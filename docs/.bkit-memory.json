@@ -1,0 +1,18 @@
+{
+  "version": "1.5.6",
+  "features": {
+    "yonsei-edtech-homepage": {
+      "phase": "do",
+      "level": "dynamic",
+      "techStack": {
+        "framework": "Next.js App Router",
+        "backend": "bkend.ai",
+        "styling": "Tailwind CSS + shadcn/ui",
+        "deploy": "Vercel"
+      },
+      "startedAt": "2026-03-11T00:00:00Z",
+      "matchRate": null,
+      "iterationCount": 0
+    }
+  }
+}
