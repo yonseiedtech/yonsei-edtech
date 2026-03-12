@@ -1,0 +1,14 @@
+# Archive Index - 2026-03
+
+## yonsei-edtech-homepage
+
+- **Archived**: 2026-03-12
+- **Match Rate**: 92.5%
+- **Iterations**: 1
+- **Duration**: 2026-03-11 ~ 2026-03-12
+
+### Documents
+- `yonsei-edtech-homepage.plan.md` - Plan document
+- `yonsei-edtech-homepage.design.md` - Design document
+- `yonsei-edtech-homepage.analysis.md` - Gap analysis (92.5%)
+- `yonsei-edtech-homepage.report.md` - Completion report
