@@ -55,6 +55,34 @@
 - [x] GitHub 저장소 생성 (yonseiedtech/yonsei-edtech)
 - [x] Vercel 배포
 
+### SEO 전체 최적화
+
+**추가된 SEO 파일**:
+| 파일 | 역할 |
+|------|------|
+| `src/app/robots.ts` | 검색 엔진 크롤링 규칙 (admin, mypage 등 비공개 페이지 차단) |
+| `src/app/sitemap.ts` | 검색 엔진용 페이지 목록 (6개 공개 페이지) |
+| `src/app/manifest.ts` | PWA 매니페스트 (앱 이름, 테마 색상) |
+| `src/app/opengraph-image.tsx` | OG 이미지 동적 생성 (카카오톡/SNS 공유 미리보기) |
+| `src/components/seo/JsonLd.tsx` | 구조화 데이터 (Organization + WebSite) |
+
+**메타데이터 강화**:
+- layout.tsx: Open Graph, Twitter Card, 확장 키워드, robots 설정, canonical URL
+- 각 페이지별 layout.tsx 추가 (login, signup, board, mypage, admin)
+- 비공개 페이지 (login, signup, mypage, admin)는 `robots: noindex` 처리
+
+**작업 내용**:
+- [x] Open Graph 메타 태그 (카카오톡/페이스북 공유 미리보기)
+- [x] Twitter Card 메타 태그
+- [x] robots.txt (크롤링 규칙)
+- [x] sitemap.xml (검색 엔진 페이지 목록)
+- [x] manifest.webmanifest (PWA 기본 정보)
+- [x] JSON-LD 구조화 데이터 (Organization, WebSite)
+- [x] 동적 OG 이미지 생성
+- [x] 페이지별 개별 메타데이터
+- [x] 확장 키워드 10개 (한국어 + 영어)
+- [x] 빌드 확인 완료
+
 ---
 
 *이 파일은 작업 진행 시마다 업데이트됩니다.*
