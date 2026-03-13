@@ -102,6 +102,25 @@
 - `AdminUserList`: 이메일 표시 → @username 표시
 - 데모 계정: admin / admin123 또는 아무 아이디 / test123
 
+### 로고 미반영 수정 + Google 검색 노출 강화
+
+**로고 미반영 수정**:
+- Footer: "YE" 텍스트 박스 → 연세대 엠블럼 이미지 교체
+- OG 이미지: "YE" → "YONSEI" 원형 디자인 + "연세대학교 교육공학 전공" 문구
+
+**Google 검색 노출 (SEO 강화)**:
+- 타이틀: `연세교육공학회 - 연세대학교 교육공학 전공 학술 커뮤니티`
+- description: "연세대학교 교육공학 전공" 키워드 선두 배치
+- 키워드 추가: "연세대학교 교육공학 전공", "교육공학 전공", "연세대 교육공학"
+- JSON-LD: alternateName에 "연세대학교 교육공학 전공" 포함, sameAs(인스타) 추가, 주소/이메일 정보 추가
+- JSON-LD knowsAbout: 한국어 키워드 추가
+
+**Google Search Console 등록 필요** (수동 작업):
+1. https://search.google.com/search-console 접속
+2. "URL 접두어" 방식으로 `https://yonsei-edtech.vercel.app` 추가
+3. HTML 태그 인증 → 발급된 코드를 layout.tsx의 `verification.google`에 추가
+4. Sitemap 제출: `https://yonsei-edtech.vercel.app/sitemap.xml`
+
 ---
 
 *이 파일은 작업 진행 시마다 업데이트됩니다.*

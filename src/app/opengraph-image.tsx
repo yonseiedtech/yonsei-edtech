@@ -27,46 +27,50 @@ export default function OgImage() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            width: 100,
-            height: 100,
-            borderRadius: 24,
-            background: "rgba(255,255,255,0.2)",
-            fontSize: 44,
+            width: 120,
+            height: 120,
+            borderRadius: 60,
+            border: "3px solid rgba(255,255,255,0.4)",
+            background: "rgba(255,255,255,0.15)",
+            fontSize: 28,
             fontWeight: 700,
-            marginBottom: 32,
+            marginBottom: 36,
+            letterSpacing: "0.05em",
           }}
         >
-          YE
+          YONSEI
         </div>
         <div
           style={{
-            fontSize: 56,
+            fontSize: 60,
             fontWeight: 800,
             letterSpacing: "-0.02em",
-            marginBottom: 16,
+            marginBottom: 12,
           }}
         >
           연세교육공학회
         </div>
         <div
           style={{
-            fontSize: 24,
+            fontSize: 22,
             fontWeight: 400,
-            opacity: 0.9,
+            opacity: 0.85,
             marginBottom: 8,
           }}
         >
-          Yonsei Educational Technology Society
+          Yonsei Educational Technology Association
         </div>
         <div
           style={{
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: 300,
-            opacity: 0.7,
-            marginTop: 24,
+            opacity: 0.6,
+            marginTop: 28,
+            borderTop: "1px solid rgba(255,255,255,0.2)",
+            paddingTop: 20,
           }}
         >
-          교육의 미래를 함께 설계합니다
+          연세대학교 교육공학 전공 · 교육의 미래를 함께 설계합니다
         </div>
       </div>
     ),

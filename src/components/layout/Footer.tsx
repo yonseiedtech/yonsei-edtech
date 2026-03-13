@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Instagram } from "lucide-react";
 
@@ -9,9 +10,13 @@ export default function Footer() {
           {/* Logo & Description */}
           <div>
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-white">
-                YE
-              </div>
+              <Image
+                src="/yonsei-emblem.svg"
+                alt="연세대학교 엠블럼"
+                width={32}
+                height={32}
+                className="h-8 w-8"
+              />
               <span className="text-lg font-bold">연세교육공학회</span>
             </div>
             <p className="mt-3 text-sm text-muted-foreground">

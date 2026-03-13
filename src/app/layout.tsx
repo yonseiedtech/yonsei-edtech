@@ -23,17 +23,20 @@ const inter = Inter({
 const SITE_URL = "https://yonsei-edtech.vercel.app";
 const SITE_NAME = "연세교육공학회";
 const SITE_DESCRIPTION =
-  "교육의 미래를 함께 설계하는 연세대학교 교육공학 학술 커뮤니티. 세미나, 프로젝트, 스터디를 통해 에듀테크 분야의 전문 지식을 공유합니다.";
+  "연세대학교 교육공학 전공 학술 커뮤니티 연세교육공학회. 에듀테크, 교수설계, 학습과학 분야의 세미나, 프로젝트, 스터디를 통해 교육의 미래를 함께 설계합니다.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "연세교육공학회 | Yonsei EdTech",
+    default: "연세교육공학회 - 연세대학교 교육공학 전공 학술 커뮤니티",
     template: "%s | 연세교육공학회",
   },
   description: SITE_DESCRIPTION,
   keywords: [
     "연세교육공학회",
+    "연세대학교 교육공학",
+    "연세대학교 교육공학 전공",
+    "교육공학 전공",
     "에듀테크",
     "교육공학",
     "연세대학교",
@@ -41,8 +44,10 @@ export const metadata: Metadata = {
     "교육기술",
     "학습과학",
     "교수설계",
+    "연세대 교육공학",
     "Yonsei University",
     "Educational Technology",
+    "Yonsei EdTech",
   ],
   authors: [{ name: SITE_NAME }],
   creator: SITE_NAME,
@@ -51,7 +56,7 @@ export const metadata: Metadata = {
     locale: "ko_KR",
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: "연세교육공학회 | Yonsei EdTech",
+    title: "연세교육공학회 - 연세대학교 교육공학 전공 학술 커뮤니티",
     description: SITE_DESCRIPTION,
     images: [
       {
@@ -64,7 +69,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "연세교육공학회 | Yonsei EdTech",
+    title: "연세교육공학회 - 연세대학교 교육공학 전공 학술 커뮤니티",
     description: SITE_DESCRIPTION,
     images: ["/og-image.png"],
   },
