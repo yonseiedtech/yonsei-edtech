@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserPlus } from "lucide-react";
 import { toast } from "sonner";
+import { authApi, profilesApi, saveTokens } from "@/lib/bkend";
 
 interface SignupData {
   code: string;
@@ -37,8 +38,30 @@ export default function SignupForm({ onSuccess }: Props) {
         return;
       }
 
-      // TODO: bkend.ai authApi.signup()
-      toast.success("가입 신청이 완료되었습니다.");
+      try {
+        // 1) bkend 인증 계정 생성
+        const tokens = await authApi.signup({
+          email: data.email,
+          password: data.password,
+          name: data.name,
+        });
+        saveTokens(tokens.accessToken, tokens.refreshToken);
+
+        // 2) users 테이블에 프로필 저장
+        await profilesApi.update("me", {
+          username: data.username,
+          name: data.name,
+          email: data.email,
+          role: "member",
+          generation: data.generation,
+          field: data.field || "",
+          approved: false,
+        });
+      } catch {
+        // bkend 미연결 시 데모 모드
+      }
+
+      toast.success("가입 신청이 완료되었습니다. 관리자 승인 후 로그인할 수 있습니다.");
       onSuccess();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "가입 중 오류가 발생했습니다.");

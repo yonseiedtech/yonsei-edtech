@@ -16,6 +16,12 @@
       "startedAt": "2026-03-13T00:00:00Z",
       "archivedAt": "2026-03-13T15:30:00Z",
       "archivedTo": "docs/archive/2026-03/role-board-seminar/"
+    },
+    "nav-content-enhance": {
+      "phase": "plan",
+      "matchRate": 0,
+      "iterationCount": 0,
+      "startedAt": "2026-03-13T00:00:00Z"
     }
   }
 }

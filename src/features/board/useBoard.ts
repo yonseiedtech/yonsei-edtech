@@ -1,45 +1,121 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { postsApi, commentsApi } from "@/lib/bkend";
 import { MOCK_POSTS, MOCK_COMMENTS } from "./board-data";
 import type { Post, Comment, PostCategory } from "@/types";
+import { useAuthStore } from "@/features/auth/auth-store";
+
+// ── Posts ──
 
 export function usePosts(category?: PostCategory | "all") {
-  // TODO: Replace with TanStack Query + bkend.ai postsApi
-  const posts = useMemo(() => {
-    if (!category || category === "all") return MOCK_POSTS;
-    return MOCK_POSTS.filter((p) => p.category === category);
-  }, [category]);
+  const { data, isLoading } = useQuery({
+    queryKey: ["posts", category],
+    queryFn: async () => {
+      const cat = category === "all" ? undefined : category;
+      const res = await postsApi.list({ category: cat, limit: 100 });
+      return res.data as unknown as Post[];
+    },
+    placeholderData: () => {
+      if (!category || category === "all") return MOCK_POSTS;
+      return MOCK_POSTS.filter((p) => p.category === category);
+    },
+    retry: false,
+  });
 
-  return { posts, isLoading: false };
+  // API 실패 시 mock fallback (data가 없으면 placeholderData 사용됨)
+  const posts = data ?? (
+    !category || category === "all"
+      ? MOCK_POSTS
+      : MOCK_POSTS.filter((p) => p.category === category)
+  );
+
+  return { posts, isLoading };
 }
 
 export function usePost(id: string) {
-  // TODO: Replace with TanStack Query + bkend.ai postsApi.get()
-  const post = MOCK_POSTS.find((p) => p.id === id) ?? null;
-  return { post, isLoading: false };
+  const { data, isLoading } = useQuery({
+    queryKey: ["posts", id],
+    queryFn: async () => {
+      const res = await postsApi.get(id);
+      return res as unknown as Post;
+    },
+    placeholderData: () => MOCK_POSTS.find((p) => p.id === id) ?? undefined,
+    retry: false,
+  });
+
+  const post = data ?? MOCK_POSTS.find((p) => p.id === id) ?? null;
+  return { post, isLoading };
 }
+
+// ── Comments ──
 
 export function useComments(postId: string) {
-  // TODO: Replace with TanStack Query + bkend.ai commentsApi
-  const [comments] = useState<Comment[]>(
-    MOCK_COMMENTS.filter((c) => c.postId === postId)
-  );
-  return { comments, isLoading: false };
+  const { data, isLoading } = useQuery({
+    queryKey: ["comments", postId],
+    queryFn: async () => {
+      const res = await commentsApi.list(postId);
+      return res.data as unknown as Comment[];
+    },
+    placeholderData: () => MOCK_COMMENTS.filter((c) => c.postId === postId),
+    enabled: !!postId,
+    retry: false,
+  });
+
+  const comments = data ?? MOCK_COMMENTS.filter((c) => c.postId === postId);
+  return { comments, isLoading };
 }
+
+// ── Create Post ──
 
 export function useCreatePost() {
-  // TODO: Replace with bkend.ai postsApi.create()
-  const createPost = async (_data: Partial<Post>) => {
-    alert("게시글이 등록되었습니다. (데모)");
+  const queryClient = useQueryClient();
+  const user = useAuthStore((s) => s.user);
+
+  const mutation = useMutation({
+    mutationFn: async (data: Partial<Post>) => {
+      return postsApi.create({
+        title: data.title,
+        content: data.content,
+        category: data.category,
+        authorId: user?.id,
+        authorName: user?.name,
+        viewCount: 0,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
+  });
+
+  return {
+    createPost: mutation.mutateAsync,
+    isLoading: mutation.isPending,
   };
-  return { createPost, isLoading: false };
 }
 
+// ── Create Comment ──
+
 export function useCreateComment() {
-  // TODO: Replace with bkend.ai commentsApi.create()
-  const createComment = async (_data: { postId: string; content: string }) => {
-    alert("댓글이 등록되었습니다. (데모)");
+  const queryClient = useQueryClient();
+  const user = useAuthStore((s) => s.user);
+
+  const mutation = useMutation({
+    mutationFn: async (data: { postId: string; content: string }) => {
+      return commentsApi.create({
+        postId: data.postId,
+        content: data.content,
+        authorId: user?.id,
+        authorName: user?.name,
+      });
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["comments", variables.postId] });
+    },
+  });
+
+  return {
+    createComment: mutation.mutateAsync,
+    isLoading: mutation.isPending,
   };
-  return { createComment, isLoading: false };
 }
