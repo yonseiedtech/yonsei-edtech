@@ -10,7 +10,7 @@ import { LogIn } from "lucide-react";
 import { toast } from "sonner";
 
 export default function LoginForm() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -21,12 +21,11 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      const user = await login(email, password);
+      const user = await login(username, password);
       if (user && !user.approved) {
         toast.error("관리자 승인 대기 중입니다. 승인 후 로그인할 수 있습니다.");
         return;
       }
-      // Redirect to saved return URL or board
       const returnUrl = sessionStorage.getItem("returnUrl") || "/board";
       sessionStorage.removeItem("returnUrl");
       router.push(returnUrl);
@@ -43,12 +42,13 @@ export default function LoginForm() {
       className="space-y-4 rounded-2xl border bg-white p-8 shadow-sm"
     >
       <div>
-        <label className="mb-1.5 block text-sm font-medium">이메일</label>
+        <label className="mb-1.5 block text-sm font-medium">아이디</label>
         <Input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="email@yonsei.ac.kr"
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="아이디를 입력하세요"
+          autoComplete="username"
           required
         />
       </div>
@@ -60,6 +60,7 @@ export default function LoginForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="비밀번호를 입력하세요"
+          autoComplete="current-password"
           required
         />
       </div>

@@ -46,7 +46,7 @@ export default function AdminUserList({ users, onApprove, onReject }: Props) {
               <Badge variant="secondary">{u.generation}기</Badge>
             </div>
             <div className="mt-1 text-sm text-muted-foreground">
-              {u.email} · {u.field}
+              @{u.username} · {u.field}
             </div>
           </div>
           <div className="flex gap-2">

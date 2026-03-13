@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -26,12 +27,21 @@ export default function Header() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-white">
-            YE
-          </div>
-          <span className="hidden text-lg font-bold text-foreground sm:block">
-            연세교육공학회
-          </span>
+          <Image
+            src="/yonsei-emblem.svg"
+            alt="연세대학교 엠블럼"
+            width={32}
+            height={32}
+            className="h-8 w-8"
+          />
+          <Image
+            src="/logo.png"
+            alt="연세교육공학회"
+            width={200}
+            height={40}
+            className="hidden h-8 w-auto sm:block"
+            priority
+          />
         </Link>
 
         {/* Desktop Nav */}

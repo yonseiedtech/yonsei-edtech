@@ -7,8 +7,8 @@ import type { User } from "@/types";
 
 // Demo pending users
 const PENDING_USERS: User[] = [
-  { id: "10", name: "홍길동", email: "hong@yonsei.ac.kr", generation: 4, field: "AI 교육", role: "member", approved: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: "11", name: "김철수", email: "kim@yonsei.ac.kr", generation: 4, field: "VR 교육", role: "member", approved: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: "10", username: "honggildong", name: "홍길동", generation: 4, field: "AI 교육", role: "member", approved: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: "11", username: "kimcs", name: "김철수", generation: 4, field: "VR 교육", role: "member", approved: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
 ];
 
 function AdminContent() {

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
@@ -16,9 +17,18 @@ export default function HeroSection() {
             transition={{ duration: 0.5 }}
             className="md:col-span-3"
           >
-            <p className="text-sm font-medium tracking-wide text-primary">
-              연세대학교 교육공학 학술 커뮤니티
-            </p>
+            <div className="flex items-center gap-2">
+              <Image
+                src="/yonsei-emblem.svg"
+                alt="연세대학교 엠블럼"
+                width={24}
+                height={24}
+                className="h-6 w-6"
+              />
+              <p className="text-sm font-medium tracking-wide text-primary">
+                연세대학교 교육공학 학술 커뮤니티
+              </p>
+            </div>
 
             <h1 className="mt-4 text-3xl font-bold leading-snug text-foreground md:text-5xl md:leading-snug">
               교육의 미래를

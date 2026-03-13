@@ -10,17 +10,17 @@ export function useAuth() {
   const router = useRouter();
 
   const login = useCallback(
-    async (email: string, password: string) => {
+    async (username: string, password: string) => {
       setLoading(true);
       try {
         // TODO: Replace with bkend.ai authApi.login()
-        // const { token, user } = await authApi.login({ email, password });
 
         // Demo login logic
-        if (email === "admin@yonsei.ac.kr" && password === "admin123") {
+        if (username === "admin" && password === "admin123") {
           const adminUser: User = {
             id: "1",
-            email,
+            username: "admin",
+            email: "admin@yonsei.ac.kr",
             name: "관리자",
             role: "admin",
             generation: 1,
@@ -31,10 +31,10 @@ export function useAuth() {
           };
           setUser(adminUser);
           return adminUser;
-        } else if (email && password === "test123") {
+        } else if (username && password === "test123") {
           const memberUser: User = {
             id: "2",
-            email,
+            username,
             name: "테스트 회원",
             role: "member",
             generation: 3,
@@ -47,7 +47,7 @@ export function useAuth() {
           return memberUser;
         }
 
-        throw new Error("이메일 또는 비밀번호가 올바르지 않습니다.");
+        throw new Error("아이디 또는 비밀번호가 올바르지 않습니다.");
       } finally {
         setLoading(false);
       }

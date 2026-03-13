@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 interface SignupData {
   code: string;
+  username: string;
   name: string;
   email: string;
   password: string;
@@ -66,6 +67,23 @@ export default function SignupForm({ onSuccess }: Props) {
       </div>
 
       <div>
+        <label className="mb-1.5 block text-sm font-medium">아이디</label>
+        <Input
+          {...register("username", {
+            required: "아이디를 입력하세요",
+            minLength: { value: 3, message: "3자 이상 입력하세요" },
+            maxLength: { value: 20, message: "20자 이하로 입력하세요" },
+            pattern: { value: /^[a-zA-Z0-9_]+$/, message: "영문, 숫자, 밑줄(_)만 사용 가능합니다" },
+          })}
+          placeholder="영문, 숫자 조합 (3~20자)"
+          autoComplete="username"
+        />
+        {errors.username && (
+          <p className="mt-1 text-xs text-destructive">{errors.username.message}</p>
+        )}
+      </div>
+
+      <div>
         <label className="mb-1.5 block text-sm font-medium">이름</label>
         <Input
           {...register("name", { required: "이름을 입력하세요" })}
@@ -77,10 +95,9 @@ export default function SignupForm({ onSuccess }: Props) {
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium">이메일</label>
+        <label className="mb-1.5 block text-sm font-medium">이메일 (선택)</label>
         <Input
           {...register("email", {
-            required: "이메일을 입력하세요",
             pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "올바른 이메일 형식이 아닙니다" },
           })}
           type="email"

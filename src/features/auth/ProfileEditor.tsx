@@ -45,8 +45,8 @@ export default function ProfileEditor({ user }: Props) {
         <Input {...register("name")} />
       </div>
       <div>
-        <label className="mb-1.5 block text-sm font-medium">이메일</label>
-        <Input value={user.email} disabled className="bg-muted" />
+        <label className="mb-1.5 block text-sm font-medium">아이디</label>
+        <Input value={user.username} disabled className="bg-muted" />
       </div>
       <div>
         <label className="mb-1.5 block text-sm font-medium">기수</label>
