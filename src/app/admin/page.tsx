@@ -8,7 +8,7 @@ import AdminInquiryTab from "@/features/admin/AdminInquiryTab";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isPresidentOrAbove } from "@/lib/permissions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield } from "lucide-react";
+import { Shield, Users, FileText, BookOpen, MessageSquare } from "lucide-react";
 
 function AdminContent() {
   const { user } = useAuthStore();
@@ -23,11 +23,25 @@ function AdminContent() {
         </div>
 
         <Tabs defaultValue={canManageMembers ? "members" : "posts"} className="mt-8">
-          <TabsList>
-            {canManageMembers && <TabsTrigger value="members">회원</TabsTrigger>}
-            <TabsTrigger value="posts">게시글</TabsTrigger>
-            <TabsTrigger value="seminars">세미나</TabsTrigger>
-            <TabsTrigger value="inquiries">문의</TabsTrigger>
+          <TabsList className="w-full">
+            {canManageMembers && (
+              <TabsTrigger value="members" className="px-4 py-2 text-base">
+                <Users size={16} className="mr-1.5" />
+                회원
+              </TabsTrigger>
+            )}
+            <TabsTrigger value="posts" className="px-4 py-2 text-base">
+              <FileText size={16} className="mr-1.5" />
+              게시글
+            </TabsTrigger>
+            <TabsTrigger value="seminars" className="px-4 py-2 text-base">
+              <BookOpen size={16} className="mr-1.5" />
+              세미나
+            </TabsTrigger>
+            <TabsTrigger value="inquiries" className="px-4 py-2 text-base">
+              <MessageSquare size={16} className="mr-1.5" />
+              문의
+            </TabsTrigger>
           </TabsList>
 
           {canManageMembers && (

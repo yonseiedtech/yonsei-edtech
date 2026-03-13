@@ -60,6 +60,17 @@ export const CATEGORY_LABELS: Record<PostCategory, string> = {
 };
 
 // ── 세미나 ──
+export interface SeminarSession {
+  id: string;
+  seminarId: string;
+  title: string;
+  speaker: string;
+  speakerBio?: string;
+  time: string;
+  duration: number;
+  order: number;
+}
+
 export interface Seminar {
   id: string;
   title: string;
@@ -69,8 +80,10 @@ export interface Seminar {
   location: string;
   speaker: string;
   speakerBio?: string;
+  posterUrl?: string;
   maxAttendees?: number;
   attendeeIds: string[];
+  sessions?: SeminarSession[];
   status: "upcoming" | "completed" | "cancelled";
   createdBy: string;
   createdAt: string;

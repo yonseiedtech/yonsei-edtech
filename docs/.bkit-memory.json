@@ -10,10 +10,12 @@
       "archivedTo": "docs/archive/2026-03/yonsei-edtech-homepage/"
     },
     "role-board-seminar": {
-      "phase": "check",
-      "matchRate": 97,
+      "phase": "archived",
+      "matchRate": 98,
       "iterationCount": 0,
-      "startedAt": "2026-03-13T00:00:00Z"
+      "startedAt": "2026-03-13T00:00:00Z",
+      "archivedAt": "2026-03-13T15:30:00Z",
+      "archivedTo": "docs/archive/2026-03/role-board-seminar/"
     }
   }
 }

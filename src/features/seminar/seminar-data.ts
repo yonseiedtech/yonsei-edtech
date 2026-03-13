@@ -1,4 +1,4 @@
-import type { Seminar } from "@/types";
+import type { Seminar, SeminarSession } from "@/types";
 
 export const MOCK_SEMINARS: Seminar[] = [
   {
@@ -11,8 +11,14 @@ export const MOCK_SEMINARS: Seminar[] = [
     location: "교육과학관 203호",
     speaker: "김민수",
     speakerBio: "연세대 교육학과 박사과정, AI 교육 연구",
+    posterUrl: "https://placehold.co/400x566?text=AI+%EA%B5%90%EC%88%98%EC%84%A4%EA%B3%84",
     maxAttendees: 30,
     attendeeIds: ["2", "3", "4", "100"],
+    sessions: [
+      { id: "ss1", seminarId: "s1", title: "생성형 AI 개론과 교육 적용", speaker: "김민수", time: "19:00", duration: 30, order: 1 },
+      { id: "ss2", seminarId: "s1", title: "ADDIE 모델에서의 AI 활용 사례", speaker: "박지현", speakerBio: "교육공학 석사과정", time: "19:30", duration: 25, order: 2 },
+      { id: "ss3", seminarId: "s1", title: "토론 및 Q&A", speaker: "전체", time: "19:55", duration: 20, order: 3 },
+    ],
     status: "upcoming",
     createdBy: "3",
     createdAt: "2026-03-10T10:00:00Z",
@@ -62,7 +68,12 @@ export const MOCK_SEMINARS: Seminar[] = [
     location: "교육과학관 203호",
     speaker: "최현우",
     speakerBio: "연세대 교육학과 석사과정, 교육정책 연구",
+    posterUrl: "https://placehold.co/400x566?text=%EB%A7%88%EC%9D%B4%ED%81%AC%EB%A1%9C%ED%81%AC%EB%A0%88%EB%8D%B4%EC%85%9C",
     attendeeIds: ["2", "3", "4", "5", "100"],
+    sessions: [
+      { id: "ss4", seminarId: "s4", title: "마이크로크레덴셜 개념과 글로벌 동향", speaker: "최현우", time: "19:00", duration: 25, order: 1 },
+      { id: "ss5", seminarId: "s4", title: "국내 대학 적용 사례 분석", speaker: "한소영", speakerBio: "교육정책 석사과정", time: "19:25", duration: 25, order: 2 },
+    ],
     status: "completed",
     createdBy: "3",
     createdAt: "2026-02-25T10:00:00Z",
