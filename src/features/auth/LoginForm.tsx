@@ -82,6 +82,18 @@ export default function LoginForm() {
           회원가입
         </Link>
       </p>
+
+      <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
+        <p className="font-medium">데모 계정</p>
+        <div className="mt-1 space-y-0.5">
+          <p>admin / admin123 (관리자)</p>
+          <p>president / test123 (회장)</p>
+          <p>staff / test123 (운영진)</p>
+          <p>alumni / test123 (졸업생)</p>
+          <p>advisor / test123 (자문위원)</p>
+          <p>아무아이디 / test123 (회원)</p>
+        </div>
+      </div>
     </form>
   );
 }

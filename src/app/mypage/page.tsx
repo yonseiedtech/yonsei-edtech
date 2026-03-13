@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { User, LogOut } from "lucide-react";
 import { useAuth } from "@/features/auth/useAuth";
+import { ROLE_LABELS } from "@/types";
 
 function MypageContent() {
   const { user } = useAuthStore();
@@ -39,7 +40,7 @@ function MypageContent() {
               <h2 className="text-xl font-bold">{user.name}</h2>
               <div className="mt-1 flex items-center gap-2">
                 <Badge variant="secondary">{user.generation}기</Badge>
-                <Badge>{user.role === "admin" ? "관리자" : "회원"}</Badge>
+                <Badge>{ROLE_LABELS[user.role]}</Badge>
               </div>
             </div>
           </div>

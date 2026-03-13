@@ -6,21 +6,44 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Menu, X, User, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { isAtLeast } from "@/lib/permissions";
+import type { UserRole } from "@/types";
 
-const NAV_ITEMS = [
-  { href: "/", label: "메인" },
+interface NavItem {
+  href: string;
+  label: string;
+  /** 이 역할 이상만 노출. 생략하면 모두에게 노출 */
+  minRole?: UserRole;
+}
+
+const PUBLIC_NAV: NavItem[] = [
+  { href: "/", label: "홈" },
   { href: "/about", label: "소개" },
   { href: "/activities", label: "활동" },
-  { href: "/members", label: "멤버" },
+  { href: "/notices", label: "공지" },
   { href: "/contact", label: "문의" },
-  { href: "/board", label: "게시판" },
+];
+
+const MEMBER_NAV: NavItem[] = [
+  { href: "/board", label: "게시판", minRole: "member" },
+  { href: "/seminars", label: "세미나", minRole: "member" },
+  { href: "/members", label: "멤버", minRole: "member" },
 ];
 
 export default function Header() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user } = useAuthStore();
+
+  const visibleMemberNav = MEMBER_NAV.filter(
+    (item) => !item.minRole || isAtLeast(user, item.minRole)
+  );
+
+  const allVisibleItems = [...PUBLIC_NAV, ...visibleMemberNav];
+
+  const showAdminLink = isAtLeast(user, "staff");
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-white/80 backdrop-blur-lg">
@@ -46,7 +69,7 @@ export default function Header() {
 
         {/* Desktop Nav */}
         <nav className="hidden items-center gap-1 md:flex">
-          {NAV_ITEMS.map((item) => (
+          {PUBLIC_NAV.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -60,13 +83,32 @@ export default function Header() {
               {item.label}
             </Link>
           ))}
+          {visibleMemberNav.length > 0 && (
+            <>
+              <Separator orientation="vertical" className="mx-1 h-5" />
+              {visibleMemberNav.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-muted",
+                    pathname === item.href
+                      ? "text-primary"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </>
+          )}
         </nav>
 
         {/* Auth Area (Desktop) */}
         <div className="hidden items-center gap-2 md:flex">
           {user ? (
             <>
-              {user.role === "admin" && (
+              {showAdminLink && (
                 <Link
                   href="/admin"
                   className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted"
@@ -107,7 +149,7 @@ export default function Header() {
       {mobileOpen && (
         <div className="border-t bg-white px-4 pb-4 md:hidden">
           <nav className="flex flex-col gap-1 pt-2">
-            {NAV_ITEMS.map((item) => (
+            {allVisibleItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -124,7 +166,7 @@ export default function Header() {
             ))}
             {user ? (
               <>
-                {user.role === "admin" && (
+                {showAdminLink && (
                   <Link
                     href="/admin"
                     onClick={() => setMobileOpen(false)}

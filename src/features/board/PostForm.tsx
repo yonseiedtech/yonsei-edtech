@@ -11,26 +11,42 @@ import { cn } from "@/lib/utils";
 import { ArrowLeft, Send } from "lucide-react";
 import { toast } from "sonner";
 import { useCreatePost } from "./useBoard";
+import { useAuthStore } from "@/features/auth/auth-store";
+import { isAtLeast } from "@/lib/permissions";
 
 interface PostData {
   title: string;
   content: string;
 }
 
-const categories: PostCategory[] = ["notice", "seminar", "free"];
+const ALL_CATEGORIES: PostCategory[] = [
+  "notice",
+  "seminar",
+  "free",
+  "promotion",
+  "newsletter",
+];
 
 export default function PostForm() {
   const router = useRouter();
+  const { user } = useAuthStore();
   const [category, setCategory] = useState<PostCategory>("free");
   const { createPost } = useCreatePost();
   const { register, handleSubmit, formState: { errors } } = useForm<PostData>();
+
+  // 역할별 카테고리 필터
+  const availableCategories = ALL_CATEGORIES.filter((cat) => {
+    if (cat === "notice") return isAtLeast(user, "president");
+    if (cat === "promotion" || cat === "newsletter") return isAtLeast(user, "staff");
+    return true;
+  });
 
   async function onSubmit(data: PostData) {
     try {
       await createPost({ ...data, category });
       toast.success("게시글이 등록되었습니다.");
       router.push("/board");
-    } catch (err) {
+    } catch {
       toast.error("게시글 등록에 실패했습니다.");
     }
   }
@@ -53,8 +69,8 @@ export default function PostForm() {
       >
         <div>
           <label className="mb-1.5 block text-sm font-medium">카테고리</label>
-          <div className="flex gap-2">
-            {categories.map((cat) => (
+          <div className="flex flex-wrap gap-2">
+            {availableCategories.map((cat) => (
               <button
                 key={cat}
                 type="button"

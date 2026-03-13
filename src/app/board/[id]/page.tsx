@@ -38,7 +38,7 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
   }
 
   const isAuthor = user?.id === post.authorId;
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user ? ["admin", "president", "staff"].includes(user.role) : false;
 
   function handleDeleteComment(commentId: string) {
     // TODO: bkend.ai commentsApi.delete()

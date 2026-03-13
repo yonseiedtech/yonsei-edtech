@@ -5,13 +5,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Send } from "lucide-react";
+import { useInquiryStore } from "@/features/inquiry/inquiry-store";
 
 export default function ContactForm() {
   const [submitted, setSubmitted] = useState(false);
+  const addInquiry = useInquiryStore((s) => s.addInquiry);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    // TODO: bkend.ai inquiries API 연동
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    addInquiry({
+      name: formData.get("name") as string,
+      email: formData.get("email") as string,
+      message: formData.get("message") as string,
+    });
     setSubmitted(true);
   }
 
@@ -43,15 +51,16 @@ export default function ContactForm() {
     >
       <div>
         <label className="mb-1.5 block text-sm font-medium">이름</label>
-        <Input placeholder="홍길동" required />
+        <Input name="name" placeholder="홍길동" required />
       </div>
       <div>
         <label className="mb-1.5 block text-sm font-medium">이메일</label>
-        <Input type="email" placeholder="email@example.com" required />
+        <Input type="email" name="email" placeholder="email@example.com" required />
       </div>
       <div>
         <label className="mb-1.5 block text-sm font-medium">문의 내용</label>
         <Textarea
+          name="message"
           placeholder="문의 내용을 입력해주세요."
           rows={5}
           required

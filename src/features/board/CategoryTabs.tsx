@@ -3,7 +3,14 @@
 import { cn } from "@/lib/utils";
 import { CATEGORY_LABELS, type PostCategory } from "@/types";
 
-const CATEGORIES: (PostCategory | "all")[] = ["all", "notice", "seminar", "free"];
+const CATEGORIES: (PostCategory | "all")[] = [
+  "all",
+  "notice",
+  "seminar",
+  "free",
+  "promotion",
+  "newsletter",
+];
 const ALL_LABELS: Record<string, string> = { all: "전체", ...CATEGORY_LABELS };
 
 interface Props {
@@ -13,7 +20,7 @@ interface Props {
 
 export default function CategoryTabs({ active, onChange }: Props) {
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-wrap gap-2">
       {CATEGORIES.map((cat) => (
         <button
           key={cat}

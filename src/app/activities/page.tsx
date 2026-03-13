@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
-import { BookOpen, FolderKanban, Users, Calendar } from "lucide-react";
+"use client";
 
-export const metadata: Metadata = {
-  title: "활동 소개",
-  description: "연세교육공학회의 세미나, 프로젝트, 스터디 활동을 소개합니다.",
-};
+import { useMemo } from "react";
+import { BookOpen, FolderKanban, Users, Calendar } from "lucide-react";
+import { MOCK_SEMINARS } from "@/features/seminar/seminar-data";
+import { MOCK_POSTS } from "@/features/board/board-data";
+import { formatDate } from "@/lib/utils";
 
 const activities = [
   {
@@ -33,30 +33,31 @@ const activities = [
   },
 ];
 
-const highlights = [
-  {
-    title: "2025 봄 세미나: AI와 적응형 학습",
-    desc: "ChatGPT 기반 개인화 학습 설계에 대한 사례 분석",
-    date: "2025.03",
-  },
-  {
-    title: "에듀테크 해커톤 참가",
-    desc: "K-에듀테크 해커톤에서 팀 프로젝트로 우수상 수상",
-    date: "2025.06",
-  },
-  {
-    title: "2025 가을 프로젝트: 학습 대시보드",
-    desc: "학습 분석 데이터를 시각화하는 대시보드 프로토타입 개발",
-    date: "2025.09",
-  },
-  {
-    title: "연말 네트워킹 데이",
-    desc: "졸업 선배 및 현직 에듀테크 전문가와의 네트워킹 행사",
-    date: "2025.12",
-  },
-];
-
 export default function ActivitiesPage() {
+  const highlights = useMemo(() => {
+    const completedSeminars = MOCK_SEMINARS.filter(
+      (s) => s.status === "completed"
+    ).map((s) => ({
+      title: s.title,
+      desc: `${s.speaker} 발표 · ${s.location}`,
+      date: s.date,
+      sortKey: s.date,
+    }));
+
+    const recentPosts = MOCK_POSTS.filter(
+      (p) => p.category === "notice" || p.category === "promotion"
+    ).map((p) => ({
+      title: p.title,
+      desc: p.content.split("\n")[0].slice(0, 60),
+      date: formatDate(p.createdAt),
+      sortKey: p.createdAt,
+    }));
+
+    return [...completedSeminars, ...recentPosts]
+      .sort((a, b) => b.sortKey.localeCompare(a.sortKey))
+      .slice(0, 6);
+  }, []);
+
   return (
     <div className="py-16">
       <section className="mx-auto max-w-6xl px-4 text-center">
@@ -95,17 +96,17 @@ export default function ActivitiesPage() {
         </div>
       </section>
 
-      {/* Highlights */}
+      {/* Dynamic Highlights */}
       <section className="mx-auto mt-20 max-w-6xl px-4">
         <h2 className="text-center text-2xl font-bold">주요 활동 내역</h2>
         <div className="mt-8 grid gap-4 md:grid-cols-2">
-          {highlights.map((h) => (
+          {highlights.map((h, i) => (
             <div
-              key={h.title}
+              key={i}
               className="flex gap-4 rounded-xl border bg-white p-5"
             >
               <div className="shrink-0 text-sm font-bold text-primary">
-                {h.date}
+                {h.date.length > 10 ? h.date : formatDate(h.date)}
               </div>
               <div>
                 <h3 className="font-semibold">{h.title}</h3>

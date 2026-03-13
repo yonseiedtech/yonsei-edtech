@@ -7,9 +7,10 @@ import { Eye } from "lucide-react";
 
 interface Props {
   posts: Post[];
+  hrefPrefix?: string;
 }
 
-export default function PostList({ posts }: Props) {
+export default function PostList({ posts, hrefPrefix = "/board" }: Props) {
   if (posts.length === 0) {
     return (
       <div className="rounded-xl border bg-white p-12 text-center text-muted-foreground">
@@ -23,7 +24,7 @@ export default function PostList({ posts }: Props) {
       {posts.map((post) => (
         <Link
           key={post.id}
-          href={`/board/${post.id}`}
+          href={`${hrefPrefix}/${post.id}`}
           className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-muted/30"
         >
           <div className="min-w-0 flex-1">
@@ -35,6 +36,10 @@ export default function PostList({ posts }: Props) {
                     ? "bg-primary/10 text-primary"
                     : post.category === "seminar"
                     ? "bg-secondary/15 text-amber-700"
+                    : post.category === "promotion"
+                    ? "bg-emerald-50 text-emerald-700"
+                    : post.category === "newsletter"
+                    ? "bg-violet-50 text-violet-700"
                     : "bg-muted text-muted-foreground"
                 )}
               >

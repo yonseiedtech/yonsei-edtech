@@ -1,39 +1,53 @@
 "use client";
 
 import AuthGuard from "@/features/auth/AuthGuard";
-import AdminUserList from "@/features/admin/AdminUserList";
+import AdminMemberTab from "@/features/admin/AdminMemberTab";
+import AdminPostTab from "@/features/admin/AdminPostTab";
+import AdminSeminarTab from "@/features/admin/AdminSeminarTab";
+import AdminInquiryTab from "@/features/admin/AdminInquiryTab";
+import { useAuthStore } from "@/features/auth/auth-store";
+import { isPresidentOrAbove } from "@/lib/permissions";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Shield } from "lucide-react";
-import type { User } from "@/types";
-
-// Demo pending users
-const PENDING_USERS: User[] = [
-  { id: "10", username: "honggildong", name: "홍길동", generation: 4, field: "AI 교육", role: "member", approved: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: "11", username: "kimcs", name: "김철수", generation: 4, field: "VR 교육", role: "member", approved: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-];
 
 function AdminContent() {
+  const { user } = useAuthStore();
+  const canManageMembers = isPresidentOrAbove(user);
+
   return (
     <div className="py-16">
-      <div className="mx-auto max-w-4xl px-4">
+      <div className="mx-auto max-w-5xl px-4">
         <div className="flex items-center gap-3">
           <Shield size={28} className="text-primary" />
           <h1 className="text-3xl font-bold">관리자</h1>
         </div>
 
-        <section className="mt-8">
-          <h2 className="text-xl font-bold">승인 대기 회원</h2>
-          <div className="mt-4">
-            <AdminUserList users={PENDING_USERS} />
-          </div>
-        </section>
+        <Tabs defaultValue={canManageMembers ? "members" : "posts"} className="mt-8">
+          <TabsList>
+            {canManageMembers && <TabsTrigger value="members">회원</TabsTrigger>}
+            <TabsTrigger value="posts">게시글</TabsTrigger>
+            <TabsTrigger value="seminars">세미나</TabsTrigger>
+            <TabsTrigger value="inquiries">문의</TabsTrigger>
+          </TabsList>
 
-        <section className="mt-12">
-          <h2 className="text-xl font-bold">게시글 관리</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            게시판에서 직접 게시글을 관리할 수 있습니다. 각 게시글의 삭제 버튼을
-            사용하세요.
-          </p>
-        </section>
+          {canManageMembers && (
+            <TabsContent value="members" className="mt-6">
+              <AdminMemberTab />
+            </TabsContent>
+          )}
+
+          <TabsContent value="posts" className="mt-6">
+            <AdminPostTab />
+          </TabsContent>
+
+          <TabsContent value="seminars" className="mt-6">
+            <AdminSeminarTab />
+          </TabsContent>
+
+          <TabsContent value="inquiries" className="mt-6">
+            <AdminInquiryTab />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
@@ -41,7 +55,7 @@ function AdminContent() {
 
 export default function AdminPage() {
   return (
-    <AuthGuard requireAdmin>
+    <AuthGuard allowedRoles={["staff", "president", "admin"]}>
       <AdminContent />
     </AuthGuard>
   );
