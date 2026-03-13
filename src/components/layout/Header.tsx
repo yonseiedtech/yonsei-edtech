@@ -35,7 +35,7 @@ export default function Header() {
             className="h-8 w-8"
           />
           <Image
-            src="/logo.png"
+            src="/logo-text.png"
             alt="연세교육공학회"
             width={200}
             height={40}
