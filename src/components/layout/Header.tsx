@@ -64,7 +64,7 @@ export default function Header() {
             alt="연세교육공학회"
             width={200}
             height={40}
-            className="hidden h-8 w-auto sm:block"
+            className="h-8 w-auto"
             priority
           />
         </Link>

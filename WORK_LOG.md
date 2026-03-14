@@ -123,4 +123,107 @@
 
 ---
 
+## 2026-03-14
+
+### 역할/게시판/세미나 기능 (PDCA: role-board-seminar, 98%, archived)
+
+이전 세션에서 구현된 기능에 대한 PDCA 사이클 완료.
+
+**구현 내용**:
+- 역할 기반 권한 시스템 (admin/president/staff/advisor/alumni/member/guest)
+- 게시판 5개 카테고리 (공지/세미나자료/자유/홍보/학회보)
+- 세미나 CRUD + 참석 토글 + Zustand 스토어
+- 문의 스토어 + 관리자 4탭 구성
+
+### 관리자 대시보드 개선
+
+**A. 탭 UI 개선** (`src/app/admin/page.tsx`):
+- TabsList `w-full` + TabsTrigger 아이콘(Users/FileText/BookOpen/MessageSquare)
+- 더 큰 터치 영역 (`px-4 py-2 text-base`)
+
+**B. 게시글 탭 리팩토링** (`src/features/admin/AdminPostTab.tsx`):
+- CategoryTabs 서브필터 (전체/공지/세미나/자유/홍보/학회보)
+- 검색 Input (제목/작성자 통합 검색) + 정렬 select (최신순/조회순)
+- 체크박스 일괄 선택 + "선택 삭제" 버튼
+- 각 행에 수정 버튼 → Dialog로 제목/내용 인라인 수정
+
+**C. 세미나 타입 확장** (`src/types/index.ts`):
+- `SeminarSession` 인터페이스 신규 (id, seminarId, title, speaker, speakerBio, time, duration, order)
+- `Seminar`에 `posterUrl?: string`, `sessions?: SeminarSession[]` 추가
+
+**D. 세미나 목업 데이터** (`src/features/seminar/seminar-data.ts`):
+- s1에 3개 세션, s4에 2개 세션 추가
+- s1, s4에 posterUrl (placehold.co) 추가
+
+**E. 세미나 스토어** (`src/features/seminar/seminar-store.ts`):
+- `addSession`, `updateSession`, `deleteSession` 액션 추가
+
+**F. 세미나 관리 탭** (`src/features/admin/AdminSeminarTab.tsx`):
+- 포스터 썸네일 컬럼 (posterUrl img / ImageIcon placeholder)
+- 수정 Dialog (제목, 날짜, 시간, 장소, 발표자, 최대인원, 포스터URL, 설명)
+- Collapsible 세션 목록 (순서 배지, 발표자/소요시간 표시)
+- 세션 추가/수정/삭제 인라인 UI
+
+**G. shadcn 컴포넌트**: checkbox, collapsible 추가
+
+### bkend.ai 백엔드 연동
+
+**환경 설정**:
+- `.env.local` — NEXT_PUBLIC_BKEND_API_KEY 설정
+- `.mcp.json` — bkend MCP 서버 설정 (https://mcp.bkend.ai)
+- `claude mcp add bkend` 완료
+
+**코드 변경**:
+
+| 파일 | 변경 내용 |
+|------|-----------|
+| `src/lib/bkend.ts` | 전면 재작성 — X-API-Key 헤더, `/data/{table}` 엔드포인트, 토큰 자동 갱신(401→refresh→retry), 타입 안전 CRUD API (dataApi, postsApi, commentsApi, profilesApi, seminarsApi, sessionsApi, attendeesApi, inquiriesApi) |
+| `src/lib/query-provider.tsx` | TanStack Query Provider 신규 (staleTime 1분, retry 1) |
+| `src/app/layout.tsx` | QueryProvider 래핑 추가 |
+| `src/features/auth/auth-store.ts` | `initialized` 상태 추가 (세션 복원 판단용) |
+| `src/features/auth/useAuth.ts` | bkend API 로그인 (`/auth/email/signin`) + 데모 fallback, 앱 시작 시 localStorage 토큰으로 세션 복원 (`/auth/me` + `/data/users`) |
+| `src/features/auth/SignupForm.tsx` | bkend signup (`/auth/email/signup`) + users 테이블 프로필 저장 |
+| `src/features/board/useBoard.ts` | TanStack Query (`useQuery`/`useMutation`) + mock fallback, `usePosts`, `usePost`, `useComments`, `useCreatePost`, `useCreateComment` |
+
+**API 엔드포인트 매핑**:
+| 기능 | 엔드포인트 |
+|------|-----------|
+| 회원가입 | `POST /auth/email/signup` |
+| 로그인 | `POST /auth/email/signin` |
+| 현재 사용자 | `GET /auth/me` |
+| 토큰 갱신 | `POST /auth/refresh` |
+| 로그아웃 | `POST /auth/signout` |
+| 데이터 CRUD | `GET/POST/PUT/PATCH/DELETE /data/{table}` |
+
+**동작 방식**: bkend 테이블 미생성 시 → API 실패 → mock 데이터 자동 fallback
+
+**연동 가이드**: `docs/02-design/bkend-integration-guide.md` (7개 테이블 스키마, RBAC, 인증 흐름)
+
+### nav-content-enhance Plan 작성
+
+메뉴/네비게이션 재설계 + 콘텐츠 페이지 강화 Plan 문서 작성 (`docs/01-plan/features/nav-content-enhance.plan.md`).
+
+**범위**:
+- A. Header 서브메뉴 드롭다운(Desktop) + 아코디언(Mobile), `/about/history` 연혁 신규
+- B. 게시판 카테고리별 라우트 (`/board?category=seminar` 등 쿼리 파라미터)
+- C. 세미나 상세 포스터 이미지 + 세션 타임라인
+- D. 갤러리 플레이스홀더 (`/gallery`)
+
+### PDCA 상태
+
+| 피처 | Phase | Match Rate | 비고 |
+|------|-------|------------|------|
+| yonsei-edtech-homepage | archived | 92.5% | 2026-03-12 |
+| role-board-seminar | archived | 98% | 2026-03-13 |
+| nav-content-enhance | plan | - | 다음 작업 |
+
+### 남은 작업
+
+1. **bkend 테이블 생성** — Claude Code 세션 재시작 → MCP로 7개 테이블 생성
+2. **Vercel 환경변수** — `NEXT_PUBLIC_BKEND_API_KEY` 등록
+3. **nav-content-enhance** — Design → Do → 배포
+4. **Google Search Console** — 인증 코드 등록 + Sitemap 제출
+
+---
+
 *이 파일은 작업 진행 시마다 업데이트됩니다.*

@@ -10,6 +10,7 @@ import { ROLE_LABELS } from "@/types";
 import type { User, UserRole } from "@/types";
 import { toast } from "sonner";
 import { Search } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 const PENDING_USERS: User[] = [
   { id: "10", username: "honggildong", name: "홍길동", generation: 4, field: "AI 교육", role: "member", approved: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
@@ -64,6 +65,8 @@ export default function AdminMemberTab() {
           </div>
         </section>
       )}
+
+      {canApprove && <Separator />}
 
       <section>
         <h2 className="text-lg font-bold">전체 회원</h2>
