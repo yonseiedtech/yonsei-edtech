@@ -6,11 +6,11 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CATEGORY_LABELS, type PostCategory } from "@/types";
+import { CATEGORY_LABELS, type PostCategory, type Post } from "@/types";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Send, Save } from "lucide-react";
 import { toast } from "sonner";
-import { useCreatePost } from "./useBoard";
+import { useCreatePost, useUpdatePost } from "./useBoard";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 
@@ -27,12 +27,23 @@ const ALL_CATEGORIES: PostCategory[] = [
   "newsletter",
 ];
 
-export default function PostForm() {
+interface PostFormProps {
+  mode?: "create" | "edit";
+  initialData?: Post;
+  onSubmitSuccess?: () => void;
+}
+
+export default function PostForm({ mode = "create", initialData, onSubmitSuccess }: PostFormProps) {
   const router = useRouter();
   const { user } = useAuthStore();
-  const [category, setCategory] = useState<PostCategory>("free");
+  const [category, setCategory] = useState<PostCategory>(initialData?.category ?? "free");
   const { createPost } = useCreatePost();
-  const { register, handleSubmit, formState: { errors } } = useForm<PostData>();
+  const { updatePost } = useUpdatePost();
+  const { register, handleSubmit, formState: { errors } } = useForm<PostData>({
+    defaultValues: initialData
+      ? { title: initialData.title, content: initialData.content }
+      : undefined,
+  });
 
   // 역할별 카테고리 필터
   const availableCategories = ALL_CATEGORIES.filter((cat) => {
@@ -43,25 +54,37 @@ export default function PostForm() {
 
   async function onSubmit(data: PostData) {
     try {
-      await createPost({ ...data, category });
-      toast.success("게시글이 등록되었습니다.");
-      router.push("/board");
+      if (mode === "edit" && initialData) {
+        await updatePost({ id: initialData.id, data: { ...data, category } });
+        toast.success("게시글이 수정되었습니다.");
+        if (onSubmitSuccess) {
+          onSubmitSuccess();
+        } else {
+          router.push(`/board/${initialData.id}`);
+        }
+      } else {
+        await createPost({ ...data, category });
+        toast.success("게시글이 등록되었습니다.");
+        router.push("/board");
+      }
     } catch {
-      toast.error("게시글 등록에 실패했습니다.");
+      toast.error(mode === "edit" ? "게시글 수정에 실패했습니다." : "게시글 등록에 실패했습니다.");
     }
   }
+
+  const isEdit = mode === "edit";
 
   return (
     <div>
       <button
-        onClick={() => router.push("/board")}
+        onClick={() => router.push(isEdit && initialData ? `/board/${initialData.id}` : "/board")}
         className="mb-6 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft size={16} />
-        목록으로
+        {isEdit ? "돌아가기" : "목록으로"}
       </button>
 
-      <h1 className="text-2xl font-bold">글쓰기</h1>
+      <h1 className="text-2xl font-bold">{isEdit ? "글 수정" : "글쓰기"}</h1>
 
       <form
         onSubmit={handleSubmit(onSubmit)}
@@ -117,12 +140,25 @@ export default function PostForm() {
         </div>
 
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={() => router.push("/board")}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push(isEdit && initialData ? `/board/${initialData.id}` : "/board")}
+          >
             취소
           </Button>
           <Button type="submit">
-            <Send size={16} className="mr-1" />
-            등록
+            {isEdit ? (
+              <>
+                <Save size={16} className="mr-1" />
+                수정하기
+              </>
+            ) : (
+              <>
+                <Send size={16} className="mr-1" />
+                등록
+              </>
+            )}
           </Button>
         </div>
       </form>

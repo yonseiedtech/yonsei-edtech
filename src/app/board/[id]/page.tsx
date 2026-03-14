@@ -1,16 +1,26 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/auth-store";
 import AuthGuard from "@/features/auth/AuthGuard";
 import CommentList from "@/features/board/CommentList";
 import CommentForm from "@/features/board/CommentForm";
-import { usePost, useComments } from "@/features/board/useBoard";
+import { usePost, useComments, useDeletePost, useDeleteComment } from "@/features/board/useBoard";
 import { CATEGORY_LABELS } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { formatDate } from "@/lib/utils";
 import { ArrowLeft, Trash2, Edit } from "lucide-react";
 import { toast } from "sonner";
@@ -21,6 +31,9 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const { user } = useAuthStore();
   const { post } = usePost(id);
   const { comments } = useComments(id);
+  const { deletePost } = useDeletePost();
+  const { deleteComment } = useDeleteComment();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   if (!post) {
     return (
@@ -40,8 +53,14 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const isAuthor = user?.id === post.authorId;
   const isAdmin = user ? ["admin", "president", "staff"].includes(user.role) : false;
 
-  function handleDeleteComment(commentId: string) {
-    // TODO: bkend.ai commentsApi.delete()
+  async function handleDelete() {
+    await deletePost(post!.id);
+    toast.success("게시글이 삭제되었습니다.");
+    router.push("/board");
+  }
+
+  async function handleDeleteComment(commentId: string) {
+    await deleteComment({ commentId, postId: id });
     toast.success("댓글이 삭제되었습니다.");
   }
 
@@ -69,11 +88,20 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
 
           {(isAuthor || isAdmin) && (
             <div className="mt-3 flex gap-2">
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/board/${id}/edit`)}
+              >
                 <Edit size={14} className="mr-1" />
                 수정
               </Button>
-              <Button variant="outline" size="sm" className="text-destructive">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-destructive"
+                onClick={() => setShowDeleteDialog(true)}
+              >
                 <Trash2 size={14} className="mr-1" />
                 삭제
               </Button>
@@ -101,6 +129,21 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
 
           <CommentForm postId={id} />
         </section>
+
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>게시글 삭제</AlertDialogTitle>
+              <AlertDialogDescription>
+                정말 이 게시글을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>취소</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete}>삭제</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

@@ -138,6 +138,89 @@ export function useCreatePost() {
   };
 }
 
+// ── Update Post ──
+
+export function useUpdatePost() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<Post> }) => {
+      try {
+        return await postsApi.update(id, {
+          title: data.title,
+          content: data.content,
+          category: data.category,
+        });
+      } catch {
+        // Mock fallback: 로컬 캐시 직접 수정
+        queryClient.setQueryData<Post[]>(["posts", "all"], (old) =>
+          (old ?? MOCK_POSTS).map((p) =>
+            p.id === id ? { ...p, ...data, updatedAt: new Date().toISOString() } : p
+          )
+        );
+        // 단건 캐시도 갱신
+        queryClient.setQueryData<Post>(["posts", id], (old) =>
+          old ? { ...old, ...data, updatedAt: new Date().toISOString() } : old
+        );
+        return { id, ...data };
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
+  });
+
+  return { updatePost: mutation.mutateAsync, isLoading: mutation.isPending };
+}
+
+// ── Delete Post ──
+
+export function useDeletePost() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async (id: string) => {
+      try {
+        return await postsApi.delete(id);
+      } catch {
+        // Mock fallback: 로컬 캐시에서 제거
+        queryClient.setQueryData<Post[]>(["posts", "all"], (old) =>
+          (old ?? MOCK_POSTS).filter((p) => p.id !== id)
+        );
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
+  });
+
+  return { deletePost: mutation.mutateAsync, isLoading: mutation.isPending };
+}
+
+// ── Delete Comment ──
+
+export function useDeleteComment() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async ({ commentId, postId }: { commentId: string; postId: string }) => {
+      try {
+        return await commentsApi.delete(commentId);
+      } catch {
+        // Mock fallback: 로컬 캐시에서 제거
+        queryClient.setQueryData<Comment[]>(["comments", postId], (old) =>
+          (old ?? []).filter((c) => c.id !== commentId)
+        );
+      }
+    },
+    onSuccess: (_data, { postId }) => {
+      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+    },
+  });
+
+  return { deleteComment: mutation.mutateAsync, isLoading: mutation.isPending };
+}
+
 // ── Create Comment ──
 
 export function useCreateComment() {
