@@ -92,7 +92,7 @@ export default function AdminMemberTab() {
           </select>
         </div>
         <div className="mt-3 overflow-x-auto rounded-xl border bg-white">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm whitespace-nowrap">
             <thead className="border-b bg-muted/30">
               <tr>
                 <th className="px-4 py-3 text-left font-medium">이름</th>
