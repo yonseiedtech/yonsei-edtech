@@ -28,6 +28,7 @@ const PUBLIC_NAV: NavItem[] = [
 ];
 
 const MEMBER_NAV: NavItem[] = [
+  { href: "/dashboard", label: "대시보드", minRole: "member" },
   { href: "/board", label: "게시판", minRole: "member" },
   { href: "/seminars", label: "세미나", minRole: "member" },
   { href: "/members", label: "멤버", minRole: "member" },

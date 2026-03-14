@@ -1,14 +1,16 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import AuthGuard from "@/features/auth/AuthGuard";
 import AdminMemberTab from "@/features/admin/AdminMemberTab";
 import AdminPostTab from "@/features/admin/AdminPostTab";
 import AdminSeminarTab from "@/features/admin/AdminSeminarTab";
 import AdminInquiryTab from "@/features/admin/AdminInquiryTab";
+import AdminNewsletterTab from "@/features/admin/AdminNewsletterTab";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isPresidentOrAbove } from "@/lib/permissions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Users, FileText, BookOpen, MessageSquare, Clock, HelpCircle } from "lucide-react";
+import { Shield, Users, FileText, BookOpen, MessageSquare, Clock, HelpCircle, Newspaper } from "lucide-react";
 import { MOCK_POSTS } from "@/features/board/board-data";
 import { useInquiryStore } from "@/features/inquiry/inquiry-store";
 
@@ -38,9 +40,17 @@ function StatCard({ icon: Icon, label, value, color }: {
 
 function AdminContent() {
   const { user } = useAuthStore();
+  const searchParams = useSearchParams();
   const canManageMembers = isPresidentOrAbove(user);
   const inquiries = useInquiryStore((s) => s.inquiries);
   const unansweredCount = inquiries.filter((i) => i.status === "pending").length;
+
+  const tabParam = searchParams.get("tab");
+  const defaultTab = tabParam === "newsletter"
+    ? "newsletter"
+    : canManageMembers
+      ? "members"
+      : "posts";
 
   return (
     <div className="py-16">
@@ -58,7 +68,7 @@ function AdminContent() {
           <StatCard icon={HelpCircle} label="미답변 문의" value={unansweredCount} color="bg-red-50 text-red-600" />
         </div>
 
-        <Tabs defaultValue={canManageMembers ? "members" : "posts"} className="mt-8">
+        <Tabs defaultValue={defaultTab} className="mt-8">
           <TabsList className="w-full">
             {canManageMembers && (
               <TabsTrigger value="members" className="px-4 py-2 text-base">
@@ -78,6 +88,10 @@ function AdminContent() {
               <MessageSquare size={16} className="mr-1.5" />
               문의
             </TabsTrigger>
+            <TabsTrigger value="newsletter" className="px-4 py-2 text-base">
+              <Newspaper size={16} className="mr-1.5" />
+              학회보
+            </TabsTrigger>
           </TabsList>
 
           {canManageMembers && (
@@ -96,6 +110,10 @@ function AdminContent() {
 
           <TabsContent value="inquiries" className="mt-6">
             <AdminInquiryTab />
+          </TabsContent>
+
+          <TabsContent value="newsletter" className="mt-6">
+            <AdminNewsletterTab />
           </TabsContent>
         </Tabs>
       </div>

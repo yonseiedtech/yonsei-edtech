@@ -28,7 +28,7 @@ export default function LoginForm() {
         toast.error("관리자 승인 대기 중입니다. 승인 후 로그인할 수 있습니다.");
         return;
       }
-      const returnUrl = sessionStorage.getItem("returnUrl") || "/board";
+      const returnUrl = sessionStorage.getItem("returnUrl") || "/dashboard";
       sessionStorage.removeItem("returnUrl");
       router.push(returnUrl);
     } catch (err) {
