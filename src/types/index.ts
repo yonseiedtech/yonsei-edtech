@@ -129,6 +129,25 @@ export interface Seminar {
   updatedAt: string;
 }
 
+// ── 세미나 출석 ──
+export interface SeminarAttendee {
+  id: string;
+  seminarId: string;
+  userId: string;
+  userName: string;
+  userGeneration: number;
+  qrToken: string;
+  checkedIn: boolean;
+  checkedInAt: string | null;
+  checkedInBy: string | null;
+  createdAt: string;
+}
+
+export type CheckinResult =
+  | { success: true; attendee: SeminarAttendee }
+  | { success: false; alreadyCheckedIn: true; attendee: SeminarAttendee }
+  | { success: false; alreadyCheckedIn?: false; message: string };
+
 // ── 문의 ──
 export interface Inquiry {
   id: string;

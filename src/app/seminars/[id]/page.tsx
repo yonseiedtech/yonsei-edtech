@@ -4,6 +4,8 @@ import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { useSeminar, useToggleAttendance } from "@/features/seminar/useSeminar";
+import { useSeminarStore } from "@/features/seminar/seminar-store";
+import QrCodeDisplay from "@/features/seminar/QrCodeDisplay";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
@@ -25,6 +27,7 @@ import {
   FileText,
   Copy,
   Download,
+  QrCode,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -75,6 +78,10 @@ function SeminarDetail({ id }: { id: string }) {
   const [pressText, setPressText] = useState("");
 
   const isStaff = isAtLeast(user, "staff");
+  const getAttendee = useSeminarStore((s) => s.getAttendee);
+  const getCheckinStats = useSeminarStore((s) => s.getCheckinStats);
+  const myAttendee = user ? getAttendee(id, user.id) : undefined;
+  const checkinStats = getCheckinStats(id);
 
   if (!seminar) {
     return (
@@ -117,7 +124,7 @@ function SeminarDetail({ id }: { id: string }) {
       toast.error("참석 인원이 가득 찼습니다.");
       return;
     }
-    toggleAttendance(seminar!.id, user.id);
+    toggleAttendance(seminar!.id, user.id, user.name, user.generation);
     toast.success(isAttending ? "참석이 취소되었습니다." : "참석 신청되었습니다.");
   }
 
@@ -239,13 +246,38 @@ function SeminarDetail({ id }: { id: string }) {
             </div>
           )}
 
-          {/* 운영진: 보도자료 생성 */}
+          {/* 참석자: 내 QR 코드 */}
+          {isAttending && myAttendee && seminar.status === "upcoming" && (
+            <div className="mt-6 border-t pt-6">
+              <h3 className="mb-3 text-sm font-bold">내 출석 QR 코드</h3>
+              <div className="flex justify-center">
+                <QrCodeDisplay
+                  token={myAttendee.qrToken}
+                  size={180}
+                  checkedIn={myAttendee.checkedIn}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* 운영진: 출석 체크 + 보도자료 */}
           {isStaff && (
             <div className="mt-4 border-t pt-4">
-              <Button variant="outline" size="sm" onClick={openPressRelease}>
-                <FileText size={16} className="mr-1" />
-                보도자료 생성
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                {seminar.status === "upcoming" && (
+                  <Button
+                    size="sm"
+                    onClick={() => router.push(`/seminars/${id}/checkin`)}
+                  >
+                    <QrCode size={16} className="mr-1" />
+                    출석 체크 ({checkinStats.checkedIn}/{checkinStats.total})
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" onClick={openPressRelease}>
+                  <FileText size={16} className="mr-1" />
+                  보도자료 생성
+                </Button>
+              </div>
             </div>
           )}
         </div>
