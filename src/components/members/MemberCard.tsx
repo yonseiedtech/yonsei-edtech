@@ -7,6 +7,10 @@ interface Props {
 }
 
 export default function MemberCard({ member }: Props) {
+  const affiliationLine = [member.affiliation, member.position]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
     <div className="rounded-2xl border bg-white p-6 text-center shadow-sm transition-shadow hover:shadow-md">
       {/* Avatar placeholder */}
@@ -14,7 +18,18 @@ export default function MemberCard({ member }: Props) {
         <User size={28} />
       </div>
 
-      <h3 className="mt-4 font-semibold">{member.name}</h3>
+      <h3 className="mt-4 font-semibold">
+        {member.name}
+        {member.generation && (
+          <span className="ml-1 text-xs font-normal text-muted-foreground">
+            ({member.generation}기)
+          </span>
+        )}
+      </h3>
+
+      {affiliationLine && (
+        <p className="mt-1 text-xs text-muted-foreground">{affiliationLine}</p>
+      )}
 
       <div className="mt-2 flex flex-wrap justify-center gap-1">
         <Badge variant="secondary" className="text-xs">

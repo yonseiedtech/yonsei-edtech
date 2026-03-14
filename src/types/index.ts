@@ -12,6 +12,26 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 };
 
 // ── 사용자 ──
+export type OccupationType = "student" | "corporate" | "teacher" | "researcher" | "freelancer" | "other";
+
+export const OCCUPATION_LABELS: Record<OccupationType, string> = {
+  student: "재학생/대학원생",
+  corporate: "기업 재직",
+  teacher: "학교 교사",
+  researcher: "연구소/기관",
+  freelancer: "프리랜서",
+  other: "기타",
+};
+
+export type ContactVisibility = "public" | "members" | "staff" | "private";
+
+export const VISIBILITY_LABELS: Record<ContactVisibility, string> = {
+  public: "전체 공개",
+  members: "회원만",
+  staff: "운영진만",
+  private: "비공개",
+};
+
 export interface User {
   id: string;
   username: string;
@@ -23,9 +43,24 @@ export interface User {
   profileImage?: string;
   bio?: string;
   approved: boolean;
+  /** 소속 정보 */
+  occupation?: OccupationType;
+  affiliation?: string;
+  department?: string;
+  position?: string;
+  contactEmail?: string;
+  contactVisibility?: ContactVisibility;
   createdAt: string;
   updatedAt: string;
 }
+
+// ── 세미나 발표자 ──
+export type SpeakerType = "member" | "guest";
+
+export const SPEAKER_TYPE_LABELS: Record<SpeakerType, string> = {
+  member: "내부 회원",
+  guest: "외부 연사",
+};
 
 // ── 게시판 ──
 export interface Post {
@@ -56,7 +91,7 @@ export const CATEGORY_LABELS: Record<PostCategory, string> = {
   seminar: "세미나 자료",
   free: "자유게시판",
   promotion: "홍보게시판",
-  newsletter: "학회보",
+  newsletter: "연세교육공학회보",
 };
 
 // ── 세미나 ──
@@ -80,6 +115,10 @@ export interface Seminar {
   location: string;
   speaker: string;
   speakerBio?: string;
+  speakerType?: SpeakerType;
+  speakerAffiliation?: string;
+  speakerPosition?: string;
+  speakerPhotoUrl?: string;
   posterUrl?: string;
   maxAttendees?: number;
   attendeeIds: string[];

@@ -95,17 +95,34 @@ export function useAuth() {
       return;
     }
 
+    let cancelled = false;
+    const timeout = setTimeout(() => {
+      if (!cancelled) {
+        clearTokens();
+        setUser(null);
+        setInitialized(true);
+      }
+    }, 5000);
+
     (async () => {
       try {
         const authUser = await authApi.me(token);
         const profileRes = await profilesApi.getByEmail(authUser.email);
-        setUser(mergeToUser(authUser, profileRes.data[0]));
+        if (!cancelled) setUser(mergeToUser(authUser, profileRes.data[0]));
       } catch {
-        clearTokens();
-        setUser(null);
+        if (!cancelled) {
+          clearTokens();
+          setUser(null);
+        }
       }
-      setInitialized(true);
+      if (!cancelled) setInitialized(true);
+      clearTimeout(timeout);
     })();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
   }, [initialized, setUser, setInitialized]);
 
   const login = useCallback(

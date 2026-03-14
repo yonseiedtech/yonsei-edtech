@@ -67,7 +67,7 @@ export default function HeroSection() {
           >
             <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border bg-border">
               {[
-                { value: "12+", label: "기수" },
+                { value: "29+", label: "기수" },
                 { value: "80+", label: "회원" },
                 { value: "50+", label: "세미나" },
                 { value: "20+", label: "프로젝트" },

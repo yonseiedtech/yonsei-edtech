@@ -1,12 +1,20 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { useSeminar, useToggleAttendance } from "@/features/seminar/useSeminar";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { isAtLeast } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   ArrowLeft,
   Calendar,
@@ -14,15 +22,59 @@ import {
   Users,
   UserCheck,
   UserPlus,
+  FileText,
+  Copy,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import type { Seminar } from "@/types";
+
+function generatePressRelease(seminar: Seminar): string {
+  const speakerInfo = [
+    seminar.speaker,
+    seminar.speakerPosition ? `(${seminar.speakerPosition})` : "",
+    seminar.speakerAffiliation || "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const url = typeof window !== "undefined" ? window.location.href : "";
+
+  return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+보  도  자  료
+배포 일시: ${new Date().toLocaleDateString("ko-KR")}
+연 락 처: yonsei.edtech@gmail.com
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+연세교육공학회,「${seminar.title}」세미나 개최
+
+■ 일시: ${seminar.date} ${seminar.time}
+■ 장소: ${seminar.location}
+■ 발표자: ${speakerInfo}
+■ 참석 대상: 연세대학교 교육학과 대학원생 및 관심 있는 분 누구나
+■ 참석 신청: ${url}
+
+${seminar.description}
+
+연세교육공학회(Yonsei Educational Technology Association)는
+연세대학교 교육공학 전공 학생들이 모여 교육공학의 이론과 실천을
+탐구하는 학술 커뮤니티입니다. 매주 정기 세미나를 통해 최신
+에듀테크 트렌드와 교육 연구를 공유하고 있습니다.
+
+문의: yonsei.edtech@gmail.com
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+}
 
 function SeminarDetail({ id }: { id: string }) {
   const router = useRouter();
   const { user } = useAuthStore();
   const seminar = useSeminar(id);
   const { toggleAttendance } = useToggleAttendance();
+  const [showPressRelease, setShowPressRelease] = useState(false);
+  const [pressText, setPressText] = useState("");
+
+  const isStaff = isAtLeast(user, "staff");
 
   if (!seminar) {
     return (
@@ -37,6 +89,27 @@ function SeminarDetail({ id }: { id: string }) {
     seminar.maxAttendees != null &&
     seminar.attendeeIds.length >= seminar.maxAttendees;
   const canToggle = seminar.status === "upcoming" && user;
+
+  function openPressRelease() {
+    setPressText(generatePressRelease(seminar!));
+    setShowPressRelease(true);
+  }
+
+  function handleCopyPress() {
+    navigator.clipboard.writeText(pressText);
+    toast.success("보도자료가 클립보드에 복사되었습니다.");
+  }
+
+  function handleDownloadPress() {
+    const blob = new Blob([pressText], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `보도자료_${seminar!.title.replace(/[^가-힣a-zA-Z0-9]/g, "_")}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("보도자료가 다운로드되었습니다.");
+  }
 
   function handleToggle() {
     if (!user) return;
@@ -96,12 +169,43 @@ function SeminarDetail({ id }: { id: string }) {
           </div>
 
           <div className="mt-6 rounded-lg bg-muted/50 p-4">
-            <div className="text-sm font-medium">발표: {seminar.speaker}</div>
-            {seminar.speakerBio && (
-              <div className="mt-1 text-xs text-muted-foreground">
-                {seminar.speakerBio}
+            <div className="flex items-start gap-4">
+              {seminar.speakerPhotoUrl ? (
+                <img
+                  src={seminar.speakerPhotoUrl}
+                  alt={seminar.speaker}
+                  className="h-16 w-16 shrink-0 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <UserPlus size={24} />
+                </div>
+              )}
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">{seminar.speaker}</span>
+                  {seminar.speakerType === "guest" ? (
+                    <Badge variant="secondary" className="bg-amber-50 text-xs text-amber-700">
+                      GUEST SPEAKER
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="text-xs">
+                      MEMBER
+                    </Badge>
+                  )}
+                </div>
+                {(seminar.speakerAffiliation || seminar.speakerPosition) && (
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {[seminar.speakerAffiliation, seminar.speakerPosition].filter(Boolean).join(" · ")}
+                  </p>
+                )}
+                {seminar.speakerBio && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {seminar.speakerBio}
+                  </p>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
           <div className="mt-6 whitespace-pre-wrap text-sm leading-relaxed">
@@ -134,7 +238,48 @@ function SeminarDetail({ id }: { id: string }) {
               )}
             </div>
           )}
+
+          {/* 운영진: 보도자료 생성 */}
+          {isStaff && (
+            <div className="mt-4 border-t pt-4">
+              <Button variant="outline" size="sm" onClick={openPressRelease}>
+                <FileText size={16} className="mr-1" />
+                보도자료 생성
+              </Button>
+            </div>
+          )}
         </div>
+
+        {/* 보도자료 Dialog */}
+        <Dialog
+          open={showPressRelease}
+          onOpenChange={(open) => !open && setShowPressRelease(false)}
+        >
+          <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>보도자료</DialogTitle>
+            </DialogHeader>
+            <textarea
+              value={pressText}
+              onChange={(e) => setPressText(e.target.value)}
+              rows={20}
+              className="w-full rounded-lg border border-input bg-muted/30 px-3 py-2 font-mono text-xs leading-relaxed outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            />
+            <DialogFooter className="gap-2">
+              <Button variant="outline" size="sm" onClick={handleCopyPress}>
+                <Copy size={14} className="mr-1" />
+                복사
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleDownloadPress}>
+                <Download size={14} className="mr-1" />
+                .txt 다운로드
+              </Button>
+              <Button variant="outline" onClick={() => setShowPressRelease(false)}>
+                닫기
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

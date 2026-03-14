@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "./auth-store";
+import { useAuth } from "./useAuth";
 import { hasPermission } from "@/lib/permissions";
+import { toast } from "sonner";
 import type { UserRole } from "@/types";
 
 interface Props {
@@ -15,7 +16,7 @@ interface Props {
 }
 
 export default function AuthGuard({ children, allowedRoles, requireAdmin }: Props) {
-  const { user, isLoading } = useAuthStore();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
 
   const roles = requireAdmin ? ["admin" as UserRole] : allowedRoles;
@@ -32,6 +33,7 @@ export default function AuthGuard({ children, allowedRoles, requireAdmin }: Prop
     }
 
     if (roles && !hasPermission(user, roles)) {
+      toast.error("접근 권한이 없습니다.");
       router.push("/");
     }
   }, [user, isLoading, roles, router]);

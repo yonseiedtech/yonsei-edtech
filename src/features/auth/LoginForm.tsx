@@ -10,15 +10,17 @@ import { LogIn } from "lucide-react";
 import { toast } from "sonner";
 
 export default function LoginForm() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+    const username = (formData.get("username") as string) ?? "";
+    const password = (formData.get("password") as string) ?? "";
 
     try {
       const user = await login(username, password);
@@ -45,8 +47,7 @@ export default function LoginForm() {
         <label className="mb-1.5 block text-sm font-medium">아이디</label>
         <Input
           type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          name="username"
           placeholder="아이디를 입력하세요"
           autoComplete="username"
           required
@@ -57,8 +58,7 @@ export default function LoginForm() {
         <label className="mb-1.5 block text-sm font-medium">비밀번호</label>
         <Input
           type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          name="password"
           placeholder="비밀번호를 입력하세요"
           autoComplete="current-password"
           required
@@ -83,17 +83,19 @@ export default function LoginForm() {
         </Link>
       </p>
 
-      <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
-        <p className="font-medium">데모 계정</p>
-        <div className="mt-1 space-y-0.5">
-          <p>admin / admin123 (관리자)</p>
-          <p>president / test123 (회장)</p>
-          <p>staff / test123 (운영진)</p>
-          <p>alumni / test123 (졸업생)</p>
-          <p>advisor / test123 (자문위원)</p>
-          <p>아무아이디 / test123 (회원)</p>
+      {process.env.NODE_ENV !== "production" && (
+        <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
+          <p className="font-medium">데모 계정</p>
+          <div className="mt-1 space-y-0.5">
+            <p>admin / admin123 (관리자)</p>
+            <p>president / test123 (회장)</p>
+            <p>staff / test123 (운영진)</p>
+            <p>alumni / test123 (졸업생)</p>
+            <p>advisor / test123 (자문위원)</p>
+            <p>아무아이디 / test123 (회원)</p>
+          </div>
         </div>
-      </div>
+      )}
     </form>
   );
 }

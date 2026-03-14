@@ -5,6 +5,7 @@ import NoticePreview from "@/components/home/NoticePreview";
 import SeminarPreview from "@/components/home/SeminarPreview";
 import PromotionPreview from "@/components/home/PromotionPreview";
 import NewsletterPreview from "@/components/home/NewsletterPreview";
+import GuestSpeakersSection from "@/components/home/GuestSpeakersSection";
 import ActivityCards from "@/components/home/ActivityCards";
 
 export const metadata: Metadata = {
@@ -22,6 +23,7 @@ export default function HomePage() {
       <SeminarPreview />
       <PromotionPreview />
       <NewsletterPreview />
+      <GuestSpeakersSection />
       <ActivityCards />
     </>
   );

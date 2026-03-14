@@ -22,6 +22,7 @@ const PUBLIC_NAV: NavItem[] = [
   { href: "/", label: "홈" },
   { href: "/about", label: "소개" },
   { href: "/activities", label: "활동" },
+  { href: "/newsletter", label: "학회보" },
   { href: "/notices", label: "공지" },
   { href: "/contact", label: "문의" },
 ];
@@ -30,6 +31,7 @@ const MEMBER_NAV: NavItem[] = [
   { href: "/board", label: "게시판", minRole: "member" },
   { href: "/seminars", label: "세미나", minRole: "member" },
   { href: "/members", label: "멤버", minRole: "member" },
+  { href: "/directory", label: "연락망", minRole: "member" },
 ];
 
 export default function Header() {
@@ -69,37 +71,45 @@ export default function Header() {
 
         {/* Desktop Nav */}
         <nav className="hidden items-center gap-1 md:flex">
-          {PUBLIC_NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-muted",
-                pathname === item.href
-                  ? "text-primary"
-                  : "text-muted-foreground"
-              )}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {PUBLIC_NAV.map((item) => {
+            const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={isActive ? "page" : undefined}
+                className={cn(
+                  "rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-muted",
+                  isActive
+                    ? "font-semibold text-primary underline underline-offset-4"
+                    : "text-muted-foreground"
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
           {visibleMemberNav.length > 0 && (
             <>
               <Separator orientation="vertical" className="mx-1 h-5" />
-              {visibleMemberNav.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-muted",
-                    pathname === item.href
-                      ? "text-primary"
-                      : "text-muted-foreground"
-                  )}
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {visibleMemberNav.map((item) => {
+                const isActive = pathname.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-current={isActive ? "page" : undefined}
+                    className={cn(
+                      "rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-muted",
+                      isActive
+                        ? "font-semibold text-primary underline underline-offset-4"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
             </>
           )}
         </nav>
@@ -149,21 +159,25 @@ export default function Header() {
       {mobileOpen && (
         <div className="border-t bg-white px-4 pb-4 md:hidden">
           <nav className="flex flex-col gap-1 pt-2">
-            {allVisibleItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setMobileOpen(false)}
-                className={cn(
-                  "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  pathname === item.href
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted"
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {allVisibleItems.map((item) => {
+              const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  aria-current={isActive ? "page" : undefined}
+                  className={cn(
+                    "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-primary/10 font-semibold text-primary"
+                      : "text-muted-foreground hover:bg-muted"
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
             {user ? (
               <>
                 {showAdminLink && (

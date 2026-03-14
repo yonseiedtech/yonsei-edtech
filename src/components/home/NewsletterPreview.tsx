@@ -16,10 +16,10 @@ export default function NewsletterPreview() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Newspaper size={20} className="text-violet-600" />
-            <h2 className="text-xl font-bold">학회보</h2>
+            <h2 className="text-xl font-bold">연세교육공학회보</h2>
           </div>
           <Link
-            href="/board?category=newsletter"
+            href="/newsletter"
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
           >
             더보기 <ArrowRight size={14} />

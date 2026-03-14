@@ -8,7 +8,15 @@ import { useAuthStore } from "@/features/auth/auth-store";
 
 // ── Posts ──
 
-export function usePosts(category?: PostCategory | "all") {
+const POSTS_PER_PAGE = 10;
+
+export function usePosts(
+  category?: PostCategory | "all",
+  options?: { page?: number; search?: string }
+) {
+  const page = options?.page ?? 1;
+  const search = options?.search ?? "";
+
   const { data, isLoading } = useQuery({
     queryKey: ["posts", category],
     queryFn: async () => {
@@ -24,13 +32,29 @@ export function usePosts(category?: PostCategory | "all") {
   });
 
   // API 실패 시 mock fallback (data가 없으면 placeholderData 사용됨)
-  const posts = data ?? (
+  let posts = data ?? (
     !category || category === "all"
       ? MOCK_POSTS
       : MOCK_POSTS.filter((p) => p.category === category)
   );
 
-  return { posts, isLoading };
+  // 클라이언트 검색 필터링
+  if (search) {
+    const q = search.toLowerCase();
+    posts = posts.filter(
+      (p) =>
+        p.title.toLowerCase().includes(q) ||
+        p.authorName.toLowerCase().includes(q)
+    );
+  }
+
+  const totalPages = Math.max(1, Math.ceil(posts.length / POSTS_PER_PAGE));
+  const paginatedPosts = posts.slice(
+    (page - 1) * POSTS_PER_PAGE,
+    page * POSTS_PER_PAGE
+  );
+
+  return { posts: paginatedPosts, totalPages, isLoading };
 }
 
 export function usePost(id: string) {
@@ -74,14 +98,34 @@ export function useCreatePost() {
 
   const mutation = useMutation({
     mutationFn: async (data: Partial<Post>) => {
-      return postsApi.create({
-        title: data.title,
-        content: data.content,
-        category: data.category,
-        authorId: user?.id,
-        authorName: user?.name,
-        viewCount: 0,
-      });
+      try {
+        return await postsApi.create({
+          title: data.title,
+          content: data.content,
+          category: data.category,
+          authorId: user?.id,
+          authorName: user?.name,
+          viewCount: 0,
+        });
+      } catch {
+        // API 실패 시 mock fallback: 로컬 캐시에 직접 추가
+        const newPost: Post = {
+          id: `p${Date.now()}`,
+          title: data.title ?? "",
+          content: data.content ?? "",
+          category: data.category ?? "free",
+          authorId: user?.id ?? "0",
+          authorName: user?.name ?? "익명",
+          viewCount: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        queryClient.setQueryData<Post[]>(["posts", "all"], (old) => [
+          newPost,
+          ...(old ?? MOCK_POSTS),
+        ]);
+        return newPost;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
@@ -102,12 +146,29 @@ export function useCreateComment() {
 
   const mutation = useMutation({
     mutationFn: async (data: { postId: string; content: string }) => {
-      return commentsApi.create({
-        postId: data.postId,
-        content: data.content,
-        authorId: user?.id,
-        authorName: user?.name,
-      });
+      try {
+        return await commentsApi.create({
+          postId: data.postId,
+          content: data.content,
+          authorId: user?.id,
+          authorName: user?.name,
+        });
+      } catch {
+        // API 실패 시 mock fallback: 로컬 캐시에 직접 추가
+        const newComment: Comment = {
+          id: `c${Date.now()}`,
+          postId: data.postId,
+          content: data.content,
+          authorId: user?.id ?? "0",
+          authorName: user?.name ?? "익명",
+          createdAt: new Date().toISOString(),
+        };
+        queryClient.setQueryData<Comment[]>(
+          ["comments", data.postId],
+          (old) => [...(old ?? []), newComment]
+        );
+        return newComment;
+      }
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["comments", variables.postId] });

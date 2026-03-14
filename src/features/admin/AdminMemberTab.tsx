@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isPresidentOrAbove } from "@/lib/permissions";
 import AdminUserList from "./AdminUserList";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { ROLE_LABELS } from "@/types";
 import type { User, UserRole } from "@/types";
 import { toast } from "sonner";
+import { Search } from "lucide-react";
 
 const PENDING_USERS: User[] = [
   { id: "10", username: "honggildong", name: "홍길동", generation: 4, field: "AI 교육", role: "member", approved: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
@@ -28,6 +30,22 @@ export default function AdminMemberTab() {
   const { user } = useAuthStore();
   const canApprove = isPresidentOrAbove(user);
   const [members, setMembers] = useState(ALL_MEMBERS);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<UserRole | "all">("all");
+
+  const filteredMembers = useMemo(() => {
+    return members.filter((m) => {
+      if (roleFilter !== "all" && m.role !== roleFilter) return false;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        return (
+          m.name.toLowerCase().includes(q) ||
+          m.username.toLowerCase().includes(q)
+        );
+      }
+      return true;
+    });
+  }, [members, searchQuery, roleFilter]);
 
   function handleRoleChange(userId: string, newRole: User["role"]) {
     setMembers((prev) =>
@@ -49,6 +67,27 @@ export default function AdminMemberTab() {
 
       <section>
         <h2 className="text-lg font-bold">전체 회원</h2>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="이름 또는 아이디 검색..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-60 pl-9"
+            />
+          </div>
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value as UserRole | "all")}
+            className="rounded-md border px-3 py-1.5 text-sm"
+          >
+            <option value="all">전체 역할</option>
+            {ASSIGNABLE_ROLES.map((r) => (
+              <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+            ))}
+          </select>
+        </div>
         <div className="mt-3 overflow-x-auto rounded-xl border bg-white">
           <table className="w-full text-sm">
             <thead className="border-b bg-muted/30">
@@ -64,7 +103,7 @@ export default function AdminMemberTab() {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {members.map((m) => (
+              {filteredMembers.map((m) => (
                 <tr key={m.id}>
                   <td className="px-4 py-3 font-medium">{m.name}</td>
                   <td className="px-4 py-3 text-muted-foreground">@{m.username}</td>

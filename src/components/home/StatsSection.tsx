@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 
 const stats = [
-  { value: "12+", label: "기수" },
+  { value: "29+", label: "기수" },
   { value: "80+", label: "멤버" },
   { value: "50+", label: "세미나" },
   { value: "20+", label: "프로젝트" },

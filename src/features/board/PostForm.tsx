@@ -86,6 +86,11 @@ export default function PostForm() {
               </button>
             ))}
           </div>
+          {!isAtLeast(user, "staff") && (
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              공지사항·홍보게시판·연세교육공학회보는 운영진 이상만 작성할 수 있습니다.
+            </p>
+          )}
         </div>
 
         <div>

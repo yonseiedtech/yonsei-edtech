@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useSeminarStore } from "@/features/seminar/seminar-store";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -179,9 +180,11 @@ export default function AdminSeminarTab() {
             {/* 포스터 썸네일 */}
             <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded border bg-muted/20">
               {s.posterUrl ? (
-                <img
+                <Image
                   src={s.posterUrl}
                   alt=""
+                  width={40}
+                  height={40}
                   className="h-full w-full object-cover"
                 />
               ) : (
