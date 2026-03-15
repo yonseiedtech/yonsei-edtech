@@ -89,58 +89,62 @@ function AdminContent() {
         </div>
 
         <Tabs defaultValue={defaultTab} className="mt-8">
-          <TabsList className="w-full overflow-x-auto">
-            {canManageMembers && (
-              <TabsTrigger value="members" className="shrink-0 px-4 py-2 text-sm">
-                <Users size={16} className="mr-1.5" />
-                회원
+          {/* 탭 영역 */}
+          <div className="overflow-x-auto border-b">
+            <TabsList variant="line" className="flex w-max min-w-full gap-0">
+              {canManageMembers && (
+                <TabsTrigger value="members" className="flex-none px-4 py-2.5 text-sm">
+                  <Users size={16} className="mr-1.5" />
+                  회원
+                </TabsTrigger>
+              )}
+              <TabsTrigger value="posts" className="flex-none px-4 py-2.5 text-sm">
+                <FileText size={16} className="mr-1.5" />
+                게시글
               </TabsTrigger>
-            )}
-            <TabsTrigger value="posts" className="shrink-0 px-4 py-2 text-sm">
-              <FileText size={16} className="mr-1.5" />
-              게시글
-            </TabsTrigger>
-            <TabsTrigger value="seminars" className="shrink-0 px-4 py-2 text-sm">
-              <BookOpen size={16} className="mr-1.5" />
-              세미나
-            </TabsTrigger>
-            <TabsTrigger value="inquiries" className="shrink-0 px-4 py-2 text-sm">
-              <MessageSquare size={16} className="mr-1.5" />
-              문의
-            </TabsTrigger>
-            <TabsTrigger value="newsletter" className="shrink-0 px-4 py-2 text-sm">
-              <Newspaper size={16} className="mr-1.5" />
-              학회보
-            </TabsTrigger>
-            <TabsTrigger value="site-settings" className="shrink-0 px-4 py-2 text-sm">
-              <Settings size={16} className="mr-1.5" />
-              사이트 설정
-            </TabsTrigger>
-          </TabsList>
+              <TabsTrigger value="seminars" className="flex-none px-4 py-2.5 text-sm">
+                <BookOpen size={16} className="mr-1.5" />
+                세미나
+              </TabsTrigger>
+              <TabsTrigger value="inquiries" className="flex-none px-4 py-2.5 text-sm">
+                <MessageSquare size={16} className="mr-1.5" />
+                문의
+              </TabsTrigger>
+              <TabsTrigger value="newsletter" className="flex-none px-4 py-2.5 text-sm">
+                <Newspaper size={16} className="mr-1.5" />
+                학회보
+              </TabsTrigger>
+              <TabsTrigger value="site-settings" className="flex-none px-4 py-2.5 text-sm">
+                <Settings size={16} className="mr-1.5" />
+                사이트 설정
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
+          {/* 본문 영역 */}
           {canManageMembers && (
-            <TabsContent value="members" className="mt-6">
+            <TabsContent value="members" className="pt-6">
               <AdminMemberTab />
             </TabsContent>
           )}
 
-          <TabsContent value="posts" className="mt-6">
+          <TabsContent value="posts" className="pt-6">
             <AdminPostTab />
           </TabsContent>
 
-          <TabsContent value="seminars" className="mt-6">
+          <TabsContent value="seminars" className="pt-6">
             <AdminSeminarTab />
           </TabsContent>
 
-          <TabsContent value="inquiries" className="mt-6">
+          <TabsContent value="inquiries" className="pt-6">
             <AdminInquiryTab />
           </TabsContent>
 
-          <TabsContent value="newsletter" className="mt-6">
+          <TabsContent value="newsletter" className="pt-6">
             <AdminNewsletterTab />
           </TabsContent>
 
-          <TabsContent value="site-settings" className="mt-6">
+          <TabsContent value="site-settings" className="pt-6">
             <AdminGreetingTab />
           </TabsContent>
         </Tabs>
