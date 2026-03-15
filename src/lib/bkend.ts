@@ -264,6 +264,15 @@ export const attendeesApi = {
   remove: (id: string) => dataApi.delete("seminar_attendees", id),
 };
 
+export const siteSettingsApi = {
+  getByKey: (key: string) =>
+    request<ListResponse<Record<string, unknown>>>(`/data/site_settings?filter[key]=${key}`, { skipAuth: true }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create("site_settings", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update("site_settings", id, data),
+};
+
 export const inquiriesApi = {
   list: (params?: QueryParams) =>
     dataApi.list<Record<string, unknown>>("inquiries", { sort: "createdAt:desc", ...params }),

@@ -24,7 +24,9 @@ const PUBLIC_NAV: NavGroup[] = [
   {
     label: "학회소개",
     items: [
+      { href: "/about/greeting", label: "인사말" },
       { href: "/about", label: "소개" },
+      { href: "/about/history", label: "연혁" },
       { href: "/members", label: "구성원" },
     ],
   },
@@ -58,6 +60,12 @@ const MEMBER_NAV: NavLink[] = [
   { href: "/mypage", label: "마이페이지" },
 ];
 
+/** Exact match for `/about`, prefix match for others */
+function isItemActive(pathname: string, href: string): boolean {
+  if (href === "/about") return pathname === "/about";
+  return pathname.startsWith(href);
+}
+
 /* ── Dropdown (desktop) ── */
 function NavDropdown({ group }: { group: NavGroup }) {
   const pathname = usePathname();
@@ -66,7 +74,7 @@ function NavDropdown({ group }: { group: NavGroup }) {
   const timeout = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const isSingle = group.items.length === 1;
-  const isGroupActive = group.items.some((item) => pathname.startsWith(item.href));
+  const isGroupActive = group.items.some((item) => isItemActive(pathname, item.href));
 
   useEffect(() => {
     return () => clearTimeout(timeout.current);
@@ -83,7 +91,7 @@ function NavDropdown({ group }: { group: NavGroup }) {
 
   if (isSingle) {
     const item = group.items[0];
-    const isActive = pathname.startsWith(item.href);
+    const isActive = isItemActive(pathname, item.href);
     return (
       <Link
         href={item.href}
@@ -124,7 +132,7 @@ function NavDropdown({ group }: { group: NavGroup }) {
       {open && (
         <div className="absolute left-0 top-full z-50 mt-1 min-w-[140px] rounded-lg border bg-white py-1 shadow-lg">
           {group.items.map((item) => {
-            const isActive = pathname.startsWith(item.href);
+            const isActive = isItemActive(pathname, item.href);
             return (
               <Link
                 key={item.href}
@@ -163,7 +171,7 @@ function MobileNavGroup({
         {group.label}
       </div>
       {group.items.map((item) => {
-        const isActive = pathname.startsWith(item.href);
+        const isActive = isItemActive(pathname, item.href);
         return (
           <Link
             key={item.href}

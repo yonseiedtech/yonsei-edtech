@@ -7,10 +7,11 @@ import AdminPostTab from "@/features/admin/AdminPostTab";
 import AdminSeminarTab from "@/features/admin/AdminSeminarTab";
 import AdminInquiryTab from "@/features/admin/AdminInquiryTab";
 import AdminNewsletterTab from "@/features/admin/AdminNewsletterTab";
+import AdminGreetingTab from "@/features/admin/AdminGreetingTab";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isPresidentOrAbove } from "@/lib/permissions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Users, FileText, BookOpen, MessageSquare, Clock, HelpCircle, Newspaper } from "lucide-react";
+import { Shield, Users, FileText, BookOpen, MessageSquare, Clock, HelpCircle, Newspaper, Settings } from "lucide-react";
 import { usePosts } from "@/features/board/useBoard";
 import { useInquiries } from "@/features/inquiry/useInquiry";
 import { profilesApi } from "@/lib/bkend";
@@ -111,6 +112,10 @@ function AdminContent() {
               <Newspaper size={16} className="mr-1.5" />
               학회보
             </TabsTrigger>
+            <TabsTrigger value="site-settings" className="px-4 py-2 text-base">
+              <Settings size={16} className="mr-1.5" />
+              사이트 설정
+            </TabsTrigger>
           </TabsList>
 
           {canManageMembers && (
@@ -133,6 +138,10 @@ function AdminContent() {
 
           <TabsContent value="newsletter" className="mt-6">
             <AdminNewsletterTab />
+          </TabsContent>
+
+          <TabsContent value="site-settings" className="mt-6">
+            <AdminGreetingTab />
           </TabsContent>
         </Tabs>
       </div>

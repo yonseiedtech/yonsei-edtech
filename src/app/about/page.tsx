@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import { Target, Eye, Sparkles, GraduationCap, Monitor, Brain } from "lucide-react";
-import Timeline from "@/components/about/Timeline";
 
 export const metadata: Metadata = {
   title: "학회 소개",
-  description: "연세교육공학회의 미션, 비전, 연혁을 소개합니다.",
+  description: "연세교육공학회의 미션, 비전, 활동분야를 소개합니다.",
 };
 
 const values = [
@@ -83,11 +82,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Timeline */}
-      <section className="mx-auto mt-20 max-w-6xl px-4">
-        <h2 className="text-center text-2xl font-bold">연혁</h2>
-        <Timeline />
-      </section>
     </div>
   );
 }
