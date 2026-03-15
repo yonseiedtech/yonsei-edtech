@@ -15,8 +15,8 @@ function Tabs({
       data-slot="tabs"
       data-orientation={orientation}
       className={cn(
-        "group/tabs flex gap-2",
-        orientation === "horizontal" ? "flex-col" : "flex-row",
+        "group/tabs flex flex-col",
+        orientation !== "horizontal" && "flex-row",
         className
       )}
       {...props}
@@ -76,7 +76,7 @@ function TabsContent({ className, ...props }: TabsPrimitive.Panel.Props) {
   return (
     <TabsPrimitive.Panel
       data-slot="tabs-content"
-      className={cn("flex-1 text-sm outline-none", className)}
+      className={cn("text-sm outline-none", className)}
       {...props}
     />
   )

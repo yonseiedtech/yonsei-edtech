@@ -90,8 +90,7 @@ function AdminContent() {
 
         <Tabs defaultValue={defaultTab} className="mt-8">
           {/* 탭 영역 */}
-          <div className="overflow-x-auto border-b">
-            <TabsList variant="line" className="flex w-max min-w-full gap-0">
+            <TabsList variant="line" className="flex w-max min-w-full gap-0 overflow-x-auto border-b">
               {canManageMembers && (
                 <TabsTrigger value="members" className="flex-none px-4 py-2.5 text-sm">
                   <Users size={16} className="mr-1.5" />
@@ -119,7 +118,6 @@ function AdminContent() {
                 사이트 설정
               </TabsTrigger>
             </TabsList>
-          </div>
 
           {/* 본문 영역 */}
           {canManageMembers && (
