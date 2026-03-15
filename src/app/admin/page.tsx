@@ -89,30 +89,30 @@ function AdminContent() {
         </div>
 
         <Tabs defaultValue={defaultTab} className="mt-8">
-          <TabsList className="w-full">
+          <TabsList className="w-full overflow-x-auto">
             {canManageMembers && (
-              <TabsTrigger value="members" className="px-4 py-2 text-base">
+              <TabsTrigger value="members" className="shrink-0 px-4 py-2 text-sm">
                 <Users size={16} className="mr-1.5" />
                 회원
               </TabsTrigger>
             )}
-            <TabsTrigger value="posts" className="px-4 py-2 text-base">
+            <TabsTrigger value="posts" className="shrink-0 px-4 py-2 text-sm">
               <FileText size={16} className="mr-1.5" />
               게시글
             </TabsTrigger>
-            <TabsTrigger value="seminars" className="px-4 py-2 text-base">
+            <TabsTrigger value="seminars" className="shrink-0 px-4 py-2 text-sm">
               <BookOpen size={16} className="mr-1.5" />
               세미나
             </TabsTrigger>
-            <TabsTrigger value="inquiries" className="px-4 py-2 text-base">
+            <TabsTrigger value="inquiries" className="shrink-0 px-4 py-2 text-sm">
               <MessageSquare size={16} className="mr-1.5" />
               문의
             </TabsTrigger>
-            <TabsTrigger value="newsletter" className="px-4 py-2 text-base">
+            <TabsTrigger value="newsletter" className="shrink-0 px-4 py-2 text-sm">
               <Newspaper size={16} className="mr-1.5" />
               학회보
             </TabsTrigger>
-            <TabsTrigger value="site-settings" className="px-4 py-2 text-base">
+            <TabsTrigger value="site-settings" className="shrink-0 px-4 py-2 text-sm">
               <Settings size={16} className="mr-1.5" />
               사이트 설정
             </TabsTrigger>
