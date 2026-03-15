@@ -19,24 +19,19 @@
 
 ### 3.1 StatCard API 전환
 
+기존 React Query 기반 훅(`usePosts`, `useSeminars`, `usePendingMembers`, `useInquiries`)을 재활용하여 실데이터를 표시한다.
+대시보드 위젯들이 동일 데이터를 공유하므로, 개별 통계 API 호출보다 기존 훅 재활용이 효율적이다.
+
 ```typescript
-// 현재 (Mock)
-const myPosts = posts.filter(p => p.authorId === user.id);
-const pendingCount = 2; // 하드코딩
+// 기존 React Query 훅 재활용 (데이터 공유)
+const { posts } = usePosts();
+const { seminars } = useSeminars();
+const { pendingMembers } = usePendingMembers(); // staff 전용
+const { inquiries } = useInquiries();           // staff 전용
 
-// 변경 후 (API)
-const { data: myPostCount } = useQuery({
-  queryKey: ["stats", "myPosts", user.id],
-  queryFn: () => postsApi.list({ "filter[authorId]": user.id, limit: 0 }),
-  select: (res) => res.total,
-});
-
-const { data: pendingCount } = useQuery({
-  queryKey: ["stats", "pendingMembers"],
-  queryFn: () => profilesApi.list({ "filter[approved]": "false", limit: 0 }),
-  select: (res) => res.total,
-  enabled: isStaff,
-});
+const myPosts = posts.filter((p) => p.authorId === user.id);
+const pendingCount = pendingMembers.length;
+const unansweredCount = inquiries.filter((q) => q.status === "pending").length;
 ```
 
 ### 3.2 역할별 위젯
@@ -44,11 +39,11 @@ const { data: pendingCount } = useQuery({
 ```
 member/alumni/advisor:
   - 내 글 | 신청 세미나 | 예정 세미나 | 최신 학회보
-  - 최근 공지 | 예정 세미나 | 내 활동 피드
+  - 최근 공지 | 세미나 일정(캘린더) | 내 활동 피드
 
 staff/president/admin:
-  - 내 글 | 승인 대기 | 미답변 문의 | 예정 세미나
-  - 최근 공지 | 관리 알림 | 승인 대기 목록
+  - 내 글 | 신청 세미나 | 승인 대기 | 미답변 문의
+  - 최근 공지 | 세미나 일정(캘린더) | 내 활동 피드 | 관리 알림
 ```
 
 ### 3.3 ActivityFeed 컴포넌트
@@ -56,20 +51,23 @@ staff/president/admin:
 ```
 Props:
   - userId: string
+  - posts: Post[] (내 게시글 필터링용)
   - limit?: number (기본 5)
 
 데이터:
-  1. 내 게시글의 최근 댓글 조회
-  2. 댓글 작성자 + 게시글 제목 + 시각 표시
+  1. 최근 댓글 50건 조회 후 내 게시글에 달린 것만 클라이언트 필터링
+  2. bkend API가 postAuthorId 필터를 지원하지 않아 클라이언트 필터 방식 채택
+  3. 자기 댓글은 제외
 
 UI:
-  - 타임라인 형태 (세로 점선 + 아바타)
+  - 타임라인 형태 (세로 점선 + 이니셜 아바타)
   - "홍길동님이 '세미나 후기'에 댓글을 남겼습니다"
+  - 댓글 내용 미리보기 + 날짜
   - 클릭 시 해당 게시글로 이동
 
 API:
-  - GET /data/comments?filter[postAuthorId]={userId}&sort=createdAt:desc&limit=5
-  - 또는 클라이언트 사이드: 내 posts → 각 post의 comments 조회
+  - dataApi.list("comments", { sort: "createdAt:desc", limit: 50 })
+  - 클라이언트 필터: myPostIds.includes(c.postId) && c.authorId !== userId
 ```
 
 ### 3.4 MiniCalendar 컴포넌트
@@ -81,13 +79,13 @@ Props:
 UI:
   - 이번 달 달력 그리드 (7열 × 5~6행)
   - 세미나 있는 날짜에 점(dot) 마커
-  - 날짜 클릭 → 해당 세미나 정보 팝오버
+  - 날짜 클릭 → 캘린더 하단에 해당 세미나 정보 인라인 표시
   - 오늘 날짜 하이라이트
+  - 이전/다음 달 네비게이션
 
 구현:
-  - 자체 구현 (외부 라이브러리 없음)
-  - date-fns의 startOfMonth, endOfMonth, eachDayOfInterval
-  - 7×6 그리드 (일~토)
+  - 자체 구현 (외부 라이브러리 없음, 네이티브 Date 사용)
+  - 7×n 그리드 (일~토)
 ```
 
 ### 3.5 모바일 레이아웃
@@ -95,7 +93,7 @@ UI:
 ```
 Desktop (md+):
   ┌─────────┬─────────┐
-  │  공지    │  세미나  │
+  │  공지    │ 캘린더   │
   ├─────────┴─────────┤
   │   활동 피드        │
   ├───────────────────│
@@ -110,7 +108,7 @@ Mobile:
   ├───────────────────┤
   │  공지 (카드)       │
   ├───────────────────┤
-  │  세미나 (카드)     │
+  │  캘린더 (카드)     │
   ├───────────────────┤
   │  활동 피드         │
   └───────────────────┘
@@ -121,15 +119,16 @@ Mobile:
 | 파일 | 변경 |
 |------|------|
 | `src/app/dashboard/page.tsx` | API 데이터 연동 + 위젯 추가 |
-| `src/features/dashboard/ActivityFeed.tsx` | 신규 — 활동 피드 |
+| `src/features/dashboard/ActivityFeed.tsx` | 신규 — 활동 피드 (타임라인) |
 | `src/features/dashboard/MiniCalendar.tsx` | 신규 — 미니 달력 |
-| `src/features/dashboard/StatsSection.tsx` | 신규 — API 기반 통계 (옵션) |
 
 ## 5. 구현 체크리스트
 
-- [ ] StatCard: React Query로 API 데이터 조회
-- [ ] 역할별 위젯 조건부 렌더링
-- [ ] ActivityFeed 컴포넌트
-- [ ] MiniCalendar 컴포넌트
-- [ ] 모바일 반응형 레이아웃
-- [ ] 빠른 액션 횡스크롤 (모바일)
+- [x] StatCard: 기존 React Query 훅으로 실데이터 조회
+- [x] 역할별 위젯 조건부 렌더링
+- [x] ActivityFeed 컴포넌트 (타임라인 UI)
+- [x] MiniCalendar 컴포넌트
+- [x] 모바일 반응형 레이아웃
+- [x] 빠른 액션 횡스크롤 (모바일)
+- [x] StatCard 클릭 시 해당 페이지 링크
+- [x] 관리 알림 위젯 (staff+ 전용)
