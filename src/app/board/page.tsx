@@ -2,20 +2,21 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { PenSquare, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { PenSquare, Search, ChevronLeft, ChevronRight, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import AuthGuard from "@/features/auth/AuthGuard";
+import { useAuthStore } from "@/features/auth/auth-store";
 import CategoryTabs from "@/features/board/CategoryTabs";
 import PostList from "@/features/board/PostList";
 import { usePosts } from "@/features/board/useBoard";
 import type { PostCategory } from "@/types";
 
-function BoardContent() {
+export default function BoardPage() {
   const [activeCategory, setActiveCategory] = useState<PostCategory | "all">("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const { posts, totalPages } = usePosts(activeCategory, { page, search });
+  const { user } = useAuthStore();
 
   function handleCategoryChange(cat: PostCategory | "all") {
     setActiveCategory(cat);
@@ -32,12 +33,21 @@ function BoardContent() {
       <div className="mx-auto max-w-4xl px-4">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">게시판</h1>
-          <Link href="/board/write">
-            <Button size="sm">
-              <PenSquare size={16} className="mr-1" />
-              글쓰기
-            </Button>
-          </Link>
+          {user ? (
+            <Link href="/board/write">
+              <Button size="sm">
+                <PenSquare size={16} className="mr-1" />
+                글쓰기
+              </Button>
+            </Link>
+          ) : (
+            <Link href="/login">
+              <Button variant="outline" size="sm">
+                <LogIn size={16} className="mr-1" />
+                로그인 후 글 작성
+              </Button>
+            </Link>
+          )}
         </div>
 
         <div className="mt-6">
@@ -92,13 +102,5 @@ function BoardContent() {
         )}
       </div>
     </div>
-  );
-}
-
-export default function BoardPage() {
-  return (
-    <AuthGuard>
-      <BoardContent />
-    </AuthGuard>
   );
 }

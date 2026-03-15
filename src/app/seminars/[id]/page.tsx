@@ -1,8 +1,8 @@
 "use client";
 
 import { use, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import AuthGuard from "@/features/auth/AuthGuard";
 import { useSeminar, useToggleAttendance, useAttendee, useCheckinStats } from "@/features/seminar/useSeminar";
 import QrCodeDisplay from "@/features/seminar/QrCodeDisplay";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -27,6 +27,7 @@ import {
   Copy,
   Download,
   QrCode,
+  LogIn,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -216,29 +217,41 @@ function SeminarDetail({ id }: { id: string }) {
             {seminar.description}
           </div>
 
-          {canToggle && (
+          {/* 참석 신청 영역 */}
+          {seminar.status === "upcoming" && (
             <div className="mt-8 border-t pt-6">
-              <Button
-                onClick={handleToggle}
-                variant={isAttending ? "outline" : "default"}
-                className="w-full sm:w-auto"
-              >
-                {isAttending ? (
-                  <>
-                    <UserCheck size={16} className="mr-1" />
-                    참석 취소
-                  </>
-                ) : (
-                  <>
-                    <UserPlus size={16} className="mr-1" />
-                    참석 신청
-                  </>
-                )}
-              </Button>
-              {isFull && !isAttending && (
-                <p className="mt-2 text-xs text-destructive">
-                  인원이 가득 찼습니다.
-                </p>
+              {user ? (
+                <>
+                  <Button
+                    onClick={handleToggle}
+                    variant={isAttending ? "outline" : "default"}
+                    className="w-full sm:w-auto"
+                  >
+                    {isAttending ? (
+                      <>
+                        <UserCheck size={16} className="mr-1" />
+                        참석 취소
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus size={16} className="mr-1" />
+                        참석 신청
+                      </>
+                    )}
+                  </Button>
+                  {isFull && !isAttending && (
+                    <p className="mt-2 text-xs text-destructive">
+                      인원이 가득 찼습니다.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <Link href="/login">
+                  <Button variant="outline" className="w-full sm:w-auto">
+                    <LogIn size={16} className="mr-1" />
+                    로그인 후 참석 신청
+                  </Button>
+                </Link>
               )}
             </div>
           )}
@@ -320,9 +333,5 @@ export default function SeminarDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  return (
-    <AuthGuard allowedRoles={["member", "alumni", "staff", "president", "admin"]}>
-      <SeminarDetail id={id} />
-    </AuthGuard>
-  );
+  return <SeminarDetail id={id} />;
 }

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import AuthGuard from "@/features/auth/AuthGuard";
 import SeminarList from "@/features/seminar/SeminarList";
 import SeminarStatusTabs from "@/features/seminar/SeminarStatusTabs";
 import { useSeminars } from "@/features/seminar/useSeminar";
@@ -14,7 +13,7 @@ import type { Seminar } from "@/types";
 
 type StatusFilter = Seminar["status"] | "all";
 
-function SeminarsContent() {
+export default function SeminarsPage() {
   const [status, setStatus] = useState<StatusFilter>("all");
   const { user } = useAuthStore();
   const { seminars: allSeminars } = useSeminars();
@@ -53,13 +52,5 @@ function SeminarsContent() {
         </div>
       </div>
     </div>
-  );
-}
-
-export default function SeminarsPage() {
-  return (
-    <AuthGuard allowedRoles={["member", "alumni", "staff", "president", "admin"]}>
-      <SeminarsContent />
-    </AuthGuard>
   );
 }

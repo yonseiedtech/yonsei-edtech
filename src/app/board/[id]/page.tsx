@@ -4,7 +4,6 @@ import { use, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/auth-store";
-import AuthGuard from "@/features/auth/AuthGuard";
 import CommentList from "@/features/board/CommentList";
 import CommentForm from "@/features/board/CommentForm";
 import { usePost, useComments, useDeletePost, useDeleteComment } from "@/features/board/useBoard";
@@ -22,7 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { formatDate } from "@/lib/utils";
-import { ArrowLeft, Trash2, Edit } from "lucide-react";
+import { ArrowLeft, Trash2, Edit, LogIn } from "lucide-react";
 import { toast } from "sonner";
 
 function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
@@ -127,7 +126,19 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
             />
           </div>
 
-          <CommentForm postId={id} />
+          {user ? (
+            <CommentForm postId={id} />
+          ) : (
+            <div className="mt-4 rounded-lg border border-dashed p-4 text-center">
+              <p className="text-sm text-muted-foreground">댓글을 작성하려면 로그인이 필요합니다.</p>
+              <Link href="/login">
+                <Button variant="outline" size="sm" className="mt-2">
+                  <LogIn size={14} className="mr-1" />
+                  로그인 후 댓글 작성
+                </Button>
+              </Link>
+            </div>
+          )}
         </section>
 
         <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
@@ -154,9 +165,5 @@ export default function PostDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  return (
-    <AuthGuard>
-      <PostDetailContent params={params} />
-    </AuthGuard>
-  );
+  return <PostDetailContent params={params} />;
 }
