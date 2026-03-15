@@ -1,107 +1,80 @@
 /**
- * bkend.ai BaaS Client
- * REST API: https://api.bkend.ai/v1
+ * Firebase Auth + Firestore Client
+ * bkend.ts export 인터페이스 유지 — 사용처 변경 최소화
  */
 
-const BKEND_URL = process.env.NEXT_PUBLIC_BKEND_URL || "https://api-client.bkend.ai/v1";
-const API_KEY = process.env.NEXT_PUBLIC_BKEND_API_KEY || "";
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  signOut,
+} from "firebase/auth";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  limit as firestoreLimit,
+  serverTimestamp,
+  Timestamp,
+  type QueryConstraint,
+} from "firebase/firestore";
+import { auth, db } from "./firebase";
 
-// ── Token helpers ──
+// ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
 
-function getAccessToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("bkend_access_token");
-}
-
-function getRefreshToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("bkend_refresh_token");
-}
-
-export function saveTokens(access: string, refresh: string) {
-  localStorage.setItem("bkend_access_token", access);
-  localStorage.setItem("bkend_refresh_token", refresh);
+export function saveTokens(_access: string, _refresh: string) {
+  // Firebase SDK handles token management internally
 }
 
 export function clearTokens() {
-  localStorage.removeItem("bkend_access_token");
-  localStorage.removeItem("bkend_refresh_token");
+  // Firebase SDK handles token management internally
 }
 
-// ── Core request ──
+// ── Firestore helpers ──
 
-type RequestOptions = {
-  method?: string;
-  body?: unknown;
-  token?: string | null;
-  skipAuth?: boolean;
-};
-
-async function refreshAccessToken(): Promise<string | null> {
-  const refreshToken = getRefreshToken();
-  if (!refreshToken) return null;
-
-  try {
-    const res = await fetch(`${BKEND_URL}/auth/refresh`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-Key": API_KEY,
-      },
-      body: JSON.stringify({ refreshToken }),
-    });
-
-    if (!res.ok) return null;
-
-    const data = await res.json();
-    saveTokens(data.accessToken, data.refreshToken);
-    return data.accessToken;
-  } catch {
-    return null;
-  }
-}
-
-async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = "GET", body, token, skipAuth = false } = options;
-
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    "X-API-Key": API_KEY,
-  };
-
-  const authToken = token ?? (skipAuth ? null : getAccessToken());
-  if (authToken) {
-    headers["Authorization"] = `Bearer ${authToken}`;
-  }
-
-  let res = await fetch(`${BKEND_URL}${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
-
-  // 401 → refresh token → retry once
-  if (res.status === 401 && !skipAuth && !token) {
-    const newToken = await refreshAccessToken();
-    if (newToken) {
-      headers["Authorization"] = `Bearer ${newToken}`;
-      res = await fetch(`${BKEND_URL}${path}`, {
-        method,
-        headers,
-        body: body ? JSON.stringify(body) : undefined,
-      });
+function parseFilters(params?: QueryParams): QueryConstraint[] {
+  const constraints: QueryConstraint[] = [];
+  if (!params) return constraints;
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined) continue;
+    const match = key.match(/^filter\[(\w+)\]$/);
+    if (match) {
+      const field = match[1];
+      const strVal = String(value);
+      const val = strVal === "true" ? true : strVal === "false" ? false : strVal;
+      constraints.push(where(field, "==", val));
     }
   }
+  return constraints;
+}
 
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: "요청 실패" }));
-    throw new Error(error.message || `HTTP ${res.status}`);
+function parseSort(sortStr?: string): QueryConstraint[] {
+  if (!sortStr) return [];
+  return sortStr.split(",").map((s) => {
+    const [field, dir] = s.split(":");
+    return orderBy(field, (dir as "asc" | "desc") || "asc");
+  });
+}
+
+/** Firestore Timestamp → ISO string */
+function serializeDoc(docSnap: { id: string; data: () => Record<string, unknown> | undefined }): Record<string, unknown> {
+  const data = docSnap.data() ?? {};
+  const result: Record<string, unknown> = { id: docSnap.id };
+  for (const [key, value] of Object.entries(data)) {
+    if (value instanceof Timestamp) {
+      result[key] = value.toDate().toISOString();
+    } else {
+      result[key] = value;
+    }
   }
-
-  // 204 No Content
-  if (res.status === 204) return undefined as T;
-
-  return res.json();
+  return result;
 }
 
 // ── API Response types ──
@@ -124,72 +97,125 @@ export interface BkendAuthUser {
   id: string;
   email: string;
   name: string;
-  role: string;
 }
 
 // ── Auth API ──
 
 export const authApi = {
-  signup: (data: { email: string; password: string; name: string }) =>
-    request<AuthTokens>("/auth/email/signup", {
-      method: "POST",
-      body: { method: "password", ...data },
-      skipAuth: true,
-    }),
+  signup: async (data: { email: string; password: string; name: string }): Promise<AuthTokens> => {
+    const cred = await createUserWithEmailAndPassword(auth, data.email, data.password);
+    await updateProfile(cred.user, { displayName: data.name });
 
-  login: (data: { email: string; password: string }) =>
-    request<AuthTokens>("/auth/email/signin", {
-      method: "POST",
-      body: { method: "password", ...data },
-      skipAuth: true,
-    }),
+    // Firestore users 컬렉션에 프로필 생성
+    const { setDoc } = await import("firebase/firestore");
+    await setDoc(doc(db, "users", cred.user.uid), {
+      email: data.email,
+      name: data.name,
+      username: data.email.split("@")[0],
+      role: "member",
+      generation: 0,
+      field: "",
+      approved: false,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
 
-  me: (token?: string) =>
-    request<BkendAuthUser>("/auth/me", { token }),
+    const token = await cred.user.getIdToken();
+    return { accessToken: token, refreshToken: token, tokenType: "Bearer", expiresIn: 3600 };
+  },
 
-  refresh: (refreshToken: string) =>
-    request<AuthTokens>("/auth/refresh", {
-      method: "POST",
-      body: { refreshToken },
-      skipAuth: true,
-    }),
+  login: async (data: { email: string; password: string }): Promise<AuthTokens> => {
+    const cred = await signInWithEmailAndPassword(auth, data.email, data.password);
+    const token = await cred.user.getIdToken();
+    return { accessToken: token, refreshToken: token, tokenType: "Bearer", expiresIn: 3600 };
+  },
 
-  logout: () =>
-    request<void>("/auth/signout", { method: "POST" }),
+  me: async (_token?: string): Promise<BkendAuthUser> => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("인증되지 않았습니다.");
+    return { id: user.uid, email: user.email || "", name: user.displayName || "" };
+  },
+
+  refresh: async (_refreshToken: string): Promise<AuthTokens> => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("인증되지 않았습니다.");
+    const token = await user.getIdToken(true);
+    return { accessToken: token, refreshToken: token, tokenType: "Bearer", expiresIn: 3600 };
+  },
+
+  logout: async (): Promise<void> => {
+    await signOut(auth);
+  },
 };
 
 // ── Data API (generic CRUD) ──
 
 type QueryParams = Record<string, string | number | undefined>;
 
-function buildQuery(params?: QueryParams): string {
-  if (!params) return "";
-  const entries = Object.entries(params).filter(([, v]) => v !== undefined);
-  if (entries.length === 0) return "";
-  return "?" + entries.map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`).join("&");
-}
-
 export const dataApi = {
-  list: <T>(table: string, params?: QueryParams) =>
-    request<ListResponse<T>>(`/data/${table}${buildQuery(params)}`),
+  list: async <T>(table: string, params?: QueryParams): Promise<ListResponse<T>> => {
+    const constraints: QueryConstraint[] = [];
 
-  get: <T>(table: string, id: string) =>
-    request<T>(`/data/${table}/${id}`),
+    // 필터 파싱
+    constraints.push(...parseFilters(params));
 
-  create: <T>(table: string, data: Record<string, unknown>) =>
-    request<T>(`/data/${table}`, { method: "POST", body: data }),
+    // 정렬 파싱
+    if (params?.sort) {
+      constraints.push(...parseSort(String(params.sort)));
+    }
 
-  update: <T>(table: string, id: string, data: Record<string, unknown>) =>
-    request<T>(`/data/${table}/${id}`, { method: "PUT", body: data }),
+    // limit 파싱
+    const limitVal = params?.limit ? Number(params.limit) : 0;
+    if (limitVal > 0) {
+      constraints.push(firestoreLimit(limitVal));
+    }
 
-  patch: <T>(table: string, id: string, data: Record<string, unknown>) =>
-    request<T>(`/data/${table}/${id}`, { method: "PATCH", body: data }),
+    const q = query(collection(db, table), ...constraints);
+    const snapshot = await getDocs(q);
+    const data = snapshot.docs.map((d) => serializeDoc(d) as T);
 
-  delete: (table: string, id: string) =>
-    request<void>(`/data/${table}/${id}`, { method: "DELETE" }),
+    return { data, total: data.length, page: 1, limit: limitVal || data.length };
+  },
+
+  get: async <T>(table: string, id: string): Promise<T> => {
+    // "me" → 현재 로그인 사용자 uid
+    const docId = id === "me" ? auth.currentUser?.uid ?? id : id;
+    const docSnap = await getDoc(doc(db, table, docId));
+    if (!docSnap.exists()) throw new Error("문서를 찾을 수 없습니다.");
+    return serializeDoc(docSnap) as T;
+  },
+
+  create: async <T>(table: string, data: Record<string, unknown>): Promise<T> => {
+    const docRef = await addDoc(collection(db, table), {
+      ...data,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    const docSnap = await getDoc(docRef);
+    return serializeDoc(docSnap!) as T;
+  },
+
+  update: async <T>(table: string, id: string, data: Record<string, unknown>): Promise<T> => {
+    const docId = id === "me" ? auth.currentUser?.uid ?? id : id;
+    const docRef = doc(db, table, docId);
+    await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() });
+    const docSnap = await getDoc(docRef);
+    return serializeDoc(docSnap) as T;
+  },
+
+  patch: async <T>(table: string, id: string, data: Record<string, unknown>): Promise<T> => {
+    const docRef = doc(db, table, id);
+    await updateDoc(docRef, data);
+    const docSnap = await getDoc(docRef);
+    return serializeDoc(docSnap) as T;
+  },
+
+  delete: async (table: string, id: string): Promise<void> => {
+    await deleteDoc(doc(db, table, id));
+  },
 };
 
-// ── Typed API shortcuts (convenience) ──
+// ── Typed API shortcuts ──
 
 export const postsApi = {
   list: (params?: { category?: string; page?: number; limit?: number; sort?: string }) =>
@@ -266,7 +292,7 @@ export const attendeesApi = {
 
 export const siteSettingsApi = {
   getByKey: (key: string) =>
-    request<ListResponse<Record<string, unknown>>>(`/data/site_settings?filter[key]=${key}`, { skipAuth: true }),
+    dataApi.list<Record<string, unknown>>("site_settings", { "filter[key]": key }),
   create: (data: Record<string, unknown>) =>
     dataApi.create("site_settings", data),
   update: (id: string, data: Record<string, unknown>) =>
@@ -277,10 +303,6 @@ export const inquiriesApi = {
   list: (params?: QueryParams) =>
     dataApi.list<Record<string, unknown>>("inquiries", { sort: "createdAt:desc", ...params }),
   create: (data: Record<string, unknown>) =>
-    request<Record<string, unknown>>(`/data/inquiries`, {
-      method: "POST",
-      body: data,
-      skipAuth: true, // 비회원도 문의 가능
-    }),
+    dataApi.create<Record<string, unknown>>("inquiries", data),
   update: (id: string, data: Record<string, unknown>) => dataApi.update("inquiries", id, data),
 };
