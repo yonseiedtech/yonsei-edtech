@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MOCK_POSTS } from "@/features/board/board-data";
+import { usePosts, useUpdatePost, useDeletePost } from "@/features/board/useBoard";
 import { CATEGORY_LABELS, type PostCategory } from "@/types";
 import CategoryTabs from "@/features/board/CategoryTabs";
 import { Badge } from "@/components/ui/badge";
@@ -31,28 +31,22 @@ export default function AdminPostTab() {
     content: string;
   } | null>(null);
 
-  const filtered = MOCK_POSTS.filter((p) => {
-    if (category !== "all" && p.category !== category) return false;
-    if (search) {
-      const q = search.toLowerCase();
-      return (
-        p.title.toLowerCase().includes(q) ||
-        p.authorName.toLowerCase().includes(q)
-      );
-    }
-    return true;
-  }).sort((a, b) => {
+  const { posts, isLoading } = usePosts(category, { search });
+  const { updatePost } = useUpdatePost();
+  const { deletePost } = useDeletePost();
+
+  const sorted = [...posts].sort((a, b) => {
     if (sort === "views") return b.viewCount - a.viewCount;
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
-  const allSelected = filtered.length > 0 && filtered.every((p) => selected.has(p.id));
+  const allSelected = sorted.length > 0 && sorted.every((p) => selected.has(p.id));
 
   function toggleAll() {
     if (allSelected) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(filtered.map((p) => p.id)));
+      setSelected(new Set(sorted.map((p) => p.id)));
     }
   }
 
@@ -65,20 +59,43 @@ export default function AdminPostTab() {
     });
   }
 
-  function handleBulkDelete() {
-    toast.success(`${selected.size}개 게시글 삭제 완료 (데모)`);
-    setSelected(new Set());
-  }
-
-  function handleDelete(postId: string) {
-    toast.success(`게시글 ${postId} 삭제 완료 (데모)`);
-  }
-
-  function handleEditSave() {
-    if (editPost) {
-      toast.success(`게시글 "${editPost.title}" 수정 완료 (데모)`);
-      setEditPost(null);
+  async function handleBulkDelete() {
+    try {
+      await Promise.all([...selected].map((id) => deletePost(id)));
+      toast.success(`${selected.size}개 게시글 삭제 완료`);
+      setSelected(new Set());
+    } catch {
+      toast.error("삭제 중 오류가 발생했습니다.");
     }
+  }
+
+  async function handleDelete(postId: string) {
+    try {
+      await deletePost(postId);
+      toast.success("게시글 삭제 완료");
+    } catch {
+      toast.error("삭제 중 오류가 발생했습니다.");
+    }
+  }
+
+  async function handleEditSave() {
+    if (editPost) {
+      try {
+        await updatePost({ id: editPost.id, data: { title: editPost.title, content: editPost.content } });
+        toast.success(`게시글 "${editPost.title}" 수정 완료`);
+        setEditPost(null);
+      } catch {
+        toast.error("수정 중 오류가 발생했습니다.");
+      }
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
   }
 
   return (
@@ -134,65 +151,73 @@ export default function AdminPostTab() {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {filtered.map((post) => (
-              <tr key={post.id}>
-                <td className="px-4 py-3">
-                  <Checkbox
-                    checked={selected.has(post.id)}
-                    onCheckedChange={() => toggleOne(post.id)}
-                  />
-                </td>
-                <td className="px-4 py-3">
-                  <Badge
-                    variant="secondary"
-                    className={cn(
-                      post.category === "notice"
-                        ? "bg-primary/10 text-primary"
-                        : post.category === "seminar"
-                        ? "bg-secondary/15 text-amber-700"
-                        : post.category === "promotion"
-                        ? "bg-emerald-50 text-emerald-700"
-                        : post.category === "newsletter"
-                        ? "bg-violet-50 text-violet-700"
-                        : ""
-                    )}
-                  >
-                    {CATEGORY_LABELS[post.category]}
-                  </Badge>
-                </td>
-                <td className="max-w-[200px] truncate px-4 py-3 font-medium">
-                  {post.title}
-                </td>
-                <td className="px-4 py-3 text-muted-foreground">{post.authorName}</td>
-                <td className="px-4 py-3 text-muted-foreground">{formatDate(post.createdAt)}</td>
-                <td className="px-4 py-3 text-muted-foreground">{post.viewCount}</td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setEditPost({
-                          id: post.id,
-                          title: post.title,
-                          content: post.content,
-                        })
-                      }
-                    >
-                      <Pencil size={14} />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-destructive"
-                      onClick={() => handleDelete(post.id)}
-                    >
-                      <Trash2 size={14} />
-                    </Button>
-                  </div>
+            {sorted.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                  게시글이 없습니다.
                 </td>
               </tr>
-            ))}
+            ) : (
+              sorted.map((post) => (
+                <tr key={post.id}>
+                  <td className="px-4 py-3">
+                    <Checkbox
+                      checked={selected.has(post.id)}
+                      onCheckedChange={() => toggleOne(post.id)}
+                    />
+                  </td>
+                  <td className="px-4 py-3">
+                    <Badge
+                      variant="secondary"
+                      className={cn(
+                        post.category === "notice"
+                          ? "bg-primary/10 text-primary"
+                          : post.category === "seminar"
+                          ? "bg-secondary/15 text-amber-700"
+                          : post.category === "promotion"
+                          ? "bg-emerald-50 text-emerald-700"
+                          : post.category === "newsletter"
+                          ? "bg-violet-50 text-violet-700"
+                          : ""
+                      )}
+                    >
+                      {CATEGORY_LABELS[post.category]}
+                    </Badge>
+                  </td>
+                  <td className="max-w-[200px] truncate px-4 py-3 font-medium">
+                    {post.title}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">{post.authorName}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{formatDate(post.createdAt)}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{post.viewCount}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setEditPost({
+                            id: post.id,
+                            title: post.title,
+                            content: post.content,
+                          })
+                        }
+                      >
+                        <Pencil size={14} />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-destructive"
+                        onClick={() => handleDelete(post.id)}
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

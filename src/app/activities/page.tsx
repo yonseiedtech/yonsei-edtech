@@ -2,8 +2,8 @@
 
 import { useMemo } from "react";
 import { BookOpen, FolderKanban, Users, Calendar } from "lucide-react";
-import { MOCK_SEMINARS } from "@/features/seminar/seminar-data";
-import { MOCK_POSTS } from "@/features/board/board-data";
+import { useSeminars } from "@/features/seminar/useSeminar";
+import { usePosts } from "@/features/board/useBoard";
 import { formatDate } from "@/lib/utils";
 
 const activities = [
@@ -34,29 +34,30 @@ const activities = [
 ];
 
 export default function ActivitiesPage() {
+  const { seminars } = useSeminars("completed");
+  const { posts } = usePosts("all");
+
   const highlights = useMemo(() => {
-    const completedSeminars = MOCK_SEMINARS.filter(
-      (s) => s.status === "completed"
-    ).map((s) => ({
+    const completedSeminars = seminars.map((s) => ({
       title: s.title,
       desc: `${s.speaker} 발표 · ${s.location}`,
       date: s.date,
       sortKey: s.date,
     }));
 
-    const recentPosts = MOCK_POSTS.filter(
-      (p) => p.category === "notice" || p.category === "promotion"
-    ).map((p) => ({
-      title: p.title,
-      desc: p.content.split("\n")[0].slice(0, 60),
-      date: formatDate(p.createdAt),
-      sortKey: p.createdAt,
-    }));
+    const recentPosts = posts
+      .filter((p) => p.category === "notice" || p.category === "promotion")
+      .map((p) => ({
+        title: p.title,
+        desc: p.content.split("\n")[0].slice(0, 60),
+        date: formatDate(p.createdAt),
+        sortKey: p.createdAt,
+      }));
 
     return [...completedSeminars, ...recentPosts]
       .sort((a, b) => b.sortKey.localeCompare(a.sortKey))
       .slice(0, 6);
-  }, []);
+  }, [seminars, posts]);
 
   return (
     <div className="py-16">
@@ -100,20 +101,26 @@ export default function ActivitiesPage() {
       <section className="mx-auto mt-20 max-w-6xl px-4">
         <h2 className="text-center text-2xl font-bold">주요 활동 내역</h2>
         <div className="mt-8 grid gap-4 md:grid-cols-2">
-          {highlights.map((h, i) => (
-            <div
-              key={i}
-              className="flex gap-4 rounded-xl border bg-white p-5"
-            >
-              <div className="shrink-0 text-sm font-bold text-primary">
-                {h.date.length > 10 ? h.date : formatDate(h.date)}
-              </div>
-              <div>
-                <h3 className="font-semibold">{h.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{h.desc}</p>
-              </div>
+          {highlights.length === 0 ? (
+            <div className="col-span-2 py-8 text-center text-sm text-muted-foreground">
+              활동 내역이 없습니다.
             </div>
-          ))}
+          ) : (
+            highlights.map((h, i) => (
+              <div
+                key={i}
+                className="flex gap-4 rounded-xl border bg-white p-5"
+              >
+                <div className="shrink-0 text-sm font-bold text-primary">
+                  {h.date.length > 10 ? h.date : formatDate(h.date)}
+                </div>
+                <div>
+                  <h3 className="font-semibold">{h.title}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{h.desc}</p>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </section>
     </div>

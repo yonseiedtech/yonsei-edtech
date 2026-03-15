@@ -1,14 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { MOCK_POSTS } from "@/features/board/board-data";
+import { usePosts } from "@/features/board/useBoard";
 import { formatDate } from "@/lib/utils";
 import { Newspaper, ArrowRight } from "lucide-react";
 
 export default function NewsletterPreview() {
-  const newsletters = MOCK_POSTS.filter((p) => p.category === "newsletter")
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    .slice(0, 3);
+  const { posts: newsletters, isLoading } = usePosts("newsletter");
 
   return (
     <section className="border-b py-16">
@@ -26,23 +24,29 @@ export default function NewsletterPreview() {
           </Link>
         </div>
         <div className="mt-4 divide-y rounded-xl border bg-white">
-          {newsletters.map((post) => (
-            <Link
-              key={post.id}
-              href={`/board/${post.id}`}
-              className="flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-muted/30"
-            >
-              <div className="min-w-0">
-                <span className="truncate font-medium">{post.title}</span>
-                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
-                  {post.content}
-                </p>
-              </div>
-              <span className="shrink-0 pl-4 text-xs text-muted-foreground">
-                {formatDate(post.createdAt)}
-              </span>
-            </Link>
-          ))}
+          {isLoading ? (
+            <div className="px-5 py-8 text-center text-sm text-muted-foreground">
+              불러오는 중...
+            </div>
+          ) : (
+            newsletters.slice(0, 3).map((post) => (
+              <Link
+                key={post.id}
+                href={`/board/${post.id}`}
+                className="flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-muted/30"
+              >
+                <div className="min-w-0">
+                  <span className="truncate font-medium">{post.title}</span>
+                  <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                    {post.content}
+                  </p>
+                </div>
+                <span className="shrink-0 pl-4 text-xs text-muted-foreground">
+                  {formatDate(post.createdAt)}
+                </span>
+              </Link>
+            ))
+          )}
         </div>
       </div>
     </section>

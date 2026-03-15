@@ -1,14 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { MOCK_POSTS } from "@/features/board/board-data";
+import { usePosts } from "@/features/board/useBoard";
 import { formatDate } from "@/lib/utils";
 import { Megaphone, ArrowRight } from "lucide-react";
 
 export default function PromotionPreview() {
-  const promotions = MOCK_POSTS.filter((p) => p.category === "promotion")
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    .slice(0, 3);
+  const { posts: promotions, isLoading } = usePosts("promotion");
 
   return (
     <section className="border-b py-16">
@@ -26,22 +24,28 @@ export default function PromotionPreview() {
           </Link>
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-3">
-          {promotions.map((post) => (
-            <Link
-              key={post.id}
-              href={`/board/${post.id}`}
-              className="rounded-xl border bg-white p-5 transition-colors hover:bg-muted/30"
-            >
-              <h3 className="line-clamp-2 font-medium">{post.title}</h3>
-              <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-                {post.content}
-              </p>
-              <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-                <span>{post.authorName}</span>
-                <span>{formatDate(post.createdAt)}</span>
-              </div>
-            </Link>
-          ))}
+          {isLoading ? (
+            <div className="col-span-3 py-8 text-center text-sm text-muted-foreground">
+              불러오는 중...
+            </div>
+          ) : (
+            promotions.slice(0, 3).map((post) => (
+              <Link
+                key={post.id}
+                href={`/board/${post.id}`}
+                className="rounded-xl border bg-white p-5 transition-colors hover:bg-muted/30"
+              >
+                <h3 className="line-clamp-2 font-medium">{post.title}</h3>
+                <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                  {post.content}
+                </p>
+                <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>{post.authorName}</span>
+                  <span>{formatDate(post.createdAt)}</span>
+                </div>
+              </Link>
+            ))
+          )}
         </div>
       </div>
     </section>

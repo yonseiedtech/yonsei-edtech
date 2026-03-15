@@ -1,15 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { MOCK_SEMINARS } from "@/features/seminar/seminar-data";
+import { useSeminars } from "@/features/seminar/useSeminar";
 import { Calendar, MapPin, ArrowRight } from "lucide-react";
 
 export default function SeminarPreview() {
-  const upcoming = MOCK_SEMINARS.filter((s) => s.status === "upcoming")
+  const { seminars, isLoading } = useSeminars("upcoming");
+
+  const upcoming = [...seminars]
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 2);
 
-  if (upcoming.length === 0) return null;
+  if (isLoading || upcoming.length === 0) return null;
 
   return (
     <section className="border-b py-16">

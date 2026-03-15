@@ -2,44 +2,33 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { inquiriesApi } from "@/lib/bkend";
-import { useInquiryStore } from "./inquiry-store";
 import type { Inquiry } from "@/types";
 
 export function useInquiries() {
-  const storeInquiries = useInquiryStore((s) => s.inquiries);
-
   const { data, isLoading } = useQuery({
     queryKey: ["inquiries"],
     queryFn: async () => {
       const res = await inquiriesApi.list();
       return res.data as unknown as Inquiry[];
     },
-    placeholderData: () => storeInquiries,
     retry: false,
   });
 
-  const inquiries = data ?? storeInquiries;
-  return { inquiries, isLoading };
+  return { inquiries: data ?? [], isLoading };
 }
 
 export function useCreateInquiry() {
   const queryClient = useQueryClient();
-  const addInquiry = useInquiryStore((s) => s.addInquiry);
 
   const mutation = useMutation({
     mutationFn: async (data: Pick<Inquiry, "name" | "email" | "message">) => {
-      try {
-        return await inquiriesApi.create({
-          name: data.name,
-          email: data.email,
-          message: data.message,
-          category: "general",
-          status: "pending",
-        });
-      } catch {
-        addInquiry(data);
-        return null;
-      }
+      return await inquiriesApi.create({
+        name: data.name,
+        email: data.email,
+        message: data.message,
+        category: "general",
+        status: "pending",
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["inquiries"] });
@@ -51,20 +40,14 @@ export function useCreateInquiry() {
 
 export function useUpdateInquiryStatus() {
   const queryClient = useQueryClient();
-  const updateStatus = useInquiryStore((s) => s.updateStatus);
 
   const mutation = useMutation({
     mutationFn: async ({ id, reply }: { id: string; reply: string }) => {
-      try {
-        return await inquiriesApi.update(id, {
-          status: "replied",
-          reply,
-          repliedAt: new Date().toISOString(),
-        });
-      } catch {
-        updateStatus(id, reply);
-        return null;
-      }
+      return await inquiriesApi.update(id, {
+        status: "replied",
+        reply,
+        repliedAt: new Date().toISOString(),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["inquiries"] });
@@ -76,16 +59,10 @@ export function useUpdateInquiryStatus() {
 
 export function useDeleteInquiry() {
   const queryClient = useQueryClient();
-  const deleteInquiry = useInquiryStore((s) => s.deleteInquiry);
 
   const mutation = useMutation({
     mutationFn: async (id: string) => {
-      try {
-        return await inquiriesApi.update(id, { status: "deleted" });
-      } catch {
-        deleteInquiry(id);
-        return null;
-      }
+      return await inquiriesApi.update(id, { status: "deleted" });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["inquiries"] });

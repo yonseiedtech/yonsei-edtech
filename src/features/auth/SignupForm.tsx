@@ -118,9 +118,10 @@ export default function SignupForm({ onSuccess }: Props) {
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium">이메일 (선택)</label>
+        <label className="mb-1.5 block text-sm font-medium">이메일</label>
         <Input
           {...register("email", {
+            required: "이메일을 입력하세요",
             pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "올바른 이메일 형식이 아닙니다" },
           })}
           type="email"

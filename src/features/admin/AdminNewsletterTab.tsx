@@ -7,7 +7,7 @@ import {
   SECTION_TYPE_LABELS,
 } from "@/features/newsletter/newsletter-store";
 import type { NewsletterSection } from "@/features/newsletter/newsletter-store";
-import { MOCK_POSTS } from "@/features/board/board-data";
+import { usePosts } from "@/features/board/useBoard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +50,7 @@ const SECTION_TYPES: NewsletterSection["type"][] = [
 export default function AdminNewsletterTab() {
   const router = useRouter();
   const { issues, addIssue } = useNewsletterStore();
+  const { posts: allPosts } = usePosts("all");
   const [showPostPicker, setShowPostPicker] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -61,7 +62,7 @@ export default function AdminNewsletterTab() {
   const [sections, setSections] = useState<NewsletterSection[]>([]);
 
   function addFromPost(postId: string) {
-    const post = MOCK_POSTS.find((p) => p.id === postId);
+    const post = allPosts.find((p) => p.id === postId);
     if (!post) return;
 
     const contentLines = post.content.split("\n").filter((l) => l.trim());
@@ -381,7 +382,7 @@ export default function AdminNewsletterTab() {
             글머리 기호(-)가 포함된 게시글은 각 항목이 개별 섹션으로 분리됩니다.
           </p>
           <div className="max-h-[50vh] divide-y overflow-y-auto rounded-lg border">
-            {MOCK_POSTS.map((post) => {
+            {allPosts.map((post) => {
               const alreadyAdded = sections.some((s) => s.postId === post.id);
               return (
                 <button

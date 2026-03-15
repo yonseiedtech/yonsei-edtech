@@ -33,10 +33,11 @@
       "completedAt": "2026-03-15T00:00:00Z"
     },
     "bkend-integration": {
-      "phase": "check",
-      "matchRate": 0,
-      "iterationCount": 0,
-      "startedAt": "2026-03-14T00:00:00Z"
+      "phase": "completed",
+      "matchRate": 92,
+      "iterationCount": 2,
+      "startedAt": "2026-03-14T00:00:00Z",
+      "completedAt": "2026-03-15T00:00:00Z"
     },
     "post-crud": {
       "phase": "completed",

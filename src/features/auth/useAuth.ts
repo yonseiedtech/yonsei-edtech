@@ -6,8 +6,9 @@ import { useAuthStore } from "./auth-store";
 import { authApi, profilesApi, saveTokens, clearTokens } from "@/lib/bkend";
 import type { User } from "@/types";
 
-// ── 데모 계정 (bkend 미연결 시 fallback) ──
-const DEMO_ACCOUNTS: Record<string, User> = {
+// ── 데모 계정 (개발 환경에서만 활성화) ──
+const DEMO_ENABLED = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+const DEMO_ACCOUNTS: Record<string, User> = DEMO_ENABLED ? {
   admin: {
     id: "1", username: "admin", email: "admin@yonsei.ac.kr", name: "관리자",
     role: "admin", generation: 1, field: "교육공학", approved: true,
@@ -33,7 +34,7 @@ const DEMO_ACCOUNTS: Record<string, User> = {
     role: "advisor", generation: 1, field: "교육공학", approved: true,
     createdAt: "2026-01-01T00:00:00Z", updatedAt: "2026-01-01T00:00:00Z",
   },
-};
+} : {};
 
 /** bkend /auth/me + /data/users 결과를 User 타입으로 합침 */
 function mergeToUser(

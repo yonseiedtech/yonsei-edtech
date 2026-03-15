@@ -121,7 +121,7 @@ function SeminarDetail({ id }: { id: string }) {
       toast.error("참석 인원이 가득 찼습니다.");
       return;
     }
-    toggleAttendance(seminar!.id, user.id, user.name, user.generation);
+    toggleAttendance(seminar!.id, user.id);
     toast.success(isAttending ? "참석이 취소되었습니다." : "참석 신청되었습니다.");
   }
 
