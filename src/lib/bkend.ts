@@ -3,7 +3,7 @@
  * REST API: https://api.bkend.ai/v1
  */
 
-const BKEND_URL = process.env.NEXT_PUBLIC_BKEND_URL || "https://api.bkend.ai/v1";
+const BKEND_URL = process.env.NEXT_PUBLIC_BKEND_URL || "https://api-client.bkend.ai/v1";
 const API_KEY = process.env.NEXT_PUBLIC_BKEND_API_KEY || "";
 
 // ── Token helpers ──

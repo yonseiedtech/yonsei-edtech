@@ -63,8 +63,15 @@ async function tryBkendLogin(email: string, password: string): Promise<User> {
   saveTokens(tokens.accessToken, tokens.refreshToken);
 
   const authUser = await authApi.me(tokens.accessToken);
-  const profileRes = await profilesApi.getByEmail(authUser.email);
-  const profile = profileRes.data[0];
+
+  // 프로필 조회 실패 시에도 인증 정보만으로 로그인 허용
+  let profile: Record<string, unknown> | undefined;
+  try {
+    const profileRes = await profilesApi.getByEmail(authUser.email);
+    profile = profileRes.data[0];
+  } catch {
+    // 데이터 API 미프로비저닝 등 — 인증만으로 진행
+  }
 
   return mergeToUser(authUser, profile);
 }
