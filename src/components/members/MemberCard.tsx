@@ -1,9 +1,10 @@
-import { User } from "lucide-react";
+import { User as UserIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import type { MemberData } from "@/app/members/page";
+import { ROLE_LABELS } from "@/types";
+import type { User } from "@/types";
 
 interface Props {
-  member: MemberData;
+  member: User;
 }
 
 export default function MemberCard({ member }: Props) {
@@ -11,20 +12,20 @@ export default function MemberCard({ member }: Props) {
     .filter(Boolean)
     .join(" · ");
 
+  const showRoleBadge = member.role !== "member" && member.role !== "alumni";
+
   return (
     <div className="rounded-2xl border bg-white p-6 text-center shadow-sm transition-shadow hover:shadow-md">
       {/* Avatar placeholder */}
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-        <User size={28} />
+        <UserIcon size={28} />
       </div>
 
       <h3 className="mt-4 font-semibold">
         {member.name}
-        {member.generation && (
-          <span className="ml-1 text-xs font-normal text-muted-foreground">
-            ({member.generation}기)
-          </span>
-        )}
+        <span className="ml-1 text-xs font-normal text-muted-foreground">
+          ({member.generation}기)
+        </span>
       </h3>
 
       {affiliationLine && (
@@ -35,16 +36,18 @@ export default function MemberCard({ member }: Props) {
         <Badge variant="secondary" className="text-xs">
           {member.field}
         </Badge>
-        {member.role && (
+        {showRoleBadge && (
           <Badge className="bg-primary/10 text-xs text-primary hover:bg-primary/20">
-            {member.role}
+            {ROLE_LABELS[member.role]}
           </Badge>
         )}
       </div>
 
-      <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-        {member.bio}
-      </p>
+      {member.bio && (
+        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+          {member.bio}
+        </p>
+      )}
     </div>
   );
 }

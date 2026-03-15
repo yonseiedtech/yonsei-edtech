@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import MemberCard from "./MemberCard";
-import type { MemberData } from "@/app/members/page";
+import type { User } from "@/types";
 
 interface Props {
-  members: MemberData[];
+  members: User[];
 }
 
 export default function GenerationTabs({ members }: Props) {
@@ -40,7 +40,7 @@ export default function GenerationTabs({ members }: Props) {
       {/* Member Grid */}
       <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {filtered.map((member) => (
-          <MemberCard key={member.name} member={member} />
+          <MemberCard key={member.id} member={member} />
         ))}
       </div>
     </div>

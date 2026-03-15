@@ -11,11 +11,10 @@ import { useAuthStore } from "@/features/auth/auth-store";
 import { isPresidentOrAbove } from "@/lib/permissions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Shield, Users, FileText, BookOpen, MessageSquare, Clock, HelpCircle, Newspaper } from "lucide-react";
-import { MOCK_POSTS } from "@/features/board/board-data";
-import { useInquiryStore } from "@/features/inquiry/inquiry-store";
-
-const PENDING_COUNT = 2; // mock 승인대기 수
-const ALL_MEMBER_COUNT = 5; // mock 전체회원 수
+import { usePosts } from "@/features/board/useBoard";
+import { useInquiries } from "@/features/inquiry/useInquiry";
+import { profilesApi } from "@/lib/bkend";
+import { useQuery } from "@tanstack/react-query";
 
 function StatCard({ icon: Icon, label, value, color }: {
   icon: React.ElementType;
@@ -42,8 +41,28 @@ function AdminContent() {
   const { user } = useAuthStore();
   const searchParams = useSearchParams();
   const canManageMembers = isPresidentOrAbove(user);
-  const inquiries = useInquiryStore((s) => s.inquiries);
+  const { inquiries } = useInquiries();
+  const { posts } = usePosts("all");
   const unansweredCount = inquiries.filter((i) => i.status === "pending").length;
+
+  const { data: membersData } = useQuery({
+    queryKey: ["admin", "members"],
+    queryFn: async () => {
+      const res = await profilesApi.list({ limit: 0 });
+      return res;
+    },
+    retry: false,
+  });
+  const { data: pendingData } = useQuery({
+    queryKey: ["admin", "pending"],
+    queryFn: async () => {
+      const res = await profilesApi.list({ "filter[approved]": "false", limit: 0 });
+      return res;
+    },
+    retry: false,
+  });
+  const allMemberCount = membersData?.total ?? 0;
+  const pendingCount = pendingData?.total ?? 0;
 
   const tabParam = searchParams.get("tab");
   const defaultTab = tabParam === "newsletter"
@@ -62,9 +81,9 @@ function AdminContent() {
 
         {/* 통계 카드 */}
         <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-          <StatCard icon={Users} label="전체 회원" value={ALL_MEMBER_COUNT} color="bg-blue-50 text-blue-600" />
-          <StatCard icon={Clock} label="승인 대기" value={PENDING_COUNT} color="bg-amber-50 text-amber-600" />
-          <StatCard icon={FileText} label="게시글" value={MOCK_POSTS.length} color="bg-green-50 text-green-600" />
+          <StatCard icon={Users} label="전체 회원" value={allMemberCount} color="bg-blue-50 text-blue-600" />
+          <StatCard icon={Clock} label="승인 대기" value={pendingCount} color="bg-amber-50 text-amber-600" />
+          <StatCard icon={FileText} label="게시글" value={posts.length} color="bg-green-50 text-green-600" />
           <StatCard icon={HelpCircle} label="미답변 문의" value={unansweredCount} color="bg-red-50 text-red-600" />
         </div>
 

@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { useSeminarStore } from "@/features/seminar/seminar-store";
+import {
+  useSeminars,
+  useUpdateSeminar,
+  useCreateSession,
+  useUpdateSession,
+  useDeleteSession,
+} from "@/features/seminar/useSeminar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,14 +66,17 @@ type EditSession = {
 };
 
 export default function AdminSeminarTab() {
-  const { seminars, updateSeminar, addSession, updateSession, deleteSession } =
-    useSeminarStore();
+  const { seminars } = useSeminars();
+  const { updateSeminar } = useUpdateSeminar();
+  const { createSession } = useCreateSession();
+  const { updateSession } = useUpdateSession();
+  const { deleteSession } = useDeleteSession();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editSeminar, setEditSeminar] = useState<EditSeminar | null>(null);
   const [editSession, setEditSession] = useState<EditSession | null>(null);
 
   function handleStatusChange(id: string, status: Seminar["status"]) {
-    updateSeminar(id, { status });
+    updateSeminar({ id, data: { status } });
     toast.success(`세미나 상태가 "${STATUS_LABELS[status]}"(으)로 변경되었습니다.`);
   }
 
@@ -88,18 +97,21 @@ export default function AdminSeminarTab() {
 
   function handleSaveSeminar() {
     if (!editSeminar) return;
-    updateSeminar(editSeminar.id, {
-      title: editSeminar.title,
-      description: editSeminar.description,
-      date: editSeminar.date,
-      time: editSeminar.time,
-      location: editSeminar.location,
-      speaker: editSeminar.speaker,
-      speakerBio: editSeminar.speakerBio || undefined,
-      posterUrl: editSeminar.posterUrl || undefined,
-      maxAttendees: editSeminar.maxAttendees
-        ? parseInt(editSeminar.maxAttendees)
-        : undefined,
+    updateSeminar({
+      id: editSeminar.id,
+      data: {
+        title: editSeminar.title,
+        description: editSeminar.description,
+        date: editSeminar.date,
+        time: editSeminar.time,
+        location: editSeminar.location,
+        speaker: editSeminar.speaker,
+        speakerBio: editSeminar.speakerBio || undefined,
+        posterUrl: editSeminar.posterUrl || undefined,
+        maxAttendees: editSeminar.maxAttendees
+          ? parseInt(editSeminar.maxAttendees)
+          : undefined,
+      },
     });
     toast.success("세미나 정보가 수정되었습니다.");
     setEditSeminar(null);
@@ -132,7 +144,7 @@ export default function AdminSeminarTab() {
 
   function handleSaveSession() {
     if (!editSession) return;
-    const data = {
+    const sessionData = {
       title: editSession.title,
       speaker: editSession.speaker,
       speakerBio: editSession.speakerBio || undefined,
@@ -141,17 +153,24 @@ export default function AdminSeminarTab() {
       order: parseInt(editSession.order) || 1,
     };
     if (editSession.sessionId) {
-      updateSession(editSession.seminarId, editSession.sessionId, data);
+      updateSession({
+        seminarId: editSession.seminarId,
+        sessionId: editSession.sessionId,
+        data: sessionData,
+      });
       toast.success("세션이 수정되었습니다.");
     } else {
-      addSession(editSession.seminarId, data);
+      createSession({
+        seminarId: editSession.seminarId,
+        data: sessionData as Omit<import("@/types").SeminarSession, "id" | "seminarId">,
+      });
       toast.success("세션이 추가되었습니다.");
     }
     setEditSession(null);
   }
 
   function handleDeleteSession(seminarId: string, sessionId: string) {
-    deleteSession(seminarId, sessionId);
+    deleteSession({ seminarId, sessionId });
     toast.success("세션이 삭제되었습니다.");
   }
 

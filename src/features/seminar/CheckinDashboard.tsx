@@ -1,6 +1,6 @@
 "use client";
 
-import { useSeminarStore } from "./seminar-store";
+import { useSeminarStore } from "./seminar-store"; // checkin 관련은 store 유지 (QR 토큰 로컬 처리)
 import { Badge } from "@/components/ui/badge";
 import { Users, UserCheck, UserX } from "lucide-react";
 

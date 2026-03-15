@@ -5,17 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Send } from "lucide-react";
-import { useInquiryStore } from "@/features/inquiry/inquiry-store";
+import { useCreateInquiry } from "@/features/inquiry/useInquiry";
 
 export default function ContactForm() {
   const [submitted, setSubmitted] = useState(false);
-  const addInquiry = useInquiryStore((s) => s.addInquiry);
+  const { createInquiry } = useCreateInquiry();
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
     const formData = new FormData(form);
-    addInquiry({
+    await createInquiry({
       name: formData.get("name") as string,
       email: formData.get("email") as string,
       message: formData.get("message") as string,

@@ -2,42 +2,49 @@
 
 import { useState } from "react";
 import AuthGuard from "@/features/auth/AuthGuard";
+import { useMembers } from "@/features/member/useMembers";
+import { useAuthStore } from "@/features/auth/auth-store";
+import { isAtLeast } from "@/lib/permissions";
 import { Badge } from "@/components/ui/badge";
 import { Shield, Lock, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROLE_LABELS } from "@/types";
-import type { UserRole } from "@/types";
+import type { User, ContactVisibility } from "@/types";
 
-interface DirectoryMember {
-  name: string;
-  role: Exclude<UserRole, "guest">;
-  generation: number;
-  email?: string;
-  affiliation?: string;
-  position?: string;
-  note?: string;
-  tenure?: string;
+function filterContactByVisibility(
+  member: User,
+  viewer: User | null
+): User {
+  const vis: ContactVisibility = member.contactVisibility ?? "members";
+  const shouldHide =
+    vis === "private" ||
+    (vis === "staff" && !isAtLeast(viewer, "staff")) ||
+    (vis === "members" && !viewer);
+
+  if (shouldHide) {
+    return { ...member, contactEmail: undefined };
+  }
+  return member;
 }
-
-const CURRENT_STAFF: DirectoryMember[] = [
-  { name: "김회장", role: "president", generation: 12, email: "president@yonsei.ac.kr", affiliation: "연세대학교", position: "교육학과 박사과정" },
-  { name: "이운영", role: "staff", generation: 12, email: "staff@yonsei.ac.kr", affiliation: "연세대학교", position: "교육학과 석사과정" },
-];
-
-const ADVISORS: DirectoryMember[] = [
-  { name: "최자문", role: "advisor", generation: 1, email: "advisor@yonsei.ac.kr", affiliation: "OO대학교", position: "교수", note: "교육공학 전공" },
-];
-
-const PAST_PRESIDENTS: DirectoryMember[] = [
-  { name: "김회장", role: "president", generation: 12, tenure: "2025.09~현재", affiliation: "연세대학교", position: "박사과정" },
-  { name: "최현우", role: "alumni", generation: 2, tenure: "2024.03~2025.08", affiliation: "OO에듀", position: "대표" },
-  { name: "김민수", role: "alumni", generation: 1, tenure: "2023.03~2024.02", affiliation: "연세대학교", position: "박사과정" },
-];
 
 type Tab = "staff" | "advisors" | "presidents";
 
 function DirectoryContent() {
   const [activeTab, setActiveTab] = useState<Tab>("staff");
+  const { user: viewer } = useAuthStore();
+
+  // 현 운영진: staff + president
+  const { members: staffMembers, isLoading: staffLoading } = useMembers({ role: "staff" });
+  const { members: presidentMembers, isLoading: presLoading } = useMembers({ role: "president" });
+  const currentStaff = [...presidentMembers, ...staffMembers].map((m) =>
+    filterContactByVisibility(m, viewer)
+  );
+
+  // 자문위원
+  const { members: advisors, isLoading: advLoading } = useMembers({ role: "advisor" });
+  const filteredAdvisors = advisors.map((m) => filterContactByVisibility(m, viewer));
+
+  const isLoading = staffLoading || presLoading || advLoading;
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "staff", label: "현 운영진" },
@@ -77,123 +84,130 @@ function DirectoryContent() {
           ))}
         </div>
 
-        {/* 현 운영진 */}
-        {activeTab === "staff" && (
-          <div className="mt-6">
-            <h2 className="text-lg font-bold">현 운영진 (2026 봄학기)</h2>
-            <div className="mt-3 overflow-x-auto rounded-xl border bg-white">
-              <table className="w-full text-sm">
-                <thead className="border-b bg-muted/30">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-medium">이름</th>
-                    <th className="px-4 py-3 text-left font-medium">역할</th>
-                    <th className="px-4 py-3 text-left font-medium">기수</th>
-                    <th className="px-4 py-3 text-left font-medium">소속</th>
-                    <th className="px-4 py-3 text-left font-medium">연락처</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {CURRENT_STAFF.map((m) => (
-                    <tr key={m.name}>
-                      <td className="px-4 py-3 font-medium">{m.name}</td>
-                      <td className="px-4 py-3">
-                        <Badge variant="secondary">{ROLE_LABELS[m.role]}</Badge>
-                      </td>
-                      <td className="px-4 py-3">{m.generation}기</td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {[m.affiliation, m.position].filter(Boolean).join(" · ")}
-                      </td>
-                      <td className="px-4 py-3">
-                        {m.email && (
-                          <a
-                            href={`mailto:${m.email}`}
-                            className="inline-flex items-center gap-1 text-primary hover:underline"
-                          >
-                            <Mail size={12} />
-                            {m.email}
-                          </a>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+        {isLoading ? (
+          <div className="mt-8 flex justify-center py-12">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
           </div>
-        )}
+        ) : (
+          <>
+            {/* 현 운영진 */}
+            {activeTab === "staff" && (
+              <div className="mt-6">
+                <h2 className="text-lg font-bold">현 운영진</h2>
+                {currentStaff.length === 0 ? (
+                  <p className="mt-4 text-sm text-muted-foreground">등록된 운영진이 없습니다.</p>
+                ) : (
+                  <div className="mt-3 overflow-x-auto rounded-xl border bg-white">
+                    <table className="w-full text-sm">
+                      <thead className="border-b bg-muted/30">
+                        <tr>
+                          <th className="px-4 py-3 text-left font-medium">이름</th>
+                          <th className="px-4 py-3 text-left font-medium">역할</th>
+                          <th className="px-4 py-3 text-left font-medium">기수</th>
+                          <th className="px-4 py-3 text-left font-medium">소속</th>
+                          <th className="px-4 py-3 text-left font-medium">연락처</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {currentStaff.map((m) => (
+                          <tr key={m.id}>
+                            <td className="px-4 py-3 font-medium">{m.name}</td>
+                            <td className="px-4 py-3">
+                              <Badge variant="secondary">{ROLE_LABELS[m.role]}</Badge>
+                            </td>
+                            <td className="px-4 py-3">{m.generation}기</td>
+                            <td className="px-4 py-3 text-muted-foreground">
+                              {[m.affiliation, m.position].filter(Boolean).join(" · ")}
+                            </td>
+                            <td className="px-4 py-3">
+                              {m.contactEmail ? (
+                                <a
+                                  href={`mailto:${m.contactEmail}`}
+                                  className="inline-flex items-center gap-1 text-primary hover:underline"
+                                >
+                                  <Mail size={12} />
+                                  {m.contactEmail}
+                                </a>
+                              ) : m.email ? (
+                                <a
+                                  href={`mailto:${m.email}`}
+                                  className="inline-flex items-center gap-1 text-primary hover:underline"
+                                >
+                                  <Mail size={12} />
+                                  {m.email}
+                                </a>
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
 
-        {/* 자문위원 */}
-        {activeTab === "advisors" && (
-          <div className="mt-6">
-            <h2 className="text-lg font-bold">자문위원</h2>
-            <div className="mt-3 overflow-x-auto rounded-xl border bg-white">
-              <table className="w-full text-sm">
-                <thead className="border-b bg-muted/30">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-medium">이름</th>
-                    <th className="px-4 py-3 text-left font-medium">기수</th>
-                    <th className="px-4 py-3 text-left font-medium">소속</th>
-                    <th className="px-4 py-3 text-left font-medium">비고</th>
-                    <th className="px-4 py-3 text-left font-medium">연락처</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {ADVISORS.map((m) => (
-                    <tr key={m.name}>
-                      <td className="px-4 py-3 font-medium">{m.name}</td>
-                      <td className="px-4 py-3">{m.generation}기</td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {[m.affiliation, m.position].filter(Boolean).join(" · ")}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">{m.note}</td>
-                      <td className="px-4 py-3">
-                        {m.email && (
-                          <a
-                            href={`mailto:${m.email}`}
-                            className="inline-flex items-center gap-1 text-primary hover:underline"
-                          >
-                            <Mail size={12} />
-                            {m.email}
-                          </a>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+            {/* 자문위원 */}
+            {activeTab === "advisors" && (
+              <div className="mt-6">
+                <h2 className="text-lg font-bold">자문위원</h2>
+                {filteredAdvisors.length === 0 ? (
+                  <p className="mt-4 text-sm text-muted-foreground">등록된 자문위원이 없습니다.</p>
+                ) : (
+                  <div className="mt-3 overflow-x-auto rounded-xl border bg-white">
+                    <table className="w-full text-sm">
+                      <thead className="border-b bg-muted/30">
+                        <tr>
+                          <th className="px-4 py-3 text-left font-medium">이름</th>
+                          <th className="px-4 py-3 text-left font-medium">기수</th>
+                          <th className="px-4 py-3 text-left font-medium">소속</th>
+                          <th className="px-4 py-3 text-left font-medium">분야</th>
+                          <th className="px-4 py-3 text-left font-medium">연락처</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {filteredAdvisors.map((m) => (
+                          <tr key={m.id}>
+                            <td className="px-4 py-3 font-medium">{m.name}</td>
+                            <td className="px-4 py-3">{m.generation}기</td>
+                            <td className="px-4 py-3 text-muted-foreground">
+                              {[m.affiliation, m.position].filter(Boolean).join(" · ")}
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground">{m.field}</td>
+                            <td className="px-4 py-3">
+                              {m.contactEmail ? (
+                                <a
+                                  href={`mailto:${m.contactEmail}`}
+                                  className="inline-flex items-center gap-1 text-primary hover:underline"
+                                >
+                                  <Mail size={12} />
+                                  {m.contactEmail}
+                                </a>
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
 
-        {/* 역대 회장 */}
-        {activeTab === "presidents" && (
-          <div className="mt-6">
-            <h2 className="text-lg font-bold">역대 회장</h2>
-            <div className="mt-3 overflow-x-auto rounded-xl border bg-white">
-              <table className="w-full text-sm">
-                <thead className="border-b bg-muted/30">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-medium">기수</th>
-                    <th className="px-4 py-3 text-left font-medium">이름</th>
-                    <th className="px-4 py-3 text-left font-medium">재임 기간</th>
-                    <th className="px-4 py-3 text-left font-medium">현 소속</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {PAST_PRESIDENTS.map((m, i) => (
-                    <tr key={`${m.name}-${i}`}>
-                      <td className="px-4 py-3">{m.generation}기</td>
-                      <td className="px-4 py-3 font-medium">{m.name}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{m.tenure}</td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {[m.affiliation, m.position].filter(Boolean).join(" · ")}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+            {/* 역대 회장 — 향후 role_history 테이블로 전환 */}
+            {activeTab === "presidents" && (
+              <div className="mt-6">
+                <h2 className="text-lg font-bold">역대 회장</h2>
+                <p className="mt-4 text-sm text-muted-foreground">
+                  역대 회장 정보는 준비 중입니다.
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

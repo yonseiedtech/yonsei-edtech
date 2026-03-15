@@ -7,7 +7,7 @@ import ProfileEditor from "@/features/auth/ProfileEditor";
 import PasswordChangeForm from "@/features/auth/PasswordChangeForm";
 import MyPostList from "@/features/auth/MyPostList";
 import { usePosts } from "@/features/board/useBoard";
-import { useSeminarStore } from "@/features/seminar/seminar-store";
+import { useSeminars, useToggleAttendance } from "@/features/seminar/useSeminar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { User, LogOut, Calendar, X } from "lucide-react";
@@ -20,7 +20,8 @@ function MypageContent() {
   const { user } = useAuthStore();
   const { logout } = useAuth();
   const { posts } = usePosts();
-  const { seminars, toggleAttendance } = useSeminarStore();
+  const { seminars } = useSeminars();
+  const { toggleAttendance } = useToggleAttendance();
 
   const myPosts = posts.filter((p) => p.authorId === user?.id);
   const mySeminars = seminars.filter((s) => user && s.attendeeIds.includes(user.id));

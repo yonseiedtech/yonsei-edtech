@@ -7,7 +7,7 @@ import QrScanner from "@/features/seminar/QrScanner";
 import CheckinResultCard from "@/features/seminar/CheckinResult";
 import CheckinDashboard from "@/features/seminar/CheckinDashboard";
 import { useSeminar } from "@/features/seminar/useSeminar";
-import { useSeminarStore } from "@/features/seminar/seminar-store";
+import { useSeminarStore } from "@/features/seminar/seminar-store"; // checkinByToken은 아직 store 사용 (QR 로컬 처리)
 import { useAuthStore } from "@/features/auth/auth-store";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, QrCode } from "lucide-react";

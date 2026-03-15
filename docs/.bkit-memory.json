@@ -26,28 +26,37 @@
       "archivedTo": "N/A"
     },
     "seminar-checkin": {
-      "phase": "check",
+      "phase": "completed",
       "matchRate": 92,
       "iterationCount": 0,
-      "startedAt": "2026-03-14T00:00:00Z"
+      "startedAt": "2026-03-14T00:00:00Z",
+      "completedAt": "2026-03-15T00:00:00Z"
     },
     "bkend-integration": {
-      "phase": "do",
+      "phase": "check",
       "matchRate": 0,
       "iterationCount": 0,
       "startedAt": "2026-03-14T00:00:00Z"
     },
     "post-crud": {
-      "phase": "check",
+      "phase": "completed",
       "matchRate": 100,
       "iterationCount": 0,
-      "startedAt": "2026-03-14T00:00:00Z"
+      "startedAt": "2026-03-14T00:00:00Z",
+      "completedAt": "2026-03-15T00:00:00Z"
     },
     "dashboard-enhance": {
       "phase": "design",
       "matchRate": 0,
       "iterationCount": 0,
       "startedAt": "2026-03-14T00:00:00Z"
+    },
+    "org-infrastructure": {
+      "phase": "completed",
+      "matchRate": 96,
+      "iterationCount": 0,
+      "startedAt": "2026-03-15T00:00:00Z",
+      "completedAt": "2026-03-15T00:00:00Z"
     }
   }
 }

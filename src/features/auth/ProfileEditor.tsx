@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Save } from "lucide-react";
 import { toast } from "sonner";
+import { useUpdateProfile } from "@/features/member/useMembers";
+import { useAuthStore } from "@/features/auth/auth-store";
 import type { User, OccupationType, ContactVisibility } from "@/types";
 import { OCCUPATION_LABELS, VISIBILITY_LABELS } from "@/types";
 
@@ -53,10 +55,17 @@ export default function ProfileEditor({ user }: Props) {
 
   const occupation = useWatch({ control, name: "occupation" });
   const occFields = occupation ? OCCUPATION_FIELDS[occupation as OccupationType] : null;
+  const { updateProfile, isLoading: isSaving } = useUpdateProfile();
 
   async function onSubmit(data: ProfileData) {
     try {
-      // TODO: bkend.ai profilesApi.update()
+      await updateProfile({ id: user.id, data: data as unknown as Record<string, unknown> });
+      const updatedUser = {
+        ...user,
+        ...data,
+        occupation: data.occupation || undefined,
+      };
+      useAuthStore.getState().setUser(updatedUser);
       toast.success("프로필이 저장되었습니다.");
     } catch {
       toast.error("프로필 저장에 실패했습니다.");
@@ -145,9 +154,9 @@ export default function ProfileEditor({ user }: Props) {
       </div>
 
       <div className="flex justify-end">
-        <Button type="submit">
+        <Button type="submit" disabled={isSaving}>
           <Save size={16} className="mr-1" />
-          저장
+          {isSaving ? "저장 중..." : "저장"}
         </Button>
       </div>
     </form>

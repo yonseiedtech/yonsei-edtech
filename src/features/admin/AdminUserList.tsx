@@ -4,25 +4,33 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { useApproveMember, useRejectMember } from "@/features/member/useMembers";
 import type { User } from "@/types";
 
 interface Props {
   users: User[];
-  onApprove?: (id: string) => void;
-  onReject?: (id: string) => void;
 }
 
-export default function AdminUserList({ users, onApprove, onReject }: Props) {
-  function handleApprove(user: User) {
-    // TODO: bkend.ai admin API
-    onApprove?.(user.id);
-    toast.success(`${user.name} 승인 완료`);
+export default function AdminUserList({ users }: Props) {
+  const { approveMember } = useApproveMember();
+  const { rejectMember } = useRejectMember();
+
+  async function handleApprove(user: User) {
+    try {
+      await approveMember(user.id);
+      toast.success(`${user.name} 승인 완료`);
+    } catch {
+      toast.error(`${user.name} 승인에 실패했습니다.`);
+    }
   }
 
-  function handleReject(user: User) {
-    // TODO: bkend.ai admin API
-    onReject?.(user.id);
-    toast.error(`${user.name} 거부 완료`);
+  async function handleReject(user: User) {
+    try {
+      await rejectMember(user.id);
+      toast.error(`${user.name} 거부 완료`);
+    } catch {
+      toast.error(`${user.name} 거부에 실패했습니다.`);
+    }
   }
 
   if (users.length === 0) {

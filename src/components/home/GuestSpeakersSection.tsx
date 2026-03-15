@@ -1,10 +1,10 @@
 "use client";
 
-import { useSeminarStore } from "@/features/seminar/seminar-store";
+import { useSeminars } from "@/features/seminar/useSeminar";
 import { Mic } from "lucide-react";
 
 export default function GuestSpeakersSection() {
-  const { seminars } = useSeminarStore();
+  const { seminars } = useSeminars();
   const guestSeminars = seminars
     .filter((s) => s.speakerType === "guest")
     .sort((a, b) => b.date.localeCompare(a.date))

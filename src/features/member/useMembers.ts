@@ -1,0 +1,149 @@
+"use client";
+
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { profilesApi } from "@/lib/bkend";
+import type { User, UserRole } from "@/types";
+
+// ── 승인된 회원 목록 ──
+
+export function useMembers(options?: {
+  generation?: number;
+  role?: UserRole;
+  approved?: boolean;
+}) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["members", options],
+    queryFn: async () => {
+      const params: Record<string, string | number | undefined> = {
+        limit: 200,
+        sort: "generation:desc,name:asc",
+      };
+      if (options?.approved !== undefined) {
+        params["filter[approved]"] = String(options.approved);
+      } else {
+        params["filter[approved]"] = "true";
+      }
+      if (options?.generation) {
+        params["filter[generation]"] = options.generation;
+      }
+      if (options?.role) {
+        params["filter[role]"] = options.role;
+      }
+      const res = await profilesApi.list(params);
+      return { members: res.data as unknown as User[], total: res.total };
+    },
+    retry: false,
+  });
+
+  return {
+    members: data?.members ?? [],
+    total: data?.total ?? 0,
+    isLoading,
+  };
+}
+
+// ── 미승인 회원 (관리자용) ──
+
+export function usePendingMembers() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["members", "pending"],
+    queryFn: async () => {
+      const res = await profilesApi.list({
+        "filter[approved]": "false",
+        limit: 100,
+        sort: "createdAt:desc",
+      });
+      return res.data as unknown as User[];
+    },
+    retry: false,
+  });
+
+  return { pendingMembers: data ?? [], isLoading };
+}
+
+// ── 프로필 수정 ──
+
+export function useUpdateProfile() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Record<string, unknown> }) => {
+      return await profilesApi.update(id, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["members"] });
+    },
+  });
+
+  return { updateProfile: mutation.mutateAsync, isLoading: mutation.isPending };
+}
+
+// ── 회원 승인 ──
+
+export function useApproveMember() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await profilesApi.approve(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["members"] });
+    },
+  });
+
+  return { approveMember: mutation.mutateAsync, isLoading: mutation.isPending };
+}
+
+// ── 회원 거부 ──
+
+export function useRejectMember() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await profilesApi.update(id, { approved: false, rejected: true });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["members"] });
+    },
+  });
+
+  return { rejectMember: mutation.mutateAsync, isLoading: mutation.isPending };
+}
+
+// ── 역할 변경 ──
+
+export function useChangeRole() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async ({ id, role }: { id: string; role: UserRole }) => {
+      return await profilesApi.update(id, { role });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["members"] });
+    },
+  });
+
+  return { changeRole: mutation.mutateAsync, isLoading: mutation.isPending };
+}
+
+// ── 일괄 역할 변경 (운영진 교체) ──
+
+export function useBulkChangeRoles() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async (changes: { id: string; role: UserRole }[]) => {
+      return await Promise.all(
+        changes.map((c) => profilesApi.update(c.id, { role: c.role }))
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["members"] });
+    },
+  });
+
+  return { bulkChangeRoles: mutation.mutateAsync, isLoading: mutation.isPending };
+}

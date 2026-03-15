@@ -1,6 +1,6 @@
 "use client";
 
-import { useInquiryStore } from "@/features/inquiry/inquiry-store";
+import { useInquiries, useUpdateInquiryStatus, useDeleteInquiry } from "@/features/inquiry/useInquiry";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
@@ -8,10 +8,12 @@ import { CheckCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AdminInquiryTab() {
-  const { inquiries, updateStatus, deleteInquiry } = useInquiryStore();
+  const { inquiries } = useInquiries();
+  const { updateInquiryStatus } = useUpdateInquiryStatus();
+  const { deleteInquiry } = useDeleteInquiry();
 
   function handleReply(id: string) {
-    updateStatus(id, "확인 후 이메일로 답변 드렸습니다.");
+    updateInquiryStatus({ id, reply: "확인 후 이메일로 답변 드렸습니다." });
     toast.success("답변 완료 처리되었습니다.");
   }
 

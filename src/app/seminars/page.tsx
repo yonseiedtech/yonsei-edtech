@@ -17,7 +17,7 @@ type StatusFilter = Seminar["status"] | "all";
 function SeminarsContent() {
   const [status, setStatus] = useState<StatusFilter>("all");
   const { user } = useAuthStore();
-  const allSeminars = useSeminars();
+  const { seminars: allSeminars } = useSeminars();
 
   const filtered =
     status === "all"

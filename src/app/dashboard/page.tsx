@@ -4,7 +4,7 @@ import Link from "next/link";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { usePosts } from "@/features/board/useBoard";
-import { useSeminarStore } from "@/features/seminar/seminar-store";
+import { useSeminars } from "@/features/seminar/useSeminar";
 import { useNewsletterStore } from "@/features/newsletter/newsletter-store";
 import { isAtLeast } from "@/lib/permissions";
 import { ROLE_LABELS } from "@/types";
@@ -55,7 +55,7 @@ function StatCard({
 function DashboardContent() {
   const { user } = useAuthStore();
   const { posts } = usePosts();
-  const { seminars } = useSeminarStore();
+  const { seminars } = useSeminars();
   const { issues } = useNewsletterStore();
 
   if (!user) return null;

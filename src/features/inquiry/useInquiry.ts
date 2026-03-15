@@ -73,3 +73,24 @@ export function useUpdateInquiryStatus() {
 
   return { updateInquiryStatus: mutation.mutateAsync, isLoading: mutation.isPending };
 }
+
+export function useDeleteInquiry() {
+  const queryClient = useQueryClient();
+  const deleteInquiry = useInquiryStore((s) => s.deleteInquiry);
+
+  const mutation = useMutation({
+    mutationFn: async (id: string) => {
+      try {
+        return await inquiriesApi.update(id, { status: "deleted" });
+      } catch {
+        deleteInquiry(id);
+        return null;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["inquiries"] });
+    },
+  });
+
+  return { deleteInquiry: mutation.mutateAsync, isLoading: mutation.isPending };
+}

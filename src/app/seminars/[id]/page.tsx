@@ -3,8 +3,7 @@
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import AuthGuard from "@/features/auth/AuthGuard";
-import { useSeminar, useToggleAttendance } from "@/features/seminar/useSeminar";
-import { useSeminarStore } from "@/features/seminar/seminar-store";
+import { useSeminar, useToggleAttendance, useAttendee, useCheckinStats } from "@/features/seminar/useSeminar";
 import QrCodeDisplay from "@/features/seminar/QrCodeDisplay";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
@@ -78,10 +77,8 @@ function SeminarDetail({ id }: { id: string }) {
   const [pressText, setPressText] = useState("");
 
   const isStaff = isAtLeast(user, "staff");
-  const getAttendee = useSeminarStore((s) => s.getAttendee);
-  const getCheckinStats = useSeminarStore((s) => s.getCheckinStats);
-  const myAttendee = user ? getAttendee(id, user.id) : undefined;
-  const checkinStats = getCheckinStats(id);
+  const myAttendee = useAttendee(id, user?.id ?? "");
+  const checkinStats = useCheckinStats(id);
 
   if (!seminar) {
     return (
