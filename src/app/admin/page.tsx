@@ -8,10 +8,11 @@ import AdminSeminarTab from "@/features/admin/AdminSeminarTab";
 import AdminInquiryTab from "@/features/admin/AdminInquiryTab";
 import AdminNewsletterTab from "@/features/admin/AdminNewsletterTab";
 import AdminGreetingTab from "@/features/admin/AdminGreetingTab";
+import AdminAgentTab from "@/features/admin/AdminAgentTab";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isPresidentOrAbove } from "@/lib/permissions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Users, FileText, BookOpen, MessageSquare, Clock, HelpCircle, Newspaper, Settings } from "lucide-react";
+import { Shield, Users, FileText, BookOpen, MessageSquare, Clock, HelpCircle, Newspaper, Settings, Bot } from "lucide-react";
 import { usePosts } from "@/features/board/useBoard";
 import { useInquiries } from "@/features/inquiry/useInquiry";
 import { profilesApi } from "@/lib/bkend";
@@ -66,8 +67,9 @@ function AdminContent() {
   const pendingCount = pendingData?.total ?? 0;
 
   const tabParam = searchParams.get("tab");
-  const defaultTab = tabParam === "newsletter"
-    ? "newsletter"
+  const validTabs = ["members", "posts", "seminars", "inquiries", "newsletter", "agents", "site-settings"];
+  const defaultTab = tabParam && validTabs.includes(tabParam)
+    ? tabParam
     : canManageMembers
       ? "members"
       : "posts";
@@ -113,6 +115,10 @@ function AdminContent() {
                 <Newspaper size={16} className="mr-1.5" />
                 학회보
               </TabsTrigger>
+              <TabsTrigger value="agents" className="flex-none px-4 py-2.5 text-sm">
+                <Bot size={16} className="mr-1.5" />
+                에이전트
+              </TabsTrigger>
               <TabsTrigger value="site-settings" className="flex-none px-4 py-2.5 text-sm">
                 <Settings size={16} className="mr-1.5" />
                 사이트 설정
@@ -140,6 +146,10 @@ function AdminContent() {
 
           <TabsContent value="newsletter" className="pt-6">
             <AdminNewsletterTab />
+          </TabsContent>
+
+          <TabsContent value="agents" className="pt-6">
+            <AdminAgentTab />
           </TabsContent>
 
           <TabsContent value="site-settings" className="pt-6">
