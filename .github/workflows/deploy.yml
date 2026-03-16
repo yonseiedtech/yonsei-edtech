@@ -28,8 +28,10 @@ jobs:
       - name: Clear Build Cache
         run: rm -rf .vercel/output .next
 
-      - name: Build
+      - name: Build (no cache)
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_FORCE_NO_BUILD_CACHE: "1"
 
       - name: Deploy
         run: vercel deploy --prebuilt --prod --force --token=${{ secrets.VERCEL_TOKEN }}
