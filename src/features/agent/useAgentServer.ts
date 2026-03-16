@@ -16,6 +16,11 @@ export function saveServerConfig(url: string, token: string) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ url, token }));
 }
 
+function hasValidConfig() {
+  const { url, token } = getServerConfig();
+  return !!url && !!token;
+}
+
 async function serverFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const { url, token } = getServerConfig();
   if (!url || !token) throw new Error("서버 설정이 필요합니다.");
@@ -34,14 +39,33 @@ async function serverFetch<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
-// ── Health ──
+// ── Health (토큰 설정된 경우만 폴링) ──
 
 export function useServerHealth() {
   return useQuery({
     queryKey: ["agent-server", "health"],
     queryFn: () => serverFetch<{ status: string; agents: number; running_tasks: number }>("/health"),
-    refetchInterval: 5000,
+    refetchInterval: hasValidConfig() ? 5000 : false,
+    enabled: hasValidConfig(),
     retry: false,
+  });
+}
+
+// ── Connection test (수동 트리거) ──
+
+export function useTestConnection() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ url, token }: { url: string; token: string }) => {
+      const res = await fetch(`${url}/health`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(res.status === 401 ? "토큰이 올바르지 않습니다." : `연결 실패 (${res.status})`);
+      return res.json() as Promise<{ status: string; agents: number }>;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["agent-server"] });
+    },
   });
 }
 
@@ -51,6 +75,7 @@ export function useAgents() {
   return useQuery({
     queryKey: ["agent-server", "agents"],
     queryFn: () => serverFetch<Agent[]>("/agents"),
+    enabled: hasValidConfig(),
     retry: false,
   });
 }
@@ -89,6 +114,7 @@ export function useTasks(agentId?: string) {
   return useQuery({
     queryKey: ["agent-server", "tasks", agentId],
     queryFn: () => serverFetch<AgentTask[]>(`/tasks?${params}`),
+    enabled: hasValidConfig(),
     refetchInterval: 3000,
     retry: false,
   });

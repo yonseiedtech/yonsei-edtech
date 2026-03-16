@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ServerConnectionCard from "@/features/agent/ServerConnectionCard";
 import AgentCard from "@/features/agent/AgentCard";
@@ -23,7 +23,6 @@ export default function AdminAgentTab() {
   const [editAgent, setEditAgent] = useState<Agent | null>(null);
   const [assignAgentId, setAssignAgentId] = useState<string | undefined>();
   const [viewTask, setViewTask] = useState<AgentTask | null>(null);
-  const [streamTaskId, setStreamTaskId] = useState<string | null>(null);
 
   function handleAddAgent() {
     createAgent(
@@ -46,8 +45,12 @@ export default function AdminAgentTab() {
       <ServerConnectionCard />
 
       {!connected ? (
-        <div className="rounded-xl border border-dashed bg-muted/30 py-12 text-center text-muted-foreground">
-          로컬 에이전트 서버에 연결해주세요.
+        <div className="rounded-xl border border-dashed bg-muted/30 p-8 text-center">
+          <Bot size={40} className="mx-auto text-muted-foreground/40" />
+          <p className="mt-3 font-medium text-muted-foreground">에이전트 서버에 연결하면 AI 에이전트를 관리할 수 있습니다</p>
+          <p className="mt-1 text-sm text-muted-foreground/70">
+            위 가이드를 따라 로컬 서버를 실행하고 토큰을 입력해주세요
+          </p>
         </div>
       ) : (
         <>
@@ -75,17 +78,14 @@ export default function AdminAgentTab() {
           {/* 작업 할당 */}
           <TaskAssignForm
             preselectedAgentId={assignAgentId}
-            onSubmitted={(taskId) => {
-              setStreamTaskId(taskId);
-              setAssignAgentId(undefined);
-            }}
+            onSubmitted={() => setAssignAgentId(undefined)}
           />
 
           {/* 최근 작업 */}
           <div>
             <h3 className="mb-3 font-semibold">최근 작업</h3>
             {tasks.length === 0 ? (
-              <p className="text-sm text-muted-foreground">아직 작업이 없습니다.</p>
+              <p className="text-sm text-muted-foreground">아직 작업이 없습니다. 에이전트에 작업을 할당해보세요.</p>
             ) : (
               <div className="rounded-xl border bg-white divide-y">
                 {tasks.map((task) => (
