@@ -14,11 +14,11 @@ function Tabs({
     <TabsPrimitive.Root
       data-slot="tabs"
       data-orientation={orientation}
-      className={cn("group/tabs", className)}
-      style={{
-        display: orientation === "horizontal" ? "block" : "flex",
-        flexDirection: orientation !== "horizontal" ? "row" : undefined,
-      }}
+      className={cn(
+        "group/tabs flex flex-col",
+        orientation === "vertical" && "flex-row",
+        className
+      )}
       {...props}
     />
   )
