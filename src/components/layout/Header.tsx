@@ -25,9 +25,18 @@ const PUBLIC_NAV: NavGroup[] = [
     label: "학회소개",
     items: [
       { href: "/about/greeting", label: "인사말" },
-      { href: "/about", label: "소개" },
+      { href: "/about", label: "학회 소개" },
+      { href: "/about/fields", label: "활동 분야" },
       { href: "/about/history", label: "연혁" },
-      { href: "/members", label: "구성원" },
+    ],
+  },
+  {
+    label: "구성원",
+    items: [
+      { href: "/members?tab=professor", label: "주임교수" },
+      { href: "/members?tab=staff", label: "운영진" },
+      { href: "/members?tab=student", label: "재학생 회원" },
+      { href: "/members?tab=alumni", label: "졸업생 회원" },
     ],
   },
   {

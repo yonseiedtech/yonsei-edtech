@@ -3,29 +3,59 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { seminarsApi, postsApi } from "@/lib/bkend";
 
-const recentActivities = [
-  {
-    category: "세미나",
-    title: "ChatGPT를 활용한 적응형 학습 설계",
-    desc: "LLM 기반 학습 피드백 시스템의 가능성과 한계를 사례 중심으로 분석했습니다.",
-    date: "2026.03",
-  },
-  {
-    category: "프로젝트",
-    title: "학습 대시보드 프로토타입 v2",
-    desc: "학습 분석 데이터를 시각화하고 학습자 맞춤 피드백을 제공하는 대시보드를 개발했습니다.",
-    date: "2025.09",
-  },
-  {
-    category: "스터디",
-    title: "UX 리서치 기초 스터디",
-    desc: "교육 서비스 대상 사용자 인터뷰, 설문 설계, 프로토타입 테스트 방법론을 학습했습니다.",
-    date: "2026.03",
-  },
-];
+interface Activity {
+  category: string;
+  title: string;
+  desc: string;
+  date: string;
+}
+
+function formatDate(dateStr?: string): string {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
 
 export default function ActivityCards() {
+  const { data: activities = [] } = useQuery({
+    queryKey: ["home", "recent-activities"],
+    queryFn: async (): Promise<Activity[]> => {
+      const results: Activity[] = [];
+
+      try {
+        const seminars = await seminarsApi.list({ limit: 2 });
+        for (const s of seminars.data) {
+          results.push({
+            category: "세미나",
+            title: (s.title as string) || "",
+            desc: (s.description as string)?.slice(0, 80) || "",
+            date: formatDate(s.date as string),
+          });
+        }
+      } catch { /* Firestore 미연결 시 무시 */ }
+
+      try {
+        const posts = await postsApi.list({ limit: 2 });
+        for (const p of posts.data) {
+          results.push({
+            category: "게시글",
+            title: (p.title as string) || "",
+            desc: (p.content as string)?.replace(/<[^>]*>/g, "").slice(0, 80) || "",
+            date: formatDate(p.createdAt as string),
+          });
+        }
+      } catch { /* Firestore 미연결 시 무시 */ }
+
+      return results.slice(0, 3);
+    },
+    staleTime: 60_000,
+  });
+
+  if (activities.length === 0) return null;
+
   return (
     <section className="py-16 md:py-24">
       <div className="mx-auto max-w-6xl px-4">
@@ -40,9 +70,9 @@ export default function ActivityCards() {
         </div>
 
         <div className="mt-8 divide-y border-y">
-          {recentActivities.map((a, i) => (
+          {activities.map((a, i) => (
             <motion.div
-              key={a.title}
+              key={`${a.category}-${a.title}`}
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}

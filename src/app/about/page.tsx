@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Target, Eye, Sparkles, GraduationCap, Monitor, Brain } from "lucide-react";
+import Link from "next/link";
+import { Target, Eye, Sparkles, ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "학회 소개",
@@ -24,11 +25,6 @@ const values = [
   },
 ];
 
-const fields = [
-  { icon: Monitor, title: "에듀테크", desc: "AI 교육, LMS, 교육용 앱 등 기술 기반 교육 솔루션" },
-  { icon: GraduationCap, title: "교수설계", desc: "체계적인 교수-학습 설계 이론과 실습" },
-  { icon: Brain, title: "학습과학", desc: "인지심리학, 동기이론 등 학습의 과학적 이해" },
-];
 
 export default function AboutPage() {
   return (
@@ -61,25 +57,14 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Research Fields */}
-      <section className="mx-auto mt-20 max-w-6xl px-4">
-        <h2 className="text-center text-2xl font-bold">활동 분야</h2>
-        <div className="mt-8 grid gap-6 md:grid-cols-3">
-          {fields.map((f) => (
-            <div
-              key={f.title}
-              className="flex items-start gap-4 rounded-2xl border bg-white p-6"
-            >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary/10 text-secondary">
-                <f.icon size={20} />
-              </div>
-              <div>
-                <h3 className="font-semibold">{f.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{f.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* Link to Fields */}
+      <section className="mx-auto mt-20 max-w-6xl px-4 text-center">
+        <Link
+          href="/about/fields"
+          className="inline-flex items-center gap-2 rounded-xl bg-primary/10 px-6 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+        >
+          활동 분야 알아보기 <ArrowRight size={16} />
+        </Link>
       </section>
 
     </div>
