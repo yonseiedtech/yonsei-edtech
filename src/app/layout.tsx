@@ -7,6 +7,7 @@ import QueryProvider from "@/lib/query-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { OrganizationJsonLd, WebsiteJsonLd } from "@/components/seo/JsonLd";
 import ChatWidget from "@/components/chat/ChatWidget";
+import AuthProvider from "@/features/auth/AuthProvider";
 import "./globals.css";
 
 const pretendard = localFont({
@@ -110,13 +111,15 @@ export default function RootLayout({
         className={`${pretendard.variable} ${inter.variable} font-sans antialiased`}
       >
         <QueryProvider>
-          <div className="flex min-h-screen flex-col">
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
-          <ChatWidget />
-          <Toaster richColors position="top-center" />
+          <AuthProvider>
+            <div className="flex min-h-screen flex-col">
+              <Header />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </div>
+            <ChatWidget />
+            <Toaster richColors position="top-center" />
+          </AuthProvider>
         </QueryProvider>
       </body>
     </html>
