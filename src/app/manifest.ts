@@ -1,5 +1,8 @@
 import type { MetadataRoute } from "next";
 
+// Dynamic으로 전환하여 Vercel 정적 캐시 방지
+export const dynamic = "force-dynamic";
+
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "연세교육공학회",
