@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { MessageCircle } from "lucide-react";
+import { useState, lazy, Suspense } from "react";
+import { MessageCircle, Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import ChatPanel from "./ChatPanel";
+
+const ChatPanel = lazy(() => import("./ChatPanel"));
 
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);
@@ -18,7 +19,15 @@ export default function ChatWidget() {
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
           >
-            <ChatPanel onClose={() => setOpen(false)} />
+            <Suspense
+              fallback={
+                <div className="flex h-[400px] w-96 items-center justify-center rounded-2xl border bg-background shadow-2xl">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              }
+            >
+              <ChatPanel onClose={() => setOpen(false)} />
+            </Suspense>
           </motion.div>
         )}
       </AnimatePresence>
