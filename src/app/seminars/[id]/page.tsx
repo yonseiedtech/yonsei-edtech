@@ -7,6 +7,7 @@ import { useSeminar, useToggleAttendance, useAttendee, useCheckinStats } from "@
 import QrCodeDisplay from "@/features/seminar/QrCodeDisplay";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
+import { streamAI } from "@/lib/ai-client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -28,10 +29,22 @@ import {
   Download,
   QrCode,
   LogIn,
+  Sparkles,
+  Loader2,
+  Instagram,
+  Mail,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { Seminar } from "@/types";
+
+type ContentFormat = "press" | "sns" | "email";
+
+const FORMAT_LABELS: Record<ContentFormat, { label: string; icon: React.ReactNode }> = {
+  press: { label: "보도자료", icon: <FileText size={14} /> },
+  sns: { label: "SNS 포스팅", icon: <Instagram size={14} /> },
+  email: { label: "초대 이메일", icon: <Mail size={14} /> },
+};
 
 function generatePressRelease(seminar: Seminar): string {
   const speakerInfo = [
@@ -76,6 +89,8 @@ function SeminarDetail({ id }: { id: string }) {
   const { toggleAttendance } = useToggleAttendance();
   const [showPressRelease, setShowPressRelease] = useState(false);
   const [pressText, setPressText] = useState("");
+  const [selectedFormat, setSelectedFormat] = useState<ContentFormat>("press");
+  const [isAiGenerating, setIsAiGenerating] = useState(false);
 
   const isStaff = isAtLeast(user, "staff");
   const myAttendee = useAttendee(id, user?.id ?? "");
@@ -97,12 +112,35 @@ function SeminarDetail({ id }: { id: string }) {
 
   function openPressRelease() {
     setPressText(generatePressRelease(seminar!));
+    setSelectedFormat("press");
     setShowPressRelease(true);
+  }
+
+  async function handleAiGenerate(format: ContentFormat) {
+    setIsAiGenerating(true);
+    setSelectedFormat(format);
+    setPressText("");
+
+    try {
+      await streamAI(
+        "/api/ai/press-release",
+        { seminar, format },
+        (chunk) => setPressText((prev) => prev + chunk),
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "AI 생성 실패");
+      // Fallback to template for press format
+      if (format === "press") {
+        setPressText(generatePressRelease(seminar!));
+      }
+    } finally {
+      setIsAiGenerating(false);
+    }
   }
 
   function handleCopyPress() {
     navigator.clipboard.writeText(pressText);
-    toast.success("보도자료가 클립보드에 복사되었습니다.");
+    toast.success("클립보드에 복사되었습니다.");
   }
 
   function handleDownloadPress() {
@@ -110,10 +148,11 @@ function SeminarDetail({ id }: { id: string }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `보도자료_${seminar!.title.replace(/[^가-힣a-zA-Z0-9]/g, "_")}.txt`;
+    const suffix = FORMAT_LABELS[selectedFormat].label;
+    a.download = `${suffix}_${seminar!.title.replace(/[^가-힣a-zA-Z0-9]/g, "_")}.txt`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success("보도자료가 다운로드되었습니다.");
+    toast.success("다운로드되었습니다.");
   }
 
   function handleToggle() {
@@ -270,7 +309,7 @@ function SeminarDetail({ id }: { id: string }) {
             </div>
           )}
 
-          {/* 운영진: 출석 체크 + 보도자료 */}
+          {/* 운영진: 출석 체크 + 콘텐츠 생성 */}
           {isStaff && (
             <div className="mt-4 border-t pt-4">
               <div className="flex flex-wrap gap-2">
@@ -285,22 +324,84 @@ function SeminarDetail({ id }: { id: string }) {
                 )}
                 <Button variant="outline" size="sm" onClick={openPressRelease}>
                   <FileText size={16} className="mr-1" />
-                  보도자료 생성
+                  보도자료 (템플릿)
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setShowPressRelease(true);
+                    handleAiGenerate("press");
+                  }}
+                >
+                  <Sparkles size={16} className="mr-1" />
+                  AI 보도자료
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setShowPressRelease(true);
+                    handleAiGenerate("sns");
+                  }}
+                >
+                  <Instagram size={16} className="mr-1" />
+                  AI SNS
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setShowPressRelease(true);
+                    handleAiGenerate("email");
+                  }}
+                >
+                  <Mail size={16} className="mr-1" />
+                  AI 초대장
                 </Button>
               </div>
             </div>
           )}
         </div>
 
-        {/* 보도자료 Dialog */}
+        {/* 콘텐츠 생성 Dialog */}
         <Dialog
           open={showPressRelease}
           onOpenChange={(open) => !open && setShowPressRelease(false)}
         >
           <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-2xl">
             <DialogHeader>
-              <DialogTitle>보도자료</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                {FORMAT_LABELS[selectedFormat].icon}
+                {FORMAT_LABELS[selectedFormat].label}
+                {isAiGenerating && (
+                  <Loader2 size={16} className="animate-spin text-muted-foreground" />
+                )}
+              </DialogTitle>
             </DialogHeader>
+
+            {/* 형식 전환 탭 */}
+            <div className="flex gap-1 rounded-lg bg-muted/50 p-1">
+              {(Object.entries(FORMAT_LABELS) as [ContentFormat, typeof FORMAT_LABELS[ContentFormat]][]).map(
+                ([key, { label, icon }]) => (
+                  <button
+                    key={key}
+                    onClick={() => handleAiGenerate(key)}
+                    disabled={isAiGenerating}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                      selectedFormat === key
+                        ? "bg-white text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {icon}
+                    {label}
+                  </button>
+                ),
+              )}
+            </div>
+
             <textarea
               value={pressText}
               onChange={(e) => setPressText(e.target.value)}
