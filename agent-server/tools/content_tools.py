@@ -1,15 +1,8 @@
-from google import genai
-from config import GOOGLE_API_KEY, MODEL_FAST
+from config import USE_OPENAI, OPENAI_API_KEY, GOOGLE_API_KEY, MODEL_FAST
 from tools.registry import register_tool
 
-_client = None
-
-
-def _get_client():
-    global _client
-    if _client is None:
-        _client = genai.Client(api_key=GOOGLE_API_KEY)
-    return _client
+_openai_client = None
+_gemini_client = None
 
 
 @register_tool(
@@ -30,10 +23,38 @@ async def generate_text(prompt: str, format: str = "free", **kwargs) -> dict:
     }
     system = f"한국어로 작성. {format_instructions.get(format, format_instructions['free'])}"
 
-    client = _get_client()
-    response = client.models.generate_content(
+    if USE_OPENAI:
+        return await _generate_openai(system, prompt)
+    else:
+        return await _generate_gemini(system, prompt)
+
+
+async def _generate_openai(system: str, prompt: str) -> dict:
+    global _openai_client
+    if _openai_client is None:
+        from openai import OpenAI
+        _openai_client = OpenAI(api_key=OPENAI_API_KEY)
+
+    response = _openai_client.chat.completions.create(
+        model=MODEL_FAST,
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user", "content": prompt},
+        ],
+    )
+    return {"text": response.choices[0].message.content}
+
+
+async def _generate_gemini(system: str, prompt: str) -> dict:
+    global _gemini_client
+    if _gemini_client is None:
+        from google import genai
+        _gemini_client = genai.Client(api_key=GOOGLE_API_KEY)
+    from google.genai import types
+
+    response = _gemini_client.models.generate_content(
         model=MODEL_FAST,
         contents=prompt,
-        config=genai.types.GenerateContentConfig(system_instruction=system),
+        config=types.GenerateContentConfig(system_instruction=system),
     )
     return {"text": response.text}

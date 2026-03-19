@@ -4,10 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
-import { Menu, X, User, Shield, ChevronDown } from "lucide-react";
+import { Menu, X, User, Shield, ChevronDown, BookUser, LayoutDashboard, LogOut, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { useAuth } from "@/features/auth/useAuth";
 import { isAtLeast } from "@/lib/permissions";
 
 interface NavLink {
@@ -63,12 +64,6 @@ const PUBLIC_NAV: NavGroup[] = [
   },
 ];
 
-const MEMBER_NAV: NavLink[] = [
-  { href: "/dashboard", label: "대시보드" },
-  { href: "/directory", label: "연락망" },
-  { href: "/mypage", label: "마이페이지" },
-];
-
 /** Exact match for `/about`, prefix match for others */
 function isItemActive(pathname: string, href: string): boolean {
   if (href === "/about") return pathname === "/about";
@@ -79,7 +74,6 @@ function isItemActive(pathname: string, href: string): boolean {
 function NavDropdown({ group }: { group: NavGroup }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
   const timeout = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const isSingle = group.items.length === 1;
@@ -89,15 +83,6 @@ function NavDropdown({ group }: { group: NavGroup }) {
     return () => clearTimeout(timeout.current);
   }, []);
 
-  function handleEnter() {
-    clearTimeout(timeout.current);
-    setOpen(true);
-  }
-
-  function handleLeave() {
-    timeout.current = setTimeout(() => setOpen(false), 150);
-  }
-
   if (isSingle) {
     const item = group.items[0];
     const isActive = isItemActive(pathname, item.href);
@@ -106,9 +91,7 @@ function NavDropdown({ group }: { group: NavGroup }) {
         href={item.href}
         className={cn(
           "rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-muted",
-          isActive
-            ? "font-semibold text-primary underline underline-offset-4"
-            : "text-muted-foreground"
+          isActive ? "font-semibold text-primary underline underline-offset-4" : "text-muted-foreground",
         )}
       >
         {group.label}
@@ -118,24 +101,18 @@ function NavDropdown({ group }: { group: NavGroup }) {
 
   return (
     <div
-      ref={ref}
       className="relative"
-      onMouseEnter={handleEnter}
-      onMouseLeave={handleLeave}
+      onMouseEnter={() => { clearTimeout(timeout.current); setOpen(true); }}
+      onMouseLeave={() => { timeout.current = setTimeout(() => setOpen(false), 150); }}
     >
       <button
         className={cn(
           "flex items-center gap-0.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-muted",
-          isGroupActive
-            ? "font-semibold text-primary underline underline-offset-4"
-            : "text-muted-foreground"
+          isGroupActive ? "font-semibold text-primary underline underline-offset-4" : "text-muted-foreground",
         )}
       >
         {group.label}
-        <ChevronDown
-          size={14}
-          className={cn("transition-transform", open && "rotate-180")}
-        />
+        <ChevronDown size={14} className={cn("transition-transform", open && "rotate-180")} />
       </button>
 
       {open && (
@@ -148,9 +125,7 @@ function NavDropdown({ group }: { group: NavGroup }) {
                 href={item.href}
                 className={cn(
                   "block px-4 py-2 text-sm transition-colors hover:bg-muted",
-                  isActive
-                    ? "font-semibold text-primary"
-                    : "text-muted-foreground"
+                  isActive ? "font-semibold text-primary" : "text-muted-foreground",
                 )}
                 onClick={() => setOpen(false)}
               >
@@ -164,14 +139,80 @@ function NavDropdown({ group }: { group: NavGroup }) {
   );
 }
 
+/* ── User Profile Dropdown (desktop) ── */
+function UserDropdown() {
+  const pathname = usePathname();
+  const { user } = useAuthStore();
+  const { logout } = useAuth();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const showAdmin = isAtLeast(user, "staff");
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
+  if (!user) return null;
+
+  const menuItems = [
+    { href: "/mypage", label: "마이페이지", icon: User },
+    { href: "/directory", label: "연락망", icon: BookUser },
+    ...(showAdmin ? [{ href: "/admin", label: "관리자", icon: Shield }] : []),
+  ];
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className={cn(
+          "flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-colors",
+          open ? "bg-primary/20 text-primary" : "bg-primary/10 text-primary hover:bg-primary/20",
+        )}
+      >
+        <User size={16} />
+        {user.name}
+        <ChevronDown size={14} className={cn("transition-transform", open && "rotate-180")} />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border bg-white py-1 shadow-lg">
+          {menuItems.map((item) => {
+            const isActive = pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setOpen(false)}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2.5 text-sm transition-colors hover:bg-muted",
+                  isActive ? "font-semibold text-primary" : "text-muted-foreground",
+                )}
+              >
+                <item.icon size={15} />
+                {item.label}
+              </Link>
+            );
+          })}
+          <Separator className="my-1" />
+          <button
+            onClick={() => { setOpen(false); logout(); }}
+            className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-red-500 transition-colors hover:bg-red-50"
+          >
+            <LogOut size={15} />
+            로그아웃
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── Mobile group ── */
-function MobileNavGroup({
-  group,
-  onClose,
-}: {
-  group: NavGroup;
-  onClose: () => void;
-}) {
+function MobileNavGroup({ group, onClose }: { group: NavGroup; onClose: () => void }) {
   const pathname = usePathname();
 
   return (
@@ -189,9 +230,7 @@ function MobileNavGroup({
             aria-current={isActive ? "page" : undefined}
             className={cn(
               "block rounded-lg px-3 py-2 pl-6 text-sm font-medium transition-colors",
-              isActive
-                ? "bg-primary/10 font-semibold text-primary"
-                : "text-muted-foreground hover:bg-muted"
+              isActive ? "bg-primary/10 font-semibold text-primary" : "text-muted-foreground hover:bg-muted",
             )}
           >
             {item.label}
@@ -206,29 +245,16 @@ export default function Header() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user } = useAuthStore();
-
-  const showAdminLink = isAtLeast(user, "staff");
+  const { logout } = useAuth();
+  const showAdmin = isAtLeast(user, "staff");
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-white/80 backdrop-blur-lg">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <Image
-            src="/yonsei-emblem.svg"
-            alt="연세대학교 엠블럼"
-            width={32}
-            height={32}
-            className="h-8 w-8"
-          />
-          <Image
-            src="/logo-text.png"
-            alt="연세교육공학회"
-            width={200}
-            height={40}
-            className="h-8 w-auto"
-            priority
-          />
+          <Image src="/yonsei-emblem.svg" alt="연세대학교 엠블럼" width={32} height={32} className="h-8 w-8" />
+          <Image src="/logo-text.png" alt="연세교육공학회" width={200} height={40} className="h-8 w-auto" priority />
         </Link>
 
         {/* Desktop Nav */}
@@ -239,24 +265,18 @@ export default function Header() {
           {user && (
             <>
               <Separator orientation="vertical" className="mx-1 h-5" />
-              {MEMBER_NAV.map((item) => {
-                const isActive = pathname.startsWith(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    aria-current={isActive ? "page" : undefined}
-                    className={cn(
-                      "rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-muted",
-                      isActive
-                        ? "font-semibold text-primary underline underline-offset-4"
-                        : "text-muted-foreground"
-                    )}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
+              <Link
+                href="/dashboard"
+                aria-current={pathname.startsWith("/dashboard") ? "page" : undefined}
+                className={cn(
+                  "rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-muted",
+                  pathname.startsWith("/dashboard")
+                    ? "font-semibold text-primary underline underline-offset-4"
+                    : "text-muted-foreground",
+                )}
+              >
+                대시보드
+              </Link>
             </>
           )}
         </nav>
@@ -264,24 +284,7 @@ export default function Header() {
         {/* Auth Area (Desktop) */}
         <div className="hidden items-center gap-2 md:flex">
           {user ? (
-            <>
-              {showAdminLink && (
-                <Link
-                  href="/admin"
-                  className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted"
-                >
-                  <Shield size={14} />
-                  관리자
-                </Link>
-              )}
-              <Link
-                href="/mypage"
-                className="flex items-center gap-2 rounded-xl bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
-              >
-                <User size={16} />
-                {user.name}
-              </Link>
-            </>
+            <UserDropdown />
           ) : (
             <Link
               href="/login"
@@ -293,11 +296,7 @@ export default function Header() {
         </div>
 
         {/* Mobile Hamburger */}
-        <button
-          className="md:hidden"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="메뉴 열기"
-        >
+        <button className="md:hidden" onClick={() => setMobileOpen(!mobileOpen)} aria-label="메뉴 열기">
           {mobileOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
@@ -307,56 +306,47 @@ export default function Header() {
         <div className="border-t bg-white px-4 pb-4 md:hidden">
           <nav className="flex flex-col gap-1 pt-2">
             {PUBLIC_NAV.map((group) => (
-              <MobileNavGroup
-                key={group.label}
-                group={group}
-                onClose={() => setMobileOpen(false)}
-              />
+              <MobileNavGroup key={group.label} group={group} onClose={() => setMobileOpen(false)} />
             ))}
             {user && (
               <>
                 <Separator className="my-1" />
-                {MEMBER_NAV.map((item) => {
+                <div className="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+                  내 메뉴
+                </div>
+                {[
+                  { href: "/dashboard", label: "대시보드", icon: LayoutDashboard },
+                  { href: "/mypage", label: "마이페이지", icon: User },
+                  { href: "/directory", label: "연락망", icon: BookUser },
+                  ...(showAdmin ? [{ href: "/admin", label: "관리자", icon: Shield }] : []),
+                ].map((item) => {
                   const isActive = pathname.startsWith(item.href);
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
                       onClick={() => setMobileOpen(false)}
-                      aria-current={isActive ? "page" : undefined}
                       className={cn(
-                        "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                        isActive
-                          ? "bg-primary/10 font-semibold text-primary"
-                          : "text-muted-foreground hover:bg-muted"
+                        "flex items-center gap-2 rounded-lg px-3 py-2 pl-6 text-sm font-medium transition-colors",
+                        isActive ? "bg-primary/10 font-semibold text-primary" : "text-muted-foreground hover:bg-muted",
                       )}
                     >
+                      <item.icon size={15} />
                       {item.label}
                     </Link>
                   );
                 })}
+                <Separator className="my-1" />
+                <button
+                  onClick={() => { setMobileOpen(false); logout(); }}
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 pl-6 text-sm font-medium text-red-500 hover:bg-red-50"
+                >
+                  <LogOut size={15} />
+                  로그아웃
+                </button>
               </>
             )}
-            {user ? (
-              <>
-                {showAdminLink && (
-                  <Link
-                    href="/admin"
-                    onClick={() => setMobileOpen(false)}
-                    className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted"
-                  >
-                    관리자
-                  </Link>
-                )}
-                <Link
-                  href="/mypage"
-                  onClick={() => setMobileOpen(false)}
-                  className="mt-2 rounded-xl bg-primary/10 px-4 py-2 text-center text-sm font-medium text-primary"
-                >
-                  {user.name} · 마이페이지
-                </Link>
-              </>
-            ) : (
+            {!user && (
               <Link
                 href="/login"
                 onClick={() => setMobileOpen(false)}
