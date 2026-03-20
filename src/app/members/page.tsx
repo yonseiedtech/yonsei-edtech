@@ -8,6 +8,7 @@ import MemberCard from "@/components/members/MemberCard";
 import { useMembers } from "@/features/member/useMembers";
 import { useProfessor } from "@/features/site-settings/useSiteContent";
 import { Mail, Globe, BookOpen } from "lucide-react";
+import OrgChart from "@/features/member/OrgChart";
 import type { User } from "@/types";
 
 const ROLE_TABS = [
@@ -89,10 +90,15 @@ function MembersContent() {
         <div className="mt-8">
           {activeTab === "professor" ? <ProfessorView /> : isLoading ? (
             <div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
-          ) : filtered.length === 0 ? (
-            <p className="py-12 text-center text-muted-foreground">해당 구성원이 없습니다.</p>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">{filtered.map((m) => <MemberCard key={m.id} member={m} />)}</div>
+            <>
+              {activeTab === "staff" && <div className="mb-8"><OrgChart /></div>}
+              {filtered.length === 0 ? (
+                <p className="py-12 text-center text-muted-foreground">해당 구성원이 없습니다.</p>
+              ) : (
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">{filtered.map((m) => <MemberCard key={m.id} member={m} />)}</div>
+              )}
+            </>
           )}
         </div>
       </section>
