@@ -85,6 +85,22 @@ export function useAuth() {
         const loggedInUser = mergeToUser(authUser, profile);
         setUser(loggedInUser);
         return loggedInUser;
+      } catch (err) {
+        // Firebase 에러 코드를 사용자 친화적 메시지로 변환
+        const msg = err instanceof Error ? err.message : String(err);
+        if (msg.includes("auth/invalid-credential") || msg.includes("auth/wrong-password") || msg.includes("auth/user-not-found")) {
+          throw new Error("아이디 또는 비밀번호가 올바르지 않습니다.");
+        }
+        if (msg.includes("auth/too-many-requests")) {
+          throw new Error("로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요.");
+        }
+        if (msg.includes("auth/user-disabled")) {
+          throw new Error("비활성화된 계정입니다. 관리자에게 문의하세요.");
+        }
+        if (msg.includes("auth/invalid-email")) {
+          throw new Error("올바른 이메일 형식이 아닙니다.");
+        }
+        throw new Error("로그인 중 오류가 발생했습니다. 다시 시도해주세요.");
       } finally {
         setLoading(false);
       }

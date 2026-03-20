@@ -83,19 +83,10 @@ export default function LoginForm() {
         </Link>
       </p>
 
-      {process.env.NODE_ENV !== "production" && (
-        <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
-          <p className="font-medium">데모 계정</p>
-          <div className="mt-1 space-y-0.5">
-            <p>admin / admin123 (관리자)</p>
-            <p>president / test123 (회장)</p>
-            <p>staff / test123 (운영진)</p>
-            <p>alumni / test123 (졸업생)</p>
-            <p>advisor / test123 (자문위원)</p>
-            <p>아무아이디 / test123 (회원)</p>
-          </div>
-        </div>
-      )}
+      <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
+        <p>회원가입 후 관리자 승인을 받아 로그인할 수 있습니다.</p>
+        <p className="mt-0.5">이메일 형식으로 입력하거나, 아이디만 입력하면 @yonsei.ac.kr이 자동으로 추가됩니다.</p>
+      </div>
     </form>
   );
 }
