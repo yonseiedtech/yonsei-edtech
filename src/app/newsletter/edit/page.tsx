@@ -7,7 +7,7 @@ export default function NewsletterEditPage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/admin?tab=newsletter");
+    router.replace("/admin/newsletter");
   }, [router]);
 
   return (
