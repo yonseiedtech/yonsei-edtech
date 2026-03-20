@@ -156,6 +156,7 @@ function UserDropdown() {
   if (!user) return null;
 
   const menuItems = [
+    { href: "/dashboard", label: "대시보드", icon: LayoutDashboard },
     { href: "/mypage", label: "마이페이지", icon: User },
     { href: "/directory", label: "연락망", icon: BookUser },
     ...(showAdmin ? [{ href: "/admin", label: "관리자", icon: Shield }] : []),
@@ -256,26 +257,9 @@ export default function Header() {
 
         {/* Desktop Nav */}
         <nav className="hidden items-center gap-1 md:flex">
-          {PUBLIC_NAV.map((group) => (
+          {PUBLIC_NAV.filter((group) => !(user && group.label === "문의")).map((group) => (
             <NavDropdown key={group.label} group={group} />
           ))}
-          {user && (
-            <>
-              <Separator orientation="vertical" className="mx-1 h-5" />
-              <Link
-                href="/dashboard"
-                aria-current={pathname.startsWith("/dashboard") ? "page" : undefined}
-                className={cn(
-                  "rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-muted",
-                  pathname.startsWith("/dashboard")
-                    ? "font-semibold text-primary underline underline-offset-4"
-                    : "text-muted-foreground",
-                )}
-              >
-                대시보드
-              </Link>
-            </>
-          )}
         </nav>
 
         {/* Auth Area (Desktop) */}
@@ -302,7 +286,7 @@ export default function Header() {
       {mobileOpen && (
         <div className="border-t bg-white px-4 pb-4 md:hidden">
           <nav className="flex flex-col gap-1 pt-2">
-            {PUBLIC_NAV.map((group) => (
+            {PUBLIC_NAV.filter((group) => !(user && group.label === "문의")).map((group) => (
               <MobileNavGroup key={group.label} group={group} onClose={() => setMobileOpen(false)} />
             ))}
             {user && (
