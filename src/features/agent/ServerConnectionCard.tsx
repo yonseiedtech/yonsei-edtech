@@ -59,23 +59,40 @@ export default function ServerConnectionCard() {
     setTimeout(() => setCopied(false), 2000);
   }
 
+  // 프로젝트 경로 복사 UI (항상 표시)
+  const projectPathUI = (
+    <div className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50/50 px-3 py-2">
+      <Terminal size={14} className="shrink-0 text-blue-600" />
+      <span className="text-xs text-blue-700">프로젝트 경로</span>
+      <code className="flex-1 rounded bg-white/80 px-2 py-1 font-mono text-xs text-blue-900">
+        C:\work\yonsei-edtech
+      </code>
+      <button onClick={handleCopyPath} className="rounded p-1 hover:bg-blue-100" title="경로 복사">
+        {copiedPath ? <Check size={14} className="text-green-600" /> : <Copy size={14} className="text-blue-500" />}
+      </button>
+    </div>
+  );
+
   // 이미 연결된 상태
   if (connected && !showSetup) {
     return (
-      <div className="rounded-xl border border-green-200 bg-green-50/50 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CheckCircle size={18} className="text-green-600" />
-            <span className="font-medium text-green-800">에이전트 서버 연결됨</span>
-            <span className="text-sm text-green-600">
-              · 에이전트 {health.agents}개
-              {health.running_tasks > 0 && ` · 실행 중 ${health.running_tasks}건`}
-            </span>
+      <div className="space-y-3">
+        <div className="rounded-xl border border-green-200 bg-green-50/50 p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CheckCircle size={18} className="text-green-600" />
+              <span className="font-medium text-green-800">에이전트 서버 연결됨</span>
+              <span className="text-sm text-green-600">
+                · 에이전트 {health.agents}개
+                {health.running_tasks > 0 && ` · 실행 중 ${health.running_tasks}건`}
+              </span>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setShowSetup(true)} className="text-xs text-muted-foreground">
+              설정 변경
+            </Button>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => setShowSetup(true)} className="text-xs text-muted-foreground">
-            설정 변경
-          </Button>
         </div>
+        {projectPathUI}
       </div>
     );
   }
