@@ -38,12 +38,10 @@ export default function PostList({ posts, hrefPrefix = "/board" }: Props) {
                     ? "bg-secondary/15 text-amber-700"
                     : post.category === "promotion"
                     ? "bg-emerald-50 text-emerald-700"
-                    : post.category === "newsletter"
-                    ? "bg-violet-50 text-violet-700"
                     : "bg-muted text-muted-foreground"
                 )}
               >
-                {CATEGORY_LABELS[post.category]}
+                {CATEGORY_LABELS[post.category as keyof typeof CATEGORY_LABELS] ?? post.category}
               </span>
               <h3 className="truncate font-medium">{post.title}</h3>
             </div>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useNewsletterStore, SECTION_TYPE_LABELS } from "@/features/newsletter/newsletter-store";
+import { useNewsletters, SECTION_TYPE_LABELS } from "@/features/newsletter/newsletter-store";
 import type { NewsletterIssue } from "@/features/newsletter/newsletter-store";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -149,11 +149,12 @@ function IssueDetail({ issue, onBack }: { issue: NewsletterIssue; onBack: () => 
 }
 
 export default function NewsletterPage() {
-  const { issues } = useNewsletterStore();
+  const { issues, isLoading } = useNewsletters();
   const { user } = useAuthStore();
   const canEdit = isAtLeast(user, "staff");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  const publishedIssues = issues.filter((i) => i.status === "published");
   const selectedIssue = issues.find((i) => i.id === selectedId);
 
   return (
@@ -181,10 +182,17 @@ export default function NewsletterPage() {
               연세교육공학회의 학술 활동과 소식을 담은 정기 간행물입니다.
             </p>
 
-            <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {issues
-                .filter((i) => i.status === "published")
-                .map((issue) => (
+            {isLoading ? (
+              <div className="mt-12 flex justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+              </div>
+            ) : publishedIssues.length === 0 ? (
+              <div className="mt-12 text-center text-muted-foreground">
+                아직 발행된 학회보가 없습니다.
+              </div>
+            ) : (
+              <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {publishedIssues.map((issue) => (
                   <button
                     key={issue.id}
                     onClick={() => setSelectedId(issue.id)}
@@ -193,7 +201,8 @@ export default function NewsletterPage() {
                     <IssueCard issue={issue} />
                   </button>
                 ))}
-            </div>
+              </div>
+            )}
           </>
         )}
       </div>

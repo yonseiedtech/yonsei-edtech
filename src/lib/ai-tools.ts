@@ -64,7 +64,7 @@ export const publicTools = {
   search_posts: tool({
     description: "게시글을 검색합니다. 카테고리 필터와 키워드 검색을 지원합니다.",
     inputSchema: z.object({
-      category: z.enum(["notice", "seminar", "free", "promotion", "newsletter"]).optional().describe("게시판 카테고리"),
+      category: z.enum(["notice", "seminar", "free", "promotion"]).optional().describe("게시판 카테고리"),
       keyword: z.string().optional().describe("검색 키워드 (제목에서 검색)"),
       limit: z.number().min(1).max(10).optional().describe("조회 개수 (최대 10)"),
     }),

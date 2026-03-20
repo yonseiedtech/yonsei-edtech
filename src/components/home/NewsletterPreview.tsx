@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { usePosts } from "@/features/board/useBoard";
+import { useNewsletters } from "@/features/newsletter/newsletter-store";
 import { formatDate } from "@/lib/utils";
 import { Newspaper, ArrowRight } from "lucide-react";
 
 export default function NewsletterPreview() {
-  const { posts: newsletters, isLoading } = usePosts("newsletter");
+  const { issues, isLoading } = useNewsletters();
+  const published = issues
+    .filter((i) => i.status === "published")
+    .slice(0, 3);
 
   return (
     <section className="border-b py-16">
@@ -28,21 +31,27 @@ export default function NewsletterPreview() {
             <div className="px-5 py-8 text-center text-sm text-muted-foreground">
               불러오는 중...
             </div>
+          ) : published.length === 0 ? (
+            <div className="px-5 py-8 text-center text-sm text-muted-foreground">
+              발행된 학회보가 없습니다.
+            </div>
           ) : (
-            newsletters.slice(0, 3).map((post) => (
+            published.map((issue) => (
               <Link
-                key={post.id}
-                href={`/board/${post.id}`}
+                key={issue.id}
+                href="/newsletter"
                 className="flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-muted/30"
               >
                 <div className="min-w-0">
-                  <span className="truncate font-medium">{post.title}</span>
-                  <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
-                    {post.content}
-                  </p>
+                  <span className="truncate font-medium">{issue.title}</span>
+                  {issue.subtitle && (
+                    <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                      {issue.subtitle}
+                    </p>
+                  )}
                 </div>
                 <span className="shrink-0 pl-4 text-xs text-muted-foreground">
-                  {formatDate(post.createdAt)}
+                  {formatDate(issue.publishDate)}
                 </span>
               </Link>
             ))

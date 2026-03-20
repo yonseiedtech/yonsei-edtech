@@ -24,7 +24,6 @@ const ALL_CATEGORIES: PostCategory[] = [
   "seminar",
   "free",
   "promotion",
-  "newsletter",
 ];
 
 interface PostFormProps {
@@ -48,7 +47,7 @@ export default function PostForm({ mode = "create", initialData, onSubmitSuccess
   // 역할별 카테고리 필터
   const availableCategories = ALL_CATEGORIES.filter((cat) => {
     if (cat === "notice") return isAtLeast(user, "president");
-    if (cat === "promotion" || cat === "newsletter") return isAtLeast(user, "staff");
+    if (cat === "promotion") return isAtLeast(user, "staff");
     return true;
   });
 
@@ -111,7 +110,7 @@ export default function PostForm({ mode = "create", initialData, onSubmitSuccess
           </div>
           {!isAtLeast(user, "staff") && (
             <p className="mt-1.5 text-xs text-muted-foreground">
-              공지사항·홍보게시판·연세교육공학회보는 운영진 이상만 작성할 수 있습니다.
+              공지사항·홍보게시판은 운영진 이상만 작성할 수 있습니다.
             </p>
           )}
         </div>

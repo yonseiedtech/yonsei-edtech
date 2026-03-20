@@ -45,6 +45,14 @@ export default function ServerConnectionCard() {
     );
   }
 
+  const [copiedPath, setCopiedPath] = useState(false);
+
+  function handleCopyPath() {
+    navigator.clipboard.writeText("C:\\work\\yonsei-edtech");
+    setCopiedPath(true);
+    setTimeout(() => setCopiedPath(false), 2000);
+  }
+
   function handleCopyCommand() {
     navigator.clipboard.writeText("cd agent-server; python main.py");
     setCopied(true);
@@ -94,7 +102,17 @@ export default function ServerConnectionCard() {
           서버 실행 방법
         </h4>
         <ol className="mt-2 space-y-1.5 text-sm text-blue-700">
-          <li>1. 프로젝트 폴더에서 터미널을 열어주세요</li>
+          <li>
+            1. 프로젝트 폴더에서 터미널을 열어주세요
+            <div className="mt-1 flex items-center gap-2">
+              <code className="flex-1 rounded bg-white/80 px-2.5 py-1.5 font-mono text-xs text-blue-900">
+                C:\work\yonsei-edtech
+              </code>
+              <button onClick={handleCopyPath} className="rounded p-1 hover:bg-blue-100" title="경로 복사">
+                {copiedPath ? <Check size={14} className="text-green-600" /> : <Copy size={14} className="text-blue-500" />}
+              </button>
+            </div>
+          </li>
           <li>
             2. 아래 명령어를 실행하세요
             <div className="mt-1 flex items-center gap-2">

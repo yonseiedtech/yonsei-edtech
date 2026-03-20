@@ -9,7 +9,6 @@ const CATEGORIES: (PostCategory | "all")[] = [
   "seminar",
   "free",
   "promotion",
-  "newsletter",
 ];
 const ALL_LABELS: Record<string, string> = { all: "전체", ...CATEGORY_LABELS };
 

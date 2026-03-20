@@ -67,7 +67,7 @@ export interface Post {
   id: string;
   title: string;
   content: string;
-  category: "notice" | "seminar" | "free" | "promotion" | "newsletter";
+  category: "notice" | "seminar" | "free" | "promotion";
   authorId: string;
   authorName: string;
   viewCount: number;
@@ -91,7 +91,6 @@ export const CATEGORY_LABELS: Record<PostCategory, string> = {
   seminar: "세미나 자료",
   free: "자유게시판",
   promotion: "홍보게시판",
-  newsletter: "연세교육공학회보",
 };
 
 // ── 세미나 ──

@@ -7,7 +7,7 @@ import { usePosts } from "@/features/board/useBoard";
 import { useSeminars } from "@/features/seminar/useSeminar";
 import { usePendingMembers } from "@/features/member/useMembers";
 import { useInquiries } from "@/features/inquiry/useInquiry";
-import { useNewsletterStore } from "@/features/newsletter/newsletter-store";
+import { useNewsletters } from "@/features/newsletter/newsletter-store";
 import { isAtLeast } from "@/lib/permissions";
 import { ROLE_LABELS } from "@/types";
 import { Badge } from "@/components/ui/badge";
@@ -69,7 +69,7 @@ function DashboardContent() {
   const { user } = useAuthStore();
   const { posts } = usePosts();
   const { seminars } = useSeminars();
-  const { issues } = useNewsletterStore();
+  const { issues } = useNewsletters();
   const { pendingMembers } = usePendingMembers();
   const { inquiries } = useInquiries();
 

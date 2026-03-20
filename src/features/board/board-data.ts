@@ -87,43 +87,6 @@ export const MOCK_POSTS: Post[] = [
     createdAt: "2026-03-12T08:00:00Z",
     updatedAt: "2026-03-12T08:00:00Z",
   },
-  // ── 학회보 ──
-  {
-    id: "8",
-    title: "연세교육공학회보 제12호 발간",
-    content:
-      "연세교육공학회보 제12호가 발간되었습니다.\n\n이번 호 주요 내용:\n- 특집: 생성형 AI와 교수설계의 만남\n- 회원 연구 소개: VR 기반 역사 교육 프로그램\n- 졸업생 인터뷰: 에듀테크 스타트업 창업기\n- 학회 활동 리뷰: 2025 가을학기",
-    category: "newsletter",
-    authorId: "3",
-    authorName: "이운영",
-    viewCount: 52,
-    createdAt: "2026-03-01T00:00:00Z",
-    updatedAt: "2026-03-01T00:00:00Z",
-  },
-  {
-    id: "9",
-    title: "연세교육공학회보 제11호",
-    content:
-      "연세교육공학회보 제11호입니다.\n\n주요 내용:\n- 특집: 마이크로크레덴셜의 현재와 미래\n- 세미나 요약: 2025 가을학기 발제 모음\n- 회원 인터뷰: 대기업 HRD 담당자가 된 선배\n- 추천 도서 & 논문",
-    category: "newsletter",
-    authorId: "3",
-    authorName: "이운영",
-    viewCount: 41,
-    createdAt: "2025-12-15T00:00:00Z",
-    updatedAt: "2025-12-15T00:00:00Z",
-  },
-  {
-    id: "10",
-    title: "연세교육공학회보 제10호 (창간 10주년 특별호)",
-    content:
-      "창간 10주년을 기념하는 특별호를 발간합니다.\n\n- 10년의 발자취: 학회 연혁 돌아보기\n- 역대 회장 인터뷰\n- 회원 설문조사 결과\n- 미래 비전: 다음 10년을 향해",
-    category: "newsletter",
-    authorId: "2",
-    authorName: "김회장",
-    viewCount: 89,
-    createdAt: "2025-09-01T00:00:00Z",
-    updatedAt: "2025-09-01T00:00:00Z",
-  },
 ];
 
 export const MOCK_COMMENTS: Comment[] = [

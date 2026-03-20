@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  useNewsletterStore,
+  useNewsletters,
+  useCreateNewsletter,
+  useDeleteNewsletter,
   SECTION_TYPE_LABELS,
 } from "@/features/newsletter/newsletter-store";
 import type { NewsletterSection } from "@/features/newsletter/newsletter-store";
@@ -27,6 +29,7 @@ import {
   FileText,
   ArrowUp,
   ArrowDown,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -49,12 +52,16 @@ const SECTION_TYPES: NewsletterSection["type"][] = [
 
 export default function AdminNewsletterTab() {
   const router = useRouter();
-  const { issues, addIssue } = useNewsletterStore();
+  const { issues, isLoading: issuesLoading } = useNewsletters();
+  const createMutation = useCreateNewsletter();
+  const deleteMutation = useDeleteNewsletter();
   const { posts: allPosts } = usePosts("all");
   const [showPostPicker, setShowPostPicker] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
-  const nextIssueNumber = Math.max(...issues.map((i) => i.issueNumber), 0) + 1;
+  const nextIssueNumber = issues.length > 0
+    ? Math.max(...issues.map((i) => i.issueNumber), 0) + 1
+    : 1;
   const [title, setTitle] = useState(`연세교육공학회보 제${nextIssueNumber}호`);
   const [subtitle, setSubtitle] = useState("");
   const [coverColor, setCoverColor] = useState(COVER_COLORS[0].value);
@@ -139,23 +146,42 @@ export default function AdminNewsletterTab() {
       toast.error("제목, 부제목, 그리고 최소 1개 섹션이 필요합니다.");
       return;
     }
-    addIssue({
-      issueNumber: nextIssueNumber,
-      title,
-      subtitle,
-      coverColor,
-      publishDate: new Date().toISOString().split("T")[0],
-      editorName: editorName || "편집팀",
-      sections,
-      status,
-    });
-    toast.success(
-      status === "published"
-        ? "학회보가 발행되었습니다!"
-        : "초안이 저장되었습니다."
+    createMutation.mutate(
+      {
+        issueNumber: nextIssueNumber,
+        title,
+        subtitle,
+        coverColor,
+        publishDate: new Date().toISOString().split("T")[0],
+        editorName: editorName || "편집팀",
+        sections,
+        status,
+      },
+      {
+        onSuccess: () => {
+          toast.success(
+            status === "published"
+              ? "학회보가 발행되었습니다!"
+              : "초안이 저장되었습니다."
+          );
+          router.push("/newsletter");
+        },
+        onError: () => {
+          toast.error("저장에 실패했습니다.");
+        },
+      }
     );
-    router.push("/newsletter");
   }
+
+  function handleDelete(id: string, issueTitle: string) {
+    if (!confirm(`"${issueTitle}"을 삭제하시겠습니까?`)) return;
+    deleteMutation.mutate(id, {
+      onSuccess: () => toast.success("삭제되었습니다."),
+      onError: () => toast.error("삭제에 실패했습니다."),
+    });
+  }
+
+  const saving = createMutation.isPending;
 
   return (
     <div>
@@ -164,9 +190,39 @@ export default function AdminNewsletterTab() {
         게시글을 선택하면 섹션으로 자동 변환됩니다.
       </p>
 
+      {/* 기존 학회보 목록 */}
+      {!issuesLoading && issues.length > 0 && (
+        <div className="mt-6 rounded-2xl border bg-white p-6">
+          <h3 className="font-bold">기존 학회보 ({issues.length})</h3>
+          <div className="mt-3 divide-y">
+            {issues.map((issue) => (
+              <div key={issue.id} className="flex items-center justify-between py-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{issue.title}</span>
+                    <Badge variant={issue.status === "published" ? "default" : "secondary"}>
+                      {issue.status === "published" ? "발행" : "초안"}
+                    </Badge>
+                  </div>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {issue.publishDate} · {issue.editorName} · {issue.sections.length}개 섹션
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleDelete(issue.id, issue.title)}
+                  className="ml-2 shrink-0 text-muted-foreground hover:text-destructive"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 기본 정보 */}
       <div className="mt-6 space-y-4 rounded-2xl border bg-white p-6">
-        <h3 className="font-bold">기본 정보</h3>
+        <h3 className="font-bold">새 학회보</h3>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <label className="mb-1 block text-sm font-medium">제목</label>
@@ -354,15 +410,20 @@ export default function AdminNewsletterTab() {
           <Button
             variant="outline"
             onClick={() => handleSave("draft")}
-            disabled={sections.length === 0}
+            disabled={sections.length === 0 || saving}
           >
-            <Save size={16} className="mr-1" />
+            {saving ? (
+              <Loader2 size={16} className="mr-1 animate-spin" />
+            ) : (
+              <Save size={16} className="mr-1" />
+            )}
             초안 저장
           </Button>
           <Button
             onClick={() => handleSave("published")}
-            disabled={sections.length === 0}
+            disabled={sections.length === 0 || saving}
           >
+            {saving && <Loader2 size={16} className="mr-1 animate-spin" />}
             발행하기
           </Button>
         </div>

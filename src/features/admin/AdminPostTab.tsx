@@ -176,12 +176,10 @@ export default function AdminPostTab() {
                           ? "bg-secondary/15 text-amber-700"
                           : post.category === "promotion"
                           ? "bg-emerald-50 text-emerald-700"
-                          : post.category === "newsletter"
-                          ? "bg-violet-50 text-violet-700"
                           : ""
                       )}
                     >
-                      {CATEGORY_LABELS[post.category]}
+                      {CATEGORY_LABELS[post.category as keyof typeof CATEGORY_LABELS] ?? post.category}
                     </Badge>
                   </td>
                   <td className="max-w-[200px] truncate px-4 py-3 font-medium">

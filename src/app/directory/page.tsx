@@ -4,6 +4,7 @@ import { useState } from "react";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { useMembers } from "@/features/member/useMembers";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { usePastPresidents } from "@/features/site-settings/useSiteContent";
 import { isAtLeast } from "@/lib/permissions";
 import { Badge } from "@/components/ui/badge";
 import { Shield, Lock, Mail } from "lucide-react";
@@ -44,7 +45,10 @@ function DirectoryContent() {
   const { members: advisors, isLoading: advLoading } = useMembers({ role: "advisor" });
   const filteredAdvisors = advisors.map((m) => filterContactByVisibility(m, viewer));
 
-  const isLoading = staffLoading || presLoading || advLoading;
+  // 역대 회장
+  const { value: pastPresidents, isLoading: ppLoading } = usePastPresidents();
+
+  const isLoading = staffLoading || presLoading || advLoading || ppLoading;
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "staff", label: "현 운영진" },
@@ -198,13 +202,42 @@ function DirectoryContent() {
               </div>
             )}
 
-            {/* 역대 회장 — 향후 role_history 테이블로 전환 */}
+            {/* 역대 회장 */}
             {activeTab === "presidents" && (
               <div className="mt-6">
                 <h2 className="text-lg font-bold">역대 회장</h2>
-                <p className="mt-4 text-sm text-muted-foreground">
-                  역대 회장 정보는 준비 중입니다.
-                </p>
+                {pastPresidents.length === 0 ? (
+                  <p className="mt-4 text-sm text-muted-foreground">
+                    역대 회장 정보가 아직 등록되지 않았습니다.
+                  </p>
+                ) : (
+                  <div className="mt-3 overflow-x-auto rounded-xl border bg-white">
+                    <table className="w-full text-sm">
+                      <thead className="border-b bg-muted/30">
+                        <tr>
+                          <th className="px-4 py-3 text-left font-medium">대수</th>
+                          <th className="px-4 py-3 text-left font-medium">이름</th>
+                          <th className="px-4 py-3 text-left font-medium">임기</th>
+                          <th className="px-4 py-3 text-left font-medium">소속</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {[...pastPresidents]
+                          .sort((a, b) => a.generation - b.generation)
+                          .map((p, idx) => (
+                            <tr key={idx}>
+                              <td className="px-4 py-3">
+                                <Badge variant="secondary">{p.generation}대</Badge>
+                              </td>
+                              <td className="px-4 py-3 font-medium">{p.name}</td>
+                              <td className="px-4 py-3 text-muted-foreground">{p.term}</td>
+                              <td className="px-4 py-3 text-muted-foreground">{p.affiliation}</td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
           </>

@@ -140,6 +140,24 @@ export function useUpdateHistory() {
   return useUpdateSiteSetting<HistoryItem[]>("history");
 }
 
+// ── 역대 회장 ──
+
+export interface PastPresidentItem {
+  generation: number;
+  name: string;
+  term: string;
+  affiliation: string;
+}
+
+const DEFAULT_PAST_PRESIDENTS: PastPresidentItem[] = [];
+
+export function usePastPresidents() {
+  return useSiteSetting<PastPresidentItem[]>("past_presidents", DEFAULT_PAST_PRESIDENTS);
+}
+export function useUpdatePastPresidents() {
+  return useUpdateSiteSetting<PastPresidentItem[]>("past_presidents");
+}
+
 // ── 문의 연락처 ──
 
 export interface ContactInfoData {
