@@ -1,15 +1,14 @@
 "use client";
 
 import { useState, useRef } from "react";
+import Image from "next/image";
 import { useSeminars, useAttendees } from "@/features/seminar/useSeminar";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { certificatesApi } from "@/lib/bkend";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Download, Printer, Award, Heart, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 
 type CertType = "completion" | "appreciation";
 
@@ -18,113 +17,239 @@ const CERT_LABELS: Record<CertType, { label: string; icon: React.ReactNode }> = 
   appreciation: { label: "감사장", icon: <Heart size={16} /> },
 };
 
+/** 이름에 자간 추가: "홍길동" → "홍 길 동" */
+function spacedName(name: string): string {
+  return name.split("").join(" ");
+}
+
 function CertificatePreview({
   type,
   seminarTitle,
   seminarDate,
+  semester,
   recipientName,
-  recipientAffiliation,
 }: {
   type: CertType;
   seminarTitle: string;
   seminarDate: string;
+  semester: string;
   recipientName: string;
-  recipientAffiliation?: string;
 }) {
-  const today = new Date().toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-
   const isCompletion = type === "completion";
+  const title = isCompletion ? "수 료 증" : "감 사 장";
 
   return (
     <div
-      className="relative mx-auto aspect-[1.414/1] w-full max-w-2xl overflow-hidden bg-white"
+      className="relative mx-auto bg-white"
       style={{
-        border: "3px solid #1e3a5f",
-        padding: "48px",
+        width: "210mm",
+        minHeight: "297mm",
+        padding: "0",
+        fontFamily: "'Batang', 'Nanum Myeongjo', serif",
       }}
     >
-      {/* 테두리 장식 */}
+      {/* 상단 파란 테두리 */}
+      <div style={{ height: "8px", background: "#003876" }} />
+
+      {/* 본문 영역 */}
       <div
-        className="absolute inset-3 border-2"
-        style={{ borderColor: "#c4a35a" }}
-      />
+        className="flex flex-col items-center"
+        style={{ padding: "50px 60px 40px" }}
+      >
+        {/* 제목 */}
+        <h1
+          style={{
+            fontSize: "48px",
+            fontWeight: "bold",
+            letterSpacing: "0.4em",
+            color: "#000",
+            marginBottom: "8px",
+          }}
+        >
+          {title}
+        </h1>
 
-      <div className="relative flex h-full flex-col items-center justify-between text-center">
-        {/* 상단: 로고 영역 */}
-        <div>
-          <p className="text-xs tracking-[0.3em] text-muted-foreground">
-            연세대학교 교육공학회
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Yonsei Educational Technology Association
-          </p>
-        </div>
+        {/* 서브타이틀 */}
+        <p
+          style={{
+            fontSize: "11px",
+            color: "#666",
+            letterSpacing: "0.1em",
+            marginBottom: "2px",
+          }}
+        >
+          Yonsei Educational Technology Association
+        </p>
+        <p
+          style={{
+            fontSize: "12px",
+            color: "#666",
+            letterSpacing: "0.2em",
+            marginBottom: "40px",
+          }}
+        >
+          연세교육공학회
+        </p>
 
-        {/* 중앙: 제목 */}
-        <div className="space-y-6">
-          <h1
-            className="text-4xl font-bold tracking-wider"
-            style={{ color: "#1e3a5f" }}
+        {/* 수여자 이름 */}
+        <div style={{ marginBottom: "50px", textAlign: "right", width: "100%" }}>
+          <span
+            style={{
+              fontSize: "28px",
+              fontWeight: "600",
+              letterSpacing: "0.5em",
+            }}
           >
-            {isCompletion ? "수 료 증" : "감 사 장"}
-          </h1>
-
-          {/* 수여자 */}
-          <div className="space-y-1">
-            <p className="text-2xl font-semibold">{recipientName || "___________"}</p>
-            {recipientAffiliation && (
-              <p className="text-sm text-muted-foreground">{recipientAffiliation}</p>
-            )}
-          </div>
-
-          {/* 본문 */}
-          <div className="mx-auto max-w-md space-y-2 text-sm leading-relaxed">
-            {isCompletion ? (
-              <p>
-                위 사람은 연세교육공학회 주최 &ldquo;{seminarTitle || "___________"}&rdquo;
-                세미나({seminarDate || "____년 __월 __일"})에 참석하여 소정의 과정을
-                이수하였기에 이 증서를 수여합니다.
-              </p>
-            ) : (
-              <p>
-                위 사람은 연세교육공학회 주최 &ldquo;{seminarTitle || "___________"}&rdquo;
-                세미나({seminarDate || "____년 __월 __일"})에서 귀중한 발표와 학술적
-                기여를 해주신 데 대하여 깊은 감사의 뜻을 전하며 이 감사장을 드립니다.
-              </p>
-            )}
-          </div>
+            {recipientName ? spacedName(recipientName) : "___________"}
+          </span>
+          <span
+            style={{
+              fontSize: "16px",
+              marginLeft: "12px",
+              fontWeight: "normal",
+            }}
+          >
+            선생님
+          </span>
         </div>
 
-        {/* 하단: 날짜 + 서명 */}
-        <div className="w-full space-y-4">
-          <p className="text-sm">{today}</p>
-          <div className="flex items-end justify-center gap-2">
-            <span className="text-sm font-medium">연세교육공학회장</span>
-            <span className="inline-block w-20 border-b border-muted-foreground/30" />
-            <span className="text-xs text-muted-foreground">(인)</span>
+        {/* 워터마크 엠블럼 (배경) */}
+        <div
+          className="absolute left-1/2 -translate-x-1/2"
+          style={{
+            top: "40%",
+            opacity: 0.08,
+            width: "320px",
+            height: "320px",
+            pointerEvents: "none",
+          }}
+        >
+          <Image
+            src="/yonsei-emblem.svg"
+            alt=""
+            width={320}
+            height={320}
+            className="h-full w-full"
+          />
+        </div>
+
+        {/* 본문 텍스트 */}
+        <div
+          className="relative"
+          style={{
+            fontSize: "18px",
+            lineHeight: "2.2",
+            textAlign: "left",
+            width: "100%",
+            maxWidth: "520px",
+            margin: "0 auto",
+            wordBreak: "keep-all",
+          }}
+        >
+          {isCompletion ? (
+            <p>
+              귀하께서는 {semester} 연세교육공학회에서 구성원들의 교육공학 핵심 역량
+              강화를 위하여 주관한 연세교육공학 학술대회 &lt;{seminarTitle || "___________"}&gt;에
+              참석하여 소정의 과정을 이수하였기에 이 수료증을 수여합니다.
+            </p>
+          ) : (
+            <p>
+              귀하께서는 {semester} 연세교육공학회에서 구성원들의 교육공학 핵심 역량
+              강화를 위하여 주관한 연세교육공학 학술대회 &lt;{seminarTitle || "___________"}&gt;에서
+              귀하께서 가지신 지식과 경험을 헌신적이고 열정적으로 공유해 주심으로서
+              구성원들의 성장에 큰 도움을 주셨음에 감사드리며, 연세교육공학회
+              구성원들의 마음을 담아 감사장을 드립니다.
+            </p>
+          )}
+        </div>
+
+        {/* 날짜 */}
+        <p
+          style={{
+            fontSize: "18px",
+            marginTop: "60px",
+            letterSpacing: "0.15em",
+          }}
+        >
+          {seminarDate}
+        </p>
+
+        {/* 하단 로고 + 직인 */}
+        <div
+          className="flex items-center justify-center gap-4"
+          style={{ marginTop: "40px" }}
+        >
+          <div className="flex items-center gap-2">
+            <Image
+              src="/yonsei-emblem.svg"
+              alt="연세대학교"
+              width={36}
+              height={36}
+            />
+            <div style={{ lineHeight: 1.3 }}>
+              <p style={{ fontSize: "18px", fontWeight: "bold" }}>연세교육공학회</p>
+              <p style={{ fontSize: "9px", color: "#666" }}>
+                Yonsei Educational Technology Association
+              </p>
+            </div>
+          </div>
+          {/* 직인 자리 */}
+          <div
+            style={{
+              width: "56px",
+              height: "56px",
+              border: "2px solid #cc3333",
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#cc3333",
+              fontSize: "10px",
+              fontWeight: "bold",
+              lineHeight: 1.2,
+              textAlign: "center",
+            }}
+          >
+            연세
+            <br />
+            교육공학회
           </div>
         </div>
       </div>
+
+      {/* 하단 파란 테두리 */}
+      <div style={{ height: "8px", background: "#003876" }} />
     </div>
   );
+}
+
+/** 세미나 날짜에서 학기 추론 */
+function inferSemester(dateStr: string): string {
+  const d = new Date(dateStr);
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1;
+  const sem = month >= 3 && month <= 8 ? "1학기" : "2학기";
+  return `${year}년 ${sem}`;
 }
 
 export default function CertificateGenerator() {
   const { seminars } = useSeminars();
   const { user } = useAuthStore();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [certType, setCertType] = useState<CertType>("completion");
+  const [certType, setCertType] = useState<CertType>("appreciation");
   const [recipientName, setRecipientName] = useState("");
-  const [recipientAffiliation, setRecipientAffiliation] = useState("");
-  const [batchMode, setBatchMode] = useState(false);
+  const [semester, setSemester] = useState("");
   const printRef = useRef<HTMLDivElement>(null);
 
   const seminar = seminars.find((s) => s.id === selectedId);
   const { attendees } = useAttendees(selectedId ?? "");
+
+  // 세미나 선택 시 학기 자동 추론
+  function handleSeminarChange(id: string) {
+    setSelectedId(id || null);
+    const s = seminars.find((sem) => sem.id === id);
+    if (s) setSemester(inferSemester(s.date));
+  }
 
   function handlePrint() {
     if (!printRef.current) return;
@@ -133,15 +258,16 @@ export default function CertificateGenerator() {
     printWindow.document.write(`
       <html><head><title>${CERT_LABELS[certType].label}</title>
       <style>
-        @page { size: A4 landscape; margin: 0; }
-        body { margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        @page { size: A4 portrait; margin: 0; }
+        body { margin: 0; font-family: 'Batang', 'Nanum Myeongjo', serif; }
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        img { display: inline-block; }
       </style></head><body>
       ${printRef.current.innerHTML}
       </body></html>
     `);
     printWindow.document.close();
-    printWindow.print();
+    setTimeout(() => printWindow.print(), 300);
   }
 
   async function handleSaveRecord() {
@@ -154,7 +280,6 @@ export default function CertificateGenerator() {
         seminarId: seminar.id,
         seminarTitle: seminar.title,
         recipientName,
-        recipientAffiliation: recipientAffiliation || undefined,
         type: certType,
         issuedAt: new Date().toISOString(),
         issuedBy: user?.id ?? "",
@@ -189,22 +314,21 @@ export default function CertificateGenerator() {
     <div className="space-y-6">
       {/* 설정 영역 */}
       <div className="rounded-xl border bg-white p-6 space-y-4">
-        <div className="flex items-end gap-4">
-          <div className="flex-1">
-            <label className="mb-2 block text-sm font-medium">세미나 선택</label>
-            <select
-              value={selectedId ?? ""}
-              onChange={(e) => setSelectedId(e.target.value || null)}
-              className="w-full rounded-lg border px-3 py-2 text-sm"
-            >
-              <option value="">-- 세미나를 선택하세요 --</option>
-              {seminars.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.title} ({s.date})
-                </option>
-              ))}
-            </select>
-          </div>
+        {/* 세미나 선택 */}
+        <div>
+          <label className="mb-2 block text-sm font-medium">세미나 선택</label>
+          <select
+            value={selectedId ?? ""}
+            onChange={(e) => handleSeminarChange(e.target.value)}
+            className="w-full rounded-lg border px-3 py-2 text-sm"
+          >
+            <option value="">-- 세미나를 선택하세요 --</option>
+            {seminars.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.title} ({s.date})
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* 종류 선택 */}
@@ -227,8 +351,8 @@ export default function CertificateGenerator() {
           </div>
         </div>
 
-        {/* 수여자 정보 */}
-        <div className="grid gap-4 sm:grid-cols-2">
+        {/* 수여자 정보 + 학기 */}
+        <div className="grid gap-4 sm:grid-cols-3">
           <div>
             <label className="mb-1.5 block text-sm font-medium">수여자 이름</label>
             <Input
@@ -238,14 +362,15 @@ export default function CertificateGenerator() {
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium">
-              소속 <span className="text-muted-foreground">(선택)</span>
-            </label>
+            <label className="mb-1.5 block text-sm font-medium">학기</label>
             <Input
-              value={recipientAffiliation}
-              onChange={(e) => setRecipientAffiliation(e.target.value)}
-              placeholder="연세대학교 교육학과"
+              value={semester}
+              onChange={(e) => setSemester(e.target.value)}
+              placeholder="2026년 1학기"
             />
+          </div>
+          <div className="flex items-end">
+            {/* 빈 공간 */}
           </div>
         </div>
 
@@ -270,18 +395,25 @@ export default function CertificateGenerator() {
 
       {/* 미리보기 */}
       {seminar && (
-        <div ref={printRef}>
-          <CertificatePreview
-            type={certType}
-            seminarTitle={seminar.title}
-            seminarDate={new Date(seminar.date).toLocaleDateString("ko-KR", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-            recipientName={recipientName}
-            recipientAffiliation={recipientAffiliation}
-          />
+        <div>
+          <p className="mb-2 text-sm font-medium text-muted-foreground">미리보기 (A4 세로)</p>
+          <div
+            ref={printRef}
+            className="overflow-auto rounded-lg border shadow-lg"
+            style={{ maxHeight: "80vh" }}
+          >
+            <CertificatePreview
+              type={certType}
+              seminarTitle={seminar.title}
+              semester={semester || inferSemester(seminar.date)}
+              seminarDate={new Date(seminar.date).toLocaleDateString("ko-KR", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+              recipientName={recipientName}
+            />
+          </div>
         </div>
       )}
     </div>
