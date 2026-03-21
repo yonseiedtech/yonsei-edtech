@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { useSeminars } from "@/features/seminar/useSeminar";
+import { useAuthStore } from "@/features/auth/auth-store";
+import { promotionContentsApi } from "@/lib/bkend";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { streamAI } from "@/lib/ai-client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,10 +18,13 @@ import {
   Copy,
   Download,
   Loader2,
+  Save,
+  Trash2,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import type { Seminar } from "@/types";
+import type { PromotionContent } from "@/types";
 
 type ContentFormat = "press" | "sns" | "email" | "kakao" | "hashtag";
 
@@ -30,14 +36,36 @@ const FORMAT_OPTIONS: { key: ContentFormat; label: string; icon: React.ReactNode
   { key: "hashtag", label: "해시태그", icon: <Hash size={14} /> },
 ];
 
+const FORMAT_LABEL_MAP: Record<string, string> = {
+  press: "보도자료",
+  sns: "SNS 포스팅",
+  email: "초대 이메일",
+  kakao: "카카오톡",
+  hashtag: "해시태그",
+};
+
 export default function PromotionTab() {
   const { seminars } = useSeminars();
+  const { user } = useAuthStore();
+  const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [format, setFormat] = useState<ContentFormat>("press");
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
 
   const seminar = seminars.find((s) => s.id === selectedId);
+
+  // 저장된 콘텐츠 이력
+  const { data: savedContents } = useQuery({
+    queryKey: ["promotion_contents", selectedId],
+    queryFn: async () => {
+      if (!selectedId) return [];
+      const res = await promotionContentsApi.list(selectedId);
+      return res.data as unknown as PromotionContent[];
+    },
+    enabled: !!selectedId,
+    retry: false,
+  });
 
   async function handleGenerate(fmt: ContentFormat) {
     if (!seminar) {
@@ -60,8 +88,40 @@ export default function PromotionTab() {
     }
   }
 
-  function handleCopy() {
-    navigator.clipboard.writeText(result);
+  async function handleSave() {
+    if (!seminar || !result.trim()) return;
+    try {
+      await promotionContentsApi.create({
+        seminarId: seminar.id,
+        seminarTitle: seminar.title,
+        format,
+        content: result,
+        createdBy: user?.id ?? "",
+      });
+      queryClient.invalidateQueries({ queryKey: ["promotion_contents", selectedId] });
+      toast.success("콘텐츠가 저장되었습니다.");
+    } catch {
+      toast.error("저장에 실패했습니다.");
+    }
+  }
+
+  async function handleDelete(id: string) {
+    try {
+      await promotionContentsApi.delete(id);
+      queryClient.invalidateQueries({ queryKey: ["promotion_contents", selectedId] });
+      toast.success("삭제되었습니다.");
+    } catch {
+      toast.error("삭제에 실패했습니다.");
+    }
+  }
+
+  function handleLoadSaved(content: PromotionContent) {
+    setFormat(content.format as ContentFormat);
+    setResult(content.content);
+  }
+
+  function handleCopy(text?: string) {
+    navigator.clipboard.writeText(text ?? result);
     toast.success("클립보드에 복사되었습니다.");
   }
 
@@ -83,7 +143,7 @@ export default function PromotionTab() {
         <label className="mb-2 block text-sm font-medium">세미나 선택</label>
         <select
           value={selectedId ?? ""}
-          onChange={(e) => setSelectedId(e.target.value || null)}
+          onChange={(e) => { setSelectedId(e.target.value || null); setResult(""); }}
           className="w-full rounded-lg border px-3 py-2 text-sm"
         >
           <option value="">-- 세미나를 선택하세요 --</option>
@@ -97,13 +157,13 @@ export default function PromotionTab() {
 
       {/* 포맷 버튼 */}
       <div>
-        <label className="mb-2 block text-sm font-medium">콘텐츠 형식</label>
+        <label className="mb-2 block text-sm font-medium">AI 콘텐츠 생성</label>
         <div className="flex flex-wrap gap-2">
           {FORMAT_OPTIONS.map((opt) => (
             <Button
               key={opt.key}
               size="sm"
-              variant={format === opt.key ? "default" : "outline"}
+              variant={format === opt.key && !loading ? "default" : "outline"}
               onClick={() => handleGenerate(opt.key)}
               disabled={loading || !selectedId}
             >
@@ -129,13 +189,17 @@ export default function PromotionTab() {
               {loading && <Loader2 size={14} className="animate-spin text-muted-foreground" />}
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleCopy} disabled={!result}>
+              <Button variant="outline" size="sm" onClick={() => handleCopy()} disabled={!result}>
                 <Copy size={14} className="mr-1" />
                 복사
               </Button>
               <Button variant="outline" size="sm" onClick={handleDownload} disabled={!result}>
                 <Download size={14} className="mr-1" />
                 .txt
+              </Button>
+              <Button size="sm" onClick={handleSave} disabled={!result || loading}>
+                <Save size={14} className="mr-1" />
+                저장
               </Button>
             </div>
           </div>
@@ -145,6 +209,57 @@ export default function PromotionTab() {
             rows={16}
             className="w-full rounded-lg border border-input bg-muted/30 px-3 py-2 font-mono text-xs leading-relaxed outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
           />
+        </div>
+      )}
+
+      {/* 저장된 콘텐츠 이력 */}
+      {selectedId && savedContents && savedContents.length > 0 && (
+        <div className="rounded-xl border bg-white">
+          <div className="border-b px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Clock size={16} className="text-muted-foreground" />
+              <span className="text-sm font-medium">저장된 콘텐츠 ({savedContents.length})</span>
+            </div>
+          </div>
+          <div className="divide-y">
+            {savedContents.map((c) => (
+              <div key={c.id} className="flex items-center gap-3 px-4 py-3">
+                <Badge variant="secondary" className="shrink-0 text-xs">
+                  {FORMAT_LABEL_MAP[c.format] ?? c.format}
+                </Badge>
+                <p className="flex-1 truncate text-sm text-muted-foreground" title={c.content}>
+                  {c.content.substring(0, 80)}...
+                </p>
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {c.createdAt ? new Date(c.createdAt).toLocaleDateString("ko-KR") : ""}
+                </span>
+                <div className="flex shrink-0 gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleLoadSaved(c)}
+                  >
+                    불러오기
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCopy(c.content)}
+                  >
+                    <Copy size={12} />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-destructive"
+                    onClick={() => handleDelete(c.id)}
+                  >
+                    <Trash2 size={12} />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

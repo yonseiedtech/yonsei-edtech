@@ -187,6 +187,17 @@ export interface Certificate {
   issuedBy: string;
 }
 
+// ── 홍보 콘텐츠 저장 ──
+export interface PromotionContent {
+  id: string;
+  seminarId: string;
+  seminarTitle: string;
+  format: string;
+  content: string;
+  createdBy: string;
+  createdAt: string;
+}
+
 // ── 문의 ──
 export interface Inquiry {
   id: string;

@@ -331,6 +331,17 @@ export const certificatesApi = {
   delete: (id: string) => dataApi.delete("certificates", id),
 };
 
+export const promotionContentsApi = {
+  list: (seminarId?: string) =>
+    dataApi.list<Record<string, unknown>>("promotion_contents", {
+      ...(seminarId ? { "filter[seminarId]": seminarId } : {}),
+      sort: "createdAt:desc",
+    }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create("promotion_contents", data),
+  delete: (id: string) => dataApi.delete("promotion_contents", id),
+};
+
 export const inquiriesApi = {
   list: (params?: QueryParams) =>
     dataApi.list<Record<string, unknown>>("inquiries", { sort: "createdAt:desc", ...params }),
