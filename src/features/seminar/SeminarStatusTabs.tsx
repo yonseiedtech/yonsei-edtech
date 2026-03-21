@@ -1,13 +1,14 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type { Seminar } from "@/types";
+import type { SeminarStatus } from "@/types";
 
-type StatusFilter = Seminar["status"] | "all";
+type StatusFilter = SeminarStatus | "all";
 
 const TABS: { value: StatusFilter; label: string }[] = [
   { value: "all", label: "전체" },
   { value: "upcoming", label: "예정" },
+  { value: "ongoing", label: "진행 중" },
   { value: "completed", label: "완료" },
 ];
 

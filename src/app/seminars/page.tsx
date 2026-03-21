@@ -7,11 +7,12 @@ import SeminarStatusTabs from "@/features/seminar/SeminarStatusTabs";
 import { useSeminars } from "@/features/seminar/useSeminar";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isStaffOrAbove } from "@/lib/permissions";
+import { getComputedStatus } from "@/lib/seminar-utils";
 import { Button } from "@/components/ui/button";
 import { Plus, Calendar } from "lucide-react";
-import type { Seminar } from "@/types";
+import type { SeminarStatus } from "@/types";
 
-type StatusFilter = Seminar["status"] | "all";
+type StatusFilter = SeminarStatus | "all";
 
 export default function SeminarsPage() {
   const [status, setStatus] = useState<StatusFilter>("all");
@@ -21,7 +22,7 @@ export default function SeminarsPage() {
   const filtered =
     status === "all"
       ? allSeminars
-      : allSeminars.filter((s) => s.status === status);
+      : allSeminars.filter((s) => getComputedStatus(s) === status);
 
   const sorted = [...filtered].sort((a, b) => b.date.localeCompare(a.date));
 

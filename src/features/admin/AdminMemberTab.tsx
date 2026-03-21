@@ -2,12 +2,13 @@
 
 import { useState, useMemo } from "react";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { isPresidentOrAbove } from "@/lib/permissions";
+import { isStaffOrAbove } from "@/lib/permissions";
 import {
   useMembers,
   usePendingMembers,
   useChangeRole,
   useBulkChangeRoles,
+  useCreateMember,
 } from "@/features/member/useMembers";
 import AdminUserList from "./AdminUserList";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { ROLE_LABELS } from "@/types";
 import type { UserRole } from "@/types";
 import { toast } from "sonner";
-import { Search, RefreshCw } from "lucide-react";
+import { Search, RefreshCw, UserPlus } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
@@ -30,7 +31,7 @@ const ASSIGNABLE_ROLES: UserRole[] = ["member", "alumni", "advisor", "staff", "p
 
 export default function AdminMemberTab() {
   const { user } = useAuthStore();
-  const canApprove = isPresidentOrAbove(user);
+  const canApprove = isStaffOrAbove(user);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<UserRole | "all">("all");
 
@@ -40,6 +41,18 @@ export default function AdminMemberTab() {
     roleFilter !== "all" ? { role: roleFilter } : undefined
   );
   const { changeRole } = useChangeRole();
+
+  // 수기 회원 추가
+  const { createMember } = useCreateMember();
+  const [showAddMember, setShowAddMember] = useState(false);
+  const [newMember, setNewMember] = useState({
+    name: "",
+    email: "",
+    username: "",
+    role: "member" as UserRole,
+    generation: 0,
+    field: "",
+  });
 
   // 운영진 교체 상태
   const [showHandover, setShowHandover] = useState(false);
@@ -96,6 +109,24 @@ export default function AdminMemberTab() {
     }
   }
 
+  async function handleAddMember() {
+    if (!newMember.name || !newMember.email) {
+      toast.error("이름과 이메일은 필수입니다.");
+      return;
+    }
+    try {
+      await createMember({
+        ...newMember,
+        username: newMember.username || newMember.email.split("@")[0],
+      });
+      toast.success(`${newMember.name} 회원이 추가되었습니다.`);
+      setShowAddMember(false);
+      setNewMember({ name: "", email: "", username: "", role: "member", generation: 0, field: "" });
+    } catch {
+      toast.error("회원 추가에 실패했습니다.");
+    }
+  }
+
   return (
     <div className="space-y-8">
       {/* 승인 대기 */}
@@ -119,14 +150,24 @@ export default function AdminMemberTab() {
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold">전체 회원</h2>
           {canApprove && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setShowHandover(true)}
-            >
-              <RefreshCw size={14} className="mr-1" />
-              운영진 교체
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowAddMember(true)}
+              >
+                <UserPlus size={14} className="mr-1" />
+                회원 추가
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowHandover(true)}
+              >
+                <RefreshCw size={14} className="mr-1" />
+                운영진 교체
+              </Button>
+            </div>
           )}
         </div>
 
@@ -207,6 +248,80 @@ export default function AdminMemberTab() {
           </div>
         )}
       </section>
+
+      {/* 수기 회원 추가 Dialog */}
+      <Dialog open={showAddMember} onOpenChange={setShowAddMember}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>회원 수기 추가</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">이름 *</label>
+                <Input
+                  value={newMember.name}
+                  onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
+                  placeholder="홍길동"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">이메일 *</label>
+                <Input
+                  value={newMember.email}
+                  onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
+                  placeholder="user@example.com"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">아이디 (username)</label>
+                <Input
+                  value={newMember.username}
+                  onChange={(e) => setNewMember({ ...newMember, username: e.target.value })}
+                  placeholder="미입력 시 이메일에서 자동 생성"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">역할</label>
+                <select
+                  value={newMember.role}
+                  onChange={(e) => setNewMember({ ...newMember, role: e.target.value as UserRole })}
+                  className="w-full rounded-md border px-3 py-2 text-sm"
+                >
+                  {ASSIGNABLE_ROLES.map((r) => (
+                    <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">기수</label>
+                <Input
+                  type="number"
+                  value={newMember.generation || ""}
+                  onChange={(e) => setNewMember({ ...newMember, generation: parseInt(e.target.value) || 0 })}
+                  placeholder="1"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">분야</label>
+                <Input
+                  value={newMember.field}
+                  onChange={(e) => setNewMember({ ...newMember, field: e.target.value })}
+                  placeholder="교육공학"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddMember(false)}>취소</Button>
+            <Button onClick={handleAddMember}>추가</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* 운영진 교체 Dialog */}
       <Dialog open={showHandover} onOpenChange={setShowHandover}>

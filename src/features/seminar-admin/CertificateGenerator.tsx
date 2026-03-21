@@ -17,9 +17,26 @@ const CERT_LABELS: Record<CertType, { label: string; icon: React.ReactNode }> = 
   appreciation: { label: "감사장", icon: <Heart size={16} /> },
 };
 
-/** 이름에 자간 추가: "홍길동" → "홍 길 동" */
+/** 이름에 자간 추가: "홍길동" → "홍  길  동" */
 function spacedName(name: string): string {
-  return name.split("").join(" ");
+  return name.split("").join("  ");
+}
+
+/** 연도 기반 증서 번호 생성 */
+async function generateCertificateNo(): Promise<string> {
+  const year = new Date().getFullYear();
+  const yy = String(year).slice(-2);
+  try {
+    const existing = await certificatesApi.list();
+    const thisYearCount = existing.data.filter((c) => {
+      const no = (c as Record<string, unknown>).certificateNo as string | undefined;
+      return no && no.startsWith(`${yy}-`);
+    }).length;
+    const seq = String(thisYearCount + 1).padStart(3, "0");
+    return `${yy}-${seq}`;
+  } catch {
+    return `${yy}-001`;
+  }
 }
 
 function CertificatePreview({
@@ -28,15 +45,17 @@ function CertificatePreview({
   seminarDate,
   semester,
   recipientName,
+  certificateNo,
 }: {
   type: CertType;
   seminarTitle: string;
   seminarDate: string;
   semester: string;
   recipientName: string;
+  certificateNo: string;
 }) {
   const isCompletion = type === "completion";
-  const title = isCompletion ? "수 료 증" : "감 사 장";
+  const title = isCompletion ? "수 료 증" : "감  사  장";
 
   return (
     <div
@@ -48,55 +67,54 @@ function CertificatePreview({
         fontFamily: "'Batang', 'Nanum Myeongjo', serif",
       }}
     >
-      {/* 상단 파란 테두리 */}
-      <div style={{ height: "8px", background: "#003876" }} />
+      {/* 외곽 테두리 프레임 */}
+      <div
+        style={{
+          position: "absolute",
+          inset: "20px",
+          border: "2px solid #333",
+          pointerEvents: "none",
+        }}
+      />
 
       {/* 본문 영역 */}
       <div
         className="flex flex-col items-center"
-        style={{ padding: "50px 60px 40px" }}
+        style={{ padding: "60px 70px 50px" }}
       >
-        {/* 제목 */}
+        {/* 좌상단 "제 N 호" */}
+        <div style={{ alignSelf: "flex-start", marginBottom: "30px" }}>
+          <span
+            style={{
+              fontSize: "16px",
+              fontWeight: 800,
+              letterSpacing: "0.1em",
+            }}
+          >
+            제 {certificateNo || "___"} 호
+          </span>
+        </div>
+
+        {/* 중앙 제목 */}
         <h1
           style={{
-            fontSize: "48px",
-            fontWeight: "bold",
-            letterSpacing: "0.4em",
+            fontSize: "40px",
+            fontWeight: 800,
+            letterSpacing: "0.6em",
             color: "#000",
-            marginBottom: "8px",
+            marginBottom: "40px",
+            textAlign: "center",
           }}
         >
           {title}
         </h1>
 
-        {/* 서브타이틀 */}
-        <p
-          style={{
-            fontSize: "11px",
-            color: "#666",
-            letterSpacing: "0.1em",
-            marginBottom: "2px",
-          }}
-        >
-          Yonsei Educational Technology Association
-        </p>
-        <p
-          style={{
-            fontSize: "12px",
-            color: "#666",
-            letterSpacing: "0.2em",
-            marginBottom: "40px",
-          }}
-        >
-          연세교육공학회
-        </p>
-
-        {/* 수여자 이름 */}
+        {/* 수여자 이름 (우측 정렬) */}
         <div style={{ marginBottom: "50px", textAlign: "right", width: "100%" }}>
           <span
             style={{
-              fontSize: "28px",
-              fontWeight: "600",
+              fontSize: "24px",
+              fontWeight: 600,
               letterSpacing: "0.5em",
             }}
           >
@@ -105,7 +123,7 @@ function CertificatePreview({
           <span
             style={{
               fontSize: "16px",
-              marginLeft: "12px",
+              marginLeft: "16px",
               fontWeight: "normal",
             }}
           >
@@ -113,22 +131,22 @@ function CertificatePreview({
           </span>
         </div>
 
-        {/* 워터마크 엠블럼 (배경) */}
+        {/* 중앙 직인 이미지 (워터마크) */}
         <div
           className="absolute left-1/2 -translate-x-1/2"
           style={{
-            top: "40%",
-            opacity: 0.08,
-            width: "320px",
-            height: "320px",
+            top: "42%",
+            opacity: 0.12,
+            width: "280px",
+            height: "280px",
             pointerEvents: "none",
           }}
         >
           <Image
             src="/yonsei-emblem.svg"
             alt=""
-            width={320}
-            height={320}
+            width={280}
+            height={280}
             className="h-full w-full"
           />
         </div>
@@ -137,11 +155,11 @@ function CertificatePreview({
         <div
           className="relative"
           style={{
-            fontSize: "18px",
-            lineHeight: "2.2",
-            textAlign: "left",
+            fontSize: "17px",
+            lineHeight: "2.4",
+            textAlign: "justify",
             width: "100%",
-            maxWidth: "520px",
+            maxWidth: "480px",
             margin: "0 auto",
             wordBreak: "keep-all",
           }}
@@ -166,25 +184,26 @@ function CertificatePreview({
         {/* 날짜 */}
         <p
           style={{
-            fontSize: "18px",
+            fontSize: "17px",
             marginTop: "60px",
             letterSpacing: "0.15em",
+            textAlign: "center",
           }}
         >
           {seminarDate}
         </p>
 
-        {/* 하단 로고 + 직인 */}
+        {/* 하단 서명 영역 */}
         <div
-          className="flex items-center justify-center gap-4"
-          style={{ marginTop: "40px" }}
+          className="flex items-center justify-center gap-6"
+          style={{ marginTop: "50px" }}
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <Image
               src="/yonsei-emblem.svg"
               alt="연세대학교"
-              width={36}
-              height={36}
+              width={40}
+              height={40}
             />
             <div style={{ lineHeight: 1.3 }}>
               <p style={{ fontSize: "18px", fontWeight: "bold" }}>연세교육공학회</p>
@@ -193,18 +212,18 @@ function CertificatePreview({
               </p>
             </div>
           </div>
-          {/* 직인 자리 */}
+          {/* 직인 */}
           <div
             style={{
-              width: "56px",
-              height: "56px",
-              border: "2px solid #cc3333",
+              width: "64px",
+              height: "64px",
+              border: "3px solid #cc3333",
               borderRadius: "50%",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               color: "#cc3333",
-              fontSize: "10px",
+              fontSize: "11px",
               fontWeight: "bold",
               lineHeight: 1.2,
               textAlign: "center",
@@ -216,9 +235,6 @@ function CertificatePreview({
           </div>
         </div>
       </div>
-
-      {/* 하단 파란 테두리 */}
-      <div style={{ height: "8px", background: "#003876" }} />
     </div>
   );
 }
@@ -239,16 +255,21 @@ export default function CertificateGenerator() {
   const [certType, setCertType] = useState<CertType>("appreciation");
   const [recipientName, setRecipientName] = useState("");
   const [semester, setSemester] = useState("");
+  const [certificateNo, setCertificateNo] = useState("");
   const printRef = useRef<HTMLDivElement>(null);
 
   const seminar = seminars.find((s) => s.id === selectedId);
   const { attendees } = useAttendees(selectedId ?? "");
 
-  // 세미나 선택 시 학기 자동 추론
-  function handleSeminarChange(id: string) {
+  // 세미나 선택 시 학기 자동 추론 + 증서번호 생성
+  async function handleSeminarChange(id: string) {
     setSelectedId(id || null);
     const s = seminars.find((sem) => sem.id === id);
-    if (s) setSemester(inferSemester(s.date));
+    if (s) {
+      setSemester(inferSemester(s.date));
+      const no = await generateCertificateNo();
+      setCertificateNo(no);
+    }
   }
 
   function handlePrint() {
@@ -281,10 +302,14 @@ export default function CertificateGenerator() {
         seminarTitle: seminar.title,
         recipientName,
         type: certType,
+        certificateNo,
         issuedAt: new Date().toISOString(),
         issuedBy: user?.id ?? "",
       });
       toast.success(`${CERT_LABELS[certType].label} 기록이 저장되었습니다.`);
+      // 다음 번호로 갱신
+      const nextNo = await generateCertificateNo();
+      setCertificateNo(nextNo);
     } catch {
       toast.error("저장에 실패했습니다.");
     }
@@ -298,11 +323,13 @@ export default function CertificateGenerator() {
       return;
     }
     for (const att of targets) {
+      const no = await generateCertificateNo();
       await certificatesApi.create({
         seminarId: seminar.id,
         seminarTitle: seminar.title,
         recipientName: att.userName,
         type: "completion",
+        certificateNo: no,
         issuedAt: new Date().toISOString(),
         issuedBy: user?.id ?? "",
       });
@@ -351,7 +378,7 @@ export default function CertificateGenerator() {
           </div>
         </div>
 
-        {/* 수여자 정보 + 학기 */}
+        {/* 수여자 정보 + 학기 + 증서번호 */}
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
             <label className="mb-1.5 block text-sm font-medium">수여자 이름</label>
@@ -369,8 +396,13 @@ export default function CertificateGenerator() {
               placeholder="2026년 1학기"
             />
           </div>
-          <div className="flex items-end">
-            {/* 빈 공간 */}
+          <div>
+            <label className="mb-1.5 block text-sm font-medium">증서 번호</label>
+            <Input
+              value={certificateNo}
+              onChange={(e) => setCertificateNo(e.target.value)}
+              placeholder="26-001"
+            />
           </div>
         </div>
 
@@ -412,6 +444,7 @@ export default function CertificateGenerator() {
                 day: "numeric",
               })}
               recipientName={recipientName}
+              certificateNo={certificateNo}
             />
           </div>
         </div>

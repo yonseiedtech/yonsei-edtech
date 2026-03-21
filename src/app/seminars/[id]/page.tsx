@@ -36,10 +36,13 @@ import {
   Mail,
   ExternalLink,
   Video,
+  BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import type { Seminar } from "@/types";
+import { getComputedStatus } from "@/lib/seminar-utils";
+import { SEMINAR_STATUS_LABELS } from "@/types";
+import type { Seminar, SeminarStatus } from "@/types";
 
 type ContentFormat = "press" | "sns" | "email";
 
@@ -107,11 +110,12 @@ function SeminarDetail({ id }: { id: string }) {
     );
   }
 
+  const computedStatus = getComputedStatus(seminar);
   const isAttending = user ? seminar.attendeeIds.includes(user.id) : false;
   const isFull =
     seminar.maxAttendees != null &&
     seminar.attendeeIds.length >= seminar.maxAttendees;
-  const canToggle = seminar.status === "upcoming" && user;
+  const canToggle = computedStatus === "upcoming" && user;
 
   function openPressRelease() {
     setPressText(generatePressRelease(seminar!));
@@ -168,12 +172,16 @@ function SeminarDetail({ id }: { id: string }) {
     toast.success(isAttending ? "참석이 취소되었습니다." : "참석 신청되었습니다.");
   }
 
-  const statusMap = {
-    upcoming: { label: "예정", className: "bg-primary/10 text-primary" },
-    completed: { label: "완료", className: "bg-muted text-muted-foreground" },
-    cancelled: { label: "취소", className: "bg-destructive/10 text-destructive" },
+  const statusStyles: Record<SeminarStatus, string> = {
+    upcoming: "bg-primary/10 text-primary",
+    ongoing: "bg-amber-100 text-amber-700",
+    completed: "bg-muted text-muted-foreground",
+    cancelled: "bg-destructive/10 text-destructive",
   };
-  const badge = statusMap[seminar.status];
+  const badge = {
+    label: SEMINAR_STATUS_LABELS[computedStatus],
+    className: statusStyles[computedStatus],
+  };
 
   return (
     <div className="py-16">
@@ -272,12 +280,33 @@ function SeminarDetail({ id }: { id: string }) {
             </div>
           </div>
 
+          {/* 세미나 공간 (LMS) 링크 */}
+          {computedStatus !== "cancelled" && (
+            <div className="mt-6">
+              {isAttending || isStaff ? (
+                <Link href={`/seminars/${id}/lms`}>
+                  <Button className="w-full gap-2">
+                    <BookOpen size={16} />
+                    세미나 공간 입장
+                  </Button>
+                </Link>
+              ) : (
+                <Link href={`/seminars/${id}/lms`}>
+                  <Button variant="outline" className="w-full gap-2">
+                    <BookOpen size={16} />
+                    세미나 공간 (자료실 · 후기)
+                  </Button>
+                </Link>
+              )}
+            </div>
+          )}
+
           <div className="mt-6 whitespace-pre-wrap text-sm leading-relaxed">
             {seminar.description}
           </div>
 
           {/* 외부 신청 버튼 */}
-          {seminar.registrationUrl && seminar.status === "upcoming" && (
+          {seminar.registrationUrl && computedStatus === "upcoming" && (
             <div className="mt-6">
               <a
                 href={seminar.registrationUrl}
@@ -293,7 +322,7 @@ function SeminarDetail({ id }: { id: string }) {
           )}
 
           {/* 회원 참석 신청 */}
-          {seminar.status === "upcoming" && user && (
+          {computedStatus === "upcoming" && user && (
             <div className="mt-8 border-t pt-6">
               <Button
                 onClick={handleToggle}
@@ -321,14 +350,14 @@ function SeminarDetail({ id }: { id: string }) {
           )}
 
           {/* 자체 신청 폼 (비회원 포함) */}
-          {seminar.status === "upcoming" && (
+          {computedStatus === "upcoming" && (
             <div className="mt-6">
               <SeminarRegistrationForm seminarId={id} seminarTitle={seminar.title} />
             </div>
           )}
 
           {/* 비회원 로그인 안내 (회원 전용 기능) */}
-          {seminar.status === "upcoming" && !user && (
+          {computedStatus === "upcoming" && !user && (
             <div className="mt-4 text-center">
               <Link href="/login">
                 <Button variant="outline" className="w-full sm:w-auto">
@@ -340,7 +369,7 @@ function SeminarDetail({ id }: { id: string }) {
           )}
 
           {/* 참석자: 내 QR 코드 */}
-          {isAttending && myAttendee && seminar.status === "upcoming" && (
+          {isAttending && myAttendee && computedStatus === "upcoming" && (
             <div className="mt-6 border-t pt-6">
               <h3 className="mb-3 text-sm font-bold">내 출석 QR 코드</h3>
               <div className="flex justify-center">
@@ -357,7 +386,7 @@ function SeminarDetail({ id }: { id: string }) {
           {isStaff && (
             <div className="mt-4 border-t pt-4">
               <div className="flex flex-wrap gap-2">
-                {seminar.status === "upcoming" && (
+                {computedStatus === "upcoming" && (
                   <Button
                     size="sm"
                     onClick={() => router.push(`/seminars/${id}/checkin`)}

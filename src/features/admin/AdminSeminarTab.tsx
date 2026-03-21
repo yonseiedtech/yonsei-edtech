@@ -25,18 +25,15 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { formatDate } from "@/lib/utils";
-import type { Seminar, SeminarSession } from "@/types";
+import type { Seminar, SeminarSession, SeminarStatus } from "@/types";
+import { SEMINAR_STATUS_LABELS } from "@/types";
+import { getComputedStatus } from "@/lib/seminar-utils";
 import { toast } from "sonner";
 import { ChevronDown, Pencil, Plus, Trash2, Image as ImageIcon, Video } from "lucide-react";
 
-const STATUS_LABELS: Record<Seminar["status"], string> = {
-  upcoming: "예정",
-  completed: "완료",
-  cancelled: "취소",
-};
-
-const STATUS_COLORS: Record<Seminar["status"], string> = {
+const STATUS_COLORS: Record<SeminarStatus, string> = {
   upcoming: "bg-blue-50 text-blue-700",
+  ongoing: "bg-amber-50 text-amber-700",
   completed: "bg-green-50 text-green-700",
   cancelled: "bg-red-50 text-red-700",
 };
@@ -77,9 +74,14 @@ export default function AdminSeminarTab() {
   const [editSeminar, setEditSeminar] = useState<EditSeminar | null>(null);
   const [editSession, setEditSession] = useState<EditSession | null>(null);
 
-  function handleStatusChange(id: string, status: Seminar["status"]) {
-    updateSeminar({ id, data: { status } });
-    toast.success(`세미나 상태가 "${STATUS_LABELS[status]}"(으)로 변경되었습니다.`);
+  function handleCancelToggle(id: string, currentDbStatus: Seminar["status"]) {
+    const newStatus = currentDbStatus === "cancelled" ? "upcoming" : "cancelled";
+    updateSeminar({ id, data: { status: newStatus } });
+    toast.success(
+      newStatus === "cancelled"
+        ? "세미나가 취소되었습니다."
+        : "세미나 취소가 해제되었습니다.",
+    );
   }
 
   function openEditSeminar(s: Seminar) {
@@ -183,25 +185,27 @@ export default function AdminSeminarTab() {
   return (
     <div className="space-y-0 rounded-xl border bg-white">
       {/* 테이블 헤더 */}
-      <div className="grid grid-cols-[48px_1fr_120px_140px_80px_80px_100px_80px] items-center gap-1 border-b bg-muted/30 px-4 py-3 text-sm font-medium">
+      <div className="grid grid-cols-[48px_1fr_120px_140px_80px_80px_80px_80px] items-center gap-1 border-b bg-muted/30 px-4 py-3 text-sm font-medium">
         <span>포스터</span>
         <span>제목</span>
         <span>발표자</span>
         <span>일시</span>
         <span>참석자</span>
         <span>상태</span>
-        <span>상태 변경</span>
+        <span>취소</span>
         <span>관리</span>
       </div>
 
       {/* 세미나 행 */}
-      {seminars.map((s) => (
+      {seminars.map((s) => {
+        const computed = getComputedStatus(s);
+        return (
         <Collapsible
           key={s.id}
           open={expandedId === s.id}
           onOpenChange={(open) => setExpandedId(open ? s.id : null)}
         >
-          <div className="grid grid-cols-[48px_1fr_120px_140px_80px_80px_100px_80px] items-center gap-1 border-b px-4 py-3 text-sm">
+          <div className="grid grid-cols-[48px_1fr_120px_140px_80px_80px_80px_80px] items-center gap-1 border-b px-4 py-3 text-sm">
             {/* 포스터 썸네일 */}
             <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded border bg-muted/20">
               {s.posterUrl ? (
@@ -239,20 +243,17 @@ export default function AdminSeminarTab() {
               {s.attendeeIds.length}
               {s.maxAttendees ? `/${s.maxAttendees}` : ""}명
             </span>
-            <Badge variant="secondary" className={STATUS_COLORS[s.status]}>
-              {STATUS_LABELS[s.status]}
+            <Badge variant="secondary" className={STATUS_COLORS[computed]}>
+              {SEMINAR_STATUS_LABELS[computed]}
             </Badge>
-            <select
-              value={s.status}
-              onChange={(e) =>
-                handleStatusChange(s.id, e.target.value as Seminar["status"])
-              }
-              className="rounded-md border px-2 py-1 text-sm"
+            <Button
+              variant={s.status === "cancelled" ? "destructive" : "outline"}
+              size="sm"
+              className="text-xs"
+              onClick={() => handleCancelToggle(s.id, s.status)}
             >
-              <option value="upcoming">예정</option>
-              <option value="completed">완료</option>
-              <option value="cancelled">취소</option>
-            </select>
+              {s.status === "cancelled" ? "해제" : "취소"}
+            </Button>
             <Button variant="outline" size="sm" onClick={() => openEditSeminar(s)}>
               <Pencil size={14} />
             </Button>
@@ -317,7 +318,8 @@ export default function AdminSeminarTab() {
             </div>
           </CollapsibleContent>
         </Collapsible>
-      ))}
+        );
+      })}
 
       {/* 세미나 수정 Dialog */}
       <Dialog

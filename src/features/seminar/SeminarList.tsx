@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import type { Seminar } from "@/types";
+import type { Seminar, SeminarStatus } from "@/types";
+import { SEMINAR_STATUS_LABELS } from "@/types";
+import { getComputedStatus } from "@/lib/seminar-utils";
 import { Calendar, MapPin, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -10,10 +12,11 @@ interface Props {
   seminars: Seminar[];
 }
 
-const STATUS_BADGE: Record<Seminar["status"], { label: string; className: string }> = {
-  upcoming: { label: "예정", className: "bg-primary/10 text-primary" },
-  completed: { label: "완료", className: "bg-muted text-muted-foreground" },
-  cancelled: { label: "취소", className: "bg-destructive/10 text-destructive" },
+const STATUS_STYLES: Record<SeminarStatus, string> = {
+  upcoming: "bg-primary/10 text-primary",
+  ongoing: "bg-amber-100 text-amber-700",
+  completed: "bg-muted text-muted-foreground",
+  cancelled: "bg-destructive/10 text-destructive",
 };
 
 export default function SeminarList({ seminars }: Props) {
@@ -28,7 +31,8 @@ export default function SeminarList({ seminars }: Props) {
   return (
     <div className="grid gap-4">
       {seminars.map((seminar) => {
-        const badge = STATUS_BADGE[seminar.status];
+        const computed = getComputedStatus(seminar);
+        const badge = { label: SEMINAR_STATUS_LABELS[computed], className: STATUS_STYLES[computed] };
         return (
           <Link
             key={seminar.id}

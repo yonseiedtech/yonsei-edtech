@@ -23,6 +23,8 @@ import {
   limit as firestoreLimit,
   serverTimestamp,
   Timestamp,
+  arrayUnion,
+  arrayRemove,
   type QueryConstraint,
 } from "firebase/firestore";
 import { auth, db } from "./firebase";
@@ -341,6 +343,41 @@ export const promotionContentsApi = {
     dataApi.create("promotion_contents", data),
   delete: (id: string) => dataApi.delete("promotion_contents", id),
 };
+
+export const materialsApi = {
+  list: (seminarId: string) =>
+    dataApi.list<Record<string, unknown>>("seminar_materials", {
+      "filter[seminarId]": seminarId,
+      sort: "createdAt:desc",
+    }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create("seminar_materials", data),
+  delete: (id: string) => dataApi.delete("seminar_materials", id),
+};
+
+export const reviewsApi = {
+  list: (seminarId: string, type?: string) =>
+    dataApi.list<Record<string, unknown>>("seminar_reviews", {
+      "filter[seminarId]": seminarId,
+      ...(type ? { "filter[type]": type } : {}),
+      sort: "createdAt:desc",
+    }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create("seminar_reviews", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update("seminar_reviews", id, data),
+  delete: (id: string) => dataApi.delete("seminar_reviews", id),
+};
+
+/** seminars 문서의 attendeeIds 배열을 동기화 */
+export async function syncAttendeeIds(seminarId: string, userId: string, action: "add" | "remove") {
+  const seminarRef = doc(db, "seminars", seminarId);
+  if (action === "add") {
+    await updateDoc(seminarRef, { attendeeIds: arrayUnion(userId), updatedAt: serverTimestamp() });
+  } else {
+    await updateDoc(seminarRef, { attendeeIds: arrayRemove(userId), updatedAt: serverTimestamp() });
+  }
+}
 
 export const inquiriesApi = {
   list: (params?: QueryParams) =>

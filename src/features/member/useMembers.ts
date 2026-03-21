@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { profilesApi } from "@/lib/bkend";
+import { profilesApi, dataApi } from "@/lib/bkend";
 import type { User, UserRole } from "@/types";
 
 // ── 승인된 회원 목록 ──
@@ -127,6 +127,33 @@ export function useChangeRole() {
   });
 
   return { changeRole: mutation.mutateAsync, isLoading: mutation.isPending };
+}
+
+// ── 수기 회원 추가 ──
+
+export function useCreateMember() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async (data: {
+      name: string;
+      email: string;
+      username: string;
+      role: UserRole;
+      generation: number;
+      field: string;
+    }) => {
+      return await dataApi.create("users", {
+        ...data,
+        approved: true,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["members"] });
+    },
+  });
+
+  return { createMember: mutation.mutateAsync, isLoading: mutation.isPending };
 }
 
 // ── 일괄 역할 변경 (운영진 교체) ──

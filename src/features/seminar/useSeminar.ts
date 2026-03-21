@@ -1,8 +1,9 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { seminarsApi, sessionsApi, attendeesApi } from "@/lib/bkend";
-import type { Seminar, SeminarSession, SeminarAttendee } from "@/types";
+import { seminarsApi, sessionsApi, attendeesApi, profilesApi } from "@/lib/bkend";
+import { syncAttendeeIds } from "@/lib/bkend";
+import type { Seminar, SeminarSession, SeminarAttendee, User } from "@/types";
 
 // ── List ──
 
@@ -96,8 +97,10 @@ export function useToggleAttendance() {
     if (existing.data.length > 0) {
       const attendeeId = (existing.data[0] as Record<string, unknown>).id as string;
       await attendeesApi.remove(attendeeId);
+      await syncAttendeeIds(seminarId, userId, "remove");
     } else {
       await attendeesApi.add(seminarId, userId);
+      await syncAttendeeIds(seminarId, userId, "add");
     }
     queryClient.invalidateQueries({ queryKey: ["seminars"] });
     queryClient.invalidateQueries({ queryKey: ["attendees"] });
@@ -141,6 +144,29 @@ export function useCheckinStats(seminarId: string) {
   const total = attendees.length;
   const checkedIn = attendees.filter((a) => a.checkedIn).length;
   return { total, checkedIn, remaining: total - checkedIn };
+}
+
+// ── Staff Members (운영진 목록) ──
+
+export function useStaffMembers() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["staff-members"],
+    queryFn: async () => {
+      const [staff, presidents, admins] = await Promise.all([
+        profilesApi.list({ "filter[role]": "staff", "filter[approved]": "true", limit: 50 }),
+        profilesApi.list({ "filter[role]": "president", "filter[approved]": "true", limit: 10 }),
+        profilesApi.list({ "filter[role]": "admin", "filter[approved]": "true", limit: 10 }),
+      ]);
+      return [
+        ...presidents.data,
+        ...staff.data,
+        ...admins.data,
+      ] as unknown as User[];
+    },
+    retry: false,
+  });
+
+  return { staffMembers: data ?? [], isLoading };
 }
 
 // ── Sessions ──

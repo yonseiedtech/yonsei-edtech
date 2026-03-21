@@ -129,7 +129,7 @@ export interface Seminar {
   onlineUrl?: string;
   registrationUrl?: string;
   timeline?: TimelinePhase[];
-  status: "upcoming" | "completed" | "cancelled";
+  status: "upcoming" | "ongoing" | "completed" | "cancelled";
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -144,6 +144,7 @@ export interface TimelinePhase {
   doneAt?: string;
   memo?: string;
   assignee?: string;
+  description?: string; // 항목 설명
 }
 
 // ── 세미나 출석 ──
@@ -181,6 +182,7 @@ export interface SeminarRegistration {
 // ── 수료증 / 감사장 ──
 export interface Certificate {
   id: string;
+  certificateNo?: string; // "YY-NNN" 형식 (예: "26-001")
   seminarId: string;
   seminarTitle: string;
   recipientName: string;
@@ -198,6 +200,42 @@ export interface PromotionContent {
   format: string;
   content: string;
   createdBy: string;
+  createdAt: string;
+}
+
+// ── 세미나 상태 라벨 ──
+export type SeminarStatus = Seminar["status"];
+
+export const SEMINAR_STATUS_LABELS: Record<SeminarStatus, string> = {
+  upcoming: "예정",
+  ongoing: "진행 중",
+  completed: "완료",
+  cancelled: "취소",
+};
+
+// ── 세미나 자료 ──
+export interface SeminarMaterial {
+  id: string;
+  seminarId: string;
+  title: string;
+  fileName: string;
+  fileUrl: string; // Base64 data URL
+  fileSize: number;
+  uploadedBy: string;
+  uploadedByName: string;
+  createdAt: string;
+}
+
+// ── 세미나 후기 ──
+export interface SeminarReview {
+  id: string;
+  seminarId: string;
+  type: "attendee" | "speaker";
+  content: string;
+  rating?: number; // 1-5 별점 (선택)
+  authorId: string;
+  authorName: string;
+  authorGeneration?: number;
   createdAt: string;
 }
 
