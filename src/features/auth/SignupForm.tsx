@@ -5,19 +5,39 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { UserPlus } from "lucide-react";
+import { UserPlus, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { authApi, profilesApi, saveTokens } from "@/lib/bkend";
+import { cn } from "@/lib/utils";
+
+type MemberType = "student" | "alumni";
+
+const MEMBER_TYPE_LABELS: Record<MemberType, string> = {
+  student: "재학생 (대학원생 포함)",
+  alumni: "졸업생",
+};
+
+const ACTIVITY_OPTIONS = [
+  { value: "", label: "선택 안 함" },
+  { value: "teacher", label: "학교 교사" },
+  { value: "corporate", label: "기업 재직" },
+  { value: "university", label: "대학 교직원" },
+  { value: "researcher", label: "연구소/기관" },
+  { value: "freelancer", label: "프리랜서" },
+  { value: "other", label: "기타" },
+];
 
 interface SignupData {
-  code: string;
   username: string;
   name: string;
   email: string;
   password: string;
-  generation: number;
   studentId: string;
   field: string;
+  activity: string;
+  affiliation1: string;
+  affiliation2: string;
+  position: string;
 }
 
 interface Props {
@@ -26,21 +46,20 @@ interface Props {
 
 export default function SignupForm({ onSuccess }: Props) {
   const [loading, setLoading] = useState(false);
+  const [memberType, setMemberType] = useState<MemberType>("student");
+  const [privacyAgreed, setPrivacyAgreed] = useState(false);
+  const [showOptional, setShowOptional] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm<SignupData>();
 
   async function onSubmit(data: SignupData) {
+    if (!privacyAgreed) {
+      toast.error("개인정보 수집 및 이용에 동의해주세요.");
+      return;
+    }
+
     setLoading(true);
     try {
-      // Validate signup code server-side
-      // TODO: Replace with bkend.ai server-side validation
-      const validCode = process.env.NEXT_PUBLIC_SIGNUP_CODE || "YONSEI2026";
-      if (data.code !== validCode) {
-        toast.error("가입 코드가 올바르지 않습니다. 학회 관리자에게 문의하세요.");
-        return;
-      }
-
       try {
-        // 1) bkend 인증 계정 생성
         const tokens = await authApi.signup({
           email: data.email,
           password: data.password,
@@ -48,17 +67,24 @@ export default function SignupForm({ onSuccess }: Props) {
         });
         saveTokens(tokens.accessToken, tokens.refreshToken);
 
-        // 2) users 테이블에 프로필 저장
-        await profilesApi.update("me", {
+        const profileData: Record<string, unknown> = {
           username: data.username,
           name: data.name,
           email: data.email,
           role: "member",
-          generation: data.generation,
+          memberType,
+          generation: 0,
           studentId: data.studentId || "",
           field: data.field || "",
           approved: false,
-        });
+          privacyAgreedAt: new Date().toISOString(),
+        };
+        if (data.activity) profileData.occupation = data.activity;
+        if (data.affiliation1) profileData.affiliation = data.affiliation1;
+        if (data.affiliation2) profileData.department = data.affiliation2;
+        if (data.position) profileData.position = data.position;
+
+        await profilesApi.update("me", profileData);
       } catch {
         // bkend 미연결 시 데모 모드
       }
@@ -77,19 +103,8 @@ export default function SignupForm({ onSuccess }: Props) {
       onSubmit={handleSubmit(onSubmit)}
       className="space-y-4 rounded-2xl border bg-white p-8 shadow-sm"
     >
-      <div>
-        <label className="mb-1.5 block text-sm font-medium">가입 코드</label>
-        <Input
-          {...register("code", { required: "가입 코드를 입력하세요" })}
-          placeholder="학회 가입 코드를 입력하세요"
-        />
-        {errors.code && (
-          <p className="mt-1 text-xs text-destructive">{errors.code.message}</p>
-        )}
-        <p className="mt-1 text-xs text-muted-foreground">
-          학회 관리자에게 가입 코드를 받으세요.
-        </p>
-      </div>
+      {/* ── 필수 정보 ── */}
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">필수 정보</p>
 
       <div>
         <label className="mb-1.5 block text-sm font-medium">아이디</label>
@@ -149,36 +164,115 @@ export default function SignupForm({ onSuccess }: Props) {
         )}
       </div>
 
+      {/* 재학생/졸업생 선택 */}
       <div>
-        <label className="mb-1.5 block text-sm font-medium">기수</label>
-        <Input
-          {...register("generation", { required: "기수를 입력하세요", valueAsNumber: true })}
-          type="number"
-          placeholder="3"
-          min={1}
-        />
-        {errors.generation && (
-          <p className="mt-1 text-xs text-destructive">{errors.generation.message}</p>
+        <label className="mb-1.5 block text-sm font-medium">구분</label>
+        <div className="flex gap-2">
+          {(Object.entries(MEMBER_TYPE_LABELS) as [MemberType, string][]).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setMemberType(key)}
+              className={cn(
+                "flex-1 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors",
+                memberType === key
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-muted bg-white text-muted-foreground hover:bg-muted/50",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── 선택 정보 (접이식) ── */}
+      <div className="border-t pt-4">
+        <button
+          type="button"
+          onClick={() => setShowOptional(!showOptional)}
+          className="flex w-full items-center justify-between text-sm font-medium text-muted-foreground hover:text-foreground"
+        >
+          <span className="text-xs font-semibold uppercase tracking-wider">선택 정보</span>
+          {showOptional ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </button>
+
+        {showOptional && (
+          <div className="mt-4 space-y-4">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">
+                학번 <span className="text-muted-foreground">(선택)</span>
+              </label>
+              <Input {...register("studentId")} placeholder="예: 2024123456" />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">
+                관심 분야 <span className="text-muted-foreground">(선택)</span>
+              </label>
+              <Input {...register("field")} placeholder="예: AI 교육, 교수설계, UX" />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">
+                현재 활동 구분 <span className="text-muted-foreground">(선택)</span>
+              </label>
+              <select
+                {...register("activity")}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+              >
+                {ACTIVITY_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">
+                  소속1 <span className="text-muted-foreground">(선택)</span>
+                </label>
+                <Input {...register("affiliation1")} placeholder="예: 서울시교육청" />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">
+                  소속2 <span className="text-muted-foreground">(선택)</span>
+                </label>
+                <Input {...register("affiliation2")} placeholder="예: 교육정책과" />
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">
+                직책 <span className="text-muted-foreground">(선택)</span>
+              </label>
+              <Input {...register("position")} placeholder="예: 장학사" />
+            </div>
+          </div>
         )}
       </div>
 
-      <div>
-        <label className="mb-1.5 block text-sm font-medium">학번</label>
-        <Input
-          {...register("studentId")}
-          placeholder="예: 2024123456"
-        />
+      {/* 개인정보 동의 */}
+      <div className="rounded-lg border bg-muted/30 p-4">
+        <label className="flex cursor-pointer items-start gap-3">
+          <input
+            type="checkbox"
+            checked={privacyAgreed}
+            onChange={(e) => setPrivacyAgreed(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-gray-300"
+          />
+          <div>
+            <span className="text-sm font-medium">개인정보 수집 및 이용 동의 (필수)</span>
+            <p className="mt-1 text-xs text-muted-foreground">
+              연세교육공학회는 회원 관리 및 학술 활동 안내를 위해 이름, 이메일, 학번 등의
+              개인정보를 수집합니다. 수집된 정보는 회원 탈퇴 시까지 보관되며, 동의를 거부할 수
+              있으나 이 경우 회원 가입이 제한됩니다.
+            </p>
+          </div>
+        </label>
       </div>
 
-      <div>
-        <label className="mb-1.5 block text-sm font-medium">관심 분야</label>
-        <Input
-          {...register("field")}
-          placeholder="예: AI 교육, 교수설계, UX"
-        />
-      </div>
-
-      <Button type="submit" className="w-full" disabled={loading}>
+      <Button type="submit" className="w-full" disabled={loading || !privacyAgreed}>
         {loading ? (
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
         ) : (
