@@ -372,82 +372,92 @@ export default function CertificateGenerator() {
     toast.success(`${targets.length}명에게 수료증 기록이 생성되었습니다.`);
   }
 
+  const previewDate = seminar
+    ? new Date(seminar.date).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })
+    : "";
+
   return (
-    <div className="space-y-6">
-      <div className="rounded-xl border bg-white p-6 space-y-4">
-        <div>
-          <label className="mb-2 block text-sm font-medium">세미나 선택</label>
-          <select
-            value={selectedId ?? ""}
-            onChange={(e) => handleSeminarChange(e.target.value)}
-            className="w-full rounded-lg border px-3 py-2 text-sm"
-          >
-            <option value="">-- 세미나를 선택하세요 --</option>
-            {seminars.map((s) => (
-              <option key={s.id} value={s.id}>{s.title} ({s.date})</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-medium">종류</label>
-          <div className="flex gap-2">
-            {(Object.entries(CERT_LABELS) as [CertType, typeof CERT_LABELS[CertType]][]).map(
-              ([key, { label, icon }]) => (
-                <Button key={key} size="sm" variant={certType === key ? "default" : "outline"} onClick={() => setCertType(key)}>
-                  {icon}
-                  <span className="ml-1">{label}</span>
-                </Button>
-              ),
-            )}
+    <div className="flex gap-6">
+      {/* 좌측: 설정 패널 */}
+      <div className="w-80 shrink-0 space-y-4">
+        <div className="rounded-xl border bg-white p-5 space-y-4">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium">세미나 선택</label>
+            <select
+              value={selectedId ?? ""}
+              onChange={(e) => handleSeminarChange(e.target.value)}
+              className="w-full rounded-lg border px-3 py-2 text-sm"
+            >
+              <option value="">-- 세미나 선택 --</option>
+              {seminars.map((s) => (
+                <option key={s.id} value={s.id}>{s.title} ({s.date})</option>
+              ))}
+            </select>
           </div>
-        </div>
 
-        <div className="grid gap-4 sm:grid-cols-3">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium">종류</label>
+            <div className="flex gap-2">
+              {(Object.entries(CERT_LABELS) as [CertType, typeof CERT_LABELS[CertType]][]).map(
+                ([key, { label, icon }]) => (
+                  <Button key={key} size="sm" variant={certType === key ? "default" : "outline"} onClick={() => setCertType(key)}>
+                    {icon}
+                    <span className="ml-1">{label}</span>
+                  </Button>
+                ),
+              )}
+            </div>
+          </div>
+
           <div>
             <label className="mb-1.5 block text-sm font-medium">수여자 이름</label>
             <Input value={recipientName} onChange={(e) => setRecipientName(e.target.value)} placeholder="홍길동" />
           </div>
+
           <div>
             <label className="mb-1.5 block text-sm font-medium">학기</label>
             <Input value={semester} onChange={(e) => setSemester(e.target.value)} placeholder="2026년 1학기" />
           </div>
+
           <div>
             <label className="mb-1.5 block text-sm font-medium">증서 번호</label>
             <Input value={certificateNo} onChange={(e) => setCertificateNo(e.target.value)} placeholder="26-001" />
           </div>
-        </div>
 
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={handlePrint} disabled={!seminar}>
-            <Printer size={16} className="mr-1" />인쇄 / PDF 저장
-          </Button>
-          <Button variant="outline" onClick={handleSaveRecord} disabled={!seminar || !recipientName}>
-            <Plus size={16} className="mr-1" />발급 기록 저장
-          </Button>
-          {certType === "completion" && (
-            <Button variant="outline" onClick={handleBatchCreate} disabled={!seminar}>
-              <Download size={16} className="mr-1" />출석자 일괄 수료증
+          <div className="space-y-2 pt-2">
+            <Button className="w-full" onClick={handlePrint} disabled={!seminar}>
+              <Printer size={16} className="mr-1" />인쇄 / PDF 저장
             </Button>
-          )}
+            <Button className="w-full" variant="outline" onClick={handleSaveRecord} disabled={!seminar || !recipientName}>
+              <Plus size={16} className="mr-1" />발급 기록 저장
+            </Button>
+            {certType === "completion" && (
+              <Button className="w-full" variant="outline" onClick={handleBatchCreate} disabled={!seminar}>
+                <Download size={16} className="mr-1" />출석자 일괄 수료증
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
-      {seminar && (
-        <div>
-          <p className="mb-2 text-sm font-medium text-muted-foreground">미리보기 (A4 세로)</p>
-          <div ref={printRef} className="overflow-auto rounded-lg border shadow-lg" style={{ maxHeight: "80vh" }}>
-            <CertificatePreview
-              type={certType}
-              seminarTitle={seminar.title}
-              semester={semester || inferSemester(seminar.date)}
-              seminarDate={new Date(seminar.date).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}
-              recipientName={recipientName}
-              certificateNo={certificateNo}
-            />
-          </div>
+      {/* 우측: 미리보기 (항상 표시) */}
+      <div className="min-w-0 flex-1">
+        <p className="mb-2 text-sm font-medium text-muted-foreground">미리보기 (A4 세로)</p>
+        <div
+          ref={printRef}
+          className="overflow-auto rounded-lg border shadow-lg"
+          style={{ maxHeight: "85vh", transform: "scale(0.6)", transformOrigin: "top left", width: "166.7%" }}
+        >
+          <CertificatePreview
+            type={certType}
+            seminarTitle={seminar?.title || "세미나 제목"}
+            semester={semester || (seminar ? inferSemester(seminar.date) : "2026년 1학기")}
+            seminarDate={previewDate || "2026년 1월 1일"}
+            recipientName={recipientName}
+            certificateNo={certificateNo}
+          />
         </div>
-      )}
+      </div>
     </div>
   );
 }

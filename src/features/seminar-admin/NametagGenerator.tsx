@@ -9,7 +9,6 @@ import { Printer, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { SeminarSession } from "@/types";
 
-/** 이름 자간: "홍길동" → "홍 길 동" */
 function spacedName(name: string): string {
   return name.split("").join("\u2003");
 }
@@ -19,17 +18,17 @@ function formatKoreanDate(dateStr: string): string {
   return d.toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
 }
 
-/* ─────────────────────────────────────────────
- * 이름표 프리뷰 — 95mm(W) × 123mm(H) × 2면 (펼친 상태: 190mm × 123mm)
- * 왼쪽: 앞면 (행사명 + 이름), 오른쪽: 뒷면 (타임테이블)
- * A4에 인쇄 후 반으로 접어 사용
- * ───────────────────────────────────────────── */
+/* ────────────────────────────────────────────────────
+ * 이름표 95mm × 123mm — 펼친 상태 190mm × 123mm
+ * 디자인: 대형 장식 원, 그라데이션 헤더, 기수 배지
+ * ──────────────────────────────────────────────────── */
 function NametagPreview({
   seminarTitle,
   seminarSubtitle,
   seminarDate,
   recipientName,
   recipientTitle,
+  recipientGeneration,
   sessions,
 }: {
   seminarTitle: string;
@@ -37,251 +36,354 @@ function NametagPreview({
   seminarDate: string;
   recipientName: string;
   recipientTitle: string;
+  recipientGeneration?: string;
   sessions: SeminarSession[];
 }) {
   return (
     <div
-      className="mx-auto bg-white"
+      className="mx-auto"
       style={{
         width: "190mm",
         height: "123mm",
         display: "flex",
         fontFamily: "'Pretendard', 'Nanum Gothic', sans-serif",
         border: "0.5px solid #ddd",
+        overflow: "hidden",
       }}
     >
-      {/* ── 왼쪽 95mm: 앞면 ── */}
+      {/* ════════ 왼쪽 95mm: 앞면 ════════ */}
       <div
-        className="relative flex flex-col items-center justify-center"
+        className="relative"
         style={{
           width: "95mm",
           height: "123mm",
           borderRight: "1px dashed #ccc",
-          padding: "8mm 6mm",
           boxSizing: "border-box",
+          background: "#fff",
+          overflow: "hidden",
         }}
       >
-        {/* 상단 네이비 바 */}
+        {/* 배경 장식: 대형 반원 (우하단) */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "-30mm",
+            right: "-20mm",
+            width: "80mm",
+            height: "80mm",
+            borderRadius: "50%",
+            background: "linear-gradient(135deg, rgba(0,56,118,0.04) 0%, rgba(0,56,118,0.08) 100%)",
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* 배경 장식: 작은 원 (좌상단) */}
+        <div
+          style={{
+            position: "absolute",
+            top: "-8mm",
+            left: "-8mm",
+            width: "28mm",
+            height: "28mm",
+            borderRadius: "50%",
+            background: "rgba(0,56,118,0.03)",
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* 상단 그라데이션 헤더 영역 */}
         <div
           style={{
             position: "absolute",
             top: 0,
             left: 0,
             right: 0,
-            height: "4mm",
-            background: "#003876",
+            height: "28mm",
+            background: "linear-gradient(135deg, #003876 0%, #0052a5 60%, #1a6fc4 100%)",
+            clipPath: "polygon(0 0, 100% 0, 100% 75%, 0 100%)",
           }}
         />
 
-        {/* 로고 */}
-        <div style={{ position: "absolute", top: "6mm", right: "5mm" }}>
-          <Image src="/yonsei-emblem.svg" alt="" width={14} height={14} style={{ opacity: 0.6 }} />
-        </div>
+        {/* 헤더 위 콘텐츠 */}
+        <div
+          style={{
+            position: "relative",
+            zIndex: 1,
+            padding: "5mm 6mm 0",
+          }}
+        >
+          {/* 로고 + 영문 */}
+          <div className="flex items-center gap-1.5">
+            <Image src="/yonsei-emblem.svg" alt="" width={14} height={14} style={{ filter: "brightness(10)" }} />
+            <span style={{ fontSize: "6pt", color: "rgba(255,255,255,0.8)", letterSpacing: "0.12em", fontWeight: 500 }}>
+              YONSEI ED-TECH ASSOCIATION
+            </span>
+          </div>
 
-        {/* 행사명 영역 */}
-        <div className="text-center" style={{ marginTop: "4mm" }}>
-          <p style={{ fontSize: "7pt", color: "#888", letterSpacing: "0.15em", fontWeight: 500, textTransform: "uppercase" }}>
-            Yonsei Ed-Tech Association
-          </p>
-          <p
-            style={{
-              fontSize: "9.5pt",
-              fontWeight: 700,
-              color: "#003876",
-              marginTop: "2mm",
-              letterSpacing: "0.03em",
-              lineHeight: 1.4,
-            }}
-          >
-            {seminarTitle}
-          </p>
-          {seminarSubtitle && (
-            <p style={{ fontSize: "7.5pt", color: "#666", marginTop: "1.5mm", lineHeight: 1.3 }}>
-              {seminarSubtitle}
+          {/* 행사명 */}
+          <div style={{ marginTop: "3mm" }}>
+            <p
+              style={{
+                fontSize: "9pt",
+                fontWeight: 700,
+                color: "#fff",
+                letterSpacing: "0.02em",
+                lineHeight: 1.4,
+                textShadow: "0 1px 2px rgba(0,0,0,0.1)",
+              }}
+            >
+              {seminarTitle}
             </p>
-          )}
+            {seminarSubtitle && (
+              <p style={{ fontSize: "7pt", color: "rgba(255,255,255,0.75)", marginTop: "1mm", lineHeight: 1.3 }}>
+                {seminarSubtitle}
+              </p>
+            )}
+          </div>
         </div>
 
-        {/* 구분선 */}
-        <div style={{ width: "20mm", height: "0.5px", background: "#003876", margin: "5mm 0", opacity: 0.3 }} />
-
-        {/* 이름 */}
-        <div className="text-center">
+        {/* 이름 영역 (중앙) */}
+        <div
+          className="flex flex-col items-center justify-center"
+          style={{
+            position: "absolute",
+            top: "32mm",
+            left: 0,
+            right: 0,
+            bottom: "18mm",
+          }}
+        >
+          {/* 이름 */}
           <p
             style={{
-              fontSize: "22pt",
+              fontSize: "24pt",
               fontWeight: 800,
               letterSpacing: "0.3em",
               color: "#111",
               lineHeight: 1,
+              textAlign: "center",
             }}
           >
             {recipientName ? spacedName(recipientName) : "___"}
           </p>
-          <p
+
+          {/* 이름 아래 악센트 라인 */}
+          <div
             style={{
-              fontSize: "9pt",
-              color: "#666",
-              marginTop: "3mm",
-              fontWeight: 500,
+              width: "16mm",
+              height: "2px",
+              background: "linear-gradient(90deg, transparent, #003876, transparent)",
+              margin: "3mm 0",
             }}
-          >
-            {recipientTitle || "참석자"}
-          </p>
+          />
+
+          {/* 직함 + 기수 */}
+          <div className="flex items-center gap-2">
+            <span
+              style={{
+                fontSize: "9pt",
+                color: "#555",
+                fontWeight: 500,
+              }}
+            >
+              {recipientTitle || "참석자"}
+            </span>
+            {recipientGeneration && (
+              <span
+                style={{
+                  fontSize: "7pt",
+                  color: "#003876",
+                  fontWeight: 700,
+                  background: "rgba(0,56,118,0.08)",
+                  padding: "1px 6px",
+                  borderRadius: "10px",
+                  letterSpacing: "0.03em",
+                }}
+              >
+                {recipientGeneration}기
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* 하단 */}
-        <div
-          className="flex items-center gap-1.5"
-          style={{ position: "absolute", bottom: "5mm" }}
-        >
-          <Image src="/yonsei-emblem.svg" alt="" width={12} height={12} />
-          <span style={{ fontSize: "6pt", color: "#aaa", fontWeight: 600, letterSpacing: "0.05em" }}>
-            연세교육공학회
-          </span>
-        </div>
-
-        {/* 하단 네이비 라인 */}
+        {/* 하단 바 */}
         <div
           style={{
             position: "absolute",
             bottom: 0,
             left: 0,
             right: 0,
-            height: "2mm",
-            background: "#003876",
+            height: "12mm",
+            background: "linear-gradient(0deg, rgba(0,56,118,0.06) 0%, transparent 100%)",
           }}
         />
+
+        {/* 하단 로고 */}
+        <div
+          className="flex items-center justify-center gap-1.5"
+          style={{ position: "absolute", bottom: "3.5mm", left: 0, right: 0 }}
+        >
+          <Image src="/yonsei-emblem.svg" alt="" width={11} height={11} style={{ opacity: 0.5 }} />
+          <span style={{ fontSize: "5.5pt", color: "#aaa", fontWeight: 600, letterSpacing: "0.05em" }}>
+            연세교육공학회
+          </span>
+        </div>
       </div>
 
-      {/* ── 오른쪽 95mm: 뒷면 (타임테이블) ── */}
+      {/* ════════ 오른쪽 95mm: 뒷면 (타임테이블) ════════ */}
       <div
-        className="relative flex flex-col"
+        className="relative"
         style={{
           width: "95mm",
           height: "123mm",
-          padding: "6mm 5mm",
           boxSizing: "border-box",
+          background: "#fff",
+          overflow: "hidden",
         }}
       >
-        {/* 상단 바 */}
+        {/* 배경 장식: 대형 반원 (좌하단) */}
         <div
           style={{
             position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: "4mm",
-            background: "linear-gradient(90deg, #003876, #1a5fa0)",
+            bottom: "-25mm",
+            left: "-15mm",
+            width: "60mm",
+            height: "60mm",
+            borderRadius: "50%",
+            background: "rgba(0,56,118,0.03)",
+            pointerEvents: "none",
           }}
         />
 
-        {/* 헤더 */}
-        <div style={{ marginTop: "4mm", marginBottom: "3mm", textAlign: "center" }}>
-          <p
-            style={{
-              fontSize: "9pt",
-              fontWeight: 700,
-              color: "#003876",
-              letterSpacing: "0.2em",
-            }}
-          >
-            TIME TABLE
-          </p>
-          <p style={{ fontSize: "6.5pt", color: "#999", marginTop: "1mm" }}>
+        {/* 상단 헤더 */}
+        <div
+          style={{
+            background: "#003876",
+            padding: "4mm 5mm 3.5mm",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div>
+            <p style={{ fontSize: "9pt", fontWeight: 700, color: "#fff", letterSpacing: "0.18em" }}>
+              TIME TABLE
+            </p>
+          </div>
+          <Image src="/yonsei-emblem.svg" alt="" width={12} height={12} style={{ filter: "brightness(10)", opacity: 0.7 }} />
+        </div>
+
+        {/* 날짜 바 */}
+        <div
+          style={{
+            background: "rgba(0,56,118,0.06)",
+            padding: "1.5mm 5mm",
+            textAlign: "center",
+          }}
+        >
+          <p style={{ fontSize: "6.5pt", color: "#666", fontWeight: 500, letterSpacing: "0.05em" }}>
             {seminarDate}
           </p>
         </div>
 
-        {/* 구분선 */}
-        <div style={{ height: "0.5px", background: "#003876", opacity: 0.2, marginBottom: "2mm" }} />
-
         {/* 세션 목록 */}
-        <div style={{ flex: 1, overflow: "hidden" }}>
+        <div style={{ padding: "2mm 4mm", flex: 1, overflow: "hidden" }}>
           {sessions.length === 0 ? (
             <div
-              className="flex h-full items-center justify-center text-center"
-              style={{ color: "#bbb", fontSize: "7.5pt" }}
+              className="flex items-center justify-center text-center"
+              style={{ color: "#bbb", fontSize: "7.5pt", height: "70mm" }}
             >
               세션 정보가 없습니다
             </div>
           ) : (
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <tbody>
-                {sessions
-                  .sort((a, b) => a.order - b.order)
-                  .map((session, i) => (
-                    <tr
-                      key={session.id}
-                      style={{
-                        borderBottom: i < sessions.length - 1 ? "0.5px solid #eee" : "none",
-                      }}
-                    >
-                      <td
+            sessions
+              .sort((a, b) => a.order - b.order)
+              .map((session, i) => (
+                <div
+                  key={session.id}
+                  style={{
+                    display: "flex",
+                    gap: "2mm",
+                    padding: "2mm 1mm",
+                    borderBottom: i < sessions.length - 1 ? "0.5px solid #eee" : "none",
+                  }}
+                >
+                  {/* 시간 표시 (좌측 컬러 도트 + 시간) */}
+                  <div style={{ width: "18mm", flexShrink: 0 }}>
+                    <div className="flex items-center gap-1">
+                      <div
                         style={{
-                          padding: "2.5mm 2mm 2.5mm 0",
+                          width: "4px",
+                          height: "4px",
+                          borderRadius: "50%",
+                          background: "#003876",
+                          flexShrink: 0,
+                        }}
+                      />
+                      <span
+                        style={{
                           fontSize: "7pt",
                           fontWeight: 700,
                           color: "#003876",
                           whiteSpace: "nowrap",
-                          verticalAlign: "top",
-                          width: "16mm",
                         }}
                       >
                         {session.time}
-                      </td>
-                      <td
-                        style={{
-                          padding: "2.5mm 0",
-                          fontSize: "7pt",
-                          verticalAlign: "top",
-                        }}
-                      >
-                        <div style={{ fontWeight: 600, color: "#333", lineHeight: 1.3 }}>
-                          {session.title}
-                        </div>
-                        {session.speaker && (
-                          <div style={{ fontSize: "6pt", color: "#999", marginTop: "0.5mm" }}>
-                            {session.speaker}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+                      </span>
+                    </div>
+                  </div>
+                  {/* 세션 내용 */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: "7pt", fontWeight: 600, color: "#333", lineHeight: 1.3 }}>
+                      {session.title}
+                    </p>
+                    {session.speaker && (
+                      <p style={{ fontSize: "5.5pt", color: "#999", marginTop: "0.3mm" }}>
+                        {session.speaker}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))
           )}
         </div>
 
-        {/* 하단 로고 */}
-        <div className="flex items-center justify-center gap-1.5" style={{ marginTop: "2mm" }}>
-          <Image src="/yonsei-emblem.svg" alt="" width={10} height={10} />
-          <span style={{ fontSize: "5.5pt", color: "#bbb", fontWeight: 600 }}>
-            연세교육공학회
-          </span>
-        </div>
-
-        {/* 하단 라인 */}
+        {/* 하단 */}
         <div
           style={{
             position: "absolute",
             bottom: 0,
             left: 0,
             right: 0,
-            height: "2mm",
-            background: "#003876",
+            height: "8mm",
+            background: "linear-gradient(0deg, rgba(0,56,118,0.05) 0%, transparent 100%)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "1.5mm",
           }}
-        />
+        >
+          <Image src="/yonsei-emblem.svg" alt="" width={9} height={9} style={{ opacity: 0.4 }} />
+          <span style={{ fontSize: "5pt", color: "#bbb", fontWeight: 600 }}>
+            Yonsei Ed-Tech Association
+          </span>
+        </div>
       </div>
     </div>
   );
+}
+
+interface NameEntry {
+  name: string;
+  title: string;
+  generation: string;
 }
 
 export default function NametagGenerator() {
   const { seminars } = useSeminars();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [subtitle, setSubtitle] = useState("");
-  const [names, setNames] = useState<{ name: string; title: string }[]>([{ name: "", title: "" }]);
+  const [names, setNames] = useState<NameEntry[]>([{ name: "", title: "", generation: "" }]);
   const printRef = useRef<HTMLDivElement>(null);
 
   const seminar = seminars.find((s) => s.id === selectedId);
@@ -296,58 +398,63 @@ export default function NametagGenerator() {
 
   function loadFromAttendees() {
     if (attendees.length === 0) { toast.error("참석자가 없습니다."); return; }
-    setNames(attendees.map((a) => ({ name: a.userName, title: "" })));
+    setNames(attendees.map((a) => ({
+      name: a.userName,
+      title: "",
+      generation: a.userGeneration ? String(a.userGeneration) : "",
+    })));
     toast.success(`${attendees.length}명의 참석자를 불러왔습니다.`);
+  }
+
+  function updateName(i: number, field: keyof NameEntry, value: string) {
+    const updated = [...names];
+    updated[i] = { ...updated[i], [field]: value };
+    setNames(updated);
   }
 
   function handleSinglePrint() {
     if (!printRef.current) return;
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-    printWindow.document.write(`
-      <html><head><title>이름표</title>
-      <style>
-        @page { size: 190mm 123mm; margin: 0; }
-        body { margin: 0; font-family: 'Pretendard', 'Nanum Gothic', sans-serif; }
-        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        img { display: inline-block; }
-      </style></head><body>${printRef.current.innerHTML}</body></html>
-    `);
-    printWindow.document.close();
-    setTimeout(() => printWindow.print(), 300);
+    const pw = window.open("", "_blank");
+    if (!pw) return;
+    pw.document.write(`<html><head><title>이름표</title><style>
+      @page { size: 190mm 123mm; margin: 0; }
+      body { margin: 0; font-family: 'Pretendard','Nanum Gothic',sans-serif; }
+      * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }
+      img { display:inline-block; }
+    </style></head><body>${printRef.current.innerHTML}</body></html>`);
+    pw.document.close();
+    setTimeout(() => pw.print(), 300);
   }
 
   function handleBatchPrint() {
     if (!printRef.current) return;
-    const validNames = names.filter((n) => n.name.trim());
-    if (validNames.length === 0) { toast.error("이름을 입력해주세요."); return; }
+    const valid = names.filter((n) => n.name.trim());
+    if (valid.length === 0) { toast.error("이름을 입력해주세요."); return; }
 
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
+    const pw = window.open("", "_blank");
+    if (!pw) return;
 
-    // Generate each nametag by cloning and updating name/title
     const pages: string[] = [];
-    for (const n of validNames) {
-      const container = printRef.current.cloneNode(true) as HTMLElement;
-      const nameEls = container.querySelectorAll("[data-nametag-name]");
-      nameEls.forEach((el) => { el.textContent = spacedName(n.name); });
-      const titleEls = container.querySelectorAll("[data-nametag-title]");
-      titleEls.forEach((el) => { el.textContent = n.title || "참석자"; });
-      pages.push(`<div style="page-break-after: always;">${container.innerHTML}</div>`);
+    for (const n of valid) {
+      const el = printRef.current.cloneNode(true) as HTMLElement;
+      el.querySelectorAll("[data-nametag-name]").forEach((e) => { e.textContent = spacedName(n.name); });
+      el.querySelectorAll("[data-nametag-title]").forEach((e) => { e.textContent = n.title || "참석자"; });
+      el.querySelectorAll("[data-nametag-gen]").forEach((e) => {
+        if (n.generation) { e.textContent = `${n.generation}기`; (e as HTMLElement).style.display = "inline"; }
+        else { (e as HTMLElement).style.display = "none"; }
+      });
+      pages.push(`<div style="page-break-after:always;">${el.innerHTML}</div>`);
     }
 
-    printWindow.document.write(`
-      <html><head><title>이름표 일괄</title>
-      <style>
-        @page { size: 190mm 123mm; margin: 0; }
-        body { margin: 0; font-family: 'Pretendard', 'Nanum Gothic', sans-serif; }
-        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        img { display: inline-block; }
-        div:last-child { page-break-after: auto; }
-      </style></head><body>${pages.join("")}</body></html>
-    `);
-    printWindow.document.close();
-    setTimeout(() => printWindow.print(), 500);
+    pw.document.write(`<html><head><title>이름표 일괄</title><style>
+      @page { size: 190mm 123mm; margin: 0; }
+      body { margin: 0; font-family: 'Pretendard','Nanum Gothic',sans-serif; }
+      * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }
+      img { display:inline-block; }
+      div:last-child { page-break-after:auto; }
+    </style></head><body>${pages.join("")}</body></html>`);
+    pw.document.close();
+    setTimeout(() => pw.print(), 500);
   }
 
   return (
@@ -377,7 +484,7 @@ export default function NametagGenerator() {
             <label className="text-sm font-medium">이름 목록</label>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={loadFromAttendees} disabled={!seminar}>참석자 불러오기</Button>
-              <Button variant="outline" size="sm" onClick={() => setNames([...names, { name: "", title: "" }])}>
+              <Button variant="outline" size="sm" onClick={() => setNames([...names, { name: "", title: "", generation: "" }])}>
                 <Plus size={14} className="mr-1" />추가
               </Button>
             </div>
@@ -388,15 +495,21 @@ export default function NametagGenerator() {
                 <span className="w-6 text-right text-xs text-muted-foreground">{i + 1}</span>
                 <Input
                   value={n.name}
-                  onChange={(e) => { const u = [...names]; u[i] = { ...n, name: e.target.value }; setNames(u); }}
+                  onChange={(e) => updateName(i, "name", e.target.value)}
                   placeholder="이름"
                   className="flex-1"
                 />
                 <Input
                   value={n.title}
-                  onChange={(e) => { const u = [...names]; u[i] = { ...n, title: e.target.value }; setNames(u); }}
+                  onChange={(e) => updateName(i, "title", e.target.value)}
                   placeholder="직함"
-                  className="w-36"
+                  className="w-28"
+                />
+                <Input
+                  value={n.generation}
+                  onChange={(e) => updateName(i, "generation", e.target.value)}
+                  placeholder="기수"
+                  className="w-16"
                 />
                 <button onClick={() => setNames(names.filter((_, j) => j !== i))} className="shrink-0 rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-500">
                   <Trash2 size={14} />
@@ -432,6 +545,7 @@ export default function NametagGenerator() {
               seminarDate={formatKoreanDate(seminar.date)}
               recipientName={names[0]?.name || ""}
               recipientTitle={names[0]?.title || "참석자"}
+              recipientGeneration={names[0]?.generation || ""}
               sessions={sessions}
             />
           </div>
