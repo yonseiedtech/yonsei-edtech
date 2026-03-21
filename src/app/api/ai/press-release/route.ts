@@ -6,7 +6,7 @@ import { requireAuth } from "@/lib/api-auth";
 export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
-  const authResult = await requireAuth(req, "member");
+  const authResult = await requireAuth(req, "staff");
   if (authResult instanceof Response) return authResult;
 
   const { seminar, format } = await req.json();

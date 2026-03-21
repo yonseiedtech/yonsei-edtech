@@ -11,8 +11,11 @@ export async function streamAI(
   onChunk: (text: string) => void,
   onDone?: () => void,
 ): Promise<void> {
-  const token = await auth.currentUser?.getIdToken();
-  if (!token) throw new Error("로그인이 필요합니다.");
+  const currentUser = auth.currentUser;
+  if (!currentUser) throw new Error("로그인이 필요합니다.");
+
+  const token = await currentUser.getIdToken(true); // force refresh
+  console.log("[streamAI] uid:", currentUser.uid, "email:", currentUser.email);
 
   const res = await fetch(endpoint, {
     method: "POST",
@@ -25,6 +28,7 @@ export async function streamAI(
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: "요청 실패" }));
+    console.error("[streamAI] error:", res.status, err);
     throw new Error(err.error || `API 오류 (${res.status})`);
   }
 
