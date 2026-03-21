@@ -61,7 +61,10 @@ export async function requireAuth(
     return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
   }
   if (ROLE_HIERARCHY[user.role] < ROLE_HIERARCHY[minimumRole]) {
-    return NextResponse.json({ error: "권한이 부족합니다." }, { status: 403 });
+    return NextResponse.json(
+      { error: `권한이 부족합니다. (현재: ${user.role}, 필요: ${minimumRole})` },
+      { status: 403 },
+    );
   }
   return user;
 }
