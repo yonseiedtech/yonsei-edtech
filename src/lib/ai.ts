@@ -8,7 +8,7 @@ const google = createGoogleGenerativeAI({
 /** 용도별 모델 매핑 (현재 Gemini 단일 프로바이더) */
 export const models = {
   /** 빠른 응답 — 문의답변, 교정 등 */
-  fast: google("gemini-2.0-flash"),
+  fast: google("gemini-2.5-flash"),
   /** 고품질 — 보도자료, 학회보 등 */
-  quality: google("gemini-2.0-flash"),
+  quality: google("gemini-2.5-flash"),
 } as const;
