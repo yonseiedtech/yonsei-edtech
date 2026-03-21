@@ -43,26 +43,30 @@ export default function SeminarForm() {
 
   async function onSubmit(data: FormData) {
     try {
-      await createSeminar({
+      // Firestore는 undefined 값을 허용하지 않으므로 제거
+      const seminarData: Record<string, unknown> = {
         title: data.title,
         description: data.description,
         date: data.date,
         time: data.time,
         location: isOnline ? (data.location || "온라인 (ZOOM)") : data.location,
         isOnline,
-        onlineUrl: isOnline ? (data.onlineUrl || undefined) : undefined,
         speaker: data.speaker,
-        speakerBio: data.speakerBio || undefined,
-        maxAttendees: data.maxAttendees ? Number(data.maxAttendees) : undefined,
-        registrationUrl: data.registrationUrl || undefined,
         attendeeIds: [],
-        status: "upcoming" as Seminar["status"],
+        status: "upcoming",
         createdBy: user?.id ?? "",
-      } as unknown as Omit<Seminar, "id" | "attendeeIds" | "createdAt" | "updatedAt">);
+      };
+      if (isOnline && data.onlineUrl) seminarData.onlineUrl = data.onlineUrl;
+      if (data.speakerBio) seminarData.speakerBio = data.speakerBio;
+      if (data.maxAttendees) seminarData.maxAttendees = Number(data.maxAttendees);
+      if (data.registrationUrl) seminarData.registrationUrl = data.registrationUrl;
+
+      await createSeminar(seminarData as unknown as Omit<Seminar, "id" | "attendeeIds" | "createdAt" | "updatedAt">);
       toast.success("세미나가 등록되었습니다.");
       router.push("/seminars");
-    } catch {
-      toast.error("세미나 등록에 실패했습니다. 다시 시도해주세요.");
+    } catch (err) {
+      console.error("세미나 등록 실패:", err);
+      toast.error(err instanceof Error ? err.message : "세미나 등록에 실패했습니다.");
     }
   }
 

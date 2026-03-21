@@ -186,8 +186,13 @@ export const dataApi = {
   },
 
   create: async <T>(table: string, data: Record<string, unknown>): Promise<T> => {
+    // Firestore does not accept undefined values — strip them
+    const cleaned: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(data)) {
+      if (v !== undefined) cleaned[k] = v;
+    }
     const docRef = await addDoc(collection(db, table), {
-      ...data,
+      ...cleaned,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
@@ -198,7 +203,12 @@ export const dataApi = {
   update: async <T>(table: string, id: string, data: Record<string, unknown>): Promise<T> => {
     const docId = id === "me" ? auth.currentUser?.uid ?? id : id;
     const docRef = doc(db, table, docId);
-    await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() });
+    // Firestore does not accept undefined values — strip them
+    const cleaned: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(data)) {
+      if (v !== undefined) cleaned[k] = v;
+    }
+    await updateDoc(docRef, { ...cleaned, updatedAt: serverTimestamp() });
     const docSnap = await getDoc(docRef);
     return serializeDoc(docSnap) as T;
   },
