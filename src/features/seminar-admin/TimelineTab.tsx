@@ -41,6 +41,7 @@ function saveTimeline(
       dDay: p.dDay,
       done: p.done,
       memo: p.memo ?? "",
+      assignee: p.assignee ?? "",
     };
     if (p.doneAt) item.doneAt = p.doneAt;
     return item;
@@ -57,6 +58,7 @@ export default function TimelineTab() {
     id: string;
     label: string;
     dDay: string;
+    assignee: string;
   } | null>(null);
 
   const seminar = seminars.find((s) => s.id === selectedId);
@@ -100,11 +102,11 @@ export default function TimelineTab() {
   }
 
   function openAdd() {
-    setEditItem({ mode: "add", id: "", label: "", dDay: "-7" });
+    setEditItem({ mode: "add", id: "", label: "", dDay: "-7", assignee: "" });
   }
 
   function openEdit(phase: TimelinePhase) {
-    setEditItem({ mode: "edit", id: phase.id, label: phase.label, dDay: String(phase.dDay) });
+    setEditItem({ mode: "edit", id: phase.id, label: phase.label, dDay: String(phase.dDay), assignee: phase.assignee ?? "" });
   }
 
   function handleSaveItem() {
@@ -119,13 +121,14 @@ export default function TimelineTab() {
         dDay,
         done: false,
         memo: "",
+        assignee: editItem.assignee || undefined,
       };
       const updated = [...timeline, newPhase];
       saveTimeline(updateSeminar, seminar.id, updated);
       toast.success("항목이 추가되었습니다.");
     } else {
       const updated = timeline.map((p) =>
-        p.id === editItem.id ? { ...p, label: editItem.label, dDay } : p,
+        p.id === editItem.id ? { ...p, label: editItem.label, dDay, assignee: editItem.assignee || undefined } : p,
       );
       saveTimeline(updateSeminar, seminar.id, updated);
       toast.success("항목이 수정되었습니다.");
@@ -247,6 +250,20 @@ export default function TimelineTab() {
                       </span>
                     )}
 
+                    {/* 담당자 */}
+                    <Input
+                      placeholder="담당자"
+                      value={phase.assignee ?? ""}
+                      onChange={(e) => {
+                        if (!seminar) return;
+                        const updated = timeline.map((p) =>
+                          p.id === phase.id ? { ...p, assignee: e.target.value } : p,
+                        );
+                        saveTimeline(updateSeminar, seminar.id, updated);
+                      }}
+                      className="w-20 shrink-0 text-xs"
+                    />
+
                     {/* 메모 */}
                     <Input
                       placeholder="메모"
@@ -305,18 +322,26 @@ export default function TimelineTab() {
                   placeholder="예: 좌장 섭외 확정"
                 />
               </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium">
-                  D-Day 오프셋
-                </label>
-                <Input
-                  type="number"
-                  value={editItem.dDay}
-                  onChange={(e) => setEditItem({ ...editItem, dDay: e.target.value })}
-                />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  세미나 날짜 기준. 음수 = 이전 (예: -7 = 7일 전), 양수 = 이후 (예: 1 = 다음날)
-                </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">D-Day 오프셋</label>
+                  <Input
+                    type="number"
+                    value={editItem.dDay}
+                    onChange={(e) => setEditItem({ ...editItem, dDay: e.target.value })}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    음수 = 이전, 양수 = 이후
+                  </p>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">담당자</label>
+                  <Input
+                    value={editItem.assignee}
+                    onChange={(e) => setEditItem({ ...editItem, assignee: e.target.value })}
+                    placeholder="예: 김회장"
+                  />
+                </div>
               </div>
             </div>
           )}

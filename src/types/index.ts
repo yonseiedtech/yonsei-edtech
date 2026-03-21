@@ -141,6 +141,7 @@ export interface TimelinePhase {
   done: boolean;
   doneAt?: string;
   memo?: string;
+  assignee?: string;
 }
 
 // ── 세미나 출석 ──
