@@ -20,6 +20,7 @@ interface FormData {
   speaker: string;
   speakerBio: string;
   maxAttendees: string;
+  registrationUrl: string;
 }
 
 export default function SeminarForm() {
@@ -42,6 +43,7 @@ export default function SeminarForm() {
       speaker: data.speaker,
       speakerBio: data.speakerBio || undefined,
       maxAttendees: data.maxAttendees ? Number(data.maxAttendees) : undefined,
+      registrationUrl: data.registrationUrl || undefined,
       status: "upcoming" as Seminar["status"],
       createdBy: user?.id ?? "",
     });
@@ -153,6 +155,16 @@ export default function SeminarForm() {
           <Input
             {...register("speakerBio")}
             placeholder="발표자 약력"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-sm font-medium">
+            외부 신청 URL <span className="text-muted-foreground">(선택)</span>
+          </label>
+          <Input
+            {...register("registrationUrl")}
+            placeholder="https://forms.gle/..."
           />
         </div>
 

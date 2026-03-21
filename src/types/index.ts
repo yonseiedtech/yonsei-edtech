@@ -123,10 +123,22 @@ export interface Seminar {
   maxAttendees?: number;
   attendeeIds: string[];
   sessions?: SeminarSession[];
+  registrationUrl?: string;
+  timeline?: TimelinePhase[];
   status: "upcoming" | "completed" | "cancelled";
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// ── 세미나 운영 타임라인 ──
+export interface TimelinePhase {
+  id: string;
+  label: string;
+  dDay: number; // D-30 → -30, D+1 → 1
+  done: boolean;
+  doneAt?: string;
+  memo?: string;
 }
 
 // ── 세미나 출석 ──

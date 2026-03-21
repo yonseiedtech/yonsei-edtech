@@ -1,7 +1,12 @@
 "use client";
 
-import AdminSeminarTab from "@/features/admin/AdminSeminarTab";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export default function AdminSeminarsPage() {
-  return <AdminSeminarTab />;
+export default function AdminSeminarsRedirect() {
+  const router = useRouter();
+  useEffect(() => {
+    router.replace("/seminar-admin");
+  }, [router]);
+  return null;
 }

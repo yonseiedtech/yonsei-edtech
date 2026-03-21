@@ -33,6 +33,7 @@ import {
   Loader2,
   Instagram,
   Mail,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -255,6 +256,22 @@ function SeminarDetail({ id }: { id: string }) {
           <div className="mt-6 whitespace-pre-wrap text-sm leading-relaxed">
             {seminar.description}
           </div>
+
+          {/* 외부 신청 버튼 */}
+          {seminar.registrationUrl && seminar.status === "upcoming" && (
+            <div className="mt-6">
+              <a
+                href={seminar.registrationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button variant="outline" className="w-full sm:w-auto">
+                  <ExternalLink size={16} className="mr-1" />
+                  외부 신청 (Google Form 등)
+                </Button>
+              </a>
+            </div>
+          )}
 
           {/* 참석 신청 영역 */}
           {seminar.status === "upcoming" && (

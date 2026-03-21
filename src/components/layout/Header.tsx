@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
-import { Menu, X, User, Shield, ChevronDown, BookUser, LayoutDashboard, LogOut, Settings } from "lucide-react";
+import { Menu, X, User, Shield, ChevronDown, BookUser, LayoutDashboard, LogOut, Settings, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -159,7 +159,12 @@ function UserDropdown() {
     { href: "/dashboard", label: "대시보드", icon: LayoutDashboard },
     { href: "/mypage", label: "마이페이지", icon: User },
     { href: "/directory", label: "연락망", icon: BookUser },
-    ...(showAdmin ? [{ href: "/admin", label: "관리자", icon: Shield }] : []),
+    ...(showAdmin
+      ? [
+          { href: "/seminar-admin", label: "세미나 관리", icon: BookOpen },
+          { href: "/admin", label: "관리자", icon: Shield },
+        ]
+      : []),
   ];
 
   return (
@@ -299,7 +304,12 @@ export default function Header() {
                   { href: "/dashboard", label: "대시보드", icon: LayoutDashboard },
                   { href: "/mypage", label: "마이페이지", icon: User },
                   { href: "/directory", label: "연락망", icon: BookUser },
-                  ...(showAdmin ? [{ href: "/admin", label: "관리자", icon: Shield }] : []),
+                  ...(showAdmin
+                    ? [
+                        { href: "/seminar-admin", label: "세미나 관리", icon: BookOpen },
+                        { href: "/admin", label: "관리자", icon: Shield },
+                      ]
+                    : []),
                 ].map((item) => {
                   const isActive = pathname.startsWith(item.href);
                   return (

@@ -11,15 +11,14 @@ import { profilesApi } from "@/lib/bkend";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import {
-  Shield, Users, FileText, BookOpen, MessageSquare,
+  Shield, Users, FileText, MessageSquare,
   Clock, HelpCircle, Newspaper, Settings, Bot,
 } from "lucide-react";
 
 const ADMIN_TABS = [
   { href: "/admin/members", label: "회원", icon: Users, presidentOnly: true },
   { href: "/admin/posts", label: "게시글", icon: FileText },
-  { href: "/admin/seminars", label: "세미나", icon: BookOpen },
-  { href: "/admin/inquiries", label: "문의", icon: MessageSquare },
+{ href: "/admin/inquiries", label: "문의", icon: MessageSquare },
   { href: "/admin/newsletter", label: "학회보", icon: Newspaper },
   { href: "/admin/agents", label: "에이전트", icon: Bot },
   { href: "/admin/settings", label: "사이트 설정", icon: Settings },
