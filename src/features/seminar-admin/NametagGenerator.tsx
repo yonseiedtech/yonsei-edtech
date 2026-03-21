@@ -43,18 +43,20 @@ function NametagPreview({
     <div
       className="mx-auto bg-white"
       style={{
-        width: "210mm",
-        minHeight: "297mm",
+        width: "10.83in",
+        height: "7.5in",
+        display: "flex",
         fontFamily: "'Pretendard', 'Nanum Gothic', sans-serif",
       }}
     >
-      {/* ── 상단: 앞면 (행사명 + 이름) ── */}
+      {/* ── 왼쪽면: 앞면 (행사명 + 이름) ── */}
       <div
         className="relative flex flex-col items-center justify-center"
         style={{
-          height: "148.5mm",
+          width: "50%",
+          height: "100%",
+          borderRight: "1px dashed #ccc",
           padding: "30px 40px",
-          borderBottom: "1px dashed #ccc",
         }}
       >
         {/* 상단 컬러바 */}
@@ -161,12 +163,13 @@ function NametagPreview({
         />
       </div>
 
-      {/* ── 하단: 뒷면 (타임테이블) ── */}
+      {/* ── 오른쪽면: 뒷면 (타임테이블) ── */}
       <div
         className="relative flex flex-col"
         style={{
-          height: "148.5mm",
-          padding: "24px 40px",
+          width: "50%",
+          height: "100%",
+          padding: "30px 30px",
         }}
       >
         {/* 상단 로고 */}
@@ -381,7 +384,7 @@ export default function NametagGenerator() {
     printWindow.document.write(`
       <html><head><title>이름표</title>
       <style>
-        @page { size: A4 portrait; margin: 0; }
+        @page { size: A4 landscape; margin: 0; }
         body { margin: 0; font-family: 'Pretendard', 'Nanum Gothic', sans-serif; }
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         img { display: inline-block; }
@@ -401,7 +404,7 @@ export default function NametagGenerator() {
     printWindow.document.write(`
       <html><head><title>이름표</title>
       <style>
-        @page { size: A4 portrait; margin: 0; }
+        @page { size: A4 landscape; margin: 0; }
         body { margin: 0; font-family: 'Pretendard', 'Nanum Gothic', sans-serif; }
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         img { display: inline-block; }
@@ -519,7 +522,7 @@ export default function NametagGenerator() {
       {seminar && (
         <div>
           <p className="mb-2 text-sm font-medium text-muted-foreground">
-            미리보기 (A4 세로 — 상단: 행사명+이름 / 하단: 타임테이블, 접어서 사용)
+            미리보기 (가로 — 왼쪽: 행사명+이름 / 오른쪽: 타임테이블, A4 가로 인쇄 후 반으로 접어 사용)
           </p>
           <div
             ref={printRef}
