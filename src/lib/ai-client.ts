@@ -26,23 +26,36 @@ export async function streamAI(
     body: JSON.stringify(body),
   });
 
+  console.log("[streamAI] response status:", res.status, "ok:", res.ok);
+
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "요청 실패" }));
-    console.error("[streamAI] error:", res.status, err);
-    throw new Error(err.error || `API 오류 (${res.status})`);
+    const errText = await res.text();
+    console.error("[streamAI] error response:", res.status, errText);
+    let msg = `API 오류 (${res.status})`;
+    try { msg = JSON.parse(errText).error || msg; } catch { /* */ }
+    throw new Error(msg);
   }
 
   const reader = res.body?.getReader();
-  if (!reader) throw new Error("스트리밍을 지원하지 않습니다.");
+  if (!reader) {
+    console.error("[streamAI] no reader available");
+    throw new Error("스트리밍을 지원하지 않습니다.");
+  }
 
   const decoder = new TextDecoder();
+  let totalChunks = 0;
 
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
     const text = decoder.decode(value, { stream: true });
-    if (text) onChunk(text);
+    if (text) {
+      totalChunks++;
+      if (totalChunks <= 3) console.log("[streamAI] chunk:", totalChunks, text.substring(0, 100));
+      onChunk(text);
+    }
   }
 
+  console.log("[streamAI] done, total chunks:", totalChunks);
   onDone?.();
 }
