@@ -22,6 +22,22 @@ export async function POST(req: NextRequest) {
     ? new Date(seminar.date).toLocaleDateString("ko-KR", { weekday: "long" })
     : "";
 
+  // 세미나 일정 기반 문체 결정
+  const seminarDate = new Date(seminar.date + "T00:00:00");
+  const now = new Date();
+  const daysUntil = Math.round((seminarDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+  let toneGuide = "";
+  if (daysUntil > 14) {
+    toneGuide = "세미나가 2주 이상 남았으므로 기대감을 높이는 톤으로 작성하세요. '곧 다가올', '기대되는' 등의 표현을 사용하세요.";
+  } else if (daysUntil > 3) {
+    toneGuide = "세미나가 곧 다가오므로 긴급하고 참석을 독려하는 톤으로 작성하세요. '이번 주', '놓치지 마세요', '마감 임박' 등의 표현을 사용하세요.";
+  } else if (daysUntil >= 0) {
+    toneGuide = "세미나가 바로 오늘이거나 며칠 내입니다. 최종 안내 톤으로 작성하세요. '오늘', '내일', '마지막 기회' 등의 표현을 사용하세요.";
+  } else {
+    toneGuide = "세미나가 이미 종료되었습니다. 사후 보도자료(결과 보고) 톤으로 작성하세요. '성공적으로 개최되었다', '참석자들은 ~ 에 대해 깊이 있는 논의를 나눴다' 등 과거형으로 작성하세요.";
+  }
+
   const speakerInfo = [
     seminar.speaker,
     seminar.speakerPosition ? `(${seminar.speakerPosition})` : "",
@@ -129,7 +145,10 @@ yonsei.edtech@gmail.com
       system: `당신은 연세교육공학회의 홍보 콘텐츠 작성 전문가입니다.
 학술적이면서도 접근성 있는 톤으로 작성합니다.
 한국어로 작성하세요.
-중요: 결과물은 복사해서 바로 사용할 수 있는 완성본이어야 합니다. 설명이나 주석을 넣지 마세요.`,
+중요: 결과물은 복사해서 바로 사용할 수 있는 완성본이어야 합니다. 설명이나 주석을 넣지 마세요.
+
+문체 가이드: ${toneGuide}
+세미나까지 D${daysUntil >= 0 ? "-" + daysUntil : "+" + Math.abs(daysUntil)}일입니다.`,
       prompt: `다음 세미나 정보를 기반으로 콘텐츠를 생성해주세요.
 
 ${formatPrompts[format] || formatPrompts.press}

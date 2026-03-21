@@ -84,14 +84,16 @@ export function useCreatePost() {
 
   const mutation = useMutation({
     mutationFn: async (data: Partial<Post>) => {
-      return await postsApi.create({
+      const payload: Record<string, unknown> = {
         title: data.title,
         content: data.content,
         category: data.category,
         authorId: user?.id,
         authorName: user?.name,
         viewCount: 0,
-      });
+      };
+      if (data.imageUrls?.length) payload.imageUrls = data.imageUrls;
+      return await postsApi.create(payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });

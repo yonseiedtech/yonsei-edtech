@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useSeminars } from "@/features/seminar/useSeminar";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { promotionContentsApi } from "@/lib/bkend";
+import { promotionContentsApi, postsApi } from "@/lib/bkend";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { streamAI } from "@/lib/ai-client";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import {
   Save,
   Trash2,
   Clock,
+  Send,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -45,6 +47,7 @@ const FORMAT_LABEL_MAP: Record<string, string> = {
 };
 
 export default function PromotionTab() {
+  const router = useRouter();
   const { seminars } = useSeminars();
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
@@ -118,6 +121,26 @@ export default function PromotionTab() {
   function handleLoadSaved(content: PromotionContent) {
     setFormat(content.format as ContentFormat);
     setResult(content.content);
+  }
+
+  async function handlePublishToBoard() {
+    if (!seminar || !result.trim()) return;
+    try {
+      const label = FORMAT_LABEL_MAP[format] ?? format;
+      await postsApi.create({
+        title: `[${label}] ${seminar.title}`,
+        content: result,
+        category: "press",
+        authorId: user?.id,
+        authorName: user?.name,
+        viewCount: 0,
+      });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      toast.success("보도자료 게시판에 게시되었습니다.");
+      router.push("/board?category=press");
+    } catch {
+      toast.error("게시에 실패했습니다.");
+    }
   }
 
   function handleCopy(text?: string) {
@@ -201,6 +224,12 @@ export default function PromotionTab() {
                 <Save size={14} className="mr-1" />
                 저장
               </Button>
+              {format === "press" && (
+                <Button size="sm" variant="default" onClick={handlePublishToBoard} disabled={!result || loading}>
+                  <Send size={14} className="mr-1" />
+                  게시판에 게시
+                </Button>
+              )}
             </div>
           </div>
           <textarea

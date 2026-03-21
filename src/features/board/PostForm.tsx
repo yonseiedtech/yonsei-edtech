@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -9,11 +9,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { CATEGORY_LABELS, type PostCategory, type Post } from "@/types";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, Send, Save, Eye, PenLine } from "lucide-react";
+import { ArrowLeft, Send, Save, Eye, PenLine, ImagePlus, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useCreatePost, useUpdatePost } from "./useBoard";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
+import { uploadImage } from "@/lib/upload";
 
 interface PostData {
   title: string;
@@ -25,25 +26,31 @@ const ALL_CATEGORIES: PostCategory[] = [
   "seminar",
   "free",
   "promotion",
+  "press",
 ];
 
 interface PostFormProps {
   mode?: "create" | "edit";
   initialData?: Post;
+  initialCategory?: PostCategory;
+  initialContent?: string;
   onSubmitSuccess?: () => void;
 }
 
-export default function PostForm({ mode = "create", initialData, onSubmitSuccess }: PostFormProps) {
+export default function PostForm({ mode = "create", initialData, initialCategory, initialContent, onSubmitSuccess }: PostFormProps) {
   const router = useRouter();
   const { user } = useAuthStore();
-  const [category, setCategory] = useState<PostCategory>(initialData?.category ?? "free");
+  const [category, setCategory] = useState<PostCategory>(initialData?.category ?? initialCategory ?? "free");
   const [showPreview, setShowPreview] = useState(false);
+  const [imageUrls, setImageUrls] = useState<string[]>(initialData?.imageUrls ?? []);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { createPost } = useCreatePost();
   const { updatePost } = useUpdatePost();
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<PostData>({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<PostData>({
     defaultValues: initialData
       ? { title: initialData.title, content: initialData.content }
-      : undefined,
+      : { title: "", content: initialContent ?? "" },
   });
 
   const watchTitle = watch("title");
@@ -52,14 +59,45 @@ export default function PostForm({ mode = "create", initialData, onSubmitSuccess
   // 역할별 카테고리 필터
   const availableCategories = ALL_CATEGORIES.filter((cat) => {
     if (cat === "notice") return isAtLeast(user, "president");
-    if (cat === "promotion") return isAtLeast(user, "staff");
+    if (cat === "promotion" || cat === "press") return isAtLeast(user, "staff");
     return true;
   });
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files?.length) return;
+
+    setUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const url = await uploadImage(file);
+        setImageUrls((prev) => [...prev, url]);
+        // 내용에 이미지 마크다운 삽입
+        const imgTag = `\n![${file.name}](${url})\n`;
+        setValue("content", (watch("content") || "") + imgTag);
+      }
+      toast.success(`${files.length}개 이미지가 업로드되었습니다.`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "이미지 업로드 실패");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  function handleRemoveImage(url: string) {
+    setImageUrls((prev) => prev.filter((u) => u !== url));
+    // 내용에서 해당 이미지 제거
+    const content = watch("content") || "";
+    const escaped = url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const cleaned = content.replace(new RegExp(`\\n?!\\[[^\\]]*\\]\\(${escaped}\\)\\n?`, "g"), "\n");
+    setValue("content", cleaned.trim());
+  }
 
   async function onSubmit(data: PostData) {
     try {
       if (mode === "edit" && initialData) {
-        await updatePost({ id: initialData.id, data: { ...data, category } });
+        await updatePost({ id: initialData.id, data: { ...data, category, imageUrls } });
         toast.success("게시글이 수정되었습니다.");
         if (onSubmitSuccess) {
           onSubmitSuccess();
@@ -67,7 +105,7 @@ export default function PostForm({ mode = "create", initialData, onSubmitSuccess
           router.push(`/board/${initialData.id}`);
         }
       } else {
-        await createPost({ ...data, category });
+        await createPost({ ...data, category, imageUrls });
         toast.success("게시글이 등록되었습니다.");
         router.push("/board");
       }
@@ -77,6 +115,14 @@ export default function PostForm({ mode = "create", initialData, onSubmitSuccess
   }
 
   const isEdit = mode === "edit";
+
+  /** 미리보기에서 이미지 마크다운을 img 태그로 변환 */
+  function renderContent(text: string) {
+    return text.replace(
+      /!\[([^\]]*)\]\(([^)]+)\)/g,
+      '<img src="$2" alt="$1" class="my-2 max-w-full rounded-lg" style="max-height:400px" />',
+    );
+  }
 
   return (
     <div>
@@ -116,9 +162,13 @@ export default function PostForm({ mode = "create", initialData, onSubmitSuccess
             <span>{new Date().toLocaleDateString("ko-KR")}</span>
           </div>
           <hr className="my-4" />
-          <div className="whitespace-pre-wrap text-sm leading-relaxed">
-            {watchContent || "(내용 없음)"}
-          </div>
+          <div
+            className="text-sm leading-relaxed"
+            dangerouslySetInnerHTML={{
+              __html: renderContent(watchContent || "(내용 없음)")
+                .replace(/\n/g, "<br />"),
+            }}
+          />
         </div>
       ) : (
         /* ── 편집 폼 ── */
@@ -147,7 +197,7 @@ export default function PostForm({ mode = "create", initialData, onSubmitSuccess
             </div>
             {!isAtLeast(user, "staff") && (
               <p className="mt-1.5 text-xs text-muted-foreground">
-                공지사항·홍보게시판은 운영진 이상만 작성할 수 있습니다.
+                공지사항·홍보·보도자료는 운영진 이상만 작성할 수 있습니다.
               </p>
             )}
           </div>
@@ -164,16 +214,66 @@ export default function PostForm({ mode = "create", initialData, onSubmitSuccess
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium">내용</label>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className="text-sm font-medium">내용</label>
+              <div className="flex items-center gap-2">
+                {uploading && <Loader2 size={14} className="animate-spin text-muted-foreground" />}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                >
+                  <ImagePlus size={14} className="mr-1" />
+                  이미지 첨부
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleImageUpload}
+                />
+              </div>
+            </div>
             <Textarea
               {...register("content", { required: "내용을 입력하세요" })}
-              placeholder="내용을 입력하세요..."
-              rows={12}
+              placeholder="내용을 입력하세요... (이미지는 ![설명](URL) 형식으로 삽입됩니다)"
+              rows={14}
             />
             {errors.content && (
               <p className="mt-1 text-xs text-destructive">{errors.content.message}</p>
             )}
           </div>
+
+          {/* 첨부된 이미지 목록 */}
+          {imageUrls.length > 0 && (
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">
+                첨부 이미지 ({imageUrls.length})
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {imageUrls.map((url) => (
+                  <div key={url} className="group relative">
+                    <img
+                      src={url}
+                      alt=""
+                      className="h-20 w-20 rounded-lg border object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(url)}
+                      className="absolute -right-1 -top-1 hidden rounded-full bg-destructive p-0.5 text-white group-hover:block"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="flex justify-end gap-2">
             <Button

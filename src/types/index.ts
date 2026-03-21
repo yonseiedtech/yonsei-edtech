@@ -68,7 +68,8 @@ export interface Post {
   id: string;
   title: string;
   content: string;
-  category: "notice" | "seminar" | "free" | "promotion";
+  category: "notice" | "seminar" | "free" | "promotion" | "press";
+  imageUrls?: string[];
   authorId: string;
   authorName: string;
   viewCount: number;
@@ -92,6 +93,7 @@ export const CATEGORY_LABELS: Record<PostCategory, string> = {
   seminar: "세미나 자료",
   free: "자유게시판",
   promotion: "홍보게시판",
+  press: "보도자료",
 };
 
 // ── 세미나 ──

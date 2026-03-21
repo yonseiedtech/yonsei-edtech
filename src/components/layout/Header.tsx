@@ -53,6 +53,7 @@ const PUBLIC_NAV: NavGroup[] = [
       { href: "/notices", label: "공지사항" },
       { href: "/board", label: "게시판" },
       { href: "/newsletter", label: "학회보" },
+      { href: "/board?category=press", label: "보도자료" },
     ],
   },
   {
