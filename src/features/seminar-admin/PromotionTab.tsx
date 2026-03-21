@@ -137,7 +137,7 @@ export default function PromotionTab() {
       });
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       toast.success("보도자료 게시판에 게시되었습니다.");
-      router.push("/board?category=press");
+      router.push("/board/press");
     } catch {
       toast.error("게시에 실패했습니다.");
     }

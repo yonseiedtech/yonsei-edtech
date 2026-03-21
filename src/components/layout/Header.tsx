@@ -51,9 +51,11 @@ const PUBLIC_NAV: NavGroup[] = [
     label: "커뮤니티",
     items: [
       { href: "/notices", label: "공지사항" },
-      { href: "/board", label: "게시판" },
+      { href: "/board/free", label: "자유게시판" },
+      { href: "/board/seminar", label: "세미나 자료" },
+      { href: "/board/promotion", label: "홍보게시판" },
+      { href: "/board/press", label: "보도자료" },
       { href: "/newsletter", label: "학회보" },
-      { href: "/board?category=press", label: "보도자료" },
     ],
   },
   {
