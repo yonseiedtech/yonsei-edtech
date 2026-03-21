@@ -54,12 +54,13 @@ export async function POST(req: NextRequest) {
     .filter(Boolean)
     .join(" ");
 
-  const result = streamText({
-    model: models.quality,
-    system: `당신은 연세교육공학회의 홍보 콘텐츠 작성 전문가입니다.
+  try {
+    const result = streamText({
+      model: models.quality,
+      system: `당신은 연세교육공학회의 홍보 콘텐츠 작성 전문가입니다.
 학술적이면서도 접근성 있는 톤으로 작성합니다.
 한국어로 작성하세요.`,
-    prompt: `다음 세미나 정보를 기반으로 콘텐츠를 생성해주세요.
+      prompt: `다음 세미나 정보를 기반으로 콘텐츠를 생성해주세요.
 
 ${formatPrompts[format] || formatPrompts.press}
 
@@ -71,7 +72,15 @@ ${formatPrompts[format] || formatPrompts.press}
 - 발표자 소개: ${seminar.speakerBio || "없음"}
 - 세미나 설명: ${seminar.description}
 - 참석 현황: ${seminar.attendeeIds?.length ?? 0}명 신청`,
-  });
+    });
 
-  return result.toTextStreamResponse();
+    return result.toTextStreamResponse();
+  } catch (err) {
+    console.error("[press-release] AI error:", err);
+    const msg = err instanceof Error ? err.message : "AI 생성 실패";
+    if (msg.includes("quota") || msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED")) {
+      return Response.json({ error: "AI API 할당량이 초과되었습니다. 잠시 후 다시 시도해주세요." }, { status: 429 });
+    }
+    return Response.json({ error: msg }, { status: 500 });
+  }
 }

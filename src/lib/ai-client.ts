@@ -57,5 +57,8 @@ export async function streamAI(
   }
 
   console.log("[streamAI] done, total chunks:", totalChunks);
+  if (totalChunks === 0) {
+    throw new Error("AI 응답이 비어있습니다. API 할당량 초과일 수 있습니다. 잠시 후 다시 시도해주세요.");
+  }
   onDone?.();
 }
