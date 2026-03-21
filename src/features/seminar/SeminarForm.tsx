@@ -1,11 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Send, Video } from "lucide-react";
 import { toast } from "sonner";
 import { useCreateSeminar } from "./useSeminar";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -17,6 +18,7 @@ interface FormData {
   date: string;
   time: string;
   location: string;
+  onlineUrl: string;
   speaker: string;
   speakerBio: string;
   maxAttendees: string;
@@ -27,6 +29,7 @@ export default function SeminarForm() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { createSeminar } = useCreateSeminar();
+  const [isOnline, setIsOnline] = useState(false);
   const {
     register,
     handleSubmit,
@@ -40,7 +43,9 @@ export default function SeminarForm() {
         description: data.description,
         date: data.date,
         time: data.time,
-        location: data.location,
+        location: isOnline ? (data.location || "온라인 (ZOOM)") : data.location,
+        isOnline,
+        onlineUrl: isOnline ? (data.onlineUrl || undefined) : undefined,
         speaker: data.speaker,
         speakerBio: data.speakerBio || undefined,
         maxAttendees: data.maxAttendees ? Number(data.maxAttendees) : undefined,
@@ -119,13 +124,36 @@ export default function SeminarForm() {
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-medium">장소</label>
+          <div className="mb-1.5 flex items-center justify-between">
+            <label className="text-sm font-medium">장소</label>
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={isOnline}
+                onChange={(e) => setIsOnline(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <Video size={14} className="text-blue-500" />
+              온라인 (ZOOM)
+            </label>
+          </div>
           <Input
-            {...register("location", { required: "장소를 입력하세요" })}
-            placeholder="예: 교육과학관 203호"
+            {...register("location", { required: !isOnline ? "장소를 입력하세요" : false })}
+            placeholder={isOnline ? "온라인 (ZOOM) — 비워두면 자동 입력" : "예: 교육과학관 203호"}
           />
           {errors.location && (
             <p className="mt-1 text-xs text-destructive">{errors.location.message}</p>
+          )}
+          {isOnline && (
+            <div className="mt-2">
+              <Input
+                {...register("onlineUrl")}
+                placeholder="ZOOM 링크 (https://zoom.us/j/...)"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                참석자에게 표시될 접속 링크입니다.
+              </p>
+            </div>
           )}
         </div>
 

@@ -27,7 +27,7 @@ import {
 import { formatDate } from "@/lib/utils";
 import type { Seminar, SeminarSession } from "@/types";
 import { toast } from "sonner";
-import { ChevronDown, Pencil, Plus, Trash2, Image as ImageIcon } from "lucide-react";
+import { ChevronDown, Pencil, Plus, Trash2, Image as ImageIcon, Video } from "lucide-react";
 
 const STATUS_LABELS: Record<Seminar["status"], string> = {
   upcoming: "예정",
@@ -48,6 +48,8 @@ type EditSeminar = {
   date: string;
   time: string;
   location: string;
+  isOnline: boolean;
+  onlineUrl: string;
   speaker: string;
   speakerBio: string;
   posterUrl: string;
@@ -88,6 +90,8 @@ export default function AdminSeminarTab() {
       date: s.date,
       time: s.time,
       location: s.location,
+      isOnline: s.isOnline ?? false,
+      onlineUrl: s.onlineUrl ?? "",
       speaker: s.speaker,
       speakerBio: s.speakerBio ?? "",
       posterUrl: s.posterUrl ?? "",
@@ -107,6 +111,8 @@ export default function AdminSeminarTab() {
         location: editSeminar.location,
         speaker: editSeminar.speaker,
         speakerBio: editSeminar.speakerBio || undefined,
+        isOnline: editSeminar.isOnline,
+        onlineUrl: editSeminar.isOnline ? (editSeminar.onlineUrl || undefined) : undefined,
         posterUrl: editSeminar.posterUrl || undefined,
         maxAttendees: editSeminar.maxAttendees
           ? parseInt(editSeminar.maxAttendees)
@@ -356,13 +362,38 @@ export default function AdminSeminarTab() {
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">장소</label>
+                <div className="mb-1 flex items-center justify-between">
+                  <label className="text-sm font-medium">장소</label>
+                  <label className="flex cursor-pointer items-center gap-1.5 text-xs">
+                    <input
+                      type="checkbox"
+                      checked={editSeminar.isOnline}
+                      onChange={(e) =>
+                        setEditSeminar({ ...editSeminar, isOnline: e.target.checked })
+                      }
+                      className="h-3.5 w-3.5 rounded border-gray-300"
+                    />
+                    <Video size={12} className="text-blue-500" />
+                    온라인 (ZOOM)
+                  </label>
+                </div>
                 <Input
                   value={editSeminar.location}
                   onChange={(e) =>
                     setEditSeminar({ ...editSeminar, location: e.target.value })
                   }
+                  placeholder={editSeminar.isOnline ? "온라인 (ZOOM)" : "장소"}
                 />
+                {editSeminar.isOnline && (
+                  <Input
+                    className="mt-2"
+                    value={editSeminar.onlineUrl}
+                    onChange={(e) =>
+                      setEditSeminar({ ...editSeminar, onlineUrl: e.target.value })
+                    }
+                    placeholder="ZOOM 링크 (https://zoom.us/j/...)"
+                  />
+                )}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>

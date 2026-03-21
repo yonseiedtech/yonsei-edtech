@@ -35,6 +35,7 @@ import {
   Instagram,
   Mail,
   ExternalLink,
+  Video,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -202,9 +203,26 @@ function SeminarDetail({ id }: { id: string }) {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <MapPin size={16} />
+              {seminar.isOnline ? <Video size={16} className="text-blue-500" /> : <MapPin size={16} />}
               <span>{seminar.location}</span>
+              {seminar.isOnline && (
+                <Badge variant="secondary" className="bg-blue-50 text-xs text-blue-700">
+                  ONLINE
+                </Badge>
+              )}
             </div>
+            {seminar.isOnline && seminar.onlineUrl && (
+              <div className="flex items-center gap-2 pl-6">
+                <a
+                  href={seminar.onlineUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-600 underline hover:text-blue-800"
+                >
+                  ZOOM 접속 링크
+                </a>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <Users size={16} />
               <span>

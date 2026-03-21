@@ -123,6 +123,8 @@ export interface Seminar {
   maxAttendees?: number;
   attendeeIds: string[];
   sessions?: SeminarSession[];
+  isOnline?: boolean;
+  onlineUrl?: string;
   registrationUrl?: string;
   timeline?: TimelinePhase[];
   status: "upcoming" | "completed" | "cancelled";
