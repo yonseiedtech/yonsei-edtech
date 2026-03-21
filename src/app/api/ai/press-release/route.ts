@@ -6,9 +6,8 @@ import { requireAuth } from "@/lib/api-auth";
 export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
-  const authResult = await requireAuth(req, "staff");
+  const authResult = await requireAuth(req, "member");
   if (authResult instanceof Response) return authResult;
-  if (!("uid" in authResult)) return Response.json({ error: "인증 실패" }, { status: 401 });
 
   const { seminar, format } = await req.json();
 
