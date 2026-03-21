@@ -34,14 +34,17 @@ export async function verifyAuth(req: NextRequest): Promise<AuthUser | null> {
     const decoded = await adminAuth.verifyIdToken(token);
     const userDoc = await adminDb.collection("users").doc(decoded.uid).get();
     const data = userDoc.data();
+    const role = (data?.role as UserRole) ?? "member";
+    console.log("[api-auth] uid:", decoded.uid, "exists:", userDoc.exists, "role:", role, "email:", decoded.email);
 
     return {
       uid: decoded.uid,
       email: decoded.email,
       name: data?.name,
-      role: (data?.role as UserRole) ?? "member",
+      role,
     };
-  } catch {
+  } catch (err) {
+    console.error("[api-auth] verifyIdToken failed:", err instanceof Error ? err.message : err);
     return null;
   }
 }

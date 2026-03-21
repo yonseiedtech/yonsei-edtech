@@ -8,6 +8,7 @@ export const maxDuration = 30;
 export async function POST(req: NextRequest) {
   const authResult = await requireAuth(req, "staff");
   if (authResult instanceof Response) return authResult;
+  if (!("uid" in authResult)) return Response.json({ error: "인증 실패" }, { status: 401 });
 
   const { seminar, format } = await req.json();
 
