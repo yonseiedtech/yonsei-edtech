@@ -16,6 +16,7 @@ interface SignupData {
   email: string;
   password: string;
   generation: number;
+  studentId: string;
   field: string;
 }
 
@@ -54,6 +55,7 @@ export default function SignupForm({ onSuccess }: Props) {
           email: data.email,
           role: "member",
           generation: data.generation,
+          studentId: data.studentId || "",
           field: data.field || "",
           approved: false,
         });
@@ -158,6 +160,14 @@ export default function SignupForm({ onSuccess }: Props) {
         {errors.generation && (
           <p className="mt-1 text-xs text-destructive">{errors.generation.message}</p>
         )}
+      </div>
+
+      <div>
+        <label className="mb-1.5 block text-sm font-medium">학번</label>
+        <Input
+          {...register("studentId")}
+          placeholder="예: 2024123456"
+        />
       </div>
 
       <div>

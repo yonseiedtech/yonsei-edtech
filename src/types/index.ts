@@ -48,6 +48,7 @@ export interface User {
   affiliation?: string;
   department?: string;
   position?: string;
+  studentId?: string;
   contactEmail?: string;
   contactVisibility?: ContactVisibility;
   createdAt: string;

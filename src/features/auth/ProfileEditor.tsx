@@ -14,6 +14,7 @@ import { OCCUPATION_LABELS, VISIBILITY_LABELS } from "@/types";
 interface ProfileData {
   name: string;
   generation: number;
+  studentId: string;
   field: string;
   bio: string;
   occupation: OccupationType | "";
@@ -42,6 +43,7 @@ export default function ProfileEditor({ user }: Props) {
     defaultValues: {
       name: user.name,
       generation: user.generation,
+      studentId: user.studentId || "",
       field: user.field,
       bio: user.bio || "",
       occupation: user.occupation || "",
@@ -85,6 +87,10 @@ export default function ProfileEditor({ user }: Props) {
       <div>
         <label className="mb-1.5 block text-sm font-medium">기수</label>
         <Input {...register("generation", { valueAsNumber: true })} type="number" />
+      </div>
+      <div>
+        <label className="mb-1.5 block text-sm font-medium">학번</label>
+        <Input {...register("studentId")} placeholder="예: 2024123456" />
       </div>
       <div>
         <label className="mb-1.5 block text-sm font-medium">관심 분야</label>
