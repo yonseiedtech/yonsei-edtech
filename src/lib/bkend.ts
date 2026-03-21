@@ -299,6 +299,28 @@ export const siteSettingsApi = {
     dataApi.update("site_settings", id, data),
 };
 
+export const registrationsApi = {
+  list: (seminarId: string) =>
+    dataApi.list<Record<string, unknown>>("seminar_registrations", {
+      "filter[seminarId]": seminarId,
+      sort: "createdAt:desc",
+    }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create("seminar_registrations", data),
+  delete: (id: string) => dataApi.delete("seminar_registrations", id),
+};
+
+export const certificatesApi = {
+  list: (seminarId?: string) =>
+    dataApi.list<Record<string, unknown>>("certificates", {
+      ...(seminarId ? { "filter[seminarId]": seminarId } : {}),
+      sort: "issuedAt:desc",
+    }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create("certificates", data),
+  delete: (id: string) => dataApi.delete("certificates", id),
+};
+
 export const inquiriesApi = {
   list: (params?: QueryParams) =>
     dataApi.list<Record<string, unknown>>("inquiries", { sort: "createdAt:desc", ...params }),

@@ -33,22 +33,27 @@ export default function SeminarForm() {
     formState: { errors },
   } = useForm<FormData>();
 
-  function onSubmit(data: FormData) {
-    createSeminar({
-      title: data.title,
-      description: data.description,
-      date: data.date,
-      time: data.time,
-      location: data.location,
-      speaker: data.speaker,
-      speakerBio: data.speakerBio || undefined,
-      maxAttendees: data.maxAttendees ? Number(data.maxAttendees) : undefined,
-      registrationUrl: data.registrationUrl || undefined,
-      status: "upcoming" as Seminar["status"],
-      createdBy: user?.id ?? "",
-    });
-    toast.success("세미나가 등록되었습니다.");
-    router.push("/seminars");
+  async function onSubmit(data: FormData) {
+    try {
+      await createSeminar({
+        title: data.title,
+        description: data.description,
+        date: data.date,
+        time: data.time,
+        location: data.location,
+        speaker: data.speaker,
+        speakerBio: data.speakerBio || undefined,
+        maxAttendees: data.maxAttendees ? Number(data.maxAttendees) : undefined,
+        registrationUrl: data.registrationUrl || undefined,
+        attendeeIds: [],
+        status: "upcoming" as Seminar["status"],
+        createdBy: user?.id ?? "",
+      } as unknown as Omit<Seminar, "id" | "attendeeIds" | "createdAt" | "updatedAt">);
+      toast.success("세미나가 등록되었습니다.");
+      router.push("/seminars");
+    } catch {
+      toast.error("세미나 등록에 실패했습니다. 다시 시도해주세요.");
+    }
   }
 
   return (

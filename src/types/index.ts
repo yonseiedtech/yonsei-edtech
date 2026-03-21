@@ -160,6 +160,31 @@ export type CheckinResult =
   | { success: false; alreadyCheckedIn: true; attendee: SeminarAttendee }
   | { success: false; alreadyCheckedIn?: false; message: string };
 
+// ── 세미나 자체 신청 (비회원 포함) ──
+export interface SeminarRegistration {
+  id: string;
+  seminarId: string;
+  name: string;
+  email: string;
+  affiliation?: string;
+  phone?: string;
+  memo?: string;
+  userId?: string; // 회원이면 uid 연결
+  createdAt: string;
+}
+
+// ── 수료증 / 감사장 ──
+export interface Certificate {
+  id: string;
+  seminarId: string;
+  seminarTitle: string;
+  recipientName: string;
+  recipientAffiliation?: string;
+  type: "completion" | "appreciation";
+  issuedAt: string;
+  issuedBy: string;
+}
+
 // ── 문의 ──
 export interface Inquiry {
   id: string;

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSeminar, useToggleAttendance, useAttendee, useCheckinStats } from "@/features/seminar/useSeminar";
 import QrCodeDisplay from "@/features/seminar/QrCodeDisplay";
+import SeminarRegistrationForm from "@/features/seminar/SeminarRegistrationForm";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import { streamAI } from "@/lib/ai-client";
@@ -273,42 +274,50 @@ function SeminarDetail({ id }: { id: string }) {
             </div>
           )}
 
-          {/* 참석 신청 영역 */}
-          {seminar.status === "upcoming" && (
+          {/* 회원 참석 신청 */}
+          {seminar.status === "upcoming" && user && (
             <div className="mt-8 border-t pt-6">
-              {user ? (
-                <>
-                  <Button
-                    onClick={handleToggle}
-                    variant={isAttending ? "outline" : "default"}
-                    className="w-full sm:w-auto"
-                  >
-                    {isAttending ? (
-                      <>
-                        <UserCheck size={16} className="mr-1" />
-                        참석 취소
-                      </>
-                    ) : (
-                      <>
-                        <UserPlus size={16} className="mr-1" />
-                        참석 신청
-                      </>
-                    )}
-                  </Button>
-                  {isFull && !isAttending && (
-                    <p className="mt-2 text-xs text-destructive">
-                      인원이 가득 찼습니다.
-                    </p>
-                  )}
-                </>
-              ) : (
-                <Link href="/login">
-                  <Button variant="outline" className="w-full sm:w-auto">
-                    <LogIn size={16} className="mr-1" />
-                    로그인 후 참석 신청
-                  </Button>
-                </Link>
+              <Button
+                onClick={handleToggle}
+                variant={isAttending ? "outline" : "default"}
+                className="w-full sm:w-auto"
+              >
+                {isAttending ? (
+                  <>
+                    <UserCheck size={16} className="mr-1" />
+                    참석 취소
+                  </>
+                ) : (
+                  <>
+                    <UserPlus size={16} className="mr-1" />
+                    회원 참석 신청
+                  </>
+                )}
+              </Button>
+              {isFull && !isAttending && (
+                <p className="mt-2 text-xs text-destructive">
+                  인원이 가득 찼습니다.
+                </p>
               )}
+            </div>
+          )}
+
+          {/* 자체 신청 폼 (비회원 포함) */}
+          {seminar.status === "upcoming" && (
+            <div className="mt-6">
+              <SeminarRegistrationForm seminarId={id} seminarTitle={seminar.title} />
+            </div>
+          )}
+
+          {/* 비회원 로그인 안내 (회원 전용 기능) */}
+          {seminar.status === "upcoming" && !user && (
+            <div className="mt-4 text-center">
+              <Link href="/login">
+                <Button variant="outline" className="w-full sm:w-auto">
+                  <LogIn size={16} className="mr-1" />
+                  로그인하면 QR 출석 등 회원 기능을 이용할 수 있습니다
+                </Button>
+              </Link>
             </div>
           )}
 
