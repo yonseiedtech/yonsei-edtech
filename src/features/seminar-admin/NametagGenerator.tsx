@@ -43,20 +43,18 @@ function NametagPreview({
     <div
       className="mx-auto bg-white"
       style={{
-        width: "10.83in",
-        height: "7.5in",
-        display: "flex",
+        width: "210mm",
+        minHeight: "297mm",
         fontFamily: "'Pretendard', 'Nanum Gothic', sans-serif",
       }}
     >
-      {/* ── 왼쪽면: 행사명 + 이름 ── */}
+      {/* ── 상단: 앞면 (행사명 + 이름) ── */}
       <div
         className="relative flex flex-col items-center justify-center"
         style={{
-          width: "50%",
-          height: "100%",
-          borderRight: "1px dashed #ccc",
-          padding: "40px 30px",
+          height: "148.5mm",
+          padding: "30px 40px",
+          borderBottom: "1px dashed #ccc",
         }}
       >
         {/* 상단 컬러바 */}
@@ -64,30 +62,30 @@ function NametagPreview({
           style={{
             position: "absolute",
             top: "10px",
-            left: "10px",
-            right: "10px",
-            height: "28px",
+            left: "15px",
+            right: "15px",
+            height: "24px",
             background: "linear-gradient(90deg, #003876 0%, #1a5fa0 100%)",
             borderRadius: "4px",
           }}
         />
 
         {/* 연세 로고 */}
-        <div style={{ position: "absolute", top: "14px", right: "20px" }}>
+        <div style={{ position: "absolute", top: "12px", right: "24px" }}>
           <Image
             src="/yonsei-emblem.svg"
             alt=""
-            width={20}
-            height={20}
+            width={18}
+            height={18}
             style={{ opacity: 0.9 }}
           />
         </div>
 
         {/* 행사명 */}
-        <div className="text-center" style={{ marginTop: "20px" }}>
+        <div className="text-center" style={{ marginTop: "16px" }}>
           <p
             style={{
-              fontSize: "11pt",
+              fontSize: "13pt",
               fontWeight: 600,
               color: "#333",
               letterSpacing: "0.05em",
@@ -98,9 +96,9 @@ function NametagPreview({
           {seminarSubtitle && (
             <p
               style={{
-                fontSize: "9pt",
+                fontSize: "10pt",
                 color: "#666",
-                marginTop: "4px",
+                marginTop: "6px",
                 letterSpacing: "0.03em",
               }}
             >
@@ -110,10 +108,10 @@ function NametagPreview({
         </div>
 
         {/* 이름 (대형) */}
-        <div className="text-center" style={{ marginTop: "30px" }}>
+        <div className="text-center" style={{ marginTop: "28px" }}>
           <p
             style={{
-              fontSize: "28pt",
+              fontSize: "32pt",
               fontWeight: 800,
               letterSpacing: "0.4em",
               color: "#000",
@@ -123,9 +121,9 @@ function NametagPreview({
           </p>
           <p
             style={{
-              fontSize: "12pt",
+              fontSize: "14pt",
               color: "#555",
-              marginTop: "8px",
+              marginTop: "10px",
               fontWeight: 500,
             }}
           >
@@ -141,10 +139,10 @@ function NametagPreview({
           <Image
             src="/yonsei-emblem.svg"
             alt="연세대학교"
-            width={18}
-            height={18}
+            width={20}
+            height={20}
           />
-          <span style={{ fontSize: "8pt", color: "#888", fontWeight: 600 }}>
+          <span style={{ fontSize: "9pt", color: "#888", fontWeight: 600 }}>
             연세교육공학회
           </span>
         </div>
@@ -154,22 +152,21 @@ function NametagPreview({
           style={{
             position: "absolute",
             bottom: "10px",
-            left: "10px",
-            right: "10px",
-            height: "5px",
+            left: "15px",
+            right: "15px",
+            height: "4px",
             background: "#003876",
             borderRadius: "2px",
           }}
         />
       </div>
 
-      {/* ── 오른쪽면: 타임테이블 ── */}
+      {/* ── 하단: 뒷면 (타임테이블) ── */}
       <div
         className="relative flex flex-col"
         style={{
-          width: "50%",
-          height: "100%",
-          padding: "40px 30px",
+          height: "148.5mm",
+          padding: "24px 40px",
         }}
       >
         {/* 상단 로고 */}
@@ -384,7 +381,7 @@ export default function NametagGenerator() {
     printWindow.document.write(`
       <html><head><title>이름표</title>
       <style>
-        @page { size: 10.83in 7.5in landscape; margin: 0; }
+        @page { size: A4 portrait; margin: 0; }
         body { margin: 0; font-family: 'Pretendard', 'Nanum Gothic', sans-serif; }
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         img { display: inline-block; }
@@ -404,7 +401,7 @@ export default function NametagGenerator() {
     printWindow.document.write(`
       <html><head><title>이름표</title>
       <style>
-        @page { size: 10.83in 7.5in landscape; margin: 0; }
+        @page { size: A4 portrait; margin: 0; }
         body { margin: 0; font-family: 'Pretendard', 'Nanum Gothic', sans-serif; }
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         img { display: inline-block; }
@@ -522,7 +519,7 @@ export default function NametagGenerator() {
       {seminar && (
         <div>
           <p className="mb-2 text-sm font-medium text-muted-foreground">
-            미리보기 (가로 — 왼쪽: 행사명+이름 / 오른쪽: 타임테이블)
+            미리보기 (A4 세로 — 상단: 행사명+이름 / 하단: 타임테이블, 접어서 사용)
           </p>
           <div
             ref={printRef}
