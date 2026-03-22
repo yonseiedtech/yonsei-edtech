@@ -16,9 +16,10 @@ interface Props {
   seminarId: string;
   seminarTitle: string;
   fields?: RegistrationFieldConfig[];
+  onSubmitted?: () => void;
 }
 
-export default function SeminarRegistrationForm({ seminarId, seminarTitle, fields }: Props) {
+export default function SeminarRegistrationForm({ seminarId, seminarTitle, fields, onSubmitted }: Props) {
   const { user } = useAuthStore();
   const [submitted, setSubmitted] = useState(false);
 
@@ -46,6 +47,7 @@ export default function SeminarRegistrationForm({ seminarId, seminarTitle, field
       }
       await registrationsApi.create(payload);
       setSubmitted(true);
+      onSubmitted?.();
       toast.success("신청이 완료되었습니다.");
     } catch {
       toast.error("신청에 실패했습니다. 다시 시도해주세요.");

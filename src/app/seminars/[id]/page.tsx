@@ -1,11 +1,13 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { useSeminar, useUpdateSeminar, useToggleAttendance, useAttendee, useCheckinStats } from "@/features/seminar/useSeminar";
 import QrCodeDisplay from "@/features/seminar/QrCodeDisplay";
 import SeminarRegistrationForm from "@/features/seminar/SeminarRegistrationForm";
+import { registrationsApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import { streamAI } from "@/lib/ai-client";
@@ -49,6 +51,7 @@ import {
   GripVertical,
   Eye,
   EyeOff,
+  CheckCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -151,6 +154,21 @@ function SeminarDetail({ id }: { id: string }) {
   const isStaff = isAtLeast(user, "staff");
   const myAttendee = useAttendee(id, user?.id ?? "");
   const checkinStats = useCheckinStats(id);
+  const [justRegistered, setJustRegistered] = useState(false);
+
+  // 자체 신청 여부 확인
+  const { data: registrations } = useQuery({
+    queryKey: ["registrations", id],
+    queryFn: async () => {
+      const res = await registrationsApi.list(id);
+      return res.data as unknown as { userId?: string; email?: string }[];
+    },
+  });
+  const hasRegistration = justRegistered || (registrations ?? []).some(
+    (r) => (user && r.userId === user.id) || (user?.email && r.email === user.email)
+  );
+
+  const handleRegistered = useCallback(() => setJustRegistered(true), []);
 
   if (!seminar) {
     return (
@@ -610,7 +628,7 @@ function SeminarDetail({ id }: { id: string }) {
 
           {/* 자체 신청 폼 (비회원 포함) */}
           {computedStatus === "upcoming" && (
-            <SeminarRegistrationForm seminarId={id} seminarTitle={seminar.title} fields={seminar.registrationFields} />
+            <SeminarRegistrationForm seminarId={id} seminarTitle={seminar.title} fields={seminar.registrationFields} onSubmitted={handleRegistered} />
           )}
 
           {/* 비회원 로그인 안내 */}
@@ -640,28 +658,26 @@ function SeminarDetail({ id }: { id: string }) {
           )}
         </div>
 
-        {/* ── 섹션 6: 세미나 공간 입장 ── */}
-        {computedStatus !== "cancelled" && (
-          <div className="mt-6 rounded-2xl border bg-white p-8">
-            <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-              <BookOpen size={16} />
-              세미나 공간
-            </h2>
-            {isAttending || isStaff ? (
-              <Link href={`/seminars/${id}/lms`}>
-                <Button className="w-full gap-2">
-                  <BookOpen size={16} />
-                  세미나 공간 입장
-                </Button>
-              </Link>
-            ) : (
-              <Link href={`/seminars/${id}/lms`}>
-                <Button variant="outline" className="w-full gap-2">
-                  <BookOpen size={16} />
-                  세미나 공간 (자료실 · 후기)
-                </Button>
-              </Link>
-            )}
+        {/* ── 섹션 6: 세미나 공간 입장 (신청자/참석자/운영진만) ── */}
+        {computedStatus !== "cancelled" && (isAttending || hasRegistration || isStaff) && (
+          <div className="mt-6 rounded-2xl border border-green-200 bg-green-50/50 p-8">
+            <div className="flex items-center gap-2 mb-4">
+              <CheckCircle size={20} className="text-green-600" />
+              <span className="text-sm font-semibold text-green-800">
+                {isStaff ? "운영진 접근" : "신청 완료"}
+              </span>
+            </div>
+            <p className="text-sm text-green-700 mb-4">
+              {isStaff
+                ? "운영진으로서 세미나 공간에 접근할 수 있습니다."
+                : "세미나 참석 신청이 완료되었습니다. 세미나 공간에서 자료와 후기를 확인하세요."}
+            </p>
+            <Link href={`/seminars/${id}/lms`}>
+              <Button className="w-full gap-2">
+                <BookOpen size={16} />
+                세미나 공간 입장
+              </Button>
+            </Link>
           </div>
         )}
 
