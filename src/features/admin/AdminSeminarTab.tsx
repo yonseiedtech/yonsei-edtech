@@ -21,7 +21,8 @@ import type { Seminar, SeminarStatus, TimelinePhase } from "@/types";
 import { SEMINAR_STATUS_LABELS } from "@/types";
 import { getComputedStatus } from "@/lib/seminar-utils";
 import { toast } from "sonner";
-import { Pencil, Image as ImageIcon, Video, AlertTriangle } from "lucide-react";
+import Link from "next/link";
+import { Pencil, BookOpen, Image as ImageIcon, Video, AlertTriangle } from "lucide-react";
 
 const STATUS_COLORS: Record<SeminarStatus, string> = {
   upcoming: "bg-blue-50 text-blue-700",
@@ -129,13 +130,14 @@ export default function AdminSeminarTab() {
   return (
     <div className="space-y-0 rounded-xl border bg-white">
       {/* 테이블 헤더 */}
-      <div className="grid grid-cols-[48px_1fr_120px_140px_80px_80px_80px] items-center gap-1 border-b bg-muted/30 px-4 py-3 text-sm font-medium">
+      <div className="grid grid-cols-[48px_1fr_120px_140px_80px_80px_80px_80px] items-center gap-1 border-b bg-muted/30 px-4 py-3 text-sm font-medium">
         <span>포스터</span>
         <span>제목</span>
         <span>발표자</span>
         <span>일시</span>
         <span>참석자</span>
         <span>상태</span>
+        <span>공간</span>
         <span>관리</span>
       </div>
 
@@ -143,7 +145,7 @@ export default function AdminSeminarTab() {
       {seminars.map((s) => {
         const computed = getComputedStatus(s);
         return (
-          <div key={s.id} className="grid grid-cols-[48px_1fr_120px_140px_80px_80px_80px] items-center gap-1 border-b px-4 py-3 text-sm">
+          <div key={s.id} className="grid grid-cols-[48px_1fr_120px_140px_80px_80px_80px_80px] items-center gap-1 border-b px-4 py-3 text-sm">
             {/* 포스터 썸네일 */}
             <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded border bg-muted/20">
               {s.posterUrl ? (
@@ -180,6 +182,12 @@ export default function AdminSeminarTab() {
             <Badge variant="secondary" className={STATUS_COLORS[computed]}>
               {SEMINAR_STATUS_LABELS[computed]}
             </Badge>
+            <Link href={`/seminars/${s.id}/lms`}>
+              <Button variant="outline" size="sm" className="gap-1 text-xs">
+                <BookOpen size={14} />
+                입장
+              </Button>
+            </Link>
             <Button variant="outline" size="sm" onClick={() => openEditSeminar(s)}>
               <Pencil size={14} />
             </Button>
