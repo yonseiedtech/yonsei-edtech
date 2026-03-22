@@ -268,7 +268,7 @@ function CertificatePreview({
             />
 
             {/* 학회명 + 영문명 (동일 고정 너비) */}
-            <div style={{ lineHeight: 1.2, width: "200px" }}>
+            <div style={{ lineHeight: 1.2, width: "260px" }}>
               <p
                 style={{
                   fontSize: "18pt",
