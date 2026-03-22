@@ -319,6 +319,8 @@ export const registrationsApi = {
     }),
   create: (data: Record<string, unknown>) =>
     dataApi.create("seminar_registrations", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update("seminar_registrations", id, data),
   delete: (id: string) => dataApi.delete("seminar_registrations", id),
 };
 

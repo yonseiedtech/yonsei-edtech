@@ -131,12 +131,32 @@ export interface Seminar {
   onlineUrl?: string;
   registrationUrl?: string;
   timeline?: TimelinePhase[];
+  registrationFields?: RegistrationFieldConfig[];
   cancelReason?: string;
   status: "upcoming" | "ongoing" | "completed" | "cancelled";
   createdBy: string;
   createdAt: string;
   updatedAt: string;
 }
+
+// ── 신청 폼 필드 설정 ──
+export interface RegistrationFieldConfig {
+  key: string;
+  label: string;
+  type: "text" | "email" | "tel" | "textarea" | "select";
+  required: boolean;
+  enabled: boolean;
+  placeholder?: string;
+  options?: string[];
+}
+
+export const DEFAULT_REGISTRATION_FIELDS: RegistrationFieldConfig[] = [
+  { key: "name", label: "이름", type: "text", required: true, enabled: true, placeholder: "홍길동" },
+  { key: "email", label: "이메일", type: "email", required: true, enabled: true, placeholder: "email@example.com" },
+  { key: "affiliation", label: "소속", type: "text", required: false, enabled: true, placeholder: "연세대학교 교육학과" },
+  { key: "phone", label: "연락처", type: "tel", required: false, enabled: true, placeholder: "010-1234-5678" },
+  { key: "memo", label: "메모", type: "textarea", required: false, enabled: true, placeholder: "질문이나 요청 사항이 있으면 적어주세요." },
+];
 
 // ── 세미나 운영 타임라인 ──
 export interface TimelinePhase {

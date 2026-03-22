@@ -6,7 +6,16 @@ import { registrationsApi } from "@/lib/bkend";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Download, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import type { SeminarRegistration } from "@/types";
 
@@ -33,10 +42,20 @@ function exportRegistrationsCSV(seminarTitle: string, regs: SeminarRegistration[
   URL.revokeObjectURL(url);
 }
 
+interface EditForm {
+  id: string;
+  name: string;
+  email: string;
+  affiliation: string;
+  phone: string;
+  memo: string;
+}
+
 export default function RegistrationsTab() {
   const { seminars } = useSeminars();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const seminar = seminars.find((s) => s.id === selectedId);
+  const [editForm, setEditForm] = useState<EditForm | null>(null);
 
   const { data, refetch } = useQuery({
     queryKey: ["registrations", selectedId],
@@ -58,6 +77,35 @@ export default function RegistrationsTab() {
       refetch();
     } catch {
       toast.error("삭제에 실패했습니다.");
+    }
+  }
+
+  function openEdit(reg: SeminarRegistration) {
+    setEditForm({
+      id: reg.id,
+      name: reg.name,
+      email: reg.email,
+      affiliation: reg.affiliation ?? "",
+      phone: reg.phone ?? "",
+      memo: reg.memo ?? "",
+    });
+  }
+
+  async function handleSaveEdit() {
+    if (!editForm) return;
+    try {
+      await registrationsApi.update(editForm.id, {
+        name: editForm.name,
+        email: editForm.email,
+        affiliation: editForm.affiliation || undefined,
+        phone: editForm.phone || undefined,
+        memo: editForm.memo || undefined,
+      });
+      toast.success("신청 정보가 수정되었습니다.");
+      setEditForm(null);
+      refetch();
+    } catch {
+      toast.error("수정에 실패했습니다.");
     }
   }
 
@@ -114,7 +162,7 @@ export default function RegistrationsTab() {
                     <th className="px-3 py-2 text-left font-medium">연락처</th>
                     <th className="px-3 py-2 text-left font-medium">메모</th>
                     <th className="px-3 py-2 text-left font-medium">신청일</th>
-                    <th className="px-3 py-2 text-left font-medium">삭제</th>
+                    <th className="px-3 py-2 text-left font-medium">관리</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -136,14 +184,23 @@ export default function RegistrationsTab() {
                         {r.createdAt ? new Date(r.createdAt).toLocaleDateString("ko-KR") : "-"}
                       </td>
                       <td className="px-3 py-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-destructive"
-                          onClick={() => handleDelete(r.id)}
-                        >
-                          <Trash2 size={12} />
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEdit(r)}
+                          >
+                            <Pencil size={12} />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-destructive"
+                            onClick={() => handleDelete(r.id)}
+                          >
+                            <Trash2 size={12} />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -153,6 +210,45 @@ export default function RegistrationsTab() {
           )}
         </div>
       )}
+
+      {/* 신청 수정 Dialog */}
+      <Dialog open={!!editForm} onOpenChange={(open) => !open && setEditForm(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>신청 정보 수정</DialogTitle>
+          </DialogHeader>
+          {editForm && (
+            <div className="grid gap-3">
+              <div>
+                <label className="mb-1 block text-sm font-medium">이름</label>
+                <Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">이메일</label>
+                <Input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-sm font-medium">소속</label>
+                  <Input value={editForm.affiliation} onChange={(e) => setEditForm({ ...editForm, affiliation: e.target.value })} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">연락처</label>
+                  <Input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} />
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">메모</label>
+                <Textarea value={editForm.memo} onChange={(e) => setEditForm({ ...editForm, memo: e.target.value })} rows={3} />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditForm(null)}>취소</Button>
+            <Button onClick={handleSaveEdit}>저장</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

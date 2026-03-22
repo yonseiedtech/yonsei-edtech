@@ -43,12 +43,18 @@ import {
   Clock,
   Pencil,
   UserCircle,
+  Settings,
+  Plus,
+  Trash2,
+  GripVertical,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getComputedStatus } from "@/lib/seminar-utils";
-import { SEMINAR_STATUS_LABELS, SPEAKER_TYPE_LABELS } from "@/types";
-import type { Seminar, SeminarStatus, SpeakerType } from "@/types";
+import { SEMINAR_STATUS_LABELS, SPEAKER_TYPE_LABELS, DEFAULT_REGISTRATION_FIELDS } from "@/types";
+import type { Seminar, SeminarStatus, SpeakerType, RegistrationFieldConfig } from "@/types";
 
 type ContentFormat = "press" | "sns" | "email";
 
@@ -95,7 +101,7 @@ ${seminar.description}
 }
 
 /* ── 편집 Dialog 타입 ── */
-type EditSection = "info" | "speaker" | "description" | null;
+type EditSection = "info" | "speaker" | "description" | "registration-fields" | null;
 
 interface InfoFormData {
   title: string;
@@ -140,6 +146,7 @@ function SeminarDetail({ id }: { id: string }) {
     speakerPosition: "", speakerPhotoUrl: "", speakerType: "member",
   });
   const [descForm, setDescForm] = useState("");
+  const [regFieldsForm, setRegFieldsForm] = useState<RegistrationFieldConfig[]>([]);
 
   const isStaff = isAtLeast(user, "staff");
   const myAttendee = useAttendee(id, user?.id ?? "");
@@ -193,6 +200,13 @@ function SeminarDetail({ id }: { id: string }) {
     setEditSection("description");
   }
 
+  function openEditRegFields() {
+    setRegFieldsForm(
+      JSON.parse(JSON.stringify(seminar!.registrationFields ?? DEFAULT_REGISTRATION_FIELDS))
+    );
+    setEditSection("registration-fields");
+  }
+
   async function handleSaveEdit() {
     try {
       if (editSection === "info") {
@@ -222,6 +236,8 @@ function SeminarDetail({ id }: { id: string }) {
         });
       } else if (editSection === "description") {
         await updateSeminar({ id: seminar!.id, data: { description: descForm } });
+      } else if (editSection === "registration-fields") {
+        await updateSeminar({ id: seminar!.id, data: { registrationFields: regFieldsForm } });
       }
       toast.success("수정되었습니다.");
       setEditSection(null);
@@ -500,10 +516,22 @@ function SeminarDetail({ id }: { id: string }) {
 
         {/* ── 섹션 5: 참석 신청 ── */}
         <div className="mt-6 rounded-2xl border bg-white p-8">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-            <UserPlus size={16} />
-            참석 신청
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+              <UserPlus size={16} />
+              참석 신청
+            </h2>
+            {isStaff && (
+              <button
+                onClick={openEditRegFields}
+                className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                title="신청 폼 설정"
+              >
+                <Settings size={14} />
+                폼 설정
+              </button>
+            )}
+          </div>
 
           {/* 외부 신청 버튼 */}
           {seminar.registrationUrl && computedStatus === "upcoming" && (
@@ -551,7 +579,7 @@ function SeminarDetail({ id }: { id: string }) {
 
           {/* 자체 신청 폼 (비회원 포함) */}
           {computedStatus === "upcoming" && (
-            <SeminarRegistrationForm seminarId={id} seminarTitle={seminar.title} />
+            <SeminarRegistrationForm seminarId={id} seminarTitle={seminar.title} fields={seminar.registrationFields} />
           )}
 
           {/* 비회원 로그인 안내 */}
@@ -666,12 +694,13 @@ function SeminarDetail({ id }: { id: string }) {
 
         {/* ── 편집 Dialog ── */}
         <Dialog open={editSection !== null} onOpenChange={(open) => !open && setEditSection(null)}>
-          <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-lg">
+          <DialogContent className={cn("max-h-[80vh] overflow-y-auto", editSection === "registration-fields" ? "sm:max-w-2xl" : "sm:max-w-lg")}>
             <DialogHeader>
               <DialogTitle>
                 {editSection === "info" && "기본 정보 편집"}
                 {editSection === "speaker" && "연사 정보 편집"}
                 {editSection === "description" && "세미나 소개 편집"}
+                {editSection === "registration-fields" && "신청 폼 필드 설정"}
               </DialogTitle>
             </DialogHeader>
 
@@ -771,6 +800,128 @@ function SeminarDetail({ id }: { id: string }) {
                 rows={10}
                 placeholder="세미나 소개 내용"
               />
+            )}
+
+            {editSection === "registration-fields" && (
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  필드를 활성화/비활성화하고, 라벨·필수 여부를 수정하세요. 커스텀 필드를 추가할 수도 있습니다.
+                </p>
+                {regFieldsForm.map((field, idx) => (
+                  <div key={field.key} className="flex items-start gap-2 rounded-lg border p-3">
+                    <div className="mt-1 text-muted-foreground">
+                      <GripVertical size={14} />
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = [...regFieldsForm];
+                            updated[idx] = { ...updated[idx], enabled: !updated[idx].enabled };
+                            setRegFieldsForm(updated);
+                          }}
+                          className={cn(
+                            "rounded p-1 transition-colors",
+                            field.enabled ? "text-primary hover:bg-primary/10" : "text-muted-foreground hover:bg-muted"
+                          )}
+                          title={field.enabled ? "비활성화" : "활성화"}
+                        >
+                          {field.enabled ? <Eye size={14} /> : <EyeOff size={14} />}
+                        </button>
+                        <Input
+                          value={field.label}
+                          onChange={(e) => {
+                            const updated = [...regFieldsForm];
+                            updated[idx] = { ...updated[idx], label: e.target.value };
+                            setRegFieldsForm(updated);
+                          }}
+                          className="h-8 text-sm"
+                          placeholder="필드 라벨"
+                        />
+                        <label className="flex shrink-0 items-center gap-1 text-xs">
+                          <input
+                            type="checkbox"
+                            checked={field.required}
+                            onChange={(e) => {
+                              const updated = [...regFieldsForm];
+                              updated[idx] = { ...updated[idx], required: e.target.checked };
+                              setRegFieldsForm(updated);
+                            }}
+                            className="h-3.5 w-3.5 rounded border-gray-300"
+                          />
+                          필수
+                        </label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={field.type}
+                          onChange={(e) => {
+                            const updated = [...regFieldsForm];
+                            updated[idx] = { ...updated[idx], type: e.target.value as RegistrationFieldConfig["type"] };
+                            setRegFieldsForm(updated);
+                          }}
+                          className="h-7 rounded border border-input bg-transparent px-2 text-xs"
+                        >
+                          <option value="text">텍스트</option>
+                          <option value="email">이메일</option>
+                          <option value="tel">전화번호</option>
+                          <option value="textarea">장문</option>
+                          <option value="select">선택</option>
+                        </select>
+                        <Input
+                          value={field.placeholder ?? ""}
+                          onChange={(e) => {
+                            const updated = [...regFieldsForm];
+                            updated[idx] = { ...updated[idx], placeholder: e.target.value };
+                            setRegFieldsForm(updated);
+                          }}
+                          className="h-7 text-xs"
+                          placeholder="placeholder"
+                        />
+                        {!["name", "email"].includes(field.key) && (
+                          <button
+                            type="button"
+                            onClick={() => setRegFieldsForm(regFieldsForm.filter((_, i) => i !== idx))}
+                            className="rounded p-1 text-destructive hover:bg-destructive/10 transition-colors"
+                            title="필드 삭제"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        )}
+                      </div>
+                      {field.type === "select" && (
+                        <Input
+                          value={(field.options ?? []).join(", ")}
+                          onChange={(e) => {
+                            const updated = [...regFieldsForm];
+                            updated[idx] = { ...updated[idx], options: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) };
+                            setRegFieldsForm(updated);
+                          }}
+                          className="h-7 text-xs"
+                          placeholder="옵션 (쉼표로 구분): 옵션1, 옵션2, 옵션3"
+                        />
+                      )}
+                    </div>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => {
+                    const key = `custom_${Date.now()}`;
+                    setRegFieldsForm([
+                      ...regFieldsForm,
+                      { key, label: "새 필드", type: "text", required: false, enabled: true, placeholder: "" },
+                    ]);
+                  }}
+                >
+                  <Plus size={14} className="mr-1" />
+                  커스텀 필드 추가
+                </Button>
+              </div>
             )}
 
             <DialogFooter>

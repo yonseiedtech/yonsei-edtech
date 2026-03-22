@@ -9,48 +9,42 @@ import { registrationsApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { CheckCircle, Send } from "lucide-react";
 import { toast } from "sonner";
-
-interface FormData {
-  name: string;
-  email: string;
-  affiliation: string;
-  phone: string;
-  memo: string;
-}
+import { DEFAULT_REGISTRATION_FIELDS } from "@/types";
+import type { RegistrationFieldConfig } from "@/types";
 
 interface Props {
   seminarId: string;
   seminarTitle: string;
+  fields?: RegistrationFieldConfig[];
 }
 
-export default function SeminarRegistrationForm({ seminarId, seminarTitle }: Props) {
+export default function SeminarRegistrationForm({ seminarId, seminarTitle, fields }: Props) {
   const { user } = useAuthStore();
   const [submitted, setSubmitted] = useState(false);
+
+  const activeFields = (fields ?? DEFAULT_REGISTRATION_FIELDS).filter((f) => f.enabled);
+
+  const defaults: Record<string, string> = {};
+  for (const f of activeFields) {
+    if (f.key === "name") defaults[f.key] = user?.name ?? "";
+    else if (f.key === "email") defaults[f.key] = user?.email ?? "";
+    else defaults[f.key] = "";
+  }
+
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({
-    defaultValues: {
-      name: user?.name ?? "",
-      email: user?.email ?? "",
-      affiliation: "",
-      phone: "",
-      memo: "",
-    },
-  });
+  } = useForm<Record<string, string>>({ defaultValues: defaults });
 
-  async function onSubmit(data: FormData) {
+  async function onSubmit(data: Record<string, string>) {
     try {
-      await registrationsApi.create({
-        seminarId,
-        name: data.name,
-        email: data.email,
-        affiliation: data.affiliation || undefined,
-        phone: data.phone || undefined,
-        memo: data.memo || undefined,
-        userId: user?.id ?? undefined,
-      });
+      const payload: Record<string, unknown> = { seminarId, userId: user?.id ?? undefined };
+      for (const f of activeFields) {
+        const val = data[f.key]?.trim();
+        if (val) payload[f.key] = val;
+      }
+      await registrationsApi.create(payload);
       setSubmitted(true);
       toast.success("신청이 완료되었습니다.");
     } catch {
@@ -81,54 +75,54 @@ export default function SeminarRegistrationForm({ seminarId, seminarTitle }: Pro
       </p>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="mb-1.5 block text-sm font-medium">이름 *</label>
-          <Input
-            {...register("name", { required: "이름을 입력하세요" })}
-            placeholder="홍길동"
-          />
-          {errors.name && (
-            <p className="mt-1 text-xs text-destructive">{errors.name.message}</p>
-          )}
-        </div>
-        <div>
-          <label className="mb-1.5 block text-sm font-medium">이메일 *</label>
-          <Input
-            type="email"
-            {...register("email", { required: "이메일을 입력하세요" })}
-            placeholder="email@example.com"
-          />
-          {errors.email && (
-            <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>
-          )}
-        </div>
+        {activeFields.map((field) => {
+          if (field.type === "textarea") return null;
+          return (
+            <div key={field.key}>
+              <label className="mb-1.5 block text-sm font-medium">
+                {field.label} {field.required ? "*" : <span className="text-muted-foreground">(선택)</span>}
+              </label>
+              {field.type === "select" && field.options ? (
+                <select
+                  {...register(field.key, field.required ? { required: `${field.label}을(를) 선택하세요` } : undefined)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="">-- 선택 --</option>
+                  {field.options.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              ) : (
+                <Input
+                  type={field.type}
+                  {...register(field.key, field.required ? { required: `${field.label}을(를) 입력하세요` } : undefined)}
+                  placeholder={field.placeholder}
+                />
+              )}
+              {errors[field.key] && (
+                <p className="mt-1 text-xs text-destructive">{errors[field.key]?.message as string}</p>
+              )}
+            </div>
+          );
+        })}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
+      {/* Textarea fields rendered full-width */}
+      {activeFields.filter((f) => f.type === "textarea").map((field) => (
+        <div key={field.key}>
           <label className="mb-1.5 block text-sm font-medium">
-            소속 <span className="text-muted-foreground">(선택)</span>
+            {field.label} {field.required ? "*" : <span className="text-muted-foreground">(선택)</span>}
           </label>
-          <Input {...register("affiliation")} placeholder="연세대학교 교육학과" />
+          <Textarea
+            {...register(field.key, field.required ? { required: `${field.label}을(를) 입력하세요` } : undefined)}
+            placeholder={field.placeholder}
+            rows={3}
+          />
+          {errors[field.key] && (
+            <p className="mt-1 text-xs text-destructive">{errors[field.key]?.message as string}</p>
+          )}
         </div>
-        <div>
-          <label className="mb-1.5 block text-sm font-medium">
-            연락처 <span className="text-muted-foreground">(선택)</span>
-          </label>
-          <Input {...register("phone")} placeholder="010-1234-5678" />
-        </div>
-      </div>
-
-      <div>
-        <label className="mb-1.5 block text-sm font-medium">
-          메모 <span className="text-muted-foreground">(선택)</span>
-        </label>
-        <Textarea
-          {...register("memo")}
-          placeholder="질문이나 요청 사항이 있으면 적어주세요."
-          rows={3}
-        />
-      </div>
+      ))}
 
       <div className="flex justify-end">
         <Button type="submit" disabled={isSubmitting}>
