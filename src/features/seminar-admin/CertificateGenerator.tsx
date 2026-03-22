@@ -257,7 +257,7 @@ function CertificatePreview({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: "16px",
+              gap: "20px",
             }}
           >
             {/* 학회 엠블럼 */}
