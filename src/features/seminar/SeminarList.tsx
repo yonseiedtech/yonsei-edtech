@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Seminar, SeminarStatus } from "@/types";
 import { SEMINAR_STATUS_LABELS } from "@/types";
@@ -38,10 +37,10 @@ export default function SeminarList({ seminars }: Props) {
         const computed = getComputedStatus(seminar);
         const badge = { label: SEMINAR_STATUS_LABELS[computed], className: STATUS_STYLES[computed] };
         return (
-          <Link
+          <div
             key={seminar.id}
-            href={`/seminars/${seminar.id}`}
-            className="rounded-xl border bg-white p-6 transition-colors hover:bg-muted/30"
+            className="cursor-pointer rounded-xl border bg-white p-6 transition-colors hover:bg-muted/30"
+            onClick={() => router.push(`/seminars/${seminar.id}`)}
           >
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
@@ -81,7 +80,7 @@ export default function SeminarList({ seminars }: Props) {
                   size="sm"
                   className="gap-1 text-xs"
                   onClick={(e) => {
-                    e.preventDefault();
+                    e.stopPropagation();
                     router.push(`/seminars/${seminar.id}/lms`);
                   }}
                 >
@@ -90,7 +89,7 @@ export default function SeminarList({ seminars }: Props) {
                 </Button>
               )}
             </div>
-          </Link>
+          </div>
         );
       })}
     </div>
