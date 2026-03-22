@@ -5,18 +5,10 @@ import Image from "next/image";
 import {
   useSeminars,
   useUpdateSeminar,
-  useCreateSession,
-  useUpdateSession,
-  useDeleteSession,
 } from "@/features/seminar/useSeminar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -25,11 +17,11 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { formatDate } from "@/lib/utils";
-import type { Seminar, SeminarSession, SeminarStatus, TimelinePhase } from "@/types";
+import type { Seminar, SeminarStatus, TimelinePhase } from "@/types";
 import { SEMINAR_STATUS_LABELS } from "@/types";
 import { getComputedStatus } from "@/lib/seminar-utils";
 import { toast } from "sonner";
-import { ChevronDown, Pencil, Plus, Trash2, Image as ImageIcon, Video, AlertTriangle } from "lucide-react";
+import { Pencil, Image as ImageIcon, Video, AlertTriangle } from "lucide-react";
 
 const STATUS_COLORS: Record<SeminarStatus, string> = {
   upcoming: "bg-blue-50 text-blue-700",
@@ -53,26 +45,10 @@ type EditSeminar = {
   maxAttendees: string;
 };
 
-type EditSession = {
-  seminarId: string;
-  sessionId?: string;
-  title: string;
-  speaker: string;
-  speakerBio: string;
-  time: string;
-  duration: string;
-  order: string;
-};
-
 export default function AdminSeminarTab() {
   const { seminars } = useSeminars();
   const { updateSeminar } = useUpdateSeminar();
-  const { createSession } = useCreateSession();
-  const { updateSession } = useUpdateSession();
-  const { deleteSession } = useDeleteSession();
-  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editSeminar, setEditSeminar] = useState<EditSeminar | null>(null);
-  const [editSession, setEditSession] = useState<EditSession | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const [showCancelInput, setShowCancelInput] = useState(false);
 
@@ -150,63 +126,6 @@ export default function AdminSeminarTab() {
     setEditSeminar(null);
   }
 
-  function openAddSession(seminarId: string) {
-    setEditSession({
-      seminarId,
-      title: "",
-      speaker: "",
-      speakerBio: "",
-      time: "",
-      duration: "30",
-      order: "1",
-    });
-  }
-
-  function openEditSession(seminarId: string, sess: SeminarSession) {
-    setEditSession({
-      seminarId,
-      sessionId: sess.id,
-      title: sess.title,
-      speaker: sess.speaker,
-      speakerBio: sess.speakerBio ?? "",
-      time: sess.time,
-      duration: sess.duration.toString(),
-      order: sess.order.toString(),
-    });
-  }
-
-  function handleSaveSession() {
-    if (!editSession) return;
-    const sessionData = {
-      title: editSession.title,
-      speaker: editSession.speaker,
-      speakerBio: editSession.speakerBio || undefined,
-      time: editSession.time,
-      duration: parseInt(editSession.duration) || 30,
-      order: parseInt(editSession.order) || 1,
-    };
-    if (editSession.sessionId) {
-      updateSession({
-        seminarId: editSession.seminarId,
-        sessionId: editSession.sessionId,
-        data: sessionData,
-      });
-      toast.success("세션이 수정되었습니다.");
-    } else {
-      createSession({
-        seminarId: editSession.seminarId,
-        data: sessionData as Omit<import("@/types").SeminarSession, "id" | "seminarId">,
-      });
-      toast.success("세션이 추가되었습니다.");
-    }
-    setEditSession(null);
-  }
-
-  function handleDeleteSession(seminarId: string, sessionId: string) {
-    deleteSession({ seminarId, sessionId });
-    toast.success("세션이 삭제되었습니다.");
-  }
-
   return (
     <div className="space-y-0 rounded-xl border bg-white">
       {/* 테이블 헤더 */}
@@ -224,12 +143,7 @@ export default function AdminSeminarTab() {
       {seminars.map((s) => {
         const computed = getComputedStatus(s);
         return (
-        <Collapsible
-          key={s.id}
-          open={expandedId === s.id}
-          onOpenChange={(open) => setExpandedId(open ? s.id : null)}
-        >
-          <div className="grid grid-cols-[48px_1fr_120px_140px_80px_80px_80px] items-center gap-1 border-b px-4 py-3 text-sm">
+          <div key={s.id} className="grid grid-cols-[48px_1fr_120px_140px_80px_80px_80px] items-center gap-1 border-b px-4 py-3 text-sm">
             {/* 포스터 썸네일 */}
             <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded border bg-muted/20">
               {s.posterUrl ? (
@@ -245,19 +159,15 @@ export default function AdminSeminarTab() {
               )}
             </div>
 
-            {/* 제목 + 확장 토글 */}
-            <CollapsibleTrigger className="flex items-center gap-1.5 text-left font-medium hover:text-primary">
-              <ChevronDown
-                size={14}
-                className={`shrink-0 transition-transform ${expandedId === s.id ? "rotate-180" : ""}`}
-              />
+            {/* 제목 */}
+            <div className="flex items-center gap-1.5 text-left font-medium">
               <span className="truncate">{s.title}</span>
               {(s.sessions?.length ?? 0) > 0 && (
                 <Badge variant="secondary" className="ml-1 text-xs">
                   {s.sessions!.length}세션
                 </Badge>
               )}
-            </CollapsibleTrigger>
+            </div>
 
             <span className="truncate text-muted-foreground">{s.speaker}</span>
             <span className="text-muted-foreground">
@@ -274,66 +184,6 @@ export default function AdminSeminarTab() {
               <Pencil size={14} />
             </Button>
           </div>
-
-          {/* 세션 목록 (확장) */}
-          <CollapsibleContent>
-            <div className="border-b bg-muted/10 px-6 py-4">
-              <div className="mb-3 flex items-center justify-between">
-                <h4 className="text-sm font-medium">세부 세션</h4>
-                <Button size="sm" variant="outline" onClick={() => openAddSession(s.id)}>
-                  <Plus size={14} className="mr-1" />
-                  세션 추가
-                </Button>
-              </div>
-              {(s.sessions?.length ?? 0) === 0 ? (
-                <p className="text-sm text-muted-foreground">등록된 세션이 없습니다.</p>
-              ) : (
-                <div className="space-y-2">
-                  {s.sessions!
-                    .sort((a, b) => a.order - b.order)
-                    .map((sess) => (
-                      <div
-                        key={sess.id}
-                        className="flex items-center justify-between rounded-lg border bg-white px-4 py-2.5 text-sm"
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
-                            {sess.order}
-                          </span>
-                          <div>
-                            <p className="font-medium">{sess.title}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {sess.speaker}
-                              {sess.speakerBio && ` · ${sess.speakerBio}`}
-                              {" · "}
-                              {sess.time} ({sess.duration}분)
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openEditSession(s.id, sess)}
-                          >
-                            <Pencil size={12} />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-destructive"
-                            onClick={() => handleDeleteSession(s.id, sess.id)}
-                          >
-                            <Trash2 size={12} />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              )}
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
         );
       })}
 
@@ -550,93 +400,6 @@ export default function AdminSeminarTab() {
         </DialogContent>
       </Dialog>
 
-      {/* 세션 추가/수정 Dialog */}
-      <Dialog
-        open={!!editSession}
-        onOpenChange={(open) => !open && setEditSession(null)}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {editSession?.sessionId ? "세션 수정" : "세션 추가"}
-            </DialogTitle>
-          </DialogHeader>
-          {editSession && (
-            <div className="grid gap-3">
-              <div>
-                <label className="mb-1 block text-sm font-medium">세션 제목</label>
-                <Input
-                  value={editSession.title}
-                  onChange={(e) =>
-                    setEditSession({ ...editSession, title: e.target.value })
-                  }
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-1 block text-sm font-medium">발표자</label>
-                  <Input
-                    value={editSession.speaker}
-                    onChange={(e) =>
-                      setEditSession({ ...editSession, speaker: e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium">발표자 소개</label>
-                  <Input
-                    value={editSession.speakerBio}
-                    onChange={(e) =>
-                      setEditSession({
-                        ...editSession,
-                        speakerBio: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="mb-1 block text-sm font-medium">시간</label>
-                  <Input
-                    type="time"
-                    value={editSession.time}
-                    onChange={(e) =>
-                      setEditSession({ ...editSession, time: e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium">길이(분)</label>
-                  <Input
-                    type="number"
-                    value={editSession.duration}
-                    onChange={(e) =>
-                      setEditSession({ ...editSession, duration: e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium">순서</label>
-                  <Input
-                    type="number"
-                    value={editSession.order}
-                    onChange={(e) =>
-                      setEditSession({ ...editSession, order: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditSession(null)}>
-              취소
-            </Button>
-            <Button onClick={handleSaveSession}>저장</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
