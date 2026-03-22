@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { isPresidentOrAbove } from "@/lib/permissions";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -11,7 +10,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (user) {
-      router.replace(isPresidentOrAbove(user) ? "/admin/members" : "/admin/posts");
+      router.replace("/admin/members");
     }
   }, [user, router]);
 

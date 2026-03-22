@@ -12,16 +12,17 @@ import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import {
   Shield, Users, FileText, MessageSquare,
-  Clock, HelpCircle, Newspaper, Settings, Bot,
+  Clock, HelpCircle, Newspaper, Settings, Bot, Award,
 } from "lucide-react";
 
 const ADMIN_TABS = [
-  { href: "/admin/members", label: "회원", icon: Users, presidentOnly: true },
+  { href: "/admin/members", label: "회원", icon: Users },
   { href: "/admin/posts", label: "게시글", icon: FileText },
-{ href: "/admin/inquiries", label: "문의", icon: MessageSquare },
+  { href: "/admin/inquiries", label: "문의", icon: MessageSquare },
   { href: "/admin/newsletter", label: "학회보", icon: Newspaper },
+  { href: "/admin/certificates", label: "수료증/감사장", icon: Award },
   { href: "/admin/agents", label: "에이전트", icon: Bot },
-  { href: "/admin/settings", label: "사이트 설정", icon: Settings },
+  { href: "/admin/settings", label: "사이트 설정", icon: Settings, presidentOnly: true },
 ];
 
 function StatCard({ icon: Icon, label, value, color }: {
@@ -48,7 +49,7 @@ function StatCard({ icon: Icon, label, value, color }: {
 function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user } = useAuthStore();
-  const canManageMembers = isPresidentOrAbove(user);
+  const isPresident = isPresidentOrAbove(user);
   const { inquiries } = useInquiries();
   const { posts } = usePosts("all");
   const unansweredCount = inquiries.filter((i) => i.status === "pending").length;
@@ -65,7 +66,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   });
 
   const visibleTabs = ADMIN_TABS.filter(
-    (tab) => !tab.presidentOnly || canManageMembers,
+    (tab) => !tab.presidentOnly || isPresident,
   );
 
   return (
