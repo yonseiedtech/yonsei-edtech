@@ -8,7 +8,7 @@ import type { Seminar, SeminarSession, SeminarAttendee, User } from "@/types";
 // ── List ──
 
 export function useSeminars(status?: Seminar["status"]) {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["seminars", status],
     queryFn: async () => {
       const res = await seminarsApi.list({ status, limit: 100 });
@@ -17,7 +17,7 @@ export function useSeminars(status?: Seminar["status"]) {
     retry: false,
   });
 
-  return { seminars: data ?? [], isLoading };
+  return { seminars: data ?? [], isLoading, error };
 }
 
 // ── Detail ──

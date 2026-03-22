@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/auth-store";
 import CommentList from "@/features/board/CommentList";
 import CommentForm from "@/features/board/CommentForm";
-import { usePost, useComments, useDeletePost, useDeleteComment } from "@/features/board/useBoard";
+import { usePost, useComments, useDeletePost, useDeleteComment, useUpdateComment } from "@/features/board/useBoard";
 import { CATEGORY_LABELS } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,7 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const { comments } = useComments(id);
   const { deletePost } = useDeletePost();
   const { deleteComment } = useDeleteComment();
+  const { updateComment } = useUpdateComment();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   if (!post) {
@@ -61,6 +62,11 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
   async function handleDeleteComment(commentId: string) {
     await deleteComment({ commentId, postId: id });
     toast.success("댓글이 삭제되었습니다.");
+  }
+
+  async function handleUpdateComment(commentId: string, content: string) {
+    await updateComment({ commentId, postId: id, data: { content } });
+    toast.success("댓글이 수정되었습니다.");
   }
 
   return (
@@ -123,6 +129,7 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
               currentUserId={user?.id}
               isAdmin={isAdmin}
               onDelete={handleDeleteComment}
+              onUpdate={handleUpdateComment}
             />
           </div>
 

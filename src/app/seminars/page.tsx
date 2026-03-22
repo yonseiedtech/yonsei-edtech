@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import SeminarList from "@/features/seminar/SeminarList";
 import SeminarStatusTabs from "@/features/seminar/SeminarStatusTabs";
@@ -9,22 +9,45 @@ import { useAuthStore } from "@/features/auth/auth-store";
 import { isStaffOrAbove } from "@/lib/permissions";
 import { getComputedStatus } from "@/lib/seminar-utils";
 import { Button } from "@/components/ui/button";
-import { Plus, Calendar } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Plus, Calendar, Search, AlertCircle } from "lucide-react";
 import type { SeminarStatus } from "@/types";
 
 type StatusFilter = SeminarStatus | "all";
 
 export default function SeminarsPage() {
   const [status, setStatus] = useState<StatusFilter>("all");
+  const [search, setSearch] = useState("");
   const { user } = useAuthStore();
-  const { seminars: allSeminars } = useSeminars();
+  const { seminars: allSeminars, isLoading, error } = useSeminars();
 
-  const filtered =
-    status === "all"
-      ? allSeminars
-      : allSeminars.filter((s) => getComputedStatus(s) === status);
+  const filtered = useMemo(() => {
+    let result = allSeminars;
 
-  const sorted = [...filtered].sort((a, b) => b.date.localeCompare(a.date));
+    // Status filter
+    if (status !== "all") {
+      result = result.filter((s) => getComputedStatus(s) === status);
+    }
+
+    // Search filter (title, speaker)
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (s) =>
+          s.title.toLowerCase().includes(q) ||
+          s.speaker.toLowerCase().includes(q) ||
+          s.location?.toLowerCase().includes(q)
+      );
+    }
+
+    return result;
+  }, [allSeminars, status, search]);
+
+  const sorted = useMemo(
+    () => [...filtered].sort((a, b) => b.date.localeCompare(a.date)),
+    [filtered]
+  );
 
   return (
     <div className="py-16">
@@ -44,12 +67,55 @@ export default function SeminarsPage() {
           )}
         </div>
 
-        <div className="mt-6">
+        {/* Search */}
+        <div className="mt-4 relative">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="제목, 발표자, 장소 검색..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 w-full max-w-sm"
+          />
+        </div>
+
+        <div className="mt-4">
           <SeminarStatusTabs active={status} onChange={setStatus} />
         </div>
 
         <div className="mt-6">
-          <SeminarList seminars={sorted} />
+          {isLoading ? (
+            <div className="grid gap-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="rounded-xl border bg-white p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-5 w-12 rounded-full" />
+                        <Skeleton className="h-6 w-64" />
+                      </div>
+                      <Skeleton className="mt-2 h-4 w-full" />
+                      <Skeleton className="mt-1 h-4 w-3/4" />
+                      <div className="mt-3 flex gap-4">
+                        <Skeleton className="h-4 w-28" />
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-4 w-16" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : error ? (
+            <div className="rounded-xl border bg-white p-12 text-center">
+              <AlertCircle size={32} className="mx-auto text-destructive/50" />
+              <p className="mt-2 text-muted-foreground">세미나를 불러오는 중 오류가 발생했습니다.</p>
+              <Button variant="outline" size="sm" className="mt-4" onClick={() => window.location.reload()}>
+                다시 시도
+              </Button>
+            </div>
+          ) : (
+            <SeminarList seminars={sorted} />
+          )}
         </div>
       </div>
     </div>

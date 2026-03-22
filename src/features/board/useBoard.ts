@@ -16,7 +16,7 @@ export function usePosts(
   const page = options?.page ?? 1;
   const search = options?.search ?? "";
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["posts", category],
     queryFn: async () => {
       const cat = category === "all" ? undefined : category;
@@ -44,7 +44,7 @@ export function usePosts(
     page * POSTS_PER_PAGE
   );
 
-  return { posts: paginatedPosts, totalPages, isLoading };
+  return { posts: paginatedPosts, totalPages, isLoading, error };
 }
 
 export function usePost(id: string) {
@@ -160,6 +160,23 @@ export function useDeleteComment() {
   });
 
   return { deleteComment: mutation.mutateAsync, isLoading: mutation.isPending };
+}
+
+// ── Update Comment ──
+
+export function useUpdateComment() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async ({ commentId, data }: { commentId: string; postId: string; data: { content: string } }) => {
+      return await commentsApi.update(commentId, data);
+    },
+    onSuccess: (_data, { postId }) => {
+      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+    },
+  });
+
+  return { updateComment: mutation.mutateAsync, isLoading: mutation.isPending };
 }
 
 // ── Create Comment ──

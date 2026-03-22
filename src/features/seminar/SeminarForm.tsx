@@ -1,15 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Send, Video, Eye, PenLine, Calendar, MapPin, Users, UserPlus } from "lucide-react";
+import { ArrowLeft, Send, Video, Eye, PenLine, Calendar, MapPin, Users, UserPlus, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { useCreateSeminar } from "./useSeminar";
+import { useCreateSeminar, useSeminars } from "./useSeminar";
 import { useAuthStore } from "@/features/auth/auth-store";
 import type { Seminar, SpeakerType } from "@/types";
 import { SPEAKER_TYPE_LABELS } from "@/types";
@@ -34,6 +34,7 @@ export default function SeminarForm() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { createSeminar } = useCreateSeminar();
+  const { seminars: allSeminars } = useSeminars();
   const [isOnline, setIsOnline] = useState(false);
   const [speakerType, setSpeakerType] = useState<SpeakerType>("member");
   const [showPreview, setShowPreview] = useState(false);
@@ -45,6 +46,14 @@ export default function SeminarForm() {
   } = useForm<FormData>();
 
   const w = watch();
+
+  // Schedule conflict detection
+  const conflictingSeminars = useMemo(() => {
+    if (!w.date) return [];
+    return allSeminars.filter(
+      (s) => s.date === w.date && s.status !== "cancelled"
+    );
+  }, [w.date, allSeminars]);
 
   async function onSubmit(data: FormData) {
     try {
@@ -255,6 +264,22 @@ export default function SeminarForm() {
               )}
             </div>
           </div>
+
+          {conflictingSeminars.length > 0 && (
+            <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+              <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-600" />
+              <div className="text-sm text-amber-800">
+                <p className="font-medium">같은 날짜에 세미나가 {conflictingSeminars.length}개 있습니다:</p>
+                <ul className="mt-1 space-y-0.5">
+                  {conflictingSeminars.map((s) => (
+                    <li key={s.id} className="text-xs">
+                      {s.time} — {s.title} ({s.location})
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
 
           <div>
             <div className="mb-1.5 flex items-center justify-between">

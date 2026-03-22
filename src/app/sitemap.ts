@@ -1,9 +1,11 @@
 import type { MetadataRoute } from "next";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = "https://yonsei-edtech.vercel.app";
 
-  return [
+  const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
       lastModified: new Date(),
@@ -40,5 +42,42 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "daily",
       priority: 0.7,
     },
+    {
+      url: `${baseUrl}/seminars`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
   ];
+
+  // Dynamic seminar routes
+  const dynamicRoutes: MetadataRoute.Sitemap = [];
+
+  try {
+    const seminarsSnapshot = await getDocs(collection(db, "seminars"));
+    for (const doc of seminarsSnapshot.docs) {
+      const data = doc.data();
+      dynamicRoutes.push({
+        url: `${baseUrl}/seminars/${doc.id}`,
+        lastModified: data.updatedAt?.toDate?.() ?? new Date(),
+        changeFrequency: "weekly",
+        priority: 0.6,
+      });
+    }
+
+    const postsSnapshot = await getDocs(collection(db, "posts"));
+    for (const doc of postsSnapshot.docs) {
+      const data = doc.data();
+      dynamicRoutes.push({
+        url: `${baseUrl}/board/${doc.id}`,
+        lastModified: data.updatedAt?.toDate?.() ?? new Date(),
+        changeFrequency: "monthly",
+        priority: 0.5,
+      });
+    }
+  } catch {
+    // Firestore unavailable at build time — return static routes only
+  }
+
+  return [...staticRoutes, ...dynamicRoutes];
 }

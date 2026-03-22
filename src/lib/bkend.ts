@@ -250,6 +250,7 @@ export const commentsApi = {
       sort: "createdAt:asc",
     }),
   create: (data: Record<string, unknown>) => dataApi.create("comments", data),
+  update: (id: string, data: Record<string, unknown>) => dataApi.update("comments", id, data),
   delete: (id: string) => dataApi.delete("comments", id),
 };
 
@@ -332,6 +333,8 @@ export const certificatesApi = {
     }),
   create: (data: Record<string, unknown>) =>
     dataApi.create("certificates", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update("certificates", id, data),
   delete: (id: string) => dataApi.delete("certificates", id),
 };
 
@@ -343,6 +346,8 @@ export const promotionContentsApi = {
     }),
   create: (data: Record<string, unknown>) =>
     dataApi.create("promotion_contents", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update("promotion_contents", id, data),
   delete: (id: string) => dataApi.delete("promotion_contents", id),
 };
 
@@ -354,6 +359,8 @@ export const materialsApi = {
     }),
   create: (data: Record<string, unknown>) =>
     dataApi.create("seminar_materials", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update("seminar_materials", id, data),
   delete: (id: string) => dataApi.delete("seminar_materials", id),
 };
 
@@ -387,4 +394,5 @@ export const inquiriesApi = {
   create: (data: Record<string, unknown>) =>
     dataApi.create<Record<string, unknown>>("inquiries", data),
   update: (id: string, data: Record<string, unknown>) => dataApi.update("inquiries", id, data),
+  delete: (id: string) => dataApi.delete("inquiries", id),
 };
