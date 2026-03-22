@@ -341,21 +341,39 @@ function SeminarDetail({ id }: { id: string }) {
 
         {/* ── 섹션 1: 히어로 영역 ── */}
         <div className="relative overflow-hidden rounded-2xl border bg-white">
-          {seminar.posterUrl && (
-            <div className="relative h-48 sm:h-64 w-full">
-              <img
-                src={seminar.posterUrl}
-                alt={seminar.title}
-                className="h-full w-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            </div>
-          )}
+          <div className="relative h-48 sm:h-64 w-full">
+            {seminar.posterUrl ? (
+              <>
+                <img
+                  src={seminar.posterUrl}
+                  alt={seminar.title}
+                  className="h-full w-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              </>
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5">
+                <div className="text-center">
+                  <BookOpen size={48} className="mx-auto text-primary/30" />
+                  <p className="mt-2 text-sm text-primary/40 font-medium">세미나 포스터</p>
+                  {isStaff && (
+                    <button
+                      onClick={openEditInfo}
+                      className="mt-2 inline-flex items-center gap-1 rounded-md bg-white/80 px-3 py-1.5 text-xs text-muted-foreground shadow-sm hover:bg-white transition-colors"
+                    >
+                      <Pencil size={12} />
+                      포스터 이미지 등록
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
-          <div className={cn("p-8", seminar.posterUrl && "relative -mt-20 z-10")}>
+          <div className="p-8 relative -mt-20 z-10">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Badge className={cn("text-xs", badge.className, seminar.posterUrl && "shadow-sm")} variant="secondary">
+                <Badge className={cn("text-xs", badge.className, "shadow-sm")} variant="secondary">
                   {badge.label}
                 </Badge>
                 {seminar.isOnline && (
@@ -374,7 +392,7 @@ function SeminarDetail({ id }: { id: string }) {
               </div>
             )}
 
-            <h1 className={cn("mt-3 text-2xl font-bold sm:text-3xl", seminar.posterUrl && "text-white drop-shadow-sm")}>
+            <h1 className={cn("mt-3 text-2xl font-bold sm:text-3xl", seminar.posterUrl ? "text-white drop-shadow-sm" : "text-foreground")}>
               {seminar.title}
             </h1>
 
@@ -478,12 +496,12 @@ function SeminarDetail({ id }: { id: string }) {
         )}
 
         {/* ── 섹션 4: 세션 프로그램 ── */}
-        {sessions.length > 0 && (
-          <div className="mt-6 rounded-2xl border bg-white p-8">
-            <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-              <Clock size={16} />
-              세션 프로그램
-            </h2>
+        <div className="mt-6 rounded-2xl border bg-white p-8">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
+            <Clock size={16} />
+            세션 프로그램
+          </h2>
+          {sessions.length > 0 ? (
             <div className="space-y-3">
               {sessions.map((sess, idx) => (
                 <div
@@ -511,8 +529,21 @@ function SeminarDetail({ id }: { id: string }) {
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="flex flex-col items-center py-6 text-center">
+              <Clock size={32} className="text-muted-foreground/30" />
+              <p className="mt-2 text-sm text-muted-foreground">등록된 세션이 없습니다.</p>
+              {isStaff && (
+                <Link href={`/seminars/${id}/lms`}>
+                  <Button variant="outline" size="sm" className="mt-3">
+                    <Plus size={14} className="mr-1" />
+                    세미나 공간에서 세션 추가
+                  </Button>
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* ── 섹션 5: 참석 신청 ── */}
         <div className="mt-6 rounded-2xl border bg-white p-8">
