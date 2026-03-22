@@ -71,6 +71,7 @@ function CertificatePreview({
 }) {
   const isCompletion = type === "completion";
   const title = isCompletion ? "수 료 증" : "감  사  장";
+  const accentColor = style.borderColor;
 
   return (
     <div
@@ -82,29 +83,62 @@ function CertificatePreview({
         overflow: "hidden",
       }}
     >
-      {/* ─── 테두리 프레임 (단일 라인) ─── */}
+      {/* ─── 이중 프레임 ─── */}
       <div
         style={{
           position: "absolute",
-          inset: "12mm",
-          border: `2px solid ${style.borderColor}`,
+          inset: "10mm",
+          border: `2.5px solid ${accentColor}`,
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          inset: "13mm",
+          border: `0.8px solid ${accentColor}`,
+          opacity: 0.35,
           pointerEvents: "none",
         }}
       />
 
+      {/* ─── 네 모서리 꼭짓점 장식 ─── */}
+      {[
+        { top: "10mm", left: "10mm", bt: true, bl: true },
+        { top: "10mm", right: "10mm", bt: true, br: true },
+        { bottom: "10mm", left: "10mm", bb: true, bl: true },
+        { bottom: "10mm", right: "10mm", bb: true, br: true },
+      ].map((pos, i) => (
+        <div
+          key={i}
+          style={{
+            position: "absolute",
+            top: pos.top, bottom: pos.bottom,
+            left: pos.left, right: pos.right,
+            width: "20px",
+            height: "20px",
+            borderTop: pos.bt ? `3px solid ${accentColor}` : "none",
+            borderBottom: pos.bb ? `3px solid ${accentColor}` : "none",
+            borderLeft: pos.bl ? `3px solid ${accentColor}` : "none",
+            borderRight: pos.br ? `3px solid ${accentColor}` : "none",
+            pointerEvents: "none",
+          }}
+        />
+      ))}
+
       {/* ─── 본문 영역 ─── */}
       <div
         className="flex flex-col items-center"
-        style={{ padding: "28mm 32mm 24mm" }}
+        style={{ padding: "26mm 36mm 22mm" }}
       >
         {/* 증서 번호 */}
-        <div style={{ alignSelf: "flex-start", marginBottom: "16mm" }}>
+        <div style={{ alignSelf: "flex-start", marginBottom: "20mm" }}>
           <span
             style={{
-              fontSize: "12pt",
-              fontWeight: 800,
-              color: "#333",
-              letterSpacing: "0.05em",
+              fontSize: "11pt",
+              fontWeight: 700,
+              color: "#666",
+              letterSpacing: "0.08em",
             }}
           >
             제 {certificateNo || "0"} 호
@@ -114,22 +148,29 @@ function CertificatePreview({
         {/* 제목 */}
         <h1
           style={{
-            fontSize: "40pt",
+            fontSize: "42pt",
             fontWeight: 800,
-            letterSpacing: "0.6em",
-            color: "#111",
-            marginBottom: "12mm",
+            letterSpacing: "0.7em",
+            color: accentColor,
+            marginBottom: "5mm",
             textAlign: "center",
           }}
         >
           {title}
         </h1>
 
+        {/* 제목 하단 장식선 */}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "18mm" }}>
+          <div style={{ width: "40px", height: "1px", background: accentColor, opacity: 0.4 }} />
+          <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: accentColor, opacity: 0.3 }} />
+          <div style={{ width: "40px", height: "1px", background: accentColor, opacity: 0.4 }} />
+        </div>
+
         {/* 수여자 이름 */}
-        <div style={{ marginBottom: "10mm", textAlign: "right", width: "100%" }}>
+        <div style={{ marginBottom: "14mm", textAlign: "right", width: "100%" }}>
           <span
             style={{
-              fontSize: "24pt",
+              fontSize: "26pt",
               fontWeight: 800,
               letterSpacing: "0.5em",
               color: "#111",
@@ -139,10 +180,10 @@ function CertificatePreview({
           </span>
           <span
             style={{
-              fontSize: "12pt",
-              marginLeft: "8px",
-              fontWeight: 800,
-              color: "#111",
+              fontSize: "13pt",
+              marginLeft: "6px",
+              fontWeight: 600,
+              color: "#444",
             }}
           >
             선생님
@@ -153,10 +194,10 @@ function CertificatePreview({
         <div
           className="absolute left-1/2 -translate-x-1/2"
           style={{
-            top: "38%",
-            opacity: 0.08,
-            width: "280px",
-            height: "280px",
+            top: "40%",
+            opacity: 0.06,
+            width: "300px",
+            height: "300px",
             pointerEvents: "none",
           }}
         >
@@ -167,13 +208,15 @@ function CertificatePreview({
         <div
           className="relative"
           style={{
-            fontSize: "12pt",
-            lineHeight: "2.4",
+            fontSize: "12.5pt",
+            lineHeight: "2.5",
             textAlign: "justify",
             width: "100%",
+            maxWidth: "460px",
+            margin: "0 auto",
             wordBreak: "keep-all",
-            color: "#111",
-            fontWeight: 800,
+            color: "#222",
+            fontWeight: 700,
           }}
         >
           <p style={{ textIndent: "1em", whiteSpace: "pre-wrap" }}>
@@ -184,58 +227,78 @@ function CertificatePreview({
         {/* 날짜 */}
         <p
           style={{
-            fontSize: "12pt",
-            fontWeight: 800,
-            marginTop: "18mm",
-            letterSpacing: "0.1em",
+            fontSize: "13pt",
+            fontWeight: 700,
+            marginTop: "22mm",
+            letterSpacing: "0.15em",
             textAlign: "center",
-            color: "#111",
+            color: "#222",
           }}
         >
           {seminarDate}
         </p>
 
-        {/* 하단 서명 영역: [엠블럼] + [학회명+영문명] + [직인] */}
+        {/* ─── 하단 서명 영역 ─── */}
         <div
-          className="flex items-center justify-center gap-4"
-          style={{ marginTop: "16mm" }}
+          style={{
+            marginTop: "18mm",
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "0",
+          }}
         >
-          {/* 학회 엠블럼 */}
-          <img
-            src="/cert-emblem.png"
-            alt="연세대학교"
-            style={{ width: "44px", height: "44px" }}
-          />
+          {/* 구분선 */}
+          <div style={{ width: "50px", height: "1.5px", background: accentColor, opacity: 0.25, marginBottom: "14mm" }} />
 
-          {/* 학회명 + 영문명 */}
-          <div style={{ lineHeight: 1.3 }}>
-            <p
-              style={{
-                fontSize: "18pt",
-                fontWeight: 800,
-                color: "#111",
-                letterSpacing: "0.3em",
-              }}
-            >
-              연세교육공학회
-            </p>
-            <p
-              style={{
-                fontSize: "8pt",
-                color: "#888",
-                letterSpacing: "0.02em",
-              }}
-            >
-              Yonsei Educational Technology Association
-            </p>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "16px",
+            }}
+          >
+            {/* 학회 엠블럼 */}
+            <img
+              src="/cert-emblem.png"
+              alt="연세대학교"
+              style={{ width: "48px", height: "48px" }}
+            />
+
+            {/* 학회명 + 영문명 */}
+            <div style={{ lineHeight: 1.2 }}>
+              <p
+                style={{
+                  fontSize: "18pt",
+                  fontWeight: 800,
+                  color: accentColor,
+                  letterSpacing: "0.35em",
+                  margin: 0,
+                }}
+              >
+                연세교육공학회
+              </p>
+              <p
+                style={{
+                  fontSize: "7.5pt",
+                  color: "#999",
+                  letterSpacing: "0.03em",
+                  marginTop: "3px",
+                }}
+              >
+                Yonsei Educational Technology Association
+              </p>
+            </div>
+
+            {/* 직인 이미지 */}
+            <img
+              src="/cert-seal.jpeg"
+              alt="직인"
+              style={{ width: "52px", height: "52px" }}
+            />
           </div>
-
-          {/* 직인 이미지 */}
-          <img
-            src="/cert-seal.jpeg"
-            alt="직인"
-            style={{ width: "44px", height: "44px" }}
-          />
         </div>
       </div>
     </div>
