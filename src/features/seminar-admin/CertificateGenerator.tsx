@@ -17,9 +17,9 @@ const CERT_LABELS: Record<CertType, { label: string; icon: React.ReactNode }> = 
   appreciation: { label: "감사장", icon: <Heart size={16} /> },
 };
 
-/** 이름 자간: "홍길동" → "홍  길  동" */
+/** 이름 자간: "홍길동" → "홍 길 동" */
 function spacedName(name: string): string {
-  return name.split("").join("\u2003");
+  return name.split("").join("\u2002");
 }
 
 async function generateCertificateNo(): Promise<string> {
@@ -267,8 +267,8 @@ function CertificatePreview({
               style={{ width: "48px", height: "48px" }}
             />
 
-            {/* 학회명 + 영문명 */}
-            <div style={{ lineHeight: 1.2 }}>
+            {/* 학회명 + 영문명 (동일 너비) */}
+            <div style={{ lineHeight: 1.2, textAlign: "center" }}>
               <p
                 style={{
                   fontSize: "18pt",
@@ -276,6 +276,8 @@ function CertificatePreview({
                   color: accentColor,
                   letterSpacing: "0.35em",
                   margin: 0,
+                  textAlign: "justify",
+                  textAlignLast: "justify",
                 }}
               >
                 연세교육공학회
@@ -284,8 +286,10 @@ function CertificatePreview({
                 style={{
                   fontSize: "7.5pt",
                   color: "#999",
-                  letterSpacing: "0.03em",
+                  letterSpacing: "0",
                   marginTop: "3px",
+                  textAlign: "justify",
+                  textAlignLast: "justify",
                 }}
               >
                 Yonsei Educational Technology Association
