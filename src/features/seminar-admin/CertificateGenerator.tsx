@@ -267,14 +267,14 @@ function CertificatePreview({
               style={{ width: "48px", height: "48px" }}
             />
 
-            {/* 학회명 + 영문명 (동일 너비) */}
-            <div style={{ lineHeight: 1.2, textAlign: "center" }}>
+            {/* 학회명 + 영문명 (동일 고정 너비) */}
+            <div style={{ lineHeight: 1.2, width: "200px" }}>
               <p
                 style={{
                   fontSize: "18pt",
                   fontWeight: 800,
                   color: accentColor,
-                  letterSpacing: "0.35em",
+                  letterSpacing: "0",
                   margin: 0,
                   textAlign: "justify",
                   textAlignLast: "justify",
