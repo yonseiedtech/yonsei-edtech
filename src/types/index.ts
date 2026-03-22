@@ -129,6 +129,7 @@ export interface Seminar {
   onlineUrl?: string;
   registrationUrl?: string;
   timeline?: TimelinePhase[];
+  cancelReason?: string;
   status: "upcoming" | "ongoing" | "completed" | "cancelled";
   createdBy: string;
   createdAt: string;

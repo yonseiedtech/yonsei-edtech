@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { Seminar, SeminarStatus } from "@/types";
 import { SEMINAR_STATUS_LABELS } from "@/types";
 import { getComputedStatus } from "@/lib/seminar-utils";
-import { Calendar, MapPin, Users } from "lucide-react";
+import { Calendar, MapPin, Users, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -20,6 +22,8 @@ const STATUS_STYLES: Record<SeminarStatus, string> = {
 };
 
 export default function SeminarList({ seminars }: Props) {
+  const router = useRouter();
+
   if (seminars.length === 0) {
     return (
       <div className="rounded-xl border bg-white p-12 text-center text-muted-foreground">
@@ -67,8 +71,24 @@ export default function SeminarList({ seminars }: Props) {
                 </div>
               </div>
             </div>
-            <div className="mt-2 text-xs text-primary font-medium">
-              발표: {seminar.speaker}
+            <div className="mt-2 flex items-center justify-between">
+              <span className="text-xs text-primary font-medium">
+                발표: {seminar.speaker}
+              </span>
+              {computed !== "cancelled" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 text-xs"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    router.push(`/seminars/${seminar.id}/lms`);
+                  }}
+                >
+                  <BookOpen size={14} />
+                  공간
+                </Button>
+              )}
             </div>
           </Link>
         );

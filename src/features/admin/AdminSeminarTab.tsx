@@ -25,11 +25,11 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { formatDate } from "@/lib/utils";
-import type { Seminar, SeminarSession, SeminarStatus } from "@/types";
+import type { Seminar, SeminarSession, SeminarStatus, TimelinePhase } from "@/types";
 import { SEMINAR_STATUS_LABELS } from "@/types";
 import { getComputedStatus } from "@/lib/seminar-utils";
 import { toast } from "sonner";
-import { ChevronDown, Pencil, Plus, Trash2, Image as ImageIcon, Video } from "lucide-react";
+import { ChevronDown, Pencil, Plus, Trash2, Image as ImageIcon, Video, AlertTriangle } from "lucide-react";
 
 const STATUS_COLORS: Record<SeminarStatus, string> = {
   upcoming: "bg-blue-50 text-blue-700",
@@ -73,15 +73,40 @@ export default function AdminSeminarTab() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editSeminar, setEditSeminar] = useState<EditSeminar | null>(null);
   const [editSession, setEditSession] = useState<EditSession | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [showCancelInput, setShowCancelInput] = useState(false);
 
-  function handleCancelToggle(id: string, currentDbStatus: Seminar["status"]) {
-    const newStatus = currentDbStatus === "cancelled" ? "upcoming" : "cancelled";
-    updateSeminar({ id, data: { status: newStatus } });
-    toast.success(
-      newStatus === "cancelled"
-        ? "세미나가 취소되었습니다."
-        : "세미나 취소가 해제되었습니다.",
-    );
+  function handleCancelSeminar() {
+    if (!editSeminar || !cancelReason.trim()) return;
+    const sem = seminars.find((s) => s.id === editSeminar.id);
+    const cancelItem: TimelinePhase = {
+      id: "cancelled",
+      label: `세미나 취소: ${cancelReason.trim()}`,
+      dDay: 0,
+      done: true,
+      doneAt: new Date().toISOString(),
+    };
+    const timeline = [...(sem?.timeline ?? []), cancelItem];
+    updateSeminar({
+      id: editSeminar.id,
+      data: { status: "cancelled", cancelReason: cancelReason.trim(), timeline },
+    });
+    toast.success("세미나가 취소되었습니다.");
+    setCancelReason("");
+    setShowCancelInput(false);
+    setEditSeminar(null);
+  }
+
+  function handleUncancelSeminar() {
+    if (!editSeminar) return;
+    const sem = seminars.find((s) => s.id === editSeminar.id);
+    const timeline = (sem?.timeline ?? []).filter((t) => t.id !== "cancelled");
+    updateSeminar({
+      id: editSeminar.id,
+      data: { status: "upcoming", cancelReason: "", timeline },
+    });
+    toast.success("세미나 취소가 해제되었습니다.");
+    setEditSeminar(null);
   }
 
   function openEditSeminar(s: Seminar) {
@@ -185,14 +210,13 @@ export default function AdminSeminarTab() {
   return (
     <div className="space-y-0 rounded-xl border bg-white">
       {/* 테이블 헤더 */}
-      <div className="grid grid-cols-[48px_1fr_120px_140px_80px_80px_80px_80px] items-center gap-1 border-b bg-muted/30 px-4 py-3 text-sm font-medium">
+      <div className="grid grid-cols-[48px_1fr_120px_140px_80px_80px_80px] items-center gap-1 border-b bg-muted/30 px-4 py-3 text-sm font-medium">
         <span>포스터</span>
         <span>제목</span>
         <span>발표자</span>
         <span>일시</span>
         <span>참석자</span>
         <span>상태</span>
-        <span>취소</span>
         <span>관리</span>
       </div>
 
@@ -205,7 +229,7 @@ export default function AdminSeminarTab() {
           open={expandedId === s.id}
           onOpenChange={(open) => setExpandedId(open ? s.id : null)}
         >
-          <div className="grid grid-cols-[48px_1fr_120px_140px_80px_80px_80px_80px] items-center gap-1 border-b px-4 py-3 text-sm">
+          <div className="grid grid-cols-[48px_1fr_120px_140px_80px_80px_80px] items-center gap-1 border-b px-4 py-3 text-sm">
             {/* 포스터 썸네일 */}
             <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded border bg-muted/20">
               {s.posterUrl ? (
@@ -246,14 +270,6 @@ export default function AdminSeminarTab() {
             <Badge variant="secondary" className={STATUS_COLORS[computed]}>
               {SEMINAR_STATUS_LABELS[computed]}
             </Badge>
-            <Button
-              variant={s.status === "cancelled" ? "destructive" : "outline"}
-              size="sm"
-              className="text-xs"
-              onClick={() => handleCancelToggle(s.id, s.status)}
-            >
-              {s.status === "cancelled" ? "해제" : "취소"}
-            </Button>
             <Button variant="outline" size="sm" onClick={() => openEditSeminar(s)}>
               <Pencil size={14} />
             </Button>
@@ -456,9 +472,78 @@ export default function AdminSeminarTab() {
               </div>
             </div>
           )}
+          {/* 세미나 취소/해제 영역 */}
+          {editSeminar && (() => {
+            const sem = seminars.find((s) => s.id === editSeminar.id);
+            if (!sem) return null;
+            return sem.status === "cancelled" ? (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-amber-800">
+                  <AlertTriangle size={16} />
+                  이 세미나는 취소된 상태입니다
+                </div>
+                {sem.cancelReason && (
+                  <p className="mt-1 text-xs text-amber-600">사유: {sem.cancelReason}</p>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3"
+                  onClick={handleUncancelSeminar}
+                >
+                  취소 해제 (예정 상태로 복원)
+                </Button>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-red-800">
+                  <AlertTriangle size={16} />
+                  세미나 취소
+                </div>
+                {showCancelInput ? (
+                  <div className="mt-3 space-y-2">
+                    <textarea
+                      value={cancelReason}
+                      onChange={(e) => setCancelReason(e.target.value)}
+                      placeholder="취소 사유를 입력하세요..."
+                      rows={2}
+                      className="w-full rounded-lg border border-input bg-white px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        disabled={!cancelReason.trim()}
+                        onClick={handleCancelSeminar}
+                      >
+                        취소 확정
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { setShowCancelInput(false); setCancelReason(""); }}
+                      >
+                        돌아가기
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="mt-3"
+                    onClick={() => setShowCancelInput(true)}
+                  >
+                    이 세미나를 취소합니다
+                  </Button>
+                )}
+              </div>
+            );
+          })()}
+
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditSeminar(null)}>
-              취소
+            <Button variant="outline" onClick={() => { setEditSeminar(null); setShowCancelInput(false); setCancelReason(""); }}>
+              닫기
             </Button>
             <Button onClick={handleSaveSeminar}>저장</Button>
           </DialogFooter>

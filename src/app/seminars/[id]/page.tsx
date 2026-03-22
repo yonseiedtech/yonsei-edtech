@@ -37,6 +37,7 @@ import {
   ExternalLink,
   Video,
   BookOpen,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -200,6 +201,13 @@ function SeminarDetail({ id }: { id: string }) {
               {badge.label}
             </Badge>
           </div>
+
+          {computedStatus === "cancelled" && seminar.cancelReason && (
+            <div className="mt-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              <AlertCircle size={16} className="shrink-0 text-red-500" />
+              <span>취소 사유: {seminar.cancelReason}</span>
+            </div>
+          )}
 
           <h1 className="mt-3 text-2xl font-bold">{seminar.title}</h1>
 
