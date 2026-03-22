@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useRef } from "react";
-import Image from "next/image";
 import { useSeminars, useAttendees } from "@/features/seminar/useSeminar";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { certificatesApi } from "@/lib/bkend";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Download, Printer, Award, Heart, Plus } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Download, Printer, Award, Heart, Plus, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 type CertType = "completion" | "appreciation";
@@ -26,21 +26,30 @@ async function generateCertificateNo(): Promise<string> {
   const yy = String(new Date().getFullYear()).slice(-2);
   try {
     const existing = await certificatesApi.list();
-    const count = existing.data.filter((c) => {
+    let maxNum = 0;
+    for (const c of existing.data) {
       const no = (c as Record<string, unknown>).certificateNo as string | undefined;
-      return no && no.startsWith(`${yy}-`);
-    }).length;
-    return `${yy}-${String(count + 1).padStart(3, "0")}`;
+      if (no && no.startsWith(`${yy}-`)) {
+        const num = parseInt(no.split("-")[1], 10);
+        if (!isNaN(num) && num > maxNum) maxNum = num;
+      }
+    }
+    return `${yy}-${String(maxNum + 1).padStart(3, "0")}`;
   } catch {
     return `${yy}-001`;
   }
 }
 
 /* ─────────────────────────────────────────────
- * 감사장/수료증 프리뷰 — 격식 있는 세로형 디자인
- * 컬러: Yonsei Navy #003876, Gold #B8860B
- * 폰트: 명조 계열 (Batang, Nanum Myeongjo)
+ * 감사장/수료증 프리뷰 — pptx 원본 기반 디자인
+ * 폰트: 페이퍼로지 8 ExtraBold (로컬) / 웹 대체
  * ───────────────────────────────────────────── */
+
+interface CertStyle {
+  fontFamily: string;
+  borderColor: string;
+}
+
 function CertificatePreview({
   type,
   seminarTitle,
@@ -48,6 +57,8 @@ function CertificatePreview({
   semester,
   recipientName,
   certificateNo,
+  bodyText,
+  style,
 }: {
   type: CertType;
   seminarTitle: string;
@@ -55,10 +66,11 @@ function CertificatePreview({
   semester: string;
   recipientName: string;
   certificateNo: string;
+  bodyText: string;
+  style: CertStyle;
 }) {
   const isCompletion = type === "completion";
-  const title = isCompletion ? "수 료 증" : "감 사 장";
-  const accentColor = isCompletion ? "#003876" : "#8B6914";
+  const title = isCompletion ? "수 료 증" : "감  사  장";
 
   return (
     <div
@@ -66,103 +78,60 @@ function CertificatePreview({
       style={{
         width: "210mm",
         minHeight: "297mm",
-        fontFamily: "'Batang', 'Nanum Myeongjo', serif",
+        fontFamily: style.fontFamily,
         overflow: "hidden",
       }}
     >
-      {/* ─── 이중 테두리 프레임 ─── */}
+      {/* ─── 테두리 프레임 (단일 라인) ─── */}
       <div
         style={{
           position: "absolute",
-          inset: "14mm",
-          border: `1.5px solid ${accentColor}`,
+          inset: "12mm",
+          border: `2px solid ${style.borderColor}`,
           pointerEvents: "none",
         }}
       />
-      <div
-        style={{
-          position: "absolute",
-          inset: "17mm",
-          border: `0.5px solid ${accentColor}`,
-          opacity: 0.4,
-          pointerEvents: "none",
-        }}
-      />
-
-      {/* ─── 네 모서리 장식 ─── */}
-      {[
-        { top: "14mm", left: "14mm" },
-        { top: "14mm", right: "14mm" },
-        { bottom: "14mm", left: "14mm" },
-        { bottom: "14mm", right: "14mm" },
-      ].map((pos, i) => (
-        <div
-          key={i}
-          style={{
-            position: "absolute",
-            ...pos,
-            width: "18px",
-            height: "18px",
-            borderTop: i < 2 ? `2.5px solid ${accentColor}` : "none",
-            borderBottom: i >= 2 ? `2.5px solid ${accentColor}` : "none",
-            borderLeft: i % 2 === 0 ? `2.5px solid ${accentColor}` : "none",
-            borderRight: i % 2 === 1 ? `2.5px solid ${accentColor}` : "none",
-            pointerEvents: "none",
-          }}
-        />
-      ))}
 
       {/* ─── 본문 영역 ─── */}
       <div
         className="flex flex-col items-center"
-        style={{ padding: "32mm 30mm 28mm" }}
+        style={{ padding: "28mm 32mm 24mm" }}
       >
         {/* 증서 번호 */}
-        <div style={{ alignSelf: "flex-start", marginBottom: "18mm" }}>
+        <div style={{ alignSelf: "flex-start", marginBottom: "16mm" }}>
           <span
             style={{
-              fontSize: "11pt",
-              fontWeight: 700,
-              color: "#555",
-              letterSpacing: "0.08em",
+              fontSize: "12pt",
+              fontWeight: 800,
+              color: "#333",
+              letterSpacing: "0.05em",
             }}
           >
-            제 {certificateNo || "___"} 호
+            제 {certificateNo || "0"} 호
           </span>
         </div>
 
         {/* 제목 */}
         <h1
           style={{
-            fontSize: "36pt",
+            fontSize: "40pt",
             fontWeight: 800,
-            letterSpacing: "0.5em",
-            color: accentColor,
-            marginBottom: "6mm",
+            letterSpacing: "0.6em",
+            color: "#111",
+            marginBottom: "12mm",
             textAlign: "center",
           }}
         >
           {title}
         </h1>
 
-        {/* 구분선 */}
-        <div
-          style={{
-            width: "60px",
-            height: "2px",
-            background: accentColor,
-            marginBottom: "16mm",
-            opacity: 0.5,
-          }}
-        />
-
         {/* 수여자 이름 */}
-        <div style={{ marginBottom: "14mm", textAlign: "right", width: "100%" }}>
+        <div style={{ marginBottom: "10mm", textAlign: "right", width: "100%" }}>
           <span
             style={{
-              fontSize: "22pt",
-              fontWeight: 700,
-              letterSpacing: "0.35em",
+              fontSize: "24pt",
+              fontWeight: 800,
+              letterSpacing: "0.5em",
               color: "#111",
             }}
           >
@@ -170,10 +139,10 @@ function CertificatePreview({
           </span>
           <span
             style={{
-              fontSize: "13pt",
-              marginLeft: "12px",
-              fontWeight: 400,
-              color: "#444",
+              fontSize: "12pt",
+              marginLeft: "8px",
+              fontWeight: 800,
+              color: "#111",
             }}
           >
             선생님
@@ -184,98 +153,89 @@ function CertificatePreview({
         <div
           className="absolute left-1/2 -translate-x-1/2"
           style={{
-            top: "44%",
-            opacity: 0.06,
-            width: "240px",
-            height: "240px",
+            top: "38%",
+            opacity: 0.08,
+            width: "280px",
+            height: "280px",
             pointerEvents: "none",
           }}
         >
-          <Image src="/yonsei-emblem.svg" alt="" width={240} height={240} className="h-full w-full" />
+          <img src="/cert-emblem.png" alt="" style={{ width: "100%", height: "100%" }} />
         </div>
 
         {/* 본문 */}
         <div
           className="relative"
           style={{
-            fontSize: "13pt",
-            lineHeight: "2.6",
+            fontSize: "12pt",
+            lineHeight: "2.4",
             textAlign: "justify",
             width: "100%",
-            maxWidth: "430px",
-            margin: "0 auto",
             wordBreak: "keep-all",
-            color: "#222",
+            color: "#111",
+            fontWeight: 800,
           }}
         >
-          {isCompletion ? (
-            <p style={{ textIndent: "1em" }}>
-              귀하께서는 {semester} 연세교육공학회에서 구성원들의 교육공학 핵심 역량
-              강화를 위하여 주관한 연세교육공학 학술대회 &lt;{seminarTitle || "___"}&gt;에
-              참석하여 소정의 과정을 이수하였기에 이 수료증을 수여합니다.
-            </p>
-          ) : (
-            <p style={{ textIndent: "1em" }}>
-              귀하께서는 {semester} 연세교육공학회에서 구성원들의 교육공학 핵심 역량
-              강화를 위하여 주관한 연세교육공학 학술대회 &lt;{seminarTitle || "___"}&gt;에서
-              귀하께서 가지신 지식과 경험을 헌신적이고 열정적으로 공유해 주심으로서
-              구성원들의 성장에 큰 도움을 주셨음에 감사드리며, 연세교육공학회
-              구성원들의 마음을 담아 감사장을 드립니다.
-            </p>
-          )}
+          <p style={{ textIndent: "1em", whiteSpace: "pre-wrap" }}>
+            {bodyText}
+          </p>
         </div>
 
         {/* 날짜 */}
         <p
           style={{
-            fontSize: "13pt",
-            marginTop: "20mm",
-            letterSpacing: "0.12em",
+            fontSize: "12pt",
+            fontWeight: 800,
+            marginTop: "18mm",
+            letterSpacing: "0.1em",
             textAlign: "center",
-            color: "#333",
+            color: "#111",
           }}
         >
           {seminarDate}
         </p>
 
-        {/* 하단 서명 영역 */}
+        {/* 하단 서명 영역: [엠블럼] + [학회명+영문명] + [직인] */}
         <div
-          className="flex items-center justify-center gap-8"
-          style={{ marginTop: "18mm" }}
+          className="flex items-center justify-center gap-4"
+          style={{ marginTop: "16mm" }}
         >
-          <div className="flex items-center gap-3">
-            <Image src="/yonsei-emblem.svg" alt="연세대학교" width={36} height={36} />
-            <div style={{ lineHeight: 1.4 }}>
-              <p style={{ fontSize: "14pt", fontWeight: 700, color: "#222" }}>
-                연세교육공학회
-              </p>
-              <p style={{ fontSize: "7pt", color: "#888", letterSpacing: "0.05em" }}>
-                Yonsei Educational Technology Association
-              </p>
-            </div>
+          {/* 학회 엠블럼 */}
+          <img
+            src="/cert-emblem.png"
+            alt="연세대학교"
+            style={{ width: "44px", height: "44px" }}
+          />
+
+          {/* 학회명 + 영문명 */}
+          <div style={{ lineHeight: 1.3 }}>
+            <p
+              style={{
+                fontSize: "18pt",
+                fontWeight: 800,
+                color: "#111",
+                letterSpacing: "0.3em",
+              }}
+            >
+              연세교육공학회
+            </p>
+            <p
+              style={{
+                fontSize: "8pt",
+                color: "#888",
+                letterSpacing: "0.02em",
+              }}
+            >
+              Yonsei Educational Technology Association
+            </p>
           </div>
-          {/* 직인 */}
-          <div
-            style={{
-              width: "56px",
-              height: "56px",
-              border: "2.5px solid #c0392b",
-              borderRadius: "50%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#c0392b",
-              fontSize: "9pt",
-              fontWeight: 700,
-              lineHeight: 1.2,
-              textAlign: "center",
-              opacity: 0.85,
-            }}
-          >
-            연세
-            <br />
-            교육공학회
-          </div>
+
+          {/* 직인 이미지 */}
+          <img
+            src="/cert-seal.jpeg"
+            alt="직인"
+            style={{ width: "44px", height: "44px" }}
+          />
         </div>
       </div>
     </div>
@@ -289,6 +249,20 @@ function inferSemester(dateStr: string): string {
   return `${year}년 ${month >= 3 && month <= 8 ? "1" : "2"}학기`;
 }
 
+function getDefaultBody(type: CertType, semester: string, seminarTitle: string): string {
+  if (type === "completion") {
+    return `귀하께서는 ${semester} 연세교육공학회에서 구성원들의 교육공학 핵심 역량강화를 위하여 주관한 연세교육공학 학술대회 <${seminarTitle || "___"}>에 참석하여 소정의 과정을 이수하였기에 이 수료증을 수여합니다.`;
+  }
+  return `귀하께서는 ${semester} 연세교육공학회에서 구성원들의 교육공학 핵심 역량강화를 위하여 주관한 연세교육공학 학술대회 <${seminarTitle || "___"}>에서 귀하께서가 지신 지식과 경험을 헌신적이고 열정적으로 공유해주심으로서 구성원들의 성장에 큰 도움을 주셨음에 감사드리며, 연세교육공학회 구성원들의 마음을 담아 감사장을 드립니다.`;
+}
+
+const FONT_PRESETS = [
+  { label: "페이퍼로지 (로컬)", value: "'페이퍼로지 8 ExtraBold', '페이퍼로지 8', serif" },
+  { label: "바탕체", value: "'Batang', 'Nanum Myeongjo', serif" },
+  { label: "나눔명조", value: "'Nanum Myeongjo', 'Batang', serif" },
+  { label: "굴림", value: "'Gulim', 'Malgun Gothic', sans-serif" },
+];
+
 export default function CertificateGenerator() {
   const { seminars } = useSeminars();
   const { user } = useAuthStore();
@@ -297,10 +271,17 @@ export default function CertificateGenerator() {
   const [recipientName, setRecipientName] = useState("");
   const [semester, setSemester] = useState("");
   const [certificateNo, setCertificateNo] = useState("");
+  const [showEditMode, setShowEditMode] = useState(false);
+  const [bodyText, setBodyText] = useState("");
+  const [fontFamily, setFontFamily] = useState(FONT_PRESETS[0].value);
+  const [borderColor, setBorderColor] = useState("#003378");
   const printRef = useRef<HTMLDivElement>(null);
 
   const seminar = seminars.find((s) => s.id === selectedId);
   const { attendees } = useAttendees(selectedId ?? "");
+
+  const currentSemester = semester || (seminar ? inferSemester(seminar.date) : "2026년 1학기");
+  const currentBody = bodyText || getDefaultBody(certType, currentSemester, seminar?.title || "세미나 제목");
 
   async function handleSeminarChange(id: string) {
     setSelectedId(id || null);
@@ -308,7 +289,13 @@ export default function CertificateGenerator() {
     if (s) {
       setSemester(inferSemester(s.date));
       setCertificateNo(await generateCertificateNo());
+      setBodyText("");
     }
+  }
+
+  function handleTypeChange(type: CertType) {
+    setCertType(type);
+    setBodyText("");
   }
 
   function handlePrint() {
@@ -319,7 +306,7 @@ export default function CertificateGenerator() {
       <html><head><title>${CERT_LABELS[certType].label}</title>
       <style>
         @page { size: A4 portrait; margin: 0; }
-        body { margin: 0; font-family: 'Batang', 'Nanum Myeongjo', serif; }
+        body { margin: 0; font-family: ${fontFamily}; }
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         img { display: inline-block; }
       </style></head><body>${printRef.current.innerHTML}</body></html>
@@ -400,7 +387,7 @@ export default function CertificateGenerator() {
             <div className="flex gap-2">
               {(Object.entries(CERT_LABELS) as [CertType, typeof CERT_LABELS[CertType]][]).map(
                 ([key, { label, icon }]) => (
-                  <Button key={key} size="sm" variant={certType === key ? "default" : "outline"} onClick={() => setCertType(key)}>
+                  <Button key={key} size="sm" variant={certType === key ? "default" : "outline"} onClick={() => handleTypeChange(key)}>
                     {icon}
                     <span className="ml-1">{label}</span>
                   </Button>
@@ -421,8 +408,73 @@ export default function CertificateGenerator() {
 
           <div>
             <label className="mb-1.5 block text-sm font-medium">증서 번호</label>
-            <Input value={certificateNo} onChange={(e) => setCertificateNo(e.target.value)} placeholder="26-001" />
+            <Input value={certificateNo} readOnly disabled placeholder="자동 생성" className="bg-gray-50" />
           </div>
+
+          {/* 편집 모드 토글 */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => setShowEditMode(!showEditMode)}
+          >
+            <Settings size={14} className="mr-1" />
+            {showEditMode ? "편집 모드 닫기" : "편집 모드 열기"}
+          </Button>
+
+          {showEditMode && (
+            <div className="space-y-3 rounded-lg border border-dashed p-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium">폰트</label>
+                <select
+                  value={fontFamily}
+                  onChange={(e) => setFontFamily(e.target.value)}
+                  className="w-full rounded-md border px-2 py-1.5 text-sm"
+                >
+                  {FONT_PRESETS.map((fp) => (
+                    <option key={fp.value} value={fp.value}>{fp.label}</option>
+                  ))}
+                </select>
+                <p className="mt-1 text-[10px] text-muted-foreground">
+                  페이퍼로지는 로컬 설치 시 인쇄에 적용됩니다.
+                </p>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium">테두리 색상</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={borderColor}
+                    onChange={(e) => setBorderColor(e.target.value)}
+                    className="h-8 w-8 cursor-pointer rounded border"
+                  />
+                  <Input
+                    value={borderColor}
+                    onChange={(e) => setBorderColor(e.target.value)}
+                    className="h-8 text-xs"
+                    placeholder="#003378"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium">본문 내용 편집</label>
+                <Textarea
+                  value={bodyText || currentBody}
+                  onChange={(e) => setBodyText(e.target.value)}
+                  rows={6}
+                  className="text-xs"
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-1 h-7 text-xs"
+                  onClick={() => setBodyText("")}
+                >
+                  기본 텍스트로 초기화
+                </Button>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2 pt-2">
             <Button className="w-full" onClick={handlePrint} disabled={!seminar}>
@@ -451,10 +503,12 @@ export default function CertificateGenerator() {
           <CertificatePreview
             type={certType}
             seminarTitle={seminar?.title || "세미나 제목"}
-            semester={semester || (seminar ? inferSemester(seminar.date) : "2026년 1학기")}
+            semester={currentSemester}
             seminarDate={previewDate || "2026년 1월 1일"}
             recipientName={recipientName}
             certificateNo={certificateNo}
+            bodyText={currentBody}
+            style={{ fontFamily, borderColor }}
           />
         </div>
       </div>
