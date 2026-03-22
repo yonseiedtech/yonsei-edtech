@@ -48,12 +48,16 @@ export function usePendingMembers() {
   const { data, isLoading } = useQuery({
     queryKey: ["members", "pending"],
     queryFn: async () => {
+      // sort를 제거: Firestore에서 where + orderBy 복합 인덱스 없이 사용 불가
       const res = await profilesApi.list({
         "filter[approved]": "false",
         limit: 100,
-        sort: "createdAt:desc",
       });
-      return res.data as unknown as User[];
+      const users = res.data as unknown as User[];
+      // 클라이언트 정렬 (최신순)
+      return users.sort((a, b) =>
+        (b.createdAt ?? "").localeCompare(a.createdAt ?? "")
+      );
     },
     retry: false,
   });
