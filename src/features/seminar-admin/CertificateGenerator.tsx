@@ -276,6 +276,7 @@ function CertificatePreview({
                   color: accentColor,
                   letterSpacing: "0.25em",
                   margin: 0,
+                  marginRight: "-0.25em",
                   whiteSpace: "nowrap",
                 }}
               >
