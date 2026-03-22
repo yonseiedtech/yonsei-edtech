@@ -41,6 +41,7 @@ import {
   Plus,
   Pencil,
   Trash2,
+  UserCircle,
 } from "lucide-react";
 
 const STATUS_STYLES: Record<SeminarStatus, string> = {
@@ -50,10 +51,11 @@ const STATUS_STYLES: Record<SeminarStatus, string> = {
   cancelled: "bg-destructive/10 text-destructive",
 };
 
-type Tab = "overview" | "sessions" | "materials" | "attendee-reviews" | "speaker-reviews";
+type Tab = "overview" | "speaker" | "sessions" | "materials" | "attendee-reviews" | "speaker-reviews";
 
 const TABS: { value: Tab; label: string; icon: React.ReactNode }[] = [
   { value: "overview", label: "개요", icon: <Info size={16} /> },
+  { value: "speaker", label: "연사 소개", icon: <UserCircle size={16} /> },
   { value: "sessions", label: "세션", icon: <Clock size={16} /> },
   { value: "materials", label: "자료실", icon: <FolderOpen size={16} /> },
   { value: "attendee-reviews", label: "참석자 후기", icon: <MessageSquare size={16} /> },
@@ -102,6 +104,79 @@ function OverviewSection({ seminar }: { seminar: NonNullable<ReturnType<typeof u
       {seminar.description && (
         <div className="mt-4 whitespace-pre-wrap rounded-lg bg-muted/30 p-4 text-sm leading-relaxed">
           {seminar.description}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SpeakerSection({ seminar }: { seminar: Seminar }) {
+  const sessions = (seminar.sessions ?? []).sort((a, b) => a.time.localeCompare(b.time));
+  const speakerSessions = sessions.filter((s) => s.speaker === seminar.speaker);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row items-start gap-6">
+        {seminar.speakerPhotoUrl ? (
+          <img
+            src={seminar.speakerPhotoUrl}
+            alt={seminar.speaker}
+            className="h-28 w-28 shrink-0 rounded-full object-cover ring-4 ring-primary/10"
+          />
+        ) : (
+          <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary ring-4 ring-primary/5">
+            <UserCircle size={48} />
+          </div>
+        )}
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-xl font-bold">{seminar.speaker}</span>
+            {seminar.speakerType === "guest" ? (
+              <Badge variant="secondary" className="bg-amber-50 text-xs text-amber-700">
+                GUEST SPEAKER
+              </Badge>
+            ) : (
+              <Badge variant="secondary" className="text-xs">
+                MEMBER
+              </Badge>
+            )}
+          </div>
+          {(seminar.speakerAffiliation || seminar.speakerPosition) && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              {[seminar.speakerAffiliation, seminar.speakerPosition].filter(Boolean).join(" · ")}
+            </p>
+          )}
+          {seminar.speakerBio && (
+            <p className="mt-3 text-sm leading-relaxed">
+              {seminar.speakerBio}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {speakerSessions.length > 0 && (
+        <div>
+          <h3 className="mb-3 text-sm font-semibold text-muted-foreground">담당 세션</h3>
+          <div className="space-y-2">
+            {speakerSessions.map((sess) => (
+              <div
+                key={sess.id}
+                className="flex items-center justify-between rounded-lg border bg-primary/5 px-4 py-2.5 text-sm"
+              >
+                <div>
+                  {sess.category && (
+                    <Badge variant="secondary" className="mr-2 text-xs">
+                      {sess.category}
+                    </Badge>
+                  )}
+                  <span className="font-medium">{sess.title}</span>
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  {sess.time}{sess.endTime ? `~${sess.endTime}` : ""} ({sess.duration}분)
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -405,6 +480,7 @@ export default function SeminarLMS({ seminarId }: Props) {
           {/* 탭 콘텐츠 */}
           <div className="p-6">
             {activeTab === "overview" && <OverviewSection seminar={seminar} />}
+            {activeTab === "speaker" && <SpeakerSection seminar={seminar} />}
             {activeTab === "sessions" && <SessionsSection seminar={seminar} isStaff={isStaff} />}
             {activeTab === "materials" && <MaterialsSection seminar={seminar} />}
             {activeTab === "attendee-reviews" && (

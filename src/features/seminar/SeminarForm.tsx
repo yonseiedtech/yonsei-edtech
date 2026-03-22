@@ -11,7 +11,8 @@ import { ArrowLeft, Send, Video, Eye, PenLine, Calendar, MapPin, Users, UserPlus
 import { toast } from "sonner";
 import { useCreateSeminar } from "./useSeminar";
 import { useAuthStore } from "@/features/auth/auth-store";
-import type { Seminar } from "@/types";
+import type { Seminar, SpeakerType } from "@/types";
+import { SPEAKER_TYPE_LABELS } from "@/types";
 
 interface FormData {
   title: string;
@@ -22,6 +23,9 @@ interface FormData {
   onlineUrl: string;
   speaker: string;
   speakerBio: string;
+  speakerAffiliation: string;
+  speakerPosition: string;
+  speakerPhotoUrl: string;
   maxAttendees: string;
   registrationUrl: string;
 }
@@ -31,6 +35,7 @@ export default function SeminarForm() {
   const { user } = useAuthStore();
   const { createSeminar } = useCreateSeminar();
   const [isOnline, setIsOnline] = useState(false);
+  const [speakerType, setSpeakerType] = useState<SpeakerType>("member");
   const [showPreview, setShowPreview] = useState(false);
   const {
     register,
@@ -58,6 +63,10 @@ export default function SeminarForm() {
       };
       if (isOnline && data.onlineUrl) seminarData.onlineUrl = data.onlineUrl;
       if (data.speakerBio) seminarData.speakerBio = data.speakerBio;
+      seminarData.speakerType = speakerType;
+      if (data.speakerAffiliation) seminarData.speakerAffiliation = data.speakerAffiliation;
+      if (data.speakerPosition) seminarData.speakerPosition = data.speakerPosition;
+      if (data.speakerPhotoUrl) seminarData.speakerPhotoUrl = data.speakerPhotoUrl;
       if (data.maxAttendees) seminarData.maxAttendees = Number(data.maxAttendees);
       if (data.registrationUrl) seminarData.registrationUrl = data.registrationUrl;
 
@@ -145,13 +154,37 @@ export default function SeminarForm() {
           {/* 발표자 */}
           <div className="mt-6 rounded-lg bg-muted/50 p-4">
             <div className="flex items-start gap-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <UserPlus size={24} />
-              </div>
+              {w.speakerPhotoUrl ? (
+                <img
+                  src={w.speakerPhotoUrl}
+                  alt={w.speaker}
+                  className="h-16 w-16 shrink-0 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <UserPlus size={24} />
+                </div>
+              )}
               <div>
-                <span className="text-sm font-medium">
-                  {w.speaker || "(발표자)"}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">
+                    {w.speaker || "(발표자)"}
+                  </span>
+                  {speakerType === "guest" ? (
+                    <Badge variant="secondary" className="bg-amber-50 text-xs text-amber-700">
+                      GUEST SPEAKER
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="text-xs">
+                      MEMBER
+                    </Badge>
+                  )}
+                </div>
+                {(w.speakerAffiliation || w.speakerPosition) && (
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {[w.speakerAffiliation, w.speakerPosition].filter(Boolean).join(" · ")}
+                  </p>
+                )}
                 {w.speakerBio && (
                   <p className="mt-1 text-xs text-muted-foreground">
                     {w.speakerBio}
@@ -288,6 +321,52 @@ export default function SeminarForm() {
             <Input
               {...register("speakerBio")}
               placeholder="발표자 약력"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium">
+              발표자 유형
+            </label>
+            <select
+              value={speakerType}
+              onChange={(e) => setSpeakerType(e.target.value as SpeakerType)}
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            >
+              {Object.entries(SPEAKER_TYPE_LABELS).map(([key, label]) => (
+                <option key={key} value={key}>{label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">
+                소속 기관 <span className="text-muted-foreground">(선택)</span>
+              </label>
+              <Input
+                {...register("speakerAffiliation")}
+                placeholder="예: 연세대학교 교육학과"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">
+                직위/직책 <span className="text-muted-foreground">(선택)</span>
+              </label>
+              <Input
+                {...register("speakerPosition")}
+                placeholder="예: 교수, 박사과정"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium">
+              발표자 사진 URL <span className="text-muted-foreground">(선택)</span>
+            </label>
+            <Input
+              {...register("speakerPhotoUrl")}
+              placeholder="https://..."
             />
           </div>
 
