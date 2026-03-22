@@ -257,7 +257,7 @@ function CertificatePreview({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: "20px",
+              gap: "14px",
             }}
           >
             {/* 학회 엠블럼 */}
@@ -267,37 +267,42 @@ function CertificatePreview({
               style={{ width: "48px", height: "48px" }}
             />
 
-            {/* 학회명 + 영문명 (한글 기준 너비 맞춤) */}
-            <div style={{ lineHeight: 1.2, display: "inline-flex", flexDirection: "column" }}>
-              <p
+            {/* 학회명 + 영문명 (SVG 이미지) */}
+            <svg
+              width="210"
+              height="38"
+              viewBox="0 0 210 38"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{ display: "block" }}
+            >
+              <text
+                x="105"
+                y="22"
+                textAnchor="middle"
                 style={{
-                  fontSize: "18pt",
+                  fontSize: "22px",
                   fontWeight: 800,
-                  color: accentColor,
-                  letterSpacing: "0.25em",
-                  margin: 0,
-                  marginRight: "-0.25em",
-                  whiteSpace: "nowrap",
+                  fill: accentColor,
+                  fontFamily: style.fontFamily,
+                  letterSpacing: "0.2em",
                 }}
               >
                 연세교육공학회
-              </p>
-              <p
+              </text>
+              <text
+                x="105"
+                y="36"
+                textAnchor="middle"
                 style={{
-                  fontSize: "7.5pt",
-                  color: "#999",
-                  letterSpacing: "0",
-                  marginTop: "3px",
-                  textAlign: "justify",
-                  textAlignLast: "justify",
-                  whiteSpace: "nowrap",
-                  transform: "scaleX(0.92)",
-                  transformOrigin: "left",
+                  fontSize: "8px",
+                  fill: "#999",
+                  fontFamily: style.fontFamily,
+                  letterSpacing: "0.08em",
                 }}
               >
                 Yonsei Educational Technology Association
-              </p>
-            </div>
+              </text>
+            </svg>
 
             {/* 직인 이미지 */}
             <img
