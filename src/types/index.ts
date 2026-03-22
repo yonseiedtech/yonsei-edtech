@@ -100,10 +100,12 @@ export const CATEGORY_LABELS: Record<PostCategory, string> = {
 export interface SeminarSession {
   id: string;
   seminarId: string;
+  category?: string;
   title: string;
   speaker: string;
   speakerBio?: string;
   time: string;
+  endTime?: string;
   duration: number;
   order: number;
 }

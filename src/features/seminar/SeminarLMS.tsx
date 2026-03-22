@@ -110,13 +110,21 @@ function OverviewSection({ seminar }: { seminar: NonNullable<ReturnType<typeof u
 
 type EditSessionForm = {
   sessionId?: string;
+  category: string;
   title: string;
+  useSeminarSpeaker: boolean;
   speaker: string;
   speakerBio: string;
-  time: string;
-  duration: string;
-  order: string;
+  startTime: string;
+  endTime: string;
 };
+
+function calcDuration(start: string, end: string): number {
+  if (!start || !end) return 0;
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  return (eh * 60 + em) - (sh * 60 + sm);
+}
 
 function SessionsSection({ seminar, isStaff }: { seminar: Seminar; isStaff: boolean }) {
   const { createSession } = useCreateSession();
@@ -124,33 +132,57 @@ function SessionsSection({ seminar, isStaff }: { seminar: Seminar; isStaff: bool
   const { deleteSession } = useDeleteSession();
   const [editSession, setEditSession] = useState<EditSessionForm | null>(null);
 
-  const sessions = (seminar.sessions ?? []).sort((a, b) => a.order - b.order);
+  // 시간 기준 자동 정렬
+  const sessions = (seminar.sessions ?? []).sort((a, b) => a.time.localeCompare(b.time));
 
   function openAdd() {
-    setEditSession({ title: "", speaker: "", speakerBio: "", time: "", duration: "30", order: String(sessions.length + 1) });
+    setEditSession({
+      category: "",
+      title: "",
+      useSeminarSpeaker: true,
+      speaker: seminar.speaker,
+      speakerBio: seminar.speakerBio ?? "",
+      startTime: "",
+      endTime: "",
+    });
   }
 
   function openEdit(sess: SeminarSession) {
+    const isSameSpeaker = sess.speaker === seminar.speaker;
     setEditSession({
       sessionId: sess.id,
+      category: sess.category ?? "",
       title: sess.title,
+      useSeminarSpeaker: isSameSpeaker,
       speaker: sess.speaker,
       speakerBio: sess.speakerBio ?? "",
-      time: sess.time,
-      duration: sess.duration.toString(),
-      order: sess.order.toString(),
+      startTime: sess.time,
+      endTime: sess.endTime ?? "",
     });
   }
 
   function handleSave() {
     if (!editSession) return;
+    const speaker = editSession.useSeminarSpeaker ? seminar.speaker : editSession.speaker;
+    const speakerBio = editSession.useSeminarSpeaker ? (seminar.speakerBio || undefined) : (editSession.speakerBio || undefined);
+    const duration = calcDuration(editSession.startTime, editSession.endTime);
+    // 시간 기준 순서 자동 계산
+    const allTimes = sessions
+      .filter((s) => !editSession.sessionId || s.id !== editSession.sessionId)
+      .map((s) => s.time);
+    allTimes.push(editSession.startTime);
+    allTimes.sort();
+    const order = allTimes.indexOf(editSession.startTime) + 1;
+
     const data = {
+      category: editSession.category || undefined,
       title: editSession.title,
-      speaker: editSession.speaker,
-      speakerBio: editSession.speakerBio || undefined,
-      time: editSession.time,
-      duration: parseInt(editSession.duration) || 30,
-      order: parseInt(editSession.order) || 1,
+      speaker,
+      speakerBio,
+      time: editSession.startTime,
+      endTime: editSession.endTime || undefined,
+      duration: duration > 0 ? duration : 30,
+      order,
     };
     if (editSession.sessionId) {
       updateSession({ seminarId: seminar.id, sessionId: editSession.sessionId, data });
@@ -183,22 +215,27 @@ function SessionsSection({ seminar, isStaff }: { seminar: Seminar; isStaff: bool
         <p className="text-sm text-muted-foreground">등록된 세션이 없습니다.</p>
       ) : (
         <div className="space-y-2">
-          {sessions.map((sess) => (
+          {sessions.map((sess, idx) => (
             <div
               key={sess.id}
               className="flex items-center justify-between rounded-lg border bg-muted/20 px-4 py-3 text-sm"
             >
               <div className="flex items-center gap-3">
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                  {sess.order}
+                  {idx + 1}
                 </span>
                 <div>
+                  {sess.category && (
+                    <Badge variant="secondary" className="mb-1 text-xs">
+                      {sess.category}
+                    </Badge>
+                  )}
                   <p className="font-medium">{sess.title}</p>
                   <p className="text-xs text-muted-foreground">
                     {sess.speaker}
                     {sess.speakerBio && ` · ${sess.speakerBio}`}
                     {" · "}
-                    {sess.time} ({sess.duration}분)
+                    {sess.time}{sess.endTime ? `~${sess.endTime}` : ""} ({sess.duration}분)
                   </p>
                 </div>
               </div>
@@ -231,32 +268,67 @@ function SessionsSection({ seminar, isStaff }: { seminar: Seminar; isStaff: bool
           {editSession && (
             <div className="grid gap-3">
               <div>
+                <label className="mb-1 block text-sm font-medium">세션 구분</label>
+                <Input
+                  placeholder="예: 기조강연, 발표, 토론, 실습, 휴식 등"
+                  value={editSession.category}
+                  onChange={(e) => setEditSession({ ...editSession, category: e.target.value })}
+                />
+              </div>
+              <div>
                 <label className="mb-1 block text-sm font-medium">세션 제목</label>
                 <Input value={editSession.title} onChange={(e) => setEditSession({ ...editSession, title: e.target.value })} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-1 block text-sm font-medium">발표자</label>
-                  <Input value={editSession.speaker} onChange={(e) => setEditSession({ ...editSession, speaker: e.target.value })} />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium">발표자 소개</label>
-                  <Input value={editSession.speakerBio} onChange={(e) => setEditSession({ ...editSession, speakerBio: e.target.value })} />
-                </div>
+              {/* 발표자 - 세미나 발표자와 동일 체크 */}
+              <div>
+                <label className="mb-2 flex cursor-pointer items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={editSession.useSeminarSpeaker}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setEditSession({
+                        ...editSession,
+                        useSeminarSpeaker: checked,
+                        speaker: checked ? seminar.speaker : "",
+                        speakerBio: checked ? (seminar.speakerBio ?? "") : "",
+                      });
+                    }}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  <span className="font-medium">세미나 발표자와 동일</span>
+                  <span className="text-xs text-muted-foreground">({seminar.speaker})</span>
+                </label>
+                {!editSession.useSeminarSpeaker && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="mb-1 block text-sm font-medium">발표자</label>
+                      <Input value={editSession.speaker} onChange={(e) => setEditSession({ ...editSession, speaker: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium">발표자 소개</label>
+                      <Input value={editSession.speakerBio} onChange={(e) => setEditSession({ ...editSession, speakerBio: e.target.value })} />
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="mb-1 block text-sm font-medium">시간</label>
-                  <Input type="time" value={editSession.time} onChange={(e) => setEditSession({ ...editSession, time: e.target.value })} />
+              {/* 시간 - 시작/종료 → 자동 길이 계산 */}
+              <div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">시작 시간</label>
+                    <Input type="time" value={editSession.startTime} onChange={(e) => setEditSession({ ...editSession, startTime: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">종료 시간</label>
+                    <Input type="time" value={editSession.endTime} onChange={(e) => setEditSession({ ...editSession, endTime: e.target.value })} />
+                  </div>
                 </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium">길이(분)</label>
-                  <Input type="number" value={editSession.duration} onChange={(e) => setEditSession({ ...editSession, duration: e.target.value })} />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium">순서</label>
-                  <Input type="number" value={editSession.order} onChange={(e) => setEditSession({ ...editSession, order: e.target.value })} />
-                </div>
+                {editSession.startTime && editSession.endTime && (
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    소요시간: {calcDuration(editSession.startTime, editSession.endTime)}분
+                  </p>
+                )}
               </div>
             </div>
           )}
