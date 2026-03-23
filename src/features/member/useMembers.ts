@@ -170,6 +170,8 @@ export function useCreateMember() {
       role: UserRole;
       generation: number;
       field: string;
+      studentId?: string;
+      phone?: string;
     }) => {
       return await dataApi.create("users", {
         ...data,

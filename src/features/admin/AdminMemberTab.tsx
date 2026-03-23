@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isStaffOrAbove } from "@/lib/permissions";
 import {
@@ -12,7 +13,6 @@ import {
   useCreateMember,
 } from "@/features/member/useMembers";
 import { profilesApi } from "@/lib/bkend";
-import { auth } from "@/lib/firebase";
 import AdminUserList from "./AdminUserList";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ import type { User, UserRole } from "@/types";
 import { toast } from "sonner";
 import {
   Search, RefreshCw, UserPlus, Clock, Users, UserCheck, XCircle,
-  RotateCcw, Settings, KeyRound,
+  RotateCcw, Settings,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -57,6 +57,7 @@ function RoleBadge({ role }: { role: UserRole }) {
 type MemberTab = "all" | "pending" | "approved" | "rejected";
 
 export default function AdminMemberTab() {
+  const router = useRouter();
   const { user } = useAuthStore();
   const canApprove = isStaffOrAbove(user);
   const [activeTab, setActiveTab] = useState<MemberTab>("all");
@@ -80,7 +81,8 @@ export default function AdminMemberTab() {
   const { createMember } = useCreateMember();
   const [showAddMember, setShowAddMember] = useState(false);
   const [newMember, setNewMember] = useState({
-    name: "", email: "", username: "", role: "member" as UserRole, generation: 0, field: "",
+    name: "", email: "", role: "member" as UserRole,
+    studentId: "", phone: "", field: "",
   });
 
   // 운영진 교체
@@ -90,11 +92,6 @@ export default function AdminMemberTab() {
   const currentLeadership = [...currentPresidents, ...currentStaff];
   const [newRoles, setNewRoles] = useState<{ memberId: string; role: UserRole }[]>([]);
   const { bulkChangeRoles, isLoading: bulkLoading } = useBulkChangeRoles();
-
-  // 회원 정보 수정 Dialog
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [editData, setEditData] = useState<Record<string, unknown>>({});
-  const [resettingPassword, setResettingPassword] = useState(false);
 
   // 현재 탭에 따른 표시 대상 회원 목록
   const displayMembers = useMemo(() => {
@@ -128,58 +125,21 @@ export default function AdminMemberTab() {
 
   async function handleAddMember() {
     if (!newMember.name || !newMember.email) { toast.error("이름과 이메일은 필수입니다."); return; }
+    if (!newMember.studentId) { toast.error("학번은 필수입니다."); return; }
+    if (!newMember.phone) { toast.error("핸드폰 번호는 필수입니다."); return; }
     try {
-      await createMember({ ...newMember, username: newMember.username || newMember.email.split("@")[0] });
+      await createMember({
+        ...newMember,
+        username: newMember.email.split("@")[0],
+        generation: 0,
+      });
       toast.success(`${newMember.name} 회원이 추가되었습니다.`);
       setShowAddMember(false);
-      setNewMember({ name: "", email: "", username: "", role: "member", generation: 0, field: "" });
+      setNewMember({ name: "", email: "", role: "member", studentId: "", phone: "", field: "" });
     } catch { toast.error("회원 추가에 실패했습니다."); }
   }
 
-  function openEditUser(u: User) {
-    setEditingUser(u);
-    setEditData({
-      name: u.name, username: u.username, email: u.email || "", generation: u.generation,
-      field: u.field, role: u.role,
-      occupation: u.occupation || "",
-      affiliation: u.affiliation || "",
-      department: u.department || "",
-      position: u.position || "",
-    });
-  }
-
-  async function handleSaveEditUser() {
-    if (!editingUser) return;
-    try {
-      await profilesApi.update(editingUser.id, editData);
-      toast.success(`${editingUser.name} 정보가 수정되었습니다.`);
-      setEditingUser(null);
-    } catch { toast.error("정보 수정에 실패했습니다."); }
-  }
-
-  async function handleResetPassword() {
-    if (!editingUser?.email) { toast.error("이메일이 없는 회원입니다."); return; }
-    setResettingPassword(true);
-    try {
-      const token = await auth.currentUser?.getIdToken();
-      if (!token) throw new Error("인증 필요");
-      // Firebase Admin으로 비밀번호 초기화 이메일 발송
-      const res = await fetch("/api/email/password-reset", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ email: editingUser.email, name: editingUser.name }),
-      });
-      if (res.ok) {
-        toast.success(`${editingUser.email}로 비밀번호 재설정 이메일을 발송했습니다.`);
-      } else {
-        const data = await res.json();
-        toast.error(data.error || "비밀번호 초기화에 실패했습니다.");
-      }
-    } catch { toast.error("비밀번호 초기화에 실패했습니다."); }
-    finally { setResettingPassword(false); }
-  }
-
-  // ── 검색/필터/액션 바 (전체 탭 + 승인완료 탭 공통) ──
+  // ── 검색/필터/액션 바 ──
   function ToolBar() {
     return (
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -220,7 +180,26 @@ export default function AdminMemberTab() {
     );
   }
 
-  // ── 회원 테이블 (전체/승인완료 공통) ──
+  // ── 역할 인라인 셀렉트 (배지 스타일) ──
+  function RoleCell({ member: m }: { member: User }) {
+    if (!canApprove) return <RoleBadge role={m.role} />;
+    return (
+      <select
+        value={m.role}
+        onChange={(e) => handleRoleChange(m.id, e.target.value as UserRole)}
+        className={cn(
+          "cursor-pointer rounded-full border px-2 py-0.5 text-[10px] font-semibold appearance-none outline-none",
+          ROLE_COLORS[m.role] || ROLE_COLORS.member,
+        )}
+      >
+        {ASSIGNABLE_ROLES.map((r) => (
+          <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+        ))}
+      </select>
+    );
+  }
+
+  // ── 회원 테이블 ──
   function MemberTable({ data, showStatus }: { data: User[]; showStatus?: boolean }) {
     return (
       <div className="mt-3 overflow-x-auto rounded-xl border bg-white">
@@ -233,7 +212,6 @@ export default function AdminMemberTab() {
               <th className="px-4 py-3 text-left font-medium">분야</th>
               <th className="px-4 py-3 text-left font-medium">역할</th>
               {showStatus && <th className="px-4 py-3 text-left font-medium">상태</th>}
-              {canApprove && <th className="px-4 py-3 text-left font-medium">역할 변경</th>}
               {canApprove && <th className="px-4 py-3 text-left font-medium">관리</th>}
             </tr>
           </thead>
@@ -244,7 +222,7 @@ export default function AdminMemberTab() {
                 <td className="px-4 py-3 text-muted-foreground">@{m.username}</td>
                 <td className="px-4 py-3">{m.generation > 0 ? `${m.generation}기` : "-"}</td>
                 <td className="px-4 py-3">{m.field || "-"}</td>
-                <td className="px-4 py-3"><RoleBadge role={m.role} /></td>
+                <td className="px-4 py-3"><RoleCell member={m} /></td>
                 {showStatus && (
                   <td className="px-4 py-3">
                     {m.approved ? (
@@ -258,20 +236,12 @@ export default function AdminMemberTab() {
                 )}
                 {canApprove && (
                   <td className="px-4 py-3">
-                    <select
-                      value={m.role}
-                      onChange={(e) => handleRoleChange(m.id, e.target.value as UserRole)}
-                      className="rounded-md border px-2 py-1 text-sm"
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => router.push(`/admin/members/${m.id}`)}
+                      title="회원 상세 관리"
                     >
-                      {ASSIGNABLE_ROLES.map((r) => (
-                        <option key={r} value={r}>{ROLE_LABELS[r]}</option>
-                      ))}
-                    </select>
-                  </td>
-                )}
-                {canApprove && (
-                  <td className="px-4 py-3">
-                    <Button size="sm" variant="ghost" onClick={() => openEditUser(m)} title="회원 설정">
                       <Settings size={14} />
                     </Button>
                   </td>
@@ -418,104 +388,78 @@ export default function AdminMemberTab() {
         </section>
       )}
 
-      {/* ── 회원 정보 수정 Dialog ── */}
-      <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>회원 정보 수정 — {editingUser?.name}</DialogTitle>
-          </DialogHeader>
-          {editingUser && (
-            <div className="grid gap-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium">이름</label>
-                  <Input value={editData.name as string} onChange={(e) => setEditData({ ...editData, name: e.target.value })} />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium">아이디</label>
-                  <Input value={editData.username as string} onChange={(e) => setEditData({ ...editData, username: e.target.value })} />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium">이메일</label>
-                  <Input value={editData.email as string} onChange={(e) => setEditData({ ...editData, email: e.target.value })} />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium">역할</label>
-                  <select
-                    value={editData.role as string}
-                    onChange={(e) => setEditData({ ...editData, role: e.target.value })}
-                    className="w-full rounded-md border px-3 py-2 text-sm"
-                  >
-                    {ASSIGNABLE_ROLES.map((r) => (<option key={r} value={r}>{ROLE_LABELS[r]}</option>))}
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium">기수</label>
-                  <Input type="number" value={editData.generation as number || ""} onChange={(e) => setEditData({ ...editData, generation: parseInt(e.target.value) || 0 })} />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium">관심 분야</label>
-                  <Input value={editData.field as string} onChange={(e) => setEditData({ ...editData, field: e.target.value })} />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium">소속</label>
-                  <Input value={editData.affiliation as string} onChange={(e) => setEditData({ ...editData, affiliation: e.target.value })} placeholder="예: 서울시교육청" />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium">직책</label>
-                  <Input value={editData.position as string} onChange={(e) => setEditData({ ...editData, position: e.target.value })} placeholder="예: 장학사" />
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
-                <div>
-                  <p className="text-sm font-medium">비밀번호 초기화</p>
-                  <p className="text-xs text-muted-foreground">
-                    {editingUser.email}로 재설정 이메일 발송
-                  </p>
-                </div>
-                <Button size="sm" variant="outline" onClick={handleResetPassword} disabled={resettingPassword}>
-                  <KeyRound size={14} className="mr-1" />
-                  {resettingPassword ? "발송 중..." : "초기화"}
-                </Button>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingUser(null)}>취소</Button>
-            <Button onClick={handleSaveEditUser}>저장</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* ── 수기 회원 추가 Dialog ── */}
       <Dialog open={showAddMember} onOpenChange={setShowAddMember}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader><DialogTitle>회원 수기 추가</DialogTitle></DialogHeader>
           <div className="grid gap-4">
             <div className="grid grid-cols-2 gap-3">
-              <div><label className="mb-1.5 block text-sm font-medium">이름 *</label><Input value={newMember.name} onChange={(e) => setNewMember({ ...newMember, name: e.target.value })} placeholder="홍길동" /></div>
-              <div><label className="mb-1.5 block text-sm font-medium">이메일 *</label><Input value={newMember.email} onChange={(e) => setNewMember({ ...newMember, email: e.target.value })} placeholder="user@example.com" /></div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">이름 *</label>
+                <Input
+                  value={newMember.name}
+                  onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
+                  placeholder="홍길동"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">이메일 *</label>
+                <Input
+                  value={newMember.email}
+                  onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
+                  placeholder="user@yonsei.ac.kr"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">아이디</label>
+              <Input
+                value={newMember.email ? newMember.email.split("@")[0] : ""}
+                disabled
+                className="bg-muted text-muted-foreground"
+                placeholder="이메일 입력 시 자동 생성"
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div><label className="mb-1.5 block text-sm font-medium">아이디</label><Input value={newMember.username} onChange={(e) => setNewMember({ ...newMember, username: e.target.value })} placeholder="자동 생성" /></div>
-              <div><label className="mb-1.5 block text-sm font-medium">역할</label>
-                <select value={newMember.role} onChange={(e) => setNewMember({ ...newMember, role: e.target.value as UserRole })} className="w-full rounded-md border px-3 py-2 text-sm">
-                  {ASSIGNABLE_ROLES.map((r) => (<option key={r} value={r}>{ROLE_LABELS[r]}</option>))}
-                </select>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">학번 *</label>
+                <Input
+                  value={newMember.studentId}
+                  onChange={(e) => setNewMember({ ...newMember, studentId: e.target.value })}
+                  placeholder="예: 2024123456"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">핸드폰 번호 *</label>
+                <Input
+                  value={newMember.phone}
+                  onChange={(e) => setNewMember({ ...newMember, phone: e.target.value })}
+                  placeholder="010-1234-5678"
+                  type="tel"
+                />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div><label className="mb-1.5 block text-sm font-medium">기수</label><Input type="number" value={newMember.generation || ""} onChange={(e) => setNewMember({ ...newMember, generation: parseInt(e.target.value) || 0 })} placeholder="1" /></div>
-              <div><label className="mb-1.5 block text-sm font-medium">분야</label><Input value={newMember.field} onChange={(e) => setNewMember({ ...newMember, field: e.target.value })} placeholder="교육공학" /></div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">역할</label>
+                <select
+                  value={newMember.role}
+                  onChange={(e) => setNewMember({ ...newMember, role: e.target.value as UserRole })}
+                  className="w-full rounded-md border px-3 py-2 text-sm"
+                >
+                  {ASSIGNABLE_ROLES.map((r) => (
+                    <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">관심 분야</label>
+                <Input
+                  value={newMember.field}
+                  onChange={(e) => setNewMember({ ...newMember, field: e.target.value })}
+                  placeholder="교육공학"
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>
