@@ -257,7 +257,7 @@ function CertificatePreview({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: "14px",
+              gap: "7px",
             }}
           >
             {/* 학회 엠블럼 */}
@@ -267,42 +267,33 @@ function CertificatePreview({
               style={{ width: "48px", height: "48px" }}
             />
 
-            {/* 학회명 + 영문명 (SVG 이미지) */}
-            <svg
-              width="210"
-              height="38"
-              viewBox="0 0 210 38"
-              xmlns="http://www.w3.org/2000/svg"
-              style={{ display: "block" }}
-            >
-              <text
-                x="105"
-                y="22"
-                textAnchor="middle"
+            {/* 학회명 + 영문명 */}
+            <div style={{ textAlign: "center" }}>
+              <p
                 style={{
-                  fontSize: "22px",
+                  fontSize: "26px",
                   fontWeight: 800,
-                  fill: accentColor,
+                  color: accentColor,
                   fontFamily: style.fontFamily,
                   letterSpacing: "0.2em",
+                  lineHeight: 1.2,
+                  margin: 0,
                 }}
               >
                 연세교육공학회
-              </text>
-              <text
-                x="105"
-                y="36"
-                textAnchor="middle"
+              </p>
+              <p
                 style={{
                   fontSize: "8px",
-                  fill: "#999",
+                  color: "#999",
                   fontFamily: style.fontFamily,
                   letterSpacing: "0.08em",
+                  margin: "2px 0 0",
                 }}
               >
                 Yonsei Educational Technology Association
-              </text>
-            </svg>
+              </p>
+            </div>
 
             {/* 직인 이미지 */}
             <img
