@@ -412,18 +412,50 @@ export default function NametagGenerator() {
     setNames(updated);
   }
 
+  function injectPrintStyle(pageSize: string) {
+    const styleId = "nametag-print-style";
+    let styleEl = document.getElementById(styleId) as HTMLStyleElement | null;
+    if (!styleEl) {
+      styleEl = document.createElement("style");
+      styleEl.id = styleId;
+      document.head.appendChild(styleEl);
+    }
+    styleEl.textContent = `
+      @media print {
+        @page { size: ${pageSize}; margin: 0; }
+        body > *:not(#nametag-print-container) { display: none !important; }
+        #nametag-print-container {
+          display: block !important;
+          position: fixed !important;
+          inset: 0 !important;
+          z-index: 99999 !important;
+          background: white !important;
+        }
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      }
+    `;
+    return styleEl;
+  }
+
   function handleSinglePrint() {
     if (!printRef.current) return;
-    const pw = window.open("", "_blank");
-    if (!pw) return;
-    pw.document.write(`<html><head><title>이름표</title><style>
-      @page { size: 190mm 123mm; margin: 0; }
-      body { margin: 0; font-family: 'Pretendard','Nanum Gothic',sans-serif; }
-      * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }
-      img { display:inline-block; }
-    </style></head><body>${printRef.current.innerHTML}</body></html>`);
-    pw.document.close();
-    setTimeout(() => pw.print(), 300);
+    const styleEl = injectPrintStyle("190mm 123mm");
+
+    let container = document.getElementById("nametag-print-container");
+    if (container) container.remove();
+    container = document.createElement("div");
+    container.id = "nametag-print-container";
+    container.style.display = "none";
+    container.innerHTML = printRef.current.innerHTML;
+    document.body.appendChild(container);
+
+    const cleanup = () => {
+      container?.remove();
+      if (styleEl) styleEl.textContent = "";
+      window.removeEventListener("afterprint", cleanup);
+    };
+    window.addEventListener("afterprint", cleanup);
+    setTimeout(() => window.print(), 100);
   }
 
   function handleBatchPrint() {
@@ -431,8 +463,7 @@ export default function NametagGenerator() {
     const valid = names.filter((n) => n.name.trim());
     if (valid.length === 0) { toast.error("이름을 입력해주세요."); return; }
 
-    const pw = window.open("", "_blank");
-    if (!pw) return;
+    const styleEl = injectPrintStyle("190mm 123mm");
 
     const pages: string[] = [];
     for (const n of valid) {
@@ -446,15 +477,21 @@ export default function NametagGenerator() {
       pages.push(`<div style="page-break-after:always;">${el.innerHTML}</div>`);
     }
 
-    pw.document.write(`<html><head><title>이름표 일괄</title><style>
-      @page { size: 190mm 123mm; margin: 0; }
-      body { margin: 0; font-family: 'Pretendard','Nanum Gothic',sans-serif; }
-      * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }
-      img { display:inline-block; }
-      div:last-child { page-break-after:auto; }
-    </style></head><body>${pages.join("")}</body></html>`);
-    pw.document.close();
-    setTimeout(() => pw.print(), 500);
+    let container = document.getElementById("nametag-print-container");
+    if (container) container.remove();
+    container = document.createElement("div");
+    container.id = "nametag-print-container";
+    container.style.display = "none";
+    container.innerHTML = pages.join("");
+    document.body.appendChild(container);
+
+    const cleanup = () => {
+      container?.remove();
+      if (styleEl) styleEl.textContent = "";
+      window.removeEventListener("afterprint", cleanup);
+    };
+    window.addEventListener("afterprint", cleanup);
+    setTimeout(() => window.print(), 100);
   }
 
   return (

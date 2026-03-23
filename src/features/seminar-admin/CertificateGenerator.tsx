@@ -129,7 +129,7 @@ function CertificatePreview({
       {/* ─── 본문 영역 ─── */}
       <div
         className="flex flex-col items-center"
-        style={{ padding: "26mm 36mm 22mm" }}
+        style={{ padding: "22mm 36mm 18mm" }}
       >
         {/* 증서 번호 */}
         <div style={{ alignSelf: "flex-start", marginBottom: "20mm" }}>
@@ -172,11 +172,11 @@ function CertificatePreview({
             style={{
               fontSize: "26pt",
               fontWeight: 800,
-              letterSpacing: "0.5em",
+              letterSpacing: "0.15em",
               color: "#111",
             }}
           >
-            {recipientName ? spacedName(recipientName) : "___________"}
+            {recipientName || "___________"}
           </span>
           <span
             style={{
@@ -375,19 +375,52 @@ export default function CertificateGenerator() {
 
   function handlePrint() {
     if (!printRef.current) return;
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-    printWindow.document.write(`
-      <html><head><title>${CERT_LABELS[certType].label}</title>
-      <style>
+
+    // 인쇄 전용 스타일을 동적으로 주입
+    const styleId = "cert-print-style";
+    let styleEl = document.getElementById(styleId) as HTMLStyleElement | null;
+    if (!styleEl) {
+      styleEl = document.createElement("style");
+      styleEl.id = styleId;
+      document.head.appendChild(styleEl);
+    }
+    styleEl.textContent = `
+      @media print {
         @page { size: A4 portrait; margin: 0; }
-        body { margin: 0; font-family: ${fontFamily}; }
+        body > *:not(#cert-print-container) { display: none !important; }
+        #cert-print-container {
+          display: block !important;
+          position: fixed !important;
+          inset: 0 !important;
+          z-index: 99999 !important;
+          background: white !important;
+          transform: none !important;
+          width: 210mm !important;
+          min-height: 297mm !important;
+          overflow: visible !important;
+        }
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        img { display: inline-block; }
-      </style></head><body>${printRef.current.innerHTML}</body></html>
-    `);
-    printWindow.document.close();
-    setTimeout(() => printWindow.print(), 300);
+      }
+    `;
+
+    // 인쇄 전용 컨테이너 생성 (원본 DOM을 클론)
+    let container = document.getElementById("cert-print-container");
+    if (container) container.remove();
+    container = document.createElement("div");
+    container.id = "cert-print-container";
+    container.style.display = "none";
+    container.innerHTML = printRef.current.innerHTML;
+    document.body.appendChild(container);
+
+    // 인쇄 후 정리
+    const cleanup = () => {
+      container?.remove();
+      if (styleEl) styleEl.textContent = "";
+      window.removeEventListener("afterprint", cleanup);
+    };
+    window.addEventListener("afterprint", cleanup);
+
+    setTimeout(() => window.print(), 100);
   }
 
   async function handleSaveRecord() {
