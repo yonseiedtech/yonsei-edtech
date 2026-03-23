@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { ROLE_LABELS } from "@/types";
 import type { UserRole } from "@/types";
 import { toast } from "sonner";
-import { Search, RefreshCw, UserPlus, Clock, Users, XCircle, RotateCcw } from "lucide-react";
+import { Search, RefreshCw, UserPlus, Clock, Users, UserCheck, XCircle, RotateCcw } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
@@ -31,22 +31,28 @@ import { cn } from "@/lib/utils";
 
 const ASSIGNABLE_ROLES: UserRole[] = ["member", "alumni", "advisor", "staff", "president"];
 
-type MemberTab = "pending" | "approved" | "rejected";
+type MemberTab = "all" | "pending" | "approved" | "rejected";
 
 export default function AdminMemberTab() {
   const { user } = useAuthStore();
   const canApprove = isStaffOrAbove(user);
-  const [activeTab, setActiveTab] = useState<MemberTab>("pending");
+  const [activeTab, setActiveTab] = useState<MemberTab>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<UserRole | "all">("all");
 
   // API 데이터
   const { pendingMembers, isLoading: pendingLoading } = usePendingMembers();
-  const { members: allApproved } = useMembers(); // 전체 승인 회원 (배지 카운트용)
+  const { members: approvedMembers } = useMembers(); // 승인 회원
   const { members, isLoading } = useMembers(
     roleFilter !== "all" ? { role: roleFilter } : undefined
   );
   const { changeRole } = useChangeRole();
+
+  // 전체 회원 = 승인 + 미승인(대기+거절) 합산
+  const allMembers = useMemo(
+    () => [...approvedMembers, ...pendingMembers],
+    [approvedMembers, pendingMembers],
+  );
 
   // 승인대기(pending) vs 거절(rejected) 분리
   const truePending = useMemo(
@@ -145,6 +151,21 @@ export default function AdminMemberTab() {
       {/* ── 탭 헤더 ── */}
       <div className="flex items-center gap-1 rounded-lg border bg-muted/30 p-1">
         <button
+          onClick={() => setActiveTab("all")}
+          className={cn(
+            "flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors",
+            activeTab === "all"
+              ? "bg-white text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <Users size={16} />
+          전체
+          <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
+            {allMembers.length}
+          </Badge>
+        </button>
+        <button
           onClick={() => setActiveTab("pending")}
           className={cn(
             "flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors",
@@ -170,10 +191,10 @@ export default function AdminMemberTab() {
               : "text-muted-foreground hover:text-foreground",
           )}
         >
-          <Users size={16} />
+          <UserCheck size={16} />
           승인 완료
           <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
-            {allApproved.length}
+            {approvedMembers.length}
           </Badge>
         </button>
         <button
@@ -194,6 +215,46 @@ export default function AdminMemberTab() {
           )}
         </button>
       </div>
+
+      {/* ── 전체 탭 ── */}
+      {activeTab === "all" && (
+        <section>
+          <div className="overflow-x-auto rounded-xl border bg-white">
+            <table className="w-full text-sm whitespace-nowrap">
+              <thead className="border-b bg-muted/30">
+                <tr>
+                  <th className="px-4 py-3 text-left font-medium">이름</th>
+                  <th className="px-4 py-3 text-left font-medium">아이디</th>
+                  <th className="px-4 py-3 text-left font-medium">기수</th>
+                  <th className="px-4 py-3 text-left font-medium">역할</th>
+                  <th className="px-4 py-3 text-left font-medium">상태</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {allMembers.map((m) => (
+                  <tr key={m.id}>
+                    <td className="px-4 py-3 font-medium">{m.name}</td>
+                    <td className="px-4 py-3 text-muted-foreground">@{m.username}</td>
+                    <td className="px-4 py-3">{m.generation > 0 ? `${m.generation}기` : "-"}</td>
+                    <td className="px-4 py-3">
+                      <Badge variant="secondary">{ROLE_LABELS[m.role]}</Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      {m.approved ? (
+                        <Badge className="bg-green-100 text-green-700 text-[10px]">승인</Badge>
+                      ) : m.rejected ? (
+                        <Badge className="bg-red-100 text-red-700 text-[10px]">거절</Badge>
+                      ) : (
+                        <Badge className="bg-amber-100 text-amber-700 text-[10px]">대기</Badge>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       {/* ── 승인 대기 탭 ── */}
       {activeTab === "pending" && (
