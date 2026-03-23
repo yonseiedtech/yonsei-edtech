@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { ROLE_LABELS } from "@/types";
 import type { UserRole } from "@/types";
 import { toast } from "sonner";
-import { Search, RefreshCw, UserPlus } from "lucide-react";
+import { Search, RefreshCw, UserPlus, Clock, Users } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
@@ -26,12 +26,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 const ASSIGNABLE_ROLES: UserRole[] = ["member", "alumni", "advisor", "staff", "president"];
+
+type MemberTab = "pending" | "approved";
 
 export default function AdminMemberTab() {
   const { user } = useAuthStore();
   const canApprove = isStaffOrAbove(user);
+  const [activeTab, setActiveTab] = useState<MemberTab>("pending");
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<UserRole | "all">("all");
 
@@ -77,7 +81,6 @@ export default function AdminMemberTab() {
     toast.success("역할이 변경되었습니다.");
   }
 
-  // 운영진 교체 실행
   async function executeHandover() {
     if (newRoles.length === 0) {
       toast.error("새 운영진을 선택해주세요.");
@@ -86,7 +89,6 @@ export default function AdminMemberTab() {
 
     const changes: { id: string; role: UserRole }[] = [];
 
-    // 기존 운영진 → member로 변경
     for (const m of currentLeadership) {
       const keepAsNew = newRoles.find((nr) => nr.memberId === m.id);
       if (!keepAsNew) {
@@ -94,7 +96,6 @@ export default function AdminMemberTab() {
       }
     }
 
-    // 새 운영진 → 지정 역할로 변경
     for (const nr of newRoles) {
       changes.push({ id: nr.memberId, role: nr.role });
     }
@@ -127,127 +128,172 @@ export default function AdminMemberTab() {
     }
   }
 
+  const pendingCount = pendingMembers.length;
+
   return (
-    <div className="space-y-8">
-      {/* 승인 대기 */}
-      {canApprove && (
+    <div className="space-y-6">
+      {/* ── 탭 헤더 ── */}
+      <div className="flex items-center gap-1 rounded-lg border bg-muted/30 p-1">
+        <button
+          onClick={() => setActiveTab("pending")}
+          className={cn(
+            "flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors",
+            activeTab === "pending"
+              ? "bg-white text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <Clock size={16} />
+          승인 대기
+          {pendingCount > 0 && (
+            <Badge className="ml-1 bg-amber-500 text-white text-[10px] px-1.5 py-0">
+              {pendingCount}
+            </Badge>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab("approved")}
+          className={cn(
+            "flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors",
+            activeTab === "approved"
+              ? "bg-white text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <Users size={16} />
+          승인 완료
+          <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
+            {members.length}
+          </Badge>
+        </button>
+      </div>
+
+      {/* ── 승인 대기 탭 ── */}
+      {activeTab === "pending" && (
         <section>
-          <h2 className="text-lg font-bold">승인 대기 회원</h2>
-          <div className="mt-3">
-            {pendingLoading ? (
-              <p className="text-sm text-muted-foreground">로딩 중...</p>
-            ) : (
+          {pendingLoading ? (
+            <div className="flex justify-center py-12">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+          ) : pendingCount === 0 ? (
+            <div className="rounded-xl border bg-white p-12 text-center">
+              <Clock size={40} className="mx-auto text-muted-foreground/40" />
+              <p className="mt-3 text-muted-foreground">승인 대기 중인 회원이 없습니다.</p>
+            </div>
+          ) : (
+            <div>
+              <p className="mb-3 text-sm text-muted-foreground">
+                {pendingCount}명의 회원이 승인을 기다리고 있습니다.
+              </p>
               <AdminUserList users={pendingMembers} />
-            )}
-          </div>
+            </div>
+          )}
         </section>
       )}
 
-      {canApprove && <Separator />}
-
-      {/* 전체 회원 */}
-      <section>
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold">전체 회원</h2>
-          {canApprove && (
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setShowAddMember(true)}
+      {/* ── 승인 완료 탭 ── */}
+      {activeTab === "approved" && (
+        <section>
+          <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="이름 또는 아이디 검색..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-60 pl-9"
+                />
+              </div>
+              <select
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value as UserRole | "all")}
+                className="rounded-md border px-3 py-1.5 text-sm"
               >
-                <UserPlus size={14} className="mr-1" />
-                회원 추가
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setShowHandover(true)}
-              >
-                <RefreshCw size={14} className="mr-1" />
-                운영진 교체
-              </Button>
+                <option value="all">전체 역할</option>
+                {ASSIGNABLE_ROLES.map((r) => (
+                  <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                ))}
+              </select>
             </div>
-          )}
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="이름 또는 아이디 검색..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-60 pl-9"
-            />
+            {canApprove && (
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowAddMember(true)}
+                >
+                  <UserPlus size={14} className="mr-1" />
+                  회원 추가
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowHandover(true)}
+                >
+                  <RefreshCw size={14} className="mr-1" />
+                  운영진 교체
+                </Button>
+              </div>
+            )}
           </div>
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value as UserRole | "all")}
-            className="rounded-md border px-3 py-1.5 text-sm"
-          >
-            <option value="all">전체 역할</option>
-            {ASSIGNABLE_ROLES.map((r) => (
-              <option key={r} value={r}>{ROLE_LABELS[r]}</option>
-            ))}
-          </select>
-        </div>
 
-        {isLoading ? (
-          <div className="mt-6 flex justify-center py-8">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          </div>
-        ) : filteredMembers.length === 0 ? (
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            {searchQuery ? "검색 결과가 없습니다." : "등록된 회원이 없습니다."}
-          </p>
-        ) : (
-          <div className="mt-3 overflow-x-auto rounded-xl border bg-white">
-            <table className="w-full text-sm whitespace-nowrap">
-              <thead className="border-b bg-muted/30">
-                <tr>
-                  <th className="px-4 py-3 text-left font-medium">이름</th>
-                  <th className="px-4 py-3 text-left font-medium">아이디</th>
-                  <th className="px-4 py-3 text-left font-medium">기수</th>
-                  <th className="px-4 py-3 text-left font-medium">분야</th>
-                  <th className="px-4 py-3 text-left font-medium">역할</th>
-                  {canApprove && (
-                    <th className="px-4 py-3 text-left font-medium">역할 변경</th>
-                  )}
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {filteredMembers.map((m) => (
-                  <tr key={m.id}>
-                    <td className="px-4 py-3 font-medium">{m.name}</td>
-                    <td className="px-4 py-3 text-muted-foreground">@{m.username}</td>
-                    <td className="px-4 py-3">{m.generation}기</td>
-                    <td className="px-4 py-3">{m.field}</td>
-                    <td className="px-4 py-3">
-                      <Badge variant="secondary">{ROLE_LABELS[m.role]}</Badge>
-                    </td>
+          {isLoading ? (
+            <div className="mt-6 flex justify-center py-8">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+          ) : filteredMembers.length === 0 ? (
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              {searchQuery ? "검색 결과가 없습니다." : "등록된 회원이 없습니다."}
+            </p>
+          ) : (
+            <div className="mt-3 overflow-x-auto rounded-xl border bg-white">
+              <table className="w-full text-sm whitespace-nowrap">
+                <thead className="border-b bg-muted/30">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-medium">이름</th>
+                    <th className="px-4 py-3 text-left font-medium">아이디</th>
+                    <th className="px-4 py-3 text-left font-medium">기수</th>
+                    <th className="px-4 py-3 text-left font-medium">분야</th>
+                    <th className="px-4 py-3 text-left font-medium">역할</th>
                     {canApprove && (
-                      <td className="px-4 py-3">
-                        <select
-                          value={m.role}
-                          onChange={(e) => handleRoleChange(m.id, e.target.value as UserRole)}
-                          className="rounded-md border px-2 py-1 text-sm"
-                        >
-                          {ASSIGNABLE_ROLES.map((r) => (
-                            <option key={r} value={r}>
-                              {ROLE_LABELS[r]}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
+                      <th className="px-4 py-3 text-left font-medium">역할 변경</th>
                     )}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+                </thead>
+                <tbody className="divide-y">
+                  {filteredMembers.map((m) => (
+                    <tr key={m.id}>
+                      <td className="px-4 py-3 font-medium">{m.name}</td>
+                      <td className="px-4 py-3 text-muted-foreground">@{m.username}</td>
+                      <td className="px-4 py-3">{m.generation}기</td>
+                      <td className="px-4 py-3">{m.field}</td>
+                      <td className="px-4 py-3">
+                        <Badge variant="secondary">{ROLE_LABELS[m.role]}</Badge>
+                      </td>
+                      {canApprove && (
+                        <td className="px-4 py-3">
+                          <select
+                            value={m.role}
+                            onChange={(e) => handleRoleChange(m.id, e.target.value as UserRole)}
+                            className="rounded-md border px-2 py-1 text-sm"
+                          >
+                            {ASSIGNABLE_ROLES.map((r) => (
+                              <option key={r} value={r}>
+                                {ROLE_LABELS[r]}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* 수기 회원 추가 Dialog */}
       <Dialog open={showAddMember} onOpenChange={setShowAddMember}>
@@ -330,7 +376,6 @@ export default function AdminMemberTab() {
             <DialogTitle>운영진 교체</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {/* 현재 운영진 */}
             <div>
               <h4 className="text-sm font-medium">현재 운영진</h4>
               {currentLeadership.length === 0 ? (
@@ -351,7 +396,6 @@ export default function AdminMemberTab() {
 
             <Separator />
 
-            {/* 새 운영진 선택 */}
             <div>
               <h4 className="text-sm font-medium">새 운영진 지정</h4>
               <div className="mt-2 space-y-2">
