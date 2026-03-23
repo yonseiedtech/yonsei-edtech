@@ -70,7 +70,7 @@ function CertificatePreview({
   style: CertStyle;
 }) {
   const isCompletion = type === "completion";
-  const title = isCompletion ? "수 료 증" : "감  사  장";
+  const title = isCompletion ? "수 료 증" : "감사장";
   const accentColor = style.borderColor;
 
   return (
@@ -150,7 +150,7 @@ function CertificatePreview({
           style={{
             fontSize: "42pt",
             fontWeight: 800,
-            letterSpacing: "0.7em",
+            letterSpacing: "0.3em",
             color: accentColor,
             marginBottom: "5mm",
             textAlign: "center",
@@ -172,7 +172,7 @@ function CertificatePreview({
             style={{
               fontSize: "26pt",
               fontWeight: 800,
-              letterSpacing: "0.15em",
+              letterSpacing: "0.25em",
               color: "#111",
             }}
           >
