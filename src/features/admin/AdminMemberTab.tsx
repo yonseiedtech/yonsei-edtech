@@ -5,6 +5,7 @@ import { useAuthStore } from "@/features/auth/auth-store";
 import { isStaffOrAbove } from "@/lib/permissions";
 import {
   useMembers,
+  useAllMembers,
   usePendingMembers,
   useChangeRole,
   useBulkChangeRoles,
@@ -41,18 +42,13 @@ export default function AdminMemberTab() {
   const [roleFilter, setRoleFilter] = useState<UserRole | "all">("all");
 
   // API 데이터
+  const { members: allMembers, isLoading: allLoading } = useAllMembers(); // 전체 회원 (승인 여부 무관)
   const { pendingMembers, isLoading: pendingLoading } = usePendingMembers();
   const { members: approvedMembers } = useMembers(); // 승인 회원
   const { members, isLoading } = useMembers(
     roleFilter !== "all" ? { role: roleFilter } : undefined
   );
   const { changeRole } = useChangeRole();
-
-  // 전체 회원 = 승인 + 미승인(대기+거절) 합산
-  const allMembers = useMemo(
-    () => [...approvedMembers, ...pendingMembers],
-    [approvedMembers, pendingMembers],
-  );
 
   // 승인대기(pending) vs 거절(rejected) 분리
   const truePending = useMemo(
@@ -219,6 +215,16 @@ export default function AdminMemberTab() {
       {/* ── 전체 탭 ── */}
       {activeTab === "all" && (
         <section>
+          {allLoading ? (
+            <div className="flex justify-center py-12">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+          ) : allMembers.length === 0 ? (
+            <div className="rounded-xl border bg-white p-12 text-center">
+              <Users size={40} className="mx-auto text-muted-foreground/40" />
+              <p className="mt-3 text-muted-foreground">등록된 회원이 없습니다.</p>
+            </div>
+          ) : (
           <div className="overflow-x-auto rounded-xl border bg-white">
             <table className="w-full text-sm whitespace-nowrap">
               <thead className="border-b bg-muted/30">
@@ -253,6 +259,7 @@ export default function AdminMemberTab() {
               </tbody>
             </table>
           </div>
+          )}
         </section>
       )}
 

@@ -42,6 +42,24 @@ export function useMembers(options?: {
   };
 }
 
+// ── 전체 회원 (승인 여부 무관, 관리자용) ──
+
+export function useAllMembers() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["members", "all"],
+    queryFn: async () => {
+      const res = await profilesApi.list({
+        limit: 500,
+      });
+      const users = res.data as unknown as User[];
+      return users.sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
+    },
+    retry: false,
+  });
+
+  return { members: data ?? [], isLoading };
+}
+
 // ── 미승인 회원 (관리자용) ──
 
 export function usePendingMembers() {
