@@ -41,6 +41,7 @@ export default function AdminMemberTab() {
 
   // API 데이터
   const { pendingMembers, isLoading: pendingLoading } = usePendingMembers();
+  const { members: allApproved } = useMembers(); // 전체 승인 회원 (배지 카운트용)
   const { members, isLoading } = useMembers(
     roleFilter !== "all" ? { role: roleFilter } : undefined
   );
@@ -163,7 +164,7 @@ export default function AdminMemberTab() {
           <Users size={16} />
           승인 완료
           <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
-            {members.length}
+            {allApproved.length}
           </Badge>
         </button>
       </div>
