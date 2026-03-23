@@ -16,7 +16,7 @@ export function useMembers(options?: {
     queryFn: async () => {
       const params: Record<string, string | number | undefined> = {
         limit: 200,
-        sort: "generation:desc,name:asc",
+        // sort를 제거: Firestore에서 where + orderBy 복합 인덱스 없이 사용 불가
       };
       if (options?.approved !== undefined) {
         params["filter[approved]"] = String(options.approved);
@@ -30,7 +30,13 @@ export function useMembers(options?: {
         params["filter[role]"] = options.role;
       }
       const res = await profilesApi.list(params);
-      return { members: res.data as unknown as User[], total: res.total };
+      const members = res.data as unknown as User[];
+      // 클라이언트 정렬 (기수 내림차순, 이름 오름차순)
+      members.sort((a, b) => {
+        if (a.generation !== b.generation) return (b.generation ?? 0) - (a.generation ?? 0);
+        return (a.name ?? "").localeCompare(b.name ?? "");
+      });
+      return { members, total: res.total };
     },
     retry: false,
   });
