@@ -10,6 +10,7 @@ import {
   useBulkChangeRoles,
   useCreateMember,
 } from "@/features/member/useMembers";
+import { profilesApi } from "@/lib/bkend";
 import AdminUserList from "./AdminUserList";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { ROLE_LABELS } from "@/types";
 import type { UserRole } from "@/types";
 import { toast } from "sonner";
-import { Search, RefreshCw, UserPlus, Clock, Users } from "lucide-react";
+import { Search, RefreshCw, UserPlus, Clock, Users, XCircle, RotateCcw } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
@@ -30,7 +31,7 @@ import { cn } from "@/lib/utils";
 
 const ASSIGNABLE_ROLES: UserRole[] = ["member", "alumni", "advisor", "staff", "president"];
 
-type MemberTab = "pending" | "approved";
+type MemberTab = "pending" | "approved" | "rejected";
 
 export default function AdminMemberTab() {
   const { user } = useAuthStore();
@@ -46,6 +47,16 @@ export default function AdminMemberTab() {
     roleFilter !== "all" ? { role: roleFilter } : undefined
   );
   const { changeRole } = useChangeRole();
+
+  // 승인대기(pending) vs 거절(rejected) 분리
+  const truePending = useMemo(
+    () => pendingMembers.filter((m) => !m.rejected),
+    [pendingMembers],
+  );
+  const rejectedMembers = useMemo(
+    () => pendingMembers.filter((m) => m.rejected),
+    [pendingMembers],
+  );
 
   // 수기 회원 추가
   const { createMember } = useCreateMember();
@@ -129,8 +140,6 @@ export default function AdminMemberTab() {
     }
   }
 
-  const pendingCount = pendingMembers.length;
-
   return (
     <div className="space-y-6">
       {/* ── 탭 헤더 ── */}
@@ -146,9 +155,9 @@ export default function AdminMemberTab() {
         >
           <Clock size={16} />
           승인 대기
-          {pendingCount > 0 && (
+          {truePending.length > 0 && (
             <Badge className="ml-1 bg-amber-500 text-white text-[10px] px-1.5 py-0">
-              {pendingCount}
+              {truePending.length}
             </Badge>
           )}
         </button>
@@ -167,6 +176,23 @@ export default function AdminMemberTab() {
             {allApproved.length}
           </Badge>
         </button>
+        <button
+          onClick={() => setActiveTab("rejected")}
+          className={cn(
+            "flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors",
+            activeTab === "rejected"
+              ? "bg-white text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <XCircle size={16} />
+          거절
+          {rejectedMembers.length > 0 && (
+            <Badge className="ml-1 bg-red-500 text-white text-[10px] px-1.5 py-0">
+              {rejectedMembers.length}
+            </Badge>
+          )}
+        </button>
       </div>
 
       {/* ── 승인 대기 탭 ── */}
@@ -176,7 +202,7 @@ export default function AdminMemberTab() {
             <div className="flex justify-center py-12">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
             </div>
-          ) : pendingCount === 0 ? (
+          ) : truePending.length === 0 ? (
             <div className="rounded-xl border bg-white p-12 text-center">
               <Clock size={40} className="mx-auto text-muted-foreground/40" />
               <p className="mt-3 text-muted-foreground">승인 대기 중인 회원이 없습니다.</p>
@@ -184,9 +210,67 @@ export default function AdminMemberTab() {
           ) : (
             <div>
               <p className="mb-3 text-sm text-muted-foreground">
-                {pendingCount}명의 회원이 승인을 기다리고 있습니다.
+                {truePending.length}명의 회원이 승인을 기다리고 있습니다.
               </p>
-              <AdminUserList users={pendingMembers} />
+              <AdminUserList users={truePending} />
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* ── 거절 탭 ── */}
+      {activeTab === "rejected" && (
+        <section>
+          {pendingLoading ? (
+            <div className="flex justify-center py-12">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+          ) : rejectedMembers.length === 0 ? (
+            <div className="rounded-xl border bg-white p-12 text-center">
+              <XCircle size={40} className="mx-auto text-muted-foreground/40" />
+              <p className="mt-3 text-muted-foreground">거절된 회원이 없습니다.</p>
+            </div>
+          ) : (
+            <div>
+              <p className="mb-3 text-sm text-muted-foreground">
+                {rejectedMembers.length}명의 가입이 거절되었습니다.
+              </p>
+              <div className="space-y-3">
+                {rejectedMembers.map((u) => (
+                  <div
+                    key={u.id}
+                    className="flex items-center justify-between rounded-xl border bg-white p-4"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{u.name}</span>
+                        {u.generation > 0 && (
+                          <Badge variant="secondary">{u.generation}기</Badge>
+                        )}
+                        <Badge variant="outline" className="text-[10px] text-red-500 border-red-200">
+                          거절됨
+                        </Badge>
+                      </div>
+                      <div className="mt-1 text-sm text-muted-foreground">
+                        @{u.username} · {u.email}
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        changeRole({ id: u.id, role: "member" });
+                        // 거절 해제 → 승인 대기로 복구
+                        profilesApi.update(u.id, { rejected: false });
+                        toast.success(`${u.name}을(를) 승인 대기로 복구했습니다.`);
+                      }}
+                    >
+                      <RotateCcw size={14} className="mr-1" />
+                      복구
+                    </Button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </section>

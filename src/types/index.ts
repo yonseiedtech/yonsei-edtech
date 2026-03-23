@@ -43,6 +43,7 @@ export interface User {
   profileImage?: string;
   bio?: string;
   approved: boolean;
+  rejected?: boolean;
   /** 소속 정보 */
   occupation?: OccupationType;
   affiliation?: string;
