@@ -1,68 +1,19 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 import { useAuthStore } from "./auth-store";
 import { authApi, profilesApi, clearTokens } from "@/lib/bkend";
-import type { User } from "@/types";
+import { mergeToUser } from "./merge-user";
 
-/** bkend /auth/me + /data/users 결과를 User 타입으로 합침 */
-function mergeToUser(
-  authUser: { id: string; email: string; name: string },
-  profile?: Record<string, unknown>
-): User {
-  return {
-    id: profile?.id as string ?? authUser.id,
-    username: (profile?.username as string) ?? authUser.email.split("@")[0],
-    email: authUser.email,
-    name: (profile?.name as string) ?? authUser.name,
-    role: (profile?.role as User["role"]) ?? "member",
-    generation: (profile?.generation as number) ?? 0,
-    field: (profile?.field as string) ?? "",
-    profileImage: profile?.profileImage as string | undefined,
-    bio: profile?.bio as string | undefined,
-    approved: (profile?.approved as boolean) ?? false,
-    createdAt: (profile?.createdAt as string) ?? new Date().toISOString(),
-    updatedAt: (profile?.updatedAt as string) ?? new Date().toISOString(),
-  };
-}
-
+/**
+ * Authentication hook.
+ * NOTE: onAuthStateChanged is handled solely by AuthProvider.
+ * This hook only provides login/logout actions and reads from the store.
+ */
 export function useAuth() {
-  const { user, isLoading, initialized, setUser, setLoading, setInitialized, logout: clearUser } =
-    useAuthStore();
+  const { user, isLoading, setUser, setLoading, logout: clearUser } = useAuthStore();
   const router = useRouter();
-
-  // Firebase onAuthStateChanged로 세션 복원
-  useEffect(() => {
-    if (initialized) return;
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        try {
-          let profile: Record<string, unknown> | undefined;
-          try {
-            const profileRes = await profilesApi.getByEmail(firebaseUser.email!);
-            profile = profileRes.data[0];
-          } catch {
-            // 프로필 조회 실패 시 인증 정보만으로 진행
-          }
-          setUser(
-            mergeToUser(
-              { id: firebaseUser.uid, email: firebaseUser.email || "", name: firebaseUser.displayName || "" },
-              profile
-            )
-          );
-        } catch {
-          setUser(null);
-        }
-      } else {
-        setUser(null);
-      }
-      setInitialized(true);
-    });
-    return () => unsubscribe();
-  }, [initialized, setUser, setInitialized]);
 
   const login = useCallback(
     async (username: string, password: string) => {
@@ -105,7 +56,7 @@ export function useAuth() {
         setLoading(false);
       }
     },
-    [setUser, setLoading]
+    [setUser, setLoading],
   );
 
   const logout = useCallback(async () => {

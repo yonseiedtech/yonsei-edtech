@@ -1,51 +1,125 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+
+    // ─── Helper Functions ───
+    function isAuthenticated() {
+      return request.auth != null;
     }
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    function isStaffOrAbove() {
+      let role = getUserRole();
+      return role in ['staff', 'president', 'admin'];
+    }
+    function isAdmin() {
+      return getUserRole() == 'admin';
+    }
+    // Checks that sensitive fields (role, approved) are not modified
+    function noSensitiveFieldChange() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'approved']);
+    }
+
+    // ─── Users ───
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      // Users can update their own profile, but NOT role or approved
+      allow update: if isOwner(userId) && noSensitiveFieldChange();
+      // Only admin can change role/approved or create/delete users
+      allow create, delete: if isAuthenticated() && isAdmin();
+      // Admin can update anything
+      allow update: if isAuthenticated() && isAdmin();
+    }
+
+    // ─── Posts ───
     match /posts/{postId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      // Authenticated users can create posts
+      allow create: if isAuthenticated();
+      // Only author or staff+ can update/delete
+      allow update, delete: if isAuthenticated()
+        && (resource.data.authorId == request.auth.uid || isStaffOrAbove());
     }
+
+    // ─── Comments ───
     match /comments/{commentId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated()
+        && (resource.data.authorId == request.auth.uid || isStaffOrAbove());
     }
+
+    // ─── Inquiries ───
     match /inquiries/{inquiryId} {
-      allow read: if request.auth != null;
-      allow create: if true;
-      allow update, delete: if request.auth != null;
+      allow read: if isAuthenticated() && isStaffOrAbove();
+      allow create: if true; // Public contact form
+      allow update, delete: if isAuthenticated() && isStaffOrAbove();
     }
+
+    // ─── Site Settings (admin/president only) ───
     match /site_settings/{settingId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAuthenticated()
+        && getUserRole() in ['president', 'admin'];
     }
+
+    // ─── Seminars ───
     match /seminars/{docId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAuthenticated() && isStaffOrAbove();
     }
+
+    // ─── Seminar Sessions ───
     match /seminar_sessions/{docId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAuthenticated() && isStaffOrAbove();
     }
+
+    // ─── Seminar Attendees ───
     match /seminar_attendees/{docId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      // Authenticated users can register themselves
+      allow create: if isAuthenticated();
+      // Only self or staff+ can update/delete
+      allow update, delete: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
     }
+
+    // ─── Seminar Registrations ───
     match /seminar_registrations/{docId} {
-      allow read: if request.auth != null;
-      allow create: if true;
-      allow update, delete: if request.auth != null;
+      allow read: if isAuthenticated();
+      allow create: if true; // Public registration
+      allow update, delete: if isAuthenticated() && isStaffOrAbove();
     }
+
+    // ─── Certificates ───
     match /certificates/{docId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAuthenticated() && isStaffOrAbove();
     }
+
+    // ─── Promotion Contents ───
     match /promotion_contents/{docId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isStaffOrAbove();
+    }
+
+    // ─── Seminar Materials ───
+    match /seminar_materials/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isStaffOrAbove();
+    }
+
+    // ─── Seminar Reviews ───
+    match /seminar_reviews/{docId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated()
+        && (resource.data.authorId == request.auth.uid || isStaffOrAbove());
     }
   }
 }

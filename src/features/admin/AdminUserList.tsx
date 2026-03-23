@@ -5,7 +5,25 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useApproveMember, useRejectMember } from "@/features/member/useMembers";
+import { auth } from "@/lib/firebase";
 import type { User } from "@/types";
+
+async function sendApprovalEmail(user: User, approved: boolean) {
+  try {
+    const token = await auth.currentUser?.getIdToken();
+    if (!token) return;
+    await fetch("/api/email/approval", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ email: user.email, name: user.name, approved }),
+    });
+  } catch {
+    // 이메일 발송 실패는 조용히 무시 (승인 자체는 성공)
+  }
+}
 
 interface Props {
   users: User[];
@@ -19,6 +37,7 @@ export default function AdminUserList({ users }: Props) {
     try {
       await approveMember(user.id);
       toast.success(`${user.name} 승인 완료`);
+      sendApprovalEmail(user, true);
     } catch {
       toast.error(`${user.name} 승인에 실패했습니다.`);
     }
@@ -28,6 +47,7 @@ export default function AdminUserList({ users }: Props) {
     try {
       await rejectMember(user.id);
       toast.error(`${user.name} 거부 완료`);
+      sendApprovalEmail(user, false);
     } catch {
       toast.error(`${user.name} 거부에 실패했습니다.`);
     }

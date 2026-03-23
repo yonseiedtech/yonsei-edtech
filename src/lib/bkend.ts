@@ -217,7 +217,11 @@ export const dataApi = {
 
   patch: async <T>(table: string, id: string, data: Record<string, unknown>): Promise<T> => {
     const docRef = doc(db, table, id);
-    await updateDoc(docRef, data);
+    // Remove undefined values to prevent Firestore errors
+    const cleaned = Object.fromEntries(
+      Object.entries(data).filter(([, v]) => v !== undefined),
+    );
+    await updateDoc(docRef, cleaned);
     const docSnap = await getDoc(docRef);
     return serializeDoc(docSnap) as T;
   },

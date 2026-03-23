@@ -96,11 +96,27 @@ export function useToggleAttendance() {
     const existing = await attendeesApi.check(seminarId, userId);
     if (existing.data.length > 0) {
       const attendeeId = (existing.data[0] as Record<string, unknown>).id as string;
-      await attendeesApi.remove(attendeeId);
-      await syncAttendeeIds(seminarId, userId, "remove");
+      try {
+        await attendeesApi.remove(attendeeId);
+        await syncAttendeeIds(seminarId, userId, "remove");
+      } catch (err) {
+        // Rollback: re-add attendee if sync failed
+        try { await attendeesApi.add(seminarId, userId); } catch { /* best effort */ }
+        throw err;
+      }
     } else {
-      await attendeesApi.add(seminarId, userId);
-      await syncAttendeeIds(seminarId, userId, "add");
+      let newAttendeeId: string | undefined;
+      try {
+        const res = await attendeesApi.add(seminarId, userId);
+        newAttendeeId = (res as Record<string, unknown>)?.id as string;
+        await syncAttendeeIds(seminarId, userId, "add");
+      } catch (err) {
+        // Rollback: remove attendee if sync failed
+        if (newAttendeeId) {
+          try { await attendeesApi.remove(newAttendeeId); } catch { /* best effort */ }
+        }
+        throw err;
+      }
     }
     queryClient.invalidateQueries({ queryKey: ["seminars"] });
     queryClient.invalidateQueries({ queryKey: ["attendees"] });

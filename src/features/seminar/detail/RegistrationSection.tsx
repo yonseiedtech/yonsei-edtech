@@ -69,9 +69,12 @@ export default function RegistrationSection({
         </div>
       )}
 
-      {/* Member attendance toggle */}
+      {/* Member attendance toggle (회원 전용) */}
       {computedStatus === "upcoming" && user && (
         <div className="mb-4">
+          <p className="mb-2 text-xs font-medium text-muted-foreground">
+            회원 참석 신청 (QR 출석 코드 발급)
+          </p>
           <Button
             onClick={onToggle}
             variant={isAttending ? "outline" : "default"}
@@ -95,14 +98,21 @@ export default function RegistrationSection({
         </div>
       )}
 
-      {/* Registration form */}
-      {computedStatus === "upcoming" && (
-        <SeminarRegistrationForm
-          seminarId={seminar.id}
-          seminarTitle={seminar.title}
-          fields={seminar.registrationFields}
-          onSubmitted={onRegistered}
-        />
+      {/* Registration form (비회원 / 추가 정보 필요 시) */}
+      {computedStatus === "upcoming" && (seminar.registrationFields?.length ?? 0) > 0 && (
+        <div className={user ? "border-t pt-4 mt-4" : ""}>
+          {user && (
+            <p className="mb-2 text-xs font-medium text-muted-foreground">
+              외부 참가자 신청 / 추가 정보 등록
+            </p>
+          )}
+          <SeminarRegistrationForm
+            seminarId={seminar.id}
+            seminarTitle={seminar.title}
+            fields={seminar.registrationFields}
+            onSubmitted={onRegistered}
+          />
+        </div>
       )}
 
       {/* Login prompt */}

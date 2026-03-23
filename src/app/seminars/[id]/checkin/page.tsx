@@ -1,15 +1,14 @@
 "use client";
 
-import { use, useState, useCallback } from "react";
+import { use, useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AuthGuard from "@/features/auth/AuthGuard";
 import QrScanner from "@/features/seminar/QrScanner";
 import CheckinResultCard from "@/features/seminar/CheckinResult";
 import CheckinDashboard from "@/features/seminar/CheckinDashboard";
 import { useSeminar } from "@/features/seminar/useSeminar";
-import { useSeminarStore } from "@/features/seminar/seminar-store"; // checkinByToken은 아직 store 사용 (QR 로컬 처리)
+import { useSeminarStore } from "@/features/seminar/seminar-store";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { Button } from "@/components/ui/button";
 import { ArrowLeft, QrCode } from "lucide-react";
 import type { CheckinResult } from "@/types";
 
@@ -18,6 +17,13 @@ function CheckinContent({ id }: { id: string }) {
   const { user } = useAuthStore();
   const seminar = useSeminar(id);
   const checkinByToken = useSeminarStore((s) => s.checkinByToken);
+  const loadAttendees = useSeminarStore((s) => s.loadAttendees);
+  const loaded = useSeminarStore((s) => s.loaded);
+
+  // Load attendees from Firestore on mount
+  useEffect(() => {
+    loadAttendees(id);
+  }, [id, loadAttendees]);
   const [lastResult, setLastResult] = useState<CheckinResult | null>(null);
   const [scanLog, setScanLog] = useState<Array<{ name: string; time: string; success: boolean }>>([]);
 
@@ -45,6 +51,14 @@ function CheckinContent({ id }: { id: string }) {
     return (
       <div className="py-16 text-center text-muted-foreground">
         세미나를 찾을 수 없습니다.
+      </div>
+    );
+  }
+
+  if (!loaded) {
+    return (
+      <div className="py-16 text-center text-muted-foreground">
+        참석자 정보를 불러오는 중...
       </div>
     );
   }

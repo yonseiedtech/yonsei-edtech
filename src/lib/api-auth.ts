@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminAuth, getAdminDb } from "./firebase-admin";
 import type { UserRole } from "@/types";
-
-const ROLE_HIERARCHY: Record<UserRole, number> = {
-  guest: 0,
-  member: 1,
-  alumni: 2,
-  advisor: 2,
-  staff: 3,
-  president: 4,
-  admin: 5,
-};
+import { ROLE_HIERARCHY } from "./permissions";
 
 export interface AuthUser {
+  /** Firebase UID */
   uid: string;
+  /** Also used as user id for rate-limit */
+  id: string;
   email?: string;
   name?: string;
   role: UserRole;
@@ -35,10 +29,9 @@ export async function verifyAuth(req: NextRequest): Promise<AuthUser | null> {
     const userDoc = await adminDb.collection("users").doc(decoded.uid).get();
     const data = userDoc.data();
     const role = (data?.role as UserRole) ?? "member";
-    console.log("[api-auth] uid:", decoded.uid, "exists:", userDoc.exists, "role:", role, "email:", decoded.email);
-
     return {
       uid: decoded.uid,
+      id: decoded.uid,
       email: decoded.email,
       name: data?.name,
       role,
@@ -62,7 +55,7 @@ export async function requireAuth(
   }
   if (ROLE_HIERARCHY[user.role] < ROLE_HIERARCHY[minimumRole]) {
     return NextResponse.json(
-      { error: `권한이 부족합니다. (현재: ${user.role}, 필요: ${minimumRole})` },
+      { error: "권한이 부족합니다." },
       { status: 403 },
     );
   }

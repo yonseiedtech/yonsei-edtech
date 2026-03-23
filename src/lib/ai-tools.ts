@@ -148,14 +148,14 @@ export const staffTools = {
     inputSchema: z.object({}),
     execute: async () => {
       const db = getAdminDb();
-      const snap = await db.collection("inquiries").get();
-      let pending = 0;
-      let replied = 0;
-      snap.docs.forEach((doc) => {
-        if (doc.data().status === "replied") replied++;
-        else pending++;
-      });
-      return { total: snap.size, pending, replied };
+      const col = db.collection("inquiries");
+      const [pendingSnap, repliedSnap] = await Promise.all([
+        col.where("status", "!=", "replied").count().get(),
+        col.where("status", "==", "replied").count().get(),
+      ]);
+      const pending = pendingSnap.data().count;
+      const replied = repliedSnap.data().count;
+      return { total: pending + replied, pending, replied };
     },
   }),
 
@@ -250,22 +250,19 @@ export const staffTools = {
   }),
 
   save_inquiry_reply: tool({
-    description: "문의에 대한 답변을 Firestore에 저장합니다.",
+    description: "문의에 대한 답변 초안을 확인용으로 반환합니다. 실제 저장은 운영진이 직접 수행합니다.",
     inputSchema: z.object({
       inquiryId: z.string().describe("문의 문서 ID"),
       reply: z.string().describe("답변 내용"),
     }),
     execute: async ({ inquiryId, reply }) => {
-      const db = getAdminDb();
-      const ref = db.collection("inquiries").doc(inquiryId);
-      const doc = await ref.get();
-      if (!doc.exists) return { error: "문의를 찾을 수 없습니다." };
-      await ref.update({
-        reply,
-        status: "replied",
-        repliedAt: new Date().toISOString(),
-      });
-      return { success: true, message: "답변이 저장되었습니다." };
+      // DB에 직접 저장하지 않고, 초안만 반환하여 운영진이 확인 후 저장하도록 함
+      return {
+        inquiryId,
+        draft: reply,
+        message: "답변 초안이 생성되었습니다. 운영진 확인 후 저장해주세요.",
+        requiresConfirmation: true,
+      };
     },
   }),
 };

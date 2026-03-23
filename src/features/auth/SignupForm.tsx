@@ -27,11 +27,19 @@ const ACTIVITY_OPTIONS = [
   { value: "other", label: "기타" },
 ];
 
+// 현재 연도 기준 기수 옵션 생성 (최근 10개 기수)
+const currentYear = new Date().getFullYear();
+const GENERATION_OPTIONS = Array.from({ length: 10 }, (_, i) => {
+  const gen = currentYear - 2010 - i; // 2011년 1기 기준
+  return gen > 0 ? gen : null;
+}).filter((g): g is number => g !== null);
+
 interface SignupData {
   username: string;
   name: string;
   email: string;
   password: string;
+  generation: string;
   studentId: string;
   field: string;
   activity: string;
@@ -73,7 +81,7 @@ export default function SignupForm({ onSuccess }: Props) {
           email: data.email,
           role: "member",
           memberType,
-          generation: 0,
+          generation: data.generation ? Number(data.generation) : 0,
           studentId: data.studentId || "",
           field: data.field || "",
           approved: false,
@@ -85,8 +93,10 @@ export default function SignupForm({ onSuccess }: Props) {
         if (data.position) profileData.position = data.position;
 
         await profilesApi.update("me", profileData);
-      } catch {
-        // bkend 미연결 시 데모 모드
+      } catch (bkendErr) {
+        console.error("[signup] profile save failed:", bkendErr);
+        toast.error("프로필 저장에 실패했습니다. 관리자에게 문의하세요.");
+        return;
       }
 
       toast.success("가입 신청이 완료되었습니다. 관리자 승인 후 로그인할 수 있습니다.");
@@ -155,6 +165,8 @@ export default function SignupForm({ onSuccess }: Props) {
           {...register("password", {
             required: "비밀번호를 입력하세요",
             minLength: { value: 8, message: "8자 이상 입력하세요" },
+            validate: (v) =>
+              /(?=.*[a-zA-Z])(?=.*\d)/.test(v) || "영문과 숫자를 모두 포함해야 합니다",
           })}
           type="password"
           placeholder="8자 이상 입력하세요"
@@ -184,6 +196,26 @@ export default function SignupForm({ onSuccess }: Props) {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* 기수 선택 */}
+      <div>
+        <label className="mb-1.5 block text-sm font-medium">기수</label>
+        <select
+          {...register("generation", { required: "기수를 선택하세요" })}
+          className="w-full rounded-lg border px-3 py-2.5 text-sm"
+        >
+          <option value="">기수를 선택하세요</option>
+          {GENERATION_OPTIONS.map((gen) => (
+            <option key={gen} value={gen}>
+              {gen}기 ({2010 + gen}학번)
+            </option>
+          ))}
+          <option value="0">기타 / 모르겠음</option>
+        </select>
+        {errors.generation && (
+          <p className="mt-1 text-xs text-destructive">{errors.generation.message}</p>
+        )}
       </div>
 
       {/* ── 선택 정보 (접이식) ── */}

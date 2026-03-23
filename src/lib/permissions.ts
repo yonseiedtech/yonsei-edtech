@@ -3,7 +3,7 @@ import type { User, UserRole } from "@/types";
 /**
  * 역할 계층 (숫자가 높을수록 권한이 높음)
  */
-const ROLE_HIERARCHY: Record<UserRole, number> = {
+export const ROLE_HIERARCHY: Record<UserRole, number> = {
   guest: 0,
   member: 1,
   alumni: 2,

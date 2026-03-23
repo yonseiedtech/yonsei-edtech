@@ -2,14 +2,36 @@ import { NextRequest } from "next/server";
 import { streamText } from "ai";
 import { models } from "@/lib/ai";
 import { requireAuth } from "@/lib/api-auth";
+import { checkRateLimit, getClientId } from "@/lib/rate-limit";
 
 export const maxDuration = 30;
+
+const VALID_FORMATS = ["press", "sns", "email", "kakao", "hashtag"];
 
 export async function POST(req: NextRequest) {
   const authResult = await requireAuth(req, "staff");
   if (authResult instanceof Response) return authResult;
+  const user = authResult;
 
-  const { seminar, format } = await req.json();
+  const rateLimited = checkRateLimit(getClientId(req, user.id), {
+    limit: 20,
+    windowSec: 60,
+  });
+  if (rateLimited) return rateLimited;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let seminar: any, format: string;
+  try {
+    const body = await req.json();
+    seminar = body.seminar;
+    format = body.format;
+  } catch {
+    return Response.json({ error: "잘못된 요청 형식입니다." }, { status: 400 });
+  }
+
+  if (format && !VALID_FORMATS.includes(format)) {
+    return Response.json({ error: `유효하지 않은 형식입니다. (${VALID_FORMATS.join(", ")})` }, { status: 400 });
+  }
 
   if (!seminar?.title) {
     return Response.json({ error: "세미나 정보가 필요합니다." }, { status: 400 });
@@ -171,6 +193,6 @@ ${formatPrompts[format] || formatPrompts.press}
     if (msg.includes("quota") || msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED")) {
       return Response.json({ error: "AI API 할당량이 초과되었습니다. 잠시 후 다시 시도해주세요." }, { status: 429 });
     }
-    return Response.json({ error: msg }, { status: 500 });
+    return Response.json({ error: "AI 콘텐츠 생성에 실패했습니다. 다시 시도해주세요." }, { status: 500 });
   }
 }

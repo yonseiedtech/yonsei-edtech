@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/api-auth";
 import { GoogleGenAI } from "@google/genai";
+import { checkRateLimit, getClientId } from "@/lib/rate-limit";
 
 export const maxDuration = 60;
 
@@ -13,8 +14,23 @@ const SIZES: Record<string, { width: number; height: number; label: string }> = 
 export async function POST(req: NextRequest) {
   const authResult = await requireAuth(req, "staff");
   if (authResult instanceof Response) return authResult;
+  const user = authResult;
 
-  const { seminar, size = "instagram" } = await req.json();
+  const rateLimited = checkRateLimit(getClientId(req, user.id), {
+    limit: 10,
+    windowSec: 60,
+  });
+  if (rateLimited) return rateLimited;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let seminar: any, size: string;
+  try {
+    const body = await req.json();
+    seminar = body.seminar;
+    size = body.size ?? "instagram";
+  } catch {
+    return Response.json({ error: "잘못된 요청 형식입니다." }, { status: 400 });
+  }
 
   if (!seminar?.title) {
     return Response.json({ error: "세미나 정보가 필요합니다." }, { status: 400 });
@@ -72,7 +88,7 @@ STYLE:
     const ai = new GoogleGenAI({ apiKey });
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-2.0-flash-preview-image-generation",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       config: {
         responseModalities: ["image", "text"],
@@ -102,6 +118,6 @@ STYLE:
     if (msg.includes("quota") || msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED")) {
       return Response.json({ error: "AI API 할당량이 초과되었습니다. 잠시 후 다시 시도해주세요." }, { status: 429 });
     }
-    return Response.json({ error: msg }, { status: 500 });
+    return Response.json({ error: "AI 포스터 생성에 실패했습니다. 다시 시도해주세요." }, { status: 500 });
   }
 }
