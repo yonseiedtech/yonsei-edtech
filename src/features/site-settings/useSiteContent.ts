@@ -158,6 +158,23 @@ export function useUpdatePastPresidents() {
   return useUpdateSiteSetting<PastPresidentItem[]>("past_presidents");
 }
 
+// ── 학술활동 소개 ──
+
+export interface ActivitiesData {
+  introduction: string;
+}
+
+const DEFAULT_ACTIVITIES: ActivitiesData = {
+  introduction: "",
+};
+
+export function useActivities() {
+  return useSiteSetting<ActivitiesData>("activities", DEFAULT_ACTIVITIES);
+}
+export function useUpdateActivities() {
+  return useUpdateSiteSetting<ActivitiesData>("activities");
+}
+
 // ── 문의 연락처 ──
 
 export interface ContactInfoData {

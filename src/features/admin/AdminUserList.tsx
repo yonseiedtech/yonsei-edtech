@@ -71,7 +71,7 @@ export default function AdminUserList({ users }: Props) {
           <div>
             <div className="flex items-center gap-2">
               <span className="font-medium">{u.name}</span>
-              <Badge variant="secondary">{u.generation}기</Badge>
+              <Badge variant="secondary">{u.studentId || "-"}</Badge>
             </div>
             <div className="mt-1 text-sm text-muted-foreground">
               @{u.username} · {u.field}

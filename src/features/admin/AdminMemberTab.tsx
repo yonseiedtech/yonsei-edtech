@@ -208,7 +208,7 @@ export default function AdminMemberTab() {
             <tr>
               <th className="px-4 py-3 text-left font-medium">이름</th>
               <th className="px-4 py-3 text-left font-medium">아이디</th>
-              <th className="px-4 py-3 text-left font-medium">기수</th>
+              <th className="px-4 py-3 text-left font-medium">학번</th>
               <th className="px-4 py-3 text-left font-medium">분야</th>
               <th className="px-4 py-3 text-left font-medium">역할</th>
               {showStatus && <th className="px-4 py-3 text-left font-medium">상태</th>}
@@ -220,7 +220,7 @@ export default function AdminMemberTab() {
               <tr key={m.id} className="hover:bg-muted/20">
                 <td className="px-4 py-3 font-medium">{m.name}</td>
                 <td className="px-4 py-3 text-muted-foreground">@{m.username}</td>
-                <td className="px-4 py-3">{m.generation > 0 ? `${m.generation}기` : "-"}</td>
+                <td className="px-4 py-3">{m.studentId || "-"}</td>
                 <td className="px-4 py-3">{m.field || "-"}</td>
                 <td className="px-4 py-3"><RoleCell member={m} /></td>
                 {showStatus && (
@@ -368,7 +368,7 @@ export default function AdminMemberTab() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{u.name}</span>
-                        {u.generation > 0 && <Badge variant="secondary">{u.generation}기</Badge>}
+                        {u.studentId && <Badge variant="secondary">{u.studentId}</Badge>}
                         <Badge variant="outline" className="text-[10px] text-red-500 border-red-200">거절됨</Badge>
                       </div>
                       <div className="mt-1 text-sm text-muted-foreground">@{u.username} · {u.email}</div>
@@ -493,7 +493,7 @@ export default function AdminMemberTab() {
                   <div key={i} className="flex items-center gap-2">
                     <select value={nr.memberId} onChange={(e) => { const u = [...newRoles]; u[i] = { ...nr, memberId: e.target.value }; setNewRoles(u); }} className="flex-1 rounded-md border px-2 py-1.5 text-sm">
                       <option value="">회원 선택...</option>
-                      {members.filter((m) => m.role === "member" || m.role === "alumni" || newRoles.some((r) => r.memberId === m.id)).map((m) => (<option key={m.id} value={m.id}>{m.name} ({m.generation}기)</option>))}
+                      {members.filter((m) => m.role === "member" || m.role === "alumni" || newRoles.some((r) => r.memberId === m.id)).map((m) => (<option key={m.id} value={m.id}>{m.name} ({m.studentId || "-"})</option>))}
                     </select>
                     <select value={nr.role} onChange={(e) => { const u = [...newRoles]; u[i] = { ...nr, role: e.target.value as UserRole }; setNewRoles(u); }} className="w-28 rounded-md border px-2 py-1.5 text-sm">
                       <option value="president">회장</option><option value="staff">운영진</option>

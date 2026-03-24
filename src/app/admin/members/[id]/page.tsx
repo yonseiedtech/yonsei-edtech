@@ -139,7 +139,7 @@ function AdminMemberDetail({ id }: { id: string }) {
             <div>
               <h2 className="text-xl font-bold">{member.name}</h2>
               <div className="mt-1 flex flex-wrap items-center gap-2">
-                <Badge variant="secondary">{member.generation > 0 ? `${member.generation}기` : "미지정"}</Badge>
+                <Badge variant="secondary">{member.studentId || "학번 미지정"}</Badge>
                 <Badge className={ROLE_COLORS[member.role]}>{ROLE_LABELS[member.role]}</Badge>
                 {member.approved ? (
                   <Badge className="bg-green-100 text-green-700 text-[10px]">승인됨</Badge>
