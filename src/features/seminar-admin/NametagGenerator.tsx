@@ -28,6 +28,7 @@ function NametagPreview({
   seminarDate,
   recipientName,
   recipientStudentId,
+  recipientRole = "참가자",
   sessions,
 }: {
   seminarTitle: string;
@@ -35,6 +36,7 @@ function NametagPreview({
   seminarDate: string;
   recipientName: string;
   recipientStudentId?: string;
+  recipientRole?: NametagRole;
   sessions: SeminarSession[];
 }) {
   return (
@@ -122,7 +124,7 @@ function NametagPreview({
           <div style={{ marginTop: "3mm" }}>
             <p
               style={{
-                fontSize: "9pt",
+                fontSize: "11pt",
                 fontWeight: 700,
                 color: "#fff",
                 letterSpacing: "0.02em",
@@ -151,6 +153,23 @@ function NametagPreview({
             bottom: "18mm",
           }}
         >
+          {/* 역할 배지 */}
+          <span
+            data-nametag-role
+            style={{
+              fontSize: "7pt",
+              fontWeight: 700,
+              color: ROLE_COLORS[recipientRole].text,
+              background: ROLE_COLORS[recipientRole].bg,
+              padding: "1.5px 8px",
+              borderRadius: "10px",
+              letterSpacing: "0.08em",
+              marginBottom: "2.5mm",
+            }}
+          >
+            {recipientRole}
+          </span>
+
           {/* 이름 */}
           <p
             data-nametag-name
@@ -359,16 +378,29 @@ function NametagPreview({
   );
 }
 
+const ROLE_OPTIONS = ["참가자", "연사", "자문", "학회장", "부학회장", "운영진"] as const;
+type NametagRole = (typeof ROLE_OPTIONS)[number];
+
+const ROLE_COLORS: Record<NametagRole, { bg: string; text: string }> = {
+  참가자: { bg: "rgba(0,56,118,0.08)", text: "#003876" },
+  연사: { bg: "rgba(220,38,38,0.1)", text: "#dc2626" },
+  자문: { bg: "rgba(124,58,237,0.1)", text: "#7c3aed" },
+  학회장: { bg: "rgba(202,138,4,0.12)", text: "#a16207" },
+  부학회장: { bg: "rgba(202,138,4,0.08)", text: "#a16207" },
+  운영진: { bg: "rgba(22,163,74,0.1)", text: "#16a34a" },
+};
+
 interface NameEntry {
   name: string;
   studentId: string;
+  role: NametagRole;
 }
 
 export default function NametagGenerator() {
   const { seminars } = useSeminars();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [subtitle, setSubtitle] = useState("");
-  const [names, setNames] = useState<NameEntry[]>([{ name: "", studentId: "" }]);
+  const [names, setNames] = useState<NameEntry[]>([{ name: "", studentId: "", role: "참가자" }]);
   const printRef = useRef<HTMLDivElement>(null);
 
   const seminar = seminars.find((s) => s.id === selectedId);
@@ -386,6 +418,7 @@ export default function NametagGenerator() {
     setNames(attendees.map((a) => ({
       name: a.userName,
       studentId: "",
+      role: "참가자" as NametagRole,
     })));
     toast.success(`${attendees.length}명의 참석자를 불러왔습니다.`);
   }
@@ -453,6 +486,12 @@ export default function NametagGenerator() {
     for (const n of valid) {
       const el = printRef.current.cloneNode(true) as HTMLElement;
       el.querySelectorAll("[data-nametag-name]").forEach((e) => { e.textContent = spacedName(n.name); });
+      el.querySelectorAll("[data-nametag-role]").forEach((e) => {
+        const colors = ROLE_COLORS[n.role];
+        e.textContent = n.role;
+        (e as HTMLElement).style.color = colors.text;
+        (e as HTMLElement).style.background = colors.bg;
+      });
       el.querySelectorAll("[data-nametag-studentid]").forEach((e) => {
         if (n.studentId) { e.textContent = n.studentId; (e as HTMLElement).style.display = "inline"; }
         else { (e as HTMLElement).style.display = "none"; }
@@ -504,7 +543,7 @@ export default function NametagGenerator() {
             <label className="text-sm font-medium">이름 목록</label>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={loadFromAttendees} disabled={!seminar}>참석자 불러오기</Button>
-              <Button variant="outline" size="sm" onClick={() => setNames([...names, { name: "", studentId: "" }])}>
+              <Button variant="outline" size="sm" onClick={() => setNames([...names, { name: "", studentId: "", role: "참가자" }])}>
                 <Plus size={14} className="mr-1" />추가
               </Button>
             </div>
@@ -519,11 +558,18 @@ export default function NametagGenerator() {
                   placeholder="이름"
                   className="flex-1"
                 />
+                <select
+                  value={n.role}
+                  onChange={(e) => updateName(i, "role", e.target.value)}
+                  className="w-24 rounded-md border px-2 py-1.5 text-sm"
+                >
+                  {ROLE_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+                </select>
                 <Input
                   value={n.studentId}
                   onChange={(e) => updateName(i, "studentId", e.target.value)}
                   placeholder="학번"
-                  className="w-32"
+                  className="w-28"
                 />
                 <button onClick={() => setNames(names.filter((_, j) => j !== i))} className="shrink-0 rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-500">
                   <Trash2 size={14} />
@@ -559,6 +605,7 @@ export default function NametagGenerator() {
               seminarDate={formatKoreanDate(seminar.date)}
               recipientName={names[0]?.name || ""}
               recipientStudentId={names[0]?.studentId || ""}
+              recipientRole={names[0]?.role || "참가자"}
               sessions={sessions}
             />
           </div>
