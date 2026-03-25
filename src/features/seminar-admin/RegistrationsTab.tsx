@@ -16,14 +16,14 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Download, Trash2, Pencil, Settings, UserPlus, Plus, Loader2 } from "lucide-react";
+import { Download, Trash2, Pencil, Settings, UserPlus, Plus, Loader2, BarChart3, Users, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { SeminarRegistration, RegistrationFieldConfig } from "@/types";
 import { DEFAULT_REGISTRATION_FIELDS } from "@/types";
 
 function exportRegistrationsCSV(seminarTitle: string, regs: SeminarRegistration[]) {
-  const header = "이름,이메일,소속,연락처,메모,신청일시";
+  const header = "이름,이메일,소속,연락처,메모,신청일시,참석자전환";
   const rows = regs.map((r) =>
     [
       r.name,
@@ -32,6 +32,7 @@ function exportRegistrationsCSV(seminarTitle: string, regs: SeminarRegistration[
       r.phone ?? "",
       `"${(r.memo ?? "").replace(/"/g, '""')}"`,
       r.createdAt ? new Date(r.createdAt).toLocaleString("ko-KR") : "",
+      r.convertedAt ? "O" : "",
     ].join(","),
   );
   const bom = "\uFEFF";
@@ -43,6 +44,71 @@ function exportRegistrationsCSV(seminarTitle: string, regs: SeminarRegistration[
   a.download = `신청자_${seminarTitle.replace(/[^가-힣a-zA-Z0-9]/g, "_")}.csv`;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+/* ── 분석 섹션 ── */
+function RegistrationAnalysis({ registrations }: { registrations: SeminarRegistration[] }) {
+  if (registrations.length === 0) return null;
+
+  const total = registrations.length;
+  const members = registrations.filter((r) => r.userId).length;
+  const converted = registrations.filter((r) => r.convertedAt).length;
+
+  // 소속별 분포
+  const affDist: Record<string, number> = {};
+  for (const r of registrations) {
+    const key = r.affiliation?.trim() || "미입력";
+    affDist[key] = (affDist[key] || 0) + 1;
+  }
+  const affEntries = Object.entries(affDist).sort((a, b) => b[1] - a[1]);
+  const affMax = Math.max(...affEntries.map(([, c]) => c), 1);
+
+  return (
+    <div className="rounded-xl border bg-white p-5 space-y-4">
+      <h4 className="flex items-center gap-1.5 text-sm font-medium">
+        <BarChart3 size={16} />
+        신청 현황 분석
+      </h4>
+
+      {/* 통계 카드 */}
+      <div className="grid grid-cols-4 gap-3">
+        <div className="rounded-lg border p-3 text-center">
+          <p className="text-lg font-bold text-blue-600">{total}</p>
+          <p className="text-[10px] text-muted-foreground">총 신청</p>
+        </div>
+        <div className="rounded-lg border p-3 text-center">
+          <p className="text-lg font-bold text-primary">{members}</p>
+          <p className="text-[10px] text-muted-foreground">회원</p>
+        </div>
+        <div className="rounded-lg border p-3 text-center">
+          <p className="text-lg font-bold text-amber-600">{total - members}</p>
+          <p className="text-[10px] text-muted-foreground">비회원</p>
+        </div>
+        <div className="rounded-lg border p-3 text-center">
+          <p className="text-lg font-bold text-green-600">{converted}</p>
+          <p className="text-[10px] text-muted-foreground">참석자 전환</p>
+        </div>
+      </div>
+
+      {/* 소속별 분포 */}
+      {affEntries.length > 1 && (
+        <div>
+          <h5 className="mb-2 text-xs font-medium text-muted-foreground">소속별 분포</h5>
+          <div className="space-y-1.5">
+            {affEntries.map(([aff, count]) => (
+              <div key={aff} className="flex items-center gap-2 text-xs">
+                <span className="w-28 truncate text-right text-muted-foreground" title={aff}>{aff}</span>
+                <div className="h-4 flex-1 rounded bg-muted/30">
+                  <div className="h-full rounded bg-blue-500/70 transition-all" style={{ width: `${(count / affMax) * 100}%` }} />
+                </div>
+                <span className="w-6 text-right text-muted-foreground">{count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 interface EditForm {
@@ -66,7 +132,6 @@ function FormFieldsEditor({ seminarId, fields }: { seminarId: string; fields: Re
 
   function toggleEnabled(idx: number) {
     const updated = [...localFields];
-    // 이름과 이메일은 비활성화 불가
     if (updated[idx].key === "name" || updated[idx].key === "email") return;
     updated[idx] = { ...updated[idx], enabled: !updated[idx].enabled };
     setLocalFields(updated);
@@ -95,7 +160,7 @@ function FormFieldsEditor({ seminarId, fields }: { seminarId: string; fields: Re
 
   function removeField(idx: number) {
     const f = localFields[idx];
-    if (!f.key.startsWith("custom_")) return; // 기본 필드 삭제 불가
+    if (!f.key.startsWith("custom_")) return;
     setLocalFields(localFields.filter((_, i) => i !== idx));
   }
 
@@ -103,7 +168,7 @@ function FormFieldsEditor({ seminarId, fields }: { seminarId: string; fields: Re
     setSaving(true);
     try {
       await seminarsApi.update(seminarId, { registrationFields: localFields });
-      qc.invalidateQueries({ queryKey: ["seminar", seminarId] });
+      qc.invalidateQueries({ queryKey: ["seminars", seminarId] });
       toast.success("신청서 폼 설정이 저장되었습니다.");
     } catch {
       toast.error("저장에 실패했습니다.");
@@ -164,7 +229,6 @@ function FormFieldsEditor({ seminarId, fields }: { seminarId: string; fields: Re
         활성화된 필드만 공개 신청 폼에 표시됩니다. 이름/이메일은 필수 항목입니다.
       </p>
 
-      {/* 필드 추가 Dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
@@ -209,8 +273,6 @@ export default function RegistrationsTab() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const qc = useQueryClient();
-
-  // 세미나 상세 (registrationFields 포함)
   const seminarDetail = useSeminar(selectedId ?? "");
 
   const { data, refetch } = useQuery({
@@ -274,8 +336,9 @@ export default function RegistrationsTab() {
   }
 
   function toggleAll() {
-    if (selected.size === registrations.length) setSelected(new Set());
-    else setSelected(new Set(registrations.map((r) => r.id)));
+    const convertable = registrations.filter((r) => !r.convertedAt);
+    if (selected.size === convertable.length) setSelected(new Set());
+    else setSelected(new Set(convertable.map((r) => r.id)));
   }
 
   async function convertToAttendees(ids: string[]) {
@@ -293,20 +356,30 @@ export default function RegistrationsTab() {
           if ((existing.data as unknown[]).length > 0) { skipped++; continue; }
         }
 
+        // P1: 데이터 완전 전달
         await attendeesApi.addWithDetails(selectedId, {
           userName: reg.name,
           userId: reg.userId || `guest_${reg.email}`,
           email: reg.email,
           phone: reg.phone || undefined,
+          interests: reg.affiliation || undefined,
+          questions: reg.memo || undefined,
           isGuest: !reg.userId,
           checkedIn: false,
           checkedInAt: null,
           checkedInBy: null,
         });
+
+        // P3: 전환 상태 기록
+        await registrationsApi.update(reg.id, {
+          convertedAt: new Date().toISOString(),
+        });
+
         added++;
       }
 
       qc.invalidateQueries({ queryKey: ["attendees", selectedId] });
+      refetch();
       setSelected(new Set());
       const parts = [];
       if (added > 0) parts.push(`${added}명 참석자 등록`);
@@ -318,6 +391,11 @@ export default function RegistrationsTab() {
       setConverting(false);
     }
   }
+
+  const convertableSelected = [...selected].filter((id) => {
+    const r = registrations.find((reg) => reg.id === id);
+    return r && !r.convertedAt;
+  });
 
   return (
     <div className="space-y-6">
@@ -357,6 +435,9 @@ export default function RegistrationsTab() {
         />
       )}
 
+      {/* P2: 신청 현황 분석 */}
+      {selectedId && <RegistrationAnalysis registrations={registrations} />}
+
       {/* 신청 목록 */}
       {selectedId && (
         <div className="rounded-xl border bg-white">
@@ -364,10 +445,10 @@ export default function RegistrationsTab() {
             <span className="text-sm font-medium">
               자체 신청 현황: {registrations.length}명
             </span>
-            {selected.size > 0 && (
-              <Button size="sm" onClick={() => convertToAttendees([...selected])} disabled={converting}>
+            {convertableSelected.length > 0 && (
+              <Button size="sm" onClick={() => convertToAttendees(convertableSelected)} disabled={converting}>
                 {converting ? <Loader2 size={14} className="mr-1 animate-spin" /> : <UserPlus size={14} className="mr-1" />}
-                선택 → 참석자 등록 ({selected.size})
+                선택 → 참석자 등록 ({convertableSelected.length})
               </Button>
             )}
           </div>
@@ -382,14 +463,17 @@ export default function RegistrationsTab() {
                 <thead className="sticky top-0 border-b bg-muted/30">
                   <tr>
                     <th className="px-3 py-2 text-left">
-                      <Checkbox checked={selected.size === registrations.length && registrations.length > 0} onCheckedChange={toggleAll} />
+                      <Checkbox
+                        checked={registrations.filter((r) => !r.convertedAt).length > 0 && selected.size === registrations.filter((r) => !r.convertedAt).length}
+                        onCheckedChange={toggleAll}
+                      />
                     </th>
                     <th className="px-3 py-2 text-left font-medium">이름</th>
                     <th className="px-3 py-2 text-left font-medium">이메일</th>
                     <th className="px-3 py-2 text-left font-medium">소속</th>
                     <th className="px-3 py-2 text-left font-medium">연락처</th>
                     <th className="px-3 py-2 text-left font-medium">메모</th>
-                    <th className="px-3 py-2 text-left font-medium">신청일</th>
+                    <th className="px-3 py-2 text-left font-medium">상태</th>
                     <th className="px-3 py-2 text-left font-medium">관리</th>
                   </tr>
                 </thead>
@@ -397,11 +481,14 @@ export default function RegistrationsTab() {
                   {registrations.map((r) => (
                     <tr key={r.id} className={cn(selected.has(r.id) && "bg-primary/5")}>
                       <td className="px-3 py-2">
-                        <Checkbox checked={selected.has(r.id)} onCheckedChange={() => toggleSelect(r.id)} />
+                        <Checkbox
+                          checked={selected.has(r.id)}
+                          onCheckedChange={() => toggleSelect(r.id)}
+                          disabled={!!r.convertedAt}
+                        />
                       </td>
                       <td className="px-3 py-2 font-medium">
                         {r.name}
-                        {r.userId && <Badge variant="secondary" className="ml-1 text-xs">회원</Badge>}
                       </td>
                       <td className="px-3 py-2 text-muted-foreground">{r.email}</td>
                       <td className="px-3 py-2 text-muted-foreground">{r.affiliation ?? "-"}</td>
@@ -409,8 +496,15 @@ export default function RegistrationsTab() {
                       <td className="max-w-32 truncate px-3 py-2 text-xs text-muted-foreground" title={r.memo}>
                         {r.memo ?? "-"}
                       </td>
-                      <td className="px-3 py-2 text-xs text-muted-foreground">
-                        {r.createdAt ? new Date(r.createdAt).toLocaleDateString("ko-KR") : "-"}
+                      <td className="px-3 py-2">
+                        <div className="flex flex-wrap gap-1">
+                          {r.userId && <Badge variant="secondary" className="text-[10px]">회원</Badge>}
+                          {r.convertedAt ? (
+                            <Badge className="bg-green-50 text-green-700 text-[10px]">참석자 등록됨</Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[10px] text-muted-foreground">대기</Badge>
+                          )}
+                        </div>
                       </td>
                       <td className="px-3 py-2">
                         <div className="flex gap-1">

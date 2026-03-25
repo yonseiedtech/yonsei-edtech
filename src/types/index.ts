@@ -209,6 +209,7 @@ export interface SeminarRegistration {
   memo?: string;
   userId?: string; // 회원이면 uid 연결
   createdAt: string;
+  convertedAt?: string; // 참석자로 전환된 시각
 }
 
 // ── 수료증 / 감사장 ──
