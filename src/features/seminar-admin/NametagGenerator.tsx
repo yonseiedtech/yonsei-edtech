@@ -121,7 +121,7 @@ function NametagPreview({
           </div>
 
           {/* 행사명 */}
-          <div style={{ marginTop: "3mm" }}>
+          <div style={{ marginTop: "1.5mm" }}>
             <p
               style={{
                 fontSize: "11pt",
