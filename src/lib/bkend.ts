@@ -302,8 +302,22 @@ export const attendeesApi = {
       "filter[seminarId]": seminarId,
       "filter[userId]": userId,
     }),
+  checkByStudentId: (seminarId: string, studentId: string) =>
+    dataApi.list<Record<string, unknown>>("seminar_attendees", {
+      "filter[seminarId]": seminarId,
+      "filter[studentId]": studentId,
+    }),
+  findGuestsByStudentId: (studentId: string) =>
+    dataApi.list<Record<string, unknown>>("seminar_attendees", {
+      "filter[studentId]": studentId,
+      "filter[isGuest]": "true",
+    }),
   add: (seminarId: string, userId: string) =>
     dataApi.create("seminar_attendees", { seminarId, userId }),
+  addWithDetails: (seminarId: string, data: Record<string, unknown>) =>
+    dataApi.create("seminar_attendees", { seminarId, ...data }),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update("seminar_attendees", id, data),
   remove: (id: string) => dataApi.delete("seminar_attendees", id),
 };
 

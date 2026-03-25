@@ -13,12 +13,15 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Download, Users, UserCheck, UserX, FileSpreadsheet, Link, Loader2, UserPlus } from "lucide-react";
+import { Download, Users, UserCheck, UserX, FileSpreadsheet, Link, Loader2, UserPlus, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { parseExcelFile, parseCSVText, extractSheetId, getSheetCsvUrl } from "@/lib/parse-spreadsheet";
 import { attendeesApi, profilesApi } from "@/lib/bkend";
 import { useQueryClient } from "@tanstack/react-query";
+import type { SeminarAttendee } from "@/types";
+
+const FORM_COLUMNS = ["이름", "학번", "누적학기", "이메일", "전화번호", "관심분야", "기타 질문사항"];
 
 function GenerationBar({ data }: { data: Record<number, number> }) {
   const entries = Object.entries(data)
@@ -44,6 +47,51 @@ function GenerationBar({ data }: { data: Record<number, number> }) {
   );
 }
 
+function AttendeeRow({ a }: { a: SeminarAttendee }) {
+  const [open, setOpen] = useState(false);
+  const hasDetails = a.interests || a.questions || a.semester || a.phone;
+
+  return (
+    <>
+      <tr className={cn("hover:bg-muted/10", hasDetails && "cursor-pointer")} onClick={() => hasDetails && setOpen(!open)}>
+        <td className="px-3 py-2">
+          <div className="flex items-center gap-1.5">
+            {a.userName}
+            {a.isGuest && <Badge variant="outline" className="text-[9px] text-amber-600 border-amber-200">미가입</Badge>}
+          </div>
+        </td>
+        <td className="px-3 py-2 text-xs text-muted-foreground">{a.studentId || "-"}</td>
+        <td className="px-3 py-2 text-xs text-muted-foreground">{a.email || "-"}</td>
+        <td className="px-3 py-2">
+          {a.checkedIn ? (
+            <Badge className="bg-green-50 text-green-700 text-xs">출석</Badge>
+          ) : (
+            <Badge variant="secondary" className="text-xs">미출석</Badge>
+          )}
+        </td>
+        <td className="px-3 py-2 text-xs text-muted-foreground">
+          {a.checkedInAt
+            ? new Date(a.checkedInAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })
+            : "-"}
+        </td>
+        <td className="px-3 py-1 w-6">
+          {hasDetails && (open ? <ChevronUp size={12} className="text-muted-foreground" /> : <ChevronDown size={12} className="text-muted-foreground" />)}
+        </td>
+      </tr>
+      {open && hasDetails && (
+        <tr className="bg-muted/5">
+          <td colSpan={6} className="px-4 py-2 text-xs text-muted-foreground space-y-0.5">
+            {a.semester && <p><span className="font-medium text-foreground">누적학기:</span> {a.semester}</p>}
+            {a.phone && <p><span className="font-medium text-foreground">전화번호:</span> {a.phone}</p>}
+            {a.interests && <p><span className="font-medium text-foreground">관심분야:</span> {a.interests}</p>}
+            {a.questions && <p><span className="font-medium text-foreground">질문사항:</span> {a.questions}</p>}
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
 function SeminarReport({ seminarId, seminarTitle }: { seminarId: string; seminarTitle: string }) {
   const { attendees } = useAttendees(seminarId);
   const qc = useQueryClient();
@@ -60,54 +108,79 @@ function SeminarReport({ seminarId, seminarTitle }: { seminarId: string; seminar
   // 기수별 분포
   const genDist: Record<number, number> = {};
   for (const a of attendees) {
-    genDist[a.userGeneration] = (genDist[a.userGeneration] || 0) + 1;
+    if (a.userGeneration > 0) genDist[a.userGeneration] = (genDist[a.userGeneration] || 0) + 1;
   }
 
-  async function registerFromData(rows: { name: string; studentId: string }[]) {
+  interface ParsedRow {
+    name: string;
+    studentId: string;
+    email: string;
+    phone: string;
+    semester: string;
+    interests: string;
+    questions: string;
+  }
+
+  async function registerFromData(rows: ParsedRow[]) {
     if (rows.length === 0) { toast.error("데이터가 없습니다."); return; }
     setRegistering(true);
     let matched = 0;
-    let unmatched = 0;
+    let guest = 0;
     let skipped = 0;
 
-    const existingIds = new Set(attendees.map((a) => a.userId));
+    const existingStudentIds = new Set(attendees.filter((a) => a.studentId).map((a) => a.studentId));
+    const existingUserIds = new Set(attendees.map((a) => a.userId));
 
     try {
-      // 모든 회원 목록 가져오기
       const allMembers = await profilesApi.list({ limit: 500 });
       const memberList = allMembers.data as unknown as { id: string; name: string; studentId?: string }[];
 
       for (const row of rows) {
-        // 1. 학번으로 매칭 시도
+        // 중복 체크 (학번 기준)
+        if (row.studentId && existingStudentIds.has(row.studentId)) { skipped++; continue; }
+
+        // 회원 매칭: 학번 → 이름
         let member = row.studentId
           ? memberList.find((m) => m.studentId === row.studentId)
           : undefined;
-        // 2. 이름으로 매칭 시도
-        if (!member) {
-          member = memberList.find((m) => m.name === row.name);
-        }
+        if (!member) member = memberList.find((m) => m.name === row.name);
+
+        if (member && existingUserIds.has(member.id)) { skipped++; continue; }
+
+        const details: Record<string, unknown> = {
+          userName: row.name,
+          studentId: row.studentId || undefined,
+          email: row.email || undefined,
+          phone: row.phone || undefined,
+          semester: row.semester || undefined,
+          interests: row.interests || undefined,
+          questions: row.questions || undefined,
+          checkedIn: false,
+          checkedInAt: null,
+          checkedInBy: null,
+        };
 
         if (member) {
-          if (existingIds.has(member.id)) {
-            skipped++;
-          } else {
-            await attendeesApi.add(seminarId, member.id);
-            existingIds.add(member.id);
-            matched++;
-          }
+          details.userId = member.id;
+          details.isGuest = false;
+          existingUserIds.add(member.id);
+          matched++;
         } else {
-          // 미가입자: 학번 기반으로 참석 기록 저장
-          await attendeesApi.add(seminarId, `guest_${row.studentId || row.name}`);
-          unmatched++;
+          details.userId = `guest_${row.studentId || row.name}`;
+          details.isGuest = true;
+          guest++;
         }
+        if (row.studentId) existingStudentIds.add(row.studentId);
+
+        await attendeesApi.addWithDetails(seminarId, details);
       }
 
       qc.invalidateQueries({ queryKey: ["attendees", seminarId] });
 
       const parts = [];
-      if (matched > 0) parts.push(`${matched}명 등록`);
+      if (matched > 0) parts.push(`${matched}명 회원 등록`);
+      if (guest > 0) parts.push(`${guest}명 미가입(학번 저장)`);
       if (skipped > 0) parts.push(`${skipped}명 중복 건너뜀`);
-      if (unmatched > 0) parts.push(`${unmatched}명 미가입(학번 기반 저장)`);
       toast.success(parts.join(", "));
     } catch {
       toast.error("참석자 등록 중 오류가 발생했습니다.");
@@ -116,12 +189,24 @@ function SeminarReport({ seminarId, seminarTitle }: { seminarId: string; seminar
     }
   }
 
+  function rowsFromParsed(raw: Record<string, string>[]): ParsedRow[] {
+    return raw.map((r) => ({
+      name: r["이름"] || "",
+      studentId: r["학번"] || "",
+      email: r["이메일"] || "",
+      phone: r["전화번호"] || "",
+      semester: r["누적학기"] || "",
+      interests: r["관심분야"] || "",
+      questions: r["기타 질문사항"] || "",
+    }));
+  }
+
   async function handleExcelUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const rows = await parseExcelFile(file, ["이름", "학번"]);
-      await registerFromData(rows.map((r) => ({ name: r["이름"], studentId: r["학번"] || "" })));
+      const raw = await parseExcelFile(file, FORM_COLUMNS);
+      await registerFromData(rowsFromParsed(raw));
     } catch { toast.error("파일을 읽을 수 없습니다."); }
     if (excelRef.current) excelRef.current.value = "";
   }
@@ -135,8 +220,8 @@ function SeminarReport({ seminarId, seminarTitle }: { seminarId: string; seminar
       const res = await fetch(`/api/sheets?url=${encodeURIComponent(csvUrl)}`);
       if (!res.ok) { const err = await res.json(); toast.error(err.error || "불러오기 실패"); return; }
       const text = await res.text();
-      const rows = parseCSVText(text, ["이름", "학번"]);
-      await registerFromData(rows.map((r) => ({ name: r["이름"], studentId: r["학번"] || "" })));
+      const raw = parseCSVText(text, FORM_COLUMNS);
+      await registerFromData(rowsFromParsed(raw));
       setSheetOpen(false);
       setSheetUrl("");
     } catch { toast.error("스프레드시트 연결에 실패했습니다."); }
@@ -164,7 +249,8 @@ function SeminarReport({ seminarId, seminarTitle }: { seminarId: string; seminar
           </div>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          엑셀(.xlsx/.csv) 또는 구글 스프레드시트에서 이름/학번 목록을 불러와 참석자를 일괄 등록합니다.
+          구글폼 응답 엑셀(.xlsx) 또는 구글 스프레드시트에서 참석자를 일괄 등록합니다.
+          열 구성: 이름/학번/누적학기/이메일/전화번호/관심분야/질문사항.
           미가입 회원은 학번 기반으로 저장되며, 추후 가입 시 자동 연동됩니다.
         </p>
       </div>
@@ -224,7 +310,7 @@ function SeminarReport({ seminarId, seminarTitle }: { seminarId: string; seminar
             CSV 내보내기
           </Button>
         </div>
-        <div className="max-h-64 overflow-y-auto rounded-lg border bg-white">
+        <div className="max-h-80 overflow-y-auto rounded-lg border bg-white">
           {attendees.length === 0 ? (
             <p className="p-4 text-center text-sm text-muted-foreground">참석자가 없습니다.</p>
           ) : (
@@ -232,34 +318,17 @@ function SeminarReport({ seminarId, seminarTitle }: { seminarId: string; seminar
               <thead className="sticky top-0 border-b bg-muted/30">
                 <tr>
                   <th className="px-3 py-2 text-left font-medium">이름</th>
-                  <th className="px-3 py-2 text-left font-medium">기수</th>
+                  <th className="px-3 py-2 text-left font-medium">학번</th>
+                  <th className="px-3 py-2 text-left font-medium">이메일</th>
                   <th className="px-3 py-2 text-left font-medium">출석</th>
                   <th className="px-3 py-2 text-left font-medium">시각</th>
+                  <th className="w-6" />
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {attendees
                   .sort((a, b) => (a.checkedIn === b.checkedIn ? 0 : a.checkedIn ? -1 : 1))
-                  .map((a) => (
-                    <tr key={a.id}>
-                      <td className="px-3 py-2">{a.userName}</td>
-                      <td className="px-3 py-2">
-                        <Badge variant="secondary" className="text-xs">{a.userGeneration}기</Badge>
-                      </td>
-                      <td className="px-3 py-2">
-                        {a.checkedIn ? (
-                          <Badge className="bg-green-50 text-green-700 text-xs">출석</Badge>
-                        ) : (
-                          <Badge variant="secondary" className="text-xs">미출석</Badge>
-                        )}
-                      </td>
-                      <td className="px-3 py-2 text-xs text-muted-foreground">
-                        {a.checkedInAt
-                          ? new Date(a.checkedInAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })
-                          : "-"}
-                      </td>
-                    </tr>
-                  ))}
+                  .map((a) => <AttendeeRow key={a.id} a={a} />)}
               </tbody>
             </table>
           )}
@@ -280,7 +349,7 @@ function SeminarReport({ seminarId, seminarTitle }: { seminarId: string; seminar
             />
             <p className="text-xs text-muted-foreground">
               스프레드시트가 &quot;링크가 있는 모든 사용자에게 공개&quot;로 설정되어야 합니다.
-              첫 번째 시트의 이름/학번 열을 불러와 참석자를 등록합니다.
+              구글폼 응답 시트의 이름/학번/이메일 등 열을 자동 인식합니다.
             </p>
           </div>
           <DialogFooter>
@@ -301,12 +370,10 @@ export default function ReportTab() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const seminar = seminars.find((s) => s.id === selectedId);
 
-  // 전체 세미나 비교
   const completedSeminars = seminars.filter((s) => s.status === "completed");
 
   return (
     <div className="space-y-6">
-      {/* 세미나 선택 */}
       <div>
         <label className="mb-2 block text-sm font-medium">세미나 선택</label>
         <select
@@ -323,10 +390,8 @@ export default function ReportTab() {
         </select>
       </div>
 
-      {/* 선택된 세미나 리포트 */}
       {seminar && <SeminarReport seminarId={seminar.id} seminarTitle={seminar.title} />}
 
-      {/* 전체 세미나 비교 */}
       {completedSeminars.length > 1 && (
         <div className="rounded-xl border bg-white p-6">
           <h3 className="mb-4 text-sm font-medium">완료된 세미나 참석률 비교</h3>

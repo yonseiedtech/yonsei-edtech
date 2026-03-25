@@ -183,6 +183,14 @@ export interface SeminarAttendee {
   checkedInAt: string | null;
   checkedInBy: string | null;
   createdAt: string;
+  // 구글폼 호환 확장 필드
+  studentId?: string;
+  email?: string;
+  phone?: string;
+  semester?: string;
+  interests?: string;
+  questions?: string;
+  isGuest?: boolean;
 }
 
 export type CheckinResult =

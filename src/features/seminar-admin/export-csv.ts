@@ -1,11 +1,15 @@
 import type { SeminarAttendee } from "@/types";
 
 export function exportAttendeesCSV(seminarTitle: string, attendees: SeminarAttendee[]) {
-  const header = "이름,기수,체크인 여부,체크인 시각";
+  const header = "이름,학번,이메일,전화번호,누적학기,관심분야,체크인 여부,체크인 시각";
   const rows = attendees.map((a) =>
     [
       a.userName,
-      `${a.userGeneration}기`,
+      a.studentId ?? "",
+      a.email ?? "",
+      a.phone ?? "",
+      a.semester ?? "",
+      `"${(a.interests ?? "").replace(/"/g, '""')}"`,
       a.checkedIn ? "O" : "X",
       a.checkedInAt ?? "",
     ].join(","),

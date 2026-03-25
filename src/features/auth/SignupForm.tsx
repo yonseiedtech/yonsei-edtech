@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserPlus, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
-import { authApi, profilesApi, saveTokens } from "@/lib/bkend";
+import { authApi, profilesApi, attendeesApi, saveTokens } from "@/lib/bkend";
 import { cn } from "@/lib/utils";
 
 type MemberType = "student" | "alumni";
@@ -93,6 +93,24 @@ export default function SignupForm({ onSuccess }: Props) {
         if (data.position) profileData.position = data.position;
 
         await profilesApi.update("me", profileData);
+
+        // 학번 기반 게스트 세미나 기록 연동
+        if (data.studentId) {
+          try {
+            const guestRecords = await attendeesApi.findGuestsByStudentId(data.studentId);
+            const records = guestRecords.data as unknown as { id: string }[];
+            if (records.length > 0) {
+              const me = await profilesApi.get("me");
+              const myId = (me as unknown as { id: string }).id;
+              for (const rec of records) {
+                await attendeesApi.update(rec.id, { userId: myId, isGuest: false });
+              }
+              toast.success(`이전 세미나 참석 기록 ${records.length}건이 연동되었습니다.`);
+            }
+          } catch {
+            // 연동 실패해도 가입은 진행
+          }
+        }
       } catch (bkendErr) {
         console.error("[signup] profile save failed:", bkendErr);
         toast.error("프로필 저장에 실패했습니다. 관리자에게 문의하세요.");
