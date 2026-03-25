@@ -5,8 +5,16 @@ import Image from "next/image";
 import { useSeminars, useAttendees, useSessions } from "@/features/seminar/useSeminar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Printer, Plus, Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Printer, Plus, Trash2, FileSpreadsheet, Link, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { parseExcelFile, parseCSVText, extractSheetId, getSheetCsvUrl } from "@/lib/parse-spreadsheet";
 import type { SeminarSession } from "@/types";
 
 function spacedName(name: string): string {
@@ -402,6 +410,10 @@ export default function NametagGenerator() {
   const [subtitle, setSubtitle] = useState("");
   const [names, setNames] = useState<NameEntry[]>([{ name: "", studentId: "", role: "참가자" }]);
   const printRef = useRef<HTMLDivElement>(null);
+  const excelInputRef = useRef<HTMLInputElement>(null);
+  const [sheetDialogOpen, setSheetDialogOpen] = useState(false);
+  const [sheetUrl, setSheetUrl] = useState("");
+  const [sheetLoading, setSheetLoading] = useState(false);
 
   const seminar = seminars.find((s) => s.id === selectedId);
   const { attendees } = useAttendees(selectedId ?? "");
@@ -421,6 +433,37 @@ export default function NametagGenerator() {
       role: "참가자" as NametagRole,
     })));
     toast.success(`${attendees.length}명의 참석자를 불러왔습니다.`);
+  }
+
+  async function handleExcelUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const rows = await parseExcelFile(file, ["이름", "학번"]);
+      if (rows.length === 0) { toast.error("데이터가 없습니다."); return; }
+      setNames(rows.map((r) => ({ name: r["이름"], studentId: r["학번"] || "", role: "참가자" as NametagRole })));
+      toast.success(`${rows.length}명을 불러왔습니다.`);
+    } catch { toast.error("파일을 읽을 수 없습니다."); }
+    if (excelInputRef.current) excelInputRef.current.value = "";
+  }
+
+  async function handleSheetLoad() {
+    const sheetId = extractSheetId(sheetUrl);
+    if (!sheetId) { toast.error("올바른 구글 스프레드시트 URL을 입력하세요."); return; }
+    setSheetLoading(true);
+    try {
+      const csvUrl = getSheetCsvUrl(sheetId);
+      const res = await fetch(`/api/sheets?url=${encodeURIComponent(csvUrl)}`);
+      if (!res.ok) { const err = await res.json(); toast.error(err.error || "불러오기 실패"); return; }
+      const text = await res.text();
+      const rows = parseCSVText(text, ["이름", "학번"]);
+      if (rows.length === 0) { toast.error("데이터가 없습니다."); return; }
+      setNames(rows.map((r) => ({ name: r["이름"], studentId: r["학번"] || "", role: "참가자" as NametagRole })));
+      toast.success(`${rows.length}명을 불러왔습니다.`);
+      setSheetDialogOpen(false);
+      setSheetUrl("");
+    } catch { toast.error("스프레드시트 연결에 실패했습니다."); }
+    finally { setSheetLoading(false); }
   }
 
   function updateName(i: number, field: keyof NameEntry, value: string) {
@@ -541,8 +584,15 @@ export default function NametagGenerator() {
         <div>
           <div className="mb-2 flex items-center justify-between">
             <label className="text-sm font-medium">이름 목록</label>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" onClick={loadFromAttendees} disabled={!seminar}>참석자 불러오기</Button>
+              <Button variant="outline" size="sm" onClick={() => excelInputRef.current?.click()}>
+                <FileSpreadsheet size={14} className="mr-1" />엑셀 업로드
+              </Button>
+              <input ref={excelInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleExcelUpload} />
+              <Button variant="outline" size="sm" onClick={() => setSheetDialogOpen(true)}>
+                <Link size={14} className="mr-1" />구글 시트
+              </Button>
               <Button variant="outline" size="sm" onClick={() => setNames([...names, { name: "", studentId: "", role: "참가자" }])}>
                 <Plus size={14} className="mr-1" />추가
               </Button>
@@ -611,6 +661,33 @@ export default function NametagGenerator() {
           </div>
         </div>
       )}
+
+      {/* 구글 시트 Dialog */}
+      <Dialog open={sheetDialogOpen} onOpenChange={setSheetDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>구글 스프레드시트 불러오기</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input
+              value={sheetUrl}
+              onChange={(e) => setSheetUrl(e.target.value)}
+              placeholder="https://docs.google.com/spreadsheets/d/..."
+            />
+            <p className="text-xs text-muted-foreground">
+              스프레드시트가 &quot;링크가 있는 모든 사용자에게 공개&quot;로 설정되어야 합니다.
+              첫 번째 시트의 이름/학번 열을 불러옵니다.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSheetDialogOpen(false)}>취소</Button>
+            <Button onClick={handleSheetLoad} disabled={sheetLoading || !sheetUrl.trim()}>
+              {sheetLoading && <Loader2 size={14} className="mr-1 animate-spin" />}
+              불러오기
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -21,7 +21,7 @@ const TABS = [
   { href: "/seminar-admin/promotion", label: "홍보 콘텐츠", icon: Megaphone },
   { href: "/seminar-admin/poster", label: "포스터", icon: ImageIcon },
   { href: "/seminar-admin/timeline", label: "운영 타임라인", icon: ListChecks },
-  { href: "/seminar-admin/report", label: "참석자 리포트", icon: BarChart3 },
+  { href: "/seminar-admin/report", label: "참석자 관리", icon: BarChart3 },
   { href: "/seminar-admin/certificate", label: "콘텐츠 제작", icon: Award },
   { href: "/seminar-admin/registrations", label: "신청 관리", icon: ClipboardList },
 ];
