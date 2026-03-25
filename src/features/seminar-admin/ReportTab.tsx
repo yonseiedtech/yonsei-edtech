@@ -122,68 +122,67 @@ function AnalysisDashboard({ attendees, seminarTitle, seminarDate }: { attendees
 
   return (
     <>
-      <div className="rounded-xl border bg-white p-5 space-y-5">
-        <div className="flex items-center justify-between">
-          <h4 className="flex items-center gap-1.5 text-sm font-medium">
-            <BarChart3 size={16} />
-            참석자 분석
-          </h4>
-          <Button variant="outline" size="sm" onClick={() => setShareOpen(true)}>
-            <Share2 size={14} className="mr-1" />강사 공유
-          </Button>
-        </div>
-
-        {/* 회원/미가입 비율 */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-lg border p-3 text-center">
-            <p className="text-lg font-bold text-primary">{members}</p>
-            <p className="text-xs text-muted-foreground">가입 회원</p>
-          </div>
-          <div className="rounded-lg border p-3 text-center">
-            <p className="text-lg font-bold text-amber-600">{guests}</p>
-            <p className="text-xs text-muted-foreground">미가입 참석자</p>
-          </div>
-        </div>
-
-        {/* 관심분야 분포 */}
-        {interestEntries.length > 0 && (
-          <div>
-            <h5 className="mb-2 text-xs font-medium text-muted-foreground">관심분야 분포</h5>
-            <div className="space-y-1.5">
-              {interestEntries.map(([interest, count]) => (
-                <HorizontalBar key={interest} label={interest} count={count} max={interestMax} color="bg-blue-500/70" />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 누적학기 분포 */}
-        {semesterEntries.length > 0 && (
-          <div>
-            <h5 className="mb-2 text-xs font-medium text-muted-foreground">누적학기 분포</h5>
-            <div className="space-y-1.5">
-              {semesterEntries.map(([sem, count]) => (
-                <HorizontalBar key={sem} label={sem} count={count} max={semesterMax} color="bg-emerald-500/70" />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 사전 질문사항 */}
-        {questions.length > 0 && (
-          <div>
-            <h5 className="mb-2 text-xs font-medium text-muted-foreground">사전 질문사항 ({questions.length}건)</h5>
-            <div className="max-h-40 space-y-2 overflow-y-auto">
-              {questions.map((q, i) => (
-                <div key={i} className="rounded-lg bg-muted/20 px-3 py-2 text-xs">
-                  <span className="font-medium">{q.name}</span>
-                  <p className="mt-0.5 text-muted-foreground">{q.q}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+      {/* 분석 헤더 */}
+      <div className="flex items-center justify-between">
+        <h4 className="flex items-center gap-1.5 text-sm font-medium">
+          <BarChart3 size={16} />
+          참석자 분석
+        </h4>
+        <Button variant="outline" size="sm" onClick={() => setShareOpen(true)}>
+          <Share2 size={14} className="mr-1" />강사 공유
+        </Button>
       </div>
+
+      {/* 회원/미가입 비율 */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-xl border bg-white p-4 text-center">
+          <p className="text-2xl font-bold text-primary">{members}</p>
+          <p className="text-xs text-muted-foreground">가입 회원</p>
+        </div>
+        <div className="rounded-xl border bg-white p-4 text-center">
+          <p className="text-2xl font-bold text-amber-600">{guests}</p>
+          <p className="text-xs text-muted-foreground">미가입 참석자</p>
+        </div>
+      </div>
+
+      {/* 관심분야 분포 */}
+      {interestEntries.length > 0 && (
+        <div className="rounded-xl border bg-white p-5">
+          <h5 className="mb-3 text-sm font-medium">관심분야 분포</h5>
+          <div className="space-y-2">
+            {interestEntries.map(([interest, count]) => (
+              <HorizontalBar key={interest} label={interest} count={count} max={interestMax} color="bg-blue-500/70" />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 누적학기 분포 */}
+      {semesterEntries.length > 0 && (
+        <div className="rounded-xl border bg-white p-5">
+          <h5 className="mb-3 text-sm font-medium">누적학기 분포</h5>
+          <div className="space-y-2">
+            {semesterEntries.map(([sem, count]) => (
+              <HorizontalBar key={sem} label={sem} count={count} max={semesterMax} color="bg-emerald-500/70" />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 사전 질문사항 */}
+      {questions.length > 0 && (
+        <div className="rounded-xl border bg-white p-5">
+          <h5 className="mb-3 text-sm font-medium">사전 질문사항 ({questions.length}건)</h5>
+          <div className="max-h-60 space-y-2 overflow-y-auto">
+            {questions.map((q, i) => (
+              <div key={i} className="rounded-lg border bg-muted/10 px-4 py-3 text-xs">
+                <span className="font-medium text-foreground">{q.name}</span>
+                <p className="mt-1 leading-relaxed text-muted-foreground">{q.q}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 강사 공유 Dialog */}
       <Dialog open={shareOpen} onOpenChange={setShareOpen}>
