@@ -6,9 +6,10 @@ import { CATEGORY_LABELS, type PostCategory } from "@/types";
 const CATEGORIES: (PostCategory | "all")[] = [
   "all",
   "notice",
-  "seminar",
   "free",
   "promotion",
+  "press",
+  "seminar",
 ];
 const ALL_LABELS: Record<string, string> = { all: "전체", ...CATEGORY_LABELS };
 
