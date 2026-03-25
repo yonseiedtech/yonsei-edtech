@@ -100,6 +100,8 @@ function SeminarReport({ seminarId, seminarTitle }: { seminarId: string; seminar
   const [sheetUrl, setSheetUrl] = useState("");
   const [sheetLoading, setSheetLoading] = useState(false);
   const [registering, setRegistering] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualForm, setManualForm] = useState({ name: "", studentId: "", email: "", phone: "", semester: "", interests: "" });
 
   const total = attendees.length;
   const checkedIn = attendees.filter((a) => a.checkedIn).length;
@@ -189,6 +191,21 @@ function SeminarReport({ seminarId, seminarTitle }: { seminarId: string; seminar
     }
   }
 
+  async function handleManualRegister() {
+    if (!manualForm.name.trim()) { toast.error("이름을 입력하세요."); return; }
+    await registerFromData([{
+      name: manualForm.name.trim(),
+      studentId: manualForm.studentId.trim(),
+      email: manualForm.email.trim(),
+      phone: manualForm.phone.trim(),
+      semester: manualForm.semester.trim(),
+      interests: manualForm.interests.trim(),
+      questions: "",
+    }]);
+    setManualForm({ name: "", studentId: "", email: "", phone: "", semester: "", interests: "" });
+    setManualOpen(false);
+  }
+
   function rowsFromParsed(raw: Record<string, string>[]): ParsedRow[] {
     return raw.map((r) => ({
       name: r["이름"] || "",
@@ -245,6 +262,9 @@ function SeminarReport({ seminarId, seminarTitle }: { seminarId: string; seminar
             <input ref={excelRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleExcelUpload} />
             <Button variant="outline" size="sm" onClick={() => setSheetOpen(true)} disabled={registering}>
               <Link size={14} className="mr-1" />구글 시트
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setManualOpen(true)} disabled={registering}>
+              <UserPlus size={14} className="mr-1" />수기 등록
             </Button>
           </div>
         </div>
@@ -357,6 +377,52 @@ function SeminarReport({ seminarId, seminarTitle }: { seminarId: string; seminar
             <Button onClick={handleSheetLoad} disabled={sheetLoading || !sheetUrl.trim()}>
               {sheetLoading && <Loader2 size={14} className="mr-1 animate-spin" />}
               불러오기
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 수기 등록 Dialog */}
+      <Dialog open={manualOpen} onOpenChange={setManualOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>참석자 수기 등록</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium">이름 *</label>
+              <Input value={manualForm.name} onChange={(e) => setManualForm({ ...manualForm, name: e.target.value })} placeholder="홍길동" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium">학번</label>
+                <Input value={manualForm.studentId} onChange={(e) => setManualForm({ ...manualForm, studentId: e.target.value })} placeholder="2025431009" />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium">이메일</label>
+                <Input value={manualForm.email} onChange={(e) => setManualForm({ ...manualForm, email: e.target.value })} placeholder="email@example.com" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium">전화번호</label>
+                <Input value={manualForm.phone} onChange={(e) => setManualForm({ ...manualForm, phone: e.target.value })} placeholder="010-1234-5678" />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium">누적학기</label>
+                <Input value={manualForm.semester} onChange={(e) => setManualForm({ ...manualForm, semester: e.target.value })} placeholder="3학기" />
+              </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium">관심분야</label>
+              <Input value={manualForm.interests} onChange={(e) => setManualForm({ ...manualForm, interests: e.target.value })} placeholder="학교교육, 인공지능" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setManualOpen(false)}>취소</Button>
+            <Button onClick={handleManualRegister} disabled={registering || !manualForm.name.trim()}>
+              {registering && <Loader2 size={14} className="mr-1 animate-spin" />}
+              등록
             </Button>
           </DialogFooter>
         </DialogContent>
