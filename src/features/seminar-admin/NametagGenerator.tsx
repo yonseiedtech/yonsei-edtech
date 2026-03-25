@@ -114,7 +114,7 @@ function NametagPreview({
         >
           {/* 로고 + 영문 */}
           <div className="flex items-center gap-1.5">
-            <Image src="/yonsei-emblem.svg" alt="" width={18} height={18} style={{ filter: "brightness(10)" }} />
+            <Image src="/yonsei-emblem.svg" alt="" width={20} height={20} />
             <span style={{ fontSize: "6pt", color: "rgba(255,255,255,0.9)", letterSpacing: "0.12em", fontWeight: 500 }}>
               YONSEI EDTECH ASSOCIATION
             </span>
@@ -223,7 +223,7 @@ function NametagPreview({
           className="flex items-center justify-center gap-1.5"
           style={{ position: "absolute", bottom: "3.5mm", left: 0, right: 0 }}
         >
-          <Image src="/yonsei-emblem.svg" alt="" width={14} height={14} style={{ opacity: 0.6 }} />
+          <Image src="/yonsei-emblem.svg" alt="" width={16} height={16} />
           <span style={{ fontSize: "5.5pt", color: "#888", fontWeight: 600, letterSpacing: "0.05em" }}>
             연세교육공학회
           </span>
@@ -270,7 +270,7 @@ function NametagPreview({
               TIME TABLE
             </p>
           </div>
-          <Image src="/yonsei-emblem.svg" alt="" width={16} height={16} style={{ filter: "brightness(10)", opacity: 0.85 }} />
+          <Image src="/yonsei-emblem.svg" alt="" width={18} height={18} />
         </div>
 
         {/* 날짜 바 */}
@@ -363,7 +363,7 @@ function NametagPreview({
             gap: "1.5mm",
           }}
         >
-          <Image src="/yonsei-emblem.svg" alt="" width={12} height={12} style={{ opacity: 0.55 }} />
+          <Image src="/yonsei-emblem.svg" alt="" width={14} height={14} />
           <span style={{ fontSize: "5pt", color: "#999", fontWeight: 600 }}>
             Yonsei EdTech Association
           </span>
