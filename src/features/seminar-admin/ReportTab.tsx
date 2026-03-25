@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Download, Users, UserCheck, UserX, FileSpreadsheet, Link, Loader2, UserPlus, ChevronDown, ChevronUp } from "lucide-react";
+import { Download, Users, UserCheck, UserX, FileSpreadsheet, Link, Loader2, UserPlus, ChevronDown, ChevronUp, Share2, BarChart3, Copy, Printer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { parseExcelFile, parseCSVText, extractSheetId, getSheetCsvUrl } from "@/lib/parse-spreadsheet";
@@ -22,6 +22,191 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { SeminarAttendee } from "@/types";
 
 const FORM_COLUMNS = ["이름", "학번", "누적학기", "이메일", "전화번호", "관심분야", "기타 질문사항"];
+
+function HorizontalBar({ label, count, max, color = "bg-primary/70" }: { label: string; count: number; max: number; color?: string }) {
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      <span className="w-24 truncate text-right text-muted-foreground" title={label}>{label}</span>
+      <div className="h-4 flex-1 rounded bg-muted/30">
+        <div className={cn("h-full rounded transition-all", color)} style={{ width: `${(count / max) * 100}%` }} />
+      </div>
+      <span className="w-8 text-right text-muted-foreground">{count}</span>
+    </div>
+  );
+}
+
+function AnalysisDashboard({ attendees, seminarTitle, seminarDate }: { attendees: SeminarAttendee[]; seminarTitle: string; seminarDate?: string }) {
+  const [shareOpen, setShareOpen] = useState(false);
+
+  // 관심분야 분포
+  const interestDist: Record<string, number> = {};
+  for (const a of attendees) {
+    if (a.interests) {
+      for (const interest of a.interests.split(",").map((s) => s.trim()).filter(Boolean)) {
+        interestDist[interest] = (interestDist[interest] || 0) + 1;
+      }
+    }
+  }
+  const interestEntries = Object.entries(interestDist).sort((a, b) => b[1] - a[1]);
+  const interestMax = Math.max(...interestEntries.map(([, c]) => c), 1);
+
+  // 누적학기 분포
+  const semesterDist: Record<string, number> = {};
+  for (const a of attendees) {
+    if (a.semester) semesterDist[a.semester] = (semesterDist[a.semester] || 0) + 1;
+  }
+  const semesterEntries = Object.entries(semesterDist).sort((a, b) => a[0].localeCompare(b[0]));
+  const semesterMax = Math.max(...semesterEntries.map(([, c]) => c), 1);
+
+  // 회원/미가입 비율
+  const guests = attendees.filter((a) => a.isGuest).length;
+  const members = attendees.length - guests;
+
+  // 질문 목록
+  const questions = attendees.filter((a) => a.questions && a.questions !== ".").map((a) => ({ name: a.userName, q: a.questions! }));
+
+  // 강사 공유용 텍스트 생성
+  function generateShareText() {
+    const lines = [
+      `📊 ${seminarTitle} — 참석자 분석 리포트`,
+      seminarDate ? `📅 ${seminarDate}` : "",
+      "",
+      `▸ 총 참석자: ${attendees.length}명 (회원 ${members}명, 미가입 ${guests}명)`,
+      "",
+    ];
+
+    if (interestEntries.length > 0) {
+      lines.push("▸ 관심분야 분포:");
+      for (const [interest, count] of interestEntries) {
+        lines.push(`  - ${interest}: ${count}명`);
+      }
+      lines.push("");
+    }
+
+    if (semesterEntries.length > 0) {
+      lines.push("▸ 누적학기 분포:");
+      for (const [sem, count] of semesterEntries) {
+        lines.push(`  - ${sem}: ${count}명`);
+      }
+      lines.push("");
+    }
+
+    if (questions.length > 0) {
+      lines.push("▸ 사전 질문사항:");
+      for (const { name, q } of questions) {
+        lines.push(`  - ${name}: ${q}`);
+      }
+    }
+
+    return lines.filter((l) => l !== undefined).join("\n");
+  }
+
+  function handleCopy() {
+    navigator.clipboard.writeText(generateShareText());
+    toast.success("리포트가 클립보드에 복사되었습니다.");
+  }
+
+  function handlePrint() {
+    const text = generateShareText();
+    const w = window.open("", "_blank");
+    if (!w) return;
+    w.document.write(`<html><head><title>${seminarTitle} 참석자 리포트</title><style>body{font-family:sans-serif;padding:40px;white-space:pre-wrap;line-height:1.8;font-size:14px;}</style></head><body>${text}</body></html>`);
+    w.document.close();
+    w.print();
+  }
+
+  if (attendees.length === 0) return null;
+
+  const hasDashboardData = interestEntries.length > 0 || semesterEntries.length > 0 || questions.length > 0;
+  if (!hasDashboardData) return null;
+
+  return (
+    <>
+      <div className="rounded-xl border bg-white p-5 space-y-5">
+        <div className="flex items-center justify-between">
+          <h4 className="flex items-center gap-1.5 text-sm font-medium">
+            <BarChart3 size={16} />
+            참석자 분석
+          </h4>
+          <Button variant="outline" size="sm" onClick={() => setShareOpen(true)}>
+            <Share2 size={14} className="mr-1" />강사 공유
+          </Button>
+        </div>
+
+        {/* 회원/미가입 비율 */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-lg border p-3 text-center">
+            <p className="text-lg font-bold text-primary">{members}</p>
+            <p className="text-xs text-muted-foreground">가입 회원</p>
+          </div>
+          <div className="rounded-lg border p-3 text-center">
+            <p className="text-lg font-bold text-amber-600">{guests}</p>
+            <p className="text-xs text-muted-foreground">미가입 참석자</p>
+          </div>
+        </div>
+
+        {/* 관심분야 분포 */}
+        {interestEntries.length > 0 && (
+          <div>
+            <h5 className="mb-2 text-xs font-medium text-muted-foreground">관심분야 분포</h5>
+            <div className="space-y-1.5">
+              {interestEntries.map(([interest, count]) => (
+                <HorizontalBar key={interest} label={interest} count={count} max={interestMax} color="bg-blue-500/70" />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 누적학기 분포 */}
+        {semesterEntries.length > 0 && (
+          <div>
+            <h5 className="mb-2 text-xs font-medium text-muted-foreground">누적학기 분포</h5>
+            <div className="space-y-1.5">
+              {semesterEntries.map(([sem, count]) => (
+                <HorizontalBar key={sem} label={sem} count={count} max={semesterMax} color="bg-emerald-500/70" />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 사전 질문사항 */}
+        {questions.length > 0 && (
+          <div>
+            <h5 className="mb-2 text-xs font-medium text-muted-foreground">사전 질문사항 ({questions.length}건)</h5>
+            <div className="max-h-40 space-y-2 overflow-y-auto">
+              {questions.map((q, i) => (
+                <div key={i} className="rounded-lg bg-muted/20 px-3 py-2 text-xs">
+                  <span className="font-medium">{q.name}</span>
+                  <p className="mt-0.5 text-muted-foreground">{q.q}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 강사 공유 Dialog */}
+      <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>강사 공유용 리포트</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-80 overflow-y-auto rounded-lg border bg-muted/10 p-4">
+            <pre className="whitespace-pre-wrap text-xs leading-relaxed">{generateShareText()}</pre>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handlePrint}>
+              <Printer size={14} className="mr-1" />인쇄
+            </Button>
+            <Button onClick={handleCopy}>
+              <Copy size={14} className="mr-1" />클립보드 복사
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
 
 function GenerationBar({ data }: { data: Record<number, number> }) {
   const entries = Object.entries(data)
@@ -92,7 +277,7 @@ function AttendeeRow({ a }: { a: SeminarAttendee }) {
   );
 }
 
-function SeminarReport({ seminarId, seminarTitle }: { seminarId: string; seminarTitle: string }) {
+function SeminarReport({ seminarId, seminarTitle, seminarDate }: { seminarId: string; seminarTitle: string; seminarDate?: string }) {
   const { attendees } = useAttendees(seminarId);
   const qc = useQueryClient();
   const excelRef = useRef<HTMLInputElement>(null);
@@ -316,6 +501,9 @@ function SeminarReport({ seminarId, seminarTitle }: { seminarId: string; seminar
         </div>
       )}
 
+      {/* 참석자 분석 대시보드 + 강사 공유 */}
+      <AnalysisDashboard attendees={attendees} seminarTitle={seminarTitle} seminarDate={seminarDate} />
+
       {/* 참석자 목록 */}
       <div>
         <div className="mb-2 flex items-center justify-between">
@@ -456,7 +644,7 @@ export default function ReportTab() {
         </select>
       </div>
 
-      {seminar && <SeminarReport seminarId={seminar.id} seminarTitle={seminar.title} />}
+      {seminar && <SeminarReport seminarId={seminar.id} seminarTitle={seminar.title} seminarDate={seminar.date} />}
 
       {completedSeminars.length > 1 && (
         <div className="rounded-xl border bg-white p-6">
