@@ -116,9 +116,15 @@ export default function PostForm({ mode = "create", initialData, initialCategory
 
   const isEdit = mode === "edit";
 
-  /** 미리보기에서 이미지 마크다운을 img 태그로 변환 */
+  /** 미리보기에서 이미지 마크다운을 img 태그로 변환 (XSS 방지) */
   function renderContent(text: string) {
-    return text.replace(
+    // HTML 엔티티 이스케이프 후 이미지 마크다운만 변환
+    const escaped = text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+    return escaped.replace(
       /!\[([^\]]*)\]\(([^)]+)\)/g,
       '<img src="$2" alt="$1" class="my-2 max-w-full rounded-lg" style="max-height:400px" />',
     );
