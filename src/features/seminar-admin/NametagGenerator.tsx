@@ -27,16 +27,14 @@ function NametagPreview({
   seminarSubtitle,
   seminarDate,
   recipientName,
-  recipientTitle,
-  recipientGeneration,
+  recipientStudentId,
   sessions,
 }: {
   seminarTitle: string;
   seminarSubtitle?: string;
   seminarDate: string;
   recipientName: string;
-  recipientTitle: string;
-  recipientGeneration?: string;
+  recipientStudentId?: string;
   sessions: SeminarSession[];
 }) {
   return (
@@ -155,6 +153,7 @@ function NametagPreview({
         >
           {/* 이름 */}
           <p
+            data-nametag-name
             style={{
               fontSize: "24pt",
               fontWeight: 800,
@@ -177,33 +176,20 @@ function NametagPreview({
             }}
           />
 
-          {/* 직함 + 기수 */}
-          <div className="flex items-center gap-2">
+          {/* 학번 */}
+          {recipientStudentId && (
             <span
+              data-nametag-studentid
               style={{
-                fontSize: "9pt",
-                color: "#555",
-                fontWeight: 500,
+                fontSize: "8pt",
+                color: "#003876",
+                fontWeight: 600,
+                letterSpacing: "0.05em",
               }}
             >
-              {recipientTitle || "참석자"}
+              {recipientStudentId}
             </span>
-            {recipientGeneration && (
-              <span
-                style={{
-                  fontSize: "7pt",
-                  color: "#003876",
-                  fontWeight: 700,
-                  background: "rgba(0,56,118,0.08)",
-                  padding: "1px 6px",
-                  borderRadius: "10px",
-                  letterSpacing: "0.03em",
-                }}
-              >
-                {recipientGeneration}기
-              </span>
-            )}
-          </div>
+          )}
         </div>
 
         {/* 하단 바 */}
@@ -375,15 +361,14 @@ function NametagPreview({
 
 interface NameEntry {
   name: string;
-  title: string;
-  generation: string;
+  studentId: string;
 }
 
 export default function NametagGenerator() {
   const { seminars } = useSeminars();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [subtitle, setSubtitle] = useState("");
-  const [names, setNames] = useState<NameEntry[]>([{ name: "", title: "", generation: "" }]);
+  const [names, setNames] = useState<NameEntry[]>([{ name: "", studentId: "" }]);
   const printRef = useRef<HTMLDivElement>(null);
 
   const seminar = seminars.find((s) => s.id === selectedId);
@@ -400,8 +385,7 @@ export default function NametagGenerator() {
     if (attendees.length === 0) { toast.error("참석자가 없습니다."); return; }
     setNames(attendees.map((a) => ({
       name: a.userName,
-      title: "",
-      generation: a.userGeneration ? String(a.userGeneration) : "",
+      studentId: "",
     })));
     toast.success(`${attendees.length}명의 참석자를 불러왔습니다.`);
   }
@@ -469,9 +453,8 @@ export default function NametagGenerator() {
     for (const n of valid) {
       const el = printRef.current.cloneNode(true) as HTMLElement;
       el.querySelectorAll("[data-nametag-name]").forEach((e) => { e.textContent = spacedName(n.name); });
-      el.querySelectorAll("[data-nametag-title]").forEach((e) => { e.textContent = n.title || "참석자"; });
-      el.querySelectorAll("[data-nametag-gen]").forEach((e) => {
-        if (n.generation) { e.textContent = `${n.generation}기`; (e as HTMLElement).style.display = "inline"; }
+      el.querySelectorAll("[data-nametag-studentid]").forEach((e) => {
+        if (n.studentId) { e.textContent = n.studentId; (e as HTMLElement).style.display = "inline"; }
         else { (e as HTMLElement).style.display = "none"; }
       });
       pages.push(`<div style="page-break-after:always;">${el.innerHTML}</div>`);
@@ -521,7 +504,7 @@ export default function NametagGenerator() {
             <label className="text-sm font-medium">이름 목록</label>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={loadFromAttendees} disabled={!seminar}>참석자 불러오기</Button>
-              <Button variant="outline" size="sm" onClick={() => setNames([...names, { name: "", title: "", generation: "" }])}>
+              <Button variant="outline" size="sm" onClick={() => setNames([...names, { name: "", studentId: "" }])}>
                 <Plus size={14} className="mr-1" />추가
               </Button>
             </div>
@@ -537,16 +520,10 @@ export default function NametagGenerator() {
                   className="flex-1"
                 />
                 <Input
-                  value={n.title}
-                  onChange={(e) => updateName(i, "title", e.target.value)}
-                  placeholder="직함"
-                  className="w-28"
-                />
-                <Input
-                  value={n.generation}
-                  onChange={(e) => updateName(i, "generation", e.target.value)}
-                  placeholder="기수"
-                  className="w-16"
+                  value={n.studentId}
+                  onChange={(e) => updateName(i, "studentId", e.target.value)}
+                  placeholder="학번"
+                  className="w-32"
                 />
                 <button onClick={() => setNames(names.filter((_, j) => j !== i))} className="shrink-0 rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-500">
                   <Trash2 size={14} />
@@ -581,8 +558,7 @@ export default function NametagGenerator() {
               seminarSubtitle={subtitle}
               seminarDate={formatKoreanDate(seminar.date)}
               recipientName={names[0]?.name || ""}
-              recipientTitle={names[0]?.title || "참석자"}
-              recipientGeneration={names[0]?.generation || ""}
+              recipientStudentId={names[0]?.studentId || ""}
               sessions={sessions}
             />
           </div>
