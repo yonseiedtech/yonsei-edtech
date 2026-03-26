@@ -261,6 +261,7 @@ function QuestionManager({ registrations, refetch }: { registrations: SeminarReg
   const [editText, setEditText] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [addForm, setAddForm] = useState({ name: "", memo: "" });
+  const [selectedQ, setSelectedQ] = useState<Set<string>>(new Set());
 
   const NO_QUESTION = [".", "-", "없음", "없습니다", "아직 없습니다", "없어요", "x", "X", "아직 없음", "아직없습니다", "없슴", "특별히 없습니다"];
   const withMemo = registrations.filter((r) => {
@@ -288,6 +289,29 @@ function QuestionManager({ registrations, refetch }: { registrations: SeminarReg
     } catch { toast.error("삭제에 실패했습니다."); }
   }
 
+  async function handleDeleteSelectedQ() {
+    const ids = [...selectedQ];
+    if (ids.length === 0) return;
+    if (!confirm(`${ids.length}건의 질문을 삭제하시겠습니까?`)) return;
+    try {
+      for (const id of ids) await registrationsApi.update(id, { memo: "" });
+      toast.success(`${ids.length}건 삭제 완료`);
+      setSelectedQ(new Set());
+      refetch();
+    } catch { toast.error("삭제 중 오류"); }
+  }
+
+  async function handleDeleteAllQ() {
+    if (withMemo.length === 0) return;
+    if (!confirm(`전체 ${withMemo.length}건의 질문을 삭제하시겠습니까?`)) return;
+    try {
+      for (const r of withMemo) await registrationsApi.update(r.id, { memo: "" });
+      toast.success(`${withMemo.length}건 전체 삭제 완료`);
+      setSelectedQ(new Set());
+      refetch();
+    } catch { toast.error("삭제 중 오류"); }
+  }
+
   async function handleAddQuestion() {
     if (!addForm.name.trim()) { toast.error("이름을 입력하세요."); return; }
     if (!addForm.memo.trim()) { toast.error("질문을 입력하세요."); return; }
@@ -313,9 +337,21 @@ function QuestionManager({ registrations, refetch }: { registrations: SeminarReg
           <MessageSquare size={16} />
           사전 질문 관리 ({withMemo.length}건)
         </h5>
-        <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
-          <Plus size={14} className="mr-1" />질문 추가
-        </Button>
+        <div className="flex gap-2">
+          {selectedQ.size > 0 && (
+            <Button variant="destructive" size="sm" onClick={handleDeleteSelectedQ}>
+              <Trash2 size={14} className="mr-1" />선택 삭제 ({selectedQ.size})
+            </Button>
+          )}
+          {withMemo.length > 0 && (
+            <Button variant="outline" size="sm" className="text-destructive" onClick={handleDeleteAllQ}>
+              <Trash2 size={14} className="mr-1" />전체 삭제
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
+            <Plus size={14} className="mr-1" />질문 추가
+          </Button>
+        </div>
       </div>
 
       {withMemo.length === 0 ? (
@@ -334,7 +370,12 @@ function QuestionManager({ registrations, refetch }: { registrations: SeminarReg
                   </div>
                 </div>
               ) : (
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    checked={selectedQ.has(r.id)}
+                    onCheckedChange={() => setSelectedQ((prev) => { const next = new Set(prev); if (next.has(r.id)) next.delete(r.id); else next.add(r.id); return next; })}
+                    className="mt-0.5"
+                  />
                   <div className="flex-1">
                     <p className="text-xs font-medium">{r.name}</p>
                     <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{r.memo}</p>
@@ -712,13 +753,35 @@ export default function RegistrationsTab() {
     } catch { toast.error("수정 실패"); }
   }
 
+  async function handleBulkDelete() {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    if (!confirm(`${ids.length}명의 신청자를 삭제하시겠습니까?`)) return;
+    try {
+      for (const id of ids) await registrationsApi.delete(id);
+      toast.success(`${ids.length}명 삭제 완료`);
+      setSelected(new Set());
+      refetch();
+    } catch { toast.error("삭제 중 오류가 발생했습니다."); }
+  }
+
+  async function handleDeleteAll() {
+    if (registrations.length === 0) return;
+    if (!confirm(`전체 ${registrations.length}명의 신청자를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
+    try {
+      for (const r of registrations) await registrationsApi.delete(r.id);
+      toast.success(`${registrations.length}명 전체 삭제 완료`);
+      setSelected(new Set());
+      refetch();
+    } catch { toast.error("삭제 중 오류가 발생했습니다."); }
+  }
+
   function toggleSelect(id: string) {
     setSelected((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   }
   function toggleAll() {
-    const convertable = registrations.filter((r) => !r.convertedAt);
-    if (selected.size === convertable.length) setSelected(new Set());
-    else setSelected(new Set(convertable.map((r) => r.id)));
+    if (selected.size === registrations.length) setSelected(new Set());
+    else setSelected(new Set(registrations.map((r) => r.id)));
   }
 
   async function convertToAttendees(ids: string[]) {
@@ -810,12 +873,24 @@ export default function RegistrationsTab() {
           <div className="rounded-xl border bg-white">
             <div className="flex items-center justify-between border-b px-4 py-3">
               <span className="text-sm font-medium">신청자 {registrations.length}명</span>
-              {convertableSelected.length > 0 && (
-                <Button size="sm" onClick={() => convertToAttendees(convertableSelected)} disabled={converting}>
-                  {converting ? <Loader2 size={14} className="mr-1 animate-spin" /> : <UserPlus size={14} className="mr-1" />}
-                  참석자 전환 ({convertableSelected.length})
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {selected.size > 0 && (
+                  <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
+                    <Trash2 size={14} className="mr-1" />선택 삭제 ({selected.size})
+                  </Button>
+                )}
+                {convertableSelected.length > 0 && (
+                  <Button size="sm" onClick={() => convertToAttendees(convertableSelected)} disabled={converting}>
+                    {converting ? <Loader2 size={14} className="mr-1 animate-spin" /> : <UserPlus size={14} className="mr-1" />}
+                    참석자 전환 ({convertableSelected.length})
+                  </Button>
+                )}
+                {registrations.length > 0 && (
+                  <Button variant="outline" size="sm" className="text-destructive" onClick={handleDeleteAll}>
+                    <Trash2 size={14} className="mr-1" />전체 삭제
+                  </Button>
+                )}
+              </div>
             </div>
             {registrations.length === 0 ? (
               <p className="p-6 text-center text-sm text-muted-foreground">신청 내역이 없습니다.</p>
@@ -824,7 +899,7 @@ export default function RegistrationsTab() {
                 <table className="w-full text-sm whitespace-nowrap">
                   <thead className="sticky top-0 border-b bg-muted/30">
                     <tr>
-                      <th className="px-3 py-2 text-left"><Checkbox checked={registrations.filter((r) => !r.convertedAt).length > 0 && selected.size === registrations.filter((r) => !r.convertedAt).length} onCheckedChange={toggleAll} /></th>
+                      <th className="px-3 py-2 text-left"><Checkbox checked={registrations.length > 0 && selected.size === registrations.length} onCheckedChange={toggleAll} /></th>
                       <th className="px-3 py-2 text-left font-medium">이름</th>
                       <th className="px-3 py-2 text-left font-medium">학번</th>
                       <th className="px-3 py-2 text-left font-medium">이메일</th>
@@ -837,7 +912,7 @@ export default function RegistrationsTab() {
                   <tbody className="divide-y">
                     {registrations.map((r) => (
                       <tr key={r.id} className={cn(selected.has(r.id) && "bg-primary/5")}>
-                        <td className="px-3 py-2"><Checkbox checked={selected.has(r.id)} onCheckedChange={() => toggleSelect(r.id)} disabled={!!r.convertedAt} /></td>
+                        <td className="px-3 py-2"><Checkbox checked={selected.has(r.id)} onCheckedChange={() => toggleSelect(r.id)} /></td>
                         <td className="px-3 py-2 font-medium">{r.name}</td>
                         <td className="px-3 py-2 text-muted-foreground">{r.studentId ?? "-"}</td>
                         <td className="px-3 py-2 text-muted-foreground">{r.email || "-"}</td>
