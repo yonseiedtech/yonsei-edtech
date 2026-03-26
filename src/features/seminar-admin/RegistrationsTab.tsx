@@ -527,7 +527,7 @@ export default function RegistrationsTab() {
     affiliation: string;
   }
 
-  // 신청자 등록 — 서버 API 기반
+  // 신청자 등록 — Firestore 클라이언트 직접 저장
   async function registerFromData(rows: RegRow[]) {
     if (rows.length === 0) { toast.error("데이터가 없습니다."); return; }
     if (!selectedId) return;
@@ -550,40 +550,41 @@ export default function RegistrationsTab() {
       return;
     }
 
+    let added = 0;
     try {
-      const res = await fetch("/api/registrations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      for (const row of newRows) {
+        const payload: Record<string, unknown> = {
           seminarId: selectedId,
-          registrations: newRows.map((row) => ({
-            name: row.name,
-            email: row.email || undefined,
-            phone: row.phone || undefined,
-            studentId: row.studentId || undefined,
-            semester: row.semester || undefined,
-            interests: row.interests || undefined,
-            memo: row.memo || undefined,
-            affiliation: row.affiliation || undefined,
-          })),
-        }),
-      });
+          name: row.name,
+        };
+        if (row.email) payload.email = row.email;
+        if (row.phone) payload.phone = row.phone;
+        if (row.studentId) payload.studentId = row.studentId;
+        if (row.semester) payload.semester = row.semester;
+        if (row.interests) payload.interests = row.interests;
+        if (row.memo) payload.memo = row.memo;
+        if (row.affiliation) payload.affiliation = row.affiliation;
 
-      if (!res.ok) {
-        const err = await res.json();
-        toast.error(err.error || "등록 실패");
-        return;
+        await registrationsApi.create(payload);
+        added++;
       }
 
-      const { count } = await res.json() as { count: number };
-      qc.resetQueries({ queryKey: ["registrations", selectedId] });
-      await refetch();
+      // 캐시 리셋 + 강제 refetch
+      qc.removeQueries({ queryKey: ["registrations", selectedId] });
+      setTimeout(async () => {
+        await refetch();
+      }, 500);
+
       const parts = [];
-      if (count > 0) parts.push(`${count}명 신청 등록 완료`);
+      if (added > 0) parts.push(`${added}명 신청 등록 완료`);
       if (skipped > 0) parts.push(`${skipped}명 중복 건너뜀`);
       toast.success(parts.join(", "));
-    } catch { toast.error("서버 연결에 실패했습니다."); }
-    finally { setRegistering(false); }
+    } catch (err) {
+      console.error("[registerFromData] error:", err);
+      toast.error(`등록 중 오류 (${added}/${newRows.length}명 완료)`);
+    } finally {
+      setRegistering(false);
+    }
   }
 
   function mapParsedToRegRow(r: Record<string, string>): RegRow {

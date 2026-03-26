@@ -334,7 +334,6 @@ export const registrationsApi = {
   list: (seminarId: string) =>
     dataApi.list<Record<string, unknown>>("seminar_registrations", {
       "filter[seminarId]": seminarId,
-      sort: "createdAt:desc",
     }),
   create: (data: Record<string, unknown>) =>
     dataApi.create("seminar_registrations", data),
