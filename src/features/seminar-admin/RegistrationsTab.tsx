@@ -105,7 +105,14 @@ function RegistrationAnalysis({
   const affMax = Math.max(...affEntries.map(([, c]) => c), 1);
 
   // 질문 목록
-  const questions = registrations.filter((r) => r.memo && r.memo !== "." && r.memo.trim().length > 1).map((r) => ({ id: r.id, name: r.name, q: r.memo! }));
+  const NO_Q = [".", "-", "없음", "없습니다", "아직 없습니다", "없어요", "x", "X"];
+  const questions = registrations.filter((r) => {
+    if (!r.memo) return false;
+    const t = r.memo.trim();
+    if (t.length < 2) return false;
+    if (NO_Q.includes(t) || t.startsWith("아직 특별한") || t.startsWith("아직 없")) return false;
+    return true;
+  }).map((r) => ({ id: r.id, name: r.name, q: r.memo! }));
 
   // 참석 전환율
   const convRate = total > 0 ? Math.round((converted / total) * 100) : 0;
@@ -255,7 +262,14 @@ function QuestionManager({ registrations, refetch }: { registrations: SeminarReg
   const [addOpen, setAddOpen] = useState(false);
   const [addForm, setAddForm] = useState({ name: "", memo: "" });
 
-  const withMemo = registrations.filter((r) => r.memo && r.memo.trim().length > 0 && r.memo !== ".");
+  const NO_QUESTION = [".", "-", "없음", "없습니다", "아직 없습니다", "없어요", "x", "X", "아직 없음", "아직없습니다", "없슴", "특별히 없습니다"];
+  const withMemo = registrations.filter((r) => {
+    if (!r.memo) return false;
+    const trimmed = r.memo.trim();
+    if (trimmed.length < 2) return false;
+    if (NO_QUESTION.some((nq) => trimmed === nq || trimmed.startsWith("아직 특별한") || trimmed.startsWith("아직 없"))) return false;
+    return true;
+  });
 
   async function handleSaveMemo(id: string) {
     try {
