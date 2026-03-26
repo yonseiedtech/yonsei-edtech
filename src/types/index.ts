@@ -199,6 +199,14 @@ export type CheckinResult =
   | { success: false; alreadyCheckedIn?: false; message: string };
 
 // ── 세미나 자체 신청 (비회원 포함) ──
+export type RegistrationStatus = "pending" | "confirmed" | "cancelled";
+
+export const REG_STATUS_LABELS: Record<RegistrationStatus, string> = {
+  pending: "대기",
+  confirmed: "확정",
+  cancelled: "취소",
+};
+
 export interface SeminarRegistration {
   id: string;
   seminarId: string;
@@ -210,6 +218,7 @@ export interface SeminarRegistration {
   userId?: string;
   createdAt: string;
   convertedAt?: string;
+  status?: RegistrationStatus;
   // 구글폼 호환 확장 필드
   studentId?: string;
   semester?: string;

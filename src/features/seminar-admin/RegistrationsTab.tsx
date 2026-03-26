@@ -23,8 +23,8 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { parseCSVText, extractSheetId, getSheetCsvUrl } from "@/lib/parse-spreadsheet";
-import type { SeminarRegistration, SeminarAttendee, RegistrationFieldConfig } from "@/types";
-import { DEFAULT_REGISTRATION_FIELDS } from "@/types";
+import type { SeminarRegistration, SeminarAttendee, RegistrationFieldConfig, RegistrationStatus } from "@/types";
+import { DEFAULT_REGISTRATION_FIELDS, REG_STATUS_LABELS } from "@/types";
 
 // 엑셀 헤더 → Registration 필드 매핑 (동의어)
 const FIELD_MAP: Record<string, { key: string; label: string }> = {
@@ -93,6 +93,7 @@ function RegistrationAnalysis({
   const total = registrations.length;
   const members = registrations.filter((r) => r.userId).length;
   const converted = registrations.filter((r) => r.convertedAt).length;
+  const cancelled = registrations.filter((r) => r.status === "cancelled").length;
   const checkedIn = attendees.filter((a) => a.checkedIn).length;
 
   // 소속별 분포
@@ -164,7 +165,7 @@ function RegistrationAnalysis({
       </div>
 
       {/* 통계 카드 */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         <div className="rounded-xl border bg-white p-4 text-center">
           <p className="text-2xl font-bold text-blue-600">{total}</p>
           <p className="text-xs text-muted-foreground">총 신청</p>
@@ -180,6 +181,10 @@ function RegistrationAnalysis({
         <div className="rounded-xl border bg-white p-4 text-center">
           <p className="text-2xl font-bold text-emerald-600">{checkedIn}</p>
           <p className="text-xs text-muted-foreground">실제 출석</p>
+        </div>
+        <div className="rounded-xl border bg-white p-4 text-center">
+          <p className="text-2xl font-bold text-red-500">{cancelled}</p>
+          <p className="text-xs text-muted-foreground">취소</p>
         </div>
       </div>
 
@@ -427,6 +432,7 @@ interface EditForm {
   affiliation: string;
   phone: string;
   memo: string;
+  status: RegistrationStatus;
 }
 
 /* ── 신청서 폼 설정 ── */
@@ -774,7 +780,7 @@ export default function RegistrationsTab() {
   }
 
   function openEdit(reg: SeminarRegistration) {
-    setEditForm({ id: reg.id, name: reg.name, studentId: reg.studentId ?? "", email: reg.email, affiliation: reg.affiliation ?? "", phone: reg.phone ?? "", memo: reg.memo ?? "" });
+    setEditForm({ id: reg.id, name: reg.name, studentId: reg.studentId ?? "", email: reg.email, affiliation: reg.affiliation ?? "", phone: reg.phone ?? "", memo: reg.memo ?? "", status: reg.status ?? "pending" });
   }
 
   async function handleSaveEdit() {
@@ -783,6 +789,7 @@ export default function RegistrationsTab() {
       await registrationsApi.update(editForm.id, {
         name: editForm.name, studentId: editForm.studentId || undefined, email: editForm.email,
         affiliation: editForm.affiliation || undefined, phone: editForm.phone || undefined, memo: editForm.memo || undefined,
+        status: editForm.status,
       });
       toast.success("수정되었습니다."); setEditForm(null); refetch();
     } catch { toast.error("수정 실패"); }
@@ -980,7 +987,15 @@ export default function RegistrationsTab() {
                         <td className="px-3 py-2">
                           <div className="flex flex-wrap gap-1">
                             {r.userId && <Badge variant="secondary" className="text-[10px]">회원</Badge>}
-                            {r.convertedAt ? <Badge className="bg-green-50 text-green-700 text-[10px]">참석 등록</Badge> : <Badge variant="outline" className="text-[10px] text-muted-foreground">대기</Badge>}
+                            {r.status === "cancelled" ? (
+                              <Badge className="bg-red-50 text-red-600 text-[10px]">취소</Badge>
+                            ) : r.convertedAt ? (
+                              <Badge className="bg-green-50 text-green-700 text-[10px]">참석 등록</Badge>
+                            ) : r.status === "confirmed" ? (
+                              <Badge className="bg-blue-50 text-blue-700 text-[10px]">확정</Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-[10px] text-muted-foreground">대기</Badge>
+                            )}
                           </div>
                         </td>
                         <td className="px-3 py-2">
@@ -1143,6 +1158,17 @@ export default function RegistrationsTab() {
               <div className="grid grid-cols-2 gap-3">
                 <div><label className="mb-1 block text-sm font-medium">소속</label><Input value={editForm.affiliation} onChange={(e) => setEditForm({ ...editForm, affiliation: e.target.value })} /></div>
                 <div><label className="mb-1 block text-sm font-medium">연락처</label><Input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-sm font-medium">신청 상태</label>
+                  <select value={editForm.status} onChange={(e) => setEditForm({ ...editForm, status: e.target.value as RegistrationStatus })} className="w-full rounded-lg border px-3 py-2 text-sm">
+                    <option value="pending">대기</option>
+                    <option value="confirmed">확정</option>
+                    <option value="cancelled">취소</option>
+                  </select>
+                </div>
+                <div />
               </div>
               <div><label className="mb-1 block text-sm font-medium">메모</label><Textarea value={editForm.memo} onChange={(e) => setEditForm({ ...editForm, memo: e.target.value })} rows={3} /></div>
             </div>
