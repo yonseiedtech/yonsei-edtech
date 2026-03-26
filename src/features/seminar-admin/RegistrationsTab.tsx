@@ -738,6 +738,28 @@ export default function RegistrationsTab() {
     catch { toast.error("삭제 실패"); }
   }
 
+  async function handleRemoveDuplicates() {
+    if (registrations.length < 2) return;
+    const seen = new Map<string, string>(); // key → 첫 번째 id
+    const dupeIds: string[] = [];
+    for (const r of registrations) {
+      // 학번 우선, 없으면 이름+이메일로 중복 판별
+      const key = r.studentId ? `sid:${r.studentId}` : `ne:${r.name}:${r.email || ""}`;
+      if (seen.has(key)) {
+        dupeIds.push(r.id);
+      } else {
+        seen.set(key, r.id);
+      }
+    }
+    if (dupeIds.length === 0) { toast.success("중복 신청자가 없습니다."); return; }
+    if (!confirm(`${dupeIds.length}명의 중복 신청자를 삭제하시겠습니까?`)) return;
+    try {
+      for (const id of dupeIds) await registrationsApi.delete(id);
+      toast.success(`${dupeIds.length}명 중복 제거 완료`);
+      refetch();
+    } catch { toast.error("중복 제거 중 오류"); }
+  }
+
   function openEdit(reg: SeminarRegistration) {
     setEditForm({ id: reg.id, name: reg.name, studentId: reg.studentId ?? "", email: reg.email, affiliation: reg.affiliation ?? "", phone: reg.phone ?? "", memo: reg.memo ?? "" });
   }
@@ -883,6 +905,11 @@ export default function RegistrationsTab() {
                   <Button size="sm" onClick={() => convertToAttendees(convertableSelected)} disabled={converting}>
                     {converting ? <Loader2 size={14} className="mr-1 animate-spin" /> : <UserPlus size={14} className="mr-1" />}
                     참석자 전환 ({convertableSelected.length})
+                  </Button>
+                )}
+                {registrations.length > 1 && (
+                  <Button variant="outline" size="sm" onClick={handleRemoveDuplicates}>
+                    중복 제거
                   </Button>
                 )}
                 {registrations.length > 0 && (
