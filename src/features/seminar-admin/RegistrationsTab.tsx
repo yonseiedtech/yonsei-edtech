@@ -740,22 +740,35 @@ export default function RegistrationsTab() {
 
   async function handleRemoveDuplicates() {
     if (registrations.length < 2) return;
-    const seen = new Map<string, string>(); // key → 첫 번째 id
+    const seenByStudentId = new Map<string, string>();
+    const seenByName = new Map<string, string>();
+    const seenByEmail = new Map<string, string>();
     const dupeIds: string[] = [];
     for (const r of registrations) {
-      // 학번 우선, 없으면 이름+이메일로 중복 판별
-      const key = r.studentId ? `sid:${r.studentId}` : `ne:${r.name}:${r.email || ""}`;
-      if (seen.has(key)) {
-        dupeIds.push(r.id);
-      } else {
-        seen.set(key, r.id);
+      let isDupe = false;
+      // 학번 중복
+      if (r.studentId) {
+        if (seenByStudentId.has(r.studentId)) isDupe = true;
+        else seenByStudentId.set(r.studentId, r.id);
       }
+      // 이메일 중복
+      if (!isDupe && r.email) {
+        if (seenByEmail.has(r.email)) isDupe = true;
+        else seenByEmail.set(r.email, r.id);
+      }
+      // 이름 중복 (학번/이메일 없는 경우)
+      if (!isDupe && !r.studentId && !r.email) {
+        if (seenByName.has(r.name)) isDupe = true;
+        else seenByName.set(r.name, r.id);
+      }
+      if (isDupe) dupeIds.push(r.id);
     }
     if (dupeIds.length === 0) { toast.success("중복 신청자가 없습니다."); return; }
     if (!confirm(`${dupeIds.length}명의 중복 신청자를 삭제하시겠습니까?`)) return;
     try {
       for (const id of dupeIds) await registrationsApi.delete(id);
       toast.success(`${dupeIds.length}명 중복 제거 완료`);
+      setSelected(new Set());
       refetch();
     } catch { toast.error("중복 제거 중 오류"); }
   }
@@ -811,17 +824,22 @@ export default function RegistrationsTab() {
     setConverting(true);
     let added = 0, skipped = 0;
     try {
-      // 기존 참석자의 userId/studentId/이름+이메일 세트 구축
-      const existingUserIds = new Set(attendees.map((a) => a.userId).filter(Boolean));
-      const existingStudentIds = new Set(attendees.filter((a) => a.studentId).map((a) => a.studentId));
-      const existingNameEmails = new Set(attendees.map((a) => `${a.userName}:${a.email || ""}`));
+      // 최신 참석자 데이터 강제 조회
+      const freshRes = await attendeesApi.list(selectedId);
+      const freshAttendees = freshRes.data as unknown as SeminarAttendee[];
+      // 기존 참석자의 userId/studentId/이름/이메일 세트 구축
+      const existingUserIds = new Set(freshAttendees.map((a) => a.userId).filter(Boolean));
+      const existingStudentIds = new Set(freshAttendees.filter((a) => a.studentId).map((a) => a.studentId));
+      const existingNames = new Set(freshAttendees.map((a) => a.userName));
+      const existingEmails = new Set(freshAttendees.filter((a) => a.email).map((a) => a.email));
 
       for (const reg of registrations.filter((r) => ids.includes(r.id))) {
         // 다중 기준 중복 체크
         const guestId = reg.userId || `guest_${reg.email || reg.name}`;
         if (existingUserIds.has(guestId)) { skipped++; continue; }
         if (reg.studentId && existingStudentIds.has(reg.studentId)) { skipped++; continue; }
-        if (existingNameEmails.has(`${reg.name}:${reg.email || ""}`)) { skipped++; continue; }
+        if (reg.email && existingEmails.has(reg.email)) { skipped++; continue; }
+        if (existingNames.has(reg.name)) { skipped++; continue; }
 
         await attendeesApi.addWithDetails(selectedId, {
           userName: reg.name, userId: guestId,
@@ -835,7 +853,8 @@ export default function RegistrationsTab() {
         await registrationsApi.update(reg.id, { convertedAt: new Date().toISOString() });
         existingUserIds.add(guestId);
         if (reg.studentId) existingStudentIds.add(reg.studentId);
-        existingNameEmails.add(`${reg.name}:${reg.email || ""}`);
+        if (reg.email) existingEmails.add(reg.email);
+        existingNames.add(reg.name);
         added++;
       }
       qc.invalidateQueries({ queryKey: ["attendees", selectedId] });
