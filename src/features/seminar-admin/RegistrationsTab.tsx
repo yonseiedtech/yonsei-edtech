@@ -22,11 +22,33 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { parseExcelFile, parseCSVText, extractSheetId, getSheetCsvUrl } from "@/lib/parse-spreadsheet";
+import { parseCSVText, extractSheetId, getSheetCsvUrl } from "@/lib/parse-spreadsheet";
 import type { SeminarRegistration, SeminarAttendee, RegistrationFieldConfig } from "@/types";
 import { DEFAULT_REGISTRATION_FIELDS } from "@/types";
 
-const FORM_COLUMNS = ["이름", "학번", "누적학기", "이메일", "전화번호", "관심분야", "기타 질문사항"];
+// 엑셀 헤더 → Registration 필드 매핑 (동의어)
+const FIELD_MAP: Record<string, { key: string; label: string }> = {
+  "이름": { key: "name", label: "이름" },
+  "성명": { key: "name", label: "이름" },
+  "학번": { key: "studentId", label: "학번" },
+  "이메일": { key: "email", label: "이메일" },
+  "email": { key: "email", label: "이메일" },
+  "전화번호": { key: "phone", label: "전화번호" },
+  "연락처": { key: "phone", label: "전화번호" },
+  "소속": { key: "affiliation", label: "소속" },
+  "누적학기": { key: "semester", label: "누적학기" },
+  "학기": { key: "semester", label: "누적학기" },
+  "관심분야": { key: "interests", label: "관심분야" },
+  "관심 분야": { key: "interests", label: "관심분야" },
+  "분야": { key: "interests", label: "관심분야" },
+  "기타 질문사항": { key: "memo", label: "질문/메모" },
+  "질문사항": { key: "memo", label: "질문/메모" },
+  "질문": { key: "memo", label: "질문/메모" },
+  "메모": { key: "memo", label: "질문/메모" },
+  "기타": { key: "memo", label: "질문/메모" },
+};
+
+const GOOGLE_FORM_COLUMNS = ["이름", "학번", "누적학기", "이메일", "전화번호", "관심분야", "기타 질문사항"];
 
 function exportRegistrationsCSV(seminarTitle: string, regs: SeminarRegistration[]) {
   const header = "이름,학번,이메일,전화번호,소속,누적학기,관심분야,질문/메모,신청일시,참석자전환";
@@ -476,6 +498,11 @@ export default function RegistrationsTab() {
   const [sheetLoading, setSheetLoading] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
   const [manualForm, setManualForm] = useState({ name: "", email: "", affiliation: "", phone: "", memo: "" });
+  // 엑셀 미리보기 상태
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewHeaders, setPreviewHeaders] = useState<string[]>([]);
+  const [previewRows, setPreviewRows] = useState<Record<string, string>[]>([]);
+  const [fieldMapping, setFieldMapping] = useState<Record<string, string>>({});
 
   const qc = useQueryClient();
   const seminarDetail = useSeminar(selectedId ?? "");
@@ -556,10 +583,47 @@ export default function RegistrationsTab() {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const raw = await parseExcelFile(file, FORM_COLUMNS);
-      await registerFromData(raw.map(mapParsedToRegRow));
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/parse-excel", { method: "POST", body: formData });
+      if (!res.ok) { const err = await res.json(); toast.error(err.error || "파싱 실패"); return; }
+      const { headers, rows, total } = await res.json() as { headers: string[]; rows: Record<string, string>[]; total: number };
+      if (total === 0) { toast.error("데이터가 없습니다."); return; }
+      // 자동 필드 매핑
+      const mapping: Record<string, string> = {};
+      for (const h of headers) {
+        const mapped = FIELD_MAP[h];
+        if (mapped) mapping[h] = mapped.key;
+      }
+      setPreviewHeaders(headers);
+      setPreviewRows(rows);
+      setFieldMapping(mapping);
+      setPreviewOpen(true);
     } catch { toast.error("파일을 읽을 수 없습니다."); }
     if (excelRef.current) excelRef.current.value = "";
+  }
+
+  async function handlePreviewConfirm() {
+    // 매핑 기반으로 RegRow 변환
+    const rows: RegRow[] = previewRows.map((row) => {
+      const mapped: Record<string, string> = {};
+      for (const [header, value] of Object.entries(row)) {
+        const fieldKey = fieldMapping[header];
+        if (fieldKey && value) mapped[fieldKey] = value;
+      }
+      return {
+        name: mapped.name || "",
+        email: mapped.email || "",
+        phone: mapped.phone || "",
+        studentId: mapped.studentId || "",
+        semester: mapped.semester || "",
+        interests: mapped.interests || "",
+        memo: mapped.memo || "",
+        affiliation: mapped.affiliation || "",
+      };
+    });
+    await registerFromData(rows);
+    setPreviewOpen(false);
   }
 
   async function handleSheetLoad() {
@@ -569,7 +633,7 @@ export default function RegistrationsTab() {
     try {
       const res = await fetch(`/api/sheets?url=${encodeURIComponent(getSheetCsvUrl(sheetId))}`);
       if (!res.ok) { toast.error("불러오기 실패"); return; }
-      const raw = parseCSVText(await res.text(), FORM_COLUMNS);
+      const raw = parseCSVText(await res.text(), GOOGLE_FORM_COLUMNS);
       await registerFromData(raw.map(mapParsedToRegRow));
       setSheetOpen(false);
       setSheetUrl("");
@@ -778,6 +842,77 @@ export default function RegistrationsTab() {
           <FormFieldsEditor seminarId={selectedId} fields={(seminarDetail.registrationFields as RegistrationFieldConfig[]) ?? []} />
         </div>
       )}
+
+      {/* 엑셀 미리보기 + 필드 매핑 Dialog */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>엑셀 데이터 미리보기 ({previewRows.length}명)</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 flex-1 overflow-hidden">
+            {/* 필드 매핑 */}
+            <div>
+              <p className="mb-2 text-xs font-medium text-muted-foreground">엑셀 열 → 신청 필드 매핑</p>
+              <div className="flex flex-wrap gap-2">
+                {previewHeaders.map((h) => (
+                  <div key={h} className="flex items-center gap-1 rounded-lg border px-2 py-1 text-xs">
+                    <span className="font-medium">{h}</span>
+                    <span className="text-muted-foreground">→</span>
+                    <select
+                      value={fieldMapping[h] || ""}
+                      onChange={(e) => setFieldMapping({ ...fieldMapping, [h]: e.target.value })}
+                      className="rounded border-none bg-transparent px-1 py-0.5 text-xs font-medium text-primary"
+                    >
+                      <option value="">건너뛰기</option>
+                      <option value="name">이름</option>
+                      <option value="studentId">학번</option>
+                      <option value="email">이메일</option>
+                      <option value="phone">전화번호</option>
+                      <option value="affiliation">소속</option>
+                      <option value="semester">누적학기</option>
+                      <option value="interests">관심분야</option>
+                      <option value="memo">질문/메모</option>
+                    </select>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* 데이터 미리보기 */}
+            <div className="overflow-auto rounded-lg border max-h-60">
+              <table className="w-full text-xs whitespace-nowrap">
+                <thead className="sticky top-0 bg-muted/50 border-b">
+                  <tr>
+                    <th className="px-2 py-1.5 text-left text-muted-foreground">#</th>
+                    {previewHeaders.filter((h) => fieldMapping[h]).map((h) => (
+                      <th key={h} className="px-2 py-1.5 text-left font-medium">{FIELD_MAP[h]?.label || fieldMapping[h]}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {previewRows.slice(0, 10).map((row, i) => (
+                    <tr key={i}>
+                      <td className="px-2 py-1.5 text-muted-foreground">{i + 1}</td>
+                      {previewHeaders.filter((h) => fieldMapping[h]).map((h) => (
+                        <td key={h} className="px-2 py-1.5">{row[h] || "-"}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {previewRows.length > 10 && (
+                <p className="px-2 py-1.5 text-xs text-muted-foreground text-center">... 외 {previewRows.length - 10}명</p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewOpen(false)}>취소</Button>
+            <Button onClick={handlePreviewConfirm} disabled={registering || !fieldMapping["이름"] && !Object.values(fieldMapping).includes("name")}>
+              {registering && <Loader2 size={14} className="mr-1 animate-spin" />}
+              {previewRows.length}명 신청 등록
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialogs */}
       <Dialog open={sheetOpen} onOpenChange={setSheetOpen}>
