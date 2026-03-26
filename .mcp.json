@@ -3,6 +3,11 @@
     "bkend": {
       "type": "http",
       "url": "https://mcp.bkend.ai"
+    },
+    "yonsei-edtech-agent": {
+      "command": "python",
+      "args": ["C:\\work\\yonsei-edtech\\agent-server\\mcp_server.py"],
+      "cwd": "C:\\work\\yonsei-edtech\\agent-server"
     }
   }
 }

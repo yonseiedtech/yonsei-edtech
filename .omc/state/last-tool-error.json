@@ -1,0 +1,7 @@
+{
+  "tool_name": "Read",
+  "tool_input_preview": "{\"file_path\":\"C:\\\\work\\\\yonsei-edtech\\\\src\\\\features\\\\seminar-admin\\\\RegistrationsTab.tsx\"}",
+  "error": "File content (12417 tokens) exceeds maximum allowed tokens (10000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file.",
+  "timestamp": "2026-03-26T03:38:58.662Z",
+  "retry_count": 1
+}
