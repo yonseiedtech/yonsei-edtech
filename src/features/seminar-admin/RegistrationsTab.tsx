@@ -560,6 +560,11 @@ export default function RegistrationsTab() {
   const [sheetLoading, setSheetLoading] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
   const [manualForm, setManualForm] = useState({ name: "", email: "", affiliation: "", phone: "", memo: "" });
+  // 정렬/필터
+  const [sortKey, setSortKey] = useState<string>("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   // 엑셀 미리보기 상태
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewHeaders, setPreviewHeaders] = useState<string[]>([]);
@@ -582,6 +587,59 @@ export default function RegistrationsTab() {
   });
 
   const registrations = data ?? [];
+
+  // 필터 + 정렬 적용
+  const filteredRegistrations = registrations.filter((r) => {
+    if (statusFilter !== "all") {
+      const s = r.status ?? "pending";
+      if (statusFilter === "converted") { if (!r.convertedAt) return false; }
+      else if (s !== statusFilter) return false;
+    }
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      if (
+        !r.name.toLowerCase().includes(q) &&
+        !(r.email || "").toLowerCase().includes(q) &&
+        !(r.studentId || "").includes(q) &&
+        !(r.phone || "").includes(q) &&
+        !(r.interests || "").toLowerCase().includes(q)
+      ) return false;
+    }
+    return true;
+  }).sort((a, b) => {
+    const getValue = (r: SeminarRegistration): string => {
+      switch (sortKey) {
+        case "name": return r.name;
+        case "studentId": return r.studentId ?? "";
+        case "email": return r.email ?? "";
+        case "phone": return r.phone ?? "";
+        case "interests": return r.interests ?? "";
+        case "status": return r.status === "cancelled" ? "z_cancelled" : r.convertedAt ? "a_converted" : r.status ?? "pending";
+        default: return r.name;
+      }
+    };
+    const va = getValue(a);
+    const vb = getValue(b);
+    const cmp = va.localeCompare(vb, "ko");
+    return sortDir === "asc" ? cmp : -cmp;
+  });
+
+  function toggleSort(key: string) {
+    if (sortKey === key) setSortDir(sortDir === "asc" ? "desc" : "asc");
+    else { setSortKey(key); setSortDir("asc"); }
+  }
+
+  const SortHeader = ({ label, field }: { label: string; field: string }) => (
+    <th
+      className="px-3 py-2 text-left font-medium cursor-pointer select-none hover:text-primary"
+      onClick={() => toggleSort(field)}
+    >
+      <span className="flex items-center gap-1">
+        {label}
+        {sortKey === field && <span className="text-[10px]">{sortDir === "asc" ? "▲" : "▼"}</span>}
+      </span>
+    </th>
+  );
 
   interface RegRow {
     name: string; email: string; phone: string;
@@ -930,10 +988,30 @@ export default function RegistrationsTab() {
             </div>
           </div>
 
+          {/* 검색 + 필터 */}
+          <div className="flex flex-wrap items-center gap-3">
+            <Input
+              placeholder="이름, 이메일, 학번 검색..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-60"
+            />
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-md border px-3 py-1.5 text-sm">
+              <option value="all">전체 상태</option>
+              <option value="pending">대기</option>
+              <option value="confirmed">확정</option>
+              <option value="cancelled">취소</option>
+              <option value="converted">참석 전환됨</option>
+            </select>
+            <span className="text-xs text-muted-foreground">
+              {filteredRegistrations.length}/{registrations.length}명
+            </span>
+          </div>
+
           {/* 신청 목록 */}
           <div className="rounded-xl border bg-white">
             <div className="flex items-center justify-between border-b px-4 py-3">
-              <span className="text-sm font-medium">신청자 {registrations.length}명</span>
+              <span className="text-sm font-medium">신청자 {filteredRegistrations.length}명</span>
               <div className="flex gap-2">
                 {selected.size > 0 && (
                   <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
@@ -958,26 +1036,26 @@ export default function RegistrationsTab() {
                 )}
               </div>
             </div>
-            {registrations.length === 0 ? (
-              <p className="p-6 text-center text-sm text-muted-foreground">신청 내역이 없습니다.</p>
+            {filteredRegistrations.length === 0 ? (
+              <p className="p-6 text-center text-sm text-muted-foreground">{registrations.length === 0 ? "신청 내역이 없습니다." : "검색 결과가 없습니다."}</p>
             ) : (
               <div className="max-h-96 overflow-x-auto overflow-y-auto">
                 <table className="w-full text-sm whitespace-nowrap">
                   <thead className="sticky top-0 border-b bg-muted/30">
                     <tr>
-                      <th className="px-3 py-2 text-left"><Checkbox checked={registrations.length > 0 && selected.size === registrations.length} onCheckedChange={toggleAll} /></th>
-                      <th className="px-3 py-2 text-left font-medium">이름</th>
-                      <th className="px-3 py-2 text-left font-medium">학번</th>
-                      <th className="px-3 py-2 text-left font-medium">이메일</th>
-                      <th className="px-3 py-2 text-left font-medium">전화번호</th>
-                      <th className="px-3 py-2 text-left font-medium">관심분야</th>
-                      <th className="px-3 py-2 text-left font-medium">상태</th>
+                      <th className="px-3 py-2 text-left"><Checkbox checked={filteredRegistrations.length > 0 && selected.size === filteredRegistrations.length} onCheckedChange={() => { if (selected.size === filteredRegistrations.length) setSelected(new Set()); else setSelected(new Set(filteredRegistrations.map((r) => r.id))); }} /></th>
+                      <SortHeader label="이름" field="name" />
+                      <SortHeader label="학번" field="studentId" />
+                      <SortHeader label="이메일" field="email" />
+                      <SortHeader label="전화번호" field="phone" />
+                      <SortHeader label="관심분야" field="interests" />
+                      <SortHeader label="상태" field="status" />
                       <th className="px-3 py-2 text-left font-medium">관리</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {registrations.map((r) => (
-                      <tr key={r.id} className={cn(selected.has(r.id) && "bg-primary/5")}>
+                    {filteredRegistrations.map((r) => (
+                      <tr key={r.id} className={cn(selected.has(r.id) && "bg-primary/5", r.status === "cancelled" && "opacity-50")}>
                         <td className="px-3 py-2"><Checkbox checked={selected.has(r.id)} onCheckedChange={() => toggleSelect(r.id)} /></td>
                         <td className="px-3 py-2 font-medium">{r.name}</td>
                         <td className="px-3 py-2 text-muted-foreground">{r.studentId ?? "-"}</td>
