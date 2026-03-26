@@ -811,18 +811,31 @@ export default function RegistrationsTab() {
     setConverting(true);
     let added = 0, skipped = 0;
     try {
+      // 기존 참석자의 userId/studentId/이름+이메일 세트 구축
+      const existingUserIds = new Set(attendees.map((a) => a.userId).filter(Boolean));
+      const existingStudentIds = new Set(attendees.filter((a) => a.studentId).map((a) => a.studentId));
+      const existingNameEmails = new Set(attendees.map((a) => `${a.userName}:${a.email || ""}`));
+
       for (const reg of registrations.filter((r) => ids.includes(r.id))) {
-        if (reg.userId) {
-          const existing = await attendeesApi.check(selectedId, reg.userId);
-          if ((existing.data as unknown[]).length > 0) { skipped++; continue; }
-        }
+        // 다중 기준 중복 체크
+        const guestId = reg.userId || `guest_${reg.email || reg.name}`;
+        if (existingUserIds.has(guestId)) { skipped++; continue; }
+        if (reg.studentId && existingStudentIds.has(reg.studentId)) { skipped++; continue; }
+        if (existingNameEmails.has(`${reg.name}:${reg.email || ""}`)) { skipped++; continue; }
+
         await attendeesApi.addWithDetails(selectedId, {
-          userName: reg.name, userId: reg.userId || `guest_${reg.email}`,
-          email: reg.email, phone: reg.phone || undefined,
-          interests: reg.affiliation || undefined, questions: reg.memo || undefined,
+          userName: reg.name, userId: guestId,
+          studentId: reg.studentId || undefined,
+          email: reg.email || undefined, phone: reg.phone || undefined,
+          interests: reg.interests || reg.affiliation || undefined,
+          questions: reg.memo || undefined,
+          semester: reg.semester || undefined,
           isGuest: !reg.userId, checkedIn: false, checkedInAt: null, checkedInBy: null,
         });
         await registrationsApi.update(reg.id, { convertedAt: new Date().toISOString() });
+        existingUserIds.add(guestId);
+        if (reg.studentId) existingStudentIds.add(reg.studentId);
+        existingNameEmails.add(`${reg.name}:${reg.email || ""}`);
         added++;
       }
       qc.invalidateQueries({ queryKey: ["attendees", selectedId] });
