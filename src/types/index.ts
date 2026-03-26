@@ -207,9 +207,13 @@ export interface SeminarRegistration {
   affiliation?: string;
   phone?: string;
   memo?: string;
-  userId?: string; // 회원이면 uid 연결
+  userId?: string;
   createdAt: string;
-  convertedAt?: string; // 참석자로 전환된 시각
+  convertedAt?: string;
+  // 구글폼 호환 확장 필드
+  studentId?: string;
+  semester?: string;
+  interests?: string;
 }
 
 // ── 수료증 / 감사장 ──

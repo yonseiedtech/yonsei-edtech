@@ -50,23 +50,47 @@ export function getSheetCsvUrl(sheetId: string): string {
 
 // ── 내부 헬퍼 ──
 
+// 동의어 매핑 (구글폼 헤더 ↔ 코드 열 이름)
+const SYNONYMS: Record<string, string[]> = {
+  "이메일": ["이메일", "email", "메일"],
+  "전화번호": ["전화번호", "연락처", "전화", "핸드폰", "phone"],
+  "관심분야": ["관심분야", "관심 분야", "분야"],
+  "기타 질문사항": ["기타 질문사항", "질문사항", "질문", "메모", "기타"],
+  "소속": ["소속", "소속기관", "학교", "affiliation"],
+  "누적학기": ["누적학기", "학기"],
+  "이름": ["이름", "성명", "name"],
+  "학번": ["학번", "학생번호", "studentId"],
+};
+
 function normalizeHeader(h: string): string {
-  // "1. 이름" → "이름", "타임스탬프" → "타임스탬프"
-  // "관심(연구/논문) 분야" → "관심분야" (괄호 내용 제거)
   return h.replace(/^\d+\.\s*/, "").replace(/\([^)]*\)\s*/g, "").trim();
+}
+
+function findColumnIndex(header: string[], col: string): number {
+  // 1. 정확히 일치
+  const exact = header.findIndex((h) => h === col);
+  if (exact >= 0) return exact;
+  // 2. 동의어 매핑: col의 동의어 그룹 찾기
+  for (const [, synonyms] of Object.entries(SYNONYMS)) {
+    if (synonyms.some((s) => s === col || col.includes(s) || s.includes(col))) {
+      // 이 동의어 그룹에서 헤더와 매칭되는 것 찾기
+      const idx = header.findIndex((h) =>
+        synonyms.some((s) => h === s || h.includes(s) || s.includes(h)),
+      );
+      if (idx >= 0) return idx;
+    }
+  }
+  // 3. 부분 문자열 매칭
+  const partial = header.findIndex((h) => h.includes(col) || col.includes(h));
+  return partial;
 }
 
 function mapRows(raw: string[][], columns: string[]): SpreadsheetRow[] {
   if (raw.length === 0) return [];
 
   const header = raw[0].map((h) => normalizeHeader(String(h ?? "")));
-  // 헤더행에서 컬럼 매칭 시도 (정규화 후 비교)
-  const colIndices: number[] = columns.map((col) => {
-    const idx = header.findIndex(
-      (h) => h === col || h.includes(col) || col.includes(h),
-    );
-    return idx;
-  });
+  // 헤더행에서 컬럼 매칭 시도 (동의어 매핑 + 정규화)
+  const colIndices: number[] = columns.map((col) => findColumnIndex(header, col));
 
   const hasHeader = colIndices.some((i) => i >= 0);
   const startRow = hasHeader ? 1 : 0;

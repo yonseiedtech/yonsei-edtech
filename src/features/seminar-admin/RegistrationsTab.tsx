@@ -26,12 +26,14 @@ import { parseExcelFile, parseCSVText, extractSheetId, getSheetCsvUrl } from "@/
 import type { SeminarRegistration, SeminarAttendee, RegistrationFieldConfig } from "@/types";
 import { DEFAULT_REGISTRATION_FIELDS } from "@/types";
 
-const REG_COLUMNS = ["이름", "이메일", "소속", "연락처", "메모"];
+const FORM_COLUMNS = ["이름", "학번", "누적학기", "이메일", "전화번호", "관심분야", "기타 질문사항"];
 
 function exportRegistrationsCSV(seminarTitle: string, regs: SeminarRegistration[]) {
-  const header = "이름,이메일,소속,연락처,메모,신청일시,참석자전환";
+  const header = "이름,학번,이메일,전화번호,소속,누적학기,관심분야,질문/메모,신청일시,참석자전환";
   const rows = regs.map((r) =>
-    [r.name, r.email, r.affiliation ?? "", r.phone ?? "", `"${(r.memo ?? "").replace(/"/g, '""')}"`,
+    [r.name, r.studentId ?? "", r.email, r.phone ?? "", r.affiliation ?? "",
+      r.semester ?? "", `"${(r.interests ?? "").replace(/"/g, '""')}"`,
+      `"${(r.memo ?? "").replace(/"/g, '""')}"`,
       r.createdAt ? new Date(r.createdAt).toLocaleString("ko-KR") : "", r.convertedAt ? "O" : ""].join(","),
   );
   const bom = "\uFEFF";
@@ -492,27 +494,39 @@ export default function RegistrationsTab() {
 
   const registrations = data ?? [];
 
+  interface RegRow {
+    name: string; email: string; phone: string;
+    studentId: string; semester: string; interests: string; memo: string;
+    affiliation: string;
+  }
+
   // 신청자 등록 (엑셀/시트/수기)
-  async function registerFromData(rows: { name: string; email: string; affiliation: string; phone: string; memo: string }[]) {
+  async function registerFromData(rows: RegRow[]) {
     if (rows.length === 0) { toast.error("데이터가 없습니다."); return; }
     if (!selectedId) return;
     setRegistering(true);
     let added = 0;
     let skipped = 0;
     const existingEmails = new Set(registrations.map((r) => r.email).filter(Boolean));
+    const existingStudentIds = new Set(registrations.map((r) => r.studentId).filter(Boolean));
     try {
       for (const row of rows) {
-        if (!row.name.trim()) continue; // 이름 없으면 스킵
+        if (!row.name.trim()) continue;
         if (row.email && existingEmails.has(row.email)) { skipped++; continue; }
+        if (row.studentId && existingStudentIds.has(row.studentId)) { skipped++; continue; }
         await registrationsApi.create({
           seminarId: selectedId,
           name: row.name,
-          email: row.email,
-          affiliation: row.affiliation || undefined,
+          email: row.email || undefined,
           phone: row.phone || undefined,
+          studentId: row.studentId || undefined,
+          semester: row.semester || undefined,
+          interests: row.interests || undefined,
           memo: row.memo || undefined,
+          affiliation: row.affiliation || undefined,
         });
-        existingEmails.add(row.email);
+        if (row.email) existingEmails.add(row.email);
+        if (row.studentId) existingStudentIds.add(row.studentId);
         added++;
       }
       qc.invalidateQueries({ queryKey: ["registrations", selectedId] });
@@ -525,15 +539,25 @@ export default function RegistrationsTab() {
     finally { setRegistering(false); }
   }
 
+  function mapParsedToRegRow(r: Record<string, string>): RegRow {
+    return {
+      name: r["이름"] || "",
+      email: r["이메일"] || "",
+      phone: r["전화번호"] || r["연락처"] || "",
+      studentId: r["학번"] || "",
+      semester: r["누적학기"] || "",
+      interests: r["관심분야"] || "",
+      memo: r["기타 질문사항"] || r["메모"] || "",
+      affiliation: r["소속"] || "",
+    };
+  }
+
   async function handleExcelUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const raw = await parseExcelFile(file, REG_COLUMNS);
-      await registerFromData(raw.map((r) => ({
-        name: r["이름"] || "", email: r["이메일"] || "", affiliation: r["소속"] || "",
-        phone: r["연락처"] || "", memo: r["메모"] || "",
-      })));
+      const raw = await parseExcelFile(file, FORM_COLUMNS);
+      await registerFromData(raw.map(mapParsedToRegRow));
     } catch { toast.error("파일을 읽을 수 없습니다."); }
     if (excelRef.current) excelRef.current.value = "";
   }
@@ -545,11 +569,8 @@ export default function RegistrationsTab() {
     try {
       const res = await fetch(`/api/sheets?url=${encodeURIComponent(getSheetCsvUrl(sheetId))}`);
       if (!res.ok) { toast.error("불러오기 실패"); return; }
-      const raw = parseCSVText(await res.text(), REG_COLUMNS);
-      await registerFromData(raw.map((r) => ({
-        name: r["이름"] || "", email: r["이메일"] || "", affiliation: r["소속"] || "",
-        phone: r["연락처"] || "", memo: r["메모"] || "",
-      })));
+      const raw = parseCSVText(await res.text(), FORM_COLUMNS);
+      await registerFromData(raw.map(mapParsedToRegRow));
       setSheetOpen(false);
       setSheetUrl("");
     } catch { toast.error("스프레드시트 연결 실패"); }
@@ -557,8 +578,8 @@ export default function RegistrationsTab() {
   }
 
   async function handleManualRegister() {
-    if (!manualForm.name.trim() || !manualForm.email.trim()) { toast.error("이름과 이메일은 필수입니다."); return; }
-    await registerFromData([manualForm]);
+    if (!manualForm.name.trim()) { toast.error("이름은 필수입니다."); return; }
+    await registerFromData([{ ...manualForm, studentId: "", semester: "", interests: "" }]);
     setManualForm({ name: "", email: "", affiliation: "", phone: "", memo: "" });
     setManualOpen(false);
   }
@@ -697,9 +718,10 @@ export default function RegistrationsTab() {
                     <tr>
                       <th className="px-3 py-2 text-left"><Checkbox checked={registrations.filter((r) => !r.convertedAt).length > 0 && selected.size === registrations.filter((r) => !r.convertedAt).length} onCheckedChange={toggleAll} /></th>
                       <th className="px-3 py-2 text-left font-medium">이름</th>
+                      <th className="px-3 py-2 text-left font-medium">학번</th>
                       <th className="px-3 py-2 text-left font-medium">이메일</th>
-                      <th className="px-3 py-2 text-left font-medium">소속</th>
-                      <th className="px-3 py-2 text-left font-medium">연락처</th>
+                      <th className="px-3 py-2 text-left font-medium">전화번호</th>
+                      <th className="px-3 py-2 text-left font-medium">관심분야</th>
                       <th className="px-3 py-2 text-left font-medium">상태</th>
                       <th className="px-3 py-2 text-left font-medium">관리</th>
                     </tr>
@@ -709,9 +731,10 @@ export default function RegistrationsTab() {
                       <tr key={r.id} className={cn(selected.has(r.id) && "bg-primary/5")}>
                         <td className="px-3 py-2"><Checkbox checked={selected.has(r.id)} onCheckedChange={() => toggleSelect(r.id)} disabled={!!r.convertedAt} /></td>
                         <td className="px-3 py-2 font-medium">{r.name}</td>
-                        <td className="px-3 py-2 text-muted-foreground">{r.email}</td>
-                        <td className="px-3 py-2 text-muted-foreground">{r.affiliation ?? "-"}</td>
+                        <td className="px-3 py-2 text-muted-foreground">{r.studentId ?? "-"}</td>
+                        <td className="px-3 py-2 text-muted-foreground">{r.email || "-"}</td>
                         <td className="px-3 py-2 text-muted-foreground">{r.phone ?? "-"}</td>
+                        <td className="max-w-32 truncate px-3 py-2 text-xs text-muted-foreground" title={r.interests}>{r.interests ?? "-"}</td>
                         <td className="px-3 py-2">
                           <div className="flex flex-wrap gap-1">
                             {r.userId && <Badge variant="secondary" className="text-[10px]">회원</Badge>}
