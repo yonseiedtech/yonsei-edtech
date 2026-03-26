@@ -367,6 +367,7 @@ function QuestionManager({ registrations, refetch }: { registrations: SeminarReg
 interface EditForm {
   id: string;
   name: string;
+  studentId: string;
   email: string;
   affiliation: string;
   phone: string;
@@ -587,12 +588,20 @@ export default function RegistrationsTab() {
     }
   }
 
+  function cleanStudentId(val: string): string {
+    if (!val) return "";
+    // 엑셀에서 숫자로 읽힌 경우 소수점 제거 (2025431009.0 → 2025431009)
+    const num = Number(val);
+    if (!isNaN(num) && num > 1000000000) return String(Math.round(num));
+    return val.trim();
+  }
+
   function mapParsedToRegRow(r: Record<string, string>): RegRow {
     return {
       name: r["이름"] || "",
       email: r["이메일"] || "",
       phone: r["전화번호"] || r["연락처"] || "",
-      studentId: r["학번"] || "",
+      studentId: cleanStudentId(r["학번"] || ""),
       semester: r["누적학기"] || "",
       interests: r["관심분야"] || "",
       memo: r["기타 질문사항"] || r["메모"] || "",
@@ -636,7 +645,7 @@ export default function RegistrationsTab() {
         name: mapped.name || "",
         email: mapped.email || "",
         phone: mapped.phone || "",
-        studentId: mapped.studentId || "",
+        studentId: cleanStudentId(mapped.studentId || ""),
         semester: mapped.semester || "",
         interests: mapped.interests || "",
         memo: mapped.memo || "",
@@ -675,14 +684,14 @@ export default function RegistrationsTab() {
   }
 
   function openEdit(reg: SeminarRegistration) {
-    setEditForm({ id: reg.id, name: reg.name, email: reg.email, affiliation: reg.affiliation ?? "", phone: reg.phone ?? "", memo: reg.memo ?? "" });
+    setEditForm({ id: reg.id, name: reg.name, studentId: reg.studentId ?? "", email: reg.email, affiliation: reg.affiliation ?? "", phone: reg.phone ?? "", memo: reg.memo ?? "" });
   }
 
   async function handleSaveEdit() {
     if (!editForm) return;
     try {
       await registrationsApi.update(editForm.id, {
-        name: editForm.name, email: editForm.email,
+        name: editForm.name, studentId: editForm.studentId || undefined, email: editForm.email,
         affiliation: editForm.affiliation || undefined, phone: editForm.phone || undefined, memo: editForm.memo || undefined,
       });
       toast.success("수정되었습니다."); setEditForm(null); refetch();
@@ -978,7 +987,10 @@ export default function RegistrationsTab() {
           <DialogHeader><DialogTitle>신청 정보 수정</DialogTitle></DialogHeader>
           {editForm && (
             <div className="grid gap-3">
-              <div><label className="mb-1 block text-sm font-medium">이름</label><Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className="mb-1 block text-sm font-medium">이름</label><Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} /></div>
+                <div><label className="mb-1 block text-sm font-medium">학번</label><Input value={editForm.studentId} onChange={(e) => setEditForm({ ...editForm, studentId: e.target.value })} placeholder="2025431009" /></div>
+              </div>
               <div><label className="mb-1 block text-sm font-medium">이메일</label><Input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} /></div>
               <div className="grid grid-cols-2 gap-3">
                 <div><label className="mb-1 block text-sm font-medium">소속</label><Input value={editForm.affiliation} onChange={(e) => setEditForm({ ...editForm, affiliation: e.target.value })} /></div>
