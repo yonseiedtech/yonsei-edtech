@@ -499,10 +499,11 @@ export default function RegistrationsTab() {
     setRegistering(true);
     let added = 0;
     let skipped = 0;
-    const existingEmails = new Set(registrations.map((r) => r.email));
+    const existingEmails = new Set(registrations.map((r) => r.email).filter(Boolean));
     try {
       for (const row of rows) {
-        if (existingEmails.has(row.email)) { skipped++; continue; }
+        if (!row.name.trim()) continue; // 이름 없으면 스킵
+        if (row.email && existingEmails.has(row.email)) { skipped++; continue; }
         await registrationsApi.create({
           seminarId: selectedId,
           name: row.name,
@@ -514,9 +515,10 @@ export default function RegistrationsTab() {
         existingEmails.add(row.email);
         added++;
       }
-      refetch();
+      qc.invalidateQueries({ queryKey: ["registrations", selectedId] });
+      await refetch();
       const parts = [];
-      if (added > 0) parts.push(`${added}명 등록`);
+      if (added > 0) parts.push(`${added}명 신청 등록`);
       if (skipped > 0) parts.push(`${skipped}명 중복 건너뜀`);
       toast.success(parts.join(", "));
     } catch { toast.error("등록 중 오류가 발생했습니다."); }
