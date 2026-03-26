@@ -527,42 +527,62 @@ export default function RegistrationsTab() {
     affiliation: string;
   }
 
-  // 신청자 등록 (엑셀/시트/수기)
+  // 신청자 등록 — 서버 API 기반
   async function registerFromData(rows: RegRow[]) {
     if (rows.length === 0) { toast.error("데이터가 없습니다."); return; }
     if (!selectedId) return;
     setRegistering(true);
-    let added = 0;
-    let skipped = 0;
+
+    // 중복 필터링
     const existingEmails = new Set(registrations.map((r) => r.email).filter(Boolean));
     const existingStudentIds = new Set(registrations.map((r) => r.studentId).filter(Boolean));
+    const newRows = rows.filter((row) => {
+      if (!row.name.trim()) return false;
+      if (row.email && existingEmails.has(row.email)) return false;
+      if (row.studentId && existingStudentIds.has(row.studentId)) return false;
+      return true;
+    });
+    const skipped = rows.length - newRows.length;
+
+    if (newRows.length === 0) {
+      toast.error(skipped > 0 ? `${skipped}명 모두 중복입니다.` : "등록할 데이터가 없습니다.");
+      setRegistering(false);
+      return;
+    }
+
     try {
-      for (const row of rows) {
-        if (!row.name.trim()) continue;
-        if (row.email && existingEmails.has(row.email)) { skipped++; continue; }
-        if (row.studentId && existingStudentIds.has(row.studentId)) { skipped++; continue; }
-        await registrationsApi.create({
+      const res = await fetch("/api/registrations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           seminarId: selectedId,
-          name: row.name,
-          email: row.email || undefined,
-          phone: row.phone || undefined,
-          studentId: row.studentId || undefined,
-          semester: row.semester || undefined,
-          interests: row.interests || undefined,
-          memo: row.memo || undefined,
-          affiliation: row.affiliation || undefined,
-        });
-        if (row.email) existingEmails.add(row.email);
-        if (row.studentId) existingStudentIds.add(row.studentId);
-        added++;
+          registrations: newRows.map((row) => ({
+            name: row.name,
+            email: row.email || undefined,
+            phone: row.phone || undefined,
+            studentId: row.studentId || undefined,
+            semester: row.semester || undefined,
+            interests: row.interests || undefined,
+            memo: row.memo || undefined,
+            affiliation: row.affiliation || undefined,
+          })),
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.error || "등록 실패");
+        return;
       }
-      qc.invalidateQueries({ queryKey: ["registrations", selectedId] });
+
+      const { count } = await res.json() as { count: number };
+      qc.resetQueries({ queryKey: ["registrations", selectedId] });
       await refetch();
       const parts = [];
-      if (added > 0) parts.push(`${added}명 신청 등록`);
+      if (count > 0) parts.push(`${count}명 신청 등록 완료`);
       if (skipped > 0) parts.push(`${skipped}명 중복 건너뜀`);
       toast.success(parts.join(", "));
-    } catch { toast.error("등록 중 오류가 발생했습니다."); }
+    } catch { toast.error("서버 연결에 실패했습니다."); }
     finally { setRegistering(false); }
   }
 
