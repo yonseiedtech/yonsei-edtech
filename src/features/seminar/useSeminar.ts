@@ -201,6 +201,12 @@ export function useSessions(seminarId: string) {
   return { sessions: data ?? [], isLoading };
 }
 
+function invalidateSessions(qc: ReturnType<typeof useQueryClient>, seminarId?: string) {
+  if (seminarId) qc.invalidateQueries({ queryKey: ["sessions", seminarId] });
+  qc.invalidateQueries({ predicate: (q) => q.queryKey[0] === "sessions" });
+  qc.invalidateQueries({ predicate: (q) => q.queryKey[0] === "seminars" });
+}
+
 export function useCreateSession() {
   const queryClient = useQueryClient();
 
@@ -208,9 +214,8 @@ export function useCreateSession() {
     mutationFn: async ({ seminarId, data }: { seminarId: string; data: Omit<SeminarSession, "id" | "seminarId"> }) => {
       return await sessionsApi.create({ seminarId, ...data } as unknown as Record<string, unknown>);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sessions"] });
-      queryClient.invalidateQueries({ queryKey: ["seminars"] });
+    onSuccess: (_data, variables) => {
+      invalidateSessions(queryClient, variables.seminarId);
     },
   });
 
@@ -224,9 +229,8 @@ export function useUpdateSession() {
     mutationFn: async ({ sessionId, data }: { seminarId: string; sessionId: string; data: Partial<SeminarSession> }) => {
       return await sessionsApi.update(sessionId, data as unknown as Record<string, unknown>);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sessions"] });
-      queryClient.invalidateQueries({ queryKey: ["seminars"] });
+    onSuccess: (_data, variables) => {
+      invalidateSessions(queryClient, variables.seminarId);
     },
   });
 
@@ -240,9 +244,8 @@ export function useDeleteSession() {
     mutationFn: async ({ sessionId }: { seminarId: string; sessionId: string }) => {
       return await sessionsApi.delete(sessionId);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sessions"] });
-      queryClient.invalidateQueries({ queryKey: ["seminars"] });
+    onSuccess: (_data, variables) => {
+      invalidateSessions(queryClient, variables.seminarId);
     },
   });
 

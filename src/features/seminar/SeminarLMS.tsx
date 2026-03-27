@@ -236,12 +236,11 @@ function SessionsSection({ seminar, isStaff }: { seminar: Seminar; isStaff: bool
     });
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!editSession) return;
     const speaker = editSession.useSeminarSpeaker ? seminar.speaker : editSession.speaker;
     const speakerBio = editSession.useSeminarSpeaker ? (seminar.speakerBio || undefined) : (editSession.speakerBio || undefined);
     const duration = calcDuration(editSession.startTime, editSession.endTime);
-    // 시간 기준 순서 자동 계산
     const allTimes = sessions
       .filter((s) => !editSession.sessionId || s.id !== editSession.sessionId)
       .map((s) => s.time);
@@ -259,19 +258,27 @@ function SessionsSection({ seminar, isStaff }: { seminar: Seminar; isStaff: bool
       duration: duration > 0 ? duration : 30,
       order,
     };
-    if (editSession.sessionId) {
-      updateSession({ seminarId: seminar.id, sessionId: editSession.sessionId, data });
-      toast.success("세션이 수정되었습니다.");
-    } else {
-      createSession({ seminarId: seminar.id, data: data as Omit<SeminarSession, "id" | "seminarId"> });
-      toast.success("세션이 추가되었습니다.");
+    try {
+      if (editSession.sessionId) {
+        await updateSession({ seminarId: seminar.id, sessionId: editSession.sessionId, data });
+        toast.success("세션이 수정되었습니다.");
+      } else {
+        await createSession({ seminarId: seminar.id, data: data as Omit<SeminarSession, "id" | "seminarId"> });
+        toast.success("세션이 추가되었습니다.");
+      }
+      setEditSession(null);
+    } catch {
+      toast.error("세션 저장에 실패했습니다.");
     }
-    setEditSession(null);
   }
 
-  function handleDelete(sessionId: string) {
-    deleteSession({ seminarId: seminar.id, sessionId });
-    toast.success("세션이 삭제되었습니다.");
+  async function handleDelete(sessionId: string) {
+    try {
+      await deleteSession({ seminarId: seminar.id, sessionId });
+      toast.success("세션이 삭제되었습니다.");
+    } catch {
+      toast.error("세션 삭제에 실패했습니다.");
+    }
   }
 
   return (

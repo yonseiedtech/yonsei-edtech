@@ -17,7 +17,7 @@ import { Download, Users, UserCheck, UserX, FileSpreadsheet, Link, Loader2, User
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { parseExcelFile, parseCSVText, extractSheetId, getSheetCsvUrl } from "@/lib/parse-spreadsheet";
-import { attendeesApi, profilesApi } from "@/lib/bkend";
+import { attendeesApi, profilesApi, registrationsApi } from "@/lib/bkend";
 import { useQueryClient } from "@tanstack/react-query";
 import type { SeminarAttendee } from "@/types";
 
@@ -286,6 +286,55 @@ function SeminarReport({ seminarId, seminarTitle, seminarDate }: { seminarId: st
   const [registering, setRegistering] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
   const [manualForm, setManualForm] = useState({ name: "", studentId: "", email: "", phone: "", semester: "", interests: "" });
+  const [syncing, setSyncing] = useState(false);
+
+  async function handleSyncFromRegistrations() {
+    setSyncing(true);
+    try {
+      const regRes = await registrationsApi.list(seminarId);
+      const regs = regRes.data as unknown as { name: string; email?: string; phone?: string; studentId?: string; semester?: string; interests?: string; memo?: string; status?: string; userId?: string }[];
+
+      // 기존 참석자 세트 (이름/학번/이메일)
+      const existingNames = new Set(attendees.map((a) => a.userName));
+      const existingStudentIds = new Set(attendees.filter((a) => a.studentId).map((a) => a.studentId));
+      const existingEmails = new Set(attendees.filter((a) => a.email).map((a) => a.email));
+
+      let added = 0;
+      let skipped = 0;
+      for (const reg of regs) {
+        if (reg.status === "cancelled") { skipped++; continue; }
+        if (existingNames.has(reg.name)) { skipped++; continue; }
+        if (reg.studentId && existingStudentIds.has(reg.studentId)) { skipped++; continue; }
+        if (reg.email && existingEmails.has(reg.email)) { skipped++; continue; }
+
+        await attendeesApi.addWithDetails(seminarId, {
+          userName: reg.name,
+          userId: reg.userId || `guest_${reg.email || reg.name}`,
+          studentId: reg.studentId || undefined,
+          email: reg.email || undefined,
+          phone: reg.phone || undefined,
+          semester: reg.semester || undefined,
+          interests: reg.interests || undefined,
+          questions: reg.memo || undefined,
+          isGuest: !reg.userId,
+          checkedIn: false,
+          checkedInAt: null,
+          checkedInBy: null,
+        });
+        existingNames.add(reg.name);
+        if (reg.studentId) existingStudentIds.add(reg.studentId);
+        if (reg.email) existingEmails.add(reg.email);
+        added++;
+      }
+
+      qc.invalidateQueries({ queryKey: ["attendees", seminarId] });
+      const parts = [];
+      if (added > 0) parts.push(`${added}명 동기화 완료`);
+      if (skipped > 0) parts.push(`${skipped}명 중복/취소 건너뜀`);
+      toast.success(parts.length > 0 ? parts.join(", ") : "동기화할 신청자가 없습니다.");
+    } catch { toast.error("동기화 중 오류가 발생했습니다."); }
+    finally { setSyncing(false); }
+  }
 
   const total = attendees.length;
   const checkedIn = attendees.filter((a) => a.checkedIn).length;
@@ -449,6 +498,10 @@ function SeminarReport({ seminarId, seminarTitle, seminarDate }: { seminarId: st
             </Button>
             <Button variant="outline" size="sm" onClick={() => setManualOpen(true)} disabled={registering}>
               <UserPlus size={14} className="mr-1" />수기 등록
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleSyncFromRegistrations} disabled={syncing}>
+              {syncing ? <Loader2 size={14} className="mr-1 animate-spin" /> : <Users size={14} className="mr-1" />}
+              신청자 동기화
             </Button>
           </div>
         </div>
