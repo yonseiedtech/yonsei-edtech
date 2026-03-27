@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   useSeminar,
+  useSessions,
   useCreateSession,
   useUpdateSession,
   useDeleteSession,
@@ -202,13 +203,14 @@ function calcDuration(start: string, end: string): number {
 }
 
 function SessionsSection({ seminar, isStaff }: { seminar: Seminar; isStaff: boolean }) {
+  const { sessions: rawSessions, refetch: refetchSessions } = useSessions(seminar.id);
   const { createSession } = useCreateSession();
   const { updateSession } = useUpdateSession();
   const { deleteSession } = useDeleteSession();
   const [editSession, setEditSession] = useState<EditSessionForm | null>(null);
 
-  // 시간 기준 자동 정렬
-  const sessions = (seminar.sessions ?? []).sort((a, b) => a.time.localeCompare(b.time));
+  // 시간 기준 자동 정렬 — useSessions 훅에서 가져온 데이터 우선, 없으면 세미나 내장 배열
+  const sessions = (rawSessions.length > 0 ? rawSessions : seminar.sessions ?? []).sort((a, b) => a.time.localeCompare(b.time));
 
   function openAdd() {
     setEditSession({
@@ -266,6 +268,7 @@ function SessionsSection({ seminar, isStaff }: { seminar: Seminar; isStaff: bool
         await createSession({ seminarId: seminar.id, data: data as Omit<SeminarSession, "id" | "seminarId"> });
         toast.success("세션이 추가되었습니다.");
       }
+      await refetchSessions();
       setEditSession(null);
     } catch {
       toast.error("세션 저장에 실패했습니다.");
@@ -275,6 +278,7 @@ function SessionsSection({ seminar, isStaff }: { seminar: Seminar; isStaff: bool
   async function handleDelete(sessionId: string) {
     try {
       await deleteSession({ seminarId: seminar.id, sessionId });
+      await refetchSessions();
       toast.success("세션이 삭제되었습니다.");
     } catch {
       toast.error("세션 삭제에 실패했습니다.");

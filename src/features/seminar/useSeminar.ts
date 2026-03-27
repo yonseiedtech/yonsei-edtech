@@ -188,7 +188,7 @@ export function useStaffMembers() {
 // ── Sessions ──
 
 export function useSessions(seminarId: string) {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ["sessions", seminarId],
     queryFn: async () => {
       const res = await sessionsApi.list(seminarId);
@@ -198,7 +198,7 @@ export function useSessions(seminarId: string) {
     enabled: !!seminarId,
   });
 
-  return { sessions: data ?? [], isLoading };
+  return { sessions: data ?? [], isLoading, refetch };
 }
 
 function invalidateSessions(qc: ReturnType<typeof useQueryClient>, seminarId?: string) {
