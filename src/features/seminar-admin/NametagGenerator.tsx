@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
+import { QRCodeSVG } from "qrcode.react";
 import { useSeminars, useAttendees, useSessions } from "@/features/seminar/useSeminar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -361,25 +362,34 @@ function NametagPreview({
           )}
         </div>
 
-        {/* 하단 */}
+        {/* 하단: QR코드 + 링크 */}
         <div
           style={{
             position: "absolute",
             bottom: 0,
             left: 0,
             right: 0,
-            height: "8mm",
-            background: "linear-gradient(0deg, rgba(0,56,118,0.05) 0%, transparent 100%)",
+            height: "22mm",
+            borderTop: "0.5px solid #eee",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            gap: "1.5mm",
+            gap: "5mm",
+            padding: "0 4mm",
           }}
         >
-          <Image src="/yonsei-emblem.svg" alt="" width={14} height={14} />
-          <span style={{ fontSize: "5pt", color: "#999", fontWeight: 600 }}>
-            Yonsei EdTech Association
-          </span>
+          {/* 홈페이지 QR */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1mm" }}>
+            <QRCodeSVG value="https://yonsei-edtech.vercel.app/" size={40} level="M" />
+            <span style={{ fontSize: "4.5pt", color: "#888", fontWeight: 600 }}>홈페이지</span>
+          </div>
+          {/* 구분선 */}
+          <div style={{ width: "0.5px", height: "14mm", background: "#ddd" }} />
+          {/* 인스타그램 QR */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1mm" }}>
+            <QRCodeSVG value="https://www.instagram.com/edtech_yonsei/" size={40} level="M" />
+            <span style={{ fontSize: "4.5pt", color: "#888", fontWeight: 600 }}>Instagram</span>
+          </div>
         </div>
       </div>
     </div>
