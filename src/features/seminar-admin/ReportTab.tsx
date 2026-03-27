@@ -277,7 +277,7 @@ function AttendeeRow({ a }: { a: SeminarAttendee }) {
 }
 
 function SeminarReport({ seminarId, seminarTitle, seminarDate }: { seminarId: string; seminarTitle: string; seminarDate?: string }) {
-  const { attendees } = useAttendees(seminarId);
+  const { attendees, refetch: refetchAttendees } = useAttendees(seminarId);
   const qc = useQueryClient();
   const excelRef = useRef<HTMLInputElement>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -327,7 +327,7 @@ function SeminarReport({ seminarId, seminarTitle, seminarDate }: { seminarId: st
         added++;
       }
 
-      qc.invalidateQueries({ queryKey: ["attendees", seminarId] });
+      await refetchAttendees();
       const parts = [];
       if (added > 0) parts.push(`${added}명 동기화 완료`);
       if (skipped > 0) parts.push(`${skipped}명 중복/취소 건너뜀`);
@@ -410,7 +410,7 @@ function SeminarReport({ seminarId, seminarTitle, seminarDate }: { seminarId: st
         await attendeesApi.addWithDetails(seminarId, details);
       }
 
-      qc.invalidateQueries({ queryKey: ["attendees", seminarId] });
+      await refetchAttendees();
 
       const parts = [];
       if (matched > 0) parts.push(`${matched}명 회원 등록`);

@@ -128,7 +128,7 @@ export function useToggleAttendance() {
 // ── Attendees ──
 
 export function useAttendees(seminarId: string) {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ["attendees", seminarId],
     queryFn: async () => {
       const res = await attendeesApi.list(seminarId);
@@ -138,7 +138,7 @@ export function useAttendees(seminarId: string) {
     enabled: !!seminarId,
   });
 
-  return { attendees: data ?? [], isLoading };
+  return { attendees: data ?? [], isLoading, refetch };
 }
 
 export function useAttendee(seminarId: string, userId: string) {
