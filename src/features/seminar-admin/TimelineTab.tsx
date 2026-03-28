@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useSeminars, useUpdateSeminar, useStaffMembers } from "@/features/seminar/useSeminar";
 import { createTimeline, OFFLINE_TIMELINE, ONLINE_TIMELINE } from "./timeline-template";
 import { resolveDate, isOverdue, formatDDay } from "./timeline-utils";
@@ -209,13 +209,19 @@ export default function TimelineTab() {
     saveTimeline(updateSeminar, seminar.id, updated);
   }
 
-  function handleMemoChange(phaseId: string, memo: string) {
+  const memoTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const handleMemoChange = useCallback((phaseId: string, memo: string) => {
     if (!seminar) return;
+    // 로컬 상태는 즉시 업데이트
     const updated = timeline.map((p) =>
       p.id === phaseId ? { ...p, memo } : p,
     );
-    saveTimeline(updateSeminar, seminar.id, updated);
-  }
+    // Firestore 저장은 500ms 디바운스
+    clearTimeout(memoTimerRef.current);
+    memoTimerRef.current = setTimeout(() => {
+      saveTimeline(updateSeminar, seminar.id, updated);
+    }, 500);
+  }, [seminar, timeline, updateSeminar]);
 
   function handleDelete(phaseId: string) {
     if (!seminar) return;
@@ -600,9 +606,9 @@ export default function TimelineTab() {
           </div>
 
           <div className="divide-y">
-            {templateItems
+            {[...templateItems]
               .sort((a, b) => a.dDay - b.dDay)
-              .map((item, i) => (
+              .map((item) => (
                 <div key={item.id} className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <Badge variant="secondary" className="w-14 shrink-0 justify-center text-xs">
@@ -619,7 +625,7 @@ export default function TimelineTab() {
                     <button
                       onClick={() => setEditTemplateItem({
                         mode: "edit",
-                        index: i,
+                        index: templateItems.findIndex((t) => t.id === item.id),
                         label: item.label,
                         dDay: String(item.dDay),
                         description: item.description ?? "",
@@ -629,7 +635,7 @@ export default function TimelineTab() {
                       <Pencil size={13} />
                     </button>
                     <button
-                      onClick={() => setTemplateItems(templateItems.filter((_, j) => j !== i))}
+                      onClick={() => setTemplateItems(templateItems.filter((t) => t.id !== item.id))}
                       className="shrink-0 rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-500"
                     >
                       <Trash2 size={13} />

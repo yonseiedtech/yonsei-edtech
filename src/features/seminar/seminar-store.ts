@@ -66,14 +66,21 @@ export const useSeminarStore = create<CheckinState>((set, get) => ({
       attendees: state.attendees.map((a) => (a.id === attendee.id ? updated : a)),
     }));
 
-    // Persist to Firestore (fire-and-forget for UX speed)
+    // Persist to Firestore — 실패 시 로컬 상태 롤백
     dataApi
       .patch("seminar_attendees", attendee.id, {
         checkedIn: true,
         checkedInAt: now,
         checkedInBy: staffUserId,
       })
-      .catch((err) => console.error("[checkin-store] Failed to persist checkin:", err));
+      .catch((err) => {
+        console.error("[checkin-store] Failed to persist checkin:", err);
+        set((state) => ({
+          attendees: state.attendees.map((a) =>
+            a.id === attendee.id ? { ...a, checkedIn: false, checkedInAt: null, checkedInBy: null } : a,
+          ),
+        }));
+      });
 
     return { success: true, attendee: updated };
   },
@@ -117,7 +124,14 @@ export const useSeminarStore = create<CheckinState>((set, get) => ({
         checkedInAt: now,
         checkedInBy: `self_${staffUserId}`,
       })
-      .catch((err) => console.error("[checkin-store] self checkin persist error:", err));
+      .catch((err) => {
+        console.error("[checkin-store] self checkin persist error:", err);
+        set((s) => ({
+          attendees: s.attendees.map((a) =>
+            a.id === attendee!.id ? { ...a, checkedIn: false, checkedInAt: null, checkedInBy: null } : a,
+          ),
+        }));
+      });
 
     return { success: true, attendee: updated } as CheckinResult;
   },

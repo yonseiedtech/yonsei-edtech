@@ -37,6 +37,12 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "세미나 정보가 필요합니다." }, { status: 400 });
   }
 
+  // 입력 길이 제한 (M1)
+  seminar.title = String(seminar.title || "").slice(0, 500);
+  seminar.description = String(seminar.description || "").slice(0, 2000);
+  seminar.speaker = String(seminar.speaker || "").slice(0, 200);
+  seminar.speakerBio = String(seminar.speakerBio || "").slice(0, 1000);
+
   const dateStr = seminar.date
     ? new Date(seminar.date).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })
     : seminar.date;
@@ -45,9 +51,14 @@ export async function POST(req: NextRequest) {
     : "";
 
   // 세미나 일정 기반 문체 결정
-  const seminarDate = new Date(seminar.date + "T00:00:00");
   const now = new Date();
-  const daysUntil = Math.round((seminarDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  let daysUntil = 0;
+  if (seminar.date) {
+    const seminarDate = new Date(seminar.date + "T00:00:00");
+    if (!isNaN(seminarDate.getTime())) {
+      daysUntil = Math.round((seminarDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    }
+  }
 
   let toneGuide = "";
   if (daysUntil > 14) {

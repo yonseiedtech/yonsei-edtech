@@ -273,7 +273,7 @@ function QuestionManager({ registrations, refetch }: { registrations: SeminarReg
     if (!r.memo) return false;
     const trimmed = r.memo.trim();
     if (trimmed.length < 2) return false;
-    if (NO_QUESTION.some((nq) => trimmed === nq || trimmed.startsWith("아직 특별한") || trimmed.startsWith("아직 없"))) return false;
+    if (NO_QUESTION.includes(trimmed) || trimmed.startsWith("아직 특별한") || trimmed.startsWith("아직 없")) return false;
     return true;
   });
 
@@ -880,8 +880,8 @@ export default function RegistrationsTab() {
     setSelected((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   }
   function toggleAll() {
-    if (selected.size === registrations.length) setSelected(new Set());
-    else setSelected(new Set(registrations.map((r) => r.id)));
+    if (selected.size === filteredRegistrations.length) setSelected(new Set());
+    else setSelected(new Set(filteredRegistrations.map((r) => r.id)));
   }
 
   async function convertToAttendees(ids: string[]) {
@@ -1177,7 +1177,7 @@ export default function RegistrationsTab() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setPreviewOpen(false)}>취소</Button>
-            <Button onClick={handlePreviewConfirm} disabled={registering || !fieldMapping["이름"] && !Object.values(fieldMapping).includes("name")}>
+            <Button onClick={handlePreviewConfirm} disabled={registering || (!fieldMapping["이름"] && !Object.values(fieldMapping).includes("name"))}>
               {registering && <Loader2 size={14} className="mr-1 animate-spin" />}
               {previewRows.length}명 신청 등록
             </Button>

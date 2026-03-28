@@ -1,12 +1,22 @@
 import { NextRequest } from "next/server";
 import * as XLSX from "xlsx";
+import { requireAuth } from "@/lib/api-auth";
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export async function POST(req: NextRequest) {
+  const authResult = await requireAuth(req, "member");
+  if (authResult instanceof Response) return authResult;
+
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
     if (!file) {
       return Response.json({ error: "파일이 없습니다." }, { status: 400 });
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      return Response.json({ error: "파일 크기는 10MB 이하여야 합니다." }, { status: 413 });
     }
 
     const buffer = await file.arrayBuffer();

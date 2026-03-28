@@ -2,6 +2,10 @@ import { NextRequest } from "next/server";
 import { Resend } from "resend";
 import { requireAuth } from "@/lib/api-auth";
 
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
 function getResend() {
   const key = process.env.RESEND_API_KEY;
   if (!key) return null;
@@ -41,7 +45,7 @@ export async function POST(req: NextRequest) {
         html: `
           <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
             <h2 style="color: #003876;">연세교육공학회</h2>
-            <p>${name || "회원"}님, 안녕하세요!</p>
+            <p>${escapeHtml(name || "회원")}님, 안녕하세요!</p>
             <p>가입 신청이 <strong>승인</strong>되었습니다. 이제 로그인하여 학회 활동에 참여하실 수 있습니다.</p>
             <a href="https://yonsei-edtech.vercel.app/login"
                style="display: inline-block; margin: 16px 0; padding: 12px 24px;
@@ -64,7 +68,7 @@ export async function POST(req: NextRequest) {
         html: `
           <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
             <h2 style="color: #003876;">연세교육공학회</h2>
-            <p>${name || "회원"}님, 안녕하세요.</p>
+            <p>${escapeHtml(name || "회원")}님, 안녕하세요.</p>
             <p>가입 신청이 반려되었습니다. 자세한 사항은 아래 이메일로 문의해주세요.</p>
             <p style="margin-top: 16px;">
               <a href="mailto:yonsei.edtech@gmail.com" style="color: #003876;">

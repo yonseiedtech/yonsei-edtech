@@ -31,13 +31,12 @@ import { auth, db } from "./firebase";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
 
-export function saveTokens(_access: string, _refresh: string) {
-  // Firebase SDK handles token management internally
-}
+/** @deprecated Firebase SDK가 토큰을 자동 관리합니다 */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function saveTokens(_access?: string, _refresh?: string) {}
 
-export function clearTokens() {
-  // Firebase SDK handles token management internally
-}
+/** @deprecated Firebase SDK가 토큰을 자동 관리합니다 */
+export function clearTokens() {}
 
 // ── Firestore helpers ──
 
@@ -199,7 +198,8 @@ export const dataApi = {
       updatedAt: serverTimestamp(),
     });
     const docSnap = await getDoc(docRef);
-    return serializeDoc(docSnap!) as T;
+    if (!docSnap.exists()) throw new Error("문서 생성 후 조회 실패");
+    return serializeDoc(docSnap) as T;
   },
 
   update: async <T>(table: string, id: string, data: Record<string, unknown>): Promise<T> => {

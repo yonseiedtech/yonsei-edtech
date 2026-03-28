@@ -432,7 +432,7 @@ export default function NametagGenerator() {
   function handleSeminarChange(id: string) {
     setSelectedId(id || null);
     const s = seminars.find((sem) => sem.id === id);
-    if (s) setSubtitle(s.description.split("\n")[0].slice(0, 40));
+    if (s) setSubtitle(s.description?.split("\n")[0]?.slice(0, 40) ?? "");
   }
 
   async function loadFromAttendees() {

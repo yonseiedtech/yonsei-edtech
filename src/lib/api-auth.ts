@@ -28,6 +28,10 @@ export async function verifyAuth(req: NextRequest): Promise<AuthUser | null> {
     const decoded = await adminAuth.verifyIdToken(token);
     const userDoc = await adminDb.collection("users").doc(decoded.uid).get();
     const data = userDoc.data();
+    // 미승인 사용자 차단
+    if (data && data.approved === false) {
+      return null;
+    }
     const role = (data?.role as UserRole) ?? "member";
     return {
       uid: decoded.uid,

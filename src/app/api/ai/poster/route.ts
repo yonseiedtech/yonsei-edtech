@@ -36,6 +36,12 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "세미나 정보가 필요합니다." }, { status: 400 });
   }
 
+  // 입력 길이 제한 (M1)
+  seminar.title = String(seminar.title || "").slice(0, 500);
+  seminar.description = String(seminar.description || "").slice(0, 2000);
+  seminar.speaker = String(seminar.speaker || "").slice(0, 200);
+  seminar.speakerBio = String(seminar.speakerBio || "").slice(0, 1000);
+
   const sizeInfo = SIZES[size] || SIZES.instagram;
 
   const dateStr = seminar.date

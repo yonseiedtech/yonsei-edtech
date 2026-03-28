@@ -17,6 +17,9 @@ export async function POST(req: NextRequest) {
   if (!email) {
     return Response.json({ error: "이메일이 필요합니다." }, { status: 400 });
   }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return Response.json({ error: "올바른 이메일 형식이 아닙니다." }, { status: 400 });
+  }
 
   try {
     const adminAuth = getAdminAuth();
@@ -38,7 +41,7 @@ export async function POST(req: NextRequest) {
             <h2 style="color: #003876;">연세교육공학회</h2>
             <p>안녕하세요,</p>
             <p>관리자에 의해 비밀번호 재설정이 요청되었습니다. 아래 버튼을 클릭하여 새 비밀번호를 설정해주세요.</p>
-            <a href="${link}"
+            <a href="${link.replace(/&/g, "&amp;").replace(/"/g, "&quot;")}"
                style="display: inline-block; margin: 16px 0; padding: 12px 24px;
                       background: #003876; color: white; text-decoration: none;
                       border-radius: 8px; font-weight: bold;">
@@ -53,9 +56,9 @@ export async function POST(req: NextRequest) {
         `,
       });
     }
-    // Resend 미설정 시 generatePasswordResetLink 호출 자체가
-    // Firebase 기본 비밀번호 재설정 이메일을 트리거하지는 않음.
-    // 대안: sendPasswordResetEmail을 클라이언트에서 호출하도록 안내 가능.
+    if (!resendKey) {
+      return Response.json({ sent: false, reason: "이메일 서비스가 설정되지 않았습니다. 관리자에게 문의하세요." });
+    }
 
     return Response.json({ sent: true });
   } catch (err) {

@@ -37,6 +37,15 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: `메시지는 최대 ${MAX_MESSAGES}개까지 허용됩니다.` }, { status: 400 });
   }
 
+  // 개별 메시지 길이 검증
+  for (const msg of messages) {
+    const parts = (msg as { parts?: { text?: string }[] }).parts;
+    const text = parts?.map((p) => p.text || "").join("") || JSON.stringify(msg);
+    if (text.length > MAX_MESSAGE_LENGTH) {
+      return Response.json({ error: `메시지 길이는 ${MAX_MESSAGE_LENGTH}자 이내여야 합니다.` }, { status: 400 });
+    }
+  }
+
   const role = user.role ?? "member";
   const tools = getToolsForRole(role);
   const system = getOrchestraSystemPrompt(role, user.name);
