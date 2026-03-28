@@ -28,6 +28,7 @@ import {
   BookOpen,
   Pencil,
   CheckCircle,
+  Star,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,38 @@ import RegistrationSection from "@/features/seminar/detail/RegistrationSection";
 import StaffTools from "@/features/seminar/detail/StaffTools";
 import EditDialogs from "@/features/seminar/detail/EditDialogs";
 import type { EditSection, InfoFormData, SpeakerFormData } from "@/features/seminar/detail/EditDialogs";
+import { reviewsApi } from "@/lib/bkend";
+import type { SeminarReview } from "@/types";
+
+function ReviewsList({ seminarId }: { seminarId: string }) {
+  const { data } = useQuery({
+    queryKey: ["reviews", seminarId, "attendee"],
+    queryFn: async () => {
+      const res = await reviewsApi.list(seminarId, "attendee");
+      return res.data as unknown as SeminarReview[];
+    },
+    retry: false,
+  });
+  const reviews = data ?? [];
+  if (reviews.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">아직 작성된 후기가 없습니다.</p>;
+  return (
+    <div className="space-y-3">
+      {reviews.map((r) => (
+        <div key={r.id} className="rounded-lg border bg-muted/10 px-4 py-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">{r.authorName}</span>
+            <div className="flex gap-0.5">
+              {[1,2,3,4,5].map((v) => (
+                <Star key={v} size={12} className={v <= (r.rating ?? 5) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/20"} />
+              ))}
+            </div>
+          </div>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap">{r.content}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 type ContentFormat = "press" | "sns" | "email";
 
@@ -345,14 +378,31 @@ function SeminarDetail({ id }: { id: string }) {
                 ? "운영진으로서 세미나 공간에 접근할 수 있습니다."
                 : "세미나 참석 신청이 완료되었습니다. 세미나 공간에서 자료와 후기를 확인하세요."}
             </p>
-            <Link href={`/seminars/${id}`}>
+            <Link href={`/seminars/${id}/lms`}>
               <Button className="w-full gap-2">
                 <BookOpen size={16} />
-                세미나 입장하기
+                세미나 공간 입장
               </Button>
             </Link>
           </div>
         )}
+
+        {/* Section 6.5: Reviews */}
+        <div className="mt-6 rounded-2xl border bg-white p-8">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
+            <Star size={16} />
+            참석자 후기
+          </h2>
+          <ReviewsList seminarId={id} />
+          <div className="mt-4 text-center">
+            <Link href={`/seminars/${id}/review`}>
+              <Button variant="outline" size="sm" className="gap-1">
+                <Pencil size={14} />
+                후기 작성하기
+              </Button>
+            </Link>
+          </div>
+        </div>
 
         {/* Section 7: Staff Tools */}
         {isStaff && (
