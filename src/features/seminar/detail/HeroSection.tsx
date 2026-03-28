@@ -41,32 +41,23 @@ export default function HeroSection({ seminar, isStaff, onEditInfo }: Props) {
   return (
     <div className="relative overflow-hidden rounded-2xl border bg-white">
       <div className="relative h-48 sm:h-64 w-full">
-        {seminar.posterUrl ? (
-          <>
-            <img
-              src={seminar.posterUrl}
-              alt={seminar.title}
-              className="h-full w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-          </>
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5">
-            <div className="text-center">
-              <BookOpen size={48} className="mx-auto text-primary/30" />
-              <p className="mt-2 text-sm text-primary/40 font-medium">세미나 포스터</p>
-              {isStaff && (
-                <button
-                  onClick={onEditInfo}
-                  className="mt-2 inline-flex items-center gap-1 rounded-md bg-white/80 px-3 py-1.5 text-xs text-muted-foreground shadow-sm hover:bg-white transition-colors"
-                >
-                  <Pencil size={12} />
-                  포스터 이미지 등록
-                </button>
-              )}
-            </div>
-          </div>
-        )}
+        <>
+          <img
+            src={seminar.posterUrl || "/yonsei-campus.jpg"}
+            alt={seminar.title}
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          {isStaff && !seminar.posterUrl && (
+            <button
+              onClick={onEditInfo}
+              className="absolute top-3 right-3 z-10 inline-flex items-center gap-1 rounded-md bg-white/80 px-3 py-1.5 text-xs text-muted-foreground shadow-sm hover:bg-white transition-colors"
+            >
+              <Pencil size={12} />
+              포스터 변경
+            </button>
+          )}
+        </>
       </div>
 
       <div className="p-8 relative -mt-20 z-10">
@@ -99,11 +90,11 @@ export default function HeroSection({ seminar, isStaff, onEditInfo }: Props) {
           </div>
         )}
 
-        <h1 className={cn("mt-3 text-2xl font-bold sm:text-3xl", seminar.posterUrl ? "text-white drop-shadow-sm" : "text-foreground")}>
+        <h1 className="mt-3 text-2xl font-bold sm:text-3xl text-white drop-shadow-sm">
           {seminar.title}
         </h1>
 
-        <div className={cn("mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm", seminar.posterUrl ? "text-white/90" : "text-muted-foreground")}>
+        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/90">
           <div className="flex items-center gap-2">
             <Calendar size={16} />
             <span>{seminar.date} {seminar.time}</span>
