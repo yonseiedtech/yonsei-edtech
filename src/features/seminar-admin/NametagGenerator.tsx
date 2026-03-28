@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import Image from "next/image";
 import { QRCodeSVG } from "qrcode.react";
 import { useSeminars, useAttendees, useSessions } from "@/features/seminar/useSeminar";
+import { registrationsApi } from "@/lib/bkend";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -435,8 +436,19 @@ export default function NametagGenerator() {
     if (s) setSubtitle(s.description.split("\n")[0].slice(0, 40));
   }
 
-  function loadFromAttendees() {
+  async function loadFromAttendees() {
     if (attendees.length === 0) { toast.error("참석자가 없습니다."); return; }
+    // 신청자 데이터에서 학번 보완용 맵 구축
+    let regMap = new Map<string, string>();
+    if (selectedId) {
+      try {
+        const regRes = await registrationsApi.list(selectedId);
+        const regs = regRes.data as unknown as { name: string; studentId?: string }[];
+        for (const r of regs) {
+          if (r.studentId && r.name) regMap.set(r.name, r.studentId);
+        }
+      } catch { /* 신청자 조회 실패해도 진행 */ }
+    }
     // 중복 제거 (이름 기준)
     const seen = new Set<string>();
     const unique = attendees.filter((a) => {
@@ -446,7 +458,7 @@ export default function NametagGenerator() {
     });
     setNames(unique.map((a) => ({
       name: a.userName,
-      studentId: a.studentId || "",
+      studentId: a.studentId || regMap.get(a.userName) || "",
       role: "참가자" as NametagRole,
     })));
     toast.success(`${unique.length}명의 참석자를 불러왔습니다.`);
