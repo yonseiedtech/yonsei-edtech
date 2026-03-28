@@ -49,14 +49,13 @@ import type { SeminarReview } from "@/types";
 
 function ReviewsList({ seminarId }: { seminarId: string }) {
   const { data } = useQuery({
-    queryKey: ["reviews", seminarId, "attendee"],
+    queryKey: ["reviews", seminarId],
     queryFn: async () => {
-      const res = await reviewsApi.list(seminarId, "attendee");
+      const res = await reviewsApi.list(seminarId);
       return res.data as unknown as SeminarReview[];
     },
-    retry: false,
   });
-  const reviews = data ?? [];
+  const reviews = (data ?? []).filter((r) => r.type === "attendee" || !r.type);
   if (reviews.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">아직 작성된 후기가 없습니다.</p>;
   return (
     <div className="space-y-3">

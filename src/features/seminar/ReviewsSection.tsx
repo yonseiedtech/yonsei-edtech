@@ -63,18 +63,19 @@ export default function ReviewsSection({ seminar, type }: Props) {
   const canWrite =
     type === "attendee" ? isAttendee : isStaff;
 
-  const { data: reviews = [] } = useQuery({
-    queryKey: ["reviews", seminar.id, type],
+  const { data: allReviews = [] } = useQuery({
+    queryKey: ["reviews", seminar.id],
     queryFn: async () => {
-      const res = await reviewsApi.list(seminar.id, type);
+      const res = await reviewsApi.list(seminar.id);
       return res.data as unknown as SeminarReview[];
     },
   });
+  const reviews = allReviews.filter((r) => r.type === type || (!r.type && type === "attendee"));
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => reviewsApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["reviews", seminar.id, type] });
+      queryClient.invalidateQueries({ queryKey: ["reviews", seminar.id] });
       toast.success("후기가 삭제되었습니다.");
     },
   });
@@ -97,7 +98,7 @@ export default function ReviewsSection({ seminar, type }: Props) {
         authorName: user.name,
         authorGeneration: user.generation || undefined,
       });
-      queryClient.invalidateQueries({ queryKey: ["reviews", seminar.id, type] });
+      queryClient.invalidateQueries({ queryKey: ["reviews", seminar.id] });
       toast.success("후기가 등록되었습니다.");
       setContent("");
       setRating(5);
