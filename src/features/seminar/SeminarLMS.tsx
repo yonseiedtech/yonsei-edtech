@@ -240,23 +240,32 @@ function SessionsSection({ seminar, isStaff }: { seminar: Seminar; isStaff: bool
 
   async function handleSave() {
     if (!editSession) return;
+    if (!editSession.title.trim()) { toast.error("세션 제목을 입력하세요."); return; }
     const speaker = editSession.useSeminarSpeaker ? seminar.speaker : editSession.speaker;
     const speakerBio = editSession.useSeminarSpeaker ? (seminar.speakerBio || undefined) : (editSession.speakerBio || undefined);
-    const duration = calcDuration(editSession.startTime, editSession.endTime);
-    const allTimes = sessions
-      .filter((s) => !editSession.sessionId || s.id !== editSession.sessionId)
-      .map((s) => s.time);
-    allTimes.push(editSession.startTime);
-    allTimes.sort();
-    const order = allTimes.indexOf(editSession.startTime) + 1;
+    const startTime = editSession.startTime || "";
+    const endTime = editSession.endTime || "";
+    const duration = calcDuration(startTime, endTime);
+
+    // 순서: 시간 있으면 시간순, 없으면 맨 뒤
+    let order = sessions.length + 1;
+    if (startTime) {
+      const allTimes = sessions
+        .filter((s) => !editSession.sessionId || s.id !== editSession.sessionId)
+        .map((s) => s.time)
+        .filter(Boolean);
+      allTimes.push(startTime);
+      allTimes.sort();
+      order = allTimes.indexOf(startTime) + 1;
+    }
 
     const data = {
       category: editSession.category || undefined,
-      title: editSession.title,
-      speaker,
+      title: editSession.title.trim(),
+      speaker: speaker || "미정",
       speakerBio,
-      time: editSession.startTime,
-      endTime: editSession.endTime || undefined,
+      time: startTime || "미정",
+      endTime: endTime || undefined,
       duration: duration > 0 ? duration : 30,
       order,
     };
