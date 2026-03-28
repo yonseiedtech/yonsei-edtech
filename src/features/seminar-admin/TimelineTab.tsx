@@ -150,11 +150,11 @@ ${s.isOnline ? "• 녹화 영상은 편집 후 별도 공유 예정입니다" :
   },
 ];
 
-export default function TimelineTab() {
+export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: string } = {}) {
   const { seminars } = useSeminars();
   const { updateSeminar } = useUpdateSeminar();
   const { staffMembers } = useStaffMembers();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(propSeminarId ?? null);
   const [viewMode, setViewMode] = useState<ViewMode>("timeline");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);

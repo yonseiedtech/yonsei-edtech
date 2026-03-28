@@ -12,7 +12,11 @@ import {
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import MaterialsSection from "@/features/seminar/MaterialsSection";
-import ReviewsSection from "@/features/seminar/ReviewsSection";
+import SeminarReviews from "@/features/seminar/SeminarReviews";
+import ReviewManagement from "@/features/seminar-admin/ReviewManagement";
+import PromotionTab from "@/features/seminar-admin/PromotionTab";
+import PosterGenerator from "@/features/seminar-admin/PosterGenerator";
+import TimelineTab from "@/features/seminar-admin/TimelineTab";
 import { getComputedStatus } from "@/lib/seminar-utils";
 import { SEMINAR_STATUS_LABELS } from "@/types";
 import type { Seminar, SeminarSession, SeminarStatus } from "@/types";
@@ -43,6 +47,10 @@ import {
   Pencil,
   Trash2,
   UserCircle,
+  BarChart3,
+  Megaphone,
+  Image,
+  ListChecks,
 } from "lucide-react";
 
 const STATUS_STYLES: Record<SeminarStatus, string> = {
@@ -52,15 +60,22 @@ const STATUS_STYLES: Record<SeminarStatus, string> = {
   cancelled: "bg-destructive/10 text-destructive",
 };
 
-type Tab = "overview" | "speaker" | "sessions" | "materials" | "attendee-reviews" | "speaker-reviews";
+type Tab = "overview" | "speaker" | "sessions" | "materials" | "reviews"
+  | "review-management" | "promotion" | "poster" | "timeline";
 
-const TABS: { value: Tab; label: string; icon: React.ReactNode }[] = [
+const GENERAL_TABS: { value: Tab; label: string; icon: React.ReactNode }[] = [
   { value: "overview", label: "개요", icon: <Info size={16} /> },
   { value: "speaker", label: "연사 소개", icon: <UserCircle size={16} /> },
   { value: "sessions", label: "세션", icon: <Clock size={16} /> },
   { value: "materials", label: "자료실", icon: <FolderOpen size={16} /> },
-  { value: "attendee-reviews", label: "참석자 후기", icon: <MessageSquare size={16} /> },
-  { value: "speaker-reviews", label: "연사 후기", icon: <Mic size={16} /> },
+  { value: "reviews", label: "세미나 후기", icon: <MessageSquare size={16} /> },
+];
+
+const ADMIN_TABS: { value: Tab; label: string; icon: React.ReactNode }[] = [
+  { value: "review-management", label: "후기 관리", icon: <BarChart3 size={16} /> },
+  { value: "promotion", label: "홍보 콘텐츠", icon: <Megaphone size={16} /> },
+  { value: "poster", label: "포스터", icon: <Image size={16} /> },
+  { value: "timeline", label: "타임라인", icon: <ListChecks size={16} /> },
 ];
 
 interface Props {
@@ -485,7 +500,7 @@ export default function SeminarLMS({ seminarId }: Props) {
         <div className="rounded-2xl border bg-white">
           {/* 탭 네비게이션 */}
           <div className="flex overflow-x-auto border-b">
-            {TABS.map((tab) => (
+            {GENERAL_TABS.map((tab) => (
               <button
                 key={tab.value}
                 onClick={() => setActiveTab(tab.value)}
@@ -500,6 +515,26 @@ export default function SeminarLMS({ seminarId }: Props) {
                 {tab.label}
               </button>
             ))}
+            {isStaff && (
+              <>
+                <div className="mx-1 my-2 border-l" />
+                {ADMIN_TABS.map((tab) => (
+                  <button
+                    key={tab.value}
+                    onClick={() => setActiveTab(tab.value)}
+                    className={cn(
+                      "flex flex-none items-center gap-1.5 border-b-2 px-4 py-3 text-sm font-medium transition-colors",
+                      activeTab === tab.value
+                        ? "border-primary text-primary"
+                        : "border-transparent text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {tab.icon}
+                    {tab.label}
+                  </button>
+                ))}
+              </>
+            )}
           </div>
 
           {/* 탭 콘텐츠 */}
@@ -508,12 +543,11 @@ export default function SeminarLMS({ seminarId }: Props) {
             {activeTab === "speaker" && <SpeakerSection seminar={seminar} />}
             {activeTab === "sessions" && <SessionsSection seminar={seminar} isStaff={isStaff} />}
             {activeTab === "materials" && <MaterialsSection seminar={seminar} />}
-            {activeTab === "attendee-reviews" && (
-              <ReviewsSection seminar={seminar} type="attendee" />
-            )}
-            {activeTab === "speaker-reviews" && (
-              <ReviewsSection seminar={seminar} type="speaker" />
-            )}
+            {activeTab === "reviews" && <SeminarReviews seminar={seminar} />}
+            {isStaff && activeTab === "review-management" && <ReviewManagement seminar={seminar} />}
+            {isStaff && activeTab === "promotion" && <PromotionTab seminarId={seminar.id} />}
+            {isStaff && activeTab === "poster" && <PosterGenerator seminarId={seminar.id} />}
+            {isStaff && activeTab === "timeline" && <TimelineTab seminarId={seminar.id} />}
           </div>
         </div>
       </div>

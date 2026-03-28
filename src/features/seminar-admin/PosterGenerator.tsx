@@ -16,10 +16,10 @@ const SIZES = [
   { value: "a4", label: "A4 (2480x3508)" },
 ];
 
-export default function PosterGenerator() {
+export default function PosterGenerator({ seminarId: propSeminarId }: { seminarId?: string } = {}) {
   const { seminars } = useSeminars();
   const { updateSeminar } = useUpdateSeminar();
-  const [selectedId, setSelectedId] = useState("");
+  const [selectedId, setSelectedId] = useState(propSeminarId ?? "");
   const [size, setSize] = useState("instagram");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);

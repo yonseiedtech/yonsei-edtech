@@ -55,7 +55,12 @@ function ReviewsList({ seminarId }: { seminarId: string }) {
       return res.data as unknown as SeminarReview[];
     },
   });
-  const reviews = (data ?? []).filter((r) => r.type === "attendee" || !r.type);
+  const reviews = (data ?? []).filter((r) => {
+    if ((r.status ?? "published") === "hidden") return false;
+    if (r.type === "attendee" || !r.type) return true;
+    if (r.type === "staff" && (r.visibility ?? "public") === "public") return true;
+    return false;
+  });
   if (reviews.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">아직 작성된 후기가 없습니다.</p>;
   return (
     <div className="space-y-3">

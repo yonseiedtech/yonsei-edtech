@@ -133,6 +133,7 @@ export interface Seminar {
   registrationUrl?: string;
   timeline?: TimelinePhase[];
   registrationFields?: RegistrationFieldConfig[];
+  reviewQuestions?: string[];
   cancelReason?: string;
   status: "upcoming" | "ongoing" | "completed" | "cancelled";
   createdBy: string;
@@ -276,13 +277,17 @@ export interface SeminarMaterial {
 export interface SeminarReview {
   id: string;
   seminarId: string;
-  type: "attendee" | "speaker";
+  type: "attendee" | "speaker" | "staff";
   content: string;
   rating?: number; // 1-5 별점 (선택)
   authorId: string;
   authorName: string;
   authorGeneration?: number;
+  visibility: "public" | "internal";
+  status: "published" | "hidden";
+  questionAnswers?: Record<string, string>;
   createdAt: string;
+  updatedAt?: string;
 }
 
 // ── 문의 ──

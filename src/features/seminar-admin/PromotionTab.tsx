@@ -46,12 +46,12 @@ const FORMAT_LABEL_MAP: Record<string, string> = {
   hashtag: "해시태그",
 };
 
-export default function PromotionTab() {
+export default function PromotionTab({ seminarId: propSeminarId }: { seminarId?: string } = {}) {
   const router = useRouter();
   const { seminars } = useSeminars();
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(propSeminarId ?? null);
   const [format, setFormat] = useState<ContentFormat>("press");
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);

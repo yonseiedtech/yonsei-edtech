@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { seminarId, type, content, rating, authorId, authorName, studentId } = body as {
+    const { seminarId, type, content, rating, authorId, authorName, studentId, visibility, questionAnswers } = body as {
       seminarId: string;
       type: string;
       content: string;
@@ -18,6 +18,8 @@ export async function POST(req: NextRequest) {
       authorId: string;
       authorName: string;
       studentId?: string;
+      visibility?: string;
+      questionAnswers?: Record<string, string>;
     };
 
     if (!seminarId || !content || !authorName) {
@@ -45,6 +47,9 @@ export async function POST(req: NextRequest) {
       authorId: authorId || `guest_${authorName}`,
       authorName: authorName.slice(0, 100),
       studentId: studentId || null,
+      visibility: visibility || "public",
+      status: "published",
+      questionAnswers: questionAnswers || null,
       createdAt: now,
       updatedAt: now,
     });

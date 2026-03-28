@@ -17,8 +17,11 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
   const [studentId, setStudentId] = useState("");
   const [rating, setRating] = useState(5);
   const [content, setContent] = useState("");
+  const [questionAnswers, setQuestionAnswers] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+
+  const reviewQuestions = seminar?.reviewQuestions ?? [];
 
   async function handleSubmit() {
     if (!name.trim()) { toast.error("이름을 입력하세요."); return; }
@@ -49,6 +52,7 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
           authorId,
           authorName: name.trim(),
           studentId: studentId.trim() || undefined,
+          questionAnswers: Object.keys(questionAnswers).length > 0 ? questionAnswers : undefined,
         }),
       });
       if (!res.ok) throw new Error("API error");
@@ -138,6 +142,20 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
               ))}
             </div>
           </div>
+
+          {/* 커스텀 질문 */}
+          {reviewQuestions.map((q, i) => (
+            <div key={i}>
+              <label className="mb-1 block text-sm font-medium">{q}</label>
+              <textarea
+                value={questionAnswers[q] ?? ""}
+                onChange={(e) => setQuestionAnswers((prev) => ({ ...prev, [q]: e.target.value }))}
+                placeholder="답변을 입력해주세요."
+                rows={3}
+                className="w-full rounded-lg border bg-muted/50 px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              />
+            </div>
+          ))}
 
           {/* 내용 */}
           <div>
