@@ -182,7 +182,7 @@ export default function AdminSeminarTab() {
             <Badge variant="secondary" className={STATUS_COLORS[computed]}>
               {SEMINAR_STATUS_LABELS[computed]}
             </Badge>
-            <Link href={`/seminars/${s.id}/lms`}>
+            <Link href={`/seminars/${s.id}`}>
               <Button variant="outline" size="sm" className="gap-1 text-xs">
                 <BookOpen size={14} />
                 입장
