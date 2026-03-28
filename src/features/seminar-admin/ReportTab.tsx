@@ -336,6 +336,31 @@ function SeminarReport({ seminarId, seminarTitle, seminarDate }: { seminarId: st
     finally { setSyncing(false); }
   }
 
+  async function handleRemoveAttendDuplicates() {
+    if (attendees.length < 2) return;
+    const seenNames = new Map<string, string>();
+    const seenStudentIds = new Map<string, string>();
+    const seenEmails = new Map<string, string>();
+    const dupeIds: string[] = [];
+    for (const a of attendees) {
+      let isDupe = false;
+      if (a.studentId && seenStudentIds.has(a.studentId)) isDupe = true;
+      else if (a.studentId) seenStudentIds.set(a.studentId, a.id);
+      if (!isDupe && a.email && seenEmails.has(a.email)) isDupe = true;
+      else if (a.email) seenEmails.set(a.email, a.id);
+      if (!isDupe && seenNames.has(a.userName)) isDupe = true;
+      else if (!isDupe) seenNames.set(a.userName, a.id);
+      if (isDupe) dupeIds.push(a.id);
+    }
+    if (dupeIds.length === 0) { toast.success("중복 참석자가 없습니다."); return; }
+    if (!confirm(`${dupeIds.length}명의 중복 참석자를 삭제하시겠습니까?`)) return;
+    try {
+      for (const id of dupeIds) await attendeesApi.remove(id);
+      toast.success(`${dupeIds.length}명 중복 제거 완료`);
+      await refetchAttendees();
+    } catch { toast.error("중복 제거 중 오류"); }
+  }
+
   const total = attendees.length;
   const checkedIn = attendees.filter((a) => a.checkedIn).length;
   const rate = total > 0 ? Math.round((checkedIn / total) * 100) : 0;
@@ -503,6 +528,11 @@ function SeminarReport({ seminarId, seminarTitle, seminarDate }: { seminarId: st
               {syncing ? <Loader2 size={14} className="mr-1 animate-spin" /> : <Users size={14} className="mr-1" />}
               신청자 동기화
             </Button>
+            {attendees.length > 1 && (
+              <Button variant="outline" size="sm" onClick={handleRemoveAttendDuplicates}>
+                중복 제거
+              </Button>
+            )}
           </div>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
