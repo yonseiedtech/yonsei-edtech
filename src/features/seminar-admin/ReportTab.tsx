@@ -231,7 +231,7 @@ function GenerationBar({ data }: { data: Record<number, number> }) {
   );
 }
 
-function AttendeeRow({ a }: { a: SeminarAttendee }) {
+function AttendeeRow({ a, onToggleCheckin }: { a: SeminarAttendee; onToggleCheckin: (id: string, checkedIn: boolean) => void }) {
   const [open, setOpen] = useState(false);
   const hasDetails = a.interests || a.questions || a.semester || a.phone;
 
@@ -247,11 +247,16 @@ function AttendeeRow({ a }: { a: SeminarAttendee }) {
         <td className="px-3 py-2 text-xs text-muted-foreground">{a.studentId || "-"}</td>
         <td className="px-3 py-2 text-xs text-muted-foreground">{a.email || "-"}</td>
         <td className="px-3 py-2">
-          {a.checkedIn ? (
-            <Badge className="bg-green-50 text-green-700 text-xs">출석</Badge>
-          ) : (
-            <Badge variant="secondary" className="text-xs">미출석</Badge>
-          )}
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleCheckin(a.id, !a.checkedIn); }}
+            title={a.checkedIn ? "클릭하여 미출석으로 변경" : "클릭하여 출석으로 변경"}
+          >
+            {a.checkedIn ? (
+              <Badge className="bg-green-50 text-green-700 text-xs cursor-pointer hover:bg-green-100">출석</Badge>
+            ) : (
+              <Badge variant="secondary" className="text-xs cursor-pointer hover:bg-muted">미출석</Badge>
+            )}
+          </button>
         </td>
         <td className="px-3 py-2 text-xs text-muted-foreground">
           {a.checkedInAt
@@ -345,6 +350,17 @@ function SeminarReport({ seminarId, seminarTitle, seminarDate }: { seminarId: st
       toast.success(parts.length > 0 ? parts.join(", ") : "동기화할 신청자가 없습니다.");
     } catch { toast.error("동기화 중 오류가 발생했습니다."); }
     finally { setSyncing(false); }
+  }
+
+  async function handleToggleCheckin(attendeeId: string, checkedIn: boolean) {
+    try {
+      await attendeesApi.update(attendeeId, {
+        checkedIn,
+        checkedInAt: checkedIn ? new Date().toISOString() : null,
+        checkedInBy: checkedIn ? "manual" : null,
+      });
+      await refetchAttendees();
+    } catch { toast.error("출석 상태 변경에 실패했습니다."); }
   }
 
   async function handleRemoveAttendDuplicates() {
@@ -629,7 +645,7 @@ function SeminarReport({ seminarId, seminarTitle, seminarDate }: { seminarId: st
               <tbody className="divide-y">
                 {attendees
                   .sort((a, b) => (a.checkedIn === b.checkedIn ? 0 : a.checkedIn ? -1 : 1))
-                  .map((a) => <AttendeeRow key={a.id} a={a} />)}
+                  .map((a) => <AttendeeRow key={a.id} a={a} onToggleCheckin={handleToggleCheckin} />)}
               </tbody>
             </table>
           )}
