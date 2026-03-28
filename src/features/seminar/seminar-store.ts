@@ -18,6 +18,9 @@ interface CheckinState {
   /** Process QR checkin locally + persist to Firestore */
   checkinByToken: (token: string, staffUserId: string) => CheckinResult;
 
+  /** Process self checkin by name + studentId */
+  checkinBySelfInfo: (name: string, studentId: string, staffUserId: string) => CheckinResult;
+
   getAttendee: (seminarId: string, userId: string) => SeminarAttendee | undefined;
   getAttendees: (seminarId: string) => SeminarAttendee[];
   getCheckinStats: (seminarId: string) => { total: number; checkedIn: number; remaining: number };
@@ -73,6 +76,50 @@ export const useSeminarStore = create<CheckinState>((set, get) => ({
       .catch((err) => console.error("[checkin-store] Failed to persist checkin:", err));
 
     return { success: true, attendee: updated };
+  },
+
+  checkinBySelfInfo: (name: string, studentId: string, staffUserId: string) => {
+    const state = get();
+    // 이름+학번 매칭 (학번 우선, 없으면 이름만)
+    let attendee = studentId
+      ? state.attendees.find((a) => a.studentId === studentId && a.userName === name)
+      : undefined;
+    if (!attendee && studentId) {
+      attendee = state.attendees.find((a) => a.studentId === studentId);
+    }
+    if (!attendee) {
+      attendee = state.attendees.find((a) => a.userName === name);
+    }
+
+    if (!attendee) {
+      return { success: false, message: "일치하는 참석자를 찾을 수 없습니다." } as CheckinResult;
+    }
+
+    if (attendee.checkedIn) {
+      return { success: false, alreadyCheckedIn: true, attendee } as CheckinResult;
+    }
+
+    const now = new Date().toISOString();
+    const updated: SeminarAttendee = {
+      ...attendee,
+      checkedIn: true,
+      checkedInAt: now,
+      checkedInBy: `self_${staffUserId}`,
+    };
+
+    set((s) => ({
+      attendees: s.attendees.map((a) => (a.id === attendee!.id ? updated : a)),
+    }));
+
+    dataApi
+      .patch("seminar_attendees", attendee.id, {
+        checkedIn: true,
+        checkedInAt: now,
+        checkedInBy: `self_${staffUserId}`,
+      })
+      .catch((err) => console.error("[checkin-store] self checkin persist error:", err));
+
+    return { success: true, attendee: updated } as CheckinResult;
   },
 
   getAttendee: (seminarId, userId) => {

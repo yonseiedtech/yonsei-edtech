@@ -9,43 +9,67 @@ import CheckinDashboard from "@/features/seminar/CheckinDashboard";
 import { useSeminar } from "@/features/seminar/useSeminar";
 import { useSeminarStore } from "@/features/seminar/seminar-store";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { ArrowLeft, QrCode } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, QrCode, UserCheck } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { CheckinResult } from "@/types";
+
+type CheckinMode = "qr" | "self";
 
 function CheckinContent({ id }: { id: string }) {
   const router = useRouter();
   const { user } = useAuthStore();
   const seminar = useSeminar(id);
   const checkinByToken = useSeminarStore((s) => s.checkinByToken);
+  const checkinBySelfInfo = useSeminarStore((s) => s.checkinBySelfInfo);
   const loadAttendees = useSeminarStore((s) => s.loadAttendees);
   const loaded = useSeminarStore((s) => s.loaded);
 
-  // Load attendees from Firestore on mount
+  const [mode, setMode] = useState<CheckinMode>("qr");
+  const [selfName, setSelfName] = useState("");
+  const [selfStudentId, setSelfStudentId] = useState("");
+
   useEffect(() => {
     loadAttendees(id);
   }, [id, loadAttendees]);
+
   const [lastResult, setLastResult] = useState<CheckinResult | null>(null);
-  const [scanLog, setScanLog] = useState<Array<{ name: string; time: string; success: boolean }>>([]);
+  const [scanLog, setScanLog] = useState<Array<{ name: string; time: string; success: boolean; method: string }>>([]);
+
+  function addToLog(name: string, success: boolean, method: string) {
+    setScanLog((prev) => [
+      {
+        name,
+        time: new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+        success,
+        method,
+      },
+      ...prev,
+    ].slice(0, 20));
+  }
 
   const handleScan = useCallback(
     (token: string) => {
       if (!user) return;
       const result = checkinByToken(token, user.id);
       setLastResult(result);
-
-      if (result.success) {
-        setScanLog((prev) => [
-          {
-            name: result.attendee.userName,
-            time: new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
-            success: true,
-          },
-          ...prev,
-        ].slice(0, 10));
-      }
+      if (result.success) addToLog(result.attendee.userName, true, "QR");
     },
     [user, checkinByToken]
   );
+
+  function handleSelfCheckin() {
+    if (!user) return;
+    if (!selfName.trim()) return;
+    const result = checkinBySelfInfo(selfName.trim(), selfStudentId.trim(), user.id);
+    setLastResult(result);
+    if (result.success) {
+      addToLog(result.attendee.userName, true, "셀프");
+      setSelfName("");
+      setSelfStudentId("");
+    }
+  }
 
   if (!seminar) {
     return (
@@ -80,10 +104,65 @@ function CheckinContent({ id }: { id: string }) {
         </div>
         <p className="mt-1 text-sm text-muted-foreground">{seminar.title}</p>
 
-        {/* QR 스캐너 */}
-        <div className="mt-4">
-          <QrScanner onScan={handleScan} />
+        {/* 체크인 모드 탭 */}
+        <div className="mt-4 flex gap-1 rounded-lg bg-muted/50 p-1">
+          <button
+            onClick={() => setMode("qr")}
+            className={cn(
+              "flex flex-1 items-center justify-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors",
+              mode === "qr" ? "bg-white text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <QrCode size={16} />
+            QR 스캔
+          </button>
+          <button
+            onClick={() => setMode("self")}
+            className={cn(
+              "flex flex-1 items-center justify-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors",
+              mode === "self" ? "bg-white text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <UserCheck size={16} />
+            셀프 체크인
+          </button>
         </div>
+
+        {/* QR 스캐너 */}
+        {mode === "qr" && (
+          <div className="mt-4">
+            <QrScanner onScan={handleScan} />
+          </div>
+        )}
+
+        {/* 셀프 체크인 폼 */}
+        {mode === "self" && (
+          <div className="mt-4 rounded-xl border bg-white p-5 space-y-3">
+            <p className="text-xs text-muted-foreground">이름과 학번을 입력하여 출석 체크합니다.</p>
+            <div>
+              <label className="mb-1 block text-sm font-medium">이름 *</label>
+              <Input
+                value={selfName}
+                onChange={(e) => setSelfName(e.target.value)}
+                placeholder="홍길동"
+                onKeyDown={(e) => e.key === "Enter" && handleSelfCheckin()}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">학번</label>
+              <Input
+                value={selfStudentId}
+                onChange={(e) => setSelfStudentId(e.target.value)}
+                placeholder="2025431009"
+                onKeyDown={(e) => e.key === "Enter" && handleSelfCheckin()}
+              />
+            </div>
+            <Button onClick={handleSelfCheckin} disabled={!selfName.trim()} className="w-full">
+              <UserCheck size={16} className="mr-1" />
+              출석 체크
+            </Button>
+          </div>
+        )}
 
         {/* 스캔 결과 */}
         {lastResult && (
@@ -105,7 +184,15 @@ function CheckinContent({ id }: { id: string }) {
                   key={i}
                   className="flex items-center justify-between text-xs"
                 >
-                  <span className="font-medium">{log.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{log.name}</span>
+                    <span className={cn(
+                      "rounded px-1.5 py-0.5 text-[10px] font-medium",
+                      log.method === "QR" ? "bg-blue-50 text-blue-600" : "bg-green-50 text-green-600",
+                    )}>
+                      {log.method}
+                    </span>
+                  </div>
                   <span className="text-muted-foreground">{log.time}</span>
                 </div>
               ))}
