@@ -205,20 +205,19 @@ function NametagPreview({
             }}
           />
 
-          {/* 학번 */}
-          {recipientStudentId && (
-            <span
-              data-nametag-studentid
-              style={{
-                fontSize: "8pt",
-                color: "#003876",
-                fontWeight: 600,
-                letterSpacing: "0.05em",
-              }}
-            >
-              {recipientStudentId}
-            </span>
-          )}
+          {/* 학번 (항상 렌더링 — 배치 인쇄용) */}
+          <span
+            data-nametag-studentid
+            style={{
+              fontSize: "8pt",
+              color: "#003876",
+              fontWeight: 600,
+              letterSpacing: "0.05em",
+              display: recipientStudentId ? "inline" : "none",
+            }}
+          >
+            {recipientStudentId || ""}
+          </span>
         </div>
 
         {/* 하단 바 */}
