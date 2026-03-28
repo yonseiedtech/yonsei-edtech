@@ -345,10 +345,10 @@ function SeminarDetail({ id }: { id: string }) {
                 ? "운영진으로서 세미나 공간에 접근할 수 있습니다."
                 : "세미나 참석 신청이 완료되었습니다. 세미나 공간에서 자료와 후기를 확인하세요."}
             </p>
-            <Link href={`/seminars/${id}/lms`}>
+            <Link href={`/seminars/${id}`}>
               <Button className="w-full gap-2">
                 <BookOpen size={16} />
-                세미나 공간 입장
+                세미나 입장하기
               </Button>
             </Link>
           </div>
