@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Clock, Plus } from "lucide-react";
+import { useSessions } from "@/features/seminar/useSeminar";
 import type { SeminarSession } from "@/types";
 
 interface Props {
@@ -12,7 +13,10 @@ interface Props {
   isStaff: boolean;
 }
 
-export default function SessionProgram({ sessions, seminarId, isStaff }: Props) {
+export default function SessionProgram({ sessions: propSessions, seminarId, isStaff }: Props) {
+  const { sessions: dbSessions } = useSessions(seminarId);
+  // DB 컬렉션 우선, 없으면 세미나 내장 배열 폴백
+  const sessions = dbSessions.length > 0 ? dbSessions : propSessions;
   const sorted = [...sessions].sort((a, b) => a.time.localeCompare(b.time));
 
   return (
@@ -40,11 +44,14 @@ export default function SessionProgram({ sessions, seminarId, isStaff }: Props) 
                 <p className="font-medium text-sm">{sess.title}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {sess.speaker}
-                  {sess.speakerBio && ` · ${sess.speakerBio}`}
                 </p>
               </div>
               <span className="shrink-0 text-xs text-muted-foreground mt-0.5">
-                {sess.time}{sess.endTime ? `~${sess.endTime}` : ""} ({sess.duration}분)
+                {sess.time && sess.time !== "미정" ? (
+                  <>{sess.time}{sess.endTime ? `~${sess.endTime}` : ""} ({sess.duration}분)</>
+                ) : (
+                  <span className="text-amber-500">시간 미정</span>
+                )}
               </span>
             </div>
           ))}

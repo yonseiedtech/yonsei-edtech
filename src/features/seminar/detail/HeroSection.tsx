@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { getComputedStatus } from "@/lib/seminar-utils";
+import { useAttendees } from "@/features/seminar/useSeminar";
 import { SEMINAR_STATUS_LABELS } from "@/types";
 import type { Seminar, SeminarStatus } from "@/types";
 import {
@@ -29,6 +30,8 @@ interface Props {
 }
 
 export default function HeroSection({ seminar, isStaff, onEditInfo }: Props) {
+  const { attendees } = useAttendees(seminar.id);
+  const attendeeCount = attendees.length > 0 ? attendees.length : seminar.attendeeIds.length;
   const computedStatus = getComputedStatus(seminar);
   const badge = {
     label: SEMINAR_STATUS_LABELS[computedStatus],
@@ -112,7 +115,7 @@ export default function HeroSection({ seminar, isStaff, onEditInfo }: Props) {
           <div className="flex items-center gap-2">
             <Users size={16} />
             <span>
-              참석 {seminar.attendeeIds.length}
+              참석 {attendeeCount}
               {seminar.maxAttendees ? ` / ${seminar.maxAttendees}` : ""}명
             </span>
           </div>
