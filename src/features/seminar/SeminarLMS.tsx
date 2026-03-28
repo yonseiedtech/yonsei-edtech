@@ -317,10 +317,17 @@ function SessionsSection({ seminar, isStaff }: { seminar: Seminar; isStaff: bool
               className="flex items-center justify-between rounded-lg border bg-muted/20 px-4 py-3 text-sm"
             >
               <div className="flex items-center gap-3">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
                   {idx + 1}
                 </span>
-                <div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
+                  {sess.time && sess.time !== "미정" ? (
+                    <span className="shrink-0 text-primary">{sess.time}{sess.endTime ? `~${sess.endTime}` : ""}</span>
+                  ) : (
+                    <span className="shrink-0 text-amber-500">시간 미정</span>
+                  )}
+                </div>
+                <div className="min-w-0">
                   {sess.category && (
                     <Badge variant="secondary" className="mb-1 text-xs">
                       {sess.category}
@@ -328,10 +335,7 @@ function SessionsSection({ seminar, isStaff }: { seminar: Seminar; isStaff: bool
                   )}
                   <p className="font-medium">{sess.title}</p>
                   <p className="text-xs text-muted-foreground">
-                    {sess.speaker}
-                    {sess.speakerBio && ` · ${sess.speakerBio}`}
-                    {" · "}
-                    {sess.time}{sess.endTime ? `~${sess.endTime}` : ""} ({sess.duration}분)
+                    {sess.speaker}{sess.duration > 0 ? ` · ${sess.duration}분` : ""}
                   </p>
                 </div>
               </div>
