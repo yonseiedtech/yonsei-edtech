@@ -22,10 +22,6 @@ export default function LoginPage() {
         </div>
 
         <LoginForm />
-
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          데모: admin / admin123 또는 아무 아이디 / test123
-        </p>
       </div>
     </div>
   );
