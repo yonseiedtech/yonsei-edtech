@@ -4,7 +4,7 @@ import { use, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSeminar } from "@/features/seminar/useSeminar";
-import { reviewsApi, attendeesApi } from "@/lib/bkend";
+import { attendeesApi } from "@/lib/bkend";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Star, CheckCircle } from "lucide-react";
@@ -38,15 +38,20 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
         } catch { /* 매칭 실패해도 진행 */ }
       }
 
-      await reviewsApi.create({
-        seminarId,
-        type: "attendee",
-        content: content.trim(),
-        rating,
-        authorId,
-        authorName: name.trim(),
-        studentId: studentId.trim() || undefined,
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          seminarId,
+          type: "attendee",
+          content: content.trim(),
+          rating,
+          authorId,
+          authorName: name.trim(),
+          studentId: studentId.trim() || undefined,
+        }),
       });
+      if (!res.ok) throw new Error("API error");
 
       setDone(true);
     } catch {
