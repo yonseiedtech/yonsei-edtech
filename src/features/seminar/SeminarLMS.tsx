@@ -279,7 +279,8 @@ function SessionsSection({ seminar, isStaff }: { seminar: Seminar; isStaff: bool
       }
       await refetchSessions();
       setEditSession(null);
-    } catch {
+    } catch (err) {
+      console.error("[session save]", err);
       toast.error("세션 저장에 실패했습니다.");
     }
   }

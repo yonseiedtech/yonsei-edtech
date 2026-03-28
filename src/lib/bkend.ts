@@ -285,7 +285,6 @@ export const sessionsApi = {
   list: (seminarId: string) =>
     dataApi.list<Record<string, unknown>>("seminar_sessions", {
       "filter[seminarId]": seminarId,
-      sort: "order:asc",
     }),
   create: (data: Record<string, unknown>) => dataApi.create("seminar_sessions", data),
   update: (id: string, data: Record<string, unknown>) => dataApi.update("seminar_sessions", id, data),
