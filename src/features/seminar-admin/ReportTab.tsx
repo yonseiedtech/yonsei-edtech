@@ -299,6 +299,16 @@ function SeminarReport({ seminarId, seminarTitle, seminarDate }: { seminarId: st
       const existingStudentIds = new Set(attendees.filter((a) => a.studentId).map((a) => a.studentId));
       const existingEmails = new Set(attendees.filter((a) => a.email).map((a) => a.email));
 
+      // 취소된 신청자가 참석자에 있으면 제거
+      let removed = 0;
+      const cancelledNames = new Set(regs.filter((r) => r.status === "cancelled").map((r) => r.name));
+      for (const att of attendees) {
+        if (cancelledNames.has(att.userName)) {
+          await attendeesApi.remove(att.id);
+          removed++;
+        }
+      }
+
       let added = 0;
       let skipped = 0;
       for (const reg of regs) {
@@ -330,6 +340,7 @@ function SeminarReport({ seminarId, seminarTitle, seminarDate }: { seminarId: st
       await refetchAttendees();
       const parts = [];
       if (added > 0) parts.push(`${added}명 동기화 완료`);
+      if (removed > 0) parts.push(`${removed}명 취소자 제거`);
       if (skipped > 0) parts.push(`${skipped}명 중복/취소 건너뜀`);
       toast.success(parts.length > 0 ? parts.join(", ") : "동기화할 신청자가 없습니다.");
     } catch { toast.error("동기화 중 오류가 발생했습니다."); }
