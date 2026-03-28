@@ -514,11 +514,12 @@ export default function NametagGenerator() {
         body > *:not(#nametag-print-container) { display: none !important; }
         #nametag-print-container {
           display: block !important;
-          position: fixed !important;
-          inset: 0 !important;
-          z-index: 99999 !important;
+          position: static !important;
+          width: 100% !important;
           background: white !important;
         }
+        #nametag-print-container > div { page-break-after: always; }
+        #nametag-print-container > div:last-child { page-break-after: avoid; }
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
       }
     `;
