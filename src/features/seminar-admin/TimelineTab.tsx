@@ -138,6 +138,7 @@ ${s.isOnline
 📋 안내사항
 • 세미나 자료는 홈페이지(yonsei-edtech.vercel.app)에서 확인 가능합니다
 • 수료증은 홈페이지 세미나 페이지에서 다운로드할 수 있습니다
+• 후기 작성: https://yonsei-edtech.vercel.app/seminars/${s.id}/review
 ${s.isOnline ? "• 녹화 영상은 편집 후 별도 공유 예정입니다" : ""}
 
 📝 피드백

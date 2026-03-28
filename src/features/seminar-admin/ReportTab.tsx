@@ -560,6 +560,13 @@ function SeminarReport({ seminarId, seminarTitle, seminarDate }: { seminarId: st
                 중복 제거
               </Button>
             )}
+            <Button variant="outline" size="sm" onClick={() => {
+              const url = `https://yonsei-edtech.vercel.app/seminars/${seminarId}/review`;
+              navigator.clipboard.writeText(url);
+              toast.success("후기 작성 링크가 복사되었습니다.");
+            }}>
+              <Share2 size={14} className="mr-1" />후기 링크
+            </Button>
           </div>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
