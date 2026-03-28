@@ -19,7 +19,7 @@ import { parseExcelFile, parseCSVText, extractSheetId, getSheetCsvUrl } from "@/
 import type { SeminarSession } from "@/types";
 
 function spacedName(name: string): string {
-  return name.split("").join("\u2003");
+  return name;
 }
 
 function formatKoreanDate(dateStr: string): string {
@@ -437,12 +437,19 @@ export default function NametagGenerator() {
 
   function loadFromAttendees() {
     if (attendees.length === 0) { toast.error("참석자가 없습니다."); return; }
-    setNames(attendees.map((a) => ({
+    // 중복 제거 (이름 기준)
+    const seen = new Set<string>();
+    const unique = attendees.filter((a) => {
+      if (seen.has(a.userName)) return false;
+      seen.add(a.userName);
+      return true;
+    });
+    setNames(unique.map((a) => ({
       name: a.userName,
-      studentId: "",
+      studentId: a.studentId || "",
       role: "참가자" as NametagRole,
     })));
-    toast.success(`${attendees.length}명의 참석자를 불러왔습니다.`);
+    toast.success(`${unique.length}명의 참석자를 불러왔습니다.`);
   }
 
   async function handleExcelUpload(e: React.ChangeEvent<HTMLInputElement>) {
