@@ -47,7 +47,7 @@ export default function HeroSection({ seminar, isStaff, onEditInfo }: Props) {
             alt={seminar.title}
             className="h-full w-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
           {isStaff && !seminar.posterUrl && (
             <button
               onClick={onEditInfo}
@@ -90,11 +90,11 @@ export default function HeroSection({ seminar, isStaff, onEditInfo }: Props) {
           </div>
         )}
 
-        <h1 className="mt-3 text-2xl font-bold sm:text-3xl text-white drop-shadow-sm">
+        <h1 className="mt-3 text-2xl font-bold sm:text-3xl text-white" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
           {seminar.title}
         </h1>
 
-        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/90">
+        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/90" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
           <div className="flex items-center gap-2">
             <Calendar size={16} />
             <span>{seminar.date} {seminar.time}</span>
