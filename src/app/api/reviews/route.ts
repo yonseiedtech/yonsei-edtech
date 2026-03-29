@@ -37,17 +37,32 @@ export async function GET(req: NextRequest) {
       return Response.json({ verified: false, message: "참석자 목록에서 확인되지 않았습니다." });
     }
 
-    // 이미 후기 작성 여부 확인
+    // 이미 후기 작성 여부 확인 + 기존 후기 데이터 반환
+    const authorId = match.userId || `guest_${name}`;
     const reviewSnapshot = await db.collection("seminar_reviews")
       .where("seminarId", "==", seminarId)
-      .where("authorId", "==", match.userId || `guest_${name}`)
+      .where("authorId", "==", authorId)
       .where("type", "==", "attendee")
       .get();
+
+    let existingReview = null;
+    if (!reviewSnapshot.empty) {
+      const doc = reviewSnapshot.docs[0];
+      const data = doc.data();
+      existingReview = {
+        id: doc.id,
+        content: data.content,
+        rating: data.rating,
+        questionAnswers: data.questionAnswers || null,
+        createdAt: data.createdAt,
+      };
+    }
 
     return Response.json({
       verified: true,
       attendee: { name: match.userName, studentId: match.studentId, userId: match.userId },
       alreadyReviewed: !reviewSnapshot.empty,
+      existingReview,
     });
   } catch (err) {
     console.error("[reviews verify]", err);
@@ -111,5 +126,56 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error("[reviews API]", err);
     return Response.json({ error: "후기 등록에 실패했습니다." }, { status: 500 });
+  }
+}
+
+// 후기 수정 API
+export async function PATCH(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const rateLimited = checkRateLimit(`review_patch_${ip}`, { limit: 10, windowSec: 60 });
+  if (rateLimited) return rateLimited;
+
+  try {
+    const body = await req.json();
+    const { reviewId, content, rating, questionAnswers, authorId } = body as {
+      reviewId: string;
+      content: string;
+      rating: number;
+      questionAnswers?: Record<string, string>;
+      authorId: string;
+    };
+
+    if (!reviewId || !content || !authorId) {
+      return Response.json({ error: "필수 항목 누락" }, { status: 400 });
+    }
+    if (content.length > 5000) {
+      return Response.json({ error: "후기 내용은 5000자 이내여야 합니다." }, { status: 400 });
+    }
+
+    const db = getAdminDb();
+    const docRef = db.collection("seminar_reviews").doc(reviewId);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      return Response.json({ error: "후기를 찾을 수 없습니다." }, { status: 404 });
+    }
+
+    // 본인 확인
+    if (doc.data()?.authorId !== authorId) {
+      return Response.json({ error: "본인의 후기만 수정할 수 있습니다." }, { status: 403 });
+    }
+
+    const safeRating = Math.min(5, Math.max(1, Number(rating) || 5));
+    await docRef.update({
+      content: content.slice(0, 5000),
+      rating: safeRating,
+      questionAnswers: questionAnswers || null,
+      updatedAt: new Date().toISOString(),
+    });
+
+    return Response.json({ success: true });
+  } catch (err) {
+    console.error("[reviews PATCH]", err);
+    return Response.json({ error: "후기 수정에 실패했습니다." }, { status: 500 });
   }
 }

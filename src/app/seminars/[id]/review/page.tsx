@@ -6,7 +6,14 @@ import Image from "next/image";
 import { useSeminar } from "@/features/seminar/useSeminar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Star, CheckCircle, Loader2, AlertCircle, ShieldCheck } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { ArrowLeft, Star, CheckCircle, Loader2, AlertCircle, ShieldCheck, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +23,14 @@ interface VerifiedAttendee {
   name: string;
   studentId?: string;
   userId?: string;
+}
+
+interface ExistingReview {
+  id: string;
+  content: string;
+  rating: number;
+  questionAnswers?: Record<string, string> | null;
+  createdAt: string;
 }
 
 interface SubmittedReview {
@@ -31,6 +46,11 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
   const [step, setStep] = useState<Step>("verify");
   const [verifiedAttendee, setVerifiedAttendee] = useState<VerifiedAttendee | null>(null);
   const [submittedReview, setSubmittedReview] = useState<SubmittedReview | null>(null);
+
+  // 기존 후기
+  const [existingReview, setExistingReview] = useState<ExistingReview | null>(null);
+  const [showExistingDialog, setShowExistingDialog] = useState(false);
+  const [editMode, setEditMode] = useState(false);
 
   // Step 1: 인증
   const [name, setName] = useState("");
@@ -69,13 +89,15 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
         return;
       }
 
-      if (data.alreadyReviewed) {
-        setVerifyError("이미 후기를 작성하셨습니다.");
-        return;
-      }
-
       setVerifiedAttendee(data.attendee);
-      setStep("write");
+
+      if (data.alreadyReviewed && data.existingReview) {
+        // 기존 후기가 있으면 팝업으로 보여주기
+        setExistingReview(data.existingReview);
+        setShowExistingDialog(true);
+      } else {
+        setStep("write");
+      }
     } catch {
       setVerifyError("인증 중 오류가 발생했습니다.");
     } finally {
@@ -83,31 +105,63 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
     }
   }
 
-  // Step 2: 후기 제출
+  // 기존 후기 수정 모드 진입
+  function handleStartEdit() {
+    if (!existingReview) return;
+    setRating(existingReview.rating ?? 5);
+    setContent(existingReview.content);
+    setQuestionAnswers(existingReview.questionAnswers ?? {});
+    setEditMode(true);
+    setShowExistingDialog(false);
+    setStep("write");
+  }
+
+  // Step 2: 후기 제출 (신규 또는 수정)
   async function handleSubmit() {
     if (!content.trim()) { toast.error("후기 내용을 입력하세요."); return; }
     if (!verifiedAttendee) return;
 
     setSubmitting(true);
     try {
-      const res = await fetch("/api/reviews", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          seminarId,
-          type: "attendee",
-          content: content.trim(),
-          rating,
-          authorId: verifiedAttendee.userId || `guest_${verifiedAttendee.name}`,
-          authorName: verifiedAttendee.name,
-          studentId: verifiedAttendee.studentId || undefined,
-          questionAnswers: Object.keys(questionAnswers).length > 0 ? questionAnswers : undefined,
-        }),
-      });
+      const authorId = verifiedAttendee.userId || `guest_${verifiedAttendee.name}`;
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "등록 실패");
+      if (editMode && existingReview) {
+        // 수정 모드
+        const res = await fetch("/api/reviews", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reviewId: existingReview.id,
+            content: content.trim(),
+            rating,
+            authorId,
+            questionAnswers: Object.keys(questionAnswers).length > 0 ? questionAnswers : undefined,
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || "수정 실패");
+        }
+      } else {
+        // 신규 등록
+        const res = await fetch("/api/reviews", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            seminarId,
+            type: "attendee",
+            content: content.trim(),
+            rating,
+            authorId,
+            authorName: verifiedAttendee.name,
+            studentId: verifiedAttendee.studentId || undefined,
+            questionAnswers: Object.keys(questionAnswers).length > 0 ? questionAnswers : undefined,
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || "등록 실패");
+        }
       }
 
       setSubmittedReview({ content: content.trim(), rating, questionAnswers });
@@ -213,7 +267,7 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
           <div className="space-y-4 rounded-xl border bg-white p-6">
             <div className="flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
               <CheckCircle size={16} className="shrink-0" />
-              <span><strong>{verifiedAttendee.name}</strong>님 인증 완료</span>
+              <span><strong>{verifiedAttendee.name}</strong>님 인증 완료{editMode ? " — 후기 수정 모드" : ""}</span>
             </div>
 
             {/* 별점 */}
@@ -221,18 +275,10 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
               <label className="mb-1 block text-sm font-medium">만족도</label>
               <div className="flex gap-1">
                 {[1, 2, 3, 4, 5].map((v) => (
-                  <button
-                    key={v}
-                    type="button"
-                    onClick={() => setRating(v)}
-                    className="p-0.5"
-                  >
+                  <button key={v} type="button" onClick={() => setRating(v)} className="p-0.5">
                     <Star
                       size={28}
-                      className={cn(
-                        "transition-colors",
-                        v <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30",
-                      )}
+                      className={cn("transition-colors", v <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30")}
                     />
                   </button>
                 ))}
@@ -266,7 +312,7 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
             </div>
 
             <Button onClick={handleSubmit} disabled={submitting || !content.trim()} className="w-full">
-              {submitting ? <><Loader2 size={14} className="mr-1 animate-spin" />등록 중...</> : "후기 등록"}
+              {submitting ? <><Loader2 size={14} className="mr-1 animate-spin" />{editMode ? "수정 중..." : "등록 중..."}</> : editMode ? "후기 수정" : "후기 등록"}
             </Button>
           </div>
         )}
@@ -276,7 +322,7 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
           <div className="space-y-4">
             <div className="rounded-xl border bg-white p-6 text-center">
               <CheckCircle size={48} className="mx-auto mb-4 text-green-500" />
-              <h2 className="text-xl font-bold">후기가 등록되었습니다!</h2>
+              <h2 className="text-xl font-bold">{editMode ? "후기가 수정되었습니다!" : "후기가 등록되었습니다!"}</h2>
               <p className="mt-2 text-sm text-muted-foreground">소중한 의견 감사합니다.</p>
             </div>
 
@@ -287,11 +333,7 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
                 <span className="text-sm font-medium">{verifiedAttendee?.name}</span>
                 <div className="flex gap-0.5">
                   {[1, 2, 3, 4, 5].map((v) => (
-                    <Star
-                      key={v}
-                      size={14}
-                      className={v <= submittedReview.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/20"}
-                    />
+                    <Star key={v} size={14} className={v <= submittedReview.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/20"} />
                   ))}
                 </div>
               </div>
@@ -307,12 +349,54 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
             </div>
 
             <Link href={`/seminars/${seminarId}`}>
-              <Button variant="outline" className="w-full">
-                세미나 페이지로 돌아가기
-              </Button>
+              <Button variant="outline" className="w-full">세미나 페이지로 돌아가기</Button>
             </Link>
           </div>
         )}
+
+        {/* 기존 후기 팝업 */}
+        <Dialog open={showExistingDialog} onOpenChange={setShowExistingDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>이미 작성한 후기가 있습니다</DialogTitle>
+            </DialogHeader>
+            {existingReview && (
+              <div className="space-y-3">
+                <div className="rounded-lg border bg-muted/10 p-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{verifiedAttendee?.name}</span>
+                    <div className="flex gap-0.5">
+                      {[1, 2, 3, 4, 5].map((v) => (
+                        <Star key={v} size={14} className={v <= (existingReview.rating ?? 5) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/20"} />
+                      ))}
+                    </div>
+                  </div>
+                  {existingReview.questionAnswers && Object.entries(existingReview.questionAnswers).map(([q, a]) => (
+                    a && (
+                      <div key={q} className="mt-2">
+                        <p className="text-xs font-medium text-muted-foreground">{q}</p>
+                        <p className="mt-0.5 text-sm">{a}</p>
+                      </div>
+                    )
+                  ))}
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{existingReview.content}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    작성일: {new Date(existingReview.createdAt).toLocaleDateString("ko-KR")}
+                  </p>
+                </div>
+              </div>
+            )}
+            <DialogFooter className="flex-col gap-2 sm:flex-row">
+              <Button variant="outline" onClick={() => setShowExistingDialog(false)} className="w-full sm:w-auto">
+                닫기
+              </Button>
+              <Button onClick={handleStartEdit} className="w-full gap-1 sm:w-auto">
+                <Pencil size={14} />
+                후기 수정하기
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
