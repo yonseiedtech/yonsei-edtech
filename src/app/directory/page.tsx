@@ -102,28 +102,28 @@ function DirectoryContent() {
                   <p className="mt-4 text-sm text-muted-foreground">등록된 운영진이 없습니다.</p>
                 ) : (
                   <div className="mt-3 overflow-x-auto rounded-xl border bg-white">
-                    <table className="w-full text-sm">
+                    <table className="w-full text-xs sm:text-sm">
                       <thead className="border-b bg-muted/30">
                         <tr>
-                          <th className="px-4 py-3 text-left font-medium">이름</th>
-                          <th className="px-4 py-3 text-left font-medium">역할</th>
-                          <th className="px-4 py-3 text-left font-medium">기수</th>
-                          <th className="px-4 py-3 text-left font-medium">소속</th>
-                          <th className="px-4 py-3 text-left font-medium">연락처</th>
+                          <th className="px-2 py-2 text-left font-medium sm:px-4 sm:py-3">이름</th>
+                          <th className="px-2 py-2 text-left font-medium sm:px-4 sm:py-3">역할</th>
+                          <th className="px-2 py-2 text-left font-medium sm:px-4 sm:py-3">기수</th>
+                          <th className="px-2 py-2 text-left font-medium sm:px-4 sm:py-3">소속</th>
+                          <th className="px-2 py-2 text-left font-medium sm:px-4 sm:py-3">연락처</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y">
                         {currentStaff.map((m) => (
                           <tr key={m.id}>
-                            <td className="px-4 py-3 font-medium">{m.name}</td>
-                            <td className="px-4 py-3">
+                            <td className="px-2 py-2 sm:px-4 sm:py-3 font-medium">{m.name}</td>
+                            <td className="px-2 py-2 sm:px-4 sm:py-3">
                               <Badge variant="secondary">{ROLE_LABELS[m.role]}</Badge>
                             </td>
-                            <td className="px-4 py-3">{m.generation}기</td>
-                            <td className="px-4 py-3 text-muted-foreground">
+                            <td className="px-2 py-2 sm:px-4 sm:py-3">{m.generation}기</td>
+                            <td className="px-2 py-2 sm:px-4 sm:py-3 text-muted-foreground">
                               {[m.affiliation, m.position].filter(Boolean).join(" · ")}
                             </td>
-                            <td className="px-4 py-3">
+                            <td className="px-2 py-2 sm:px-4 sm:py-3">
                               {m.contactEmail ? (
                                 <a
                                   href={`mailto:${m.contactEmail}`}
@@ -161,26 +161,26 @@ function DirectoryContent() {
                   <p className="mt-4 text-sm text-muted-foreground">등록된 자문위원이 없습니다.</p>
                 ) : (
                   <div className="mt-3 overflow-x-auto rounded-xl border bg-white">
-                    <table className="w-full text-sm">
+                    <table className="w-full text-xs sm:text-sm">
                       <thead className="border-b bg-muted/30">
                         <tr>
-                          <th className="px-4 py-3 text-left font-medium">이름</th>
-                          <th className="px-4 py-3 text-left font-medium">기수</th>
-                          <th className="px-4 py-3 text-left font-medium">소속</th>
-                          <th className="px-4 py-3 text-left font-medium">분야</th>
-                          <th className="px-4 py-3 text-left font-medium">연락처</th>
+                          <th className="px-2 py-2 text-left font-medium sm:px-4 sm:py-3">이름</th>
+                          <th className="px-2 py-2 text-left font-medium sm:px-4 sm:py-3">기수</th>
+                          <th className="px-2 py-2 text-left font-medium sm:px-4 sm:py-3">소속</th>
+                          <th className="px-2 py-2 text-left font-medium sm:px-4 sm:py-3">분야</th>
+                          <th className="px-2 py-2 text-left font-medium sm:px-4 sm:py-3">연락처</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y">
                         {filteredAdvisors.map((m) => (
                           <tr key={m.id}>
-                            <td className="px-4 py-3 font-medium">{m.name}</td>
-                            <td className="px-4 py-3">{m.generation}기</td>
-                            <td className="px-4 py-3 text-muted-foreground">
+                            <td className="px-2 py-2 sm:px-4 sm:py-3 font-medium">{m.name}</td>
+                            <td className="px-2 py-2 sm:px-4 sm:py-3">{m.generation}기</td>
+                            <td className="px-2 py-2 sm:px-4 sm:py-3 text-muted-foreground">
                               {[m.affiliation, m.position].filter(Boolean).join(" · ")}
                             </td>
-                            <td className="px-4 py-3 text-muted-foreground">{m.field}</td>
-                            <td className="px-4 py-3">
+                            <td className="px-2 py-2 sm:px-4 sm:py-3 text-muted-foreground">{m.field}</td>
+                            <td className="px-2 py-2 sm:px-4 sm:py-3">
                               {m.contactEmail ? (
                                 <a
                                   href={`mailto:${m.contactEmail}`}
@@ -212,13 +212,13 @@ function DirectoryContent() {
                   </p>
                 ) : (
                   <div className="mt-3 overflow-x-auto rounded-xl border bg-white">
-                    <table className="w-full text-sm">
+                    <table className="w-full text-xs sm:text-sm">
                       <thead className="border-b bg-muted/30">
                         <tr>
-                          <th className="px-4 py-3 text-left font-medium">대수</th>
-                          <th className="px-4 py-3 text-left font-medium">이름</th>
-                          <th className="px-4 py-3 text-left font-medium">임기</th>
-                          <th className="px-4 py-3 text-left font-medium">소속</th>
+                          <th className="px-2 py-2 text-left font-medium sm:px-4 sm:py-3">대수</th>
+                          <th className="px-2 py-2 text-left font-medium sm:px-4 sm:py-3">이름</th>
+                          <th className="px-2 py-2 text-left font-medium sm:px-4 sm:py-3">임기</th>
+                          <th className="px-2 py-2 text-left font-medium sm:px-4 sm:py-3">소속</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y">
@@ -226,12 +226,12 @@ function DirectoryContent() {
                           .sort((a, b) => a.generation - b.generation)
                           .map((p, idx) => (
                             <tr key={idx}>
-                              <td className="px-4 py-3">
+                              <td className="px-2 py-2 sm:px-4 sm:py-3">
                                 <Badge variant="secondary">{p.generation}대</Badge>
                               </td>
-                              <td className="px-4 py-3 font-medium">{p.name}</td>
-                              <td className="px-4 py-3 text-muted-foreground">{p.term}</td>
-                              <td className="px-4 py-3 text-muted-foreground">{p.affiliation}</td>
+                              <td className="px-2 py-2 sm:px-4 sm:py-3 font-medium">{p.name}</td>
+                              <td className="px-2 py-2 sm:px-4 sm:py-3 text-muted-foreground">{p.term}</td>
+                              <td className="px-2 py-2 sm:px-4 sm:py-3 text-muted-foreground">{p.affiliation}</td>
                             </tr>
                           ))}
                       </tbody>
