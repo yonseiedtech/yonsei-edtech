@@ -32,7 +32,7 @@ export const VISIBILITY_LABELS: Record<ContactVisibility, string> = {
   private: "비공개",
 };
 
-export interface User {
+export interface User { [key: string]: unknown;
   id: string;
   username: string;
   email?: string;
@@ -177,7 +177,7 @@ export interface TimelinePhase {
 }
 
 // ── 세미나 출석 ──
-export interface SeminarAttendee {
+export interface SeminarAttendee { [key: string]: unknown;
   id: string;
   seminarId: string;
   userId: string;
@@ -231,7 +231,7 @@ export interface SeminarRegistration {
 }
 
 // ── 수료증 / 감사장 ──
-export interface Certificate {
+export interface Certificate { [key: string]: unknown;
   id: string;
   certificateNo?: string; // "YY-NNN" 형식 (예: "26-001")
   seminarId: string;

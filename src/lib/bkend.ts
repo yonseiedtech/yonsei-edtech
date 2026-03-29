@@ -28,6 +28,11 @@ import {
   type QueryConstraint,
 } from "firebase/firestore";
 import { auth, db } from "./firebase";
+import type {
+  User, Post, Comment, Seminar, SeminarSession, SeminarAttendee,
+  SeminarRegistration, Certificate, PromotionContent, SeminarMaterial,
+  SeminarReview, Inquiry,
+} from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
 
@@ -235,161 +240,127 @@ export const dataApi = {
 
 export const postsApi = {
   list: (params?: { category?: string; page?: number; limit?: number; sort?: string }) =>
-    dataApi.list<Record<string, unknown>>("posts", {
+    dataApi.list<Post>("posts", {
       "filter[category]": params?.category,
       page: params?.page,
       limit: params?.limit,
       sort: params?.sort ?? "createdAt:desc",
     }),
-  get: (id: string) => dataApi.get<Record<string, unknown>>("posts", id),
-  create: (data: Record<string, unknown>) => dataApi.create("posts", data),
-  update: (id: string, data: Record<string, unknown>) => dataApi.update("posts", id, data),
+  get: (id: string) => dataApi.get<Post>("posts", id),
+  create: (data: Record<string, unknown>) => dataApi.create<Post>("posts", data),
+  update: (id: string, data: Record<string, unknown>) => dataApi.update<Post>("posts", id, data),
   delete: (id: string) => dataApi.delete("posts", id),
 };
 
 export const commentsApi = {
   list: (postId: string) =>
-    dataApi.list<Record<string, unknown>>("comments", {
-      "filter[postId]": postId,
-      sort: "createdAt:asc",
-    }),
-  create: (data: Record<string, unknown>) => dataApi.create("comments", data),
-  update: (id: string, data: Record<string, unknown>) => dataApi.update("comments", id, data),
+    dataApi.list<Comment>("comments", { "filter[postId]": postId, sort: "createdAt:asc" }),
+  create: (data: Record<string, unknown>) => dataApi.create<Comment>("comments", data),
+  update: (id: string, data: Record<string, unknown>) => dataApi.update<Comment>("comments", id, data),
   delete: (id: string) => dataApi.delete("comments", id),
 };
 
 export const profilesApi = {
-  list: (params?: QueryParams) => dataApi.list<Record<string, unknown>>("users", params),
-  get: (id: string) => dataApi.get<Record<string, unknown>>("users", id),
-  getByEmail: (email: string) =>
-    dataApi.list<Record<string, unknown>>("users", { "filter[email]": email }),
-  update: (id: string, data: Record<string, unknown>) => dataApi.update("users", id, data),
+  list: (params?: QueryParams) => dataApi.list<User>("users", params),
+  get: (id: string) => dataApi.get<User>("users", id),
+  getByEmail: (email: string) => dataApi.list<User>("users", { "filter[email]": email }),
+  update: (id: string, data: Record<string, unknown>) => dataApi.update<User>("users", id, data),
   approve: (id: string) => dataApi.patch("users", id, { approved: true }),
 };
 
 export const seminarsApi = {
   list: (params?: { status?: string; page?: number; limit?: number }) =>
-    dataApi.list<Record<string, unknown>>("seminars", {
+    dataApi.list<Seminar>("seminars", {
       "filter[status]": params?.status,
       page: params?.page,
       limit: params?.limit,
       sort: "date:desc",
     }),
-  get: (id: string) => dataApi.get<Record<string, unknown>>("seminars", id),
-  create: (data: Record<string, unknown>) => dataApi.create("seminars", data),
-  update: (id: string, data: Record<string, unknown>) => dataApi.update("seminars", id, data),
+  get: (id: string) => dataApi.get<Seminar>("seminars", id),
+  create: (data: Record<string, unknown>) => dataApi.create<Seminar>("seminars", data),
+  update: (id: string, data: Record<string, unknown>) => dataApi.update<Seminar>("seminars", id, data),
   delete: (id: string) => dataApi.delete("seminars", id),
 };
 
 export const sessionsApi = {
   list: (seminarId: string) =>
-    dataApi.list<Record<string, unknown>>("seminar_sessions", {
-      "filter[seminarId]": seminarId,
-    }),
-  create: (data: Record<string, unknown>) => dataApi.create("seminar_sessions", data),
-  update: (id: string, data: Record<string, unknown>) => dataApi.update("seminar_sessions", id, data),
+    dataApi.list<SeminarSession>("seminar_sessions", { "filter[seminarId]": seminarId }),
+  create: (data: Record<string, unknown>) => dataApi.create<SeminarSession>("seminar_sessions", data),
+  update: (id: string, data: Record<string, unknown>) => dataApi.update<SeminarSession>("seminar_sessions", id, data),
   delete: (id: string) => dataApi.delete("seminar_sessions", id),
 };
 
 export const attendeesApi = {
   list: (seminarId: string) =>
-    dataApi.list<Record<string, unknown>>("seminar_attendees", {
-      "filter[seminarId]": seminarId,
-    }),
+    dataApi.list<SeminarAttendee>("seminar_attendees", { "filter[seminarId]": seminarId }),
   check: (seminarId: string, userId: string) =>
-    dataApi.list<Record<string, unknown>>("seminar_attendees", {
-      "filter[seminarId]": seminarId,
-      "filter[userId]": userId,
-    }),
+    dataApi.list<SeminarAttendee>("seminar_attendees", { "filter[seminarId]": seminarId, "filter[userId]": userId }),
   checkByStudentId: (seminarId: string, studentId: string) =>
-    dataApi.list<Record<string, unknown>>("seminar_attendees", {
-      "filter[seminarId]": seminarId,
-      "filter[studentId]": studentId,
-    }),
+    dataApi.list<SeminarAttendee>("seminar_attendees", { "filter[seminarId]": seminarId, "filter[studentId]": studentId }),
   findGuestsByStudentId: (studentId: string) =>
-    dataApi.list<Record<string, unknown>>("seminar_attendees", {
-      "filter[studentId]": studentId,
-      "filter[isGuest]": "true",
-    }),
+    dataApi.list<SeminarAttendee>("seminar_attendees", { "filter[studentId]": studentId, "filter[isGuest]": "true" }),
   add: (seminarId: string, userId: string) =>
-    dataApi.create("seminar_attendees", { seminarId, userId }),
+    dataApi.create<SeminarAttendee>("seminar_attendees", { seminarId, userId }),
   addWithDetails: (seminarId: string, data: Record<string, unknown>) =>
-    dataApi.create("seminar_attendees", { seminarId, ...data }),
+    dataApi.create<SeminarAttendee>("seminar_attendees", { seminarId, ...data }),
   update: (id: string, data: Record<string, unknown>) =>
-    dataApi.update("seminar_attendees", id, data),
+    dataApi.update<SeminarAttendee>("seminar_attendees", id, data),
   remove: (id: string) => dataApi.delete("seminar_attendees", id),
 };
 
 export const siteSettingsApi = {
   getByKey: (key: string) =>
     dataApi.list<Record<string, unknown>>("site_settings", { "filter[key]": key }),
-  create: (data: Record<string, unknown>) =>
-    dataApi.create("site_settings", data),
-  update: (id: string, data: Record<string, unknown>) =>
-    dataApi.update("site_settings", id, data),
+  create: (data: Record<string, unknown>) => dataApi.create("site_settings", data),
+  update: (id: string, data: Record<string, unknown>) => dataApi.update("site_settings", id, data),
 };
 
 export const registrationsApi = {
   list: (seminarId: string) =>
-    dataApi.list<Record<string, unknown>>("seminar_registrations", {
-      "filter[seminarId]": seminarId,
-    }),
-  create: (data: Record<string, unknown>) =>
-    dataApi.create("seminar_registrations", data),
-  update: (id: string, data: Record<string, unknown>) =>
-    dataApi.update("seminar_registrations", id, data),
+    dataApi.list<SeminarRegistration>("seminar_registrations", { "filter[seminarId]": seminarId }),
+  create: (data: Record<string, unknown>) => dataApi.create<SeminarRegistration>("seminar_registrations", data),
+  update: (id: string, data: Record<string, unknown>) => dataApi.update<SeminarRegistration>("seminar_registrations", id, data),
   delete: (id: string) => dataApi.delete("seminar_registrations", id),
 };
 
 export const certificatesApi = {
   list: (seminarId?: string) =>
-    dataApi.list<Record<string, unknown>>("certificates", {
+    dataApi.list<Certificate>("certificates", {
       ...(seminarId ? { "filter[seminarId]": seminarId } : {}),
       sort: "issuedAt:desc",
     }),
-  create: (data: Record<string, unknown>) =>
-    dataApi.create("certificates", data),
-  update: (id: string, data: Record<string, unknown>) =>
-    dataApi.update("certificates", id, data),
+  create: (data: Record<string, unknown>) => dataApi.create<Certificate>("certificates", data),
+  update: (id: string, data: Record<string, unknown>) => dataApi.update<Certificate>("certificates", id, data),
   delete: (id: string) => dataApi.delete("certificates", id),
 };
 
 export const promotionContentsApi = {
   list: (seminarId?: string) =>
-    dataApi.list<Record<string, unknown>>("promotion_contents", {
+    dataApi.list<PromotionContent>("promotion_contents", {
       ...(seminarId ? { "filter[seminarId]": seminarId } : {}),
       sort: "createdAt:desc",
     }),
-  create: (data: Record<string, unknown>) =>
-    dataApi.create("promotion_contents", data),
-  update: (id: string, data: Record<string, unknown>) =>
-    dataApi.update("promotion_contents", id, data),
+  create: (data: Record<string, unknown>) => dataApi.create<PromotionContent>("promotion_contents", data),
+  update: (id: string, data: Record<string, unknown>) => dataApi.update<PromotionContent>("promotion_contents", id, data),
   delete: (id: string) => dataApi.delete("promotion_contents", id),
 };
 
 export const materialsApi = {
   list: (seminarId: string) =>
-    dataApi.list<Record<string, unknown>>("seminar_materials", {
-      "filter[seminarId]": seminarId,
-      sort: "createdAt:desc",
-    }),
-  create: (data: Record<string, unknown>) =>
-    dataApi.create("seminar_materials", data),
-  update: (id: string, data: Record<string, unknown>) =>
-    dataApi.update("seminar_materials", id, data),
+    dataApi.list<SeminarMaterial>("seminar_materials", { "filter[seminarId]": seminarId, sort: "createdAt:desc" }),
+  create: (data: Record<string, unknown>) => dataApi.create<SeminarMaterial>("seminar_materials", data),
+  update: (id: string, data: Record<string, unknown>) => dataApi.update<SeminarMaterial>("seminar_materials", id, data),
   delete: (id: string) => dataApi.delete("seminar_materials", id),
 };
 
 export const reviewsApi = {
   list: (seminarId: string, type?: string) =>
-    dataApi.list<Record<string, unknown>>("seminar_reviews", {
+    dataApi.list<SeminarReview>("seminar_reviews", {
       "filter[seminarId]": seminarId,
       ...(type ? { "filter[type]": type } : {}),
     }),
-  create: (data: Record<string, unknown>) =>
-    dataApi.create("seminar_reviews", data),
-  update: (id: string, data: Record<string, unknown>) =>
-    dataApi.update("seminar_reviews", id, data),
+  create: (data: Record<string, unknown>) => dataApi.create<SeminarReview>("seminar_reviews", data),
+  update: (id: string, data: Record<string, unknown>) => dataApi.update<SeminarReview>("seminar_reviews", id, data),
   delete: (id: string) => dataApi.delete("seminar_reviews", id),
 };
 
