@@ -58,7 +58,7 @@ export default function SeminarsPage() {
               <Calendar size={24} />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">세미나</h1>
+              <h1 className="text-2xl font-bold">정기 세미나</h1>
               <p className="text-sm text-muted-foreground">
                 매주 교육공학/에듀테크 관련 최신 논문이나 트렌드를 발제하고 토론합니다.
               </p>

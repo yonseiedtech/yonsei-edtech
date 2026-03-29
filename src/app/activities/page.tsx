@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { BookOpen, FolderKanban, Users, Globe, Calendar, ArrowRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { useSeminars } from "@/features/seminar/useSeminar";
 import { usePosts } from "@/features/board/useBoard";
 import { formatDate } from "@/lib/utils";
@@ -52,6 +54,8 @@ export default function ActivitiesPage() {
 
   const highlights = useMemo(() => {
     const completedSeminars = seminars.map((s) => ({
+      category: "세미나",
+      color: "bg-primary/10 text-primary",
       title: s.title,
       desc: `${s.speaker} 발표 · ${s.location}`,
       date: s.date,
@@ -61,6 +65,8 @@ export default function ActivitiesPage() {
     const recentPosts = posts
       .filter((p) => p.category === "notice" || p.category === "promotion")
       .map((p) => ({
+        category: p.category === "notice" ? "공지" : "홍보",
+        color: p.category === "notice" ? "bg-amber-50 text-amber-700" : "bg-secondary/10 text-secondary",
         title: p.title,
         desc: p.content.split("\n")[0].slice(0, 60),
         date: formatDate(p.createdAt),
@@ -141,7 +147,10 @@ export default function ActivitiesPage() {
                   {h.date.length > 10 ? h.date : formatDate(h.date)}
                 </div>
                 <div>
-                  <h3 className="font-medium">{h.title}</h3>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className={cn("text-[10px]", h.color)}>{h.category}</Badge>
+                    <h3 className="font-medium">{h.title}</h3>
+                  </div>
                   <p className="mt-0.5 text-sm text-muted-foreground">{h.desc}</p>
                 </div>
               </div>
