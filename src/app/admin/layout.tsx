@@ -12,11 +12,12 @@ import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import {
   Shield, Users, FileText, MessageSquare,
-  Clock, HelpCircle, Newspaper, Settings, Bot, Award,
+  Clock, HelpCircle, Newspaper, Settings, Bot, Award, Wallet,
 } from "lucide-react";
 
 const ADMIN_TABS = [
   { href: "/admin/members", label: "회원", icon: Users },
+  { href: "/admin/fees", label: "학회비", icon: Wallet },
   { href: "/admin/posts", label: "게시글", icon: FileText },
   { href: "/admin/inquiries", label: "문의", icon: MessageSquare },
   { href: "/admin/newsletter", label: "학회보", icon: Newspaper },
