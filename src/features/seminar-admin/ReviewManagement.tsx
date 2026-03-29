@@ -161,12 +161,14 @@ export default function ReviewManagement({ seminar }: Props) {
     }
   }
 
-  // 질문 설정
-  const reviewQuestions = seminar.reviewQuestions ?? [];
+  // 질문 설정 (유형별)
+  const [questionType, setQuestionType] = useState<ReviewSubTab>("attendee");
+  const allReviewQuestions = seminar.reviewQuestions ?? {};
+  const currentQuestions = allReviewQuestions[questionType] ?? [];
 
   async function addQuestion() {
     if (!newQuestion.trim()) return;
-    const updated = [...reviewQuestions, newQuestion.trim()];
+    const updated = { ...allReviewQuestions, [questionType]: [...currentQuestions, newQuestion.trim()] };
     await seminarsApi.update(seminar.id, { reviewQuestions: updated });
     queryClient.invalidateQueries({ queryKey: ["seminar", seminar.id] });
     setNewQuestion("");
@@ -174,7 +176,7 @@ export default function ReviewManagement({ seminar }: Props) {
   }
 
   async function removeQuestion(idx: number) {
-    const updated = reviewQuestions.filter((_, i) => i !== idx);
+    const updated = { ...allReviewQuestions, [questionType]: currentQuestions.filter((_, i) => i !== idx) };
     await seminarsApi.update(seminar.id, { reviewQuestions: updated });
     queryClient.invalidateQueries({ queryKey: ["seminar", seminar.id] });
     toast.success("질문이 삭제되었습니다.");
@@ -313,9 +315,28 @@ export default function ReviewManagement({ seminar }: Props) {
       {/* 폼 질문 설정 */}
       {section === "questions" && (
         <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">공개 후기 폼에 표시할 질문을 설정합니다.</p>
+          <p className="text-sm text-muted-foreground">후기 유형별로 폼에 표시할 질문을 설정합니다.</p>
+
+          {/* 유형 선택 */}
+          <div className="flex gap-1 rounded-lg bg-muted/50 p-1">
+            {SUB_TABS.map((tab) => (
+              <button
+                key={tab.value}
+                onClick={() => setQuestionType(tab.value)}
+                className={cn(
+                  "flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors sm:px-3 sm:text-sm",
+                  questionType === tab.value
+                    ? "bg-white text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
           <div className="space-y-2">
-            {reviewQuestions.map((q, i) => (
+            {currentQuestions.map((q, i) => (
               <div key={i} className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2">
                 <span className="flex-1 text-sm">{q}</span>
                 <button onClick={() => removeQuestion(i)} className="shrink-0 rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-500">

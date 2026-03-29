@@ -133,7 +133,11 @@ export interface Seminar {
   registrationUrl?: string;
   timeline?: TimelinePhase[];
   registrationFields?: RegistrationFieldConfig[];
-  reviewQuestions?: string[];
+  reviewQuestions?: {
+    attendee?: string[];
+    speaker?: string[];
+    staff?: string[];
+  };
   cancelReason?: string;
   status: "upcoming" | "ongoing" | "completed" | "cancelled";
   createdBy: string;
