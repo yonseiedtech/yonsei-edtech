@@ -99,7 +99,7 @@ export default function PosterGenerator({ seminarId: propSeminarId }: { seminarI
           세미나 정보를 기반으로 AI가 포스터를 자동 생성합니다.
         </p>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {/* 세미나 선택 */}
           <div>
             <label className="mb-1.5 block text-sm font-medium">세미나 선택</label>

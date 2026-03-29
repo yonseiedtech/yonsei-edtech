@@ -211,7 +211,7 @@ export default function PromotionTab({ seminarId: propSeminarId }: { seminarId?:
               </span>
               {loading && <Loader2 size={14} className="animate-spin text-muted-foreground" />}
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" onClick={() => handleCopy()} disabled={!result}>
                 <Copy size={14} className="mr-1" />
                 복사

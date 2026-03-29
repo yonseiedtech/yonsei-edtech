@@ -317,7 +317,7 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
   return (
     <div className="space-y-6">
       {/* 세미나 선택 */}
-      <div className="flex items-end gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
         <div className="flex-1">
           <label className="mb-2 block text-sm font-medium">세미나 선택</label>
           <select
@@ -491,7 +491,7 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
                           );
                           saveTimeline(updateSeminar, seminar.id, updated);
                         }}
-                        className="w-24 shrink-0 rounded border px-1.5 py-1 text-xs"
+                        className="w-full shrink-0 rounded border px-1.5 py-1 text-xs sm:w-24"
                       >
                         <option value="">미정</option>
                         {staffMembers.map((s) => (

@@ -242,7 +242,7 @@ export default function SeminarForm() {
             )}
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-sm font-medium">날짜</label>
               <Input
@@ -315,7 +315,7 @@ export default function SeminarForm() {
             )}
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-sm font-medium">발표자</label>
               <Input
@@ -364,7 +364,7 @@ export default function SeminarForm() {
             </select>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-sm font-medium">
                 소속 기관 <span className="text-muted-foreground">(선택)</span>
