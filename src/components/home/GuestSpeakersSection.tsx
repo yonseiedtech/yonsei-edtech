@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useSeminars } from "@/features/seminar/useSeminar";
 import { Mic } from "lucide-react";
 
@@ -27,10 +28,13 @@ export default function GuestSpeakersSection() {
               className="flex items-start gap-4 rounded-xl border bg-white p-5 shadow-sm"
             >
               {s.speakerPhotoUrl ? (
-                <img
+                <Image
                   src={s.speakerPhotoUrl}
                   alt={s.speaker}
+                  width={56}
+                  height={56}
                   className="h-14 w-14 shrink-0 rounded-full object-cover"
+                  unoptimized
                 />
               ) : (
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-600">

@@ -37,7 +37,7 @@ export default function PromotionPreview() {
               >
                 <h3 className="line-clamp-2 font-medium">{post.title}</h3>
                 <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-                  {post.content}
+                  {post.content.replace(/<[^>]*>/g, "").slice(0, 120)}
                 </p>
                 <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
                   <span>{post.authorName}</span>

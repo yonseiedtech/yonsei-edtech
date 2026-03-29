@@ -20,7 +20,7 @@ function formatDate(dateStr?: string): string {
 }
 
 export default function ActivityCards() {
-  const { data: activities = [] } = useQuery({
+  const { data: activities = [], isLoading } = useQuery({
     queryKey: ["home", "recent-activities"],
     queryFn: async (): Promise<Activity[]> => {
       const results: Activity[] = [];
@@ -54,7 +54,7 @@ export default function ActivityCards() {
     staleTime: 60_000,
   });
 
-  if (activities.length === 0) return null;
+  if (!isLoading && activities.length === 0) return null;
 
   return (
     <section className="py-16 md:py-24">

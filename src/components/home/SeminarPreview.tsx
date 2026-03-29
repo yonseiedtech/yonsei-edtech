@@ -11,7 +11,7 @@ export default function SeminarPreview() {
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 2);
 
-  if (isLoading || upcoming.length === 0) return null;
+  if (!isLoading && upcoming.length === 0) return null;
 
   return (
     <section className="border-b py-16">

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { Inter } from "next/font/google";
+// Inter font removed — Pretendard only
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import QueryProvider from "@/lib/query-provider";
@@ -17,11 +17,6 @@ const pretendard = localFont({
   fallback: ["system-ui", "sans-serif"],
 });
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
 
 const SITE_URL = "https://yonsei-edtech.vercel.app";
 const SITE_NAME = "연세교육공학회";
@@ -108,7 +103,7 @@ export default function RootLayout({
         <WebsiteJsonLd />
       </head>
       <body
-        className={`${pretendard.variable} ${inter.variable} font-sans antialiased`}
+        className={`${pretendard.variable} font-sans antialiased`}
       >
         <QueryProvider>
           <AuthProvider>

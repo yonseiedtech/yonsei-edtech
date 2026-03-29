@@ -44,7 +44,7 @@ export default function HeroSection() {
             <div className="mt-8 flex items-center gap-4">
               <Link
                 href="/about"
-                className="inline-flex items-center gap-2 bg-primary px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary/90"
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary/90"
               >
                 학회 소개
                 <ArrowRight size={15} />

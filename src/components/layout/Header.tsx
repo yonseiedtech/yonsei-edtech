@@ -109,7 +109,7 @@ function NavDropdown({ group }: { group: NavGroup }) {
     >
       <button
         className={cn(
-          "flex items-center gap-0.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-muted",
+          "flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-muted",
           isGroupActive ? "font-semibold text-primary underline underline-offset-4" : "text-muted-foreground",
         )}
       >
