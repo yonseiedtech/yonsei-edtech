@@ -28,6 +28,10 @@ export default function PromotionPreview() {
             <div className="col-span-3 py-8 text-center text-sm text-muted-foreground">
               불러오는 중...
             </div>
+          ) : promotions.length === 0 ? (
+            <div className="col-span-3 py-8 text-center text-sm text-muted-foreground">
+              등록된 홍보글이 없습니다.
+            </div>
           ) : (
             promotions.slice(0, 3).map((post) => (
               <Link

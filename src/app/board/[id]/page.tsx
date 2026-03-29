@@ -73,7 +73,7 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
     <div className="py-16">
       <div className="mx-auto max-w-3xl px-4">
         <button
-          onClick={() => router.push("/board")}
+          onClick={() => router.back()}
           className="mb-6 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft size={16} />

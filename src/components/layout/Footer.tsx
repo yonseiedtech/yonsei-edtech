@@ -37,16 +37,16 @@ export default function Footer() {
                 학회 소개
               </Link>
               <Link
-                href="/activities"
+                href="/seminars"
                 className="text-sm text-muted-foreground hover:text-foreground"
               >
-                활동 소개
+                세미나
               </Link>
               <Link
-                href="/members"
+                href="/notices"
                 className="text-sm text-muted-foreground hover:text-foreground"
               >
-                멤버
+                공지사항
               </Link>
               <Link
                 href="/contact"

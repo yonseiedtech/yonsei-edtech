@@ -172,7 +172,8 @@ function DashboardContent() {
         </div>
 
         {/* 빠른 액션 */}
-        <div className="mt-6 flex flex-wrap gap-2 sm:gap-3">
+        <h2 className="mt-6 text-sm font-semibold text-muted-foreground">빠른 액션</h2>
+        <div className="mt-2 flex flex-wrap gap-2 sm:gap-3">
           <Link href="/board/write">
             <Button variant="outline" size="sm" className="shrink-0">
               <PenSquare size={14} className="mr-1.5" />

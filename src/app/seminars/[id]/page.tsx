@@ -306,13 +306,13 @@ function SeminarDetail({ id }: { id: string }) {
   return (
     <div className="py-16">
       <div className="mx-auto max-w-3xl px-4">
-        <button
-          onClick={() => router.push("/seminars")}
+        <Link
+          href="/seminars"
           className="mb-6 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft size={16} />
           목록으로
-        </button>
+        </Link>
 
         {/* Section 1: Hero */}
         <HeroSection seminar={seminar} isStaff={isStaff} onEditInfo={openEditInfo} />
