@@ -121,5 +121,23 @@ service cloud.firestore {
       allow update, delete: if isAuthenticated()
         && (resource.data.authorId == request.auth.uid || isStaffOrAbove());
     }
+
+    // ─── Activities (프로젝트, 스터디, 대외활동) ───
+    match /activities/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isStaffOrAbove();
+    }
+
+    // ─── Fee Settings (학회비 설정) ───
+    match /fee_settings/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isStaffOrAbove();
+    }
+
+    // ─── Fee Payments (학회비 납부 기록) ───
+    match /fee_payments/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isStaffOrAbove();
+    }
   }
 }
