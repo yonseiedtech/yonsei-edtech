@@ -102,16 +102,20 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
       // 학번에서 입학 시점 자동 추출
       parseEnrollmentFromStudentId(watchedUsername);
 
-      const res = await profilesApi.list({ "filter[username]": watchedUsername });
-      const existing = res.data as unknown[];
-      if (existing.length > 0) {
+      const res = await fetch(`/api/auth/check-username?username=${encodeURIComponent(watchedUsername)}`);
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "확인에 실패했습니다.");
+        return;
+      }
+      if (!data.available) {
         setUsernameAvailable(false);
         setUsernameChecked(true);
         toast.error("이미 가입된 학번입니다.");
       } else {
         setUsernameAvailable(true);
         setUsernameChecked(true);
-        toast.success("사용 가능한 학번입니다.");
+        toast.success(data.message || "사용 가능한 학번입니다.");
       }
     } catch {
       toast.error("확인에 실패했습니다.");
