@@ -27,12 +27,11 @@ const ACTIVITY_OPTIONS = [
   { value: "other", label: "기타" },
 ];
 
-// 현재 연도 기준 기수 옵션 생성 (최근 10개 기수)
-const currentYear = new Date().getFullYear();
-const GENERATION_OPTIONS = Array.from({ length: 10 }, (_, i) => {
-  const gen = currentYear - 2010 - i; // 2011년 1기 기준
-  return gen > 0 ? gen : null;
-}).filter((g): g is number => g !== null);
+// 2026년 1학기 기준 누적학기 옵션 (1~20학기)
+const SEMESTER_OPTIONS = Array.from({ length: 20 }, (_, i) => i + 1);
+
+// 입학 연도 옵션 (최근 15년)
+const ENROLLMENT_YEAR_OPTIONS = Array.from({ length: 15 }, (_, i) => 2026 - i);
 
 interface SignupData {
   username: string;
@@ -40,6 +39,8 @@ interface SignupData {
   email: string;
   password: string;
   generation: string;
+  enrollmentYear: string;
+  enrollmentHalf: string;
   studentId: string;
   field: string;
   activity: string;
@@ -82,7 +83,9 @@ export default function SignupForm({ onSuccess }: Props) {
           role: "member",
           memberType,
           generation: data.generation ? Number(data.generation) : 0,
-          studentId: data.studentId || "",
+          studentId: data.studentId || data.username || "",
+          enrollmentYear: data.enrollmentYear ? Number(data.enrollmentYear) : null,
+          enrollmentHalf: data.enrollmentHalf ? Number(data.enrollmentHalf) : null,
           field: data.field || "",
           approved: false,
           privacyAgreedAt: new Date().toISOString(),
@@ -95,9 +98,10 @@ export default function SignupForm({ onSuccess }: Props) {
         await profilesApi.update("me", profileData);
 
         // 학번 기반 게스트 세미나 기록 연동
-        if (data.studentId) {
+        const studentIdForLookup = data.studentId || data.username;
+        if (studentIdForLookup) {
           try {
-            const guestRecords = await attendeesApi.findGuestsByStudentId(data.studentId);
+            const guestRecords = await attendeesApi.findGuestsByStudentId(studentIdForLookup);
             const records = guestRecords.data as unknown as { id: string }[];
             if (records.length > 0) {
               const me = await profilesApi.get("me");
@@ -135,17 +139,18 @@ export default function SignupForm({ onSuccess }: Props) {
       <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">필수 정보</p>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium">아이디</label>
+        <label className="mb-1.5 block text-sm font-medium">학번 (아이디)</label>
         <Input
           {...register("username", {
-            required: "아이디를 입력하세요",
-            minLength: { value: 3, message: "3자 이상 입력하세요" },
+            required: "학번을 입력하세요",
+            minLength: { value: 5, message: "5자 이상 입력하세요" },
             maxLength: { value: 20, message: "20자 이하로 입력하세요" },
             pattern: { value: /^[a-zA-Z0-9_]+$/, message: "영문, 숫자, 밑줄(_)만 사용 가능합니다" },
           })}
-          placeholder="영문, 숫자 조합 (3~20자)"
+          placeholder="예: 2023432001"
           autoComplete="username"
         />
+        <p className="mt-1 text-xs text-muted-foreground">로그인 시 아이디로 사용됩니다.</p>
         {errors.username && (
           <p className="mt-1 text-xs text-destructive">{errors.username.message}</p>
         )}
@@ -216,23 +221,53 @@ export default function SignupForm({ onSuccess }: Props) {
         </div>
       </div>
 
-      {/* 기수 선택 */}
+      {/* 누적학기 선택 */}
       <div>
-        <label className="mb-1.5 block text-sm font-medium">기수</label>
+        <label className="mb-1.5 block text-sm font-medium">누적학기</label>
         <select
-          {...register("generation", { required: "기수를 선택하세요" })}
+          {...register("generation", { required: "누적학기를 선택하세요" })}
           className="w-full rounded-lg border px-3 py-2.5 text-sm"
         >
-          <option value="">기수를 선택하세요</option>
-          {GENERATION_OPTIONS.map((gen) => (
-            <option key={gen} value={gen}>
-              {gen}기 ({2010 + gen}학번)
+          <option value="">누적학기를 선택하세요</option>
+          {SEMESTER_OPTIONS.map((sem) => (
+            <option key={sem} value={sem}>
+              {sem}학기
             </option>
           ))}
           <option value="0">기타 / 모르겠음</option>
         </select>
+        <p className="mt-1 text-xs text-muted-foreground">2026년 1학기 기준 재학 중인 학기를 선택하세요.</p>
         {errors.generation && (
           <p className="mt-1 text-xs text-destructive">{errors.generation.message}</p>
+        )}
+      </div>
+
+      {/* 입학 시점 */}
+      <div>
+        <label className="mb-1.5 block text-sm font-medium">입학 시점</label>
+        <div className="grid grid-cols-2 gap-2">
+          <select
+            {...register("enrollmentYear", { required: "입학 연도를 선택하세요" })}
+            className="w-full rounded-lg border px-3 py-2.5 text-sm"
+          >
+            <option value="">연도 선택</option>
+            {ENROLLMENT_YEAR_OPTIONS.map((y) => (
+              <option key={y} value={y}>{y}년</option>
+            ))}
+          </select>
+          <select
+            {...register("enrollmentHalf", { required: "반기를 선택하세요" })}
+            className="w-full rounded-lg border px-3 py-2.5 text-sm"
+          >
+            <option value="">반기 선택</option>
+            <option value="1">전반기 (3월)</option>
+            <option value="2">후반기 (9월)</option>
+          </select>
+        </div>
+        {(errors.enrollmentYear || errors.enrollmentHalf) && (
+          <p className="mt-1 text-xs text-destructive">
+            {errors.enrollmentYear?.message || errors.enrollmentHalf?.message}
+          </p>
         )}
       </div>
 
