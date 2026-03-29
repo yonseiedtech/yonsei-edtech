@@ -126,6 +126,12 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
       return;
     }
 
+    // 학번 중복 가입 방지 (필수 확인)
+    if (!usernameChecked || !usernameAvailable) {
+      toast.error("학번 가입여부 확인을 먼저 진행해주세요.");
+      return;
+    }
+
     setLoading(true);
     try {
       try {
@@ -466,7 +472,7 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
         </label>
       </div>
 
-      <Button type="submit" className="w-full" disabled={loading || !privacyAgreed}>
+      <Button type="submit" className="w-full" disabled={loading || !privacyAgreed || !usernameChecked || !usernameAvailable}>
         {loading ? (
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
         ) : (
