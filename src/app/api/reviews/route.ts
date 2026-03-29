@@ -2,13 +2,44 @@ import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { checkRateLimit } from "@/lib/rate-limit";
 
-// 참석자 인증 API
+// 후기 목록 조회 또는 참석자 인증 API
 export async function GET(req: NextRequest) {
   const seminarId = req.nextUrl.searchParams.get("seminarId");
+  const mode = req.nextUrl.searchParams.get("mode");
   const name = req.nextUrl.searchParams.get("name");
   const studentId = req.nextUrl.searchParams.get("studentId");
 
-  if (!seminarId || !name) {
+  if (!seminarId) {
+    return Response.json({ error: "세미나 ID가 필요합니다." }, { status: 400 });
+  }
+
+  // mode=list: 후기 목록 반환 (공개, published만)
+  if (mode === "list") {
+    try {
+      const db = getAdminDb();
+      const snapshot = await db.collection("seminar_reviews")
+        .where("seminarId", "==", seminarId)
+        .get();
+
+      const reviews = snapshot.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .filter((r: Record<string, unknown>) => {
+          const status = (r.status as string) ?? "published";
+          const visibility = (r.visibility as string) ?? "public";
+          if (status === "hidden") return false;
+          if (r.type === "staff" && visibility !== "public") return false;
+          return true;
+        });
+
+      return Response.json({ data: reviews });
+    } catch (err) {
+      console.error("[reviews list]", err);
+      return Response.json({ error: "후기 조회에 실패했습니다." }, { status: 500 });
+    }
+  }
+
+  // 참석자 인증 모드
+  if (!name) {
     return Response.json({ error: "세미나 ID와 이름이 필요합니다." }, { status: 400 });
   }
 

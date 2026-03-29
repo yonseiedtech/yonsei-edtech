@@ -70,8 +70,10 @@ export default function SeminarReviews({ seminar }: Props) {
   const { data: allReviews = [] } = useQuery({
     queryKey: ["reviews", seminar.id],
     queryFn: async () => {
-      const res = await reviewsApi.list(seminar.id);
-      return res.data as unknown as SeminarReview[];
+      const res = await fetch(`/api/reviews?seminarId=${seminar.id}&mode=list`);
+      if (!res.ok) return [];
+      const json = await res.json();
+      return (json.data ?? []) as SeminarReview[];
     },
   });
 

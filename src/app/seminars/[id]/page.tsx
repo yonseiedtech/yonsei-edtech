@@ -51,16 +51,13 @@ function ReviewsList({ seminarId }: { seminarId: string }) {
   const { data } = useQuery({
     queryKey: ["reviews", seminarId],
     queryFn: async () => {
-      const res = await reviewsApi.list(seminarId);
-      return res.data as unknown as SeminarReview[];
+      const res = await fetch(`/api/reviews?seminarId=${seminarId}&mode=list`);
+      if (!res.ok) return [];
+      const json = await res.json();
+      return (json.data ?? []) as SeminarReview[];
     },
   });
-  const reviews = (data ?? []).filter((r) => {
-    if ((r.status ?? "published") === "hidden") return false;
-    if (r.type === "attendee" || !r.type) return true;
-    if (r.type === "staff" && (r.visibility ?? "public") === "public") return true;
-    return false;
-  });
+  const reviews = (data ?? []).filter((r) => r.type === "attendee" || !r.type || (r.type === "staff" && (r.visibility ?? "public") === "public"));
   if (reviews.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">아직 작성된 후기가 없습니다.</p>;
   return (
     <div className="space-y-3">

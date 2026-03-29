@@ -71,8 +71,9 @@ export default function ReviewManagement({ seminar }: Props) {
 
   // 데이터 조회
   const { data: allReviews = [] } = useQuery({
-    queryKey: ["reviews", seminar.id],
+    queryKey: ["reviews-admin", seminar.id],
     queryFn: async () => {
+      // 관리자는 클라이언트 SDK로 전체 조회 (hidden/internal 포함)
       const res = await reviewsApi.list(seminar.id);
       return res.data as unknown as SeminarReview[];
     },
