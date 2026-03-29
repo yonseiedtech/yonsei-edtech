@@ -149,7 +149,7 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
           enrollmentYear: data.enrollmentYear ? Number(data.enrollmentYear) : null,
           enrollmentHalf: data.enrollmentHalf ? Number(data.enrollmentHalf) : null,
           field: data.field || "",
-          approved: false,
+          approved: true,
           privacyAgreedAt: new Date().toISOString(),
         };
         if (data.activity) profileData.occupation = data.activity;
