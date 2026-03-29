@@ -11,7 +11,7 @@ import { profilesApi } from "@/lib/bkend";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import {
-  Shield, Users, FileText, MessageSquare,
+  Shield, Users, FileText, MessageSquare, MessageCircle,
   Clock, HelpCircle, Newspaper, Settings, Bot, Award, Wallet,
 } from "lucide-react";
 
@@ -20,6 +20,7 @@ const ADMIN_TABS = [
   { href: "/admin/fees", label: "학회비", icon: Wallet },
   { href: "/admin/posts", label: "게시글", icon: FileText },
   { href: "/admin/inquiries", label: "문의", icon: MessageSquare },
+  { href: "/admin/chatbot", label: "챗봇 관리", icon: MessageCircle },
   { href: "/admin/newsletter", label: "학회보", icon: Newspaper },
   { href: "/admin/certificates", label: "수료증/감사장", icon: Award },
   { href: "/admin/agents", label: "에이전트", icon: Bot },

@@ -32,7 +32,7 @@ export default function ChatPanel({ onClose }: { onClose: () => void }) {
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm text-primary-foreground">
             AI
           </div>
-          <span className="font-semibold">AI 학회장</span>
+          <span className="font-semibold">연교공 챗봇</span>
         </div>
         <button
           onClick={onClose}

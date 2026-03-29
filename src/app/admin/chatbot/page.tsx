@@ -1,0 +1,324 @@
+"use client";
+
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { dataApi } from "@/lib/bkend";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  MessageCircle,
+  Plus,
+  Pencil,
+  Trash2,
+  Search,
+  Loader2,
+  Clock,
+  User,
+} from "lucide-react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+
+interface ChatLog {
+  id: string;
+  userId?: string;
+  userName?: string;
+  userMessage: string;
+  botResponse: string;
+  createdAt: string;
+}
+
+interface ChatQA {
+  id: string;
+  keywords: string[];
+  question: string;
+  answer: string;
+  enabled: boolean;
+  createdAt: string;
+}
+
+type Section = "logs" | "qa";
+
+export default function ChatbotAdminPage() {
+  const queryClient = useQueryClient();
+  const [section, setSection] = useState<Section>("logs");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Q&A 편집
+  const [qaDialog, setQaDialog] = useState(false);
+  const [editQaId, setEditQaId] = useState<string | null>(null);
+  const [qaForm, setQaForm] = useState({ question: "", answer: "", keywords: "" });
+
+  // 채팅 로그 조회
+  const { data: chatLogs = [] } = useQuery({
+    queryKey: ["chat_logs"],
+    queryFn: async () => {
+      const res = await dataApi.list<ChatLog>("chat_logs", { sort: "createdAt:desc", limit: 100 });
+      return res.data;
+    },
+  });
+
+  // Q&A 설정 조회
+  const { data: qaList = [] } = useQuery({
+    queryKey: ["chat_qa"],
+    queryFn: async () => {
+      const res = await dataApi.list<ChatQA>("chat_qa", { sort: "createdAt:desc" });
+      return res.data;
+    },
+  });
+
+  // 채팅 로그 필터
+  const filteredLogs = chatLogs.filter((log) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return log.userMessage.toLowerCase().includes(q) || (log.userName ?? "").toLowerCase().includes(q);
+  });
+
+  // Q&A 저장
+  const saveQaMutation = useMutation({
+    mutationFn: async () => {
+      const data = {
+        question: qaForm.question.trim(),
+        answer: qaForm.answer.trim(),
+        keywords: qaForm.keywords.split(",").map((k) => k.trim()).filter(Boolean),
+        enabled: true,
+      };
+      if (editQaId) {
+        await dataApi.update("chat_qa", editQaId, data);
+      } else {
+        await dataApi.create("chat_qa", data);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chat_qa"] });
+      toast.success(editQaId ? "수정되었습니다." : "등록되었습니다.");
+      closeQaDialog();
+    },
+  });
+
+  const deleteQaMutation = useMutation({
+    mutationFn: (id: string) => dataApi.delete("chat_qa", id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chat_qa"] });
+      toast.success("삭제되었습니다.");
+    },
+  });
+
+  const toggleQaMutation = useMutation({
+    mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) =>
+      dataApi.update("chat_qa", id, { enabled }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chat_qa"] });
+    },
+  });
+
+  function openCreateQa() {
+    setEditQaId(null);
+    setQaForm({ question: "", answer: "", keywords: "" });
+    setQaDialog(true);
+  }
+
+  function openEditQa(qa: ChatQA) {
+    setEditQaId(qa.id);
+    setQaForm({ question: qa.question, answer: qa.answer, keywords: qa.keywords.join(", ") });
+    setQaDialog(true);
+  }
+
+  function closeQaDialog() {
+    setQaDialog(false);
+    setEditQaId(null);
+    setQaForm({ question: "", answer: "", keywords: "" });
+  }
+
+  const SECTIONS: { value: Section; label: string; icon: React.ReactNode }[] = [
+    { value: "logs", label: "채팅 기록", icon: <Clock size={14} /> },
+    { value: "qa", label: "Q&A 설정", icon: <MessageCircle size={14} /> },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <MessageCircle size={20} className="text-primary" />
+        <h2 className="text-lg font-bold">연교공 챗봇 관리</h2>
+        <Badge variant="secondary" className="bg-amber-50 text-amber-700 text-xs">준비중</Badge>
+      </div>
+
+      {/* 섹션 네비게이션 */}
+      <div className="flex flex-wrap gap-1">
+        {SECTIONS.map((s) => (
+          <button
+            key={s.value}
+            onClick={() => setSection(s.value)}
+            className={cn(
+              "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+              section === s.value
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted/50 text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {s.icon}
+            {s.label}
+          </button>
+        ))}
+      </div>
+
+      {/* 채팅 기록 */}
+      {section === "logs" && (
+        <div className="space-y-3">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="메시지 내용 또는 사용자 검색"
+              className="pl-8 text-sm"
+            />
+          </div>
+
+          {filteredLogs.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">채팅 기록이 없습니다.</p>
+          ) : (
+            <div className="space-y-2">
+              {filteredLogs.map((log) => (
+                <div key={log.id} className="rounded-lg border bg-white p-4">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <User size={12} />
+                    <span>{log.userName || "익명"}</span>
+                    <span>·</span>
+                    <span>{new Date(log.createdAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false })}</span>
+                  </div>
+                  <div className="mt-2 space-y-1.5">
+                    <div className="flex gap-2">
+                      <Badge variant="secondary" className="shrink-0 text-[10px]">질문</Badge>
+                      <p className="text-sm">{log.userMessage}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Badge className="shrink-0 bg-primary/10 text-[10px] text-primary">답변</Badge>
+                      <p className="text-sm text-muted-foreground">{log.botResponse}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Q&A 설정 */}
+      {section === "qa" && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              자주 묻는 질문과 답변을 설정합니다. 키워드가 매칭되면 설정된 답변을 자동으로 제공합니다.
+            </p>
+            <Button size="sm" onClick={openCreateQa}>
+              <Plus size={14} className="mr-1" />
+              Q&A 추가
+            </Button>
+          </div>
+
+          {qaList.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">설정된 Q&A가 없습니다.</p>
+          ) : (
+            <div className="space-y-2">
+              {qaList.map((qa) => (
+                <div key={qa.id} className={cn("rounded-lg border bg-white p-4", !qa.enabled && "opacity-50")}>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="secondary" className={qa.enabled ? "bg-green-50 text-green-700 text-[10px]" : "text-[10px]"}>
+                          {qa.enabled ? "활성" : "비활성"}
+                        </Badge>
+                        {qa.keywords.map((k) => (
+                          <Badge key={k} variant="secondary" className="text-[10px]">{k}</Badge>
+                        ))}
+                      </div>
+                      <p className="mt-1.5 text-sm font-medium">Q: {qa.question}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">A: {qa.answer}</p>
+                    </div>
+                    <div className="flex shrink-0 gap-1 self-end sm:self-start">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs"
+                        onClick={() => toggleQaMutation.mutate({ id: qa.id, enabled: !qa.enabled })}
+                      >
+                        {qa.enabled ? "비활성" : "활성"}
+                      </Button>
+                      <Button variant="outline" size="sm" className="h-7" onClick={() => openEditQa(qa)}>
+                        <Pencil size={12} />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-destructive"
+                        onClick={() => { if (confirm("삭제하시겠습니까?")) deleteQaMutation.mutate(qa.id); }}
+                      >
+                        <Trash2 size={12} />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Q&A 등록/수정 Dialog */}
+      <Dialog open={qaDialog} onOpenChange={(open) => !open && closeQaDialog()}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editQaId ? "Q&A 수정" : "Q&A 등록"}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <div>
+              <label className="mb-1 block text-sm font-medium">키워드 (쉼표 구분)</label>
+              <Input
+                value={qaForm.keywords}
+                onChange={(e) => setQaForm({ ...qaForm, keywords: e.target.value })}
+                placeholder="예: 세미나, 일정, 시간"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">사용자 메시지에 키워드가 포함되면 이 답변을 제공합니다.</p>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">질문 (대표 질문)</label>
+              <Input
+                value={qaForm.question}
+                onChange={(e) => setQaForm({ ...qaForm, question: e.target.value })}
+                placeholder="예: 세미나는 언제 열리나요?"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">답변</label>
+              <textarea
+                value={qaForm.answer}
+                onChange={(e) => setQaForm({ ...qaForm, answer: e.target.value })}
+                rows={4}
+                placeholder="챗봇이 제공할 답변을 작성하세요."
+                className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={closeQaDialog}>취소</Button>
+            <Button
+              onClick={() => saveQaMutation.mutate()}
+              disabled={saveQaMutation.isPending || !qaForm.question.trim() || !qaForm.answer.trim()}
+            >
+              {saveQaMutation.isPending && <Loader2 size={14} className="mr-1 animate-spin" />}
+              {editQaId ? "수정" : "등록"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

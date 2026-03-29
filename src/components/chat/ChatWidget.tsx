@@ -38,7 +38,7 @@ export default function ChatWidget() {
           className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          aria-label="AI 학회장 채팅 열기"
+          aria-label="연교공 챗봇 열기"
         >
           <MessageCircle className="h-6 w-6" />
         </motion.button>

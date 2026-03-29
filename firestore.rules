@@ -122,6 +122,18 @@ service cloud.firestore {
         && (resource.data.authorId == request.auth.uid || isStaffOrAbove());
     }
 
+    // ─── Chat Logs & Q&A ───
+    match /chat_logs/{docId} {
+      allow read: if isAuthenticated() && isStaffOrAbove();
+      allow create: if isAuthenticated();
+      allow delete: if isAuthenticated() && isStaffOrAbove();
+    }
+
+    match /chat_qa/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isStaffOrAbove();
+    }
+
     // ─── Activities (프로젝트, 스터디, 대외활동) ───
     match /activities/{docId} {
       allow read: if true;
