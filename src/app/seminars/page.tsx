@@ -52,14 +52,21 @@ export default function SeminarsPage() {
   return (
     <div className="py-16">
       <div className="mx-auto max-w-4xl px-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Calendar size={28} className="text-primary" />
-            <h1 className="text-3xl font-bold">세미나</h1>
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Calendar size={24} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">세미나</h1>
+              <p className="text-sm text-muted-foreground">
+                매주 교육공학/에듀테크 관련 최신 논문이나 트렌드를 발제하고 토론합니다.
+              </p>
+            </div>
           </div>
           {isStaffOrAbove(user) && (
             <Link href="/seminars/create">
-              <Button size="sm">
+              <Button size="sm" className="shrink-0">
                 <Plus size={16} className="mr-1" />
                 세미나 등록
               </Button>
