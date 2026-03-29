@@ -1,0 +1,273 @@
+"use client";
+
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { activitiesApi } from "@/lib/bkend";
+import { useAuthStore } from "@/features/auth/auth-store";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Plus, Pencil, Trash2, Loader2, Calendar } from "lucide-react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import type { Activity, ActivityType } from "@/types";
+
+const STATUS_LABELS: Record<string, string> = {
+  upcoming: "예정",
+  ongoing: "진행 중",
+  completed: "완료",
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  upcoming: "bg-blue-50 text-blue-700",
+  ongoing: "bg-amber-50 text-amber-700",
+  completed: "bg-muted text-muted-foreground",
+};
+
+interface Props {
+  type: ActivityType;
+  typeLabel: string;
+}
+
+interface FormData {
+  title: string;
+  description: string;
+  date: string;
+  endDate: string;
+  status: "upcoming" | "ongoing" | "completed";
+  leader: string;
+  members: string;
+  location: string;
+  tags: string;
+}
+
+const emptyForm: FormData = {
+  title: "",
+  description: "",
+  date: "",
+  endDate: "",
+  status: "upcoming",
+  leader: "",
+  members: "",
+  location: "",
+  tags: "",
+};
+
+export default function ActivityList({ type, typeLabel }: Props) {
+  const { user } = useAuthStore();
+  const queryClient = useQueryClient();
+  const [editId, setEditId] = useState<string | null>(null);
+  const [form, setForm] = useState<FormData>(emptyForm);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const { data: activities = [] } = useQuery({
+    queryKey: ["activities", type],
+    queryFn: async () => {
+      const res = await activitiesApi.list(type);
+      return res.data;
+    },
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const data: Record<string, unknown> = {
+        type,
+        title: form.title.trim(),
+        description: form.description.trim(),
+        date: form.date,
+        endDate: form.endDate || undefined,
+        status: form.status,
+        leader: form.leader.trim() || undefined,
+        members: form.members ? form.members.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
+        location: form.location.trim() || undefined,
+        tags: form.tags ? form.tags.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
+        createdBy: user?.id || "",
+      };
+      if (editId) {
+        await activitiesApi.update(editId, data);
+      } else {
+        await activitiesApi.create(data);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["activities", type] });
+      toast.success(editId ? "수정되었습니다." : "등록되었습니다.");
+      closeDialog();
+    },
+    onError: () => toast.error("저장에 실패했습니다."),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => activitiesApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["activities", type] });
+      toast.success("삭제되었습니다.");
+    },
+  });
+
+  function openCreate() {
+    setEditId(null);
+    setForm(emptyForm);
+    setDialogOpen(true);
+  }
+
+  function openEdit(a: Activity) {
+    setEditId(a.id);
+    setForm({
+      title: a.title,
+      description: a.description,
+      date: a.date,
+      endDate: a.endDate || "",
+      status: a.status,
+      leader: a.leader || "",
+      members: a.members?.join(", ") || "",
+      location: a.location || "",
+      tags: a.tags?.join(", ") || "",
+    });
+    setDialogOpen(true);
+  }
+
+  function closeDialog() {
+    setDialogOpen(false);
+    setEditId(null);
+    setForm(emptyForm);
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold">{typeLabel} 관리</h2>
+        <Button size="sm" onClick={openCreate}>
+          <Plus size={14} className="mr-1" />
+          {typeLabel} 등록
+        </Button>
+      </div>
+
+      {activities.length === 0 ? (
+        <p className="py-8 text-center text-sm text-muted-foreground">등록된 {typeLabel}이(가) 없습니다.</p>
+      ) : (
+        <div className="space-y-3">
+          {activities.map((a) => (
+            <div key={a.id} className="rounded-lg border bg-white p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="secondary" className={cn("text-xs", STATUS_COLORS[a.status])}>
+                      {STATUS_LABELS[a.status]}
+                    </Badge>
+                    <h3 className="font-medium">{a.title}</h3>
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{a.description}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><Calendar size={12} />{a.date}{a.endDate ? ` ~ ${a.endDate}` : ""}</span>
+                    {a.leader && <span>담당: {a.leader}</span>}
+                    {a.location && <span>{a.location}</span>}
+                  </div>
+                  {a.tags && a.tags.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {a.tags.map((t) => (
+                        <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="flex shrink-0 gap-1 self-end sm:self-start">
+                  <Button variant="outline" size="sm" className="h-7" onClick={() => openEdit(a)}>
+                    <Pencil size={12} />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-destructive"
+                    onClick={() => { if (confirm("삭제하시겠습니까?")) deleteMutation.mutate(a.id); }}
+                  >
+                    <Trash2 size={12} />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 등록/수정 Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={(open) => !open && closeDialog()}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editId ? `${typeLabel} 수정` : `${typeLabel} 등록`}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <div>
+              <label className="mb-1 block text-sm font-medium">제목 *</label>
+              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="활동 제목" />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">설명</label>
+              <textarea
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                rows={3}
+                placeholder="활동에 대한 설명"
+                className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              />
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-sm font-medium">시작일</label>
+                <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">종료일</label>
+                <Input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-sm font-medium">상태</label>
+                <select
+                  value={form.status}
+                  onChange={(e) => setForm({ ...form, status: e.target.value as FormData["status"] })}
+                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                >
+                  <option value="upcoming">예정</option>
+                  <option value="ongoing">진행 중</option>
+                  <option value="completed">완료</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">장소</label>
+                <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="예: 교육과학관 606호" />
+              </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">담당자</label>
+              <Input value={form.leader} onChange={(e) => setForm({ ...form, leader: e.target.value })} placeholder="예: 김대경" />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">참여자 (쉼표 구분)</label>
+              <Input value={form.members} onChange={(e) => setForm({ ...form, members: e.target.value })} placeholder="예: 홍길동, 김철수, 이영희" />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">태그 (쉼표 구분)</label>
+              <Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="예: AI교육, UX리서치" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={closeDialog}>취소</Button>
+            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !form.title.trim()}>
+              {saveMutation.isPending && <Loader2 size={14} className="mr-1 animate-spin" />}
+              {editId ? "수정" : "등록"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

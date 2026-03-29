@@ -102,6 +102,7 @@ export default function SeminarReviews({ seminar }: Props) {
     mutationFn: (id: string) => reviewsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reviews", seminar.id] });
+      queryClient.invalidateQueries({ queryKey: ["reviews", seminar.id, "admin"] });
       toast.success("후기가 삭제되었습니다.");
     },
   });
@@ -124,6 +125,7 @@ export default function SeminarReviews({ seminar }: Props) {
         status: "published",
       });
       queryClient.invalidateQueries({ queryKey: ["reviews", seminar.id] });
+      queryClient.invalidateQueries({ queryKey: ["reviews", seminar.id, "admin"] });
       toast.success("후기가 등록되었습니다.");
       setContent("");
       setRating(5);

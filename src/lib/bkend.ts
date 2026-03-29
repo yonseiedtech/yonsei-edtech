@@ -31,7 +31,7 @@ import { auth, db } from "./firebase";
 import type {
   User, Post, Comment, Seminar, SeminarSession, SeminarAttendee,
   SeminarRegistration, Certificate, PromotionContent, SeminarMaterial,
-  SeminarReview, Inquiry,
+  SeminarReview, Inquiry, Activity,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -381,4 +381,16 @@ export const inquiriesApi = {
     dataApi.create<Record<string, unknown>>("inquiries", data),
   update: (id: string, data: Record<string, unknown>) => dataApi.update("inquiries", id, data),
   delete: (id: string) => dataApi.delete("inquiries", id),
+};
+
+export const activitiesApi = {
+  list: (type?: string) =>
+    dataApi.list<Activity>("activities", {
+      ...(type ? { "filter[type]": type } : {}),
+      sort: "date:desc",
+    }),
+  get: (id: string) => dataApi.get<Activity>("activities", id),
+  create: (data: Record<string, unknown>) => dataApi.create<Activity>("activities", data),
+  update: (id: string, data: Record<string, unknown>) => dataApi.update<Activity>("activities", id, data),
+  delete: (id: string) => dataApi.delete("activities", id),
 };

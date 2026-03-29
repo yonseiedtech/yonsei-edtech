@@ -71,7 +71,7 @@ export default function ReviewManagement({ seminar }: Props) {
 
   // 데이터 조회
   const { data: allReviews = [] } = useQuery({
-    queryKey: ["reviews-admin", seminar.id],
+    queryKey: ["reviews", seminar.id, "admin"],
     queryFn: async () => {
       // 관리자는 클라이언트 SDK로 전체 조회 (hidden/internal 포함)
       const res = await reviewsApi.list(seminar.id);
@@ -123,6 +123,7 @@ export default function ReviewManagement({ seminar }: Props) {
       reviewsApi.update(id, { status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reviews", seminar.id] });
+      queryClient.invalidateQueries({ queryKey: ["reviews", seminar.id, "admin"] });
       toast.success("상태가 변경되었습니다.");
     },
   });
@@ -131,6 +132,7 @@ export default function ReviewManagement({ seminar }: Props) {
     mutationFn: (id: string) => reviewsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reviews", seminar.id] });
+      queryClient.invalidateQueries({ queryKey: ["reviews", seminar.id, "admin"] });
       toast.success("후기가 삭제되었습니다.");
     },
   });
@@ -152,6 +154,7 @@ export default function ReviewManagement({ seminar }: Props) {
         status: "published",
       });
       queryClient.invalidateQueries({ queryKey: ["reviews", seminar.id] });
+      queryClient.invalidateQueries({ queryKey: ["reviews", seminar.id, "admin"] });
       toast.success("후기가 등록되었습니다.");
       setWriteContent("");
       setWriteRating(5);

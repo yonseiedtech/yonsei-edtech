@@ -294,6 +294,27 @@ export interface SeminarReview {
   updatedAt?: string;
 }
 
+// ── 학술활동 ──
+export type ActivityType = "project" | "study" | "external";
+
+export interface Activity { [key: string]: unknown;
+  id: string;
+  type: ActivityType;
+  title: string;
+  description: string;
+  date: string;
+  endDate?: string;
+  status: "upcoming" | "ongoing" | "completed";
+  leader?: string;
+  members?: string[];
+  location?: string;
+  tags?: string[];
+  imageUrl?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ── 문의 ──
 export interface Inquiry {
   id: string;

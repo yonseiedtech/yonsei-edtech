@@ -1,3 +1,3 @@
 "use client";
-import ActivityEditor from "@/features/admin/settings/ActivityEditor";
-export default function Page() { return <ActivityEditor settingsKey="activity_projects" defaultTitle="팀 프로젝트" />; }
+import ActivityList from "@/features/admin/settings/ActivityList";
+export default function Page() { return <ActivityList type="project" typeLabel="팀 프로젝트" />; }
