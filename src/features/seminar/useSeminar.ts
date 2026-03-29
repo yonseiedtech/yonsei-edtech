@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { seminarsApi, sessionsApi, attendeesApi, profilesApi } from "@/lib/bkend";
 import { syncAttendeeIds } from "@/lib/bkend";
+import { getComputedStatus } from "@/lib/seminar-utils";
 import type { Seminar, SeminarSession, SeminarAttendee, User } from "@/types";
 
 // ── List ──
@@ -11,8 +12,11 @@ export function useSeminars(status?: Seminar["status"]) {
   const { data, isLoading, error } = useQuery({
     queryKey: ["seminars", status],
     queryFn: async () => {
-      const res = await seminarsApi.list({ status, limit: 100 });
-      return res.data as unknown as Seminar[];
+      // 전체 조회 후 getComputedStatus로 클라이언트 필터링 (DB status는 날짜 기반 자동 계산과 불일치 가능)
+      const res = await seminarsApi.list({ limit: 200 });
+      const all = res.data as unknown as Seminar[];
+      if (!status) return all;
+      return all.filter((s) => getComputedStatus(s) === status);
     },
     retry: false,
   });
