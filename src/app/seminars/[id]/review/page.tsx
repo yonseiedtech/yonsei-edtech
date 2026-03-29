@@ -109,7 +109,7 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
 
         {/* 폼 */}
         <div className="space-y-4 rounded-xl border bg-white p-6">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium">이름 *</label>
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="홍길동" />

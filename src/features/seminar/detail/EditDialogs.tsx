@@ -87,7 +87,7 @@ export default function EditDialogs({
               <label className="mb-1 block text-sm font-medium">제목</label>
               <Input value={infoForm.title} onChange={(e) => onInfoChange({ ...infoForm, title: e.target.value })} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className="mb-1 block text-sm font-medium">날짜</label>
                 <Input type="date" value={infoForm.date} onChange={(e) => onInfoChange({ ...infoForm, date: e.target.value })} />

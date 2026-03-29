@@ -190,13 +190,13 @@ export default function ReviewManagement({ seminar }: Props) {
   return (
     <div className="space-y-4">
       {/* 섹션 네비게이션 */}
-      <div className="flex gap-1 overflow-x-auto">
+      <div className="flex flex-wrap gap-1">
         {SECTIONS.map((s) => (
           <button
             key={s.value}
             onClick={() => setSection(s.value)}
             className={cn(
-              "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors whitespace-nowrap",
+              "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
               section === s.value
                 ? "bg-primary text-primary-foreground"
                 : "bg-muted/50 text-muted-foreground hover:text-foreground",
@@ -211,7 +211,7 @@ export default function ReviewManagement({ seminar }: Props) {
       {/* 통계 */}
       {section === "stats" && (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
             <div className="rounded-lg border bg-white p-3 text-center">
               <p className="text-2xl font-bold">{stats.total}</p>
               <p className="text-xs text-muted-foreground">총 후기</p>
@@ -373,8 +373,8 @@ export default function ReviewManagement({ seminar }: Props) {
                 const isInternal = (r.visibility ?? "public") === "internal";
                 return (
                   <div key={r.id} className={cn("rounded-lg border bg-white p-4", isHidden && "opacity-50")}>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-sm font-medium">{r.authorName}</span>
                           {r.authorGeneration ? <span className="text-xs text-muted-foreground">{r.authorGeneration}기</span> : null}
@@ -387,7 +387,7 @@ export default function ReviewManagement({ seminar }: Props) {
                           {new Date(r.createdAt).toLocaleDateString("ko-KR")}
                         </p>
                       </div>
-                      <div className="flex shrink-0 gap-1">
+                      <div className="flex shrink-0 gap-1 self-end sm:self-start">
                         <Button
                           variant="outline"
                           size="sm"

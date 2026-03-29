@@ -141,7 +141,7 @@ export default function SeminarReviews({ seminar }: Props) {
             key={tab.value}
             onClick={() => { setSubTab(tab.value); setContent(""); }}
             className={cn(
-              "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+              "flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors sm:px-3 sm:text-sm",
               subTab === tab.value
                 ? "bg-white text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground",

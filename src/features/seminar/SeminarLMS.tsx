@@ -505,7 +505,7 @@ export default function SeminarLMS({ seminarId }: Props) {
                 key={tab.value}
                 onClick={() => setActiveTab(tab.value)}
                 className={cn(
-                  "flex flex-none items-center gap-1.5 border-b-2 px-4 py-3 text-sm font-medium transition-colors",
+                  "flex flex-none items-center gap-1 border-b-2 px-2.5 py-2.5 text-xs font-medium transition-colors sm:gap-1.5 sm:px-4 sm:py-3 sm:text-sm",
                   activeTab === tab.value
                     ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground",
@@ -523,7 +523,7 @@ export default function SeminarLMS({ seminarId }: Props) {
                     key={tab.value}
                     onClick={() => setActiveTab(tab.value)}
                     className={cn(
-                      "flex flex-none items-center gap-1.5 border-b-2 px-4 py-3 text-sm font-medium transition-colors",
+                      "flex flex-none items-center gap-1 border-b-2 px-2.5 py-2.5 text-xs font-medium transition-colors sm:gap-1.5 sm:px-4 sm:py-3 sm:text-sm",
                       activeTab === tab.value
                         ? "border-primary text-primary"
                         : "border-transparent text-muted-foreground hover:text-foreground",

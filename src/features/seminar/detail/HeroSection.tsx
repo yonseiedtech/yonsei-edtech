@@ -94,7 +94,7 @@ export default function HeroSection({ seminar, isStaff, onEditInfo }: Props) {
           {seminar.title}
         </h1>
 
-        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/90" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+        <div className="mt-4 flex flex-wrap gap-x-3 gap-y-2 text-sm text-white/90 sm:gap-x-6" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
           <div className="flex items-center gap-2">
             <Calendar size={16} />
             <span>{seminar.date} {seminar.time}</span>

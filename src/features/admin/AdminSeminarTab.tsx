@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 import {
   useSeminars,
   useUpdateSeminar,
@@ -129,8 +130,8 @@ export default function AdminSeminarTab() {
 
   return (
     <div className="space-y-0 rounded-xl border bg-white">
-      {/* 테이블 헤더 */}
-      <div className="grid grid-cols-[48px_1fr_120px_140px_80px_80px_80px_80px] items-center gap-1 border-b bg-muted/30 px-4 py-3 text-sm font-medium">
+      {/* 테이블 헤더 (데스크톱만) */}
+      <div className="hidden lg:grid grid-cols-[48px_1fr_120px_140px_80px_80px_80px_80px] items-center gap-1 border-b bg-muted/30 px-4 py-3 text-sm font-medium">
         <span>포스터</span>
         <span>제목</span>
         <span>발표자</span>
@@ -144,55 +145,63 @@ export default function AdminSeminarTab() {
       {/* 세미나 행 */}
       {seminars.map((s) => {
         const computed = getComputedStatus(s);
-        return (
-          <div key={s.id} className="grid grid-cols-[48px_1fr_120px_140px_80px_80px_80px_80px] items-center gap-1 border-b px-4 py-3 text-sm">
-            {/* 포스터 썸네일 */}
+        return (<>
+          {/* 데스크톱: 그리드 행 */}
+          <div key={s.id} className="hidden lg:grid grid-cols-[48px_1fr_120px_140px_80px_80px_80px_80px] items-center gap-1 border-b px-4 py-3 text-sm">
             <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded border bg-muted/20">
               {s.posterUrl ? (
-                <Image
-                  src={s.posterUrl}
-                  alt=""
-                  width={40}
-                  height={40}
-                  className="h-full w-full object-cover"
-                />
+                <Image src={s.posterUrl} alt="" width={40} height={40} className="h-full w-full object-cover" />
               ) : (
                 <ImageIcon size={16} className="text-muted-foreground" />
               )}
             </div>
-
-            {/* 제목 */}
-            <div className="flex items-center gap-1.5 text-left font-medium">
-              <span className="truncate">{s.title}</span>
+            <div className="flex items-start gap-1.5 text-left font-medium min-w-0">
+              <span className="line-clamp-2 break-words">{s.title}</span>
               {(s.sessions?.length ?? 0) > 0 && (
-                <Badge variant="secondary" className="ml-1 text-xs">
-                  {s.sessions!.length}세션
-                </Badge>
+                <Badge variant="secondary" className="shrink-0 text-xs">{s.sessions!.length}세션</Badge>
               )}
             </div>
-
-            <span className="truncate text-muted-foreground">{s.speaker}</span>
-            <span className="text-muted-foreground">
-              {formatDate(s.date)} {s.time}
-            </span>
-            <span>
-              {s.attendeeIds.length}
-              {s.maxAttendees ? `/${s.maxAttendees}` : ""}명
-            </span>
-            <Badge variant="secondary" className={STATUS_COLORS[computed]}>
-              {SEMINAR_STATUS_LABELS[computed]}
-            </Badge>
+            <span className="line-clamp-1 text-muted-foreground">{s.speaker}</span>
+            <span className="text-muted-foreground">{formatDate(s.date)} {s.time}</span>
+            <span>{s.attendeeIds.length}{s.maxAttendees ? `/${s.maxAttendees}` : ""}명</span>
+            <Badge variant="secondary" className={STATUS_COLORS[computed]}>{SEMINAR_STATUS_LABELS[computed]}</Badge>
             <Link href={`/seminars/${s.id}`}>
-              <Button variant="outline" size="sm" className="gap-1 text-xs">
-                <BookOpen size={14} />
-                입장
-              </Button>
+              <Button variant="outline" size="sm" className="gap-1 text-xs"><BookOpen size={14} />입장</Button>
             </Link>
-            <Button variant="outline" size="sm" onClick={() => openEditSeminar(s)}>
-              <Pencil size={14} />
-            </Button>
+            <Button variant="outline" size="sm" onClick={() => openEditSeminar(s)}><Pencil size={14} /></Button>
           </div>
-        );
+
+          {/* 모바일: 카드형 */}
+          <div key={`m-${s.id}`} className="flex lg:hidden items-start gap-3 border-b px-4 py-3 text-sm">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded border bg-muted/20">
+              {s.posterUrl ? (
+                <Image src={s.posterUrl} alt="" width={48} height={48} className="h-full w-full object-cover" />
+              ) : (
+                <ImageIcon size={16} className="text-muted-foreground" />
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start gap-1.5 font-medium">
+                <span className="line-clamp-2 break-words">{s.title}</span>
+                {(s.sessions?.length ?? 0) > 0 && (
+                  <Badge variant="secondary" className="shrink-0 text-xs">{s.sessions!.length}세션</Badge>
+                )}
+              </div>
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                <span>{s.speaker}</span>
+                <span>{formatDate(s.date)} {s.time}</span>
+                <span>{s.attendeeIds.length}{s.maxAttendees ? `/${s.maxAttendees}` : ""}명</span>
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <Badge variant="secondary" className={cn("text-xs", STATUS_COLORS[computed])}>{SEMINAR_STATUS_LABELS[computed]}</Badge>
+                <Link href={`/seminars/${s.id}`}>
+                  <Button variant="outline" size="sm" className="h-7 gap-1 text-xs"><BookOpen size={12} />입장</Button>
+                </Link>
+                <Button variant="outline" size="sm" className="h-7" onClick={() => openEditSeminar(s)}><Pencil size={12} /></Button>
+              </div>
+            </div>
+          </div>
+        </>);
       })}
 
       {/* 세미나 수정 Dialog */}
