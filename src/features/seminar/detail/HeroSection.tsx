@@ -39,29 +39,28 @@ export default function HeroSection({ seminar, isStaff, onEditInfo }: Props) {
   };
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border bg-white">
+    <div className="overflow-hidden rounded-2xl border bg-white">
+      {/* 이미지 + 제목 오버레이 */}
       <div className="relative h-48 sm:h-64 w-full">
-        <>
-          <img
-            src={seminar.posterUrl || "/yonsei-campus.jpg"}
-            alt={seminar.title}
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
-          {isStaff && !seminar.posterUrl && (
-            <button
-              onClick={onEditInfo}
-              className="absolute top-3 right-3 z-10 inline-flex items-center gap-1 rounded-md bg-white/80 px-3 py-1.5 text-xs text-muted-foreground shadow-sm hover:bg-white transition-colors"
-            >
-              <Pencil size={12} />
-              포스터 변경
-            </button>
-          )}
-        </>
-      </div>
+        <img
+          src={seminar.posterUrl || "/yonsei-campus.jpg"}
+          alt={seminar.title}
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
-      <div className="p-8 relative -mt-20 z-10">
-        <div className="flex items-center justify-between">
+        {isStaff && !seminar.posterUrl && (
+          <button
+            onClick={onEditInfo}
+            className="absolute top-3 right-3 z-10 inline-flex items-center gap-1 rounded-md bg-white/80 px-3 py-1.5 text-xs text-muted-foreground shadow-sm hover:bg-white transition-colors"
+          >
+            <Pencil size={12} />
+            포스터 변경
+          </button>
+        )}
+
+        {/* 좌측 하단: 뱃지 + 제목 */}
+        <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8">
           <div className="flex items-center gap-2">
             <Badge className={cn("text-xs", badge.className, "shadow-sm")} variant="secondary">
               {badge.label}
@@ -72,10 +71,43 @@ export default function HeroSection({ seminar, isStaff, onEditInfo }: Props) {
               </Badge>
             )}
           </div>
+          <h1 className="mt-2 text-xl font-bold sm:text-2xl text-white leading-tight" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+            {seminar.title}
+          </h1>
+        </div>
+      </div>
+
+      {/* 이미지 아래: 세미나 정보 */}
+      <div className="px-5 py-5 sm:px-8 sm:py-6">
+        {computedStatus === "cancelled" && seminar.cancelReason && (
+          <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            <AlertCircle size={16} className="shrink-0 text-red-500" />
+            <span>취소 사유: {seminar.cancelReason}</span>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between">
+          <div className="flex flex-wrap gap-x-3 gap-y-2 text-sm text-foreground sm:gap-x-6">
+            <div className="flex items-center gap-2">
+              <Calendar size={16} className="text-muted-foreground" />
+              <span>{seminar.date} {seminar.time}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {seminar.isOnline ? <Video size={16} className="text-blue-500" /> : <MapPin size={16} className="text-muted-foreground" />}
+              <span>{seminar.location}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Users size={16} className="text-muted-foreground" />
+              <span>
+                참석 {attendeeCount}
+                {seminar.maxAttendees ? ` / ${seminar.maxAttendees}` : ""}명
+              </span>
+            </div>
+          </div>
           {isStaff && (
             <button
               onClick={onEditInfo}
-              className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
               title="편집"
             >
               <Pencil size={14} />
@@ -83,37 +115,8 @@ export default function HeroSection({ seminar, isStaff, onEditInfo }: Props) {
           )}
         </div>
 
-        {computedStatus === "cancelled" && seminar.cancelReason && (
-          <div className="mt-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-            <AlertCircle size={16} className="shrink-0 text-red-500" />
-            <span>취소 사유: {seminar.cancelReason}</span>
-          </div>
-        )}
-
-        <h1 className="mt-3 text-2xl font-bold sm:text-3xl text-white" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
-          {seminar.title}
-        </h1>
-
-        <div className="mt-4 flex flex-wrap gap-x-3 gap-y-2 text-sm text-white/90 sm:gap-x-6" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
-          <div className="flex items-center gap-2">
-            <Calendar size={16} />
-            <span>{seminar.date} {seminar.time}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            {seminar.isOnline ? <Video size={16} className="text-blue-400" /> : <MapPin size={16} />}
-            <span>{seminar.location}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Users size={16} />
-            <span>
-              참석 {attendeeCount}
-              {seminar.maxAttendees ? ` / ${seminar.maxAttendees}` : ""}명
-            </span>
-          </div>
-        </div>
-
         {seminar.isOnline && seminar.onlineUrl && (
-          <div className="mt-2">
+          <div className="mt-3">
             <a
               href={seminar.onlineUrl}
               target="_blank"
