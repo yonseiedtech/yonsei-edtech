@@ -341,7 +341,7 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
       {/* 입학 시점 */}
       <div>
         <label className="mb-1.5 block text-sm font-medium">입학 시점</label>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <select
             {...register("enrollmentYear", { required: "입학 연도를 선택하세요" })}
             className="w-full rounded-lg border px-3 py-2.5 text-sm"
@@ -431,7 +431,7 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
               </select>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-1.5 block text-sm font-medium">
                   소속1 <span className="text-muted-foreground">(선택)</span>

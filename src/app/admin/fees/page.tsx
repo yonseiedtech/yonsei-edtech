@@ -394,7 +394,7 @@ export default function FeesPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-7 gap-1 text-xs text-green-600"
+                        className="h-7 gap-0.5 text-[10px] sm:gap-1 sm:text-xs text-green-600"
                         onClick={() => payMutation.mutate({ userId: m.id, userName: m.name, studentId: m.studentId ?? "", status: "paid" })}
                         disabled={payMutation.isPending}
                       >
@@ -406,7 +406,7 @@ export default function FeesPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-7 gap-1 text-xs text-red-500"
+                        className="h-7 gap-0.5 text-[10px] sm:gap-1 sm:text-xs text-red-500"
                         onClick={() => payMutation.mutate({ userId: m.id, userName: m.name, studentId: m.studentId ?? "", status: "unpaid" })}
                         disabled={payMutation.isPending}
                       >
@@ -418,7 +418,7 @@ export default function FeesPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-7 text-xs text-blue-600"
+                        className="h-7 text-[10px] sm:text-xs text-blue-600"
                         onClick={() => payMutation.mutate({ userId: m.id, userName: m.name, studentId: m.studentId ?? "", status: "exempt" })}
                         disabled={payMutation.isPending}
                       >

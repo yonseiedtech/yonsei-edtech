@@ -243,13 +243,13 @@ export default function ReviewManagement({ seminar }: Props) {
           <div className="rounded-lg border bg-muted/30 p-4">
             <h3 className="mb-3 text-sm font-medium">후기 작성</h3>
             <div className="space-y-3">
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">유형:</span>
                   <select
                     value={writeType}
                     onChange={(e) => setWriteType(e.target.value as typeof writeType)}
-                    className="rounded-md border bg-white px-2 py-1 text-sm"
+                    className="w-full rounded-md border bg-white px-2 py-1 text-sm sm:w-auto"
                   >
                     <option value="attendee">참석자</option>
                     <option value="speaker">연사</option>

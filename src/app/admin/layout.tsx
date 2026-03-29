@@ -85,7 +85,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
           <StatCard icon={HelpCircle} label="미답변 문의" value={unansweredCount} color="bg-red-50 text-red-600" />
         </div>
 
-        <nav className="mt-8 flex w-max min-w-full gap-0 overflow-x-auto border-b">
+        <nav className="mt-8 flex flex-wrap gap-0 border-b sm:overflow-x-auto">
           {visibleTabs.map((tab) => {
             const isActive = pathname.startsWith(tab.href);
             return (
@@ -93,7 +93,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
                 key={tab.href}
                 href={tab.href}
                 className={cn(
-                  "flex flex-none items-center gap-1.5 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors",
+                  "flex flex-none items-center gap-1 border-b-2 px-2.5 py-2 text-xs font-medium transition-colors sm:gap-1.5 sm:px-4 sm:py-2.5 sm:text-sm",
                   isActive
                     ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground",

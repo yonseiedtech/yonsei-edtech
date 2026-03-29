@@ -295,7 +295,7 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
               <label className="mb-1 block text-sm font-medium">만족도</label>
               <div className="flex gap-1">
                 {[1, 2, 3, 4, 5].map((v) => (
-                  <button key={v} type="button" onClick={() => setRating(v)} className="p-0.5">
+                  <button key={v} type="button" onClick={() => setRating(v)} className="p-1.5 sm:p-0.5">
                     <Star
                       size={28}
                       className={cn("transition-colors", v <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30")}
