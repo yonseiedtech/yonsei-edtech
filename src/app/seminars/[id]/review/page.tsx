@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Star, CheckCircle, Loader2, AlertCircle, ShieldCheck, Pencil } from "lucide-react";
+import { ArrowLeft, Star, CheckCircle, Loader2, AlertCircle, ShieldCheck, Pencil, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -52,6 +52,10 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
   const [showExistingDialog, setShowExistingDialog] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
+  // 가입 권장 팝업
+  const [showSignupDialog, setShowSignupDialog] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
+
   // Step 1: 인증
   const [name, setName] = useState("");
   const [studentId, setStudentId] = useState("");
@@ -69,12 +73,12 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
   // Step 1: 참석자 인증
   async function handleVerify() {
     if (!name.trim()) { toast.error("이름을 입력하세요."); return; }
+    if (!studentId.trim()) { toast.error("학번을 입력하세요."); return; }
     setVerifying(true);
     setVerifyError("");
 
     try {
-      const params = new URLSearchParams({ seminarId, name: name.trim() });
-      if (studentId.trim()) params.set("studentId", studentId.trim());
+      const params = new URLSearchParams({ seminarId, name: name.trim(), studentId: studentId.trim() });
 
       const res = await fetch(`/api/reviews?${params}`);
       const data = await res.json();
@@ -92,17 +96,33 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
       setVerifiedAttendee(data.attendee);
 
       if (data.alreadyReviewed && data.existingReview) {
-        // 기존 후기가 있으면 팝업으로 보여주기
         setExistingReview(data.existingReview);
         setShowExistingDialog(true);
       } else {
-        setStep("write");
+        // 게스트(비회원)인지 확인 → 가입 권장 팝업
+        const isGuestUser = !data.attendee.userId || data.attendee.userId.startsWith("guest_");
+        if (isGuestUser) {
+          setIsGuest(true);
+          setShowSignupDialog(true);
+        } else {
+          setStep("write");
+        }
       }
     } catch {
       setVerifyError("인증 중 오류가 발생했습니다.");
     } finally {
       setVerifying(false);
     }
+  }
+
+  function handleGoToSignup() {
+    const params = new URLSearchParams({ name: name.trim(), studentId: studentId.trim() });
+    window.location.href = `/signup?${params}`;
+  }
+
+  function handleContinueAsGuest() {
+    setShowSignupDialog(false);
+    setStep("write");
   }
 
   // 기존 후기 수정 모드 진입
@@ -235,7 +255,7 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">학번</label>
+                <label className="mb-1 block text-sm font-medium">학번 *</label>
                 <Input
                   value={studentId}
                   onChange={(e) => setStudentId(e.target.value)}
@@ -252,7 +272,7 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
               </div>
             )}
 
-            <Button onClick={handleVerify} disabled={verifying || !name.trim()} className="w-full">
+            <Button onClick={handleVerify} disabled={verifying || !name.trim() || !studentId.trim()} className="w-full">
               {verifying ? <><Loader2 size={14} className="mr-1 animate-spin" />인증 중...</> : "참석자 인증"}
             </Button>
 
@@ -353,6 +373,33 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
             </Link>
           </div>
         )}
+
+        {/* 가입 권장 팝업 */}
+        <Dialog open={showSignupDialog} onOpenChange={setShowSignupDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>회원 가입을 권장합니다</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                연세교육공학회 회원으로 가입하시면 세미나 자료, 후기 관리, 수료증 발급 등 다양한 혜택을 받으실 수 있습니다.
+              </p>
+              <div className="rounded-lg bg-primary/5 p-3 text-sm">
+                <p><strong>{name}</strong>님 ({studentId})</p>
+                <p className="mt-1 text-xs text-muted-foreground">비회원 상태입니다.</p>
+              </div>
+            </div>
+            <DialogFooter className="flex-col gap-2 sm:flex-row">
+              <Button variant="outline" onClick={handleContinueAsGuest} className="w-full sm:w-auto">
+                비회원으로 작성하기
+              </Button>
+              <Button onClick={handleGoToSignup} className="w-full gap-1 sm:w-auto">
+                <UserPlus size={14} />
+                회원 가입하기
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* 기존 후기 팝업 */}
         <Dialog open={showExistingDialog} onOpenChange={setShowExistingDialog}>

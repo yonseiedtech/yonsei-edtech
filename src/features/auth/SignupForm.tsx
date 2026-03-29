@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { UserPlus, ChevronDown, ChevronUp } from "lucide-react";
+import { UserPlus, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { authApi, profilesApi, attendeesApi, saveTokens } from "@/lib/bkend";
 import { cn } from "@/lib/utils";
@@ -37,6 +37,8 @@ interface SignupData {
   username: string;
   name: string;
   email: string;
+  phone: string;
+  birthDate: string;
   password: string;
   generation: string;
   enrollmentYear: string;
@@ -51,14 +53,72 @@ interface SignupData {
 
 interface Props {
   onSuccess: () => void;
+  defaultName?: string;
+  defaultStudentId?: string;
 }
 
-export default function SignupForm({ onSuccess }: Props) {
+export default function SignupForm({ onSuccess, defaultName, defaultStudentId }: Props) {
   const [loading, setLoading] = useState(false);
   const [memberType, setMemberType] = useState<MemberType>("student");
   const [privacyAgreed, setPrivacyAgreed] = useState(false);
   const [showOptional, setShowOptional] = useState(false);
-  const { register, handleSubmit, formState: { errors } } = useForm<SignupData>();
+  const [usernameChecked, setUsernameChecked] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState(false);
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<SignupData>({
+    defaultValues: {
+      username: defaultStudentId || "",
+      name: defaultName || "",
+    },
+  });
+
+  const watchedUsername = watch("username");
+
+  // 학번에서 입학 시점 추출: 2023432001 → 2023년, 432=후반기 / 431=전반기
+  function parseEnrollmentFromStudentId(sid: string) {
+    if (sid.length < 7) return;
+    const year = sid.slice(0, 4);
+    const code = sid.slice(4, 7);
+    if (/^\d{4}$/.test(year)) {
+      const yearNum = Number(year);
+      if (yearNum >= 2000 && yearNum <= 2030) {
+        setValue("enrollmentYear", year);
+      }
+    }
+    if (code === "431") {
+      setValue("enrollmentHalf", "1"); // 전반기
+    } else if (code === "432") {
+      setValue("enrollmentHalf", "2"); // 후반기
+    }
+  }
+
+  async function checkUsernameAvailability() {
+    if (!watchedUsername || watchedUsername.length < 5) {
+      toast.error("학번을 5자 이상 입력하세요.");
+      return;
+    }
+    setCheckingUsername(true);
+    try {
+      // 학번에서 입학 시점 자동 추출
+      parseEnrollmentFromStudentId(watchedUsername);
+
+      const res = await profilesApi.list({ "filter[username]": watchedUsername });
+      const existing = res.data as unknown[];
+      if (existing.length > 0) {
+        setUsernameAvailable(false);
+        setUsernameChecked(true);
+        toast.error("이미 가입된 학번입니다.");
+      } else {
+        setUsernameAvailable(true);
+        setUsernameChecked(true);
+        toast.success("사용 가능한 학번입니다.");
+      }
+    } catch {
+      toast.error("확인에 실패했습니다.");
+    } finally {
+      setCheckingUsername(false);
+    }
+  }
 
   async function onSubmit(data: SignupData) {
     if (!privacyAgreed) {
@@ -84,6 +144,8 @@ export default function SignupForm({ onSuccess }: Props) {
           memberType,
           generation: data.generation ? Number(data.generation) : 0,
           studentId: data.studentId || data.username || "",
+          phone: data.phone || "",
+          birthDate: data.birthDate || "",
           enrollmentYear: data.enrollmentYear ? Number(data.enrollmentYear) : null,
           enrollmentHalf: data.enrollmentHalf ? Number(data.enrollmentHalf) : null,
           field: data.field || "",
@@ -140,17 +202,36 @@ export default function SignupForm({ onSuccess }: Props) {
 
       <div>
         <label className="mb-1.5 block text-sm font-medium">학번 (아이디)</label>
-        <Input
-          {...register("username", {
-            required: "학번을 입력하세요",
-            minLength: { value: 5, message: "5자 이상 입력하세요" },
-            maxLength: { value: 20, message: "20자 이하로 입력하세요" },
-            pattern: { value: /^[a-zA-Z0-9_]+$/, message: "영문, 숫자, 밑줄(_)만 사용 가능합니다" },
-          })}
-          placeholder="예: 2023432001"
-          autoComplete="username"
-        />
-        <p className="mt-1 text-xs text-muted-foreground">로그인 시 아이디로 사용됩니다.</p>
+        <div className="flex gap-2">
+          <Input
+            {...register("username", {
+              required: "학번을 입력하세요",
+              minLength: { value: 5, message: "5자 이상 입력하세요" },
+              maxLength: { value: 20, message: "20자 이하로 입력하세요" },
+              pattern: { value: /^[a-zA-Z0-9_]+$/, message: "영문, 숫자, 밑줄(_)만 사용 가능합니다" },
+              onChange: () => { setUsernameChecked(false); setUsernameAvailable(false); },
+            })}
+            placeholder="예: 2023432001"
+            autoComplete="username"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="shrink-0 whitespace-nowrap"
+            onClick={checkUsernameAvailability}
+            disabled={checkingUsername || !watchedUsername || watchedUsername.length < 5}
+          >
+            {checkingUsername ? <Loader2 size={14} className="animate-spin" /> : "가입 확인"}
+          </Button>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {usernameChecked
+            ? usernameAvailable
+              ? "✓ 사용 가능한 학번입니다."
+              : "✗ 이미 가입된 학번입니다."
+            : "로그인 시 아이디로 사용됩니다."}
+        </p>
         {errors.username && (
           <p className="mt-1 text-xs text-destructive">{errors.username.message}</p>
         )}
@@ -179,6 +260,32 @@ export default function SignupForm({ onSuccess }: Props) {
         />
         {errors.email && (
           <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>
+        )}
+      </div>
+
+      <div>
+        <label className="mb-1.5 block text-sm font-medium">핸드폰 번호</label>
+        <Input
+          {...register("phone", {
+            pattern: { value: /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/, message: "올바른 핸드폰 번호를 입력하세요" },
+          })}
+          type="tel"
+          placeholder="010-1234-5678"
+        />
+        {errors.phone && (
+          <p className="mt-1 text-xs text-destructive">{errors.phone.message}</p>
+        )}
+      </div>
+
+      <div>
+        <label className="mb-1.5 block text-sm font-medium">생년월일</label>
+        <Input
+          {...register("birthDate", { required: "생년월일을 입력하세요" })}
+          type="date"
+        />
+        <p className="mt-1 text-xs text-muted-foreground">아이디/비밀번호 찾기 시 본인 확인에 활용됩니다.</p>
+        {errors.birthDate && (
+          <p className="mt-1 text-xs text-destructive">{errors.birthDate.message}</p>
         )}
       </div>
 
@@ -221,27 +328,6 @@ export default function SignupForm({ onSuccess }: Props) {
         </div>
       </div>
 
-      {/* 누적학기 선택 */}
-      <div>
-        <label className="mb-1.5 block text-sm font-medium">누적학기</label>
-        <select
-          {...register("generation", { required: "누적학기를 선택하세요" })}
-          className="w-full rounded-lg border px-3 py-2.5 text-sm"
-        >
-          <option value="">누적학기를 선택하세요</option>
-          {SEMESTER_OPTIONS.map((sem) => (
-            <option key={sem} value={sem}>
-              {sem}학기
-            </option>
-          ))}
-          <option value="0">기타 / 모르겠음</option>
-        </select>
-        <p className="mt-1 text-xs text-muted-foreground">2026년 1학기 기준 재학 중인 학기를 선택하세요.</p>
-        {errors.generation && (
-          <p className="mt-1 text-xs text-destructive">{errors.generation.message}</p>
-        )}
-      </div>
-
       {/* 입학 시점 */}
       <div>
         <label className="mb-1.5 block text-sm font-medium">입학 시점</label>
@@ -270,6 +356,29 @@ export default function SignupForm({ onSuccess }: Props) {
           </p>
         )}
       </div>
+
+      {/* 누적학기 선택 (재학생만) */}
+      {memberType === "student" && (
+        <div>
+          <label className="mb-1.5 block text-sm font-medium">누적학기</label>
+          <select
+            {...register("generation", { required: memberType === "student" ? "누적학기를 선택하세요" : false })}
+            className="w-full rounded-lg border px-3 py-2.5 text-sm"
+          >
+            <option value="">누적학기를 선택하세요</option>
+            {SEMESTER_OPTIONS.map((sem) => (
+              <option key={sem} value={sem}>
+                {sem}학기
+              </option>
+            ))}
+            <option value="0">기타 / 모르겠음</option>
+          </select>
+          <p className="mt-1 text-xs text-muted-foreground">2026년 1학기 기준 재학 중인 학기를 선택하세요.</p>
+          {errors.generation && (
+            <p className="mt-1 text-xs text-destructive">{errors.generation.message}</p>
+          )}
+        </div>
+      )}
 
       {/* ── 선택 정보 (접이식) ── */}
       <div className="border-t pt-4">

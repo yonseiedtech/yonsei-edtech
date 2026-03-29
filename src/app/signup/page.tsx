@@ -1,12 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
 import SignupForm from "@/features/auth/SignupForm";
 
-export default function SignupPage() {
+function SignupContent() {
+  const searchParams = useSearchParams();
+  const defaultName = searchParams.get("name") || undefined;
+  const defaultStudentId = searchParams.get("studentId") || undefined;
   const [submitted, setSubmitted] = useState(false);
 
   if (submitted) {
@@ -40,8 +44,16 @@ export default function SignupPage() {
           </p>
         </div>
 
-        <SignupForm onSuccess={() => setSubmitted(true)} />
+        <SignupForm onSuccess={() => setSubmitted(true)} defaultName={defaultName} defaultStudentId={defaultStudentId} />
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupContent />
+    </Suspense>
   );
 }
