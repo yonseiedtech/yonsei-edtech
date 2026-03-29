@@ -406,7 +406,7 @@ export default function ReviewManagement({ seminar }: Props) {
                         </div>
                         <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{r.content}</p>
                         <p className="mt-2 text-xs text-muted-foreground">
-                          {new Date(r.createdAt).toLocaleDateString("ko-KR")}
+                          {new Date(r.createdAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false })}
                         </p>
                       </div>
                       <div className="flex shrink-0 gap-1 self-end sm:self-start">

@@ -381,7 +381,7 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
                   ))}
                   <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{existingReview.content}</p>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    작성일: {new Date(existingReview.createdAt).toLocaleDateString("ko-KR")}
+                    작성일: {new Date(existingReview.createdAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false })}
                   </p>
                 </div>
               </div>
