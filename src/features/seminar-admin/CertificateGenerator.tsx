@@ -26,11 +26,12 @@ function AttendeeSelector({ attendees, seminarId, certType, onSelectName, onBatc
   seminarId: string;
   certType: CertType;
   onSelectName: (name: string) => void;
-  onBatchCreate: (names: string[]) => Promise<void>;
+  onBatchCreate: (names: string[], onProgress?: (current: number, total: number) => void) => Promise<void>;
 }) {
   const [recipients, setRecipients] = useState<string[]>([]);
   const [filter, setFilter] = useState<"all" | "checked" | "unchecked">("all");
   const [creating, setCreating] = useState(false);
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [manualName, setManualName] = useState("");
 
   const { data: existingCerts = [] } = useQuery({
@@ -74,9 +75,11 @@ function AttendeeSelector({ attendees, seminarId, certType, onSelectName, onBatc
   async function handleBatchIssue() {
     if (recipients.length === 0) { toast.error("발급 대상자를 추가하세요."); return; }
     setCreating(true);
-    await onBatchCreate(recipients);
+    setProgress({ current: 0, total: recipients.length });
+    await onBatchCreate(recipients, (current, total) => setProgress({ current, total }));
     setRecipients([]);
     setCreating(false);
+    setProgress({ current: 0, total: 0 });
   }
 
   return (
@@ -151,8 +154,11 @@ function AttendeeSelector({ attendees, seminarId, certType, onSelectName, onBatc
         {/* 발급 버튼 */}
         <div className="mt-2 flex gap-1">
           <Button size="sm" className="h-8 flex-1 gap-1 text-xs" disabled={recipients.length === 0 || creating} onClick={handleBatchIssue}>
-            {creating ? <span className="animate-spin">⏳</span> : <Award size={12} />}
-            {recipients.length}명 {certType === "completion" ? "수료증" : "감사장"} 일괄 발급
+            {creating ? (
+              <>{progress.current}/{progress.total} ({Math.round((progress.current / progress.total) * 100)}%)</>
+            ) : (
+              <><Award size={12} />{recipients.length}명 {certType === "completion" ? "수료증" : "감사장"} 일괄 발급</>
+            )}
           </Button>
           {recipients.length === 1 && (
             <Button variant="outline" size="sm" className="h-8 gap-1 text-xs" onClick={() => onSelectName(recipients[0])}>
@@ -791,11 +797,13 @@ export default function CertificateGenerator() {
               seminarId={seminar.id}
               certType={certType}
               onSelectName={(name) => setRecipientName(name)}
-              onBatchCreate={async (names) => {
+              onBatchCreate={async (names, onProgress) => {
                 let created = 0, skipped = 0;
                 const existingRes = await certificatesApi.list(seminar.id);
                 const existingNames = new Set((existingRes.data as unknown as { recipientName: string }[]).map((c) => c.recipientName));
-                for (const name of names) {
+                for (let i = 0; i < names.length; i++) {
+                  onProgress?.(i + 1, names.length);
+                  const name = names[i];
                   if (existingNames.has(name)) { skipped++; continue; }
                   const no = await generateCertificateNo(certType);
                   await certificatesApi.create({ seminarId: seminar.id, seminarTitle: seminar.title, recipientName: name, type: certType, certificateNo: no, issuedAt: new Date().toISOString(), issuedBy: user?.id ?? "" });
