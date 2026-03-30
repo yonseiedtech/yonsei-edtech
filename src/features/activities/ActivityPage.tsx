@@ -15,8 +15,12 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import Link from "next/link";
 import PageHeader from "@/components/ui/page-header";
 import { Calendar, MapPin, Users, User, Plus, Pencil, Trash2, Loader2, UserPlus, Check } from "lucide-react";
+
+const RECRUIT_LABELS: Record<string, string> = { recruiting: "모집중", closed: "모집마감", in_progress: "진행중", completed: "완료" };
+const RECRUIT_COLORS: Record<string, string> = { recruiting: "bg-green-50 text-green-700", closed: "bg-red-50 text-red-700", in_progress: "bg-amber-50 text-amber-700", completed: "bg-muted text-muted-foreground" };
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { Activity, ActivityType } from "@/types";
@@ -25,11 +29,13 @@ const STATUS_LABELS: Record<string, string> = { upcoming: "예정", ongoing: "�
 const STATUS_COLORS: Record<string, string> = { upcoming: "bg-blue-50 text-blue-700", ongoing: "bg-amber-50 text-amber-700", completed: "bg-muted text-muted-foreground" };
 
 interface FormData {
-  title: string; description: string; date: string; endDate: string;
+  title: string; description: string; detailContent: string; date: string; endDate: string;
   status: "upcoming" | "ongoing" | "completed";
+  recruitmentStatus: string; maxParticipants: string;
   leader: string; location: string; tags: string;
+  organizerName: string; conferenceUrl: string;
 }
-const emptyForm: FormData = { title: "", description: "", date: "", endDate: "", status: "upcoming", leader: "", location: "", tags: "" };
+const emptyForm: FormData = { title: "", description: "", detailContent: "", date: "", endDate: "", status: "upcoming", recruitmentStatus: "recruiting", maxParticipants: "", leader: "", location: "", tags: "", organizerName: "", conferenceUrl: "" };
 
 interface Props {
   type: ActivityType;
@@ -57,10 +63,16 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
     mutationFn: async () => {
       const data: Record<string, unknown> = {
         type, title: form.title.trim(), description: form.description.trim(),
+        detailContent: form.detailContent.trim() || undefined,
         date: form.date, endDate: form.endDate || undefined, status: form.status,
+        recruitmentStatus: form.recruitmentStatus || "recruiting",
+        maxParticipants: form.maxParticipants ? Number(form.maxParticipants) : undefined,
         leader: form.leader.trim() || undefined, location: form.location.trim() || undefined,
         tags: form.tags ? form.tags.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
-        participants: editId ? undefined : [], // 신규 생성 시 빈 참여자 배열
+        organizerName: form.organizerName.trim() || undefined,
+        conferenceUrl: form.conferenceUrl.trim() || undefined,
+        participants: editId ? undefined : [],
+        applicants: editId ? undefined : [],
         createdBy: user?.id || "",
       };
       if (editId) await activitiesApi.update(editId, data);
@@ -104,7 +116,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
   function openCreate() { setEditId(null); setForm(emptyForm); setDialogOpen(true); }
   function openEdit(a: Activity) {
     setEditId(a.id);
-    setForm({ title: a.title, description: a.description, date: a.date, endDate: a.endDate || "", status: a.status, leader: a.leader || "", location: a.location || "", tags: a.tags?.join(", ") || "" });
+    setForm({ title: a.title, description: a.description, detailContent: a.detailContent || "", date: a.date, endDate: a.endDate || "", status: a.status, recruitmentStatus: a.recruitmentStatus || "recruiting", maxParticipants: a.maxParticipants ? String(a.maxParticipants) : "", leader: a.leader || "", location: a.location || "", tags: a.tags?.join(", ") || "", organizerName: a.organizerName || "", conferenceUrl: a.conferenceUrl || "" });
     setDialogOpen(true);
   }
   function closeDialog() { setDialogOpen(false); setEditId(null); setForm(emptyForm); }
@@ -123,7 +135,8 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary" className={cn("text-xs", STATUS_COLORS[a.status])}>{STATUS_LABELS[a.status]}</Badge>
-              <h3 className="text-lg font-semibold">{a.title}</h3>
+              {a.recruitmentStatus && <Badge variant="secondary" className={cn("text-xs", RECRUIT_COLORS[a.recruitmentStatus])}>{RECRUIT_LABELS[a.recruitmentStatus]}</Badge>}
+              <Link href={`/activities/${type === "project" ? "projects" : type === "study" ? "studies" : "external"}/${a.id}`} className="text-lg font-semibold hover:text-primary hover:underline">{a.title}</Link>
             </div>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{a.description}</p>
             <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
@@ -218,7 +231,24 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
                 </div>
                 <div><label className="mb-1 block text-sm font-medium">장소</label><Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="예: 교육과학관 606호" /></div>
               </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div><label className="mb-1 block text-sm font-medium">모집 상태</label>
+                  <select value={form.recruitmentStatus} onChange={(e) => setForm({ ...form, recruitmentStatus: e.target.value })} className="w-full rounded-lg border px-3 py-2 text-sm">
+                    <option value="recruiting">모집중</option><option value="closed">모집마감</option><option value="in_progress">진행중</option><option value="completed">완료</option>
+                  </select>
+                </div>
+                <div><label className="mb-1 block text-sm font-medium">정원</label><Input type="number" value={form.maxParticipants} onChange={(e) => setForm({ ...form, maxParticipants: e.target.value })} placeholder="미입력 시 제한 없음" /></div>
+              </div>
               <div><label className="mb-1 block text-sm font-medium">담당자</label><Input value={form.leader} onChange={(e) => setForm({ ...form, leader: e.target.value })} placeholder="예: 김대경" /></div>
+              <div><label className="mb-1 block text-sm font-medium">상세 내용</label>
+                <textarea value={form.detailContent} onChange={(e) => setForm({ ...form, detailContent: e.target.value })} rows={4} placeholder="세부 진행 방법, 커리큘럼, 참여 조건 등" className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50" />
+              </div>
+              {type === "external" && (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div><label className="mb-1 block text-sm font-medium">주최 기관</label><Input value={form.organizerName} onChange={(e) => setForm({ ...form, organizerName: e.target.value })} placeholder="예: 한국교육공학회" /></div>
+                  <div><label className="mb-1 block text-sm font-medium">학회 URL</label><Input value={form.conferenceUrl} onChange={(e) => setForm({ ...form, conferenceUrl: e.target.value })} placeholder="https://..." /></div>
+                </div>
+              )}
               <div><label className="mb-1 block text-sm font-medium">태그 (쉼표 구분)</label><Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="예: AI교육, UX리서치" /></div>
             </div>
             <DialogFooter>

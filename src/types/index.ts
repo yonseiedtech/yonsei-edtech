@@ -297,20 +297,29 @@ export interface SeminarReview {
 // ── 학술활동 ──
 export type ActivityType = "project" | "study" | "external";
 
+export type RecruitmentStatus = "recruiting" | "closed" | "in_progress" | "completed";
+
 export interface Activity { [key: string]: unknown;
   id: string;
   type: ActivityType;
   title: string;
   description: string;
+  detailContent?: string;
   date: string;
   endDate?: string;
   status: "upcoming" | "ongoing" | "completed";
+  recruitmentStatus?: RecruitmentStatus;
+  maxParticipants?: number;
   leader?: string;
   members?: string[];
   participants?: string[];
+  applicants?: { userId: string; name: string; studentId?: string; appliedAt: string; status: "pending" | "approved" | "rejected" }[];
   location?: string;
   tags?: string[];
   imageUrl?: string;
+  // 대외활동 전용
+  organizerName?: string;
+  conferenceUrl?: string;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
