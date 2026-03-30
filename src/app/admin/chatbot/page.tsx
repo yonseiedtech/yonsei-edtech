@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { dataApi } from "@/lib/bkend";
+import { dataApi, siteSettingsApi } from "@/lib/bkend";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -44,17 +44,49 @@ interface ChatQA {
   createdAt: string;
 }
 
-type Section = "logs" | "qa";
+type Section = "greeting" | "logs" | "qa";
 
 export default function ChatbotAdminPage() {
   const queryClient = useQueryClient();
-  const [section, setSection] = useState<Section>("logs");
+  const [section, setSection] = useState<Section>("greeting");
+  const [greetingText, setGreetingText] = useState("");
+  const [savingGreeting, setSavingGreeting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Q&A 편집
   const [qaDialog, setQaDialog] = useState(false);
   const [editQaId, setEditQaId] = useState<string | null>(null);
   const [qaForm, setQaForm] = useState({ question: "", answer: "", keywords: "" });
+
+  // 인사말 조회
+  const { data: greetingSetting } = useQuery({
+    queryKey: ["site_settings", "chatbot_greeting"],
+    queryFn: async () => {
+      const res = await siteSettingsApi.getByKey("chatbot_greeting");
+      return res.data[0] as { id: string; value: string } | undefined;
+    },
+  });
+
+  // 인사말 초기값 설정
+  const currentGreeting = greetingSetting?.value || "안녕하세요! 연교공 챗봇입니다. 현재 연교공 챗봇은 준비중입니다! 공식 오픈 시 다시 한번 안내해드릴게요 😊";
+  if (greetingText === "" && greetingSetting?.value) setGreetingText(greetingSetting.value);
+
+  async function saveGreeting() {
+    setSavingGreeting(true);
+    try {
+      if (greetingSetting?.id) {
+        await siteSettingsApi.update(greetingSetting.id, { key: "chatbot_greeting", value: greetingText });
+      } else {
+        await siteSettingsApi.create({ key: "chatbot_greeting", value: greetingText });
+      }
+      queryClient.invalidateQueries({ queryKey: ["site_settings", "chatbot_greeting"] });
+      toast.success("인사말이 저장되었습니다.");
+    } catch {
+      toast.error("저장에 실패했습니다.");
+    } finally {
+      setSavingGreeting(false);
+    }
+  }
 
   // 채팅 로그 조회
   const { data: chatLogs = [] } = useQuery({
@@ -138,6 +170,7 @@ export default function ChatbotAdminPage() {
   }
 
   const SECTIONS: { value: Section; label: string; icon: React.ReactNode }[] = [
+    { value: "greeting", label: "인사말 설정", icon: <MessageCircle size={14} /> },
     { value: "logs", label: "채팅 기록", icon: <Clock size={14} /> },
     { value: "qa", label: "Q&A 설정", icon: <MessageCircle size={14} /> },
   ];
@@ -168,6 +201,32 @@ export default function ChatbotAdminPage() {
           </button>
         ))}
       </div>
+
+      {/* 인사말 설정 */}
+      {section === "greeting" && (
+        <div className="rounded-xl border bg-white p-6 space-y-4">
+          <h3 className="font-semibold">챗봇 인사말 설정</h3>
+          <p className="text-xs text-muted-foreground">챗봇을 열었을 때 처음 표시되는 인사말을 설정합니다.</p>
+          <div>
+            <label className="mb-1 block text-sm font-medium">현재 인사말</label>
+            <div className="rounded-lg bg-muted/30 p-3 text-sm text-muted-foreground">{currentGreeting}</div>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">새 인사말</label>
+            <textarea
+              value={greetingText || currentGreeting}
+              onChange={(e) => setGreetingText(e.target.value)}
+              rows={4}
+              placeholder="챗봇 인사말을 입력하세요."
+              className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            />
+          </div>
+          <Button onClick={saveGreeting} disabled={savingGreeting}>
+            {savingGreeting && <Loader2 size={14} className="mr-1 animate-spin" />}
+            인사말 저장
+          </Button>
+        </div>
+      )}
 
       {/* 채팅 기록 */}
       {section === "logs" && (

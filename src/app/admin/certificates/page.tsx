@@ -29,43 +29,40 @@ function CertPreview({ cert }: { cert: Certificate }) {
   const date = cert.issuedAt ? new Date(cert.issuedAt).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" }) : "";
 
   return (
-    <div className="mx-auto bg-white" style={{ width: "100%", maxWidth: "500px", aspectRatio: "210/297", fontFamily: "'Batang', serif", position: "relative", border: `3px double ${color}`, padding: "8%" }}>
-      {/* 내부 테두리 */}
-      <div style={{ border: `1px solid ${color}`, height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "8%", textAlign: "center" }}>
-        {/* 증서번호 */}
-        <p style={{ fontSize: "8px", color: "#999", position: "absolute", top: "12%", right: "12%" }}>
-          제 {cert.certificateNo} 호
-        </p>
+    <div className="mx-auto w-full max-w-md rounded-sm bg-white p-4" style={{ fontFamily: "'Batang', 'Nanum Myeongjo', serif" }}>
+      <div className="rounded-sm p-4" style={{ border: `3px double ${color}` }}>
+        <div className="flex flex-col items-center gap-4 p-4 text-center" style={{ border: `1px solid ${color}` }}>
+          {/* 증서번호 */}
+          <p className="self-end text-[10px] text-gray-400">제 {cert.certificateNo} 호</p>
 
-        {/* 제목 */}
-        <h1 style={{ fontSize: "28px", fontWeight: 800, letterSpacing: "0.3em", color, marginBottom: "24px" }}>
-          {title}
-        </h1>
+          {/* 제목 */}
+          <h1 className="text-2xl font-extrabold tracking-[0.3em]" style={{ color }}>{title}</h1>
 
-        {/* 수여자 */}
-        <div style={{ textAlign: "right", width: "100%", marginBottom: "20px" }}>
-          <span style={{ fontSize: "18px", fontWeight: 800 }}>{spacedName(cert.recipientName)}</span>
-          <span style={{ fontSize: "14px", marginLeft: "8px" }}>선생님</span>
-        </div>
+          {/* 수여자 */}
+          <div className="w-full text-right">
+            <span className="text-lg font-extrabold">{spacedName(cert.recipientName)}</span>
+            <span className="ml-2 text-sm">선생님</span>
+          </div>
 
-        {/* 구분선 */}
-        <div style={{ width: "60%", height: "1px", background: color, marginBottom: "16px" }} />
+          {/* 구분선 */}
+          <div className="w-3/5" style={{ height: "1px", background: color }} />
 
-        {/* 본문 */}
-        <p style={{ fontSize: "11px", lineHeight: 2.2, textAlign: "justify" }}>
-          {isCompletion
-            ? `위 사람은 연세교육공학회가 주관한 「${cert.seminarTitle}」 세미나에 참석하여 소정의 과정을 성실히 수료하였기에 이 증서를 수여합니다.`
-            : `위 사람은 연세교육공학회가 주관한 「${cert.seminarTitle}」에서 귀중한 시간을 내어 발표해주시고 학문적 교류에 기여해주셨기에 깊은 감사의 뜻을 담아 이 감사장을 드립니다.`
-          }
-        </p>
+          {/* 본문 */}
+          <p className="px-2 text-xs leading-7" style={{ textAlign: "justify" }}>
+            {isCompletion
+              ? `위 사람은 연세교육공학회가 주관한 「${cert.seminarTitle}」 세미나에 참석하여 소정의 과정을 성실히 수료하였기에 이 증서를 수여합니다.`
+              : `위 사람은 연세교육공학회가 주관한 「${cert.seminarTitle}」에서 귀중한 시간을 내어 발표해주시고 학문적 교류에 기여해주셨기에 깊은 감사의 뜻을 담아 이 감사장을 드립니다.`
+            }
+          </p>
 
-        {/* 날짜 */}
-        <p style={{ fontSize: "12px", marginTop: "24px", color: "#666" }}>{date}</p>
+          {/* 날짜 */}
+          <p className="text-xs text-gray-500">{date}</p>
 
-        {/* 학회명 */}
-        <div style={{ marginTop: "24px" }}>
-          <p style={{ fontSize: "14px", fontWeight: 700, color }}>연세교육공학회</p>
-          <p style={{ fontSize: "9px", color: "#999" }}>Yonsei Educational Technology Society</p>
+          {/* 학회명 */}
+          <div className="mt-2">
+            <p className="text-sm font-bold" style={{ color }}>연세교육공학회</p>
+            <p className="text-[9px] text-gray-400">Yonsei Educational Technology Society</p>
+          </div>
         </div>
       </div>
     </div>

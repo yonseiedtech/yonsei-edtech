@@ -272,31 +272,76 @@ export default function AdminNewsletterTab() {
       <div className="mt-6 rounded-2xl border bg-white p-6">
         <div className="flex items-center justify-between">
           <h3 className="font-bold">섹션 ({sections.length})</h3>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowPostPicker(true)}
-          >
-            <Plus size={14} className="mr-1" />
-            게시글에서 추가
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => {
+                setSections((prev) => [
+                  ...prev,
+                  {
+                    id: `new-${Date.now()}`,
+                    postId: undefined as unknown as string,
+                    title: "",
+                    content: "",
+                    authorName: editorName || "",
+                    type: "feature",
+                    order: prev.length + 1,
+                  },
+                ]);
+                toast.success("빈 섹션이 추가되었습니다. 내용을 직접 작성하세요.");
+              }}
+            >
+              <Plus size={14} className="mr-1" />
+              직접 작성
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPostPicker(true)}
+            >
+              <FileText size={14} className="mr-1" />
+              게시글에서 추가
+            </Button>
+          </div>
         </div>
 
         {sections.length === 0 ? (
           <div className="mt-6 rounded-xl border-2 border-dashed bg-muted/20 py-12 text-center">
             <FileText size={32} className="mx-auto text-muted-foreground" />
             <p className="mt-2 text-sm text-muted-foreground">
-              아직 섹션이 없습니다. 게시글을 선택하여 섹션을 추가하세요.
+              아직 섹션이 없습니다. 직접 작성하거나 게시글에서 추가하세요.
             </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-4"
-              onClick={() => setShowPostPicker(true)}
-            >
-              <Plus size={14} className="mr-1" />
-              게시글에서 추가
-            </Button>
+            <div className="mt-4 flex justify-center gap-2">
+              <Button
+                size="sm"
+                onClick={() => {
+                  setSections((prev) => [
+                    ...prev,
+                    {
+                      id: `new-${Date.now()}`,
+                      postId: undefined as unknown as string,
+                      title: "",
+                      content: "",
+                      authorName: editorName || "",
+                      type: "feature",
+                      order: prev.length + 1,
+                    },
+                  ]);
+                }}
+              >
+                <Plus size={14} className="mr-1" />
+                직접 작성
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowPostPicker(true)}
+              >
+                <FileText size={14} className="mr-1" />
+                게시글에서 추가
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="mt-4 space-y-3">
