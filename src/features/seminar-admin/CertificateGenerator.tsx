@@ -7,7 +7,7 @@ import { certificatesApi } from "@/lib/bkend";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Download, Printer, Award, Heart, Plus, Settings, Check, UserPlus } from "lucide-react";
+import { Download, Printer, Award, Heart, Plus, Settings, Check, UserPlus, Eye, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -20,7 +20,7 @@ const CERT_LABELS: Record<CertType, { label: string; icon: React.ReactNode }> = 
   appreciation: { label: "감사장", icon: <Heart size={16} /> },
 };
 
-/** 참석자 → 발급 대상자 선택 컴포넌트 */
+/** 참석자 현황 + 발급 대상자 2패널 컴포넌트 */
 function AttendeeSelector({ attendees, seminarId, certType, onSelectName, onBatchCreate }: {
   attendees: { id: string; userName: string; checkedIn: boolean }[];
   seminarId: string;
@@ -28,19 +28,19 @@ function AttendeeSelector({ attendees, seminarId, certType, onSelectName, onBatc
   onSelectName: (name: string) => void;
   onBatchCreate: (names: string[]) => Promise<void>;
 }) {
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [recipients, setRecipients] = useState<string[]>([]);
   const [filter, setFilter] = useState<"all" | "checked" | "unchecked">("all");
   const [creating, setCreating] = useState(false);
+  const [manualName, setManualName] = useState("");
 
-  // 이미 발급된 이름 조회
   const { data: existingCerts = [] } = useQuery({
     queryKey: ["certificates", seminarId],
     queryFn: async () => {
       const res = await certificatesApi.list(seminarId);
-      return res.data as unknown as { recipientName: string }[];
+      return res.data as unknown as { recipientName: string; type: string }[];
     },
   });
-  const issuedNames = new Set(existingCerts.map((c) => c.recipientName));
+  const issuedNames = new Set(existingCerts.filter((c) => c.type === certType).map((c) => c.recipientName));
 
   const filtered = attendees.filter((a) => {
     if (filter === "checked") return a.checkedIn;
@@ -48,64 +48,118 @@ function AttendeeSelector({ attendees, seminarId, certType, onSelectName, onBatc
     return true;
   });
 
-  function toggleSelect(name: string) {
-    setSelected((prev) => { const next = new Set(prev); if (next.has(name)) next.delete(name); else next.add(name); return next; });
+  function addRecipient(name: string) {
+    if (recipients.includes(name)) { toast.error(`${name}님이 이미 대상자에 있습니다.`); return; }
+    if (issuedNames.has(name)) { toast.error(`${name}님에게 이미 발급되었습니다.`); return; }
+    setRecipients((prev) => [...prev, name]);
   }
 
-  function selectAllCheckedIn() {
-    const names = filtered.filter((a) => a.checkedIn && !issuedNames.has(a.userName)).map((a) => a.userName);
-    setSelected(new Set(names));
+  function removeRecipient(name: string) {
+    setRecipients((prev) => prev.filter((n) => n !== name));
   }
 
-  async function handleBatchSelected() {
-    if (selected.size === 0) { toast.error("대상자를 선택하세요."); return; }
+  function addAllCheckedIn() {
+    const names = attendees.filter((a) => a.checkedIn && !issuedNames.has(a.userName) && !recipients.includes(a.userName)).map((a) => a.userName);
+    if (names.length === 0) { toast.error("추가할 출석자가 없습니다."); return; }
+    setRecipients((prev) => [...prev, ...names]);
+    toast.success(`${names.length}명 추가됨`);
+  }
+
+  function addManual() {
+    if (!manualName.trim()) return;
+    addRecipient(manualName.trim());
+    setManualName("");
+  }
+
+  async function handleBatchIssue() {
+    if (recipients.length === 0) { toast.error("발급 대상자를 추가하세요."); return; }
     setCreating(true);
-    await onBatchCreate(Array.from(selected));
-    setSelected(new Set());
+    await onBatchCreate(recipients);
+    setRecipients([]);
     setCreating(false);
   }
 
   return (
-    <div className="mt-4 rounded-lg border bg-muted/30 p-3">
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-medium text-muted-foreground">발급 대상자 선택</p>
-        <div className="flex gap-1">
-          {(["all", "checked", "unchecked"] as const).map((f) => (
-            <button key={f} onClick={() => setFilter(f)} className={cn("rounded px-2 py-0.5 text-[10px] font-medium", filter === f ? "bg-primary text-white" : "bg-white text-muted-foreground")}>
-              {f === "all" ? "전체" : f === "checked" ? "출석" : "미출석"}
-            </button>
-          ))}
+    <div className="mt-4 space-y-3">
+      {/* 패널 1: 참석자 현황 */}
+      <div className="rounded-lg border bg-muted/30 p-3">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold">참석자 현황 <span className="font-normal text-muted-foreground">({attendees.length}명)</span></p>
+          <div className="flex gap-1">
+            {(["all", "checked", "unchecked"] as const).map((f) => (
+              <button key={f} onClick={() => setFilter(f)} className={cn("rounded px-2 py-0.5 text-[10px] font-medium", filter === f ? "bg-primary text-white" : "bg-white text-muted-foreground")}>
+                {f === "all" ? "전체" : f === "checked" ? "출석" : "미출석"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-1">
+          <Button variant="outline" size="sm" className="h-6 text-[10px]" onClick={addAllCheckedIn}>
+            <Plus size={10} className="mr-0.5" />출석자 전체 추가
+          </Button>
+        </div>
+
+        <div className="mt-2 max-h-36 space-y-0.5 overflow-y-auto">
+          {filtered.map((att) => {
+            const issued = issuedNames.has(att.userName);
+            const inRecipients = recipients.includes(att.userName);
+            return (
+              <div key={att.id} className={cn("flex items-center justify-between rounded px-2 py-1 text-xs", (issued || inRecipients) && "opacity-40")}>
+                <span className="flex items-center gap-1.5">
+                  {att.userName}
+                  {att.checkedIn && <Badge variant="secondary" className="h-4 text-[9px] bg-green-50 text-green-700">출석</Badge>}
+                  {issued && <Badge variant="secondary" className="h-4 text-[9px]">발급완료</Badge>}
+                  {inRecipients && <Badge variant="secondary" className="h-4 text-[9px] bg-blue-50 text-blue-700">대상자</Badge>}
+                </span>
+                {!issued && !inRecipients && (
+                  <Button variant="ghost" size="sm" className="h-5 px-1.5 text-[10px]" onClick={() => addRecipient(att.userName)}>
+                    <Plus size={10} />추가
+                  </Button>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      <div className="mt-2 flex gap-1">
-        <Button variant="outline" size="sm" className="h-6 text-[10px]" onClick={selectAllCheckedIn}>출석자 전체 선택</Button>
-        <Button variant="outline" size="sm" className="h-6 text-[10px]" onClick={() => setSelected(new Set())}>선택 해제</Button>
-      </div>
+      {/* 패널 2: 발급 대상자 */}
+      <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
+        <p className="text-xs font-semibold text-primary">발급 대상자 <span className="font-normal">({recipients.length}명)</span></p>
 
-      <div className="mt-2 max-h-48 space-y-0.5 overflow-y-auto">
-        {filtered.map((att) => {
-          const issued = issuedNames.has(att.userName);
-          const isSelected = selected.has(att.userName);
-          return (
-            <label key={att.id} className={cn("flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-white", issued && "opacity-50")}>
-              <input type="checkbox" checked={isSelected} disabled={issued} onChange={() => issued ? null : toggleSelect(att.userName)} className="h-3.5 w-3.5 rounded border-gray-300" />
-              <span className="flex-1">{att.userName}</span>
-              {att.checkedIn && <Badge variant="secondary" className="h-4 text-[9px] bg-green-50 text-green-700">출석</Badge>}
-              {issued && <Badge variant="secondary" className="h-4 text-[9px]">발급완료</Badge>}
-            </label>
-          );
-        })}
-      </div>
+        {recipients.length === 0 ? (
+          <p className="mt-2 text-center text-[11px] text-muted-foreground">참석자 현황에서 "추가" 버튼을 눌러 대상자를 추가하세요.</p>
+        ) : (
+          <div className="mt-2 max-h-32 space-y-0.5 overflow-y-auto">
+            {recipients.map((name) => (
+              <div key={name} className="flex items-center justify-between rounded bg-white px-2 py-1 text-xs">
+                <span>{name}</span>
+                <button onClick={() => removeRecipient(name)} className="rounded p-0.5 text-muted-foreground hover:bg-red-50 hover:text-red-500">
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
-      <div className="mt-2 flex gap-1">
-        <Button size="sm" className="h-7 flex-1 gap-1 text-xs" disabled={selected.size === 0 || creating} onClick={handleBatchSelected}>
-          {creating ? <span className="animate-spin">⏳</span> : <Award size={12} />}
-          선택 {selected.size}명 {certType === "completion" ? "수료증" : "감사장"} 발급
-        </Button>
-        <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" disabled={selected.size !== 1} onClick={() => { const name = Array.from(selected)[0]; if (name) onSelectName(name); }}>
-          <UserPlus size={12} />미리보기
-        </Button>
+        {/* 수기 추가 */}
+        <div className="mt-2 flex gap-1">
+          <Input value={manualName} onChange={(e) => setManualName(e.target.value)} placeholder="수기 입력" className="h-7 text-xs" onKeyDown={(e) => e.key === "Enter" && addManual()} />
+          <Button variant="outline" size="sm" className="h-7 shrink-0 text-[10px]" onClick={addManual} disabled={!manualName.trim()}>추가</Button>
+        </div>
+
+        {/* 발급 버튼 */}
+        <div className="mt-2 flex gap-1">
+          <Button size="sm" className="h-8 flex-1 gap-1 text-xs" disabled={recipients.length === 0 || creating} onClick={handleBatchIssue}>
+            {creating ? <span className="animate-spin">⏳</span> : <Award size={12} />}
+            {recipients.length}명 {certType === "completion" ? "수료증" : "감사장"} 일괄 발급
+          </Button>
+          {recipients.length === 1 && (
+            <Button variant="outline" size="sm" className="h-8 gap-1 text-xs" onClick={() => onSelectName(recipients[0])}>
+              <Eye size={12} />미리보기
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
