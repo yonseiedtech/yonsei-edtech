@@ -116,21 +116,23 @@ function spacedName(name: string): string {
   return name.split("").join("\u2002");
 }
 
-async function generateCertificateNo(): Promise<string> {
+async function generateCertificateNo(certType: CertType = "completion"): Promise<string> {
   const yy = String(new Date().getFullYear()).slice(-2);
+  const prefix = certType === "completion" ? "C" : "A"; // C=수료증, A=감사장
+  const tag = `${prefix}${yy}-`;
   try {
     const existing = await certificatesApi.list();
     let maxNum = 0;
     for (const c of existing.data) {
       const no = (c as Record<string, unknown>).certificateNo as string | undefined;
-      if (no && no.startsWith(`${yy}-`)) {
+      if (no && no.startsWith(tag)) {
         const num = parseInt(no.split("-")[1], 10);
         if (!isNaN(num) && num > maxNum) maxNum = num;
       }
     }
-    return `${yy}-${String(maxNum + 1).padStart(3, "0")}`;
+    return `${tag}${String(maxNum + 1).padStart(3, "0")}`;
   } catch {
-    return `${yy}-001`;
+    return `${tag}001`;
   }
 }
 
@@ -448,7 +450,7 @@ export default function CertificateGenerator() {
     const s = seminars.find((sem) => sem.id === id);
     if (s) {
       setSemester(inferSemester(s.date));
-      setCertificateNo(await generateCertificateNo());
+      setCertificateNo(await generateCertificateNo(certType));
       setBodyText("");
     }
   }
@@ -524,7 +526,7 @@ export default function CertificateGenerator() {
         issuedBy: user?.id ?? "",
       });
       toast.success(`${CERT_LABELS[certType].label} 기록이 저장되었습니다.`);
-      setCertificateNo(await generateCertificateNo());
+      setCertificateNo(await generateCertificateNo(certType));
     } catch {
       toast.error("저장에 실패했습니다.");
     }
@@ -551,7 +553,7 @@ export default function CertificateGenerator() {
     }
 
     for (const att of newTargets) {
-      const no = await generateCertificateNo();
+      const no = await generateCertificateNo(certType);
       await certificatesApi.create({
         seminarId: seminar.id,
         seminarTitle: seminar.title,
@@ -583,7 +585,7 @@ export default function CertificateGenerator() {
       return;
     }
 
-    const no = await generateCertificateNo();
+    const no = await generateCertificateNo(certType);
     await certificatesApi.create({
       seminarId: seminar.id,
       seminarTitle: seminar.title,
@@ -741,7 +743,7 @@ export default function CertificateGenerator() {
                 const existingNames = new Set((existingRes.data as unknown as { recipientName: string }[]).map((c) => c.recipientName));
                 for (const name of names) {
                   if (existingNames.has(name)) { skipped++; continue; }
-                  const no = await generateCertificateNo();
+                  const no = await generateCertificateNo(certType);
                   await certificatesApi.create({ seminarId: seminar.id, seminarTitle: seminar.title, recipientName: name, type: certType, certificateNo: no, issuedAt: new Date().toISOString(), issuedBy: user?.id ?? "" });
                   created++;
                 }
