@@ -294,7 +294,7 @@ export default function Header() {
 
       {/* Mobile Nav */}
       {mobileOpen && (
-        <div className="border-t bg-white px-4 pb-4 md:hidden">
+        <div className="animate-in slide-in-from-top-2 fade-in duration-200 border-t bg-white px-4 pb-4 md:hidden">
           <nav className="flex flex-col gap-1 pt-2">
             {PUBLIC_NAV.filter((group) => !(user && group.label === "문의")).map((group) => (
               <MobileNavGroup key={group.label} group={group} onClose={() => setMobileOpen(false)} />

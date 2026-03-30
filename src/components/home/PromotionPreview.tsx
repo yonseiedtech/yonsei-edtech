@@ -17,7 +17,7 @@ export default function PromotionPreview() {
             <h2 className="text-xl font-bold">홍보게시판</h2>
           </div>
           <Link
-            href="/board?category=promotion"
+            href="/board/promotion"
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
           >
             더보기 <ArrowRight size={14} />

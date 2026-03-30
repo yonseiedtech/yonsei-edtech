@@ -1,7 +1,8 @@
 "use client";
 
-import { Mail, MapPin, Clock } from "lucide-react";
+import { Mail, MapPin, Clock, MessageSquare } from "lucide-react";
 import ContactForm from "@/components/contact/ContactForm";
+import PageHeader from "@/components/ui/page-header";
 import { useContactInfo } from "@/features/site-settings/useSiteContent";
 
 export default function ContactPage() {
@@ -9,9 +10,12 @@ export default function ContactPage() {
 
   return (
     <div className="py-16">
-      <section className="mx-auto max-w-6xl px-4 text-center">
-        <h1 className="text-3xl font-bold md:text-4xl">문의하기</h1>
-        <p className="mt-4 text-muted-foreground">학회에 대한 궁금한 점이 있으시면 편하게 문의해주세요.</p>
+      <section className="mx-auto max-w-6xl px-4">
+        <PageHeader
+          icon={<MessageSquare size={24} />}
+          title="문의하기"
+          description="학회에 대한 궁금한 점이 있으시면 편하게 문의해주세요."
+        />
       </section>
 
       <section className="mx-auto mt-12 max-w-6xl px-4">
@@ -20,7 +24,17 @@ export default function ContactPage() {
             <h2 className="text-xl font-bold">연락처</h2>
 
             {isLoading ? (
-              <div className="py-8 text-sm text-muted-foreground">불러오는 중...</div>
+              <div className="space-y-4 py-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-start gap-4">
+                    <div className="h-10 w-10 shrink-0 animate-pulse rounded-lg bg-muted" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 w-20 animate-pulse rounded bg-muted" />
+                      <div className="h-3 w-40 animate-pulse rounded bg-muted" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
               <>
                 <div className="flex items-start gap-4">

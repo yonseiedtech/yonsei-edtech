@@ -78,8 +78,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-8 border-t pt-6 text-center text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()} 연세교육공학회 (Yonsei EdTech). All
-          rights reserved.
+          &copy; 2025 연세교육공학회 (Yonsei EdTech). All rights reserved.
         </div>
       </div>
     </footer>

@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils";
 import MemberCard from "@/components/members/MemberCard";
 import { useMembers } from "@/features/member/useMembers";
 import { useProfessor } from "@/features/site-settings/useSiteContent";
-import { Mail, Globe, BookOpen } from "lucide-react";
+import { Mail, Globe, BookOpen, Users } from "lucide-react";
+import PageHeader from "@/components/ui/page-header";
 import OrgChart from "@/features/member/OrgChart";
 import type { User } from "@/types";
 
@@ -77,9 +78,12 @@ function MembersContent() {
 
   return (
     <div className="py-16">
-      <section className="mx-auto max-w-6xl px-4 text-center">
-        <h1 className="text-3xl font-bold md:text-4xl">구성원</h1>
-        <p className="mt-4 text-muted-foreground">교육의 미래를 함께 만들어가는 구성원들을 소개합니다.</p>
+      <section className="mx-auto max-w-6xl px-4">
+        <PageHeader
+          icon={<Users size={24} />}
+          title="구성원"
+          description="교육의 미래를 함께 만들어가는 구성원들을 소개합니다."
+        />
       </section>
       <section className="mx-auto mt-12 max-w-6xl px-4">
         <div className="flex justify-center gap-2">

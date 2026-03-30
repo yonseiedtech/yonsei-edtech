@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Target, Eye, Sparkles, ArrowRight } from "lucide-react";
+import { Target, Eye, Sparkles, ArrowRight, Info } from "lucide-react";
+import PageHeader from "@/components/ui/page-header";
 import { useAbout } from "@/features/site-settings/useSiteContent";
 
 const ICONS = [Target, Eye, Sparkles];
@@ -18,11 +19,12 @@ export default function AboutPage() {
 
   return (
     <div className="py-16">
-      <section className="mx-auto max-w-6xl px-4 text-center">
-        <h1 className="text-3xl font-bold md:text-4xl">학회 소개</h1>
-        <p className="mt-4 text-muted-foreground">
-          연세교육공학회는 연세대학교에서 교육공학을 탐구하는 학술 커뮤니티입니다.
-        </p>
+      <section className="mx-auto max-w-6xl px-4">
+        <PageHeader
+          icon={<Info size={24} />}
+          title="학회 소개"
+          description="연세교육공학회는 연세대학교에서 교육공학을 탐구하는 학술 커뮤니티입니다."
+        />
       </section>
 
       <section className="mx-auto mt-16 max-w-6xl px-4">
