@@ -25,7 +25,7 @@ const STATUS_COLORS: Record<string, string> = { upcoming: "bg-blue-50 text-blue-
 const RECRUIT_LABELS: Record<string, string> = { recruiting: "모집중", closed: "모집마감", in_progress: "진행중", completed: "완료" };
 const RECRUIT_COLORS: Record<string, string> = { recruiting: "bg-green-50 text-green-700", closed: "bg-red-50 text-red-700", in_progress: "bg-amber-50 text-amber-700", completed: "bg-muted text-muted-foreground" };
 
-type Tab = "overview" | "participants" | "applicants" | "settings";
+type Tab = "overview" | "participants" | "applicants" | "form-settings" | "report" | "settings";
 
 interface Props {
   activityId: string;
@@ -42,6 +42,8 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const [applyDialog, setApplyDialog] = useState(false);
   const [applyName, setApplyName] = useState("");
   const [applyStudentId, setApplyStudentId] = useState("");
+  const [applyAnswers, setApplyAnswers] = useState<Record<string, string>>({});
+  const [newQuestion, setNewQuestion] = useState("");
 
   const { data: activity } = useQuery({
     queryKey: ["activity", activityId],
@@ -62,7 +64,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
     mutationFn: async () => {
       if (!activity || !user) return;
       if (type === "external") {
-        const newApplicant = { userId: user.id, name: applyName || user.name, studentId: applyStudentId, appliedAt: new Date().toISOString(), status: "pending" as const };
+        const newApplicant = { userId: user.id, name: applyName || user.name, studentId: applyStudentId, answers: Object.keys(applyAnswers).length > 0 ? applyAnswers : undefined, appliedAt: new Date().toISOString(), status: "pending" as const };
         await activitiesApi.update(activityId, { applicants: [...applicants, newApplicant] });
       } else {
         if (participants.includes(user.id)) return;
@@ -95,10 +97,42 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
     return <div className="py-16 text-center text-muted-foreground">활동을 찾을 수 없습니다.</div>;
   }
 
+  const applicationQuestions = (activity?.applicationQuestions as string[] | undefined) ?? [];
+
+  // 신청 폼 질문 관리
+  async function addQuestion() {
+    if (!newQuestion.trim() || !activity) return;
+    const updated = [...applicationQuestions, newQuestion.trim()];
+    await activitiesApi.update(activityId, { applicationQuestions: updated });
+    queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+    setNewQuestion("");
+    toast.success("질문이 추가되었습니다.");
+  }
+
+  async function removeQuestion(idx: number) {
+    if (!activity) return;
+    const updated = applicationQuestions.filter((_, i) => i !== idx);
+    await activitiesApi.update(activityId, { applicationQuestions: updated });
+    queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+    toast.success("질문이 삭제되었습니다.");
+  }
+
+  // 리포트 통계
+  const reportStats = {
+    totalApplicants: applicants.length,
+    approved: applicants.filter((a) => a.status === "approved").length,
+    rejected: applicants.filter((a) => a.status === "rejected").length,
+    pending: applicants.filter((a) => a.status === "pending").length,
+    participants: participants.length,
+    approvalRate: applicants.length > 0 ? Math.round((applicants.filter((a) => a.status === "approved").length / applicants.length) * 100) : 0,
+  };
+
   const TABS: { value: Tab; label: string; show: boolean }[] = [
     { value: "overview", label: "개요", show: true },
     { value: "participants", label: `참여자 (${participants.length})`, show: true },
     { value: "applicants", label: `신청현황 (${applicants.length})`, show: type === "external" || isStaff },
+    { value: "form-settings", label: "신청 폼 설정", show: isStaff },
+    { value: "report", label: "리포트", show: isStaff },
     { value: "settings", label: "관리", show: isStaff },
   ];
 
@@ -233,6 +267,96 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             </div>
           )}
 
+          {activeTab === "form-settings" && isStaff && (
+            <div className="rounded-xl border bg-white p-6 space-y-4">
+              <h3 className="font-semibold">신청 폼 커스텀 질문</h3>
+              <p className="text-xs text-muted-foreground">신청 시 추가로 받을 질문을 설정합니다.</p>
+              <div className="space-y-2">
+                {applicationQuestions.map((q, i) => (
+                  <div key={i} className="flex items-center gap-2 rounded-lg border bg-muted/20 px-3 py-2">
+                    <span className="flex-1 text-sm">{q}</span>
+                    <button onClick={() => removeQuestion(i)} className="shrink-0 rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-500"><X size={14} /></button>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Input value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)} placeholder="새 질문 입력 (예: 지원 동기는?)" onKeyDown={(e) => e.key === "Enter" && addQuestion()} />
+                <Button size="sm" variant="outline" onClick={addQuestion} disabled={!newQuestion.trim()}>추가</Button>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "report" && isStaff && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <div className="rounded-lg border bg-white p-4 text-center">
+                  <p className="text-2xl font-bold">{reportStats.totalApplicants}</p>
+                  <p className="text-xs text-muted-foreground">총 신청</p>
+                </div>
+                <div className="rounded-lg border bg-white p-4 text-center">
+                  <p className="text-2xl font-bold text-green-600">{reportStats.approved}</p>
+                  <p className="text-xs text-muted-foreground">승인</p>
+                </div>
+                <div className="rounded-lg border bg-white p-4 text-center">
+                  <p className="text-2xl font-bold text-red-500">{reportStats.rejected}</p>
+                  <p className="text-xs text-muted-foreground">거절</p>
+                </div>
+                <div className="rounded-lg border bg-white p-4 text-center">
+                  <p className="text-2xl font-bold text-amber-500">{reportStats.pending}</p>
+                  <p className="text-xs text-muted-foreground">대기</p>
+                </div>
+                <div className="rounded-lg border bg-white p-4 text-center">
+                  <p className="text-2xl font-bold text-primary">{reportStats.participants}</p>
+                  <p className="text-xs text-muted-foreground">참여자</p>
+                </div>
+                <div className="rounded-lg border bg-white p-4 text-center">
+                  <p className="text-2xl font-bold">{reportStats.approvalRate}%</p>
+                  <p className="text-xs text-muted-foreground">승인율</p>
+                </div>
+              </div>
+
+              {/* 신청 답변 요약 */}
+              {applicationQuestions.length > 0 && applicants.length > 0 && (
+                <div className="rounded-xl border bg-white p-6">
+                  <h3 className="font-semibold">신청 답변 요약</h3>
+                  {applicationQuestions.map((q) => {
+                    const answers = applicants.filter((a) => a.answers?.[q]).map((a) => ({ name: a.name, answer: a.answers![q] }));
+                    return (
+                      <div key={q} className="mt-4">
+                        <p className="text-sm font-medium text-primary">{q}</p>
+                        {answers.length === 0 ? (
+                          <p className="mt-1 text-xs text-muted-foreground">답변 없음</p>
+                        ) : (
+                          <div className="mt-2 space-y-1">
+                            {answers.map((a, i) => (
+                              <div key={i} className="rounded-lg bg-muted/30 px-3 py-2 text-sm">
+                                <span className="font-medium">{a.name}:</span> {a.answer}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* 참여자 목록 CSV 내보내기 */}
+              <Button variant="outline" size="sm" onClick={() => {
+                const bom = "\uFEFF";
+                const header = "이름,학번,상태,신청일\n";
+                const rows = applicants.map((a) => `"${a.name}","${a.studentId ?? ""}","${a.status}","${a.appliedAt}"`).join("\n");
+                const blob = new Blob([bom + header + rows], { type: "text/csv" });
+                const url = URL.createObjectURL(blob);
+                const el = document.createElement("a");
+                el.href = url; el.download = `${activity?.title ?? "activity"}_리포트.csv`; el.click();
+                URL.revokeObjectURL(url);
+              }}>
+                CSV 내보내기
+              </Button>
+            </div>
+          )}
+
           {activeTab === "settings" && isStaff && (
             <div className="rounded-xl border bg-white p-6">
               <p className="text-sm text-muted-foreground">활동 목록 페이지에서 수정/삭제할 수 있습니다.</p>
@@ -252,6 +376,10 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 <Input value={applyName} onChange={(e) => setApplyName(e.target.value)} /></div>
               <div><label className="mb-1 block text-sm font-medium">학번</label>
                 <Input value={applyStudentId} onChange={(e) => setApplyStudentId(e.target.value)} /></div>
+              {applicationQuestions.map((q, i) => (
+                <div key={i}><label className="mb-1 block text-sm font-medium">{q}</label>
+                  <textarea value={applyAnswers[q] ?? ""} onChange={(e) => setApplyAnswers((prev) => ({ ...prev, [q]: e.target.value }))} rows={2} placeholder="답변을 입력해주세요." className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50" /></div>
+              ))}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setApplyDialog(false)}>취소</Button>
