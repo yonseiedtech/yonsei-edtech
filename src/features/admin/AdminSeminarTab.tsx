@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import {
   useSeminars,
   useUpdateSeminar,
+  useDeleteSeminar,
 } from "@/features/seminar/useSeminar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,7 @@ import { SEMINAR_STATUS_LABELS } from "@/types";
 import { getComputedStatus } from "@/lib/seminar-utils";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Pencil, BookOpen, Image as ImageIcon, Video, AlertTriangle } from "lucide-react";
+import { Pencil, BookOpen, Image as ImageIcon, Video, AlertTriangle, Trash2 } from "lucide-react";
 
 const STATUS_COLORS: Record<SeminarStatus, string> = {
   upcoming: "bg-blue-50 text-blue-700",
@@ -50,6 +51,17 @@ type EditSeminar = {
 export default function AdminSeminarTab() {
   const { seminars } = useSeminars();
   const { updateSeminar } = useUpdateSeminar();
+  const { deleteSeminar } = useDeleteSeminar();
+
+  async function handleDeleteSeminar(id: string, title: string) {
+    if (!confirm(`"${title}" 세미나를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) return;
+    try {
+      await deleteSeminar(id);
+      toast.success("세미나가 삭제되었습니다.");
+    } catch {
+      toast.error("삭제에 실패했습니다.");
+    }
+  }
   const [editSeminar, setEditSeminar] = useState<EditSeminar | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const [showCancelInput, setShowCancelInput] = useState(false);
@@ -169,6 +181,7 @@ export default function AdminSeminarTab() {
               <Button variant="outline" size="sm" className="gap-1 text-xs"><BookOpen size={14} />입장</Button>
             </Link>
             <Button variant="outline" size="sm" onClick={() => openEditSeminar(s)}><Pencil size={14} /></Button>
+            <Button variant="outline" size="sm" className="text-destructive" onClick={() => handleDeleteSeminar(s.id, s.title)}><Trash2 size={14} /></Button>
           </div>
 
           {/* 모바일: 카드형 */}
@@ -198,6 +211,7 @@ export default function AdminSeminarTab() {
                   <Button variant="outline" size="sm" className="h-7 gap-1 text-xs"><BookOpen size={12} />입장</Button>
                 </Link>
                 <Button variant="outline" size="sm" className="h-7" onClick={() => openEditSeminar(s)}><Pencil size={12} /></Button>
+                <Button variant="outline" size="sm" className="h-7 text-destructive" onClick={() => handleDeleteSeminar(s.id, s.title)}><Trash2 size={12} /></Button>
               </div>
             </div>
           </div>

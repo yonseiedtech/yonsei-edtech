@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { activitiesApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { auth } from "@/lib/firebase";
 import { isAtLeast } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,11 @@ const RECRUIT_COLORS: Record<string, string> = { recruiting: "bg-green-50 text-g
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { Activity, ActivityType } from "@/types";
+
+async function apiFetch(url: string, options?: RequestInit) {
+  const token = await auth.currentUser?.getIdToken();
+  return fetch(url, { ...options, headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}), ...options?.headers } });
+}
 
 const STATUS_LABELS: Record<string, string> = { upcoming: "예정", ongoing: "진행 중", completed: "완료" };
 const STATUS_COLORS: Record<string, string> = { upcoming: "bg-blue-50 text-blue-700", ongoing: "bg-amber-50 text-amber-700", completed: "bg-muted text-muted-foreground" };
@@ -56,7 +61,11 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
 
   const { data: activities = [] } = useQuery({
     queryKey: ["activities", type],
-    queryFn: async () => { const res = await activitiesApi.list(type); return res.data; },
+    queryFn: async () => {
+      const res = await fetch(`/api/activities?type=${type}`);
+      const json = await res.json();
+      return (json.data ?? []) as Activity[];
+    },
   });
 
   const saveMutation = useMutation({
@@ -75,8 +84,13 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
         applicants: editId ? undefined : [],
         createdBy: user?.id || "",
       };
-      if (editId) await activitiesApi.update(editId, data);
-      else await activitiesApi.create(data);
+      if (editId) {
+        const res = await apiFetch("/api/activities", { method: "PATCH", body: JSON.stringify({ id: editId, ...data }) });
+        if (!res.ok) throw new Error("수정 실패");
+      } else {
+        const res = await apiFetch("/api/activities", { method: "POST", body: JSON.stringify(data) });
+        if (!res.ok) throw new Error("생성 실패");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activities", type] });
@@ -87,7 +101,10 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => activitiesApi.delete(id),
+    mutationFn: async (id: string) => {
+      const res = await apiFetch(`/api/activities?id=${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("삭제 실패");
+    },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["activities", type] }); toast.success("삭제되었습니다."); },
   });
 
@@ -98,7 +115,8 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
       const activity = activities.find((a) => a.id === activityId);
       const participants = (activity?.participants as string[] | undefined) ?? [];
       if (participants.includes(user.id)) { toast.error("이미 참여 신청되었습니다."); return; }
-      await activitiesApi.update(activityId, { participants: [...participants, user.id] });
+      const res = await apiFetch("/api/activities", { method: "PATCH", body: JSON.stringify({ id: activityId, participants: [...participants, user.id] }) });
+      if (!res.ok) throw new Error("참여 실패");
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["activities", type] }); toast.success("참여 신청이 완료되었습니다."); },
   });
@@ -108,7 +126,8 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
       if (!user) return;
       const activity = activities.find((a) => a.id === activityId);
       const participants = (activity?.participants as string[] | undefined) ?? [];
-      await activitiesApi.update(activityId, { participants: participants.filter((p) => p !== user.id) });
+      const res = await apiFetch("/api/activities", { method: "PATCH", body: JSON.stringify({ id: activityId, participants: participants.filter((p) => p !== user.id) }) });
+      if (!res.ok) throw new Error("취소 실패");
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["activities", type] }); toast.success("참여가 취소되었습니다."); },
   });

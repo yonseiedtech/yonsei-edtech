@@ -68,18 +68,24 @@ export async function POST(req: NextRequest) {
     console.error("[chat] 대화 기록 저장 실패:", e);
   }
 
-  // 스트리밍 형태로 응답 (AI SDK 호환 형식)
+  // AI SDK useChat 호환 응답 (data stream protocol)
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     start(controller) {
-      // AI SDK UIMessage stream format
+      // text part
       controller.enqueue(encoder.encode(`0:${JSON.stringify(reply)}\n`));
+      // finish step
+      controller.enqueue(encoder.encode(`e:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0},"isContinued":false}\n`));
+      // finish message
       controller.enqueue(encoder.encode(`d:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`));
       controller.close();
     },
   });
 
   return new Response(stream, {
-    headers: { "Content-Type": "text/plain; charset=utf-8" },
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "X-Vercel-AI-Data-Stream": "v1",
+    },
   });
 }
