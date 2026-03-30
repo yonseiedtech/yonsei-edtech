@@ -7,7 +7,10 @@ import { certificatesApi } from "@/lib/bkend";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Download, Printer, Award, Heart, Plus, Settings } from "lucide-react";
+import { Download, Printer, Award, Heart, Plus, Settings, Check, UserPlus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 type CertType = "completion" | "appreciation";
@@ -16,6 +19,97 @@ const CERT_LABELS: Record<CertType, { label: string; icon: React.ReactNode }> = 
   completion: { label: "수료증", icon: <Award size={16} /> },
   appreciation: { label: "감사장", icon: <Heart size={16} /> },
 };
+
+/** 참석자 → 발급 대상자 선택 컴포넌트 */
+function AttendeeSelector({ attendees, seminarId, certType, onSelectName, onBatchCreate }: {
+  attendees: { id: string; userName: string; checkedIn: boolean }[];
+  seminarId: string;
+  certType: CertType;
+  onSelectName: (name: string) => void;
+  onBatchCreate: (names: string[]) => Promise<void>;
+}) {
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [filter, setFilter] = useState<"all" | "checked" | "unchecked">("all");
+  const [creating, setCreating] = useState(false);
+
+  // 이미 발급된 이름 조회
+  const { data: existingCerts = [] } = useQuery({
+    queryKey: ["certificates", seminarId],
+    queryFn: async () => {
+      const res = await certificatesApi.list(seminarId);
+      return res.data as unknown as { recipientName: string }[];
+    },
+  });
+  const issuedNames = new Set(existingCerts.map((c) => c.recipientName));
+
+  const filtered = attendees.filter((a) => {
+    if (filter === "checked") return a.checkedIn;
+    if (filter === "unchecked") return !a.checkedIn;
+    return true;
+  });
+
+  function toggleSelect(name: string) {
+    setSelected((prev) => { const next = new Set(prev); if (next.has(name)) next.delete(name); else next.add(name); return next; });
+  }
+
+  function selectAllCheckedIn() {
+    const names = filtered.filter((a) => a.checkedIn && !issuedNames.has(a.userName)).map((a) => a.userName);
+    setSelected(new Set(names));
+  }
+
+  async function handleBatchSelected() {
+    if (selected.size === 0) { toast.error("대상자를 선택하세요."); return; }
+    setCreating(true);
+    await onBatchCreate(Array.from(selected));
+    setSelected(new Set());
+    setCreating(false);
+  }
+
+  return (
+    <div className="mt-4 rounded-lg border bg-muted/30 p-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-medium text-muted-foreground">발급 대상자 선택</p>
+        <div className="flex gap-1">
+          {(["all", "checked", "unchecked"] as const).map((f) => (
+            <button key={f} onClick={() => setFilter(f)} className={cn("rounded px-2 py-0.5 text-[10px] font-medium", filter === f ? "bg-primary text-white" : "bg-white text-muted-foreground")}>
+              {f === "all" ? "전체" : f === "checked" ? "출석" : "미출석"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-2 flex gap-1">
+        <Button variant="outline" size="sm" className="h-6 text-[10px]" onClick={selectAllCheckedIn}>출석자 전체 선택</Button>
+        <Button variant="outline" size="sm" className="h-6 text-[10px]" onClick={() => setSelected(new Set())}>선택 해제</Button>
+      </div>
+
+      <div className="mt-2 max-h-48 space-y-0.5 overflow-y-auto">
+        {filtered.map((att) => {
+          const issued = issuedNames.has(att.userName);
+          const isSelected = selected.has(att.userName);
+          return (
+            <label key={att.id} className={cn("flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-white", issued && "opacity-50")}>
+              <input type="checkbox" checked={isSelected} disabled={issued} onChange={() => issued ? null : toggleSelect(att.userName)} className="h-3.5 w-3.5 rounded border-gray-300" />
+              <span className="flex-1">{att.userName}</span>
+              {att.checkedIn && <Badge variant="secondary" className="h-4 text-[9px] bg-green-50 text-green-700">출석</Badge>}
+              {issued && <Badge variant="secondary" className="h-4 text-[9px]">발급완료</Badge>}
+            </label>
+          );
+        })}
+      </div>
+
+      <div className="mt-2 flex gap-1">
+        <Button size="sm" className="h-7 flex-1 gap-1 text-xs" disabled={selected.size === 0 || creating} onClick={handleBatchSelected}>
+          {creating ? <span className="animate-spin">⏳</span> : <Award size={12} />}
+          선택 {selected.size}명 {certType === "completion" ? "수료증" : "감사장"} 발급
+        </Button>
+        <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" disabled={selected.size !== 1} onClick={() => { const name = Array.from(selected)[0]; if (name) onSelectName(name); }}>
+          <UserPlus size={12} />미리보기
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 /** 이름 자간: "홍길동" → "홍 길 동" */
 function spacedName(name: string): string {
@@ -634,29 +728,26 @@ export default function CertificateGenerator() {
             )}
           </div>
 
-          {/* 참석자 목록에서 수기 추가 */}
+          {/* 참석자 → 발급 대상자 선택 */}
           {seminar && attendees.length > 0 && (
-            <div className="mt-4 rounded-lg border bg-muted/30 p-3">
-              <p className="mb-2 text-xs font-medium text-muted-foreground">참석자 목록에서 개별 추가</p>
-              <div className="max-h-40 space-y-1 overflow-y-auto">
-                {attendees.map((att) => (
-                  <div key={att.id} className="flex items-center justify-between rounded px-2 py-1 text-xs hover:bg-white">
-                    <span>
-                      {att.userName}
-                      {att.checkedIn && <span className="ml-1 text-green-600">(출석)</span>}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 px-2 text-[10px]"
-                      onClick={() => handleAddFromAttendee(att.userName)}
-                    >
-                      <Plus size={10} className="mr-0.5" />추가
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <AttendeeSelector
+              attendees={attendees}
+              seminarId={seminar.id}
+              certType={certType}
+              onSelectName={(name) => setRecipientName(name)}
+              onBatchCreate={async (names) => {
+                let created = 0, skipped = 0;
+                const existingRes = await certificatesApi.list(seminar.id);
+                const existingNames = new Set((existingRes.data as unknown as { recipientName: string }[]).map((c) => c.recipientName));
+                for (const name of names) {
+                  if (existingNames.has(name)) { skipped++; continue; }
+                  const no = await generateCertificateNo();
+                  await certificatesApi.create({ seminarId: seminar.id, seminarTitle: seminar.title, recipientName: name, type: certType, certificateNo: no, issuedAt: new Date().toISOString(), issuedBy: user?.id ?? "" });
+                  created++;
+                }
+                toast.success(`${created}명 발급 완료` + (skipped > 0 ? ` (${skipped}명 중복 스킵)` : ""));
+              }}
+            />
           )}
         </div>
       </div>
