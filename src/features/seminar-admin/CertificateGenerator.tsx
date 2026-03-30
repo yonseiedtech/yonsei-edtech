@@ -798,18 +798,34 @@ export default function CertificateGenerator() {
               certType={certType}
               onSelectName={(name) => setRecipientName(name)}
               onBatchCreate={async (names, onProgress) => {
-                let created = 0, skipped = 0;
-                const existingRes = await certificatesApi.list(seminar.id);
-                const existingNames = new Set((existingRes.data as unknown as { recipientName: string }[]).map((c) => c.recipientName));
-                for (let i = 0; i < names.length; i++) {
-                  onProgress?.(i + 1, names.length);
-                  const name = names[i];
-                  if (existingNames.has(name)) { skipped++; continue; }
-                  const no = await generateCertificateNo(certType);
-                  await certificatesApi.create({ seminarId: seminar.id, seminarTitle: seminar.title, recipientName: name, type: certType, certificateNo: no, issuedAt: new Date().toISOString(), issuedBy: user?.id ?? "" });
-                  created++;
+                try {
+                  let created = 0, skipped = 0;
+                  let existingNames = new Set<string>();
+                  try {
+                    const existingRes = await certificatesApi.list(seminar.id);
+                    existingNames = new Set((existingRes.data as unknown as { recipientName: string }[]).map((c) => c.recipientName));
+                  } catch (e) {
+                    console.error("[cert] 기존 발급 조회 실패:", e);
+                  }
+                  for (let i = 0; i < names.length; i++) {
+                    onProgress?.(i + 1, names.length);
+                    const name = names[i];
+                    if (existingNames.has(name)) { skipped++; continue; }
+                    try {
+                      const no = await generateCertificateNo(certType);
+                      await certificatesApi.create({ seminarId: seminar.id, seminarTitle: seminar.title, recipientName: name, type: certType, certificateNo: no, issuedAt: new Date().toISOString(), issuedBy: user?.id ?? "" });
+                      created++;
+                    } catch (e) {
+                      console.error(`[cert] ${name} 발급 실패:`, e);
+                      toast.error(`${name} 발급 실패: ${e instanceof Error ? e.message : "알 수 없는 오류"}`);
+                    }
+                  }
+                  if (created > 0) toast.success(`${created}명 발급 완료` + (skipped > 0 ? ` (${skipped}명 중복 스킵)` : ""));
+                  else if (skipped > 0) toast.error("모든 대상자가 이미 발급되었습니다.");
+                } catch (e) {
+                  console.error("[cert] 일괄 발급 오류:", e);
+                  toast.error(`일괄 발급 오류: ${e instanceof Error ? e.message : "알 수 없는 오류"}`);
                 }
-                toast.success(`${created}명 발급 완료` + (skipped > 0 ? ` (${skipped}명 중복 스킵)` : ""));
               }}
             />
           )}
