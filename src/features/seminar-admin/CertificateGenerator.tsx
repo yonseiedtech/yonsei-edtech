@@ -443,7 +443,20 @@ export default function CertificateGenerator() {
       toast.error("출석 체크된 참석자가 없습니다.");
       return;
     }
-    for (const att of targets) {
+
+    // 기존 수료증 조회 (중복 방지)
+    const existingRes = await certificatesApi.list(seminar.id);
+    const existingNames = new Set(
+      (existingRes.data as unknown as { recipientName: string }[]).map((c) => c.recipientName)
+    );
+
+    const newTargets = targets.filter((a) => !existingNames.has(a.userName));
+    if (newTargets.length === 0) {
+      toast.error("모든 출석자에게 이미 수료증이 발급되었습니다.");
+      return;
+    }
+
+    for (const att of newTargets) {
       const no = await generateCertificateNo();
       await certificatesApi.create({
         seminarId: seminar.id,
@@ -455,7 +468,39 @@ export default function CertificateGenerator() {
         issuedBy: user?.id ?? "",
       });
     }
-    toast.success(`${targets.length}명에게 수료증 기록이 생성되었습니다.`);
+
+    const skipped = targets.length - newTargets.length;
+    toast.success(
+      `${newTargets.length}명 수료증 생성 완료` + (skipped > 0 ? ` (${skipped}명 중복 스킵)` : "")
+    );
+  }
+
+  // 참석자 목록에서 선택하여 수기 추가
+  async function handleAddFromAttendee(name: string) {
+    if (!seminar) return;
+
+    // 중복 확인
+    const existingRes = await certificatesApi.list(seminar.id);
+    const existingNames = new Set(
+      (existingRes.data as unknown as { recipientName: string }[]).map((c) => c.recipientName)
+    );
+    if (existingNames.has(name)) {
+      toast.error(`${name}님에게 이미 수료증이 발급되었습니다.`);
+      return;
+    }
+
+    const no = await generateCertificateNo();
+    await certificatesApi.create({
+      seminarId: seminar.id,
+      seminarTitle: seminar.title,
+      recipientName: name,
+      type: certType,
+      certificateNo: no,
+      issuedAt: new Date().toISOString(),
+      issuedBy: user?.id ?? "",
+    });
+    setRecipientName(name);
+    toast.success(`${name}님 ${certType === "completion" ? "수료증" : "감사장"} 생성 완료`);
   }
 
   const previewDate = seminar
@@ -588,6 +633,31 @@ export default function CertificateGenerator() {
               </Button>
             )}
           </div>
+
+          {/* 참석자 목록에서 수기 추가 */}
+          {seminar && attendees.length > 0 && (
+            <div className="mt-4 rounded-lg border bg-muted/30 p-3">
+              <p className="mb-2 text-xs font-medium text-muted-foreground">참석자 목록에서 개별 추가</p>
+              <div className="max-h-40 space-y-1 overflow-y-auto">
+                {attendees.map((att) => (
+                  <div key={att.id} className="flex items-center justify-between rounded px-2 py-1 text-xs hover:bg-white">
+                    <span>
+                      {att.userName}
+                      {att.checkedIn && <span className="ml-1 text-green-600">(출석)</span>}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-[10px]"
+                      onClick={() => handleAddFromAttendee(att.userName)}
+                    >
+                      <Plus size={10} className="mr-0.5" />추가
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

@@ -307,6 +307,7 @@ export interface Activity { [key: string]: unknown;
   status: "upcoming" | "ongoing" | "completed";
   leader?: string;
   members?: string[];
+  participants?: string[];
   location?: string;
   tags?: string[];
   imageUrl?: string;
