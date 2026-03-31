@@ -1,19 +1,12 @@
 "use client";
 
-import { use, useState, useEffect, useRef } from "react";
+import { use, useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useSeminar } from "@/features/seminar/useSeminar";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { ArrowLeft, Star, CheckCircle, Loader2, AlertCircle, Pencil, Mic, Printer, Download } from "lucide-react";
+import { ArrowLeft, Star, CheckCircle, Loader2, AlertCircle, Pencil, Mic, Download } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -37,7 +30,7 @@ interface SubmittedReview {
   recommendedSpeakers?: string;
 }
 
-/* ── 감사장 프리뷰 ── */
+/* ── 감사장 ── */
 
 function inferSemester(dateStr: string): string {
   const d = new Date(dateStr);
@@ -51,34 +44,32 @@ function formatCertDate(dateStr: string): string {
   return `${d.getFullYear()}년 ${String(d.getMonth() + 1).padStart(2, "0")}월 ${String(d.getDate()).padStart(2, "0")}일`;
 }
 
+const CERT_FONT = "'Nanum Myeongjo', 'Batang', serif";
+const ACCENT = "#003378";
+
 function AppreciationCertificate({
   speakerName,
   seminarTitle,
   seminarDate,
+  certNo,
 }: {
   speakerName: string;
   seminarTitle: string;
   seminarDate: string;
+  certNo?: string;
 }) {
   const semester = inferSemester(seminarDate);
   const formattedDate = formatCertDate(seminarDate);
-  const accentColor = "#003378";
-  const fontFamily = "'Batang', 'Nanum Myeongjo', serif";
   const bodyText = `귀하께서는 ${semester} 연세교육공학회에서 구성원들의 교육공학 핵심 역량강화를 위하여 주관한 연세교육공학 학술대회 <${seminarTitle}>에서 귀하께서가 지신 지식과 경험을 헌신적이고 열정적으로 공유해주심으로서 구성원들의 성장에 큰 도움을 주셨음에 감사드리며, 연세교육공학회 구성원들의 마음을 담아 감사장을 드립니다.`;
 
   return (
     <div
-      className="relative mx-auto bg-white"
-      style={{
-        width: "210mm",
-        minHeight: "297mm",
-        fontFamily,
-        overflow: "hidden",
-      }}
+      className="relative bg-white"
+      style={{ width: "210mm", height: "297mm", fontFamily: CERT_FONT, overflow: "hidden" }}
     >
       {/* 이중 프레임 */}
-      <div style={{ position: "absolute", inset: "10mm", border: `2.5px solid ${accentColor}`, pointerEvents: "none" }} />
-      <div style={{ position: "absolute", inset: "13mm", border: `0.8px solid ${accentColor}`, opacity: 0.35, pointerEvents: "none" }} />
+      <div style={{ position: "absolute", inset: "10mm", border: `2.5px solid ${ACCENT}`, pointerEvents: "none" }} />
+      <div style={{ position: "absolute", inset: "13mm", border: `0.8px solid ${ACCENT}`, opacity: 0.35, pointerEvents: "none" }} />
 
       {/* 네 모서리 장식 */}
       {[
@@ -91,30 +82,36 @@ function AppreciationCertificate({
           key={i}
           style={{
             position: "absolute",
-            top: pos.top, bottom: pos.bottom,
-            left: pos.left, right: pos.right,
+            top: pos.top, bottom: pos.bottom, left: pos.left, right: pos.right,
             width: "20px", height: "20px",
-            borderTop: pos.bt ? `3px solid ${accentColor}` : "none",
-            borderBottom: pos.bb ? `3px solid ${accentColor}` : "none",
-            borderLeft: pos.bl ? `3px solid ${accentColor}` : "none",
-            borderRight: pos.br ? `3px solid ${accentColor}` : "none",
+            borderTop: pos.bt ? `3px solid ${ACCENT}` : "none",
+            borderBottom: pos.bb ? `3px solid ${ACCENT}` : "none",
+            borderLeft: pos.bl ? `3px solid ${ACCENT}` : "none",
+            borderRight: pos.br ? `3px solid ${ACCENT}` : "none",
             pointerEvents: "none",
           }}
         />
       ))}
 
       {/* 본문 영역 */}
-      <div className="flex flex-col items-center" style={{ padding: "22mm 36mm 18mm" }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "22mm 36mm 18mm" }}>
+        {/* 호수 */}
+        <div style={{ alignSelf: "flex-start", marginBottom: "20mm" }}>
+          <span style={{ fontSize: "11pt", fontWeight: 700, color: "#666", letterSpacing: "0.08em" }}>
+            제 {certNo || "—"} 호
+          </span>
+        </div>
+
         {/* 제목 */}
-        <h1 style={{ fontSize: "42pt", fontWeight: 800, letterSpacing: "0.3em", color: accentColor, marginBottom: "5mm", marginTop: "20mm", textAlign: "center" }}>
+        <h1 style={{ fontSize: "42pt", fontWeight: 800, letterSpacing: "0.3em", color: ACCENT, marginBottom: "5mm", textAlign: "center" }}>
           감사장
         </h1>
 
-        {/* 제목 하단 장식선 */}
+        {/* 장식선 */}
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "18mm" }}>
-          <div style={{ width: "40px", height: "1px", background: accentColor, opacity: 0.4 }} />
-          <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: accentColor, opacity: 0.3 }} />
-          <div style={{ width: "40px", height: "1px", background: accentColor, opacity: 0.4 }} />
+          <div style={{ width: "40px", height: "1px", background: ACCENT, opacity: 0.4 }} />
+          <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: ACCENT, opacity: 0.3 }} />
+          <div style={{ width: "40px", height: "1px", background: ACCENT, opacity: 0.4 }} />
         </div>
 
         {/* 수여자 이름 */}
@@ -128,18 +125,13 @@ function AppreciationCertificate({
         </div>
 
         {/* 워터마크 */}
-        <div
-          className="absolute left-1/2 -translate-x-1/2"
-          style={{ top: "40%", opacity: 0.06, width: "300px", height: "300px", pointerEvents: "none" }}
-        >
-          <img src="/cert-emblem.png" alt="" style={{ width: "100%", height: "100%" }} />
+        <div style={{ position: "absolute", top: "40%", left: "50%", transform: "translateX(-50%)", opacity: 0.06, width: "300px", height: "300px", pointerEvents: "none" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/cert-emblem.png" alt="" style={{ width: "100%", height: "100%" }} crossOrigin="anonymous" />
         </div>
 
         {/* 본문 */}
-        <div
-          className="relative"
-          style={{ fontSize: "12.5pt", lineHeight: "2.5", textAlign: "justify", width: "100%", maxWidth: "460px", margin: "0 auto", wordBreak: "keep-all", color: "#222", fontWeight: 700 }}
-        >
+        <div style={{ position: "relative", fontSize: "12.5pt", lineHeight: "2.5", textAlign: "justify", width: "100%", maxWidth: "460px", margin: "0 auto", wordBreak: "keep-all", color: "#222", fontWeight: 700 }}>
           <p style={{ textIndent: "1em", whiteSpace: "pre-wrap" }}>{bodyText}</p>
         </div>
 
@@ -149,19 +141,21 @@ function AppreciationCertificate({
         </p>
 
         {/* 하단 서명 영역 */}
-        <div style={{ marginTop: "18mm", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: "0" }}>
-          <div style={{ width: "50px", height: "1.5px", background: accentColor, opacity: 0.25, marginBottom: "14mm" }} />
+        <div style={{ marginTop: "18mm", width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <div style={{ width: "50px", height: "1.5px", background: ACCENT, opacity: 0.25, marginBottom: "14mm" }} />
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "7px" }}>
-            <img src="/cert-emblem.png" alt="연세대학교" style={{ width: "48px", height: "48px" }} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/cert-emblem.png" alt="연세대학교" style={{ width: "48px", height: "48px" }} crossOrigin="anonymous" />
             <div style={{ textAlign: "center" }}>
-              <p style={{ fontSize: "26px", fontWeight: 800, color: accentColor, fontFamily, letterSpacing: "0.2em", lineHeight: 1.2, margin: 0 }}>
+              <p style={{ fontSize: "26px", fontWeight: 800, color: ACCENT, fontFamily: CERT_FONT, letterSpacing: "0.2em", lineHeight: 1.2, margin: 0 }}>
                 연세교육공학회
               </p>
-              <p style={{ fontSize: "8px", color: "#999", fontFamily, letterSpacing: "0.08em", margin: "2px 0 0" }}>
+              <p style={{ fontSize: "8px", color: "#999", fontFamily: CERT_FONT, letterSpacing: "0.08em", margin: "2px 0 0" }}>
                 Yonsei Educational Technology Association
               </p>
             </div>
-            <img src="/cert-seal.jpeg" alt="직인" style={{ width: "52px", height: "52px" }} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/cert-seal.jpeg" alt="직인" style={{ width: "52px", height: "52px" }} crossOrigin="anonymous" />
           </div>
         </div>
       </div>
@@ -173,16 +167,16 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const seminar = useSeminar(seminarId);
-  const certRef = useRef<HTMLDivElement>(null);
+  const certPrintRef = useRef<HTMLDivElement>(null);
 
   const [step, setStep] = useState<Step>("verifying");
   const [speakerName, setSpeakerName] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [submittedReview, setSubmittedReview] = useState<SubmittedReview | null>(null);
+  const [downloading, setDownloading] = useState(false);
 
   // 기존 후기
   const [existingReview, setExistingReview] = useState<ExistingReview | null>(null);
-  const [showExistingDialog, setShowExistingDialog] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
   // 후기 작성
@@ -193,7 +187,37 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
   const [recommendedSpeakers, setRecommendedSpeakers] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // 감사장 호수
+  const [certNo, setCertNo] = useState("");
+
   const reviewQuestions = seminar?.reviewQuestions?.speaker ?? [];
+
+  // Google Fonts 로드
+  useEffect(() => {
+    const linkId = "nanum-myeongjo-font";
+    if (!document.getElementById(linkId)) {
+      const link = document.createElement("link");
+      link.id = linkId;
+      link.rel = "stylesheet";
+      link.href = "https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&display=swap";
+      document.head.appendChild(link);
+    }
+  }, []);
+
+  // 감사장 호수 조회
+  useEffect(() => {
+    if (!seminarId) return;
+    async function fetchCertNo() {
+      try {
+        const res = await fetch(`/api/reviews/cert-no?seminarId=${seminarId}&speakerName=${encodeURIComponent(speakerName)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.certNo) setCertNo(data.certNo);
+        }
+      } catch { /* ignore */ }
+    }
+    if (speakerName && step === "done") fetchCertNo();
+  }, [seminarId, speakerName, step]);
 
   // 토큰 검증
   useEffect(() => {
@@ -219,7 +243,6 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
 
         if (data.alreadyReviewed && data.existingReview) {
           setExistingReview(data.existingReview);
-          // 기존 후기가 있으면 바로 완료(감사장) 화면으로
           setSubmittedReview({
             content: data.existingReview.content,
             rating: data.existingReview.rating ?? 5,
@@ -312,48 +335,39 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
     }
   }
 
-  function handlePrintCert() {
-    if (!certRef.current) return;
+  const handleDownloadPdf = useCallback(async () => {
+    if (!certPrintRef.current) return;
+    setDownloading(true);
 
-    const styleId = "cert-print-style";
-    let styleEl = document.getElementById(styleId) as HTMLStyleElement | null;
-    if (!styleEl) {
-      styleEl = document.createElement("style");
-      styleEl.id = styleId;
-      document.head.appendChild(styleEl);
+    try {
+      // 폰트 로딩 대기
+      await document.fonts.ready;
+
+      const html2canvas = (await import("html2canvas-pro")).default;
+      const { jsPDF } = await import("jspdf");
+
+      const canvas = await html2canvas(certPrintRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+        width: certPrintRef.current.scrollWidth,
+        height: certPrintRef.current.scrollHeight,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      pdf.addImage(imgData, "PNG", 0, 0, 210, 297);
+      pdf.save(`감사장_${speakerName}_${seminar?.title || "세미나"}.pdf`);
+
+      toast.success("감사장 PDF가 다운로드되었습니다.");
+    } catch (err) {
+      console.error("[pdf download]", err);
+      toast.error("PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setDownloading(false);
     }
-    styleEl.textContent = `
-      @media print {
-        @page { size: A4 portrait; margin: 0; }
-        body > *:not(#cert-print-container) { display: none !important; }
-        #cert-print-container {
-          display: block !important;
-          position: fixed !important;
-          inset: 0 !important;
-          z-index: 99999 !important;
-          background: white !important;
-          width: 210mm !important;
-          min-height: 297mm !important;
-        }
-        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-      }
-    `;
-
-    let container = document.getElementById("cert-print-container");
-    if (container) container.remove();
-    container = document.createElement("div");
-    container.id = "cert-print-container";
-    container.style.display = "none";
-    container.innerHTML = certRef.current.innerHTML;
-    document.body.appendChild(container);
-
-    const cleanup = () => {
-      container?.remove();
-      window.removeEventListener("afterprint", cleanup);
-    };
-    window.addEventListener("afterprint", cleanup);
-    setTimeout(() => window.print(), 100);
-  }
+  }, [speakerName, seminar?.title]);
 
   if (!seminar && step !== "error") {
     return (
@@ -424,10 +438,7 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
               <div className="flex gap-1">
                 {[1, 2, 3, 4, 5].map((v) => (
                   <button key={v} type="button" onClick={() => setRating(v)} className="p-1.5 sm:p-0.5">
-                    <Star
-                      size={28}
-                      className={cn("transition-colors", v <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30")}
-                    />
+                    <Star size={28} className={cn("transition-colors", v <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30")} />
                   </button>
                 ))}
               </div>
@@ -528,36 +539,42 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
             <div className="rounded-xl border bg-white p-6">
               <h3 className="mb-4 text-center text-sm font-semibold">연세교육공학회 감사장</h3>
 
-              {/* 감사장 미리보기 (축소) */}
+              {/* 감사장 미리보기 (축소, 화면 표시용) */}
               <div
                 className="relative mx-auto overflow-hidden rounded-lg border shadow-sm"
                 style={{ width: "100%", maxWidth: "360px", aspectRatio: "210/297" }}
               >
-                <div
-                  ref={certRef}
-                  style={{ transform: "scale(0.45)", transformOrigin: "top left", width: "210mm", minHeight: "297mm" }}
-                >
+                <div style={{ transform: "scale(0.45)", transformOrigin: "top left", width: "210mm", height: "297mm" }}>
                   <AppreciationCertificate
                     speakerName={speakerName}
                     seminarTitle={seminar.title}
                     seminarDate={seminar.date}
+                    certNo={certNo}
                   />
                 </div>
               </div>
 
-              {/* 다운로드/인쇄 버튼 */}
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-center">
-                <Button onClick={handlePrintCert} className="gap-2">
-                  <Download size={14} />
-                  감사장 PDF 다운로드
-                </Button>
-                <Button variant="outline" onClick={handlePrintCert} className="gap-2">
-                  <Printer size={14} />
-                  인쇄하기
+              {/* PDF 렌더링용 (화면에 보이지 않음) */}
+              <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
+                <div ref={certPrintRef}>
+                  <AppreciationCertificate
+                    speakerName={speakerName}
+                    seminarTitle={seminar.title}
+                    seminarDate={seminar.date}
+                    certNo={certNo}
+                  />
+                </div>
+              </div>
+
+              {/* 다운로드 버튼 */}
+              <div className="mt-4 flex justify-center">
+                <Button onClick={handleDownloadPdf} disabled={downloading} className="gap-2">
+                  {downloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                  {downloading ? "PDF 생성 중..." : "감사장 PDF 다운로드"}
                 </Button>
               </div>
               <p className="mt-2 text-center text-[11px] text-muted-foreground">
-                인쇄 대화상자에서 &quot;PDF로 저장&quot;을 선택하면 PDF 파일로 다운로드됩니다.
+                버튼을 누르면 감사장이 PDF 파일로 바로 다운로드됩니다.
               </p>
             </div>
 
