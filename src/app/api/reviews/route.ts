@@ -192,12 +192,28 @@ export async function POST(req: NextRequest) {
     // 작성자가 staff 이상이면 자동으로 운영진 후기로 분류
     let resolvedType = type || "attendee";
     let resolvedAuthorRole = authorRole || null;
-    if (resolvedType === "attendee" && authorId && !authorId.startsWith("guest_")) {
+    if (resolvedType === "attendee") {
       try {
-        const userDoc = await db.collection("users").doc(authorId).get();
-        if (userDoc.exists) {
-          const userRole = userDoc.data()?.role as string | undefined;
-          if (userRole && ["staff", "president", "admin"].includes(userRole)) {
+        // 1차: userId로 매칭
+        if (authorId && !authorId.startsWith("guest_")) {
+          const userDoc = await db.collection("users").doc(authorId).get();
+          if (userDoc.exists) {
+            const userRole = userDoc.data()?.role as string | undefined;
+            if (userRole && ["staff", "president", "admin"].includes(userRole)) {
+              resolvedType = "staff";
+              resolvedAuthorRole = userRole;
+            }
+          }
+        }
+        // 2차: 이름으로 매칭 (guest 포함)
+        if (resolvedType === "attendee" && authorName) {
+          const nameQuery = await db.collection("users")
+            .where("name", "==", authorName)
+            .where("role", "in", ["staff", "president", "admin"])
+            .limit(1)
+            .get();
+          if (!nameQuery.empty) {
+            const userRole = nameQuery.docs[0].data().role as string;
             resolvedType = "staff";
             resolvedAuthorRole = userRole;
           }

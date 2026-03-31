@@ -10,13 +10,16 @@ export async function GET(req: Request) {
 
   const db = getAdminDb();
 
-  // staff 이상 사용자 목록 가져오기
+  // staff 이상 사용자 목록 가져오기 (ID 및 이름 매핑)
   const usersSnapshot = await db.collection("users").get();
-  const staffUsers = new Map<string, string>();
+  const staffById = new Map<string, string>();
+  const staffByName = new Map<string, string>();
   for (const doc of usersSnapshot.docs) {
-    const role = doc.data().role as string;
+    const data = doc.data();
+    const role = data.role as string;
     if (["staff", "president", "admin"].includes(role)) {
-      staffUsers.set(doc.id, role);
+      staffById.set(doc.id, role);
+      if (data.name) staffByName.set(data.name as string, role);
     }
   }
 
@@ -25,23 +28,26 @@ export async function GET(req: Request) {
     .where("type", "==", "attendee")
     .get();
 
-  const updates: { id: string; authorName: string; oldType: string; newRole: string }[] = [];
+  const updates: { id: string; authorName: string; oldType: string; newRole: string; matchedBy: string }[] = [];
 
   for (const doc of reviewsSnapshot.docs) {
     const data = doc.data();
     const authorId = data.authorId as string;
-    if (authorId && staffUsers.has(authorId)) {
-      const role = staffUsers.get(authorId)!;
-      await doc.ref.update({
-        type: "staff",
-        authorRole: role,
-      });
-      updates.push({
-        id: doc.id,
-        authorName: data.authorName,
-        oldType: "attendee",
-        newRole: role,
-      });
+    const authorName = data.authorName as string;
+
+    // 1차: authorId 매칭
+    if (authorId && staffById.has(authorId)) {
+      const role = staffById.get(authorId)!;
+      await doc.ref.update({ type: "staff", authorRole: role });
+      updates.push({ id: doc.id, authorName, oldType: "attendee", newRole: role, matchedBy: "userId" });
+      continue;
+    }
+
+    // 2차: 이름 매칭 (guest_ 계정 포함)
+    if (authorName && staffByName.has(authorName)) {
+      const role = staffByName.get(authorName)!;
+      await doc.ref.update({ type: "staff", authorRole: role });
+      updates.push({ id: doc.id, authorName, oldType: "attendee", newRole: role, matchedBy: "name" });
     }
   }
 
