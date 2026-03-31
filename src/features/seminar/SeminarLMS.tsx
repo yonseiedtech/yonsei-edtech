@@ -9,8 +9,10 @@ import {
   useUpdateSession,
   useDeleteSession,
 } from "@/features/seminar/useSeminar";
+import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
+import { registrationsApi } from "@/lib/bkend";
 import MaterialsSection from "@/features/seminar/MaterialsSection";
 import SeminarReviews from "@/features/seminar/SeminarReviews";
 import ReviewManagement from "@/features/seminar-admin/ReviewManagement";
@@ -85,6 +87,16 @@ interface Props {
 function OverviewSection({ seminar }: { seminar: NonNullable<ReturnType<typeof useSeminar>> }) {
   const computed = getComputedStatus(seminar);
 
+  // 회원 참석자 + 비회원 등록자 합산
+  const { data: registrations } = useQuery({
+    queryKey: ["registrations", seminar.id],
+    queryFn: async () => {
+      const res = await registrationsApi.list(seminar.id);
+      return res.data as unknown as { id: string }[];
+    },
+  });
+  const totalAttendees = seminar.attendeeIds.length + (registrations?.length ?? 0);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
@@ -105,16 +117,23 @@ function OverviewSection({ seminar }: { seminar: NonNullable<ReturnType<typeof u
         <div className="flex items-center gap-2">
           <Users size={16} />
           <span>
-            참석 {seminar.attendeeIds.length}
+            참석 {totalAttendees}
             {seminar.maxAttendees ? ` / ${seminar.maxAttendees}` : ""}명
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <Mic size={16} />
-          <span>{seminar.speaker}</span>
-          {seminar.speakerBio && (
-            <span className="text-xs">— {seminar.speakerBio}</span>
-          )}
+        <div className="flex items-start gap-2">
+          <Mic size={16} className="mt-0.5 shrink-0" />
+          <div>
+            <span>{seminar.speaker}</span>
+            {(seminar.speakerAffiliation || seminar.speakerPosition) && (
+              <span className="text-xs text-muted-foreground/70">
+                {" "}({[seminar.speakerAffiliation, seminar.speakerPosition].filter(Boolean).join(" · ")})
+              </span>
+            )}
+            {seminar.speakerBio && (
+              <p className="mt-1 text-xs leading-relaxed">{seminar.speakerBio}</p>
+            )}
+          </div>
         </div>
       </div>
       {seminar.description && (
