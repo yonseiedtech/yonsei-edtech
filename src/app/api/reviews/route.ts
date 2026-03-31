@@ -29,12 +29,62 @@ export async function GET(req: NextRequest) {
           if (status === "hidden") return false;
           if (r.type === "staff" && visibility !== "public") return false;
           return true;
+        })
+        .map((r: Record<string, unknown>) => {
+          // 연사 추천 정보는 운영진 전용 — 공개 API에서 제거
+          const { recommendedTopics, recommendedSpeakers, ...rest } = r;
+          return rest;
         });
 
       return Response.json({ data: reviews });
     } catch (err) {
       console.error("[reviews list]", err);
       return Response.json({ error: "후기 조회에 실패했습니다." }, { status: 500 });
+    }
+  }
+
+  // 연사 토큰 인증 모드
+  const token = req.nextUrl.searchParams.get("token");
+  if (token) {
+    try {
+      const db = getAdminDb();
+      const semDoc = await db.collection("seminars").doc(seminarId).get();
+      if (!semDoc.exists || semDoc.data()?.speakerReviewToken !== token) {
+        return Response.json({ verified: false, message: "유효하지 않은 연사 후기 링크입니다." });
+      }
+
+      // 이미 연사 후기 작성 여부 확인
+      const reviewSnapshot = await db.collection("seminar_reviews")
+        .where("seminarId", "==", seminarId)
+        .where("type", "==", "speaker")
+        .get();
+
+      let existingReview = null;
+      if (!reviewSnapshot.empty) {
+        const doc = reviewSnapshot.docs[0];
+        const data = doc.data();
+        existingReview = {
+          id: doc.id,
+          content: data.content,
+          rating: data.rating,
+          questionAnswers: data.questionAnswers || null,
+          recommendedTopics: data.recommendedTopics || null,
+          recommendedSpeakers: data.recommendedSpeakers || null,
+          createdAt: data.createdAt,
+        };
+      }
+
+      const seminar = semDoc.data();
+      return Response.json({
+        verified: true,
+        seminarTitle: seminar?.title,
+        speakerName: seminar?.speaker,
+        alreadyReviewed: !reviewSnapshot.empty,
+        existingReview,
+      });
+    } catch (err) {
+      console.error("[reviews speaker verify]", err);
+      return Response.json({ error: "인증에 실패했습니다." }, { status: 500 });
     }
   }
 
@@ -109,7 +159,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { seminarId, type, content, rating, authorId, authorName, studentId, visibility, questionAnswers } = body as {
+    const { seminarId, type, content, rating, authorId, authorName, studentId, visibility, questionAnswers, recommendedTopics, recommendedSpeakers, speakerToken, authorRole } = body as {
       seminarId: string;
       type: string;
       content: string;
@@ -119,6 +169,10 @@ export async function POST(req: NextRequest) {
       studentId?: string;
       visibility?: string;
       questionAnswers?: Record<string, string>;
+      recommendedTopics?: string;
+      recommendedSpeakers?: string;
+      speakerToken?: string;
+      authorRole?: string;
     };
 
     if (!seminarId || !content || !authorName) {
@@ -133,6 +187,18 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "이름이 너무 깁니다." }, { status: 400 });
     }
 
+    // 연사 후기인 경우 토큰 검증
+    if (type === "speaker") {
+      if (!speakerToken) {
+        return Response.json({ error: "연사 후기 토큰이 필요합니다." }, { status: 403 });
+      }
+      const db = getAdminDb();
+      const semDoc = await db.collection("seminars").doc(seminarId).get();
+      if (!semDoc.exists || semDoc.data()?.speakerReviewToken !== speakerToken) {
+        return Response.json({ error: "유효하지 않은 연사 후기 토큰입니다." }, { status: 403 });
+      }
+    }
+
     // rating 범위 검증 (M2 포함)
     const safeRating = Math.min(5, Math.max(1, Number(rating) || 5));
 
@@ -145,10 +211,13 @@ export async function POST(req: NextRequest) {
       rating: safeRating,
       authorId: authorId || `guest_${authorName}`,
       authorName: authorName.slice(0, 100),
+      authorRole: authorRole || null,
       studentId: studentId || null,
       visibility: visibility || "public",
       status: "published",
       questionAnswers: questionAnswers || null,
+      recommendedTopics: type === "speaker" && recommendedTopics ? recommendedTopics.slice(0, 2000) : null,
+      recommendedSpeakers: type === "speaker" && recommendedSpeakers ? recommendedSpeakers.slice(0, 2000) : null,
       createdAt: now,
       updatedAt: now,
     });
@@ -168,12 +237,14 @@ export async function PATCH(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { reviewId, content, rating, questionAnswers, authorId } = body as {
+    const { reviewId, content, rating, questionAnswers, authorId, recommendedTopics, recommendedSpeakers } = body as {
       reviewId: string;
       content: string;
       rating: number;
       questionAnswers?: Record<string, string>;
       authorId: string;
+      recommendedTopics?: string;
+      recommendedSpeakers?: string;
     };
 
     if (!reviewId || !content || !authorId) {
@@ -197,12 +268,18 @@ export async function PATCH(req: NextRequest) {
     }
 
     const safeRating = Math.min(5, Math.max(1, Number(rating) || 5));
-    await docRef.update({
+    const updateData: Record<string, unknown> = {
       content: content.slice(0, 5000),
       rating: safeRating,
       questionAnswers: questionAnswers || null,
       updatedAt: new Date().toISOString(),
-    });
+    };
+    // 연사 후기 추천 정보 업데이트
+    if (doc.data()?.type === "speaker") {
+      updateData.recommendedTopics = recommendedTopics ? recommendedTopics.slice(0, 2000) : null;
+      updateData.recommendedSpeakers = recommendedSpeakers ? recommendedSpeakers.slice(0, 2000) : null;
+    }
+    await docRef.update(updateData);
 
     return Response.json({ success: true });
   } catch (err) {

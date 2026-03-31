@@ -20,6 +20,9 @@ import {
   BarChart3,
   Settings,
   ClipboardList,
+  Link2,
+  Copy,
+  Mic,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -150,6 +153,7 @@ export default function ReviewManagement({ seminar }: Props) {
         authorId: user.id,
         authorName: user.name,
         authorGeneration: user.generation || undefined,
+        authorRole: writeType === "staff" ? user.role : undefined,
         visibility: writeType === "staff" ? writeVisibility : "public",
         status: "published",
       });
@@ -163,6 +167,35 @@ export default function ReviewManagement({ seminar }: Props) {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  // 연사 후기 링크
+  const [speakerToken, setSpeakerToken] = useState<string | null>(seminar.speakerReviewToken ?? null);
+  const [generatingToken, setGeneratingToken] = useState(false);
+
+  async function handleGenerateSpeakerLink() {
+    setGeneratingToken(true);
+    try {
+      const res = await fetch(`/api/seminars/${seminar.id}/speaker-token`, { method: "POST" });
+      const data = await res.json();
+      if (data.token) {
+        setSpeakerToken(data.token);
+        const url = `${window.location.origin}/seminars/${seminar.id}/speaker-review?token=${data.token}`;
+        await navigator.clipboard.writeText(url);
+        toast.success("연사 후기 링크가 생성되어 클립보드에 복사되었습니다.");
+      }
+    } catch {
+      toast.error("링크 생성에 실패했습니다.");
+    } finally {
+      setGeneratingToken(false);
+    }
+  }
+
+  function handleCopySpeakerLink() {
+    if (!speakerToken) return;
+    const url = `${window.location.origin}/seminars/${seminar.id}/speaker-review?token=${speakerToken}`;
+    navigator.clipboard.writeText(url);
+    toast.success("연사 후기 링크가 클립보드에 복사되었습니다.");
   }
 
   // 질문 설정 (유형별)
@@ -240,6 +273,41 @@ export default function ReviewManagement({ seminar }: Props) {
               <p className="text-2xl font-bold text-muted-foreground">{stats.hidden}</p>
               <p className="text-xs text-muted-foreground">숨김 처리</p>
             </div>
+          </div>
+
+          {/* 연사 후기 링크 */}
+          <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-4">
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-medium">
+              <Mic size={14} className="text-blue-600" />
+              연사 후기 링크
+            </h3>
+            {speakerToken ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2">
+                  <Link2 size={14} className="shrink-0 text-muted-foreground" />
+                  <span className="flex-1 truncate text-xs text-muted-foreground">
+                    /seminars/{seminar.id}/speaker-review?token={speakerToken.slice(0, 8)}...
+                  </span>
+                  <Button size="sm" variant="ghost" onClick={handleCopySpeakerLink} className="shrink-0 h-7 px-2">
+                    <Copy size={12} className="mr-1" />
+                    복사
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  이 링크를 연사에게 공유하면 별도 인증 없이 후기를 작성할 수 있습니다.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  연사에게 공유할 후기 작성 링크를 생성합니다. 링크를 통해 연사가 직접 후기를 작성할 수 있습니다.
+                </p>
+                <Button size="sm" onClick={handleGenerateSpeakerLink} disabled={generatingToken}>
+                  {generatingToken ? <Loader2 size={14} className="mr-1 animate-spin" /> : <Link2 size={14} className="mr-1" />}
+                  연사 후기 링크 생성
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* 관리자 후기 작성 */}
@@ -408,6 +476,24 @@ export default function ReviewManagement({ seminar }: Props) {
                           {isInternal && <Badge variant="secondary" className="text-xs text-amber-600">비공개</Badge>}
                         </div>
                         <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{r.content}</p>
+                        {/* 연사 추천 정보 */}
+                        {r.type === "speaker" && (r.recommendedTopics || r.recommendedSpeakers) && (
+                          <div className="mt-2 rounded-lg border border-dashed border-amber-300 bg-amber-50/50 px-3 py-2 space-y-1">
+                            <p className="text-[10px] font-medium text-amber-700 uppercase tracking-wide">연사 추천 (운영진 전용)</p>
+                            {r.recommendedTopics && (
+                              <div>
+                                <span className="text-xs font-medium text-amber-800">추천 주제: </span>
+                                <span className="text-xs text-amber-700">{r.recommendedTopics}</span>
+                              </div>
+                            )}
+                            {r.recommendedSpeakers && (
+                              <div>
+                                <span className="text-xs font-medium text-amber-800">추천 연사: </span>
+                                <span className="text-xs text-amber-700">{r.recommendedSpeakers}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
                         <p className="mt-2 text-xs text-muted-foreground">
                           {new Date(r.createdAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false })}
                         </p>

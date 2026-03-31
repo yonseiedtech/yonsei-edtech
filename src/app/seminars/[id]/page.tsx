@@ -29,6 +29,8 @@ import {
   Pencil,
   CheckCircle,
   Star,
+  Mic,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -47,8 +49,37 @@ import type { EditSection, InfoFormData, SpeakerFormData } from "@/features/semi
 import { reviewsApi } from "@/lib/bkend";
 import type { SeminarReview } from "@/types";
 
-function ReviewsList({ seminarId }: { seminarId: string }) {
-  const { data } = useQuery({
+function ReviewCard({ review }: { review: SeminarReview }) {
+  return (
+    <div className="rounded-lg border bg-muted/10 px-4 py-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">{review.authorName}</span>
+          {review.authorRole && ["president", "admin"].includes(review.authorRole) && (
+            <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+              {review.authorRole === "president" ? "회장" : "관리자"}
+            </span>
+          )}
+          {review.authorRole === "staff" && (
+            <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">
+              운영진
+            </span>
+          )}
+        </div>
+        <div className="flex gap-0.5">
+          {[1,2,3,4,5].map((v) => (
+            <Star key={v} size={12} className={v <= (review.rating ?? 5) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/20"} />
+          ))}
+        </div>
+      </div>
+      <p className="mt-1 text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap">{review.content}</p>
+    </div>
+  );
+}
+
+function ReviewsSection({ seminarId, isStaff }: { seminarId: string; isStaff: boolean }) {
+  // 공개 API: 추천 정보 제외
+  const { data: publicData } = useQuery({
     queryKey: ["reviews", seminarId],
     queryFn: async () => {
       const res = await fetch(`/api/reviews?seminarId=${seminarId}&mode=list`);
@@ -56,24 +87,94 @@ function ReviewsList({ seminarId }: { seminarId: string }) {
       const json = await res.json();
       return (json.data ?? []) as SeminarReview[];
     },
+    enabled: !isStaff,
   });
-  const reviews = (data ?? []).filter((r) => r.type === "attendee" || !r.type || (r.type === "staff" && (r.visibility ?? "public") === "public"));
-  if (reviews.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">아직 작성된 후기가 없습니다.</p>;
+  // 운영진: 클라이언트 SDK로 전체 조회 (추천 정보 포함)
+  const { data: staffData } = useQuery({
+    queryKey: ["reviews", seminarId, "staff"],
+    queryFn: async () => {
+      const res = await reviewsApi.list(seminarId);
+      const all = (res.data as unknown as SeminarReview[]) ?? [];
+      return all.filter((r) => {
+        const status = (r.status ?? "published");
+        const visibility = (r.visibility ?? "public");
+        if (status === "hidden") return false;
+        if (r.type === "staff" && visibility !== "public") return false;
+        return true;
+      });
+    },
+    enabled: isStaff,
+  });
+  const allReviews = (isStaff ? staffData : publicData) ?? [];
+
+  const speakerReviews = allReviews.filter((r) => r.type === "speaker");
+  const staffReviews = allReviews.filter((r) => r.type === "staff" && (r.visibility ?? "public") === "public");
+  const attendeeReviews = allReviews.filter((r) => r.type === "attendee" || !r.type);
+
   return (
-    <div className="space-y-3">
-      {reviews.map((r) => (
-        <div key={r.id} className="rounded-lg border bg-muted/10 px-4 py-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">{r.authorName}</span>
-            <div className="flex gap-0.5">
-              {[1,2,3,4,5].map((v) => (
-                <Star key={v} size={12} className={v <= (r.rating ?? 5) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/20"} />
-              ))}
-            </div>
+    <div className="space-y-6">
+      {/* 연사 후기 */}
+      {speakerReviews.length > 0 && (
+        <div>
+          <h3 className="flex items-center gap-2 text-xs font-semibold text-primary uppercase tracking-wide mb-3">
+            <Mic size={14} />
+            연사 후기
+          </h3>
+          <div className="space-y-3">
+            {speakerReviews.map((r) => (
+              <div key={r.id}>
+                <ReviewCard review={r} />
+                {/* 연사 추천 정보: 운영진만 표시 */}
+                {isStaff && (r.recommendedTopics || r.recommendedSpeakers) && (
+                  <div className="mt-2 ml-3 rounded-lg border border-dashed border-amber-300 bg-amber-50/50 px-3 py-2 space-y-1">
+                    <p className="text-[10px] font-medium text-amber-700 uppercase tracking-wide">연사 추천 (운영진 전용)</p>
+                    {r.recommendedTopics && (
+                      <div>
+                        <span className="text-xs font-medium text-amber-800">추천 주제:</span>
+                        <p className="text-xs text-amber-700 whitespace-pre-wrap">{r.recommendedTopics}</p>
+                      </div>
+                    )}
+                    {r.recommendedSpeakers && (
+                      <div>
+                        <span className="text-xs font-medium text-amber-800">추천 연사:</span>
+                        <p className="text-xs text-amber-700 whitespace-pre-wrap">{r.recommendedSpeakers}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-          <p className="mt-1 text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap">{r.content}</p>
         </div>
-      ))}
+      )}
+
+      {/* 운영진 후기 */}
+      {staffReviews.length > 0 && (
+        <div>
+          <h3 className="flex items-center gap-2 text-xs font-semibold text-blue-600 uppercase tracking-wide mb-3">
+            <Users size={14} />
+            운영진 후기
+          </h3>
+          <div className="space-y-3">
+            {staffReviews.map((r) => <ReviewCard key={r.id} review={r} />)}
+          </div>
+        </div>
+      )}
+
+      {/* 참석자 후기 */}
+      <div>
+        <h3 className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+          <Star size={14} />
+          참석자 후기
+        </h3>
+        {attendeeReviews.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">아직 작성된 후기가 없습니다.</p>
+        ) : (
+          <div className="space-y-3">
+            {attendeeReviews.map((r) => <ReviewCard key={r.id} review={r} />)}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -392,9 +493,9 @@ function SeminarDetail({ id }: { id: string }) {
         <div className="mt-6 rounded-2xl border bg-white p-8">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
             <Star size={16} />
-            참석자 후기
+            세미나 후기
           </h2>
-          <ReviewsList seminarId={id} />
+          <ReviewsSection seminarId={id} isStaff={isStaff} />
           <div className="mt-4 text-center">
             <Link href={`/seminars/${id}/review`}>
               <Button variant="outline" size="sm" className="gap-1">

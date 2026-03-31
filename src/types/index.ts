@@ -138,6 +138,7 @@ export interface Seminar {
     speaker?: string[];
     staff?: string[];
   };
+  speakerReviewToken?: string;
   cancelReason?: string;
   status: "upcoming" | "ongoing" | "completed" | "cancelled";
   createdBy: string;
@@ -287,9 +288,12 @@ export interface SeminarReview {
   authorId: string;
   authorName: string;
   authorGeneration?: number;
+  authorRole?: string; // 운영진 후기 자동 분류용 (staff, president, admin)
   visibility: "public" | "internal";
   status: "published" | "hidden";
   questionAnswers?: Record<string, string>;
+  recommendedTopics?: string; // 연사 추천 세미나 주제
+  recommendedSpeakers?: string; // 연사 추천 연사
   createdAt: string;
   updatedAt?: string;
 }
