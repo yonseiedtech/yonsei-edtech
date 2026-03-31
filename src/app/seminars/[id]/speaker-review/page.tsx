@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Star, CheckCircle, Loader2, AlertCircle, Pencil, Mic } from "lucide-react";
+import { ArrowLeft, Star, CheckCircle, Loader2, AlertCircle, Pencil, Mic, Printer, Download } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -37,10 +37,143 @@ interface SubmittedReview {
   recommendedSpeakers?: string;
 }
 
+/* ── 감사장 프리뷰 ── */
+
+function inferSemester(dateStr: string): string {
+  const d = new Date(dateStr);
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1;
+  return `${year}년 ${month >= 3 && month <= 8 ? "1" : "2"}학기`;
+}
+
+function formatCertDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  return `${d.getFullYear()}년 ${String(d.getMonth() + 1).padStart(2, "0")}월 ${String(d.getDate()).padStart(2, "0")}일`;
+}
+
+function AppreciationCertificate({
+  speakerName,
+  seminarTitle,
+  seminarDate,
+}: {
+  speakerName: string;
+  seminarTitle: string;
+  seminarDate: string;
+}) {
+  const semester = inferSemester(seminarDate);
+  const formattedDate = formatCertDate(seminarDate);
+  const accentColor = "#003378";
+  const fontFamily = "'Batang', 'Nanum Myeongjo', serif";
+  const bodyText = `귀하께서는 ${semester} 연세교육공학회에서 구성원들의 교육공학 핵심 역량강화를 위하여 주관한 연세교육공학 학술대회 <${seminarTitle}>에서 귀하께서가 지신 지식과 경험을 헌신적이고 열정적으로 공유해주심으로서 구성원들의 성장에 큰 도움을 주셨음에 감사드리며, 연세교육공학회 구성원들의 마음을 담아 감사장을 드립니다.`;
+
+  return (
+    <div
+      className="relative mx-auto bg-white"
+      style={{
+        width: "210mm",
+        minHeight: "297mm",
+        fontFamily,
+        overflow: "hidden",
+      }}
+    >
+      {/* 이중 프레임 */}
+      <div style={{ position: "absolute", inset: "10mm", border: `2.5px solid ${accentColor}`, pointerEvents: "none" }} />
+      <div style={{ position: "absolute", inset: "13mm", border: `0.8px solid ${accentColor}`, opacity: 0.35, pointerEvents: "none" }} />
+
+      {/* 네 모서리 장식 */}
+      {[
+        { top: "10mm", left: "10mm", bt: true, bl: true },
+        { top: "10mm", right: "10mm", bt: true, br: true },
+        { bottom: "10mm", left: "10mm", bb: true, bl: true },
+        { bottom: "10mm", right: "10mm", bb: true, br: true },
+      ].map((pos, i) => (
+        <div
+          key={i}
+          style={{
+            position: "absolute",
+            top: pos.top, bottom: pos.bottom,
+            left: pos.left, right: pos.right,
+            width: "20px", height: "20px",
+            borderTop: pos.bt ? `3px solid ${accentColor}` : "none",
+            borderBottom: pos.bb ? `3px solid ${accentColor}` : "none",
+            borderLeft: pos.bl ? `3px solid ${accentColor}` : "none",
+            borderRight: pos.br ? `3px solid ${accentColor}` : "none",
+            pointerEvents: "none",
+          }}
+        />
+      ))}
+
+      {/* 본문 영역 */}
+      <div className="flex flex-col items-center" style={{ padding: "22mm 36mm 18mm" }}>
+        {/* 제목 */}
+        <h1 style={{ fontSize: "42pt", fontWeight: 800, letterSpacing: "0.3em", color: accentColor, marginBottom: "5mm", marginTop: "20mm", textAlign: "center" }}>
+          감사장
+        </h1>
+
+        {/* 제목 하단 장식선 */}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "18mm" }}>
+          <div style={{ width: "40px", height: "1px", background: accentColor, opacity: 0.4 }} />
+          <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: accentColor, opacity: 0.3 }} />
+          <div style={{ width: "40px", height: "1px", background: accentColor, opacity: 0.4 }} />
+        </div>
+
+        {/* 수여자 이름 */}
+        <div style={{ marginBottom: "14mm", textAlign: "right", width: "100%" }}>
+          <span style={{ fontSize: "26pt", fontWeight: 800, letterSpacing: "0.25em", color: "#111" }}>
+            {speakerName}
+          </span>
+          <span style={{ fontSize: "13pt", marginLeft: "6px", fontWeight: 600, color: "#444" }}>
+            선생님
+          </span>
+        </div>
+
+        {/* 워터마크 */}
+        <div
+          className="absolute left-1/2 -translate-x-1/2"
+          style={{ top: "40%", opacity: 0.06, width: "300px", height: "300px", pointerEvents: "none" }}
+        >
+          <img src="/cert-emblem.png" alt="" style={{ width: "100%", height: "100%" }} />
+        </div>
+
+        {/* 본문 */}
+        <div
+          className="relative"
+          style={{ fontSize: "12.5pt", lineHeight: "2.5", textAlign: "justify", width: "100%", maxWidth: "460px", margin: "0 auto", wordBreak: "keep-all", color: "#222", fontWeight: 700 }}
+        >
+          <p style={{ textIndent: "1em", whiteSpace: "pre-wrap" }}>{bodyText}</p>
+        </div>
+
+        {/* 날짜 */}
+        <p style={{ fontSize: "13pt", fontWeight: 700, marginTop: "22mm", letterSpacing: "0.15em", textAlign: "center", color: "#222" }}>
+          {formattedDate}
+        </p>
+
+        {/* 하단 서명 영역 */}
+        <div style={{ marginTop: "18mm", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: "0" }}>
+          <div style={{ width: "50px", height: "1.5px", background: accentColor, opacity: 0.25, marginBottom: "14mm" }} />
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "7px" }}>
+            <img src="/cert-emblem.png" alt="연세대학교" style={{ width: "48px", height: "48px" }} />
+            <div style={{ textAlign: "center" }}>
+              <p style={{ fontSize: "26px", fontWeight: 800, color: accentColor, fontFamily, letterSpacing: "0.2em", lineHeight: 1.2, margin: 0 }}>
+                연세교육공학회
+              </p>
+              <p style={{ fontSize: "8px", color: "#999", fontFamily, letterSpacing: "0.08em", margin: "2px 0 0" }}>
+                Yonsei Educational Technology Association
+              </p>
+            </div>
+            <img src="/cert-seal.jpeg" alt="직인" style={{ width: "52px", height: "52px" }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const seminar = useSeminar(seminarId);
+  const certRef = useRef<HTMLDivElement>(null);
 
   const [step, setStep] = useState<Step>("verifying");
   const [speakerName, setSpeakerName] = useState("");
@@ -86,8 +219,15 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
 
         if (data.alreadyReviewed && data.existingReview) {
           setExistingReview(data.existingReview);
-          setShowExistingDialog(true);
-          setStep("write");
+          // 기존 후기가 있으면 바로 완료(감사장) 화면으로
+          setSubmittedReview({
+            content: data.existingReview.content,
+            rating: data.existingReview.rating ?? 5,
+            questionAnswers: data.existingReview.questionAnswers ?? {},
+            recommendedTopics: data.existingReview.recommendedTopics ?? "",
+            recommendedSpeakers: data.existingReview.recommendedSpeakers ?? "",
+          });
+          setStep("done");
         } else {
           setStep("write");
         }
@@ -108,7 +248,7 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
     setRecommendedTopics(existingReview.recommendedTopics ?? "");
     setRecommendedSpeakers(existingReview.recommendedSpeakers ?? "");
     setEditMode(true);
-    setShowExistingDialog(false);
+    setStep("write");
   }
 
   async function handleSubmit() {
@@ -170,6 +310,49 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function handlePrintCert() {
+    if (!certRef.current) return;
+
+    const styleId = "cert-print-style";
+    let styleEl = document.getElementById(styleId) as HTMLStyleElement | null;
+    if (!styleEl) {
+      styleEl = document.createElement("style");
+      styleEl.id = styleId;
+      document.head.appendChild(styleEl);
+    }
+    styleEl.textContent = `
+      @media print {
+        @page { size: A4 portrait; margin: 0; }
+        body > *:not(#cert-print-container) { display: none !important; }
+        #cert-print-container {
+          display: block !important;
+          position: fixed !important;
+          inset: 0 !important;
+          z-index: 99999 !important;
+          background: white !important;
+          width: 210mm !important;
+          min-height: 297mm !important;
+        }
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      }
+    `;
+
+    let container = document.getElementById("cert-print-container");
+    if (container) container.remove();
+    container = document.createElement("div");
+    container.id = "cert-print-container";
+    container.style.display = "none";
+    container.innerHTML = certRef.current.innerHTML;
+    document.body.appendChild(container);
+
+    const cleanup = () => {
+      container?.remove();
+      window.removeEventListener("afterprint", cleanup);
+    };
+    window.addEventListener("afterprint", cleanup);
+    setTimeout(() => window.print(), 100);
   }
 
   if (!seminar && step !== "error") {
@@ -276,15 +459,11 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
               />
             </div>
 
-            {/* 추천 섹션 (운영진만 볼 수 있음 안내) */}
+            {/* 추천 섹션 */}
             <div className="rounded-lg border border-dashed border-amber-300 bg-amber-50/50 p-4 space-y-3">
               <div>
-                <p className="text-sm font-medium text-amber-800 mb-1">
-                  추천 정보 (운영진 전용)
-                </p>
-                <p className="text-xs text-amber-600">
-                  아래 내용은 운영진과 관리자만 확인할 수 있습니다.
-                </p>
+                <p className="text-sm font-medium text-amber-800 mb-1">추천 정보 (운영진 전용)</p>
+                <p className="text-xs text-amber-600">아래 내용은 운영진과 관리자만 확인할 수 있습니다.</p>
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium">추천 세미나 주제</label>
@@ -314,17 +493,20 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
           </div>
         )}
 
-        {/* 완료 */}
-        {step === "done" && submittedReview && (
+        {/* 완료: 후기 + 감사장 */}
+        {step === "done" && submittedReview && seminar && (
           <div className="space-y-4">
             <div className="rounded-xl border bg-white p-6 text-center">
               <CheckCircle size={48} className="mx-auto mb-4 text-green-500" />
-              <h2 className="text-xl font-bold">{editMode ? "후기가 수정되었습니다!" : "후기가 등록되었습니다!"}</h2>
+              <h2 className="text-xl font-bold">
+                {existingReview && !editMode ? "후기가 등록되어 있습니다" : editMode ? "후기가 수정되었습니다!" : "후기가 등록되었습니다!"}
+              </h2>
               <p className="mt-2 text-sm text-muted-foreground">소중한 의견 감사합니다.</p>
             </div>
 
+            {/* 작성한 후기 미리보기 */}
             <div className="rounded-xl border bg-muted/10 p-4">
-              <p className="mb-2 text-xs font-medium text-muted-foreground">내가 작성한 후기</p>
+              <p className="mb-2 text-xs font-medium text-muted-foreground">작성된 후기</p>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">{speakerName}</span>
                 <div className="flex gap-0.5">
@@ -334,6 +516,49 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
                 </div>
               </div>
               <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{submittedReview.content}</p>
+              <div className="mt-3 text-center">
+                <Button variant="outline" size="sm" onClick={handleStartEdit} className="gap-1">
+                  <Pencil size={12} />
+                  후기 수정하기
+                </Button>
+              </div>
+            </div>
+
+            {/* 감사장 섹션 */}
+            <div className="rounded-xl border bg-white p-6">
+              <h3 className="mb-4 text-center text-sm font-semibold">연세교육공학회 감사장</h3>
+
+              {/* 감사장 미리보기 (축소) */}
+              <div
+                className="relative mx-auto overflow-hidden rounded-lg border shadow-sm"
+                style={{ width: "100%", maxWidth: "360px", aspectRatio: "210/297" }}
+              >
+                <div
+                  ref={certRef}
+                  style={{ transform: "scale(0.45)", transformOrigin: "top left", width: "210mm", minHeight: "297mm" }}
+                >
+                  <AppreciationCertificate
+                    speakerName={speakerName}
+                    seminarTitle={seminar.title}
+                    seminarDate={seminar.date}
+                  />
+                </div>
+              </div>
+
+              {/* 다운로드/인쇄 버튼 */}
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-center">
+                <Button onClick={handlePrintCert} className="gap-2">
+                  <Download size={14} />
+                  감사장 PDF 다운로드
+                </Button>
+                <Button variant="outline" onClick={handlePrintCert} className="gap-2">
+                  <Printer size={14} />
+                  인쇄하기
+                </Button>
+              </div>
+              <p className="mt-2 text-center text-[11px] text-muted-foreground">
+                인쇄 대화상자에서 &quot;PDF로 저장&quot;을 선택하면 PDF 파일로 다운로드됩니다.
+              </p>
             </div>
 
             <Link href={`/seminars/${seminarId}`}>
@@ -341,42 +566,6 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
             </Link>
           </div>
         )}
-
-        {/* 기존 후기 팝업 */}
-        <Dialog open={showExistingDialog} onOpenChange={setShowExistingDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>이미 작성한 후기가 있습니다</DialogTitle>
-            </DialogHeader>
-            {existingReview && (
-              <div className="space-y-3">
-                <div className="rounded-lg border bg-muted/10 p-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{speakerName}</span>
-                    <div className="flex gap-0.5">
-                      {[1, 2, 3, 4, 5].map((v) => (
-                        <Star key={v} size={14} className={v <= (existingReview.rating ?? 5) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/20"} />
-                      ))}
-                    </div>
-                  </div>
-                  <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{existingReview.content}</p>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    작성일: {new Date(existingReview.createdAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false })}
-                  </p>
-                </div>
-              </div>
-            )}
-            <DialogFooter className="flex-col gap-2 sm:flex-row">
-              <Button variant="outline" onClick={() => setShowExistingDialog(false)} className="w-full sm:w-auto">
-                닫기
-              </Button>
-              <Button onClick={handleStartEdit} className="w-full gap-1 sm:w-auto">
-                <Pencil size={14} />
-                후기 수정하기
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );
