@@ -187,12 +187,31 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "이름이 너무 깁니다." }, { status: 400 });
     }
 
+    const db = getAdminDb();
+
+    // 작성자가 staff 이상이면 자동으로 운영진 후기로 분류
+    let resolvedType = type || "attendee";
+    let resolvedAuthorRole = authorRole || null;
+    if (resolvedType === "attendee" && authorId && !authorId.startsWith("guest_")) {
+      try {
+        const userDoc = await db.collection("users").doc(authorId).get();
+        if (userDoc.exists) {
+          const userRole = userDoc.data()?.role as string | undefined;
+          if (userRole && ["staff", "president", "admin"].includes(userRole)) {
+            resolvedType = "staff";
+            resolvedAuthorRole = userRole;
+          }
+        }
+      } catch {
+        // 사용자 조회 실패 시 원래 type 유지
+      }
+    }
+
     // 연사 후기인 경우 토큰 검증
     if (type === "speaker") {
       if (!speakerToken) {
         return Response.json({ error: "연사 후기 토큰이 필요합니다." }, { status: 403 });
       }
-      const db = getAdminDb();
       const semDoc = await db.collection("seminars").doc(seminarId).get();
       if (!semDoc.exists || semDoc.data()?.speakerReviewToken !== speakerToken) {
         return Response.json({ error: "유효하지 않은 연사 후기 토큰입니다." }, { status: 403 });
@@ -201,17 +220,15 @@ export async function POST(req: NextRequest) {
 
     // rating 범위 검증 (M2 포함)
     const safeRating = Math.min(5, Math.max(1, Number(rating) || 5));
-
-    const db = getAdminDb();
     const now = new Date().toISOString();
     const docRef = await db.collection("seminar_reviews").add({
       seminarId,
-      type: type || "attendee",
+      type: resolvedType,
       content: content.slice(0, 5000),
       rating: safeRating,
       authorId: authorId || `guest_${authorName}`,
       authorName: authorName.slice(0, 100),
-      authorRole: authorRole || null,
+      authorRole: resolvedAuthorRole,
       studentId: studentId || null,
       visibility: visibility || "public",
       status: "published",
