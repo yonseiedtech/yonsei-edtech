@@ -49,12 +49,15 @@ import type { EditSection, InfoFormData, SpeakerFormData } from "@/features/semi
 import { reviewsApi } from "@/lib/bkend";
 import type { SeminarReview } from "@/types";
 
-function ReviewCard({ review }: { review: SeminarReview }) {
+function ReviewCard({ review, extraInfo }: { review: SeminarReview; extraInfo?: string }) {
   return (
     <div className="rounded-lg border bg-muted/10 px-4 py-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">{review.authorName}</span>
+          {extraInfo && (
+            <span className="text-xs text-muted-foreground">{extraInfo}</span>
+          )}
           {review.authorRole && ["president", "admin"].includes(review.authorRole) && (
             <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
               {review.authorRole === "president" ? "회장" : "관리자"}
@@ -77,7 +80,7 @@ function ReviewCard({ review }: { review: SeminarReview }) {
   );
 }
 
-function ReviewsSection({ seminarId, isStaff }: { seminarId: string; isStaff: boolean }) {
+function ReviewsSection({ seminarId, isStaff, speakerInfo }: { seminarId: string; isStaff: boolean; speakerInfo?: { name?: string; affiliation?: string; position?: string } }) {
   // 공개 API: 추천 정보 제외
   const { data: publicData } = useQuery({
     queryKey: ["reviews", seminarId],
@@ -116,14 +119,14 @@ function ReviewsSection({ seminarId, isStaff }: { seminarId: string; isStaff: bo
       {/* 연사 후기 */}
       {speakerReviews.length > 0 && (
         <div>
-          <h3 className="flex items-center gap-2 text-xs font-semibold text-primary uppercase tracking-wide mb-3">
+          <h3 className="flex items-center gap-2 text-xs font-semibold text-amber-600 uppercase tracking-wide mb-3">
             <Mic size={14} />
             연사 후기
           </h3>
           <div className="space-y-3">
             {speakerReviews.map((r) => (
               <div key={r.id}>
-                <ReviewCard review={r} />
+                <ReviewCard review={r} extraInfo={speakerInfo?.affiliation || speakerInfo?.position ? [speakerInfo.affiliation, speakerInfo.position].filter(Boolean).join(' · ') : undefined} />
                 {/* 연사 추천 정보: 운영진만 표시 */}
                 {isStaff && (r.recommendedTopics || r.recommendedSpeakers) && (
                   <div className="mt-2 ml-3 rounded-lg border border-dashed border-amber-300 bg-amber-50/50 px-3 py-2 space-y-1">
@@ -495,7 +498,7 @@ function SeminarDetail({ id }: { id: string }) {
             <Star size={16} />
             세미나 후기
           </h2>
-          <ReviewsSection seminarId={id} isStaff={isStaff} />
+          <ReviewsSection seminarId={id} isStaff={isStaff} speakerInfo={{ name: seminar.speaker, affiliation: seminar.speakerAffiliation, position: seminar.speakerPosition }} />
           <div className="mt-4 text-center">
             <Link href={`/seminars/${id}/review`}>
               <Button variant="outline" size="sm" className="gap-1">
