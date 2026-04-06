@@ -305,7 +305,7 @@ function CertificatePreview({
         <h1
           style={{
             fontSize: "42pt",
-            fontWeight: 800,
+            fontWeight: 900,
             letterSpacing: "0.3em",
             color: accentColor,
             marginBottom: "5mm",
@@ -327,7 +327,7 @@ function CertificatePreview({
           <span
             style={{
               fontSize: "26pt",
-              fontWeight: 800,
+              fontWeight: 900,
               letterSpacing: "0.25em",
               color: "#111",
             }}
@@ -428,7 +428,7 @@ function CertificatePreview({
               <p
                 style={{
                   fontSize: "26px",
-                  fontWeight: 800,
+                  fontWeight: 900,
                   color: accentColor,
                   fontFamily: style.fontFamily,
                   letterSpacing: "0.2em",
@@ -479,10 +479,11 @@ function getDefaultBody(type: CertType, semester: string, seminarTitle: string):
 }
 
 const FONT_PRESETS = [
+  { label: "함렛 (추천·한글 최적)", value: "'Hahmlet', serif" },
+  { label: "Noto Serif 한글", value: "'Noto Serif KR', serif" },
+  { label: "고운바탕", value: "'Gowun Batang', serif" },
   { label: "페이퍼로지 (로컬)", value: "'페이퍼로지 8 ExtraBold', '페이퍼로지 8', serif" },
   { label: "바탕체", value: "'Batang', 'Nanum Myeongjo', serif" },
-  { label: "나눔명조", value: "'Nanum Myeongjo', 'Batang', serif" },
-  { label: "굴림", value: "'Gulim', 'Malgun Gothic', sans-serif" },
 ];
 
 export default function CertificateGenerator() {
@@ -790,8 +791,8 @@ export default function CertificateGenerator() {
             )}
           </div>
 
-          {/* 참석자 → 발급 대상자 선택 */}
-          {seminar && attendees.length > 0 && (
+          {/* 참석자 → 발급 대상자 선택 (감사장은 연사/보조자 대상이므로 참석자 목록 불필요) */}
+          {certType === "completion" && seminar && attendees.length > 0 && (
             <AttendeeSelector
               attendees={attendees}
               seminarId={seminar.id}
