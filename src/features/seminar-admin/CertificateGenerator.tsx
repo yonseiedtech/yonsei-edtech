@@ -301,9 +301,12 @@ function DraggableArea({
     [editable, areaKey, offsetX, offsetY, onDragEnd, onSelect]
   );
 
+  const ox = offsetX || 0;
+  const oy = offsetY || 0;
+
   if (!editable) {
     return (
-      <div style={{ transform: `translate(${offsetX}px, ${offsetY}px)` }}>
+      <div style={{ transform: ox || oy ? `translate(${ox}px, ${oy}px)` : undefined }}>
         {children}
       </div>
     );
@@ -313,7 +316,7 @@ function DraggableArea({
     <div
       onMouseDown={handleMouseDown}
       style={{
-        transform: `translate(${offsetX + localOffset.x}px, ${offsetY + localOffset.y}px)`,
+        transform: `translate(${ox + localOffset.x}px, ${oy + localOffset.y}px)`,
         cursor: "move",
         position: "relative",
         outline: isSelected ? "2px dashed #3b82f6" : "1px dashed transparent",
@@ -360,6 +363,7 @@ function AreaStyleEditor({
           <input
             value={value.fontSize}
             onChange={(e) => update("fontSize", e.target.value)}
+            placeholder="예: 42pt"
             className="mt-0.5 block w-full rounded border px-1.5 py-0.5 text-[11px]"
           />
         </label>
@@ -368,6 +372,7 @@ function AreaStyleEditor({
           <input
             value={value.letterSpacing}
             onChange={(e) => update("letterSpacing", e.target.value)}
+            placeholder="예: 0.3em"
             className="mt-0.5 block w-full rounded border px-1.5 py-0.5 text-[11px]"
           />
         </label>
@@ -376,6 +381,7 @@ function AreaStyleEditor({
           <input
             value={value.lineHeight}
             onChange={(e) => update("lineHeight", e.target.value)}
+            placeholder="예: 2.5"
             className="mt-0.5 block w-full rounded border px-1.5 py-0.5 text-[11px]"
           />
         </label>
@@ -766,7 +772,15 @@ export default function CertificateGenerator() {
     if (typeof window !== "undefined") {
       try {
         const saved = localStorage.getItem(CERT_STYLE_STORAGE_KEY);
-        if (saved) return JSON.parse(saved);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          // 이전 버전에서 저장된 데이터에 누락된 필드(offsetX/Y 등)를 기본값으로 채움
+          const merged = {} as Record<AreaKey, AreaStyle>;
+          for (const k of Object.keys(DEFAULT_AREA_STYLES) as AreaKey[]) {
+            merged[k] = { ...DEFAULT_AREA_STYLES[k], ...(parsed[k] ?? {}) };
+          }
+          return merged;
+        }
       } catch { /* ignore */ }
     }
     return { ...DEFAULT_AREA_STYLES };
