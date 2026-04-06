@@ -710,7 +710,7 @@ export function CertificatePreview({
               <p
                 style={{
                   fontSize: "8px",
-                  color: "#999",
+                  color: "#777",
                   fontFamily: style.fontFamily,
                   letterSpacing: "0.08em",
                   margin: "2px 0 0",
@@ -861,6 +861,11 @@ export default function CertificateGenerator() {
           width: 210mm !important;
           min-height: 297mm !important;
           overflow: visible !important;
+        }
+        #cert-print-container > div { overflow: visible !important; }
+        #cert-print-container [style*="cursor: move"] {
+          cursor: default !important;
+          outline: none !important;
         }
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
       }
