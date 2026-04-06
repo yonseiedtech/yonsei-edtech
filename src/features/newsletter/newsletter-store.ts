@@ -7,10 +7,24 @@ export interface NewsletterSection {
   title: string;
   content: string;
   authorName: string;
+  /** 작성자 유형 */
+  authorType?: string;
+  /** 입학 학기 (예: "2024년 전기") */
+  authorEnrollment?: string;
   /** 섹션 유형 */
   type: "feature" | "interview" | "review" | "column" | "news";
   order: number;
 }
+
+export const AUTHOR_TYPE_LABELS: Record<string, string> = {
+  professor: "교수",
+  representative: "전공대표",
+  assistant: "조교",
+  president: "학회장",
+  staff: "운영진",
+  student: "재학생",
+  alumni: "졸업생",
+};
 
 export interface NewsletterIssue {
   id: string;

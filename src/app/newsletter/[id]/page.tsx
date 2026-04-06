@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import Link from "next/link";
-import { useNewsletters, SECTION_TYPE_LABELS } from "@/features/newsletter/newsletter-store";
+import { useNewsletters, SECTION_TYPE_LABELS, AUTHOR_TYPE_LABELS } from "@/features/newsletter/newsletter-store";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -89,7 +89,19 @@ export default function NewsletterDetailPage({
                       </Badge>
                       <span className="truncate font-medium">{section.title}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground">{section.authorName}</p>
+                    <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+                      <span>{section.authorName}</span>
+                      {section.authorType && (
+                        <Badge variant="secondary" className="text-[10px]">
+                          {AUTHOR_TYPE_LABELS[section.authorType] ?? section.authorType}
+                        </Badge>
+                      )}
+                      {section.authorEnrollment && (
+                        <Badge variant="outline" className="text-[10px]">
+                          {section.authorEnrollment} 입학
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </a>
               ))}
@@ -112,7 +124,19 @@ export default function NewsletterDetailPage({
                 </span>
               </div>
               <h2 className="mt-3 text-2xl font-bold">{section.title}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">글 {section.authorName}</p>
+              <div className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+                <span>글 {section.authorName}</span>
+                {section.authorType && (
+                  <Badge variant="secondary" className="text-[10px]">
+                    {AUTHOR_TYPE_LABELS[section.authorType] ?? section.authorType}
+                  </Badge>
+                )}
+                {section.authorEnrollment && (
+                  <Badge variant="outline" className="text-[10px]">
+                    {section.authorEnrollment} 입학
+                  </Badge>
+                )}
+              </div>
               <div className="mt-6 whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
                 {section.content}
               </div>

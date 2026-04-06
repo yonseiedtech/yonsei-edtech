@@ -198,12 +198,109 @@ async function generateCertificateNo(certType: CertType = "completion"): Promise
 
 /* ─────────────────────────────────────────────
  * 감사장/수료증 프리뷰 — pptx 원본 기반 디자인
- * 폰트: 페이퍼로지 8 ExtraBold (로컬) / 웹 대체
+ * 폰트: 함렛 / Noto Serif KR / 고운바탕 등 한글 웹폰트
  * ───────────────────────────────────────────── */
 
 interface CertStyle {
   fontFamily: string;
   borderColor: string;
+}
+
+/** 영역별 세부 스타일 */
+interface AreaStyle {
+  fontSize: string;
+  letterSpacing: string;
+  lineHeight: string;
+  marginTop: string;
+  marginBottom: string;
+}
+
+type AreaKey = "certNo" | "title" | "name" | "body" | "date" | "org";
+
+const AREA_LABELS: Record<AreaKey, string> = {
+  certNo: "증서 번호",
+  title: "제목",
+  name: "수여자 이름",
+  body: "본문",
+  date: "날짜",
+  org: "학회명",
+};
+
+const DEFAULT_AREA_STYLES: Record<AreaKey, AreaStyle> = {
+  certNo: { fontSize: "11pt", letterSpacing: "0.08em", lineHeight: "1.4", marginTop: "0mm", marginBottom: "20mm" },
+  title: { fontSize: "42pt", letterSpacing: "0.3em", lineHeight: "1.2", marginTop: "0mm", marginBottom: "5mm" },
+  name: { fontSize: "26pt", letterSpacing: "0.25em", lineHeight: "1.4", marginTop: "0mm", marginBottom: "14mm" },
+  body: { fontSize: "12.5pt", letterSpacing: "0em", lineHeight: "2.5", marginTop: "0mm", marginBottom: "0mm" },
+  date: { fontSize: "13pt", letterSpacing: "0.15em", lineHeight: "1.4", marginTop: "22mm", marginBottom: "0mm" },
+  org: { fontSize: "26px", letterSpacing: "0.2em", lineHeight: "1.2", marginTop: "18mm", marginBottom: "0mm" },
+};
+
+/** 영역별 스타일 편집 컨트롤 */
+function AreaStyleEditor({
+  areaKey,
+  value,
+  onChange,
+}: {
+  areaKey: AreaKey;
+  value: AreaStyle;
+  onChange: (v: AreaStyle) => void;
+}) {
+  const update = (field: keyof AreaStyle, v: string) =>
+    onChange({ ...value, [field]: v });
+
+  return (
+    <div className="rounded-lg border bg-muted/20 p-2.5">
+      <p className="mb-1.5 text-[11px] font-semibold">{AREA_LABELS[areaKey]}</p>
+      <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+        <label className="text-[10px] text-muted-foreground">
+          크기
+          <input
+            value={value.fontSize}
+            onChange={(e) => update("fontSize", e.target.value)}
+            className="mt-0.5 block w-full rounded border px-1.5 py-0.5 text-[11px]"
+          />
+        </label>
+        <label className="text-[10px] text-muted-foreground">
+          자간
+          <input
+            value={value.letterSpacing}
+            onChange={(e) => update("letterSpacing", e.target.value)}
+            className="mt-0.5 block w-full rounded border px-1.5 py-0.5 text-[11px]"
+          />
+        </label>
+        <label className="text-[10px] text-muted-foreground">
+          줄간격
+          <input
+            value={value.lineHeight}
+            onChange={(e) => update("lineHeight", e.target.value)}
+            className="mt-0.5 block w-full rounded border px-1.5 py-0.5 text-[11px]"
+          />
+        </label>
+        <label className="text-[10px] text-muted-foreground">
+          상단 여백
+          <input
+            value={value.marginTop}
+            onChange={(e) => update("marginTop", e.target.value)}
+            className="mt-0.5 block w-full rounded border px-1.5 py-0.5 text-[11px]"
+          />
+        </label>
+        <label className="text-[10px] text-muted-foreground">
+          하단 여백
+          <input
+            value={value.marginBottom}
+            onChange={(e) => update("marginBottom", e.target.value)}
+            className="mt-0.5 block w-full rounded border px-1.5 py-0.5 text-[11px]"
+          />
+        </label>
+        <button
+          onClick={() => onChange(DEFAULT_AREA_STYLES[areaKey])}
+          className="mt-auto rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/80"
+        >
+          초기화
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function CertificatePreview({
@@ -215,6 +312,7 @@ function CertificatePreview({
   certificateNo,
   bodyText,
   style,
+  areaStyles,
 }: {
   type: CertType;
   seminarTitle: string;
@@ -224,10 +322,12 @@ function CertificatePreview({
   certificateNo: string;
   bodyText: string;
   style: CertStyle;
+  areaStyles: Record<AreaKey, AreaStyle>;
 }) {
   const isCompletion = type === "completion";
   const title = isCompletion ? "수 료 증" : "감사장";
   const accentColor = style.borderColor;
+  const a = areaStyles;
 
   return (
     <div
@@ -288,13 +388,14 @@ function CertificatePreview({
         style={{ padding: "22mm 36mm 18mm" }}
       >
         {/* 증서 번호 */}
-        <div style={{ alignSelf: "flex-start", marginBottom: "20mm" }}>
+        <div style={{ alignSelf: "flex-start", marginTop: a.certNo.marginTop, marginBottom: a.certNo.marginBottom }}>
           <span
             style={{
-              fontSize: "11pt",
+              fontSize: a.certNo.fontSize,
               fontWeight: 700,
               color: "#666",
-              letterSpacing: "0.08em",
+              letterSpacing: a.certNo.letterSpacing,
+              lineHeight: a.certNo.lineHeight,
             }}
           >
             제 {certificateNo || "0"} 호
@@ -304,11 +405,13 @@ function CertificatePreview({
         {/* 제목 */}
         <h1
           style={{
-            fontSize: "42pt",
+            fontSize: a.title.fontSize,
             fontWeight: 900,
-            letterSpacing: "0.3em",
+            letterSpacing: a.title.letterSpacing,
+            lineHeight: a.title.lineHeight,
             color: accentColor,
-            marginBottom: "5mm",
+            marginTop: a.title.marginTop,
+            marginBottom: a.title.marginBottom,
             textAlign: "center",
           }}
         >
@@ -323,12 +426,13 @@ function CertificatePreview({
         </div>
 
         {/* 수여자 이름 */}
-        <div style={{ marginBottom: "14mm", textAlign: "right", width: "100%" }}>
+        <div style={{ marginTop: a.name.marginTop, marginBottom: a.name.marginBottom, textAlign: "right", width: "100%" }}>
           <span
             style={{
-              fontSize: "26pt",
+              fontSize: a.name.fontSize,
               fontWeight: 900,
-              letterSpacing: "0.25em",
+              letterSpacing: a.name.letterSpacing,
+              lineHeight: a.name.lineHeight,
               color: "#111",
             }}
           >
@@ -364,12 +468,15 @@ function CertificatePreview({
         <div
           className="relative"
           style={{
-            fontSize: "12.5pt",
-            lineHeight: "2.5",
+            fontSize: a.body.fontSize,
+            lineHeight: a.body.lineHeight,
+            letterSpacing: a.body.letterSpacing,
             textAlign: "justify",
             width: "100%",
             maxWidth: "460px",
             margin: "0 auto",
+            marginTop: a.body.marginTop,
+            marginBottom: a.body.marginBottom,
             wordBreak: "keep-all",
             color: "#222",
             fontWeight: 700,
@@ -383,10 +490,12 @@ function CertificatePreview({
         {/* 날짜 */}
         <p
           style={{
-            fontSize: "13pt",
+            fontSize: a.date.fontSize,
             fontWeight: 700,
-            marginTop: "22mm",
-            letterSpacing: "0.15em",
+            marginTop: a.date.marginTop,
+            marginBottom: a.date.marginBottom,
+            letterSpacing: a.date.letterSpacing,
+            lineHeight: a.date.lineHeight,
             textAlign: "center",
             color: "#222",
           }}
@@ -397,7 +506,8 @@ function CertificatePreview({
         {/* ─── 하단 서명 영역 ─── */}
         <div
           style={{
-            marginTop: "18mm",
+            marginTop: a.org.marginTop,
+            marginBottom: a.org.marginBottom,
             width: "100%",
             display: "flex",
             flexDirection: "column",
@@ -427,12 +537,12 @@ function CertificatePreview({
             <div style={{ textAlign: "center" }}>
               <p
                 style={{
-                  fontSize: "26px",
+                  fontSize: a.org.fontSize,
                   fontWeight: 900,
                   color: accentColor,
                   fontFamily: style.fontFamily,
-                  letterSpacing: "0.2em",
-                  lineHeight: 1.2,
+                  letterSpacing: a.org.letterSpacing,
+                  lineHeight: a.org.lineHeight,
                   margin: 0,
                 }}
               >
@@ -498,7 +608,13 @@ export default function CertificateGenerator() {
   const [bodyText, setBodyText] = useState("");
   const [fontFamily, setFontFamily] = useState(FONT_PRESETS[0].value);
   const [borderColor, setBorderColor] = useState("#003378");
+  const [areaStyles, setAreaStyles] = useState<Record<AreaKey, AreaStyle>>({ ...DEFAULT_AREA_STYLES });
+  const [expandedArea, setExpandedArea] = useState<AreaKey | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
+
+  function updateAreaStyle(key: AreaKey, value: AreaStyle) {
+    setAreaStyles((prev) => ({ ...prev, [key]: value }));
+  }
 
   const seminar = seminars.find((s) => s.id === selectedId);
   const { attendees } = useAttendees(selectedId ?? "");
@@ -774,6 +890,48 @@ export default function CertificateGenerator() {
                   기본 텍스트로 초기화
                 </Button>
               </div>
+
+              {/* 영역별 세부 스타일 */}
+              <div>
+                <label className="mb-1.5 block text-xs font-medium">영역별 세부 조절</label>
+                <div className="space-y-1">
+                  {(Object.keys(AREA_LABELS) as AreaKey[]).map((key) => (
+                    <div key={key}>
+                      <button
+                        onClick={() => setExpandedArea(expandedArea === key ? null : key)}
+                        className={cn(
+                          "flex w-full items-center justify-between rounded-md border px-2.5 py-1.5 text-left text-[11px] font-medium transition-colors",
+                          expandedArea === key
+                            ? "border-primary/40 bg-primary/5 text-primary"
+                            : "hover:bg-muted/50"
+                        )}
+                      >
+                        {AREA_LABELS[key]}
+                        <span className="text-[10px] text-muted-foreground">
+                          {areaStyles[key].fontSize} · {areaStyles[key].letterSpacing}
+                        </span>
+                      </button>
+                      {expandedArea === key && (
+                        <div className="mt-1">
+                          <AreaStyleEditor
+                            areaKey={key}
+                            value={areaStyles[key]}
+                            onChange={(v) => updateAreaStyle(key, v)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-1.5 h-7 w-full text-xs"
+                  onClick={() => setAreaStyles({ ...DEFAULT_AREA_STYLES })}
+                >
+                  모든 영역 초기화
+                </Button>
+              </div>
             </div>
           )}
 
@@ -850,6 +1008,7 @@ export default function CertificateGenerator() {
             certificateNo={certificateNo}
             bodyText={currentBody}
             style={{ fontFamily, borderColor }}
+            areaStyles={areaStyles}
           />
         </div>
       </div>
