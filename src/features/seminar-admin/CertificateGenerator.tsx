@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useSeminars, useAttendees } from "@/features/seminar/useSeminar";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { certificatesApi } from "@/lib/bkend";
@@ -213,6 +213,8 @@ interface AreaStyle {
   lineHeight: string;
   marginTop: string;
   marginBottom: string;
+  offsetX: number; // px 단위 드래그 오프셋
+  offsetY: number;
 }
 
 type AreaKey = "certNo" | "title" | "name" | "body" | "date" | "org";
@@ -227,13 +229,114 @@ const AREA_LABELS: Record<AreaKey, string> = {
 };
 
 const DEFAULT_AREA_STYLES: Record<AreaKey, AreaStyle> = {
-  certNo: { fontSize: "11pt", letterSpacing: "0.08em", lineHeight: "1.4", marginTop: "0mm", marginBottom: "20mm" },
-  title: { fontSize: "42pt", letterSpacing: "0.3em", lineHeight: "1.2", marginTop: "0mm", marginBottom: "5mm" },
-  name: { fontSize: "26pt", letterSpacing: "0.25em", lineHeight: "1.4", marginTop: "0mm", marginBottom: "14mm" },
-  body: { fontSize: "12.5pt", letterSpacing: "0em", lineHeight: "2.5", marginTop: "0mm", marginBottom: "0mm" },
-  date: { fontSize: "13pt", letterSpacing: "0.15em", lineHeight: "1.4", marginTop: "22mm", marginBottom: "0mm" },
-  org: { fontSize: "26px", letterSpacing: "0.2em", lineHeight: "1.2", marginTop: "18mm", marginBottom: "0mm" },
+  certNo: { fontSize: "11pt", letterSpacing: "0.08em", lineHeight: "1.4", marginTop: "0mm", marginBottom: "20mm", offsetX: 0, offsetY: 0 },
+  title: { fontSize: "42pt", letterSpacing: "0.3em", lineHeight: "1.2", marginTop: "0mm", marginBottom: "5mm", offsetX: 0, offsetY: 0 },
+  name: { fontSize: "26pt", letterSpacing: "0.25em", lineHeight: "1.4", marginTop: "0mm", marginBottom: "14mm", offsetX: 0, offsetY: 0 },
+  body: { fontSize: "12.5pt", letterSpacing: "0em", lineHeight: "2.5", marginTop: "0mm", marginBottom: "0mm", offsetX: 0, offsetY: 0 },
+  date: { fontSize: "13pt", letterSpacing: "0.15em", lineHeight: "1.4", marginTop: "22mm", marginBottom: "0mm", offsetX: 0, offsetY: 0 },
+  org: { fontSize: "26px", letterSpacing: "0.2em", lineHeight: "1.2", marginTop: "18mm", marginBottom: "0mm", offsetX: 0, offsetY: 0 },
 };
+
+const CERT_STYLE_STORAGE_KEY = "cert-area-styles";
+
+/** 드래그 가능한 영역 래퍼 */
+function DraggableArea({
+  areaKey,
+  offsetX,
+  offsetY,
+  editable,
+  onDragEnd,
+  selectedArea,
+  onSelect,
+  children,
+}: {
+  areaKey: AreaKey;
+  offsetX: number;
+  offsetY: number;
+  editable: boolean;
+  onDragEnd: (key: AreaKey, dx: number, dy: number) => void;
+  selectedArea: AreaKey | null;
+  onSelect: (key: AreaKey) => void;
+  children: React.ReactNode;
+}) {
+  const dragging = useRef(false);
+  const startPos = useRef({ x: 0, y: 0 });
+  const startOffset = useRef({ x: 0, y: 0 });
+  const [localOffset, setLocalOffset] = useState({ x: 0, y: 0 });
+  const isSelected = selectedArea === areaKey;
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (!editable) return;
+      e.preventDefault();
+      e.stopPropagation();
+      onSelect(areaKey);
+      dragging.current = true;
+      startPos.current = { x: e.clientX, y: e.clientY };
+      startOffset.current = { x: offsetX, y: offsetY };
+      setLocalOffset({ x: 0, y: 0 });
+
+      const scale = 0.6;
+      const handleMouseMove = (ev: MouseEvent) => {
+        if (!dragging.current) return;
+        const dx = (ev.clientX - startPos.current.x) / scale;
+        const dy = (ev.clientY - startPos.current.y) / scale;
+        setLocalOffset({ x: dx, y: dy });
+      };
+
+      const handleMouseUp = (ev: MouseEvent) => {
+        if (!dragging.current) return;
+        dragging.current = false;
+        const dx = (ev.clientX - startPos.current.x) / scale;
+        const dy = (ev.clientY - startPos.current.y) / scale;
+        setLocalOffset({ x: 0, y: 0 });
+        onDragEnd(areaKey, startOffset.current.x + dx, startOffset.current.y + dy);
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+      };
+
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    },
+    [editable, areaKey, offsetX, offsetY, onDragEnd, onSelect]
+  );
+
+  if (!editable) {
+    return (
+      <div style={{ transform: `translate(${offsetX}px, ${offsetY}px)` }}>
+        {children}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      onMouseDown={handleMouseDown}
+      style={{
+        transform: `translate(${offsetX + localOffset.x}px, ${offsetY + localOffset.y}px)`,
+        cursor: "move",
+        position: "relative",
+        outline: isSelected ? "2px dashed #3b82f6" : "1px dashed transparent",
+        outlineOffset: "3px",
+        borderRadius: "4px",
+        transition: dragging.current ? "none" : "outline-color 0.15s",
+      }}
+      onMouseEnter={(e) => {
+        if (!dragging.current) (e.currentTarget as HTMLElement).style.outlineColor = "#93c5fd";
+      }}
+      onMouseLeave={(e) => {
+        if (!dragging.current && !isSelected) (e.currentTarget as HTMLElement).style.outlineColor = "transparent";
+      }}
+    >
+      {isSelected && (
+        <span className="absolute -top-4 left-0 rounded bg-blue-500 px-1.5 py-0.5 text-[9px] font-medium text-white" style={{ zIndex: 10 }}>
+          {AREA_LABELS[areaKey]}
+        </span>
+      )}
+      {children}
+    </div>
+  );
+}
 
 /** 영역별 스타일 편집 컨트롤 */
 function AreaStyleEditor({
@@ -292,9 +395,27 @@ function AreaStyleEditor({
             className="mt-0.5 block w-full rounded border px-1.5 py-0.5 text-[11px]"
           />
         </label>
+        <label className="text-[10px] text-muted-foreground">
+          X 위치 (px)
+          <input
+            type="number"
+            value={Math.round(value.offsetX)}
+            onChange={(e) => onChange({ ...value, offsetX: Number(e.target.value) || 0 })}
+            className="mt-0.5 block w-full rounded border px-1.5 py-0.5 text-[11px]"
+          />
+        </label>
+        <label className="text-[10px] text-muted-foreground">
+          Y 위치 (px)
+          <input
+            type="number"
+            value={Math.round(value.offsetY)}
+            onChange={(e) => onChange({ ...value, offsetY: Number(e.target.value) || 0 })}
+            className="mt-0.5 block w-full rounded border px-1.5 py-0.5 text-[11px]"
+          />
+        </label>
         <button
           onClick={() => onChange(DEFAULT_AREA_STYLES[areaKey])}
-          className="mt-auto rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/80"
+          className="col-span-2 mt-1 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/80"
         >
           초기화
         </button>
@@ -313,6 +434,10 @@ function CertificatePreview({
   bodyText,
   style,
   areaStyles,
+  editable = false,
+  selectedArea = null,
+  onAreaDrag,
+  onSelectArea,
 }: {
   type: CertType;
   seminarTitle: string;
@@ -323,11 +448,25 @@ function CertificatePreview({
   bodyText: string;
   style: CertStyle;
   areaStyles: Record<AreaKey, AreaStyle>;
+  editable?: boolean;
+  selectedArea?: AreaKey | null;
+  onAreaDrag?: (key: AreaKey, x: number, y: number) => void;
+  onSelectArea?: (key: AreaKey) => void;
 }) {
   const isCompletion = type === "completion";
   const title = isCompletion ? "수 료 증" : "감사장";
   const accentColor = style.borderColor;
   const a = areaStyles;
+
+  const dragProps = (key: AreaKey) => ({
+    areaKey: key,
+    offsetX: a[key].offsetX,
+    offsetY: a[key].offsetY,
+    editable,
+    selectedArea,
+    onSelect: onSelectArea ?? (() => {}),
+    onDragEnd: onAreaDrag ?? (() => {}),
+  });
 
   return (
     <div
@@ -388,35 +527,39 @@ function CertificatePreview({
         style={{ padding: "22mm 36mm 18mm" }}
       >
         {/* 증서 번호 */}
-        <div style={{ alignSelf: "flex-start", marginTop: a.certNo.marginTop, marginBottom: a.certNo.marginBottom }}>
-          <span
-            style={{
-              fontSize: a.certNo.fontSize,
-              fontWeight: 700,
-              color: "#666",
-              letterSpacing: a.certNo.letterSpacing,
-              lineHeight: a.certNo.lineHeight,
-            }}
-          >
-            제 {certificateNo || "0"} 호
-          </span>
-        </div>
+        <DraggableArea {...dragProps("certNo")}>
+          <div style={{ alignSelf: "flex-start", marginTop: a.certNo.marginTop, marginBottom: a.certNo.marginBottom }}>
+            <span
+              style={{
+                fontSize: a.certNo.fontSize,
+                fontWeight: 700,
+                color: "#666",
+                letterSpacing: a.certNo.letterSpacing,
+                lineHeight: a.certNo.lineHeight,
+              }}
+            >
+              제 {certificateNo || "0"} 호
+            </span>
+          </div>
+        </DraggableArea>
 
         {/* 제목 */}
-        <h1
-          style={{
-            fontSize: a.title.fontSize,
-            fontWeight: 900,
-            letterSpacing: a.title.letterSpacing,
-            lineHeight: a.title.lineHeight,
-            color: accentColor,
-            marginTop: a.title.marginTop,
-            marginBottom: a.title.marginBottom,
-            textAlign: "center",
-          }}
-        >
-          {title}
-        </h1>
+        <DraggableArea {...dragProps("title")}>
+          <h1
+            style={{
+              fontSize: a.title.fontSize,
+              fontWeight: 900,
+              letterSpacing: a.title.letterSpacing,
+              lineHeight: a.title.lineHeight,
+              color: accentColor,
+              marginTop: a.title.marginTop,
+              marginBottom: a.title.marginBottom,
+              textAlign: "center",
+            }}
+          >
+            {title}
+          </h1>
+        </DraggableArea>
 
         {/* 제목 하단 장식선 */}
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "18mm" }}>
@@ -426,29 +569,31 @@ function CertificatePreview({
         </div>
 
         {/* 수여자 이름 */}
-        <div style={{ marginTop: a.name.marginTop, marginBottom: a.name.marginBottom, textAlign: "right", width: "100%" }}>
-          <span
-            style={{
-              fontSize: a.name.fontSize,
-              fontWeight: 900,
-              letterSpacing: a.name.letterSpacing,
-              lineHeight: a.name.lineHeight,
-              color: "#111",
-            }}
-          >
-            {recipientName || "___________"}
-          </span>
-          <span
-            style={{
-              fontSize: "13pt",
-              marginLeft: "6px",
-              fontWeight: 600,
-              color: "#444",
-            }}
-          >
-            선생님
-          </span>
-        </div>
+        <DraggableArea {...dragProps("name")}>
+          <div style={{ marginTop: a.name.marginTop, marginBottom: a.name.marginBottom, textAlign: "right", width: "100%" }}>
+            <span
+              style={{
+                fontSize: a.name.fontSize,
+                fontWeight: 900,
+                letterSpacing: a.name.letterSpacing,
+                lineHeight: a.name.lineHeight,
+                color: "#111",
+              }}
+            >
+              {recipientName || "___________"}
+            </span>
+            <span
+              style={{
+                fontSize: "13pt",
+                marginLeft: "6px",
+                fontWeight: 600,
+                color: "#444",
+              }}
+            >
+              선생님
+            </span>
+          </div>
+        </DraggableArea>
 
         {/* 워터마크 엠블럼 */}
         <div
@@ -465,56 +610,61 @@ function CertificatePreview({
         </div>
 
         {/* 본문 */}
-        <div
-          className="relative"
-          style={{
-            fontSize: a.body.fontSize,
-            lineHeight: a.body.lineHeight,
-            letterSpacing: a.body.letterSpacing,
-            textAlign: "justify",
-            width: "100%",
-            maxWidth: "460px",
-            margin: "0 auto",
-            marginTop: a.body.marginTop,
-            marginBottom: a.body.marginBottom,
-            wordBreak: "keep-all",
-            color: "#222",
-            fontWeight: 700,
-          }}
-        >
-          <p style={{ textIndent: "1em", whiteSpace: "pre-wrap" }}>
-            {bodyText}
-          </p>
-        </div>
+        <DraggableArea {...dragProps("body")}>
+          <div
+            className="relative"
+            style={{
+              fontSize: a.body.fontSize,
+              lineHeight: a.body.lineHeight,
+              letterSpacing: a.body.letterSpacing,
+              textAlign: "justify",
+              width: "100%",
+              maxWidth: "460px",
+              margin: "0 auto",
+              marginTop: a.body.marginTop,
+              marginBottom: a.body.marginBottom,
+              wordBreak: "keep-all",
+              color: "#222",
+              fontWeight: 700,
+            }}
+          >
+            <p style={{ textIndent: "1em", whiteSpace: "pre-wrap" }}>
+              {bodyText}
+            </p>
+          </div>
+        </DraggableArea>
 
         {/* 날짜 */}
-        <p
-          style={{
-            fontSize: a.date.fontSize,
-            fontWeight: 700,
-            marginTop: a.date.marginTop,
-            marginBottom: a.date.marginBottom,
-            letterSpacing: a.date.letterSpacing,
-            lineHeight: a.date.lineHeight,
-            textAlign: "center",
-            color: "#222",
-          }}
-        >
-          {seminarDate}
-        </p>
+        <DraggableArea {...dragProps("date")}>
+          <p
+            style={{
+              fontSize: a.date.fontSize,
+              fontWeight: 700,
+              marginTop: a.date.marginTop,
+              marginBottom: a.date.marginBottom,
+              letterSpacing: a.date.letterSpacing,
+              lineHeight: a.date.lineHeight,
+              textAlign: "center",
+              color: "#222",
+            }}
+          >
+            {seminarDate}
+          </p>
+        </DraggableArea>
 
         {/* ─── 하단 서명 영역 ─── */}
-        <div
-          style={{
-            marginTop: a.org.marginTop,
-            marginBottom: a.org.marginBottom,
-            width: "100%",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "0",
-          }}
-        >
+        <DraggableArea {...dragProps("org")}>
+          <div
+            style={{
+              marginTop: a.org.marginTop,
+              marginBottom: a.org.marginBottom,
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "0",
+            }}
+          >
           {/* 구분선 */}
           <div style={{ width: "50px", height: "1.5px", background: accentColor, opacity: 0.25, marginBottom: "14mm" }} />
 
@@ -569,6 +719,7 @@ function CertificatePreview({
             />
           </div>
         </div>
+        </DraggableArea>
       </div>
     </div>
   );
@@ -608,12 +759,43 @@ export default function CertificateGenerator() {
   const [bodyText, setBodyText] = useState("");
   const [fontFamily, setFontFamily] = useState(FONT_PRESETS[0].value);
   const [borderColor, setBorderColor] = useState("#003378");
-  const [areaStyles, setAreaStyles] = useState<Record<AreaKey, AreaStyle>>({ ...DEFAULT_AREA_STYLES });
+  const [areaStyles, setAreaStyles] = useState<Record<AreaKey, AreaStyle>>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem(CERT_STYLE_STORAGE_KEY);
+        if (saved) return JSON.parse(saved);
+      } catch { /* ignore */ }
+    }
+    return { ...DEFAULT_AREA_STYLES };
+  });
   const [expandedArea, setExpandedArea] = useState<AreaKey | null>(null);
+  const [selectedArea, setSelectedArea] = useState<AreaKey | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
   function updateAreaStyle(key: AreaKey, value: AreaStyle) {
     setAreaStyles((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function handleAreaDrag(key: AreaKey, x: number, y: number) {
+    setAreaStyles((prev) => ({
+      ...prev,
+      [key]: { ...prev[key], offsetX: Math.round(x), offsetY: Math.round(y) },
+    }));
+  }
+
+  function saveAreaStyles() {
+    try {
+      localStorage.setItem(CERT_STYLE_STORAGE_KEY, JSON.stringify(areaStyles));
+      toast.success("스타일 설정이 저장되었습니다.");
+    } catch {
+      toast.error("저장에 실패했습니다.");
+    }
+  }
+
+  function resetAndClearStyles() {
+    setAreaStyles({ ...DEFAULT_AREA_STYLES });
+    localStorage.removeItem(CERT_STYLE_STORAGE_KEY);
+    toast.success("모든 스타일이 초기화되었습니다.");
   }
 
   const seminar = seminars.find((s) => s.id === selectedId);
@@ -923,14 +1105,28 @@ export default function CertificateGenerator() {
                     </div>
                   ))}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="mt-1.5 h-7 w-full text-xs"
-                  onClick={() => setAreaStyles({ ...DEFAULT_AREA_STYLES })}
-                >
-                  모든 영역 초기화
-                </Button>
+                <div className="mt-2 flex gap-1.5">
+                  <Button
+                    size="sm"
+                    className="h-7 flex-1 text-xs"
+                    onClick={saveAreaStyles}
+                  >
+                    스타일 저장
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 flex-1 text-xs"
+                    onClick={resetAndClearStyles}
+                  >
+                    전체 초기화
+                  </Button>
+                </div>
+                {showEditMode && (
+                  <p className="mt-1 text-[10px] text-muted-foreground">
+                    미리보기에서 영역을 드래그하여 위치를 조절할 수 있습니다.
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -1009,6 +1205,13 @@ export default function CertificateGenerator() {
             bodyText={currentBody}
             style={{ fontFamily, borderColor }}
             areaStyles={areaStyles}
+            editable={showEditMode}
+            selectedArea={selectedArea}
+            onAreaDrag={handleAreaDrag}
+            onSelectArea={(key) => {
+              setSelectedArea(key);
+              setExpandedArea(key);
+            }}
           />
         </div>
       </div>
