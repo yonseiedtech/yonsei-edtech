@@ -424,7 +424,10 @@ function AreaStyleEditor({
   );
 }
 
-function CertificatePreview({
+export { DEFAULT_AREA_STYLES };
+export type { AreaKey, AreaStyle, CertStyle };
+
+export function CertificatePreview({
   type,
   seminarTitle,
   seminarDate,
@@ -725,14 +728,14 @@ function CertificatePreview({
   );
 }
 
-function inferSemester(dateStr: string): string {
+export function inferSemester(dateStr: string): string {
   const d = new Date(dateStr);
   const year = d.getFullYear();
   const month = d.getMonth() + 1;
   return `${year}년 ${month >= 3 && month <= 8 ? "1" : "2"}학기`;
 }
 
-function getDefaultBody(type: CertType, semester: string, seminarTitle: string): string {
+export function getDefaultBody(type: CertType, semester: string, seminarTitle: string): string {
   if (type === "completion") {
     return `귀하께서는 ${semester} 연세교육공학회에서 구성원들의 교육공학 핵심 역량강화를 위하여 주관한 연세교육공학 학술대회 <${seminarTitle || "___"}>에 참석하여 소정의 과정을 이수하였기에 이 수료증을 수여합니다.`;
   }

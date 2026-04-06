@@ -14,60 +14,17 @@ import {
 import { Award, Heart, Trash2, Eye, Printer } from "lucide-react";
 import { toast } from "sonner";
 import type { Certificate } from "@/types";
+import {
+  CertificatePreview,
+  DEFAULT_AREA_STYLES,
+  getDefaultBody,
+  inferSemester,
+} from "@/features/seminar-admin/CertificateGenerator";
 
 type TypeFilter = "all" | "completion" | "appreciation";
 
-function spacedName(name: string): string {
-  return name.split("").join("\u2002");
-}
-
-/** 미리보기용 증서 렌더 */
-function CertPreview({ cert }: { cert: Certificate }) {
-  const isCompletion = cert.type === "completion";
-  const title = isCompletion ? "수 료 증" : "감 사 장";
-  const color = "#003378";
-  const date = cert.issuedAt ? new Date(cert.issuedAt).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" }) : "";
-
-  return (
-    <div className="mx-auto w-full max-w-md rounded-sm bg-white p-4" style={{ fontFamily: "'Batang', 'Nanum Myeongjo', serif" }}>
-      <div className="rounded-sm p-4" style={{ border: `3px double ${color}` }}>
-        <div className="flex flex-col items-center gap-4 p-4 text-center" style={{ border: `1px solid ${color}` }}>
-          {/* 증서번호 */}
-          <p className="self-end text-[10px] text-gray-400">제 {cert.certificateNo} 호</p>
-
-          {/* 제목 */}
-          <h1 className="text-2xl font-extrabold tracking-[0.3em]" style={{ color }}>{title}</h1>
-
-          {/* 수여자 */}
-          <div className="w-full text-right">
-            <span className="text-lg font-extrabold">{spacedName(cert.recipientName)}</span>
-            <span className="ml-2 text-sm">선생님</span>
-          </div>
-
-          {/* 구분선 */}
-          <div className="w-3/5" style={{ height: "1px", background: color }} />
-
-          {/* 본문 */}
-          <p className="px-2 text-xs leading-7" style={{ textAlign: "justify" }}>
-            {isCompletion
-              ? `위 사람은 연세교육공학회가 주관한 「${cert.seminarTitle}」 세미나에 참석하여 소정의 과정을 성실히 수료하였기에 이 증서를 수여합니다.`
-              : `위 사람은 연세교육공학회가 주관한 「${cert.seminarTitle}」에서 귀중한 시간을 내어 발표해주시고 학문적 교류에 기여해주셨기에 깊은 감사의 뜻을 담아 이 감사장을 드립니다.`
-            }
-          </p>
-
-          {/* 날짜 */}
-          <p className="text-xs text-gray-500">{date}</p>
-
-          {/* 학회명 */}
-          <div className="mt-2">
-            <p className="text-sm font-bold" style={{ color }}>연세교육공학회</p>
-            <p className="text-[9px] text-gray-400">Yonsei Educational Technology Society</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+const FONT_DEFAULT = "'Hahmlet', serif";
+const BORDER_COLOR = "#003378";
 
 export default function CertificatesPage() {
   const { seminars } = useSeminars();
@@ -98,6 +55,32 @@ export default function CertificatesPage() {
 
   function handlePrint() {
     window.print();
+  }
+
+  // CertificatePreview용 props 생성
+  function buildPreviewProps(cert: Certificate) {
+    const seminar = seminars.find((s) => s.id === cert.seminarId);
+    const dateStr = cert.issuedAt || new Date().toISOString();
+    const semester = inferSemester(dateStr);
+    const seminarDate = new Date(dateStr).toLocaleDateString("ko-KR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    const certType = cert.type as "completion" | "appreciation";
+    const bodyText = getDefaultBody(certType, semester, cert.seminarTitle || seminar?.title || "");
+
+    return {
+      type: certType,
+      seminarTitle: cert.seminarTitle || seminar?.title || "",
+      seminarDate,
+      semester,
+      recipientName: cert.recipientName,
+      certificateNo: cert.certificateNo || "",
+      bodyText,
+      style: { fontFamily: FONT_DEFAULT, borderColor: BORDER_COLOR },
+      areaStyles: DEFAULT_AREA_STYLES,
+    };
   }
 
   return (
@@ -184,7 +167,7 @@ export default function CertificatesPage() {
 
       {/* 미리보기 Dialog */}
       <Dialog open={!!previewCert} onOpenChange={(open) => !open && setPreviewCert(null)}>
-        <DialogContent className="max-w-lg sm:max-w-xl">
+        <DialogContent className="max-h-[90vh] overflow-auto sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {previewCert?.type === "completion" ? <Award size={18} /> : <Heart size={18} />}
@@ -192,7 +175,14 @@ export default function CertificatesPage() {
               <span className="text-xs font-normal text-muted-foreground">({previewCert?.certificateNo})</span>
             </DialogTitle>
           </DialogHeader>
-          {previewCert && <CertPreview cert={previewCert} />}
+          {previewCert && (
+            <div
+              className="overflow-auto rounded-lg border"
+              style={{ transform: "scale(0.5)", transformOrigin: "top left", width: "200%", maxHeight: "70vh" }}
+            >
+              <CertificatePreview {...buildPreviewProps(previewCert)} />
+            </div>
+          )}
           <div className="flex justify-end gap-2">
             <Button variant="outline" size="sm" onClick={() => setPreviewCert(null)}>닫기</Button>
             <Button size="sm" onClick={handlePrint}><Printer size={14} className="mr-1" />인쇄</Button>
