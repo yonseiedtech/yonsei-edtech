@@ -151,5 +151,87 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow write: if isAuthenticated() && isStaffOrAbove();
     }
+
+    // ─── Newsletters (학회보) ───
+    match /newsletters/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isStaffOrAbove();
+    }
+
+    // ─── Activity Progress (활동 진행현황) ───
+    match /activity_progress/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isStaffOrAbove();
+    }
+
+    // ─── Activity Materials (활동 자료) ───
+    match /activity_materials/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // ─── Email Logs (이메일 발송 기록) ───
+    match /email_logs/{docId} {
+      allow read: if isAuthenticated() && isStaffOrAbove();
+      allow write: if isAuthenticated() && isStaffOrAbove();
+    }
+
+    // ─── Notifications (알림) ───
+    match /notifications/{docId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
+    }
+
+    // ─── Admin Todos (할일) ───
+    match /admin_todos/{docId} {
+      allow read: if isAuthenticated() && isStaffOrAbove();
+      allow write: if isAuthenticated() && isStaffOrAbove();
+    }
+
+    // ─── Polls (투표) ───
+    match /polls/{docId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isStaffOrAbove();
+      allow update, delete: if isAuthenticated() && isStaffOrAbove();
+    }
+
+    // ─── Poll Responses (투표 응답) ───
+    match /poll_responses/{docId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
+    }
+
+    // ─── Photo Albums (갤러리 앨범) ───
+    match /photo_albums/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isStaffOrAbove();
+    }
+
+    // ─── Photos (갤러리 사진) ───
+    match /photos/{docId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated()
+        && (resource.data.uploadedBy == request.auth.uid || isStaffOrAbove());
+    }
+
+    // ─── Seminar Waitlist (세미나 대기자) ───
+    match /seminar_waitlist/{docId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
+    }
+
+    // ─── Audit Logs (감사 로그) ───
+    match /audit_logs/{docId} {
+      allow read: if isAuthenticated()
+        && getUserRole() in ['president', 'admin'];
+      allow create: if isAuthenticated() && isStaffOrAbove();
+    }
   }
 }

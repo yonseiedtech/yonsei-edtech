@@ -8,7 +8,7 @@ import { usePastPresidents } from "@/features/site-settings/useSiteContent";
 import { isAtLeast } from "@/lib/permissions";
 import { Badge } from "@/components/ui/badge";
 import { Shield, Lock, Mail } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatGeneration } from "@/lib/utils";
 import { ROLE_LABELS } from "@/types";
 import type { User, ContactVisibility } from "@/types";
 
@@ -119,7 +119,7 @@ function DirectoryContent() {
                             <td className="px-2 py-2 sm:px-4 sm:py-3">
                               <Badge variant="secondary">{ROLE_LABELS[m.role]}</Badge>
                             </td>
-                            <td className="px-2 py-2 sm:px-4 sm:py-3">{m.generation}기</td>
+                            <td className="px-2 py-2 sm:px-4 sm:py-3">{formatGeneration(m.generation, m.enrollmentYear, m.enrollmentHalf)}</td>
                             <td className="px-2 py-2 sm:px-4 sm:py-3 text-muted-foreground">
                               {[m.affiliation, m.position].filter(Boolean).join(" · ")}
                             </td>
@@ -175,7 +175,7 @@ function DirectoryContent() {
                         {filteredAdvisors.map((m) => (
                           <tr key={m.id}>
                             <td className="px-2 py-2 sm:px-4 sm:py-3 font-medium">{m.name}</td>
-                            <td className="px-2 py-2 sm:px-4 sm:py-3">{m.generation}기</td>
+                            <td className="px-2 py-2 sm:px-4 sm:py-3">{formatGeneration(m.generation, m.enrollmentYear, m.enrollmentHalf)}</td>
                             <td className="px-2 py-2 sm:px-4 sm:py-3 text-muted-foreground">
                               {[m.affiliation, m.position].filter(Boolean).join(" · ")}
                             </td>

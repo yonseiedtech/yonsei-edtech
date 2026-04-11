@@ -32,6 +32,8 @@ import type {
   User, Post, Comment, Seminar, SeminarSession, SeminarAttendee,
   SeminarRegistration, Certificate, PromotionContent, SeminarMaterial,
   SeminarReview, Inquiry, Activity, AppNotification, WaitlistEntry,
+  Poll, PollResponse, PhotoAlbum, Photo, AdminTodo, AuditLog,
+  ActivityProgress, ActivityMaterial, EmailLog,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -299,6 +301,8 @@ export const attendeesApi = {
     dataApi.list<SeminarAttendee>("seminar_attendees", { "filter[seminarId]": seminarId, "filter[studentId]": studentId }),
   findGuestsByStudentId: (studentId: string) =>
     dataApi.list<SeminarAttendee>("seminar_attendees", { "filter[studentId]": studentId, "filter[isGuest]": "true" }),
+  findGuestsByEmail: (email: string) =>
+    dataApi.list<SeminarAttendee>("seminar_attendees", { "filter[email]": email, "filter[isGuest]": "true" }),
   add: (seminarId: string, userId: string) =>
     dataApi.create<SeminarAttendee>("seminar_attendees", { seminarId, userId }),
   addWithDetails: (seminarId: string, data: Record<string, unknown>) =>
@@ -396,6 +400,39 @@ export const activitiesApi = {
   delete: (id: string) => dataApi.delete("activities", id),
 };
 
+export const pollsApi = {
+  list: (status?: string) =>
+    dataApi.list<Poll>("polls", {
+      ...(status ? { "filter[status]": status } : {}),
+      sort: "createdAt:desc",
+    }),
+  get: (id: string) => dataApi.get<Poll>("polls", id),
+  create: (data: Record<string, unknown>) => dataApi.create<Poll>("polls", data),
+  update: (id: string, data: Record<string, unknown>) => dataApi.update<Poll>("polls", id, data),
+  delete: (id: string) => dataApi.delete("polls", id),
+};
+
+export const pollResponsesApi = {
+  list: (pollId: string) =>
+    dataApi.list<PollResponse>("poll_responses", { "filter[pollId]": pollId, limit: 2000 }),
+  create: (data: Record<string, unknown>) => dataApi.create<PollResponse>("poll_responses", data),
+};
+
+export const albumsApi = {
+  list: () => dataApi.list<PhotoAlbum>("photo_albums", { sort: "createdAt:desc" }),
+  get: (id: string) => dataApi.get<PhotoAlbum>("photo_albums", id),
+  create: (data: Record<string, unknown>) => dataApi.create<PhotoAlbum>("photo_albums", data),
+  update: (id: string, data: Record<string, unknown>) => dataApi.update<PhotoAlbum>("photo_albums", id, data),
+  delete: (id: string) => dataApi.delete("photo_albums", id),
+};
+
+export const photosApi = {
+  list: (albumId: string) =>
+    dataApi.list<Photo>("photos", { "filter[albumId]": albumId, sort: "createdAt:desc", limit: 500 }),
+  create: (data: Record<string, unknown>) => dataApi.create<Photo>("photos", data),
+  delete: (id: string) => dataApi.delete("photos", id),
+};
+
 export const waitlistApi = {
   list: (seminarId: string) =>
     dataApi.list<WaitlistEntry>("seminar_waitlist", {
@@ -412,6 +449,44 @@ export const waitlistApi = {
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<WaitlistEntry>("seminar_waitlist", id, data),
   delete: (id: string) => dataApi.delete("seminar_waitlist", id),
+};
+
+export const auditLogsApi = {
+  list: (params?: QueryParams) =>
+    dataApi.list<AuditLog>("audit_logs", { sort: "createdAt:desc", ...params }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<AuditLog>("audit_logs", data),
+};
+
+export const todosApi = {
+  list: () => dataApi.list<AdminTodo>("admin_todos", { sort: "createdAt:desc" }),
+  create: (data: Record<string, unknown>) => dataApi.create<AdminTodo>("admin_todos", data),
+  update: (id: string, data: Record<string, unknown>) => dataApi.update<AdminTodo>("admin_todos", id, data),
+  delete: (id: string) => dataApi.delete("admin_todos", id),
+};
+
+export const activityProgressApi = {
+  list: (activityId: string) =>
+    dataApi.list<ActivityProgress>("activity_progress", { "filter[activityId]": activityId, sort: "week:asc" }),
+  create: (data: Record<string, unknown>) => dataApi.create<ActivityProgress>("activity_progress", data),
+  update: (id: string, data: Record<string, unknown>) => dataApi.update<ActivityProgress>("activity_progress", id, data),
+  delete: (id: string) => dataApi.delete("activity_progress", id),
+};
+
+export const activityMaterialsApi = {
+  list: (activityId: string) =>
+    dataApi.list<ActivityMaterial>("activity_materials", { "filter[activityId]": activityId, sort: "createdAt:desc" }),
+  create: (data: Record<string, unknown>) => dataApi.create<ActivityMaterial>("activity_materials", data),
+  delete: (id: string) => dataApi.delete("activity_materials", id),
+};
+
+export const emailLogsApi = {
+  list: (targetId?: string) =>
+    dataApi.list<EmailLog>("email_logs", {
+      ...(targetId ? { "filter[targetId]": targetId } : {}),
+      sort: "sentAt:desc",
+    }),
+  create: (data: Record<string, unknown>) => dataApi.create<EmailLog>("email_logs", data),
 };
 
 export const notificationsApi = {

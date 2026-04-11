@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/dialog";
 import Link from "next/link";
 import PageHeader from "@/components/ui/page-header";
-import { Calendar, MapPin, Users, User, Plus, Pencil, Trash2, Loader2, UserPlus, Check } from "lucide-react";
+import { Calendar, MapPin, Users, User, Plus, Pencil, Trash2, Loader2, UserPlus, Check, Megaphone } from "lucide-react";
+import { postsApi } from "@/lib/bkend";
 
 const RECRUIT_LABELS: Record<string, string> = { recruiting: "모집중", closed: "모집마감", in_progress: "진행중", completed: "완료" };
 const RECRUIT_COLORS: Record<string, string> = { recruiting: "bg-green-50 text-green-700", closed: "bg-red-50 text-red-700", in_progress: "bg-amber-50 text-amber-700", completed: "bg-muted text-muted-foreground" };
@@ -58,6 +59,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<FormData>(emptyForm);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [autoPost, setAutoPost] = useState(false);
 
   const { data: activities = [] } = useQuery({
     queryKey: ["activities", type],
@@ -90,11 +92,29 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
       } else {
         const res = await apiFetch("/api/activities", { method: "POST", body: JSON.stringify(data) });
         if (!res.ok) throw new Error("생성 실패");
+
+        // 게시판 자동 공고 등록
+        if (autoPost && user) {
+          const typeLabel = type === "project" ? "프로젝트" : type === "study" ? "스터디" : "대외 학술대회";
+          const dateInfo = form.date ? `\n📅 기간: ${form.date}${form.endDate ? ` ~ ${form.endDate}` : ""}` : "";
+          const locationInfo = form.location ? `\n📍 장소: ${form.location}` : "";
+          const maxInfo = form.maxParticipants ? `\n👥 정원: ${form.maxParticipants}명` : "";
+          try {
+            await postsApi.create({
+              title: `[모집] ${form.title.trim()}`,
+              content: `${typeLabel} 모집 안내입니다.\n\n${form.description.trim()}${dateInfo}${locationInfo}${maxInfo}\n\n자세한 내용은 학술활동 페이지에서 확인해 주세요.`,
+              category: "free",
+              authorId: user.id,
+              authorName: user.name,
+              viewCount: 0,
+            });
+          } catch (e) { console.error("[auto-post] 게시글 등록 실패:", e); }
+        }
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activities", type] });
-      toast.success(editId ? "수정되었습니다." : "등록되었습니다.");
+      toast.success(editId ? "수정되었습니다." : (autoPost ? "등록 및 게시판 공고가 작성되었습니다." : "등록되었습니다."));
       closeDialog();
     },
     onError: () => toast.error("저장에 실패했습니다."),
@@ -108,14 +128,15 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["activities", type] }); toast.success("삭제되었습니다."); },
   });
 
-  // 참여 신청
+  // 참여 신청 (atomic arrayUnion)
   const joinMutation = useMutation({
     mutationFn: async (activityId: string) => {
       if (!user) return;
       const activity = activities.find((a) => a.id === activityId);
-      const participants = (activity?.participants as string[] | undefined) ?? [];
+      if (!activity) { toast.error("활동을 찾을 수 없습니다."); return; }
+      const participants = (activity.participants as string[] | undefined) ?? [];
       if (participants.includes(user.id)) { toast.error("이미 참여 신청되었습니다."); return; }
-      const res = await apiFetch("/api/activities", { method: "PATCH", body: JSON.stringify({ id: activityId, participants: [...participants, user.id] }) });
+      const res = await apiFetch("/api/activities", { method: "PATCH", body: JSON.stringify({ id: activityId, joinUserId: user.id }) });
       if (!res.ok) throw new Error("참여 실패");
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["activities", type] }); toast.success("참여 신청이 완료되었습니다."); },
@@ -124,9 +145,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
   const leaveMutation = useMutation({
     mutationFn: async (activityId: string) => {
       if (!user) return;
-      const activity = activities.find((a) => a.id === activityId);
-      const participants = (activity?.participants as string[] | undefined) ?? [];
-      const res = await apiFetch("/api/activities", { method: "PATCH", body: JSON.stringify({ id: activityId, participants: participants.filter((p) => p !== user.id) }) });
+      const res = await apiFetch("/api/activities", { method: "PATCH", body: JSON.stringify({ id: activityId, leaveUserId: user.id }) });
       if (!res.ok) throw new Error("취소 실패");
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["activities", type] }); toast.success("참여가 취소되었습니다."); },
@@ -138,7 +157,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
     setForm({ title: a.title, description: a.description, detailContent: a.detailContent || "", date: a.date, endDate: a.endDate || "", status: a.status, recruitmentStatus: a.recruitmentStatus || "recruiting", maxParticipants: a.maxParticipants ? String(a.maxParticipants) : "", leader: a.leader || "", location: a.location || "", tags: a.tags?.join(", ") || "", organizerName: a.organizerName || "", conferenceUrl: a.conferenceUrl || "" });
     setDialogOpen(true);
   }
-  function closeDialog() { setDialogOpen(false); setEditId(null); setForm(emptyForm); }
+  function closeDialog() { setDialogOpen(false); setEditId(null); setForm(emptyForm); setAutoPost(false); }
 
   const ongoing = activities.filter((a) => a.status === "ongoing" || a.status === "upcoming");
   const completed = activities.filter((a) => a.status === "completed");
@@ -269,10 +288,17 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
                 </div>
               )}
               <div><label className="mb-1 block text-sm font-medium">태그 (쉼표 구분)</label><Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="예: AI교육, UX리서치" /></div>
+              {!editId && (
+                <label className="flex cursor-pointer items-center gap-2 rounded-lg border bg-muted/20 px-3 py-2.5">
+                  <input type="checkbox" checked={autoPost} onChange={(e) => setAutoPost(e.target.checked)} className="h-4 w-4 rounded border-gray-300" />
+                  <Megaphone size={14} className="text-primary" />
+                  <span className="text-sm">게시판에 모집 공고 자동 등록</span>
+                </label>
+              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={closeDialog}>취소</Button>
-              <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !form.title.trim()}>
+              <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !form.title.trim() || !form.date || !form.description.trim()}>
                 {saveMutation.isPending && <Loader2 size={14} className="mr-1 animate-spin" />}{editId ? "수정" : "등록"}
               </Button>
             </DialogFooter>

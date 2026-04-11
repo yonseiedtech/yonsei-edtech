@@ -24,7 +24,8 @@ import { SEMINAR_STATUS_LABELS } from "@/types";
 import { getComputedStatus } from "@/lib/seminar-utils";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Pencil, BookOpen, Image as ImageIcon, Video, AlertTriangle, Trash2 } from "lucide-react";
+import { Pencil, BookOpen, Image as ImageIcon, Video, AlertTriangle, Trash2, Copy } from "lucide-react";
+import { useCreateSeminar } from "@/features/seminar/useSeminar";
 
 const STATUS_COLORS: Record<SeminarStatus, string> = {
   upcoming: "bg-blue-50 text-blue-700",
@@ -52,6 +53,36 @@ export default function AdminSeminarTab() {
   const { seminars } = useSeminars();
   const { updateSeminar } = useUpdateSeminar();
   const { deleteSeminar } = useDeleteSeminar();
+  const { createSeminar } = useCreateSeminar();
+
+  async function handleCloneSeminar(s: Seminar) {
+    if (!confirm(`"${s.title}" 세미나를 복제하시겠습니까?`)) return;
+    try {
+      const cloneData: Record<string, unknown> = {
+        title: `${s.title} (복사본)`,
+        description: s.description,
+        date: "",
+        time: s.time,
+        location: s.location,
+        speaker: "",
+        speakerBio: "",
+        speakerType: s.speakerType,
+        isOnline: s.isOnline,
+        onlineUrl: s.isOnline ? s.onlineUrl : undefined,
+        maxAttendees: s.maxAttendees,
+        attendeeIds: [],
+        status: "upcoming" as const,
+        registrationFields: s.registrationFields,
+        reviewQuestions: s.reviewQuestions,
+        timeline: (s.timeline ?? []).map((t) => ({ ...t, done: false, doneAt: undefined })),
+        createdBy: s.createdBy,
+      };
+      await createSeminar(cloneData as Omit<Seminar, "id" | "attendeeIds" | "createdAt" | "updatedAt">);
+      toast.success("세미나가 복제되었습니다. 날짜와 연사를 수정해주세요.");
+    } catch {
+      toast.error("세미나 복제에 실패했습니다.");
+    }
+  }
 
   async function handleDeleteSeminar(id: string, title: string) {
     if (!confirm(`"${title}" 세미나를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) return;
@@ -143,12 +174,13 @@ export default function AdminSeminarTab() {
   return (
     <div className="space-y-0 rounded-xl border bg-white">
       {/* 테이블 헤더 (데스크톱만) */}
-      <div className="hidden lg:grid grid-cols-[48px_1fr_120px_140px_80px_80px_80px_80px] items-center gap-1 border-b bg-muted/30 px-4 py-3 text-sm font-medium">
+      <div className="hidden lg:grid grid-cols-[48px_1fr_120px_140px_80px_100px_80px_80px_80px] items-center gap-1 border-b bg-muted/30 px-4 py-3 text-sm font-medium">
         <span>포스터</span>
         <span>제목</span>
         <span>발표자</span>
         <span>일시</span>
         <span>참석자</span>
+        <span>준비현황</span>
         <span>상태</span>
         <span>공간</span>
         <span>관리</span>
@@ -157,9 +189,20 @@ export default function AdminSeminarTab() {
       {/* 세미나 행 */}
       {seminars.map((s) => {
         const computed = getComputedStatus(s);
+        const timeline = s.timeline ?? [];
+        const totalTasks = timeline.length;
+        const doneTasks = timeline.filter((t) => t.done).length;
+        const progressPct = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : -1;
+        const overdue = timeline.filter((t) => !t.done && computed === "upcoming" && (() => {
+          const semDate = new Date(s.date);
+          const now = new Date();
+          const diffDays = Math.round((semDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          return t.dDay <= 0 ? diffDays <= Math.abs(t.dDay) : false;
+        })());
+
         return (<>
           {/* 데스크톱: 그리드 행 */}
-          <div key={s.id} className="hidden lg:grid grid-cols-[48px_1fr_120px_140px_80px_80px_80px_80px] items-center gap-1 border-b px-4 py-3 text-sm">
+          <div key={s.id} className="hidden lg:grid grid-cols-[48px_1fr_120px_140px_80px_100px_80px_80px_80px] items-center gap-1 border-b px-4 py-3 text-sm">
             <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded border bg-muted/20">
               {s.posterUrl ? (
                 <Image src={s.posterUrl} alt="" width={40} height={40} className="h-full w-full object-cover" />
@@ -176,11 +219,22 @@ export default function AdminSeminarTab() {
             <span className="line-clamp-1 text-muted-foreground">{s.speaker}</span>
             <span className="text-muted-foreground">{formatDate(s.date)} {s.time}</span>
             <span>{s.attendeeIds.length}{s.maxAttendees ? `/${s.maxAttendees}` : ""}명</span>
+            {progressPct >= 0 ? (
+              <div className="flex flex-col gap-0.5" title={`${doneTasks}/${totalTasks} 완료${overdue.length > 0 ? ` (지연 ${overdue.length}건)` : ""}`}>
+                <div className="h-1.5 w-full rounded-full bg-muted">
+                  <div className={cn("h-full rounded-full transition-all", progressPct === 100 ? "bg-green-500" : overdue.length > 0 ? "bg-red-400" : "bg-primary")} style={{ width: `${progressPct}%` }} />
+                </div>
+                <span className={cn("text-[10px]", overdue.length > 0 ? "text-red-500" : "text-muted-foreground")}>{progressPct}%</span>
+              </div>
+            ) : (
+              <span className="text-xs text-muted-foreground">-</span>
+            )}
             <Badge variant="secondary" className={STATUS_COLORS[computed]}>{SEMINAR_STATUS_LABELS[computed]}</Badge>
             <Link href={`/seminars/${s.id}`}>
               <Button variant="outline" size="sm" className="gap-1 text-xs"><BookOpen size={14} />입장</Button>
             </Link>
             <Button variant="outline" size="sm" onClick={() => openEditSeminar(s)}><Pencil size={14} /></Button>
+            <Button variant="outline" size="sm" title="복제" onClick={() => handleCloneSeminar(s)}><Copy size={14} /></Button>
             <Button variant="outline" size="sm" className="text-destructive" onClick={() => handleDeleteSeminar(s.id, s.title)}><Trash2 size={14} /></Button>
           </div>
 
@@ -205,12 +259,21 @@ export default function AdminSeminarTab() {
                 <span>{formatDate(s.date)} {s.time}</span>
                 <span>{s.attendeeIds.length}{s.maxAttendees ? `/${s.maxAttendees}` : ""}명</span>
               </div>
+              {progressPct >= 0 && (
+                <div className="mt-1.5 flex items-center gap-2">
+                  <div className="h-1.5 flex-1 rounded-full bg-muted">
+                    <div className={cn("h-full rounded-full", progressPct === 100 ? "bg-green-500" : overdue.length > 0 ? "bg-red-400" : "bg-primary")} style={{ width: `${progressPct}%` }} />
+                  </div>
+                  <span className={cn("text-[10px] shrink-0", overdue.length > 0 ? "text-red-500" : "text-muted-foreground")}>{progressPct}% ({doneTasks}/{totalTasks})</span>
+                </div>
+              )}
               <div className="mt-2 flex items-center gap-2">
                 <Badge variant="secondary" className={cn("text-xs", STATUS_COLORS[computed])}>{SEMINAR_STATUS_LABELS[computed]}</Badge>
                 <Link href={`/seminars/${s.id}`}>
                   <Button variant="outline" size="sm" className="h-7 gap-1 text-xs"><BookOpen size={12} />입장</Button>
                 </Link>
                 <Button variant="outline" size="sm" className="h-7" onClick={() => openEditSeminar(s)}><Pencil size={12} /></Button>
+                <Button variant="outline" size="sm" className="h-7" title="복제" onClick={() => handleCloneSeminar(s)}><Copy size={12} /></Button>
                 <Button variant="outline" size="sm" className="h-7 text-destructive" onClick={() => handleDeleteSeminar(s.id, s.title)}><Trash2 size={12} /></Button>
               </div>
             </div>

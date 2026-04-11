@@ -13,8 +13,9 @@ import {
 } from "@/components/ui/dialog";
 import { formatDate } from "@/lib/utils";
 import { streamAI } from "@/lib/ai-client";
-import { CheckCircle, Trash2, Sparkles, Send, Loader2 } from "lucide-react";
+import { CheckCircle, Trash2, Sparkles, Send, Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
+import { auth } from "@/lib/firebase";
 import type { Inquiry } from "@/types";
 
 export default function AdminInquiryTab() {
@@ -63,12 +64,46 @@ export default function AdminInquiryTab() {
     }
   }
 
-  function handleSendReply() {
+  const [isSending, setIsSending] = useState(false);
+
+  async function sendReplyEmail(inq: Inquiry, reply: string) {
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) return;
+      await fetch("/api/email/inquiry-reply", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          email: inq.email,
+          name: inq.name,
+          message: inq.message,
+          reply,
+        }),
+      });
+    } catch {
+      // 이메일 발송 실패는 조용히 무시 (답변 저장은 성공)
+    }
+  }
+
+  async function handleSendReply(withEmail: boolean) {
     if (!replyDialog || !replyText.trim()) return;
-    updateInquiryStatus({ id: replyDialog.id, reply: replyText.trim() });
-    toast.success("답변이 저장되었습니다.");
-    setReplyDialog(null);
-    setReplyText("");
+    setIsSending(true);
+    try {
+      updateInquiryStatus({ id: replyDialog.id, reply: replyText.trim() });
+      if (withEmail && replyDialog.email) {
+        await sendReplyEmail(replyDialog, replyText.trim());
+        toast.success("답변이 저장되고 이메일이 발송되었습니다.");
+      } else {
+        toast.success("답변이 저장되었습니다.");
+      }
+    } finally {
+      setIsSending(false);
+      setReplyDialog(null);
+      setReplyText("");
+    }
   }
 
   if (inquiries.length === 0) {
@@ -226,13 +261,27 @@ export default function AdminInquiryTab() {
               닫기
             </Button>
             {replyDialog?.status === "pending" && (
-              <Button
-                onClick={handleSendReply}
-                disabled={!replyText.trim() || isGenerating}
-              >
-                <Send size={14} className="mr-1" />
-                답변 저장
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => handleSendReply(false)}
+                  disabled={!replyText.trim() || isGenerating || isSending}
+                >
+                  <Send size={14} className="mr-1" />
+                  저장만
+                </Button>
+                <Button
+                  onClick={() => handleSendReply(true)}
+                  disabled={!replyText.trim() || isGenerating || isSending || !replyDialog.email}
+                >
+                  {isSending ? (
+                    <Loader2 size={14} className="mr-1 animate-spin" />
+                  ) : (
+                    <Mail size={14} className="mr-1" />
+                  )}
+                  {isSending ? "발송 중..." : "저장 + 이메일 발송"}
+                </Button>
+              </>
             )}
           </DialogFooter>
         </DialogContent>

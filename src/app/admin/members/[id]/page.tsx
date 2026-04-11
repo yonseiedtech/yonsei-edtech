@@ -3,7 +3,7 @@
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { profilesApi } from "@/lib/bkend";
+import { profilesApi, seminarsApi, attendeesApi, activitiesApi, reviewsApi, certificatesApi } from "@/lib/bkend";
 import { auth } from "@/lib/firebase";
 import AuthGuard from "@/features/auth/AuthGuard";
 import ProfileEditor from "@/features/auth/ProfileEditor";
@@ -13,10 +13,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ROLE_LABELS } from "@/types";
-import type { User, UserRole } from "@/types";
+import type { User, UserRole, Seminar, SeminarAttendee, Activity, Certificate } from "@/types";
 import { toast } from "sonner";
 import {
   ArrowLeft, User as UserIcon, KeyRound, CheckCircle, XCircle, Shield,
+  BookOpen, Users, FolderKanban, Globe, Award, Star,
 } from "lucide-react";
 
 const ASSIGNABLE_ROLES: UserRole[] = ["member", "alumni", "advisor", "staff", "president"];
@@ -209,12 +210,131 @@ function AdminMemberDetail({ id }: { id: string }) {
           </div>
         </div>
 
+        {/* 학술활동 이력 */}
+        <MemberActivityHistory memberId={id} />
+
         {/* 프로필 편집 (마이페이지와 동일) */}
         <div className="mt-4 rounded-2xl border bg-white p-6">
           <h3 className="text-lg font-bold">프로필 정보 수정</h3>
           <ProfileEditor user={member} />
         </div>
       </div>
+    </div>
+  );
+}
+
+function MemberActivityHistory({ memberId }: { memberId: string }) {
+  // 세미나 참석 이력
+  const { data: seminars = [] } = useQuery({
+    queryKey: ["member-seminars", memberId],
+    queryFn: async () => {
+      const res = await seminarsApi.list({ limit: 200 });
+      const all = res.data as unknown as Seminar[];
+      return all.filter((s) => s.attendeeIds.includes(memberId));
+    },
+  });
+
+  // 활동 참여 이력
+  const { data: activities = [] } = useQuery({
+    queryKey: ["member-activities", memberId],
+    queryFn: async () => {
+      const res = await activitiesApi.list();
+      const all = res.data as Activity[];
+      return all.filter((a) => ((a.participants as string[]) ?? []).includes(memberId));
+    },
+  });
+
+  // 수료증
+  const { data: certificates = [] } = useQuery({
+    queryKey: ["member-certificates", memberId],
+    queryFn: async () => {
+      const res = await certificatesApi.list();
+      return (res.data as Certificate[]).filter((c) => {
+        // 수료증은 recipientName 기반이므로 완벽한 매칭은 어렵지만 최선의 노력
+        return true; // 일단 전체 로드 후 UI에서 필터
+      });
+    },
+    enabled: false, // 필요 시 활성화
+  });
+
+  const projects = activities.filter((a) => a.type === "project");
+  const studies = activities.filter((a) => a.type === "study");
+  const externals = activities.filter((a) => a.type === "external");
+
+  const totalActivities = seminars.length + activities.length;
+
+  return (
+    <div className="mt-4 rounded-2xl border bg-white p-6 space-y-4">
+      <h3 className="flex items-center gap-2 text-lg font-bold">
+        <BookOpen size={18} /> 학술활동 이력
+      </h3>
+
+      {/* 요약 카드 */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="rounded-lg border p-3 text-center">
+          <p className="text-xl font-bold text-primary">{seminars.length}</p>
+          <p className="text-[10px] text-muted-foreground flex items-center justify-center gap-1"><BookOpen size={10} />세미나 참석</p>
+        </div>
+        <div className="rounded-lg border p-3 text-center">
+          <p className="text-xl font-bold text-green-600">{studies.length}</p>
+          <p className="text-[10px] text-muted-foreground flex items-center justify-center gap-1"><Users size={10} />스터디</p>
+        </div>
+        <div className="rounded-lg border p-3 text-center">
+          <p className="text-xl font-bold text-purple-600">{projects.length}</p>
+          <p className="text-[10px] text-muted-foreground flex items-center justify-center gap-1"><FolderKanban size={10} />프로젝트</p>
+        </div>
+        <div className="rounded-lg border p-3 text-center">
+          <p className="text-xl font-bold text-amber-600">{externals.length}</p>
+          <p className="text-[10px] text-muted-foreground flex items-center justify-center gap-1"><Globe size={10} />대외활동</p>
+        </div>
+      </div>
+
+      {totalActivities === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-4">학술활동 이력이 없습니다.</p>
+      ) : (
+        <div className="space-y-3">
+          {/* 세미나 이력 */}
+          {seminars.length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-muted-foreground mb-2">세미나 참석 이력</h4>
+              <div className="space-y-1">
+                {seminars.slice(0, 10).map((s) => (
+                  <div key={s.id} className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm">
+                    <BookOpen size={14} className="shrink-0 text-primary" />
+                    <span className="flex-1 truncate">{s.title}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">{s.date}</span>
+                    <Badge variant="secondary" className="text-[10px]">{s.speaker}</Badge>
+                  </div>
+                ))}
+                {seminars.length > 10 && (
+                  <p className="text-xs text-muted-foreground text-center">외 {seminars.length - 10}건</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 활동 이력 */}
+          {activities.length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-muted-foreground mb-2">학술활동 참여 이력</h4>
+              <div className="space-y-1">
+                {activities.map((a) => (
+                  <div key={a.id} className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm">
+                    {a.type === "study" ? <Users size={14} className="shrink-0 text-green-600" /> :
+                     a.type === "project" ? <FolderKanban size={14} className="shrink-0 text-purple-600" /> :
+                     <Globe size={14} className="shrink-0 text-amber-600" />}
+                    <span className="flex-1 truncate">{a.title}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">{a.date}</span>
+                    <Badge variant="secondary" className="text-[10px]">
+                      {a.type === "study" ? "스터디" : a.type === "project" ? "프로젝트" : "대외활동"}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -30,9 +30,12 @@ function CheckinContent({ id }: { id: string }) {
   const [selfName, setSelfName] = useState("");
   const [selfStudentId, setSelfStudentId] = useState("");
 
+  const unsubscribe = useSeminarStore((s) => s.unsubscribe);
+
   useEffect(() => {
     loadAttendees(id);
-  }, [id, loadAttendees]);
+    return () => unsubscribe();
+  }, [id, loadAttendees, unsubscribe]);
 
   const [lastResult, setLastResult] = useState<CheckinResult | null>(null);
   const [scanLog, setScanLog] = useState<Array<{ name: string; time: string; success: boolean; method: string }>>([]);

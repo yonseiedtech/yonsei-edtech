@@ -41,7 +41,7 @@ export default function HeroSection() {
               공유합니다. 매 학기 세미나와 팀 프로젝트를 중심으로 활동합니다.
             </p>
 
-            <div className="mt-8 flex items-center gap-4">
+            <div className="mt-8 flex flex-wrap items-center gap-3 sm:gap-4">
               <Link
                 href="/about"
                 className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary/90"

@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { parseExcelFile, parseCSVText, extractSheetId, getSheetCsvUrl } from "@/lib/parse-spreadsheet";
 import { attendeesApi, profilesApi, registrationsApi } from "@/lib/bkend";
+import { logAudit } from "@/lib/audit";
+import { useAuthStore } from "@/features/auth/auth-store";
 import { useQueryClient } from "@tanstack/react-query";
 import type { SeminarAttendee } from "@/types";
 
@@ -283,6 +285,7 @@ function AttendeeRow({ a, onToggleCheckin }: { a: SeminarAttendee; onToggleCheck
 
 function SeminarReport({ seminarId, seminarTitle, seminarDate }: { seminarId: string; seminarTitle: string; seminarDate?: string }) {
   const { attendees, refetch: refetchAttendees } = useAttendees(seminarId);
+  const { user: currentUser } = useAuthStore();
   const qc = useQueryClient();
   const excelRef = useRef<HTMLInputElement>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -358,6 +361,19 @@ function SeminarReport({ seminarId, seminarTitle, seminarDate }: { seminarId: st
         checkedIn,
         checkedInAt: checkedIn ? new Date().toISOString() : null,
         checkedInBy: checkedIn ? "manual" : null,
+      });
+      // 감사 로그 기록
+      const target = attendees.find((a) => a.id === attendeeId);
+      logAudit({
+        action: checkedIn ? "checkin" : "checkin_cancel",
+        category: "seminar",
+        detail: checkedIn
+          ? `${target?.userName ?? "알 수 없음"}의 출석을 수동 체크인 처리`
+          : `${target?.userName ?? "알 수 없음"}의 출석 체크인을 취소`,
+        targetId: seminarId,
+        targetName: seminarTitle,
+        userId: currentUser?.id ?? "unknown",
+        userName: currentUser?.name ?? "unknown",
       });
       await refetchAttendees();
     } catch { toast.error("출석 상태 변경에 실패했습니다."); }
@@ -577,7 +593,7 @@ function SeminarReport({ seminarId, seminarTitle, seminarDate }: { seminarId: st
       </div>
 
       {/* 통계 카드 */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
         <div className="rounded-xl border bg-white p-4 text-center">
           <Users size={20} className="mx-auto mb-1 text-blue-500" />
           <p className="text-2xl font-bold">{total}</p>

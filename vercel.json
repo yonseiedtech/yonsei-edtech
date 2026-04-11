@@ -3,6 +3,14 @@
     {
       "path": "/api/cron/seminar-reminder",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/seminar-status",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/activity-status",
+      "schedule": "0 0 * * *"
     }
   ]
 }

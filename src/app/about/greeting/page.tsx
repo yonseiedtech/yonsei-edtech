@@ -32,7 +32,7 @@ export default function GreetingPage() {
         transition={{ duration: 0.5 }}
         className="mx-auto mt-12 max-w-6xl px-4"
       >
-        <div className="flex flex-col items-center gap-10 rounded-2xl border bg-white p-8 shadow-sm md:flex-row md:items-start md:p-12">
+        <div className="flex flex-col items-center gap-6 rounded-2xl border bg-white p-5 shadow-sm sm:gap-10 sm:p-8 md:flex-row md:items-start md:p-12">
           {/* Photo */}
           {greeting.presidentPhoto ? (
             <div className="relative h-56 w-44 shrink-0 overflow-hidden rounded-xl bg-muted md:h-64 md:w-52">

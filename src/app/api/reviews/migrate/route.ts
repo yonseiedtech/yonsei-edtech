@@ -1,9 +1,14 @@
+import { NextRequest } from "next/server";
+import { requireAuth } from "@/lib/api-auth";
 import { getAdminDb } from "@/lib/firebase-admin";
 
 // 기존 후기 중 staff+ 사용자의 후기를 자동 분류하는 마이그레이션
-// GET /api/reviews/migrate?run=true 로 실행
-export async function GET(req: Request) {
-  const run = new URL(req.url).searchParams.get("run");
+// GET /api/reviews/migrate?run=true 로 실행 (admin 전용)
+export async function GET(req: NextRequest) {
+  const authResult = await requireAuth(req, "admin");
+  if (authResult instanceof Response) return authResult;
+
+  const run = req.nextUrl.searchParams.get("run");
   if (run !== "true") {
     return Response.json({ message: "?run=true 파라미터를 추가하세요." });
   }

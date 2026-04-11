@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { postsApi, commentsApi } from "@/lib/bkend";
 import type { Post, Comment, PostCategory } from "@/types";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { isStaffOrAbove } from "@/lib/permissions";
 import { notifyComment, notifyNewNotice } from "@/features/notifications/notify";
 
 // ── Posts ──
@@ -16,6 +17,8 @@ export function usePosts(
 ) {
   const page = options?.page ?? 1;
   const search = options?.search ?? "";
+  const user = useAuthStore((s) => s.user);
+  const canSeeStaff = isStaffOrAbove(user);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["posts", category, search],
@@ -28,6 +31,11 @@ export function usePosts(
   });
 
   let posts = data ?? [];
+
+  // 운영진 게시판 글은 staff 이상만 볼 수 있음
+  if (category === "all" && !canSeeStaff) {
+    posts = posts.filter((p) => p.category !== "staff");
+  }
 
   // 클라이언트 검색 필터링
   if (search) {

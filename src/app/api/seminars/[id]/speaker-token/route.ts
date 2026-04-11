@@ -1,12 +1,16 @@
 import { NextRequest } from "next/server";
+import { requireAuth } from "@/lib/api-auth";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { randomBytes } from "crypto";
 
-// 연사 후기 토큰 조회
+// 연사 후기 토큰 조회 (운영진 전용)
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const authResult = await requireAuth(req, "staff");
+  if (authResult instanceof Response) return authResult;
+
   const { id } = await params;
   const db = getAdminDb();
   const doc = await db.collection("seminars").doc(id).get();
@@ -19,11 +23,14 @@ export async function GET(
   return Response.json({ token });
 }
 
-// 연사 후기 토큰 생성 (운영진 전용 — 클라이언트에서 권한 체크)
+// 연사 후기 토큰 생성 (운영진 전용)
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const authResult = await requireAuth(req, "staff");
+  if (authResult instanceof Response) return authResult;
+
   const { id } = await params;
   const db = getAdminDb();
   const ref = db.collection("seminars").doc(id);

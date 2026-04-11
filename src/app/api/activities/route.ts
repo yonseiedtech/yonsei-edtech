@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { requireAuth } from "@/lib/api-auth";
+import { FieldValue } from "firebase-admin/firestore";
 
 // 활동 목록 조회 (공개)
 export async function GET(req: NextRequest) {
@@ -51,17 +52,40 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// 활동 수정 (staff+)
+// 활동 수정 (staff+) 또는 참여 신청/취소 (일반 회원)
 export async function PATCH(req: NextRequest) {
-  const authResult = await requireAuth(req, "staff");
+  const authResult = await requireAuth(req);
   if (authResult instanceof Response) return authResult;
 
   try {
     const body = await req.json();
-    const { id, ...data } = body;
+    const { id, joinUserId, leaveUserId, ...data } = body;
     if (!id) return Response.json({ error: "ID가 필요합니다." }, { status: 400 });
 
     const db = getAdminDb();
+
+    // 참여 신청 (atomic)
+    if (joinUserId) {
+      await db.collection("activities").doc(id).update({
+        participants: FieldValue.arrayUnion(joinUserId),
+        updatedAt: new Date().toISOString(),
+      });
+      return Response.json({ success: true });
+    }
+
+    // 참여 취소 (atomic)
+    if (leaveUserId) {
+      await db.collection("activities").doc(id).update({
+        participants: FieldValue.arrayRemove(leaveUserId),
+        updatedAt: new Date().toISOString(),
+      });
+      return Response.json({ success: true });
+    }
+
+    // 일반 수정 (staff+ 전용)
+    if (!authResult || !["staff", "president", "admin"].includes(authResult.role)) {
+      return Response.json({ error: "권한이 부족합니다." }, { status: 403 });
+    }
     await db.collection("activities").doc(id).update({ ...data, updatedAt: new Date().toISOString() });
     return Response.json({ success: true });
   } catch (err) {

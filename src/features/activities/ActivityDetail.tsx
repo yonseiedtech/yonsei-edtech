@@ -17,15 +17,18 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Calendar, MapPin, Users, User, UserPlus, Check, X,
   Pencil, Globe, Loader2, CheckCircle, Clock, XCircle,
+  Plus, Trash2, FileUp, Download, ListChecks,
 } from "lucide-react";
-import type { Activity, ActivityType } from "@/types";
+import type { Activity, ActivityType, ActivityProgress, ActivityMaterial } from "@/types";
+import { activityProgressApi, activityMaterialsApi } from "@/lib/bkend";
+import { uploadImage } from "@/lib/upload";
 
 const STATUS_LABELS: Record<string, string> = { upcoming: "예정", ongoing: "진행 중", completed: "완료" };
 const STATUS_COLORS: Record<string, string> = { upcoming: "bg-blue-50 text-blue-700", ongoing: "bg-amber-50 text-amber-700", completed: "bg-muted text-muted-foreground" };
 const RECRUIT_LABELS: Record<string, string> = { recruiting: "모집중", closed: "모집마감", in_progress: "진행중", completed: "완료" };
 const RECRUIT_COLORS: Record<string, string> = { recruiting: "bg-green-50 text-green-700", closed: "bg-red-50 text-red-700", in_progress: "bg-amber-50 text-amber-700", completed: "bg-muted text-muted-foreground" };
 
-type Tab = "overview" | "participants" | "applicants" | "form-settings" | "report" | "settings";
+type Tab = "overview" | "progress" | "materials" | "participants" | "applicants" | "form-settings" | "report" | "settings";
 
 interface Props {
   activityId: string;
@@ -44,12 +47,31 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const [applyStudentId, setApplyStudentId] = useState("");
   const [applyAnswers, setApplyAnswers] = useState<Record<string, string>>({});
   const [newQuestion, setNewQuestion] = useState("");
+  const [progressTitle, setProgressTitle] = useState("");
+  const [progressDate, setProgressDate] = useState("");
+  const [uploading, setUploading] = useState(false);
 
   const { data: activity } = useQuery({
     queryKey: ["activity", activityId],
     queryFn: async () => {
       const res = await activitiesApi.get(activityId);
       return res;
+    },
+  });
+
+  const { data: progressList = [] } = useQuery({
+    queryKey: ["activity-progress", activityId],
+    queryFn: async () => {
+      const res = await activityProgressApi.list(activityId);
+      return res.data as ActivityProgress[];
+    },
+  });
+
+  const { data: materialsList = [] } = useQuery({
+    queryKey: ["activity-materials", activityId],
+    queryFn: async () => {
+      const res = await activityMaterialsApi.list(activityId);
+      return res.data as ActivityMaterial[];
     },
   });
 
@@ -127,8 +149,13 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
     approvalRate: applicants.length > 0 ? Math.round((applicants.filter((a) => a.status === "approved").length / applicants.length) * 100) : 0,
   };
 
+  const progressDone = progressList.filter((p) => p.status === "completed").length;
+  const progressPct = progressList.length > 0 ? Math.round((progressDone / progressList.length) * 100) : 0;
+
   const TABS: { value: Tab; label: string; show: boolean }[] = [
     { value: "overview", label: "개요", show: true },
+    { value: "progress", label: `진행 현황${progressList.length > 0 ? ` (${progressPct}%)` : ""}`, show: type !== "external" },
+    { value: "materials", label: `산출물 (${materialsList.length})`, show: true },
     { value: "participants", label: `참여자 (${participants.length})`, show: true },
     { value: "applicants", label: `신청현황 (${applicants.length})`, show: type === "external" || isStaff },
     { value: "form-settings", label: "신청 폼 설정", show: isStaff },
@@ -211,6 +238,153 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   {activity.tags.map((t) => <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>)}
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === "progress" && (
+            <div className="space-y-4">
+              {/* 진행률 바 */}
+              {progressList.length > 0 && (
+                <div className="rounded-xl border bg-white p-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">전체 진행률</span>
+                    <span className="text-muted-foreground">{progressDone}/{progressList.length} 완료 ({progressPct}%)</span>
+                  </div>
+                  <div className="mt-2 h-2 w-full rounded-full bg-muted">
+                    <div className={cn("h-full rounded-full transition-all", progressPct === 100 ? "bg-green-500" : "bg-primary")} style={{ width: `${progressPct}%` }} />
+                  </div>
+                </div>
+              )}
+
+              {/* 주차별 기록 */}
+              <div className="rounded-xl border bg-white divide-y">
+                {progressList.length === 0 ? (
+                  <p className="p-6 text-center text-sm text-muted-foreground">등록된 진행 기록이 없습니다.</p>
+                ) : (
+                  progressList.map((p) => (
+                    <div key={p.id} className="flex items-start gap-3 px-4 py-3">
+                      <button
+                        onClick={async () => {
+                          if (!isStaff) return;
+                          const next = p.status === "completed" ? "planned" : p.status === "planned" ? "in_progress" : "completed";
+                          await activityProgressApi.update(p.id, { status: next });
+                          queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
+                        }}
+                        className={cn("mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors", p.status === "completed" ? "border-green-500 bg-green-500 text-white" : p.status === "in_progress" ? "border-amber-400 bg-amber-50" : "border-muted-foreground/30")}
+                        disabled={!isStaff}
+                      >
+                        {p.status === "completed" && <Check size={12} />}
+                        {p.status === "in_progress" && <div className="h-2 w-2 rounded-full bg-amber-400" />}
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="text-[10px]">Week {p.week}</Badge>
+                          <span className="text-sm font-medium">{p.title}</span>
+                        </div>
+                        {p.description && <p className="mt-1 text-xs text-muted-foreground">{p.description}</p>}
+                        <span className="text-[10px] text-muted-foreground">{p.date}</span>
+                      </div>
+                      {isStaff && (
+                        <button onClick={async () => {
+                          await activityProgressApi.delete(p.id);
+                          queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
+                          toast.success("삭제되었습니다.");
+                        }} className="shrink-0 rounded p-1 text-muted-foreground hover:text-red-500"><Trash2 size={14} /></button>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* 주차 추가 (운영진) */}
+              {isStaff && (
+                <div className="rounded-xl border bg-white p-4 space-y-3">
+                  <h3 className="text-sm font-semibold flex items-center gap-1"><ListChecks size={14} />주차 추가</h3>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Input value={progressTitle} onChange={(e) => setProgressTitle(e.target.value)} placeholder="활동 내용 (예: 논문 리뷰 #1)" className="flex-1" />
+                    <Input type="date" value={progressDate} onChange={(e) => setProgressDate(e.target.value)} className="w-40" />
+                    <Button size="sm" disabled={!progressTitle.trim()} onClick={async () => {
+                      await activityProgressApi.create({
+                        activityId,
+                        week: progressList.length + 1,
+                        date: progressDate || new Date().toISOString().split("T")[0],
+                        title: progressTitle.trim(),
+                        status: "planned",
+                      });
+                      queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
+                      setProgressTitle("");
+                      setProgressDate("");
+                      toast.success("추가되었습니다.");
+                    }}><Plus size={14} className="mr-1" />추가</Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "materials" && (
+            <div className="space-y-4">
+              {/* 업로드 (운영진 또는 참여자) */}
+              {(isStaff || (user && participants.includes(user.id))) && (
+                <div className="rounded-xl border bg-white p-4">
+                  <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-primary hover:underline">
+                    {uploading ? <Loader2 size={14} className="animate-spin" /> : <FileUp size={14} />}
+                    파일 업로드
+                    <input type="file" className="hidden" disabled={uploading} onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file || !user) return;
+                      if (file.size > 5 * 1024 * 1024) { toast.error("5MB 이하 파일만 업로드할 수 있습니다."); return; }
+                      setUploading(true);
+                      try {
+                        const url = await uploadImage(file);
+                        await activityMaterialsApi.create({
+                          activityId,
+                          title: file.name,
+                          fileName: file.name,
+                          fileUrl: url,
+                          fileSize: file.size,
+                          uploadedBy: user.id,
+                          uploadedByName: user.name,
+                        });
+                        queryClient.invalidateQueries({ queryKey: ["activity-materials", activityId] });
+                        toast.success("파일이 업로드되었습니다.");
+                      } catch { toast.error("업로드에 실패했습니다."); }
+                      finally { setUploading(false); e.target.value = ""; }
+                    }} />
+                  </label>
+                </div>
+              )}
+
+              {/* 파일 목록 */}
+              <div className="rounded-xl border bg-white divide-y">
+                {materialsList.length === 0 ? (
+                  <p className="p-6 text-center text-sm text-muted-foreground">등록된 산출물이 없습니다.</p>
+                ) : (
+                  materialsList.map((m) => (
+                    <div key={m.id} className="flex items-center gap-3 px-4 py-3 text-sm">
+                      <div className="flex-1 min-w-0">
+                        <span className="font-medium">{m.title}</span>
+                        <div className="mt-0.5 flex items-center gap-2 text-[10px] text-muted-foreground">
+                          <span>{m.uploadedByName}</span>
+                          <span>{(m.fileSize / 1024).toFixed(0)}KB</span>
+                          <span>{new Date(m.createdAt).toLocaleDateString("ko-KR")}</span>
+                        </div>
+                      </div>
+                      <a href={m.fileUrl} download={m.fileName} target="_blank" rel="noopener noreferrer">
+                        <Button variant="outline" size="sm" className="h-7 gap-1 text-xs"><Download size={12} />다운로드</Button>
+                      </a>
+                      {(isStaff || user?.id === m.uploadedBy) && (
+                        <button onClick={async () => {
+                          if (!confirm("삭제하시겠습니까?")) return;
+                          await activityMaterialsApi.delete(m.id);
+                          queryClient.invalidateQueries({ queryKey: ["activity-materials", activityId] });
+                          toast.success("삭제되었습니다.");
+                        }} className="shrink-0 rounded p-1 text-muted-foreground hover:text-red-500"><Trash2 size={14} /></button>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           )}
 

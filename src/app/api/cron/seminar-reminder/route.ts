@@ -1,12 +1,104 @@
 import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+async function sendReminderEmails(
+  db: FirebaseFirestore.Firestore,
+  seminar: FirebaseFirestore.DocumentData,
+  seminarId: string,
+  attendeeIds: string[],
+  daysLeft: number,
+) {
+  const Resend = (await import("resend")).Resend;
+  const key = process.env.RESEND_API_KEY;
+  if (!key || attendeeIds.length === 0) return 0;
+
+  // 이메일 중복 발송 방지
+  const emailLogSnap = await db
+    .collection("email_logs")
+    .where("type", "==", "reminder")
+    .where("targetId", "==", `${seminarId}_d${daysLeft}`)
+    .limit(1)
+    .get();
+  if (!emailLogSnap.empty) return 0;
+
+  const resend = new Resend(key);
+
+  // 참석자 이메일 수집
+  const emails: string[] = [];
+  for (const userId of attendeeIds) {
+    try {
+      const userDoc = await db.collection("users").doc(userId).get();
+      const email = userDoc.data()?.email || userDoc.data()?.contactEmail;
+      if (email) emails.push(email);
+    } catch (e) { console.warn("[reminder] user fetch error:", userId, e); }
+  }
+
+  if (emails.length === 0) return 0;
+
+  const locationInfo = seminar.isOnline
+    ? `온라인 (ZOOM)${seminar.onlineUrl ? ` - ${seminar.onlineUrl}` : ""}`
+    : (seminar.location || "미정");
+
+  const subject = daysLeft === 1
+    ? `[연세교육공학회] 내일 세미나가 있습니다 - ${seminar.title}`
+    : `[연세교육공학회] 세미나 D-${daysLeft} 안내 - ${seminar.title}`;
+
+  const html = `
+    <div style="font-family: sans-serif; max-width: 520px; margin: 0 auto;">
+      <h2 style="color: #003876;">연세교육공학회</h2>
+      <p>안녕하세요, 세미나 참석 안내 드립니다.</p>
+      <div style="margin: 20px 0; padding: 16px; background: #eef3ff; border-left: 4px solid #003876; border-radius: 4px;">
+        <p style="margin: 0 0 8px; font-size: 16px; font-weight: bold; color: #003876;">${escapeHtml(seminar.title)}</p>
+        <p style="margin: 4px 0; font-size: 14px;">📅 일시: ${escapeHtml(seminar.date)} ${escapeHtml(seminar.time || "")}</p>
+        <p style="margin: 4px 0; font-size: 14px;">📍 장소: ${escapeHtml(locationInfo)}</p>
+        <p style="margin: 4px 0; font-size: 14px;">🎤 발표자: ${escapeHtml(seminar.speaker || "")}</p>
+      </div>
+      ${daysLeft === 1 ? '<p style="color: #d97706; font-weight: bold;">⏰ 내일 세미나가 진행됩니다. 시간에 맞춰 참석해 주세요!</p>' : `<p>세미나가 <strong>${daysLeft}일 후</strong> 진행됩니다.</p>`}
+      <p><a href="https://yonsei-edtech.vercel.app/seminars/${seminarId}" style="display: inline-block; padding: 10px 20px; background: #003876; color: white; text-decoration: none; border-radius: 6px;">세미나 상세 보기</a></p>
+      <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
+      <p style="color: #888; font-size: 12px;">연세교육공학회 | yonsei.edtech@gmail.com</p>
+    </div>
+  `;
+
+  // BCC로 일괄 발송 (한 번에 최대 50명씩)
+  let sentCount = 0;
+  for (let i = 0; i < emails.length; i += 50) {
+    const batch = emails.slice(i, i + 50);
+    try {
+      await resend.emails.send({
+        from: "연세교육공학회 <noreply@yonsei-edtech.vercel.app>",
+        to: "noreply@yonsei-edtech.vercel.app",
+        bcc: batch,
+        subject,
+        html,
+      });
+      sentCount += batch.length;
+    } catch (e) {
+      console.error("[email] reminder send error:", e);
+    }
+  }
+
+  // 발송 이력 저장
+  await db.collection("email_logs").add({
+    type: "reminder",
+    targetId: `${seminarId}_d${daysLeft}`,
+    recipientCount: sentCount,
+    sentAt: new Date().toISOString(),
+    sentBy: "system",
+  });
+
+  return sentCount;
+}
+
 /**
  * 세미나 사전 알림 Cron (매일 09:00 KST 실행)
- * D-3, D-1 세미나에 대해 참석 예정 회원에게 알림을 생성한다.
+ * D-3, D-1 세미나에 대해 참석 예정 회원에게 알림 + 이메일 발송
  */
 export async function GET(req: NextRequest) {
-  // Vercel Cron 인증
   const authHeader = req.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -15,25 +107,23 @@ export async function GET(req: NextRequest) {
   try {
     const db = getAdminDb();
     const now = new Date();
-    // KST 기준 오늘 날짜
     const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
-    const today = kstNow.toISOString().split("T")[0]; // YYYY-MM-DD
+    const today = kstNow.toISOString().split("T")[0];
 
-    // D+1, D+3 날짜 계산
     const d1 = addDays(kstNow, 1);
     const d3 = addDays(kstNow, 3);
 
-    // upcoming 세미나 전체 조회
     const seminarsSnapshot = await db
       .collection("seminars")
       .where("status", "in", ["upcoming", "ongoing"])
       .get();
 
-    let sentCount = 0;
+    let notifCount = 0;
+    let emailCount = 0;
 
     for (const doc of seminarsSnapshot.docs) {
       const seminar = doc.data();
-      const seminarDate = seminar.date; // "YYYY-MM-DD" 형식
+      const seminarDate = seminar.date;
 
       let daysLeft: number | null = null;
       if (seminarDate === d1) daysLeft = 1;
@@ -41,11 +131,10 @@ export async function GET(req: NextRequest) {
 
       if (daysLeft === null) continue;
 
-      // 참석 예정자 (attendeeIds) 에게 알림 생성
       const attendeeIds: string[] = seminar.attendeeIds ?? [];
       if (attendeeIds.length === 0) continue;
 
-      // 이미 발송된 알림 중복 방지: 같은 세미나+같은 D-day 조합 체크
+      // 알림 중복 방지
       const existingSnapshot = await db
         .collection("notifications")
         .where("type", "==", "seminar_reminder")
@@ -54,8 +143,9 @@ export async function GET(req: NextRequest) {
         .limit(1)
         .get();
 
-      if (!existingSnapshot.empty) continue; // 이미 발송됨
+      if (!existingSnapshot.empty) continue;
 
+      // 인앱 알림 생성
       const batch = db.batch();
       for (const userId of attendeeIds) {
         const ref = db.collection("notifications").doc();
@@ -68,16 +158,16 @@ export async function GET(req: NextRequest) {
           read: false,
           createdAt: new Date().toISOString(),
         });
-        sentCount++;
+        notifCount++;
       }
       await batch.commit();
+
+      // 이메일 발송
+      const sent = await sendReminderEmails(db, seminar, doc.id, attendeeIds, daysLeft);
+      emailCount += sent;
     }
 
-    return Response.json({
-      ok: true,
-      date: today,
-      sentCount,
-    });
+    return Response.json({ ok: true, date: today, notifCount, emailCount });
   } catch (err) {
     console.error("[cron/seminar-reminder]", err);
     return Response.json({ error: "Internal error" }, { status: 500 });

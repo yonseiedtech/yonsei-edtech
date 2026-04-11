@@ -52,6 +52,8 @@ export interface User { [key: string]: unknown;
   studentId?: string;
   contactEmail?: string;
   contactVisibility?: ContactVisibility;
+  enrollmentYear?: number;
+  enrollmentHalf?: number; // 1=전반기, 2=후반기
   createdAt: string;
   updatedAt: string;
 }
@@ -69,7 +71,7 @@ export interface Post {
   id: string;
   title: string;
   content: string;
-  category: "notice" | "seminar" | "free" | "promotion" | "press";
+  category: "notice" | "seminar" | "free" | "promotion" | "press" | "staff";
   imageUrls?: string[];
   authorId: string;
   authorName: string;
@@ -95,6 +97,7 @@ export const CATEGORY_LABELS: Record<PostCategory, string> = {
   free: "자유게시판",
   promotion: "홍보게시판",
   press: "보도자료",
+  staff: "운영진 게시판",
 };
 
 // ── 세미나 ──
@@ -133,6 +136,7 @@ export interface Seminar {
   registrationUrl?: string;
   timeline?: TimelinePhase[];
   registrationFields?: RegistrationFieldConfig[];
+  autoConvertRegistration?: boolean;
   reviewQuestions?: {
     attendee?: string[];
     speaker?: string[];
@@ -330,6 +334,74 @@ export interface Activity { [key: string]: unknown;
   updatedAt: string;
 }
 
+// ── 투표/설문 ──
+export type PollType = "vote" | "survey";
+export type PollStatus = "draft" | "active" | "closed";
+
+export interface PollOption {
+  id: string;
+  text: string;
+  votes: number;
+}
+
+export interface PollQuestion {
+  id: string;
+  text: string;
+  type: "single" | "multiple" | "text" | "rating";
+  options?: PollOption[];
+  required: boolean;
+}
+
+export interface Poll {
+  id: string;
+  title: string;
+  description: string;
+  type: PollType;
+  status: PollStatus;
+  questions: PollQuestion[];
+  allowAnonymous: boolean;
+  showResults: boolean; // 투표 후 결과 공개 여부
+  endsAt?: string;
+  createdBy: string;
+  createdByName: string;
+  voterIds: string[]; // 중복 투표 방지
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PollResponse {
+  id: string;
+  pollId: string;
+  userId?: string;
+  userName?: string;
+  answers: Record<string, string | string[] | number>; // questionId → answer
+  createdAt: string;
+}
+
+// ── 포토갤러리 ──
+export interface PhotoAlbum {
+  id: string;
+  title: string;
+  description?: string;
+  seminarId?: string;
+  activityId?: string;
+  coverUrl?: string;
+  photoCount: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Photo {
+  id: string;
+  albumId: string;
+  url: string; // base64 data URL or external URL
+  caption?: string;
+  uploadedBy: string;
+  uploadedByName: string;
+  createdAt: string;
+}
+
 // ── 운영진 업무수행철 (인수인계철) ──
 export interface HandoverDocument {
   id: string;
@@ -385,6 +457,71 @@ export interface AppNotification {
   link?: string;          // 클릭 시 이동할 경로
   read: boolean;
   createdAt: string;
+}
+
+// ── 감사 로그 ──
+export interface AuditLog {
+  id: string;
+  action: string;
+  category: "member" | "seminar" | "post" | "settings" | "role" | "system";
+  detail: string;
+  targetId?: string;
+  targetName?: string;
+  userId: string;
+  userName: string;
+  createdAt: string;
+}
+
+// ── 운영 To-Do ──
+export interface AdminTodo {
+  id: string;
+  title: string;
+  description?: string;
+  priority: "high" | "medium" | "low";
+  status: "todo" | "in_progress" | "done";
+  assigneeId?: string;
+  assigneeName?: string;
+  dueDate?: string;
+  createdBy: string;
+  createdByName: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+// ── 활동 진행 기록 ──
+export interface ActivityProgress {
+  id: string;
+  activityId: string;
+  week: number;
+  date: string;
+  title: string;
+  description?: string;
+  status: "planned" | "in_progress" | "completed";
+  attachments?: string[];
+  createdAt: string;
+}
+
+// ── 활동 산출물 ──
+export interface ActivityMaterial {
+  id: string;
+  activityId: string;
+  title: string;
+  fileName: string;
+  fileUrl: string;
+  fileSize: number;
+  uploadedBy: string;
+  uploadedByName: string;
+  createdAt: string;
+}
+
+// ── 이메일 발송 이력 ──
+export interface EmailLog {
+  id: string;
+  type: "reminder" | "review_request" | "certificate" | "welcome";
+  targetId: string;
+  recipientCount: number;
+  sentAt: string;
+  sentBy: string;
 }
 
 // ── 문의 ──

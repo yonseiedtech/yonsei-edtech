@@ -43,6 +43,8 @@ import HeroSection from "@/features/seminar/detail/HeroSection";
 import SpeakerCard from "@/features/seminar/detail/SpeakerCard";
 import SessionProgram from "@/features/seminar/detail/SessionProgram";
 import RegistrationSection from "@/features/seminar/detail/RegistrationSection";
+import AttendanceCertificate from "@/features/seminar/AttendanceCertificate";
+import ShareButton from "@/components/ShareButton";
 import StaffTools from "@/features/seminar/detail/StaffTools";
 import EditDialogs from "@/features/seminar/detail/EditDialogs";
 import type { EditSection, InfoFormData, SpeakerFormData } from "@/features/seminar/detail/EditDialogs";
@@ -436,6 +438,11 @@ function SeminarDetail({ id }: { id: string }) {
           목록으로
         </Link>
 
+        {/* Share */}
+        <div className="mb-4 flex justify-end">
+          <ShareButton title={`${seminar.title} - 연세교육공학회 세미나`} text={`${seminar.title} 세미나 (${seminar.date}) #연세교육공학회`} />
+        </div>
+
         {/* Section 1: Hero */}
         <HeroSection seminar={seminar} isStaff={isStaff} onEditInfo={openEditInfo} />
 
@@ -515,7 +522,27 @@ function SeminarDetail({ id }: { id: string }) {
           </div>
         )}
 
-        {/* Section 6.5: Reviews */}
+        {/* Section 6.5: Attendance Certificate */}
+        {myAttendee?.checkedIn && (
+          <div className="mt-6 rounded-2xl border border-blue-200 bg-blue-50/50 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-blue-800">참석 확인서</h3>
+                <p className="mt-1 text-xs text-blue-600">출석이 확인되었습니다. 참석 확인서를 다운로드할 수 있습니다.</p>
+              </div>
+              <AttendanceCertificate
+                seminarTitle={seminar.title}
+                seminarDate={seminar.date}
+                seminarLocation={seminar.location}
+                attendeeName={user?.name ?? ""}
+                generation={user?.generation}
+                checkedInAt={myAttendee.checkedInAt}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Section 7: Reviews */}
         <div className="mt-6 rounded-2xl border bg-white p-8">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
             <Star size={16} />

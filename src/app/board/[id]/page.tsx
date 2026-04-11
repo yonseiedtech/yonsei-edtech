@@ -23,6 +23,7 @@ import {
 import { formatDate } from "@/lib/utils";
 import { ArrowLeft, Trash2, Edit, LogIn } from "lucide-react";
 import { toast } from "sonner";
+import ShareButton from "@/components/ShareButton";
 
 function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -85,10 +86,13 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
             <Badge variant="secondary">{CATEGORY_LABELS[post.category]}</Badge>
           </div>
           <h1 className="mt-3 text-2xl font-bold">{post.title}</h1>
-          <div className="mt-3 flex items-center gap-3 text-sm text-muted-foreground">
-            <span>{post.authorName}</span>
-            <span>{formatDate(post.createdAt)}</span>
-            <span>조회 {post.viewCount}</span>
+          <div className="mt-3 flex items-center justify-between">
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <span>{post.authorName}</span>
+              <span>{formatDate(post.createdAt)}</span>
+              <span>조회 {post.viewCount}</span>
+            </div>
+            <ShareButton title={post.title} />
           </div>
 
           {(isAuthor || isAdmin) && (

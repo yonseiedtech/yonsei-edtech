@@ -27,6 +27,7 @@ const ALL_CATEGORIES: PostCategory[] = [
   "free",
   "promotion",
   "press",
+  "staff",
 ];
 
 interface PostFormProps {
@@ -59,7 +60,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
   // 역할별 카테고리 필터
   const availableCategories = ALL_CATEGORIES.filter((cat) => {
     if (cat === "notice") return isAtLeast(user, "president");
-    if (cat === "promotion" || cat === "press") return isAtLeast(user, "staff");
+    if (cat === "promotion" || cat === "press" || cat === "staff") return isAtLeast(user, "staff");
     return true;
   });
 

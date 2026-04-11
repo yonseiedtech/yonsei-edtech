@@ -22,8 +22,10 @@ import type { User, UserRole } from "@/types";
 import { toast } from "sonner";
 import {
   Search, RefreshCw, UserPlus, Clock, Users, UserCheck, XCircle,
-  RotateCcw, Settings,
+  RotateCcw, Settings, Download,
 } from "lucide-react";
+import { exportCSV } from "@/lib/export-csv";
+import { logAudit } from "@/lib/audit";
 import { Separator } from "@/components/ui/separator";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
@@ -104,8 +106,10 @@ export default function AdminMemberTab() {
   }, [activeTab, allMembers, members, searchQuery]);
 
   function handleRoleChange(userId: string, newRole: UserRole) {
+    const target = allMembers.find((m) => m.id === userId);
     changeRole({ id: userId, role: newRole });
     toast.success("역할이 변경되었습니다.");
+    logAudit({ action: "역할 변경", category: "role", detail: `${target?.name ?? userId}: ${target?.role ?? "?"} → ${newRole}`, targetId: userId, targetName: target?.name, userId: user?.id ?? "", userName: user?.name ?? "" });
   }
 
   async function executeHandover() {
@@ -118,6 +122,7 @@ export default function AdminMemberTab() {
     try {
       await bulkChangeRoles(changes);
       toast.success(`운영진 교체 완료 (${changes.length}건 변경)`);
+      logAudit({ action: "운영진 교체", category: "role", detail: `${changes.length}건 역할 변경`, userId: user?.id ?? "", userName: user?.name ?? "" });
       setShowHandover(false);
       setNewRoles([]);
     } catch { toast.error("운영진 교체에 실패했습니다."); }
@@ -166,16 +171,26 @@ export default function AdminMemberTab() {
             </select>
           )}
         </div>
-        {canApprove && (
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => setShowAddMember(true)}>
-              <UserPlus size={14} className="mr-1" /> 회원 추가
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => setShowHandover(true)}>
-              <RefreshCw size={14} className="mr-1" /> 운영진 교체
-            </Button>
-          </div>
-        )}
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => {
+            const source = activeTab === "all" ? allMembers : displayMembers;
+            exportCSV("회원목록", ["이름", "아이디", "이메일", "학번", "역할", "기수", "분야", "상태"],
+              source.map((m) => [m.name, m.username, m.email, m.studentId, m.role, m.generation, m.field, m.approved ? "승인" : m.rejected ? "거절" : "대기"]),
+            );
+          }}>
+            <Download size={14} className="mr-1" /> CSV 내보내기
+          </Button>
+          {canApprove && (
+            <>
+              <Button size="sm" variant="outline" onClick={() => setShowAddMember(true)}>
+                <UserPlus size={14} className="mr-1" /> 회원 추가
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setShowHandover(true)}>
+                <RefreshCw size={14} className="mr-1" /> 운영진 교체
+              </Button>
+            </>
+          )}
+        </div>
       </div>
     );
   }

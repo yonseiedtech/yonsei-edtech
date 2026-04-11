@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import {
   Shield, Users, FileText, MessageSquare, MessageCircle,
   Clock, HelpCircle, Newspaper, Settings, Bot, Award, Wallet, BarChart3, RefreshCw,
+  ClipboardList, ScrollText, LayoutDashboard,
 } from "lucide-react";
 
 const ADMIN_TABS = [
@@ -23,7 +24,11 @@ const ADMIN_TABS = [
   { href: "/admin/chatbot", label: "챗봇 관리", icon: MessageCircle },
   { href: "/admin/newsletter", label: "학회보", icon: Newspaper },
   { href: "/admin/certificates", label: "수료증/감사장", icon: Award },
+  { href: "/admin/todos", label: "To-Do", icon: ClipboardList },
+  { href: "/admin/activity-dashboard", label: "학술활동", icon: LayoutDashboard },
   { href: "/admin/analytics", label: "분석", icon: BarChart3 },
+  { href: "/admin/semester-report", label: "학기보고서", icon: BarChart3 },
+  { href: "/admin/audit-log", label: "감사로그", icon: ScrollText, presidentOnly: true },
   { href: "/admin/transition", label: "운영진", icon: RefreshCw, presidentOnly: true },
   { href: "/admin/agents", label: "에이전트", icon: Bot },
   { href: "/admin/settings", label: "사이트 설정", icon: Settings, presidentOnly: true },

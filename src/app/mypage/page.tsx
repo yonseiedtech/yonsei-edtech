@@ -10,7 +10,8 @@ import MyPostList from "@/features/auth/MyPostList";
 import { usePosts } from "@/features/board/useBoard";
 import { useSeminars, useToggleAttendance } from "@/features/seminar/useSeminar";
 import { useQuery } from "@tanstack/react-query";
-import { certificatesApi } from "@/lib/bkend";
+import { certificatesApi, attendeesApi } from "@/lib/bkend";
+import AttendanceCertificate from "@/features/seminar/AttendanceCertificate";
 import type { Certificate } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { User, LogOut, Calendar, X, FileText, KeyRound, UserCog, Award } from "lucide-react";
 import { useAuth } from "@/features/auth/useAuth";
 import { ROLE_LABELS } from "@/types";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatGeneration } from "@/lib/utils";
 import { toast } from "sonner";
 
 const TABS = [
@@ -52,6 +53,24 @@ function MypageContent() {
   });
   const myCertificates = allCertificates.filter((c) => c.recipientName === user?.name);
 
+  // 내 출석 기록 (참석 확인서용)
+  const { data: myAttendeeRecords = [] } = useQuery({
+    queryKey: ["my-attendees", user?.id],
+    queryFn: async () => {
+      const results = [];
+      for (const s of mySeminars) {
+        const res = await attendeesApi.check(s.id, user!.id);
+        const attendee = (res.data as unknown as { checkedIn: boolean; checkedInAt: string | null }[])?.[0];
+        if (attendee?.checkedIn) {
+          results.push({ seminarId: s.id, checkedInAt: attendee.checkedInAt });
+        }
+      }
+      return results;
+    },
+    enabled: !!user && mySeminars.length > 0,
+  });
+  const checkedInMap = new Map(myAttendeeRecords.map((r) => [r.seminarId, r.checkedInAt]));
+
   function handleCancelAttendance(seminarId: string) {
     if (!user) return;
     toggleAttendance(seminarId, user.id);
@@ -81,7 +100,7 @@ function MypageContent() {
             <div>
               <h2 className="text-xl font-bold">{user.name}</h2>
               <div className="mt-1 flex flex-wrap items-center gap-2">
-                <Badge variant="secondary">{user.generation}기</Badge>
+                <Badge variant="secondary">{formatGeneration(user.generation, user.enrollmentYear, user.enrollmentHalf)}</Badge>
                 <Badge>{ROLE_LABELS[user.role]}</Badge>
                 {user.studentId && (
                   <span className="text-xs text-muted-foreground">{user.studentId}</span>
@@ -141,18 +160,33 @@ function MypageContent() {
                 </p>
               ) : (
                 mySeminars.map((s) => (
-                  <div key={s.id} className="flex items-center justify-between rounded-xl border bg-white px-5 py-4">
-                    <div>
-                      <Link href={`/seminars/${s.id}`} className="font-medium hover:text-primary hover:underline">
-                        {s.title}
-                      </Link>
-                      <p className="mt-0.5 text-sm text-muted-foreground">
-                        {formatDate(s.date)} {s.time} · {s.location}
-                      </p>
+                  <div key={s.id} className="rounded-xl border bg-white px-5 py-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Link href={`/seminars/${s.id}`} className="font-medium hover:text-primary hover:underline">
+                          {s.title}
+                        </Link>
+                        <p className="mt-0.5 text-sm text-muted-foreground">
+                          {formatDate(s.date)} {s.time} · {s.location}
+                        </p>
+                      </div>
+                      <Button variant="outline" size="sm" className="text-destructive" onClick={() => handleCancelAttendance(s.id)}>
+                        <X size={14} className="mr-1" />취소
+                      </Button>
                     </div>
-                    <Button variant="outline" size="sm" className="text-destructive" onClick={() => handleCancelAttendance(s.id)}>
-                      <X size={14} className="mr-1" />취소
-                    </Button>
+                    {checkedInMap.has(s.id) && (
+                      <div className="mt-2 flex items-center gap-2 border-t pt-2">
+                        <Badge variant="secondary" className="bg-green-50 text-green-700">출석 완료</Badge>
+                        <AttendanceCertificate
+                          seminarTitle={s.title}
+                          seminarDate={s.date}
+                          seminarLocation={s.location}
+                          attendeeName={user?.name ?? ""}
+                          generation={user?.generation}
+                          checkedInAt={checkedInMap.get(s.id)}
+                        />
+                      </div>
+                    )}
                   </div>
                 ))
               )}

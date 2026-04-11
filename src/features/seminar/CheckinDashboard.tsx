@@ -39,7 +39,7 @@ export default function CheckinDashboard({ seminarId }: Props) {
   return (
     <div>
       {/* 통계 */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
         <MiniStat icon={Users} label="전체" value={stats.total} color="text-blue-600" />
         <MiniStat icon={UserCheck} label="출석" value={stats.checkedIn} color="text-green-600" />
         <MiniStat icon={UserX} label="미출석" value={stats.remaining} color="text-amber-600" />

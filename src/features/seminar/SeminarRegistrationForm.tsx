@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { registrationsApi } from "@/lib/bkend";
+import { registrationsApi, attendeesApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { CheckCircle, Send } from "lucide-react";
 import { toast } from "sonner";
@@ -16,10 +16,11 @@ interface Props {
   seminarId: string;
   seminarTitle: string;
   fields?: RegistrationFieldConfig[];
+  autoConvert?: boolean;
   onSubmitted?: () => void;
 }
 
-export default function SeminarRegistrationForm({ seminarId, seminarTitle, fields, onSubmitted }: Props) {
+export default function SeminarRegistrationForm({ seminarId, seminarTitle, fields, autoConvert, onSubmitted }: Props) {
   const { user } = useAuthStore();
   const [submitted, setSubmitted] = useState(false);
 
@@ -46,6 +47,31 @@ export default function SeminarRegistrationForm({ seminarId, seminarTitle, field
         if (val) payload[f.key] = val;
       }
       await registrationsApi.create(payload);
+
+      // 자동 참석자 전환
+      if (autoConvert) {
+        try {
+          const name = data.name?.trim() || user?.name || "";
+          await attendeesApi.addWithDetails(seminarId, {
+            userName: name,
+            userId: user?.id || `guest_${data.email?.trim() || name}`,
+            studentId: data.studentId?.trim() || undefined,
+            email: data.email?.trim() || undefined,
+            phone: data.phone?.trim() || undefined,
+            semester: data.semester?.trim() || undefined,
+            interests: data.interests?.trim() || undefined,
+            questions: data.memo?.trim() || undefined,
+            isGuest: !user?.id,
+            checkedIn: false,
+            checkedInAt: null,
+            checkedInBy: null,
+          });
+        } catch {
+          // 참석자 전환 실패해도 신청은 완료된 것으로 처리
+          console.error("[auto-convert] attendee creation failed");
+        }
+      }
+
       setSubmitted(true);
       onSubmitted?.();
       toast.success("신청이 완료되었습니다.");

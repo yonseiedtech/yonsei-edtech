@@ -12,18 +12,16 @@ import {
   BarChart3,
   Award,
   ClipboardList,
-  Image as ImageIcon,
 } from "lucide-react";
 
 const TABS = [
   { href: "/seminar-admin", label: "세미나 목록", icon: BookOpen, exact: true },
   { href: "/seminar-admin/create", label: "세미나 생성", icon: PlusCircle },
-  { href: "/seminar-admin/promotion", label: "홍보 콘텐츠", icon: Megaphone },
-  { href: "/seminar-admin/poster", label: "포스터", icon: ImageIcon },
+  { href: "/seminar-admin/promotion", label: "홍보 제작", icon: Megaphone },
   { href: "/seminar-admin/timeline", label: "운영 타임라인", icon: ListChecks },
-  { href: "/seminar-admin/report", label: "참석자 관리", icon: BarChart3 },
-  { href: "/seminar-admin/certificate", label: "콘텐츠 제작", icon: Award },
-  { href: "/seminar-admin/registrations", label: "신청 관리", icon: ClipboardList },
+  { href: "/seminar-admin/registrations", label: "참석자", icon: ClipboardList },
+  { href: "/seminar-admin/report", label: "참석 분석", icon: BarChart3 },
+  { href: "/seminar-admin/certificate", label: "수료증/명찰", icon: Award },
 ];
 
 function SeminarAdminShell({ children }: { children: React.ReactNode }) {

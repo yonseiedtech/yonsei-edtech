@@ -165,6 +165,7 @@ export default function RegistrationSection({
             seminarId={seminar.id}
             seminarTitle={seminar.title}
             fields={seminar.registrationFields}
+            autoConvert={seminar.autoConvertRegistration}
             onSubmitted={onRegistered}
           />
         </div>

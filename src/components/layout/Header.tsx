@@ -11,6 +11,7 @@ import { useAuthStore } from "@/features/auth/auth-store";
 import { useAuth } from "@/features/auth/useAuth";
 import { isAtLeast } from "@/lib/permissions";
 import NotificationBell from "@/features/notifications/NotificationBell";
+import ThemeToggle from "@/components/ThemeToggle";
 
 interface NavLink {
   href: string;
@@ -49,6 +50,7 @@ const PUBLIC_NAV: NavGroup[] = [
       { href: "/activities/projects", label: "팀 프로젝트" },
       { href: "/activities/studies", label: "스터디" },
       { href: "/activities/external", label: "대외 학회활동" },
+      { href: "/calendar", label: "학술 캘린더" },
     ],
   },
   {
@@ -58,6 +60,8 @@ const PUBLIC_NAV: NavGroup[] = [
       { href: "/board/free", label: "자유게시판" },
       { href: "/board/promotion", label: "홍보게시판" },
       { href: "/board/press", label: "보도자료" },
+      { href: "/polls", label: "투표/설문" },
+      { href: "/gallery", label: "포토갤러리" },
       { href: "/newsletter", label: "학회보" },
     ],
   },
@@ -119,7 +123,7 @@ function NavDropdown({ group }: { group: NavGroup }) {
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-1 min-w-[140px] rounded-lg border bg-white py-1 shadow-lg">
+        <div className="absolute left-0 top-full z-50 mt-1 min-w-[140px] rounded-lg border bg-popover py-1 shadow-lg">
           {group.items.map((item) => {
             const isActive = isItemActive(pathname, item.href);
             return (
@@ -188,7 +192,7 @@ function UserDropdown() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border bg-white py-1 shadow-lg">
+        <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border bg-popover py-1 shadow-lg">
           {menuItems.map((item) => {
             const isActive = pathname.startsWith(item.href);
             return (
@@ -258,7 +262,7 @@ export default function Header() {
   const showAdmin = isAtLeast(user, "staff");
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-white/80 backdrop-blur-lg">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
@@ -275,6 +279,7 @@ export default function Header() {
 
         {/* Auth Area (Desktop) */}
         <div className="hidden items-center gap-2 md:flex">
+          <ThemeToggle />
           {user ? (
             <>
               <NotificationBell />
@@ -290,15 +295,18 @@ export default function Header() {
           )}
         </div>
 
-        {/* Mobile Hamburger */}
-        <button className="md:hidden" onClick={() => setMobileOpen(!mobileOpen)} aria-label="메뉴 열기">
-          {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        {/* Mobile: theme + hamburger */}
+        <div className="flex items-center gap-1 md:hidden">
+          <ThemeToggle />
+          <button onClick={() => setMobileOpen(!mobileOpen)} aria-label="메뉴 열기">
+            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Nav */}
       {mobileOpen && (
-        <div className="animate-in slide-in-from-top-2 fade-in duration-200 border-t bg-white px-4 pb-4 md:hidden">
+        <div className="animate-in slide-in-from-top-2 fade-in duration-200 border-t bg-popover px-4 pb-4 md:hidden">
           <nav className="flex flex-col gap-1 pt-2">
             {PUBLIC_NAV.filter((group) => !(user && group.label === "문의")).map((group) => (
               <MobileNavGroup key={group.label} group={group} onClose={() => setMobileOpen(false)} />

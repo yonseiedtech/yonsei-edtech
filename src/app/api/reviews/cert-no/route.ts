@@ -1,13 +1,17 @@
 import { NextRequest } from "next/server";
+import { requireAuth } from "@/lib/api-auth";
 import { getAdminDb } from "@/lib/firebase-admin";
 
-// 해당 세미나 연사의 감사장 호수 조회
+// 해당 세미나 연사의 감사장 호수 조회 (인증 필요)
 export async function GET(req: NextRequest) {
+  const authResult = await requireAuth(req);
+  if (authResult instanceof Response) return authResult;
+
   const seminarId = req.nextUrl.searchParams.get("seminarId");
   const speakerName = req.nextUrl.searchParams.get("speakerName");
 
   if (!seminarId) {
-    return Response.json({ certNo: null });
+    return Response.json({ error: "seminarId가 필요합니다." }, { status: 400 });
   }
 
   try {

@@ -2,6 +2,7 @@ import { User as UserIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ROLE_LABELS } from "@/types";
 import type { User } from "@/types";
+import { formatGeneration } from "@/lib/utils";
 
 interface Props {
   member: User;
@@ -24,7 +25,7 @@ export default function MemberCard({ member }: Props) {
       <h3 className="mt-4 font-semibold">
         {member.name}
         <span className="ml-1 text-xs font-normal text-muted-foreground">
-          ({member.generation}기)
+          ({formatGeneration(member.generation, member.enrollmentYear, member.enrollmentHalf)})
         </span>
       </h3>
 

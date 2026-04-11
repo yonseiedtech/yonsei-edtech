@@ -9,8 +9,10 @@ import {
 } from "recharts";
 import {
   BarChart3, Users, FileText, CalendarDays, TrendingUp,
-  Star, Award,
+  Star, Award, Download,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { exportCSV } from "@/lib/export-csv";
 import type { User, Post, Seminar, SeminarAttendee, SeminarReview, Certificate } from "@/types";
 
 // ── helpers ──
@@ -223,11 +225,48 @@ export default function AnalyticsPage() {
     };
   }, [members, seminars, posts, attendees, reviews, certs]);
 
+  function exportMembers() {
+    exportCSV("회원목록", ["이름", "아이디", "이메일", "학번", "역할", "기수", "분야", "가입일"],
+      members.map((m) => [m.name, m.username, m.email, m.studentId, m.role, m.generation, m.field, m.createdAt?.split("T")[0]]),
+    );
+  }
+
+  function exportSeminars() {
+    exportCSV("세미나목록", ["제목", "날짜", "시간", "장소", "상태", "참가자수"],
+      seminars.map((s) => [s.title, s.date, s.time, s.location, s.status, s.attendeeIds?.length ?? 0]),
+    );
+  }
+
+  function exportAttendees() {
+    exportCSV("출석현황", ["세미나", "회원이름", "학번", "출석여부", "출석시각"],
+      attendees.map((a) => {
+        const sem = seminars.find((s) => s.id === a.seminarId);
+        return [sem?.title ?? a.seminarId, a.userName, a.studentId, a.checkedIn ? "출석" : "미출석", a.checkedInAt ?? ""];
+      }),
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <BarChart3 size={20} className="text-primary" />
-        <h2 className="text-lg font-bold">분석 대시보드</h2>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <BarChart3 size={20} className="text-primary" />
+          <h2 className="text-lg font-bold">분석 대시보드</h2>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={exportMembers}>
+            <Download size={14} className="mr-1" />
+            회원 CSV
+          </Button>
+          <Button size="sm" variant="outline" onClick={exportSeminars}>
+            <Download size={14} className="mr-1" />
+            세미나 CSV
+          </Button>
+          <Button size="sm" variant="outline" onClick={exportAttendees}>
+            <Download size={14} className="mr-1" />
+            출석 CSV
+          </Button>
+        </div>
       </div>
 
       {/* Summary cards */}

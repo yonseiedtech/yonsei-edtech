@@ -15,6 +15,18 @@ export function formatDate(date: string | Date): string {
   });
 }
 
+/** 기수 + 입학시점 문자열: "3기 (2024 전반기)" */
+export function formatGeneration(
+  generation: number,
+  enrollmentYear?: number,
+  enrollmentHalf?: number,
+): string {
+  const base = `${generation}기`;
+  if (!enrollmentYear) return base;
+  const half = enrollmentHalf === 2 ? "후반기" : "전반기";
+  return `${base} (${enrollmentYear} ${half})`;
+}
+
 export function formatDistanceToNow(date: string | Date): string {
   const d = new Date(date);
   if (isNaN(d.getTime())) return "-";

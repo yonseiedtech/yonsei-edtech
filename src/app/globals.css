@@ -64,6 +64,28 @@ html {
   --font-sans: var(--font-pretendard), "Pretendard", system-ui, sans-serif;
 }
 
+.dark {
+  --background: 222 30% 10%;
+  --foreground: 210 20% 92%;
+  --card: 222 28% 14%;
+  --card-foreground: 210 20% 92%;
+  --popover: 222 28% 14%;
+  --popover-foreground: 210 20% 92%;
+  --primary: 212 80% 55%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 42 50% 45%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 222 20% 18%;
+  --muted-foreground: 210 14% 60%;
+  --accent: 220 80% 60%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 70% 50%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 222 18% 22%;
+  --input: 222 18% 22%;
+  --ring: 212 80% 55%;
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -72,4 +94,17 @@ html {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+}
+
+/* 모바일 최적화 */
+@media (max-width: 639px) {
+  /* 페이지 상하 패딩 축소 */
+  .py-16 { padding-top: 2rem; padding-bottom: 2rem; }
+  .py-20 { padding-top: 2.5rem; padding-bottom: 2.5rem; }
+  /* 카드 내부 패딩 축소 */
+  .p-8 { padding: 1.25rem; }
+  .p-6 { padding: 1rem; }
+  /* 큰 gap 축소 */
+  .gap-10 { gap: 1.5rem; }
+  .gap-8 { gap: 1.25rem; }
 }

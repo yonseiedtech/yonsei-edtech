@@ -70,12 +70,56 @@ function exportRegistrationsCSV(seminarTitle: string, regs: SeminarRegistration[
 }
 
 /* ── 탭 버튼 ── */
-type TabKey = "manage" | "analysis" | "settings";
+type TabKey = "manage" | "attendees" | "analysis" | "settings";
 const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: "manage", label: "신청 관리", icon: <Users size={14} /> },
+  { key: "attendees", label: "참석자 현황", icon: <UserPlus size={14} /> },
   { key: "analysis", label: "분석", icon: <BarChart3 size={14} /> },
   { key: "settings", label: "폼 설정", icon: <Settings size={14} /> },
 ];
+
+/* ── 파이프라인 바 ── */
+function PipelineBar({ registrations, attendees, seminar }: {
+  registrations: SeminarRegistration[];
+  attendees: SeminarAttendee[];
+  seminar: { status: string };
+}) {
+  const regCount = registrations.length;
+  const converted = registrations.filter((r) => r.convertedAt).length;
+  const attCount = attendees.length;
+  const checkedIn = attendees.filter((a) => a.checkedIn).length;
+  const isCompleted = seminar.status === "completed";
+
+  const steps = [
+    { label: "신청", count: regCount, active: regCount > 0, color: "bg-blue-500" },
+    { label: "참석자 전환", count: converted || attCount, active: attCount > 0, color: "bg-green-500" },
+    { label: "체크인", count: checkedIn, active: checkedIn > 0, color: "bg-emerald-500" },
+    { label: "완료", count: isCompleted ? checkedIn : 0, active: isCompleted, color: "bg-primary" },
+  ];
+
+  return (
+    <div className="rounded-xl border bg-white p-4">
+      <div className="flex items-center gap-1">
+        {steps.map((step, i) => (
+          <div key={step.label} className="flex flex-1 items-center">
+            <div className="flex flex-1 flex-col items-center gap-1">
+              <div className={cn(
+                "flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white transition-colors",
+                step.active ? step.color : "bg-muted-foreground/30",
+              )}>
+                {step.count}
+              </div>
+              <span className={cn("text-[10px] font-medium", step.active ? "text-foreground" : "text-muted-foreground")}>{step.label}</span>
+            </div>
+            {i < steps.length - 1 && (
+              <div className={cn("mx-1 h-0.5 w-full min-w-4", step.active ? "bg-green-300" : "bg-muted/50")} />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 /* ── 분석 섹션 ── */
 function RegistrationAnalysis({
@@ -436,11 +480,12 @@ interface EditForm {
 }
 
 /* ── 신청서 폼 설정 ── */
-function FormFieldsEditor({ seminarId, fields }: { seminarId: string; fields: RegistrationFieldConfig[] }) {
+function FormFieldsEditor({ seminarId, fields, autoConvert }: { seminarId: string; fields: RegistrationFieldConfig[]; autoConvert?: boolean }) {
   const qc = useQueryClient();
   const [localFields, setLocalFields] = useState<RegistrationFieldConfig[]>(
     fields.length > 0 ? fields : DEFAULT_REGISTRATION_FIELDS,
   );
+  const [localAutoConvert, setLocalAutoConvert] = useState(autoConvert ?? false);
   const [saving, setSaving] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [newField, setNewField] = useState({ label: "", type: "text" as RegistrationFieldConfig["type"] });
@@ -480,7 +525,7 @@ function FormFieldsEditor({ seminarId, fields }: { seminarId: string; fields: Re
   async function handleSave() {
     setSaving(true);
     try {
-      await seminarsApi.update(seminarId, { registrationFields: localFields });
+      await seminarsApi.update(seminarId, { registrationFields: localFields, autoConvertRegistration: localAutoConvert });
       qc.invalidateQueries({ queryKey: ["seminars", seminarId] });
       toast.success("신청서 폼 설정이 저장되었습니다.");
     } catch { toast.error("저장에 실패했습니다."); }
@@ -497,6 +542,15 @@ function FormFieldsEditor({ seminarId, fields }: { seminarId: string; fields: Re
             {saving && <Loader2 size={14} className="mr-1 animate-spin" />}저장
           </Button>
         </div>
+      </div>
+
+      {/* 자동 참석자 전환 토글 */}
+      <div className="flex items-center justify-between rounded-lg border border-dashed border-primary/30 bg-primary/5 px-4 py-3">
+        <div>
+          <p className="text-sm font-medium">자동 참석자 전환</p>
+          <p className="text-xs text-muted-foreground">신청 즉시 참석자로 자동 등록 (QR 토큰 발급)</p>
+        </div>
+        <Checkbox checked={localAutoConvert} onCheckedChange={(v) => setLocalAutoConvert(!!v)} />
       </div>
 
       <div className="space-y-1.5">
@@ -952,6 +1006,11 @@ export default function RegistrationsTab() {
         )}
       </div>
 
+      {/* 파이프라인 바 */}
+      {selectedId && seminar && (
+        <PipelineBar registrations={registrations} attendees={attendees} seminar={seminar} />
+      )}
+
       {/* 서브 탭 */}
       {selectedId && (
         <div className="flex gap-1 border-b">
@@ -1097,6 +1156,81 @@ export default function RegistrationsTab() {
         </div>
       )}
 
+      {/* 참석자 현황 탭 */}
+      {selectedId && activeTab === "attendees" && (
+        <div className="space-y-4">
+          {/* 통계 */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="rounded-xl border bg-white p-4 text-center">
+              <p className="text-2xl font-bold text-blue-600">{attendees.length}</p>
+              <p className="text-xs text-muted-foreground">총 참석자</p>
+            </div>
+            <div className="rounded-xl border bg-white p-4 text-center">
+              <p className="text-2xl font-bold text-green-600">{attendees.filter((a) => a.checkedIn).length}</p>
+              <p className="text-xs text-muted-foreground">체크인</p>
+            </div>
+            <div className="rounded-xl border bg-white p-4 text-center">
+              <p className="text-2xl font-bold text-amber-600">{attendees.filter((a) => !a.checkedIn).length}</p>
+              <p className="text-xs text-muted-foreground">미체크인</p>
+            </div>
+            <div className="rounded-xl border bg-white p-4 text-center">
+              <p className="text-2xl font-bold text-purple-600">{attendees.filter((a) => a.isGuest).length}</p>
+              <p className="text-xs text-muted-foreground">미가입</p>
+            </div>
+          </div>
+
+          {/* 참석자 목록 */}
+          <div className="rounded-xl border bg-white">
+            <div className="border-b px-4 py-3">
+              <span className="text-sm font-medium">참석자 목록</span>
+            </div>
+            {attendees.length === 0 ? (
+              <p className="p-6 text-center text-sm text-muted-foreground">참석자가 없습니다. 신청 관리 탭에서 참석자를 전환하거나 신청자 동기화를 실행하세요.</p>
+            ) : (
+              <div className="max-h-96 overflow-auto">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 border-b bg-muted/30">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-medium">이름</th>
+                      <th className="px-3 py-2 text-left font-medium">학번</th>
+                      <th className="px-3 py-2 text-left font-medium">이메일</th>
+                      <th className="px-3 py-2 text-left font-medium">체크인</th>
+                      <th className="px-3 py-2 text-left font-medium">시각</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {attendees
+                      .sort((a, b) => (a.checkedIn === b.checkedIn ? 0 : a.checkedIn ? -1 : 1))
+                      .map((a) => (
+                        <tr key={a.id} className="hover:bg-muted/10">
+                          <td className="px-3 py-2">
+                            <div className="flex items-center gap-1.5">
+                              {a.userName}
+                              {a.isGuest && <Badge variant="outline" className="text-[9px] text-amber-600 border-amber-200">미가입</Badge>}
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 text-xs text-muted-foreground">{a.studentId || "-"}</td>
+                          <td className="px-3 py-2 text-xs text-muted-foreground">{a.email || "-"}</td>
+                          <td className="px-3 py-2">
+                            {a.checkedIn ? (
+                              <Badge className="bg-green-50 text-green-700 text-xs">출석</Badge>
+                            ) : (
+                              <Badge variant="secondary" className="text-xs">미출석</Badge>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-xs text-muted-foreground">
+                            {a.checkedInAt ? new Date(a.checkedInAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }) : "-"}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* 분석 탭 */}
       {selectedId && activeTab === "analysis" && (
         <RegistrationAnalysis
@@ -1110,7 +1244,7 @@ export default function RegistrationsTab() {
       {/* 폼 설정 탭 */}
       {selectedId && activeTab === "settings" && seminarDetail && (
         <div className="rounded-xl border bg-white p-5">
-          <FormFieldsEditor seminarId={selectedId} fields={(seminarDetail.registrationFields as RegistrationFieldConfig[]) ?? []} />
+          <FormFieldsEditor seminarId={selectedId} fields={(seminarDetail.registrationFields as RegistrationFieldConfig[]) ?? []} autoConvert={seminarDetail.autoConvertRegistration as boolean | undefined} />
         </div>
       )}
 
@@ -1148,38 +1282,69 @@ export default function RegistrationsTab() {
                 ))}
               </div>
             </div>
-            {/* 데이터 미리보기 */}
-            <div className="overflow-auto rounded-lg border max-h-60">
-              <table className="w-full text-xs whitespace-nowrap">
-                <thead className="sticky top-0 bg-muted/50 border-b">
-                  <tr>
-                    <th className="px-2 py-1.5 text-left text-muted-foreground">#</th>
-                    {previewHeaders.filter((h) => fieldMapping[h]).map((h) => (
-                      <th key={h} className="px-2 py-1.5 text-left font-medium">{FIELD_MAP[h]?.label || fieldMapping[h]}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {previewRows.slice(0, 10).map((row, i) => (
-                    <tr key={i}>
-                      <td className="px-2 py-1.5 text-muted-foreground">{i + 1}</td>
-                      {previewHeaders.filter((h) => fieldMapping[h]).map((h) => (
-                        <td key={h} className="px-2 py-1.5">{row[h] || "-"}</td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {previewRows.length > 10 && (
-                <p className="px-2 py-1.5 text-xs text-muted-foreground text-center">... 외 {previewRows.length - 10}명</p>
-              )}
-            </div>
+            {/* 중복 감지 + 데이터 미리보기 */}
+            {(() => {
+              const existingEmails = new Set(registrations.map((r) => r.email).filter(Boolean));
+              const existingStudentIds = new Set(registrations.map((r) => r.studentId).filter(Boolean));
+              const emailKey = previewHeaders.find((h) => fieldMapping[h] === "email");
+              const sidKey = previewHeaders.find((h) => fieldMapping[h] === "studentId");
+              const dupIndices = new Set<number>();
+              for (let i = 0; i < previewRows.length; i++) {
+                const row = previewRows[i];
+                if (emailKey && row[emailKey] && existingEmails.has(row[emailKey])) dupIndices.add(i);
+                else if (sidKey && row[sidKey] && existingStudentIds.has(cleanStudentId(row[sidKey]))) dupIndices.add(i);
+              }
+              const dupCount = dupIndices.size;
+              const newCount = previewRows.length - dupCount;
+              return (
+                <>
+                  {dupCount > 0 && (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                      <strong>{dupCount}명</strong>이 기존 신청 목록과 중복됩니다 (이메일/학번 기준). 중복 행은 자동으로 건너뜁니다.
+                      {newCount > 0 && <span className="ml-1 text-green-700">신규 {newCount}명만 등록됩니다.</span>}
+                    </div>
+                  )}
+                  <div className="overflow-auto rounded-lg border max-h-60">
+                    <table className="w-full text-xs whitespace-nowrap">
+                      <thead className="sticky top-0 bg-muted/50 border-b">
+                        <tr>
+                          <th className="px-2 py-1.5 text-left text-muted-foreground">#</th>
+                          {previewHeaders.filter((h) => fieldMapping[h]).map((h) => (
+                            <th key={h} className="px-2 py-1.5 text-left font-medium">{FIELD_MAP[h]?.label || fieldMapping[h]}</th>
+                          ))}
+                          <th className="px-2 py-1.5 text-left font-medium">상태</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {previewRows.slice(0, 20).map((row, i) => {
+                          const isDup = dupIndices.has(i);
+                          return (
+                            <tr key={i} className={isDup ? "bg-amber-50/50 opacity-60" : ""}>
+                              <td className="px-2 py-1.5 text-muted-foreground">{i + 1}</td>
+                              {previewHeaders.filter((h) => fieldMapping[h]).map((h) => (
+                                <td key={h} className="px-2 py-1.5">{row[h] || "-"}</td>
+                              ))}
+                              <td className="px-2 py-1.5">
+                                {isDup ? <Badge className="bg-amber-100 text-amber-700 text-[9px]">중복</Badge> : <Badge className="bg-green-50 text-green-700 text-[9px]">신규</Badge>}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                    {previewRows.length > 20 && (
+                      <p className="px-2 py-1.5 text-xs text-muted-foreground text-center">... 외 {previewRows.length - 20}명</p>
+                    )}
+                  </div>
+                </>
+              );
+            })()}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setPreviewOpen(false)}>취소</Button>
             <Button onClick={handlePreviewConfirm} disabled={registering || (!fieldMapping["이름"] && !Object.values(fieldMapping).includes("name"))}>
               {registering && <Loader2 size={14} className="mr-1 animate-spin" />}
-              {previewRows.length}명 신청 등록
+              신규 신청 등록
             </Button>
           </DialogFooter>
         </DialogContent>
