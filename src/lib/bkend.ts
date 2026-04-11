@@ -324,9 +324,10 @@ export const registrationsApi = {
 };
 
 export const certificatesApi = {
-  list: (seminarId?: string) =>
+  list: (seminarId?: string, type?: "completion" | "appreciation") =>
     dataApi.list<Certificate>("certificates", {
       ...(seminarId ? { "filter[seminarId]": seminarId } : {}),
+      ...(type ? { "filter[type]": type } : {}),
       sort: "issuedAt:desc",
     }),
   create: (data: Record<string, unknown>) => dataApi.create<Certificate>("certificates", data),

@@ -176,12 +176,13 @@ function spacedName(name: string): string {
   return name.split("").join("\u2002");
 }
 
+/** 현재 최대 증서번호를 조회하여 다음 번호 반환 */
 async function generateCertificateNo(certType: CertType = "completion"): Promise<string> {
   const yy = String(new Date().getFullYear()).slice(-2);
   const prefix = certType === "completion" ? "C" : "A"; // C=수료증, A=감사장
   const tag = `${prefix}${yy}-`;
   try {
-    const existing = await certificatesApi.list();
+    const existing = await certificatesApi.list(undefined, certType);
     let maxNum = 0;
     for (const c of existing.data) {
       const no = (c as Record<string, unknown>).certificateNo as string | undefined;
@@ -194,6 +195,27 @@ async function generateCertificateNo(certType: CertType = "completion"): Promise
   } catch {
     return `${tag}001`;
   }
+}
+
+/** 일괄 발급용: 시작 번호를 한 번 조회 후 로컬에서 증가 */
+async function generateCertificateNoBatch(certType: CertType, count: number): Promise<string[]> {
+  const yy = String(new Date().getFullYear()).slice(-2);
+  const prefix = certType === "completion" ? "C" : "A";
+  const tag = `${prefix}${yy}-`;
+  let maxNum = 0;
+  try {
+    const existing = await certificatesApi.list(undefined, certType);
+    for (const c of existing.data) {
+      const no = (c as Record<string, unknown>).certificateNo as string | undefined;
+      if (no && no.startsWith(tag)) {
+        const num = parseInt(no.split("-")[1], 10);
+        if (!isNaN(num) && num > maxNum) maxNum = num;
+      }
+    }
+  } catch { /* fallback to 0 */ }
+  return Array.from({ length: count }, (_, i) =>
+    `${tag}${String(maxNum + 1 + i).padStart(3, "0")}`
+  );
 }
 
 /* ─────────────────────────────────────────────
@@ -587,9 +609,9 @@ export function CertificatePreview({
         className="flex flex-col items-center"
         style={{ padding: "22mm 36mm 18mm" }}
       >
-        {/* 증서 번호 */}
+        {/* 증서 번호 — 항상 좌측 상단 */}
         <DraggableArea {...dragProps("certNo")}>
-          <div style={{ width: "100%", textAlign: a.certNo.textAlign, marginTop: a.certNo.marginTop, marginBottom: a.certNo.marginBottom }}>
+          <div style={{ width: "100%", textAlign: "left", marginTop: a.certNo.marginTop, marginBottom: a.certNo.marginBottom }}>
             <span
               style={{
                 fontSize: a.certNo.fontSize,
@@ -629,9 +651,9 @@ export function CertificatePreview({
           <div style={{ width: "40px", height: "1px", background: accentColor, opacity: 0.4 }} />
         </div>
 
-        {/* 수여자 이름 */}
+        {/* 수여자 이름 — 항상 우측 정렬 */}
         <DraggableArea {...dragProps("name")}>
-          <div style={{ marginTop: a.name.marginTop, marginBottom: a.name.marginBottom, textAlign: a.name.textAlign, width: "100%" }}>
+          <div style={{ marginTop: a.name.marginTop, marginBottom: a.name.marginBottom, textAlign: "right", width: "100%" }}>
             <span
               style={{
                 fontSize: a.name.fontSize,
@@ -1071,14 +1093,14 @@ export default function CertificateGenerator() {
       return;
     }
 
-    for (const att of newTargets) {
-      const no = await generateCertificateNo(certType);
+    const nos = await generateCertificateNoBatch(certType, newTargets.length);
+    for (let i = 0; i < newTargets.length; i++) {
       await certificatesApi.create({
         seminarId: seminar.id,
         seminarTitle: seminar.title,
-        recipientName: att.userName,
-        type: "completion",
-        certificateNo: no,
+        recipientName: newTargets[i].userName,
+        type: certType,
+        certificateNo: nos[i],
         issuedAt: new Date().toISOString(),
         issuedBy: user?.id ?? "",
       });
@@ -1367,24 +1389,33 @@ export default function CertificateGenerator() {
               onBatchCreate={async (names, onProgress) => {
                 try {
                   let created = 0, skipped = 0;
-                  let existingNames = new Set<string>();
+                  let existingCertNames = new Set<string>();
                   try {
-                    const existingRes = await certificatesApi.list(seminar.id);
-                    existingNames = new Set((existingRes.data as unknown as { recipientName: string }[]).map((c) => c.recipientName));
+                    const existingRes = await certificatesApi.list(seminar.id, certType);
+                    existingCertNames = new Set((existingRes.data as unknown as { recipientName: string }[]).map((c) => c.recipientName));
                   } catch (e) {
                     console.error("[cert] 기존 발급 조회 실패:", e);
                   }
-                  for (let i = 0; i < names.length; i++) {
-                    onProgress?.(i + 1, names.length);
-                    const name = names[i];
-                    if (existingNames.has(name)) { skipped++; continue; }
-                    try {
-                      const no = await generateCertificateNo(certType);
-                      await certificatesApi.create({ seminarId: seminar.id, seminarTitle: seminar.title, recipientName: name, type: certType, certificateNo: no, issuedAt: new Date().toISOString(), issuedBy: user?.id ?? "" });
-                      created++;
-                    } catch (e) {
-                      console.error(`[cert] ${name} 발급 실패:`, e);
-                      toast.error(`${name} 발급 실패: ${e instanceof Error ? e.message : "알 수 없는 오류"}`);
+                  // 중복 제외 후 실제 발급 대상 확정
+                  const actualNames = names.filter((n) => !existingCertNames.has(n));
+                  const skippedCount = names.length - actualNames.length;
+                  skipped = skippedCount;
+
+                  if (actualNames.length > 0) {
+                    const nos = await generateCertificateNoBatch(certType, actualNames.length);
+                    let idx = 0;
+                    for (let i = 0; i < names.length; i++) {
+                      onProgress?.(i + 1, names.length);
+                      if (existingCertNames.has(names[i])) continue;
+                      try {
+                        await certificatesApi.create({ seminarId: seminar.id, seminarTitle: seminar.title, recipientName: names[i], type: certType, certificateNo: nos[idx], issuedAt: new Date().toISOString(), issuedBy: user?.id ?? "" });
+                        created++;
+                        idx++;
+                      } catch (e) {
+                        console.error(`[cert] ${names[i]} 발급 실패:`, e);
+                        toast.error(`${names[i]} 발급 실패: ${e instanceof Error ? e.message : "알 수 없는 오류"}`);
+                        idx++;
+                      }
                     }
                   }
                   if (created > 0) toast.success(`${created}명 발급 완료` + (skipped > 0 ? ` (${skipped}명 중복 스킵)` : ""));
