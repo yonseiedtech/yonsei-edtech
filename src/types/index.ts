@@ -331,6 +331,29 @@ export interface Activity { [key: string]: unknown;
 }
 
 // ── 문의 ──
+// ── 알림 ──
+export type NotificationType =
+  | "member_approved"    // 회원 가입 승인
+  | "member_rejected"    // 회원 가입 거절
+  | "comment"            // 내 글에 댓글
+  | "notice"             // 새 공지사항
+  | "certificate"        // 수료증/감사장 발급
+  | "seminar_new"        // 새 세미나 등록
+  | "seminar_reminder"   // 세미나 리마인더
+  | "newsletter";        // 뉴스레터 발행
+
+export interface AppNotification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  link?: string;          // 클릭 시 이동할 경로
+  read: boolean;
+  createdAt: string;
+}
+
+// ── 문의 ──
 export interface Inquiry {
   id: string;
   name: string;

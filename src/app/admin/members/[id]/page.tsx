@@ -8,6 +8,7 @@ import { auth } from "@/lib/firebase";
 import AuthGuard from "@/features/auth/AuthGuard";
 import ProfileEditor from "@/features/auth/ProfileEditor";
 import { useUpdateProfile, useApproveMember } from "@/features/member/useMembers";
+import { notifyMemberApproved, notifyMemberRejected } from "@/features/notifications/notify";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -58,6 +59,7 @@ function AdminMemberDetail({ id }: { id: string }) {
     if (!member) return;
     try {
       await approveMember(member.id);
+      notifyMemberApproved(member.id, member.name);
       toast.success(`${member.name} 승인 완료`);
     } catch {
       toast.error("승인에 실패했습니다.");
@@ -68,6 +70,7 @@ function AdminMemberDetail({ id }: { id: string }) {
     if (!member) return;
     try {
       await profilesApi.update(member.id, { approved: false, rejected: true });
+      notifyMemberRejected(member.id, member.name);
       toast.success(`${member.name} 거절 완료`);
     } catch {
       toast.error("거절에 실패했습니다.");

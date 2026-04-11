@@ -31,7 +31,7 @@ import { auth, db } from "./firebase";
 import type {
   User, Post, Comment, Seminar, SeminarSession, SeminarAttendee,
   SeminarRegistration, Certificate, PromotionContent, SeminarMaterial,
-  SeminarReview, Inquiry, Activity,
+  SeminarReview, Inquiry, Activity, AppNotification,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -394,4 +394,27 @@ export const activitiesApi = {
   create: (data: Record<string, unknown>) => dataApi.create<Activity>("activities", data),
   update: (id: string, data: Record<string, unknown>) => dataApi.update<Activity>("activities", id, data),
   delete: (id: string) => dataApi.delete("activities", id),
+};
+
+export const notificationsApi = {
+  list: (userId: string) =>
+    dataApi.list<AppNotification>("notifications", {
+      "filter[userId]": userId,
+      sort: "createdAt:desc",
+      limit: 50,
+    }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<AppNotification>("notifications", data),
+  markRead: (id: string) =>
+    dataApi.update<AppNotification>("notifications", id, { read: true }),
+  markAllRead: async (userId: string) => {
+    const res = await dataApi.list<AppNotification>("notifications", {
+      "filter[userId]": userId,
+      "filter[read]": "false",
+    });
+    await Promise.all(
+      res.data.map((n) => dataApi.update("notifications", n.id, { read: true }))
+    );
+  },
+  delete: (id: string) => dataApi.delete("notifications", id),
 };

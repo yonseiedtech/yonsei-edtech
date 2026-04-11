@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useApproveMember, useRejectMember } from "@/features/member/useMembers";
+import { notifyMemberApproved, notifyMemberRejected } from "@/features/notifications/notify";
 import { auth } from "@/lib/firebase";
 import type { User } from "@/types";
 
@@ -37,6 +38,7 @@ export default function AdminUserList({ users }: Props) {
     try {
       await approveMember(user.id);
       toast.success(`${user.name} 승인 완료`);
+      notifyMemberApproved(user.id, user.name);
       sendApprovalEmail(user, true);
     } catch {
       toast.error(`${user.name} 승인에 실패했습니다.`);
@@ -47,6 +49,7 @@ export default function AdminUserList({ users }: Props) {
     try {
       await rejectMember(user.id);
       toast.error(`${user.name} 거부 완료`);
+      notifyMemberRejected(user.id, user.name);
       sendApprovalEmail(user, false);
     } catch {
       toast.error(`${user.name} 거부에 실패했습니다.`);

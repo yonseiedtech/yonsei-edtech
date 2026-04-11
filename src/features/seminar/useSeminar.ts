@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { seminarsApi, sessionsApi, attendeesApi, profilesApi } from "@/lib/bkend";
 import { syncAttendeeIds } from "@/lib/bkend";
 import { getComputedStatus } from "@/lib/seminar-utils";
+import { notifyNewSeminar } from "@/features/notifications/notify";
 import type { Seminar, SeminarSession, SeminarAttendee, User } from "@/types";
 
 // ── List ──
@@ -47,7 +48,10 @@ export function useCreateSeminar() {
 
   const mutation = useMutation({
     mutationFn: async (data: Omit<Seminar, "id" | "attendeeIds" | "createdAt" | "updatedAt">) => {
-      return await seminarsApi.create(data as unknown as Record<string, unknown>);
+      const res = await seminarsApi.create(data as unknown as Record<string, unknown>);
+      const created = res as unknown as Seminar;
+      notifyNewSeminar(data.title, created.id, data.createdBy);
+      return res;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["seminars"] });

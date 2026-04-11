@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { useAuth } from "@/features/auth/useAuth";
 import { isAtLeast } from "@/lib/permissions";
+import NotificationBell from "@/features/notifications/NotificationBell";
 
 interface NavLink {
   href: string;
@@ -275,7 +276,10 @@ export default function Header() {
         {/* Auth Area (Desktop) */}
         <div className="hidden items-center gap-2 md:flex">
           {user ? (
-            <UserDropdown />
+            <>
+              <NotificationBell />
+              <UserDropdown />
+            </>
           ) : (
             <Link
               href="/login"
@@ -302,8 +306,9 @@ export default function Header() {
             {user && (
               <>
                 <Separator className="my-1" />
-                <div className="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
-                  내 메뉴
+                <div className="flex items-center justify-between px-3 py-1">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">내 메뉴</span>
+                  <NotificationBell />
                 </div>
                 {[
                   { href: "/dashboard", label: "대시보드", icon: LayoutDashboard },

@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { postsApi, commentsApi } from "@/lib/bkend";
 import type { Post, Comment, PostCategory } from "@/types";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { notifyComment, notifyNewNotice } from "@/features/notifications/notify";
 
 // ── Posts ──
 
@@ -94,7 +95,13 @@ export function useCreatePost() {
         viewCount: 0,
       };
       if (data.imageUrls?.length) payload.imageUrls = data.imageUrls;
-      return await postsApi.create(payload);
+      const res = await postsApi.create(payload);
+      // 공지사항이면 전체 회원에게 알림
+      if (data.category === "notice") {
+        const created = res as unknown as Post;
+        notifyNewNotice(data.title ?? "", created.id, user.id);
+      }
+      return res;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
@@ -189,12 +196,20 @@ export function useCreateComment() {
   const mutation = useMutation({
     mutationFn: async (data: { postId: string; content: string }) => {
       if (!user) throw new Error("로그인이 필요합니다.");
-      return await commentsApi.create({
+      const res = await commentsApi.create({
         postId: data.postId,
         content: data.content,
         authorId: user.id,
         authorName: user.name,
       });
+      // 게시글 작성자에게 댓글 알림 (본인 댓글 제외)
+      try {
+        const post = await postsApi.get(data.postId) as unknown as Post;
+        if (post && post.authorId !== user.id) {
+          notifyComment(post.authorId, user.name, post.title, data.postId);
+        }
+      } catch { /* 알림 실패는 무시 */ }
+      return res;
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["comments", variables.postId] });

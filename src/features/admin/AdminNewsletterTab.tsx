@@ -37,9 +37,12 @@ import {
   Check,
   X,
   UserPlus,
+  Mail,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { notifyNewsletterPublished } from "@/features/notifications/notify";
+import { useAuthStore } from "@/features/auth/auth-store";
 
 const COVER_COLORS = [
   { label: "보라", value: "from-violet-600 to-indigo-700" },
@@ -77,6 +80,7 @@ export default function AdminNewsletterTab() {
   const updateMutation = useUpdateNewsletter();
   const deleteMutation = useDeleteNewsletter();
   const { posts: allPosts } = usePosts("all");
+  const currentUser = useAuthStore((s) => s.user);
 
   // 운영진 목록 (admin, president, staff)
   const { members: allMembers } = useMembers();
@@ -87,6 +91,37 @@ export default function AdminNewsletterTab() {
   const [showPostPicker, setShowPostPicker] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showEditorPicker, setShowEditorPicker] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState<string | null>(null);
+
+  async function sendNewsletterEmail(issue: NewsletterIssue) {
+    if (!confirm(`"${issue.title}" 학회보를 전체 회원에게 이메일로 발송하시겠습니까?`)) return;
+    setSendingEmail(issue.id);
+    try {
+      const { auth } = await import("@/lib/firebase");
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) { toast.error("인증이 필요합니다."); return; }
+      const res = await fetch("/api/email/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          title: issue.title,
+          subtitle: issue.subtitle,
+          issueNumber: issue.issueNumber,
+          sections: issue.sections.map((s) => ({ title: s.title, type: s.type, authorName: s.authorName })),
+        }),
+      });
+      const data = await res.json();
+      if (data.sent) {
+        toast.success(`${data.count}명에게 이메일이 발송되었습니다.`);
+      } else {
+        toast.error(data.reason || data.error || "발송에 실패했습니다.");
+      }
+    } catch {
+      toast.error("이메일 발송 중 오류가 발생했습니다.");
+    } finally {
+      setSendingEmail(null);
+    }
+  }
 
   // 편집 대상 (null = 신규)
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -254,6 +289,9 @@ export default function AdminNewsletterTab() {
                 ? "학회보가 발행되었습니다!"
                 : "초안이 저장되었습니다."
             );
+            if (status === "published") {
+              notifyNewsletterPublished(title, payload.issueNumber, currentUser?.id);
+            }
             resetForm();
             router.push("/newsletter");
           },
@@ -268,6 +306,9 @@ export default function AdminNewsletterTab() {
               ? "학회보가 발행되었습니다!"
               : "초안이 저장되었습니다."
           );
+          if (status === "published") {
+            notifyNewsletterPublished(title, payload.issueNumber, currentUser?.id);
+          }
           resetForm();
           router.push("/newsletter");
         },
@@ -335,6 +376,20 @@ export default function AdminNewsletterTab() {
                   </p>
                 </div>
                 <div className="ml-2 flex shrink-0 gap-1">
+                  {issue.status === "published" && (
+                    <button
+                      onClick={() => sendNewsletterEmail(issue)}
+                      disabled={sendingEmail === issue.id}
+                      className="text-muted-foreground hover:text-primary disabled:opacity-50"
+                      title="이메일 발송"
+                    >
+                      {sendingEmail === issue.id ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <Mail size={16} />
+                      )}
+                    </button>
+                  )}
                   <button
                     onClick={() => startEdit(issue)}
                     className="text-muted-foreground hover:text-primary"

@@ -4,6 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import { useSeminars, useAttendees } from "@/features/seminar/useSeminar";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { certificatesApi } from "@/lib/bkend";
+import { notifyCertificateIssued } from "@/features/notifications/notify";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -1104,6 +1105,9 @@ export default function CertificateGenerator() {
         issuedAt: new Date().toISOString(),
         issuedBy: user?.id ?? "",
       });
+      if (newTargets[i].userId) {
+        notifyCertificateIssued(newTargets[i].userId, seminar.title, certType);
+      }
     }
 
     const skipped = targets.length - newTargets.length;
@@ -1136,6 +1140,11 @@ export default function CertificateGenerator() {
       issuedAt: new Date().toISOString(),
       issuedBy: user?.id ?? "",
     });
+    // 해당 참석자의 userId로 알림 발송
+    const attendee = attendees.find((a) => a.userName === name);
+    if (attendee?.userId) {
+      notifyCertificateIssued(attendee.userId, seminar.title, certType);
+    }
     setRecipientName(name);
     toast.success(`${name}님 ${certType === "completion" ? "수료증" : "감사장"} 생성 완료`);
   }
