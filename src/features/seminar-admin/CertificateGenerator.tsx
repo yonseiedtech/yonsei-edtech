@@ -950,13 +950,41 @@ export default function CertificateGenerator() {
     if (!printRef.current) return;
     setPdfLoading(true);
     try {
+      // 폰트가 완전히 로드될 때까지 대기 (자간 깨짐 방지)
+      await document.fonts.ready;
+
       const html2canvas = (await import("html2canvas-pro")).default;
       const { jsPDF } = await import("jspdf");
-      const canvas = await html2canvas(printRef.current.firstElementChild as HTMLElement, {
-        scale: 2,
+
+      const target = printRef.current.firstElementChild as HTMLElement;
+
+      // letter-spacing em → px 변환 (html2canvas em 단위 정밀도 이슈 해결)
+      const elementsWithSpacing: { el: HTMLElement; original: string }[] = [];
+      target.querySelectorAll<HTMLElement>("*").forEach((el) => {
+        const ls = el.style.letterSpacing;
+        if (ls && ls.endsWith("em")) {
+          const emVal = parseFloat(ls);
+          if (!isNaN(emVal) && emVal !== 0) {
+            const computed = window.getComputedStyle(el);
+            const fontSizePx = parseFloat(computed.fontSize);
+            const pxVal = emVal * fontSizePx;
+            elementsWithSpacing.push({ el, original: ls });
+            el.style.letterSpacing = `${pxVal}px`;
+          }
+        }
+      });
+
+      const canvas = await html2canvas(target, {
+        scale: 3,
         useCORS: true,
         backgroundColor: "#ffffff",
       });
+
+      // letter-spacing 원래 값 복원
+      for (const { el, original } of elementsWithSpacing) {
+        el.style.letterSpacing = original;
+      }
+
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const imgData = canvas.toDataURL("image/png");
       pdf.addImage(imgData, "PNG", 0, 0, 210, 297);
