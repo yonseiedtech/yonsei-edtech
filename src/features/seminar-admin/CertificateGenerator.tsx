@@ -7,7 +7,7 @@ import { certificatesApi } from "@/lib/bkend";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Download, Printer, Award, Heart, Plus, Settings, Check, UserPlus, Eye, X } from "lucide-react";
+import { Download, Printer, Award, Heart, Plus, Settings, Check, UserPlus, Eye, X, AlignLeft, AlignCenter, AlignRight, AlignJustify, ZoomIn, ZoomOut, FileDown, Palette } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -215,6 +215,7 @@ interface AreaStyle {
   marginBottom: string;
   offsetX: number; // px 단위 드래그 오프셋
   offsetY: number;
+  textAlign: "left" | "center" | "right" | "justify";
 }
 
 type AreaKey = "certNo" | "title" | "name" | "body" | "date" | "org";
@@ -229,12 +230,12 @@ const AREA_LABELS: Record<AreaKey, string> = {
 };
 
 const DEFAULT_AREA_STYLES: Record<AreaKey, AreaStyle> = {
-  certNo: { fontSize: "11pt", letterSpacing: "0.08em", lineHeight: "1.4", marginTop: "0mm", marginBottom: "20mm", offsetX: 0, offsetY: 0 },
-  title: { fontSize: "42pt", letterSpacing: "0.3em", lineHeight: "1.2", marginTop: "0mm", marginBottom: "5mm", offsetX: 0, offsetY: 0 },
-  name: { fontSize: "26pt", letterSpacing: "0.25em", lineHeight: "1.4", marginTop: "0mm", marginBottom: "14mm", offsetX: 0, offsetY: 0 },
-  body: { fontSize: "12.5pt", letterSpacing: "0em", lineHeight: "2.5", marginTop: "0mm", marginBottom: "0mm", offsetX: 0, offsetY: 0 },
-  date: { fontSize: "13pt", letterSpacing: "0.15em", lineHeight: "1.4", marginTop: "22mm", marginBottom: "0mm", offsetX: 0, offsetY: 0 },
-  org: { fontSize: "26px", letterSpacing: "0.2em", lineHeight: "1.2", marginTop: "18mm", marginBottom: "0mm", offsetX: 0, offsetY: 0 },
+  certNo: { fontSize: "11pt", letterSpacing: "0.08em", lineHeight: "1.4", marginTop: "0mm", marginBottom: "20mm", offsetX: 0, offsetY: 0, textAlign: "left" },
+  title: { fontSize: "42pt", letterSpacing: "0.3em", lineHeight: "1.2", marginTop: "0mm", marginBottom: "5mm", offsetX: 0, offsetY: 0, textAlign: "center" },
+  name: { fontSize: "26pt", letterSpacing: "0.25em", lineHeight: "1.4", marginTop: "0mm", marginBottom: "14mm", offsetX: 0, offsetY: 0, textAlign: "right" },
+  body: { fontSize: "12.5pt", letterSpacing: "0em", lineHeight: "2.5", marginTop: "0mm", marginBottom: "0mm", offsetX: 0, offsetY: 0, textAlign: "justify" },
+  date: { fontSize: "13pt", letterSpacing: "0.15em", lineHeight: "1.4", marginTop: "22mm", marginBottom: "0mm", offsetX: 0, offsetY: 0, textAlign: "center" },
+  org: { fontSize: "26px", letterSpacing: "0.2em", lineHeight: "1.2", marginTop: "18mm", marginBottom: "0mm", offsetX: 0, offsetY: 0, textAlign: "center" },
 };
 
 const CERT_STYLE_STORAGE_KEY = "cert-area-styles";
@@ -248,6 +249,7 @@ function DraggableArea({
   onDragEnd,
   selectedArea,
   onSelect,
+  scale = 0.6,
   children,
 }: {
   areaKey: AreaKey;
@@ -257,6 +259,7 @@ function DraggableArea({
   onDragEnd: (key: AreaKey, dx: number, dy: number) => void;
   selectedArea: AreaKey | null;
   onSelect: (key: AreaKey) => void;
+  scale?: number;
   children: React.ReactNode;
 }) {
   const dragging = useRef(false);
@@ -276,7 +279,6 @@ function DraggableArea({
       startOffset.current = { x: offsetX, y: offsetY };
       setLocalOffset({ x: 0, y: 0 });
 
-      const scale = 0.6;
       const handleMouseMove = (ev: MouseEvent) => {
         if (!dragging.current) return;
         const dx = (ev.clientX - startPos.current.x) / scale;
@@ -341,7 +343,44 @@ function DraggableArea({
   );
 }
 
-/** 영역별 스타일 편집 컨트롤 */
+/** 숫자+단위 파싱 유틸 */
+function parseUnit(val: string): { num: number; unit: string } {
+  const m = val.match(/^(-?[\d.]+)\s*(pt|px|em|mm|%)$/);
+  if (m) return { num: parseFloat(m[1]), unit: m[2] };
+  const n = parseFloat(val);
+  return { num: isNaN(n) ? 0 : n, unit: "" };
+}
+
+/** 슬라이더 한 줄 컴포넌트 */
+function StyleSlider({ label, value, unit, min, max, step, onChange }: {
+  label: string; value: number; unit: string; min: number; max: number; step: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <label className="text-[10px] text-muted-foreground">
+      <span className="flex items-center justify-between">
+        <span>{label}</span>
+        <span className="font-mono text-[9px] text-foreground">{value}{unit}</span>
+      </span>
+      <input
+        type="range"
+        min={min} max={max} step={step}
+        value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        className="mt-0.5 block h-1.5 w-full cursor-pointer accent-primary"
+      />
+    </label>
+  );
+}
+
+const ALIGN_OPTIONS: { value: AreaStyle["textAlign"]; icon: React.ReactNode; label: string }[] = [
+  { value: "left", icon: <AlignLeft size={12} />, label: "왼쪽" },
+  { value: "center", icon: <AlignCenter size={12} />, label: "가운데" },
+  { value: "right", icon: <AlignRight size={12} />, label: "오른쪽" },
+  { value: "justify", icon: <AlignJustify size={12} />, label: "양쪽" },
+];
+
+/** 영역별 스타일 편집 컨트롤 — 슬라이더 + 맞춤 버튼 */
 function AreaStyleEditor({
   areaKey,
   value,
@@ -351,81 +390,91 @@ function AreaStyleEditor({
   value: AreaStyle;
   onChange: (v: AreaStyle) => void;
 }) {
-  const update = (field: keyof AreaStyle, v: string) =>
-    onChange({ ...value, [field]: v });
+  const fs = parseUnit(value.fontSize);
+  const ls = parseUnit(value.letterSpacing);
+  const lh = parseFloat(value.lineHeight) || 1.4;
+  const mt = parseUnit(value.marginTop);
+  const mb = parseUnit(value.marginBottom);
 
   return (
-    <div className="rounded-lg border bg-muted/20 p-2.5">
-      <p className="mb-1.5 text-[11px] font-semibold">{AREA_LABELS[areaKey]}</p>
-      <div className="grid grid-cols-2 gap-x-2 gap-y-1">
-        <label className="text-[10px] text-muted-foreground">
-          크기
-          <input
-            value={value.fontSize}
-            onChange={(e) => update("fontSize", e.target.value)}
-            placeholder="예: 42pt"
-            className="mt-0.5 block w-full rounded border px-1.5 py-0.5 text-[11px]"
-          />
-        </label>
-        <label className="text-[10px] text-muted-foreground">
-          자간
-          <input
-            value={value.letterSpacing}
-            onChange={(e) => update("letterSpacing", e.target.value)}
-            placeholder="예: 0.3em"
-            className="mt-0.5 block w-full rounded border px-1.5 py-0.5 text-[11px]"
-          />
-        </label>
-        <label className="text-[10px] text-muted-foreground">
-          줄간격
-          <input
-            value={value.lineHeight}
-            onChange={(e) => update("lineHeight", e.target.value)}
-            placeholder="예: 2.5"
-            className="mt-0.5 block w-full rounded border px-1.5 py-0.5 text-[11px]"
-          />
-        </label>
-        <label className="text-[10px] text-muted-foreground">
-          상단 여백
-          <input
-            value={value.marginTop}
-            onChange={(e) => update("marginTop", e.target.value)}
-            className="mt-0.5 block w-full rounded border px-1.5 py-0.5 text-[11px]"
-          />
-        </label>
-        <label className="text-[10px] text-muted-foreground">
-          하단 여백
-          <input
-            value={value.marginBottom}
-            onChange={(e) => update("marginBottom", e.target.value)}
-            className="mt-0.5 block w-full rounded border px-1.5 py-0.5 text-[11px]"
-          />
-        </label>
-        <label className="text-[10px] text-muted-foreground">
-          X 위치 (px)
-          <input
-            type="number"
-            value={Math.round(value.offsetX)}
-            onChange={(e) => onChange({ ...value, offsetX: Number(e.target.value) || 0 })}
-            className="mt-0.5 block w-full rounded border px-1.5 py-0.5 text-[11px]"
-          />
-        </label>
-        <label className="text-[10px] text-muted-foreground">
-          Y 위치 (px)
-          <input
-            type="number"
-            value={Math.round(value.offsetY)}
-            onChange={(e) => onChange({ ...value, offsetY: Number(e.target.value) || 0 })}
-            className="mt-0.5 block w-full rounded border px-1.5 py-0.5 text-[11px]"
-          />
-        </label>
-        <button
-          onClick={() => onChange(DEFAULT_AREA_STYLES[areaKey])}
-          className="col-span-2 mt-1 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/80"
-        >
-          초기화
-        </button>
+    <div className="rounded-lg border bg-muted/20 p-2.5 space-y-2">
+      <p className="mb-1 text-[11px] font-semibold">{AREA_LABELS[areaKey]}</p>
+
+      {/* 수평 맞춤 */}
+      <div>
+        <p className="mb-1 text-[10px] text-muted-foreground">수평 맞춤</p>
+        <div className="flex gap-0.5">
+          {ALIGN_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              title={opt.label}
+              onClick={() => onChange({ ...value, textAlign: opt.value })}
+              className={cn(
+                "flex h-6 w-7 items-center justify-center rounded border text-[10px] transition-colors",
+                value.textAlign === opt.value
+                  ? "border-primary bg-primary text-white"
+                  : "border-muted bg-white text-muted-foreground hover:bg-muted/50"
+              )}
+            >
+              {opt.icon}
+            </button>
+          ))}
+          {/* 수평 중앙 맞춤 (오프셋 리셋) */}
+          <button
+            title="수평 중앙으로 이동"
+            onClick={() => onChange({ ...value, offsetX: 0, textAlign: "center" })}
+            className="ml-auto flex h-6 items-center gap-0.5 rounded border border-muted bg-white px-1.5 text-[9px] text-muted-foreground hover:bg-muted/50"
+          >
+            ↔ 중앙
+          </button>
+        </div>
       </div>
+
+      {/* 수직 중앙 맞춤 */}
+      <button
+        title="수직 위치 초기화 (오프셋 Y=0)"
+        onClick={() => onChange({ ...value, offsetY: 0 })}
+        className="flex h-6 w-full items-center justify-center gap-0.5 rounded border border-muted bg-white text-[9px] text-muted-foreground hover:bg-muted/50"
+      >
+        ↕ 수직 위치 초기화
+      </button>
+
+      {/* 슬라이더들 */}
+      <div className="space-y-1.5">
+        <StyleSlider label="크기" value={fs.num} unit={fs.unit || "pt"} min={8} max={60} step={0.5}
+          onChange={(n) => onChange({ ...value, fontSize: `${n}${fs.unit || "pt"}` })} />
+        <StyleSlider label="자간" value={ls.num} unit={ls.unit || "em"} min={-0.05} max={0.5} step={0.01}
+          onChange={(n) => onChange({ ...value, letterSpacing: `${n}${ls.unit || "em"}` })} />
+        <StyleSlider label="줄간격" value={lh} unit="" min={1.0} max={3.5} step={0.1}
+          onChange={(n) => onChange({ ...value, lineHeight: String(n) })} />
+        <StyleSlider label="상단 여백" value={mt.num} unit={mt.unit || "mm"} min={0} max={40} step={1}
+          onChange={(n) => onChange({ ...value, marginTop: `${n}${mt.unit || "mm"}` })} />
+        <StyleSlider label="하단 여백" value={mb.num} unit={mb.unit || "mm"} min={0} max={40} step={1}
+          onChange={(n) => onChange({ ...value, marginBottom: `${n}${mb.unit || "mm"}` })} />
+      </div>
+
+      {/* X/Y 위치 미세조절 */}
+      <div className="grid grid-cols-2 gap-x-2">
+        <label className="text-[10px] text-muted-foreground">
+          X (px)
+          <input type="number" value={Math.round(value.offsetX)}
+            onChange={(e) => onChange({ ...value, offsetX: Number(e.target.value) || 0 })}
+            className="mt-0.5 block w-full rounded border px-1.5 py-0.5 text-[11px]" />
+        </label>
+        <label className="text-[10px] text-muted-foreground">
+          Y (px)
+          <input type="number" value={Math.round(value.offsetY)}
+            onChange={(e) => onChange({ ...value, offsetY: Number(e.target.value) || 0 })}
+            className="mt-0.5 block w-full rounded border px-1.5 py-0.5 text-[11px]" />
+        </label>
+      </div>
+
+      <button
+        onClick={() => onChange(DEFAULT_AREA_STYLES[areaKey])}
+        className="w-full rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/80"
+      >
+        이 영역 초기화
+      </button>
     </div>
   );
 }
@@ -447,6 +496,7 @@ export function CertificatePreview({
   selectedArea = null,
   onAreaDrag,
   onSelectArea,
+  previewScale,
 }: {
   type: CertType;
   seminarTitle: string;
@@ -461,6 +511,7 @@ export function CertificatePreview({
   selectedArea?: AreaKey | null;
   onAreaDrag?: (key: AreaKey, x: number, y: number) => void;
   onSelectArea?: (key: AreaKey) => void;
+  previewScale?: number;
 }) {
   const isCompletion = type === "completion";
   const title = isCompletion ? "수 료 증" : "감사장";
@@ -475,6 +526,7 @@ export function CertificatePreview({
     selectedArea,
     onSelect: onSelectArea ?? (() => {}),
     onDragEnd: onAreaDrag ?? (() => {}),
+    scale: previewScale ?? 0.6,
   });
 
   return (
@@ -537,7 +589,7 @@ export function CertificatePreview({
       >
         {/* 증서 번호 */}
         <DraggableArea {...dragProps("certNo")}>
-          <div style={{ alignSelf: "flex-start", marginTop: a.certNo.marginTop, marginBottom: a.certNo.marginBottom }}>
+          <div style={{ width: "100%", textAlign: a.certNo.textAlign, marginTop: a.certNo.marginTop, marginBottom: a.certNo.marginBottom }}>
             <span
               style={{
                 fontSize: a.certNo.fontSize,
@@ -563,7 +615,7 @@ export function CertificatePreview({
               color: accentColor,
               marginTop: a.title.marginTop,
               marginBottom: a.title.marginBottom,
-              textAlign: "center",
+              textAlign: a.title.textAlign,
             }}
           >
             {title}
@@ -579,7 +631,7 @@ export function CertificatePreview({
 
         {/* 수여자 이름 */}
         <DraggableArea {...dragProps("name")}>
-          <div style={{ marginTop: a.name.marginTop, marginBottom: a.name.marginBottom, textAlign: "right", width: "100%" }}>
+          <div style={{ marginTop: a.name.marginTop, marginBottom: a.name.marginBottom, textAlign: a.name.textAlign, width: "100%" }}>
             <span
               style={{
                 fontSize: a.name.fontSize,
@@ -626,7 +678,7 @@ export function CertificatePreview({
               fontSize: a.body.fontSize,
               lineHeight: a.body.lineHeight,
               letterSpacing: a.body.letterSpacing,
-              textAlign: "justify",
+              textAlign: a.body.textAlign,
               width: "100%",
               maxWidth: "460px",
               margin: "0 auto",
@@ -653,7 +705,7 @@ export function CertificatePreview({
               marginBottom: a.date.marginBottom,
               letterSpacing: a.date.letterSpacing,
               lineHeight: a.date.lineHeight,
-              textAlign: "center",
+              textAlign: a.date.textAlign,
               color: "#222",
             }}
           >
@@ -670,7 +722,7 @@ export function CertificatePreview({
               width: "100%",
               display: "flex",
               flexDirection: "column",
-              alignItems: "center",
+              alignItems: a.org.textAlign === "left" ? "flex-start" : a.org.textAlign === "right" ? "flex-end" : "center",
               gap: "0",
             }}
           >
@@ -756,6 +808,53 @@ const FONT_PRESETS = [
   { label: "바탕체", value: "'Batang', 'Nanum Myeongjo', serif" },
 ];
 
+/** 스타일 프리셋 */
+interface StylePreset {
+  label: string;
+  description: string;
+  fontFamily: string;
+  borderColor: string;
+  areaStyles: Record<AreaKey, AreaStyle>;
+}
+
+const STYLE_PRESETS: StylePreset[] = [
+  {
+    label: "정통 격식체",
+    description: "연세 블루 + 함렛, 공식 행사용",
+    fontFamily: "'Hahmlet', serif",
+    borderColor: "#003378",
+    areaStyles: { ...DEFAULT_AREA_STYLES },
+  },
+  {
+    label: "모던 심플",
+    description: "Noto Serif + 넓은 여백, 깔끔한 스타일",
+    fontFamily: "'Noto Serif KR', serif",
+    borderColor: "#1a1a2e",
+    areaStyles: {
+      certNo: { ...DEFAULT_AREA_STYLES.certNo, fontSize: "10pt", letterSpacing: "0.1em" },
+      title: { ...DEFAULT_AREA_STYLES.title, fontSize: "38pt", letterSpacing: "0.4em" },
+      name: { ...DEFAULT_AREA_STYLES.name, fontSize: "24pt", letterSpacing: "0.3em" },
+      body: { ...DEFAULT_AREA_STYLES.body, fontSize: "12pt", lineHeight: "2.8", letterSpacing: "0.02em" },
+      date: { ...DEFAULT_AREA_STYLES.date, fontSize: "12pt", letterSpacing: "0.2em" },
+      org: { ...DEFAULT_AREA_STYLES.org, fontSize: "24px", letterSpacing: "0.25em" },
+    },
+  },
+  {
+    label: "클래식 바탕",
+    description: "바탕체 + 전통적 분위기",
+    fontFamily: "'Batang', 'Nanum Myeongjo', serif",
+    borderColor: "#2c1810",
+    areaStyles: {
+      certNo: { ...DEFAULT_AREA_STYLES.certNo, fontSize: "11pt", letterSpacing: "0.05em" },
+      title: { ...DEFAULT_AREA_STYLES.title, fontSize: "44pt", letterSpacing: "0.35em" },
+      name: { ...DEFAULT_AREA_STYLES.name, fontSize: "28pt", letterSpacing: "0.2em" },
+      body: { ...DEFAULT_AREA_STYLES.body, fontSize: "13pt", lineHeight: "2.3" },
+      date: { ...DEFAULT_AREA_STYLES.date, fontSize: "13pt" },
+      org: { ...DEFAULT_AREA_STYLES.org, fontSize: "28px", letterSpacing: "0.15em" },
+    },
+  },
+];
+
 export default function CertificateGenerator() {
   const { seminars } = useSeminars();
   const { user } = useAuthStore();
@@ -787,6 +886,8 @@ export default function CertificateGenerator() {
   });
   const [expandedArea, setExpandedArea] = useState<AreaKey | null>(null);
   const [selectedArea, setSelectedArea] = useState<AreaKey | null>(null);
+  const [zoom, setZoom] = useState(0.6);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
   function updateAreaStyle(key: AreaKey, value: AreaStyle) {
@@ -815,8 +916,45 @@ export default function CertificateGenerator() {
     toast.success("모든 스타일이 초기화되었습니다.");
   }
 
+  function applyPreset(preset: StylePreset) {
+    setFontFamily(preset.fontFamily);
+    setBorderColor(preset.borderColor);
+    setAreaStyles({ ...preset.areaStyles });
+    toast.success(`"${preset.label}" 프리셋이 적용되었습니다.`);
+  }
+
+  async function handlePdfDownload() {
+    if (!printRef.current) return;
+    setPdfLoading(true);
+    try {
+      const html2canvas = (await import("html2canvas-pro")).default;
+      const { jsPDF } = await import("jspdf");
+      const canvas = await html2canvas(printRef.current.firstElementChild as HTMLElement, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+      });
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const imgData = canvas.toDataURL("image/png");
+      pdf.addImage(imgData, "PNG", 0, 0, 210, 297);
+      const fileName = `${certType === "completion" ? "수료증" : "감사장"}_${recipientName || "미입력"}_${certificateNo || "번호없음"}.pdf`;
+      pdf.save(fileName);
+      toast.success("PDF가 다운로드되었습니다.");
+    } catch (e) {
+      console.error("[cert] PDF 생성 실패:", e);
+      toast.error("PDF 생성에 실패했습니다.");
+    } finally {
+      setPdfLoading(false);
+    }
+  }
+
   const seminar = seminars.find((s) => s.id === selectedId);
   const { attendees } = useAttendees(selectedId ?? "");
+
+  // 감사장 대상: 세미나 메인 연사 + 세션별 발표자
+  const speakers: string[] = seminar
+    ? [...new Set([seminar.speaker, ...(seminar.sessions?.map((s) => s.speaker) ?? [])].filter(Boolean))]
+    : [];
 
   const currentSemester = semester || (seminar ? inferSemester(seminar.date) : "2026년 1학기");
   const currentBody = bodyText || getDefaultBody(certType, currentSemester, seminar?.title || "세미나 제목");
@@ -1153,9 +1291,36 @@ export default function CertificateGenerator() {
             </div>
           )}
 
+          {/* 스타일 프리셋 */}
+          {showEditMode && (
+            <div>
+              <label className="mb-1.5 block text-xs font-medium">
+                <Palette size={12} className="mr-1 inline" />스타일 프리셋
+              </label>
+              <div className="grid grid-cols-1 gap-1">
+                {STYLE_PRESETS.map((preset) => (
+                  <button
+                    key={preset.label}
+                    onClick={() => applyPreset(preset)}
+                    className="flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left text-[11px] transition-colors hover:bg-muted/50"
+                  >
+                    <span className="h-4 w-4 shrink-0 rounded-full border" style={{ background: preset.borderColor }} />
+                    <span>
+                      <span className="font-medium">{preset.label}</span>
+                      <span className="ml-1 text-[10px] text-muted-foreground">{preset.description}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2 pt-2">
             <Button className="w-full" onClick={handlePrint} disabled={!seminar}>
-              <Printer size={16} className="mr-1" />인쇄 / PDF 저장
+              <Printer size={16} className="mr-1" />인쇄
+            </Button>
+            <Button className="w-full" variant="outline" onClick={handlePdfDownload} disabled={!seminar || pdfLoading}>
+              <FileDown size={16} className="mr-1" />{pdfLoading ? "PDF 생성 중..." : "PDF 다운로드"}
             </Button>
             <Button className="w-full" variant="outline" onClick={handleSaveRecord} disabled={!seminar || !recipientName}>
               <Plus size={16} className="mr-1" />발급 기록 저장
@@ -1167,8 +1332,33 @@ export default function CertificateGenerator() {
             )}
           </div>
 
-          {/* 참석자 → 발급 대상자 선택 (감사장은 연사/보조자 대상이므로 참석자 목록 불필요) */}
-          {certType === "completion" && seminar && attendees.length > 0 && (
+          {/* 감사장: 연사/발표자 바로 선택 */}
+          {certType === "appreciation" && seminar && speakers.length > 0 && (
+            <div className="rounded-lg border border-orange-200 bg-orange-50/50 p-3">
+              <p className="text-xs font-semibold text-orange-700">연사/발표자 <span className="font-normal text-muted-foreground">({speakers.length}명)</span></p>
+              <div className="mt-2 space-y-0.5">
+                {speakers.map((name) => (
+                  <div key={name} className="flex items-center justify-between rounded px-2 py-1 text-xs">
+                    <span className="flex items-center gap-1.5">
+                      {name}
+                      <Badge variant="secondary" className="h-4 text-[9px] bg-orange-100 text-orange-700">연사</Badge>
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 px-1.5 text-[10px]"
+                      onClick={() => setRecipientName(name)}
+                    >
+                      <UserPlus size={10} className="mr-0.5" />선택
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 참석자 → 발급 대상자 선택 */}
+          {seminar && attendees.length > 0 && (
             <AttendeeSelector
               attendees={attendees}
               seminarId={seminar.id}
@@ -1211,30 +1401,54 @@ export default function CertificateGenerator() {
 
       {/* 우측: 미리보기 (항상 표시) */}
       <div className="min-w-0 flex-1">
-        <p className="mb-2 text-sm font-medium text-muted-foreground">미리보기 (A4 세로)</p>
+        {/* 줌 컨트롤 바 */}
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-sm font-medium text-muted-foreground">미리보기 (A4 세로)</p>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))} title="축소">
+              <ZoomOut size={14} />
+            </Button>
+            <span className="min-w-[3.5rem] text-center text-xs font-medium tabular-nums text-muted-foreground">
+              {Math.round(zoom * 100)}%
+            </span>
+            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setZoom((z) => Math.min(1, z + 0.1))} title="확대">
+              <ZoomIn size={14} />
+            </Button>
+            {[0.5, 0.75, 1].map((z) => (
+              <Button key={z} variant={Math.abs(zoom - z) < 0.01 ? "default" : "outline"} size="sm" className="h-7 px-2 text-[10px]" onClick={() => setZoom(z)}>
+                {Math.round(z * 100)}%
+              </Button>
+            ))}
+          </div>
+        </div>
         <div
-          ref={printRef}
           className="overflow-auto rounded-lg border shadow-lg"
-          style={{ maxHeight: "85vh", transform: "scale(0.6)", transformOrigin: "top left", width: "166.7%" }}
+          style={{ maxHeight: "85vh" }}
         >
-          <CertificatePreview
-            type={certType}
-            seminarTitle={seminar?.title || "세미나 제목"}
-            semester={currentSemester}
-            seminarDate={previewDate || "2026년 1월 1일"}
-            recipientName={recipientName}
-            certificateNo={certificateNo}
-            bodyText={currentBody}
-            style={{ fontFamily, borderColor }}
-            areaStyles={areaStyles}
-            editable={showEditMode}
-            selectedArea={selectedArea}
-            onAreaDrag={handleAreaDrag}
-            onSelectArea={(key) => {
-              setSelectedArea(key);
-              setExpandedArea(key);
-            }}
-          />
+          <div
+            ref={printRef}
+            style={{ transform: `scale(${zoom})`, transformOrigin: "top left", width: `${100 / zoom}%` }}
+          >
+            <CertificatePreview
+              type={certType}
+              seminarTitle={seminar?.title || "세미나 제목"}
+              semester={currentSemester}
+              seminarDate={previewDate || "2026년 1월 1일"}
+              recipientName={recipientName}
+              certificateNo={certificateNo}
+              bodyText={currentBody}
+              style={{ fontFamily, borderColor }}
+              areaStyles={areaStyles}
+              editable={showEditMode}
+              selectedArea={selectedArea}
+              onAreaDrag={handleAreaDrag}
+              onSelectArea={(key) => {
+                setSelectedArea(key);
+                setExpandedArea(key);
+              }}
+              previewScale={zoom}
+            />
+          </div>
         </div>
       </div>
     </div>
