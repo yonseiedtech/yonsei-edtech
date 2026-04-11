@@ -31,7 +31,7 @@ import { auth, db } from "./firebase";
 import type {
   User, Post, Comment, Seminar, SeminarSession, SeminarAttendee,
   SeminarRegistration, Certificate, PromotionContent, SeminarMaterial,
-  SeminarReview, Inquiry, Activity, AppNotification,
+  SeminarReview, Inquiry, Activity, AppNotification, WaitlistEntry,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -394,6 +394,24 @@ export const activitiesApi = {
   create: (data: Record<string, unknown>) => dataApi.create<Activity>("activities", data),
   update: (id: string, data: Record<string, unknown>) => dataApi.update<Activity>("activities", id, data),
   delete: (id: string) => dataApi.delete("activities", id),
+};
+
+export const waitlistApi = {
+  list: (seminarId: string) =>
+    dataApi.list<WaitlistEntry>("seminar_waitlist", {
+      "filter[seminarId]": seminarId,
+      sort: "position:asc",
+    }),
+  check: (seminarId: string, userId: string) =>
+    dataApi.list<WaitlistEntry>("seminar_waitlist", {
+      "filter[seminarId]": seminarId,
+      "filter[userId]": userId,
+    }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<WaitlistEntry>("seminar_waitlist", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<WaitlistEntry>("seminar_waitlist", id, data),
+  delete: (id: string) => dataApi.delete("seminar_waitlist", id),
 };
 
 export const notificationsApi = {

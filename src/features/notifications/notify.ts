@@ -148,6 +148,20 @@ export function notifyNewsletterPublished(
   );
 }
 
+export function notifyWaitlistPromoted(
+  userId: string,
+  seminarTitle: string,
+  seminarId: string,
+) {
+  return create(
+    userId,
+    "waitlist_promoted",
+    "대기열에서 참가 확정되었습니다 🎉",
+    `"${seminarTitle}" 세미나에 자리가 생겨 참가가 확정되었습니다.`,
+    `/seminars/${seminarId}`,
+  );
+}
+
 export function notifySeminarReminder(
   userId: string,
   seminarTitle: string,

@@ -330,7 +330,40 @@ export interface Activity { [key: string]: unknown;
   updatedAt: string;
 }
 
-// ── 문의 ──
+// ── 운영진 업무수행철 (인수인계철) ──
+export interface HandoverDocument {
+  id: string;
+  role: string;          // 직책명 (회장, 부회장, 총무 등)
+  authorId: string;
+  authorName: string;
+  term: string;          // 임기 (예: "2026-1")
+  title: string;
+  content: string;       // 업무 내용 (마크다운)
+  category: "routine" | "project" | "reference" | "caution";
+  priority: "high" | "medium" | "low";
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const HANDOVER_CATEGORY_LABELS: Record<HandoverDocument["category"], string> = {
+  routine: "정기 업무",
+  project: "진행 프로젝트",
+  reference: "참고 자료",
+  caution: "주의 사항",
+};
+
+// ── 세미나 대기열 ──
+export interface WaitlistEntry {
+  id: string;
+  seminarId: string;
+  userId: string;
+  userName: string;
+  position: number; // 대기 순번
+  status: "waiting" | "promoted" | "cancelled";
+  promotedAt?: string;
+  createdAt: string;
+}
+
 // ── 알림 ──
 export type NotificationType =
   | "member_approved"    // 회원 가입 승인
@@ -340,6 +373,7 @@ export type NotificationType =
   | "certificate"        // 수료증/감사장 발급
   | "seminar_new"        // 새 세미나 등록
   | "seminar_reminder"   // 세미나 리마인더
+  | "waitlist_promoted"  // 대기열 → 참가 승격
   | "newsletter";        // 뉴스레터 발행
 
 export interface AppNotification {

@@ -10,8 +10,10 @@ import {
   ExternalLink,
   LogIn,
   Settings,
+  Clock,
+  XCircle,
 } from "lucide-react";
-import type { Seminar, SeminarAttendee, SeminarStatus, User } from "@/types";
+import type { Seminar, SeminarAttendee, SeminarStatus, User, WaitlistEntry } from "@/types";
 
 interface Props {
   seminar: Seminar;
@@ -24,6 +26,11 @@ interface Props {
   onToggle: () => void;
   onEditRegFields: () => void;
   onRegistered: () => void;
+  waitlist?: WaitlistEntry[];
+  myWaitlistEntry?: WaitlistEntry | null;
+  onJoinWaitlist?: () => void;
+  onCancelWaitlist?: () => void;
+  isWaitlistLoading?: boolean;
 }
 
 export default function RegistrationSection({
@@ -37,6 +44,11 @@ export default function RegistrationSection({
   onToggle,
   onEditRegFields,
   onRegistered,
+  waitlist = [],
+  myWaitlistEntry,
+  onJoinWaitlist,
+  onCancelWaitlist,
+  isWaitlistLoading,
 }: Props) {
   return (
     <div className="mt-6 rounded-2xl border bg-white p-8">
@@ -92,8 +104,51 @@ export default function RegistrationSection({
               </>
             )}
           </Button>
-          {isFull && !isAttending && (
-            <p className="mt-2 text-xs text-destructive">인원이 가득 찼습니다.</p>
+          {isFull && !isAttending && !myWaitlistEntry && (
+            <div className="mt-3">
+              <p className="text-xs text-destructive mb-2">
+                정원이 마감되었습니다. {seminar.maxAttendees && `(${seminar.attendeeIds.length}/${seminar.maxAttendees}명)`}
+              </p>
+              {onJoinWaitlist && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onJoinWaitlist}
+                  disabled={isWaitlistLoading}
+                >
+                  <Clock size={14} className="mr-1" />
+                  대기열 등록 ({waitlist.length}명 대기 중)
+                </Button>
+              )}
+            </div>
+          )}
+          {myWaitlistEntry && (
+            <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock size={16} className="text-amber-600" />
+                  <span className="text-sm font-medium text-amber-800">
+                    대기 순번 {myWaitlistEntry.position}번
+                  </span>
+                  <span className="text-xs text-amber-600">
+                    (전체 {waitlist.length}명 대기 중)
+                  </span>
+                </div>
+                {onCancelWaitlist && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onCancelWaitlist}
+                    disabled={isWaitlistLoading}
+                    className="h-7 text-xs text-destructive hover:text-destructive"
+                  >
+                    <XCircle size={14} className="mr-1" />
+                    대기 취소
+                  </Button>
+                )}
+              </div>
+              <p className="mt-1 text-xs text-amber-600">자리가 생기면 자동으로 참가 확정되고 알림을 보내드립니다.</p>
+            </div>
           )}
         </div>
       )}

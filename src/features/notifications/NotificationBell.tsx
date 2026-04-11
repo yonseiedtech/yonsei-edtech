@@ -15,6 +15,7 @@ const TYPE_ICONS: Record<AppNotification["type"], string> = {
   certificate: "🏆",
   seminar_new: "📅",
   seminar_reminder: "⏰",
+  waitlist_promoted: "🎟️",
   newsletter: "📰",
 };
 

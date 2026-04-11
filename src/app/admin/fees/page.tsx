@@ -23,6 +23,12 @@ import {
   Users,
   TrendingUp,
   Loader2,
+  Plus,
+  BookOpen,
+  ArrowUpCircle,
+  ArrowDownCircle,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -49,7 +55,23 @@ interface FeeSetting {
   createdAt: string;
 }
 
-type Section = "dashboard" | "payments" | "settings";
+interface Transaction {
+  id: string;
+  type: "income" | "expense";
+  category: string;
+  description: string;
+  amount: number;
+  date: string;
+  semester: string;
+  memo?: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+const INCOME_CATEGORIES = ["학회비", "후원금", "행사 수입", "기타 수입"];
+const EXPENSE_CATEGORIES = ["행사비", "식비/다과", "인쇄/제작", "교통비", "강사료", "플랫폼/서비스", "사무용품", "기타 지출"];
+
+type Section = "dashboard" | "payments" | "ledger" | "settings";
 type PaymentFilter = "all" | "paid" | "unpaid" | "exempt";
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -80,6 +102,19 @@ export default function FeesPage() {
   // 메모 다이얼로그
   const [memoDialog, setMemoDialog] = useState<{ paymentId: string; memo: string } | null>(null);
 
+  // 장부 상태
+  const [showTxDialog, setShowTxDialog] = useState(false);
+  const [editingTx, setEditingTx] = useState<Transaction | null>(null);
+  const [txForm, setTxForm] = useState({
+    type: "expense" as "income" | "expense",
+    category: "",
+    description: "",
+    amount: "",
+    date: new Date().toISOString().slice(0, 10),
+    memo: "",
+  });
+  const [ledgerFilter, setLedgerFilter] = useState<"all" | "income" | "expense">("all");
+
   // 데이터 조회
   const { data: payments = [] } = useQuery({
     queryKey: ["fee_payments", selectedSemester],
@@ -95,6 +130,17 @@ export default function FeesPage() {
     queryKey: ["fee_settings"],
     queryFn: async () => {
       const res = await dataApi.list<FeeSetting>("fee_settings");
+      return res.data;
+    },
+  });
+
+  const { data: transactions = [] } = useQuery({
+    queryKey: ["transactions", selectedSemester],
+    queryFn: async () => {
+      const res = await dataApi.list<Transaction>("transactions", {
+        "filter[semester]": selectedSemester,
+        sort: "date:desc",
+      });
       return res.data;
     },
   });
@@ -202,6 +248,62 @@ export default function FeesPage() {
     }
   }
 
+  // 거래 추가/수정
+  const txMutation = useMutation({
+    mutationFn: async (data: typeof txForm & { id?: string }) => {
+      const payload = {
+        type: data.type,
+        category: data.category,
+        description: data.description,
+        amount: Number(data.amount),
+        date: data.date,
+        semester: selectedSemester,
+        memo: data.memo || null,
+        createdBy: members.find((m) => m.id)?.name ?? "",
+      };
+      if (data.id) {
+        await dataApi.update("transactions", data.id, payload);
+      } else {
+        await dataApi.create("transactions", payload);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions", selectedSemester] });
+      setShowTxDialog(false);
+      setEditingTx(null);
+      setTxForm({ type: "expense", category: "", description: "", amount: "", date: new Date().toISOString().slice(0, 10), memo: "" });
+      toast.success(editingTx ? "거래가 수정되었습니다." : "거래가 등록되었습니다.");
+    },
+  });
+
+  const deleteTxMutation = useMutation({
+    mutationFn: (id: string) => dataApi.delete("transactions", id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions", selectedSemester] });
+      toast.success("거래가 삭제되었습니다.");
+    },
+  });
+
+  // 장부 통계
+  const ledgerStats = (() => {
+    const income = transactions.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
+    const expense = transactions.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
+    return { income, expense, balance: income - expense };
+  })();
+
+  const filteredTx = transactions.filter((t) => ledgerFilter === "all" || t.type === ledgerFilter);
+
+  function openTxDialog(tx?: Transaction) {
+    if (tx) {
+      setEditingTx(tx);
+      setTxForm({ type: tx.type, category: tx.category, description: tx.description, amount: String(tx.amount), date: tx.date, memo: tx.memo ?? "" });
+    } else {
+      setEditingTx(null);
+      setTxForm({ type: "expense", category: "", description: "", amount: "", date: new Date().toISOString().slice(0, 10), memo: "" });
+    }
+    setShowTxDialog(true);
+  }
+
   // CSV 내보내기
   function exportCSV() {
     const bom = "\uFEFF";
@@ -224,6 +326,7 @@ export default function FeesPage() {
   const SECTIONS: { value: Section; label: string; icon: React.ReactNode }[] = [
     { value: "dashboard", label: "대시보드", icon: <TrendingUp size={14} /> },
     { value: "payments", label: "납부 현황", icon: <Users size={14} /> },
+    { value: "ledger", label: "수입·지출", icon: <BookOpen size={14} /> },
     { value: "settings", label: "설정", icon: <Settings size={14} /> },
   ];
 
@@ -286,7 +389,7 @@ export default function FeesPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
             <div className="rounded-lg border bg-white p-4">
               <p className="text-sm text-muted-foreground">{formatSemester(selectedSemester)} 학회비</p>
               <p className="mt-1 text-2xl font-bold">{feeAmount > 0 ? `${feeAmount.toLocaleString()}원` : "미설정"}</p>
@@ -298,6 +401,20 @@ export default function FeesPage() {
               <p className="text-sm text-muted-foreground">총 납부 금액</p>
               <p className="mt-1 text-2xl font-bold text-green-600">{stats.totalAmount.toLocaleString()}원</p>
               <p className="mt-1 text-xs text-muted-foreground">면제 {stats.exempt}명</p>
+            </div>
+            <div className="rounded-lg border bg-white p-4">
+              <p className="text-sm text-muted-foreground">총 수입 / 지출</p>
+              <p className="mt-1 text-lg font-bold">
+                <span className="text-green-600">+{ledgerStats.income.toLocaleString()}</span>
+                <span className="mx-1 text-muted-foreground">/</span>
+                <span className="text-red-500">-{ledgerStats.expense.toLocaleString()}</span>
+              </p>
+            </div>
+            <div className="rounded-lg border bg-white p-4">
+              <p className="text-sm text-muted-foreground">잔액</p>
+              <p className={cn("mt-1 text-2xl font-bold", ledgerStats.balance >= 0 ? "text-primary" : "text-red-500")}>
+                {ledgerStats.balance >= 0 ? "+" : ""}{ledgerStats.balance.toLocaleString()}원
+              </p>
             </div>
           </div>
 
@@ -432,6 +549,176 @@ export default function FeesPage() {
           </div>
         </div>
       )}
+
+      {/* 수입·지출 장부 */}
+      {section === "ledger" && (
+        <div className="space-y-4">
+          {/* 요약 카드 */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border bg-white p-4 text-center">
+              <div className="flex items-center justify-center gap-1.5 text-green-600">
+                <ArrowDownCircle size={16} />
+                <span className="text-xs font-medium">수입</span>
+              </div>
+              <p className="mt-1 text-2xl font-bold text-green-600">{ledgerStats.income.toLocaleString()}원</p>
+            </div>
+            <div className="rounded-lg border bg-white p-4 text-center">
+              <div className="flex items-center justify-center gap-1.5 text-red-500">
+                <ArrowUpCircle size={16} />
+                <span className="text-xs font-medium">지출</span>
+              </div>
+              <p className="mt-1 text-2xl font-bold text-red-500">{ledgerStats.expense.toLocaleString()}원</p>
+            </div>
+            <div className="rounded-lg border bg-white p-4 text-center">
+              <div className="flex items-center justify-center gap-1.5 text-primary">
+                <Wallet size={16} />
+                <span className="text-xs font-medium">잔액</span>
+              </div>
+              <p className={cn("mt-1 text-2xl font-bold", ledgerStats.balance >= 0 ? "text-primary" : "text-red-500")}>
+                {ledgerStats.balance >= 0 ? "+" : ""}{ledgerStats.balance.toLocaleString()}원
+              </p>
+            </div>
+          </div>
+
+          {/* 필터 + 추가 */}
+          <div className="flex items-center justify-between">
+            <div className="flex gap-1">
+              {(["all", "income", "expense"] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setLedgerFilter(f)}
+                  className={cn(
+                    "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                    ledgerFilter === f ? "bg-primary text-primary-foreground" : "bg-muted/50 text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {f === "all" ? "전체" : f === "income" ? "수입" : "지출"}
+                </button>
+              ))}
+            </div>
+            <Button size="sm" onClick={() => openTxDialog()}>
+              <Plus size={14} className="mr-1" />
+              거래 등록
+            </Button>
+          </div>
+
+          {/* 거래 목록 */}
+          <div className="rounded-lg border bg-white">
+            <div className="hidden sm:grid grid-cols-[80px_100px_1fr_120px_60px] items-center gap-2 border-b bg-muted/30 px-4 py-2.5 text-xs font-medium text-muted-foreground">
+              <span>날짜</span>
+              <span>분류</span>
+              <span>내용</span>
+              <span className="text-right">금액</span>
+              <span />
+            </div>
+            {filteredTx.length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">등록된 거래가 없습니다.</p>
+            ) : (
+              filteredTx.map((tx) => (
+                <div key={tx.id} className="flex flex-col gap-1 border-b px-4 py-3 text-sm sm:grid sm:grid-cols-[80px_100px_1fr_120px_60px] sm:items-center sm:gap-2">
+                  <span className="text-xs text-muted-foreground">{tx.date}</span>
+                  <div>
+                    <Badge variant="secondary" className={cn("text-xs", tx.type === "income" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700")}>
+                      {tx.category}
+                    </Badge>
+                  </div>
+                  <div>
+                    <span className="font-medium">{tx.description}</span>
+                    {tx.memo && <span className="ml-2 text-xs text-muted-foreground">({tx.memo})</span>}
+                  </div>
+                  <span className={cn("text-right font-medium", tx.type === "income" ? "text-green-600" : "text-red-500")}>
+                    {tx.type === "income" ? "+" : "-"}{tx.amount.toLocaleString()}원
+                  </span>
+                  <div className="flex gap-1">
+                    <button onClick={() => openTxDialog(tx)} className="rounded p-1 text-muted-foreground hover:text-foreground">
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      onClick={() => { if (confirm("삭제하시겠습니까?")) deleteTxMutation.mutate(tx.id); }}
+                      className="rounded p-1 text-muted-foreground hover:text-red-500"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 거래 등록/수정 다이얼로그 */}
+      <Dialog open={showTxDialog} onOpenChange={setShowTxDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingTx ? "거래 수정" : "거래 등록"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              {(["income", "expense"] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTxForm((f) => ({ ...f, type: t, category: "" }))}
+                  className={cn(
+                    "flex-1 rounded-lg border py-2 text-sm font-medium transition-colors",
+                    txForm.type === t
+                      ? t === "income" ? "border-green-500 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-600"
+                      : "text-muted-foreground",
+                  )}
+                >
+                  {t === "income" ? "수입" : "지출"}
+                </button>
+              ))}
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">분류</label>
+              <select
+                value={txForm.category}
+                onChange={(e) => setTxForm((f) => ({ ...f, category: e.target.value }))}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+              >
+                <option value="">선택하세요</option>
+                {(txForm.type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">내용</label>
+              <Input value={txForm.description} onChange={(e) => setTxForm((f) => ({ ...f, description: e.target.value }))} placeholder="거래 내용을 입력하세요" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block text-sm font-medium">금액 (원)</label>
+                <Input type="number" value={txForm.amount} onChange={(e) => setTxForm((f) => ({ ...f, amount: e.target.value }))} placeholder="0" />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">날짜</label>
+                <Input type="date" value={txForm.date} onChange={(e) => setTxForm((f) => ({ ...f, date: e.target.value }))} />
+              </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">메모 (선택)</label>
+              <Input value={txForm.memo} onChange={(e) => setTxForm((f) => ({ ...f, memo: e.target.value }))} placeholder="비고" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTxDialog(false)}>취소</Button>
+            <Button
+              onClick={() => {
+                if (!txForm.category) { toast.error("분류를 선택하세요."); return; }
+                if (!txForm.description) { toast.error("내용을 입력하세요."); return; }
+                if (!txForm.amount || Number(txForm.amount) <= 0) { toast.error("금액을 입력하세요."); return; }
+                txMutation.mutate(editingTx ? { ...txForm, id: editingTx.id } : txForm);
+              }}
+              disabled={txMutation.isPending}
+            >
+              {txMutation.isPending ? <Loader2 size={14} className="mr-1 animate-spin" /> : null}
+              {editingTx ? "수정" : "등록"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* 설정 */}
       {section === "settings" && (

@@ -4,7 +4,7 @@ import { use, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { useSeminar, useUpdateSeminar, useToggleAttendance, useAttendee, useCheckinStats } from "@/features/seminar/useSeminar";
+import { useSeminar, useUpdateSeminar, useToggleAttendance, useAttendee, useCheckinStats, useWaitlist, useJoinWaitlist, useCancelWaitlist } from "@/features/seminar/useSeminar";
 import { registrationsApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
@@ -232,6 +232,9 @@ function SeminarDetail({ id }: { id: string }) {
   const seminar = useSeminar(id);
   const { updateSeminar } = useUpdateSeminar();
   const { toggleAttendance } = useToggleAttendance();
+  const { waitlist } = useWaitlist(id);
+  const { joinWaitlist, isLoading: isJoinWlLoading } = useJoinWaitlist();
+  const { cancelWaitlist, isLoading: isCancelWlLoading } = useCancelWaitlist();
   const [showPressRelease, setShowPressRelease] = useState(false);
   const [pressText, setPressText] = useState("");
   const [selectedFormat, setSelectedFormat] = useState<ContentFormat>("press");
@@ -397,14 +400,29 @@ function SeminarDetail({ id }: { id: string }) {
     toast.success("다운로드되었습니다.");
   }
 
+  const myWaitlistEntry = user ? waitlist.find((w) => w.userId === user.id) : undefined;
+
   function handleToggle() {
     if (!user) return;
     if (!isAttending && isFull) {
-      toast.error("참석 인원이 가득 찼습니다.");
+      toast.error("정원이 마감되었습니다. 대기열에 등록해 주세요.");
       return;
     }
-    toggleAttendance(seminar!.id, user.id);
+    toggleAttendance(seminar!.id, user.id, seminar!.title);
     toast.success(isAttending ? "참석이 취소되었습니다." : "참석 신청되었습니다.");
+  }
+
+  function handleJoinWaitlist() {
+    if (!user) return;
+    joinWaitlist({ seminarId: seminar!.id, userId: user.id, userName: user.name })
+      .then(() => toast.success("대기열에 등록되었습니다."))
+      .catch((e: Error) => toast.error(e.message));
+  }
+
+  function handleCancelWaitlist() {
+    if (!myWaitlistEntry) return;
+    cancelWaitlist({ entryId: myWaitlistEntry.id, seminarId: seminar!.id })
+      .then(() => toast.success("대기가 취소되었습니다."));
   }
 
   return (
@@ -467,6 +485,11 @@ function SeminarDetail({ id }: { id: string }) {
           onToggle={handleToggle}
           onEditRegFields={openEditRegFields}
           onRegistered={handleRegistered}
+          waitlist={waitlist}
+          myWaitlistEntry={myWaitlistEntry}
+          onJoinWaitlist={handleJoinWaitlist}
+          onCancelWaitlist={handleCancelWaitlist}
+          isWaitlistLoading={isJoinWlLoading || isCancelWlLoading}
         />
 
         {/* Section 6: Seminar Space Entry */}

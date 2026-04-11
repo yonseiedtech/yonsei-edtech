@@ -1,10 +1,11 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { seminarsApi, sessionsApi, attendeesApi, profilesApi } from "@/lib/bkend";
+import { seminarsApi, sessionsApi, attendeesApi, profilesApi, waitlistApi } from "@/lib/bkend";
 import { syncAttendeeIds } from "@/lib/bkend";
 import { getComputedStatus } from "@/lib/seminar-utils";
-import { notifyNewSeminar } from "@/features/notifications/notify";
+import { notifyNewSeminar, notifyWaitlistPromoted } from "@/features/notifications/notify";
+import type { WaitlistEntry } from "@/types";
 import type { Seminar, SeminarSession, SeminarAttendee, User } from "@/types";
 
 // ── List ──
@@ -100,18 +101,51 @@ export function useDeleteSeminar() {
 export function useToggleAttendance() {
   const queryClient = useQueryClient();
 
-  async function toggle(seminarId: string, userId: string) {
+  function invalidateAll(seminarId: string) {
+    queryClient.invalidateQueries({ queryKey: ["seminars"] });
+    queryClient.invalidateQueries({ queryKey: ["attendees"] });
+    queryClient.invalidateQueries({ queryKey: ["waitlist", seminarId] });
+  }
+
+  /** 대기열 1번을 참가자로 승격 */
+  async function promoteFromWaitlist(seminarId: string, seminarTitle: string) {
+    try {
+      const wlRes = await waitlistApi.list(seminarId);
+      const waiting = (wlRes.data as unknown as WaitlistEntry[]).filter((w) => w.status === "waiting");
+      if (waiting.length === 0) return;
+      const first = waiting.sort((a, b) => a.position - b.position)[0];
+      // 참가자로 추가
+      const res = await attendeesApi.add(seminarId, first.userId);
+      const newId = (res as Record<string, unknown>)?.id as string;
+      try {
+        await syncAttendeeIds(seminarId, first.userId, "add");
+      } catch {
+        if (newId) try { await attendeesApi.remove(newId); } catch { /* best effort */ }
+        return;
+      }
+      // 대기열 상태 변경
+      await waitlistApi.update(first.id, { status: "promoted", promotedAt: new Date().toISOString() });
+      // 알림
+      notifyWaitlistPromoted(first.userId, seminarTitle, seminarId);
+    } catch {
+      // 승격 실패는 메인 로직 블로킹하지 않음
+    }
+  }
+
+  async function toggle(seminarId: string, userId: string, seminarTitle?: string) {
     const existing = await attendeesApi.check(seminarId, userId);
     if (existing.data.length > 0) {
+      // 참석 취소
       const attendeeId = (existing.data[0] as Record<string, unknown>).id as string;
       try {
         await attendeesApi.remove(attendeeId);
         await syncAttendeeIds(seminarId, userId, "remove");
       } catch (err) {
-        // Rollback: re-add attendee if sync failed
         try { await attendeesApi.add(seminarId, userId); } catch { /* best effort */ }
         throw err;
       }
+      // 대기열에서 자동 승격
+      if (seminarTitle) await promoteFromWaitlist(seminarId, seminarTitle);
     } else {
       let newAttendeeId: string | undefined;
       try {
@@ -119,18 +153,76 @@ export function useToggleAttendance() {
         newAttendeeId = (res as Record<string, unknown>)?.id as string;
         await syncAttendeeIds(seminarId, userId, "add");
       } catch (err) {
-        // Rollback: remove attendee if sync failed
         if (newAttendeeId) {
           try { await attendeesApi.remove(newAttendeeId); } catch { /* best effort */ }
         }
         throw err;
       }
     }
-    queryClient.invalidateQueries({ queryKey: ["seminars"] });
-    queryClient.invalidateQueries({ queryKey: ["attendees"] });
+    invalidateAll(seminarId);
   }
 
   return { toggleAttendance: toggle };
+}
+
+// ── Waitlist ──
+
+export function useWaitlist(seminarId: string) {
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["waitlist", seminarId],
+    queryFn: async () => {
+      const res = await waitlistApi.list(seminarId);
+      return res.data as unknown as WaitlistEntry[];
+    },
+    retry: false,
+    enabled: !!seminarId,
+  });
+
+  return { waitlist: (data ?? []).filter((w) => w.status === "waiting"), allWaitlist: data ?? [], isLoading, refetch };
+}
+
+export function useJoinWaitlist() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async ({ seminarId, userId, userName }: { seminarId: string; userId: string; userName: string }) => {
+      // 이미 대기 중인지 확인
+      const existing = await waitlistApi.check(seminarId, userId);
+      const waiting = (existing.data as unknown as WaitlistEntry[]).filter((w) => w.status === "waiting");
+      if (waiting.length > 0) throw new Error("이미 대기열에 등록되어 있습니다.");
+      // 현재 대기열 최대 순번
+      const all = await waitlistApi.list(seminarId);
+      const maxPos = (all.data as unknown as WaitlistEntry[]).reduce((m, w) => Math.max(m, w.position), 0);
+      return await waitlistApi.create({
+        seminarId,
+        userId,
+        userName,
+        position: maxPos + 1,
+        status: "waiting",
+      });
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["waitlist", vars.seminarId] });
+    },
+  });
+
+  return { joinWaitlist: mutation.mutateAsync, isLoading: mutation.isPending };
+}
+
+export function useCancelWaitlist() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async ({ entryId, seminarId }: { entryId: string; seminarId: string }) => {
+      await waitlistApi.update(entryId, { status: "cancelled" });
+      return seminarId;
+    },
+    onSuccess: (seminarId) => {
+      queryClient.invalidateQueries({ queryKey: ["waitlist", seminarId] });
+    },
+  });
+
+  return { cancelWaitlist: mutation.mutateAsync, isLoading: mutation.isPending };
 }
 
 // ── Attendees ──
