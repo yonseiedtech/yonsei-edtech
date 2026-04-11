@@ -5,8 +5,8 @@ import { checkRateLimit, getClientId } from "@/lib/rate-limit";
 
 export const maxDuration = 30;
 
-const DEFAULT_GREETING = "안녕하세요! 연교공 챗봇입니다. 현재 연교공 챗봇은 준비중입니다! 공식 오픈 시 다시 한번 안내해드릴게요 😊";
-const DEFAULT_REPLY = "현재 연교공 챗봇은 준비중입니다! 공식 오픈 시 다시 한번 안내해드릴게요 😊";
+const DEFAULT_GREETING = "안녕하세요! 연세교육공학회 챗봇입니다. 궁금한 점이 있으시면 편하게 질문해 주세요! 😊";
+const DEFAULT_REPLY = "죄송합니다, 해당 질문에 대한 답변을 찾지 못했습니다. 더 자세한 안내가 필요하시면 문의 페이지(https://yonsei-edtech.vercel.app/contact)를 이용해 주세요.";
 
 export async function POST(req: NextRequest) {
   const authResult = await requireAuth(req, "member");

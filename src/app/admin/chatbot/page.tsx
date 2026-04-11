@@ -68,7 +68,7 @@ export default function ChatbotAdminPage() {
   });
 
   // 인사말 초기값 설정
-  const currentGreeting = greetingSetting?.value || "안녕하세요! 연교공 챗봇입니다. 현재 연교공 챗봇은 준비중입니다! 공식 오픈 시 다시 한번 안내해드릴게요 😊";
+  const currentGreeting = greetingSetting?.value || "안녕하세요! 연세교육공학회 챗봇입니다. 궁금한 점이 있으시면 편하게 질문해 주세요! 😊";
   if (greetingText === "" && greetingSetting?.value) setGreetingText(greetingSetting.value);
 
   async function saveGreeting() {
@@ -180,7 +180,7 @@ export default function ChatbotAdminPage() {
       <div className="flex items-center gap-2">
         <MessageCircle size={20} className="text-primary" />
         <h2 className="text-lg font-bold">연교공 챗봇 관리</h2>
-        <Badge variant="secondary" className="bg-amber-50 text-amber-700 text-xs">준비중</Badge>
+        <Badge variant="secondary" className="bg-green-50 text-green-700 text-xs">운영중</Badge>
       </div>
 
       {/* 섹션 네비게이션 */}

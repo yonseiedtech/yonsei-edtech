@@ -94,7 +94,7 @@ STYLE:
     const ai = new GoogleGenAI({ apiKey });
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-image",
+      model: "gemini-2.0-flash-preview-image-generation",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       config: {
         responseModalities: ["IMAGE", "TEXT"],

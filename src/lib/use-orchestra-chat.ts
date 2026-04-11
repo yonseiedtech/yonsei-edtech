@@ -13,26 +13,31 @@ const transport = new DefaultChatTransport({
   },
 });
 
-const DEFAULT_GREETING = "안녕하세요! 연교공 챗봇입니다. 현재 연교공 챗봇은 준비중입니다! 공식 오픈 시 다시 한번 안내해드릴게요 😊";
+const DEFAULT_GREETING = "안녕하세요! 연세교육공학회 챗봇입니다. 궁금한 점이 있으시면 편하게 질문해 주세요! 😊";
 
 export function useOrchestraChat() {
   const [greeting, setGreeting] = useState(DEFAULT_GREETING);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     fetch("/api/chatbot")
       .then((res) => res.json())
       .then((data) => { if (data.greeting) setGreeting(data.greeting); })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setReady(true));
   }, []);
 
-  return useChat({
+  const chat = useChat({
     transport,
+    id: ready ? `chat-${greeting.slice(0, 20)}` : "chat-init",
     messages: [
       {
         id: "welcome",
-        role: "assistant",
-        parts: [{ type: "text", text: greeting }],
+        role: "assistant" as const,
+        parts: [{ type: "text" as const, text: greeting }],
       },
     ],
   });
+
+  return chat;
 }
