@@ -7,13 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { CATEGORY_LABELS, type PostCategory, type Post } from "@/types";
+import { CATEGORY_LABELS, ACTIVE_POST_CATEGORIES, type Post, type PostCategory, type PostPoll } from "@/types";
+import PollEditor from "./PollEditor";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, Send, Save, Eye, PenLine, ImagePlus, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useCreatePost, useUpdatePost } from "./useBoard";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
+import { canWritePost } from "@/lib/post-permissions";
 import { uploadImage } from "@/lib/upload";
 
 interface PostData {
@@ -21,29 +23,23 @@ interface PostData {
   content: string;
 }
 
-const ALL_CATEGORIES: PostCategory[] = [
-  "notice",
-  "seminar",
-  "free",
-  "promotion",
-  "press",
-  "staff",
-];
-
 interface PostFormProps {
   mode?: "create" | "edit";
   initialData?: Post;
   initialCategory?: PostCategory;
   initialContent?: string;
+  /** true이면 카테고리 선택 UI를 숨기고 initialCategory로 고정 */
+  lockCategory?: boolean;
   onSubmitSuccess?: () => void;
 }
 
-export default function PostForm({ mode = "create", initialData, initialCategory, initialContent, onSubmitSuccess }: PostFormProps) {
+export default function PostForm({ mode = "create", initialData, initialCategory, initialContent, lockCategory = false, onSubmitSuccess }: PostFormProps) {
   const router = useRouter();
   const { user } = useAuthStore();
   const [category, setCategory] = useState<PostCategory>(initialData?.category ?? initialCategory ?? "free");
   const [showPreview, setShowPreview] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>(initialData?.imageUrls ?? []);
+  const [poll, setPoll] = useState<PostPoll | null>(initialData?.poll ?? null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { createPost } = useCreatePost();
@@ -57,12 +53,8 @@ export default function PostForm({ mode = "create", initialData, initialCategory
   const watchTitle = watch("title");
   const watchContent = watch("content");
 
-  // 역할별 카테고리 필터
-  const availableCategories = ALL_CATEGORIES.filter((cat) => {
-    if (cat === "notice") return isAtLeast(user, "president");
-    if (cat === "promotion" || cat === "press" || cat === "staff") return isAtLeast(user, "staff");
-    return true;
-  });
+  // 역할별 카테고리 필터 (post-permissions 기반)
+  const availableCategories = ACTIVE_POST_CATEGORIES.filter((cat) => canWritePost(cat, user?.role));
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
@@ -98,7 +90,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
   async function onSubmit(data: PostData) {
     try {
       if (mode === "edit" && initialData) {
-        await updatePost({ id: initialData.id, data: { ...data, category, imageUrls } });
+        await updatePost({ id: initialData.id, data: { ...data, category, imageUrls, poll: poll ?? undefined } });
         toast.success("게시글이 수정되었습니다.");
         if (onSubmitSuccess) {
           onSubmitSuccess();
@@ -106,7 +98,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
           router.push(`/board/${initialData.id}`);
         }
       } else {
-        const created = await createPost({ ...data, category, imageUrls }) as unknown as { id: string };
+        const created = await createPost({ ...data, category, imageUrls, poll: poll ?? undefined }) as unknown as { id: string };
         toast.success("게시글이 등록되었습니다.");
         if (created?.id) {
           router.push(`/board/${created.id}`);
@@ -116,8 +108,8 @@ export default function PostForm({ mode = "create", initialData, initialCategory
             notice: "/notices",
             free: "/board/free",
             promotion: "/board/promotion",
-            press: "/board/press",
             seminar: "/board/seminar",
+            resources: "/board/resources",
             staff: "/board/staff",
           };
           router.push(categoryRoutes[category] ?? "/board");
@@ -196,31 +188,33 @@ export default function PostForm({ mode = "create", initialData, initialCategory
           onSubmit={handleSubmit(onSubmit)}
           className="mt-6 space-y-4 rounded-2xl border bg-white p-8"
         >
-          <div>
-            <label className="mb-1.5 block text-sm font-medium">카테고리</label>
-            <div className="flex flex-wrap gap-2">
-              {availableCategories.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setCategory(cat)}
-                  className={cn(
-                    "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
-                    category === cat
-                      ? "bg-primary text-white"
-                      : "bg-muted text-muted-foreground"
-                  )}
-                >
-                  {CATEGORY_LABELS[cat]}
-                </button>
-              ))}
+          {!lockCategory && (
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">카테고리</label>
+              <div className="flex flex-wrap gap-2">
+                {availableCategories.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setCategory(cat)}
+                    className={cn(
+                      "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+                      category === cat
+                        ? "bg-primary text-white"
+                        : "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    {CATEGORY_LABELS[cat]}
+                  </button>
+                ))}
+              </div>
+              {!isAtLeast(user, "staff") && (
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  공지사항·홍보·자료실은 운영진 이상만 작성할 수 있습니다.
+                </p>
+              )}
             </div>
-            {!isAtLeast(user, "staff") && (
-              <p className="mt-1.5 text-xs text-muted-foreground">
-                공지사항·홍보·보도자료는 운영진 이상만 작성할 수 있습니다.
-              </p>
-            )}
-          </div>
+          )}
 
           <div>
             <label className="mb-1.5 block text-sm font-medium">제목</label>
@@ -267,6 +261,9 @@ export default function PostForm({ mode = "create", initialData, initialCategory
               <p className="mt-1 text-xs text-destructive">{errors.content.message}</p>
             )}
           </div>
+
+          {/* 투표 (선택) */}
+          <PollEditor value={poll} onChange={setPoll} />
 
           {/* 첨부된 이미지 목록 */}
           {imageUrls.length > 0 && (

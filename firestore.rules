@@ -36,13 +36,47 @@ service cloud.firestore {
     }
 
     // ─── Posts ───
+    // board-community-v2: 카테고리별 read/write 권한 재검증
+    function postCategoryReadable(cat) {
+      // staff/resources는 인증 필요, 그 외 public
+      return cat in ['notice', 'seminar', 'free', 'promotion', 'press']
+        || (cat == 'resources' && isAuthenticated())
+        || (cat == 'staff' && isAuthenticated() && isStaffOrAbove());
+    }
+    function postCategoryWritable(cat) {
+      return (cat == 'free' && isAuthenticated())
+        || (cat in ['notice', 'seminar', 'promotion', 'resources', 'staff', 'press']
+            && isAuthenticated() && isStaffOrAbove());
+    }
     match /posts/{postId} {
-      allow read: if true;
-      // Authenticated users can create posts
-      allow create: if isAuthenticated();
-      // Only author or staff+ can update/delete
+      allow read: if postCategoryReadable(resource.data.category);
+      // 카테고리별 쓰기 권한 재검증
+      allow create: if isAuthenticated()
+        && postCategoryWritable(request.resource.data.category)
+        && request.resource.data.authorId == request.auth.uid;
       allow update, delete: if isAuthenticated()
-        && (resource.data.authorId == request.auth.uid || isStaffOrAbove());
+        && (resource.data.authorId == request.auth.uid || isStaffOrAbove())
+        && postCategoryWritable(request.resource.data.category);
+
+      // 좋아요 (uid를 doc id로 사용 → 중복 방지)
+      match /likes/{uid} {
+        allow read: if true;
+        allow create, delete: if isAuthenticated() && request.auth.uid == uid;
+      }
+      // 투표 (익명 모드에서는 client가 해시를 doc id로)
+      match /votes/{voteKey} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated();
+        allow update: if isAuthenticated(); // editableUntil 검증은 API/클라이언트
+        allow delete: if false; // 투표는 삭제 불가
+      }
+      // 댓글
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isAuthenticated();
+        allow update, delete: if isAuthenticated()
+          && (resource.data.authorId == request.auth.uid || isStaffOrAbove());
+      }
     }
 
     // ─── Comments ───

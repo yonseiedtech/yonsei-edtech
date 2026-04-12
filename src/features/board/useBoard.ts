@@ -110,6 +110,18 @@ export function useCreatePost() {
         viewCount: 0,
       };
       if (data.imageUrls?.length) payload.imageUrls = data.imageUrls;
+      if (data.poll) {
+        // 옵션 id 생성 확정 + 초기 집계값 0
+        payload.poll = {
+          ...data.poll,
+          options: data.poll.options
+            .filter((o) => o.label.trim().length > 0)
+            .map((o) => ({ ...o, voteCount: 0 })),
+          totalVotes: 0,
+        };
+      }
+      if (data.attachments?.length) payload.attachments = data.attachments;
+      payload.likeCount = 0;
       const res = await postsApi.create(payload);
       // 공지사항이면 전체 회원에게 알림
       if (data.category === "notice") {
@@ -142,6 +154,12 @@ export function useUpdatePost() {
         category: data.category,
       };
       if (data.imageUrls) payload.imageUrls = data.imageUrls;
+      if (data.poll) {
+        // 수정 시 기존 집계값은 보존하므로, question/options label/설정만 병합.
+        // 실제 서버에서는 options의 voteCount를 절대 덮어쓰지 않도록 처리 필요.
+        payload.poll = data.poll;
+      }
+      if (data.attachments) payload.attachments = data.attachments;
       return await postsApi.update(id, payload);
     },
     onSuccess: (_data, { id }) => {

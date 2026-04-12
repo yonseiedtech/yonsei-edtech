@@ -64,6 +64,24 @@
       "matchRate": 0,
       "iterationCount": 0,
       "startedAt": "2026-03-21T00:00:00Z"
+    },
+    "board-community-v2": {
+      "phase": "design",
+      "matchRate": 0,
+      "iterationCount": 0,
+      "startedAt": "2026-04-12T00:00:00Z"
+    },
+    "academic-activities-v2": {
+      "phase": "plan",
+      "matchRate": 0,
+      "iterationCount": 0,
+      "startedAt": "2026-04-12T00:00:00Z"
+    },
+    "org-structure-v2": {
+      "phase": "plan",
+      "matchRate": 0,
+      "iterationCount": 0,
+      "startedAt": "2026-04-12T00:00:00Z"
     }
   }
 }

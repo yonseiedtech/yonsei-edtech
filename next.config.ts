@@ -31,6 +31,12 @@ const nextConfig: NextConfig = {
         destination: "/academic-admin/seminars/:path*",
         permanent: true,
       },
+      // board-community-v2: press → promotion 통합
+      { source: "/board/press", destination: "/board/promotion", permanent: true },
+      { source: "/board/press/:path*", destination: "/board/promotion/:path*", permanent: true },
+      // board-community-v2: /polls 제거 (게시물 첨부 투표로 전환)
+      { source: "/polls", destination: "/board", permanent: true },
+      { source: "/polls/:path*", destination: "/board", permanent: true },
     ];
   },
 };

@@ -76,18 +76,53 @@ export const SPEAKER_TYPE_LABELS: Record<SpeakerType, string> = {
 };
 
 // ── 게시판 ──
+// board-community-v2: "press"는 "promotion"으로 통합, "resources" 자료실 신규. 마이그레이션 기간 동안 "press" 읽기 호환 유지.
+export const POST_CATEGORIES = ["notice", "seminar", "free", "promotion", "resources", "staff"] as const;
+
+export interface PostPollOption {
+  id: string;
+  label: string;
+  voteCount: number;
+}
+
+export interface PostPoll {
+  question: string;
+  options: PostPollOption[];
+  multi: boolean;                      // 복수선택 허용
+  anonymous: boolean;                  // 익명 투표 (UID 저장 안함, 해시로 중복 방지)
+  deadline?: string;                   // ISO string
+  totalVotes: number;
+  hideResultsBeforeDeadline: boolean;
+  hideResultsAfterDeadline: boolean;   // true이면 비공개 투표
+  editableUntil?: string;              // 이 시점까지 수정 가능, 없으면 수정 불가
+}
+
+export interface PostAttachment {
+  name: string;
+  url: string;
+  size: number;
+  mimeType: string;
+  downloadCount?: number;
+}
+
 export interface Post {
   id: string;
   title: string;
   content: string;
-  category: "notice" | "seminar" | "free" | "promotion" | "press" | "staff";
+  category: "notice" | "seminar" | "free" | "promotion" | "resources" | "staff" | "press"; // "press"는 legacy
   imageUrls?: string[];
+  attachments?: PostAttachment[];
+  poll?: PostPoll;
   authorId: string;
   authorName: string;
   viewCount: number;
   commentCount?: number;
+  likeCount?: number;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string;
+  /** 마이그레이션 백업 (구 category 값) */
+  _legacyCategory?: "press";
 }
 
 export interface Comment {
@@ -105,10 +140,21 @@ export const CATEGORY_LABELS: Record<PostCategory, string> = {
   notice: "공지사항",
   seminar: "세미나 자료",
   free: "자유게시판",
-  promotion: "홍보게시판",
-  press: "보도자료",
+  promotion: "홍보·보도자료",
+  resources: "자료실",
   staff: "운영진 게시판",
+  press: "보도자료", // legacy, 마이그레이션 이후 제거 예정
 };
+
+/** 현재 활성 카테고리 (글쓰기·탭에 노출) - press 제외 */
+export const ACTIVE_POST_CATEGORIES: Exclude<PostCategory, "press">[] = [
+  "notice",
+  "seminar",
+  "free",
+  "promotion",
+  "resources",
+  "staff",
+];
 
 // ── 세미나 ──
 export interface SeminarSession {

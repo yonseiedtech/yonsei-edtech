@@ -228,6 +228,41 @@ export default function ReviewManagement({ seminar }: Props) {
 
   return (
     <div className="space-y-4">
+      {/* 연사 후기 링크 (항상 표시) */}
+      <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-4">
+        <h3 className="mb-3 flex items-center gap-2 text-sm font-medium">
+          <Mic size={14} className="text-blue-600" />
+          연사 후기 링크
+        </h3>
+        {speakerToken ? (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2">
+              <Link2 size={14} className="shrink-0 text-muted-foreground" />
+              <span className="flex-1 truncate text-xs text-muted-foreground">
+                /seminars/{seminar.id}/speaker-review?token={speakerToken.slice(0, 8)}...
+              </span>
+              <Button size="sm" variant="ghost" onClick={handleCopySpeakerLink} className="shrink-0 h-7 px-2">
+                <Copy size={12} className="mr-1" />
+                복사
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              이 링크를 연사에게 공유하면 별도 인증 없이 후기를 작성할 수 있습니다.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">
+              연사에게 공유할 후기 작성 링크를 생성합니다. 링크를 통해 연사가 직접 후기를 작성할 수 있습니다.
+            </p>
+            <Button size="sm" onClick={handleGenerateSpeakerLink} disabled={generatingToken}>
+              {generatingToken ? <Loader2 size={14} className="mr-1 animate-spin" /> : <Link2 size={14} className="mr-1" />}
+              연사 후기 링크 생성
+            </Button>
+          </div>
+        )}
+      </div>
+
       {/* 섹션 네비게이션 */}
       <div className="flex flex-wrap gap-1">
         {SECTIONS.map((s) => (
@@ -273,41 +308,6 @@ export default function ReviewManagement({ seminar }: Props) {
               <p className="text-2xl font-bold text-muted-foreground">{stats.hidden}</p>
               <p className="text-xs text-muted-foreground">숨김 처리</p>
             </div>
-          </div>
-
-          {/* 연사 후기 링크 */}
-          <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-4">
-            <h3 className="mb-3 flex items-center gap-2 text-sm font-medium">
-              <Mic size={14} className="text-blue-600" />
-              연사 후기 링크
-            </h3>
-            {speakerToken ? (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2">
-                  <Link2 size={14} className="shrink-0 text-muted-foreground" />
-                  <span className="flex-1 truncate text-xs text-muted-foreground">
-                    /seminars/{seminar.id}/speaker-review?token={speakerToken.slice(0, 8)}...
-                  </span>
-                  <Button size="sm" variant="ghost" onClick={handleCopySpeakerLink} className="shrink-0 h-7 px-2">
-                    <Copy size={12} className="mr-1" />
-                    복사
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  이 링크를 연사에게 공유하면 별도 인증 없이 후기를 작성할 수 있습니다.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <p className="text-xs text-muted-foreground">
-                  연사에게 공유할 후기 작성 링크를 생성합니다. 링크를 통해 연사가 직접 후기를 작성할 수 있습니다.
-                </p>
-                <Button size="sm" onClick={handleGenerateSpeakerLink} disabled={generatingToken}>
-                  {generatingToken ? <Loader2 size={14} className="mr-1 animate-spin" /> : <Link2 size={14} className="mr-1" />}
-                  연사 후기 링크 생성
-                </Button>
-              </div>
-            )}
           </div>
 
           {/* 관리자 후기 작성 */}
