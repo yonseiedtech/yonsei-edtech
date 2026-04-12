@@ -38,7 +38,7 @@ export default function HeroSection() {
 
             <p className="mt-5 max-w-lg text-base leading-relaxed text-muted-foreground">
               에듀테크, 교수설계, 학습과학 분야의 최신 트렌드를 연구하고
-              공유합니다. 매 학기 세미나와 팀 프로젝트를 중심으로 활동합니다.
+              공유합니다. 매 학기 세미나와 프로젝트를 중심으로 활동합니다.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-3 sm:gap-4">

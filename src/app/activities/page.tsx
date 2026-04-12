@@ -22,7 +22,7 @@ const activities = [
   {
     icon: FolderKanban,
     category: "프로젝트",
-    title: "팀 프로젝트",
+    title: "프로젝트",
     desc: "실제 교육 현장의 문제를 기술로 해결하는 프로토타입을 개발합니다.",
     schedule: "학기 단위",
     color: "bg-secondary/10 text-secondary",

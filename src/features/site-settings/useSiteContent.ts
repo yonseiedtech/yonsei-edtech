@@ -128,7 +128,7 @@ export interface HistoryItem {
 const DEFAULT_HISTORY: HistoryItem[] = [
   { year: "2024", title: "학회 창립", desc: "연세대학교 교육공학 전공 학생들이 모여 학회를 설립" },
   { year: "2024", title: "첫 세미나 시리즈", desc: "AI와 교육 주제의 첫 정기 세미나 개최" },
-  { year: "2025", title: "프로젝트 런칭", desc: "에듀테크 프로토타입 팀 프로젝트 시작" },
+  { year: "2025", title: "프로젝트 런칭", desc: "에듀테크 프로토타입 프로젝트 시작" },
   { year: "2025", title: "회원 확대", desc: "타과 학생 참여로 학제간 교류 활성화" },
   { year: "2026", title: "홈페이지 오픈", desc: "공식 웹사이트를 통한 지식 아카이빙 시작" },
 ];

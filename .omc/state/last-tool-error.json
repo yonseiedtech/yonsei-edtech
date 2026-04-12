@@ -1,7 +1,7 @@
 {
-  "tool_name": "Read",
-  "tool_input_preview": "{\"file_path\":\"C:\\\\work\\\\yonsei-edtech\\\\src\\\\features\\\\seminar-admin\\\\RegistrationsTab.tsx\"}",
-  "error": "File content (12417 tokens) exceeds maximum allowed tokens (10000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file.",
-  "timestamp": "2026-03-26T03:38:58.662Z",
+  "tool_name": "Glob",
+  "tool_input_preview": "{\"pattern\":\"src/app/seminar-admin/**/*.tsx\",\"path\":\"C:\\\\work\\\\yonsei-edtech\"}",
+  "error": "Ripgrep search timed out after 20 seconds. The search may have matched files but did not complete in time. Try searching a more specific path or pattern.",
+  "timestamp": "2026-04-12T05:15:45.676Z",
   "retry_count": 1
 }

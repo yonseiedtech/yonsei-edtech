@@ -1,0 +1,496 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1775896370833,
+  "projectRoot": "C:\\work\\yonsei-edtech",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "next",
+        "version": "16.1.6",
+        "category": "fullstack"
+      },
+      {
+        "name": "react",
+        "version": "19.2.3",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "19.2.3",
+        "category": "frontend"
+      },
+      {
+        "name": "vitest",
+        "version": "4.1.2",
+        "category": "testing"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": "npm test",
+    "lintCommand": "npm run lint",
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "next dev",
+      "build": "next build",
+      "start": "next start",
+      "lint": "eslint",
+      "test": "vitest run",
+      "test:watch": "vitest"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": "feature-based"
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "docs",
+      "public",
+      "scripts",
+      "src"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "agent-server": {
+      "path": "agent-server",
+      "purpose": null,
+      "fileCount": 8,
+      "lastAccessed": 1775896370652,
+      "keyFiles": [
+        "config.py",
+        "main.py",
+        "mcp_server.py",
+        "models.py",
+        "requirements.txt"
+      ]
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 3,
+      "lastAccessed": 1775896370654,
+      "keyFiles": [
+        "PRD-연세교육공학회-고도화-v1.md",
+        "ROLE_PERMISSIONS.md"
+      ]
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 12,
+      "lastAccessed": 1775896370695,
+      "keyFiles": [
+        "cert-emblem.png",
+        "cert-seal.jpeg",
+        "file.svg",
+        "globe.svg",
+        "logo-text.png"
+      ]
+    },
+    "ref": {
+      "path": "ref",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1775896370697,
+      "keyFiles": [
+        "관리자모드 화면.png"
+      ]
+    },
+    "scripts": {
+      "path": "scripts",
+      "purpose": "Build/utility scripts",
+      "fileCount": 2,
+      "lastAccessed": 1775896370700,
+      "keyFiles": [
+        "create-admin.mjs",
+        "reset-admin.mjs"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 0,
+      "lastAccessed": 1775896370702,
+      "keyFiles": []
+    },
+    "agent-server\\data": {
+      "path": "agent-server\\data",
+      "purpose": "Data files",
+      "fileCount": 2,
+      "lastAccessed": 1775896370706,
+      "keyFiles": [
+        "agents.json",
+        "tasks.json"
+      ]
+    },
+    "src\\app": {
+      "path": "src\\app",
+      "purpose": "Application code",
+      "fileCount": 10,
+      "lastAccessed": 1775896370715,
+      "keyFiles": [
+        "error.tsx",
+        "globals.css",
+        "icon.svg"
+      ]
+    },
+    "src\\components": {
+      "path": "src\\components",
+      "purpose": "UI components",
+      "fileCount": 0,
+      "lastAccessed": 1775896370718,
+      "keyFiles": []
+    },
+    "src\\lib": {
+      "path": "src\\lib",
+      "purpose": "Library code",
+      "fileCount": 16,
+      "lastAccessed": 1775896370720,
+      "keyFiles": [
+        "ai-client.ts",
+        "ai-prompts.ts",
+        "ai-tools.ts"
+      ]
+    },
+    "src\\types": {
+      "path": "src\\types",
+      "purpose": "Type definitions",
+      "fileCount": 1,
+      "lastAccessed": 1775896370723,
+      "keyFiles": [
+        "index.ts"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "src",
+      "accessCount": 57,
+      "lastAccessed": 1775970897412,
+      "type": "directory"
+    },
+    {
+      "path": "src\\lib\\bkend.ts",
+      "accessCount": 55,
+      "lastAccessed": 1775969769050,
+      "type": "file"
+    },
+    {
+      "path": "src\\types\\index.ts",
+      "accessCount": 50,
+      "lastAccessed": 1775969686493,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\seminars\\[id]\\page.tsx",
+      "accessCount": 28,
+      "lastAccessed": 1775952824493,
+      "type": "directory"
+    },
+    {
+      "path": "src\\app\\admin\\layout.tsx",
+      "accessCount": 21,
+      "lastAccessed": 1775969593621,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\seminar\\useSeminar.ts",
+      "accessCount": 13,
+      "lastAccessed": 1775952511349,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\admin\\fees\\page.tsx",
+      "accessCount": 11,
+      "lastAccessed": 1775904637399,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\seminar\\detail\\RegistrationSection.tsx",
+      "accessCount": 9,
+      "lastAccessed": 1775952534669,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\api\\ai\\chat\\route.ts",
+      "accessCount": 8,
+      "lastAccessed": 1775912357830,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\api\\activities\\route.ts",
+      "accessCount": 7,
+      "lastAccessed": 1775913076306,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\seminar-admin\\promotion\\page.tsx",
+      "accessCount": 7,
+      "lastAccessed": 1775914682067,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\seminar-admin\\page.tsx",
+      "accessCount": 7,
+      "lastAccessed": 1775952658376,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\admin\\analytics\\page.tsx",
+      "accessCount": 6,
+      "lastAccessed": 1775906876363,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\api\\email\\newsletter\\route.ts",
+      "accessCount": 6,
+      "lastAccessed": 1775912463796,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\seminar-admin\\create\\page.tsx",
+      "accessCount": 6,
+      "lastAccessed": 1775941423499,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\notifications\\notify.ts",
+      "accessCount": 5,
+      "lastAccessed": 1775912535364,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\admin\\transition\\page.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1775955127408,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\api\\ai\\inquiry-reply\\route.ts",
+      "accessCount": 4,
+      "lastAccessed": 1775912267785,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\api\\email\\approval\\route.ts",
+      "accessCount": 4,
+      "lastAccessed": 1775912270294,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\seminar-admin\\report\\page.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1775914045336,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\seminar-admin\\timeline\\page.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1775914045748,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\seminar-admin\\registrations\\page.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1775914046085,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\layout.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1775920325082,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\about\\greeting\\page.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1775904287278,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\notifications\\NotificationBell.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1775904672808,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\admin\\page.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1775906146066,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\use-orchestra-chat.ts",
+      "accessCount": 3,
+      "lastAccessed": 1775907742569,
+      "type": "file"
+    },
+    {
+      "path": "package.json",
+      "accessCount": 3,
+      "lastAccessed": 1775911289432,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\api\\ai\\press-release\\route.ts",
+      "accessCount": 3,
+      "lastAccessed": 1775912271159,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\api\\reviews\\route.ts",
+      "accessCount": 3,
+      "lastAccessed": 1775912302235,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\api\\ai\\poster\\route.ts",
+      "accessCount": 3,
+      "lastAccessed": 1775912358609,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\admin\\members\\page.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1775912439698,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\admin\\newsletter\\page.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1775912484255,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\seminars\\create\\page.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1775952579252,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\admin\\seminars\\page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775904627004,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\admin\\agents\\page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775904633124,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\admin\\inquiries\\page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775904639405,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\admin\\posts\\page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775904639488,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\admin\\settings\\page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775904666945,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\newsletter\\edit\\page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775910918265,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\seminars",
+      "accessCount": 2,
+      "lastAccessed": 1775924957070,
+      "type": "directory"
+    },
+    {
+      "path": "src\\app\\page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775965497295,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\board\\layout.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1775900593870,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\login\\layout.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1775900606849,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\dashboard\\layout.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1775900607459,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\members\\layout.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1775900623667,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\mypage\\layout.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1775900626634,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\activities\\layout.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1775900627782,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\about\\history\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1775900627998,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\about\\fields\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1775900628116,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

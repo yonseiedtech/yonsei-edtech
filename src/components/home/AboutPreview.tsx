@@ -43,7 +43,7 @@ export default function AboutPreview() {
                 desc: "교육공학 논문 리뷰, 에듀테크 트렌드 발제 및 토론",
               },
               {
-                title: "팀 프로젝트",
+                title: "프로젝트",
                 desc: "교육 문제 해결을 위한 프로토타입 기획·개발·테스트",
               },
               {

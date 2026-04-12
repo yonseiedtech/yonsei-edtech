@@ -77,7 +77,7 @@ export default function ActivityEditor({ settingsKey, defaultTitle }: Props) {
             <Input
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder="예: 팀 프로젝트"
+              placeholder="예: 프로젝트"
             />
           </div>
 
