@@ -106,9 +106,22 @@ export default function PostForm({ mode = "create", initialData, initialCategory
           router.push(`/board/${initialData.id}`);
         }
       } else {
-        await createPost({ ...data, category, imageUrls });
+        const created = await createPost({ ...data, category, imageUrls }) as unknown as { id: string };
         toast.success("게시글이 등록되었습니다.");
-        router.push("/board");
+        if (created?.id) {
+          router.push(`/board/${created.id}`);
+        } else {
+          // fallback: 카테고리별 게시판으로 이동
+          const categoryRoutes: Record<string, string> = {
+            notice: "/notices",
+            free: "/board/free",
+            promotion: "/board/promotion",
+            press: "/board/press",
+            seminar: "/board/seminar",
+            staff: "/board/staff",
+          };
+          router.push(categoryRoutes[category] ?? "/board");
+        }
       }
     } catch {
       toast.error(mode === "edit" ? "게시글 수정에 실패했습니다." : "게시글 등록에 실패했습니다.");

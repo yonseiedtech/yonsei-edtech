@@ -1,15 +1,16 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/auth-store";
 import CommentList from "@/features/board/CommentList";
 import CommentForm from "@/features/board/CommentForm";
-import { usePost, useComments, useDeletePost, useDeleteComment, useUpdateComment } from "@/features/board/useBoard";
+import { usePost, useComments, useDeletePost, useDeleteComment, useUpdateComment, useIncrementViewCount } from "@/features/board/useBoard";
 import { CATEGORY_LABELS } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,16 +26,61 @@ import { ArrowLeft, Trash2, Edit, LogIn } from "lucide-react";
 import { toast } from "sonner";
 import ShareButton from "@/components/ShareButton";
 
+/** 이미지 마크다운을 img 태그로, 나머지는 XSS 방지 후 렌더링 */
+function renderPostContent(text: string): string {
+  const escaped = text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+  return escaped
+    .replace(
+      /!\[([^\]]*)\]\(([^)]+)\)/g,
+      '<img src="$2" alt="$1" class="my-3 max-w-full rounded-lg" style="max-height:600px" />',
+    )
+    .replace(/\n/g, "<br />");
+}
+
 function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const { user } = useAuthStore();
-  const { post } = usePost(id);
+  const { post, isLoading } = usePost(id);
   const { comments } = useComments(id);
   const { deletePost } = useDeletePost();
   const { deleteComment } = useDeleteComment();
   const { updateComment } = useUpdateComment();
+  const incrementView = useIncrementViewCount();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const viewCounted = useRef(false);
+
+  // 조회수 증가 (최초 1회만)
+  useEffect(() => {
+    if (post && !viewCounted.current) {
+      viewCounted.current = true;
+      incrementView.mutate(id);
+    }
+  }, [post, id, incrementView]);
+
+  if (isLoading) {
+    return (
+      <div className="py-16">
+        <div className="mx-auto max-w-3xl px-4">
+          <Skeleton className="mb-6 h-5 w-20" />
+          <div className="rounded-2xl border bg-white p-8">
+            <Skeleton className="h-6 w-24" />
+            <Skeleton className="mt-3 h-8 w-3/4" />
+            <Skeleton className="mt-3 h-4 w-48" />
+            <div className="mt-6 space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-2/3" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!post) {
     return (
@@ -117,9 +163,10 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
             </div>
           )}
 
-          <div className="mt-6 whitespace-pre-wrap text-sm leading-relaxed">
-            {post.content}
-          </div>
+          <div
+            className="mt-6 text-sm leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: renderPostContent(post.content) }}
+          />
         </article>
 
         <section className="mt-8">

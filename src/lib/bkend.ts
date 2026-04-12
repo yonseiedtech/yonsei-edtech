@@ -25,6 +25,7 @@ import {
   Timestamp,
   arrayUnion,
   arrayRemove,
+  increment,
   type QueryConstraint,
 } from "firebase/firestore";
 import { auth, db } from "./firebase";
@@ -252,6 +253,10 @@ export const postsApi = {
   create: (data: Record<string, unknown>) => dataApi.create<Post>("posts", data),
   update: (id: string, data: Record<string, unknown>) => dataApi.update<Post>("posts", id, data),
   delete: (id: string) => dataApi.delete("posts", id),
+  incrementView: async (id: string) => {
+    const docRef = doc(db, "posts", id);
+    await updateDoc(docRef, { viewCount: increment(1) });
+  },
 };
 
 export const commentsApi = {

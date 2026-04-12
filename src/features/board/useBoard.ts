@@ -2,6 +2,8 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { postsApi, commentsApi } from "@/lib/bkend";
+import { doc, updateDoc, increment } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import type { Post, Comment, PostCategory } from "@/types";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isStaffOrAbove } from "@/lib/permissions";
@@ -129,11 +131,13 @@ export function useUpdatePost() {
 
   const mutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Post> }) => {
-      return await postsApi.update(id, {
+      const payload: Record<string, unknown> = {
         title: data.title,
         content: data.content,
         category: data.category,
-      });
+      };
+      if (data.imageUrls) payload.imageUrls = data.imageUrls;
+      return await postsApi.update(id, payload);
     },
     onSuccess: (_data, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
@@ -167,11 +171,13 @@ export function useDeleteComment() {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async ({ commentId }: { commentId: string; postId: string }) => {
-      return await commentsApi.delete(commentId);
+    mutationFn: async ({ commentId, postId }: { commentId: string; postId: string }) => {
+      await commentsApi.delete(commentId);
+      await updateDoc(doc(db, "posts", postId), { commentCount: increment(-1) });
     },
     onSuccess: (_data, { postId }) => {
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
   });
 
@@ -210,6 +216,8 @@ export function useCreateComment() {
         authorId: user.id,
         authorName: user.name,
       });
+      // commentCount +1
+      await updateDoc(doc(db, "posts", data.postId), { commentCount: increment(1) });
       // 게시글 작성자에게 댓글 알림 (본인 댓글 제외)
       try {
         const post = await postsApi.get(data.postId) as unknown as Post;
@@ -228,4 +236,12 @@ export function useCreateComment() {
     createComment: mutation.mutateAsync,
     isLoading: mutation.isPending,
   };
+}
+
+// ── Increment View Count ──
+
+export function useIncrementViewCount() {
+  return useMutation({
+    mutationFn: (id: string) => postsApi.incrementView(id),
+  });
 }

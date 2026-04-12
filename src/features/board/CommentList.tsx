@@ -4,6 +4,16 @@ import { useState } from "react";
 import { User, Trash2, Pencil, Check, X } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { Comment } from "@/types";
 
 interface Props {
@@ -17,6 +27,7 @@ interface Props {
 export default function CommentList({ comments, currentUserId, isAdmin, onDelete, onUpdate }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   function startEdit(comment: Comment) {
     setEditingId(comment.id);
@@ -62,7 +73,7 @@ export default function CommentList({ comments, currentUserId, isAdmin, onDelete
                 )}
                 {onDelete && (
                   <button
-                    onClick={() => onDelete(comment.id)}
+                    onClick={() => setDeleteTargetId(comment.id)}
                     className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive"
                   >
                     <Trash2 size={12} />
@@ -101,6 +112,30 @@ export default function CommentList({ comments, currentUserId, isAdmin, onDelete
           아직 댓글이 없습니다.
         </p>
       )}
+
+      <AlertDialog open={!!deleteTargetId} onOpenChange={(open) => !open && setDeleteTargetId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>댓글 삭제</AlertDialogTitle>
+            <AlertDialogDescription>
+              정말 이 댓글을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteTargetId && onDelete) {
+                  onDelete(deleteTargetId);
+                  setDeleteTargetId(null);
+                }
+              }}
+            >
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

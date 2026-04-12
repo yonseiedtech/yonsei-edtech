@@ -315,9 +315,19 @@ export default function Header() {
             {user && (
               <>
                 <Separator className="my-1" />
-                <div className="flex items-center justify-between px-3 py-1">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">내 메뉴</span>
+                {/* 모바일 프로필 카드 */}
+                <div className="mx-3 my-2 flex items-center gap-3 rounded-xl bg-primary/5 px-4 py-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                    {user.name?.[0] || "?"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="truncate text-sm font-semibold">{user.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">{user.role === "admin" ? "관리자" : user.role === "president" ? "학회장" : user.role === "staff" ? "운영진" : user.role === "alumni" ? "졸업생" : "회원"}</p>
+                  </div>
                   <NotificationBell />
+                </div>
+                <div className="px-3 py-1">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">내 메뉴</span>
                 </div>
                 {[
                   { href: "/dashboard", label: "대시보드", icon: LayoutDashboard },
@@ -326,6 +336,7 @@ export default function Header() {
                   ...(showAdmin
                     ? [
                         { href: "/seminar-admin", label: "세미나 관리", icon: BookOpen },
+                        { href: "/staff-admin", label: "운영진 관리", icon: Users },
                         { href: "/admin", label: "관리자", icon: Shield },
                       ]
                     : []),

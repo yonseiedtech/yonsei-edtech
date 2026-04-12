@@ -11,18 +11,14 @@ import {
   ListChecks,
   Award,
   ClipboardList,
-  BarChart3,
-  Image,
 } from "lucide-react";
 
 const TABS = [
   { href: "/seminar-admin", label: "세미나 목록", icon: BookOpen, exact: true },
   { href: "/seminar-admin/create", label: "세미나 생성", icon: PlusCircle },
   { href: "/seminar-admin/promotion", label: "홍보 제작", icon: Megaphone },
-  { href: "/seminar-admin/poster", label: "포스터", icon: Image },
   { href: "/seminar-admin/timeline", label: "운영 타임라인", icon: ListChecks },
-  { href: "/seminar-admin/registrations", label: "참석자", icon: ClipboardList },
-  { href: "/seminar-admin/reviews", label: "후기 관리", icon: BarChart3 },
+  { href: "/seminar-admin/registrations", label: "신청/참석 관리", icon: ClipboardList },
   { href: "/seminar-admin/certificate", label: "수료증/명찰", icon: Award },
 ];
 

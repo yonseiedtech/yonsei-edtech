@@ -85,6 +85,7 @@ export interface Post {
   authorId: string;
   authorName: string;
   viewCount: number;
+  commentCount?: number;
   createdAt: string;
   updatedAt: string;
 }
