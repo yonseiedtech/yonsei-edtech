@@ -252,7 +252,7 @@ interface AreaStyle {
   scale?: number;
 }
 
-type AreaKey = "certNo" | "title" | "name" | "body" | "date" | "org";
+type AreaKey = "certNo" | "title" | "name" | "body" | "date" | "org" | "watermark";
 
 const AREA_LABELS: Record<AreaKey, string> = {
   certNo: "증서 번호",
@@ -261,6 +261,7 @@ const AREA_LABELS: Record<AreaKey, string> = {
   body: "본문",
   date: "날짜",
   org: "학회명",
+  watermark: "배경 워터마크",
 };
 
 const DEFAULT_AREA_STYLES: Record<AreaKey, AreaStyle> = {
@@ -270,6 +271,7 @@ const DEFAULT_AREA_STYLES: Record<AreaKey, AreaStyle> = {
   body: { fontSize: "12.5pt", letterSpacing: "0em", lineHeight: "2.5", marginTop: "0mm", marginBottom: "0mm", offsetX: 0, offsetY: 0, textAlign: "justify" },
   date: { fontSize: "13pt", letterSpacing: "0.15em", lineHeight: "1.4", marginTop: "22mm", marginBottom: "0mm", offsetX: 0, offsetY: 0, textAlign: "center" },
   org: { fontSize: "26px", letterSpacing: "0.2em", lineHeight: "1.2", marginTop: "18mm", marginBottom: "0mm", offsetX: 0, offsetY: 0, textAlign: "center" },
+  watermark: { fontSize: "0pt", letterSpacing: "0em", lineHeight: "1", marginTop: "0mm", marginBottom: "0mm", offsetX: 0, offsetY: 0, textAlign: "center", scale: 1 },
 };
 
 export const CERT_STYLE_STORAGE_KEY = "cert-area-styles";
@@ -949,19 +951,25 @@ export function CertificatePreview({
           </div>
         </DraggableArea>
 
-        {/* 워터마크 엠블럼 — 본문과 같은 중앙 축에 배치 */}
+        {/* 워터마크 엠블럼 — 본문과 같은 중앙 축에 배치 (드래그/리사이즈 가능) */}
         <div
-          className="absolute left-1/2"
+          className="absolute"
           style={{
+            left: "50%",
             top: "38%",
             transform: "translate(-50%, -50%)",
             opacity: 0.07,
-            width: "440px",
-            height: "440px",
-            pointerEvents: "none",
+            pointerEvents: editable ? "auto" : "none",
           }}
         >
-          <img src="/cert-emblem.png" alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+          <DraggableArea {...dragProps("watermark")}>
+            <img
+              src="/cert-emblem.png"
+              alt=""
+              style={{ width: "440px", height: "440px", objectFit: "contain", display: "block", userSelect: "none" }}
+              draggable={false}
+            />
+          </DraggableArea>
         </div>
 
         {/* 본문 — 워터마크와 같은 중앙 축에 정렬 */}
@@ -1135,6 +1143,7 @@ const STYLE_PRESETS: StylePreset[] = [
       body: { ...DEFAULT_AREA_STYLES.body, fontSize: "12pt", lineHeight: "2.8", letterSpacing: "0.02em" },
       date: { ...DEFAULT_AREA_STYLES.date, fontSize: "12pt", letterSpacing: "0.2em" },
       org: { ...DEFAULT_AREA_STYLES.org, fontSize: "24px", letterSpacing: "0.25em" },
+      watermark: { ...DEFAULT_AREA_STYLES.watermark },
     },
   },
   {
@@ -1149,6 +1158,7 @@ const STYLE_PRESETS: StylePreset[] = [
       body: { ...DEFAULT_AREA_STYLES.body, fontSize: "13pt", lineHeight: "2.3" },
       date: { ...DEFAULT_AREA_STYLES.date, fontSize: "13pt" },
       org: { ...DEFAULT_AREA_STYLES.org, fontSize: "28px", letterSpacing: "0.15em" },
+      watermark: { ...DEFAULT_AREA_STYLES.watermark },
     },
   },
 ];

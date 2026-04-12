@@ -1,7 +1,7 @@
 {
   "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"git add -A && git commit -m \\\"feat(cert): PPT-style corner resize + smart yellow guide snap\\\" && git push origin master && npx vercel --prod\",\"timeout\":300000,\"description\":\"Commit, push, ...",
-  "error": "Exit code 127\n/usr/bin/bash: line 1: git: command not found",
-  "timestamp": "2026-04-12T12:14:04.331Z",
+  "tool_input_preview": "{\"command\":\"\\\"/c/Program Files/nodejs/npm.cmd\\\" run build\",\"timeout\":300000,\"description\":\"Build\"}",
+  "error": "Exit code 1\n\n> yonsei-edtech@0.1.0 build\n> next build\n\n▲ Next.js 16.1.6 (Turbopack)\n- Environments: .env.local\n- Experiments (use with caution):\n  · optimizePackageImports\n\n  Creating an optimized production build ...\n✓ Compiled successfully in 90s\n  Running TypeScript ...\nFailed to compile.\n\n./src/features/seminar-admin/CertificateGenerator.tsx:1139:5\nType error: Property 'watermark' is missing in type '{ certNo: { fontSize: string; letterSpacing: string; lineHeight: string; marginTop: string; ...",
+  "timestamp": "2026-04-12T13:58:05.214Z",
   "retry_count": 1
 }
