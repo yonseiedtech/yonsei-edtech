@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Trash2, ChevronUp, ChevronDown, Pencil, X, Check } from "lucide-react";
-import { useOrgChart, useUpdateOrgChart, type OrgPosition } from "./useOrgChart";
+import { Plus, Trash2, ChevronUp, ChevronDown, Pencil, Sparkles } from "lucide-react";
+import { useOrgChart, useUpdateOrgChart, DEFAULT_ORG_SEED, type OrgPosition, type OrgRole } from "./useOrgChart";
 import { useMembers } from "@/features/member/useMembers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,14 @@ const LEVEL_LABELS: Record<number, string> = {
   1: "부회장/감사",
   2: "팀장",
   3: "팀원",
+};
+
+const ROLE_LABELS: Record<OrgRole, string> = {
+  advisor: "주임교수",
+  president: "학회장",
+  vice_president: "부학회장",
+  direct_aide: "학회장 직속 보조",
+  team_member: "팀원",
 };
 
 function generateId() {
@@ -92,6 +100,28 @@ function EditDialog({ position, allPositions, open, onClose, onSave }: EditDialo
               </select>
             </div>
           )}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">역할</label>
+              <select
+                value={form.role ?? ""}
+                onChange={(e) => {
+                  const role = (e.target.value || undefined) as OrgRole | undefined;
+                  setForm({ ...form, role, isDirectAide: role === "direct_aide" });
+                }}
+                className="w-full rounded-lg border bg-white px-3 py-2 text-sm"
+              >
+                <option value="">선택 안 함</option>
+                {Object.entries(ROLE_LABELS).map(([v, l]) => (
+                  <option key={v} value={v}>{l}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">팀명 (선택)</label>
+              <Input value={form.team ?? ""} onChange={(e) => setForm({ ...form, team: e.target.value || undefined })} placeholder="예: 학술팀" />
+            </div>
+          </div>
           <div>
             <label className="mb-1 block text-xs text-muted-foreground">담당자</label>
             <select
@@ -221,9 +251,20 @@ export default function OrgChartEditor() {
         </div>
       ))}
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
         <Button variant="outline" size="sm" onClick={() => { setEditPos(null); setShowDialog(true); }}>
           <Plus size={14} className="mr-1" />직책 추가
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            if (items.length > 0 && !confirm("기존 직책을 모두 지우고 기본 구조로 초기화합니다. 계속하시겠습니까?")) return;
+            setItems(DEFAULT_ORG_SEED.map((p) => ({ ...p })));
+            toast.success("기본 구조를 불러왔습니다. '저장' 버튼을 눌러 반영하세요.");
+          }}
+        >
+          <Sparkles size={14} className="mr-1" />기본 구조 불러오기
         </Button>
         <Button size="sm" onClick={handleSaveAll} disabled={updateMutation.isPending}>
           {updateMutation.isPending ? "저장 중..." : "저장"}

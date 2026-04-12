@@ -206,6 +206,12 @@
       "type": "file"
     },
     {
+      "path": "src",
+      "accessCount": 9,
+      "lastAccessed": 1776005443956,
+      "type": "directory"
+    },
+    {
       "path": "src\\app\\api\\certificates\\pdf\\route.ts",
       "accessCount": 8,
       "lastAccessed": 1775990261086,
@@ -215,6 +221,144 @@
       "path": "src\\app\\admin\\certificates\\page.tsx",
       "accessCount": 5,
       "lastAccessed": 1775991357722,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\board\\[id]\\page.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1776005940572,
+      "type": "directory"
+    },
+    {
+      "path": "src\\features\\admin\\settings\\OrgChartEditor.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1776006000634,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\api\\activities\\route.ts",
+      "accessCount": 3,
+      "lastAccessed": 1776005055059,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\seminar\\SeminarRegistrationForm.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1776005458386,
+      "type": "directory"
+    },
+    {
+      "path": "src\\app\\calendar\\page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1776002878817,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\activities\\ActivityPage.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1776002894389,
+      "type": "file"
+    },
+    {
+      "path": "src\\types\\index.ts",
+      "accessCount": 2,
+      "lastAccessed": 1776005853482,
+      "type": "directory"
+    },
+    {
+      "path": "src\\features\\admin\\settings\\useOrgChart.ts",
+      "accessCount": 2,
+      "lastAccessed": 1776005956383,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\seminars",
+      "accessCount": 1,
+      "lastAccessed": 1776002688632,
+      "type": "directory"
+    },
+    {
+      "path": "src\\app\\admin\\settings\\activities\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776002750473,
+      "type": "directory"
+    },
+    {
+      "path": "src\\features\\admin\\settings\\ActivityList.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776002859155,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\seminar",
+      "accessCount": 1,
+      "lastAccessed": 1776005425422,
+      "type": "directory"
+    },
+    {
+      "path": "src\\features\\seminar\\detail\\RegistrationSection.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776005453522,
+      "type": "directory"
+    },
+    {
+      "path": "src\\features\\activities\\ActivityDetail.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776005473664,
+      "type": "directory"
+    },
+    {
+      "path": "docs\\01-plan\\features\\board-community-v2.plan.md",
+      "accessCount": 1,
+      "lastAccessed": 1776005746791,
+      "type": "file"
+    },
+    {
+      "path": "docs\\01-plan\\features\\org-structure-v2.plan.md",
+      "accessCount": 1,
+      "lastAccessed": 1776005746890,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\layout\\Header.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776005799574,
+      "type": "directory"
+    },
+    {
+      "path": "src\\features\\board\\PostForm.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776005802893,
+      "type": "directory"
+    },
+    {
+      "path": "src\\features\\board\\PollViewer.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776005824864,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\board\\useBoard.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776005853274,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\api-auth.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776005893222,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\firebase-admin.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776005893527,
+      "type": "directory"
+    },
+    {
+      "path": "src\\app\\api\\posts\\[id]\\vote\\route.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776005910622,
       "type": "file"
     }
   ],

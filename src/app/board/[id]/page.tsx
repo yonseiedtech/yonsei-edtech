@@ -6,7 +6,10 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/auth-store";
 import CommentList from "@/features/board/CommentList";
 import CommentForm from "@/features/board/CommentForm";
+import PollViewer from "@/features/board/PollViewer";
 import { usePost, useComments, useDeletePost, useDeleteComment, useUpdateComment, useIncrementViewCount } from "@/features/board/useBoard";
+import { auth as firebaseAuth } from "@/lib/firebase";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CATEGORY_LABELS } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +56,38 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const incrementView = useIncrementViewCount();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const viewCounted = useRef(false);
+  const queryClient = useQueryClient();
+
+  // 내 투표 내역 조회
+  const { data: myVoteData } = useQuery({
+    queryKey: ["post-vote", id, user?.id ?? "guest"],
+    queryFn: async () => {
+      if (!user) return null;
+      const token = await firebaseAuth.currentUser?.getIdToken();
+      if (!token) return null;
+      const res = await fetch(`/api/posts/${id}/vote`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) return null;
+      const json = await res.json();
+      return json.data as { optionIds: string[] } | null;
+    },
+    enabled: !!post?.poll && !!user,
+  });
+
+  async function handleVote(optionIds: string[]) {
+    if (!user) { toast.error("로그인이 필요합니다."); return; }
+    const token = await firebaseAuth.currentUser?.getIdToken();
+    if (!token) { toast.error("인증이 필요합니다."); return; }
+    const res = await fetch(`/api/posts/${id}/vote`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ optionIds }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) { toast.error(json.error ?? "투표 실패"); return; }
+    toast.success("투표되었습니다.");
+    queryClient.invalidateQueries({ queryKey: ["posts", id] });
+    queryClient.invalidateQueries({ queryKey: ["post-vote", id, user.id] });
+  }
 
   // 조회수 증가 (최초 1회만)
   useEffect(() => {
@@ -167,6 +202,17 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
             className="mt-6 text-sm leading-relaxed"
             dangerouslySetInnerHTML={{ __html: renderPostContent(post.content) }}
           />
+
+          {post.poll && (
+            <div className="mt-6">
+              <PollViewer
+                poll={post.poll}
+                myVote={myVoteData?.optionIds}
+                canVote={!!user}
+                onSubmit={handleVote}
+              />
+            </div>
+          )}
         </article>
 
         <section className="mt-8">

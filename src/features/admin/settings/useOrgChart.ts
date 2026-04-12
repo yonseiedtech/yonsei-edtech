@@ -3,6 +3,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { siteSettingsApi } from "@/lib/bkend";
 
+export type OrgRole = "advisor" | "president" | "vice_president" | "direct_aide" | "team_member";
+
 export interface OrgPosition {
   id: string;
   title: string;
@@ -13,7 +15,23 @@ export interface OrgPosition {
   userId?: string;
   userName?: string;
   userPhoto?: string;
+  /** 시각적 구분·정렬용 역할 분류 */
+  role?: OrgRole;
+  /** 팀명 (부학회장 휘하 팀원 그룹핑) */
+  team?: string;
+  /** 학회장 직속 보조역 플래그 (role === "direct_aide"와 동등, UI 편의용) */
+  isDirectAide?: boolean;
 }
+
+/** org-structure-v2 기본 구조: 주임교수 / 학회장 / 직속보조 3명 / 부학회장 */
+export const DEFAULT_ORG_SEED: OrgPosition[] = [
+  { id: "advisor",    title: "주임교수",        level: 0, order: 0, role: "advisor" },
+  { id: "president",  title: "학회장",          level: 1, order: 0, parentId: "advisor",  role: "president" },
+  { id: "major-rep",  title: "재학생 전공대표", level: 2, order: 0, parentId: "president", role: "direct_aide", isDirectAide: true },
+  { id: "ta",         title: "조교",            level: 2, order: 1, parentId: "president", role: "direct_aide", isDirectAide: true },
+  { id: "alumni-rep", title: "졸업생 대표",     level: 2, order: 2, parentId: "president", role: "direct_aide", isDirectAide: true },
+  { id: "vp",         title: "부학회장",        level: 2, order: 3, parentId: "president", role: "vice_president" },
+];
 
 export interface OrgTreeNode extends OrgPosition {
   children: OrgTreeNode[];
