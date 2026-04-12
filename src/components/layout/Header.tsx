@@ -316,23 +316,26 @@ export default function Header() {
 
       {/* Mobile Nav */}
       {mobileOpen && (
-        <div className="animate-in slide-in-from-top-2 fade-in duration-200 border-t bg-popover px-4 pb-4 md:hidden max-h-[calc(100vh-4rem)] overflow-y-auto overscroll-contain">
+        <div className="animate-in slide-in-from-top-2 fade-in duration-200 border-t bg-popover md:hidden flex flex-col max-h-[calc(100vh-4rem)]">
+          {/* 모바일 프로필 카드 (스크롤 영역 바깥에 고정) */}
+          {user && (
+            <div className="shrink-0 border-b bg-popover px-4 pt-2 pb-2">
+              <div className="flex items-center gap-3 rounded-xl bg-primary/5 px-4 py-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                  {user.name?.[0] || "?"}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="truncate text-sm font-semibold">{user.name}</p>
+                  <p className="truncate text-xs text-muted-foreground">{user.role === "admin" ? "관리자" : user.role === "president" ? "학회장" : user.role === "staff" ? "운영진" : user.role === "alumni" ? "졸업생" : "회원"}</p>
+                </div>
+                <NotificationBell />
+              </div>
+            </div>
+          )}
+          <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-4">
           <nav className="flex flex-col gap-1 pt-2">
             {user && (
               <>
-                {/* 모바일 프로필 카드 (상단 고정) */}
-                <div className="sticky top-0 z-10 -mx-4 mb-1 border-b bg-popover px-4 pb-2 pt-1">
-                  <div className="flex items-center gap-3 rounded-xl bg-primary/5 px-4 py-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-                      {user.name?.[0] || "?"}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="truncate text-sm font-semibold">{user.name}</p>
-                      <p className="truncate text-xs text-muted-foreground">{user.role === "admin" ? "관리자" : user.role === "president" ? "학회장" : user.role === "staff" ? "운영진" : user.role === "alumni" ? "졸업생" : "회원"}</p>
-                    </div>
-                    <NotificationBell />
-                  </div>
-                </div>
                 <div className="px-3 py-1">
                   <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">내 메뉴</span>
                 </div>
@@ -392,6 +395,7 @@ export default function Header() {
               </Link>
             )}
           </nav>
+          </div>
         </div>
       )}
     </header>
