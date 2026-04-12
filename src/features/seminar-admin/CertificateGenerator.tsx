@@ -375,9 +375,8 @@ function DraggableArea({
             left: selfAtStart.left + dx, right: selfAtStart.right + dx, cx: selfAtStart.cx + dx,
             top: selfAtStart.top + dy, bottom: selfAtStart.bottom + dy, cy: selfAtStart.cy + dy,
           };
-          // 수직 가이드 (세로선): x-축 정렬
+          // 수직 가이드 (세로선): x-축 정렬 — 가장 가까운 매칭으로 스냅, 이후 정렬되는 모든 지점에 가이드
           let bestXDelta: number | null = null;
-          let bestXAt: number | null = null;
           for (const p of others) {
             for (const selfVal of [cur.left, cur.right, cur.cx]) {
               for (const peerVal of [p.left, p.right, p.cx]) {
@@ -385,19 +384,28 @@ function DraggableArea({
                 if (Math.abs(diff) <= SMART_TOL) {
                   if (bestXDelta === null || Math.abs(diff) < Math.abs(bestXDelta)) {
                     bestXDelta = diff;
-                    bestXAt = peerVal;
                   }
                 }
               }
             }
           }
-          if (bestXDelta !== null && bestXAt !== null) {
+          if (bestXDelta !== null) {
             finalDx = dx + bestXDelta;
-            guides.push({ axis: "x", at: bestXAt });
+            const snappedCur = { left: cur.left + bestXDelta, right: cur.right + bestXDelta, cx: cur.cx + bestXDelta };
+            const seen = new Set<number>();
+            for (const p of others) {
+              for (const selfVal of [snappedCur.left, snappedCur.right, snappedCur.cx]) {
+                for (const peerVal of [p.left, p.right, p.cx]) {
+                  if (Math.abs(peerVal - selfVal) <= 0.5) {
+                    const at = Math.round(peerVal * 10) / 10;
+                    if (!seen.has(at)) { seen.add(at); guides.push({ axis: "x", at }); }
+                  }
+                }
+              }
+            }
           }
           // 수평 가이드 (가로선): y-축 정렬
           let bestYDelta: number | null = null;
-          let bestYAt: number | null = null;
           for (const p of others) {
             for (const selfVal of [cur.top, cur.bottom, cur.cy]) {
               for (const peerVal of [p.top, p.bottom, p.cy]) {
@@ -405,15 +413,25 @@ function DraggableArea({
                 if (Math.abs(diff) <= SMART_TOL) {
                   if (bestYDelta === null || Math.abs(diff) < Math.abs(bestYDelta)) {
                     bestYDelta = diff;
-                    bestYAt = peerVal;
                   }
                 }
               }
             }
           }
-          if (bestYDelta !== null && bestYAt !== null) {
+          if (bestYDelta !== null) {
             finalDy = dy + bestYDelta;
-            guides.push({ axis: "y", at: bestYAt });
+            const snappedCur = { top: cur.top + bestYDelta, bottom: cur.bottom + bestYDelta, cy: cur.cy + bestYDelta };
+            const seen = new Set<number>();
+            for (const p of others) {
+              for (const selfVal of [snappedCur.top, snappedCur.bottom, snappedCur.cy]) {
+                for (const peerVal of [p.top, p.bottom, p.cy]) {
+                  if (Math.abs(peerVal - selfVal) <= 0.5) {
+                    const at = Math.round(peerVal * 10) / 10;
+                    if (!seen.has(at)) { seen.add(at); guides.push({ axis: "y", at }); }
+                  }
+                }
+              }
+            }
           }
         }
         // 가이드 미발동 시에만 격자 스냅
@@ -483,17 +501,21 @@ function DraggableArea({
   const oy = offsetY || 0;
 
   const bs = boxScale ?? 1;
-  const scaledChildren =
-    bs === 1 ? children : (
-      <div style={{ transform: `scale(${bs})`, transformOrigin: "top left", display: "inline-block" }}>
-        {children}
-      </div>
-    );
 
   if (!editable) {
+    const t =
+      bs !== 1
+        ? `translate(${ox}px, ${oy}px) scale(${bs})`
+        : ox || oy
+        ? `translate(${ox}px, ${oy}px)`
+        : undefined;
     return (
-      <div ref={rootRef} data-area-key={areaKey} style={{ transform: ox || oy ? `translate(${ox}px, ${oy}px)` : undefined }}>
-        {scaledChildren}
+      <div
+        ref={rootRef}
+        data-area-key={areaKey}
+        style={{ transform: t, transformOrigin: "top left", display: "inline-block" }}
+      >
+        {children}
       </div>
     );
   }
@@ -504,11 +526,13 @@ function DraggableArea({
       data-area-key={areaKey}
       onMouseDown={handleMouseDown}
       style={{
-        transform: `translate(${ox + localOffset.x}px, ${oy + localOffset.y}px)`,
+        transform: `translate(${ox + localOffset.x}px, ${oy + localOffset.y}px) scale(${bs})`,
+        transformOrigin: "top left",
+        display: "inline-block",
         cursor: "move",
         position: "relative",
-        outline: isSelected ? "2px dashed #3b82f6" : "1px dashed transparent",
-        outlineOffset: "3px",
+        outline: isSelected ? `${2 / bs}px dashed #3b82f6` : `${1 / bs}px dashed transparent`,
+        outlineOffset: `${3 / bs}px`,
         borderRadius: "4px",
         transition: dragging.current ? "none" : "outline-color 0.15s",
       }}
@@ -521,7 +545,17 @@ function DraggableArea({
     >
       {isSelected && (
         <>
-          <span className="absolute -top-4 left-0 rounded bg-blue-500 px-1.5 py-0.5 text-[9px] font-medium text-white" style={{ zIndex: 10 }}>
+          <span
+            className="absolute rounded bg-blue-500 px-1.5 py-0.5 text-[9px] font-medium text-white"
+            style={{
+              zIndex: 10,
+              top: `${-16 / bs}px`,
+              left: 0,
+              transform: `scale(${1 / bs})`,
+              transformOrigin: "top left",
+              whiteSpace: "nowrap",
+            }}
+          >
             {AREA_LABELS[areaKey]} {bs !== 1 && `· ${Math.round(bs * 100)}%`}
           </span>
           {/* 모서리 리사이즈 핸들 (우측 하단) */}
@@ -529,13 +563,13 @@ function DraggableArea({
             onMouseDown={startResize}
             style={{
               position: "absolute",
-              right: -6,
-              bottom: -6,
-              width: 10,
-              height: 10,
+              right: `${-6 / bs}px`,
+              bottom: `${-6 / bs}px`,
+              width: `${10 / bs}px`,
+              height: `${10 / bs}px`,
               background: "#3b82f6",
-              border: "1.5px solid #fff",
-              borderRadius: 2,
+              border: `${1.5 / bs}px solid #fff`,
+              borderRadius: `${2 / bs}px`,
               cursor: "nwse-resize",
               zIndex: 11,
             }}
@@ -543,7 +577,7 @@ function DraggableArea({
           />
         </>
       )}
-      {scaledChildren}
+      {children}
     </div>
   );
 }
