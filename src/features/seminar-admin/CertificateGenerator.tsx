@@ -1035,59 +1035,49 @@ export default function CertificateGenerator() {
     if (!printRef.current) return;
     setPdfLoading(true);
     try {
-      // 폰트가 완전히 로드될 때까지 대기 (자간·한글 깨짐 방지)
-      // Google Fonts의 unicode-range 서브셋은 실제 사용된 글리프가 요청될 때까지
-      // 로드되지 않으므로, 래스터라이즈 전에 한글 샘플과 실제 폰트 패밀리를
-      // 명시적으로 preload 한다.
-      const sampleKo = "연세교육공학회 감사장 수료증 귀하 성명";
-      // next/font가 생성한 실제 패밀리명은 CSS 변수에 담겨있으므로
-      // 지정된 타겟의 computed fontFamily를 그대로 사용하여 한글 샘플을 preload.
-      const computedFamily = window.getComputedStyle(printRef.current.firstElementChild as HTMLElement).fontFamily;
-      const weights = [400, 600, 700, 900];
-      await Promise.all(
-        weights.map((w) =>
-          document.fonts.load(`${w} 16px ${computedFamily}`, sampleKo).catch(() => null),
-        ),
-      );
-      await document.fonts.ready;
-
-      const html2canvas = (await import("html2canvas-pro")).default;
-      const { jsPDF } = await import("jspdf");
-
       const target = printRef.current.firstElementChild as HTMLElement;
+      if (!target) throw new Error("증서 미리보기 요소를 찾을 수 없습니다.");
 
-      // letter-spacing em → px 변환 (html2canvas em 단위 정밀도 이슈 해결)
-      const elementsWithSpacing: { el: HTMLElement; original: string }[] = [];
-      target.querySelectorAll<HTMLElement>("*").forEach((el) => {
-        const ls = el.style.letterSpacing;
+      // letter-spacing em → px 정규화 (서버 렌더링 환경에서 폰트 metric 편차 방지)
+      const clone = target.cloneNode(true) as HTMLElement;
+      clone.style.transform = "none";
+      const walk = (src: HTMLElement, dst: HTMLElement) => {
+        const cs = window.getComputedStyle(src);
+        const fontSizePx = parseFloat(cs.fontSize) || 16;
+        const ls = src.style.letterSpacing;
         if (ls && ls.endsWith("em")) {
-          const emVal = parseFloat(ls);
-          if (!isNaN(emVal) && emVal !== 0) {
-            const computed = window.getComputedStyle(el);
-            const fontSizePx = parseFloat(computed.fontSize);
-            const pxVal = emVal * fontSizePx;
-            elementsWithSpacing.push({ el, original: ls });
-            el.style.letterSpacing = `${pxVal}px`;
-          }
+          const em = parseFloat(ls);
+          if (!isNaN(em)) dst.style.letterSpacing = `${em * fontSizePx}px`;
         }
-      });
+        for (let i = 0; i < src.children.length; i++) {
+          walk(src.children[i] as HTMLElement, dst.children[i] as HTMLElement);
+        }
+      };
+      walk(target, clone);
+      // 미리보기용 편집 UI 잔여 요소 제거 (테두리 하이라이트 등)
+      clone.querySelectorAll("[data-editable-overlay]").forEach((n) => n.remove());
 
-      const canvas = await html2canvas(target, {
-        scale: 3,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-      });
-
-      // letter-spacing 원래 값 복원
-      for (const { el, original } of elementsWithSpacing) {
-        el.style.letterSpacing = original;
-      }
-
-      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      const imgData = canvas.toDataURL("image/png");
-      pdf.addImage(imgData, "PNG", 0, 0, 210, 297);
+      const html = clone.outerHTML;
       const fileName = `${certType === "completion" ? "수료증" : "감사장"}_${recipientName || "미입력"}_${certificateNo || "번호없음"}.pdf`;
-      pdf.save(fileName);
+
+      const res = await fetch("/api/certificates/pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html, fileName }),
+      });
+      if (!res.ok) {
+        const msg = await res.text().catch(() => "");
+        throw new Error(`서버 응답 오류: ${res.status} ${msg}`);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
       toast.success("PDF가 다운로드되었습니다.");
     } catch (e) {
       console.error("[cert] PDF 생성 실패:", e);
