@@ -298,7 +298,6 @@ function DraggableArea({
   snapPx = 0,
   boxScale = 1,
   onResize,
-  peers = [],
   onGuides,
   children,
 }: {
@@ -315,12 +314,11 @@ function DraggableArea({
   /** 개체 배율 (PPT 모서리 드래그) */
   boxScale?: number;
   onResize?: (key: AreaKey, newScale: number) => void;
-  /** 다른 영역들의 offset 좌표 (가이드/스냅용) */
-  peers?: { key: AreaKey; x: number; y: number }[];
-  /** 드래그 중 가이드 라인 업데이트 (부모가 렌더링) */
+  /** 드래그 중 가이드 라인 업데이트 (부모가 렌더링, 캔버스 절대 좌표) */
   onGuides?: (lines: { axis: "x" | "y"; at: number }[]) => void;
   children: React.ReactNode;
 }) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
   const startPos = useRef({ x: 0, y: 0 });
   const startOffset = useRef({ x: 0, y: 0 });
@@ -338,36 +336,95 @@ function DraggableArea({
       startOffset.current = { x: offsetX, y: offsetY };
       setLocalOffset({ x: 0, y: 0 });
 
-      const SMART_TOL = 4; // px 허용 오차 (자석 스냅)
+      const SMART_TOL = 6; // px 허용 오차
+      // 캔버스 기준 좌표계로 자신 + peer의 edge/center를 계산
+      const canvas = rootRef.current?.closest("[data-cert-canvas]") as HTMLElement | null;
+      const cRect = canvas?.getBoundingClientRect();
+      type Rect = { key: string; left: number; right: number; top: number; bottom: number; cx: number; cy: number };
+      const measureAll = (): { self: Rect | null; others: Rect[] } => {
+        if (!canvas || !cRect) return { self: null, others: [] };
+        const rects: Rect[] = Array.from(canvas.querySelectorAll<HTMLElement>("[data-area-key]")).map((el) => {
+          const r = el.getBoundingClientRect();
+          return {
+            key: el.dataset.areaKey || "",
+            left: (r.left - cRect.left) / scale,
+            right: (r.right - cRect.left) / scale,
+            top: (r.top - cRect.top) / scale,
+            bottom: (r.bottom - cRect.top) / scale,
+            cx: (r.left + r.right - 2 * cRect.left) / (2 * scale),
+            cy: (r.top + r.bottom - 2 * cRect.top) / (2 * scale),
+          };
+        });
+        const self = rects.find((r) => r.key === areaKey) || null;
+        const others = rects.filter((r) => r.key !== areaKey);
+        return { self, others };
+      };
+      const { self: selfAtStart, others } = measureAll();
+
       const applySnapAndLock = (dx: number, dy: number, ev: MouseEvent) => {
         if (ev.shiftKey) {
           if (Math.abs(dx) > Math.abs(dy)) dy = 0;
           else dx = 0;
         }
-        let finalX = startOffset.current.x + dx;
-        let finalY = startOffset.current.y + dy;
+        let finalDx = dx;
+        let finalDy = dy;
         const guides: { axis: "x" | "y"; at: number }[] = [];
-        // 인접 개체와 동일 X/Y 정렬 감지 (PPT 노란색 가이드)
-        if (peers && peers.length > 0) {
-          for (const p of peers) {
-            if (p.key === areaKey) continue;
-            if (Math.abs(p.x - finalX) <= SMART_TOL) {
-              finalX = p.x;
-              guides.push({ axis: "x", at: p.x });
-            }
-            if (Math.abs(p.y - finalY) <= SMART_TOL) {
-              finalY = p.y;
-              guides.push({ axis: "y", at: p.y });
+        if (selfAtStart && others.length > 0) {
+          // 가상의 현재 위치 = 시작 rect + (dx, dy)
+          const cur = {
+            left: selfAtStart.left + dx, right: selfAtStart.right + dx, cx: selfAtStart.cx + dx,
+            top: selfAtStart.top + dy, bottom: selfAtStart.bottom + dy, cy: selfAtStart.cy + dy,
+          };
+          // 수직 가이드 (세로선): x-축 정렬
+          let bestXDelta: number | null = null;
+          let bestXAt: number | null = null;
+          for (const p of others) {
+            for (const selfVal of [cur.left, cur.right, cur.cx]) {
+              for (const peerVal of [p.left, p.right, p.cx]) {
+                const diff = peerVal - selfVal;
+                if (Math.abs(diff) <= SMART_TOL) {
+                  if (bestXDelta === null || Math.abs(diff) < Math.abs(bestXDelta)) {
+                    bestXDelta = diff;
+                    bestXAt = peerVal;
+                  }
+                }
+              }
             }
           }
+          if (bestXDelta !== null && bestXAt !== null) {
+            finalDx = dx + bestXDelta;
+            guides.push({ axis: "x", at: bestXAt });
+          }
+          // 수평 가이드 (가로선): y-축 정렬
+          let bestYDelta: number | null = null;
+          let bestYAt: number | null = null;
+          for (const p of others) {
+            for (const selfVal of [cur.top, cur.bottom, cur.cy]) {
+              for (const peerVal of [p.top, p.bottom, p.cy]) {
+                const diff = peerVal - selfVal;
+                if (Math.abs(diff) <= SMART_TOL) {
+                  if (bestYDelta === null || Math.abs(diff) < Math.abs(bestYDelta)) {
+                    bestYDelta = diff;
+                    bestYAt = peerVal;
+                  }
+                }
+              }
+            }
+          }
+          if (bestYDelta !== null && bestYAt !== null) {
+            finalDy = dy + bestYDelta;
+            guides.push({ axis: "y", at: bestYAt });
+          }
         }
-        // 격자 스냅 (스마트 가이드가 우선 적용된 뒤 보정)
+        // 가이드 미발동 시에만 격자 스냅
         if (snapPx > 0 && guides.length === 0) {
-          finalX = Math.round(finalX / snapPx) * snapPx;
-          finalY = Math.round(finalY / snapPx) * snapPx;
+          const fx = startOffset.current.x + finalDx;
+          const fy = startOffset.current.y + finalDy;
+          finalDx = Math.round(fx / snapPx) * snapPx - startOffset.current.x;
+          finalDy = Math.round(fy / snapPx) * snapPx - startOffset.current.y;
         }
         if (onGuides) onGuides(guides);
-        return { dx: finalX - startOffset.current.x, dy: finalY - startOffset.current.y };
+        return { dx: finalDx, dy: finalDy };
       };
 
       const handleMouseMove = (ev: MouseEvent) => {
@@ -394,7 +451,7 @@ function DraggableArea({
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
     },
-    [editable, areaKey, offsetX, offsetY, onDragEnd, onSelect, scale, snapPx, peers, onGuides]
+    [editable, areaKey, offsetX, offsetY, onDragEnd, onSelect, scale, snapPx, onGuides]
   );
 
   // 모서리 리사이즈
@@ -435,7 +492,7 @@ function DraggableArea({
 
   if (!editable) {
     return (
-      <div style={{ transform: ox || oy ? `translate(${ox}px, ${oy}px)` : undefined }}>
+      <div ref={rootRef} data-area-key={areaKey} style={{ transform: ox || oy ? `translate(${ox}px, ${oy}px)` : undefined }}>
         {scaledChildren}
       </div>
     );
@@ -443,6 +500,8 @@ function DraggableArea({
 
   return (
     <div
+      ref={rootRef}
+      data-area-key={areaKey}
       onMouseDown={handleMouseDown}
       style={{
         transform: `translate(${ox + localOffset.x}px, ${oy + localOffset.y}px)`,
@@ -675,12 +734,6 @@ export function CertificatePreview({
 
   const [guides, setGuides] = useState<{ axis: "x" | "y"; at: number }[]>([]);
 
-  const peers = (Object.keys(a) as AreaKey[]).map((k) => ({
-    key: k,
-    x: a[k].offsetX,
-    y: a[k].offsetY,
-  }));
-
   const dragProps = (key: AreaKey) => ({
     areaKey: key,
     offsetX: a[key].offsetX,
@@ -693,13 +746,13 @@ export function CertificatePreview({
     snapPx,
     boxScale: a[key].scale ?? 1,
     onResize: onAreaResize,
-    peers,
     onGuides: setGuides,
   });
   void snapStep;
 
   return (
     <div
+      data-cert-canvas=""
       className="relative mx-auto bg-white"
       style={{
         width: "210mm",
@@ -765,43 +818,36 @@ export function CertificatePreview({
         />
       )}
 
-      {/* 스마트 가이드 (PPT 스타일 노란색 정렬선) */}
+      {/* 스마트 가이드 (PPT 스타일 노란색 정렬선 — 캔버스 절대 좌표) */}
       {editable && guides.length > 0 && (
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 20 }}>
-          {guides.map((g, i) => {
-            // 기준점: 본문 padding 고려 (padding: "22mm 36mm 18mm")
-            // 영역들은 padding 내부에 배치되므로 대략적 중앙축 기준
-            if (g.axis === "x") {
-              return (
-                <div
-                  key={`gx-${i}`}
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    bottom: 0,
-                    left: "50%",
-                    width: 0,
-                    borderLeft: "1px dashed #f59e0b",
-                    transform: `translateX(${g.at}px)`,
-                  }}
-                />
-              );
-            }
-            return (
+          {guides.map((g, i) =>
+            g.axis === "x" ? (
               <div
-                key={`gy-${i}`}
+                key={`gx-${i}-${g.at}`}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  bottom: 0,
+                  left: `${g.at}px`,
+                  width: 0,
+                  borderLeft: "1px dashed #f59e0b",
+                }}
+              />
+            ) : (
+              <div
+                key={`gy-${i}-${g.at}`}
                 style={{
                   position: "absolute",
                   left: 0,
                   right: 0,
-                  top: "22mm",
+                  top: `${g.at}px`,
                   height: 0,
                   borderTop: "1px dashed #f59e0b",
-                  transform: `translateY(${g.at}px)`,
                 }}
               />
-            );
-          })}
+            )
+          )}
         </div>
       )}
 
