@@ -23,6 +23,14 @@ export const OCCUPATION_LABELS: Record<OccupationType, string> = {
   other: "기타",
 };
 
+export type EnrollmentStatus = "enrolled" | "on_leave" | "graduated";
+
+export const ENROLLMENT_STATUS_LABELS: Record<EnrollmentStatus, string> = {
+  enrolled: "재학",
+  on_leave: "휴학",
+  graduated: "졸업",
+};
+
 export type ContactVisibility = "public" | "members" | "staff" | "private";
 
 export const VISIBILITY_LABELS: Record<ContactVisibility, string> = {
@@ -54,6 +62,7 @@ export interface User { [key: string]: unknown;
   contactVisibility?: ContactVisibility;
   enrollmentYear?: number;
   enrollmentHalf?: number; // 1=전반기, 2=후반기
+  enrollmentStatus?: EnrollmentStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -144,7 +153,7 @@ export interface Seminar {
   };
   speakerReviewToken?: string;
   cancelReason?: string;
-  status: "upcoming" | "ongoing" | "completed" | "cancelled";
+  status: "draft" | "upcoming" | "ongoing" | "completed" | "cancelled";
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -263,6 +272,7 @@ export interface PromotionContent {
 export type SeminarStatus = Seminar["status"];
 
 export const SEMINAR_STATUS_LABELS: Record<SeminarStatus, string> = {
+  draft: "임시저장",
   upcoming: "예정",
   ongoing: "진행 중",
   completed: "완료",

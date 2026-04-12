@@ -6,27 +6,19 @@ import AuthGuard from "@/features/auth/AuthGuard";
 import { cn } from "@/lib/utils";
 import {
   BookOpen,
-  PlusCircle,
-  Megaphone,
-  ListChecks,
-  Award,
   ClipboardList,
-  BarChart3,
-  Image,
+  LayoutDashboard,
+  ArrowRightLeft,
 } from "lucide-react";
 
 const TABS = [
-  { href: "/seminar-admin", label: "세미나 목록", icon: BookOpen, exact: true },
-  { href: "/seminar-admin/create", label: "세미나 생성", icon: PlusCircle },
-  { href: "/seminar-admin/promotion", label: "홍보 제작", icon: Megaphone },
-  { href: "/seminar-admin/poster", label: "포스터", icon: Image },
-  { href: "/seminar-admin/timeline", label: "운영 타임라인", icon: ListChecks },
-  { href: "/seminar-admin/registrations", label: "참석자", icon: ClipboardList },
-  { href: "/seminar-admin/reviews", label: "후기 관리", icon: BarChart3 },
-  { href: "/seminar-admin/certificate", label: "수료증/명찰", icon: Award },
+  { href: "/staff-admin", label: "업무수행철", icon: BookOpen, exact: true },
+  { href: "/staff-admin/todos", label: "To-Do", icon: ClipboardList },
+  { href: "/staff-admin/activity-dashboard", label: "학술활동 대시보드", icon: LayoutDashboard },
+  { href: "/staff-admin/transition", label: "운영진 교체", icon: ArrowRightLeft },
 ];
 
-function SeminarAdminShell({ children }: { children: React.ReactNode }) {
+function StaffAdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
@@ -34,7 +26,7 @@ function SeminarAdminShell({ children }: { children: React.ReactNode }) {
       <div className="mx-auto max-w-5xl px-4">
         <div className="flex items-center gap-3">
           <BookOpen size={28} className="text-primary" />
-          <h1 className="text-3xl font-bold">세미나 관리</h1>
+          <h1 className="text-3xl font-bold">운영진 관리</h1>
         </div>
 
         <nav className="mt-8 flex flex-wrap gap-0 border-b sm:overflow-x-auto">
@@ -66,14 +58,14 @@ function SeminarAdminShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function SeminarAdminLayout({
+export default function StaffAdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
     <AuthGuard allowedRoles={["staff", "president", "admin"]}>
-      <SeminarAdminShell>{children}</SeminarAdminShell>
+      <StaffAdminShell>{children}</StaffAdminShell>
     </AuthGuard>
   );
 }

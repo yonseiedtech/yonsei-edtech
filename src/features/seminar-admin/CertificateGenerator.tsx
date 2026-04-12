@@ -8,7 +8,7 @@ import { notifyCertificateIssued } from "@/features/notifications/notify";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Download, Printer, Award, Heart, Plus, Settings, Check, UserPlus, Eye, X, AlignLeft, AlignCenter, AlignRight, AlignJustify, ZoomIn, ZoomOut, FileDown, Palette } from "lucide-react";
+import { Download, Printer, Award, Heart, Plus, Settings, Check, UserPlus, Eye, X, AlignLeft, AlignCenter, AlignRight, AlignJustify, ZoomIn, ZoomOut, FileDown, Palette, AlignVerticalJustifyCenter, AlignHorizontalJustifyCenter, ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -30,7 +30,7 @@ function AttendeeSelector({ attendees, seminarId, certType, onSelectName, onBatc
   onBatchCreate: (names: string[], onProgress?: (current: number, total: number) => void) => Promise<void>;
 }) {
   const [recipients, setRecipients] = useState<string[]>([]);
-  const [filter, setFilter] = useState<"all" | "checked" | "unchecked">("all");
+  const [filter, setFilter] = useState<"all" | "checked" | "unchecked">(certType === "completion" ? "checked" : "all");
   const [creating, setCreating] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [manualName, setManualName] = useState("");
@@ -53,6 +53,11 @@ function AttendeeSelector({ attendees, seminarId, certType, onSelectName, onBatc
   function addRecipient(name: string) {
     if (recipients.includes(name)) { toast.error(`${name}님이 이미 대상자에 있습니다.`); return; }
     if (issuedNames.has(name)) { toast.error(`${name}님에게 이미 발급되었습니다.`); return; }
+    // 수료증은 출석자만 발급 가능
+    if (certType === "completion") {
+      const att = attendees.find((a) => a.userName === name);
+      if (att && !att.checkedIn) { toast.error(`${name}님은 미출석 상태입니다. 수료증은 출석자만 발급 가능합니다.`); return; }
+    }
     setRecipients((prev) => [...prev, name]);
   }
 
@@ -117,9 +122,13 @@ function AttendeeSelector({ attendees, seminarId, certType, onSelectName, onBatc
                   {inRecipients && <Badge variant="secondary" className="h-4 text-[9px] bg-blue-50 text-blue-700">대상자</Badge>}
                 </span>
                 {!issued && !inRecipients && (
-                  <Button variant="ghost" size="sm" className="h-5 px-1.5 text-[10px]" onClick={() => addRecipient(att.userName)}>
-                    <Plus size={10} />추가
-                  </Button>
+                  certType === "completion" && !att.checkedIn ? (
+                    <span className="text-[9px] text-muted-foreground">미출석</span>
+                  ) : (
+                    <Button variant="ghost" size="sm" className="h-5 px-1.5 text-[10px]" onClick={() => addRecipient(att.userName)}>
+                      <Plus size={10} />추가
+                    </Button>
+                  )
                 )}
               </div>
             );
@@ -261,7 +270,18 @@ const DEFAULT_AREA_STYLES: Record<AreaKey, AreaStyle> = {
   org: { fontSize: "26px", letterSpacing: "0.2em", lineHeight: "1.2", marginTop: "18mm", marginBottom: "0mm", offsetX: 0, offsetY: 0, textAlign: "center" },
 };
 
-const CERT_STYLE_STORAGE_KEY = "cert-area-styles";
+export const CERT_STYLE_STORAGE_KEY = "cert-area-styles";
+const CERT_TEMPLATES_KEY = "cert-templates";
+
+interface CertTemplate {
+  name: string;
+  certType: CertType;
+  fontFamily: string;
+  borderColor: string;
+  bodyText: string;
+  areaStyles: Record<AreaKey, AreaStyle>;
+  createdAt: string;
+}
 
 /** 드래그 가능한 영역 래퍼 */
 function DraggableArea({
@@ -270,7 +290,7 @@ function DraggableArea({
   offsetY,
   editable,
   onDragEnd,
-  selectedArea,
+  selectedAreas,
   onSelect,
   scale = 0.6,
   children,
@@ -280,8 +300,8 @@ function DraggableArea({
   offsetY: number;
   editable: boolean;
   onDragEnd: (key: AreaKey, dx: number, dy: number) => void;
-  selectedArea: AreaKey | null;
-  onSelect: (key: AreaKey) => void;
+  selectedAreas: AreaKey[];
+  onSelect: (key: AreaKey, ctrlKey: boolean) => void;
   scale?: number;
   children: React.ReactNode;
 }) {
@@ -289,14 +309,14 @@ function DraggableArea({
   const startPos = useRef({ x: 0, y: 0 });
   const startOffset = useRef({ x: 0, y: 0 });
   const [localOffset, setLocalOffset] = useState({ x: 0, y: 0 });
-  const isSelected = selectedArea === areaKey;
+  const isSelected = selectedAreas.includes(areaKey);
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       if (!editable) return;
       e.preventDefault();
       e.stopPropagation();
-      onSelect(areaKey);
+      onSelect(areaKey, e.ctrlKey || e.metaKey);
       dragging.current = true;
       startPos.current = { x: e.clientX, y: e.clientY };
       startOffset.current = { x: offsetX, y: offsetY };
@@ -423,9 +443,9 @@ function AreaStyleEditor({
     <div className="rounded-lg border bg-muted/20 p-2.5 space-y-2">
       <p className="mb-1 text-[11px] font-semibold">{AREA_LABELS[areaKey]}</p>
 
-      {/* 수평 맞춤 */}
+      {/* 텍스트 정렬 */}
       <div>
-        <p className="mb-1 text-[10px] text-muted-foreground">수평 맞춤</p>
+        <p className="mb-1 text-[10px] text-muted-foreground">텍스트 정렬</p>
         <div className="flex gap-0.5">
           {ALIGN_OPTIONS.map((opt) => (
             <button
@@ -442,25 +462,26 @@ function AreaStyleEditor({
               {opt.icon}
             </button>
           ))}
-          {/* 수평 중앙 맞춤 (오프셋 리셋) */}
-          <button
-            title="수평 중앙으로 이동"
-            onClick={() => onChange({ ...value, offsetX: 0, textAlign: "center" })}
-            className="ml-auto flex h-6 items-center gap-0.5 rounded border border-muted bg-white px-1.5 text-[9px] text-muted-foreground hover:bg-muted/50"
-          >
-            ↔ 중앙
-          </button>
         </div>
       </div>
 
-      {/* 수직 중앙 맞춤 */}
-      <button
-        title="수직 위치 초기화 (오프셋 Y=0)"
-        onClick={() => onChange({ ...value, offsetY: 0 })}
-        className="flex h-6 w-full items-center justify-center gap-0.5 rounded border border-muted bg-white text-[9px] text-muted-foreground hover:bg-muted/50"
-      >
-        ↕ 수직 위치 초기화
-      </button>
+      {/* 위치 초기화 */}
+      <div className="flex gap-1">
+        <button
+          title="수평 위치 초기화 (X=0)"
+          onClick={() => onChange({ ...value, offsetX: 0 })}
+          className="flex h-6 flex-1 items-center justify-center gap-0.5 rounded border border-muted bg-white text-[9px] text-muted-foreground hover:bg-muted/50"
+        >
+          ↔ X 초기화
+        </button>
+        <button
+          title="수직 위치 초기화 (Y=0)"
+          onClick={() => onChange({ ...value, offsetY: 0 })}
+          className="flex h-6 flex-1 items-center justify-center gap-0.5 rounded border border-muted bg-white text-[9px] text-muted-foreground hover:bg-muted/50"
+        >
+          ↕ Y 초기화
+        </button>
+      </div>
 
       {/* 슬라이더들 */}
       <div className="space-y-1.5">
@@ -516,7 +537,7 @@ export function CertificatePreview({
   style,
   areaStyles,
   editable = false,
-  selectedArea = null,
+  selectedAreas = [],
   onAreaDrag,
   onSelectArea,
   previewScale,
@@ -531,9 +552,9 @@ export function CertificatePreview({
   style: CertStyle;
   areaStyles: Record<AreaKey, AreaStyle>;
   editable?: boolean;
-  selectedArea?: AreaKey | null;
+  selectedAreas?: AreaKey[];
   onAreaDrag?: (key: AreaKey, x: number, y: number) => void;
-  onSelectArea?: (key: AreaKey) => void;
+  onSelectArea?: (key: AreaKey, ctrlKey: boolean) => void;
   previewScale?: number;
 }) {
   const isCompletion = type === "completion";
@@ -546,7 +567,7 @@ export function CertificatePreview({
     offsetX: a[key].offsetX,
     offsetY: a[key].offsetY,
     editable,
-    selectedArea,
+    selectedAreas: selectedAreas ?? [],
     onSelect: onSelectArea ?? (() => {}),
     onDragEnd: onAreaDrag ?? (() => {}),
     scale: previewScale ?? 0.6,
@@ -909,6 +930,7 @@ export default function CertificateGenerator() {
   });
   const [expandedArea, setExpandedArea] = useState<AreaKey | null>(null);
   const [selectedArea, setSelectedArea] = useState<AreaKey | null>(null);
+  const [selectedAreas, setSelectedAreas] = useState<AreaKey[]>([]);
   const [zoom, setZoom] = useState(0.6);
   const [pdfLoading, setPdfLoading] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
@@ -924,6 +946,16 @@ export default function CertificateGenerator() {
     }));
   }
 
+  function handleMultiAlign(updates: { key: AreaKey; x: number; y: number }[]) {
+    setAreaStyles((prev) => {
+      const next = { ...prev };
+      for (const u of updates) {
+        next[u.key] = { ...next[u.key], offsetX: Math.round(u.x), offsetY: Math.round(u.y) };
+      }
+      return next;
+    });
+  }
+
   function saveAreaStyles() {
     try {
       localStorage.setItem(CERT_STYLE_STORAGE_KEY, JSON.stringify(areaStyles));
@@ -937,6 +969,56 @@ export default function CertificateGenerator() {
     setAreaStyles({ ...DEFAULT_AREA_STYLES });
     localStorage.removeItem(CERT_STYLE_STORAGE_KEY);
     toast.success("모든 스타일이 초기화되었습니다.");
+  }
+
+  // ── 템플릿 관리 ──
+  const [savedTemplates, setSavedTemplates] = useState<CertTemplate[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem(CERT_TEMPLATES_KEY);
+        if (raw) return JSON.parse(raw) as CertTemplate[];
+      } catch { /* ignore */ }
+    }
+    return [];
+  });
+  const [templateName, setTemplateName] = useState("");
+
+  function saveTemplate() {
+    const name = templateName.trim();
+    if (!name) { toast.error("템플릿 이름을 입력하세요."); return; }
+    const tpl: CertTemplate = {
+      name,
+      certType,
+      fontFamily,
+      borderColor,
+      bodyText,
+      areaStyles: { ...areaStyles },
+      createdAt: new Date().toISOString(),
+    };
+    const exists = savedTemplates.findIndex((t) => t.name === name);
+    const next = exists >= 0
+      ? savedTemplates.map((t, i) => (i === exists ? tpl : t))
+      : [...savedTemplates, tpl];
+    setSavedTemplates(next);
+    localStorage.setItem(CERT_TEMPLATES_KEY, JSON.stringify(next));
+    setTemplateName("");
+    toast.success(`"${name}" 템플릿이 저장되었습니다.`);
+  }
+
+  function loadTemplate(tpl: CertTemplate) {
+    setCertType(tpl.certType);
+    setFontFamily(tpl.fontFamily);
+    setBorderColor(tpl.borderColor);
+    setBodyText(tpl.bodyText);
+    setAreaStyles({ ...tpl.areaStyles });
+    toast.success(`"${tpl.name}" 템플릿이 적용되었습니다.`);
+  }
+
+  function deleteTemplate(name: string) {
+    const next = savedTemplates.filter((t) => t.name !== name);
+    setSavedTemplates(next);
+    localStorage.setItem(CERT_TEMPLATES_KEY, JSON.stringify(next));
+    toast.success(`"${name}" 템플릿이 삭제되었습니다.`);
   }
 
   function applyPreset(preset: StylePreset) {
@@ -1292,6 +1374,133 @@ export default function CertificateGenerator() {
                 </Button>
               </div>
 
+              {/* PPT 스타일 정렬 도구 */}
+              {selectedArea && (
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium">
+                    정렬 · {AREA_LABELS[selectedArea]}
+                  </label>
+                  {/* 수평 정렬 */}
+                  <p className="mb-1 text-[10px] text-muted-foreground">수평 (좌우)</p>
+                  <div className="grid grid-cols-3 gap-1">
+                    <Button variant="outline" size="sm" className="h-7 gap-1 text-[10px]" title="좌측 붙임"
+                      onClick={() => handleAreaDrag(selectedArea, -120, areaStyles[selectedArea].offsetY)}>
+                      <ArrowLeft size={12} />좌
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 gap-1 text-[10px]" title="수평 가운데"
+                      onClick={() => handleAreaDrag(selectedArea, 0, areaStyles[selectedArea].offsetY)}>
+                      <AlignHorizontalJustifyCenter size={12} />중앙
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 gap-1 text-[10px]" title="우측 붙임"
+                      onClick={() => handleAreaDrag(selectedArea, 120, areaStyles[selectedArea].offsetY)}>
+                      <ArrowRight size={12} />우
+                    </Button>
+                  </div>
+                  {/* 수직 정렬 */}
+                  <p className="mb-1 mt-2 text-[10px] text-muted-foreground">수직 (상하)</p>
+                  <div className="grid grid-cols-3 gap-1">
+                    <Button variant="outline" size="sm" className="h-7 gap-1 text-[10px]" title="상단 붙임"
+                      onClick={() => handleAreaDrag(selectedArea, areaStyles[selectedArea].offsetX, -120)}>
+                      <ArrowUp size={12} />상
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 gap-1 text-[10px]" title="수직 가운데"
+                      onClick={() => handleAreaDrag(selectedArea, areaStyles[selectedArea].offsetX, 0)}>
+                      <AlignVerticalJustifyCenter size={12} />중앙
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 gap-1 text-[10px]" title="하단 붙임"
+                      onClick={() => handleAreaDrag(selectedArea, areaStyles[selectedArea].offsetX, 120)}>
+                      <ArrowDown size={12} />하
+                    </Button>
+                  </div>
+                  {/* 미세조절 */}
+                  <p className="mb-1 mt-2 text-[10px] text-muted-foreground">미세조절 (1px)</p>
+                  <div className="grid grid-cols-4 gap-1">
+                    <Button variant="outline" size="sm" className="h-7 text-[10px]" title="왼쪽 1px"
+                      onClick={() => handleAreaDrag(selectedArea, areaStyles[selectedArea].offsetX - 1, areaStyles[selectedArea].offsetY)}>
+                      ←1
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 text-[10px]" title="오른쪽 1px"
+                      onClick={() => handleAreaDrag(selectedArea, areaStyles[selectedArea].offsetX + 1, areaStyles[selectedArea].offsetY)}>
+                      →1
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 text-[10px]" title="위 1px"
+                      onClick={() => handleAreaDrag(selectedArea, areaStyles[selectedArea].offsetX, areaStyles[selectedArea].offsetY - 1)}>
+                      ↑1
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 text-[10px]" title="아래 1px"
+                      onClick={() => handleAreaDrag(selectedArea, areaStyles[selectedArea].offsetX, areaStyles[selectedArea].offsetY + 1)}>
+                      ↓1
+                    </Button>
+                  </div>
+                  <p className="mt-1 text-[9px] text-muted-foreground">
+                    현재 위치: X={areaStyles[selectedArea].offsetX}px, Y={areaStyles[selectedArea].offsetY}px
+                  </p>
+                </div>
+              )}
+
+              {/* 다중 개체 정렬 (2개 이상 선택 시) */}
+              {selectedAreas.length > 1 && (
+                <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-3">
+                  <label className="mb-1.5 block text-xs font-semibold text-blue-700">
+                    다중 정렬 · {selectedAreas.length}개 선택
+                    <button className="ml-2 text-[10px] font-normal text-muted-foreground hover:text-foreground" onClick={() => setSelectedAreas([])}>
+                      선택 해제
+                    </button>
+                  </label>
+                  <p className="mb-1 text-[10px] text-muted-foreground">수평 (좌우 맞춤)</p>
+                  <div className="grid grid-cols-3 gap-1">
+                    <Button variant="outline" size="sm" className="h-7 gap-1 text-[10px]" title="왼쪽 맞춤"
+                      onClick={() => {
+                        const minX = Math.min(...selectedAreas.map((k) => areaStyles[k].offsetX));
+                        handleMultiAlign(selectedAreas.map((k) => ({ key: k, x: minX, y: areaStyles[k].offsetY })));
+                      }}>
+                      <ArrowLeft size={12} />좌 맞춤
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 gap-1 text-[10px]" title="수평 가운데 맞춤"
+                      onClick={() => {
+                        const avgX = Math.round(selectedAreas.reduce((s, k) => s + areaStyles[k].offsetX, 0) / selectedAreas.length);
+                        handleMultiAlign(selectedAreas.map((k) => ({ key: k, x: avgX, y: areaStyles[k].offsetY })));
+                      }}>
+                      <AlignHorizontalJustifyCenter size={12} />중앙
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 gap-1 text-[10px]" title="오른쪽 맞춤"
+                      onClick={() => {
+                        const maxX = Math.max(...selectedAreas.map((k) => areaStyles[k].offsetX));
+                        handleMultiAlign(selectedAreas.map((k) => ({ key: k, x: maxX, y: areaStyles[k].offsetY })));
+                      }}>
+                      <ArrowRight size={12} />우 맞춤
+                    </Button>
+                  </div>
+                  <p className="mb-1 mt-2 text-[10px] text-muted-foreground">수직 (상하 맞춤)</p>
+                  <div className="grid grid-cols-3 gap-1">
+                    <Button variant="outline" size="sm" className="h-7 gap-1 text-[10px]" title="상단 맞춤"
+                      onClick={() => {
+                        const minY = Math.min(...selectedAreas.map((k) => areaStyles[k].offsetY));
+                        handleMultiAlign(selectedAreas.map((k) => ({ key: k, x: areaStyles[k].offsetX, y: minY })));
+                      }}>
+                      <ArrowUp size={12} />상 맞춤
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 gap-1 text-[10px]" title="수직 가운데 맞춤"
+                      onClick={() => {
+                        const avgY = Math.round(selectedAreas.reduce((s, k) => s + areaStyles[k].offsetY, 0) / selectedAreas.length);
+                        handleMultiAlign(selectedAreas.map((k) => ({ key: k, x: areaStyles[k].offsetX, y: avgY })));
+                      }}>
+                      <AlignVerticalJustifyCenter size={12} />중앙
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 gap-1 text-[10px]" title="하단 맞춤"
+                      onClick={() => {
+                        const maxY = Math.max(...selectedAreas.map((k) => areaStyles[k].offsetY));
+                        handleMultiAlign(selectedAreas.map((k) => ({ key: k, x: areaStyles[k].offsetX, y: maxY })));
+                      }}>
+                      <ArrowDown size={12} />하 맞춤
+                    </Button>
+                  </div>
+                  <p className="mt-1 text-[9px] text-muted-foreground">
+                    Ctrl+클릭으로 개체를 추가/제거할 수 있습니다.
+                  </p>
+                </div>
+              )}
+
               {/* 영역별 세부 스타일 */}
               <div>
                 <label className="mb-1.5 block text-xs font-medium">영역별 세부 조절</label>
@@ -1374,6 +1583,55 @@ export default function CertificateGenerator() {
             </div>
           )}
 
+          {/* 내 템플릿 */}
+          <div>
+            <label className="mb-1.5 block text-xs font-medium">
+              <Download size={12} className="mr-1 inline" />내 템플릿
+            </label>
+            {/* 저장 */}
+            <div className="flex gap-1">
+              <Input
+                placeholder="템플릿 이름"
+                className="h-7 text-xs"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") saveTemplate(); }}
+              />
+              <Button variant="outline" size="sm" className="h-7 shrink-0 text-[10px]" onClick={saveTemplate}>
+                저장
+              </Button>
+            </div>
+            {/* 목록 */}
+            {savedTemplates.length > 0 ? (
+              <div className="mt-2 space-y-0.5">
+                {savedTemplates.map((tpl) => (
+                  <div key={tpl.name} className="flex items-center justify-between rounded-lg border px-2.5 py-1.5 text-[11px]">
+                    <button onClick={() => loadTemplate(tpl)} className="flex-1 text-left hover:text-primary">
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-3 w-3 shrink-0 rounded-full border" style={{ background: tpl.borderColor }} />
+                        <span className="font-medium">{tpl.name}</span>
+                        <Badge variant="secondary" className="h-4 text-[9px]">
+                          {tpl.certType === "completion" ? "수료증" : "감사장"}
+                        </Badge>
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => deleteTemplate(tpl.name)}
+                      className="ml-1 rounded p-0.5 text-muted-foreground hover:bg-red-50 hover:text-red-500"
+                      title="삭제"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                저장된 템플릿이 없습니다. 현재 설정을 저장해보세요.
+              </p>
+            )}
+          </div>
+
           <div className="space-y-2 pt-2">
             <Button className="w-full" onClick={handlePrint} disabled={!seminar}>
               <Printer size={16} className="mr-1" />인쇄
@@ -1391,33 +1649,62 @@ export default function CertificateGenerator() {
             )}
           </div>
 
-          {/* 감사장: 연사/발표자 바로 선택 */}
-          {certType === "appreciation" && seminar && speakers.length > 0 && (
+          {/* 감사장: 연사/발표자 바로 선택 + 수기 추가 */}
+          {certType === "appreciation" && seminar && (
             <div className="rounded-lg border border-orange-200 bg-orange-50/50 p-3">
               <p className="text-xs font-semibold text-orange-700">연사/발표자 <span className="font-normal text-muted-foreground">({speakers.length}명)</span></p>
-              <div className="mt-2 space-y-0.5">
-                {speakers.map((name) => (
-                  <div key={name} className="flex items-center justify-between rounded px-2 py-1 text-xs">
-                    <span className="flex items-center gap-1.5">
-                      {name}
-                      <Badge variant="secondary" className="h-4 text-[9px] bg-orange-100 text-orange-700">연사</Badge>
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-5 px-1.5 text-[10px]"
-                      onClick={() => setRecipientName(name)}
-                    >
-                      <UserPlus size={10} className="mr-0.5" />선택
-                    </Button>
-                  </div>
-                ))}
+              {speakers.length > 0 && (
+                <div className="mt-2 space-y-0.5">
+                  {speakers.map((name) => (
+                    <div key={name} className="flex items-center justify-between rounded px-2 py-1 text-xs">
+                      <span className="flex items-center gap-1.5">
+                        {name}
+                        <Badge variant="secondary" className="h-4 text-[9px] bg-orange-100 text-orange-700">연사</Badge>
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 px-1.5 text-[10px]"
+                        onClick={() => setRecipientName(name)}
+                      >
+                        <UserPlus size={10} className="mr-0.5" />선택
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* 연사 수기 추가 */}
+              <div className="mt-2 flex gap-1">
+                <Input
+                  placeholder="연사/발표자 이름 입력"
+                  className="h-7 text-xs"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const val = (e.target as HTMLInputElement).value.trim();
+                      if (val) { setRecipientName(val); (e.target as HTMLInputElement).value = ""; }
+                    }
+                  }}
+                  id="manual-speaker-input"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 shrink-0 text-[10px]"
+                  onClick={() => {
+                    const input = document.getElementById("manual-speaker-input") as HTMLInputElement;
+                    const val = input?.value.trim();
+                    if (val) { setRecipientName(val); input.value = ""; }
+                  }}
+                >
+                  <UserPlus size={10} className="mr-0.5" />추가
+                </Button>
               </div>
+              <p className="mt-1 text-[9px] text-muted-foreground">이름 입력 후 Enter 또는 추가 버튼을 누르면 수여자로 설정됩니다.</p>
             </div>
           )}
 
-          {/* 참석자 → 발급 대상자 선택 */}
-          {seminar && attendees.length > 0 && (
+          {/* 참석자 → 발급 대상자 선택 (수료증만) */}
+          {certType === "completion" && seminar && attendees.length > 0 && (
             <AttendeeSelector
               attendees={attendees}
               seminarId={seminar.id}
@@ -1508,9 +1795,16 @@ export default function CertificateGenerator() {
               style={{ fontFamily, borderColor }}
               areaStyles={areaStyles}
               editable={showEditMode}
-              selectedArea={selectedArea}
+              selectedAreas={selectedAreas}
               onAreaDrag={handleAreaDrag}
-              onSelectArea={(key) => {
+              onSelectArea={(key, ctrlKey) => {
+                if (ctrlKey) {
+                  setSelectedAreas((prev) =>
+                    prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+                  );
+                } else {
+                  setSelectedAreas([key]);
+                }
                 setSelectedArea(key);
                 setExpandedArea(key);
               }}

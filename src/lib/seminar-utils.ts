@@ -25,8 +25,9 @@ export function getComputedStatus(
   seminar: Pick<Seminar, "status" | "date" | "time">,
   now: Date = new Date(),
 ): SeminarStatus {
-  // 수동 취소는 그대로 유지
+  // 수동 취소 / 임시저장은 그대로 유지
   if (seminar.status === "cancelled") return "cancelled";
+  if (seminar.status === "draft") return "draft";
 
   // 세미나 시작 시간 파싱 (KST 기준)
   const [hours, minutes] = (seminar.time || "00:00").split(":").map(Number);

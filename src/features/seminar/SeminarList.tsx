@@ -15,6 +15,7 @@ interface Props {
 }
 
 const STATUS_STYLES: Record<SeminarStatus, string> = {
+  draft: "bg-gray-100 text-gray-500",
   upcoming: "bg-primary/10 text-primary",
   ongoing: "bg-amber-100 text-amber-700",
   completed: "bg-muted text-muted-foreground",
@@ -86,7 +87,7 @@ export default function SeminarList({ seminars }: Props) {
                   }}
                 >
                   <BookOpen size={14} />
-                  공간
+                  학습공간
                 </Button>
               )}
             </div>

@@ -5,10 +5,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useSeminar } from "@/features/seminar/useSeminar";
+import { albumsApi, photosApi } from "@/lib/bkend";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Star, CheckCircle, Loader2, AlertCircle, Pencil, Mic, Download } from "lucide-react";
+import { ArrowLeft, Star, CheckCircle, Loader2, AlertCircle, Pencil, Mic, Download, ImageIcon, Camera, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import type { Photo } from "@/types";
 
 type Step = "verifying" | "write" | "done" | "error";
 
@@ -190,6 +192,10 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
   // 감사장 호수
   const [certNo, setCertNo] = useState("");
 
+  // 세미나 포토갤러리
+  const [seminarPhotos, setSeminarPhotos] = useState<Photo[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
   const reviewQuestions = seminar?.reviewQuestions?.speaker ?? [];
 
   // Google Fonts 로드
@@ -218,6 +224,47 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
     }
     if (speakerName && step === "done") fetchCertNo();
   }, [seminarId, speakerName, step]);
+
+  // 세미나 포토갤러리 조회
+  useEffect(() => {
+    if (!seminarId || step !== "done") return;
+    async function fetchPhotos() {
+      try {
+        const albumRes = await albumsApi.listBySeminarId(seminarId);
+        const albums = albumRes.data as unknown as { id: string }[];
+        if (albums.length > 0) {
+          const photoRes = await photosApi.list(albums[0].id);
+          setSeminarPhotos((photoRes.data as unknown as Photo[]) ?? []);
+        }
+      } catch { /* ignore */ }
+    }
+    fetchPhotos();
+  }, [seminarId, step]);
+
+  // 감사장 이미지 다운로드
+  const handleDownloadImage = useCallback(async () => {
+    if (!certPrintRef.current) return;
+    setDownloading(true);
+    try {
+      await document.fonts.ready;
+      const html2canvas = (await import("html2canvas-pro")).default;
+      const canvas = await html2canvas(certPrintRef.current, {
+        scale: 3,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+      });
+      const link = document.createElement("a");
+      link.download = `감사장_${speakerName}_${seminar?.title || "세미나"}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+      toast.success("감사장 이미지가 다운로드되었습니다.");
+    } catch {
+      toast.error("이미지 다운로드에 실패했습니다.");
+    } finally {
+      setDownloading(false);
+    }
+  }, [speakerName, seminar?.title]);
 
   // 토큰 검증
   useEffect(() => {
@@ -504,9 +551,9 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
           </div>
         )}
 
-        {/* 완료: 후기 + 감사장 */}
+        {/* 완료: 후기 + 감사장 + 갤러리 */}
         {step === "done" && submittedReview && seminar && (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="rounded-xl border bg-white p-6 text-center">
               <CheckCircle size={48} className="mx-auto mb-4 text-green-500" />
               <h2 className="text-xl font-bold">
@@ -535,22 +582,74 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
               </div>
             </div>
 
-            {/* 감사장 섹션 */}
+            {/* 감사장 섹션 — 반짝이는 테두리 */}
             <div className="rounded-xl border bg-white p-6">
               <h3 className="mb-4 text-center text-sm font-semibold">연세교육공학회 감사장</h3>
 
-              {/* 감사장 미리보기 (축소, 화면 표시용) */}
+              {/* 반짝이 애니메이션 CSS */}
+              <style>{`
+                @keyframes shimmer-border {
+                  0% { background-position: -200% center; }
+                  100% { background-position: 200% center; }
+                }
+                .cert-sparkle-wrapper {
+                  position: relative;
+                  padding: 4px;
+                  border-radius: 12px;
+                  background: linear-gradient(
+                    90deg,
+                    #003378 0%,
+                    #003378 30%,
+                    #c9a84c 40%,
+                    #ffd700 50%,
+                    #c9a84c 60%,
+                    #003378 70%,
+                    #003378 100%
+                  );
+                  background-size: 200% 100%;
+                  animation: shimmer-border 3s ease-in-out infinite;
+                  box-shadow: 0 0 20px rgba(201,168,76,0.3), 0 0 40px rgba(0,51,120,0.15);
+                }
+                .cert-sparkle-wrapper::before {
+                  content: '';
+                  position: absolute;
+                  inset: 0;
+                  border-radius: 12px;
+                  background: linear-gradient(
+                    90deg,
+                    transparent 0%,
+                    rgba(255,215,0,0.4) 45%,
+                    rgba(255,255,255,0.6) 50%,
+                    rgba(255,215,0,0.4) 55%,
+                    transparent 100%
+                  );
+                  background-size: 200% 100%;
+                  animation: shimmer-border 3s ease-in-out infinite;
+                  pointer-events: none;
+                }
+                .cert-sparkle-inner {
+                  border-radius: 8px;
+                  overflow: hidden;
+                  background: white;
+                }
+              `}</style>
+
               <div
-                className="relative mx-auto overflow-hidden rounded-lg border shadow-sm"
-                style={{ width: "100%", maxWidth: "360px", aspectRatio: "210/297" }}
+                className="cert-sparkle-wrapper mx-auto"
+                style={{ width: "100%", maxWidth: "368px" }}
               >
-                <div style={{ transform: "scale(0.45)", transformOrigin: "top left", width: "210mm", height: "297mm" }}>
-                  <AppreciationCertificate
-                    speakerName={speakerName}
-                    seminarTitle={seminar.title}
-                    seminarDate={seminar.date}
-                    certNo={certNo}
-                  />
+                <div
+                  className="cert-sparkle-inner"
+                  style={{ aspectRatio: "210/297" }}
+                >
+                  <div style={{ transform: "scale(0.45)", transformOrigin: "top left", width: "210mm", height: "297mm" }}>
+                    <AppreciationCertificate
+                      speakerName={speakerName}
+                      seminarTitle={seminar.title}
+                      seminarDate={seminar.date}
+                      certNo={certNo}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -567,16 +666,127 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
               </div>
 
               {/* 다운로드 버튼 */}
-              <div className="mt-4 flex justify-center">
+              <div className="mt-4 flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
                 <Button onClick={handleDownloadPdf} disabled={downloading} className="gap-2">
                   {downloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-                  {downloading ? "PDF 생성 중..." : "감사장 PDF 다운로드"}
+                  {downloading ? "생성 중..." : "PDF 다운로드"}
+                </Button>
+                <Button variant="outline" onClick={handleDownloadImage} disabled={downloading} className="gap-2">
+                  <ImageIcon size={14} />
+                  이미지 다운로드
                 </Button>
               </div>
               <p className="mt-2 text-center text-[11px] text-muted-foreground">
-                버튼을 누르면 감사장이 PDF 파일로 바로 다운로드됩니다.
+                감사장을 PDF 또는 이미지 파일로 다운로드할 수 있습니다.
               </p>
             </div>
+
+            {/* 포토갤러리 — 연세교육공학과 함께한 순간 */}
+            {seminarPhotos.length > 0 && (
+              <div className="rounded-xl border bg-white p-6">
+                <div className="mb-4 text-center">
+                  <div className="mx-auto mb-2 flex items-center justify-center gap-2">
+                    <Camera size={18} className="text-primary" />
+                    <h3 className="text-base font-bold text-primary">연세교육공학과 함께한 순간</h3>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{seminar.title}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {seminarPhotos.map((photo, idx) => (
+                    <button
+                      key={photo.id}
+                      onClick={() => setLightboxIndex(idx)}
+                      className="group relative aspect-square overflow-hidden rounded-lg border bg-muted/20 transition-transform hover:scale-[1.02]"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={photo.url}
+                        alt={photo.caption || `세미나 사진 ${idx + 1}`}
+                        className="h-full w-full object-cover transition-opacity group-hover:opacity-90"
+                      />
+                      <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/30 to-transparent opacity-0 transition-opacity group-hover:opacity-100">
+                        <span className="px-2 pb-2 text-[10px] text-white">{photo.caption || ""}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-3 text-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 text-xs"
+                    onClick={() => {
+                      seminarPhotos.forEach((photo, i) => {
+                        const a = document.createElement("a");
+                        a.href = photo.url;
+                        a.download = `세미나_사진_${i + 1}.jpg`;
+                        a.click();
+                      });
+                      toast.success(`${seminarPhotos.length}장 다운로드 시작`);
+                    }}
+                  >
+                    <Download size={12} />
+                    사진 전체 다운로드 ({seminarPhotos.length}장)
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* 라이트박스 */}
+            {lightboxIndex !== null && seminarPhotos[lightboxIndex] && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+                onClick={() => setLightboxIndex(null)}
+              >
+                <button
+                  className="absolute right-4 top-4 rounded-full bg-white/20 p-2 text-white hover:bg-white/30"
+                  onClick={() => setLightboxIndex(null)}
+                >
+                  <X size={20} />
+                </button>
+                {lightboxIndex > 0 && (
+                  <button
+                    className="absolute left-4 rounded-full bg-white/20 p-2 text-white hover:bg-white/30"
+                    onClick={(e) => { e.stopPropagation(); setLightboxIndex(lightboxIndex - 1); }}
+                  >
+                    <ChevronLeft size={24} />
+                  </button>
+                )}
+                {lightboxIndex < seminarPhotos.length - 1 && (
+                  <button
+                    className="absolute right-4 rounded-full bg-white/20 p-2 text-white hover:bg-white/30"
+                    onClick={(e) => { e.stopPropagation(); setLightboxIndex(lightboxIndex + 1); }}
+                  >
+                    <ChevronRight size={24} />
+                  </button>
+                )}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={seminarPhotos[lightboxIndex].url}
+                  alt=""
+                  className="max-h-[85vh] max-w-[90vw] rounded-lg object-contain"
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <div className="absolute bottom-4 flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="gap-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const a = document.createElement("a");
+                      a.href = seminarPhotos[lightboxIndex!].url;
+                      a.download = `세미나_사진_${lightboxIndex! + 1}.jpg`;
+                      a.click();
+                    }}
+                  >
+                    <Download size={12} />다운로드
+                  </Button>
+                </div>
+              </div>
+            )}
 
             <Link href={`/seminars/${seminarId}`}>
               <Button variant="outline" className="w-full">세미나 페이지로 돌아가기</Button>

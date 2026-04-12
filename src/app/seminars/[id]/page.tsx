@@ -477,6 +477,8 @@ function SeminarDetail({ id }: { id: string }) {
         <SessionProgram
           sessions={seminar.sessions ?? []}
           seminarId={id}
+          seminarSpeaker={seminar.speaker}
+          seminarSpeakerBio={seminar.speakerBio}
           isStaff={isStaff}
         />
 

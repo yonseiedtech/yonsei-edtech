@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
-import { Menu, X, User, Shield, ChevronDown, BookUser, LayoutDashboard, LogOut, Settings, BookOpen } from "lucide-react";
+import { Menu, X, User, Shield, ChevronDown, BookUser, LayoutDashboard, LogOut, Settings, BookOpen, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -172,6 +172,7 @@ function UserDropdown() {
     ...(showAdmin
       ? [
           { href: "/seminar-admin", label: "세미나 관리", icon: BookOpen },
+          { href: "/staff-admin", label: "운영진 관리", icon: Users },
           { href: "/admin", label: "관리자", icon: Shield },
         ]
       : []),

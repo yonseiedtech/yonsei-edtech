@@ -24,10 +24,12 @@ import { SEMINAR_STATUS_LABELS } from "@/types";
 import { getComputedStatus } from "@/lib/seminar-utils";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Pencil, BookOpen, Image as ImageIcon, Video, AlertTriangle, Trash2, Copy } from "lucide-react";
+import { Pencil, BookOpen, Image as ImageIcon, Video, AlertTriangle, Trash2, Copy, Send, CalendarDays, Users, TrendingUp, FileEdit } from "lucide-react";
 import { useCreateSeminar } from "@/features/seminar/useSeminar";
+import { createTimeline } from "@/features/seminar-admin/timeline-template";
 
 const STATUS_COLORS: Record<SeminarStatus, string> = {
+  draft: "bg-gray-50 text-gray-500",
   upcoming: "bg-blue-50 text-blue-700",
   ongoing: "bg-amber-50 text-amber-700",
   completed: "bg-green-50 text-green-700",
@@ -81,6 +83,21 @@ export default function AdminSeminarTab() {
       toast.success("세미나가 복제되었습니다. 날짜와 연사를 수정해주세요.");
     } catch {
       toast.error("세미나 복제에 실패했습니다.");
+    }
+  }
+
+  async function handlePublishDraft(s: Seminar) {
+    if (!s.date || !s.title) {
+      toast.error("등록하려면 제목과 날짜를 먼저 입력해주세요.");
+      return;
+    }
+    if (!confirm(`"${s.title}" 세미나를 등록(공개)하시겠습니까?`)) return;
+    try {
+      const timeline = s.timeline?.length ? s.timeline : createTimeline(s.isOnline);
+      await updateSeminar({ id: s.id, data: { status: "upcoming", timeline } });
+      toast.success("세미나가 등록되었습니다. 타임라인이 자동 적용되었습니다.");
+    } catch {
+      toast.error("등록에 실패했습니다.");
     }
   }
 
@@ -171,7 +188,96 @@ export default function AdminSeminarTab() {
     setEditSeminar(null);
   }
 
+  // 대시보드 통계
+  const stats = (() => {
+    let draft = 0, upcoming = 0, ongoing = 0, completed = 0, totalAttendees = 0;
+    for (const s of seminars) {
+      const c = getComputedStatus(s);
+      if (c === "draft") draft++;
+      else if (c === "upcoming") upcoming++;
+      else if (c === "ongoing") ongoing++;
+      else if (c === "completed") completed++;
+      totalAttendees += s.attendeeIds.length;
+    }
+    return { draft, upcoming, ongoing, completed, totalAttendees };
+  })();
+
+  // 다가오는 세미나 (가장 가까운 예정 세미나)
+  const upcomingSeminars = seminars
+    .filter((s) => getComputedStatus(s) === "upcoming")
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(0, 3);
+
   return (
+    <div className="space-y-4">
+      {/* 대시보드 통계 카드 */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="rounded-xl border bg-white p-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <CalendarDays size={16} className="text-blue-500" />
+            <span>예정</span>
+          </div>
+          <p className="mt-1 text-2xl font-bold">{stats.upcoming}<span className="ml-1 text-sm font-normal text-muted-foreground">건</span></p>
+        </div>
+        <div className="rounded-xl border bg-white p-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <TrendingUp size={16} className="text-green-500" />
+            <span>완료</span>
+          </div>
+          <p className="mt-1 text-2xl font-bold">{stats.completed}<span className="ml-1 text-sm font-normal text-muted-foreground">건</span></p>
+        </div>
+        <div className="rounded-xl border bg-white p-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Users size={16} className="text-primary" />
+            <span>총 참석자</span>
+          </div>
+          <p className="mt-1 text-2xl font-bold">{stats.totalAttendees}<span className="ml-1 text-sm font-normal text-muted-foreground">명</span></p>
+        </div>
+        <div className="rounded-xl border bg-white p-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <FileEdit size={16} className="text-gray-400" />
+            <span>임시저장</span>
+          </div>
+          <p className="mt-1 text-2xl font-bold">{stats.draft}<span className="ml-1 text-sm font-normal text-muted-foreground">건</span></p>
+        </div>
+      </div>
+
+      {/* 다가오는 세미나 하이라이트 */}
+      {upcomingSeminars.length > 0 && (
+        <div className="rounded-xl border bg-gradient-to-r from-primary/5 to-blue-50 p-4">
+          <h3 className="text-sm font-semibold text-primary">다가오는 세미나</h3>
+          <div className="mt-2 space-y-2">
+            {upcomingSeminars.map((s) => {
+              const timeline = s.timeline ?? [];
+              const done = timeline.filter((t) => t.done).length;
+              const total = timeline.length;
+              const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+              const dDay = Math.round((new Date(s.date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+              return (
+                <div key={s.id} className="flex items-center gap-3 rounded-lg bg-white/80 px-3 py-2 text-sm">
+                  <Badge variant="secondary" className="shrink-0 bg-blue-50 text-blue-700">D{dDay <= 0 ? "" : "-"}{Math.abs(dDay)}</Badge>
+                  <div className="min-w-0 flex-1">
+                    <span className="font-medium line-clamp-1">{s.title}</span>
+                    <span className="ml-2 text-xs text-muted-foreground">{s.speaker} | {s.date} {s.time}</span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs text-muted-foreground">{s.attendeeIds.length}명</span>
+                    {total > 0 && (
+                      <div className="flex items-center gap-1">
+                        <div className="h-1.5 w-16 rounded-full bg-muted">
+                          <div className={cn("h-full rounded-full", pct === 100 ? "bg-green-500" : "bg-primary")} style={{ width: `${pct}%` }} />
+                        </div>
+                        <span className="text-[10px] text-muted-foreground">{pct}%</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
     <div className="space-y-0 rounded-xl border bg-white">
       {/* 테이블 헤더 (데스크톱만) */}
       <div className="hidden lg:grid grid-cols-[48px_1fr_120px_140px_80px_100px_80px_80px_80px] items-center gap-1 border-b bg-muted/30 px-4 py-3 text-sm font-medium">
@@ -235,6 +341,9 @@ export default function AdminSeminarTab() {
             </Link>
             <Button variant="outline" size="sm" onClick={() => openEditSeminar(s)}><Pencil size={14} /></Button>
             <Button variant="outline" size="sm" title="복제" onClick={() => handleCloneSeminar(s)}><Copy size={14} /></Button>
+            {computed === "draft" && (
+              <Button variant="default" size="sm" title="등록(공개)" onClick={() => handlePublishDraft(s)}><Send size={14} /></Button>
+            )}
             <Button variant="outline" size="sm" className="text-destructive" onClick={() => handleDeleteSeminar(s.id, s.title)}><Trash2 size={14} /></Button>
           </div>
 
@@ -274,6 +383,9 @@ export default function AdminSeminarTab() {
                 </Link>
                 <Button variant="outline" size="sm" className="h-7" onClick={() => openEditSeminar(s)}><Pencil size={12} /></Button>
                 <Button variant="outline" size="sm" className="h-7" title="복제" onClick={() => handleCloneSeminar(s)}><Copy size={12} /></Button>
+                {computed === "draft" && (
+                  <Button variant="default" size="sm" className="h-7" title="등록(공개)" onClick={() => handlePublishDraft(s)}><Send size={12} /></Button>
+                )}
                 <Button variant="outline" size="sm" className="h-7 text-destructive" onClick={() => handleDeleteSeminar(s.id, s.title)}><Trash2 size={12} /></Button>
               </div>
             </div>
@@ -494,6 +606,7 @@ export default function AdminSeminarTab() {
         </DialogContent>
       </Dialog>
 
+    </div>
     </div>
   );
 }

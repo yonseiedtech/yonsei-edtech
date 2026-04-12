@@ -10,12 +10,10 @@ import { toast } from "sonner";
 import { authApi, profilesApi, attendeesApi, saveTokens } from "@/lib/bkend";
 import { cn } from "@/lib/utils";
 
-type MemberType = "student" | "alumni";
+import type { EnrollmentStatus } from "@/types";
+import { ENROLLMENT_STATUS_LABELS } from "@/types";
 
-const MEMBER_TYPE_LABELS: Record<MemberType, string> = {
-  student: "재학생 (대학원생 포함)",
-  alumni: "졸업생",
-};
+type MemberType = "student" | "alumni";
 
 const ACTIVITY_OPTIONS = [
   { value: "", label: "선택 안 함" },
@@ -59,6 +57,7 @@ interface Props {
 
 export default function SignupForm({ onSuccess, defaultName, defaultStudentId }: Props) {
   const [loading, setLoading] = useState(false);
+  const [enrollmentStatus, setEnrollmentStatus] = useState<EnrollmentStatus>("enrolled");
   const [memberType, setMemberType] = useState<MemberType>("student");
   const [privacyAgreed, setPrivacyAgreed] = useState(false);
   const [showOptional, setShowOptional] = useState(false);
@@ -151,7 +150,8 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
           name: data.name,
           email: data.email,
           role: "member",
-          memberType,
+          memberType: enrollmentStatus === "graduated" ? "alumni" : "student",
+          enrollmentStatus,
           generation: data.generation ? Number(data.generation) : 0,
           studentId: data.studentId || data.username || "",
           phone: data.phone || "",
@@ -316,18 +316,20 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
         )}
       </div>
 
-      {/* 재학생/졸업생 선택 */}
+      {/* 신분 유형 (필수) */}
       <div>
-        <label className="mb-1.5 block text-sm font-medium">구분</label>
+        <label className="mb-1.5 block text-sm font-medium">
+          신분 유형 <span className="text-destructive">*</span>
+        </label>
         <div className="flex gap-2">
-          {(Object.entries(MEMBER_TYPE_LABELS) as [MemberType, string][]).map(([key, label]) => (
+          {(Object.entries(ENROLLMENT_STATUS_LABELS) as [EnrollmentStatus, string][]).map(([key, label]) => (
             <button
               key={key}
               type="button"
-              onClick={() => setMemberType(key)}
+              onClick={() => setEnrollmentStatus(key)}
               className={cn(
                 "flex-1 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors",
-                memberType === key
+                enrollmentStatus === key
                   ? "border-primary bg-primary/10 text-primary"
                   : "border-muted bg-white text-muted-foreground hover:bg-muted/50",
               )}
@@ -367,12 +369,12 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
         )}
       </div>
 
-      {/* 누적학기 선택 (재학생만) */}
-      {memberType === "student" && (
+      {/* 누적학기 선택 (재학/휴학만) */}
+      {enrollmentStatus !== "graduated" && (
         <div>
           <label className="mb-1.5 block text-sm font-medium">누적학기</label>
           <select
-            {...register("generation", { required: memberType === "student" ? "누적학기를 선택하세요" : false })}
+            {...register("generation", { required: "누적학기를 선택하세요" })}
             className="w-full rounded-lg border px-3 py-2.5 text-sm"
           >
             <option value="">누적학기를 선택하세요</option>

@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Send, Video, Eye, PenLine, Calendar, MapPin, Users, UserPlus, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Send, Video, Eye, PenLine, Calendar, MapPin, Users, UserPlus, AlertTriangle, Save } from "lucide-react";
 import { toast } from "sonner";
-import { useCreateSeminar, useSeminars } from "./useSeminar";
+import { useCreateSeminar, useUpdateSeminar, useSeminars } from "./useSeminar";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { createTimeline } from "@/features/seminar-admin/timeline-template";
 import type { Seminar, SpeakerType } from "@/types";
 import { SPEAKER_TYPE_LABELS } from "@/types";
 
@@ -34,10 +35,12 @@ export default function SeminarForm() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { createSeminar } = useCreateSeminar();
+  const { updateSeminar } = useUpdateSeminar();
   const { seminars: allSeminars } = useSeminars();
   const [isOnline, setIsOnline] = useState(false);
   const [speakerType, setSpeakerType] = useState<SpeakerType>("member");
   const [showPreview, setShowPreview] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const {
     register,
     handleSubmit,
@@ -55,33 +58,56 @@ export default function SeminarForm() {
     );
   }, [w.date, allSeminars]);
 
+  function buildSeminarData(data: FormData, status: "draft" | "upcoming"): Record<string, unknown> {
+    const seminarData: Record<string, unknown> = {
+      title: data.title || "(제목 없음)",
+      description: data.description || "",
+      date: data.date || "",
+      time: data.time || "",
+      location: isOnline ? (data.location || "온라인 (ZOOM)") : (data.location || ""),
+      isOnline,
+      speaker: data.speaker || "",
+      attendeeIds: [],
+      status,
+      createdBy: user?.id ?? "",
+    };
+    if (isOnline && data.onlineUrl) seminarData.onlineUrl = data.onlineUrl;
+    if (data.speakerBio) seminarData.speakerBio = data.speakerBio;
+    seminarData.speakerType = speakerType;
+    if (data.speakerAffiliation) seminarData.speakerAffiliation = data.speakerAffiliation;
+    if (data.speakerPosition) seminarData.speakerPosition = data.speakerPosition;
+    if (data.speakerPhotoUrl) seminarData.speakerPhotoUrl = data.speakerPhotoUrl;
+    if (data.maxAttendees) seminarData.maxAttendees = Number(data.maxAttendees);
+    if (data.registrationUrl) seminarData.registrationUrl = data.registrationUrl;
+    // 타임라인 자동 적용
+    if (status === "upcoming") {
+      seminarData.timeline = createTimeline(isOnline);
+    }
+    return seminarData;
+  }
+
+  async function handleSaveDraft() {
+    setIsSaving(true);
+    try {
+      const data = watch() as unknown as FormData;
+      const seminarData = buildSeminarData(data, "draft");
+      await createSeminar(seminarData as unknown as Omit<Seminar, "id" | "attendeeIds" | "createdAt" | "updatedAt">);
+      toast.success("임시저장되었습니다.");
+      router.push("/seminar-admin");
+    } catch (err) {
+      console.error("임시저장 실패:", err);
+      toast.error(err instanceof Error ? err.message : "임시저장에 실패했습니다.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   async function onSubmit(data: FormData) {
     try {
-      // Firestore는 undefined 값을 허용하지 않으므로 제거
-      const seminarData: Record<string, unknown> = {
-        title: data.title,
-        description: data.description,
-        date: data.date,
-        time: data.time,
-        location: isOnline ? (data.location || "온라인 (ZOOM)") : data.location,
-        isOnline,
-        speaker: data.speaker,
-        attendeeIds: [],
-        status: "upcoming",
-        createdBy: user?.id ?? "",
-      };
-      if (isOnline && data.onlineUrl) seminarData.onlineUrl = data.onlineUrl;
-      if (data.speakerBio) seminarData.speakerBio = data.speakerBio;
-      seminarData.speakerType = speakerType;
-      if (data.speakerAffiliation) seminarData.speakerAffiliation = data.speakerAffiliation;
-      if (data.speakerPosition) seminarData.speakerPosition = data.speakerPosition;
-      if (data.speakerPhotoUrl) seminarData.speakerPhotoUrl = data.speakerPhotoUrl;
-      if (data.maxAttendees) seminarData.maxAttendees = Number(data.maxAttendees);
-      if (data.registrationUrl) seminarData.registrationUrl = data.registrationUrl;
-
+      const seminarData = buildSeminarData(data, "upcoming");
       await createSeminar(seminarData as unknown as Omit<Seminar, "id" | "attendeeIds" | "createdAt" | "updatedAt">);
-      toast.success("세미나가 등록되었습니다.");
-      router.push("/seminars");
+      toast.success("세미나가 등록되었습니다. 타임라인이 자동 적용되었습니다.");
+      router.push("/seminar-admin");
     } catch (err) {
       console.error("세미나 등록 실패:", err);
       toast.error(err instanceof Error ? err.message : "세미나 등록에 실패했습니다.");
@@ -406,8 +432,12 @@ export default function SeminarForm() {
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => router.push("/seminars")}>
+            <Button type="button" variant="outline" onClick={() => router.push("/seminar-admin")}>
               취소
+            </Button>
+            <Button type="button" variant="secondary" onClick={handleSaveDraft} disabled={isSaving}>
+              <Save size={16} className="mr-1" />
+              {isSaving ? "저장 중..." : "임시저장"}
             </Button>
             <Button type="submit">
               <Send size={16} className="mr-1" />

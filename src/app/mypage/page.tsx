@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { User, LogOut, Calendar, X, FileText, KeyRound, UserCog, Award } from "lucide-react";
 import { useAuth } from "@/features/auth/useAuth";
-import { ROLE_LABELS } from "@/types";
+import { ROLE_LABELS, ENROLLMENT_STATUS_LABELS } from "@/types";
 import { formatDate, formatGeneration } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -102,6 +102,9 @@ function MypageContent() {
               <div className="mt-1 flex flex-wrap items-center gap-2">
                 <Badge variant="secondary">{formatGeneration(user.generation, user.enrollmentYear, user.enrollmentHalf)}</Badge>
                 <Badge>{ROLE_LABELS[user.role]}</Badge>
+                {user.enrollmentStatus && (
+                  <Badge variant="outline">{ENROLLMENT_STATUS_LABELS[user.enrollmentStatus]}</Badge>
+                )}
                 {user.studentId && (
                   <span className="text-xs text-muted-foreground">{user.studentId}</span>
                 )}

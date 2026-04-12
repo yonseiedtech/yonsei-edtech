@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useCertificates, useDeleteCertificate } from "@/features/admin/useCertificates";
 import { useSeminars } from "@/features/seminar/useSeminar";
 import { Input } from "@/components/ui/input";
@@ -17,14 +17,32 @@ import type { Certificate } from "@/types";
 import {
   CertificatePreview,
   DEFAULT_AREA_STYLES,
+  CERT_STYLE_STORAGE_KEY,
   getDefaultBody,
   inferSemester,
 } from "@/features/seminar-admin/CertificateGenerator";
+import type { AreaKey, AreaStyle } from "@/features/seminar-admin/CertificateGenerator";
 
 type TypeFilter = "all" | "completion" | "appreciation";
 
 const FONT_DEFAULT = "'Hahmlet', serif";
 const BORDER_COLOR = "#003378";
+
+function loadSavedAreaStyles(): Record<AreaKey, AreaStyle> {
+  if (typeof window === "undefined") return { ...DEFAULT_AREA_STYLES };
+  try {
+    const saved = localStorage.getItem(CERT_STYLE_STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      const merged = {} as Record<AreaKey, AreaStyle>;
+      for (const k of Object.keys(DEFAULT_AREA_STYLES) as AreaKey[]) {
+        merged[k] = { ...DEFAULT_AREA_STYLES[k], ...(parsed[k] ?? {}) };
+      }
+      return merged;
+    }
+  } catch { /* ignore */ }
+  return { ...DEFAULT_AREA_STYLES };
+}
 
 export default function CertificatesPage() {
   const { seminars } = useSeminars();
@@ -57,6 +75,8 @@ export default function CertificatesPage() {
     window.print();
   }
 
+  const savedAreaStyles = useMemo(() => loadSavedAreaStyles(), []);
+
   // CertificatePreview용 props 생성
   function buildPreviewProps(cert: Certificate) {
     const seminar = seminars.find((s) => s.id === cert.seminarId);
@@ -79,7 +99,7 @@ export default function CertificatesPage() {
       certificateNo: cert.certificateNo || "",
       bodyText,
       style: { fontFamily: FONT_DEFAULT, borderColor: BORDER_COLOR },
-      areaStyles: DEFAULT_AREA_STYLES,
+      areaStyles: savedAreaStyles,
     };
   }
 

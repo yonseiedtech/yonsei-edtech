@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { parseCSVText, extractSheetId, getSheetCsvUrl } from "@/lib/parse-spreadsheet";
 import type { SeminarRegistration, SeminarAttendee, RegistrationFieldConfig, RegistrationStatus } from "@/types";
 import { DEFAULT_REGISTRATION_FIELDS, REG_STATUS_LABELS } from "@/types";
+import { SeminarReport } from "./ReportTab";
 
 // 엑셀 헤더 → Registration 필드 매핑 (동의어)
 const FIELD_MAP: Record<string, { key: string; label: string }> = {
@@ -1156,79 +1157,9 @@ export default function RegistrationsTab() {
         </div>
       )}
 
-      {/* 참석자 현황 탭 */}
-      {selectedId && activeTab === "attendees" && (
-        <div className="space-y-4">
-          {/* 통계 */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="rounded-xl border bg-white p-4 text-center">
-              <p className="text-2xl font-bold text-blue-600">{attendees.length}</p>
-              <p className="text-xs text-muted-foreground">총 참석자</p>
-            </div>
-            <div className="rounded-xl border bg-white p-4 text-center">
-              <p className="text-2xl font-bold text-green-600">{attendees.filter((a) => a.checkedIn).length}</p>
-              <p className="text-xs text-muted-foreground">체크인</p>
-            </div>
-            <div className="rounded-xl border bg-white p-4 text-center">
-              <p className="text-2xl font-bold text-amber-600">{attendees.filter((a) => !a.checkedIn).length}</p>
-              <p className="text-xs text-muted-foreground">미체크인</p>
-            </div>
-            <div className="rounded-xl border bg-white p-4 text-center">
-              <p className="text-2xl font-bold text-purple-600">{attendees.filter((a) => a.isGuest).length}</p>
-              <p className="text-xs text-muted-foreground">미가입</p>
-            </div>
-          </div>
-
-          {/* 참석자 목록 */}
-          <div className="rounded-xl border bg-white">
-            <div className="border-b px-4 py-3">
-              <span className="text-sm font-medium">참석자 목록</span>
-            </div>
-            {attendees.length === 0 ? (
-              <p className="p-6 text-center text-sm text-muted-foreground">참석자가 없습니다. 신청 관리 탭에서 참석자를 전환하거나 신청자 동기화를 실행하세요.</p>
-            ) : (
-              <div className="max-h-96 overflow-auto">
-                <table className="w-full text-sm">
-                  <thead className="sticky top-0 border-b bg-muted/30">
-                    <tr>
-                      <th className="px-3 py-2 text-left font-medium">이름</th>
-                      <th className="px-3 py-2 text-left font-medium">학번</th>
-                      <th className="px-3 py-2 text-left font-medium">이메일</th>
-                      <th className="px-3 py-2 text-left font-medium">체크인</th>
-                      <th className="px-3 py-2 text-left font-medium">시각</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {attendees
-                      .sort((a, b) => (a.checkedIn === b.checkedIn ? 0 : a.checkedIn ? -1 : 1))
-                      .map((a) => (
-                        <tr key={a.id} className="hover:bg-muted/10">
-                          <td className="px-3 py-2">
-                            <div className="flex items-center gap-1.5">
-                              {a.userName}
-                              {a.isGuest && <Badge variant="outline" className="text-[9px] text-amber-600 border-amber-200">미가입</Badge>}
-                            </div>
-                          </td>
-                          <td className="px-3 py-2 text-xs text-muted-foreground">{a.studentId || "-"}</td>
-                          <td className="px-3 py-2 text-xs text-muted-foreground">{a.email || "-"}</td>
-                          <td className="px-3 py-2">
-                            {a.checkedIn ? (
-                              <Badge className="bg-green-50 text-green-700 text-xs">출석</Badge>
-                            ) : (
-                              <Badge variant="secondary" className="text-xs">미출석</Badge>
-                            )}
-                          </td>
-                          <td className="px-3 py-2 text-xs text-muted-foreground">
-                            {a.checkedInAt ? new Date(a.checkedInAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }) : "-"}
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </div>
+      {/* 참석자 현황 탭 — ReportTab의 SeminarReport 통합 */}
+      {selectedId && activeTab === "attendees" && seminar && (
+        <SeminarReport seminarId={selectedId} seminarTitle={seminar.title} seminarDate={seminar.date} />
       )}
 
       {/* 분석 탭 */}

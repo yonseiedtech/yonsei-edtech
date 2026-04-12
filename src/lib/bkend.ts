@@ -421,6 +421,8 @@ export const pollResponsesApi = {
 export const albumsApi = {
   list: () => dataApi.list<PhotoAlbum>("photo_albums", { sort: "createdAt:desc" }),
   get: (id: string) => dataApi.get<PhotoAlbum>("photo_albums", id),
+  listBySeminarId: (seminarId: string) =>
+    dataApi.list<PhotoAlbum>("photo_albums", { "filter[seminarId]": seminarId, sort: "createdAt:desc" }),
   create: (data: Record<string, unknown>) => dataApi.create<PhotoAlbum>("photo_albums", data),
   update: (id: string, data: Record<string, unknown>) => dataApi.update<PhotoAlbum>("photo_albums", id, data),
   delete: (id: string) => dataApi.delete("photo_albums", id),

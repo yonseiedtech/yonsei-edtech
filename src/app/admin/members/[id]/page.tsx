@@ -12,7 +12,7 @@ import { notifyMemberApproved, notifyMemberRejected } from "@/features/notificat
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ROLE_LABELS } from "@/types";
+import { ROLE_LABELS, ENROLLMENT_STATUS_LABELS } from "@/types";
 import type { User, UserRole, Seminar, SeminarAttendee, Activity, Certificate } from "@/types";
 import { toast } from "sonner";
 import {
@@ -145,6 +145,9 @@ function AdminMemberDetail({ id }: { id: string }) {
               <div className="mt-1 flex flex-wrap items-center gap-2">
                 <Badge variant="secondary">{member.studentId || "학번 미지정"}</Badge>
                 <Badge className={ROLE_COLORS[member.role]}>{ROLE_LABELS[member.role]}</Badge>
+                {member.enrollmentStatus && (
+                  <Badge variant="outline">{ENROLLMENT_STATUS_LABELS[member.enrollmentStatus]}</Badge>
+                )}
                 {member.approved ? (
                   <Badge className="bg-green-100 text-green-700 text-[10px]">승인됨</Badge>
                 ) : member.rejected ? (

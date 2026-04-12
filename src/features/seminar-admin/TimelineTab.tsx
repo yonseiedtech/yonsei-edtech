@@ -25,8 +25,6 @@ import {
   MapPin,
   ChevronDown,
   FileText,
-  MessageSquare,
-  Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -55,100 +53,8 @@ function saveTimeline(
   updateSeminar({ id: seminarId, data: { timeline: cleaned } as unknown as Partial<Seminar> });
 }
 
-type ViewMode = "timeline" | "template" | "reminder";
+type ViewMode = "timeline" | "template";
 
-interface ReminderTemplate {
-  id: string;
-  label: string;
-  timing: string;
-  getMessage: (s: Seminar) => string;
-}
-
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr);
-  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일(${["일","월","화","수","목","금","토"][d.getDay()]})`;
-}
-
-const REMINDER_TEMPLATES: ReminderTemplate[] = [
-  {
-    id: "d-2",
-    label: "D-2 사전 리마인더",
-    timing: "세미나 2일 전",
-    getMessage: (s) =>
-`[연세교육공학회] 세미나 안내 📢
-
-안녕하세요, 연세교육공학회입니다.
-
-신청해주신 세미나가 이틀 앞으로 다가왔습니다!
-
-📌 세미나 정보
-• 제목: ${s.title}
-• 일시: ${formatDate(s.date)}${s.time ? ` ${s.time}` : ""}
-• 장소: ${s.location || (s.isOnline ? "ZOOM (링크 별도 안내)" : "추후 안내")}
-${s.isOnline && s.onlineUrl ? `• ZOOM 링크: ${s.onlineUrl}` : ""}
-
-📋 참석 전 안내사항
-• 세미나 시작 10분 전까지 입장해주세요
-${s.isOnline ? "• ZOOM 접속 시 실명으로 참여 부탁드립니다" : "• 현장에서 QR 출석 체크가 진행됩니다"}
-• 사전 질문이 있으시면 답글로 남겨주세요
-
-많은 관심과 참여 부탁드립니다! 🙏
-연세교육공학회 드림`,
-  },
-  {
-    id: "d-day",
-    label: "D-DAY 당일 안내",
-    timing: "세미나 당일 오전",
-    getMessage: (s) =>
-`[연세교육공학회] 오늘 세미나 당일입니다! 🎓
-
-안녕하세요, 연세교육공학회입니다.
-
-오늘 세미나가 진행됩니다!
-
-📌 세미나 정보
-• 제목: ${s.title}
-• 일시: ${formatDate(s.date)}${s.time ? ` ${s.time}` : ""}
-• 장소: ${s.location || (s.isOnline ? "ZOOM" : "추후 안내")}
-${s.isOnline && s.onlineUrl ? `• ZOOM 링크: ${s.onlineUrl}` : ""}
-
-⏰ 안내사항
-${s.isOnline
-  ? `• ZOOM 접속은 시작 10분 전부터 가능합니다
-• 마이크는 음소거 상태로 입장해주세요
-• 질의응답은 채팅 또는 손들기 기능을 이용해주세요`
-  : `• 현장 도착 후 QR 출석 체크를 진행해주세요
-• 주차가 어려울 수 있으니 대중교통 이용을 권장합니다
-• 세미나 자료는 현장에서 배포됩니다`}
-
-오늘 뵙겠습니다! 😊
-연세교육공학회 드림`,
-  },
-  {
-    id: "after",
-    label: "교육 종료 후 감사 인사",
-    timing: "세미나 종료 후",
-    getMessage: (s) =>
-`[연세교육공학회] 세미나 참석 감사합니다! 🙏
-
-안녕하세요, 연세교육공학회입니다.
-
-「${s.title}」 세미나에 참석해주셔서 진심으로 감사드립니다.
-
-📋 안내사항
-• 세미나 자료는 홈페이지(yonsei-edtech.vercel.app)에서 확인 가능합니다
-• 수료증은 홈페이지 세미나 페이지에서 다운로드할 수 있습니다
-• 후기 작성: https://yonsei-edtech.vercel.app/seminars/${s.id}/review
-${s.isOnline ? "• 녹화 영상은 편집 후 별도 공유 예정입니다" : ""}
-
-📝 피드백
-세미나에 대한 소중한 의견을 남겨주시면
-더 나은 세미나를 준비하는 데 큰 도움이 됩니다.
-
-다음 세미나에서도 함께해주세요! 🎓
-연세교육공학회 드림`,
-  },
-];
 
 export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: string } = {}) {
   const { seminars } = useSeminars();
@@ -367,16 +273,6 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
             <FileText size={14} />
             템플릿 관리
           </button>
-          <button
-            onClick={() => setViewMode("reminder")}
-            className={cn(
-              "flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors",
-              viewMode === "reminder" ? "bg-white text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <MessageSquare size={14} />
-            리마인더 메시지
-          </button>
         </div>
       )}
 
@@ -396,6 +292,26 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
                 </span>
               </div>
               <div className="flex gap-2">
+                {timeline.some((p) => !p.done) && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (!seminar) return;
+                      if (!confirm("모든 타임라인 항목을 완료 처리하시겠습니까?")) return;
+                      const updated = timeline.map((p) => ({
+                        ...p,
+                        done: true,
+                        doneAt: p.doneAt || new Date().toISOString(),
+                      }));
+                      saveTimeline(updateSeminar, seminar.id, updated);
+                      toast.success("모든 항목이 완료 처리되었습니다.");
+                    }}
+                  >
+                    <Check size={14} className="mr-1" />
+                    일괄 완료
+                  </Button>
+                )}
                 <Button variant="outline" size="sm" onClick={openAdd}>
                   <Plus size={14} className="mr-1" />
                   항목 추가
@@ -647,40 +563,6 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
         </div>
       )}
 
-      {/* ── 리마인더 메시지 뷰 ── */}
-      {viewMode === "reminder" && seminar && (
-        <div className="space-y-4">
-          <p className="text-xs text-muted-foreground">
-            세미나 정보가 자동으로 반영된 카카오톡 리마인더 메시지입니다. &quot;복사&quot; 버튼으로 복사 후 카카오톡에 붙여넣기하세요.
-          </p>
-          {REMINDER_TEMPLATES.map((tpl) => {
-            const msg = tpl.getMessage(seminar);
-            return (
-              <div key={tpl.id} className="rounded-xl border bg-white overflow-hidden">
-                <div className="flex items-center justify-between border-b bg-muted/20 px-4 py-3">
-                  <div>
-                    <h4 className="text-sm font-medium">{tpl.label}</h4>
-                    <p className="text-xs text-muted-foreground">{tpl.timing}</p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      navigator.clipboard.writeText(msg);
-                      toast.success(`${tpl.label} 메시지가 복사되었습니다.`);
-                    }}
-                  >
-                    <Copy size={14} className="mr-1" />복사
-                  </Button>
-                </div>
-                <div className="p-4">
-                  <pre className="whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground font-[inherit]">{msg}</pre>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
 
       {/* 항목 추가/수정 Dialog */}
       <Dialog open={!!editItem} onOpenChange={(open) => !open && setEditItem(null)}>

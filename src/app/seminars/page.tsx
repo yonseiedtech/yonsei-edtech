@@ -23,7 +23,10 @@ export default function SeminarsPage() {
   const { seminars: allSeminars, isLoading, error } = useSeminars();
 
   const filtered = useMemo(() => {
-    let result = allSeminars;
+    // 임시저장 세미나는 운영진만 볼 수 있음
+    let result = isStaffOrAbove(user)
+      ? allSeminars
+      : allSeminars.filter((s) => s.status !== "draft");
 
     // Status filter
     if (status !== "all") {

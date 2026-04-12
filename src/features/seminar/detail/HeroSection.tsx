@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 const STATUS_STYLES: Record<SeminarStatus, string> = {
+  draft: "bg-gray-100 text-gray-500",
   upcoming: "bg-primary/10 text-primary",
   ongoing: "bg-amber-100 text-amber-700",
   completed: "bg-muted text-muted-foreground",

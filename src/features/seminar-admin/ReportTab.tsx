@@ -283,7 +283,7 @@ function AttendeeRow({ a, onToggleCheckin }: { a: SeminarAttendee; onToggleCheck
   );
 }
 
-function SeminarReport({ seminarId, seminarTitle, seminarDate }: { seminarId: string; seminarTitle: string; seminarDate?: string }) {
+export function SeminarReport({ seminarId, seminarTitle, seminarDate }: { seminarId: string; seminarTitle: string; seminarDate?: string }) {
   const { attendees, refetch: refetchAttendees } = useAttendees(seminarId);
   const { user: currentUser } = useAuthStore();
   const qc = useQueryClient();

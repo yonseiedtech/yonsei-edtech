@@ -14,7 +14,7 @@ import type { User } from "@/types";
 
 const ROLE_TABS = [
   { key: "professor", label: "주임교수" },
-  { key: "staff", label: "운영진", roles: ["president", "staff", "admin"] },
+  { key: "staff", label: "운영진", roles: ["president", "staff"] },
   { key: "student", label: "재학생 회원", roles: ["member"] },
   { key: "alumni", label: "졸업생 회원", roles: ["alumni"] },
 ] as const;
