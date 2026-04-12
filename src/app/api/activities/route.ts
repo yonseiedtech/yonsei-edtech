@@ -17,10 +17,18 @@ export async function GET(req: NextRequest) {
       return Response.json({ data: { id: doc.id, ...doc.data() } });
     }
 
-    let query = db.collection("activities").orderBy("createdAt", "desc");
-    if (type) query = query.where("type", "==", type) as typeof query;
-    const snap = await query.get();
-    const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    // type 필터가 있으면 orderBy 생략 (복합 인덱스 미생성 대비) → 메모리 정렬
+    const snap = type
+      ? await db.collection("activities").where("type", "==", type).get()
+      : await db.collection("activities").orderBy("createdAt", "desc").get();
+    const data = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) }));
+    if (type) {
+      data.sort((a, b) => {
+        const ca = (a as { createdAt?: string }).createdAt ?? "";
+        const cb = (b as { createdAt?: string }).createdAt ?? "";
+        return cb.localeCompare(ca);
+      });
+    }
     return Response.json({ data });
   } catch (err) {
     console.error("[activities GET]", err);
