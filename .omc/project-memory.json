@@ -201,14 +201,20 @@
   "hotPaths": [
     {
       "path": "src\\features\\seminar-admin\\CertificateGenerator.tsx",
-      "accessCount": 7,
-      "lastAccessed": 1775984932941,
+      "accessCount": 10,
+      "lastAccessed": 1775990224106,
       "type": "file"
     },
     {
       "path": "src\\app\\api\\certificates\\pdf\\route.ts",
+      "accessCount": 8,
+      "lastAccessed": 1775990261086,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\admin\\certificates\\page.tsx",
       "accessCount": 5,
-      "lastAccessed": 1775988918908,
+      "lastAccessed": 1775991357722,
       "type": "file"
     }
   ],

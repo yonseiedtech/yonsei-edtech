@@ -34,11 +34,12 @@ async function getBrowser() {
   });
 }
 
-function buildHtml(bodyHtml: string, extraStyles: string, fileTitle: string) {
+function buildHtml(bodyHtml: string, extraStyles: string, fileTitle: string, baseUrl: string) {
   return `<!doctype html>
 <html lang="ko">
 <head>
 <meta charset="utf-8" />
+<base href="${baseUrl}" />
 <title>${fileTitle}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -81,10 +82,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "html 필드가 필요합니다." }, { status: 400 });
     }
 
-    const fullHtml = buildHtml(html, styles, fileName);
+    const origin = req.nextUrl.origin.replace(/\/$/, "") + "/";
+    const fullHtml = buildHtml(html, styles, fileName, origin);
     browser = await getBrowser();
     const page = await browser.newPage();
     await page.setContent(fullHtml, { waitUntil: ["load", "networkidle0"] });
+    // 이미지 완전 로드 대기
+    await page.evaluate(async () => {
+      const imgs = Array.from(document.images);
+      await Promise.all(
+        imgs.map((img) =>
+          img.complete && img.naturalWidth > 0
+            ? Promise.resolve()
+            : new Promise<void>((resolve) => {
+                img.addEventListener("load", () => resolve());
+                img.addEventListener("error", () => resolve());
+              }),
+        ),
+      );
+    });
     await page.evaluateHandle("document.fonts.ready");
     // 확실하게 한글 글리프 로드 대기
     await page.evaluate(async () => {

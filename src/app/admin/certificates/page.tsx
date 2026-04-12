@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useCertificates, useDeleteCertificate } from "@/features/admin/useCertificates";
 import { useSeminars } from "@/features/seminar/useSeminar";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Award, Heart, Trash2, Eye, Printer } from "lucide-react";
+import { Award, Heart, Trash2, Eye, Printer, FileDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Certificate } from "@/types";
 import {
@@ -71,8 +71,85 @@ export default function CertificatesPage() {
     });
   }
 
-  function handlePrint() {
-    window.print();
+  const previewRef = useRef<HTMLDivElement>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  async function generatePdfBlob(fileName: string): Promise<Blob | null> {
+    if (!previewRef.current) return null;
+    const target = previewRef.current.firstElementChild as HTMLElement | null;
+    if (!target) return null;
+    const clone = target.cloneNode(true) as HTMLElement;
+    clone.style.transform = "none";
+    const walk = (src: HTMLElement, dst: HTMLElement) => {
+      const cs = window.getComputedStyle(src);
+      const fontSizePx = parseFloat(cs.fontSize) || 16;
+      const ls = src.style.letterSpacing;
+      if (ls && ls.endsWith("em")) {
+        const em = parseFloat(ls);
+        if (!isNaN(em)) dst.style.letterSpacing = `${em * fontSizePx}px`;
+      }
+      for (let i = 0; i < src.children.length; i++) {
+        walk(src.children[i] as HTMLElement, dst.children[i] as HTMLElement);
+      }
+    };
+    walk(target, clone);
+    const res = await fetch("/api/certificates/pdf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ html: clone.outerHTML, fileName }),
+    });
+    if (!res.ok) throw new Error(`서버 응답 오류: ${res.status}`);
+    return await res.blob();
+  }
+
+  async function handleDownload() {
+    if (!previewCert) return;
+    setPdfLoading(true);
+    try {
+      const fileName = `${previewCert.type === "completion" ? "수료증" : "감사장"}_${previewCert.recipientName}_${previewCert.certificateNo || "번호없음"}.pdf`;
+      const blob = await generatePdfBlob(fileName);
+      if (!blob) throw new Error("미리보기 요소 없음");
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success("PDF가 다운로드되었습니다.");
+    } catch (e) {
+      console.error("[cert] PDF 다운로드 실패:", e);
+      toast.error("PDF 생성에 실패했습니다.");
+    } finally {
+      setPdfLoading(false);
+    }
+  }
+
+  async function handlePrint() {
+    if (!previewCert) return;
+    setPdfLoading(true);
+    try {
+      const fileName = `${previewCert.type === "completion" ? "수료증" : "감사장"}_${previewCert.recipientName}.pdf`;
+      const blob = await generatePdfBlob(fileName);
+      if (!blob) throw new Error("미리보기 요소 없음");
+      const url = URL.createObjectURL(blob);
+      const w = window.open(url, "_blank");
+      if (!w) {
+        toast.error("팝업 차단을 해제해주세요.");
+      } else {
+        w.addEventListener("load", () => {
+          try { w.focus(); w.print(); } catch { /* ignore */ }
+        });
+      }
+      // URL은 창이 쓸 때까지 유지 — revoke는 일정 시간 후
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (e) {
+      console.error("[cert] 인쇄 실패:", e);
+      toast.error("인쇄용 PDF 생성에 실패했습니다.");
+    } finally {
+      setPdfLoading(false);
+    }
   }
 
   const savedAreaStyles = useMemo(() => loadSavedAreaStyles(), []);
@@ -197,6 +274,7 @@ export default function CertificatesPage() {
           </DialogHeader>
           {previewCert && (
             <div
+              ref={previewRef}
               className="overflow-auto rounded-lg border"
               style={{ transform: "scale(0.5)", transformOrigin: "top left", width: "200%", maxHeight: "70vh" }}
             >
@@ -205,7 +283,14 @@ export default function CertificatesPage() {
           )}
           <div className="flex justify-end gap-2">
             <Button variant="outline" size="sm" onClick={() => setPreviewCert(null)}>닫기</Button>
-            <Button size="sm" onClick={handlePrint}><Printer size={14} className="mr-1" />인쇄</Button>
+            <Button variant="outline" size="sm" onClick={handleDownload} disabled={pdfLoading}>
+              {pdfLoading ? <Loader2 size={14} className="mr-1 animate-spin" /> : <FileDown size={14} className="mr-1" />}
+              PDF 저장
+            </Button>
+            <Button size="sm" onClick={handlePrint} disabled={pdfLoading}>
+              {pdfLoading ? <Loader2 size={14} className="mr-1 animate-spin" /> : <Printer size={14} className="mr-1" />}
+              인쇄
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

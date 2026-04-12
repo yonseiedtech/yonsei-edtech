@@ -687,16 +687,6 @@ export function CertificatePreview({
             >
               {recipientName || "___________"}
             </span>
-            <span
-              style={{
-                fontSize: "13pt",
-                marginLeft: "6px",
-                fontWeight: 600,
-                color: "#444",
-              }}
-            >
-              선생님
-            </span>
           </div>
         </DraggableArea>
 
