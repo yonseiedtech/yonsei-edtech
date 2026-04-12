@@ -844,12 +844,15 @@ export function getDefaultBody(type: CertType, semester: string, seminarTitle: s
   return `귀하께서는 ${semester} 연세교육공학회에서 구성원들의 교육공학 핵심 역량강화를 위하여 주관한 연세교육공학 학술대회 <${seminarTitle || "___"}>에서 귀하께서가 지신 지식과 경험을 헌신적이고 열정적으로 공유해주심으로서 구성원들의 성장에 큰 도움을 주셨음에 감사드리며, 연세교육공학회 구성원들의 마음을 담아 감사장을 드립니다.`;
 }
 
+// ⚠️ 모든 프리셋은 한글 글리프가 보장되는 웹폰트(Noto Serif KR)를 최종 fallback으로 둔다.
+// OS 로컬 폰트(Batang/Nanum Myeongjo/페이퍼로지)는 없는 환경에서 mojibake가 발생하므로
+// Noto Serif KR로 대체되도록 한다.
 const FONT_PRESETS = [
-  { label: "함렛 (추천·한글 최적)", value: "'Hahmlet', serif" },
+  { label: "함렛 (추천·한글 최적)", value: "'Hahmlet', 'Noto Serif KR', serif" },
   { label: "Noto Serif 한글", value: "'Noto Serif KR', serif" },
-  { label: "고운바탕", value: "'Gowun Batang', serif" },
-  { label: "페이퍼로지 (로컬)", value: "'페이퍼로지 8 ExtraBold', '페이퍼로지 8', serif" },
-  { label: "바탕체", value: "'Batang', 'Nanum Myeongjo', serif" },
+  { label: "고운바탕", value: "'Gowun Batang', 'Noto Serif KR', serif" },
+  { label: "페이퍼로지 (로컬)", value: "'페이퍼로지 8 ExtraBold', '페이퍼로지 8', 'Noto Serif KR', serif" },
+  { label: "바탕체", value: "'Gowun Batang', 'Batang', 'Nanum Myeongjo', 'Noto Serif KR', serif" },
 ];
 
 /** 스타일 프리셋 */
@@ -886,7 +889,7 @@ const STYLE_PRESETS: StylePreset[] = [
   {
     label: "클래식 바탕",
     description: "바탕체 + 전통적 분위기",
-    fontFamily: "'Batang', 'Nanum Myeongjo', serif",
+    fontFamily: "'Gowun Batang', 'Batang', 'Nanum Myeongjo', 'Noto Serif KR', serif",
     borderColor: "#2c1810",
     areaStyles: {
       certNo: { ...DEFAULT_AREA_STYLES.certNo, fontSize: "11pt", letterSpacing: "0.05em" },
@@ -1032,7 +1035,30 @@ export default function CertificateGenerator() {
     if (!printRef.current) return;
     setPdfLoading(true);
     try {
-      // 폰트가 완전히 로드될 때까지 대기 (자간 깨짐 방지)
+      // 폰트가 완전히 로드될 때까지 대기 (자간·한글 깨짐 방지)
+      // Google Fonts의 unicode-range 서브셋은 실제 사용된 글리프가 요청될 때까지
+      // 로드되지 않으므로, 래스터라이즈 전에 한글 샘플과 실제 폰트 패밀리를
+      // 명시적으로 preload 한다.
+      const sampleKo = "연세교육공학회 감사장 수료증 귀하 성명";
+      const families = Array.from(
+        new Set([
+          "Hahmlet",
+          "Noto Serif KR",
+          "Gowun Batang",
+          // 현재 선택된 fontFamily의 첫 항목을 추출
+          ...(fontFamily.match(/'([^']+)'|"([^"]+)"|([^,]+)/g) ?? [])
+            .map((s) => s.replace(/['",]/g, "").trim())
+            .filter(Boolean),
+        ]),
+      );
+      const weights = [400, 600, 700, 900];
+      await Promise.all(
+        families.flatMap((fam) =>
+          weights.map((w) =>
+            document.fonts.load(`${w} 16pt "${fam}"`, sampleKo).catch(() => null),
+          ),
+        ),
+      );
       await document.fonts.ready;
 
       const html2canvas = (await import("html2canvas-pro")).default;

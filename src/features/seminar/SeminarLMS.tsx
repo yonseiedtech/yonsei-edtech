@@ -26,7 +26,12 @@ import {
   Users,
   AlertCircle,
   Mic,
+  Link2,
+  Copy,
+  Loader2,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const STATUS_STYLES: Record<SeminarStatus, string> = {
   draft: "bg-gray-100 text-gray-500",
@@ -116,6 +121,36 @@ export default function SeminarLMS({ seminarId }: Props) {
   const isAttending = user ? (seminar?.attendeeIds ?? []).includes(user.id) : false;
   const hasAccess = isAttending || isStaff;
 
+  // 연사 후기 링크 (staff 전용)
+  const [speakerToken, setSpeakerToken] = useState<string | null>(seminar?.speakerReviewToken ?? null);
+  const [generatingToken, setGeneratingToken] = useState(false);
+
+  async function handleGenerateSpeakerLink() {
+    if (!seminar) return;
+    setGeneratingToken(true);
+    try {
+      const res = await fetch(`/api/seminars/${seminar.id}/speaker-token`, { method: "POST" });
+      const data = await res.json();
+      if (data.token) {
+        setSpeakerToken(data.token);
+        const url = `${window.location.origin}/seminars/${seminar.id}/speaker-review?token=${data.token}`;
+        await navigator.clipboard.writeText(url);
+        toast.success("연사 후기 링크가 생성되어 클립보드에 복사되었습니다.");
+      }
+    } catch {
+      toast.error("링크 생성에 실패했습니다.");
+    } finally {
+      setGeneratingToken(false);
+    }
+  }
+
+  function handleCopySpeakerLink() {
+    if (!seminar || !speakerToken) return;
+    const url = `${window.location.origin}/seminars/${seminar.id}/speaker-review?token=${speakerToken}`;
+    navigator.clipboard.writeText(url);
+    toast.success("연사 후기 링크가 클립보드에 복사되었습니다.");
+  }
+
   if (!seminar) {
     return (
       <div className="py-16 text-center text-muted-foreground">
@@ -145,6 +180,43 @@ export default function SeminarLMS({ seminarId }: Props) {
                 세미나에 참석 신청하시면 자료실, 후기 작성 등 모든 기능을 이용하실 수 있습니다.
               </p>
             </div>
+          </div>
+        )}
+
+        {/* 연사 후기 링크 (staff 전용) */}
+        {isStaff && (
+          <div className="mb-4 rounded-xl border border-blue-200 bg-blue-50/60 p-4">
+            <h3 className="mb-2 flex items-center gap-2 text-sm font-medium">
+              <Mic size={14} className="text-blue-600" />
+              연사 후기 링크
+            </h3>
+            {speakerToken ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2">
+                  <Link2 size={14} className="shrink-0 text-muted-foreground" />
+                  <span className="flex-1 truncate text-xs text-muted-foreground">
+                    /seminars/{seminar.id}/speaker-review?token={speakerToken.slice(0, 8)}...
+                  </span>
+                  <Button size="sm" variant="ghost" onClick={handleCopySpeakerLink} className="h-7 shrink-0 px-2">
+                    <Copy size={12} className="mr-1" />
+                    복사
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  이 링크를 연사에게 공유하면 별도 인증 없이 후기를 작성할 수 있습니다.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  연사에게 공유할 후기 작성 링크를 생성합니다.
+                </p>
+                <Button size="sm" onClick={handleGenerateSpeakerLink} disabled={generatingToken}>
+                  {generatingToken ? <Loader2 size={14} className="mr-1 animate-spin" /> : <Link2 size={14} className="mr-1" />}
+                  연사 후기 링크 생성
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
