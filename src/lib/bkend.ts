@@ -394,11 +394,19 @@ export const inquiriesApi = {
 };
 
 export const activitiesApi = {
-  list: (type?: string) =>
-    dataApi.list<Activity>("activities", {
+  // NOTE: where + orderBy 조합은 Firestore 복합 인덱스가 필요하므로,
+  // type 필터만 쓰고 정렬은 클라이언트에서 수행한다. (board/posts 동일 패턴)
+  list: async (type?: string) => {
+    const res = await dataApi.list<Activity>("activities", {
       ...(type ? { "filter[type]": type } : {}),
-      sort: "date:desc",
-    }),
+    });
+    const sorted = [...res.data].sort((a, b) => {
+      const ad = (a as { date?: string }).date ?? "";
+      const bd = (b as { date?: string }).date ?? "";
+      return bd.localeCompare(ad);
+    });
+    return { ...res, data: sorted };
+  },
   get: (id: string) => dataApi.get<Activity>("activities", id),
   create: (data: Record<string, unknown>) => dataApi.create<Activity>("activities", data),
   update: (id: string, data: Record<string, unknown>) => dataApi.update<Activity>("activities", id, data),

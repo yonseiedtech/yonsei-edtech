@@ -1,7 +1,7 @@
 {
   "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"\\\"/c/Program Files/Git/cmd/git.exe\\\" mv src/app/seminar-admin src/app/academic-admin/seminars-tmp 2>&1; \\\"/c/Program Files/Git/cmd/git.exe\\\" status -s | head\",\"description\":\"Move seminar-a...",
-  "error": "Exit code 127\nfatal: renaming 'src/app/seminar-admin' failed: No such file or directory\n/usr/bin/bash: line 1: head: command not found",
-  "timestamp": "2026-04-12T05:29:17.792Z",
-  "retry_count": 2
+  "tool_input_preview": "{\"command\":\"npm run build 2>&1 | tail -60\",\"timeout\":300000,\"description\":\"Build verification\"}",
+  "error": "Exit code 127\n/usr/bin/bash: line 1: tail: command not found",
+  "timestamp": "2026-04-12T06:19:47.146Z",
+  "retry_count": 1
 }

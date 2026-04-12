@@ -192,16 +192,16 @@
   },
   "hotPaths": [
     {
+      "path": "src\\lib\\bkend.ts",
+      "accessCount": 61,
+      "lastAccessed": 1775974735472,
+      "type": "file"
+    },
+    {
       "path": "src",
       "accessCount": 59,
       "lastAccessed": 1775972031844,
       "type": "directory"
-    },
-    {
-      "path": "src\\lib\\bkend.ts",
-      "accessCount": 55,
-      "lastAccessed": 1775969769050,
-      "type": "file"
     },
     {
       "path": "src\\types\\index.ts",

@@ -58,3 +58,4 @@
 {"t":0,"agent":"ac8a12d","agent_type":"unknown","event":"agent_stop","success":true}
 {"t":0,"agent":"af74463","agent_type":"Explore","event":"agent_start","parent_mode":"none"}
 {"t":0,"agent":"af74463","agent_type":"Explore","event":"agent_stop","success":true,"duration_ms":294517}
+{"t":0,"agent":"a66c23e","agent_type":"unknown","event":"agent_stop","success":true}
