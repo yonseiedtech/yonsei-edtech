@@ -248,6 +248,8 @@ interface AreaStyle {
   offsetX: number; // px 단위 드래그 오프셋
   offsetY: number;
   textAlign: "left" | "center" | "right" | "justify";
+  /** 개체 전체 크기 배율 (기본 1.0) — PPT 모서리 드래그 시 변경 */
+  scale?: number;
 }
 
 type AreaKey = "certNo" | "title" | "name" | "body" | "date" | "org";
@@ -294,6 +296,10 @@ function DraggableArea({
   onSelect,
   scale = 0.6,
   snapPx = 0,
+  boxScale = 1,
+  onResize,
+  peers = [],
+  onGuides,
   children,
 }: {
   areaKey: AreaKey;
@@ -306,6 +312,13 @@ function DraggableArea({
   scale?: number;
   /** 격자 스냅 크기(px, 0이면 비활성) */
   snapPx?: number;
+  /** 개체 배율 (PPT 모서리 드래그) */
+  boxScale?: number;
+  onResize?: (key: AreaKey, newScale: number) => void;
+  /** 다른 영역들의 offset 좌표 (가이드/스냅용) */
+  peers?: { key: AreaKey; x: number; y: number }[];
+  /** 드래그 중 가이드 라인 업데이트 (부모가 렌더링) */
+  onGuides?: (lines: { axis: "x" | "y"; at: number }[]) => void;
   children: React.ReactNode;
 }) {
   const dragging = useRef(false);
@@ -325,20 +338,36 @@ function DraggableArea({
       startOffset.current = { x: offsetX, y: offsetY };
       setLocalOffset({ x: 0, y: 0 });
 
+      const SMART_TOL = 4; // px 허용 오차 (자석 스냅)
       const applySnapAndLock = (dx: number, dy: number, ev: MouseEvent) => {
-        // Shift 누름 → 축 고정 (큰 축만 적용)
         if (ev.shiftKey) {
           if (Math.abs(dx) > Math.abs(dy)) dy = 0;
           else dx = 0;
         }
-        // 격자 스냅: 최종 좌표 = start + delta, 격자에 맞춰 라운드
-        if (snapPx > 0) {
-          const nx = Math.round((startOffset.current.x + dx) / snapPx) * snapPx;
-          const ny = Math.round((startOffset.current.y + dy) / snapPx) * snapPx;
-          dx = nx - startOffset.current.x;
-          dy = ny - startOffset.current.y;
+        let finalX = startOffset.current.x + dx;
+        let finalY = startOffset.current.y + dy;
+        const guides: { axis: "x" | "y"; at: number }[] = [];
+        // 인접 개체와 동일 X/Y 정렬 감지 (PPT 노란색 가이드)
+        if (peers && peers.length > 0) {
+          for (const p of peers) {
+            if (p.key === areaKey) continue;
+            if (Math.abs(p.x - finalX) <= SMART_TOL) {
+              finalX = p.x;
+              guides.push({ axis: "x", at: p.x });
+            }
+            if (Math.abs(p.y - finalY) <= SMART_TOL) {
+              finalY = p.y;
+              guides.push({ axis: "y", at: p.y });
+            }
+          }
         }
-        return { dx, dy };
+        // 격자 스냅 (스마트 가이드가 우선 적용된 뒤 보정)
+        if (snapPx > 0 && guides.length === 0) {
+          finalX = Math.round(finalX / snapPx) * snapPx;
+          finalY = Math.round(finalY / snapPx) * snapPx;
+        }
+        if (onGuides) onGuides(guides);
+        return { dx: finalX - startOffset.current.x, dy: finalY - startOffset.current.y };
       };
 
       const handleMouseMove = (ev: MouseEvent) => {
@@ -357,6 +386,7 @@ function DraggableArea({
         ({ dx, dy } = applySnapAndLock(dx, dy, ev));
         setLocalOffset({ x: 0, y: 0 });
         onDragEnd(areaKey, startOffset.current.x + dx, startOffset.current.y + dy);
+        if (onGuides) onGuides([]);
         document.removeEventListener("mousemove", handleMouseMove);
         document.removeEventListener("mouseup", handleMouseUp);
       };
@@ -364,16 +394,49 @@ function DraggableArea({
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
     },
-    [editable, areaKey, offsetX, offsetY, onDragEnd, onSelect, scale, snapPx]
+    [editable, areaKey, offsetX, offsetY, onDragEnd, onSelect, scale, snapPx, peers, onGuides]
+  );
+
+  // 모서리 리사이즈
+  const startResize = useCallback(
+    (e: React.MouseEvent) => {
+      if (!editable || !onResize) return;
+      e.preventDefault();
+      e.stopPropagation();
+      onSelect(areaKey, false);
+      const startY = e.clientY;
+      const startScale = boxScale || 1;
+      const onMove = (ev: MouseEvent) => {
+        const dy = (ev.clientY - startY) / scale;
+        const factor = 1 + dy / 180; // 아래로 드래그 → 키움
+        const next = Math.max(0.3, Math.min(3, startScale * factor));
+        onResize(areaKey, Number(next.toFixed(3)));
+      };
+      const onUp = () => {
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+      };
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+    },
+    [editable, onResize, onSelect, areaKey, boxScale, scale]
   );
 
   const ox = offsetX || 0;
   const oy = offsetY || 0;
 
+  const bs = boxScale ?? 1;
+  const scaledChildren =
+    bs === 1 ? children : (
+      <div style={{ transform: `scale(${bs})`, transformOrigin: "top left", display: "inline-block" }}>
+        {children}
+      </div>
+    );
+
   if (!editable) {
     return (
       <div style={{ transform: ox || oy ? `translate(${ox}px, ${oy}px)` : undefined }}>
-        {children}
+        {scaledChildren}
       </div>
     );
   }
@@ -398,11 +461,30 @@ function DraggableArea({
       }}
     >
       {isSelected && (
-        <span className="absolute -top-4 left-0 rounded bg-blue-500 px-1.5 py-0.5 text-[9px] font-medium text-white" style={{ zIndex: 10 }}>
-          {AREA_LABELS[areaKey]}
-        </span>
+        <>
+          <span className="absolute -top-4 left-0 rounded bg-blue-500 px-1.5 py-0.5 text-[9px] font-medium text-white" style={{ zIndex: 10 }}>
+            {AREA_LABELS[areaKey]} {bs !== 1 && `· ${Math.round(bs * 100)}%`}
+          </span>
+          {/* 모서리 리사이즈 핸들 (우측 하단) */}
+          <span
+            onMouseDown={startResize}
+            style={{
+              position: "absolute",
+              right: -6,
+              bottom: -6,
+              width: 10,
+              height: 10,
+              background: "#3b82f6",
+              border: "1.5px solid #fff",
+              borderRadius: 2,
+              cursor: "nwse-resize",
+              zIndex: 11,
+            }}
+            title="드래그로 크기 조절"
+          />
+        </>
       )}
-      {children}
+      {scaledChildren}
     </div>
   );
 }
@@ -565,6 +647,7 @@ export function CertificatePreview({
   snapPx = 0,
   showGrid = false,
   snapStep = 16,
+  onAreaResize,
 }: {
   type: CertType;
   seminarTitle: string;
@@ -583,11 +666,20 @@ export function CertificatePreview({
   snapPx?: number;
   showGrid?: boolean;
   snapStep?: number;
+  onAreaResize?: (key: AreaKey, newScale: number) => void;
 }) {
   const isCompletion = type === "completion";
   const title = isCompletion ? "수 료 증" : "감사장";
   const accentColor = style.borderColor;
   const a = areaStyles;
+
+  const [guides, setGuides] = useState<{ axis: "x" | "y"; at: number }[]>([]);
+
+  const peers = (Object.keys(a) as AreaKey[]).map((k) => ({
+    key: k,
+    x: a[k].offsetX,
+    y: a[k].offsetY,
+  }));
 
   const dragProps = (key: AreaKey) => ({
     areaKey: key,
@@ -599,6 +691,10 @@ export function CertificatePreview({
     onDragEnd: onAreaDrag ?? (() => {}),
     scale: previewScale ?? 0.6,
     snapPx,
+    boxScale: a[key].scale ?? 1,
+    onResize: onAreaResize,
+    peers,
+    onGuides: setGuides,
   });
   void snapStep;
 
@@ -667,6 +763,46 @@ export function CertificatePreview({
             backgroundSize: `${snapStep}px ${snapStep}px`,
           }}
         />
+      )}
+
+      {/* 스마트 가이드 (PPT 스타일 노란색 정렬선) */}
+      {editable && guides.length > 0 && (
+        <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 20 }}>
+          {guides.map((g, i) => {
+            // 기준점: 본문 padding 고려 (padding: "22mm 36mm 18mm")
+            // 영역들은 padding 내부에 배치되므로 대략적 중앙축 기준
+            if (g.axis === "x") {
+              return (
+                <div
+                  key={`gx-${i}`}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    bottom: 0,
+                    left: "50%",
+                    width: 0,
+                    borderLeft: "1px dashed #f59e0b",
+                    transform: `translateX(${g.at}px)`,
+                  }}
+                />
+              );
+            }
+            return (
+              <div
+                key={`gy-${i}`}
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  top: "22mm",
+                  height: 0,
+                  borderTop: "1px dashed #f59e0b",
+                  transform: `translateY(${g.at}px)`,
+                }}
+              />
+            );
+          })}
+        </div>
       )}
 
       {/* ─── 본문 영역 ─── */}
@@ -984,6 +1120,13 @@ export default function CertificateGenerator() {
     setAreaStyles((prev) => ({
       ...prev,
       [key]: { ...prev[key], offsetX: Math.round(x), offsetY: Math.round(y) },
+    }));
+  }
+
+  function handleAreaResize(key: AreaKey, newScale: number) {
+    setAreaStyles((prev) => ({
+      ...prev,
+      [key]: { ...prev[key], scale: newScale },
     }));
   }
 
@@ -1946,6 +2089,7 @@ export default function CertificateGenerator() {
               editable={showEditMode}
               selectedAreas={selectedAreas}
               onAreaDrag={handleAreaDrag}
+              onAreaResize={handleAreaResize}
               onSelectArea={(key, ctrlKey) => {
                 if (ctrlKey) {
                   setSelectedAreas((prev) =>
