@@ -1,7 +1,7 @@
 {
-  "tool_name": "Glob",
-  "tool_input_preview": "{\"pattern\":\"src/app/seminar-admin/**/*.tsx\",\"path\":\"C:\\\\work\\\\yonsei-edtech\"}",
-  "error": "Ripgrep search timed out after 20 seconds. The search may have matched files but did not complete in time. Try searching a more specific path or pattern.",
-  "timestamp": "2026-04-12T05:15:45.676Z",
-  "retry_count": 1
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"\\\"/c/Program Files/Git/cmd/git.exe\\\" mv src/app/seminar-admin src/app/academic-admin/seminars-tmp 2>&1; \\\"/c/Program Files/Git/cmd/git.exe\\\" status -s | head\",\"description\":\"Move seminar-a...",
+  "error": "Exit code 127\nfatal: renaming 'src/app/seminar-admin' failed: No such file or directory\n/usr/bin/bash: line 1: head: command not found",
+  "timestamp": "2026-04-12T05:29:17.792Z",
+  "retry_count": 2
 }

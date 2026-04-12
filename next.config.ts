@@ -17,6 +17,22 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["lucide-react", "@tanstack/react-query"],
   },
+
+  // 구 seminar-admin 경로 → 학술활동 관리 허브로 이관
+  async redirects() {
+    return [
+      {
+        source: "/seminar-admin",
+        destination: "/academic-admin/seminars",
+        permanent: true,
+      },
+      {
+        source: "/seminar-admin/:path*",
+        destination: "/academic-admin/seminars/:path*",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -193,8 +193,8 @@
   "hotPaths": [
     {
       "path": "src",
-      "accessCount": 57,
-      "lastAccessed": 1775970897412,
+      "accessCount": 59,
+      "lastAccessed": 1775972031844,
       "type": "directory"
     },
     {
@@ -330,6 +330,12 @@
       "type": "file"
     },
     {
+      "path": "src\\app\\admin\\seminars\\page.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1775971929854,
+      "type": "file"
+    },
+    {
       "path": "src\\app\\about\\greeting\\page.tsx",
       "accessCount": 3,
       "lastAccessed": 1775904287278,
@@ -393,12 +399,6 @@
       "path": "src\\app\\seminars\\create\\page.tsx",
       "accessCount": 3,
       "lastAccessed": 1775952579252,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\admin\\seminars\\page.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1775904627004,
       "type": "file"
     },
     {

@@ -93,7 +93,7 @@ export default function SeminarForm() {
       const seminarData = buildSeminarData(data, "draft");
       await createSeminar(seminarData as unknown as Omit<Seminar, "id" | "attendeeIds" | "createdAt" | "updatedAt">);
       toast.success("임시저장되었습니다.");
-      router.push("/seminar-admin");
+      router.push("/academic-admin/seminars");
     } catch (err) {
       console.error("임시저장 실패:", err);
       toast.error(err instanceof Error ? err.message : "임시저장에 실패했습니다.");
@@ -107,7 +107,7 @@ export default function SeminarForm() {
       const seminarData = buildSeminarData(data, "upcoming");
       await createSeminar(seminarData as unknown as Omit<Seminar, "id" | "attendeeIds" | "createdAt" | "updatedAt">);
       toast.success("세미나가 등록되었습니다. 타임라인이 자동 적용되었습니다.");
-      router.push("/seminar-admin");
+      router.push("/academic-admin/seminars");
     } catch (err) {
       console.error("세미나 등록 실패:", err);
       toast.error(err instanceof Error ? err.message : "세미나 등록에 실패했습니다.");
@@ -432,7 +432,7 @@ export default function SeminarForm() {
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => router.push("/seminar-admin")}>
+            <Button type="button" variant="outline" onClick={() => router.push("/academic-admin/seminars")}>
               취소
             </Button>
             <Button type="button" variant="secondary" onClick={handleSaveDraft} disabled={isSaving}>

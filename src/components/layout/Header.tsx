@@ -171,7 +171,7 @@ function UserDropdown() {
     { href: "/directory", label: "연락망", icon: BookUser },
     ...(showAdmin
       ? [
-          { href: "/seminar-admin", label: "세미나 관리", icon: BookOpen },
+          { href: "/academic-admin", label: "학술활동 관리", icon: BookOpen },
           { href: "/staff-admin", label: "운영진 관리", icon: Users },
           { href: "/admin", label: "관리자", icon: Shield },
         ]
@@ -342,7 +342,7 @@ export default function Header() {
                   { href: "/directory", label: "연락망", icon: BookUser },
                   ...(showAdmin
                     ? [
-                        { href: "/seminar-admin", label: "세미나 관리", icon: BookOpen },
+                        { href: "/academic-admin", label: "학술활동 관리", icon: BookOpen },
                         { href: "/staff-admin", label: "운영진 관리", icon: Users },
                         { href: "/admin", label: "관리자", icon: Shield },
                       ]

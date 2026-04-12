@@ -163,7 +163,7 @@ export async function GET(req: NextRequest) {
         const certAlertSnap = await db
           .collection("notifications")
           .where("type", "==", "certificate")
-          .where("link", "==", `/seminar-admin/certificate?seminarId=${docSnap.id}`)
+          .where("link", "==", `/academic-admin/seminars/certificate?seminarId=${docSnap.id}`)
           .limit(1)
           .get();
 
@@ -183,7 +183,7 @@ export async function GET(req: NextRequest) {
               type: "certificate",
               title: "수료증 발급 준비 알림",
               message: `"${seminar.title}" 세미나 후기가 ${reviewsSnap.size}건 접수되었습니다. 수료증 발급을 진행해 주세요.`,
-              link: `/seminar-admin/certificate?seminarId=${docSnap.id}`,
+              link: `/academic-admin/seminars/certificate?seminarId=${docSnap.id}`,
               read: false,
               createdAt: new Date().toISOString(),
             });

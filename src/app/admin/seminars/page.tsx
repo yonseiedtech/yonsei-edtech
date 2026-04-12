@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 export default function AdminSeminarsRedirect() {
   const router = useRouter();
   useEffect(() => {
-    router.replace("/seminar-admin");
+    router.replace("/academic-admin/seminars");
   }, [router]);
   return null;
 }

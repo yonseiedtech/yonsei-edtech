@@ -5,36 +5,39 @@ import { usePathname } from "next/navigation";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { cn } from "@/lib/utils";
 import {
+  LayoutDashboard,
   BookOpen,
-  PlusCircle,
-  Megaphone,
-  ListChecks,
-  Award,
-  ClipboardList,
+  FolderKanban,
+  Users,
+  Globe,
 } from "lucide-react";
 
-const TABS = [
-  { href: "/seminar-admin", label: "세미나 목록", icon: BookOpen, exact: true },
-  { href: "/seminar-admin/create", label: "세미나 생성", icon: PlusCircle },
-  { href: "/seminar-admin/promotion", label: "홍보 제작", icon: Megaphone },
-  { href: "/seminar-admin/timeline", label: "운영 타임라인", icon: ListChecks },
-  { href: "/seminar-admin/registrations", label: "신청/참석 관리", icon: ClipboardList },
-  { href: "/seminar-admin/certificate", label: "수료증/명찰", icon: Award },
+const HUB_TABS = [
+  { href: "/academic-admin", label: "대시보드", icon: LayoutDashboard, exact: true },
+  { href: "/academic-admin/seminars", label: "세미나", icon: BookOpen },
+  { href: "/academic-admin/projects", label: "프로젝트", icon: FolderKanban },
+  { href: "/academic-admin/studies", label: "스터디", icon: Users },
+  { href: "/academic-admin/external", label: "대외 학회활동", icon: Globe },
 ];
 
-function SeminarAdminShell({ children }: { children: React.ReactNode }) {
+function AcademicAdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <div className="py-16">
-      <div className="mx-auto max-w-5xl px-4">
+    <div className="py-8">
+      <div className="mx-auto max-w-6xl px-4">
         <div className="flex items-center gap-3">
-          <BookOpen size={28} className="text-primary" />
-          <h1 className="text-3xl font-bold">세미나 관리</h1>
+          <LayoutDashboard size={28} className="text-primary" />
+          <div>
+            <h1 className="text-2xl font-bold sm:text-3xl">학술활동 관리</h1>
+            <p className="text-sm text-muted-foreground">
+              세미나·프로젝트·스터디·대외활동을 한 곳에서 운영합니다.
+            </p>
+          </div>
         </div>
 
-        <nav className="mt-8 flex flex-wrap gap-0 border-b sm:overflow-x-auto">
-          {TABS.map((tab) => {
+        <nav className="mt-6 flex flex-wrap gap-0 border-b sm:overflow-x-auto">
+          {HUB_TABS.map((tab) => {
             const isActive = tab.exact
               ? pathname === tab.href
               : pathname.startsWith(tab.href);
@@ -62,14 +65,14 @@ function SeminarAdminShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function SeminarAdminLayout({
+export default function AcademicAdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
     <AuthGuard allowedRoles={["staff", "president", "admin"]}>
-      <SeminarAdminShell>{children}</SeminarAdminShell>
+      <AcademicAdminShell>{children}</AcademicAdminShell>
     </AuthGuard>
   );
 }
