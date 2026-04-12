@@ -262,6 +262,15 @@ export default function Header() {
   const { logout } = useAuth();
   const showAdmin = isAtLeast(user, "staff");
 
+  // 모바일 메뉴 열림 시 배경 스크롤 방지
+  useEffect(() => {
+    if (mobileOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = prev; };
+    }
+  }, [mobileOpen]);
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
@@ -307,24 +316,22 @@ export default function Header() {
 
       {/* Mobile Nav */}
       {mobileOpen && (
-        <div className="animate-in slide-in-from-top-2 fade-in duration-200 border-t bg-popover px-4 pb-4 md:hidden">
+        <div className="animate-in slide-in-from-top-2 fade-in duration-200 border-t bg-popover px-4 pb-4 md:hidden max-h-[calc(100vh-4rem)] overflow-y-auto overscroll-contain">
           <nav className="flex flex-col gap-1 pt-2">
-            {PUBLIC_NAV.filter((group) => !(user && group.label === "문의")).map((group) => (
-              <MobileNavGroup key={group.label} group={group} onClose={() => setMobileOpen(false)} />
-            ))}
             {user && (
               <>
-                <Separator className="my-1" />
-                {/* 모바일 프로필 카드 */}
-                <div className="mx-3 my-2 flex items-center gap-3 rounded-xl bg-primary/5 px-4 py-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-                    {user.name?.[0] || "?"}
+                {/* 모바일 프로필 카드 (상단 고정) */}
+                <div className="sticky top-0 z-10 -mx-4 mb-1 border-b bg-popover px-4 pb-2 pt-1">
+                  <div className="flex items-center gap-3 rounded-xl bg-primary/5 px-4 py-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                      {user.name?.[0] || "?"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate text-sm font-semibold">{user.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">{user.role === "admin" ? "관리자" : user.role === "president" ? "학회장" : user.role === "staff" ? "운영진" : user.role === "alumni" ? "졸업생" : "회원"}</p>
+                    </div>
+                    <NotificationBell />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="truncate text-sm font-semibold">{user.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">{user.role === "admin" ? "관리자" : user.role === "president" ? "학회장" : user.role === "staff" ? "운영진" : user.role === "alumni" ? "졸업생" : "회원"}</p>
-                  </div>
-                  <NotificationBell />
                 </div>
                 <div className="px-3 py-1">
                   <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">내 메뉴</span>
@@ -357,6 +364,14 @@ export default function Header() {
                     </Link>
                   );
                 })}
+                <Separator className="my-1" />
+              </>
+            )}
+            {PUBLIC_NAV.filter((group) => !(user && group.label === "문의")).map((group) => (
+              <MobileNavGroup key={group.label} group={group} onClose={() => setMobileOpen(false)} />
+            ))}
+            {user && (
+              <>
                 <Separator className="my-1" />
                 <button
                   onClick={() => { setMobileOpen(false); logout(); }}
