@@ -201,8 +201,8 @@
   "hotPaths": [
     {
       "path": "src\\features\\seminar-admin\\CertificateGenerator.tsx",
-      "accessCount": 10,
-      "lastAccessed": 1775990224106,
+      "accessCount": 30,
+      "lastAccessed": 1775994681876,
       "type": "file"
     },
     {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useSeminars, useAttendees } from "@/features/seminar/useSeminar";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { certificatesApi } from "@/lib/bkend";
@@ -293,6 +293,7 @@ function DraggableArea({
   selectedAreas,
   onSelect,
   scale = 0.6,
+  snapPx = 0,
   children,
 }: {
   areaKey: AreaKey;
@@ -303,6 +304,8 @@ function DraggableArea({
   selectedAreas: AreaKey[];
   onSelect: (key: AreaKey, ctrlKey: boolean) => void;
   scale?: number;
+  /** 격자 스냅 크기(px, 0이면 비활성) */
+  snapPx?: number;
   children: React.ReactNode;
 }) {
   const dragging = useRef(false);
@@ -322,18 +325,36 @@ function DraggableArea({
       startOffset.current = { x: offsetX, y: offsetY };
       setLocalOffset({ x: 0, y: 0 });
 
+      const applySnapAndLock = (dx: number, dy: number, ev: MouseEvent) => {
+        // Shift 누름 → 축 고정 (큰 축만 적용)
+        if (ev.shiftKey) {
+          if (Math.abs(dx) > Math.abs(dy)) dy = 0;
+          else dx = 0;
+        }
+        // 격자 스냅: 최종 좌표 = start + delta, 격자에 맞춰 라운드
+        if (snapPx > 0) {
+          const nx = Math.round((startOffset.current.x + dx) / snapPx) * snapPx;
+          const ny = Math.round((startOffset.current.y + dy) / snapPx) * snapPx;
+          dx = nx - startOffset.current.x;
+          dy = ny - startOffset.current.y;
+        }
+        return { dx, dy };
+      };
+
       const handleMouseMove = (ev: MouseEvent) => {
         if (!dragging.current) return;
-        const dx = (ev.clientX - startPos.current.x) / scale;
-        const dy = (ev.clientY - startPos.current.y) / scale;
+        let dx = (ev.clientX - startPos.current.x) / scale;
+        let dy = (ev.clientY - startPos.current.y) / scale;
+        ({ dx, dy } = applySnapAndLock(dx, dy, ev));
         setLocalOffset({ x: dx, y: dy });
       };
 
       const handleMouseUp = (ev: MouseEvent) => {
         if (!dragging.current) return;
         dragging.current = false;
-        const dx = (ev.clientX - startPos.current.x) / scale;
-        const dy = (ev.clientY - startPos.current.y) / scale;
+        let dx = (ev.clientX - startPos.current.x) / scale;
+        let dy = (ev.clientY - startPos.current.y) / scale;
+        ({ dx, dy } = applySnapAndLock(dx, dy, ev));
         setLocalOffset({ x: 0, y: 0 });
         onDragEnd(areaKey, startOffset.current.x + dx, startOffset.current.y + dy);
         document.removeEventListener("mousemove", handleMouseMove);
@@ -343,7 +364,7 @@ function DraggableArea({
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
     },
-    [editable, areaKey, offsetX, offsetY, onDragEnd, onSelect]
+    [editable, areaKey, offsetX, offsetY, onDragEnd, onSelect, scale, snapPx]
   );
 
   const ox = offsetX || 0;
@@ -541,6 +562,9 @@ export function CertificatePreview({
   onAreaDrag,
   onSelectArea,
   previewScale,
+  snapPx = 0,
+  showGrid = false,
+  snapStep = 16,
 }: {
   type: CertType;
   seminarTitle: string;
@@ -556,6 +580,9 @@ export function CertificatePreview({
   onAreaDrag?: (key: AreaKey, x: number, y: number) => void;
   onSelectArea?: (key: AreaKey, ctrlKey: boolean) => void;
   previewScale?: number;
+  snapPx?: number;
+  showGrid?: boolean;
+  snapStep?: number;
 }) {
   const isCompletion = type === "completion";
   const title = isCompletion ? "수 료 증" : "감사장";
@@ -571,7 +598,9 @@ export function CertificatePreview({
     onSelect: onSelectArea ?? (() => {}),
     onDragEnd: onAreaDrag ?? (() => {}),
     scale: previewScale ?? 0.6,
+    snapPx,
   });
+  void snapStep;
 
   return (
     <div
@@ -625,6 +654,20 @@ export function CertificatePreview({
           }}
         />
       ))}
+
+      {/* 격자 오버레이 (편집 중 + 표시 옵션 활성화 시) */}
+      {editable && showGrid && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "none",
+            backgroundImage:
+              "linear-gradient(to right, rgba(59,130,246,0.12) 1px, transparent 1px), linear-gradient(to bottom, rgba(59,130,246,0.12) 1px, transparent 1px)",
+            backgroundSize: `${snapStep}px ${snapStep}px`,
+          }}
+        />
+      )}
 
       {/* ─── 본문 영역 ─── */}
       <div
@@ -690,21 +733,22 @@ export function CertificatePreview({
           </div>
         </DraggableArea>
 
-        {/* 워터마크 엠블럼 */}
+        {/* 워터마크 엠블럼 — 본문과 같은 중앙 축에 배치 */}
         <div
-          className="absolute left-1/2 -translate-x-1/2"
+          className="absolute left-1/2"
           style={{
-            top: "40%",
-            opacity: 0.06,
-            width: "300px",
-            height: "300px",
+            top: "38%",
+            transform: "translate(-50%, -50%)",
+            opacity: 0.07,
+            width: "440px",
+            height: "440px",
             pointerEvents: "none",
           }}
         >
-          <img src="/cert-emblem.png" alt="" style={{ width: "100%", height: "100%" }} />
+          <img src="/cert-emblem.png" alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
         </div>
 
-        {/* 본문 */}
+        {/* 본문 — 워터마크와 같은 중앙 축에 정렬 */}
         <DraggableArea {...dragProps("body")}>
           <div
             className="relative"
@@ -714,8 +758,9 @@ export function CertificatePreview({
               letterSpacing: a.body.letterSpacing,
               textAlign: a.body.textAlign,
               width: "100%",
-              maxWidth: "460px",
-              margin: "0 auto",
+              maxWidth: "480px",
+              marginLeft: "auto",
+              marginRight: "auto",
               marginTop: a.body.marginTop,
               marginBottom: a.body.marginBottom,
               wordBreak: "keep-all",
@@ -723,7 +768,7 @@ export function CertificatePreview({
               fontWeight: 700,
             }}
           >
-            <p style={{ textIndent: "1em", whiteSpace: "pre-wrap" }}>
+            <p style={{ textIndent: "1em", whiteSpace: "pre-wrap", textAlign: a.body.textAlign }}>
               {bodyText}
             </p>
           </div>
@@ -901,6 +946,9 @@ export default function CertificateGenerator() {
   const [semester, setSemester] = useState("");
   const [certificateNo, setCertificateNo] = useState("");
   const [showEditMode, setShowEditMode] = useState(false);
+  const [snapEnabled, setSnapEnabled] = useState(true);
+  const [snapStep, setSnapStep] = useState(8);
+  const [showGrid, setShowGrid] = useState(true);
   const [bodyText, setBodyText] = useState("");
   const [fontFamily, setFontFamily] = useState(FONT_PRESETS[0].value);
   const [borderColor, setBorderColor] = useState("#003378");
@@ -939,6 +987,49 @@ export default function CertificateGenerator() {
     }));
   }
 
+  // ── 키보드 미세조정 (방향키: 1px, Shift+화살표: 10px, Alt+화살표: 0.1px) ──
+  useEffect(() => {
+    if (!showEditMode) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (selectedAreas.length === 0) return;
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      const step = e.altKey ? 0.1 : e.shiftKey ? 10 : 1;
+      let dx = 0, dy = 0;
+      if (e.key === "ArrowLeft") dx = -step;
+      else if (e.key === "ArrowRight") dx = step;
+      else if (e.key === "ArrowUp") dy = -step;
+      else if (e.key === "ArrowDown") dy = step;
+      else return;
+      e.preventDefault();
+      setAreaStyles((prev) => {
+        const next = { ...prev };
+        for (const k of selectedAreas) {
+          next[k] = { ...next[k], offsetX: next[k].offsetX + dx, offsetY: next[k].offsetY + dy };
+        }
+        return next;
+      });
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showEditMode, selectedAreas]);
+
+  // ── 캔버스(페이지) 기준 정렬 ──
+  function alignToCanvas(axis: "h" | "v", mode: "start" | "center" | "end") {
+    if (selectedAreas.length === 0) return;
+    setAreaStyles((prev) => {
+      const next = { ...prev };
+      for (const k of selectedAreas) {
+        // 페이지 중앙 기준: offset 0 = 원래 위치, 중앙은 페이지 중앙을 의미
+        // 실제 픽셀 이동량은 preview 기준이 아니라 상대 offset이므로 단순화:
+        // start = -300, center = 0, end = +300 (근사)
+        const v = mode === "start" ? -300 : mode === "end" ? 300 : 0;
+        if (axis === "h") next[k] = { ...next[k], offsetX: v };
+        else next[k] = { ...next[k], offsetY: v };
+      }
+      return next;
+    });
+  }
   function handleMultiAlign(updates: { key: AreaKey; x: number; y: number }[]) {
     setAreaStyles((prev) => {
       const next = { ...prev };
@@ -1320,6 +1411,68 @@ export default function CertificateGenerator() {
 
           {showEditMode && (
             <div className="space-y-3 rounded-lg border border-dashed p-3">
+              {/* 편집 툴바: 격자/스냅 */}
+              <div className="rounded-md border bg-muted/30 p-2">
+                <p className="mb-1 text-[11px] font-semibold">편집 도구</p>
+                <div className="mb-1 flex flex-wrap gap-1">
+                  <Button
+                    variant={showGrid ? "default" : "outline"}
+                    size="sm"
+                    className="h-7 text-[10px]"
+                    onClick={() => setShowGrid(!showGrid)}
+                    title="격자 표시"
+                  >
+                    격자 {showGrid ? "ON" : "OFF"}
+                  </Button>
+                  <Button
+                    variant={snapEnabled ? "default" : "outline"}
+                    size="sm"
+                    className="h-7 text-[10px]"
+                    onClick={() => setSnapEnabled(!snapEnabled)}
+                    title="드래그 시 격자에 스냅"
+                  >
+                    스냅 {snapEnabled ? "ON" : "OFF"}
+                  </Button>
+                  <select
+                    value={snapStep}
+                    onChange={(e) => setSnapStep(Number(e.target.value))}
+                    className="h-7 rounded border px-1 text-[10px]"
+                    title="격자 간격"
+                  >
+                    <option value={4}>4px</option>
+                    <option value={8}>8px</option>
+                    <option value={16}>16px</option>
+                    <option value={32}>32px</option>
+                  </select>
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  방향키: 1px · Shift+화살표: 10px · Alt+화살표: 0.1px · Shift+드래그: 축 고정
+                </p>
+              </div>
+
+              {/* 캔버스 기준 정렬 (선택 영역) */}
+              {selectedAreas.length > 0 && (
+                <div className="rounded-md border border-purple-200 bg-purple-50/60 p-2">
+                  <p className="mb-1 text-[11px] font-semibold text-purple-700">
+                    페이지 기준 정렬 · {selectedAreas.length}개 선택
+                  </p>
+                  <div className="grid grid-cols-3 gap-1">
+                    <Button variant="outline" size="sm" className="h-7 text-[10px]"
+                      onClick={() => alignToCanvas("h", "start")}>페이지 좌</Button>
+                    <Button variant="outline" size="sm" className="h-7 text-[10px]"
+                      onClick={() => alignToCanvas("h", "center")}>페이지 중앙</Button>
+                    <Button variant="outline" size="sm" className="h-7 text-[10px]"
+                      onClick={() => alignToCanvas("h", "end")}>페이지 우</Button>
+                    <Button variant="outline" size="sm" className="h-7 text-[10px]"
+                      onClick={() => alignToCanvas("v", "start")}>페이지 상</Button>
+                    <Button variant="outline" size="sm" className="h-7 text-[10px]"
+                      onClick={() => alignToCanvas("v", "center")}>페이지 중단</Button>
+                    <Button variant="outline" size="sm" className="h-7 text-[10px]"
+                      onClick={() => alignToCanvas("v", "end")}>페이지 하</Button>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="mb-1 block text-xs font-medium">폰트</label>
                 <select
@@ -1805,6 +1958,9 @@ export default function CertificateGenerator() {
                 setExpandedArea(key);
               }}
               previewScale={zoom}
+              snapPx={snapEnabled ? snapStep : 0}
+              showGrid={showGrid}
+              snapStep={snapStep}
             />
           </div>
         </div>
