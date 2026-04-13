@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/activity-status",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/newsletter-publisher",
+      "schedule": "0 * * * *"
     }
   ]
 }

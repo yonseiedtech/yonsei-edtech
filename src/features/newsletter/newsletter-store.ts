@@ -38,6 +38,8 @@ export interface NewsletterIssue {
   editorName: string;
   sections: NewsletterSection[];
   status: "draft" | "published";
+  /** 예약 발송 일시 (ISO string). draft 상태에서만 유효 */
+  publishAt?: string;
   createdAt: string;
 }
 
@@ -66,7 +68,7 @@ export async function fetchNewsletters(): Promise<NewsletterIssue[]> {
 export async function createNewsletter(
   data: Omit<NewsletterIssue, "id" | "createdAt">
 ): Promise<NewsletterIssue> {
-  const payload = {
+  const payload: Record<string, unknown> = {
     issueNumber: data.issueNumber,
     title: data.title,
     subtitle: data.subtitle,
@@ -76,6 +78,7 @@ export async function createNewsletter(
     sections: JSON.stringify(data.sections),
     status: data.status,
   };
+  if (data.publishAt !== undefined) payload.publishAt = data.publishAt;
   const doc = await dataApi.create<Record<string, unknown>>(TABLE, payload);
   return docToIssue(doc);
 }
@@ -93,6 +96,7 @@ export async function updateNewsletter(
   if (data.status !== undefined) payload.status = data.status;
   if (data.issueNumber !== undefined) payload.issueNumber = data.issueNumber;
   if (data.sections !== undefined) payload.sections = JSON.stringify(data.sections);
+  if (data.publishAt !== undefined) payload.publishAt = data.publishAt;
 
   const doc = await dataApi.update<Record<string, unknown>>(TABLE, id, payload);
   return docToIssue(doc);
@@ -124,6 +128,7 @@ function docToIssue(doc: Record<string, unknown>): NewsletterIssue {
     editorName: (doc.editorName as string) ?? "",
     sections,
     status: (doc.status as "draft" | "published") ?? "draft",
+    publishAt: (doc.publishAt as string | undefined) ?? undefined,
     createdAt: (doc.createdAt as string) ?? new Date().toISOString(),
   };
 }

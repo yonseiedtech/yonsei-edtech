@@ -22,8 +22,10 @@ import type { User, UserRole } from "@/types";
 import { toast } from "sonner";
 import {
   Search, RefreshCw, UserPlus, Clock, Users, UserCheck, XCircle,
-  RotateCcw, Settings, Download,
+  RotateCcw, Settings, Download, ShieldCheck, AlertTriangle, AlertCircle,
 } from "lucide-react";
+import { evaluateSignup, partitionPending } from "@/lib/auth/approval-rules";
+import { notifyMemberApproved } from "@/features/notifications/notify";
 import { exportCSV } from "@/lib/export-csv";
 import { logAudit } from "@/lib/audit";
 import { Separator } from "@/components/ui/separator";
@@ -78,6 +80,37 @@ export default function AdminMemberTab() {
   // 승인대기 vs 거절 분리
   const truePending = useMemo(() => pendingMembers.filter((m) => !m.rejected), [pendingMembers]);
   const rejectedMembers = useMemo(() => pendingMembers.filter((m) => m.rejected), [pendingMembers]);
+
+  // 자동 승인 규칙 평가
+  const { qualifying: qualifyingPending } = useMemo(
+    () => partitionPending(truePending, allMembers),
+    [truePending, allMembers],
+  );
+
+  // 일괄 승인 처리
+  const [bulkApproving, setBulkApproving] = useState(false);
+  async function handleBulkApprove() {
+    if (qualifyingPending.length === 0) return;
+    if (!confirm(`자동 승인 가능 ${qualifyingPending.length}명을 일괄 승인하시겠습니까?`)) return;
+    setBulkApproving(true);
+    let successCount = 0;
+    let errorCount = 0;
+    for (const u of qualifyingPending) {
+      try {
+        await profilesApi.approve(u.id);
+        await notifyMemberApproved(u.id, u.name);
+        successCount++;
+      } catch {
+        errorCount++;
+      }
+    }
+    setBulkApproving(false);
+    if (errorCount === 0) {
+      toast.success(`${successCount}명 일괄 승인 완료`);
+    } else {
+      toast.warning(`승인 완료: ${successCount}명 / 실패: ${errorCount}명`);
+    }
+  }
 
   // 수기 회원 추가
   const { createMember } = useCreateMember();
@@ -224,6 +257,7 @@ export default function AdminMemberTab() {
               <th className="px-4 py-3 text-left font-medium">이름</th>
               <th className="px-4 py-3 text-left font-medium">아이디</th>
               <th className="px-4 py-3 text-left font-medium">학번</th>
+              <th className="px-4 py-3 text-left font-medium">연락처</th>
               <th className="px-4 py-3 text-left font-medium">분야</th>
               <th className="px-4 py-3 text-left font-medium">역할</th>
               {showStatus && <th className="px-4 py-3 text-left font-medium">상태</th>}
@@ -236,6 +270,7 @@ export default function AdminMemberTab() {
                 <td className="px-4 py-3 font-medium">{m.name}</td>
                 <td className="px-4 py-3 text-muted-foreground">@{m.username}</td>
                 <td className="px-4 py-3">{m.studentId || "-"}</td>
+                <td className="px-4 py-3 text-muted-foreground">{m.phone || "-"}</td>
                 <td className="px-4 py-3">{m.field || "-"}</td>
                 <td className="px-4 py-3"><RoleCell member={m} /></td>
                 {showStatus && (
@@ -333,10 +368,66 @@ export default function AdminMemberTab() {
             </div>
           ) : (
             <div>
-              <p className="mb-3 text-sm text-muted-foreground">
-                {truePending.length}명의 회원이 승인을 기다리고 있습니다.
-              </p>
-              <AdminUserList users={truePending} />
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  {truePending.length}명 대기 중 — 자동 승인 가능{" "}
+                  <span className="font-semibold text-green-700">{qualifyingPending.length}명</span>
+                </p>
+                {canApprove && qualifyingPending.length > 0 && (
+                  <Button size="sm" onClick={handleBulkApprove} disabled={bulkApproving}>
+                    {bulkApproving ? (
+                      <div className="mr-1 h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    ) : (
+                      <ShieldCheck size={14} className="mr-1" />
+                    )}
+                    자동 승인 가능 {qualifyingPending.length}명 일괄 승인
+                  </Button>
+                )}
+              </div>
+              <div className="space-y-2">
+                {truePending.map((u) => {
+                  const eval_ = evaluateSignup(u, allMembers);
+                  const riskIcon = eval_.qualifying
+                    ? <ShieldCheck size={14} className="text-green-600" />
+                    : eval_.risk === "medium"
+                    ? <AlertTriangle size={14} className="text-amber-500" />
+                    : <AlertCircle size={14} className="text-red-500" />;
+                  const riskColor = eval_.qualifying
+                    ? "border-green-200 bg-green-50"
+                    : eval_.risk === "medium"
+                    ? "border-amber-200 bg-amber-50"
+                    : "border-red-200 bg-red-50";
+                  return (
+                    <div key={u.id} className={cn("flex items-start justify-between rounded-xl border p-4", riskColor)}>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {riskIcon}
+                          <span className="font-medium">{u.name}</span>
+                          {u.studentId && <Badge variant="secondary">{u.studentId}</Badge>}
+                          {eval_.qualifying ? (
+                            <Badge className="bg-green-100 text-green-700 text-[10px]">자동 승인 가능</Badge>
+                          ) : (
+                            <Badge className="bg-red-100 text-red-700 text-[10px]">수동 검토 필요</Badge>
+                          )}
+                        </div>
+                        <div className="mt-1 text-sm text-muted-foreground">@{u.username} · {u.email || "-"}</div>
+                        {!eval_.qualifying && eval_.reasons.length > 0 && (
+                          <div className="mt-1.5 flex flex-wrap gap-1">
+                            {eval_.reasons.map((r, i) => (
+                              <span key={i} className="rounded-full bg-white border border-red-200 px-2 py-0.5 text-[10px] text-red-600">{r}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      {canApprove && (
+                        <Button size="sm" variant="ghost" className="ml-3 shrink-0" onClick={() => router.push(`/admin/members/${u.id}`)}>
+                          <Settings size={14} />
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </section>

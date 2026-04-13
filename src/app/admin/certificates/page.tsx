@@ -10,8 +10,13 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
-import { Award, Heart, Trash2, Eye, Printer, FileDown, Loader2 } from "lucide-react";
+import { Award, Heart, Trash2, Eye, Printer, FileDown, Loader2, ListPlus, CheckSquare, Square } from "lucide-react";
+import { registrationsApi } from "@/lib/bkend";
+import type { SeminarRegistration } from "@/types";
+import { useAuthStore } from "@/features/auth/auth-store";
+import { auth } from "@/lib/firebase";
 import { toast } from "sonner";
 import type { Certificate } from "@/types";
 import {
@@ -46,10 +51,76 @@ function loadSavedAreaStyles(): Record<AreaKey, AreaStyle> {
 
 export default function CertificatesPage() {
   const { seminars } = useSeminars();
+  const { user } = useAuthStore();
   const [seminarId, setSeminarId] = useState("");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [search, setSearch] = useState("");
   const [previewCert, setPreviewCert] = useState<Certificate | null>(null);
+
+  // ── 일괄 발급 state ──
+  const [showBatch, setShowBatch] = useState(false);
+  const [batchSeminarId, setBatchSeminarId] = useState("");
+  const [batchType, setBatchType] = useState<"completion" | "appreciation">("completion");
+  const [batchRegistrations, setBatchRegistrations] = useState<SeminarRegistration[]>([]);
+  const [batchSelected, setBatchSelected] = useState<Set<string>>(new Set());
+  const [batchLoading, setBatchLoading] = useState(false);
+  const [batchFetching, setBatchFetching] = useState(false);
+
+  async function handleLoadRegistrations(sid: string) {
+    if (!sid) { setBatchRegistrations([]); setBatchSelected(new Set()); return; }
+    setBatchFetching(true);
+    try {
+      const res = await registrationsApi.list(sid);
+      const confirmed = res.data.filter((r) => !r.status || r.status === "confirmed" || r.status === "pending");
+      setBatchRegistrations(confirmed);
+      setBatchSelected(new Set(confirmed.map((r) => r.id)));
+    } catch {
+      setBatchRegistrations([]);
+    } finally {
+      setBatchFetching(false);
+    }
+  }
+
+  function toggleBatchSelect(id: string) {
+    setBatchSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  async function handleBatchIssue() {
+    if (!batchSeminarId || batchSelected.size === 0) return;
+    setBatchLoading(true);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const recipients = batchRegistrations
+        .filter((r) => batchSelected.has(r.id))
+        .map((r) => ({ name: r.name, email: r.email, type: batchType }));
+      const res = await fetch("/api/certificates/batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ seminarId: batchSeminarId, recipients, issuedBy: user?.name ?? "관리자" }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const { toast } = await import("sonner");
+        toast.success(`${data.created}건 발급 완료${data.errors.length > 0 ? ` (실패 ${data.errors.length}건)` : ""}`);
+        setShowBatch(false);
+        setBatchRegistrations([]);
+        setBatchSelected(new Set());
+        setBatchSeminarId("");
+      } else {
+        const { toast } = await import("sonner");
+        toast.error(data.error || "발급에 실패했습니다.");
+      }
+    } catch {
+      const { toast } = await import("sonner");
+      toast.error("일괄 발급 중 오류가 발생했습니다.");
+    } finally {
+      setBatchLoading(false);
+    }
+  }
 
   const { certificates, isLoading } = useCertificates(seminarId || undefined);
   const deleteMut = useDeleteCertificate();
@@ -203,6 +274,11 @@ export default function CertificatesPage() {
           <label className="mb-1 block text-sm font-medium">수여자 검색</label>
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="수여자명..." className="w-48" />
         </div>
+        <div className="ml-auto">
+          <Button size="sm" onClick={() => setShowBatch(true)}>
+            <ListPlus size={14} className="mr-1" /> 일괄 발급
+          </Button>
+        </div>
       </div>
 
       {/* 통계 */}
@@ -261,6 +337,77 @@ export default function CertificatesPage() {
           </table>
         </div>
       )}
+
+      {/* 일괄 발급 Dialog */}
+      <Dialog open={showBatch} onOpenChange={(open) => { setShowBatch(open); if (!open) { setBatchRegistrations([]); setBatchSelected(new Set()); setBatchSeminarId(""); } }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><ListPlus size={18} /> 일괄 발급</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block text-sm font-medium">세미나 선택</label>
+                <select
+                  value={batchSeminarId}
+                  onChange={(e) => { setBatchSeminarId(e.target.value); handleLoadRegistrations(e.target.value); }}
+                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                >
+                  <option value="">선택...</option>
+                  {seminars.map((s) => <option key={s.id} value={s.id}>{s.title}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">증서 유형</label>
+                <select
+                  value={batchType}
+                  onChange={(e) => setBatchType(e.target.value as "completion" | "appreciation")}
+                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                >
+                  <option value="completion">수료증</option>
+                  <option value="appreciation">감사장</option>
+                </select>
+              </div>
+            </div>
+
+            {batchFetching && (
+              <div className="flex justify-center py-4"><Loader2 size={20} className="animate-spin text-muted-foreground" /></div>
+            )}
+
+            {!batchFetching && batchRegistrations.length > 0 && (
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-sm font-medium">수여 대상자 ({batchSelected.size}/{batchRegistrations.length}명)</span>
+                  <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => {
+                    if (batchSelected.size === batchRegistrations.length) setBatchSelected(new Set());
+                    else setBatchSelected(new Set(batchRegistrations.map((r) => r.id)));
+                  }}>
+                    {batchSelected.size === batchRegistrations.length ? "전체 해제" : "전체 선택"}
+                  </Button>
+                </div>
+                <div className="max-h-56 overflow-y-auto rounded-lg border divide-y">
+                  {batchRegistrations.map((r) => (
+                    <div key={r.id} className="flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-muted/30" onClick={() => toggleBatchSelect(r.id)}>
+                      {batchSelected.has(r.id) ? <CheckSquare size={16} className="text-primary shrink-0" /> : <Square size={16} className="text-muted-foreground shrink-0" />}
+                      <span className="flex-1 text-sm font-medium">{r.name}</span>
+                      <span className="text-xs text-muted-foreground">{r.email || "-"}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {!batchFetching && batchSeminarId && batchRegistrations.length === 0 && (
+              <p className="text-center text-sm text-muted-foreground py-4">신청자가 없습니다.</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBatch(false)}>취소</Button>
+            <Button onClick={handleBatchIssue} disabled={batchLoading || batchSelected.size === 0}>
+              {batchLoading ? <Loader2 size={14} className="mr-1 animate-spin" /> : <Award size={14} className="mr-1" />}
+              {batchSelected.size}건 발급
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* 미리보기 Dialog */}
       <Dialog open={!!previewCert} onOpenChange={(open) => !open && setPreviewCert(null)}>

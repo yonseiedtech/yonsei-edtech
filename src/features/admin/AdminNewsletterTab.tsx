@@ -38,6 +38,7 @@ import {
   X,
   UserPlus,
   Mail,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -93,6 +94,10 @@ export default function AdminNewsletterTab() {
   const [showEditorPicker, setShowEditorPicker] = useState(false);
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
 
+  // 예약 발송
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [publishAt, setPublishAt] = useState("");
+
   async function sendNewsletterEmail(issue: NewsletterIssue) {
     if (!confirm(`"${issue.title}" 학회보를 전체 회원에게 이메일로 발송하시겠습니까?`)) return;
     setSendingEmail(issue.id);
@@ -143,6 +148,14 @@ export default function AdminNewsletterTab() {
     setCoverColor(issue.coverColor);
     setEditors(issue.editorName ? issue.editorName.split(", ") : []);
     setSections([...issue.sections]);
+    if (issue.publishAt) {
+      setScheduleEnabled(true);
+      // datetime-local input expects "YYYY-MM-DDTHH:mm"
+      setPublishAt(issue.publishAt.slice(0, 16));
+    } else {
+      setScheduleEnabled(false);
+      setPublishAt("");
+    }
     toast.success(`"${issue.title}" 편집 모드로 전환했습니다.`);
   }
 
@@ -153,6 +166,8 @@ export default function AdminNewsletterTab() {
     setCoverColor(COVER_COLORS[0].value);
     setEditors([]);
     setSections([]);
+    setScheduleEnabled(false);
+    setPublishAt("");
   }
 
   // 편집자 토글
@@ -277,6 +292,9 @@ export default function AdminNewsletterTab() {
       editorName: editorName || "편집팀",
       sections,
       status,
+      publishAt: scheduleEnabled && publishAt && status === "draft"
+        ? new Date(publishAt).toISOString()
+        : undefined,
     };
 
     if (editingId) {
@@ -720,35 +738,63 @@ export default function AdminNewsletterTab() {
       </div>
 
       {/* 하단 액션 */}
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <Button
-          variant="outline"
-          onClick={() => setShowPreview(true)}
-          disabled={sections.length === 0}
-        >
-          <Eye size={16} className="mr-1" />
-          미리보기
-        </Button>
-        <div className="flex gap-2">
+      <div className="mt-6 space-y-3">
+        {/* 예약 발송 */}
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/20 px-4 py-3">
+          <label className="flex cursor-pointer items-center gap-2 text-sm font-medium select-none">
+            <input
+              type="checkbox"
+              checked={scheduleEnabled}
+              onChange={(e) => setScheduleEnabled(e.target.checked)}
+              className="rounded border"
+            />
+            <Clock size={14} />
+            예약 발송
+          </label>
+          {scheduleEnabled && (
+            <>
+              <input
+                type="datetime-local"
+                value={publishAt}
+                onChange={(e) => setPublishAt(e.target.value)}
+                className="rounded-md border px-3 py-1.5 text-sm"
+                min={new Date().toISOString().slice(0, 16)}
+              />
+              <span className="text-xs text-muted-foreground">초안으로 저장 후 지정 시각에 자동 발행됩니다</span>
+            </>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <Button
             variant="outline"
-            onClick={() => handleSave("draft")}
-            disabled={sections.length === 0 || saving}
+            onClick={() => setShowPreview(true)}
+            disabled={sections.length === 0}
           >
-            {saving ? (
-              <Loader2 size={16} className="mr-1 animate-spin" />
-            ) : (
-              <Save size={16} className="mr-1" />
-            )}
-            초안 저장
+            <Eye size={16} className="mr-1" />
+            미리보기
           </Button>
-          <Button
-            onClick={() => handleSave("published")}
-            disabled={sections.length === 0 || saving}
-          >
-            {saving && <Loader2 size={16} className="mr-1 animate-spin" />}
-            발행하기
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => handleSave("draft")}
+              disabled={sections.length === 0 || saving}
+            >
+              {saving ? (
+                <Loader2 size={16} className="mr-1 animate-spin" />
+              ) : (
+                <Save size={16} className="mr-1" />
+              )}
+              {scheduleEnabled && publishAt ? "예약 저장" : "초안 저장"}
+            </Button>
+            <Button
+              onClick={() => handleSave("published")}
+              disabled={sections.length === 0 || saving}
+            >
+              {saving && <Loader2 size={16} className="mr-1 animate-spin" />}
+              발행하기
+            </Button>
+          </div>
         </div>
       </div>
 
