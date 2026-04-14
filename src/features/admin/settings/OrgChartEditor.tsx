@@ -11,14 +11,15 @@ import Section from "./SectionWrapper";
 import { toast } from "sonner";
 
 const LEVEL_LABELS: Record<number, string> = {
-  0: "회장",
-  1: "부회장/감사",
+  0: "주임교수",
+  1: "학회장·운영진",
   2: "팀장",
   3: "팀원",
 };
 
 const ROLE_LABELS: Record<OrgRole, string> = {
   advisor: "주임교수",
+  professor: "전공 교수",
   president: "학회장",
   vice_president: "부학회장",
   direct_aide: "학회장 직속 보조",
@@ -121,6 +122,24 @@ function EditDialog({ position, allPositions, open, onClose, onSave }: EditDialo
               <label className="mb-1 block text-xs text-muted-foreground">팀명 (선택)</label>
               <Input value={form.team ?? ""} onChange={(e) => setForm({ ...form, team: e.target.value || undefined })} placeholder="예: 학술팀" />
             </div>
+          </div>
+          <label className="flex items-center gap-2 rounded-lg border bg-amber-50/40 px-3 py-2 text-xs">
+            <input
+              type="checkbox"
+              checked={!!form.isIndependent}
+              onChange={(e) => setForm({ ...form, isIndependent: e.target.checked || undefined })}
+            />
+            <span>직속 독립기관 (0.5 계층 — 사이드 브랜치로 표시, 예: 전공 교수)</span>
+          </label>
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">인수인계 메모 (선택)</label>
+            <textarea
+              value={form.handover ?? ""}
+              onChange={(e) => setForm({ ...form, handover: e.target.value || undefined })}
+              placeholder="차기 임원에게 전달할 업무 노하우·주의사항·연락처 등"
+              rows={4}
+              className="w-full rounded-lg border bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
           </div>
           <div>
             <label className="mb-1 block text-xs text-muted-foreground">담당자</label>

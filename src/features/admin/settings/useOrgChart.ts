@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { siteSettingsApi } from "@/lib/bkend";
 
-export type OrgRole = "advisor" | "president" | "vice_president" | "direct_aide" | "team_member";
+export type OrgRole = "advisor" | "professor" | "president" | "vice_president" | "direct_aide" | "team_member";
 
 export interface OrgPosition {
   id: string;
@@ -21,16 +21,26 @@ export interface OrgPosition {
   team?: string;
   /** 학회장 직속 보조역 플래그 (role === "direct_aide"와 동등, UI 편의용) */
   isDirectAide?: boolean;
+  /** 인수인계 메모 (Markdown) - 차기 임원에게 전달할 업무 노하우 */
+  handover?: string;
+  /** 직속 독립기관 플래그 — 상위 계층과 하위 계층 사이에 사이드 브랜치로 렌더링 (예: 전공 교수님) */
+  isIndependent?: boolean;
 }
 
-/** org-structure-v2 기본 구조: 주임교수 / 학회장 / 직속보조 3명 / 부학회장 */
+/**
+ * org-structure-v3 기본 구조
+ * - L0: 주임교수
+ * - L0.5(독립): 전공 교수 (isIndependent: true, 사이드 브랜치)
+ * - L1: 학회장 + 운영진(부학회장·직속보조)
+ */
 export const DEFAULT_ORG_SEED: OrgPosition[] = [
-  { id: "advisor",    title: "주임교수",        level: 0, order: 0, role: "advisor" },
-  { id: "president",  title: "학회장",          level: 1, order: 0, parentId: "advisor",  role: "president" },
-  { id: "major-rep",  title: "재학생 전공대표", level: 2, order: 0, parentId: "president", role: "direct_aide", isDirectAide: true },
-  { id: "ta",         title: "조교",            level: 2, order: 1, parentId: "president", role: "direct_aide", isDirectAide: true },
-  { id: "alumni-rep", title: "졸업생 대표",     level: 2, order: 2, parentId: "president", role: "direct_aide", isDirectAide: true },
-  { id: "vp",         title: "부학회장",        level: 2, order: 3, parentId: "president", role: "vice_president" },
+  { id: "advisor",     title: "주임교수",         level: 0, order: 0, role: "advisor" },
+  { id: "professor-1", title: "전공 교수 (공석)", level: 0, order: 1, parentId: "advisor", role: "professor", isIndependent: true },
+  { id: "president",   title: "학회장",           level: 1, order: 0, parentId: "advisor",  role: "president" },
+  { id: "vp",          title: "부학회장",         level: 1, order: 1, parentId: "advisor",  role: "vice_president" },
+  { id: "major-rep",   title: "재학생 전공대표",  level: 1, order: 2, parentId: "advisor",  role: "direct_aide", isDirectAide: true },
+  { id: "ta",          title: "조교",             level: 1, order: 3, parentId: "advisor",  role: "direct_aide", isDirectAide: true },
+  { id: "alumni-rep",  title: "졸업생 대표",      level: 1, order: 4, parentId: "advisor",  role: "direct_aide", isDirectAide: true },
 ];
 
 export interface OrgTreeNode extends OrgPosition {
