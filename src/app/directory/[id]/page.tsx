@@ -148,18 +148,46 @@ export default function ProfilePage() {
 
         {/* 액션 */}
         <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <Button asChild variant="outline">
-            <Link href={`/directory/${owner.id}/card`}>
-              <CreditCard size={16} className="mr-1" />명함 보기
-            </Link>
-          </Button>
+          <Link
+            href={`/directory/${owner.id}/card`}
+            className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-white px-4 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground"
+          >
+            <CreditCard size={16} className="mr-1" />명함 보기
+          </Link>
           <Button onClick={() => downloadVCard(userToContact(owner))}>
             <UserPlus size={16} className="mr-1" />연락처 저장(vCard)
           </Button>
         </div>
 
+        {/* 온보딩 가이드 */}
+        <section className="mt-6 rounded-2xl border bg-primary/5 p-5">
+          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-primary">
+            <CreditCard size={15} />명함 교환, 이렇게 해요
+          </h2>
+          <ol className="mt-3 space-y-2 text-xs text-slate-700">
+            <li className="flex gap-2">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">1</span>
+              <span><strong>명함 보기</strong>를 눌러 QR 코드 · 전화번호 · 이메일을 한 번에 확인하세요.</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">2</span>
+              <span><strong>연락처 저장(vCard)</strong>을 누르면 휴대폰 주소록에 자동 등록됩니다.</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">3</span>
+              <span>내 명함은 <Link href="/mypage/card" className="text-primary underline">마이페이지 › 내 명함</Link>에서 QR을 보여주거나 링크를 공유하면 됩니다.</span>
+            </li>
+            {viewer && !isSelf && (
+              <li className="flex gap-2">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">4</span>
+                <span>QR로 방문한 이 페이지는 <Link href="/mypage/card" className="text-primary underline">교환 기록</Link>에 자동 저장됩니다.</span>
+              </li>
+            )}
+          </ol>
+        </section>
+
         {!viewer && (
-          <p className="mt-6 rounded-xl border border-dashed bg-white p-3 text-center text-xs text-muted-foreground">
+          <p className="mt-4 rounded-xl border border-dashed bg-white p-3 text-center text-xs text-muted-foreground">
             연세교육공학회 회원이신가요? <Link href="/login" className="text-primary underline">로그인</Link>하면 명함을 주고받은 기록이 저장됩니다.
           </p>
         )}
