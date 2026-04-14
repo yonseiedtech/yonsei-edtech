@@ -132,7 +132,7 @@ function ExchangesTab({ userId }: { userId: string }) {
         emptyMsg="아직 받은 명함이 없습니다."
         loading={isLoading}
         nameKey="ownerName"
-        linkPrefix={(x) => `/directory/${x.ownerId}/card`}
+        linkPrefix={(x) => `/directory/${x.ownerId}`}
       />
       <ExchangeSection
         title="내 명함을 받은 사람"
@@ -140,7 +140,7 @@ function ExchangesTab({ userId }: { userId: string }) {
         emptyMsg="아직 명함을 나눈 기록이 없습니다."
         loading={isLoading}
         nameKey="receiverName"
-        linkPrefix={(x) => `/directory/${x.receiverId}/card`}
+        linkPrefix={(x) => `/directory/${x.receiverId}`}
       />
     </div>
   );
@@ -154,7 +154,7 @@ function CardInner() {
   if (!user) return null;
 
   const siteOrigin = typeof window !== "undefined" ? window.location.origin : "https://yonsei-edtech.vercel.app";
-  const qrUrl = `${siteOrigin}/directory/${user.id}/card?via=qr`;
+  const qrUrl = `${siteOrigin}/directory/${user.id}?via=qr`;
 
   async function handleShare() {
     if (!user) return;

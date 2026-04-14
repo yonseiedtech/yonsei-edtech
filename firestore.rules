@@ -26,7 +26,9 @@ service cloud.firestore {
 
     // ─── Users ───
     match /users/{userId} {
-      allow read: if isAuthenticated();
+      // Public profile (QR scan) — single-doc get is open; list still requires auth
+      allow get: if true;
+      allow list: if isAuthenticated();
       // Users can update their own profile, but NOT role or approved
       allow update: if isOwner(userId) && noSensitiveFieldChange();
       // Only admin can change role/approved or create/delete users

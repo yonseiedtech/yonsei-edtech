@@ -85,9 +85,9 @@ function ReceivedCardInner() {
     <div className="min-h-screen bg-slate-50 py-10">
       <div className="mx-auto max-w-md px-4">
         <div className="mb-4 flex items-center gap-2">
-          <Link href="/directory" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <Link href={`/directory/${owner.id}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft size={16} />
-            회원 목록
+            프로필로
           </Link>
         </div>
 
