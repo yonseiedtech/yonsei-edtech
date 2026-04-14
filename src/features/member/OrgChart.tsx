@@ -2,39 +2,60 @@
 
 import { useOrgChart, buildOrgTree, type OrgTreeNode } from "@/features/admin/settings/useOrgChart";
 
-function OrgNode({ node, isRoot }: { node: OrgTreeNode; isRoot?: boolean }) {
+function OrgNode({ node, isRoot, isIndependent }: { node: OrgTreeNode; isRoot?: boolean; isIndependent?: boolean }) {
+  const regulars = node.children.filter((c) => !c.isIndependent);
+  const independents = node.children.filter((c) => c.isIndependent);
+
   return (
     <div className="flex flex-col items-center">
-      {/* 노드 카드 */}
-      <div className={`flex flex-col items-center rounded-xl border bg-white px-4 py-3 shadow-sm ${isRoot ? "border-primary/30 bg-primary/5" : ""}`}>
-        <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${
-          node.userName
-            ? "bg-primary/10 text-primary"
-            : "bg-muted text-muted-foreground"
-        }`}>
-          {node.userName ? node.userName[0] : "?"}
+      {/* 부모 카드 + 독립기관 (독립은 absolute로 부모의 수평 중심축을 흔들지 않음) */}
+      <div className="relative">
+        <div className={`flex flex-col items-center rounded-xl border bg-white px-4 py-3 shadow-sm ${isRoot ? "border-primary/30 bg-primary/5" : ""} ${isIndependent ? "border-dashed border-amber-400/60 bg-amber-50/40" : ""}`}>
+          <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${
+            node.userName
+              ? "bg-primary/10 text-primary"
+              : "bg-muted text-muted-foreground"
+          }`}>
+            {node.userName ? node.userName[0] : "?"}
+          </div>
+          <p className="mt-1.5 text-xs font-semibold">{node.title}</p>
+          <p className="text-[11px] text-muted-foreground">{node.userName ?? "공석"}</p>
+          {node.department && (
+            <p className="text-[10px] text-muted-foreground/70">{node.department}</p>
+          )}
         </div>
-        <p className="mt-1.5 text-xs font-semibold">{node.title}</p>
-        <p className="text-[11px] text-muted-foreground">{node.userName ?? "공석"}</p>
-        {node.department && (
-          <p className="text-[10px] text-muted-foreground/70">{node.department}</p>
+
+        {/* 독립기관: 부모 카드 오른쪽, 부모-자식 중간 높이에 배치 */}
+        {independents.length > 0 && (
+          <div
+            className={
+              regulars.length > 0
+                ? "absolute left-full top-full ml-8 flex -translate-y-1/2 flex-col gap-2 pt-[0.625rem]"
+                : "absolute left-full top-1/2 ml-8 flex -translate-y-1/2 flex-col gap-2"
+            }
+          >
+            {independents.map((ind) => (
+              <div key={ind.id} className="flex items-center gap-2">
+                <div className="h-px w-6 border-t border-dashed border-amber-400/70" />
+                <OrgNode node={ind} isIndependent />
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
-      {/* 자식 노드 */}
-      {node.children.length > 0 && (
+      {/* 자식 노드 (직속) */}
+      {regulars.length > 0 && (
         <>
-          {/* 세로 연결선 */}
           <div className="h-5 w-px bg-border" />
-          {/* 가로 연결선 + 자식들 */}
           <div className="relative flex gap-6">
-            {node.children.length > 1 && (
-              <div className="absolute left-[calc(50%-50%+2rem)] right-[calc(50%-50%+2rem)] top-0 h-px bg-border" style={{
-                left: `calc(${100 / (node.children.length * 2)}% + 0.5rem)`,
-                right: `calc(${100 / (node.children.length * 2)}% + 0.5rem)`,
+            {regulars.length > 1 && (
+              <div className="absolute top-0 h-px bg-border" style={{
+                left: `calc(${100 / (regulars.length * 2)}% + 0.5rem)`,
+                right: `calc(${100 / (regulars.length * 2)}% + 0.5rem)`,
               }} />
             )}
-            {node.children.map((child) => (
+            {regulars.map((child) => (
               <div key={child.id} className="flex flex-col items-center">
                 <div className="h-5 w-px bg-border" />
                 <OrgNode node={child} />
@@ -63,6 +84,9 @@ function MobileOrgList({ nodes, depth = 0 }: { nodes: OrgTreeNode[]; depth?: num
             </div>
             <div className="min-w-0">
               <span className="text-sm font-medium">{node.title}</span>
+              {node.isIndependent && (
+                <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">독립</span>
+              )}
               <span className="ml-1.5 text-xs text-muted-foreground">{node.userName ?? "공석"}</span>
               {node.department && (
                 <span className="ml-1 text-xs text-muted-foreground/70">· {node.department}</span>
