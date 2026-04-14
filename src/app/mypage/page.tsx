@@ -244,11 +244,7 @@ function MypageContent() {
                     <QrCode size={16} className="text-primary" />
                     <p className="text-sm font-semibold">내 모바일 명함</p>
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">QR·vCard·공유로 명함 주고받기</p>
-                </Link>
-                <Link href="/mypage/card/exchanges" className="rounded-2xl border bg-white p-4 hover:border-primary/40 hover:shadow-sm">
-                  <p className="text-sm font-semibold">명함 교환 기록</p>
-                  <p className="mt-1 text-xs text-muted-foreground">받은·나눈 명함 내역</p>
+                  <p className="mt-1 text-xs text-muted-foreground">QR·vCard·공유·교환 기록 관리</p>
                 </Link>
                 <Link href="/activities" className="rounded-2xl border bg-white p-4 hover:border-primary/40 hover:shadow-sm">
                   <p className="text-sm font-semibold">학술활동 둘러보기</p>
