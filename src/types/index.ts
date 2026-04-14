@@ -58,6 +58,7 @@ export interface User { [key: string]: unknown;
   department?: string;
   position?: string;
   studentId?: string;
+  phone?: string;
   contactEmail?: string;
   contactVisibility?: ContactVisibility;
   enrollmentYear?: number;
@@ -480,6 +481,21 @@ export const HANDOVER_CATEGORY_LABELS: Record<HandoverDocument["category"], stri
   reference: "참고 자료",
   caution: "주의 사항",
 };
+
+// ── 명함 교환 로그 ──
+export interface BusinessCardExchange {
+  id: string;
+  /** 명함 주인 (내 명함을 상대가 스캔) */
+  ownerId: string;
+  ownerName: string;
+  /** 받은 사람 (스캔한 사람) */
+  receiverId: string;
+  receiverName: string;
+  /** 'qr' = QR 스캔, 'link' = 공유 링크 클릭 */
+  channel: "qr" | "link";
+  note?: string;
+  createdAt: string;
+}
 
 // ── 세미나 대기열 ──
 export interface WaitlistEntry {

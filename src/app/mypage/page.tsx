@@ -10,25 +10,33 @@ import MyPostList from "@/features/auth/MyPostList";
 import { usePosts } from "@/features/board/useBoard";
 import { useSeminars, useToggleAttendance } from "@/features/seminar/useSeminar";
 import { useQuery } from "@tanstack/react-query";
-import { certificatesApi, attendeesApi } from "@/lib/bkend";
+import { certificatesApi, attendeesApi, activitiesApi } from "@/lib/bkend";
 import AttendanceCertificate from "@/features/seminar/AttendanceCertificate";
-import type { Certificate } from "@/types";
+import type { Certificate, Activity } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { User, LogOut, Calendar, X, FileText, KeyRound, UserCog, Award } from "lucide-react";
+import { User, LogOut, Calendar, X, FileText, KeyRound, UserCog, Award, Home, ChevronRight, FolderKanban, BookOpen, Globe, QrCode } from "lucide-react";
+import EmptyState from "@/components/ui/empty-state";
 import { useAuth } from "@/features/auth/useAuth";
 import { ROLE_LABELS, ENROLLMENT_STATUS_LABELS } from "@/types";
 import { formatDate, formatGeneration } from "@/lib/utils";
 import { toast } from "sonner";
 
 const TABS = [
+  { key: "home", label: "홈", icon: Home },
   { key: "profile", label: "프로필", icon: UserCog },
   { key: "password", label: "비밀번호", icon: KeyRound },
-  { key: "seminars", label: "세미나", icon: Calendar },
+  { key: "activities", label: "학술활동", icon: BookOpen },
   { key: "certificates", label: "수료증", icon: Award },
   { key: "posts", label: "내 글", icon: FileText },
 ] as const;
+
+const ACTIVITY_META: Record<string, { label: string; icon: typeof FolderKanban; href: string }> = {
+  project: { label: "프로젝트", icon: FolderKanban, href: "/activities/projects" },
+  study: { label: "스터디", icon: BookOpen, href: "/activities/studies" },
+  external: { label: "대외활동", icon: Globe, href: "/activities/external" },
+};
 
 type TabKey = (typeof TABS)[number]["key"];
 
@@ -38,10 +46,27 @@ function MypageContent() {
   const { posts } = usePosts();
   const { seminars } = useSeminars();
   const { toggleAttendance } = useToggleAttendance();
-  const [activeTab, setActiveTab] = useState<TabKey>("profile");
+  const [activeTab, setActiveTab] = useState<TabKey>("home");
 
   const myPosts = posts.filter((p) => p.authorId === user?.id);
   const mySeminars = seminars.filter((s) => user && s.attendeeIds.includes(user.id));
+
+  const { data: allActivities = [] } = useQuery({
+    queryKey: ["activities", "all"],
+    queryFn: async () => {
+      const res = await activitiesApi.list();
+      return res.data as unknown as Activity[];
+    },
+    enabled: !!user,
+  });
+  const myActivities = allActivities.filter((a) => {
+    if (!user) return false;
+    const inMembers = a.members?.includes(user.id) || a.members?.includes(user.name);
+    const inParticipants = a.participants?.includes(user.id) || a.participants?.includes(user.name);
+    const isLeader = a.leader === user.id || a.leader === user.name;
+    const isApplicant = a.applicants?.some((ap) => ap.userId === user.id && ap.status === "approved");
+    return inMembers || inParticipants || isLeader || isApplicant;
+  });
 
   const { data: allCertificates = [] } = useQuery({
     queryKey: ["certificates", "my"],
@@ -137,6 +162,106 @@ function MypageContent() {
 
         {/* 탭 콘텐츠 */}
         <div className="mt-6">
+          {activeTab === "home" && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-3">
+                <button onClick={() => setActiveTab("activities")} className="rounded-2xl border bg-white p-4 text-left hover:border-primary/40 hover:shadow-sm">
+                  <BookOpen size={18} className="text-primary" />
+                  <p className="mt-2 text-xs text-muted-foreground">참여 학술활동</p>
+                  <p className="mt-0.5 text-xl font-bold">{myActivities.length + mySeminars.length}</p>
+                </button>
+                <button onClick={() => setActiveTab("certificates")} className="rounded-2xl border bg-white p-4 text-left hover:border-primary/40 hover:shadow-sm">
+                  <Award size={18} className="text-primary" />
+                  <p className="mt-2 text-xs text-muted-foreground">보유 수료증</p>
+                  <p className="mt-0.5 text-xl font-bold">{myCertificates.length}</p>
+                </button>
+                <button onClick={() => setActiveTab("posts")} className="rounded-2xl border bg-white p-4 text-left hover:border-primary/40 hover:shadow-sm">
+                  <FileText size={18} className="text-primary" />
+                  <p className="mt-2 text-xs text-muted-foreground">작성한 글</p>
+                  <p className="mt-0.5 text-xl font-bold">{myPosts.length}</p>
+                </button>
+              </div>
+
+              <div className="rounded-2xl border bg-white p-5">
+                <h3 className="text-sm font-semibold">다음 학술활동</h3>
+                {(() => {
+                  const today = new Date().toISOString().slice(0, 10);
+                  const upcomingActivities = myActivities
+                    .filter((a) => (a.date || "") >= today)
+                    .map((a) => ({
+                      kind: "activity" as const,
+                      id: a.id,
+                      title: a.title,
+                      date: a.date,
+                      meta: ACTIVITY_META[a.type]?.label ?? "학술활동",
+                      href: `${ACTIVITY_META[a.type]?.href ?? "/activities"}/${a.id}`,
+                    }));
+                  const upcomingSeminars = mySeminars
+                    .filter((s) => (s.date || "") >= today)
+                    .map((s) => ({
+                      kind: "seminar" as const,
+                      id: s.id,
+                      title: s.title,
+                      date: s.date,
+                      meta: `세미나 · ${s.location}`,
+                      href: `/seminars/${s.id}`,
+                    }));
+                  const upcoming = [...upcomingActivities, ...upcomingSeminars]
+                    .sort((a, b) => a.date.localeCompare(b.date))
+                    .slice(0, 3);
+
+                  if (upcoming.length === 0) {
+                    return (
+                      <EmptyState
+                        icon={BookOpen}
+                        title="예정된 학술활동이 없습니다"
+                        description="프로젝트·스터디·세미나에 참여해보세요."
+                        actionLabel="학술활동 둘러보기"
+                        actionHref="/activities"
+                        className="mt-3 border-0 bg-transparent py-6"
+                      />
+                    );
+                  }
+                  return (
+                    <ul className="mt-3 divide-y">
+                      {upcoming.map((item) => (
+                        <li key={`${item.kind}-${item.id}`} className="flex items-center justify-between py-2.5">
+                          <div className="min-w-0">
+                            <Link href={item.href} className="truncate text-sm font-medium hover:text-primary">{item.title}</Link>
+                            <p className="text-xs text-muted-foreground">{formatDate(item.date)} · {item.meta}</p>
+                          </div>
+                          <ChevronRight size={14} className="shrink-0 text-muted-foreground" />
+                        </li>
+                      ))}
+                    </ul>
+                  );
+                })()}
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Link href="/mypage/card" className="rounded-2xl border bg-white p-4 hover:border-primary/40 hover:shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <QrCode size={16} className="text-primary" />
+                    <p className="text-sm font-semibold">내 모바일 명함</p>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">QR·vCard·공유로 명함 주고받기</p>
+                </Link>
+                <Link href="/mypage/card/exchanges" className="rounded-2xl border bg-white p-4 hover:border-primary/40 hover:shadow-sm">
+                  <p className="text-sm font-semibold">명함 교환 기록</p>
+                  <p className="mt-1 text-xs text-muted-foreground">받은·나눈 명함 내역</p>
+                </Link>
+                <Link href="/activities" className="rounded-2xl border bg-white p-4 hover:border-primary/40 hover:shadow-sm">
+                  <p className="text-sm font-semibold">학술활동 둘러보기</p>
+                  <p className="mt-1 text-xs text-muted-foreground">프로젝트·스터디·대외활동</p>
+                </Link>
+                <Link href="/board" className="rounded-2xl border bg-white p-4 hover:border-primary/40 hover:shadow-sm">
+                  <p className="text-sm font-semibold">게시판</p>
+                  <p className="mt-1 text-xs text-muted-foreground">공지·자유·홍보·자료실</p>
+                </Link>
+              </div>
+            </div>
+          )}
+
           {activeTab === "profile" && (
             <div className="rounded-2xl border bg-white p-6">
               <ProfileEditor user={user} />
@@ -152,17 +277,65 @@ function MypageContent() {
             </div>
           )}
 
-          {activeTab === "seminars" && (
-            <div className="space-y-3">
-              {mySeminars.length === 0 ? (
-                <p className="rounded-xl border bg-white p-6 text-center text-sm text-muted-foreground">
-                  신청한 세미나가 없습니다.{" "}
-                  <Link href="/seminars" className="text-primary hover:underline">
-                    세미나 보러가기
-                  </Link>
-                </p>
-              ) : (
-                mySeminars.map((s) => (
+          {activeTab === "activities" && (
+            <div className="space-y-6">
+              {/* 학술활동 (프로젝트·스터디·대외활동) */}
+              <section>
+                <h3 className="mb-2 text-sm font-semibold">학술활동 ({myActivities.length})</h3>
+                {myActivities.length === 0 ? (
+                  <EmptyState
+                    icon={BookOpen}
+                    title="참여 중인 학술활동이 없습니다"
+                    description="프로젝트·스터디·대외활동에 참여해보세요."
+                    actionLabel="학술활동 둘러보기"
+                    actionHref="/activities"
+                  />
+                ) : (
+                  <ul className="space-y-2">
+                    {myActivities.map((a) => {
+                      const meta = ACTIVITY_META[a.type] ?? ACTIVITY_META.project;
+                      const Icon = meta.icon;
+                      return (
+                        <li key={a.id} className="rounded-xl border bg-white px-5 py-4 hover:border-primary/40">
+                          <Link href={`${meta.href}/${a.id}`} className="flex items-center justify-between">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <Icon size={14} className="text-primary" />
+                                <Badge variant="secondary" className="text-[10px]">{meta.label}</Badge>
+                                {a.status && (
+                                  <Badge variant="outline" className="text-[10px]">
+                                    {a.status === "upcoming" ? "예정" : a.status === "ongoing" ? "진행중" : "완료"}
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="mt-1 truncate font-medium">{a.title}</p>
+                              <p className="mt-0.5 text-xs text-muted-foreground">
+                                {a.date ? formatDate(a.date) : ""}{a.location ? ` · ${a.location}` : ""}
+                              </p>
+                            </div>
+                            <ChevronRight size={14} className="shrink-0 text-muted-foreground" />
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </section>
+
+              {/* 세미나 */}
+              <section>
+                <h3 className="mb-2 text-sm font-semibold">참여 세미나 ({mySeminars.length})</h3>
+                {mySeminars.length === 0 ? (
+                  <EmptyState
+                    icon={Calendar}
+                    title="신청한 세미나가 없습니다"
+                    description="관심 있는 세미나에 참여 신청해보세요."
+                    actionLabel="세미나 보러가기"
+                    actionHref="/seminars"
+                  />
+                ) : (
+                  <div className="space-y-3">
+                    {mySeminars.map((s) => (
                   <div key={s.id} className="rounded-xl border bg-white px-5 py-4">
                     <div className="flex items-center justify-between">
                       <div>
@@ -191,17 +364,23 @@ function MypageContent() {
                       </div>
                     )}
                   </div>
-                ))
-              )}
+                ))}
+                  </div>
+                )}
+              </section>
             </div>
           )}
 
           {activeTab === "certificates" && (
             <div className="space-y-3">
               {myCertificates.length === 0 ? (
-                <p className="rounded-xl border bg-white p-6 text-center text-sm text-muted-foreground">
-                  발급된 수료증이 없습니다.
-                </p>
+                <EmptyState
+                  icon={Award}
+                  title="발급된 수료증이 없습니다"
+                  description="세미나 출석을 완료하면 수료증이 발급됩니다."
+                  actionLabel="세미나 보러가기"
+                  actionHref="/seminars"
+                />
               ) : (
                 myCertificates.map((c) => (
                   <div key={c.id} className="rounded-xl border bg-white px-5 py-4">

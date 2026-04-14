@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
-import { Menu, X, User, Shield, ChevronDown, BookUser, LayoutDashboard, LogOut, Settings, BookOpen, Users } from "lucide-react";
+import { Menu, X, User, Shield, ChevronDown, BookUser, LayoutDashboard, LogOut, Settings, BookOpen, Users, QrCode } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -12,6 +12,8 @@ import { useAuth } from "@/features/auth/useAuth";
 import { isAtLeast } from "@/lib/permissions";
 import NotificationBell from "@/features/notifications/NotificationBell";
 import ThemeToggle from "@/components/ThemeToggle";
+import GlobalSearch from "@/components/layout/GlobalSearch";
+import SessionIndicator from "@/features/auth/SessionIndicator";
 
 interface NavLink {
   href: string;
@@ -167,12 +169,10 @@ function UserDropdown() {
   const menuItems = [
     { href: "/dashboard", label: "대시보드", icon: LayoutDashboard },
     { href: "/mypage", label: "마이페이지", icon: User },
-    { href: "/directory", label: "연락망", icon: BookUser },
+    { href: "/mypage/card", label: "내 명함", icon: QrCode },
     ...(showAdmin
       ? [
-          { href: "/academic-admin", label: "학술활동 관리", icon: BookOpen },
-          { href: "/staff-admin", label: "운영진 관리", icon: Users },
-          { href: "/admin", label: "관리자", icon: Shield },
+          { href: "/console", label: "운영 콘솔", icon: Shield },
         ]
       : []),
   ];
@@ -288,9 +288,11 @@ export default function Header() {
 
         {/* Auth Area (Desktop) */}
         <div className="hidden items-center gap-2 md:flex">
+          <GlobalSearch />
           <ThemeToggle />
           {user ? (
             <>
+              <SessionIndicator />
               <NotificationBell />
               <UserDropdown />
             </>
@@ -341,12 +343,10 @@ export default function Header() {
                 {[
                   { href: "/dashboard", label: "대시보드", icon: LayoutDashboard },
                   { href: "/mypage", label: "마이페이지", icon: User },
-                  { href: "/directory", label: "연락망", icon: BookUser },
+                  { href: "/mypage/card", label: "내 명함", icon: QrCode },
                   ...(showAdmin
                     ? [
-                        { href: "/academic-admin", label: "학술활동 관리", icon: BookOpen },
-                        { href: "/staff-admin", label: "운영진 관리", icon: Users },
-                        { href: "/admin", label: "관리자", icon: Shield },
+                        { href: "/console", label: "운영 콘솔", icon: Shield },
                       ]
                     : []),
                 ].map((item) => {
