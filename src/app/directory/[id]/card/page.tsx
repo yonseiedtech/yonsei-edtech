@@ -6,7 +6,6 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { addDoc, collection, getDocs, query, serverTimestamp, where } from "firebase/firestore";
 import { ArrowLeft, Download, UserPlus } from "lucide-react";
-import AuthGuard from "@/features/auth/AuthGuard";
 import { useAuthStore } from "@/features/auth/auth-store";
 import BusinessCard from "@/features/card/BusinessCard";
 import { Button } from "@/components/ui/button";
@@ -115,9 +114,5 @@ function ReceivedCardInner() {
 }
 
 export default function ReceivedCardPage() {
-  return (
-    <AuthGuard>
-      <ReceivedCardInner />
-    </AuthGuard>
-  );
+  return <ReceivedCardInner />;
 }
