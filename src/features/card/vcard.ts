@@ -14,13 +14,31 @@ export interface BusinessCardContact {
   note?: string;
 }
 
+function splitKoreanName(fullName: string): { family: string; given: string } {
+  const trimmed = fullName.trim();
+  if (trimmed.includes(" ")) {
+    const [given, ...rest] = trimmed.split(/\s+/);
+    return { family: rest.join(" "), given };
+  }
+  if (/^[가-힣]{2,4}$/.test(trimmed)) {
+    return { family: trimmed.slice(0, 1), given: trimmed.slice(1) };
+  }
+  return { family: "", given: trimmed };
+}
+
 export function buildVCard(c: BusinessCardContact): string {
-  const lines = ["BEGIN:VCARD", "VERSION:3.0", `FN:${escapeVCard(c.name)}`];
+  const { family, given } = splitKoreanName(c.name);
+  const lines = [
+    "BEGIN:VCARD",
+    "VERSION:3.0",
+    `N:${escapeVCard(family)};${escapeVCard(given)};;;`,
+    `FN:${escapeVCard(c.name)}`,
+  ];
   if (c.org) lines.push(`ORG:${escapeVCard(c.org)}`);
   if (c.title) lines.push(`TITLE:${escapeVCard(c.title)}`);
-  if (c.phone) lines.push(`TEL;TYPE=CELL:${c.phone}`);
-  if (c.email) lines.push(`EMAIL;TYPE=INTERNET:${c.email}`);
-  if (c.url) lines.push(`URL:${c.url}`);
+  if (c.phone) lines.push(`TEL;TYPE=CELL:${escapeVCard(c.phone)}`);
+  if (c.email) lines.push(`EMAIL;TYPE=INTERNET:${escapeVCard(c.email)}`);
+  if (c.url) lines.push(`URL:${escapeVCard(c.url)}`);
   if (c.note) lines.push(`NOTE:${escapeVCard(c.note)}`);
   lines.push("END:VCARD");
   return lines.join("\r\n");

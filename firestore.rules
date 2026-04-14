@@ -268,7 +268,10 @@ service cloud.firestore {
           || resource.data.receiverId == request.auth.uid
           || isStaffOrAbove());
       allow create: if isAuthenticated()
-        && request.resource.data.receiverId == request.auth.uid;
+        && request.resource.data.receiverId == request.auth.uid
+        && request.resource.data.ownerId != request.auth.uid
+        && exists(/databases/$(database)/documents/users/$(request.resource.data.ownerId))
+        && get(/databases/$(database)/documents/users/$(request.resource.data.ownerId)).data.name == request.resource.data.ownerName;
       allow update, delete: if isAuthenticated() && isStaffOrAbove();
     }
 
