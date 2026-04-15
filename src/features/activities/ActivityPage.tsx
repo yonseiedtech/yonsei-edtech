@@ -17,8 +17,10 @@ import {
 } from "@/components/ui/dialog";
 import Link from "next/link";
 import PageHeader from "@/components/ui/page-header";
-import { Calendar, MapPin, Users, User, Plus, Pencil, Trash2, Loader2, UserPlus, Check, Megaphone } from "lucide-react";
+import { Calendar, MapPin, Users, User, Plus, Pencil, Trash2, Loader2, UserPlus, Check, Megaphone, CalendarClock, Archive } from "lucide-react";
 import { postsApi } from "@/lib/bkend";
+import EmptyState from "@/components/ui/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const RECRUIT_LABELS: Record<string, string> = { recruiting: "모집중", closed: "모집마감", in_progress: "진행중", completed: "완료" };
 const RECRUIT_COLORS: Record<string, string> = { recruiting: "bg-green-50 text-green-700", closed: "bg-red-50 text-red-700", in_progress: "bg-amber-50 text-amber-700", completed: "bg-muted text-muted-foreground" };
@@ -61,7 +63,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
   const [dialogOpen, setDialogOpen] = useState(false);
   const [autoPost, setAutoPost] = useState(false);
 
-  const { data: activities = [] } = useQuery({
+  const { data: activities = [], isLoading } = useQuery({
     queryKey: ["activities", type],
     queryFn: async () => {
       const res = await fetch(`/api/activities?type=${type}`);
@@ -191,9 +193,12 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
           </div>
           <div className="flex shrink-0 gap-1 self-end sm:self-start">
             {canJoin && (
-              <Button size="sm" className="h-8 gap-1 text-xs" onClick={() => joinMutation.mutate(a.id)} disabled={joinMutation.isPending}>
-                <UserPlus size={12} />참여 신청
-              </Button>
+              <Link
+                href={`/activities/${type === "project" ? "projects" : type === "study" ? "studies" : "external"}/${a.id}`}
+                className="inline-flex h-8 items-center gap-1 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                <UserPlus size={12} />상세·신청
+              </Link>
             )}
             {isJoined && (
               <Button variant="outline" size="sm" className="h-8 gap-1 text-xs text-green-600" onClick={() => leaveMutation.mutate(a.id)} disabled={leaveMutation.isPending}>
@@ -225,20 +230,53 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
         />
 
         {/* 진행 중 / 예정 */}
-        {ongoing.length > 0 && (
-          <div className="mt-8">
-            <h2 className="text-lg font-bold">진행 중 & 예정</h2>
+        <div className="mt-8">
+          <h2 className="text-lg font-bold">진행 중 & 예정</h2>
+          {isLoading ? (
+            <div className="mt-4 space-y-3">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="rounded-xl border bg-white p-5">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-5 w-12" />
+                    <Skeleton className="h-5 w-14" />
+                    <Skeleton className="h-6 w-40" />
+                  </div>
+                  <Skeleton className="mt-3 h-4 w-full" />
+                  <Skeleton className="mt-2 h-4 w-2/3" />
+                </div>
+              ))}
+            </div>
+          ) : ongoing.length === 0 ? (
+            <EmptyState
+              icon={CalendarClock}
+              title={`진행 중이거나 예정된 ${title}이 없어요`}
+              description="운영진이 새 활동을 등록하면 여기에 표시됩니다."
+              className="mt-4"
+            />
+          ) : (
             <div className="mt-4 space-y-3">{ongoing.map((a) => <ActivityCard key={a.id} a={a} />)}</div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* 완료 */}
         <div className="mt-8">
           <h2 className="text-lg font-bold">활동 내역</h2>
-          {completed.length === 0 && ongoing.length === 0 ? (
-            <p className="mt-4 text-sm text-muted-foreground">등록된 활동이 없습니다.</p>
+          {isLoading ? (
+            <div className="mt-4 space-y-3">
+              {[0, 1].map((i) => (
+                <div key={i} className="rounded-xl border bg-white p-5">
+                  <Skeleton className="h-5 w-1/3" />
+                  <Skeleton className="mt-3 h-4 w-full" />
+                </div>
+              ))}
+            </div>
           ) : completed.length === 0 ? (
-            <p className="mt-4 text-sm text-muted-foreground">완료된 활동이 없습니다.</p>
+            <EmptyState
+              icon={Archive}
+              title="완료된 활동이 없습니다"
+              description="활동이 마무리되면 아카이브에서 확인할 수 있어요."
+              className="mt-4"
+            />
           ) : (
             <div className="mt-4 space-y-3">{completed.map((a) => <ActivityCard key={a.id} a={a} />)}</div>
           )}
