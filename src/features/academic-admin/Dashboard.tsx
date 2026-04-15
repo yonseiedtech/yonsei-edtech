@@ -9,10 +9,19 @@ import type { Seminar, Activity } from "@/types";
 import { Calendar, BookOpen, Users, FolderKanban, Globe, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 
-function StatCard({ icon, title, color, stats }: { icon: React.ReactNode; title: string; color: string; stats: { label: string; value: number }[] }) {
+function StatCard({ icon, title, color, stats, href }: { icon: React.ReactNode; title: string; color: string; stats: { label: string; value: number }[]; href: string }) {
   return (
-    <div className={cn("rounded-xl border-l-4 border bg-white p-4", color)}>
-      <div className="flex items-center gap-2 text-sm font-semibold">{icon}{title}</div>
+    <Link
+      href={href}
+      className={cn(
+        "block rounded-xl border-l-4 border bg-white p-4 transition-shadow hover:shadow-md",
+        color,
+      )}
+    >
+      <div className="flex items-center justify-between text-sm font-semibold">
+        <span className="flex items-center gap-2">{icon}{title}</span>
+        <span className="text-[10px] font-normal text-muted-foreground">관리 →</span>
+      </div>
       <div className="mt-3 grid grid-cols-2 gap-2">
         {stats.map((s) => (
           <div key={s.label} className="text-center">
@@ -21,7 +30,7 @@ function StatCard({ icon, title, color, stats }: { icon: React.ReactNode; title:
           </div>
         ))}
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -114,25 +123,25 @@ export default function AcademicDashboard() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={<BookOpen size={20} />} title="세미나" color="border-l-blue-500" stats={[
+        <StatCard icon={<BookOpen size={20} />} title="세미나" color="border-l-blue-500" href="/academic-admin/seminars" stats={[
           { label: "완료", value: seminarStats.completed },
           { label: "예정", value: seminarStats.upcoming },
           { label: "진행중", value: seminarStats.ongoing },
           { label: "총 참석자", value: seminarStats.totalAttendees },
         ]} />
-        <StatCard icon={<Users size={20} />} title="스터디" color="border-l-green-500" stats={[
+        <StatCard icon={<Users size={20} />} title="스터디" color="border-l-green-500" href="/academic-admin/studies" stats={[
           { label: "진행/예정", value: studyStats.ongoing },
           { label: "완료", value: studyStats.completed },
           { label: "모집중", value: studyStats.recruiting },
           { label: "참여자", value: studyStats.totalParticipants },
         ]} />
-        <StatCard icon={<FolderKanban size={20} />} title="프로젝트" color="border-l-purple-500" stats={[
+        <StatCard icon={<FolderKanban size={20} />} title="프로젝트" color="border-l-purple-500" href="/academic-admin/projects" stats={[
           { label: "진행/예정", value: projectStats.ongoing },
           { label: "완료", value: projectStats.completed },
           { label: "모집중", value: projectStats.recruiting },
           { label: "참여자", value: projectStats.totalParticipants },
         ]} />
-        <StatCard icon={<Globe size={20} />} title="대외 학술대회" color="border-l-amber-500" stats={[
+        <StatCard icon={<Globe size={20} />} title="대외 학술대회" color="border-l-amber-500" href="/academic-admin/external" stats={[
           { label: "진행/예정", value: externalStats.ongoing },
           { label: "완료", value: externalStats.completed },
           { label: "모집중", value: externalStats.recruiting },

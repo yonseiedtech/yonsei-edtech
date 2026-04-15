@@ -114,7 +114,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
     {
       label: "학술활동",
       items: [
-        { href: "/console/academic/manage", label: "학술활동 관리", icon: GraduationCap },
+        { href: "/academic-admin", label: "학술활동 관리", icon: GraduationCap },
         { href: "/console/fees", label: "학회비", icon: Wallet },
       ],
     },
