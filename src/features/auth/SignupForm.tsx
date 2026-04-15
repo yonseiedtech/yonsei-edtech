@@ -9,6 +9,7 @@ import { UserPlus, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { authApi, profilesApi, attendeesApi, saveTokens } from "@/lib/bkend";
 import { cn } from "@/lib/utils";
+import { buildFreshConsents } from "@/lib/legal";
 
 import type { EnrollmentStatus } from "@/types";
 import { ENROLLMENT_STATUS_LABELS } from "@/types";
@@ -59,7 +60,18 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
   const [loading, setLoading] = useState(false);
   const [enrollmentStatus, setEnrollmentStatus] = useState<EnrollmentStatus>("enrolled");
   const [memberType, setMemberType] = useState<MemberType>("student");
-  const [privacyAgreed, setPrivacyAgreed] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreePrivacy, setAgreePrivacy] = useState(false);
+  const [agreeCollection, setAgreeCollection] = useState(false);
+  const [agreeMarketing, setAgreeMarketing] = useState(false);
+  const allRequiredAgreed = agreeTerms && agreePrivacy && agreeCollection;
+  const allAgreed = allRequiredAgreed && agreeMarketing;
+  function toggleAll(checked: boolean) {
+    setAgreeTerms(checked);
+    setAgreePrivacy(checked);
+    setAgreeCollection(checked);
+    setAgreeMarketing(checked);
+  }
   const [showOptional, setShowOptional] = useState(false);
   const [usernameChecked, setUsernameChecked] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState(false);
@@ -124,8 +136,8 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
   }
 
   async function onSubmit(data: SignupData) {
-    if (!privacyAgreed) {
-      toast.error("개인정보 수집 및 이용에 동의해주세요.");
+    if (!allRequiredAgreed) {
+      toast.error("필수 약관에 모두 동의해주세요.");
       return;
     }
 
@@ -161,6 +173,12 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
           field: data.field || "",
           approved: true,
           privacyAgreedAt: new Date().toISOString(),
+          consents: buildFreshConsents({
+            terms: agreeTerms,
+            privacy: agreePrivacy,
+            collection: agreeCollection,
+            marketing: agreeMarketing,
+          }),
         };
         if (data.activity) profileData.occupation = data.activity;
         if (data.affiliation1) profileData.affiliation = data.affiliation1;
@@ -458,27 +476,49 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
         )}
       </div>
 
-      {/* 개인정보 동의 */}
-      <div className="rounded-lg border bg-muted/30 p-4">
-        <label className="flex cursor-pointer items-start gap-3">
+      {/* 약관 동의 */}
+      <div className="space-y-2 rounded-lg border bg-muted/30 p-4">
+        <label className="flex cursor-pointer items-center gap-2 border-b pb-2">
           <input
             type="checkbox"
-            checked={privacyAgreed}
-            onChange={(e) => setPrivacyAgreed(e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-gray-300"
+            checked={allAgreed}
+            onChange={(e) => toggleAll(e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300"
           />
-          <div>
-            <span className="text-sm font-medium">개인정보 수집 및 이용 동의 (필수)</span>
-            <p className="mt-1 text-xs text-muted-foreground">
-              연세교육공학회는 회원 관리 및 학술 활동 안내를 위해 이름, 이메일, 학번 등의
-              개인정보를 수집합니다. 수집된 정보는 회원 탈퇴 시까지 보관되며, 동의를 거부할 수
-              있으나 이 경우 회원 가입이 제한됩니다.
-            </p>
-          </div>
+          <span className="text-sm font-semibold">전체 동의 (선택 항목 포함)</span>
         </label>
+
+        {[
+          { key: "terms", label: "서비스 이용약관 동의", href: "/terms", required: true, checked: agreeTerms, set: setAgreeTerms },
+          { key: "privacy", label: "개인정보처리방침 동의", href: "/privacy", required: true, checked: agreePrivacy, set: setAgreePrivacy },
+          { key: "collection", label: "개인정보 수집·이용 동의", href: "/consent", required: true, checked: agreeCollection, set: setAgreeCollection },
+          { key: "marketing", label: "마케팅·이벤트 정보 수신 동의", href: "/consent", required: false, checked: agreeMarketing, set: setAgreeMarketing },
+        ].map((item) => (
+          <label key={item.key} className="flex cursor-pointer items-center gap-2">
+            <input
+              type="checkbox"
+              checked={item.checked}
+              onChange={(e) => item.set(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <span className="text-sm">
+              <span className={item.required ? "font-medium" : "text-muted-foreground"}>
+                [{item.required ? "필수" : "선택"}] {item.label}
+              </span>
+            </span>
+            <Link
+              href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-auto text-xs text-primary hover:underline"
+            >
+              보기
+            </Link>
+          </label>
+        ))}
       </div>
 
-      <Button type="submit" className="w-full" disabled={loading || !privacyAgreed || !usernameChecked || !usernameAvailable}>
+      <Button type="submit" className="w-full" disabled={loading || !allRequiredAgreed || !usernameChecked || !usernameAvailable}>
         {loading ? (
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
         ) : (

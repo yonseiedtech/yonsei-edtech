@@ -9,6 +9,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { OrganizationJsonLd, WebsiteJsonLd } from "@/components/seo/JsonLd";
 import ChatWidget from "@/components/chat/ChatWidget";
 import AuthProvider from "@/features/auth/AuthProvider";
+import ImpersonationBanner from "@/components/layout/ImpersonationBanner";
+import ConsentGate from "@/components/auth/ConsentGate";
 import "./globals.css";
 
 const pretendard = localFont({
@@ -149,11 +151,13 @@ export default function RootLayout({
         <QueryProvider>
           <AuthProvider>
             <div className="flex min-h-screen flex-col">
+              <ImpersonationBanner />
               <Header />
               <main className="flex-1">{children}</main>
               <Footer />
             </div>
             <ChatWidget />
+            <ConsentGate />
             <Toaster richColors position="top-center" />
           </AuthProvider>
         </QueryProvider>

@@ -27,16 +27,40 @@ export default function FormRenderer({ fields, value, onChange }: Props) {
         );
 
         switch (f.type) {
+          case "section_break":
+            return (
+              <div key={f.id} className="pt-3">
+                <h3 className="text-base font-semibold">{f.label}</h3>
+                {f.description && <p className="mt-0.5 text-xs text-muted-foreground">{f.description}</p>}
+                <hr className="mt-2 border-t" />
+              </div>
+            );
           case "short_text":
           case "email":
           case "phone":
+          case "url":
             return (
               <div key={f.id}>{base}
                 <Input
-                  type={f.type === "email" ? "email" : "text"}
+                  type={f.type === "email" ? "email" : f.type === "url" ? "url" : "text"}
                   value={typeof v === "string" ? v : ""}
                   onChange={(e) => onChange(f.id, e.target.value)}
                   placeholder={f.placeholder}
+                  required={f.required}
+                />
+              </div>
+            );
+          case "number":
+            return (
+              <div key={f.id}>{base}
+                <Input
+                  type="number"
+                  value={typeof v === "string" ? v : ""}
+                  onChange={(e) => onChange(f.id, e.target.value)}
+                  placeholder={f.placeholder}
+                  min={f.min}
+                  max={f.max}
+                  required={f.required}
                 />
               </div>
             );
@@ -47,6 +71,7 @@ export default function FormRenderer({ fields, value, onChange }: Props) {
                   value={typeof v === "string" ? v : ""}
                   onChange={(e) => onChange(f.id, e.target.value)}
                   rows={3}
+                  required={f.required}
                   className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                 />
               </div>
@@ -54,9 +79,48 @@ export default function FormRenderer({ fields, value, onChange }: Props) {
           case "date":
             return (
               <div key={f.id}>{base}
-                <Input type="date" value={typeof v === "string" ? v : ""} onChange={(e) => onChange(f.id, e.target.value)} />
+                <Input type="date" value={typeof v === "string" ? v : ""} onChange={(e) => onChange(f.id, e.target.value)} required={f.required} />
               </div>
             );
+          case "time":
+            return (
+              <div key={f.id}>{base}
+                <Input type="time" value={typeof v === "string" ? v : ""} onChange={(e) => onChange(f.id, e.target.value)} required={f.required} />
+              </div>
+            );
+          case "datetime":
+            return (
+              <div key={f.id}>{base}
+                <Input type="datetime-local" value={typeof v === "string" ? v : ""} onChange={(e) => onChange(f.id, e.target.value)} required={f.required} />
+              </div>
+            );
+          case "linear_scale": {
+            const min = f.min ?? 1;
+            const max = f.max ?? 5;
+            const range: number[] = [];
+            for (let n = min; n <= max; n++) range.push(n);
+            return (
+              <div key={f.id}>{base}
+                <div className="flex items-center gap-2">
+                  {f.minLabel && <span className="text-[11px] text-muted-foreground">{f.minLabel}</span>}
+                  <div className="flex flex-1 flex-wrap items-center justify-around gap-2">
+                    {range.map((n) => (
+                      <label key={n} className="flex cursor-pointer flex-col items-center gap-1 text-xs">
+                        <span>{n}</span>
+                        <input
+                          type="radio"
+                          name={f.id}
+                          checked={v === String(n)}
+                          onChange={() => onChange(f.id, String(n))}
+                        />
+                      </label>
+                    ))}
+                  </div>
+                  {f.maxLabel && <span className="text-[11px] text-muted-foreground">{f.maxLabel}</span>}
+                </div>
+              </div>
+            );
+          }
           case "radio":
             return (
               <div key={f.id}>{base}
@@ -76,6 +140,7 @@ export default function FormRenderer({ fields, value, onChange }: Props) {
                 <select
                   value={typeof v === "string" ? v : ""}
                   onChange={(e) => onChange(f.id, e.target.value)}
+                  required={f.required}
                   className="w-full rounded-lg border bg-white px-3 py-2 text-sm"
                 >
                   <option value="">선택하세요</option>

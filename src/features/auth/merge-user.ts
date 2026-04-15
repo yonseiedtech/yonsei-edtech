@@ -17,6 +17,8 @@ export function mergeToUser(
     profileImage: profile?.profileImage as string | undefined,
     bio: profile?.bio as string | undefined,
     approved: (profile?.approved as boolean) ?? false,
+    consents: profile?.consents as User["consents"],
+    privacyAgreedAt: profile?.privacyAgreedAt as string | undefined,
     createdAt: (profile?.createdAt as string) ?? new Date().toISOString(),
     updatedAt: (profile?.updatedAt as string) ?? new Date().toISOString(),
   };

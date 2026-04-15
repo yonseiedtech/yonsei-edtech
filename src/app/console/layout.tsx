@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, ClipboardList, MessageSquare, FileText, Newspaper, Award,
   BarChart3, GraduationCap, Wallet, Users, BookUser,
-  BookOpen, ArrowRightLeft, FileBarChart2,
+  BookOpen,
   Settings, MessageCircle, ScrollText, ChevronDown, ChevronRight,
 } from "lucide-react";
 import { useState } from "react";
@@ -114,8 +114,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
     {
       label: "학술활동",
       items: [
-        { href: "/console/academic", label: "대시보드", icon: BarChart3 },
-        { href: "/console/academic/manage", label: "세미나·스터디 관리", icon: GraduationCap },
+        { href: "/console/academic/manage", label: "학술활동 관리", icon: GraduationCap },
         { href: "/console/fees", label: "학회비", icon: Wallet },
       ],
     },
@@ -130,16 +129,13 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
       label: "인수인계",
       presidentOnly: true,
       items: [
-        { href: "/console/handover", label: "업무수행철", icon: BookOpen },
-        { href: "/console/handover/overview", label: "인수인계 종합", icon: FileBarChart2 },
-        { href: "/console/transition", label: "운영진 교체", icon: ArrowRightLeft },
+        { href: "/console/handover", label: "인수인계", icon: BookOpen },
       ],
     },
     {
       label: "인사이트",
       items: [
-        { href: "/console/insights", label: "KPI", icon: BarChart3 },
-        { href: "/console/insights/semester", label: "학기 리포트", icon: FileText },
+        { href: "/console/insights", label: "인사이트", icon: BarChart3 },
       ],
     },
     {

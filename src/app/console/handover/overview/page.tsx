@@ -1,1 +1,5 @@
-export { default } from "@/app/staff-admin/handover-overview/page";
+import { redirect } from "next/navigation";
+
+export default function ConsoleHandoverOverviewRedirect() {
+  redirect("/console/handover?tab=overview");
+}

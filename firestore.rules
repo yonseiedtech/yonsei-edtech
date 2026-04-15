@@ -134,7 +134,9 @@ service cloud.firestore {
 
     // ─── Certificates ───
     match /certificates/{docId} {
-      allow read: if true;
+      // 본인(recipientUserId) 또는 staff 이상만 read. 공개 조회는 차단.
+      allow read: if isAuthenticated()
+        && (resource.data.recipientUserId == request.auth.uid || isStaffOrAbove());
       allow write: if isAuthenticated() && isStaffOrAbove();
     }
 

@@ -12,13 +12,15 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Award, Heart, Trash2, Eye, Printer, FileDown, Loader2, ListPlus, CheckSquare, Square } from "lucide-react";
-import { registrationsApi } from "@/lib/bkend";
-import type { SeminarRegistration } from "@/types";
+import { Award, Heart, Trash2, Eye, Printer, FileDown, Loader2, ListPlus, CheckSquare, Square, Link2, RefreshCw } from "lucide-react";
+import { registrationsApi, certificatesApi, profilesApi } from "@/lib/bkend";
+import type { SeminarRegistration, User } from "@/types";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { auth } from "@/lib/firebase";
 import { toast } from "sonner";
 import type { Certificate } from "@/types";
+import { Badge } from "@/components/ui/badge";
+import { runAllGuestLinkers } from "@/lib/guestLinker";
 import {
   CertificatePreview,
   DEFAULT_AREA_STYLES,
@@ -140,6 +142,59 @@ export default function CertificatesPage() {
       onSuccess: () => toast.success("삭제되었습니다."),
       onError: () => toast.error("삭제에 실패했습니다."),
     });
+  }
+
+  const [linkingId, setLinkingId] = useState<string | null>(null);
+  const [bulkSyncing, setBulkSyncing] = useState(false);
+
+  async function handleManualLink(cert: Certificate) {
+    if (!cert.recipientEmail) {
+      toast.error("이메일이 없어 매칭할 수 없습니다.");
+      return;
+    }
+    setLinkingId(cert.id);
+    try {
+      const res = await profilesApi.getByEmail(cert.recipientEmail);
+      const match = (res.data?.[0] as unknown as User | undefined);
+      if (!match) {
+        toast.error("해당 이메일의 회원을 찾지 못했습니다.");
+        return;
+      }
+      await certificatesApi.update(cert.id, { recipientUserId: match.id });
+      toast.success(`${match.name} 계정에 연결되었습니다.`);
+      const { useQueryClient } = await import("@tanstack/react-query");
+      // 쿼리 무효화: 부모가 관리
+      void useQueryClient;
+      window.location.reload();
+    } catch {
+      toast.error("연결에 실패했습니다.");
+    } finally {
+      setLinkingId(null);
+    }
+  }
+
+  async function handleBulkResync() {
+    if (!confirm("모든 게스트 수료증에 대해 이메일 매칭을 재실행합니다. 계속할까요?")) return;
+    setBulkSyncing(true);
+    try {
+      // 게스트 상태인 수료증에 대해 이메일별로 runAllGuestLinkers 호출
+      const guests = certificates.filter((c) => !c.recipientUserId && c.recipientEmail);
+      const uniqueEmails = Array.from(new Set(guests.map((c) => (c.recipientEmail as string).toLowerCase())));
+      let linked = 0;
+      for (const email of uniqueEmails) {
+        const res = await profilesApi.getByEmail(email);
+        const match = res.data?.[0] as unknown as User | undefined;
+        if (!match) continue;
+        const result = await runAllGuestLinkers({ userId: match.id, userName: match.name, email: match.email });
+        linked += result.certificates.linked;
+      }
+      toast.success(`${linked}건 연결되었습니다.`);
+      window.location.reload();
+    } catch {
+      toast.error("재동기화 중 오류가 발생했습니다.");
+    } finally {
+      setBulkSyncing(false);
+    }
   }
 
   const previewRef = useRef<HTMLDivElement>(null);
@@ -274,7 +329,11 @@ export default function CertificatesPage() {
           <label className="mb-1 block text-sm font-medium">수여자 검색</label>
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="수여자명..." className="w-48" />
         </div>
-        <div className="ml-auto">
+        <div className="ml-auto flex gap-2">
+          <Button size="sm" variant="outline" onClick={handleBulkResync} disabled={bulkSyncing}>
+            {bulkSyncing ? <Loader2 size={14} className="mr-1 animate-spin" /> : <RefreshCw size={14} className="mr-1" />}
+            일괄 재동기화
+          </Button>
           <Button size="sm" onClick={() => setShowBatch(true)}>
             <ListPlus size={14} className="mr-1" /> 일괄 발급
           </Button>
@@ -311,7 +370,16 @@ export default function CertificatesPage() {
                 <tr key={c.id} className="border-b last:border-b-0 hover:bg-gray-50">
                   <td className="px-2 py-2 font-mono sm:px-4 sm:py-3">{c.certificateNo || "-"}</td>
                   <td className="px-2 py-2 sm:px-4 sm:py-3 line-clamp-1">{c.seminarTitle}</td>
-                  <td className="px-2 py-2 font-medium sm:px-4 sm:py-3">{c.recipientName}</td>
+                  <td className="px-2 py-2 font-medium sm:px-4 sm:py-3">
+                    <div className="flex flex-col gap-0.5">
+                      <span>{c.recipientName}</span>
+                      {c.recipientUserId ? (
+                        <Badge variant="secondary" className="w-fit bg-green-50 text-[10px] text-green-700">회원 연결됨</Badge>
+                      ) : (
+                        <Badge variant="secondary" className="w-fit bg-gray-100 text-[10px] text-gray-600">게스트</Badge>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-2 py-2 sm:px-4 sm:py-3">
                     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${c.type === "completion" ? "bg-blue-50 text-blue-700" : "bg-amber-50 text-amber-700"}`}>
                       {c.type === "completion" ? <Award size={12} /> : <Heart size={12} />}
@@ -326,6 +394,11 @@ export default function CertificatesPage() {
                       <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setPreviewCert(c)} title="미리보기">
                         <Eye size={14} />
                       </Button>
+                      {!c.recipientUserId && c.recipientEmail && (
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-primary" onClick={() => handleManualLink(c)} disabled={linkingId === c.id} title="수동 링크">
+                          {linkingId === c.id ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />}
+                        </Button>
+                      )}
                       <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500 hover:bg-red-50 hover:text-red-700" onClick={() => handleDelete(c)} disabled={deleteMut.isPending} title="삭제">
                         <Trash2 size={14} />
                       </Button>

@@ -40,6 +40,8 @@ export const VISIBILITY_LABELS: Record<ContactVisibility, string> = {
   private: "비공개",
 };
 
+import type { UserConsents } from "@/lib/legal";
+
 export interface User { [key: string]: unknown;
   id: string;
   username: string;
@@ -52,6 +54,10 @@ export interface User { [key: string]: unknown;
   bio?: string;
   approved: boolean;
   rejected?: boolean;
+  /** 약관/개인정보 동의 이력 */
+  consents?: UserConsents;
+  /** 레거시: 개인정보 수집 동의 시점 */
+  privacyAgreedAt?: string;
   /** 소속 정보 */
   occupation?: OccupationType;
   affiliation?: string;
@@ -299,6 +305,8 @@ export interface Certificate { [key: string]: unknown;
   seminarId: string;
   seminarTitle: string;
   recipientName: string;
+  recipientEmail?: string;
+  recipientUserId?: string | null;
   recipientAffiliation?: string;
   type: "completion" | "appreciation";
   issuedAt: string;
@@ -363,7 +371,10 @@ export interface SeminarReview {
 // ── 학술활동 ──
 export type ActivityType = "project" | "study" | "external";
 
-export type FormFieldType = "short_text" | "long_text" | "radio" | "checkbox" | "select" | "date" | "email" | "phone" | "file" | "image";
+export type FormFieldType =
+  | "short_text" | "long_text" | "radio" | "checkbox" | "select"
+  | "date" | "time" | "datetime" | "email" | "phone" | "url" | "number"
+  | "linear_scale" | "file" | "image" | "section_break";
 
 export interface FormField {
   id: string;
@@ -373,6 +384,10 @@ export interface FormField {
   required?: boolean;
   options?: string[]; // radio/checkbox/select
   placeholder?: string;
+  min?: number;
+  max?: number;
+  minLabel?: string;
+  maxLabel?: string;
 }
 
 export type RecruitmentStatus = "recruiting" | "closed" | "in_progress" | "completed";

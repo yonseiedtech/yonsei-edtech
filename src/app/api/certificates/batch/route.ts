@@ -52,10 +52,20 @@ export async function POST(req: NextRequest) {
     try {
       lastSeq += 1;
       const certificateNo = `${year}-${String(lastSeq).padStart(3, "0")}`;
+
+      // 이메일로 기존 회원 매칭
+      let recipientUserId: string | null = null;
+      if (r.email) {
+        const userSnap = await db.collection("users").where("email", "==", r.email).limit(1).get();
+        if (!userSnap.empty) recipientUserId = userSnap.docs[0].id;
+      }
+
       await db.collection("certificates").add({
         seminarId,
         seminarTitle,
         recipientName: r.name,
+        recipientEmail: r.email ?? null,
+        recipientUserId,
         type: r.type,
         certificateNo,
         issuedAt: now,
@@ -64,22 +74,18 @@ export async function POST(req: NextRequest) {
         updatedAt: FieldValue.serverTimestamp(),
       });
 
-      // 회원 알림 (이메일 매칭으로 userId 조회)
-      if (r.email) {
-        const userSnap = await db.collection("users").where("email", "==", r.email).limit(1).get();
-        if (!userSnap.empty) {
-          const userId = userSnap.docs[0].id;
-          const label = r.type === "completion" ? "수료증" : "감사장";
-          await db.collection("notifications").add({
-            userId,
-            type: "certificate",
-            title: `${label}이 발급되었습니다`,
-            message: `"${seminarTitle}" ${label}이 발급되었습니다.`,
-            link: "/mypage",
-            read: false,
-            createdAt: now,
-          });
-        }
+      // 회원 알림
+      if (recipientUserId) {
+        const label = r.type === "completion" ? "수료증" : "감사장";
+        await db.collection("notifications").add({
+          userId: recipientUserId,
+          type: "certificate",
+          title: `${label}이 발급되었습니다`,
+          message: `"${seminarTitle}" ${label}이 발급되었습니다.`,
+          link: "/mypage",
+          read: false,
+          createdAt: now,
+        });
       }
 
       created.push(lastSeq);

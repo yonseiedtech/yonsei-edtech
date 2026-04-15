@@ -17,8 +17,15 @@ import type { User, UserRole, Seminar, SeminarAttendee, Activity, Certificate } 
 import { toast } from "sonner";
 import {
   ArrowLeft, User as UserIcon, KeyRound, CheckCircle, XCircle, Shield,
-  BookOpen, Users, FolderKanban, Globe, Award, Star,
+  BookOpen, Users, FolderKanban, Globe, UserCog, Loader2,
 } from "lucide-react";
+import { signInWithCustomToken } from "firebase/auth";
+import MyPageView from "@/components/mypage/MyPageView";
+import { useAuthStore } from "@/features/auth/auth-store";
+import { isPresidentOrAbove } from "@/lib/permissions";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { CONSENT_LABELS, CURRENT_TERMS, type ConsentKey } from "@/lib/legal";
+import { FileCheck } from "lucide-react";
 
 const ASSIGNABLE_ROLES: UserRole[] = ["member", "alumni", "advisor", "staff", "president"];
 
@@ -36,6 +43,37 @@ function AdminMemberDetail({ id }: { id: string }) {
   const { updateProfile } = useUpdateProfile();
   const { approveMember } = useApproveMember();
   const [resettingPassword, setResettingPassword] = useState(false);
+  const [impersonating, setImpersonating] = useState(false);
+  const { user: currentUser } = useAuthStore();
+  const canImpersonate = isPresidentOrAbove(currentUser);
+
+  async function handleImpersonate() {
+    if (!canImpersonate) return;
+    if (!confirm("이 계정으로 전환하시겠습니까? 관리자 배너에서 언제든 복귀할 수 있습니다.")) return;
+    setImpersonating(true);
+    try {
+      const idToken = await auth.currentUser?.getIdToken();
+      if (!idToken) throw new Error("no token");
+      const res = await fetch("/api/admin/impersonate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ targetUserId: id }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "전환 실패");
+      }
+      const data = await res.json();
+      try { sessionStorage.setItem("impersonatorUid", data.impersonatorUid); } catch { /* ignore */ }
+      await signInWithCustomToken(auth, data.customToken);
+      toast.success("계정 전환이 완료되었습니다.");
+      router.push("/mypage");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "전환에 실패했습니다.");
+    } finally {
+      setImpersonating(false);
+    }
+  }
 
   const { data: member, isLoading } = useQuery({
     queryKey: ["members", "detail", id],
@@ -131,8 +169,28 @@ function AdminMemberDetail({ id }: { id: string }) {
 
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">회원 관리</h1>
-          <Badge className="text-xs">관리자 모드</Badge>
+          <div className="flex items-center gap-2">
+            {canImpersonate && (
+              <Button size="sm" variant="outline" onClick={handleImpersonate} disabled={impersonating}>
+                {impersonating ? <Loader2 size={14} className="mr-1 animate-spin" /> : <UserCog size={14} className="mr-1" />}
+                이 계정으로 전환
+              </Button>
+            )}
+            <Badge className="text-xs">관리자 모드</Badge>
+          </div>
         </div>
+
+        <Tabs defaultValue="admin" className="mt-6">
+          <TabsList>
+            <TabsTrigger value="admin">관리</TabsTrigger>
+            <TabsTrigger value="mypage-preview">마이페이지 미리보기</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="mypage-preview" className="mt-4">
+            <MyPageView userId={id} readOnly />
+          </TabsContent>
+
+          <TabsContent value="admin" className="mt-4">
 
         {/* 프로필 카드 */}
         <div className="mt-6 rounded-2xl border bg-white p-6">
@@ -213,6 +271,9 @@ function AdminMemberDetail({ id }: { id: string }) {
           </div>
         </div>
 
+        {/* 동의 현황 */}
+        <ConsentStatusSection member={member} />
+
         {/* 학술활동 이력 */}
         <MemberActivityHistory memberId={id} />
 
@@ -221,7 +282,71 @@ function AdminMemberDetail({ id }: { id: string }) {
           <h3 className="text-lg font-bold">프로필 정보 수정</h3>
           <ProfileEditor user={member} />
         </div>
+          </TabsContent>
+        </Tabs>
       </div>
+    </div>
+  );
+}
+
+function ConsentStatusSection({ member }: { member: User }) {
+  const consents = member.consents;
+  const keys: ConsentKey[] = ["terms", "privacy", "collection", "marketing"];
+  function fmt(iso?: string) {
+    if (!iso) return "-";
+    try { return new Date(iso).toLocaleString("ko-KR"); } catch { return iso; }
+  }
+  return (
+    <div className="mt-4 rounded-2xl border bg-white p-6 space-y-3">
+      <h3 className="flex items-center gap-2 text-lg font-bold">
+        <FileCheck size={18} /> 동의 현황
+      </h3>
+      <div className="overflow-hidden rounded-lg border">
+        <table className="w-full text-xs">
+          <thead className="bg-muted/40">
+            <tr>
+              <th className="border-b px-3 py-2 text-left">항목</th>
+              <th className="border-b px-3 py-2 text-left">동의 여부</th>
+              <th className="border-b px-3 py-2 text-left">버전</th>
+              <th className="border-b px-3 py-2 text-left">동의 일시</th>
+            </tr>
+          </thead>
+          <tbody>
+            {keys.map((k) => {
+              const rec = consents?.[k];
+              const isRequired = k !== "marketing";
+              const current = k === "marketing" ? CURRENT_TERMS.collection : CURRENT_TERMS[k];
+              const outdated = rec?.agreed && rec.version !== current;
+              return (
+                <tr key={k}>
+                  <td className="border-b px-3 py-2 align-top">
+                    [{isRequired ? "필수" : "선택"}] {CONSENT_LABELS[k]}
+                  </td>
+                  <td className="border-b px-3 py-2 align-top">
+                    {rec?.agreed ? (
+                      <Badge className="bg-green-100 text-green-700">동의</Badge>
+                    ) : (
+                      <Badge className="bg-gray-100 text-gray-600">미동의</Badge>
+                    )}
+                  </td>
+                  <td className="border-b px-3 py-2 align-top">
+                    {rec?.version ?? "-"}
+                    {outdated && (
+                      <span className="ml-1 text-[10px] text-amber-600">(구버전)</span>
+                    )}
+                  </td>
+                  <td className="border-b px-3 py-2 align-top text-muted-foreground">{fmt(rec?.at)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      {member.privacyAgreedAt && (
+        <p className="text-[10px] text-muted-foreground">
+          레거시 privacyAgreedAt: {fmt(member.privacyAgreedAt)}
+        </p>
+      )}
     </div>
   );
 }
