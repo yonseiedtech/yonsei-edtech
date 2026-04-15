@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { auth } from "./firebase";
@@ -15,29 +15,40 @@ const transport = new DefaultChatTransport({
 
 const DEFAULT_GREETING = "안녕하세요! 연세교육공학회 챗봇입니다. 궁금한 점이 있으시면 편하게 질문해 주세요! 😊";
 
+function buildWelcome(text: string) {
+  return {
+    id: "welcome",
+    role: "assistant" as const,
+    parts: [{ type: "text" as const, text }],
+  };
+}
+
 export function useOrchestraChat() {
-  const [greeting, setGreeting] = useState(DEFAULT_GREETING);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    fetch("/api/chatbot")
-      .then((res) => res.json())
-      .then((data) => { if (data.greeting) setGreeting(data.greeting); })
-      .catch(() => {})
-      .finally(() => setReady(true));
-  }, []);
-
   const chat = useChat({
     transport,
-    id: ready ? `chat-${greeting.slice(0, 20)}` : "chat-init",
-    messages: [
-      {
-        id: "welcome",
-        role: "assistant" as const,
-        parts: [{ type: "text" as const, text: greeting }],
-      },
-    ],
+    id: "orchestra-chat",
   });
+  const { setMessages, messages } = chat;
+
+  useEffect(() => {
+    if (messages.length > 0) return;
+    let cancelled = false;
+
+    fetch("/api/chatbot")
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled) return;
+        setMessages([buildWelcome(data.greeting || DEFAULT_GREETING)]);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setMessages([buildWelcome(DEFAULT_GREETING)]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [setMessages, messages.length]);
 
   return chat;
 }

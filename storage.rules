@@ -1,10 +1,32 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    // 게시글 이미지 (기존)
     match /posts/{fileName} {
       allow read: if true;
       allow write: if request.auth != null
-                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.size < 10 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    // 활동 산출물 — 로그인 회원만 업로드/조회
+    match /activity-materials/{activityId}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                   && request.resource.size < 20 * 1024 * 1024;
+    }
+
+    // 신청 폼 첨부 파일 — 비로그인도 업로드 허용 (비회원 참가 신청)
+    match /applications/{fieldId}/{fileName} {
+      allow read: if request.auth != null;
+      allow create: if request.resource.size < 20 * 1024 * 1024;
+    }
+
+    // 범용 이미지 업로드 (프로필·명함·기타)
+    match /images/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.resource.size < 10 * 1024 * 1024
                    && request.resource.contentType.matches('image/.*');
     }
   }

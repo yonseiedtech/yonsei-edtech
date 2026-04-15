@@ -37,6 +37,33 @@ const nextConfig: NextConfig = {
       // board-community-v2: /polls 제거 (게시물 첨부 투표로 전환)
       { source: "/polls", destination: "/board", permanent: true },
       { source: "/polls/:path*", destination: "/board", permanent: true },
+
+      // /admin/* → /console/* (307 temporary so future changes are easy)
+      { source: "/admin", destination: "/console", permanent: false },
+      { source: "/admin/members", destination: "/console/members", permanent: false },
+      { source: "/admin/inquiries", destination: "/console/inquiries", permanent: false },
+      { source: "/admin/posts", destination: "/console/posts", permanent: false },
+      { source: "/admin/newsletter", destination: "/console/newsletter", permanent: false },
+      { source: "/admin/certificates", destination: "/console/certificates", permanent: false },
+      { source: "/admin/fees", destination: "/console/fees", permanent: false },
+      { source: "/admin/insights", destination: "/console/insights", permanent: false },
+      { source: "/admin/audit-log", destination: "/console/audit-log", permanent: false },
+      { source: "/admin/chatbot", destination: "/console/ai", permanent: false },
+      { source: "/admin/agents", destination: "/console/ai", permanent: false },
+      { source: "/admin/settings", destination: "/console/settings", permanent: false },
+      { source: "/admin/semester-report", destination: "/console/insights/semester", permanent: false },
+      { source: "/admin/transition", destination: "/console/transition", permanent: false },
+      { source: "/admin/todos", destination: "/console/todos", permanent: false },
+      { source: "/admin/activity-dashboard", destination: "/console/academic", permanent: false },
+      { source: "/admin/seminars", destination: "/console/academic/manage", permanent: false },
+      { source: "/admin/analytics", destination: "/console/insights", permanent: false },
+
+      // /staff-admin/* → /console/*
+      { source: "/staff-admin", destination: "/console", permanent: false },
+      { source: "/staff-admin/todos", destination: "/console/todos", permanent: false },
+      { source: "/staff-admin/activity-dashboard", destination: "/console/academic", permanent: false },
+      { source: "/staff-admin/handover-overview", destination: "/console/handover/overview", permanent: false },
+      { source: "/staff-admin/transition", destination: "/console/transition", permanent: false },
     ];
   },
 };

@@ -5,7 +5,7 @@ import AuthGuard from "@/features/auth/AuthGuard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { auth } from "@/lib/firebase";
-import { BarChart3, FileDown, Copy, Loader2 } from "lucide-react";
+import { BarChart3, FileDown, Copy, Loader2, Printer } from "lucide-react";
 import { toast } from "sonner";
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -146,8 +146,11 @@ function SemesterReportPage() {
             <Button size="sm" variant="outline" onClick={handleDownload}>
               <FileDown size={14} className="mr-1" /> 다운로드
             </Button>
+            <Button size="sm" variant="outline" onClick={() => window.print()}>
+              <Printer size={14} className="mr-1" /> 인쇄/PDF
+            </Button>
           </div>
-          <div className="max-w-none p-6 whitespace-pre-wrap text-sm leading-relaxed font-[inherit] [&>*]:font-[inherit]">
+          <div id="printable-report" className="max-w-none p-6 whitespace-pre-wrap text-sm leading-relaxed font-[inherit] [&>*]:font-[inherit] print:p-0">
             {report.split("\n").map((line, i) => {
               if (line.startsWith("# ")) return <h1 key={i} className="mt-6 mb-3 text-xl font-bold first:mt-0">{line.slice(2)}</h1>;
               if (line.startsWith("## ")) return <h2 key={i} className="mt-5 mb-2 text-lg font-bold">{line.slice(3)}</h2>;

@@ -27,7 +27,7 @@ const CARDS = [
   },
   {
     href: "/academic-admin/external",
-    title: "대외 학회활동",
+    title: "대외 학술대회",
     desc: "외부 학회·컨퍼런스 참여 관리",
     icon: Globe,
     color: "bg-blue-50 text-blue-700",

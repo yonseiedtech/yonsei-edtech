@@ -1,8 +1,20 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import { Instagram } from "lucide-react";
+import { Instagram, Award, CreditCard, CalendarCheck, UserCog } from "lucide-react";
+import { useAuthStore } from "@/features/auth/auth-store";
+
+const MEMBER_SHORTCUTS = [
+  { href: "/mypage?tab=certificates", label: "수료증 확인", icon: Award },
+  { href: "/admin/fees", label: "회비 납부", icon: CreditCard },
+  { href: "/mypage?tab=seminars", label: "내 활동", icon: CalendarCheck },
+  { href: "/mypage", label: "프로필 관리", icon: UserCog },
+];
 
 export default function Footer() {
+  const { user } = useAuthStore();
+
   return (
     <footer className="border-t bg-muted/30">
       <div className="mx-auto max-w-6xl px-4 py-12">
@@ -30,31 +42,29 @@ export default function Footer() {
           <div>
             <h3 className="mb-3 text-sm font-semibold">바로가기</h3>
             <nav className="flex flex-col gap-2">
-              <Link
-                href="/about"
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
-                학회 소개
-              </Link>
-              <Link
-                href="/seminars"
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
-                세미나
-              </Link>
-              <Link
-                href="/notices"
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
-                공지사항
-              </Link>
-              <Link
-                href="/contact"
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
-                문의
-              </Link>
+              <Link href="/about" className="text-sm text-muted-foreground hover:text-foreground">학회 소개</Link>
+              <Link href="/seminars" className="text-sm text-muted-foreground hover:text-foreground">세미나</Link>
+              <Link href="/notices" className="text-sm text-muted-foreground hover:text-foreground">공지사항</Link>
+              <Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground">문의</Link>
             </nav>
+
+            {user && (
+              <div className="mt-5">
+                <h3 className="mb-2 text-xs font-semibold text-muted-foreground">회원 전용</h3>
+                <nav className="flex flex-col gap-2">
+                  {MEMBER_SHORTCUTS.map((s) => (
+                    <Link
+                      key={s.href}
+                      href={s.href}
+                      className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+                    >
+                      <s.icon size={14} />
+                      {s.label}
+                    </Link>
+                  ))}
+                </nav>
+              </div>
+            )}
           </div>
 
           {/* Contact */}

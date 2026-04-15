@@ -11,25 +11,20 @@ import { profilesApi } from "@/lib/bkend";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import {
-  Shield, Users, FileText, MessageSquare, MessageCircle,
-  Clock, HelpCircle, Newspaper, Settings, Bot, Award, Wallet, BarChart3, RefreshCw,
-  ScrollText,
+  Shield, Users, FileText, MessageCircle,
+  Clock, HelpCircle, Settings, Bot, BarChart3,
+  ScrollText, BookUser,
 } from "lucide-react";
 
+// 관리자 메뉴: 시스템 차원의 데이터·설정만 유지. 학회 운영 기능은 /staff-admin 으로 이관.
 const ADMIN_TABS = [
-  { href: "/admin/members", label: "회원", icon: Users },
-  { href: "/admin/fees", label: "학회비", icon: Wallet },
-  { href: "/admin/posts", label: "게시글", icon: FileText },
-  { href: "/admin/inquiries", label: "문의", icon: MessageSquare },
-  { href: "/admin/chatbot", label: "챗봇 관리", icon: MessageCircle },
-  { href: "/admin/newsletter", label: "학회보", icon: Newspaper },
-  { href: "/admin/certificates", label: "수료증/감사장", icon: Award },
-  { href: "/admin/analytics", label: "분석", icon: BarChart3 },
-  { href: "/admin/semester-report", label: "학기보고서", icon: BarChart3 },
+  { href: "/admin/members", label: "회원 DB", icon: Users },
+  { href: "/directory", label: "연락망", icon: BookUser },
+  { href: "/admin/insights", label: "학회 인사이트", icon: BarChart3 },
   { href: "/admin/audit-log", label: "감사로그", icon: ScrollText, presidentOnly: true },
+  { href: "/admin/chatbot", label: "챗봇·AI", icon: MessageCircle },
   { href: "/admin/agents", label: "에이전트", icon: Bot },
   { href: "/admin/settings", label: "사이트 설정", icon: Settings, presidentOnly: true },
-  { href: "/staff-admin", label: "운영진 관리", icon: RefreshCw, external: true },
 ];
 
 function StatCard({ icon: Icon, label, value, color }: {

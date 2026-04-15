@@ -17,7 +17,7 @@ const HUB_TABS = [
   { href: "/academic-admin/seminars", label: "세미나", icon: BookOpen },
   { href: "/academic-admin/projects", label: "프로젝트", icon: FolderKanban },
   { href: "/academic-admin/studies", label: "스터디", icon: Users },
-  { href: "/academic-admin/external", label: "대외 학회활동", icon: Globe },
+  { href: "/academic-admin/external", label: "대외 학술대회", icon: Globe },
 ];
 
 function AcademicAdminShell({ children }: { children: React.ReactNode }) {

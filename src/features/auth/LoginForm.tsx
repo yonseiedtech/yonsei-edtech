@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "./useAuth";
@@ -17,6 +17,7 @@ export default function LoginForm() {
   const [pendingEmail, setPendingEmail] = useState("");
   const { login } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -38,9 +39,14 @@ export default function LoginForm() {
         setPendingEmail(user.email || "");
         return;
       }
-      const raw = sessionStorage.getItem("returnUrl") || "/dashboard";
+      const nextParam = searchParams.get("next") || "";
+      const stored = sessionStorage.getItem("returnUrl") || "";
       sessionStorage.removeItem("returnUrl");
-      const returnUrl = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/dashboard";
+      const candidate = nextParam || stored;
+      const safe = candidate.startsWith("/") && !candidate.startsWith("//");
+      // 명함/로그인/홈 경로는 로그인 후 대시보드로 이동
+      const blocked = ["/login", "/", "/mypage/card"].includes(candidate);
+      const returnUrl = safe && !blocked ? candidate : "/dashboard";
       router.push(returnUrl);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "로그인 중 오류가 발생했습니다.");

@@ -19,9 +19,11 @@ import {
   Pencil, Globe, Loader2, CheckCircle, Clock, XCircle,
   Plus, Trash2, FileUp, Download, ListChecks,
 } from "lucide-react";
-import type { Activity, ActivityType, ActivityProgress, ActivityMaterial } from "@/types";
+import type { Activity, ActivityType, ActivityProgress, ActivityMaterial, FormField } from "@/types";
 import { activityProgressApi, activityMaterialsApi } from "@/lib/bkend";
-import { uploadImage } from "@/lib/upload";
+import { uploadToStorage, type UploadedFile } from "@/lib/storage";
+import FormBuilder from "./FormBuilder";
+import FormRenderer from "./FormRenderer";
 
 const STATUS_LABELS: Record<string, string> = { upcoming: "예정", ongoing: "진행 중", completed: "완료" };
 const STATUS_COLORS: Record<string, string> = { upcoming: "bg-blue-50 text-blue-700", ongoing: "bg-amber-50 text-amber-700", completed: "bg-muted text-muted-foreground" };
@@ -47,9 +49,8 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const [applyStudentId, setApplyStudentId] = useState("");
   const [applyEmail, setApplyEmail] = useState("");
   const [applyPhone, setApplyPhone] = useState("");
-  const [applyAnswers, setApplyAnswers] = useState<Record<string, string>>({});
+  const [applyAnswers, setApplyAnswers] = useState<Record<string, string | string[] | UploadedFile[]>>({});
   const [signupCtaOpen, setSignupCtaOpen] = useState(false);
-  const [newQuestion, setNewQuestion] = useState("");
   const [progressTitle, setProgressTitle] = useState("");
   const [progressDate, setProgressDate] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -134,24 +135,8 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   }
 
   const applicationQuestions = (activity?.applicationQuestions as string[] | undefined) ?? [];
-
-  // 신청 폼 질문 관리
-  async function addQuestion() {
-    if (!newQuestion.trim() || !activity) return;
-    const updated = [...applicationQuestions, newQuestion.trim()];
-    await activitiesApi.update(activityId, { applicationQuestions: updated });
-    queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
-    setNewQuestion("");
-    toast.success("질문이 추가되었습니다.");
-  }
-
-  async function removeQuestion(idx: number) {
-    if (!activity) return;
-    const updated = applicationQuestions.filter((_, i) => i !== idx);
-    await activitiesApi.update(activityId, { applicationQuestions: updated });
-    queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
-    toast.success("질문이 삭제되었습니다.");
-  }
+  const applicationForm: FormField[] = (activity?.applicationForm as FormField[] | undefined)
+    ?? applicationQuestions.map((q, i) => ({ id: `legacy_${i}`, type: "long_text" as const, label: q }));
 
   // 리포트 통계
   const reportStats = {
@@ -357,22 +342,21 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                     <input type="file" className="hidden" disabled={uploading} onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file || !user) return;
-                      if (file.size > 5 * 1024 * 1024) { toast.error("5MB 이하 파일만 업로드할 수 있습니다."); return; }
                       setUploading(true);
                       try {
-                        const url = await uploadImage(file);
+                        const uploaded = await uploadToStorage(file, `activity-materials/${activityId}`);
                         await activityMaterialsApi.create({
                           activityId,
                           title: file.name,
                           fileName: file.name,
-                          fileUrl: url,
+                          fileUrl: uploaded.url,
                           fileSize: file.size,
                           uploadedBy: user.id,
                           uploadedByName: user.name,
                         });
                         queryClient.invalidateQueries({ queryKey: ["activity-materials", activityId] });
                         toast.success("파일이 업로드되었습니다.");
-                      } catch { toast.error("업로드에 실패했습니다."); }
+                      } catch (err) { toast.error(err instanceof Error ? err.message : "업로드에 실패했습니다."); }
                       finally { setUploading(false); e.target.value = ""; }
                     }} />
                   </label>
@@ -471,20 +455,17 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
 
           {activeTab === "form-settings" && isStaff && (
             <div className="rounded-xl border bg-white p-6 space-y-4">
-              <h3 className="font-semibold">신청 폼 커스텀 질문</h3>
-              <p className="text-xs text-muted-foreground">신청 시 추가로 받을 질문을 설정합니다.</p>
-              <div className="space-y-2">
-                {applicationQuestions.map((q, i) => (
-                  <div key={i} className="flex items-center gap-2 rounded-lg border bg-muted/20 px-3 py-2">
-                    <span className="flex-1 text-sm">{q}</span>
-                    <button onClick={() => removeQuestion(i)} className="shrink-0 rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-500"><X size={14} /></button>
-                  </div>
-                ))}
+              <div>
+                <h3 className="font-semibold">신청 폼 빌더</h3>
+                <p className="mt-1 text-xs text-muted-foreground">구글 폼처럼 단답·장문·객관식·체크박스·드롭다운·날짜·파일 업로드 등 다양한 질문을 구성할 수 있습니다.</p>
               </div>
-              <div className="flex gap-2">
-                <Input value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)} placeholder="새 질문 입력 (예: 지원 동기는?)" onKeyDown={(e) => e.key === "Enter" && addQuestion()} />
-                <Button size="sm" variant="outline" onClick={addQuestion} disabled={!newQuestion.trim()}>추가</Button>
-              </div>
+              <FormBuilder
+                value={applicationForm}
+                onChange={async (fields) => {
+                  await activitiesApi.update(activityId, { applicationForm: fields });
+                  queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+                }}
+              />
             </div>
           )}
 
@@ -518,23 +499,32 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               </div>
 
               {/* 신청 답변 요약 */}
-              {applicationQuestions.length > 0 && applicants.length > 0 && (
+              {applicationForm.length > 0 && applicants.length > 0 && (
                 <div className="rounded-xl border bg-white p-6">
                   <h3 className="font-semibold">신청 답변 요약</h3>
-                  {applicationQuestions.map((q) => {
-                    const answers = applicants.filter((a) => a.answers?.[q]).map((a) => ({ name: a.name, answer: a.answers![q] }));
+                  {applicationForm.map((field) => {
+                    const answers = applicants
+                      .map((a) => ({ name: a.name, v: a.answers?.[field.id] ?? a.answers?.[field.label] }))
+                      .filter((x) => x.v !== undefined && x.v !== "");
                     return (
-                      <div key={q} className="mt-4">
-                        <p className="text-sm font-medium text-primary">{q}</p>
+                      <div key={field.id} className="mt-4">
+                        <p className="text-sm font-medium text-primary">{field.label}</p>
                         {answers.length === 0 ? (
                           <p className="mt-1 text-xs text-muted-foreground">답변 없음</p>
                         ) : (
                           <div className="mt-2 space-y-1">
-                            {answers.map((a, i) => (
-                              <div key={i} className="rounded-lg bg-muted/30 px-3 py-2 text-sm">
-                                <span className="font-medium">{a.name}:</span> {a.answer}
-                              </div>
-                            ))}
+                            {answers.map((a, i) => {
+                              const display = Array.isArray(a.v)
+                                ? typeof (a.v as unknown[])[0] === "string"
+                                  ? (a.v as string[]).join(", ")
+                                  : `${(a.v as { name: string }[]).length}개 파일 첨부`
+                                : String(a.v);
+                              return (
+                                <div key={i} className="rounded-lg bg-muted/30 px-3 py-2 text-sm">
+                                  <span className="font-medium">{a.name}:</span> {display}
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
@@ -587,10 +577,13 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 <Input type="email" value={applyEmail} onChange={(e) => setApplyEmail(e.target.value)} placeholder="name@example.com" /></div>
               <div><label className="mb-1 block text-sm font-medium">연락처</label>
                 <Input value={applyPhone} onChange={(e) => setApplyPhone(e.target.value)} placeholder="010-0000-0000" /></div>
-              {applicationQuestions.map((q, i) => (
-                <div key={i}><label className="mb-1 block text-sm font-medium">{q}</label>
-                  <textarea value={applyAnswers[q] ?? ""} onChange={(e) => setApplyAnswers((prev) => ({ ...prev, [q]: e.target.value }))} rows={2} placeholder="답변을 입력해주세요." className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50" /></div>
-              ))}
+              {applicationForm.length > 0 && (
+                <FormRenderer
+                  fields={applicationForm}
+                  value={applyAnswers}
+                  onChange={(id, v) => setApplyAnswers((prev) => ({ ...prev, [id]: v }))}
+                />
+              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setApplyDialog(false)}>취소</Button>

@@ -363,6 +363,18 @@ export interface SeminarReview {
 // ── 학술활동 ──
 export type ActivityType = "project" | "study" | "external";
 
+export type FormFieldType = "short_text" | "long_text" | "radio" | "checkbox" | "select" | "date" | "email" | "phone" | "file" | "image";
+
+export interface FormField {
+  id: string;
+  type: FormFieldType;
+  label: string;
+  description?: string;
+  required?: boolean;
+  options?: string[]; // radio/checkbox/select
+  placeholder?: string;
+}
+
 export type RecruitmentStatus = "recruiting" | "closed" | "in_progress" | "completed";
 
 export interface Activity { [key: string]: unknown;
@@ -379,8 +391,9 @@ export interface Activity { [key: string]: unknown;
   leader?: string;
   members?: string[];
   participants?: string[];
-  applicants?: { userId?: string; guestKey?: string; isGuest?: boolean; email?: string; phone?: string; name: string; studentId?: string; answers?: Record<string, string>; appliedAt: string; status: "pending" | "approved" | "rejected" }[];
+  applicants?: { userId?: string; guestKey?: string; isGuest?: boolean; email?: string; phone?: string; name: string; studentId?: string; answers?: Record<string, string | string[] | { url: string; name: string; size: number; type: string }[]>; appliedAt: string; status: "pending" | "approved" | "rejected" }[];
   applicationQuestions?: string[];
+  applicationForm?: FormField[];
   location?: string;
   tags?: string[];
   imageUrl?: string;

@@ -25,15 +25,9 @@ function OrgNode({ node, isRoot, isIndependent }: { node: OrgTreeNode; isRoot?: 
           )}
         </div>
 
-        {/* 독립기관: 부모 카드 오른쪽, 부모-자식 중간 높이에 배치 */}
+        {/* 독립기관: 부모 카드 오른쪽, 카드 수직 중심에 배치 (겹침 방지) */}
         {independents.length > 0 && (
-          <div
-            className={
-              regulars.length > 0
-                ? "absolute left-full top-full ml-8 flex -translate-y-1/2 flex-col gap-2 pt-[0.625rem]"
-                : "absolute left-full top-1/2 ml-8 flex -translate-y-1/2 flex-col gap-2"
-            }
-          >
+          <div className="absolute left-full top-1/2 ml-8 flex -translate-y-1/2 flex-col gap-3">
             {independents.map((ind) => (
               <div key={ind.id} className="flex items-center gap-2">
                 <div className="h-px w-6 border-t border-dashed border-amber-400/70" />

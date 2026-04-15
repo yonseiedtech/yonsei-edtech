@@ -23,32 +23,34 @@ export default function PromotionPreview() {
             더보기 <ArrowRight size={14} />
           </Link>
         </div>
-        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        <div className="mt-4 rounded-xl border bg-white p-4">
           {isLoading ? (
-            <div className="col-span-3 py-8 text-center text-sm text-muted-foreground">
+            <div className="py-8 text-center text-sm text-muted-foreground">
               불러오는 중...
             </div>
           ) : promotions.length === 0 ? (
-            <div className="col-span-3 py-8 text-center text-sm text-muted-foreground">
+            <div className="py-8 text-center text-sm text-muted-foreground">
               등록된 홍보글이 없습니다.
             </div>
           ) : (
-            promotions.slice(0, 3).map((post) => (
-              <Link
-                key={post.id}
-                href={`/board/${post.id}`}
-                className="rounded-xl border bg-white p-5 transition-colors hover:bg-muted/30"
-              >
-                <h3 className="line-clamp-2 font-medium">{post.title}</h3>
-                <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-                  {post.content.replace(/<[^>]*>/g, "").slice(0, 120)}
-                </p>
-                <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>{post.authorName}</span>
-                  <span>{formatDate(post.createdAt)}</span>
-                </div>
-              </Link>
-            ))
+            <div className="grid gap-3 sm:grid-cols-3">
+              {promotions.slice(0, 3).map((post) => (
+                <Link
+                  key={post.id}
+                  href={`/board/${post.id}`}
+                  className="rounded-lg border p-4 transition-colors hover:bg-muted/30"
+                >
+                  <h3 className="line-clamp-2 font-medium">{post.title}</h3>
+                  <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                    {post.content.replace(/<[^>]*>/g, "").slice(0, 120)}
+                  </p>
+                  <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{post.authorName}</span>
+                    <span>{formatDate(post.createdAt)}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
           )}
         </div>
       </div>

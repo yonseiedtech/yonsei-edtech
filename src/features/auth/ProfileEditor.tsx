@@ -27,6 +27,7 @@ interface ProfileData {
   department: string;
   position: string;
   contactEmail: string;
+  phone: string;
   contactVisibility: ContactVisibility;
 }
 
@@ -59,6 +60,7 @@ export default function ProfileEditor({ user }: Props) {
       department: user.department || "",
       position: user.position || "",
       contactEmail: user.contactEmail || "",
+      phone: user.phone || "",
       contactVisibility: user.contactVisibility || "members",
     },
   });
@@ -235,6 +237,10 @@ export default function ProfileEditor({ user }: Props) {
           <div>
             <label className="mb-1.5 block text-sm font-medium">연락용 이메일</label>
             <Input {...register("contactEmail")} type="email" placeholder="example@email.com" />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium">핸드폰 번호</label>
+            <Input {...register("phone")} type="tel" placeholder="010-0000-0000" />
           </div>
           <div>
             <label className="mb-1.5 block text-sm font-medium">연락처 공개 범위</label>

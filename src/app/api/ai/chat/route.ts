@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { streamText } from "ai";
 import { models } from "@/lib/ai";
-import { requireAuth } from "@/lib/api-auth";
+import { verifyAuth } from "@/lib/api-auth";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { checkRateLimit, getClientId } from "@/lib/rate-limit";
 
@@ -10,9 +10,8 @@ export const maxDuration = 30;
 const DEFAULT_GREETING = "안녕하세요! 연세교육공학회 챗봇입니다. 궁금한 점이 있으시면 편하게 질문해 주세요! 😊";
 
 export async function POST(req: NextRequest) {
-  const authResult = await requireAuth(req, "member");
-  if (authResult instanceof Response) return authResult;
-  const user = authResult;
+  const authUser = await verifyAuth(req).catch(() => null);
+  const user = authUser ?? { id: "guest", name: "비로그인", role: "guest" as const };
 
   const rateLimited = checkRateLimit(getClientId(req, user.id), { limit: 30, windowSec: 60 });
   if (rateLimited) return rateLimited;

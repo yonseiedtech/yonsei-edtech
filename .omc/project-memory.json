@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1775984752926,
+  "lastScanned": 1776186074734,
   "projectRoot": "C:\\work\\yonsei-edtech",
   "techStack": {
     "languages": [
@@ -83,7 +83,7 @@
       "path": "agent-server",
       "purpose": null,
       "fileCount": 8,
-      "lastAccessed": 1775984752756,
+      "lastAccessed": 1776186074548,
       "keyFiles": [
         "config.py",
         "main.py",
@@ -95,21 +95,21 @@
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
-      "fileCount": 6,
-      "lastAccessed": 1775984752792,
+      "fileCount": 8,
+      "lastAccessed": 1776186074594,
       "keyFiles": [
+        "AUTOMATION_PROGRESS.md",
         "PRD-연세교육공학회-고도화-v1.md",
+        "proposal-site-operation-overhaul.md",
         "ROLE_PERMISSIONS.md",
-        "seminar-enhancement-proposal.md",
-        "세미나관리_UX개선_제안서.md",
-        "학술활동_고도화_제안서.md"
+        "seminar-enhancement-proposal.md"
       ]
     },
     "public": {
       "path": "public",
       "purpose": "Public files",
       "fileCount": 13,
-      "lastAccessed": 1775984752795,
+      "lastAccessed": 1776186074597,
       "keyFiles": [
         "cert-emblem.png",
         "cert-seal.jpeg",
@@ -122,7 +122,7 @@
       "path": "ref",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1775984752798,
+      "lastAccessed": 1776186074599,
       "keyFiles": [
         "관리자모드 화면.png"
       ]
@@ -131,7 +131,7 @@
       "path": "scripts",
       "purpose": "Build/utility scripts",
       "fileCount": 4,
-      "lastAccessed": 1775984752800,
+      "lastAccessed": 1776186074601,
       "keyFiles": [
         "create-admin.mjs",
         "migrate-press-to-promotion.mjs",
@@ -143,14 +143,14 @@
       "path": "src",
       "purpose": "Source code",
       "fileCount": 0,
-      "lastAccessed": 1775984752803,
+      "lastAccessed": 1776186074604,
       "keyFiles": []
     },
     "agent-server\\data": {
       "path": "agent-server\\data",
       "purpose": "Data files",
       "fileCount": 2,
-      "lastAccessed": 1775984752806,
+      "lastAccessed": 1776186074608,
       "keyFiles": [
         "agents.json",
         "tasks.json"
@@ -160,7 +160,7 @@
       "path": "src\\app",
       "purpose": "Application code",
       "fileCount": 10,
-      "lastAccessed": 1775984752814,
+      "lastAccessed": 1776186074617,
       "keyFiles": [
         "error.tsx",
         "globals.css",
@@ -171,7 +171,7 @@
       "path": "src\\components",
       "purpose": "UI components",
       "fileCount": 2,
-      "lastAccessed": 1775984752817,
+      "lastAccessed": 1776186074619,
       "keyFiles": [
         "ShareButton.tsx",
         "ThemeToggle.tsx"
@@ -181,7 +181,7 @@
       "path": "src\\lib",
       "purpose": "Library code",
       "fileCount": 19,
-      "lastAccessed": 1775984752819,
+      "lastAccessed": 1776186074622,
       "keyFiles": [
         "ai-client.ts",
         "ai-prompts.ts",
@@ -192,7 +192,7 @@
       "path": "src\\types",
       "purpose": "Type definitions",
       "fileCount": 1,
-      "lastAccessed": 1775984752821,
+      "lastAccessed": 1776186074624,
       "keyFiles": [
         "index.ts"
       ]
@@ -200,166 +200,202 @@
   },
   "hotPaths": [
     {
-      "path": "src\\features\\seminar-admin\\CertificateGenerator.tsx",
-      "accessCount": 66,
-      "lastAccessed": 1776002309595,
+      "path": "src\\features\\activities\\ActivityDetail.tsx",
+      "accessCount": 21,
+      "lastAccessed": 1776221828344,
       "type": "file"
     },
     {
       "path": "src",
-      "accessCount": 9,
-      "lastAccessed": 1776005443956,
+      "accessCount": 12,
+      "lastAccessed": 1776221869593,
       "type": "directory"
-    },
-    {
-      "path": "src\\app\\api\\certificates\\pdf\\route.ts",
-      "accessCount": 8,
-      "lastAccessed": 1775990261086,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\admin\\certificates\\page.tsx",
-      "accessCount": 5,
-      "lastAccessed": 1775991357722,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\board\\[id]\\page.tsx",
-      "accessCount": 5,
-      "lastAccessed": 1776005940572,
-      "type": "directory"
-    },
-    {
-      "path": "src\\features\\admin\\settings\\OrgChartEditor.tsx",
-      "accessCount": 5,
-      "lastAccessed": 1776006000634,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\api\\activities\\route.ts",
-      "accessCount": 3,
-      "lastAccessed": 1776005055059,
-      "type": "file"
-    },
-    {
-      "path": "src\\features\\seminar\\SeminarRegistrationForm.tsx",
-      "accessCount": 3,
-      "lastAccessed": 1776005458386,
-      "type": "directory"
-    },
-    {
-      "path": "src\\app\\calendar\\page.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1776002878817,
-      "type": "file"
     },
     {
       "path": "src\\features\\activities\\ActivityPage.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1776002894389,
+      "accessCount": 7,
+      "lastAccessed": 1776217197187,
       "type": "file"
     },
     {
       "path": "src\\types\\index.ts",
+      "accessCount": 7,
+      "lastAccessed": 1776221672769,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\auth\\AuthProvider.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1776218705692,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\mypage\\page.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1776220391508,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\auth\\LoginForm.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1776221590195,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\directory\\[id]\\card\\page.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1776187779319,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\card\\BusinessCard.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1776186151593,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\mypage\\card\\page.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1776187771012,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\firebase.ts",
+      "accessCount": 3,
+      "lastAccessed": 1776221607458,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\members\\MemberCard.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1776221962023,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\login\\page.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1776222453513,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\bkend.ts",
       "accessCount": 2,
-      "lastAccessed": 1776005853482,
+      "lastAccessed": 1776187642826,
+      "type": "file"
+    },
+    {
+      "path": "firestore.rules",
+      "accessCount": 2,
+      "lastAccessed": 1776187695246,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\directory\\[id]\\page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1776188370735,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\auth",
+      "accessCount": 2,
+      "lastAccessed": 1776221497689,
       "type": "directory"
+    },
+    {
+      "path": "storage.rules",
+      "accessCount": 2,
+      "lastAccessed": 1776221854977,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\member\\OrgChart.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1776221905500,
+      "type": "file"
     },
     {
       "path": "src\\features\\admin\\settings\\useOrgChart.ts",
-      "accessCount": 2,
-      "lastAccessed": 1776005956383,
+      "accessCount": 1,
+      "lastAccessed": 1776187241786,
       "type": "file"
     },
     {
-      "path": "src\\app\\seminars",
+      "path": "src\\app\\seminars\\page.tsx",
       "accessCount": 1,
-      "lastAccessed": 1776002688632,
-      "type": "directory"
-    },
-    {
-      "path": "src\\app\\admin\\settings\\activities\\page.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1776002750473,
-      "type": "directory"
-    },
-    {
-      "path": "src\\features\\admin\\settings\\ActivityList.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1776002859155,
+      "lastAccessed": 1776216982911,
       "type": "file"
     },
     {
-      "path": "src\\features\\seminar",
+      "path": "src\\app\\seminars\\[id]\\page.tsx",
       "accessCount": 1,
-      "lastAccessed": 1776005425422,
-      "type": "directory"
+      "lastAccessed": 1776216983534,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\seminar\\SeminarStatusTabs.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776216988136,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\seminar\\useSeminar.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776216988441,
+      "type": "file"
     },
     {
       "path": "src\\features\\seminar\\detail\\RegistrationSection.tsx",
       "accessCount": 1,
-      "lastAccessed": 1776005453522,
+      "lastAccessed": 1776216993900,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\seminar\\SeminarRegistrationForm.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776216999044,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\upload.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776221316397,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\storage.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776221624305,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\ui\\file-uploader.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776221649333,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\activities\\FormBuilder.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776221700175,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\activities\\FormRenderer.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776221718360,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\members\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776221916154,
       "type": "directory"
     },
     {
-      "path": "src\\features\\activities\\ActivityDetail.tsx",
+      "path": "src\\lib\\utils.ts",
       "accessCount": 1,
-      "lastAccessed": 1776005473664,
+      "lastAccessed": 1776221939807,
       "type": "directory"
-    },
-    {
-      "path": "docs\\01-plan\\features\\board-community-v2.plan.md",
-      "accessCount": 1,
-      "lastAccessed": 1776005746791,
-      "type": "file"
-    },
-    {
-      "path": "docs\\01-plan\\features\\org-structure-v2.plan.md",
-      "accessCount": 1,
-      "lastAccessed": 1776005746890,
-      "type": "file"
-    },
-    {
-      "path": "src\\components\\layout\\Header.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1776005799574,
-      "type": "directory"
-    },
-    {
-      "path": "src\\features\\board\\PostForm.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1776005802893,
-      "type": "directory"
-    },
-    {
-      "path": "src\\features\\board\\PollViewer.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1776005824864,
-      "type": "file"
-    },
-    {
-      "path": "src\\features\\board\\useBoard.ts",
-      "accessCount": 1,
-      "lastAccessed": 1776005853274,
-      "type": "file"
-    },
-    {
-      "path": "src\\lib\\api-auth.ts",
-      "accessCount": 1,
-      "lastAccessed": 1776005893222,
-      "type": "file"
-    },
-    {
-      "path": "src\\lib\\firebase-admin.ts",
-      "accessCount": 1,
-      "lastAccessed": 1776005893527,
-      "type": "directory"
-    },
-    {
-      "path": "src\\app\\api\\posts\\[id]\\vote\\route.ts",
-      "accessCount": 1,
-      "lastAccessed": 1776005910622,
-      "type": "file"
     }
   ],
   "userDirectives": []

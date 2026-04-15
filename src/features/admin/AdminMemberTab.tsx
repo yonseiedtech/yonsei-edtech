@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isStaffOrAbove } from "@/lib/permissions";
@@ -87,8 +87,41 @@ export default function AdminMemberTab() {
     [truePending, allMembers],
   );
 
+  // 자동 승인 토글 (localStorage 영속)
+  const [autoApprove, setAutoApprove] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setAutoApprove(localStorage.getItem("autoApproveEnabled") === "true");
+  }, []);
+  function toggleAutoApprove(next: boolean) {
+    setAutoApprove(next);
+    if (typeof window !== "undefined") localStorage.setItem("autoApproveEnabled", String(next));
+    toast.success(next ? "자동 승인이 켜졌습니다" : "자동 승인이 꺼졌습니다");
+  }
+
   // 일괄 승인 처리
   const [bulkApproving, setBulkApproving] = useState(false);
+
+  // 자동 승인: 토글 ON + 자격 대기자 발생 시 자동 처리
+  useEffect(() => {
+    if (!autoApprove || !canApprove || bulkApproving) return;
+    if (qualifyingPending.length === 0) return;
+    (async () => {
+      setBulkApproving(true);
+      let ok = 0;
+      for (const u of qualifyingPending) {
+        try {
+          await profilesApi.approve(u.id);
+          await notifyMemberApproved(u.id, u.name);
+          ok++;
+        } catch {}
+      }
+      setBulkApproving(false);
+      if (ok > 0) toast.success(`자동 승인 완료: ${ok}명`);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoApprove, qualifyingPending.length]);
+
   async function handleBulkApprove() {
     if (qualifyingPending.length === 0) return;
     if (!confirm(`자동 승인 가능 ${qualifyingPending.length}명을 일괄 승인하시겠습니까?`)) return;
@@ -357,6 +390,35 @@ export default function AdminMemberTab() {
       {/* ── 승인 대기 탭 ── */}
       {activeTab === "pending" && (
         <section>
+          {/* 자동 승인 토글 — 대기자 유무 관계없이 항상 표시 */}
+          {canApprove && (
+            <div className="mb-4 flex items-center justify-between rounded-xl border bg-white p-4">
+              <div>
+                <p className="text-sm font-medium">자동 승인</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  켜두면 승인 규칙을 통과한 가입 신청자(@yonsei.ac.kr 이메일 + 학번 + 중복 없음)를 자동으로 승인합니다.
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={autoApprove}
+                onClick={() => toggleAutoApprove(!autoApprove)}
+                className={cn(
+                  "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2",
+                  autoApprove ? "bg-green-500" : "bg-gray-300",
+                )}
+              >
+                <span
+                  aria-hidden
+                  className={cn(
+                    "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition-transform",
+                    autoApprove ? "translate-x-5" : "translate-x-0.5",
+                  )}
+                />
+              </button>
+            </div>
+          )}
           {pendingLoading ? (
             <div className="flex justify-center py-12">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -365,6 +427,9 @@ export default function AdminMemberTab() {
             <div className="rounded-xl border bg-white p-12 text-center">
               <Clock size={40} className="mx-auto text-muted-foreground/40" />
               <p className="mt-3 text-muted-foreground">승인 대기 중인 회원이 없습니다.</p>
+              {autoApprove && (
+                <p className="mt-2 text-xs text-green-700">자동 승인이 켜져 있습니다.</p>
+              )}
             </div>
           ) : (
             <div>

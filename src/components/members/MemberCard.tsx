@@ -2,7 +2,13 @@ import { User as UserIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ROLE_LABELS } from "@/types";
 import type { User } from "@/types";
-import { formatGeneration } from "@/lib/utils";
+
+function formatEnrollment(year?: number, half?: number): string {
+  if (!year) return "";
+  const yy = String(year).slice(-2);
+  const label = half === 2 ? "후기" : "전기";
+  return `${yy}년 ${label}`;
+}
 
 interface Props {
   member: User;
@@ -24,9 +30,11 @@ export default function MemberCard({ member }: Props) {
 
       <h3 className="mt-4 font-semibold">
         {member.name}
-        <span className="ml-1 text-xs font-normal text-muted-foreground">
-          ({formatGeneration(member.generation, member.enrollmentYear, member.enrollmentHalf)})
-        </span>
+        {formatEnrollment(member.enrollmentYear, member.enrollmentHalf) && (
+          <span className="ml-1 text-xs font-normal text-muted-foreground">
+            ({formatEnrollment(member.enrollmentYear, member.enrollmentHalf)})
+          </span>
+        )}
       </h3>
 
       {affiliationLine && (
