@@ -106,12 +106,12 @@ export default function HeroSection() {
           이번 학기 세미나·프로젝트 모집 중
         </motion.div>
 
-        <div className="grid items-center gap-12 md:grid-cols-5">
+        <div className="grid grid-cols-5 items-center gap-4 md:gap-12">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="md:col-span-3"
+            className="col-span-3"
           >
             <p className="text-sm font-medium tracking-wide text-primary">
               연세대학교 교육공학 학술 커뮤니티
@@ -151,17 +151,17 @@ export default function HeroSection() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="md:col-span-2"
+            className="col-span-2"
           >
             <TiltCard>
-              <div className="flex items-center justify-center p-4">
+              <div className="flex items-center justify-center p-2 md:p-4">
                 <Image
                   src="/yonsei-emblem.svg"
                   alt="연세대학교 엠블럼"
                   width={360}
                   height={360}
                   priority
-                  className="h-auto w-full max-w-[360px] drop-shadow-2xl"
+                  className="h-auto w-full max-w-[140px] drop-shadow-2xl sm:max-w-[220px] md:max-w-[360px]"
                 />
               </div>
             </TiltCard>

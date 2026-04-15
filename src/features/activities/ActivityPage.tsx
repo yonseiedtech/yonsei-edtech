@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import Link from "next/link";
 import PageHeader from "@/components/ui/page-header";
-import { Calendar, MapPin, Users, User, Plus, Pencil, Trash2, Loader2, UserPlus, Check, Megaphone, CalendarClock, Archive } from "lucide-react";
+import { Calendar, MapPin, Users, User, Plus, Pencil, Trash2, Loader2, UserPlus, Check, Megaphone, CalendarClock, Archive, ImageIcon } from "lucide-react";
 import { postsApi } from "@/lib/bkend";
 import EmptyState from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,9 +41,9 @@ interface FormData {
   status: "upcoming" | "ongoing" | "completed";
   recruitmentStatus: string; maxParticipants: string;
   leader: string; location: string; tags: string;
-  organizerName: string; conferenceUrl: string;
+  organizerName: string; conferenceUrl: string; imageUrl: string;
 }
-const emptyForm: FormData = { title: "", description: "", detailContent: "", date: "", endDate: "", status: "upcoming", recruitmentStatus: "recruiting", maxParticipants: "", leader: "", location: "", tags: "", organizerName: "", conferenceUrl: "" };
+const emptyForm: FormData = { title: "", description: "", detailContent: "", date: "", endDate: "", status: "upcoming", recruitmentStatus: "recruiting", maxParticipants: "", leader: "", location: "", tags: "", organizerName: "", conferenceUrl: "", imageUrl: "" };
 
 interface Props {
   type: ActivityType;
@@ -84,6 +84,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
         tags: form.tags ? form.tags.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
         organizerName: form.organizerName.trim() || undefined,
         conferenceUrl: form.conferenceUrl.trim() || undefined,
+        imageUrl: form.imageUrl.trim() || undefined,
         participants: editId ? undefined : [],
         applicants: editId ? undefined : [],
         createdBy: user?.id || "",
@@ -156,13 +157,100 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
   function openCreate() { setEditId(null); setForm(emptyForm); setDialogOpen(true); }
   function openEdit(a: Activity) {
     setEditId(a.id);
-    setForm({ title: a.title, description: a.description, detailContent: a.detailContent || "", date: a.date, endDate: a.endDate || "", status: a.status, recruitmentStatus: a.recruitmentStatus || "recruiting", maxParticipants: a.maxParticipants ? String(a.maxParticipants) : "", leader: a.leader || "", location: a.location || "", tags: a.tags?.join(", ") || "", organizerName: a.organizerName || "", conferenceUrl: a.conferenceUrl || "" });
+    setForm({ title: a.title, description: a.description, detailContent: a.detailContent || "", date: a.date, endDate: a.endDate || "", status: a.status, recruitmentStatus: a.recruitmentStatus || "recruiting", maxParticipants: a.maxParticipants ? String(a.maxParticipants) : "", leader: a.leader || "", location: a.location || "", tags: a.tags?.join(", ") || "", organizerName: a.organizerName || "", conferenceUrl: a.conferenceUrl || "", imageUrl: a.imageUrl || "" });
     setDialogOpen(true);
   }
   function closeDialog() { setDialogOpen(false); setEditId(null); setForm(emptyForm); setAutoPost(false); }
 
   const ongoing = activities.filter((a) => a.status === "ongoing" || a.status === "upcoming");
   const completed = activities.filter((a) => a.status === "completed");
+
+  const isExternal = type === "external";
+  const [externalTab, setExternalTab] = useState<"all" | "active" | "completed">("all");
+  const externalList =
+    externalTab === "active" ? ongoing : externalTab === "completed" ? completed : activities;
+
+  function computeDday(a: Activity): { label: string; tone: string } | null {
+    if (!a.date) return null;
+    const target = new Date(`${a.date}T00:00:00`);
+    if (isNaN(target.getTime())) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diff = Math.round((target.getTime() - today.getTime()) / 86400000);
+    if (a.status === "completed") return { label: "종료", tone: "bg-muted text-muted-foreground" };
+    if (diff > 0) return { label: `D-${diff}`, tone: "bg-primary text-primary-foreground" };
+    if (diff === 0) return { label: "D-DAY", tone: "bg-rose-500 text-white" };
+    if (a.endDate) {
+      const end = new Date(`${a.endDate}T00:00:00`);
+      if (!isNaN(end.getTime()) && end.getTime() >= today.getTime()) {
+        return { label: "진행중", tone: "bg-amber-500 text-white" };
+      }
+    }
+    return { label: `D+${Math.abs(diff)}`, tone: "bg-muted text-muted-foreground" };
+  }
+
+  function ExternalCard({ a }: { a: Activity }) {
+    const participants = (a.participants as string[] | undefined) ?? [];
+    const isJoined = user ? participants.includes(user.id) : false;
+    const canJoin = user && !isJoined && (a.status === "upcoming" || a.status === "ongoing");
+    const dday = computeDday(a);
+    const href = `/activities/external/${a.id}`;
+    const poster = a.imageUrl as string | undefined;
+
+    return (
+      <div className="group flex flex-col overflow-hidden rounded-xl border bg-white shadow-sm transition hover:shadow-md">
+        <Link href={href} className="relative block aspect-[3/4] w-full overflow-hidden bg-muted">
+          {poster ? (
+            // 외부 도메인 호환을 위해 일반 img 사용
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={poster} alt={a.title} className="absolute inset-0 h-full w-full object-cover transition-transform group-hover:scale-[1.02]" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-muted-foreground/40">
+              <ImageIcon size={56} strokeWidth={1.2} />
+            </div>
+          )}
+          {dday && (
+            <span className={cn("absolute left-3 top-3 rounded-full px-2.5 py-1 text-xs font-bold shadow", dday.tone)}>
+              {dday.label}
+            </span>
+          )}
+          <span className={cn("absolute right-3 top-3 rounded-full px-2 py-0.5 text-[10px] font-medium shadow-sm", STATUS_COLORS[a.status])}>
+            {STATUS_LABELS[a.status]}
+          </span>
+        </Link>
+        <div className="flex flex-1 flex-col gap-2 p-4">
+          <Link href={href} className="line-clamp-2 text-base font-semibold leading-snug hover:text-primary">{a.title}</Link>
+          {a.description && <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">{a.description}</p>}
+          <div className="mt-auto flex flex-col gap-1 pt-2 text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-1"><Calendar size={11} />{a.date}{a.endDate ? ` ~ ${a.endDate}` : ""}</span>
+            {a.location && <span className="flex items-center gap-1"><MapPin size={11} />{a.location}</span>}
+            {a.organizerName && <span className="flex items-center gap-1"><User size={11} />{a.organizerName}</span>}
+          </div>
+          <div className="flex items-center justify-between gap-2 pt-2">
+            <span className="flex items-center gap-1 text-[11px] text-muted-foreground"><Users size={11} />참여 {participants.length}명</span>
+            <div className="flex gap-1">
+              {canJoin && (
+                <Link href={href} className="inline-flex h-7 items-center gap-1 rounded-md bg-primary px-2.5 text-[11px] font-medium text-primary-foreground hover:bg-primary/90">
+                  <UserPlus size={11} />신청
+                </Link>
+              )}
+              {isJoined && (
+                <Button variant="outline" size="sm" className="h-7 gap-1 px-2 text-[11px] text-green-600" onClick={() => leaveMutation.mutate(a.id)} disabled={leaveMutation.isPending}>
+                  <Check size={11} />참여 중
+                </Button>
+              )}
+              {isStaff && (
+                <>
+                  <Button variant="outline" size="sm" className="h-7 px-2" onClick={() => openEdit(a)}><Pencil size={11} /></Button>
+                  <Button variant="outline" size="sm" className="h-7 px-2 text-destructive" onClick={() => { if (confirm("삭제하시겠습니까?")) deleteMutation.mutate(a.id); }}><Trash2 size={11} /></Button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   function ActivityCard({ a }: { a: Activity }) {
     const participants = (a.participants as string[] | undefined) ?? [];
@@ -229,8 +317,51 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
           ) : undefined}
         />
 
+        {isExternal && (
+          <div className="mt-8">
+            <div className="inline-flex rounded-lg border bg-white p-1 text-sm shadow-sm">
+              {(["all", "active", "completed"] as const).map((k) => (
+                <button
+                  key={k}
+                  onClick={() => setExternalTab(k)}
+                  className={cn(
+                    "rounded-md px-4 py-1.5 font-medium transition-colors",
+                    externalTab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
+                  )}
+                >
+                  {k === "all" ? `전체 (${activities.length})` : k === "active" ? `예정·진행중 (${ongoing.length})` : `완료 (${completed.length})`}
+                </button>
+              ))}
+            </div>
+            {isLoading ? (
+              <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="overflow-hidden rounded-xl border bg-white">
+                    <Skeleton className="aspect-[3/4] w-full" />
+                    <div className="p-4 space-y-2">
+                      <Skeleton className="h-5 w-3/4" />
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : externalList.length === 0 ? (
+              <EmptyState
+                icon={CalendarClock}
+                title={`${externalTab === "completed" ? "완료된" : externalTab === "active" ? "예정·진행 중인" : "등록된"} ${title}이 없어요`}
+                description="운영진이 새 활동을 등록하면 여기에 표시됩니다."
+                className="mt-6"
+              />
+            ) : (
+              <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {externalList.map((a) => <ExternalCard key={a.id} a={a} />)}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 진행 중 / 예정 */}
-        <div className="mt-8">
+        {!isExternal && <div className="mt-8">
           <h2 className="text-lg font-bold">진행 중 & 예정</h2>
           {isLoading ? (
             <div className="mt-4 space-y-3">
@@ -256,10 +387,10 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
           ) : (
             <div className="mt-4 space-y-3">{ongoing.map((a) => <ActivityCard key={a.id} a={a} />)}</div>
           )}
-        </div>
+        </div>}
 
         {/* 완료 */}
-        <div className="mt-8">
+        {!isExternal && <div className="mt-8">
           <h2 className="text-lg font-bold">활동 내역</h2>
           {isLoading ? (
             <div className="mt-4 space-y-3">
@@ -280,7 +411,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
           ) : (
             <div className="mt-4 space-y-3">{completed.map((a) => <ActivityCard key={a.id} a={a} />)}</div>
           )}
-        </div>
+        </div>}
 
         {/* 등록/수정 Dialog */}
         <Dialog open={dialogOpen} onOpenChange={(open) => !open && closeDialog()}>
@@ -320,10 +451,13 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
                 <textarea value={form.detailContent} onChange={(e) => setForm({ ...form, detailContent: e.target.value })} rows={4} placeholder="세부 진행 방법, 커리큘럼, 참여 조건 등" className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50" />
               </div>
               {type === "external" && (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div><label className="mb-1 block text-sm font-medium">주최 기관</label><Input value={form.organizerName} onChange={(e) => setForm({ ...form, organizerName: e.target.value })} placeholder="예: 한국교육공학회" /></div>
-                  <div><label className="mb-1 block text-sm font-medium">학회 URL</label><Input value={form.conferenceUrl} onChange={(e) => setForm({ ...form, conferenceUrl: e.target.value })} placeholder="https://..." /></div>
-                </div>
+                <>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div><label className="mb-1 block text-sm font-medium">주최 기관</label><Input value={form.organizerName} onChange={(e) => setForm({ ...form, organizerName: e.target.value })} placeholder="예: 한국교육공학회" /></div>
+                    <div><label className="mb-1 block text-sm font-medium">학회 URL</label><Input value={form.conferenceUrl} onChange={(e) => setForm({ ...form, conferenceUrl: e.target.value })} placeholder="https://..." /></div>
+                  </div>
+                  <div><label className="mb-1 block text-sm font-medium">포스터 이미지 URL</label><Input value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} placeholder="https://..." /></div>
+                </>
               )}
               <div><label className="mb-1 block text-sm font-medium">태그 (쉼표 구분)</label><Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="예: AI교육, UX리서치" /></div>
               {!editId && (

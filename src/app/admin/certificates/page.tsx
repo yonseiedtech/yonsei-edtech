@@ -98,7 +98,7 @@ export default function CertificatesPage() {
       const token = await auth.currentUser?.getIdToken();
       const recipients = batchRegistrations
         .filter((r) => batchSelected.has(r.id))
-        .map((r) => ({ name: r.name, email: r.email, type: batchType }));
+        .map((r) => ({ name: r.name, email: r.email, studentId: r.studentId, type: batchType }));
       const res = await fetch("/api/certificates/batch", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -148,16 +148,23 @@ export default function CertificatesPage() {
   const [bulkSyncing, setBulkSyncing] = useState(false);
 
   async function handleManualLink(cert: Certificate) {
-    if (!cert.recipientEmail) {
-      toast.error("이메일이 없어 매칭할 수 없습니다.");
+    if (!cert.recipientStudentId && !cert.recipientEmail) {
+      toast.error("학번/이메일이 없어 매칭할 수 없습니다.");
       return;
     }
     setLinkingId(cert.id);
     try {
-      const res = await profilesApi.getByEmail(cert.recipientEmail);
-      const match = (res.data?.[0] as unknown as User | undefined);
+      let match: User | undefined;
+      if (cert.recipientStudentId) {
+        const res = await profilesApi.getByStudentId(cert.recipientStudentId);
+        match = res.data?.[0] as unknown as User | undefined;
+      }
+      if (!match && cert.recipientEmail) {
+        const res = await profilesApi.getByEmail(cert.recipientEmail);
+        match = res.data?.[0] as unknown as User | undefined;
+      }
       if (!match) {
-        toast.error("해당 이메일의 회원을 찾지 못했습니다.");
+        toast.error("해당 학번/이메일의 회원을 찾지 못했습니다.");
         return;
       }
       await certificatesApi.update(cert.id, { recipientUserId: match.id });
@@ -174,19 +181,41 @@ export default function CertificatesPage() {
   }
 
   async function handleBulkResync() {
-    if (!confirm("모든 게스트 수료증에 대해 이메일 매칭을 재실행합니다. 계속할까요?")) return;
+    if (!confirm("모든 게스트 수료증에 대해 학번 매칭을 재실행합니다. 계속할까요?")) return;
     setBulkSyncing(true);
     try {
-      // 게스트 상태인 수료증에 대해 이메일별로 runAllGuestLinkers 호출
-      const guests = certificates.filter((c) => !c.recipientUserId && c.recipientEmail);
-      const uniqueEmails = Array.from(new Set(guests.map((c) => (c.recipientEmail as string).toLowerCase())));
+      const guests = certificates.filter((c) => !c.recipientUserId);
       let linked = 0;
-      for (const email of uniqueEmails) {
-        const res = await profilesApi.getByEmail(email);
-        const match = res.data?.[0] as unknown as User | undefined;
+      const seenUsers = new Set<string>();
+      for (const cert of guests) {
+        let match: User | undefined;
+        const sid = cert.recipientStudentId as string | undefined;
+        if (sid) {
+          const res = await profilesApi.getByStudentId(sid);
+          match = res.data?.[0] as unknown as User | undefined;
+        }
+        if (!match && cert.recipientEmail) {
+          const res = await profilesApi.getByEmail(cert.recipientEmail);
+          match = res.data?.[0] as unknown as User | undefined;
+        }
         if (!match) continue;
-        const result = await runAllGuestLinkers({ userId: match.id, userName: match.name, email: match.email });
+        if (seenUsers.has(match.id)) {
+          await certificatesApi.update(cert.id, { recipientUserId: match.id });
+          linked += 1;
+          continue;
+        }
+        seenUsers.add(match.id);
+        const result = await runAllGuestLinkers({
+          userId: match.id,
+          userName: match.name,
+          studentId: match.studentId,
+          email: match.email,
+        });
         linked += result.certificates.linked;
+        if (result.certificates.linked === 0) {
+          await certificatesApi.update(cert.id, { recipientUserId: match.id });
+          linked += 1;
+        }
       }
       toast.success(`${linked}건 연결되었습니다.`);
       window.location.reload();
@@ -394,7 +423,7 @@ export default function CertificatesPage() {
                       <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setPreviewCert(c)} title="미리보기">
                         <Eye size={14} />
                       </Button>
-                      {!c.recipientUserId && c.recipientEmail && (
+                      {!c.recipientUserId && (c.recipientStudentId || c.recipientEmail) && (
                         <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-primary" onClick={() => handleManualLink(c)} disabled={linkingId === c.id} title="수동 링크">
                           {linkingId === c.id ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />}
                         </Button>

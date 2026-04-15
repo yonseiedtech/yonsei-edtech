@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   if (authResult instanceof Response) return authResult;
 
   let seminarId: string;
-  let recipients: Array<{ name: string; email?: string; type: "completion" | "appreciation" }>;
+  let recipients: Array<{ name: string; email?: string; studentId?: string; type: "completion" | "appreciation" }>;
   let issuedBy: string;
 
   try {
@@ -53,9 +53,13 @@ export async function POST(req: NextRequest) {
       lastSeq += 1;
       const certificateNo = `${year}-${String(lastSeq).padStart(3, "0")}`;
 
-      // 이메일로 기존 회원 매칭
+      // 학번 우선 매칭 → 없으면 이메일 매칭
       let recipientUserId: string | null = null;
-      if (r.email) {
+      if (r.studentId) {
+        const userSnap = await db.collection("users").where("studentId", "==", r.studentId).limit(1).get();
+        if (!userSnap.empty) recipientUserId = userSnap.docs[0].id;
+      }
+      if (!recipientUserId && r.email) {
         const userSnap = await db.collection("users").where("email", "==", r.email).limit(1).get();
         if (!userSnap.empty) recipientUserId = userSnap.docs[0].id;
       }
@@ -65,6 +69,7 @@ export async function POST(req: NextRequest) {
         seminarTitle,
         recipientName: r.name,
         recipientEmail: r.email ?? null,
+        recipientStudentId: r.studentId ?? null,
         recipientUserId,
         type: r.type,
         certificateNo,

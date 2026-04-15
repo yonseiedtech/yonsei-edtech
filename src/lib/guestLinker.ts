@@ -80,21 +80,25 @@ export async function linkGuestApplicants({
   return { linked };
 }
 
-/** 게스트 수료증 → recipientUserId 채우기 (recipientEmail 매칭) */
+/** 게스트 수료증 → recipientUserId 채우기 (학번 우선, 이메일 보조) */
 export async function linkGuestCertificates({
   userId,
+  studentId,
   email,
 }: LinkerInput): Promise<LinkerResult> {
-  if (!email) return { linked: 0 };
+  if (!studentId && !email) return { linked: 0 };
   let linked = 0;
   try {
-    const lower = email.toLowerCase();
+    const lowerEmail = email?.toLowerCase();
     const res = await certificatesApi.list();
     const certs = (res.data ?? []) as Certificate[];
     for (const c of certs) {
       if (c.recipientUserId) continue;
+      const certSid = c.recipientStudentId as string | undefined;
       const certEmail = (c.recipientEmail as string | undefined)?.toLowerCase();
-      if (!certEmail || certEmail !== lower) continue;
+      const matchBySid = !!(studentId && certSid && certSid === studentId);
+      const matchByEmail = !!(lowerEmail && certEmail && certEmail === lowerEmail);
+      if (!matchBySid && !matchByEmail) continue;
       await certificatesApi.update(c.id, { recipientUserId: userId });
       linked += 1;
     }

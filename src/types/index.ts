@@ -320,6 +320,7 @@ export interface Certificate { [key: string]: unknown;
   seminarTitle: string;
   recipientName: string;
   recipientEmail?: string;
+  recipientStudentId?: string;
   recipientUserId?: string | null;
   recipientAffiliation?: string;
   type: "completion" | "appreciation";

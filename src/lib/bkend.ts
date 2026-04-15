@@ -271,6 +271,7 @@ export const profilesApi = {
   list: (params?: QueryParams) => dataApi.list<User>("users", params),
   get: (id: string) => dataApi.get<User>("users", id),
   getByEmail: (email: string) => dataApi.list<User>("users", { "filter[email]": email }),
+  getByStudentId: (studentId: string) => dataApi.list<User>("users", { "filter[studentId]": studentId }),
   update: (id: string, data: Record<string, unknown>) => dataApi.update<User>("users", id, data),
   approve: (id: string) => dataApi.patch("users", id, { approved: true }),
 };
