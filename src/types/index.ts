@@ -54,6 +54,8 @@ export interface User { [key: string]: unknown;
   bio?: string;
   approved: boolean;
   rejected?: boolean;
+  /** 실험실 접근 허용 플래그 */
+  labsAccess?: boolean;
   /** 약관/개인정보 동의 이력 */
   consents?: UserConsents;
   /** 레거시: 개인정보 수집 동의 시점 */
@@ -326,6 +328,50 @@ export interface Certificate { [key: string]: unknown;
   type: "completion" | "appreciation";
   issuedAt: string;
   issuedBy: string;
+}
+
+// ── 실험실(Labs) ──
+export type LabKind = "internal" | "external";
+export type LabStatus = "draft" | "testing" | "feedback" | "approved" | "archived";
+export const LAB_EMOJIS = ["👍", "💡", "🐛", "❤️"] as const;
+export type LabEmoji = (typeof LAB_EMOJIS)[number];
+
+export interface Lab { [key: string]: unknown;
+  id: string;
+  kind: LabKind;
+  title: string;
+  description: string;
+  status: LabStatus;
+  featureFlag?: string;
+  previewRoute?: string;
+  externalUrl?: string;
+  thumbnailUrl?: string;
+  tags?: string[];
+  ownerId: string;
+  ownerName: string;
+  allowedUserIds?: string[];
+  reactionSummary?: Record<string, number>;
+  commentCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LabReaction {
+  id: string;
+  labId: string;
+  userId: string;
+  emoji: LabEmoji;
+  createdAt: string;
+}
+
+export interface LabComment {
+  id: string;
+  labId: string;
+  parentId?: string;
+  authorId: string;
+  authorName: string;
+  content: string;
+  createdAt: string;
 }
 
 // ── 홍보 콘텐츠 저장 ──

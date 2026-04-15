@@ -1,4 +1,4 @@
-import type { User, UserRole } from "@/types";
+import type { User, UserRole, Lab } from "@/types";
 
 /**
  * 역할 계층 (숫자가 높을수록 권한이 높음)
@@ -38,4 +38,26 @@ export function isStaffOrAbove(user: User | null): boolean {
 /** president 이상 (president, admin) */
 export function isPresidentOrAbove(user: User | null): boolean {
   return isAtLeast(user, "president");
+}
+
+/** 실험실 접근 권한: staff 이상 또는 labsAccess 부여받은 회원 (lab별 allowedUserIds 존중) */
+export function canAccessLabs(
+  user: User | null,
+  lab?: Pick<Lab, "allowedUserIds">,
+): boolean {
+  if (!user) return false;
+  if (isStaffOrAbove(user)) return true;
+  if (!user.labsAccess) return false;
+  if (lab?.allowedUserIds?.length) return lab.allowedUserIds.includes(user.id);
+  return true;
+}
+
+/** 실험실 생성/수정/삭제 권한 */
+export function canManageLabs(user: User | null): boolean {
+  return isStaffOrAbove(user);
+}
+
+/** 실험실 승격(approved 등) 권한 */
+export function canPromoteLab(user: User | null): boolean {
+  return isPresidentOrAbove(user);
 }

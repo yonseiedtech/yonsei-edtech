@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, ClipboardList, MessageSquare, FileText, Newspaper, Award,
   BarChart3, GraduationCap, Wallet, Users, BookUser,
-  BookOpen,
+  BookOpen, FlaskConical,
   Settings, MessageCircle, ScrollText, ChevronDown, ChevronRight,
 } from "lucide-react";
 import { useState } from "react";
@@ -136,6 +136,12 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
       label: "인사이트",
       items: [
         { href: "/console/insights", label: "인사이트", icon: BarChart3 },
+      ],
+    },
+    {
+      label: "R&D",
+      items: [
+        { href: "/console/labs", label: "실험실", icon: FlaskConical },
       ],
     },
     {

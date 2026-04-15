@@ -35,6 +35,7 @@ import type {
   SeminarReview, Inquiry, Activity, AppNotification, WaitlistEntry,
   Poll, PollResponse, PhotoAlbum, Photo, AdminTodo, AuditLog,
   ActivityProgress, ActivityMaterial, EmailLog,
+  Lab, LabReaction, LabComment,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -503,6 +504,33 @@ export const emailLogsApi = {
       sort: "sentAt:desc",
     }),
   create: (data: Record<string, unknown>) => dataApi.create<EmailLog>("email_logs", data),
+};
+
+export const labsApi = {
+  list: async () => {
+    const res = await dataApi.list<Lab>("labs", {});
+    const sorted = [...res.data].sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+    return { ...res, data: sorted };
+  },
+  get: (id: string) => dataApi.get<Lab>("labs", id),
+  create: (data: Record<string, unknown>) => dataApi.create<Lab>("labs", data),
+  update: (id: string, data: Record<string, unknown>) => dataApi.update<Lab>("labs", id, data),
+  delete: (id: string) => dataApi.delete("labs", id),
+};
+
+export const labReactionsApi = {
+  list: (labId: string) =>
+    dataApi.list<LabReaction>("lab_reactions", { "filter[labId]": labId, limit: 2000 }),
+  create: (data: Record<string, unknown>) => dataApi.create<LabReaction>("lab_reactions", data),
+  delete: (id: string) => dataApi.delete("lab_reactions", id),
+};
+
+export const labCommentsApi = {
+  list: (labId: string) =>
+    dataApi.list<LabComment>("lab_comments", { "filter[labId]": labId, sort: "createdAt:asc" }),
+  create: (data: Record<string, unknown>) => dataApi.create<LabComment>("lab_comments", data),
+  update: (id: string, data: Record<string, unknown>) => dataApi.update<LabComment>("lab_comments", id, data),
+  delete: (id: string) => dataApi.delete("lab_comments", id),
 };
 
 export const notificationsApi = {
