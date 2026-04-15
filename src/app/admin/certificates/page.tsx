@@ -147,33 +147,64 @@ export default function CertificatesPage() {
   const [linkingId, setLinkingId] = useState<string | null>(null);
   const [bulkSyncing, setBulkSyncing] = useState(false);
 
+  function normalizeSid(s?: string): string {
+    return (s ?? "").replace(/[\s-]/g, "").toLowerCase();
+  }
+  function normalizeEmail(s?: string): string {
+    return (s ?? "").trim().toLowerCase();
+  }
+  function normalizeName(s?: string): string {
+    return (s ?? "").replace(/\s/g, "").trim();
+  }
+
+  /** 전체 users 로드 후 정규화 매칭으로 회원 탐색 */
+  async function findMatchForCert(
+    cert: Certificate,
+    allUsers: User[],
+  ): Promise<User | undefined> {
+    const sid = normalizeSid(cert.recipientStudentId as string | undefined);
+    const email = normalizeEmail(cert.recipientEmail);
+    const name = normalizeName(cert.recipientName);
+
+    if (sid) {
+      const m = allUsers.find((u) => normalizeSid(u.studentId) === sid);
+      if (m) return m;
+    }
+    if (email) {
+      const m = allUsers.find(
+        (u) =>
+          normalizeEmail(u.email) === email ||
+          normalizeEmail(u.contactEmail) === email,
+      );
+      if (m) return m;
+    }
+    // 이름 fallback — 단, 동명이인이 1명뿐일 때만 매칭
+    if (name) {
+      const candidates = allUsers.filter((u) => normalizeName(u.name) === name);
+      if (candidates.length === 1) return candidates[0];
+    }
+    return undefined;
+  }
+
   async function handleManualLink(cert: Certificate) {
-    if (!cert.recipientStudentId && !cert.recipientEmail) {
-      toast.error("학번/이메일이 없어 매칭할 수 없습니다.");
+    if (!cert.recipientStudentId && !cert.recipientEmail && !cert.recipientName) {
+      toast.error("학번/이메일/이름이 없어 매칭할 수 없습니다.");
       return;
     }
     setLinkingId(cert.id);
     try {
-      let match: User | undefined;
-      if (cert.recipientStudentId) {
-        const res = await profilesApi.getByStudentId(cert.recipientStudentId);
-        match = res.data?.[0] as unknown as User | undefined;
-      }
-      if (!match && cert.recipientEmail) {
-        const res = await profilesApi.getByEmail(cert.recipientEmail);
-        match = res.data?.[0] as unknown as User | undefined;
-      }
+      const allRes = await profilesApi.list({ limit: 2000 });
+      const allUsers = (allRes.data ?? []) as unknown as User[];
+      const match = await findMatchForCert(cert, allUsers);
       if (!match) {
-        toast.error("해당 학번/이메일의 회원을 찾지 못했습니다.");
+        toast.error("일치하는 회원을 찾지 못했습니다.");
         return;
       }
       await certificatesApi.update(cert.id, { recipientUserId: match.id });
       toast.success(`${match.name} 계정에 연결되었습니다.`);
-      const { useQueryClient } = await import("@tanstack/react-query");
-      // 쿼리 무효화: 부모가 관리
-      void useQueryClient;
       window.location.reload();
-    } catch {
+    } catch (e) {
+      console.error("[cert] 수동 링크 실패:", e);
       toast.error("연결에 실패했습니다.");
     } finally {
       setLinkingId(null);
@@ -181,24 +212,25 @@ export default function CertificatesPage() {
   }
 
   async function handleBulkResync() {
-    if (!confirm("모든 게스트 수료증에 대해 학번 매칭을 재실행합니다. 계속할까요?")) return;
+    if (!confirm("모든 게스트 수료증에 대해 회원 매칭을 재실행합니다. 계속할까요?")) return;
     setBulkSyncing(true);
     try {
+      const allRes = await profilesApi.list({ limit: 2000 });
+      const allUsers = (allRes.data ?? []) as unknown as User[];
+
       const guests = certificates.filter((c) => !c.recipientUserId);
       let linked = 0;
+      let skipped = 0;
       const seenUsers = new Set<string>();
+      const failedNames: string[] = [];
+
       for (const cert of guests) {
-        let match: User | undefined;
-        const sid = cert.recipientStudentId as string | undefined;
-        if (sid) {
-          const res = await profilesApi.getByStudentId(sid);
-          match = res.data?.[0] as unknown as User | undefined;
+        const match = await findMatchForCert(cert, allUsers);
+        if (!match) {
+          skipped += 1;
+          failedNames.push(cert.recipientName);
+          continue;
         }
-        if (!match && cert.recipientEmail) {
-          const res = await profilesApi.getByEmail(cert.recipientEmail);
-          match = res.data?.[0] as unknown as User | undefined;
-        }
-        if (!match) continue;
         if (seenUsers.has(match.id)) {
           await certificatesApi.update(cert.id, { recipientUserId: match.id });
           linked += 1;
@@ -217,9 +249,15 @@ export default function CertificatesPage() {
           linked += 1;
         }
       }
-      toast.success(`${linked}건 연결되었습니다.`);
+      if (failedNames.length) {
+        console.warn("[cert] 매칭 실패:", failedNames);
+      }
+      toast.success(
+        `${linked}건 연결${skipped > 0 ? ` · ${skipped}건 매칭 실패(콘솔 확인)` : ""}`,
+      );
       window.location.reload();
-    } catch {
+    } catch (e) {
+      console.error("[cert] 재동기화 실패:", e);
       toast.error("재동기화 중 오류가 발생했습니다.");
     } finally {
       setBulkSyncing(false);
@@ -423,7 +461,7 @@ export default function CertificatesPage() {
                       <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setPreviewCert(c)} title="미리보기">
                         <Eye size={14} />
                       </Button>
-                      {!c.recipientUserId && (c.recipientStudentId || c.recipientEmail) && (
+                      {!c.recipientUserId && (c.recipientStudentId || c.recipientEmail || c.recipientName) && (
                         <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-primary" onClick={() => handleManualLink(c)} disabled={linkingId === c.id} title="수동 링크">
                           {linkingId === c.id ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />}
                         </Button>
