@@ -121,12 +121,7 @@ export default function LoginForm() {
       </div>
 
       <div>
-        <div className="mb-1.5 flex items-center justify-between">
-          <label className="block text-sm font-medium">비밀번호</label>
-          <Link href="/forgot-password" className="text-xs text-primary hover:underline">
-            비밀번호 찾기
-          </Link>
-        </div>
+        <label className="mb-1.5 block text-sm font-medium">비밀번호</label>
         <Input
           type="password"
           name="password"
@@ -147,12 +142,15 @@ export default function LoginForm() {
         )}
       </Button>
 
-      <p className="text-center text-sm text-muted-foreground">
-        계정이 없으신가요?{" "}
+      <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">
+        <Link href="/forgot-password" className="hover:text-primary hover:underline">
+          비밀번호 찾기
+        </Link>
+        <span className="text-muted-foreground/40">·</span>
         <Link href="/signup" className="font-medium text-primary hover:underline">
           회원가입
         </Link>
-      </p>
+      </div>
 
       <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
         <p>회원가입 후 관리자 승인을 받아 로그인할 수 있습니다.</p>
