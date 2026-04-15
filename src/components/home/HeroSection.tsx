@@ -1,71 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, useAnimationFrame, useInView, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { motion, useAnimationFrame, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { profilesApi, seminarsApi, activitiesApi } from "@/lib/bkend";
-import type { User } from "@/types";
-
-function useHeroStats() {
-  const users = useQuery({
-    queryKey: ["hero", "users"],
-    queryFn: () => profilesApi.list({ limit: 500 }),
-    staleTime: 1000 * 60 * 10,
-  });
-  const seminars = useQuery({
-    queryKey: ["hero", "seminars"],
-    queryFn: () => seminarsApi.list({ limit: 1 }),
-    staleTime: 1000 * 60 * 10,
-  });
-  const projects = useQuery({
-    queryKey: ["hero", "projects"],
-    queryFn: () => activitiesApi.list("project"),
-    staleTime: 1000 * 60 * 10,
-  });
-
-  const stats = useMemo(() => {
-    const memberCount = users.data?.total ?? 0;
-    const maxGen = (users.data?.data ?? []).reduce(
-      (max: number, u: User) => (typeof u.generation === "number" && u.generation > max ? u.generation : max),
-      0,
-    );
-    const seminarCount = seminars.data?.total ?? 0;
-    const projectCount = projects.data?.total ?? 0;
-    return [
-      { value: maxGen, suffix: "기", label: "현재 기수" },
-      { value: memberCount, suffix: "명", label: "회원" },
-      { value: seminarCount, suffix: "회", label: "세미나" },
-      { value: projectCount, suffix: "개", label: "프로젝트" },
-    ];
-  }, [users.data, seminars.data, projects.data]);
-
-  return stats;
-}
-
-function CountUp({ target, suffix, inView }: { target: number; suffix: string; inView: boolean }) {
-  const mv = useMotionValue(0);
-  const [display, setDisplay] = useState(0);
-  useEffect(() => {
-    if (!inView) return;
-    const controls = { stop: false };
-    const start = performance.now();
-    const duration = 1200;
-    function tick(t: number) {
-      if (controls.stop) return;
-      const p = Math.min(1, (t - start) / duration);
-      const eased = 1 - Math.pow(1 - p, 3);
-      mv.set(target * eased);
-      setDisplay(Math.round(target * eased));
-      if (p < 1) requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-    return () => { controls.stop = true; };
-  }, [inView, target, mv]);
-  return <span>{display}{suffix}</span>;
-}
 
 function AuroraBackground() {
   const b1x = useMotionValue(0);
@@ -149,10 +88,6 @@ function TiltCard({ children }: { children: React.ReactNode }) {
 }
 
 export default function HeroSection() {
-  const statsRef = useRef<HTMLDivElement>(null);
-  const inView = useInView(statsRef, { once: true, amount: 0.4 });
-  const stats = useHeroStats();
-
   return (
     <section className="relative overflow-hidden border-b py-20 md:py-28">
       <AuroraBackground />
@@ -222,24 +157,21 @@ export default function HeroSection() {
           </motion.div>
 
           <motion.div
-            ref={statsRef}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
             className="md:col-span-2"
           >
             <TiltCard>
-              <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border bg-border/80 shadow-xl shadow-primary/5">
-                {stats.map((stat) => (
-                  <div key={stat.label} className="bg-white/90 p-6 text-center backdrop-blur">
-                    <div className="text-2xl font-bold text-foreground">
-                      <CountUp target={stat.value} suffix={stat.suffix} inView={inView} />
-                    </div>
-                    <div className="mt-0.5 text-xs text-muted-foreground">
-                      {stat.label}
-                    </div>
-                  </div>
-                ))}
+              <div className="flex items-center justify-center p-4">
+                <Image
+                  src="/yonsei-emblem.svg"
+                  alt="연세대학교 엠블럼"
+                  width={360}
+                  height={360}
+                  priority
+                  className="h-auto w-full max-w-[360px] drop-shadow-2xl"
+                />
               </div>
             </TiltCard>
           </motion.div>

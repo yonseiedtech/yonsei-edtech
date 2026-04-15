@@ -70,6 +70,20 @@ export interface User { [key: string]: unknown;
   enrollmentYear?: number;
   enrollmentHalf?: number; // 1=전반기, 2=후반기
   enrollmentStatus?: EnrollmentStatus;
+  /** 휴학 정보 */
+  leaveStartYear?: number;
+  leaveStartHalf?: number;   // 1|2
+  returnYear?: number;
+  returnHalf?: number;       // 1|2
+  /** 졸업 정보 */
+  thesisTitle?: string;
+  graduationYear?: number;
+  graduationMonth?: 2 | 8;
+  /** 보안 질문 (비밀번호 찾기용) */
+  securityQuestion?: string;
+  securityAnswerHash?: string;
+  /** 생년월일 */
+  birthDate?: string;
   createdAt: string;
   updatedAt: string;
 }

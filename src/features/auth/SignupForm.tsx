@@ -9,12 +9,11 @@ import { UserPlus, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { authApi, profilesApi, attendeesApi, saveTokens } from "@/lib/bkend";
 import { cn } from "@/lib/utils";
-import { buildFreshConsents } from "@/lib/legal";
+import type { UserConsents } from "@/lib/legal";
+import { sha256Hex } from "@/lib/hash";
 
 import type { EnrollmentStatus } from "@/types";
 import { ENROLLMENT_STATUS_LABELS } from "@/types";
-
-type MemberType = "student" | "alumni";
 
 const ACTIVITY_OPTIONS = [
   { value: "", label: "선택 안 함" },
@@ -31,6 +30,18 @@ const SEMESTER_OPTIONS = Array.from({ length: 20 }, (_, i) => i + 1);
 
 // 입학 연도 옵션 (최근 15년)
 const ENROLLMENT_YEAR_OPTIONS = Array.from({ length: 15 }, (_, i) => 2026 - i);
+const LEAVE_YEAR_OPTIONS = Array.from({ length: 20 }, (_, i) => 2026 - i + 4); // 2030~2011
+const RETURN_YEAR_OPTIONS = Array.from({ length: 10 }, (_, i) => 2026 + i - 3); // 2023~2032
+const GRADUATION_YEAR_OPTIONS = Array.from({ length: 20 }, (_, i) => 2028 - i);
+
+const SECURITY_QUESTIONS = [
+  "첫 반려동물 이름",
+  "출신 초등학교",
+  "좋아하는 책",
+  "어머니 성함",
+  "첫 직장 이름",
+  "직접 입력",
+];
 
 interface SignupData {
   username: string;
@@ -42,36 +53,36 @@ interface SignupData {
   generation: string;
   enrollmentYear: string;
   enrollmentHalf: string;
-  studentId: string;
   field: string;
   activity: string;
   affiliation1: string;
   affiliation2: string;
   position: string;
+  // 휴학
+  leaveStartYear: string;
+  leaveStartHalf: string;
+  returnYear: string;
+  returnHalf: string;
+  // 졸업
+  thesisTitle: string;
+  graduationYear: string;
+  graduationMonth: string;
+  // 보안질문
+  securityQuestionSelect: string;
+  securityQuestionCustom: string;
+  securityAnswer: string;
 }
 
 interface Props {
   onSuccess: () => void;
   defaultName?: string;
   defaultStudentId?: string;
+  initialConsents?: UserConsents;
 }
 
-export default function SignupForm({ onSuccess, defaultName, defaultStudentId }: Props) {
+export default function SignupForm({ onSuccess, defaultName, defaultStudentId, initialConsents }: Props) {
   const [loading, setLoading] = useState(false);
   const [enrollmentStatus, setEnrollmentStatus] = useState<EnrollmentStatus>("enrolled");
-  const [memberType, setMemberType] = useState<MemberType>("student");
-  const [agreeTerms, setAgreeTerms] = useState(false);
-  const [agreePrivacy, setAgreePrivacy] = useState(false);
-  const [agreeCollection, setAgreeCollection] = useState(false);
-  const [agreeMarketing, setAgreeMarketing] = useState(false);
-  const allRequiredAgreed = agreeTerms && agreePrivacy && agreeCollection;
-  const allAgreed = allRequiredAgreed && agreeMarketing;
-  function toggleAll(checked: boolean) {
-    setAgreeTerms(checked);
-    setAgreePrivacy(checked);
-    setAgreeCollection(checked);
-    setAgreeMarketing(checked);
-  }
   const [showOptional, setShowOptional] = useState(false);
   const [usernameChecked, setUsernameChecked] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState(false);
@@ -80,12 +91,14 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
     defaultValues: {
       username: defaultStudentId || "",
       name: defaultName || "",
+      securityQuestionSelect: SECURITY_QUESTIONS[0],
     },
   });
 
   const watchedUsername = watch("username");
+  const watchedSecurityQ = watch("securityQuestionSelect");
 
-  // 학번에서 입학 시점 추출: 2023432001 → 2023년, 432=후반기 / 431=전반기
+  // 학번에서 입학 시점 추출
   function parseEnrollmentFromStudentId(sid: string) {
     if (sid.length < 7) return;
     const year = sid.slice(0, 4);
@@ -96,11 +109,8 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
         setValue("enrollmentYear", year);
       }
     }
-    if (code === "431") {
-      setValue("enrollmentHalf", "1"); // 전반기
-    } else if (code === "432") {
-      setValue("enrollmentHalf", "2"); // 후반기
-    }
+    if (code === "431") setValue("enrollmentHalf", "1");
+    else if (code === "432") setValue("enrollmentHalf", "2");
   }
 
   async function checkUsernameAvailability() {
@@ -110,9 +120,7 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
     }
     setCheckingUsername(true);
     try {
-      // 학번에서 입학 시점 자동 추출
       parseEnrollmentFromStudentId(watchedUsername);
-
       const res = await fetch(`/api/auth/check-username?username=${encodeURIComponent(watchedUsername)}`);
       const data = await res.json();
       if (!res.ok) {
@@ -136,19 +144,47 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
   }
 
   async function onSubmit(data: SignupData) {
-    if (!allRequiredAgreed) {
-      toast.error("필수 약관에 모두 동의해주세요.");
+    if (!initialConsents) {
+      toast.error("약관 동의 정보가 없습니다. 처음부터 다시 진행해주세요.");
       return;
     }
-
-    // 학번 중복 가입 방지 (필수 확인)
     if (!usernameChecked || !usernameAvailable) {
       toast.error("학번 가입여부 확인을 먼저 진행해주세요.");
       return;
     }
 
+    // 보안 질문 확정
+    const securityQuestion =
+      data.securityQuestionSelect === "직접 입력"
+        ? (data.securityQuestionCustom || "").trim()
+        : data.securityQuestionSelect;
+    if (!securityQuestion) {
+      toast.error("보안 질문을 입력하세요.");
+      return;
+    }
+    if (!data.securityAnswer || !data.securityAnswer.trim()) {
+      toast.error("보안 질문 답변을 입력하세요.");
+      return;
+    }
+
+    // 휴학 필수 분기 검증
+    if (enrollmentStatus === "on_leave") {
+      if (!data.leaveStartYear || !data.leaveStartHalf || !data.returnYear || !data.returnHalf) {
+        toast.error("휴학/복학 정보를 모두 입력하세요.");
+        return;
+      }
+    }
+    if (enrollmentStatus === "graduated") {
+      if (!data.thesisTitle || !data.graduationYear || !data.graduationMonth) {
+        toast.error("졸업 정보를 모두 입력하세요.");
+        return;
+      }
+    }
+
     setLoading(true);
     try {
+      const securityAnswerHash = await sha256Hex(data.securityAnswer.trim().toLowerCase());
+
       try {
         const tokens = await authApi.signup({
           email: data.email,
@@ -165,7 +201,7 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
           memberType: enrollmentStatus === "graduated" ? "alumni" : "student",
           enrollmentStatus,
           generation: data.generation ? Number(data.generation) : 0,
-          studentId: data.studentId || data.username || "",
+          studentId: data.username || "",
           phone: data.phone || "",
           birthDate: data.birthDate || "",
           enrollmentYear: data.enrollmentYear ? Number(data.enrollmentYear) : null,
@@ -173,13 +209,23 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
           field: data.field || "",
           approved: true,
           privacyAgreedAt: new Date().toISOString(),
-          consents: buildFreshConsents({
-            terms: agreeTerms,
-            privacy: agreePrivacy,
-            collection: agreeCollection,
-            marketing: agreeMarketing,
-          }),
+          consents: initialConsents,
+          securityQuestion,
+          securityAnswerHash,
         };
+
+        if (enrollmentStatus === "on_leave") {
+          profileData.leaveStartYear = Number(data.leaveStartYear);
+          profileData.leaveStartHalf = Number(data.leaveStartHalf);
+          profileData.returnYear = Number(data.returnYear);
+          profileData.returnHalf = Number(data.returnHalf);
+        }
+        if (enrollmentStatus === "graduated") {
+          profileData.thesisTitle = data.thesisTitle;
+          profileData.graduationYear = Number(data.graduationYear);
+          profileData.graduationMonth = Number(data.graduationMonth) as 2 | 8;
+        }
+
         if (data.activity) profileData.occupation = data.activity;
         if (data.affiliation1) profileData.affiliation = data.affiliation1;
         if (data.affiliation2) profileData.department = data.affiliation2;
@@ -188,7 +234,7 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
         await profilesApi.update("me", profileData);
 
         // 학번 기반 게스트 세미나 기록 연동
-        const studentIdForLookup = data.studentId || data.username;
+        const studentIdForLookup = data.username;
         if (studentIdForLookup) {
           try {
             const guestRecords = await attendeesApi.findGuestsByStudentId(studentIdForLookup);
@@ -334,7 +380,7 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
         )}
       </div>
 
-      {/* 신분 유형 (필수) */}
+      {/* 신분 유형 */}
       <div>
         <label className="mb-1.5 block text-sm font-medium">
           신분 유형 <span className="text-destructive">*</span>
@@ -410,6 +456,128 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
         </div>
       )}
 
+      {/* 휴학 분기 */}
+      {enrollmentStatus === "on_leave" && (
+        <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
+          <p className="text-sm font-medium">휴학 정보 <span className="text-destructive">*</span></p>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium">휴학 시작</label>
+            <div className="grid grid-cols-2 gap-2">
+              <select
+                {...register("leaveStartYear")}
+                className="w-full rounded-lg border px-3 py-2.5 text-sm"
+              >
+                <option value="">연도</option>
+                {LEAVE_YEAR_OPTIONS.map((y) => (
+                  <option key={y} value={y}>{y}년</option>
+                ))}
+              </select>
+              <select
+                {...register("leaveStartHalf")}
+                className="w-full rounded-lg border px-3 py-2.5 text-sm"
+              >
+                <option value="">학기</option>
+                <option value="1">전기</option>
+                <option value="2">후기</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium">복학 예정</label>
+            <div className="grid grid-cols-2 gap-2">
+              <select
+                {...register("returnYear")}
+                className="w-full rounded-lg border px-3 py-2.5 text-sm"
+              >
+                <option value="">연도</option>
+                {RETURN_YEAR_OPTIONS.map((y) => (
+                  <option key={y} value={y}>{y}년</option>
+                ))}
+              </select>
+              <select
+                {...register("returnHalf")}
+                className="w-full rounded-lg border px-3 py-2.5 text-sm"
+              >
+                <option value="">학기</option>
+                <option value="1">전기</option>
+                <option value="2">후기</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 졸업 분기 */}
+      {enrollmentStatus === "graduated" && (
+        <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
+          <p className="text-sm font-medium">졸업 정보 <span className="text-destructive">*</span></p>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium">졸업 논문(연구보고서) 제목</label>
+            <Input {...register("thesisTitle")} placeholder="제목을 입력하세요" />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium">졸업 시점</label>
+            <div className="grid grid-cols-2 gap-2">
+              <select
+                {...register("graduationYear")}
+                className="w-full rounded-lg border px-3 py-2.5 text-sm"
+              >
+                <option value="">연도</option>
+                {GRADUATION_YEAR_OPTIONS.map((y) => (
+                  <option key={y} value={y}>{y}년</option>
+                ))}
+              </select>
+              <select
+                {...register("graduationMonth")}
+                className="w-full rounded-lg border px-3 py-2.5 text-sm"
+              >
+                <option value="">월</option>
+                <option value="2">2월</option>
+                <option value="8">8월</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 보안 질문 */}
+      <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
+        <p className="text-sm font-medium">
+          보안 질문 <span className="text-destructive">*</span>
+          <span className="ml-1 text-xs text-muted-foreground">(비밀번호 찾기용)</span>
+        </p>
+        <div>
+          <label className="mb-1.5 block text-xs font-medium">질문</label>
+          <select
+            {...register("securityQuestionSelect", { required: true })}
+            className="w-full rounded-lg border px-3 py-2.5 text-sm"
+          >
+            {SECURITY_QUESTIONS.map((q) => (
+              <option key={q} value={q}>{q}</option>
+            ))}
+          </select>
+        </div>
+        {watchedSecurityQ === "직접 입력" && (
+          <div>
+            <label className="mb-1.5 block text-xs font-medium">직접 입력한 질문</label>
+            <Input
+              {...register("securityQuestionCustom")}
+              placeholder="질문을 직접 입력하세요"
+            />
+          </div>
+        )}
+        <div>
+          <label className="mb-1.5 block text-xs font-medium">답변</label>
+          <Input
+            {...register("securityAnswer", { required: "답변을 입력하세요" })}
+            placeholder="답변을 입력하세요"
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            답변은 암호화되어 저장되며, 평문은 서버에 보관되지 않습니다.
+          </p>
+        </div>
+      </div>
+
       {/* ── 선택 정보 (접이식) ── */}
       <div className="border-t pt-4">
         <button
@@ -423,13 +591,6 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
 
         {showOptional && (
           <div className="mt-4 space-y-4">
-            <div>
-              <label className="mb-1.5 block text-sm font-medium">
-                학번 <span className="text-muted-foreground">(선택)</span>
-              </label>
-              <Input {...register("studentId")} placeholder="예: 2024123456" />
-            </div>
-
             <div>
               <label className="mb-1.5 block text-sm font-medium">
                 관심 분야 <span className="text-muted-foreground">(선택)</span>
@@ -451,7 +612,7 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
               </select>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="mb-1.5 block text-sm font-medium">
                   소속1 <span className="text-muted-foreground">(선택)</span>
@@ -476,49 +637,7 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId }:
         )}
       </div>
 
-      {/* 약관 동의 */}
-      <div className="space-y-2 rounded-lg border bg-muted/30 p-4">
-        <label className="flex cursor-pointer items-center gap-2 border-b pb-2">
-          <input
-            type="checkbox"
-            checked={allAgreed}
-            onChange={(e) => toggleAll(e.target.checked)}
-            className="h-4 w-4 rounded border-gray-300"
-          />
-          <span className="text-sm font-semibold">전체 동의 (선택 항목 포함)</span>
-        </label>
-
-        {[
-          { key: "terms", label: "서비스 이용약관 동의", href: "/terms", required: true, checked: agreeTerms, set: setAgreeTerms },
-          { key: "privacy", label: "개인정보처리방침 동의", href: "/privacy", required: true, checked: agreePrivacy, set: setAgreePrivacy },
-          { key: "collection", label: "개인정보 수집·이용 동의", href: "/consent", required: true, checked: agreeCollection, set: setAgreeCollection },
-          { key: "marketing", label: "마케팅·이벤트 정보 수신 동의", href: "/consent", required: false, checked: agreeMarketing, set: setAgreeMarketing },
-        ].map((item) => (
-          <label key={item.key} className="flex cursor-pointer items-center gap-2">
-            <input
-              type="checkbox"
-              checked={item.checked}
-              onChange={(e) => item.set(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300"
-            />
-            <span className="text-sm">
-              <span className={item.required ? "font-medium" : "text-muted-foreground"}>
-                [{item.required ? "필수" : "선택"}] {item.label}
-              </span>
-            </span>
-            <Link
-              href={item.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="ml-auto text-xs text-primary hover:underline"
-            >
-              보기
-            </Link>
-          </label>
-        ))}
-      </div>
-
-      <Button type="submit" className="w-full" disabled={loading || !allRequiredAgreed || !usernameChecked || !usernameAvailable}>
+      <Button type="submit" className="w-full" disabled={loading || !usernameChecked || !usernameAvailable}>
         {loading ? (
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
         ) : (

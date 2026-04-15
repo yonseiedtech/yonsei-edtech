@@ -121,7 +121,12 @@ export default function LoginForm() {
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium">비밀번호</label>
+        <div className="mb-1.5 flex items-center justify-between">
+          <label className="block text-sm font-medium">비밀번호</label>
+          <Link href="/forgot-password" className="text-xs text-primary hover:underline">
+            비밀번호 찾기
+          </Link>
+        </div>
         <Input
           type="password"
           name="password"
