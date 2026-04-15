@@ -83,36 +83,15 @@ export default function InterviewBuilder({ value, onChange }: Props) {
           />
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-sm font-medium">마감일 (선택)</label>
-            <Input
-              type="date"
-              value={value.deadline ? value.deadline.slice(0, 10) : ""}
-              onChange={(e) =>
-                update("deadline", e.target.value ? new Date(e.target.value).toISOString() : undefined)
-              }
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">응답 공개 범위</label>
-            <div className="flex gap-2">
-              {(["public", "staff_only"] as const).map((opt) => (
-                <button
-                  key={opt}
-                  type="button"
-                  onClick={() => update("responseVisibility", opt)}
-                  className={`flex-1 rounded-full border px-3 py-1.5 text-sm ${
-                    value.responseVisibility === opt
-                      ? "border-violet-600 bg-violet-600 text-white"
-                      : "border-muted bg-white text-muted-foreground"
-                  }`}
-                >
-                  {opt === "public" ? "전체 공개" : "운영진 전용"}
-                </button>
-              ))}
-            </div>
-          </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium">마감일 (선택)</label>
+          <Input
+            type="date"
+            value={value.deadline ? value.deadline.slice(0, 10) : ""}
+            onChange={(e) =>
+              update("deadline", e.target.value ? new Date(e.target.value).toISOString() : undefined)
+            }
+          />
         </div>
       </div>
 

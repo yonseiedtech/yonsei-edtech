@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { InterviewMeta, InterviewResponse } from "@/types";
 import { useInterviewResponses } from "./interview-store";
@@ -10,10 +9,9 @@ import { formatDate } from "@/lib/utils";
 interface Props {
   postId: string;
   meta: InterviewMeta;
-  canViewRestricted: boolean;
 }
 
-export default function InterviewResponses({ postId, meta, canViewRestricted }: Props) {
+export default function InterviewResponses({ postId, meta }: Props) {
   const { responses, isLoading } = useInterviewResponses(postId);
   const submitted = useMemo(
     () => responses.filter((r) => r.status === "submitted"),
@@ -25,25 +23,13 @@ export default function InterviewResponses({ postId, meta, canViewRestricted }: 
     return m;
   }, [meta.questions]);
 
-  const visibilityBlocked = meta.responseVisibility === "staff_only" && !canViewRestricted;
-
   return (
     <section className="mt-8">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold">응답 ({submitted.length})</h2>
-        {meta.responseVisibility === "staff_only" && (
-          <Badge variant="outline" className="text-xs">
-            <Lock size={12} className="mr-1" />
-            운영진 전용 공개
-          </Badge>
-        )}
       </div>
 
-      {visibilityBlocked ? (
-        <div className="mt-4 rounded-2xl border border-dashed bg-muted/40 p-8 text-center text-sm text-muted-foreground">
-          이 인터뷰의 응답은 운영진만 열람할 수 있어요.
-        </div>
-      ) : isLoading ? (
+      {isLoading ? (
         <p className="mt-4 text-sm text-muted-foreground">응답을 불러오는 중...</p>
       ) : submitted.length === 0 ? (
         <div className="mt-4 rounded-2xl border border-dashed bg-muted/40 p-8 text-center text-sm text-muted-foreground">

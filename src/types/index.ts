@@ -166,7 +166,7 @@ export interface InterviewQuestion {
 export interface InterviewMeta {
   intro: string;
   deadline?: string;
-  responseVisibility: "public" | "staff_only";
+  responseVisibility?: "public" | "staff_only";
   questions: InterviewQuestion[];
 }
 

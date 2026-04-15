@@ -279,6 +279,17 @@ service cloud.firestore {
       allow update, delete: if isAuthenticated() && isStaffOrAbove();
     }
 
+    // ─── Interview Responses (온라인 인터뷰 응답) ───
+    match /interview_responses/{docId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.respondentId == request.auth.uid;
+      allow update: if isAuthenticated()
+        && (resource.data.respondentId == request.auth.uid || isStaffOrAbove());
+      allow delete: if isAuthenticated()
+        && (resource.data.respondentId == request.auth.uid || isStaffOrAbove());
+    }
+
     // ─── Audit Logs (감사 로그) ───
     match /audit_logs/{docId} {
       allow read: if isAuthenticated()
