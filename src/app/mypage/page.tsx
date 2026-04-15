@@ -67,6 +67,9 @@ function MypageContent() {
     const isApplicant = a.applicants?.some((ap) => ap.userId === user.id && ap.status === "approved");
     return inMembers || inParticipants || isLeader || isApplicant;
   });
+  const myPendingApplications = allActivities.filter((a) =>
+    a.applicants?.some((ap) => ap.userId === user?.id && ap.status !== "approved"),
+  );
 
   const { data: allCertificates = [] } = useQuery({
     queryKey: ["certificates", "my"],
@@ -169,6 +172,9 @@ function MypageContent() {
                   <BookOpen size={18} className="text-primary" />
                   <p className="mt-2 text-xs text-muted-foreground">참여 학술활동</p>
                   <p className="mt-0.5 text-xl font-bold">{myActivities.length + mySeminars.length}</p>
+                  {myPendingApplications.length > 0 && (
+                    <p className="mt-0.5 text-[10px] font-medium text-amber-600">신청 대기 {myPendingApplications.length}건</p>
+                  )}
                 </button>
                 <button onClick={() => setActiveTab("certificates")} className="rounded-2xl border bg-white p-4 text-left hover:border-primary/40 hover:shadow-sm">
                   <Award size={18} className="text-primary" />
@@ -317,6 +323,38 @@ function MypageContent() {
                   </ul>
                 )}
               </section>
+
+              {/* 신청 대기/반려 */}
+              {myPendingApplications.length > 0 && (
+                <section>
+                  <h3 className="mb-2 text-sm font-semibold">신청 현황 ({myPendingApplications.length})</h3>
+                  <ul className="space-y-2">
+                    {myPendingApplications.map((a) => {
+                      const meta = ACTIVITY_META[a.type] ?? ACTIVITY_META.project;
+                      const mine = a.applicants?.find((ap) => ap.userId === user.id);
+                      const statusLabel = mine?.status === "rejected" ? "반려" : "승인 대기";
+                      const statusColor = mine?.status === "rejected" ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700";
+                      return (
+                        <li key={a.id} className="rounded-xl border bg-white px-5 py-4 hover:border-primary/40">
+                          <Link href={`${meta.href}/${a.id}`} className="flex items-center justify-between">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <Badge variant="secondary" className="text-[10px]">{meta.label}</Badge>
+                                <Badge className={cn("text-[10px]", statusColor)}>{statusLabel}</Badge>
+                              </div>
+                              <p className="mt-1 truncate font-medium">{a.title}</p>
+                              <p className="mt-0.5 text-xs text-muted-foreground">
+                                신청일 {mine?.appliedAt ? new Date(mine.appliedAt).toLocaleDateString("ko-KR") : "-"}
+                              </p>
+                            </div>
+                            <ChevronRight size={14} className="shrink-0 text-muted-foreground" />
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              )}
 
               {/* 세미나 */}
               <section>
