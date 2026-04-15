@@ -190,7 +190,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-violet-100 via-white to-indigo-100">
+    <div className="fixed inset-0 z-50 flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-violet-100 via-white to-indigo-100">
       <audio
         ref={audioRef}
         src={BGM_URL}
@@ -200,15 +200,18 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
       />
 
       {/* 헤더 */}
-      <header className="flex items-center justify-between border-b bg-white/60 px-4 py-3 backdrop-blur">
+      <header
+        className="flex items-center justify-between gap-2 border-b bg-white/60 px-3 py-2 backdrop-blur sm:px-4 sm:py-3"
+        style={{ paddingTop: "max(0.5rem, env(safe-area-inset-top))" }}
+      >
         <div className="min-w-0 flex-1">
-          <p className="truncate text-xs text-muted-foreground">{post.authorName} · 온라인 인터뷰</p>
-          <p className="truncate text-sm font-bold">{post.title}</p>
+          <p className="truncate text-[11px] text-muted-foreground sm:text-xs">{post.authorName} · 온라인 인터뷰</p>
+          <p className="truncate text-xs font-bold sm:text-sm">{post.title}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
           <button
             onClick={() => setBgmOn((v) => !v)}
-            className="rounded-full p-2 text-muted-foreground hover:bg-muted"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-muted"
             title={bgmOn ? "배경음악 끄기" : "배경음악 켜기"}
           >
             {bgmOn ? <Volume2 size={18} /> : <VolumeX size={18} />}
@@ -216,7 +219,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
           {index >= 0 && (
             <button
               onClick={handleSaveDraft}
-              className="rounded-full p-2 text-muted-foreground hover:bg-muted"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-muted"
               title="임시저장 후 닫기"
             >
               <Save size={18} />
@@ -224,7 +227,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
           )}
           <button
             onClick={onClose}
-            className="rounded-full p-2 text-muted-foreground hover:bg-muted"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-muted"
             title="닫기"
           >
             <X size={18} />
@@ -242,7 +245,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
       </div>
 
       {/* 전체화면 질문 영역 */}
-      <main className="flex flex-1 items-center justify-center overflow-y-auto px-6 py-10">
+      <main className="flex flex-1 items-center justify-center overflow-y-auto px-4 py-6 sm:px-6 sm:py-10">
         <AnimatePresence mode="wait">
           {index < 0 ? (
             <motion.div
@@ -259,8 +262,8 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
               <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-violet-700">
                 {post.authorName} · 인터뷰어
               </p>
-              <h2 className="mt-2 text-3xl font-bold leading-snug sm:text-4xl">{post.title}</h2>
-              <p className="mt-6 whitespace-pre-wrap text-base leading-relaxed text-foreground/80">
+              <h2 className="mt-2 text-2xl font-bold leading-snug sm:text-4xl">{post.title}</h2>
+              <p className="mt-5 whitespace-pre-wrap text-sm leading-relaxed text-foreground/80 sm:mt-6 sm:text-base">
                 {meta.intro || "안녕하세요! 몇 가지 질문을 드릴게요."}
               </p>
               <p className="mt-6 text-sm text-muted-foreground">총 {total}개의 질문</p>
@@ -285,7 +288,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1, duration: 0.35 }}
-                className="mt-3 text-center text-2xl font-bold leading-snug sm:text-3xl"
+                className="mt-3 text-center text-xl font-bold leading-snug sm:text-3xl"
               >
                 {currentQ.prompt}
               </motion.h2>
@@ -307,9 +310,9 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                       value={currentAnswer?.text ?? ""}
                       onChange={(e) => patchAnswer({ text: e.target.value })}
                       placeholder="여기에 답변을 입력하세요..."
-                      rows={6}
+                      rows={5}
                       className="bg-white text-base"
-                      autoFocus
+                      style={{ fontSize: "16px" }}
                     />
                     {currentQ.maxChars && (
                       <p className="mt-1 text-right text-xs text-muted-foreground">
@@ -367,9 +370,12 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
 
       {/* 하단 컨트롤 */}
       {index >= 0 && (
-        <footer className="border-t bg-white/70 px-4 py-3 backdrop-blur">
+        <footer
+          className="border-t bg-white/70 px-3 py-2 backdrop-blur sm:px-4 sm:py-3"
+          style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+        >
           <div className="mx-auto flex max-w-2xl items-center justify-between gap-2">
-            <Button type="button" variant="outline" onClick={handlePrev}>
+            <Button type="button" variant="outline" size="sm" onClick={handlePrev} className="min-w-[72px]">
               <ChevronLeft size={16} className="mr-1" />
               이전
             </Button>
@@ -377,16 +383,16 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
               {index + 1} / {total}
             </span>
             {isLast ? (
-              <Button type="button" onClick={handleSubmit} disabled={saveMutation.isPending}>
+              <Button type="button" size="sm" onClick={handleSubmit} disabled={saveMutation.isPending} className="min-w-[88px]">
                 {saveMutation.isPending ? (
                   <Loader2 size={16} className="mr-1 animate-spin" />
                 ) : (
                   <Send size={16} className="mr-1" />
                 )}
-                제출하기
+                제출
               </Button>
             ) : (
-              <Button type="button" onClick={handleNext} disabled={saveMutation.isPending}>
+              <Button type="button" size="sm" onClick={handleNext} disabled={saveMutation.isPending} className="min-w-[72px]">
                 다음
               </Button>
             )}
