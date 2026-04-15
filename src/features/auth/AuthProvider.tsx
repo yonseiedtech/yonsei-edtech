@@ -4,8 +4,9 @@ import { useEffect, useRef } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useAuthStore } from "./auth-store";
-import { profilesApi, attendeesApi } from "@/lib/bkend";
+import { profilesApi, attendeesApi, activitiesApi } from "@/lib/bkend";
 import { mergeToUser } from "./merge-user";
+import type { Activity } from "@/types";
 
 /** 게스트 참석자 중 로그인한 회원과 매칭되는 레코드를 자동 연결 */
 async function linkGuestAttendees(userId: string, userName: string, studentId?: string, email?: string) {
@@ -33,6 +34,29 @@ async function linkGuestAttendees(userId: string, userName: string, studentId?: 
   } catch {
     // 게스트 연결 실패는 로그인에 영향 없음
     console.warn("[auth] guest linking failed");
+  }
+}
+
+/** 게스트 참가 신청(activities.applicants[])을 로그인한 회원과 자동 연결 */
+async function linkGuestApplicants(userId: string, userName: string, email?: string) {
+  if (!email) return;
+  try {
+    const lower = email.toLowerCase();
+    const res = await activitiesApi.list();
+    const activities = (res.data ?? []) as Activity[];
+    for (const a of activities) {
+      const apps = a.applicants ?? [];
+      const hasMatch = apps.some((x) => x.isGuest && x.email?.toLowerCase() === lower);
+      if (!hasMatch) continue;
+      const updated = apps.map((x) =>
+        x.isGuest && x.email?.toLowerCase() === lower
+          ? { ...x, userId, name: x.name || userName, isGuest: false }
+          : x,
+      );
+      await activitiesApi.update(a.id, { applicants: updated });
+    }
+  } catch {
+    console.warn("[auth] guest applicant linking failed");
   }
 }
 
@@ -66,6 +90,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
               (profile?.studentId as string) || undefined,
               merged.email || undefined,
             );
+            linkGuestApplicants(merged.id, merged.name, merged.email || undefined);
           }
         } catch {
           setUser(null);

@@ -379,7 +379,7 @@ export interface Activity { [key: string]: unknown;
   leader?: string;
   members?: string[];
   participants?: string[];
-  applicants?: { userId: string; name: string; studentId?: string; answers?: Record<string, string>; appliedAt: string; status: "pending" | "approved" | "rejected" }[];
+  applicants?: { userId?: string; guestKey?: string; isGuest?: boolean; email?: string; phone?: string; name: string; studentId?: string; answers?: Record<string, string>; appliedAt: string; status: "pending" | "approved" | "rejected" }[];
   applicationQuestions?: string[];
   location?: string;
   tags?: string[];

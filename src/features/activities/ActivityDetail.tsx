@@ -45,7 +45,10 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const [applyDialog, setApplyDialog] = useState(false);
   const [applyName, setApplyName] = useState("");
   const [applyStudentId, setApplyStudentId] = useState("");
+  const [applyEmail, setApplyEmail] = useState("");
+  const [applyPhone, setApplyPhone] = useState("");
   const [applyAnswers, setApplyAnswers] = useState<Record<string, string>>({});
+  const [signupCtaOpen, setSignupCtaOpen] = useState(false);
   const [newQuestion, setNewQuestion] = useState("");
   const [progressTitle, setProgressTitle] = useState("");
   const [progressDate, setProgressDate] = useState("");
@@ -78,17 +81,25 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const participants = (activity?.participants as string[] | undefined) ?? [];
   const applicants = (activity?.applicants as Activity["applicants"]) ?? [];
   const isJoined = user ? participants.includes(user.id) : false;
-  const hasApplied = user ? applicants.some((a) => a.userId === user?.id) : false;
+  const hasApplied = user ? applicants.some((a) => a.userId === user?.id || (a.isGuest && a.email && user?.email && a.email.toLowerCase() === user.email.toLowerCase())) : false;
   const recruitmentStatus = activity?.recruitmentStatus ?? "recruiting";
 
   // 참여 신청 (대외활동: 신청서 기반, 기타: 즉시 참여)
   const applyMutation = useMutation({
     mutationFn: async () => {
-      if (!activity || !user) return;
+      if (!activity) return;
       if (type === "external") {
-        const newApplicant = { userId: user.id, name: applyName || user.name, studentId: applyStudentId, answers: Object.keys(applyAnswers).length > 0 ? applyAnswers : undefined, appliedAt: new Date().toISOString(), status: "pending" as const };
-        await activitiesApi.update(activityId, { applicants: [...applicants, newApplicant] });
+        if (user) {
+          const newApplicant = { userId: user.id, name: applyName || user.name, studentId: applyStudentId, email: applyEmail || user.email, phone: applyPhone, answers: Object.keys(applyAnswers).length > 0 ? applyAnswers : undefined, appliedAt: new Date().toISOString(), status: "pending" as const };
+          await activitiesApi.update(activityId, { applicants: [...applicants, newApplicant] });
+        } else {
+          if (!applyName.trim() || !applyEmail.trim()) throw new Error("이름과 이메일은 필수입니다.");
+          const guestKey = `guest_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+          const newApplicant = { guestKey, isGuest: true, name: applyName.trim(), studentId: applyStudentId, email: applyEmail.trim().toLowerCase(), phone: applyPhone, answers: Object.keys(applyAnswers).length > 0 ? applyAnswers : undefined, appliedAt: new Date().toISOString(), status: "pending" as const };
+          await activitiesApi.update(activityId, { applicants: [...applicants, newApplicant] });
+        }
       } else {
+        if (!user) return;
         if (participants.includes(user.id)) return;
         await activitiesApi.update(activityId, { participants: [...participants, user.id] });
       }
@@ -97,16 +108,19 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
       queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
       toast.success(type === "external" ? "참가 신청이 완료되었습니다." : "참여 신청이 완료되었습니다.");
       setApplyDialog(false);
+      if (!user && type === "external") setSignupCtaOpen(true);
     },
+    onError: (e: Error) => { toast.error(e.message || "신청에 실패했습니다."); },
   });
 
   // 신청 승인/거절 (관리자)
   const updateApplicantMutation = useMutation({
-    mutationFn: async ({ userId, status }: { userId: string; status: "approved" | "rejected" }) => {
+    mutationFn: async ({ key, status }: { key: string; status: "approved" | "rejected" }) => {
       if (!activity) return;
-      const updated = applicants.map((a) => a.userId === userId ? { ...a, status } : a);
-      const newParticipants = status === "approved" && !participants.includes(userId)
-        ? [...participants, userId] : participants;
+      const updated = applicants.map((a) => ((a.userId ?? a.guestKey) === key ? { ...a, status } : a));
+      const target = applicants.find((a) => (a.userId ?? a.guestKey) === key);
+      const newParticipants = status === "approved" && target?.userId && !participants.includes(target.userId)
+        ? [...participants, target.userId] : participants;
       await activitiesApi.update(activityId, { applicants: updated, participants: newParticipants });
     },
     onSuccess: () => {
@@ -189,15 +203,25 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
 
           {/* 참여 버튼 */}
           <div className="mt-4">
-            {user && !isJoined && !hasApplied && recruitmentStatus === "recruiting" && (
+            {!isJoined && !hasApplied && recruitmentStatus === "recruiting" && (
               type === "external" ? (
-                <Button size="sm" onClick={() => { setApplyName(user.name); setApplyStudentId(user.studentId || ""); setApplyDialog(true); }}>
-                  <UserPlus size={14} className="mr-1" />참가 신청
+                <Button size="sm" onClick={() => {
+                  setApplyName(user?.name ?? "");
+                  setApplyStudentId(user?.studentId ?? "");
+                  setApplyEmail(user?.email ?? "");
+                  setApplyPhone("");
+                  setApplyDialog(true);
+                }}>
+                  <UserPlus size={14} className="mr-1" />참가 신청{!user && " (비회원 가능)"}
                 </Button>
-              ) : (
+              ) : user ? (
                 <Button size="sm" onClick={() => applyMutation.mutate()} disabled={applyMutation.isPending}>
                   <UserPlus size={14} className="mr-1" />참여 신청
                 </Button>
+              ) : (
+                <Link href={`/login?next=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "")}`} className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-xs hover:bg-primary/90">
+                  <UserPlus size={14} className="mr-1" />로그인 후 참여 신청
+                </Link>
               )
             )}
             {isJoined && <Badge className="bg-green-50 text-green-700"><Check size={12} className="mr-1" />참여 중</Badge>}
@@ -410,11 +434,15 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 <p className="p-6 text-center text-sm text-muted-foreground">신청 내역이 없습니다.</p>
               ) : (
                 <div className="divide-y">
-                  {applicants.map((a) => (
-                    <div key={a.userId} className="flex items-center justify-between px-4 py-3 text-sm">
+                  {applicants.map((a) => {
+                    const key = a.userId ?? a.guestKey ?? `${a.name}-${a.appliedAt}`;
+                    return (
+                    <div key={key} className="flex items-center justify-between px-4 py-3 text-sm">
                       <div>
                         <span className="font-medium">{a.name}</span>
+                        {a.isGuest && <Badge variant="secondary" className="ml-2 bg-slate-100 text-[10px] text-slate-600">비회원</Badge>}
                         {a.studentId && <span className="ml-2 text-xs text-muted-foreground">{a.studentId}</span>}
+                        {a.email && isStaff && <span className="ml-2 text-xs text-muted-foreground">{a.email}</span>}
                         <span className="ml-2 text-xs text-muted-foreground">
                           {new Date(a.appliedAt).toLocaleDateString("ko-KR")}
                         </span>
@@ -422,10 +450,10 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                       <div className="flex items-center gap-2">
                         {a.status === "pending" && isStaff && (
                           <>
-                            <Button size="sm" className="h-7 gap-1 text-xs" onClick={() => updateApplicantMutation.mutate({ userId: a.userId, status: "approved" })}>
+                            <Button size="sm" className="h-7 gap-1 text-xs" onClick={() => updateApplicantMutation.mutate({ key, status: "approved" })}>
                               <CheckCircle size={12} />승인
                             </Button>
-                            <Button variant="outline" size="sm" className="h-7 gap-1 text-xs text-destructive" onClick={() => updateApplicantMutation.mutate({ userId: a.userId, status: "rejected" })}>
+                            <Button variant="outline" size="sm" className="h-7 gap-1 text-xs text-destructive" onClick={() => updateApplicantMutation.mutate({ key, status: "rejected" })}>
                               <XCircle size={12} />거절
                             </Button>
                           </>
@@ -435,7 +463,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                         {a.status === "pending" && !isStaff && <Badge className="bg-amber-50 text-amber-700 text-[10px]">대기</Badge>}
                       </div>
                     </div>
-                  ))}
+                  );})}
                 </div>
               )}
             </div>
@@ -544,12 +572,21 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
         {/* 대외활동 참가 신청 Dialog */}
         <Dialog open={applyDialog} onOpenChange={setApplyDialog}>
           <DialogContent className="sm:max-w-md">
-            <DialogHeader><DialogTitle>참가 신청</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>참가 신청{!user && " (비회원)"}</DialogTitle></DialogHeader>
+            {!user && (
+              <p className="rounded-lg bg-primary/5 p-3 text-xs text-muted-foreground">
+                비회원으로도 신청할 수 있습니다. 신청 후 동일한 이메일로 회원가입하시면 활동 기록이 자동 연결됩니다.
+              </p>
+            )}
             <div className="grid gap-3">
-              <div><label className="mb-1 block text-sm font-medium">이름</label>
+              <div><label className="mb-1 block text-sm font-medium">이름 *</label>
                 <Input value={applyName} onChange={(e) => setApplyName(e.target.value)} /></div>
               <div><label className="mb-1 block text-sm font-medium">학번</label>
                 <Input value={applyStudentId} onChange={(e) => setApplyStudentId(e.target.value)} /></div>
+              <div><label className="mb-1 block text-sm font-medium">이메일 {!user && "*"}</label>
+                <Input type="email" value={applyEmail} onChange={(e) => setApplyEmail(e.target.value)} placeholder="name@example.com" /></div>
+              <div><label className="mb-1 block text-sm font-medium">연락처</label>
+                <Input value={applyPhone} onChange={(e) => setApplyPhone(e.target.value)} placeholder="010-0000-0000" /></div>
               {applicationQuestions.map((q, i) => (
                 <div key={i}><label className="mb-1 block text-sm font-medium">{q}</label>
                   <textarea value={applyAnswers[q] ?? ""} onChange={(e) => setApplyAnswers((prev) => ({ ...prev, [q]: e.target.value }))} rows={2} placeholder="답변을 입력해주세요." className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50" /></div>
@@ -557,9 +594,36 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setApplyDialog(false)}>취소</Button>
-              <Button onClick={() => applyMutation.mutate()} disabled={applyMutation.isPending || !applyName.trim()}>
+              <Button onClick={() => applyMutation.mutate()} disabled={applyMutation.isPending || !applyName.trim() || (!user && !applyEmail.trim())}>
                 {applyMutation.isPending && <Loader2 size={14} className="mr-1 animate-spin" />}신청
               </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* 비회원 신청 후 회원가입 유도 */}
+        <Dialog open={signupCtaOpen} onOpenChange={setSignupCtaOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader><DialogTitle>신청이 완료되었습니다 🎉</DialogTitle></DialogHeader>
+            <div className="space-y-3 text-sm text-slate-700">
+              <p>운영진 승인 후 참가 확정 메일을 <strong>{applyEmail}</strong>로 보내드립니다.</p>
+              <div className="rounded-lg border bg-primary/5 p-3">
+                <p className="font-medium text-primary">회원가입하면 이런 점이 좋아요</p>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-slate-600">
+                  <li>신청 내역과 승인 상태를 마이페이지에서 실시간 확인</li>
+                  <li>후속 세미나·스터디 일정 자동 알림</li>
+                  <li>같은 이메일로 가입하면 이번 신청이 <strong>자동 연결</strong>됩니다</li>
+                </ul>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSignupCtaOpen(false)}>나중에</Button>
+              <Link
+                href={`/signup?email=${encodeURIComponent(applyEmail)}&name=${encodeURIComponent(applyName)}`}
+                className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-xs hover:bg-primary/90"
+              >
+                회원가입하고 기록 연결하기
+              </Link>
             </DialogFooter>
           </DialogContent>
         </Dialog>
