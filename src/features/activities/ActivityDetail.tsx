@@ -462,8 +462,16 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               <FormBuilder
                 value={applicationForm}
                 onChange={async (fields) => {
-                  await activitiesApi.update(activityId, { applicationForm: fields });
-                  queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+                  queryClient.setQueryData(["activity", activityId], (prev: unknown) => {
+                    if (!prev || typeof prev !== "object") return prev;
+                    return { ...(prev as Record<string, unknown>), applicationForm: fields };
+                  });
+                  try {
+                    await activitiesApi.update(activityId, { applicationForm: fields });
+                  } catch (e) {
+                    toast.error(e instanceof Error ? e.message : "폼 저장 실패");
+                    queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+                  }
                 }}
               />
             </div>

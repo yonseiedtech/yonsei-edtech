@@ -19,6 +19,7 @@ import Link from "next/link";
 import PageHeader from "@/components/ui/page-header";
 import { Calendar, MapPin, Users, User, Plus, Pencil, Trash2, Loader2, UserPlus, Check, Megaphone, CalendarClock, Archive, ImageIcon } from "lucide-react";
 import { postsApi } from "@/lib/bkend";
+import { uploadImageSmart } from "@/lib/storage";
 import EmptyState from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -62,6 +63,24 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
   const [form, setForm] = useState<FormData>(emptyForm);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [autoPost, setAutoPost] = useState(false);
+  const [uploadingPoster, setUploadingPoster] = useState(false);
+
+  async function handlePosterFile(file: File) {
+    if (!file.type.startsWith("image/")) {
+      toast.error("이미지 파일만 업로드 가능합니다.");
+      return;
+    }
+    setUploadingPoster(true);
+    try {
+      const url = await uploadImageSmart(file, `activities/${type}/posters`);
+      setForm((f) => ({ ...f, imageUrl: url }));
+      toast.success("포스터가 업로드되었습니다.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "업로드 실패");
+    } finally {
+      setUploadingPoster(false);
+    }
+  }
 
   const { data: activities = [], isLoading } = useQuery({
     queryKey: ["activities", type],
@@ -456,7 +475,28 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
                     <div><label className="mb-1 block text-sm font-medium">주최 기관</label><Input value={form.organizerName} onChange={(e) => setForm({ ...form, organizerName: e.target.value })} placeholder="예: 한국교육공학회" /></div>
                     <div><label className="mb-1 block text-sm font-medium">학회 URL</label><Input value={form.conferenceUrl} onChange={(e) => setForm({ ...form, conferenceUrl: e.target.value })} placeholder="https://..." /></div>
                   </div>
-                  <div><label className="mb-1 block text-sm font-medium">포스터 이미지 URL</label><Input value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} placeholder="https://..." /></div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">포스터 이미지</label>
+                    <div className="flex items-start gap-3">
+                      {form.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={form.imageUrl} alt="포스터 미리보기" className="h-24 w-18 shrink-0 rounded-lg border object-cover" />
+                      ) : (
+                        <div className="flex h-24 w-18 shrink-0 items-center justify-center rounded-lg border bg-muted/30 text-muted-foreground/40"><ImageIcon size={22} /></div>
+                      )}
+                      <div className="flex-1 space-y-2">
+                        <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium hover:bg-muted">
+                          {uploadingPoster ? <Loader2 size={12} className="animate-spin" /> : <ImageIcon size={12} />}
+                          {uploadingPoster ? "업로드 중..." : "파일 업로드"}
+                          <input type="file" accept="image/*" className="hidden" disabled={uploadingPoster} onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePosterFile(f); e.target.value = ""; }} />
+                        </label>
+                        <Input value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} placeholder="또는 이미지 URL 직접 입력 (https://...)" />
+                        {form.imageUrl && (
+                          <button type="button" onClick={() => setForm({ ...form, imageUrl: "" })} className="text-xs text-muted-foreground hover:text-red-600">포스터 제거</button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </>
               )}
               <div><label className="mb-1 block text-sm font-medium">태그 (쉼표 구분)</label><Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="예: AI교육, UX리서치" /></div>

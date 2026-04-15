@@ -162,6 +162,22 @@ export const authApi = {
 
 type QueryParams = Record<string, string | number | undefined>;
 
+/** Recursively strip `undefined` values — Firestore rejects undefined at any nesting level. */
+function stripUndefinedDeep<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((v) => stripUndefinedDeep(v)) as unknown as T;
+  }
+  if (value && typeof value === "object" && !(value instanceof Date) && !(value instanceof Timestamp)) {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      if (v === undefined) continue;
+      out[k] = stripUndefinedDeep(v);
+    }
+    return out as T;
+  }
+  return value;
+}
+
 export const dataApi = {
   list: async <T>(table: string, params?: QueryParams): Promise<ListResponse<T>> => {
     const constraints: QueryConstraint[] = [];
@@ -196,11 +212,8 @@ export const dataApi = {
   },
 
   create: async <T>(table: string, data: Record<string, unknown>): Promise<T> => {
-    // Firestore does not accept undefined values — strip them
-    const cleaned: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(data)) {
-      if (v !== undefined) cleaned[k] = v;
-    }
+    // Firestore does not accept undefined values — strip them (deep)
+    const cleaned = stripUndefinedDeep(data);
     const docRef = await addDoc(collection(db, table), {
       ...cleaned,
       createdAt: serverTimestamp(),
@@ -214,11 +227,8 @@ export const dataApi = {
   update: async <T>(table: string, id: string, data: Record<string, unknown>): Promise<T> => {
     const docId = id === "me" ? auth.currentUser?.uid ?? id : id;
     const docRef = doc(db, table, docId);
-    // Firestore does not accept undefined values — strip them
-    const cleaned: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(data)) {
-      if (v !== undefined) cleaned[k] = v;
-    }
+    // Firestore does not accept undefined values — strip them (deep)
+    const cleaned = stripUndefinedDeep(data);
     await updateDoc(docRef, { ...cleaned, updatedAt: serverTimestamp() });
     const docSnap = await getDoc(docRef);
     return serializeDoc(docSnap) as T;
@@ -226,10 +236,8 @@ export const dataApi = {
 
   patch: async <T>(table: string, id: string, data: Record<string, unknown>): Promise<T> => {
     const docRef = doc(db, table, id);
-    // Remove undefined values to prevent Firestore errors
-    const cleaned = Object.fromEntries(
-      Object.entries(data).filter(([, v]) => v !== undefined),
-    );
+    // Remove undefined values (deep) to prevent Firestore errors
+    const cleaned = stripUndefinedDeep(data);
     await updateDoc(docRef, cleaned);
     const docSnap = await getDoc(docRef);
     return serializeDoc(docSnap) as T;
