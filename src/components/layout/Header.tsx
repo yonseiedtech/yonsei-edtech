@@ -335,6 +335,15 @@ export default function Header() {
           )}
           <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-4">
           <nav className="flex flex-col gap-1 pt-2">
+            {!user && (
+              <Link
+                href="/login"
+                onClick={() => setMobileOpen(false)}
+                className="mb-2 rounded-xl bg-primary px-4 py-2.5 text-center text-sm font-semibold text-white shadow-sm"
+              >
+                로그인
+              </Link>
+            )}
             {user && (
               <>
                 <div className="px-3 py-1">
@@ -383,15 +392,6 @@ export default function Header() {
                   로그아웃
                 </button>
               </>
-            )}
-            {!user && (
-              <Link
-                href="/login"
-                onClick={() => setMobileOpen(false)}
-                className="mt-2 rounded-xl bg-primary px-4 py-2 text-center text-sm font-medium text-white"
-              >
-                로그인
-              </Link>
             )}
           </nav>
           </div>
