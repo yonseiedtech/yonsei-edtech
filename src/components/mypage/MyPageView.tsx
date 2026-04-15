@@ -11,11 +11,12 @@ import { useSeminars, useToggleAttendance } from "@/features/seminar/useSeminar"
 import { useQuery } from "@tanstack/react-query";
 import { certificatesApi, attendeesApi, activitiesApi, profilesApi } from "@/lib/bkend";
 import AttendanceCertificate from "@/features/seminar/AttendanceCertificate";
-import type { Certificate, Activity, User } from "@/types";
+import type { Certificate, Activity, User, Post } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { User as UserIcon, LogOut, Calendar, X, FileText, KeyRound, UserCog, Award, Home, ChevronRight, FolderKanban, BookOpen, Globe, QrCode, Eye } from "lucide-react";
+import { User as UserIcon, LogOut, Calendar, X, FileText, KeyRound, UserCog, Award, Home, ChevronRight, FolderKanban, BookOpen, Globe, QrCode, Eye, Mic } from "lucide-react";
+import { useMyInterviewResponses } from "@/features/board/interview-store";
 import EmptyState from "@/components/ui/empty-state";
 import { useAuth } from "@/features/auth/useAuth";
 import { ROLE_LABELS, ENROLLMENT_STATUS_LABELS } from "@/types";
@@ -29,6 +30,7 @@ const TABS = [
   { key: "activities", label: "학술활동", icon: BookOpen },
   { key: "certificates", label: "수료증", icon: Award },
   { key: "posts", label: "내 글", icon: FileText },
+  { key: "interviews", label: "인터뷰", icon: Mic },
 ] as const;
 
 const ACTIVITY_META: Record<string, { label: string; icon: typeof FolderKanban; href: string }> = {
@@ -65,6 +67,11 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
   const user = isSelf ? authUser : fetchedUser;
 
   const myPosts = posts.filter((p) => p.authorId === userId);
+  const myCreatedInterviews = posts.filter((p) => p.authorId === userId && p.type === "interview");
+  const { responses: myInterviewResponses } = useMyInterviewResponses(userId);
+  const respondedPostIds = new Set(myInterviewResponses.map((r) => r.postId));
+  const respondedInterviews = posts.filter((p) => p.type === "interview" && respondedPostIds.has(p.id));
+  const postById = new Map<string, Post>(posts.map((p) => [p.id, p]));
   const mySeminars = seminars.filter((s) => s.attendeeIds.includes(userId));
 
   const { data: allActivities = [] } = useQuery({
@@ -485,6 +492,88 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
 
           {activeTab === "posts" && (
             <MyPostList posts={myPosts} />
+          )}
+
+          {activeTab === "interviews" && (
+            <div className="space-y-6">
+              <section>
+                <h3 className="mb-2 text-sm font-semibold">참여한 인터뷰 ({respondedInterviews.length})</h3>
+                {respondedInterviews.length === 0 ? (
+                  <EmptyState
+                    icon={Mic}
+                    title="아직 참여한 인터뷰가 없습니다"
+                    description="자유게시판의 온라인 인터뷰에 참여해보세요."
+                    actionLabel="자유게시판 가기"
+                    actionHref="/board/free"
+                  />
+                ) : (
+                  <ul className="space-y-2">
+                    {myInterviewResponses
+                      .filter((r) => postById.has(r.postId))
+                      .map((r) => {
+                        const p = postById.get(r.postId)!;
+                        return (
+                          <li key={r.id} className="rounded-xl border bg-white px-5 py-4 hover:border-primary/40">
+                            <Link href={`/board/${p.id}`} className="flex items-center justify-between">
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <Mic size={14} className="text-violet-600" />
+                                  <Badge variant="secondary" className="bg-violet-50 text-violet-700 text-[10px]">인터뷰</Badge>
+                                  <Badge
+                                    variant="outline"
+                                    className={cn(
+                                      "text-[10px]",
+                                      r.status === "submitted" ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700",
+                                    )}
+                                  >
+                                    {r.status === "submitted" ? "제출 완료" : "임시 저장"}
+                                  </Badge>
+                                </div>
+                                <p className="mt-1 truncate font-medium">{p.title}</p>
+                                <p className="mt-0.5 text-xs text-muted-foreground">
+                                  {r.submittedAt ? `제출 ${formatDate(r.submittedAt)}` : r.updatedAt ? `저장 ${formatDate(r.updatedAt)}` : ""}
+                                  {" · "}답변 {r.answers.length}개
+                                </p>
+                              </div>
+                              <ChevronRight size={14} className="shrink-0 text-muted-foreground" />
+                            </Link>
+                          </li>
+                        );
+                      })}
+                  </ul>
+                )}
+              </section>
+
+              {myCreatedInterviews.length > 0 && (
+                <section>
+                  <h3 className="mb-2 text-sm font-semibold">내가 개설한 인터뷰 ({myCreatedInterviews.length})</h3>
+                  <ul className="space-y-2">
+                    {myCreatedInterviews.map((p) => (
+                      <li key={p.id} className="rounded-xl border bg-white px-5 py-4 hover:border-primary/40">
+                        <Link href={`/board/${p.id}`} className="flex items-center justify-between">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <Mic size={14} className="text-violet-600" />
+                              <Badge variant="secondary" className="bg-violet-50 text-violet-700 text-[10px]">인터뷰</Badge>
+                              {p.interview?.deadline && (
+                                <Badge variant="outline" className="text-[10px]">
+                                  마감 {new Date(p.interview.deadline).toLocaleDateString("ko-KR")}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="mt-1 truncate font-medium">{p.title}</p>
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                              {formatDate(p.createdAt)} · 질문 {p.interview?.questions.length ?? 0}개
+                            </p>
+                          </div>
+                          <ChevronRight size={14} className="shrink-0 text-muted-foreground" />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </div>
           )}
         </div>
       </div>
