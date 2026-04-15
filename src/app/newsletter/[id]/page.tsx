@@ -2,7 +2,13 @@
 
 import { use } from "react";
 import Link from "next/link";
-import { useNewsletters, SECTION_TYPE_LABELS, AUTHOR_TYPE_LABELS } from "@/features/newsletter/newsletter-store";
+import {
+  useNewsletters,
+  SECTION_TYPE_LABELS,
+  AUTHOR_TYPE_LABELS,
+  SECTION_TYPE_STYLES,
+  AUTHOR_TYPE_STYLES,
+} from "@/features/newsletter/newsletter-store";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -51,20 +57,34 @@ export default function NewsletterDetailPage({
         </Link>
 
         {/* 표지 */}
-        <div
-          className={cn(
-            "relative flex min-h-[280px] flex-col justify-end rounded-2xl bg-gradient-to-br p-8 text-white md:min-h-[340px]",
-            issue.coverColor,
-          )}
-        >
-          <p className="text-sm font-medium uppercase tracking-widest opacity-70">
-            연세교육공학회보
-          </p>
-          <p className="mt-1 text-xs opacity-60">vol. {issue.issueNumber}</p>
-          <h1 className="mt-4 text-3xl font-bold md:text-4xl">{issue.subtitle}</h1>
-          <p className="mt-3 text-sm opacity-80">
-            {issue.publishDate} · 편집 {issue.editorName}
-          </p>
+        <div className="relative h-48 w-full overflow-hidden rounded-2xl sm:h-64">
+          <img
+            src="/yonsei-campus.jpg"
+            alt={issue.title}
+            className="h-full w-full object-cover"
+          />
+          <div
+            className={cn(
+              "absolute inset-0 bg-gradient-to-br opacity-70",
+              issue.coverColor,
+            )}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+
+          <div className="absolute bottom-0 left-0 right-0 p-5 text-white sm:p-8">
+            <p className="text-xs font-medium uppercase tracking-widest opacity-80">
+              연세교육공학회보 · vol. {issue.issueNumber}
+            </p>
+            <h1
+              className="mt-2 text-2xl font-bold leading-tight sm:text-3xl md:text-4xl"
+              style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}
+            >
+              {issue.subtitle}
+            </h1>
+            <p className="mt-2 text-xs opacity-90 sm:text-sm">
+              {issue.publishDate} · 편집 {issue.editorName}
+            </p>
+          </div>
         </div>
 
         {/* 목차 */}
@@ -84,7 +104,10 @@ export default function NewsletterDetailPage({
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="text-[10px]">
+                      <Badge
+                        variant="outline"
+                        className={cn("text-[10px]", SECTION_TYPE_STYLES[section.type])}
+                      >
                         {SECTION_TYPE_LABELS[section.type]}
                       </Badge>
                       <span className="truncate font-medium">{section.title}</span>
@@ -92,7 +115,13 @@ export default function NewsletterDetailPage({
                     <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
                       <span>{section.authorName}</span>
                       {section.authorType && (
-                        <Badge variant="secondary" className="text-[10px]">
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-[10px]",
+                            AUTHOR_TYPE_STYLES[section.authorType]
+                          )}
+                        >
                           {AUTHOR_TYPE_LABELS[section.authorType] ?? section.authorType}
                         </Badge>
                       )}
@@ -118,7 +147,12 @@ export default function NewsletterDetailPage({
               className="mt-8 rounded-2xl border bg-white p-8"
             >
               <div className="flex items-center gap-2">
-                <Badge variant="secondary">{SECTION_TYPE_LABELS[section.type]}</Badge>
+                <Badge
+                  variant="outline"
+                  className={cn(SECTION_TYPE_STYLES[section.type])}
+                >
+                  {SECTION_TYPE_LABELS[section.type]}
+                </Badge>
                 <span className="text-sm text-muted-foreground">
                   {idx + 1}/{issue.sections.length}
                 </span>
@@ -127,7 +161,10 @@ export default function NewsletterDetailPage({
               <div className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
                 <span>글 {section.authorName}</span>
                 {section.authorType && (
-                  <Badge variant="secondary" className="text-[10px]">
+                  <Badge
+                    variant="outline"
+                    className={cn("text-[10px]", AUTHOR_TYPE_STYLES[section.authorType])}
+                  >
                     {AUTHOR_TYPE_LABELS[section.authorType] ?? section.authorType}
                   </Badge>
                 )}

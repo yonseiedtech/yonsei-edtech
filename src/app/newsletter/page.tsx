@@ -1,7 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useNewsletters, SECTION_TYPE_LABELS } from "@/features/newsletter/newsletter-store";
+import {
+  useNewsletters,
+  SECTION_TYPE_LABELS,
+  SECTION_TYPE_STYLES,
+} from "@/features/newsletter/newsletter-store";
 import type { NewsletterIssue } from "@/features/newsletter/newsletter-store";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,7 +39,10 @@ function IssueCard({ issue }: { issue: NewsletterIssue }) {
             .slice(0, 3)
             .map((section) => (
               <div key={section.id} className="flex items-center gap-2 text-sm">
-                <Badge variant="secondary" className="shrink-0 text-[10px]">
+                <Badge
+                  variant="outline"
+                  className={cn("shrink-0 text-[10px]", SECTION_TYPE_STYLES[section.type])}
+                >
                   {SECTION_TYPE_LABELS[section.type]}
                 </Badge>
                 <span className="truncate text-muted-foreground">
@@ -101,13 +108,79 @@ export default function NewsletterPage() {
             아직 발행된 학회보가 없습니다.
           </div>
         ) : (
-          <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {publishedIssues.map((issue) => (
-              <Link key={issue.id} href={`/newsletter/${issue.id}`} className="text-left">
-                <IssueCard issue={issue} />
-              </Link>
-            ))}
-          </div>
+          <>
+            {/* 전체 발행 현황 */}
+            <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {(() => {
+                const total = publishedIssues.length;
+                const latest = [...publishedIssues].sort((a, b) =>
+                  (b.publishDate ?? "").localeCompare(a.publishDate ?? "")
+                )[0];
+                const years = new Set(
+                  publishedIssues
+                    .map((i) => i.publishDate?.slice(0, 4))
+                    .filter(Boolean) as string[]
+                );
+                const sectionsSum = publishedIssues.reduce(
+                  (acc, i) => acc + i.sections.length,
+                  0
+                );
+                const stats = [
+                  { label: "총 발행 호수", value: String(total) },
+                  { label: "발행 연도", value: String(years.size) },
+                  { label: "누적 섹션", value: String(sectionsSum) },
+                  { label: "최신 발행일", value: latest?.publishDate ?? "—" },
+                ];
+                return stats.map((s) => (
+                  <div key={s.label} className="rounded-2xl border bg-white p-4">
+                    <div className="text-xs text-muted-foreground">{s.label}</div>
+                    <div className="mt-1 text-lg font-bold">{s.value}</div>
+                  </div>
+                ));
+              })()}
+            </div>
+
+            {/* 연도별 아카이브 */}
+            {(() => {
+              const byYear = new Map<string, NewsletterIssue[]>();
+              for (const issue of publishedIssues) {
+                const year = issue.publishDate?.slice(0, 4) || "기타";
+                if (!byYear.has(year)) byYear.set(year, []);
+                byYear.get(year)!.push(issue);
+              }
+              const years = [...byYear.keys()].sort((a, b) => b.localeCompare(a));
+              return (
+                <div className="mt-10 space-y-10">
+                  {years.map((year) => {
+                    const yearIssues = byYear
+                      .get(year)!
+                      .sort((a, b) => b.issueNumber - a.issueNumber);
+                    return (
+                      <section key={year}>
+                        <div className="flex items-baseline gap-3 border-b pb-2">
+                          <h2 className="text-xl font-bold">{year}년</h2>
+                          <span className="text-sm text-muted-foreground">
+                            {yearIssues.length}호 발행
+                          </span>
+                        </div>
+                        <div className="mt-5 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                          {yearIssues.map((issue) => (
+                            <Link
+                              key={issue.id}
+                              href={`/newsletter/${issue.id}`}
+                              className="text-left"
+                            >
+                              <IssueCard issue={issue} />
+                            </Link>
+                          ))}
+                        </div>
+                      </section>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </>
         )}
       </div>
     </div>

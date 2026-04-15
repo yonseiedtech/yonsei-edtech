@@ -265,7 +265,7 @@ export default function AdminNewsletterTab() {
     try {
       await updateMutation.mutateAsync({
         id: editingId,
-        data: { sections },
+        data: { sections, lastEditedBy: currentUser?.name ?? "관리자" },
       });
       toast.success("섹션이 저장되었습니다.");
     } catch {
@@ -295,6 +295,7 @@ export default function AdminNewsletterTab() {
       publishAt: scheduleEnabled && publishAt && status === "draft"
         ? new Date(publishAt).toISOString()
         : undefined,
+      lastEditedBy: currentUser?.name ?? "관리자",
     };
 
     if (editingId) {
@@ -367,10 +368,36 @@ export default function AdminNewsletterTab() {
         )}
       </div>
 
+      {/* 발행 통계 */}
+      {!issuesLoading && issues.length > 0 && (
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {(() => {
+            const total = issues.length;
+            const published = issues.filter((i) => i.status === "published").length;
+            const draft = total - published;
+            const latest = issues
+              .filter((i) => i.status === "published")
+              .sort((a, b) => (b.publishDate ?? "").localeCompare(a.publishDate ?? ""))[0];
+            const stats = [
+              { label: "총 호수", value: String(total) },
+              { label: "발행", value: String(published) },
+              { label: "초안", value: String(draft) },
+              { label: "최신 발행일", value: latest?.publishDate ?? "—" },
+            ];
+            return stats.map((s) => (
+              <div key={s.label} className="rounded-2xl border bg-white p-4">
+                <div className="text-xs text-muted-foreground">{s.label}</div>
+                <div className="mt-1 text-lg font-bold">{s.value}</div>
+              </div>
+            ));
+          })()}
+        </div>
+      )}
+
       {/* 기존 학회보 목록 */}
       {!issuesLoading && issues.length > 0 && (
         <div className="mt-6 rounded-2xl border bg-white p-6">
-          <h3 className="font-bold">기존 학회보 ({issues.length})</h3>
+          <h3 className="font-bold">발행 이력 ({issues.length})</h3>
           <div className="mt-3 divide-y">
             {issues.map((issue) => (
               <div key={issue.id} className="flex items-center justify-between py-3">
@@ -392,6 +419,14 @@ export default function AdminNewsletterTab() {
                     {issue.publishDate} · {issue.editorName} · {issue.sections.length}개
                     섹션
                   </p>
+                  {(issue.lastEditedBy || issue.lastEditedAt) && (
+                    <p className="mt-0.5 text-[11px] text-muted-foreground/80">
+                      마지막 수정: {issue.lastEditedBy ?? "—"}
+                      {issue.lastEditedAt
+                        ? ` · ${new Date(issue.lastEditedAt).toLocaleString("ko-KR")}`
+                        : ""}
+                    </p>
+                  )}
                 </div>
                 <div className="ml-2 flex shrink-0 gap-1">
                   {issue.status === "published" && (

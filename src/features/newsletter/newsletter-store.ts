@@ -41,6 +41,10 @@ export interface NewsletterIssue {
   /** 예약 발송 일시 (ISO string). draft 상태에서만 유효 */
   publishAt?: string;
   createdAt: string;
+  /** 마지막 수정자 이름 */
+  lastEditedBy?: string;
+  /** 마지막 수정 일시 (ISO string) — Firestore updatedAt */
+  lastEditedAt?: string;
 }
 
 const SECTION_TYPE_LABELS: Record<NewsletterSection["type"], string> = {
@@ -52,6 +56,26 @@ const SECTION_TYPE_LABELS: Record<NewsletterSection["type"], string> = {
 };
 
 export { SECTION_TYPE_LABELS };
+
+/** 섹션 유형별 배지 색상 (특집/인터뷰/리뷰/칼럼/소식) */
+export const SECTION_TYPE_STYLES: Record<NewsletterSection["type"], string> = {
+  feature: "bg-violet-100 text-violet-700 border-violet-200",
+  interview: "bg-sky-100 text-sky-700 border-sky-200",
+  review: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  column: "bg-amber-100 text-amber-800 border-amber-200",
+  news: "bg-rose-100 text-rose-700 border-rose-200",
+};
+
+/** 작성자 유형별 배지 색상 */
+export const AUTHOR_TYPE_STYLES: Record<string, string> = {
+  professor: "bg-indigo-100 text-indigo-700 border-indigo-200",
+  representative: "bg-teal-100 text-teal-700 border-teal-200",
+  assistant: "bg-cyan-100 text-cyan-700 border-cyan-200",
+  president: "bg-purple-100 text-purple-700 border-purple-200",
+  staff: "bg-blue-100 text-blue-700 border-blue-200",
+  student: "bg-green-100 text-green-700 border-green-200",
+  alumni: "bg-orange-100 text-orange-700 border-orange-200",
+};
 
 // ── Firestore CRUD helpers ──
 
@@ -79,6 +103,7 @@ export async function createNewsletter(
     status: data.status,
   };
   if (data.publishAt !== undefined) payload.publishAt = data.publishAt;
+  if (data.lastEditedBy !== undefined) payload.lastEditedBy = data.lastEditedBy;
   const doc = await dataApi.create<Record<string, unknown>>(TABLE, payload);
   return docToIssue(doc);
 }
@@ -97,6 +122,7 @@ export async function updateNewsletter(
   if (data.issueNumber !== undefined) payload.issueNumber = data.issueNumber;
   if (data.sections !== undefined) payload.sections = JSON.stringify(data.sections);
   if (data.publishAt !== undefined) payload.publishAt = data.publishAt;
+  if (data.lastEditedBy !== undefined) payload.lastEditedBy = data.lastEditedBy;
 
   const doc = await dataApi.update<Record<string, unknown>>(TABLE, id, payload);
   return docToIssue(doc);
@@ -130,6 +156,8 @@ function docToIssue(doc: Record<string, unknown>): NewsletterIssue {
     status: (doc.status as "draft" | "published") ?? "draft",
     publishAt: (doc.publishAt as string | undefined) ?? undefined,
     createdAt: (doc.createdAt as string) ?? new Date().toISOString(),
+    lastEditedBy: (doc.lastEditedBy as string | undefined) ?? undefined,
+    lastEditedAt: (doc.updatedAt as string | undefined) ?? undefined,
   };
 }
 
