@@ -136,6 +136,9 @@ export interface Post {
   imageUrls?: string[];
   attachments?: PostAttachment[];
   poll?: PostPoll;
+  /** 특수 글타입. 지정되면 content 대신 전용 플레이어가 사용됨 */
+  type?: "interview";
+  interview?: InterviewMeta;
   authorId: string;
   authorName: string;
   viewCount: number;
@@ -146,6 +149,44 @@ export interface Post {
   deletedAt?: string;
   /** 마이그레이션 백업 (구 category 값) */
   _legacyCategory?: "press";
+}
+
+// ── 온라인 인터뷰 ──
+export type InterviewAnswerType = "text" | "photo" | "text_and_photo";
+
+export interface InterviewQuestion {
+  id: string;
+  order: number;
+  prompt: string;
+  answerType: InterviewAnswerType;
+  required: boolean;
+  maxChars?: number;
+}
+
+export interface InterviewMeta {
+  intro: string;
+  deadline?: string;
+  responseVisibility: "public" | "staff_only";
+  questions: InterviewQuestion[];
+}
+
+export interface InterviewAnswer {
+  questionId: string;
+  text?: string;
+  imageUrls?: string[];
+}
+
+export interface InterviewResponse {
+  id: string;
+  postId: string;
+  respondentId: string;
+  respondentName: string;
+  respondentRole?: string;
+  status: "draft" | "submitted";
+  answers: InterviewAnswer[];
+  createdAt: string;
+  updatedAt?: string;
+  submittedAt?: string;
 }
 
 export interface Comment {

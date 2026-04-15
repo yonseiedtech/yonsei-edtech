@@ -19,8 +19,18 @@ export function useAuth() {
     async (username: string, password: string) => {
       setLoading(true);
       try {
-        // Firebase는 이메일 로그인만 지원 — 이메일 형식이 아니면 @yonsei.ac.kr 추가
-        const email = username.includes("@") ? username : `${username}@yonsei.ac.kr`;
+        // Firebase는 이메일 로그인만 지원.
+        // 이메일 형식이면 그대로, 아니면 학번(username) → 프로필 조회로 실제 이메일 확보.
+        let email = username;
+        if (!username.includes("@")) {
+          try {
+            const res = await fetch(`/api/auth/resolve-email?username=${encodeURIComponent(username)}`);
+            const json = await res.json();
+            email = json?.email || `${username}@yonsei.ac.kr`;
+          } catch {
+            email = `${username}@yonsei.ac.kr`;
+          }
+        }
 
         await authApi.login({ email, password });
         const authUser = await authApi.me();

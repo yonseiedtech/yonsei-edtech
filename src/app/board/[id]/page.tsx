@@ -28,6 +28,10 @@ import { formatDate } from "@/lib/utils";
 import { ArrowLeft, Trash2, Edit, LogIn } from "lucide-react";
 import { toast } from "sonner";
 import ShareButton from "@/components/ShareButton";
+import InterviewPlayer from "@/features/board/InterviewPlayer";
+import InterviewResponses from "@/features/board/InterviewResponses";
+import { useMyInterviewForPost } from "@/features/board/interview-store";
+import { Mic } from "lucide-react";
 
 /** 이미지 마크다운을 img 태그로, 나머지는 XSS 방지 후 렌더링 */
 function renderPostContent(text: string): string {
@@ -55,6 +59,8 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const { updateComment } = useUpdateComment();
   const incrementView = useIncrementViewCount();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showInterviewPlayer, setShowInterviewPlayer] = useState(false);
+  const { response: myInterviewResp } = useMyInterviewForPost(id, user?.id);
   const viewCounted = useRef(false);
   const queryClient = useQueryClient();
 
@@ -198,10 +204,64 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
             </div>
           )}
 
-          <div
-            className="mt-6 text-sm leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: renderPostContent(post.content) }}
-          />
+          {post.type === "interview" && post.interview ? (
+            <div className="mt-6 rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-50 p-6">
+              <div className="flex items-center gap-2 text-violet-700">
+                <Mic size={18} />
+                <span className="text-sm font-bold">온라인 인터뷰</span>
+                <Badge variant="outline" className="border-violet-300 bg-white text-violet-700 text-[10px]">
+                  {post.interview.questions.length}문항
+                </Badge>
+                {post.interview.deadline && (
+                  <Badge variant="outline" className="border-amber-300 bg-white text-amber-700 text-[10px]">
+                    마감 {new Date(post.interview.deadline).toLocaleDateString("ko-KR")}
+                  </Badge>
+                )}
+              </div>
+              <p className="mt-3 whitespace-pre-wrap text-sm text-foreground/90">
+                {post.interview.intro}
+              </p>
+              <div className="mt-4">
+                {(() => {
+                  const isExpired = post.interview.deadline
+                    ? new Date(post.interview.deadline).getTime() < Date.now()
+                    : false;
+                  if (!user) {
+                    return (
+                      <Link href="/login">
+                        <Button>
+                          <LogIn size={14} className="mr-1" />
+                          로그인 후 참여하기
+                        </Button>
+                      </Link>
+                    );
+                  }
+                  if (isExpired) {
+                    return (
+                      <Button disabled variant="outline">
+                        마감된 인터뷰입니다
+                      </Button>
+                    );
+                  }
+                  return (
+                    <Button onClick={() => setShowInterviewPlayer(true)}>
+                      <Mic size={14} className="mr-1" />
+                      {myInterviewResp?.status === "submitted"
+                        ? "내 답변 수정하기"
+                        : myInterviewResp?.status === "draft"
+                          ? "이어서 참여하기"
+                          : "참여하기"}
+                    </Button>
+                  );
+                })()}
+              </div>
+            </div>
+          ) : (
+            <div
+              className="mt-6 text-sm leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: renderPostContent(post.content) }}
+            />
+          )}
 
           {post.poll && (
             <div className="mt-6">
@@ -214,6 +274,26 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
             </div>
           )}
         </article>
+
+        {post.type === "interview" && post.interview && (
+          <InterviewResponses
+            postId={id}
+            meta={post.interview}
+            canViewRestricted={isAdmin}
+          />
+        )}
+
+        {showInterviewPlayer && post.type === "interview" && post.interview && (
+          <InterviewPlayer
+            post={post}
+            existing={myInterviewResp}
+            onClose={() => setShowInterviewPlayer(false)}
+            onSubmitted={() => {
+              setShowInterviewPlayer(false);
+              toast.success("응답이 제출되었습니다!");
+            }}
+          />
+        )}
 
         <section className="mt-8">
           <h2 className="text-lg font-bold">

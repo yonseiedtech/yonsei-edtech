@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { CATEGORY_LABELS, ACTIVE_POST_CATEGORIES, type Post, type PostCategory, type PostPoll } from "@/types";
+import { CATEGORY_LABELS, ACTIVE_POST_CATEGORIES, type Post, type PostCategory, type PostPoll, type InterviewMeta } from "@/types";
 import PollEditor from "./PollEditor";
+import InterviewBuilder from "./InterviewBuilder";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, Send, Save, Eye, PenLine, ImagePlus, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -40,6 +41,14 @@ export default function PostForm({ mode = "create", initialData, initialCategory
   const [showPreview, setShowPreview] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>(initialData?.imageUrls ?? []);
   const [poll, setPoll] = useState<PostPoll | null>(initialData?.poll ?? null);
+  const [interviewOn, setInterviewOn] = useState<boolean>(initialData?.type === "interview");
+  const [interview, setInterview] = useState<InterviewMeta>(
+    initialData?.interview ?? {
+      intro: "",
+      responseVisibility: "public",
+      questions: [],
+    }
+  );
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { createPost } = useCreatePost();
@@ -88,9 +97,23 @@ export default function PostForm({ mode = "create", initialData, initialCategory
   }
 
   async function onSubmit(data: PostData) {
+    const isInterview = interviewOn && category === "free" && isAtLeast(user, "staff");
+    if (isInterview) {
+      if (!interview.intro.trim()) {
+        toast.error("인터뷰 소개문을 입력하세요.");
+        return;
+      }
+      if (interview.questions.length === 0 || interview.questions.some((q) => !q.prompt.trim())) {
+        toast.error("질문을 최소 1개 이상, 빈 질문 없이 작성하세요.");
+        return;
+      }
+    }
+    const extra = isInterview
+      ? { type: "interview" as const, interview }
+      : { type: undefined, interview: undefined };
     try {
       if (mode === "edit" && initialData) {
-        await updatePost({ id: initialData.id, data: { ...data, category, imageUrls, poll: poll ?? undefined } });
+        await updatePost({ id: initialData.id, data: { ...data, category, imageUrls, poll: poll ?? undefined, ...extra } });
         toast.success("게시글이 수정되었습니다.");
         if (onSubmitSuccess) {
           onSubmitSuccess();
@@ -98,7 +121,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
           router.push(`/board/${initialData.id}`);
         }
       } else {
-        const created = await createPost({ ...data, category, imageUrls, poll: poll ?? undefined }) as unknown as { id: string };
+        const created = await createPost({ ...data, category, imageUrls, poll: poll ?? undefined, ...extra }) as unknown as { id: string };
         toast.success("게시글이 등록되었습니다.");
         if (created?.id) {
           router.push(`/board/${created.id}`);
@@ -261,6 +284,31 @@ export default function PostForm({ mode = "create", initialData, initialCategory
               <p className="mt-1 text-xs text-destructive">{errors.content.message}</p>
             )}
           </div>
+
+          {/* 온라인 인터뷰 (자유게시판 + staff 이상) */}
+          {category === "free" && isAtLeast(user, "staff") && (
+            <div className="rounded-xl border bg-white p-4">
+              <label className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">🎙️ 온라인 인터뷰로 만들기</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    응답자가 질문 하나씩 애니메이션 대화형으로 답변합니다. 회보 수집용.
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  className="h-5 w-5"
+                  checked={interviewOn}
+                  onChange={(e) => setInterviewOn(e.target.checked)}
+                />
+              </label>
+              {interviewOn && (
+                <div className="mt-4">
+                  <InterviewBuilder value={interview} onChange={setInterview} />
+                </div>
+              )}
+            </div>
+          )}
 
           {/* 투표 (선택) */}
           <PollEditor value={poll} onChange={setPoll} />

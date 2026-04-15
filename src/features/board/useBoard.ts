@@ -121,6 +121,8 @@ export function useCreatePost() {
         };
       }
       if (data.attachments?.length) payload.attachments = data.attachments;
+      if (data.type) payload.type = data.type;
+      if (data.interview) payload.interview = data.interview;
       payload.likeCount = 0;
       const res = await postsApi.create(payload);
       // 공지사항이면 전체 회원에게 알림
@@ -160,6 +162,8 @@ export function useUpdatePost() {
         payload.poll = data.poll;
       }
       if (data.attachments) payload.attachments = data.attachments;
+      if ("type" in data) payload.type = data.type ?? null;
+      if ("interview" in data) payload.interview = data.interview ?? null;
       return await postsApi.update(id, payload);
     },
     onSuccess: (_data, { id }) => {
