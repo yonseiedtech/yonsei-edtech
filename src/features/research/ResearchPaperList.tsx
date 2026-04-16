@@ -29,6 +29,7 @@ import RisImporter from "./RisImporter";
 import TagInput from "./TagInput";
 import { profilesApi, dataApi } from "@/lib/bkend";
 import { cn } from "@/lib/utils";
+import { isPaperInPeriod, formatPeriodLabel } from "@/lib/research-period";
 
 type FilterType = "all" | "thesis" | "academic";
 type FilterStatus = "all" | "to_read" | "reading" | "completed";
@@ -37,9 +38,13 @@ type SortKey = "recent" | "year" | "rating";
 interface Props {
   user: User;
   readOnly?: boolean;
+  /** YYYY-MM 시작 — 비어있으면 무제한 */
+  periodStart?: string;
+  /** YYYY-MM 종료 — 비어있으면 무제한 */
+  periodEnd?: string;
 }
 
-export default function ResearchPaperList({ user, readOnly = false }: Props) {
+export default function ResearchPaperList({ user, readOnly = false, periodStart, periodEnd }: Props) {
   const { papers, isLoading } = useResearchPapers(user.id);
   const createPaper = useCreateResearchPaper();
   const updatePaper = useUpdateResearchPaper();
@@ -112,8 +117,13 @@ export default function ResearchPaperList({ user, readOnly = false }: Props) {
     return Array.from(m.entries()).sort((a, b) => b[1] - a[1]).map(([t]) => t);
   }, [published]);
 
+  const periodFiltered = useMemo(() => {
+    if (!periodStart && !periodEnd) return published;
+    return published.filter((p) => isPaperInPeriod(p, periodStart, periodEnd));
+  }, [published, periodStart, periodEnd]);
+
   const filtered = useMemo(() => {
-    let arr = [...published];
+    let arr = [...periodFiltered];
     if (filterType !== "all") arr = arr.filter((p) => p.paperType === filterType);
     if (filterStatus !== "all") arr = arr.filter((p) => p.readStatus === filterStatus);
     if (activeTagFilter) arr = arr.filter((p) => p.tags?.includes(activeTagFilter));
@@ -132,7 +142,9 @@ export default function ResearchPaperList({ user, readOnly = false }: Props) {
       return (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
     });
     return arr;
-  }, [published, filterType, filterStatus, activeTagFilter, search, sortKey]);
+  }, [periodFiltered, filterType, filterStatus, activeTagFilter, search, sortKey]);
+
+  const hasPeriodFilter = !!(periodStart || periodEnd);
 
   function openNew() {
     setEditing(null);
@@ -260,7 +272,14 @@ export default function ResearchPaperList({ user, readOnly = false }: Props) {
       <section>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold">연구 논문 ({published.length})</h3>
+            <h3 className="text-sm font-semibold">
+              연구 논문 ({hasPeriodFilter ? `${periodFiltered.length}/${published.length}` : published.length})
+            </h3>
+            {hasPeriodFilter && (
+              <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] text-violet-700">
+                기간: {formatPeriodLabel(periodStart, periodEnd)}
+              </span>
+            )}
           </div>
           {!readOnly && (
             <div className="flex items-center gap-2">
@@ -463,9 +482,20 @@ export default function ResearchPaperList({ user, readOnly = false }: Props) {
                       ? undefined
                       : async (patch) => {
                           try {
+                            const enriched: Record<string, unknown> = { ...patch };
+                            if (patch.readStatus) {
+                              const today = new Date().toISOString().slice(0, 10);
+                              if (patch.readStatus === "reading" && !p.readStartedAt) {
+                                enriched.readStartedAt = today;
+                              }
+                              if (patch.readStatus === "completed") {
+                                if (!p.readStartedAt) enriched.readStartedAt = today;
+                                if (!p.readCompletedAt) enriched.readCompletedAt = today;
+                              }
+                            }
                             await updatePaper.mutateAsync({
                               id: p.id,
-                              data: patch as Record<string, unknown>,
+                              data: enriched,
                             });
                             if (patch.readStatus) {
                               const label =

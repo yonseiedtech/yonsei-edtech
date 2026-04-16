@@ -211,6 +211,11 @@ export interface ResearchPaper {
   readStatus?: PaperReadStatus;
   rating?: 1 | 2 | 3 | 4 | 5;
 
+  /** 읽기 시작 일자 (YYYY-MM-DD). 상태가 "읽는 중"으로 바뀔 때 자동 기록 (수동 수정 가능) */
+  readStartedAt?: string;
+  /** 완독 일자 (YYYY-MM-DD). 상태가 "완독"으로 바뀔 때 자동 기록 (수동 수정 가능) */
+  readCompletedAt?: string;
+
   /** true면 임시저장 상태 — 본 리스트에서 별도 섹션으로 노출, 메인 카운트에서 제외 */
   isDraft?: boolean;
   /** 임시저장 시 마지막으로 머문 위저드 단계 (1~5). 재개 시 해당 단계로 점프. */

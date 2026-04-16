@@ -72,6 +72,8 @@ interface FormState {
   tags: string[];
   readStatus: PaperReadStatus;
   rating: 0 | 1 | 2 | 3 | 4 | 5;
+  readStartedAt: string;
+  readCompletedAt: string;
 }
 
 const EMPTY: FormState = {
@@ -94,6 +96,8 @@ const EMPTY: FormState = {
   tags: [],
   readStatus: "to_read",
   rating: 0,
+  readStartedAt: "",
+  readCompletedAt: "",
 };
 
 function clampStep(n: number): StepNum {
@@ -140,6 +144,8 @@ export default function ResearchPaperDialog({
           tags: initial.tags ?? [],
           readStatus: initial.readStatus ?? "to_read",
           rating: (initial.rating ?? 0) as FormState["rating"],
+          readStartedAt: initial.readStartedAt ?? "",
+          readCompletedAt: initial.readCompletedAt ?? "",
         });
         setStep(clampStep(initial.lastEditStep ?? 1));
         setDraftId(initial.id);
@@ -189,6 +195,8 @@ export default function ResearchPaperDialog({
       tags: form.tags.length > 0 ? form.tags : undefined,
       readStatus: form.readStatus,
       rating: form.rating > 0 ? (form.rating as 1 | 2 | 3 | 4 | 5) : undefined,
+      readStartedAt: form.readStartedAt || undefined,
+      readCompletedAt: form.readCompletedAt || undefined,
     };
     if (opts.isDraft) {
       base.isDraft = true;
@@ -494,7 +502,18 @@ export default function ResearchPaperDialog({
                       <button
                         key={s}
                         type="button"
-                        onClick={() => update("readStatus", s)}
+                        onClick={() => {
+                          const today = new Date().toISOString().slice(0, 10);
+                          setForm((prev) => {
+                            const next = { ...prev, readStatus: s };
+                            if (s === "reading" && !prev.readStartedAt) next.readStartedAt = today;
+                            if (s === "completed") {
+                              if (!prev.readStartedAt) next.readStartedAt = today;
+                              if (!prev.readCompletedAt) next.readCompletedAt = today;
+                            }
+                            return next;
+                          });
+                        }}
                         className={cn(
                           "rounded-full border px-3 py-1 text-xs font-medium transition",
                           isActive
@@ -511,6 +530,34 @@ export default function ResearchPaperDialog({
                     );
                   })}
                 </div>
+                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium">읽기 시작일</label>
+                    <Input
+                      type="date"
+                      value={form.readStartedAt}
+                      onChange={(e) => update("readStartedAt", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium">완독일</label>
+                    <Input
+                      type="date"
+                      value={form.readCompletedAt}
+                      onChange={(e) => update("readCompletedAt", e.target.value)}
+                    />
+                  </div>
+                </div>
+                {form.readStartedAt && form.readCompletedAt && (() => {
+                  const s = Date.parse(form.readStartedAt);
+                  const e = Date.parse(form.readCompletedAt);
+                  if (!Number.isFinite(s) || !Number.isFinite(e)) return null;
+                  if (e < s) {
+                    return <p className="mt-1 text-[11px] text-destructive">완독일이 시작일보다 빠릅니다.</p>;
+                  }
+                  const days = Math.round((e - s) / 86400000);
+                  return <p className="mt-1 text-[11px] text-emerald-700">소요 기간: {days}일</p>;
+                })()}
               </div>
             </section>
           )}

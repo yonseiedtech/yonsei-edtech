@@ -149,6 +149,25 @@ export default function ResearchPaperCard({ paper, onEdit, onDelete, onQuickUpda
         </div>
       )}
 
+      {(paper.readStartedAt || paper.readCompletedAt) && (
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
+          {paper.readStartedAt && (
+            <span>시작 {paper.readStartedAt}</span>
+          )}
+          {paper.readCompletedAt && (
+            <span>· 완독 {paper.readCompletedAt}</span>
+          )}
+          {(() => {
+            if (!paper.readStartedAt || !paper.readCompletedAt) return null;
+            const s = Date.parse(paper.readStartedAt);
+            const e = Date.parse(paper.readCompletedAt);
+            if (!Number.isFinite(s) || !Number.isFinite(e) || e < s) return null;
+            const days = Math.round((e - s) / 86400000);
+            return <span className="text-emerald-700">· 소요 {days}일</span>;
+          })()}
+        </div>
+      )}
+
       <div className="mt-3 flex items-center justify-between text-[10px] text-muted-foreground">
         <span>
           {daysAgo !== null && (daysAgo === 0 ? "오늘 수정" : `${daysAgo}일 전 수정`)}
