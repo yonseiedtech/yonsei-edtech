@@ -290,10 +290,10 @@ export default function Header() {
         {/* Auth Area (Desktop) */}
         <div className="hidden items-center gap-2 md:flex">
           <GlobalSearch />
+          {user && <SessionIndicator />}
           <ThemeToggle />
           {user ? (
             <>
-              <SessionIndicator />
               <NotificationBell />
               <UserDropdown />
             </>

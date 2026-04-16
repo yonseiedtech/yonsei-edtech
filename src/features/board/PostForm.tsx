@@ -106,6 +106,8 @@ export default function PostForm({ mode = "create", initialData, initialCategory
         toast.error("질문을 최소 1개 이상, 빈 질문 없이 작성하세요.");
         return;
       }
+      // 인터뷰 글은 본문 대신 소개문을 content로 사용
+      if (!data.content?.trim()) data.content = interview.intro;
     }
     const extra = isInterview
       ? { type: "interview" as const, interview }
@@ -250,6 +252,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
             )}
           </div>
 
+          {category !== "interview" && (
           <div>
             <div className="mb-1.5 flex items-center justify-between">
               <label className="text-sm font-medium">내용</label>
@@ -276,7 +279,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
               </div>
             </div>
             <Textarea
-              {...register("content", { required: "내용을 입력하세요" })}
+              {...register("content", category === "interview" ? {} : { required: "내용을 입력하세요" })}
               placeholder="내용을 입력하세요... (이미지는 ![설명](URL) 형식으로 삽입됩니다)"
               rows={14}
             />
@@ -284,6 +287,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
               <p className="mt-1 text-xs text-destructive">{errors.content.message}</p>
             )}
           </div>
+          )}
 
           {/* 온라인 인터뷰 (인터뷰 게시판 + staff 이상) */}
           {category === "interview" && isAtLeast(user, "staff") && (
