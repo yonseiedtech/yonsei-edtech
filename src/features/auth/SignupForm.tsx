@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { UserPlus, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { UserPlus, ChevronDown, ChevronUp, Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { authApi, profilesApi, attendeesApi, saveTokens } from "@/lib/bkend";
 import { cn } from "@/lib/utils";
@@ -25,8 +25,8 @@ const ACTIVITY_OPTIONS = [
   { value: "other", label: "기타" },
 ];
 
-// 2026년 1학기 기준 누적학기 옵션 (1~20학기)
-const SEMESTER_OPTIONS = Array.from({ length: 20 }, (_, i) => i + 1);
+// 2026년 1학기 기준 누적학기 옵션 (1~10학기 + 기타/모르겠음)
+const SEMESTER_OPTIONS = Array.from({ length: 10 }, (_, i) => i + 1);
 
 // 입학 연도 옵션 (최근 15년)
 const ENROLLMENT_YEAR_OPTIONS = Array.from({ length: 15 }, (_, i) => 2026 - i);
@@ -50,6 +50,7 @@ interface SignupData {
   phone: string;
   birthDate: string;
   password: string;
+  passwordConfirm: string;
   generation: string;
   enrollmentYear: string;
   enrollmentHalf: string;
@@ -83,7 +84,14 @@ interface Props {
 export default function SignupForm({ onSuccess, defaultName, defaultStudentId, initialConsents }: Props) {
   const [loading, setLoading] = useState(false);
   const [enrollmentStatus, setEnrollmentStatus] = useState<EnrollmentStatus>("enrolled");
-  const [showOptional, setShowOptional] = useState(false);
+  const [showOptional, setShowOptional] = useState(true);
+  const [birthYear, setBirthYear] = useState("");
+  const [birthMonth, setBirthMonth] = useState("");
+  const [birthDay, setBirthDay] = useState("");
+  const birthMonthRef = useRef<HTMLInputElement>(null);
+  const birthDayRef = useRef<HTMLInputElement>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [usernameChecked, setUsernameChecked] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState(false);
   const [checkingUsername, setCheckingUsername] = useState(false);
@@ -97,6 +105,7 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
 
   const watchedUsername = watch("username");
   const watchedSecurityQ = watch("securityQuestionSelect");
+  const watchedPassword = watch("password");
 
   // 학번에서 입학 시점 추출
   function parseEnrollmentFromStudentId(sid: string) {
@@ -266,9 +275,42 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
     }
   }
 
+  function onInvalid(errs: Record<string, { message?: string } | undefined>) {
+    const fieldLabels: Record<string, string> = {
+      username: "학번",
+      name: "이름",
+      email: "이메일",
+      phone: "핸드폰 번호",
+      birthDate: "생년월일",
+      password: "비밀번호",
+      passwordConfirm: "비밀번호 확인",
+      enrollmentYear: "입학 연도",
+      enrollmentHalf: "입학 반기",
+      generation: "누적학기",
+      securityAnswer: "보안 질문 답변",
+    };
+    const firstKey = Object.keys(errs)[0];
+    const label = fieldLabels[firstKey] ?? "필수 정보";
+    const message = errs[firstKey]?.message ?? "필수 항목을 확인해 주세요.";
+    toast.error(`${label}: ${message}`);
+
+    // scroll to first error field
+    const el =
+      (document.querySelector(`[name="${firstKey}"]`) as HTMLElement | null) ??
+      (firstKey === "birthDate"
+        ? (document.querySelector('input[placeholder="YYYY"]') as HTMLElement | null)
+        : null);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (typeof (el as HTMLInputElement).focus === "function") {
+        setTimeout(() => (el as HTMLInputElement).focus(), 300);
+      }
+    }
+  }
+
   return (
     <form
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit(onSubmit, onInvalid)}
       className="space-y-4 rounded-2xl border bg-white p-8 shadow-sm"
     >
       {/* ── 필수 정보 ── */}
@@ -312,7 +354,9 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium">이름</label>
+        <label className="mb-1.5 block text-sm font-medium">
+          이름 <span className="text-destructive">*</span>
+        </label>
         <Input
           {...register("name", { required: "이름을 입력하세요" })}
           placeholder="홍길동"
@@ -323,7 +367,9 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium">이메일</label>
+        <label className="mb-1.5 block text-sm font-medium">
+          이메일 <span className="text-destructive">*</span>
+        </label>
         <Input
           {...register("email", {
             required: "이메일을 입력하세요",
@@ -332,15 +378,21 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
           type="email"
           placeholder="email@yonsei.ac.kr"
         />
+        <p className="mt-1 text-xs text-muted-foreground">
+          연세 메일(@yonsei.ac.kr)로 작성해 주세요.
+        </p>
         {errors.email && (
           <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>
         )}
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium">핸드폰 번호</label>
+        <label className="mb-1.5 block text-sm font-medium">
+          핸드폰 번호 <span className="text-destructive">*</span>
+        </label>
         <Input
           {...register("phone", {
+            required: "핸드폰 번호를 입력하세요",
             pattern: { value: /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/, message: "올바른 핸드폰 번호를 입력하세요" },
           })}
           type="tel"
@@ -352,31 +404,182 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium">생년월일</label>
-        <Input
-          {...register("birthDate", { required: "생년월일을 입력하세요" })}
-          type="date"
+        <label className="mb-1.5 block text-sm font-medium">
+          생년월일 <span className="text-destructive">*</span>
+        </label>
+        {/* hidden field that holds the YYYY-MM-DD value for react-hook-form */}
+        <input
+          type="hidden"
+          {...register("birthDate", {
+            required: "생년월일을 입력하세요",
+            pattern: {
+              value: /^\d{4}-\d{2}-\d{2}$/,
+              message: "생년월일을 올바르게 입력하세요",
+            },
+          })}
         />
-        <p className="mt-1 text-xs text-muted-foreground">아이디/비밀번호 찾기 시 본인 확인에 활용됩니다.</p>
+        <div className="flex items-center gap-2">
+          <Input
+            inputMode="numeric"
+            placeholder="YYYY"
+            value={birthYear}
+            maxLength={4}
+            className={cn(
+              "w-24 text-center",
+              errors.birthDate && "border-destructive ring-2 ring-destructive/40",
+            )}
+            onChange={(e) => {
+              const v = e.target.value.replace(/\D/g, "").slice(0, 4);
+              setBirthYear(v);
+              setValue(
+                "birthDate",
+                `${v.padEnd(4, " ")}-${birthMonth.padStart(2, "0")}-${birthDay.padStart(2, "0")}`
+                  .replace(/ /g, "")
+                  .replace(/^-+|-+$/g, ""),
+                { shouldValidate: true },
+              );
+              if (v.length === 4) birthMonthRef.current?.focus();
+            }}
+          />
+          <span className="text-muted-foreground">년</span>
+          <Input
+            ref={birthMonthRef}
+            inputMode="numeric"
+            placeholder="MM"
+            value={birthMonth}
+            maxLength={2}
+            className={cn(
+              "w-16 text-center",
+              errors.birthDate && "border-destructive ring-2 ring-destructive/40",
+            )}
+            onChange={(e) => {
+              let v = e.target.value.replace(/\D/g, "").slice(0, 2);
+              if (v.length === 2) {
+                const n = Number(v);
+                if (n < 1) v = "01";
+                if (n > 12) v = "12";
+              }
+              setBirthMonth(v);
+              setValue(
+                "birthDate",
+                `${birthYear}-${v.padStart(2, "0")}-${birthDay.padStart(2, "0")}`,
+                { shouldValidate: true },
+              );
+              if (v.length === 2) birthDayRef.current?.focus();
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Backspace" && birthMonth === "") {
+                const yearInput = e.currentTarget.parentElement?.querySelector(
+                  'input[placeholder="YYYY"]',
+                ) as HTMLInputElement | null;
+                yearInput?.focus();
+              }
+            }}
+          />
+          <span className="text-muted-foreground">월</span>
+          <Input
+            ref={birthDayRef}
+            inputMode="numeric"
+            placeholder="DD"
+            value={birthDay}
+            maxLength={2}
+            className={cn(
+              "w-16 text-center",
+              errors.birthDate && "border-destructive ring-2 ring-destructive/40",
+            )}
+            onChange={(e) => {
+              let v = e.target.value.replace(/\D/g, "").slice(0, 2);
+              if (v.length === 2) {
+                const n = Number(v);
+                if (n < 1) v = "01";
+                if (n > 31) v = "31";
+              }
+              setBirthDay(v);
+              setValue(
+                "birthDate",
+                `${birthYear}-${birthMonth.padStart(2, "0")}-${v.padStart(2, "0")}`,
+                { shouldValidate: true },
+              );
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Backspace" && birthDay === "") {
+                birthMonthRef.current?.focus();
+              }
+            }}
+          />
+          <span className="text-muted-foreground">일</span>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          연도(4자리) → 월 → 일 순서로 입력하세요. 비밀번호 찾기 시 본인 확인에 활용됩니다.
+        </p>
         {errors.birthDate && (
           <p className="mt-1 text-xs text-destructive">{errors.birthDate.message}</p>
         )}
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium">비밀번호</label>
-        <Input
-          {...register("password", {
-            required: "비밀번호를 입력하세요",
-            minLength: { value: 8, message: "8자 이상 입력하세요" },
-            validate: (v) =>
-              /(?=.*[a-zA-Z])(?=.*\d)/.test(v) || "영문과 숫자를 모두 포함해야 합니다",
-          })}
-          type="password"
-          placeholder="8자 이상 입력하세요"
-        />
+        <label className="mb-1.5 block text-sm font-medium">
+          비밀번호 <span className="text-destructive">*</span>
+        </label>
+        <div className="relative">
+          <Input
+            {...register("password", {
+              required: "비밀번호를 입력하세요",
+              minLength: { value: 8, message: "8자 이상 입력하세요" },
+              validate: (v) =>
+                /(?=.*[a-zA-Z])(?=.*\d)/.test(v) || "영문과 숫자를 모두 포함해야 합니다",
+            })}
+            type={showPassword ? "text" : "password"}
+            placeholder="8자 이상, 영문+숫자 포함"
+            className={cn(
+              "pr-10",
+              errors.password && "border-destructive ring-2 ring-destructive/40",
+            )}
+          />
+          <button
+            type="button"
+            tabIndex={-1}
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
+            aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
+          >
+            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        </div>
         {errors.password && (
           <p className="mt-1 text-xs text-destructive">{errors.password.message}</p>
+        )}
+      </div>
+
+      <div>
+        <label className="mb-1.5 block text-sm font-medium">
+          비밀번호 확인 <span className="text-destructive">*</span>
+        </label>
+        <div className="relative">
+          <Input
+            {...register("passwordConfirm", {
+              required: "비밀번호를 한 번 더 입력하세요",
+              validate: (v) => v === watchedPassword || "비밀번호가 일치하지 않습니다",
+            })}
+            type={showPasswordConfirm ? "text" : "password"}
+            placeholder="위에서 입력한 비밀번호와 동일하게 입력"
+            className={cn(
+              "pr-10",
+              errors.passwordConfirm && "border-destructive ring-2 ring-destructive/40",
+            )}
+          />
+          <button
+            type="button"
+            tabIndex={-1}
+            onClick={() => setShowPasswordConfirm((v) => !v)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
+            aria-label={showPasswordConfirm ? "비밀번호 숨기기" : "비밀번호 보기"}
+          >
+            {showPasswordConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        </div>
+        {errors.passwordConfirm && (
+          <p className="mt-1 text-xs text-destructive">{errors.passwordConfirm.message}</p>
         )}
       </div>
 
@@ -593,13 +796,6 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
           <div className="mt-4 space-y-4">
             <div>
               <label className="mb-1.5 block text-sm font-medium">
-                관심 분야 <span className="text-muted-foreground">(선택)</span>
-              </label>
-              <Input {...register("field")} placeholder="예: AI 교육, 교수설계, UX" />
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-sm font-medium">
                 현재 활동 구분 <span className="text-muted-foreground">(선택)</span>
               </label>
               <select
@@ -632,6 +828,13 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
                 직책 <span className="text-muted-foreground">(선택)</span>
               </label>
               <Input {...register("position")} placeholder="예: 장학사" />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">
+                관심 분야 <span className="text-muted-foreground">(선택)</span>
+              </label>
+              <Input {...register("field")} placeholder="예: AI 교육, 교수설계, UX" />
             </div>
           </div>
         )}

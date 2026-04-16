@@ -81,7 +81,7 @@ export default function ConsentSteps({
     await onComplete(consents);
   }
 
-  const nextLabel = step <= 3 ? "다음 →" : step === 4 ? "확인" : "사이트 이용하기";
+  const nextLabel = step <= 3 ? "다음 →" : step === 4 ? "확인" : "이어서 가입하기";
 
   return (
     <div className="flex flex-col gap-4">
