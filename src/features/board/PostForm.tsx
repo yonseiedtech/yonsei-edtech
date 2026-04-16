@@ -279,7 +279,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
               </div>
             </div>
             <Textarea
-              {...register("content", category === "interview" ? {} : { required: "내용을 입력하세요" })}
+              {...register("content", { required: "내용을 입력하세요" })}
               placeholder="내용을 입력하세요... (이미지는 ![설명](URL) 형식으로 삽입됩니다)"
               rows={14}
             />
