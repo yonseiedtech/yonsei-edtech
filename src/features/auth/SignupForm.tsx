@@ -207,7 +207,7 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
           enrollmentYear: data.enrollmentYear ? Number(data.enrollmentYear) : null,
           enrollmentHalf: data.enrollmentHalf ? Number(data.enrollmentHalf) : null,
           field: data.field || "",
-          approved: true,
+          approved: false,
           privacyAgreedAt: new Date().toISOString(),
           consents: initialConsents,
           securityQuestion,
