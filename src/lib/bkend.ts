@@ -15,6 +15,7 @@ import {
   getDoc,
   getDocs,
   addDoc,
+  setDoc,
   updateDoc,
   deleteDoc,
   query,
@@ -35,8 +36,9 @@ import type {
   SeminarReview, Inquiry, Activity, AppNotification, WaitlistEntry,
   Poll, PollResponse, PhotoAlbum, Photo, AdminTodo, AuditLog,
   ActivityProgress, ActivityMaterial, EmailLog,
-  Lab, LabReaction, LabComment, ResearchPaper, WritingPaper,
+  Lab, LabReaction, LabComment, ResearchPaper, WritingPaper, WritingPaperHistory,
   InterviewResponseReaction, InterviewResponseComment,
+  ProfileLike, ProfileView,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -599,6 +601,20 @@ export const writingPapersApi = {
   delete: (id: string) => dataApi.delete("writing_papers", id),
 };
 
+export const writingPaperHistoryApi = {
+  /**
+   * 복합 인덱스 회피: filter[userId]만 사용하고 정렬은 클라이언트에서.
+   * 1년치 최대 ~1000건 가정.
+   */
+  listByUser: (userId: string) =>
+    dataApi.list<WritingPaperHistory>("writing_paper_history", {
+      "filter[userId]": userId,
+      limit: 1000,
+    }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<WritingPaperHistory>("writing_paper_history", data),
+};
+
 export const notificationsApi = {
   list: (userId: string) =>
     dataApi.list<AppNotification>("notifications", {
@@ -620,4 +636,51 @@ export const notificationsApi = {
     );
   },
   delete: (id: string) => dataApi.delete("notifications", id),
+};
+
+// ── Profile Likes (PR5) ──
+// 결정적 doc id `${profileId}_${likerId}` 로 1인 1회 보장.
+// 클라이언트는 setDoc/deleteDoc만 사용 — addDoc 사용 금지.
+export const profileLikesApi = {
+  /** 특정 프로필을 좋아요한 모든 기록 (카운트/리스트 용) */
+  listByProfile: (profileId: string) =>
+    dataApi.list<ProfileLike>("profile_likes", {
+      "filter[profileId]": profileId,
+      limit: 1000,
+    }),
+  /** viewer가 해당 프로필에 좋아요 누른 단일 doc 조회 */
+  getMine: async (profileId: string, likerId: string): Promise<ProfileLike | null> => {
+    const docId = `${profileId}_${likerId}`;
+    const snap = await getDoc(doc(db, "profile_likes", docId));
+    if (!snap.exists()) return null;
+    return serializeDoc(snap) as unknown as ProfileLike;
+  },
+  toggle: async (profileId: string, likerId: string, likerName?: string): Promise<{ liked: boolean }> => {
+    const docId = `${profileId}_${likerId}`;
+    const ref = doc(db, "profile_likes", docId);
+    const existing = await getDoc(ref);
+    if (existing.exists()) {
+      await deleteDoc(ref);
+      return { liked: false };
+    }
+    const data = stripUndefinedDeep({
+      profileId,
+      likerId,
+      likerName,
+      createdAt: serverTimestamp(),
+    });
+    await setDoc(ref, data);
+    return { liked: true };
+  },
+};
+
+// ── Profile Views (PR5, 통계용) ──
+export const profileViewsApi = {
+  listByProfile: (profileId: string) =>
+    dataApi.list<ProfileView>("profile_views", {
+      "filter[profileId]": profileId,
+      limit: 1000,
+    }),
+  log: (data: { profileId: string; viewerId?: string; channel: "qr" | "link" | "members" | "direct" }) =>
+    dataApi.create<ProfileView>("profile_views", data),
 };

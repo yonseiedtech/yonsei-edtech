@@ -8,25 +8,33 @@ import { useAuthStore } from "@/features/auth/auth-store";
 import { profilesApi } from "@/lib/bkend";
 import ResearchPaperList from "@/features/research/ResearchPaperList";
 import WritingPaperEditor from "@/features/research/WritingPaperEditor";
-import ResearchReportDialog from "@/features/research/ResearchReportDialog";
+import WritingHeatmap from "@/features/research/WritingHeatmap";
+import WritingHistoryList from "@/features/research/WritingHistoryList";
+import ResearchDashboard from "@/features/research/ResearchDashboard";
+import ResearchReportPrint from "@/features/research/ResearchReportPrint";
 import { useResearchPapers } from "@/features/research/useResearchPapers";
 import { useWritingPaper } from "@/features/research/useWritingPaper";
+import { useWritingPaperHistory } from "@/features/research/useWritingPaperHistory";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { User } from "@/types";
-import { BookOpen, FileText, BookOpenCheck, FileBarChart2, X } from "lucide-react";
+import { BookOpen, FileText, BookOpenCheck, FileBarChart2, X, CalendarRange } from "lucide-react";
 import { formatPeriodLabel } from "@/lib/research-period";
+import {
+  currentSemesterRange,
+  previousSemesterRange,
+  thisYearRange,
+} from "@/lib/semester";
 
 interface Props {
   userId: string;
   readOnly?: boolean;
 }
 
-type ResearchTab = "writing" | "reading";
+type ResearchTab = "writing" | "reading" | "report";
 
 function isResearchTab(v: string | null): v is ResearchTab {
-  return v === "writing" || v === "reading";
+  return v === "writing" || v === "reading" || v === "report";
 }
 
 export default function MyResearchView({ userId, readOnly = false }: Props) {
@@ -41,7 +49,6 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
 
   const [periodStart, setPeriodStart] = useState<string>(fromParam);
   const [periodEnd, setPeriodEnd] = useState<string>(toParam);
-  const [reportOpen, setReportOpen] = useState(false);
 
   const { data: fetchedUser } = useQuery({
     queryKey: ["mypage-user", userId],
@@ -53,9 +60,10 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
   });
   const user = isSelf ? authUser : fetchedUser;
 
-  // 리포트용 데이터 (전체 페이퍼 + writing paper)
+  // 데이터 소스
   const { papers } = useResearchPapers(userId);
   const { paper: writingPaper } = useWritingPaper(userId);
+  const { history } = useWritingPaperHistory(userId);
 
   const periodLabel = useMemo(
     () => formatPeriodLabel(periodStart, periodEnd),
@@ -88,6 +96,12 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
     syncPeriodToUrl(periodStart, v);
   }
 
+  function applyRange(from: string, to: string) {
+    setPeriodStart(from);
+    setPeriodEnd(to);
+    syncPeriodToUrl(from, to);
+  }
+
   function resetPeriod() {
     setPeriodStart("");
     setPeriodEnd("");
@@ -96,10 +110,15 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
 
   const hasPeriod = !!(periodStart || periodEnd);
 
+  // 학기 빠른 선택
+  const cur = currentSemesterRange();
+  const prev = previousSemesterRange();
+  const ty = thisYearRange();
+
   return (
     <div className="py-12">
       <div className="mx-auto max-w-3xl px-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between print-hide">
           <div className="flex items-center gap-2">
             <BookOpen size={22} className="text-primary" />
             <h1 className="text-2xl font-bold">내 연구활동</h1>
@@ -111,14 +130,23 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
             마이페이지로 돌아가기
           </Link>
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground print-hide">
           직접 쓰는 논문과 분석한 논문을 한 곳에서 관리하세요.
         </p>
 
-        {/* 기간 필터 + 리포트 */}
-        <section className="mt-5 rounded-2xl border bg-white p-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex flex-1 flex-wrap items-end gap-3">
+        {/* 기간 필터 + 학기 빠른 선택 */}
+        <section className="mt-5 rounded-2xl border bg-white p-4 print-hide">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                <CalendarRange size={12} />
+                빠른 선택
+              </span>
+              <QuickBtn label={cur.label} onClick={() => applyRange(cur.from, cur.to)} active={periodStart === cur.from && periodEnd === cur.to} />
+              <QuickBtn label={prev.label} onClick={() => applyRange(prev.from, prev.to)} active={periodStart === prev.from && periodEnd === prev.to} />
+              <QuickBtn label={ty.label} onClick={() => applyRange(ty.from, ty.to)} active={periodStart === ty.from && periodEnd === ty.to} />
+            </div>
+            <div className="flex flex-wrap items-end gap-3">
               <div>
                 <label className="mb-1 block text-xs font-medium text-muted-foreground">시작 (YYYY-MM)</label>
                 <Input
@@ -148,18 +176,14 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
                 </button>
               )}
             </div>
-            <Button size="sm" onClick={() => setReportOpen(true)}>
-              <FileBarChart2 size={14} className="mr-1" />
-              연구 리포트 보기
-            </Button>
+            <p className="text-[11px] text-muted-foreground">
+              기간: <span className="font-medium text-foreground">{periodLabel}</span>
+              {" · "}연구 리포트 / 논문 읽기 발행본 목록에 적용됩니다.
+            </p>
           </div>
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            기간: <span className="font-medium text-foreground">{periodLabel}</span>
-            {" · "}논문 읽기 탭의 발행본 목록과 리포트 출력에 적용됩니다.
-          </p>
         </section>
 
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="mt-6">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="mt-6 print-hide">
           <TabsList variant="line" className="w-full justify-start gap-2 border-b">
             <TabsTrigger value="writing" className="flex-none">
               <FileText size={14} />내 논문 작성
@@ -167,10 +191,17 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
             <TabsTrigger value="reading" className="flex-none">
               <BookOpenCheck size={14} />논문 읽기
             </TabsTrigger>
+            <TabsTrigger value="report" className="flex-none">
+              <FileBarChart2 size={14} />연구 리포트
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="writing" className="mt-5">
-            <WritingPaperEditor user={user} readOnly={!isSelf || readOnly} />
+            <div className="space-y-5">
+              <WritingHeatmap history={history} />
+              <WritingHistoryList history={history} />
+              <WritingPaperEditor user={user} readOnly={!isSelf || readOnly} />
+            </div>
           </TabsContent>
 
           <TabsContent value="reading" className="mt-5">
@@ -181,18 +212,45 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
               periodEnd={periodEnd}
             />
           </TabsContent>
-        </Tabs>
 
-        <ResearchReportDialog
-          open={reportOpen}
-          onOpenChange={setReportOpen}
-          user={user}
-          papers={papers}
-          writingPaper={writingPaper ?? null}
-          periodStart={periodStart}
-          periodEnd={periodEnd}
-        />
+          <TabsContent value="report" className="mt-5">
+            <div className="space-y-6">
+              <div className="print-hide">
+                <ResearchDashboard
+                  papers={papers}
+                  history={history}
+                  periodStart={periodStart}
+                  periodEnd={periodEnd}
+                />
+              </div>
+              <ResearchReportPrint
+                user={user}
+                papers={papers}
+                writingPaper={writingPaper ?? null}
+                history={history}
+                periodStart={periodStart}
+                periodEnd={periodEnd}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
+  );
+}
+
+function QuickBtn({ label, onClick, active }: { label: string; onClick: () => void; active: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-md border px-2 py-1 text-[11px] transition-colors ${
+        active
+          ? "border-primary bg-primary text-primary-foreground"
+          : "border-border bg-white text-muted-foreground hover:border-primary/40 hover:text-foreground"
+      }`}
+    >
+      {label}
+    </button>
   );
 }

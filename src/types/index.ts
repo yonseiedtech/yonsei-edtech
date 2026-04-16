@@ -12,12 +12,29 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 };
 
 // ── 사용자 ──
-export type OccupationType = "corporate" | "teacher" | "researcher" | "freelancer" | "other";
+export type OccupationType =
+  | "corporate"
+  | "teacher"
+  | "researcher"
+  | "public"        // 공무원/공공기관/공기업 (PR6 신규)
+  | "freelancer"
+  | "other";
 
 export const OCCUPATION_LABELS: Record<OccupationType, string> = {
   corporate: "기업 재직",
   teacher: "학교 교사",
   researcher: "연구소/기관",
+  public: "공무원/공공기관/공기업",
+  freelancer: "프리랜서",
+  other: "기타",
+};
+
+/** 직업유형 화면 단축 라벨 (연락망 테이블 등 좁은 영역용) */
+export const OCCUPATION_SHORT_LABELS: Record<OccupationType, string> = {
+  corporate: "기업",
+  teacher: "학교교사",
+  researcher: "연구소",
+  public: "공무원/공공기관/공기업",
   freelancer: "프리랜서",
   other: "기타",
 };
@@ -38,6 +55,65 @@ export const VISIBILITY_LABELS: Record<ContactVisibility, string> = {
   staff: "운영진만",
   private: "비공개",
 };
+
+// ── 프로필 페이지 섹션별 공개 범위 (PR5) ──
+export type SectionKey =
+  | "email"
+  | "phone"
+  | "socials"
+  | "bio"
+  | "researchInterests"
+  | "academicActivities"
+  | "researchActivities"
+  | "graduateInfo";
+
+export type SectionVisibility = "members" | "staff" | "shared" | "private";
+
+export const SECTION_VISIBILITY_LABELS: Record<SectionVisibility, string> = {
+  members: "회원만 공개",
+  staff: "운영진만 공개",
+  shared: "공유자까지 공개",
+  private: "비공개",
+};
+
+export const SECTION_LABELS: Record<SectionKey, string> = {
+  email: "이메일",
+  phone: "전화번호",
+  socials: "SNS / 외부 링크",
+  bio: "학회원 소개",
+  researchInterests: "관심 연구 키워드",
+  academicActivities: "학술활동",
+  researchActivities: "연구활동",
+  graduateInfo: "대학원 정보",
+};
+
+export type SocialPlatform =
+  | "instagram"
+  | "linkedin"
+  | "github"
+  | "x"
+  | "threads"
+  | "youtube"
+  | "website"
+  | "other";
+
+export const SOCIAL_PLATFORM_LABELS: Record<SocialPlatform, string> = {
+  instagram: "Instagram",
+  linkedin: "LinkedIn",
+  github: "GitHub",
+  x: "X (Twitter)",
+  threads: "Threads",
+  youtube: "YouTube",
+  website: "웹사이트",
+  other: "기타",
+};
+
+export interface SocialLink {
+  platform: SocialPlatform;
+  /** platform === "other" 일 때 사용. 그 외에는 옵션. */
+  label?: string;
+  url: string;
+}
 
 import type { UserConsents } from "@/lib/legal";
 
@@ -64,6 +140,19 @@ export interface User { [key: string]: unknown;
   affiliation?: string;
   department?: string;
   position?: string;
+  /** PR6 신규: 직업유형별 세부 정보 */
+  /** 기업 담당업무 */
+  corporateDuty?: string;
+  /** 연구소 직책 (position과 별개) */
+  researcherTitle?: string;
+  /** 연구소 담당업무 */
+  researcherDuty?: string;
+  /** 공무원·공공기관·공기업 직책 */
+  publicTitle?: string;
+  /** 공무원·공공기관·공기업 담당업무 */
+  publicDuty?: string;
+  /** 프리랜서 비고 */
+  freelancerNotes?: string;
   studentId?: string;
   phone?: string;
   contactEmail?: string;
@@ -89,8 +178,42 @@ export interface User { [key: string]: unknown;
   researchInterests?: string[];
   /** 최근 논문 */
   recentPapers?: RecentPaper[];
+  // ── PR5: 프로필 전용 페이지 ──
+  /** SNS / 외부 링크 (프리셋 7개 + other) */
+  socials?: SocialLink[];
+  /** 섹션별 공개 범위 — 미지정 시 "members" (회원만) 기본 */
+  sectionVisibility?: Partial<Record<SectionKey, SectionVisibility>>;
+  /** 대학 (기본 "연세대학교") */
+  university?: string;
+  /** 대학원 (기본 "교육대학원") */
+  graduateSchool?: string;
+  /** 전공 (기본 "교육공학전공") */
+  graduateMajor?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// ── 프로필 좋아요 (PR5) ──
+export interface ProfileLike {
+  /** `${profileId}_${likerId}` — 1인 1회 보장 */
+  id: string;
+  profileId: string;
+  likerId: string;
+  /** 좋아요 누른 사람의 표시 이름 (모달용) */
+  likerName?: string;
+  createdAt: string;
+}
+
+// ── 프로필 페이지 뷰 (PR5, 통계용) ──
+export type ProfileViewChannel = "qr" | "link" | "members" | "direct";
+
+export interface ProfileView {
+  id: string;
+  profileId: string;
+  /** 비로그인 시 undefined */
+  viewerId?: string;
+  channel: ProfileViewChannel;
+  createdAt: string;
 }
 
 export interface RecentPaper {
@@ -243,6 +366,23 @@ export interface WritingPaper {
   lastSavedAt?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+/** 내 논문 작성 활동 이력 — 자동 저장 시점마다(쓰로틀) 1건 적재 */
+export interface WritingPaperHistory {
+  id: string;
+  userId: string;
+  /** writing_papers.id (현재 1건이지만 다건 대비) */
+  paperId: string;
+  /** 저장 시각 (ISO) */
+  savedAt: string;
+  /** 저장 시점의 총 글자수 (모든 챕터 합) */
+  charCount: number;
+  /** 마지막으로 편집된 챕터 키 */
+  lastChapter?: WritingPaperChapterKey;
+  /** 저장 시점의 제목 스냅샷 */
+  title?: string;
+  createdAt: string;
 }
 
 // ── 온라인 인터뷰 ──

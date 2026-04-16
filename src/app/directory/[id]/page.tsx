@@ -1,197 +1,22 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { useEffect, useRef } from "react";
-import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { addDoc, collection, getDocs, query, serverTimestamp, where } from "firebase/firestore";
-import { ArrowLeft, CreditCard, Mail, Phone, Briefcase, GraduationCap, UserPlus } from "lucide-react";
-import { useAuthStore } from "@/features/auth/auth-store";
-import { Button } from "@/components/ui/button";
-import { profilesApi } from "@/lib/bkend";
-import { db } from "@/lib/firebase";
-import { downloadVCard, userToContact } from "@/features/card/vcard";
-import { formatGeneration } from "@/lib/utils";
-import type { User } from "@/types";
-import { toast } from "sonner";
+interface PageProps {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
 
-export default function ProfilePage() {
-  const params = useParams<{ id: string }>();
-  const search = useSearchParams();
-  const viewer = useAuthStore((s) => s.user);
-  const ownerId = params.id;
-  const exchangeLoggedRef = useRef(false);
-
-  const { data: owner, isLoading, error } = useQuery({
-    queryKey: ["user-profile", ownerId],
-    queryFn: async () => (await profilesApi.get(ownerId)) as unknown as User,
-    enabled: !!ownerId,
-    retry: false,
-  });
-
-  // QR/링크 스캔으로 들어온 경우 교환 기록 자동 생성 (로그인 필수)
-  useEffect(() => {
-    if (exchangeLoggedRef.current) return;
-    if (!viewer || !owner) return;
-    if (viewer.id === owner.id) return;
-    const via = search.get("via");
-    if (via !== "qr" && via !== "link") return;
-
-    exchangeLoggedRef.current = true;
-    (async () => {
-      try {
-        const existing = await getDocs(
-          query(
-            collection(db, "business_card_exchanges"),
-            where("ownerId", "==", owner.id),
-            where("receiverId", "==", viewer.id),
-          ),
-        );
-        if (!existing.empty) return;
-        await addDoc(collection(db, "business_card_exchanges"), {
-          ownerId: owner.id,
-          ownerName: owner.name,
-          receiverId: viewer.id,
-          receiverName: viewer.name,
-          channel: via,
-          createdAt: serverTimestamp(),
-        });
-        toast.success(`${owner.name}님의 명함을 받았어요.`);
-      } catch {
-        /* ignore — 규칙 거부/네트워크 오류 */
-      }
-    })();
-  }, [viewer, owner, search]);
-
-  if (isLoading) {
-    return <div className="py-20 text-center text-sm text-muted-foreground">프로필을 불러오는 중…</div>;
+/**
+ * /directory/[id] → /profile/[id] 영구 리다이렉트.
+ * 기존 발급된 명함 QR(`/directory/{id}?via=qr`) 호환을 위해 쿼리 보존.
+ */
+export default async function DirectoryRedirect({ params, searchParams }: PageProps) {
+  const { id } = await params;
+  const sp = await searchParams;
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(sp)) {
+    if (Array.isArray(v)) v.forEach((vv) => qs.append(k, vv));
+    else if (v !== undefined) qs.append(k, v);
   }
-  if (error || !owner) {
-    return (
-      <div className="py-20 text-center">
-        <p className="text-sm text-muted-foreground">프로필을 찾을 수 없습니다.</p>
-        <Link href="/" className="mt-4 inline-block text-sm text-primary underline">홈으로</Link>
-      </div>
-    );
-  }
-
-  const gen = formatGeneration(owner.generation, owner.enrollmentYear, owner.enrollmentHalf);
-  const affiliationLine = [owner.affiliation, owner.department].filter(Boolean).join(" · ");
-  const isSelf = viewer?.id === owner.id;
-  const canShowContact = isSelf || owner.contactVisibility !== "private";
-
-  return (
-    <div className="min-h-screen bg-slate-50 py-10">
-      <div className="mx-auto max-w-md px-4">
-        <div className="mb-4 flex items-center gap-2">
-          <Link href={viewer ? "/directory" : "/"} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft size={16} />{viewer ? "회원 목록" : "홈"}
-          </Link>
-        </div>
-
-        {/* 헤더: 프로필 사진 + 이름 + 기수 */}
-        <div className="rounded-2xl border bg-white p-6 text-center shadow-sm">
-          <div className="mx-auto h-24 w-24 overflow-hidden rounded-full bg-primary/10 ring-4 ring-white">
-            {owner.profileImage ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={owner.profileImage} alt={owner.name} className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-primary">
-                {owner.name?.[0] ?? "?"}
-              </div>
-            )}
-          </div>
-          <h1 className="mt-3 text-2xl font-bold">{owner.name}</h1>
-          {gen && <p className="mt-1 text-sm font-semibold text-primary">{gen}</p>}
-          {owner.position && <p className="mt-1 text-sm text-slate-600">{owner.position}</p>}
-          {affiliationLine && <p className="mt-0.5 text-xs text-slate-500">{affiliationLine}</p>}
-          {owner.field && <p className="mt-2 text-xs italic text-slate-500">#{owner.field}</p>}
-        </div>
-
-        {/* 소개 */}
-        {owner.bio && (
-          <section className="mt-4 rounded-2xl border bg-white p-5 shadow-sm">
-            <h2 className="mb-2 text-xs font-semibold text-muted-foreground">소개</h2>
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{owner.bio}</p>
-          </section>
-        )}
-
-        {/* 상세 정보 */}
-        <section className="mt-4 space-y-2 rounded-2xl border bg-white p-5 shadow-sm">
-          {owner.affiliation && (
-            <div className="flex items-center gap-2 text-sm text-slate-700">
-              <Briefcase size={14} className="text-muted-foreground" />
-              <span>{[owner.affiliation, owner.department, owner.position].filter(Boolean).join(" · ")}</span>
-            </div>
-          )}
-          {gen && (
-            <div className="flex items-center gap-2 text-sm text-slate-700">
-              <GraduationCap size={14} className="text-muted-foreground" />
-              <span>{gen}</span>
-            </div>
-          )}
-          {canShowContact && (owner.contactEmail || owner.email) && (
-            <div className="flex items-center gap-2 text-sm text-slate-700">
-              <Mail size={14} className="text-muted-foreground" />
-              <a href={`mailto:${owner.contactEmail ?? owner.email}`} className="hover:text-primary">
-                {owner.contactEmail ?? owner.email}
-              </a>
-            </div>
-          )}
-          {canShowContact && owner.phone && (
-            <div className="flex items-center gap-2 text-sm text-slate-700">
-              <Phone size={14} className="text-muted-foreground" />
-              <a href={`tel:${owner.phone}`} className="hover:text-primary">{owner.phone}</a>
-            </div>
-          )}
-        </section>
-
-        {/* 액션 */}
-        <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <Link
-            href={`/directory/${owner.id}/card`}
-            className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-white px-4 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground"
-          >
-            <CreditCard size={16} className="mr-1" />명함 보기
-          </Link>
-          <Button onClick={() => downloadVCard(userToContact(owner))}>
-            <UserPlus size={16} className="mr-1" />연락처 저장(vCard)
-          </Button>
-        </div>
-
-        {/* 온보딩 가이드 */}
-        <section className="mt-6 rounded-2xl border bg-primary/5 p-5">
-          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-primary">
-            <CreditCard size={15} />명함 교환, 이렇게 해요
-          </h2>
-          <ol className="mt-3 space-y-2 text-xs text-slate-700">
-            <li className="flex gap-2">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">1</span>
-              <span><strong>명함 보기</strong>를 눌러 QR 코드 · 전화번호 · 이메일을 한 번에 확인하세요.</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">2</span>
-              <span><strong>연락처 저장(vCard)</strong>을 누르면 휴대폰 주소록에 자동 등록됩니다.</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">3</span>
-              <span>내 명함은 <Link href="/mypage/card" className="text-primary underline">마이페이지 › 내 명함</Link>에서 QR을 보여주거나 링크를 공유하면 됩니다.</span>
-            </li>
-            {viewer && !isSelf && (
-              <li className="flex gap-2">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">4</span>
-                <span>QR로 방문한 이 페이지는 <Link href="/mypage/card" className="text-primary underline">교환 기록</Link>에 자동 저장됩니다.</span>
-              </li>
-            )}
-          </ol>
-        </section>
-
-        {!viewer && (
-          <p className="mt-4 rounded-xl border border-dashed bg-white p-3 text-center text-xs text-muted-foreground">
-            연세교육공학회 회원이신가요? <Link href="/login" className="text-primary underline">로그인</Link>하면 명함을 주고받은 기록이 저장됩니다.
-          </p>
-        )}
-      </div>
-    </div>
-  );
+  const tail = qs.toString() ? `?${qs.toString()}` : "";
+  redirect(`/profile/${id}${tail}`);
 }

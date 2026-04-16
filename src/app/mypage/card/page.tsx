@@ -154,7 +154,7 @@ function CardInner() {
   if (!user) return null;
 
   const siteOrigin = typeof window !== "undefined" ? window.location.origin : "https://yonsei-edtech.vercel.app";
-  const qrUrl = `${siteOrigin}/directory/${user.id}?via=qr`;
+  const qrUrl = `${siteOrigin}/profile/${user.id}?via=qr`;
 
   async function handleShare() {
     if (!user) return;

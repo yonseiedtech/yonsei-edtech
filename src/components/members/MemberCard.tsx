@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { User as UserIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ROLE_LABELS } from "@/types";
@@ -22,10 +23,18 @@ export default function MemberCard({ member }: Props) {
   const showRoleBadge = member.role !== "member" && member.role !== "alumni";
 
   return (
-    <div className="rounded-2xl border bg-white p-6 text-center shadow-sm transition-shadow hover:shadow-md">
-      {/* Avatar placeholder */}
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-        <UserIcon size={28} />
+    <Link
+      href={`/profile/${member.id}?from=members`}
+      className="block rounded-2xl border bg-white p-6 text-center shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+    >
+      {/* Avatar */}
+      <div className="mx-auto flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary">
+        {member.profileImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={member.profileImage} alt={member.name} className="h-full w-full object-cover" />
+        ) : (
+          <UserIcon size={28} />
+        )}
       </div>
 
       <h3 className="mt-4 font-semibold">
@@ -42,9 +51,11 @@ export default function MemberCard({ member }: Props) {
       )}
 
       <div className="mt-2 flex flex-wrap justify-center gap-1">
-        <Badge variant="secondary" className="text-xs">
-          {member.field}
-        </Badge>
+        {member.field && (
+          <Badge variant="secondary" className="text-xs">
+            {member.field}
+          </Badge>
+        )}
         {showRoleBadge && (
           <Badge className="bg-primary/10 text-xs text-primary hover:bg-primary/20">
             {ROLE_LABELS[member.role]}
@@ -53,10 +64,10 @@ export default function MemberCard({ member }: Props) {
       </div>
 
       {member.bio && (
-        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+        <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
           {member.bio}
         </p>
       )}
-    </div>
+    </Link>
   );
 }

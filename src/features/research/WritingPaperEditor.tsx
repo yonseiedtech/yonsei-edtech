@@ -11,6 +11,7 @@ import {
   useEnsureWritingPaper,
   useUpdateWritingPaper,
 } from "./useWritingPaper";
+import { useLogWritingActivity } from "./useWritingPaperHistory";
 
 interface Props {
   user: User;
@@ -102,6 +103,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   const { paper, isLoading } = useWritingPaper(user.id);
   const ensure = useEnsureWritingPaper();
   const update = useUpdateWritingPaper();
+  const logActivity = useLogWritingActivity();
 
   const [form, setForm] = useState<FormState>(EMPTY);
   const [hydrated, setHydrated] = useState(false);
@@ -109,6 +111,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   const [saving, setSaving] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ensureTriggeredRef = useRef(false);
+  const lastEditedChapterRef = useRef<WritingPaperChapterKey | null>(null);
 
   // 문서 자동 생성 (없을 때 1회)
   useEffect(() => {
@@ -148,6 +151,15 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           },
         });
         setSavedAt(now);
+        // 활동 이력 적재 (5분 쓰로틀은 훅 내부에서 처리)
+        const charCount = totalChars(next);
+        logActivity.mutate({
+          userId: user.id,
+          paperId: paper.id,
+          charCount,
+          lastChapter: lastEditedChapterRef.current ?? undefined,
+          title: next.title?.trim() || undefined,
+        });
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "자동 저장 실패");
       } finally {
@@ -165,6 +177,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   }
 
   function setChapter(key: WritingPaperChapterKey, value: string) {
+    lastEditedChapterRef.current = key;
     setForm((prev) => {
       const next = { ...prev, chapters: { ...prev.chapters, [key]: value } };
       scheduleSave(next);

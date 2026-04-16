@@ -343,6 +343,37 @@ service cloud.firestore {
         && resource.data.userId == request.auth.uid;
     }
 
+    // ─── Writing Paper History (작성 활동 이력 — 잔디/통계용, append-only) ───
+    match /writing_paper_history/{docId} {
+      allow read: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid;
+      // 이력은 변경/삭제 불가 (감사성)
+      allow update, delete: if false;
+    }
+
+    // ─── Profile Likes (PR5 — 프로필 좋아요, 1인 1회 보장) ───
+    match /profile_likes/{docId} {
+      // 카운트/누가 눌렀는지 조회는 로그인 회원만
+      allow read: if isAuthenticated();
+      // doc id는 결정적 `${profileId}_${likerId}` — 본인만 자기 좋아요 생성/삭제
+      allow create: if isAuthenticated()
+        && request.resource.data.likerId == request.auth.uid
+        && docId == request.resource.data.profileId + "_" + request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.likerId == request.auth.uid;
+      allow update: if false;
+    }
+
+    // ─── Profile Views (PR5 — 통계용 페이지 뷰) ───
+    match /profile_views/{docId} {
+      // 본인 페이지의 view 통계는 본인만 열람
+      allow read: if isAuthenticated() && resource.data.profileId == request.auth.uid;
+      // 비로그인 외부인도 view 로깅은 가능 (운영진 페이지 등 public 접근 케이스)
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
     // ─── Audit Logs (감사 로그) ───
     match /audit_logs/{docId} {
       allow read: if isAuthenticated()

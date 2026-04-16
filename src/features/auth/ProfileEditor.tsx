@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useForm, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,8 +9,18 @@ import { Save, BookOpen, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useUpdateProfile } from "@/features/member/useMembers";
 import { useAuthStore } from "@/features/auth/auth-store";
-import type { User, OccupationType, ContactVisibility, EnrollmentStatus } from "@/types";
+import type {
+  User,
+  OccupationType,
+  ContactVisibility,
+  EnrollmentStatus,
+  SocialLink,
+  SectionKey,
+  SectionVisibility,
+} from "@/types";
 import { OCCUPATION_LABELS, VISIBILITY_LABELS, ENROLLMENT_STATUS_LABELS } from "@/types";
+import ProfileSocialsEditor from "@/components/profile/ProfileSocialsEditor";
+import ProfileVisibilitySettings from "@/components/profile/ProfileVisibilitySettings";
 
 const ENROLLMENT_YEAR_OPTIONS = Array.from({ length: 15 }, (_, i) => 2026 - i);
 
@@ -30,6 +40,11 @@ interface ProfileData {
   contactEmail: string;
   phone: string;
   contactVisibility: ContactVisibility;
+  university: string;
+  graduateSchool: string;
+  graduateMajor: string;
+  socials: SocialLink[];
+  sectionVisibility: Partial<Record<SectionKey, SectionVisibility>>;
 }
 
 interface Props {
@@ -40,6 +55,7 @@ const OCCUPATION_FIELDS: Record<OccupationType, { affiliation: string; departmen
   corporate: { affiliation: "회사명", department: "부서", position: "직책" },
   teacher: { affiliation: "소속 교육청/학교", department: "학교급 (초/중/고)", position: "담당 과목" },
   researcher: { affiliation: "기관명", department: "부서", position: "직위" },
+  public: { affiliation: "기관명", department: "부서", position: "직위" },
   freelancer: { affiliation: "활동 분야", department: "", position: "직함" },
   other: { affiliation: "소속", department: "", position: "직함" },
 };
@@ -62,6 +78,11 @@ export default function ProfileEditor({ user }: Props) {
       contactEmail: user.contactEmail || "",
       phone: user.phone || "",
       contactVisibility: user.contactVisibility || "members",
+      university: user.university || "연세대학교",
+      graduateSchool: user.graduateSchool || "교육대학원",
+      graduateMajor: user.graduateMajor || "교육공학전공",
+      socials: user.socials ?? [],
+      sectionVisibility: user.sectionVisibility ?? {},
     },
   });
 
@@ -250,6 +271,58 @@ export default function ProfileEditor({ user }: Props) {
             </select>
           </div>
         </div>
+      </div>
+
+      {/* 대학원 정보 */}
+      <div className="border-t pt-6">
+        <h3 className="text-sm font-bold">대학원 정보</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          기본값으로 연세대학교 · 교육대학원 · 교육공학전공이 자동 설정됩니다. 다른 곳이라면 수정하세요.
+        </p>
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium">대학교</label>
+            <Input {...register("university")} placeholder="예: 연세대학교" />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium">대학원</label>
+            <Input {...register("graduateSchool")} placeholder="예: 교육대학원" />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium">전공</label>
+            <Input {...register("graduateMajor")} placeholder="예: 교육공학전공" />
+          </div>
+        </div>
+      </div>
+
+      {/* SNS · 외부 링크 */}
+      <div className="border-t pt-6">
+        <Controller
+          control={control}
+          name="socials"
+          render={({ field: f }) => (
+            <ProfileSocialsEditor
+              value={f.value}
+              onChange={f.onChange}
+              disabled={isSaving}
+            />
+          )}
+        />
+      </div>
+
+      {/* 섹션별 공개 범위 */}
+      <div className="border-t pt-6">
+        <Controller
+          control={control}
+          name="sectionVisibility"
+          render={({ field: f }) => (
+            <ProfileVisibilitySettings
+              value={f.value}
+              onChange={f.onChange}
+              disabled={isSaving}
+            />
+          )}
+        />
       </div>
 
       {/* 연구 정보 안내 */}
