@@ -202,11 +202,12 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
         });
         saveTokens(tokens.accessToken, tokens.refreshToken);
 
+        // role / approved는 setDoc(authApi.signup)에서 이미 설정됨.
+        // Firestore Rules의 noSensitiveFieldChange()와 충돌을 피하기 위해 update payload에서 제외.
         const profileData: Record<string, unknown> = {
           username: data.username,
           name: data.name,
           email: data.email,
-          role: "member",
           memberType: enrollmentStatus === "graduated" ? "alumni" : "student",
           enrollmentStatus,
           generation: data.generation ? Number(data.generation) : 0,
@@ -216,7 +217,6 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
           enrollmentYear: data.enrollmentYear ? Number(data.enrollmentYear) : null,
           enrollmentHalf: data.enrollmentHalf ? Number(data.enrollmentHalf) : null,
           field: data.field || "",
-          approved: false,
           privacyAgreedAt: new Date().toISOString(),
           consents: initialConsents,
           securityQuestion,
@@ -262,7 +262,8 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
         }
       } catch (bkendErr) {
         console.error("[signup] profile save failed:", bkendErr);
-        toast.error("프로필 저장에 실패했습니다. 관리자에게 문의하세요.");
+        const detail = bkendErr instanceof Error ? bkendErr.message : String(bkendErr);
+        toast.error(`프로필 저장 실패: ${detail}`);
         return;
       }
 

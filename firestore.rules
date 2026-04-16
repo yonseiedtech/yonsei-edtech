@@ -29,12 +29,16 @@ service cloud.firestore {
       // Public profile (QR scan) — single-doc get is open; list still requires auth
       allow get: if true;
       allow list: if isAuthenticated();
+      // 회원가입: 본인이 본인 문서를 처음 만드는 경우 허용 (role=member, approved=false 강제)
+      allow create: if isOwner(userId)
+        && request.resource.data.role == 'member'
+        && request.resource.data.approved == false;
       // Users can update their own profile, but NOT role or approved
       allow update: if isOwner(userId) && noSensitiveFieldChange();
-      // Only admin can change role/approved or create/delete users
-      allow create, delete: if isAuthenticated() && isAdmin();
-      // Admin can update anything
-      allow update: if isAuthenticated() && isAdmin();
+      // Only admin can delete users or change role/approved
+      allow delete: if isAuthenticated() && isAdmin();
+      // Admin can create/update anything
+      allow create, update: if isAuthenticated() && isAdmin();
     }
 
     // ─── Posts ───
