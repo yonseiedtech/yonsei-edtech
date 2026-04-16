@@ -142,9 +142,20 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const isAdmin = user ? ["admin", "president", "staff"].includes(user.role) : false;
 
   async function handleDelete() {
+    const cat = post!.category;
     await deletePost(post!.id);
     toast.success("게시글이 삭제되었습니다.");
-    router.push("/board");
+    const routes: Record<string, string> = {
+      notice: "/notices",
+      free: "/board/free",
+      promotion: "/board/promotion",
+      seminar: "/board/seminar",
+      resources: "/board/resources",
+      staff: "/board/staff",
+      interview: "/board/interview",
+      press: "/newsletter",
+    };
+    router.push(routes[cat] ?? "/board");
   }
 
   async function handleDeleteComment(commentId: string) {
