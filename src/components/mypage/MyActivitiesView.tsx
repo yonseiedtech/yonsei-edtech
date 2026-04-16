@@ -19,6 +19,7 @@ import { useMyInterviewResponses } from "@/features/board/interview-store";
 import MyInterviewAnswersDialog from "@/features/board/MyInterviewAnswersDialog";
 import EmptyState from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/utils";
+import { formatSemester } from "@/lib/semester";
 import { toast } from "sonner";
 
 const TABS = [
@@ -208,6 +209,11 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                                     {a.status && (
                                       <Badge variant="outline" className="text-[10px]">
                                         {a.status === "upcoming" ? "예정" : a.status === "ongoing" ? "진행중" : "완료"}
+                                      </Badge>
+                                    )}
+                                    {(a.year || a.semester) && (
+                                      <Badge variant="secondary" className="bg-violet-50 text-[10px] text-violet-700">
+                                        {formatSemester(a.year, a.semester)}
                                       </Badge>
                                     )}
                                   </div>

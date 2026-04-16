@@ -680,6 +680,10 @@ export interface Activity { [key: string]: unknown;
   // 대외활동 전용
   organizerName?: string;
   conferenceUrl?: string;
+  /** 활동 학기 — 연도(yyyy) */
+  year?: number;
+  /** 활동 학기 — 전기(first) / 후기(second) */
+  semester?: "first" | "second";
   createdBy: string;
   createdAt: string;
   updatedAt: string;

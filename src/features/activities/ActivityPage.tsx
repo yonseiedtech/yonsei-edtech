@@ -28,6 +28,7 @@ const RECRUIT_COLORS: Record<string, string> = { recruiting: "bg-green-50 text-g
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { Activity, ActivityType } from "@/types";
+import { formatSemester } from "@/lib/semester";
 
 async function apiFetch(url: string, options?: RequestInit) {
   const token = await auth.currentUser?.getIdToken();
@@ -43,8 +44,12 @@ interface FormData {
   recruitmentStatus: string; maxParticipants: string;
   leader: string; location: string; tags: string;
   organizerName: string; conferenceUrl: string; imageUrl: string;
+  /** 학기 연도 — 빈 문자열 = 미지정 */
+  year: string;
+  /** 학기 — "" | "first" | "second" */
+  semester: "" | "first" | "second";
 }
-const emptyForm: FormData = { title: "", description: "", detailContent: "", date: "", endDate: "", status: "upcoming", recruitmentStatus: "recruiting", maxParticipants: "", leader: "", location: "", tags: "", organizerName: "", conferenceUrl: "", imageUrl: "" };
+const emptyForm: FormData = { title: "", description: "", detailContent: "", date: "", endDate: "", status: "upcoming", recruitmentStatus: "recruiting", maxParticipants: "", leader: "", location: "", tags: "", organizerName: "", conferenceUrl: "", imageUrl: "", year: "", semester: "" };
 
 interface Props {
   type: ActivityType;
@@ -104,6 +109,8 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
         organizerName: form.organizerName.trim() || undefined,
         conferenceUrl: form.conferenceUrl.trim() || undefined,
         imageUrl: form.imageUrl.trim() || undefined,
+        year: form.year ? Number(form.year) : undefined,
+        semester: form.semester || undefined,
         participants: editId ? undefined : [],
         applicants: editId ? undefined : [],
         createdBy: user?.id || "",
@@ -176,7 +183,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
   function openCreate() { setEditId(null); setForm(emptyForm); setDialogOpen(true); }
   function openEdit(a: Activity) {
     setEditId(a.id);
-    setForm({ title: a.title, description: a.description, detailContent: a.detailContent || "", date: a.date, endDate: a.endDate || "", status: a.status, recruitmentStatus: a.recruitmentStatus || "recruiting", maxParticipants: a.maxParticipants ? String(a.maxParticipants) : "", leader: a.leader || "", location: a.location || "", tags: a.tags?.join(", ") || "", organizerName: a.organizerName || "", conferenceUrl: a.conferenceUrl || "", imageUrl: a.imageUrl || "" });
+    setForm({ title: a.title, description: a.description, detailContent: a.detailContent || "", date: a.date, endDate: a.endDate || "", status: a.status, recruitmentStatus: a.recruitmentStatus || "recruiting", maxParticipants: a.maxParticipants ? String(a.maxParticipants) : "", leader: a.leader || "", location: a.location || "", tags: a.tags?.join(", ") || "", organizerName: a.organizerName || "", conferenceUrl: a.conferenceUrl || "", imageUrl: a.imageUrl || "", year: a.year ? String(a.year) : "", semester: a.semester || "" });
     setDialogOpen(true);
   }
   function closeDialog() { setDialogOpen(false); setEditId(null); setForm(emptyForm); setAutoPost(false); }
@@ -288,6 +295,11 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{a.description}</p>
             <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1"><Calendar size={12} />{a.date}{a.endDate ? ` ~ ${a.endDate}` : ""}</span>
+              {(a.year || a.semester) && (
+                <Badge variant="secondary" className="bg-violet-50 text-[10px] text-violet-700">
+                  {formatSemester(a.year, a.semester)}
+                </Badge>
+              )}
               {a.leader && <span className="flex items-center gap-1"><User size={12} />{a.leader}</span>}
               {a.location && <span className="flex items-center gap-1"><MapPin size={12} />{a.location}</span>}
               <span className="flex items-center gap-1"><Users size={12} />참여 {participants.length}명</span>
@@ -448,6 +460,20 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div><label className="mb-1 block text-sm font-medium">시작일</label><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
                 <div><label className="mb-1 block text-sm font-medium">종료일</label><Input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} /></div>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-sm font-medium">학기 연도</label>
+                  <Input type="number" inputMode="numeric" min={2000} max={2100} value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} placeholder="예: 2026 (선택)" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">학기</label>
+                  <select value={form.semester} onChange={(e) => setForm({ ...form, semester: e.target.value as FormData["semester"] })} className="w-full rounded-lg border px-3 py-2 text-sm">
+                    <option value="">미지정</option>
+                    <option value="first">전기</option>
+                    <option value="second">후기</option>
+                  </select>
+                </div>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div><label className="mb-1 block text-sm font-medium">상태</label>

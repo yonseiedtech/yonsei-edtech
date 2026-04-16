@@ -18,6 +18,7 @@ import { Plus, Pencil, Trash2, Loader2, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { Activity, ActivityType } from "@/types";
+import { formatSemester, type Semester } from "@/lib/semester";
 
 const STATUS_LABELS: Record<string, string> = {
   upcoming: "예정",
@@ -46,6 +47,10 @@ interface FormData {
   members: string;
   location: string;
   tags: string;
+  /** 학기 연도 — 빈 문자열 = 미지정 */
+  year: string;
+  /** 학기 — "" | "first" | "second" */
+  semester: "" | Semester;
 }
 
 const emptyForm: FormData = {
@@ -58,6 +63,8 @@ const emptyForm: FormData = {
   members: "",
   location: "",
   tags: "",
+  year: "",
+  semester: "",
 };
 
 export default function ActivityList({ type, typeLabel }: Props) {
@@ -88,6 +95,8 @@ export default function ActivityList({ type, typeLabel }: Props) {
         members: form.members ? form.members.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
         location: form.location.trim() || undefined,
         tags: form.tags ? form.tags.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
+        year: form.year ? Number(form.year) : undefined,
+        semester: form.semester || undefined,
         createdBy: user?.id || "",
       };
       if (editId) {
@@ -130,6 +139,8 @@ export default function ActivityList({ type, typeLabel }: Props) {
       members: a.members?.join(", ") || "",
       location: a.location || "",
       tags: a.tags?.join(", ") || "",
+      year: a.year ? String(a.year) : "",
+      semester: a.semester || "",
     });
     setDialogOpen(true);
   }
@@ -167,6 +178,11 @@ export default function ActivityList({ type, typeLabel }: Props) {
                   <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{a.description}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1"><Calendar size={12} />{a.date}{a.endDate ? ` ~ ${a.endDate}` : ""}</span>
+                    {(a.year || a.semester) && (
+                      <Badge variant="secondary" className="bg-violet-50 text-[10px] text-violet-700">
+                        {formatSemester(a.year, a.semester)}
+                      </Badge>
+                    )}
                     {a.leader && <span>담당: {a.leader}</span>}
                     {a.location && <span>{a.location}</span>}
                   </div>
@@ -226,6 +242,32 @@ export default function ActivityList({ type, typeLabel }: Props) {
               <div>
                 <label className="mb-1 block text-sm font-medium">종료일</label>
                 <Input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-sm font-medium">학기 연도</label>
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={2000}
+                  max={2100}
+                  value={form.year}
+                  onChange={(e) => setForm({ ...form, year: e.target.value })}
+                  placeholder="예: 2026 (선택)"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">학기</label>
+                <select
+                  value={form.semester}
+                  onChange={(e) => setForm({ ...form, semester: e.target.value as FormData["semester"] })}
+                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                >
+                  <option value="">미지정</option>
+                  <option value="first">전기</option>
+                  <option value="second">후기</option>
+                </select>
               </div>
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

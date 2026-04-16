@@ -22,6 +22,7 @@ import {
 import type { Activity, ActivityType, ActivityProgress, ActivityMaterial, FormField } from "@/types";
 import { activityProgressApi, activityMaterialsApi } from "@/lib/bkend";
 import { uploadToStorage, type UploadedFile } from "@/lib/storage";
+import { formatSemester } from "@/lib/semester";
 import FormBuilder from "./FormBuilder";
 import FormRenderer from "./FormRenderer";
 
@@ -178,8 +179,13 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             )}
           </div>
           <h1 className="mt-2 text-2xl font-bold">{activity.title}</h1>
-          <div className="mt-3 flex flex-wrap gap-3 text-sm text-muted-foreground">
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             <span className="flex items-center gap-1"><Calendar size={14} />{activity.date}{activity.endDate ? ` ~ ${activity.endDate}` : ""}</span>
+            {(activity.year || activity.semester) && (
+              <Badge variant="secondary" className="bg-violet-50 text-[10px] text-violet-700">
+                {formatSemester(activity.year, activity.semester)}
+              </Badge>
+            )}
             {activity.leader && <span className="flex items-center gap-1"><User size={14} />{activity.leader}</span>}
             {activity.location && <span className="flex items-center gap-1"><MapPin size={14} />{activity.location}</span>}
             <span className="flex items-center gap-1"><Users size={14} />참여 {participants.length}{activity.maxParticipants ? `/${activity.maxParticipants}` : ""}명</span>
