@@ -784,7 +784,18 @@ export type ActivityType = "project" | "study" | "external";
 export type FormFieldType =
   | "short_text" | "long_text" | "radio" | "checkbox" | "select"
   | "date" | "time" | "datetime" | "email" | "phone" | "url" | "number"
-  | "linear_scale" | "file" | "image" | "section_break";
+  | "linear_scale" | "file" | "image" | "section_break"
+  | "schedule"; // PR8: 시간표 드래그 선택 (학술대회 신청 등)
+
+/** PR8: 가능한 시간대 슬롯 */
+export interface ScheduleSlot {
+  /** YYYY-MM-DD */
+  date: string;
+  /** HH:MM (24시간) */
+  start: string;
+  /** HH:MM (24시간) */
+  end: string;
+}
 
 export interface FormField {
   id: string;
@@ -798,6 +809,17 @@ export interface FormField {
   max?: number;
   minLabel?: string;
   maxLabel?: string;
+  // PR8: schedule 전용 설정
+  /** 행사 시작 날짜 YYYY-MM-DD */
+  scheduleStartDate?: string;
+  /** 행사 종료 날짜 YYYY-MM-DD (단일 날짜면 start와 동일) */
+  scheduleEndDate?: string;
+  /** 하루 중 시작 시간 HH:MM */
+  scheduleStartTime?: string;
+  /** 하루 중 종료 시간 HH:MM */
+  scheduleEndTime?: string;
+  /** 슬롯 단위 분 (기본 30) */
+  scheduleSlotMinutes?: number;
 }
 
 export type RecruitmentStatus = "recruiting" | "closed" | "in_progress" | "completed";
@@ -814,6 +836,8 @@ export interface Activity { [key: string]: unknown;
   recruitmentStatus?: RecruitmentStatus;
   maxParticipants?: number;
   leader?: string;
+  /** PR7: 모임장(스터디) 회원 ID — leader 문자열과 별도로 보관 (자동완성 선택값) */
+  leaderId?: string;
   members?: string[];
   participants?: string[];
   applicants?: { userId?: string; guestKey?: string; isGuest?: boolean; email?: string; phone?: string; name: string; studentId?: string; answers?: Record<string, string | string[] | { url: string; name: string; size: number; type: string }[]>; appliedAt: string; status: "pending" | "approved" | "rejected" }[];

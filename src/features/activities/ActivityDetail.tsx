@@ -25,6 +25,8 @@ import { uploadToStorage, type UploadedFile } from "@/lib/storage";
 import { formatSemester } from "@/lib/semester";
 import FormBuilder from "./FormBuilder";
 import FormRenderer from "./FormRenderer";
+import MemberAutocomplete from "@/components/ui/MemberAutocomplete";
+import { useAllMembers } from "@/features/member/useMembers";
 
 const STATUS_LABELS: Record<string, string> = { upcoming: "예정", ongoing: "진행 중", completed: "완료" };
 const STATUS_COLORS: Record<string, string> = { upcoming: "bg-blue-50 text-blue-700", ongoing: "bg-amber-50 text-amber-700", completed: "bg-muted text-muted-foreground" };
@@ -82,6 +84,12 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
 
   const participants = (activity?.participants as string[] | undefined) ?? [];
   const applicants = (activity?.applicants as Activity["applicants"]) ?? [];
+  // PR7: 모임장 또는 운영진은 참여자 직접 추가/제거 가능
+  const leaderId = (activity?.leaderId as string | undefined) ?? undefined;
+  const isLeader = !!user && !!leaderId && user.id === leaderId;
+  const canManageParticipants = isLeader || isStaff;
+  const { members: allMembers } = useAllMembers();
+  const memberMap = new Map(allMembers.map((m) => [m.id, m]));
   const isJoined = user ? participants.includes(user.id) : false;
   const hasApplied = user ? applicants.some((a) => a.userId === user?.id || (a.isGuest && a.email && user?.email && a.email.toLowerCase() === user.email.toLowerCase())) : false;
   const recruitmentStatus = activity?.recruitmentStatus ?? "recruiting";
@@ -113,6 +121,31 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
       if (!user && type === "external") setSignupCtaOpen(true);
     },
     onError: (e: Error) => { toast.error(e.message || "신청에 실패했습니다."); },
+  });
+
+  // PR7: 참여자 추가/제거 (운영진 또는 스터디 모임장)
+  const addParticipantMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      if (!activity) return;
+      if (participants.includes(memberId)) return;
+      await activitiesApi.update(activityId, { participants: [...participants, memberId] });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+      toast.success("참여자가 추가되었습니다.");
+    },
+    onError: () => toast.error("추가에 실패했습니다."),
+  });
+
+  const removeParticipantMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      if (!activity) return;
+      await activitiesApi.update(activityId, { participants: participants.filter((p) => p !== memberId) });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+      toast.success("참여자가 제외되었습니다.");
+    },
   });
 
   // 신청 승인/거절 (관리자)
@@ -403,18 +436,57 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
           )}
 
           {activeTab === "participants" && (
-            <div className="rounded-xl border bg-white">
-              {participants.length === 0 ? (
-                <p className="p-6 text-center text-sm text-muted-foreground">참여자가 없습니다.</p>
-              ) : (
-                <div className="divide-y">
-                  {participants.map((pid, i) => (
-                    <div key={pid} className="flex items-center justify-between px-4 py-3 text-sm">
-                      <span>{i + 1}. {pid}</span>
-                    </div>
-                  ))}
+            <div className="space-y-3">
+              {/* PR7: 모임장/운영진 직접 추가 */}
+              {canManageParticipants && (
+                <div className="rounded-xl border bg-white p-4">
+                  <h3 className="mb-2 text-sm font-semibold flex items-center gap-1">
+                    <UserPlus size={14} />회원 추가
+                  </h3>
+                  <MemberAutocomplete
+                    value=""
+                    onSelect={(m) => addParticipantMutation.mutate(m.id)}
+                    excludeIds={participants}
+                    placeholder="회원 이름 또는 학번으로 검색"
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {type === "study" && isLeader ? "모임장 권한으로 참여자를 추가할 수 있습니다." : "운영진 권한으로 참여자를 추가/제거할 수 있습니다."}
+                  </p>
                 </div>
               )}
+              <div className="rounded-xl border bg-white">
+                {participants.length === 0 ? (
+                  <p className="p-6 text-center text-sm text-muted-foreground">참여자가 없습니다.</p>
+                ) : (
+                  <div className="divide-y">
+                    {participants.map((pid, i) => {
+                      const m = memberMap.get(pid);
+                      return (
+                        <div key={pid} className="flex items-center justify-between px-4 py-3 text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground">{i + 1}.</span>
+                            <span className="font-medium">{m?.name ?? "(이름 미확인)"}</span>
+                            {m?.studentId && <span className="text-xs text-muted-foreground">{m.studentId}</span>}
+                            {m?.generation && <Badge variant="secondary" className="text-[10px]">{m.generation}기</Badge>}
+                            {leaderId === pid && <Badge className="bg-amber-50 text-amber-700 text-[10px]">{type === "study" ? "모임장" : "담당자"}</Badge>}
+                          </div>
+                          {canManageParticipants && (
+                            <button
+                              onClick={() => {
+                                if (confirm("참여에서 제외하시겠습니까?")) removeParticipantMutation.mutate(pid);
+                              }}
+                              className="rounded p-1 text-muted-foreground hover:text-red-500"
+                              aria-label="제외"
+                            >
+                              <X size={14} />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -528,11 +600,24 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                         ) : (
                           <div className="mt-2 space-y-1">
                             {answers.map((a, i) => {
-                              const display = Array.isArray(a.v)
-                                ? typeof (a.v as unknown[])[0] === "string"
+                              let display: string;
+                              if (Array.isArray(a.v)) {
+                                display = typeof (a.v as unknown[])[0] === "string"
                                   ? (a.v as string[]).join(", ")
-                                  : `${(a.v as { name: string }[]).length}개 파일 첨부`
-                                : String(a.v);
+                                  : `${(a.v as { name: string }[]).length}개 파일 첨부`;
+                              } else if (field.type === "schedule" && typeof a.v === "string") {
+                                // PR8: 스케줄 답변은 JSON 문자열
+                                try {
+                                  const slots = JSON.parse(a.v) as { date: string; start: string; end: string }[];
+                                  display = slots.length === 0
+                                    ? "(선택 없음)"
+                                    : slots.map((s) => `${s.date} ${s.start}-${s.end}`).join(", ");
+                                } catch {
+                                  display = String(a.v);
+                                }
+                              } else {
+                                display = String(a.v);
+                              }
                               return (
                                 <div key={i} className="rounded-lg bg-muted/30 px-3 py-2 text-sm">
                                   <span className="font-medium">{a.name}:</span> {display}

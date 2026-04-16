@@ -14,18 +14,32 @@ import { cn } from "@/lib/utils";
 import type { UserConsents } from "@/lib/legal";
 import { sha256Hex } from "@/lib/hash";
 
-import type { EnrollmentStatus } from "@/types";
-import { ENROLLMENT_STATUS_LABELS } from "@/types";
+import type { EnrollmentStatus, OccupationType } from "@/types";
+import { ENROLLMENT_STATUS_LABELS, OCCUPATION_LABELS } from "@/types";
 
-const ACTIVITY_OPTIONS = [
+// 직업유형 5분류 (PR6) — types/index.ts의 OccupationType 5분류와 1:1 일치
+const ACTIVITY_OPTIONS: { value: "" | OccupationType; label: string }[] = [
   { value: "", label: "선택 안 함" },
-  { value: "teacher", label: "학교 교사" },
-  { value: "corporate", label: "기업 재직" },
-  { value: "university", label: "대학 교직원" },
-  { value: "researcher", label: "연구소/기관" },
-  { value: "freelancer", label: "프리랜서" },
-  { value: "other", label: "기타" },
+  { value: "teacher", label: OCCUPATION_LABELS.teacher },
+  { value: "corporate", label: OCCUPATION_LABELS.corporate },
+  { value: "researcher", label: OCCUPATION_LABELS.researcher },
+  { value: "public", label: OCCUPATION_LABELS.public },
+  { value: "freelancer", label: OCCUPATION_LABELS.freelancer },
+  { value: "other", label: OCCUPATION_LABELS.other },
 ];
+
+/** 직업유형별 입력 필드 라벨 (placeholder 포함) */
+const OCCUPATION_FIELD_LABELS: Record<
+  OccupationType,
+  { affiliation: string; department?: string; position?: string; title?: string; duty?: string; notes?: string }
+> = {
+  teacher: { affiliation: "소속 교육청/학교", department: "학교급 (초/중/고)", position: "담당 과목" },
+  corporate: { affiliation: "회사명", department: "부서", position: "직책", duty: "담당업무" },
+  researcher: { affiliation: "기관명", department: "부서", title: "직책", duty: "담당업무" },
+  public: { affiliation: "기관명", department: "부서", title: "직책", duty: "담당업무" },
+  freelancer: { affiliation: "활동분야", department: "활동업무", position: "대외직책", notes: "비고" },
+  other: { affiliation: "소속", position: "직함" },
+};
 
 // 2026년 1학기 기준 누적학기 옵션 (1~10학기 + 기타/모르겠음)
 const SEMESTER_OPTIONS = Array.from({ length: 10 }, (_, i) => i + 1);
@@ -61,6 +75,13 @@ interface SignupData {
   affiliation1: string;
   affiliation2: string;
   position: string;
+  // PR6 신규: 직업유형별 세부 필드
+  corporateDuty: string;
+  researcherTitle: string;
+  researcherDuty: string;
+  publicTitle: string;
+  publicDuty: string;
+  freelancerNotes: string;
   // 휴학
   leaveStartYear: string;
   leaveStartHalf: string;
@@ -108,6 +129,8 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
   const watchedUsername = watch("username");
   const watchedSecurityQ = watch("securityQuestionSelect");
   const watchedPassword = watch("password");
+  const watchedActivity = watch("activity") as "" | OccupationType;
+  const occLabels = watchedActivity ? OCCUPATION_FIELD_LABELS[watchedActivity] : null;
 
   // 학번에서 입학 시점 추출
   function parseEnrollmentFromStudentId(sid: string) {
@@ -241,6 +264,21 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
         if (data.affiliation1) profileData.affiliation = data.affiliation1;
         if (data.affiliation2) profileData.department = data.affiliation2;
         if (data.position) profileData.position = data.position;
+        // PR6: 직업유형별 세부 필드 (해당 유형일 때만 저장)
+        if (data.activity === "corporate" && data.corporateDuty) {
+          profileData.corporateDuty = data.corporateDuty;
+        }
+        if (data.activity === "researcher") {
+          if (data.researcherTitle) profileData.researcherTitle = data.researcherTitle;
+          if (data.researcherDuty) profileData.researcherDuty = data.researcherDuty;
+        }
+        if (data.activity === "public") {
+          if (data.publicTitle) profileData.publicTitle = data.publicTitle;
+          if (data.publicDuty) profileData.publicDuty = data.publicDuty;
+        }
+        if (data.activity === "freelancer" && data.freelancerNotes) {
+          profileData.freelancerNotes = data.freelancerNotes;
+        }
 
         await profilesApi.update("me", profileData);
 
@@ -837,27 +875,88 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
               </select>
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium">
-                  소속1 <span className="text-muted-foreground">(선택)</span>
-                </label>
-                <Input {...register("affiliation1")} placeholder="예: 서울시교육청" />
+            {/* 직업유형별 세부 필드 (PR6) */}
+            {occLabels && (
+              <div className="space-y-4 rounded-lg border bg-muted/10 p-4">
+                <p className="text-xs text-muted-foreground">
+                  {OCCUPATION_LABELS[watchedActivity as OccupationType]} 세부 정보
+                </p>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">
+                    {occLabels.affiliation} <span className="text-muted-foreground">(선택)</span>
+                  </label>
+                  <Input {...register("affiliation1")} placeholder={occLabels.affiliation} />
+                </div>
+                {occLabels.department && (
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">
+                      {occLabels.department} <span className="text-muted-foreground">(선택)</span>
+                    </label>
+                    <Input {...register("affiliation2")} placeholder={occLabels.department} />
+                  </div>
+                )}
+                {/* 연구소·공무원: 직책(title) → researcherTitle/publicTitle 별도 필드 */}
+                {occLabels.title && watchedActivity === "researcher" && (
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">
+                      {occLabels.title} <span className="text-muted-foreground">(선택)</span>
+                    </label>
+                    <Input {...register("researcherTitle")} placeholder={occLabels.title} />
+                  </div>
+                )}
+                {occLabels.title && watchedActivity === "public" && (
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">
+                      {occLabels.title} <span className="text-muted-foreground">(선택)</span>
+                    </label>
+                    <Input {...register("publicTitle")} placeholder={occLabels.title} />
+                  </div>
+                )}
+                {/* 그 외: position(직책/직함/대외직책/담당과목) → 기존 position 필드 */}
+                {occLabels.position && (
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">
+                      {occLabels.position} <span className="text-muted-foreground">(선택)</span>
+                    </label>
+                    <Input {...register("position")} placeholder={occLabels.position} />
+                  </div>
+                )}
+                {/* 담당업무 — 기업/연구소/공무원 */}
+                {occLabels.duty && watchedActivity === "corporate" && (
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">
+                      {occLabels.duty} <span className="text-muted-foreground">(선택)</span>
+                    </label>
+                    <Input {...register("corporateDuty")} placeholder={occLabels.duty} />
+                  </div>
+                )}
+                {occLabels.duty && watchedActivity === "researcher" && (
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">
+                      {occLabels.duty} <span className="text-muted-foreground">(선택)</span>
+                    </label>
+                    <Input {...register("researcherDuty")} placeholder={occLabels.duty} />
+                  </div>
+                )}
+                {occLabels.duty && watchedActivity === "public" && (
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">
+                      {occLabels.duty} <span className="text-muted-foreground">(선택)</span>
+                    </label>
+                    <Input {...register("publicDuty")} placeholder={occLabels.duty} />
+                  </div>
+                )}
+                {/* 비고 — 프리랜서 */}
+                {occLabels.notes && watchedActivity === "freelancer" && (
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">
+                      {occLabels.notes} <span className="text-muted-foreground">(선택)</span>
+                    </label>
+                    <Input {...register("freelancerNotes")} placeholder={occLabels.notes} />
+                  </div>
+                )}
               </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium">
-                  소속2 <span className="text-muted-foreground">(선택)</span>
-                </label>
-                <Input {...register("affiliation2")} placeholder="예: 교육정책과" />
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-sm font-medium">
-                직책 <span className="text-muted-foreground">(선택)</span>
-              </label>
-              <Input {...register("position")} placeholder="예: 장학사" />
-            </div>
+            )}
 
             <div>
               <label className="mb-1.5 block text-sm font-medium">

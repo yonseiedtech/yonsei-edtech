@@ -22,6 +22,7 @@ import { postsApi } from "@/lib/bkend";
 import { uploadImageSmart } from "@/lib/storage";
 import EmptyState from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
+import MemberAutocomplete from "@/components/ui/MemberAutocomplete";
 
 const RECRUIT_LABELS: Record<string, string> = { recruiting: "모집중", closed: "모집마감", in_progress: "진행중", completed: "완료" };
 const RECRUIT_COLORS: Record<string, string> = { recruiting: "bg-green-50 text-green-700", closed: "bg-red-50 text-red-700", in_progress: "bg-amber-50 text-amber-700", completed: "bg-muted text-muted-foreground" };
@@ -42,14 +43,17 @@ interface FormData {
   title: string; description: string; detailContent: string; date: string; endDate: string;
   status: "upcoming" | "ongoing" | "completed";
   recruitmentStatus: string; maxParticipants: string;
-  leader: string; location: string; tags: string;
+  leader: string;
+  /** PR7: 모임장(스터디) 회원 ID */
+  leaderId: string;
+  location: string; tags: string;
   organizerName: string; conferenceUrl: string; imageUrl: string;
   /** 학기 연도 — 빈 문자열 = 미지정 */
   year: string;
   /** 학기 — "" | "first" | "second" */
   semester: "" | "first" | "second";
 }
-const emptyForm: FormData = { title: "", description: "", detailContent: "", date: "", endDate: "", status: "upcoming", recruitmentStatus: "recruiting", maxParticipants: "", leader: "", location: "", tags: "", organizerName: "", conferenceUrl: "", imageUrl: "", year: "", semester: "" };
+const emptyForm: FormData = { title: "", description: "", detailContent: "", date: "", endDate: "", status: "upcoming", recruitmentStatus: "recruiting", maxParticipants: "", leader: "", leaderId: "", location: "", tags: "", organizerName: "", conferenceUrl: "", imageUrl: "", year: "", semester: "" };
 
 interface Props {
   type: ActivityType;
@@ -104,7 +108,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
         date: form.date, endDate: form.endDate || undefined, status: form.status,
         recruitmentStatus: form.recruitmentStatus || "recruiting",
         maxParticipants: form.maxParticipants ? Number(form.maxParticipants) : undefined,
-        leader: form.leader.trim() || undefined, location: form.location.trim() || undefined,
+        leader: form.leader.trim() || undefined, leaderId: form.leaderId || undefined, location: form.location.trim() || undefined,
         tags: form.tags ? form.tags.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
         organizerName: form.organizerName.trim() || undefined,
         conferenceUrl: form.conferenceUrl.trim() || undefined,
@@ -183,7 +187,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
   function openCreate() { setEditId(null); setForm(emptyForm); setDialogOpen(true); }
   function openEdit(a: Activity) {
     setEditId(a.id);
-    setForm({ title: a.title, description: a.description, detailContent: a.detailContent || "", date: a.date, endDate: a.endDate || "", status: a.status, recruitmentStatus: a.recruitmentStatus || "recruiting", maxParticipants: a.maxParticipants ? String(a.maxParticipants) : "", leader: a.leader || "", location: a.location || "", tags: a.tags?.join(", ") || "", organizerName: a.organizerName || "", conferenceUrl: a.conferenceUrl || "", imageUrl: a.imageUrl || "", year: a.year ? String(a.year) : "", semester: a.semester || "" });
+    setForm({ title: a.title, description: a.description, detailContent: a.detailContent || "", date: a.date, endDate: a.endDate || "", status: a.status, recruitmentStatus: a.recruitmentStatus || "recruiting", maxParticipants: a.maxParticipants ? String(a.maxParticipants) : "", leader: a.leader || "", leaderId: a.leaderId || "", location: a.location || "", tags: a.tags?.join(", ") || "", organizerName: a.organizerName || "", conferenceUrl: a.conferenceUrl || "", imageUrl: a.imageUrl || "", year: a.year ? String(a.year) : "", semester: a.semester || "" });
     setDialogOpen(true);
   }
   function closeDialog() { setDialogOpen(false); setEditId(null); setForm(emptyForm); setAutoPost(false); }
@@ -300,7 +304,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
                   {formatSemester(a.year, a.semester)}
                 </Badge>
               )}
-              {a.leader && <span className="flex items-center gap-1"><User size={12} />{a.leader}</span>}
+              {a.leader && <span className="flex items-center gap-1"><User size={12} />{type === "study" ? "모임장 " : ""}{a.leader}</span>}
               {a.location && <span className="flex items-center gap-1"><MapPin size={12} />{a.location}</span>}
               <span className="flex items-center gap-1"><Users size={12} />참여 {participants.length}명</span>
             </div>
@@ -491,7 +495,20 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
                 </div>
                 <div><label className="mb-1 block text-sm font-medium">정원</label><Input type="number" value={form.maxParticipants} onChange={(e) => setForm({ ...form, maxParticipants: e.target.value })} placeholder="미입력 시 제한 없음" /></div>
               </div>
-              <div><label className="mb-1 block text-sm font-medium">담당자</label><Input value={form.leader} onChange={(e) => setForm({ ...form, leader: e.target.value })} placeholder="예: 김대경" /></div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">{type === "study" ? "모임장" : "담당자"}</label>
+                {type === "study" ? (
+                  <MemberAutocomplete
+                    value={form.leaderId}
+                    displayName={form.leaderId ? form.leader : undefined}
+                    onSelect={(m) => setForm({ ...form, leaderId: m.id, leader: m.name })}
+                    onClear={() => setForm({ ...form, leaderId: "", leader: "" })}
+                    placeholder="회원 이름 또는 학번을 입력하세요"
+                  />
+                ) : (
+                  <Input value={form.leader} onChange={(e) => setForm({ ...form, leader: e.target.value })} placeholder="예: 김대경" />
+                )}
+              </div>
               <div><label className="mb-1 block text-sm font-medium">상세 내용</label>
                 <textarea value={form.detailContent} onChange={(e) => setForm({ ...form, detailContent: e.target.value })} rows={4} placeholder="세부 진행 방법, 커리큘럼, 참여 조건 등" className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50" />
               </div>

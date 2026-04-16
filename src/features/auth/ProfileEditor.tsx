@@ -1,11 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Save, BookOpen, ArrowRight } from "lucide-react";
+import { Save } from "lucide-react";
 import { toast } from "sonner";
 import { useUpdateProfile } from "@/features/member/useMembers";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -37,6 +36,13 @@ interface ProfileData {
   affiliation: string;
   department: string;
   position: string;
+  // PR6 신규: 직업유형별 세부 필드
+  corporateDuty: string;
+  researcherTitle: string;
+  researcherDuty: string;
+  publicTitle: string;
+  publicDuty: string;
+  freelancerNotes: string;
   contactEmail: string;
   phone: string;
   contactVisibility: ContactVisibility;
@@ -51,12 +57,16 @@ interface Props {
   user: User;
 }
 
-const OCCUPATION_FIELDS: Record<OccupationType, { affiliation: string; department: string; position: string }> = {
-  corporate: { affiliation: "회사명", department: "부서", position: "직책" },
+/** PR6: 직업유형별 입력 필드 라벨 */
+const OCCUPATION_FIELDS: Record<
+  OccupationType,
+  { affiliation: string; department: string; position: string; title?: string; duty?: string; notes?: string }
+> = {
   teacher: { affiliation: "소속 교육청/학교", department: "학교급 (초/중/고)", position: "담당 과목" },
-  researcher: { affiliation: "기관명", department: "부서", position: "직위" },
-  public: { affiliation: "기관명", department: "부서", position: "직위" },
-  freelancer: { affiliation: "활동 분야", department: "", position: "직함" },
+  corporate: { affiliation: "회사명", department: "부서", position: "직책", duty: "담당업무" },
+  researcher: { affiliation: "기관명", department: "부서", position: "", title: "직책", duty: "담당업무" },
+  public: { affiliation: "기관명", department: "부서", position: "", title: "직책", duty: "담당업무" },
+  freelancer: { affiliation: "활동분야", department: "활동업무", position: "대외직책", notes: "비고" },
   other: { affiliation: "소속", department: "", position: "직함" },
 };
 
@@ -75,6 +85,12 @@ export default function ProfileEditor({ user }: Props) {
       affiliation: user.affiliation || "",
       department: user.department || "",
       position: user.position || "",
+      corporateDuty: user.corporateDuty || "",
+      researcherTitle: user.researcherTitle || "",
+      researcherDuty: user.researcherDuty || "",
+      publicTitle: user.publicTitle || "",
+      publicDuty: user.publicDuty || "",
+      freelancerNotes: user.freelancerNotes || "",
       contactEmail: user.contactEmail || "",
       phone: user.phone || "",
       contactVisibility: user.contactVisibility || "members",
@@ -244,10 +260,48 @@ export default function ProfileEditor({ user }: Props) {
                   <Input {...register("department")} placeholder={occFields.department} />
                 </div>
               )}
-              <div>
-                <label className="mb-1.5 block text-sm font-medium">{occFields.position}</label>
-                <Input {...register("position")} placeholder={occFields.position} />
-              </div>
+              {occFields.title && occupation === "researcher" && (
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">{occFields.title}</label>
+                  <Input {...register("researcherTitle")} placeholder={occFields.title} />
+                </div>
+              )}
+              {occFields.title && occupation === "public" && (
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">{occFields.title}</label>
+                  <Input {...register("publicTitle")} placeholder={occFields.title} />
+                </div>
+              )}
+              {occFields.position && (
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">{occFields.position}</label>
+                  <Input {...register("position")} placeholder={occFields.position} />
+                </div>
+              )}
+              {occFields.duty && occupation === "corporate" && (
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">{occFields.duty}</label>
+                  <Input {...register("corporateDuty")} placeholder={occFields.duty} />
+                </div>
+              )}
+              {occFields.duty && occupation === "researcher" && (
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">{occFields.duty}</label>
+                  <Input {...register("researcherDuty")} placeholder={occFields.duty} />
+                </div>
+              )}
+              {occFields.duty && occupation === "public" && (
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">{occFields.duty}</label>
+                  <Input {...register("publicDuty")} placeholder={occFields.duty} />
+                </div>
+              )}
+              {occFields.notes && occupation === "freelancer" && (
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">{occFields.notes}</label>
+                  <Input {...register("freelancerNotes")} placeholder={occFields.notes} />
+                </div>
+              )}
             </>
           )}
 
@@ -323,29 +377,6 @@ export default function ProfileEditor({ user }: Props) {
             />
           )}
         />
-      </div>
-
-      {/* 연구 정보 안내 */}
-      <div className="border-t pt-6">
-        <h3 className="text-sm font-bold">연구 정보</h3>
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border bg-muted/30 p-4">
-          <div className="flex items-start gap-3">
-            <BookOpen size={18} className="mt-0.5 shrink-0 text-primary" />
-            <div className="text-sm">
-              <p className="font-medium">관심 연구분야와 논문 분석 노트는 학술활동 탭으로 이전되었습니다.</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                기존에 입력한 정보는 자동으로 옮겨집니다. 학술활동 → 연구활동 이력에서 확인하세요.
-              </p>
-            </div>
-          </div>
-          <Link
-            href="/mypage?tab=activities&sub=research"
-            className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            이동
-            <ArrowRight size={12} />
-          </Link>
-        </div>
       </div>
 
       <div className="flex justify-end">

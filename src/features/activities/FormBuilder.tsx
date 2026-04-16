@@ -4,7 +4,7 @@ import { useState } from "react";
 import {
   Plus, Trash2, GripVertical, Copy, Type, AlignLeft, CircleDot, SquareCheck,
   ChevronDown, ChevronUp, Calendar, Clock, CalendarClock, Mail, Phone, FileText,
-  Image as ImageIcon, Link2, Hash, SlidersHorizontal, Minus,
+  Image as ImageIcon, Link2, Hash, SlidersHorizontal, Minus, CalendarRange,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ const TYPE_META: Record<FormFieldType, { label: string; icon: typeof Type }> = {
   file: { label: "파일 업로드", icon: FileText },
   image: { label: "이미지 업로드", icon: ImageIcon },
   section_break: { label: "섹션 구분", icon: Minus },
+  schedule: { label: "가능 시간대 (시간표)", icon: CalendarRange },
 };
 
 const HAS_OPTIONS: FormFieldType[] = ["radio", "checkbox", "select"];
@@ -49,6 +50,13 @@ export default function FormBuilder({ value, onChange }: Props) {
   function defaultsFor(t: FormFieldType): Partial<FormField> {
     if (t === "linear_scale") return { min: 1, max: 5, minLabel: "매우 아니다", maxLabel: "매우 그렇다" };
     if (t === "number") return {};
+    if (t === "schedule") return {
+      scheduleStartDate: "",
+      scheduleEndDate: "",
+      scheduleStartTime: "09:00",
+      scheduleEndTime: "18:00",
+      scheduleSlotMinutes: 30,
+    };
     return {};
   }
   function add() {
@@ -194,6 +202,38 @@ export default function FormBuilder({ value, onChange }: Props) {
                     <label className="flex flex-col gap-1 text-[10px] text-muted-foreground">
                       placeholder
                       <Input value={f.placeholder ?? ""} onChange={(e) => update(i, { placeholder: e.target.value })} className="h-7 text-xs" />
+                    </label>
+                  </div>
+                )}
+                {f.type === "schedule" && (
+                  <div className="grid grid-cols-2 gap-2 rounded-lg bg-muted/20 p-2">
+                    <label className="flex flex-col gap-1 text-[10px] text-muted-foreground">
+                      행사 시작일
+                      <Input type="date" value={f.scheduleStartDate ?? ""} onChange={(e) => update(i, { scheduleStartDate: e.target.value })} className="h-7 text-xs" />
+                    </label>
+                    <label className="flex flex-col gap-1 text-[10px] text-muted-foreground">
+                      행사 종료일 (단일이면 동일)
+                      <Input type="date" value={f.scheduleEndDate ?? ""} onChange={(e) => update(i, { scheduleEndDate: e.target.value })} className="h-7 text-xs" />
+                    </label>
+                    <label className="flex flex-col gap-1 text-[10px] text-muted-foreground">
+                      하루 시작 시간
+                      <Input type="time" value={f.scheduleStartTime ?? "09:00"} onChange={(e) => update(i, { scheduleStartTime: e.target.value })} className="h-7 text-xs" />
+                    </label>
+                    <label className="flex flex-col gap-1 text-[10px] text-muted-foreground">
+                      하루 종료 시간
+                      <Input type="time" value={f.scheduleEndTime ?? "18:00"} onChange={(e) => update(i, { scheduleEndTime: e.target.value })} className="h-7 text-xs" />
+                    </label>
+                    <label className="col-span-2 flex flex-col gap-1 text-[10px] text-muted-foreground">
+                      슬롯 단위 (분)
+                      <select
+                        value={f.scheduleSlotMinutes ?? 30}
+                        onChange={(e) => update(i, { scheduleSlotMinutes: Number(e.target.value) })}
+                        className="h-7 rounded border bg-white px-2 text-xs"
+                      >
+                        <option value={15}>15분</option>
+                        <option value={30}>30분</option>
+                        <option value={60}>60분</option>
+                      </select>
                     </label>
                   </div>
                 )}

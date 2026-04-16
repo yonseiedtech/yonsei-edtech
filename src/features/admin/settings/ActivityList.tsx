@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { Activity, ActivityType } from "@/types";
 import { formatSemester, type Semester } from "@/lib/semester";
+import MemberAutocomplete from "@/components/ui/MemberAutocomplete";
 
 const STATUS_LABELS: Record<string, string> = {
   upcoming: "예정",
@@ -44,6 +45,8 @@ interface FormData {
   endDate: string;
   status: "upcoming" | "ongoing" | "completed";
   leader: string;
+  /** PR7: 스터디 모임장 회원 ID (자동완성 선택값) */
+  leaderId: string;
   members: string;
   location: string;
   tags: string;
@@ -60,6 +63,7 @@ const emptyForm: FormData = {
   endDate: "",
   status: "upcoming",
   leader: "",
+  leaderId: "",
   members: "",
   location: "",
   tags: "",
@@ -92,6 +96,7 @@ export default function ActivityList({ type, typeLabel }: Props) {
         endDate: form.endDate || undefined,
         status: form.status,
         leader: form.leader.trim() || undefined,
+        leaderId: form.leaderId || undefined,
         members: form.members ? form.members.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
         location: form.location.trim() || undefined,
         tags: form.tags ? form.tags.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
@@ -136,6 +141,7 @@ export default function ActivityList({ type, typeLabel }: Props) {
       endDate: a.endDate || "",
       status: a.status,
       leader: a.leader || "",
+      leaderId: a.leaderId || "",
       members: a.members?.join(", ") || "",
       location: a.location || "",
       tags: a.tags?.join(", ") || "",
@@ -183,7 +189,7 @@ export default function ActivityList({ type, typeLabel }: Props) {
                         {formatSemester(a.year, a.semester)}
                       </Badge>
                     )}
-                    {a.leader && <span>담당: {a.leader}</span>}
+                    {a.leader && <span>{type === "study" ? "모임장" : "담당"}: {a.leader}</span>}
                     {a.location && <span>{a.location}</span>}
                   </div>
                   {a.tags && a.tags.length > 0 && (
@@ -289,8 +295,18 @@ export default function ActivityList({ type, typeLabel }: Props) {
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">담당자</label>
-              <Input value={form.leader} onChange={(e) => setForm({ ...form, leader: e.target.value })} placeholder="예: 김대경" />
+              <label className="mb-1 block text-sm font-medium">{type === "study" ? "모임장" : "담당자"}</label>
+              {type === "study" ? (
+                <MemberAutocomplete
+                  value={form.leaderId}
+                  displayName={form.leaderId ? form.leader : undefined}
+                  onSelect={(m) => setForm({ ...form, leaderId: m.id, leader: m.name })}
+                  onClear={() => setForm({ ...form, leaderId: "", leader: "" })}
+                  placeholder="회원 이름 또는 학번을 입력하세요"
+                />
+              ) : (
+                <Input value={form.leader} onChange={(e) => setForm({ ...form, leader: e.target.value })} placeholder="예: 김대경" />
+              )}
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium">참여자 (쉼표 구분)</label>

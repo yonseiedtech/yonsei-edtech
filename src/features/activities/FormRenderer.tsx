@@ -2,7 +2,8 @@
 
 import { Input } from "@/components/ui/input";
 import FileUploader from "@/components/ui/file-uploader";
-import type { FormField } from "@/types";
+import ScheduleSelector from "@/components/ui/ScheduleSelector";
+import type { FormField, ScheduleSlot } from "@/types";
 import type { UploadedFile } from "@/lib/storage";
 
 type AnswerValue = string | string[] | UploadedFile[];
@@ -180,6 +181,29 @@ export default function FormRenderer({ fields, value, onChange }: Props) {
                 />
               </div>
             );
+          case "schedule": {
+            // 답변은 JSON 문자열로 저장 (기존 AnswerValue 타입 유지)
+            let slots: ScheduleSlot[] = [];
+            if (typeof v === "string" && v) {
+              try {
+                const parsed = JSON.parse(v);
+                if (Array.isArray(parsed)) slots = parsed as ScheduleSlot[];
+              } catch { /* ignore */ }
+            }
+            return (
+              <div key={f.id}>{base}
+                <ScheduleSelector
+                  startDate={f.scheduleStartDate ?? ""}
+                  endDate={f.scheduleEndDate ?? f.scheduleStartDate ?? ""}
+                  startTime={f.scheduleStartTime ?? "09:00"}
+                  endTime={f.scheduleEndTime ?? "18:00"}
+                  slotMinutes={f.scheduleSlotMinutes ?? 30}
+                  value={slots}
+                  onChange={(next) => onChange(f.id, JSON.stringify(next))}
+                />
+              </div>
+            );
+          }
         }
       })}
     </div>
