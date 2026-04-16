@@ -56,9 +56,12 @@ service cloud.firestore {
       allow create: if isAuthenticated()
         && postCategoryWritable(request.resource.data.category)
         && request.resource.data.authorId == request.auth.uid;
-      allow update, delete: if isAuthenticated()
+      allow update: if isAuthenticated()
         && (resource.data.authorId == request.auth.uid || isStaffOrAbove())
         && postCategoryWritable(request.resource.data.category);
+      allow delete: if isAuthenticated()
+        && (resource.data.authorId == request.auth.uid || isStaffOrAbove())
+        && postCategoryWritable(resource.data.category);
 
       // 좋아요 (uid를 doc id로 사용 → 중복 방지)
       match /likes/{uid} {
