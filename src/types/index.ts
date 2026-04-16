@@ -189,6 +189,19 @@ export interface User { [key: string]: unknown;
   graduateSchool?: string;
   /** 전공 (기본 "교육공학전공") */
   graduateMajor?: string;
+  // ── 학부 정보 (학술 활동 기획·운영 참고용) ──
+  /** 학부 — 대학교명 */
+  undergraduateUniversity?: string;
+  /** 학부 — 단과대 */
+  undergraduateCollege?: string;
+  /** 학부 — 전공1 */
+  undergraduateMajor1?: string;
+  /** 학부 — 전공1 교육학 계열 여부 */
+  undergraduateMajor1IsEducation?: boolean;
+  /** 학부 — 전공2 (복수전공/부전공) */
+  undergraduateMajor2?: string;
+  /** 학부 — 전공2 교육학 계열 여부 */
+  undergraduateMajor2IsEducation?: boolean;
   createdAt: string;
   updatedAt: string;
 }

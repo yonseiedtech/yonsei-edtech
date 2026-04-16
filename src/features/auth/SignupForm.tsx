@@ -95,6 +95,13 @@ interface SignupData {
   securityQuestionSelect: string;
   securityQuestionCustom: string;
   securityAnswer: string;
+  // 학부 정보 (필수)
+  undergraduateUniversity: string;
+  undergraduateCollege: string;
+  undergraduateMajor1: string;
+  undergraduateMajor1IsEducation: boolean;
+  undergraduateMajor2: string;
+  undergraduateMajor2IsEducation: boolean;
 }
 
 interface Props {
@@ -246,6 +253,13 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
           consents: initialConsents,
           securityQuestion,
           securityAnswerHash,
+          // 학부 정보 (필수)
+          undergraduateUniversity: data.undergraduateUniversity.trim(),
+          undergraduateCollege: data.undergraduateCollege.trim(),
+          undergraduateMajor1: data.undergraduateMajor1.trim(),
+          undergraduateMajor1IsEducation: !!data.undergraduateMajor1IsEducation,
+          undergraduateMajor2: data.undergraduateMajor2?.trim() || "",
+          undergraduateMajor2IsEducation: !!data.undergraduateMajor2IsEducation,
         };
 
         if (enrollmentStatus === "on_leave") {
@@ -355,6 +369,9 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
       enrollmentHalf: "입학 반기",
       generation: "누적학기",
       securityAnswer: "보안 질문 답변",
+      undergraduateUniversity: "학부 대학교",
+      undergraduateCollege: "학부 단과대",
+      undergraduateMajor1: "학부 전공 1",
     };
     const firstKey = Object.keys(errs)[0];
     const label = fieldLabels[firstKey] ?? "필수 정보";
@@ -648,6 +665,65 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
         {errors.passwordConfirm && (
           <p className="mt-1 text-xs text-destructive">{errors.passwordConfirm.message}</p>
         )}
+      </div>
+
+      {/* 학부 정보 (필수) */}
+      <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
+        <div>
+          <p className="text-sm font-medium">
+            학부 정보 <span className="text-destructive">*</span>
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            학부 전공 기반으로 학회원 대상 학술 활동 기획·운영 등에 참고하기 위한 목적입니다.
+          </p>
+        </div>
+        <div>
+          <label className="mb-1.5 block text-xs font-medium">대학교</label>
+          <Input
+            {...register("undergraduateUniversity", { required: "대학교를 입력하세요" })}
+            placeholder="예: 연세대학교"
+          />
+          {errors.undergraduateUniversity && (
+            <p className="mt-1 text-xs text-destructive">{errors.undergraduateUniversity.message}</p>
+          )}
+        </div>
+        <div>
+          <label className="mb-1.5 block text-xs font-medium">단과대</label>
+          <Input
+            {...register("undergraduateCollege", { required: "단과대를 입력하세요" })}
+            placeholder="예: 교육과학대학"
+          />
+          {errors.undergraduateCollege && (
+            <p className="mt-1 text-xs text-destructive">{errors.undergraduateCollege.message}</p>
+          )}
+        </div>
+        <div>
+          <label className="mb-1.5 block text-xs font-medium">전공 1</label>
+          <Input
+            {...register("undergraduateMajor1", { required: "전공 1을 입력하세요" })}
+            placeholder="예: 교육학과"
+          />
+          <label className="mt-1.5 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <input type="checkbox" {...register("undergraduateMajor1IsEducation")} />
+            교육학 계열
+          </label>
+          {errors.undergraduateMajor1 && (
+            <p className="mt-1 text-xs text-destructive">{errors.undergraduateMajor1.message}</p>
+          )}
+        </div>
+        <div>
+          <label className="mb-1.5 block text-xs font-medium">
+            전공 2 <span className="text-muted-foreground">(복수전공·부전공, 선택)</span>
+          </label>
+          <Input
+            {...register("undergraduateMajor2")}
+            placeholder="예: 심리학과"
+          />
+          <label className="mt-1.5 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <input type="checkbox" {...register("undergraduateMajor2IsEducation")} />
+            교육학 계열
+          </label>
+        </div>
       </div>
 
       {/* 신분 유형 */}

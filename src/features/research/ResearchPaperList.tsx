@@ -98,7 +98,7 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
           migratedRecentPapers: true,
           recentPapers: [],
         });
-        toast.success(`기존 논문 ${userAny.recentPapers.length}건이 연구활동 이력으로 이전되었습니다.`);
+        // 마이그레이션 안내 토스트는 표시하지 않음 (자동 이전)
       } catch (e) {
         console.warn("recentPapers migration failed", e);
       }

@@ -14,12 +14,11 @@ import type {
   ContactVisibility,
   EnrollmentStatus,
   SocialLink,
-  SectionKey,
-  SectionVisibility,
 } from "@/types";
 import { OCCUPATION_LABELS, VISIBILITY_LABELS, ENROLLMENT_STATUS_LABELS } from "@/types";
 import ProfileSocialsEditor from "@/components/profile/ProfileSocialsEditor";
-import ProfileVisibilitySettings from "@/components/profile/ProfileVisibilitySettings";
+import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 
 const ENROLLMENT_YEAR_OPTIONS = Array.from({ length: 15 }, (_, i) => 2026 - i);
 
@@ -46,11 +45,14 @@ interface ProfileData {
   contactEmail: string;
   phone: string;
   contactVisibility: ContactVisibility;
-  university: string;
-  graduateSchool: string;
-  graduateMajor: string;
   socials: SocialLink[];
-  sectionVisibility: Partial<Record<SectionKey, SectionVisibility>>;
+  // 학부 정보
+  undergraduateUniversity: string;
+  undergraduateCollege: string;
+  undergraduateMajor1: string;
+  undergraduateMajor1IsEducation: boolean;
+  undergraduateMajor2: string;
+  undergraduateMajor2IsEducation: boolean;
 }
 
 interface Props {
@@ -94,11 +96,13 @@ export default function ProfileEditor({ user }: Props) {
       contactEmail: user.contactEmail || "",
       phone: user.phone || "",
       contactVisibility: user.contactVisibility || "members",
-      university: user.university || "연세대학교",
-      graduateSchool: user.graduateSchool || "교육대학원",
-      graduateMajor: user.graduateMajor || "교육공학전공",
       socials: user.socials ?? [],
-      sectionVisibility: user.sectionVisibility ?? {},
+      undergraduateUniversity: user.undergraduateUniversity || "",
+      undergraduateCollege: user.undergraduateCollege || "",
+      undergraduateMajor1: user.undergraduateMajor1 || "",
+      undergraduateMajor1IsEducation: !!user.undergraduateMajor1IsEducation,
+      undergraduateMajor2: user.undergraduateMajor2 || "",
+      undergraduateMajor2IsEducation: !!user.undergraduateMajor2IsEducation,
     },
   });
 
@@ -327,24 +331,38 @@ export default function ProfileEditor({ user }: Props) {
         </div>
       </div>
 
-      {/* 대학원 정보 */}
+      {/* 학부 정보 */}
       <div className="border-t pt-6">
-        <h3 className="text-sm font-bold">대학원 정보</h3>
+        <h3 className="text-sm font-bold">학부 정보 <span className="text-destructive">*</span></h3>
         <p className="mt-1 text-xs text-muted-foreground">
-          기본값으로 연세대학교 · 교육대학원 · 교육공학전공이 자동 설정됩니다. 다른 곳이라면 수정하세요.
+          학부 전공 기반으로 학회원 대상 학술 활동 기획·운영 등에 참고하기 위한 목적입니다.
         </p>
-        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="mt-3 space-y-3">
           <div>
             <label className="mb-1.5 block text-sm font-medium">대학교</label>
-            <Input {...register("university")} placeholder="예: 연세대학교" />
+            <Input {...register("undergraduateUniversity")} placeholder="예: 연세대학교" />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium">대학원</label>
-            <Input {...register("graduateSchool")} placeholder="예: 교육대학원" />
+            <label className="mb-1.5 block text-sm font-medium">단과대</label>
+            <Input {...register("undergraduateCollege")} placeholder="예: 교육과학대학" />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium">전공</label>
-            <Input {...register("graduateMajor")} placeholder="예: 교육공학전공" />
+            <label className="mb-1.5 block text-sm font-medium">전공 1</label>
+            <Input {...register("undergraduateMajor1")} placeholder="예: 교육학과" />
+            <label className="mt-1.5 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+              <input type="checkbox" {...register("undergraduateMajor1IsEducation")} />
+              교육학 계열
+            </label>
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium">
+              전공 2 <span className="text-muted-foreground text-xs">(복수전공·부전공)</span>
+            </label>
+            <Input {...register("undergraduateMajor2")} placeholder="예: 심리학과" />
+            <label className="mt-1.5 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+              <input type="checkbox" {...register("undergraduateMajor2IsEducation")} />
+              교육학 계열
+            </label>
           </div>
         </div>
       </div>
@@ -364,19 +382,21 @@ export default function ProfileEditor({ user }: Props) {
         />
       </div>
 
-      {/* 섹션별 공개 범위 */}
+      {/* 섹션별 공개 범위 안내 (개인 페이지에서 직접 설정) */}
       <div className="border-t pt-6">
-        <Controller
-          control={control}
-          name="sectionVisibility"
-          render={({ field: f }) => (
-            <ProfileVisibilitySettings
-              value={f.value}
-              onChange={f.onChange}
-              disabled={isSaving}
-            />
-          )}
-        />
+        <div className="rounded-2xl border bg-muted/20 p-4">
+          <h3 className="text-sm font-semibold">프로필 공개 범위 설정</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            섹션별 공개 범위는 내 개인 페이지에서 직접 설정할 수 있습니다.
+          </p>
+          <Link
+            href={`/profile/${user.id}`}
+            className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+          >
+            내 개인 페이지로 이동
+            <ExternalLink size={12} />
+          </Link>
+        </div>
       </div>
 
       <div className="flex justify-end">

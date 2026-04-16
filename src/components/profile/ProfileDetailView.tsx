@@ -24,6 +24,7 @@ import ProfileContactInfo from "./ProfileContactInfo";
 import ProfileResearchInterests from "./ProfileResearchInterests";
 import ProfileAcademicActivities from "./ProfileAcademicActivities";
 import ProfileResearchActivities from "./ProfileResearchActivities";
+import OwnerVisibilitySection from "./OwnerVisibilitySection";
 
 interface Props {
   ownerId: string;
@@ -133,6 +134,8 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
     <div className="min-h-screen bg-slate-50 py-10">
       <div className="mx-auto max-w-2xl space-y-4 px-4">
         <ProfileHeader owner={owner} isOwner={isOwner} />
+
+        {isOwner && <OwnerVisibilitySection owner={owner} />}
 
         {(showGraduateInfo || showStaffPublicBase) && <ProfileGraduateInfo user={owner} />}
 
