@@ -109,8 +109,12 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
   const myCertificates = allCertificates.filter((c) => {
     if (!user) return false;
     if (c.recipientUserId && c.recipientUserId === user.id) return true;
+    // 학번 매칭: 게스트로 발급된 수료증(recipientUserId 비어있음)이 본인 학번과 일치
+    const myStudentId = (user.studentId || user.username || "").trim();
+    const certStudentId = (c.recipientStudentId || "").toString().trim();
+    if (myStudentId && certStudentId && myStudentId === certStudentId) return true;
     if (c.recipientEmail && user.email && (c.recipientEmail as string).toLowerCase() === user.email.toLowerCase()) return true;
-    if (!c.recipientUserId && !c.recipientEmail && c.recipientName === user.name) return true;
+    if (!c.recipientUserId && !c.recipientEmail && !certStudentId && c.recipientName === user.name) return true;
     return false;
   });
 

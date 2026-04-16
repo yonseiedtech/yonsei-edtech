@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserPlus, ChevronDown, ChevronUp, Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
-import { authApi, profilesApi, attendeesApi, saveTokens } from "@/lib/bkend";
+import { authApi, profilesApi, saveTokens } from "@/lib/bkend";
+import { runAllGuestLinkers } from "@/lib/guestLinker";
+import { auth } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import type { UserConsents } from "@/lib/legal";
 import { sha256Hex } from "@/lib/hash";
@@ -242,23 +244,27 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
 
         await profilesApi.update("me", profileData);
 
-        // 학번 기반 게스트 세미나 기록 연동
-        const studentIdForLookup = data.username;
-        if (studentIdForLookup) {
-          try {
-            const guestRecords = await attendeesApi.findGuestsByStudentId(studentIdForLookup);
-            const records = guestRecords.data as unknown as { id: string }[];
-            if (records.length > 0) {
-              const me = await profilesApi.get("me");
-              const myId = (me as unknown as { id: string }).id;
-              for (const rec of records) {
-                await attendeesApi.update(rec.id, { userId: myId, isGuest: false });
-              }
-              toast.success(`이전 세미나 참석 기록 ${records.length}건이 연동되었습니다.`);
-            }
-          } catch {
-            // 연동 실패해도 가입은 진행
+        // 학번/이메일 기반 게스트 레코드 일괄 연동 (참석자·신청자·수료증)
+        try {
+          const me = await profilesApi.get("me");
+          const myId = (me as unknown as { id: string }).id;
+          const result = await runAllGuestLinkers({
+            userId: myId,
+            userName: data.name,
+            studentId: data.username || undefined,
+            email: data.email || undefined,
+          });
+          const totalLinked =
+            result.attendees.linked + result.applicants.linked + result.certificates.linked;
+          if (totalLinked > 0) {
+            const parts: string[] = [];
+            if (result.attendees.linked > 0) parts.push(`참석 ${result.attendees.linked}건`);
+            if (result.applicants.linked > 0) parts.push(`신청 ${result.applicants.linked}건`);
+            if (result.certificates.linked > 0) parts.push(`수료증 ${result.certificates.linked}건`);
+            toast.success(`이전 활동 기록이 연동되었습니다 (${parts.join(", ")}).`);
           }
+        } catch {
+          // 연동 실패해도 가입은 진행
         }
       } catch (bkendErr) {
         console.error("[signup] profile save failed:", bkendErr);
@@ -267,7 +273,29 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
         return;
       }
 
-      toast.success("가입 신청이 완료되었습니다. 관리자 승인 후 로그인할 수 있습니다.");
+      // 자동 승인 시도: 규칙 통과 시 즉시 approved=true (관리자 대기 불필요)
+      let autoApproved = false;
+      try {
+        const idToken = await auth.currentUser?.getIdToken();
+        if (idToken) {
+          const res = await fetch("/api/auth/auto-approve", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${idToken}` },
+          });
+          if (res.ok) {
+            const json = (await res.json()) as { approved?: boolean; autoApproved?: boolean };
+            if (json.approved) autoApproved = true;
+          }
+        }
+      } catch (autoErr) {
+        console.warn("[signup] auto-approve skipped:", autoErr);
+      }
+
+      if (autoApproved) {
+        toast.success("가입이 완료되었습니다. 바로 로그인하실 수 있습니다.");
+      } else {
+        toast.success("가입 신청이 완료되었습니다. 관리자 승인 후 로그인할 수 있습니다.");
+      }
       onSuccess();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "가입 중 오류가 발생했습니다.");

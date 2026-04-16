@@ -77,13 +77,18 @@ export function buildFreshConsents(opts: {
   };
 }
 
-/** 필수 동의 항목 중 하나라도 현재 버전과 다르거나 미동의이면 true */
+/**
+ * 필수 동의 항목 중 하나라도 누락이거나 미동의이면 true.
+ *
+ * 정책: 회원가입 시 약관에 동의한 사용자는 약관이 개정되더라도 로그인할 때마다
+ * 재동의 모달을 띄우지 않는다 (사용자 결정, 2026-04-16). 약관 개정 시에는
+ * 별도 안내(공지/메일) 채널로 고지한다. 따라서 version 불일치는 트리거 사유에서 제외.
+ */
 export function needsReConsent(consents: UserConsents | undefined | null): boolean {
   if (!consents) return true;
   for (const k of REQUIRED_CONSENT_KEYS) {
     const rec = consents[k];
     if (!rec || !rec.agreed) return true;
-    if (rec.version !== CURRENT_TERMS[k]) return true;
   }
   return false;
 }
