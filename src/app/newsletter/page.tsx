@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 import {
   useNewsletters,
   SECTION_TYPE_LABELS,
@@ -100,9 +101,7 @@ export default function NewsletterPage() {
         </p>
 
         {isLoading ? (
-          <div className="mt-12 flex justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          </div>
+          <LoadingSpinner className="mt-12" />
         ) : publishedIssues.length === 0 ? (
           <div className="mt-12 text-center text-muted-foreground">
             아직 발행된 학회보가 없습니다.

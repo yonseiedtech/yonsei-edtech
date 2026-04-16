@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { useMembers } from "@/features/member/useMembers";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -317,9 +318,7 @@ function DirectoryContent() {
         </div>
 
         {isLoading ? (
-          <div className="mt-8 flex justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          </div>
+          <LoadingSpinner className="mt-8" />
         ) : (
           <div className="mt-6">
             <p className="text-xs text-muted-foreground">

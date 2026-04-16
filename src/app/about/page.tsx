@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Target, Eye, Sparkles, ArrowRight, Info } from "lucide-react";
 import PageHeader from "@/components/ui/page-header";
 import { useAbout } from "@/features/site-settings/useSiteContent";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 
 const ICONS = [Target, Eye, Sparkles];
 const LABELS = ["미션", "비전", "가치"];
@@ -29,7 +30,7 @@ export default function AboutPage() {
 
       <section className="mx-auto mt-16 max-w-6xl px-4">
         {isLoading ? (
-          <div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
+          <LoadingSpinner />
         ) : (
           <div className="grid gap-6 md:grid-cols-3">
             {values.map((v) => (

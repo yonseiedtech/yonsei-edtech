@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { useTodos, useCreateTodo, useUpdateTodo, useDeleteTodo } from "./useTodos";
 import { Button } from "@/components/ui/button";
@@ -101,9 +102,7 @@ export default function AdminTodoTab() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
+      <LoadingSpinner />
     );
   }
 

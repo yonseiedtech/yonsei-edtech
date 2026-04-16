@@ -3,16 +3,13 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useGreeting } from "@/features/greeting/useGreeting";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 
 export default function GreetingPage() {
   const { greeting, isLoading } = useGreeting();
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
+    return <LoadingSpinner className="min-h-[40vh] items-center" />;
   }
 
   return (

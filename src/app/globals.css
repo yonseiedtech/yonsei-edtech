@@ -13,6 +13,18 @@ html {
   outline-offset: 2px;
 }
 
+nav.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+nav.overflow-x-auto::-webkit-scrollbar {
+  display: none;
+}
+nav.overflow-x-auto > button {
+  scroll-snap-align: start;
+}
+
 :root {
   --background: 210 20% 98%;
   --foreground: 212 40% 13%;

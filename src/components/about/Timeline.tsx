@@ -2,12 +2,13 @@
 
 import { motion } from "framer-motion";
 import { useHistory } from "@/features/site-settings/useSiteContent";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 
 export default function Timeline() {
   const { value: history, isLoading } = useHistory();
 
   if (isLoading) {
-    return <div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
+    return <LoadingSpinner />;
   }
 
   return (

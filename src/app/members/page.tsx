@@ -10,6 +10,7 @@ import { useProfessor } from "@/features/site-settings/useSiteContent";
 import { Mail, Globe, BookOpen, Users } from "lucide-react";
 import PageHeader from "@/components/ui/page-header";
 import EmptyState from "@/components/ui/empty-state";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 import OrgChart from "@/features/member/OrgChart";
 import type { User } from "@/types";
 
@@ -29,7 +30,7 @@ function filterByTab(members: User[], tabKey: string): User[] {
 function ProfessorView() {
   const { value: prof, isLoading } = useProfessor();
 
-  if (isLoading) return <div className="flex justify-center py-12" role="status" aria-label="로딩 중"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
+  if (isLoading) return <LoadingSpinner />;
   if (!prof.name) return <EmptyState icon={Users} title="주임교수 정보가 등록되지 않았습니다" description="운영진이 정보를 등록할 때까지 기다려주세요." />;
 
   return (
@@ -119,7 +120,7 @@ function MembersContent() {
         </nav>
         <div className="mt-8">
           {activeTab === "professor" ? <ProfessorView /> : isLoading ? (
-            <div className="flex justify-center py-12" role="status" aria-label="로딩 중"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
+            <LoadingSpinner />
           ) : (
             <>
               {activeTab === "staff" && <div className="mb-8"><OrgChart /></div>}
@@ -138,7 +139,7 @@ function MembersContent() {
 
 export default function MembersPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center py-24" role="status" aria-label="로딩 중"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>}>
+    <Suspense fallback={<LoadingSpinner className="py-24" />}>
       <MembersContent />
     </Suspense>
   );

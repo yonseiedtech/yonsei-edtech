@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { profilesApi, seminarsApi, attendeesApi, activitiesApi, reviewsApi, certificatesApi } from "@/lib/bkend";
@@ -138,11 +139,7 @@ function AdminMemberDetail({ id }: { id: string }) {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
+    return <LoadingSpinner className="min-h-[50vh] items-center" />;
   }
 
   if (!member) {

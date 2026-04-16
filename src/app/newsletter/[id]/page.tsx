@@ -12,6 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 
 export default function NewsletterDetailPage({
   params,
@@ -23,11 +24,7 @@ export default function NewsletterDetailPage({
   const issue = issues.find((i) => i.id === id);
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
+    return <LoadingSpinner className="min-h-[50vh] items-center" />;
   }
 
   if (!issue) {

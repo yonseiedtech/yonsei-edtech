@@ -2,6 +2,7 @@
 
 import { Monitor, GraduationCap, Brain, Lightbulb, BarChart3, Users, type LucideIcon } from "lucide-react";
 import { useFields } from "@/features/site-settings/useSiteContent";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Monitor, GraduationCap, Brain, Lightbulb, BarChart3, Users,
@@ -19,7 +20,7 @@ export default function FieldsPage() {
 
       <section className="mx-auto mt-12 max-w-6xl px-4">
         {isLoading ? (
-          <div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
+          <LoadingSpinner />
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {fields.map((f) => {

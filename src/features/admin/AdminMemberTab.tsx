@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isStaffOrAbove } from "@/lib/permissions";
@@ -371,9 +372,7 @@ export default function AdminMemberTab() {
         <section>
           <ToolBar />
           {allLoading ? (
-            <div className="flex justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-            </div>
+            <LoadingSpinner />
           ) : displayMembers.length === 0 ? (
             <div className="mt-3 rounded-xl border bg-white p-12 text-center">
               <Users size={40} className="mx-auto text-muted-foreground/40" />
@@ -420,9 +419,7 @@ export default function AdminMemberTab() {
             </div>
           )}
           {pendingLoading ? (
-            <div className="flex justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-            </div>
+            <LoadingSpinner />
           ) : truePending.length === 0 ? (
             <div className="rounded-xl border bg-white p-12 text-center">
               <Clock size={40} className="mx-auto text-muted-foreground/40" />
@@ -503,9 +500,7 @@ export default function AdminMemberTab() {
         <section>
           <ToolBar />
           {isLoading ? (
-            <div className="flex justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-            </div>
+            <LoadingSpinner />
           ) : displayMembers.length === 0 ? (
             <p className="mt-6 text-center text-sm text-muted-foreground">
               {searchQuery ? "검색 결과가 없습니다." : "등록된 회원이 없습니다."}
@@ -520,9 +515,7 @@ export default function AdminMemberTab() {
       {activeTab === "rejected" && (
         <section>
           {pendingLoading ? (
-            <div className="flex justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-            </div>
+            <LoadingSpinner />
           ) : rejectedMembers.length === 0 ? (
             <div className="rounded-xl border bg-white p-12 text-center">
               <XCircle size={40} className="mx-auto text-muted-foreground/40" />
