@@ -195,9 +195,20 @@ export interface ResearchPaper {
   insights?: string;
   myConnection?: string;
 
+  /**
+   * 참고문헌 — 사용자가 복사·붙여넣기한 원문(서지정보 한 줄당 1건 권장).
+   * 향후 구조화/네트워크 시각화 분석을 위한 raw 텍스트 저장.
+   */
+  references?: string;
+
   tags?: string[];
   readStatus?: PaperReadStatus;
   rating?: 1 | 2 | 3 | 4 | 5;
+
+  /** true면 임시저장 상태 — 본 리스트에서 별도 섹션으로 노출, 메인 카운트에서 제외 */
+  isDraft?: boolean;
+  /** 임시저장 시 마지막으로 머문 위저드 단계 (1~5). 재개 시 해당 단계로 점프. */
+  lastEditStep?: number;
 
   createdAt: string;
   updatedAt: string;

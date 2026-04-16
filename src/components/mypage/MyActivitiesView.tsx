@@ -17,7 +17,6 @@ import { cn } from "@/lib/utils";
 import { Calendar, X, FileText, Award, ChevronRight, FolderKanban, BookOpen, Globe, Eye, Mic, ClipboardList } from "lucide-react";
 import { useMyInterviewResponses } from "@/features/board/interview-store";
 import MyInterviewAnswersDialog from "@/features/board/MyInterviewAnswersDialog";
-import ResearchPaperList from "@/features/research/ResearchPaperList";
 import EmptyState from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/utils";
 import { toast } from "sonner";
@@ -49,14 +48,11 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
   const { toggleAttendance } = useToggleAttendance();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabKey>("activities");
-  const [activitiesSubTab, setActivitiesSubTab] = useState<"academic" | "research">("academic");
   const [viewingAnswerOf, setViewingAnswerOf] = useState<{ post: Post; response: InterviewResponse } | null>(null);
 
   useEffect(() => {
     const t = searchParams.get("tab");
-    const sub = searchParams.get("sub");
     if (t && TABS.some((x) => x.key === t)) setActiveTab(t as TabKey);
-    if (sub === "research" || sub === "academic") setActivitiesSubTab(sub);
   }, [searchParams]);
 
   const isSelf = authUser?.id === userId;
@@ -186,33 +182,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
         <div className="mt-6">
           {activeTab === "activities" && (
             <div className="space-y-5">
-              <div className="flex items-center gap-1 rounded-xl border bg-muted/40 p-1 text-sm">
-                {([
-                  { key: "academic", label: "학술활동 이력" },
-                  { key: "research", label: "연구활동 이력" },
-                ] as const).map((s) => (
-                  <button
-                    key={s.key}
-                    type="button"
-                    onClick={() => setActivitiesSubTab(s.key)}
-                    className={cn(
-                      "flex-1 rounded-lg px-3 py-1.5 font-medium transition",
-                      activitiesSubTab === s.key
-                        ? "bg-white text-primary shadow-sm"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-
-              {activitiesSubTab === "research" && user && (
-                <ResearchPaperList user={user} readOnly={!isSelf || readOnly} />
-              )}
-
-              {activitiesSubTab === "academic" && (
-                <div className="space-y-6">
+              <div className="space-y-6">
                   <section>
                     <h3 className="mb-2 text-sm font-semibold">학술활동 ({myActivities.length})</h3>
                     {myActivities.length === 0 ? (
@@ -334,7 +304,6 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                     )}
                   </section>
                 </div>
-              )}
             </div>
           )}
 

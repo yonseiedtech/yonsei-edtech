@@ -10,6 +10,7 @@ import { usePosts } from "@/features/board/useBoard";
 import { useSeminars } from "@/features/seminar/useSeminar";
 import { useQuery } from "@tanstack/react-query";
 import { certificatesApi, activitiesApi, profilesApi } from "@/lib/bkend";
+import { useResearchPapers } from "@/features/research/useResearchPapers";
 import type { Certificate, Activity, User } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -59,12 +60,17 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabKey>("home");
 
-  // Legacy URL 자동 리다이렉트: /mypage?tab=activities → /mypage/activities?tab=activities
+  // Legacy URL 자동 리다이렉트
   useEffect(() => {
     if (readOnly) return;
     const t = searchParams.get("tab");
+    const sub = searchParams.get("sub");
+    // 구 /mypage?tab=activities&sub=research → /mypage/research
+    if (t === "activities" && sub === "research") {
+      router.replace("/mypage/research");
+      return;
+    }
     if (t && (LEGACY_TABS as readonly string[]).includes(t)) {
-      const sub = searchParams.get("sub");
       const qs = new URLSearchParams();
       qs.set("tab", t);
       if (sub) qs.set("sub", sub);
@@ -120,6 +126,10 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
     if (!c.recipientUserId && !c.recipientEmail && c.recipientName === user.name) return true;
     return false;
   });
+
+  // 연구활동 카드용 카운트 (임시저장 제외)
+  const { papers: myPapers } = useResearchPapers(user?.id);
+  const publishedPaperCount = myPapers.filter((p) => !p.isDraft).length;
 
   if (!user) return null;
 
@@ -200,7 +210,6 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <h3 className="text-base font-bold">내 학회활동</h3>
-                      <Badge variant="secondary" className="bg-primary/10 text-primary text-[10px]">신규</Badge>
                     </div>
                     <p className="mt-0.5 text-sm text-muted-foreground">
                       학술활동·수료증·내 글·인터뷰를 한 화면에서 관리해보세요.
@@ -221,6 +230,33 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                     </div>
                   </div>
                   <ArrowRight size={18} className="shrink-0 self-center text-primary" />
+                </div>
+              </Link>
+
+              {/* 내 연구활동 카드 (학회활동과 동일 격) */}
+              <Link
+                href="/mypage/research"
+                className="block rounded-2xl border-2 border-amber-200/60 bg-gradient-to-br from-amber-50 to-amber-100/60 p-5 transition hover:border-amber-300 hover:shadow-md"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-200/40 text-amber-700">
+                    <BookOpen size={22} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-bold">내 연구활동</h3>
+                      <Badge variant="secondary" className="bg-amber-200/60 text-amber-800 text-[10px]">신규</Badge>
+                    </div>
+                    <p className="mt-0.5 text-sm text-muted-foreground">
+                      관심 연구분야 · 논문 분석 노트를 단계별로 정리해보세요.
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-1.5 text-[11px]">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-muted-foreground">
+                        <BookOpen size={11} /> 논문 {publishedPaperCount}
+                      </span>
+                    </div>
+                  </div>
+                  <ArrowRight size={18} className="shrink-0 self-center text-amber-700" />
                 </div>
               </Link>
 

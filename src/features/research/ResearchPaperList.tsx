@@ -14,7 +14,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import EmptyState from "@/components/ui/empty-state";
-import { Plus, Upload, BookOpen, Search, X, Save } from "lucide-react";
+import { Plus, Upload, BookOpen, Search, X, Save, FileEdit, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import type { ResearchPaper, User, RecentPaper } from "@/types";
 import {
@@ -102,14 +102,18 @@ export default function ResearchPaperList({ user, readOnly = false }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id]);
 
+  // 임시저장 / 발행본 분리
+  const drafts = useMemo(() => papers.filter((p) => p.isDraft), [papers]);
+  const published = useMemo(() => papers.filter((p) => !p.isDraft), [papers]);
+
   const allTags = useMemo(() => {
     const m = new Map<string, number>();
-    papers.forEach((p) => p.tags?.forEach((t) => m.set(t, (m.get(t) ?? 0) + 1)));
+    published.forEach((p) => p.tags?.forEach((t) => m.set(t, (m.get(t) ?? 0) + 1)));
     return Array.from(m.entries()).sort((a, b) => b[1] - a[1]).map(([t]) => t);
-  }, [papers]);
+  }, [published]);
 
   const filtered = useMemo(() => {
-    let arr = [...papers];
+    let arr = [...published];
     if (filterType !== "all") arr = arr.filter((p) => p.paperType === filterType);
     if (filterStatus !== "all") arr = arr.filter((p) => p.readStatus === filterStatus);
     if (activeTagFilter) arr = arr.filter((p) => p.tags?.includes(activeTagFilter));
@@ -128,7 +132,7 @@ export default function ResearchPaperList({ user, readOnly = false }: Props) {
       return (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
     });
     return arr;
-  }, [papers, filterType, filterStatus, activeTagFilter, search, sortKey]);
+  }, [published, filterType, filterStatus, activeTagFilter, search, sortKey]);
 
   function openNew() {
     setEditing(null);
@@ -140,14 +144,30 @@ export default function ResearchPaperList({ user, readOnly = false }: Props) {
     setDialogOpen(true);
   }
 
-  async function handleSubmit(data: Partial<ResearchPaper>) {
+  async function handleSubmit(
+    data: Partial<ResearchPaper>,
+    opts: { isDraft: boolean }
+  ): Promise<ResearchPaper | void> {
     try {
       if (editing) {
-        await updatePaper.mutateAsync({ id: editing.id, data: data as Record<string, unknown> });
-        toast.success("논문이 수정되었습니다.");
+        const res = await updatePaper.mutateAsync({
+          id: editing.id,
+          data: data as Record<string, unknown>,
+        });
+        if (!opts.isDraft) toast.success("논문이 수정되었습니다.");
+        return res as ResearchPaper;
       } else {
-        await createPaper.mutateAsync({ ...data, userId: user.id } as Record<string, unknown>);
-        toast.success("논문이 추가되었습니다.");
+        const res = await createPaper.mutateAsync({
+          ...data,
+          userId: user.id,
+        } as Record<string, unknown>);
+        // 신규 임시저장 → 다이얼로그가 받은 id로 update 모드 승격하도록 editing 세팅
+        if (opts.isDraft && res && typeof res === "object" && "id" in res) {
+          setEditing(res as ResearchPaper);
+        } else if (!opts.isDraft) {
+          toast.success("논문이 추가되었습니다.");
+        }
+        return res as ResearchPaper;
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "저장 실패");
@@ -240,7 +260,7 @@ export default function ResearchPaperList({ user, readOnly = false }: Props) {
       <section>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold">연구 논문 ({papers.length})</h3>
+            <h3 className="text-sm font-semibold">연구 논문 ({published.length})</h3>
           </div>
           {!readOnly && (
             <div className="flex items-center gap-2">
@@ -256,8 +276,78 @@ export default function ResearchPaperList({ user, readOnly = false }: Props) {
           )}
         </div>
 
+        {/* 임시 저장 섹션 */}
+        {drafts.length > 0 && (
+          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/40 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <FileEdit size={14} className="text-amber-700" />
+                <h4 className="text-sm font-semibold text-amber-900">
+                  임시 저장 ({drafts.length})
+                </h4>
+              </div>
+              <span className="text-[11px] text-amber-700/80">
+                이어서 작성하거나 삭제할 수 있어요
+              </span>
+            </div>
+            <ul className="mt-3 space-y-2">
+              {drafts.map((d) => {
+                const stepNum = d.lastEditStep ?? 1;
+                return (
+                  <li
+                    key={d.id}
+                    className="flex flex-wrap items-center gap-2 rounded-xl border border-amber-200/70 bg-white px-3 py-2.5"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {d.title?.trim() || "(제목 없음)"}
+                      </p>
+                      <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                        <span className="rounded-full bg-amber-100 px-1.5 py-0.5 font-mono font-semibold text-amber-800">
+                          Step {Math.min(Math.max(stepNum, 1), 5)}/5
+                        </span>
+                        {d.updatedAt && (
+                          <span>
+                            마지막 수정 {new Date(d.updatedAt).toLocaleString("ko-KR", {
+                              month: "2-digit",
+                              day: "2-digit",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                    {!readOnly && (
+                      <div className="flex shrink-0 items-center gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 border-amber-300 text-amber-800 hover:bg-amber-100"
+                          onClick={() => openEdit(d)}
+                        >
+                          <Pencil size={12} className="mr-1" />
+                          이어 쓰기
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 text-destructive hover:bg-destructive/10"
+                          onClick={() => setPendingDelete(d)}
+                        >
+                          <Trash2 size={12} />
+                        </Button>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+
         {/* 검색 + 필터 */}
-        {papers.length > 0 && (
+        {published.length > 0 && (
           <div className="mt-3 space-y-2">
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -344,7 +434,7 @@ export default function ResearchPaperList({ user, readOnly = false }: Props) {
         <div className="mt-4">
           {isLoading ? (
             <p className="py-8 text-center text-sm text-muted-foreground">불러오는 중...</p>
-          ) : papers.length === 0 ? (
+          ) : published.length === 0 && drafts.length === 0 ? (
             <EmptyState
               icon={BookOpen}
               title="아직 등록된 논문이 없습니다"
@@ -352,6 +442,10 @@ export default function ResearchPaperList({ user, readOnly = false }: Props) {
               actionLabel={readOnly ? undefined : "첫 논문 추가"}
               onAction={readOnly ? undefined : openNew}
             />
+          ) : published.length === 0 ? (
+            <p className="rounded-2xl border border-dashed bg-muted/30 py-8 text-center text-sm text-muted-foreground">
+              아직 발행된 논문이 없습니다. 임시 저장된 항목을 마저 작성해보세요.
+            </p>
           ) : filtered.length === 0 ? (
             <p className="rounded-2xl border border-dashed bg-muted/30 py-8 text-center text-sm text-muted-foreground">
               검색 조건에 맞는 논문이 없습니다.
@@ -390,9 +484,10 @@ export default function ResearchPaperList({ user, readOnly = false }: Props) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>논문 삭제</AlertDialogTitle>
+            <AlertDialogTitle>{pendingDelete?.isDraft ? "임시 저장 삭제" : "논문 삭제"}</AlertDialogTitle>
             <AlertDialogDescription>
-              &quot;{pendingDelete?.title}&quot; 분석 노트를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+              &quot;{pendingDelete?.title?.trim() || "(제목 없음)"}&quot;
+              {pendingDelete?.isDraft ? " 임시 저장본을" : " 분석 노트를"} 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

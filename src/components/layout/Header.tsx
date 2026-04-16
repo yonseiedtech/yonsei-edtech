@@ -171,6 +171,7 @@ function UserDropdown() {
     { href: "/dashboard", label: "대시보드", icon: LayoutDashboard },
     { href: "/mypage", label: "마이페이지", icon: User },
     { href: "/mypage/activities", label: "내 학회활동", icon: ClipboardList },
+    { href: "/mypage/research", label: "내 연구활동", icon: BookOpen },
     { href: "/mypage/card", label: "내 명함", icon: QrCode },
     ...(showAdmin
       ? [
@@ -372,6 +373,7 @@ export default function Header() {
                   { href: "/dashboard", label: "대시보드", icon: LayoutDashboard },
                   { href: "/mypage", label: "마이페이지", icon: User },
                   { href: "/mypage/activities", label: "내 학회활동", icon: ClipboardList },
+                  { href: "/mypage/research", label: "내 연구활동", icon: BookOpen },
                   { href: "/mypage/card", label: "내 명함", icon: QrCode },
                   ...(showAdmin
                     ? [
