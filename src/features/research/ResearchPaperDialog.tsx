@@ -58,6 +58,9 @@ interface FormState {
   authors: string;
   year: string;
   venue: string;
+  volume: string;
+  issue: string;
+  pages: string;
   doi: string;
   url: string;
   variables: PaperVariables;
@@ -77,6 +80,9 @@ const EMPTY: FormState = {
   authors: "",
   year: "",
   venue: "",
+  volume: "",
+  issue: "",
+  pages: "",
   doi: "",
   url: "",
   variables: {},
@@ -120,6 +126,9 @@ export default function ResearchPaperDialog({
           authors: initial.authors ?? "",
           year: initial.year ? String(initial.year) : "",
           venue: initial.venue ?? "",
+          volume: initial.volume ?? "",
+          issue: initial.issue ?? "",
+          pages: initial.pages ?? "",
           doi: initial.doi ?? "",
           url: initial.url ?? "",
           variables: initial.variables ?? {},
@@ -163,6 +172,9 @@ export default function ResearchPaperDialog({
       authors: form.authors.trim() || undefined,
       year: form.year ? Number(form.year) : undefined,
       venue: form.venue.trim() || undefined,
+      volume: form.paperType === "academic" && form.volume.trim() ? form.volume.trim() : undefined,
+      issue: form.paperType === "academic" && form.issue.trim() ? form.issue.trim() : undefined,
+      pages: form.paperType === "academic" && form.pages.trim() ? form.pages.trim() : undefined,
       doi: form.doi.trim() || undefined,
       url: form.url.trim() || undefined,
       variables:
@@ -188,9 +200,23 @@ export default function ResearchPaperDialog({
     return base;
   }
 
+  // 필수 입력 검증 상태 (기본정보 단계 필수: 제목 / 저자 / 연도)
+  const titleEmpty = !form.title.trim();
+  const authorsEmpty = !form.authors.trim();
+  const yearEmpty = !form.year.trim();
+  const basicsInvalid = titleEmpty || authorsEmpty || yearEmpty;
+
+  function describeMissingBasics(): string {
+    const missing: string[] = [];
+    if (titleEmpty) missing.push("제목");
+    if (authorsEmpty) missing.push("저자");
+    if (yearEmpty) missing.push("연도");
+    return missing.join(" · ");
+  }
+
   async function handleDraftSave() {
-    if (!form.title.trim()) {
-      toast.error("제목은 필수입니다.");
+    if (titleEmpty) {
+      toast.error("제목은 필수입니다. (임시 저장이라도 제목은 있어야 해요)");
       return;
     }
     setSaving(true);
@@ -211,8 +237,9 @@ export default function ResearchPaperDialog({
   }
 
   async function handleComplete() {
-    if (!form.title.trim()) {
-      toast.error("제목은 필수입니다.");
+    if (basicsInvalid) {
+      toast.error(`기본 정보 필수 항목이 비어있습니다: ${describeMissingBasics()}`);
+      setStep(1);
       return;
     }
     setSaving(true);
@@ -227,9 +254,10 @@ export default function ResearchPaperDialog({
     }
   }
 
-  const titleEmpty = !form.title.trim();
-  const canNext = !titleEmpty;
-  const canJump = !titleEmpty;
+  // 다음 단계 진행은 기본정보 3종 모두 충족해야 함 (1단계 → 2단계 진입 조건)
+  const canNext = step === 1 ? !basicsInvalid : true;
+  // step bar에서 1 외 다른 단계로 점프할 수 있는 조건
+  const canJump = !basicsInvalid;
 
   function goStep(target: StepNum) {
     if (target === 1) {
@@ -252,18 +280,57 @@ export default function ResearchPaperDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Step indicator */}
+        {/* Step indicator — 모바일은 동그라미만, 데스크톱은 라벨까지 */}
         <div className="mt-2">
-          <div className="flex items-center justify-between gap-1">
+          {/* 모바일: 현재 단계명 + 진행 표시 */}
+          <div className="sm:hidden">
+            <div className="mb-2 flex items-center justify-between text-xs">
+              <span className="font-semibold text-primary">
+                Step {step}/{TOTAL_STEPS} · {STEPS[step - 1].label}
+              </span>
+              <span className="text-[11px] text-muted-foreground">
+                {step < TOTAL_STEPS ? `다음: ${STEPS[step].label}` : "마지막 단계"}
+              </span>
+            </div>
+            <div className="flex items-center justify-between gap-1">
+              {STEPS.map((s) => {
+                const isCurrent = s.num === step;
+                const isDone = s.num < step;
+                const disabled = s.num !== 1 && !canJump;
+                return (
+                  <button
+                    key={s.num}
+                    type="button"
+                    onClick={() => goStep(s.num)}
+                    disabled={disabled}
+                    className={cn(
+                      "flex h-7 flex-1 items-center justify-center rounded-full border text-[11px] font-bold transition disabled:cursor-not-allowed disabled:opacity-40",
+                      isCurrent
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : isDone
+                          ? "border-primary bg-primary/15 text-primary"
+                          : "border-muted-foreground/30 text-muted-foreground"
+                    )}
+                    aria-label={`${s.num}단계: ${s.label}`}
+                  >
+                    {isDone ? <Check size={12} /> : s.num}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          {/* 데스크톱: 라벨까지 표시 */}
+          <div className="hidden items-center justify-between gap-1 sm:flex">
             {STEPS.map((s, idx) => {
               const isCurrent = s.num === step;
               const isDone = s.num < step;
+              const disabled = s.num !== 1 && !canJump;
               return (
                 <div key={s.num} className="flex flex-1 items-center">
                   <button
                     type="button"
                     onClick={() => goStep(s.num)}
-                    disabled={s.num !== 1 && titleEmpty}
+                    disabled={disabled}
                     className={cn(
                       "flex flex-1 items-center gap-1.5 rounded-md px-1.5 py-1 text-[11px] font-medium transition disabled:cursor-not-allowed disabled:opacity-50",
                       isCurrent
@@ -272,7 +339,7 @@ export default function ResearchPaperDialog({
                           ? "text-foreground hover:bg-muted/60"
                           : "text-muted-foreground hover:bg-muted/40"
                     )}
-                    title={titleEmpty && s.num !== 1 ? "제목을 먼저 입력하세요" : undefined}
+                    title={disabled ? "기본 정보(제목·저자·연도)를 먼저 모두 입력하세요" : undefined}
                   >
                     <span
                       className={cn(
@@ -339,50 +406,117 @@ export default function ResearchPaperDialog({
                   value={form.title}
                   onChange={(e) => update("title", e.target.value)}
                   placeholder="논문 제목"
+                  aria-invalid={titleEmpty}
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="mb-1 block text-xs font-medium">
+                    저자 <span className="text-destructive">*</span>
+                  </label>
+                  <Input
+                    value={form.authors}
+                    onChange={(e) => update("authors", e.target.value)}
+                    placeholder="예: 홍길동, 김철수"
+                    aria-invalid={authorsEmpty}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium">
+                    연도 <span className="text-destructive">*</span>
+                  </label>
+                  <Input
+                    value={form.year}
+                    onChange={(e) => update("year", e.target.value)}
+                    type="number"
+                    placeholder="예: 2024"
+                    aria-invalid={yearEmpty}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium">
+                  {form.paperType === "thesis" ? "수여 기관" : "저널/학회"}
+                </label>
                 <Input
-                  value={form.authors}
-                  onChange={(e) => update("authors", e.target.value)}
-                  placeholder="저자 (예: 홍길동, 김철수)"
-                />
-                <Input
-                  value={form.year}
-                  onChange={(e) => update("year", e.target.value)}
-                  type="number"
-                  placeholder="연도"
+                  value={form.venue}
+                  onChange={(e) => update("venue", e.target.value)}
+                  placeholder={form.paperType === "thesis" ? "예: 연세대학교" : "예: 교육공학연구"}
                 />
               </div>
-              <Input
-                value={form.venue}
-                onChange={(e) => update("venue", e.target.value)}
-                placeholder={form.paperType === "thesis" ? "수여 기관 (예: 연세대학교)" : "저널/학회 (예: 교육공학연구)"}
-              />
+              {form.paperType === "academic" && (
+                <div>
+                  <label className="mb-1 block text-xs font-medium">권 · 호 · 페이지</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Input
+                      value={form.volume}
+                      onChange={(e) => update("volume", e.target.value)}
+                      placeholder="권 (예: 40)"
+                    />
+                    <Input
+                      value={form.issue}
+                      onChange={(e) => update("issue", e.target.value)}
+                      placeholder="호 (예: 2)"
+                    />
+                    <Input
+                      value={form.pages}
+                      onChange={(e) => update("pages", e.target.value)}
+                      placeholder="페이지 (123-150)"
+                    />
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-2">
-                <Input
-                  value={form.doi}
-                  onChange={(e) => update("doi", e.target.value)}
-                  placeholder="DOI"
-                />
-                <Input
-                  value={form.url}
-                  onChange={(e) => update("url", e.target.value)}
-                  placeholder="URL"
-                />
+                <div>
+                  <label className="mb-1 block text-xs font-medium">DOI</label>
+                  <Input
+                    value={form.doi}
+                    onChange={(e) => update("doi", e.target.value)}
+                    placeholder="10.xxxx/yyyy"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium">URL</label>
+                  <Input
+                    value={form.url}
+                    onChange={(e) => update("url", e.target.value)}
+                    placeholder="https://"
+                  />
+                </div>
+              </div>
+              <div className="border-t pt-3">
+                <label className="mb-1 block text-xs font-medium">읽기 상태</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {(["to_read", "reading", "completed"] as PaperReadStatus[]).map((s) => {
+                    const label = s === "to_read" ? "읽을 예정" : s === "reading" ? "읽는 중" : "완독";
+                    const isActive = form.readStatus === s;
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => update("readStatus", s)}
+                        className={cn(
+                          "rounded-full border px-3 py-1 text-xs font-medium transition",
+                          isActive
+                            ? s === "to_read"
+                              ? "border-amber-500 bg-amber-50 text-amber-800"
+                              : s === "reading"
+                                ? "border-blue-500 bg-blue-50 text-blue-800"
+                                : "border-emerald-500 bg-emerald-50 text-emerald-800"
+                            : "border-muted text-muted-foreground hover:bg-muted/60"
+                        )}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </section>
           )}
 
           {step === 2 && (
             <>
-              <section className="space-y-2">
-                <h4 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">변인</h4>
-                <VariablesInput
-                  value={form.variables}
-                  onChange={(v) => update("variables", v)}
-                />
-              </section>
               <section className="space-y-3">
                 <h4 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">연구방법 · 결과</h4>
                 <div>
@@ -402,6 +536,13 @@ export default function ResearchPaperDialog({
                     rows={4}
                   />
                 </div>
+              </section>
+              <section className="space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">변인</h4>
+                <VariablesInput
+                  value={form.variables}
+                  onChange={(v) => update("variables", v)}
+                />
               </section>
             </>
           )}
@@ -457,7 +598,7 @@ export default function ResearchPaperDialog({
 
           {step === 5 && (
             <section className="space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">분류</h4>
+              <h4 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">분류 · 평점</h4>
               <div>
                 <label className="mb-1 block text-xs font-medium">태그</label>
                 <TagInput
@@ -467,47 +608,36 @@ export default function ResearchPaperDialog({
                   suggestions={tagSuggestions}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="mb-1 block text-xs font-medium">읽기 상태</label>
-                  <select
-                    value={form.readStatus}
-                    onChange={(e) => update("readStatus", e.target.value as PaperReadStatus)}
-                    className="w-full rounded-md border px-2.5 py-2 text-sm"
-                  >
-                    <option value="to_read">읽을 예정</option>
-                    <option value="reading">읽는 중</option>
-                    <option value="completed">완독</option>
-                  </select>
+              <div>
+                <label className="mb-1 block text-xs font-medium">평점</label>
+                <div className="flex items-center gap-0.5">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => update("rating", (form.rating === n ? 0 : n) as FormState["rating"])}
+                      className="p-1 text-amber-500 hover:scale-110"
+                    >
+                      <Star
+                        size={20}
+                        fill={n <= form.rating ? "currentColor" : "none"}
+                        strokeWidth={n <= form.rating ? 0 : 1.5}
+                      />
+                    </button>
+                  ))}
+                  {form.rating > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => update("rating", 0)}
+                      className="ml-2 text-[11px] text-muted-foreground hover:text-foreground"
+                    >
+                      지우기
+                    </button>
+                  )}
                 </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium">평점</label>
-                  <div className="flex items-center gap-0.5">
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <button
-                        key={n}
-                        type="button"
-                        onClick={() => update("rating", (form.rating === n ? 0 : n) as FormState["rating"])}
-                        className="p-1 text-amber-500 hover:scale-110"
-                      >
-                        <Star
-                          size={20}
-                          fill={n <= form.rating ? "currentColor" : "none"}
-                          strokeWidth={n <= form.rating ? 0 : 1.5}
-                        />
-                      </button>
-                    ))}
-                    {form.rating > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => update("rating", 0)}
-                        className="ml-2 text-[11px] text-muted-foreground hover:text-foreground"
-                      >
-                        지우기
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  읽기 상태는 <span className="font-medium">1단계 기본 정보</span>에서 설정하거나, 카드의 상태 배지를 직접 클릭해 토글할 수 있어요.
+                </p>
               </div>
             </section>
           )}
@@ -542,12 +672,17 @@ export default function ResearchPaperDialog({
               <Button
                 onClick={() => setStep((s) => clampStep(s + 1))}
                 disabled={saving || !canNext}
+                title={!canNext ? `필수: ${describeMissingBasics()}` : undefined}
               >
                 다음
                 <ChevronRight size={14} className="ml-1" />
               </Button>
             ) : (
-              <Button onClick={handleComplete} disabled={saving || titleEmpty}>
+              <Button
+                onClick={handleComplete}
+                disabled={saving || basicsInvalid}
+                title={basicsInvalid ? `필수: ${describeMissingBasics()}` : undefined}
+              >
                 {saving ? "저장 중..." : "완료"}
               </Button>
             )}

@@ -458,6 +458,29 @@ export default function ResearchPaperList({ user, readOnly = false }: Props) {
                   paper={p}
                   onEdit={() => openEdit(p)}
                   onDelete={() => setPendingDelete(p)}
+                  onQuickUpdate={
+                    readOnly
+                      ? undefined
+                      : async (patch) => {
+                          try {
+                            await updatePaper.mutateAsync({
+                              id: p.id,
+                              data: patch as Record<string, unknown>,
+                            });
+                            if (patch.readStatus) {
+                              const label =
+                                patch.readStatus === "to_read"
+                                  ? "읽을 예정"
+                                  : patch.readStatus === "reading"
+                                    ? "읽는 중"
+                                    : "완독";
+                              toast.success(`상태가 "${label}"으로 변경되었습니다.`);
+                            }
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "변경 실패");
+                          }
+                        }
+                  }
                 />
               ))}
             </div>

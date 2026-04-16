@@ -1,22 +1,32 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Star, Clock, BookOpen, Pencil, Trash2, ExternalLink, GraduationCap, FileText } from "lucide-react";
+import { Star, Clock, BookOpen, Pencil, Trash2, ExternalLink, GraduationCap, FileText, CheckCircle2 } from "lucide-react";
 import type { ResearchPaper, PaperReadStatus } from "@/types";
+import { cn } from "@/lib/utils";
 
 interface Props {
   paper: ResearchPaper;
   onEdit: () => void;
   onDelete: () => void;
+  /** 카드 내 인라인 업데이트(읽기 상태 토글 등). 옵셔널 — 미제공 시 토글 비활성. */
+  onQuickUpdate?: (patch: Partial<ResearchPaper>) => void | Promise<void>;
 }
 
 const READ_STATUS_LABEL: Record<PaperReadStatus, { label: string; icon: typeof Clock; color: string }> = {
-  to_read: { label: "읽을 예정", icon: Clock, color: "bg-amber-50 text-amber-700" },
-  reading: { label: "읽는 중", icon: BookOpen, color: "bg-blue-50 text-blue-700" },
-  completed: { label: "완독", icon: BookOpen, color: "bg-emerald-50 text-emerald-700" },
+  to_read: { label: "읽을 예정", icon: Clock, color: "bg-amber-50 text-amber-700 border-amber-200" },
+  reading: { label: "읽는 중", icon: BookOpen, color: "bg-blue-50 text-blue-700 border-blue-200" },
+  completed: { label: "완독", icon: CheckCircle2, color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
 };
 
-export default function ResearchPaperCard({ paper, onEdit, onDelete }: Props) {
+const STATUS_CYCLE: PaperReadStatus[] = ["to_read", "reading", "completed"];
+function nextStatus(current: PaperReadStatus | undefined): PaperReadStatus {
+  if (!current) return "reading";
+  const idx = STATUS_CYCLE.indexOf(current);
+  return STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
+}
+
+export default function ResearchPaperCard({ paper, onEdit, onDelete, onQuickUpdate }: Props) {
   const isThesis = paper.paperType === "thesis";
   const TypeIcon = isThesis ? GraduationCap : FileText;
   const updatedDate = paper.updatedAt ? new Date(paper.updatedAt) : null;
@@ -24,7 +34,23 @@ export default function ResearchPaperCard({ paper, onEdit, onDelete }: Props) {
     ? Math.floor((Date.now() - updatedDate.getTime()) / (1000 * 60 * 60 * 24))
     : null;
 
-  const status = paper.readStatus ? READ_STATUS_LABEL[paper.readStatus] : null;
+  const status = paper.readStatus ? READ_STATUS_LABEL[paper.readStatus] : READ_STATUS_LABEL.to_read;
+  const canToggleStatus = !!onQuickUpdate;
+
+  function handleStatusToggle() {
+    if (!onQuickUpdate) return;
+    const next = nextStatus(paper.readStatus);
+    onQuickUpdate({ readStatus: next });
+  }
+
+  // 학술논문 권/호/페이지를 한 줄로 정리
+  const academicMeta = !isThesis
+    ? [
+        paper.volume ? `${paper.volume}권` : null,
+        paper.issue ? `${paper.issue}호` : null,
+        paper.pages ? `pp. ${paper.pages}` : null,
+      ].filter(Boolean).join(" · ")
+    : "";
 
   const variableSummary = (() => {
     if (!paper.variables) return null;
@@ -45,7 +71,20 @@ export default function ResearchPaperCard({ paper, onEdit, onDelete }: Props) {
             <TypeIcon size={11} className="mr-1" />
             {isThesis ? `학위논문${paper.thesisLevel === "master" ? " · 석사" : paper.thesisLevel === "doctoral" ? " · 박사" : ""}` : "학술논문"}
           </Badge>
-          {status && (
+          {canToggleStatus ? (
+            <button
+              type="button"
+              onClick={handleStatusToggle}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium transition hover:scale-105",
+                status.color
+              )}
+              title="클릭하여 다음 상태로 전환 (읽을 예정 → 읽는 중 → 완독)"
+            >
+              <status.icon size={10} />
+              {status.label}
+            </button>
+          ) : (
             <Badge variant="outline" className={`text-[10px] ${status.color}`}>
               <status.icon size={10} className="mr-1" />
               {status.label}
@@ -83,9 +122,9 @@ export default function ResearchPaperCard({ paper, onEdit, onDelete }: Props) {
         {paper.title || <span className="text-muted-foreground">(제목 없음)</span>}
       </h4>
 
-      {(paper.authors || paper.year || paper.venue) && (
+      {(paper.authors || paper.year || paper.venue || academicMeta) && (
         <p className="mt-1 text-xs text-muted-foreground">
-          {[paper.authors, paper.year, paper.venue].filter(Boolean).join(" · ")}
+          {[paper.authors, paper.year, paper.venue, academicMeta || null].filter(Boolean).join(" · ")}
         </p>
       )}
 

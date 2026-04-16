@@ -186,6 +186,12 @@ export interface ResearchPaper {
   authors?: string;
   year?: number;
   venue?: string;
+  /** 학술논문 권 (volume) */
+  volume?: string;
+  /** 학술논문 호/편 (issue) */
+  issue?: string;
+  /** 학술논문 페이지 범위 (예: "123-150") */
+  pages?: string;
   doi?: string;
   url?: string;
 
