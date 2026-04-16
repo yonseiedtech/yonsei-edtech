@@ -35,6 +35,8 @@ function docToResponse(doc: Record<string, unknown>): InterviewResponse {
     createdAt: (doc.createdAt as string) ?? new Date().toISOString(),
     updatedAt: (doc.updatedAt as string) ?? undefined,
     submittedAt: (doc.submittedAt as string) ?? undefined,
+    totalElapsedMs:
+      typeof doc.totalElapsedMs === "number" ? (doc.totalElapsedMs as number) : undefined,
   };
 }
 
@@ -116,6 +118,7 @@ export function useSaveInterviewResponse() {
       respondentRole?: string;
       answers: InterviewAnswer[];
       status: "draft" | "submitted";
+      totalElapsedMs?: number;
     }) => {
       const payload: Record<string, unknown> = {
         postId: input.postId,
@@ -125,6 +128,9 @@ export function useSaveInterviewResponse() {
         status: input.status,
         answers: JSON.stringify(input.answers),
       };
+      if (typeof input.totalElapsedMs === "number") {
+        payload.totalElapsedMs = input.totalElapsedMs;
+      }
       if (input.status === "submitted") {
         payload.submittedAt = new Date().toISOString();
       }

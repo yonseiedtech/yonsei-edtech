@@ -14,8 +14,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Trash2, Lock, Globe } from "lucide-react";
 import { toast } from "sonner";
-import type { InterviewMeta, InterviewResponse } from "@/types";
+import { CUSTOM_OPTION_ID, type InterviewMeta, type InterviewResponse } from "@/types";
 import { useInterviewResponses, useDeleteInterviewResponse } from "./interview-store";
+
+const FILL_BLANK_PATTERN = /\(\s+\)|_{3,}/;
+
+function formatDuration(ms?: number): string {
+  if (!ms || ms < 1000) return "";
+  const totalSec = Math.floor(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return m > 0 ? `${m}분 ${s}초` : `${s}초`;
+}
 import { formatDate } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
 import InterviewResponseReactions from "./InterviewResponseReactions";
@@ -44,10 +54,22 @@ export default function InterviewResponses({ postId, meta }: Props) {
   const questionById = useMemo(() => {
     const m = new Map<
       string,
-      { order: number; prompt: string; answerType: string; options?: { id: string; label: string }[] }
+      {
+        order: number;
+        prompt: string;
+        description?: string;
+        answerType: string;
+        options?: { id: string; label: string }[];
+      }
     >();
     meta.questions.forEach((q) =>
-      m.set(q.id, { order: q.order, prompt: q.prompt, answerType: q.answerType, options: q.options })
+      m.set(q.id, {
+        order: q.order,
+        prompt: q.prompt,
+        description: q.description,
+        answerType: q.answerType,
+        options: q.options,
+      })
     );
     return m;
   }, [meta.questions]);
@@ -66,15 +88,38 @@ export default function InterviewResponses({ postId, meta }: Props) {
 
   function renderChoiceLabel(
     q: { answerType: string; options?: { id: string; label: string }[] },
-    selectedOptionId?: string
+    selectedOptionId?: string,
+    customOptionText?: string
   ): string | null {
     if (!selectedOptionId) return null;
     if (q.answerType === "ox") return selectedOptionId === "O" ? "⭕ O" : "❌ X";
     if (q.answerType === "single_choice") {
+      if (selectedOptionId === CUSTOM_OPTION_ID) {
+        return `💬 (직접 입력) ${customOptionText ?? ""}`;
+      }
       const opt = q.options?.find((o) => o.id === selectedOptionId);
       return opt?.label ?? selectedOptionId;
     }
     return null;
+  }
+
+  function renderFillBlankFilled(prompt: string, text?: string) {
+    if (!FILL_BLANK_PATTERN.test(prompt)) return null;
+    const parts = prompt.split(FILL_BLANK_PATTERN);
+    return (
+      <p className="mt-1 whitespace-pre-wrap text-sm text-foreground/90">
+        {parts.map((p, i) => (
+          <span key={i}>
+            {p}
+            {i < parts.length - 1 && (
+              <span className="mx-1 inline-block border-b-2 border-[#003876] px-2 font-bold text-[#003876]">
+                {text || "____"}
+              </span>
+            )}
+          </span>
+        ))}
+      </p>
+    );
   }
 
   return (
@@ -124,7 +169,10 @@ export default function InterviewResponses({ postId, meta }: Props) {
                   <p className="text-sm font-bold">{r.respondentName}</p>
                   <p className="text-xs text-muted-foreground">
                     {r.submittedAt
-                      ? `${formatDate(r.submittedAt)} ${new Date(r.submittedAt).toLocaleTimeString("ko-KR", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
+                      ? `${formatDate(r.submittedAt)} ${new Date(r.submittedAt).toLocaleTimeString("ko-KR", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "Asia/Seoul" })} (KST)`
+                      : ""}
+                    {r.totalElapsedMs && r.totalElapsedMs > 0
+                      ? ` · 소요 ${formatDuration(r.totalElapsedMs)}`
                       : ""}
                   </p>
                 </div>
@@ -152,16 +200,40 @@ export default function InterviewResponses({ postId, meta }: Props) {
                   .sort((a, b) => (questionById.get(a.questionId)!.order ?? 0) - (questionById.get(b.questionId)!.order ?? 0))
                   .map((a) => {
                     const q = questionById.get(a.questionId)!;
-                    const choiceLabel = renderChoiceLabel(q, a.selectedOptionId);
+                    const choiceLabel = renderChoiceLabel(q, a.selectedOptionId, a.customOptionText);
+                    const isFillBlank = q.answerType === "fill_blank";
+                    const fillBlankNode = isFillBlank ? renderFillBlankFilled(q.prompt, a.text) : null;
                     return (
                       <div key={a.questionId} className="rounded-lg bg-muted/40 p-3">
-                        <p className="text-xs font-semibold text-[#003876]">Q{q.order}. {q.prompt}</p>
+                        <p className="text-xs font-semibold text-[#003876]">
+                          Q{q.order}. {isFillBlank && fillBlankNode ? "" : q.prompt}
+                        </p>
+                        {q.description && (
+                          <p className="mt-1 whitespace-pre-wrap text-xs text-muted-foreground">
+                            {q.description}
+                          </p>
+                        )}
+                        {fillBlankNode}
                         {choiceLabel && (
                           <p className="mt-1 inline-block rounded-md bg-blue-50 px-2 py-0.5 text-sm font-semibold text-[#003876]">
                             {choiceLabel}
                           </p>
                         )}
-                        {a.text && (
+                        {q.answerType === "multi_text" && a.texts && a.texts.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {a.texts
+                              .filter((t) => t && t.trim())
+                              .map((t, i) => (
+                                <span
+                                  key={i}
+                                  className="rounded-full bg-[#003876]/10 px-2.5 py-1 text-xs font-medium text-[#003876]"
+                                >
+                                  {t}
+                                </span>
+                              ))}
+                          </div>
+                        )}
+                        {!isFillBlank && q.answerType !== "multi_text" && a.text && (
                           <p className="mt-1 whitespace-pre-wrap text-sm text-foreground/90">{a.text}</p>
                         )}
                         {a.imageUrls && a.imageUrls.length > 0 && (
@@ -172,6 +244,11 @@ export default function InterviewResponses({ postId, meta }: Props) {
                               </a>
                             ))}
                           </div>
+                        )}
+                        {a.elapsedMs && a.elapsedMs >= 1000 && (
+                          <p className="mt-2 text-[11px] text-muted-foreground/80">
+                            ⏱ 답변 소요 {formatDuration(a.elapsedMs)}
+                          </p>
                         )}
                       </div>
                     );

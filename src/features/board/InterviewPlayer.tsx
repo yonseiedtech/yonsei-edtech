@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
@@ -14,18 +15,58 @@ import {
   Volume2,
   VolumeX,
   Save,
+  Plus,
+  Minus,
 } from "lucide-react";
 import { uploadImageSmart } from "@/lib/storage";
-import type {
-  InterviewAnswer,
-  InterviewMeta,
-  InterviewQuestion,
-  InterviewResponse,
-  Post,
+import {
+  CUSTOM_OPTION_ID,
+  type InterviewAnswer,
+  type InterviewMeta,
+  type InterviewQuestion,
+  type InterviewResponse,
+  type Post,
 } from "@/types";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { useSaveInterviewResponse } from "./interview-store";
+import { useSaveInterviewResponse, useInterviewResponses } from "./interview-store";
 import InterviewCertificate from "./InterviewCertificate";
+
+const FILL_BLANK_PATTERN = /\(\s+\)|_{3,}/;
+
+function formatElapsed(ms: number): string {
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function renderFillBlankInline(
+  q: InterviewQuestion,
+  answer: InterviewAnswer | null,
+  patch: (p: Partial<InterviewAnswer>) => void
+) {
+  const parts = q.prompt.split(FILL_BLANK_PATTERN);
+  const value = answer?.text ?? "";
+  return (
+    <span className="inline-flex flex-wrap items-baseline justify-center gap-1">
+      {parts.map((p, i) => (
+        <span key={i} className="inline-flex items-baseline gap-1">
+          <span>{p}</span>
+          {i < parts.length - 1 && (
+            <input
+              type="text"
+              value={value}
+              onChange={(e) => patch({ text: e.target.value })}
+              placeholder="답변"
+              className="inline-block min-w-[80px] max-w-[240px] border-b-2 border-[#003876] bg-transparent px-2 text-center text-[#003876] outline-none placeholder:text-[#003876]/30 focus:border-[#1a5fa0]"
+              style={{ fontSize: "inherit", fontWeight: "inherit" }}
+            />
+          )}
+        </span>
+      ))}
+    </span>
+  );
+}
 
 const BGM_URL = "https://www.chosic.com/wp-content/uploads/2021/02/Lukrembo-biscuit.mp3";
 
@@ -54,10 +95,36 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
   });
   const [responseId, setResponseId] = useState<string | undefined>(existing?.id);
   const isEditingSubmitted = existing?.status === "submitted";
+  const accumulatedTotalMs = useRef<number>(existing?.totalElapsedMs ?? 0);
   const [showCertificate, setShowCertificate] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [bgmOn, setBgmOn] = useState(true);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // 첫 참여자 메시지용
+  const { responses } = useInterviewResponses(post.id);
+  const submittedCount = useMemo(
+    () => (responses ?? []).filter((r) => r.status === "submitted").length,
+    [responses]
+  );
+  const isFirstParticipant = submittedCount === 0 && !existing;
+
+  // 진행 중 타이머 HUD
+  const sessionStartedAt = useRef<number | null>(null);
+  const questionStartedAt = useRef<number | null>(null);
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    if (index < 0) return;
+    const t = setInterval(() => setTick((v) => v + 1), 1000);
+    return () => clearInterval(t);
+  }, [index]);
+  useEffect(() => {
+    if (index >= 0) questionStartedAt.current = Date.now();
+  }, [index]);
+  const now = Date.now();
+  const sessionElapsed = sessionStartedAt.current ? now - sessionStartedAt.current : 0;
+  const questionElapsed = questionStartedAt.current ? now - questionStartedAt.current : 0;
+  void tick; // ensure re-render every second
 
   useEffect(() => {
     const saved = localStorage.getItem("interview_bgm");
@@ -83,6 +150,22 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
       ...prev,
       [currentQ.id]: { ...prev[currentQ.id], ...patch, questionId: currentQ.id },
     }));
+  }
+
+  /** 현재 질문에 머문 시간을 answers에 누적하고 questionStartedAt을 초기화. 갱신된 answers 반환. */
+  function commitQuestionElapsed(): Record<string, InterviewAnswer> {
+    if (!currentQ || !questionStartedAt.current) return answers;
+    const delta = Date.now() - questionStartedAt.current;
+    questionStartedAt.current = Date.now();
+    const prev = answers[currentQ.id] ?? { questionId: currentQ.id };
+    const next: InterviewAnswer = {
+      ...prev,
+      questionId: currentQ.id,
+      elapsedMs: (prev.elapsedMs ?? 0) + delta,
+    };
+    const merged = { ...answers, [currentQ.id]: next };
+    setAnswers(merged);
+    return merged;
   }
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -111,19 +194,28 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
     }
   }
 
-  async function persist(status: "draft" | "submitted") {
+  async function persist(
+    status: "draft" | "submitted",
+    answersMap: Record<string, InterviewAnswer> = answers,
+  ) {
     if (!user) return;
+    const totalElapsedMs = Object.values(answersMap).reduce(
+      (sum, a) => sum + (a.elapsedMs ?? 0),
+      0,
+    );
     const payload = {
       id: responseId,
       postId: post.id,
       respondentId: user.id,
       respondentName: user.name,
       respondentRole: user.role,
-      answers: Object.values(answers),
+      answers: Object.values(answersMap),
       status,
+      totalElapsedMs,
     } as const;
     const saved = await saveMutation.mutateAsync(payload);
     if (!responseId) setResponseId(saved.id);
+    accumulatedTotalMs.current = totalElapsedMs;
     return saved;
   }
 
@@ -136,24 +228,41 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
     const needChoice = currentQ.answerType === "single_choice" || currentQ.answerType === "ox";
     if (needText && (!a?.text || !a.text.trim())) return "답변을 입력해주세요.";
     if (needPhoto && (!a?.imageUrls || a.imageUrls.length === 0)) return "사진을 첨부해주세요.";
-    if (needChoice && !a?.selectedOptionId) return "선택지를 골라주세요.";
+    if (needChoice) {
+      if (!a?.selectedOptionId) return "선택지를 골라주세요.";
+      if (a.selectedOptionId === CUSTOM_OPTION_ID && !(a.customOptionText ?? "").trim()) {
+        return "직접 입력한 선지를 적어주세요.";
+      }
+    }
+    if (currentQ.answerType === "multi_text") {
+      const items = (a?.texts ?? []).map((t) => t.trim()).filter(Boolean);
+      const min = currentQ.minCount ?? 1;
+      if (items.length < min) return `최소 ${min}개 이상 입력해주세요.`;
+    }
+    if (currentQ.answerType === "fill_blank") {
+      if (!a?.text || !a.text.trim()) return "빈칸을 채워주세요.";
+    }
     return null;
   }
 
   async function handleStart() {
+    sessionStartedAt.current = Date.now();
+    questionStartedAt.current = Date.now();
     setIndex(0);
   }
 
   async function handleNext() {
     const err = validateCurrent();
     if (err) { toast.error(err); return; }
+    const merged = commitQuestionElapsed();
     if (!isEditingSubmitted) {
-      await persist("draft").catch(() => {});
+      await persist("draft", merged).catch(() => {});
     }
     if (index < questions.length - 1) setIndex(index + 1);
   }
 
   function handlePrev() {
+    commitQuestionElapsed();
     if (index > 0) setIndex(index - 1);
     else if (index === 0) setIndex(-1);
   }
@@ -161,8 +270,9 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
   async function handleSubmit() {
     const err = validateCurrent();
     if (err) { toast.error(err); return; }
+    const merged = commitQuestionElapsed();
     try {
-      await persist("submitted");
+      await persist("submitted", merged);
       setShowCertificate(true);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "제출에 실패했습니다.";
@@ -175,8 +285,9 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
       onClose();
       return;
     }
+    const merged = commitQuestionElapsed();
     try {
-      await persist("draft");
+      await persist("draft", merged);
       toast.success("임시저장되었습니다.");
       onClose();
     } catch {
@@ -277,13 +388,10 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                   className="h-12 w-12 opacity-90"
                 />
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#003876]/70">
-                  Yonsei University · 교육공학회
+                  YONSEI UNIV. Educational Technology
                 </p>
               </div>
-              <div className="mx-auto mt-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#003876] to-[#00275c] text-2xl font-bold text-white shadow-lg">
-                {post.authorName.slice(0, 1)}
-              </div>
-              <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-[#003876]">
+              <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-[#003876]">
                 {post.authorName} · 인터뷰어
               </p>
               <h2 className="mt-2 text-2xl font-bold leading-snug sm:text-4xl">{post.title}</h2>
@@ -294,6 +402,16 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
               <Button onClick={handleStart} size="lg" className="mt-8">
                 시작하기
               </Button>
+              {isFirstParticipant && (
+                <motion.p
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="mt-4 text-sm font-medium text-[#003876]"
+                >
+                  첫번째 참여자이세요! 잘 부탁드립니다💗
+                </motion.p>
+              )}
             </motion.div>
           ) : currentQ ? (
             <motion.div
@@ -307,6 +425,9 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
               <p className="text-center text-xs font-semibold uppercase tracking-wider text-[#003876]">
                 Q{index + 1} / {total}
               </p>
+              <p className="mt-1 text-center font-mono text-[11px] text-muted-foreground sm:text-xs">
+                질문 {formatElapsed(questionElapsed)} · 누적 {formatElapsed(sessionElapsed)} · {index + 1}/{total} ({Math.round(progress)}%)
+              </p>
               <motion.h2
                 key={`${currentQ.id}-prompt`}
                 initial={{ opacity: 0, y: 10 }}
@@ -314,8 +435,15 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                 transition={{ delay: 0.1, duration: 0.35 }}
                 className="mt-3 text-center text-xl font-bold leading-snug sm:text-3xl"
               >
-                {currentQ.prompt}
+                {currentQ.answerType === "fill_blank" && FILL_BLANK_PATTERN.test(currentQ.prompt)
+                  ? renderFillBlankInline(currentQ, currentAnswer, patchAnswer)
+                  : currentQ.prompt}
               </motion.h2>
+              {currentQ.description && (
+                <p className="mt-3 whitespace-pre-wrap rounded-lg bg-muted/40 p-3 text-center text-sm text-muted-foreground">
+                  {currentQ.description}
+                </p>
+              )}
               {currentQ.maxChars ? (
                 <p className="mt-2 text-center text-xs text-muted-foreground">
                   최대 {currentQ.maxChars}자 가이드
@@ -368,7 +496,121 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                         </button>
                       );
                     })}
+                    {currentQ.allowCustomOption && (
+                      <div
+                        className={`rounded-xl border-2 px-4 py-3 transition-all ${
+                          currentAnswer?.selectedOptionId === CUSTOM_OPTION_ID
+                            ? "border-[#003876] bg-[#003876]/5 shadow-sm"
+                            : "border-dashed border-muted bg-white hover:border-[#003876]/40"
+                        }`}
+                      >
+                        <button
+                          type="button"
+                          onClick={() =>
+                            patchAnswer({ selectedOptionId: CUSTOM_OPTION_ID, text: undefined })
+                          }
+                          className="flex w-full items-center gap-2 text-left text-base"
+                        >
+                          <span
+                            className="inline-flex h-5 w-5 items-center justify-center rounded-full border-2 align-middle"
+                            style={{
+                              borderColor:
+                                currentAnswer?.selectedOptionId === CUSTOM_OPTION_ID
+                                  ? "#003876"
+                                  : "#cbd5e1",
+                            }}
+                          >
+                            {currentAnswer?.selectedOptionId === CUSTOM_OPTION_ID && (
+                              <span className="h-2.5 w-2.5 rounded-full bg-[#003876]" />
+                            )}
+                          </span>
+                          <span className="font-semibold text-[#003876]">+ 직접 입력</span>
+                        </button>
+                        {currentAnswer?.selectedOptionId === CUSTOM_OPTION_ID && (
+                          <Input
+                            value={currentAnswer?.customOptionText ?? ""}
+                            onChange={(e) => patchAnswer({ customOptionText: e.target.value })}
+                            placeholder="직접 입력할 선지를 적어주세요"
+                            className="mt-2 bg-white"
+                            style={{ fontSize: "16px" }}
+                          />
+                        )}
+                      </div>
+                    )}
                   </div>
+                )}
+
+                {currentQ.answerType === "multi_text" && (() => {
+                  const min = currentQ.minCount ?? 1;
+                  const max = currentQ.maxCount ?? 10;
+                  const items = currentAnswer?.texts ?? Array.from({ length: min }, () => "");
+                  if ((currentAnswer?.texts ?? []).length === 0) {
+                    // initialize lazily so user sees min inputs
+                  }
+                  const updateItem = (i: number, v: string) => {
+                    const next = [...items];
+                    next[i] = v;
+                    patchAnswer({ texts: next });
+                  };
+                  const addItem = () => {
+                    if (items.length >= max) return;
+                    patchAnswer({ texts: [...items, ""] });
+                  };
+                  const removeItem = (i: number) => {
+                    if (items.length <= 1) return;
+                    patchAnswer({ texts: items.filter((_, j) => j !== i) });
+                  };
+                  return (
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        {min === max ? `${min}개 입력` : `${min}~${max}개 입력 가능`}
+                      </p>
+                      {items.map((v, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <span className="w-6 shrink-0 text-center text-xs text-muted-foreground">
+                            {i + 1}.
+                          </span>
+                          <Input
+                            value={v}
+                            onChange={(e) => updateItem(i, e.target.value)}
+                            placeholder={`항목 ${i + 1}`}
+                            className="bg-white"
+                            style={{ fontSize: "16px" }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeItem(i)}
+                            disabled={items.length <= 1}
+                            className="rounded-full p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-30"
+                            title="항목 삭제"
+                          >
+                            <Minus size={16} />
+                          </button>
+                        </div>
+                      ))}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={addItem}
+                        disabled={items.length >= max}
+                        className="w-full"
+                      >
+                        <Plus size={14} className="mr-1" />
+                        항목 추가 ({items.length}/{max})
+                      </Button>
+                    </div>
+                  );
+                })()}
+
+                {currentQ.answerType === "fill_blank" && !FILL_BLANK_PATTERN.test(currentQ.prompt) && (
+                  <Input
+                    value={currentAnswer?.text ?? ""}
+                    onChange={(e) => patchAnswer({ text: e.target.value })}
+                    placeholder="답변을 입력하세요"
+                    className="bg-white"
+                    style={{ fontSize: "16px" }}
+                  />
                 )}
 
                 {currentQ.answerType === "ox" && (

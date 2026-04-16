@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,7 +23,30 @@ const ANSWER_TYPE_LABELS: Record<InterviewAnswerType, string> = {
   text_and_photo: "텍스트 + 사진",
   single_choice: "선지형",
   ox: "O / X",
+  multi_text: "복수 답변(키워드 등)",
+  fill_blank: "빈칸 채우기",
 };
+
+const FILL_BLANK_PATTERN = /\(\s+\)|_{3,}/;
+
+function fillBlankPreview(prompt: string): ReactNode {
+  if (!FILL_BLANK_PATTERN.test(prompt)) return null;
+  const parts = prompt.split(FILL_BLANK_PATTERN);
+  return (
+    <span>
+      {parts.map((p, i) => (
+        <span key={i}>
+          {p}
+          {i < parts.length - 1 && (
+            <span className="mx-1 inline-block min-w-[60px] border-b-2 border-violet-500 px-2 text-center text-violet-700">
+              ___
+            </span>
+          )}
+        </span>
+      ))}
+    </span>
+  );
+}
 
 function makeId() {
   return `q-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
@@ -57,8 +81,15 @@ export default function InterviewBuilder({ value, onChange }: Props) {
       }
     } else if (next === "ox") {
       patch.options = undefined;
+      patch.allowCustomOption = undefined;
+    } else if (next === "multi_text") {
+      patch.options = undefined;
+      patch.allowCustomOption = undefined;
+      if (q.minCount == null) patch.minCount = 1;
+      if (q.maxCount == null) patch.maxCount = 5;
     } else {
       patch.options = undefined;
+      patch.allowCustomOption = undefined;
     }
     updateQuestion(qid, patch);
   }
@@ -239,6 +270,15 @@ export default function InterviewBuilder({ value, onChange }: Props) {
                       placeholder="질문을 입력하세요"
                       rows={2}
                     />
+                    <Textarea
+                      value={q.description ?? ""}
+                      onChange={(e) =>
+                        updateQuestion(q.id, { description: e.target.value || undefined })
+                      }
+                      placeholder="설명 (선택) — 응답자에게 보여줄 보조 안내문"
+                      rows={2}
+                      className="bg-muted/30 text-sm"
+                    />
                     <div className="flex flex-wrap items-center gap-2 text-xs">
                       <select
                         value={q.answerType}
@@ -262,18 +302,63 @@ export default function InterviewBuilder({ value, onChange }: Props) {
                         필수
                       </label>
                       {needsCharCount && (
-                        <label className="flex items-center gap-1">
-                          최대 글자수
-                          <input
-                            type="number"
-                            min={0}
-                            value={q.maxChars ?? 0}
-                            onChange={(e) =>
-                              updateQuestion(q.id, { maxChars: Number(e.target.value) || undefined })
-                            }
-                            className="w-16 rounded-md border bg-white px-2 py-1"
-                          />
-                        </label>
+                        <>
+                          <label className="flex items-center gap-1">
+                            최대 글자수
+                            <input
+                              type="number"
+                              min={0}
+                              value={q.maxChars ?? 0}
+                              disabled={q.maxChars == null}
+                              onChange={(e) =>
+                                updateQuestion(q.id, { maxChars: Number(e.target.value) || undefined })
+                              }
+                              className="w-16 rounded-md border bg-white px-2 py-1 disabled:bg-muted disabled:opacity-50"
+                            />
+                          </label>
+                          <label className="flex items-center gap-1">
+                            <input
+                              type="checkbox"
+                              checked={q.maxChars == null}
+                              onChange={(e) =>
+                                updateQuestion(q.id, {
+                                  maxChars: e.target.checked ? undefined : 400,
+                                })
+                              }
+                            />
+                            제한 없음
+                          </label>
+                        </>
+                      )}
+                      {q.answerType === "multi_text" && (
+                        <>
+                          <label className="flex items-center gap-1">
+                            최소
+                            <input
+                              type="number"
+                              min={0}
+                              max={20}
+                              value={q.minCount ?? 1}
+                              onChange={(e) =>
+                                updateQuestion(q.id, { minCount: Math.max(0, Number(e.target.value) || 0) })
+                              }
+                              className="w-14 rounded-md border bg-white px-2 py-1"
+                            />
+                          </label>
+                          <label className="flex items-center gap-1">
+                            최대
+                            <input
+                              type="number"
+                              min={1}
+                              max={20}
+                              value={q.maxCount ?? 5}
+                              onChange={(e) =>
+                                updateQuestion(q.id, { maxCount: Math.max(1, Number(e.target.value) || 1) })
+                              }
+                              className="w-14 rounded-md border bg-white px-2 py-1"
+                            />
+                          </label>
+                        </>
                       )}
                     </div>
 
@@ -310,6 +395,16 @@ export default function InterviewBuilder({ value, onChange }: Props) {
                           <Plus size={12} />
                           선택지 추가
                         </button>
+                        <label className="mt-3 flex items-center gap-2 text-xs text-violet-800">
+                          <input
+                            type="checkbox"
+                            checked={!!q.allowCustomOption}
+                            onChange={(e) =>
+                              updateQuestion(q.id, { allowCustomOption: e.target.checked })
+                            }
+                          />
+                          응답자가 선지를 직접 추가할 수 있게 허용
+                        </label>
                       </div>
                     )}
 
@@ -317,6 +412,32 @@ export default function InterviewBuilder({ value, onChange }: Props) {
                       <p className="rounded-md bg-blue-50 p-2 text-xs text-blue-800">
                         응답자에게 ⭕ O / ❌ X 두 개의 버튼이 표시됩니다.
                       </p>
+                    )}
+
+                    {q.answerType === "multi_text" && (
+                      <p className="rounded-md bg-amber-50 p-2 text-xs text-amber-800">
+                        응답자에게 짧은 텍스트 입력란을 {q.minCount ?? 1}~{q.maxCount ?? 5}개 표시합니다.
+                        (예: &quot;키워드 3가지&quot; → 최소 3, 최대 3)
+                      </p>
+                    )}
+
+                    {q.answerType === "fill_blank" && (
+                      <div className="rounded-md border border-emerald-200 bg-emerald-50/60 p-3 text-xs text-emerald-900">
+                        <p className="font-semibold">빈칸 채우기</p>
+                        <p className="mt-1">
+                          질문에 <code className="rounded bg-white px-1">(   )</code> 또는 <code className="rounded bg-white px-1">___</code>을 넣으면 그 자리에 응답자의 입력창이 표시됩니다.
+                        </p>
+                        {fillBlankPreview(q.prompt) ? (
+                          <div className="mt-2 rounded bg-white p-2 text-sm text-foreground">
+                            <span className="text-xs font-semibold text-emerald-700">미리보기: </span>
+                            {fillBlankPreview(q.prompt)}
+                          </div>
+                        ) : (
+                          <p className="mt-2 text-amber-700">
+                            ⚠️ 마커가 없습니다. 일반 텍스트 입력으로 표시됩니다.
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
                   <div className="flex shrink-0 flex-col gap-1">
