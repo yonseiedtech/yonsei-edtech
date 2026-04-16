@@ -22,11 +22,16 @@ export function usePosts(
   const user = useAuthStore((s) => s.user);
   const canSeeStaff = isStaffOrAbove(user);
 
+  const effectiveCategory = category && category !== "all" ? category : undefined;
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ["posts", "all-client-filtered"],
+    queryKey: ["posts", effectiveCategory ?? "all"],
     queryFn: async () => {
-      // Firestore 복합 인덱스 회피: 항상 전체를 가져와 클라이언트에서 필터·정렬
-      const res = await postsApi.list({ limit: 200, sort: "" });
+      const res = await postsApi.list({
+        limit: 200,
+        sort: "",
+        category: effectiveCategory,
+      });
       const arr = res.data as unknown as Post[];
       arr.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
       return arr;
@@ -36,13 +41,8 @@ export function usePosts(
 
   let posts = data ?? [];
 
-  // 카테고리 필터 (클라이언트 사이드)
-  if (category && category !== "all") {
-    posts = posts.filter((p) => p.category === category);
-  }
-
   // 운영진 게시판 글은 staff 이상만 볼 수 있음
-  if ((category === "all" || !category) && !canSeeStaff) {
+  if (!effectiveCategory && !canSeeStaff) {
     posts = posts.filter((p) => p.category !== "staff");
   }
 
