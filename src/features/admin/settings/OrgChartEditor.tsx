@@ -40,7 +40,7 @@ interface EditDialogProps {
 
 function EditDialog({ position, allPositions, open, onClose, onSave }: EditDialogProps) {
   const { members } = useMembers();
-  const staffMembers = members.filter((m) => ["staff", "president", "admin"].includes(m.role));
+  const staffMembers = members.filter((m) => ["sysadmin", "admin", "staff", "president"].includes(m.role));
 
   const [form, setForm] = useState<OrgPosition>(
     position ?? { id: generateId(), title: "", level: 0, order: 0 },

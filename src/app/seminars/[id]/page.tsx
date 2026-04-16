@@ -60,9 +60,9 @@ function ReviewCard({ review, extraInfo }: { review: SeminarReview; extraInfo?: 
           {extraInfo && (
             <span className="text-xs text-muted-foreground">{extraInfo}</span>
           )}
-          {review.authorRole && ["president", "admin"].includes(review.authorRole) && (
+          {review.authorRole && ["president", "admin", "sysadmin"].includes(review.authorRole) && (
             <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-              {review.authorRole === "president" ? "회장" : "관리자"}
+              {review.authorRole === "president" ? "회장" : review.authorRole === "sysadmin" ? "시스템 관리자" : "관리자"}
             </span>
           )}
           {review.authorRole === "staff" && (

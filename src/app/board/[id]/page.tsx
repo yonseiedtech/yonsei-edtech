@@ -141,7 +141,7 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
   }
 
   const isAuthor = user?.id === post.authorId;
-  const isAdmin = user ? ["admin", "president", "staff"].includes(user.role) : false;
+  const isAdmin = user ? ["sysadmin", "admin", "president", "staff"].includes(user.role) : false;
 
   async function handleDelete() {
     const cat = post!.category;

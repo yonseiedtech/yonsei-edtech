@@ -118,7 +118,7 @@ export const staffTools = {
   list_members: tool({
     description: "회원 목록을 조회합니다. 민감 정보(이메일 등)는 제외됩니다.",
     inputSchema: z.object({
-      role: z.enum(["admin", "president", "staff", "advisor", "alumni", "member"]).optional().describe("역할 필터"),
+      role: z.enum(["sysadmin", "admin", "president", "staff", "advisor", "alumni", "member"]).optional().describe("역할 필터"),
       generation: z.number().optional().describe("기수 필터"),
       limit: z.number().min(1).max(20).optional().describe("조회 개수 (최대 20)"),
     }),
@@ -269,7 +269,7 @@ export const staffTools = {
 
 /** 역할에 따라 사용 가능한 도구 세트 반환 */
 export function getToolsForRole(role: string) {
-  const STAFF_ROLES = ["staff", "president", "admin"];
+  const STAFF_ROLES = ["sysadmin", "admin", "staff", "president"];
   if (STAFF_ROLES.includes(role)) {
     return { ...publicTools, ...staffTools };
   }

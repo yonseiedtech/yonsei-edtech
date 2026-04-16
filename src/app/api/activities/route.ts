@@ -116,7 +116,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     // 일반 수정 (staff+ 전용)
-    if (!authResult || !["staff", "president", "admin"].includes(authResult.role)) {
+    if (!authResult || !["sysadmin", "admin", "staff", "president"].includes(authResult.role)) {
       return Response.json({ error: "권한이 부족합니다." }, { status: 403 });
     }
     await db.collection("activities").doc(id).update({ ...data, updatedAt: new Date().toISOString() });

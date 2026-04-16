@@ -20,7 +20,7 @@ interface Props {
   postId: string;
 }
 
-const STAFF_ROLES: UserRole[] = ["admin", "president", "staff"];
+const STAFF_ROLES: UserRole[] = ["sysadmin", "admin", "president", "staff"];
 
 function formatDate(iso: string) {
   const d = new Date(iso);

@@ -331,7 +331,7 @@ export default function Header() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="truncate text-sm font-semibold">{user.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">{user.role === "admin" ? "관리자" : user.role === "president" ? "학회장" : user.role === "staff" ? "운영진" : user.role === "alumni" ? "졸업생" : "회원"}</p>
+                  <p className="truncate text-xs text-muted-foreground">{user.role === "sysadmin" ? "시스템 관리자" : user.role === "admin" ? "관리자" : user.role === "president" ? "학회장" : user.role === "staff" ? "운영진" : user.role === "alumni" ? "졸업생" : "회원"}</p>
                 </div>
                 <NotificationBell />
                 <button

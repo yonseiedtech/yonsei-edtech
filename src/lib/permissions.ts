@@ -11,6 +11,7 @@ export const ROLE_HIERARCHY: Record<UserRole, number> = {
   staff: 3,
   president: 4,
   admin: 5,
+  sysadmin: 6,
 };
 
 /** user가 null이면 guest로 취급 */
@@ -24,10 +25,18 @@ export function isAtLeast(user: User | null, minimumRole: UserRole): boolean {
   return ROLE_HIERARCHY[role] >= ROLE_HIERARCHY[minimumRole];
 }
 
-/** user의 역할이 allowedRoles 배열에 포함되는지 확인 */
+/** user의 역할이 allowedRoles 배열에 포함되는지 확인.
+ *  sysadmin은 admin을 상위 포함 — admin이 허용된 곳이면 sysadmin도 허용. */
 export function hasPermission(user: User | null, allowedRoles: UserRole[]): boolean {
   const role = getUserRole(user);
-  return allowedRoles.includes(role);
+  if (allowedRoles.includes(role)) return true;
+  if (role === "sysadmin" && allowedRoles.includes("admin")) return true;
+  return false;
+}
+
+/** admin 또는 sysadmin인지 확인 */
+export function isAdminOrSysadmin(user: User | null): boolean {
+  return isAtLeast(user, "admin");
 }
 
 /** staff 이상 (staff, president, admin) */

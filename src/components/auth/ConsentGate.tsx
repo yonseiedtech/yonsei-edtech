@@ -27,7 +27,7 @@ export default function ConsentGate() {
       return;
     }
     // admin/president는 게이트 대상 아님
-    if (user.role === "admin" || user.role === "president") {
+    if (user.role === "sysadmin" || user.role === "admin" || user.role === "president") {
       setOpen(false);
       return;
     }
@@ -63,7 +63,7 @@ export default function ConsentGate() {
   }
 
   if (!user) return null;
-  if (user.role === "admin" || user.role === "president") return null;
+  if (user.role === "sysadmin" || user.role === "admin" || user.role === "president") return null;
 
   return (
     <Dialog

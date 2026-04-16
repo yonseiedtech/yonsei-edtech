@@ -38,7 +38,7 @@ interface Props {
 
 export default function InterviewResponses({ postId, meta }: Props) {
   const { user } = useAuthStore();
-  const isStaffPlus = user ? ["admin", "president", "staff"].includes(user.role) : false;
+  const isStaffPlus = user ? ["sysadmin", "admin", "president", "staff"].includes(user.role) : false;
   const { responses, isLoading } = useInterviewResponses(postId);
   const deleteResponse = useDeleteInterviewResponse(postId);
   const [pendingDelete, setPendingDelete] = useState<InterviewResponse | null>(null);

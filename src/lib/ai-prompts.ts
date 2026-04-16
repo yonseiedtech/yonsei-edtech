@@ -19,7 +19,7 @@ const STAFF_EXTRA = `## 운영진 추가 기능
 
 export function getOrchestraSystemPrompt(role: string, userName?: string): string {
   const greeting = userName ? `현재 대화 상대: ${userName}님` : "현재 대화 상대: 비로그인 방문자";
-  const isStaff = ["staff", "president", "admin"].includes(role);
+  const isStaff = ["sysadmin", "admin", "staff", "president"].includes(role);
 
   return `당신은 연세교육공학회의 연교공 챗봇입니다.
 

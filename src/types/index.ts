@@ -1,7 +1,8 @@
 // ── 역할 ──
-export type UserRole = "admin" | "president" | "staff" | "advisor" | "alumni" | "member" | "guest";
+export type UserRole = "sysadmin" | "admin" | "president" | "staff" | "advisor" | "alumni" | "member" | "guest";
 
 export const ROLE_LABELS: Record<UserRole, string> = {
+  sysadmin: "시스템 관리자",
   admin: "관리자",
   president: "회장",
   staff: "운영진",

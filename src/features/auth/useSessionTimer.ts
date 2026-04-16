@@ -16,6 +16,7 @@ const DAY = 24 * HOUR;
  * - 일반 회원: 30일 — rolling refresh, 활동 있을 때 자동 연장
  */
 const IDLE_LIMITS: Record<UserRole, number> = {
+  sysadmin: 2 * HOUR,
   admin: 2 * HOUR,
   president: 2 * HOUR,
   staff: 2 * HOUR,
@@ -45,7 +46,7 @@ export function useSessionTimer() {
   const limit = user ? IDLE_LIMITS[user.role] ?? IDLE_LIMITS.member : 0;
   const elapsed = now - lastActivity;
   const remaining = Math.max(0, limit - elapsed);
-  const isSensitiveRole = !!user && ["admin", "president", "staff", "advisor"].includes(user.role);
+  const isSensitiveRole = !!user && ["sysadmin", "admin", "president", "staff", "advisor"].includes(user.role);
 
   const extend = useCallback(() => {
     const t = Date.now();

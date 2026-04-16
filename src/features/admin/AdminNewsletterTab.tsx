@@ -86,7 +86,7 @@ export default function AdminNewsletterTab() {
   // 운영진 목록 (admin, president, staff)
   const { members: allMembers } = useMembers();
   const staffMembers = allMembers.filter((m) =>
-    ["admin", "president", "staff"].includes(m.role)
+    ["sysadmin", "admin", "president", "staff"].includes(m.role)
   );
 
   const [showPostPicker, setShowPostPicker] = useState(false);
@@ -876,11 +876,13 @@ export default function AdminNewsletterTab() {
                       <span className="text-sm font-medium">{member.name}</span>
                       <div className="flex items-center gap-1.5">
                         <Badge variant="secondary" className="text-[10px]">
-                          {member.role === "admin"
-                            ? "관리자"
-                            : member.role === "president"
-                              ? "회장"
-                              : "운영진"}
+                          {member.role === "sysadmin"
+                            ? "시스템 관리자"
+                            : member.role === "admin"
+                              ? "관리자"
+                              : member.role === "president"
+                                ? "회장"
+                                : "운영진"}
                         </Badge>
                         {member.generation && (
                           <span className="text-[10px] text-muted-foreground">

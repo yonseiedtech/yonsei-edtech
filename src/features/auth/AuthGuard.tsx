@@ -19,7 +19,7 @@ export default function AuthGuard({ children, allowedRoles, requireAdmin }: Prop
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
-  const roles = requireAdmin ? ["admin" as UserRole] : allowedRoles;
+  const roles = requireAdmin ? (["admin", "sysadmin"] as UserRole[]) : allowedRoles;
 
   useEffect(() => {
     if (isLoading) return;

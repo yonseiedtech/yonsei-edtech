@@ -12,8 +12,7 @@ const DISMISS_KEY = "undergrad-info-prompt-dismissed-session";
 
 function needsUndergradInfo(user: User | null): boolean {
   if (!user) return false;
-  // 신규 가입자(가입 시 입력)는 undergraduateUniversity가 채워져 있음.
-  // 기존 회원은 비어있어 안내 대상.
+  if (user.role === "sysadmin") return false;
   if (user.undergraduateUniversity && user.undergraduateUniversity.trim()) return false;
   return true;
 }

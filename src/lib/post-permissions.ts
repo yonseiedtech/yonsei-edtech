@@ -9,14 +9,14 @@ interface CategoryRule {
 }
 
 export const POST_CATEGORY_RULES: Record<PostCategory, CategoryRule> = {
-  notice:    { read: "public", write: ["staff", "admin", "president"] },
-  seminar:   { read: "public", write: ["staff", "admin", "president"] },
-  free:      { read: "public", write: ["member", "staff", "admin", "president", "alumni", "advisor"] },
-  promotion: { read: "public", write: ["staff", "admin", "president"] },
-  resources: { read: ["member", "staff", "admin", "president", "alumni", "advisor"], write: ["staff", "admin", "president"] },
-  staff:     { read: ["staff", "admin", "president"], write: ["staff", "admin", "president"] },
-  press:     { read: "public", write: ["staff", "admin", "president"] }, // legacy
-  interview: { read: "public", write: ["staff", "admin", "president"] },
+  notice:    { read: "public", write: ["sysadmin", "admin", "staff", "president"] },
+  seminar:   { read: "public", write: ["sysadmin", "admin", "staff", "president"] },
+  free:      { read: "public", write: ["sysadmin", "admin", "member", "staff", "president", "alumni", "advisor"] },
+  promotion: { read: "public", write: ["sysadmin", "admin", "staff", "president"] },
+  resources: { read: ["sysadmin", "admin", "member", "staff", "president", "alumni", "advisor"], write: ["sysadmin", "admin", "staff", "president"] },
+  staff:     { read: ["sysadmin", "admin", "staff", "president"], write: ["sysadmin", "admin", "staff", "president"] },
+  press:     { read: "public", write: ["sysadmin", "admin", "staff", "president"] },
+  interview: { read: "public", write: ["sysadmin", "admin", "staff", "president"] },
 };
 
 export function canWritePost(category: PostCategory, role: UserRole | null | undefined): boolean {

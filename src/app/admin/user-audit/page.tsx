@@ -37,7 +37,7 @@ export default function UserAuditPage() {
   const [err, setErr] = useState("");
 
   async function load() {
-    if (!user || user.role !== "admin") {
+    if (!user || (user.role !== "admin" && user.role !== "sysadmin")) {
       setErr("관리자만 접근 가능합니다.");
       return;
     }
@@ -63,7 +63,7 @@ export default function UserAuditPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  if (!user || user.role !== "admin") {
+  if (!user || (user.role !== "admin" && user.role !== "sysadmin")) {
     return <div className="p-8 text-center text-muted-foreground">관리자만 접근 가능합니다.</div>;
   }
 
