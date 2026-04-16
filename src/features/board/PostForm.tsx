@@ -41,7 +41,6 @@ export default function PostForm({ mode = "create", initialData, initialCategory
   const [showPreview, setShowPreview] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>(initialData?.imageUrls ?? []);
   const [poll, setPoll] = useState<PostPoll | null>(initialData?.poll ?? null);
-  const [interviewOn, setInterviewOn] = useState<boolean>(initialData?.type === "interview");
   const [interview, setInterview] = useState<InterviewMeta>(
     initialData?.interview ?? {
       intro: "",
@@ -97,7 +96,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
   }
 
   async function onSubmit(data: PostData) {
-    const isInterview = interviewOn && category === "free" && isAtLeast(user, "staff");
+    const isInterview = category === "interview" && isAtLeast(user, "staff");
     if (isInterview) {
       if (!interview.intro.trim()) {
         toast.error("인터뷰 소개문을 입력하세요.");
@@ -134,6 +133,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
             seminar: "/board/seminar",
             resources: "/board/resources",
             staff: "/board/staff",
+            interview: "/board/interview",
           };
           router.push(categoryRoutes[category] ?? "/board");
         }
@@ -285,28 +285,16 @@ export default function PostForm({ mode = "create", initialData, initialCategory
             )}
           </div>
 
-          {/* 온라인 인터뷰 (자유게시판 + staff 이상) */}
-          {category === "free" && isAtLeast(user, "staff") && (
-            <div className="rounded-xl border bg-white p-4">
-              <label className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium">🎙️ 온라인 인터뷰로 만들기</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    응답자가 질문 하나씩 애니메이션 대화형으로 답변합니다. 회보 수집용.
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  className="h-5 w-5"
-                  checked={interviewOn}
-                  onChange={(e) => setInterviewOn(e.target.checked)}
-                />
-              </label>
-              {interviewOn && (
-                <div className="mt-4">
-                  <InterviewBuilder value={interview} onChange={setInterview} />
-                </div>
-              )}
+          {/* 온라인 인터뷰 (인터뷰 게시판 + staff 이상) */}
+          {category === "interview" && isAtLeast(user, "staff") && (
+            <div className="rounded-xl border border-violet-200 bg-violet-50/40 p-4">
+              <p className="text-sm font-medium text-violet-800">🎙️ 온라인 인터뷰 설정</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                인터뷰 게시판 글은 자동으로 온라인 인터뷰로 발행됩니다. 소개문과 질문을 입력하세요.
+              </p>
+              <div className="mt-4">
+                <InterviewBuilder value={interview} onChange={setInterview} />
+              </div>
             </div>
           )}
 

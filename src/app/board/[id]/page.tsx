@@ -161,7 +161,19 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
     <div className="py-16">
       <div className="mx-auto max-w-3xl px-4">
         <button
-          onClick={() => router.back()}
+          onClick={() => {
+            const routes: Record<string, string> = {
+              notice: "/notices",
+              free: "/board/free",
+              promotion: "/board/promotion",
+              seminar: "/board/seminar",
+              resources: "/board/resources",
+              staff: "/board/staff",
+              interview: "/board/interview",
+              press: "/newsletter",
+            };
+            router.push(routes[post.category] ?? "/board");
+          }}
           className="mb-6 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft size={16} />

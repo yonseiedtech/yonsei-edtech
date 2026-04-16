@@ -100,7 +100,7 @@ export const SPEAKER_TYPE_LABELS: Record<SpeakerType, string> = {
 
 // ── 게시판 ──
 // board-community-v2: "press"는 "promotion"으로 통합, "resources" 자료실 신규. 마이그레이션 기간 동안 "press" 읽기 호환 유지.
-export const POST_CATEGORIES = ["notice", "seminar", "free", "promotion", "resources", "staff"] as const;
+export const POST_CATEGORIES = ["notice", "seminar", "free", "promotion", "resources", "staff", "interview"] as const;
 
 export interface PostPollOption {
   id: string;
@@ -132,7 +132,7 @@ export interface Post {
   id: string;
   title: string;
   content: string;
-  category: "notice" | "seminar" | "free" | "promotion" | "resources" | "staff" | "press"; // "press"는 legacy
+  category: "notice" | "seminar" | "free" | "promotion" | "resources" | "staff" | "press" | "interview"; // "press"는 legacy
   imageUrls?: string[];
   attachments?: PostAttachment[];
   poll?: PostPoll;
@@ -208,6 +208,7 @@ export const CATEGORY_LABELS: Record<PostCategory, string> = {
   resources: "자료실",
   staff: "운영진 게시판",
   press: "보도자료", // legacy, 마이그레이션 이후 제거 예정
+  interview: "인터뷰 게시판",
 };
 
 /** 현재 활성 카테고리 (글쓰기·탭에 노출) - press 제외 */
@@ -218,6 +219,7 @@ export const ACTIVE_POST_CATEGORIES: Exclude<PostCategory, "press">[] = [
   "promotion",
   "resources",
   "staff",
+  "interview",
 ];
 
 // ── 세미나 ──

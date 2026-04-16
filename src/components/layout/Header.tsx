@@ -60,6 +60,7 @@ const PUBLIC_NAV: NavGroup[] = [
     items: [
       { href: "/notices", label: "공지사항" },
       { href: "/board/free", label: "자유게시판" },
+      { href: "/board/interview", label: "인터뷰 게시판" },
       { href: "/board/promotion", label: "홍보게시판" },
       { href: "/board/resources", label: "자료실" },
       { href: "/gallery", label: "포토갤러리" },
