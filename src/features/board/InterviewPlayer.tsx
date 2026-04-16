@@ -53,6 +53,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
     return map;
   });
   const [responseId, setResponseId] = useState<string | undefined>(existing?.id);
+  const isEditingSubmitted = existing?.status === "submitted";
   const [showCertificate, setShowCertificate] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [bgmOn, setBgmOn] = useState(true);
@@ -132,8 +133,10 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
     const a = currentAnswer;
     const needText = currentQ.answerType === "text" || currentQ.answerType === "text_and_photo";
     const needPhoto = currentQ.answerType === "photo";
+    const needChoice = currentQ.answerType === "single_choice" || currentQ.answerType === "ox";
     if (needText && (!a?.text || !a.text.trim())) return "답변을 입력해주세요.";
     if (needPhoto && (!a?.imageUrls || a.imageUrls.length === 0)) return "사진을 첨부해주세요.";
+    if (needChoice && !a?.selectedOptionId) return "선택지를 골라주세요.";
     return null;
   }
 
@@ -144,7 +147,9 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
   async function handleNext() {
     const err = validateCurrent();
     if (err) { toast.error(err); return; }
-    await persist("draft").catch(() => {});
+    if (!isEditingSubmitted) {
+      await persist("draft").catch(() => {});
+    }
     if (index < questions.length - 1) setIndex(index + 1);
   }
 
@@ -166,6 +171,10 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
   }
 
   async function handleSaveDraft() {
+    if (isEditingSubmitted) {
+      onClose();
+      return;
+    }
     try {
       await persist("draft");
       toast.success("임시저장되었습니다.");
@@ -190,7 +199,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-violet-100 via-white to-indigo-100">
+    <div className="fixed inset-0 z-50 flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-blue-50 via-white to-slate-100">
       <audio
         ref={audioRef}
         src={BGM_URL}
@@ -204,6 +213,11 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
         className="flex items-center justify-between gap-2 border-b bg-white/60 px-3 py-2 backdrop-blur sm:px-4 sm:py-3"
         style={{ paddingTop: "max(0.5rem, env(safe-area-inset-top))" }}
       >
+        <img
+          src="/yonsei-emblem.svg"
+          alt="연세대학교"
+          className="h-7 w-7 shrink-0 sm:h-8 sm:w-8"
+        />
         <div className="min-w-0 flex-1">
           <p className="truncate text-[11px] text-muted-foreground sm:text-xs">{post.authorName} · 온라인 인터뷰</p>
           <p className="truncate text-xs font-bold sm:text-sm">{post.title}</p>
@@ -238,7 +252,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
       {/* 진행바 */}
       <div className="h-1 w-full bg-muted">
         <motion.div
-          className="h-full bg-gradient-to-r from-violet-500 to-indigo-500"
+          className="h-full bg-gradient-to-r from-[#003876] to-[#1a5fa0]"
           animate={{ width: `${progress}%` }}
           transition={{ duration: 0.4 }}
         />
@@ -256,10 +270,20 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
               transition={{ duration: 0.4 }}
               className="mx-auto w-full max-w-2xl text-center"
             >
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-2xl font-bold text-white">
+              <div className="mx-auto flex flex-col items-center gap-2">
+                <img
+                  src="/yonsei-emblem.svg"
+                  alt="연세대학교"
+                  className="h-12 w-12 opacity-90"
+                />
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#003876]/70">
+                  Yonsei University · 교육공학회
+                </p>
+              </div>
+              <div className="mx-auto mt-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#003876] to-[#00275c] text-2xl font-bold text-white shadow-lg">
                 {post.authorName.slice(0, 1)}
               </div>
-              <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-violet-700">
+              <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-[#003876]">
                 {post.authorName} · 인터뷰어
               </p>
               <h2 className="mt-2 text-2xl font-bold leading-snug sm:text-4xl">{post.title}</h2>
@@ -280,7 +304,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
               transition={{ duration: 0.32, ease: "easeOut" }}
               className="mx-auto w-full max-w-2xl"
             >
-              <p className="text-center text-xs font-semibold uppercase tracking-wider text-violet-600">
+              <p className="text-center text-xs font-semibold uppercase tracking-wider text-[#003876]">
                 Q{index + 1} / {total}
               </p>
               <motion.h2
@@ -319,6 +343,56 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                         {(currentAnswer?.text ?? "").length} / {currentQ.maxChars}
                       </p>
                     )}
+                  </div>
+                )}
+
+                {currentQ.answerType === "single_choice" && (
+                  <div className="space-y-2">
+                    {(currentQ.options ?? []).map((opt) => {
+                      const selected = currentAnswer?.selectedOptionId === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => patchAnswer({ selectedOptionId: opt.id, text: undefined })}
+                          className={`block w-full rounded-xl border-2 px-4 py-3 text-left text-base transition-all ${
+                            selected
+                              ? "border-[#003876] bg-[#003876]/5 font-semibold text-[#003876] shadow-sm"
+                              : "border-muted bg-white hover:border-[#003876]/40 hover:bg-blue-50/40"
+                          }`}
+                        >
+                          <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full border-2 align-middle" style={{ borderColor: selected ? "#003876" : "#cbd5e1" }}>
+                            {selected && <span className="h-2.5 w-2.5 rounded-full bg-[#003876]" />}
+                          </span>
+                          {opt.label || <span className="text-muted-foreground">(선택지 미입력)</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {currentQ.answerType === "ox" && (
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                    {(["O", "X"] as const).map((v) => {
+                      const selected = currentAnswer?.selectedOptionId === v;
+                      const isO = v === "O";
+                      return (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => patchAnswer({ selectedOptionId: v, text: undefined })}
+                          className={`flex aspect-square items-center justify-center rounded-2xl border-4 text-6xl font-bold transition-all sm:text-7xl ${
+                            selected
+                              ? isO
+                                ? "border-emerald-500 bg-emerald-50 text-emerald-600 shadow-lg"
+                                : "border-rose-500 bg-rose-50 text-rose-600 shadow-lg"
+                              : "border-muted bg-white text-muted-foreground hover:border-[#003876]/40 hover:bg-blue-50/40"
+                          }`}
+                        >
+                          {isO ? "⭕" : "❌"}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
 

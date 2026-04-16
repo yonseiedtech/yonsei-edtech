@@ -331,19 +331,36 @@ export default function Header() {
                   <p className="truncate text-xs text-muted-foreground">{user.role === "admin" ? "관리자" : user.role === "president" ? "학회장" : user.role === "staff" ? "운영진" : user.role === "alumni" ? "졸업생" : "회원"}</p>
                 </div>
                 <NotificationBell />
+                <button
+                  onClick={() => { setMobileOpen(false); logout(); }}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-red-500 hover:bg-red-50"
+                  aria-label="로그아웃"
+                  title="로그아웃"
+                >
+                  <LogOut size={16} />
+                </button>
               </div>
             </div>
           )}
           <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-4">
           <nav className="flex flex-col gap-1 pt-2">
             {!user && (
-              <Link
-                href="/login"
-                onClick={() => setMobileOpen(false)}
-                className="mb-2 rounded-xl bg-primary px-4 py-2.5 text-center text-sm font-semibold text-white shadow-sm"
-              >
-                로그인
-              </Link>
+              <div className="mb-2 grid grid-cols-2 gap-2">
+                <Link
+                  href="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-xl bg-primary px-3 py-2 text-center text-sm font-semibold text-white shadow-sm"
+                >
+                  로그인
+                </Link>
+                <Link
+                  href="/signup"
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-xl border border-primary px-3 py-2 text-center text-sm font-semibold text-primary"
+                >
+                  회원가입
+                </Link>
+              </div>
             )}
             {user && (
               <>

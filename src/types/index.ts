@@ -12,10 +12,9 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 };
 
 // ── 사용자 ──
-export type OccupationType = "student" | "corporate" | "teacher" | "researcher" | "freelancer" | "other";
+export type OccupationType = "corporate" | "teacher" | "researcher" | "freelancer" | "other";
 
 export const OCCUPATION_LABELS: Record<OccupationType, string> = {
-  student: "재학생/대학원생",
   corporate: "기업 재직",
   teacher: "학교 교사",
   researcher: "연구소/기관",
@@ -86,8 +85,19 @@ export interface User { [key: string]: unknown;
   securityAnswerHash?: string;
   /** 생년월일 */
   birthDate?: string;
+  /** 관심 연구분야 */
+  researchInterests?: string[];
+  /** 최근 논문 */
+  recentPapers?: RecentPaper[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface RecentPaper {
+  title: string;
+  authors?: string;
+  year?: number;
+  url?: string;
 }
 
 // ── 세미나 발표자 ──
@@ -151,8 +161,58 @@ export interface Post {
   _legacyCategory?: "press";
 }
 
+// ── 연구활동 (Research Papers) ──
+export type PaperType = "thesis" | "academic";
+export type ThesisLevel = "bachelor" | "master" | "doctoral";
+export type PaperReadStatus = "to_read" | "reading" | "completed";
+
+export interface PaperVariables {
+  independent?: string[];
+  dependent?: string[];
+  mediator?: string[];
+  moderator?: string[];
+  control?: string[];
+}
+
+export interface ResearchPaper {
+  id: string;
+  userId: string;
+
+  paperType: PaperType;
+  thesisLevel?: ThesisLevel;
+  title: string;
+  authors?: string;
+  year?: number;
+  venue?: string;
+  doi?: string;
+  url?: string;
+
+  variables?: PaperVariables;
+  methodology?: string;
+  findings?: string;
+  insights?: string;
+  myConnection?: string;
+
+  tags?: string[];
+  readStatus?: PaperReadStatus;
+  rating?: 1 | 2 | 3 | 4 | 5;
+
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ── 온라인 인터뷰 ──
-export type InterviewAnswerType = "text" | "photo" | "text_and_photo";
+export type InterviewAnswerType =
+  | "text"
+  | "photo"
+  | "text_and_photo"
+  | "single_choice"
+  | "ox";
+
+export interface InterviewChoice {
+  id: string;
+  label: string;
+}
 
 export interface InterviewQuestion {
   id: string;
@@ -161,6 +221,8 @@ export interface InterviewQuestion {
   answerType: InterviewAnswerType;
   required: boolean;
   maxChars?: number;
+  /** single_choice일 때 사용. ox는 자동으로 O/X 두 옵션 처리 */
+  options?: InterviewChoice[];
 }
 
 export interface InterviewMeta {
@@ -174,6 +236,8 @@ export interface InterviewAnswer {
   questionId: string;
   text?: string;
   imageUrls?: string[];
+  /** single_choice/ox 응답: 선택한 옵션 id (ox는 "O" 또는 "X") */
+  selectedOptionId?: string;
 }
 
 export interface InterviewResponse {

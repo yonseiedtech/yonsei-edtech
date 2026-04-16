@@ -85,11 +85,17 @@ export default function InterviewCertificate({ post, respondentName, answerCount
           {/* 콘텐츠 */}
           <div className="relative flex h-full flex-col items-center justify-between p-8 text-white">
             <div className="flex flex-col items-center">
-              <div className="rounded-xl bg-white/90 px-4 py-2 text-sm font-bold text-[#003876] shadow">
-                연세교육공학회
+              <div className="flex items-center gap-2 rounded-xl bg-white/95 px-4 py-2 text-sm font-bold text-[#003876] shadow">
+                <img
+                  src="/yonsei-emblem.svg"
+                  alt="연세대학교"
+                  crossOrigin="anonymous"
+                  className="h-6 w-6"
+                />
+                <span>연세교육공학회</span>
               </div>
-              <p className="mt-3 text-xs uppercase tracking-[0.3em] opacity-80">
-                Online Interview
+              <p className="mt-3 text-[10px] uppercase tracking-[0.3em] opacity-80">
+                Yonsei University · Online Interview
               </p>
             </div>
 

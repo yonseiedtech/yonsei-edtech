@@ -3,8 +3,13 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import type { InterviewMeta, InterviewQuestion, InterviewAnswerType } from "@/types";
-import { Plus, Trash2, ArrowUp, ArrowDown, Sparkles } from "lucide-react";
+import type {
+  InterviewMeta,
+  InterviewQuestion,
+  InterviewAnswerType,
+  InterviewChoice,
+} from "@/types";
+import { Plus, Trash2, ArrowUp, ArrowDown, Sparkles, X } from "lucide-react";
 
 interface Props {
   value: InterviewMeta;
@@ -15,10 +20,16 @@ const ANSWER_TYPE_LABELS: Record<InterviewAnswerType, string> = {
   text: "텍스트",
   photo: "사진",
   text_and_photo: "텍스트 + 사진",
+  single_choice: "선지형",
+  ox: "O / X",
 };
 
 function makeId() {
   return `q-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+}
+
+function makeChoiceId() {
+  return `c-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
 export default function InterviewBuilder({ value, onChange }: Props) {
@@ -31,6 +42,46 @@ export default function InterviewBuilder({ value, onChange }: Props) {
       ...value,
       questions: value.questions.map((q) => (q.id === qid ? { ...q, ...patch } : q)),
     });
+  }
+
+  function changeAnswerType(qid: string, next: InterviewAnswerType) {
+    const q = value.questions.find((x) => x.id === qid);
+    if (!q) return;
+    const patch: Partial<InterviewQuestion> = { answerType: next };
+    if (next === "single_choice") {
+      if (!q.options || q.options.length === 0) {
+        patch.options = [
+          { id: makeChoiceId(), label: "" },
+          { id: makeChoiceId(), label: "" },
+        ];
+      }
+    } else if (next === "ox") {
+      patch.options = undefined;
+    } else {
+      patch.options = undefined;
+    }
+    updateQuestion(qid, patch);
+  }
+
+  function updateChoice(qid: string, cid: string, label: string) {
+    const q = value.questions.find((x) => x.id === qid);
+    if (!q) return;
+    const opts = (q.options ?? []).map((c) => (c.id === cid ? { ...c, label } : c));
+    updateQuestion(qid, { options: opts });
+  }
+
+  function addChoice(qid: string) {
+    const q = value.questions.find((x) => x.id === qid);
+    if (!q) return;
+    const opts: InterviewChoice[] = [...(q.options ?? []), { id: makeChoiceId(), label: "" }];
+    updateQuestion(qid, { options: opts });
+  }
+
+  function removeChoice(qid: string, cid: string) {
+    const q = value.questions.find((x) => x.id === qid);
+    if (!q) return;
+    const opts = (q.options ?? []).filter((c) => c.id !== cid);
+    updateQuestion(qid, { options: opts });
   }
 
   function addQuestion() {
@@ -98,10 +149,12 @@ export default function InterviewBuilder({ value, onChange }: Props) {
       <div className="mt-5">
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold">질문 ({value.questions.length})</span>
-          <Button type="button" size="sm" variant="outline" onClick={addQuestion}>
-            <Plus size={14} className="mr-1" />
-            질문 추가
-          </Button>
+          {value.questions.length <= 2 && (
+            <Button type="button" size="sm" variant="outline" onClick={addQuestion}>
+              <Plus size={14} className="mr-1" />
+              질문 추가
+            </Button>
+          )}
         </div>
 
         {value.questions.length === 0 && (
@@ -111,70 +164,132 @@ export default function InterviewBuilder({ value, onChange }: Props) {
         )}
 
         <div className="mt-3 space-y-3">
-          {value.questions.map((q, i) => (
-            <div key={q.id} className="rounded-lg border bg-white p-4">
-              <div className="flex items-start gap-3">
-                <span className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-700">
-                  Q{i + 1}
-                </span>
-                <div className="flex-1 space-y-2">
-                  <Textarea
-                    value={q.prompt}
-                    onChange={(e) => updateQuestion(q.id, { prompt: e.target.value })}
-                    placeholder="질문을 입력하세요"
-                    rows={2}
-                  />
-                  <div className="flex flex-wrap items-center gap-2 text-xs">
-                    <select
-                      value={q.answerType}
-                      onChange={(e) =>
-                        updateQuestion(q.id, { answerType: e.target.value as InterviewAnswerType })
-                      }
-                      className="rounded-md border bg-white px-2 py-1"
-                    >
-                      {(Object.keys(ANSWER_TYPE_LABELS) as InterviewAnswerType[]).map((t) => (
-                        <option key={t} value={t}>
-                          {ANSWER_TYPE_LABELS[t]}
-                        </option>
-                      ))}
-                    </select>
-                    <label className="flex items-center gap-1">
-                      <input
-                        type="checkbox"
-                        checked={q.required}
-                        onChange={(e) => updateQuestion(q.id, { required: e.target.checked })}
-                      />
-                      필수
-                    </label>
-                    <label className="flex items-center gap-1">
-                      최대 글자수
-                      <input
-                        type="number"
-                        min={0}
-                        value={q.maxChars ?? 0}
+          {value.questions.map((q, i) => {
+            const needsCharCount =
+              q.answerType === "text" || q.answerType === "text_and_photo";
+            return (
+              <div key={q.id} className="rounded-lg border bg-white p-4">
+                <div className="flex items-start gap-3">
+                  <span className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-700">
+                    Q{i + 1}
+                  </span>
+                  <div className="flex-1 space-y-2">
+                    <Textarea
+                      value={q.prompt}
+                      onChange={(e) => updateQuestion(q.id, { prompt: e.target.value })}
+                      placeholder="질문을 입력하세요"
+                      rows={2}
+                    />
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                      <select
+                        value={q.answerType}
                         onChange={(e) =>
-                          updateQuestion(q.id, { maxChars: Number(e.target.value) || undefined })
+                          changeAnswerType(q.id, e.target.value as InterviewAnswerType)
                         }
-                        className="w-16 rounded-md border bg-white px-2 py-1"
-                      />
-                    </label>
+                        className="rounded-md border bg-white px-2 py-1"
+                      >
+                        {(Object.keys(ANSWER_TYPE_LABELS) as InterviewAnswerType[]).map((t) => (
+                          <option key={t} value={t}>
+                            {ANSWER_TYPE_LABELS[t]}
+                          </option>
+                        ))}
+                      </select>
+                      <label className="flex items-center gap-1">
+                        <input
+                          type="checkbox"
+                          checked={q.required}
+                          onChange={(e) => updateQuestion(q.id, { required: e.target.checked })}
+                        />
+                        필수
+                      </label>
+                      {needsCharCount && (
+                        <label className="flex items-center gap-1">
+                          최대 글자수
+                          <input
+                            type="number"
+                            min={0}
+                            value={q.maxChars ?? 0}
+                            onChange={(e) =>
+                              updateQuestion(q.id, { maxChars: Number(e.target.value) || undefined })
+                            }
+                            className="w-16 rounded-md border bg-white px-2 py-1"
+                          />
+                        </label>
+                      )}
+                    </div>
+
+                    {q.answerType === "single_choice" && (
+                      <div className="rounded-md border bg-violet-50/50 p-3">
+                        <p className="mb-2 text-xs font-semibold text-violet-700">선택지</p>
+                        <div className="space-y-2">
+                          {(q.options ?? []).map((c, ci) => (
+                            <div key={c.id} className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">{ci + 1}.</span>
+                              <Input
+                                value={c.label}
+                                onChange={(e) => updateChoice(q.id, c.id, e.target.value)}
+                                placeholder={`선택지 ${ci + 1}`}
+                                className="flex-1"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeChoice(q.id, c.id)}
+                                disabled={(q.options ?? []).length <= 2}
+                                className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-30"
+                                title="선택지 삭제"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => addChoice(q.id)}
+                          className="mt-2 inline-flex items-center gap-1 text-xs text-violet-700 hover:text-violet-900"
+                        >
+                          <Plus size={12} />
+                          선택지 추가
+                        </button>
+                      </div>
+                    )}
+
+                    {q.answerType === "ox" && (
+                      <p className="rounded-md bg-blue-50 p-2 text-xs text-blue-800">
+                        응답자에게 ⭕ O / ❌ X 두 개의 버튼이 표시됩니다.
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 flex-col gap-1">
+                    <button type="button" onClick={() => moveQuestion(q.id, -1)} className="rounded p-1 hover:bg-muted" title="위로">
+                      <ArrowUp size={14} />
+                    </button>
+                    <button type="button" onClick={() => moveQuestion(q.id, 1)} className="rounded p-1 hover:bg-muted" title="아래로">
+                      <ArrowDown size={14} />
+                    </button>
+                    <button type="button" onClick={() => removeQuestion(q.id)} className="rounded p-1 text-destructive hover:bg-destructive/10" title="삭제">
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </div>
-                <div className="flex shrink-0 flex-col gap-1">
-                  <button type="button" onClick={() => moveQuestion(q.id, -1)} className="rounded p-1 hover:bg-muted" title="위로">
-                    <ArrowUp size={14} />
-                  </button>
-                  <button type="button" onClick={() => moveQuestion(q.id, 1)} className="rounded p-1 hover:bg-muted" title="아래로">
-                    <ArrowDown size={14} />
-                  </button>
-                  <button type="button" onClick={() => removeQuestion(q.id)} className="rounded p-1 text-destructive hover:bg-destructive/10" title="삭제">
-                    <Trash2 size={14} />
-                  </button>
-                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
+
+        {value.questions.length > 0 && (
+          <div className="mt-4 flex justify-center">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addQuestion}
+              className="border-violet-300 bg-white text-violet-700 hover:bg-violet-50 hover:text-violet-900"
+            >
+              <Plus size={16} className="mr-1" />
+              질문 추가
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

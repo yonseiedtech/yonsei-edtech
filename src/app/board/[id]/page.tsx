@@ -32,6 +32,7 @@ import InterviewPlayer from "@/features/board/InterviewPlayer";
 import InterviewResponses from "@/features/board/InterviewResponses";
 import { useMyInterviewForPost } from "@/features/board/interview-store";
 import { Mic } from "lucide-react";
+import LoginModal from "@/features/auth/LoginModal";
 
 /** 이미지 마크다운을 img 태그로, 나머지는 XSS 방지 후 렌더링 */
 function renderPostContent(text: string): string {
@@ -60,6 +61,7 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const incrementView = useIncrementViewCount();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showInterviewPlayer, setShowInterviewPlayer] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const { response: myInterviewResp } = useMyInterviewForPost(id, user?.id);
   const viewCounted = useRef(false);
   const queryClient = useQueryClient();
@@ -228,11 +230,11 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
           )}
 
           {post.type === "interview" && post.interview ? (
-            <div className="mt-6 rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-50 p-6">
-              <div className="flex items-center gap-2 text-violet-700">
+            <div className="mt-6 rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-slate-50 p-6">
+              <div className="flex items-center gap-2 text-[#003876]">
                 <Mic size={18} />
                 <span className="text-sm font-bold">온라인 인터뷰</span>
-                <Badge variant="outline" className="border-violet-300 bg-white text-violet-700 text-[10px]">
+                <Badge variant="outline" className="border-blue-300 bg-white text-[#003876] text-[10px]">
                   {post.interview.questions.length}문항
                 </Badge>
                 {post.interview.deadline && (
@@ -251,12 +253,10 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
                     : false;
                   if (!user) {
                     return (
-                      <Link href="/login">
-                        <Button>
-                          <LogIn size={14} className="mr-1" />
-                          로그인 후 참여하기
-                        </Button>
-                      </Link>
+                      <Button onClick={() => setShowLoginModal(true)}>
+                        <LogIn size={14} className="mr-1" />
+                        로그인 후 참여하기
+                      </Button>
                     );
                   }
                   if (isExpired) {
@@ -317,35 +317,61 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
           />
         )}
 
-        <section className="mt-8">
-          <h2 className="text-lg font-bold">
-            댓글 <span className="text-primary">{comments.length}</span>
-          </h2>
+        {post.type !== "interview" && (
+          <section className="mt-8">
+            <h2 className="text-lg font-bold">
+              댓글 <span className="text-primary">{comments.length}</span>
+            </h2>
 
-          <div className="mt-4">
-            <CommentList
-              comments={comments}
-              currentUserId={user?.id}
-              isAdmin={isAdmin}
-              onDelete={handleDeleteComment}
-              onUpdate={handleUpdateComment}
-            />
-          </div>
+            <div className="mt-4">
+              <CommentList
+                comments={comments}
+                currentUserId={user?.id}
+                isAdmin={isAdmin}
+                onDelete={handleDeleteComment}
+                onUpdate={handleUpdateComment}
+              />
+            </div>
 
-          {user ? (
-            <CommentForm postId={id} />
-          ) : (
-            <div className="mt-4 rounded-lg border border-dashed p-4 text-center">
-              <p className="text-sm text-muted-foreground">댓글을 작성하려면 로그인이 필요합니다.</p>
-              <Link href="/login">
-                <Button variant="outline" size="sm" className="mt-2">
+            {user ? (
+              <CommentForm postId={id} />
+            ) : (
+              <div className="mt-4 rounded-lg border border-dashed p-4 text-center">
+                <p className="text-sm text-muted-foreground">댓글을 작성하려면 로그인이 필요합니다.</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => setShowLoginModal(true)}
+                >
                   <LogIn size={14} className="mr-1" />
                   로그인 후 댓글 작성
                 </Button>
-              </Link>
-            </div>
-          )}
-        </section>
+              </div>
+            )}
+          </section>
+        )}
+
+        <LoginModal
+          open={showLoginModal}
+          onOpenChange={setShowLoginModal}
+          returnUrl={`/board/${id}`}
+          title="로그인 후 이어서 진행하기"
+          description={
+            post.type === "interview"
+              ? "로그인하면 이 페이지를 떠나지 않고 인터뷰에 참여할 수 있습니다."
+              : "로그인하면 이 페이지를 떠나지 않고 활동을 이어갈 수 있습니다."
+          }
+          onLoggedIn={() => {
+            // 인터뷰 게시글이라면 로그인 직후 바로 참여 모달 노출
+            if (post.type === "interview" && post.interview) {
+              const isExpired = post.interview.deadline
+                ? new Date(post.interview.deadline).getTime() < Date.now()
+                : false;
+              if (!isExpired) setShowInterviewPlayer(true);
+            }
+          }}
+        />
 
         <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
           <AlertDialogContent>

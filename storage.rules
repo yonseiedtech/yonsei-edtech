@@ -22,6 +22,14 @@ service firebase.storage {
       allow create: if request.resource.size < 20 * 1024 * 1024;
     }
 
+    // 인터뷰 응답 이미지
+    match /interview/{postId}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.resource.size < 10 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
     // 범용 이미지 업로드 (프로필·명함·기타)
     match /images/{fileName} {
       allow read: if true;

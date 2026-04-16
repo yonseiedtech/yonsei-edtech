@@ -16,10 +16,13 @@ function SignupContent() {
   const searchParams = useSearchParams();
   const defaultName = searchParams.get("name") || undefined;
   const defaultStudentId = searchParams.get("studentId") || undefined;
+  const nextParam = searchParams.get("next") || "";
+  const safeNext = nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "";
   const [step, setStep] = useState<Step>("consent");
   const [consents, setConsents] = useState<UserConsents | undefined>(undefined);
 
   if (step === "done") {
+    const loginHref = safeNext ? `/login?next=${encodeURIComponent(safeNext)}` : "/login";
     return (
       <div className="flex min-h-[70vh] items-center justify-center px-4">
         <div className="max-w-md text-center">
@@ -32,7 +35,12 @@ function SignupContent() {
             <br />
             승인까지 1~2일 소요될 수 있습니다.
           </p>
-          <Link href="/login">
+          {safeNext && (
+            <p className="mt-3 text-xs text-muted-foreground">
+              승인 완료 후 로그인하면 원래 보던 페이지로 이동됩니다.
+            </p>
+          )}
+          <Link href={loginHref}>
             <Button className="mt-6">로그인 페이지로</Button>
           </Link>
         </div>

@@ -17,6 +17,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { User as UserIcon, LogOut, Calendar, X, FileText, KeyRound, UserCog, Award, Home, ChevronRight, FolderKanban, BookOpen, Globe, QrCode, Eye, Mic } from "lucide-react";
 import { useMyInterviewResponses } from "@/features/board/interview-store";
+import MyInterviewAnswersDialog from "@/features/board/MyInterviewAnswersDialog";
+import type { InterviewResponse } from "@/types";
 import EmptyState from "@/components/ui/empty-state";
 import { useAuth } from "@/features/auth/useAuth";
 import { ROLE_LABELS, ENROLLMENT_STATUS_LABELS } from "@/types";
@@ -53,6 +55,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
   const { seminars } = useSeminars();
   const { toggleAttendance } = useToggleAttendance();
   const [activeTab, setActiveTab] = useState<TabKey>("home");
+  const [viewingAnswerOf, setViewingAnswerOf] = useState<{ post: Post; response: InterviewResponse } | null>(null);
 
   // 대상 사용자 조회: 로그인 사용자와 동일하면 authUser 재사용
   const isSelf = authUser?.id === userId;
@@ -494,6 +497,16 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
             <MyPostList posts={myPosts} />
           )}
 
+          {viewingAnswerOf && viewingAnswerOf.post.interview && (
+            <MyInterviewAnswersDialog
+              open={!!viewingAnswerOf}
+              onOpenChange={(open) => { if (!open) setViewingAnswerOf(null); }}
+              postTitle={viewingAnswerOf.post.title}
+              meta={viewingAnswerOf.post.interview}
+              response={viewingAnswerOf.response}
+            />
+          )}
+
           {activeTab === "interviews" && (
             <div className="space-y-6">
               <section>
@@ -502,7 +515,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                   <EmptyState
                     icon={Mic}
                     title="아직 참여한 인터뷰가 없습니다"
-                    description="자유게시판의 온라인 인터뷰에 참여해보세요."
+                    description="인터뷰 게시판의 온라인 인터뷰에 참여해보세요."
                     actionLabel="자유게시판 가기"
                     actionHref="/board/free"
                   />
@@ -514,29 +527,46 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                         const p = postById.get(r.postId)!;
                         return (
                           <li key={r.id} className="rounded-xl border bg-white px-5 py-4 hover:border-primary/40">
-                            <Link href={`/board/${p.id}`} className="flex items-center justify-between">
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <Mic size={14} className="text-violet-600" />
-                                  <Badge variant="secondary" className="bg-violet-50 text-violet-700 text-[10px]">인터뷰</Badge>
-                                  <Badge
-                                    variant="outline"
-                                    className={cn(
-                                      "text-[10px]",
-                                      r.status === "submitted" ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700",
-                                    )}
-                                  >
-                                    {r.status === "submitted" ? "제출 완료" : "임시 저장"}
-                                  </Badge>
-                                </div>
-                                <p className="mt-1 truncate font-medium">{p.title}</p>
-                                <p className="mt-0.5 text-xs text-muted-foreground">
-                                  {r.submittedAt ? `제출 ${formatDate(r.submittedAt)}` : r.updatedAt ? `저장 ${formatDate(r.updatedAt)}` : ""}
-                                  {" · "}답변 {r.answers.length}개
-                                </p>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <Mic size={14} className="text-violet-600" />
+                                <Badge variant="secondary" className="bg-violet-50 text-violet-700 text-[10px]">인터뷰</Badge>
+                                <Badge
+                                  variant="outline"
+                                  className={cn(
+                                    "text-[10px]",
+                                    r.status === "submitted" ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700",
+                                  )}
+                                >
+                                  {r.status === "submitted" ? "제출 완료" : "임시 저장"}
+                                </Badge>
                               </div>
-                              <ChevronRight size={14} className="shrink-0 text-muted-foreground" />
-                            </Link>
+                              <p className="mt-1 truncate font-medium">{p.title}</p>
+                              <p className="mt-0.5 text-xs text-muted-foreground">
+                                {r.submittedAt ? `제출 ${formatDate(r.submittedAt)}` : r.updatedAt ? `저장 ${formatDate(r.updatedAt)}` : ""}
+                                {" · "}답변 {r.answers.length}개
+                              </p>
+                              <div className="mt-3 flex flex-wrap items-center gap-2">
+                                {p.interview && r.answers.length > 0 && (
+                                  <Button
+                                    type="button"
+                                    variant="default"
+                                    size="sm"
+                                    onClick={() => setViewingAnswerOf({ post: p, response: r })}
+                                    className="h-8"
+                                  >
+                                    <Eye size={13} className="mr-1" />
+                                    내 답변 보기
+                                  </Button>
+                                )}
+                                <Link href={`/board/${p.id}`}>
+                                  <Button type="button" variant="outline" size="sm" className="h-8">
+                                    게시글로 이동
+                                    <ChevronRight size={13} className="ml-0.5" />
+                                  </Button>
+                                </Link>
+                              </div>
+                            </div>
                           </li>
                         );
                       })}

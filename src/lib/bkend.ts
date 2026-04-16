@@ -35,7 +35,7 @@ import type {
   SeminarReview, Inquiry, Activity, AppNotification, WaitlistEntry,
   Poll, PollResponse, PhotoAlbum, Photo, AdminTodo, AuditLog,
   ActivityProgress, ActivityMaterial, EmailLog,
-  Lab, LabReaction, LabComment,
+  Lab, LabReaction, LabComment, ResearchPaper,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -539,6 +539,25 @@ export const labCommentsApi = {
   create: (data: Record<string, unknown>) => dataApi.create<LabComment>("lab_comments", data),
   update: (id: string, data: Record<string, unknown>) => dataApi.update<LabComment>("lab_comments", id, data),
   delete: (id: string) => dataApi.delete("lab_comments", id),
+};
+
+export const researchPapersApi = {
+  list: async (userId: string) => {
+    const res = await dataApi.list<ResearchPaper>("research_papers", {
+      "filter[userId]": userId,
+      limit: 500,
+    });
+    const sorted = [...res.data].sort((a, b) =>
+      (b.createdAt ?? "").localeCompare(a.createdAt ?? "")
+    );
+    return { ...res, data: sorted };
+  },
+  get: (id: string) => dataApi.get<ResearchPaper>("research_papers", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<ResearchPaper>("research_papers", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<ResearchPaper>("research_papers", id, data),
+  delete: (id: string) => dataApi.delete("research_papers", id),
 };
 
 export const notificationsApi = {

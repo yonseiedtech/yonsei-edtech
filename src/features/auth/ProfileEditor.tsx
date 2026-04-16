@@ -1,14 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Save } from "lucide-react";
+import { Save, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { useUpdateProfile } from "@/features/member/useMembers";
 import { useAuthStore } from "@/features/auth/auth-store";
-import type { User, OccupationType, ContactVisibility, EnrollmentStatus } from "@/types";
+import type { User, OccupationType, ContactVisibility, EnrollmentStatus, RecentPaper } from "@/types";
 import { OCCUPATION_LABELS, VISIBILITY_LABELS, ENROLLMENT_STATUS_LABELS } from "@/types";
 
 const ENROLLMENT_YEAR_OPTIONS = Array.from({ length: 15 }, (_, i) => 2026 - i);
@@ -36,7 +37,6 @@ interface Props {
 }
 
 const OCCUPATION_FIELDS: Record<OccupationType, { affiliation: string; department: string; position: string }> = {
-  student: { affiliation: "소속 대학·기관", department: "학과", position: "과정 (학부/석사/박사)" },
   corporate: { affiliation: "회사명", department: "부서", position: "직책" },
   teacher: { affiliation: "소속 교육청/학교", department: "학교급 (초/중/고)", position: "담당 과목" },
   researcher: { affiliation: "기관명", department: "부서", position: "직위" },
@@ -45,6 +45,10 @@ const OCCUPATION_FIELDS: Record<OccupationType, { affiliation: string; departmen
 };
 
 export default function ProfileEditor({ user }: Props) {
+  const [researchInterests, setResearchInterests] = useState<string[]>(user.researchInterests ?? []);
+  const [newInterest, setNewInterest] = useState("");
+  const [recentPapers, setRecentPapers] = useState<RecentPaper[]>(user.recentPapers ?? []);
+
   const { register, handleSubmit, control, setValue } = useForm<ProfileData>({
     defaultValues: {
       name: user.name,
@@ -95,6 +99,8 @@ export default function ProfileEditor({ user }: Props) {
         enrollmentYear: data.enrollmentYear ? Number(data.enrollmentYear) : undefined,
         enrollmentHalf: data.enrollmentHalf ? Number(data.enrollmentHalf) : undefined,
         enrollmentStatus: data.enrollmentStatus || undefined,
+        researchInterests: researchInterests.length > 0 ? researchInterests : undefined,
+        recentPapers: recentPapers.length > 0 ? recentPapers : undefined,
       };
       await updateProfile({ id: user.id, data: payload as unknown as Record<string, unknown> });
       const updatedUser = {
@@ -118,10 +124,6 @@ export default function ProfileEditor({ user }: Props) {
       <div>
         <label className="mb-1.5 block text-sm font-medium">아이디</label>
         <Input value={user.username} disabled className="bg-muted" />
-      </div>
-      <div>
-        <label className="mb-1.5 block text-sm font-medium">기수</label>
-        <Input {...register("generation", { valueAsNumber: true })} type="number" />
       </div>
       <div>
         <label className="mb-1.5 block text-sm font-medium">학번</label>
@@ -252,6 +254,104 @@ export default function ProfileEditor({ user }: Props) {
                 <option key={key} value={key}>{label}</option>
               ))}
             </select>
+          </div>
+        </div>
+      </div>
+
+      {/* 연구 정보 */}
+      <div className="border-t pt-6">
+        <h3 className="text-sm font-bold">연구 정보</h3>
+        <div className="mt-3 space-y-4">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium">관심 연구분야</label>
+            <div className="flex flex-wrap gap-2">
+              {researchInterests.map((interest, i) => (
+                <span key={i} className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm text-primary">
+                  {interest}
+                  <button type="button" onClick={() => setResearchInterests(prev => prev.filter((_, idx) => idx !== i))} className="hover:text-destructive">
+                    <X size={14} />
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div className="mt-2 flex gap-2">
+              <Input
+                value={newInterest}
+                onChange={(e) => setNewInterest(e.target.value)}
+                placeholder="예: 교수설계, AI 교육, HCI"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const v = newInterest.trim();
+                    if (v && !researchInterests.includes(v)) {
+                      setResearchInterests(prev => [...prev, v]);
+                      setNewInterest("");
+                    }
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+                onClick={() => {
+                  const v = newInterest.trim();
+                  if (v && !researchInterests.includes(v)) {
+                    setResearchInterests(prev => [...prev, v]);
+                    setNewInterest("");
+                  }
+                }}
+              >
+                <Plus size={14} className="mr-1" />추가
+              </Button>
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium">최근 논문</label>
+            {recentPapers.map((paper, i) => (
+              <div key={i} className="mb-2 rounded-lg border p-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 space-y-2">
+                    <Input
+                      value={paper.title}
+                      onChange={(e) => setRecentPapers(prev => prev.map((p, idx) => idx === i ? { ...p, title: e.target.value } : p))}
+                      placeholder="논문 제목"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        value={paper.authors ?? ""}
+                        onChange={(e) => setRecentPapers(prev => prev.map((p, idx) => idx === i ? { ...p, authors: e.target.value } : p))}
+                        placeholder="저자 (예: 홍길동, 김철수)"
+                      />
+                      <Input
+                        value={paper.year ?? ""}
+                        onChange={(e) => setRecentPapers(prev => prev.map((p, idx) => idx === i ? { ...p, year: e.target.value ? Number(e.target.value) : undefined } : p))}
+                        type="number"
+                        placeholder="발행연도"
+                      />
+                    </div>
+                    <Input
+                      value={paper.url ?? ""}
+                      onChange={(e) => setRecentPapers(prev => prev.map((p, idx) => idx === i ? { ...p, url: e.target.value } : p))}
+                      placeholder="URL (선택)"
+                    />
+                  </div>
+                  <button type="button" className="ml-2 text-muted-foreground hover:text-destructive" onClick={() => setRecentPapers(prev => prev.filter((_, idx) => idx !== i))}>
+                    <X size={16} />
+                  </button>
+                </div>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setRecentPapers(prev => [...prev, { title: "" }])}
+            >
+              <Plus size={14} className="mr-1" />논문 추가
+            </Button>
           </div>
         </div>
       </div>

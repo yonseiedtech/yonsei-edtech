@@ -11,7 +11,14 @@ import { authApi, clearTokens } from "@/lib/bkend";
 import { LogIn, Clock, Mail } from "lucide-react";
 import { toast } from "sonner";
 
-export default function LoginForm() {
+interface LoginFormProps {
+  /** 모달용: 로그인 성공 시 페이지 이동 대신 호출됨. 회원가입 링크 노출도 제어 가능 */
+  onSuccess?: () => void;
+  hideSignupLink?: boolean;
+  signupHref?: string;
+}
+
+export default function LoginForm({ onSuccess, hideSignupLink, signupHref }: LoginFormProps = {}) {
   const [loading, setLoading] = useState(false);
   const [pendingApproval, setPendingApproval] = useState(false);
   const [pendingEmail, setPendingEmail] = useState("");
@@ -37,6 +44,11 @@ export default function LoginForm() {
         useAuthStore.getState().logout();
         setPendingApproval(true);
         setPendingEmail(user.email || "");
+        return;
+      }
+      // 모달 모드: 콜백만 실행 (페이지 이동 없음)
+      if (onSuccess) {
+        onSuccess();
         return;
       }
       const nextParam = searchParams.get("next") || "";
@@ -146,10 +158,14 @@ export default function LoginForm() {
         <Link href="/forgot-password" className="hover:text-primary hover:underline">
           비밀번호 찾기
         </Link>
-        <span className="text-muted-foreground/40">·</span>
-        <Link href="/signup" className="font-medium text-primary hover:underline">
-          회원가입
-        </Link>
+        {!hideSignupLink && (
+          <>
+            <span className="text-muted-foreground/40">·</span>
+            <Link href={signupHref ?? "/signup"} className="font-medium text-primary hover:underline">
+              회원가입
+            </Link>
+          </>
+        )}
       </div>
 
       <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">

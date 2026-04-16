@@ -80,6 +80,20 @@ export function useMyInterviewForPost(postId: string, userId: string | undefined
   return { response: data ?? null, isLoading };
 }
 
+export function useDeleteInterviewResponse(postId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await dataApi.delete(TABLE, id);
+      return id;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["interview_responses", "post", postId] });
+      qc.invalidateQueries({ queryKey: ["interview_responses", "mine"] });
+    },
+  });
+}
+
 export function useSaveInterviewResponse() {
   const qc = useQueryClient();
   return useMutation({
