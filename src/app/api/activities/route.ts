@@ -1,7 +1,30 @@
 import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { requireAuth } from "@/lib/api-auth";
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
+
+/**
+ * createdAt/updatedAt이 Firestore Timestamp 객체로 저장된 레거시 문서와
+ * ISO 문자열로 저장된 신규 문서를 모두 지원하기 위한 정규화 유틸.
+ */
+function tsToIso(v: unknown): string {
+  if (typeof v === "string") return v;
+  if (v instanceof Timestamp) return v.toDate().toISOString();
+  if (v && typeof v === "object") {
+    const o = v as { _seconds?: number; seconds?: number; _nanoseconds?: number; nanoseconds?: number };
+    const sec = o._seconds ?? o.seconds;
+    if (typeof sec === "number") return new Date(sec * 1000).toISOString();
+  }
+  return "";
+}
+
+function normalizeDoc(raw: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...raw,
+    createdAt: tsToIso(raw.createdAt) || raw.createdAt,
+    updatedAt: tsToIso(raw.updatedAt) || raw.updatedAt,
+  };
+}
 
 // 활동 목록 조회 (공개)
 export async function GET(req: NextRequest) {
@@ -14,21 +37,23 @@ export async function GET(req: NextRequest) {
     if (id) {
       const doc = await db.collection("activities").doc(id).get();
       if (!doc.exists) return Response.json({ error: "활동을 찾을 수 없습니다." }, { status: 404 });
-      return Response.json({ data: { id: doc.id, ...doc.data() } });
+      return Response.json({ data: { id: doc.id, ...normalizeDoc(doc.data() as Record<string, unknown>) } });
     }
 
     // type 필터가 있으면 orderBy 생략 (복합 인덱스 미생성 대비) → 메모리 정렬
     const snap = type
       ? await db.collection("activities").where("type", "==", type).get()
       : await db.collection("activities").orderBy("createdAt", "desc").get();
-    const data = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) }));
-    if (type) {
-      data.sort((a, b) => {
-        const ca = (a as { createdAt?: string }).createdAt ?? "";
-        const cb = (b as { createdAt?: string }).createdAt ?? "";
-        return cb.localeCompare(ca);
-      });
-    }
+    const data = snap.docs.map((d) => ({
+      id: d.id,
+      ...normalizeDoc(d.data() as Record<string, unknown>),
+    }));
+    // 모든 응답을 createdAt 내림차순으로 정렬 (정규화 후 안전)
+    data.sort((a, b) => {
+      const ca = tsToIso((a as Record<string, unknown>).createdAt);
+      const cb = tsToIso((b as Record<string, unknown>).createdAt);
+      return cb.localeCompare(ca);
+    });
     return Response.json({ data });
   } catch (err) {
     console.error("[activities GET]", err);
