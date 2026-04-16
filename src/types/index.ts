@@ -220,6 +220,26 @@ export interface ResearchPaper {
   updatedAt: string;
 }
 
+// ── 내 논문 작성 (단일 문서 MVP) ──
+export type WritingPaperChapterKey =
+  | "intro"        // 서론
+  | "background"   // 이론적 배경
+  | "method"       // 연구 방법
+  | "results"      // 연구 결과
+  | "conclusion";  // 결론
+
+export interface WritingPaper {
+  id: string;
+  userId: string;
+  title?: string;
+  /** 5장 본문 */
+  chapters?: Partial<Record<WritingPaperChapterKey, string>>;
+  /** UI 표시용 마지막 자동 저장 시각 (ISO) */
+  lastSavedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ── 온라인 인터뷰 ──
 export type InterviewAnswerType =
   | "text"

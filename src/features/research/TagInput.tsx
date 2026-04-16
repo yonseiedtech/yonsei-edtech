@@ -42,28 +42,6 @@ export default function TagInput({
 
   return (
     <div className={className}>
-      {value.length > 0 && (
-        <div className="mb-2 flex flex-wrap gap-1.5">
-          {value.map((tag, i) => (
-            <span
-              key={`${tag}-${i}`}
-              className={
-                chipClassName ??
-                "inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs text-primary"
-              }
-            >
-              {tag}
-              <button
-                type="button"
-                onClick={() => remove(i)}
-                className="hover:text-destructive"
-              >
-                <X size={12} />
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
       <div className="flex gap-2">
         <Input
           value={draft}
@@ -99,6 +77,28 @@ export default function TagInput({
             >
               + {s}
             </button>
+          ))}
+        </div>
+      )}
+      {value.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {value.map((tag, i) => (
+            <span
+              key={`${tag}-${i}`}
+              className={
+                chipClassName ??
+                "inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs text-primary"
+              }
+            >
+              {tag}
+              <button
+                type="button"
+                onClick={() => remove(i)}
+                className="hover:text-destructive"
+              >
+                <X size={12} />
+              </button>
+            </span>
           ))}
         </div>
       )}
