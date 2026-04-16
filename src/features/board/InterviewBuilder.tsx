@@ -21,7 +21,8 @@ const ANSWER_TYPE_LABELS: Record<InterviewAnswerType, string> = {
   text: "텍스트",
   photo: "사진",
   text_and_photo: "텍스트 + 사진",
-  single_choice: "선지형",
+  single_choice: "선지형 (단일 선택)",
+  multi_choice: "선지형 (복수 선택)",
   ox: "O / X",
   multi_text: "복수 답변(키워드 등)",
   fill_blank: "빈칸 채우기",
@@ -79,6 +80,15 @@ export default function InterviewBuilder({ value, onChange }: Props) {
           { id: makeChoiceId(), label: "" },
         ];
       }
+    } else if (next === "multi_choice") {
+      if (!q.options || q.options.length === 0) {
+        patch.options = [
+          { id: makeChoiceId(), label: "" },
+          { id: makeChoiceId(), label: "" },
+        ];
+      }
+      if (q.minCount == null) patch.minCount = 1;
+      if (q.maxCount == null) patch.maxCount = Math.max(2, (q.options ?? []).length || 2);
     } else if (next === "ox") {
       patch.options = undefined;
       patch.allowCustomOption = undefined;
@@ -330,10 +340,10 @@ export default function InterviewBuilder({ value, onChange }: Props) {
                           </label>
                         </>
                       )}
-                      {q.answerType === "multi_text" && (
+                      {(q.answerType === "multi_text" || q.answerType === "multi_choice") && (
                         <>
                           <label className="flex items-center gap-1">
-                            최소
+                            {q.answerType === "multi_choice" ? "최소 선택" : "최소"}
                             <input
                               type="number"
                               min={0}
@@ -346,7 +356,7 @@ export default function InterviewBuilder({ value, onChange }: Props) {
                             />
                           </label>
                           <label className="flex items-center gap-1">
-                            최대
+                            {q.answerType === "multi_choice" ? "최대 선택" : "최대"}
                             <input
                               type="number"
                               min={1}
@@ -362,9 +372,11 @@ export default function InterviewBuilder({ value, onChange }: Props) {
                       )}
                     </div>
 
-                    {q.answerType === "single_choice" && (
+                    {(q.answerType === "single_choice" || q.answerType === "multi_choice") && (
                       <div className="rounded-md border bg-violet-50/50 p-3">
-                        <p className="mb-2 text-xs font-semibold text-violet-700">선택지</p>
+                        <p className="mb-2 text-xs font-semibold text-violet-700">
+                          선택지 {q.answerType === "multi_choice" ? "(복수 선택 가능)" : "(단일 선택)"}
+                        </p>
                         <div className="space-y-2">
                           {(q.options ?? []).map((c, ci) => (
                             <div key={c.id} className="flex items-center gap-2">

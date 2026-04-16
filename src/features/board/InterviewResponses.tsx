@@ -103,6 +103,19 @@ export default function InterviewResponses({ postId, meta }: Props) {
     return null;
   }
 
+  function renderMultiChoiceLabels(
+    q: { options?: { id: string; label: string }[] },
+    selectedOptionIds?: string[],
+    customOptionText?: string,
+  ): string[] {
+    if (!selectedOptionIds || selectedOptionIds.length === 0) return [];
+    return selectedOptionIds.map((id) => {
+      if (id === CUSTOM_OPTION_ID) return `💬 ${customOptionText ?? "(직접 입력)"}`;
+      const opt = q.options?.find((o) => o.id === id);
+      return opt?.label ?? id;
+    });
+  }
+
   function renderFillBlankFilled(prompt: string, text?: string) {
     if (!FILL_BLANK_PATTERN.test(prompt)) return null;
     const parts = prompt.split(FILL_BLANK_PATTERN);
@@ -233,7 +246,23 @@ export default function InterviewResponses({ postId, meta }: Props) {
                               ))}
                           </div>
                         )}
-                        {!isFillBlank && q.answerType !== "multi_text" && a.text && (
+                        {q.answerType === "multi_choice" && (() => {
+                          const labels = renderMultiChoiceLabels(q, a.selectedOptionIds, a.customOptionText);
+                          if (labels.length === 0) return null;
+                          return (
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              {labels.map((l, i) => (
+                                <span
+                                  key={i}
+                                  className="rounded-md bg-blue-50 px-2 py-0.5 text-sm font-semibold text-[#003876]"
+                                >
+                                  ✓ {l}
+                                </span>
+                              ))}
+                            </div>
+                          );
+                        })()}
+                        {!isFillBlank && q.answerType !== "multi_text" && q.answerType !== "multi_choice" && a.text && (
                           <p className="mt-1 whitespace-pre-wrap text-sm text-foreground/90">{a.text}</p>
                         )}
                         {a.imageUrls && a.imageUrls.length > 0 && (

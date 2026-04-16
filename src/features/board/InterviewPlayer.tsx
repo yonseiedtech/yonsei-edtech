@@ -219,13 +219,14 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
     return saved;
   }
 
-  function validateCurrent(): string | null {
-    if (!currentQ) return null;
-    if (!currentQ.required) return null;
-    const a = currentAnswer;
-    const needText = currentQ.answerType === "text" || currentQ.answerType === "text_and_photo";
-    const needPhoto = currentQ.answerType === "photo";
-    const needChoice = currentQ.answerType === "single_choice" || currentQ.answerType === "ox";
+  function validateAnswer(
+    q: typeof questions[number],
+    a: InterviewAnswer | undefined,
+  ): string | null {
+    if (!q.required) return null;
+    const needText = q.answerType === "text" || q.answerType === "text_and_photo";
+    const needPhoto = q.answerType === "photo";
+    const needChoice = q.answerType === "single_choice" || q.answerType === "ox";
     if (needText && (!a?.text || !a.text.trim())) return "답변을 입력해주세요.";
     if (needPhoto && (!a?.imageUrls || a.imageUrls.length === 0)) return "사진을 첨부해주세요.";
     if (needChoice) {
@@ -234,13 +235,34 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
         return "직접 입력한 선지를 적어주세요.";
       }
     }
-    if (currentQ.answerType === "multi_text") {
+    if (q.answerType === "multi_choice") {
+      const ids = a?.selectedOptionIds ?? [];
+      const min = q.minCount ?? 1;
+      if (ids.length < min) return `최소 ${min}개 이상 선택해주세요.`;
+      if (ids.includes(CUSTOM_OPTION_ID) && !(a?.customOptionText ?? "").trim()) {
+        return "직접 입력한 선지를 적어주세요.";
+      }
+    }
+    if (q.answerType === "multi_text") {
       const items = (a?.texts ?? []).map((t) => t.trim()).filter(Boolean);
-      const min = currentQ.minCount ?? 1;
+      const min = q.minCount ?? 1;
       if (items.length < min) return `최소 ${min}개 이상 입력해주세요.`;
     }
-    if (currentQ.answerType === "fill_blank") {
+    if (q.answerType === "fill_blank") {
       if (!a?.text || !a.text.trim()) return "빈칸을 채워주세요.";
+    }
+    return null;
+  }
+
+  /** 모든 필수 질문 검증 → 미완료 첫 인덱스 반환, 모두 OK면 -1 */
+  function findFirstUnansweredRequired(answersMap: Record<string, InterviewAnswer> = answers): {
+    index: number;
+    error: string;
+  } | null {
+    for (let i = 0; i < questions.length; i++) {
+      const q = questions[i];
+      const err = validateAnswer(q, answersMap[q.id]);
+      if (err) return { index: i, error: err };
     }
     return null;
   }
@@ -252,8 +274,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
   }
 
   async function handleNext() {
-    const err = validateCurrent();
-    if (err) { toast.error(err); return; }
+    // 미응답 허용 — 검증은 최종 제출 시에만 수행
     const merged = commitQuestionElapsed();
     if (!isEditingSubmitted) {
       await persist("draft", merged).catch(() => {});
@@ -268,9 +289,14 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
   }
 
   async function handleSubmit() {
-    const err = validateCurrent();
-    if (err) { toast.error(err); return; }
     const merged = commitQuestionElapsed();
+    const missing = findFirstUnansweredRequired(merged);
+    if (missing) {
+      const targetQ = questions[missing.index];
+      toast.error(`Q${targetQ.order} ${missing.error}`);
+      if (index !== missing.index) setIndex(missing.index);
+      return;
+    }
     try {
       await persist("submitted", merged);
       setShowCertificate(true);
@@ -539,6 +565,99 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                     )}
                   </div>
                 )}
+
+                {currentQ.answerType === "multi_choice" && (() => {
+                  const min = currentQ.minCount ?? 1;
+                  const totalOptions = (currentQ.options?.length ?? 0) + (currentQ.allowCustomOption ? 1 : 0);
+                  const max = currentQ.maxCount ?? (totalOptions > 0 ? totalOptions : 99);
+                  const selectedIds = currentAnswer?.selectedOptionIds ?? [];
+                  const toggle = (id: string) => {
+                    const isOn = selectedIds.includes(id);
+                    if (isOn) {
+                      patchAnswer({
+                        selectedOptionIds: selectedIds.filter((x) => x !== id),
+                        ...(id === CUSTOM_OPTION_ID ? { customOptionText: undefined } : {}),
+                      });
+                      return;
+                    }
+                    if (selectedIds.length >= max) {
+                      toast.error(`최대 ${max}개까지 선택 가능합니다.`);
+                      return;
+                    }
+                    patchAnswer({ selectedOptionIds: [...selectedIds, id] });
+                  };
+                  return (
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        {min === max ? `${min}개 선택` : `${min}~${max}개 선택 가능`} · 현재 {selectedIds.length}개 선택
+                      </p>
+                      {(currentQ.options ?? []).map((opt) => {
+                        const selected = selectedIds.includes(opt.id);
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => toggle(opt.id)}
+                            className={`block w-full rounded-xl border-2 px-4 py-3 text-left text-base transition-all ${
+                              selected
+                                ? "border-[#003876] bg-[#003876]/5 font-semibold text-[#003876] shadow-sm"
+                                : "border-muted bg-white hover:border-[#003876]/40 hover:bg-blue-50/40"
+                            }`}
+                          >
+                            <span
+                              className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-md border-2 align-middle"
+                              style={{
+                                borderColor: selected ? "#003876" : "#cbd5e1",
+                                backgroundColor: selected ? "#003876" : "transparent",
+                              }}
+                            >
+                              {selected && <span className="text-[12px] font-bold leading-none text-white">✓</span>}
+                            </span>
+                            {opt.label || <span className="text-muted-foreground">(선택지 미입력)</span>}
+                          </button>
+                        );
+                      })}
+                      {currentQ.allowCustomOption && (() => {
+                        const selected = selectedIds.includes(CUSTOM_OPTION_ID);
+                        return (
+                          <div
+                            className={`rounded-xl border-2 px-4 py-3 transition-all ${
+                              selected
+                                ? "border-[#003876] bg-[#003876]/5 shadow-sm"
+                                : "border-dashed border-muted bg-white hover:border-[#003876]/40"
+                            }`}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => toggle(CUSTOM_OPTION_ID)}
+                              className="flex w-full items-center gap-2 text-left text-base"
+                            >
+                              <span
+                                className="inline-flex h-5 w-5 items-center justify-center rounded-md border-2 align-middle"
+                                style={{
+                                  borderColor: selected ? "#003876" : "#cbd5e1",
+                                  backgroundColor: selected ? "#003876" : "transparent",
+                                }}
+                              >
+                                {selected && <span className="text-[12px] font-bold leading-none text-white">✓</span>}
+                              </span>
+                              <span className="font-semibold text-[#003876]">+ 직접 입력</span>
+                            </button>
+                            {selected && (
+                              <Input
+                                value={currentAnswer?.customOptionText ?? ""}
+                                onChange={(e) => patchAnswer({ customOptionText: e.target.value })}
+                                placeholder="직접 입력할 선지를 적어주세요"
+                                className="mt-2 bg-white"
+                                style={{ fontSize: "16px" }}
+                              />
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  );
+                })()}
 
                 {currentQ.answerType === "multi_text" && (() => {
                   const min = currentQ.minCount ?? 1;

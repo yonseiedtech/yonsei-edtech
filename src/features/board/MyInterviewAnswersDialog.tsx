@@ -77,6 +77,19 @@ export default function MyInterviewAnswersDialog({
     return null;
   }
 
+  function renderMultiChoiceLabels(
+    q: { options?: { id: string; label: string }[] },
+    selectedOptionIds?: string[],
+    customOptionText?: string,
+  ): string[] {
+    if (!selectedOptionIds || selectedOptionIds.length === 0) return [];
+    return selectedOptionIds.map((id) => {
+      if (id === CUSTOM_OPTION_ID) return `💬 ${customOptionText ?? "(직접 입력)"}`;
+      const opt = q.options?.find((o) => o.id === id);
+      return opt?.label ?? id;
+    });
+  }
+
   function renderFillBlankFilled(prompt: string, text?: string) {
     if (!FILL_BLANK_PATTERN.test(prompt)) return null;
     const parts = prompt.split(FILL_BLANK_PATTERN);
@@ -140,12 +153,17 @@ export default function MyInterviewAnswersDialog({
               const isFillBlank = q.answerType === "fill_blank";
               const fillBlankNode = isFillBlank ? renderFillBlankFilled(q.prompt, a.text) : null;
               const isMultiText = q.answerType === "multi_text";
+              const isMultiChoice = q.answerType === "multi_choice";
               const multiTextItems = (a.texts ?? []).filter((t) => t && t.trim());
+              const multiChoiceLabels = isMultiChoice
+                ? renderMultiChoiceLabels(q, a.selectedOptionIds, a.customOptionText)
+                : [];
               const hasContent =
                 !!a.text ||
                 !!choiceLabel ||
                 (a.imageUrls && a.imageUrls.length > 0) ||
-                multiTextItems.length > 0;
+                multiTextItems.length > 0 ||
+                multiChoiceLabels.length > 0;
               return (
                 <div key={a.questionId} className="rounded-lg bg-muted/40 p-3">
                   <p className="text-xs font-semibold text-[#003876]">
@@ -174,7 +192,19 @@ export default function MyInterviewAnswersDialog({
                       ))}
                     </div>
                   )}
-                  {!isFillBlank && !isMultiText && a.text && (
+                  {isMultiChoice && multiChoiceLabels.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {multiChoiceLabels.map((l, i) => (
+                        <span
+                          key={i}
+                          className="rounded-md bg-blue-50 px-2 py-0.5 text-sm font-semibold text-[#003876]"
+                        >
+                          ✓ {l}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {!isFillBlank && !isMultiText && !isMultiChoice && a.text && (
                     <p className="mt-1 whitespace-pre-wrap text-sm text-foreground/90">{a.text}</p>
                   )}
                   {a.imageUrls && a.imageUrls.length > 0 && (

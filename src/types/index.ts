@@ -207,6 +207,7 @@ export type InterviewAnswerType =
   | "photo"
   | "text_and_photo"
   | "single_choice"
+  | "multi_choice"
   | "ox"
   | "multi_text"
   | "fill_blank";
@@ -228,13 +229,13 @@ export interface InterviewQuestion {
   required: boolean;
   /** undefined면 글자수 제한 없음 */
   maxChars?: number;
-  /** multi_text 전용 최소 항목 수 (기본 1) */
+  /** multi_text/multi_choice 전용 최소 항목/선택 수 (기본 1) */
   minCount?: number;
-  /** multi_text 전용 최대 항목 수 (기본 10) */
+  /** multi_text/multi_choice 전용 최대 항목/선택 수 (기본 10) */
   maxCount?: number;
-  /** single_choice일 때 사용. ox는 자동으로 O/X 두 옵션 처리 */
+  /** single_choice/multi_choice일 때 사용. ox는 자동으로 O/X 두 옵션 처리 */
   options?: InterviewChoice[];
-  /** single_choice에서 응답자가 직접 선지를 추가할 수 있는지 */
+  /** single_choice/multi_choice에서 응답자가 직접 선지를 추가할 수 있는지 */
   allowCustomOption?: boolean;
 }
 
@@ -252,6 +253,8 @@ export interface InterviewAnswer {
   imageUrls?: string[];
   /** single_choice/ox 응답: 선택한 옵션 id (ox는 "O" 또는 "X", 직접 입력은 CUSTOM_OPTION_ID) */
   selectedOptionId?: string;
+  /** multi_choice 응답: 선택한 옵션 id 목록 (직접 입력 포함 시 CUSTOM_OPTION_ID 포함) */
+  selectedOptionIds?: string[];
   /** allowCustomOption=true이고 직접 입력 선택 시 사용자가 입력한 텍스트 */
   customOptionText?: string;
   /** multi_text 응답: 복수 텍스트 항목 */
