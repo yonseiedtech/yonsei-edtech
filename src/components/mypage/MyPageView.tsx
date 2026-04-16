@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/features/auth/auth-store";
 import ProfileEditor from "@/features/auth/ProfileEditor";
 import PasswordChangeForm from "@/features/auth/PasswordChangeForm";
@@ -18,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { User as UserIcon, LogOut, Calendar, X, FileText, KeyRound, UserCog, Award, Home, ChevronRight, FolderKanban, BookOpen, Globe, QrCode, Eye, Mic } from "lucide-react";
 import { useMyInterviewResponses } from "@/features/board/interview-store";
 import MyInterviewAnswersDialog from "@/features/board/MyInterviewAnswersDialog";
+import ResearchPaperList from "@/features/research/ResearchPaperList";
 import type { InterviewResponse } from "@/types";
 import EmptyState from "@/components/ui/empty-state";
 import { useAuth } from "@/features/auth/useAuth";
@@ -54,7 +56,16 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
   const { posts } = usePosts();
   const { seminars } = useSeminars();
   const { toggleAttendance } = useToggleAttendance();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabKey>("home");
+  const [activitiesSubTab, setActivitiesSubTab] = useState<"academic" | "research">("academic");
+
+  useEffect(() => {
+    const t = searchParams.get("tab");
+    const sub = searchParams.get("sub");
+    if (t && (TABS.some((x) => x.key === t))) setActiveTab(t as TabKey);
+    if (sub === "research" || sub === "academic") setActivitiesSubTab(sub);
+  }, [searchParams]);
   const [viewingAnswerOf, setViewingAnswerOf] = useState<{ post: Post; response: InterviewResponse } | null>(null);
 
   // 대상 사용자 조회: 로그인 사용자와 동일하면 authUser 재사용
@@ -331,9 +342,37 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
           )}
 
           {activeTab === "activities" && (
-            <div className="space-y-6">
-              <section>
-                <h3 className="mb-2 text-sm font-semibold">학술활동 ({myActivities.length})</h3>
+            <div className="space-y-5">
+              {/* sub-tab switcher */}
+              <div className="flex items-center gap-1 rounded-xl border bg-muted/40 p-1 text-sm">
+                {([
+                  { key: "academic", label: "학술활동 이력" },
+                  { key: "research", label: "연구활동 이력" },
+                ] as const).map((s) => (
+                  <button
+                    key={s.key}
+                    type="button"
+                    onClick={() => setActivitiesSubTab(s.key)}
+                    className={cn(
+                      "flex-1 rounded-lg px-3 py-1.5 font-medium transition",
+                      activitiesSubTab === s.key
+                        ? "bg-white text-primary shadow-sm"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+
+              {activitiesSubTab === "research" && user && (
+                <ResearchPaperList user={user} readOnly={!isSelf || readOnly} />
+              )}
+
+              {activitiesSubTab === "academic" && (
+                <div className="space-y-6">
+                  <section>
+                    <h3 className="mb-2 text-sm font-semibold">학술활동 ({myActivities.length})</h3>
                 {myActivities.length === 0 ? (
                   <EmptyState
                     icon={BookOpen}
@@ -405,53 +444,55 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                 </section>
               )}
 
-              <section>
-                <h3 className="mb-2 text-sm font-semibold">참여 세미나 ({mySeminars.length})</h3>
-                {mySeminars.length === 0 ? (
-                  <EmptyState
-                    icon={Calendar}
-                    title="신청한 세미나가 없습니다"
-                    description="관심 있는 세미나에 참여 신청해보세요."
-                    actionLabel="세미나 보러가기"
-                    actionHref="/seminars"
-                  />
-                ) : (
-                  <div className="space-y-3">
-                    {mySeminars.map((s) => (
-                      <div key={s.id} className="rounded-xl border bg-white px-5 py-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Link href={`/seminars/${s.id}`} className="font-medium hover:text-primary hover:underline">
-                              {s.title}
-                            </Link>
-                            <p className="mt-0.5 text-sm text-muted-foreground">
-                              {formatDate(s.date)} {s.time} · {s.location}
-                            </p>
+                  <section>
+                    <h3 className="mb-2 text-sm font-semibold">참여 세미나 ({mySeminars.length})</h3>
+                    {mySeminars.length === 0 ? (
+                      <EmptyState
+                        icon={Calendar}
+                        title="신청한 세미나가 없습니다"
+                        description="관심 있는 세미나에 참여 신청해보세요."
+                        actionLabel="세미나 보러가기"
+                        actionHref="/seminars"
+                      />
+                    ) : (
+                      <div className="space-y-3">
+                        {mySeminars.map((s) => (
+                          <div key={s.id} className="rounded-xl border bg-white px-5 py-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <Link href={`/seminars/${s.id}`} className="font-medium hover:text-primary hover:underline">
+                                  {s.title}
+                                </Link>
+                                <p className="mt-0.5 text-sm text-muted-foreground">
+                                  {formatDate(s.date)} {s.time} · {s.location}
+                                </p>
+                              </div>
+                              {!readOnly && isSelf && (
+                                <Button variant="outline" size="sm" className="text-destructive" onClick={() => handleCancelAttendance(s.id)}>
+                                  <X size={14} className="mr-1" />취소
+                                </Button>
+                              )}
+                            </div>
+                            {checkedInMap.has(s.id) && (
+                              <div className="mt-2 flex items-center gap-2 border-t pt-2">
+                                <Badge variant="secondary" className="bg-green-50 text-green-700">출석 완료</Badge>
+                                <AttendanceCertificate
+                                  seminarTitle={s.title}
+                                  seminarDate={s.date}
+                                  seminarLocation={s.location}
+                                  attendeeName={user?.name ?? ""}
+                                  generation={user?.generation}
+                                  checkedInAt={checkedInMap.get(s.id)}
+                                />
+                              </div>
+                            )}
                           </div>
-                          {!readOnly && isSelf && (
-                            <Button variant="outline" size="sm" className="text-destructive" onClick={() => handleCancelAttendance(s.id)}>
-                              <X size={14} className="mr-1" />취소
-                            </Button>
-                          )}
-                        </div>
-                        {checkedInMap.has(s.id) && (
-                          <div className="mt-2 flex items-center gap-2 border-t pt-2">
-                            <Badge variant="secondary" className="bg-green-50 text-green-700">출석 완료</Badge>
-                            <AttendanceCertificate
-                              seminarTitle={s.title}
-                              seminarDate={s.date}
-                              seminarLocation={s.location}
-                              attendeeName={user?.name ?? ""}
-                              generation={user?.generation}
-                              checkedInAt={checkedInMap.get(s.id)}
-                            />
-                          </div>
-                        )}
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                )}
-              </section>
+                    )}
+                  </section>
+                </div>
+              )}
             </div>
           )}
 
