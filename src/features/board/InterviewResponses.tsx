@@ -12,12 +12,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Trash2 } from "lucide-react";
+import { Trash2, Lock, Globe } from "lucide-react";
 import { toast } from "sonner";
 import type { InterviewMeta, InterviewResponse } from "@/types";
 import { useInterviewResponses, useDeleteInterviewResponse } from "./interview-store";
 import { formatDate } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
+import InterviewResponseReactions from "./InterviewResponseReactions";
+import InterviewResponseComments from "./InterviewResponseComments";
 
 interface Props {
   postId: string;
@@ -30,12 +32,15 @@ export default function InterviewResponses({ postId, meta }: Props) {
   const { responses, isLoading } = useInterviewResponses(postId);
   const deleteResponse = useDeleteInterviewResponse(postId);
   const [pendingDelete, setPendingDelete] = useState<InterviewResponse | null>(null);
+  const visibility = meta.responseVisibility ?? "public";
+  const isPublic = visibility === "public";
   const submitted = useMemo(() => {
     const all = responses.filter((r) => r.status === "submitted");
     if (isStaffPlus) return all;
+    if (isPublic) return all;
     if (!user) return [];
     return all.filter((r) => r.respondentId === user.id);
-  }, [responses, isStaffPlus, user]);
+  }, [responses, isStaffPlus, isPublic, user]);
   const questionById = useMemo(() => {
     const m = new Map<
       string,
@@ -74,12 +79,29 @@ export default function InterviewResponses({ postId, meta }: Props) {
 
   return (
     <section className="mt-8">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold">
-          {isStaffPlus ? "전체 응답" : "내 응답"} ({submitted.length})
-        </h2>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-bold">
+            {isPublic || isStaffPlus ? "전체 응답" : "내 응답"} ({submitted.length})
+          </h2>
+          <span
+            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+              isPublic
+                ? "bg-blue-50 text-blue-700"
+                : "bg-violet-50 text-violet-700"
+            }`}
+            title={isPublic ? "공유 모드" : "인터뷰 모드"}
+          >
+            {isPublic ? <Globe size={11} /> : <Lock size={11} />}
+            {isPublic ? "공유 모드" : "인터뷰 모드"}
+          </span>
+        </div>
         <p className="text-xs text-muted-foreground">
-          {isStaffPlus ? "운영진 전용 — 전체 응답 열람" : "본인이 제출한 응답만 표시됩니다"}
+          {isPublic
+            ? "로그인한 모든 회원이 응답을 열람·반응·댓글할 수 있습니다"
+            : isStaffPlus
+              ? "운영진 전용 — 전체 응답 열람"
+              : "본인이 제출한 응답만 표시됩니다"}
         </p>
       </div>
 
@@ -154,6 +176,13 @@ export default function InterviewResponses({ postId, meta }: Props) {
                       </div>
                     );
                   })}
+              </div>
+
+              <div className="mt-4 border-t pt-4">
+                <InterviewResponseReactions responseId={r.id} postId={postId} />
+              </div>
+              <div className="mt-3">
+                <InterviewResponseComments responseId={r.id} postId={postId} />
               </div>
             </article>
           ))}

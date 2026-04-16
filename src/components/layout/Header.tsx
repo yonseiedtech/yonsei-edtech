@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
-import { Menu, X, User, Shield, ChevronDown, BookUser, LayoutDashboard, LogOut, Settings, BookOpen, Users, QrCode } from "lucide-react";
+import { Menu, X, User, Shield, ChevronDown, BookUser, LayoutDashboard, LogOut, Settings, BookOpen, Users, QrCode, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -170,6 +170,7 @@ function UserDropdown() {
   const menuItems = [
     { href: "/dashboard", label: "대시보드", icon: LayoutDashboard },
     { href: "/mypage", label: "마이페이지", icon: User },
+    { href: "/mypage/activities", label: "내 학회활동", icon: ClipboardList },
     { href: "/mypage/card", label: "내 명함", icon: QrCode },
     ...(showAdmin
       ? [
@@ -370,6 +371,7 @@ export default function Header() {
                 {[
                   { href: "/dashboard", label: "대시보드", icon: LayoutDashboard },
                   { href: "/mypage", label: "마이페이지", icon: User },
+                  { href: "/mypage/activities", label: "내 학회활동", icon: ClipboardList },
                   { href: "/mypage/card", label: "내 명함", icon: QrCode },
                   ...(showAdmin
                     ? [

@@ -36,6 +36,7 @@ import type {
   Poll, PollResponse, PhotoAlbum, Photo, AdminTodo, AuditLog,
   ActivityProgress, ActivityMaterial, EmailLog,
   Lab, LabReaction, LabComment, ResearchPaper,
+  InterviewResponseReaction, InterviewResponseComment,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -539,6 +540,30 @@ export const labCommentsApi = {
   create: (data: Record<string, unknown>) => dataApi.create<LabComment>("lab_comments", data),
   update: (id: string, data: Record<string, unknown>) => dataApi.update<LabComment>("lab_comments", id, data),
   delete: (id: string) => dataApi.delete("lab_comments", id),
+};
+
+export const interviewResponseReactionsApi = {
+  list: (responseId: string) =>
+    dataApi.list<InterviewResponseReaction>("interview_response_reactions", {
+      "filter[responseId]": responseId,
+      limit: 1000,
+    }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<InterviewResponseReaction>("interview_response_reactions", data),
+  delete: (id: string) => dataApi.delete("interview_response_reactions", id),
+};
+
+export const interviewResponseCommentsApi = {
+  list: (responseId: string) =>
+    dataApi.list<InterviewResponseComment>("interview_response_comments", {
+      "filter[responseId]": responseId,
+      sort: "createdAt:asc",
+    }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<InterviewResponseComment>("interview_response_comments", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<InterviewResponseComment>("interview_response_comments", id, data),
+  delete: (id: string) => dataApi.delete("interview_response_comments", id),
 };
 
 export const researchPapersApi = {

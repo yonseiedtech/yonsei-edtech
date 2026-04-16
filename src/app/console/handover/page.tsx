@@ -24,7 +24,7 @@ function HandoverTabs() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">인수인계</h1>
+        <h1 className="text-2xl font-bold">업무노트</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           업무수행철 · 인수인계 종합 · 운영진 교체를 한 곳에서 관리합니다.
         </p>

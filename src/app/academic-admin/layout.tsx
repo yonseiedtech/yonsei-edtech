@@ -10,6 +10,7 @@ import {
   FolderKanban,
   Users,
   Globe,
+  Award,
 } from "lucide-react";
 
 const HUB_TABS = [
@@ -18,6 +19,7 @@ const HUB_TABS = [
   { href: "/academic-admin/projects", label: "프로젝트", icon: FolderKanban },
   { href: "/academic-admin/studies", label: "스터디", icon: Users },
   { href: "/academic-admin/external", label: "대외 학술대회", icon: Globe },
+  { href: "/academic-admin/certificates", label: "수료증·감사장", icon: Award },
 ];
 
 function AcademicAdminShell({ children }: { children: React.ReactNode }) {

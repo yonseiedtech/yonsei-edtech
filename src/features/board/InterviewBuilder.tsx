@@ -9,7 +9,7 @@ import type {
   InterviewAnswerType,
   InterviewChoice,
 } from "@/types";
-import { Plus, Trash2, ArrowUp, ArrowDown, Sparkles, X } from "lucide-react";
+import { Plus, Trash2, ArrowUp, ArrowDown, Sparkles, X, Lock, Globe } from "lucide-react";
 
 interface Props {
   value: InterviewMeta;
@@ -143,6 +143,65 @@ export default function InterviewBuilder({ value, onChange }: Props) {
               update("deadline", e.target.value ? new Date(e.target.value).toISOString() : undefined)
             }
           />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium">응답 열람 모드</label>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <label
+              className={`flex cursor-pointer items-start gap-2 rounded-lg border p-3 transition ${
+                (value.responseVisibility ?? "public") === "staff_only"
+                  ? "border-violet-500 bg-violet-100/60 ring-2 ring-violet-300"
+                  : "border-input bg-white hover:bg-violet-50/40"
+              }`}
+            >
+              <input
+                type="radio"
+                name="responseVisibility"
+                value="staff_only"
+                checked={(value.responseVisibility ?? "public") === "staff_only"}
+                onChange={() => update("responseVisibility", "staff_only")}
+                className="mt-0.5"
+              />
+              <div className="flex-1">
+                <div className="flex items-center gap-1 text-sm font-semibold">
+                  <Lock size={14} className="text-violet-700" />
+                  인터뷰 모드
+                </div>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  관리자/학회장/운영진과 본인만 응답을 열람할 수 있습니다.
+                </p>
+              </div>
+            </label>
+            <label
+              className={`flex cursor-pointer items-start gap-2 rounded-lg border p-3 transition ${
+                (value.responseVisibility ?? "public") === "public"
+                  ? "border-violet-500 bg-violet-100/60 ring-2 ring-violet-300"
+                  : "border-input bg-white hover:bg-violet-50/40"
+              }`}
+            >
+              <input
+                type="radio"
+                name="responseVisibility"
+                value="public"
+                checked={(value.responseVisibility ?? "public") === "public"}
+                onChange={() => update("responseVisibility", "public")}
+                className="mt-0.5"
+              />
+              <div className="flex-1">
+                <div className="flex items-center gap-1 text-sm font-semibold">
+                  <Globe size={14} className="text-violet-700" />
+                  공유 모드
+                </div>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  로그인한 모든 회원이 다른 사람의 응답을 보고 반응·댓글을 남길 수 있습니다.
+                </p>
+              </div>
+            </label>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            모드는 게시 후에도 변경 가능하며, 변경 시 즉시 적용됩니다.
+          </p>
         </div>
       </div>
 

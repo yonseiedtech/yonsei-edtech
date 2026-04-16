@@ -253,6 +253,39 @@ export interface InterviewResponse {
   submittedAt?: string;
 }
 
+export type InterviewReactionType = "like" | "cool";
+
+export const INTERVIEW_REACTION_LABELS: Record<InterviewReactionType, string> = {
+  like: "좋아요",
+  cool: "멋져요",
+};
+
+export const INTERVIEW_REACTION_EMOJIS: Record<InterviewReactionType, string> = {
+  like: "👍",
+  cool: "✨",
+};
+
+export interface InterviewResponseReaction {
+  id: string;
+  responseId: string;
+  postId: string;
+  userId: string;
+  type: InterviewReactionType;
+  createdAt: string;
+}
+
+export interface InterviewResponseComment {
+  id: string;
+  responseId: string;
+  postId: string;
+  authorId: string;
+  authorName: string;
+  authorRole?: string;
+  content: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export interface Comment {
   id: string;
   postId: string;

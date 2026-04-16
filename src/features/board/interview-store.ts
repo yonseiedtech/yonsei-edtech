@@ -1,8 +1,19 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { dataApi } from "@/lib/bkend";
-import type { InterviewResponse, InterviewAnswer } from "@/types";
+import {
+  dataApi,
+  interviewResponseReactionsApi,
+  interviewResponseCommentsApi,
+} from "@/lib/bkend";
+import type {
+  InterviewResponse,
+  InterviewAnswer,
+  InterviewResponseReaction,
+  InterviewResponseComment,
+  InterviewReactionType,
+} from "@/types";
+import { useAuthStore } from "@/features/auth/auth-store";
 
 const TABLE = "interview_responses";
 
@@ -130,4 +141,129 @@ export function useSaveInterviewResponse() {
       qc.invalidateQueries({ queryKey: ["interview_responses", "mine"] });
     },
   });
+}
+
+// ── Reactions ──
+
+export function useInterviewResponseReactions(responseId: string) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["interview_response_reactions", responseId],
+    queryFn: async () =>
+      (await interviewResponseReactionsApi.list(responseId))
+        .data as unknown as InterviewResponseReaction[],
+    enabled: !!responseId,
+    staleTime: 1000 * 30,
+    retry: false,
+  });
+  return { reactions: data ?? [], isLoading };
+}
+
+export function useToggleInterviewReaction() {
+  const qc = useQueryClient();
+  const user = useAuthStore((s) => s.user);
+  const m = useMutation({
+    mutationFn: async ({
+      responseId,
+      postId,
+      type,
+      existing,
+    }: {
+      responseId: string;
+      postId: string;
+      type: InterviewReactionType;
+      existing?: InterviewResponseReaction;
+    }) => {
+      if (!user) throw new Error("로그인이 필요합니다.");
+      // 같은 type → 토글 해제 / 다른 type → 기존 삭제 후 신규
+      if (existing?.type === type) {
+        await interviewResponseReactionsApi.delete(existing.id);
+        return;
+      }
+      if (existing) {
+        await interviewResponseReactionsApi.delete(existing.id);
+      }
+      await interviewResponseReactionsApi.create({
+        responseId,
+        postId,
+        userId: user.id,
+        type,
+      });
+    },
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ["interview_response_reactions", v.responseId] });
+    },
+  });
+  return { toggle: m.mutateAsync, isLoading: m.isPending };
+}
+
+// ── Comments ──
+
+export function useInterviewResponseComments(responseId: string) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["interview_response_comments", responseId],
+    queryFn: async () =>
+      (await interviewResponseCommentsApi.list(responseId))
+        .data as unknown as InterviewResponseComment[],
+    enabled: !!responseId,
+    staleTime: 1000 * 30,
+    retry: false,
+  });
+  return { comments: data ?? [], isLoading };
+}
+
+export function useCreateInterviewComment() {
+  const qc = useQueryClient();
+  const user = useAuthStore((s) => s.user);
+  const m = useMutation({
+    mutationFn: async (data: { responseId: string; postId: string; content: string }) => {
+      if (!user) throw new Error("로그인이 필요합니다.");
+      const payload: Record<string, unknown> = {
+        responseId: data.responseId,
+        postId: data.postId,
+        content: data.content,
+        authorId: user.id,
+        authorName: user.name,
+      };
+      if (user.role) payload.authorRole = user.role;
+      return await interviewResponseCommentsApi.create(payload);
+    },
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ["interview_response_comments", v.responseId] });
+    },
+  });
+  return { createComment: m.mutateAsync, isLoading: m.isPending };
+}
+
+export function useUpdateInterviewComment() {
+  const qc = useQueryClient();
+  const m = useMutation({
+    mutationFn: async ({
+      id,
+      content,
+    }: {
+      id: string;
+      responseId: string;
+      content: string;
+    }) =>
+      await interviewResponseCommentsApi.update(id, {
+        content,
+        updatedAt: new Date().toISOString(),
+      }),
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ["interview_response_comments", v.responseId] });
+    },
+  });
+  return { updateComment: m.mutateAsync, isLoading: m.isPending };
+}
+
+export function useDeleteInterviewComment() {
+  const qc = useQueryClient();
+  const m = useMutation({
+    mutationFn: async ({ id }: { id: string; responseId: string }) =>
+      await interviewResponseCommentsApi.delete(id),
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ["interview_response_comments", v.responseId] });
+    },
+  });
+  return { deleteComment: m.mutateAsync, isLoading: m.isPending };
 }

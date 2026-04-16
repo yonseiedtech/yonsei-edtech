@@ -11,7 +11,7 @@ import { profilesApi } from "@/lib/bkend";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, ClipboardList, MessageSquare, FileText, Newspaper, Award,
+  LayoutDashboard, ClipboardList, MessageSquare, FileText, Newspaper,
   BarChart3, GraduationCap, Wallet, Users, BookUser,
   BookOpen, FlaskConical,
   Settings, MessageCircle, ScrollText, ChevronDown, ChevronRight,
@@ -108,7 +108,6 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
         { href: "/console/inquiries", label: "문의 답변", icon: MessageSquare, badge: unansweredCount },
         { href: "/console/posts", label: "게시글", icon: FileText },
         { href: "/console/newsletter", label: "학회보", icon: Newspaper },
-        { href: "/console/certificates", label: "수료증·감사장", icon: Award },
       ],
     },
     {
@@ -126,10 +125,10 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
       ],
     },
     {
-      label: "인수인계",
+      label: "업무노트",
       presidentOnly: true,
       items: [
-        { href: "/console/handover", label: "인수인계", icon: BookOpen },
+        { href: "/console/handover", label: "업무노트", icon: BookOpen },
       ],
     },
     {
