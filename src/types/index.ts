@@ -165,7 +165,7 @@ export interface Post {
 
 // ── 연구활동 (Research Papers) ──
 export type PaperType = "thesis" | "academic";
-export type ThesisLevel = "bachelor" | "master" | "doctoral";
+export type ThesisLevel = "master" | "doctoral";
 export type PaperReadStatus = "to_read" | "reading" | "completed";
 
 export interface PaperVariables {

@@ -43,7 +43,7 @@ export default function ResearchPaperCard({ paper, onEdit, onDelete }: Props) {
         <div className="flex items-center gap-2 text-xs">
           <Badge variant="secondary" className={isThesis ? "bg-violet-50 text-violet-700" : "bg-blue-50 text-blue-700"}>
             <TypeIcon size={11} className="mr-1" />
-            {isThesis ? `학위논문${paper.thesisLevel ? ` · ${paper.thesisLevel === "bachelor" ? "학사" : paper.thesisLevel === "master" ? "석사" : "박사"}` : ""}` : "학술논문"}
+            {isThesis ? `학위논문${paper.thesisLevel === "master" ? " · 석사" : paper.thesisLevel === "doctoral" ? " · 박사" : ""}` : "학술논문"}
           </Badge>
           {status && (
             <Badge variant="outline" className={`text-[10px] ${status.color}`}>

@@ -325,7 +325,6 @@ export default function ResearchPaperDialog({
                       className="w-full rounded-md border px-2.5 py-2 text-sm"
                     >
                       <option value="">선택</option>
-                      <option value="bachelor">학사</option>
                       <option value="master">석사</option>
                       <option value="doctoral">박사</option>
                     </select>
