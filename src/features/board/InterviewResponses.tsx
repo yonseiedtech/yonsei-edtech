@@ -44,13 +44,22 @@ export default function InterviewResponses({ postId, meta }: Props) {
   const [pendingDelete, setPendingDelete] = useState<InterviewResponse | null>(null);
   const visibility = meta.responseVisibility ?? "public";
   const isPublic = visibility === "public";
-  const submitted = useMemo(() => {
-    const all = responses.filter((r) => r.status === "submitted");
-    if (isStaffPlus) return all;
-    if (isPublic) return all;
+  // staff+ 에게는 draft도 함께 노출하여 미정리 응답을 detail 페이지에서 직접 삭제할 수 있게 한다.
+  const visibleResponses = useMemo(() => {
+    if (isStaffPlus) return responses;
+    const submitted = responses.filter((r) => r.status === "submitted");
+    if (isPublic) return submitted;
     if (!user) return [];
-    return all.filter((r) => r.respondentId === user.id);
+    return submitted.filter((r) => r.respondentId === user.id);
   }, [responses, isStaffPlus, isPublic, user]);
+  const submittedCount = useMemo(
+    () => responses.filter((r) => r.status === "submitted").length,
+    [responses],
+  );
+  const draftCount = useMemo(
+    () => responses.filter((r) => r.status !== "submitted").length,
+    [responses],
+  );
   const questionById = useMemo(() => {
     const m = new Map<
       string,
@@ -140,7 +149,8 @@ export default function InterviewResponses({ postId, meta }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-bold">
-            {isPublic || isStaffPlus ? "전체 응답" : "내 응답"} ({submitted.length})
+            {isPublic || isStaffPlus ? "전체 응답" : "내 응답"} ({submittedCount}
+            {isStaffPlus && draftCount > 0 ? ` · 임시 ${draftCount}` : ""})
           </h2>
           <span
             className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
@@ -165,7 +175,7 @@ export default function InterviewResponses({ postId, meta }: Props) {
 
       {isLoading ? (
         <p className="mt-4 text-sm text-muted-foreground">응답을 불러오는 중...</p>
-      ) : submitted.length === 0 ? (
+      ) : visibleResponses.length === 0 ? (
         <div className="mt-4 rounded-2xl border border-dashed bg-muted/40 p-8 text-center text-sm text-muted-foreground">
           {isStaffPlus
             ? "아직 제출된 응답이 없습니다."
@@ -175,21 +185,38 @@ export default function InterviewResponses({ postId, meta }: Props) {
         </div>
       ) : (
         <div className="mt-4 space-y-4">
-          {submitted.map((r: InterviewResponse) => (
-            <article key={r.id} className="rounded-2xl border bg-white p-5">
+          {visibleResponses.map((r: InterviewResponse) => (
+            <article
+              key={r.id}
+              className={`rounded-2xl border bg-white p-5 ${
+                r.status !== "submitted" ? "border-amber-300 bg-amber-50/40" : ""
+              }`}
+            >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-bold">{r.respondentName}</p>
+                  <p className="text-sm font-bold">
+                    {r.respondentName || "(익명/미상)"}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     {r.submittedAt
                       ? `${formatDate(r.submittedAt)} ${new Date(r.submittedAt).toLocaleTimeString("ko-KR", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "Asia/Seoul" })} (KST)`
-                      : ""}
+                      : r.updatedAt
+                        ? `최종 저장 ${formatDate(r.updatedAt)}`
+                        : ""}
                     {r.totalElapsedMs && r.totalElapsedMs > 0
                       ? ` · 소요 ${formatDuration(r.totalElapsedMs)}`
                       : ""}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
+                  {r.status !== "submitted" && (
+                    <Badge
+                      variant="outline"
+                      className="border-amber-400 text-[10px] text-amber-700"
+                    >
+                      임시저장
+                    </Badge>
+                  )}
                   {r.respondentRole && (
                     <Badge variant="secondary" className="text-[10px]">
                       {r.respondentRole}
@@ -284,12 +311,16 @@ export default function InterviewResponses({ postId, meta }: Props) {
                   })}
               </div>
 
-              <div className="mt-4 border-t pt-4">
-                <InterviewResponseReactions responseId={r.id} postId={postId} />
-              </div>
-              <div className="mt-3">
-                <InterviewResponseComments responseId={r.id} postId={postId} />
-              </div>
+              {r.status === "submitted" && (
+                <>
+                  <div className="mt-4 border-t pt-4">
+                    <InterviewResponseReactions responseId={r.id} postId={postId} />
+                  </div>
+                  <div className="mt-3">
+                    <InterviewResponseComments responseId={r.id} postId={postId} />
+                  </div>
+                </>
+              )}
             </article>
           ))}
         </div>

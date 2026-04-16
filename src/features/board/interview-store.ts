@@ -6,6 +6,8 @@ import {
   interviewResponseReactionsApi,
   interviewResponseCommentsApi,
 } from "@/lib/bkend";
+import { db } from "@/lib/firebase";
+import { doc as fsDoc, updateDoc, increment } from "firebase/firestore";
 import type {
   InterviewResponse,
   InterviewAnswer,
@@ -16,6 +18,16 @@ import type {
 import { useAuthStore } from "@/features/auth/auth-store";
 
 const TABLE = "interview_responses";
+
+/** posts.responseCount를 안전하게 증감. 실패해도 본 흐름을 막지 않는다. */
+async function adjustResponseCount(postId: string, delta: number) {
+  if (!postId || !delta) return;
+  try {
+    await updateDoc(fsDoc(db, "posts", postId), { responseCount: increment(delta) });
+  } catch (e) {
+    console.warn("[interview-store] responseCount adjust failed:", e);
+  }
+}
 
 function docToResponse(doc: Record<string, unknown>): InterviewResponse {
   let answers: InterviewAnswer[] = [];
@@ -97,12 +109,28 @@ export function useDeleteInterviewResponse(postId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
+      // 삭제 전에 status/postId를 읽어서 submitted였다면 카운트를 -1 한다.
+      let wasSubmitted = false;
+      let postIdOfDoc = postId;
+      try {
+        const existing = await dataApi.get<Record<string, unknown>>(TABLE, id);
+        wasSubmitted = (existing?.status as string) === "submitted";
+        if (typeof existing?.postId === "string" && existing.postId) {
+          postIdOfDoc = existing.postId;
+        }
+      } catch {
+        /* 조회 실패해도 삭제는 진행 */
+      }
       await dataApi.delete(TABLE, id);
+      if (wasSubmitted) {
+        await adjustResponseCount(postIdOfDoc, -1);
+      }
       return id;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["interview_responses", "post", postId] });
       qc.invalidateQueries({ queryKey: ["interview_responses", "mine"] });
+      qc.invalidateQueries({ queryKey: ["posts"] });
     },
   });
 }
@@ -134,17 +162,40 @@ export function useSaveInterviewResponse() {
       if (input.status === "submitted") {
         payload.submittedAt = new Date().toISOString();
       }
+      // status 전환 추적: 새 submit / draft↔submitted 전환을 잡아서 responseCount를 조정.
+      let prevStatus: "draft" | "submitted" | undefined;
+      if (input.id) {
+        try {
+          const existing = await dataApi.get<Record<string, unknown>>(TABLE, input.id);
+          prevStatus = (existing?.status as "draft" | "submitted") ?? "draft";
+        } catch {
+          /* 조회 실패 시 prevStatus는 unknown — 카운트 조정 보수적으로 스킵 */
+        }
+      }
+
+      let result: InterviewResponse;
       if (input.id) {
         const doc = await dataApi.update<Record<string, unknown>>(TABLE, input.id, payload);
-        return docToResponse(doc);
+        result = docToResponse(doc);
       } else {
         const doc = await dataApi.create<Record<string, unknown>>(TABLE, payload);
-        return docToResponse(doc);
+        result = docToResponse(doc);
       }
+
+      const wasSubmitted = prevStatus === "submitted";
+      const isSubmitted = input.status === "submitted";
+      let delta = 0;
+      if (!input.id && isSubmitted) delta = 1; // 신규 제출
+      else if (input.id && !wasSubmitted && isSubmitted) delta = 1; // draft → submitted
+      else if (input.id && wasSubmitted && !isSubmitted) delta = -1; // submitted → draft (롤백)
+      if (delta) await adjustResponseCount(input.postId, delta);
+
+      return result;
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ["interview_responses", "post", vars.postId] });
       qc.invalidateQueries({ queryKey: ["interview_responses", "mine"] });
+      qc.invalidateQueries({ queryKey: ["posts"] });
     },
   });
 }

@@ -153,6 +153,8 @@ export interface Post {
   authorName: string;
   viewCount: number;
   commentCount?: number;
+  /** 인터뷰 카테고리 전용 — 제출(submitted)된 응답 수. interview-store가 increment/decrement로 관리. */
+  responseCount?: number;
   likeCount?: number;
   createdAt: string;
   updatedAt: string;

@@ -198,7 +198,10 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
     status: "draft" | "submitted",
     answersMap: Record<string, InterviewAnswer> = answers,
   ) {
-    if (!user) return;
+    if (!user || !user.id) {
+      // 로그인하지 않은 상태로 저장 시도 — silent fail 시 사용자가 "제출 완료"로 오인하므로 명시적으로 차단.
+      throw new Error("로그인 후 응답을 저장할 수 있습니다.");
+    }
     const totalElapsedMs = Object.values(answersMap).reduce(
       (sum, a) => sum + (a.elapsedMs ?? 0),
       0,

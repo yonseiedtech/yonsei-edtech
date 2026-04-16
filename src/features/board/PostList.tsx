@@ -3,7 +3,7 @@ import { CATEGORY_LABELS } from "@/types";
 import type { Post } from "@/types";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/utils";
-import { Eye, MessageCircle } from "lucide-react";
+import { Eye, ListChecks } from "lucide-react";
 
 interface Props {
   posts: Post[];
@@ -52,10 +52,10 @@ export default function PostList({ posts, hrefPrefix = "/board" }: Props) {
                 <Eye size={12} />
                 {post.viewCount}
               </span>
-              {(post.commentCount ?? 0) > 0 && (
-                <span className="flex items-center gap-1 text-primary">
-                  <MessageCircle size={12} />
-                  {post.commentCount}
+              {post.category === "interview" && (post.responseCount ?? 0) > 0 && (
+                <span className="flex items-center gap-1 text-primary" title="제출된 응답 수">
+                  <ListChecks size={12} />
+                  {post.responseCount}
                 </span>
               )}
             </div>
