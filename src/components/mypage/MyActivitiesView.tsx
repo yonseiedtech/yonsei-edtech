@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/features/auth/auth-store";
 import MyPostList from "@/features/auth/MyPostList";
 import { usePosts } from "@/features/board/useBoard";
@@ -47,6 +47,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
   const { posts } = usePosts();
   const { seminars } = useSeminars();
   const { toggleAttendance } = useToggleAttendance();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabKey>("activities");
   const [viewingAnswerOf, setViewingAnswerOf] = useState<{ post: Post; response: InterviewResponse } | null>(null);
@@ -165,7 +166,13 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
             return (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
+                onClick={() => {
+                  setActiveTab(tab.key);
+                  const qs = new URLSearchParams(searchParams.toString());
+                  qs.set("tab", tab.key);
+                  router.replace(`/mypage/activities?${qs.toString()}`, { scroll: false });
+                }}
+                aria-current={isActive ? "page" : undefined}
                 className={cn(
                   "flex flex-none items-center gap-1 border-b-2 px-2.5 py-2 text-xs font-medium transition-colors sm:gap-1.5 sm:px-4 sm:py-2.5 sm:text-sm",
                   isActive
@@ -200,7 +207,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                           const meta = ACTIVITY_META[a.type] ?? ACTIVITY_META.project;
                           const Icon = meta.icon;
                           return (
-                            <li key={a.id} className="rounded-xl border bg-white px-5 py-4 hover:border-primary/40">
+                            <li key={a.id} className="rounded-xl border bg-card px-5 py-4 hover:border-primary/40">
                               <Link href={`${meta.href}/${a.id}`} className="flex items-center justify-between">
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-2">
@@ -241,7 +248,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                           const statusLabel = mine?.status === "rejected" ? "반려" : "승인 대기";
                           const statusColor = mine?.status === "rejected" ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700";
                           return (
-                            <li key={a.id} className="rounded-xl border bg-white px-5 py-4 hover:border-primary/40">
+                            <li key={a.id} className="rounded-xl border bg-card px-5 py-4 hover:border-primary/40">
                               <Link href={`${meta.href}/${a.id}`} className="flex items-center justify-between">
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-2">
@@ -275,7 +282,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                     ) : (
                       <div className="space-y-3">
                         {mySeminars.map((s) => (
-                          <div key={s.id} className="rounded-xl border bg-white px-5 py-4">
+                          <div key={s.id} className="rounded-xl border bg-card px-5 py-4">
                             <div className="flex items-center justify-between">
                               <div>
                                 <Link href={`/seminars/${s.id}`} className="font-medium hover:text-primary hover:underline">
@@ -326,7 +333,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2">
                   {myCertificates.map((c) => (
-                    <div key={c.id} className="rounded-xl border bg-white px-5 py-4">
+                    <div key={c.id} className="rounded-xl border bg-card px-5 py-4">
                       <div className="flex items-start justify-between">
                         <div>
                           <div className="flex items-center gap-2">
@@ -382,7 +389,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                       .map((r) => {
                         const p = postById.get(r.postId)!;
                         return (
-                          <li key={r.id} className="rounded-xl border bg-white px-5 py-4 hover:border-primary/40">
+                          <li key={r.id} className="rounded-xl border bg-card px-5 py-4 hover:border-primary/40">
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
                                 <Mic size={14} className="text-violet-600" />
@@ -435,7 +442,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                   <h3 className="mb-2 text-sm font-semibold">내가 개설한 인터뷰 ({myCreatedInterviews.length})</h3>
                   <ul className="space-y-2">
                     {myCreatedInterviews.map((p) => (
-                      <li key={p.id} className="rounded-xl border bg-white px-5 py-4 hover:border-primary/40">
+                      <li key={p.id} className="rounded-xl border bg-card px-5 py-4 hover:border-primary/40">
                         <Link href={`/board/${p.id}`} className="flex items-center justify-between">
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">

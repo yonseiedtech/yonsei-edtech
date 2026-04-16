@@ -151,7 +151,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
         </div>
 
         {/* 프로필 카드 */}
-        <div className="mt-8 rounded-2xl border bg-white p-6">
+        <div className="mt-8 rounded-2xl border bg-card p-6">
           <div className="flex items-center gap-4">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
               <UserIcon size={28} />
@@ -179,7 +179,17 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
             return (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
+                onClick={() => {
+                  setActiveTab(tab.key);
+                  if (!readOnly) {
+                    const qs = new URLSearchParams(searchParams.toString());
+                    if (tab.key === "home") qs.delete("tab");
+                    else qs.set("tab", tab.key);
+                    const next = qs.toString();
+                    router.replace(next ? `/mypage?${next}` : "/mypage", { scroll: false });
+                  }
+                }}
+                aria-current={isActive ? "page" : undefined}
                 className={cn(
                   "flex flex-none items-center gap-1 border-b-2 px-2.5 py-2 text-xs font-medium transition-colors sm:gap-1.5 sm:px-4 sm:py-2.5 sm:text-sm",
                   isActive
@@ -273,7 +283,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                   .slice(0, 3);
 
                 return (
-                  <div className="rounded-2xl border bg-white p-5">
+                  <div className="rounded-2xl border bg-card p-5">
                     <h3 className="text-sm font-semibold">다음 학술활동</h3>
                     {upcoming.length === 0 ? (
                       <EmptyState
@@ -303,18 +313,18 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
 
               {isSelf && !readOnly && (
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <Link href="/mypage/card" className="rounded-2xl border bg-white p-4 hover:border-primary/40 hover:shadow-sm">
+                  <Link href="/mypage/card" className="rounded-2xl border bg-card p-4 hover:border-primary/40 hover:shadow-sm">
                     <div className="flex items-center gap-2">
                       <QrCode size={16} className="text-primary" />
                       <p className="text-sm font-semibold">내 모바일 명함</p>
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">QR·vCard·공유·교환 기록 관리</p>
                   </Link>
-                  <Link href="/activities" className="rounded-2xl border bg-white p-4 hover:border-primary/40 hover:shadow-sm">
+                  <Link href="/activities" className="rounded-2xl border bg-card p-4 hover:border-primary/40 hover:shadow-sm">
                     <p className="text-sm font-semibold">학술활동 둘러보기</p>
                     <p className="mt-1 text-xs text-muted-foreground">프로젝트·스터디·대외활동</p>
                   </Link>
-                  <Link href="/board" className="rounded-2xl border bg-white p-4 hover:border-primary/40 hover:shadow-sm">
+                  <Link href="/board" className="rounded-2xl border bg-card p-4 hover:border-primary/40 hover:shadow-sm">
                     <p className="text-sm font-semibold">게시판</p>
                     <p className="mt-1 text-xs text-muted-foreground">공지·자유·홍보·자료실</p>
                   </Link>
@@ -324,7 +334,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
           )}
 
           {activeTab === "profile" && (
-            <div className="rounded-2xl border bg-white p-6">
+            <div className="rounded-2xl border bg-card p-6">
               {readOnly ? (
                 <div className="space-y-2 text-sm">
                   <p><span className="font-medium">이름:</span> {user.name}</p>
@@ -339,7 +349,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
           )}
 
           {activeTab === "password" && (
-            <div className="rounded-2xl border bg-white p-6">
+            <div className="rounded-2xl border bg-card p-6">
               <h3 className="text-lg font-bold">비밀번호 변경</h3>
               <div className="mt-4">
                 {readOnly ? (

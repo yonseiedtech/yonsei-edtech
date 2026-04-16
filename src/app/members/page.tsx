@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -9,6 +9,7 @@ import { useMembers } from "@/features/member/useMembers";
 import { useProfessor } from "@/features/site-settings/useSiteContent";
 import { Mail, Globe, BookOpen, Users } from "lucide-react";
 import PageHeader from "@/components/ui/page-header";
+import EmptyState from "@/components/ui/empty-state";
 import OrgChart from "@/features/member/OrgChart";
 import type { User } from "@/types";
 
@@ -28,8 +29,8 @@ function filterByTab(members: User[], tabKey: string): User[] {
 function ProfessorView() {
   const { value: prof, isLoading } = useProfessor();
 
-  if (isLoading) return <div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
-  if (!prof.name) return <p className="py-12 text-center text-muted-foreground">주임교수 정보가 등록되지 않았습니다.</p>;
+  if (isLoading) return <div className="flex justify-center py-12" role="status" aria-label="로딩 중"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
+  if (!prof.name) return <EmptyState icon={Users} title="주임교수 정보가 등록되지 않았습니다" description="운영진이 정보를 등록할 때까지 기다려주세요." />;
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -66,6 +67,7 @@ function ProfessorView() {
 
 function MembersContent() {
   const { members, isLoading } = useMembers();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState(tabParam || "professor");
@@ -73,6 +75,15 @@ function MembersContent() {
   useEffect(() => {
     if (tabParam && ROLE_TABS.some((t) => t.key === tabParam)) setActiveTab(tabParam);
   }, [tabParam]);
+
+  function handleTabChange(key: string) {
+    setActiveTab(key);
+    const qs = new URLSearchParams(searchParams.toString());
+    if (key === "professor") qs.delete("tab");
+    else qs.set("tab", key);
+    const next = qs.toString();
+    router.replace(next ? `/members?${next}` : "/members", { scroll: false });
+  }
 
   const filtered = filterByTab(members, activeTab);
 
@@ -86,19 +97,34 @@ function MembersContent() {
         />
       </section>
       <section className="mx-auto mt-12 max-w-6xl px-4">
-        <div className="flex justify-center gap-2">
-          {ROLE_TABS.map((tab) => (
-            <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={cn("rounded-full px-5 py-2 text-sm font-medium transition-colors", activeTab === tab.key ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:bg-muted/80")}>{tab.label}</button>
-          ))}
-        </div>
+        <nav className="flex gap-1 overflow-x-auto border-b" aria-label="구성원 분류">
+          {ROLE_TABS.map((tab) => {
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => handleTabChange(tab.key)}
+                aria-current={isActive ? "page" : undefined}
+                className={cn(
+                  "flex flex-none items-center border-b-2 px-3 py-2 text-xs font-medium transition-colors sm:px-5 sm:py-2.5 sm:text-sm",
+                  isActive
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </nav>
         <div className="mt-8">
           {activeTab === "professor" ? <ProfessorView /> : isLoading ? (
-            <div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
+            <div className="flex justify-center py-12" role="status" aria-label="로딩 중"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
           ) : (
             <>
               {activeTab === "staff" && <div className="mb-8"><OrgChart /></div>}
               {filtered.length === 0 ? (
-                <p className="py-12 text-center text-muted-foreground">해당 구성원이 없습니다.</p>
+                <EmptyState icon={Users} title="해당 구성원이 없습니다" description="조건에 맞는 회원이 아직 등록되지 않았습니다." />
               ) : (
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">{filtered.map((m) => <MemberCard key={m.id} member={m} />)}</div>
               )}
@@ -111,5 +137,9 @@ function MembersContent() {
 }
 
 export default function MembersPage() {
-  return <Suspense fallback={<div className="flex justify-center py-24"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>}><MembersContent /></Suspense>;
+  return (
+    <Suspense fallback={<div className="flex justify-center py-24" role="status" aria-label="로딩 중"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>}>
+      <MembersContent />
+    </Suspense>
+  );
 }

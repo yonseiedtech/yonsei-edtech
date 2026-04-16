@@ -6,10 +6,10 @@ import { Instagram, Award, CreditCard, CalendarCheck, UserCog } from "lucide-rea
 import { useAuthStore } from "@/features/auth/auth-store";
 
 const MEMBER_SHORTCUTS = [
-  { href: "/mypage?tab=certificates", label: "수료증 확인", icon: Award },
+  { href: "/mypage/activities?tab=certificates", label: "수료증 확인", icon: Award },
   { href: "/admin/fees", label: "회비 납부", icon: CreditCard },
-  { href: "/mypage?tab=seminars", label: "내 활동", icon: CalendarCheck },
-  { href: "/mypage", label: "프로필 관리", icon: UserCog },
+  { href: "/mypage/activities?tab=activities", label: "내 활동", icon: CalendarCheck },
+  { href: "/mypage?tab=profile", label: "프로필 관리", icon: UserCog },
 ];
 
 export default function Footer() {
