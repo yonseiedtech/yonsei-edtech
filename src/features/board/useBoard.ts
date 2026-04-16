@@ -25,9 +25,11 @@ export function usePosts(
   const { data, isLoading, error } = useQuery({
     queryKey: ["posts", "all-client-filtered"],
     queryFn: async () => {
-      // Firestore 복합 인덱스 회피: 항상 전체를 가져와 클라이언트에서 필터
-      const res = await postsApi.list({ limit: 200 });
-      return res.data as unknown as Post[];
+      // Firestore 복합 인덱스 회피: 항상 전체를 가져와 클라이언트에서 필터·정렬
+      const res = await postsApi.list({ limit: 200, sort: "" });
+      const arr = res.data as unknown as Post[];
+      arr.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+      return arr;
     },
     retry: false,
   });
