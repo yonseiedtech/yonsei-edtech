@@ -15,7 +15,7 @@ import {
   BarChart3, GraduationCap, Wallet, Users, BookUser,
   BookOpen, FlaskConical, FolderKanban, Globe, Award, NotebookPen,
   Settings, MessageCircle, ScrollText, ChevronDown, ChevronRight,
-  ShieldCheck, PieChart,
+  ShieldCheck,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -102,13 +102,16 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
 
   const NAV_GROUPS: NavGroup[] = [
     {
-      label: "일일 운영",
+      label: "홈",
       items: [
         { href: "/console", label: "홈", icon: LayoutDashboard },
-        { href: "/console/todos", label: "To-Do", icon: ClipboardList },
-        { href: "/console/inquiries", label: "문의 답변", icon: MessageSquare, badge: unansweredCount },
-        { href: "/console/posts", label: "게시글", icon: FileText },
-        { href: "/console/newsletter", label: "학회보", icon: Newspaper },
+      ],
+    },
+    {
+      label: "업무노트",
+      presidentOnly: true,
+      items: [
+        { href: "/console/handover", label: "업무노트", icon: ClipboardList },
       ],
     },
     {
@@ -119,8 +122,6 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
         { href: "/console/academic/projects", label: "프로젝트", icon: FolderKanban },
         { href: "/console/academic/studies", label: "스터디", icon: NotebookPen },
         { href: "/console/academic/external", label: "대외 학술대회", icon: Globe },
-        { href: "/console/academic/certificates", label: "수료증·감사장", icon: Award },
-        { href: "/console/fees", label: "학회비", icon: Wallet },
       ],
     },
     {
@@ -132,23 +133,28 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
       ],
     },
     {
-      label: "업무노트",
-      presidentOnly: true,
+      label: "커뮤니티 관리",
       items: [
-        { href: "/console/handover", label: "업무노트", icon: BookOpen },
+        { href: "/console/posts", label: "게시글", icon: FileText },
+        { href: "/console/newsletter", label: "학회보", icon: Newspaper },
+      ],
+    },
+    {
+      label: "학회비",
+      items: [
+        { href: "/console/fees", label: "학회비", icon: Wallet },
+      ],
+    },
+    {
+      label: "수료증·감사장",
+      items: [
+        { href: "/console/academic/certificates", label: "수료증·감사장", icon: Award },
       ],
     },
     {
       label: "인사이트",
       items: [
         { href: "/console/insights", label: "인사이트", icon: BarChart3 },
-        { href: "/console/insights/analytics", label: "분석 대시보드", icon: PieChart },
-      ],
-    },
-    {
-      label: "R&D",
-      items: [
-        { href: "/console/labs", label: "실험실", icon: FlaskConical },
       ],
     },
     {
@@ -158,6 +164,8 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
         { href: "/console/settings", label: "사이트 설정", icon: Settings },
         { href: "/console/ai", label: "챗봇·AI / 에이전트", icon: MessageCircle },
         { href: "/console/audit-log", label: "감사로그", icon: ScrollText },
+        { href: "/console/labs", label: "실험실", icon: FlaskConical },
+        { href: "/console/inquiries", label: "문의 답변", icon: MessageSquare, badge: unansweredCount },
       ],
     },
   ];

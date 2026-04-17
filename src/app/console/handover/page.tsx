@@ -3,17 +3,18 @@
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import AdminTodoTab from "@/features/admin/AdminTodoTab";
 import WorkLogView from "@/features/handover/WorkLogView";
 import OverviewView from "@/features/handover/OverviewView";
 import TransitionView from "@/features/handover/TransitionView";
 
-type TabKey = "worklog" | "overview" | "transition";
+type TabKey = "todo" | "worklog" | "overview" | "transition";
 
 function HandoverTabs() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const raw = searchParams.get("tab");
-  const tab: TabKey = raw === "overview" || raw === "transition" ? raw : "worklog";
+  const tab: TabKey = raw === "worklog" || raw === "overview" || raw === "transition" ? raw : "todo";
 
   function handleChange(next: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -26,17 +27,21 @@ function HandoverTabs() {
       <div>
         <h1 className="text-2xl font-bold">업무노트</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          업무수행철 · 인수인계 종합 · 운영진 교체를 한 곳에서 관리합니다.
+          To-Do · 업무수행철 · 인수인계 종합 · 운영진 교체를 한 곳에서 관리합니다.
         </p>
       </div>
 
       <Tabs value={tab} onValueChange={(v) => handleChange(v as string)}>
         <TabsList>
+          <TabsTrigger value="todo">To-Do</TabsTrigger>
           <TabsTrigger value="worklog">업무수행철</TabsTrigger>
           <TabsTrigger value="overview">인수인계 종합</TabsTrigger>
           <TabsTrigger value="transition">운영진 교체</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="todo" className="mt-4">
+          <AdminTodoTab />
+        </TabsContent>
         <TabsContent value="worklog" className="mt-4">
           <WorkLogView />
         </TabsContent>
