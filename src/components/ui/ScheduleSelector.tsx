@@ -179,9 +179,12 @@ export default function ScheduleSelector({
       )}
 
       <div className="overflow-x-auto">
-        <div className="inline-flex gap-2 select-none">
+        <div
+          className="grid select-none gap-2"
+          style={{ gridTemplateColumns: `repeat(${dates.length}, minmax(140px, 1fr))` }}
+        >
           {dates.map((date) => (
-            <div key={date} className="min-w-[120px] rounded-lg border bg-white">
+            <div key={date} className="rounded-lg border bg-white">
               <div className="flex items-center justify-between border-b bg-muted/30 px-2 py-1.5">
                 <div className="text-xs font-semibold">{formatDateLabel(date)}</div>
                 {!readOnly && value.some((s) => s.date === date) && (
