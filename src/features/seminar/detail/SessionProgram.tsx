@@ -155,7 +155,7 @@ export default function SessionProgram({
   }
 
   return (
-    <div className="mt-6 rounded-2xl border bg-white p-8">
+    <div className="mt-4 rounded-2xl border bg-white p-5 sm:mt-6 sm:p-8">
       <div className="flex items-center justify-between mb-4">
         <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
           <Clock size={16} />
@@ -190,8 +190,8 @@ export default function SessionProgram({
                   {sess.speaker}
                 </p>
               </div>
-              <div className="flex items-center gap-2 shrink-0 mt-0.5">
-                <span className="text-xs text-muted-foreground">
+              <div className="flex shrink-0 items-center gap-1 sm:gap-2 mt-0.5">
+                <span className="text-[11px] text-muted-foreground sm:text-xs">
                   {sess.time && sess.time !== "미정" ? (
                     <>
                       {sess.time}
@@ -202,7 +202,7 @@ export default function SessionProgram({
                   )}
                 </span>
                 {isStaff && (
-                  <div className="flex gap-1">
+                  <div className="flex gap-0.5">
                     <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(sess)}>
                       <Pencil size={12} />
                     </Button>

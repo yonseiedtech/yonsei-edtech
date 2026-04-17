@@ -12,7 +12,7 @@ interface Props {
 
 export default function SpeakerCard({ seminar, isStaff, onEdit }: Props) {
   return (
-    <div className="mt-6 rounded-2xl border bg-white p-8">
+    <div className="mt-4 rounded-2xl border bg-white p-5 sm:mt-6 sm:p-8">
       <div className="flex items-center justify-between mb-4">
         <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
           <UserCircle size={16} />

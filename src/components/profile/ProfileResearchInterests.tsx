@@ -3,8 +3,12 @@ interface Props {
   field?: string;
 }
 
+function splitByComma(arr: string[]): string[] {
+  return arr.flatMap((s) => s.split(/[,，]/)).map((s) => s.trim()).filter(Boolean);
+}
+
 export default function ProfileResearchInterests({ interests, field }: Props) {
-  const tags = (interests ?? []).filter((t) => t.trim().length > 0);
+  const tags = splitByComma(interests ?? []);
   if (tags.length === 0 && !field) return null;
   return (
     <section className="rounded-2xl border bg-white p-5 shadow-sm">

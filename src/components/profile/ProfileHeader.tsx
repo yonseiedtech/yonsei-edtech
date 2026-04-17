@@ -8,9 +8,10 @@ import ProfileShareMenu from "./ProfileShareMenu";
 interface Props {
   owner: User;
   isOwner: boolean;
+  viewer?: User | null;
 }
 
-export default function ProfileHeader({ owner, isOwner }: Props) {
+export default function ProfileHeader({ owner, isOwner, viewer }: Props) {
   const gen = formatGeneration(owner.generation, owner.enrollmentYear, owner.enrollmentHalf);
   const showRoleBadge = owner.role !== "member" && owner.role !== "alumni";
 
@@ -50,7 +51,9 @@ export default function ProfileHeader({ owner, isOwner }: Props) {
 
           <div className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
             <ProfileLikeButton profileId={owner.id} isOwner={isOwner} />
-            <ProfileShareMenu profileId={owner.id} name={owner.name} bio={owner.bio} />
+            {(isOwner || (viewer && ["sysadmin", "admin", "president", "staff"].includes(viewer.role))) && (
+              <ProfileShareMenu profileId={owner.id} name={owner.name} bio={owner.bio} />
+            )}
           </div>
         </div>
       </div>

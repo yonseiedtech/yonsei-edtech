@@ -23,6 +23,7 @@ import ProfileBio from "./ProfileBio";
 import ProfileContactInfo from "./ProfileContactInfo";
 import ProfileResearchInterests from "./ProfileResearchInterests";
 import ProfileAcademicActivities from "./ProfileAcademicActivities";
+import ProfileCertificates from "./ProfileCertificates";
 import ProfileResearchActivities from "./ProfileResearchActivities";
 import OwnerVisibilitySection from "./OwnerVisibilitySection";
 
@@ -133,7 +134,7 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
   return (
     <div className="min-h-screen bg-slate-50 py-10">
       <div className="mx-auto max-w-2xl space-y-4 px-4">
-        <ProfileHeader owner={owner} isOwner={isOwner} />
+        <ProfileHeader owner={owner} isOwner={isOwner} viewer={viewer} />
 
         {isOwner && <OwnerVisibilitySection owner={owner} />}
 
@@ -156,6 +157,8 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
         )}
 
         {showAcademic && <ProfileAcademicActivities owner={owner} />}
+
+        {showAcademic && <ProfileCertificates owner={owner} />}
 
         {showResearch && <ProfileResearchActivities papers={owner.recentPapers} />}
 

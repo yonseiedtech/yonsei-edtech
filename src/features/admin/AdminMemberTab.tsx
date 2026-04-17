@@ -242,8 +242,8 @@ export default function AdminMemberTab() {
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={() => {
             const source = activeTab === "all" ? allMembers : displayMembers;
-            exportCSV("회원목록", ["이름", "아이디", "이메일", "학번", "역할", "기수", "분야", "상태"],
-              source.map((m) => [m.name, m.username, m.email, m.studentId, m.role, m.generation, m.field, m.approved ? "승인" : m.rejected ? "거절" : "대기"]),
+            exportCSV("회원목록", ["이름", "아이디", "이메일", "학번", "역할", "기수", "분야", "관심 연구분야", "상태"],
+              source.map((m) => [m.name, m.username, m.email, m.studentId, m.role, m.generation, m.field, (m.researchInterests ?? []).join(", "), m.approved ? "승인" : m.rejected ? "거절" : "대기"]),
             );
           }}>
             <Download size={14} className="mr-1" /> CSV 내보내기
@@ -294,6 +294,7 @@ export default function AdminMemberTab() {
               <th className="px-4 py-3 text-left font-medium">학번</th>
               <th className="px-4 py-3 text-left font-medium">연락처</th>
               <th className="px-4 py-3 text-left font-medium">분야</th>
+              <th className="px-4 py-3 text-left font-medium">관심 연구분야</th>
               <th className="px-4 py-3 text-left font-medium">역할</th>
               {showStatus && <th className="px-4 py-3 text-left font-medium">상태</th>}
               {canApprove && <th className="px-4 py-3 text-left font-medium">관리</th>}
@@ -307,6 +308,21 @@ export default function AdminMemberTab() {
                 <td className="px-4 py-3">{m.studentId || "-"}</td>
                 <td className="px-4 py-3 text-muted-foreground">{m.phone || "-"}</td>
                 <td className="px-4 py-3">{m.field || "-"}</td>
+                <td className="max-w-[200px] px-4 py-3">
+                  {(() => {
+                    const tags = (m.researchInterests ?? []).flatMap((s: string) => s.split(/[,，]/)).map((s: string) => s.trim()).filter(Boolean);
+                    if (tags.length === 0) return "-";
+                    return (
+                      <div className="flex flex-wrap gap-1">
+                        {tags.map((t: string) => (
+                          <span key={t} className="inline-flex items-center rounded-full bg-muted/60 px-2 py-0.5 text-[10px] text-muted-foreground">
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </td>
                 <td className="px-4 py-3"><RoleCell member={m} /></td>
                 {showStatus && (
                   <td className="px-4 py-3">

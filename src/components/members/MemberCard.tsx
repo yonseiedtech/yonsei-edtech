@@ -63,6 +63,29 @@ export default function MemberCard({ member }: Props) {
         )}
       </div>
 
+      {(() => {
+        const tags = (member.researchInterests ?? [])
+          .flatMap((s) => s.split(/[,，]/))
+          .map((s) => s.trim())
+          .filter(Boolean);
+        if (tags.length === 0) return null;
+        const MAX_VISIBLE = 3;
+        const visible = tags.slice(0, MAX_VISIBLE);
+        const overflow = tags.length - MAX_VISIBLE;
+        return (
+          <div className="mt-2 flex h-6 flex-wrap justify-center gap-1 overflow-hidden">
+            {visible.map((t) => (
+              <span key={t} className="inline-flex items-center rounded-full bg-muted/60 px-2 py-0.5 text-[10px] text-muted-foreground">
+                {t}
+              </span>
+            ))}
+            {overflow > 0 && (
+              <span className="inline-flex items-center text-[10px] text-muted-foreground">+{overflow}</span>
+            )}
+          </div>
+        );
+      })()}
+
       {member.bio && (
         <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
           {member.bio}

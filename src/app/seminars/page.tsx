@@ -53,23 +53,23 @@ export default function SeminarsPage() {
   );
 
   return (
-    <div className="py-16">
+    <div className="py-8 sm:py-16">
       <div className="mx-auto max-w-4xl px-4">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Calendar size={24} />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary sm:h-12 sm:w-12">
+              <Calendar size={22} />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">정기 세미나</h1>
-              <p className="text-sm text-muted-foreground">
+              <h1 className="text-xl font-bold sm:text-2xl">정기 세미나</h1>
+              <p className="text-xs text-muted-foreground sm:text-sm">
                 매주 교육공학/에듀테크 관련 최신 논문이나 트렌드를 발제하고 토론합니다.
               </p>
             </div>
           </div>
           {isStaffOrAbove(user) && (
             <Link href="/seminars/create">
-              <Button size="sm" className="shrink-0">
+              <Button size="sm" className="w-full shrink-0 sm:w-auto">
                 <Plus size={16} className="mr-1" />
                 세미나 등록
               </Button>
@@ -84,7 +84,7 @@ export default function SeminarsPage() {
             placeholder="제목, 발표자, 장소 검색..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 w-full max-w-sm"
+            className="pl-9 w-full sm:max-w-sm"
           />
         </div>
 

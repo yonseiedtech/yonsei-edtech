@@ -19,13 +19,13 @@ interface Props {
 
 export default function SeminarStatusTabs({ active, onChange }: Props) {
   return (
-    <div className="flex gap-2">
+    <nav className="flex gap-2 overflow-x-auto">
       {TABS.map((tab) => (
         <button
           key={tab.value}
           onClick={() => onChange(tab.value)}
           className={cn(
-            "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+            "shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
             active === tab.value
               ? "bg-primary text-white"
               : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -34,6 +34,6 @@ export default function SeminarStatusTabs({ active, onChange }: Props) {
           {tab.label}
         </button>
       ))}
-    </div>
+    </nav>
   );
 }

@@ -42,34 +42,32 @@ export default function SeminarList({ seminars }: Props) {
           <Link
             key={seminar.id}
             href={`/seminars/${seminar.id}`}
-            className="block rounded-xl border bg-white p-6 transition-colors hover:bg-muted/30"
+            className="block rounded-xl border bg-white p-4 transition-colors hover:bg-muted/30 sm:p-6"
           >
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <Badge className={cn("text-xs", badge.className)} variant="secondary">
-                    {badge.label}
-                  </Badge>
-                  <h3 className="truncate text-lg font-semibold">{seminar.title}</h3>
-                </div>
-                <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-                  {seminar.description}
-                </p>
-                <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Calendar size={14} />
-                    {seminar.date} {seminar.time}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <MapPin size={14} />
-                    {seminar.location}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Users size={14} />
-                    {seminar.attendeeIds.length}
-                    {seminar.maxAttendees ? `/${seminar.maxAttendees}` : ""}명
-                  </span>
-                </div>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <Badge className={cn("text-xs", badge.className)} variant="secondary">
+                  {badge.label}
+                </Badge>
+                <h3 className="text-base font-semibold leading-snug sm:text-lg">{seminar.title}</h3>
+              </div>
+              <p className="mt-1.5 line-clamp-2 text-xs text-muted-foreground sm:mt-2 sm:text-sm">
+                {seminar.description}
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground sm:mt-3 sm:gap-x-4 sm:text-sm">
+                <span className="flex items-center gap-1">
+                  <Calendar size={14} />
+                  {seminar.date} {seminar.time}
+                </span>
+                <span className="flex items-center gap-1">
+                  <MapPin size={14} />
+                  {seminar.location}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Users size={14} />
+                  {seminar.attendeeIds.length}
+                  {seminar.maxAttendees ? `/${seminar.maxAttendees}` : ""}명
+                </span>
               </div>
             </div>
             <div className="mt-2 flex items-center justify-between">

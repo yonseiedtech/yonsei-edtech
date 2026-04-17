@@ -12,7 +12,7 @@ const DISMISS_KEY = "undergrad-info-prompt-dismissed-session";
 
 function needsUndergradInfo(user: User | null): boolean {
   if (!user) return false;
-  if (user.role === "sysadmin") return false;
+  if (user.role === "sysadmin" || user.role === "admin") return false;
   if (user.undergraduateUniversity && user.undergraduateUniversity.trim()) return false;
   return true;
 }

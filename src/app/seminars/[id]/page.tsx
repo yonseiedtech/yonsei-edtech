@@ -428,18 +428,16 @@ function SeminarDetail({ id }: { id: string }) {
   }
 
   return (
-    <div className="py-16">
+    <div className="py-8 sm:py-16">
       <div className="mx-auto max-w-3xl px-4">
-        <Link
-          href="/seminars"
-          className="mb-6 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft size={16} />
-          목록으로
-        </Link>
-
-        {/* Share */}
-        <div className="mb-4 flex justify-end">
+        <div className="mb-4 flex items-center justify-between sm:mb-6">
+          <Link
+            href="/seminars"
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft size={16} />
+            목록으로
+          </Link>
           <ShareButton title={`${seminar.title} - 연세교육공학회 세미나`} text={`${seminar.title} 세미나 (${seminar.date}) #연세교육공학회`} />
         </div>
 
@@ -451,7 +449,7 @@ function SeminarDetail({ id }: { id: string }) {
 
         {/* Section 3: Description */}
         {seminar.description && (
-          <div className="mt-6 rounded-2xl border bg-white p-8">
+          <div className="mt-4 rounded-2xl border bg-white p-5 sm:mt-6 sm:p-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 <BookOpen size={16} />
@@ -503,7 +501,7 @@ function SeminarDetail({ id }: { id: string }) {
 
         {/* Section 6: Seminar Space Entry */}
         {computedStatus !== "cancelled" && (isAttending || hasRegistration || isStaff) && (
-          <div className="mt-6 rounded-2xl border border-green-200 bg-green-50/50 p-8">
+          <div className="mt-4 rounded-2xl border border-green-200 bg-green-50/50 p-5 sm:mt-6 sm:p-8">
             <div className="flex items-center gap-2 mb-4">
               <CheckCircle size={20} className="text-green-600" />
               <span className="text-sm font-semibold text-green-800">
@@ -526,7 +524,7 @@ function SeminarDetail({ id }: { id: string }) {
 
         {/* Section 6.5: Attendance Certificate */}
         {myAttendee?.checkedIn && (
-          <div className="mt-6 rounded-2xl border border-blue-200 bg-blue-50/50 p-6">
+          <div className="mt-4 rounded-2xl border border-blue-200 bg-blue-50/50 p-5 sm:mt-6 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-semibold text-blue-800">참석 확인서</h3>
@@ -545,7 +543,7 @@ function SeminarDetail({ id }: { id: string }) {
         )}
 
         {/* Section 7: Reviews */}
-        <div className="mt-6 rounded-2xl border bg-white p-8">
+        <div className="mt-4 rounded-2xl border bg-white p-5 sm:mt-6 sm:p-8">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
             <Star size={16} />
             세미나 후기
