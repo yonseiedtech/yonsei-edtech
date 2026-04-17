@@ -18,7 +18,7 @@ export default function OverviewView() {
         <div>
           <p className="text-sm text-muted-foreground">
             각 직책별 인수인계 메모를 한눈에 확인합니다. 수정은{" "}
-            <Link href="/admin/settings/org-chart" className="text-primary underline underline-offset-2">
+            <Link href="/console/settings" className="text-primary underline underline-offset-2">
               조직도 설정
             </Link>
             에서 할 수 있습니다.

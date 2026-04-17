@@ -136,14 +136,14 @@ function DashboardContent() {
                 label="승인 대기"
                 value={pendingCount}
                 color="bg-amber-50 text-amber-600"
-                href="/admin"
+                href="/console/members"
               />
               <StatCard
                 icon={HelpCircle}
                 label="미답변 문의"
                 value={unansweredCount}
                 color="bg-rose-50 text-rose-600"
-                href="/admin"
+                href="/console/inquiries"
               />
             </>
           ) : (
@@ -192,10 +192,10 @@ function DashboardContent() {
             </Button>
           </Link>
           {isStaff && (
-            <Link href="/admin">
+            <Link href="/console">
               <Button variant="outline" size="sm" className="shrink-0">
                 <Shield size={14} className="mr-1.5" />
-                관리자
+                운영 콘솔
               </Button>
             </Link>
           )}
@@ -302,7 +302,7 @@ function DashboardContent() {
             <div className="mt-4 space-y-2">
               {pendingCount > 0 && (
                 <Link
-                  href="/admin"
+                  href="/console/members"
                   className="flex items-center justify-between rounded-lg bg-white px-4 py-3 transition-colors hover:bg-amber-50"
                 >
                   <span className="text-sm font-medium">
@@ -315,7 +315,7 @@ function DashboardContent() {
               )}
               {unansweredCount > 0 && (
                 <Link
-                  href="/admin"
+                  href="/console/inquiries"
                   className="flex items-center justify-between rounded-lg bg-white px-4 py-3 transition-colors hover:bg-amber-50"
                 >
                   <span className="text-sm font-medium">

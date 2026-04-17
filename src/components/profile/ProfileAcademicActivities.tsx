@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { activitiesApi, seminarsApi } from "@/lib/bkend";
-import type { Activity, Seminar, User } from "@/types";
+import { activitiesApi, seminarsApi, attendeesApi } from "@/lib/bkend";
+import type { Activity, Seminar, SeminarAttendee, User } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, FolderKanban, Globe, Mic, ChevronRight } from "lucide-react";
 import { formatDate } from "@/lib/utils";
@@ -59,14 +59,23 @@ export default function ProfileAcademicActivities({ owner }: Props) {
     },
   });
 
+  const { data: userAttendeeRecords = [] } = useQuery({
+    queryKey: ["profile-user-attendees", owner.id],
+    queryFn: async () => {
+      const res = await attendeesApi.listByUser(owner.id);
+      return res.data as unknown as SeminarAttendee[];
+    },
+    enabled: !!owner.id,
+  });
+
   const myActivities = useMemo(
     () => allActivities.filter((a) => isMember(a, owner)),
     [allActivities, owner],
   );
-  const mySeminars = useMemo(
-    () => allSeminars.filter((s) => s.attendeeIds?.includes(owner.id)),
-    [allSeminars, owner.id],
-  );
+  const mySeminars = useMemo(() => {
+    const attendedIds = new Set(userAttendeeRecords.map((a) => a.seminarId));
+    return allSeminars.filter((s) => attendedIds.has(s.id));
+  }, [allSeminars, userAttendeeRecords]);
 
   const filtered = useMemo(() => {
     if (tab === "seminar") return mySeminars;

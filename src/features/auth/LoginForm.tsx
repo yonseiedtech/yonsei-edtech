@@ -181,17 +181,17 @@ export default function LoginForm({ onSuccess, hideSignupLink, signupHref }: Log
       </Button>
 
       <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">
-        <Link href="/forgot-password" className="hover:text-primary hover:underline">
-          비밀번호 찾기
-        </Link>
         {!hideSignupLink && (
           <>
-            <span className="text-muted-foreground/40">·</span>
             <Link href={signupHref ?? "/signup"} className="font-medium text-primary hover:underline">
               회원가입
             </Link>
+            <span className="text-muted-foreground/40">·</span>
           </>
         )}
+        <Link href="/forgot-password" className="hover:text-primary hover:underline">
+          비밀번호 찾기
+        </Link>
       </div>
 
       <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">

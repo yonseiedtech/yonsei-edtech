@@ -15,15 +15,15 @@ export default function HandoverOverviewPage() {
   return (
     <div className="py-10">
       <div className="mx-auto max-w-4xl px-4">
-        <Link href="/staff-admin" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft size={14} /> 운영진 관리로
+        <Link href="/console" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft size={14} /> 운영 콘솔로
         </Link>
 
         <div className="mt-4 flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold">인수인계 종합</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              각 직책별 인수인계 메모를 한눈에 확인합니다. 수정은 <Link href="/admin/settings/org-chart" className="text-primary underline underline-offset-2">조직도 설정</Link>에서 할 수 있습니다.
+              각 직책별 인수인계 메모를 한눈에 확인합니다. 수정은 <Link href="/console/settings" className="text-primary underline underline-offset-2">조직도 설정</Link>에서 할 수 있습니다.
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={() => window.print()} className="print:hidden">

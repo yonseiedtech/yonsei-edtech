@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
-import { Menu, X, User, Shield, ChevronDown, BookUser, LayoutDashboard, LogOut, Settings, BookOpen, Users, QrCode, ClipboardList, IdCard } from "lucide-react";
+import { Menu, X, User, Shield, ChevronDown, BookUser, LayoutDashboard, LogOut, Settings, BookOpen, Users, QrCode, ClipboardList, IdCard, FlaskConical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -174,6 +174,7 @@ function UserDropdown() {
     { href: "/mypage/activities", label: "내 학회활동", icon: ClipboardList },
     { href: "/mypage/research", label: "내 연구활동", icon: BookOpen },
     { href: "/mypage/card", label: "내 명함", icon: QrCode },
+    { href: "/labs", label: "실험실", icon: FlaskConical },
     ...(showAdmin
       ? [
           { href: "/console", label: "운영 콘솔", icon: Shield },
@@ -377,6 +378,7 @@ export default function Header() {
                   { href: "/mypage/activities", label: "내 학회활동", icon: ClipboardList },
                   { href: "/mypage/research", label: "내 연구활동", icon: BookOpen },
                   { href: "/mypage/card", label: "내 명함", icon: QrCode },
+                  { href: "/labs", label: "실험실", icon: FlaskConical },
                   ...(showAdmin
                     ? [
                         { href: "/console", label: "운영 콘솔", icon: Shield },

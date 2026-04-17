@@ -21,7 +21,6 @@ import ProfileBio from "./ProfileBio";
 import ProfileContactInfo from "./ProfileContactInfo";
 import ProfileResearchInterests from "./ProfileResearchInterests";
 import ProfileAcademicActivities from "./ProfileAcademicActivities";
-import ProfileCertificates from "./ProfileCertificates";
 import ProfileResearchActivities from "./ProfileResearchActivities";
 import OwnerVisibilitySection from "./OwnerVisibilitySection";
 
@@ -150,8 +149,6 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
         )}
 
         {showAcademic && <ProfileAcademicActivities owner={owner} />}
-
-        {showAcademic && <ProfileCertificates owner={owner} />}
 
         {showResearch && <ProfileResearchActivities papers={owner.recentPapers} />}
 

@@ -313,6 +313,8 @@ export const sessionsApi = {
 export const attendeesApi = {
   list: (seminarId: string) =>
     dataApi.list<SeminarAttendee>("seminar_attendees", { "filter[seminarId]": seminarId }),
+  listByUser: (userId: string) =>
+    dataApi.list<SeminarAttendee>("seminar_attendees", { "filter[userId]": userId }),
   check: (seminarId: string, userId: string) =>
     dataApi.list<SeminarAttendee>("seminar_attendees", { "filter[seminarId]": seminarId, "filter[userId]": userId }),
   checkByStudentId: (seminarId: string, studentId: string) =>

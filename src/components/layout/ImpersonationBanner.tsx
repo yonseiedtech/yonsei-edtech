@@ -56,7 +56,7 @@ export default function ImpersonationBanner() {
       await signInWithCustomToken(auth, data.customToken);
       try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
       toast.success("관리자 계정으로 복귀했습니다.");
-      router.push("/admin/members");
+      router.push("/console/members");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "복귀에 실패했습니다.");
     } finally {

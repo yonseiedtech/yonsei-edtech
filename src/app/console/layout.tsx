@@ -15,6 +15,7 @@ import {
   BarChart3, GraduationCap, Wallet, Users, BookUser,
   BookOpen, FlaskConical, FolderKanban, Globe, Award, NotebookPen,
   Settings, MessageCircle, ScrollText, ChevronDown, ChevronRight,
+  ShieldCheck, PieChart,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -127,6 +128,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
       items: [
         { href: "/console/members", label: "회원 DB", icon: Users, badge: pendingCount },
         { href: "/console/directory", label: "연락망", icon: BookUser },
+        { href: "/console/members/audit", label: "회원 검증", icon: ShieldCheck },
       ],
     },
     {
@@ -140,6 +142,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
       label: "인사이트",
       items: [
         { href: "/console/insights", label: "인사이트", icon: BarChart3 },
+        { href: "/console/insights/analytics", label: "분석 대시보드", icon: PieChart },
       ],
     },
     {
