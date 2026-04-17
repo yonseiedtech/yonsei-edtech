@@ -34,7 +34,7 @@ import {
 import EmptyState from "@/components/ui/empty-state";
 import { useAuth } from "@/features/auth/useAuth";
 import { ROLE_LABELS, ENROLLMENT_STATUS_LABELS } from "@/types";
-import { formatDate, formatGeneration } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 
 const TABS = [
   { key: "home", label: "홈", icon: Home },
@@ -159,7 +159,6 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
             <div>
               <h2 className="text-xl font-bold">{user.name}</h2>
               <div className="mt-1 flex flex-wrap items-center gap-2">
-                <Badge variant="secondary">{formatGeneration(user.generation, user.enrollmentYear, user.enrollmentHalf)}</Badge>
                 <Badge>{ROLE_LABELS[user.role]}</Badge>
                 {user.enrollmentStatus && (
                   <Badge variant="outline">{ENROLLMENT_STATUS_LABELS[user.enrollmentStatus]}</Badge>

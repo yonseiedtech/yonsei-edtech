@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, ClipboardList, MessageSquare, FileText, Newspaper,
   BarChart3, GraduationCap, Wallet, Users, BookUser,
-  BookOpen, FlaskConical,
+  BookOpen, FlaskConical, FolderKanban, Globe, Award, NotebookPen,
   Settings, MessageCircle, ScrollText, ChevronDown, ChevronRight,
 } from "lucide-react";
 import { useState } from "react";
@@ -113,7 +113,12 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
     {
       label: "학술활동",
       items: [
-        { href: "/academic-admin", label: "학술활동 관리", icon: GraduationCap },
+        { href: "/console/academic/manage", label: "대시보드", icon: GraduationCap },
+        { href: "/console/academic/seminars", label: "세미나", icon: BookOpen },
+        { href: "/console/academic/projects", label: "프로젝트", icon: FolderKanban },
+        { href: "/console/academic/studies", label: "스터디", icon: NotebookPen },
+        { href: "/console/academic/external", label: "대외 학술대회", icon: Globe },
+        { href: "/console/academic/certificates", label: "수료증·감사장", icon: Award },
         { href: "/console/fees", label: "학회비", icon: Wallet },
       ],
     },

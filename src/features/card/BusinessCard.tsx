@@ -4,7 +4,6 @@ import { forwardRef } from "react";
 import Image from "next/image";
 import { QRCodeSVG } from "qrcode.react";
 import type { User } from "@/types";
-import { formatGeneration } from "@/lib/utils";
 
 interface BusinessCardProps {
   user: User;
@@ -16,7 +15,6 @@ interface BusinessCardProps {
 
 const BusinessCard = forwardRef<HTMLDivElement, BusinessCardProps>(
   function BusinessCard({ user, qrValue, hideExchangeHint }, ref) {
-    const gen = formatGeneration(user.generation, user.enrollmentYear, user.enrollmentHalf);
     const affiliationLine = [user.affiliation, user.department].filter(Boolean).join(" ");
 
     return (
@@ -54,7 +52,6 @@ const BusinessCard = forwardRef<HTMLDivElement, BusinessCardProps>(
           {/* 이름 + 직함 */}
           <div className="mt-3 text-center">
             <h2 className="text-xl font-bold text-slate-900">{user.name}</h2>
-            {gen && <p className="mt-0.5 text-xs font-semibold text-primary">{gen}</p>}
             {user.position && <p className="mt-0.5 text-sm text-slate-600">{user.position}</p>}
             {affiliationLine && <p className="mt-0.5 text-xs text-slate-500">{affiliationLine}</p>}
           </div>

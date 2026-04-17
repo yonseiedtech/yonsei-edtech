@@ -1,7 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import type { User } from "@/types";
 import { ROLE_LABELS } from "@/types";
-import { formatGeneration } from "@/lib/utils";
 import ProfileLikeButton from "./ProfileLikeButton";
 import ProfileShareMenu from "./ProfileShareMenu";
 
@@ -12,7 +11,6 @@ interface Props {
 }
 
 export default function ProfileHeader({ owner, isOwner, viewer }: Props) {
-  const gen = formatGeneration(owner.generation, owner.enrollmentYear, owner.enrollmentHalf);
   const showRoleBadge = owner.role !== "member" && owner.role !== "alumni";
 
   return (
@@ -39,7 +37,6 @@ export default function ProfileHeader({ owner, isOwner, viewer }: Props) {
               </Badge>
             )}
           </div>
-          {gen && <p className="mt-1 text-sm font-semibold text-primary">{gen}</p>}
           {owner.position && (
             <p className="mt-1 text-sm text-slate-700">{owner.position}</p>
           )}

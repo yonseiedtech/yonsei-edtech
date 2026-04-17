@@ -203,9 +203,6 @@ export default function SeminarReviews({ seminar }: Props) {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">{r.authorName}</span>
-                    {r.authorGeneration ? (
-                      <span className="text-xs text-muted-foreground">{r.authorGeneration}기</span>
-                    ) : null}
                     {r.rating && <StarRating value={r.rating} readonly />}
                   </div>
                   <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{r.content}</p>

@@ -14,7 +14,7 @@ import type { Certificate, Activity, User, Post, InterviewResponse } from "@/typ
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Calendar, X, FileText, Award, ChevronRight, FolderKanban, BookOpen, Globe, Eye, Mic, ClipboardList } from "lucide-react";
+import { Calendar, X, FileText, Award, ChevronRight, FolderKanban, BookOpen, Globe, Eye, ClipboardList, Mic } from "lucide-react";
 import { useMyInterviewResponses } from "@/features/board/interview-store";
 import MyInterviewAnswersDialog from "@/features/board/MyInterviewAnswersDialog";
 import EmptyState from "@/components/ui/empty-state";
@@ -29,7 +29,9 @@ const TABS = [
   { key: "interviews", label: "인터뷰", icon: Mic },
 ] as const;
 
+
 const ACTIVITY_META: Record<string, { label: string; icon: typeof FolderKanban; href: string }> = {
+  seminar: { label: "세미나", icon: Calendar, href: "/seminars" },
   project: { label: "프로젝트", icon: FolderKanban, href: "/activities/projects" },
   study: { label: "스터디", icon: BookOpen, href: "/activities/studies" },
   external: { label: "대외활동", icon: Globe, href: "/activities/external" },
@@ -188,137 +190,156 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
         </nav>
 
         <div className="mt-6">
-          {activeTab === "activities" && (
-            <div className="space-y-5">
+          {activeTab === "activities" && (() => {
+            const totalCount = mySeminars.length + myActivities.length;
+            const grouped: { type: string; items: React.ReactNode[] }[] = [];
+
+            if (mySeminars.length > 0) {
+              grouped.push({
+                type: "seminar",
+                items: mySeminars.map((s) => (
+                  <li key={`sem-${s.id}`} className="rounded-xl border bg-card px-5 py-4 hover:border-primary/40">
+                    <div className="flex items-center justify-between">
+                      <Link href={`/seminars/${s.id}`} className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Calendar size={14} className="text-primary" />
+                          <Badge variant="secondary" className="text-[10px]">세미나</Badge>
+                          {checkedInMap.has(s.id) && <Badge variant="secondary" className="bg-green-50 text-green-700 text-[10px]">출석</Badge>}
+                        </div>
+                        <p className="mt-1 truncate font-medium">{s.title}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {formatDate(s.date)} {s.time} · {s.location}
+                        </p>
+                      </Link>
+                      <div className="flex items-center gap-2">
+                        {checkedInMap.has(s.id) && (
+                          <AttendanceCertificate
+                            seminarTitle={s.title}
+                            seminarDate={s.date}
+                            seminarLocation={s.location}
+                            attendeeName={user?.name ?? ""}
+                            generation={user?.generation}
+                            checkedInAt={checkedInMap.get(s.id)}
+                          />
+                        )}
+                        {!readOnly && isSelf && (
+                          <Button variant="outline" size="sm" className="h-7 text-xs text-destructive" onClick={() => handleCancelAttendance(s.id)}>
+                            <X size={12} className="mr-1" />취소
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                )),
+              });
+            }
+
+            const types = ["project", "study", "external"] as const;
+            for (const t of types) {
+              const items = myActivities.filter((a) => a.type === t);
+              if (items.length > 0) {
+                grouped.push({
+                  type: t,
+                  items: items.map((a) => {
+                    const meta = ACTIVITY_META[a.type] ?? ACTIVITY_META.project;
+                    const Icon = meta.icon;
+                    const role = user && a.participantRoles ? (a.participantRoles as Record<string, string>)[user.id] : undefined;
+                    return (
+                      <li key={a.id} className="rounded-xl border bg-card px-5 py-4 hover:border-primary/40">
+                        <Link href={`${meta.href}/${a.id}`} className="flex items-center justify-between">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Icon size={14} className="text-primary" />
+                              <Badge variant="secondary" className="text-[10px]">{meta.label}</Badge>
+                              {a.status && (
+                                <Badge variant="outline" className="text-[10px]">
+                                  {a.status === "upcoming" ? "예정" : a.status === "ongoing" ? "진행중" : "완료"}
+                                </Badge>
+                              )}
+                              {(a.year || a.semester) && (
+                                <Badge variant="secondary" className="bg-violet-50 text-[10px] text-violet-700">
+                                  {formatSemester(a.year, a.semester)}
+                                </Badge>
+                              )}
+                              {role && <Badge variant="secondary" className="bg-sky-50 text-sky-700 text-[10px]">{role}</Badge>}
+                              {a.leaderId === user?.id && <Badge className="bg-amber-50 text-amber-700 text-[10px]">{a.type === "study" ? "모임장" : "담당자"}</Badge>}
+                            </div>
+                            <p className="mt-1 truncate font-medium">{a.title}</p>
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                              {a.date ? formatDate(a.date) : ""}{a.location ? ` · ${a.location}` : ""}
+                            </p>
+                          </div>
+                          <ChevronRight size={14} className="shrink-0 text-muted-foreground" />
+                        </Link>
+                      </li>
+                    );
+                  }),
+                });
+              }
+            }
+
+            return (
               <div className="space-y-6">
-                  <section>
-                    <h3 className="mb-2 text-sm font-semibold">학술활동 ({myActivities.length})</h3>
-                    {myActivities.length === 0 ? (
-                      <EmptyState
-                        icon={BookOpen}
-                        title="참여 중인 학술활동이 없습니다"
-                        description="프로젝트·스터디·대외활동에 참여해보세요."
-                        actionLabel="학술활동 둘러보기"
-                        actionHref="/activities"
-                      />
-                    ) : (
-                      <ul className="space-y-2">
-                        {myActivities.map((a) => {
-                          const meta = ACTIVITY_META[a.type] ?? ACTIVITY_META.project;
-                          const Icon = meta.icon;
-                          return (
-                            <li key={a.id} className="rounded-xl border bg-card px-5 py-4 hover:border-primary/40">
-                              <Link href={`${meta.href}/${a.id}`} className="flex items-center justify-between">
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <Icon size={14} className="text-primary" />
-                                    <Badge variant="secondary" className="text-[10px]">{meta.label}</Badge>
-                                    {a.status && (
-                                      <Badge variant="outline" className="text-[10px]">
-                                        {a.status === "upcoming" ? "예정" : a.status === "ongoing" ? "진행중" : "완료"}
-                                      </Badge>
-                                    )}
-                                    {(a.year || a.semester) && (
-                                      <Badge variant="secondary" className="bg-violet-50 text-[10px] text-violet-700">
-                                        {formatSemester(a.year, a.semester)}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  <p className="mt-1 truncate font-medium">{a.title}</p>
-                                  <p className="mt-0.5 text-xs text-muted-foreground">
-                                    {a.date ? formatDate(a.date) : ""}{a.location ? ` · ${a.location}` : ""}
-                                  </p>
-                                </div>
-                                <ChevronRight size={14} className="shrink-0 text-muted-foreground" />
-                              </Link>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-                  </section>
-
-                  {myPendingApplications.length > 0 && (
-                    <section>
-                      <h3 className="mb-2 text-sm font-semibold">신청 현황 ({myPendingApplications.length})</h3>
-                      <ul className="space-y-2">
-                        {myPendingApplications.map((a) => {
-                          const meta = ACTIVITY_META[a.type] ?? ACTIVITY_META.project;
-                          const mine = a.applicants?.find((ap) => ap.userId === userId);
-                          const statusLabel = mine?.status === "rejected" ? "반려" : "승인 대기";
-                          const statusColor = mine?.status === "rejected" ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700";
-                          return (
-                            <li key={a.id} className="rounded-xl border bg-card px-5 py-4 hover:border-primary/40">
-                              <Link href={`${meta.href}/${a.id}`} className="flex items-center justify-between">
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <Badge variant="secondary" className="text-[10px]">{meta.label}</Badge>
-                                    <Badge className={cn("text-[10px]", statusColor)}>{statusLabel}</Badge>
-                                  </div>
-                                  <p className="mt-1 truncate font-medium">{a.title}</p>
-                                  <p className="mt-0.5 text-xs text-muted-foreground">
-                                    신청일 {mine?.appliedAt ? new Date(mine.appliedAt).toLocaleDateString("ko-KR") : "-"}
-                                  </p>
-                                </div>
-                                <ChevronRight size={14} className="shrink-0 text-muted-foreground" />
-                              </Link>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </section>
+                <section>
+                  <h3 className="mb-2 text-sm font-semibold">학술활동 ({totalCount})</h3>
+                  {totalCount === 0 ? (
+                    <EmptyState
+                      icon={BookOpen}
+                      title="참여 중인 학술활동이 없습니다"
+                      description="세미나·프로젝트·스터디·대외활동에 참여해보세요."
+                      actionLabel="학술활동 둘러보기"
+                      actionHref="/activities"
+                    />
+                  ) : (
+                    <div className="space-y-4">
+                      {grouped.map((g) => {
+                        const meta = ACTIVITY_META[g.type];
+                        return (
+                          <div key={g.type}>
+                            <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                              <meta.icon size={13} />{meta.label} ({g.items.length})
+                            </p>
+                            <ul className="space-y-2">{g.items}</ul>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
+                </section>
 
+                {myPendingApplications.length > 0 && (
                   <section>
-                    <h3 className="mb-2 text-sm font-semibold">참여 세미나 ({mySeminars.length})</h3>
-                    {mySeminars.length === 0 ? (
-                      <EmptyState
-                        icon={Calendar}
-                        title="신청한 세미나가 없습니다"
-                        description="관심 있는 세미나에 참여 신청해보세요."
-                        actionLabel="세미나 보러가기"
-                        actionHref="/seminars"
-                      />
-                    ) : (
-                      <div className="space-y-3">
-                        {mySeminars.map((s) => (
-                          <div key={s.id} className="rounded-xl border bg-card px-5 py-4">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <Link href={`/seminars/${s.id}`} className="font-medium hover:text-primary hover:underline">
-                                  {s.title}
-                                </Link>
-                                <p className="mt-0.5 text-sm text-muted-foreground">
-                                  {formatDate(s.date)} {s.time} · {s.location}
+                    <h3 className="mb-2 text-sm font-semibold">신청 현황 ({myPendingApplications.length})</h3>
+                    <ul className="space-y-2">
+                      {myPendingApplications.map((a) => {
+                        const meta = ACTIVITY_META[a.type] ?? ACTIVITY_META.project;
+                        const mine = a.applicants?.find((ap) => ap.userId === userId);
+                        const statusLabel = mine?.status === "rejected" ? "반려" : "승인 대기";
+                        const statusColor = mine?.status === "rejected" ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700";
+                        return (
+                          <li key={a.id} className="rounded-xl border bg-card px-5 py-4 hover:border-primary/40">
+                            <Link href={`${meta.href}/${a.id}`} className="flex items-center justify-between">
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="secondary" className="text-[10px]">{meta.label}</Badge>
+                                  <Badge className={cn("text-[10px]", statusColor)}>{statusLabel}</Badge>
+                                </div>
+                                <p className="mt-1 truncate font-medium">{a.title}</p>
+                                <p className="mt-0.5 text-xs text-muted-foreground">
+                                  신청일 {mine?.appliedAt ? new Date(mine.appliedAt).toLocaleDateString("ko-KR") : "-"}
                                 </p>
                               </div>
-                              {!readOnly && isSelf && (
-                                <Button variant="outline" size="sm" className="text-destructive" onClick={() => handleCancelAttendance(s.id)}>
-                                  <X size={14} className="mr-1" />취소
-                                </Button>
-                              )}
-                            </div>
-                            {checkedInMap.has(s.id) && (
-                              <div className="mt-2 flex items-center gap-2 border-t pt-2">
-                                <Badge variant="secondary" className="bg-green-50 text-green-700">출석 완료</Badge>
-                                <AttendanceCertificate
-                                  seminarTitle={s.title}
-                                  seminarDate={s.date}
-                                  seminarLocation={s.location}
-                                  attendeeName={user?.name ?? ""}
-                                  generation={user?.generation}
-                                  checkedInAt={checkedInMap.get(s.id)}
-                                />
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                              <ChevronRight size={14} className="shrink-0 text-muted-foreground" />
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   </section>
-                </div>
-            </div>
-          )}
+                )}
+              </div>
+            );
+          })()}
 
           {activeTab === "certificates" && (
             <div className="space-y-3">

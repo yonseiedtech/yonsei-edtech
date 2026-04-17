@@ -31,6 +31,7 @@ import { useAllMembers } from "@/features/member/useMembers";
 const STATUS_LABELS: Record<string, string> = { upcoming: "예정", ongoing: "진행 중", completed: "완료" };
 const STATUS_COLORS: Record<string, string> = { upcoming: "bg-blue-50 text-blue-700", ongoing: "bg-amber-50 text-amber-700", completed: "bg-muted text-muted-foreground" };
 const RECRUIT_LABELS: Record<string, string> = { recruiting: "모집중", closed: "모집마감", in_progress: "진행중", completed: "완료" };
+const RECRUIT_LABELS_STUDY: Record<string, string> = { recruiting: "모집중", closed: "모집완료" };
 const RECRUIT_COLORS: Record<string, string> = { recruiting: "bg-green-50 text-green-700", closed: "bg-red-50 text-red-700", in_progress: "bg-amber-50 text-amber-700", completed: "bg-muted text-muted-foreground" };
 
 type Tab = "overview" | "progress" | "materials" | "participants" | "applicants" | "form-settings" | "report" | "settings";
@@ -82,10 +83,12 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
     },
   });
 
-  const participants = (activity?.participants as string[] | undefined) ?? [];
-  const applicants = (activity?.applicants as Activity["applicants"]) ?? [];
-  // PR7: 모임장 또는 운영진은 참여자 직접 추가/제거 가능
+  const rawParticipants = (activity?.participants as string[] | undefined) ?? [];
   const leaderId = (activity?.leaderId as string | undefined) ?? undefined;
+  const participants = leaderId && !rawParticipants.includes(leaderId) ? [leaderId, ...rawParticipants] : rawParticipants;
+  const applicants = (activity?.applicants as Activity["applicants"]) ?? [];
+  const participantRoles = (activity?.participantRoles as Record<string, string> | undefined) ?? {};
+  const registrationMethod = (activity?.registrationMethod as "open" | "manual" | undefined) ?? "manual";
   const isLeader = !!user && !!leaderId && user.id === leaderId;
   const canManageParticipants = isLeader || isStaff;
   const { members: allMembers } = useAllMembers();
@@ -190,8 +193,8 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
     { value: "progress", label: `진행 현황${progressList.length > 0 ? ` (${progressPct}%)` : ""}`, show: type !== "external" },
     { value: "materials", label: `산출물 (${materialsList.length})`, show: true },
     { value: "participants", label: `참여자 (${participants.length})`, show: true },
-    { value: "applicants", label: `신청현황 (${applicants.length})`, show: type === "external" || isStaff },
-    { value: "form-settings", label: "신청 폼 설정", show: isStaff },
+    { value: "applicants", label: `신청현황 (${applicants.length})`, show: registrationMethod === "open" && (type === "external" || isStaff) },
+    { value: "form-settings", label: "신청 폼 설정", show: registrationMethod === "open" && isStaff },
     { value: "report", label: "리포트", show: isStaff },
     { value: "settings", label: "관리", show: isStaff },
   ];
@@ -208,7 +211,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary" className={cn("text-xs", STATUS_COLORS[activity.status])}>{STATUS_LABELS[activity.status]}</Badge>
             {activity.recruitmentStatus && (
-              <Badge variant="secondary" className={cn("text-xs", RECRUIT_COLORS[activity.recruitmentStatus])}>{RECRUIT_LABELS[activity.recruitmentStatus]}</Badge>
+              <Badge variant="secondary" className={cn("text-xs", RECRUIT_COLORS[activity.recruitmentStatus])}>{type === "study" ? (RECRUIT_LABELS_STUDY[activity.recruitmentStatus] ?? RECRUIT_LABELS[activity.recruitmentStatus]) : RECRUIT_LABELS[activity.recruitmentStatus]}</Badge>
             )}
           </div>
           <h1 className="mt-2 text-2xl font-bold">{activity.title}</h1>
@@ -227,7 +230,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
 
           {/* 참여 버튼 */}
           <div className="mt-4">
-            {!isJoined && !hasApplied && recruitmentStatus === "recruiting" && (
+            {!isJoined && !hasApplied && recruitmentStatus === "recruiting" && registrationMethod === "open" && (
               type === "external" ? (
                 <Button size="sm" onClick={() => {
                   setApplyName(user?.name ?? "");
@@ -461,26 +464,50 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   <div className="divide-y">
                     {participants.map((pid, i) => {
                       const m = memberMap.get(pid);
+                      const role = participantRoles[pid];
                       return (
                         <div key={pid} className="flex items-center justify-between px-4 py-3 text-sm">
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <span className="text-muted-foreground">{i + 1}.</span>
                             <span className="font-medium">{m?.name ?? "(이름 미확인)"}</span>
                             {m?.studentId && <span className="text-xs text-muted-foreground">{m.studentId}</span>}
                             {m?.generation && <Badge variant="secondary" className="text-[10px]">{m.generation}기</Badge>}
                             {leaderId === pid && <Badge className="bg-amber-50 text-amber-700 text-[10px]">{type === "study" ? "모임장" : "담당자"}</Badge>}
+                            {role && <Badge variant="secondary" className="bg-sky-50 text-sky-700 text-[10px]">{role}</Badge>}
                           </div>
-                          {canManageParticipants && (
-                            <button
-                              onClick={() => {
-                                if (confirm("참여에서 제외하시겠습니까?")) removeParticipantMutation.mutate(pid);
-                              }}
-                              className="rounded p-1 text-muted-foreground hover:text-red-500"
-                              aria-label="제외"
-                            >
-                              <X size={14} />
-                            </button>
-                          )}
+                          <div className="flex items-center gap-1">
+                            {canManageParticipants && (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    const newRole = prompt("역할을 입력하세요 (예: 발표자, 기록자, 총무)", role || "");
+                                    if (newRole === null) return;
+                                    const updated = { ...participantRoles };
+                                    if (newRole.trim()) updated[pid] = newRole.trim();
+                                    else delete updated[pid];
+                                    activitiesApi.update(activityId, { participantRoles: updated });
+                                    queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+                                  }}
+                                  className="rounded p-1 text-muted-foreground hover:text-primary"
+                                  aria-label="역할 설정"
+                                  title="역할 설정"
+                                >
+                                  <Pencil size={13} />
+                                </button>
+                                {leaderId !== pid && (
+                                  <button
+                                    onClick={() => {
+                                      if (confirm("참여에서 제외하시겠습니까?")) removeParticipantMutation.mutate(pid);
+                                    }}
+                                    className="rounded p-1 text-muted-foreground hover:text-red-500"
+                                    aria-label="제외"
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                )}
+                              </>
+                            )}
+                          </div>
                         </div>
                       );
                     })}
@@ -649,11 +676,33 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
           )}
 
           {activeTab === "settings" && isStaff && (
-            <div className="rounded-xl border bg-white p-6">
-              <p className="text-sm text-muted-foreground">활동 목록 페이지에서 수정/삭제할 수 있습니다.</p>
-              <Link href={backHref}>
-                <Button variant="outline" size="sm" className="mt-3"><Pencil size={14} className="mr-1" />목록으로 이동</Button>
-              </Link>
+            <div className="space-y-4">
+              <div className="rounded-xl border bg-white p-6 space-y-4">
+                <h3 className="font-semibold">참여자 등록 방식</h3>
+                <select
+                  value={registrationMethod}
+                  onChange={async (e) => {
+                    await activitiesApi.update(activityId, { registrationMethod: e.target.value as "open" | "manual" });
+                    queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+                    toast.success("등록 방식이 변경되었습니다.");
+                  }}
+                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                >
+                  <option value="manual">수기 등록 (관리자/모임장이 직접 추가)</option>
+                  <option value="open">공개 신청 (참가 신청을 받음)</option>
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  {registrationMethod === "open"
+                    ? "공개 신청 모드: 참가 신청 버튼이 표시되며, 신청현황 탭에서 승인/거절할 수 있습니다."
+                    : "수기 등록 모드: 참여자 탭에서 관리자 또는 모임장이 직접 회원을 추가합니다."}
+                </p>
+              </div>
+              <div className="rounded-xl border bg-white p-6">
+                <p className="text-sm text-muted-foreground">활동 정보 수정/삭제는 목록 페이지에서 가능합니다.</p>
+                <Link href={backHref}>
+                  <Button variant="outline" size="sm" className="mt-3"><Pencil size={14} className="mr-1" />목록으로 이동</Button>
+                </Link>
+              </div>
             </div>
           )}
         </div>

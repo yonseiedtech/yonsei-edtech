@@ -470,7 +470,6 @@ export default function ReviewManagement({ seminar }: Props) {
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-sm font-medium">{r.authorName}</span>
-                          {r.authorGeneration ? <span className="text-xs text-muted-foreground">{r.authorGeneration}기</span> : null}
                           {r.rating && <StarRating value={r.rating} readonly />}
                           {isHidden && <Badge variant="secondary" className="text-xs text-red-500">숨김</Badge>}
                           {isInternal && <Badge variant="secondary" className="text-xs text-amber-600">비공개</Badge>}

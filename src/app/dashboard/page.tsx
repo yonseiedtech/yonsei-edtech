@@ -12,7 +12,7 @@ import { isAtLeast } from "@/lib/permissions";
 import { ROLE_LABELS } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatDate, formatGeneration } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import MiniCalendar from "@/features/dashboard/MiniCalendar";
 import ActivityFeed from "@/features/dashboard/ActivityFeed";
 import {
@@ -109,7 +109,6 @@ function DashboardContent() {
             </h1>
             <div className="mt-1 flex items-center gap-2">
               <Badge>{ROLE_LABELS[user.role]}</Badge>
-              <Badge variant="secondary">{formatGeneration(user.generation, user.enrollmentYear, user.enrollmentHalf)}</Badge>
             </div>
           </div>
         </div>

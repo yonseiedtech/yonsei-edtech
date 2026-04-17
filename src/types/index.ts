@@ -399,6 +399,36 @@ export interface WritingPaperHistory {
   createdAt: string;
 }
 
+// ── 연구 보고서 ──
+
+export interface ResearchGroup {
+  id: string;
+  name: string;
+  paperIds: string[];
+  integration: string;
+  insight: string;
+}
+
+export interface ResearchReport {
+  id: string;
+  userId: string;
+  fieldDescription: string;
+  fieldProblem: string;
+  problemPhenomenon: string;
+  problemEvidence: string;
+  problemCause: string;
+  problemDefinition: string;
+  theoryType: string;
+  theoryDefinition: string;
+  theoryConnection: string;
+  priorResearchAnalysis: string;
+  priorResearchPaperIds: string[];
+  priorResearchGroups: ResearchGroup[];
+  lastSavedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ── 온라인 인터뷰 ──
 export type InterviewAnswerType =
   | "text"
@@ -857,6 +887,8 @@ export interface Activity { [key: string]: unknown;
   applicants?: { userId?: string; guestKey?: string; isGuest?: boolean; email?: string; phone?: string; name: string; studentId?: string; answers?: Record<string, string | string[] | { url: string; name: string; size: number; type: string }[]>; appliedAt: string; status: "pending" | "approved" | "rejected" }[];
   applicationQuestions?: string[];
   applicationForm?: FormField[];
+  registrationMethod?: "open" | "manual";
+  participantRoles?: Record<string, string>;
   location?: string;
   tags?: string[];
   imageUrl?: string;

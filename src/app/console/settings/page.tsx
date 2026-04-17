@@ -1,1 +1,10 @@
-export { default } from "@/app/admin/settings/page";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
+export default function SettingsPage() {
+  const router = useRouter();
+  useEffect(() => { router.replace("/console/settings/greeting"); }, [router]);
+  return null;
+}

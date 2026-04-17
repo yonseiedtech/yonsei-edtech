@@ -4,13 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { ROLE_LABELS } from "@/types";
 import type { User } from "@/types";
 
-function formatEnrollment(year?: number, half?: number): string {
-  if (!year) return "";
-  const yy = String(year).slice(-2);
-  const label = half === 2 ? "후기" : "전기";
-  return `${yy}년 ${label}`;
-}
-
 interface Props {
   member: User;
 }
@@ -37,14 +30,7 @@ export default function MemberCard({ member }: Props) {
         )}
       </div>
 
-      <h3 className="mt-4 font-semibold">
-        {member.name}
-        {formatEnrollment(member.enrollmentYear, member.enrollmentHalf) && (
-          <span className="ml-1 text-xs font-normal text-muted-foreground">
-            ({formatEnrollment(member.enrollmentYear, member.enrollmentHalf)})
-          </span>
-        )}
-      </h3>
+      <h3 className="mt-4 font-semibold">{member.name}</h3>
 
       {affiliationLine && (
         <p className="mt-1 text-xs text-muted-foreground">{affiliationLine}</p>

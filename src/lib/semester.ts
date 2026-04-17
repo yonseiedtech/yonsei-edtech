@@ -96,4 +96,37 @@ export function monthRangeDays(fromYM: string | null | undefined, toYM: string |
   return Math.round((endExclusive.getTime() - start.getTime()) / 86400000);
 }
 
+/** 입학 시점 기준 1년차~N년차 범위 배열 */
+export function enrollmentYearRanges(
+  enrollmentYear: number,
+  enrollmentHalf: number,
+  now: Date = new Date(),
+): SemesterRange[] {
+  const ranges: SemesterRange[] = [];
+  const startMonth = enrollmentHalf === 1 ? 3 : 9;
+
+  for (let n = 0; ; n++) {
+    const baseYear = enrollmentYear + n;
+    const from = `${baseYear}-${pad(startMonth)}`;
+
+    let endMonth = startMonth - 1;
+    let endYear = baseYear + 1;
+    if (endMonth === 0) {
+      endMonth = 12;
+      endYear = baseYear;
+    }
+    const to = `${endYear}-${pad(endMonth)}`;
+
+    if (new Date(baseYear, startMonth - 1, 1) > now) break;
+
+    ranges.push({
+      from,
+      to,
+      label: `${n + 1}년차 (${baseYear}.${pad(startMonth)}~${endYear}.${pad(endMonth)})`,
+    });
+  }
+
+  return ranges;
+}
+
 void pad;

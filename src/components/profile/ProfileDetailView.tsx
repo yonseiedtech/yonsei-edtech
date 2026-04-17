@@ -15,10 +15,8 @@ import {
 import { useProfileViews } from "@/features/profile/useProfileViews";
 import type { User } from "@/types";
 import { Lock } from "lucide-react";
-import { formatGeneration } from "@/lib/utils";
-
+import Image from "next/image";
 import ProfileHeader from "./ProfileHeader";
-import ProfileGraduateInfo from "./ProfileGraduateInfo";
 import ProfileBio from "./ProfileBio";
 import ProfileContactInfo from "./ProfileContactInfo";
 import ProfileResearchInterests from "./ProfileResearchInterests";
@@ -90,11 +88,6 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
               <Lock size={22} className="text-muted-foreground" />
             </div>
             <h1 className="text-lg font-bold">{owner.name}</h1>
-            {owner.enrollmentYear && (
-              <p className="mt-1 text-sm text-muted-foreground">
-                {formatGeneration(owner.generation, owner.enrollmentYear, owner.enrollmentHalf)}
-              </p>
-            )}
             <p className="mt-4 text-sm text-slate-700">
               회원 전용 프로필입니다. 자세한 정보를 보려면 로그인하세요.
             </p>
@@ -124,8 +117,6 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
   const showResearchInterests = canViewSection("researchInterests", viewer, owner, via);
   const showAcademic = canViewSection("academicActivities", viewer, owner, via);
   const showResearch = canViewSection("researchActivities", viewer, owner, via);
-  const showGraduateInfo = canViewSection("graduateInfo", viewer, owner, via);
-
   // 운영진 페이지 비로그인 케이스: 일부 항상 노출 + 운영진 공식 이메일 표시 보강
   const isStaffPublic = access === "staff-public-only";
   const showOfficialEmail = isStaffPublic; // 항상 노출되는 공식 이메일
@@ -134,11 +125,13 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
   return (
     <div className="min-h-screen bg-slate-50 py-10">
       <div className="mx-auto max-w-2xl space-y-4 px-4">
+        <div className="flex items-center gap-2.5 pb-2">
+          <Image src="/yonsei-emblem.svg" alt="연세대학교" width={28} height={28} className="h-7 w-7" />
+          <h1 className="text-lg font-bold text-foreground">개인 프로필</h1>
+        </div>
         <ProfileHeader owner={owner} isOwner={isOwner} viewer={viewer} />
 
         {isOwner && <OwnerVisibilitySection owner={owner} />}
-
-        {(showGraduateInfo || showStaffPublicBase) && <ProfileGraduateInfo user={owner} />}
 
         {(showBio || showStaffPublicBase) && <ProfileBio bio={owner.bio} />}
 

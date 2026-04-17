@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import Link from "next/link";
 import PageHeader from "@/components/ui/page-header";
-import { Calendar, MapPin, Users, User, Plus, Pencil, Trash2, Loader2, UserPlus, Check, Megaphone, CalendarClock, Archive, ImageIcon } from "lucide-react";
+import { Calendar, MapPin, Users, User, Plus, Pencil, Trash2, Loader2, UserPlus, Check, Megaphone, CalendarClock, ImageIcon, LayoutGrid, List } from "lucide-react";
 import { postsApi } from "@/lib/bkend";
 import { uploadImageSmart } from "@/lib/storage";
 import EmptyState from "@/components/ui/empty-state";
@@ -44,16 +44,14 @@ interface FormData {
   status: "upcoming" | "ongoing" | "completed";
   recruitmentStatus: string; maxParticipants: string;
   leader: string;
-  /** PR7: 모임장(스터디) 회원 ID */
   leaderId: string;
   location: string; tags: string;
   organizerName: string; conferenceUrl: string; imageUrl: string;
-  /** 학기 연도 — 빈 문자열 = 미지정 */
   year: string;
-  /** 학기 — "" | "first" | "second" */
   semester: "" | "first" | "second";
+  registrationMethod: "open" | "manual";
 }
-const emptyForm: FormData = { title: "", description: "", detailContent: "", date: "", endDate: "", status: "upcoming", recruitmentStatus: "recruiting", maxParticipants: "", leader: "", leaderId: "", location: "", tags: "", organizerName: "", conferenceUrl: "", imageUrl: "", year: "", semester: "" };
+const emptyForm: FormData = { title: "", description: "", detailContent: "", date: "", endDate: "", status: "upcoming", recruitmentStatus: "recruiting", maxParticipants: "", leader: "", leaderId: "", location: "", tags: "", organizerName: "", conferenceUrl: "", imageUrl: "", year: "", semester: "", registrationMethod: "manual" };
 
 interface Props {
   type: ActivityType;
@@ -115,6 +113,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
         imageUrl: form.imageUrl.trim() || undefined,
         year: form.year ? Number(form.year) : undefined,
         semester: form.semester || undefined,
+        registrationMethod: form.registrationMethod,
         participants: editId ? undefined : [],
         applicants: editId ? undefined : [],
         createdBy: user?.id || "",
@@ -187,7 +186,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
   function openCreate() { setEditId(null); setForm(emptyForm); setDialogOpen(true); }
   function openEdit(a: Activity) {
     setEditId(a.id);
-    setForm({ title: a.title, description: a.description, detailContent: a.detailContent || "", date: a.date, endDate: a.endDate || "", status: a.status, recruitmentStatus: a.recruitmentStatus || "recruiting", maxParticipants: a.maxParticipants ? String(a.maxParticipants) : "", leader: a.leader || "", leaderId: a.leaderId || "", location: a.location || "", tags: a.tags?.join(", ") || "", organizerName: a.organizerName || "", conferenceUrl: a.conferenceUrl || "", imageUrl: a.imageUrl || "", year: a.year ? String(a.year) : "", semester: a.semester || "" });
+    setForm({ title: a.title, description: a.description, detailContent: a.detailContent || "", date: a.date, endDate: a.endDate || "", status: a.status, recruitmentStatus: a.recruitmentStatus || "recruiting", maxParticipants: a.maxParticipants ? String(a.maxParticipants) : "", leader: a.leader || "", leaderId: a.leaderId || "", location: a.location || "", tags: a.tags?.join(", ") || "", organizerName: a.organizerName || "", conferenceUrl: a.conferenceUrl || "", imageUrl: a.imageUrl || "", year: a.year ? String(a.year) : "", semester: a.semester || "", registrationMethod: a.registrationMethod || "manual" });
     setDialogOpen(true);
   }
   function closeDialog() { setDialogOpen(false); setEditId(null); setForm(emptyForm); setAutoPost(false); }
@@ -195,10 +194,13 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
   const ongoing = activities.filter((a) => a.status === "ongoing" || a.status === "upcoming");
   const completed = activities.filter((a) => a.status === "completed");
 
+  const [statusTab, setStatusTab] = useState<"all" | "active" | "completed">("all");
+  const filteredList =
+    statusTab === "active" ? ongoing : statusTab === "completed" ? completed : activities;
+
   const isExternal = type === "external";
-  const [externalTab, setExternalTab] = useState<"all" | "active" | "completed">("all");
-  const externalList =
-    externalTab === "active" ? ongoing : externalTab === "completed" ? completed : activities;
+  const defaultView = isExternal ? "gallery" : "list";
+  const [viewMode, setViewMode] = useState<"gallery" | "list">(defaultView);
 
   function computeDday(a: Activity): { label: string; tone: string } | null {
     if (!a.date) return null;
@@ -293,7 +295,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary" className={cn("text-xs", STATUS_COLORS[a.status])}>{STATUS_LABELS[a.status]}</Badge>
-              {a.recruitmentStatus && <Badge variant="secondary" className={cn("text-xs", RECRUIT_COLORS[a.recruitmentStatus])}>{RECRUIT_LABELS[a.recruitmentStatus]}</Badge>}
+              {a.recruitmentStatus && <Badge variant="secondary" className={cn("text-xs", RECRUIT_COLORS[a.recruitmentStatus])}>{type === "study" && a.recruitmentStatus === "closed" ? "모집완료" : RECRUIT_LABELS[a.recruitmentStatus]}</Badge>}
               <Link href={`/activities/${type === "project" ? "projects" : type === "study" ? "studies" : "external"}/${a.id}`} className="text-lg font-semibold hover:text-primary hover:underline">{a.title}</Link>
             </div>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{a.description}</p>
@@ -352,119 +354,76 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
           ) : undefined}
         />
 
-        {isExternal && (
-          <div className="mt-8">
+        <div className="mt-8">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="inline-flex rounded-lg border bg-white p-1 text-sm shadow-sm">
               {(["all", "active", "completed"] as const).map((k) => (
                 <button
                   key={k}
-                  onClick={() => setExternalTab(k)}
+                  onClick={() => setStatusTab(k)}
                   className={cn(
                     "rounded-md px-4 py-1.5 font-medium transition-colors",
-                    externalTab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
+                    statusTab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
                   )}
                 >
                   {k === "all" ? `전체 (${activities.length})` : k === "active" ? `예정·진행중 (${ongoing.length})` : `완료 (${completed.length})`}
                 </button>
               ))}
             </div>
-            {isLoading ? (
+            <div className="inline-flex rounded-lg border bg-white p-0.5 shadow-sm">
+              <button onClick={() => setViewMode("list")} className={cn("rounded-md p-1.5 transition-colors", viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted")} title="리스트">
+                <List size={16} />
+              </button>
+              <button onClick={() => setViewMode("gallery")} className={cn("rounded-md p-1.5 transition-colors", viewMode === "gallery" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted")} title="갤러리">
+                <LayoutGrid size={16} />
+              </button>
+            </div>
+          </div>
+
+          {isLoading ? (
+            viewMode === "gallery" ? (
               <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {[0, 1, 2].map((i) => (
                   <div key={i} className="overflow-hidden rounded-xl border bg-white">
                     <Skeleton className="aspect-[3/4] w-full" />
-                    <div className="p-4 space-y-2">
-                      <Skeleton className="h-5 w-3/4" />
-                      <Skeleton className="h-4 w-full" />
-                    </div>
+                    <div className="p-4 space-y-2"><Skeleton className="h-5 w-3/4" /><Skeleton className="h-4 w-full" /></div>
                   </div>
                 ))}
               </div>
-            ) : externalList.length === 0 ? (
-              <EmptyState
-                icon={CalendarClock}
-                title={`${externalTab === "completed" ? "완료된" : externalTab === "active" ? "예정·진행 중인" : "등록된"} ${title}이 없어요`}
-                description="운영진이 새 활동을 등록하면 여기에 표시됩니다."
-                className="mt-6"
-              />
             ) : (
-              <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {externalList.map((a) => <ExternalCard key={a.id} a={a} />)}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* 진행 중 / 예정 */}
-        {!isExternal && <div className="mt-8">
-          <h2 className="text-lg font-bold">진행 중 & 예정</h2>
-          {isLoading ? (
-            <div className="mt-4 space-y-3">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="rounded-xl border bg-white p-5">
-                  <div className="flex items-center gap-2">
-                    <Skeleton className="h-5 w-12" />
-                    <Skeleton className="h-5 w-14" />
-                    <Skeleton className="h-6 w-40" />
+              <div className="mt-4 space-y-3">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="rounded-xl border bg-white p-5">
+                    <div className="flex items-center gap-2"><Skeleton className="h-5 w-12" /><Skeleton className="h-5 w-14" /><Skeleton className="h-6 w-40" /></div>
+                    <Skeleton className="mt-3 h-4 w-full" /><Skeleton className="mt-2 h-4 w-2/3" />
                   </div>
-                  <Skeleton className="mt-3 h-4 w-full" />
-                  <Skeleton className="mt-2 h-4 w-2/3" />
-                </div>
-              ))}
-            </div>
-          ) : ongoing.length === 0 ? (
+                ))}
+              </div>
+            )
+          ) : filteredList.length === 0 ? (
             <EmptyState
               icon={CalendarClock}
-              title={`진행 중이거나 예정된 ${title}이 없어요`}
+              title={`${statusTab === "completed" ? "완료된" : statusTab === "active" ? "예정·진행 중인" : "등록된"} ${title}이 없어요`}
               description="운영진이 새 활동을 등록하면 여기에 표시됩니다."
-              className="mt-4"
+              className="mt-6"
             />
-          ) : (
-            <div className="mt-4 space-y-3">{ongoing.map((a) => <ActivityCard key={a.id} a={a} />)}</div>
-          )}
-        </div>}
-
-        {/* 완료 */}
-        {!isExternal && <div className="mt-8">
-          <h2 className="text-lg font-bold">활동 내역</h2>
-          {isLoading ? (
-            <div className="mt-4 space-y-3">
-              {[0, 1].map((i) => (
-                <div key={i} className="rounded-xl border bg-white p-5">
-                  <Skeleton className="h-5 w-1/3" />
-                  <Skeleton className="mt-3 h-4 w-full" />
-                </div>
-              ))}
+          ) : viewMode === "gallery" ? (
+            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredList.map((a) => <ExternalCard key={a.id} a={a} />)}
             </div>
-          ) : completed.length === 0 ? (
-            <EmptyState
-              icon={Archive}
-              title="완료된 활동이 없습니다"
-              description="활동이 마무리되면 아카이브에서 확인할 수 있어요."
-              className="mt-4"
-            />
           ) : (
-            <div className="mt-4 space-y-3">{completed.map((a) => <ActivityCard key={a.id} a={a} />)}</div>
+            <div className="mt-4 space-y-3">
+              {filteredList.map((a) => <ActivityCard key={a.id} a={a} />)}
+            </div>
           )}
-        </div>}
+        </div>
 
         {/* 등록/수정 Dialog */}
         <Dialog open={dialogOpen} onOpenChange={(open) => !open && closeDialog()}>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader><DialogTitle>{editId ? `${title} 수정` : `${title} 등록`}</DialogTitle></DialogHeader>
-            <div className="grid gap-3">
-              <div>
-                <label className="mb-1 block text-sm font-medium">제목 *</label>
-                <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="활동 제목" />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium">설명</label>
-                <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} placeholder="활동에 대한 설명" className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50" />
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div><label className="mb-1 block text-sm font-medium">시작일</label><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
-                <div><label className="mb-1 block text-sm font-medium">종료일</label><Input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} /></div>
-              </div>
+            <div className="grid gap-3 max-h-[70vh] overflow-y-auto pr-1">
+              {/* 학기 연도/학기 — 맨 위 */}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-sm font-medium">학기 연도</label>
@@ -479,6 +438,18 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
                   </select>
                 </div>
               </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">제목 *</label>
+                <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="활동 제목" />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">설명</label>
+                <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} placeholder="활동에 대한 설명" className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50" />
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div><label className="mb-1 block text-sm font-medium">시작일</label><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
+                <div><label className="mb-1 block text-sm font-medium">종료일</label><Input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} /></div>
+              </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div><label className="mb-1 block text-sm font-medium">상태</label>
                   <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as FormData["status"] })} className="w-full rounded-lg border px-3 py-2 text-sm">
@@ -490,14 +461,18 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div><label className="mb-1 block text-sm font-medium">모집 상태</label>
                   <select value={form.recruitmentStatus} onChange={(e) => setForm({ ...form, recruitmentStatus: e.target.value })} className="w-full rounded-lg border px-3 py-2 text-sm">
-                    <option value="recruiting">모집중</option><option value="closed">모집마감</option><option value="in_progress">진행중</option><option value="completed">완료</option>
+                    {type === "study" ? (
+                      <><option value="recruiting">모집중</option><option value="closed">모집완료</option></>
+                    ) : (
+                      <><option value="recruiting">모집중</option><option value="closed">모집마감</option><option value="in_progress">진행중</option><option value="completed">완료</option></>
+                    )}
                   </select>
                 </div>
                 <div><label className="mb-1 block text-sm font-medium">정원</label><Input type="number" value={form.maxParticipants} onChange={(e) => setForm({ ...form, maxParticipants: e.target.value })} placeholder="미입력 시 제한 없음" /></div>
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium">{type === "study" ? "모임장" : "담당자"}</label>
-                {type === "study" ? (
+                {type === "study" || type === "external" ? (
                   <MemberAutocomplete
                     value={form.leaderId}
                     displayName={form.leaderId ? form.leader : undefined}
@@ -508,6 +483,13 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
                 ) : (
                   <Input value={form.leader} onChange={(e) => setForm({ ...form, leader: e.target.value })} placeholder="예: 김대경" />
                 )}
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">참여자 등록 방식</label>
+                <select value={form.registrationMethod} onChange={(e) => setForm({ ...form, registrationMethod: e.target.value as "open" | "manual" })} className="w-full rounded-lg border px-3 py-2 text-sm">
+                  <option value="manual">수기 등록 (관리자/모임장이 직접 추가)</option>
+                  <option value="open">공개 신청 (참가 신청을 받음)</option>
+                </select>
               </div>
               <div><label className="mb-1 block text-sm font-medium">상세 내용</label>
                 <textarea value={form.detailContent} onChange={(e) => setForm({ ...form, detailContent: e.target.value })} rows={4} placeholder="세부 진행 방법, 커리큘럼, 참여 조건 등" className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50" />
