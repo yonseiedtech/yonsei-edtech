@@ -1,14 +1,17 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import type { WritingPaperHistory } from "@/types";
 import { computeDailyActivity } from "@/lib/research-stats";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 
 interface Props {
   history: WritingPaperHistory[];
 }
 
-const DAYS = 7;
+const ROWS = 7;
+
+type PeriodType = "year" | "spring" | "fall";
 
 function pad(n: number): string {
   return String(n).padStart(2, "0");
@@ -34,7 +37,38 @@ function levelLabel(count: number): string {
   return "6+";
 }
 
+function periodRange(periodType: PeriodType, baseYear: number): { start: Date; end: Date } {
+  const s = new Date(baseYear, 0, 1);
+  const e = new Date(baseYear, 11, 31);
+  s.setHours(0, 0, 0, 0);
+  e.setHours(0, 0, 0, 0);
+
+  if (periodType === "spring") {
+    s.setMonth(2, 1);
+    e.setFullYear(baseYear + 1, 1, 28);
+    const leap = new Date(baseYear + 1, 1, 29).getMonth() === 1;
+    if (leap) e.setDate(29);
+  } else if (periodType === "fall") {
+    s.setMonth(8, 1);
+    e.setFullYear(baseYear + 1, 7, 31);
+  }
+  return { start: s, end: e };
+}
+
+function periodLabel(periodType: PeriodType, baseYear: number): string {
+  if (periodType === "spring") return `${baseYear} 전기 (3월~)`;
+  if (periodType === "fall") return `${baseYear} 후기 (9월~)`;
+  return `${baseYear}년`;
+}
+
+const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 const MONTH_LABELS = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
+
+const PERIOD_OPTIONS: { value: PeriodType; label: string }[] = [
+  { value: "year", label: "연도별" },
+  { value: "spring", label: "전기 (3월)" },
+  { value: "fall", label: "후기 (9월)" },
+];
 
 export default function WritingHeatmap({ history }: Props) {
   const dailyMap = useMemo(() => computeDailyActivity(history), [history]);
@@ -45,42 +79,59 @@ export default function WritingHeatmap({ history }: Props) {
     return d;
   }, []);
 
-  const year = today.getFullYear();
+  const currentYear = today.getFullYear();
+
+  const [draftYear, setDraftYear] = useState(currentYear);
+  const [draftPeriod, setDraftPeriod] = useState<PeriodType>("year");
+
+  const [activeYear, setActiveYear] = useState(currentYear);
+  const [activePeriod, setActivePeriod] = useState<PeriodType>("year");
+
+  const handleSearch = useCallback(() => {
+    setActiveYear(draftYear);
+    setActivePeriod(draftPeriod);
+  }, [draftYear, draftPeriod]);
+
+  const { start: rangeStart, end: rangeEnd } = useMemo(
+    () => periodRange(activePeriod, activeYear),
+    [activePeriod, activeYear],
+  );
+
+  const startWeekday = rangeStart.getDay();
+
+  const dayLabels = useMemo(() => {
+    return Array.from({ length: ROWS }, (_, i) => {
+      const idx = (startWeekday + i) % 7;
+      return i % 2 === 0 ? DAY_NAMES[idx] : "";
+    });
+  }, [startWeekday]);
 
   const cells = useMemo(() => {
-    const jan1 = new Date(year, 0, 1);
-    jan1.setHours(0, 0, 0, 0);
-    const jan1Weekday = jan1.getDay();
-
-    const dec31 = new Date(year, 11, 31);
-    dec31.setHours(0, 0, 0, 0);
-
-    const startDate = new Date(jan1);
-    startDate.setDate(jan1.getDate() - jan1Weekday);
-
-    const dec31Weekday = dec31.getDay();
-    const endDate = new Date(dec31);
-    endDate.setDate(dec31.getDate() + (6 - dec31Weekday));
-
-    const totalDays = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    const weeks = Math.ceil(totalDays / DAYS);
+    const totalDays = Math.round((rangeEnd.getTime() - rangeStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const weeks = Math.ceil(totalDays / ROWS);
 
     const out: Array<{ key: string; date: Date | null; count: number; lastSavedAt?: string }> = [];
 
     for (let week = 0; week < weeks; week++) {
-      for (let day = 0; day < DAYS; day++) {
-        const d = new Date(startDate);
-        d.setDate(startDate.getDate() + week * DAYS + day);
+      for (let row = 0; row < ROWS; row++) {
+        const dayIndex = week * ROWS + row;
+        if (dayIndex >= totalDays) {
+          out.push({ key: `${week}-${row}`, date: null, count: 0 });
+          continue;
+        }
+
+        const d = new Date(rangeStart);
+        d.setDate(rangeStart.getDate() + dayIndex);
 
         if (d > today) {
-          out.push({ key: `${week}-${day}`, date: null, count: 0 });
+          out.push({ key: `${week}-${row}`, date: null, count: 0 });
           continue;
         }
 
         const key = ymd(d);
         const found = dailyMap.get(key);
         out.push({
-          key: `${week}-${day}`,
+          key: `${week}-${row}`,
           date: d,
           count: found?.count ?? 0,
           lastSavedAt: found?.lastSavedAt,
@@ -88,7 +139,7 @@ export default function WritingHeatmap({ history }: Props) {
       }
     }
     return { cells: out, weeks };
-  }, [today, year, dailyMap]);
+  }, [today, rangeStart, rangeEnd, dailyMap]);
 
   const totalActiveDays = useMemo(() => {
     let n = 0;
@@ -105,7 +156,7 @@ export default function WritingHeatmap({ history }: Props) {
     const arr: Array<{ week: number; label: string }> = [];
     let lastMonth = -1;
     for (let week = 0; week < weeks; week++) {
-      const cell = cellData[week * DAYS];
+      const cell = cellData[week * ROWS];
       if (!cell?.date) continue;
       const m = cell.date.getMonth();
       if (m !== lastMonth) {
@@ -116,13 +167,61 @@ export default function WritingHeatmap({ history }: Props) {
     return arr;
   }, [cellData, weeks]);
 
+  const maxYear = activePeriod === "year" ? currentYear : currentYear;
+
   return (
     <section className="rounded-2xl border bg-white p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-semibold">{year}년 작성 활동</h3>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">
-            저장 시점 기준 활동일 <span className="font-medium text-foreground">{totalActiveDays}일</span>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => { setDraftYear((y) => y - 1); setActiveYear((y) => y - 1); }}
+              className="rounded-md p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label="이전"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className="min-w-[5rem] text-center text-sm font-semibold tabular-nums">
+              {periodLabel(activePeriod, activeYear)}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                const next = Math.min(draftYear + 1, maxYear);
+                setDraftYear(next);
+                setActiveYear(next);
+              }}
+              disabled={activeYear >= maxYear}
+              className="rounded-md p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
+              aria-label="다음"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <select
+              value={draftPeriod}
+              onChange={(e) => setDraftPeriod(e.target.value as PeriodType)}
+              className="h-7 rounded-md border bg-white px-2 text-xs"
+            >
+              {PERIOD_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={handleSearch}
+              className="flex h-7 items-center gap-1 rounded-md bg-primary px-2.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              <Search size={12} />
+              조회
+            </button>
+          </div>
+
+          <p className="text-[11px] text-muted-foreground">
+            활동일 <span className="font-medium text-foreground">{totalActiveDays}일</span>
           </p>
         </div>
         <div className="hidden items-center gap-1 text-[10px] text-muted-foreground sm:flex">
@@ -154,7 +253,7 @@ export default function WritingHeatmap({ history }: Props) {
           </div>
           <div className="flex gap-1">
             <div className="flex flex-col gap-[2px] pr-1 text-[9px] text-muted-foreground">
-              {["일", "", "화", "", "목", "", "토"].map((d, i) => (
+              {dayLabels.map((d, i) => (
                 <span key={i} className="h-3 leading-3">{d}</span>
               ))}
             </div>
@@ -162,7 +261,7 @@ export default function WritingHeatmap({ history }: Props) {
               className="grid"
               style={{
                 gridTemplateColumns: `repeat(${weeks}, 12px)`,
-                gridTemplateRows: `repeat(${DAYS}, 12px)`,
+                gridTemplateRows: `repeat(${ROWS}, 12px)`,
                 gridAutoFlow: "column",
                 gap: 2,
               }}
