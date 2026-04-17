@@ -41,7 +41,7 @@ interface Props {
 
 type ResearchTab = "writing" | "reading" | "report";
 type WritingSubTab = "report" | "proposal" | "thesis";
-type WritingPeriodMode = "semester" | "yearly" | "custom";
+type WritingPeriodMode = "semester" | "1year" | "yearly" | "custom";
 
 function isResearchTab(v: string | null): v is ResearchTab {
   return v === "writing" || v === "reading" || v === "report";
@@ -107,15 +107,31 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
     return enrollmentYearRanges(user.enrollmentYear, user.enrollmentHalf);
   }, [user?.enrollmentYear, user?.enrollmentHalf]);
 
+  const oneYearRange = useMemo(() => {
+    const now = new Date();
+    const fromY = now.getFullYear() - 1;
+    const fromM = String(now.getMonth() + 1).padStart(2, "0");
+    const toY = now.getFullYear();
+    const toM = String(now.getMonth() + 1).padStart(2, "0");
+    return {
+      from: `${fromY}-${fromM}`,
+      to: `${toY}-${toM}`,
+      label: `최근 1년 (${fromY}.${fromM}~${toY}.${toM})`,
+    };
+  }, []);
+
   const writingPeriod = useMemo(() => {
     if (writingPeriodMode === "semester") {
       return semesterRange(semYear, semSemester);
+    }
+    if (writingPeriodMode === "1year") {
+      return oneYearRange;
     }
     if (writingPeriodMode === "yearly" && yearRanges[yearIdx]) {
       return yearRanges[yearIdx];
     }
     return { from: customStart, to: customEnd, label: "" };
-  }, [writingPeriodMode, semYear, semSemester, yearIdx, yearRanges, customStart, customEnd]);
+  }, [writingPeriodMode, semYear, semSemester, oneYearRange, yearIdx, yearRanges, customStart, customEnd]);
 
   // 연구 현황 필터링된 이력
   const filteredHistory = useMemo(() => {
@@ -235,6 +251,68 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
 
           {/* ── 내 논문 작성 ── */}
           <TabsContent value="writing" className="mt-5">
+            {/* ── 연구 현황 (공유 섹션) ── */}
+            <div className="space-y-4 mb-8">
+              <h3 className="text-sm font-semibold text-foreground">연구 현황</h3>
+
+              {/* 기간 선택기 */}
+              <div className="rounded-2xl border bg-white p-4">
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                  <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                    <CalendarRange size={12} />
+                    기간 선택
+                  </span>
+                  <PeriodModeBtn label="학기" active={writingPeriodMode === "semester"} onClick={() => setWritingPeriodMode("semester")} />
+                  <PeriodModeBtn label="1년" active={writingPeriodMode === "1year"} onClick={() => setWritingPeriodMode("1year")} />
+                  {yearRanges.length > 0 && (
+                    <PeriodModeBtn label="연간" active={writingPeriodMode === "yearly"} onClick={() => setWritingPeriodMode("yearly")} />
+                  )}
+                  <PeriodModeBtn label="직접 설정" active={writingPeriodMode === "custom"} onClick={() => setWritingPeriodMode("custom")} />
+                </div>
+
+                {writingPeriodMode === "semester" && (
+                  <div className="flex items-center gap-2">
+                    <button type="button" onClick={() => navigateSemester(-1)} className="rounded-md border px-2 py-1 text-xs hover:bg-muted">◀</button>
+                    <span className="text-sm font-medium">{writingPeriod.label}</span>
+                    <button type="button" onClick={() => navigateSemester(1)} className="rounded-md border px-2 py-1 text-xs hover:bg-muted">▶</button>
+                  </div>
+                )}
+
+                {writingPeriodMode === "1year" && (
+                  <p className="text-sm font-medium">{oneYearRange.label}</p>
+                )}
+
+                {writingPeriodMode === "yearly" && yearRanges.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {yearRanges.map((r, i) => (
+                      <QuickBtn
+                        key={r.from}
+                        label={r.label.split(" ")[0]}
+                        onClick={() => setYearIdx(i)}
+                        active={yearIdx === i}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {writingPeriodMode === "custom" && (
+                  <div className="flex flex-wrap items-end gap-3">
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-muted-foreground">시작</label>
+                      <Input type="month" value={customStart} onChange={(e) => setCustomStart(e.target.value)} className="w-40" />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-muted-foreground">종료</label>
+                      <Input type="month" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} className="w-40" />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <WritingHeatmap history={filteredHistory} />
+              <WritingHistoryList history={filteredHistory} />
+            </div>
+
             {/* 서브탭 */}
             <div className="inline-flex rounded-lg border bg-white p-1 gap-1 mb-5">
               <SubTabBtn
@@ -277,63 +355,6 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
             {writingSubTab === "thesis" && (
               <WritingPaperEditor user={user} readOnly={!isSelf || readOnly} />
             )}
-
-            {/* ── 연구 현황 (공유 섹션) ── */}
-            <div className="mt-8 space-y-4">
-              <h3 className="text-sm font-semibold text-foreground">연구 현황</h3>
-
-              {/* 기간 선택기 */}
-              <div className="rounded-2xl border bg-white p-4">
-                <div className="flex flex-wrap items-center gap-2 mb-3">
-                  <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                    <CalendarRange size={12} />
-                    기간 선택
-                  </span>
-                  <PeriodModeBtn label="학기" active={writingPeriodMode === "semester"} onClick={() => setWritingPeriodMode("semester")} />
-                  {yearRanges.length > 0 && (
-                    <PeriodModeBtn label="연간" active={writingPeriodMode === "yearly"} onClick={() => setWritingPeriodMode("yearly")} />
-                  )}
-                  <PeriodModeBtn label="직접 설정" active={writingPeriodMode === "custom"} onClick={() => setWritingPeriodMode("custom")} />
-                </div>
-
-                {writingPeriodMode === "semester" && (
-                  <div className="flex items-center gap-2">
-                    <button type="button" onClick={() => navigateSemester(-1)} className="rounded-md border px-2 py-1 text-xs hover:bg-muted">◀</button>
-                    <span className="text-sm font-medium">{writingPeriod.label}</span>
-                    <button type="button" onClick={() => navigateSemester(1)} className="rounded-md border px-2 py-1 text-xs hover:bg-muted">▶</button>
-                  </div>
-                )}
-
-                {writingPeriodMode === "yearly" && yearRanges.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {yearRanges.map((r, i) => (
-                      <QuickBtn
-                        key={r.from}
-                        label={r.label.split(" ")[0]}
-                        onClick={() => setYearIdx(i)}
-                        active={yearIdx === i}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                {writingPeriodMode === "custom" && (
-                  <div className="flex flex-wrap items-end gap-3">
-                    <div>
-                      <label className="mb-1 block text-xs font-medium text-muted-foreground">시작</label>
-                      <Input type="month" value={customStart} onChange={(e) => setCustomStart(e.target.value)} className="w-40" />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-xs font-medium text-muted-foreground">종료</label>
-                      <Input type="month" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} className="w-40" />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <WritingHeatmap history={filteredHistory} />
-              <WritingHistoryList history={filteredHistory} />
-            </div>
           </TabsContent>
 
           {/* ── 논문 읽기 ── */}

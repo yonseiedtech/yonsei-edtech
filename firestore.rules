@@ -353,6 +353,26 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // ─── Research Reports (연구 보고서 — 사용자당 1건) ───
+    match /research_reports/{docId} {
+      allow read: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // ─── Research Reports (연구 보고서 — 사용자당 1건) ───
+    match /research_reports/{docId} {
+      allow read: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+    }
+
     // ─── Profile Likes (PR5 — 프로필 좋아요, 1인 1회 보장) ───
     match /profile_likes/{docId} {
       // 카운트/누가 눌렀는지 조회는 로그인 회원만
