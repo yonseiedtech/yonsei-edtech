@@ -37,7 +37,7 @@ export default function OverviewView() {
           title="인수인계 메모가 없습니다"
           description="조직도 설정에서 각 직책에 인수인계 노하우를 기록해두면, 차기 임원이 바로 확인할 수 있습니다."
           actionLabel="조직도 설정 열기"
-          actionHref="/admin/settings/org-chart"
+          actionHref="/console/settings"
           className="mt-8"
         />
       ) : (

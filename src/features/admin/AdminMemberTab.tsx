@@ -323,7 +323,7 @@ export default function AdminMemberTab() {
               size="sm"
               variant="ghost"
               className="shrink-0"
-              onClick={() => router.push(`/admin/members/${m.id}`)}
+              onClick={() => router.push(`/console/members/${m.id}`)}
               title="회원 상세 관리"
             >
               <Settings size={14} />
@@ -400,7 +400,7 @@ export default function AdminMemberTab() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => router.push(`/admin/members/${m.id}`)}
+                        onClick={() => router.push(`/console/members/${m.id}`)}
                         title="회원 상세 관리"
                       >
                         <Settings size={14} />
@@ -560,7 +560,7 @@ export default function AdminMemberTab() {
                         )}
                       </div>
                       {canApprove && (
-                        <Button size="sm" variant="ghost" className="ml-3 shrink-0" onClick={() => router.push(`/admin/members/${u.id}`)}>
+                        <Button size="sm" variant="ghost" className="ml-3 shrink-0" onClick={() => router.push(`/console/members/${u.id}`)}>
                           <Settings size={14} />
                         </Button>
                       )}

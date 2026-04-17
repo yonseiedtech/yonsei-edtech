@@ -7,7 +7,7 @@ import { useAuthStore } from "@/features/auth/auth-store";
 
 const MEMBER_SHORTCUTS = [
   { href: "/mypage/activities?tab=certificates", label: "수료증 확인", icon: Award },
-  { href: "/admin/fees", label: "회비 납부", icon: CreditCard },
+  { href: "/console/fees", label: "회비 납부", icon: CreditCard },
   { href: "/mypage/activities?tab=activities", label: "내 활동", icon: CalendarCheck },
   { href: "/mypage?tab=profile", label: "프로필 관리", icon: UserCog },
 ];
