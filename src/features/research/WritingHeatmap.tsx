@@ -10,8 +10,7 @@ interface Props {
 }
 
 const ROWS = 7;
-
-type PeriodType = "year" | "spring" | "fall";
+type PeriodType = "spring" | "fall";
 
 function pad(n: number): string {
   return String(n).padStart(2, "0");
@@ -19,6 +18,10 @@ function pad(n: number): string {
 
 function ymd(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function sameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
 function levelColor(count: number): string {
@@ -37,38 +40,45 @@ function levelLabel(count: number): string {
   return "6+";
 }
 
-function periodRange(periodType: PeriodType, baseYear: number): { start: Date; end: Date } {
-  const s = new Date(baseYear, 0, 1);
-  const e = new Date(baseYear, 11, 31);
+function periodRange(type: PeriodType, baseYear: number): { start: Date; end: Date } {
+  if (type === "spring") {
+    const s = new Date(baseYear, 2, 1);
+    const endYear = baseYear + 1;
+    const leap = new Date(endYear, 1, 29).getMonth() === 1;
+    const e = new Date(endYear, 1, leap ? 29 : 28);
+    s.setHours(0, 0, 0, 0);
+    e.setHours(0, 0, 0, 0);
+    return { start: s, end: e };
+  }
+  const s = new Date(baseYear, 8, 1);
+  const e = new Date(baseYear + 1, 7, 31);
   s.setHours(0, 0, 0, 0);
   e.setHours(0, 0, 0, 0);
-
-  if (periodType === "spring") {
-    s.setMonth(2, 1);
-    e.setFullYear(baseYear + 1, 1, 28);
-    const leap = new Date(baseYear + 1, 1, 29).getMonth() === 1;
-    if (leap) e.setDate(29);
-  } else if (periodType === "fall") {
-    s.setMonth(8, 1);
-    e.setFullYear(baseYear + 1, 7, 31);
-  }
   return { start: s, end: e };
 }
 
-function periodLabel(periodType: PeriodType, baseYear: number): string {
-  if (periodType === "spring") return `${baseYear} 전기 (3월~)`;
-  if (periodType === "fall") return `${baseYear} 후기 (9월~)`;
-  return `${baseYear}년`;
+function detectPeriod(d: Date): { type: PeriodType; year: number } {
+  const m = d.getMonth();
+  if (m >= 2 && m <= 7) return { type: "spring", year: d.getFullYear() };
+  if (m >= 8) return { type: "fall", year: d.getFullYear() };
+  return { type: "fall", year: d.getFullYear() - 1 };
+}
+
+function periodLabel(type: PeriodType, baseYear: number): string {
+  if (type === "spring") return `${baseYear} 전기 (3월~)`;
+  return `${baseYear} 후기 (9월~)`;
 }
 
 const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 const MONTH_LABELS = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
 
-const PERIOD_OPTIONS: { value: PeriodType; label: string }[] = [
-  { value: "year", label: "연도별" },
-  { value: "spring", label: "전기 (3월)" },
-  { value: "fall", label: "후기 (9월)" },
-];
+interface CellData {
+  key: string;
+  date: Date | null;
+  count: number;
+  lastSavedAt?: string;
+  isToday: boolean;
+}
 
 export default function WritingHeatmap({ history }: Props) {
   const dailyMap = useMemo(() => computeDailyActivity(history), [history]);
@@ -79,13 +89,12 @@ export default function WritingHeatmap({ history }: Props) {
     return d;
   }, []);
 
-  const currentYear = today.getFullYear();
+  const defaultPeriod = useMemo(() => detectPeriod(today), [today]);
 
-  const [draftYear, setDraftYear] = useState(currentYear);
-  const [draftPeriod, setDraftPeriod] = useState<PeriodType>("year");
-
-  const [activeYear, setActiveYear] = useState(currentYear);
-  const [activePeriod, setActivePeriod] = useState<PeriodType>("year");
+  const [draftYear, setDraftYear] = useState(defaultPeriod.year);
+  const [draftPeriod, setDraftPeriod] = useState<PeriodType>(defaultPeriod.type);
+  const [activeYear, setActiveYear] = useState(defaultPeriod.year);
+  const [activePeriod, setActivePeriod] = useState<PeriodType>(defaultPeriod.type);
 
   const handleSearch = useCallback(() => {
     setActiveYear(draftYear);
@@ -101,8 +110,9 @@ export default function WritingHeatmap({ history }: Props) {
 
   const dayLabels = useMemo(() => {
     return Array.from({ length: ROWS }, (_, i) => {
-      const idx = (startWeekday + i) % 7;
-      return i % 2 === 0 ? DAY_NAMES[idx] : "";
+      if (i === 0) return DAY_NAMES[(startWeekday) % 7];
+      if (i === 6) return DAY_NAMES[(startWeekday + 6) % 7];
+      return "";
     });
   }, [startWeekday]);
 
@@ -110,21 +120,23 @@ export default function WritingHeatmap({ history }: Props) {
     const totalDays = Math.round((rangeEnd.getTime() - rangeStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     const weeks = Math.ceil(totalDays / ROWS);
 
-    const out: Array<{ key: string; date: Date | null; count: number; lastSavedAt?: string }> = [];
+    const out: CellData[] = [];
 
     for (let week = 0; week < weeks; week++) {
       for (let row = 0; row < ROWS; row++) {
         const dayIndex = week * ROWS + row;
+
         if (dayIndex >= totalDays) {
-          out.push({ key: `${week}-${row}`, date: null, count: 0 });
+          out.push({ key: `${week}-${row}`, date: null, count: 0, isToday: false });
           continue;
         }
 
         const d = new Date(rangeStart);
         d.setDate(rangeStart.getDate() + dayIndex);
+        const isToday = sameDay(d, today);
 
         if (d > today) {
-          out.push({ key: `${week}-${row}`, date: null, count: 0 });
+          out.push({ key: `${week}-${row}`, date: d, count: 0, isToday: false });
           continue;
         }
 
@@ -135,6 +147,7 @@ export default function WritingHeatmap({ history }: Props) {
           date: d,
           count: found?.count ?? 0,
           lastSavedAt: found?.lastSavedAt,
+          isToday,
         });
       }
     }
@@ -167,7 +180,15 @@ export default function WritingHeatmap({ history }: Props) {
     return arr;
   }, [cellData, weeks]);
 
-  const maxYear = activePeriod === "year" ? currentYear : currentYear;
+  const handlePrev = useCallback(() => {
+    setDraftYear((y) => y - 1);
+    setActiveYear((y) => y - 1);
+  }, []);
+
+  const handleNext = useCallback(() => {
+    setDraftYear((y) => y + 1);
+    setActiveYear((y) => y + 1);
+  }, []);
 
   return (
     <section className="rounded-2xl border bg-white p-4">
@@ -176,23 +197,19 @@ export default function WritingHeatmap({ history }: Props) {
           <div className="flex items-center gap-1">
             <button
               type="button"
-              onClick={() => { setDraftYear((y) => y - 1); setActiveYear((y) => y - 1); }}
+              onClick={handlePrev}
               className="rounded-md p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
               aria-label="이전"
             >
               <ChevronLeft size={16} />
             </button>
-            <span className="min-w-[5rem] text-center text-sm font-semibold tabular-nums">
+            <span className="min-w-[7rem] text-center text-sm font-semibold tabular-nums">
               {periodLabel(activePeriod, activeYear)}
             </span>
             <button
               type="button"
-              onClick={() => {
-                const next = Math.min(draftYear + 1, maxYear);
-                setDraftYear(next);
-                setActiveYear(next);
-              }}
-              disabled={activeYear >= maxYear}
+              onClick={handleNext}
+              disabled={activeYear >= defaultPeriod.year && activePeriod === defaultPeriod.type}
               className="rounded-md p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
               aria-label="다음"
             >
@@ -206,9 +223,8 @@ export default function WritingHeatmap({ history }: Props) {
               onChange={(e) => setDraftPeriod(e.target.value as PeriodType)}
               className="h-7 rounded-md border bg-white px-2 text-xs"
             >
-              {PERIOD_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
+              <option value="spring">전기 (3월)</option>
+              <option value="fall">후기 (9월)</option>
             </select>
             <button
               type="button"
@@ -279,6 +295,7 @@ export default function WritingHeatmap({ history }: Props) {
                     width: 12,
                     height: 12,
                     background: c.date ? levelColor(c.count) : "transparent",
+                    boxShadow: c.isToday ? "inset 0 0 0 1.5px #1e3a5f" : undefined,
                   }}
                   aria-label={c.date ? `${ymd(c.date)} ${levelLabel(c.count)}회` : undefined}
                 />
