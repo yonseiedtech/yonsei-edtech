@@ -187,8 +187,8 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
         {/* Mobile tab bar */}
         <div className="w-full lg:hidden">
           <div className="mb-6 flex flex-wrap gap-0 overflow-x-auto border-b">
-            {visibleGroups.flatMap((g) =>
-              g.items.map((item) => {
+            {visibleGroups.flatMap((g, gi) => {
+              const items = g.items.map((item) => {
                 const isActive = pathname === item.href || (item.href !== "/console" && pathname.startsWith(item.href));
                 return (
                   <Link
@@ -210,8 +210,14 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
                     )}
                   </Link>
                 );
-              }),
-            )}
+              });
+              if (gi < visibleGroups.length - 1) {
+                items.push(
+                  <span key={`sep-${gi}`} className="mx-1 self-center text-muted-foreground/30">|</span>
+                );
+              }
+              return items;
+            })}
           </div>
           <main>{children}</main>
         </div>
