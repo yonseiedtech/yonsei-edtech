@@ -18,13 +18,21 @@ interface LoginFormProps {
   signupHref?: string;
 }
 
+const SAVED_USERNAME_KEY = "savedLoginUsername";
+const REMEMBER_KEY = "rememberLoginUsername";
+
 export default function LoginForm({ onSuccess, hideSignupLink, signupHref }: LoginFormProps = {}) {
   const [loading, setLoading] = useState(false);
   const [pendingApproval, setPendingApproval] = useState(false);
   const [pendingEmail, setPendingEmail] = useState("");
+  const [rememberUsername, setRememberUsername] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(REMEMBER_KEY) === "true";
+  });
   const { login } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const savedUsername = typeof window !== "undefined" ? localStorage.getItem(SAVED_USERNAME_KEY) || "" : "";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -36,6 +44,13 @@ export default function LoginForm({ onSuccess, hideSignupLink, signupHref }: Log
     const password = (formData.get("password") as string) ?? "";
 
     try {
+      if (rememberUsername) {
+        localStorage.setItem(SAVED_USERNAME_KEY, username);
+        localStorage.setItem(REMEMBER_KEY, "true");
+      } else {
+        localStorage.removeItem(SAVED_USERNAME_KEY);
+        localStorage.removeItem(REMEMBER_KEY);
+      }
       const user = await login(username, password);
       if (user && !user.approved) {
         // 비승인 사용자는 즉시 로그아웃 + 승인 대기 UI 표시
@@ -128,6 +143,7 @@ export default function LoginForm({ onSuccess, hideSignupLink, signupHref }: Log
           name="username"
           placeholder="아이디를 입력하세요"
           autoComplete="username"
+          defaultValue={savedUsername}
           required
         />
       </div>
@@ -142,6 +158,16 @@ export default function LoginForm({ onSuccess, hideSignupLink, signupHref }: Log
           required
         />
       </div>
+
+      <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={rememberUsername}
+          onChange={(e) => setRememberUsername(e.target.checked)}
+          className="h-4 w-4 rounded border-gray-300"
+        />
+        아이디 저장
+      </label>
 
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? (

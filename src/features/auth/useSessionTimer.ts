@@ -10,11 +10,6 @@ const MIN = 60 * 1000;
 const HOUR = 60 * MIN;
 const DAY = 24 * HOUR;
 
-/**
- * 역할별 무활동(idle) 허용 시간.
- * - 운영진(staff/president/admin): 2시간 — 민감 데이터 취급
- * - 일반 회원: 30일 — rolling refresh, 활동 있을 때 자동 연장
- */
 const IDLE_LIMITS: Record<UserRole, number> = {
   sysadmin: 2 * HOUR,
   admin: 2 * HOUR,
@@ -29,6 +24,7 @@ const IDLE_LIMITS: Record<UserRole, number> = {
 const WARN_BEFORE = 5 * MIN;
 const TICK_MS = 1000;
 const STORAGE_KEY = "sessionLastActivity";
+const LOGIN_GRACE_MS = 5000;
 
 export function useSessionTimer() {
   const user = useAuthStore((s) => s.user);
@@ -42,6 +38,7 @@ export function useSessionTimer() {
   const [now, setNow] = useState(Date.now());
   const warnedRef = useRef(false);
   const expiredRef = useRef(false);
+  const loginTimeRef = useRef(Date.now());
 
   const limit = user ? IDLE_LIMITS[user.role] ?? IDLE_LIMITS.member : 0;
   const elapsed = now - lastActivity;
@@ -52,15 +49,29 @@ export function useSessionTimer() {
     const t = Date.now();
     setLastActivity(t);
     warnedRef.current = false;
+    expiredRef.current = false;
     if (typeof window !== "undefined") localStorage.setItem(STORAGE_KEY, String(t));
   }, []);
 
-  // 활동 감지
+  const silentRefresh = useCallback(() => {
+    extend();
+    authApi.me().catch(() => {});
+    toast.success("세션이 자동 갱신되었습니다.", { duration: 2000 });
+  }, [extend]);
+
+  // 활동 감지 + 자동 갱신
   useEffect(() => {
     if (!user) return;
     const events: Array<keyof WindowEventMap> = ["mousedown", "keydown", "touchstart", "scroll"];
     const handler = () => {
       const t = Date.now();
+      const currentElapsed = t - lastActivity;
+
+      if (isSensitiveRole && currentElapsed >= limit && expiredRef.current) {
+        silentRefresh();
+        return;
+      }
+
       if (t - lastActivity > 15 * 1000) {
         setLastActivity(t);
         if (typeof window !== "undefined") localStorage.setItem(STORAGE_KEY, String(t));
@@ -68,7 +79,25 @@ export function useSessionTimer() {
     };
     events.forEach((e) => window.addEventListener(e, handler, { passive: true }));
     return () => events.forEach((e) => window.removeEventListener(e, handler));
-  }, [user, lastActivity]);
+  }, [user, lastActivity, isSensitiveRole, limit, silentRefresh]);
+
+  // 탭 복귀 시 자동 갱신 (visibilitychange)
+  useEffect(() => {
+    if (!user || !isSensitiveRole) return;
+    const handler = () => {
+      if (document.visibilityState !== "visible") return;
+      const t = Date.now();
+      const currentElapsed = t - lastActivity;
+      if (currentElapsed >= limit) {
+        silentRefresh();
+      } else if (currentElapsed > 15 * 1000) {
+        setLastActivity(t);
+        if (typeof window !== "undefined") localStorage.setItem(STORAGE_KEY, String(t));
+      }
+    };
+    document.addEventListener("visibilitychange", handler);
+    return () => document.removeEventListener("visibilitychange", handler);
+  }, [user, isSensitiveRole, lastActivity, limit, silentRefresh]);
 
   // 주기적 tick
   useEffect(() => {
@@ -77,30 +106,31 @@ export function useSessionTimer() {
     return () => clearInterval(id);
   }, [user]);
 
-  // 경고 & 만료
+  // 경고 (만료 시 로그아웃하지 않음 — 활동 감지 시 자동 갱신)
   useEffect(() => {
     if (!user || !isSensitiveRole) return;
+    // 로그인 직후 grace period — 즉시 만료 방지
+    if (Date.now() - loginTimeRef.current < LOGIN_GRACE_MS) return;
+
     if (remaining > 0 && remaining <= WARN_BEFORE && !warnedRef.current) {
       warnedRef.current = true;
       toast.warning("세션이 곧 만료됩니다", {
-        description: "5분 내 활동이 없으면 자동 로그아웃됩니다.",
+        description: "활동이 감지되면 자동으로 갱신됩니다.",
         action: { label: "연장", onClick: () => extend() },
         duration: WARN_BEFORE,
       });
     }
     if (remaining === 0 && !expiredRef.current) {
       expiredRef.current = true;
-      authApi.logout().catch(() => {});
-      logoutStore();
-      toast.error("세션이 만료되어 로그아웃되었습니다.");
     }
-  }, [user, isSensitiveRole, remaining, extend, logoutStore]);
+  }, [user, isSensitiveRole, remaining, extend]);
 
-  // 로그인 시 초기화 (lastActivity를 현재 시각으로 리셋하여 stale 타임스탬프로 인한 즉시 만료 방지)
+  // 로그인 시 초기화
   useEffect(() => {
     if (user) {
       expiredRef.current = false;
       warnedRef.current = false;
+      loginTimeRef.current = Date.now();
       const t = Date.now();
       setLastActivity(t);
       if (typeof window !== "undefined") localStorage.setItem(STORAGE_KEY, String(t));
