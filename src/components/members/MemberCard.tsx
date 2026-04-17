@@ -37,11 +37,16 @@ export default function MemberCard({ member }: Props) {
       )}
 
       <div className="mt-2 flex flex-wrap justify-center gap-1">
-        {member.field && (
-          <Badge variant="secondary" className="text-xs">
-            {member.field}
-          </Badge>
-        )}
+        {member.field &&
+          member.field
+            .split(/[,，]/)
+            .map((f) => f.trim())
+            .filter(Boolean)
+            .map((f) => (
+              <Badge key={f} variant="secondary" className="text-xs">
+                {f}
+              </Badge>
+            ))}
         {showRoleBadge && (
           <Badge className="bg-primary/10 text-xs text-primary hover:bg-primary/20">
             {ROLE_LABELS[member.role]}
