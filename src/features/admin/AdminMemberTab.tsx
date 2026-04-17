@@ -35,10 +35,11 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
-const ASSIGNABLE_ROLES: UserRole[] = ["member", "alumni", "advisor", "staff", "president"];
+const ASSIGNABLE_ROLES: UserRole[] = ["member", "alumni", "advisor", "staff", "president", "admin", "sysadmin"];
 
 // ── 역할별 배지 색상 ──
 const ROLE_COLORS: Record<string, string> = {
+  sysadmin: "bg-rose-100 text-rose-700 border-rose-200",
   admin: "bg-purple-100 text-purple-700 border-purple-200",
   president: "bg-blue-100 text-blue-700 border-blue-200",
   staff: "bg-sky-100 text-sky-700 border-sky-200",

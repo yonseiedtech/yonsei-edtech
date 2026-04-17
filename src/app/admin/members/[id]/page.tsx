@@ -28,9 +28,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CONSENT_LABELS, CURRENT_TERMS, type ConsentKey } from "@/lib/legal";
 import { FileCheck } from "lucide-react";
 
-const ASSIGNABLE_ROLES: UserRole[] = ["member", "alumni", "advisor", "staff", "president"];
+const ASSIGNABLE_ROLES: UserRole[] = ["member", "alumni", "advisor", "staff", "president", "admin", "sysadmin"];
 
 const ROLE_COLORS: Record<string, string> = {
+  sysadmin: "bg-rose-100 text-rose-700",
   admin: "bg-purple-100 text-purple-700",
   president: "bg-blue-100 text-blue-700",
   staff: "bg-sky-100 text-sky-700",
