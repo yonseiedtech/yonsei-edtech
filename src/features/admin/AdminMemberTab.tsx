@@ -215,15 +215,15 @@ export default function AdminMemberTab() {
   // ── 검색/필터/액션 바 ──
   function ToolBar() {
     return (
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="이름 또는 아이디 검색..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-60 pl-9"
+              className="w-full pl-9 sm:w-60"
             />
           </div>
           {activeTab === "approved" && (
@@ -282,94 +282,155 @@ export default function AdminMemberTab() {
     );
   }
 
+  // ── 회원 모바일 카드 ──
+  function MemberMobileCard({ m, showStatus }: { m: User; showStatus?: boolean }) {
+    const tags = (m.researchInterests ?? []).flatMap((s: string) => s.split(/[,，]/)).map((s: string) => s.trim()).filter(Boolean);
+    return (
+      <div className="rounded-xl border bg-white p-4">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="font-semibold text-sm">{m.name}</span>
+              <span className="text-xs text-muted-foreground">@{m.username}</span>
+              <RoleCell member={m} />
+              {showStatus && (
+                m.approved ? (
+                  <Badge className="bg-green-100 text-green-700 text-[10px]">승인</Badge>
+                ) : m.rejected ? (
+                  <Badge className="bg-red-100 text-red-700 text-[10px]">거절</Badge>
+                ) : (
+                  <Badge className="bg-amber-100 text-amber-700 text-[10px]">대기</Badge>
+                )
+              )}
+            </div>
+            <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+              {m.studentId && <span>학번: {m.studentId}</span>}
+              {m.phone && <span>{m.phone}</span>}
+              {m.field && <span>분야: {m.field}</span>}
+            </div>
+            {tags.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {tags.map((t: string) => (
+                  <span key={t} className="inline-flex items-center rounded-full bg-muted/60 px-2 py-0.5 text-[10px] text-muted-foreground">
+                    {t}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+          {canApprove && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="shrink-0"
+              onClick={() => router.push(`/admin/members/${m.id}`)}
+              title="회원 상세 관리"
+            >
+              <Settings size={14} />
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // ── 회원 테이블 ──
   function MemberTable({ data, showStatus }: { data: User[]; showStatus?: boolean }) {
     return (
-      <div className="mt-3 overflow-x-auto rounded-xl border bg-white">
-        <table className="w-full text-sm whitespace-nowrap">
-          <thead className="border-b bg-muted/30">
-            <tr>
-              <th className="px-4 py-3 text-left font-medium">이름</th>
-              <th className="px-4 py-3 text-left font-medium">아이디</th>
-              <th className="px-4 py-3 text-left font-medium">학번</th>
-              <th className="px-4 py-3 text-left font-medium">연락처</th>
-              <th className="px-4 py-3 text-left font-medium">분야</th>
-              <th className="px-4 py-3 text-left font-medium">관심 연구분야</th>
-              <th className="px-4 py-3 text-left font-medium">역할</th>
-              {showStatus && <th className="px-4 py-3 text-left font-medium">상태</th>}
-              {canApprove && <th className="px-4 py-3 text-left font-medium">관리</th>}
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {data.map((m) => (
-              <tr key={m.id} className="hover:bg-muted/20">
-                <td className="px-4 py-3 font-medium">{m.name}</td>
-                <td className="px-4 py-3 text-muted-foreground">@{m.username}</td>
-                <td className="px-4 py-3">{m.studentId || "-"}</td>
-                <td className="px-4 py-3 text-muted-foreground">{m.phone || "-"}</td>
-                <td className="px-4 py-3">{m.field || "-"}</td>
-                <td className="max-w-[200px] px-4 py-3">
-                  {(() => {
-                    const tags = (m.researchInterests ?? []).flatMap((s: string) => s.split(/[,，]/)).map((s: string) => s.trim()).filter(Boolean);
-                    if (tags.length === 0) return "-";
-                    return (
-                      <div className="flex flex-wrap gap-1">
-                        {tags.map((t: string) => (
-                          <span key={t} className="inline-flex items-center rounded-full bg-muted/60 px-2 py-0.5 text-[10px] text-muted-foreground">
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    );
-                  })()}
-                </td>
-                <td className="px-4 py-3"><RoleCell member={m} /></td>
-                {showStatus && (
-                  <td className="px-4 py-3">
-                    {m.approved ? (
-                      <Badge className="bg-green-100 text-green-700 text-[10px]">승인</Badge>
-                    ) : m.rejected ? (
-                      <Badge className="bg-red-100 text-red-700 text-[10px]">거절</Badge>
-                    ) : (
-                      <Badge className="bg-amber-100 text-amber-700 text-[10px]">대기</Badge>
-                    )}
-                  </td>
-                )}
-                {canApprove && (
-                  <td className="px-4 py-3">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => router.push(`/admin/members/${m.id}`)}
-                      title="회원 상세 관리"
-                    >
-                      <Settings size={14} />
-                    </Button>
-                  </td>
-                )}
+      <>
+        {/* 모바일 카드 뷰 */}
+        <div className="mt-3 space-y-2 sm:hidden">
+          {data.map((m) => (
+            <MemberMobileCard key={m.id} m={m} showStatus={showStatus} />
+          ))}
+        </div>
+        {/* 데스크톱 테이블 */}
+        <div className="mt-3 hidden overflow-x-auto rounded-xl border bg-white sm:block">
+          <table className="w-full text-sm whitespace-nowrap">
+            <thead className="border-b bg-muted/30">
+              <tr>
+                <th className="px-4 py-3 text-left font-medium">이름</th>
+                <th className="px-4 py-3 text-left font-medium">아이디</th>
+                <th className="px-4 py-3 text-left font-medium">학번</th>
+                <th className="px-4 py-3 text-left font-medium">연락처</th>
+                <th className="px-4 py-3 text-left font-medium">분야</th>
+                <th className="px-4 py-3 text-left font-medium">관심 연구분야</th>
+                <th className="px-4 py-3 text-left font-medium">역할</th>
+                {showStatus && <th className="px-4 py-3 text-left font-medium">상태</th>}
+                {canApprove && <th className="px-4 py-3 text-left font-medium">관리</th>}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y">
+              {data.map((m) => (
+                <tr key={m.id} className="hover:bg-muted/20">
+                  <td className="px-4 py-3 font-medium">{m.name}</td>
+                  <td className="px-4 py-3 text-muted-foreground">@{m.username}</td>
+                  <td className="px-4 py-3">{m.studentId || "-"}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{m.phone || "-"}</td>
+                  <td className="px-4 py-3">{m.field || "-"}</td>
+                  <td className="max-w-[200px] px-4 py-3">
+                    {(() => {
+                      const tags = (m.researchInterests ?? []).flatMap((s: string) => s.split(/[,，]/)).map((s: string) => s.trim()).filter(Boolean);
+                      if (tags.length === 0) return "-";
+                      return (
+                        <div className="flex flex-wrap gap-1">
+                          {tags.map((t: string) => (
+                            <span key={t} className="inline-flex items-center rounded-full bg-muted/60 px-2 py-0.5 text-[10px] text-muted-foreground">
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </td>
+                  <td className="px-4 py-3"><RoleCell member={m} /></td>
+                  {showStatus && (
+                    <td className="px-4 py-3">
+                      {m.approved ? (
+                        <Badge className="bg-green-100 text-green-700 text-[10px]">승인</Badge>
+                      ) : m.rejected ? (
+                        <Badge className="bg-red-100 text-red-700 text-[10px]">거절</Badge>
+                      ) : (
+                        <Badge className="bg-amber-100 text-amber-700 text-[10px]">대기</Badge>
+                      )}
+                    </td>
+                  )}
+                  {canApprove && (
+                    <td className="px-4 py-3">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => router.push(`/admin/members/${m.id}`)}
+                        title="회원 상세 관리"
+                      >
+                        <Settings size={14} />
+                      </Button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </>
     );
   }
 
   return (
     <div className="space-y-6">
       {/* ── 탭 헤더 ── */}
-      <div className="flex items-center gap-1 rounded-lg border bg-muted/30 p-1">
+      <nav className="flex items-center gap-1 overflow-x-auto rounded-lg border bg-muted/30 p-1">
         {([
           { key: "all" as const, icon: Users, label: "전체", count: allMembers.length, color: undefined },
-          { key: "pending" as const, icon: Clock, label: "승인 대기", count: truePending.length, color: truePending.length > 0 ? "bg-amber-500 text-white" : undefined },
-          { key: "approved" as const, icon: UserCheck, label: "승인 완료", count: approvedMembers.length, color: undefined },
+          { key: "pending" as const, icon: Clock, label: "대기", count: truePending.length, color: truePending.length > 0 ? "bg-amber-500 text-white" : undefined },
+          { key: "approved" as const, icon: UserCheck, label: "승인", count: approvedMembers.length, color: undefined },
           { key: "rejected" as const, icon: XCircle, label: "거절", count: rejectedMembers.length, color: rejectedMembers.length > 0 ? "bg-red-500 text-white" : undefined },
         ] as const).map(({ key, icon: Icon, label, count, color }) => (
           <button
             key={key}
             onClick={() => setActiveTab(key)}
             className={cn(
-              "flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors",
+              "flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium transition-colors sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm",
               activeTab === key ? "bg-white text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
             )}
           >
@@ -382,7 +443,7 @@ export default function AdminMemberTab() {
             )}
           </button>
         ))}
-      </div>
+      </nav>
 
       {/* ── 전체 탭 ── */}
       {activeTab === "all" && (
