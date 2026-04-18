@@ -11,7 +11,7 @@ function WriteContent() {
 
   return (
     <div className="py-16">
-      <div className="mx-auto max-w-5xl px-4">
+      <div className="mx-auto max-w-6xl px-4">
         <PostForm initialCategory={category ?? undefined} lockCategory={!!category} />
       </div>
     </div>

@@ -108,7 +108,7 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
   if (isLoading) {
     return (
       <div className="py-16">
-        <div className="mx-auto max-w-5xl px-4">
+        <div className="mx-auto max-w-6xl px-4">
           <Skeleton className="mb-6 h-5 w-20" />
           <div className="rounded-2xl border bg-white p-8">
             <Skeleton className="h-6 w-24" />
@@ -172,7 +172,7 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
 
   return (
     <div className="py-16">
-      <div className="mx-auto max-w-5xl px-4">
+      <div className="mx-auto max-w-6xl px-4">
         <button
           onClick={() => {
             const routes: Record<string, string> = {

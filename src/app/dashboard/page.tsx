@@ -99,7 +99,7 @@ function DashboardContent() {
 
   return (
     <div className="py-16">
-      <div className="mx-auto max-w-5xl px-4">
+      <div className="mx-auto max-w-6xl px-4">
         {/* 환영 섹션 */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">

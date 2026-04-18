@@ -36,7 +36,7 @@ export default function NoticeDetailPage({
 
   return (
     <div className="py-16">
-      <div className="mx-auto max-w-5xl px-4">
+      <div className="mx-auto max-w-6xl px-4">
         <button
           onClick={() => router.push("/notices")}
           className="mb-6 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"

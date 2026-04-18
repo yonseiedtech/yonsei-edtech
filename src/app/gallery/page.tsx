@@ -77,7 +77,7 @@ export default function GalleryPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-16">
+    <div className="mx-auto max-w-6xl px-4 py-16">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -267,7 +267,7 @@ function AlbumDetail({ album, isStaff, onBack }: { album: PhotoAlbum; isStaff: b
   );
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-16">
+    <div className="mx-auto max-w-6xl px-4 py-16">
       <button
         onClick={onBack}
         className="mb-6 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"

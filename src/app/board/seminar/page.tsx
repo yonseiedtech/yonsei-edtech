@@ -8,7 +8,7 @@ export default function SeminarBoardPage() {
   return (
     <div>
       {/* 세미나 공간 안내 배너 */}
-      <div className="mx-auto max-w-5xl px-4 pt-8">
+      <div className="mx-auto max-w-6xl px-4 pt-8">
         <Link
           href="/seminars"
           className="flex items-center justify-between rounded-xl border border-primary/20 bg-primary/5 p-4 transition-colors hover:bg-primary/10"

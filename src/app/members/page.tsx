@@ -90,14 +90,14 @@ function MembersContent() {
 
   return (
     <div className="py-16">
-      <section className="mx-auto max-w-5xl px-4">
+      <section className="mx-auto max-w-6xl px-4">
         <PageHeader
           icon={<Users size={24} />}
           title="구성원"
           description="교육의 미래를 함께 만들어가는 구성원들을 소개합니다."
         />
       </section>
-      <section className="mx-auto mt-12 max-w-5xl px-4">
+      <section className="mx-auto mt-12 max-w-6xl px-4">
         <nav className="flex gap-1 overflow-x-auto border-b" aria-label="구성원 분류">
           {ROLE_TABS.map((tab) => {
             const isActive = activeTab === tab.key;
