@@ -138,12 +138,18 @@ export default function ProfileEditor({ user }: Props) {
         enrollmentStatus: data.enrollmentStatus || undefined,
       };
       await updateProfile({ id: user.id, data: payload as unknown as Record<string, unknown> });
-      const updatedUser = {
-        ...user,
-        ...payload,
-        occupation: data.occupation || undefined,
-      };
-      useAuthStore.getState().setUser(updatedUser);
+      // 본인 프로필을 편집한 경우에만 authStore를 갱신.
+      // 관리자가 다른 회원 정보를 수정할 때 setUser를 호출하면
+      // 관리자 세션이 그 회원 데이터로 덮어씌워져 계정이 전환된 것처럼 보임.
+      const currentAuthUser = useAuthStore.getState().user;
+      if (currentAuthUser?.id === user.id) {
+        const updatedUser = {
+          ...user,
+          ...payload,
+          occupation: data.occupation || undefined,
+        };
+        useAuthStore.getState().setUser(updatedUser);
+      }
       toast.success("프로필이 저장되었습니다.");
     } catch {
       toast.error("프로필 저장에 실패했습니다.");
