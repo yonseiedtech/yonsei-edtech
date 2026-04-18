@@ -39,6 +39,8 @@ import type {
   Lab, LabReaction, LabComment, ResearchPaper, ResearchReport, ResearchProposal, WritingPaper, WritingPaperHistory,
   InterviewResponseReaction, InterviewResponseComment,
   ProfileLike, ProfileView, StudySession,
+  ActivityParticipation, Award, ExternalActivity, ContentCreation,
+  AlumniThesis, ThesisReference, ThesisClaim,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -727,4 +729,119 @@ export const profileViewsApi = {
     }),
   log: (data: { profileId: string; viewerId?: string; channel: "qr" | "link" | "members" | "direct" }) =>
     dataApi.create<ProfileView>("profile_views", data),
+};
+
+// ── Track 2: 학술 포트폴리오 ──
+
+export const activityParticipationsApi = {
+  listByUser: (userId: string) =>
+    dataApi.list<ActivityParticipation>("activity_participations", {
+      "filter[userId]": userId,
+      limit: 500,
+    }),
+  listByActivity: (activityId: string) =>
+    dataApi.list<ActivityParticipation>("activity_participations", {
+      "filter[activityId]": activityId,
+      limit: 500,
+    }),
+  get: (id: string) => dataApi.get<ActivityParticipation>("activity_participations", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<ActivityParticipation>("activity_participations", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<ActivityParticipation>("activity_participations", id, data),
+  delete: (id: string) => dataApi.delete("activity_participations", id),
+};
+
+export const awardsApi = {
+  listByUser: (userId: string) =>
+    dataApi.list<Award>("awards", { "filter[userId]": userId, limit: 200 }),
+  get: (id: string) => dataApi.get<Award>("awards", id),
+  create: (data: Record<string, unknown>) => dataApi.create<Award>("awards", data),
+  update: (id: string, data: Record<string, unknown>) => dataApi.update<Award>("awards", id, data),
+  delete: (id: string) => dataApi.delete("awards", id),
+};
+
+export const externalActivitiesApi = {
+  listByUser: (userId: string) =>
+    dataApi.list<ExternalActivity>("external_activities", {
+      "filter[userId]": userId,
+      limit: 200,
+    }),
+  /** 운영진 검증 큐 */
+  listPending: () =>
+    dataApi.list<ExternalActivity>("external_activities", {
+      "filter[verified]": "false",
+      limit: 200,
+    }),
+  get: (id: string) => dataApi.get<ExternalActivity>("external_activities", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<ExternalActivity>("external_activities", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<ExternalActivity>("external_activities", id, data),
+  delete: (id: string) => dataApi.delete("external_activities", id),
+};
+
+export const contentCreationsApi = {
+  listByUser: (userId: string) =>
+    dataApi.list<ContentCreation>("content_creations", {
+      "filter[userId]": userId,
+      limit: 500,
+    }),
+  get: (id: string) => dataApi.get<ContentCreation>("content_creations", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<ContentCreation>("content_creations", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<ContentCreation>("content_creations", id, data),
+  delete: (id: string) => dataApi.delete("content_creations", id),
+};
+
+// ── Track 4: 졸업생 학위논문 DB ──
+
+export const alumniThesesApi = {
+  list: (params?: Record<string, string | number>) =>
+    dataApi.list<AlumniThesis>("alumni_theses", { limit: 500, ...params }),
+  listByAuthor: (authorUserId: string) =>
+    dataApi.list<AlumniThesis>("alumni_theses", {
+      "filter[authorUserId]": authorUserId,
+      limit: 50,
+    }),
+  listUnmapped: () =>
+    dataApi.list<AlumniThesis>("alumni_theses", {
+      "filter[authorMappingStatus]": "unmapped",
+      limit: 500,
+    }),
+  get: (id: string) => dataApi.get<AlumniThesis>("alumni_theses", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<AlumniThesis>("alumni_theses", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<AlumniThesis>("alumni_theses", id, data),
+  delete: (id: string) => dataApi.delete("alumni_theses", id),
+};
+
+export const thesisReferencesApi = {
+  listByThesis: (thesisId: string) =>
+    dataApi.list<ThesisReference>("thesis_references", {
+      "filter[thesisId]": thesisId,
+      limit: 500,
+    }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<ThesisReference>("thesis_references", data),
+  delete: (id: string) => dataApi.delete("thesis_references", id),
+};
+
+export const thesisClaimsApi = {
+  listPending: () =>
+    dataApi.list<ThesisClaim>("thesis_claims", {
+      "filter[status]": "pending",
+      limit: 200,
+    }),
+  listByUser: (userId: string) =>
+    dataApi.list<ThesisClaim>("thesis_claims", {
+      "filter[userId]": userId,
+      limit: 50,
+    }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<ThesisClaim>("thesis_claims", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<ThesisClaim>("thesis_claims", id, data),
 };
