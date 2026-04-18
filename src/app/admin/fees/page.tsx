@@ -6,6 +6,8 @@ import { dataApi, profilesApi } from "@/lib/bkend";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import {
   Dialog,
   DialogContent,
@@ -323,53 +325,43 @@ export default function FeesPage() {
     URL.revokeObjectURL(url);
   }
 
-  const SECTIONS: { value: Section; label: string; icon: React.ReactNode }[] = [
-    { value: "dashboard", label: "대시보드", icon: <TrendingUp size={14} /> },
-    { value: "payments", label: "납부 현황", icon: <Users size={14} /> },
-    { value: "ledger", label: "수입·지출", icon: <BookOpen size={14} /> },
-    { value: "settings", label: "설정", icon: <Settings size={14} /> },
-  ];
-
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Wallet size={20} className="text-primary" />
-          <h2 className="text-lg font-bold">학회비 관리</h2>
-        </div>
-        <select
-          value={selectedSemester}
-          onChange={(e) => setSelectedSemester(e.target.value)}
-          className="rounded-lg border px-3 py-1.5 text-sm"
-        >
-          {SEMESTERS.map((s) => (
-            <option key={s} value={s}>{formatSemester(s)}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* 섹션 네비게이션 */}
-      <div className="flex flex-wrap gap-1">
-        {SECTIONS.map((s) => (
-          <button
-            key={s.value}
-            onClick={() => setSection(s.value)}
-            className={cn(
-              "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-              section === s.value
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted/50 text-muted-foreground hover:text-foreground",
-            )}
+    <div className="space-y-6">
+      <ConsolePageHeader
+        icon={Wallet}
+        title="학회비 관리"
+        description="학기별 학회비 납부 현황과 수입·지출 장부를 한 곳에서 관리합니다."
+        actions={
+          <select
+            value={selectedSemester}
+            onChange={(e) => setSelectedSemester(e.target.value)}
+            className="rounded-lg border px-3 py-1.5 text-sm"
           >
-            {s.icon}
-            {s.label}
-          </button>
-        ))}
-      </div>
+            {SEMESTERS.map((s) => (
+              <option key={s} value={s}>{formatSemester(s)}</option>
+            ))}
+          </select>
+        }
+      />
 
-      {/* 대시보드 */}
-      {section === "dashboard" && (
-        <div className="space-y-4">
+      <Tabs value={section} onValueChange={(v) => setSection(v as Section)}>
+        <TabsList>
+          <TabsTrigger value="dashboard">
+            <TrendingUp size={14} className="mr-1" />대시보드
+          </TabsTrigger>
+          <TabsTrigger value="payments">
+            <Users size={14} className="mr-1" />납부 현황
+          </TabsTrigger>
+          <TabsTrigger value="ledger">
+            <BookOpen size={14} className="mr-1" />수입·지출
+          </TabsTrigger>
+          <TabsTrigger value="settings">
+            <Settings size={14} className="mr-1" />설정
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dashboard" className="mt-4">
+          <div className="space-y-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
             <div className="rounded-lg border bg-white p-4 text-center">
               <p className="text-3xl font-bold">{stats.total}</p>
@@ -431,12 +423,11 @@ export default function FeesPage() {
               />
             </div>
           </div>
-        </div>
-      )}
+          </div>
+        </TabsContent>
 
-      {/* 납부 현황 */}
-      {section === "payments" && (
-        <div className="space-y-3">
+        <TabsContent value="payments" className="mt-4">
+          <div className="space-y-3">
           {/* 필터/검색 바 */}
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex gap-1">
@@ -547,12 +538,11 @@ export default function FeesPage() {
               ))
             )}
           </div>
-        </div>
-      )}
+          </div>
+        </TabsContent>
 
-      {/* 수입·지출 장부 */}
-      {section === "ledger" && (
-        <div className="space-y-4">
+        <TabsContent value="ledger" className="mt-4">
+          <div className="space-y-4">
           {/* 요약 카드 */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="rounded-lg border bg-white p-4 text-center">
@@ -644,8 +634,72 @@ export default function FeesPage() {
               ))
             )}
           </div>
-        </div>
-      )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="settings" className="mt-4">
+          <div className="space-y-4">
+          <div className="rounded-lg border bg-white p-6">
+            <h3 className="text-sm font-semibold">학기별 학회비 설정</h3>
+            <p className="mt-1 text-xs text-muted-foreground">학기를 선택하고 학회비 금액과 납부 기한을 설정합니다.</p>
+
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="mb-1 block text-sm font-medium">학기</label>
+                <select
+                  value={selectedSemester}
+                  onChange={(e) => setSelectedSemester(e.target.value)}
+                  className="w-full rounded-lg border px-3 py-2 text-sm sm:w-48"
+                >
+                  {SEMESTERS.map((s) => (
+                    <option key={s} value={s}>{formatSemester(s)}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-sm font-medium">학회비 금액 (원)</label>
+                  <Input
+                    type="number"
+                    value={settingAmount || currentSetting?.amount || ""}
+                    onChange={(e) => setSettingAmount(e.target.value)}
+                    placeholder="예: 30000"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">납부 기한</label>
+                  <Input
+                    type="date"
+                    value={settingDueDate || currentSetting?.dueDate || ""}
+                    onChange={(e) => setSettingDueDate(e.target.value)}
+                  />
+                </div>
+              </div>
+              <Button onClick={saveSetting}>설정 저장</Button>
+            </div>
+          </div>
+
+          <div className="rounded-lg border bg-white p-6">
+            <h3 className="text-sm font-semibold">학기별 설정 내역</h3>
+            <div className="mt-3 space-y-2">
+              {feeSettings.length === 0 ? (
+                <p className="text-sm text-muted-foreground">설정된 학기가 없습니다.</p>
+              ) : (
+                feeSettings.map((s) => (
+                  <div key={s.id} className="flex items-center justify-between rounded-lg border px-4 py-2.5 text-sm">
+                    <span className="font-medium">{formatSemester(s.semester)}</span>
+                    <div className="flex items-center gap-4 text-muted-foreground">
+                      <span>{s.amount.toLocaleString()}원</span>
+                      {s.dueDate && <span>기한: {s.dueDate}</span>}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       {/* 거래 등록/수정 다이얼로그 */}
       <Dialog open={showTxDialog} onOpenChange={setShowTxDialog}>
@@ -719,70 +773,6 @@ export default function FeesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* 설정 */}
-      {section === "settings" && (
-        <div className="space-y-4">
-          <div className="rounded-lg border bg-white p-6">
-            <h3 className="text-sm font-semibold">학기별 학회비 설정</h3>
-            <p className="mt-1 text-xs text-muted-foreground">학기를 선택하고 학회비 금액과 납부 기한을 설정합니다.</p>
-
-            <div className="mt-4 space-y-3">
-              <div>
-                <label className="mb-1 block text-sm font-medium">학기</label>
-                <select
-                  value={selectedSemester}
-                  onChange={(e) => setSelectedSemester(e.target.value)}
-                  className="w-full rounded-lg border px-3 py-2 text-sm sm:w-48"
-                >
-                  {SEMESTERS.map((s) => (
-                    <option key={s} value={s}>{formatSemester(s)}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="mb-1 block text-sm font-medium">학회비 금액 (원)</label>
-                  <Input
-                    type="number"
-                    value={settingAmount || currentSetting?.amount || ""}
-                    onChange={(e) => setSettingAmount(e.target.value)}
-                    placeholder="예: 30000"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium">납부 기한</label>
-                  <Input
-                    type="date"
-                    value={settingDueDate || currentSetting?.dueDate || ""}
-                    onChange={(e) => setSettingDueDate(e.target.value)}
-                  />
-                </div>
-              </div>
-              <Button onClick={saveSetting}>설정 저장</Button>
-            </div>
-          </div>
-
-          <div className="rounded-lg border bg-white p-6">
-            <h3 className="text-sm font-semibold">학기별 설정 내역</h3>
-            <div className="mt-3 space-y-2">
-              {feeSettings.length === 0 ? (
-                <p className="text-sm text-muted-foreground">설정된 학기가 없습니다.</p>
-              ) : (
-                feeSettings.map((s) => (
-                  <div key={s.id} className="flex items-center justify-between rounded-lg border px-4 py-2.5 text-sm">
-                    <span className="font-medium">{formatSemester(s.semester)}</span>
-                    <div className="flex items-center gap-4 text-muted-foreground">
-                      <span>{s.amount.toLocaleString()}원</span>
-                      {s.dueDate && <span>기한: {s.dueDate}</span>}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

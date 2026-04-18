@@ -14,12 +14,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Loader2, Calendar } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Calendar, Globe, FolderKanban, BookOpen, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { Activity, ActivityType } from "@/types";
 import { formatSemester, type Semester } from "@/lib/semester";
 import MemberAutocomplete from "@/components/ui/MemberAutocomplete";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 
 const STATUS_LABELS: Record<string, string> = {
   upcoming: "예정",
@@ -36,7 +37,15 @@ const STATUS_COLORS: Record<string, string> = {
 interface Props {
   type: ActivityType;
   typeLabel: string;
+  icon?: LucideIcon;
+  description?: string;
 }
+
+const TYPE_DEFAULTS: Record<ActivityType, { icon: LucideIcon; description: string }> = {
+  external: { icon: Globe, description: "회원의 대외 학회·공모전·발표 등 외부 학술활동을 등록하고 관리합니다." },
+  project: { icon: FolderKanban, description: "학회 연구 프로젝트와 협업 과제의 진행 상황을 관리합니다." },
+  study: { icon: BookOpen, description: "학회 스터디 모임의 일정과 참여자를 관리합니다." },
+};
 
 interface FormData {
   title: string;
@@ -71,7 +80,9 @@ const emptyForm: FormData = {
   semester: "",
 };
 
-export default function ActivityList({ type, typeLabel }: Props) {
+export default function ActivityList({ type, typeLabel, icon, description }: Props) {
+  const resolvedIcon = icon ?? TYPE_DEFAULTS[type].icon;
+  const resolvedDescription = description ?? TYPE_DEFAULTS[type].description;
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [editId, setEditId] = useState<string | null>(null);
@@ -159,13 +170,17 @@ export default function ActivityList({ type, typeLabel }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold">{typeLabel} 관리</h2>
-        <Button size="sm" onClick={openCreate}>
-          <Plus size={14} className="mr-1" />
-          {typeLabel} 등록
-        </Button>
-      </div>
+      <ConsolePageHeader
+        icon={resolvedIcon}
+        title={`${typeLabel} 관리`}
+        description={resolvedDescription}
+        actions={
+          <Button size="sm" onClick={openCreate}>
+            <Plus size={14} className="mr-1" />
+            {typeLabel} 등록
+          </Button>
+        }
+      />
 
       {activities.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">등록된 {typeLabel}이(가) 없습니다.</p>

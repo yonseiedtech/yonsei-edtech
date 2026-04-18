@@ -8,6 +8,7 @@ import { formatDate } from "@/lib/utils";
 import { Shield, Users, CalendarDays, FileText, Settings, Tag, Server } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AuditLog } from "@/types";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 
 const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   member: { label: "회원", icon: Users, color: "bg-blue-100 text-blue-700" },
@@ -48,10 +49,11 @@ export default function AuditLogPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Shield size={20} className="text-primary" />
-        <h2 className="text-lg font-bold">감사 로그</h2>
-      </div>
+      <ConsolePageHeader
+        icon={Shield}
+        title="감사 로그"
+        description="회원·역할·세미나·설정 등 주요 관리 작업 기록을 카테고리별로 조회합니다."
+      />
 
       {/* 필터 */}
       <div className="flex flex-wrap gap-2">

@@ -25,6 +25,13 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/components/ui/tabs";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 
 interface ChatLog {
   id: string;
@@ -169,42 +176,35 @@ export default function ChatbotAdminPage() {
     setQaForm({ question: "", answer: "", keywords: "" });
   }
 
-  const SECTIONS: { value: Section; label: string; icon: React.ReactNode }[] = [
-    { value: "greeting", label: "인사말 설정", icon: <MessageCircle size={14} /> },
-    { value: "logs", label: "채팅 기록", icon: <Clock size={14} /> },
-    { value: "qa", label: "Q&A 설정", icon: <MessageCircle size={14} /> },
-  ];
-
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <MessageCircle size={20} className="text-primary" />
-        <h2 className="text-lg font-bold">연교공 챗봇 관리</h2>
-        <Badge variant="secondary" className="bg-green-50 text-green-700 text-xs">운영중</Badge>
-      </div>
+    <div className="space-y-6">
+      <ConsolePageHeader
+        icon={MessageCircle}
+        title="연교공 챗봇 관리"
+        description="회원과 방문자에게 노출되는 챗봇 인사말·채팅 기록·Q&A 자동응답을 관리합니다."
+        actions={
+          <Badge variant="secondary" className="bg-green-50 text-green-700 text-xs">운영중</Badge>
+        }
+      />
 
-      {/* 섹션 네비게이션 */}
-      <div className="flex flex-wrap gap-1">
-        {SECTIONS.map((s) => (
-          <button
-            key={s.value}
-            onClick={() => setSection(s.value)}
-            className={cn(
-              "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-              section === s.value
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted/50 text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {s.icon}
-            {s.label}
-          </button>
-        ))}
-      </div>
+      <Tabs value={section} onValueChange={(v) => setSection(v as Section)}>
+        <TabsList>
+          <TabsTrigger value="greeting">
+            <MessageCircle size={14} className="mr-1" />
+            인사말 설정
+          </TabsTrigger>
+          <TabsTrigger value="logs">
+            <Clock size={14} className="mr-1" />
+            채팅 기록
+          </TabsTrigger>
+          <TabsTrigger value="qa">
+            <MessageCircle size={14} className="mr-1" />
+            Q&A 설정
+          </TabsTrigger>
+        </TabsList>
 
-      {/* 인사말 설정 */}
-      {section === "greeting" && (
-        <div className="rounded-xl border bg-white p-6 space-y-4">
+        <TabsContent value="greeting" className="mt-4">
+          <div className="rounded-xl border bg-white p-6 space-y-4">
           <h3 className="font-semibold">챗봇 인사말 설정</h3>
           <p className="text-xs text-muted-foreground">챗봇을 열었을 때 처음 표시되는 인사말을 설정합니다.</p>
           <div>
@@ -225,12 +225,11 @@ export default function ChatbotAdminPage() {
             {savingGreeting && <Loader2 size={14} className="mr-1 animate-spin" />}
             인사말 저장
           </Button>
-        </div>
-      )}
+          </div>
+        </TabsContent>
 
-      {/* 채팅 기록 */}
-      {section === "logs" && (
-        <div className="space-y-3">
+        <TabsContent value="logs" className="mt-4">
+          <div className="space-y-3">
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -267,12 +266,11 @@ export default function ChatbotAdminPage() {
               ))}
             </div>
           )}
-        </div>
-      )}
+          </div>
+        </TabsContent>
 
-      {/* Q&A 설정 */}
-      {section === "qa" && (
-        <div className="space-y-3">
+        <TabsContent value="qa" className="mt-4">
+          <div className="space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
               자주 묻는 질문과 답변을 설정합니다. 키워드가 매칭되면 설정된 답변을 자동으로 제공합니다.
@@ -328,8 +326,9 @@ export default function ChatbotAdminPage() {
               ))}
             </div>
           )}
-        </div>
-      )}
+          </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Q&A 등록/수정 Dialog */}
       <Dialog open={qaDialog} onOpenChange={(open) => !open && closeQaDialog()}>

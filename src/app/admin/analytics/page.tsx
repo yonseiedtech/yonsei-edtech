@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { exportCSV } from "@/lib/export-csv";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import type { User, Post, Seminar, SeminarAttendee, SeminarReview, Certificate } from "@/types";
 
 // ── helpers ──
@@ -248,27 +249,24 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <BarChart3 size={20} className="text-primary" />
-          <h2 className="text-lg font-bold">분석 대시보드</h2>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" onClick={exportMembers}>
-            <Download size={14} className="mr-1" />
-            회원 CSV
-          </Button>
-          <Button size="sm" variant="outline" onClick={exportSeminars}>
-            <Download size={14} className="mr-1" />
-            세미나 CSV
-          </Button>
-          <Button size="sm" variant="outline" onClick={exportAttendees}>
-            <Download size={14} className="mr-1" />
-            출석 CSV
-          </Button>
-        </div>
-      </div>
-
+      <ConsolePageHeader
+        icon={BarChart3}
+        title="분석 대시보드"
+        description="회원·세미나·출석 현황을 집계하고 CSV로 내보냅니다."
+        actions={
+          <>
+            <Button size="sm" variant="outline" onClick={exportMembers}>
+              <Download size={14} className="mr-1" />회원 CSV
+            </Button>
+            <Button size="sm" variant="outline" onClick={exportSeminars}>
+              <Download size={14} className="mr-1" />세미나 CSV
+            </Button>
+            <Button size="sm" variant="outline" onClick={exportAttendees}>
+              <Download size={14} className="mr-1" />출석 CSV
+            </Button>
+          </>
+        }
+      />
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard icon={Users} label="승인 회원" value={analytics.totalMembers} color="bg-blue-50 text-blue-600" />

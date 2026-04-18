@@ -36,7 +36,7 @@ import type {
   SeminarReview, Inquiry, Activity, AppNotification, WaitlistEntry,
   Poll, PollResponse, PhotoAlbum, Photo, AdminTodo, AuditLog,
   ActivityProgress, ActivityMaterial, EmailLog,
-  Lab, LabReaction, LabComment, ResearchPaper, ResearchReport, WritingPaper, WritingPaperHistory,
+  Lab, LabReaction, LabComment, ResearchPaper, ResearchReport, ResearchProposal, WritingPaper, WritingPaperHistory,
   InterviewResponseReaction, InterviewResponseComment,
   ProfileLike, ProfileView, StudySession,
 } from "@/types";
@@ -643,6 +643,20 @@ export const researchReportsApi = {
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<ResearchReport>("research_reports", id, data),
   delete: (id: string) => dataApi.delete("research_reports", id),
+};
+
+export const researchProposalsApi = {
+  listByUser: (userId: string) =>
+    dataApi.list<ResearchProposal>("research_proposals", {
+      "filter[userId]": userId,
+      limit: 50,
+    }),
+  get: (id: string) => dataApi.get<ResearchProposal>("research_proposals", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<ResearchProposal>("research_proposals", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<ResearchProposal>("research_proposals", id, data),
+  delete: (id: string) => dataApi.delete("research_proposals", id),
 };
 
 export const notificationsApi = {

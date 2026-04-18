@@ -13,6 +13,7 @@ import WritingHistoryList from "@/features/research/WritingHistoryList";
 import ResearchDashboard from "@/features/research/ResearchDashboard";
 import ResearchReportPrint from "@/features/research/ResearchReportPrint";
 import ResearchReportEditor from "@/features/research/ResearchReportEditor";
+import ResearchProposalEditor from "@/features/research/ResearchProposalEditor";
 import { useResearchPapers } from "@/features/research/useResearchPapers";
 import { useWritingPaper } from "@/features/research/useWritingPaper";
 import { useWritingPaperHistory } from "@/features/research/useWritingPaperHistory";
@@ -341,15 +342,7 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
             )}
 
             {writingSubTab === "proposal" && (
-              <div className="rounded-2xl border bg-white p-8 text-center">
-                <ClipboardList size={40} className="mx-auto text-muted-foreground/40" />
-                <p className="mt-3 text-sm font-medium text-muted-foreground">
-                  연구 계획서
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  추후 업데이트 예정입니다.
-                </p>
-              </div>
+              <ResearchProposalEditor user={user} readOnly={!isSelf || readOnly} />
             )}
 
             {writingSubTab === "thesis" && (

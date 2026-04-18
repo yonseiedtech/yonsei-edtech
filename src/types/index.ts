@@ -452,6 +452,29 @@ export interface ResearchReport {
   updatedAt: string;
 }
 
+// ── 연구 계획서 ──
+export interface ResearchProposal {
+  id: string;
+  userId: string;
+  /** 논문 제목 (국문) */
+  titleKo: string;
+  /** 논문 제목 (영문) */
+  titleEn: string;
+  /** 연구 목적 */
+  purpose: string;
+  /** 연구 범위 */
+  scope: string;
+  /** 연구 방법 */
+  method: string;
+  /** 연구 내용 */
+  content: string;
+  /** 참고문헌 (ResearchPaper.id 참조, APA7 형식은 렌더링 시 생성) */
+  referencePaperIds: string[];
+  lastSavedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ── 온라인 인터뷰 ──
 export type InterviewAnswerType =
   | "text"
