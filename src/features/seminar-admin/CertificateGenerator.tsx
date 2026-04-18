@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useSeminars, useAttendees } from "@/features/seminar/useSeminar";
+import { useOrgChart, type OrgPosition } from "@/features/admin/settings/useOrgChart";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { certificatesApi } from "@/lib/bkend";
 import { notifyCertificateIssued } from "@/features/notifications/notify";
@@ -177,6 +178,90 @@ function AttendeeSelector({ attendees, seminarId, certType, onSelectName, onBatc
             </Button>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+/** 조직도 기반 임명장 수신자 선택 */
+function AppointmentSelector({ positions, onSelect, onBatchCreate }: {
+  positions: OrgPosition[];
+  onSelect: (name: string, position: string) => void;
+  onBatchCreate: (entries: { name: string; position: string }[]) => Promise<void>;
+}) {
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [creating, setCreating] = useState(false);
+
+  const assignedPositions = positions.filter((p) => p.userName && p.role !== "advisor" && p.role !== "professor");
+
+  function togglePosition(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function selectAll() {
+    setSelected(new Set(assignedPositions.map((p) => p.id)));
+  }
+
+  async function handleBatchIssue() {
+    const entries = assignedPositions
+      .filter((p) => selected.has(p.id))
+      .map((p) => ({ name: p.userName!, position: p.title }));
+    if (entries.length === 0) { toast.error("발급 대상자를 선택하세요."); return; }
+    setCreating(true);
+    try { await onBatchCreate(entries); } finally { setCreating(false); }
+  }
+
+  return (
+    <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold text-blue-700">
+          운영진 직책 <span className="font-normal text-muted-foreground">({assignedPositions.length}명)</span>
+        </p>
+        <Button variant="ghost" size="sm" className="h-5 px-1.5 text-[10px]" onClick={selectAll}>전체 선택</Button>
+      </div>
+      {assignedPositions.length === 0 ? (
+        <p className="mt-2 text-center text-[11px] text-muted-foreground">조직도에 배정된 운영진이 없습니다.</p>
+      ) : (
+        <div className="mt-2 space-y-0.5">
+          {assignedPositions.map((pos) => (
+            <div key={pos.id} className="flex items-center justify-between rounded px-2 py-1.5 text-xs hover:bg-blue-100/50">
+              <label className="flex flex-1 cursor-pointer items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={selected.has(pos.id)}
+                  onChange={() => togglePosition(pos.id)}
+                  className="h-3.5 w-3.5 rounded border-gray-300"
+                />
+                <span className="font-medium">{pos.userName}</span>
+                <Badge variant="secondary" className="h-4 text-[9px] bg-blue-100 text-blue-700">{pos.title}</Badge>
+              </label>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-5 px-1.5 text-[10px]"
+                onClick={() => onSelect(pos.userName!, pos.title)}
+              >
+                <Eye size={10} className="mr-0.5" />미리보기
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="mt-2 flex gap-1">
+        <Button
+          size="sm"
+          className="h-8 flex-1 gap-1 text-xs"
+          disabled={selected.size === 0 || creating}
+          onClick={handleBatchIssue}
+        >
+          {creating ? <span className="animate-pulse">발급 중...</span> : (
+            <><Award size={12} />{selected.size}명 임명장 일괄 발급</>
+          )}
+        </Button>
       </div>
     </div>
   );
@@ -1164,10 +1249,26 @@ const STYLE_PRESETS: StylePreset[] = [
       watermark: { ...DEFAULT_AREA_STYLES.watermark },
     },
   },
+  {
+    label: "임명장 격식체",
+    description: "연세 블루 + 굵은 테두리, 임명장 전용",
+    fontFamily: "var(--font-hahmlet), var(--font-noto-serif-kr), serif",
+    borderColor: "#003378",
+    areaStyles: {
+      certNo: { ...DEFAULT_AREA_STYLES.certNo, fontSize: "10pt", letterSpacing: "0.1em" },
+      title: { ...DEFAULT_AREA_STYLES.title, fontSize: "48pt", letterSpacing: "0.5em" },
+      name: { ...DEFAULT_AREA_STYLES.name, fontSize: "28pt", letterSpacing: "0.3em" },
+      body: { ...DEFAULT_AREA_STYLES.body, fontSize: "14pt", lineHeight: "2.6", letterSpacing: "0.03em" },
+      date: { ...DEFAULT_AREA_STYLES.date, fontSize: "12pt", letterSpacing: "0.15em" },
+      org: { ...DEFAULT_AREA_STYLES.org, fontSize: "26px", letterSpacing: "0.2em" },
+      watermark: { ...DEFAULT_AREA_STYLES.watermark },
+    },
+  },
 ];
 
 export default function CertificateGenerator() {
   const { seminars } = useSeminars();
+  const { positions: orgPositions } = useOrgChart();
   const { user } = useAuthStore();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [certType, setCertType] = useState<CertType>("appreciation");
@@ -1179,6 +1280,7 @@ export default function CertificateGenerator() {
   const [snapStep, setSnapStep] = useState(8);
   const [showGrid, setShowGrid] = useState(true);
   const [bodyText, setBodyText] = useState("");
+  const [appointmentPosition, setAppointmentPosition] = useState("");
   const [fontFamily, setFontFamily] = useState(FONT_PRESETS[0].value);
   const [borderColor, setBorderColor] = useState("#003378");
   const [areaStyles, setAreaStyles] = useState<Record<AreaKey, AreaStyle>>(() => {
@@ -1413,7 +1515,11 @@ export default function CertificateGenerator() {
     : [];
 
   const currentSemester = semester || (seminar ? inferSemester(seminar.date) : "2026년 1학기");
-  const currentBody = bodyText || getDefaultBody(certType, currentSemester, seminar?.title || "세미나 제목");
+  const currentBody = bodyText || getDefaultBody(
+    certType,
+    currentSemester,
+    certType === "appointment" ? (appointmentPosition || "___") : (seminar?.title || "세미나 제목"),
+  );
 
   async function handleSeminarChange(id: string) {
     setSelectedId(id || null);
@@ -1425,9 +1531,13 @@ export default function CertificateGenerator() {
     }
   }
 
-  function handleTypeChange(type: CertType) {
+  async function handleTypeChange(type: CertType) {
     setCertType(type);
     setBodyText("");
+    if (type === "appointment") {
+      if (!semester) setSemester(inferSemester(new Date().toISOString().slice(0, 10)));
+      setCertificateNo(await generateCertificateNo(type));
+    }
   }
 
   function handlePrint() {
@@ -1486,19 +1596,23 @@ export default function CertificateGenerator() {
   }
 
   async function handleSaveRecord() {
-    if (!seminar || !recipientName) {
-      toast.error("세미나와 수여자 이름을 입력하세요.");
-      return;
+    if (certType === "appointment") {
+      if (!recipientName) { toast.error("수여자 이름을 입력하세요."); return; }
+    } else {
+      if (!seminar || !recipientName) { toast.error("세미나와 수여자 이름을 입력하세요."); return; }
     }
     try {
       await certificatesApi.create({
-        seminarId: seminar.id,
-        seminarTitle: seminar.title,
+        ...(seminar ? { seminarId: seminar.id, seminarTitle: seminar.title } : {}),
         recipientName,
         type: certType,
         certificateNo,
         issuedAt: new Date().toISOString(),
         issuedBy: user?.id ?? "",
+        ...(certType === "appointment" ? {
+          appointmentPosition: appointmentPosition || undefined,
+          appointmentTerm: currentSemester,
+        } : {}),
       });
       toast.success(`${CERT_LABELS[certType].label} 기록이 저장되었습니다.`);
       setCertificateNo(await generateCertificateNo(certType));
@@ -1591,19 +1705,30 @@ export default function CertificateGenerator() {
       {/* 좌측: 설정 패널 */}
       <div className="w-full shrink-0 space-y-4 lg:w-80">
         <div className="rounded-xl border bg-white p-5 space-y-4">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium">세미나 선택</label>
-            <select
-              value={selectedId ?? ""}
-              onChange={(e) => handleSeminarChange(e.target.value)}
-              className="w-full rounded-lg border px-3 py-2 text-sm"
-            >
-              <option value="">-- 세미나 선택 --</option>
-              {seminars.map((s) => (
-                <option key={s.id} value={s.id}>{s.title} ({s.date})</option>
-              ))}
-            </select>
-          </div>
+          {certType !== "appointment" ? (
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">세미나 선택</label>
+              <select
+                value={selectedId ?? ""}
+                onChange={(e) => handleSeminarChange(e.target.value)}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+              >
+                <option value="">-- 세미나 선택 --</option>
+                {seminars.map((s) => (
+                  <option key={s.id} value={s.id}>{s.title} ({s.date})</option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">임명 직책</label>
+              <Input
+                value={appointmentPosition}
+                onChange={(e) => { setAppointmentPosition(e.target.value); setBodyText(""); }}
+                placeholder="예: 부학회장, 학술부장"
+              />
+            </div>
+          )}
 
           <div>
             <label className="mb-1.5 block text-sm font-medium">종류</label>
@@ -2018,13 +2143,13 @@ export default function CertificateGenerator() {
           </div>
 
           <div className="space-y-2 pt-2">
-            <Button className="w-full" onClick={handlePrint} disabled={!seminar}>
+            <Button className="w-full" onClick={handlePrint} disabled={certType !== "appointment" && !seminar}>
               <Printer size={16} className="mr-1" />인쇄
             </Button>
-            <Button className="w-full" variant="outline" onClick={handlePdfDownload} disabled={!seminar || pdfLoading}>
+            <Button className="w-full" variant="outline" onClick={handlePdfDownload} disabled={(certType !== "appointment" && !seminar) || pdfLoading}>
               <FileDown size={16} className="mr-1" />{pdfLoading ? "PDF 생성 중..." : "PDF 다운로드"}
             </Button>
-            <Button className="w-full" variant="outline" onClick={handleSaveRecord} disabled={!seminar || !recipientName}>
+            <Button className="w-full" variant="outline" onClick={handleSaveRecord} disabled={(certType === "appointment" ? !recipientName : (!seminar || !recipientName))}>
               <Plus size={16} className="mr-1" />발급 기록 저장
             </Button>
             {certType === "completion" && (
@@ -2086,6 +2211,48 @@ export default function CertificateGenerator() {
               </div>
               <p className="mt-1 text-[9px] text-muted-foreground">이름 입력 후 Enter 또는 추가 버튼을 누르면 수여자로 설정됩니다.</p>
             </div>
+          )}
+
+          {/* 임명장: 조직도 기반 수신자 선택 */}
+          {certType === "appointment" && (
+            <AppointmentSelector
+              positions={orgPositions}
+              onSelect={(name, position) => {
+                setRecipientName(name);
+                setAppointmentPosition(position);
+                setBodyText("");
+              }}
+              onBatchCreate={async (entries) => {
+                try {
+                  let created = 0;
+                  const nos = await generateCertificateNoBatch("appointment", entries.length);
+                  for (let i = 0; i < entries.length; i++) {
+                    const { name, position } = entries[i];
+                    const body = getDefaultBody("appointment", currentSemester, position);
+                    try {
+                      await certificatesApi.create({
+                        recipientName: name,
+                        type: "appointment",
+                        certificateNo: nos[i],
+                        issuedAt: new Date().toISOString(),
+                        issuedBy: user?.id ?? "",
+                        appointmentPosition: position,
+                        appointmentTerm: currentSemester,
+                        bodyText: body,
+                      });
+                      created++;
+                    } catch (e) {
+                      console.error(`[cert] ${name} 임명장 발급 실패:`, e);
+                      toast.error(`${name} 발급 실패`);
+                    }
+                  }
+                  if (created > 0) toast.success(`${created}명 임명장 발급 완료`);
+                } catch (e) {
+                  console.error("[cert] 일괄 임명장 발급 오류:", e);
+                  toast.error(`일괄 발급 오류: ${e instanceof Error ? e.message : "알 수 없는 오류"}`);
+                }
+              }}
+            />
           )}
 
           {/* 참석자 → 발급 대상자 선택 (수료증만) */}
