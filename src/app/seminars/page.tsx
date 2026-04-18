@@ -3,49 +3,68 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import SeminarList from "@/features/seminar/SeminarList";
-import SeminarStatusTabs from "@/features/seminar/SeminarStatusTabs";
 import { useSeminars } from "@/features/seminar/useSeminar";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isStaffOrAbove } from "@/lib/permissions";
 import { getComputedStatus } from "@/lib/seminar-utils";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Calendar, Search, AlertCircle } from "lucide-react";
-import type { SeminarStatus } from "@/types";
+import { Plus, Calendar, Search, AlertCircle, List, LayoutGrid } from "lucide-react";
 
-type StatusFilter = SeminarStatus | "all";
+type StatusTab = "all" | "active" | "completed";
 
 export default function SeminarsPage() {
-  const [status, setStatus] = useState<StatusFilter>("all");
+  const [statusTab, setStatusTab] = useState<StatusTab>("all");
+  const [viewMode, setViewMode] = useState<"list" | "gallery">("list");
   const [search, setSearch] = useState("");
   const { user } = useAuthStore();
   const { seminars: allSeminars, isLoading, error } = useSeminars();
 
+  // 운영진만 임시저장 포함
+  const visibleSeminars = useMemo(
+    () =>
+      isStaffOrAbove(user)
+        ? allSeminars
+        : allSeminars.filter((s) => s.status !== "draft"),
+    [allSeminars, user],
+  );
+
+  const ongoingSeminars = useMemo(
+    () =>
+      visibleSeminars.filter((s) => {
+        const cs = getComputedStatus(s);
+        return cs === "upcoming" || cs === "ongoing";
+      }),
+    [visibleSeminars],
+  );
+
+  const completedSeminars = useMemo(
+    () => visibleSeminars.filter((s) => getComputedStatus(s) === "completed"),
+    [visibleSeminars],
+  );
+
   const filtered = useMemo(() => {
-    // 임시저장 세미나는 운영진만 볼 수 있음
-    let result = isStaffOrAbove(user)
-      ? allSeminars
-      : allSeminars.filter((s) => s.status !== "draft");
+    let result =
+      statusTab === "all"
+        ? visibleSeminars
+        : statusTab === "active"
+          ? ongoingSeminars
+          : completedSeminars;
 
-    // Status filter
-    if (status !== "all") {
-      result = result.filter((s) => getComputedStatus(s) === status);
-    }
-
-    // Search filter (title, speaker)
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(
         (s) =>
           s.title.toLowerCase().includes(q) ||
           s.speaker.toLowerCase().includes(q) ||
-          s.location?.toLowerCase().includes(q)
+          s.location?.toLowerCase().includes(q),
       );
     }
 
     return result;
-  }, [allSeminars, status, search]);
+  }, [visibleSeminars, ongoingSeminars, completedSeminars, statusTab, search]);
 
   const sorted = useMemo(
     () => [...filtered].sort((a, b) => b.date.localeCompare(a.date)),
@@ -61,7 +80,7 @@ export default function SeminarsPage() {
               <Calendar size={22} />
             </div>
             <div>
-              <h1 className="text-xl font-bold sm:text-2xl">정기 세미나</h1>
+              <h1 className="text-xl font-bold sm:text-2xl">세미나</h1>
               <p className="text-xs text-muted-foreground sm:text-sm">
                 매주 교육공학/에듀테크 관련 최신 논문이나 트렌드를 발제하고 토론합니다.
               </p>
@@ -88,8 +107,53 @@ export default function SeminarsPage() {
           />
         </div>
 
-        <div className="mt-4">
-          <SeminarStatusTabs active={status} onChange={setStatus} />
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="inline-flex rounded-lg border bg-white p-1 text-sm shadow-sm">
+            {(["all", "active", "completed"] as const).map((k) => (
+              <button
+                key={k}
+                onClick={() => setStatusTab(k)}
+                className={cn(
+                  "rounded-md px-4 py-1.5 font-medium transition-colors",
+                  statusTab === k
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted",
+                )}
+              >
+                {k === "all"
+                  ? `전체 (${visibleSeminars.length})`
+                  : k === "active"
+                    ? `예정·진행중 (${ongoingSeminars.length})`
+                    : `완료 (${completedSeminars.length})`}
+              </button>
+            ))}
+          </div>
+          <div className="inline-flex rounded-lg border bg-white p-0.5 shadow-sm">
+            <button
+              onClick={() => setViewMode("list")}
+              className={cn(
+                "rounded-md p-1.5 transition-colors",
+                viewMode === "list"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted",
+              )}
+              title="리스트"
+            >
+              <List size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode("gallery")}
+              className={cn(
+                "rounded-md p-1.5 transition-colors",
+                viewMode === "gallery"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted",
+              )}
+              title="갤러리"
+            >
+              <LayoutGrid size={16} />
+            </button>
+          </div>
         </div>
 
         <div className="mt-6">
@@ -124,7 +188,7 @@ export default function SeminarsPage() {
               </Button>
             </div>
           ) : (
-            <SeminarList seminars={sorted} />
+            <SeminarList seminars={sorted} viewMode={viewMode} />
           )}
         </div>
       </div>

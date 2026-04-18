@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 
 interface Props {
   seminars: Seminar[];
+  viewMode?: "list" | "gallery";
 }
 
 const STATUS_STYLES: Record<SeminarStatus, string> = {
@@ -22,13 +23,76 @@ const STATUS_STYLES: Record<SeminarStatus, string> = {
   cancelled: "bg-destructive/10 text-destructive",
 };
 
-export default function SeminarList({ seminars }: Props) {
+export default function SeminarList({ seminars, viewMode = "list" }: Props) {
   const router = useRouter();
 
   if (seminars.length === 0) {
     return (
       <div className="rounded-xl border bg-white p-12 text-center text-muted-foreground">
         세미나가 없습니다.
+      </div>
+    );
+  }
+
+  if (viewMode === "gallery") {
+    return (
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {seminars.map((seminar) => {
+          const computed = getComputedStatus(seminar);
+          const badge = { label: SEMINAR_STATUS_LABELS[computed], className: STATUS_STYLES[computed] };
+          return (
+            <Link
+              key={seminar.id}
+              href={`/seminars/${seminar.id}`}
+              className="flex flex-col rounded-xl border bg-white p-5 transition-colors hover:bg-muted/30"
+            >
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Badge className={cn("text-xs", badge.className)} variant="secondary">
+                  {badge.label}
+                </Badge>
+              </div>
+              <h3 className="mt-2 text-base font-semibold leading-snug line-clamp-2">
+                {seminar.title}
+              </h3>
+              <p className="mt-2 line-clamp-3 text-xs text-muted-foreground">
+                {seminar.description}
+              </p>
+              <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <Calendar size={12} />
+                  {seminar.date} {seminar.time}
+                </div>
+                <div className="flex items-center gap-1">
+                  <MapPin size={12} />
+                  {seminar.location}
+                </div>
+                <div className="flex items-center gap-1">
+                  <Users size={12} />
+                  {seminar.attendeeIds.length}
+                  {seminar.maxAttendees ? `/${seminar.maxAttendees}` : ""}명
+                </div>
+              </div>
+              <div className="mt-3 flex items-center justify-between border-t pt-3">
+                <span className="text-xs font-medium text-primary">발표: {seminar.speaker}</span>
+                {computed !== "cancelled" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      router.push(`/seminars/${seminar.id}/lms`);
+                    }}
+                  >
+                    <BookOpen size={12} />
+                    학습공간
+                  </Button>
+                )}
+              </div>
+            </Link>
+          );
+        })}
       </div>
     );
   }

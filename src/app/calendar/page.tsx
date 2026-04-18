@@ -149,14 +149,19 @@ export default function CalendarPage() {
   );
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-16">
-      <div className="flex items-center gap-3">
-        <Calendar size={28} className="text-primary" />
-        <h1 className="text-3xl font-bold">학술 캘린더</h1>
-      </div>
-      <p className="mt-2 text-muted-foreground">세미나, 프로젝트, 스터디, 대외활동 일정을 한눈에 확인하세요.</p>
+    <div className="py-16">
+      <div className="mx-auto max-w-4xl px-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Calendar size={24} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">학술 캘린더</h1>
+            <p className="text-sm text-muted-foreground">세미나, 프로젝트, 스터디, 대외활동 일정을 한눈에 확인하세요.</p>
+          </div>
+        </div>
 
-      {/* 필터 + 뷰 모드 */}
+        {/* 필터 + 뷰 모드 */}
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
           {FILTER_OPTIONS.map((opt) => (
@@ -359,6 +364,7 @@ export default function CalendarPage() {
             )}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
