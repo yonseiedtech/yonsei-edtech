@@ -482,5 +482,36 @@ service cloud.firestore {
       allow update: if isAuthenticated() && isStaffOrAbove();
       allow delete: if false;
     }
+
+    // ─── Course Offerings (Track 5: 학기별 개설 과목 마스터) ───
+    match /course_offerings/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isStaffOrAbove();
+    }
+
+    // ─── Guide Tracks (Track 6: 인지디딤판 트랙 카탈로그) ───
+    match /guide_tracks/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isStaffOrAbove();
+    }
+
+    // ─── Guide Items (Track 6: 가이드 항목 — published만 공개) ───
+    match /guide_items/{docId} {
+      allow read: if resource.data.published == true
+        || (isAuthenticated() && isStaffOrAbove());
+      allow write: if isAuthenticated() && isStaffOrAbove();
+    }
+
+    // ─── Guide Progress (Track 6: 회원 체크리스트 진행 상태) ───
+    match /guide_progress/{docId} {
+      allow read: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
+    }
   }
 }

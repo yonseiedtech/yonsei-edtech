@@ -122,6 +122,8 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
         { href: "/console/academic/projects", label: "프로젝트", icon: FolderKanban },
         { href: "/console/academic/studies", label: "스터디", icon: NotebookPen },
         { href: "/console/academic/external", label: "대외 학술대회", icon: Globe },
+        { href: "/console/courses", label: "수강과목 마스터", icon: BookOpen },
+        { href: "/console/steppingstone", label: "인지디딤판", icon: ClipboardList },
       ],
     },
     {

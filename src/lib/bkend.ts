@@ -41,6 +41,8 @@ import type {
   ProfileLike, ProfileView, StudySession,
   ActivityParticipation, Award, ExternalActivity, ContentCreation,
   AlumniThesis, ThesisReference, ThesisClaim,
+  CourseOffering, SemesterTerm,
+  GuideTrack, GuideItem, GuideProgress,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -844,4 +846,81 @@ export const thesisClaimsApi = {
     dataApi.create<ThesisClaim>("thesis_claims", data),
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<ThesisClaim>("thesis_claims", id, data),
+};
+
+// ── Track 5: 수강과목 마스터 (Phase 1) ──
+
+export const courseOfferingsApi = {
+  list: (params?: QueryParams) =>
+    dataApi.list<CourseOffering>("course_offerings", { limit: 1000, ...params }),
+  listBySemester: (year: number, term: SemesterTerm) =>
+    dataApi.list<CourseOffering>("course_offerings", {
+      "filter[year]": year,
+      "filter[term]": term,
+      limit: 500,
+    }),
+  get: (id: string) => dataApi.get<CourseOffering>("course_offerings", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<CourseOffering>("course_offerings", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<CourseOffering>("course_offerings", id, data),
+  delete: (id: string) => dataApi.delete("course_offerings", id),
+};
+
+// ── Track 6: 인지디딤판 (Phase 1) ──
+
+export const guideTracksApi = {
+  list: () =>
+    dataApi.list<GuideTrack>("guide_tracks", { sort: "order:asc", limit: 50 }),
+  listPublished: () =>
+    dataApi.list<GuideTrack>("guide_tracks", {
+      "filter[published]": "true",
+      sort: "order:asc",
+      limit: 50,
+    }),
+  get: (id: string) => dataApi.get<GuideTrack>("guide_tracks", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<GuideTrack>("guide_tracks", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<GuideTrack>("guide_tracks", id, data),
+  delete: (id: string) => dataApi.delete("guide_tracks", id),
+};
+
+export const guideItemsApi = {
+  listByTrack: (trackId: string) =>
+    dataApi.list<GuideItem>("guide_items", {
+      "filter[trackId]": trackId,
+      limit: 500,
+    }),
+  /** 트랙 내 published 항목만 (회원 뷰) — published 인덱스 필요 시 클라이언트 필터로 폴백 */
+  listPublishedByTrack: async (trackId: string) => {
+    const res = await dataApi.list<GuideItem>("guide_items", {
+      "filter[trackId]": trackId,
+      limit: 500,
+    });
+    return { ...res, data: res.data.filter((i) => i.published) };
+  },
+  get: (id: string) => dataApi.get<GuideItem>("guide_items", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<GuideItem>("guide_items", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<GuideItem>("guide_items", id, data),
+  delete: (id: string) => dataApi.delete("guide_items", id),
+};
+
+export const guideProgressApi = {
+  /** 사용자별 트랙 진행 상태 1건 (없으면 null) */
+  getByUserAndTrack: async (userId: string, trackId: string): Promise<GuideProgress | null> => {
+    const res = await dataApi.list<GuideProgress>("guide_progress", {
+      "filter[userId]": userId,
+      "filter[trackId]": trackId,
+      limit: 1,
+    });
+    return res.data[0] ?? null;
+  },
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<GuideProgress>("guide_progress", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<GuideProgress>("guide_progress", id, data),
+  delete: (id: string) => dataApi.delete("guide_progress", id),
 };
