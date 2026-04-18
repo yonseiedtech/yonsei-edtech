@@ -89,11 +89,22 @@
       "iterationCount": 0,
       "startedAt": "2026-04-12T00:00:00Z"
     },
-    "newsletter-pdf": {
-      "phase": "do",
+    "certificate-pdf-bulk-email": {
+      "phase": "plan",
       "matchRate": 0,
       "iterationCount": 0,
-      "startedAt": "2026-04-18T00:00:00Z"
+      "startedAt": "2026-04-18T19:35:00Z",
+      "notes": "Stage 3 P1 \ubb36\uc74c 1/4. \uae30\uc874 /api/certificates/pdf + /api/certificates/batch + Resend \uc7ac\uc0ac\uc6a9. \uc2e0\uaddc: /api/certificates/email + emailSent \ucd94\uc801 + \uc6b4\uc601\uc790 UI \ubc84\ud2bc."
+    },
+    "newsletter-pdf": {
+      "phase": "completed",
+      "matchRate": 88,
+      "iterationCount": 0,
+      "startedAt": "2026-04-18T00:00:00Z",
+      "completedAt": "2026-04-18T19:30:00Z",
+      "lastDeployedAt": "2026-04-18T19:20:00Z",
+      "lastCommit": "61be3f1",
+      "notes": "MVP deployed (PDF route + magazine view + Pretendard CDN). 88% match (>=85% production-ready threshold). Carry-over: TOC page numbers, mobile sticky index, font static migration."
     }
   }
 }

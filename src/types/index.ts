@@ -770,6 +770,10 @@ export interface Certificate { [key: string]: unknown;
   issuedBy: string;
   appointmentPosition?: string;
   appointmentTerm?: string;
+  // 이메일 발송 상태
+  emailSent?: string;        // ISO ts (성공)
+  emailFailedAt?: string;    // ISO ts (마지막 실패 시각)
+  emailError?: string;       // 실패 원인 메시지
 }
 
 // ── 실험실(Labs) ──

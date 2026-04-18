@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Award, Heart, Trash2, Eye, Printer, FileDown, Loader2, ListPlus, CheckSquare, Square, Link2, RefreshCw } from "lucide-react";
+import { Award, Heart, Trash2, Eye, Printer, FileDown, Loader2, ListPlus, CheckSquare, Square, Link2, RefreshCw, Mail, MailCheck, MailX, MailWarning } from "lucide-react";
 import { registrationsApi, certificatesApi, profilesApi } from "@/lib/bkend";
 import type { SeminarRegistration, User } from "@/types";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -146,6 +146,71 @@ export default function CertificatesPage() {
 
   const [linkingId, setLinkingId] = useState<string | null>(null);
   const [bulkSyncing, setBulkSyncing] = useState(false);
+
+  // ── 이메일 발송 state ──
+  const [emailingId, setEmailingId] = useState<string | null>(null);
+  const [bulkEmailing, setBulkEmailing] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  async function postEmail(body: Record<string, unknown>): Promise<{ sent: number; failed: number; skipped: number; total: number; results: Array<{ ok: boolean; recipientName: string; error?: string }> } | null> {
+    const token = await auth.currentUser?.getIdToken();
+    if (!token) { toast.error("로그인이 필요합니다."); return null; }
+    const res = await fetch("/api/certificates/email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      toast.error(data.error || "이메일 발송 실패");
+      return null;
+    }
+    return data;
+  }
+
+  async function handleSendOne(cert: Certificate, force = false) {
+    if (!cert.recipientEmail) { toast.error("수신자 이메일이 없습니다."); return; }
+    setEmailingId(cert.id);
+    try {
+      const data = await postEmail({ certificateIds: [cert.id], force });
+      if (!data) return;
+      if (data.sent > 0) toast.success(`${cert.recipientName}님께 발송되었습니다.`);
+      else if (data.skipped > 0) toast.info("이미 발송된 수료증입니다. (재발송하려면 재발송 옵션 사용)");
+      else if (data.failed > 0) toast.error(data.results[0]?.error || "발송 실패");
+      // refresh
+      window.setTimeout(() => window.location.reload(), 800);
+    } finally {
+      setEmailingId(null);
+    }
+  }
+
+  async function handleSendSelected() {
+    if (selected.size === 0) { toast.error("선택된 수료증이 없습니다."); return; }
+    if (!confirm(`선택된 ${selected.size}건에 이메일을 발송합니다. 진행하시겠습니까?`)) return;
+    setBulkEmailing(true);
+    try {
+      const ids = Array.from(selected);
+      const data = await postEmail({ certificateIds: ids });
+      if (!data) return;
+      const parts: string[] = [];
+      if (data.sent > 0) parts.push(`발송 ${data.sent}건`);
+      if (data.skipped > 0) parts.push(`이미 발송됨 ${data.skipped}건`);
+      if (data.failed > 0) parts.push(`실패 ${data.failed}건`);
+      toast.success(parts.join(" · ") || "처리 완료");
+      setSelected(new Set());
+      window.setTimeout(() => window.location.reload(), 1200);
+    } finally {
+      setBulkEmailing(false);
+    }
+  }
 
   function normalizeSid(s?: string): string {
     return (s ?? "").replace(/[\s-]/g, "").toLowerCase();
@@ -398,6 +463,12 @@ export default function CertificatesPage() {
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="수여자명..." className="w-48" />
         </div>
         <div className="ml-auto flex gap-2">
+          {selected.size > 0 && (
+            <Button size="sm" variant="outline" onClick={handleSendSelected} disabled={bulkEmailing}>
+              {bulkEmailing ? <Loader2 size={14} className="mr-1 animate-spin" /> : <Mail size={14} className="mr-1" />}
+              선택 {selected.size}건 이메일 발송
+            </Button>
+          )}
           <Button size="sm" variant="outline" onClick={handleBulkResync} disabled={bulkSyncing}>
             {bulkSyncing ? <Loader2 size={14} className="mr-1 animate-spin" /> : <RefreshCw size={14} className="mr-1" />}
             일괄 재동기화
@@ -425,17 +496,58 @@ export default function CertificatesPage() {
           <table className="w-full text-xs sm:text-sm">
             <thead>
               <tr className="border-b bg-gray-50 text-left">
+                <th className="px-2 py-2 font-medium sm:px-4 sm:py-3 w-8">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const allIds = filtered.map((c: Certificate) => c.id);
+                      const allSelected = allIds.length > 0 && allIds.every((id) => selected.has(id));
+                      if (allSelected) {
+                        setSelected((prev) => {
+                          const next = new Set(prev);
+                          allIds.forEach((id) => next.delete(id));
+                          return next;
+                        });
+                      } else {
+                        setSelected((prev) => {
+                          const next = new Set(prev);
+                          allIds.forEach((id) => next.add(id));
+                          return next;
+                        });
+                      }
+                    }}
+                    title="전체 선택/해제"
+                    className="flex items-center"
+                  >
+                    {filtered.length > 0 && filtered.every((c: Certificate) => selected.has(c.id))
+                      ? <CheckSquare size={14} className="text-primary" />
+                      : <Square size={14} className="text-muted-foreground" />}
+                  </button>
+                </th>
                 <th className="px-2 py-2 font-medium sm:px-4 sm:py-3">증서번호</th>
                 <th className="px-2 py-2 font-medium sm:px-4 sm:py-3">세미나명</th>
                 <th className="px-2 py-2 font-medium sm:px-4 sm:py-3">수여자</th>
                 <th className="px-2 py-2 font-medium sm:px-4 sm:py-3">유형</th>
                 <th className="px-2 py-2 font-medium sm:px-4 sm:py-3">발급일</th>
-                <th className="px-2 py-2 font-medium sm:px-4 sm:py-3 w-20"></th>
+                <th className="px-2 py-2 font-medium sm:px-4 sm:py-3">이메일</th>
+                <th className="px-2 py-2 font-medium sm:px-4 sm:py-3 w-28"></th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((c: Certificate) => (
                 <tr key={c.id} className="border-b last:border-b-0 hover:bg-gray-50">
+                  <td className="px-2 py-2 sm:px-4 sm:py-3">
+                    <button
+                      type="button"
+                      onClick={() => toggleSelect(c.id)}
+                      title="선택"
+                      className="flex items-center"
+                    >
+                      {selected.has(c.id)
+                        ? <CheckSquare size={14} className="text-primary" />
+                        : <Square size={14} className="text-muted-foreground" />}
+                    </button>
+                  </td>
                   <td className="px-2 py-2 font-mono sm:px-4 sm:py-3">{c.certificateNo || "-"}</td>
                   <td className="px-2 py-2 sm:px-4 sm:py-3 line-clamp-1">{c.seminarTitle}</td>
                   <td className="px-2 py-2 font-medium sm:px-4 sm:py-3">
@@ -458,10 +570,41 @@ export default function CertificatesPage() {
                     {c.issuedAt ? new Date(c.issuedAt).toLocaleDateString("ko-KR") : "-"}
                   </td>
                   <td className="px-2 py-2 sm:px-4 sm:py-3">
+                    {!c.recipientEmail ? (
+                      <Badge variant="secondary" className="bg-gray-100 text-[10px] text-gray-500" title="수신자 이메일 없음">
+                        <MailX size={10} className="mr-0.5" /> 이메일 없음
+                      </Badge>
+                    ) : c.emailSent ? (
+                      <Badge variant="secondary" className="bg-green-50 text-[10px] text-green-700" title={`발송: ${new Date(c.emailSent).toLocaleString("ko-KR")}`}>
+                        <MailCheck size={10} className="mr-0.5" /> 보냄
+                      </Badge>
+                    ) : c.emailFailedAt ? (
+                      <Badge variant="secondary" className="bg-red-50 text-[10px] text-red-700" title={c.emailError || "발송 실패"}>
+                        <MailWarning size={10} className="mr-0.5" /> 실패
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="bg-gray-100 text-[10px] text-gray-600">
+                        대기
+                      </Badge>
+                    )}
+                  </td>
+                  <td className="px-2 py-2 sm:px-4 sm:py-3">
                     <div className="flex gap-1">
                       <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setPreviewCert(c)} title="미리보기">
                         <Eye size={14} />
                       </Button>
+                      {c.recipientEmail && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 text-primary"
+                          onClick={() => handleSendOne(c, !!c.emailSent)}
+                          disabled={emailingId === c.id}
+                          title={c.emailSent ? "이메일 재발송" : "이메일 발송"}
+                        >
+                          {emailingId === c.id ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
+                        </Button>
+                      )}
                       {!c.recipientUserId && (c.recipientStudentId || c.recipientEmail || c.recipientName) && (
                         <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-primary" onClick={() => handleManualLink(c)} disabled={linkingId === c.id} title="수동 링크">
                           {linkingId === c.id ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />}
