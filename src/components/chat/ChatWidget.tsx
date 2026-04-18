@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect, lazy, Suspense } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { MessageCircle, Loader2, Pause, Play, Square, BookOpen, Pencil } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { useStudyTimerStore } from "@/features/research/study-timer/study-timer-store";
-import { useEndSession, useCreateManualSession } from "@/features/research/study-timer/useStudySessions";
+import { useEndSession } from "@/features/research/study-timer/useStudySessions";
 import { cn } from "@/lib/utils";
 
 const ChatPanel = lazy(() => import("./ChatPanel"));
@@ -49,29 +50,30 @@ export default function ChatWidget() {
   const restoredRef = useRef(false);
 
   // ───── Timer integration ─────
-  const {
-    active,
-    elapsed,
-    isPaused,
-    ghost,
-    pause,
-    resume,
-    stop,
-    tick,
-    restore,
-    acknowledgeGhost,
-    setStopHandler,
-  } = useStudyTimerStore();
-  const endSession = useEndSession();
-  const createManualSession = useCreateManualSession();
+  // 상태는 selector + shallow 비교로 안정 구독
+  const { active, elapsed, isPaused, ghost } = useStudyTimerStore(
+    useShallow((s) => ({ active: s.active, elapsed: s.elapsed, isPaused: s.isPaused, ghost: s.ghost })),
+  );
+  // 액션은 createStore에서 stable 참조 — 직접 select
+  const pause = useStudyTimerStore((s) => s.pause);
+  const resume = useStudyTimerStore((s) => s.resume);
+  const stop = useStudyTimerStore((s) => s.stop);
+  const tick = useStudyTimerStore((s) => s.tick);
+  const restore = useStudyTimerStore((s) => s.restore);
+  const acknowledgeGhost = useStudyTimerStore((s) => s.acknowledgeGhost);
+  const setStopHandler = useStudyTimerStore((s) => s.setStopHandler);
 
-  // 종료 핸들러 등록 (store → API)
+  const endSession = useEndSession();
+  const endSessionRef = useRef(endSession);
+  endSessionRef.current = endSession;
+
+  // 종료 핸들러 등록 (store → API). ref로 endSession을 우회해 dep 안정화
   useEffect(() => {
     setStopHandler((session) => {
-      endSession.mutate({ sessionId: session.id });
+      endSessionRef.current.mutate({ sessionId: session.id });
     });
     return () => setStopHandler(null);
-  }, [setStopHandler, endSession]);
+  }, [setStopHandler]);
 
   // 위치 복원
   useEffect(() => {
@@ -122,7 +124,7 @@ export default function ChatWidget() {
       onAutoClose: () => acknowledgeGhost(),
       duration: 8000,
     });
-  }, [ghost, acknowledgeGhost, createManualSession]);
+  }, [ghost, acknowledgeGhost]);
 
   // ───── Drag handlers ─────
   const onPointerDown = useCallback((e: React.PointerEvent) => {
