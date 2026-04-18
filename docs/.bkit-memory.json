@@ -90,11 +90,14 @@
       "startedAt": "2026-04-12T00:00:00Z"
     },
     "certificate-pdf-bulk-email": {
-      "phase": "plan",
-      "matchRate": 0,
+      "phase": "completed",
+      "matchRate": 96,
       "iterationCount": 0,
       "startedAt": "2026-04-18T19:35:00Z",
-      "notes": "Stage 3 P1 \ubb36\uc74c 1/4. \uae30\uc874 /api/certificates/pdf + /api/certificates/batch + Resend \uc7ac\uc0ac\uc6a9. \uc2e0\uaddc: /api/certificates/email + emailSent \ucd94\uc801 + \uc6b4\uc601\uc790 UI \ubc84\ud2bc."
+      "completedAt": "2026-04-18T19:55:00Z",
+      "lastDeployedAt": "2026-04-18T19:50:00Z",
+      "lastCommit": "603950c",
+      "notes": "Stage 3 P1 1/4 completed. 96% match, 0 real gaps. Reused Puppeteer /api/certificates/pdf + Resend. New: /api/certificates/email, buildCertificateHtml.ts, emailSent tracking, UI checkbox/badges/Mail buttons."
     },
     "newsletter-pdf": {
       "phase": "completed",
