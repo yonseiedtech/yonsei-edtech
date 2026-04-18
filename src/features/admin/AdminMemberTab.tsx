@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import {
   Search, RefreshCw, UserPlus, Clock, Users, UserCheck, XCircle,
   RotateCcw, Settings, Download, ShieldCheck, AlertTriangle, AlertCircle,
+  CheckSquare, Square,
 } from "lucide-react";
 import { evaluateSignup, partitionPending } from "@/lib/auth/approval-rules";
 import AdminEmptyState from "@/components/admin/AdminEmptyState";
@@ -118,6 +119,45 @@ export default function AdminMemberTab() {
 
   // 일괄 승인 처리
   const [bulkApproving, setBulkApproving] = useState(false);
+
+  // 수동 선택 일괄 승인
+  const [selectedPending, setSelectedPending] = useState<Set<string>>(new Set());
+  function togglePendingSelect(id: string) {
+    setSelectedPending((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+  async function handleApproveSelected() {
+    if (selectedPending.size === 0) return;
+    if (!confirm(`선택된 ${selectedPending.size}명을 일괄 승인하시겠습니까?`)) return;
+    setBulkApproving(true);
+    let ok = 0;
+    let fail = 0;
+    for (const id of selectedPending) {
+      const u = truePending.find((p) => p.id === id);
+      if (!u) continue;
+      try {
+        await profilesApi.approve(u.id);
+        await notifyMemberApproved(u.id, u.name);
+        ok += 1;
+      } catch {
+        fail += 1;
+      }
+    }
+    setBulkApproving(false);
+    setSelectedPending(new Set());
+    if (fail === 0) toast.success(`${ok}명 승인 완료`);
+    else toast.warning(`승인: ${ok}명 / 실패: ${fail}명`);
+    logAudit({
+      action: "회원 일괄 승인",
+      category: "role",
+      detail: `${ok}건 승인 (수동 선택${fail > 0 ? `, 실패 ${fail}건` : ""})`,
+      userId: user?.id ?? "",
+      userName: user?.name ?? "",
+    });
+  }
 
   // 자동 승인: 토글 ON + 자격 대기자 발생 시 자동 처리
   useEffect(() => {
@@ -526,21 +566,51 @@ export default function AdminMemberTab() {
             </div>
           ) : (
             <div>
-              <div className="mb-3 flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  {truePending.length}명 대기 중 — 자동 승인 가능{" "}
-                  <span className="font-semibold text-green-700">{qualifyingPending.length}명</span>
-                </p>
-                {canApprove && qualifyingPending.length > 0 && (
-                  <Button size="sm" onClick={handleBulkApprove} disabled={bulkApproving}>
-                    {bulkApproving ? (
-                      <div className="mr-1 h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    ) : (
-                      <ShieldCheck size={14} className="mr-1" />
-                    )}
-                    자동 승인 가능 {qualifyingPending.length}명 일괄 승인
-                  </Button>
-                )}
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-3">
+                  <p className="text-sm text-muted-foreground">
+                    {truePending.length}명 대기 중 — 자동 승인 가능{" "}
+                    <span className="font-semibold text-green-700">{qualifyingPending.length}명</span>
+                  </p>
+                  {canApprove && (
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                      onClick={() => {
+                        const allSelected = truePending.length > 0 && truePending.every((u) => selectedPending.has(u.id));
+                        if (allSelected) setSelectedPending(new Set());
+                        else setSelectedPending(new Set(truePending.map((u) => u.id)));
+                      }}
+                    >
+                      {truePending.length > 0 && truePending.every((u) => selectedPending.has(u.id))
+                        ? <CheckSquare size={14} className="text-primary" />
+                        : <Square size={14} />}
+                      전체 선택
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {canApprove && selectedPending.size > 0 && (
+                    <Button size="sm" variant="default" onClick={handleApproveSelected} disabled={bulkApproving}>
+                      {bulkApproving ? (
+                        <div className="mr-1 h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      ) : (
+                        <UserCheck size={14} className="mr-1" />
+                      )}
+                      선택 {selectedPending.size}명 승인
+                    </Button>
+                  )}
+                  {canApprove && qualifyingPending.length > 0 && (
+                    <Button size="sm" variant="outline" onClick={handleBulkApprove} disabled={bulkApproving}>
+                      {bulkApproving ? (
+                        <div className="mr-1 h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                      ) : (
+                        <ShieldCheck size={14} className="mr-1" />
+                      )}
+                      자동 승인 가능 {qualifyingPending.length}명 일괄 승인
+                    </Button>
+                  )}
+                </div>
               </div>
               <div className="space-y-2">
                 {truePending.map((u) => {
@@ -557,6 +627,19 @@ export default function AdminMemberTab() {
                     : "border-red-200 bg-red-50";
                   return (
                     <div key={u.id} className={cn("flex items-start justify-between rounded-xl border p-4", riskColor)}>
+                      {canApprove && (
+                        <button
+                          type="button"
+                          onClick={() => togglePendingSelect(u.id)}
+                          className="mr-3 mt-0.5 shrink-0"
+                          aria-label={selectedPending.has(u.id) ? "선택 해제" : "선택"}
+                          title={selectedPending.has(u.id) ? "선택 해제" : "일괄 승인 대상으로 선택"}
+                        >
+                          {selectedPending.has(u.id)
+                            ? <CheckSquare size={18} className="text-primary" />
+                            : <Square size={18} className="text-muted-foreground" />}
+                        </button>
+                      )}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           {riskIcon}

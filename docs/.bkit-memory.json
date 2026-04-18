@@ -99,6 +99,13 @@
       "lastCommit": "603950c",
       "notes": "Stage 3 P1 1/4 completed. 96% match, 0 real gaps. Reused Puppeteer /api/certificates/pdf + Resend. New: /api/certificates/email, buildCertificateHtml.ts, emailSent tracking, UI checkbox/badges/Mail buttons."
     },
+    "member-bulk-approval": {
+      "phase": "do",
+      "matchRate": 0,
+      "iterationCount": 0,
+      "startedAt": "2026-04-18T19:58:00Z",
+      "notes": "Stage 3 P1 2/4. 자동 승인/일괄 승인은 이미 구현됨 (qualifyingPending). gap: 수동 선택 체크박스 + '선택 N명 승인' 버튼만 추가."
+    },
     "newsletter-pdf": {
       "phase": "completed",
       "matchRate": 88,
