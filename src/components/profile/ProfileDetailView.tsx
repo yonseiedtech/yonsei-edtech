@@ -55,6 +55,8 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
   const owner = useMemo(() => (ownerRaw ? withGraduateDefaults(ownerRaw) : null), [ownerRaw]);
 
   const isOwner = !!viewer?.id && !!owner && viewer.id === owner.id;
+  const isStaff =
+    !!viewer && ["sysadmin", "admin", "president", "staff"].includes(viewer.role);
   const channel = via ?? (search.get("from") === "members" ? "members" : "direct");
 
   // view 로깅 (본인 제외)
@@ -156,10 +158,12 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
 
         {showAcademic && <ProfileOutputs owner={owner} />}
 
-        {showAcademic && <ProfileAwards owner={owner} />}
+        {showAcademic && (
+          <ProfileAwards owner={owner} verifiedOnly={!isOwner && !isStaff} />
+        )}
 
         {showAcademic && (
-          <ProfileExternalActivities owner={owner} verifiedOnly={!isOwner} />
+          <ProfileExternalActivities owner={owner} verifiedOnly={!isOwner && !isStaff} />
         )}
 
         {showAcademic && <ProfileContentCreations owner={owner} />}

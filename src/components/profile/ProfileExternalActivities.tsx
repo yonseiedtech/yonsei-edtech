@@ -5,7 +5,8 @@ import { externalActivitiesApi } from "@/lib/bkend";
 import { EXTERNAL_ACTIVITY_TYPE_LABELS } from "@/types";
 import type { ExternalActivity, User } from "@/types";
 import { Badge } from "@/components/ui/badge";
-import { Globe, ExternalLink, CheckCircle2, Clock } from "lucide-react";
+import { Globe, ExternalLink, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import PortfolioVerifyButtons from "./PortfolioVerifyButtons";
 
 interface Props {
   owner: User;
@@ -39,7 +40,7 @@ export default function ProfileExternalActivities({ owner, verifiedOnly = false 
       </h2>
       <ul className="mt-3 space-y-2">
         {sorted.map((x) => (
-          <li key={x.id} className="rounded-lg border bg-muted/10 p-3">
+          <li key={x.id} className="relative rounded-lg border bg-muted/10 p-3">
             <div className="flex flex-wrap items-center gap-2">
               {x.url ? (
                 <a
@@ -66,6 +67,11 @@ export default function ProfileExternalActivities({ owner, verifiedOnly = false 
               <Badge variant="secondary" className="text-[10px]">
                 {EXTERNAL_ACTIVITY_TYPE_LABELS[x.type]}
               </Badge>
+              <PortfolioVerifyButtons
+                kind="external_activities"
+                itemId={x.id}
+                ownerId={owner.id}
+              />
             </div>
             <p className="mt-0.5 text-xs text-muted-foreground">
               {x.organization && `${x.organization} · `}
@@ -79,6 +85,11 @@ export default function ProfileExternalActivities({ owner, verifiedOnly = false 
             <p className="mt-1.5 text-[10px] italic text-muted-foreground/80">
               {x.affiliation}
             </p>
+            {!x.verified && x.rejectionReason && (
+              <p className="mt-1.5 inline-flex items-center gap-1 rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-[10px] text-rose-700">
+                <AlertCircle size={10} /> 반려 사유: {x.rejectionReason}
+              </p>
+            )}
           </li>
         ))}
       </ul>

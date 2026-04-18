@@ -758,6 +758,12 @@ export const activityParticipationsApi = {
 export const awardsApi = {
   listByUser: (userId: string) =>
     dataApi.list<Award>("awards", { "filter[userId]": userId, limit: 200 }),
+  /** 운영진 검증 큐 */
+  listPending: () =>
+    dataApi.list<Award>("awards", {
+      "filter[verified]": "false",
+      limit: 200,
+    }),
   get: (id: string) => dataApi.get<Award>("awards", id),
   create: (data: Record<string, unknown>) => dataApi.create<Award>("awards", data),
   update: (id: string, data: Record<string, unknown>) => dataApi.update<Award>("awards", id, data),

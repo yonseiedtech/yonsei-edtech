@@ -6,12 +6,15 @@ import { AWARD_SCOPE_LABELS } from "@/types";
 import type { Award, User } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Award as AwardIcon, CheckCircle2, Clock } from "lucide-react";
+import PortfolioVerifyButtons from "./PortfolioVerifyButtons";
 
 interface Props {
   owner: User;
+  /** 비공개 모드 — 검증된 항목만 표시 (외부 시청자용 옵션) */
+  verifiedOnly?: boolean;
 }
 
-export default function ProfileAwards({ owner }: Props) {
+export default function ProfileAwards({ owner, verifiedOnly = false }: Props) {
   const { data: awards = [], isLoading } = useQuery({
     queryKey: ["profile-awards", owner.id],
     queryFn: async () => {
@@ -22,21 +25,22 @@ export default function ProfileAwards({ owner }: Props) {
   });
 
   if (isLoading) return null;
-  if (awards.length === 0) return null;
+  const visible = verifiedOnly ? awards.filter((a) => a.verified) : awards;
+  if (visible.length === 0) return null;
 
-  const sorted = [...awards].sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
+  const sorted = [...visible].sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
 
   return (
     <section className="rounded-2xl border bg-white p-5">
       <h2 className="flex items-center gap-1.5 text-sm font-semibold">
         <AwardIcon size={14} className="text-primary" />
-        수상 <span className="text-xs font-normal text-muted-foreground">({awards.length})</span>
+        수상 <span className="text-xs font-normal text-muted-foreground">({visible.length})</span>
       </h2>
       <ul className="mt-3 space-y-2">
         {sorted.map((a) => (
           <li
             key={a.id}
-            className="rounded-lg border bg-muted/10 p-3"
+            className="relative rounded-lg border bg-muted/10 p-3"
           >
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-sm font-medium">{a.title}</p>
@@ -52,6 +56,7 @@ export default function ProfileAwards({ owner }: Props) {
               <Badge variant="secondary" className="text-[10px]">
                 {AWARD_SCOPE_LABELS[a.scope]}
               </Badge>
+              <PortfolioVerifyButtons kind="awards" itemId={a.id} ownerId={owner.id} />
             </div>
             <p className="mt-0.5 text-xs text-muted-foreground">
               {a.organization} · {a.date}

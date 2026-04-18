@@ -3,6 +3,7 @@ import type { User } from "@/types";
 import { ROLE_LABELS } from "@/types";
 import ProfileLikeButton from "./ProfileLikeButton";
 import ProfileShareMenu from "./ProfileShareMenu";
+import ProfileCertificateDownloadButton from "./ProfileCertificateDownloadButton";
 
 interface Props {
   owner: User;
@@ -12,6 +13,8 @@ interface Props {
 
 export default function ProfileHeader({ owner, isOwner, viewer }: Props) {
   const showRoleBadge = owner.role !== "member" && owner.role !== "alumni";
+  const isStaff =
+    !!viewer && ["sysadmin", "admin", "president", "staff"].includes(viewer.role);
 
   return (
     <section className="rounded-2xl border bg-white p-6 shadow-sm">
@@ -45,11 +48,28 @@ export default function ProfileHeader({ owner, isOwner, viewer }: Props) {
               {[owner.affiliation, owner.department].filter(Boolean).join(" · ")}
             </p>
           )}
+          <p className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/5 px-2 py-0.5 text-[11px] font-medium text-primary">
+            학술 포트폴리오
+          </p>
 
           <div className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
             <ProfileLikeButton profileId={owner.id} isOwner={isOwner} />
-            {(isOwner || (viewer && ["sysadmin", "admin", "president", "staff"].includes(viewer.role))) && (
+            {(isOwner || isStaff) && (
               <ProfileShareMenu profileId={owner.id} name={owner.name} bio={owner.bio} />
+            )}
+            {/* 증명서 PDF: 본인+운영진은 본인판(미검증 포함), 그 외에는 공개판 */}
+            {(isOwner || isStaff) ? (
+              <ProfileCertificateDownloadButton
+                ownerId={owner.id}
+                ownerName={owner.name}
+                full
+              />
+            ) : (
+              <ProfileCertificateDownloadButton
+                ownerId={owner.id}
+                ownerName={owner.name}
+                full={false}
+              />
             )}
           </div>
         </div>
