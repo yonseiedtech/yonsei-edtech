@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { dataApi, profilesApi } from "@/lib/bkend";
+import { parseExcelFile, type SpreadsheetRow } from "@/lib/parse-spreadsheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +32,11 @@ import {
   ArrowDownCircle,
   Pencil,
   Trash2,
+  FileSpreadsheet,
+  Upload,
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -103,6 +109,13 @@ export default function FeesPage() {
 
   // 메모 다이얼로그
   const [memoDialog, setMemoDialog] = useState<{ paymentId: string; memo: string } | null>(null);
+
+  // 엑셀 대조 상태
+  const [reconcileExpanded, setReconcileExpanded] = useState(false);
+  const [reconcileFile, setReconcileFile] = useState<File | null>(null);
+  const [reconcileRows, setReconcileRows] = useState<SpreadsheetRow[] | null>(null);
+  const [reconcileLoading, setReconcileLoading] = useState(false);
+  const [reconcileBulk, setReconcileBulk] = useState(false);
 
   // 장부 상태
   const [showTxDialog, setShowTxDialog] = useState(false);
@@ -248,6 +261,111 @@ export default function FeesPage() {
       if (!m) continue;
       await payMutation.mutateAsync({ userId: uid, userName: m.name, studentId: m.studentId ?? "", status: "paid" });
     }
+  }
+
+  // 엑셀 대조 — 행 매칭
+  type ReconcileMatch = {
+    row: SpreadsheetRow;
+    matched: typeof approvedMembers[number] | null;
+    candidates: typeof approvedMembers;
+    status: "matched" | "ambiguous" | "not_found" | "already_paid";
+    amount?: number;
+  };
+
+  function matchRowToMember(row: SpreadsheetRow): ReconcileMatch {
+    const sid = (row["학번"] ?? "").trim();
+    const email = (row["이메일"] ?? "").trim().toLowerCase();
+    const name = (row["이름"] ?? "").trim();
+    const amountRaw = (row["금액"] ?? "").replace(/[^0-9.-]/g, "");
+    const amount = amountRaw ? Number(amountRaw) : undefined;
+
+    let matched: typeof approvedMembers[number] | null = null;
+    let candidates: typeof approvedMembers = [];
+
+    if (sid) {
+      candidates = approvedMembers.filter((m) => (m.studentId ?? "").trim() === sid);
+      if (candidates.length === 1) matched = candidates[0];
+    }
+    if (!matched && email) {
+      const byEmail = approvedMembers.filter((m) => (m.email ?? "").toLowerCase() === email);
+      if (byEmail.length === 1) matched = byEmail[0];
+      else if (byEmail.length > 1) candidates = byEmail;
+    }
+    if (!matched && name) {
+      const byName = approvedMembers.filter((m) => m.name === name);
+      if (byName.length === 1) matched = byName[0];
+      else if (byName.length > 1) candidates = byName;
+    }
+
+    if (matched) {
+      const existing = paymentMap.get(matched.id);
+      if (existing?.status === "paid") {
+        return { row, matched, candidates: [matched], status: "already_paid", amount };
+      }
+      return { row, matched, candidates: [matched], status: "matched", amount };
+    }
+    if (candidates.length > 1) {
+      return { row, matched: null, candidates, status: "ambiguous", amount };
+    }
+    return { row, matched: null, candidates: [], status: "not_found", amount };
+  }
+
+  const reconcileMatches: ReconcileMatch[] = reconcileRows
+    ? reconcileRows.map(matchRowToMember)
+    : [];
+
+  const reconcileStats = {
+    total: reconcileMatches.length,
+    matched: reconcileMatches.filter((m) => m.status === "matched").length,
+    alreadyPaid: reconcileMatches.filter((m) => m.status === "already_paid").length,
+    ambiguous: reconcileMatches.filter((m) => m.status === "ambiguous").length,
+    notFound: reconcileMatches.filter((m) => m.status === "not_found").length,
+  };
+
+  async function handleReconcileParse() {
+    if (!reconcileFile) { toast.error("파일을 선택하세요."); return; }
+    setReconcileLoading(true);
+    try {
+      const rows = await parseExcelFile(reconcileFile, ["이름", "학번", "이메일", "금액"]);
+      if (rows.length === 0) {
+        toast.error("파싱된 행이 없습니다. 헤더에 이름/학번/이메일/금액이 포함되어 있는지 확인하세요.");
+        setReconcileRows(null);
+      } else {
+        setReconcileRows(rows);
+        toast.success(`${rows.length}행 분석 완료`);
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("파일 파싱에 실패했습니다.");
+      setReconcileRows(null);
+    } finally {
+      setReconcileLoading(false);
+    }
+  }
+
+  async function handleReconcileApply() {
+    const ids = reconcileMatches
+      .filter((m) => m.status === "matched" && m.matched)
+      .map((m) => m.matched!.id);
+    if (ids.length === 0) { toast.error("일치하는 회원이 없습니다."); return; }
+    if (!confirm(`일치 ${ids.length}건을 일괄 납부 처리하시겠습니까?\n(이미 납부, 미등록, 동명이인 항목은 제외됩니다.)`)) return;
+    setReconcileBulk(true);
+    try {
+      await bulkMarkPaid(ids);
+      toast.success(`${ids.length}건 일괄 납부 처리 완료`);
+      setReconcileRows(null);
+      setReconcileFile(null);
+    } catch (e) {
+      console.error(e);
+      toast.error("일괄 처리 중 일부가 실패했습니다.");
+    } finally {
+      setReconcileBulk(false);
+    }
+  }
+
+  function handleReconcileReset() {
+    setReconcileRows(null);
+    setReconcileFile(null);
   }
 
   // 거래 추가/수정
@@ -428,6 +546,133 @@ export default function FeesPage() {
 
         <TabsContent value="payments" className="mt-4">
           <div className="space-y-3">
+          {/* 엑셀 대조 카드 */}
+          <div className="rounded-lg border bg-white">
+            <button
+              onClick={() => setReconcileExpanded((v) => !v)}
+              className="flex w-full items-center justify-between px-4 py-3 text-left"
+            >
+              <div className="flex items-center gap-2">
+                <FileSpreadsheet size={16} className="text-primary" />
+                <span className="text-sm font-semibold">엑셀로 회비 대조</span>
+                <span className="text-xs text-muted-foreground">
+                  은행/구글폼 엑셀을 업로드해 회원 명단과 자동 매칭하고 일괄 납부 처리
+                </span>
+              </div>
+              {reconcileExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
+            {reconcileExpanded && (
+              <div className="space-y-3 border-t px-4 py-3">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls,.csv"
+                    onChange={(e) => {
+                      setReconcileFile(e.target.files?.[0] ?? null);
+                      setReconcileRows(null);
+                    }}
+                    className="block text-xs file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-primary-foreground hover:file:bg-primary/90"
+                  />
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleReconcileParse} disabled={!reconcileFile || reconcileLoading}>
+                      {reconcileLoading ? <Loader2 size={14} className="mr-1 animate-spin" /> : <Upload size={14} className="mr-1" />}
+                      분석
+                    </Button>
+                    {reconcileRows && (
+                      <Button size="sm" variant="outline" onClick={handleReconcileReset}>
+                        <RefreshCw size={14} className="mr-1" />
+                        초기화
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-muted-foreground">
+                  헤더 예시: <code className="rounded bg-muted px-1">이름 | 학번 | 이메일 | 금액</code>{" "}
+                  · 매칭 우선순위: 학번 → 이메일 → 이름. 동명이인은 자동 매칭에서 제외됩니다.
+                </p>
+
+                {reconcileRows && (
+                  <>
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      <Badge variant="secondary">전체 {reconcileStats.total}</Badge>
+                      <Badge className="bg-green-100 text-green-700 hover:bg-green-100">일치 {reconcileStats.matched}</Badge>
+                      <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">이미 납부 {reconcileStats.alreadyPaid}</Badge>
+                      <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">동명이인 {reconcileStats.ambiguous}</Badge>
+                      <Badge className="bg-red-100 text-red-700 hover:bg-red-100">미등록 {reconcileStats.notFound}</Badge>
+                    </div>
+
+                    <div className="max-h-[360px] overflow-auto rounded-lg border">
+                      <table className="w-full text-xs">
+                        <thead className="sticky top-0 bg-muted/40">
+                          <tr className="text-left">
+                            <th className="px-2 py-1.5">이름</th>
+                            <th className="px-2 py-1.5">학번</th>
+                            <th className="px-2 py-1.5">이메일</th>
+                            <th className="px-2 py-1.5">금액</th>
+                            <th className="px-2 py-1.5">매칭</th>
+                            <th className="px-2 py-1.5">상태</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {reconcileMatches.map((rm, i) => (
+                            <tr key={i} className="border-t">
+                              <td className="px-2 py-1">{rm.row["이름"] || "-"}</td>
+                              <td className="px-2 py-1 text-muted-foreground">{rm.row["학번"] || "-"}</td>
+                              <td className="px-2 py-1 text-muted-foreground">{rm.row["이메일"] || "-"}</td>
+                              <td className="px-2 py-1 text-right tabular-nums">
+                                {rm.amount ? `${rm.amount.toLocaleString()}원` : "-"}
+                              </td>
+                              <td className="px-2 py-1">
+                                {rm.matched ? (
+                                  <span className="font-medium">{rm.matched.name}</span>
+                                ) : rm.candidates.length > 1 ? (
+                                  <span className="text-yellow-700">
+                                    {rm.candidates.map((c) => `${c.name}(${c.studentId ?? "-"})`).join(", ")}
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground">-</span>
+                                )}
+                              </td>
+                              <td className="px-2 py-1">
+                                {rm.status === "matched" && (
+                                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100">일치</Badge>
+                                )}
+                                {rm.status === "already_paid" && (
+                                  <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">이미 납부</Badge>
+                                )}
+                                {rm.status === "ambiguous" && (
+                                  <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">동명이인</Badge>
+                                )}
+                                {rm.status === "not_found" && (
+                                  <Badge className="bg-red-100 text-red-700 hover:bg-red-100">미등록</Badge>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        학회비 설정 금액({feeAmount > 0 ? `${feeAmount.toLocaleString()}원` : "미설정"})으로 처리됩니다.
+                      </span>
+                      <Button
+                        size="sm"
+                        onClick={handleReconcileApply}
+                        disabled={reconcileStats.matched === 0 || reconcileBulk || feeAmount === 0}
+                      >
+                        {reconcileBulk ? <Loader2 size={14} className="mr-1 animate-spin" /> : <Check size={14} className="mr-1" />}
+                        일치 {reconcileStats.matched}건 일괄 납부 처리
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* 필터/검색 바 */}
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex gap-1">

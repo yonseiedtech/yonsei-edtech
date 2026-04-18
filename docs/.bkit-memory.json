@@ -118,6 +118,12 @@
       "lastDeployedAt": "2026-04-18T19:20:00Z",
       "lastCommit": "61be3f1",
       "notes": "MVP deployed (PDF route + magazine view + Pretendard CDN). 88% match (>=85% production-ready threshold). Carry-over: TOC page numbers, mobile sticky index, font static migration."
+    },
+    "fees-excel-reconcile": {
+      "phase": "do",
+      "matchRate": 0,
+      "iterationCount": 0,
+      "startedAt": "2026-04-18T20:10:00Z"
     }
   }
 }
