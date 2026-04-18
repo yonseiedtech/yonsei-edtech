@@ -120,10 +120,14 @@
       "notes": "MVP deployed (PDF route + magazine view + Pretendard CDN). 88% match (>=85% production-ready threshold). Carry-over: TOC page numbers, mobile sticky index, font static migration."
     },
     "fees-excel-reconcile": {
-      "phase": "do",
-      "matchRate": 0,
+      "phase": "completed",
+      "matchRate": 97,
       "iterationCount": 0,
-      "startedAt": "2026-04-18T20:10:00Z"
+      "startedAt": "2026-04-18T20:10:00Z",
+      "completedAt": "2026-04-18T20:50:00Z",
+      "lastDeployedAt": "2026-04-18T20:48:00Z",
+      "lastCommit": "66f47b6",
+      "notes": "Stage 3 P1 3/4 completed. 97% match. 기존 parseExcelFile + bulkMarkPaid + paymentMap 재사용. 신규: 매칭 함수(학번→이메일→이름) + 접힘 카드 UI + 5종 카운트 배지 + 6열 결과표. 1주 추정 → 40분 (3연속 grep 선행 단축 검증)."
     }
   }
 }
