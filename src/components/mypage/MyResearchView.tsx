@@ -15,6 +15,8 @@ import ResearchReportPrint from "@/features/research/ResearchReportPrint";
 import ResearchReportEditor from "@/features/research/ResearchReportEditor";
 import ResearchProposalEditor from "@/features/research/ResearchProposalEditor";
 import StudyTimerStats from "@/features/research/study-timer/StudyTimerStats";
+import ManualSessionDialog from "@/features/research/study-timer/ManualSessionDialog";
+import { useStudySessions } from "@/features/research/study-timer/useStudySessions";
 import { useResearchPapers } from "@/features/research/useResearchPapers";
 import { useWritingPaper } from "@/features/research/useWritingPaper";
 import { useWritingPaperHistory } from "@/features/research/useWritingPaperHistory";
@@ -24,7 +26,9 @@ import type { User } from "@/types";
 import {
   BookOpen, FileText, BookOpenCheck, FileBarChart2,
   X, CalendarRange, Printer, FileEdit, ClipboardList,
+  Clock, Plus, Pencil,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { formatPeriodLabel } from "@/lib/research-period";
 import {
   currentSemesterRange,
@@ -41,12 +45,12 @@ interface Props {
   readOnly?: boolean;
 }
 
-type ResearchTab = "writing" | "reading" | "report";
+type ResearchTab = "writing" | "reading" | "report" | "timer";
 type WritingSubTab = "report" | "proposal" | "thesis";
 type WritingPeriodMode = "semester" | "1year" | "yearly" | "custom";
 
 function isResearchTab(v: string | null): v is ResearchTab {
-  return v === "writing" || v === "reading" || v === "report";
+  return v === "writing" || v === "reading" || v === "report" || v === "timer";
 }
 
 function isWritingSubTab(v: string | null): v is WritingSubTab {
@@ -82,6 +86,12 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
 
   // 연구 리포트 인쇄 섹션 토글
   const [showPrint, setShowPrint] = useState(false);
+
+  // 수동 세션 추가 다이얼로그
+  const [manualOpen, setManualOpen] = useState(false);
+
+  // 학습 세션 (연구 타이머) — 본인일 때만 의미 있음 (hook이 authStore 사용)
+  const { sessions: studySessions } = useStudySessions();
 
   const { data: fetchedUser } = useQuery({
     queryKey: ["mypage-user", userId],
@@ -238,6 +248,67 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
           직접 쓰는 논문과 분석한 논문을 한 곳에서 관리하세요.
         </p>
 
+        {/* ── 연구 현황 (탭 위 공유 섹션, 모든 탭에 노출) ── */}
+        <div className="space-y-4 mt-6 print-hide">
+          <h3 className="text-sm font-semibold text-foreground">연구 현황</h3>
+
+          {/* 기간 선택기 */}
+          <div className="rounded-2xl border bg-white p-4">
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                <CalendarRange size={12} />
+                기간 선택
+              </span>
+              <PeriodModeBtn label="학기" active={writingPeriodMode === "semester"} onClick={() => setWritingPeriodMode("semester")} />
+              <PeriodModeBtn label="1년" active={writingPeriodMode === "1year"} onClick={() => setWritingPeriodMode("1year")} />
+              {yearRanges.length > 0 && (
+                <PeriodModeBtn label="연간" active={writingPeriodMode === "yearly"} onClick={() => setWritingPeriodMode("yearly")} />
+              )}
+              <PeriodModeBtn label="직접 설정" active={writingPeriodMode === "custom"} onClick={() => setWritingPeriodMode("custom")} />
+            </div>
+
+            {writingPeriodMode === "semester" && (
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => navigateSemester(-1)} className="rounded-md border px-2 py-1 text-xs hover:bg-muted">◀</button>
+                <span className="text-sm font-medium">{writingPeriod.label}</span>
+                <button type="button" onClick={() => navigateSemester(1)} className="rounded-md border px-2 py-1 text-xs hover:bg-muted">▶</button>
+              </div>
+            )}
+
+            {writingPeriodMode === "1year" && (
+              <p className="text-sm font-medium">{oneYearRange.label}</p>
+            )}
+
+            {writingPeriodMode === "yearly" && yearRanges.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {yearRanges.map((r, i) => (
+                  <QuickBtn
+                    key={r.from}
+                    label={r.label.split(" ")[0]}
+                    onClick={() => setYearIdx(i)}
+                    active={yearIdx === i}
+                  />
+                ))}
+              </div>
+            )}
+
+            {writingPeriodMode === "custom" && (
+              <div className="flex flex-wrap items-end gap-3">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-muted-foreground">시작</label>
+                  <Input type="month" value={customStart} onChange={(e) => setCustomStart(e.target.value)} className="w-40" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-muted-foreground">종료</label>
+                  <Input type="month" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} className="w-40" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <WritingHeatmap history={filteredHistory} />
+        </div>
+
         <Tabs value={activeTab} onValueChange={handleTabChange} className="mt-6 print-hide">
           <TabsList variant="line" className="w-full justify-start gap-2 border-b">
             <TabsTrigger value="writing" className="flex-none">
@@ -249,73 +320,13 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
             <TabsTrigger value="report" className="flex-none">
               <FileBarChart2 size={14} />연구 리포트
             </TabsTrigger>
+            <TabsTrigger value="timer" className="flex-none">
+              <Clock size={14} />연구 타이머
+            </TabsTrigger>
           </TabsList>
 
           {/* ── 내 논문 작성 ── */}
           <TabsContent value="writing" className="mt-5">
-            {/* ── 연구 현황 (공유 섹션) ── */}
-            <div className="space-y-4 mb-8">
-              <h3 className="text-sm font-semibold text-foreground">연구 현황</h3>
-
-              {/* 기간 선택기 */}
-              <div className="rounded-2xl border bg-white p-4">
-                <div className="flex flex-wrap items-center gap-2 mb-3">
-                  <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                    <CalendarRange size={12} />
-                    기간 선택
-                  </span>
-                  <PeriodModeBtn label="학기" active={writingPeriodMode === "semester"} onClick={() => setWritingPeriodMode("semester")} />
-                  <PeriodModeBtn label="1년" active={writingPeriodMode === "1year"} onClick={() => setWritingPeriodMode("1year")} />
-                  {yearRanges.length > 0 && (
-                    <PeriodModeBtn label="연간" active={writingPeriodMode === "yearly"} onClick={() => setWritingPeriodMode("yearly")} />
-                  )}
-                  <PeriodModeBtn label="직접 설정" active={writingPeriodMode === "custom"} onClick={() => setWritingPeriodMode("custom")} />
-                </div>
-
-                {writingPeriodMode === "semester" && (
-                  <div className="flex items-center gap-2">
-                    <button type="button" onClick={() => navigateSemester(-1)} className="rounded-md border px-2 py-1 text-xs hover:bg-muted">◀</button>
-                    <span className="text-sm font-medium">{writingPeriod.label}</span>
-                    <button type="button" onClick={() => navigateSemester(1)} className="rounded-md border px-2 py-1 text-xs hover:bg-muted">▶</button>
-                  </div>
-                )}
-
-                {writingPeriodMode === "1year" && (
-                  <p className="text-sm font-medium">{oneYearRange.label}</p>
-                )}
-
-                {writingPeriodMode === "yearly" && yearRanges.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {yearRanges.map((r, i) => (
-                      <QuickBtn
-                        key={r.from}
-                        label={r.label.split(" ")[0]}
-                        onClick={() => setYearIdx(i)}
-                        active={yearIdx === i}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                {writingPeriodMode === "custom" && (
-                  <div className="flex flex-wrap items-end gap-3">
-                    <div>
-                      <label className="mb-1 block text-xs font-medium text-muted-foreground">시작</label>
-                      <Input type="month" value={customStart} onChange={(e) => setCustomStart(e.target.value)} className="w-40" />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-xs font-medium text-muted-foreground">종료</label>
-                      <Input type="month" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} className="w-40" />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <WritingHeatmap history={filteredHistory} />
-              <WritingHistoryList history={filteredHistory} />
-              {isSelf && <StudyTimerStats />}
-            </div>
-
             {/* 서브탭 */}
             <div className="inline-flex rounded-lg border bg-white p-1 gap-1 mb-5">
               <SubTabBtn
@@ -437,7 +448,95 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
               )}
             </div>
           </TabsContent>
+
+          {/* ── 연구 타이머 ── */}
+          <TabsContent value="timer" className="mt-5">
+            {isSelf ? (
+              <div className="space-y-6">
+                <StudyTimerStats />
+
+                <div className="rounded-2xl border bg-white p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                        <Pencil size={14} />
+                        수동 세션 추가
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        타이머를 켜지 않고 했던 연구·읽기 시간을 직접 입력하세요.
+                      </p>
+                    </div>
+                    <Button size="sm" onClick={() => setManualOpen(true)}>
+                      <Plus size={14} className="mr-1" />
+                      추가
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border bg-white p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-3">최근 세션</h3>
+                  {studySessions.length === 0 ? (
+                    <p className="text-xs text-muted-foreground py-6 text-center">
+                      아직 기록된 세션이 없습니다. 수동 추가 또는 논문 화면에서 타이머를 시작해보세요.
+                    </p>
+                  ) : (
+                    <ul className="divide-y divide-border">
+                      {studySessions.slice(0, 20).map((s) => {
+                        const date = s.startTime?.slice(0, 10) ?? "";
+                        const start = s.startTime?.slice(11, 16) ?? "";
+                        const end = s.endTime?.slice(11, 16) ?? "";
+                        const minutes = s.durationMinutes ?? 0;
+                        return (
+                          <li key={s.id} className="flex items-center justify-between py-2">
+                            <div className="min-w-0">
+                              <p className="text-sm truncate">
+                                <span className={`mr-2 inline-block rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                                  s.type === "writing"
+                                    ? "bg-blue-50 text-blue-600"
+                                    : "bg-emerald-50 text-emerald-600"
+                                }`}>
+                                  {s.type === "writing" ? "작성" : "읽기"}
+                                </span>
+                                <span className="text-foreground">{s.targetTitle || "(제목 없음)"}</span>
+                              </p>
+                              <p className="text-[11px] text-muted-foreground">
+                                {date} · {start}~{end}
+                                {s.source === "manual" && (
+                                  <span className="ml-1 text-amber-600">· 수동</span>
+                                )}
+                              </p>
+                            </div>
+                            <span className="text-xs font-medium text-muted-foreground shrink-0 ml-3">
+                              {minutes < 60
+                                ? `${Math.round(minutes)}분`
+                                : `${(minutes / 60).toFixed(1)}h`}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground py-12 text-center">
+                연구 타이머는 본인만 확인할 수 있습니다.
+              </p>
+            )}
+          </TabsContent>
         </Tabs>
+
+        {/* ── 작성 이력 (페이지 하단 공통 영역) ── */}
+        <div className="mt-8 print-hide">
+          <WritingHistoryList history={filteredHistory} />
+        </div>
+
+        {isSelf && (
+          <ManualSessionDialog
+            open={manualOpen}
+            onClose={() => setManualOpen(false)}
+          />
+        )}
       </div>
     </div>
   );

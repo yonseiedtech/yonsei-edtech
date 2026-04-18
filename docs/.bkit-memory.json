@@ -136,6 +136,23 @@
       "startedAt": "2026-04-18T20:55:00Z",
       "completedAt": "2026-04-18T21:35:00Z",
       "notes": "Stage 3 P1 4/4 completed. 95% match. 기수 인쇄 리포트 + 마크다운 툴바. Bonus: firestore.rules 보강(research_proposals/study_sessions) + StudyTimerStats 위젯 추가. 1주 추정 → 35분."
+    },
+    "console-ui-unify-v2": {
+      "phase": "completed",
+      "matchRate": 96,
+      "iterationCount": 0,
+      "startedAt": "2026-04-18T21:40:00Z",
+      "completedAt": "2026-04-18T22:05:00Z",
+      "lastCommit": "4d9d76f",
+      "notes": "Console UI 공통 컴포넌트 적용률 22% → 100%. 8개 *Tab.tsx + 4개 admin 페이지에 ConsolePageHeader 일괄 주입. AdminTodoTab 빈상태 1건 AdminEmptyState 교체. 1.5일 추정 → 30분 (executor 1콜)."
+    },
+    "research-timer-tab": {
+      "phase": "completed",
+      "matchRate": 95,
+      "iterationCount": 0,
+      "startedAt": "2026-04-18T22:10:00Z",
+      "completedAt": "2026-04-18T22:30:00Z",
+      "notes": "MyResearchView 재구성: (1) 연구 현황(period selector + WritingHeatmap)을 탭 위로 lift하여 모든 탭에서 항상 노출, (2) 4번째 '연구 타이머' 탭 신규(StudyTimerStats + 수동 세션 추가 + 최근 세션 20개 리스트), (3) 작성 이력(WritingHistoryList)을 페이지 하단으로 이동. 사용자 직접 지적 3건 한 사이클에 통합."
     }
   }
 }
