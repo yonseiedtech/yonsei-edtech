@@ -88,6 +88,12 @@
       "matchRate": 0,
       "iterationCount": 0,
       "startedAt": "2026-04-12T00:00:00Z"
+    },
+    "newsletter-pdf": {
+      "phase": "do",
+      "matchRate": 0,
+      "iterationCount": 0,
+      "startedAt": "2026-04-18T00:00:00Z"
     }
   }
 }

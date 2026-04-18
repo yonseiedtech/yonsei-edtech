@@ -10,7 +10,7 @@ import {
   AUTHOR_TYPE_STYLES,
 } from "@/features/newsletter/newsletter-store";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, BookOpen, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 
@@ -45,13 +45,33 @@ export default function NewsletterDetailPage({
   return (
     <div className="py-16">
       <div className="mx-auto max-w-5xl px-4">
-        <Link
-          href="/newsletter"
-          className="mb-6 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft size={16} />
-          목록으로
-        </Link>
+        <div className="mb-6 flex items-center justify-between">
+          <Link
+            href="/newsletter"
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft size={16} />
+            목록으로
+          </Link>
+          {issue.status === "published" && (
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/newsletter/${issue.id}/magazine`}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+              >
+                <BookOpen size={14} />
+                매거진으로 보기
+              </Link>
+              <a
+                href={`/api/newsletter/${issue.id}/pdf`}
+                className="inline-flex items-center gap-1.5 rounded-lg border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+              >
+                <Download size={14} />
+                PDF 다운로드
+              </a>
+            </div>
+          )}
+        </div>
 
         {/* 표지 */}
         <div className="relative h-48 w-full overflow-hidden rounded-2xl sm:h-64">
