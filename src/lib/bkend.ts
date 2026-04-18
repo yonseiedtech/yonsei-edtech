@@ -43,6 +43,7 @@ import type {
   AlumniThesis, ThesisReference, ThesisClaim,
   CourseOffering, SemesterTerm,
   GuideTrack, GuideItem, GuideProgress,
+  HostRetrospective, HostActivityType,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -923,4 +924,43 @@ export const guideProgressApi = {
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<GuideProgress>("guide_progress", id, data),
   delete: (id: string) => dataApi.delete("guide_progress", id),
+};
+
+// ── Track 7 F6: Host Retrospectives ──
+export const hostRetrospectivesApi = {
+  listByActivity: (activityType: HostActivityType, activityId: string) =>
+    dataApi.list<HostRetrospective>("host_retrospectives", {
+      "filter[activityType]": activityType,
+      "filter[activityId]": activityId,
+      sort: "createdAt:desc",
+    }),
+  listByHost: (hostUserId: string) =>
+    dataApi.list<HostRetrospective>("host_retrospectives", {
+      "filter[hostUserId]": hostUserId,
+      sort: "createdAt:desc",
+    }),
+  listForOverview: (limit = 30) =>
+    dataApi.list<HostRetrospective>("host_retrospectives", {
+      "filter[status]": "published",
+      sort: "createdAt:desc",
+      limit,
+    }),
+  getMine: async (
+    activityType: HostActivityType,
+    activityId: string,
+    hostUserId: string,
+  ): Promise<HostRetrospective | null> => {
+    const res = await dataApi.list<HostRetrospective>("host_retrospectives", {
+      "filter[activityType]": activityType,
+      "filter[activityId]": activityId,
+      "filter[hostUserId]": hostUserId,
+      limit: 1,
+    });
+    return res.data[0] ?? null;
+  },
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<HostRetrospective>("host_retrospectives", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<HostRetrospective>("host_retrospectives", id, data),
+  delete: (id: string) => dataApi.delete("host_retrospectives", id),
 };

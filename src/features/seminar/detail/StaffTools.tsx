@@ -8,6 +8,7 @@ import {
   Sparkles,
   Instagram,
   Mail,
+  Mic,
 } from "lucide-react";
 import type { SeminarStatus } from "@/types";
 
@@ -35,6 +36,15 @@ export default function StaffTools({
         운영진 도구
       </h2>
       <div className="flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          variant="default"
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+          onClick={() => router.push(`/seminars/${seminarId}/host`)}
+        >
+          <Mic size={16} className="mr-1" />
+          연사 대시보드
+        </Button>
         {computedStatus === "upcoming" && (
           <Button
             size="sm"

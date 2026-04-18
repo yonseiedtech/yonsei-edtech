@@ -513,5 +513,20 @@ service cloud.firestore {
       allow delete: if isAuthenticated()
         && (resource.data.userId == request.auth.uid || isStaffOrAbove());
     }
+
+    // ─── Host Retrospectives (Track 7 F6: 호스트 회고) ───
+    // 작성/수정/삭제: 호스트 본인만
+    // 열람: 호스트 본인 + 운영진(published만)
+    match /host_retrospectives/{docId} {
+      allow read: if isAuthenticated()
+        && (resource.data.hostUserId == request.auth.uid
+            || (resource.data.status == 'published' && isStaffOrAbove()));
+      allow create: if isAuthenticated()
+        && request.resource.data.hostUserId == request.auth.uid;
+      allow update: if isAuthenticated()
+        && resource.data.hostUserId == request.auth.uid;
+      allow delete: if isAuthenticated()
+        && resource.data.hostUserId == request.auth.uid;
+    }
   }
 }

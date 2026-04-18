@@ -664,11 +664,45 @@ export interface Seminar {
   };
   speakerReviewToken?: string;
   cancelReason?: string;
+  /** Track 7: 연사로 지정된 회원 id (호스트 대시보드 접근 권한) */
+  hostUserIds?: string[];
   status: "draft" | "upcoming" | "ongoing" | "completed" | "cancelled";
   createdBy: string;
   createdAt: string;
   updatedAt: string;
 }
+
+// ── Track 7 F6: 호스트 회고 (Retrospective) ──
+export type HostActivityType = "seminar" | "study" | "project" | "external";
+
+export interface HostRetrospective {
+  id: string;
+  activityType: HostActivityType;
+  activityId: string;
+  hostUserId: string;
+  hostUserName?: string;
+  /** 좋았던 점 (Markdown) */
+  liked: string;
+  /** 아쉬웠던 점 */
+  lacked: string;
+  /** 보완·발전시킬 사항 */
+  longedFor: string;
+  rating?: number;
+  followUpTags?: string[];
+  attachments?: string[];
+  status: "draft" | "published";
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const HOST_RETROSPECTIVE_TAG_SUGGESTIONS = [
+  "재초청",
+  "커리큘럼개편",
+  "장소변경",
+  "예산증액",
+  "홍보강화",
+  "운영매뉴얼보강",
+] as const;
 
 // ── 신청 폼 필드 설정 ──
 export interface RegistrationFieldConfig {
