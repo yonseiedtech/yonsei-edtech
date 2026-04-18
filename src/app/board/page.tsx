@@ -18,30 +18,32 @@ export default function BoardPage() {
   return (
     <div className="py-16">
       <div className="mx-auto max-w-4xl px-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <LayoutList size={24} className="text-primary" />
-            <h1 className="text-3xl font-bold">전체 게시글</h1>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <LayoutList size={24} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">전체 게시글</h1>
+              <p className="text-sm text-muted-foreground">모든 게시판의 최신 글을 한눈에 확인하세요.</p>
+            </div>
           </div>
           {user ? (
             <Link href="/board/write">
-              <Button size="sm">
+              <Button size="sm" className="w-full shrink-0 sm:w-auto">
                 <PenSquare size={16} className="mr-1" />
                 글쓰기
               </Button>
             </Link>
           ) : (
             <Link href="/login">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="w-full shrink-0 sm:w-auto">
                 <LogIn size={16} className="mr-1" />
                 로그인 후 글 작성
               </Button>
             </Link>
           )}
         </div>
-        <p className="mt-2 text-muted-foreground">
-          모든 게시판의 최신 글을 한눈에 확인하세요.
-        </p>
 
         <div className="mt-4 relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />

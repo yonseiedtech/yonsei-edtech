@@ -31,28 +31,32 @@ export default function CategoryBoardPage({ category, title, description, icon, 
   return (
     <div className="py-16">
       <div className="mx-auto max-w-4xl px-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {icon}
-            <h1 className="text-3xl font-bold">{title}</h1>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              {icon}
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">{title}</h1>
+              <p className="text-sm text-muted-foreground">{description}</p>
+            </div>
           </div>
           {canWrite ? (
             <Link href={`/board/write?category=${category}`}>
-              <Button size="sm">
+              <Button size="sm" className="w-full shrink-0 sm:w-auto">
                 <PenSquare size={16} className="mr-1" />
                 글쓰기
               </Button>
             </Link>
           ) : user ? null : (
             <Link href="/login">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="w-full shrink-0 sm:w-auto">
                 <LogIn size={16} className="mr-1" />
                 로그인 후 글 작성
               </Button>
             </Link>
           )}
         </div>
-        <p className="mt-2 text-muted-foreground">{description}</p>
 
         <div className="mt-4 relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />

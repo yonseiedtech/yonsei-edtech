@@ -7,7 +7,7 @@ import { seminarsApi, activitiesApi } from "@/lib/bkend";
 import { getComputedStatus } from "@/lib/seminar-utils";
 import type { Seminar, Activity } from "@/types";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, Calendar, MapPin, Clock, Users, BookOpen, Presentation, FlaskConical, Globe } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, MapPin, Clock, Users, BookOpen, Presentation, Globe } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
@@ -38,6 +38,10 @@ const FILTER_OPTIONS: { value: CalendarEvent["type"] | "all"; label: string }[] 
   { value: "study", label: "스터디" },
   { value: "external", label: "대외활동" },
 ];
+
+function toDateStr(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 
 export default function CalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(() => {
@@ -116,11 +120,21 @@ export default function CalendarPage() {
 
     const eventsByDate = new Map<string, CalendarEvent[]>();
     for (const e of filteredEvents) {
-      const d = e.date;
-      const [ey, em] = d.split("-").map(Number);
-      if (ey === year && em === month + 1) {
-        if (!eventsByDate.has(d)) eventsByDate.set(d, []);
-        eventsByDate.get(d)!.push(e);
+      const startStr = e.date;
+      const endStr = e.endDate ?? e.date;
+      // 시작/종료 사이 모든 날짜를 enumerate
+      const [sy, sm, sd] = startStr.split("-").map(Number);
+      const [ey, em, ed] = endStr.split("-").map(Number);
+      const start = new Date(sy, sm - 1, sd);
+      const end = new Date(ey, em - 1, ed);
+      const cursor = new Date(start);
+      while (cursor <= end) {
+        if (cursor.getFullYear() === year && cursor.getMonth() === month) {
+          const ds = toDateStr(cursor);
+          if (!eventsByDate.has(ds)) eventsByDate.set(ds, []);
+          eventsByDate.get(ds)!.push(e);
+        }
+        cursor.setDate(cursor.getDate() + 1);
       }
     }
 
@@ -128,7 +142,7 @@ export default function CalendarPage() {
   }, [year, month, filteredEvents]);
 
   const today = new Date();
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const todayStr = toDateStr(today);
 
   const selectedEvents = selectedDate ? eventsByDate.get(selectedDate) ?? [] : [];
 
@@ -136,15 +150,24 @@ export default function CalendarPage() {
     return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
   }
 
-  // 리스트 뷰용: 이번 달 이벤트
+  // 리스트 뷰용: 이번 달 이벤트 (시작일 기준)
   const monthEvents = useMemo(() => {
     const monthStr = `${year}-${String(month + 1).padStart(2, "0")}`;
     return filteredEvents.filter((e) => e.date.startsWith(monthStr));
   }, [filteredEvents, year, month]);
 
-  // 다가오는 이벤트 (오늘 이후)
+  // 진행중인 학술활동: 오늘이 시작-종료 범위 내인 이벤트(세미나는 status === "ongoing")
+  const ongoingEvents = useMemo(() => {
+    return filteredEvents.filter((e) => {
+      if (e.type === "seminar") return e.status === "ongoing";
+      const end = e.endDate ?? e.date;
+      return e.date <= todayStr && todayStr <= end;
+    });
+  }, [filteredEvents, todayStr]);
+
+  // 다가오는 일정: 오늘 이후 시작
   const upcomingEvents = useMemo(
-    () => filteredEvents.filter((e) => e.date >= todayStr).slice(0, 5),
+    () => filteredEvents.filter((e) => e.date > todayStr).slice(0, 8),
     [filteredEvents, todayStr],
   );
 
@@ -162,48 +185,62 @@ export default function CalendarPage() {
         </div>
 
         {/* 필터 + 뷰 모드 */}
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
-          {FILTER_OPTIONS.map((opt) => (
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap gap-2">
+            {FILTER_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setFilter(opt.value)}
+                className={cn(
+                  "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                  filter === opt.value
+                    ? "bg-primary text-white"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80",
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-1 rounded-lg border p-0.5">
             <button
-              key={opt.value}
-              onClick={() => setFilter(opt.value)}
+              onClick={() => setViewMode("month")}
               className={cn(
-                "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                filter === opt.value
-                  ? "bg-primary text-white"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80",
+                "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                viewMode === "month" ? "bg-primary text-white" : "text-muted-foreground hover:bg-muted",
               )}
             >
-              {opt.label}
+              월간
             </button>
-          ))}
+            <button
+              onClick={() => setViewMode("list")}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                viewMode === "list" ? "bg-primary text-white" : "text-muted-foreground hover:bg-muted",
+              )}
+            >
+              목록
+            </button>
+          </div>
         </div>
-        <div className="flex gap-1 rounded-lg border p-0.5">
-          <button
-            onClick={() => setViewMode("month")}
-            className={cn(
-              "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-              viewMode === "month" ? "bg-primary text-white" : "text-muted-foreground hover:bg-muted",
-            )}
-          >
-            월간
-          </button>
-          <button
-            onClick={() => setViewMode("list")}
-            className={cn(
-              "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-              viewMode === "list" ? "bg-primary text-white" : "text-muted-foreground hover:bg-muted",
-            )}
-          >
-            목록
-          </button>
-        </div>
-      </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_300px]">
-        {/* 메인 영역 */}
-        <div className="rounded-xl border bg-white p-4 sm:p-6">
+        {/* 범례 (가로, 우측정렬) */}
+        <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
+          {Object.entries(TYPE_CONFIG).map(([key, config]) => {
+            const Icon = config.icon;
+            return (
+              <div key={key} className="flex items-center gap-1.5">
+                <div className={cn("flex h-5 w-5 items-center justify-center rounded text-[10px]", config.color)}>
+                  <Icon size={12} />
+                </div>
+                <span className="text-xs text-muted-foreground">{config.label}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* 캘린더 본체 */}
+        <div className="mt-3 rounded-xl border bg-white p-4 sm:p-6">
           {/* 월 네비게이션 */}
           <div className="flex items-center justify-between">
             <button
@@ -240,6 +277,7 @@ export default function CalendarPage() {
                   const dayEvents = eventsByDate.get(dateStr) ?? [];
                   const isToday = dateStr === todayStr;
                   const isSelected = dateStr === selectedDate;
+                  const dayOfWeek = i % 7;
 
                   return (
                     <button
@@ -261,12 +299,26 @@ export default function CalendarPage() {
                       <div className="mt-0.5 space-y-0.5">
                         {dayEvents.slice(0, 3).map((e) => {
                           const config = TYPE_CONFIG[e.type];
+                          const isMulti = !!e.endDate && e.endDate !== e.date;
+                          const isStart = dateStr === e.date;
+                          const isEnd = dateStr === (e.endDate ?? e.date);
+                          // 다중일자 이벤트 — 시작일 또는 주의 첫째 날(일요일)에만 제목 표시
+                          const showTitle = !isMulti || isStart || dayOfWeek === 0;
                           return (
                             <div
                               key={e.id}
-                              className={cn("truncate rounded px-1 py-0.5 text-[10px] font-medium", config.color)}
+                              className={cn(
+                                "truncate px-1 py-0.5 text-[10px] font-medium",
+                                config.color,
+                                isMulti
+                                  ? cn(
+                                      isStart || dayOfWeek === 0 ? "rounded-l" : "",
+                                      isEnd || dayOfWeek === 6 ? "rounded-r" : "",
+                                    )
+                                  : "rounded",
+                              )}
                             >
-                              {e.title}
+                              {showTitle ? e.title : "\u00A0"}
                             </div>
                           );
                         })}
@@ -301,70 +353,34 @@ export default function CalendarPage() {
           )}
         </div>
 
-        {/* 사이드바 */}
-        <div className="space-y-4">
-          {/* 오늘 바로가기 */}
-          <button
-            onClick={() => {
-              setCurrentMonth(new Date(today.getFullYear(), today.getMonth(), 1));
-              setSelectedDate(todayStr);
-            }}
-            className="w-full rounded-xl border bg-white p-4 text-left transition-colors hover:bg-muted/20"
-          >
-            <div className="text-xs font-medium text-muted-foreground">오늘</div>
-            <div className="text-lg font-bold">
-              {today.getMonth() + 1}월 {today.getDate()}일 ({WEEKDAYS[today.getDay()]})
-            </div>
-          </button>
-
-          {/* 범례 */}
+        {/* 하단: 진행중인 학술활동 + 다가오는 일정 (PC 2분할, 모바일 세로) */}
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
           <div className="rounded-xl border bg-white p-4">
-            <h3 className="text-sm font-semibold">범례</h3>
-            <div className="mt-2 space-y-1.5">
-              {Object.entries(TYPE_CONFIG).map(([key, config]) => {
-                const Icon = config.icon;
-                return (
-                  <div key={key} className="flex items-center gap-2">
-                    <div className={cn("flex h-5 w-5 items-center justify-center rounded text-[10px]", config.color)}>
-                      <Icon size={12} />
-                    </div>
-                    <span className="text-xs text-muted-foreground">{config.label}</span>
-                  </div>
-                );
-              })}
-            </div>
+            <h3 className="text-sm font-semibold">진행중인 학술활동</h3>
+            {ongoingEvents.length === 0 ? (
+              <p className="mt-2 text-xs text-muted-foreground">진행 중인 활동이 없습니다.</p>
+            ) : (
+              <div className="mt-2 space-y-2">
+                {ongoingEvents.map((e) => (
+                  <CompactEventRow key={e.id} event={e} />
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* 다가오는 일정 */}
           <div className="rounded-xl border bg-white p-4">
             <h3 className="text-sm font-semibold">다가오는 일정</h3>
             {upcomingEvents.length === 0 ? (
               <p className="mt-2 text-xs text-muted-foreground">예정된 일정이 없습니다.</p>
             ) : (
               <div className="mt-2 space-y-2">
-                {upcomingEvents.map((e) => {
-                  const config = TYPE_CONFIG[e.type];
-                  return (
-                    <Link
-                      key={e.id}
-                      href={e.href}
-                      className="block rounded-lg p-2 transition-colors hover:bg-muted/50"
-                    >
-                      <div className="flex items-center gap-1.5">
-                        <Badge variant="outline" className={cn("text-[10px]", config.color)}>
-                          {config.label}
-                        </Badge>
-                        <span className="text-[10px] text-muted-foreground">{e.date}</span>
-                      </div>
-                      <p className="mt-0.5 text-xs font-medium leading-tight">{e.title}</p>
-                    </Link>
-                  );
-                })}
+                {upcomingEvents.map((e) => (
+                  <CompactEventRow key={e.id} event={e} />
+                ))}
               </div>
             )}
           </div>
         </div>
-      </div>
       </div>
     </div>
   );
@@ -402,6 +418,25 @@ function EventCard({ event }: { event: CalendarEvent }) {
           )}
         </div>
       </div>
+    </Link>
+  );
+}
+
+function CompactEventRow({ event }: { event: CalendarEvent }) {
+  const config = TYPE_CONFIG[event.type];
+  const dateLabel = event.endDate && event.endDate !== event.date ? `${event.date} ~ ${event.endDate}` : event.date;
+  return (
+    <Link
+      href={event.href}
+      className="block rounded-lg p-2 transition-colors hover:bg-muted/50"
+    >
+      <div className="flex items-center gap-1.5">
+        <Badge variant="outline" className={cn("text-[10px]", config.color)}>
+          {config.label}
+        </Badge>
+        <span className="text-[10px] text-muted-foreground">{dateLabel}</span>
+      </div>
+      <p className="mt-0.5 text-xs font-medium leading-tight">{event.title}</p>
     </Link>
   );
 }
