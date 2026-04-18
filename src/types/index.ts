@@ -125,6 +125,8 @@ export interface User { [key: string]: unknown;
   name: string;
   role: Exclude<UserRole, "guest">;
   generation: number;
+  /** 학적 기준 누적 학기 (가입 시점 기준, generation/기수와는 별개) */
+  accumulatedSemesters?: number;
   field: string;
   profileImage?: string;
   bio?: string;

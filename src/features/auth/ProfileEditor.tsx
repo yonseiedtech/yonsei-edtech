@@ -16,6 +16,7 @@ import type {
   SocialLink,
 } from "@/types";
 import { OCCUPATION_LABELS, VISIBILITY_LABELS, ENROLLMENT_STATUS_LABELS } from "@/types";
+import { calcGeneration } from "@/lib/generation";
 import ProfileSocialsEditor from "@/components/profile/ProfileSocialsEditor";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
@@ -25,6 +26,8 @@ const ENROLLMENT_YEAR_OPTIONS = Array.from({ length: 15 }, (_, i) => 2026 - i);
 interface ProfileData {
   name: string;
   generation: number;
+  /** 누적학기 (휴학 제외, 실제 다닌 학기 수) */
+  accumulatedSemesters: string;
   studentId: string;
   enrollmentYear: string;
   enrollmentHalf: string;
@@ -77,6 +80,7 @@ export default function ProfileEditor({ user }: Props) {
     defaultValues: {
       name: user.name,
       generation: user.generation,
+      accumulatedSemesters: user.accumulatedSemesters != null ? String(user.accumulatedSemesters) : "",
       studentId: user.studentId || "",
       enrollmentYear: user.enrollmentYear ? String(user.enrollmentYear) : "",
       enrollmentHalf: user.enrollmentHalf ? String(user.enrollmentHalf) : "",
@@ -131,11 +135,16 @@ export default function ProfileEditor({ user }: Props) {
 
   async function onSubmit(data: ProfileData) {
     try {
+      const enrollmentYear = data.enrollmentYear ? Number(data.enrollmentYear) : undefined;
+      const enrollmentHalf = data.enrollmentHalf ? Number(data.enrollmentHalf) : undefined;
+      const computedGen = calcGeneration(enrollmentYear ?? null, enrollmentHalf ?? null);
       const payload = {
         ...data,
-        enrollmentYear: data.enrollmentYear ? Number(data.enrollmentYear) : undefined,
-        enrollmentHalf: data.enrollmentHalf ? Number(data.enrollmentHalf) : undefined,
+        enrollmentYear,
+        enrollmentHalf,
         enrollmentStatus: data.enrollmentStatus || undefined,
+        generation: computedGen || data.generation,
+        accumulatedSemesters: data.accumulatedSemesters ? Number(data.accumulatedSemesters) : undefined,
       };
       await updateProfile({ id: user.id, data: payload as unknown as Record<string, unknown> });
       // 본인 프로필을 편집한 경우에만 authStore를 갱신.
@@ -226,6 +235,22 @@ export default function ProfileEditor({ user }: Props) {
             <option key={key} value={key}>{label}</option>
           ))}
         </select>
+      </div>
+
+      {/* 누적학기 (실제 다닌 학기 — 휴학 제외) */}
+      <div>
+        <label className="mb-1.5 block text-sm font-medium">누적학기</label>
+        <Input
+          type="number"
+          min={0}
+          max={20}
+          step={1}
+          {...register("accumulatedSemesters")}
+          placeholder="예: 3"
+        />
+        <p className="mt-1 text-xs text-muted-foreground">
+          휴학 기간은 제외하고 실제로 학교를 다닌 누적 학기 수를 입력하세요. (학회 기수와는 별개로 관리됩니다)
+        </p>
       </div>
 
       <div>

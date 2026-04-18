@@ -127,7 +127,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
     {
       label: "회원",
       items: [
-        { href: "/console/members", label: "회원 DB", icon: Users, badge: pendingCount },
+        { href: "/console/members", label: "회원관리", icon: Users, badge: pendingCount },
         { href: "/console/directory", label: "연락망", icon: BookUser },
         { href: "/console/members/audit", label: "회원 검증", icon: ShieldCheck },
       ],

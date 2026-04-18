@@ -14,11 +14,10 @@ import {
   useCreateMember,
 } from "@/features/member/useMembers";
 import { profilesApi } from "@/lib/bkend";
-import AdminUserList from "./AdminUserList";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ROLE_LABELS } from "@/types";
+import { ROLE_LABELS, ENROLLMENT_STATUS_LABELS, OCCUPATION_LABELS } from "@/types";
 import type { User, UserRole } from "@/types";
 import { toast } from "sonner";
 import {
@@ -68,13 +67,37 @@ const ROLE_COLORS: Record<string, string> = {
 
 function RoleBadge({ role }: { role: UserRole }) {
   return (
-    <Badge
-      variant="outline"
-      className={cn("text-[10px] font-semibold border", ROLE_COLORS[role] || ROLE_COLORS.member)}
+    <span
+      className={cn(
+        "inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold leading-none",
+        ROLE_COLORS[role] || ROLE_COLORS.member,
+      )}
     >
       {ROLE_LABELS[role]}
-    </Badge>
+    </span>
   );
+}
+
+// ── 회원 상태별 행 시각 스타일 ──
+function rowStatusClass(m: User): string {
+  if (m.rejected) return "bg-red-50/50 border-l-4 border-l-red-300";
+  if (!m.approved) return "bg-amber-50/50 border-l-4 border-l-amber-300";
+  return "";
+}
+
+function cardStatusClass(m: User): string {
+  if (m.rejected) return "border-red-300 bg-red-50/40";
+  if (!m.approved) return "border-amber-300 bg-amber-50/40";
+  return "";
+}
+
+// ── 현재 신분 유형 라벨 ──
+function currentStatusLabel(m: User): string {
+  if (m.occupation) return OCCUPATION_LABELS[m.occupation];
+  if (m.enrollmentStatus === "graduated") return "졸업생";
+  if (m.enrollmentStatus === "on_leave") return "휴학생";
+  if (m.enrollmentStatus === "enrolled") return "재학생";
+  return "-";
 }
 
 type MemberTab = "all" | "pending" | "approved" | "rejected";
@@ -298,8 +321,23 @@ export default function AdminMemberTab() {
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={() => {
             const source = activeTab === "all" ? allMembers : displayMembers;
-            exportCSV("회원목록", ["이름", "아이디", "이메일", "학번", "역할", "기수", "분야", "관심 연구분야", "상태"],
-              source.map((m) => [m.name, m.username, m.email, m.studentId, m.role, m.generation, m.field, (m.researchInterests ?? []).join(", "), m.approved ? "승인" : m.rejected ? "거절" : "대기"]),
+            exportCSV("회원목록",
+              ["이름", "아이디", "이메일", "학번", "역할", "기수", "신분유형", "누적학기", "현재 신분 유형", "연락처", "분야", "관심 연구분야", "상태"],
+              source.map((m) => [
+                m.name,
+                m.username,
+                m.email,
+                m.studentId,
+                m.role,
+                m.generation,
+                m.enrollmentStatus ? ENROLLMENT_STATUS_LABELS[m.enrollmentStatus] : "",
+                m.accumulatedSemesters ?? "",
+                currentStatusLabel(m),
+                m.phone,
+                m.field,
+                (m.researchInterests ?? []).join(", "),
+                m.approved ? "승인" : m.rejected ? "거절" : "대기",
+              ]),
             );
           }}>
             <Download size={14} className="mr-1" /> CSV 내보내기
@@ -339,41 +377,33 @@ export default function AdminMemberTab() {
   }
 
   // ── 회원 모바일 카드 ──
-  function MemberMobileCard({ m, showStatus }: { m: User; showStatus?: boolean }) {
-    const tags = (m.researchInterests ?? []).flatMap((s: string) => s.split(/[,，]/)).map((s: string) => s.trim()).filter(Boolean);
+  function MemberMobileCard({ m }: { m: User; showStatus?: boolean }) {
+    const cardCls = cardStatusClass(m);
     return (
-      <div className="rounded-xl border bg-white p-4">
+      <div className={cn("rounded-xl border bg-white p-4", cardCls)}>
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="font-semibold text-sm">{m.name}</span>
               <span className="text-xs text-muted-foreground">@{m.username}</span>
               <RoleCell member={m} />
-              {showStatus && (
-                m.approved ? (
-                  <Badge className="bg-green-100 text-green-700 text-[10px]">승인</Badge>
-                ) : m.rejected ? (
-                  <Badge className="bg-red-100 text-red-700 text-[10px]">거절</Badge>
-                ) : (
-                  <Badge className="bg-amber-100 text-amber-700 text-[10px]">대기</Badge>
-                )
+              {m.rejected && (
+                <span className="rounded-md bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700">거절</span>
+              )}
+              {!m.approved && !m.rejected && (
+                <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">대기</span>
               )}
             </div>
             <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
               {m.studentId && <span>학번: {m.studentId}</span>}
+              {m.enrollmentStatus && (
+                <span>신분: {ENROLLMENT_STATUS_LABELS[m.enrollmentStatus]}</span>
+              )}
+              {m.accumulatedSemesters != null && <span>누적학기: {m.accumulatedSemesters}</span>}
+              <span>현재: {currentStatusLabel(m)}</span>
               {m.phone && <span>{m.phone}</span>}
-              {m.field && <span>분야: {m.field}</span>}
               {m.lastLoginAt && <span>접속: {formatLastLogin(m.lastLoginAt)}</span>}
             </div>
-            {tags.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1">
-                {tags.map((t: string) => (
-                  <span key={t} className="inline-flex items-center rounded-full bg-muted/60 px-2 py-0.5 text-[10px] text-muted-foreground">
-                    {t}
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
           {canApprove && (
             <Button
@@ -392,13 +422,13 @@ export default function AdminMemberTab() {
   }
 
   // ── 회원 테이블 ──
-  function MemberTable({ data, showStatus }: { data: User[]; showStatus?: boolean }) {
+  function MemberTable({ data }: { data: User[]; showStatus?: boolean }) {
     return (
       <>
         {/* 모바일 카드 뷰 */}
         <div className="mt-3 space-y-2 sm:hidden">
           {data.map((m) => (
-            <MemberMobileCard key={m.id} m={m} showStatus={showStatus} />
+            <MemberMobileCard key={m.id} m={m} />
           ))}
         </div>
         {/* 데스크톱 테이블 */}
@@ -406,54 +436,35 @@ export default function AdminMemberTab() {
           <table className="w-full text-sm whitespace-nowrap">
             <thead className="border-b bg-muted/30">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">이름</th>
-                <th className="px-4 py-3 text-left font-medium">아이디</th>
-                <th className="px-4 py-3 text-left font-medium">학번</th>
+                <th className="px-4 py-3 text-left font-medium">학번(아이디)</th>
+                <th className="px-4 py-3 text-left font-medium">신분유형</th>
+                <th className="px-4 py-3 text-left font-medium">누적학기</th>
+                <th className="px-4 py-3 text-left font-medium">현재 신분 유형</th>
                 <th className="px-4 py-3 text-left font-medium">연락처</th>
-                <th className="px-4 py-3 text-left font-medium">분야</th>
-                <th className="px-4 py-3 text-left font-medium">관심 연구분야</th>
                 <th className="px-4 py-3 text-left font-medium">역할</th>
                 <th className="px-4 py-3 text-left font-medium">최근 접속</th>
-                {showStatus && <th className="px-4 py-3 text-left font-medium">상태</th>}
                 {canApprove && <th className="px-4 py-3 text-left font-medium">관리</th>}
               </tr>
             </thead>
             <tbody className="divide-y">
               {data.map((m) => (
-                <tr key={m.id} className="hover:bg-muted/20">
-                  <td className="px-4 py-3 font-medium">{m.name}</td>
-                  <td className="px-4 py-3 text-muted-foreground">@{m.username}</td>
-                  <td className="px-4 py-3">{m.studentId || "-"}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{m.phone || "-"}</td>
-                  <td className="px-4 py-3">{m.field || "-"}</td>
-                  <td className="max-w-[200px] px-4 py-3">
-                    {(() => {
-                      const tags = (m.researchInterests ?? []).flatMap((s: string) => s.split(/[,，]/)).map((s: string) => s.trim()).filter(Boolean);
-                      if (tags.length === 0) return "-";
-                      return (
-                        <div className="flex flex-wrap gap-1">
-                          {tags.map((t: string) => (
-                            <span key={t} className="inline-flex items-center rounded-full bg-muted/60 px-2 py-0.5 text-[10px] text-muted-foreground">
-                              {t}
-                            </span>
-                          ))}
-                        </div>
-                      );
-                    })()}
+                <tr key={m.id} className={cn("hover:bg-muted/20", rowStatusClass(m))}>
+                  <td className="px-4 py-3">
+                    <div className="font-medium">{m.studentId || m.username}</div>
+                    {m.studentId && (
+                      <div className="text-xs text-muted-foreground">@{m.username}</div>
+                    )}
                   </td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {m.enrollmentStatus ? ENROLLMENT_STATUS_LABELS[m.enrollmentStatus] : "-"}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {m.accumulatedSemesters != null ? `${m.accumulatedSemesters}학기` : "-"}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">{currentStatusLabel(m)}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{m.phone || "-"}</td>
                   <td className="px-4 py-3"><RoleCell member={m} /></td>
                   <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{formatLastLogin(m.lastLoginAt)}</td>
-                  {showStatus && (
-                    <td className="px-4 py-3">
-                      {m.approved ? (
-                        <Badge className="bg-green-100 text-green-700 text-[10px]">승인</Badge>
-                      ) : m.rejected ? (
-                        <Badge className="bg-red-100 text-red-700 text-[10px]">거절</Badge>
-                      ) : (
-                        <Badge className="bg-amber-100 text-amber-700 text-[10px]">대기</Badge>
-                      )}
-                    </td>
-                  )}
                   {canApprove && (
                     <td className="px-4 py-3">
                       <Button

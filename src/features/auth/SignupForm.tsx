@@ -16,6 +16,7 @@ import { sha256Hex } from "@/lib/hash";
 
 import type { EnrollmentStatus, OccupationType } from "@/types";
 import { ENROLLMENT_STATUS_LABELS, OCCUPATION_LABELS } from "@/types";
+import { calcGeneration } from "@/lib/generation";
 
 // 직업유형 5분류 (PR6) — types/index.ts의 OccupationType 5분류와 1:1 일치
 const ACTIVITY_OPTIONS: { value: "" | OccupationType; label: string }[] = [
@@ -242,7 +243,11 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
           email: data.email,
           memberType: enrollmentStatus === "graduated" ? "alumni" : "student",
           enrollmentStatus,
-          generation: data.generation ? Number(data.generation) : 0,
+          generation: calcGeneration(
+            data.enrollmentYear ? Number(data.enrollmentYear) : null,
+            data.enrollmentHalf ? Number(data.enrollmentHalf) : null,
+          ),
+          accumulatedSemesters: data.generation ? Number(data.generation) : undefined,
           studentId: data.username || "",
           phone: data.phone || "",
           birthDate: data.birthDate || "",
