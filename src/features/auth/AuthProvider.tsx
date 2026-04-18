@@ -30,6 +30,10 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
           }
           const merged = mergeToUser(firebaseUser, profile);
           setUser(merged);
+          // 백그라운드: 마지막 접속 시각 갱신
+          if (merged?.id) {
+            profilesApi.update(merged.id, { lastLoginAt: new Date().toISOString() }).catch(() => {});
+          }
           // 백그라운드: 게스트 레코드 자동 연결 (참석자·신청자·수료증)
           if (merged?.id) {
             runAllGuestLinkers({

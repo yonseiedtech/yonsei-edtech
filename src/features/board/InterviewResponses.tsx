@@ -156,7 +156,7 @@ export default function InterviewResponses({ postId, meta }: Props) {
             className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
               isPublic
                 ? "bg-blue-50 text-blue-700"
-                : "bg-violet-50 text-violet-700"
+                : "bg-blue-50 text-blue-700"
             }`}
             title={isPublic ? "공유 모드" : "인터뷰 모드"}
           >

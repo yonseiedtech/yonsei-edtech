@@ -276,7 +276,7 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
               연구 논문 ({hasPeriodFilter ? `${periodFiltered.length}/${published.length}` : published.length})
             </h3>
             {hasPeriodFilter && (
-              <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] text-violet-700">
+              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] text-blue-700">
                 기간: {formatPeriodLabel(periodStart, periodEnd)}
               </span>
             )}

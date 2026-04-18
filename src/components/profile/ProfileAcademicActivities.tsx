@@ -154,7 +154,7 @@ export default function ProfileAcademicActivities({ owner }: Props) {
                         </Badge>
                       )}
                       {(a.year || a.semester) && (
-                        <Badge variant="secondary" className="bg-violet-50 text-[10px] text-violet-700">
+                        <Badge variant="secondary" className="bg-blue-50 text-[10px] text-blue-700">
                           {formatSemester(a.year, a.semester)}
                         </Badge>
                       )}

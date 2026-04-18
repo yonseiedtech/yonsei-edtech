@@ -7,10 +7,13 @@ import { Button } from "@/components/ui/button";
 import {
   Save, FileText, CheckCircle2, ChevronLeft, ChevronRight,
   BookOpen, FlaskConical, Microscope, BarChart3, Flag,
+  Play, Timer,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { User, WritingPaper, WritingPaperChapterKey } from "@/types";
+import { useStudyTimerStore } from "./study-timer/study-timer-store";
+import { useCreateSession, useStudySessionsByWritingPaper } from "./study-timer/useStudySessions";
 import {
   useWritingPaper,
   useEnsureWritingPaper,
@@ -80,6 +83,31 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   const ensure = useEnsureWritingPaper();
   const update = useUpdateWritingPaper();
   const logActivity = useLogWritingActivity();
+
+  const { active: timerActive, start: startTimer } = useStudyTimerStore();
+  const { mutateAsync: createSession } = useCreateSession();
+  const writingSessions = useStudySessionsByWritingPaper(paper?.id);
+  const writingTotalMin = writingSessions.reduce((s, x) => s + (x.durationMinutes || 0), 0);
+  const isTimerActive = timerActive?.writingPaperId === paper?.id;
+
+  async function handleStartWritingTimer() {
+    if (timerActive) { toast.error("이미 진행 중인 세션이 있습니다"); return; }
+    if (!paper) return;
+    try {
+      const session = await createSession({
+        type: "writing",
+        writingPaperId: paper.id,
+        targetTitle: form.title || "(제목 미정)",
+      });
+      startTimer({
+        id: session.id,
+        type: "writing",
+        writingPaperId: paper.id,
+        targetTitle: form.title || "(제목 미정)",
+        startTime: Date.now(),
+      });
+    } catch { toast.error("타이머 시작에 실패했습니다"); }
+  }
 
   const [form, setForm] = useState<FormState>(EMPTY);
   const [hydrated, setHydrated] = useState(false);
@@ -180,8 +208,30 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
               <h3 className="text-sm font-semibold">논문</h3>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 5장 구조로 집필하세요. · {total.toLocaleString()}자
+                {writingTotalMin > 0 && (
+                  <span className="ml-1">
+                    · <Timer size={10} className="mr-0.5 inline" />
+                    {writingTotalMin >= 60 ? `${Math.floor(writingTotalMin / 60)}시간 ${Math.round(writingTotalMin % 60)}분` : `${Math.round(writingTotalMin)}분`}
+                  </span>
+                )}
               </p>
             </div>
+            {!readOnly && !isTimerActive && (
+              <button
+                type="button"
+                onClick={handleStartWritingTimer}
+                className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2.5 py-1.5 text-xs font-medium text-primary hover:bg-primary/20"
+              >
+                <Play size={12} />
+                작성 시작
+              </button>
+            )}
+            {isTimerActive && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2.5 py-1.5 text-xs font-medium text-primary animate-pulse">
+                <Timer size={12} />
+                측정 중
+              </span>
+            )}
           </div>
           {!readOnly && (
             <div className="flex shrink-0 items-center gap-2">

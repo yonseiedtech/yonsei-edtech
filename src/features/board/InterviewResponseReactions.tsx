@@ -57,7 +57,7 @@ export default function InterviewResponseReactions({ responseId, postId }: Props
             disabled={isToggling || isLoading}
             className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs transition ${
               isMine
-                ? "border-violet-400 bg-violet-50 text-violet-800"
+                ? "border-blue-400 bg-blue-50 text-blue-800"
                 : "border-input bg-white text-muted-foreground hover:bg-muted"
             } ${isToggling || isLoading ? "opacity-60" : ""}`}
             aria-pressed={isMine}

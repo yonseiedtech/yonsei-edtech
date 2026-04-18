@@ -38,7 +38,7 @@ import type {
   ActivityProgress, ActivityMaterial, EmailLog,
   Lab, LabReaction, LabComment, ResearchPaper, ResearchReport, WritingPaper, WritingPaperHistory,
   InterviewResponseReaction, InterviewResponseComment,
-  ProfileLike, ProfileView,
+  ProfileLike, ProfileView, StudySession,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -348,7 +348,7 @@ export const registrationsApi = {
 };
 
 export const certificatesApi = {
-  list: (seminarId?: string, type?: "completion" | "appreciation") =>
+  list: (seminarId?: string, type?: "completion" | "appreciation" | "appointment") =>
     dataApi.list<Certificate>("certificates", {
       ...(seminarId ? { "filter[seminarId]": seminarId } : {}),
       ...(type ? { "filter[type]": type } : {}),
@@ -615,6 +615,20 @@ export const writingPaperHistoryApi = {
     }),
   create: (data: Record<string, unknown>) =>
     dataApi.create<WritingPaperHistory>("writing_paper_history", data),
+};
+
+export const studySessionsApi = {
+  listByUser: (userId: string) =>
+    dataApi.list<StudySession>("study_sessions", {
+      "filter[userId]": userId,
+      limit: 1000,
+    }),
+  get: (id: string) => dataApi.get<StudySession>("study_sessions", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<StudySession>("study_sessions", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<StudySession>("study_sessions", id, data),
+  delete: (id: string) => dataApi.delete("study_sessions", id),
 };
 
 export const researchReportsApi = {

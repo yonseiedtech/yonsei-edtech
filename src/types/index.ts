@@ -203,6 +203,8 @@ export interface User { [key: string]: unknown;
   undergraduateMajor2?: string;
   /** 학부 — 전공2 교육학 계열 여부 */
   undergraduateMajor2IsEducation?: boolean;
+  /** 마지막 로그인 시각 (ISO) */
+  lastLoginAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -397,6 +399,27 @@ export interface WritingPaperHistory {
   /** 저장 시점의 제목 스냅샷 */
   title?: string;
   createdAt: string;
+}
+
+// ── 연구 활동 타이머 세션 ──
+
+export type StudySessionType = "reading" | "writing";
+
+export interface StudySession {
+  id: string;
+  userId: string;
+  type: StudySessionType;
+  paperId?: string;
+  writingPaperId?: string;
+  targetTitle: string;
+  startTime: string;
+  endTime: string | null;
+  durationMinutes: number;
+  source: "timer" | "manual";
+  focusScore?: number;
+  memo?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ── 연구 보고서 ──
@@ -707,7 +730,8 @@ export interface SeminarRegistration {
   interests?: string;
 }
 
-// ── 수료증 / 감사장 ──
+// ── 수료증 / 감사장 / 임명장 ──
+export type CertificateType = "completion" | "appreciation" | "appointment";
 export interface Certificate { [key: string]: unknown;
   id: string;
   certificateNo?: string; // "YY-NNN" 형식 (예: "26-001")
@@ -718,9 +742,11 @@ export interface Certificate { [key: string]: unknown;
   recipientStudentId?: string;
   recipientUserId?: string | null;
   recipientAffiliation?: string;
-  type: "completion" | "appreciation";
+  type: CertificateType;
   issuedAt: string;
   issuedBy: string;
+  appointmentPosition?: string;
+  appointmentTerm?: string;
 }
 
 // ── 실험실(Labs) ──

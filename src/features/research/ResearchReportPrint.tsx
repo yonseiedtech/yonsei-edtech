@@ -13,6 +13,7 @@ import {
   computeAvgReadDuration,
   computeTopKeywords,
   computeVariableBreakdown,
+  computeTotalReadDays,
 } from "@/lib/research-stats";
 
 interface Props {
@@ -70,6 +71,7 @@ export default function ResearchReportPrint({
   const avgDuration = useMemo(() => computeAvgReadDuration(papers, opts), [papers, periodStart, periodEnd]);
   const topKeywords = useMemo(() => computeTopKeywords(papers, 10, opts), [papers, periodStart, periodEnd]);
   const variableBreakdown = useMemo(() => computeVariableBreakdown(papers, 5, opts), [papers, periodStart, periodEnd]);
+  const totalReadDays = useMemo(() => computeTotalReadDays(papers, opts), [papers, periodStart, periodEnd]);
 
   const writingMeta = writingPaper && writingPaper.chapters
     ? Object.entries(writingPaper.chapters).filter(([, v]) => (v ?? "").trim().length > 0)
@@ -148,6 +150,8 @@ export default function ResearchReportPrint({
               <Row label="완독" value={`${readingStats.completed}건`} />
               <Row label="읽는 중" value={`${readingStats.reading}건`} />
               <Row label="읽을 예정" value={`${readingStats.toRead}건`} />
+              <Row label="평균 완독 소요" value={avgDuration !== null ? `${avgDuration}일` : "—"} />
+              <Row label="총 완독 소요" value={totalReadDays !== null ? `${totalReadDays}일` : "—"} />
             </ul>
           </div>
         </section>

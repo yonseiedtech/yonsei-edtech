@@ -71,7 +71,7 @@ export function ScrollProgressBar() {
   return (
     <motion.div
       style={{ scaleX, transformOrigin: "0%" }}
-      className="fixed left-0 right-0 top-0 z-[60] h-[2px] bg-gradient-to-r from-primary via-sky-400 to-indigo-500"
+      className="fixed left-0 right-0 top-0 z-[60] h-[2px] bg-gradient-to-r from-primary via-sky-400 to-blue-500"
     />
   );
 }

@@ -206,13 +206,13 @@ function MetricCard({ icon, label, value, hint, tone = "sky" }: { icon: React.Re
     emerald: "ring-emerald-100 bg-emerald-50/40",
     amber: "ring-amber-100 bg-amber-50/40",
     sky: "ring-sky-100 bg-sky-50/40",
-    violet: "ring-violet-100 bg-violet-50/40",
+    violet: "ring-blue-100 bg-blue-50/40",
   };
   const text: Record<string, string> = {
     emerald: "text-emerald-700",
     amber: "text-amber-700",
     sky: "text-sky-700",
-    violet: "text-violet-700",
+    violet: "text-blue-700",
   };
   return (
     <div className={`rounded-2xl border p-4 ring-1 ${ring[tone]}`}>

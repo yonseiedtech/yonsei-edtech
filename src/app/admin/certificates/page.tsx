@@ -30,7 +30,7 @@ import {
 } from "@/features/seminar-admin/CertificateGenerator";
 import type { AreaKey, AreaStyle } from "@/features/seminar-admin/CertificateGenerator";
 
-type TypeFilter = "all" | "completion" | "appreciation";
+type TypeFilter = "all" | "completion" | "appreciation" | "appointment";
 
 const FONT_DEFAULT = "'Hahmlet', serif";
 const BORDER_COLOR = "#003378";
@@ -62,7 +62,7 @@ export default function CertificatesPage() {
   // ── 일괄 발급 state ──
   const [showBatch, setShowBatch] = useState(false);
   const [batchSeminarId, setBatchSeminarId] = useState("");
-  const [batchType, setBatchType] = useState<"completion" | "appreciation">("completion");
+  const [batchType, setBatchType] = useState<"completion" | "appreciation" | "appointment">("completion");
   const [batchRegistrations, setBatchRegistrations] = useState<SeminarRegistration[]>([]);
   const [batchSelected, setBatchSelected] = useState<Set<string>>(new Set());
   const [batchLoading, setBatchLoading] = useState(false);
@@ -299,7 +299,7 @@ export default function CertificatesPage() {
     if (!previewCert) return;
     setPdfLoading(true);
     try {
-      const fileName = `${previewCert.type === "completion" ? "수료증" : "감사장"}_${previewCert.recipientName}_${previewCert.certificateNo || "번호없음"}.pdf`;
+      const fileName = `${previewCert.type === "completion" ? "수료증" : previewCert.type === "appointment" ? "임명장" : "감사장"}_${previewCert.recipientName}_${previewCert.certificateNo || "번호없음"}.pdf`;
       const blob = await generatePdfBlob(fileName);
       if (!blob) throw new Error("미리보기 요소 없음");
       const url = URL.createObjectURL(blob);
@@ -323,7 +323,7 @@ export default function CertificatesPage() {
     if (!previewCert) return;
     setPdfLoading(true);
     try {
-      const fileName = `${previewCert.type === "completion" ? "수료증" : "감사장"}_${previewCert.recipientName}.pdf`;
+      const fileName = `${previewCert.type === "completion" ? "수료증" : previewCert.type === "appointment" ? "임명장" : "감사장"}_${previewCert.recipientName}.pdf`;
       const blob = await generatePdfBlob(fileName);
       if (!blob) throw new Error("미리보기 요소 없음");
       const url = URL.createObjectURL(blob);
@@ -390,6 +390,7 @@ export default function CertificatesPage() {
             <option value="all">전체</option>
             <option value="completion">수료증</option>
             <option value="appreciation">감사장</option>
+            <option value="appointment">임명장</option>
           </select>
         </div>
         <div>
@@ -450,7 +451,7 @@ export default function CertificatesPage() {
                   <td className="px-2 py-2 sm:px-4 sm:py-3">
                     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${c.type === "completion" ? "bg-blue-50 text-blue-700" : "bg-amber-50 text-amber-700"}`}>
                       {c.type === "completion" ? <Award size={12} /> : <Heart size={12} />}
-                      {c.type === "completion" ? "수료증" : "감사장"}
+                      {c.type === "completion" ? "수료증" : c.type === "appointment" ? "임명장" : "감사장"}
                     </span>
                   </td>
                   <td className="px-2 py-2 text-muted-foreground sm:px-4 sm:py-3">
@@ -504,6 +505,7 @@ export default function CertificatesPage() {
                 >
                   <option value="completion">수료증</option>
                   <option value="appreciation">감사장</option>
+                  <option value="appointment">임명장</option>
                 </select>
               </div>
             </div>
@@ -555,7 +557,7 @@ export default function CertificatesPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {previewCert?.type === "completion" ? <Award size={18} /> : <Heart size={18} />}
-              {previewCert?.type === "completion" ? "수료증" : "감사장"} 미리보기
+              {previewCert?.type === "completion" ? "수료증" : previewCert?.type === "appointment" ? "임명장" : "감사장"} 미리보기
               <span className="text-xs font-normal text-muted-foreground">({previewCert?.certificateNo})</span>
             </DialogTitle>
           </DialogHeader>

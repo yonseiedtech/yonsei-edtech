@@ -39,7 +39,7 @@ function fillBlankPreview(prompt: string): ReactNode {
         <span key={i}>
           {p}
           {i < parts.length - 1 && (
-            <span className="mx-1 inline-block min-w-[60px] border-b-2 border-violet-500 px-2 text-center text-violet-700">
+            <span className="mx-1 inline-block min-w-[60px] border-b-2 border-blue-500 px-2 text-center text-blue-700">
               ___
             </span>
           )}
@@ -155,12 +155,12 @@ export default function InterviewBuilder({ value, onChange }: Props) {
   }
 
   return (
-    <div className="rounded-2xl border border-violet-200 bg-violet-50/40 p-5">
+    <div className="rounded-2xl border border-blue-200 bg-blue-50/40 p-5">
       <div className="flex items-center gap-2">
-        <Sparkles size={16} className="text-violet-600" />
-        <h3 className="font-bold text-violet-900">온라인 인터뷰 설계</h3>
+        <Sparkles size={16} className="text-blue-600" />
+        <h3 className="font-bold text-blue-900">온라인 인터뷰 설계</h3>
       </div>
-      <p className="mt-1 text-xs text-violet-700/80">
+      <p className="mt-1 text-xs text-blue-700/80">
         질문을 순서대로 등록하면, 응답자는 대화형 UI로 한 질문씩 답변합니다.
       </p>
 
@@ -192,8 +192,8 @@ export default function InterviewBuilder({ value, onChange }: Props) {
             <label
               className={`flex cursor-pointer items-start gap-2 rounded-lg border p-3 transition ${
                 (value.responseVisibility ?? "public") === "staff_only"
-                  ? "border-violet-500 bg-violet-100/60 ring-2 ring-violet-300"
-                  : "border-input bg-white hover:bg-violet-50/40"
+                  ? "border-blue-500 bg-blue-100/60 ring-2 ring-blue-300"
+                  : "border-input bg-white hover:bg-blue-50/40"
               }`}
             >
               <input
@@ -206,7 +206,7 @@ export default function InterviewBuilder({ value, onChange }: Props) {
               />
               <div className="flex-1">
                 <div className="flex items-center gap-1 text-sm font-semibold">
-                  <Lock size={14} className="text-violet-700" />
+                  <Lock size={14} className="text-blue-700" />
                   인터뷰 모드
                 </div>
                 <p className="mt-0.5 text-xs text-muted-foreground">
@@ -217,8 +217,8 @@ export default function InterviewBuilder({ value, onChange }: Props) {
             <label
               className={`flex cursor-pointer items-start gap-2 rounded-lg border p-3 transition ${
                 (value.responseVisibility ?? "public") === "public"
-                  ? "border-violet-500 bg-violet-100/60 ring-2 ring-violet-300"
-                  : "border-input bg-white hover:bg-violet-50/40"
+                  ? "border-blue-500 bg-blue-100/60 ring-2 ring-blue-300"
+                  : "border-input bg-white hover:bg-blue-50/40"
               }`}
             >
               <input
@@ -231,7 +231,7 @@ export default function InterviewBuilder({ value, onChange }: Props) {
               />
               <div className="flex-1">
                 <div className="flex items-center gap-1 text-sm font-semibold">
-                  <Globe size={14} className="text-violet-700" />
+                  <Globe size={14} className="text-blue-700" />
                   공유 모드
                 </div>
                 <p className="mt-0.5 text-xs text-muted-foreground">
@@ -258,7 +258,7 @@ export default function InterviewBuilder({ value, onChange }: Props) {
         </div>
 
         {value.questions.length === 0 && (
-          <div className="mt-3 rounded-lg border border-dashed border-violet-300 bg-white p-6 text-center text-sm text-muted-foreground">
+          <div className="mt-3 rounded-lg border border-dashed border-blue-300 bg-white p-6 text-center text-sm text-muted-foreground">
             아직 질문이 없습니다. &quot;질문 추가&quot;로 시작하세요.
           </div>
         )}
@@ -270,7 +270,7 @@ export default function InterviewBuilder({ value, onChange }: Props) {
             return (
               <div key={q.id} className="rounded-lg border bg-white p-4">
                 <div className="flex items-start gap-3">
-                  <span className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-700">
+                  <span className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
                     Q{i + 1}
                   </span>
                   <div className="flex-1 space-y-2">
@@ -373,8 +373,8 @@ export default function InterviewBuilder({ value, onChange }: Props) {
                     </div>
 
                     {(q.answerType === "single_choice" || q.answerType === "multi_choice") && (
-                      <div className="rounded-md border bg-violet-50/50 p-3">
-                        <p className="mb-2 text-xs font-semibold text-violet-700">
+                      <div className="rounded-md border bg-blue-50/50 p-3">
+                        <p className="mb-2 text-xs font-semibold text-blue-700">
                           선택지 {q.answerType === "multi_choice" ? "(복수 선택 가능)" : "(단일 선택)"}
                         </p>
                         <div className="space-y-2">
@@ -402,12 +402,12 @@ export default function InterviewBuilder({ value, onChange }: Props) {
                         <button
                           type="button"
                           onClick={() => addChoice(q.id)}
-                          className="mt-2 inline-flex items-center gap-1 text-xs text-violet-700 hover:text-violet-900"
+                          className="mt-2 inline-flex items-center gap-1 text-xs text-blue-700 hover:text-blue-900"
                         >
                           <Plus size={12} />
                           선택지 추가
                         </button>
-                        <label className="mt-3 flex items-center gap-2 text-xs text-violet-800">
+                        <label className="mt-3 flex items-center gap-2 text-xs text-blue-800">
                           <input
                             type="checkbox"
                             checked={!!q.allowCustomOption}
@@ -475,7 +475,7 @@ export default function InterviewBuilder({ value, onChange }: Props) {
               type="button"
               variant="outline"
               onClick={addQuestion}
-              className="border-violet-300 bg-white text-violet-700 hover:bg-violet-50 hover:text-violet-900"
+              className="border-blue-300 bg-white text-blue-700 hover:bg-blue-50 hover:text-blue-900"
             >
               <Plus size={16} className="mr-1" />
               질문 추가

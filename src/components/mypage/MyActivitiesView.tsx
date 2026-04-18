@@ -257,7 +257,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                                 </Badge>
                               )}
                               {(a.year || a.semester) && (
-                                <Badge variant="secondary" className="bg-violet-50 text-[10px] text-violet-700">
+                                <Badge variant="secondary" className="bg-blue-50 text-[10px] text-blue-700">
                                   {formatSemester(a.year, a.semester)}
                                 </Badge>
                               )}
@@ -358,8 +358,8 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                       <div className="flex items-start justify-between">
                         <div>
                           <div className="flex items-center gap-2">
-                            <Badge variant="secondary" className={c.type === "completion" ? "bg-primary/10 text-primary" : "bg-amber-50 text-amber-700"}>
-                              {c.type === "completion" ? "수료증" : "감사장"}
+                            <Badge variant="secondary" className={c.type === "completion" ? "bg-primary/10 text-primary" : c.type === "appointment" ? "bg-blue-50 text-blue-700" : "bg-amber-50 text-amber-700"}>
+                              {c.type === "completion" ? "수료증" : c.type === "appointment" ? "임명장" : "감사장"}
                             </Badge>
                             {c.certificateNo && (
                               <span className="text-xs text-muted-foreground">No. {c.certificateNo}</span>
@@ -413,8 +413,8 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                           <li key={r.id} className="rounded-xl border bg-card px-5 py-4 hover:border-primary/40">
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
-                                <Mic size={14} className="text-violet-600" />
-                                <Badge variant="secondary" className="bg-violet-50 text-violet-700 text-[10px]">인터뷰</Badge>
+                                <Mic size={14} className="text-blue-600" />
+                                <Badge variant="secondary" className="bg-blue-50 text-blue-700 text-[10px]">인터뷰</Badge>
                                 <Badge
                                   variant="outline"
                                   className={cn(
@@ -467,8 +467,8 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                         <Link href={`/board/${p.id}`} className="flex items-center justify-between">
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <Mic size={14} className="text-violet-600" />
-                              <Badge variant="secondary" className="bg-violet-50 text-violet-700 text-[10px]">인터뷰</Badge>
+                              <Mic size={14} className="text-blue-600" />
+                              <Badge variant="secondary" className="bg-blue-50 text-blue-700 text-[10px]">인터뷰</Badge>
                               {p.interview?.deadline && (
                                 <Badge variant="outline" className="text-[10px]">
                                   마감 {new Date(p.interview.deadline).toLocaleDateString("ko-KR")}

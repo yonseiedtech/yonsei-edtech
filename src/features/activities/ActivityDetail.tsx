@@ -218,7 +218,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
           <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             <span className="flex items-center gap-1"><Calendar size={14} />{activity.date}{activity.endDate ? ` ~ ${activity.endDate}` : ""}</span>
             {(activity.year || activity.semester) && (
-              <Badge variant="secondary" className="bg-violet-50 text-[10px] text-violet-700">
+              <Badge variant="secondary" className="bg-blue-50 text-[10px] text-blue-700">
                 {formatSemester(activity.year, activity.semester)}
               </Badge>
             )}

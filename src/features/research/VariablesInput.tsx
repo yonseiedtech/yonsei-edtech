@@ -11,7 +11,7 @@ interface Props {
 const CATEGORIES: { key: keyof PaperVariables; label: string; color: string; placeholder: string }[] = [
   { key: "independent", label: "독립변인", color: "bg-blue-50 text-blue-700", placeholder: "예: 자기조절학습" },
   { key: "dependent", label: "종속변인", color: "bg-emerald-50 text-emerald-700", placeholder: "예: 학업성취도" },
-  { key: "mediator", label: "매개변인", color: "bg-violet-50 text-violet-700", placeholder: "예: 학습몰입" },
+  { key: "mediator", label: "매개변인", color: "bg-blue-50 text-blue-700", placeholder: "예: 학습몰입" },
   { key: "moderator", label: "조절변인", color: "bg-amber-50 text-amber-700", placeholder: "예: 학년" },
   { key: "control", label: "통제변인", color: "bg-slate-100 text-slate-700", placeholder: "예: 사전학업성취도" },
 ];

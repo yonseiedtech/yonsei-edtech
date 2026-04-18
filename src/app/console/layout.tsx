@@ -146,9 +146,9 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
       ],
     },
     {
-      label: "수료증·감사장",
+      label: "발급 문서",
       items: [
-        { href: "/console/academic/certificates", label: "수료증·감사장", icon: Award },
+        { href: "/console/academic/certificates", label: "발급 문서", icon: Award },
       ],
     },
     {

@@ -37,10 +37,24 @@ import { cn } from "@/lib/utils";
 
 const ASSIGNABLE_ROLES: UserRole[] = ["member", "alumni", "advisor", "staff", "president", "admin", "sysadmin"];
 
+const DAY_KO = ["일", "월", "화", "수", "목", "금", "토"];
+function formatLastLogin(iso?: string): string {
+  if (!iso) return "-";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "-";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const dow = DAY_KO[d.getDay()];
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${y}년 ${m}월 ${day}일(${dow}) ${hh}:${mm}`;
+}
+
 // ── 역할별 배지 색상 ──
 const ROLE_COLORS: Record<string, string> = {
   sysadmin: "bg-rose-100 text-rose-700 border-rose-200",
-  admin: "bg-purple-100 text-purple-700 border-purple-200",
+  admin: "bg-blue-100 text-blue-700 border-blue-200",
   president: "bg-blue-100 text-blue-700 border-blue-200",
   staff: "bg-sky-100 text-sky-700 border-sky-200",
   advisor: "bg-teal-100 text-teal-700 border-teal-200",
@@ -307,6 +321,7 @@ export default function AdminMemberTab() {
               {m.studentId && <span>학번: {m.studentId}</span>}
               {m.phone && <span>{m.phone}</span>}
               {m.field && <span>분야: {m.field}</span>}
+              {m.lastLoginAt && <span>접속: {formatLastLogin(m.lastLoginAt)}</span>}
             </div>
             {tags.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1">
@@ -356,6 +371,7 @@ export default function AdminMemberTab() {
                 <th className="px-4 py-3 text-left font-medium">분야</th>
                 <th className="px-4 py-3 text-left font-medium">관심 연구분야</th>
                 <th className="px-4 py-3 text-left font-medium">역할</th>
+                <th className="px-4 py-3 text-left font-medium">최근 접속</th>
                 {showStatus && <th className="px-4 py-3 text-left font-medium">상태</th>}
                 {canApprove && <th className="px-4 py-3 text-left font-medium">관리</th>}
               </tr>
@@ -384,6 +400,7 @@ export default function AdminMemberTab() {
                     })()}
                   </td>
                   <td className="px-4 py-3"><RoleCell member={m} /></td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{formatLastLogin(m.lastLoginAt)}</td>
                   {showStatus && (
                     <td className="px-4 py-3">
                       {m.approved ? (

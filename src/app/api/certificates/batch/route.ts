@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   if (authResult instanceof Response) return authResult;
 
   let seminarId: string;
-  let recipients: Array<{ name: string; email?: string; studentId?: string; type: "completion" | "appreciation" }>;
+  let recipients: Array<{ name: string; email?: string; studentId?: string; type: "completion" | "appreciation" | "appointment" }>;
   let issuedBy: string;
 
   try {
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
 
       // 회원 알림
       if (recipientUserId) {
-        const label = r.type === "completion" ? "수료증" : "감사장";
+        const label = r.type === "completion" ? "수료증" : r.type === "appointment" ? "임명장" : "감사장";
         await db.collection("notifications").add({
           userId: recipientUserId,
           type: "certificate",

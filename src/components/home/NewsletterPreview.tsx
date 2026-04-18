@@ -16,7 +16,7 @@ export default function NewsletterPreview() {
       <div className="mx-auto max-w-6xl px-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Newspaper size={20} className="text-violet-600" />
+            <Newspaper size={20} className="text-blue-600" />
             <h2 className="text-xl font-bold">연세교육공학회보</h2>
           </div>
           <Link

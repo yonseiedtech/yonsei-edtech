@@ -14,11 +14,12 @@ import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-type CertType = "completion" | "appreciation";
+type CertType = "completion" | "appreciation" | "appointment";
 
 const CERT_LABELS: Record<CertType, { label: string; icon: React.ReactNode }> = {
   completion: { label: "수료증", icon: <Award size={16} /> },
   appreciation: { label: "감사장", icon: <Heart size={16} /> },
+  appointment: { label: "임명장", icon: <Award size={16} /> },
 };
 
 /** 참석자 현황 + 발급 대상자 2패널 컴포넌트 */
@@ -167,7 +168,7 @@ function AttendeeSelector({ attendees, seminarId, certType, onSelectName, onBatc
             {creating ? (
               <>{progress.current}/{progress.total} ({Math.round((progress.current / progress.total) * 100)}%)</>
             ) : (
-              <><Award size={12} />{recipients.length}명 {certType === "completion" ? "수료증" : "감사장"} 일괄 발급</>
+              <><Award size={12} />{recipients.length}명 {CERT_LABELS[certType].label} 일괄 발급</>
             )}
           </Button>
           {recipients.length === 1 && (
@@ -189,7 +190,7 @@ function spacedName(name: string): string {
 /** 현재 최대 증서번호를 조회하여 다음 번호 반환 */
 async function generateCertificateNo(certType: CertType = "completion"): Promise<string> {
   const yy = String(new Date().getFullYear()).slice(-2);
-  const prefix = certType === "completion" ? "C" : "A"; // C=수료증, A=감사장
+  const prefix = certType === "completion" ? "C" : certType === "appreciation" ? "A" : "P";
   const tag = `${prefix}${yy}-`;
   try {
     const existing = await certificatesApi.list(undefined, certType);
@@ -210,7 +211,7 @@ async function generateCertificateNo(certType: CertType = "completion"): Promise
 /** 일괄 발급용: 시작 번호를 한 번 조회 후 로컬에서 증가 */
 async function generateCertificateNoBatch(certType: CertType, count: number): Promise<string[]> {
   const yy = String(new Date().getFullYear()).slice(-2);
-  const prefix = certType === "completion" ? "C" : "A";
+  const prefix = certType === "completion" ? "C" : certType === "appreciation" ? "A" : "P";
   const tag = `${prefix}${yy}-`;
   let maxNum = 0;
   try {
@@ -763,8 +764,7 @@ export function CertificatePreview({
   snapStep?: number;
   onAreaResize?: (key: AreaKey, newScale: number) => void;
 }) {
-  const isCompletion = type === "completion";
-  const title = isCompletion ? "수 료 증" : "감사장";
+  const title = type === "completion" ? "수 료 증" : type === "appointment" ? "임 명 장" : "감사장";
   const accentColor = style.borderColor;
   const a = areaStyles;
 
@@ -1100,6 +1100,9 @@ export function getDefaultBody(type: CertType, semester: string, seminarTitle: s
   if (type === "completion") {
     return `귀하께서는 ${semester} 연세교육공학회에서 구성원들의 교육공학 핵심 역량강화를 위하여 주관한 연세교육공학 학술대회 <${seminarTitle || "___"}>에 참석하여 소정의 과정을 이수하였기에 이 수료증을 수여합니다.`;
   }
+  if (type === "appointment") {
+    return `귀하를 ${semester} 연세대학교 교육공학회 ${seminarTitle || "___"}(으)로 임명합니다.\n\n귀하의 헌신적인 활동을 기대하며, 학회 발전에 크게 기여해주시기 바랍니다.`;
+  }
   return `귀하께서는 ${semester} 연세교육공학회에서 구성원들의 교육공학 핵심 역량강화를 위하여 주관한 연세교육공학 학술대회 <${seminarTitle || "___"}>에서 귀하께서가 지신 지식과 경험을 헌신적이고 열정적으로 공유해주심으로서 구성원들의 성장에 큰 도움을 주셨음에 감사드리며, 연세교육공학회 구성원들의 마음을 담아 감사장을 드립니다.`;
 }
 
@@ -1372,7 +1375,7 @@ export default function CertificateGenerator() {
       clone.querySelectorAll("[data-editable-overlay]").forEach((n) => n.remove());
 
       const html = clone.outerHTML;
-      const fileName = `${certType === "completion" ? "수료증" : "감사장"}_${recipientName || "미입력"}_${certificateNo || "번호없음"}.pdf`;
+      const fileName = `${CERT_LABELS[certType].label}_${recipientName || "미입력"}_${certificateNo || "번호없음"}.pdf`;
 
       const res = await fetch("/api/certificates/pdf", {
         method: "POST",
@@ -1576,7 +1579,7 @@ export default function CertificateGenerator() {
       notifyCertificateIssued(attendee.userId, seminar.title, certType);
     }
     setRecipientName(name);
-    toast.success(`${name}님 ${certType === "completion" ? "수료증" : "감사장"} 생성 완료`);
+    toast.success(`${name}님 ${CERT_LABELS[certType].label} 생성 완료`);
   }
 
   const previewDate = seminar
@@ -1685,8 +1688,8 @@ export default function CertificateGenerator() {
 
               {/* 캔버스 기준 정렬 (선택 영역) */}
               {selectedAreas.length > 0 && (
-                <div className="rounded-md border border-purple-200 bg-purple-50/60 p-2">
-                  <p className="mb-1 text-[11px] font-semibold text-purple-700">
+                <div className="rounded-md border border-blue-200 bg-blue-50/60 p-2">
+                  <p className="mb-1 text-[11px] font-semibold text-blue-700">
                     페이지 기준 정렬 · {selectedAreas.length}개 선택
                   </p>
                   <div className="grid grid-cols-3 gap-1">
@@ -1993,7 +1996,7 @@ export default function CertificateGenerator() {
                         <span className="h-3 w-3 shrink-0 rounded-full border" style={{ background: tpl.borderColor }} />
                         <span className="font-medium">{tpl.name}</span>
                         <Badge variant="secondary" className="h-4 text-[9px]">
-                          {tpl.certType === "completion" ? "수료증" : "감사장"}
+                          {CERT_LABELS[certType].label}
                         </Badge>
                       </span>
                     </button>

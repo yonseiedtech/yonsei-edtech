@@ -197,6 +197,25 @@ export function computeAvgReadDuration(
   return Math.round(durations.reduce((a, b) => a + b, 0) / durations.length);
 }
 
+export function computeTotalReadDays(
+  papers: ResearchPaper[],
+  opts: PeriodOpts = {}
+): number | null {
+  let total = 0;
+  let count = 0;
+  for (const p of papers) {
+    if (p.isDraft) continue;
+    if (!isPaperInPeriod(p, opts.periodStart, opts.periodEnd)) continue;
+    if (!p.readStartedAt || !p.readCompletedAt) continue;
+    const s = Date.parse(p.readStartedAt);
+    const e = Date.parse(p.readCompletedAt);
+    if (!Number.isFinite(s) || !Number.isFinite(e) || e < s) continue;
+    total += Math.round((e - s) / 86400000);
+    count += 1;
+  }
+  return count > 0 ? total : null;
+}
+
 export function computeTopKeywords(
   papers: ResearchPaper[],
   topN = 10,

@@ -12,6 +12,8 @@ import AuthProvider from "@/features/auth/AuthProvider";
 import ImpersonationBanner from "@/components/layout/ImpersonationBanner";
 import ConsentGate from "@/components/auth/ConsentGate";
 import UndergradInfoPrompt from "@/components/auth/UndergradInfoPrompt";
+import StudyTimerBar from "@/features/research/study-timer/StudyTimerBar";
+import StudyEndDialog from "@/features/research/study-timer/StudyEndDialog";
 import "./globals.css";
 
 const pretendard = localFont({
@@ -158,6 +160,8 @@ export default function RootLayout({
               <Footer />
             </div>
             <ChatWidget />
+            <StudyTimerBar />
+            <StudyEndDialog />
             <ConsentGate />
             <UndergradInfoPrompt />
             <Toaster richColors position="top-center" />

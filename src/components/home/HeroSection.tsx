@@ -120,7 +120,7 @@ export default function HeroSection() {
             <h1 className="mt-4 text-3xl font-bold leading-snug text-foreground md:text-5xl md:leading-snug">
               교육의 미래를
               <br />
-              <span className="bg-gradient-to-r from-primary via-sky-500 to-indigo-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary via-sky-500 to-blue-500 bg-clip-text text-transparent">
                 함께 설계합니다
               </span>
             </h1>

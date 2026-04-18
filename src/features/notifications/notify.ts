@@ -122,9 +122,9 @@ export function notifyNewSeminar(
 export function notifyCertificateIssued(
   recipientUserId: string,
   seminarTitle: string,
-  certType: "completion" | "appreciation",
+  certType: "completion" | "appreciation" | "appointment",
 ) {
-  const label = certType === "completion" ? "수료증" : "감사장";
+  const label = certType === "completion" ? "수료증" : certType === "appointment" ? "임명장" : "감사장";
   return create(
     recipientUserId,
     "certificate",

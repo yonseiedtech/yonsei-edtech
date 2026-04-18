@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useRef } from "react";
 import type { WritingPaperHistory } from "@/types";
 import { computeDailyActivity } from "@/lib/research-stats";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
@@ -71,6 +71,22 @@ function periodLabel(type: PeriodType, baseYear: number): string {
 
 const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 const MONTH_LABELS = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
+
+function formatDateKo(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const dow = DAY_NAMES[d.getDay()];
+  return `${y}년 ${m}월 ${day}일(${dow})`;
+}
+
+interface TooltipData {
+  x: number;
+  y: number;
+  dateStr: string;
+  hasWriting: boolean;
+  count: number;
+}
 
 interface CellData {
   key: string;
@@ -190,6 +206,26 @@ export default function WritingHeatmap({ history }: Props) {
     setActiveYear((y) => y + 1);
   }, []);
 
+  const [tooltip, setTooltip] = useState<TooltipData | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  const handleCellEnter = useCallback((e: React.MouseEvent, c: CellData) => {
+    if (!c.date) return;
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const parentRect = gridRef.current?.closest(".overflow-x-auto")?.getBoundingClientRect();
+    const baseX = parentRect ? rect.left - parentRect.left + rect.width / 2 : rect.left + rect.width / 2;
+    const baseY = parentRect ? rect.top - parentRect.top : rect.top;
+    setTooltip({
+      x: baseX,
+      y: baseY,
+      dateStr: formatDateKo(c.date),
+      hasWriting: c.count > 0,
+      count: c.count,
+    });
+  }, []);
+
+  const handleCellLeave = useCallback(() => setTooltip(null), []);
+
   return (
     <section className="rounded-2xl border bg-white p-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -255,7 +291,7 @@ export default function WritingHeatmap({ history }: Props) {
       </div>
 
       <div className="mt-3 overflow-x-auto">
-        <div className="inline-flex min-w-max flex-col gap-1">
+        <div className="relative inline-flex min-w-max flex-col gap-1" ref={gridRef}>
           <div className="relative ml-6 h-3" style={{ width: weeks * 14 }}>
             {monthMarkers.map((m) => (
               <span
@@ -285,11 +321,8 @@ export default function WritingHeatmap({ history }: Props) {
               {cellData.map((c) => (
                 <div
                   key={c.key}
-                  title={
-                    c.date
-                      ? `${ymd(c.date)} · ${c.count}회 저장${c.lastSavedAt ? ` · 마지막 ${c.lastSavedAt.slice(11, 16)}` : ""}`
-                      : ""
-                  }
+                  onMouseEnter={(e) => handleCellEnter(e, c)}
+                  onMouseLeave={handleCellLeave}
                   className="rounded-[2px]"
                   style={{
                     width: 12,
@@ -302,6 +335,21 @@ export default function WritingHeatmap({ history }: Props) {
               ))}
             </div>
           </div>
+
+          {tooltip && (
+            <div
+              className="pointer-events-none absolute z-50 rounded-md border bg-white px-2.5 py-1.5 text-[11px] leading-relaxed shadow-lg"
+              style={{ left: tooltip.x, top: tooltip.y - 4, transform: "translate(-50%, -100%)" }}
+            >
+              <p className="font-semibold text-foreground">{tooltip.dateStr}</p>
+              <p className="text-muted-foreground">
+                논문 작성 : <span className={tooltip.hasWriting ? "font-bold text-green-600" : "text-muted-foreground"}>{tooltip.hasWriting ? "YES!" : "NO"}</span>
+              </p>
+              <p className="text-muted-foreground">
+                작업 이력 : <span className="font-medium text-foreground">{tooltip.count}건</span>
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </section>

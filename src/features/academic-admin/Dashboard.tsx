@@ -135,7 +135,7 @@ export default function AcademicDashboard() {
           { label: "모집중", value: studyStats.recruiting },
           { label: "참여자", value: studyStats.totalParticipants },
         ]} />
-        <StatCard icon={<FolderKanban size={20} />} title="프로젝트" color="border-l-purple-500" href="/console/academic/projects" stats={[
+        <StatCard icon={<FolderKanban size={20} />} title="프로젝트" color="border-l-blue-500" href="/console/academic/projects" stats={[
           { label: "진행/예정", value: projectStats.ongoing },
           { label: "완료", value: projectStats.completed },
           { label: "모집중", value: projectStats.recruiting },

@@ -123,7 +123,7 @@ export default function InterviewResponseComments({ responseId, postId }: Props)
                 <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                   <span className="font-semibold text-foreground">{c.authorName}</span>
                   {roleLabel && (
-                    <span className="rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700">
+                    <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">
                       {roleLabel}
                     </span>
                   )}

@@ -302,7 +302,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
             <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1"><Calendar size={12} />{a.date}{a.endDate ? ` ~ ${a.endDate}` : ""}</span>
               {(a.year || a.semester) && (
-                <Badge variant="secondary" className="bg-violet-50 text-[10px] text-violet-700">
+                <Badge variant="secondary" className="bg-blue-50 text-[10px] text-blue-700">
                   {formatSemester(a.year, a.semester)}
                 </Badge>
               )}

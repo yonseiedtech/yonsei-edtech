@@ -1,9 +1,12 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Star, Clock, BookOpen, Pencil, Trash2, ExternalLink, GraduationCap, FileText, CheckCircle2 } from "lucide-react";
+import { Star, Clock, BookOpen, Pencil, Trash2, ExternalLink, GraduationCap, FileText, CheckCircle2, Play, Timer } from "lucide-react";
 import type { ResearchPaper, PaperReadStatus } from "@/types";
 import { cn } from "@/lib/utils";
+import { useStudyTimerStore } from "./study-timer/study-timer-store";
+import { useCreateSession, usePaperTotalMinutes } from "./study-timer/useStudySessions";
+import { toast } from "sonner";
 
 interface Props {
   paper: ResearchPaper;
@@ -27,6 +30,34 @@ function nextStatus(current: PaperReadStatus | undefined): PaperReadStatus {
 }
 
 export default function ResearchPaperCard({ paper, onEdit, onDelete, onQuickUpdate }: Props) {
+  const { active, start: startTimer } = useStudyTimerStore();
+  const { mutateAsync: createSession } = useCreateSession();
+  const totalMinutes = usePaperTotalMinutes(paper.id);
+  const isTimerActive = active?.paperId === paper.id;
+
+  async function handleStartTimer() {
+    if (active) {
+      toast.error("이미 진행 중인 세션이 있습니다");
+      return;
+    }
+    try {
+      const session = await createSession({
+        type: "reading",
+        paperId: paper.id,
+        targetTitle: paper.title || "(제목 없음)",
+      });
+      startTimer({
+        id: session.id,
+        type: "reading",
+        paperId: paper.id,
+        targetTitle: paper.title || "(제목 없음)",
+        startTime: Date.now(),
+      });
+    } catch {
+      toast.error("타이머 시작에 실패했습니다");
+    }
+  }
+
   const isThesis = paper.paperType === "thesis";
   const TypeIcon = isThesis ? GraduationCap : FileText;
   const updatedDate = paper.updatedAt ? new Date(paper.updatedAt) : null;
@@ -67,7 +98,7 @@ export default function ResearchPaperCard({ paper, onEdit, onDelete, onQuickUpda
     <article className="group rounded-2xl border bg-white p-5 transition hover:border-primary/40 hover:shadow-sm">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 text-xs">
-          <Badge variant="secondary" className={isThesis ? "bg-violet-50 text-violet-700" : "bg-blue-50 text-blue-700"}>
+          <Badge variant="secondary" className={isThesis ? "bg-blue-50 text-blue-700" : "bg-blue-50 text-blue-700"}>
             <TypeIcon size={11} className="mr-1" />
             {isThesis ? `학위논문${paper.thesisLevel === "master" ? " · 석사" : paper.thesisLevel === "doctoral" ? " · 박사" : ""}` : "학술논문"}
           </Badge>
@@ -168,20 +199,45 @@ export default function ResearchPaperCard({ paper, onEdit, onDelete, onQuickUpda
         </div>
       )}
 
+      {totalMinutes > 0 && (
+        <div className="mt-2 flex items-center gap-1 text-[11px] text-primary">
+          <Timer size={11} />
+          <span>총 {totalMinutes >= 60 ? `${Math.floor(totalMinutes / 60)}시간 ${Math.round(totalMinutes % 60)}분` : `${Math.round(totalMinutes)}분`}</span>
+        </div>
+      )}
+
       <div className="mt-3 flex items-center justify-between text-[10px] text-muted-foreground">
-        <span>
-          {daysAgo !== null && (daysAgo === 0 ? "오늘 수정" : `${daysAgo}일 전 수정`)}
-        </span>
-        {(paper.url || paper.doi) && (
-          <a
-            href={paper.url || `https://doi.org/${paper.doi}`}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-0.5 hover:text-primary"
-            onClick={(e) => e.stopPropagation()}
+        <div className="flex items-center gap-2">
+          <span>
+            {daysAgo !== null && (daysAgo === 0 ? "오늘 수정" : `${daysAgo}일 전 수정`)}
+          </span>
+          {(paper.url || paper.doi) && (
+            <a
+              href={paper.url || `https://doi.org/${paper.doi}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-0.5 hover:text-primary"
+              onClick={(e) => e.stopPropagation()}
+            >
+              원문 <ExternalLink size={10} />
+            </a>
+          )}
+        </div>
+        {!isTimerActive && paper.readStatus !== "completed" && (
+          <button
+            type="button"
+            onClick={handleStartTimer}
+            className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary hover:bg-primary/20"
           >
-            원문 <ExternalLink size={10} />
-          </a>
+            <Play size={10} />
+            {paper.readStatus === "reading" ? "읽기 계속" : "읽기 시작"}
+          </button>
+        )}
+        {isTimerActive && (
+          <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary animate-pulse">
+            <Timer size={10} />
+            측정 중
+          </span>
         )}
       </div>
     </article>
