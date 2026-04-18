@@ -101,16 +101,21 @@ function DashboardContent() {
     <div className="py-16">
       <div className="mx-auto max-w-5xl px-4">
         {/* 환영 섹션 */}
-        <div className="flex items-center gap-3">
-          <LayoutDashboard size={28} className="text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold">
-              안녕하세요, {user.name}님
-            </h1>
-            <div className="mt-1 flex items-center gap-2">
-              <Badge>{ROLE_LABELS[user.role]}</Badge>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <LayoutDashboard size={24} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">
+                안녕하세요, {user.name}님
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                오늘의 학회 활동 현황을 확인하세요.
+              </p>
             </div>
           </div>
+          <Badge>{ROLE_LABELS[user.role]}</Badge>
         </div>
 
         {/* 통계 카드 */}

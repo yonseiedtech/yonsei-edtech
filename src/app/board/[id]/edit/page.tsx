@@ -40,7 +40,7 @@ function EditContent({ params }: { params: Promise<{ id: string }> }) {
 
   return (
     <div className="py-16">
-      <div className="mx-auto max-w-3xl px-4">
+      <div className="mx-auto max-w-5xl px-4">
         <PostForm
           mode="edit"
           initialData={post}

@@ -238,8 +238,15 @@ function DirectoryContent() {
       <div className="mx-auto max-w-6xl px-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Shield size={28} className="text-primary" />
-            <h1 className="text-3xl font-bold">연락망</h1>
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Shield size={24} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">연락망</h1>
+              <p className="text-sm text-muted-foreground">
+                학회원 연락처 정보를 확인하세요.
+              </p>
+            </div>
           </div>
           <Badge variant="secondary" className="gap-1">
             <Lock size={12} />

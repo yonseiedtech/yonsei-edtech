@@ -344,7 +344,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
 
   return (
     <div className="py-16">
-      <div className="mx-auto max-w-4xl px-4">
+      <div className="mx-auto max-w-5xl px-4">
         <PageHeader
           icon={icon}
           title={title}

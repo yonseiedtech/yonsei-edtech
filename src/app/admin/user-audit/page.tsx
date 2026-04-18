@@ -72,8 +72,8 @@ export default function UserAuditPage() {
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-10">
       <ConsolePageHeader
         icon={ShieldCheck}
-        title="감사 로그"
-        description="관리자 작업 이력과 권한 변경을 추적합니다."
+        title="회원 검증"
+        description="Firebase Auth 계정과 Firestore 프로필 정합성을 검증합니다."
         actions={
           <Button variant="outline" size="sm" onClick={load} disabled={loading}>
             {loading ? <Loader2 size={14} className="mr-1 animate-spin" /> : <RefreshCw size={14} className="mr-1" />}

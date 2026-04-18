@@ -84,8 +84,15 @@ export default function NewsletterPage() {
       <div className="mx-auto max-w-5xl px-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Newspaper size={28} className="text-violet-600" />
-            <h1 className="text-3xl font-bold">연세교육공학회보</h1>
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
+              <Newspaper size={24} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">연세교육공학회보</h1>
+              <p className="text-sm text-muted-foreground">
+                연세교육공학회의 학술 활동과 소식을 담은 정기 간행물입니다.
+              </p>
+            </div>
           </div>
           {canEdit && (
             <Link href="/newsletter/edit">
@@ -96,9 +103,6 @@ export default function NewsletterPage() {
             </Link>
           )}
         </div>
-        <p className="mt-2 text-muted-foreground">
-          연세교육공학회의 학술 활동과 소식을 담은 정기 간행물입니다.
-        </p>
 
         {isLoading ? (
           <LoadingSpinner className="mt-12" />

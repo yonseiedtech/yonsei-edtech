@@ -44,13 +44,21 @@ function formatLastLogin(iso?: string): string {
   if (!iso) return "-";
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "-";
-  const y = d.getFullYear();
+  const yy = String(d.getFullYear()).slice(-2);
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   const dow = DAY_KO[d.getDay()];
   const hh = String(d.getHours()).padStart(2, "0");
   const mm = String(d.getMinutes()).padStart(2, "0");
-  return `${y}년 ${m}월 ${day}일(${dow}) ${hh}:${mm}`;
+  return `${yy}년${m}월${day}일(${dow}) ${hh}:${mm}`;
+}
+
+function formatPhone(p?: string): string {
+  if (!p) return "-";
+  const d = p.replace(/\D/g, "");
+  if (d.length === 11) return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
+  if (d.length === 10) return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`;
+  return p;
 }
 
 // ── 역할별 배지 색상 ──
@@ -365,7 +373,7 @@ export default function AdminMemberTab() {
         value={m.role}
         onChange={(e) => handleRoleChange(m.id, e.target.value as UserRole)}
         className={cn(
-          "cursor-pointer rounded-full border px-2 py-0.5 text-[10px] font-semibold appearance-none outline-none",
+          "inline-flex w-fit cursor-pointer rounded-md border px-1.5 py-0.5 text-[10px] font-semibold leading-none appearance-none outline-none",
           ROLE_COLORS[m.role] || ROLE_COLORS.member,
         )}
       >
@@ -436,6 +444,7 @@ export default function AdminMemberTab() {
           <table className="w-full text-sm whitespace-nowrap">
             <thead className="border-b bg-muted/30">
               <tr>
+                <th className="px-4 py-3 text-left font-medium">이름</th>
                 <th className="px-4 py-3 text-left font-medium">학번(아이디)</th>
                 <th className="px-4 py-3 text-left font-medium">신분유형</th>
                 <th className="px-4 py-3 text-left font-medium">누적학기</th>
@@ -449,6 +458,7 @@ export default function AdminMemberTab() {
             <tbody className="divide-y">
               {data.map((m) => (
                 <tr key={m.id} className={cn("hover:bg-muted/20", rowStatusClass(m))}>
+                  <td className="px-4 py-3 font-medium">{m.name}</td>
                   <td className="px-4 py-3">
                     <div className="font-medium">{m.studentId || m.username}</div>
                     {m.studentId && (
@@ -462,7 +472,7 @@ export default function AdminMemberTab() {
                     {m.accumulatedSemesters != null ? `${m.accumulatedSemesters}학기` : "-"}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{currentStatusLabel(m)}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{m.phone || "-"}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{formatPhone(m.phone)}</td>
                   <td className="px-4 py-3"><RoleCell member={m} /></td>
                   <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{formatLastLogin(m.lastLoginAt)}</td>
                   {canApprove && (

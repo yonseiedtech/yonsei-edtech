@@ -80,8 +80,15 @@ export default function GalleryPage() {
     <div className="mx-auto max-w-5xl px-4 py-16">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Camera size={28} className="text-primary" />
-          <h1 className="text-3xl font-bold">포토갤러리</h1>
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Camera size={24} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">포토갤러리</h1>
+            <p className="text-sm text-muted-foreground">
+              학회 활동 사진을 앨범별로 확인하세요.
+            </p>
+          </div>
         </div>
         {isStaff && (
           <Button onClick={() => setShowCreateAlbum(true)} size="sm">
@@ -90,7 +97,6 @@ export default function GalleryPage() {
           </Button>
         )}
       </div>
-      <p className="mt-2 text-muted-foreground">학회 활동 사진을 앨범별로 확인하세요.</p>
 
       {isLoading ? (
         <div className="flex items-center justify-center py-20">

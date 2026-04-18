@@ -81,7 +81,7 @@ export default function ActivitiesPage() {
   return (
     <div className="py-16">
       {/* 헤더 */}
-      <div className="mx-auto max-w-4xl px-4">
+      <div className="mx-auto max-w-5xl px-4">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <BookOpen size={24} />
@@ -96,7 +96,7 @@ export default function ActivitiesPage() {
       </div>
 
       {/* 활동 카드 */}
-      <section className="mx-auto mt-8 max-w-4xl px-4">
+      <section className="mx-auto mt-8 max-w-5xl px-4">
         <div className="grid gap-4 sm:grid-cols-2">
           {activities.map((a) => (
             <Link
@@ -133,7 +133,7 @@ export default function ActivitiesPage() {
       </section>
 
       {/* 주요 활동 내역 */}
-      <section className="mx-auto mt-12 max-w-4xl px-4">
+      <section className="mx-auto mt-12 max-w-5xl px-4">
         <h2 className="text-lg font-bold">주요 활동 내역</h2>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {highlights.length === 0 ? (
