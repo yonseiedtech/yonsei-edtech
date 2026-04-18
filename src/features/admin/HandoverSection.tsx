@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { dataApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -16,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   FileText, Plus, Pencil, Trash2, ChevronDown,
-  ChevronUp, Loader2,
+  ChevronUp, Loader2, Heading2, Bold, List, CheckSquare, Printer,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -47,6 +48,45 @@ export default function HandoverSection() {
     category: "routine" as HandoverDocument["category"],
     priority: "medium" as HandoverDocument["priority"],
   });
+  const contentRef = useRef<HTMLTextAreaElement | null>(null);
+
+  function applyMarkdown(action: "heading" | "bold" | "list" | "checkbox") {
+    const ta = contentRef.current;
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const value = ta.value;
+    const before = value.slice(0, start);
+    const selected = value.slice(start, end);
+    const after = value.slice(end);
+
+    let next = value;
+    let cursorStart = start;
+    let cursorEnd = end;
+
+    if (action === "bold") {
+      const text = selected || "굵게";
+      next = `${before}**${text}**${after}`;
+      cursorStart = start + 2;
+      cursorEnd = cursorStart + text.length;
+    } else {
+      const lineStart = before.lastIndexOf("\n") + 1;
+      const prefix = action === "heading" ? "## "
+        : action === "list" ? "- "
+        : "- [ ] ";
+      const beforeLine = value.slice(0, lineStart);
+      const lineContent = value.slice(lineStart);
+      next = `${beforeLine}${prefix}${lineContent}`;
+      cursorStart = start + prefix.length;
+      cursorEnd = end + prefix.length;
+    }
+
+    setDocForm((f) => ({ ...f, content: next }));
+    requestAnimationFrame(() => {
+      ta.focus();
+      ta.setSelectionRange(cursorStart, cursorEnd);
+    });
+  }
 
   const { data: handoverDocs = [] } = useQuery({
     queryKey: ["handover_docs"],
@@ -124,10 +164,18 @@ export default function HandoverSection() {
             </button>
           ))}
         </div>
-        <Button size="sm" onClick={() => openDocDialog()}>
-          <Plus size={14} className="mr-1" />
-          문서 작성
-        </Button>
+        <div className="flex gap-2">
+          <Link href={`/console/handover/report?term=${CURRENT_TERM}`}>
+            <Button variant="outline" size="sm">
+              <Printer size={14} className="mr-1" />
+              기수 리포트
+            </Button>
+          </Link>
+          <Button size="sm" onClick={() => openDocDialog()}>
+            <Plus size={14} className="mr-1" />
+            문서 작성
+          </Button>
+        </div>
       </div>
 
       {filteredDocs.length === 0 ? (
@@ -212,14 +260,59 @@ export default function HandoverSection() {
               <Input value={docForm.title} onChange={(e) => setDocForm((f) => ({ ...f, title: e.target.value }))} placeholder="업무 제목" />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">내용</label>
+              <div className="mb-1 flex items-center justify-between">
+                <label className="block text-sm font-medium">내용</label>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => applyMarkdown("heading")}
+                    title="소제목 (## )"
+                    className="rounded border px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+                  >
+                    <Heading2 size={12} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyMarkdown("bold")}
+                    title="굵게 (**)"
+                    className="rounded border px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+                  >
+                    <Bold size={12} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyMarkdown("list")}
+                    title="목록 (- )"
+                    className="rounded border px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+                  >
+                    <List size={12} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyMarkdown("checkbox")}
+                    title="체크박스 (- [ ] )"
+                    className="rounded border px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+                  >
+                    <CheckSquare size={12} />
+                  </button>
+                </div>
+              </div>
               <textarea
+                ref={contentRef}
                 value={docForm.content}
                 onChange={(e) => setDocForm((f) => ({ ...f, content: e.target.value }))}
-                placeholder="업무 내용, 절차, 주의사항 등을 작성하세요..."
-                rows={8}
-                className="w-full rounded-lg border px-3 py-2 text-sm resize-y"
+                placeholder={`## 정기 업무
+- 매주 월요일 회의 운영
+- 회비 입금 확인 (#재무 슬랙)
+
+## 주의사항
+**중요**: 학기 초 신입 환영 행사 일정 조율`}
+                rows={10}
+                className="w-full rounded-lg border px-3 py-2 font-mono text-sm resize-y"
               />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                ## 소제목 · **굵게** · - 목록 · - [ ] 체크박스 (마크다운은 기수 리포트에서 그대로 표시됩니다)
+              </p>
             </div>
           </div>
           <DialogFooter>
