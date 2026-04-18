@@ -14,6 +14,7 @@ import ResearchDashboard from "@/features/research/ResearchDashboard";
 import ResearchReportPrint from "@/features/research/ResearchReportPrint";
 import ResearchReportEditor from "@/features/research/ResearchReportEditor";
 import ResearchProposalEditor from "@/features/research/ResearchProposalEditor";
+import StudyTimerStats from "@/features/research/study-timer/StudyTimerStats";
 import { useResearchPapers } from "@/features/research/useResearchPapers";
 import { useWritingPaper } from "@/features/research/useWritingPaper";
 import { useWritingPaperHistory } from "@/features/research/useWritingPaperHistory";
@@ -312,6 +313,7 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
 
               <WritingHeatmap history={filteredHistory} />
               <WritingHistoryList history={filteredHistory} />
+              {isSelf && <StudyTimerStats />}
             </div>
 
             {/* 서브탭 */}

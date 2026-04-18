@@ -363,8 +363,18 @@ service cloud.firestore {
         && resource.data.userId == request.auth.uid;
     }
 
-    // ─── Research Reports (연구 보고서 — 사용자당 1건) ───
-    match /research_reports/{docId} {
+    // ─── Research Proposals (연구 계획서 — 사용자당 1건) ───
+    match /research_proposals/{docId} {
+      allow read: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // ─── Study Sessions (연구 타이머 세션 — 통계/잔디용) ───
+    match /study_sessions/{docId} {
       allow read: if isAuthenticated()
         && resource.data.userId == request.auth.uid;
       allow create: if isAuthenticated()
