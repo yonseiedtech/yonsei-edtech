@@ -22,6 +22,10 @@ import ProfileContactInfo from "./ProfileContactInfo";
 import ProfileResearchInterests from "./ProfileResearchInterests";
 import ProfileAcademicActivities from "./ProfileAcademicActivities";
 import ProfileResearchActivities from "./ProfileResearchActivities";
+import ProfileAwards from "./ProfileAwards";
+import ProfileExternalActivities from "./ProfileExternalActivities";
+import ProfileContentCreations from "./ProfileContentCreations";
+import ProfileOutputs from "./ProfileOutputs";
 import OwnerVisibilitySection from "./OwnerVisibilitySection";
 
 interface Props {
@@ -149,6 +153,16 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
         )}
 
         {showAcademic && <ProfileAcademicActivities owner={owner} />}
+
+        {showAcademic && <ProfileOutputs owner={owner} />}
+
+        {showAcademic && <ProfileAwards owner={owner} />}
+
+        {showAcademic && (
+          <ProfileExternalActivities owner={owner} verifiedOnly={!isOwner} />
+        )}
+
+        {showAcademic && <ProfileContentCreations owner={owner} />}
 
         {showResearch && <ProfileResearchActivities papers={owner.recentPapers} />}
 

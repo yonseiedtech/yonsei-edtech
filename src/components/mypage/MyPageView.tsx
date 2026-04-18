@@ -327,6 +327,10 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                     <p className="text-sm font-semibold">게시판</p>
                     <p className="mt-1 text-xs text-muted-foreground">공지·자유·홍보·자료실</p>
                   </Link>
+                  <Link href="/mypage/portfolio" className="rounded-2xl border bg-card p-4 hover:border-primary/40 hover:shadow-sm">
+                    <p className="text-sm font-semibold">학술 포트폴리오</p>
+                    <p className="mt-1 text-xs text-muted-foreground">수상·대외활동·콘텐츠 등록</p>
+                  </Link>
                 </div>
               )}
             </div>
