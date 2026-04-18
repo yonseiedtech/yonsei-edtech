@@ -79,6 +79,49 @@
 - 호스트가 본인 활동에 들어왔을 때, 활동 상세 페이지 우측 상단에 **"호스트 대시보드"** 버튼 노출
 - 마이페이지 → "내가 진행하는 활동" 위젯에 링크
 
+### F6. 호스트 회고 (Retrospective) — 호스트 본인 작성·운영진 열람
+호스트가 활동 종료 후(또는 진행 중) 자신의 운영 회고를 남길 수 있는 영역.
+
+**필드 (3분할 회고 템플릿)**
+1. **좋았던 점 (Liked)** — 잘 굴러간 진행/참가자 반응/운영 요소
+2. **아쉬웠던 점 (Lacked)** — 시간 부족·자료 미비·참여 저조 등
+3. **보완·발전시킬 사항 (Longed for / Next Action)** — 다음 회차 또는 인수인계 시 반영할 개선안
+
+**부가 메타**
+- 종합 평점 1~5 (운영자 본인 자평) — 선택
+- 후속 액션 태그 (`#재초청`, `#커리큘럼개편`, `#장소변경`, `#예산증액` 등)
+- 첨부 이미지/파일 (활동 사진·메모지) — 선택, 최대 3개
+
+**가시성**
+- 작성: 활동 호스트 본인만
+- 열람: 호스트 본인 + `staff` / `president` / `admin` (운영진 인수인계 가치 ↑)
+- 비공개 토글: "초안" 상태로 본인만 보기 가능
+
+**활용 시나리오**
+- `/console/host-overview` — 모든 활동 회고 모아보기, 학기말 운영 리뷰 자료
+- 신임 호스트가 동일 활동 직전 회차 회고 자동 표시 → 시행착오 감소
+- 인수인계 리포트(단계 3 Handover PDF)에 자동 첨부 옵션
+- AI 요약: 학기 말 모든 회고를 `gemini-2.5-flash`로 요약 → 학회 운영 리포트 초안 (V2)
+
+**데이터 모델**
+```typescript
+interface HostRetrospective {
+  id: string;
+  activityType: "seminar" | "study" | "project" | "external";
+  activityId: string;
+  hostUserId: string;
+  liked: string;        // 좋았던 점 (Markdown)
+  lacked: string;       // 아쉬웠던 점
+  longedFor: string;    // 보완/발전 사항
+  rating?: number;      // 1~5
+  followUpTags?: string[];
+  attachments?: string[];  // bkend.ai 파일 ID
+  status: "draft" | "published";
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
 ---
 
 ## 데이터 모델
@@ -104,6 +147,9 @@ interface StudyHostable { hostUserIds: string[]; }
 interface ProjectHostable { hostUserIds: string[]; }
 interface ExternalActivityHostable { hostUserIds: string[]; }
 
+// 호스트 회고 (활동×호스트 조합) — F6
+// → 위 F6 섹션의 HostRetrospective 타입과 동일, 컬렉션명: host_retrospectives
+
 // 호스트 메모 (활동×참가자×호스트 조합)
 interface HostNote {
   id: string;
@@ -121,6 +167,10 @@ interface HostNote {
 ### bkend API 모듈 (신규)
 - `hostDashboardApi.getParticipants(activityType, activityId)` — 신청자 + 프로필 + 포트폴리오 + 활동이력 조인
 - `hostNotesApi.list / upsert / delete`
+- `hostRetrospectivesApi.list / get / upsert / delete` — F6 호스트 회고 CRUD
+  - `listByActivity(activityType, activityId)` — 운영진/호스트 본인용
+  - `listByHost(hostUserId)` — 호스트 본인의 모든 회고
+  - `listForOverview()` — 운영진 전체 보기 (`/console/host-overview`)
 
 ---
 
@@ -130,6 +180,17 @@ interface HostNote {
 match /host_notes/{id} {
   allow read: if isAuthenticated()
     && (resource.data.hostUserId == request.auth.uid || isStaffOrAbove());
+  allow create: if isAuthenticated()
+    && request.resource.data.hostUserId == request.auth.uid;
+  allow update, delete: if isAuthenticated()
+    && resource.data.hostUserId == request.auth.uid;
+}
+
+// F6 호스트 회고 — 호스트 본인 작성, 본인+운영진 열람
+match /host_retrospectives/{id} {
+  allow read: if isAuthenticated()
+    && (resource.data.hostUserId == request.auth.uid
+        || (resource.data.status == 'published' && isStaffOrAbove()));
   allow create: if isAuthenticated()
     && request.resource.data.hostUserId == request.auth.uid;
   allow update, delete: if isAuthenticated()
@@ -182,11 +243,14 @@ match /host_notes/{id} {
 - studies / projects / external 호스트 페이지 (컴포넌트 90% 재사용, 호칭만 변경)
 - 모임장↔PM 호칭만 다르게 — `<HostDashboard role="PM" />` 패턴
 
-### Phase 4 — 액션 도구 (3일)
+### Phase 4 — 액션 도구 + 호스트 회고 (4일)
 - CSV 내보내기
 - 단체 메일 (Resend 재사용 — 단계 3 인프라)
 - 호스트 메모 CRUD
 - 집계 위젯 (도넛/막대/태그)
+- **F6 호스트 회고**: 좋았던 점/아쉬웠던 점/보완사항 3분할 폼 + 평점 + 태그 + 첨부
+  - 활동 종료 시점에 자동 알림 (회고 작성 유도)
+  - `/console/host-overview` 운영진 회고 모아보기
 
 ### Phase 5 — 마이페이지 통합 + 권한 정밀화 (3일)
 - 마이페이지 "내가 진행하는 활동" 위젯
@@ -207,6 +271,9 @@ match /host_notes/{id} {
 - `src/components/host/ParticipantInsights.tsx` (학술활동·연구·회원 정보 종합)
 - `src/components/host/HostStatsWidget.tsx` (도넛·막대·태그)
 - `src/components/host/HostNoteEditor.tsx`
+- `src/components/host/HostRetrospectiveSection.tsx` — F6 회고 섹션 (3분할 + 평점 + 태그)
+- `src/components/host/HostRetrospectiveList.tsx` — 운영자 보기용 회고 카드 리스트
+- `src/app/console/host-overview/page.tsx` — 운영진 회고 모아보기 페이지
 - `src/lib/host-helpers.ts` — `isHostOrStaff`, 신청자 데이터 조립
 
 ### 수정
