@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
 import {
   useNewsletters,
@@ -9,10 +9,29 @@ import {
   SECTION_TYPE_STYLES,
   AUTHOR_TYPE_STYLES,
 } from "@/features/newsletter/newsletter-store";
+import type { NewsletterIssue } from "@/features/newsletter/newsletter-store";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, BookOpen, Download } from "lucide-react";
+import { ArrowLeft, BookOpen, Download, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import LoadingSpinner from "@/components/ui/loading-spinner";
+
+async function downloadIssuePdf(issue: NewsletterIssue) {
+  // SSR 안전: react-pdf와 PDF 컴포넌트는 클라이언트에서만 dynamic import
+  const [{ pdf }, { NewsletterPdfDocument }] = await Promise.all([
+    import("@react-pdf/renderer"),
+    import("@/features/newsletter/NewsletterPdfDocument"),
+  ]);
+  const blob = await pdf(<NewsletterPdfDocument issue={issue} />).toBlob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `연세교육공학회보_vol.${issue.issueNumber}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
 
 export default function NewsletterDetailPage({
   params,
@@ -22,6 +41,7 @@ export default function NewsletterDetailPage({
   const { id } = use(params);
   const { issues, isLoading } = useNewsletters();
   const issue = issues.find((i) => i.id === id);
+  const [pdfBusy, setPdfBusy] = useState(false);
 
   if (isLoading) {
     return <LoadingSpinner className="min-h-[50vh] items-center" />;
@@ -62,13 +82,25 @@ export default function NewsletterDetailPage({
                 <BookOpen size={14} />
                 매거진으로 보기
               </Link>
-              <a
-                href={`/api/newsletter/${issue.id}/pdf`}
-                className="inline-flex items-center gap-1.5 rounded-lg border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+              <button
+                type="button"
+                disabled={pdfBusy}
+                onClick={async () => {
+                  setPdfBusy(true);
+                  try {
+                    await downloadIssuePdf(issue);
+                  } catch (err) {
+                    console.error("[newsletter] PDF download failed", err);
+                    toast.error("PDF 생성에 실패했습니다.");
+                  } finally {
+                    setPdfBusy(false);
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <Download size={14} />
-                PDF 다운로드
-              </a>
+                {pdfBusy ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                {pdfBusy ? "PDF 생성 중..." : "PDF 다운로드"}
+              </button>
             </div>
           )}
         </div>

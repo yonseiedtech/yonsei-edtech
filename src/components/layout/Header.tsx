@@ -53,6 +53,7 @@ const PUBLIC_NAV: NavGroup[] = [
       { href: "/activities/projects", label: "프로젝트" },
       { href: "/activities/studies", label: "스터디" },
       { href: "/activities/external", label: "대외 학술대회" },
+      { href: "/alumni/thesis", label: "졸업생 학위논문" },
     ],
   },
   {
