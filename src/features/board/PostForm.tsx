@@ -96,6 +96,10 @@ export default function PostForm({ mode = "create", initialData, initialCategory
   }
 
   async function onSubmit(data: PostData) {
+    if (category === "resources" && imageUrls.length === 0) {
+      toast.error("자료실 게시물은 첨부 파일이 1개 이상 필요합니다.");
+      return;
+    }
     const isInterview = category === "interview" && isAtLeast(user, "staff");
     if (isInterview) {
       if (!interview.intro.trim()) {

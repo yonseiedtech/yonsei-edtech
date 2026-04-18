@@ -47,10 +47,11 @@
       "completedAt": "2026-03-15T00:00:00Z"
     },
     "dashboard-enhance": {
-      "phase": "design",
-      "matchRate": 0,
+      "phase": "completed",
+      "matchRate": 98,
       "iterationCount": 0,
-      "startedAt": "2026-03-14T00:00:00Z"
+      "startedAt": "2026-03-14T00:00:00Z",
+      "completedAt": "2026-04-18T00:00:00Z"
     },
     "org-infrastructure": {
       "phase": "completed",
@@ -60,18 +61,21 @@
       "completedAt": "2026-03-15T00:00:00Z"
     },
     "admin-enhance": {
-      "phase": "do",
-      "matchRate": 0,
+      "phase": "completed",
+      "matchRate": 95,
       "iterationCount": 0,
-      "startedAt": "2026-03-21T00:00:00Z"
+      "startedAt": "2026-03-21T00:00:00Z",
+      "completedAt": "2026-04-18T00:00:00Z"
     },
     "board-community-v2": {
-      "phase": "do",
-      "matchRate": 0,
+      "phase": "completed",
+      "matchRate": 95,
       "iterationCount": 0,
       "startedAt": "2026-04-12T00:00:00Z",
+      "completedAt": "2026-04-18T00:00:00Z",
       "lastDeployedAt": "2026-04-12T08:00:00Z",
-      "lastCommit": "ae1e3b7"
+      "lastCommit": "ae1e3b7",
+      "notes": "PostForm 자료실 첨부 필수 검증 추가, FEATURE_POLL env는 항상-ON으로 단순화"
     },
     "academic-activities-v2": {
       "phase": "plan",
