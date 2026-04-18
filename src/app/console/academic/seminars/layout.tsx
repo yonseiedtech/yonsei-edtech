@@ -26,7 +26,7 @@ export default function SeminarsLayout({ children }: { children: React.ReactNode
 
   return (
     <div>
-      <nav className="mb-6 flex flex-wrap gap-0 border-b sm:overflow-x-auto">
+      <nav className="mb-6 inline-flex h-10 items-center justify-center gap-0.5 overflow-x-auto rounded-md bg-muted p-1 text-muted-foreground">
         {SUB_TABS.map((tab) => {
           const isActive = tab.exact
             ? pathname === tab.href
@@ -36,13 +36,13 @@ export default function SeminarsLayout({ children }: { children: React.ReactNode
               key={tab.href}
               href={tab.href}
               className={cn(
-                "flex flex-none items-center gap-1 border-b-2 px-2.5 py-2 text-xs font-medium transition-colors sm:gap-1.5 sm:px-4 sm:py-2.5 sm:text-sm",
+                "inline-flex items-center gap-1.5 whitespace-nowrap rounded-sm px-3 py-1.5 text-xs font-medium transition-all sm:text-sm",
                 isActive
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground",
+                  ? "bg-background text-foreground shadow-sm"
+                  : "hover:bg-background/50 hover:text-foreground",
               )}
             >
-              <tab.icon size={16} />
+              <tab.icon size={14} />
               {tab.label}
             </Link>
           );

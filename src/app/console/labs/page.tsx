@@ -6,6 +6,7 @@ import { useLabs } from "@/features/labs/useLabs";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { canManageLabs } from "@/lib/permissions";
 import { FlaskConical, Plus, ExternalLink, MessageSquare } from "lucide-react";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { cn } from "@/lib/utils";
 import type { LabStatus, LabKind } from "@/types";
 
@@ -40,25 +41,19 @@ export default function LabsPage() {
 
   return (
     <div>
-      <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold">
-            <FlaskConical className="text-primary" size={22} />
-            실험실
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            사전 테스트 중인 내부 프로토타입과 학회원 서비스를 공유하는 공간입니다.
-          </p>
-        </div>
-        {canManage && (
+      <ConsolePageHeader
+        icon={FlaskConical}
+        title="실험실"
+        description="사전 테스트 중인 내부 프로토타입과 학회원 서비스를 공유하는 공간입니다."
+        actions={canManage ? (
           <Link
             href="/console/labs/new"
             className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-white hover:bg-primary/90"
           >
             <Plus size={15} /> 새 실험
           </Link>
-        )}
-      </header>
+        ) : undefined}
+      />
 
       <div className="mb-5 flex flex-wrap gap-2 text-xs">
         {[

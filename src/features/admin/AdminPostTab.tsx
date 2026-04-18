@@ -15,9 +15,10 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Trash2, Pencil } from "lucide-react";
+import { Trash2, Pencil, FileText } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import AdminEmptyState from "@/components/admin/AdminEmptyState";
 import { toast } from "sonner";
 
 export default function AdminPostTab() {
@@ -98,6 +99,19 @@ export default function AdminPostTab() {
     );
   }
 
+  if (sorted.length === 0) {
+    return (
+      <div className="space-y-4">
+        <CategoryTabs active={category} onChange={setCategory} />
+        <AdminEmptyState
+          icon={FileText}
+          title={search ? "검색 결과가 없습니다." : "게시글이 없습니다."}
+          description={search ? "다른 검색어로 시도해보세요." : undefined}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* 카테고리 서브필터 */}
@@ -131,8 +145,55 @@ export default function AdminPostTab() {
         )}
       </div>
 
-      {/* 테이블 */}
-      <div className="overflow-x-auto rounded-xl border bg-white">
+      {/* 모바일 카드 뷰 */}
+      <div className="space-y-2 sm:hidden">
+        {sorted.map((post) => (
+          <div key={post.id} className="rounded-xl border bg-white p-4">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Badge
+                    variant="secondary"
+                    className={cn(
+                      "text-[10px]",
+                      post.category === "notice"
+                        ? "bg-primary/10 text-primary"
+                        : post.category === "seminar"
+                        ? "bg-secondary/15 text-amber-700"
+                        : post.category === "promotion"
+                        ? "bg-emerald-50 text-emerald-700"
+                        : ""
+                    )}
+                  >
+                    {CATEGORY_LABELS[post.category as keyof typeof CATEGORY_LABELS] ?? post.category}
+                  </Badge>
+                  <Checkbox
+                    checked={selected.has(post.id)}
+                    onCheckedChange={() => toggleOne(post.id)}
+                  />
+                </div>
+                <h4 className="mt-1.5 line-clamp-2 text-sm font-medium">{post.title}</h4>
+                <div className="mt-1 flex flex-wrap gap-x-3 text-xs text-muted-foreground">
+                  <span>{post.authorName}</span>
+                  <span>{formatDate(post.createdAt)}</span>
+                  <span>조회 {post.viewCount}</span>
+                </div>
+              </div>
+              <div className="flex shrink-0 gap-1">
+                <Button variant="outline" size="sm" onClick={() => setEditPost({ id: post.id, title: post.title, content: post.content })}>
+                  <Pencil size={14} />
+                </Button>
+                <Button variant="outline" size="sm" className="text-destructive" onClick={() => handleDelete(post.id)}>
+                  <Trash2 size={14} />
+                </Button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* 데스크톱 테이블 */}
+      <div className="hidden overflow-x-auto rounded-xl border bg-white sm:block">
         <table className="w-full text-sm">
           <thead className="border-b bg-muted/30">
             <tr>
@@ -151,71 +212,63 @@ export default function AdminPostTab() {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {sorted.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
-                  게시글이 없습니다.
+            {sorted.map((post) => (
+              <tr key={post.id}>
+                <td className="px-4 py-3">
+                  <Checkbox
+                    checked={selected.has(post.id)}
+                    onCheckedChange={() => toggleOne(post.id)}
+                  />
+                </td>
+                <td className="px-4 py-3">
+                  <Badge
+                    variant="secondary"
+                    className={cn(
+                      post.category === "notice"
+                        ? "bg-primary/10 text-primary"
+                        : post.category === "seminar"
+                        ? "bg-secondary/15 text-amber-700"
+                        : post.category === "promotion"
+                        ? "bg-emerald-50 text-emerald-700"
+                        : ""
+                    )}
+                  >
+                    {CATEGORY_LABELS[post.category as keyof typeof CATEGORY_LABELS] ?? post.category}
+                  </Badge>
+                </td>
+                <td className="max-w-[200px] truncate px-4 py-3 font-medium">
+                  {post.title}
+                </td>
+                <td className="px-4 py-3 text-muted-foreground">{post.authorName}</td>
+                <td className="px-4 py-3 text-muted-foreground">{formatDate(post.createdAt)}</td>
+                <td className="px-4 py-3 text-muted-foreground">{post.viewCount}</td>
+                <td className="px-4 py-3">
+                  <div className="flex gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setEditPost({
+                          id: post.id,
+                          title: post.title,
+                          content: post.content,
+                        })
+                      }
+                    >
+                      <Pencil size={14} />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive"
+                      onClick={() => handleDelete(post.id)}
+                    >
+                      <Trash2 size={14} />
+                    </Button>
+                  </div>
                 </td>
               </tr>
-            ) : (
-              sorted.map((post) => (
-                <tr key={post.id}>
-                  <td className="px-4 py-3">
-                    <Checkbox
-                      checked={selected.has(post.id)}
-                      onCheckedChange={() => toggleOne(post.id)}
-                    />
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge
-                      variant="secondary"
-                      className={cn(
-                        post.category === "notice"
-                          ? "bg-primary/10 text-primary"
-                          : post.category === "seminar"
-                          ? "bg-secondary/15 text-amber-700"
-                          : post.category === "promotion"
-                          ? "bg-emerald-50 text-emerald-700"
-                          : ""
-                      )}
-                    >
-                      {CATEGORY_LABELS[post.category as keyof typeof CATEGORY_LABELS] ?? post.category}
-                    </Badge>
-                  </td>
-                  <td className="max-w-[200px] truncate px-4 py-3 font-medium">
-                    {post.title}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">{post.authorName}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{formatDate(post.createdAt)}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{post.viewCount}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          setEditPost({
-                            id: post.id,
-                            title: post.title,
-                            content: post.content,
-                          })
-                        }
-                      >
-                        <Pencil size={14} />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-destructive"
-                        onClick={() => handleDelete(post.id)}
-                      >
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
+            ))}
           </tbody>
         </table>
       </div>

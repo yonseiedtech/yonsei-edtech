@@ -26,6 +26,7 @@ import {
   RotateCcw, Settings, Download, ShieldCheck, AlertTriangle, AlertCircle,
 } from "lucide-react";
 import { evaluateSignup, partitionPending } from "@/lib/auth/approval-rules";
+import AdminEmptyState from "@/components/admin/AdminEmptyState";
 import { notifyMemberApproved } from "@/features/notifications/notify";
 import { exportCSV } from "@/lib/export-csv";
 import { logAudit } from "@/lib/audit";
@@ -597,9 +598,12 @@ export default function AdminMemberTab() {
           {isLoading ? (
             <LoadingSpinner />
           ) : displayMembers.length === 0 ? (
-            <p className="mt-6 text-center text-sm text-muted-foreground">
-              {searchQuery ? "검색 결과가 없습니다." : "등록된 회원이 없습니다."}
-            </p>
+            <div className="mt-3">
+              <AdminEmptyState
+                icon={UserCheck}
+                title={searchQuery ? "검색 결과가 없습니다." : "등록된 회원이 없습니다."}
+              />
+            </div>
           ) : (
             <MemberTable data={displayMembers} />
           )}

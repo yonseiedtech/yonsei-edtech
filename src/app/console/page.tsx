@@ -8,6 +8,7 @@ import { profilesApi } from "@/lib/bkend";
 import { useQuery } from "@tanstack/react-query";
 import { Users, Clock, FileText, HelpCircle, LayoutDashboard } from "lucide-react";
 import AdminTodoTab from "@/features/admin/AdminTodoTab";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 
 function StatCard({ icon: Icon, label, value, color, href }: {
   icon: React.ElementType;
@@ -59,16 +60,12 @@ export default function ConsoleDashboardPage() {
   });
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center gap-3">
-        <LayoutDashboard size={26} className="text-primary" />
-        <div>
-          <h1 className="text-2xl font-bold">운영 콘솔</h1>
-          <p className="text-sm text-muted-foreground">
-            {user?.name}님, 안녕하세요.
-          </p>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <ConsolePageHeader
+        icon={LayoutDashboard}
+        title="운영 콘솔"
+        description={`${user?.name}님, 안녕하세요.`}
+      />
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <StatCard icon={Users} label="전체 회원" value={membersData?.total ?? 0} color="bg-blue-50 text-blue-600" href="/console/members" />

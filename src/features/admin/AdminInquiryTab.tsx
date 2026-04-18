@@ -13,9 +13,11 @@ import {
 } from "@/components/ui/dialog";
 import { formatDate } from "@/lib/utils";
 import { streamAI } from "@/lib/ai-client";
-import { CheckCircle, Trash2, Sparkles, Send, Loader2, Mail } from "lucide-react";
+import { CheckCircle, Trash2, Sparkles, Send, Loader2, Mail, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { auth } from "@/lib/firebase";
+import { cn } from "@/lib/utils";
+import AdminEmptyState from "@/components/admin/AdminEmptyState";
 import type { Inquiry } from "@/types";
 
 export default function AdminInquiryTab() {
@@ -108,15 +110,65 @@ export default function AdminInquiryTab() {
 
   if (inquiries.length === 0) {
     return (
-      <div className="rounded-xl border bg-white p-8 text-center text-muted-foreground">
-        문의 내역이 없습니다.
-      </div>
+      <AdminEmptyState
+        icon={HelpCircle}
+        title="문의 내역이 없습니다."
+      />
     );
   }
 
   return (
     <>
-      <div className="overflow-x-auto rounded-xl border bg-white">
+      {/* 모바일 카드 뷰 */}
+      <div className="space-y-2 sm:hidden">
+        {inquiries.map((inq) => (
+          <div key={inq.id} className="rounded-xl border bg-white p-4">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Badge
+                    variant="secondary"
+                    className={cn(
+                      "text-[10px]",
+                      inq.status === "pending"
+                        ? "bg-amber-50 text-amber-700"
+                        : "bg-green-50 text-green-700"
+                    )}
+                  >
+                    {inq.status === "pending" ? "대기" : "답변완료"}
+                  </Badge>
+                  <span className="text-sm font-medium">{inq.name}</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">{inq.email}</p>
+                <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">{inq.message}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{formatDate(inq.createdAt)}</p>
+              </div>
+              <div className="flex shrink-0 flex-col gap-1">
+                {inq.status === "pending" ? (
+                  <>
+                    <Button size="sm" variant="outline" onClick={() => openReplyDialog(inq)}>
+                      <Sparkles size={14} />
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => handleQuickReply(inq.id)}>
+                      <CheckCircle size={14} />
+                    </Button>
+                  </>
+                ) : (
+                  <Button size="sm" variant="ghost" onClick={() => openReplyDialog(inq)}>
+                    답변
+                  </Button>
+                )}
+                <Button size="sm" variant="outline" className="text-destructive" onClick={() => handleDelete(inq.id)}>
+                  <Trash2 size={14} />
+                </Button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* 데스크톱 테이블 */}
+      <div className="hidden overflow-x-auto rounded-xl border bg-white sm:block">
         <table className="w-full text-sm">
           <thead className="border-b bg-muted/30">
             <tr>

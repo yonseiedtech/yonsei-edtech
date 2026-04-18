@@ -4,6 +4,8 @@ import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import AdminTodoTab from "@/features/admin/AdminTodoTab";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
+import { ClipboardList } from "lucide-react";
 import WorkLogView from "@/features/handover/WorkLogView";
 import OverviewView from "@/features/handover/OverviewView";
 import TransitionView from "@/features/handover/TransitionView";
@@ -24,12 +26,11 @@ function HandoverTabs() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">업무노트</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          To-Do · 업무수행철 · 인수인계 종합 · 운영진 교체를 한 곳에서 관리합니다.
-        </p>
-      </div>
+      <ConsolePageHeader
+        icon={ClipboardList}
+        title="업무노트"
+        description="To-Do · 업무수행철 · 인수인계 종합 · 운영진 교체를 한 곳에서 관리합니다."
+      />
 
       <Tabs value={tab} onValueChange={(v) => handleChange(v as string)}>
         <TabsList>
