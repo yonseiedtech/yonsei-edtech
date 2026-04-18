@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { evaluateSignup, partitionPending } from "@/lib/auth/approval-rules";
 import AdminEmptyState from "@/components/admin/AdminEmptyState";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { notifyMemberApproved } from "@/features/notifications/notify";
 import { exportCSV } from "@/lib/export-csv";
 import { logAudit } from "@/lib/audit";
@@ -476,6 +477,11 @@ export default function AdminMemberTab() {
 
   return (
     <div className="space-y-6">
+      <ConsolePageHeader
+        icon={Users}
+        title="회원 관리"
+        description="회원 가입 승인, 역할 부여, 운영진 교체를 관리합니다."
+      />
       {/* ── 탭 헤더 ── */}
       <nav className="flex items-center gap-1 overflow-x-auto rounded-lg border bg-muted/30 p-1">
         {([

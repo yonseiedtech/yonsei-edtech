@@ -19,6 +19,7 @@ import { Trash2, Pencil, FileText } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import AdminEmptyState from "@/components/admin/AdminEmptyState";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { toast } from "sonner";
 
 export default function AdminPostTab() {
@@ -93,29 +94,49 @@ export default function AdminPostTab() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      <div className="space-y-6">
+        <ConsolePageHeader
+          icon={FileText}
+          title="게시판 관리"
+          description="공지/자유/홍보/자료실 게시글을 검수하고 일괄 관리합니다."
+        />
+        <div className="flex items-center justify-center py-12">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
       </div>
     );
   }
 
   if (sorted.length === 0) {
     return (
-      <div className="space-y-4">
-        <CategoryTabs active={category} onChange={setCategory} />
-        <AdminEmptyState
+      <div className="space-y-6">
+        <ConsolePageHeader
           icon={FileText}
-          title={search ? "검색 결과가 없습니다." : "게시글이 없습니다."}
-          description={search ? "다른 검색어로 시도해보세요." : undefined}
+          title="게시판 관리"
+          description="공지/자유/홍보/자료실 게시글을 검수하고 일괄 관리합니다."
         />
+        <div className="space-y-4">
+          <CategoryTabs active={category} onChange={setCategory} />
+          <AdminEmptyState
+            icon={FileText}
+            title={search ? "검색 결과가 없습니다." : "게시글이 없습니다."}
+            description={search ? "다른 검색어로 시도해보세요." : undefined}
+          />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {/* 카테고리 서브필터 */}
-      <CategoryTabs active={category} onChange={setCategory} />
+    <div className="space-y-6">
+      <ConsolePageHeader
+        icon={FileText}
+        title="게시판 관리"
+        description="공지/자유/홍보/자료실 게시글을 검수하고 일괄 관리합니다."
+      />
+      <div className="space-y-4">
+        {/* 카테고리 서브필터 */}
+        <CategoryTabs active={category} onChange={setCategory} />
 
       {/* 검색 + 정렬 + 일괄삭제 */}
       <div className="flex flex-wrap items-center gap-3">
@@ -311,6 +332,7 @@ export default function AdminPostTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { getComputedStatus } from "@/lib/seminar-utils";
 import type { Seminar, Activity } from "@/types";
-import { Calendar, BookOpen, Users, FolderKanban, Globe, AlertTriangle } from "lucide-react";
+import { Calendar, BookOpen, Users, FolderKanban, Globe, AlertTriangle, Activity as ActivityIcon } from "lucide-react";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import Link from "next/link";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -116,7 +117,11 @@ function Dashboard() {
 
   return (
     <div className="space-y-6 p-6">
-      <h1 className="text-2xl font-bold">학술활동 통합 대시보드</h1>
+      <ConsolePageHeader
+        icon={ActivityIcon}
+        title="활동 대시보드"
+        description="회원별 누적 활동(세미나/게시글/연구) 통계를 확인합니다."
+      />
 
       {/* 카테고리별 통계 카드 */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

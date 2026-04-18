@@ -39,7 +39,9 @@ import {
   UserPlus,
   Mail,
   Clock,
+  BookOpen,
 } from "lucide-react";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { notifyNewsletterPublished } from "@/features/notifications/notify";
@@ -350,7 +352,12 @@ export default function AdminNewsletterTab() {
   const saving = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <div>
+    <div className="space-y-6">
+      <ConsolePageHeader
+        icon={BookOpen}
+        title="학회보 관리"
+        description="학회보 발행물을 편집하고 발송 이력을 관리합니다."
+      />
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold">

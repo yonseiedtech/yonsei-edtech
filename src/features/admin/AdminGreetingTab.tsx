@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Trash2, GripVertical } from "lucide-react";
+import { Plus, Trash2, GripVertical, Megaphone } from "lucide-react";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { useGreeting, useUpdateGreeting, type GreetingData } from "@/features/greeting/useGreeting";
 import {
   useProfessor, useUpdateProfessor, type ProfessorData,
@@ -347,6 +348,11 @@ function PastPresidentsSection() {
 export default function AdminGreetingTab() {
   return (
     <div className="space-y-6">
+      <ConsolePageHeader
+        icon={Megaphone}
+        title="사이트 콘텐츠"
+        description="인사말, 주임교수, 학회 소개 등 메인 페이지 노출 정보를 편집합니다."
+      />
       <ProfessorSection />
       <GreetingSection />
       <AboutSection />

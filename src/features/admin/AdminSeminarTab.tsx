@@ -25,6 +25,7 @@ import { getComputedStatus } from "@/lib/seminar-utils";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Pencil, BookOpen, Image as ImageIcon, Video, AlertTriangle, Trash2, Copy, Send, CalendarDays, Users, TrendingUp, FileEdit } from "lucide-react";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { useCreateSeminar } from "@/features/seminar/useSeminar";
 import { createTimeline } from "@/features/seminar-admin/timeline-template";
 
@@ -209,7 +210,12 @@ export default function AdminSeminarTab() {
     .slice(0, 3);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      <ConsolePageHeader
+        icon={CalendarDays}
+        title="세미나 관리"
+        description="세미나 일정을 등록하고 출석/리뷰/수료증을 관리합니다."
+      />
       {/* 대시보드 통계 카드 */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="rounded-xl border bg-white p-4">

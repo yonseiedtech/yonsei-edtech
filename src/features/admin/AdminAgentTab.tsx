@@ -12,6 +12,7 @@ import TaskResultDialog from "@/features/agent/TaskResultDialog";
 import { useAgents, useTasks, useServerHealth, useCreateAgent } from "@/features/agent/useAgentServer";
 import { toast } from "sonner";
 import type { Agent, AgentTask } from "@/features/agent/agent-types";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 
 export default function AdminAgentTab() {
   const { data: health } = useServerHealth();
@@ -42,6 +43,11 @@ export default function AdminAgentTab() {
 
   return (
     <div className="space-y-6">
+      <ConsolePageHeader
+        icon={Bot}
+        title="AI 에이전트"
+        description="외부 에이전트 서버를 연결하고 작업을 할당합니다."
+      />
       <ServerConnectionCard />
 
       {!connected ? (

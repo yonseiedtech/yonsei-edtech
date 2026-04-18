@@ -5,7 +5,8 @@ import { auth as firebaseAuth } from "@/lib/firebase";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { AlertCircle, CheckCircle2, Loader2, RefreshCw } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2, RefreshCw, ShieldCheck } from "lucide-react";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 
 interface UserRow {
   id: string;
@@ -68,19 +69,18 @@ export default function UserAuditPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">회원 검증</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            관리자를 제외한 모든 회원의 Firebase Auth 계정 상태·학번·역할을 검증합니다.
-          </p>
-        </div>
-        <Button variant="outline" size="sm" onClick={load} disabled={loading}>
-          {loading ? <Loader2 size={14} className="mr-1 animate-spin" /> : <RefreshCw size={14} className="mr-1" />}
-          새로고침
-        </Button>
-      </div>
+    <div className="mx-auto max-w-5xl space-y-6 px-4 py-10">
+      <ConsolePageHeader
+        icon={ShieldCheck}
+        title="감사 로그"
+        description="관리자 작업 이력과 권한 변경을 추적합니다."
+        actions={
+          <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+            {loading ? <Loader2 size={14} className="mr-1 animate-spin" /> : <RefreshCw size={14} className="mr-1" />}
+            새로고침
+          </Button>
+        }
+      />
 
       {err && (
         <div className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">

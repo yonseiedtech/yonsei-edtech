@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { auth } from "@/lib/firebase";
 import { BarChart3, FileDown, Copy, Loader2, Printer } from "lucide-react";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { toast } from "sonner";
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -93,12 +94,12 @@ function SemesterReportPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <BarChart3 size={24} /> 학기 보고서
-        </h1>
-        <Badge variant="secondary">AI 자동 생성</Badge>
-      </div>
+      <ConsolePageHeader
+        icon={BarChart3}
+        title="학기 리포트"
+        description="학기별 운영 활동을 종합 리포트로 출력합니다."
+        actions={<Badge variant="secondary">AI 자동 생성</Badge>}
+      />
 
       {/* 학기 선택 */}
       <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-white p-5">

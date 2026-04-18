@@ -13,8 +13,10 @@ import {
 import { cn, formatDate } from "@/lib/utils";
 import {
   Plus, Trash2, CheckCircle, Circle, Clock, AlertTriangle,
-  ArrowUp, ArrowRight, ArrowDown,
+  ArrowUp, ArrowRight, ArrowDown, CheckSquare,
 } from "lucide-react";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
+import AdminEmptyState from "@/components/admin/AdminEmptyState";
 import { toast } from "sonner";
 import type { AdminTodo } from "@/types";
 
@@ -102,12 +104,24 @@ export default function AdminTodoTab() {
 
   if (isLoading) {
     return (
-      <LoadingSpinner />
+      <div className="space-y-6">
+        <ConsolePageHeader
+          icon={CheckSquare}
+          title="할 일 관리"
+          description="운영진 할 일을 등록하고 진행 상황을 추적합니다."
+        />
+        <LoadingSpinner />
+      </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      <ConsolePageHeader
+        icon={CheckSquare}
+        title="할 일 관리"
+        description="운영진 할 일을 등록하고 진행 상황을 추적합니다."
+      />
       {/* 상단: 통계 카드 */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {([
@@ -141,12 +155,10 @@ export default function AdminTodoTab() {
 
       {/* 할 일 목록 */}
       {filtered.length === 0 ? (
-        <div className="rounded-xl border bg-white p-12 text-center">
-          <CheckCircle size={40} className="mx-auto text-muted-foreground/40" />
-          <p className="mt-3 text-muted-foreground">
-            {statusFilter === "all" ? "등록된 할 일이 없습니다." : "해당 상태의 할 일이 없습니다."}
-          </p>
-        </div>
+        <AdminEmptyState
+          icon={CheckCircle}
+          title={statusFilter === "all" ? "등록된 할 일이 없습니다." : "해당 상태의 할 일이 없습니다."}
+        />
       ) : (
         <div className="space-y-2">
           {filtered.map((todo) => {

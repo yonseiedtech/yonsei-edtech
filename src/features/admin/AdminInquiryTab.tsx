@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { auth } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import AdminEmptyState from "@/components/admin/AdminEmptyState";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import type { Inquiry } from "@/types";
 
 export default function AdminInquiryTab() {
@@ -110,15 +111,27 @@ export default function AdminInquiryTab() {
 
   if (inquiries.length === 0) {
     return (
-      <AdminEmptyState
-        icon={HelpCircle}
-        title="문의 내역이 없습니다."
-      />
+      <div className="space-y-6">
+        <ConsolePageHeader
+          icon={HelpCircle}
+          title="문의 관리"
+          description="회원/외부 문의에 답변하고 처리 상태를 추적합니다."
+        />
+        <AdminEmptyState
+          icon={HelpCircle}
+          title="문의 내역이 없습니다."
+        />
+      </div>
     );
   }
 
   return (
-    <>
+    <div className="space-y-6">
+      <ConsolePageHeader
+        icon={HelpCircle}
+        title="문의 관리"
+        description="회원/외부 문의에 답변하고 처리 상태를 추적합니다."
+      />
       {/* 모바일 카드 뷰 */}
       <div className="space-y-2 sm:hidden">
         {inquiries.map((inq) => (
@@ -338,6 +351,6 @@ export default function AdminInquiryTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }

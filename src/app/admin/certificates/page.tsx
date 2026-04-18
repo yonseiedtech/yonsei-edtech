@@ -29,6 +29,7 @@ import {
   inferSemester,
 } from "@/features/seminar-admin/CertificateGenerator";
 import type { AreaKey, AreaStyle } from "@/features/seminar-admin/CertificateGenerator";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 
 type TypeFilter = "all" | "completion" | "appreciation" | "appointment";
 
@@ -440,6 +441,11 @@ export default function CertificatesPage() {
 
   return (
     <div className="space-y-6">
+      <ConsolePageHeader
+        icon={Award}
+        title="수료증 발급"
+        description="세미나 참석자에게 수료증을 발급하고 일괄 이메일 전송합니다."
+      />
       {/* 필터 */}
       <div className="flex flex-wrap items-end gap-3">
         <div>
