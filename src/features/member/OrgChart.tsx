@@ -63,18 +63,25 @@ function getRoleStyle(role?: OrgRole, hasUser?: boolean): RoleStyle {
   };
 }
 
-function OrgNode({ node, isRoot, isIndependent }: { node: OrgTreeNode; isRoot?: boolean; isIndependent?: boolean }) {
-  const regulars = node.children.filter((c) => !c.isIndependent);
+type SidecarKind = "independent" | "directAide";
+
+function OrgNode({ node, isRoot, sidecar }: { node: OrgTreeNode; isRoot?: boolean; sidecar?: SidecarKind }) {
+  // 자식 분리: 일반 트리 / 우측 독립 / 좌측 직속보조
+  const regulars = node.children.filter((c) => !c.isIndependent && !c.isDirectAide);
   const independents = node.children.filter((c) => c.isIndependent);
+  const directAides = node.children.filter((c) => c.isDirectAide);
   const style = getRoleStyle(node.role, !!node.userName);
-  // 독립기관 시각이 우선 (점선 테두리). 그다음 role 색상. role 없고 root일 때만 primary.
-  const cardClass = isIndependent
-    ? "border-dashed border-amber-400/60 bg-amber-50/40"
-    : style.card || (isRoot ? "border-primary/30 bg-primary/5" : "");
+  // 사이드카 시각 우선 (점선 테두리). 그다음 role 색상. role 없고 root일 때만 primary.
+  const cardClass =
+    sidecar === "independent"
+      ? "border-dashed border-amber-400/60 bg-amber-50/40"
+      : sidecar === "directAide"
+        ? "border-dashed border-teal-400/60 bg-teal-50/40"
+        : style.card || (isRoot ? "border-primary/30 bg-primary/5" : "");
 
   return (
     <div className="flex flex-col items-center">
-      {/* 부모 카드 + 독립기관 (독립은 absolute로 부모의 수평 중심축을 흔들지 않음) */}
+      {/* 부모 카드 + 사이드카 (좌측 직속보조 / 우측 독립). absolute로 부모의 수평 중심축 보존 */}
       <div className="relative">
         <div className={`flex flex-col items-center rounded-xl border bg-white px-4 py-3 shadow-sm ${cardClass}`}>
           <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${style.avatar}`}>
@@ -92,13 +99,25 @@ function OrgNode({ node, isRoot, isIndependent }: { node: OrgTreeNode; isRoot?: 
           )}
         </div>
 
-        {/* 독립기관: 부모 카드 오른쪽, 카드 수직 중심에 배치 (겹침 방지) */}
+        {/* 좌측 사이드카: 직속보조 (예: 전공대표·조교·졸업생대표 — 주임교수 직속) */}
+        {directAides.length > 0 && (
+          <div className="absolute right-full top-1/2 mr-8 flex -translate-y-1/2 flex-col gap-3">
+            {directAides.map((aide) => (
+              <div key={aide.id} className="flex items-center gap-2">
+                <OrgNode node={aide} sidecar="directAide" />
+                <div className="h-px w-6 border-t border-dashed border-teal-400/70" />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* 우측 사이드카: 독립기관 (예: 외부 자문위원) */}
         {independents.length > 0 && (
           <div className="absolute left-full top-1/2 ml-8 flex -translate-y-1/2 flex-col gap-3">
             {independents.map((ind) => (
               <div key={ind.id} className="flex items-center gap-2">
                 <div className="h-px w-6 border-t border-dashed border-amber-400/70" />
-                <OrgNode node={ind} isIndependent />
+                <OrgNode node={ind} sidecar="independent" />
               </div>
             ))}
           </div>
@@ -152,6 +171,9 @@ function MobileOrgList({ nodes, depth = 0 }: { nodes: OrgTreeNode[]; depth?: num
                 )}
                 {node.isIndependent && (
                   <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">독립</span>
+                )}
+                {node.isDirectAide && (
+                  <span className="rounded bg-teal-100 px-1.5 py-0.5 text-[10px] font-medium text-teal-700">주임교수 직속</span>
                 )}
                 <span className="text-xs text-muted-foreground">{node.userName ?? "공석"}</span>
                 {node.department && (

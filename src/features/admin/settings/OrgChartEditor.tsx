@@ -12,9 +12,10 @@ import { toast } from "sonner";
 
 const LEVEL_LABELS: Record<number, string> = {
   0: "주임교수",
-  1: "학회장·운영진",
-  2: "팀장",
-  3: "팀원",
+  1: "전공 교수",
+  2: "학회장·운영진·직속보조",
+  3: "팀장",
+  4: "팀원",
 };
 
 const ROLE_LABELS: Record<OrgRole, string> = {
@@ -129,7 +130,7 @@ function EditDialog({ position, allPositions, open, onClose, onSave }: EditDialo
               checked={!!form.isIndependent}
               onChange={(e) => setForm({ ...form, isIndependent: e.target.checked || undefined })}
             />
-            <span>직속 독립기관 (0.5 계층 — 사이드 브랜치로 표시, 예: 전공 교수)</span>
+            <span>독립 사이드 브랜치 (부모 카드 우측에 점선으로 표시, 예: 외부 자문위원)</span>
           </label>
           <div>
             <label className="mb-1 block text-xs text-muted-foreground">인수인계 메모 (선택)</label>
