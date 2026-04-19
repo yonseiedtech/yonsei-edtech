@@ -44,6 +44,7 @@ import type {
   CourseOffering, SemesterTerm,
   GuideTrack, GuideItem, GuideProgress,
   HostRetrospective, HostActivityType,
+  SitePopup,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -971,4 +972,21 @@ export const hostRetrospectivesApi = {
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<HostRetrospective>("host_retrospectives", id, data),
   delete: (id: string) => dataApi.delete("host_retrospectives", id),
+};
+
+// ── Site Popups (사이트 팝업 공지) ──
+export const popupsApi = {
+  list: () =>
+    dataApi.list<SitePopup>("site_popups", { sort: "priority:desc" }),
+  listActive: () =>
+    dataApi.list<SitePopup>("site_popups", {
+      "filter[active]": "true",
+      sort: "priority:desc",
+    }),
+  get: (id: string) => dataApi.get<SitePopup>("site_popups", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<SitePopup>("site_popups", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<SitePopup>("site_popups", id, data),
+  delete: (id: string) => dataApi.delete("site_popups", id),
 };

@@ -12,6 +12,7 @@ import AuthProvider from "@/features/auth/AuthProvider";
 import ImpersonationBanner from "@/components/layout/ImpersonationBanner";
 import ConsentGate from "@/components/auth/ConsentGate";
 import UndergradInfoPrompt from "@/components/auth/UndergradInfoPrompt";
+import SitePopupGate from "@/components/popup/SitePopupGate";
 import "./globals.css";
 
 const pretendard = localFont({
@@ -160,6 +161,7 @@ export default function RootLayout({
             <ChatWidget />
             <ConsentGate />
             <UndergradInfoPrompt />
+            <SitePopupGate />
             <Toaster richColors position="top-center" />
           </AuthProvider>
         </QueryProvider>
