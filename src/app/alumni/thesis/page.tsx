@@ -6,8 +6,9 @@ import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { GraduationCap, Search, ExternalLink, BookOpen, User as UserIcon, Calendar } from "lucide-react";
+import { GraduationCap, Search, ExternalLink, BookOpen, User as UserIcon, Calendar, Lock, BarChart3 } from "lucide-react";
 import { alumniThesesApi } from "@/lib/bkend";
+import { useAuthStore } from "@/features/auth/auth-store";
 import type { AlumniThesis } from "@/types";
 
 const PAGE_SIZE = 30;
@@ -18,7 +19,20 @@ function yearFrom(awardedYearMonth?: string): number | null {
   return m ? Number(m[1]) : null;
 }
 
+/** YYYY-MM 을 "YYYY년 전기/후기" 라벨로 변환. 2월=전기, 8월=후기, 그 외는 월만 표시. */
+function semesterLabel(awardedYearMonth?: string): string | null {
+  if (!awardedYearMonth) return null;
+  const m = awardedYearMonth.match(/^(\d{4})-(\d{2})/);
+  if (!m) return null;
+  const y = m[1];
+  const mo = Number(m[2]);
+  if (mo === 2) return `${y}년 전기`;
+  if (mo === 8) return `${y}년 후기`;
+  return `${y}년 ${mo}월`;
+}
+
 export default function AlumniThesisListPage() {
+  const { user, initialized } = useAuthStore();
   const [theses, setTheses] = useState<AlumniThesis[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +42,11 @@ export default function AlumniThesisListPage() {
   const [page, setPage] = useState(1);
 
   useEffect(() => {
+    if (!initialized) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     (async () => {
       try {
@@ -42,7 +61,54 @@ export default function AlumniThesisListPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [initialized, user]);
+
+  if (initialized && !user) {
+    return (
+      <div className="py-16">
+        <div className="mx-auto max-w-2xl px-4">
+          <div className="rounded-2xl border bg-white p-10 text-center shadow-sm">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <Lock size={26} />
+            </div>
+            <h1 className="mt-4 text-xl font-bold">회원 전용 콘텐츠</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              졸업생 학위논문 134건의 상세 정보(저자·지도교수·초록·원문 링크)는<br />
+              연세교육공학회 회원에게만 공개됩니다.
+            </p>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+              <Link
+                href="/login"
+                className="inline-flex h-10 items-center rounded-md bg-primary px-5 text-sm font-medium text-white hover:bg-primary/90"
+              >
+                로그인
+              </Link>
+              <Link
+                href="/signup"
+                className="inline-flex h-10 items-center rounded-md border border-primary px-5 text-sm font-medium text-primary hover:bg-primary/5"
+              >
+                회원가입
+              </Link>
+              <Link
+                href="/research"
+                className="inline-flex h-10 items-center rounded-md border bg-white px-5 text-sm font-medium text-muted-foreground hover:bg-muted"
+              >
+                <BarChart3 size={14} className="mr-1.5" />
+                연구 분석 페이지로
+              </Link>
+            </div>
+            <p className="mt-5 text-[11px] text-muted-foreground">
+              비회원은 연구 키워드 분석·연구 계보·시대별 흐름을{" "}
+              <Link href="/research" className="text-primary hover:underline">
+                /research
+              </Link>{" "}
+              에서 확인할 수 있습니다.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const years = useMemo(() => {
     const set = new Set<number>();
@@ -172,22 +238,20 @@ export default function AlumniThesisListPage() {
             ) : (
               <ul className="mt-4 space-y-3">
                 {pageItems.map((t) => {
-                  const year = yearFrom(t.awardedYearMonth);
+                  const semester = semesterLabel(t.awardedYearMonth);
                   return (
                     <li key={t.id}>
                       <Link
                         href={`/alumni/thesis/${t.id}`}
                         className="block rounded-xl border bg-white p-4 transition-colors hover:border-primary/40 hover:bg-primary/5"
                       >
-                        <div className="flex flex-wrap items-start justify-between gap-2">
-                          <h2 className="text-base font-semibold leading-snug">
-                            {t.title}
-                          </h2>
-                          <Badge variant="secondary" className="shrink-0 gap-1">
-                            <Calendar size={11} />
-                            {year ? `${year}년` : "—"}
-                          </Badge>
-                        </div>
+                        <p className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-primary">
+                          <Calendar size={11} />
+                          {semester ?? "졸업시점 미상"}
+                        </p>
+                        <h2 className="mt-1 text-base font-semibold leading-snug">
+                          {t.title}
+                        </h2>
                         {t.titleEn && (
                           <p className="mt-1 text-xs italic text-muted-foreground">
                             {t.titleEn}

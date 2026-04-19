@@ -16,7 +16,7 @@ import {
 import EmptyState from "@/components/ui/empty-state";
 import { Plus, Upload, BookOpen, Search, X, Save, FileEdit, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
-import type { ResearchPaper, User, RecentPaper } from "@/types";
+import type { ResearchPaper, User, RecentPaper, AlumniThesis } from "@/types";
 import {
   useResearchPapers,
   useCreateResearchPaper,
@@ -27,7 +27,10 @@ import ResearchPaperCard from "./ResearchPaperCard";
 import ResearchPaperDialog from "./ResearchPaperDialog";
 import RisImporter from "./RisImporter";
 import TagInput from "./TagInput";
-import { profilesApi, dataApi } from "@/lib/bkend";
+import { profilesApi, dataApi, alumniThesesApi } from "@/lib/bkend";
+import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import { GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isPaperInPeriod, formatPeriodLabel } from "@/lib/research-period";
 
@@ -266,6 +269,12 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
             />
           )}
         </div>
+
+        <p className="mt-3 text-[11px] text-muted-foreground">
+          관심 연구 분야를 추가하시면 연세교육공학 졸업생 논문이 추천됩니다.
+        </p>
+
+        <AlumniThesisRecommendations interests={interests} />
       </section>
 
       {/* 논문 리스트 헤더 */}
@@ -549,6 +558,104 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+function yearMonthLabel(yearMonth?: string): string {
+  if (!yearMonth) return "—";
+  const m = yearMonth.match(/^(\d{4})-(\d{2})$/);
+  if (!m) return yearMonth;
+  return `${m[1]}년 ${Number(m[2])}월`;
+}
+
+function AlumniThesisRecommendations({ interests }: { interests: string[] }) {
+  const normalizedInterests = useMemo(
+    () => interests.map((s) => s.trim()).filter(Boolean),
+    [interests]
+  );
+
+  const { data: theses = [], isLoading } = useQuery({
+    queryKey: ["alumni-theses-for-reco"],
+    queryFn: async () => {
+      const res = await alumniThesesApi.list({ limit: 500 });
+      return res.data as unknown as AlumniThesis[];
+    },
+    staleTime: 10 * 60_000,
+    enabled: normalizedInterests.length > 0,
+  });
+
+  const matched = useMemo(() => {
+    if (normalizedInterests.length === 0) return [];
+    const lowered = normalizedInterests.map((s) => s.toLowerCase());
+    type Scored = { thesis: AlumniThesis; score: number; hits: string[] };
+    const scored: Scored[] = [];
+    for (const t of theses) {
+      const hayParts = [
+        ...(t.keywords ?? []),
+        t.keywordsRaw ?? "",
+        t.title ?? "",
+        t.titleEn ?? "",
+      ];
+      const hay = hayParts.join(" ").toLowerCase();
+      const hits = lowered.filter((kw) => hay.includes(kw));
+      if (hits.length === 0) continue;
+      scored.push({ thesis: t, score: hits.length, hits });
+    }
+    scored.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return (b.thesis.awardedYearMonth ?? "").localeCompare(a.thesis.awardedYearMonth ?? "");
+    });
+    return scored.slice(0, 6);
+  }, [theses, normalizedInterests]);
+
+  if (normalizedInterests.length === 0) return null;
+
+  return (
+    <div className="mt-4 rounded-xl border bg-muted/20 p-3">
+      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-foreground/80">
+        <GraduationCap size={12} className="text-primary" />
+        졸업생 학위논문 추천
+      </div>
+      {isLoading ? (
+        <p className="mt-2 text-[11px] text-muted-foreground">불러오는 중…</p>
+      ) : matched.length === 0 ? (
+        <p className="mt-2 text-[11px] text-muted-foreground">
+          관심 분야와 일치하는 졸업생 논문이 아직 없습니다.
+        </p>
+      ) : (
+        <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+          {matched.map(({ thesis, hits }) => (
+            <li key={thesis.id}>
+              <Link
+                href={`/alumni/thesis/${thesis.id}`}
+                className="block rounded-lg border bg-white p-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5"
+              >
+                <p className="line-clamp-2 text-xs font-medium leading-snug">
+                  {thesis.title}
+                </p>
+                <p className="mt-1 flex items-center gap-1.5 text-[10.5px] text-muted-foreground">
+                  <span className="font-medium text-foreground/70">{thesis.authorName}</span>
+                  <span>·</span>
+                  <span>{yearMonthLabel(thesis.awardedYearMonth)}</span>
+                </p>
+                {hits.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {hits.slice(0, 3).map((h) => (
+                      <span
+                        key={h}
+                        className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[9.5px] text-primary"
+                      >
+                        #{h}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

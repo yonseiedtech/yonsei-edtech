@@ -12,7 +12,6 @@ import { useAuth } from "@/features/auth/useAuth";
 import { isAtLeast } from "@/lib/permissions";
 import NotificationBell from "@/features/notifications/NotificationBell";
 import ThemeToggle from "@/components/ThemeToggle";
-import GlobalSearch from "@/components/layout/GlobalSearch";
 import SessionIndicator from "@/features/auth/SessionIndicator";
 
 interface NavLink {
@@ -45,7 +44,22 @@ const PUBLIC_NAV: NavGroup[] = [
     ],
   },
   {
-    label: "학술활동",
+    label: "대학원 생활",
+    items: [
+      { href: "/steppingstone", label: "인지디딤판" },
+      { href: "/courses", label: "내 수강과목" },
+    ],
+  },
+  {
+    label: "연구 활동",
+    items: [
+      { href: "/mypage/research", label: "내 연구활동" },
+      { href: "/alumni/thesis", label: "졸업생 학위논문" },
+      { href: "/research", label: "연세교육공학 연구 분석" },
+    ],
+  },
+  {
+    label: "학술 활동",
     items: [
       { href: "/activities", label: "활동 소개" },
       { href: "/calendar", label: "학술 캘린더" },
@@ -53,9 +67,6 @@ const PUBLIC_NAV: NavGroup[] = [
       { href: "/activities/projects", label: "프로젝트" },
       { href: "/activities/studies", label: "스터디" },
       { href: "/activities/external", label: "대외 학술대회" },
-      { href: "/courses", label: "내 수강과목" },
-      { href: "/alumni/thesis", label: "졸업생 학위논문" },
-      { href: "/steppingstone", label: "인지디딤판" },
     ],
   },
   {
@@ -289,7 +300,7 @@ export default function Header() {
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-3 md:flex">
           {PUBLIC_NAV.filter((group) => !(user && group.label === "문의")).map((group) => (
             <NavDropdown key={group.label} group={group} />
           ))}
@@ -297,7 +308,6 @@ export default function Header() {
 
         {/* Auth Area (Desktop) */}
         <div className="hidden items-center gap-2 md:flex">
-          <GlobalSearch />
           {user && <SessionIndicator />}
           <ThemeToggle />
           {user ? (

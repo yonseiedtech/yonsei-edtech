@@ -30,6 +30,12 @@ export default function InstallPromptBanner() {
       (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
     if (isStandalone) return;
 
+    const ua = window.navigator.userAgent || "";
+    const isMobileUA = /Android|iPhone|iPad|iPod|Mobile|Tablet/i.test(ua);
+    const isCoarsePointer = window.matchMedia?.("(pointer: coarse)").matches ?? false;
+    const isNarrow = window.innerWidth <= 820;
+    if (!(isMobileUA || isCoarsePointer) || !isNarrow) return;
+
     function onBeforeInstallPrompt(e: Event) {
       e.preventDefault();
       setEvent(e as BeforeInstallPromptEvent);
