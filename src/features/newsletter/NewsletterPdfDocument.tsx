@@ -1,18 +1,15 @@
+import path from "node:path";
 import { Document, Page, View, Text, StyleSheet, Font } from "@react-pdf/renderer";
 import type { NewsletterIssue } from "./newsletter-store";
 
-// Pretendard 한글 폰트 등록 (jsDelivr CDN, OFL 라이선스)
+// Pretendard 한글 폰트 등록 — public/fonts/ 정적 파일 (CDN 의존성 제거)
+// Vercel serverless에서도 process.cwd() 기준 절대 경로로 read-only fs 접근 가능
+const FONT_DIR = path.join(process.cwd(), "public", "fonts");
 Font.register({
   family: "Pretendard",
   fonts: [
-    {
-      src: "https://cdn.jsdelivr.net/gh/orioncactus/pretendard/packages/pretendard/dist/public/static/Pretendard-Regular.otf",
-      fontWeight: 400,
-    },
-    {
-      src: "https://cdn.jsdelivr.net/gh/orioncactus/pretendard/packages/pretendard/dist/public/static/Pretendard-Bold.otf",
-      fontWeight: 700,
-    },
+    { src: path.join(FONT_DIR, "Pretendard-Regular.otf"), fontWeight: 400 },
+    { src: path.join(FONT_DIR, "Pretendard-Bold.otf"), fontWeight: 700 },
   ],
 });
 
@@ -135,6 +132,19 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: "#6b7280",
   },
+  tocPage: {
+    width: 36,
+    fontSize: 10,
+    fontWeight: 700,
+    color: "#6366f1",
+    textAlign: "right",
+  },
+  tocDots: {
+    fontSize: 10,
+    color: "#d1d5db",
+    marginHorizontal: 6,
+    flexShrink: 0,
+  },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -184,9 +194,24 @@ interface Props {
   issue: NewsletterIssue;
 }
 
+// 섹션 본문 길이로 시작 페이지 추정 (1페이지 ≈ 1500자, 최소 1페이지)
+// 표지(1) + 목차(2) = 2페이지 고정 → 첫 섹션은 3페이지부터 시작
+function estimateSectionStartPages(sections: Array<{ content: string }>): number[] {
+  const CHARS_PER_PAGE = 1500;
+  const startPages: number[] = [];
+  let cursor = 3; // cover(1) + toc(2) + 1
+  for (const s of sections) {
+    startPages.push(cursor);
+    const pages = Math.max(1, Math.ceil((s.content?.length ?? 0) / CHARS_PER_PAGE));
+    cursor += pages;
+  }
+  return startPages;
+}
+
 export function NewsletterPdfDocument({ issue }: Props) {
   const coverHex = coverColorToHex(issue.coverColor);
   const sortedSections = [...issue.sections].sort((a, b) => a.order - b.order);
+  const sectionStartPages = estimateSectionStartPages(sortedSections);
 
   return (
     <Document
@@ -221,6 +246,7 @@ export function NewsletterPdfDocument({ issue }: Props) {
                 {section.authorEnrollment ? ` · ${section.authorEnrollment} 입학` : ""}
               </Text>
             </View>
+            <Text style={styles.tocPage}>p. {sectionStartPages[idx]}</Text>
           </View>
         ))}
         <Text
@@ -230,9 +256,14 @@ export function NewsletterPdfDocument({ issue }: Props) {
         />
       </Page>
 
-      {/* 섹션 본문 */}
+      {/* 섹션 본문 — bookmark로 PDF 뷰어 사이드바 목차 navigation 제공 */}
       {sortedSections.map((section, idx) => (
-        <Page size="A4" style={styles.page} key={section.id}>
+        <Page
+          size="A4"
+          style={styles.page}
+          key={section.id}
+          bookmark={{ title: `${idx + 1}. ${section.title}`, fit: false }}
+        >
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionBadge}>{SECTION_TYPE_LABEL[section.type] ?? section.type}</Text>
             <Text style={styles.sectionIndex}>

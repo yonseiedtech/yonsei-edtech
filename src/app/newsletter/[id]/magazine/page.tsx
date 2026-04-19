@@ -130,12 +130,45 @@ export default function NewsletterMagazinePage({
 
         {/* 매거진 본문 */}
         <main className="flex-1">
-          {/* 모바일: 전체 섹션 단일 칼럼 + 스크롤 스냅 */}
-          <div className="space-y-6 lg:hidden">
-            <CoverCard issue={issue} />
-            {sortedSections.map((section, idx) => (
-              <SectionCard key={section.id} section={section} index={idx} total={sortedSections.length} />
-            ))}
+          {/* 모바일: sticky 섹션 인덱스 + 전체 섹션 단일 칼럼 */}
+          <div className="lg:hidden">
+            {/* 가로 스크롤 sticky 섹션 chip 네비게이션 */}
+            <nav
+              aria-label="섹션 바로가기"
+              className="sticky top-[52px] z-10 -mx-4 mb-4 border-b bg-slate-50/95 px-4 py-2 backdrop-blur"
+            >
+              <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <a
+                  href="#mag-cover"
+                  className="shrink-0 rounded-full border bg-white px-3 py-1 text-[11px] font-medium text-muted-foreground hover:bg-muted"
+                >
+                  표지
+                </a>
+                {sortedSections.map((s, i) => (
+                  <a
+                    key={s.id}
+                    href={`#mag-section-${i}`}
+                    className="shrink-0 rounded-full border bg-white px-3 py-1 text-[11px] font-medium text-muted-foreground hover:bg-muted"
+                  >
+                    <span className="mr-1 text-[10px] tabular-nums text-primary/70">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    {s.title}
+                  </a>
+                ))}
+              </div>
+            </nav>
+
+            <div id="mag-cover" className="space-y-6 scroll-mt-28">
+              <CoverCard issue={issue} />
+            </div>
+            <div className="mt-6 space-y-6">
+              {sortedSections.map((section, idx) => (
+                <div key={section.id} id={`mag-section-${idx}`} className="scroll-mt-28">
+                  <SectionCard section={section} index={idx} total={sortedSections.length} />
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* PC: 2면 펼침 */}
