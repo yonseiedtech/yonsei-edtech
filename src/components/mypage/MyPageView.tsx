@@ -11,6 +11,7 @@ import { useSeminars } from "@/features/seminar/useSeminar";
 import { useQuery } from "@tanstack/react-query";
 import { certificatesApi, activitiesApi, profilesApi } from "@/lib/bkend";
 import { useResearchPapers } from "@/features/research/useResearchPapers";
+import { useMyInterviewResponses } from "@/features/board/interview-store";
 import type { Certificate, Activity, User } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +31,9 @@ import {
   FileText,
   Mic,
   ArrowRight,
+  Calendar,
+  Clock,
+  FolderKanban,
 } from "lucide-react";
 import EmptyState from "@/components/ui/empty-state";
 import { useAuth } from "@/features/auth/useAuth";
@@ -93,6 +97,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
 
   const myPosts = posts.filter((p) => p.authorId === userId);
   const mySeminars = seminars.filter((s) => s.attendeeIds.includes(userId));
+  const { responses: myInterviewResponses } = useMyInterviewResponses(userId);
 
   const { data: allActivities = [] } = useQuery({
     queryKey: ["activities", "all"],
@@ -306,6 +311,105 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                         ))}
                       </ul>
                     )}
+                  </div>
+                );
+              })()}
+
+              {(() => {
+                type TLEvent = {
+                  id: string;
+                  ts: string;
+                  iso: string;
+                  title: string;
+                  meta: string;
+                  href: string;
+                  type: "activity" | "seminar" | "certificate" | "post" | "interview";
+                };
+                const events: TLEvent[] = [];
+                const cutoff = new Date();
+                cutoff.setDate(cutoff.getDate() - 90);
+
+                for (const a of myActivities) {
+                  if (!a.date) continue;
+                  const meta =
+                    a.type === "project" ? "프로젝트"
+                    : a.type === "study" ? "스터디"
+                    : a.type === "external" ? "대외활동"
+                    : "학술활동";
+                  const href =
+                    a.type === "project" ? `/activities/projects/${a.id}`
+                    : a.type === "study" ? `/activities/studies/${a.id}`
+                    : a.type === "external" ? `/activities/external/${a.id}`
+                    : `/activities`;
+                  events.push({ id: `act-${a.id}`, ts: a.date, iso: a.date, title: a.title, meta, href, type: "activity" });
+                }
+                for (const s of mySeminars) {
+                  if (!s.date) continue;
+                  events.push({ id: `sem-${s.id}`, ts: s.date, iso: s.date, title: s.title, meta: "세미나", href: `/seminars/${s.id}`, type: "seminar" });
+                }
+                for (const c of myCertificates) {
+                  const label = c.type === "completion" ? "수료증" : c.type === "appointment" ? "임명장" : c.type === "participation" ? "참석확인서" : "감사장";
+                  const title = c.activityTitle || c.seminarTitle || "수료증";
+                  events.push({ id: `cert-${c.id}`, ts: c.issuedAt, iso: c.issuedAt, title, meta: label, href: `/mypage/activities?tab=certificates`, type: "certificate" });
+                }
+                for (const p of myPosts) {
+                  if (!p.createdAt) continue;
+                  events.push({ id: `post-${p.id}`, ts: p.createdAt, iso: p.createdAt, title: p.title, meta: "내 글 작성", href: `/board/${p.id}`, type: "post" });
+                }
+                for (const r of myInterviewResponses) {
+                  const submitted = r.submittedAt || r.updatedAt;
+                  if (!submitted || r.status !== "submitted") continue;
+                  const post = posts.find((p) => p.id === r.postId);
+                  if (!post) continue;
+                  events.push({ id: `intv-${r.id}`, ts: submitted, iso: submitted, title: post.title, meta: "인터뷰 응답", href: `/board/${post.id}`, type: "interview" });
+                }
+
+                const recent = events
+                  .filter((e) => new Date(e.iso) >= cutoff)
+                  .sort((a, b) => b.iso.localeCompare(a.iso))
+                  .slice(0, 8);
+
+                if (recent.length === 0) return null;
+
+                const ICON_MAP: Record<TLEvent["type"], { icon: typeof Calendar; bg: string; fg: string }> = {
+                  activity: { icon: FolderKanban, bg: "bg-emerald-100", fg: "text-emerald-700" },
+                  seminar: { icon: Calendar, bg: "bg-primary/15", fg: "text-primary" },
+                  certificate: { icon: Award, bg: "bg-amber-100", fg: "text-amber-700" },
+                  post: { icon: FileText, bg: "bg-slate-100", fg: "text-slate-700" },
+                  interview: { icon: Mic, bg: "bg-blue-100", fg: "text-blue-700" },
+                };
+
+                return (
+                  <div className="rounded-2xl border bg-card p-5">
+                    <div className="flex items-center justify-between">
+                      <h3 className="flex items-center gap-1.5 text-sm font-semibold">
+                        <Clock size={14} className="text-muted-foreground" />
+                        최근 활동
+                      </h3>
+                      <span className="text-[11px] text-muted-foreground">최근 90일</span>
+                    </div>
+                    <ol className="mt-4 space-y-3">
+                      {recent.map((ev) => {
+                        const cfg = ICON_MAP[ev.type];
+                        const Icon = cfg.icon;
+                        return (
+                          <li key={ev.id} className="flex items-start gap-3">
+                            <div className={cn("mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full", cfg.bg)}>
+                              <Icon size={14} className={cfg.fg} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <Link href={ev.href} className="block truncate text-sm font-medium hover:text-primary">
+                                {ev.title}
+                              </Link>
+                              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                <span className={cn("mr-1.5 rounded-full px-1.5 py-0.5", cfg.bg, cfg.fg)}>{ev.meta}</span>
+                                {formatDate(ev.iso)}
+                              </p>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ol>
                   </div>
                 );
               })()}
