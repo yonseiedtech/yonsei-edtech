@@ -712,6 +712,37 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                     : "수기 등록 모드: 참여자 탭에서 관리자 또는 모임장이 직접 회원을 추가합니다."}
                 </p>
               </div>
+              <div className="rounded-xl border bg-white p-6 space-y-3">
+                <h3 className="font-semibold">완료 시 자동 발급</h3>
+                <label className="flex cursor-pointer items-start gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={activity.autoIssueCertificates !== false}
+                    onChange={async (e) => {
+                      try {
+                        await activitiesApi.update(activityId, { autoIssueCertificates: e.target.checked });
+                        queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+                        toast.success(e.target.checked ? "자동 발급이 켜졌습니다." : "자동 발급이 꺼졌습니다.");
+                      } catch (err) {
+                        console.error("[activity/auto-cert]", err);
+                        toast.error(err instanceof Error ? `변경 실패: ${err.message}` : "변경에 실패했습니다.");
+                      }
+                    }}
+                  />
+                  <div>
+                    <p className="font-medium">
+                      활동 종료 시 {type === "external" ? "참석확인서" : "수료증"} 자동 발급
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {type === "external"
+                        ? "활동이 종료되면 승인된 신청자에게 참석확인서를 자동 발급합니다 (주관기관·일정 포함)."
+                        : "활동이 종료되면 참여자에게 수료증을 자동 발급합니다 (활동 기간·역할 포함)."}
+                      {" "}해제하면 운영자가 수동 발급해야 합니다.
+                    </p>
+                  </div>
+                </label>
+              </div>
               <div className="rounded-xl border bg-white p-6">
                 <p className="text-sm text-muted-foreground">활동 정보 수정/삭제는 목록 페이지에서 가능합니다.</p>
                 <Link href={backHref}>

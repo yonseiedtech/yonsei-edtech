@@ -36,18 +36,45 @@ function formatKoreanDate(iso: string): string {
 function getTitle(type: Certificate["type"]): string {
   if (type === "completion") return "수 료 증";
   if (type === "appreciation") return "감 사 장";
+  if (type === "participation") return "참 석 확 인 서";
   return "임 명 장";
+}
+
+function activityKindLabel(activityType?: Certificate["activityType"]): string {
+  if (activityType === "study") return "스터디";
+  if (activityType === "project") return "프로젝트";
+  if (activityType === "external") return "대외 학술활동";
+  return "활동";
 }
 
 function getDefaultBody(cert: Certificate): string {
   const semester = inferSemester(cert.issuedAt);
   const seminarTitle = cert.seminarTitle || "___";
+
+  // ── 학술활동(study/project/external) 발급 — activityId 가 있으면 활동 본문 우선 ──
+  if (cert.activityId) {
+    const activityTitle = cert.activityTitle || seminarTitle || "___";
+    const kind = activityKindLabel(cert.activityType);
+    const period = cert.activityPeriod ? ` (${cert.activityPeriod})` : "";
+    const role = cert.activityRole ? `, ${cert.activityRole}으로` : "";
+
+    if (cert.type === "participation") {
+      const organizer = cert.organizerName ? `${cert.organizerName} 주관 ` : "";
+      return `귀하께서는 ${semester} ${organizer}<${activityTitle}>${period}에 ${role.replace(/^,\s*/, "")} 참석하였음을 확인합니다.\n\n학문적 교류와 역량 강화를 위한 헌신적인 참여에 감사드리며, 연세교육공학회의 이름으로 본 참석 확인서를 발급합니다.`;
+    }
+    return `귀하께서는 ${semester} 연세교육공학회 ${kind} <${activityTitle}>${period}에${role} 성실히 참여하여 소정의 과정을 이수하였기에 이 수료증을 수여합니다.`;
+  }
+
+  // ── 세미나 발급 (legacy) ──
   if (cert.type === "completion") {
     return `귀하께서는 ${semester} 연세교육공학회에서 구성원들의 교육공학 핵심 역량강화를 위하여 주관한 연세교육공학 학술대회 <${seminarTitle}>에 참석하여 소정의 과정을 이수하였기에 이 수료증을 수여합니다.`;
   }
   if (cert.type === "appointment") {
     const position = cert.appointmentPosition || seminarTitle;
     return `귀하를 ${semester} 연세대학교 교육공학회 ${position}(으)로 임명합니다.\n\n귀하의 헌신적인 활동을 기대하며, 학회 발전에 크게 기여해주시기 바랍니다.`;
+  }
+  if (cert.type === "participation") {
+    return `귀하께서는 ${semester} 연세교육공학회에서 주관한 <${seminarTitle}>에 참석하였음을 확인합니다.`;
   }
   return `귀하께서는 ${semester} 연세교육공학회에서 구성원들의 교육공학 핵심 역량강화를 위하여 주관한 연세교육공학 학술대회 <${seminarTitle}>에서 귀하께서 지니신 지식과 경험을 헌신적이고 열정적으로 공유해주심으로서 구성원들의 성장에 큰 도움을 주셨음에 감사드리며, 연세교육공학회 구성원들의 마음을 담아 감사장을 드립니다.`;
 }

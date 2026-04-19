@@ -791,13 +791,28 @@ export interface SeminarRegistration {
   interests?: string;
 }
 
-// ── 수료증 / 감사장 / 임명장 ──
-export type CertificateType = "completion" | "appreciation" | "appointment";
+// ── 수료증 / 감사장 / 임명장 / 참석확인서 ──
+export type CertificateType =
+  | "completion"      // 수료증 (세미나 출석, 스터디·프로젝트 이수)
+  | "appreciation"    // 감사장 (연사 등)
+  | "appointment"     // 임명장 (운영진)
+  | "participation";  // 참석확인서 (대외 학술대회 등)
 export interface Certificate { [key: string]: unknown;
   id: string;
   certificateNo?: string; // "YY-NNN" 형식 (예: "26-001")
-  seminarId: string;
-  seminarTitle: string;
+  /** 세미나 발급 (legacy 필드, optional 처리) */
+  seminarId?: string;
+  seminarTitle?: string;
+  /** 학술활동(스터디/프로젝트/대외) 발급 — seminarId 와 상호배타 */
+  activityId?: string;
+  activityType?: ActivityType;
+  activityTitle?: string;
+  /** 활동 기간 (예: "2026.03 - 2026.06") */
+  activityPeriod?: string;
+  /** 활동 내 역할 (예: "팀장", "발표자") */
+  activityRole?: string;
+  /** 대외활동 주관기관 (예: "한국교육공학회") */
+  organizerName?: string;
   recipientName: string;
   recipientEmail?: string;
   recipientStudentId?: string;
@@ -990,6 +1005,13 @@ export interface Activity { [key: string]: unknown;
   year?: number;
   /** 활동 학기 — 전기(first) / 후기(second) */
   semester?: "first" | "second";
+  /**
+   * 종료 시 자동 수료증/참석확인서 발급 여부 (기본 true).
+   * - study/project: completion(수료증)
+   * - external: participation(참석확인서)
+   * 운영자가 false 로 설정하면 자동 발급되지 않고 수동 발급 필요.
+   */
+  autoIssueCertificates?: boolean;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
