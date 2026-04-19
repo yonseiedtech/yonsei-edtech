@@ -246,6 +246,7 @@ export function NewsletterPdfDocument({ issue }: Props) {
                 {section.authorEnrollment ? ` · ${section.authorEnrollment} 입학` : ""}
               </Text>
             </View>
+            <Text style={styles.tocDots}>· · · · · · · ·</Text>
             <Text style={styles.tocPage}>p. {sectionStartPages[idx]}</Text>
           </View>
         ))}

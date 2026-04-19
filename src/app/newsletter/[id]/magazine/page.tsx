@@ -32,6 +32,7 @@ export default function NewsletterMagazinePage({
   // pageIndex = 0 → 표지 단독, 1 → 섹션 0,1 → 2 → 섹션 2,3 …
   const totalPages = useMemo(() => 1 + Math.ceil(sortedSections.length / 2), [sortedSections.length]);
   const [pageIndex, setPageIndex] = useState(0);
+  const [activeMobileId, setActiveMobileId] = useState<string>("mag-cover");
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -41,6 +42,26 @@ export default function NewsletterMagazinePage({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [totalPages]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !sortedSections.length) return;
+    const ids = ["mag-cover", ...sortedSections.map((_, i) => `mag-section-${i}`)];
+    const elements = ids
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => el !== null);
+    if (!elements.length) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        if (visible[0]) setActiveMobileId(visible[0].target.id);
+      },
+      { rootMargin: "-100px 0px -55% 0px", threshold: [0, 0.25, 0.5, 1] }
+    );
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [sortedSections]);
 
   if (isLoading) return <LoadingSpinner className="min-h-[60vh] items-center" />;
   if (!issue) {
@@ -140,22 +161,41 @@ export default function NewsletterMagazinePage({
               <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <a
                   href="#mag-cover"
-                  className="shrink-0 rounded-full border bg-white px-3 py-1 text-[11px] font-medium text-muted-foreground hover:bg-muted"
+                  className={cn(
+                    "shrink-0 rounded-full border px-3 py-1 text-[11px] font-medium transition-colors",
+                    activeMobileId === "mag-cover"
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "bg-white text-muted-foreground hover:bg-muted"
+                  )}
                 >
                   표지
                 </a>
-                {sortedSections.map((s, i) => (
-                  <a
-                    key={s.id}
-                    href={`#mag-section-${i}`}
-                    className="shrink-0 rounded-full border bg-white px-3 py-1 text-[11px] font-medium text-muted-foreground hover:bg-muted"
-                  >
-                    <span className="mr-1 text-[10px] tabular-nums text-primary/70">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    {s.title}
-                  </a>
-                ))}
+                {sortedSections.map((s, i) => {
+                  const id = `mag-section-${i}`;
+                  const isActive = activeMobileId === id;
+                  return (
+                    <a
+                      key={s.id}
+                      href={`#${id}`}
+                      className={cn(
+                        "shrink-0 rounded-full border px-3 py-1 text-[11px] font-medium transition-colors",
+                        isActive
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "bg-white text-muted-foreground hover:bg-muted"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "mr-1 text-[10px] tabular-nums",
+                          isActive ? "text-primary" : "text-primary/70"
+                        )}
+                      >
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      {s.title}
+                    </a>
+                  );
+                })}
               </div>
             </nav>
 
