@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 import type { AlumniThesis } from "@/types";
 import { STOPWORDS, normalizeKeyword, yearFrom, thesesYearRange } from "./shared";
 
@@ -210,6 +212,50 @@ export default function KeywordCloud({
 
   const dropped = sliced.length - placed.length;
 
+  // hover된 키워드 상세 데이터 (논문 목록·연도 분포·공출현 키워드)
+  const hoverDetail = useMemo(() => {
+    if (!hover) return null;
+    const matched = theses.filter((t) =>
+      (t.keywords ?? []).some((raw) => normalizeKeyword(raw) === hover),
+    );
+    if (matched.length === 0) return null;
+
+    // 연도 분포 (시작-종료 범위 내)
+    const yearCounts = new Map<number, number>();
+    for (let y = lo; y <= hi; y++) yearCounts.set(y, 0);
+    matched.forEach((t) => {
+      const y = yearFrom(t);
+      if (y != null && y >= lo && y <= hi) {
+        yearCounts.set(y, (yearCounts.get(y) ?? 0) + 1);
+      }
+    });
+
+    // 공출현 키워드 top 5
+    const coOccur = new Map<string, number>();
+    matched.forEach((t) => {
+      (t.keywords ?? []).forEach((raw) => {
+        const k = normalizeKeyword(raw);
+        if (!k || k === hover || k.length < 2 || STOPWORDS.has(k)) return;
+        coOccur.set(k, (coOccur.get(k) ?? 0) + 1);
+      });
+    });
+    const coKeywords = Array.from(coOccur.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+
+    // 최근 논문 5건
+    const recentPapers = [...matched]
+      .sort((a, b) => (b.awardedYearMonth ?? "").localeCompare(a.awardedYearMonth ?? ""))
+      .slice(0, 5);
+
+    return {
+      total: matched.length,
+      yearCounts,
+      coKeywords,
+      recentPapers,
+    };
+  }, [hover, theses, lo, hi]);
+
   if (theses.length === 0) {
     return (
       <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
@@ -333,12 +379,108 @@ export default function KeywordCloud({
         </svg>
       </div>
 
-      {hover && (
-        <p className="mt-2 text-center text-xs text-muted-foreground">
-          <span className="font-semibold text-foreground">{hover}</span>{" "}
-          ({placed.find((p) => p.word === hover)?.count}건)
-        </p>
-      )}
+      {/* Hover 상세 패널 */}
+      <div className="mt-3 min-h-[112px] rounded-xl border bg-gradient-to-br from-slate-50 to-white p-3 transition-all duration-200">
+        {hover && hoverDetail ? (
+          <div className="animate-in fade-in slide-in-from-bottom-1 duration-200">
+            {/* 헤더: 키워드명 + 총 건수 */}
+            <div className="mb-2 flex items-baseline justify-between gap-3 border-b pb-2">
+              <div>
+                <p className="text-[10.5px] font-semibold uppercase tracking-wider text-primary">
+                  HOVER · 키워드 상세
+                </p>
+                <h6 className="mt-0.5 text-base font-bold text-foreground">{hover}</h6>
+              </div>
+              <span className="shrink-0 rounded-md bg-primary/10 px-2 py-1 text-[11px] font-semibold tabular-nums text-primary">
+                전체 {hoverDetail.total}건
+              </span>
+            </div>
+
+            <div className="grid gap-3 lg:grid-cols-[1fr_1.4fr]">
+              {/* 연도 분포 mini-bar */}
+              <div>
+                <p className="mb-1 text-[10.5px] font-semibold text-muted-foreground">
+                  연도별 분포 ({lo}–{hi})
+                </p>
+                <div className="flex h-10 items-end gap-[2px]">
+                  {Array.from(hoverDetail.yearCounts.entries()).map(([y, c]) => {
+                    const max = Math.max(...hoverDetail.yearCounts.values(), 1);
+                    const h = (c / max) * 100;
+                    return (
+                      <div
+                        key={y}
+                        className="group relative flex-1"
+                        title={`${y}년: ${c}건`}
+                      >
+                        <div
+                          className={`w-full rounded-sm ${c > 0 ? "bg-primary/70" : "bg-slate-100"}`}
+                          style={{ height: `${Math.max(h, c > 0 ? 6 : 2)}%` }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                {/* 공출현 키워드 */}
+                {hoverDetail.coKeywords.length > 0 && (
+                  <div className="mt-2.5">
+                    <p className="mb-1 text-[10.5px] font-semibold text-muted-foreground">
+                      함께 등장 (Top 5)
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {hoverDetail.coKeywords.map(([k, c]) => (
+                        <span
+                          key={k}
+                          className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10.5px]"
+                        >
+                          <span className="font-medium text-foreground">{k}</span>
+                          <span className="tabular-nums text-muted-foreground">{c}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 최근 논문 */}
+              <div>
+                <p className="mb-1 text-[10.5px] font-semibold text-muted-foreground">
+                  최근 논문 (Top 5)
+                </p>
+                <ul className="space-y-1">
+                  {hoverDetail.recentPapers.map((t) => {
+                    const y = yearFrom(t);
+                    return (
+                      <li key={t.id} className="text-[11px] leading-snug">
+                        <Link
+                          href={`/alumni/thesis/${t.id}`}
+                          className="group flex items-start gap-1.5 rounded-md px-1.5 py-1 hover:bg-primary/5"
+                        >
+                          <span className="shrink-0 rounded bg-slate-100 px-1.5 text-[10px] tabular-nums text-muted-foreground">
+                            {y ?? "—"}
+                          </span>
+                          <span className="line-clamp-1 text-foreground/80 group-hover:text-primary">
+                            {t.title}
+                          </span>
+                          <ExternalLink
+                            size={9}
+                            className="mt-1 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
+                          />
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex h-full min-h-[88px] items-center justify-center text-center text-[11px] text-muted-foreground">
+            <span>
+              키워드 위에 마우스를 올리면 <span className="font-semibold text-primary">관련 논문·연도 분포·공출현 키워드</span>가 표시됩니다
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

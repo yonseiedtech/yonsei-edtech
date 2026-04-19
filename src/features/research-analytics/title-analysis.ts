@@ -87,6 +87,21 @@ export const CONTEXT_DICT = {
   "특수·기타": ["특수", "장애", "이주", "북한이탈"],
 } as const;
 
+/** 교육 현장 유형 — 학교 교육 / 기업 교육 / 고등 교육 / 평생·성인 / 기타 */
+export const VENUE_DICT = {
+  "학교 교육": [
+    "초등", "중등", "고등", "중학", "고교", "초교", "초등학교", "중학교", "고등학교",
+    "교실", "교과", "수업", "학교현장", "공교육", "특목고", "자사고",
+  ],
+  "기업 교육": [
+    "기업", "직장", "재직", "근로자", "조직", "사내", "기업체", "산업체",
+    "HRD", "인적자원", "인적 자원", "직무", "OJT", "이러닝(기업)",
+  ],
+  "고등 교육": ["대학", "대학생", "대학원", "전공", "캠퍼스"],
+  "평생·성인": ["성인", "평생교육", "평생학습", "노인", "고령", "주부", "지역주민"],
+  "기타": ["군", "병원", "의료", "복지", "특수", "장애", "공공기관", "박물관", "도서관"],
+} as const;
+
 /** 연구 대상자 (한 논문이 여러 대상에 속할 수 있음) */
 export const AUDIENCE_DICT = {
   "학생": ["학생", "학습자", "수험생", "재학생"],
@@ -104,6 +119,7 @@ interface ClassifyResult {
   analyze: boolean;
   contexts: string[]; // matched context labels
   audiences: string[]; // matched audience labels
+  venues: string[]; // matched venue labels (학교/기업/고등/평생/기타)
 }
 
 export function classifyTitle(title: string): ClassifyResult {
@@ -117,6 +133,10 @@ export function classifyTitle(title: string): ClassifyResult {
   for (const [label, words] of Object.entries(AUDIENCE_DICT)) {
     if (has(words)) audiences.push(label);
   }
+  const venues: string[] = [];
+  for (const [label, words] of Object.entries(VENUE_DICT)) {
+    if (has(words)) venues.push(label);
+  }
   return {
     quant: has(TYPE_DICTS.quantQual.quant),
     qual: has(TYPE_DICTS.quantQual.qual),
@@ -124,7 +144,86 @@ export function classifyTitle(title: string): ClassifyResult {
     analyze: has(TYPE_DICTS.devAnalyze.analyze),
     contexts,
     audiences,
+    venues,
   };
+}
+
+/** ---------- 초록 기반 양적/질적/혼합 분석 ---------- */
+
+const ABSTRACT_QUANT_CUES = [
+  "통계", "회귀분석", "유의수준", "상관관계", "상관 관계", "상관분석",
+  "t-검정", "t검정", "분산분석", "ANOVA", "구조방정식", "SEM", "경로분석",
+  "설문", "설문조사", "측정", "타당도", "신뢰도", "Cronbach", "크론바흐",
+  "p<.05", "p<.01", "p < .05", "유의미한 차이", "유의한 차이",
+  "기술통계", "추리통계", "표본", "사례수", "응답자", "변량",
+  "효과 검증", "효과검증", "효과크기", "Cohen",
+];
+const ABSTRACT_QUAL_CUES = [
+  "심층면담", "심층 면담", "면담", "인터뷰", "포커스 그룹", "포커스그룹",
+  "관찰", "참여관찰", "참여 관찰", "내러티브", "근거이론", "근거 이론",
+  "현상학", "사례 연구", "사례연구", "에스노그라피", "문화기술",
+  "질적 분석", "질적분석", "주제 분석", "주제분석", "코딩", "범주화",
+  "내러티브 탐구", "구술사", "생애사",
+];
+
+export type AbstractMethodType = "quantitative" | "qualitative" | "mixed" | "unknown";
+
+export interface AbstractAnalysis {
+  type: AbstractMethodType;
+  confidence: "high" | "low";
+  evidence: string[]; // matched cue phrases (최대 6개)
+  quantHits: number;
+  qualHits: number;
+}
+
+export function analyzeAbstract(abstract?: string): AbstractAnalysis {
+  if (!abstract || abstract.length < 50) {
+    return { type: "unknown", confidence: "low", evidence: [], quantHits: 0, qualHits: 0 };
+  }
+  const txt = abstract;
+  const quantHits = ABSTRACT_QUANT_CUES.filter((c) => txt.includes(c));
+  const qualHits = ABSTRACT_QUAL_CUES.filter((c) => txt.includes(c));
+  const evidence = [...new Set([...quantHits, ...qualHits])].slice(0, 6);
+  const qn = quantHits.length;
+  const ql = qualHits.length;
+  if (qn >= 2 && ql >= 2) {
+    return { type: "mixed", confidence: "high", evidence, quantHits: qn, qualHits: ql };
+  }
+  if (qn >= 2 && ql === 0) {
+    return { type: "quantitative", confidence: "high", evidence, quantHits: qn, qualHits: ql };
+  }
+  if (ql >= 2 && qn === 0) {
+    return { type: "qualitative", confidence: "high", evidence, quantHits: qn, qualHits: ql };
+  }
+  if (qn >= 1 && ql >= 1) {
+    return { type: "mixed", confidence: "low", evidence, quantHits: qn, qualHits: ql };
+  }
+  if (qn >= 1) return { type: "quantitative", confidence: "low", evidence, quantHits: qn, qualHits: ql };
+  if (ql >= 1) return { type: "qualitative", confidence: "low", evidence, quantHits: qn, qualHits: ql };
+  return { type: "unknown", confidence: "low", evidence: [], quantHits: 0, qualHits: 0 };
+}
+
+/** ---------- 분석 제한 논문 판정 (운영진 전용 모아보기) ---------- */
+
+export interface ThesisRestriction {
+  restricted: boolean;
+  reasons: string[]; // ex) "초록 미수록", "키워드 없음", "제목 짧음"
+}
+
+export function thesisAnalysisRestriction(t: {
+  abstract?: string;
+  keywords?: string[];
+  title?: string;
+}): ThesisRestriction {
+  const reasons: string[] = [];
+  const abs = (t.abstract ?? "").trim();
+  if (abs.length === 0) reasons.push("초록 미수록");
+  else if (abs.length < 50) reasons.push("초록 짧음");
+  if (!t.keywords || t.keywords.length === 0) reasons.push("키워드 없음");
+  else if (t.keywords.length < 3) reasons.push("키워드 부족(<3)");
+  if (!t.title || t.title.trim().length < 5) reasons.push("제목 짧음");
+  // 2개 이상 결함이면 분석 제한
+  return { restricted: reasons.length >= 2, reasons };
 }
 
 export function eraOf(year: number): string {

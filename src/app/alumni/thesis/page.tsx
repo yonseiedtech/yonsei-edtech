@@ -6,9 +6,11 @@ import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { GraduationCap, Search, ExternalLink, BookOpen, User as UserIcon, Calendar, Lock, BarChart3 } from "lucide-react";
+import { GraduationCap, Search, ExternalLink, BookOpen, User as UserIcon, Calendar, Lock, BarChart3, AlertTriangle, ShieldCheck } from "lucide-react";
 import { alumniThesesApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { isStaffUser } from "@/features/research-analytics/shared";
+import { thesisAnalysisRestriction } from "@/features/research-analytics/title-analysis";
 import type { AlumniThesis } from "@/types";
 
 const PAGE_SIZE = 30;
@@ -39,7 +41,10 @@ export default function AlumniThesisListPage() {
   const [search, setSearch] = useState("");
   const [yearFilter, setYearFilter] = useState<number | "all">("all");
   const [advisorFilter, setAdvisorFilter] = useState<string>("all");
+  const [showOnlyRestricted, setShowOnlyRestricted] = useState(false);
   const [page, setPage] = useState(1);
+
+  const staffMode = isStaffUser(user);
 
   useEffect(() => {
     if (!initialized) return;
@@ -127,11 +132,28 @@ export default function AlumniThesisListPage() {
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [theses]);
 
+  const restrictionByThesis = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof thesisAnalysisRestriction>>();
+    theses.forEach((t) => {
+      map.set(t.id, thesisAnalysisRestriction(t));
+    });
+    return map;
+  }, [theses]);
+
+  const restrictedCount = useMemo(() => {
+    let n = 0;
+    restrictionByThesis.forEach((r) => {
+      if (r.restricted) n++;
+    });
+    return n;
+  }, [restrictionByThesis]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return theses.filter((t) => {
       if (yearFilter !== "all" && yearFrom(t.awardedYearMonth) !== yearFilter) return false;
       if (advisorFilter !== "all" && t.advisorName !== advisorFilter) return false;
+      if (staffMode && showOnlyRestricted && !restrictionByThesis.get(t.id)?.restricted) return false;
       if (!q) return true;
       const hay = [
         t.title,
@@ -146,7 +168,7 @@ export default function AlumniThesisListPage() {
         .toLowerCase();
       return hay.includes(q);
     });
-  }, [theses, search, yearFilter, advisorFilter]);
+  }, [theses, search, yearFilter, advisorFilter, staffMode, showOnlyRestricted, restrictionByThesis]);
 
   const sorted = useMemo(
     () =>
@@ -161,7 +183,7 @@ export default function AlumniThesisListPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [search, yearFilter, advisorFilter]);
+  }, [search, yearFilter, advisorFilter, showOnlyRestricted]);
 
   return (
     <div className="py-16">
@@ -218,6 +240,30 @@ export default function AlumniThesisListPage() {
           </select>
         </div>
 
+        {staffMode && (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50/60 px-3 py-2">
+            <div className="flex items-center gap-2 text-[12px]">
+              <ShieldCheck size={14} className="text-amber-700" />
+              <span className="font-semibold text-amber-900">운영진 전용</span>
+              <span className="text-amber-800">
+                분석 제한 논문 <span className="font-bold">{restrictedCount}</span>건
+                <span className="ml-1 text-amber-700/80">
+                  (전체 {theses.length}건 중 {Math.round((restrictedCount / Math.max(1, theses.length)) * 100)}%)
+                </span>
+              </span>
+            </div>
+            <label className="flex cursor-pointer items-center gap-1.5 text-[11px] font-medium text-amber-900">
+              <input
+                type="checkbox"
+                checked={showOnlyRestricted}
+                onChange={(e) => setShowOnlyRestricted(e.target.checked)}
+                className="h-3.5 w-3.5 rounded border-amber-400 accent-amber-700"
+              />
+              분석 제한 논문만 보기
+            </label>
+          </div>
+        )}
+
         {loading ? (
           <LoadingSpinner className="mt-12" />
         ) : error ? (
@@ -239,16 +285,30 @@ export default function AlumniThesisListPage() {
               <ul className="mt-4 space-y-3">
                 {pageItems.map((t) => {
                   const semester = semesterLabel(t.awardedYearMonth);
+                  const restriction = staffMode ? restrictionByThesis.get(t.id) : null;
                   return (
                     <li key={t.id}>
                       <Link
                         href={`/alumni/thesis/${t.id}`}
-                        className="block rounded-xl border bg-white p-4 transition-colors hover:border-primary/40 hover:bg-primary/5"
+                        className={`block rounded-xl border bg-white p-4 transition-colors hover:border-primary/40 hover:bg-primary/5 ${
+                          restriction?.restricted ? "border-amber-300/70 bg-amber-50/30" : ""
+                        }`}
                       >
-                        <p className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-primary">
-                          <Calendar size={11} />
-                          {semester ?? "졸업시점 미상"}
-                        </p>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-primary">
+                            <Calendar size={11} />
+                            {semester ?? "졸업시점 미상"}
+                          </p>
+                          {restriction?.restricted && (
+                            <span
+                              className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800"
+                              title={`분석 제한 사유: ${restriction.reasons.join(", ")}`}
+                            >
+                              <AlertTriangle size={10} />
+                              분석 제한
+                            </span>
+                          )}
+                        </div>
                         <h2 className="mt-1 text-base font-semibold leading-snug">
                           {t.title}
                         </h2>
