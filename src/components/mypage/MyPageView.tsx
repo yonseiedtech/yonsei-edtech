@@ -9,10 +9,10 @@ import PasswordChangeForm from "@/features/auth/PasswordChangeForm";
 import { usePosts } from "@/features/board/useBoard";
 import { useSeminars } from "@/features/seminar/useSeminar";
 import { useQuery } from "@tanstack/react-query";
-import { certificatesApi, activitiesApi, profilesApi } from "@/lib/bkend";
+import { certificatesApi, activitiesApi, profilesApi, reviewsApi } from "@/lib/bkend";
 import { useResearchPapers } from "@/features/research/useResearchPapers";
 import { useMyInterviewResponses } from "@/features/board/interview-store";
-import type { Certificate, Activity, User } from "@/types";
+import type { Certificate, Activity, User, SeminarReview } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -34,6 +34,8 @@ import {
   Calendar,
   Clock,
   FolderKanban,
+  AlertCircle,
+  PenSquare,
 } from "lucide-react";
 import EmptyState from "@/components/ui/empty-state";
 import { useAuth } from "@/features/auth/useAuth";
@@ -123,6 +125,15 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
       return res.data as unknown as Certificate[];
     },
     enabled: !!user,
+  });
+
+  const { data: myReviews = [] } = useQuery({
+    queryKey: ["my-reviews", userId],
+    queryFn: async () => {
+      const res = await reviewsApi.listByAuthor(userId);
+      return res.data as unknown as SeminarReview[];
+    },
+    enabled: !!user && isSelf,
   });
   const myCertificates = allCertificates.filter((c) => {
     if (!user) return false;
@@ -311,6 +322,75 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                         ))}
                       </ul>
                     )}
+                  </div>
+                );
+              })()}
+
+              {isSelf && !readOnly && (() => {
+                const today = new Date().toISOString().slice(0, 10);
+
+                const pendingApps = allActivities
+                  .map((a) => ({ a, mine: a.applicants?.find((ap) => ap.userId === userId && ap.status !== "approved") }))
+                  .filter((x): x is { a: Activity; mine: NonNullable<Activity["applicants"]>[number] } => !!x.mine);
+
+                const reviewedSeminarIds = new Set(
+                  myReviews.filter((r) => r.type === "attendee").map((r) => r.seminarId)
+                );
+                const pendingReviews = mySeminars
+                  .filter((s) => s.date && s.date < today)
+                  .filter((s) => !reviewedSeminarIds.has(s.id))
+                  .sort((a, b) => b.date.localeCompare(a.date))
+                  .slice(0, 3);
+
+                if (pendingApps.length === 0 && pendingReviews.length === 0) return null;
+
+                return (
+                  <div className="space-y-2">
+                    {pendingApps.length > 0 && (
+                      <Link
+                        href="/mypage/activities"
+                        className="block rounded-2xl border border-amber-200/70 bg-amber-50/60 p-4 transition hover:border-amber-300 hover:bg-amber-50"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-200/60 text-amber-700">
+                            <AlertCircle size={18} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-amber-900">
+                              신청 결과 대기 {pendingApps.length}건
+                            </p>
+                            <p className="mt-0.5 truncate text-xs text-amber-800/80">
+                              {pendingApps.slice(0, 2).map((x) => x.a.title).join(" · ")}
+                              {pendingApps.length > 2 ? ` 외 ${pendingApps.length - 2}건` : ""}
+                            </p>
+                          </div>
+                          <ChevronRight size={16} className="shrink-0 self-center text-amber-700" />
+                        </div>
+                      </Link>
+                    )}
+
+                    {pendingReviews.map((s) => (
+                      <Link
+                        key={`prv-${s.id}`}
+                        href={`/seminars/${s.id}/review`}
+                        className="block rounded-2xl border border-blue-200/70 bg-blue-50/50 p-4 transition hover:border-blue-300 hover:bg-blue-50"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-200/60 text-blue-700">
+                            <PenSquare size={18} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-blue-900">
+                              세미나 리뷰를 작성해보세요
+                            </p>
+                            <p className="mt-0.5 truncate text-xs text-blue-800/80">
+                              {s.title} · {formatDate(s.date)}
+                            </p>
+                          </div>
+                          <ChevronRight size={16} className="shrink-0 self-center text-blue-700" />
+                        </div>
+                      </Link>
+                    ))}
                   </div>
                 );
               })()}

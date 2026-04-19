@@ -389,6 +389,8 @@ export const reviewsApi = {
       "filter[seminarId]": seminarId,
       ...(type ? { "filter[type]": type } : {}),
     }),
+  listByAuthor: (authorId: string) =>
+    dataApi.list<SeminarReview>("seminar_reviews", { "filter[authorId]": authorId }),
   create: (data: Record<string, unknown>) => dataApi.create<SeminarReview>("seminar_reviews", data),
   update: (id: string, data: Record<string, unknown>) => dataApi.update<SeminarReview>("seminar_reviews", id, data),
   delete: (id: string) => dataApi.delete("seminar_reviews", id),
