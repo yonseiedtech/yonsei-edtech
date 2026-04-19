@@ -41,7 +41,7 @@ import type {
   ProfileLike, ProfileView, StudySession,
   ActivityParticipation, Award, ExternalActivity, ContentCreation,
   AlumniThesis, ThesisReference, ThesisClaim,
-  CourseOffering, SemesterTerm,
+  CourseOffering, CourseEnrollment, SemesterTerm,
   GuideTrack, GuideItem, GuideProgress,
   HostRetrospective, HostActivityType,
   SitePopup,
@@ -882,6 +882,27 @@ export const courseOfferingsApi = {
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<CourseOffering>("course_offerings", id, data),
   delete: (id: string) => dataApi.delete("course_offerings", id),
+};
+
+// 수강생 명단 (course_offerings 의 자식 — 운영진 관리)
+export const courseEnrollmentsApi = {
+  listByCourse: (courseOfferingId: string) =>
+    dataApi.list<CourseEnrollment>("course_enrollments", {
+      "filter[courseOfferingId]": courseOfferingId,
+      sort: "studentName:asc",
+      limit: 500,
+    }),
+  listBySemester: (year: number, term: SemesterTerm) =>
+    dataApi.list<CourseEnrollment>("course_enrollments", {
+      "filter[year]": year,
+      "filter[term]": term,
+      limit: 2000,
+    }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<CourseEnrollment>("course_enrollments", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<CourseEnrollment>("course_enrollments", id, data),
+  delete: (id: string) => dataApi.delete("course_enrollments", id),
 };
 
 // ── Track 6: 인지디딤판 (Phase 1) ──

@@ -1564,6 +1564,37 @@ export interface CourseOffering {
   updatedAt: string;
 }
 
+/**
+ * 수강생 명단 (운영진이 관리)
+ * — 한 과목(courseOfferingId)에 다수의 수강생을 등록.
+ * — userId 가 있으면 회원 계정 연동, 없으면 외부 학생 (학번/이름만 보유 가능).
+ */
+export interface CourseEnrollment {
+  id: string;
+  courseOfferingId: string;
+  /** 빠른 조회용 비정규화 (학기 단위 통계) */
+  year: number;
+  term: SemesterTerm;
+  /** 회원 계정 연동 (선택) */
+  userId?: string;
+  /** 학번 (회원 비연동인 외부 수강생용) */
+  studentId?: string;
+  studentName: string;
+  email?: string;
+  /** 역할: 일반 수강생/조교(TA)/청강 */
+  role?: "student" | "ta" | "auditor";
+  notes?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const ENROLLMENT_ROLE_LABELS: Record<NonNullable<CourseEnrollment["role"]>, string> = {
+  student: "수강생",
+  ta: "조교(TA)",
+  auditor: "청강",
+};
+
 // ── Track 6: 인지디딤판 (가이드 트랙) ──
 
 export type GuideTrackKey =

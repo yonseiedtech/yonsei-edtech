@@ -490,6 +490,13 @@ service cloud.firestore {
       allow write: if isAuthenticated() && isStaffOrAbove();
     }
 
+    // ─── Course Enrollments (Track 5: 과목별 수강생 명단 — 운영진 관리) ───
+    match /course_enrollments/{docId} {
+      // 읽기: 운영진/회장/관리자 전용 (개인정보 포함 — 학번/이메일)
+      allow read: if isAuthenticated() && isStaffOrAbove();
+      allow write: if isAuthenticated() && isStaffOrAbove();
+    }
+
     // ─── Guide Tracks (Track 6: 인지디딤판 트랙 카탈로그) ───
     match /guide_tracks/{docId} {
       allow read: if true;

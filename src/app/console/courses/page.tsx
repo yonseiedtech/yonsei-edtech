@@ -8,15 +8,31 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Plus, Trash2, Power, Save, Upload, Pencil } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  BookOpen,
+  Plus,
+  Trash2,
+  Power,
+  Save,
+  Upload,
+  Pencil,
+  Users,
+  ChevronDown,
+  ChevronUp,
+  X,
+  GraduationCap,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
-import { courseOfferingsApi } from "@/lib/bkend";
+import { courseOfferingsApi, courseEnrollmentsApi } from "@/lib/bkend";
 import {
   COURSE_CATEGORY_LABELS,
+  ENROLLMENT_ROLE_LABELS,
   SEMESTER_TERM_LABELS,
   type CourseCategory,
+  type CourseEnrollment,
   type CourseOffering,
   type SemesterTerm,
 } from "@/types";
@@ -94,6 +110,7 @@ function ConsoleCoursesContent() {
   const { user: viewer } = useAuthStore();
   const isStaff = isAtLeast(viewer, "staff");
 
+  const [tab, setTab] = useState<string>("register");
   const [year, setYear] = useState<number>(nowYear());
   const [term, setTerm] = useState<SemesterTerm>(defaultTermForToday());
   const [rows, setRows] = useState<CourseOffering[]>([]);
@@ -104,6 +121,7 @@ function ConsoleCoursesContent() {
   const [csvText, setCsvText] = useState("");
   const [csvOpen, setCsvOpen] = useState(false);
   const [filterCategory, setFilterCategory] = useState<CourseCategory | "all">("all");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isStaff) return;
@@ -201,6 +219,7 @@ function ConsoleCoursesContent() {
     try {
       await courseOfferingsApi.delete(row.id);
       setRows((prev) => prev.filter((r) => r.id !== row.id));
+      if (expandedId === row.id) setExpandedId(null);
       toast.success("삭제되었습니다");
     } catch (e) {
       console.error("[courses/handleDelete] 실패", e);
@@ -212,7 +231,6 @@ function ConsoleCoursesContent() {
 
   /**
    * 인라인 편집 배치 저장 — 변경된 필드만 모아서 한 번의 update 호출.
-   * 필드별 N번 호출하던 기존 방식 폐기 (부분 실패 시 데이터 정합성 깨지는 문제 해결).
    */
   async function handleUpdateRow(
     row: CourseOffering,
@@ -238,11 +256,6 @@ function ConsoleCoursesContent() {
     }
   }
 
-  /**
-   * CSV 일괄 등록.
-   * 헤더 또는 행 형식: 과목코드,과목명,교수,학점,분류,요일/시간,강의실,비고
-   * 분류는 한글 라벨(전공필수/전공선택/...) 또는 영문 키 모두 허용.
-   */
   async function handleImportCsv() {
     if (!viewer?.id) return;
     const lines = csvText
@@ -264,7 +277,6 @@ function ConsoleCoursesContent() {
 
     const parsed = lines.map((line) => {
       const cols = line.split(/[\t,]/).map((c) => c.trim());
-      // 헤더 라인 스킵 (과목명 또는 과목코드 헤더)
       if (cols[0] === "과목코드" || cols[1] === "과목명") return null;
       const rawCat = cols[4] ?? "";
       const cat: CourseCategory =
@@ -325,245 +337,294 @@ function ConsoleCoursesContent() {
   const cy = nowYear();
   for (let y = cy + 1; y >= cy - 8; y--) yearOptions.push(y);
 
+  // 학기 선택 + 통계 위젯 — 등록/조회 탭에서 공유
+  const semesterPicker = (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="rounded-lg border bg-white p-3">
+        <p className="text-xs text-muted-foreground">학기</p>
+        <div className="mt-1 flex gap-2">
+          <select
+            value={year}
+            onChange={(e) => setYear(Number(e.target.value))}
+            className="flex-1 rounded-md border bg-background px-2 py-1.5 text-sm"
+          >
+            {yearOptions.map((y) => (
+              <option key={y} value={y}>{y}년</option>
+            ))}
+          </select>
+          <select
+            value={term}
+            onChange={(e) => setTerm(e.target.value as SemesterTerm)}
+            className="flex-1 rounded-md border bg-background px-2 py-1.5 text-sm"
+          >
+            {TERMS.map((t) => (
+              <option key={t} value={t}>{SEMESTER_TERM_LABELS[t]}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <StatCard label="등록 과목" value={stats.total} />
+      <StatCard label="개설 중" value={stats.active} tone="primary" />
+      <StatCard label="폐강" value={stats.inactive} tone="muted" />
+    </div>
+  );
+
   return (
     <div className="py-12">
       <div className="mx-auto max-w-6xl px-4">
         <ConsolePageHeader
           icon={BookOpen}
           title="수강과목 마스터"
-          description="학기별 개설 전공/교직/타전공 과목 리스트를 관리합니다. 폐강 처리 시 카탈로그에서 숨겨집니다."
+          description="학기별 개설 전공/교직/타전공 과목과 수강생 명단을 관리합니다."
         />
 
-        {/* 학기 선택 + 통계 */}
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-lg border bg-white p-3">
-            <p className="text-xs text-muted-foreground">학기</p>
-            <div className="mt-1 flex gap-2">
-              <select
-                value={year}
-                onChange={(e) => setYear(Number(e.target.value))}
-                className="flex-1 rounded-md border bg-background px-2 py-1.5 text-sm"
-              >
-                {yearOptions.map((y) => (
-                  <option key={y} value={y}>{y}년</option>
-                ))}
-              </select>
-              <select
-                value={term}
-                onChange={(e) => setTerm(e.target.value as SemesterTerm)}
-                className="flex-1 rounded-md border bg-background px-2 py-1.5 text-sm"
-              >
-                {TERMS.map((t) => (
-                  <option key={t} value={t}>{SEMESTER_TERM_LABELS[t]}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <StatCard label="등록 과목" value={stats.total} />
-          <StatCard label="개설 중" value={stats.active} tone="primary" />
-          <StatCard label="폐강" value={stats.inactive} tone="muted" />
-        </div>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as string)} className="mt-6">
+          <TabsList>
+            <TabsTrigger value="register">과목 등록</TabsTrigger>
+            <TabsTrigger value="browse">과목 조회</TabsTrigger>
+            <TabsTrigger value="exam">종합시험</TabsTrigger>
+          </TabsList>
 
-        {/* 카테고리 필터 */}
-        <div className="mt-4 flex flex-wrap gap-1">
-          <FilterPill active={filterCategory === "all"} onClick={() => setFilterCategory("all")}>
-            전체 ({rows.length})
-          </FilterPill>
-          {CATEGORIES.map((c) => {
-            const cnt = rows.filter((r) => r.category === c).length;
-            return (
-              <FilterPill
-                key={c}
-                active={filterCategory === c}
-                onClick={() => setFilterCategory(c)}
+          {/* ───── 과목 등록 ───── */}
+          <TabsContent value="register" className="mt-4 space-y-4">
+            {semesterPicker}
+
+            {/* CSV 일괄 등록 */}
+            <div className="rounded-xl border bg-white">
+              <button
+                type="button"
+                onClick={() => setCsvOpen((v) => !v)}
+                className="flex w-full items-center justify-between gap-2 px-4 py-3 text-sm font-semibold hover:bg-muted/30"
               >
-                {COURSE_CATEGORY_LABELS[c]} ({cnt})
-              </FilterPill>
-            );
-          })}
-        </div>
-
-        {/* CSV 일괄 등록 */}
-        <div className="mt-4 rounded-xl border bg-white">
-          <button
-            type="button"
-            onClick={() => setCsvOpen((v) => !v)}
-            className="flex w-full items-center justify-between gap-2 px-4 py-3 text-sm font-semibold hover:bg-muted/30"
-          >
-            <span className="flex items-center gap-2">
-              <Upload size={14} />
-              CSV·표 붙여넣기로 일괄 등록
-            </span>
-            <span className="text-xs text-muted-foreground">{csvOpen ? "닫기" : "열기"}</span>
-          </button>
-          {csvOpen && (
-            <div className="border-t p-4">
-              <p className="text-xs text-muted-foreground">
-                컬럼 순서: <code>과목코드, 과목명, 교수, 학점, 분류, 요일/시간, 강의실, 비고</code>
-                {" "}— 첫 줄이 헤더라면 자동 스킵. 분류는 한글 라벨(예: 전공필수)로 입력 가능.
-              </p>
-              <Textarea
-                value={csvText}
-                onChange={(e) => setCsvText(e.target.value)}
-                placeholder="EDU5001, 교수설계, 홍길동, 3, 전공필수, 월 18:30-21:00, 외솔관 401, 비고"
-                rows={6}
-                className="mt-2 font-mono text-xs"
-              />
-              <div className="mt-2 flex justify-end gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setCsvText("")}>지우기</Button>
-                <Button size="sm" onClick={handleImportCsv} disabled={savingId === "__csv__"}>
-                  {savingId === "__csv__" ? "등록 중..." : "일괄 등록"}
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* 새 과목 추가 폼 */}
-        <div className="mt-4 rounded-xl border bg-white p-4">
-          <p className="text-sm font-semibold">새 과목 추가</p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-3">
-            <Input
-              placeholder="과목코드 (선택)"
-              value={newRow.courseCode}
-              onChange={(e) => setNewRow({ ...newRow, courseCode: e.target.value })}
-            />
-            <Input
-              placeholder="과목명 *"
-              value={newRow.courseName}
-              onChange={(e) => setNewRow({ ...newRow, courseName: e.target.value })}
-              className="sm:col-span-2"
-            />
-            <Input
-              placeholder="교수"
-              value={newRow.professor}
-              onChange={(e) => setNewRow({ ...newRow, professor: e.target.value })}
-            />
-            <Input
-              type="number"
-              placeholder="학점"
-              value={newRow.credits}
-              onChange={(e) => setNewRow({ ...newRow, credits: e.target.value })}
-            />
-            <select
-              value={newRow.category}
-              onChange={(e) => setNewRow({ ...newRow, category: e.target.value as CourseCategory })}
-              className="rounded-md border bg-background px-2 py-2 text-sm"
-            >
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>{COURSE_CATEGORY_LABELS[c]}</option>
-              ))}
-            </select>
-            <Input
-              placeholder="요일/시간"
-              value={newRow.schedule}
-              onChange={(e) => setNewRow({ ...newRow, schedule: e.target.value })}
-            />
-            <Input
-              placeholder="강의실"
-              value={newRow.classroom}
-              onChange={(e) => setNewRow({ ...newRow, classroom: e.target.value })}
-            />
-            <Input
-              placeholder="강의계획서 URL (선택)"
-              value={newRow.syllabusUrl}
-              onChange={(e) => setNewRow({ ...newRow, syllabusUrl: e.target.value })}
-            />
-            <Input
-              placeholder="비고"
-              value={newRow.notes}
-              onChange={(e) => setNewRow({ ...newRow, notes: e.target.value })}
-              className="sm:col-span-3"
-            />
-          </div>
-          <div className="mt-3 flex items-center justify-between gap-2">
-            <span className="text-[11px] text-muted-foreground">
-              * 과목명은 필수. 저장 시 즉시 목록에 반영됩니다.
-            </span>
-            <Button size="sm" onClick={handleAdd} disabled={savingId === "__new__"}>
-              <Plus size={14} className="mr-1" />
-              {savingId === "__new__" ? "저장 중..." : "저장"}
-            </Button>
-          </div>
-        </div>
-
-        {/* 목록 */}
-        {loading ? (
-          <LoadingSpinner className="mt-12" />
-        ) : error ? (
-          <p className="mt-12 text-sm text-destructive">⚠ {error}</p>
-        ) : visibleRows.length === 0 ? (
-          <p className="mt-12 text-sm text-muted-foreground">
-            등록된 과목이 없습니다. 위에서 새 과목을 추가하거나 CSV를 붙여넣어 일괄 등록하세요.
-          </p>
-        ) : (
-          <ul className="mt-6 space-y-2">
-            {visibleRows.map((r) => (
-              <li
-                key={r.id}
-                className={`rounded-lg border bg-white p-3 ${r.active ? "" : "opacity-60"}`}
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <Badge variant="secondary" className="text-[10px]">
-                        {COURSE_CATEGORY_LABELS[r.category]}
-                      </Badge>
-                      {r.courseCode && (
-                        <span className="font-mono text-[11px] text-muted-foreground">
-                          {r.courseCode}
-                        </span>
-                      )}
-                      <span className="text-sm font-semibold">{r.courseName}</span>
-                      {!r.active && (
-                        <Badge variant="destructive" className="text-[10px]">폐강</Badge>
-                      )}
-                    </div>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {[r.professor, r.credits ? `${r.credits}학점` : null, r.schedule, r.classroom]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </p>
-                    {r.notes && (
-                      <p className="mt-1 text-[11px] text-foreground/70">📝 {r.notes}</p>
-                    )}
-                    {r.syllabusUrl && (
-                      <a
-                        href={r.syllabusUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-1 inline-block text-[11px] text-primary hover:underline"
-                      >
-                        강의계획서 →
-                      </a>
-                    )}
-                  </div>
-                  <div className="flex shrink-0 gap-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      title={r.active ? "폐강 처리" : "재활성화"}
-                      disabled={savingId === r.id}
-                      onClick={() => handleToggleActive(r)}
-                    >
-                      <Power size={13} />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-destructive"
-                      disabled={savingId === r.id}
-                      onClick={() => handleDelete(r)}
-                    >
-                      <Trash2 size={13} />
+                <span className="flex items-center gap-2">
+                  <Upload size={14} />
+                  CSV·표 붙여넣기로 일괄 등록
+                </span>
+                <span className="text-xs text-muted-foreground">{csvOpen ? "닫기" : "열기"}</span>
+              </button>
+              {csvOpen && (
+                <div className="border-t p-4">
+                  <p className="text-xs text-muted-foreground">
+                    컬럼 순서: <code>과목코드, 과목명, 교수, 학점, 분류, 요일/시간, 강의실, 비고</code>
+                    {" "}— 첫 줄이 헤더라면 자동 스킵. 분류는 한글 라벨(예: 전공필수)로 입력 가능.
+                  </p>
+                  <Textarea
+                    value={csvText}
+                    onChange={(e) => setCsvText(e.target.value)}
+                    placeholder="EDU5001, 교수설계, 홍길동, 3, 전공필수, 월 18:30-21:00, 외솔관 401, 비고"
+                    rows={6}
+                    className="mt-2 font-mono text-xs"
+                  />
+                  <div className="mt-2 flex justify-end gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => setCsvText("")}>지우기</Button>
+                    <Button size="sm" onClick={handleImportCsv} disabled={savingId === "__csv__"}>
+                      {savingId === "__csv__" ? "등록 중..." : "일괄 등록"}
                     </Button>
                   </div>
                 </div>
-                <InlineEditor row={r} onSaveRow={handleUpdateRow} disabled={savingId === r.id} />
-              </li>
-            ))}
-          </ul>
-        )}
+              )}
+            </div>
+
+            {/* 새 과목 추가 폼 */}
+            <div className="rounded-xl border bg-white p-4">
+              <p className="text-sm font-semibold">새 과목 추가</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                <Input
+                  placeholder="과목코드 (선택)"
+                  value={newRow.courseCode}
+                  onChange={(e) => setNewRow({ ...newRow, courseCode: e.target.value })}
+                />
+                <Input
+                  placeholder="과목명 *"
+                  value={newRow.courseName}
+                  onChange={(e) => setNewRow({ ...newRow, courseName: e.target.value })}
+                  className="sm:col-span-2"
+                />
+                <Input
+                  placeholder="교수"
+                  value={newRow.professor}
+                  onChange={(e) => setNewRow({ ...newRow, professor: e.target.value })}
+                />
+                <Input
+                  type="number"
+                  placeholder="학점"
+                  value={newRow.credits}
+                  onChange={(e) => setNewRow({ ...newRow, credits: e.target.value })}
+                />
+                <select
+                  value={newRow.category}
+                  onChange={(e) => setNewRow({ ...newRow, category: e.target.value as CourseCategory })}
+                  className="rounded-md border bg-background px-2 py-2 text-sm"
+                >
+                  {CATEGORIES.map((c) => (
+                    <option key={c} value={c}>{COURSE_CATEGORY_LABELS[c]}</option>
+                  ))}
+                </select>
+                <Input
+                  placeholder="요일/시간"
+                  value={newRow.schedule}
+                  onChange={(e) => setNewRow({ ...newRow, schedule: e.target.value })}
+                />
+                <Input
+                  placeholder="강의실"
+                  value={newRow.classroom}
+                  onChange={(e) => setNewRow({ ...newRow, classroom: e.target.value })}
+                />
+                <Input
+                  placeholder="강의계획서 URL (선택)"
+                  value={newRow.syllabusUrl}
+                  onChange={(e) => setNewRow({ ...newRow, syllabusUrl: e.target.value })}
+                />
+                <Input
+                  placeholder="비고"
+                  value={newRow.notes}
+                  onChange={(e) => setNewRow({ ...newRow, notes: e.target.value })}
+                  className="sm:col-span-3"
+                />
+              </div>
+              <div className="mt-3 flex items-center justify-between gap-2">
+                <span className="text-[11px] text-muted-foreground">
+                  * 과목명은 필수. 저장 시 즉시 목록에 반영됩니다.
+                </span>
+                <Button size="sm" onClick={handleAdd} disabled={savingId === "__new__"}>
+                  <Plus size={14} className="mr-1" />
+                  {savingId === "__new__" ? "저장 중..." : "저장"}
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* ───── 과목 조회 ───── */}
+          <TabsContent value="browse" className="mt-4 space-y-4">
+            {semesterPicker}
+
+            {/* 카테고리 필터 */}
+            <div className="flex flex-wrap gap-1">
+              <FilterPill active={filterCategory === "all"} onClick={() => setFilterCategory("all")}>
+                전체 ({rows.length})
+              </FilterPill>
+              {CATEGORIES.map((c) => {
+                const cnt = rows.filter((r) => r.category === c).length;
+                return (
+                  <FilterPill
+                    key={c}
+                    active={filterCategory === c}
+                    onClick={() => setFilterCategory(c)}
+                  >
+                    {COURSE_CATEGORY_LABELS[c]} ({cnt})
+                  </FilterPill>
+                );
+              })}
+            </div>
+
+            {loading ? (
+              <LoadingSpinner className="mt-12" />
+            ) : error ? (
+              <p className="mt-12 text-sm text-destructive">⚠ {error}</p>
+            ) : visibleRows.length === 0 ? (
+              <p className="mt-12 text-sm text-muted-foreground">
+                등록된 과목이 없습니다. <strong>과목 등록</strong> 탭에서 추가하세요.
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {visibleRows.map((r) => (
+                  <li
+                    key={r.id}
+                    className={`rounded-lg border bg-white p-3 ${r.active ? "" : "opacity-60"}`}
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <Badge variant="secondary" className="text-[10px]">
+                            {COURSE_CATEGORY_LABELS[r.category]}
+                          </Badge>
+                          {r.courseCode && (
+                            <span className="font-mono text-[11px] text-muted-foreground">
+                              {r.courseCode}
+                            </span>
+                          )}
+                          <span className="text-sm font-semibold">{r.courseName}</span>
+                          {!r.active && (
+                            <Badge variant="destructive" className="text-[10px]">폐강</Badge>
+                          )}
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {[r.professor, r.credits ? `${r.credits}학점` : null, r.schedule, r.classroom]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </p>
+                        {r.notes && (
+                          <p className="mt-1 text-[11px] text-foreground/70">📝 {r.notes}</p>
+                        )}
+                        {r.syllabusUrl && (
+                          <a
+                            href={r.syllabusUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-1 inline-block text-[11px] text-primary hover:underline"
+                          >
+                            강의계획서 →
+                          </a>
+                        )}
+                      </div>
+                      <div className="flex shrink-0 gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          title="수강생 명단"
+                          onClick={() =>
+                            setExpandedId((cur) => (cur === r.id ? null : r.id))
+                          }
+                        >
+                          <Users size={13} />
+                          {expandedId === r.id ? (
+                            <ChevronUp size={12} className="ml-0.5" />
+                          ) : (
+                            <ChevronDown size={12} className="ml-0.5" />
+                          )}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          title={r.active ? "폐강 처리" : "재활성화"}
+                          disabled={savingId === r.id}
+                          onClick={() => handleToggleActive(r)}
+                        >
+                          <Power size={13} />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive"
+                          disabled={savingId === r.id}
+                          onClick={() => handleDelete(r)}
+                        >
+                          <Trash2 size={13} />
+                        </Button>
+                      </div>
+                    </div>
+                    <InlineEditor row={r} onSaveRow={handleUpdateRow} disabled={savingId === r.id} />
+                    {expandedId === r.id && (
+                      <EnrollmentList course={r} viewerId={viewer?.id} />
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </TabsContent>
+
+          {/* ───── 종합시험 (스캐폴드) ───── */}
+          <TabsContent value="exam" className="mt-4">
+            <div className="rounded-xl border border-dashed bg-muted/20 p-10 text-center">
+              <GraduationCap size={36} className="mx-auto text-muted-foreground" />
+              <p className="mt-3 text-sm font-semibold">종합시험 관리 (준비 중)</p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                응시자 명단·일정·결과 관리 기능이 이 영역에 들어옵니다.
+                <br />구체적인 요구사항이 정해지면 추가 구현됩니다.
+              </p>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
@@ -640,12 +701,10 @@ function InlineEditor({
   );
   const [draft, setDraft] = useState(initial);
 
-  // row 가 외부에서 갱신되면(저장 후 setRows) draft 동기화
   useEffect(() => {
     setDraft(initial);
   }, [initial]);
 
-  // 변경사항 계산 — 저장 버튼 활성/비활성 판단에 사용
   const updates = useMemo(() => {
     const u: Partial<CourseOffering> = {};
     const trimmedName = draft.courseName.trim();
@@ -749,6 +808,364 @@ function InlineEditor({
           </Button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * 과목별 수강생 명단 — CRUD.
+ * 운영진 전용. 추가/편집/삭제 후 즉시 목록 반영.
+ */
+function EnrollmentList({
+  course,
+  viewerId,
+}: {
+  course: CourseOffering;
+  viewerId?: string;
+}) {
+  const [list, setList] = useState<CourseEnrollment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<{
+    studentName: string;
+    studentId: string;
+    email: string;
+    role: NonNullable<CourseEnrollment["role"]>;
+    notes: string;
+  }>({ studentName: "", studentId: "", email: "", role: "student", notes: "" });
+  const [adding, setAdding] = useState(false);
+  const [newDraft, setNewDraft] = useState({
+    studentName: "",
+    studentId: "",
+    email: "",
+    role: "student" as NonNullable<CourseEnrollment["role"]>,
+    notes: "",
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setErr(null);
+      try {
+        const res = await courseEnrollmentsApi.listByCourse(course.id);
+        if (!cancelled) setList(res.data);
+      } catch (e) {
+        console.error("[EnrollmentList/list] 실패", e);
+        if (!cancelled) setErr(formatFirestoreError(e, "수강생 명단을 불러오지 못했습니다"));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [course.id]);
+
+  async function handleCreate() {
+    if (!newDraft.studentName.trim()) {
+      toast.error("이름을 입력하세요");
+      return;
+    }
+    if (!viewerId) {
+      toast.error("로그인 상태를 확인하세요");
+      return;
+    }
+    setBusy("__new__");
+    try {
+      const created = await courseEnrollmentsApi.create({
+        courseOfferingId: course.id,
+        year: course.year,
+        term: course.term,
+        studentName: newDraft.studentName.trim(),
+        studentId: newDraft.studentId.trim() || undefined,
+        email: newDraft.email.trim() || undefined,
+        role: newDraft.role,
+        notes: newDraft.notes.trim() || undefined,
+        createdBy: viewerId,
+      });
+      setList((prev) =>
+        [...prev, created].sort((a, b) =>
+          (a.studentName ?? "").localeCompare(b.studentName ?? "")
+        )
+      );
+      setNewDraft({ studentName: "", studentId: "", email: "", role: "student", notes: "" });
+      setAdding(false);
+      toast.success(`"${created.studentName}" 추가됨`);
+    } catch (e) {
+      console.error("[EnrollmentList/create] 실패", e);
+      toast.error(formatFirestoreError(e, "추가 실패"), { duration: 8000 });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  function startEdit(row: CourseEnrollment) {
+    setEditingId(row.id);
+    setEditDraft({
+      studentName: row.studentName ?? "",
+      studentId: row.studentId ?? "",
+      email: row.email ?? "",
+      role: row.role ?? "student",
+      notes: row.notes ?? "",
+    });
+  }
+
+  async function handleSaveEdit(row: CourseEnrollment) {
+    if (!editDraft.studentName.trim()) {
+      toast.error("이름은 필수");
+      return;
+    }
+    setBusy(row.id);
+    try {
+      const updates = {
+        studentName: editDraft.studentName.trim(),
+        studentId: editDraft.studentId.trim() || undefined,
+        email: editDraft.email.trim() || undefined,
+        role: editDraft.role,
+        notes: editDraft.notes.trim() || undefined,
+      };
+      await courseEnrollmentsApi.update(row.id, updates);
+      setList((prev) =>
+        prev
+          .map((r) => (r.id === row.id ? { ...r, ...updates } : r))
+          .sort((a, b) => (a.studentName ?? "").localeCompare(b.studentName ?? ""))
+      );
+      setEditingId(null);
+      toast.success("수정 완료");
+    } catch (e) {
+      console.error("[EnrollmentList/update] 실패", e);
+      toast.error(formatFirestoreError(e, "수정 실패"), { duration: 8000 });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function handleDelete(row: CourseEnrollment) {
+    if (!confirm(`"${row.studentName}" 항목을 삭제하시겠습니까?`)) return;
+    setBusy(row.id);
+    try {
+      await courseEnrollmentsApi.delete(row.id);
+      setList((prev) => prev.filter((r) => r.id !== row.id));
+      toast.success("삭제됨");
+    } catch (e) {
+      console.error("[EnrollmentList/delete] 실패", e);
+      toast.error(formatFirestoreError(e, "삭제 실패"), { duration: 8000 });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <div className="mt-3 rounded-md border bg-muted/10 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <p className="flex items-center gap-1.5 text-xs font-semibold">
+          <Users size={12} />
+          수강생 명단
+          <span className="text-[11px] font-normal text-muted-foreground">
+            {loading ? "불러오는 중..." : `${list.length}명`}
+          </span>
+        </p>
+        {!adding && (
+          <Button size="sm" variant="outline" onClick={() => setAdding(true)}>
+            <Plus size={12} className="mr-1" /> 추가
+          </Button>
+        )}
+      </div>
+
+      {err && <p className="mt-2 text-[11px] text-destructive">⚠ {err}</p>}
+
+      {adding && (
+        <div className="mt-3 rounded-md border bg-white p-3">
+          <div className="grid gap-2 sm:grid-cols-3">
+            <Input
+              placeholder="이름 *"
+              value={newDraft.studentName}
+              onChange={(e) => setNewDraft({ ...newDraft, studentName: e.target.value })}
+            />
+            <Input
+              placeholder="학번"
+              value={newDraft.studentId}
+              onChange={(e) => setNewDraft({ ...newDraft, studentId: e.target.value })}
+            />
+            <Input
+              type="email"
+              placeholder="이메일"
+              value={newDraft.email}
+              onChange={(e) => setNewDraft({ ...newDraft, email: e.target.value })}
+            />
+            <select
+              value={newDraft.role}
+              onChange={(e) =>
+                setNewDraft({
+                  ...newDraft,
+                  role: e.target.value as NonNullable<CourseEnrollment["role"]>,
+                })
+              }
+              className="rounded-md border bg-background px-2 py-2 text-sm"
+            >
+              {(Object.keys(ENROLLMENT_ROLE_LABELS) as Array<NonNullable<CourseEnrollment["role"]>>).map((k) => (
+                <option key={k} value={k}>{ENROLLMENT_ROLE_LABELS[k]}</option>
+              ))}
+            </select>
+            <Input
+              placeholder="비고"
+              value={newDraft.notes}
+              onChange={(e) => setNewDraft({ ...newDraft, notes: e.target.value })}
+              className="sm:col-span-2"
+            />
+          </div>
+          <div className="mt-2 flex justify-end gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setAdding(false);
+                setNewDraft({ studentName: "", studentId: "", email: "", role: "student", notes: "" });
+              }}
+            >
+              취소
+            </Button>
+            <Button size="sm" onClick={handleCreate} disabled={busy === "__new__"}>
+              {busy === "__new__" ? "추가 중..." : "추가"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {!loading && list.length === 0 && !adding && (
+        <p className="mt-3 text-[11px] text-muted-foreground">
+          등록된 수강생이 없습니다. 우측 <strong>추가</strong> 버튼으로 등록하세요.
+        </p>
+      )}
+
+      {list.length > 0 && (
+        <ul className="mt-3 space-y-1.5">
+          {list.map((r) => {
+            const isEditing = editingId === r.id;
+            if (isEditing) {
+              return (
+                <li key={r.id} className="rounded-md border bg-white p-3">
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    <Input
+                      value={editDraft.studentName}
+                      onChange={(e) =>
+                        setEditDraft({ ...editDraft, studentName: e.target.value })
+                      }
+                      placeholder="이름 *"
+                    />
+                    <Input
+                      value={editDraft.studentId}
+                      onChange={(e) =>
+                        setEditDraft({ ...editDraft, studentId: e.target.value })
+                      }
+                      placeholder="학번"
+                    />
+                    <Input
+                      type="email"
+                      value={editDraft.email}
+                      onChange={(e) =>
+                        setEditDraft({ ...editDraft, email: e.target.value })
+                      }
+                      placeholder="이메일"
+                    />
+                    <select
+                      value={editDraft.role}
+                      onChange={(e) =>
+                        setEditDraft({
+                          ...editDraft,
+                          role: e.target.value as NonNullable<CourseEnrollment["role"]>,
+                        })
+                      }
+                      className="rounded-md border bg-background px-2 py-2 text-sm"
+                    >
+                      {(Object.keys(ENROLLMENT_ROLE_LABELS) as Array<NonNullable<CourseEnrollment["role"]>>).map((k) => (
+                        <option key={k} value={k}>{ENROLLMENT_ROLE_LABELS[k]}</option>
+                      ))}
+                    </select>
+                    <Input
+                      value={editDraft.notes}
+                      onChange={(e) =>
+                        setEditDraft({ ...editDraft, notes: e.target.value })
+                      }
+                      placeholder="비고"
+                      className="sm:col-span-2"
+                    />
+                  </div>
+                  <div className="mt-2 flex justify-end gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setEditingId(null)}
+                      disabled={busy === r.id}
+                    >
+                      <X size={12} className="mr-1" /> 취소
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleSaveEdit(r)}
+                      disabled={busy === r.id}
+                    >
+                      <Save size={12} className="mr-1" />
+                      {busy === r.id ? "저장 중..." : "저장"}
+                    </Button>
+                  </div>
+                </li>
+              );
+            }
+            return (
+              <li
+                key={r.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-white px-3 py-2"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-sm font-medium">{r.studentName}</span>
+                    {r.role && r.role !== "student" && (
+                      <Badge variant="outline" className="text-[10px]">
+                        {ENROLLMENT_ROLE_LABELS[r.role]}
+                      </Badge>
+                    )}
+                    {r.studentId && (
+                      <span className="font-mono text-[11px] text-muted-foreground">
+                        {r.studentId}
+                      </span>
+                    )}
+                  </div>
+                  {(r.email || r.notes) && (
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                      {[r.email, r.notes].filter(Boolean).join(" · ")}
+                    </p>
+                  )}
+                </div>
+                <div className="flex shrink-0 gap-1">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    title="편집"
+                    onClick={() => startEdit(r)}
+                    disabled={busy === r.id}
+                  >
+                    <Pencil size={12} />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-destructive"
+                    title="삭제"
+                    onClick={() => handleDelete(r)}
+                    disabled={busy === r.id}
+                  >
+                    <Trash2 size={12} />
+                  </Button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }
