@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { activitiesApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -14,7 +14,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Loader2, Calendar, Globe, FolderKanban, BookOpen, type LucideIcon } from "lucide-react";
+import Link from "next/link";
+import { Plus, Pencil, Trash2, Loader2, Calendar, Globe, FolderKanban, BookOpen, LayoutDashboard, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { Activity, ActivityType } from "@/types";
@@ -45,6 +46,12 @@ const TYPE_DEFAULTS: Record<ActivityType, { icon: LucideIcon; description: strin
   external: { icon: Globe, description: "회원의 대외 학회·공모전·발표 등 외부 학술활동을 등록하고 관리합니다." },
   project: { icon: FolderKanban, description: "학회 연구 프로젝트와 협업 과제의 진행 상황을 관리합니다." },
   study: { icon: BookOpen, description: "학회 스터디 모임의 일정과 참여자를 관리합니다." },
+};
+
+const TYPE_TO_PATH: Record<ActivityType, string> = {
+  study: "studies",
+  project: "projects",
+  external: "external",
 };
 
 interface FormData {
@@ -216,7 +223,15 @@ export default function ActivityList({ type, typeLabel, icon, description }: Pro
                   )}
                 </div>
                 <div className="flex shrink-0 gap-1 self-end sm:self-start">
-                  <Button variant="outline" size="sm" className="h-7" onClick={() => openEdit(a)}>
+                  <Link
+                    href={`/academic-admin/${TYPE_TO_PATH[type]}/${a.id}`}
+                    title="운영 페이지 열기"
+                    className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 gap-1 text-xs")}
+                  >
+                    <LayoutDashboard size={12} />
+                    <span className="hidden sm:inline">운영</span>
+                  </Link>
+                  <Button variant="outline" size="sm" className="h-7" onClick={() => openEdit(a)} title="기본 정보 수정">
                     <Pencil size={12} />
                   </Button>
                   <Button
@@ -224,6 +239,7 @@ export default function ActivityList({ type, typeLabel, icon, description }: Pro
                     size="sm"
                     className="h-7 text-destructive"
                     onClick={() => { if (confirm("삭제하시겠습니까?")) deleteMutation.mutate(a.id); }}
+                    title="삭제"
                   >
                     <Trash2 size={12} />
                   </Button>
