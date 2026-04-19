@@ -10,9 +10,10 @@ const MIN = 60 * 1000;
 const HOUR = 60 * MIN;
 const DAY = 24 * HOUR;
 
+// 관리자(sysadmin, admin)는 운영 편의를 위해 2시간 idle 제한 면제 — 일반 회원과 동일한 장기 세션
 const IDLE_LIMITS: Record<UserRole, number> = {
-  sysadmin: 2 * HOUR,
-  admin: 2 * HOUR,
+  sysadmin: 30 * DAY,
+  admin: 30 * DAY,
   president: 2 * HOUR,
   staff: 2 * HOUR,
   advisor: 2 * HOUR,
@@ -20,6 +21,9 @@ const IDLE_LIMITS: Record<UserRole, number> = {
   member: 30 * DAY,
   guest: 30 * DAY,
 };
+
+// 2시간 idle 제한이 적용되는 역할 (운영진 중 임기 순환 포지션)
+const SHORT_SESSION_ROLES: UserRole[] = ["president", "staff", "advisor"];
 
 const WARN_BEFORE = 5 * MIN;
 const TICK_MS = 1000;
@@ -43,7 +47,7 @@ export function useSessionTimer() {
   const limit = user ? IDLE_LIMITS[user.role] ?? IDLE_LIMITS.member : 0;
   const elapsed = now - lastActivity;
   const remaining = Math.max(0, limit - elapsed);
-  const isSensitiveRole = !!user && ["sysadmin", "admin", "president", "staff", "advisor"].includes(user.role);
+  const isSensitiveRole = !!user && (SHORT_SESSION_ROLES as string[]).includes(user.role);
 
   const extend = useCallback(() => {
     const t = Date.now();
