@@ -28,6 +28,7 @@ import { formatDate } from "@/lib/utils";
 import { ArrowLeft, Trash2, Edit, LogIn } from "lucide-react";
 import { toast } from "sonner";
 import ShareButton from "@/components/ShareButton";
+import { PostArticleJsonLd } from "@/components/seo/JsonLd";
 import InterviewPlayer from "@/features/board/InterviewPlayer";
 import InterviewResponses from "@/features/board/InterviewResponses";
 import { useMyInterviewForPost } from "@/features/board/interview-store";
@@ -172,6 +173,7 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
 
   return (
     <div className="py-16">
+      <PostArticleJsonLd post={post} />
       <div className="mx-auto max-w-6xl px-4">
         <button
           onClick={() => {

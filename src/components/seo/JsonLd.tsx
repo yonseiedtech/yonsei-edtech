@@ -62,3 +62,109 @@ export function WebsiteJsonLd() {
     />
   );
 }
+
+interface SeminarEventLdInput {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  time: string;
+  location: string;
+  speaker: string;
+  speakerAffiliation?: string;
+  posterUrl?: string;
+  isOnline?: boolean;
+  onlineUrl?: string;
+  maxAttendees?: number;
+}
+
+export function SeminarEventJsonLd({ seminar }: { seminar: SeminarEventLdInput }) {
+  const startsAt = (() => {
+    try {
+      return new Date(`${seminar.date}T${seminar.time}:00+09:00`).toISOString();
+    } catch {
+      return seminar.date;
+    }
+  })();
+
+  const jsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: seminar.title,
+    description: seminar.description?.slice(0, 500),
+    startDate: startsAt,
+    eventAttendanceMode: seminar.isOnline
+      ? "https://schema.org/OnlineEventAttendanceMode"
+      : "https://schema.org/OfflineEventAttendanceMode",
+    eventStatus: "https://schema.org/EventScheduled",
+    location: seminar.isOnline
+      ? {
+          "@type": "VirtualLocation",
+          url: seminar.onlineUrl ?? `https://yonsei-edtech.vercel.app/seminars/${seminar.id}`,
+        }
+      : {
+          "@type": "Place",
+          name: seminar.location,
+          address: { "@type": "PostalAddress", addressLocality: "서울", addressCountry: "KR" },
+        },
+    organizer: {
+      "@type": "Organization",
+      name: "연세교육공학회",
+      url: "https://yonsei-edtech.vercel.app",
+    },
+    performer: {
+      "@type": "Person",
+      name: seminar.speaker,
+      ...(seminar.speakerAffiliation ? { affiliation: seminar.speakerAffiliation } : {}),
+    },
+    url: `https://yonsei-edtech.vercel.app/seminars/${seminar.id}`,
+    ...(seminar.posterUrl ? { image: seminar.posterUrl } : {}),
+    ...(seminar.maxAttendees ? { maximumAttendeeCapacity: seminar.maxAttendees } : {}),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
+
+interface PostArticleLdInput {
+  id: string;
+  title: string;
+  content: string;
+  authorName: string;
+  createdAt: string;
+  updatedAt?: string;
+  imageUrls?: string[];
+}
+
+export function PostArticleJsonLd({ post }: { post: PostArticleLdInput }) {
+  const jsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.title,
+    description: post.content?.replace(/<[^>]+>/g, "").slice(0, 200),
+    author: { "@type": "Person", name: post.authorName },
+    publisher: {
+      "@type": "Organization",
+      name: "연세교육공학회",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://yonsei-edtech.vercel.app/logo-text.png",
+      },
+    },
+    datePublished: post.createdAt,
+    dateModified: post.updatedAt ?? post.createdAt,
+    mainEntityOfPage: `https://yonsei-edtech.vercel.app/board/${post.id}`,
+    ...(post.imageUrls?.length ? { image: post.imageUrls } : {}),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}

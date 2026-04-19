@@ -1,5 +1,5 @@
-const CACHE_NAME = "yonsei-edtech-v2";
-const STATIC_ASSETS = ["/icon.svg", "/logo-text.png", "/yonsei-emblem.svg"];
+const CACHE_NAME = "yonsei-edtech-v3";
+const STATIC_ASSETS = ["/icon.svg", "/logo-text.png", "/yonsei-emblem.svg", "/offline"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -39,7 +39,7 @@ self.addEventListener("fetch", (event) => {
           }
           return response;
         })
-        .catch(() => caches.match(request).then((c) => c || caches.match("/")))
+        .catch(() => caches.match(request).then((c) => c || caches.match("/offline")))
     );
     return;
   }

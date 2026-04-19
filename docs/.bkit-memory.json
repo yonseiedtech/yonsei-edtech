@@ -116,13 +116,13 @@
     },
     "newsletter-pdf": {
       "phase": "completed",
-      "matchRate": 88,
-      "iterationCount": 0,
+      "matchRate": 96,
+      "iterationCount": 1,
       "startedAt": "2026-04-18T00:00:00Z",
-      "completedAt": "2026-04-18T19:30:00Z",
-      "lastDeployedAt": "2026-04-18T19:20:00Z",
-      "lastCommit": "61be3f1",
-      "notes": "MVP deployed (PDF route + magazine view + Pretendard CDN). 88% match (>=85% production-ready threshold). Carry-over: TOC page numbers, mobile sticky index, font static migration."
+      "completedAt": "2026-04-19T03:25:00Z",
+      "lastDeployedAt": "2026-04-19T05:00:00Z",
+      "lastCommit": "58c77e2",
+      "notes": "MVP(61be3f1) 88% → carry-over(17f2f1b) 96% → 다듬기 사이클(58c77e2). 추가: (a) 매거진 모바일 chip IntersectionObserver active state 강조 (b) PDF TOC dots leader. 검증 미완: serverless 폰트 fs read 런타임 확인 필요 (PDF 다운로드 한 번 클릭)."
     },
     "fees-excel-reconcile": {
       "phase": "completed",

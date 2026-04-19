@@ -13,6 +13,7 @@ import ImpersonationBanner from "@/components/layout/ImpersonationBanner";
 import ConsentGate from "@/components/auth/ConsentGate";
 import UndergradInfoPrompt from "@/components/auth/UndergradInfoPrompt";
 import SitePopupGate from "@/components/popup/SitePopupGate";
+import InstallPromptBanner from "@/components/pwa/InstallPromptBanner";
 import "./globals.css";
 
 const pretendard = localFont({
@@ -162,6 +163,7 @@ export default function RootLayout({
             <ConsentGate />
             <UndergradInfoPrompt />
             <SitePopupGate />
+            <InstallPromptBanner />
             <Toaster richColors position="top-center" />
           </AuthProvider>
         </QueryProvider>
