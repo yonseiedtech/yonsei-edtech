@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { AlumniThesis } from "@/types";
+import { STOPWORDS, normalizeKeyword, yearFrom, thesesYearRange } from "./shared";
 
 interface CloudItem {
   word: string;
@@ -51,7 +53,13 @@ function rectsOverlap(
 }
 
 /** Spiral packing word cloud (deterministic, no JS lib needed). */
-function packWords(items: CloudItem[], width: number, height: number): PlacedWord[] {
+function packWords(
+  items: CloudItem[],
+  width: number,
+  height: number,
+  maxFont: number,
+  minFont: number,
+): PlacedWord[] {
   if (items.length === 0) return [];
   const maxCount = items[0].count;
   const minCount = items[items.length - 1]?.count ?? 1;
@@ -62,9 +70,9 @@ function packWords(items: CloudItem[], width: number, height: number): PlacedWor
   const placed: { x: number; y: number; w: number; h: number }[] = [];
   const result: PlacedWord[] = [];
 
-  items.forEach((item, idx) => {
+  items.forEach((item) => {
     const norm = (item.count - minCount) / span;
-    const fontSize = Math.round(14 + norm * 38);
+    const fontSize = Math.round(minFont + norm * (maxFont - minFont));
     const charW = fontSize * 0.95;
     const w = item.word.length * charW * 0.55 + 6;
     const h = fontSize * 1.05;
@@ -73,10 +81,9 @@ function packWords(items: CloudItem[], width: number, height: number): PlacedWor
     let x = cx;
     let y = cy;
 
-    // Archimedean spiral
     const stepAngle = 0.35;
     const stepRadius = 1.2;
-    for (let t = idx === 0 ? 0 : 0; t < 6000; t++) {
+    for (let t = 0; t < 8000; t++) {
       const angle = t * stepAngle;
       const radius = t * stepRadius * 0.06;
       x = cx + radius * Math.cos(angle) - w / 2;
@@ -84,7 +91,7 @@ function packWords(items: CloudItem[], width: number, height: number): PlacedWor
       if (x < 0 || y < 0 || x + w > width || y + h > height) continue;
       let collide = false;
       for (const p of placed) {
-        if (rectsOverlap(x, y, w, h, p.x, p.y, p.w, p.h, 4)) {
+        if (rectsOverlap(x, y, w, h, p.x, p.y, p.w, p.h, 5)) {
           collide = true;
           break;
         }
@@ -111,14 +118,77 @@ function packWords(items: CloudItem[], width: number, height: number): PlacedWor
   return result;
 }
 
-export default function KeywordCloud({ items }: { items: CloudItem[] }) {
+const TOPN_OPTIONS = [10, 30, 50, 80] as const;
+type TopN = (typeof TOPN_OPTIONS)[number];
+
+// 항목 수에 따라 폰트/캔버스 동적 조절 — 많을수록 작게, 적을수록 크게
+function dimensionsFor(n: number): {
+  width: number;
+  height: number;
+  maxFont: number;
+  minFont: number;
+} {
+  if (n <= 10) return { width: 820, height: 320, maxFont: 60, minFont: 24 };
+  if (n <= 30) return { width: 860, height: 420, maxFont: 50, minFont: 18 };
+  if (n <= 50) return { width: 880, height: 500, maxFont: 42, minFont: 14 };
+  return { width: 900, height: 580, maxFont: 36, minFont: 12 };
+}
+
+export default function KeywordCloud({
+  theses,
+  defaultTopN = 30,
+}: {
+  theses: AlumniThesis[];
+  defaultTopN?: TopN;
+}) {
   const [hover, setHover] = useState<string | null>(null);
-  const width = 880;
-  const height = 460;
+  const [topN, setTopN] = useState<TopN>(defaultTopN);
 
-  const placed = useMemo(() => packWords(items, width, height), [items]);
+  const dataRange = useMemo(() => thesesYearRange(theses), [theses]);
+  const [yearStart, setYearStart] = useState<number>(dataRange.min);
+  const [yearEnd, setYearEnd] = useState<number>(dataRange.max);
 
-  if (items.length === 0) {
+  // 데이터 로드 후 슬라이더 초기값을 데이터 실제 범위로 동기화 (1회)
+  const [synced, setSynced] = useState(false);
+  useEffect(() => {
+    if (!synced && theses.length > 0) {
+      setYearStart(dataRange.min);
+      setYearEnd(dataRange.max);
+      setSynced(true);
+    }
+  }, [theses.length, dataRange.min, dataRange.max, synced]);
+
+  // 슬라이더 좌(start) 우(end) 교차 방지
+  const lo = Math.min(yearStart, yearEnd);
+  const hi = Math.max(yearStart, yearEnd);
+
+  const filteredCounts = useMemo(() => {
+    const map = new Map<string, number>();
+    theses.forEach((t) => {
+      const y = yearFrom(t);
+      if (y == null || y < lo || y > hi) return;
+      (t.keywords ?? []).forEach((raw) => {
+        const k = normalizeKeyword(raw);
+        if (!k || k.length < 2 || STOPWORDS.has(k)) return;
+        map.set(k, (map.get(k) ?? 0) + 1);
+      });
+    });
+    return Array.from(map.entries())
+      .map(([word, count]) => ({ word, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [theses, lo, hi]);
+
+  const sliced = useMemo(() => filteredCounts.slice(0, topN), [filteredCounts, topN]);
+  const dims = useMemo(() => dimensionsFor(sliced.length), [sliced.length]);
+
+  const placed = useMemo(
+    () => packWords(sliced, dims.width, dims.height, dims.maxFont, dims.minFont),
+    [sliced, dims],
+  );
+
+  const dropped = sliced.length - placed.length;
+
+  if (theses.length === 0) {
     return (
       <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
         키워드 데이터가 없습니다.
@@ -127,41 +197,120 @@ export default function KeywordCloud({ items }: { items: CloudItem[] }) {
   }
 
   return (
-    <div className="w-full overflow-x-auto">
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        className="mx-auto block w-full max-w-[920px]"
-        role="img"
-        aria-label="연구 키워드 워드 클라우드"
-      >
-        {placed.map((p) => {
-          const active = hover === p.word;
-          return (
-            <text
-              key={p.word}
-              x={p.x}
-              y={p.y}
-              textAnchor="middle"
-              dominantBaseline="central"
-              fontSize={p.fontSize}
-              fontWeight={p.fontSize > 28 ? 700 : 500}
-              fill={p.color}
-              opacity={hover && !active ? 0.25 : 1}
-              style={{
-                cursor: "default",
-                transition: "opacity 120ms",
-                fontFamily:
-                  "'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, sans-serif",
-              }}
-              onMouseEnter={() => setHover(p.word)}
-              onMouseLeave={() => setHover(null)}
-            >
-              {p.word}
-              <title>{`${p.word} · ${p.count}건`}</title>
-            </text>
-          );
-        })}
-      </svg>
+    <div className="w-full">
+      {/* Top-N 선택 */}
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 text-[11px]">
+          <span className="text-muted-foreground">상위</span>
+          {TOPN_OPTIONS.map((n) => {
+            const active = n === topN;
+            return (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setTopN(n)}
+                className={`rounded-md px-2 py-1 font-medium transition ${
+                  active
+                    ? "bg-primary text-primary-foreground"
+                    : "border bg-white text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                }`}
+              >
+                {n}개
+              </button>
+            );
+          })}
+        </div>
+        {dropped > 0 && (
+          <span className="text-[10.5px] text-amber-700">
+            ⓘ 공간 부족으로 {dropped}개 키워드는 표시되지 않았습니다
+          </span>
+        )}
+      </div>
+
+      {/* 연도 범위 슬라이더 */}
+      <div className="mb-4 rounded-lg border bg-slate-50/50 px-3 py-2.5">
+        <div className="mb-1.5 flex items-center justify-between text-[11px]">
+          <span className="font-medium text-muted-foreground">조회 기간</span>
+          <span className="font-semibold text-foreground">
+            {lo}년 – {hi}년 ({hi - lo + 1}년간)
+          </span>
+        </div>
+        <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 sm:gap-3">
+          <label className="flex items-center gap-2 text-[10.5px] text-muted-foreground">
+            <span className="w-10 shrink-0 text-right">시작</span>
+            <input
+              type="range"
+              min={dataRange.min}
+              max={dataRange.max}
+              value={yearStart}
+              onChange={(e) => setYearStart(Number(e.target.value))}
+              className="h-1.5 flex-1 cursor-pointer accent-primary"
+              aria-label="시작 연도"
+            />
+            <span className="w-10 shrink-0 text-right tabular-nums font-medium text-foreground">
+              {yearStart}
+            </span>
+          </label>
+          <label className="flex items-center gap-2 text-[10.5px] text-muted-foreground">
+            <span className="w-10 shrink-0 text-right">종료</span>
+            <input
+              type="range"
+              min={dataRange.min}
+              max={dataRange.max}
+              value={yearEnd}
+              onChange={(e) => setYearEnd(Number(e.target.value))}
+              className="h-1.5 flex-1 cursor-pointer accent-primary"
+              aria-label="종료 연도"
+            />
+            <span className="w-10 shrink-0 text-right tabular-nums font-medium text-foreground">
+              {yearEnd}
+            </span>
+          </label>
+        </div>
+        {filteredCounts.length === 0 && (
+          <p className="mt-2 text-[10.5px] text-amber-700">
+            ⓘ 선택한 기간에 해당하는 키워드가 없습니다
+          </p>
+        )}
+      </div>
+
+      <div className="overflow-x-auto">
+        <svg
+          viewBox={`0 0 ${dims.width} ${dims.height}`}
+          className="mx-auto block w-full max-w-[920px]"
+          role="img"
+          aria-label="연구 키워드 워드 클라우드"
+        >
+          {placed.map((p) => {
+            const active = hover === p.word;
+            return (
+              <text
+                key={p.word}
+                x={p.x}
+                y={p.y}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={p.fontSize}
+                fontWeight={p.fontSize > 26 ? 700 : 500}
+                fill={p.color}
+                opacity={hover && !active ? 0.25 : 1}
+                style={{
+                  cursor: "default",
+                  transition: "opacity 120ms",
+                  fontFamily:
+                    "'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, sans-serif",
+                }}
+                onMouseEnter={() => setHover(p.word)}
+                onMouseLeave={() => setHover(null)}
+              >
+                {p.word}
+                <title>{`${p.word} · ${p.count}건`}</title>
+              </text>
+            );
+          })}
+        </svg>
+      </div>
+
       {hover && (
         <p className="mt-2 text-center text-xs text-muted-foreground">
           <span className="font-semibold text-foreground">{hover}</span>{" "}

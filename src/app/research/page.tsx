@@ -204,10 +204,10 @@ export default function ResearchAnalyticsPage() {
               <SectionHeader
                 icon={<BookOpen size={16} />}
                 title="키워드 워드 클라우드"
-                desc={`총 ${keywordCounts.length}개 키워드 중 상위 80개를 표시합니다. 글자 크기는 등장 빈도에 비례합니다.`}
+                desc={`총 ${keywordCounts.length}개 키워드를 수집했습니다. 상위 항목 수와 조회 기간을 조정할 수 있으며, 글자 크기는 등장 빈도에 비례합니다.`}
               />
               <div className="mt-4 rounded-2xl border bg-white p-5">
-                <KeywordCloud items={keywordCounts.slice(0, 80)} />
+                <KeywordCloud theses={theses} defaultTopN={30} />
               </div>
             </section>
 
