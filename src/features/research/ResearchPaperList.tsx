@@ -30,9 +30,10 @@ import TagInput from "./TagInput";
 import { profilesApi, dataApi, alumniThesesApi } from "@/lib/bkend";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, Bookmark, BookmarkCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isPaperInPeriod, formatPeriodLabel } from "@/lib/research-period";
+import { useAuthStore } from "@/features/auth/auth-store";
 
 type FilterType = "all" | "thesis" | "academic";
 type FilterStatus = "all" | "to_read" | "reading" | "completed";
@@ -56,6 +57,12 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
   const [interests, setInterests] = useState<string[]>(user.researchInterests ?? []);
   const [savingInterests, setSavingInterests] = useState(false);
   const [interestsDirty, setInterestsDirty] = useState(false);
+
+  // user prop이 갱신되면 관심분야 초기값 동기화 (페이지 이동 후 돌아왔을 때)
+  useEffect(() => {
+    setInterests(user.researchInterests ?? []);
+    setInterestsDirty(false);
+  }, [user.id, user.researchInterests]);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<ResearchPaper | null>(null);
@@ -220,9 +227,15 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
   async function saveInterests() {
     setSavingInterests(true);
     try {
+      const payload = interests.length > 0 ? interests : undefined;
       await profilesApi.update(user.id, {
-        researchInterests: interests.length > 0 ? interests : undefined,
+        researchInterests: payload,
       });
+      // auth-store 동기화 — 다른 페이지로 이동했다 돌아왔을 때 사라지는 문제 방지
+      const authState = useAuthStore.getState();
+      if (authState.user && authState.user.id === user.id) {
+        authState.setUser({ ...authState.user, researchInterests: payload });
+      }
       toast.success("관심 연구분야가 저장되었습니다.");
       setInterestsDirty(false);
     } catch (e) {
@@ -569,7 +582,17 @@ function yearMonthLabel(yearMonth?: string): string {
   return `${m[1]}년 ${Number(m[2])}월`;
 }
 
+const RECO_PAGE_SIZE = 6;
+
 function AlumniThesisRecommendations({ interests }: { interests: string[] }) {
+  const { user: authUser } = useAuthStore();
+  const [readingList, setReadingList] = useState<string[]>(authUser?.thesisReadingList ?? []);
+  const [visible, setVisible] = useState(RECO_PAGE_SIZE);
+
+  useEffect(() => {
+    setReadingList(authUser?.thesisReadingList ?? []);
+  }, [authUser?.id, authUser?.thesisReadingList]);
+
   const normalizedInterests = useMemo(
     () => interests.map((s) => s.trim()).filter(Boolean),
     [interests]
@@ -606,10 +629,56 @@ function AlumniThesisRecommendations({ interests }: { interests: string[] }) {
       if (b.score !== a.score) return b.score - a.score;
       return (b.thesis.awardedYearMonth ?? "").localeCompare(a.thesis.awardedYearMonth ?? "");
     });
-    return scored.slice(0, 6);
+    return scored;
   }, [theses, normalizedInterests]);
 
+  // 키워드 매칭 외 추가 추천 — 최신 졸업생 논문(매칭에 포함되지 않은 것)
+  const extraSuggestions = useMemo(() => {
+    if (theses.length === 0) return [] as AlumniThesis[];
+    const matchedIds = new Set(matched.map((m) => m.thesis.id));
+    return theses
+      .filter((t) => !matchedIds.has(t.id))
+      .sort((a, b) => (b.awardedYearMonth ?? "").localeCompare(a.awardedYearMonth ?? ""))
+      .slice(0, 8);
+  }, [theses, matched]);
+
+  async function toggleReading(thesisId: string) {
+    if (!authUser) {
+      toast.error("로그인이 필요합니다.");
+      return;
+    }
+    const next = readingList.includes(thesisId)
+      ? readingList.filter((x) => x !== thesisId)
+      : [...readingList, thesisId];
+    setReadingList(next);
+    try {
+      await profilesApi.update(authUser.id, {
+        thesisReadingList: next.length > 0 ? next : undefined,
+      });
+      const authState = useAuthStore.getState();
+      if (authState.user && authState.user.id === authUser.id) {
+        authState.setUser({
+          ...authState.user,
+          thesisReadingList: next.length > 0 ? next : undefined,
+        });
+      }
+      toast.success(
+        readingList.includes(thesisId)
+          ? "읽기 리스트에서 제거했습니다."
+          : "읽기 리스트에 추가했습니다."
+      );
+    } catch (e) {
+      setReadingList(readingList);
+      toast.error(e instanceof Error ? e.message : "저장 실패");
+    }
+  }
+
   if (normalizedInterests.length === 0) return null;
+
+  const visibleMatched = matched.slice(0, visible);
+  const hasMore = matched.length > visible;
+  const showExtras = !isLoading && matched.length > 0 && !hasMore && extraSuggestions.length > 0;
+  const noMatch = !isLoading && matched.length === 0;
 
   return (
     <div className="mt-4 rounded-xl border bg-muted/20 p-3">
@@ -619,43 +688,117 @@ function AlumniThesisRecommendations({ interests }: { interests: string[] }) {
       </div>
       {isLoading ? (
         <p className="mt-2 text-[11px] text-muted-foreground">불러오는 중…</p>
-      ) : matched.length === 0 ? (
+      ) : noMatch ? (
         <p className="mt-2 text-[11px] text-muted-foreground">
           관심 분야와 일치하는 졸업생 논문이 아직 없습니다.
         </p>
       ) : (
-        <ul className="mt-2 grid gap-2 sm:grid-cols-2">
-          {matched.map(({ thesis, hits }) => (
-            <li key={thesis.id}>
-              <Link
-                href={`/alumni/thesis/${thesis.id}`}
-                className="block rounded-lg border bg-white p-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5"
+        <>
+          <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+            {visibleMatched.map(({ thesis, hits }) => (
+              <RecoCard
+                key={thesis.id}
+                thesis={thesis}
+                hits={hits}
+                inReadingList={readingList.includes(thesis.id)}
+                onToggleReading={() => toggleReading(thesis.id)}
+                disabled={!authUser}
+              />
+            ))}
+          </ul>
+          {hasMore && (
+            <div className="mt-3 text-center">
+              <button
+                type="button"
+                onClick={() => setVisible((v) => v + RECO_PAGE_SIZE)}
+                className="rounded-md border bg-white px-3 py-1.5 text-[11px] text-muted-foreground hover:border-primary/40 hover:text-foreground"
               >
-                <p className="line-clamp-2 text-xs font-medium leading-snug">
-                  {thesis.title}
-                </p>
-                <p className="mt-1 flex items-center gap-1.5 text-[10.5px] text-muted-foreground">
-                  <span className="font-medium text-foreground/70">{thesis.authorName}</span>
-                  <span>·</span>
-                  <span>{yearMonthLabel(thesis.awardedYearMonth)}</span>
-                </p>
-                {hits.length > 0 && (
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {hits.slice(0, 3).map((h) => (
-                      <span
-                        key={h}
-                        className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[9.5px] text-primary"
-                      >
-                        #{h}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </Link>
-            </li>
-          ))}
-        </ul>
+                더 많은 추천 보기 ({matched.length - visible}건 남음)
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {showExtras && (
+        <div className="mt-4 border-t pt-3">
+          <div className="text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+            관심 외 최신 졸업생 논문
+          </div>
+          <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+            {extraSuggestions.map((thesis) => (
+              <RecoCard
+                key={thesis.id}
+                thesis={thesis}
+                hits={[]}
+                inReadingList={readingList.includes(thesis.id)}
+                onToggleReading={() => toggleReading(thesis.id)}
+                disabled={!authUser}
+              />
+            ))}
+          </ul>
+        </div>
       )}
     </div>
+  );
+}
+
+function RecoCard({
+  thesis,
+  hits,
+  inReadingList,
+  onToggleReading,
+  disabled,
+}: {
+  thesis: AlumniThesis;
+  hits: string[];
+  inReadingList: boolean;
+  onToggleReading: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <li className="rounded-lg border bg-white p-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5">
+      <div className="flex items-start gap-2">
+        <Link href={`/alumni/thesis/${thesis.id}`} className="block min-w-0 flex-1">
+          <p className="line-clamp-2 text-xs font-medium leading-snug">{thesis.title}</p>
+          <p className="mt-1 flex items-center gap-1.5 text-[10.5px] text-muted-foreground">
+            <span className="font-medium text-foreground/70">{thesis.authorName}</span>
+            <span>·</span>
+            <span>{yearMonthLabel(thesis.awardedYearMonth)}</span>
+          </p>
+          {hits.length > 0 && (
+            <div className="mt-1 flex flex-wrap gap-1">
+              {hits.slice(0, 3).map((h) => (
+                <span
+                  key={h}
+                  className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[9.5px] text-primary"
+                >
+                  #{h}
+                </span>
+              ))}
+            </div>
+          )}
+        </Link>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onToggleReading();
+          }}
+          disabled={disabled}
+          title={inReadingList ? "읽기 리스트에서 제거" : "읽기 리스트에 추가"}
+          className={cn(
+            "shrink-0 rounded-md p-1 transition-colors",
+            inReadingList
+              ? "bg-primary/10 text-primary hover:bg-primary/20"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground",
+            disabled && "cursor-not-allowed opacity-40"
+          )}
+        >
+          {inReadingList ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
+        </button>
+      </div>
+    </li>
   );
 }

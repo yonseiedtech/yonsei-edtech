@@ -82,6 +82,16 @@ export default function ProfileAcademicActivities({ owner }: Props) {
     return myActivities.filter((a) => a.type === tab);
   }, [tab, myActivities, mySeminars]);
 
+  const counts = useMemo<Record<SubTab, number>>(
+    () => ({
+      seminar: mySeminars.length,
+      study: myActivities.filter((a) => a.type === "study").length,
+      project: myActivities.filter((a) => a.type === "project").length,
+      external: myActivities.filter((a) => a.type === "external").length,
+    }),
+    [mySeminars, myActivities],
+  );
+
   const totalCount = filtered.length;
   const sliced = filtered.slice(0, visible);
   const hasMore = totalCount > visible;
@@ -102,6 +112,7 @@ export default function ProfileAcademicActivities({ owner }: Props) {
       <nav className="mb-3 flex flex-wrap gap-1 border-b">
         {SUB_TABS.map((t) => {
           const active = tab === t.key;
+          const c = counts[t.key];
           return (
             <button
               key={t.key}
@@ -113,6 +124,17 @@ export default function ProfileAcademicActivities({ owner }: Props) {
             >
               <t.icon size={12} />
               {t.label}
+              <span
+                className={`ml-1 inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-[10px] font-semibold ${
+                  active
+                    ? "bg-primary/10 text-primary"
+                    : c > 0
+                      ? "bg-slate-100 text-slate-600"
+                      : "bg-transparent text-muted-foreground/50"
+                }`}
+              >
+                {c}
+              </span>
             </button>
           );
         })}

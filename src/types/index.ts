@@ -183,6 +183,8 @@ export interface User { [key: string]: unknown;
   researchInterests?: string[];
   /** 최근 논문 */
   recentPapers?: RecentPaper[];
+  /** 졸업생 학위논문 읽기 리스트 (alumniThesis id 배열) */
+  thesisReadingList?: string[];
   // ── PR5: 프로필 전용 페이지 ──
   /** SNS / 외부 링크 (프리셋 7개 + other) */
   socials?: SocialLink[];

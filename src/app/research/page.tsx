@@ -14,6 +14,7 @@ import KeywordCloud from "@/features/research-analytics/KeywordCloud";
 const STOPWORDS = new Set([
   "연구",
   "교육",
+  "교육공학",
   "학습",
   "분석",
   "사례",
@@ -54,18 +55,20 @@ interface EraSummary {
 }
 
 const ERA_HIGHLIGHTS: Record<string, string> = {
-  "~1999": "초기 시청각·CAI 기반 교수매체 연구",
-  "2000s": "웹 기반 학습·CSCL·이러닝 시스템 확산",
-  "2010s": "모바일·SNS 학습, MOOC, 학습분석 등장",
-  "2020s": "AI·메타버스·디지털 전환 시대",
+  "2000-2004": "웹 기반 학습·CAI에서 e-Learning 본격 전환",
+  "2005-2009": "LMS·CSCL·블렌디드 러닝 본격화",
+  "2010-2014": "모바일·SNS·MOOC 등장과 확산",
+  "2015-2019": "학습분석·플립러닝·디지털 콘텐츠 다양화",
+  "2020-": "AI·메타버스·디지털 전환 시대",
 };
 
 function pickEra(year: number | null): string | null {
-  if (year == null) return null;
-  if (year < 2000) return "~1999";
-  if (year < 2010) return "2000s";
-  if (year < 2020) return "2010s";
-  return "2020s";
+  if (year == null || year < 2000) return null;
+  if (year <= 2004) return "2000-2004";
+  if (year <= 2009) return "2005-2009";
+  if (year <= 2014) return "2010-2014";
+  if (year <= 2019) return "2015-2019";
+  return "2020-";
 }
 
 function yearFrom(t: AlumniThesis): number | null {
@@ -125,12 +128,13 @@ export default function ResearchAnalyticsPage() {
   }, [theses]);
 
   const eras: EraSummary[] = useMemo(() => {
-    const order = ["~1999", "2000s", "2010s", "2020s"] as const;
+    const order = ["2000-2004", "2005-2009", "2010-2014", "2015-2019", "2020-"] as const;
     const ranges: Record<string, string> = {
-      "~1999": "1990년대 이전",
-      "2000s": "2000-2009",
-      "2010s": "2010-2019",
-      "2020s": "2020-현재",
+      "2000-2004": "2000–2004",
+      "2005-2009": "2005–2009",
+      "2010-2014": "2010–2014",
+      "2015-2019": "2015–2019",
+      "2020-": "2020–현재",
     };
     return order.map((label) => {
       const subset = theses.filter((t) => pickEra(yearFrom(t)) === label);

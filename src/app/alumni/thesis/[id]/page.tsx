@@ -18,10 +18,16 @@ import {
   Pencil,
   Save,
   X,
+  Lock,
+  BarChart3,
+  Bookmark,
+  BookmarkCheck,
 } from "lucide-react";
 import { alumniThesesApi, profilesApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 import type { AlumniThesis, User } from "@/types";
 
 function jaccardWithMatches(a: string[], b: string[]): { score: number; matches: string[] } {
@@ -78,7 +84,7 @@ function toDraft(t: AlumniThesis): EditDraft {
 export default function AlumniThesisDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { user: viewer } = useAuthStore();
+  const { user: viewer, initialized } = useAuthStore();
   const canEdit = isAtLeast(viewer, "staff");
   const [thesis, setThesis] = useState<AlumniThesis | null>(null);
   const [related, setRelated] = useState<RelatedGroups>({
@@ -92,9 +98,17 @@ export default function AlumniThesisDetailPage() {
   const [draft, setDraft] = useState<EditDraft | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
+  const [readingPending, setReadingPending] = useState(false);
+
+  const inReadingList = !!viewer?.thesisReadingList?.includes(thesis?.id ?? "");
 
   useEffect(() => {
     if (!params?.id) return;
+    if (!initialized) return;
+    if (!viewer) {
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     (async () => {
       try {
@@ -121,7 +135,6 @@ export default function AlumniThesisDetailPage() {
               .sort((a, b) =>
                 (b.awardedYearMonth ?? "").localeCompare(a.awardedYearMonth ?? ""),
               )
-              .slice(0, 5)
               .map((x) => ({
                 thesis: x,
                 reason: `같은 지도교수(${t.advisorName})의 논문`,
@@ -138,7 +151,6 @@ export default function AlumniThesisDetailPage() {
           })
           .filter((r) => r.matches.length > 0)
           .sort((a, b) => b.score - a.score)
-          .slice(0, 5)
           .map((r) => ({
             thesis: r.t,
             reason: `키워드 ‘${r.matches.slice(0, 3).join(", ")}’ 공유`,
@@ -154,7 +166,7 @@ export default function AlumniThesisDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [params?.id]);
+  }, [params?.id, initialized, viewer]);
 
   const year = useMemo(() => {
     const m = (thesis?.awardedYearMonth ?? "").match(/^(\d{4})/);
@@ -182,6 +194,39 @@ export default function AlumniThesisDetailPage() {
     setEditing(false);
     setDraft(null);
     setSaveMsg(null);
+  }
+
+  async function toggleReadingList() {
+    if (!viewer || !thesis) {
+      toast.error("로그인이 필요합니다.");
+      return;
+    }
+    setReadingPending(true);
+    const current = viewer.thesisReadingList ?? [];
+    const next = current.includes(thesis.id)
+      ? current.filter((x) => x !== thesis.id)
+      : [...current, thesis.id];
+    try {
+      await profilesApi.update(viewer.id, {
+        thesisReadingList: next.length > 0 ? next : undefined,
+      });
+      const authState = useAuthStore.getState();
+      if (authState.user && authState.user.id === viewer.id) {
+        authState.setUser({
+          ...authState.user,
+          thesisReadingList: next.length > 0 ? next : undefined,
+        });
+      }
+      toast.success(
+        current.includes(thesis.id)
+          ? "읽기 리스트에서 제거했습니다."
+          : "읽기 리스트에 추가했습니다."
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "저장 실패");
+    } finally {
+      setReadingPending(false);
+    }
   }
 
   async function saveEdit() {
@@ -221,6 +266,45 @@ export default function AlumniThesisDetailPage() {
     } finally {
       setSaving(false);
     }
+  }
+
+  if (initialized && !viewer) {
+    return (
+      <div className="py-16">
+        <div className="mx-auto max-w-2xl px-4">
+          <div className="rounded-2xl border bg-white p-10 text-center shadow-sm">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <Lock size={26} />
+            </div>
+            <h1 className="mt-4 text-xl font-bold">회원 전용 콘텐츠</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              학위논문 상세(저자·지도교수·초록·원문 링크)는 연세교육공학회 회원에게만 공개됩니다.
+            </p>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+              <Link
+                href="/login"
+                className="inline-flex h-10 items-center rounded-md bg-primary px-5 text-sm font-medium text-white hover:bg-primary/90"
+              >
+                로그인
+              </Link>
+              <Link
+                href="/signup"
+                className="inline-flex h-10 items-center rounded-md border border-primary px-5 text-sm font-medium text-primary hover:bg-primary/5"
+              >
+                회원가입
+              </Link>
+              <Link
+                href="/research"
+                className="inline-flex h-10 items-center rounded-md border bg-white px-5 text-sm font-medium text-muted-foreground hover:bg-muted"
+              >
+                <BarChart3 size={14} className="mr-1.5" />
+                연구 분석 페이지로
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (loading) {
@@ -345,6 +429,25 @@ export default function AlumniThesisDetailPage() {
                 dCollection에서 원문 보기
               </a>
             )}
+            <Button
+              variant={inReadingList ? "default" : "outline"}
+              size="sm"
+              onClick={toggleReadingList}
+              disabled={readingPending}
+              className="h-9"
+            >
+              {inReadingList ? (
+                <>
+                  <BookmarkCheck size={14} className="mr-1.5" />
+                  읽기 리스트에 추가됨
+                </>
+              ) : (
+                <>
+                  <Bookmark size={14} className="mr-1.5" />
+                  논문 읽기 리스트에 추가
+                </>
+              )}
+            </Button>
           </div>
 
           {canEdit && editing && draft && (
@@ -469,25 +572,45 @@ export default function AlumniThesisDetailPage() {
         </div>
 
         {(related.byAdvisor.length > 0 || related.byKeyword.length > 0) && (
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <RelatedGroup
-              title="지도교수 기준 추천"
-              accent="indigo"
-              icon={<UserIcon size={14} />}
-              items={related.byAdvisor}
-              emptyText={
-                thesis.advisorName
-                  ? "같은 지도교수의 다른 논문이 없습니다."
-                  : "지도교수 정보가 없습니다."
-              }
-            />
-            <RelatedGroup
-              title="키워드 기준 추천"
-              accent="amber"
-              icon={<BookOpen size={14} />}
-              items={related.byKeyword}
-              emptyText="공유 키워드가 있는 논문이 없습니다."
-            />
+          <div className="mt-6 rounded-2xl border bg-white">
+            <Tabs defaultValue="advisor" className="w-full">
+              <div className="border-b px-3 pt-3">
+                <TabsList>
+                  <TabsTrigger value="advisor" className="gap-1.5">
+                    <UserIcon size={13} />
+                    지도교수 기준
+                    <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                      {related.byAdvisor.length}
+                    </span>
+                  </TabsTrigger>
+                  <TabsTrigger value="keyword" className="gap-1.5">
+                    <BookOpen size={13} />
+                    키워드 기준
+                    <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                      {related.byKeyword.length}
+                    </span>
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+              <TabsContent value="advisor" className="p-3">
+                <RelatedList
+                  accent="indigo"
+                  items={related.byAdvisor}
+                  emptyText={
+                    thesis.advisorName
+                      ? "같은 지도교수의 다른 논문이 없습니다."
+                      : "지도교수 정보가 없습니다."
+                  }
+                />
+              </TabsContent>
+              <TabsContent value="keyword" className="p-3">
+                <RelatedList
+                  accent="amber"
+                  items={related.byKeyword}
+                  emptyText="공유 키워드가 있는 논문이 없습니다."
+                />
+              </TabsContent>
+            </Tabs>
           </div>
         )}
       </div>
@@ -516,64 +639,69 @@ function semesterLabelOf(awardedYearMonth?: string): string {
   return `${m[1]}년`;
 }
 
-function RelatedGroup({
-  title,
+function RelatedList({
   accent,
-  icon,
   items,
   emptyText,
 }: {
-  title: string;
   accent: "indigo" | "amber";
-  icon: React.ReactNode;
   items: RelatedThesis[];
   emptyText: string;
 }) {
   const accentMap = {
-    indigo: { headBg: "bg-indigo-50", headText: "text-indigo-700", reason: "text-indigo-700" },
-    amber: { headBg: "bg-amber-50", headText: "text-amber-700", reason: "text-amber-700" },
+    indigo: { reason: "text-indigo-700" },
+    amber: { reason: "text-amber-700" },
   } as const;
   const a = accentMap[accent];
+  const PAGE = 5;
+  const [visible, setVisible] = useState(PAGE);
+  const sliced = items.slice(0, visible);
+  const hasMore = items.length > visible;
+
+  if (items.length === 0) {
+    return (
+      <p className="px-3 py-6 text-center text-xs text-muted-foreground">
+        {emptyText}
+      </p>
+    );
+  }
+
   return (
-    <div className="rounded-2xl border bg-white">
-      <div className={`flex items-center gap-2 border-b px-4 py-2.5 ${a.headBg}`}>
-        <span className={a.headText}>{icon}</span>
-        <h3 className={`text-xs font-bold ${a.headText}`}>{title}</h3>
-        <span className="ml-auto text-[10px] text-muted-foreground">
-          {items.length}건
-        </span>
-      </div>
-      <div className="p-2">
-        {items.length === 0 ? (
-          <p className="px-3 py-4 text-center text-xs text-muted-foreground">
-            {emptyText}
-          </p>
-        ) : (
-          <ul className="divide-y">
-            {items.map(({ thesis: r, reason }) => {
-              const yearLabel = semesterLabelOf(r.awardedYearMonth);
-              return (
-                <li key={r.id} className="py-2.5">
-                  <Link
-                    href={`/alumni/thesis/${r.id}`}
-                    className="block rounded-md px-2 py-1.5 hover:bg-muted/50 hover:text-primary"
-                  >
-                    <p className="text-sm font-medium leading-snug">{r.title}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {r.authorName}
-                      {r.advisorName && ` · 지도 ${r.advisorName}`}
-                      {yearLabel && ` · ${yearLabel}`}
-                    </p>
-                    <p className={`mt-1 text-[11px] font-medium ${a.reason}`}>
-                      {reason} 이유로 관련되었습니다.
-                    </p>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
+    <div>
+      <ul className="divide-y">
+        {sliced.map(({ thesis: r, reason }) => {
+          const yearLabel = semesterLabelOf(r.awardedYearMonth);
+          return (
+            <li key={r.id} className="py-2.5">
+              <Link
+                href={`/alumni/thesis/${r.id}`}
+                className="block rounded-md px-2 py-1.5 hover:bg-muted/50 hover:text-primary"
+              >
+                <p className="text-sm font-medium leading-snug">{r.title}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {r.authorName}
+                  {r.advisorName && ` · 지도 ${r.advisorName}`}
+                  {yearLabel && ` · ${yearLabel}`}
+                </p>
+                <p className={`mt-1 text-[11px] font-medium ${a.reason}`}>
+                  {reason} 이유로 관련되었습니다.
+                </p>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+      {hasMore && (
+        <div className="mt-2 text-center">
+          <button
+            type="button"
+            onClick={() => setVisible((v) => v + PAGE)}
+            className="rounded-md border bg-white px-3 py-1.5 text-[11px] text-muted-foreground hover:border-primary/40 hover:text-foreground"
+          >
+            추가 추천 보기 ({items.length - visible}건 남음)
+          </button>
+        </div>
+      )}
     </div>
   );
 }

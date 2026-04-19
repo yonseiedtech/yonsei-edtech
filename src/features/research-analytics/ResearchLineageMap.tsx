@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { AlumniThesis } from "@/types";
 
 const STOPWORDS = new Set([
   "연구",
   "교육",
+  "교육공학",
   "학습",
   "분석",
   "사례",
@@ -35,13 +37,29 @@ const STOPWORDS = new Set([
 ]);
 
 const ERAS = [
-  { id: "~1999", label: "~1999", from: 0, to: 1999 },
-  { id: "2000s", label: "2000s", from: 2000, to: 2009 },
-  { id: "2010s", label: "2010s", from: 2010, to: 2019 },
-  { id: "2020s", label: "2020s", from: 2020, to: 9999 },
+  { id: "2000-2004", label: "2000–2004", from: 2000, to: 2004 },
+  { id: "2005-2009", label: "2005–2009", from: 2005, to: 2009 },
+  { id: "2010-2014", label: "2010–2014", from: 2010, to: 2014 },
+  { id: "2015-2019", label: "2015–2019", from: 2015, to: 2019 },
+  { id: "2020-", label: "2020–현재", from: 2020, to: 9999 },
 ] as const;
 
-const TOP_PER_ERA = 6;
+const TOP_PER_ERA = 5;
+const MAX_LABEL_CHARS = 9;
+const VIEW_ERAS_DESKTOP = 3;
+
+const PALETTE = ["#1e3a8a", "#0f766e", "#7c3aed", "#b45309"];
+
+function colorFor(word: string): string {
+  let h = 0;
+  for (let i = 0; i < word.length; i++) h = (h * 31 + word.charCodeAt(i)) >>> 0;
+  return PALETTE[h % PALETTE.length];
+}
+
+function truncateLabel(word: string, max: number = MAX_LABEL_CHARS): string {
+  if (word.length <= max) return word;
+  return word.slice(0, max - 1) + "…";
+}
 
 function normalizeKeyword(raw: string): string {
   return raw.replace(/[\s·,()<>「」『』\[\]'"]/g, "").trim();
@@ -74,25 +92,6 @@ interface Link {
   weight: number;
 }
 
-const PALETTE = [
-  "#1e3a8a",
-  "#0369a1",
-  "#7c3aed",
-  "#be185d",
-  "#b45309",
-  "#15803d",
-  "#0f766e",
-  "#9333ea",
-  "#dc2626",
-  "#0891b2",
-];
-
-function colorFor(word: string): string {
-  let h = 0;
-  for (let i = 0; i < word.length; i++) h = (h * 31 + word.charCodeAt(i)) >>> 0;
-  return PALETTE[h % PALETTE.length];
-}
-
 function curve(x1: number, y1: number, x2: number, y2: number): string {
   const mx = (x1 + x2) / 2;
   return `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
@@ -100,9 +99,13 @@ function curve(x1: number, y1: number, x2: number, y2: number): string {
 
 export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] }) {
   const [hoverWord, setHoverWord] = useState<string | null>(null);
+  const [startIdx, setStartIdx] = useState(0);
+  const visibleCount = Math.min(VIEW_ERAS_DESKTOP, ERAS.length);
+  const maxStart = Math.max(0, ERAS.length - visibleCount);
+  const safeStart = Math.min(startIdx, maxStart);
+  const visibleEras = ERAS.slice(safeStart, safeStart + visibleCount);
 
-  const { nodes, links, columnWidth, height } = useMemo(() => {
-    // Group theses by era
+  const eraTops = useMemo(() => {
     const byEra: Record<string, AlumniThesis[]> = {};
     ERAS.forEach((e) => {
       byEra[e.id] = [];
@@ -112,8 +115,7 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
       if (era) byEra[era].push(t);
     });
 
-    // Top keywords per era
-    const eraTopMaps: Record<string, Map<string, number>> = {};
+    const result: Record<string, { word: string; count: number }[]> = {};
     ERAS.forEach((e) => {
       const m = new Map<string, number>();
       byEra[e.id].forEach((t) =>
@@ -123,37 +125,37 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
           m.set(k, (m.get(k) ?? 0) + 1);
         }),
       );
-      eraTopMaps[e.id] = m;
-    });
-
-    const eraTops: Record<string, { word: string; count: number }[]> = {};
-    ERAS.forEach((e) => {
-      eraTops[e.id] = Array.from(eraTopMaps[e.id].entries())
+      result[e.id] = Array.from(m.entries())
         .sort((a, b) => b[1] - a[1])
         .slice(0, TOP_PER_ERA)
         .map(([word, count]) => ({ word, count }));
     });
+    return result;
+  }, [theses]);
 
-    // Layout
-    const colW = 200;
-    const rowH = 70;
-    const topPadding = 30;
-    const leftPadding = 60;
-    const maxRows = TOP_PER_ERA;
-    const heightCalc = topPadding * 2 + rowH * (maxRows - 1) + 60;
+  const { nodes, links, viewWidth, height } = useMemo(() => {
+    const colW = 220;
+    const rowH = 84;
+    const topPadding = 36;
+    const leftPadding = 72;
+    const rightPadding = 72;
+    const heightCalc = topPadding + rowH * (TOP_PER_ERA - 1) + 80;
 
     const nodes: Node[] = [];
     const nodeIndex: Record<string, Node> = {};
 
-    ERAS.forEach((era, ei) => {
+    visibleEras.forEach((era, ei) => {
       const tops = eraTops[era.id];
       const x = leftPadding + ei * colW;
-      const prevWords = ei === 0 ? new Set<string>() : new Set(eraTops[ERAS[ei - 1].id].map((t) => t.word));
+      const prevAbsoluteIdx = safeStart + ei - 1;
+      const prevWords =
+        prevAbsoluteIdx < 0
+          ? new Set<string>()
+          : new Set(eraTops[ERAS[prevAbsoluteIdx].id].map((t) => t.word));
+      const maxC = Math.max(...tops.map((x) => x.count), 1);
       tops.forEach((t, ri) => {
         const y = topPadding + ri * rowH;
-        // Radius scaled by count
-        const maxC = Math.max(...tops.map((x) => x.count), 1);
-        const r = 8 + (t.count / maxC) * 18;
+        const r = 7 + (t.count / maxC) * 14;
         const node: Node = {
           era: era.id,
           word: t.word,
@@ -161,20 +163,19 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
           x,
           y,
           r,
-          isNew: ei > 0 && !prevWords.has(t.word),
+          isNew: prevAbsoluteIdx >= 0 && !prevWords.has(t.word),
         };
         nodes.push(node);
         nodeIndex[`${era.id}::${t.word}`] = node;
       });
     });
 
-    // Links: same word in adjacent eras
     const links: Link[] = [];
-    for (let ei = 0; ei < ERAS.length - 1; ei++) {
-      const cur = eraTops[ERAS[ei].id];
+    for (let ei = 0; ei < visibleEras.length - 1; ei++) {
+      const cur = eraTops[visibleEras[ei].id];
       cur.forEach((t) => {
-        const target = nodeIndex[`${ERAS[ei + 1].id}::${t.word}`];
-        const source = nodeIndex[`${ERAS[ei].id}::${t.word}`];
+        const target = nodeIndex[`${visibleEras[ei + 1].id}::${t.word}`];
+        const source = nodeIndex[`${visibleEras[ei].id}::${t.word}`];
         if (target && source) {
           links.push({
             source,
@@ -185,10 +186,13 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
       });
     }
 
-    return { nodes, links, columnWidth: colW, height: heightCalc };
-  }, [theses]);
-
-  const totalWidth = 60 + ERAS.length * columnWidth;
+    return {
+      nodes,
+      links,
+      viewWidth: leftPadding + colW * (visibleEras.length - 1) + rightPadding,
+      height: heightCalc,
+    };
+  }, [eraTops, visibleEras, safeStart]);
 
   if (theses.length === 0) {
     return (
@@ -198,33 +202,79 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
     );
   }
 
+  const colW = 220;
+  const leftPadding = 72;
+
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full">
+      {/* Pagination header */}
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={() => setStartIdx((i) => Math.max(0, i - 1))}
+          disabled={safeStart === 0}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-md border bg-white text-slate-700 transition disabled:cursor-not-allowed disabled:opacity-30 hover:enabled:bg-slate-50"
+          aria-label="이전 시대"
+        >
+          <ChevronLeft size={16} />
+        </button>
+        <div className="flex flex-1 items-center justify-center gap-1.5">
+          {ERAS.map((e, idx) => {
+            const inView = idx >= safeStart && idx < safeStart + visibleCount;
+            return (
+              <button
+                key={e.id}
+                type="button"
+                onClick={() =>
+                  setStartIdx(Math.min(maxStart, Math.max(0, idx - Math.floor(visibleCount / 2))))
+                }
+                className={`rounded-md px-2 py-1 text-[11px] font-medium transition ${
+                  inView
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-slate-50"
+                }`}
+              >
+                {e.label}
+              </button>
+            );
+          })}
+        </div>
+        <button
+          type="button"
+          onClick={() => setStartIdx((i) => Math.min(maxStart, i + 1))}
+          disabled={safeStart === maxStart}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-md border bg-white text-slate-700 transition disabled:cursor-not-allowed disabled:opacity-30 hover:enabled:bg-slate-50"
+          aria-label="다음 시대"
+        >
+          <ChevronRight size={16} />
+        </button>
+      </div>
+
       <svg
-        viewBox={`0 0 ${totalWidth} ${height}`}
-        className="mx-auto block w-full"
-        style={{ minWidth: "640px" }}
+        viewBox={`0 0 ${viewWidth} ${height}`}
+        className="block w-full"
+        preserveAspectRatio="xMidYMid meet"
         role="img"
         aria-label="연도별 연구 키워드 계보도"
       >
-        {/* Era column headers */}
-        {ERAS.map((era, ei) => (
+        {/* Era column headers + dashed guide */}
+        {visibleEras.map((era, ei) => (
           <g key={era.id}>
             <text
-              x={60 + ei * columnWidth}
-              y={height - 20}
+              x={leftPadding + ei * colW}
+              y={height - 16}
               textAnchor="middle"
-              fontSize={13}
+              fontSize={12}
               fontWeight={700}
               fill="#0f172a"
             >
               {era.label}
             </text>
             <line
-              x1={60 + ei * columnWidth}
-              x2={60 + ei * columnWidth}
-              y1={15}
-              y2={height - 40}
+              x1={leftPadding + ei * colW}
+              x2={leftPadding + ei * colW}
+              y1={18}
+              y2={height - 38}
               stroke="#e2e8f0"
               strokeDasharray="3 4"
               strokeWidth={1}
@@ -237,7 +287,7 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
           const active = hoverWord === l.source.word;
           const dim = hoverWord && !active;
           const stroke = colorFor(l.source.word);
-          const sw = Math.max(1.5, Math.min(10, l.weight * 0.8));
+          const sw = Math.max(1.5, Math.min(8, l.weight * 0.7));
           return (
             <path
               key={i}
@@ -245,17 +295,18 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
               stroke={stroke}
               strokeWidth={sw}
               fill="none"
-              opacity={dim ? 0.08 : active ? 0.85 : 0.35}
+              opacity={dim ? 0.08 : active ? 0.85 : 0.3}
               style={{ transition: "opacity 120ms" }}
             />
           );
         })}
 
-        {/* Nodes */}
+        {/* Nodes + labels */}
         {nodes.map((n) => {
           const active = hoverWord === n.word;
           const dim = hoverWord && !active;
           const fill = colorFor(n.word);
+          const display = truncateLabel(n.word);
           return (
             <g
               key={`${n.era}-${n.word}`}
@@ -285,7 +336,7 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
                   transition: "fill 120ms",
                 }}
               >
-                {n.word}
+                {display}
                 <tspan fontSize={9} fill="#64748b" dx={3}>
                   ×{n.count}
                 </tspan>
