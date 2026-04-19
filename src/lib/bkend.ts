@@ -66,8 +66,15 @@ function parseFilters(params?: QueryParams): QueryConstraint[] {
     const match = key.match(/^filter\[(\w+)\]$/);
     if (match) {
       const field = match[1];
-      const strVal = String(value);
-      const val = strVal === "true" ? true : strVal === "false" ? false : strVal;
+      // 원본 타입 보존: number/boolean 은 그대로, 문자열만 "true"/"false" 변환 처리.
+      // (필드 타입 미스매치로 Firestore where("year", "==", "2026") 가 number 2026 doc 을 못 찾던 버그 fix)
+      let val: string | number | boolean;
+      if (typeof value === "number" || typeof value === "boolean") {
+        val = value;
+      } else {
+        const strVal = String(value);
+        val = strVal === "true" ? true : strVal === "false" ? false : strVal;
+      }
       constraints.push(where(field, "==", val));
     }
   }
