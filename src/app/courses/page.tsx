@@ -107,7 +107,7 @@ export default function CoursesPage() {
             <BookOpen size={22} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">수강과목 안내</h1>
+            <h1 className="text-2xl font-bold">내 수강과목</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               학기별 개설된 전공·교직·타전공 과목을 한눈에 확인하세요. 강의계획서 링크가 있으면 함께 확인할 수 있습니다.
             </p>

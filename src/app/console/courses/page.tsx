@@ -60,6 +60,28 @@ function nowYear() {
   return new Date().getFullYear();
 }
 
+/**
+ * Firestore/Firebase 에러를 한국어로 변환 + 운영자가 즉시 원인 파악 가능하게.
+ * permission-denied 가 가장 흔한 케이스 (운영진/회장 role 누락) — 별도 안내.
+ */
+function formatFirestoreError(e: unknown, fallback: string): string {
+  if (!e) return fallback;
+  const err = e as { code?: string; message?: string };
+  const code = err.code ?? "";
+  const message = err.message ?? "";
+  if (code === "permission-denied" || /Missing or insufficient permissions/i.test(message)) {
+    return "권한이 없습니다 — 운영진(staff) 이상 권한이 필요합니다. 본인 계정 role 확인 필요.";
+  }
+  if (code === "unavailable" || /offline|network/i.test(message)) {
+    return "네트워크 연결을 확인하세요";
+  }
+  if (code === "failed-precondition") {
+    return "Firestore 인덱스 누락일 수 있습니다 (콘솔에서 인덱스 생성 필요)";
+  }
+  if (message) return `${fallback}: ${message}`;
+  return fallback;
+}
+
 function defaultTermForToday(): SemesterTerm {
   const m = new Date().getMonth() + 1;
   if (m >= 3 && m <= 6) return "spring";
@@ -121,10 +143,13 @@ function ConsoleCoursesContent() {
 
   async function handleAdd() {
     if (!newRow.courseName.trim()) {
-      alert("과목명을 입력하세요");
+      toast.error("과목명을 입력하세요");
       return;
     }
-    if (!viewer?.id) return;
+    if (!viewer?.id) {
+      toast.error("로그인 상태를 확인하세요 (사용자 ID 없음)");
+      return;
+    }
     setSavingId("__new__");
     try {
       const created = await courseOfferingsApi.create({
@@ -146,7 +171,8 @@ function ConsoleCoursesContent() {
       setNewRow(EMPTY_NEW_ROW);
       toast.success(`"${created.courseName}" 과목이 저장되었습니다`);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "추가 실패");
+      console.error("[courses/handleAdd] Firestore create 실패", e);
+      toast.error(formatFirestoreError(e, "과목 추가 실패"), { duration: 8000 });
     } finally {
       setSavingId(null);
     }
@@ -161,7 +187,8 @@ function ConsoleCoursesContent() {
       setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, active: next } : r)));
       toast.success(next ? "재활성화되었습니다" : "폐강 처리되었습니다");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "변경 실패");
+      console.error("[courses/handleToggleActive] 실패", e);
+      toast.error(formatFirestoreError(e, "변경 실패"), { duration: 8000 });
     } finally {
       setSavingId(null);
     }
@@ -176,7 +203,8 @@ function ConsoleCoursesContent() {
       setRows((prev) => prev.filter((r) => r.id !== row.id));
       toast.success("삭제되었습니다");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "삭제 실패");
+      console.error("[courses/handleDelete] 실패", e);
+      toast.error(formatFirestoreError(e, "삭제 실패"), { duration: 8000 });
     } finally {
       setSavingId(null);
     }
@@ -202,7 +230,8 @@ function ConsoleCoursesContent() {
       toast.success(`"${row.courseName}" 저장 완료`);
       return true;
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "수정 실패");
+      console.error("[courses/handleUpdateRow] 실패", { row: row.id, updates, e });
+      toast.error(formatFirestoreError(e, "수정 실패"), { duration: 8000 });
       return false;
     } finally {
       setSavingId(null);
