@@ -2,49 +2,19 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { BarChart3, BookOpen, GraduationCap, Sparkles, ArrowRight } from "lucide-react";
+import { BarChart3, BookOpen, GraduationCap, Sparkles, ArrowRight, Type, Network, Cloud } from "lucide-react";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { alumniThesesApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import type { AlumniThesis } from "@/types";
 import ResearchLineageMap from "@/features/research-analytics/ResearchLineageMap";
 import KeywordCloud from "@/features/research-analytics/KeywordCloud";
-
-const STOPWORDS = new Set([
-  "연구",
-  "교육",
-  "교육공학",
-  "학습",
-  "분석",
-  "사례",
-  "효과",
-  "관계",
-  "영향",
-  "방안",
-  "모형",
-  "프로그램",
-  "활용",
-  "탐색",
-  "고찰",
-  "개발",
-  "적용",
-  "설계",
-  "수행",
-  "조사",
-  "비교",
-  "검증",
-  "구조",
-  "변인",
-  "특성",
-  "수업",
-  "학생",
-  "학교",
-  "학",
-  "을",
-  "를",
-  "의",
-]);
+import TitleNgramTrend from "@/features/research-analytics/TitleNgramTrend";
+import ResearchTypeChart from "@/features/research-analytics/ResearchTypeChart";
+import SubjectDistribution from "@/features/research-analytics/SubjectDistribution";
+import { STOPWORDS, normalizeKeyword, yearFrom } from "@/features/research-analytics/shared";
 
 interface EraSummary {
   label: string;
@@ -69,15 +39,6 @@ function pickEra(year: number | null): string | null {
   if (year <= 2014) return "2010-2014";
   if (year <= 2019) return "2015-2019";
   return "2020-";
-}
-
-function yearFrom(t: AlumniThesis): number | null {
-  const m = (t.awardedYearMonth ?? "").match(/^(\d{4})/);
-  return m ? Number(m[1]) : null;
-}
-
-function normalizeKeyword(raw: string): string {
-  return raw.replace(/[\s·,()<>「」『』\[\]'"]/g, "").trim();
 }
 
 export default function ResearchAnalyticsPage() {
@@ -113,18 +74,15 @@ export default function ResearchAnalyticsPage() {
     };
   }, [theses]);
 
-  const keywordCounts = useMemo(() => {
-    const map = new Map<string, number>();
-    theses.forEach((t) => {
+  const keywordCount = useMemo(() => {
+    const set = new Set<string>();
+    theses.forEach((t) =>
       (t.keywords ?? []).forEach((raw) => {
         const k = normalizeKeyword(raw);
-        if (!k || k.length < 2 || STOPWORDS.has(k)) return;
-        map.set(k, (map.get(k) ?? 0) + 1);
-      });
-    });
-    return Array.from(map.entries())
-      .map(([word, count]) => ({ word, count }))
-      .sort((a, b) => b.count - a.count);
+        if (k && k.length >= 2 && !STOPWORDS.has(k)) set.add(k);
+      }),
+    );
+    return set.size;
   }, [theses]);
 
   const eras: EraSummary[] = useMemo(() => {
@@ -170,7 +128,7 @@ export default function ResearchAnalyticsPage() {
           <div className="flex-1">
             <h1 className="text-2xl font-bold sm:text-3xl">연세교육공학 연구 분석</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              연세대학교 교육대학원 교육공학전공 졸업생 학위논문 {stats.total}건의 키워드·시대별 흐름·연구 계보를 시각화합니다.
+              연세대학교 교육대학원 교육공학전공 졸업생 학위논문 {stats.total}건의 키워드·제목·시대별 흐름·연구 계보를 시각화합니다.
             </p>
           </div>
         </div>
@@ -178,7 +136,7 @@ export default function ResearchAnalyticsPage() {
         <div className="mt-6 grid grid-cols-3 gap-3">
           <StatCard label="수집 논문" value={`${stats.total}건`} />
           <StatCard label="기간" value={stats.yearRange} />
-          <StatCard label="키워드 수록" value={`${stats.withKeywords}건`} />
+          <StatCard label="고유 키워드" value={`${keywordCount}개`} />
         </div>
 
         {loading ? (
@@ -187,73 +145,138 @@ export default function ResearchAnalyticsPage() {
           <p className="mt-12 text-sm text-destructive">⚠ {error}</p>
         ) : (
           <>
-            {/* Section 1: Lineage Map */}
-            <section className="mt-10">
-              <SectionHeader
-                icon={<Sparkles size={16} />}
-                title="연구 계보도"
-                desc="시대별 핵심 키워드가 어떻게 이어지고 분기되었는지를 보여줍니다. 같은 키워드는 시대 사이를 곡선으로 잇고, 곡선의 굵기는 해당 시대의 연구 비중을 나타냅니다."
-              />
-              <div className="mt-4 rounded-2xl border bg-white p-3 sm:p-5 overflow-hidden">
-                <ResearchLineageMap theses={theses} />
-              </div>
-            </section>
+            <Tabs defaultValue="keyword" className="mt-8">
+              <TabsList variant="line" className="flex-wrap justify-start gap-1 border-b bg-transparent p-0">
+                <TabsTrigger
+                  value="keyword"
+                  className="data-active:border-primary data-active:text-primary border-b-2 border-transparent rounded-none flex-none px-3 py-2 text-sm"
+                >
+                  <Cloud size={14} className="mr-1.5" />
+                  키워드 분석
+                </TabsTrigger>
+                <TabsTrigger
+                  value="title"
+                  className="data-active:border-primary data-active:text-primary border-b-2 border-transparent rounded-none flex-none px-3 py-2 text-sm"
+                >
+                  <Type size={14} className="mr-1.5" />
+                  제목 분석
+                </TabsTrigger>
+                <TabsTrigger
+                  value="lineage"
+                  className="data-active:border-primary data-active:text-primary border-b-2 border-transparent rounded-none flex-none px-3 py-2 text-sm"
+                >
+                  <Network size={14} className="mr-1.5" />
+                  연구 계보
+                </TabsTrigger>
+              </TabsList>
 
-            {/* Section 2: Keyword Cloud */}
-            <section className="mt-10">
-              <SectionHeader
-                icon={<BookOpen size={16} />}
-                title="키워드 워드 클라우드"
-                desc={`총 ${keywordCounts.length}개 키워드를 수집했습니다. 상위 항목 수와 조회 기간을 조정할 수 있으며, 글자 크기는 등장 빈도에 비례합니다.`}
-              />
-              <div className="mt-4 rounded-2xl border bg-white p-5">
-                <KeywordCloud theses={theses} defaultTopN={30} />
-              </div>
-            </section>
-
-            {/* Section 3: Era Timeline Cards */}
-            <section className="mt-10">
-              <SectionHeader
-                icon={<GraduationCap size={16} />}
-                title="주요 연구 흐름 타임라인"
-                desc="시대별 졸업논문 분포와 대표 키워드를 한눈에 확인할 수 있습니다."
-              />
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {eras.map((era) => (
-                  <div
-                    key={era.label}
-                    className="rounded-2xl border bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-                          {era.label}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{era.range}</p>
-                      </div>
-                      <Badge variant="secondary">{era.count}건</Badge>
-                    </div>
-                    <p className="mt-3 text-sm font-medium leading-snug">{era.highlight}</p>
-                    {era.topKeywords.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-1.5">
-                        {era.topKeywords.map((k) => (
-                          <Badge
-                            key={k.word}
-                            variant="outline"
-                            className="text-[11px] font-normal"
-                          >
-                            {k.word}
-                            <span className="ml-1 text-[10px] text-muted-foreground">
-                              ×{k.count}
-                            </span>
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
+              {/* Tab 1: Keyword Analysis */}
+              <TabsContent value="keyword" className="mt-6">
+                <section>
+                  <SectionHeader
+                    icon={<BookOpen size={16} />}
+                    title="키워드 워드 클라우드"
+                    desc={`총 ${keywordCount}개 키워드를 수집했습니다. 상위 항목 수와 조회 기간을 조정할 수 있으며, 글자 크기는 등장 빈도에 비례합니다.`}
+                  />
+                  <div className="mt-4 rounded-2xl border bg-white p-5">
+                    <KeywordCloud theses={theses} defaultTopN={30} />
                   </div>
-                ))}
-              </div>
-            </section>
+                </section>
+
+                <section className="mt-8">
+                  <SectionHeader
+                    icon={<GraduationCap size={16} />}
+                    title="주요 연구 흐름 타임라인"
+                    desc="시대별 졸업논문 분포와 대표 키워드를 한눈에 확인할 수 있습니다."
+                  />
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    {eras.map((era) => (
+                      <div
+                        key={era.label}
+                        className="rounded-2xl border bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+                              {era.label}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{era.range}</p>
+                          </div>
+                          <Badge variant="secondary">{era.count}건</Badge>
+                        </div>
+                        <p className="mt-3 text-sm font-medium leading-snug">{era.highlight}</p>
+                        {era.topKeywords.length > 0 && (
+                          <div className="mt-3 flex flex-wrap gap-1.5">
+                            {era.topKeywords.map((k) => (
+                              <Badge
+                                key={k.word}
+                                variant="outline"
+                                className="text-[11px] font-normal"
+                              >
+                                {k.word}
+                                <span className="ml-1 text-[10px] text-muted-foreground">
+                                  ×{k.count}
+                                </span>
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </TabsContent>
+
+              {/* Tab 2: Title Analysis */}
+              <TabsContent value="title" className="mt-6">
+                <section>
+                  <SectionHeader
+                    icon={<Type size={16} />}
+                    title="제목 N-gram 트렌드"
+                    desc="논문 제목에서 추출한 2~3어절 표현의 등장 빈도와 시대별 분포를 보여줍니다. 키워드(명사 단위)로는 잡히지 않는 구문 단위 표현을 분석할 수 있습니다."
+                  />
+                  <div className="mt-4 rounded-2xl border bg-white p-5">
+                    <TitleNgramTrend theses={theses} />
+                  </div>
+                </section>
+
+                <section className="mt-8">
+                  <SectionHeader
+                    icon={<BarChart3 size={16} />}
+                    title="연구 유형 자동 분류"
+                    desc="제목 어휘를 사전과 매칭해 정량/정성, 개발/분석 두 축으로 자동 태깅하고 시대별 추세를 보여줍니다."
+                  />
+                  <div className="mt-4">
+                    <ResearchTypeChart theses={theses} />
+                  </div>
+                </section>
+
+                <section className="mt-8">
+                  <SectionHeader
+                    icon={<GraduationCap size={16} />}
+                    title="연구 대상자 · 응용 영역 분포"
+                    desc="제목에 등장한 연구 대상자(학생·교사·성인 등)와 응용 영역(초중등·대학·평생교육 등)을 분류해 비중과 시대별 변화를 보여줍니다."
+                  />
+                  <div className="mt-4">
+                    <SubjectDistribution theses={theses} />
+                  </div>
+                </section>
+              </TabsContent>
+
+              {/* Tab 3: Lineage Map */}
+              <TabsContent value="lineage" className="mt-6">
+                <section>
+                  <SectionHeader
+                    icon={<Sparkles size={16} />}
+                    title="연구 계보도"
+                    desc="시대별 핵심 키워드가 어떻게 이어지고 분기되었는지를 보여줍니다. 같은 키워드는 시대 사이를 곡선으로 잇고, 곡선의 굵기는 해당 시대의 연구 비중을 나타냅니다."
+                  />
+                  <div className="mt-4 rounded-2xl border bg-white p-3 sm:p-5 overflow-hidden">
+                    <ResearchLineageMap theses={theses} />
+                  </div>
+                </section>
+              </TabsContent>
+            </Tabs>
 
             {/* Member CTA */}
             <section className="mt-10 rounded-2xl border bg-gradient-to-br from-primary/5 to-primary/10 p-6 sm:p-8">
