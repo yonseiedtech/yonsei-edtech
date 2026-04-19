@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import AuthGuard from "@/features/auth/AuthGuard";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import LoadingSpinner from "@/components/ui/loading-spinner";
@@ -22,11 +23,14 @@ import {
   ChevronUp,
   X,
   GraduationCap,
+  Link2,
+  Link2Off,
+  Wand2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
-import { courseOfferingsApi, courseEnrollmentsApi } from "@/lib/bkend";
+import { courseOfferingsApi, courseEnrollmentsApi, profilesApi } from "@/lib/bkend";
 import {
   COURSE_CATEGORY_LABELS,
   ENROLLMENT_ROLE_LABELS,
@@ -35,6 +39,7 @@ import {
   type CourseEnrollment,
   type CourseOffering,
   type SemesterTerm,
+  type User,
 } from "@/types";
 
 const TERMS: SemesterTerm[] = ["spring", "summer", "fall", "winter"];
@@ -122,6 +127,25 @@ function ConsoleCoursesContent() {
   const [csvOpen, setCsvOpen] = useState(false);
   const [filterCategory, setFilterCategory] = useState<CourseCategory | "all">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  // 회원 명단 — EnrollmentList 에서 회원 자동 매칭/연동에 사용. 첫 펼침 시점에 lazy fetch.
+  const [members, setMembers] = useState<User[]>([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [membersLoaded, setMembersLoaded] = useState(false);
+
+  const ensureMembersLoaded = useCallback(async () => {
+    if (membersLoaded || membersLoading) return;
+    setMembersLoading(true);
+    try {
+      const res = await profilesApi.list({ limit: 1000 });
+      setMembers(res.data);
+      setMembersLoaded(true);
+    } catch (e) {
+      console.error("[courses/loadMembers] 실패", e);
+      toast.error(formatFirestoreError(e, "회원 명단 로드 실패"), { duration: 6000 });
+    } finally {
+      setMembersLoading(false);
+    }
+  }, [membersLoaded, membersLoading]);
 
   useEffect(() => {
     if (!isStaff) return;
@@ -572,9 +596,10 @@ function ConsoleCoursesContent() {
                           size="sm"
                           variant="ghost"
                           title="수강생 명단"
-                          onClick={() =>
-                            setExpandedId((cur) => (cur === r.id ? null : r.id))
-                          }
+                          onClick={() => {
+                            setExpandedId((cur) => (cur === r.id ? null : r.id));
+                            void ensureMembersLoaded();
+                          }}
                         >
                           <Users size={13} />
                           {expandedId === r.id ? (
@@ -605,7 +630,12 @@ function ConsoleCoursesContent() {
                     </div>
                     <InlineEditor row={r} onSaveRow={handleUpdateRow} disabled={savingId === r.id} />
                     {expandedId === r.id && (
-                      <EnrollmentList course={r} viewerId={viewer?.id} />
+                      <EnrollmentList
+                        course={r}
+                        viewerId={viewer?.id}
+                        members={members}
+                        membersLoading={membersLoading}
+                      />
                     )}
                   </li>
                 ))}
@@ -813,36 +843,59 @@ function InlineEditor({
 }
 
 /**
- * 과목별 수강생 명단 — CRUD.
+ * 과목별 수강생 명단 — CRUD + 회원 계정 자동 연동.
  * 운영진 전용. 추가/편집/삭제 후 즉시 목록 반영.
+ *
+ * 회원 연동:
+ * - MemberPicker 로 신규/편집 시 회원 검색·선택 → userId/name/studentId/email 자동 채움
+ * - "이름 자동 매칭" 으로 userId 가 비어있는 기존 행을 회원 명단의 동명이인이 1명일 때만 일괄 연동
+ * - 연동된 행: 이름 클릭 → /profile/{userId} 이동, "해제" 버튼으로 userId 만 비움
  */
+type EnrollmentDraft = {
+  userId?: string;
+  studentName: string;
+  studentId: string;
+  email: string;
+  role: NonNullable<CourseEnrollment["role"]>;
+  notes: string;
+};
+
+const EMPTY_ENROLLMENT_DRAFT: EnrollmentDraft = {
+  userId: undefined,
+  studentName: "",
+  studentId: "",
+  email: "",
+  role: "student",
+  notes: "",
+};
+
 function EnrollmentList({
   course,
   viewerId,
+  members,
+  membersLoading,
 }: {
   course: CourseOffering;
   viewerId?: string;
+  members: User[];
+  membersLoading: boolean;
 }) {
   const [list, setList] = useState<CourseEnrollment[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editDraft, setEditDraft] = useState<{
-    studentName: string;
-    studentId: string;
-    email: string;
-    role: NonNullable<CourseEnrollment["role"]>;
-    notes: string;
-  }>({ studentName: "", studentId: "", email: "", role: "student", notes: "" });
+  const [editDraft, setEditDraft] = useState<EnrollmentDraft>(EMPTY_ENROLLMENT_DRAFT);
   const [adding, setAdding] = useState(false);
-  const [newDraft, setNewDraft] = useState({
-    studentName: "",
-    studentId: "",
-    email: "",
-    role: "student" as NonNullable<CourseEnrollment["role"]>,
-    notes: "",
-  });
+  const [newDraft, setNewDraft] = useState<EnrollmentDraft>(EMPTY_ENROLLMENT_DRAFT);
+  const [autoMatching, setAutoMatching] = useState(false);
+
+  // userId → User 빠른 룩업 (행 표시용)
+  const memberById = useMemo(() => {
+    const m = new Map<string, User>();
+    for (const u of members) m.set(u.id, u);
+    return m;
+  }, [members]);
 
   useEffect(() => {
     let cancelled = false;
@@ -879,6 +932,7 @@ function EnrollmentList({
         courseOfferingId: course.id,
         year: course.year,
         term: course.term,
+        userId: newDraft.userId || undefined,
         studentName: newDraft.studentName.trim(),
         studentId: newDraft.studentId.trim() || undefined,
         email: newDraft.email.trim() || undefined,
@@ -891,7 +945,7 @@ function EnrollmentList({
           (a.studentName ?? "").localeCompare(b.studentName ?? "")
         )
       );
-      setNewDraft({ studentName: "", studentId: "", email: "", role: "student", notes: "" });
+      setNewDraft(EMPTY_ENROLLMENT_DRAFT);
       setAdding(false);
       toast.success(`"${created.studentName}" 추가됨`);
     } catch (e) {
@@ -905,6 +959,7 @@ function EnrollmentList({
   function startEdit(row: CourseEnrollment) {
     setEditingId(row.id);
     setEditDraft({
+      userId: row.userId,
       studentName: row.studentName ?? "",
       studentId: row.studentId ?? "",
       email: row.email ?? "",
@@ -920,17 +975,19 @@ function EnrollmentList({
     }
     setBusy(row.id);
     try {
-      const updates = {
+      // userId 는 명시적으로 변경된 경우만 patch (해제하려면 빈 문자열로 보냄 → undefined)
+      const updates: Record<string, unknown> = {
         studentName: editDraft.studentName.trim(),
         studentId: editDraft.studentId.trim() || undefined,
         email: editDraft.email.trim() || undefined,
         role: editDraft.role,
         notes: editDraft.notes.trim() || undefined,
+        userId: editDraft.userId || undefined,
       };
       await courseEnrollmentsApi.update(row.id, updates);
       setList((prev) =>
         prev
-          .map((r) => (r.id === row.id ? { ...r, ...updates } : r))
+          .map((r) => (r.id === row.id ? { ...r, ...updates } as CourseEnrollment : r))
           .sort((a, b) => (a.studentName ?? "").localeCompare(b.studentName ?? ""))
       );
       setEditingId(null);
@@ -938,6 +995,95 @@ function EnrollmentList({
     } catch (e) {
       console.error("[EnrollmentList/update] 실패", e);
       toast.error(formatFirestoreError(e, "수정 실패"), { duration: 8000 });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  /**
+   * 회원 자동 매칭 — userId 가 비어있는 모든 행에 대해 회원 명단에서 동명(정확 일치) 검색.
+   * 동명이인이 1명일 때만 연동, 0명/2명 이상은 스킵.
+   */
+  async function handleAutoMatch() {
+    if (members.length === 0) {
+      toast.error("회원 명단이 아직 로드되지 않았습니다");
+      return;
+    }
+    const candidates = list.filter((r) => !r.userId && r.studentName?.trim());
+    if (candidates.length === 0) {
+      toast.info("연동할 행이 없습니다 (이미 모두 연동되었거나 이름이 비어있음)");
+      return;
+    }
+    const nameIndex = new Map<string, User[]>();
+    for (const u of members) {
+      const key = u.name?.trim();
+      if (!key) continue;
+      const arr = nameIndex.get(key);
+      if (arr) arr.push(u);
+      else nameIndex.set(key, [u]);
+    }
+    const plan: Array<{ row: CourseEnrollment; user: User }> = [];
+    let ambiguous = 0;
+    let unmatched = 0;
+    for (const r of candidates) {
+      const matches = nameIndex.get(r.studentName!.trim()) ?? [];
+      if (matches.length === 1) plan.push({ row: r, user: matches[0] });
+      else if (matches.length > 1) ambiguous++;
+      else unmatched++;
+    }
+    if (plan.length === 0) {
+      toast.info(
+        `매칭 가능한 항목 없음 (모호 ${ambiguous}건, 미일치 ${unmatched}건)`,
+        { duration: 6000 }
+      );
+      return;
+    }
+    if (
+      !confirm(
+        `${plan.length}건을 자동 연동합니다.\n` +
+          `(모호 ${ambiguous}건, 미일치 ${unmatched}건은 수동 처리 필요)\n계속하시겠습니까?`
+      )
+    ) {
+      return;
+    }
+    setAutoMatching(true);
+    let succeeded = 0;
+    const updatedRows: CourseEnrollment[] = [];
+    for (const { row, user } of plan) {
+      try {
+        const patch: Record<string, unknown> = {
+          userId: user.id,
+          studentId: row.studentId || user.studentId || undefined,
+          email: row.email || user.email || undefined,
+        };
+        await courseEnrollmentsApi.update(row.id, patch);
+        updatedRows.push({ ...row, ...patch } as CourseEnrollment);
+        succeeded++;
+      } catch (e) {
+        console.error("[EnrollmentList/autoMatch] 실패", { row: row.id, e });
+      }
+    }
+    setList((prev) => {
+      const map = new Map(updatedRows.map((r) => [r.id, r]));
+      return prev.map((r) => map.get(r.id) ?? r);
+    });
+    setAutoMatching(false);
+    toast.success(`${succeeded}/${plan.length} 건 자동 연동 완료`);
+  }
+
+  /** 단일 행 연동 해제 — userId 만 비움 */
+  async function handleUnlink(row: CourseEnrollment) {
+    if (!row.userId) return;
+    setBusy(row.id);
+    try {
+      await courseEnrollmentsApi.update(row.id, { userId: undefined });
+      setList((prev) =>
+        prev.map((r) => (r.id === row.id ? { ...r, userId: undefined } : r))
+      );
+      toast.success("연동 해제됨");
+    } catch (e) {
+      console.error("[EnrollmentList/unlink] 실패", e);
+      toast.error(formatFirestoreError(e, "해제 실패"), { duration: 8000 });
     } finally {
       setBusy(null);
     }
@@ -958,21 +1104,43 @@ function EnrollmentList({
     }
   }
 
+  const linkedCount = list.filter((r) => !!r.userId).length;
+  const unlinkedNamedCount = list.filter((r) => !r.userId && r.studentName?.trim()).length;
+
   return (
     <div className="mt-3 rounded-md border bg-muted/10 p-3">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="flex items-center gap-1.5 text-xs font-semibold">
           <Users size={12} />
           수강생 명단
           <span className="text-[11px] font-normal text-muted-foreground">
-            {loading ? "불러오는 중..." : `${list.length}명`}
+            {loading
+              ? "불러오는 중..."
+              : `${list.length}명 · 회원 연동 ${linkedCount}/${list.length}`}
           </span>
         </p>
-        {!adding && (
-          <Button size="sm" variant="outline" onClick={() => setAdding(true)}>
-            <Plus size={12} className="mr-1" /> 추가
-          </Button>
-        )}
+        <div className="flex items-center gap-1.5">
+          {membersLoading && (
+            <span className="text-[11px] text-muted-foreground">회원 명단 로드 중...</span>
+          )}
+          {!loading && unlinkedNamedCount > 0 && members.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleAutoMatch}
+              disabled={autoMatching}
+              title="이름이 정확히 일치하는 회원만 자동 연동 (동명이인은 수동 처리)"
+            >
+              <Wand2 size={12} className="mr-1" />
+              {autoMatching ? "매칭 중..." : `이름 자동 매칭 (${unlinkedNamedCount})`}
+            </Button>
+          )}
+          {!adding && (
+            <Button size="sm" variant="outline" onClick={() => setAdding(true)}>
+              <Plus size={12} className="mr-1" /> 추가
+            </Button>
+          )}
+        </div>
       </div>
 
       {err && <p className="mt-2 text-[11px] text-destructive">⚠ {err}</p>}
@@ -980,11 +1148,27 @@ function EnrollmentList({
       {adding && (
         <div className="mt-3 rounded-md border bg-white p-3">
           <div className="grid gap-2 sm:grid-cols-3">
-            <Input
-              placeholder="이름 *"
-              value={newDraft.studentName}
-              onChange={(e) => setNewDraft({ ...newDraft, studentName: e.target.value })}
-            />
+            <div className="sm:col-span-3">
+              <MemberPicker
+                members={members}
+                value={newDraft.userId}
+                displayName={newDraft.studentName}
+                onSelect={(u) =>
+                  setNewDraft((d) => ({
+                    ...d,
+                    userId: u.id,
+                    studentName: u.name,
+                    studentId: d.studentId || u.studentId || "",
+                    email: d.email || u.email || "",
+                  }))
+                }
+                onUnlink={() => setNewDraft((d) => ({ ...d, userId: undefined }))}
+                onTypeName={(name) =>
+                  setNewDraft((d) => ({ ...d, studentName: name, userId: undefined }))
+                }
+                membersLoading={membersLoading}
+              />
+            </div>
             <Input
               placeholder="학번"
               value={newDraft.studentId}
@@ -1014,7 +1198,7 @@ function EnrollmentList({
               placeholder="비고"
               value={newDraft.notes}
               onChange={(e) => setNewDraft({ ...newDraft, notes: e.target.value })}
-              className="sm:col-span-2"
+              className="sm:col-span-3"
             />
           </div>
           <div className="mt-2 flex justify-end gap-2">
@@ -1023,7 +1207,7 @@ function EnrollmentList({
               variant="ghost"
               onClick={() => {
                 setAdding(false);
-                setNewDraft({ studentName: "", studentId: "", email: "", role: "student", notes: "" });
+                setNewDraft(EMPTY_ENROLLMENT_DRAFT);
               }}
             >
               취소
@@ -1049,13 +1233,27 @@ function EnrollmentList({
               return (
                 <li key={r.id} className="rounded-md border bg-white p-3">
                   <div className="grid gap-2 sm:grid-cols-3">
-                    <Input
-                      value={editDraft.studentName}
-                      onChange={(e) =>
-                        setEditDraft({ ...editDraft, studentName: e.target.value })
-                      }
-                      placeholder="이름 *"
-                    />
+                    <div className="sm:col-span-3">
+                      <MemberPicker
+                        members={members}
+                        value={editDraft.userId}
+                        displayName={editDraft.studentName}
+                        onSelect={(u) =>
+                          setEditDraft((d) => ({
+                            ...d,
+                            userId: u.id,
+                            studentName: u.name,
+                            studentId: d.studentId || u.studentId || "",
+                            email: d.email || u.email || "",
+                          }))
+                        }
+                        onUnlink={() => setEditDraft((d) => ({ ...d, userId: undefined }))}
+                        onTypeName={(name) =>
+                          setEditDraft((d) => ({ ...d, studentName: name, userId: undefined }))
+                        }
+                        membersLoading={membersLoading}
+                      />
+                    </div>
                     <Input
                       value={editDraft.studentId}
                       onChange={(e) =>
@@ -1115,6 +1313,7 @@ function EnrollmentList({
                 </li>
               );
             }
+            const linkedUser = r.userId ? memberById.get(r.userId) : undefined;
             return (
               <li
                 key={r.id}
@@ -1122,7 +1321,27 @@ function EnrollmentList({
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-sm font-medium">{r.studentName}</span>
+                    {r.userId ? (
+                      <Link
+                        href={`/profile/${r.userId}`}
+                        className="text-sm font-medium text-primary hover:underline"
+                        title={linkedUser ? `회원 프로필 — ${linkedUser.name}` : "회원 프로필"}
+                      >
+                        {r.studentName}
+                      </Link>
+                    ) : (
+                      <span className="text-sm font-medium">{r.studentName}</span>
+                    )}
+                    {r.userId && (
+                      <Badge
+                        variant="secondary"
+                        className="border border-primary/20 bg-primary/10 text-[10px] text-primary"
+                        title="회원 계정 연동됨"
+                      >
+                        <Link2 size={9} className="mr-0.5" />
+                        회원 연동
+                      </Badge>
+                    )}
                     {r.role && r.role !== "student" && (
                       <Badge variant="outline" className="text-[10px]">
                         {ENROLLMENT_ROLE_LABELS[r.role]}
@@ -1141,6 +1360,17 @@ function EnrollmentList({
                   )}
                 </div>
                 <div className="flex shrink-0 gap-1">
+                  {r.userId && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      title="회원 연동 해제"
+                      onClick={() => handleUnlink(r)}
+                      disabled={busy === r.id}
+                    >
+                      <Link2Off size={12} />
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="ghost"
@@ -1165,6 +1395,136 @@ function EnrollmentList({
             );
           })}
         </ul>
+      )}
+    </div>
+  );
+}
+
+/**
+ * 회원 검색 + 선택 위젯.
+ * - 입력창에 이름/이메일/학번 일부 입력 → 매칭되는 회원 최대 8명 드롭다운
+ * - 회원 선택 → onSelect 콜백으로 userId/name/studentId/email 자동 채움
+ * - 외부 클릭 시 드롭다운 닫힘
+ * - 회원 연동 없이 직접 입력도 가능 (그냥 이름 타이핑)
+ */
+function MemberPicker({
+  members,
+  value,
+  displayName,
+  onSelect,
+  onUnlink,
+  onTypeName,
+  membersLoading,
+}: {
+  members: User[];
+  value?: string;
+  displayName: string;
+  onSelect: (u: User) => void;
+  onUnlink: () => void;
+  onTypeName: (name: string) => void;
+  membersLoading: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  // 외부 클릭 시 드롭다운 닫기
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
+
+  const matches = useMemo(() => {
+    const q = (query || displayName || "").trim().toLowerCase();
+    if (!q) return [] as User[];
+    return members
+      .filter((u) => {
+        if (u.id === value) return false;
+        const haystack = `${u.name ?? ""} ${u.email ?? ""} ${u.studentId ?? ""}`.toLowerCase();
+        return haystack.includes(q);
+      })
+      .slice(0, 8);
+  }, [members, query, displayName, value]);
+
+  // 회원이 이미 연동된 경우: 칩 + 해제 버튼만 표시
+  if (value) {
+    return (
+      <div className="flex flex-wrap items-center gap-2 rounded-md border bg-primary/5 px-3 py-2">
+        <Link2 size={14} className="text-primary" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium">{displayName}</p>
+          <p className="text-[11px] text-muted-foreground">
+            회원 연동됨 — 학번/이메일이 비어있으면 회원 정보로 채워집니다
+          </p>
+        </div>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={onUnlink}
+          title="연동 해제"
+        >
+          <Link2Off size={12} className="mr-1" /> 해제
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <Input
+        placeholder={
+          membersLoading
+            ? "회원 명단 로드 중..."
+            : "이름 * (회원 검색: 이름·이메일·학번 일부 입력)"
+        }
+        value={displayName}
+        onChange={(e) => {
+          onTypeName(e.target.value);
+          setQuery(e.target.value);
+          setOpen(true);
+        }}
+        onFocus={() => setOpen(true)}
+        autoComplete="off"
+      />
+      {open && matches.length > 0 && (
+        <ul className="absolute left-0 right-0 top-full z-50 mt-1 max-h-72 overflow-auto rounded-md border bg-white shadow-lg">
+          {matches.map((u) => (
+            <li key={u.id}>
+              <button
+                type="button"
+                className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left hover:bg-muted/30"
+                onMouseDown={(e) => {
+                  // mousedown — onBlur 가 먼저 발화하지 않도록
+                  e.preventDefault();
+                  onSelect(u);
+                  setQuery("");
+                  setOpen(false);
+                }}
+              >
+                <span className="flex items-center gap-1.5 text-sm font-medium">
+                  {u.name}
+                  {u.role && (
+                    <Badge variant="outline" className="text-[9px]">
+                      {u.role}
+                    </Badge>
+                  )}
+                </span>
+                <span className="text-[11px] text-muted-foreground">
+                  {[u.studentId, u.email].filter(Boolean).join(" · ")}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {open && !membersLoading && matches.length === 0 && (displayName.trim() || query.trim()) && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-md border bg-white px-3 py-2 text-[11px] text-muted-foreground shadow-lg">
+          매칭되는 회원이 없습니다 — 이대로 저장하면 회원 비연동 외부 수강생으로 등록됩니다
+        </div>
       )}
     </div>
   );
