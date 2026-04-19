@@ -84,10 +84,12 @@
       "startedAt": "2026-04-12T00:00:00Z"
     },
     "org-structure-v2": {
-      "phase": "plan",
-      "matchRate": 0,
+      "phase": "completed",
+      "matchRate": 95,
       "iterationCount": 0,
-      "startedAt": "2026-04-12T00:00:00Z"
+      "startedAt": "2026-04-12T00:00:00Z",
+      "completedAt": "2026-04-19T00:00:00Z",
+      "notes": "잔여 30% 마무리: (1) 인사말 2인 체제 — GreetingData 확장(advisor/president), normalizeGreeting 하위호환, GreetingSection/AdminGreetingTab 2분할, /about/greeting 순차 표시 (2) OrgChart role별 색상/배지 — advisor 보라/president primary/vp 앰버/direct_aide 청록 (3) 모바일 리스트 role 배지 + 데스크톱 범례. 코어 70%(타입·시드·에디터)는 이전 사이클에서 이미 완료."
     },
     "certificate-pdf-bulk-email": {
       "phase": "completed",
