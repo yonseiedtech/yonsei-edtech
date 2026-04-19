@@ -26,6 +26,7 @@ import ProfileAwards from "./ProfileAwards";
 import ProfileExternalActivities from "./ProfileExternalActivities";
 import ProfileContentCreations from "./ProfileContentCreations";
 import ProfileOutputs from "./ProfileOutputs";
+import ProfileCourses from "./ProfileCourses";
 import OwnerVisibilitySection from "./OwnerVisibilitySection";
 
 interface Props {
@@ -122,6 +123,7 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
   const showResearchInterests = canViewSection("researchInterests", viewer, owner, via);
   const showAcademic = canViewSection("academicActivities", viewer, owner, via);
   const showResearch = canViewSection("researchActivities", viewer, owner, via);
+  const showCourses = canViewSection("courses", viewer, owner, via);
   // 운영진 페이지 비로그인 케이스: 일부 항상 노출 + 운영진 공식 이메일 표시 보강
   const isStaffPublic = access === "staff-public-only";
   const showOfficialEmail = isStaffPublic; // 항상 노출되는 공식 이메일
@@ -169,6 +171,10 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
         {showAcademic && <ProfileContentCreations owner={owner} />}
 
         {showResearch && <ProfileResearchActivities papers={owner.recentPapers} />}
+
+        {showCourses && (
+          <ProfileCourses ownerId={owner.id} canSeeSensitive={isOwner || isStaff} />
+        )}
 
         {isStaffPublic && (
           <p className="rounded-xl border border-dashed bg-white p-3 text-center text-xs text-muted-foreground">

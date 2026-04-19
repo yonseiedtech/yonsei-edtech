@@ -18,6 +18,7 @@ const SECTIONS: SectionKey[] = [
   "academicActivities",
   "researchActivities",
   "graduateInfo",
+  "courses",
 ];
 
 const LEVELS: SectionVisibility[] = ["members", "staff", "shared", "private"];

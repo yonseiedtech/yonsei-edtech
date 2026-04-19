@@ -66,7 +66,8 @@ export type SectionKey =
   | "researchInterests"
   | "academicActivities"
   | "researchActivities"
-  | "graduateInfo";
+  | "graduateInfo"
+  | "courses";
 
 export type SectionVisibility = "members" | "staff" | "shared" | "private";
 
@@ -86,6 +87,7 @@ export const SECTION_LABELS: Record<SectionKey, string> = {
   academicActivities: "학술활동",
   researchActivities: "연구활동",
   graduateInfo: "대학원 정보",
+  courses: "수강 내역",
 };
 
 export type SocialPlatform =

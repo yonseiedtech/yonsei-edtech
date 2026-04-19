@@ -492,8 +492,10 @@ service cloud.firestore {
 
     // ─── Course Enrollments (Track 5: 과목별 수강생 명단 — 운영진 관리) ───
     match /course_enrollments/{docId} {
-      // 읽기: 운영진/회장/관리자 전용 (개인정보 포함 — 학번/이메일)
-      allow read: if isAuthenticated() && isStaffOrAbove();
+      // 읽기: 로그인 회원 전체 (개인 프로필에서 수강 내역 표시용)
+      // — 학번/이메일은 클라이언트에서 본인+운영진만 노출하도록 마스킹.
+      // 쓰기: 운영진/회장/관리자 전용
+      allow read: if isAuthenticated();
       allow write: if isAuthenticated() && isStaffOrAbove();
     }
 

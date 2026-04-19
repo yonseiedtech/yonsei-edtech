@@ -898,6 +898,13 @@ export const courseEnrollmentsApi = {
       "filter[term]": term,
       limit: 2000,
     }),
+  /** 회원 ID로 본인 수강 이력 조회 — 프로필 학기별 표시용 */
+  listByUser: (userId: string) =>
+    dataApi.list<CourseEnrollment>("course_enrollments", {
+      "filter[userId]": userId,
+      sort: "year:desc",
+      limit: 500,
+    }),
   create: (data: Record<string, unknown>) =>
     dataApi.create<CourseEnrollment>("course_enrollments", data),
   update: (id: string, data: Record<string, unknown>) =>
