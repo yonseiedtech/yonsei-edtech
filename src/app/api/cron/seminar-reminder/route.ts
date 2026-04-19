@@ -43,7 +43,9 @@ async function sendReminderEmails(
     ? `온라인 (ZOOM)${seminar.onlineUrl ? ` - ${seminar.onlineUrl}` : ""}`
     : (seminar.location || "미정");
 
-  const subject = daysLeft === 1
+  const subject = daysLeft === 0
+    ? `[연세교육공학회] 오늘 세미나가 진행됩니다 - ${seminar.title}`
+    : daysLeft === 1
     ? `[연세교육공학회] 내일 세미나가 있습니다 - ${seminar.title}`
     : `[연세교육공학회] 세미나 D-${daysLeft} 안내 - ${seminar.title}`;
 
@@ -57,7 +59,11 @@ async function sendReminderEmails(
         <p style="margin: 4px 0; font-size: 14px;">📍 장소: ${escapeHtml(locationInfo)}</p>
         <p style="margin: 4px 0; font-size: 14px;">🎤 발표자: ${escapeHtml(seminar.speaker || "")}</p>
       </div>
-      ${daysLeft === 1 ? '<p style="color: #d97706; font-weight: bold;">⏰ 내일 세미나가 진행됩니다. 시간에 맞춰 참석해 주세요!</p>' : `<p>세미나가 <strong>${daysLeft}일 후</strong> 진행됩니다.</p>`}
+      ${daysLeft === 0
+        ? '<p style="color: #dc2626; font-weight: bold;">🎯 오늘 세미나가 진행됩니다. 시간 맞춰 참석해 주세요!</p>'
+        : daysLeft === 1
+        ? '<p style="color: #d97706; font-weight: bold;">⏰ 내일 세미나가 진행됩니다. 시간에 맞춰 참석해 주세요!</p>'
+        : `<p>세미나가 <strong>${daysLeft}일 후</strong> 진행됩니다.</p>`}
       <p><a href="https://yonsei-edtech.vercel.app/seminars/${seminarId}" style="display: inline-block; padding: 10px 20px; background: #003876; color: white; text-decoration: none; border-radius: 6px;">세미나 상세 보기</a></p>
       <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
       <p style="color: #888; font-size: 12px;">연세교육공학회 | yonsei.edtech@gmail.com</p>
@@ -110,6 +116,7 @@ export async function GET(req: NextRequest) {
     const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
     const today = kstNow.toISOString().split("T")[0];
 
+    const d0 = today;
     const d1 = addDays(kstNow, 1);
     const d3 = addDays(kstNow, 3);
 
@@ -126,7 +133,8 @@ export async function GET(req: NextRequest) {
       const seminarDate = seminar.date;
 
       let daysLeft: number | null = null;
-      if (seminarDate === d1) daysLeft = 1;
+      if (seminarDate === d0) daysLeft = 0;
+      else if (seminarDate === d1) daysLeft = 1;
       else if (seminarDate === d3) daysLeft = 3;
 
       if (daysLeft === null) continue;

@@ -1,10 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import jsQR from "jsqr";
-import { Camera, CameraOff } from "lucide-react";
+import { Camera, CameraOff, AlertTriangle, RefreshCw } from "lucide-react";
 
 const SCAN_COOLDOWN = 3000; // 3초 중복 방지
+
+type CameraError =
+  | "permission_denied"
+  | "no_camera"
+  | "in_use"
+  | "insecure_context"
+  | "unknown";
 
 interface Props {
   onScan: (token: string) => void;
@@ -18,6 +25,8 @@ export default function QrScanner({ onScan, enabled = true }: Props) {
   const animFrameRef = useRef<number>(0);
   const lastTokenRef = useRef("");
   const lastTimeRef = useRef(0);
+  const [error, setError] = useState<CameraError | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   const scanLoop = useCallback(() => {
     const video = videoRef.current;
@@ -62,6 +71,17 @@ export default function QrScanner({ onScan, enabled = true }: Props) {
     if (!enabled) return;
 
     async function startCamera() {
+      setError(null);
+
+      if (typeof window !== "undefined" && !window.isSecureContext) {
+        setError("insecure_context");
+        return;
+      }
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setError("no_camera");
+        return;
+      }
+
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
@@ -78,8 +98,12 @@ export default function QrScanner({ onScan, enabled = true }: Props) {
             scanLoop();
           };
         }
-      } catch {
-        // 카메라 접근 실패 — UI에서 안내
+      } catch (err) {
+        const name = (err as { name?: string })?.name ?? "";
+        if (name === "NotAllowedError" || name === "SecurityError") setError("permission_denied");
+        else if (name === "NotFoundError" || name === "OverconstrainedError") setError("no_camera");
+        else if (name === "NotReadableError") setError("in_use");
+        else setError("unknown");
       }
     }
 
@@ -90,12 +114,52 @@ export default function QrScanner({ onScan, enabled = true }: Props) {
       streamRef.current?.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     };
-  }, [enabled, scanLoop]);
+  }, [enabled, scanLoop, retryKey]);
 
   if (!enabled) {
     return (
       <div className="flex aspect-square items-center justify-center rounded-2xl bg-muted">
         <CameraOff size={40} className="text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    const messages: Record<CameraError, { title: string; help: string }> = {
+      permission_denied: {
+        title: "카메라 권한이 필요합니다",
+        help: "브라우저 주소창의 자물쇠 아이콘에서 카메라를 '허용'으로 변경한 뒤 재시도하세요.",
+      },
+      no_camera: {
+        title: "사용 가능한 카메라를 찾을 수 없습니다",
+        help: "기기에 후면 카메라가 없거나 차단되어 있습니다. 셀프 체크인 탭을 사용하세요.",
+      },
+      in_use: {
+        title: "카메라가 다른 앱에서 사용 중입니다",
+        help: "카메라를 쓰는 다른 앱(영상통화·녹화 등)을 종료한 뒤 재시도하세요.",
+      },
+      insecure_context: {
+        title: "보안 연결(HTTPS)이 필요합니다",
+        help: "이 페이지는 HTTPS에서만 카메라를 열 수 있습니다.",
+      },
+      unknown: {
+        title: "카메라를 시작할 수 없습니다",
+        help: "잠시 후 재시도하거나 셀프 체크인 탭을 사용하세요.",
+      },
+    };
+    const msg = messages[error];
+    return (
+      <div className="flex aspect-square flex-col items-center justify-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center">
+        <AlertTriangle size={36} className="text-amber-600" />
+        <p className="text-sm font-medium text-amber-900">{msg.title}</p>
+        <p className="text-xs text-amber-800">{msg.help}</p>
+        <button
+          onClick={() => setRetryKey((k) => k + 1)}
+          className="mt-1 inline-flex items-center gap-1.5 rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700"
+        >
+          <RefreshCw size={12} />
+          재시도
+        </button>
       </div>
     );
   }
