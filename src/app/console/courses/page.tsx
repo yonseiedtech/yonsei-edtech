@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Plus, Trash2, Power, Save, Upload } from "lucide-react";
+import { BookOpen, Plus, Trash2, Power, Save, Upload, Pencil } from "lucide-react";
+import { toast } from "sonner";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import { courseOfferingsApi } from "@/lib/bkend";
@@ -143,8 +144,9 @@ function ConsoleCoursesContent() {
       });
       setRows((prev) => [...prev, created]);
       setNewRow(EMPTY_NEW_ROW);
+      toast.success(`"${created.courseName}" 과목이 저장되었습니다`);
     } catch (e) {
-      alert(e instanceof Error ? e.message : "추가 실패");
+      toast.error(e instanceof Error ? e.message : "추가 실패");
     } finally {
       setSavingId(null);
     }
@@ -157,8 +159,9 @@ function ConsoleCoursesContent() {
       const next = !row.active;
       await courseOfferingsApi.update(row.id, { active: next });
       setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, active: next } : r)));
+      toast.success(next ? "재활성화되었습니다" : "폐강 처리되었습니다");
     } catch (e) {
-      alert(e instanceof Error ? e.message : "변경 실패");
+      toast.error(e instanceof Error ? e.message : "변경 실패");
     } finally {
       setSavingId(null);
     }
@@ -171,25 +174,36 @@ function ConsoleCoursesContent() {
     try {
       await courseOfferingsApi.delete(row.id);
       setRows((prev) => prev.filter((r) => r.id !== row.id));
+      toast.success("삭제되었습니다");
     } catch (e) {
-      alert(e instanceof Error ? e.message : "삭제 실패");
+      toast.error(e instanceof Error ? e.message : "삭제 실패");
     } finally {
       setSavingId(null);
     }
   }
 
-  async function handleUpdateField<K extends keyof CourseOffering>(
+  /**
+   * 인라인 편집 배치 저장 — 변경된 필드만 모아서 한 번의 update 호출.
+   * 필드별 N번 호출하던 기존 방식 폐기 (부분 실패 시 데이터 정합성 깨지는 문제 해결).
+   */
+  async function handleUpdateRow(
     row: CourseOffering,
-    field: K,
-    value: CourseOffering[K]
+    updates: Partial<CourseOffering>
   ) {
-    if (savingId) return;
+    if (savingId) return false;
+    if (Object.keys(updates).length === 0) {
+      toast.info("변경사항이 없습니다");
+      return true;
+    }
     setSavingId(row.id);
     try {
-      await courseOfferingsApi.update(row.id, { [field]: value });
-      setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, [field]: value } : r)));
+      await courseOfferingsApi.update(row.id, updates);
+      setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, ...updates } : r)));
+      toast.success(`"${row.courseName}" 저장 완료`);
+      return true;
     } catch (e) {
-      alert(e instanceof Error ? e.message : "수정 실패");
+      toast.error(e instanceof Error ? e.message : "수정 실패");
+      return false;
     } finally {
       setSavingId(null);
     }
@@ -433,10 +447,13 @@ function ConsoleCoursesContent() {
               className="sm:col-span-3"
             />
           </div>
-          <div className="mt-3 flex justify-end">
+          <div className="mt-3 flex items-center justify-between gap-2">
+            <span className="text-[11px] text-muted-foreground">
+              * 과목명은 필수. 저장 시 즉시 목록에 반영됩니다.
+            </span>
             <Button size="sm" onClick={handleAdd} disabled={savingId === "__new__"}>
               <Plus size={14} className="mr-1" />
-              {savingId === "__new__" ? "추가 중..." : "추가"}
+              {savingId === "__new__" ? "저장 중..." : "저장"}
             </Button>
           </div>
         </div>
@@ -513,7 +530,7 @@ function ConsoleCoursesContent() {
                     </Button>
                   </div>
                 </div>
-                <InlineEditor row={r} onSave={handleUpdateField} disabled={savingId === r.id} />
+                <InlineEditor row={r} onSaveRow={handleUpdateRow} disabled={savingId === r.id} />
               </li>
             ))}
           </ul>
@@ -572,102 +589,136 @@ function FilterPill({
 
 function InlineEditor({
   row,
-  onSave,
+  onSaveRow,
   disabled,
 }: {
   row: CourseOffering;
-  onSave: <K extends keyof CourseOffering>(
-    row: CourseOffering,
-    field: K,
-    value: CourseOffering[K]
-  ) => void;
+  onSaveRow: (row: CourseOffering, updates: Partial<CourseOffering>) => Promise<boolean>;
   disabled: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState({
-    courseName: row.courseName,
-    professor: row.professor ?? "",
-    credits: row.credits != null ? String(row.credits) : "",
-    schedule: row.schedule ?? "",
-    classroom: row.classroom ?? "",
-    notes: row.notes ?? "",
-  });
+  const initial = useMemo(
+    () => ({
+      courseName: row.courseName,
+      professor: row.professor ?? "",
+      credits: row.credits != null ? String(row.credits) : "",
+      schedule: row.schedule ?? "",
+      classroom: row.classroom ?? "",
+      syllabusUrl: row.syllabusUrl ?? "",
+      notes: row.notes ?? "",
+    }),
+    [row]
+  );
+  const [draft, setDraft] = useState(initial);
+
+  // row 가 외부에서 갱신되면(저장 후 setRows) draft 동기화
+  useEffect(() => {
+    setDraft(initial);
+  }, [initial]);
+
+  // 변경사항 계산 — 저장 버튼 활성/비활성 판단에 사용
+  const updates = useMemo(() => {
+    const u: Partial<CourseOffering> = {};
+    const trimmedName = draft.courseName.trim();
+    if (trimmedName && trimmedName !== row.courseName) u.courseName = trimmedName;
+    const profNew = draft.professor.trim() || undefined;
+    if (profNew !== row.professor) u.professor = profNew;
+    const creditsNew = draft.credits ? Number(draft.credits) : undefined;
+    if (creditsNew !== row.credits) u.credits = creditsNew;
+    const schedNew = draft.schedule.trim() || undefined;
+    if (schedNew !== row.schedule) u.schedule = schedNew;
+    const classNew = draft.classroom.trim() || undefined;
+    if (classNew !== row.classroom) u.classroom = classNew;
+    const sylNew = draft.syllabusUrl.trim() || undefined;
+    if (sylNew !== row.syllabusUrl) u.syllabusUrl = sylNew;
+    const notesNew = draft.notes.trim() || undefined;
+    if (notesNew !== row.notes) u.notes = notesNew;
+    return u;
+  }, [draft, row]);
+
+  const dirty = Object.keys(updates).length > 0;
 
   if (!open) {
     return (
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-2 text-[11px] text-muted-foreground hover:text-primary"
+        className="mt-2 inline-flex items-center gap-1 rounded-md border bg-white px-2 py-1 text-[11px] text-muted-foreground hover:bg-muted/30 hover:text-primary"
       >
-        ✏ 인라인 편집
+        <Pencil size={11} /> 편집
       </button>
     );
   }
 
+  async function handleSave() {
+    const ok = await onSaveRow(row, updates);
+    if (ok) setOpen(false);
+  }
+
   return (
-    <div className="mt-3 grid gap-2 rounded-md bg-muted/20 p-2 sm:grid-cols-3">
-      <Input
-        value={draft.courseName}
-        onChange={(e) => setDraft({ ...draft, courseName: e.target.value })}
-        placeholder="과목명"
-        className="sm:col-span-2"
-      />
-      <Input
-        value={draft.professor}
-        onChange={(e) => setDraft({ ...draft, professor: e.target.value })}
-        placeholder="교수"
-      />
-      <Input
-        type="number"
-        value={draft.credits}
-        onChange={(e) => setDraft({ ...draft, credits: e.target.value })}
-        placeholder="학점"
-      />
-      <Input
-        value={draft.schedule}
-        onChange={(e) => setDraft({ ...draft, schedule: e.target.value })}
-        placeholder="요일/시간"
-      />
-      <Input
-        value={draft.classroom}
-        onChange={(e) => setDraft({ ...draft, classroom: e.target.value })}
-        placeholder="강의실"
-      />
-      <Input
-        value={draft.notes}
-        onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
-        placeholder="비고"
-        className="sm:col-span-3"
-      />
-      <div className="flex justify-end gap-2 sm:col-span-3">
-        <Button variant="ghost" size="sm" onClick={() => setOpen(false)} disabled={disabled}>
-          취소
-        </Button>
-        <Button
-          size="sm"
-          disabled={disabled}
-          onClick={async () => {
-            const updates: Partial<CourseOffering> = {};
-            if (draft.courseName.trim() !== row.courseName) updates.courseName = draft.courseName.trim();
-            if ((draft.professor || undefined) !== row.professor)
-              updates.professor = draft.professor.trim() || undefined;
-            const newCredits = draft.credits ? Number(draft.credits) : undefined;
-            if (newCredits !== row.credits) updates.credits = newCredits;
-            if ((draft.schedule || undefined) !== row.schedule)
-              updates.schedule = draft.schedule.trim() || undefined;
-            if ((draft.classroom || undefined) !== row.classroom)
-              updates.classroom = draft.classroom.trim() || undefined;
-            if ((draft.notes || undefined) !== row.notes)
-              updates.notes = draft.notes.trim() || undefined;
-            for (const [k, v] of Object.entries(updates)) {
-              await onSave(row, k as keyof CourseOffering, v as CourseOffering[keyof CourseOffering]);
-            }
-            setOpen(false);
-          }}
-        >
-          <Save size={13} className="mr-1" /> 저장
-        </Button>
+    <div className="mt-3 rounded-md border bg-muted/20 p-3">
+      <div className="grid gap-2 sm:grid-cols-3">
+        <Input
+          value={draft.courseName}
+          onChange={(e) => setDraft({ ...draft, courseName: e.target.value })}
+          placeholder="과목명 *"
+          className="sm:col-span-2"
+        />
+        <Input
+          value={draft.professor}
+          onChange={(e) => setDraft({ ...draft, professor: e.target.value })}
+          placeholder="교수"
+        />
+        <Input
+          type="number"
+          value={draft.credits}
+          onChange={(e) => setDraft({ ...draft, credits: e.target.value })}
+          placeholder="학점"
+        />
+        <Input
+          value={draft.schedule}
+          onChange={(e) => setDraft({ ...draft, schedule: e.target.value })}
+          placeholder="요일/시간"
+        />
+        <Input
+          value={draft.classroom}
+          onChange={(e) => setDraft({ ...draft, classroom: e.target.value })}
+          placeholder="강의실"
+        />
+        <Input
+          value={draft.syllabusUrl}
+          onChange={(e) => setDraft({ ...draft, syllabusUrl: e.target.value })}
+          placeholder="강의계획서 URL (선택)"
+          className="sm:col-span-3"
+        />
+        <Input
+          value={draft.notes}
+          onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
+          placeholder="비고"
+          className="sm:col-span-3"
+        />
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <span className="text-[11px] text-muted-foreground">
+          {dirty ? `변경된 항목: ${Object.keys(updates).length}개` : "변경사항 없음"}
+        </span>
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setDraft(initial);
+              setOpen(false);
+            }}
+            disabled={disabled}
+          >
+            취소
+          </Button>
+          <Button size="sm" disabled={disabled || !dirty} onClick={handleSave}>
+            <Save size={13} className="mr-1" />
+            {disabled ? "저장 중..." : "저장"}
+          </Button>
+        </div>
       </div>
     </div>
   );
