@@ -36,6 +36,7 @@ import {
   FolderKanban,
   AlertCircle,
   PenSquare,
+  Sparkles,
 } from "lucide-react";
 import EmptyState from "@/components/ui/empty-state";
 import { useAuth } from "@/features/auth/useAuth";
@@ -391,6 +392,85 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                         </div>
                       </Link>
                     ))}
+                  </div>
+                );
+              })()}
+
+              {isSelf && !readOnly && (() => {
+                const today = new Date().toISOString().slice(0, 10);
+                const ACTIVITY_LABELS: Record<string, string> = {
+                  study: "스터디",
+                  project: "프로젝트",
+                  external: "대외활동",
+                };
+
+                // 사용자 취향 프로파일: 참여한 활동의 type/tag 빈도
+                const typeWeights: Record<string, number> = {};
+                const tagWeights: Record<string, number> = {};
+                for (const a of myActivities) {
+                  typeWeights[a.type] = (typeWeights[a.type] || 0) + 1;
+                  for (const tag of a.tags || []) {
+                    tagWeights[tag] = (tagWeights[tag] || 0) + 1;
+                  }
+                }
+
+                const myActivityIds = new Set(myActivities.map((a) => a.id));
+
+                // 후보: upcoming + 미참여 + 미신청
+                const candidates = allActivities
+                  .filter((a) => (a.date || "") >= today && a.status !== "completed")
+                  .filter((a) => !myActivityIds.has(a.id))
+                  .filter((a) => !a.applicants?.some((ap) => ap.userId === userId))
+                  .map((a) => {
+                    const typeScore = (typeWeights[a.type] || 0) * 3;
+                    const tagScore = (a.tags || []).reduce(
+                      (s, t) => s + (tagWeights[t] || 0) * 2,
+                      0,
+                    );
+                    return { a, score: typeScore + tagScore };
+                  })
+                  .sort((x, y) => {
+                    if (y.score !== x.score) return y.score - x.score;
+                    return (x.a.date || "").localeCompare(y.a.date || "");
+                  })
+                  .slice(0, 3);
+
+                if (candidates.length === 0) return null;
+
+                const hasHistory = myActivities.length > 0;
+                const heading = hasHistory ? "당신을 위한 추천" : "곧 시작하는 활동";
+
+                return (
+                  <div className="rounded-2xl border border-violet-200/70 bg-violet-50/50 p-5">
+                    <div className="flex items-center gap-2">
+                      <Sparkles size={16} className="text-violet-600" />
+                      <h3 className="text-sm font-semibold text-violet-900">{heading}</h3>
+                    </div>
+                    <ul className="mt-3 divide-y divide-violet-100">
+                      {candidates.map(({ a }) => {
+                        const typeLabel = ACTIVITY_LABELS[a.type] || a.type;
+                        const tagPreview = (a.tags || []).slice(0, 2).join(" · ");
+                        return (
+                          <li key={`rec-${a.id}`} className="py-2.5">
+                            <Link
+                              href={`/activities/${a.type}/${a.id}`}
+                              className="flex items-center justify-between gap-2"
+                            >
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-medium text-violet-900 hover:text-violet-700">
+                                  {a.title}
+                                </p>
+                                <p className="mt-0.5 truncate text-xs text-violet-800/80">
+                                  {typeLabel} · {formatDate(a.date)}
+                                  {tagPreview && ` · ${tagPreview}`}
+                                </p>
+                              </div>
+                              <ChevronRight size={14} className="shrink-0 text-violet-700" />
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   </div>
                 );
               })()}
