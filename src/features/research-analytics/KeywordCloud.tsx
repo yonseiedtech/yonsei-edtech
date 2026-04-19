@@ -52,6 +52,23 @@ function rectsOverlap(
   );
 }
 
+/** 텍스트 추정 너비 (한글 = 거의 fontSize 폭, ASCII = 약 0.6×). */
+function estimateTextWidth(word: string, fontSize: number): number {
+  let total = 0;
+  for (const ch of word) {
+    const code = ch.charCodeAt(0);
+    // CJK Unified, Hangul Syllables, Hangul Jamo, Halfwidth/Fullwidth
+    const isWide =
+      (code >= 0x1100 && code <= 0x11ff) ||
+      (code >= 0x3000 && code <= 0x9fff) ||
+      (code >= 0xac00 && code <= 0xd7af) ||
+      (code >= 0xf900 && code <= 0xfaff) ||
+      (code >= 0xff00 && code <= 0xffef);
+    total += isWide ? fontSize * 1.0 : fontSize * 0.6;
+  }
+  return total;
+}
+
 /** Spiral packing word cloud (deterministic, no JS lib needed). */
 function packWords(
   items: CloudItem[],
@@ -70,28 +87,32 @@ function packWords(
   const placed: { x: number; y: number; w: number; h: number }[] = [];
   const result: PlacedWord[] = [];
 
+  // 폰트 크기에 비례한 패딩 — 큰 단어 주변에 더 넓은 여백
+  const padFor = (fontSize: number) => Math.max(8, Math.round(fontSize * 0.35));
+
   items.forEach((item) => {
     const norm = (item.count - minCount) / span;
     const fontSize = Math.round(minFont + norm * (maxFont - minFont));
-    const charW = fontSize * 0.95;
-    const w = item.word.length * charW * 0.55 + 6;
-    const h = fontSize * 1.05;
+    // 실제 렌더 폭에 맞춘 추정 + 좌우 여백
+    const w = estimateTextWidth(item.word, fontSize) + 12;
+    // 한글은 디센더가 거의 없지만 안전 마진
+    const h = fontSize * 1.3;
+    const pad = padFor(fontSize);
 
     let placedSuccess = false;
     let x = cx;
     let y = cy;
 
-    const stepAngle = 0.35;
-    const stepRadius = 1.2;
-    for (let t = 0; t < 8000; t++) {
+    const stepAngle = 0.32;
+    for (let t = 0; t < 12000; t++) {
       const angle = t * stepAngle;
-      const radius = t * stepRadius * 0.06;
+      const radius = Math.sqrt(t) * 2.4;
       x = cx + radius * Math.cos(angle) - w / 2;
       y = cy + radius * Math.sin(angle) - h / 2;
-      if (x < 0 || y < 0 || x + w > width || y + h > height) continue;
+      if (x < 4 || y < 4 || x + w > width - 4 || y + h > height - 4) continue;
       let collide = false;
       for (const p of placed) {
-        if (rectsOverlap(x, y, w, h, p.x, p.y, p.w, p.h, 5)) {
+        if (rectsOverlap(x, y, w, h, p.x, p.y, p.w, p.h, pad)) {
           collide = true;
           break;
         }
@@ -122,16 +143,17 @@ const TOPN_OPTIONS = [10, 30, 50, 80] as const;
 type TopN = (typeof TOPN_OPTIONS)[number];
 
 // 항목 수에 따라 폰트/캔버스 동적 조절 — 많을수록 작게, 적을수록 크게
+// 패딩이 fontSize * 0.35 + 한글 폭 1.0× 반영하여 캔버스 여유 확보
 function dimensionsFor(n: number): {
   width: number;
   height: number;
   maxFont: number;
   minFont: number;
 } {
-  if (n <= 10) return { width: 820, height: 320, maxFont: 60, minFont: 24 };
-  if (n <= 30) return { width: 860, height: 420, maxFont: 50, minFont: 18 };
-  if (n <= 50) return { width: 880, height: 500, maxFont: 42, minFont: 14 };
-  return { width: 900, height: 580, maxFont: 36, minFont: 12 };
+  if (n <= 10) return { width: 900, height: 380, maxFont: 52, minFont: 22 };
+  if (n <= 30) return { width: 960, height: 520, maxFont: 42, minFont: 16 };
+  if (n <= 50) return { width: 1000, height: 640, maxFont: 36, minFont: 13 };
+  return { width: 1040, height: 760, maxFont: 30, minFont: 11 };
 }
 
 export default function KeywordCloud({
@@ -277,7 +299,7 @@ export default function KeywordCloud({
       <div className="overflow-x-auto">
         <svg
           viewBox={`0 0 ${dims.width} ${dims.height}`}
-          className="mx-auto block w-full max-w-[920px]"
+          className="mx-auto block w-full max-w-[1040px]"
           role="img"
           aria-label="연구 키워드 워드 클라우드"
         >
