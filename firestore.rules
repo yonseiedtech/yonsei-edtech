@@ -14,10 +14,11 @@ service cloud.firestore {
     }
     function isStaffOrAbove() {
       let role = getUserRole();
-      return role in ['staff', 'president', 'admin'];
+      return role in ['staff', 'president', 'admin', 'sysadmin'];
     }
     function isAdmin() {
-      return getUserRole() == 'admin';
+      let role = getUserRole();
+      return role == 'admin' || role == 'sysadmin';
     }
     // Checks that sensitive fields (role, approved) are not modified
     function noSensitiveFieldChange() {
@@ -113,7 +114,7 @@ service cloud.firestore {
     match /site_settings/{settingId} {
       allow read: if true;
       allow write: if isAuthenticated()
-        && getUserRole() in ['president', 'admin'];
+        && getUserRole() in ['president', 'admin', 'sysadmin'];
     }
 
     // ─── Seminars ───
@@ -407,7 +408,7 @@ service cloud.firestore {
     // ─── Audit Logs (감사 로그) ───
     match /audit_logs/{docId} {
       allow read: if isAuthenticated()
-        && getUserRole() in ['president', 'admin'];
+        && getUserRole() in ['president', 'admin', 'sysadmin'];
       allow create: if isAuthenticated() && isStaffOrAbove();
     }
 

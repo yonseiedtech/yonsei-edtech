@@ -99,6 +99,11 @@ export async function GET(req: NextRequest) {
 
         // 연사 감사 이메일 발송
         await sendSpeakerThankYouEmail(db, seminar, docSnap.id);
+
+        // 체크인 참석자 수료증 자동 발급 (autoIssueCertificates !== false 일 때)
+        if (seminar.autoIssueCertificates !== false) {
+          await autoIssueCompletionCertificates(db, seminar, docSnap.id);
+        }
         workflowActions++;
       }
     }
@@ -324,4 +329,132 @@ async function sendSpeakerThankYouEmail(
       sentBy: "system",
     });
   } catch (e) { console.error("[email] speaker thank-you error:", e); }
+}
+
+/**
+ * 세미나 completed 전환 시 체크인(출석) 참석자에게 수료증 자동 발급.
+ *
+ * - 세미나 전용. 학술활동(study/project/external)은 별도 발급 시스템 필요
+ *   (이수증/참석 확인서: 활동 기간·역할·주관기관·일정 등 필드 상이) → 별도 사이클에서 처리.
+ * - 중복 발급 방지: 동일 seminarId × completion 타입 cert 1건이라도 있으면 skip.
+ * - 학번 우선 매칭 → 이메일 매칭 fallback (batch route와 동일 정책).
+ * - 발급 후 알림 1건 + email_logs 기록.
+ */
+async function autoIssueCompletionCertificates(
+  db: FirebaseFirestore.Firestore,
+  seminar: FirebaseFirestore.DocumentData,
+  seminarId: string,
+) {
+  // 중복 발급 방지: 이미 completion 타입 1건이라도 있으면 skip (수동 발급 후 cron 재실행 케이스 보호)
+  const existingCertSnap = await db
+    .collection("certificates")
+    .where("seminarId", "==", seminarId)
+    .where("type", "==", "completion")
+    .limit(1)
+    .get();
+  if (!existingCertSnap.empty) return;
+
+  // email_logs 중복 방지 (같은 사이클 재실행 가드)
+  const logSnap = await db
+    .collection("email_logs")
+    .where("type", "==", "auto_certificate")
+    .where("targetId", "==", seminarId)
+    .limit(1)
+    .get();
+  if (!logSnap.empty) return;
+
+  // 체크인 참석자 조회
+  const attendeesSnap = await db
+    .collection("seminar_attendees")
+    .where("seminarId", "==", seminarId)
+    .where("checkedIn", "==", true)
+    .get();
+  if (attendeesSnap.empty) return;
+
+  const seminarTitle = (seminar.title as string) ?? "";
+  const year = new Date().getFullYear().toString().slice(-2);
+
+  // 기존 certificateNo 최대값 (YY-NNN)
+  const lastCertSnap = await db
+    .collection("certificates")
+    .orderBy("certificateNo", "desc")
+    .limit(1)
+    .get();
+  let lastSeq = 0;
+  if (!lastCertSnap.empty) {
+    const no = lastCertSnap.docs[0].data().certificateNo as string | undefined;
+    if (no && no.startsWith(year + "-")) {
+      lastSeq = parseInt(no.slice(3), 10) || 0;
+    }
+  }
+
+  const now = new Date().toISOString();
+  let createdCount = 0;
+
+  for (const attDoc of attendeesSnap.docs) {
+    const att = attDoc.data();
+    const userName = (att.userName as string) ?? "";
+    const userId = (att.userId as string) ?? null;
+    const studentId = (att.studentId as string) ?? null;
+    const email = (att.email as string) ?? null;
+    if (!userName) continue;
+
+    try {
+      lastSeq += 1;
+      const certificateNo = `${year}-${String(lastSeq).padStart(3, "0")}`;
+
+      // 학번 → 이메일 순 매칭 (cron 환경에서 attendee.userId 비어있을 수 있음)
+      let recipientUserId: string | null = userId;
+      if (!recipientUserId && studentId) {
+        const u = await db.collection("users").where("studentId", "==", studentId).limit(1).get();
+        if (!u.empty) recipientUserId = u.docs[0].id;
+      }
+      if (!recipientUserId && email) {
+        const u = await db.collection("users").where("email", "==", email).limit(1).get();
+        if (!u.empty) recipientUserId = u.docs[0].id;
+      }
+
+      await db.collection("certificates").add({
+        seminarId,
+        seminarTitle,
+        recipientName: userName,
+        recipientEmail: email,
+        recipientStudentId: studentId,
+        recipientUserId,
+        type: "completion",
+        certificateNo,
+        issuedAt: now,
+        issuedBy: "system",
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      if (recipientUserId) {
+        await db.collection("notifications").add({
+          userId: recipientUserId,
+          type: "certificate",
+          title: "수료증이 발급되었습니다",
+          message: `"${seminarTitle}" 수료증이 자동 발급되었습니다.`,
+          link: "/mypage",
+          read: false,
+          createdAt: now,
+        });
+      }
+
+      createdCount++;
+    } catch (e) {
+      console.error("[cron/auto-cert] issue error:", userName, e);
+      lastSeq -= 1; // rollback seq
+    }
+  }
+
+  if (createdCount > 0) {
+    await db.collection("email_logs").add({
+      type: "auto_certificate",
+      targetId: seminarId,
+      recipientCount: createdCount,
+      sentAt: now,
+      sentBy: "system",
+    });
+  }
 }

@@ -318,8 +318,13 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                         onClick={async () => {
                           if (!isStaff) return;
                           const next = p.status === "completed" ? "planned" : p.status === "planned" ? "in_progress" : "completed";
-                          await activityProgressApi.update(p.id, { status: next });
-                          queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
+                          try {
+                            await activityProgressApi.update(p.id, { status: next });
+                            queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
+                          } catch (e) {
+                            console.error("[activity-progress/update]", e);
+                            toast.error(e instanceof Error ? `상태 변경 실패: ${e.message}` : "상태 변경에 실패했습니다.");
+                          }
                         }}
                         className={cn("mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors", p.status === "completed" ? "border-green-500 bg-green-500 text-white" : p.status === "in_progress" ? "border-amber-400 bg-amber-50" : "border-muted-foreground/30")}
                         disabled={!isStaff}
@@ -337,9 +342,14 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                       </div>
                       {isStaff && (
                         <button onClick={async () => {
-                          await activityProgressApi.delete(p.id);
-                          queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
-                          toast.success("삭제되었습니다.");
+                          try {
+                            await activityProgressApi.delete(p.id);
+                            queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
+                            toast.success("삭제되었습니다.");
+                          } catch (e) {
+                            console.error("[activity-progress/delete]", e);
+                            toast.error(e instanceof Error ? `삭제 실패: ${e.message}` : "삭제에 실패했습니다.");
+                          }
                         }} className="shrink-0 rounded p-1 text-muted-foreground hover:text-red-500"><Trash2 size={14} /></button>
                       )}
                     </div>
@@ -355,17 +365,22 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                     <Input value={progressTitle} onChange={(e) => setProgressTitle(e.target.value)} placeholder="활동 내용 (예: 논문 리뷰 #1)" className="flex-1" />
                     <Input type="date" value={progressDate} onChange={(e) => setProgressDate(e.target.value)} className="w-40" />
                     <Button size="sm" disabled={!progressTitle.trim()} onClick={async () => {
-                      await activityProgressApi.create({
-                        activityId,
-                        week: progressList.length + 1,
-                        date: progressDate || new Date().toISOString().split("T")[0],
-                        title: progressTitle.trim(),
-                        status: "planned",
-                      });
-                      queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
-                      setProgressTitle("");
-                      setProgressDate("");
-                      toast.success("추가되었습니다.");
+                      try {
+                        await activityProgressApi.create({
+                          activityId,
+                          week: progressList.length + 1,
+                          date: progressDate || new Date().toISOString().split("T")[0],
+                          title: progressTitle.trim(),
+                          status: "planned",
+                        });
+                        queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
+                        setProgressTitle("");
+                        setProgressDate("");
+                        toast.success("추가되었습니다.");
+                      } catch (e) {
+                        console.error("[activity-progress/create]", e);
+                        toast.error(e instanceof Error ? `추가 실패: ${e.message}` : "추가에 실패했습니다.");
+                      }
                     }}><Plus size={14} className="mr-1" />추가</Button>
                   </div>
                 </div>

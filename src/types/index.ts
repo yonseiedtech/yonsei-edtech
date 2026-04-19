@@ -666,6 +666,8 @@ export interface Seminar {
   cancelReason?: string;
   /** Track 7: 연사로 지정된 회원 id (호스트 대시보드 접근 권한) */
   hostUserIds?: string[];
+  /** 세미나 종료(completed 전환) 시 체크인 참석자 대상 수료증 자동 발급 (기본 true). false 시 cron이 발급 단계 스킵. */
+  autoIssueCertificates?: boolean;
   status: "draft" | "upcoming" | "ongoing" | "completed" | "cancelled";
   createdBy: string;
   createdAt: string;

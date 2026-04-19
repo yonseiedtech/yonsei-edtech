@@ -41,6 +41,7 @@ export default function SeminarForm() {
   const [speakerType, setSpeakerType] = useState<SpeakerType>("member");
   const [showPreview, setShowPreview] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [autoIssueCertificates, setAutoIssueCertificates] = useState(true);
   const {
     register,
     handleSubmit,
@@ -79,6 +80,7 @@ export default function SeminarForm() {
     if (data.speakerPhotoUrl) seminarData.speakerPhotoUrl = data.speakerPhotoUrl;
     if (data.maxAttendees) seminarData.maxAttendees = Number(data.maxAttendees);
     if (data.registrationUrl) seminarData.registrationUrl = data.registrationUrl;
+    seminarData.autoIssueCertificates = autoIssueCertificates;
     // 타임라인 자동 적용
     if (status === "upcoming") {
       seminarData.timeline = createTimeline(isOnline);
@@ -429,6 +431,23 @@ export default function SeminarForm() {
               {...register("registrationUrl")}
               placeholder="https://forms.gle/..."
             />
+          </div>
+
+          <div className="rounded-lg border border-muted bg-muted/20 p-3">
+            <label className="flex cursor-pointer items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={autoIssueCertificates}
+                onChange={(e) => setAutoIssueCertificates(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300"
+              />
+              <div>
+                <p className="font-medium">세미나 종료 시 수료증 자동 발급</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  체크인 출석자에게 수료증을 자동 발급합니다. 해제하면 운영자가 직접 발급해야 합니다.
+                </p>
+              </div>
+            </label>
           </div>
 
           <div className="flex justify-end gap-2">
