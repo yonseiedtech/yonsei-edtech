@@ -19,6 +19,15 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
+          // 임퍼소네이션 여부 확인 (관리자 → 회원 전환 중인 세션은 lastLoginAt/guest linker 스킵)
+          let isImpersonating = false;
+          try {
+            const tokenResult = await firebaseUser.getIdTokenResult();
+            isImpersonating = !!tokenResult.claims.impersonatedBy;
+          } catch {
+            // ignore — 기본값 false
+          }
+
           let profile: Record<string, unknown> | undefined;
           try {
             if (firebaseUser.email) {
@@ -30,12 +39,12 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
           }
           const merged = mergeToUser(firebaseUser, profile);
           setUser(merged);
-          // 백그라운드: 마지막 접속 시각 갱신
-          if (merged?.id) {
+          // 백그라운드: 마지막 접속 시각 갱신 (임퍼소네이션 세션은 제외)
+          if (merged?.id && !isImpersonating) {
             profilesApi.update(merged.id, { lastLoginAt: new Date().toISOString() }).catch(() => {});
           }
-          // 백그라운드: 게스트 레코드 자동 연결 (참석자·신청자·수료증)
-          if (merged?.id) {
+          // 백그라운드: 게스트 레코드 자동 연결 (임퍼소네이션 세션은 제외)
+          if (merged?.id && !isImpersonating) {
             runAllGuestLinkers({
               userId: merged.id,
               userName: merged.name,

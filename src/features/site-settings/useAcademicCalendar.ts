@@ -36,7 +36,7 @@ export function useAcademicCalendar() {
         value: JSON.parse(row.value as string) as AcademicCalendarData,
       };
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 30, // 30초 — 운영진 저장 직후 대시보드 빠른 반영
   });
 
   return {
@@ -116,6 +116,7 @@ export function pickActiveEntry(
   entries: AcademicCalendarEntry[],
   now: Date = new Date(),
 ): AcademicCalendarEntry | null {
+  if (entries.length === 0) return null;
   const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   // 우선순위: 현재 시점이 semesterStart~breakEnd 사이인 학기
   const ranged = entries
@@ -143,7 +144,15 @@ export function pickActiveEntry(
   const past = ranged
     .filter((x) => x.end < today)
     .sort((a, b) => b.end.getTime() - a.end.getTime())[0];
-  return past ? past.e : null;
+  if (past) return past.e;
+
+  // 모든 entries가 날짜 파싱 실패 (semesterStart/End 미입력) — year/semester 기준
+  // 가장 최근(또는 가장 가까운) 학기를 fallback 으로 반환
+  const sorted = [...entries].sort((a, b) => {
+    if (a.year !== b.year) return b.year - a.year;
+    return a.semester === "second" ? -1 : 1;
+  });
+  return sorted[0] ?? null;
 }
 
 export function computeProgress(

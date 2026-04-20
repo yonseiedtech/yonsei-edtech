@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo, Suspense } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import MemberCard from "@/components/members/MemberCard";
+import OrgChart from "@/features/member/OrgChart";
 import { useMembers } from "@/features/member/useMembers";
 import { useProfessor } from "@/features/site-settings/useSiteContent";
 import { Mail, Globe, BookOpen, Users, Search } from "lucide-react";
@@ -17,14 +18,23 @@ import type { User } from "@/types";
 const ROLE_TABS = [
   { key: "professor", label: "주임교수" },
   { key: "staff", label: "운영진", roles: ["president", "staff"] },
-  { key: "student", label: "재학생 회원", roles: ["member"] },
+  { key: "student", label: "재학생 회원", roles: ["member", "president", "staff"] },
   { key: "alumni", label: "졸업생 회원", roles: ["alumni"] },
 ] as const;
 
 function filterByTab(members: User[], tabKey: string): User[] {
   const tab = ROLE_TABS.find((t) => t.key === tabKey);
   if (!tab || !("roles" in tab)) return [];
-  return members.filter((m) => (tab.roles as readonly string[]).includes(m.role));
+  const roles = tab.roles as readonly string[];
+  return members.filter((m) => {
+    if (!roles.includes(m.role)) return false;
+    // 재학생 탭: 운영진 중 졸업생 제외 (graduated 또는 alumni 식별)
+    if (tabKey === "student") {
+      const status = m.enrollmentStatus ?? "enrolled";
+      if (status === "graduated") return false;
+    }
+    return true;
+  });
 }
 
 function ProfessorView() {
@@ -166,6 +176,11 @@ function MembersContent() {
             <LoadingSpinner />
           ) : (
             <>
+              {activeTab === "staff" && (
+                <div className="mb-8">
+                  <OrgChart />
+                </div>
+              )}
               {showFilters && (
                 <div className="mb-6 flex flex-col gap-3 rounded-xl border bg-white p-3 sm:flex-row sm:items-center">
                   <div className="relative flex-1">

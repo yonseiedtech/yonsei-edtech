@@ -16,18 +16,20 @@ import ResearchReportEditor from "@/features/research/ResearchReportEditor";
 import ResearchProposalEditor from "@/features/research/ResearchProposalEditor";
 import StudyTimerStats from "@/features/research/study-timer/StudyTimerStats";
 import ManualSessionDialog from "@/features/research/study-timer/ManualSessionDialog";
-import { useStudySessions } from "@/features/research/study-timer/useStudySessions";
+import EditSessionDialog from "@/features/research/study-timer/EditSessionDialog";
+import { useStudySessions, useDeleteSession } from "@/features/research/study-timer/useStudySessions";
 import { useResearchPapers } from "@/features/research/useResearchPapers";
 import { useWritingPaper } from "@/features/research/useWritingPaper";
 import { useWritingPaperHistory } from "@/features/research/useWritingPaperHistory";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import type { User } from "@/types";
+import type { User, StudySession } from "@/types";
 import {
   BookOpen, FileText, BookOpenCheck, FileBarChart2,
   X, CalendarRange, Printer, FileEdit, ClipboardList,
-  Clock, Plus, Pencil,
+  Clock, Plus, Pencil, Trash2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { formatPeriodLabel } from "@/lib/research-period";
 import {
@@ -89,9 +91,23 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
 
   // 수동 세션 추가 다이얼로그
   const [manualOpen, setManualOpen] = useState(false);
+  // 세션 수정 다이얼로그
+  const [editSession, setEditSession] = useState<StudySession | null>(null);
 
   // 학습 세션 (연구 타이머) — 본인일 때만 의미 있음 (hook이 authStore 사용)
   const { sessions: studySessions } = useStudySessions();
+  const { mutateAsync: deleteSession } = useDeleteSession();
+
+  async function handleDeleteSession(s: StudySession) {
+    const label = s.targetTitle || "(제목 없음)";
+    if (!window.confirm(`"${label}" 세션을 삭제하시겠습니까? 되돌릴 수 없습니다.`)) return;
+    try {
+      await deleteSession(s.id);
+      toast.success("세션이 삭제되었습니다.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "삭제에 실패했습니다");
+    }
+  }
 
   const { data: fetchedUser } = useQuery({
     queryKey: ["mypage-user", userId],
@@ -486,9 +502,10 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
                         const start = s.startTime?.slice(11, 16) ?? "";
                         const end = s.endTime?.slice(11, 16) ?? "";
                         const minutes = s.durationMinutes ?? 0;
+                        const completed = !!s.endTime;
                         return (
-                          <li key={s.id} className="flex items-center justify-between py-2">
-                            <div className="min-w-0">
+                          <li key={s.id} className="flex items-center justify-between gap-2 py-2">
+                            <div className="min-w-0 flex-1">
                               <p className="text-sm truncate">
                                 <span className={`mr-2 inline-block rounded px-1.5 py-0.5 text-[10px] font-medium ${
                                   s.type === "writing"
@@ -506,11 +523,30 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
                                 )}
                               </p>
                             </div>
-                            <span className="text-xs font-medium text-muted-foreground shrink-0 ml-3">
+                            <span className="shrink-0 text-xs font-medium text-muted-foreground">
                               {minutes < 60
                                 ? `${Math.round(minutes)}분`
                                 : `${(minutes / 60).toFixed(1)}h`}
                             </span>
+                            <div className="flex shrink-0 items-center gap-0.5">
+                              <button
+                                type="button"
+                                onClick={() => setEditSession(s)}
+                                disabled={!completed}
+                                title={completed ? "세션 수정" : "진행 중인 세션은 수정할 수 없습니다"}
+                                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
+                              >
+                                <Pencil size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteSession(s)}
+                                title="세션 삭제"
+                                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-rose-50 hover:text-rose-600"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
                           </li>
                         );
                       })}
@@ -532,10 +568,17 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
         </div>
 
         {isSelf && (
-          <ManualSessionDialog
-            open={manualOpen}
-            onClose={() => setManualOpen(false)}
-          />
+          <>
+            <ManualSessionDialog
+              open={manualOpen}
+              onClose={() => setManualOpen(false)}
+            />
+            <EditSessionDialog
+              open={!!editSession}
+              session={editSession}
+              onClose={() => setEditSession(null)}
+            />
+          </>
         )}
       </div>
     </div>

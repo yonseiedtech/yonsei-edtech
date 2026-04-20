@@ -71,6 +71,18 @@ export default function AcademicCalendarConsolePage() {
   }
 
   async function handleSave() {
+    // 필수 필드 검증 — 개강일/종강일 누락 시 대시보드 진행도 계산 불가
+    for (let i = 0; i < entries.length; i++) {
+      const e = entries[i];
+      const missing: string[] = [];
+      if (!e.semesterStart) missing.push("개강일");
+      if (!e.semesterEnd) missing.push("종강일");
+      if (missing.length > 0) {
+        const label = `${e.year}년 ${e.semester === "first" ? "1학기" : "2학기"}`;
+        toast.error(`${label}: 필수 항목 누락 (${missing.join(", ")})`);
+        return;
+      }
+    }
     // 정렬: year, semester (first → second)
     const sorted = [...entries].sort((a, b) => {
       if (a.year !== b.year) return a.year - b.year;

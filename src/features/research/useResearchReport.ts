@@ -46,6 +46,24 @@ export function useEnsureResearchReport() {
         priorResearchAnalysis: "",
         priorResearchPaperIds: [],
         priorResearchGroups: [],
+        // v2 신규
+        fieldAudience: "",
+        fieldFormat: "",
+        fieldSubject: "",
+        problemPhenomena: [],
+        problemEvidences: [],
+        problemCauses: [],
+        problemImpact: "",
+        problemImportance: "",
+        scopeAudience: "",
+        scopeContext: "",
+        scopeExclusion: "",
+        problemMeasurements: [],
+        // v2 — 2. 교육공학 이론 신규
+        theoryCards: [],
+        theoryRelationProblem: "",
+        theoryRelationRoles: "",
+        theoryRelationIntegration: "",
       });
       return created;
     },

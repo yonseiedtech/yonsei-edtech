@@ -59,7 +59,7 @@ export default function AcademicCalendarProgress() {
   const entry = pickActiveEntry(value.entries);
   const progress = entry ? computeProgress(entry) : null;
 
-  if (!entry || !progress) {
+  if (!entry) {
     return (
       <div className="rounded-2xl border bg-white p-6">
         <div className="flex items-center justify-between">
@@ -80,6 +80,34 @@ export default function AcademicCalendarProgress() {
           {canEdit
             ? "학사일정이 등록되지 않았습니다. 운영콘솔에서 입력해 주세요."
             : "학사일정이 아직 등록되지 않았습니다."}
+        </p>
+      </div>
+    );
+  }
+
+  // entry는 있지만 진행도 계산 불가 (semesterStart/End 누락)
+  if (!progress) {
+    const semesterLabel = `${entry.year}년 ${entry.semester === "first" ? "1학기" : "2학기"}`;
+    return (
+      <div className="rounded-2xl border bg-white p-6">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <CalendarDays size={18} className="text-primary" />
+            <h2 className="font-bold">학사일정 — {semesterLabel}</h2>
+          </div>
+          {canEdit && (
+            <Link
+              href="/console/academic-calendar"
+              className="flex items-center gap-1 rounded-md border px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+            >
+              <Settings size={12} /> 편집
+            </Link>
+          )}
+        </div>
+        <p className="mt-4 rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-900">
+          {canEdit
+            ? "개강일·종강일이 비어 있어 진행도를 계산할 수 없습니다. 학사일정을 다시 확인해 주세요."
+            : "개강일·종강일 정보가 등록되지 않아 진행도를 계산할 수 없습니다."}
         </p>
       </div>
     );

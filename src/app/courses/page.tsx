@@ -990,7 +990,7 @@ function TaReportSection({
 
   const isLoading = loadingEnrollments || loadingOfferings;
 
-  const courseGroups = useMemo(() => {
+  const { courseGroups, orphanEnrollments } = useMemo(() => {
     const enrollments = enrollmentsRes?.data ?? [];
     const offerings = offeringsRes?.data ?? [];
     const offeringMap = new Map<string, CourseOffering>();
@@ -1005,9 +1005,13 @@ function TaReportSection({
         tas: CourseEnrollment[];
       }
     >();
+    const orphans: CourseEnrollment[] = [];
     for (const e of enrollments) {
       const course = offeringMap.get(e.courseOfferingId);
-      if (!course) continue;
+      if (!course) {
+        orphans.push(e);
+        continue;
+      }
       let bucket = grouped.get(course.id);
       if (!bucket) {
         bucket = { course, students: [], auditors: [], tas: [] };
@@ -1017,20 +1021,24 @@ function TaReportSection({
       else if (e.role === "ta") bucket.tas.push(e);
       else bucket.students.push(e);
     }
-    return Array.from(grouped.values()).sort((a, b) => {
-      const ra = categoryRank(a.course.category);
-      const rb = categoryRank(b.course.category);
-      if (ra !== rb) return ra - rb;
-      return (a.course.courseName ?? "").localeCompare(b.course.courseName ?? "");
-    });
+    return {
+      courseGroups: Array.from(grouped.values()).sort((a, b) => {
+        const ra = categoryRank(a.course.category);
+        const rb = categoryRank(b.course.category);
+        if (ra !== rb) return ra - rb;
+        return (a.course.courseName ?? "").localeCompare(b.course.courseName ?? "");
+      }),
+      orphanEnrollments: orphans,
+    };
   }, [enrollmentsRes, offeringsRes]);
 
   if (isLoading) return <LoadingSpinner className="mt-12" />;
 
-  const totalEnrollments =
-    (enrollmentsRes?.data ?? []).length;
+  const totalEnrollments = (enrollmentsRes?.data ?? []).length;
   const totalStudents = courseGroups.reduce((acc, g) => acc + g.students.length, 0);
   const totalAuditors = courseGroups.reduce((acc, g) => acc + g.auditors.length, 0);
+  const totalTAs = courseGroups.reduce((acc, g) => acc + g.tas.length, 0);
+  const totalOrphans = orphanEnrollments.length;
 
   return (
     <div className="space-y-4">
@@ -1039,9 +1047,51 @@ function TaReportSection({
           <ShieldCheck size={14} /> 조교 리포트 — 운영진 전용
         </div>
         <p className="mt-1 text-[11px] text-blue-800/80">
-          {year}년 {SEMESTER_TERM_LABELS[term]} · 등록 {totalEnrollments}건 (수강 {totalStudents}, 청강 {totalAuditors})
+          {year}년 {SEMESTER_TERM_LABELS[term]} · 등록 {totalEnrollments}건
+          (수강 {totalStudents} · 청강 {totalAuditors} · TA {totalTAs}
+          {totalOrphans > 0 ? ` · 과목 매칭 실패 ${totalOrphans}` : ""})
         </p>
       </div>
+
+      {totalOrphans > 0 && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3">
+          <p className="text-xs font-semibold text-amber-900">
+            ⚠ 등록되었으나 과목 정보가 없는 수강생 {totalOrphans}명
+          </p>
+          <p className="mt-1 text-[11px] text-amber-900/80">
+            등록 시점에는 존재했으나 이후 과목이 삭제되었거나 학기/연도 정보가 다른 데이터입니다. 운영콘솔의 수강과목에서 정리해 주세요.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {orphanEnrollments.map((e) => (
+              <span
+                key={e.id}
+                className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-white pl-2 pr-0.5 py-0.5 text-[11px] text-amber-900"
+              >
+                <Link
+                  href={e.userId ? `/profile/${e.userId}` : "#"}
+                  className={e.userId ? "hover:underline" : "cursor-default"}
+                >
+                  {e.studentName}
+                  {e.role && e.role !== "student" && (
+                    <span className="ml-1 text-[10px] text-amber-900/70">
+                      · {ENROLLMENT_ROLE_LABELS[e.role]}
+                    </span>
+                  )}
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(e)}
+                  disabled={deletingId === e.id}
+                  aria-label="수강 등록 삭제"
+                  className="ml-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full text-amber-900/70 hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
+                >
+                  <Trash2 size={10} />
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {courseGroups.length === 0 ? (
         <div className="rounded-lg border bg-muted/20 p-8 text-center">

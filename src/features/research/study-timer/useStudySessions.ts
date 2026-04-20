@@ -110,6 +110,54 @@ export function useEndSession() {
   });
 }
 
+export function useUpdateSession() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      sessionId: string;
+      type?: StudySessionType;
+      targetTitle?: string;
+      date: string;
+      startTime: string;
+      endTime: string;
+      memo?: string;
+    }) => {
+      const startIso = `${data.date}T${data.startTime}:00`;
+      const endIso = `${data.date}T${data.endTime}:00`;
+      const startMs = new Date(startIso).getTime();
+      const endMs = new Date(endIso).getTime();
+      if (endMs <= startMs) throw new Error("종료 시각이 시작보다 빠릅니다");
+      const durationMinutes = Math.round(((endMs - startMs) / 60000) * 10) / 10;
+
+      await studySessionsApi.update(data.sessionId, {
+        ...(data.type && { type: data.type }),
+        ...(data.targetTitle !== undefined && { targetTitle: data.targetTitle }),
+        startTime: new Date(startIso).toISOString(),
+        endTime: new Date(endIso).toISOString(),
+        durationMinutes,
+        memo: data.memo ?? "",
+        updatedAt: new Date().toISOString(),
+      });
+
+      return { durationMinutes };
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["study-sessions"] }),
+  });
+}
+
+export function useDeleteSession() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (sessionId: string) => {
+      await studySessionsApi.delete(sessionId);
+      return { sessionId };
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["study-sessions"] }),
+  });
+}
+
 export function useCreateManualSession() {
   const qc = useQueryClient();
   const { user } = useAuthStore();

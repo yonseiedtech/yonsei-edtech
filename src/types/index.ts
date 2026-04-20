@@ -444,6 +444,54 @@ export interface ResearchGroup {
   insight: string;
 }
 
+export type EducationFormat = "" | "offline" | "online" | "blended";
+export type EvidenceType = "" | "observation" | "assessment" | "survey" | "prior_research" | "other";
+export type CauseType = "" | "learner" | "instructional_design" | "environment" | "other";
+
+export interface ProblemEvidenceItem {
+  id: string;
+  type: EvidenceType;
+  content: string;
+}
+
+export interface ProblemCauseItem {
+  id: string;
+  type: CauseType;
+  content: string;
+}
+
+export interface ProblemMeasurementItem {
+  id: string;
+  factor: string;
+  indicator: string;
+}
+
+// ── v2: 2. 교육공학 이론 — 구조화 입력 ──
+export interface TheoryConcept {
+  id: string;
+  /** 핵심 개념 이름 (예: "최근접발달영역(ZPD)") */
+  name: string;
+  /** 정의 / 의미 (1~2문장) */
+  definition: string;
+}
+
+/** 이론 카드: 사용자가 선택한 이론 1개에 대한 상세 입력. */
+export interface TheoryCard {
+  id: string;
+  /** 이론 이름 (예: "Vygotsky 사회문화이론") */
+  name: string;
+  /** 주요 학자 (선택) */
+  scholar?: string;
+  /** 발표 연도 (선택) */
+  year?: string;
+  /** 이 이론을 선택한 이유 (3~5줄) */
+  selectionReason?: string;
+  /** 핵심 개념 — 반복 입력 (3~5개 권장) */
+  concepts?: TheoryConcept[];
+  /** 이 이론이 1번 문제와 어떻게 연결되는지 */
+  problemLink?: string;
+}
+
 export interface ResearchReport {
   id: string;
   userId: string;
@@ -459,6 +507,40 @@ export interface ResearchReport {
   priorResearchAnalysis: string;
   priorResearchPaperIds: string[];
   priorResearchGroups: ResearchGroup[];
+  // ── v2: 1. 교육현장의 문제 정의 — 구조화 입력 (모두 옵셔널: 구버전 데이터 호환) ──
+  /** 1-1. 대상 학습자 (예: 중학교 2학년) */
+  fieldAudience?: string;
+  /** 1-1. 교육 형태 */
+  fieldFormat?: EducationFormat;
+  /** 1-1. 교과 또는 학습 주제 */
+  fieldSubject?: string;
+  /** 1-2. 현상 — 반복 입력 (구버전 problemPhenomenon이 있으면 첫 항목으로 마이그레이션) */
+  problemPhenomena?: string[];
+  /** 1-2. 근거 — 유형 + 내용 */
+  problemEvidences?: ProblemEvidenceItem[];
+  /** 1-2. 원인 — 유형 + 내용 */
+  problemCauses?: ProblemCauseItem[];
+  /** 1-3. 이 문제의 영향 */
+  problemImpact?: string;
+  /** 1-3. 왜 해결이 필요한가 */
+  problemImportance?: string;
+  /** 1-4. 주요 대상 */
+  scopeAudience?: string;
+  /** 1-4. 초점이 되는 상황/맥락 */
+  scopeContext?: string;
+  /** 1-4. 제외하거나 한정할 범위 */
+  scopeExclusion?: string;
+  /** 1-5. 측정 가능성 — 문제 요소 + 관찰 가능한 지표 */
+  problemMeasurements?: ProblemMeasurementItem[];
+  // ── v2: 2. 교육공학 이론 — 구조화 입력 (옵셔널, 구버전 호환) ──
+  /** 2. 적용 이론 카드 — 1~다수 */
+  theoryCards?: TheoryCard[];
+  /** 2-2. 이론들이 1번 문제와 어떻게 연결되는지 (이론 간 종합) */
+  theoryRelationProblem?: string;
+  /** 2-2. 각 이론의 역할 분담 (이론 A는 ~를, 이론 B는 ~를 설명) */
+  theoryRelationRoles?: string;
+  /** 2-2. 통합적 관점 — 이론들이 함께 만들어내는 의미 */
+  theoryRelationIntegration?: string;
   lastSavedAt?: string;
   createdAt: string;
   updatedAt: string;
