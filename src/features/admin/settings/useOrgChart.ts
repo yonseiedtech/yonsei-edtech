@@ -28,19 +28,21 @@ export interface OrgPosition {
 }
 
 /**
- * org-structure-v4 기본 구조
+ * org-structure-v5 기본 구조
  * - L0: 주임교수 (최상위)
  * - L1: 전공 교수 (학회장 위 진짜 중간 레이어)
- * - L2: 학회장·부학회장 (전공교수 직속) + 직속보조(전공대표·조교·졸업생대표) — advisor 직속, 사이드카로 분리 표시
+ * - L2: 전공대표·조교·학회장·졸업생대표 (전공교수 자식, 학회장과 같은 시각 레벨)
+ *       · 전공대표·조교·졸업생대표는 의미상 advisor 직속(isDirectAide) — 점선 카드 + 배지로 표시
+ * - L3: 부학회장 (학회장 직속)
  */
 export const DEFAULT_ORG_SEED: OrgPosition[] = [
   { id: "advisor",     title: "주임교수",         level: 0, order: 0,                              role: "advisor" },
   { id: "professor-1", title: "전공 교수 (공석)", level: 1, order: 0, parentId: "advisor",         role: "professor" },
-  { id: "president",   title: "학회장",           level: 2, order: 0, parentId: "professor-1",     role: "president" },
-  { id: "vp",          title: "부학회장",         level: 2, order: 1, parentId: "professor-1",     role: "vice_president" },
-  { id: "major-rep",   title: "재학생 전공대표",  level: 2, order: 2, parentId: "advisor",         role: "direct_aide", isDirectAide: true },
-  { id: "ta",          title: "조교",             level: 2, order: 3, parentId: "advisor",         role: "direct_aide", isDirectAide: true },
-  { id: "alumni-rep",  title: "졸업생 대표",      level: 2, order: 4, parentId: "advisor",         role: "direct_aide", isDirectAide: true },
+  { id: "major-rep",   title: "재학생 전공대표",  level: 2, order: 0, parentId: "professor-1",     role: "direct_aide", isDirectAide: true },
+  { id: "ta",          title: "조교",             level: 2, order: 1, parentId: "professor-1",     role: "direct_aide", isDirectAide: true },
+  { id: "president",   title: "학회장",           level: 2, order: 2, parentId: "professor-1",     role: "president" },
+  { id: "alumni-rep",  title: "졸업생 대표",      level: 2, order: 3, parentId: "professor-1",     role: "direct_aide", isDirectAide: true },
+  { id: "vp",          title: "부학회장",         level: 3, order: 0, parentId: "president",       role: "vice_president" },
 ];
 
 export interface OrgTreeNode extends OrgPosition {

@@ -63,25 +63,21 @@ function getRoleStyle(role?: OrgRole, hasUser?: boolean): RoleStyle {
   };
 }
 
-type SidecarKind = "independent" | "directAide";
-
-function OrgNode({ node, isRoot, sidecar }: { node: OrgTreeNode; isRoot?: boolean; sidecar?: SidecarKind }) {
-  // 자식 분리: 일반 트리 / 우측 독립 / 좌측 직속보조
-  const regulars = node.children.filter((c) => !c.isIndependent && !c.isDirectAide);
+function OrgNode({ node, isRoot, isIndependent }: { node: OrgTreeNode; isRoot?: boolean; isIndependent?: boolean }) {
+  // 자식 분리: 일반 트리 / 우측 독립
+  const regulars = node.children.filter((c) => !c.isIndependent);
   const independents = node.children.filter((c) => c.isIndependent);
-  const directAides = node.children.filter((c) => c.isDirectAide);
   const style = getRoleStyle(node.role, !!node.userName);
-  // 사이드카 시각 우선 (점선 테두리). 그다음 role 색상. role 없고 root일 때만 primary.
-  const cardClass =
-    sidecar === "independent"
-      ? "border-dashed border-amber-400/60 bg-amber-50/40"
-      : sidecar === "directAide"
-        ? "border-dashed border-teal-400/60 bg-teal-50/40"
-        : style.card || (isRoot ? "border-primary/30 bg-primary/5" : "");
+  // 사이드카 시각 우선 (점선 테두리). 그다음 직속보조(advisor 직속, 점선 teal). 그다음 role 색상. role 없고 root일 때만 primary.
+  const cardClass = isIndependent
+    ? "border-dashed border-amber-400/60 bg-amber-50/40"
+    : node.isDirectAide
+      ? "border-dashed border-teal-400/60 bg-teal-50/40"
+      : style.card || (isRoot ? "border-primary/30 bg-primary/5" : "");
 
   return (
     <div className="flex flex-col items-center">
-      {/* 부모 카드 + 사이드카 (좌측 직속보조 / 우측 독립). absolute로 부모의 수평 중심축 보존 */}
+      {/* 부모 카드 + 우측 독립 사이드카. absolute로 부모의 수평 중심축 보존 */}
       <div className="relative">
         <div className={`flex flex-col items-center rounded-xl border bg-white px-4 py-3 shadow-sm ${cardClass}`}>
           <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${style.avatar}`}>
@@ -92,24 +88,19 @@ function OrgNode({ node, isRoot, sidecar }: { node: OrgTreeNode; isRoot?: boolea
           {node.department && (
             <p className="text-[10px] text-muted-foreground/70">{node.department}</p>
           )}
-          {node.role && (
-            <span className={`mt-1.5 rounded-full px-1.5 py-0.5 text-[9px] font-medium ${style.badge}`}>
-              {ROLE_LABELS[node.role]}
-            </span>
-          )}
-        </div>
-
-        {/* 좌측 사이드카: 직속보조 (예: 전공대표·조교·졸업생대표 — 주임교수 직속) */}
-        {directAides.length > 0 && (
-          <div className="absolute right-full top-1/2 mr-8 flex -translate-y-1/2 flex-col gap-3">
-            {directAides.map((aide) => (
-              <div key={aide.id} className="flex items-center gap-2">
-                <OrgNode node={aide} sidecar="directAide" />
-                <div className="h-px w-6 border-t border-dashed border-teal-400/70" />
-              </div>
-            ))}
+          <div className="mt-1.5 flex flex-wrap items-center justify-center gap-1">
+            {node.role && (
+              <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-medium ${style.badge}`}>
+                {ROLE_LABELS[node.role]}
+              </span>
+            )}
+            {node.isDirectAide && (
+              <span className="rounded-full bg-teal-100 px-1.5 py-0.5 text-[9px] font-medium text-teal-700">
+                주임교수 직속
+              </span>
+            )}
           </div>
-        )}
+        </div>
 
         {/* 우측 사이드카: 독립기관 (예: 외부 자문위원) */}
         {independents.length > 0 && (
@@ -117,7 +108,7 @@ function OrgNode({ node, isRoot, sidecar }: { node: OrgTreeNode; isRoot?: boolea
             {independents.map((ind) => (
               <div key={ind.id} className="flex items-center gap-2">
                 <div className="h-px w-6 border-t border-dashed border-amber-400/70" />
-                <OrgNode node={ind} sidecar="independent" />
+                <OrgNode node={ind} isIndependent />
               </div>
             ))}
           </div>
