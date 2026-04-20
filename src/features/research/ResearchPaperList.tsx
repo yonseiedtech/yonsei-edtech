@@ -290,6 +290,36 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
         <AlumniThesisRecommendations interests={interests} />
       </section>
 
+      {/* 읽기 리스트: 북마크한 졸업생 학위논문 */}
+      <SavedAlumniTheses
+        userId={user.id}
+        readOnly={readOnly}
+        onImportToMyPapers={async (thesis) => {
+          const yearNum = thesis.awardedYearMonth
+            ? Number(thesis.awardedYearMonth.slice(0, 4))
+            : undefined;
+          const authors = thesis.authorName ? thesis.authorName : "";
+          try {
+            await createPaper.mutateAsync({
+              userId: user.id,
+              paperType: "thesis",
+              title: thesis.title,
+              authors,
+              year: yearNum,
+              venue: "연세대학교",
+              tags: thesis.keywords ?? [],
+              abstract: thesis.abstract ?? undefined,
+              url: thesis.dcollectionUrl ?? thesis.pdfUrl ?? undefined,
+              readStatus: "to_read",
+              sourceAlumniThesisId: thesis.id,
+            } as Record<string, unknown>);
+            toast.success("내 분석 노트에 추가했습니다.");
+          } catch (e) {
+            toast.error(e instanceof Error ? e.message : "추가에 실패했습니다.");
+          }
+        }}
+      />
+
       {/* 논문 리스트 헤더 */}
       <section>
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -800,5 +830,147 @@ function RecoCard({
         </button>
       </div>
     </li>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────
+ * 읽기 리스트: user.thesisReadingList 기반 북마크한 졸업생 학위논문
+ * ──────────────────────────────────────────────────────────── */
+
+function SavedAlumniTheses({
+  userId,
+  readOnly,
+  onImportToMyPapers,
+}: {
+  userId: string;
+  readOnly?: boolean;
+  onImportToMyPapers: (thesis: AlumniThesis) => Promise<void>;
+}) {
+  const { user: authUser } = useAuthStore();
+  const readingIds = useMemo(
+    () => authUser?.thesisReadingList ?? [],
+    [authUser?.thesisReadingList],
+  );
+  const isSelf = authUser?.id === userId;
+
+  const { data: theses = [], isLoading } = useQuery({
+    queryKey: ["alumni-theses-reading-list", readingIds.join(",")],
+    queryFn: async () => {
+      if (readingIds.length === 0) return [] as AlumniThesis[];
+      const results = await Promise.allSettled(
+        readingIds.map((id) => alumniThesesApi.get(id)),
+      );
+      return results
+        .filter((r) => r.status === "fulfilled")
+        .map((r) => (r as PromiseFulfilledResult<AlumniThesis>).value);
+    },
+    enabled: readingIds.length > 0,
+    staleTime: 60_000,
+  });
+
+  async function removeFromList(thesisId: string) {
+    if (!authUser) return;
+    const next = readingIds.filter((x) => x !== thesisId);
+    try {
+      await profilesApi.update(authUser.id, {
+        thesisReadingList: next.length > 0 ? next : undefined,
+      });
+      const state = useAuthStore.getState();
+      if (state.user && state.user.id === authUser.id) {
+        state.setUser({
+          ...state.user,
+          thesisReadingList: next.length > 0 ? next : undefined,
+        });
+      }
+      toast.success("읽기 리스트에서 제거했습니다.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "제거 실패");
+    }
+  }
+
+  if (!isSelf) return null;
+  if (readingIds.length === 0) return null;
+
+  return (
+    <section className="rounded-2xl border bg-white p-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <BookmarkCheck size={16} className="text-primary" />
+          <h3 className="text-sm font-semibold">
+            읽기 리스트 ({readingIds.length})
+          </h3>
+          <span className="text-[11px] text-muted-foreground">
+            추천에서 북마크한 졸업생 학위논문
+          </span>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <p className="mt-3 text-xs text-muted-foreground">불러오는 중…</p>
+      ) : theses.length === 0 ? (
+        <p className="mt-3 text-xs text-muted-foreground">
+          북마크한 논문 정보를 가져올 수 없습니다.
+        </p>
+      ) : (
+        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+          {theses.map((t) => (
+            <li
+              key={t.id}
+              className="group rounded-lg border bg-muted/20 p-3 transition-colors hover:border-primary/40 hover:bg-primary/5"
+            >
+              <Link href={`/alumni/thesis/${t.id}`} className="block">
+                <p className="line-clamp-2 text-xs font-medium leading-snug">
+                  {t.title}
+                </p>
+                <p className="mt-1 flex items-center gap-1.5 text-[10.5px] text-muted-foreground">
+                  <GraduationCap size={10} />
+                  <span className="font-medium text-foreground/70">
+                    {t.authorName}
+                  </span>
+                  <span>·</span>
+                  <span>{yearMonthLabel(t.awardedYearMonth)}</span>
+                </p>
+                {t.keywords && t.keywords.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {t.keywords.slice(0, 3).map((k) => (
+                      <span
+                        key={k}
+                        className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[9.5px] text-primary"
+                      >
+                        #{k}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </Link>
+              {!readOnly && (
+                <div className="mt-2 flex items-center gap-1.5">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 flex-1 px-2 text-[10.5px]"
+                    onClick={() => onImportToMyPapers(t)}
+                  >
+                    <Plus size={11} className="mr-1" />
+                    내 분석 노트에 추가
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 px-2 text-[10.5px] text-muted-foreground hover:text-destructive"
+                    onClick={() => removeFromList(t.id)}
+                    title="읽기 리스트에서 제거"
+                  >
+                    <X size={11} />
+                  </Button>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

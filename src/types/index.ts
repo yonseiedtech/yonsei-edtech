@@ -366,6 +366,12 @@ export interface ResearchPaper {
   /** 임시저장 시 마지막으로 머문 위저드 단계 (1~5). 재개 시 해당 단계로 점프. */
   lastEditStep?: number;
 
+  /** 졸업생 학위논문 DB 에서 임포트한 경우 — 원본 thesis id 추적 (선택) */
+  sourceAlumniThesisId?: string;
+
+  /** 초록 (AlumniThesis 임포트 또는 사용자 직접 입력) */
+  abstract?: string;
+
   createdAt: string;
   updatedAt: string;
 }
