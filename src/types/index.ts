@@ -1629,6 +1629,45 @@ export interface ComprehensiveExamRecord {
   updatedAt: string;
 }
 
+/* ────────────────────────────────────────────────────────────
+ * 강의 후기 (Course Review)
+ * ──────────────────────────────────────────────────────────── */
+export interface CourseReview {
+  id: string;
+  /** 후기 대상 강의 (CourseOffering.id) */
+  courseOfferingId: string;
+  /** denorm: 빠른 표시·필터용 */
+  courseName: string;
+  /** denorm */
+  professor?: string;
+  /** denorm: 카테고리별 필터링용 */
+  category?: CourseCategory;
+  authorId: string;
+  /** 익명일 경우 빈 문자열 또는 "익명" */
+  authorName: string;
+  anonymous: boolean;
+  /** 1~5 (전반 평점) */
+  rating: number;
+  /** 1~5 (과제량 — 적음 1, 많음 5) */
+  workload?: number;
+  /** 1~5 (난이도 — 쉬움 1, 어려움 5) */
+  difficulty?: number;
+  /** 후기 본문 */
+  comment: string;
+  /** 추천 여부 */
+  recommend: boolean;
+  /** 수강 연도 */
+  year: number;
+  /** 수강 학기 */
+  term: SemesterTerm;
+  /** 도움됨 누적 */
+  helpfulCount: number;
+  /** "도움됨" 표시한 사용자 ID 목록 (중복 방지) */
+  helpfulBy?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 /** 수업 진행 모드 */
 export type ClassSessionMode =
   | "in_person"   // 대면 수업 (기본)

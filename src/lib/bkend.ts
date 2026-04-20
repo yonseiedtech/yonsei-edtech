@@ -41,7 +41,7 @@ import type {
   ProfileLike, ProfileView, StudySession,
   ActivityParticipation, Award, ExternalActivity, ContentCreation,
   AlumniThesis, ThesisReference, ThesisClaim,
-  CourseOffering, CourseEnrollment, ClassSession, SemesterTerm, ComprehensiveExamRecord,
+  CourseOffering, CourseEnrollment, ClassSession, SemesterTerm, ComprehensiveExamRecord, CourseReview,
   GuideTrack, GuideItem, GuideProgress,
   HostRetrospective, HostActivityType,
   SitePopup,
@@ -938,6 +938,43 @@ export const comprehensiveExamsApi = {
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<ComprehensiveExamRecord>("comprehensive_exam_records", id, data),
   delete: (id: string) => dataApi.delete("comprehensive_exam_records", id),
+};
+
+// 강의 후기 (회원 self-input)
+export const courseReviewsApi = {
+  list: (params?: QueryParams) =>
+    dataApi.list<CourseReview>("course_reviews", {
+      sort: "createdAt:desc",
+      limit: 1000,
+      ...params,
+    }),
+  listByCourse: (courseOfferingId: string) =>
+    dataApi.list<CourseReview>("course_reviews", {
+      "filter[courseOfferingId]": courseOfferingId,
+      sort: "createdAt:desc",
+      limit: 200,
+    }),
+  listByCourses: (courseOfferingIds: string[]) => {
+    if (courseOfferingIds.length === 0) {
+      return Promise.resolve({ data: [] as CourseReview[], total: 0 });
+    }
+    return dataApi.list<CourseReview>("course_reviews", {
+      "filter[courseOfferingId][in]": courseOfferingIds.join(","),
+      sort: "createdAt:desc",
+      limit: 1000,
+    });
+  },
+  listByAuthor: (authorId: string) =>
+    dataApi.list<CourseReview>("course_reviews", {
+      "filter[authorId]": authorId,
+      sort: "createdAt:desc",
+      limit: 100,
+    }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<CourseReview>("course_reviews", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<CourseReview>("course_reviews", id, data),
+  delete: (id: string) => dataApi.delete("course_reviews", id),
 };
 
 // 수업 진행 스케쥴 (날짜별 운영방식 기록)

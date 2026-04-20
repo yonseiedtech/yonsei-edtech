@@ -52,6 +52,7 @@ import {
   type SemesterTerm,
 } from "@/types";
 import ProfileCourses from "@/components/profile/ProfileCourses";
+import CourseReviewBlock from "@/features/courses/CourseReviewBlock";
 
 // 전기/후기만 운영
 const TERMS: SemesterTerm[] = ["spring", "fall"];
@@ -611,8 +612,8 @@ function ElectiveSection({
   }
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3 text-[11px] text-amber-800">
-        💡 강의 선택에 도움이 될 후기·팁을 비고/메모 칸에 남겨주세요. 정식 강의평 시스템은 곧 도입 예정입니다.
+      <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-3 text-[11px] text-emerald-800">
+        💬 수강 경험을 다른 학우와 공유해주세요. 익명으로도 작성 가능합니다.
       </div>
       {groups.map(([cat, list]) => (
         <section key={cat}>
@@ -657,6 +658,14 @@ function ElectiveSection({
                     </a>
                   )}
                 </div>
+                <CourseReviewBlock
+                  courseOfferingId={r.id}
+                  courseName={r.courseName}
+                  professor={r.professor}
+                  category={r.category}
+                  defaultYear={r.year}
+                  defaultTerm={r.term}
+                />
               </li>
             ))}
           </ul>

@@ -17,6 +17,8 @@ import MiniCalendar from "@/features/dashboard/MiniCalendar";
 import ActivityFeed from "@/features/dashboard/ActivityFeed";
 import AcademicCalendarProgress from "@/features/dashboard/AcademicCalendarProgress";
 import TodayClassesWidget from "@/features/dashboard/TodayClassesWidget";
+import MyAcademicActivitiesWidget from "@/features/dashboard/MyAcademicActivitiesWidget";
+import ComprehensiveExamCountdown from "@/features/dashboard/ComprehensiveExamCountdown";
 import PageHeader from "@/components/ui/page-header";
 import {
   LayoutDashboard,
@@ -248,6 +250,12 @@ function DashboardContent() {
               <MiniCalendar seminars={seminars} />
             </div>
           </div>
+        </div>
+
+        {/* 학술 위젯: 참여 학술활동 + 종합시험 D-Day */}
+        <div className="mt-6 grid gap-6 md:grid-cols-2">
+          <MyAcademicActivitiesWidget />
+          <ComprehensiveExamCountdown />
         </div>
 
         {/* 활동 피드 */}
