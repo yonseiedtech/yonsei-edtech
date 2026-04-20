@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { HandoverDocument } from "@/types";
 import { HANDOVER_CATEGORY_LABELS } from "@/types";
+import { HandoverMarkdown } from "@/lib/markdown-handover";
 
 function buildTermOptions(): string[] {
   const now = new Date();
@@ -170,9 +171,10 @@ function ReportInner() {
                     {p.team && ` · ${p.team}`}
                   </span>
                 </div>
-                <pre className="mt-2 whitespace-pre-wrap rounded-md border bg-muted/20 p-3 font-sans text-sm leading-relaxed text-foreground">
-{p.handover}
-                </pre>
+                <HandoverMarkdown
+                  content={p.handover ?? ""}
+                  className="mt-2 rounded-md border bg-muted/20 p-3 text-sm leading-relaxed text-foreground"
+                />
               </li>
             ))}
           </ul>
@@ -209,9 +211,10 @@ function ReportInner() {
                   <p className="mt-1 text-xs text-muted-foreground">
                     {doc.authorName ?? "-"}
                   </p>
-                  <pre className="mt-2 whitespace-pre-wrap rounded-md border bg-muted/20 p-3 font-sans text-sm leading-relaxed text-foreground">
-{doc.content}
-                  </pre>
+                  <HandoverMarkdown
+                    content={doc.content}
+                    className="mt-2 rounded-md border bg-muted/20 p-3 text-sm leading-relaxed text-foreground"
+                  />
                 </article>
               ))}
             </div>

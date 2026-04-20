@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { HandoverDocument } from "@/types";
 import { HANDOVER_CATEGORY_LABELS } from "@/types";
+import { HandoverMarkdown } from "@/lib/markdown-handover";
 
 const STAFF_ROLES = ["회장", "부회장", "총무", "학술부장", "홍보부장", "대외협력부장", "편집부장"];
 const CURRENT_TERM = `${new Date().getFullYear()}-${new Date().getMonth() < 6 ? 1 : 2}`;
@@ -204,7 +205,7 @@ export default function HandoverSection() {
               </button>
               {expandedDoc === doc.id && (
                 <div className="border-t px-4 py-4">
-                  <div className="whitespace-pre-wrap text-sm leading-relaxed">{doc.content}</div>
+                  <HandoverMarkdown content={doc.content} className="text-sm leading-relaxed" />
                   <div className="mt-4 flex gap-2">
                     <Button variant="outline" size="sm" onClick={() => openDocDialog(doc)}>
                       <Pencil size={12} className="mr-1" />수정
@@ -311,7 +312,7 @@ export default function HandoverSection() {
                 className="w-full rounded-lg border px-3 py-2 font-mono text-sm resize-y"
               />
               <p className="mt-1 text-[11px] text-muted-foreground">
-                ## 소제목 · **굵게** · - 목록 · - [ ] 체크박스 (마크다운은 기수 리포트에서 그대로 표시됩니다)
+                ## 소제목 · **굵게** · - 목록 · - [ ] 체크박스 (저장 후 본문/기수 리포트에서 서식이 적용됩니다)
               </p>
             </div>
           </div>
