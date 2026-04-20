@@ -10,6 +10,7 @@ import { usePosts } from "@/features/board/useBoard";
 import { useSeminars } from "@/features/seminar/useSeminar";
 import { useQuery } from "@tanstack/react-query";
 import { certificatesApi, activitiesApi, profilesApi, reviewsApi } from "@/lib/bkend";
+import { enrichCertificates } from "@/lib/denorm-sync";
 import { useResearchPapers } from "@/features/research/useResearchPapers";
 import { useMyInterviewResponses } from "@/features/board/interview-store";
 import type { Certificate, Activity, User, SeminarReview } from "@/types";
@@ -123,7 +124,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
     queryKey: ["certificates", "my", userId],
     queryFn: async () => {
       const res = await certificatesApi.list();
-      return res.data as unknown as Certificate[];
+      return enrichCertificates(res.data as unknown as Certificate[]);
     },
     enabled: !!user,
   });

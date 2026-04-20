@@ -424,13 +424,18 @@ export const inquiriesApi = {
   delete: (id: string) => dataApi.delete("inquiries", id),
 };
 
+const ACTIVITIES_LIMIT = 1000;
 export const activitiesApi = {
   // NOTE: where + orderBy 조합은 Firestore 복합 인덱스가 필요하므로,
   // type 필터만 쓰고 정렬은 클라이언트에서 수행한다. (board/posts 동일 패턴)
   list: async (type?: string) => {
     const res = await dataApi.list<Activity>("activities", {
       ...(type ? { "filter[type]": type } : {}),
+      limit: ACTIVITIES_LIMIT,
     });
+    if (res.data.length >= ACTIVITIES_LIMIT) {
+      console.warn(`[activitiesApi] limit ${ACTIVITIES_LIMIT} reached — cursor-based pagination needed.`);
+    }
     const sorted = [...res.data].sort((a, b) => {
       const ad = (a as { date?: string }).date ?? "";
       const bd = (b as { date?: string }).date ?? "";
@@ -535,9 +540,13 @@ export const emailLogsApi = {
   create: (data: Record<string, unknown>) => dataApi.create<EmailLog>("email_logs", data),
 };
 
+const LABS_LIMIT = 500;
 export const labsApi = {
   list: async () => {
-    const res = await dataApi.list<Lab>("labs", {});
+    const res = await dataApi.list<Lab>("labs", { limit: LABS_LIMIT });
+    if (res.data.length >= LABS_LIMIT) {
+      console.warn(`[labsApi] limit ${LABS_LIMIT} reached — cursor-based pagination needed.`);
+    }
     const sorted = [...res.data].sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
     return { ...res, data: sorted };
   },

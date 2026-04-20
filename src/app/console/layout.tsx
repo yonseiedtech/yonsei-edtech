@@ -237,7 +237,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
 
 export default function ConsoleLayout({ children }: { children: React.ReactNode }) {
   return (
-    <AuthGuard allowedRoles={["staff", "president", "admin"]}>
+    <AuthGuard allowedRoles={["staff", "president", "admin", "sysadmin"]}>
       <ConsoleShell>{children}</ConsoleShell>
     </AuthGuard>
   );

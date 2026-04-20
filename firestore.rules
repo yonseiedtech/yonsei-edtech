@@ -546,5 +546,75 @@ service cloud.firestore {
       allow delete: if isAuthenticated()
         && resource.data.hostUserId == request.auth.uid;
     }
+
+    // ─── Handover Docs (업무 인수인계 문서) ───
+    // 운영진 이상만 read/write (민감 운영 노하우 포함)
+    match /handover_docs/{docId} {
+      allow read: if isAuthenticated() && isStaffOrAbove();
+      allow write: if isAuthenticated() && isStaffOrAbove();
+    }
+
+    // ─── Class Sessions (수업 일정/차시) ───
+    // 수강생·회원 누구나 read, 운영진만 write
+    match /class_sessions/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isStaffOrAbove();
+    }
+
+    // ─── Course Reviews (강의 후기) ───
+    // 공개 read (수강 선택 참고), 작성자 본인만 update (helpful 토글 포함)
+    // helpfulBy[] toggle은 본인이 아닌 사용자도 허용 (rating/comment 불변)
+    function isHelpfulToggleOnly() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['helpfulCount', 'helpfulBy', 'updatedAt']);
+    }
+    match /course_reviews/{docId} {
+      allow read: if true;
+      allow create: if isAuthenticated()
+        && request.resource.data.authorId == request.auth.uid;
+      allow update: if isAuthenticated()
+        && (resource.data.authorId == request.auth.uid || isHelpfulToggleOnly() || isStaffOrAbove());
+      allow delete: if isAuthenticated()
+        && (resource.data.authorId == request.auth.uid || isStaffOrAbove());
+    }
+
+    // ─── Comprehensive Exam Records (종합시험 응시 기록) ───
+    // 본인(userId) 또는 운영진만 read/write
+    match /comprehensive_exam_records/{docId} {
+      allow read: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
+      allow create: if isAuthenticated()
+        && (request.resource.data.userId == request.auth.uid || isStaffOrAbove());
+      allow update, delete: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
+    }
+
+    // ─── Labs (시크릿랩 프로젝트 카드) ───
+    // 공개 read (디렉토리), 소유자(ownerId) 또는 운영진만 write
+    match /labs/{docId} {
+      allow read: if true;
+      allow create: if isAuthenticated()
+        && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if isAuthenticated()
+        && (resource.data.ownerId == request.auth.uid || isStaffOrAbove());
+    }
+
+    // ─── Lab Reactions (이모지 반응) ───
+    match /lab_reactions/{docId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+      allow update: if false;
+    }
+
+    // ─── Lab Comments ───
+    match /lab_comments/{docId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.authorId == request.auth.uid;
+      allow update, delete: if isAuthenticated()
+        && (resource.data.authorId == request.auth.uid || isStaffOrAbove());
+    }
   }
 }

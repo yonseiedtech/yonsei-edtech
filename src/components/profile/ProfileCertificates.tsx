@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { certificatesApi } from "@/lib/bkend";
+import { enrichCertificates } from "@/lib/denorm-sync";
 import type { Certificate, User } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Award } from "lucide-react";
@@ -17,7 +18,8 @@ export default function ProfileCertificates({ owner }: Props) {
     queryKey: ["profile-certificates", owner.id],
     queryFn: async () => {
       const res = await certificatesApi.list();
-      return res.data as unknown as Certificate[];
+      const certs = res.data as unknown as Certificate[];
+      return enrichCertificates(certs);
     },
   });
 
