@@ -558,22 +558,30 @@ export interface InterviewResponse {
   totalElapsedMs?: number;
 }
 
-export type InterviewReactionType = "like" | "cool";
+export type InterviewReactionType = "like" | "cool" | "empathize" | "cheer";
+
+export const INTERVIEW_REACTION_TYPES: InterviewReactionType[] = ["like", "cool", "empathize", "cheer"];
 
 export const INTERVIEW_REACTION_LABELS: Record<InterviewReactionType, string> = {
   like: "좋아요",
   cool: "멋져요",
+  empathize: "공감돼요",
+  cheer: "응원해요",
 };
 
 export const INTERVIEW_REACTION_EMOJIS: Record<InterviewReactionType, string> = {
   like: "👍",
   cool: "✨",
+  empathize: "💗",
+  cheer: "📣",
 };
 
 export interface InterviewResponseReaction {
   id: string;
   responseId: string;
   postId: string;
+  /** 특정 질문 답변에 대한 반응이면 설정. 없으면 응답 전체에 대한 반응. */
+  questionId?: string;
   userId: string;
   type: InterviewReactionType;
   createdAt: string;
@@ -583,6 +591,8 @@ export interface InterviewResponseComment {
   id: string;
   responseId: string;
   postId: string;
+  /** 특정 질문 답변에 대한 댓글이면 설정. 없으면 응답 전체에 대한 댓글. */
+  questionId?: string;
   authorId: string;
   authorName: string;
   authorRole?: string;
@@ -1521,9 +1531,9 @@ export interface ThesisClaim {
 export type SemesterTerm = "spring" | "summer" | "fall" | "winter";
 
 export const SEMESTER_TERM_LABELS: Record<SemesterTerm, string> = {
-  spring: "1학기",
+  spring: "전기",
   summer: "여름학기",
-  fall: "2학기",
+  fall: "후기",
   winter: "겨울학기",
 };
 
@@ -1622,6 +1632,10 @@ export interface ComprehensiveExamRecord {
   plannedYear: number;
   plannedTerm: SemesterTerm;
   status: ComprehensiveExamStatus;
+  /** 응시 희망 과목 2개 (본인 수강 과목 중 선택) — courseOfferings.id 배열 */
+  selectedCourseIds?: string[];
+  /** 선택 과목명 스냅샷 (원본 CourseOffering 이 사라져도 표시 유지) */
+  selectedCourseNames?: string[];
   /** 자유 메모 (응시 영역, 결과 상세 등) */
   notes?: string;
   createdBy: string;
@@ -1632,6 +1646,22 @@ export interface ComprehensiveExamRecord {
 /* ────────────────────────────────────────────────────────────
  * 강의 후기 (Course Review)
  * ──────────────────────────────────────────────────────────── */
+export type ExamType = "exam" | "assignment" | "none";
+export const EXAM_TYPE_LABELS: Record<ExamType, string> = {
+  exam: "시험",
+  assignment: "과제 대체",
+  none: "없음",
+};
+
+export type AssignmentFrequency = "none" | "rare" | "biweekly" | "weekly" | "frequent";
+export const ASSIGNMENT_FREQUENCY_LABELS: Record<AssignmentFrequency, string> = {
+  none: "없음",
+  rare: "드물게(학기 1~2회)",
+  biweekly: "격주",
+  weekly: "매주",
+  frequent: "주 2회 이상",
+};
+
 export interface CourseReview {
   id: string;
   /** 후기 대상 강의 (CourseOffering.id) */
@@ -1648,11 +1678,13 @@ export interface CourseReview {
   anonymous: boolean;
   /** 1~5 (전반 평점) */
   rating: number;
+  /** 평점 평가 이유 */
+  ratingReason?: string;
   /** 1~5 (과제량 — 적음 1, 많음 5) */
   workload?: number;
   /** 1~5 (난이도 — 쉬움 1, 어려움 5) */
   difficulty?: number;
-  /** 후기 본문 */
+  /** 후기 총평 (기존 comment 필드를 재사용) */
   comment: string;
   /** 추천 여부 */
   recommend: boolean;
@@ -1660,6 +1692,24 @@ export interface CourseReview {
   year: number;
   /** 수강 학기 */
   term: SemesterTerm;
+
+  /** 중간고사 운영 형태 */
+  midtermType?: ExamType;
+  /** 기말고사 운영 형태 */
+  finalType?: ExamType;
+  /** 시험에 대한 추가 의견 */
+  examNotes?: string;
+
+  /** 과제 유형 (개인 보고서/팀 프로젝트/발표/실습 등 자유 입력) */
+  assignmentType?: string;
+  /** 과제 빈도 */
+  assignmentFrequency?: AssignmentFrequency;
+  /** 과제에 대한 추가 의견 */
+  assignmentNotes?: string;
+
+  /** 추천 대상 (예: "1학기 신입생", "통계 배경 있는 학생") */
+  recommendedFor?: string;
+
   /** 도움됨 누적 */
   helpfulCount: number;
   /** "도움됨" 표시한 사용자 ID 목록 (중복 방지) */

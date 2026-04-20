@@ -306,20 +306,43 @@ export default function InterviewResponses({ postId, meta }: Props) {
                             ⏱ 답변 소요 {formatDuration(a.elapsedMs)}
                           </p>
                         )}
+
+                        {r.status === "submitted" && (
+                          <div className="mt-3 space-y-2 border-t border-dashed pt-3">
+                            <InterviewResponseReactions
+                              responseId={r.id}
+                              postId={postId}
+                              questionId={a.questionId}
+                              size="sm"
+                            />
+                            <InterviewResponseComments
+                              responseId={r.id}
+                              postId={postId}
+                              questionId={a.questionId}
+                              respondentId={r.respondentId}
+                              compact
+                            />
+                          </div>
+                        )}
                       </div>
                     );
                   })}
               </div>
 
               {r.status === "submitted" && (
-                <>
-                  <div className="mt-4 border-t pt-4">
-                    <InterviewResponseReactions responseId={r.id} postId={postId} />
-                  </div>
+                <div className="mt-4 border-t pt-4">
+                  <p className="mb-2 text-xs font-semibold text-muted-foreground">
+                    응답 전체에 대한 반응·댓글
+                  </p>
+                  <InterviewResponseReactions responseId={r.id} postId={postId} />
                   <div className="mt-3">
-                    <InterviewResponseComments responseId={r.id} postId={postId} />
+                    <InterviewResponseComments
+                      responseId={r.id}
+                      postId={postId}
+                      respondentId={r.respondentId}
+                    />
                   </div>
-                </>
+                </div>
               )}
             </article>
           ))}

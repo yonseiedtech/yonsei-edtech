@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   BookOpen,
@@ -53,6 +53,7 @@ import {
 } from "@/types";
 import ProfileCourses from "@/components/profile/ProfileCourses";
 import CourseReviewBlock from "@/features/courses/CourseReviewBlock";
+import ElectiveReviewsByName from "@/features/courses/ElectiveReviewsByName";
 
 // 전기/후기만 운영
 const TERMS: SemesterTerm[] = ["spring", "fall"];
@@ -182,7 +183,6 @@ export default function CoursesPage() {
   }
 
   const majorRows = useMemo(() => classify(MAJOR_CATS), [rows, search, filterCategory]);
-  const electiveRows = useMemo(() => classify(ELECTIVE_CATS), [rows, search, filterCategory]);
 
   function groupByCategory(list: CourseOffering[]) {
     const buckets = new Map<CourseCategory, CourseOffering[]>();
@@ -196,44 +196,70 @@ export default function CoursesPage() {
     );
   }
 
+  // 동시 클릭으로 인한 중복 enrollment 생성 방지용 in-flight lock
+  const [pendingCourse, setPendingCourse] = useState<string | null>(null);
+
   // ── 본인 수강 토글 ──────────────────────────────────────
   async function toggleEnrollment(course: CourseOffering, next: EnrollMode) {
     if (!user) {
       toast.error("로그인 후 이용 가능합니다");
       return;
     }
-    const existing = myMap.get(course.id);
+    if (pendingCourse) return; // 다른 과목이 저장 중이면 무시
+    setPendingCourse(course.id);
     try {
+      // 중복 방지: 서버에서 본인 해당 학기 기록을 재조회해서
+      // 모든 기존 row 를 수집 (cache 신뢰하지 않음)
+      const latest = await courseEnrollmentsApi.listByUser(user.id);
+      const dupes = latest.data.filter(
+        (e) =>
+          e.courseOfferingId === course.id &&
+          e.year === course.year &&
+          e.term === course.term,
+      );
+
       if (next === "none") {
-        if (!existing) return;
-        await courseEnrollmentsApi.delete(existing.id);
+        if (dupes.length === 0) return;
+        for (const d of dupes) await courseEnrollmentsApi.delete(d.id);
         toast.success(`"${course.courseName}" 표시 해제`);
-      } else if (existing) {
-        const role = next === "student" ? "student" : "auditor";
-        if (existing.role === role) return;
-        await courseEnrollmentsApi.update(existing.id, { role });
-        toast.success(`"${course.courseName}" → ${role === "student" ? "수강" : "청강"}`);
       } else {
         const role = next === "student" ? "student" : "auditor";
-        await courseEnrollmentsApi.create({
-          courseOfferingId: course.id,
-          year: course.year,
-          term: course.term,
-          userId: user.id,
-          studentName: user.name ?? "",
-          studentId: user.studentId ?? undefined,
-          email: user.email ?? undefined,
-          role,
-          createdBy: user.id,
-        });
+        const [head, ...rest] = dupes;
+        // 중복 제거: 첫 행만 남기고 나머지 삭제
+        for (const d of rest) await courseEnrollmentsApi.delete(d.id);
+
+        if (head) {
+          if (head.role !== role) {
+            await courseEnrollmentsApi.update(head.id, { role });
+          }
+        } else {
+          await courseEnrollmentsApi.create({
+            courseOfferingId: course.id,
+            year: course.year,
+            term: course.term,
+            userId: user.id,
+            studentName: user.name ?? "",
+            studentId: user.studentId ?? undefined,
+            email: user.email ?? undefined,
+            role,
+            createdBy: user.id,
+          });
+        }
         toast.success(`"${course.courseName}" → ${role === "student" ? "수강" : "청강"}`);
       }
       await qc.invalidateQueries({ queryKey: ["my-enrollments", user.id] });
       await qc.invalidateQueries({ queryKey: ["profile-courses-enrollments", user.id] });
+      await qc.invalidateQueries({ queryKey: ["ta-report-enrollments"] });
     } catch (e) {
       console.error("[toggleEnrollment] 실패", e);
       const msg = (e as Error).message ?? "변경 실패";
-      toast.error(msg.includes("permission") ? "권한이 없습니다" : `변경 실패: ${msg}`);
+      toast.error(
+        msg.includes("permission") || msg.includes("Missing")
+          ? "권한이 없습니다 (관리자에게 문의)"
+          : `변경 실패: ${msg}`,
+      );
+    } finally {
+      setPendingCourse(null);
     }
   }
 
@@ -342,15 +368,9 @@ export default function CoursesPage() {
             />
           </TabsContent>
 
-          {/* 교양·타전공 강의후기 */}
+          {/* 교양·타전공 강의후기 — 강의명별 학기별 모아보기 */}
           <TabsContent value="elective" className="mt-4">
-            <ElectiveSection
-              loading={isLoading}
-              error={error ? (error as Error).message : null}
-              groups={groupByCategory(electiveRows)}
-              year={year}
-              term={term}
-            />
+            <ElectiveReviewsByName />
           </TabsContent>
 
           {/* 내 수강기록 */}
@@ -581,101 +601,6 @@ function ToggleChip({
 }
 
 /* ────────────────────────────────────────────────────────────
- * 교양·타전공 강의후기 섹션
- * 후기 등록 기능은 추후 별도 사이클로. 현재는 조회 + Empty 안내.
- * ──────────────────────────────────────────────────────────── */
-
-function ElectiveSection({
-  loading,
-  error,
-  groups,
-  year,
-  term,
-}: {
-  loading: boolean;
-  error: string | null;
-  groups: [CourseCategory, CourseOffering[]][];
-  year: number;
-  term: SemesterTerm;
-}) {
-  if (loading) return <LoadingSpinner className="mt-12" />;
-  if (error) return <p className="mt-12 text-sm text-destructive">⚠ {error}</p>;
-  if (groups.length === 0) {
-    return (
-      <div className="mt-6 rounded-lg border bg-muted/20 p-8 text-center">
-        <Megaphone size={28} className="mx-auto text-muted-foreground" />
-        <p className="mt-3 text-sm text-muted-foreground">
-          {year}년 {SEMESTER_TERM_LABELS[term]}에 등록된 교양·타전공 과목이 없습니다.
-        </p>
-      </div>
-    );
-  }
-  return (
-    <div className="space-y-4">
-      <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-3 text-[11px] text-emerald-800">
-        💬 수강 경험을 다른 학우와 공유해주세요. 익명으로도 작성 가능합니다.
-      </div>
-      {groups.map(([cat, list]) => (
-        <section key={cat}>
-          <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold">
-            <span className="inline-block h-2 w-2 rounded-full bg-primary" />
-            {COURSE_CATEGORY_LABELS[cat]}
-            <span className="text-xs font-normal text-muted-foreground">{list.length}과목</span>
-          </h2>
-          <ul className="space-y-2">
-            {list.map((r) => (
-              <li key={r.id} className="rounded-lg border bg-white p-3">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {r.courseCode && (
-                        <span className="font-mono text-[11px] text-muted-foreground">
-                          {r.courseCode}
-                        </span>
-                      )}
-                      <span className="text-sm font-semibold">{r.courseName}</span>
-                      {r.credits != null && (
-                        <Badge variant="secondary" className="text-[10px]">
-                          {r.credits}학점
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {[r.professor, r.schedule, r.classroom].filter(Boolean).join(" · ")}
-                    </p>
-                    {r.notes && (
-                      <p className="mt-1 text-[11px] text-foreground/70">📝 {r.notes}</p>
-                    )}
-                  </div>
-                  {r.syllabusUrl && (
-                    <a
-                      href={r.syllabusUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex shrink-0 items-center gap-1 rounded-md border border-primary/30 bg-primary/5 px-2 py-1 text-[11px] font-medium text-primary hover:bg-primary/10"
-                    >
-                      강의계획서 <ExternalLink size={11} />
-                    </a>
-                  )}
-                </div>
-                <CourseReviewBlock
-                  courseOfferingId={r.id}
-                  courseName={r.courseName}
-                  professor={r.professor}
-                  category={r.category}
-                  defaultYear={r.year}
-                  defaultTerm={r.term}
-                />
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
-    </div>
-  );
-}
-
-/* ────────────────────────────────────────────────────────────
  * 종합시험 입력 패널 (회원 본인) — 검색창 하단
  * ──────────────────────────────────────────────────────────── */
 
@@ -688,13 +613,19 @@ function ComprehensiveExamPanel() {
     plannedTerm: SemesterTerm;
     status: ComprehensiveExamStatus;
     notes: string;
+    selectedCourseIds: string[];
   }>({
     plannedYear: nowYear(),
     plannedTerm: defaultTermForToday(),
     status: "planning",
     notes: "",
+    selectedCourseIds: [],
   });
   const [saving, setSaving] = useState(false);
+
+  // 누적학기 3학기 이상만 소요 등록 가능 (정책)
+  const accumulated = (user?.accumulatedSemesters as number | undefined) ?? 0;
+  const isEligible = accumulated >= 3;
 
   const { data: myExams = [] } = useQuery({
     queryKey: ["my-comp-exams", user?.id],
@@ -707,16 +638,99 @@ function ComprehensiveExamPanel() {
     staleTime: 30_000,
   });
 
+  // 본인 전체 수강 이력 (student/ta 역할만) — 과목 2개 선택 풀
+  const { data: myEnrollmentsAll = [] } = useQuery({
+    queryKey: ["my-enrollments-all", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [] as CourseEnrollment[];
+      const res = await courseEnrollmentsApi.listByUser(user.id);
+      return res.data.filter((e) => e.role !== "auditor");
+    },
+    enabled: !!user?.id && open,
+    staleTime: 30_000,
+  });
+
+  const courseIdsForLookup = useMemo(
+    () =>
+      Array.from(
+        new Set(myEnrollmentsAll.map((e) => e.courseOfferingId).filter(Boolean)),
+      ),
+    [myEnrollmentsAll],
+  );
+
+  const { data: myCourseMap = new Map<string, CourseOffering>() } = useQuery({
+    queryKey: ["my-courses-for-comp-exam", courseIdsForLookup.sort().join(",")],
+    queryFn: async () => {
+      const entries = await Promise.all(
+        courseIdsForLookup.map(async (id) => {
+          try {
+            const c = (await courseOfferingsApi.get(id)) as unknown as CourseOffering;
+            return [id, c] as const;
+          } catch {
+            return [id, null] as const;
+          }
+        }),
+      );
+      const m = new Map<string, CourseOffering>();
+      for (const [id, c] of entries) if (c) m.set(id, c);
+      return m;
+    },
+    enabled: courseIdsForLookup.length > 0,
+    staleTime: 5 * 60_000,
+  });
+
+  const courseOptions = useMemo(() => {
+    // 중복된 courseOfferingId 제거 + 과목명 + 학기 정렬
+    const seen = new Set<string>();
+    const list: Array<{ id: string; course: CourseOffering }> = [];
+    for (const e of myEnrollmentsAll) {
+      if (seen.has(e.courseOfferingId)) continue;
+      const c = myCourseMap.get(e.courseOfferingId);
+      if (!c) continue;
+      seen.add(e.courseOfferingId);
+      list.push({ id: e.courseOfferingId, course: c });
+    }
+    return list.sort((a, b) => {
+      if (a.course.year !== b.course.year) return b.course.year - a.course.year;
+      return (a.course.courseName ?? "").localeCompare(b.course.courseName ?? "");
+    });
+  }, [myEnrollmentsAll, myCourseMap]);
+
   if (!user) return null;
 
   const yearOptions: number[] = [];
   const cy = nowYear();
   for (let y = cy + 1; y >= cy - 4; y--) yearOptions.push(y);
 
+  function toggleCourseSelection(courseId: string) {
+    setDraft((d) => {
+      const exists = d.selectedCourseIds.includes(courseId);
+      if (exists) {
+        return { ...d, selectedCourseIds: d.selectedCourseIds.filter((x) => x !== courseId) };
+      }
+      if (d.selectedCourseIds.length >= 2) {
+        toast.error("응시 과목은 2개까지만 선택 가능합니다");
+        return d;
+      }
+      return { ...d, selectedCourseIds: [...d.selectedCourseIds, courseId] };
+    });
+  }
+
   async function save() {
     if (!user) return;
+    if (!isEligible) {
+      toast.error("누적학기 3학기 이상 회원만 소요 등록 가능합니다");
+      return;
+    }
+    if (draft.selectedCourseIds.length !== 2) {
+      toast.error("본인 수강 과목 중 정확히 2개를 선택해 주세요");
+      return;
+    }
     setSaving(true);
     try {
+      const selectedNames = draft.selectedCourseIds
+        .map((id) => myCourseMap.get(id)?.courseName)
+        .filter((n): n is string => !!n);
       await comprehensiveExamsApi.create({
         userId: user.id,
         studentName: user.name ?? "",
@@ -724,17 +738,20 @@ function ComprehensiveExamPanel() {
         plannedYear: draft.plannedYear,
         plannedTerm: draft.plannedTerm,
         status: draft.status,
+        selectedCourseIds: draft.selectedCourseIds,
+        selectedCourseNames: selectedNames,
         notes: draft.notes.trim() || undefined,
         createdBy: user.id,
       });
       await qc.invalidateQueries({ queryKey: ["my-comp-exams", user.id] });
-      toast.success("종합시험 응시 정보가 저장되었습니다");
+      toast.success("종합시험 소요가 등록되었습니다");
       setOpen(false);
       setDraft({
         plannedYear: nowYear(),
         plannedTerm: defaultTermForToday(),
         status: "planning",
         notes: "",
+        selectedCourseIds: [],
       });
     } catch (e) {
       const msg = (e as Error).message ?? "저장 실패";
@@ -746,7 +763,7 @@ function ComprehensiveExamPanel() {
 
   async function remove(id: string) {
     if (!user) return;
-    if (!confirm("이 응시 기록을 삭제하시겠습니까?")) return;
+    if (!confirm("이 소요 등록을 삭제하시겠습니까?")) return;
     try {
       await comprehensiveExamsApi.delete(id);
       await qc.invalidateQueries({ queryKey: ["my-comp-exams", user.id] });
@@ -761,18 +778,23 @@ function ComprehensiveExamPanel() {
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex items-center gap-2">
           <GraduationCap size={16} className="text-primary" />
-          <h2 className="text-sm font-semibold">종합시험 소요조사 / 신청·결과</h2>
+          <h2 className="text-sm font-semibold">종합시험 소요 등록</h2>
         </div>
-        <Button size="sm" onClick={() => setOpen(true)}>
-          <Plus size={13} className="mr-1" /> 등록
+        <Button size="sm" onClick={() => setOpen(true)} disabled={!isEligible}>
+          <Plus size={13} className="mr-1" /> 소요 등록
         </Button>
       </div>
       <p className="mt-1 text-[11px] text-muted-foreground">
-        응시 예정 학기를 미리 등록(소요조사)하고, 신청·결과까지 직접 갱신할 수 있습니다. 등록한 정보는 운영진(전공대표·학회장)이 학기별로 모아 확인합니다.
+        응시 예정 학기를 미리 등록(소요조사)하고, 본인 수강 과목 중 2과목을 선택해 주세요. 신청·결과는 나중에 직접 갱신 가능합니다. 등록한 정보는 운영진(전공대표·학회장)이 학기별로 모아 확인합니다.
       </p>
+      {!isEligible && (
+        <p className="mt-2 rounded-md border border-amber-200 bg-amber-50/70 px-2 py-1.5 text-[11px] text-amber-800">
+          ⓘ 종합시험 소요 등록은 <b>누적학기 3학기 이상</b> 회원만 가능합니다. (현재: {accumulated}학기)
+        </p>
+      )}
 
       {myExams.length === 0 ? (
-        <p className="mt-3 text-[11px] text-muted-foreground">아직 등록된 응시 기록이 없습니다.</p>
+        <p className="mt-3 text-[11px] text-muted-foreground">아직 등록된 소요 이력이 없습니다.</p>
       ) : (
         <ul className="mt-3 space-y-1.5">
           {myExams.map((r) => (
@@ -787,6 +809,11 @@ function ComprehensiveExamPanel() {
                 <Badge variant="outline" className="text-[10px]">
                   {COMPREHENSIVE_EXAM_STATUS_LABELS[r.status]}
                 </Badge>
+                {r.selectedCourseNames && r.selectedCourseNames.length > 0 && (
+                  <span className="text-[11px] text-muted-foreground">
+                    📚 {r.selectedCourseNames.join(" / ")}
+                  </span>
+                )}
                 {r.notes && (
                   <span className="text-[11px] text-muted-foreground">📝 {r.notes}</span>
                 )}
@@ -807,9 +834,9 @@ function ComprehensiveExamPanel() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>종합시험 응시 등록</DialogTitle>
+            <DialogTitle>종합시험 소요 등록</DialogTitle>
             <DialogDescription>
-              응시 예정 학기와 현재 진행 상태를 입력하세요. 결과가 나오면 다시 들어와 상태를 변경할 수 있습니다.
+              응시 예정 학기와 본인 수강 과목 중 2개를 선택하세요. 상태(신청·결과)는 추후 갱신 가능합니다.
             </DialogDescription>
           </DialogHeader>
 
@@ -852,6 +879,47 @@ function ComprehensiveExamPanel() {
                 ))}
               </select>
             </label>
+
+            {/* 응시 과목 2개 선택 */}
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">
+                응시 과목 선택 (정확히 2개 · 본인 수강 이력 중) — 현재 {draft.selectedCourseIds.length}/2
+              </p>
+              {courseOptions.length === 0 ? (
+                <p className="rounded-md border border-dashed bg-muted/20 px-3 py-4 text-center text-[11px] text-muted-foreground">
+                  본인 수강 이력에 수강(student)/조교(ta) 과목이 없습니다. 먼저 "수강과목" 에서 내 수강 표시를 해주세요.
+                </p>
+              ) : (
+                <ul className="max-h-56 overflow-auto rounded-md border divide-y">
+                  {courseOptions.map(({ id, course }) => {
+                    const checked = draft.selectedCourseIds.includes(id);
+                    return (
+                      <li
+                        key={id}
+                        className={`flex items-center gap-2 px-3 py-1.5 text-sm ${
+                          checked ? "bg-primary/5" : ""
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleCourseSelection(id)}
+                          className="h-3.5 w-3.5 accent-primary"
+                        />
+                        <span className="min-w-0 flex-1">
+                          <span className="font-medium">{course.courseName}</span>
+                          <span className="ml-2 text-[11px] text-muted-foreground">
+                            {course.year}년 {SEMESTER_TERM_LABELS[course.term]}
+                            {course.professor ? ` · ${course.professor}` : ""}
+                          </span>
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+
             <label className="flex flex-col gap-1 text-sm">
               <span className="text-xs text-muted-foreground">메모 (응시 영역, 결과 상세 등)</span>
               <Input
@@ -864,7 +932,7 @@ function ComprehensiveExamPanel() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>취소</Button>
-            <Button onClick={save} disabled={saving}>
+            <Button onClick={save} disabled={saving || draft.selectedCourseIds.length !== 2}>
               {saving ? "저장 중..." : "저장"}
             </Button>
           </DialogFooter>
@@ -886,12 +954,34 @@ function TaReportSection({
   year: number;
   term: SemesterTerm;
 }) {
+  const qc = useQueryClient();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [detailCourse, setDetailCourse] = useState<CourseOffering | null>(null);
   // 학기별 enrollment 전체 + offering 매핑
   const { data: enrollmentsRes, isLoading: loadingEnrollments } = useQuery({
     queryKey: ["ta-report-enrollments", year, term],
     queryFn: () => courseEnrollmentsApi.listBySemester(year, term),
     staleTime: 60_000,
   });
+
+  async function handleDelete(e: CourseEnrollment) {
+    if (deletingId) return;
+    if (!confirm(`${e.studentName} 학생의 수강 등록을 삭제하시겠습니까?`)) return;
+    setDeletingId(e.id);
+    try {
+      await courseEnrollmentsApi.delete(e.id);
+      await qc.invalidateQueries({ queryKey: ["ta-report-enrollments", year, term] });
+      if (e.userId) {
+        await qc.invalidateQueries({ queryKey: ["my-enrollments", e.userId] });
+        await qc.invalidateQueries({ queryKey: ["profile-courses-enrollments", e.userId] });
+      }
+      toast.success("삭제되었습니다");
+    } catch (err) {
+      toast.error(`삭제 실패: ${(err as Error).message}`);
+    } finally {
+      setDeletingId(null);
+    }
+  }
   const { data: offeringsRes, isLoading: loadingOfferings } = useQuery({
     queryKey: ["ta-report-offerings", year, term],
     queryFn: () => courseOfferingsApi.listBySemester(year, term),
@@ -967,7 +1057,12 @@ function TaReportSection({
             return (
               <li key={g.course.id} className="rounded-lg border bg-white p-3">
                 <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
+                  <button
+                    type="button"
+                    onClick={() => setDetailCourse(g.course)}
+                    className="group min-w-0 flex-1 text-left"
+                    title="이 과목의 전체 학기 이력 보기"
+                  >
                     <div className="flex flex-wrap items-center gap-1.5">
                       <Badge variant="secondary" className="text-[10px]">
                         {COURSE_CATEGORY_LABELS[g.course.category]}
@@ -977,35 +1072,54 @@ function TaReportSection({
                           {g.course.courseCode}
                         </span>
                       )}
-                      <span className="text-sm font-semibold">{g.course.courseName}</span>
+                      <span className="text-sm font-semibold group-hover:underline">
+                        {g.course.courseName}
+                      </span>
                       {g.course.professor && (
                         <span className="text-[11px] text-muted-foreground">· {g.course.professor}</span>
                       )}
+                      <ExternalLink
+                        size={11}
+                        className="text-muted-foreground opacity-0 transition group-hover:opacity-100"
+                      />
                     </div>
                     <p className="mt-1 text-[11px] text-muted-foreground">
                       총 {total}명 · 수강 {g.students.length} · 청강 {g.auditors.length} · TA {g.tas.length}
                     </p>
-                  </div>
+                  </button>
                 </div>
                 {total > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1.5 border-t pt-2">
                     {[...g.students, ...g.auditors, ...g.tas].map((e) => (
-                      <Link
+                      <span
                         key={e.id}
-                        href={e.userId ? `/profile/${e.userId}` : "#"}
-                        className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${
+                        className={`inline-flex items-center gap-1 rounded-full border pl-2 pr-0.5 py-0.5 text-[11px] ${
                           e.userId
-                            ? "border-primary/30 bg-primary/5 text-primary hover:bg-primary/10"
+                            ? "border-primary/30 bg-primary/5 text-primary"
                             : "border-border bg-muted text-muted-foreground"
                         }`}
                       >
-                        {e.studentName}
-                        {e.role && e.role !== "student" && (
-                          <span className="text-[10px] text-muted-foreground">
-                            · {ENROLLMENT_ROLE_LABELS[e.role]}
-                          </span>
-                        )}
-                      </Link>
+                        <Link
+                          href={e.userId ? `/profile/${e.userId}` : "#"}
+                          className={e.userId ? "hover:underline" : "cursor-default"}
+                        >
+                          {e.studentName}
+                          {e.role && e.role !== "student" && (
+                            <span className="ml-1 text-[10px] text-muted-foreground">
+                              · {ENROLLMENT_ROLE_LABELS[e.role]}
+                            </span>
+                          )}
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(e)}
+                          disabled={deletingId === e.id}
+                          aria-label="수강 등록 삭제"
+                          className="ml-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
+                        >
+                          <Trash2 size={10} />
+                        </button>
+                      </span>
                     ))}
                   </div>
                 )}
@@ -1014,6 +1128,315 @@ function TaReportSection({
           })}
         </ul>
       )}
+
+      <CourseDetailDialog
+        course={detailCourse}
+        onClose={() => setDetailCourse(null)}
+      />
     </div>
+  );
+}
+
+/* ──────────────────────────────────────────────────────────
+ * CourseDetailDialog
+ * 조교 리포트에서 과목을 클릭하면 열리는 상세 팝업.
+ * 동일 과목(courseCode 또는 courseName)의 여러 학기 이력을 수집하고,
+ * 학기별 보기 / 여러 학기 선택 종합 보기를 지원한다.
+ * ────────────────────────────────────────────────────────── */
+function CourseDetailDialog({
+  course,
+  onClose,
+}: {
+  course: CourseOffering | null;
+  onClose: () => void;
+}) {
+  const open = !!course;
+  const normKey = (c: CourseOffering) =>
+    (c.courseCode ?? "").trim() || (c.courseName ?? "").trim();
+  const key = course ? normKey(course) : "";
+
+  // 전체 offering 중 같은 과목(코드/이름 일치) 모두 수집
+  const { data: allOfferingsRes, isLoading: offeringsLoading } = useQuery({
+    queryKey: ["course-detail-offerings", key],
+    queryFn: () => courseOfferingsApi.list({ limit: 2000 }),
+    enabled: open && !!key,
+    staleTime: 60_000,
+  });
+
+  const matchingOfferings = useMemo(() => {
+    if (!course) return [] as CourseOffering[];
+    const rows = allOfferingsRes?.data ?? [];
+    const ck = (course.courseCode ?? "").trim();
+    const nk = (course.courseName ?? "").trim();
+    const matched = rows.filter((o) => {
+      if (ck && (o.courseCode ?? "").trim() === ck) return true;
+      if (!ck && nk && (o.courseName ?? "").trim() === nk) return true;
+      return false;
+    });
+    return matched.sort((a, b) => {
+      if (a.year !== b.year) return b.year - a.year;
+      return (a.term ?? "").localeCompare(b.term ?? "");
+    });
+  }, [allOfferingsRes, course]);
+
+  // 매칭된 offering들의 수강생 수집
+  const { data: enrollmentsByOffering, isLoading: enrollmentsLoading } = useQuery({
+    queryKey: ["course-detail-enrollments", matchingOfferings.map((o) => o.id).join("|")],
+    queryFn: async () => {
+      const result = new Map<string, CourseEnrollment[]>();
+      await Promise.all(
+        matchingOfferings.map(async (o) => {
+          const res = await courseEnrollmentsApi.listByCourse(o.id);
+          result.set(o.id, res.data);
+        }),
+      );
+      return result;
+    },
+    enabled: open && matchingOfferings.length > 0,
+    staleTime: 30_000,
+  });
+
+  // 학기 키: "year-term" 형태
+  const semesterKeys = useMemo(
+    () => matchingOfferings.map((o) => `${o.year}-${o.term}`),
+    [matchingOfferings],
+  );
+
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  // 열릴 때마다 초기 선택: 클릭한 학기만 선택
+  useEffect(() => {
+    if (course) {
+      setSelected(new Set([`${course.year}-${course.term}`]));
+    } else {
+      setSelected(new Set());
+    }
+  }, [course]);
+
+  function toggleSemester(k: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(k)) next.delete(k);
+      else next.add(k);
+      return next;
+    });
+  }
+  function selectAll() {
+    setSelected(new Set(semesterKeys));
+  }
+  function selectNone() {
+    setSelected(new Set());
+  }
+
+  // 선택된 학기의 offering + enrollment 수집
+  const aggregated = useMemo(() => {
+    type Row = {
+      enrollment: CourseEnrollment;
+      offering: CourseOffering;
+      semesterKey: string;
+    };
+    const rows: Row[] = [];
+    for (const o of matchingOfferings) {
+      const k = `${o.year}-${o.term}`;
+      if (!selected.has(k)) continue;
+      const list = enrollmentsByOffering?.get(o.id) ?? [];
+      for (const e of list) rows.push({ enrollment: e, offering: o, semesterKey: k });
+    }
+    return rows;
+  }, [matchingOfferings, enrollmentsByOffering, selected]);
+
+  // 종합 보기 시 userId 기준 dedupe 카운트
+  const uniqueStudentCount = useMemo(() => {
+    const ids = new Set<string>();
+    let anonCount = 0;
+    for (const r of aggregated) {
+      if (r.enrollment.role === "ta") continue;
+      if (r.enrollment.userId) ids.add(r.enrollment.userId);
+      else anonCount += 1; // userId 미매칭은 개별 카운트
+    }
+    return ids.size + anonCount;
+  }, [aggregated]);
+
+  // 학기별 그룹핑
+  const bySemester = useMemo(() => {
+    const groups = new Map<
+      string,
+      {
+        offering: CourseOffering;
+        students: CourseEnrollment[];
+        auditors: CourseEnrollment[];
+        tas: CourseEnrollment[];
+      }
+    >();
+    for (const o of matchingOfferings) {
+      const k = `${o.year}-${o.term}`;
+      if (!selected.has(k)) continue;
+      const list = enrollmentsByOffering?.get(o.id) ?? [];
+      const bucket = {
+        offering: o,
+        students: list.filter((e) => e.role !== "auditor" && e.role !== "ta"),
+        auditors: list.filter((e) => e.role === "auditor"),
+        tas: list.filter((e) => e.role === "ta"),
+      };
+      groups.set(k, bucket);
+    }
+    return Array.from(groups.entries()).sort(([, a], [, b]) => {
+      if (a.offering.year !== b.offering.year) return b.offering.year - a.offering.year;
+      return (a.offering.term ?? "").localeCompare(b.offering.term ?? "");
+    });
+  }, [matchingOfferings, enrollmentsByOffering, selected]);
+
+  const loading = offeringsLoading || enrollmentsLoading;
+
+  if (!course) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle className="flex flex-wrap items-center gap-2">
+            <Badge variant="secondary" className="text-[10px]">
+              {COURSE_CATEGORY_LABELS[course.category]}
+            </Badge>
+            {course.courseCode && (
+              <span className="font-mono text-xs text-muted-foreground">
+                {course.courseCode}
+              </span>
+            )}
+            <span>{course.courseName}</span>
+          </DialogTitle>
+          <DialogDescription>
+            {course.professor && <span>{course.professor} · </span>}
+            동일 과목의 학기 이력을 선택해 학기별/종합 수강생을 확인합니다.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* 학기 선택 영역 */}
+          <div className="rounded-lg border bg-muted/20 p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs font-semibold">학기 선택 ({selected.size}/{semesterKeys.length})</p>
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={selectAll}
+                  className="rounded border px-2 py-0.5 text-[11px] hover:bg-muted"
+                >
+                  모두 선택
+                </button>
+                <button
+                  type="button"
+                  onClick={selectNone}
+                  className="rounded border px-2 py-0.5 text-[11px] hover:bg-muted"
+                >
+                  선택 해제
+                </button>
+              </div>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {matchingOfferings.length === 0 ? (
+                <span className="text-[11px] text-muted-foreground">
+                  이력 없음
+                </span>
+              ) : (
+                matchingOfferings.map((o) => {
+                  const k = `${o.year}-${o.term}`;
+                  const isOn = selected.has(k);
+                  const count = (enrollmentsByOffering?.get(o.id) ?? []).length;
+                  return (
+                    <button
+                      key={o.id}
+                      type="button"
+                      onClick={() => toggleSemester(k)}
+                      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] transition ${
+                        isOn
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-input bg-white text-muted-foreground hover:bg-muted"
+                      }`}
+                    >
+                      <span>{o.year}년 {SEMESTER_TERM_LABELS[o.term]}</span>
+                      {count > 0 && <span className="tabular-nums">· {count}명</span>}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* 요약 */}
+          <div className="grid grid-cols-3 gap-2 rounded-lg border bg-white p-3 text-center">
+            <div>
+              <p className="text-[10px] text-muted-foreground">선택 학기</p>
+              <p className="text-sm font-semibold">{selected.size}개</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-muted-foreground">누적 등록(행)</p>
+              <p className="text-sm font-semibold">{aggregated.length}건</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-muted-foreground">고유 수강생</p>
+              <p className="text-sm font-semibold">{uniqueStudentCount}명</p>
+            </div>
+          </div>
+
+          {/* 학기별 수강생 리스트 */}
+          {loading ? (
+            <LoadingSpinner className="mt-6" />
+          ) : selected.size === 0 ? (
+            <p className="rounded-lg border bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+              학기를 하나 이상 선택해 주세요.
+            </p>
+          ) : (
+            <div className="max-h-[40vh] space-y-3 overflow-y-auto pr-1">
+              {bySemester.map(([k, group]) => {
+                const total =
+                  group.students.length + group.auditors.length + group.tas.length;
+                return (
+                  <div key={k} className="rounded-lg border bg-white p-3">
+                    <p className="text-xs font-semibold text-primary">
+                      {group.offering.year}년 {SEMESTER_TERM_LABELS[group.offering.term]}
+                      <span className="ml-2 font-normal text-muted-foreground">
+                        · 총 {total}명 · 수강 {group.students.length} · 청강 {group.auditors.length} · TA {group.tas.length}
+                      </span>
+                    </p>
+                    {total > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {[...group.students, ...group.auditors, ...group.tas].map((e) => (
+                          <Link
+                            key={e.id}
+                            href={e.userId ? `/profile/${e.userId}` : "#"}
+                            onClick={(ev) => {
+                              if (!e.userId) ev.preventDefault();
+                            }}
+                            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${
+                              e.userId
+                                ? "border-primary/30 bg-primary/5 text-primary hover:underline"
+                                : "cursor-default border-border bg-muted text-muted-foreground"
+                            }`}
+                          >
+                            {e.studentName}
+                            {e.role && e.role !== "student" && (
+                              <span className="text-[10px] text-muted-foreground">
+                                · {ENROLLMENT_ROLE_LABELS[e.role]}
+                              </span>
+                            )}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            닫기
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

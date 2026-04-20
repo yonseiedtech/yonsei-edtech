@@ -13,11 +13,16 @@ import {
 } from "@/features/board/interview-store";
 import { ROLE_LABELS } from "@/types";
 import type { UserRole } from "@/types";
-import { MessageSquare, Pencil, Trash2, X, Check } from "lucide-react";
+import { MessageSquare, Pencil, Trash2, X, Check, Mic } from "lucide-react";
 
 interface Props {
   responseId: string;
   postId: string;
+  /** 특정 질문 답변에 대한 댓글일 때 지정. */
+  questionId?: string;
+  /** 응답 작성자 id. authorId === respondentId 인 댓글에 "인터뷰이" 배지를 표시한다. */
+  respondentId?: string;
+  compact?: boolean;
 }
 
 const STAFF_ROLES: UserRole[] = ["sysadmin", "admin", "president", "staff"];
@@ -32,10 +37,16 @@ function formatDate(iso: string) {
   return `${d.getFullYear()}.${m}.${day} ${h}:${min}`;
 }
 
-export default function InterviewResponseComments({ responseId, postId }: Props) {
+export default function InterviewResponseComments({
+  responseId,
+  postId,
+  questionId,
+  respondentId,
+  compact = false,
+}: Props) {
   const user = useAuthStore((s) => s.user);
   const isStaffPlus = user ? STAFF_ROLES.includes(user.role) : false;
-  const { comments, isLoading } = useInterviewResponseComments(responseId);
+  const { comments, isLoading } = useInterviewResponseComments(responseId, questionId);
   const { createComment, isLoading: isCreating } = useCreateInterviewComment();
   const { updateComment, isLoading: isUpdating } = useUpdateInterviewComment();
   const { deleteComment } = useDeleteInterviewComment();
@@ -43,6 +54,7 @@ export default function InterviewResponseComments({ responseId, postId }: Props)
   const [draft, setDraft] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
+  const [open, setOpen] = useState(!compact);
 
   async function onSubmit() {
     if (!user) {
@@ -52,8 +64,9 @@ export default function InterviewResponseComments({ responseId, postId }: Props)
     const content = draft.trim();
     if (!content) return;
     try {
-      await createComment({ responseId, postId, content });
+      await createComment({ responseId, postId, questionId, content });
       setDraft("");
+      if (compact) setOpen(true);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "댓글 작성에 실패했습니다.");
     }
@@ -93,13 +106,20 @@ export default function InterviewResponseComments({ responseId, postId }: Props)
     }
   }
 
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <MessageSquare size={14} />
-        <span>댓글 {comments.length}</span>
-      </div>
+  const header = (
+    <button
+      type="button"
+      onClick={() => setOpen((v) => !v)}
+      className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+    >
+      <MessageSquare size={compact ? 12 : 14} />
+      <span>댓글 {comments.length}</span>
+      {compact && <span className="text-[10px]">{open ? "접기" : "펼치기"}</span>}
+    </button>
+  );
 
+  const body = (
+    <>
       {isLoading && (
         <p className="text-xs text-muted-foreground">댓글을 불러오는 중…</p>
       )}
@@ -111,6 +131,7 @@ export default function InterviewResponseComments({ responseId, postId }: Props)
             const canDelete = isMine || isStaffPlus;
             const canEdit = isMine;
             const isEditing = editingId === c.id;
+            const isInterviewee = !!respondentId && c.authorId === respondentId;
             const roleLabel =
               c.authorRole && (c.authorRole as UserRole) in ROLE_LABELS
                 ? ROLE_LABELS[c.authorRole as UserRole]
@@ -118,11 +139,22 @@ export default function InterviewResponseComments({ responseId, postId }: Props)
             return (
               <li
                 key={c.id}
-                className="rounded-lg border bg-muted/30 p-3 text-sm"
+                className={`rounded-lg border p-3 text-sm ${
+                  isInterviewee ? "border-blue-200 bg-blue-50/40" : "bg-muted/30"
+                }`}
               >
                 <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                   <span className="font-semibold text-foreground">{c.authorName}</span>
-                  {roleLabel && (
+                  {isInterviewee && (
+                    <span
+                      className="inline-flex items-center gap-0.5 rounded-full bg-[#003876] px-1.5 py-0.5 text-[10px] font-semibold text-white"
+                      title="이 인터뷰에 응답한 본인이 남긴 댓글"
+                    >
+                      <Mic size={10} />
+                      인터뷰이
+                    </span>
+                  )}
+                  {roleLabel && !isInterviewee && (
                     <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">
                       {roleLabel}
                     </span>
@@ -202,7 +234,7 @@ export default function InterviewResponseComments({ responseId, postId }: Props)
           <Textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="댓글을 작성하세요"
+            placeholder={questionId ? "이 답변에 댓글 남기기" : "응답 전체에 댓글 남기기"}
             rows={2}
           />
           <div className="flex justify-end">
@@ -221,6 +253,25 @@ export default function InterviewResponseComments({ responseId, postId }: Props)
           로그인 후 댓글을 작성할 수 있습니다.
         </p>
       )}
+    </>
+  );
+
+  if (compact) {
+    return (
+      <div className="space-y-2">
+        {header}
+        {open && <div className="space-y-3 pt-1">{body}</div>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <MessageSquare size={14} />
+        <span>댓글 {comments.length}</span>
+      </div>
+      {body}
     </div>
   );
 }

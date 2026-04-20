@@ -202,7 +202,11 @@ export function useSaveInterviewResponse() {
 
 // ── Reactions ──
 
-export function useInterviewResponseReactions(responseId: string) {
+/**
+ * 응답 전체에 대한 모든 반응을 한 번만 로드. 질문별 필터는 컴포넌트에서 select로 처리.
+ * (React Query가 queryKey 기준 캐시를 공유하므로 여러 질문에서 호출해도 네트워크는 1회)
+ */
+export function useInterviewResponseReactions(responseId: string, questionId?: string) {
   const { data, isLoading } = useQuery({
     queryKey: ["interview_response_reactions", responseId],
     queryFn: async () =>
@@ -211,6 +215,8 @@ export function useInterviewResponseReactions(responseId: string) {
     enabled: !!responseId,
     staleTime: 1000 * 30,
     retry: false,
+    select: (all: InterviewResponseReaction[]) =>
+      all.filter((r) => (r.questionId ?? null) === (questionId ?? null)),
   });
   return { reactions: data ?? [], isLoading };
 }
@@ -222,16 +228,17 @@ export function useToggleInterviewReaction() {
     mutationFn: async ({
       responseId,
       postId,
+      questionId,
       type,
       existing,
     }: {
       responseId: string;
       postId: string;
+      questionId?: string;
       type: InterviewReactionType;
       existing?: InterviewResponseReaction;
     }) => {
       if (!user) throw new Error("로그인이 필요합니다.");
-      // 같은 type → 토글 해제 / 다른 type → 기존 삭제 후 신규
       if (existing?.type === type) {
         await interviewResponseReactionsApi.delete(existing.id);
         return;
@@ -239,12 +246,14 @@ export function useToggleInterviewReaction() {
       if (existing) {
         await interviewResponseReactionsApi.delete(existing.id);
       }
-      await interviewResponseReactionsApi.create({
+      const payload: Record<string, unknown> = {
         responseId,
         postId,
         userId: user.id,
         type,
-      });
+      };
+      if (questionId) payload.questionId = questionId;
+      await interviewResponseReactionsApi.create(payload);
     },
     onSuccess: (_d, v) => {
       qc.invalidateQueries({ queryKey: ["interview_response_reactions", v.responseId] });
@@ -255,7 +264,7 @@ export function useToggleInterviewReaction() {
 
 // ── Comments ──
 
-export function useInterviewResponseComments(responseId: string) {
+export function useInterviewResponseComments(responseId: string, questionId?: string) {
   const { data, isLoading } = useQuery({
     queryKey: ["interview_response_comments", responseId],
     queryFn: async () =>
@@ -264,6 +273,8 @@ export function useInterviewResponseComments(responseId: string) {
     enabled: !!responseId,
     staleTime: 1000 * 30,
     retry: false,
+    select: (all: InterviewResponseComment[]) =>
+      all.filter((c) => (c.questionId ?? null) === (questionId ?? null)),
   });
   return { comments: data ?? [], isLoading };
 }
@@ -272,7 +283,7 @@ export function useCreateInterviewComment() {
   const qc = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const m = useMutation({
-    mutationFn: async (data: { responseId: string; postId: string; content: string }) => {
+    mutationFn: async (data: { responseId: string; postId: string; questionId?: string; content: string }) => {
       if (!user) throw new Error("로그인이 필요합니다.");
       const payload: Record<string, unknown> = {
         responseId: data.responseId,
@@ -281,6 +292,7 @@ export function useCreateInterviewComment() {
         authorId: user.id,
         authorName: user.name,
       };
+      if (data.questionId) payload.questionId = data.questionId;
       if (user.role) payload.authorRole = user.role;
       return await interviewResponseCommentsApi.create(payload);
     },

@@ -18,9 +18,13 @@ import { useAuthStore } from "@/features/auth/auth-store";
 import { courseReviewsApi } from "@/lib/bkend";
 import { isAtLeast } from "@/lib/permissions";
 import {
+  ASSIGNMENT_FREQUENCY_LABELS,
+  EXAM_TYPE_LABELS,
   SEMESTER_TERM_LABELS,
+  type AssignmentFrequency,
   type CourseCategory,
   type CourseReview,
+  type ExamType,
   type SemesterTerm,
 } from "@/types";
 
@@ -193,6 +197,11 @@ export default function CourseReviewBlock({
                         {r.anonymous ? "익명" : r.authorName}
                       </span>
                     </div>
+                    {r.ratingReason && (
+                      <p className="mt-1 text-[10px] italic text-amber-700/80">
+                        ★ {r.ratingReason}
+                      </p>
+                    )}
                     <p className="mt-1 whitespace-pre-wrap text-[11px] text-foreground/80">
                       {r.comment}
                     </p>
@@ -201,6 +210,54 @@ export default function CourseReviewBlock({
                         {r.workload != null && <span>과제량 {r.workload}/5</span>}
                         {r.difficulty != null && <span>난이도 {r.difficulty}/5</span>}
                       </div>
+                    )}
+                    {(r.midtermType || r.finalType || r.examNotes) && (
+                      <div className="mt-1.5 rounded border border-blue-100 bg-blue-50/40 p-1.5 text-[10px] text-blue-900/80">
+                        <div className="flex flex-wrap gap-2">
+                          {r.midtermType && (
+                            <span>
+                              <strong>중간:</strong> {EXAM_TYPE_LABELS[r.midtermType]}
+                            </span>
+                          )}
+                          {r.finalType && (
+                            <span>
+                              <strong>기말:</strong> {EXAM_TYPE_LABELS[r.finalType]}
+                            </span>
+                          )}
+                        </div>
+                        {r.examNotes && (
+                          <p className="mt-0.5 whitespace-pre-wrap text-blue-900/70">
+                            {r.examNotes}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    {(r.assignmentType || r.assignmentFrequency || r.assignmentNotes) && (
+                      <div className="mt-1 rounded border border-violet-100 bg-violet-50/40 p-1.5 text-[10px] text-violet-900/80">
+                        <div className="flex flex-wrap gap-2">
+                          {r.assignmentType && (
+                            <span>
+                              <strong>과제:</strong> {r.assignmentType}
+                            </span>
+                          )}
+                          {r.assignmentFrequency && (
+                            <span>
+                              <strong>빈도:</strong>{" "}
+                              {ASSIGNMENT_FREQUENCY_LABELS[r.assignmentFrequency]}
+                            </span>
+                          )}
+                        </div>
+                        {r.assignmentNotes && (
+                          <p className="mt-0.5 whitespace-pre-wrap text-violet-900/70">
+                            {r.assignmentNotes}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    {r.recommendedFor && (
+                      <p className="mt-1 text-[10px] text-emerald-800/80">
+                        🎯 추천 대상: {r.recommendedFor}
+                      </p>
                     )}
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1">
@@ -277,6 +334,16 @@ function ReviewComposeDialog({
   const [comment, setComment] = useState("");
   const [year, setYear] = useState<number>(defaultYear);
   const [term, setTerm] = useState<SemesterTerm>(defaultTerm);
+  const [profName, setProfName] = useState<string>(professor ?? "");
+  const [ratingReason, setRatingReason] = useState("");
+  const [midtermType, setMidtermType] = useState<ExamType>("exam");
+  const [finalType, setFinalType] = useState<ExamType>("exam");
+  const [examNotes, setExamNotes] = useState("");
+  const [assignmentType, setAssignmentType] = useState("");
+  const [assignmentFrequency, setAssignmentFrequency] =
+    useState<AssignmentFrequency>("weekly");
+  const [assignmentNotes, setAssignmentNotes] = useState("");
+  const [recommendedFor, setRecommendedFor] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -297,18 +364,26 @@ function ReviewComposeDialog({
       await courseReviewsApi.create({
         courseOfferingId,
         courseName,
-        professor: professor ?? "",
+        professor: profName.trim() || professor || "",
         category: category ?? "general",
         authorId: user.id,
         authorName: user.name,
         anonymous,
         rating,
+        ratingReason: ratingReason.trim() || undefined,
         workload,
         difficulty,
         comment: comment.trim(),
         recommend,
         year,
         term,
+        midtermType,
+        finalType,
+        examNotes: examNotes.trim() || undefined,
+        assignmentType: assignmentType.trim() || undefined,
+        assignmentFrequency,
+        assignmentNotes: assignmentNotes.trim() || undefined,
+        recommendedFor: recommendedFor.trim() || undefined,
         helpfulCount: 0,
         helpfulBy: [],
         createdAt: now,
@@ -316,8 +391,14 @@ function ReviewComposeDialog({
       });
       qc.invalidateQueries({ queryKey: ["course-reviews", courseOfferingId] });
       qc.invalidateQueries({ queryKey: ["course-reviews-aggregate"] });
+      qc.invalidateQueries({ queryKey: ["course-reviews-by-name", courseName] });
       onOpenChange(false);
       setComment("");
+      setRatingReason("");
+      setExamNotes("");
+      setAssignmentType("");
+      setAssignmentNotes("");
+      setRecommendedFor("");
     } catch (e) {
       setError((e as Error).message ?? "저장 실패");
     } finally {
@@ -327,7 +408,7 @@ function ReviewComposeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{courseName} 강의 후기</DialogTitle>
           <DialogDescription>
@@ -336,11 +417,40 @@ function ReviewComposeDialog({
         </DialogHeader>
 
         <div className="space-y-4 text-sm">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">과목명</label>
+              <input
+                type="text"
+                value={courseName}
+                readOnly
+                className="mt-1 h-9 w-full rounded-md border bg-muted/30 px-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">교수</label>
+              <input
+                type="text"
+                value={profName}
+                onChange={(e) => setProfName(e.target.value)}
+                placeholder="담당 교수"
+                className="mt-1 h-9 w-full rounded-md border bg-white px-2 text-sm"
+              />
+            </div>
+          </div>
+
           <div>
             <label className="text-xs font-medium text-muted-foreground">전반 평점</label>
             <div className="mt-1">
               <StarRow value={rating} onChange={setRating} size={20} />
             </div>
+            <Textarea
+              rows={2}
+              value={ratingReason}
+              onChange={(e) => setRatingReason(e.target.value)}
+              placeholder="평점 평가 이유 (예: 강의 구성이 체계적이었음)"
+              className="mt-2"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -407,13 +517,104 @@ function ReviewComposeDialog({
             </div>
           </div>
 
+          <fieldset className="rounded-md border border-blue-200 bg-blue-50/30 p-3">
+            <legend className="px-1 text-xs font-semibold text-blue-900">시험 운영</legend>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-muted-foreground">중간고사</label>
+                <select
+                  value={midtermType}
+                  onChange={(e) => setMidtermType(e.target.value as ExamType)}
+                  className="mt-1 h-9 w-full rounded-md border bg-white px-2 text-sm"
+                >
+                  {Object.entries(EXAM_TYPE_LABELS).map(([k, label]) => (
+                    <option key={k} value={k}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">기말고사</label>
+                <select
+                  value={finalType}
+                  onChange={(e) => setFinalType(e.target.value as ExamType)}
+                  className="mt-1 h-9 w-full rounded-md border bg-white px-2 text-sm"
+                >
+                  {Object.entries(EXAM_TYPE_LABELS).map(([k, label]) => (
+                    <option key={k} value={k}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <Textarea
+              rows={2}
+              value={examNotes}
+              onChange={(e) => setExamNotes(e.target.value)}
+              placeholder="시험에 대한 추가 의견 (예: 오픈북, 서술형 위주)"
+              className="mt-2"
+            />
+          </fieldset>
+
+          <fieldset className="rounded-md border border-violet-200 bg-violet-50/30 p-3">
+            <legend className="px-1 text-xs font-semibold text-violet-900">과제 운영</legend>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-muted-foreground">과제 유형</label>
+                <input
+                  type="text"
+                  value={assignmentType}
+                  onChange={(e) => setAssignmentType(e.target.value)}
+                  placeholder="개인 보고서 / 팀 프로젝트 / 발표 등"
+                  className="mt-1 h-9 w-full rounded-md border bg-white px-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">과제 빈도</label>
+                <select
+                  value={assignmentFrequency}
+                  onChange={(e) => setAssignmentFrequency(e.target.value as AssignmentFrequency)}
+                  className="mt-1 h-9 w-full rounded-md border bg-white px-2 text-sm"
+                >
+                  {Object.entries(ASSIGNMENT_FREQUENCY_LABELS).map(([k, label]) => (
+                    <option key={k} value={k}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <Textarea
+              rows={2}
+              value={assignmentNotes}
+              onChange={(e) => setAssignmentNotes(e.target.value)}
+              placeholder="과제에 대한 추가 의견 (예: 매주 발제문 제출)"
+              className="mt-2"
+            />
+          </fieldset>
+
           <div>
-            <label className="text-xs font-medium text-muted-foreground">후기</label>
+            <label className="text-xs font-medium text-muted-foreground">
+              추천 대상 (학기·특성)
+            </label>
+            <input
+              type="text"
+              value={recommendedFor}
+              onChange={(e) => setRecommendedFor(e.target.value)}
+              placeholder="예: 1학기 신입생 / 통계 배경 있는 학생 / 학부 청강생"
+              className="mt-1 h-9 w-full rounded-md border bg-white px-2 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">총평</label>
             <Textarea
               rows={5}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="강의 진행, 과제 부담, 추천 대상 등을 자유롭게 작성해주세요."
+              placeholder="강의 진행, 분위기, 추천 이유 등을 자유롭게 작성해주세요."
               className="mt-1"
             />
             <p className="mt-0.5 text-right text-[10px] text-muted-foreground">
