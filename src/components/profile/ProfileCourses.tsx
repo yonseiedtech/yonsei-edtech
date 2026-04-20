@@ -7,10 +7,27 @@ import {
   COURSE_CATEGORY_LABELS,
   ENROLLMENT_ROLE_LABELS,
   SEMESTER_TERM_LABELS,
+  type CourseCategory,
   type CourseEnrollment,
   type CourseOffering,
   type SemesterTerm,
 } from "@/types";
+
+const CATEGORY_ORDER: CourseCategory[] = [
+  "major_required",
+  "major_elective",
+  "teaching_general",
+  "other_major",
+  "general",
+  "research",
+  "other",
+];
+
+function categoryRank(c: CourseCategory | undefined): number {
+  if (!c) return CATEGORY_ORDER.length;
+  const i = CATEGORY_ORDER.indexOf(c);
+  return i < 0 ? CATEGORY_ORDER.length : i;
+}
 import { Badge } from "@/components/ui/badge";
 import { GraduationCap, BookOpen } from "lucide-react";
 
@@ -84,12 +101,12 @@ export default function ProfileCourses({ ownerId, canSeeSensitive }: Props) {
       }
       g.items.push({ ...e, course: courseMap[e.courseOfferingId] });
     }
-    // 항목별 정렬 (카테고리 → 과목명)
+    // 항목별 정렬 (커리큘럼 순서: 전공필수→전공선택→교직→타전공→교양→연구→기타 → 과목명)
     for (const g of buckets.values()) {
       g.items.sort((a, b) => {
-        const ca = a.course?.category ?? "zzz";
-        const cb = b.course?.category ?? "zzz";
-        if (ca !== cb) return ca.localeCompare(cb);
+        const ra = categoryRank(a.course?.category);
+        const rb = categoryRank(b.course?.category);
+        if (ra !== rb) return ra - rb;
         return (a.course?.courseName ?? "").localeCompare(b.course?.courseName ?? "");
       });
     }

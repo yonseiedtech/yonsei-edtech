@@ -30,11 +30,14 @@ import {
 import { toast } from "sonner";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
-import { courseOfferingsApi, courseEnrollmentsApi, profilesApi } from "@/lib/bkend";
+import { courseOfferingsApi, courseEnrollmentsApi, profilesApi, comprehensiveExamsApi } from "@/lib/bkend";
 import {
   COURSE_CATEGORY_LABELS,
+  COMPREHENSIVE_EXAM_STATUS_LABELS,
   ENROLLMENT_ROLE_LABELS,
   SEMESTER_TERM_LABELS,
+  type ComprehensiveExamRecord,
+  type ComprehensiveExamStatus,
   type CourseCategory,
   type CourseEnrollment,
   type CourseOffering,
@@ -42,7 +45,8 @@ import {
   type User,
 } from "@/types";
 
-const TERMS: SemesterTerm[] = ["spring", "summer", "fall", "winter"];
+// 전기/후기 2학기 운영 (여름/겨울 학기 미사용)
+const TERMS: SemesterTerm[] = ["spring", "fall"];
 const CATEGORIES: CourseCategory[] = [
   "major_required",
   "major_elective",
@@ -105,10 +109,13 @@ function formatFirestoreError(e: unknown, fallback: string): string {
 
 function defaultTermForToday(): SemesterTerm {
   const m = new Date().getMonth() + 1;
-  if (m >= 3 && m <= 6) return "spring";
-  if (m === 7 || m === 8) return "summer";
-  if (m >= 9 && m <= 12) return "fall";
-  return "winter";
+  // 3~8월 → 1학기, 9~2월 → 2학기 (여름/겨울 학기는 미운영)
+  return m >= 3 && m <= 8 ? "spring" : "fall";
+}
+
+function categoryRank(c: CourseCategory): number {
+  const i = CATEGORIES.indexOf(c);
+  return i < 0 ? CATEGORIES.length : i;
 }
 
 function ConsoleCoursesContent() {
@@ -178,7 +185,9 @@ function ConsoleCoursesContent() {
       ? rows
       : rows.filter((r) => r.category === filterCategory);
     return [...filtered].sort((a, b) => {
-      if (a.category !== b.category) return a.category.localeCompare(b.category);
+      const ra = categoryRank(a.category);
+      const rb = categoryRank(b.category);
+      if (ra !== rb) return ra - rb;
       return (a.courseName ?? "").localeCompare(b.courseName ?? "");
     });
   }, [rows, filterCategory]);
@@ -643,16 +652,9 @@ function ConsoleCoursesContent() {
             )}
           </TabsContent>
 
-          {/* ───── 종합시험 (스캐폴드) ───── */}
-          <TabsContent value="exam" className="mt-4">
-            <div className="rounded-xl border border-dashed bg-muted/20 p-10 text-center">
-              <GraduationCap size={36} className="mx-auto text-muted-foreground" />
-              <p className="mt-3 text-sm font-semibold">종합시험 관리 (준비 중)</p>
-              <p className="mt-2 text-xs text-muted-foreground">
-                응시자 명단·일정·결과 관리 기능이 이 영역에 들어옵니다.
-                <br />구체적인 요구사항이 정해지면 추가 구현됩니다.
-              </p>
-            </div>
+          {/* ───── 종합시험 ───── */}
+          <TabsContent value="exam" className="mt-4 space-y-4">
+            <ComprehensiveExamConsole year={year} term={term} setYear={setYear} setTerm={setTerm} />
           </TabsContent>
         </Tabs>
       </div>
@@ -1527,6 +1529,186 @@ function MemberPicker({
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * 종합시험 운영 콘솔 — 학기별로 응시자 명단을 모아 보고, status(예정/신청/합격/불합격) 변경.
+ * 회원 self-input 은 /courses 의 종합시험 입력 폼에서 이루어짐.
+ */
+function ComprehensiveExamConsole({
+  year,
+  term,
+  setYear,
+  setTerm,
+}: {
+  year: number;
+  term: SemesterTerm;
+  setYear: (y: number) => void;
+  setTerm: (t: SemesterTerm) => void;
+}) {
+  const [records, setRecords] = useState<ComprehensiveExamRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const yearOptions: number[] = [];
+  const cy = nowYear();
+  for (let y = cy + 1; y >= cy - 8; y--) yearOptions.push(y);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await comprehensiveExamsApi.listBySemester(year, term);
+        if (!cancelled) setRecords(res.data);
+      } catch (e) {
+        console.error("[exam-console] 실패", e);
+        if (!cancelled) toast.error(formatFirestoreError(e, "응시 기록 조회 실패"), { duration: 8000 });
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [year, term]);
+
+  async function setStatus(row: ComprehensiveExamRecord, next: ComprehensiveExamStatus) {
+    setBusy(row.id);
+    try {
+      await comprehensiveExamsApi.update(row.id, { status: next });
+      setRecords((prev) => prev.map((r) => (r.id === row.id ? { ...r, status: next } : r)));
+      toast.success(`${row.studentName} → ${COMPREHENSIVE_EXAM_STATUS_LABELS[next]}`);
+    } catch (e) {
+      toast.error(formatFirestoreError(e, "상태 변경 실패"), { duration: 6000 });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function remove(row: ComprehensiveExamRecord) {
+    if (!confirm(`${row.studentName}님의 ${row.plannedYear}년 ${SEMESTER_TERM_LABELS[row.plannedTerm]} 응시 기록을 삭제하시겠습니까?`)) return;
+    setBusy(row.id);
+    try {
+      await comprehensiveExamsApi.delete(row.id);
+      setRecords((prev) => prev.filter((r) => r.id !== row.id));
+      toast.success("삭제되었습니다");
+    } catch (e) {
+      toast.error(formatFirestoreError(e, "삭제 실패"), { duration: 6000 });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  const counts = useMemo(() => {
+    const by: Record<ComprehensiveExamStatus, number> = { planning: 0, applied: 0, passed: 0, failed: 0 };
+    for (const r of records) by[r.status] = (by[r.status] ?? 0) + 1;
+    return by;
+  }, [records]);
+
+  return (
+    <>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="rounded-lg border bg-white p-3">
+          <p className="text-xs text-muted-foreground">학기</p>
+          <div className="mt-1 flex gap-2">
+            <select
+              value={year}
+              onChange={(e) => setYear(Number(e.target.value))}
+              className="flex-1 rounded-md border bg-background px-2 py-1.5 text-sm"
+            >
+              {yearOptions.map((y) => (
+                <option key={y} value={y}>{y}년</option>
+              ))}
+            </select>
+            <select
+              value={term}
+              onChange={(e) => setTerm(e.target.value as SemesterTerm)}
+              className="flex-1 rounded-md border bg-background px-2 py-1.5 text-sm"
+            >
+              {TERMS.map((t) => (
+                <option key={t} value={t}>{SEMESTER_TERM_LABELS[t]}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <StatCard label="응시 예정" value={counts.planning} />
+        <StatCard label="신청 완료" value={counts.applied} tone="primary" />
+        <StatCard label="합격" value={counts.passed} tone="primary" />
+        <StatCard label="불합격" value={counts.failed} tone="muted" />
+      </div>
+
+      <div className="rounded-xl border bg-white p-4">
+        <div className="flex flex-wrap items-start gap-2">
+          <GraduationCap size={18} className="text-primary" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold">{year}년 {SEMESTER_TERM_LABELS[term]} 응시 기록</p>
+            <p className="text-[11px] text-muted-foreground">
+              회원이 <Link href="/courses" className="text-primary hover:underline">수강과목 페이지 → 종합시험</Link>에서 직접 등록한 소요조사·신청 결과를 확인하고 상태를 변경합니다.
+            </p>
+          </div>
+        </div>
+
+        {loading ? (
+          <LoadingSpinner className="mt-6" />
+        ) : records.length === 0 ? (
+          <p className="mt-6 text-center text-xs text-muted-foreground">해당 학기에 등록된 응시 기록이 없습니다.</p>
+        ) : (
+          <ul className="mt-4 space-y-2">
+            {records.map((r) => (
+              <li key={r.id} className="rounded-lg border bg-muted/10 p-3">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="flex flex-wrap items-center gap-1.5 text-sm font-semibold">
+                      {r.userId ? (
+                        <Link href={`/profile/${r.userId}`} className="hover:text-primary hover:underline">
+                          {r.studentName}
+                        </Link>
+                      ) : (
+                        <span>{r.studentName}</span>
+                      )}
+                      {r.studentId && (
+                        <span className="font-mono text-[11px] text-muted-foreground">{r.studentId}</span>
+                      )}
+                      <Badge variant="outline" className="text-[10px]">
+                        {COMPREHENSIVE_EXAM_STATUS_LABELS[r.status]}
+                      </Badge>
+                    </p>
+                    {r.notes && (
+                      <p className="mt-1 text-[11px] text-foreground/70">📝 {r.notes}</p>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 flex-wrap gap-1">
+                    {(["planning", "applied", "passed", "failed"] as ComprehensiveExamStatus[]).map((s) => (
+                      <Button
+                        key={s}
+                        size="sm"
+                        variant={r.status === s ? "default" : "outline"}
+                        disabled={busy === r.id || r.status === s}
+                        onClick={() => setStatus(r, s)}
+                        className="h-7 px-2 text-[11px]"
+                      >
+                        {COMPREHENSIVE_EXAM_STATUS_LABELS[s]}
+                      </Button>
+                    ))}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={busy === r.id}
+                      onClick={() => remove(r)}
+                      className="h-7 px-2 text-destructive"
+                    >
+                      <Trash2 size={12} />
+                    </Button>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </>
   );
 }
 

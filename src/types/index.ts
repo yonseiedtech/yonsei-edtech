@@ -1599,6 +1599,36 @@ export const ENROLLMENT_ROLE_LABELS: Record<NonNullable<CourseEnrollment["role"]
   auditor: "청강",
 };
 
+/**
+ * 종합시험 응시 기록
+ * — 회원이 직접 입력하는 소요조사 + 신청·결과
+ * — 운영진(president 이상)이 학기별로 모아서 관리
+ */
+export type ComprehensiveExamStatus = "planning" | "applied" | "passed" | "failed";
+
+export const COMPREHENSIVE_EXAM_STATUS_LABELS: Record<ComprehensiveExamStatus, string> = {
+  planning: "응시 예정",
+  applied: "신청 완료",
+  passed: "합격",
+  failed: "불합격",
+};
+
+export interface ComprehensiveExamRecord {
+  id: string;
+  userId: string;
+  studentName: string;
+  studentId?: string;
+  /** 응시 예정/응시한 학기 (소요조사 시점) */
+  plannedYear: number;
+  plannedTerm: SemesterTerm;
+  status: ComprehensiveExamStatus;
+  /** 자유 메모 (응시 영역, 결과 상세 등) */
+  notes?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 /** 수업 진행 모드 */
 export type ClassSessionMode =
   | "in_person"   // 대면 수업 (기본)

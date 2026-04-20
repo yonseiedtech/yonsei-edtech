@@ -41,7 +41,7 @@ import type {
   ProfileLike, ProfileView, StudySession,
   ActivityParticipation, Award, ExternalActivity, ContentCreation,
   AlumniThesis, ThesisReference, ThesisClaim,
-  CourseOffering, CourseEnrollment, ClassSession, SemesterTerm,
+  CourseOffering, CourseEnrollment, ClassSession, SemesterTerm, ComprehensiveExamRecord,
   GuideTrack, GuideItem, GuideProgress,
   HostRetrospective, HostActivityType,
   SitePopup,
@@ -911,6 +911,33 @@ export const courseEnrollmentsApi = {
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<CourseEnrollment>("course_enrollments", id, data),
   delete: (id: string) => dataApi.delete("course_enrollments", id),
+};
+
+// 종합시험 응시 기록 (회원 self-input + 운영진 조회)
+export const comprehensiveExamsApi = {
+  list: (params?: QueryParams) =>
+    dataApi.list<ComprehensiveExamRecord>("comprehensive_exam_records", {
+      sort: "plannedYear:desc",
+      limit: 1000,
+      ...params,
+    }),
+  listByUser: (userId: string) =>
+    dataApi.list<ComprehensiveExamRecord>("comprehensive_exam_records", {
+      "filter[userId]": userId,
+      sort: "plannedYear:desc",
+      limit: 50,
+    }),
+  listBySemester: (year: number, term: SemesterTerm) =>
+    dataApi.list<ComprehensiveExamRecord>("comprehensive_exam_records", {
+      "filter[plannedYear]": year,
+      "filter[plannedTerm]": term,
+      limit: 500,
+    }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<ComprehensiveExamRecord>("comprehensive_exam_records", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<ComprehensiveExamRecord>("comprehensive_exam_records", id, data),
+  delete: (id: string) => dataApi.delete("comprehensive_exam_records", id),
 };
 
 // 수업 진행 스케쥴 (날짜별 운영방식 기록)
