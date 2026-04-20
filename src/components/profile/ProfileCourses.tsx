@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { courseEnrollmentsApi, courseOfferingsApi } from "@/lib/bkend";
+import { cn } from "@/lib/utils";
 import {
   COURSE_CATEGORY_LABELS,
   ENROLLMENT_ROLE_LABELS,
@@ -147,6 +148,55 @@ export default function ProfileCourses({ ownerId, canSeeSensitive }: Props) {
   const semesterCount = groups.length;
 
   return (
+    <ProfileCoursesView
+      groups={groups}
+      total={total}
+      semesterCount={semesterCount}
+      canSeeSensitive={canSeeSensitive}
+    />
+  );
+}
+
+interface ViewProps {
+  groups: SemesterGroup[];
+  total: number;
+  semesterCount: number;
+  canSeeSensitive: boolean;
+}
+
+function ProfileCoursesView({
+  groups,
+  total,
+  semesterCount,
+  canSeeSensitive,
+}: ViewProps) {
+  const tabs = useMemo(
+    () => [
+      { key: "all" as const, label: "전체", count: total },
+      ...groups.map((g) => ({
+        key: `${g.year}-${g.term}` as const,
+        label: `${g.year}년 ${SEMESTER_TERM_LABELS[g.term]}`,
+        count: g.items.length,
+      })),
+    ],
+    [groups, total],
+  );
+
+  const [activeTab, setActiveTab] = useState<string>("all");
+
+  // tabs 변경 시 활성 탭이 사라졌다면 첫 번째로 fallback
+  useEffect(() => {
+    if (!tabs.find((t) => t.key === activeTab)) {
+      setActiveTab(tabs[0]?.key ?? "all");
+    }
+  }, [tabs, activeTab]);
+
+  const visibleGroups =
+    activeTab === "all"
+      ? groups
+      : groups.filter((g) => `${g.year}-${g.term}` === activeTab);
+
+  return (
     <section className="rounded-2xl border bg-white p-5">
       <header className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
@@ -158,24 +208,53 @@ export default function ProfileCourses({ ownerId, canSeeSensitive }: Props) {
         </p>
       </header>
 
+      <nav
+        className="mt-3 flex gap-1 overflow-x-auto border-b"
+        aria-label="학기별 수강 내역"
+      >
+        {tabs.map((t) => {
+          const isActive = activeTab === t.key;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setActiveTab(t.key)}
+              aria-current={isActive ? "page" : undefined}
+              className={cn(
+                "flex flex-none items-center gap-1 border-b-2 px-3 py-1.5 text-[11px] font-medium transition-colors",
+                isActive
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {t.label}
+              <span className="rounded-full bg-muted px-1.5 text-[10px] text-muted-foreground">
+                {t.count}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
+
       <div className="mt-4 space-y-4">
-        {groups.map((g) => (
-          <div key={`${g.year}-${g.term}`} className="rounded-lg border bg-muted/10 p-3">
-            <div className="flex items-center gap-2">
-              <span className="inline-block h-2 w-2 rounded-full bg-primary" />
-              <h3 className="text-xs font-semibold">
-                {g.year}년 {SEMESTER_TERM_LABELS[g.term]}
-              </h3>
-              <span className="text-[11px] text-muted-foreground">{g.items.length}과목</span>
-            </div>
-            <ul className="mt-2 space-y-1.5">
+        {visibleGroups.map((g) => (
+          <div key={`${g.year}-${g.term}`} className="space-y-2">
+            {activeTab === "all" && (
+              <div className="flex items-center gap-2">
+                <span className="inline-block h-2 w-2 rounded-full bg-primary" />
+                <h3 className="text-xs font-semibold">
+                  {g.year}년 {SEMESTER_TERM_LABELS[g.term]}
+                </h3>
+                <span className="text-[11px] text-muted-foreground">
+                  {g.items.length}과목
+                </span>
+              </div>
+            )}
+            <ul className="space-y-1.5">
               {g.items.map((it) => {
                 const course = it.course;
                 return (
-                  <li
-                    key={it.id}
-                    className="rounded-md border bg-white px-3 py-2"
-                  >
+                  <li key={it.id} className="rounded-md border bg-white px-3 py-2">
                     <div className="flex flex-wrap items-center gap-1.5">
                       {course?.category && (
                         <Badge variant="secondary" className="text-[10px]">

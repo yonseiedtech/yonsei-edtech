@@ -11,7 +11,6 @@ import { Mail, Globe, BookOpen, Users, Search } from "lucide-react";
 import PageHeader from "@/components/ui/page-header";
 import EmptyState from "@/components/ui/empty-state";
 import LoadingSpinner from "@/components/ui/loading-spinner";
-import OrgChart from "@/features/member/OrgChart";
 import { Input } from "@/components/ui/input";
 import type { User } from "@/types";
 
@@ -131,8 +130,6 @@ function MembersContent() {
   }, [filteredByTab, generationFilter, enrollmentFilter, search, activeTab]);
 
   const showFilters = activeTab === "student" || activeTab === "alumni" || activeTab === "staff";
-  // OrgChart는 운영진/재학생 탭 모두 노출
-  const showOrgChart = activeTab === "staff" || activeTab === "student";
 
   return (
     <div className="py-16">
@@ -169,8 +166,6 @@ function MembersContent() {
             <LoadingSpinner />
           ) : (
             <>
-              {showOrgChart && <div className="mb-8"><OrgChart /></div>}
-
               {showFilters && (
                 <div className="mb-6 flex flex-col gap-3 rounded-xl border bg-white p-3 sm:flex-row sm:items-center">
                   <div className="relative flex-1">
