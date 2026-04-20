@@ -14,7 +14,7 @@ import {
 } from "@/lib/profile-visibility";
 import { useProfileViews } from "@/features/profile/useProfileViews";
 import type { User } from "@/types";
-import { Lock } from "lucide-react";
+import { Lock, Pencil } from "lucide-react";
 import Image from "next/image";
 import ProfileHeader from "./ProfileHeader";
 import ProfileBio from "./ProfileBio";
@@ -166,7 +166,17 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
         <div className="rounded-2xl border border-dashed border-primary/20 bg-primary/[0.02] p-3 space-y-3">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-[11px] font-semibold uppercase tracking-wider text-primary/70">학술 포트폴리오</h3>
-            <span className="text-[10px] text-muted-foreground">승인 여부 무관 · 수강 내역 상단</span>
+            {isOwner ? (
+              <Link
+                href="/mypage/portfolio"
+                className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-white px-2 py-0.5 text-[10px] font-medium text-primary hover:bg-primary/5"
+              >
+                <Pencil size={10} />
+                편집
+              </Link>
+            ) : (
+              <span className="text-[10px] text-muted-foreground">승인 여부 무관 · 수강 내역 상단</span>
+            )}
           </div>
           <ProfileAwards owner={owner} />
           <ProfileExternalActivities owner={owner} />

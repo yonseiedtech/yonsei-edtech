@@ -235,10 +235,10 @@ function PortfolioContent() {
     <div className="min-h-screen bg-slate-50 py-10">
       <div className="mx-auto max-w-3xl px-4">
         <Link
-          href="/mypage"
+          href="/profile/me"
           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
         >
-          <ArrowLeft size={12} /> 마이페이지
+          <ArrowLeft size={12} /> 개인 페이지
         </Link>
 
         <div className="mt-3 flex items-center gap-3">
