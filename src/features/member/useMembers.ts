@@ -186,6 +186,23 @@ export function useCreateMember() {
   return { createMember: mutation.mutateAsync, isLoading: mutation.isPending };
 }
 
+// ── 회원 탈퇴 (하드 삭제) ──
+
+export function useDeleteMember() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await profilesApi.delete(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["members"] });
+    },
+  });
+
+  return { deleteMember: mutation.mutateAsync, isLoading: mutation.isPending };
+}
+
 // ── 일괄 역할 변경 (운영진 교체) ──
 
 export function useBulkChangeRoles() {

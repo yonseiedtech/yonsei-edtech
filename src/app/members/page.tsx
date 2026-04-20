@@ -1,17 +1,18 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import MemberCard from "@/components/members/MemberCard";
 import { useMembers } from "@/features/member/useMembers";
 import { useProfessor } from "@/features/site-settings/useSiteContent";
-import { Mail, Globe, BookOpen, Users } from "lucide-react";
+import { Mail, Globe, BookOpen, Users, Search } from "lucide-react";
 import PageHeader from "@/components/ui/page-header";
 import EmptyState from "@/components/ui/empty-state";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import OrgChart from "@/features/member/OrgChart";
+import { Input } from "@/components/ui/input";
 import type { User } from "@/types";
 
 const ROLE_TABS = [
@@ -73,12 +74,20 @@ function MembersContent() {
   const tabParam = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState(tabParam || "professor");
 
+  // 검색/필터 상태 (학생/졸업생 탭 공용)
+  const [search, setSearch] = useState("");
+  const [generationFilter, setGenerationFilter] = useState<string>("all");
+  const [enrollmentFilter, setEnrollmentFilter] = useState<string>("all");
+
   useEffect(() => {
     if (tabParam && ROLE_TABS.some((t) => t.key === tabParam)) setActiveTab(tabParam);
   }, [tabParam]);
 
   function handleTabChange(key: string) {
     setActiveTab(key);
+    setSearch("");
+    setGenerationFilter("all");
+    setEnrollmentFilter("all");
     const qs = new URLSearchParams(searchParams.toString());
     if (key === "professor") qs.delete("tab");
     else qs.set("tab", key);
@@ -86,7 +95,44 @@ function MembersContent() {
     router.replace(next ? `/members?${next}` : "/members", { scroll: false });
   }
 
-  const filtered = filterByTab(members, activeTab);
+  const filteredByTab = filterByTab(members, activeTab);
+
+  // 기수 옵션 (현재 탭 기준)
+  const generations = useMemo(() => {
+    const set = new Set<number>();
+    filteredByTab.forEach((m) => { if (m.generation) set.add(m.generation); });
+    return Array.from(set).sort((a, b) => b - a);
+  }, [filteredByTab]);
+
+  // 검색/필터 적용
+  const visible = useMemo(() => {
+    let list = filteredByTab;
+    if (generationFilter !== "all") {
+      list = list.filter((m) => String(m.generation ?? "") === generationFilter);
+    }
+    if (enrollmentFilter !== "all" && activeTab === "student") {
+      list = list.filter((m) => (m.enrollmentStatus ?? "enrolled") === enrollmentFilter);
+    }
+    const q = search.trim().toLowerCase();
+    if (q) {
+      list = list.filter((m) => {
+        const hay = [
+          m.name,
+          m.studentId,
+          m.field,
+          m.affiliation,
+          m.position,
+          ...(m.researchInterests ?? []),
+        ].filter(Boolean).join(" ").toLowerCase();
+        return hay.includes(q);
+      });
+    }
+    return list;
+  }, [filteredByTab, generationFilter, enrollmentFilter, search, activeTab]);
+
+  const showFilters = activeTab === "student" || activeTab === "alumni" || activeTab === "staff";
+  // OrgChart는 운영진/재학생 탭 모두 노출
+  const showOrgChart = activeTab === "staff" || activeTab === "student";
 
   return (
     <div className="py-16">
@@ -123,11 +169,59 @@ function MembersContent() {
             <LoadingSpinner />
           ) : (
             <>
-              {activeTab === "staff" && <div className="mb-8"><OrgChart /></div>}
-              {filtered.length === 0 ? (
-                <EmptyState icon={Users} title="해당 구성원이 없습니다" description="조건에 맞는 회원이 아직 등록되지 않았습니다." />
+              {showOrgChart && <div className="mb-8"><OrgChart /></div>}
+
+              {showFilters && (
+                <div className="mb-6 flex flex-col gap-3 rounded-xl border bg-white p-3 sm:flex-row sm:items-center">
+                  <div className="relative flex-1">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="이름·학번·관심분야·소속 검색"
+                      className="pl-9"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    {generations.length > 0 && (
+                      <select
+                        value={generationFilter}
+                        onChange={(e) => setGenerationFilter(e.target.value)}
+                        className="rounded-md border bg-white px-3 py-2 text-sm"
+                        aria-label="기수 필터"
+                      >
+                        <option value="all">전체 기수</option>
+                        {generations.map((g) => (
+                          <option key={g} value={String(g)}>{g}기</option>
+                        ))}
+                      </select>
+                    )}
+                    {activeTab === "student" && (
+                      <select
+                        value={enrollmentFilter}
+                        onChange={(e) => setEnrollmentFilter(e.target.value)}
+                        className="rounded-md border bg-white px-3 py-2 text-sm"
+                        aria-label="재학 상태 필터"
+                      >
+                        <option value="all">재학·휴학</option>
+                        <option value="enrolled">재학</option>
+                        <option value="on_leave">휴학</option>
+                      </select>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {showFilters && (
+                <p className="mb-3 text-xs text-muted-foreground">
+                  총 {visible.length}명{search && ` · "${search}" 검색 결과`}
+                </p>
+              )}
+
+              {visible.length === 0 ? (
+                <EmptyState icon={Users} title="해당 구성원이 없습니다" description={search ? "검색 조건에 맞는 회원이 없습니다." : "조건에 맞는 회원이 아직 등록되지 않았습니다."} />
               ) : (
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">{filtered.map((m) => <MemberCard key={m.id} member={m} />)}</div>
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">{visible.map((m) => <MemberCard key={m.id} member={m} />)}</div>
               )}
             </>
           )}

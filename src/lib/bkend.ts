@@ -41,7 +41,7 @@ import type {
   ProfileLike, ProfileView, StudySession,
   ActivityParticipation, Award, ExternalActivity, ContentCreation,
   AlumniThesis, ThesisReference, ThesisClaim,
-  CourseOffering, CourseEnrollment, SemesterTerm,
+  CourseOffering, CourseEnrollment, ClassSession, SemesterTerm,
   GuideTrack, GuideItem, GuideProgress,
   HostRetrospective, HostActivityType,
   SitePopup,
@@ -299,6 +299,7 @@ export const profilesApi = {
   getByStudentId: (studentId: string) => dataApi.list<User>("users", { "filter[studentId]": studentId }),
   update: (id: string, data: Record<string, unknown>) => dataApi.update<User>("users", id, data),
   approve: (id: string) => dataApi.patch("users", id, { approved: true }),
+  delete: (id: string) => dataApi.delete("users", id),
 };
 
 export const seminarsApi = {
@@ -910,6 +911,36 @@ export const courseEnrollmentsApi = {
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<CourseEnrollment>("course_enrollments", id, data),
   delete: (id: string) => dataApi.delete("course_enrollments", id),
+};
+
+// 수업 진행 스케쥴 (날짜별 운영방식 기록)
+export const classSessionsApi = {
+  listByCourse: (courseOfferingId: string) =>
+    dataApi.list<ClassSession>("class_sessions", {
+      "filter[courseOfferingId]": courseOfferingId,
+      sort: "date:asc",
+      limit: 500,
+    }),
+  listByDate: (date: string) =>
+    dataApi.list<ClassSession>("class_sessions", {
+      "filter[date]": date,
+      limit: 200,
+    }),
+  listByCourses: (courseIds: string[]) => {
+    if (courseIds.length === 0) {
+      return Promise.resolve({ data: [] as ClassSession[], total: 0 });
+    }
+    return dataApi.list<ClassSession>("class_sessions", {
+      "filter[courseOfferingId][in]": courseIds.join(","),
+      sort: "date:asc",
+      limit: 1000,
+    });
+  },
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<ClassSession>("class_sessions", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<ClassSession>("class_sessions", id, data),
+  delete: (id: string) => dataApi.delete("class_sessions", id),
 };
 
 // ── Track 6: 인지디딤판 (Phase 1) ──

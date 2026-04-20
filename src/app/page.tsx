@@ -8,6 +8,7 @@ import NewsletterPreview from "@/components/home/NewsletterPreview";
 import GuestSpeakersSection from "@/components/home/GuestSpeakersSection";
 import ActivityCards from "@/components/home/ActivityCards";
 import InteractiveHome from "@/components/home/InteractiveWrap";
+import HomeRedirectGate from "@/components/home/HomeRedirectGate";
 
 export const metadata: Metadata = {
   alternates: {
@@ -17,15 +18,18 @@ export const metadata: Metadata = {
 
 export default function HomePage() {
   return (
-    <InteractiveHome>
-      <HeroSection />
-      <AboutPreview />
-      <NoticePreview />
-      <SeminarPreview />
-      <PromotionPreview />
-      <NewsletterPreview />
-      <GuestSpeakersSection />
-      <ActivityCards />
-    </InteractiveHome>
+    <>
+      <HomeRedirectGate />
+      <InteractiveHome>
+        <HeroSection />
+        <AboutPreview />
+        <NoticePreview />
+        <SeminarPreview />
+        <PromotionPreview />
+        <NewsletterPreview />
+        <GuestSpeakersSection />
+        <ActivityCards />
+      </InteractiveHome>
+    </>
   );
 }

@@ -94,11 +94,6 @@ function OrgNode({ node, isRoot, isIndependent }: { node: OrgTreeNode; isRoot?: 
                 {ROLE_LABELS[node.role]}
               </span>
             )}
-            {node.isDirectAide && (
-              <span className="rounded-full bg-teal-100 px-1.5 py-0.5 text-[9px] font-medium text-teal-700">
-                주임교수 직속
-              </span>
-            )}
           </div>
         </div>
 
@@ -140,9 +135,53 @@ function OrgNode({ node, isRoot, isIndependent }: { node: OrgTreeNode; isRoot?: 
 }
 
 function MobileOrgList({ nodes, depth = 0 }: { nodes: OrgTreeNode[]; depth?: number }) {
+  // 직속보조 2명 이상 연속 시 가로 그룹으로 묶어 한 줄에 표시
+  type Group = { kind: "single"; node: OrgTreeNode } | { kind: "aides"; nodes: OrgTreeNode[] };
+  const groups: Group[] = [];
+  for (const node of nodes) {
+    const last = groups[groups.length - 1];
+    if (node.isDirectAide && !node.children.length && last?.kind === "aides") {
+      last.nodes.push(node);
+    } else if (node.isDirectAide && !node.children.length) {
+      groups.push({ kind: "aides", nodes: [node] });
+    } else {
+      groups.push({ kind: "single", node });
+    }
+  }
+  // 단일 직속보조는 일반 single로 환원 (가로 묶음 의미 없음)
+  const flattened: Group[] = groups.map((g) =>
+    g.kind === "aides" && g.nodes.length === 1 ? { kind: "single", node: g.nodes[0] } : g,
+  );
+
   return (
     <div className="space-y-1">
-      {nodes.map((node) => {
+      {flattened.map((g, gi) => {
+        if (g.kind === "aides") {
+          return (
+            <div
+              key={`aides-${gi}`}
+              className="flex flex-wrap items-center gap-1.5 px-3 py-2"
+              style={{ paddingLeft: `${depth * 1.25 + 0.75}rem` }}
+            >
+              {g.nodes.map((n) => {
+                const s = getRoleStyle(n.role, !!n.userName);
+                return (
+                  <span
+                    key={n.id}
+                    className="inline-flex items-center gap-1.5 rounded-full border bg-white px-2 py-1"
+                  >
+                    <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${s.avatar}`}>
+                      {n.userName ? n.userName[0] : "?"}
+                    </span>
+                    <span className="text-xs font-medium">{n.title}</span>
+                    <span className="text-[11px] text-muted-foreground">{n.userName ?? "공석"}</span>
+                  </span>
+                );
+              })}
+            </div>
+          );
+        }
+        const node = g.node;
         const style = getRoleStyle(node.role, !!node.userName);
         return (
           <div key={node.id}>
@@ -162,9 +201,6 @@ function MobileOrgList({ nodes, depth = 0 }: { nodes: OrgTreeNode[]; depth?: num
                 )}
                 {node.isIndependent && (
                   <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">독립</span>
-                )}
-                {node.isDirectAide && (
-                  <span className="rounded bg-teal-100 px-1.5 py-0.5 text-[10px] font-medium text-teal-700">주임교수 직속</span>
                 )}
                 <span className="text-xs text-muted-foreground">{node.userName ?? "공석"}</span>
                 {node.department && (

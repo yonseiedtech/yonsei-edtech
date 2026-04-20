@@ -12,6 +12,7 @@ import {
   useChangeRole,
   useBulkChangeRoles,
   useCreateMember,
+  useDeleteMember,
 } from "@/features/member/useMembers";
 import { profilesApi } from "@/lib/bkend";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +24,7 @@ import { toast } from "sonner";
 import {
   Search, RefreshCw, UserPlus, Clock, Users, UserCheck, XCircle,
   RotateCcw, Settings, Download, ShieldCheck, AlertTriangle, AlertCircle,
-  CheckSquare, Square,
+  CheckSquare, Square, Trash2,
 } from "lucide-react";
 import { evaluateSignup, partitionPending } from "@/lib/auth/approval-rules";
 import AdminEmptyState from "@/components/admin/AdminEmptyState";
@@ -126,6 +127,36 @@ export default function AdminMemberTab() {
     roleFilter !== "all" ? { role: roleFilter } : undefined,
   );
   const { changeRole } = useChangeRole();
+  const { deleteMember, isLoading: deleting } = useDeleteMember();
+
+  // 회원 탈퇴 확인 다이얼로그
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    if (deleteConfirm !== deleteTarget.name) {
+      toast.error("이름이 일치하지 않습니다.");
+      return;
+    }
+    try {
+      await deleteMember(deleteTarget.id);
+      toast.success(`${deleteTarget.name} 회원을 탈퇴 처리했습니다.`);
+      logAudit({
+        action: "회원 탈퇴 (관리자)",
+        category: "role",
+        detail: `${deleteTarget.name}(@${deleteTarget.username}) 계정 삭제`,
+        targetId: deleteTarget.id,
+        targetName: deleteTarget.name,
+        userId: user?.id ?? "",
+        userName: user?.name ?? "",
+      });
+      setDeleteTarget(null);
+      setDeleteConfirm("");
+    } catch {
+      toast.error("회원 탈퇴 처리에 실패했습니다.");
+    }
+  }
 
   // 승인대기 vs 거절 분리
   const truePending = useMemo(() => pendingMembers.filter((m) => !m.rejected), [pendingMembers]);
@@ -414,15 +445,25 @@ export default function AdminMemberTab() {
             </div>
           </div>
           {canApprove && (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="shrink-0"
-              onClick={() => router.push(`/console/members/${m.id}`)}
-              title="회원 상세 관리"
-            >
-              <Settings size={14} />
-            </Button>
+            <div className="flex shrink-0 items-center gap-1">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => router.push(`/console/members/${m.id}`)}
+                title="회원 상세 관리"
+              >
+                <Settings size={14} />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={() => { setDeleteTarget(m); setDeleteConfirm(""); }}
+                title="회원 탈퇴"
+              >
+                <Trash2 size={14} />
+              </Button>
+            </div>
           )}
         </div>
       </div>
@@ -477,14 +518,25 @@ export default function AdminMemberTab() {
                   <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{formatLastLogin(m.lastLoginAt)}</td>
                   {canApprove && (
                     <td className="px-4 py-3">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => router.push(`/console/members/${m.id}`)}
-                        title="회원 상세 관리"
-                      >
-                        <Settings size={14} />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => router.push(`/console/members/${m.id}`)}
+                          title="회원 상세 관리"
+                        >
+                          <Settings size={14} />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          onClick={() => { setDeleteTarget(m); setDeleteConfirm(""); }}
+                          title="회원 탈퇴"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
                     </td>
                   )}
                 </tr>
@@ -838,6 +890,45 @@ export default function AdminMemberTab() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddMember(false)}>취소</Button>
             <Button onClick={handleAddMember}>추가</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── 회원 탈퇴 확인 Dialog ── */}
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) { setDeleteTarget(null); setDeleteConfirm(""); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle size={18} /> 회원 탈퇴
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p>
+              <strong>{deleteTarget?.name}</strong>(@{deleteTarget?.username}) 회원을 탈퇴 처리합니다.
+            </p>
+            <p className="rounded-md bg-destructive/10 p-3 text-xs leading-relaxed text-destructive">
+              이 작업은 되돌릴 수 없습니다. 회원 정보가 영구 삭제되며, 작성한 글·신청 기록 등은 저자 정보만 비표시됩니다.
+            </p>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium">
+                확인을 위해 회원의 이름 <strong>{deleteTarget?.name}</strong>을(를) 입력하세요.
+              </label>
+              <Input
+                value={deleteConfirm}
+                onChange={(e) => setDeleteConfirm(e.target.value)}
+                placeholder={deleteTarget?.name}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setDeleteTarget(null); setDeleteConfirm(""); }}>취소</Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleting || deleteConfirm !== deleteTarget?.name}
+            >
+              {deleting ? "처리 중…" : "탈퇴 확정"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

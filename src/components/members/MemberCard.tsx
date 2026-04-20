@@ -2,6 +2,7 @@ import Link from "next/link";
 import { User as UserIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ROLE_LABELS } from "@/types";
+import { formatEnrollment } from "@/lib/utils";
 import type { User } from "@/types";
 
 interface Props {
@@ -12,6 +13,8 @@ export default function MemberCard({ member }: Props) {
   const affiliationLine = [member.affiliation, member.position]
     .filter(Boolean)
     .join(" · ");
+
+  const enrollmentLabel = formatEnrollment(member.enrollmentYear, member.enrollmentHalf);
 
   const showRoleBadge = member.role !== "member" && member.role !== "alumni";
 
@@ -31,6 +34,10 @@ export default function MemberCard({ member }: Props) {
       </div>
 
       <h3 className="mt-4 font-semibold">{member.name}</h3>
+
+      {enrollmentLabel && (
+        <p className="mt-0.5 text-[11px] font-medium text-primary/80">입학 {enrollmentLabel}</p>
+      )}
 
       {affiliationLine && (
         <p className="mt-1 text-xs text-muted-foreground">{affiliationLine}</p>

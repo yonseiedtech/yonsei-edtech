@@ -160,17 +160,18 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
 
         {showAcademic && <ProfileOutputs owner={owner} />}
 
-        {showAcademic && (
-          <ProfileAwards owner={owner} verifiedOnly={!isOwner && !isStaff} />
-        )}
-
-        {showAcademic && (
-          <ProfileExternalActivities owner={owner} verifiedOnly={!isOwner && !isStaff} />
-        )}
-
-        {showAcademic && <ProfileContentCreations owner={owner} />}
-
         {showResearch && <ProfileResearchActivities papers={owner.recentPapers} />}
+
+        {/* 학술 포트폴리오 (수상·대외활동·콘텐츠) — 승인여부·가시성 정책 무관, 수강 내역 바로 상단 항상 노출 */}
+        <div className="rounded-2xl border border-dashed border-primary/20 bg-primary/[0.02] p-3 space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-primary/70">학술 포트폴리오</h3>
+            <span className="text-[10px] text-muted-foreground">승인 여부 무관 · 수강 내역 상단</span>
+          </div>
+          <ProfileAwards owner={owner} />
+          <ProfileExternalActivities owner={owner} />
+          <ProfileContentCreations owner={owner} />
+        </div>
 
         {showCourses && (
           <ProfileCourses ownerId={owner.id} canSeeSensitive={isOwner || isStaff} />

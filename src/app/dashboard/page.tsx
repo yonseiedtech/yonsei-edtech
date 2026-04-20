@@ -15,6 +15,9 @@ import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 import MiniCalendar from "@/features/dashboard/MiniCalendar";
 import ActivityFeed from "@/features/dashboard/ActivityFeed";
+import AcademicCalendarProgress from "@/features/dashboard/AcademicCalendarProgress";
+import TodayClassesWidget from "@/features/dashboard/TodayClassesWidget";
+import PageHeader from "@/components/ui/page-header";
 import {
   LayoutDashboard,
   FileText,
@@ -99,23 +102,22 @@ function DashboardContent() {
 
   return (
     <div className="py-16">
-      <div className="mx-auto max-w-6xl px-4">
-        {/* 환영 섹션 */}
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <LayoutDashboard size={24} />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">
-                안녕하세요, {user.name}님
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                오늘의 학회 활동 현황을 확인하세요.
-              </p>
-            </div>
-          </div>
-          <Badge>{ROLE_LABELS[user.role]}</Badge>
+      <section className="mx-auto max-w-6xl px-4">
+        <PageHeader
+          icon={<LayoutDashboard size={24} />}
+          title={`안녕하세요, ${user.name}님`}
+          description="오늘의 학회 활동 현황을 확인하세요."
+          actions={<Badge>{ROLE_LABELS[user.role]}</Badge>}
+        />
+      </section>
+
+      <section className="mx-auto mt-8 max-w-6xl px-4">
+        {/* 학사일정 진행바 (최상단) */}
+        <AcademicCalendarProgress />
+
+        {/* 오늘의 수업 */}
+        <div className="mt-6">
+          <TodayClassesWidget />
         </div>
 
         {/* 통계 카드 */}
@@ -334,7 +336,7 @@ function DashboardContent() {
             </div>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

@@ -616,18 +616,99 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
           )}
 
           {activeTab === "password" && (
-            <div className="rounded-2xl border bg-card p-6">
-              <h3 className="text-lg font-bold">비밀번호 변경</h3>
-              <div className="mt-4">
-                {readOnly ? (
-                  <p className="text-sm text-muted-foreground">읽기 전용 모드에서는 비밀번호를 변경할 수 없습니다.</p>
-                ) : (
-                  <PasswordChangeForm />
-                )}
+            <>
+              <div className="rounded-2xl border bg-card p-6">
+                <h3 className="text-lg font-bold">비밀번호 변경</h3>
+                <div className="mt-4">
+                  {readOnly ? (
+                    <p className="text-sm text-muted-foreground">읽기 전용 모드에서는 비밀번호를 변경할 수 없습니다.</p>
+                  ) : (
+                    <PasswordChangeForm />
+                  )}
+                </div>
               </div>
-            </div>
+              {!readOnly && <SelfDeleteSection user={user} onDeleted={() => { logout(); router.push("/"); }} />}
+            </>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function SelfDeleteSection({ user, onDeleted }: { user: User; onDeleted: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function handleDelete() {
+    if (confirmText !== user.name) {
+      const { toast } = await import("sonner");
+      toast.error("이름이 일치하지 않습니다.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await profilesApi.delete(user.id);
+      const { toast } = await import("sonner");
+      toast.success("탈퇴가 완료되었습니다. 이용해 주셔서 감사합니다.");
+      onDeleted();
+    } catch {
+      const { toast } = await import("sonner");
+      toast.error("탈퇴 처리에 실패했습니다. 운영진에게 문의해주세요.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <div className="mt-6 rounded-2xl border border-destructive/30 bg-destructive/[0.02] p-6">
+        <h3 className="flex items-center gap-2 text-base font-semibold text-destructive">
+          <AlertCircle size={18} /> 회원 탈퇴
+        </h3>
+        <p className="mt-2 text-sm text-muted-foreground">
+          탈퇴 시 계정 정보가 영구 삭제됩니다. 작성한 글·신청 기록은 저자 정보가 비표시 처리됩니다.
+        </p>
+        <Button
+          variant="outline"
+          className="mt-4 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+          onClick={() => setOpen(true)}
+        >
+          탈퇴 진행
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-6 rounded-2xl border-2 border-destructive bg-destructive/[0.04] p-6">
+      <h3 className="flex items-center gap-2 text-base font-semibold text-destructive">
+        <AlertCircle size={18} /> 회원 탈퇴 확인
+      </h3>
+      <p className="mt-2 text-sm text-foreground">
+        정말 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+      </p>
+      <div className="mt-4">
+        <label className="mb-1.5 block text-xs font-medium">
+          확인을 위해 본인의 이름 <strong>{user.name}</strong>을(를) 입력하세요.
+        </label>
+        <input
+          value={confirmText}
+          onChange={(e) => setConfirmText(e.target.value)}
+          placeholder={user.name}
+          className="w-full rounded-md border bg-white px-3 py-2 text-sm"
+        />
+      </div>
+      <div className="mt-4 flex justify-end gap-2">
+        <Button variant="outline" onClick={() => { setOpen(false); setConfirmText(""); }}>취소</Button>
+        <Button
+          className="bg-destructive text-white hover:bg-destructive/90"
+          onClick={handleDelete}
+          disabled={busy || confirmText !== user.name}
+        >
+          {busy ? "처리 중…" : "탈퇴 확정"}
+        </Button>
       </div>
     </div>
   );

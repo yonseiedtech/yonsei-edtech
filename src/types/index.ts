@@ -1599,6 +1599,42 @@ export const ENROLLMENT_ROLE_LABELS: Record<NonNullable<CourseEnrollment["role"]
   auditor: "청강",
 };
 
+/** 수업 진행 모드 */
+export type ClassSessionMode =
+  | "in_person"   // 대면 수업 (기본)
+  | "zoom"        // 줌 등 비대면
+  | "assignment"  // 과제 대체
+  | "cancelled"   // 휴강
+  | "field"       // 외부 일정/현장학습
+  | "exam";       // 시험
+
+export const CLASS_SESSION_MODE_LABELS: Record<ClassSessionMode, string> = {
+  in_person: "대면",
+  zoom: "비대면(줌)",
+  assignment: "과제 대체",
+  cancelled: "휴강",
+  field: "현장학습",
+  exam: "시험",
+};
+
+/**
+ * 수업 진행 스케쥴 — 특정 일자에 기본 운영방식과 다른 사항이 있을 때 기록.
+ * 같은 과목/일자가 중복될 수 있으므로 화면 단에서 최신값을 우선 표시한다.
+ */
+export interface ClassSession {
+  id: string;
+  courseOfferingId: string;
+  /** YYYY-MM-DD */
+  date: string;
+  mode: ClassSessionMode;
+  /** 줌 링크/외부 링크 */
+  link?: string;
+  notes?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ── Track 6: 인지디딤판 (가이드 트랙) ──
 
 export type GuideTrackKey =

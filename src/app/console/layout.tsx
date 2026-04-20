@@ -15,7 +15,7 @@ import {
   BarChart3, GraduationCap, Wallet, Users, BookUser,
   BookOpen, FlaskConical, FolderKanban, Globe, Award, NotebookPen,
   Settings, MessageCircle, ScrollText, ChevronDown, ChevronRight,
-  ShieldCheck, Megaphone,
+  ShieldCheck, Megaphone, CalendarDays,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -166,6 +166,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
       presidentOnly: true,
       items: [
         { href: "/console/settings", label: "사이트 설정", icon: Settings },
+        { href: "/console/academic-calendar", label: "학사일정", icon: CalendarDays },
         { href: "/console/popups", label: "팝업 공지", icon: Megaphone },
         { href: "/console/ai", label: "챗봇·AI / 에이전트", icon: MessageCircle },
         { href: "/console/audit-log", label: "감사로그", icon: ScrollText },

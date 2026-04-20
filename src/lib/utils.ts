@@ -27,6 +27,13 @@ export function formatGeneration(
   return `${base} (${enrollmentYear} ${half})`;
 }
 
+/** 입학시점 문자열: "2024 전반기" / "2024" / "" */
+export function formatEnrollment(year?: number, half?: number): string {
+  if (!year) return "";
+  const label = half === 2 ? "후반기" : half === 1 ? "전반기" : "";
+  return label ? `${year} ${label}` : `${year}`;
+}
+
 export function formatDistanceToNow(date: string | Date): string {
   const d = new Date(date);
   if (isNaN(d.getTime())) return "-";
