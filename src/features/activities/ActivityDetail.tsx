@@ -19,7 +19,8 @@ import {
   Pencil, Globe, Loader2, CheckCircle, Clock, XCircle,
   Plus, Trash2, FileUp, Download, ListChecks,
 } from "lucide-react";
-import type { Activity, ActivityType, ActivityProgress, ActivityMaterial, FormField } from "@/types";
+import type { Activity, ActivityType, ActivityProgress, ActivityMaterial, FormField, EnrollmentStatus } from "@/types";
+import { ENROLLMENT_STATUS_LABELS } from "@/types";
 import { activityProgressApi, activityMaterialsApi } from "@/lib/bkend";
 import { uploadToStorage, type UploadedFile } from "@/lib/storage";
 import { formatSemester } from "@/lib/semester";
@@ -58,6 +59,10 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const [progressTitle, setProgressTitle] = useState("");
   const [progressDate, setProgressDate] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [roleDialog, setRoleDialog] = useState<{ pid: string; name: string } | null>(null);
+  const [roleInput, setRoleInput] = useState("");
+  const [noteDialog, setNoteDialog] = useState<{ pid: string; name: string } | null>(null);
+  const [noteInput, setNoteInput] = useState("");
 
   const { data: activity } = useQuery({
     queryKey: ["activity", activityId],
@@ -88,6 +93,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const participants = leaderId && !rawParticipants.includes(leaderId) ? [leaderId, ...rawParticipants] : rawParticipants;
   const applicants = (activity?.applicants as Activity["applicants"]) ?? [];
   const participantRoles = (activity?.participantRoles as Record<string, string> | undefined) ?? {};
+  const participantNotes = (activity?.participantNotes as Record<string, string> | undefined) ?? {};
   const registrationMethod = (activity?.registrationMethod as "open" | "manual" | undefined) ?? "manual";
   const isLeader = !!user && !!leaderId && user.id === leaderId;
   const canManageParticipants = isLeader || isStaff;
@@ -148,6 +154,56 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
       toast.success("참여자가 제외되었습니다.");
+    },
+  });
+
+  // 참여자 역할 저장
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ pid, role }: { pid: string; role: string }) => {
+      const updated = { ...participantRoles };
+      if (role.trim()) updated[pid] = role.trim();
+      else delete updated[pid];
+      await activitiesApi.update(activityId, { participantRoles: updated });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+      toast.success("역할이 저장되었습니다.");
+      setRoleDialog(null);
+    },
+  });
+
+  // 참여자 메모 저장
+  const updateNoteMutation = useMutation({
+    mutationFn: async ({ pid, note }: { pid: string; note: string }) => {
+      const updated = { ...participantNotes };
+      if (note.trim()) updated[pid] = note.trim();
+      else delete updated[pid];
+      await activitiesApi.update(activityId, { participantNotes: updated });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+      toast.success("메모가 저장되었습니다.");
+      setNoteDialog(null);
+    },
+  });
+
+  // 참여자 신청 상태 변경 (해당 사용자의 applicant row 가 있을 때만 의미가 있음)
+  const updateParticipantStatusMutation = useMutation({
+    mutationFn: async ({ pid, status }: { pid: string; status: "approved" | "rejected" | "pending" }) => {
+      const updated = applicants.map((a) =>
+        a.userId === pid ? { ...a, status } : a,
+      );
+      const newParticipants = status === "rejected"
+        ? participants.filter((p) => p !== pid)
+        : participants;
+      await activitiesApi.update(activityId, {
+        applicants: updated,
+        participants: newParticipants,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+      toast.success("상태가 변경되었습니다.");
     },
   });
 
@@ -472,60 +528,160 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   </p>
                 </div>
               )}
-              <div className="rounded-xl border bg-white">
-                {participants.length === 0 ? (
-                  <p className="p-6 text-center text-sm text-muted-foreground">참여자가 없습니다.</p>
-                ) : (
-                  <div className="divide-y">
-                    {participants.map((pid, i) => {
+
+              {/* 역할 등록 (별도 섹션) */}
+              {canManageParticipants && participants.length > 0 && (
+                <div className="rounded-xl border bg-white p-4">
+                  <h3 className="mb-2 text-sm font-semibold flex items-center gap-1">
+                    <Pencil size={14} />역할 등록
+                  </h3>
+                  <p className="mb-2 text-xs text-muted-foreground">
+                    참여자에게 담당자·발표자·기록자 등 역할을 부여합니다. 등록된 역할은 참여자 리스트의 &ldquo;역할&rdquo; 열에 표시됩니다.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {participants.map((pid) => {
                       const m = memberMap.get(pid);
                       const role = participantRoles[pid];
                       return (
-                        <div key={pid} className="flex items-center justify-between px-4 py-3 text-sm">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-muted-foreground">{i + 1}.</span>
-                            <span className="font-medium">{m?.name ?? "(이름 미확인)"}</span>
-                            {m?.studentId && <span className="text-xs text-muted-foreground">{m.studentId}</span>}
-                            {m?.generation && <Badge variant="secondary" className="text-[10px]">{m.generation}기</Badge>}
-                            {leaderId === pid && <Badge className="bg-amber-50 text-amber-700 text-[10px]">{type === "study" ? "모임장" : "담당자"}</Badge>}
-                            {role && <Badge variant="secondary" className="bg-sky-50 text-sky-700 text-[10px]">{role}</Badge>}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {canManageParticipants && (
-                              <>
-                                <button
-                                  onClick={() => {
-                                    const newRole = prompt("역할을 입력하세요 (예: 발표자, 기록자, 총무)", role || "");
-                                    if (newRole === null) return;
-                                    const updated = { ...participantRoles };
-                                    if (newRole.trim()) updated[pid] = newRole.trim();
-                                    else delete updated[pid];
-                                    activitiesApi.update(activityId, { participantRoles: updated });
-                                    queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
-                                  }}
-                                  className="rounded p-1 text-muted-foreground hover:text-primary"
-                                  aria-label="역할 설정"
-                                  title="역할 설정"
-                                >
-                                  <Pencil size={13} />
-                                </button>
-                                {leaderId !== pid && (
-                                  <button
-                                    onClick={() => {
-                                      if (confirm("참여에서 제외하시겠습니까?")) removeParticipantMutation.mutate(pid);
-                                    }}
-                                    className="rounded p-1 text-muted-foreground hover:text-red-500"
-                                    aria-label="제외"
-                                  >
-                                    <X size={14} />
-                                  </button>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        </div>
+                        <button
+                          key={`role-${pid}`}
+                          onClick={() => {
+                            setRoleInput(role ?? "");
+                            setRoleDialog({ pid, name: m?.name ?? "(이름 미확인)" });
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-md border bg-white px-3 py-1.5 text-xs hover:bg-muted/50"
+                        >
+                          <span className="font-medium">{m?.name ?? "(이름 미확인)"}</span>
+                          {role
+                            ? <Badge variant="secondary" className="bg-sky-50 text-sky-700 text-[10px]">{role}</Badge>
+                            : <span className="text-muted-foreground">+ 역할</span>}
+                        </button>
                       );
                     })}
+                  </div>
+                </div>
+              )}
+
+              {/* 참여자 테이블 */}
+              <div className="rounded-xl border bg-white overflow-hidden">
+                {participants.length === 0 ? (
+                  <p className="p-6 text-center text-sm text-muted-foreground">참여자가 없습니다.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[760px] text-sm">
+                      <thead className="bg-muted/40 text-xs text-muted-foreground">
+                        <tr className="text-left">
+                          <th className="px-3 py-2 font-medium">신분유형</th>
+                          <th className="px-3 py-2 font-medium">이름</th>
+                          <th className="px-3 py-2 font-medium">학번</th>
+                          <th className="px-3 py-2 font-medium">역할</th>
+                          <th className="px-3 py-2 font-medium">핸드폰 번호</th>
+                          <th className="px-3 py-2 font-medium">이메일</th>
+                          {canManageParticipants && <th className="px-3 py-2 font-medium text-right">관리</th>}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {participants.map((pid) => {
+                          const m = memberMap.get(pid);
+                          const role = participantRoles[pid];
+                          const note = participantNotes[pid];
+                          const applicant = applicants.find((a) => a.userId === pid);
+                          const status = applicant?.status;
+                          const enrollment = (m?.enrollmentStatus as EnrollmentStatus | undefined);
+                          const isLeaderRow = leaderId === pid;
+                          return (
+                            <tr key={pid} className="hover:bg-muted/20">
+                              <td className="px-3 py-2 align-top">
+                                {enrollment ? (
+                                  <Badge variant="secondary" className={cn(
+                                    "text-[10px]",
+                                    enrollment === "enrolled" && "bg-green-50 text-green-700",
+                                    enrollment === "on_leave" && "bg-amber-50 text-amber-700",
+                                    enrollment === "graduated" && "bg-slate-100 text-slate-700",
+                                  )}>
+                                    {ENROLLMENT_STATUS_LABELS[enrollment]}
+                                  </Badge>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">-</span>
+                                )}
+                              </td>
+                              <td className="px-3 py-2 align-top">
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <span className="font-medium">{m?.name ?? "(이름 미확인)"}</span>
+                                  {m?.generation && <Badge variant="secondary" className="text-[10px]">{m.generation}기</Badge>}
+                                  {isLeaderRow && (
+                                    <Badge className="bg-amber-50 text-amber-700 text-[10px]">
+                                      {type === "study" ? "모임장" : "담당자"}
+                                    </Badge>
+                                  )}
+                                </div>
+                                {note && (
+                                  <p className="mt-1 text-[11px] text-muted-foreground italic">메모: {note}</p>
+                                )}
+                              </td>
+                              <td className="px-3 py-2 align-top text-xs text-muted-foreground">
+                                {m?.studentId ?? "-"}
+                              </td>
+                              <td className="px-3 py-2 align-top">
+                                {role ? (
+                                  <Badge variant="secondary" className="bg-sky-50 text-sky-700 text-[10px]">{role}</Badge>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">-</span>
+                                )}
+                              </td>
+                              <td className="px-3 py-2 align-top text-xs text-muted-foreground">
+                                {m?.phone ?? "-"}
+                              </td>
+                              <td className="px-3 py-2 align-top text-xs text-muted-foreground truncate max-w-[200px]">
+                                {m?.email ?? "-"}
+                              </td>
+                              {canManageParticipants && (
+                                <td className="px-3 py-2 align-top">
+                                  <div className="flex items-center justify-end gap-2">
+                                    {applicant && (
+                                      <select
+                                        value={status ?? "pending"}
+                                        onChange={(e) => updateParticipantStatusMutation.mutate({
+                                          pid,
+                                          status: e.target.value as "approved" | "rejected" | "pending",
+                                        })}
+                                        className="rounded border bg-background px-1.5 py-1 text-[11px]"
+                                        title="신청 상태 변경"
+                                      >
+                                        <option value="pending">대기</option>
+                                        <option value="approved">승인</option>
+                                        <option value="rejected">거절</option>
+                                      </select>
+                                    )}
+                                    <button
+                                      onClick={() => {
+                                        setNoteInput(note ?? "");
+                                        setNoteDialog({ pid, name: m?.name ?? "(이름 미확인)" });
+                                      }}
+                                      className="rounded p-1 text-muted-foreground hover:text-primary"
+                                      title="메모"
+                                    >
+                                      <Pencil size={13} />
+                                    </button>
+                                    {!isLeaderRow && (
+                                      <button
+                                        onClick={() => {
+                                          if (confirm("참여에서 제외하시겠습니까?")) removeParticipantMutation.mutate(pid);
+                                        }}
+                                        className="rounded p-1 text-muted-foreground hover:text-red-500"
+                                        title="제외"
+                                      >
+                                        <X size={14} />
+                                      </button>
+                                    )}
+                                  </div>
+                                </td>
+                              )}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </div>
@@ -783,6 +939,57 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               <Button variant="outline" onClick={() => setApplyDialog(false)}>취소</Button>
               <Button onClick={() => applyMutation.mutate()} disabled={applyMutation.isPending || !applyName.trim() || (!user && !applyEmail.trim())}>
                 {applyMutation.isPending && <Loader2 size={14} className="mr-1 animate-spin" />}신청
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* 역할 등록 Dialog */}
+        <Dialog open={!!roleDialog} onOpenChange={(open) => { if (!open) setRoleDialog(null); }}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader><DialogTitle>역할 등록 — {roleDialog?.name}</DialogTitle></DialogHeader>
+            <div className="space-y-2">
+              <Input
+                value={roleInput}
+                onChange={(e) => setRoleInput(e.target.value)}
+                placeholder="예: 발표자, 기록자, 총무"
+                autoFocus
+              />
+              <p className="text-xs text-muted-foreground">비워두고 저장하면 역할이 제거됩니다.</p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setRoleDialog(null)}>취소</Button>
+              <Button
+                onClick={() => roleDialog && updateRoleMutation.mutate({ pid: roleDialog.pid, role: roleInput })}
+                disabled={updateRoleMutation.isPending}
+              >
+                저장
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* 메모 Dialog */}
+        <Dialog open={!!noteDialog} onOpenChange={(open) => { if (!open) setNoteDialog(null); }}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader><DialogTitle>메모 — {noteDialog?.name}</DialogTitle></DialogHeader>
+            <div className="space-y-2">
+              <textarea
+                value={noteInput}
+                onChange={(e) => setNoteInput(e.target.value)}
+                placeholder="참여자에 대한 메모를 입력하세요"
+                className="w-full min-h-[100px] rounded-md border bg-background px-3 py-2 text-sm"
+                autoFocus
+              />
+              <p className="text-xs text-muted-foreground">비워두고 저장하면 메모가 삭제됩니다.</p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setNoteDialog(null)}>취소</Button>
+              <Button
+                onClick={() => noteDialog && updateNoteMutation.mutate({ pid: noteDialog.pid, note: noteInput })}
+                disabled={updateNoteMutation.isPending}
+              >
+                저장
               </Button>
             </DialogFooter>
           </DialogContent>

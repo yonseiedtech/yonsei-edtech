@@ -16,8 +16,7 @@ import { formatDate } from "@/lib/utils";
 import MiniCalendar from "@/features/dashboard/MiniCalendar";
 import ActivityFeed from "@/features/dashboard/ActivityFeed";
 import AcademicCalendarProgress from "@/features/dashboard/AcademicCalendarProgress";
-import TodayClassesWidget from "@/features/dashboard/TodayClassesWidget";
-import WeeklyClassTimelineWidget from "@/features/dashboard/WeeklyClassTimelineWidget";
+import DailyClassTimelineWidget from "@/features/dashboard/DailyClassTimelineWidget";
 import MyAcademicActivitiesWidget from "@/features/dashboard/MyAcademicActivitiesWidget";
 import ComprehensiveExamCountdown from "@/features/dashboard/ComprehensiveExamCountdown";
 import PageHeader from "@/components/ui/page-header";
@@ -118,14 +117,9 @@ function DashboardContent() {
         {/* 학사일정 진행바 (최상단) */}
         <AcademicCalendarProgress />
 
-        {/* 오늘의 수업 */}
+        {/* 오늘의 수업 — 일일 타임라인 (17~23시 시간축에 카드가 떠있는 뷰) */}
         <div className="mt-6">
-          <TodayClassesWidget />
-        </div>
-
-        {/* 주간 수업 타임라인 (17~23시) */}
-        <div className="mt-6">
-          <WeeklyClassTimelineWidget />
+          <DailyClassTimelineWidget />
         </div>
 
         {/* 통계 카드 */}

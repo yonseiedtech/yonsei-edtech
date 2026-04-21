@@ -253,6 +253,32 @@ export const SPEAKER_TYPE_LABELS: Record<SpeakerType, string> = {
   guest: "외부 연사",
 };
 
+/**
+ * 세미나 연사 (다중 연사 지원).
+ * - type=member 이고 userId 가 있으면 회원 계정과 직접 연결.
+ * - type=member 이지만 userId 가 없으면 학번(studentId) 기준으로 추후 가입 시 자동 연동
+ *   (수료증과 동일한 늦은-매칭 방식).
+ * - type=guest 는 외부 연사 — 회원 매칭하지 않음.
+ */
+export interface SeminarSpeaker {
+  /** 회원/외부 구분 */
+  type: SpeakerType;
+  /** 회원 계정 ID (회원 검색 결과로 매칭된 경우만) */
+  userId?: string;
+  /** 회원 학번 — 가입 시 자동 연동의 키 */
+  studentId?: string;
+  /** 표시 이름 */
+  name: string;
+  /** 약력 */
+  bio?: string;
+  /** 소속 (예: 연세대학교 교육학과) */
+  affiliation?: string;
+  /** 직위·직책 (예: 교수, 박사과정) */
+  position?: string;
+  /** 사진 URL */
+  photoUrl?: string;
+}
+
 // ── 게시판 ──
 // board-community-v2: "press"는 "promotion"으로 통합, "resources" 자료실 신규. 마이그레이션 기간 동안 "press" 읽기 호환 유지.
 export const POST_CATEGORIES = ["notice", "seminar", "free", "promotion", "resources", "staff", "interview"] as const;
@@ -743,12 +769,20 @@ export interface Seminar {
   date: string;
   time: string;
   location: string;
+  /** @deprecated speakers[0] 대신 speakers 배열 사용. 하위호환을 위해 유지. */
   speaker: string;
+  /** @deprecated speakers[0].bio */
   speakerBio?: string;
+  /** @deprecated speakers[0].type */
   speakerType?: SpeakerType;
+  /** @deprecated speakers[0].affiliation */
   speakerAffiliation?: string;
+  /** @deprecated speakers[0].position */
   speakerPosition?: string;
+  /** @deprecated speakers[0].photoUrl */
   speakerPhotoUrl?: string;
+  /** 다중 연사 (신규). 비어있으면 위 단일 연사 필드를 사용 (마이그레이션 호환) */
+  speakers?: SeminarSpeaker[];
   posterUrl?: string;
   maxAttendees?: number;
   attendeeIds: string[];
@@ -1097,6 +1131,8 @@ export interface Activity { [key: string]: unknown;
   applicationForm?: FormField[];
   registrationMethod?: "open" | "manual";
   participantRoles?: Record<string, string>;
+  /** 운영자가 참여자별로 남기는 메모 (key: userId/guestKey/applicantKey) */
+  participantNotes?: Record<string, string>;
   location?: string;
   tags?: string[];
   imageUrl?: string;
