@@ -31,6 +31,7 @@ import { toast } from "sonner";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import { courseOfferingsApi, courseEnrollmentsApi, profilesApi, comprehensiveExamsApi } from "@/lib/bkend";
+import ScheduleEditor from "@/features/courses/ScheduleEditor";
 import {
   COURSE_CATEGORY_LABELS,
   COMPREHENSIVE_EXAM_STATUS_LABELS,
@@ -493,10 +494,9 @@ function ConsoleCoursesContent() {
                     <option key={c} value={c}>{COURSE_CATEGORY_LABELS[c]}</option>
                   ))}
                 </select>
-                <Input
-                  placeholder="요일/시간"
+                <ScheduleEditor
                   value={newRow.schedule}
-                  onChange={(e) => setNewRow({ ...newRow, schedule: e.target.value })}
+                  onChange={(v) => setNewRow({ ...newRow, schedule: v })}
                 />
                 <Input
                   placeholder="강의실"
@@ -795,10 +795,9 @@ function InlineEditor({
           onChange={(e) => setDraft({ ...draft, credits: e.target.value })}
           placeholder="학점"
         />
-        <Input
+        <ScheduleEditor
           value={draft.schedule}
-          onChange={(e) => setDraft({ ...draft, schedule: e.target.value })}
-          placeholder="요일/시간"
+          onChange={(v) => setDraft({ ...draft, schedule: v })}
         />
         <Input
           value={draft.classroom}
