@@ -289,23 +289,50 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
     const isJoined = user ? participants.includes(user.id) : false;
     const canJoin = user && !isJoined && (a.status === "upcoming" || a.status === "ongoing");
 
+    // 진행 상태별 카드 배경색 — 진행 중: 앰버, 예정: 블루, 완료: 회색
+    const statusCardBg =
+      a.status === "ongoing"
+        ? "bg-amber-50/60 border-amber-200"
+        : a.status === "upcoming"
+          ? "bg-blue-50/50 border-blue-200"
+          : "bg-muted/30 border-muted";
+
+    // 모집 상태 배지 — 상태(ongoing/upcoming)와 의미가 겹치는 legacy 'in_progress'는 표시 생략
+    const showRecruitBadge =
+      !!a.recruitmentStatus &&
+      !(type === "study" && a.recruitmentStatus === "in_progress");
+
     return (
-      <div className="rounded-xl border bg-white p-5">
+      <div className={cn("rounded-xl border p-5 transition-colors", statusCardBg)}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary" className={cn("text-xs", STATUS_COLORS[a.status])}>{STATUS_LABELS[a.status]}</Badge>
-              {a.recruitmentStatus && <Badge variant="secondary" className={cn("text-xs", RECRUIT_COLORS[a.recruitmentStatus])}>{type === "study" && a.recruitmentStatus === "closed" ? "모집완료" : RECRUIT_LABELS[a.recruitmentStatus]}</Badge>}
-              <Link href={`/activities/${type === "project" ? "projects" : type === "study" ? "studies" : "external"}/${a.id}`} className="text-lg font-semibold hover:text-primary hover:underline">{a.title}</Link>
+            {/* 학기 · 모집 상태 — 제목 위 메타 라인 */}
+            <div className="flex flex-wrap items-center gap-2 text-[11px]">
+              {(a.year || a.semester) ? (
+                <span className="font-semibold text-primary">
+                  {formatSemester(a.year, a.semester)}
+                </span>
+              ) : null}
+              <Badge variant="secondary" className={cn("text-[10px]", STATUS_COLORS[a.status])}>
+                {STATUS_LABELS[a.status]}
+              </Badge>
+              {showRecruitBadge && (
+                <Badge variant="secondary" className={cn("text-[10px]", RECRUIT_COLORS[a.recruitmentStatus!])}>
+                  {type === "study" && a.recruitmentStatus === "closed"
+                    ? "모집완료"
+                    : RECRUIT_LABELS[a.recruitmentStatus!]}
+                </Badge>
+              )}
             </div>
+            <Link
+              href={`/activities/${type === "project" ? "projects" : type === "study" ? "studies" : "external"}/${a.id}`}
+              className="mt-1.5 block text-lg font-semibold hover:text-primary hover:underline"
+            >
+              {a.title}
+            </Link>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{a.description}</p>
             <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1"><Calendar size={12} />{a.date}{a.endDate ? ` ~ ${a.endDate}` : ""}</span>
-              {(a.year || a.semester) && (
-                <Badge variant="secondary" className="bg-blue-50 text-[10px] text-blue-700">
-                  {formatSemester(a.year, a.semester)}
-                </Badge>
-              )}
               {a.leader && <span className="flex items-center gap-1"><User size={12} />{type === "study" ? "모임장 " : ""}{a.leader}</span>}
               {a.location && <span className="flex items-center gap-1"><MapPin size={12} />{a.location}</span>}
               <span className="flex items-center gap-1"><Users size={12} />참여 {participants.length}명</span>

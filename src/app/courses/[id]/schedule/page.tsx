@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -9,18 +9,29 @@ import {
   Plus,
   Pencil,
   Trash2,
+  NotebookPen,
+  ListChecks,
+  Settings,
 } from "lucide-react";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { useAuthStore } from "@/features/auth/auth-store";
 import {
   classSessionsApi,
+  courseEnrollmentsApi,
   courseOfferingsApi,
+  courseSessionNotesApi,
+  courseTodosApi,
 } from "@/lib/bkend";
 import {
   CLASS_SESSION_MODE_LABELS,
+  COURSE_TODO_TYPE_LABELS,
+  COURSE_TODO_TYPE_COLORS,
   type ClassSession,
   type ClassSessionMode,
   type CourseOffering,
+  type CourseSessionNote,
+  type CourseTodo,
+  type CourseTodoType,
 } from "@/types";
 import PageHeader from "@/components/ui/page-header";
 import LoadingSpinner from "@/components/ui/loading-spinner";
@@ -37,6 +48,14 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { isStaffOrAbove } from "@/lib/permissions";
+import { parseSchedule } from "@/lib/courseSchedule";
+import {
+  buildSemesterWeeks,
+  inferSemesterStartDate,
+  DEFAULT_TOTAL_WEEKS,
+  type WeekRange,
+} from "@/lib/semesterWeeks";
 
 const MODE_OPTIONS: ClassSessionMode[] = [
   "in_person",
@@ -56,6 +75,14 @@ const MODE_COLORS: Record<ClassSessionMode, string> = {
   exam: "bg-rose-50 text-rose-700 border-rose-200",
 };
 
+const TODO_TYPES: CourseTodoType[] = [
+  "assignment",
+  "paper_reading",
+  "paper_writing",
+  "presentation_prep",
+  "other",
+];
+
 interface SessionDraft {
   id?: string;
   date: string;
@@ -71,11 +98,54 @@ const blankDraft = (date?: string): SessionDraft => ({
   notes: "",
 });
 
+interface TodoDraft {
+  id?: string;
+  type: CourseTodoType;
+  content: string;
+  dueDate: string;
+  sessionDate?: string;
+}
+
+const blankTodoDraft = (sessionDate?: string): TodoDraft => ({
+  type: "assignment",
+  content: "",
+  dueDate: "",
+  sessionDate,
+});
+
+interface NoteDraft {
+  id?: string;
+  date: string;
+  content: string;
+}
+
 function ScheduleContent({ courseId }: { courseId: string }) {
   const { user } = useAuthStore();
   const qc = useQueryClient();
   const [draft, setDraft] = useState<SessionDraft | null>(null);
   const [saving, setSaving] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsStart, setSettingsStart] = useState("");
+  const [settingsWeeks, setSettingsWeeks] = useState<number>(DEFAULT_TOTAL_WEEKS);
+  const [savingSettings, setSavingSettings] = useState(false);
+
+  const [noteDraft, setNoteDraft] = useState<NoteDraft | null>(null);
+  const [savingNote, setSavingNote] = useState(false);
+  const [todoDraft, setTodoDraft] = useState<TodoDraft | null>(null);
+  const [savingTodo, setSavingTodo] = useState(false);
+
+  const isStaff = isStaffOrAbove(user);
+
+  const { data: enrollmentsRes } = useQuery({
+    queryKey: ["course-enrollments", "by-course", courseId],
+    queryFn: () => courseEnrollmentsApi.listByCourse(courseId),
+  });
+  const myEnrollment = useMemo(() => {
+    if (!user) return null;
+    return (enrollmentsRes?.data ?? []).find((e) => e.userId === user.id) ?? null;
+  }, [enrollmentsRes, user]);
+  const isCourseTA = myEnrollment?.role === "ta";
+  const master = isStaff || isCourseTA;
 
   const { data: course, isLoading: loadingCourse } = useQuery({
     queryKey: ["course-offering", courseId],
@@ -92,6 +162,47 @@ function ScheduleContent({ courseId }: { courseId: string }) {
   const sessions: ClassSession[] = (sessionsRes?.data ?? []).slice().sort(
     (a, b) => a.date.localeCompare(b.date),
   );
+
+  const { data: notesRes } = useQuery({
+    queryKey: ["course-session-notes", courseId, user?.id],
+    queryFn: () =>
+      user ? courseSessionNotesApi.listByCourseAndUser(courseId, user.id) : null,
+    enabled: !!user,
+  });
+  const notes: CourseSessionNote[] = notesRes?.data ?? [];
+
+  const { data: todosRes } = useQuery({
+    queryKey: ["course-todos", courseId, user?.id],
+    queryFn: () =>
+      user ? courseTodosApi.listByCourseAndUser(courseId, user.id) : null,
+    enabled: !!user,
+  });
+  const todos: CourseTodo[] = todosRes?.data ?? [];
+
+  const parsedSchedule = useMemo(
+    () => parseSchedule(course?.schedule),
+    [course?.schedule],
+  );
+
+  const weeks: WeekRange[] = useMemo(() => {
+    if (!course) return [];
+    return buildSemesterWeeks({
+      year: course.year,
+      term: course.term === "spring" ? "spring" : "fall",
+      schedule: parsedSchedule,
+      semesterStartDate: course.semesterStartDate,
+      totalWeeks: course.totalWeeks ?? DEFAULT_TOTAL_WEEKS,
+    });
+  }, [course, parsedSchedule]);
+
+  const inferredStart = useMemo(() => {
+    if (!course) return "";
+    return inferSemesterStartDate(
+      course.year,
+      course.term === "spring" ? "spring" : "fall",
+      parsedSchedule.weekdays,
+    );
+  }, [course, parsedSchedule]);
 
   async function save() {
     if (!draft || !user) return;
@@ -140,6 +251,156 @@ function ScheduleContent({ courseId }: { courseId: string }) {
     }
   }
 
+  async function saveSettings() {
+    if (!course) return;
+    setSavingSettings(true);
+    try {
+      const payload: Record<string, unknown> = {
+        semesterStartDate: settingsStart || undefined,
+        totalWeeks: settingsWeeks,
+      };
+      await courseOfferingsApi.update(courseId, payload);
+      await qc.invalidateQueries({ queryKey: ["course-offering", courseId] });
+      await qc.refetchQueries({ queryKey: ["course-offering", courseId] });
+      toast.success("개강일/주차 설정을 저장했습니다.");
+      setSettingsOpen(false);
+    } catch (e) {
+      toast.error(`저장 실패: ${(e as Error).message}`);
+    } finally {
+      setSavingSettings(false);
+    }
+  }
+
+  async function saveNote() {
+    if (!noteDraft || !user) return;
+    const content = noteDraft.content.trim();
+    if (!content) {
+      toast.error("메모 내용을 입력하세요.");
+      return;
+    }
+    setSavingNote(true);
+    try {
+      if (noteDraft.id) {
+        await courseSessionNotesApi.update(noteDraft.id, {
+          content,
+          updatedAt: new Date().toISOString(),
+        });
+      } else {
+        await courseSessionNotesApi.create({
+          courseOfferingId: courseId,
+          date: noteDraft.date,
+          userId: user.id,
+          content,
+        });
+      }
+      await qc.invalidateQueries({
+        queryKey: ["course-session-notes", courseId, user.id],
+      });
+      await qc.refetchQueries({
+        queryKey: ["course-session-notes", courseId, user.id],
+      });
+      toast.success("메모를 저장했습니다.");
+      setNoteDraft(null);
+    } catch (e) {
+      toast.error(`저장 실패: ${(e as Error).message}`);
+    } finally {
+      setSavingNote(false);
+    }
+  }
+
+  async function deleteNote(n: CourseSessionNote) {
+    if (!user) return;
+    if (!confirm("이 메모를 삭제하시겠습니까?")) return;
+    try {
+      await courseSessionNotesApi.delete(n.id);
+      await qc.invalidateQueries({
+        queryKey: ["course-session-notes", courseId, user.id],
+      });
+      toast.success("삭제했습니다.");
+    } catch (e) {
+      toast.error(`삭제 실패: ${(e as Error).message}`);
+    }
+  }
+
+  async function saveTodo() {
+    if (!todoDraft || !user) return;
+    const content = todoDraft.content.trim();
+    if (!content) {
+      toast.error("할 일 내용을 입력하세요.");
+      return;
+    }
+    setSavingTodo(true);
+    try {
+      if (todoDraft.id) {
+        await courseTodosApi.update(todoDraft.id, {
+          type: todoDraft.type,
+          content,
+          dueDate: todoDraft.dueDate || undefined,
+          sessionDate: todoDraft.sessionDate,
+          updatedAt: new Date().toISOString(),
+        });
+      } else {
+        await courseTodosApi.create({
+          courseOfferingId: courseId,
+          userId: user.id,
+          type: todoDraft.type,
+          content,
+          dueDate: todoDraft.dueDate || undefined,
+          sessionDate: todoDraft.sessionDate,
+          completed: false,
+        });
+      }
+      await qc.invalidateQueries({
+        queryKey: ["course-todos", courseId, user.id],
+      });
+      await qc.refetchQueries({
+        queryKey: ["course-todos", courseId, user.id],
+      });
+      toast.success("할 일을 저장했습니다.");
+      setTodoDraft(null);
+    } catch (e) {
+      toast.error(`저장 실패: ${(e as Error).message}`);
+    } finally {
+      setSavingTodo(false);
+    }
+  }
+
+  async function toggleTodo(t: CourseTodo) {
+    if (!user) return;
+    try {
+      await courseTodosApi.update(t.id, {
+        completed: !t.completed,
+        completedAt: !t.completed ? new Date().toISOString() : undefined,
+      });
+      await qc.invalidateQueries({
+        queryKey: ["course-todos", courseId, user.id],
+      });
+    } catch (e) {
+      toast.error(`변경 실패: ${(e as Error).message}`);
+    }
+  }
+
+  async function deleteTodo(t: CourseTodo) {
+    if (!user) return;
+    if (!confirm("이 할 일을 삭제하시겠습니까?")) return;
+    try {
+      await courseTodosApi.delete(t.id);
+      await qc.invalidateQueries({
+        queryKey: ["course-todos", courseId, user.id],
+      });
+      toast.success("삭제했습니다.");
+    } catch (e) {
+      toast.error(`삭제 실패: ${(e as Error).message}`);
+    }
+  }
+
+  function openSettings() {
+    if (!course) return;
+    setSettingsStart(course.semesterStartDate ?? inferredStart);
+    setSettingsWeeks(course.totalWeeks ?? DEFAULT_TOTAL_WEEKS);
+    setSettingsOpen(true);
+  }
+
   if (loadingCourse) return <LoadingSpinner className="py-24" />;
   if (!course) {
     return (
@@ -152,6 +413,38 @@ function ScheduleContent({ courseId }: { courseId: string }) {
   }
 
   const today = new Date().toISOString().slice(0, 10);
+
+  // 주차별 그룹: 세션·메모·할일을 주차에 정렬해 집계
+  const sessionsByWeek = new Map<number, ClassSession[]>();
+  for (const s of sessions) {
+    const wk = weeks.find((w) => s.date >= w.startDate && s.date <= w.endDate);
+    if (!wk) continue;
+    const arr = sessionsByWeek.get(wk.weekNo) ?? [];
+    arr.push(s);
+    sessionsByWeek.set(wk.weekNo, arr);
+  }
+
+  const notesByWeek = new Map<number, CourseSessionNote[]>();
+  for (const n of notes) {
+    const wk = weeks.find((w) => n.date >= w.startDate && n.date <= w.endDate);
+    if (!wk) continue;
+    const arr = notesByWeek.get(wk.weekNo) ?? [];
+    arr.push(n);
+    notesByWeek.set(wk.weekNo, arr);
+  }
+
+  const todosByWeek = new Map<number, CourseTodo[]>();
+  for (const t of todos) {
+    if (!t.sessionDate) continue;
+    const wk = weeks.find(
+      (w) => t.sessionDate! >= w.startDate && t.sessionDate! <= w.endDate,
+    );
+    if (!wk) continue;
+    const arr = todosByWeek.get(wk.weekNo) ?? [];
+    arr.push(t);
+    todosByWeek.set(wk.weekNo, arr);
+  }
+  const unassignedTodos = todos.filter((t) => !t.sessionDate);
 
   return (
     <div className="py-16">
@@ -171,93 +464,329 @@ function ScheduleContent({ courseId }: { courseId: string }) {
             course.classroom ? ` · ${course.classroom}` : ""
           }`}
           actions={
-            <Button onClick={() => setDraft(blankDraft(today))} size="sm">
-              <Plus size={14} className="mr-1" /> 일정 추가
-            </Button>
+            <div className="flex gap-2">
+              {master && (
+                <Button onClick={openSettings} size="sm" variant="outline">
+                  <Settings size={14} className="mr-1" /> 학기 설정
+                </Button>
+              )}
+              {master && (
+                <Button onClick={() => setDraft(blankDraft(today))} size="sm">
+                  <Plus size={14} className="mr-1" /> 일정 추가
+                </Button>
+              )}
+            </div>
           }
         />
 
         <p className="mt-3 text-xs text-muted-foreground">
-          기본 운영방식은 <span className="font-medium">대면</span>입니다. 줌 운영 / 과제
-          대체 / 휴강 등 변경사항만 일자별로 등록하면, 본인 및 동기 모두의 대시보드에 자동
-          반영됩니다.
+          기본 운영방식은 <span className="font-medium">대면</span>입니다.
+          일자별 변경사항은 운영진이 등록하며, 수강생은 매 수업마다 개인 메모와 할 일을 남길 수 있습니다.
+          {course.semesterStartDate ? (
+            <>
+              {" "}개강일: <b>{course.semesterStartDate}</b> · 총 {course.totalWeeks ?? DEFAULT_TOTAL_WEEKS}주
+            </>
+          ) : (
+            <>
+              {" "}기본 개강일(자동 추정): <b>{inferredStart || "—"}</b> · 총 {DEFAULT_TOTAL_WEEKS}주
+            </>
+          )}
         </p>
       </section>
 
       <section className="mx-auto mt-8 max-w-4xl px-4">
         {loadingSessions ? (
           <LoadingSpinner />
-        ) : sessions.length === 0 ? (
+        ) : weeks.length === 0 ? (
           <EmptyState
             icon={CalendarClock}
-            title="등록된 일정이 없습니다"
-            description="‘일정 추가’ 버튼으로 변경사항을 기록하세요."
+            title="주차를 계산할 수 없습니다"
+            description="학기/수업요일 정보를 확인해주세요."
           />
         ) : (
-          <ul className="space-y-2">
-            {sessions.map((s) => (
-              <li
-                key={s.id}
-                className="flex flex-col gap-2 rounded-xl border bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="flex flex-1 flex-col gap-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-semibold">{s.date}</span>
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        "border text-[11px]",
-                        MODE_COLORS[s.mode],
+          <ul className="space-y-3">
+            {weeks.map((w) => {
+              const ws = sessionsByWeek.get(w.weekNo) ?? [];
+              const ns = notesByWeek.get(w.weekNo) ?? [];
+              const ts = todosByWeek.get(w.weekNo) ?? [];
+              const isCurrentWeek = today >= w.startDate && today <= w.endDate;
+              const isPast = today > w.endDate;
+              return (
+                <li
+                  key={w.weekNo}
+                  className={cn(
+                    "rounded-xl border bg-white p-4",
+                    isCurrentWeek && "border-primary/50 bg-primary/5",
+                    isPast && !isCurrentWeek && "opacity-80",
+                  )}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-xs">
+                        {w.weekNo}주차
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {w.startDate} ~ {w.endDate}
+                      </span>
+                      {isCurrentWeek && (
+                        <Badge className="bg-primary text-white text-[10px]">
+                          이번 주
+                        </Badge>
                       )}
-                    >
-                      {CLASS_SESSION_MODE_LABELS[s.mode]}
-                    </Badge>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() =>
+                          setNoteDraft({ date: w.startDate, content: "" })
+                        }
+                      >
+                        <NotebookPen size={12} className="mr-1" /> 메모
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() =>
+                          setTodoDraft(blankTodoDraft(w.startDate))
+                        }
+                      >
+                        <ListChecks size={12} className="mr-1" /> 할 일
+                      </Button>
+                    </div>
                   </div>
-                  {s.notes && (
-                    <p className="text-xs text-muted-foreground">{s.notes}</p>
+
+                  {/* 수업 운영 */}
+                  {ws.length === 0 ? (
+                    <p className="mt-2 text-[11px] text-muted-foreground">
+                      — 운영 변경사항 없음 (기본 대면 수업)
+                    </p>
+                  ) : (
+                    <ul className="mt-2 space-y-1">
+                      {ws.map((s) => (
+                        <li
+                          key={s.id}
+                          className="flex flex-wrap items-center gap-2 rounded-md bg-slate-50 px-2 py-1.5"
+                        >
+                          <span className="text-[11px] font-medium">{s.date}</span>
+                          <Badge
+                            variant="outline"
+                            className={cn("border text-[10px]", MODE_COLORS[s.mode])}
+                          >
+                            {CLASS_SESSION_MODE_LABELS[s.mode]}
+                          </Badge>
+                          {s.notes && (
+                            <span className="text-[11px] text-muted-foreground">
+                              {s.notes}
+                            </span>
+                          )}
+                          {s.link && (
+                            <a
+                              href={s.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[11px] text-primary hover:underline"
+                            >
+                              링크
+                            </a>
+                          )}
+                          {master && (
+                            <div className="ml-auto flex gap-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() =>
+                                  setDraft({
+                                    id: s.id,
+                                    date: s.date,
+                                    mode: s.mode,
+                                    link: s.link ?? "",
+                                    notes: s.notes ?? "",
+                                  })
+                                }
+                              >
+                                <Pencil size={10} />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => remove(s)}
+                                className="text-destructive"
+                              >
+                                <Trash2 size={10} />
+                              </Button>
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
                   )}
-                  {s.link && (
-                    <a
-                      href={s.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-primary hover:underline"
-                    >
-                      {s.link}
-                    </a>
+
+                  {/* 개인 메모 */}
+                  {ns.length > 0 && (
+                    <div className="mt-3 rounded-md border border-blue-100 bg-blue-50/30 p-2">
+                      <p className="mb-1 text-[10px] font-medium text-blue-700">
+                        내 메모
+                      </p>
+                      <ul className="space-y-1">
+                        {ns.map((n) => (
+                          <li
+                            key={n.id}
+                            className="flex items-start justify-between gap-2 text-[11px]"
+                          >
+                            <div className="flex-1">
+                              <span className="mr-1 text-muted-foreground">{n.date}</span>
+                              <span className="whitespace-pre-wrap">{n.content}</span>
+                            </div>
+                            <div className="flex gap-1">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setNoteDraft({
+                                    id: n.id,
+                                    date: n.date,
+                                    content: n.content,
+                                  })
+                                }
+                                className="text-muted-foreground hover:text-primary"
+                              >
+                                <Pencil size={10} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => deleteNote(n)}
+                                className="text-muted-foreground hover:text-destructive"
+                              >
+                                <Trash2 size={10} />
+                              </button>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   )}
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      setDraft({
-                        id: s.id,
-                        date: s.date,
-                        mode: s.mode,
-                        link: s.link ?? "",
-                        notes: s.notes ?? "",
-                      })
-                    }
-                  >
-                    <Pencil size={12} className="mr-1" /> 수정
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => remove(s)}
-                    className="text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 size={12} className="mr-1" /> 삭제
-                  </Button>
-                </div>
-              </li>
-            ))}
+
+                  {/* 개인 할 일 */}
+                  {ts.length > 0 && (
+                    <div className="mt-2 rounded-md border border-amber-100 bg-amber-50/30 p-2">
+                      <p className="mb-1 text-[10px] font-medium text-amber-700">
+                        내 할 일
+                      </p>
+                      <ul className="space-y-1">
+                        {ts.map((t) => (
+                          <li
+                            key={t.id}
+                            className="flex items-center gap-2 text-[11px]"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={!!t.completed}
+                              onChange={() => toggleTodo(t)}
+                              className="shrink-0"
+                            />
+                            <Badge
+                              variant="secondary"
+                              className={cn(
+                                "text-[10px]",
+                                COURSE_TODO_TYPE_COLORS[t.type],
+                              )}
+                            >
+                              {COURSE_TODO_TYPE_LABELS[t.type]}
+                            </Badge>
+                            <span
+                              className={cn(
+                                "flex-1",
+                                t.completed && "line-through text-muted-foreground",
+                              )}
+                            >
+                              {t.content}
+                            </span>
+                            {t.dueDate && (
+                              <span className="text-muted-foreground">
+                                ~{t.dueDate}
+                              </span>
+                            )}
+                            <div className="flex gap-1">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setTodoDraft({
+                                    id: t.id,
+                                    type: t.type,
+                                    content: t.content,
+                                    dueDate: t.dueDate ?? "",
+                                    sessionDate: t.sessionDate,
+                                  })
+                                }
+                                className="text-muted-foreground hover:text-primary"
+                              >
+                                <Pencil size={10} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => deleteTodo(t)}
+                                className="text-muted-foreground hover:text-destructive"
+                              >
+                                <Trash2 size={10} />
+                              </button>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
+        )}
+
+        {/* 주차 미배정 할 일 */}
+        {unassignedTodos.length > 0 && (
+          <div className="mt-6 rounded-xl border bg-white p-4">
+            <p className="mb-2 text-xs font-medium text-muted-foreground">
+              주차 미배정 할 일
+            </p>
+            <ul className="space-y-1">
+              {unassignedTodos.map((t) => (
+                <li key={t.id} className="flex items-center gap-2 text-[11px]">
+                  <input
+                    type="checkbox"
+                    checked={!!t.completed}
+                    onChange={() => toggleTodo(t)}
+                  />
+                  <Badge
+                    variant="secondary"
+                    className={cn("text-[10px]", COURSE_TODO_TYPE_COLORS[t.type])}
+                  >
+                    {COURSE_TODO_TYPE_LABELS[t.type]}
+                  </Badge>
+                  <span
+                    className={cn(
+                      "flex-1",
+                      t.completed && "line-through text-muted-foreground",
+                    )}
+                  >
+                    {t.content}
+                  </span>
+                  {t.dueDate && (
+                    <span className="text-muted-foreground">~{t.dueDate}</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => deleteTodo(t)}
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 size={10} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </section>
 
+      {/* 운영자 일정 Dialog */}
       <Dialog open={!!draft} onOpenChange={(o) => !o && setDraft(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -268,70 +797,181 @@ function ScheduleContent({ courseId }: { courseId: string }) {
           {draft && (
             <div className="space-y-3">
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-xs font-medium text-muted-foreground">
-                  날짜
-                </span>
+                <span className="text-xs font-medium text-muted-foreground">날짜</span>
                 <Input
                   type="date"
                   value={draft.date}
-                  onChange={(e) =>
-                    setDraft({ ...draft, date: e.target.value })
-                  }
+                  onChange={(e) => setDraft({ ...draft, date: e.target.value })}
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-xs font-medium text-muted-foreground">
-                  운영방식
-                </span>
+                <span className="text-xs font-medium text-muted-foreground">운영방식</span>
                 <select
                   value={draft.mode}
                   onChange={(e) =>
-                    setDraft({
-                      ...draft,
-                      mode: e.target.value as ClassSessionMode,
-                    })
+                    setDraft({ ...draft, mode: e.target.value as ClassSessionMode })
                   }
                   className="rounded-md border bg-white px-3 py-2 text-sm"
                 >
                   {MODE_OPTIONS.map((m) => (
-                    <option key={m} value={m}>
-                      {CLASS_SESSION_MODE_LABELS[m]}
-                    </option>
+                    <option key={m} value={m}>{CLASS_SESSION_MODE_LABELS[m]}</option>
                   ))}
                 </select>
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-xs font-medium text-muted-foreground">
-                  링크 (줌 등)
-                </span>
+                <span className="text-xs font-medium text-muted-foreground">링크 (줌 등)</span>
                 <Input
                   value={draft.link}
-                  onChange={(e) =>
-                    setDraft({ ...draft, link: e.target.value })
-                  }
+                  onChange={(e) => setDraft({ ...draft, link: e.target.value })}
                   placeholder="https://..."
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-xs font-medium text-muted-foreground">
-                  메모
-                </span>
+                <span className="text-xs font-medium text-muted-foreground">메모</span>
                 <Input
                   value={draft.notes}
-                  onChange={(e) =>
-                    setDraft({ ...draft, notes: e.target.value })
-                  }
+                  onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
                   placeholder="과제 대체 안내, 보강 일정 등"
                 />
               </label>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDraft(null)}>
-              취소
-            </Button>
+            <Button variant="outline" onClick={() => setDraft(null)}>취소</Button>
             <Button onClick={save} disabled={saving}>
               {saving ? "저장 중..." : "저장"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 학기 설정 Dialog (master) */}
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>학기 설정</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              개강일(주차 1의 시작일)과 총 주차 수를 설정합니다. 설정값은 수강생 전원에게 동일하게 적용됩니다.
+            </p>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-xs font-medium text-muted-foreground">
+                개강일 (주차 1 시작일)
+              </span>
+              <Input
+                type="date"
+                value={settingsStart}
+                onChange={(e) => setSettingsStart(e.target.value)}
+              />
+              {inferredStart && (
+                <span className="text-[11px] text-muted-foreground">
+                  자동 추정값: {inferredStart}
+                </span>
+              )}
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-xs font-medium text-muted-foreground">총 주차</span>
+              <Input
+                type="number"
+                min={1}
+                max={30}
+                value={settingsWeeks}
+                onChange={(e) => setSettingsWeeks(Number(e.target.value) || DEFAULT_TOTAL_WEEKS)}
+              />
+            </label>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSettingsOpen(false)}>취소</Button>
+            <Button onClick={saveSettings} disabled={savingSettings}>
+              {savingSettings ? "저장 중..." : "저장"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 메모 Dialog */}
+      <Dialog open={!!noteDraft} onOpenChange={(o) => !o && setNoteDraft(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{noteDraft?.id ? "메모 수정" : "수업 메모"}</DialogTitle>
+          </DialogHeader>
+          {noteDraft && (
+            <div className="space-y-3">
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-xs font-medium text-muted-foreground">수업 일자</span>
+                <Input
+                  type="date"
+                  value={noteDraft.date}
+                  onChange={(e) => setNoteDraft({ ...noteDraft, date: e.target.value })}
+                  disabled={!!noteDraft.id}
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-xs font-medium text-muted-foreground">내용</span>
+                <textarea
+                  value={noteDraft.content}
+                  onChange={(e) => setNoteDraft({ ...noteDraft, content: e.target.value })}
+                  rows={5}
+                  className="rounded-md border bg-white px-3 py-2 text-sm"
+                  placeholder="수업에서 배운 내용, 느낀 점, 질문 등을 자유롭게 기록하세요."
+                />
+              </label>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNoteDraft(null)}>취소</Button>
+            <Button onClick={saveNote} disabled={savingNote}>
+              {savingNote ? "저장 중..." : "저장"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 할 일 Dialog */}
+      <Dialog open={!!todoDraft} onOpenChange={(o) => !o && setTodoDraft(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{todoDraft?.id ? "할 일 수정" : "할 일 추가"}</DialogTitle>
+          </DialogHeader>
+          {todoDraft && (
+            <div className="space-y-3">
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-xs font-medium text-muted-foreground">유형</span>
+                <select
+                  value={todoDraft.type}
+                  onChange={(e) =>
+                    setTodoDraft({ ...todoDraft, type: e.target.value as CourseTodoType })
+                  }
+                  className="rounded-md border bg-white px-3 py-2 text-sm"
+                >
+                  {TODO_TYPES.map((t) => (
+                    <option key={t} value={t}>{COURSE_TODO_TYPE_LABELS[t]}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-xs font-medium text-muted-foreground">내용</span>
+                <Input
+                  value={todoDraft.content}
+                  onChange={(e) => setTodoDraft({ ...todoDraft, content: e.target.value })}
+                  placeholder="해야 할 일"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-xs font-medium text-muted-foreground">기한 (선택)</span>
+                <Input
+                  type="date"
+                  value={todoDraft.dueDate}
+                  onChange={(e) => setTodoDraft({ ...todoDraft, dueDate: e.target.value })}
+                />
+              </label>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTodoDraft(null)}>취소</Button>
+            <Button onClick={saveTodo} disabled={savingTodo}>
+              {savingTodo ? "저장 중..." : "저장"}
             </Button>
           </DialogFooter>
         </DialogContent>

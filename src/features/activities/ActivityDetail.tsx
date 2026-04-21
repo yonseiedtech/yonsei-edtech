@@ -19,8 +19,8 @@ import {
   Pencil, Globe, Loader2, CheckCircle, Clock, XCircle,
   Plus, Trash2, FileUp, Download, ListChecks,
 } from "lucide-react";
-import type { Activity, ActivityType, ActivityProgress, ActivityMaterial, FormField, EnrollmentStatus } from "@/types";
-import { ENROLLMENT_STATUS_LABELS } from "@/types";
+import type { Activity, ActivityType, ActivityProgress, ActivityProgressMode, ActivityMaterial, FormField, EnrollmentStatus } from "@/types";
+import { ENROLLMENT_STATUS_LABELS, ACTIVITY_PROGRESS_MODE_LABELS } from "@/types";
 import { activityProgressApi, activityMaterialsApi } from "@/lib/bkend";
 import { uploadToStorage, type UploadedFile } from "@/lib/storage";
 import { formatSemester } from "@/lib/semester";
@@ -58,6 +58,9 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const [signupCtaOpen, setSignupCtaOpen] = useState(false);
   const [progressTitle, setProgressTitle] = useState("");
   const [progressDate, setProgressDate] = useState("");
+  const [progressStartTime, setProgressStartTime] = useState("");
+  const [progressEndTime, setProgressEndTime] = useState("");
+  const [progressMode, setProgressMode] = useState<ActivityProgressMode>("in_person");
   const [uploading, setUploading] = useState(false);
   const [roleDialog, setRoleDialog] = useState<{ pid: string; name: string } | null>(null);
   const [roleInput, setRoleInput] = useState("");
@@ -389,12 +392,34 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                         {p.status === "in_progress" && <div className="h-2 w-2 rounded-full bg-amber-400" />}
                       </button>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <Badge variant="secondary" className="text-[10px]">Week {p.week}</Badge>
+                          {p.mode && (
+                            <Badge
+                              variant="secondary"
+                              className={cn(
+                                "text-[10px]",
+                                p.mode === "in_person"
+                                  ? "bg-emerald-50 text-emerald-700"
+                                  : "bg-blue-50 text-blue-700",
+                              )}
+                            >
+                              {ACTIVITY_PROGRESS_MODE_LABELS[p.mode]}
+                            </Badge>
+                          )}
                           <span className="text-sm font-medium">{p.title}</span>
                         </div>
                         {p.description && <p className="mt-1 text-xs text-muted-foreground">{p.description}</p>}
-                        <span className="text-[10px] text-muted-foreground">{p.date}</span>
+                        <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
+                          <span>{p.date}</span>
+                          {(p.startTime || p.endTime) && (
+                            <span>
+                              {p.startTime}
+                              {p.startTime && p.endTime && " ~ "}
+                              {p.endTime}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       {isStaff && (
                         <button onClick={async () => {
@@ -417,21 +442,53 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               {isStaff && (
                 <div className="rounded-xl border bg-white p-4 space-y-3">
                   <h3 className="text-sm font-semibold flex items-center gap-1"><ListChecks size={14} />주차 추가</h3>
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <Input value={progressTitle} onChange={(e) => setProgressTitle(e.target.value)} placeholder="활동 내용 (예: 논문 리뷰 #1)" className="flex-1" />
-                    <Input type="date" value={progressDate} onChange={(e) => setProgressDate(e.target.value)} className="w-40" />
+                  <Input value={progressTitle} onChange={(e) => setProgressTitle(e.target.value)} placeholder="활동 내용 (예: 논문 리뷰 #1)" />
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <div>
+                      <label className="mb-1 block text-[11px] text-muted-foreground">날짜</label>
+                      <Input type="date" value={progressDate} onChange={(e) => setProgressDate(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-[11px] text-muted-foreground">시작 시간</label>
+                      <Input type="time" value={progressStartTime} onChange={(e) => setProgressStartTime(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-[11px] text-muted-foreground">종료 시간</label>
+                      <Input type="time" value={progressEndTime} onChange={(e) => setProgressEndTime(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-[11px] text-muted-foreground">방법</label>
+                      <select
+                        value={progressMode}
+                        onChange={(e) => setProgressMode(e.target.value as ActivityProgressMode)}
+                        className="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
+                      >
+                        <option value="in_person">대면</option>
+                        <option value="zoom">ZOOM</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
                     <Button size="sm" disabled={!progressTitle.trim()} onClick={async () => {
                       try {
+                        const nextWeek = progressList.reduce((max, p) => Math.max(max, p.week ?? 0), 0) + 1;
                         await activityProgressApi.create({
                           activityId,
-                          week: progressList.length + 1,
+                          week: nextWeek,
                           date: progressDate || new Date().toISOString().split("T")[0],
+                          startTime: progressStartTime || undefined,
+                          endTime: progressEndTime || undefined,
+                          mode: progressMode,
                           title: progressTitle.trim(),
                           status: "planned",
                         });
-                        queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
+                        await queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
+                        await queryClient.refetchQueries({ queryKey: ["activity-progress", activityId] });
                         setProgressTitle("");
                         setProgressDate("");
+                        setProgressStartTime("");
+                        setProgressEndTime("");
+                        setProgressMode("in_person");
                         toast.success("추가되었습니다.");
                       } catch (e) {
                         console.error("[activity-progress/create]", e);

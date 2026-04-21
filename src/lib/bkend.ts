@@ -41,7 +41,7 @@ import type {
   ProfileLike, ProfileView, StudySession,
   ActivityParticipation, Award, ExternalActivity, ContentCreation,
   AlumniThesis, ThesisReference, ThesisClaim,
-  CourseOffering, CourseEnrollment, ClassSession, SemesterTerm, ComprehensiveExamRecord, CourseReview,
+  CourseOffering, CourseEnrollment, ClassSession, CourseSessionNote, CourseTodo, SemesterTerm, ComprehensiveExamRecord, CourseReview,
   GuideTrack, GuideItem, GuideProgress,
   HostRetrospective, HostActivityType,
   SitePopup,
@@ -1014,6 +1014,50 @@ export const classSessionsApi = {
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<ClassSession>("class_sessions", id, data),
   delete: (id: string) => dataApi.delete("class_sessions", id),
+};
+
+// 수업 개인 메모 (수강생이 수업일별로 남기는 메모)
+export const courseSessionNotesApi = {
+  listByCourseAndUser: (courseOfferingId: string, userId: string) =>
+    dataApi.list<CourseSessionNote>("course_session_notes", {
+      "filter[courseOfferingId]": courseOfferingId,
+      "filter[userId]": userId,
+      sort: "date:asc",
+      limit: 500,
+    }),
+  listByUser: (userId: string) =>
+    dataApi.list<CourseSessionNote>("course_session_notes", {
+      "filter[userId]": userId,
+      sort: "date:desc",
+      limit: 500,
+    }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<CourseSessionNote>("course_session_notes", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<CourseSessionNote>("course_session_notes", id, data),
+  delete: (id: string) => dataApi.delete("course_session_notes", id),
+};
+
+// 수업 TO-DO (수강생 개인)
+export const courseTodosApi = {
+  listByCourseAndUser: (courseOfferingId: string, userId: string) =>
+    dataApi.list<CourseTodo>("course_todos", {
+      "filter[courseOfferingId]": courseOfferingId,
+      "filter[userId]": userId,
+      sort: "createdAt:desc",
+      limit: 500,
+    }),
+  listByUser: (userId: string) =>
+    dataApi.list<CourseTodo>("course_todos", {
+      "filter[userId]": userId,
+      sort: "createdAt:desc",
+      limit: 500,
+    }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<CourseTodo>("course_todos", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<CourseTodo>("course_todos", id, data),
+  delete: (id: string) => dataApi.delete("course_todos", id),
 };
 
 // ── Track 6: 인지디딤판 (Phase 1) ──

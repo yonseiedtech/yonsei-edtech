@@ -2,19 +2,34 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { CalendarClock, ExternalLink } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { CalendarClock, ChevronLeft, ChevronRight, ExternalLink, Settings, NotebookPen, ListChecks } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 import { useAuthStore } from "@/features/auth/auth-store";
 import {
   courseEnrollmentsApi,
   courseOfferingsApi,
   classSessionsApi,
+  courseSessionNotesApi,
+  courseTodosApi,
 } from "@/lib/bkend";
 import {
   CLASS_SESSION_MODE_LABELS,
+  COURSE_TODO_TYPE_LABELS,
+  COURSE_TODO_TYPE_COLORS,
   type ClassSession,
   type ClassSessionMode,
   type CourseOffering,
+  type CourseTodoType,
 } from "@/types";
 import { inferCurrentSemester } from "@/lib/semester";
 import {
@@ -28,14 +43,18 @@ const DAY_CHARS = ["일", "월", "화", "수", "목", "금", "토"] as const;
 // 주간 그리드는 평일만(월~금)
 const WEEK_DAY_INDICES = [1, 2, 3, 4, 5] as const;
 
-const HOUR_START = 17;
-const HOUR_END = 23;
-const MIN_START = HOUR_START * 60;
-const MIN_END = HOUR_END * 60;
+const DEFAULT_HOUR_START = 17;
+const DEFAULT_HOUR_END = 24; // 24 = 자정 (00:00)
 const ROW_HEIGHT_PX = 64;
 
 const VIEW_STORAGE_KEY = "dashboard.classTimeline.view";
+const HOUR_RANGE_STORAGE_KEY = "dashboard.classTimeline.hourRange";
 type ViewMode = "daily" | "weekly";
+
+function formatHour(h: number): string {
+  if (h === 24) return "00:00";
+  return `${String(h).padStart(2, "0")}:00`;
+}
 
 const MODE_BORDER: Record<ClassSessionMode, string> = {
   in_person: "border-l-emerald-400 bg-emerald-50/40",
@@ -85,16 +104,43 @@ interface PlacedClass {
   heightPx: number;
 }
 
+interface QuickMemoDraft {
+  courseOfferingId: string;
+  courseName: string;
+  date: string;
+  content: string;
+}
+
+interface QuickTodoDraft {
+  courseOfferingId: string;
+  courseName: string;
+  sessionDate: string;
+  type: CourseTodoType;
+  content: string;
+  dueDate: string;
+}
+
+const TODO_TYPE_OPTIONS: CourseTodoType[] = [
+  "assignment",
+  "paper_reading",
+  "paper_writing",
+  "presentation_prep",
+  "other",
+];
+
 export default function DailyClassTimelineWidget() {
   const { user } = useAuthStore();
   const userId = user?.id;
-  const now = new Date();
-  const today = ymd(now);
-  const todayDayIndex = now.getDay();
+  const qc = useQueryClient();
+
+  // 사용자가 좌/우로 이동 가능한 선택일 — 기본값은 오늘
+  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
+  const today = ymd(selectedDate);
+  const todayDayIndex = selectedDate.getDay();
   const dayChar = DAY_CHARS[todayDayIndex];
-  const { year, semester } = inferCurrentSemester(now);
+  const { year, semester } = inferCurrentSemester(selectedDate);
   const term = semesterToTerm(semester);
-  const dateLabel = `${now.getMonth() + 1}월 ${now.getDate()}일 (${dayChar})`;
+  const dateLabel = `${selectedDate.getMonth() + 1}월 ${selectedDate.getDate()}일 (${dayChar})`;
   const semesterLabel = `${year}년 ${term === "spring" ? "1학기" : "2학기"}`;
 
   const [viewMode, setViewMode] = useState<ViewMode>("daily");
@@ -110,6 +156,105 @@ export default function DailyClassTimelineWidget() {
       localStorage.setItem(VIEW_STORAGE_KEY, v);
     } catch {}
   };
+
+  // 시간대 설정 (localStorage 영속화)
+  const [hourStart, setHourStart] = useState<number>(DEFAULT_HOUR_START);
+  const [hourEnd, setHourEnd] = useState<number>(DEFAULT_HOUR_END);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(HOUR_RANGE_STORAGE_KEY);
+      if (!saved) return;
+      const parsed = JSON.parse(saved) as { start?: number; end?: number };
+      if (
+        typeof parsed.start === "number" &&
+        typeof parsed.end === "number" &&
+        parsed.start >= 0 &&
+        parsed.end <= 24 &&
+        parsed.end > parsed.start
+      ) {
+        setHourStart(parsed.start);
+        setHourEnd(parsed.end);
+      }
+    } catch {}
+  }, []);
+  const saveHourRange = (start: number, end: number) => {
+    setHourStart(start);
+    setHourEnd(end);
+    try {
+      localStorage.setItem(
+        HOUR_RANGE_STORAGE_KEY,
+        JSON.stringify({ start, end }),
+      );
+    } catch {}
+  };
+  const MIN_START = hourStart * 60;
+  const MIN_END = hourEnd * 60;
+
+  // 수업 종료 후 메모·할 일 입력 Dialog 상태
+  const [memoDraft, setMemoDraft] = useState<QuickMemoDraft | null>(null);
+  const [savingMemo, setSavingMemo] = useState(false);
+  const [todoDraft, setTodoDraft] = useState<QuickTodoDraft | null>(null);
+  const [savingTodo, setSavingTodo] = useState(false);
+  const [dismissedToday, setDismissedToday] = useState<Record<string, boolean>>({});
+
+  async function saveQuickMemo() {
+    if (!memoDraft || !userId) return;
+    const content = memoDraft.content.trim();
+    if (!content) {
+      toast.error("메모 내용을 입력하세요.");
+      return;
+    }
+    setSavingMemo(true);
+    try {
+      await courseSessionNotesApi.create({
+        courseOfferingId: memoDraft.courseOfferingId,
+        date: memoDraft.date,
+        userId,
+        content,
+      });
+      await qc.invalidateQueries({
+        queryKey: ["course-session-notes", memoDraft.courseOfferingId, userId],
+      });
+      toast.success("메모를 저장했습니다.");
+      setDismissedToday((p) => ({ ...p, [memoDraft.courseOfferingId]: true }));
+      setMemoDraft(null);
+    } catch (e) {
+      toast.error(`저장 실패: ${(e as Error).message}`);
+    } finally {
+      setSavingMemo(false);
+    }
+  }
+
+  async function saveQuickTodo() {
+    if (!todoDraft || !userId) return;
+    const content = todoDraft.content.trim();
+    if (!content) {
+      toast.error("할 일 내용을 입력하세요.");
+      return;
+    }
+    setSavingTodo(true);
+    try {
+      await courseTodosApi.create({
+        courseOfferingId: todoDraft.courseOfferingId,
+        userId,
+        type: todoDraft.type,
+        content,
+        dueDate: todoDraft.dueDate || undefined,
+        sessionDate: todoDraft.sessionDate,
+        completed: false,
+      });
+      await qc.invalidateQueries({
+        queryKey: ["course-todos", todoDraft.courseOfferingId, userId],
+      });
+      toast.success("할 일을 저장했습니다.");
+      setTodoDraft(null);
+    } catch (e) {
+      toast.error(`저장 실패: ${(e as Error).message}`);
+    } finally {
+      setSavingTodo(false);
+    }
+  }
 
   // 1분마다 갱신되는 현재 시각 (NOW 라인 + 라벨용) — 분 경계에 정렬
   const [currentTime, setCurrentTime] = useState<Date>(() => new Date());
@@ -134,6 +279,20 @@ export default function DailyClassTimelineWidget() {
       ? ((nowMin - MIN_START) / 60) * ROW_HEIGHT_PX
       : null;
   const nowLabel = `${String(currentTime.getHours()).padStart(2, "0")}:${String(currentTime.getMinutes()).padStart(2, "0")}`;
+
+  // 실제 오늘(selectedDate와 무관) — NOW 라인 표시 여부 판별용
+  const actualToday = ymd(currentTime);
+  const isViewingToday = today === actualToday;
+
+  // 날짜 네비게이션 (daily: ±1일, weekly: ±7일)
+  const navigateDate = (direction: -1 | 1) => {
+    const step = viewMode === "daily" ? 1 : 7;
+    const next = new Date(selectedDate);
+    next.setDate(next.getDate() + step * direction);
+    setSelectedDate(next);
+  };
+  const resetToToday = () => setSelectedDate(new Date());
+  const isShowingToday = isViewingToday; // 버튼 활성 판별
 
   const { data: enrollmentsRes, isLoading: loadingEnrollments } = useQuery({
     queryKey: ["my-enrollments", userId],
@@ -179,18 +338,17 @@ export default function DailyClassTimelineWidget() {
       });
   }, [parsedOfferings, todayDayIndex]);
 
-  // 이번 주 월~금 날짜 (weekly 모드)
+  // 선택일이 속한 주의 월~금 날짜 (weekly 모드)
   const weekDates = useMemo(() => {
-    // 일요일 기준 → 월요일을 첫 칸으로
-    const monday = new Date(now);
-    const dayDiff = (todayDayIndex + 6) % 7; // 월=0, ..., 일=6
+    const monday = new Date(selectedDate);
+    const dayDiff = (selectedDate.getDay() + 6) % 7; // 월=0, ..., 일=6
     monday.setDate(monday.getDate() - dayDiff);
     return WEEK_DAY_INDICES.map((_, i) => {
       const d = new Date(monday);
       d.setDate(monday.getDate() + i);
       return d;
     });
-  }, [now, todayDayIndex]);
+  }, [selectedDate]);
 
   const weekStartStr = weekDates.length > 0 ? ymd(weekDates[0]) : today;
   const weekEndStr = weekDates.length > 0 ? ymd(weekDates[weekDates.length - 1]) : today;
@@ -298,18 +456,36 @@ export default function DailyClassTimelineWidget() {
     });
   }, [weekDates, parsedOfferings, weeklySessionsByDateCourse]);
 
+  // 오늘 종료된 수업들 — 메모·할 일 입력 프롬프트용
+  const finishedToday = useMemo(() => {
+    if (!isViewingToday) return [] as typeof todayOfferings;
+    return todayOfferings.filter(
+      ({ parsed }) => parsed.endMin !== null && parsed.endMin <= nowMin,
+    );
+  }, [isViewingToday, todayOfferings, nowMin]);
+
   if (!userId) return null;
   const isLoading = loadingEnrollments || loadingOfferings;
 
   const hourRows = Array.from(
-    { length: HOUR_END - HOUR_START + 1 },
-    (_, i) => HOUR_START + i,
+    { length: hourEnd - hourStart + 1 },
+    (_, i) => hourStart + i,
   );
-  const totalHeight = ROW_HEIGHT_PX * (HOUR_END - HOUR_START);
+  const totalHeight = ROW_HEIGHT_PX * (hourEnd - hourStart);
 
+  const currentWeekContainsToday = weekDates.some((d) => ymd(d) === actualToday);
+  const headerTitle =
+    viewMode === "daily"
+      ? isShowingToday
+        ? "오늘의 수업"
+        : `${dateLabel} 수업`
+      : currentWeekContainsToday
+        ? "이번 주 수업"
+        : "선택 주 수업";
+  const hourRangeLabel = `${formatHour(hourStart)}~${formatHour(hourEnd)}`;
   const headerLabel =
     viewMode === "daily"
-      ? `${dateLabel} · ${semesterLabel} · ${HOUR_START}~${HOUR_END}시`
+      ? `${dateLabel} · ${semesterLabel} · ${hourRangeLabel}`
       : `${weekDates[0]?.getMonth() + 1}/${weekDates[0]?.getDate()} ~ ${weekDates[4]?.getMonth() + 1}/${weekDates[4]?.getDate()} · ${semesterLabel}`;
 
   return (
@@ -318,13 +494,43 @@ export default function DailyClassTimelineWidget() {
         <div className="flex items-center gap-2">
           <CalendarClock size={18} className="text-primary" />
           <div className="leading-tight">
-            <h2 className="font-bold">
-              {viewMode === "daily" ? "오늘의 수업" : "이번 주 수업"}
-            </h2>
+            <h2 className="font-bold">{headerTitle}</h2>
             <p className="mt-0.5 text-xs text-muted-foreground">{headerLabel}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* 날짜 네비게이션 */}
+          <div className="flex items-center gap-0.5 rounded-lg border p-0.5">
+            <button
+              type="button"
+              onClick={() => navigateDate(-1)}
+              aria-label={viewMode === "daily" ? "이전 날" : "이전 주"}
+              className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={resetToToday}
+              disabled={isShowingToday}
+              className={cn(
+                "rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors",
+                isShowingToday
+                  ? "cursor-default text-muted-foreground/50"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              )}
+            >
+              오늘
+            </button>
+            <button
+              type="button"
+              onClick={() => navigateDate(1)}
+              aria-label={viewMode === "daily" ? "다음 날" : "다음 주"}
+              className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
           {/* 일간/주간 토글 */}
           <div className="flex gap-0.5 rounded-lg border p-0.5">
             <button
@@ -350,12 +556,6 @@ export default function DailyClassTimelineWidget() {
               주간
             </button>
           </div>
-          <Link
-            href="/courses?tab=mine"
-            className="text-xs text-muted-foreground hover:text-primary"
-          >
-            내 수강기록 →
-          </Link>
         </div>
       </div>
 
@@ -364,7 +564,7 @@ export default function DailyClassTimelineWidget() {
       ) : viewMode === "daily" ? (
         todayOfferings.length === 0 ? (
           <p className="mt-4 text-sm text-muted-foreground">
-            오늘({dayChar})에 해당하는 수강과목이 없습니다.
+            {isShowingToday ? `오늘(${dayChar})` : `${dateLabel}`}에 해당하는 수강과목이 없습니다.
           </p>
         ) : (
           <DailyGrid
@@ -372,7 +572,7 @@ export default function DailyClassTimelineWidget() {
             undated={undated}
             hourRows={hourRows}
             totalHeight={totalHeight}
-            nowPx={nowPx}
+            nowPx={isViewingToday ? nowPx : null}
             nowLabel={nowLabel}
           />
         )
@@ -381,11 +581,249 @@ export default function DailyClassTimelineWidget() {
           placedWeekly={placedWeekly}
           hourRows={hourRows}
           totalHeight={totalHeight}
-          todayDayIndex={todayDayIndex}
+          actualToday={actualToday}
           nowPx={nowPx}
           nowLabel={nowLabel}
         />
       )}
+
+      {/* 수업 종료 후 메모·할 일 프롬프트 (오늘 뷰에서만) */}
+      {viewMode === "daily" && isViewingToday && finishedToday.length > 0 && (
+        <div className="mt-4 space-y-2">
+          {finishedToday.map(({ offering }) => {
+            if (dismissedToday[offering.id]) return null;
+            return (
+              <div
+                key={offering.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50/50 p-3"
+              >
+                <div className="flex-1 text-[13px]">
+                  <p className="font-medium text-emerald-900">
+                    오늘도 <b>{offering.courseName}</b> 수업 들으시느라 고생하셨습니다.
+                  </p>
+                  <p className="text-[11px] text-emerald-800/70">
+                    오늘 수업에 대한 메모 또는 할 일을 남겨둘까요?
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      setMemoDraft({
+                        courseOfferingId: offering.id,
+                        courseName: offering.courseName,
+                        date: actualToday,
+                        content: "",
+                      })
+                    }
+                  >
+                    <NotebookPen size={12} className="mr-1" /> 메모
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      setTodoDraft({
+                        courseOfferingId: offering.id,
+                        courseName: offering.courseName,
+                        sessionDate: actualToday,
+                        type: "assignment",
+                        content: "",
+                        dueDate: "",
+                      })
+                    }
+                  >
+                    <ListChecks size={12} className="mr-1" /> 할 일
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDismissedToday((p) => ({ ...p, [offering.id]: true }))
+                    }
+                    className="rounded-md px-2 text-[11px] text-muted-foreground hover:text-foreground"
+                  >
+                    닫기
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* 하단: 설정 + 내 수강기록 */}
+      <div className="mt-3 flex items-center justify-end gap-2 border-t pt-2">
+        <button
+          type="button"
+          onClick={() => setSettingsOpen(true)}
+          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-muted-foreground hover:bg-muted hover:text-foreground"
+          aria-label="타임라인 시간대 설정"
+        >
+          <Settings size={12} />
+          시간대 설정
+        </button>
+        <Link
+          href="/courses?tab=mine"
+          className="text-[11px] text-muted-foreground hover:text-primary"
+        >
+          내 수강기록 →
+        </Link>
+      </div>
+
+      {/* 시간대 설정 Dialog */}
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>일간 타임라인 시간대 설정</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-xs text-muted-foreground">
+              일간 뷰에서 표시할 시간대를 선택하세요. 설정은 이 브라우저에만 저장됩니다.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex flex-col gap-1 text-xs">
+                <span className="font-medium text-muted-foreground">시작 시간</span>
+                <select
+                  value={hourStart}
+                  onChange={(e) => {
+                    const s = Number(e.target.value);
+                    const newEnd = hourEnd <= s ? Math.min(24, s + 1) : hourEnd;
+                    saveHourRange(s, newEnd);
+                  }}
+                  className="rounded border px-2 py-1.5 text-sm"
+                >
+                  {Array.from({ length: 24 }, (_, i) => i).map((h) => (
+                    <option key={h} value={h}>{formatHour(h)}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-xs">
+                <span className="font-medium text-muted-foreground">종료 시간</span>
+                <select
+                  value={hourEnd}
+                  onChange={(e) => saveHourRange(hourStart, Number(e.target.value))}
+                  className="rounded border px-2 py-1.5 text-sm"
+                >
+                  {Array.from({ length: 24 - hourStart }, (_, i) => hourStart + 1 + i).map((h) => (
+                    <option key={h} value={h}>{formatHour(h)}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <button
+              type="button"
+              onClick={() => saveHourRange(DEFAULT_HOUR_START, DEFAULT_HOUR_END)}
+              className="text-[11px] text-muted-foreground underline hover:text-foreground"
+            >
+              기본값(17:00~00:00)으로 되돌리기
+            </button>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSettingsOpen(false)}>
+              닫기
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 빠른 메모 Dialog */}
+      <Dialog open={!!memoDraft} onOpenChange={(o) => !o && setMemoDraft(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{memoDraft?.courseName} — 수업 메모</DialogTitle>
+          </DialogHeader>
+          {memoDraft && (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                {memoDraft.date} 수업에 대한 개인 메모입니다.
+              </p>
+              <textarea
+                value={memoDraft.content}
+                onChange={(e) =>
+                  setMemoDraft({ ...memoDraft, content: e.target.value })
+                }
+                rows={6}
+                autoFocus
+                className="w-full rounded-md border bg-white px-3 py-2 text-sm"
+                placeholder="오늘 수업에서 배운 내용, 느낀 점, 질문 등을 자유롭게 기록하세요."
+              />
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMemoDraft(null)}>
+              취소
+            </Button>
+            <Button onClick={saveQuickMemo} disabled={savingMemo}>
+              {savingMemo ? "저장 중..." : "저장"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 빠른 할 일 Dialog */}
+      <Dialog open={!!todoDraft} onOpenChange={(o) => !o && setTodoDraft(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{todoDraft?.courseName} — 할 일 추가</DialogTitle>
+          </DialogHeader>
+          {todoDraft && (
+            <div className="space-y-3">
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-xs font-medium text-muted-foreground">유형</span>
+                <div className="flex flex-wrap gap-1">
+                  {TODO_TYPE_OPTIONS.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setTodoDraft({ ...todoDraft, type: t })}
+                      className={`rounded-md px-2 py-1 text-[11px] ${
+                        todoDraft.type === t
+                          ? COURSE_TODO_TYPE_COLORS[t] + " ring-1 ring-offset-1 ring-primary/40"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      }`}
+                    >
+                      {COURSE_TODO_TYPE_LABELS[t]}
+                    </button>
+                  ))}
+                </div>
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-xs font-medium text-muted-foreground">내용</span>
+                <Input
+                  value={todoDraft.content}
+                  onChange={(e) =>
+                    setTodoDraft({ ...todoDraft, content: e.target.value })
+                  }
+                  autoFocus
+                  placeholder="예) Dewey 챕터 2 읽기"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-xs font-medium text-muted-foreground">기한 (선택)</span>
+                <Input
+                  type="date"
+                  value={todoDraft.dueDate}
+                  onChange={(e) =>
+                    setTodoDraft({ ...todoDraft, dueDate: e.target.value })
+                  }
+                />
+              </label>
+              <p className="text-[10px] text-muted-foreground">
+                이 할 일은 {todoDraft.sessionDate} 수업({todoDraft.courseName})에 연결됩니다.
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTodoDraft(null)}>
+              취소
+            </Button>
+            <Button onClick={saveQuickTodo} disabled={savingTodo}>
+              {savingTodo ? "저장 중..." : "저장"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -418,7 +856,7 @@ function DailyGrid({
               className="absolute right-2 -translate-y-2 text-[11px] font-medium text-muted-foreground"
               style={{ top: i * ROW_HEIGHT_PX }}
             >
-              {h}:00
+              {h === 24 ? "00:00" : `${h}:00`}
             </div>
           ))}
         </div>
@@ -563,14 +1001,14 @@ function WeeklyGrid({
   placedWeekly,
   hourRows,
   totalHeight,
-  todayDayIndex,
+  actualToday,
   nowPx,
   nowLabel,
 }: {
   placedWeekly: Array<{ date: Date; dayIndex: number; items: PlacedClass[] }>;
   hourRows: number[];
   totalHeight: number;
-  todayDayIndex: number;
+  actualToday: string;
   nowPx: number | null;
   nowLabel: string;
 }) {
@@ -585,7 +1023,7 @@ function WeeklyGrid({
           {/* 헤더 행 */}
           <div />
           {placedWeekly.map(({ date, dayIndex }) => {
-            const isToday = dayIndex === todayDayIndex;
+            const isToday = ymd(date) === actualToday;
             return (
               <div
                 key={ymd(date)}
@@ -616,8 +1054,8 @@ function WeeklyGrid({
           </div>
 
           {/* 요일 컬럼들 */}
-          {placedWeekly.map(({ date, dayIndex, items }) => {
-            const isToday = dayIndex === todayDayIndex;
+          {placedWeekly.map(({ date, items }) => {
+            const isToday = ymd(date) === actualToday;
             return (
               <div
                 key={ymd(date)}

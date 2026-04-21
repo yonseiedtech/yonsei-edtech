@@ -579,6 +579,28 @@ service cloud.firestore {
       allow write: if isAuthenticated() && isStaffOrAbove();
     }
 
+    // ─── Course Session Notes (수강생 개인 수업 메모) ───
+    // 본인만 read/write (운영진이라도 타인의 개인 메모는 접근 불가)
+    match /course_session_notes/{docId} {
+      allow read: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // ─── Course Todos (수강생 개인 해야할 일) ───
+    // 본인만 read/write
+    match /course_todos/{docId} {
+      allow read: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+    }
+
     // ─── Course Reviews (강의 후기) ───
     // 공개 read (수강 선택 참고), 작성자 본인만 update (helpful 토글 포함)
     // helpfulBy[] toggle은 본인이 아닌 사용자도 허용 (rating/comment 불변)

@@ -1325,11 +1325,21 @@ export interface AdminTodo {
 }
 
 // ── 활동 진행 기록 ──
+export type ActivityProgressMode = "in_person" | "zoom";
+
+export const ACTIVITY_PROGRESS_MODE_LABELS: Record<ActivityProgressMode, string> = {
+  in_person: "대면",
+  zoom: "ZOOM",
+};
+
 export interface ActivityProgress {
   id: string;
   activityId: string;
   week: number;
   date: string;
+  startTime?: string; // "HH:mm"
+  endTime?: string;   // "HH:mm"
+  mode?: ActivityProgressMode;
   title: string;
   description?: string;
   status: "planned" | "in_progress" | "completed";
@@ -1697,6 +1707,10 @@ export interface CourseOffering {
   /** false = 폐강 (카탈로그에서 숨김) */
   active: boolean;
   enrollmentCap?: number;
+  /** 학기 개강일(주차 1의 시작일) YYYY-MM-DD — 미지정 시 학기+수업요일에서 자동 추론 */
+  semesterStartDate?: string;
+  /** 총 주차 수 (기본 15) */
+  totalWeeks?: number;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -1876,6 +1890,64 @@ export interface ClassSession {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// ── 수업 메모 (수강생 개인, 수업일별) ──
+
+/** 수강생이 개별 수업(courseOffering×date)에 대해 남기는 개인 메모 */
+export interface CourseSessionNote {
+  id: string;
+  courseOfferingId: string;
+  /** YYYY-MM-DD (수업 일자) */
+  date: string;
+  /** 작성자(수강생) userId */
+  userId: string;
+  content: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+// ── 수업 TO-DO (수강생 개인) ──
+
+export type CourseTodoType =
+  | "assignment"          // 과제
+  | "paper_reading"       // 논문 읽기
+  | "paper_writing"       // 논문 작성
+  | "presentation_prep"   // 발표 준비
+  | "other";              // 기타
+
+export const COURSE_TODO_TYPE_LABELS: Record<CourseTodoType, string> = {
+  assignment: "과제",
+  paper_reading: "논문 읽기",
+  paper_writing: "논문 작성",
+  presentation_prep: "발표 준비",
+  other: "기타",
+};
+
+export const COURSE_TODO_TYPE_COLORS: Record<CourseTodoType, string> = {
+  assignment: "bg-amber-100 text-amber-700",
+  paper_reading: "bg-blue-100 text-blue-700",
+  paper_writing: "bg-purple-100 text-purple-700",
+  presentation_prep: "bg-emerald-100 text-emerald-700",
+  other: "bg-slate-100 text-slate-700",
+};
+
+/** 수강생이 특정 수업에서 생성한 해야 할 일 */
+export interface CourseTodo {
+  id: string;
+  courseOfferingId: string;
+  /** 작성자 userId */
+  userId: string;
+  type: CourseTodoType;
+  content: string;
+  /** YYYY-MM-DD, 선택 */
+  dueDate?: string;
+  /** 연결된 수업 일자(수업에서 생성한 경우) — YYYY-MM-DD */
+  sessionDate?: string;
+  completed?: boolean;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 // ── Track 6: 인지디딤판 (가이드 트랙) ──

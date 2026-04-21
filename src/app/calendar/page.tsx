@@ -487,10 +487,10 @@ export default function CalendarPage() {
               <div className="flex flex-col divide-y">
                 {weeks.map((week, wi) => {
                   const laneCount = week.bars.reduce((max, b) => Math.max(max, b.lane + 1), 0);
-                  const BASE = 96;
+                  const BASE = 104;
                   const BAR_ROW = 20;
                   const weekMinHeight = BASE + laneCount * BAR_ROW;
-                  const BAR_TOP_OFFSET = 30; // 날짜 숫자 아래 여유
+                  const BAR_TOP_OFFSET = 38; // 날짜 숫자(p-2 + h-6 = 32px) 아래로 충분히 내려 숫자 가림 방지
 
                   return (
                     <div
@@ -512,7 +512,7 @@ export default function CalendarPage() {
                           >
                             <span
                               className={cn(
-                                "inline-flex h-6 w-6 items-center justify-center rounded-full text-xs",
+                                "relative z-30 inline-flex h-6 w-6 items-center justify-center rounded-full text-xs",
                                 cell.isToday && "bg-primary font-bold text-white",
                                 !cell.inMonth && "text-muted-foreground/40",
                               )}
