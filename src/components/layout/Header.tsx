@@ -48,6 +48,7 @@ const PUBLIC_NAV: NavGroup[] = [
     items: [
       { href: "/steppingstone", label: "인지디딤판" },
       { href: "/courses", label: "내 수강과목" },
+      { href: "/mypage/calendar", label: "캘린더" },
     ],
   },
   {

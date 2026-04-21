@@ -1,14 +1,23 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { seminarsApi, activitiesApi } from "@/lib/bkend";
+import {
+  seminarsApi,
+  activitiesApi,
+  courseEnrollmentsApi,
+  courseOfferingsApi,
+  classSessionsApi,
+} from "@/lib/bkend";
 import { getComputedStatus } from "@/lib/seminar-utils";
-import type { Seminar, Activity } from "@/types";
+import type { Seminar, Activity, CourseOffering, ClassSession } from "@/types";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, Calendar, MapPin, Clock, Users, BookOpen, Presentation, Globe } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, MapPin, Clock, Users, BookOpen, Presentation, Globe, GraduationCap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useAuthStore } from "@/features/auth/auth-store";
+import { parseSchedule, fmtMin } from "@/lib/courseSchedule";
+import { inferCurrentSemester } from "@/lib/semester";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -19,7 +28,7 @@ type CalendarEvent = {
   endDate?: string;
   time?: string;
   location?: string;
-  type: "seminar" | "project" | "study" | "external";
+  type: "seminar" | "project" | "study" | "external" | "course";
   status: string;
   href: string;
 };
@@ -29,15 +38,26 @@ const TYPE_CONFIG: Record<CalendarEvent["type"], { label: string; color: string;
   project: { label: "프로젝트", color: "bg-green-100 text-green-700 border-green-200", icon: Users },
   study: { label: "스터디", color: "bg-purple-100 text-purple-700 border-purple-200", icon: BookOpen },
   external: { label: "대외활동", color: "bg-orange-100 text-orange-700 border-orange-200", icon: Globe },
+  course: { label: "수업", color: "bg-cyan-100 text-cyan-700 border-cyan-200", icon: GraduationCap },
 };
 
-const FILTER_OPTIONS: { value: CalendarEvent["type"] | "all"; label: string }[] = [
+const PUBLIC_FILTER_OPTIONS: { value: CalendarEvent["type"] | "all"; label: string }[] = [
   { value: "all", label: "전체" },
   { value: "seminar", label: "세미나" },
   { value: "project", label: "프로젝트" },
   { value: "study", label: "스터디" },
   { value: "external", label: "대외활동" },
 ];
+
+// 회원 로그인 시 사용 — "수업" 토글 추가
+const MEMBER_FILTER_OPTIONS: { value: CalendarEvent["type"] | "all"; label: string }[] = [
+  ...PUBLIC_FILTER_OPTIONS,
+  { value: "course", label: "수업" },
+];
+
+// 표시할 카테고리 (다중 선택). localStorage로 개인 설정 영속화.
+const CAT_STORAGE_KEY = "calendar.visibleCategories";
+const ALL_CATS: CalendarEvent["type"][] = ["seminar", "project", "study", "external", "course"];
 
 function toDateStr(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -101,13 +121,55 @@ function buildWeekBars(week: { firstDateStr: string; lastDateStr: string }, even
 }
 
 export default function CalendarPage() {
+  const { user } = useAuthStore();
+  const userId = user?.id;
+  const isLoggedIn = !!userId;
+
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [filter, setFilter] = useState<CalendarEvent["type"] | "all">("all");
+  // 표시 카테고리 다중 선택 (Set). 기본값: 전체 ON
+  const [visibleCats, setVisibleCats] = useState<Set<CalendarEvent["type"]>>(
+    () => new Set(ALL_CATS),
+  );
   const [viewMode, setViewMode] = useState<"month" | "list">("month");
+
+  // 사용자별 카테고리 설정 영속화
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(CAT_STORAGE_KEY);
+      if (!saved) return;
+      const parsed = JSON.parse(saved) as string[];
+      if (Array.isArray(parsed)) {
+        const valid = parsed.filter((v): v is CalendarEvent["type"] =>
+          ALL_CATS.includes(v as CalendarEvent["type"]),
+        );
+        setVisibleCats(new Set(valid));
+      }
+    } catch {}
+  }, []);
+
+  const toggleCat = (cat: CalendarEvent["type"]) => {
+    setVisibleCats((prev) => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat);
+      else next.add(cat);
+      try {
+        localStorage.setItem(CAT_STORAGE_KEY, JSON.stringify(Array.from(next)));
+      } catch {}
+      return next;
+    });
+  };
+
+  const setAllCats = (on: boolean) => {
+    const next = on ? new Set(ALL_CATS) : new Set<CalendarEvent["type"]>();
+    setVisibleCats(next);
+    try {
+      localStorage.setItem(CAT_STORAGE_KEY, JSON.stringify(Array.from(next)));
+    } catch {}
+  };
 
   const { data: seminars = [] } = useQuery({
     queryKey: ["seminars"],
@@ -124,6 +186,92 @@ export default function CalendarPage() {
       return res.data as unknown as Activity[];
     },
   });
+
+  // ── 수강과목 (로그인 사용자만) ──
+  const { year: semYear, semester } = inferCurrentSemester(new Date());
+  const term: "spring" | "fall" = semester === "first" ? "spring" : "fall";
+
+  const { data: enrollmentsRes } = useQuery({
+    queryKey: ["my-enrollments", userId],
+    queryFn: async () => {
+      if (!userId) return { data: [], total: 0 };
+      return await courseEnrollmentsApi.listByUser(userId);
+    },
+    enabled: isLoggedIn,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const myCourseIds = useMemo(
+    () =>
+      (enrollmentsRes?.data ?? [])
+        .filter((e) => e.year === semYear && e.term === term)
+        .map((e) => e.courseOfferingId),
+    [enrollmentsRes, semYear, term],
+  );
+
+  const { data: offeringsRes } = useQuery({
+    queryKey: ["course-offerings", semYear, term],
+    queryFn: () => courseOfferingsApi.listBySemester(semYear, term),
+    enabled: isLoggedIn,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const myOfferings: CourseOffering[] = useMemo(
+    () => (offeringsRes?.data ?? []).filter((o) => myCourseIds.includes(o.id)),
+    [offeringsRes, myCourseIds],
+  );
+
+  // 현재 월의 class_sessions 일괄 조회 (mode 오버라이드용)
+  const { data: courseSessionsRes } = useQuery({
+    queryKey: ["class-sessions-by-courses", myCourseIds],
+    queryFn: () => classSessionsApi.listByCourses(myCourseIds),
+    enabled: isLoggedIn && myCourseIds.length > 0,
+    staleTime: 1000 * 60 * 2,
+  });
+
+  const sessionByDateCourse = useMemo(() => {
+    const map = new Map<string, ClassSession>();
+    for (const s of (courseSessionsRes?.data ?? []) as ClassSession[]) {
+      map.set(`${s.date}__${s.courseOfferingId}`, s);
+    }
+    return map;
+  }, [courseSessionsRes]);
+
+  // 현재 보이는 month 의 평일들에 대해 수업 이벤트 생성
+  const courseEvents: CalendarEvent[] = useMemo(() => {
+    if (!isLoggedIn || myOfferings.length === 0) return [];
+    const y = currentMonth.getFullYear();
+    const m = currentMonth.getMonth();
+    const lastDate = new Date(y, m + 1, 0).getDate();
+    const result: CalendarEvent[] = [];
+    for (let d = 1; d <= lastDate; d++) {
+      const dt = new Date(y, m, d);
+      const dayIdx = dt.getDay();
+      const dateStr = toDateStr(dt);
+      for (const o of myOfferings) {
+        const parsed = parseSchedule(o.schedule);
+        if (!parsed.weekdays.includes(dayIdx)) continue;
+        const session = sessionByDateCourse.get(`${dateStr}__${o.id}`);
+        // 휴강은 캘린더에서 숨김
+        if (session?.mode === "cancelled") continue;
+        const timeLabel =
+          parsed.startMin !== null && parsed.endMin !== null
+            ? `${fmtMin(parsed.startMin)}~${fmtMin(parsed.endMin)}`
+            : undefined;
+        result.push({
+          id: `course-${o.id}-${dateStr}`,
+          title: o.courseName,
+          date: dateStr,
+          time: timeLabel,
+          location: o.classroom,
+          type: "course",
+          status: session?.mode ?? "scheduled",
+          href: `/courses/${o.id}/schedule`,
+        });
+      }
+    }
+    return result;
+  }, [isLoggedIn, myOfferings, currentMonth, sessionByDateCourse]);
 
   const events: CalendarEvent[] = useMemo(() => {
     const result: CalendarEvent[] = [];
@@ -153,12 +301,13 @@ export default function CalendarPage() {
         href: `/activities/${a.type}/${a.id}`,
       });
     }
+    result.push(...courseEvents);
     return result.sort((a, b) => a.date.localeCompare(b.date));
-  }, [seminars, activities]);
+  }, [seminars, activities, courseEvents]);
 
   const filteredEvents = useMemo(
-    () => (filter === "all" ? events : events.filter((e) => e.type === filter)),
-    [events, filter],
+    () => events.filter((e) => visibleCats.has(e.type)),
+    [events, visibleCats],
   );
 
   const year = currentMonth.getFullYear();
@@ -244,23 +393,39 @@ export default function CalendarPage() {
           </div>
         </div>
 
-        {/* 필터 + 뷰 모드 */}
+        {/* 표시 카테고리 토글 + 뷰 모드 */}
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap gap-2">
-            {FILTER_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setFilter(opt.value)}
-                className={cn(
-                  "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                  filter === opt.value
-                    ? "bg-primary text-white"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80",
-                )}
-              >
-                {opt.label}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-medium text-muted-foreground">표시:</span>
+            {(isLoggedIn ? MEMBER_FILTER_OPTIONS : PUBLIC_FILTER_OPTIONS)
+              .filter((opt) => opt.value !== "all")
+              .map((opt) => {
+                const cat = opt.value as CalendarEvent["type"];
+                const active = visibleCats.has(cat);
+                const config = TYPE_CONFIG[cat];
+                const Icon = config.icon;
+                return (
+                  <button
+                    key={opt.value}
+                    onClick={() => toggleCat(cat)}
+                    className={cn(
+                      "flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-all",
+                      active
+                        ? cn(config.color, "border-transparent")
+                        : "border-input bg-background text-muted-foreground hover:bg-muted",
+                    )}
+                  >
+                    <Icon size={11} />
+                    {opt.label}
+                  </button>
+                );
+              })}
+            <button
+              onClick={() => setAllCats(visibleCats.size < ALL_CATS.length)}
+              className="ml-1 text-[11px] text-primary hover:underline"
+            >
+              {visibleCats.size < ALL_CATS.length ? "모두 켜기" : "모두 끄기"}
+            </button>
           </div>
           <div className="flex gap-1 rounded-lg border p-0.5">
             <button
@@ -282,21 +447,6 @@ export default function CalendarPage() {
               목록
             </button>
           </div>
-        </div>
-
-        {/* 범례 */}
-        <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
-          {Object.entries(TYPE_CONFIG).map(([key, config]) => {
-            const Icon = config.icon;
-            return (
-              <div key={key} className="flex items-center gap-1.5">
-                <div className={cn("flex h-5 w-5 items-center justify-center rounded text-[10px]", config.color)}>
-                  <Icon size={12} />
-                </div>
-                <span className="text-xs text-muted-foreground">{config.label}</span>
-              </div>
-            );
-          })}
         </div>
 
         {/* 캘린더 본체 */}
