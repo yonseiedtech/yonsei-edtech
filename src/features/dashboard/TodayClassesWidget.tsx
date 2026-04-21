@@ -17,6 +17,7 @@ import {
   type CourseOffering,
 } from "@/types";
 import { inferCurrentSemester } from "@/lib/semester";
+import { parseSchedule, fmtTimeRange } from "@/lib/courseSchedule";
 import { cn } from "@/lib/utils";
 
 const DAY_CHARS = ["일", "월", "화", "수", "목", "금", "토"] as const;
@@ -35,12 +36,6 @@ function todayYmd(now: Date = new Date()): string {
   const m = String(now.getMonth() + 1).padStart(2, "0");
   const d = String(now.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
-}
-
-function scheduleHasDay(schedule: string | undefined, dayChar: string): boolean {
-  if (!schedule) return false;
-  // 단순 포함 체크: 한글 요일 1글자가 들어있으면 매칭
-  return schedule.includes(dayChar);
 }
 
 function semesterToTerm(semester: "first" | "second"): "spring" | "fall" {
@@ -63,9 +58,12 @@ export default function TodayClassesWidget() {
 
   const now = new Date();
   const today = todayYmd(now);
-  const dayChar = DAY_CHARS[now.getDay()];
+  const todayDayIndex = now.getDay();
+  const dayChar = DAY_CHARS[todayDayIndex];
   const { year, semester } = inferCurrentSemester(now);
   const term = semesterToTerm(semester);
+  const dateLabel = `${now.getMonth() + 1}월 ${now.getDate()}일 (${dayChar})`;
+  const semesterLabel = `${year}년 ${term === "spring" ? "1학기" : "2학기"}`;
 
   // 1) 본인의 수강 이력 (전체)
   const { data: enrollmentsRes, isLoading: loadingEnrollments } = useQuery({
@@ -101,13 +99,19 @@ export default function TodayClassesWidget() {
     [offeringsRes],
   );
 
-  // 3) 오늘 요일에 해당하는 본인 수강과목
+  // 3) 오늘 요일에 해당하는 본인 수강과목 + 파싱된 스케줄
   const todaysCourses = useMemo(() => {
-    return offerings.filter(
-      (o) =>
-        courseIds.includes(o.id) && scheduleHasDay(o.schedule, dayChar),
-    );
-  }, [offerings, courseIds, dayChar]);
+    return offerings
+      .filter((o) => courseIds.includes(o.id))
+      .map((o) => ({ offering: o, parsed: parseSchedule(o.schedule) }))
+      .filter(({ parsed }) => parsed.weekdays.includes(todayDayIndex))
+      .sort((a, b) => {
+        // 시작 시각 오름차순, 시간 미정은 뒤로
+        const sa = a.parsed.startMin ?? Number.POSITIVE_INFINITY;
+        const sb = b.parsed.startMin ?? Number.POSITIVE_INFINITY;
+        return sa - sb;
+      });
+  }, [offerings, courseIds, todayDayIndex]);
 
   // 4) 오늘 날짜의 class_sessions (오버라이드 정보)
   const { data: sessionsRes } = useQuery({
@@ -135,12 +139,12 @@ export default function TodayClassesWidget() {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <CalendarClock size={18} className="text-primary" />
-          <h2 className="font-bold">
-            오늘({dayChar}) 수업{" "}
-            <span className="text-xs font-normal text-muted-foreground">
-              {year}년 {term === "spring" ? "1학기" : "2학기"}
-            </span>
-          </h2>
+          <div className="leading-tight">
+            <h2 className="font-bold">오늘의 수업</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {dateLabel} · {semesterLabel}
+            </p>
+          </div>
         </div>
         <Link
           href="/courses?tab=mine"
@@ -158,9 +162,10 @@ export default function TodayClassesWidget() {
         </p>
       ) : (
         <ul className="mt-4 space-y-2">
-          {todaysCourses.map((c) => {
+          {todaysCourses.map(({ offering: c, parsed }) => {
             const session = pickLatestSession(sessionsByCourse.get(c.id) ?? []);
             const mode: ClassSessionMode = session?.mode ?? "in_person";
+            const timeLabel = fmtTimeRange(parsed) || c.schedule || "시간 미정";
             return (
               <li
                 key={c.id}
@@ -176,7 +181,7 @@ export default function TodayClassesWidget() {
                     )}
                   </p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {c.schedule ?? "시간 미정"}
+                    {timeLabel}
                     {c.classroom && ` · ${c.classroom}`}
                   </p>
                   {session?.notes && (

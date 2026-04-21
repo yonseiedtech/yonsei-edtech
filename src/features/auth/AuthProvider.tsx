@@ -30,7 +30,18 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
           let profile: Record<string, unknown> | undefined;
           try {
-            if (firebaseUser.email) {
+            // 1차: Firebase uid 로 직접 조회 — 회원가입 시 doc id 가 uid 로 고정되므로
+            //  임퍼소네이션·이메일 중복 케이스에서 잘못된 프로필을 잡지 않도록 우선.
+            try {
+              const direct = (await profilesApi.get(firebaseUser.uid)) as unknown;
+              if (direct && typeof direct === "object") {
+                profile = direct as Record<string, unknown>;
+              }
+            } catch {
+              // 404 등 — 폴백으로 진행
+            }
+            // 2차: uid 매칭 실패 시 이메일로 폴백 (CSV 임포트 등 레거시 데이터)
+            if (!profile && firebaseUser.email) {
               const res = await profilesApi.getByEmail(firebaseUser.email);
               profile = res.data[0];
             }
