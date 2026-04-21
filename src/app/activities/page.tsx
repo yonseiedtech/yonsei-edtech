@@ -13,7 +13,7 @@ const activities = [
   {
     icon: BookOpen,
     category: "세미나",
-    title: "정기 세미나",
+    title: "세미나",
     desc: "매주 교육공학/에듀테크 관련 최신 논문이나 트렌드를 발제하고 토론합니다.",
     schedule: "매주 수요일",
     color: "bg-primary/10 text-primary",

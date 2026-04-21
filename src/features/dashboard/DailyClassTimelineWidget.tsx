@@ -111,12 +111,29 @@ export default function DailyClassTimelineWidget() {
     } catch {}
   };
 
+  // 1분마다 갱신되는 현재 시각 (NOW 라인 + 라벨용) — 분 경계에 정렬
+  const [currentTime, setCurrentTime] = useState<Date>(() => new Date());
+  useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+    const tick = () => setCurrentTime(new Date());
+    const msToNextMinute = 60_000 - (Date.now() % 60_000);
+    const timeoutId = setTimeout(() => {
+      tick();
+      intervalId = setInterval(tick, 60_000);
+    }, msToNextMinute);
+    return () => {
+      clearTimeout(timeoutId);
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, []);
+
   // 현재 시각 위치 (분 단위)
-  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const nowMin = currentTime.getHours() * 60 + currentTime.getMinutes();
   const nowPx =
     nowMin >= MIN_START && nowMin <= MIN_END
       ? ((nowMin - MIN_START) / 60) * ROW_HEIGHT_PX
       : null;
+  const nowLabel = `${String(currentTime.getHours()).padStart(2, "0")}:${String(currentTime.getMinutes()).padStart(2, "0")}`;
 
   const { data: enrollmentsRes, isLoading: loadingEnrollments } = useQuery({
     queryKey: ["my-enrollments", userId],
@@ -356,6 +373,7 @@ export default function DailyClassTimelineWidget() {
             hourRows={hourRows}
             totalHeight={totalHeight}
             nowPx={nowPx}
+            nowLabel={nowLabel}
           />
         )
       ) : (
@@ -365,6 +383,7 @@ export default function DailyClassTimelineWidget() {
           totalHeight={totalHeight}
           todayDayIndex={todayDayIndex}
           nowPx={nowPx}
+          nowLabel={nowLabel}
         />
       )}
     </div>
@@ -379,12 +398,14 @@ function DailyGrid({
   hourRows,
   totalHeight,
   nowPx,
+  nowLabel,
 }: {
   placed: PlacedClass[];
   undated: { offering: CourseOffering; parsed: ParsedSchedule }[];
   hourRows: number[];
   totalHeight: number;
   nowPx: number | null;
+  nowLabel: string;
 }) {
   return (
     <>
@@ -420,8 +441,8 @@ function DailyGrid({
               style={{ top: nowPx }}
             >
               <span className="absolute -top-2 -left-1 h-2 w-2 rounded-full bg-primary" />
-              <span className="absolute -top-2.5 left-2 rounded bg-primary px-1 py-0.5 text-[9px] font-medium text-white">
-                NOW
+              <span className="absolute -top-2.5 left-2 rounded bg-primary px-1 py-0.5 text-[9px] font-medium tabular-nums text-white">
+                {nowLabel}
               </span>
             </div>
           )}
@@ -544,12 +565,14 @@ function WeeklyGrid({
   totalHeight,
   todayDayIndex,
   nowPx,
+  nowLabel,
 }: {
   placedWeekly: Array<{ date: Date; dayIndex: number; items: PlacedClass[] }>;
   hourRows: number[];
   totalHeight: number;
   todayDayIndex: number;
   nowPx: number | null;
+  nowLabel: string;
 }) {
   const hasAny = placedWeekly.some((d) => d.items.length > 0);
   return (
@@ -619,6 +642,9 @@ function WeeklyGrid({
                     style={{ top: nowPx }}
                   >
                     <span className="absolute -top-2 -left-1 h-2 w-2 rounded-full bg-primary" />
+                    <span className="absolute -top-2.5 left-2 rounded bg-primary px-1 py-0.5 text-[9px] font-medium tabular-nums text-white">
+                      {nowLabel}
+                    </span>
                   </div>
                 )}
                 {/* 카드들 */}

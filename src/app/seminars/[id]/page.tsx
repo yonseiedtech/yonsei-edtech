@@ -222,7 +222,7 @@ ${seminar.description}
 
 연세교육공학회(Yonsei Educational Technology Association)는
 연세대학교 교육공학 전공 학생들이 모여 교육공학의 이론과 실천을
-탐구하는 학술 커뮤니티입니다. 매주 정기 세미나를 통해 최신
+탐구하는 학술 커뮤니티입니다. 매주 세미나를 통해 최신
 에듀테크 트렌드와 교육 연구를 공유하고 있습니다.
 
 문의: yonsei.edtech@gmail.com
