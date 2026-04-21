@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useSeminars } from "@/features/seminar/useSeminar";
 import { usePosts } from "@/features/board/useBoard";
 import { formatDate } from "@/lib/utils";
+import { usePageHeader } from "@/features/site-settings/useSiteContent";
 
 const activities = [
   {
@@ -51,6 +52,10 @@ const activities = [
 export default function ActivitiesPage() {
   const { seminars } = useSeminars("completed");
   const { posts } = usePosts("all");
+  const header = usePageHeader("activities", {
+    title: "활동 소개",
+    description: "세미나, 프로젝트, 스터디를 통해 교육공학의 이론과 실천을 연결합니다.",
+  });
 
   const highlights = useMemo(() => {
     const completedSeminars = seminars.map((s) => ({
@@ -87,9 +92,9 @@ export default function ActivitiesPage() {
             <BookOpen size={24} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">활동 소개</h1>
+            <h1 className="text-2xl font-bold">{header.title}</h1>
             <p className="text-sm text-muted-foreground">
-              세미나, 프로젝트, 스터디를 통해 교육공학의 이론과 실천을 연결합니다.
+              {header.description}
             </p>
           </div>
         </div>

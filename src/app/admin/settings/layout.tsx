@@ -35,6 +35,7 @@ const SETTINGS_GROUPS = [
     label: "기타",
     tabs: [
       { href: "/admin/settings/contact", label: "연락처" },
+      { href: "/admin/settings/page-headers", label: "페이지 헤더" },
     ],
   },
 ];

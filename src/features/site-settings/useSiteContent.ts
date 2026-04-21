@@ -195,3 +195,44 @@ export function useContactInfo() {
 export function useUpdateContactInfo() {
   return useUpdateSiteSetting<ContactInfoData>("contact_info");
 }
+
+// ── 페이지 헤더(타이틀/설명) ──
+// 운영자가 사이트 주요 페이지의 헤더 카피를 직접 편집할 수 있게 한다.
+// 저장된 값이 없거나 빈 문자열이면 페이지에 하드코딩된 fallback 값을 사용.
+
+export type PageHeaderKey = "seminars" | "activities" | "research" | "calendar";
+
+export interface PageHeaderData {
+  title: string;
+  description: string;
+}
+
+export type PageHeadersMap = Partial<Record<PageHeaderKey, PageHeaderData>>;
+
+const DEFAULT_PAGE_HEADERS: PageHeadersMap = {};
+
+export const PAGE_HEADER_META: Record<PageHeaderKey, { label: string; route: string }> = {
+  seminars: { label: "세미나", route: "/seminars" },
+  activities: { label: "활동 소개", route: "/activities" },
+  research: { label: "연세교육공학 연구 분석", route: "/research" },
+  calendar: { label: "학술 캘린더", route: "/calendar" },
+};
+
+export function usePageHeaders() {
+  return useSiteSetting<PageHeadersMap>("page_headers", DEFAULT_PAGE_HEADERS);
+}
+export function useUpdatePageHeaders() {
+  return useUpdateSiteSetting<PageHeadersMap>("page_headers");
+}
+
+export function usePageHeader(
+  key: PageHeaderKey,
+  fallback: PageHeaderData,
+): PageHeaderData {
+  const { value } = usePageHeaders();
+  const stored = value?.[key];
+  return {
+    title: stored?.title?.trim() || fallback.title,
+    description: stored?.description?.trim() || fallback.description,
+  };
+}

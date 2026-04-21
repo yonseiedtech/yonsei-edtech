@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Calendar, Search, AlertCircle, List, LayoutGrid } from "lucide-react";
+import { usePageHeader } from "@/features/site-settings/useSiteContent";
 
 type StatusTab = "all" | "active" | "completed";
 
@@ -21,6 +22,10 @@ export default function SeminarsPage() {
   const [search, setSearch] = useState("");
   const { user } = useAuthStore();
   const { seminars: allSeminars, isLoading, error } = useSeminars();
+  const header = usePageHeader("seminars", {
+    title: "세미나",
+    description: "매주 교육공학/에듀테크 관련 최신 논문이나 트렌드를 발제하고 토론합니다.",
+  });
 
   // 운영진만 임시저장 포함
   const visibleSeminars = useMemo(
@@ -80,9 +85,9 @@ export default function SeminarsPage() {
               <Calendar size={22} />
             </div>
             <div>
-              <h1 className="text-xl font-bold sm:text-2xl">세미나</h1>
+              <h1 className="text-xl font-bold sm:text-2xl">{header.title}</h1>
               <p className="text-xs text-muted-foreground sm:text-sm">
-                매주 교육공학/에듀테크 관련 최신 논문이나 트렌드를 발제하고 토론합니다.
+                {header.description}
               </p>
             </div>
           </div>

@@ -15,6 +15,7 @@ import TitleNgramTrend from "@/features/research-analytics/TitleNgramTrend";
 import ResearchTypeChart from "@/features/research-analytics/ResearchTypeChart";
 import SubjectDistribution from "@/features/research-analytics/SubjectDistribution";
 import { STOPWORDS, normalizeKeyword, yearFrom } from "@/features/research-analytics/shared";
+import { usePageHeader } from "@/features/site-settings/useSiteContent";
 
 interface EraSummary {
   label: string;
@@ -74,6 +75,11 @@ export default function ResearchAnalyticsPage() {
     };
   }, [theses]);
 
+  const header = usePageHeader("research", {
+    title: "연세교육공학 연구 분석",
+    description: `연세대학교 교육대학원 교육공학전공 졸업생 학위논문 ${stats.total}건의 키워드·제목·시대별 흐름·연구 계보를 시각화합니다.`,
+  });
+
   const keywordCount = useMemo(() => {
     const set = new Set<string>();
     theses.forEach((t) =>
@@ -126,9 +132,9 @@ export default function ResearchAnalyticsPage() {
             <BarChart3 size={24} />
           </div>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold sm:text-3xl">연세교육공학 연구 분석</h1>
+            <h1 className="text-2xl font-bold sm:text-3xl">{header.title}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              연세대학교 교육대학원 교육공학전공 졸업생 학위논문 {stats.total}건의 키워드·제목·시대별 흐름·연구 계보를 시각화합니다.
+              {header.description}
             </p>
           </div>
         </div>

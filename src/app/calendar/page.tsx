@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { parseSchedule, fmtMin } from "@/lib/courseSchedule";
 import { inferCurrentSemester } from "@/lib/semester";
+import { usePageHeader } from "@/features/site-settings/useSiteContent";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -122,6 +123,10 @@ function buildWeekBars(week: { firstDateStr: string; lastDateStr: string }, even
 
 export default function CalendarPage() {
   const { user } = useAuthStore();
+  const header = usePageHeader("calendar", {
+    title: "학술 캘린더",
+    description: "세미나, 프로젝트, 스터디, 대외활동 일정을 한눈에 확인하세요.",
+  });
   const userId = user?.id;
   const isLoggedIn = !!userId;
 
@@ -388,8 +393,8 @@ export default function CalendarPage() {
             <Calendar size={24} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">학술 캘린더</h1>
-            <p className="text-sm text-muted-foreground">세미나, 프로젝트, 스터디, 대외활동 일정을 한눈에 확인하세요.</p>
+            <h1 className="text-2xl font-bold">{header.title}</h1>
+            <p className="text-sm text-muted-foreground">{header.description}</p>
           </div>
         </div>
 
