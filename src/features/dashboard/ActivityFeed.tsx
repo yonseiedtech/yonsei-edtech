@@ -75,7 +75,7 @@ export default function ActivityFeed({
             className="relative flex items-start gap-4 rounded-lg py-3 pr-3 pl-10 transition-colors hover:bg-muted/50"
           >
             {/* 아바타 (타임라인 노드) */}
-            <div className="absolute left-0 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-white bg-blue-100 text-blue-600">
+            <div className="absolute left-0 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-white bg-blue-100 text-blue-600 dark:border-card dark:bg-blue-950/50 dark:text-blue-300">
               <span className="text-xs font-semibold">
                 {(c.authorName ?? "?")[0]}
               </span>

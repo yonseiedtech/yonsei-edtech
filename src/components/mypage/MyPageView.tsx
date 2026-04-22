@@ -537,11 +537,11 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                 if (recent.length === 0) return null;
 
                 const ICON_MAP: Record<TLEvent["type"], { icon: typeof Calendar; bg: string; fg: string }> = {
-                  activity: { icon: FolderKanban, bg: "bg-emerald-100", fg: "text-emerald-700" },
+                  activity: { icon: FolderKanban, bg: "bg-emerald-100 dark:bg-emerald-950/50", fg: "text-emerald-700 dark:text-emerald-300" },
                   seminar: { icon: Calendar, bg: "bg-primary/15", fg: "text-primary" },
-                  certificate: { icon: Award, bg: "bg-amber-100", fg: "text-amber-700" },
-                  post: { icon: FileText, bg: "bg-slate-100", fg: "text-slate-700" },
-                  interview: { icon: Mic, bg: "bg-blue-100", fg: "text-blue-700" },
+                  certificate: { icon: Award, bg: "bg-amber-100 dark:bg-amber-950/50", fg: "text-amber-700 dark:text-amber-300" },
+                  post: { icon: FileText, bg: "bg-slate-100 dark:bg-slate-800", fg: "text-slate-700 dark:text-slate-300" },
+                  interview: { icon: Mic, bg: "bg-blue-100 dark:bg-blue-950/50", fg: "text-blue-700 dark:text-blue-300" },
                 };
 
                 return (

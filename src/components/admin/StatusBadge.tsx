@@ -3,13 +3,13 @@ import { cn } from "@/lib/utils";
 
 /* ── 역할 ── */
 const ROLE_COLORS: Record<string, string> = {
-  sysadmin: "bg-rose-100 text-rose-700 border-rose-200",
-  admin: "bg-blue-100 text-blue-700 border-blue-200",
-  president: "bg-blue-100 text-blue-700 border-blue-200",
-  staff: "bg-sky-100 text-sky-700 border-sky-200",
-  advisor: "bg-teal-100 text-teal-700 border-teal-200",
-  alumni: "bg-slate-100 text-slate-600 border-slate-200",
-  member: "bg-gray-100 text-gray-600 border-gray-200",
+  sysadmin: "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-900",
+  admin: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900",
+  president: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900",
+  staff: "bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-950/50 dark:text-sky-300 dark:border-sky-900",
+  advisor: "bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-950/50 dark:text-teal-300 dark:border-teal-900",
+  alumni: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+  member: "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700",
 };
 
 const ROLE_LABELS: Record<string, string> = {
@@ -24,32 +24,32 @@ const ROLE_LABELS: Record<string, string> = {
 
 /* ── 승인 상태 ── */
 const APPROVAL_COLORS: Record<string, string> = {
-  pending: "bg-amber-50 text-amber-700 border-amber-200",
-  approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  rejected: "bg-red-50 text-red-700 border-red-200",
+  pending: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900",
+  approved: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900",
+  rejected: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-900",
 };
 
 /* ── 문의 상태 ── */
 const INQUIRY_COLORS: Record<string, string> = {
-  pending: "bg-amber-50 text-amber-700 border-amber-200",
-  replied: "bg-green-50 text-green-700 border-green-200",
+  pending: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900",
+  replied: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950/50 dark:text-green-300 dark:border-green-900",
 };
 
 /* ── 세미나 상태 ── */
 const SEMINAR_COLORS: Record<string, string> = {
-  draft: "bg-gray-100 text-gray-600 border-gray-200",
-  upcoming: "bg-blue-50 text-blue-700 border-blue-200",
-  ongoing: "bg-amber-50 text-amber-700 border-amber-200",
-  completed: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  cancelled: "bg-red-50 text-red-600 border-red-200",
+  draft: "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700",
+  upcoming: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900",
+  ongoing: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900",
+  completed: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900",
+  cancelled: "bg-red-50 text-red-600 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-900",
 };
 
 /* ── 게시글 카테고리 ── */
 const POST_CATEGORY_COLORS: Record<string, string> = {
   notice: "bg-primary/10 text-primary border-primary/20",
-  seminar: "bg-amber-50 text-amber-700 border-amber-200",
-  promotion: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  general: "bg-gray-100 text-gray-600 border-gray-200",
+  seminar: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900",
+  promotion: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900",
+  general: "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700",
 };
 
 type Category = "role" | "approval" | "inquiry" | "seminar" | "postCategory";
@@ -71,7 +71,7 @@ interface Props {
 }
 
 export default function StatusBadge({ category, value, label, className }: Props) {
-  const colors = COLOR_MAP[category]?.[value] ?? "bg-gray-100 text-gray-600 border-gray-200";
+  const colors = COLOR_MAP[category]?.[value] ?? "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700";
   const displayLabel = category === "role" ? (label ?? ROLE_LABELS[value] ?? value) : (label ?? value);
 
   return (

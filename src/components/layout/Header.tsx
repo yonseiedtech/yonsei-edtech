@@ -233,7 +233,7 @@ function UserDropdown() {
           <Separator className="my-1" />
           <button
             onClick={() => { setOpen(false); logout(); }}
-            className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-red-500 transition-colors hover:bg-red-50"
+            className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-950/30"
           >
             <LogOut size={15} />
             로그아웃
@@ -351,7 +351,7 @@ export default function Header() {
                 <NotificationBell />
                 <button
                   onClick={() => { setMobileOpen(false); logout(); }}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-red-500 hover:bg-red-50"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
                   aria-label="로그아웃"
                   title="로그아웃"
                 >
@@ -426,7 +426,7 @@ export default function Header() {
                 <Separator className="my-1" />
                 <button
                   onClick={() => { setMobileOpen(false); logout(); }}
-                  className="flex items-center gap-2 rounded-lg px-3 py-2 pl-6 text-sm font-medium text-red-500 hover:bg-red-50"
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 pl-6 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
                 >
                   <LogOut size={15} />
                   로그아웃
