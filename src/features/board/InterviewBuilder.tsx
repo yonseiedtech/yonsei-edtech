@@ -187,13 +187,13 @@ export default function InterviewBuilder({ value, onChange }: Props) {
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium">응답 열람 모드</label>
+          <label className="mb-1 block text-sm font-medium">공개 범위</label>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <label
               className={`flex cursor-pointer items-start gap-2 rounded-lg border p-3 transition ${
                 (value.responseVisibility ?? "public") === "staff_only"
-                  ? "border-blue-500 bg-blue-100/60 ring-2 ring-blue-300"
-                  : "border-input bg-white hover:bg-blue-50/40"
+                  ? "border-blue-500 bg-blue-100/60 ring-2 ring-blue-300 dark:bg-blue-950/40"
+                  : "border-input bg-white hover:bg-blue-50/40 dark:bg-card dark:hover:bg-blue-950/20"
               }`}
             >
               <input
@@ -206,8 +206,8 @@ export default function InterviewBuilder({ value, onChange }: Props) {
               />
               <div className="flex-1">
                 <div className="flex items-center gap-1 text-sm font-semibold">
-                  <Lock size={14} className="text-blue-700" />
-                  인터뷰 모드
+                  <Lock size={14} className="text-blue-700 dark:text-blue-300" />
+                  비공개 (1:1 인터뷰)
                 </div>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   관리자/학회장/운영진과 본인만 응답을 열람할 수 있습니다.
@@ -217,8 +217,8 @@ export default function InterviewBuilder({ value, onChange }: Props) {
             <label
               className={`flex cursor-pointer items-start gap-2 rounded-lg border p-3 transition ${
                 (value.responseVisibility ?? "public") === "public"
-                  ? "border-blue-500 bg-blue-100/60 ring-2 ring-blue-300"
-                  : "border-input bg-white hover:bg-blue-50/40"
+                  ? "border-blue-500 bg-blue-100/60 ring-2 ring-blue-300 dark:bg-blue-950/40"
+                  : "border-input bg-white hover:bg-blue-50/40 dark:bg-card dark:hover:bg-blue-950/20"
               }`}
             >
               <input
@@ -231,17 +231,17 @@ export default function InterviewBuilder({ value, onChange }: Props) {
               />
               <div className="flex-1">
                 <div className="flex items-center gap-1 text-sm font-semibold">
-                  <Globe size={14} className="text-blue-700" />
-                  공유 모드
+                  <Globe size={14} className="text-blue-700 dark:text-blue-300" />
+                  공개 (실시간 공유)
                 </div>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  로그인한 모든 회원이 다른 사람의 응답을 보고 반응·댓글을 남길 수 있습니다.
+                  로그인한 모든 회원이 응답을 실시간으로 보고 반응·댓글을 남길 수 있습니다.
                 </p>
               </div>
             </label>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            모드는 게시 후에도 변경 가능하며, 변경 시 즉시 적용됩니다.
+            게시 후에도 언제든 변경 가능하며, 변경 즉시 적용됩니다.
           </p>
         </div>
       </div>

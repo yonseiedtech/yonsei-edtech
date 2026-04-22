@@ -9,6 +9,7 @@ import {
   Save, CheckCircle2, ChevronLeft, ChevronRight,
   FileText, School, BookOpen, FlaskConical,
   Plus, Trash2, Link2, X, Lightbulb, Target, Ruler, Sparkles,
+  MessageSquareQuote, LayoutGrid,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -239,12 +240,44 @@ const CAUSE_TYPE_OPTIONS: { value: CauseType; label: string }[] = [
 ];
 
 const STEPS = [
-  { key: "field", label: "교육현장의 문제 정의", icon: School },
-  { key: "theory", label: "교육공학 이론", icon: BookOpen },
-  { key: "prior", label: "선행연구 분석", icon: FlaskConical },
+  {
+    key: "field",
+    label: "교육현장의 문제 정의",
+    icon: School,
+    question: "어떤 교육 현장의, 어떤 문제를 다루려고 하시나요?",
+    hints: [
+      "학습자(누가)·교육 형식(어떻게)·과목/주제(무엇)을 먼저 정의해 보세요.",
+      "그 다음 현장에서 관찰되는 ‘현상’ → ‘근거’ → ‘원인’ → ‘영향’ → ‘중요성’ 순서로 한 카드씩 채우면 자연스럽습니다.",
+      "마지막에 측정 지표를 정해두면 결과 챕터에서 바로 활용할 수 있습니다.",
+    ],
+  },
+  {
+    key: "theory",
+    label: "교육공학 이론",
+    icon: BookOpen,
+    question: "이 문제를 설명·해결할 수 있는 교육공학 이론은 무엇인가요?",
+    hints: [
+      "이론 카드에 이름·학자·연도·핵심 개념·선택 이유·문제 연결을 적습니다.",
+      "여러 이론을 결합한다면 ‘이론 간 관계’ 3필드(공통 문제·역할 분담·통합 시각)도 채워주세요.",
+      "이론은 1개부터 시작해도 좋습니다. 카드는 언제든 추가/삭제할 수 있어요.",
+    ],
+  },
+  {
+    key: "prior",
+    label: "선행연구 분석",
+    icon: FlaskConical,
+    question: "내 문제·이론과 가장 가까운 선행연구는 어떤 흐름을 보이나요?",
+    hints: [
+      "‘논문 읽기’에 미리 등록해 둔 선행연구를 검색해서 추가합니다.",
+      "관련 논문들을 ‘그룹’으로 묶고, 그룹별 통합 해석·시사점을 정리하면 분석이 깔끔해집니다.",
+      "마지막에 전체를 관통하는 통찰을 한두 문단으로 요약해 두세요.",
+    ],
+  },
 ] as const;
 
 type StepKey = (typeof STEPS)[number]["key"];
+
+type ViewMode = "single" | "interview";
 
 function PaperSelector({
   papers,
@@ -349,6 +382,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [step, setStep] = useState<StepKey>("field");
+  const [viewMode, setViewMode] = useState<ViewMode>("single");
   const ensureTriggeredRef = useRef(false);
 
   useEffect(() => {
@@ -455,17 +489,48 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
   return (
     <div className="space-y-4">
       {/* 헤더 */}
-      <section className="rounded-2xl border bg-white p-5">
-        <div className="flex items-start justify-between gap-3">
+      <section className="rounded-2xl border bg-white p-5 dark:bg-card">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-center gap-2">
             <FileText size={18} className="text-primary" />
             <div>
               <h3 className="text-sm font-semibold">연구 보고서</h3>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 현장–이론–연구를 결합하는 것이 목표입니다. · {total.toLocaleString()}자
+                {viewMode === "interview" && ` · 진행 ${stepIdx + 1}/${STEPS.length}`}
               </p>
             </div>
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {/* 보기 모드 토글 */}
+            <div className="inline-flex items-center overflow-hidden rounded-md border border-input">
+              <button
+                type="button"
+                onClick={() => setViewMode("single")}
+                className={cn(
+                  "flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium transition-colors",
+                  viewMode === "single"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card text-muted-foreground hover:bg-muted",
+                )}
+                title="전체 모드 — 모든 항목을 한 번에 보기"
+              >
+                <LayoutGrid size={12} /> 전체 모드
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("interview")}
+                className={cn(
+                  "flex items-center gap-1 border-l px-2.5 py-1.5 text-[11px] font-medium transition-colors",
+                  viewMode === "interview"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card text-muted-foreground hover:bg-muted",
+                )}
+                title="인터뷰 모드 — 한 챕터씩 안내 받으며 작성"
+              >
+                <MessageSquareQuote size={12} /> 인터뷰 모드
+              </button>
+            </div>
           {!readOnly && (
             <div className="flex shrink-0 items-center gap-2">
               {savedAt && !saving && (
@@ -489,8 +554,65 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
               </Button>
             </div>
           )}
+          </div>
         </div>
       </section>
+
+      {/* 인터뷰 모드 안내 */}
+      {viewMode === "interview" && (
+        <section className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+              <MessageSquareQuote size={16} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 text-xs font-medium text-primary">
+                <Sparkles size={12} />
+                Step {stepIdx + 1} / {STEPS.length} · {STEPS[stepIdx].label}
+              </div>
+              <p className="mt-1.5 text-base font-semibold text-foreground">
+                {STEPS[stepIdx].question}
+              </p>
+              <ul className="mt-2 space-y-1">
+                {STEPS[stepIdx].hints.map((h, i) => (
+                  <li key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                    <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-primary/50" />
+                    <span>{h}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-3 flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => canPrev && setStep(STEPS[stepIdx - 1].key)}
+                  disabled={!canPrev}
+                  className="h-7 px-2 text-[11px]"
+                >
+                  <ChevronLeft size={12} className="mr-0.5" />
+                  이전 챕터
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => canNext && setStep(STEPS[stepIdx + 1].key)}
+                  disabled={!canNext}
+                  className="h-7 px-2 text-[11px]"
+                >
+                  다음 챕터
+                  <ChevronRight size={12} className="ml-0.5" />
+                </Button>
+              </div>
+              {/* 진행도 바 */}
+              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full bg-primary transition-all"
+                  style={{ width: `${((stepIdx + 1) / STEPS.length) * 100}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* 스텝 탭 */}
       <div className="flex items-center gap-1 rounded-xl border bg-white p-1.5">
