@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   Play, Pause, SkipForward, Square, Plus, Trash2, Clock,
-  AlertTriangle, CheckCircle2, RotateCcw, ExternalLink, Timer,
+  AlertTriangle, CheckCircle2, RotateCcw, ExternalLink, Timer, Pencil,
 } from "lucide-react";
 import type { ProgressMeeting, ProgressMeetingSection } from "@/types";
 
@@ -144,6 +144,9 @@ interface PanelProps {
 function MeetingPanel({ meeting, canControl, weekLabel, onMutated }: PanelProps) {
   const [newTitle, setNewTitle] = useState("");
   const [newMinutes, setNewMinutes] = useState(10);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editMinutes, setEditMinutes] = useState(10);
 
   const updateMutation = useMutation({
     mutationFn: (data: Partial<ProgressMeeting>) =>
@@ -255,14 +258,102 @@ function MeetingPanel({ meeting, canControl, weekLabel, onMutated }: PanelProps)
       estimatedMinutes: newMinutes,
       actualSeconds: 0,
     };
+    // 진행 중에 추가하면 그냥 마지막에 append (현재 섹션 인덱스/상태 유지)
     updateMutation.mutate({ sections: [...sections, next] });
     setNewTitle("");
     setNewMinutes(10);
   }
 
-  function handleRemoveSection(id: string) {
-    if (status === "running") return toast.error("진행 중에는 섹션을 삭제할 수 없습니다.");
-    updateMutation.mutate({ sections: sections.filter((s) => s.id !== id) });
+  /** 이미 진행된 섹션 판정: 시간이 측정됐거나, 현재 인덱스 이전이거나, 현재 활성 섹션이거나 */
+  function isProgressedSection(s: ProgressMeetingSection, idx: number): boolean {
+    if (s.actualSeconds > 0) return true;
+    if (s.startedAt || s.endedAt) return true;
+    if (idx < currentIdx) return true;
+    if (idx === currentIdx && (status === "running" || status === "paused")) return true;
+    return false;
+  }
+
+  function handleRemoveSection(idx: number) {
+    const s = sections[idx];
+    if (!s) return;
+    if (status === "running" && idx === currentIdx) {
+      return toast.error("현재 진행 중인 섹션은 삭제할 수 없습니다. 일시정지 후 시도하세요.");
+    }
+    const progressed = isProgressedSection(s, idx);
+    const baseMsg = `'${s.title}' 섹션을 삭제하시겠습니까?`;
+    const extraMsg = progressed
+      ? `\n\n⚠️ 이미 진행된 섹션입니다 (실제 ${fmtMMSS(s.actualSeconds)}). 정말 삭제하시겠습니까?`
+      : "";
+    if (!confirm(baseMsg + extraMsg)) return;
+    if (progressed && !confirm("정말로 삭제하시겠습니까? 진행 기록이 사라집니다.")) return;
+
+    const updated = sections.filter((_, i) => i !== idx);
+    let nextIdx = currentIdx;
+    if (idx < currentIdx) nextIdx = Math.max(0, currentIdx - 1);
+    else if (idx === currentIdx) nextIdx = Math.min(currentIdx, Math.max(0, updated.length - 1));
+    updateMutation.mutate({ sections: updated, currentSectionIndex: nextIdx });
+  }
+
+  function startEditSection(s: ProgressMeetingSection) {
+    setEditingId(s.id);
+    setEditTitle(s.title);
+    setEditMinutes(s.estimatedMinutes);
+  }
+
+  function commitEditSection() {
+    if (!editingId) return;
+    const title = editTitle.trim();
+    if (!title) return toast.error("섹션 제목을 입력하세요.");
+    if (editMinutes < 1) return toast.error("예상 시간은 1분 이상이어야 합니다.");
+    const updated = sections.map((s) =>
+      s.id === editingId ? { ...s, title, estimatedMinutes: editMinutes } : s,
+    );
+    updateMutation.mutate({ sections: updated });
+    setEditingId(null);
+  }
+
+  /** 한 섹션의 시간 기록만 0으로 (섹션 자체는 유지) */
+  function handleResetSection(idx: number) {
+    const s = sections[idx];
+    if (!s) return;
+    if (s.actualSeconds === 0 && !s.startedAt && !s.endedAt) {
+      return toast.message("이미 초기화된 섹션입니다.");
+    }
+    if (!confirm(`'${s.title}' 섹션의 시간 기록을 초기화하시겠습니까? (실제 ${fmtMMSS(s.actualSeconds)} → 0:00)`)) return;
+
+    const isActiveRunning = idx === currentIdx && status === "running";
+    const updated = sections.map((sec, i) => {
+      if (i !== idx) return sec;
+      return {
+        ...sec,
+        actualSeconds: 0,
+        startedAt: isActiveRunning ? new Date().toISOString() : undefined,
+        endedAt: undefined,
+      };
+    });
+    updateMutation.mutate({ sections: updated });
+  }
+
+  /** 미팅 전체 초기화 — 섹션 목록은 유지, 모든 시간 기록만 0으로 + status: planning */
+  function handleResetAll() {
+    if (sections.length === 0) {
+      return toast.message("초기화할 섹션이 없습니다.");
+    }
+    if (!confirm("⚠️ 미팅 전체를 초기화합니다.\n\n모든 섹션의 진행 시간이 0으로 되돌아가고, 상태가 '준비 중'으로 변경됩니다.\n섹션 목록은 그대로 유지됩니다.\n\n계속하시겠습니까?")) return;
+    if (!confirm("정말로 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) return;
+    const cleared = sections.map((s) => ({
+      ...s,
+      actualSeconds: 0,
+      startedAt: undefined,
+      endedAt: undefined,
+    }));
+    updateMutation.mutate({
+      status: "planning",
+      currentSectionIndex: 0,
+      sections: cleared,
+      startedAt: undefined,
+      endedAt: undefined,
+    });
   }
 
   const totalEstimatedSec = useMemo(
@@ -352,6 +443,17 @@ function MeetingPanel({ meeting, canControl, weekLabel, onMutated }: PanelProps)
               <RotateCcw size={13} className="mr-1" /> 다시 열기
             </Button>
           )}
+          {sections.length > 0 && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+              onClick={handleResetAll}
+              title="모든 섹션의 시간 기록을 0으로 되돌리고 준비 중 상태로 전환"
+            >
+              <RotateCcw size={13} className="mr-1" /> 전체 초기화
+            </Button>
+          )}
         </div>
       ) : (
         <p className="text-[11px] text-muted-foreground">관전 모드 — 운영진/모임장만 조작할 수 있어요.</p>
@@ -373,6 +475,8 @@ function MeetingPanel({ meeting, canControl, weekLabel, onMutated }: PanelProps)
             const delta = live - estSec;
             const overTime = delta > 0;
             const pct = Math.min(100, (live / Math.max(1, estSec)) * 100);
+            const isEditing = editingId === s.id;
+            const progressed = isProgressedSection(s, i);
             return (
               <li
                 key={s.id}
@@ -382,36 +486,94 @@ function MeetingPanel({ meeting, canControl, weekLabel, onMutated }: PanelProps)
                   isDone && "opacity-70",
                 )}
               >
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="secondary" className="text-[10px]">#{i + 1}</Badge>
-                  {isActive && <Badge className="bg-primary text-[10px] text-white">진행 중</Badge>}
-                  {isDone && (
-                    <Badge className="bg-emerald-50 text-[10px] text-emerald-700">
-                      <CheckCircle2 size={10} className="mr-0.5" />완료
-                    </Badge>
-                  )}
-                  <span className="font-medium">{s.title}</span>
-                  <span className="ml-auto flex items-center gap-2 text-[10px] tabular-nums text-muted-foreground">
-                    <span className="flex items-center gap-0.5"><Clock size={10} /> 예상 {s.estimatedMinutes}분</span>
-                    <span>실제 {fmtMMSS(live)}</span>
-                    {(isActive || isDone) && (
-                      <span className={cn(overTime ? "text-rose-600" : "text-emerald-600")}>
-                        {overTime && <AlertTriangle size={10} className="-mt-0.5 mr-0.5 inline" />}
-                        {overTime ? "초과" : "여유"} {fmtMMSS(Math.abs(delta))}
-                      </span>
+                {isEditing ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="secondary" className="text-[10px]">#{i + 1}</Badge>
+                    <Input
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") commitEditSection();
+                        if (e.key === "Escape") setEditingId(null);
+                      }}
+                      autoFocus
+                      className="h-7 flex-1 min-w-[140px] text-xs"
+                      placeholder="섹션 제목"
+                    />
+                    <Input
+                      type="number"
+                      min={1}
+                      value={editMinutes}
+                      onChange={(e) => setEditMinutes(Number(e.target.value))}
+                      className="h-7 w-16 text-xs"
+                    />
+                    <span className="text-[10px] text-muted-foreground">분</span>
+                    <Button size="sm" className="h-7 px-2 text-[11px]" onClick={commitEditSection}>저장</Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 text-[11px]"
+                      onClick={() => setEditingId(null)}
+                    >
+                      취소
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="secondary" className="text-[10px]">#{i + 1}</Badge>
+                    {isActive && <Badge className="bg-primary text-[10px] text-white">진행 중</Badge>}
+                    {isDone && (
+                      <Badge className="bg-emerald-50 text-[10px] text-emerald-700">
+                        <CheckCircle2 size={10} className="mr-0.5" />완료
+                      </Badge>
                     )}
-                    {canControl && status === "planning" && (
-                      <button
-                        onClick={() => handleRemoveSection(s.id)}
-                        className="rounded p-0.5 text-muted-foreground hover:text-rose-500"
-                        aria-label="섹션 삭제"
-                      >
-                        <Trash2 size={11} />
-                      </button>
-                    )}
-                  </span>
-                </div>
-                {(isActive || isDone) && (
+                    <span className="font-medium">{s.title}</span>
+                    <span className="ml-auto flex items-center gap-2 text-[10px] tabular-nums text-muted-foreground">
+                      <span className="flex items-center gap-0.5"><Clock size={10} /> 예상 {s.estimatedMinutes}분</span>
+                      <span>실제 {fmtMMSS(live)}</span>
+                      {(isActive || isDone) && (
+                        <span className={cn(overTime ? "text-rose-600" : "text-emerald-600")}>
+                          {overTime && <AlertTriangle size={10} className="-mt-0.5 mr-0.5 inline" />}
+                          {overTime ? "초과" : "여유"} {fmtMMSS(Math.abs(delta))}
+                        </span>
+                      )}
+                      {canControl && (
+                        <span className="flex items-center gap-0.5 border-l pl-1.5">
+                          <button
+                            onClick={() => startEditSection(s)}
+                            className="rounded p-0.5 text-muted-foreground hover:text-primary"
+                            aria-label="섹션 편집"
+                            title="섹션 편집"
+                          >
+                            <Pencil size={11} />
+                          </button>
+                          <button
+                            onClick={() => handleResetSection(i)}
+                            className="rounded p-0.5 text-muted-foreground hover:text-amber-600"
+                            aria-label="섹션 시간 초기화"
+                            title="이 섹션의 시간 기록만 초기화"
+                          >
+                            <RotateCcw size={11} />
+                          </button>
+                          <button
+                            onClick={() => handleRemoveSection(i)}
+                            className={cn(
+                              "rounded p-0.5",
+                              progressed
+                                ? "text-rose-400 hover:text-rose-600"
+                                : "text-muted-foreground hover:text-rose-500",
+                            )}
+                            aria-label="섹션 삭제"
+                            title={progressed ? "이미 진행된 섹션 — 삭제 시 추가 확인" : "섹션 삭제"}
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                )}
+                {(isActive || isDone) && !isEditing && (
                   <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
                     <div
                       className={cn("h-full transition-all duration-300", overTime ? "bg-rose-500" : "bg-primary")}
@@ -425,8 +587,8 @@ function MeetingPanel({ meeting, canControl, weekLabel, onMutated }: PanelProps)
         </ul>
       )}
 
-      {/* 아젠다 추가 (planning 단계에서만) */}
-      {canControl && status === "planning" && (
+      {/* 아젠다 추가 — 진행 중에도 추가 가능 (status: completed 만 제외, 단 reopen 후엔 paused 가 되어 표시됨) */}
+      {canControl && status !== "completed" && (
         <div className="rounded-md border border-dashed bg-white p-3">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_110px_auto]">
             <Input

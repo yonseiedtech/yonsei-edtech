@@ -1102,10 +1102,12 @@ function DailyGrid({
               const timeLabel = fmtTimeRange(parsed) || c.schedule || "";
               const isCancelled = mode === "cancelled";
               return (
-                <div
+                <Link
                   key={c.id}
+                  href={`/courses/${c.id}/schedule`}
+                  aria-label={`${c.courseName} 강의 스케줄로 이동`}
                   className={cn(
-                    "absolute left-3 right-3 overflow-hidden rounded-xl border border-l-4 bg-white p-3 shadow-sm transition-shadow hover:shadow-md",
+                    "absolute left-3 right-3 block overflow-hidden rounded-xl border border-l-4 bg-white p-3 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer",
                     MODE_BORDER[mode],
                     isCancelled && "opacity-70",
                   )}
@@ -1142,26 +1144,21 @@ function DailyGrid({
                         </p>
                       )}
                     </div>
-                    <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center">
+                    <div className="flex shrink-0 items-center gap-1">
                       {session?.link && !isCancelled && (
                         <a
                           href={session.link}
                           target="_blank"
                           rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
                           className="flex items-center gap-1 rounded-md border bg-white px-2 py-1 text-[11px] font-medium text-primary hover:bg-primary/5"
                         >
                           입장 <ExternalLink size={11} />
                         </a>
                       )}
-                      <Link
-                        href={`/courses/${c.id}/schedule`}
-                        className="rounded-md border bg-white px-2 py-1 text-[11px] text-muted-foreground hover:bg-muted"
-                      >
-                        스케줄
-                      </Link>
                     </div>
                   </div>
-                </div>
+                </Link>
               );
             },
           )}
