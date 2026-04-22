@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { activitiesApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -17,11 +18,11 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Calendar, MapPin, Users, User, UserPlus, Check, X,
   Pencil, Globe, Loader2, CheckCircle, Clock, XCircle,
-  Plus, Trash2, FileUp, Download, ListChecks,
+  Plus, Trash2, FileUp, Download, ListChecks, Timer,
 } from "lucide-react";
 import type { Activity, ActivityType, ActivityProgress, ActivityProgressMode, ActivityMaterial, FormField, EnrollmentStatus, ExternalParticipantType } from "@/types";
 import { ENROLLMENT_STATUS_LABELS, ACTIVITY_PROGRESS_MODE_LABELS, EXTERNAL_PARTICIPANT_TYPE_LABELS, EXTERNAL_PARTICIPANT_TYPE_COLORS } from "@/types";
-import { activityProgressApi, activityMaterialsApi } from "@/lib/bkend";
+import { activityProgressApi, activityMaterialsApi, progressMeetingsApi } from "@/lib/bkend";
 import { uploadToStorage, type UploadedFile } from "@/lib/storage";
 import { formatSemester } from "@/lib/semester";
 import FormBuilder from "./FormBuilder";
@@ -48,6 +49,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const { user } = useAuthStore();
   const isStaff = isAtLeast(user, "staff");
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [applyDialog, setApplyDialog] = useState(false);
   const [applyName, setApplyName] = useState("");
@@ -422,18 +424,53 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                           )}
                         </div>
                       </div>
-                      {isStaff && (
-                        <button onClick={async () => {
-                          try {
-                            await activityProgressApi.delete(p.id);
-                            queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
-                            toast.success("삭제되었습니다.");
-                          } catch (e) {
-                            console.error("[activity-progress/delete]", e);
-                            toast.error(e instanceof Error ? `삭제 실패: ${e.message}` : "삭제에 실패했습니다.");
-                          }
-                        }} className="shrink-0 rounded p-1 text-muted-foreground hover:text-red-500"><Trash2 size={14} /></button>
-                      )}
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          onClick={async () => {
+                            try {
+                              const existing = await progressMeetingsApi.getByProgress(p.id);
+                              if (existing) {
+                                router.push(`/progress-meetings/${existing.id}`);
+                                return;
+                              }
+                              if (!isStaff && !isLeader) {
+                                toast.error("미팅은 운영진/모임장만 시작할 수 있습니다.");
+                                return;
+                              }
+                              const created = await progressMeetingsApi.create({
+                                activityId,
+                                activityProgressId: p.id,
+                                status: "planning",
+                                currentSectionIndex: 0,
+                                sections: [],
+                                createdBy: user!.id,
+                                createdAt: new Date().toISOString(),
+                              });
+                              router.push(`/progress-meetings/${created.id}`);
+                            } catch (e) {
+                              console.error("[progress-meeting/open]", e);
+                              toast.error(e instanceof Error ? `미팅 열기 실패: ${e.message}` : "미팅을 열지 못했습니다.");
+                            }
+                          }}
+                          className="rounded p-1 text-muted-foreground hover:text-primary"
+                          aria-label="실시간 미팅 타이머"
+                          title="실시간 미팅 타이머"
+                        >
+                          <Timer size={14} />
+                        </button>
+                        {(isStaff || isLeader) && (
+                          <button onClick={async () => {
+                            try {
+                              await activityProgressApi.delete(p.id);
+                              queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
+                              toast.success("삭제되었습니다.");
+                            } catch (e) {
+                              console.error("[activity-progress/delete]", e);
+                              toast.error(e instanceof Error ? `삭제 실패: ${e.message}` : "삭제에 실패했습니다.");
+                            }
+                          }} className="rounded p-1 text-muted-foreground hover:text-red-500"><Trash2 size={14} /></button>
+                        )}
+                      </div>
                     </div>
                   ))
                 )}
