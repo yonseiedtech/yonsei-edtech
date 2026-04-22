@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarClock, ChevronLeft, ChevronRight, ExternalLink, Settings, NotebookPen, ListChecks } from "lucide-react";
+import { CalendarClock, ChevronLeft, ChevronRight, ExternalLink, Settings, NotebookPen, ListChecks, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -563,9 +563,31 @@ export default function DailyClassTimelineWidget() {
         <div className="mt-4 h-72 animate-pulse rounded-lg bg-muted" />
       ) : viewMode === "daily" ? (
         todayOfferings.length === 0 ? (
-          <p className="mt-4 text-sm text-muted-foreground">
-            {isShowingToday ? `오늘(${dayChar})` : `${dateLabel}`}에 해당하는 수강과목이 없습니다.
-          </p>
+          parsedOfferings.length === 0 ? (
+            <div className="mt-4 rounded-xl border border-dashed bg-muted/20 p-4 text-sm">
+              <p className="font-medium">
+                {semesterLabel}에 등록된 수강과목이 없어요.
+              </p>
+              <p className="mt-1 text-[12px] text-muted-foreground">
+                /수강과목 페이지에서 본인 수강·청강 토글로 과목을 등록하면, 여기에 자동으로 표시됩니다.
+              </p>
+              <Link
+                href="/courses?tab=mine"
+                className="mt-3 inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-[12px] font-medium text-white hover:bg-primary/90"
+              >
+                <BookOpen size={12} /> 수강과목 등록하러 가기
+              </Link>
+            </div>
+          ) : (
+            <div className="mt-4 rounded-xl border border-dashed bg-muted/10 p-4 text-sm">
+              <p className="text-muted-foreground">
+                {isShowingToday ? `오늘(${dayChar}요일)` : `${dateLabel}`}에 예정된 수업이 없어요.
+              </p>
+              <p className="mt-1 text-[11px] text-muted-foreground/70">
+                이번 학기 등록 과목 {parsedOfferings.length}건 — 다른 요일을 확인해보세요.
+              </p>
+            </div>
+          )
         ) : (
           <DailyGrid
             placed={placedDaily}

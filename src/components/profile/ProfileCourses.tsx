@@ -30,7 +30,8 @@ function categoryRank(c: CourseCategory | undefined): number {
   return i < 0 ? CATEGORY_ORDER.length : i;
 }
 import { Badge } from "@/components/ui/badge";
-import { GraduationCap, BookOpen } from "lucide-react";
+import { GraduationCap, BookOpen, CalendarDays } from "lucide-react";
+import Link from "next/link";
 
 interface Props {
   ownerId: string;
@@ -255,49 +256,63 @@ function ProfileCoursesView({
                 const course = it.course;
                 return (
                   <li key={it.id} className="rounded-md border bg-white px-3 py-2">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {course?.category && (
-                        <Badge variant="secondary" className="text-[10px]">
-                          {COURSE_CATEGORY_LABELS[course.category]}
-                        </Badge>
-                      )}
-                      {course?.courseCode && (
-                        <span className="font-mono text-[11px] text-muted-foreground">
-                          {course.courseCode}
-                        </span>
-                      )}
-                      <span className="text-sm font-medium">
-                        {course?.courseName ?? "(폐강·삭제된 과목)"}
-                      </span>
-                      {it.role && it.role !== "student" && (
-                        <Badge variant="outline" className="text-[10px]">
-                          {ENROLLMENT_ROLE_LABELS[it.role]}
-                        </Badge>
-                      )}
-                      {course?.credits != null && (
-                        <span className="text-[11px] text-muted-foreground">
-                          · {course.credits}학점
-                        </span>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {course?.category && (
+                            <Badge variant="secondary" className="text-[10px]">
+                              {COURSE_CATEGORY_LABELS[course.category]}
+                            </Badge>
+                          )}
+                          {course?.courseCode && (
+                            <span className="font-mono text-[11px] text-muted-foreground">
+                              {course.courseCode}
+                            </span>
+                          )}
+                          <span className="text-sm font-medium">
+                            {course?.courseName ?? "(폐강·삭제된 과목)"}
+                          </span>
+                          {it.role && it.role !== "student" && (
+                            <Badge variant="outline" className="text-[10px]">
+                              {ENROLLMENT_ROLE_LABELS[it.role]}
+                            </Badge>
+                          )}
+                          {course?.credits != null && (
+                            <span className="text-[11px] text-muted-foreground">
+                              · {course.credits}학점
+                            </span>
+                          )}
+                        </div>
+                        {course && (
+                          <p className="mt-0.5 text-[11px] text-muted-foreground">
+                            {[course.professor, course.schedule, course.classroom]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </p>
+                        )}
+                        {canSeeSensitive && (it.studentId || it.email || it.notes) && (
+                          <p className="mt-0.5 text-[11px] text-foreground/70">
+                            {[
+                              it.studentId ? `학번 ${it.studentId}` : null,
+                              it.email,
+                              it.notes,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </p>
+                        )}
+                      </div>
+                      {course && it.courseOfferingId && (
+                        <Link
+                          href={`/courses/${it.courseOfferingId}/schedule`}
+                          className="flex flex-none items-center gap-1 rounded-md border border-input px-2 py-1 text-[10px] font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                          title="주차별 수업 일정 보기"
+                        >
+                          <CalendarDays size={11} />
+                          주차별
+                        </Link>
                       )}
                     </div>
-                    {course && (
-                      <p className="mt-0.5 text-[11px] text-muted-foreground">
-                        {[course.professor, course.schedule, course.classroom]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </p>
-                    )}
-                    {canSeeSensitive && (it.studentId || it.email || it.notes) && (
-                      <p className="mt-0.5 text-[11px] text-foreground/70">
-                        {[
-                          it.studentId ? `학번 ${it.studentId}` : null,
-                          it.email,
-                          it.notes,
-                        ]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </p>
-                    )}
                   </li>
                 );
               })}
