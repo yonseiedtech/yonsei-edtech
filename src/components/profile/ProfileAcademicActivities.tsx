@@ -4,10 +4,11 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { activitiesApi, seminarsApi, attendeesApi } from "@/lib/bkend";
-import type { Activity, Seminar, SeminarAttendee, User } from "@/types";
+import { EXTERNAL_PARTICIPANT_TYPE_LABELS, EXTERNAL_PARTICIPANT_TYPE_COLORS } from "@/types";
+import type { Activity, ExternalParticipantType, Seminar, SeminarAttendee, User } from "@/types";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, FolderKanban, Globe, Mic, ChevronRight } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { BookOpen, ChevronRight, Crown, FolderKanban, Globe, Mic, Tag } from "lucide-react";
+import { formatDate, cn } from "@/lib/utils";
 import { formatSemester } from "@/lib/semester";
 
 interface Props {
@@ -23,20 +24,41 @@ const SUB_TABS: { key: SubTab; label: string; icon: typeof BookOpen }[] = [
   { key: "external", label: "대외 학술대회", icon: Globe },
 ];
 
-const ACTIVITY_HREF: Record<string, string> = {
-  project: "/activities/projects",
-  study: "/activities/studies",
-  external: "/activities/external",
-};
-
 const PAGE_SIZE = 30;
 
 function isMember(a: Activity, owner: User): boolean {
   const inMembers = a.members?.includes(owner.id) || a.members?.includes(owner.name);
   const inParticipants = a.participants?.includes(owner.id) || a.participants?.includes(owner.name);
-  const isLeader = a.leader === owner.id || a.leader === owner.name;
+  const isLeader = a.leader === owner.id || a.leader === owner.name || a.leaderId === owner.id;
   const isApplicant = a.applicants?.some((ap) => ap.userId === owner.id && ap.status === "approved");
   return !!(inMembers || inParticipants || isLeader || isApplicant);
+}
+
+interface RoleInfo {
+  label: string;
+  kind: "leader" | "role" | "external";
+  type?: ExternalParticipantType;
+}
+
+function roleOf(a: Activity, owner: User): RoleInfo | null {
+  // 1) 모임장
+  if (a.leaderId === owner.id || a.leader === owner.id || a.leader === owner.name) {
+    return { label: a.type === "study" ? "스터디장" : a.type === "project" ? "팀장" : "리더", kind: "leader" };
+  }
+  // 2) 운영진이 부여한 활동 내 역할 (participantRoles)
+  const role = a.participantRoles?.[owner.id] ?? a.participantRoles?.[owner.name];
+  if (role && role.trim()) {
+    return { label: role, kind: "role" };
+  }
+  // 3) 대외활동 신청 시 선택한 참석 유형
+  if (a.type === "external") {
+    const ap = a.applicants?.find(
+      (x) => (x.userId === owner.id || x.email?.toLowerCase() === owner.email?.toLowerCase()) && x.status === "approved",
+    );
+    const t = ap?.participantType as ExternalParticipantType | undefined;
+    if (t) return { label: EXTERNAL_PARTICIPANT_TYPE_LABELS[t], kind: "external", type: t };
+  }
+  return null;
 }
 
 export default function ProfileAcademicActivities({ owner }: Props) {
@@ -164,30 +186,41 @@ export default function ProfileAcademicActivities({ owner }: Props) {
               );
             }
             const a = item as Activity;
-            const href = ACTIVITY_HREF[a.type] ?? "/activities";
+            const role = roleOf(a, owner);
             return (
-              <li key={a.id} className="rounded-xl border px-4 py-3 hover:border-primary/40">
-                <Link href={`${href}/${a.id}`} className="flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {a.status && (
-                        <Badge variant="outline" className="text-[10px]">
-                          {a.status === "upcoming" ? "예정" : a.status === "ongoing" ? "진행중" : "완료"}
-                        </Badge>
-                      )}
-                      {(a.year || a.semester) && (
-                        <Badge variant="secondary" className="bg-blue-50 text-[10px] text-blue-700">
-                          {formatSemester(a.year, a.semester)}
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="mt-1 truncate text-sm font-medium">{a.title}</p>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground">
-                      {a.date ? formatDate(a.date) : ""}{a.location ? ` · ${a.location}` : ""}
-                    </p>
+              <li key={a.id} className="rounded-xl border px-4 py-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {a.status && (
+                      <Badge variant="outline" className="text-[10px]">
+                        {a.status === "upcoming" ? "예정" : a.status === "ongoing" ? "진행중" : "완료"}
+                      </Badge>
+                    )}
+                    {(a.year || a.semester) && (
+                      <Badge variant="secondary" className="bg-blue-50 text-[10px] text-blue-700">
+                        {formatSemester(a.year, a.semester)}
+                      </Badge>
+                    )}
+                    {role && (
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          "gap-0.5 text-[10px] font-medium",
+                          role.kind === "leader" && "bg-amber-50 text-amber-700",
+                          role.kind === "role" && "bg-violet-50 text-violet-700",
+                          role.kind === "external" && role.type && EXTERNAL_PARTICIPANT_TYPE_COLORS[role.type],
+                        )}
+                      >
+                        {role.kind === "leader" ? <Crown size={9} /> : <Tag size={9} />}
+                        {role.label}
+                      </Badge>
+                    )}
                   </div>
-                  <ChevronRight size={14} className="shrink-0 text-muted-foreground" />
-                </Link>
+                  <p className="mt-1 truncate text-sm font-medium">{a.title}</p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                    {a.date ? formatDate(a.date) : ""}{a.location ? ` · ${a.location}` : ""}
+                  </p>
+                </div>
               </li>
             );
           })}

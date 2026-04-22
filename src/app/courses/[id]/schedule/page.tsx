@@ -638,7 +638,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                               <span className="mr-1 text-muted-foreground">{n.date}</span>
                               <span className="whitespace-pre-wrap">{n.content}</span>
                             </div>
-                            <div className="flex gap-1">
+                            <div className="flex shrink-0 gap-1">
                               <button
                                 type="button"
                                 onClick={() =>
@@ -648,16 +648,18 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                                     content: n.content,
                                   })
                                 }
-                                className="text-muted-foreground hover:text-primary"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-blue-100 hover:text-primary"
+                                aria-label="메모 수정"
                               >
-                                <Pencil size={10} />
+                                <Pencil size={14} />
                               </button>
                               <button
                                 type="button"
                                 onClick={() => deleteNote(n)}
-                                className="text-muted-foreground hover:text-destructive"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-rose-100 hover:text-destructive"
+                                aria-label="메모 삭제"
                               >
-                                <Trash2 size={10} />
+                                <Trash2 size={14} />
                               </button>
                             </div>
                           </li>
@@ -706,7 +708,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                                 ~{t.dueDate}
                               </span>
                             )}
-                            <div className="flex gap-1">
+                            <div className="flex shrink-0 gap-1">
                               <button
                                 type="button"
                                 onClick={() =>
@@ -718,16 +720,18 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                                     sessionDate: t.sessionDate,
                                   })
                                 }
-                                className="text-muted-foreground hover:text-primary"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-amber-100 hover:text-primary"
+                                aria-label="할 일 수정"
                               >
-                                <Pencil size={10} />
+                                <Pencil size={14} />
                               </button>
                               <button
                                 type="button"
                                 onClick={() => deleteTodo(t)}
-                                className="text-muted-foreground hover:text-destructive"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-rose-100 hover:text-destructive"
+                                aria-label="할 일 삭제"
                               >
-                                <Trash2 size={10} />
+                                <Trash2 size={14} />
                               </button>
                             </div>
                           </li>
@@ -775,9 +779,10 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                   <button
                     type="button"
                     onClick={() => deleteTodo(t)}
-                    className="text-muted-foreground hover:text-destructive"
+                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-rose-100 hover:text-destructive"
+                    aria-label="할 일 삭제"
                   >
-                    <Trash2 size={10} />
+                    <Trash2 size={14} />
                   </button>
                 </li>
               ))}
