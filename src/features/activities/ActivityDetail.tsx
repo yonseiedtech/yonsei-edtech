@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Calendar, MapPin, Users, User, UserPlus, Check, X,
   Pencil, Globe, Loader2, CheckCircle, Clock, XCircle,
-  Plus, Trash2, FileUp, Download, ListChecks, Timer,
+  Plus, Trash2, FileUp, Download, ListChecks, Timer, UserCog,
 } from "lucide-react";
 import type { Activity, ActivityType, ActivityProgress, ActivityProgressMode, ActivityMaterial, FormField, EnrollmentStatus, ExternalParticipantType } from "@/types";
 import { ENROLLMENT_STATUS_LABELS, ACTIVITY_PROGRESS_MODE_LABELS, EXTERNAL_PARTICIPANT_TYPE_LABELS, EXTERNAL_PARTICIPANT_TYPE_COLORS } from "@/types";
@@ -1086,23 +1086,63 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
         {/* 역할 등록 Dialog */}
         <Dialog open={!!roleDialog} onOpenChange={(open) => { if (!open) setRoleDialog(null); }}>
           <DialogContent className="sm:max-w-sm">
-            <DialogHeader><DialogTitle>역할 등록 — {roleDialog?.name}</DialogTitle></DialogHeader>
-            <div className="space-y-2">
-              <Input
-                value={roleInput}
-                onChange={(e) => setRoleInput(e.target.value)}
-                placeholder="예: 발표자, 기록자, 총무"
-                autoFocus
-              />
-              <p className="text-xs text-muted-foreground">비워두고 저장하면 역할이 제거됩니다.</p>
+            <DialogHeader className="space-y-3 pb-2">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <UserCog size={18} />
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <DialogTitle className="text-base">역할 등록</DialogTitle>
+                  <p className="text-xs text-muted-foreground">{roleDialog?.name}님의 활동 내 역할을 지정합니다.</p>
+                </div>
+              </div>
+            </DialogHeader>
+            <div className="mt-2 space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground">자주 쓰는 역할</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {["발표자", "진행자", "기록자", "총무", "자료조사", "디자인", "영상", "자원봉사"].map((r) => {
+                    const active = roleInput === r;
+                    return (
+                      <button
+                        key={r}
+                        type="button"
+                        onClick={() => setRoleInput(r)}
+                        className={cn(
+                          "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                          active
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-slate-200 bg-white text-slate-700 hover:border-primary/40 hover:bg-primary/5",
+                        )}
+                      >
+                        {r}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">직접 입력</label>
+                <Input
+                  value={roleInput}
+                  onChange={(e) => setRoleInput(e.target.value)}
+                  placeholder="예: 발표자, 기록자, 총무"
+                  className="h-10"
+                  autoFocus
+                />
+                <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <X size={11} /> 비워두고 저장하면 역할이 제거됩니다.
+                </p>
+              </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setRoleDialog(null)}>취소</Button>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="outline" onClick={() => setRoleDialog(null)} className="flex-1 sm:flex-none">취소</Button>
               <Button
                 onClick={() => roleDialog && updateRoleMutation.mutate({ pid: roleDialog.pid, role: roleInput })}
                 disabled={updateRoleMutation.isPending}
+                className="flex-1 sm:flex-none"
               >
-                저장
+                {updateRoleMutation.isPending && <Loader2 size={14} className="mr-1 animate-spin" />}저장
               </Button>
             </DialogFooter>
           </DialogContent>

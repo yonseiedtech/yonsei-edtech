@@ -7,6 +7,32 @@
         { "fieldPath": "userId", "order": "ASCENDING" },
         { "fieldPath": "year", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "activity_progress",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "activityId", "order": "ASCENDING" },
+        { "fieldPath": "week", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "course_session_notes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "courseOfferingId", "order": "ASCENDING" },
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "course_todos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "courseOfferingId", "order": "ASCENDING" },
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
