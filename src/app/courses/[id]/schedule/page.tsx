@@ -143,10 +143,24 @@ interface TodoDraft {
   sessionDate?: string;
 }
 
+/** 세션 날짜 기준 +6일 (다음 주 동일 요일 수업의 하루 전) */
+function defaultDueFromSession(sessionDate?: string): string {
+  if (!sessionDate) return "";
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(sessionDate);
+  if (!m) return "";
+  const [, y, mo, d] = m;
+  const dt = new Date(Number(y), Number(mo) - 1, Number(d));
+  dt.setDate(dt.getDate() + 6);
+  const yy = dt.getFullYear();
+  const mm = String(dt.getMonth() + 1).padStart(2, "0");
+  const dd = String(dt.getDate()).padStart(2, "0");
+  return `${yy}-${mm}-${dd}`;
+}
+
 const blankTodoDraft = (sessionDate?: string): TodoDraft => ({
   type: "assignment",
   content: "",
-  dueDate: "",
+  dueDate: defaultDueFromSession(sessionDate),
   sessionDate,
 });
 
@@ -653,7 +667,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                         size="sm"
                         variant="ghost"
                         onClick={() =>
-                          setTodoDraft(blankTodoDraft(w.startDate))
+                          setTodoDraft(blankTodoDraft(firstClassDate))
                         }
                       >
                         <ListChecks size={12} className="mr-1" /> 할 일
