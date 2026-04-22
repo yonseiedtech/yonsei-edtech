@@ -12,8 +12,27 @@ import { cn } from "@/lib/utils";
 import {
   Play, Pause, SkipForward, Square, Plus, Trash2, Clock,
   AlertTriangle, CheckCircle2, RotateCcw, ExternalLink, Timer, Pencil,
+  Copy, GripVertical,
 } from "lucide-react";
 import type { ProgressMeeting, ProgressMeetingSection } from "@/types";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface Props {
   activityId: string;
@@ -264,6 +283,37 @@ function MeetingPanel({ meeting, canControl, weekLabel, onMutated }: PanelProps)
     setNewMinutes(10);
   }
 
+  /** 섹션 복제 — 시간 기록 0으로 초기화, 원본 바로 다음에 삽입 ("다시 논의" 시나리오 지원) */
+  function handleDuplicateSection(idx: number) {
+    const s = sections[idx];
+    if (!s) return;
+    const dup: ProgressMeetingSection = {
+      id: uuid(),
+      title: `${s.title} (재논의)`,
+      estimatedMinutes: s.estimatedMinutes,
+      actualSeconds: 0,
+    };
+    const updated = [...sections.slice(0, idx + 1), dup, ...sections.slice(idx + 1)];
+    // 복제는 idx 다음에 삽입 — 활성 섹션의 인덱스 유지 (idx < currentIdx면 +1)
+    let nextIdx = currentIdx;
+    if (idx < currentIdx) nextIdx = currentIdx + 1;
+    updateMutation.mutate({ sections: updated, currentSectionIndex: nextIdx });
+    toast.success("섹션을 복제했습니다.");
+  }
+
+  /** 드래그 정렬 — 활성 섹션 ID 기준으로 currentIdx 재매핑 */
+  function handleMoveSections(fromIdx: number, toIdx: number) {
+    if (fromIdx === toIdx) return;
+    const activeId = sections[currentIdx]?.id;
+    const moved = arrayMove(sections, fromIdx, toIdx);
+    let nextIdx = currentIdx;
+    if (activeId) {
+      const newActiveIdx = moved.findIndex((s) => s.id === activeId);
+      if (newActiveIdx >= 0) nextIdx = newActiveIdx;
+    }
+    updateMutation.mutate({ sections: moved, currentSectionIndex: nextIdx });
+  }
+
   /** 이미 진행된 섹션 판정: 시간이 측정됐거나, 현재 인덱스 이전이거나, 현재 활성 섹션이거나 */
   function isProgressedSection(s: ProgressMeetingSection, idx: number): boolean {
     if (s.actualSeconds > 0) return true;
@@ -466,125 +516,25 @@ function MeetingPanel({ meeting, canControl, weekLabel, onMutated }: PanelProps)
           {canControl && " 아래에서 추가하세요."}
         </div>
       ) : (
-        <ul className="space-y-1.5">
-          {sections.map((s, i) => {
-            const isActive = i === currentIdx && status !== "planning" && status !== "completed";
-            const isDone = i < currentIdx || (i === currentIdx && status === "completed");
-            const live = liveSeconds(s, i === currentIdx, status);
-            const estSec = s.estimatedMinutes * 60;
-            const delta = live - estSec;
-            const overTime = delta > 0;
-            const pct = Math.min(100, (live / Math.max(1, estSec)) * 100);
-            const isEditing = editingId === s.id;
-            const progressed = isProgressedSection(s, i);
-            return (
-              <li
-                key={s.id}
-                className={cn(
-                  "rounded-md border bg-white px-3 py-2 text-xs transition-shadow",
-                  isActive && "border-primary shadow-sm",
-                  isDone && "opacity-70",
-                )}
-              >
-                {isEditing ? (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="secondary" className="text-[10px]">#{i + 1}</Badge>
-                    <Input
-                      value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") commitEditSection();
-                        if (e.key === "Escape") setEditingId(null);
-                      }}
-                      autoFocus
-                      className="h-7 flex-1 min-w-[140px] text-xs"
-                      placeholder="섹션 제목"
-                    />
-                    <Input
-                      type="number"
-                      min={1}
-                      value={editMinutes}
-                      onChange={(e) => setEditMinutes(Number(e.target.value))}
-                      className="h-7 w-16 text-xs"
-                    />
-                    <span className="text-[10px] text-muted-foreground">분</span>
-                    <Button size="sm" className="h-7 px-2 text-[11px]" onClick={commitEditSection}>저장</Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 px-2 text-[11px]"
-                      onClick={() => setEditingId(null)}
-                    >
-                      취소
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="secondary" className="text-[10px]">#{i + 1}</Badge>
-                    {isActive && <Badge className="bg-primary text-[10px] text-white">진행 중</Badge>}
-                    {isDone && (
-                      <Badge className="bg-emerald-50 text-[10px] text-emerald-700">
-                        <CheckCircle2 size={10} className="mr-0.5" />완료
-                      </Badge>
-                    )}
-                    <span className="font-medium">{s.title}</span>
-                    <span className="ml-auto flex items-center gap-2 text-[10px] tabular-nums text-muted-foreground">
-                      <span className="flex items-center gap-0.5"><Clock size={10} /> 예상 {s.estimatedMinutes}분</span>
-                      <span>실제 {fmtMMSS(live)}</span>
-                      {(isActive || isDone) && (
-                        <span className={cn(overTime ? "text-rose-600" : "text-emerald-600")}>
-                          {overTime && <AlertTriangle size={10} className="-mt-0.5 mr-0.5 inline" />}
-                          {overTime ? "초과" : "여유"} {fmtMMSS(Math.abs(delta))}
-                        </span>
-                      )}
-                      {canControl && (
-                        <span className="flex items-center gap-0.5 border-l pl-1.5">
-                          <button
-                            onClick={() => startEditSection(s)}
-                            className="rounded p-0.5 text-muted-foreground hover:text-primary"
-                            aria-label="섹션 편집"
-                            title="섹션 편집"
-                          >
-                            <Pencil size={11} />
-                          </button>
-                          <button
-                            onClick={() => handleResetSection(i)}
-                            className="rounded p-0.5 text-muted-foreground hover:text-amber-600"
-                            aria-label="섹션 시간 초기화"
-                            title="이 섹션의 시간 기록만 초기화"
-                          >
-                            <RotateCcw size={11} />
-                          </button>
-                          <button
-                            onClick={() => handleRemoveSection(i)}
-                            className={cn(
-                              "rounded p-0.5",
-                              progressed
-                                ? "text-rose-400 hover:text-rose-600"
-                                : "text-muted-foreground hover:text-rose-500",
-                            )}
-                            aria-label="섹션 삭제"
-                            title={progressed ? "이미 진행된 섹션 — 삭제 시 추가 확인" : "섹션 삭제"}
-                          >
-                            <Trash2 size={11} />
-                          </button>
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                )}
-                {(isActive || isDone) && !isEditing && (
-                  <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
-                    <div
-                      className={cn("h-full transition-all duration-300", overTime ? "bg-rose-500" : "bg-primary")}
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+        <SectionListDnd
+          sections={sections}
+          canControl={canControl}
+          status={status}
+          currentIdx={currentIdx}
+          editingId={editingId}
+          editTitle={editTitle}
+          editMinutes={editMinutes}
+          setEditTitle={setEditTitle}
+          setEditMinutes={setEditMinutes}
+          setEditingId={setEditingId}
+          startEditSection={startEditSection}
+          commitEditSection={commitEditSection}
+          handleRemoveSection={handleRemoveSection}
+          handleResetSection={handleResetSection}
+          handleDuplicateSection={handleDuplicateSection}
+          handleMoveSections={handleMoveSections}
+          isProgressedSection={isProgressedSection}
+        />
       )}
 
       {/* 아젠다 추가 — 진행 중에도 추가 가능 (status: completed 만 제외, 단 reopen 후엔 paused 가 되어 표시됨) */}
@@ -611,5 +561,280 @@ function MeetingPanel({ meeting, canControl, weekLabel, onMutated }: PanelProps)
         </div>
       )}
     </div>
+  );
+}
+
+interface SectionListDndProps {
+  sections: ProgressMeetingSection[];
+  canControl: boolean;
+  status: ProgressMeeting["status"];
+  currentIdx: number;
+  editingId: string | null;
+  editTitle: string;
+  editMinutes: number;
+  setEditTitle: (v: string) => void;
+  setEditMinutes: (v: number) => void;
+  setEditingId: (v: string | null) => void;
+  startEditSection: (s: ProgressMeetingSection) => void;
+  commitEditSection: () => void;
+  handleRemoveSection: (idx: number) => void;
+  handleResetSection: (idx: number) => void;
+  handleDuplicateSection: (idx: number) => void;
+  handleMoveSections: (from: number, to: number) => void;
+  isProgressedSection: (s: ProgressMeetingSection, idx: number) => boolean;
+}
+
+function SectionListDnd(props: SectionListDndProps) {
+  const { sections, canControl, handleMoveSections } = props;
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    // 모바일: 250ms 길게 눌러야 드래그 시작 → 페이지 스크롤과 충돌 방지
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  function onDragEnd(e: DragEndEvent) {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const fromIdx = sections.findIndex((s) => s.id === active.id);
+    const toIdx = sections.findIndex((s) => s.id === over.id);
+    if (fromIdx < 0 || toIdx < 0) return;
+    handleMoveSections(fromIdx, toIdx);
+  }
+
+  // 운영자 권한 없으면 dnd 비활성화 — 단순 렌더만
+  if (!canControl) {
+    return (
+      <ul className="space-y-1.5">
+        {sections.map((s, i) => (
+          <SortableSection key={s.id} idx={i} section={s} {...props} disableDrag />
+        ))}
+      </ul>
+    );
+  }
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+      <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+        <ul className="space-y-1.5">
+          {sections.map((s, i) => (
+            <SortableSection key={s.id} idx={i} section={s} {...props} />
+          ))}
+        </ul>
+      </SortableContext>
+    </DndContext>
+  );
+}
+
+interface SortableSectionProps extends SectionListDndProps {
+  idx: number;
+  section: ProgressMeetingSection;
+  disableDrag?: boolean;
+}
+
+function SortableSection(props: SortableSectionProps) {
+  const {
+    idx: i, section: s, canControl, status, currentIdx,
+    editingId, editTitle, editMinutes,
+    setEditTitle, setEditMinutes, setEditingId,
+    startEditSection, commitEditSection,
+    handleRemoveSection, handleResetSection, handleDuplicateSection,
+    isProgressedSection, disableDrag,
+  } = props;
+
+  const sortable = useSortable({ id: s.id, disabled: disableDrag });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = sortable;
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const isActive = i === currentIdx && status !== "planning" && status !== "completed";
+  const isDone = i < currentIdx || (i === currentIdx && status === "completed");
+  const live = liveSeconds(s, i === currentIdx, status);
+  const estSec = s.estimatedMinutes * 60;
+  const delta = live - estSec;
+  const overTime = delta > 0;
+  const pct = Math.min(100, (live / Math.max(1, estSec)) * 100);
+  const isEditing = editingId === s.id;
+  const progressed = isProgressedSection(s, i);
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "rounded-md border bg-white px-3 py-2 text-xs transition-shadow",
+        isActive && "border-primary shadow-sm",
+        isDone && "opacity-70",
+        isDragging && "z-10 opacity-90 shadow-lg ring-2 ring-primary/30",
+      )}
+    >
+      {isEditing ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="secondary" className="text-[10px]">#{i + 1}</Badge>
+          <Input
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commitEditSection();
+              if (e.key === "Escape") setEditingId(null);
+            }}
+            autoFocus
+            className="h-7 flex-1 min-w-[140px] text-xs"
+            placeholder="섹션 제목"
+          />
+          <Input
+            type="number"
+            min={1}
+            value={editMinutes}
+            onChange={(e) => setEditMinutes(Number(e.target.value))}
+            className="h-7 w-16 text-xs"
+          />
+          <span className="text-[10px] text-muted-foreground">분</span>
+          <Button size="sm" className="h-7 px-2 text-[11px]" onClick={commitEditSection}>저장</Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 px-2 text-[11px]"
+            onClick={() => setEditingId(null)}
+          >
+            취소
+          </Button>
+        </div>
+      ) : (
+        <>
+          <div className="flex flex-wrap items-center gap-2">
+            {canControl && !disableDrag && (
+              <button
+                type="button"
+                {...attributes}
+                {...listeners}
+                aria-label="섹션 순서 드래그"
+                title="드래그로 순서 변경 (모바일은 길게 눌러 드래그)"
+                className="-ml-1 flex h-6 w-6 cursor-grab touch-none items-center justify-center rounded text-muted-foreground hover:bg-slate-100 hover:text-slate-700 active:cursor-grabbing"
+              >
+                <GripVertical size={14} />
+              </button>
+            )}
+            <Badge variant="secondary" className="text-[10px]">#{i + 1}</Badge>
+            {isActive && <Badge className="bg-primary text-[10px] text-white">진행 중</Badge>}
+            {isDone && (
+              <Badge className="bg-emerald-50 text-[10px] text-emerald-700">
+                <CheckCircle2 size={10} className="mr-0.5" />완료
+              </Badge>
+            )}
+            <span className="font-medium">{s.title}</span>
+            <span className="ml-auto flex items-center gap-2 text-[10px] tabular-nums text-muted-foreground">
+              <span className="flex items-center gap-0.5"><Clock size={10} /> 예상 {s.estimatedMinutes}분</span>
+              <span>실제 {fmtMMSS(live)}</span>
+              {(isActive || isDone) && (
+                <span className={cn(overTime ? "text-rose-600" : "text-emerald-600")}>
+                  {overTime && <AlertTriangle size={10} className="-mt-0.5 mr-0.5 inline" />}
+                  {overTime ? "초과" : "여유"} {fmtMMSS(Math.abs(delta))}
+                </span>
+              )}
+              {/* PC 인라인 액션 (md+) */}
+              {canControl && (
+                <span className="hidden items-center gap-0.5 border-l pl-1.5 md:flex">
+                  <button
+                    onClick={() => startEditSection(s)}
+                    className="rounded p-0.5 text-muted-foreground hover:text-primary"
+                    aria-label="섹션 편집"
+                    title="섹션 편집"
+                  >
+                    <Pencil size={11} />
+                  </button>
+                  <button
+                    onClick={() => handleDuplicateSection(i)}
+                    className="rounded p-0.5 text-muted-foreground hover:text-blue-600"
+                    aria-label="섹션 복제"
+                    title="섹션 복제 (재논의용 — 시간 0으로 초기화하여 다음 줄에 추가)"
+                  >
+                    <Copy size={11} />
+                  </button>
+                  <button
+                    onClick={() => handleResetSection(i)}
+                    className="rounded p-0.5 text-muted-foreground hover:text-amber-600"
+                    aria-label="섹션 시간 초기화"
+                    title="이 섹션의 시간 기록만 초기화"
+                  >
+                    <RotateCcw size={11} />
+                  </button>
+                  <button
+                    onClick={() => handleRemoveSection(i)}
+                    className={cn(
+                      "rounded p-0.5",
+                      progressed
+                        ? "text-rose-400 hover:text-rose-600"
+                        : "text-muted-foreground hover:text-rose-500",
+                    )}
+                    aria-label="섹션 삭제"
+                    title={progressed ? "이미 진행된 섹션 — 삭제 시 추가 확인" : "섹션 삭제"}
+                  >
+                    <Trash2 size={11} />
+                  </button>
+                </span>
+              )}
+            </span>
+          </div>
+
+          {/* 모바일 액션바 — 큰 터치 타겟 + 라벨 */}
+          {canControl && (
+            <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-slate-100 pt-2 md:hidden">
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="h-9 flex-1 min-w-[64px] px-2 text-[11px] text-muted-foreground hover:text-primary"
+                onClick={() => startEditSection(s)}
+              >
+                <Pencil size={14} className="mr-1" />편집
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="h-9 flex-1 min-w-[64px] px-2 text-[11px] text-muted-foreground hover:text-blue-600"
+                onClick={() => handleDuplicateSection(i)}
+              >
+                <Copy size={14} className="mr-1" />복제
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="h-9 flex-1 min-w-[64px] px-2 text-[11px] text-muted-foreground hover:text-amber-600"
+                onClick={() => handleResetSection(i)}
+              >
+                <RotateCcw size={14} className="mr-1" />초기화
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className={cn(
+                  "h-9 flex-1 min-w-[64px] px-2 text-[11px]",
+                  progressed
+                    ? "text-rose-500 hover:text-rose-700"
+                    : "text-muted-foreground hover:text-rose-600",
+                )}
+                onClick={() => handleRemoveSection(i)}
+              >
+                <Trash2 size={14} className="mr-1" />삭제
+              </Button>
+            </div>
+          )}
+        </>
+      )}
+      {(isActive || isDone) && !isEditing && (
+        <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className={cn("h-full transition-all duration-300", overTime ? "bg-rose-500" : "bg-primary")}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      )}
+    </li>
   );
 }
