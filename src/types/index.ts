@@ -766,6 +766,10 @@ export interface Seminar {
   id: string;
   title: string;
   description: string;
+  /** 세미나 학기 — 연도(yyyy). Activity와 동일 패턴. */
+  year?: number;
+  /** 세미나 학기 — 전기(first) / 후기(second). Activity와 동일 패턴. */
+  semester?: "first" | "second";
   date: string;
   time: string;
   location: string;

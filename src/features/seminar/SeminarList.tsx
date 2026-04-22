@@ -9,10 +9,28 @@ import { Calendar, MapPin, Users, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAttendees } from "@/features/seminar/useSeminar";
+import { formatSemester } from "@/lib/semester";
 
 interface Props {
   seminars: Seminar[];
   viewMode?: "list" | "gallery";
+}
+
+/**
+ * 세미나 카드 1건의 참가자 수 라벨.
+ * - 우선순위: 실시간 attendees(체크인 + 신청 통합) → seminars.attendeeIds (denorm fallback)
+ * - HeroSection 과 동일한 로직으로 일관성 유지.
+ */
+function ParticipantCount({ seminar }: { seminar: Seminar }) {
+  const { attendees } = useAttendees(seminar.id);
+  const count = attendees.length > 0 ? attendees.length : seminar.attendeeIds.length;
+  return (
+    <>
+      {count}
+      {seminar.maxAttendees ? `/${seminar.maxAttendees}` : ""}명
+    </>
+  );
 }
 
 const STATUS_STYLES: Record<SeminarStatus, string> = {
@@ -50,6 +68,11 @@ export default function SeminarList({ seminars, viewMode = "list" }: Props) {
                 <Badge className={cn("text-xs", badge.className)} variant="secondary">
                   {badge.label}
                 </Badge>
+                {(seminar.year || seminar.semester) && (
+                  <Badge variant="secondary" className="bg-blue-50 text-[10px] text-blue-700">
+                    {formatSemester(seminar.year, seminar.semester)}
+                  </Badge>
+                )}
               </div>
               <h3 className="mt-2 text-base font-semibold leading-snug line-clamp-2">
                 {seminar.title}
@@ -68,8 +91,7 @@ export default function SeminarList({ seminars, viewMode = "list" }: Props) {
                 </div>
                 <div className="flex items-center gap-1">
                   <Users size={12} />
-                  {seminar.attendeeIds.length}
-                  {seminar.maxAttendees ? `/${seminar.maxAttendees}` : ""}명
+                  <ParticipantCount seminar={seminar} />
                 </div>
               </div>
               <div className="mt-3 flex items-center justify-between border-t pt-3">
@@ -113,6 +135,11 @@ export default function SeminarList({ seminars, viewMode = "list" }: Props) {
                 <Badge className={cn("text-xs", badge.className)} variant="secondary">
                   {badge.label}
                 </Badge>
+                {(seminar.year || seminar.semester) && (
+                  <Badge variant="secondary" className="bg-blue-50 text-[10px] text-blue-700">
+                    {formatSemester(seminar.year, seminar.semester)}
+                  </Badge>
+                )}
                 <h3 className="text-base font-semibold leading-snug sm:text-lg">{seminar.title}</h3>
               </div>
               <p className="mt-1.5 line-clamp-2 text-xs text-muted-foreground sm:mt-2 sm:text-sm">
@@ -129,8 +156,7 @@ export default function SeminarList({ seminars, viewMode = "list" }: Props) {
                 </span>
                 <span className="flex items-center gap-1">
                   <Users size={14} />
-                  {seminar.attendeeIds.length}
-                  {seminar.maxAttendees ? `/${seminar.maxAttendees}` : ""}명
+                  <ParticipantCount seminar={seminar} />
                 </span>
               </div>
             </div>

@@ -6,6 +6,7 @@ import { getComputedStatus } from "@/lib/seminar-utils";
 import { useAttendees } from "@/features/seminar/useSeminar";
 import { SEMINAR_STATUS_LABELS } from "@/types";
 import type { Seminar, SeminarStatus } from "@/types";
+import { formatSemester } from "@/lib/semester";
 import {
   Calendar,
   MapPin,
@@ -62,10 +63,15 @@ export default function HeroSection({ seminar, isStaff, onEditInfo }: Props) {
 
         {/* 좌측 하단: 뱃지 + 제목 */}
         <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge className={cn("text-xs", badge.className, "shadow-sm")} variant="secondary">
               {badge.label}
             </Badge>
+            {(seminar.year || seminar.semester) && (
+              <Badge variant="secondary" className="bg-blue-50 text-xs text-blue-700 shadow-sm">
+                {formatSemester(seminar.year, seminar.semester)}
+              </Badge>
+            )}
             {seminar.isOnline && (
               <Badge variant="secondary" className="bg-blue-50 text-xs text-blue-700">
                 ONLINE

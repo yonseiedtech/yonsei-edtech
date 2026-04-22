@@ -18,6 +18,7 @@ import { useAllMembers } from "@/features/member/useMembers";
 import { createTimeline } from "@/features/seminar-admin/timeline-template";
 import type { Seminar, SeminarSpeaker, SpeakerType } from "@/types";
 import { SPEAKER_TYPE_LABELS } from "@/types";
+import { inferCurrentSemester, formatSemester, type Semester } from "@/lib/semester";
 
 interface FormData {
   title: string;
@@ -28,6 +29,30 @@ interface FormData {
   onlineUrl: string;
   maxAttendees: string;
   registrationUrl: string;
+}
+
+/** 등록 시점에 선택할 수 있는 학기 옵션 (이전/현재/다음 1년 범위) */
+function buildSemesterOptions(now: Date = new Date()): Array<{
+  value: string;
+  label: string;
+  year: number;
+  semester: Semester;
+}> {
+  const cur = inferCurrentSemester(now);
+  const list: Array<{ year: number; semester: Semester }> = [
+    { year: cur.year - 1, semester: "first" },
+    { year: cur.year - 1, semester: "second" },
+    { year: cur.year, semester: "first" },
+    { year: cur.year, semester: "second" },
+    { year: cur.year + 1, semester: "first" },
+    { year: cur.year + 1, semester: "second" },
+  ];
+  return list.map((x) => ({
+    value: `${x.year}-${x.semester}`,
+    label: formatSemester(x.year, x.semester),
+    year: x.year,
+    semester: x.semester,
+  }));
 }
 
 function emptySpeaker(type: SpeakerType = "member"): SeminarSpeaker {
@@ -46,6 +71,16 @@ export default function SeminarForm() {
   const [showPreview, setShowPreview] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [autoIssueCertificates, setAutoIssueCertificates] = useState(true);
+  const semesterOptions = useMemo(() => buildSemesterOptions(), []);
+  const defaultSemesterValue = useMemo(() => {
+    const c = inferCurrentSemester();
+    return `${c.year}-${c.semester}`;
+  }, []);
+  const [semesterValue, setSemesterValue] = useState<string>(defaultSemesterValue);
+  const selectedSemester = useMemo(
+    () => semesterOptions.find((o) => o.value === semesterValue) ?? null,
+    [semesterOptions, semesterValue],
+  );
   const {
     register,
     handleSubmit,
@@ -112,6 +147,10 @@ export default function SeminarForm() {
     seminarData.speakers = cleaned;
     if (data.maxAttendees) seminarData.maxAttendees = Number(data.maxAttendees);
     if (data.registrationUrl) seminarData.registrationUrl = data.registrationUrl;
+    if (selectedSemester) {
+      seminarData.year = selectedSemester.year;
+      seminarData.semester = selectedSemester.semester;
+    }
     seminarData.autoIssueCertificates = autoIssueCertificates;
     // 회원 연사 자동 호스트 권한 부여
     const hostUserIds = cleaned
@@ -195,8 +234,13 @@ export default function SeminarForm() {
       {showPreview ? (
         /* ── 세미나 미리보기 ── */
         <div className="mt-6 rounded-2xl border bg-white p-8">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge className="bg-primary/10 text-xs text-primary" variant="secondary">예정</Badge>
+            {selectedSemester && (
+              <Badge variant="secondary" className="bg-blue-50 text-xs text-blue-700">
+                {formatSemester(selectedSemester.year, selectedSemester.semester)}
+              </Badge>
+            )}
             {isOnline && (
               <Badge variant="secondary" className="bg-blue-50 text-xs text-blue-700">ONLINE</Badge>
             )}
@@ -283,6 +327,36 @@ export default function SeminarForm() {
       ) : (
         /* ── 편집 폼 ── */
         <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4 rounded-2xl border bg-white p-8">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">
+                연도 · 학기 <span className="text-muted-foreground">(자동 설정됨)</span>
+              </label>
+              <select
+                value={semesterValue}
+                onChange={(e) => setSemesterValue(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {semesterOptions.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                학기별 세미나 모아보기·통계에 반영됩니다.
+              </p>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">선택된 학기</label>
+              <div className="flex h-10 items-center rounded-md border border-input bg-muted/30 px-3 text-sm">
+                <Badge variant="secondary" className="bg-blue-50 text-xs text-blue-700">
+                  {selectedSemester ? formatSemester(selectedSemester.year, selectedSemester.semester) : "—"}
+                </Badge>
+              </div>
+            </div>
+          </div>
+
           <div>
             <label className="mb-1.5 block text-sm font-medium">제목</label>
             <Input {...register("title", { required: "제목을 입력하세요" })} placeholder="세미나 제목" />
