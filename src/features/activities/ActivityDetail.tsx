@@ -19,7 +19,9 @@ import {
   ArrowLeft, Calendar, MapPin, Users, User, UserPlus, Check, X,
   Pencil, Globe, Loader2, CheckCircle, Clock, XCircle,
   Plus, Trash2, FileUp, Download, ListChecks, Timer, UserCog,
+  ChevronDown, ChevronUp,
 } from "lucide-react";
+import InlineMeetingTimer from "./InlineMeetingTimer";
 import type { Activity, ActivityType, ActivityProgress, ActivityProgressMode, ActivityMaterial, FormField, EnrollmentStatus, ExternalParticipantType } from "@/types";
 import { ENROLLMENT_STATUS_LABELS, ACTIVITY_PROGRESS_MODE_LABELS, EXTERNAL_PARTICIPANT_TYPE_LABELS, EXTERNAL_PARTICIPANT_TYPE_COLORS } from "@/types";
 import { activityProgressApi, activityMaterialsApi, progressMeetingsApi } from "@/lib/bkend";
@@ -69,6 +71,16 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const [roleInput, setRoleInput] = useState("");
   const [noteDialog, setNoteDialog] = useState<{ pid: string; name: string } | null>(null);
   const [noteInput, setNoteInput] = useState("");
+  const [expandedTimers, setExpandedTimers] = useState<Set<string>>(new Set());
+
+  const toggleTimer = (pid: string) => {
+    setExpandedTimers((prev) => {
+      const next = new Set(prev);
+      if (next.has(pid)) next.delete(pid);
+      else next.add(pid);
+      return next;
+    });
+  };
 
   const { data: activity } = useQuery({
     queryKey: ["activity", activityId],
@@ -369,114 +381,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 </div>
               )}
 
-              {/* 주차별 기록 */}
-              <div className="rounded-xl border bg-white divide-y">
-                {progressList.length === 0 ? (
-                  <p className="p-6 text-center text-sm text-muted-foreground">등록된 진행 기록이 없습니다.</p>
-                ) : (
-                  progressList.map((p) => (
-                    <div key={p.id} className="flex items-start gap-3 px-4 py-3">
-                      <button
-                        onClick={async () => {
-                          if (!isStaff && !isLeader) return;
-                          const next = p.status === "completed" ? "planned" : p.status === "planned" ? "in_progress" : "completed";
-                          try {
-                            await activityProgressApi.update(p.id, { status: next });
-                            queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
-                          } catch (e) {
-                            console.error("[activity-progress/update]", e);
-                            toast.error(e instanceof Error ? `상태 변경 실패: ${e.message}` : "상태 변경에 실패했습니다.");
-                          }
-                        }}
-                        className={cn("mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors", p.status === "completed" ? "border-green-500 bg-green-500 text-white" : p.status === "in_progress" ? "border-amber-400 bg-amber-50" : "border-muted-foreground/30")}
-                        disabled={!isStaff && !isLeader}
-                      >
-                        {p.status === "completed" && <Check size={12} />}
-                        {p.status === "in_progress" && <div className="h-2 w-2 rounded-full bg-amber-400" />}
-                      </button>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="secondary" className="text-[10px]">Week {p.week}</Badge>
-                          {p.mode && (
-                            <Badge
-                              variant="secondary"
-                              className={cn(
-                                "text-[10px]",
-                                p.mode === "in_person"
-                                  ? "bg-emerald-50 text-emerald-700"
-                                  : "bg-blue-50 text-blue-700",
-                              )}
-                            >
-                              {ACTIVITY_PROGRESS_MODE_LABELS[p.mode]}
-                            </Badge>
-                          )}
-                          <span className="text-sm font-medium">{p.title}</span>
-                        </div>
-                        {p.description && <p className="mt-1 text-xs text-muted-foreground">{p.description}</p>}
-                        <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
-                          <span>{p.date}</span>
-                          {(p.startTime || p.endTime) && (
-                            <span>
-                              {p.startTime}
-                              {p.startTime && p.endTime && " ~ "}
-                              {p.endTime}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-1">
-                        <button
-                          onClick={async () => {
-                            try {
-                              const existing = await progressMeetingsApi.getByProgress(p.id);
-                              if (existing) {
-                                router.push(`/progress-meetings/${existing.id}`);
-                                return;
-                              }
-                              if (!isStaff && !isLeader) {
-                                toast.error("미팅은 운영진/모임장만 시작할 수 있습니다.");
-                                return;
-                              }
-                              const created = await progressMeetingsApi.create({
-                                activityId,
-                                activityProgressId: p.id,
-                                status: "planning",
-                                currentSectionIndex: 0,
-                                sections: [],
-                                createdBy: user!.id,
-                                createdAt: new Date().toISOString(),
-                              });
-                              router.push(`/progress-meetings/${created.id}`);
-                            } catch (e) {
-                              console.error("[progress-meeting/open]", e);
-                              toast.error(e instanceof Error ? `미팅 열기 실패: ${e.message}` : "미팅을 열지 못했습니다.");
-                            }
-                          }}
-                          className="rounded p-1 text-muted-foreground hover:text-primary"
-                          aria-label="실시간 미팅 타이머"
-                          title="실시간 미팅 타이머"
-                        >
-                          <Timer size={14} />
-                        </button>
-                        {(isStaff || isLeader) && (
-                          <button onClick={async () => {
-                            try {
-                              await activityProgressApi.delete(p.id);
-                              queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
-                              toast.success("삭제되었습니다.");
-                            } catch (e) {
-                              console.error("[activity-progress/delete]", e);
-                              toast.error(e instanceof Error ? `삭제 실패: ${e.message}` : "삭제에 실패했습니다.");
-                            }
-                          }} className="rounded p-1 text-muted-foreground hover:text-red-500"><Trash2 size={14} /></button>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              {/* 주차 추가 (운영진 또는 스터디/프로젝트 모임장) */}
+              {/* 주차 추가 (운영진 또는 스터디/프로젝트 모임장) — 리스트 위로 이동 */}
               {(isStaff || isLeader) && (
                 <div className="rounded-xl border bg-white p-4 space-y-3">
                   <h3 className="text-sm font-semibold flex items-center gap-1"><ListChecks size={14} />주차 추가</h3>
@@ -536,6 +441,109 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   </div>
                 </div>
               )}
+
+              {/* 주차별 기록 */}
+              <div className="rounded-xl border bg-white divide-y">
+                {progressList.length === 0 ? (
+                  <p className="p-6 text-center text-sm text-muted-foreground">등록된 진행 기록이 없습니다.</p>
+                ) : (
+                  progressList.map((p) => {
+                    const isExpanded = expandedTimers.has(p.id);
+                    return (
+                      <div key={p.id}>
+                        <div className="flex items-start gap-3 px-4 py-3">
+                          <button
+                            onClick={async () => {
+                              if (!isStaff && !isLeader) return;
+                              const next = p.status === "completed" ? "planned" : p.status === "planned" ? "in_progress" : "completed";
+                              try {
+                                await activityProgressApi.update(p.id, { status: next });
+                                queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
+                              } catch (e) {
+                                console.error("[activity-progress/update]", e);
+                                toast.error(e instanceof Error ? `상태 변경 실패: ${e.message}` : "상태 변경에 실패했습니다.");
+                              }
+                            }}
+                            className={cn("mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors", p.status === "completed" ? "border-green-500 bg-green-500 text-white" : p.status === "in_progress" ? "border-amber-400 bg-amber-50" : "border-muted-foreground/30")}
+                            disabled={!isStaff && !isLeader}
+                          >
+                            {p.status === "completed" && <Check size={12} />}
+                            {p.status === "in_progress" && <div className="h-2 w-2 rounded-full bg-amber-400" />}
+                          </button>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Badge variant="secondary" className="text-[10px]">Week {p.week}</Badge>
+                              {p.mode && (
+                                <Badge
+                                  variant="secondary"
+                                  className={cn(
+                                    "text-[10px]",
+                                    p.mode === "in_person"
+                                      ? "bg-emerald-50 text-emerald-700"
+                                      : "bg-blue-50 text-blue-700",
+                                  )}
+                                >
+                                  {ACTIVITY_PROGRESS_MODE_LABELS[p.mode]}
+                                </Badge>
+                              )}
+                              <span className="text-sm font-medium">{p.title}</span>
+                            </div>
+                            {p.description && <p className="mt-1 text-xs text-muted-foreground">{p.description}</p>}
+                            <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
+                              <span>{p.date}</span>
+                              {(p.startTime || p.endTime) && (
+                                <span>
+                                  {p.startTime}
+                                  {p.startTime && p.endTime && " ~ "}
+                                  {p.endTime}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-1">
+                            <Button
+                              size="sm"
+                              variant={isExpanded ? "default" : "outline"}
+                              onClick={() => toggleTimer(p.id)}
+                              className="h-7 gap-1 px-2 text-[11px]"
+                              aria-expanded={isExpanded}
+                              aria-label={isExpanded ? "미팅 타이머 접기" : "미팅 타이머 펼치기"}
+                            >
+                              <Timer size={12} />
+                              <span className="hidden sm:inline">타이머</span>
+                              {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                            </Button>
+                            {(isStaff || isLeader) && (
+                              <button onClick={async () => {
+                                try {
+                                  await activityProgressApi.delete(p.id);
+                                  queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
+                                  toast.success("삭제되었습니다.");
+                                } catch (e) {
+                                  console.error("[activity-progress/delete]", e);
+                                  toast.error(e instanceof Error ? `삭제 실패: ${e.message}` : "삭제에 실패했습니다.");
+                                }
+                              }} className="rounded p-1 text-muted-foreground hover:text-red-500"><Trash2 size={14} /></button>
+                            )}
+                          </div>
+                        </div>
+                        {isExpanded && (
+                          <div className="border-t bg-muted/20 px-4 py-3">
+                            <InlineMeetingTimer
+                              activityId={activityId}
+                              activityProgressId={p.id}
+                              weekLabel={`Week ${p.week} · ${p.title}`}
+                              canControl={isStaff || isLeader}
+                              canStart={isStaff || isLeader}
+                              createdBy={user?.id}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             </div>
           )}
 
