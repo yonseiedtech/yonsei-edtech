@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useSeminars, useAttendees } from "@/features/seminar/useSeminar";
+import { useSeminarAdminContext } from "./seminar-admin-store";
 import { useOrgChart, type OrgPosition } from "@/features/admin/settings/useOrgChart";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { certificatesApi } from "@/lib/bkend";
@@ -1270,7 +1271,10 @@ export default function CertificateGenerator() {
   const { seminars } = useSeminars();
   const { positions: orgPositions } = useOrgChart();
   const { user } = useAuthStore();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const activeSeminarId = useSeminarAdminContext((s) => s.activeSeminarId);
+  const setActiveSeminarId = useSeminarAdminContext((s) => s.setActiveSeminarId);
+  const selectedId = activeSeminarId;
+  const setSelectedId = (id: string | null) => setActiveSeminarId(id);
   const [certType, setCertType] = useState<CertType>("appreciation");
   const [recipientName, setRecipientName] = useState("");
   const [semester, setSemester] = useState("");

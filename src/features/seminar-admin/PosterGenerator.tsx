@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSeminars } from "@/features/seminar/useSeminar";
 import { useUpdateSeminar } from "@/features/seminar/useSeminar";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { useSeminarAdminContext } from "./seminar-admin-store";
 import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Loader2, Download, Image as ImageIcon, Save } from "lucide-react";
@@ -19,7 +20,15 @@ const SIZES = [
 export default function PosterGenerator({ seminarId: propSeminarId }: { seminarId?: string } = {}) {
   const { seminars } = useSeminars();
   const { updateSeminar } = useUpdateSeminar();
-  const [selectedId, setSelectedId] = useState(propSeminarId ?? "");
+  const activeSeminarId = useSeminarAdminContext((s) => s.activeSeminarId);
+  const setActiveSeminarId = useSeminarAdminContext((s) => s.setActiveSeminarId);
+  const selectedId = propSeminarId ?? activeSeminarId ?? "";
+  const setSelectedId = (id: string) => setActiveSeminarId(id || null);
+  useEffect(() => {
+    if (propSeminarId && propSeminarId !== activeSeminarId) {
+      setActiveSeminarId(propSeminarId);
+    }
+  }, [propSeminarId, activeSeminarId, setActiveSeminarId]);
   const [size, setSize] = useState("instagram");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);

@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { useSeminars, useSeminar, useAttendees } from "@/features/seminar/useSeminar";
 import { useAllMembers } from "@/features/member/useMembers";
+import { useSeminarAdminContext } from "./seminar-admin-store";
 import { registrationsApi, attendeesApi, seminarsApi } from "@/lib/bkend";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -603,7 +604,10 @@ function FormFieldsEditor({ seminarId, fields, autoConvert }: { seminarId: strin
 /* ── 메인 컴포넌트 ── */
 export default function RegistrationsTab() {
   const { seminars } = useSeminars();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const activeSeminarId = useSeminarAdminContext((s) => s.activeSeminarId);
+  const setActiveSeminarId = useSeminarAdminContext((s) => s.setActiveSeminarId);
+  const selectedId = activeSeminarId;
+  const setSelectedId = (id: string | null) => setActiveSeminarId(id);
   const seminar = seminars.find((s) => s.id === selectedId);
   const [activeTab, setActiveTab] = useState<TabKey>("manage");
   const [editForm, setEditForm] = useState<EditForm | null>(null);

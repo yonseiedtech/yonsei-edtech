@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSeminars } from "@/features/seminar/useSeminar";
+import { useSeminarAdminContext } from "./seminar-admin-store";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { promotionContentsApi, postsApi } from "@/lib/bkend";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -146,7 +147,15 @@ export default function PromotionTab({ seminarId: propSeminarId }: { seminarId?:
   const { seminars } = useSeminars();
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
-  const [selectedId, setSelectedId] = useState<string | null>(propSeminarId ?? null);
+  const activeSeminarId = useSeminarAdminContext((s) => s.activeSeminarId);
+  const setActiveSeminarId = useSeminarAdminContext((s) => s.setActiveSeminarId);
+  const selectedId = propSeminarId ?? activeSeminarId;
+  const setSelectedId = (id: string | null) => setActiveSeminarId(id);
+  useEffect(() => {
+    if (propSeminarId && propSeminarId !== activeSeminarId) {
+      setActiveSeminarId(propSeminarId);
+    }
+  }, [propSeminarId, activeSeminarId, setActiveSeminarId]);
   const [format, setFormat] = useState<ContentFormat>("press");
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);

@@ -28,6 +28,7 @@ import { Pencil, BookOpen, Image as ImageIcon, Video, AlertTriangle, Trash2, Cop
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { useCreateSeminar } from "@/features/seminar/useSeminar";
 import { createTimeline } from "@/features/seminar-admin/timeline-template";
+import { useSeminarAdminContext } from "@/features/seminar-admin/seminar-admin-store";
 
 const STATUS_COLORS: Record<SeminarStatus, string> = {
   draft: "bg-gray-50 text-gray-500",
@@ -57,6 +58,7 @@ export default function AdminSeminarTab() {
   const { updateSeminar } = useUpdateSeminar();
   const { deleteSeminar } = useDeleteSeminar();
   const { createSeminar } = useCreateSeminar();
+  const setActiveSeminarId = useSeminarAdminContext((s) => s.setActiveSeminarId);
 
   async function handleCloneSeminar(s: Seminar) {
     if (!confirm(`"${s.title}" 세미나를 복제하시겠습니까?`)) return;
@@ -149,6 +151,7 @@ export default function AdminSeminarTab() {
   }
 
   function openEditSeminar(s: Seminar) {
+    setActiveSeminarId(s.id);
     setEditSeminar({
       id: s.id,
       title: s.title,

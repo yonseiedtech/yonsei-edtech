@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import Image from "next/image";
 import { QRCodeSVG } from "qrcode.react";
 import { useSeminars, useAttendees, useSessions } from "@/features/seminar/useSeminar";
+import { useSeminarAdminContext } from "./seminar-admin-store";
 import { registrationsApi } from "@/lib/bkend";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -416,7 +417,10 @@ interface NameEntry {
 
 export default function NametagGenerator() {
   const { seminars } = useSeminars();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const activeSeminarId = useSeminarAdminContext((s) => s.activeSeminarId);
+  const setActiveSeminarId = useSeminarAdminContext((s) => s.setActiveSeminarId);
+  const selectedId = activeSeminarId;
+  const setSelectedId = (id: string | null) => setActiveSeminarId(id);
   const [subtitle, setSubtitle] = useState("");
   const [names, setNames] = useState<NameEntry[]>([{ name: "", studentId: "", role: "참가자" }]);
   const printRef = useRef<HTMLDivElement>(null);

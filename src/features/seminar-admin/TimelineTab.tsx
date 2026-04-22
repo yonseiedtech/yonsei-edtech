@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useSeminars, useUpdateSeminar, useStaffMembers } from "@/features/seminar/useSeminar";
+import { useSeminarAdminContext } from "./seminar-admin-store";
 import { createTimeline, OFFLINE_TIMELINE, ONLINE_TIMELINE } from "./timeline-template";
 import { resolveDate, isOverdue, formatDDay } from "./timeline-utils";
 import { Button } from "@/components/ui/button";
@@ -60,7 +61,15 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
   const { seminars } = useSeminars();
   const { updateSeminar } = useUpdateSeminar();
   const { staffMembers } = useStaffMembers();
-  const [selectedId, setSelectedId] = useState<string | null>(propSeminarId ?? null);
+  const activeSeminarId = useSeminarAdminContext((s) => s.activeSeminarId);
+  const setActiveSeminarId = useSeminarAdminContext((s) => s.setActiveSeminarId);
+  const selectedId = propSeminarId ?? activeSeminarId;
+  const setSelectedId = (id: string | null) => setActiveSeminarId(id);
+  useEffect(() => {
+    if (propSeminarId && propSeminarId !== activeSeminarId) {
+      setActiveSeminarId(propSeminarId);
+    }
+  }, [propSeminarId, activeSeminarId, setActiveSeminarId]);
   const [viewMode, setViewMode] = useState<ViewMode>("timeline");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);

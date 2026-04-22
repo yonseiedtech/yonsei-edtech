@@ -10,7 +10,12 @@ import {
   ListChecks,
   Award,
   ClipboardList,
+  X,
 } from "lucide-react";
+import { useSeminarAdminContext } from "@/features/seminar-admin/seminar-admin-store";
+import { useSeminar } from "@/features/seminar/useSeminar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 const SUB_TABS = [
   { href: "/academic-admin/seminars", label: "세미나 목록", icon: BookOpen, exact: true },
@@ -23,10 +28,13 @@ const SUB_TABS = [
 
 export default function SeminarsLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const activeSeminarId = useSeminarAdminContext((s) => s.activeSeminarId);
+  const clear = useSeminarAdminContext((s) => s.clear);
+  const activeSeminar = useSeminar(activeSeminarId ?? "");
 
   return (
     <div>
-      <nav className="mb-6 flex flex-wrap gap-0 border-b sm:overflow-x-auto">
+      <nav className="mb-3 flex flex-wrap gap-0 border-b sm:overflow-x-auto">
         {SUB_TABS.map((tab) => {
           const isActive = tab.exact
             ? pathname === tab.href
@@ -48,6 +56,27 @@ export default function SeminarsLayout({ children }: { children: React.ReactNode
           );
         })}
       </nav>
+      {activeSeminarId && activeSeminar && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-xs">
+          <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/15">
+            작업 중
+          </Badge>
+          <span className="font-semibold text-foreground">{activeSeminar.title}</span>
+          <span className="text-muted-foreground">
+            {activeSeminar.date}
+            {activeSeminar.time ? ` · ${activeSeminar.time}` : ""}
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-auto h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground"
+            onClick={() => clear()}
+          >
+            <X size={12} className="mr-1" />
+            선택 해제
+          </Button>
+        </div>
+      )}
       <div>{children}</div>
     </div>
   );
