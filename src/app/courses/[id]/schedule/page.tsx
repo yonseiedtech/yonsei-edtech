@@ -62,7 +62,6 @@ const MODE_OPTIONS: ClassSessionMode[] = [
   "zoom",
   "assignment",
   "cancelled",
-  "field",
   "exam",
 ];
 
@@ -281,6 +280,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
     mode: ClassSessionMode;
   }) {
     if (!user) return;
+    if (args.existing && args.existing.mode === args.mode) return;
     try {
       if (args.existing) {
         await classSessionsApi.update(args.existing.id, { mode: args.mode });
@@ -292,11 +292,12 @@ function ScheduleContent({ courseId }: { courseId: string }) {
           createdBy: user.id,
         });
       }
-      await qc.invalidateQueries({
+      await qc.refetchQueries({
         queryKey: ["class-sessions", "by-course", courseId],
+        type: "active",
       });
       await qc.invalidateQueries({ queryKey: ["class-sessions"] });
-      toast.success(`${CLASS_SESSION_MODE_LABELS[args.mode]}으로 변경했습니다.`);
+      toast.success(`${CLASS_SESSION_MODE_LABELS[args.mode]}(으)로 변경했습니다.`);
     } catch (e) {
       toast.error(`변경 실패: ${(e as Error).message}`);
     }
@@ -593,6 +594,37 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                     isPast && !isCurrentWeek && "opacity-80",
                   )}
                 >
+                  {master && (
+                    <div className="mb-2 flex flex-wrap items-center gap-1.5 border-b border-dashed border-slate-200 pb-2">
+                      <span className="text-[10px] font-medium text-muted-foreground">
+                        수업 형태:
+                      </span>
+                      {MODE_OPTIONS.map((m) => {
+                        const active = ws.length > 0 && primaryMode === m;
+                        return (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() =>
+                              quickSetMode({
+                                existing: ws[0],
+                                date: ws[0]?.date ?? firstClassDate,
+                                mode: m,
+                              })
+                            }
+                            className={cn(
+                              "rounded-full border px-2.5 py-0.5 text-[10px] transition-colors",
+                              active
+                                ? cn(MODE_COLORS[m], "ring-1 ring-current/30 font-medium")
+                                : "border-slate-200 bg-white text-muted-foreground hover:border-slate-300 hover:bg-slate-50",
+                            )}
+                          >
+                            {CLASS_SESSION_MODE_LABELS[m]}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="text-xs">
@@ -631,44 +663,18 @@ function ScheduleContent({ courseId }: { courseId: string }) {
 
                   {/* 수업 운영 */}
                   {ws.length === 0 ? (
-                    <div className="mt-2 space-y-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setNoteDraft({ date: firstClassDate, content: "" })
-                        }
-                        className="group flex w-full items-center gap-2 rounded-md border border-dashed border-slate-200 px-3 py-2 text-left text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
-                      >
-                        <NotebookPen size={14} className="shrink-0" />
-                        <span>
-                          {dayLabel} 수업 메모 없어요. 지금 한번 남겨보시겠어요?
-                        </span>
-                      </button>
-                      {master && (
-                        <div className="flex flex-wrap items-center gap-1">
-                          <span className="text-[10px] text-muted-foreground">
-                            수업 형태:
-                          </span>
-                          {MODE_OPTIONS.map((m) => (
-                            <button
-                              key={m}
-                              type="button"
-                              onClick={() =>
-                                quickSetMode({ date: firstClassDate, mode: m })
-                              }
-                              className={cn(
-                                "rounded-full border px-2 py-0.5 text-[10px] transition-colors hover:opacity-80",
-                                m === "in_person"
-                                  ? cn(MODE_COLORS[m], "ring-1 ring-emerald-300")
-                                  : "border-slate-200 bg-white text-muted-foreground",
-                              )}
-                            >
-                              {CLASS_SESSION_MODE_LABELS[m]}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setNoteDraft({ date: firstClassDate, content: "" })
+                      }
+                      className="group mt-2 flex w-full items-center gap-2 rounded-md border border-dashed border-slate-200 px-3 py-2 text-left text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+                    >
+                      <NotebookPen size={14} className="shrink-0" />
+                      <span>
+                        {dayLabel} 수업 메모 없어요. 지금 한번 남겨보시겠어요?
+                      </span>
+                    </button>
                   ) : (
                     <ul className="mt-2 space-y-1">
                       {ws.map((s) => (
@@ -728,31 +734,6 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                               </div>
                             )}
                           </div>
-                          {master && (
-                            <div className="mt-1.5 flex flex-wrap items-center gap-1">
-                              <span className="text-[10px] text-muted-foreground">
-                                형태 변경:
-                              </span>
-                              {MODE_OPTIONS.map((m) => (
-                                <button
-                                  key={m}
-                                  type="button"
-                                  onClick={() =>
-                                    quickSetMode({ existing: s, date: s.date, mode: m })
-                                  }
-                                  disabled={s.mode === m}
-                                  className={cn(
-                                    "rounded-full border px-2 py-0.5 text-[10px] transition-colors",
-                                    s.mode === m
-                                      ? cn(MODE_COLORS[m], "ring-1 ring-current/30")
-                                      : "border-slate-200 bg-white text-muted-foreground hover:border-slate-300 hover:bg-slate-50",
-                                  )}
-                                >
-                                  {CLASS_SESSION_MODE_LABELS[m]}
-                                </button>
-                              ))}
-                            </div>
-                          )}
                         </li>
                       ))}
                     </ul>
