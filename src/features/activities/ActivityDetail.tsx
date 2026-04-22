@@ -376,7 +376,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                     <div key={p.id} className="flex items-start gap-3 px-4 py-3">
                       <button
                         onClick={async () => {
-                          if (!isStaff) return;
+                          if (!isStaff && !isLeader) return;
                           const next = p.status === "completed" ? "planned" : p.status === "planned" ? "in_progress" : "completed";
                           try {
                             await activityProgressApi.update(p.id, { status: next });
@@ -387,7 +387,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                           }
                         }}
                         className={cn("mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors", p.status === "completed" ? "border-green-500 bg-green-500 text-white" : p.status === "in_progress" ? "border-amber-400 bg-amber-50" : "border-muted-foreground/30")}
-                        disabled={!isStaff}
+                        disabled={!isStaff && !isLeader}
                       >
                         {p.status === "completed" && <Check size={12} />}
                         {p.status === "in_progress" && <div className="h-2 w-2 rounded-full bg-amber-400" />}
@@ -439,8 +439,8 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 )}
               </div>
 
-              {/* 주차 추가 (운영진) */}
-              {isStaff && (
+              {/* 주차 추가 (운영진 또는 스터디/프로젝트 모임장) */}
+              {(isStaff || isLeader) && (
                 <div className="rounded-xl border bg-white p-4 space-y-3">
                   <h3 className="text-sm font-semibold flex items-center gap-1"><ListChecks size={14} />주차 추가</h3>
                   <Input value={progressTitle} onChange={(e) => setProgressTitle(e.target.value)} placeholder="활동 내용 (예: 논문 리뷰 #1)" />

@@ -212,14 +212,32 @@ service cloud.firestore {
 
     // ─── Activity Progress (활동 진행현황) ───
     match /activity_progress/{docId} {
+      function isActivityLeader(activityId) {
+        let act = get(/databases/$(database)/documents/activities/$(activityId));
+        return isAuthenticated() && act.data.leaderId == request.auth.uid;
+      }
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && isStaffOrAbove();
+      // 운영진 또는 해당 활동의 모임장(leaderId)
+      allow create: if isAuthenticated() && (isStaffOrAbove() || isActivityLeader(request.resource.data.activityId));
+      allow update, delete: if isAuthenticated() && (isStaffOrAbove() || isActivityLeader(resource.data.activityId));
     }
 
     // ─── Activity Materials (활동 자료) ───
     match /activity_materials/{docId} {
       allow read: if isAuthenticated();
       allow write: if isAuthenticated();
+    }
+
+    // ─── Progress Meetings (실시간 미팅 타이머) ───
+    match /progress_meetings/{docId} {
+      function isMeetingActivityLeader(activityId) {
+        let act = get(/databases/$(database)/documents/activities/$(activityId));
+        return isAuthenticated() && act.data.leaderId == request.auth.uid;
+      }
+      // 인증된 사용자는 누구나 라이브 미팅 조회 가능 (참여자가 같이 보면서 회의 진행)
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && (isStaffOrAbove() || isMeetingActivityLeader(request.resource.data.activityId));
+      allow update, delete: if isAuthenticated() && (isStaffOrAbove() || isMeetingActivityLeader(resource.data.activityId));
     }
 
     // ─── Email Logs (이메일 발송 기록) ───

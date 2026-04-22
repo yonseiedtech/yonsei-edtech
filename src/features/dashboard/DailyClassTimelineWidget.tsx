@@ -416,7 +416,7 @@ export default function DailyClassTimelineWidget() {
       });
     }
     return result;
-  }, [todayOfferings, dailySessionsByCourse]);
+  }, [todayOfferings, dailySessionsByCourse, MIN_START, MIN_END]);
 
   const undated = useMemo(() => {
     return todayOfferings.filter(
@@ -454,7 +454,7 @@ export default function DailyClassTimelineWidget() {
       }
       return { date: d, dayIndex: dayIdx, items };
     });
-  }, [weekDates, parsedOfferings, weeklySessionsByDateCourse]);
+  }, [weekDates, parsedOfferings, weeklySessionsByDateCourse, MIN_START, MIN_END]);
 
   // 오늘 종료된 수업들 — 메모·할 일 입력 프롬프트용
   const finishedToday = useMemo(() => {

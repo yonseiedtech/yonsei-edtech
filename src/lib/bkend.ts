@@ -35,7 +35,7 @@ import type {
   SeminarRegistration, Certificate, PromotionContent, SeminarMaterial,
   SeminarReview, Inquiry, Activity, AppNotification, WaitlistEntry,
   Poll, PollResponse, PhotoAlbum, Photo, AdminTodo, AuditLog,
-  ActivityProgress, ActivityMaterial, EmailLog,
+  ActivityProgress, ActivityMaterial, EmailLog, ProgressMeeting,
   Lab, LabReaction, LabComment, ResearchPaper, ResearchReport, ResearchProposal, WritingPaper, WritingPaperHistory,
   InterviewResponseReaction, InterviewResponseComment,
   ProfileLike, ProfileView, StudySession,
@@ -522,6 +522,21 @@ export const activityProgressApi = {
   create: (data: Record<string, unknown>) => dataApi.create<ActivityProgress>("activity_progress", data),
   update: (id: string, data: Record<string, unknown>) => dataApi.update<ActivityProgress>("activity_progress", id, data),
   delete: (id: string) => dataApi.delete("activity_progress", id),
+};
+
+// ── 진행 미팅 타이머 (실시간 회의 진행) ──
+export const progressMeetingsApi = {
+  /** activityProgressId 1개에 대한 미팅 단건 조회 (없으면 null) */
+  getByProgress: async (activityProgressId: string): Promise<ProgressMeeting | null> => {
+    const res = await dataApi.list<ProgressMeeting>("progress_meetings", {
+      "filter[activityProgressId]": activityProgressId,
+    });
+    return res.data[0] ?? null;
+  },
+  get: (id: string) => dataApi.get<ProgressMeeting>("progress_meetings", id),
+  create: (data: Record<string, unknown>) => dataApi.create<ProgressMeeting>("progress_meetings", data),
+  update: (id: string, data: Record<string, unknown>) => dataApi.update<ProgressMeeting>("progress_meetings", id, data),
+  delete: (id: string) => dataApi.delete("progress_meetings", id),
 };
 
 export const activityMaterialsApi = {

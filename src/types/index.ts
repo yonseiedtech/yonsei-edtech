@@ -1360,6 +1360,39 @@ export interface ActivityProgress {
   createdAt: string;
 }
 
+// ── 진행 미팅 타이머 (스터디·프로젝트 회의 실시간 진행) ──
+export type ProgressMeetingStatus = "planning" | "running" | "paused" | "completed";
+
+/** 미팅 한 섹션(아젠다 항목) */
+export interface ProgressMeetingSection {
+  id: string;
+  title: string;
+  /** 예상 진행 시간(분) */
+  estimatedMinutes: number;
+  /** 누적 실제 진행 시간(초). 진행 중일 때 startedAt 기준으로 클라이언트에서 합산하여 표시. */
+  actualSeconds: number;
+  /** 현재 섹션이 시작된 시각(ISO). 일시정지/완료 시 undefined. */
+  startedAt?: string;
+  /** 섹션을 완료한 시각(ISO). */
+  endedAt?: string;
+}
+
+export interface ProgressMeeting {
+  id: string;
+  activityId: string;
+  /** 연결된 ActivityProgress(주차) ID — 1:1 대응 */
+  activityProgressId: string;
+  status: ProgressMeetingStatus;
+  /** 진행 중인 섹션 인덱스. 시작 전이면 0, 모두 끝나면 sections.length */
+  currentSectionIndex: number;
+  sections: ProgressMeetingSection[];
+  startedAt?: string;
+  endedAt?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 // ── 활동 산출물 ──
 export interface ActivityMaterial {
   id: string;
