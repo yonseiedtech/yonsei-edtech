@@ -408,27 +408,71 @@ export default function DailyClassTimelineWidget() {
     return ymd(sun);
   }, [weekDates, weekEndStr]);
 
-  const myCourseIdSet = useMemo(() => new Set(courseIds), [courseIds]);
+  // 할 일에서 참조하는 모든 courseOfferingId — 학기 enrollment 와 무관하게 이름 조회
+  const todoCourseIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const t of (myTodosRes?.data ?? []) as CourseTodo[]) {
+      if (t.courseOfferingId) set.add(t.courseOfferingId);
+    }
+    return Array.from(set);
+  }, [myTodosRes]);
+
+  const myOfferingIdSet = useMemo(
+    () => new Set(myOfferings.map((o) => o.id)),
+    [myOfferings],
+  );
+
+  // 현재 학기 myOfferings 에 없는 강의 이름은 별도 조회 (지난 학기 등록 과목의 잔여 할 일 등)
+  const { data: extraOfferingsMap = {} } = useQuery({
+    queryKey: [
+      "todo-course-offerings",
+      todoCourseIds.filter((id) => !myOfferingIdSet.has(id)).sort().join(","),
+    ],
+    queryFn: async () => {
+      const map: Record<string, CourseOffering> = {};
+      const missing = todoCourseIds.filter((id) => !myOfferingIdSet.has(id));
+      await Promise.all(
+        missing.map(async (id) => {
+          try {
+            const c = (await courseOfferingsApi.get(id)) as unknown as CourseOffering;
+            if (c) map[id] = c;
+          } catch {
+            // 삭제된 과목 등은 무시
+          }
+        }),
+      );
+      return map;
+    },
+    enabled: todoCourseIds.some((id) => !myOfferingIdSet.has(id)),
+    staleTime: 5 * 60_000,
+  });
+
   const courseNameById = useMemo(() => {
     const map = new Map<string, string>();
     for (const o of myOfferings) map.set(o.id, o.courseName);
+    for (const id of Object.keys(extraOfferingsMap)) {
+      const o = extraOfferingsMap[id];
+      if (o) map.set(id, o.courseName);
+    }
     return map;
-  }, [myOfferings]);
+  }, [myOfferings, extraOfferingsMap]);
 
-  // 이번 주에 표시할 할 일: dueDate 또는 sessionDate 가 이번 주 범위 안
-  const weekTodos: CourseTodo[] = useMemo(() => {
+  // 표시 정책: 미완료는 항상 노출, 완료된 항목은 이번 주 범위(week) 안인 것만
+  const relevantTodos: CourseTodo[] = useMemo(() => {
     const all = (myTodosRes?.data ?? []) as CourseTodo[];
-    const inRange = (d?: string) =>
-      !!d && d >= weekTodoStart && d <= weekTodoEnd;
+    const inWeek = (d?: string) => !!d && d >= weekTodoStart && d <= weekTodoEnd;
     return all
-      .filter((t) => myCourseIdSet.has(t.courseOfferingId))
-      .filter((t) => inRange(t.dueDate) || inRange(t.sessionDate))
+      .filter((t) => !t.completed || inWeek(t.dueDate) || inWeek(t.sessionDate))
       .sort((a, b) => {
-        const ka = a.dueDate ?? a.sessionDate ?? "";
-        const kb = b.dueDate ?? b.sessionDate ?? "";
+        // 1) 미완료 먼저 2) 마감일/세션일 빠른 순
+        if (!!a.completed !== !!b.completed) return a.completed ? 1 : -1;
+        const ka = a.dueDate ?? a.sessionDate ?? "9999-12-31";
+        const kb = b.dueDate ?? b.sessionDate ?? "9999-12-31";
         return ka.localeCompare(kb);
       });
-  }, [myTodosRes, myCourseIdSet, weekTodoStart, weekTodoEnd]);
+  }, [myTodosRes, weekTodoStart, weekTodoEnd]);
+
+  const incompleteCount = relevantTodos.filter((t) => !t.completed).length;
 
   async function toggleWeekTodo(t: CourseTodo) {
     if (!userId) return;
@@ -579,15 +623,15 @@ export default function DailyClassTimelineWidget() {
             <button
               type="button"
               onClick={resetToToday}
-              disabled={isShowingToday}
+              disabled={viewMode === "weekly" ? currentWeekContainsToday : isShowingToday}
               className={cn(
                 "rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors",
-                isShowingToday
+                (viewMode === "weekly" ? currentWeekContainsToday : isShowingToday)
                   ? "cursor-default text-muted-foreground/50"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
-              오늘
+              {viewMode === "weekly" ? "이번주" : "오늘"}
             </button>
             <button
               type="button"
@@ -666,84 +710,93 @@ export default function DailyClassTimelineWidget() {
           />
         )
       ) : (
-        <>
-          <WeeklyGrid
-            placedWeekly={placedWeekly}
-            hourRows={hourRows}
-            totalHeight={totalHeight}
-            actualToday={actualToday}
-            nowPx={nowPx}
-            nowLabel={nowLabel}
-          />
-          {/* 이번 주 할 일 */}
-          <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50/30 p-3">
-            <div className="mb-2 flex items-center justify-between">
-              <p className="flex items-center gap-1.5 text-xs font-semibold text-amber-800">
-                <ListChecks size={14} />
-                이번 주 할 일
-                <span className="text-[10px] font-normal text-amber-700/70">
-                  ({weekTodoStart} ~ {weekTodoEnd})
-                </span>
-              </p>
-              <span className="text-[10px] text-amber-700/70">{weekTodos.length}건</span>
-            </div>
-            {weekTodos.length === 0 ? (
-              <p className="text-[11px] text-muted-foreground">
-                이번 주 할 일이 없어요. 수업 일정에서 <ListChecks size={11} className="inline" /> 할 일 버튼으로 추가할 수 있어요.
-              </p>
-            ) : (
-              <ul className="space-y-1">
-                {weekTodos.map((t) => {
-                  const courseName = courseNameById.get(t.courseOfferingId) ?? "(과목)";
-                  const isDueThisWeek = !!t.dueDate && t.dueDate >= weekTodoStart && t.dueDate <= weekTodoEnd;
-                  const isOverdue = !t.completed && !!t.dueDate && t.dueDate < actualToday;
-                  return (
-                    <li key={t.id} className="flex items-center gap-2 rounded-md bg-white/60 px-2 py-1.5 text-[11px]">
-                      <input
-                        type="checkbox"
-                        checked={!!t.completed}
-                        onChange={() => toggleWeekTodo(t)}
-                        className="shrink-0"
-                        aria-label="완료 토글"
-                      />
-                      <Badge
-                        variant="secondary"
-                        className={cn("text-[10px]", COURSE_TODO_TYPE_COLORS[t.type])}
-                      >
-                        {COURSE_TODO_TYPE_LABELS[t.type]}
-                      </Badge>
-                      <Link
-                        href={`/courses/${t.courseOfferingId}/schedule`}
-                        className="truncate text-[10px] text-muted-foreground hover:text-primary"
-                        title={courseName}
-                      >
-                        {courseName}
-                      </Link>
+        <WeeklyGrid
+          placedWeekly={placedWeekly}
+          hourRows={hourRows}
+          totalHeight={totalHeight}
+          actualToday={actualToday}
+          nowPx={nowPx}
+          nowLabel={nowLabel}
+        />
+      )}
+
+      {/* 내 수업 할 일 (일간/주간 공통) — 미완료는 계속, 완료는 이번 주 분만 */}
+      {!isLoading && (
+        <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50/30 p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="flex items-center gap-1.5 text-xs font-semibold text-amber-800">
+              <ListChecks size={14} />
+              내 수업 할 일
+              <span className="text-[10px] font-normal text-amber-700/70">
+                미완료 {incompleteCount}건 · 이번 주({weekTodoStart}~{weekTodoEnd}) 완료 포함
+              </span>
+            </p>
+            <span className="text-[10px] text-amber-700/70">{relevantTodos.length}건</span>
+          </div>
+          {relevantTodos.length === 0 ? (
+            <p className="text-[11px] text-muted-foreground">
+              표시할 할 일이 없어요. 수업 일정에서 <ListChecks size={11} className="inline" /> 할 일 버튼으로 추가할 수 있어요.
+            </p>
+          ) : (
+            <ul className="space-y-1">
+              {relevantTodos.map((t) => {
+                const courseName = courseNameById.get(t.courseOfferingId) ?? "(과목)";
+                const isOverdue = !t.completed && !!t.dueDate && t.dueDate < actualToday;
+                return (
+                  <li
+                    key={t.id}
+                    className={cn(
+                      "flex items-center gap-2 rounded-md px-2 py-1.5 text-[11px]",
+                      t.completed ? "bg-white/40" : "bg-white/80",
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={!!t.completed}
+                      onChange={() => toggleWeekTodo(t)}
+                      className="shrink-0"
+                      aria-label="완료 토글"
+                    />
+                    <Badge
+                      variant="secondary"
+                      className={cn("text-[10px]", COURSE_TODO_TYPE_COLORS[t.type])}
+                    >
+                      {COURSE_TODO_TYPE_LABELS[t.type]}
+                    </Badge>
+                    <Link
+                      href={`/courses/${t.courseOfferingId}/schedule`}
+                      className="truncate text-[10px] text-muted-foreground hover:text-primary"
+                      title={courseName}
+                    >
+                      {courseName}
+                    </Link>
+                    <span
+                      className={cn(
+                        "flex-1 truncate",
+                        t.completed && "text-muted-foreground line-through",
+                      )}
+                    >
+                      {t.content}
+                    </span>
+                    {t.dueDate && (
                       <span
                         className={cn(
-                          "flex-1 truncate",
-                          t.completed && "text-muted-foreground line-through",
+                          "shrink-0 text-[10px]",
+                          isOverdue
+                            ? "font-semibold text-rose-600"
+                            : "text-muted-foreground",
                         )}
                       >
-                        {t.content}
+                        ~{t.dueDate}
+                        {isOverdue && " (지남)"}
                       </span>
-                      {isDueThisWeek && t.dueDate && (
-                        <span
-                          className={cn(
-                            "shrink-0 text-[10px]",
-                            isOverdue ? "font-semibold text-rose-600" : "text-muted-foreground",
-                          )}
-                        >
-                          ~{t.dueDate}
-                        </span>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-        </>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
       )}
 
       {/* 수업 종료 후 메모·할 일 프롬프트 (오늘 뷰에서만) */}
