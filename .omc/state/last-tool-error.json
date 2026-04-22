@@ -1,7 +1,7 @@
 {
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"ls src/app/courses/ 2>/dev/null && ls src/components/courses/ 2>/dev/null\",\"description\":\"List courses page paths\"}",
-  "error": "Exit code 2\n[id]\npage.tsx",
-  "timestamp": "2026-04-21T02:25:10.714Z",
+  "tool_name": "Read",
+  "tool_input_preview": "{\"file_path\":\"C:\\\\work\\\\yonsei-edtech\\\\src\\\\features\\\\seminar-admin\\\\RegistrationsTab.tsx\"}",
+  "error": "File content (25271 tokens) exceeds maximum allowed tokens (25000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file.",
+  "timestamp": "2026-04-22T17:08:30.097Z",
   "retry_count": 1
 }

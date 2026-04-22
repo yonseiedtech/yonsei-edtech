@@ -1395,6 +1395,9 @@ export interface ProgressMeeting {
   createdBy: string;
   createdAt: string;
   updatedAt?: string;
+  /** 발표 슬라이드(PDF) URL — 미팅 진행 중 화면 공유 대용 */
+  slidesUrl?: string;
+  slidesName?: string;
 }
 
 // ── 활동 산출물 ──

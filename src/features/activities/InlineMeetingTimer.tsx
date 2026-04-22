@@ -198,6 +198,10 @@ function MeetingPanel({ meeting, canControl, weekLabel, onMutated }: PanelProps)
       sections: updated,
       startedAt: now,
     });
+    // 미팅 시작 시 전체화면 페이지 자동 새탭 오픈 (참여자 공유용)
+    if (typeof window !== "undefined") {
+      window.open(`/progress-meetings/${meeting.id}`, "_blank", "noopener,noreferrer");
+    }
   }
 
   function handlePause() {

@@ -94,7 +94,17 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
     queryKey: ["activity-progress", activityId],
     queryFn: async () => {
       const res = await activityProgressApi.list(activityId);
-      return res.data as ActivityProgress[];
+      const list = res.data as ActivityProgress[];
+      // 진행된 날짜(date) 오름차순 정렬, 날짜 동일 시 시작시간/week 보조 정렬
+      return [...list].sort((a, b) => {
+        const aDate = a.date ?? "";
+        const bDate = b.date ?? "";
+        if (aDate !== bDate) return aDate.localeCompare(bDate);
+        const aStart = a.startTime ?? "";
+        const bStart = b.startTime ?? "";
+        if (aStart !== bStart) return aStart.localeCompare(bStart);
+        return (a.week ?? 0) - (b.week ?? 0);
+      });
     },
   });
 

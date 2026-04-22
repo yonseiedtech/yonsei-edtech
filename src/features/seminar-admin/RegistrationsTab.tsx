@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useSeminars, useSeminar, useAttendees } from "@/features/seminar/useSeminar";
+import { useAllMembers } from "@/features/member/useMembers";
 import { registrationsApi, attendeesApi, seminarsApi } from "@/lib/bkend";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -615,6 +616,10 @@ export default function RegistrationsTab() {
   const [sheetLoading, setSheetLoading] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
   const [manualForm, setManualForm] = useState({ name: "", email: "", affiliation: "", phone: "", memo: "" });
+  const [memberPickerOpen, setMemberPickerOpen] = useState(false);
+  const [memberSearch, setMemberSearch] = useState("");
+  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
+  const { members: allMembers, isLoading: membersLoading } = useAllMembers();
   // 정렬/필터
   const [sortKey, setSortKey] = useState<string>("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
@@ -700,6 +705,7 @@ export default function RegistrationsTab() {
     name: string; email: string; phone: string;
     studentId: string; semester: string; interests: string; memo: string;
     affiliation: string;
+    userId?: string;
   }
 
   // 신청자 등록 — Firestore 클라이언트 직접 저장
@@ -711,8 +717,10 @@ export default function RegistrationsTab() {
     // 중복 필터링
     const existingEmails = new Set(registrations.map((r) => r.email).filter(Boolean));
     const existingStudentIds = new Set(registrations.map((r) => r.studentId).filter(Boolean));
+    const existingUserIds = new Set(registrations.map((r) => r.userId).filter(Boolean));
     const newRows = rows.filter((row) => {
       if (!row.name.trim()) return false;
+      if (row.userId && existingUserIds.has(row.userId)) return false;
       if (row.email && existingEmails.has(row.email)) return false;
       if (row.studentId && existingStudentIds.has(row.studentId)) return false;
       return true;
@@ -732,6 +740,7 @@ export default function RegistrationsTab() {
           seminarId: selectedId,
           name: row.name,
         };
+        if (row.userId) payload.userId = row.userId;
         if (row.email) payload.email = row.email;
         if (row.phone) payload.phone = row.phone;
         if (row.studentId) payload.studentId = row.studentId;
@@ -850,6 +859,27 @@ export default function RegistrationsTab() {
     await registerFromData([{ ...manualForm, studentId: "", semester: "", interests: "" }]);
     setManualForm({ name: "", email: "", affiliation: "", phone: "", memo: "" });
     setManualOpen(false);
+  }
+
+  async function handleMemberRegister() {
+    if (selectedMemberIds.size === 0) { toast.error("등록할 회원을 선택하세요."); return; }
+    const rows: RegRow[] = allMembers
+      .filter((m) => selectedMemberIds.has(m.id))
+      .map((m) => ({
+        userId: m.id,
+        name: m.name ?? "",
+        email: m.email ?? "",
+        phone: m.phone ?? "",
+        studentId: m.studentId ?? "",
+        semester: m.accumulatedSemesters ? String(m.accumulatedSemesters) : "",
+        interests: m.field ?? "",
+        memo: "",
+        affiliation: m.affiliation ?? "",
+      }));
+    await registerFromData(rows);
+    setSelectedMemberIds(new Set());
+    setMemberSearch("");
+    setMemberPickerOpen(false);
   }
 
   async function handleDelete(id: string) {
@@ -1043,6 +1073,7 @@ export default function RegistrationsTab() {
                 </Button>
                 <input ref={excelRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleExcelUpload} />
                 <Button variant="outline" size="sm" onClick={() => setSheetOpen(true)} disabled={registering}><Link size={14} className="mr-1" />구글 시트</Button>
+                <Button variant="outline" size="sm" onClick={() => setMemberPickerOpen(true)} disabled={registering}><Users size={14} className="mr-1" />회원 등록</Button>
                 <Button variant="outline" size="sm" onClick={() => setManualOpen(true)} disabled={registering}><UserPlus size={14} className="mr-1" />수기 등록</Button>
               </div>
             </div>
@@ -1293,6 +1324,108 @@ export default function RegistrationsTab() {
             <Button variant="outline" onClick={() => setSheetOpen(false)}>취소</Button>
             <Button onClick={handleSheetLoad} disabled={sheetLoading || !sheetUrl.trim()}>
               {sheetLoading && <Loader2 size={14} className="mr-1 animate-spin" />}불러오기
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={memberPickerOpen} onOpenChange={(open) => {
+        if (!open) {
+          setMemberPickerOpen(false);
+          setSelectedMemberIds(new Set());
+          setMemberSearch("");
+        }
+      }}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>회원 DB에서 신청자 등록</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input
+              placeholder="이름, 학번, 이메일로 검색"
+              value={memberSearch}
+              onChange={(e) => setMemberSearch(e.target.value)}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              이미 신청된 회원은 등록 시 자동으로 건너뜁니다. ({allMembers.length}명 중 검색)
+            </p>
+            <div className="max-h-[400px] overflow-y-auto rounded-lg border">
+              {membersLoading ? (
+                <p className="p-6 text-center text-xs text-muted-foreground">회원 목록 불러오는 중…</p>
+              ) : (() => {
+                const q = memberSearch.trim().toLowerCase();
+                const registeredUserIds = new Set(registrations.map((r) => r.userId).filter(Boolean));
+                const filtered = allMembers.filter((m) => {
+                  if (!q) return true;
+                  const n = (m.name ?? "").toLowerCase();
+                  const sid = (m.studentId ?? "").toLowerCase();
+                  const em = (m.email ?? "").toLowerCase();
+                  return n.includes(q) || sid.includes(q) || em.includes(q);
+                });
+                if (filtered.length === 0) {
+                  return <p className="p-6 text-center text-xs text-muted-foreground">일치하는 회원이 없습니다.</p>;
+                }
+                return (
+                  <ul className="divide-y">
+                    {filtered.map((m) => {
+                      const isRegistered = registeredUserIds.has(m.id);
+                      const isSelected = selectedMemberIds.has(m.id);
+                      return (
+                        <li key={m.id}>
+                          <label className={cn(
+                            "flex cursor-pointer items-center gap-3 px-3 py-2 text-sm hover:bg-muted/30",
+                            isRegistered && "opacity-50",
+                          )}>
+                            <Checkbox
+                              checked={isSelected}
+                              disabled={isRegistered}
+                              onCheckedChange={(checked) => {
+                                const next = new Set(selectedMemberIds);
+                                if (checked) next.add(m.id);
+                                else next.delete(m.id);
+                                setSelectedMemberIds(next);
+                              }}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">{m.name}</span>
+                                {m.studentId && (
+                                  <span className="font-mono text-[10px] text-muted-foreground">{m.studentId}</span>
+                                )}
+                                {m.generation != null && (
+                                  <Badge variant="secondary" className="text-[10px]">{m.generation}기</Badge>
+                                )}
+                                {isRegistered && (
+                                  <Badge variant="secondary" className="bg-amber-50 text-[10px] text-amber-700">이미 신청됨</Badge>
+                                )}
+                              </div>
+                              <p className="truncate text-[11px] text-muted-foreground">
+                                {m.email}{m.affiliation ? ` · ${m.affiliation}` : ""}
+                              </p>
+                            </div>
+                          </label>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                );
+              })()}
+            </div>
+            {selectedMemberIds.size > 0 && (
+              <p className="text-xs text-primary">
+                선택된 회원: <strong>{selectedMemberIds.size}</strong>명
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setMemberPickerOpen(false);
+              setSelectedMemberIds(new Set());
+              setMemberSearch("");
+            }}>취소</Button>
+            <Button onClick={handleMemberRegister} disabled={registering || selectedMemberIds.size === 0}>
+              {registering && <Loader2 size={14} className="mr-1 animate-spin" />}
+              {selectedMemberIds.size > 0 ? `${selectedMemberIds.size}명 등록` : "등록"}
             </Button>
           </DialogFooter>
         </DialogContent>

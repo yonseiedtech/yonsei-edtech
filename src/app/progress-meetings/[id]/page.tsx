@@ -14,11 +14,15 @@ import {
   Clock,
   AlertTriangle,
   CheckCircle2,
+  FileText,
+  Upload,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { uploadToStorage } from "@/lib/storage";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { progressMeetingsApi, activitiesApi, activityProgressApi } from "@/lib/bkend";
 import { isAtLeast } from "@/lib/permissions";
@@ -99,6 +103,32 @@ export default function ProgressMeetingPage({ params }: PageProps) {
   // 새 섹션 추가 입력 상태
   const [newTitle, setNewTitle] = useState("");
   const [newMinutes, setNewMinutes] = useState(10);
+
+  // 슬라이드 업로드 상태
+  const [uploadingSlides, setUploadingSlides] = useState(false);
+
+  async function handleSlidesUpload(file: File) {
+    if (file.type !== "application/pdf") {
+      toast.error("PDF 파일만 업로드 가능합니다.");
+      return;
+    }
+    setUploadingSlides(true);
+    try {
+      const u = await uploadToStorage(file, `progress-meetings/${meetingId}/slides`);
+      updateMutation.mutate({ slidesUrl: u.url, slidesName: u.name });
+      toast.success("슬라이드를 업로드했습니다.");
+    } catch (e) {
+      console.error("[slides/upload]", e);
+      toast.error(e instanceof Error ? `업로드 실패: ${e.message}` : "업로드 실패");
+    } finally {
+      setUploadingSlides(false);
+    }
+  }
+
+  function handleRemoveSlides() {
+    if (!confirm("슬라이드를 삭제하시겠습니까?")) return;
+    updateMutation.mutate({ slidesUrl: undefined, slidesName: undefined } as Partial<ProgressMeeting>);
+  }
 
   if (isLoading || !meeting) {
     return (
@@ -301,6 +331,79 @@ export default function ProgressMeetingPage({ params }: PageProps) {
           {!canControl && (
             <p className="mt-3 border-t pt-3 text-xs text-muted-foreground">
               관전 모드입니다. 운영진/모임장만 미팅을 조작할 수 있습니다.
+            </p>
+          )}
+        </div>
+
+        {/* 슬라이드 (PDF) — 발표 자료 공유 */}
+        <div className="mt-4 rounded-2xl border bg-white p-4">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <h2 className="flex items-center gap-1.5 text-sm font-semibold">
+              <FileText size={14} />발표 슬라이드
+              {meeting.slidesName && (
+                <span className="text-xs font-normal text-muted-foreground">· {meeting.slidesName}</span>
+              )}
+            </h2>
+            {canControl && (
+              <div className="flex items-center gap-1.5">
+                <label className="relative inline-flex cursor-pointer items-center gap-1 rounded-md border bg-white px-2 py-1 text-xs font-medium text-muted-foreground hover:border-primary hover:text-primary">
+                  {uploadingSlides ? (
+                    <span>업로드 중…</span>
+                  ) : (
+                    <>
+                      <Upload size={12} />
+                      {meeting.slidesUrl ? "교체" : "PDF 업로드"}
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    className="absolute inset-0 cursor-pointer opacity-0"
+                    disabled={uploadingSlides}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleSlidesUpload(f);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+                {meeting.slidesUrl && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveSlides}
+                    className="rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-500"
+                    aria-label="슬라이드 삭제"
+                    title="슬라이드 삭제"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+          {meeting.slidesUrl ? (
+            <div className="overflow-hidden rounded-lg border">
+              <iframe
+                src={`${meeting.slidesUrl}#toolbar=1&navpanes=0`}
+                className="h-[640px] w-full"
+                title={meeting.slidesName ?? "발표 슬라이드"}
+              />
+              <div className="flex items-center justify-end gap-2 border-t bg-muted/30 px-3 py-2">
+                <a
+                  href={meeting.slidesUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-muted-foreground hover:text-primary"
+                >
+                  새 창에서 열기
+                </a>
+              </div>
+            </div>
+          ) : (
+            <p className="rounded-md border border-dashed bg-muted/20 p-4 text-center text-xs text-muted-foreground">
+              {canControl
+                ? "PDF 슬라이드를 업로드하면 참여자들이 함께 볼 수 있습니다."
+                : "아직 업로드된 슬라이드가 없습니다."}
             </p>
           )}
         </div>
