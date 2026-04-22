@@ -19,8 +19,8 @@ import {
   Pencil, Globe, Loader2, CheckCircle, Clock, XCircle,
   Plus, Trash2, FileUp, Download, ListChecks,
 } from "lucide-react";
-import type { Activity, ActivityType, ActivityProgress, ActivityProgressMode, ActivityMaterial, FormField, EnrollmentStatus } from "@/types";
-import { ENROLLMENT_STATUS_LABELS, ACTIVITY_PROGRESS_MODE_LABELS } from "@/types";
+import type { Activity, ActivityType, ActivityProgress, ActivityProgressMode, ActivityMaterial, FormField, EnrollmentStatus, ExternalParticipantType } from "@/types";
+import { ENROLLMENT_STATUS_LABELS, ACTIVITY_PROGRESS_MODE_LABELS, EXTERNAL_PARTICIPANT_TYPE_LABELS, EXTERNAL_PARTICIPANT_TYPE_COLORS } from "@/types";
 import { activityProgressApi, activityMaterialsApi } from "@/lib/bkend";
 import { uploadToStorage, type UploadedFile } from "@/lib/storage";
 import { formatSemester } from "@/lib/semester";
@@ -55,6 +55,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const [applyEmail, setApplyEmail] = useState("");
   const [applyPhone, setApplyPhone] = useState("");
   const [applyAnswers, setApplyAnswers] = useState<Record<string, string | string[] | UploadedFile[]>>({});
+  const [applyParticipantType, setApplyParticipantType] = useState<ExternalParticipantType>("attendee");
   const [signupCtaOpen, setSignupCtaOpen] = useState(false);
   const [progressTitle, setProgressTitle] = useState("");
   const [progressDate, setProgressDate] = useState("");
@@ -112,12 +113,12 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
       if (!activity) return;
       if (type === "external") {
         if (user) {
-          const newApplicant = { userId: user.id, name: applyName || user.name, studentId: applyStudentId, email: applyEmail || user.email, phone: applyPhone, answers: Object.keys(applyAnswers).length > 0 ? applyAnswers : undefined, appliedAt: new Date().toISOString(), status: "pending" as const };
+          const newApplicant = { userId: user.id, name: applyName || user.name, studentId: applyStudentId, email: applyEmail || user.email, phone: applyPhone, answers: Object.keys(applyAnswers).length > 0 ? applyAnswers : undefined, appliedAt: new Date().toISOString(), status: "pending" as const, participantType: applyParticipantType };
           await activitiesApi.update(activityId, { applicants: [...applicants, newApplicant] });
         } else {
           if (!applyName.trim() || !applyEmail.trim()) throw new Error("이름과 이메일은 필수입니다.");
           const guestKey = `guest_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-          const newApplicant = { guestKey, isGuest: true, name: applyName.trim(), studentId: applyStudentId, email: applyEmail.trim().toLowerCase(), phone: applyPhone, answers: Object.keys(applyAnswers).length > 0 ? applyAnswers : undefined, appliedAt: new Date().toISOString(), status: "pending" as const };
+          const newApplicant = { guestKey, isGuest: true, name: applyName.trim(), studentId: applyStudentId, email: applyEmail.trim().toLowerCase(), phone: applyPhone, answers: Object.keys(applyAnswers).length > 0 ? applyAnswers : undefined, appliedAt: new Date().toISOString(), status: "pending" as const, participantType: applyParticipantType };
           await activitiesApi.update(activityId, { applicants: [...applicants, newApplicant] });
         }
       } else {
@@ -269,7 +270,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
         <div className="rounded-2xl border bg-white p-6">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary" className={cn("text-xs", STATUS_COLORS[activity.status])}>{STATUS_LABELS[activity.status]}</Badge>
-            {activity.recruitmentStatus && (
+            {activity.recruitmentStatus && !(type === "study" && (activity.recruitmentStatus === "in_progress" || activity.recruitmentStatus === "completed")) && (
               <Badge variant="secondary" className={cn("text-xs", RECRUIT_COLORS[activity.recruitmentStatus])}>{type === "study" ? (RECRUIT_LABELS_STUDY[activity.recruitmentStatus] ?? RECRUIT_LABELS[activity.recruitmentStatus]) : RECRUIT_LABELS[activity.recruitmentStatus]}</Badge>
             )}
           </div>
@@ -757,6 +758,11 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                     <div key={key} className="flex items-center justify-between px-4 py-3 text-sm">
                       <div>
                         <span className="font-medium">{a.name}</span>
+                        {type === "external" && (
+                          <Badge variant="secondary" className={cn("ml-2 text-[10px]", EXTERNAL_PARTICIPANT_TYPE_COLORS[(a.participantType ?? "attendee") as ExternalParticipantType])}>
+                            {EXTERNAL_PARTICIPANT_TYPE_LABELS[(a.participantType ?? "attendee") as ExternalParticipantType]}
+                          </Badge>
+                        )}
                         {a.isGuest && <Badge variant="secondary" className="ml-2 bg-slate-100 text-[10px] text-slate-600">비회원</Badge>}
                         {a.studentId && <span className="ml-2 text-xs text-muted-foreground">{a.studentId}</span>}
                         {a.email && isStaff && <span className="ml-2 text-xs text-muted-foreground">{a.email}</span>}
@@ -839,6 +845,23 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 </div>
               </div>
 
+              {type === "external" && applicants.length > 0 && (
+                <div className="rounded-xl border bg-white p-4">
+                  <p className="mb-2 text-sm font-semibold">참석 유형별 신청</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    {(["speaker", "volunteer", "attendee"] as const).map((t) => {
+                      const count = applicants.filter((a) => (a.participantType ?? "attendee") === t).length;
+                      return (
+                        <div key={t} className={cn("rounded-lg p-3 text-center", EXTERNAL_PARTICIPANT_TYPE_COLORS[t])}>
+                          <p className="text-xs">{EXTERNAL_PARTICIPANT_TYPE_LABELS[t]}</p>
+                          <p className="text-xl font-bold">{count}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* 신청 답변 요약 */}
               {applicationForm.length > 0 && applicants.length > 0 && (
                 <div className="rounded-xl border bg-white p-6">
@@ -890,8 +913,10 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               {/* 참여자 목록 CSV 내보내기 */}
               <Button variant="outline" size="sm" onClick={() => {
                 const bom = "\uFEFF";
-                const header = "이름,학번,상태,신청일\n";
-                const rows = applicants.map((a) => `"${a.name}","${a.studentId ?? ""}","${a.status}","${a.appliedAt}"`).join("\n");
+                const header = type === "external" ? "이름,학번,참석유형,상태,신청일\n" : "이름,학번,상태,신청일\n";
+                const rows = applicants.map((a) => type === "external"
+                  ? `"${a.name}","${a.studentId ?? ""}","${EXTERNAL_PARTICIPANT_TYPE_LABELS[(a.participantType ?? "attendee") as ExternalParticipantType]}","${a.status}","${a.appliedAt}"`
+                  : `"${a.name}","${a.studentId ?? ""}","${a.status}","${a.appliedAt}"`).join("\n");
                 const blob = new Blob([bom + header + rows], { type: "text/csv" });
                 const url = URL.createObjectURL(blob);
                 const el = document.createElement("a");
@@ -976,6 +1001,26 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               </p>
             )}
             <div className="grid gap-3">
+              <div>
+                <label className="mb-1 block text-sm font-medium">참석 유형 *</label>
+                <div className="flex flex-wrap gap-2">
+                  {(["speaker", "volunteer", "attendee"] as const).map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setApplyParticipantType(t)}
+                      className={cn(
+                        "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                        applyParticipantType === t
+                          ? `${EXTERNAL_PARTICIPANT_TYPE_COLORS[t]} border-transparent`
+                          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
+                      )}
+                    >
+                      {EXTERNAL_PARTICIPANT_TYPE_LABELS[t]}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div><label className="mb-1 block text-sm font-medium">이름 *</label>
                 <Input value={applyName} onChange={(e) => setApplyName(e.target.value)} /></div>
               <div><label className="mb-1 block text-sm font-medium">학번</label>

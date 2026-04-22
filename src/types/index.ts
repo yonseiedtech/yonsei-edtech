@@ -1067,6 +1067,19 @@ export interface SeminarReview {
 // ── 학술활동 ──
 export type ActivityType = "project" | "study" | "external";
 
+/** 대외학술대회 참석 유형 */
+export type ExternalParticipantType = "speaker" | "volunteer" | "attendee";
+export const EXTERNAL_PARTICIPANT_TYPE_LABELS: Record<ExternalParticipantType, string> = {
+  speaker: "발표자",
+  volunteer: "자원봉사자",
+  attendee: "참석",
+};
+export const EXTERNAL_PARTICIPANT_TYPE_COLORS: Record<ExternalParticipantType, string> = {
+  speaker: "bg-purple-50 text-purple-700",
+  volunteer: "bg-emerald-50 text-emerald-700",
+  attendee: "bg-slate-100 text-slate-700",
+};
+
 export type FormFieldType =
   | "short_text" | "long_text" | "radio" | "checkbox" | "select"
   | "date" | "time" | "datetime" | "email" | "phone" | "url" | "number"
@@ -1126,7 +1139,7 @@ export interface Activity { [key: string]: unknown;
   leaderId?: string;
   members?: string[];
   participants?: string[];
-  applicants?: { userId?: string; guestKey?: string; isGuest?: boolean; email?: string; phone?: string; name: string; studentId?: string; answers?: Record<string, string | string[] | { url: string; name: string; size: number; type: string }[]>; appliedAt: string; status: "pending" | "approved" | "rejected" }[];
+  applicants?: { userId?: string; guestKey?: string; isGuest?: boolean; email?: string; phone?: string; name: string; studentId?: string; answers?: Record<string, string | string[] | { url: string; name: string; size: number; type: string }[]>; appliedAt: string; status: "pending" | "approved" | "rejected"; participantType?: ExternalParticipantType }[];
   applicationQuestions?: string[];
   applicationForm?: FormField[];
   registrationMethod?: "open" | "manual";
