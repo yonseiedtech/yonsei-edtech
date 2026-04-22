@@ -75,6 +75,44 @@ const MODE_COLORS: Record<ClassSessionMode, string> = {
   exam: "bg-rose-50 text-rose-700 border-rose-200",
 };
 
+const MODE_WEEK_BORDER: Record<ClassSessionMode, string> = {
+  in_person: "border-l-emerald-400 bg-emerald-50/30",
+  zoom: "border-l-blue-400 bg-blue-50/30",
+  assignment: "border-l-amber-400 bg-amber-50/30",
+  cancelled: "border-l-rose-400 bg-rose-50/30",
+  field: "border-l-purple-400 bg-purple-50/30",
+  exam: "border-l-rose-400 bg-rose-50/30",
+};
+
+const WEEKDAY_KOR = ["일", "월", "화", "수", "목", "금", "토"];
+
+function ymd(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function computeClassDatesInWeek(weekStartDate: string, weekdays: number[]): string[] {
+  if (!weekdays.length) return [];
+  const [y, m, d] = weekStartDate.split("-").map(Number);
+  const start = new Date(y, m - 1, d);
+  const dates: string[] = [];
+  for (let i = 0; i < 7; i++) {
+    const cur = new Date(start);
+    cur.setDate(start.getDate() + i);
+    if (weekdays.includes(cur.getDay())) {
+      dates.push(ymd(cur));
+    }
+  }
+  return dates;
+}
+
+function formatWeekdayLabel(weekdays: number[]): string {
+  if (!weekdays.length) return "수업";
+  return weekdays.map((d) => WEEKDAY_KOR[d]).join("·") + "요일";
+}
+
 const TODO_TYPES: CourseTodoType[] = [
   "assignment",
   "paper_reading",
@@ -234,6 +272,33 @@ function ScheduleContent({ courseId }: { courseId: string }) {
       toast.error(`저장 실패: ${(e as Error).message}`);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function quickSetMode(args: {
+    existing?: ClassSession;
+    date: string;
+    mode: ClassSessionMode;
+  }) {
+    if (!user) return;
+    try {
+      if (args.existing) {
+        await classSessionsApi.update(args.existing.id, { mode: args.mode });
+      } else {
+        await classSessionsApi.create({
+          courseOfferingId: courseId,
+          date: args.date,
+          mode: args.mode,
+          createdBy: user.id,
+        });
+      }
+      await qc.invalidateQueries({
+        queryKey: ["class-sessions", "by-course", courseId],
+      });
+      await qc.invalidateQueries({ queryKey: ["class-sessions"] });
+      toast.success(`${CLASS_SESSION_MODE_LABELS[args.mode]}으로 변경했습니다.`);
+    } catch (e) {
+      toast.error(`변경 실패: ${(e as Error).message}`);
     }
   }
 
@@ -511,12 +576,20 @@ function ScheduleContent({ courseId }: { courseId: string }) {
               const ts = todosByWeek.get(w.weekNo) ?? [];
               const isCurrentWeek = today >= w.startDate && today <= w.endDate;
               const isPast = today > w.endDate;
+              const primaryMode: ClassSessionMode = ws[0]?.mode ?? "in_person";
+              const classDates = computeClassDatesInWeek(
+                w.startDate,
+                parsedSchedule.weekdays,
+              );
+              const dayLabel = formatWeekdayLabel(parsedSchedule.weekdays);
+              const firstClassDate = classDates[0] ?? w.startDate;
               return (
                 <li
                   key={w.weekNo}
                   className={cn(
-                    "rounded-xl border bg-white p-4",
-                    isCurrentWeek && "border-primary/50 bg-primary/5",
+                    "rounded-xl border border-l-4 bg-white p-4",
+                    MODE_WEEK_BORDER[primaryMode],
+                    isCurrentWeek && "ring-2 ring-primary/30",
                     isPast && !isCurrentWeek && "opacity-80",
                   )}
                 >
@@ -558,63 +631,126 @@ function ScheduleContent({ courseId }: { courseId: string }) {
 
                   {/* 수업 운영 */}
                   {ws.length === 0 ? (
-                    <p className="mt-2 text-[11px] text-muted-foreground">
-                      — 운영 변경사항 없음 (기본 대면 수업)
-                    </p>
+                    <div className="mt-2 space-y-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setNoteDraft({ date: firstClassDate, content: "" })
+                        }
+                        className="group flex w-full items-center gap-2 rounded-md border border-dashed border-slate-200 px-3 py-2 text-left text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+                      >
+                        <NotebookPen size={14} className="shrink-0" />
+                        <span>
+                          {dayLabel} 수업 메모 없어요. 지금 한번 남겨보시겠어요?
+                        </span>
+                      </button>
+                      {master && (
+                        <div className="flex flex-wrap items-center gap-1">
+                          <span className="text-[10px] text-muted-foreground">
+                            수업 형태:
+                          </span>
+                          {MODE_OPTIONS.map((m) => (
+                            <button
+                              key={m}
+                              type="button"
+                              onClick={() =>
+                                quickSetMode({ date: firstClassDate, mode: m })
+                              }
+                              className={cn(
+                                "rounded-full border px-2 py-0.5 text-[10px] transition-colors hover:opacity-80",
+                                m === "in_person"
+                                  ? cn(MODE_COLORS[m], "ring-1 ring-emerald-300")
+                                  : "border-slate-200 bg-white text-muted-foreground",
+                              )}
+                            >
+                              {CLASS_SESSION_MODE_LABELS[m]}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <ul className="mt-2 space-y-1">
                       {ws.map((s) => (
                         <li
                           key={s.id}
-                          className="flex flex-wrap items-center gap-2 rounded-md bg-slate-50 px-2 py-1.5"
+                          className="rounded-md bg-slate-50 px-2 py-1.5"
                         >
-                          <span className="text-[11px] font-medium">{s.date}</span>
-                          <Badge
-                            variant="outline"
-                            className={cn("border text-[10px]", MODE_COLORS[s.mode])}
-                          >
-                            {CLASS_SESSION_MODE_LABELS[s.mode]}
-                          </Badge>
-                          {s.notes && (
-                            <span className="text-[11px] text-muted-foreground">
-                              {s.notes}
-                            </span>
-                          )}
-                          {s.link && (
-                            <a
-                              href={s.link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[11px] text-primary hover:underline"
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-[11px] font-medium">{s.date}</span>
+                            <Badge
+                              variant="outline"
+                              className={cn("border text-[10px]", MODE_COLORS[s.mode])}
                             >
-                              링크
-                            </a>
-                          )}
+                              {CLASS_SESSION_MODE_LABELS[s.mode]}
+                            </Badge>
+                            {s.notes && (
+                              <span className="text-[11px] text-muted-foreground">
+                                {s.notes}
+                              </span>
+                            )}
+                            {s.link && (
+                              <a
+                                href={s.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[11px] text-primary hover:underline"
+                              >
+                                링크
+                              </a>
+                            )}
+                            {master && (
+                              <div className="ml-auto flex gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setDraft({
+                                      id: s.id,
+                                      date: s.date,
+                                      mode: s.mode,
+                                      link: s.link ?? "",
+                                      notes: s.notes ?? "",
+                                    })
+                                  }
+                                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-slate-200 hover:text-primary"
+                                  aria-label="일정 수정"
+                                >
+                                  <Pencil size={13} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => remove(s)}
+                                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-rose-100 hover:text-destructive"
+                                  aria-label="일정 삭제"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              </div>
+                            )}
+                          </div>
                           {master && (
-                            <div className="ml-auto flex gap-1">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() =>
-                                  setDraft({
-                                    id: s.id,
-                                    date: s.date,
-                                    mode: s.mode,
-                                    link: s.link ?? "",
-                                    notes: s.notes ?? "",
-                                  })
-                                }
-                              >
-                                <Pencil size={10} />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => remove(s)}
-                                className="text-destructive"
-                              >
-                                <Trash2 size={10} />
-                              </Button>
+                            <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                              <span className="text-[10px] text-muted-foreground">
+                                형태 변경:
+                              </span>
+                              {MODE_OPTIONS.map((m) => (
+                                <button
+                                  key={m}
+                                  type="button"
+                                  onClick={() =>
+                                    quickSetMode({ existing: s, date: s.date, mode: m })
+                                  }
+                                  disabled={s.mode === m}
+                                  className={cn(
+                                    "rounded-full border px-2 py-0.5 text-[10px] transition-colors",
+                                    s.mode === m
+                                      ? cn(MODE_COLORS[m], "ring-1 ring-current/30")
+                                      : "border-slate-200 bg-white text-muted-foreground hover:border-slate-300 hover:bg-slate-50",
+                                  )}
+                                >
+                                  {CLASS_SESSION_MODE_LABELS[m]}
+                                </button>
+                              ))}
                             </div>
                           )}
                         </li>
@@ -809,20 +945,29 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                   onChange={(e) => setDraft({ ...draft, date: e.target.value })}
                 />
               </label>
-              <label className="flex flex-col gap-1 text-sm">
+              <div className="flex flex-col gap-1.5 text-sm">
                 <span className="text-xs font-medium text-muted-foreground">운영방식</span>
-                <select
-                  value={draft.mode}
-                  onChange={(e) =>
-                    setDraft({ ...draft, mode: e.target.value as ClassSessionMode })
-                  }
-                  className="rounded-md border bg-white px-3 py-2 text-sm"
-                >
-                  {MODE_OPTIONS.map((m) => (
-                    <option key={m} value={m}>{CLASS_SESSION_MODE_LABELS[m]}</option>
-                  ))}
-                </select>
-              </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {MODE_OPTIONS.map((m) => {
+                    const active = draft.mode === m;
+                    return (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => setDraft({ ...draft, mode: m })}
+                        className={cn(
+                          "rounded-full border px-3 py-1 text-xs transition-colors",
+                          active
+                            ? cn(MODE_COLORS[m], "ring-2 ring-offset-1 ring-current/30 font-medium")
+                            : "border-slate-200 bg-white text-muted-foreground hover:border-slate-300",
+                        )}
+                      >
+                        {CLASS_SESSION_MODE_LABELS[m]}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
               <label className="flex flex-col gap-1 text-sm">
                 <span className="text-xs font-medium text-muted-foreground">링크 (줌 등)</span>
                 <Input
