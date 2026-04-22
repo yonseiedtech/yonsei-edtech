@@ -247,7 +247,7 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
 
   return (
     <div className="py-12">
-      <div className="mx-auto max-w-3xl px-4">
+      <div className="mx-auto max-w-6xl px-4">
         <div className="flex items-center justify-between print-hide">
           <div className="flex items-center gap-2">
             <BookOpen size={22} className="text-primary" />

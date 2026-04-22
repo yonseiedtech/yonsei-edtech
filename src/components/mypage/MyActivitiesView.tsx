@@ -91,7 +91,11 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
     const inMembers = a.members?.includes(user.id) || a.members?.includes(user.name);
     const inParticipants = a.participants?.includes(user.id) || a.participants?.includes(user.name);
     const isLeader = a.leader === user.id || a.leader === user.name;
-    const isApplicant = a.applicants?.some((ap) => ap.userId === user.id && ap.status === "approved");
+    // 대외학술대회는 운영진 승인 절차 없이 신청만으로 참여로 간주(pending 포함, rejected만 제외)
+    const isApplicant = a.applicants?.some((ap) =>
+      ap.userId === user.id &&
+      (a.type === "external" ? ap.status !== "rejected" : ap.status === "approved"),
+    );
     return inMembers || inParticipants || isLeader || isApplicant;
   });
   const myPendingApplications = allActivities.filter((a) =>

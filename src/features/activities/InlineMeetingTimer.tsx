@@ -355,9 +355,23 @@ function MeetingPanel({ meeting, canControl, weekLabel, onMutated }: PanelProps)
     const title = editTitle.trim();
     if (!title) return toast.error("섹션 제목을 입력하세요.");
     if (editMinutes < 1) return toast.error("예상 시간은 1분 이상이어야 합니다.");
-    const updated = sections.map((s) =>
-      s.id === editingId ? { ...s, title, estimatedMinutes: editMinutes } : s,
-    );
+    const editingIdx = sections.findIndex((s) => s.id === editingId);
+    const isEditingActiveRunning =
+      editingIdx >= 0 && editingIdx === currentIdx && status === "running";
+    const updated = sections.map((s) => {
+      if (s.id !== editingId) return s;
+      if (isEditingActiveRunning) {
+        // 활성 섹션 편집 시 진행 시간 보존 — 흐른 시간을 actualSeconds에 누적하고 새 startedAt 부여 (= 즉시 재개)
+        const flushed = flushActiveSeconds(s);
+        return {
+          ...flushed,
+          title,
+          estimatedMinutes: editMinutes,
+          startedAt: new Date().toISOString(),
+        };
+      }
+      return { ...s, title, estimatedMinutes: editMinutes };
+    });
     updateMutation.mutate({ sections: updated });
     setEditingId(null);
   }

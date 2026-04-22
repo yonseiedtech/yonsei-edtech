@@ -116,7 +116,11 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
     const inMembers = a.members?.includes(user.id) || a.members?.includes(user.name);
     const inParticipants = a.participants?.includes(user.id) || a.participants?.includes(user.name);
     const isLeader = a.leader === user.id || a.leader === user.name;
-    const isApplicant = a.applicants?.some((ap) => ap.userId === user.id && ap.status === "approved");
+    // 대외학술대회는 신청만으로 참여로 간주(rejected 제외)
+    const isApplicant = a.applicants?.some((ap) =>
+      ap.userId === user.id &&
+      (a.type === "external" ? ap.status !== "rejected" : ap.status === "approved"),
+    );
     return inMembers || inParticipants || isLeader || isApplicant;
   });
 

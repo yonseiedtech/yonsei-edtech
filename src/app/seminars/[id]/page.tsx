@@ -48,9 +48,10 @@ import ShareButton from "@/components/ShareButton";
 import { SeminarEventJsonLd } from "@/components/seo/JsonLd";
 import StaffTools from "@/features/seminar/detail/StaffTools";
 import EditDialogs from "@/features/seminar/detail/EditDialogs";
-import type { EditSection, InfoFormData, SpeakerFormData } from "@/features/seminar/detail/EditDialogs";
+import type { EditSection, InfoFormData, SpeakersFormData } from "@/features/seminar/detail/EditDialogs";
 import { reviewsApi } from "@/lib/bkend";
-import type { SeminarReview } from "@/types";
+import { useAllMembers } from "@/features/member/useMembers";
+import type { SeminarReview, SeminarSpeaker } from "@/types";
 
 function ReviewCard({ review, extraInfo }: { review: SeminarReview; extraInfo?: string }) {
   return (
@@ -249,12 +250,10 @@ function SeminarDetail({ id }: { id: string }) {
     title: "", date: "", time: "", location: "",
     isOnline: false, onlineUrl: "", maxAttendees: "", registrationUrl: "", posterUrl: "",
   });
-  const [speakerForm, setSpeakerForm] = useState<SpeakerFormData>({
-    speaker: "", speakerBio: "", speakerAffiliation: "",
-    speakerPosition: "", speakerPhotoUrl: "", speakerType: "member",
-  });
+  const [speakersForm, setSpeakersForm] = useState<SpeakersFormData>([]);
   const [descForm, setDescForm] = useState("");
   const [regFieldsForm, setRegFieldsForm] = useState<RegistrationFieldConfig[]>([]);
+  const { members } = useAllMembers();
 
   const isStaff = isAtLeast(user, "staff");
   const myAttendee = useAttendee(id, user?.id ?? "");
@@ -301,13 +300,19 @@ function SeminarDetail({ id }: { id: string }) {
   }
 
   function openEditSpeaker() {
-    setSpeakerForm({
-      speaker: seminar!.speaker, speakerBio: seminar!.speakerBio ?? "",
-      speakerAffiliation: seminar!.speakerAffiliation ?? "",
-      speakerPosition: seminar!.speakerPosition ?? "",
-      speakerPhotoUrl: seminar!.speakerPhotoUrl ?? "",
-      speakerType: seminar!.speakerType ?? "member",
-    });
+    const existing = seminar!.speakers && seminar!.speakers.length > 0
+      ? seminar!.speakers
+      : seminar!.speaker
+        ? [{
+            type: seminar!.speakerType ?? "member",
+            name: seminar!.speaker,
+            bio: seminar!.speakerBio,
+            affiliation: seminar!.speakerAffiliation,
+            position: seminar!.speakerPosition,
+            photoUrl: seminar!.speakerPhotoUrl,
+          } as SeminarSpeaker]
+        : [{ type: "member" as const, name: "" }];
+    setSpeakersForm(existing.map((s) => ({ ...s })));
     setEditSection("speaker");
   }
 
@@ -336,17 +341,37 @@ function SeminarDetail({ id }: { id: string }) {
         if (infoForm.posterUrl) data.posterUrl = infoForm.posterUrl;
         await updateSeminar({ id: seminar!.id, data });
       } else if (editSection === "speaker") {
-        await updateSeminar({
-          id: seminar!.id,
-          data: {
-            speaker: speakerForm.speaker,
-            speakerBio: speakerForm.speakerBio || undefined,
-            speakerAffiliation: speakerForm.speakerAffiliation || undefined,
-            speakerPosition: speakerForm.speakerPosition || undefined,
-            speakerPhotoUrl: speakerForm.speakerPhotoUrl || undefined,
-            speakerType: speakerForm.speakerType,
-          },
-        });
+        const cleaned = speakersForm
+          .map((s) => ({
+            type: s.type,
+            userId: s.userId,
+            studentId: s.studentId?.trim() || undefined,
+            name: s.name.trim(),
+            bio: s.bio?.trim() || undefined,
+            affiliation: s.affiliation?.trim() || undefined,
+            position: s.position?.trim() || undefined,
+            photoUrl: s.photoUrl?.trim() || undefined,
+          }))
+          .filter((s) => s.name.length > 0);
+        if (cleaned.length === 0) {
+          toast.error("최소 1명의 연사를 입력하세요.");
+          return;
+        }
+        const primary = cleaned[0];
+        const data: Partial<Seminar> = {
+          speakers: cleaned,
+          speaker: primary.name,
+          speakerBio: primary.bio,
+          speakerAffiliation: primary.affiliation,
+          speakerPosition: primary.position,
+          speakerPhotoUrl: primary.photoUrl,
+          speakerType: primary.type,
+        };
+        const hostUserIds = cleaned
+          .filter((s) => s.type === "member" && s.userId)
+          .map((s) => s.userId as string);
+        if (hostUserIds.length > 0) data.hostUserIds = hostUserIds;
+        await updateSeminar({ id: seminar!.id, data });
       } else if (editSection === "description") {
         await updateSeminar({ id: seminar!.id, data: { description: descForm } });
       } else if (editSection === "registration-fields") {
@@ -579,8 +604,9 @@ function SeminarDetail({ id }: { id: string }) {
           onSave={handleSaveEdit}
           infoForm={infoForm}
           onInfoChange={setInfoForm}
-          speakerForm={speakerForm}
-          onSpeakerChange={setSpeakerForm}
+          speakersForm={speakersForm}
+          onSpeakersChange={setSpeakersForm}
+          members={members}
           descForm={descForm}
           onDescChange={setDescForm}
           regFieldsForm={regFieldsForm}

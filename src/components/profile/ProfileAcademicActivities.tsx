@@ -30,7 +30,11 @@ function isMember(a: Activity, owner: User): boolean {
   const inMembers = a.members?.includes(owner.id) || a.members?.includes(owner.name);
   const inParticipants = a.participants?.includes(owner.id) || a.participants?.includes(owner.name);
   const isLeader = a.leader === owner.id || a.leader === owner.name || a.leaderId === owner.id;
-  const isApplicant = a.applicants?.some((ap) => ap.userId === owner.id && ap.status === "approved");
+  // 대외학술대회는 신청만으로 참여로 간주(rejected 제외) — 별도 승인 절차 없음
+  const isApplicant = a.applicants?.some((ap) =>
+    ap.userId === owner.id &&
+    (a.type === "external" ? ap.status !== "rejected" : ap.status === "approved"),
+  );
   return !!(inMembers || inParticipants || isLeader || isApplicant);
 }
 
@@ -53,7 +57,9 @@ function roleOf(a: Activity, owner: User): RoleInfo | null {
   // 3) 대외활동 신청 시 선택한 참석 유형
   if (a.type === "external") {
     const ap = a.applicants?.find(
-      (x) => (x.userId === owner.id || x.email?.toLowerCase() === owner.email?.toLowerCase()) && x.status === "approved",
+      (x) =>
+        (x.userId === owner.id || x.email?.toLowerCase() === owner.email?.toLowerCase()) &&
+        x.status !== "rejected",
     );
     const t = ap?.participantType as ExternalParticipantType | undefined;
     if (t) return { label: EXTERNAL_PARTICIPANT_TYPE_LABELS[t], kind: "external", type: t };

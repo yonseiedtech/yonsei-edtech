@@ -11,9 +11,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { SPEAKER_TYPE_LABELS } from "@/types";
-import type { SpeakerType, RegistrationFieldConfig } from "@/types";
-import { GripVertical, Eye, EyeOff, Trash2, Plus } from "lucide-react";
+import type { RegistrationFieldConfig, SeminarSpeaker } from "@/types";
+import { GripVertical, Eye, EyeOff, Trash2, Plus, UserPlus } from "lucide-react";
+import SpeakerRow, { emptySpeaker, type MemberLite } from "@/features/seminar/SpeakerRow";
 
 export type EditSection = "info" | "speaker" | "description" | "registration-fields" | null;
 
@@ -29,14 +29,7 @@ export interface InfoFormData {
   posterUrl: string;
 }
 
-export interface SpeakerFormData {
-  speaker: string;
-  speakerBio: string;
-  speakerAffiliation: string;
-  speakerPosition: string;
-  speakerPhotoUrl: string;
-  speakerType: SpeakerType;
-}
+export type SpeakersFormData = SeminarSpeaker[];
 
 interface Props {
   editSection: EditSection;
@@ -45,9 +38,10 @@ interface Props {
   // Info
   infoForm: InfoFormData;
   onInfoChange: (form: InfoFormData) => void;
-  // Speaker
-  speakerForm: SpeakerFormData;
-  onSpeakerChange: (form: SpeakerFormData) => void;
+  // Speakers (multi)
+  speakersForm: SpeakersFormData;
+  onSpeakersChange: (form: SpeakersFormData) => void;
+  members: MemberLite[];
   // Description
   descForm: string;
   onDescChange: (value: string) => void;
@@ -62,16 +56,30 @@ export default function EditDialogs({
   onSave,
   infoForm,
   onInfoChange,
-  speakerForm,
-  onSpeakerChange,
+  speakersForm,
+  onSpeakersChange,
+  members,
   descForm,
   onDescChange,
   regFieldsForm,
   onRegFieldsChange,
 }: Props) {
+  function updateSpeaker(idx: number, patch: Partial<SeminarSpeaker>) {
+    onSpeakersChange(speakersForm.map((s, i) => (i === idx ? { ...s, ...patch } : s)));
+  }
+
+  function removeSpeaker(idx: number) {
+    if (speakersForm.length <= 1) return;
+    onSpeakersChange(speakersForm.filter((_, i) => i !== idx));
+  }
+
+  function addSpeaker() {
+    onSpeakersChange([...speakersForm, emptySpeaker("member")]);
+  }
+
   return (
     <Dialog open={editSection !== null} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className={cn("max-h-[80vh] overflow-y-auto", editSection === "registration-fields" ? "sm:max-w-2xl" : "sm:max-w-lg")}>
+      <DialogContent className={cn("max-h-[80vh] overflow-y-auto", editSection === "registration-fields" || editSection === "speaker" ? "sm:max-w-2xl" : "sm:max-w-lg")}>
         <DialogHeader>
           <DialogTitle>
             {editSection === "info" && "기본 정보 편집"}
@@ -132,41 +140,33 @@ export default function EditDialogs({
         )}
 
         {editSection === "speaker" && (
-          <div className="grid gap-3">
-            <div>
-              <label className="mb-1 block text-sm font-medium">이름</label>
-              <Input value={speakerForm.speaker} onChange={(e) => onSpeakerChange({ ...speakerForm, speaker: e.target.value })} />
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="flex items-center gap-1.5 text-sm font-semibold">
+                <UserPlus size={14} />연사 ({speakersForm.length}명)
+              </h3>
+              <Button type="button" size="sm" variant="outline" onClick={addSpeaker}>
+                <Plus size={13} className="mr-1" />연사 추가
+              </Button>
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">타입</label>
-              <select
-                value={speakerForm.speakerType}
-                onChange={(e) => onSpeakerChange({ ...speakerForm, speakerType: e.target.value as SpeakerType })}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
-                {Object.entries(SPEAKER_TYPE_LABELS).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
-                ))}
-              </select>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="mb-1 block text-sm font-medium">소속</label>
-                <Input value={speakerForm.speakerAffiliation} onChange={(e) => onSpeakerChange({ ...speakerForm, speakerAffiliation: e.target.value })} placeholder="소속 기관" />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium">직위</label>
-                <Input value={speakerForm.speakerPosition} onChange={(e) => onSpeakerChange({ ...speakerForm, speakerPosition: e.target.value })} placeholder="직위/직책" />
-              </div>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">소개</label>
-              <Textarea value={speakerForm.speakerBio} onChange={(e) => onSpeakerChange({ ...speakerForm, speakerBio: e.target.value })} rows={3} placeholder="발표자 약력" />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">사진 URL</label>
-              <Input value={speakerForm.speakerPhotoUrl} onChange={(e) => onSpeakerChange({ ...speakerForm, speakerPhotoUrl: e.target.value })} placeholder="https://..." />
-            </div>
+            <p className="text-[11px] text-muted-foreground">
+              내부 회원: 회원 검색으로 자동 매칭 (학번이 함께 저장되어 추후 가입한 사람과도 자동 연동됩니다).
+              조회 결과가 없으면 수기 입력하세요.
+            </p>
+            {speakersForm.map((s, idx) => (
+              <SpeakerRow
+                key={idx}
+                speaker={s}
+                index={idx}
+                canRemove={speakersForm.length > 1}
+                onChange={(patch) => updateSpeaker(idx, patch)}
+                onRemove={() => removeSpeaker(idx)}
+                allMembers={members}
+                excludeIds={speakersForm
+                  .filter((x, i) => i !== idx && x.userId)
+                  .map((x) => x.userId as string)}
+              />
+            ))}
           </div>
         )}
 
