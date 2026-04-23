@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   BookOpen,
   CheckCircle2,
@@ -116,11 +117,33 @@ function FilterPill({
 }
 
 export default function CoursesPage() {
+  return (
+    <Suspense fallback={<LoadingSpinner className="mt-24" />}>
+      <CoursesPageInner />
+    </Suspense>
+  );
+}
+
+const VALID_TABS = new Set(["major", "elective", "mine", "report"]);
+
+function CoursesPageInner() {
   const { user } = useAuthStore();
   const isReportViewer = isAtLeast(user, "president"); // 관리자/학회장
   const qc = useQueryClient();
+  const searchParams = useSearchParams();
 
-  const [tab, setTab] = useState<string>("major");
+  const tabFromUrl = searchParams.get("tab");
+  const initialTab =
+    tabFromUrl && VALID_TABS.has(tabFromUrl) ? tabFromUrl : "major";
+  const [tab, setTab] = useState<string>(initialTab);
+
+  // URL ?tab= 변경 시 동기화 (브라우저 뒤로가기/내부 링크 대응)
+  useEffect(() => {
+    if (tabFromUrl && VALID_TABS.has(tabFromUrl) && tabFromUrl !== tab) {
+      setTab(tabFromUrl);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabFromUrl]);
   const [year, setYear] = useState<number>(nowYear());
   const [term, setTerm] = useState<SemesterTerm>(defaultTermForToday());
   const [search, setSearch] = useState("");

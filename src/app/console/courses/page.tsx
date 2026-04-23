@@ -133,6 +133,9 @@ function ConsoleCoursesContent() {
   const [newRow, setNewRow] = useState<NewRow>(EMPTY_NEW_ROW);
   const [csvText, setCsvText] = useState("");
   const [csvOpen, setCsvOpen] = useState(false);
+  const xlsxFileRef = useRef<HTMLInputElement>(null);
+  const [xlsxBusy, setXlsxBusy] = useState(false);
+  const [xlsxResult, setXlsxResult] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState<CourseCategory | "all">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   // 회원 명단 — EnrollmentList 에서 회원 자동 매칭/연동에 사용. 첫 펼침 시점에 lazy fetch.
@@ -359,6 +362,173 @@ function ConsoleCoursesContent() {
     alert(`${succeeded}/${parsed.length} 건 등록 완료`);
   }
 
+  /**
+   * 연세 수강편람 .xlsx 일괄 등록/업데이트.
+   *
+   * 입력: 표준 수강편람 시트(헤더에 학기·과목종별·학정번호-분반-실습·교과목명·담당교수·강의시간·강의실 포함).
+   * 동작:
+   *  - 학기 셀("2026-1학기") → year/term 파싱(1→spring, 2→fall).
+   *  - 과목종별: "전공"→major_required, "선택"→major_elective, 그 외 라벨도 시도(교직 등).
+   *  - 강의시간 "목0/목3,4" → "/" 뒤("목3,4")만 schedule 로 저장.
+   *  - 강의실 "동영상콘텐츠/교606" → "/" 뒤("교606")만 classroom 으로 저장.
+   *  - 과목명이 같은 기존 행 있으면 update, 없으면 create.
+   */
+  async function handleImportXlsx(file: File) {
+    if (!viewer?.id) {
+      toast.error("로그인 상태를 확인하세요");
+      return;
+    }
+    setXlsxBusy(true);
+    setXlsxResult(null);
+    try {
+      const XLSX = await import("xlsx");
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      // header:1 로 헤더+행 모두 배열로 받음 — 헤더 셀에 줄바꿈("캠퍼\n스")이 섞여 있어 정규화 필요.
+      const matrix = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
+        header: 1,
+        defval: "",
+        blankrows: false,
+      });
+      if (matrix.length < 2) {
+        toast.error("데이터 행이 없습니다");
+        setXlsxBusy(false);
+        return;
+      }
+      const norm = (s: unknown) =>
+        String(s ?? "")
+          .replace(/\s+/g, "")
+          .trim();
+      const headers = (matrix[0] as unknown[]).map(norm);
+      const findCol = (...candidates: string[]) => {
+        for (const c of candidates) {
+          const i = headers.findIndex((h) => h.includes(c));
+          if (i >= 0) return i;
+        }
+        return -1;
+      };
+      const colSemester = findCol("학기");
+      const colCategory = findCol("과목종별", "이수구분");
+      const colCode = findCol("학정번호");
+      const colCredits = findCol("학점");
+      const colName = findCol("교과목명", "과목명");
+      const colProf = findCol("담당교수", "교수");
+      const colSchedule = findCol("강의시간");
+      const colClassroom = findCol("강의실");
+      const colNotes = findCol("기타유의사항", "비고");
+      const colCanceled = findCol("폐강");
+
+      if (colName < 0) {
+        toast.error("교과목명 컬럼을 찾지 못했습니다");
+        setXlsxBusy(false);
+        return;
+      }
+
+      // "2026-1학기" → { year:2026, term:"spring" }
+      const parseSemester = (raw: string): { year: number; term: SemesterTerm } | null => {
+        const m = raw.match(/(\d{4})\s*-\s*([12])/);
+        if (!m) return null;
+        return { year: Number(m[1]), term: m[2] === "1" ? "spring" : "fall" };
+      };
+      // "전공"→major_required, "선택"→major_elective, "교직"→teaching_general, …
+      const parseCategory = (raw: string): CourseCategory => {
+        const t = raw.trim();
+        if (t === "전공" || t === "전공필수") return "major_required";
+        if (t === "선택" || t === "전공선택") return "major_elective";
+        if (t.includes("교직")) return "teaching_general";
+        if (t.includes("타전공")) return "other_major";
+        if (t.includes("교양")) return "general";
+        if (t.includes("연구")) return "research";
+        return "major_elective";
+      };
+      // "목0/목3,4" → "목3,4" / 슬래시 없으면 그대로
+      const parseAfterSlash = (raw: string): string | undefined => {
+        const t = String(raw ?? "").trim();
+        if (!t) return undefined;
+        const idx = t.indexOf("/");
+        return idx >= 0 ? t.slice(idx + 1).trim() : t;
+      };
+
+      // 같은 학기 기존 과목명 → row 룩업 (업데이트 판정용)
+      const byName = new Map<string, CourseOffering>();
+      for (const r of rows) {
+        if (r.courseName) byName.set(r.courseName.trim(), r);
+      }
+
+      let created = 0;
+      let updated = 0;
+      let skipped = 0;
+      const newOnes: CourseOffering[] = [];
+
+      for (let i = 1; i < matrix.length; i++) {
+        const row = matrix[i] as unknown[];
+        const get = (idx: number) => (idx >= 0 ? String(row[idx] ?? "").trim() : "");
+        const courseName = get(colName);
+        if (!courseName) {
+          skipped++;
+          continue;
+        }
+        // 폐강 행은 active=false 로 표시(있으면), 새 데이터의 경우 등록 자체는 진행
+        const isCanceled = colCanceled >= 0 && /[YyOo예]/.test(get(colCanceled));
+
+        // 학기 파싱은 셀에 있으면 사용, 없으면 현재 선택된 year/term 으로 폴백
+        let py = year;
+        let pt: SemesterTerm = term;
+        if (colSemester >= 0) {
+          const parsed = parseSemester(get(colSemester));
+          if (parsed) {
+            py = parsed.year;
+            pt = parsed.term;
+          }
+        }
+        const cat = colCategory >= 0 ? parseCategory(get(colCategory)) : "major_elective";
+        const credits = colCredits >= 0 ? Number(get(colCredits)) : NaN;
+        const payload: Record<string, unknown> = {
+          year: py,
+          term: pt,
+          courseCode: get(colCode) || undefined,
+          courseName,
+          professor: get(colProf) || undefined,
+          credits: Number.isFinite(credits) ? credits : undefined,
+          category: cat,
+          schedule: parseAfterSlash(get(colSchedule)),
+          classroom: parseAfterSlash(get(colClassroom)),
+          notes: get(colNotes) || undefined,
+          active: !isCanceled,
+        };
+
+        // 이미 같은 과목명이 등록돼 있으면 update, 아니면 create
+        const exist = byName.get(courseName);
+        try {
+          if (exist) {
+            const upd = await courseOfferingsApi.update(exist.id, payload);
+            setRows((prev) => prev.map((x) => (x.id === exist.id ? { ...x, ...upd } : x)));
+            updated++;
+          } else {
+            const c = await courseOfferingsApi.create({ ...payload, createdBy: viewer.id });
+            newOnes.push(c);
+            byName.set(courseName, c); // 같은 시트에 동일 과목명 중복 시에도 1건만 생성
+            created++;
+          }
+        } catch (e) {
+          console.error("[xlsx 행 처리 실패]", { courseName, payload, e });
+          skipped++;
+        }
+      }
+      if (newOnes.length > 0) setRows((prev) => [...prev, ...newOnes]);
+      const msg = `완료: 신규 ${created}건 / 업데이트 ${updated}건 / 스킵 ${skipped}건`;
+      setXlsxResult(msg);
+      toast.success(msg, { duration: 8000 });
+    } catch (e) {
+      console.error("[xlsx 업로드 실패]", e);
+      toast.error(e instanceof Error ? e.message : "엑셀 업로드 실패", { duration: 8000 });
+    } finally {
+      setXlsxBusy(false);
+      if (xlsxFileRef.current) xlsxFileRef.current.value = "";
+    }
+  }
+
   if (!isStaff) {
     return (
       <div className="py-16">
@@ -422,6 +592,44 @@ function ConsoleCoursesContent() {
           {/* ───── 과목 등록 ───── */}
           <TabsContent value="register" className="mt-4 space-y-4">
             {semesterPicker}
+
+            {/* 수강편람 .xlsx 일괄 등록/업데이트 */}
+            <div className="rounded-xl border bg-white p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className="flex items-center gap-2 text-sm font-semibold">
+                    <Upload size={14} />
+                    연세 수강편람 엑셀 업로드
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    표준 수강편람 .xlsx 형식.
+                    학기·과목종별·교과목명·담당교수·강의시간·강의실 자동 인식.
+                    과목명이 같으면 업데이트, 새 과목이면 등록합니다.
+                  </p>
+                </div>
+                <input
+                  ref={xlsxFileRef}
+                  type="file"
+                  accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleImportXlsx(f);
+                  }}
+                  className="hidden"
+                />
+                <Button
+                  size="sm"
+                  onClick={() => xlsxFileRef.current?.click()}
+                  disabled={xlsxBusy}
+                >
+                  <Upload size={14} className="mr-1" />
+                  {xlsxBusy ? "업로드 중..." : "엑셀 파일 선택"}
+                </Button>
+              </div>
+              {xlsxResult && (
+                <p className="mt-2 text-xs text-emerald-700">✓ {xlsxResult}</p>
+              )}
+            </div>
 
             {/* CSV 일괄 등록 */}
             <div className="rounded-xl border bg-white">
@@ -905,7 +1113,13 @@ function EnrollmentList({
       setErr(null);
       try {
         const res = await courseEnrollmentsApi.listByCourse(course.id);
-        if (!cancelled) setList(res.data);
+        if (!cancelled) {
+          // 서버 sort 를 제거해 인덱스 요구를 회피했으므로 클라이언트에서 이름순 정렬.
+          const sorted = [...res.data].sort((a, b) =>
+            (a.studentName ?? "").localeCompare(b.studentName ?? "")
+          );
+          setList(sorted);
+        }
       } catch (e) {
         console.error("[EnrollmentList/list] 실패", e);
         if (!cancelled) setErr(formatFirestoreError(e, "수강생 명단을 불러오지 못했습니다"));

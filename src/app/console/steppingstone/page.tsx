@@ -59,7 +59,7 @@ function ConsoleSteppingStoneContent() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<Partial<GuideItem>>({});
 
-  // 트랙 로드 (없으면 onboarding 초기 시드)
+  // 트랙 로드 (onboarding 키가 전혀 없을 때만 초기 시드 — 중복 방지)
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -67,8 +67,8 @@ function ConsoleSteppingStoneContent() {
         const res = await guideTracksApi.list();
         if (cancelled) return;
         setTracks(res.data);
-        if (res.data.length === 0) {
-          // onboarding 트랙 자동 생성 (1회)
+        const hasOnboarding = res.data.some((t) => t.key === "onboarding");
+        if (!hasOnboarding) {
           const now = new Date().toISOString();
           const created = await guideTracksApi.create({
             key: "onboarding",
@@ -81,9 +81,9 @@ function ConsoleSteppingStoneContent() {
             updatedAt: now,
           });
           if (cancelled) return;
-          setTracks([created]);
+          setTracks([...res.data, created]);
           setActiveTrackId(created.id);
-        } else {
+        } else if (res.data.length > 0) {
           setActiveTrackId(res.data[0].id);
         }
       } catch (e) {
@@ -241,7 +241,49 @@ function ConsoleSteppingStoneContent() {
     }
   }
 
+  async function removeTrack(t: GuideTrack) {
+    if (!isStaff) return;
+    // 항목이 있는지 확인 (삭제 전 안전장치)
+    let itemCount = 0;
+    try {
+      const res = await guideItemsApi.listByTrack(t.id);
+      itemCount = res.data.length;
+    } catch {
+      // ignore — 카운트 실패해도 진행 가능
+    }
+    const msg =
+      itemCount > 0
+        ? `"${t.title}" 트랙에 ${itemCount}개 항목이 있습니다. 트랙만 삭제하면 항목은 고아가 됩니다. 정말 삭제할까요?`
+        : `"${t.title}" 트랙을 삭제할까요?`;
+    if (!confirm(msg)) return;
+    setBusy(true);
+    try {
+      await guideTracksApi.delete(t.id);
+      setTracks((prev) => {
+        const next = prev.filter((x) => x.id !== t.id);
+        if (activeTrackId === t.id) {
+          setActiveTrackId(next[0]?.id ?? null);
+          setItems([]);
+        }
+        return next;
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "트랙 삭제 실패");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const availableNewKeys = TRACK_KEYS.filter((k) => !tracks.some((t) => t.key === k));
+
+  // 중복 키 탐지 (예: onboarding 트랙이 2개 이상 존재)
+  const duplicateKeys = useMemo(() => {
+    const counts = new Map<string, number>();
+    tracks.forEach((t) => counts.set(t.key, (counts.get(t.key) ?? 0) + 1));
+    return Array.from(counts.entries())
+      .filter(([, c]) => c > 1)
+      .map(([k]) => k as GuideTrackKey);
+  }, [tracks]);
 
   return (
     <div className="space-y-6">
@@ -254,6 +296,21 @@ function ConsoleSteppingStoneContent() {
       {error && (
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
           {error}
+        </div>
+      )}
+
+      {duplicateKeys.length > 0 && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+          <div className="font-semibold">⚠️ 중복 트랙이 있습니다</div>
+          <div className="mt-1 text-xs">
+            아래 키가 둘 이상의 트랙으로 등록되어 있습니다 — 회원 페이지가 첫 번째 트랙만 사용하므로,
+            중복은 삭제하는 것이 좋습니다:&nbsp;
+            {duplicateKeys.map((k) => (
+              <Badge key={k} variant="secondary" className="mr-1 text-[10px]">
+                {GUIDE_TRACK_LABELS[k]} ({k})
+              </Badge>
+            ))}
+          </div>
         </div>
       )}
 
@@ -301,10 +358,21 @@ function ConsoleSteppingStoneContent() {
         {activeTrackId && isStaff && (() => {
           const t = tracks.find((x) => x.id === activeTrackId);
           if (!t) return null;
+          const isDup = duplicateKeys.includes(t.key);
           return (
-            <div className="mt-3 flex justify-end">
+            <div className="mt-3 flex justify-end gap-1">
               <Button size="sm" variant="ghost" onClick={() => toggleTrackPublished(t)} disabled={busy}>
                 <Power size={12} /> {t.published ? "비공개로" : "공개로"}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => removeTrack(t)}
+                disabled={busy}
+                className="text-destructive"
+                title={isDup ? "중복 트랙 — 안전하게 삭제 가능합니다" : "트랙 삭제"}
+              >
+                <Trash2 size={12} /> 트랙 삭제
               </Button>
             </div>
           );

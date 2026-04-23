@@ -575,6 +575,70 @@ export default function DailyClassTimelineWidget() {
     );
   }, [isViewingToday, todayOfferings, nowMin]);
 
+  // 다음주 같은 요일의 수업 세션 (종료 수업 프롬프트에서 수업형태 편집용)
+  const nextWeekDate = useMemo(() => addDaysYmd(actualToday, 7), [actualToday]);
+  const { data: nextWeekSessionsRes } = useQuery({
+    queryKey: ["class-sessions", "next-week", nextWeekDate],
+    queryFn: () => classSessionsApi.listByDate(nextWeekDate),
+    enabled: isViewingToday && finishedToday.length > 0,
+    staleTime: 30_000,
+  });
+  const nextWeekSessionByCourse = useMemo(() => {
+    const map = new Map<string, ClassSession>();
+    for (const s of (nextWeekSessionsRes?.data ?? []) as ClassSession[]) {
+      // 같은 과목에 여러 건이면 최신 updatedAt을 채택
+      const prev = map.get(s.courseOfferingId);
+      if (
+        !prev ||
+        new Date(s.updatedAt ?? s.createdAt).getTime() >
+          new Date(prev.updatedAt ?? prev.createdAt).getTime()
+      ) {
+        map.set(s.courseOfferingId, s);
+      }
+    }
+    return map;
+  }, [nextWeekSessionsRes]);
+  const [savingNextMode, setSavingNextMode] = useState<string | null>(null);
+
+  async function setNextWeekMode(
+    courseOfferingId: string,
+    mode: ClassSessionMode,
+  ) {
+    if (!userId) return;
+    const key = `${courseOfferingId}__${mode}`;
+    if (savingNextMode) return;
+    setSavingNextMode(key);
+    try {
+      const ex = nextWeekSessionByCourse.get(courseOfferingId);
+      if (ex) {
+        if (ex.mode !== mode) {
+          await classSessionsApi.update(ex.id, { mode });
+        }
+      } else {
+        // in_person 기본값은 세션 생성 없이 유지 가능하지만,
+        // 명시적 선택이므로 기록을 남긴다
+        await classSessionsApi.create({
+          courseOfferingId,
+          date: nextWeekDate,
+          mode,
+          createdBy: userId,
+        });
+      }
+      await qc.refetchQueries({
+        queryKey: ["class-sessions", "next-week", nextWeekDate],
+        type: "active",
+      });
+      await qc.invalidateQueries({ queryKey: ["class-sessions"] });
+      toast.success(
+        `다음주 ${CLASS_SESSION_MODE_LABELS[mode]}(으)로 설정했습니다.`,
+      );
+    } catch (e) {
+      toast.error(`저장 실패: ${(e as Error).message}`);
+    } finally {
+      setSavingNextMode(null);
+    }
+  }
+
   if (!userId) return null;
   const isLoading = loadingEnrollments || loadingOfferings;
 
@@ -802,61 +866,108 @@ export default function DailyClassTimelineWidget() {
       {/* 수업 종료 후 메모·할 일 프롬프트 (오늘 뷰에서만) */}
       {viewMode === "daily" && isViewingToday && finishedToday.length > 0 && (
         <div className="mt-4 space-y-2">
-          {finishedToday.map(({ offering }) => {
+          {finishedToday.map(({ offering, parsed }) => {
             if (dismissedToday[offering.id]) return null;
+            const nextWeekday =
+              parsed.weekdays.length > 0
+                ? DAY_CHARS[parsed.weekdays[0]]
+                : DAY_CHARS[currentTime.getDay()];
+            const nextSession = nextWeekSessionByCourse.get(offering.id);
+            const nextMode: ClassSessionMode = nextSession?.mode ?? "in_person";
+            const isSavingThis = savingNextMode?.startsWith(`${offering.id}__`);
             return (
               <div
                 key={offering.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50/50 p-3"
+                className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3"
               >
-                <div className="flex-1 text-[13px]">
-                  <p className="font-medium text-emerald-900">
-                    오늘도 <b>{offering.courseName}</b> 수업 들으시느라 고생하셨습니다.
-                  </p>
-                  <p className="text-[11px] text-emerald-800/70">
-                    오늘 수업에 대한 메모 또는 할 일을 남겨둘까요?
-                  </p>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex-1 text-[13px]">
+                    <p className="font-medium text-emerald-900">
+                      오늘도 <b>{offering.courseName}</b> 수업 들으시느라 고생하셨습니다.
+                    </p>
+                    <p className="text-[11px] text-emerald-800/70">
+                      오늘 수업에 대한 메모 또는 할 일을 남겨둘까요?
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        setMemoDraft({
+                          courseOfferingId: offering.id,
+                          courseName: offering.courseName,
+                          date: actualToday,
+                          content: "",
+                        })
+                      }
+                    >
+                      <NotebookPen size={12} className="mr-1" /> 메모
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        setTodoDraft({
+                          courseOfferingId: offering.id,
+                          courseName: offering.courseName,
+                          sessionDate: actualToday,
+                          type: "assignment",
+                          content: "",
+                          dueDate: addDaysYmd(actualToday, 6),
+                        })
+                      }
+                    >
+                      <ListChecks size={12} className="mr-1" /> 할 일
+                    </Button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setDismissedToday((p) => ({ ...p, [offering.id]: true }))
+                      }
+                      className="rounded-md px-2 text-[11px] text-muted-foreground hover:text-foreground"
+                    >
+                      닫기
+                    </button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      setMemoDraft({
-                        courseOfferingId: offering.id,
-                        courseName: offering.courseName,
-                        date: actualToday,
-                        content: "",
-                      })
-                    }
-                  >
-                    <NotebookPen size={12} className="mr-1" /> 메모
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      setTodoDraft({
-                        courseOfferingId: offering.id,
-                        courseName: offering.courseName,
-                        sessionDate: actualToday,
-                        type: "assignment",
-                        content: "",
-                        dueDate: addDaysYmd(actualToday, 6),
-                      })
-                    }
-                  >
-                    <ListChecks size={12} className="mr-1" /> 할 일
-                  </Button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setDismissedToday((p) => ({ ...p, [offering.id]: true }))
-                    }
-                    className="rounded-md px-2 text-[11px] text-muted-foreground hover:text-foreground"
-                  >
-                    닫기
-                  </button>
+
+                {/* 다음주 수업 형태 편집 */}
+                <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-emerald-200/60 pt-2">
+                  <span className="text-[11px] font-medium text-emerald-900">
+                    다음주 {nextWeekday}요일 ({nextWeekDate}) 수업 형태:
+                  </span>
+                  {(["in_person", "zoom", "assignment", "cancelled", "exam"] as ClassSessionMode[]).map(
+                    (m) => {
+                      const active = nextMode === m;
+                      const saving = savingNextMode === `${offering.id}__${m}`;
+                      return (
+                        <button
+                          key={m}
+                          type="button"
+                          disabled={!!isSavingThis}
+                          onClick={() => setNextWeekMode(offering.id, m)}
+                          className={cn(
+                            "rounded-full border px-2.5 py-0.5 text-[10px] transition-colors",
+                            active
+                              ? cn(
+                                  MODE_BADGE[m],
+                                  "border-current/30 ring-1 ring-current/30 font-medium",
+                                )
+                              : "border-emerald-200 bg-white text-emerald-700/70 hover:border-emerald-300 hover:bg-emerald-50",
+                            isSavingThis && !saving && "opacity-50",
+                          )}
+                        >
+                          {saving ? "저장중…" : CLASS_SESSION_MODE_LABELS[m]}
+                        </button>
+                      );
+                    },
+                  )}
+                  {!nextSession && (
+                    <span className="text-[10px] text-emerald-700/60">
+                      (기본: 대면 — 변경하려면 클릭)
+                    </span>
+                  )}
                 </div>
               </div>
             );

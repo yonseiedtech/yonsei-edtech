@@ -621,6 +621,8 @@ export const researchPapersApi = {
     );
     return { ...res, data: sorted };
   },
+  listAll: (limit: number = 5000) =>
+    dataApi.list<ResearchPaper>("research_papers", { limit }),
   get: (id: string) => dataApi.get<ResearchPaper>("research_papers", id),
   create: (data: Record<string, unknown>) =>
     dataApi.create<ResearchPaper>("research_papers", data),
@@ -663,6 +665,8 @@ export const studySessionsApi = {
       "filter[userId]": userId,
       limit: 1000,
     }),
+  listAll: (limit: number = 10000) =>
+    dataApi.list<StudySession>("study_sessions", { limit }),
   get: (id: string) => dataApi.get<StudySession>("study_sessions", id),
   create: (data: Record<string, unknown>) =>
     dataApi.create<StudySession>("study_sessions", data),
@@ -916,10 +920,14 @@ export const courseOfferingsApi = {
 
 // 수강생 명단 (course_offerings 의 자식 — 운영진 관리)
 export const courseEnrollmentsApi = {
+  /**
+   * 과목별 수강생 목록.
+   * sort 파라미터를 빼서 Firestore 복합 인덱스(courseOfferingId + studentName) 요구를 회피한다.
+   * 호출부에서 studentName 기준 정렬.
+   */
   listByCourse: (courseOfferingId: string) =>
     dataApi.list<CourseEnrollment>("course_enrollments", {
       "filter[courseOfferingId]": courseOfferingId,
-      sort: "studentName:asc",
       limit: 500,
     }),
   listBySemester: (year: number, term: SemesterTerm) =>

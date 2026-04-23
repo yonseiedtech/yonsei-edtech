@@ -76,44 +76,38 @@ export default function ConsoleResearchPage() {
   const users = profilesData?.data ?? [];
   const reports = reportsData?.data ?? [];
 
-  // 보고서가 있는 사용자만 papers/sessions 로드 (네트워크 절약)
-  const userIdsWithReport = useMemo(() => new Set(reports.map((r) => r.userId)), [reports]);
-
-  const { data: papersBundles } = useQuery({
-    queryKey: ["console-research", "papers", Array.from(userIdsWithReport).sort()],
-    enabled: userIdsWithReport.size > 0,
+  // 모든 승인 회원의 논문·세션을 listAll 로 한 번에 로드 후 userId 로 그룹 (네트워크 절약)
+  const { data: papersBundles, isLoading: loadingPapers } = useQuery({
+    queryKey: ["console-research", "papers-all"],
     queryFn: async () => {
-      const ids = Array.from(userIdsWithReport);
-      const results: Array<[string, ResearchPaper[]]> = await Promise.all(
-        ids.map(async (uid): Promise<[string, ResearchPaper[]]> => {
-          try {
-            const list = await researchPapersApi.list(uid);
-            return [uid, list.data ?? []];
-          } catch {
-            return [uid, []];
-          }
-        }),
-      );
-      return new Map(results);
+      const res = await researchPapersApi.listAll();
+      const map = new Map<string, ResearchPaper[]>();
+      for (const p of res.data ?? []) {
+        if (!p.userId) continue;
+        const arr = map.get(p.userId) ?? [];
+        arr.push(p);
+        map.set(p.userId, arr);
+      }
+      // 사용자별로 createdAt 내림차순 정렬
+      for (const [, arr] of map) {
+        arr.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+      }
+      return map;
     },
   });
 
-  const { data: sessionBundles } = useQuery({
-    queryKey: ["console-research", "sessions", Array.from(userIdsWithReport).sort()],
-    enabled: userIdsWithReport.size > 0,
+  const { data: sessionBundles, isLoading: loadingSessions } = useQuery({
+    queryKey: ["console-research", "sessions-all"],
     queryFn: async () => {
-      const ids = Array.from(userIdsWithReport);
-      const results: Array<[string, StudySession[]]> = await Promise.all(
-        ids.map(async (uid): Promise<[string, StudySession[]]> => {
-          try {
-            const r = await studySessionsApi.listByUser(uid);
-            return [uid, r.data ?? []];
-          } catch {
-            return [uid, []];
-          }
-        }),
-      );
-      return new Map(results);
+      const res = await studySessionsApi.listAll();
+      const map = new Map<string, StudySession[]>();
+      for (const s of res.data ?? []) {
+        if (!s.userId) continue;
+        const arr = map.get(s.userId) ?? [];
+        arr.push(s);
+        map.set(s.userId, arr);
+      }
+      return map;
     },
   });
 
@@ -180,7 +174,7 @@ export default function ConsoleResearchPage() {
     return { reportCount, paperCount, sessionCount, totalMinutes };
   }, [summaries]);
 
-  const loading = loadingProfiles || loadingReports;
+  const loading = loadingProfiles || loadingReports || loadingPapers || loadingSessions;
 
   return (
     <div className="space-y-6">
