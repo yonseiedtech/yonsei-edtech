@@ -346,12 +346,20 @@ function ResearchRow({ summary }: { summary: UserResearchSummary }) {
                   <div className="pt-1 text-[11px] text-muted-foreground">
                     마지막 수정: {formatDate(report.updatedAt)}
                   </div>
-                  <Link
-                    href={`/profile/${user.id}`}
-                    className="mt-2 flex h-8 w-full items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
-                  >
-                    회원 프로필 보기
-                  </Link>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <Link
+                      href={`/console/research/${user.id}`}
+                      className="flex h-8 items-center justify-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+                    >
+                      자세히 보기
+                    </Link>
+                    <Link
+                      href={`/profile/${user.id}`}
+                      className="flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
+                    >
+                      프로필
+                    </Link>
+                  </div>
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground">아직 작성된 보고서가 없습니다.</p>
