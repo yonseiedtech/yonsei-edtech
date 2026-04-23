@@ -288,23 +288,45 @@ function ScheduleContent({ courseId }: { courseId: string }) {
     }
   }
 
-  async function quickSetMode(args: {
-    existing?: ClassSession;
-    date: string;
+  async function quickSetWeekMode(args: {
+    classDates: string[];
+    existing: ClassSession[];
     mode: ClassSessionMode;
   }) {
     if (!user) return;
-    if (args.existing && args.existing.mode === args.mode) return;
+    if (args.classDates.length === 0) {
+      toast.error("강의 시간(요일) 설정이 필요합니다. 콘솔에서 schedule을 등록하세요.");
+      return;
+    }
+
+    // 모든 수업일이 이미 같은 모드인지 확인 (전부 in_person 기본값일 때도 포함)
+    const allSame = args.classDates.every((d) => {
+      const ex = args.existing.find((s) => s.date === d);
+      const cur = ex?.mode ?? "in_person";
+      return cur === args.mode;
+    });
+    if (allSame) {
+      toast.info(`이미 ${CLASS_SESSION_MODE_LABELS[args.mode]}(으)로 설정되어 있습니다.`);
+      return;
+    }
+
     try {
-      if (args.existing) {
-        await classSessionsApi.update(args.existing.id, { mode: args.mode });
-      } else {
-        await classSessionsApi.create({
-          courseOfferingId: courseId,
-          date: args.date,
-          mode: args.mode,
-          createdBy: user.id,
-        });
+      for (const d of args.classDates) {
+        const ex = args.existing.find((s) => s.date === d);
+        if (ex) {
+          if (ex.mode !== args.mode) {
+            await classSessionsApi.update(ex.id, { mode: args.mode });
+          }
+        } else {
+          // 기본값(in_person)으로 두고 싶을 땐 세션 미생성 — in_person 클릭 시 굳이 행 추가하지 않음
+          if (args.mode === "in_person") continue;
+          await classSessionsApi.create({
+            courseOfferingId: courseId,
+            date: d,
+            mode: args.mode,
+            createdBy: user.id,
+          });
+        }
       }
       await qc.refetchQueries({
         queryKey: ["class-sessions", "by-course", courseId],
@@ -591,13 +613,26 @@ function ScheduleContent({ courseId }: { courseId: string }) {
               const ts = todosByWeek.get(w.weekNo) ?? [];
               const isCurrentWeek = today >= w.startDate && today <= w.endDate;
               const isPast = today > w.endDate;
-              const primaryMode: ClassSessionMode = ws[0]?.mode ?? "in_person";
               const classDates = computeClassDatesInWeek(
                 w.startDate,
                 parsedSchedule.weekdays,
               );
               const dayLabel = formatWeekdayLabel(parsedSchedule.weekdays);
               const firstClassDate = classDates[0] ?? w.startDate;
+
+              // 모든 수업일의 실효 모드 (세션 없으면 기본 in_person)
+              const sessionsByDate = new Map(ws.map((s) => [s.date, s]));
+              const effectiveModes: ClassSessionMode[] = classDates.length > 0
+                ? classDates.map((d) => sessionsByDate.get(d)?.mode ?? "in_person")
+                : ws.map((s) => s.mode);
+              const allSameMode =
+                effectiveModes.length > 0 &&
+                effectiveModes.every((m) => m === effectiveModes[0]);
+              const activeMode: ClassSessionMode | null = allSameMode
+                ? (effectiveModes[0] as ClassSessionMode)
+                : null;
+              const primaryMode: ClassSessionMode = activeMode ?? ws[0]?.mode ?? "in_person";
+              const noWeekdays = parsedSchedule.weekdays.length === 0;
               return (
                 <li
                   key={w.weekNo}
@@ -611,18 +646,23 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                   {master && (
                     <div className="mb-2 flex flex-wrap items-center gap-1.5 border-b border-dashed border-slate-200 pb-2">
                       <span className="text-[10px] font-medium text-muted-foreground">
-                        수업 형태:
+                        수업 형태{classDates.length > 1 ? ` (${classDates.length}회 일괄)` : ""}:
                       </span>
-                      {MODE_OPTIONS.map((m) => {
-                        const active = ws.length > 0 && primaryMode === m;
+                      {noWeekdays && (
+                        <span className="text-[10px] text-amber-700">
+                          강의 시간(요일) 설정이 필요합니다.
+                        </span>
+                      )}
+                      {!noWeekdays && MODE_OPTIONS.map((m) => {
+                        const active = activeMode === m;
                         return (
                           <button
                             key={m}
                             type="button"
                             onClick={() =>
-                              quickSetMode({
-                                existing: ws[0],
-                                date: ws[0]?.date ?? firstClassDate,
+                              quickSetWeekMode({
+                                classDates,
+                                existing: ws,
                                 mode: m,
                               })
                             }
@@ -637,6 +677,11 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                           </button>
                         );
                       })}
+                      {!noWeekdays && !allSameMode && (
+                        <span className="text-[10px] text-muted-foreground">
+                          (수업일별 다름)
+                        </span>
+                      )}
                     </div>
                   )}
                   <div className="flex flex-wrap items-center justify-between gap-2">
