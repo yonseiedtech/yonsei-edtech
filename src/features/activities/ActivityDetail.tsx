@@ -457,8 +457,9 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 {progressList.length === 0 ? (
                   <p className="p-6 text-center text-sm text-muted-foreground">등록된 진행 기록이 없습니다.</p>
                 ) : (
-                  progressList.map((p) => {
+                  progressList.map((p, idx) => {
                     const isExpanded = expandedTimers.has(p.id);
+                    const displayWeek = idx + 1;
                     return (
                       <div key={p.id}>
                         <div className="flex items-start gap-3 px-4 py-3">
@@ -482,7 +483,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                           </button>
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
-                              <Badge variant="secondary" className="text-[10px]">Week {p.week}</Badge>
+                              <Badge variant="secondary" className="text-[10px]">Week {displayWeek}</Badge>
                               {p.mode && (
                                 <Badge
                                   variant="secondary"
@@ -542,7 +543,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                             <InlineMeetingTimer
                               activityId={activityId}
                               activityProgressId={p.id}
-                              weekLabel={`Week ${p.week} · ${p.title}`}
+                              weekLabel={`Week ${displayWeek} · ${p.title}`}
                               canControl={isStaff || isLeader}
                               canStart={isStaff || isLeader}
                               createdBy={user?.id}
