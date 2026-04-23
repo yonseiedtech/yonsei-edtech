@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { useSeminars, useSeminar, useAttendees } from "@/features/seminar/useSeminar";
 import { useAllMembers } from "@/features/member/useMembers";
+import { useAuthStore } from "@/features/auth/auth-store";
 import { useSeminarAdminContext } from "./seminar-admin-store";
 import { registrationsApi, attendeesApi, seminarsApi } from "@/lib/bkend";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -623,7 +624,9 @@ export default function RegistrationsTab() {
   const [memberPickerOpen, setMemberPickerOpen] = useState(false);
   const [memberSearch, setMemberSearch] = useState("");
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
+  const [memberMarkAttended, setMemberMarkAttended] = useState(true);
   const { members: allMembers, isLoading: membersLoading } = useAllMembers();
+  const currentUser = useAuthStore((s) => s.user);
   // 정렬/필터
   const [sortKey, setSortKey] = useState<string>("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
@@ -737,7 +740,7 @@ export default function RegistrationsTab() {
       return;
     }
 
-    let added = 0;
+    const created: SeminarRegistration[] = [];
     try {
       for (const row of newRows) {
         const payload: Record<string, unknown> = {
@@ -753,8 +756,10 @@ export default function RegistrationsTab() {
         if (row.memo) payload.memo = row.memo;
         if (row.affiliation) payload.affiliation = row.affiliation;
 
-        await registrationsApi.create(payload);
-        added++;
+        const newReg = await registrationsApi.create(payload);
+        if (newReg && (newReg as SeminarRegistration).id) {
+          created.push(newReg as SeminarRegistration);
+        }
       }
 
       // 캐시 리셋 + 강제 refetch
@@ -764,12 +769,14 @@ export default function RegistrationsTab() {
       }, 500);
 
       const parts = [];
-      if (added > 0) parts.push(`${added}명 신청 등록 완료`);
+      if (created.length > 0) parts.push(`${created.length}명 신청 등록 완료`);
       if (skipped > 0) parts.push(`${skipped}명 중복 건너뜀`);
       toast.success(parts.join(", "));
+      return created;
     } catch (err) {
       console.error("[registerFromData] error:", err);
-      toast.error(`등록 중 오류 (${added}/${newRows.length}명 완료)`);
+      toast.error(`등록 중 오류 (${created.length}/${newRows.length}명 완료)`);
+      return created;
     } finally {
       setRegistering(false);
     }
@@ -880,7 +887,13 @@ export default function RegistrationsTab() {
         memo: "",
         affiliation: m.affiliation ?? "",
       }));
-    await registerFromData(rows);
+    const created = await registerFromData(rows);
+    if (memberMarkAttended && created && created.length > 0) {
+      await convertToAttendees(
+        created.map((r) => r.id),
+        { markCheckedIn: true, sourceRegistrations: created },
+      );
+    }
     setSelectedMemberIds(new Set());
     setMemberSearch("");
     setMemberPickerOpen(false);
@@ -973,10 +986,17 @@ export default function RegistrationsTab() {
     else setSelected(new Set(filteredRegistrations.map((r) => r.id)));
   }
 
-  async function convertToAttendees(ids: string[]) {
+  async function convertToAttendees(
+    ids: string[],
+    options: { markCheckedIn?: boolean; sourceRegistrations?: SeminarRegistration[] } = {},
+  ) {
     if (!selectedId) return;
     setConverting(true);
     let added = 0, skipped = 0;
+    const markCheckedIn = options.markCheckedIn ?? false;
+    const checkedBy = markCheckedIn ? `manual:${currentUser?.id ?? "staff"}` : null;
+    const checkedAt = markCheckedIn ? new Date().toISOString() : null;
+    const sourceRegs = options.sourceRegistrations ?? registrations;
     try {
       // 최신 참석자 데이터 강제 조회
       const freshRes = await attendeesApi.list(selectedId);
@@ -987,7 +1007,7 @@ export default function RegistrationsTab() {
       const existingNames = new Set(freshAttendees.map((a) => a.userName));
       const existingEmails = new Set(freshAttendees.filter((a) => a.email).map((a) => a.email));
 
-      for (const reg of registrations.filter((r) => ids.includes(r.id))) {
+      for (const reg of sourceRegs.filter((r) => ids.includes(r.id))) {
         // 다중 기준 중복 체크
         const guestId = reg.userId || `guest_${reg.email || reg.name}`;
         if (existingUserIds.has(guestId)) { skipped++; continue; }
@@ -1002,7 +1022,10 @@ export default function RegistrationsTab() {
           interests: reg.interests || reg.affiliation || undefined,
           questions: reg.memo || undefined,
           semester: reg.semester || undefined,
-          isGuest: !reg.userId, checkedIn: false, checkedInAt: null, checkedInBy: null,
+          isGuest: !reg.userId,
+          checkedIn: markCheckedIn,
+          checkedInAt: checkedAt,
+          checkedInBy: checkedBy,
         });
         await registrationsApi.update(reg.id, { convertedAt: new Date().toISOString() });
         existingUserIds.add(guestId);
@@ -1014,10 +1037,11 @@ export default function RegistrationsTab() {
       qc.invalidateQueries({ queryKey: ["attendees", selectedId] });
       refetch(); setSelected(new Set());
       const parts = [];
-      if (added > 0) parts.push(`${added}명 참석자 등록`);
+      if (added > 0) parts.push(markCheckedIn ? `${added}명 참석 처리 완료` : `${added}명 참석자 등록`);
       if (skipped > 0) parts.push(`${skipped}명 중복 건너뜀`);
       toast.success(parts.join(", "));
-    } catch { toast.error("전환 중 오류"); }
+      return added;
+    } catch { toast.error("전환 중 오류"); return 0; }
     finally { setConverting(false); }
   }
 
@@ -1415,11 +1439,23 @@ export default function RegistrationsTab() {
                 );
               })()}
             </div>
-            {selectedMemberIds.size > 0 && (
-              <p className="text-xs text-primary">
-                선택된 회원: <strong>{selectedMemberIds.size}</strong>명
-              </p>
-            )}
+            <div className="flex items-center justify-between gap-3 rounded-md border bg-muted/30 px-3 py-2">
+              <label htmlFor="member-mark-attended" className="flex cursor-pointer items-center gap-2 text-xs">
+                <Checkbox
+                  id="member-mark-attended"
+                  checked={memberMarkAttended}
+                  onCheckedChange={(c) => setMemberMarkAttended(c === true)}
+                />
+                <span>
+                  추가 즉시 <strong>참석 처리</strong> (수기 출석체크)
+                </span>
+              </label>
+              {selectedMemberIds.size > 0 && (
+                <span className="text-xs text-primary">
+                  선택: <strong>{selectedMemberIds.size}</strong>명
+                </span>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => {
@@ -1427,9 +1463,13 @@ export default function RegistrationsTab() {
               setSelectedMemberIds(new Set());
               setMemberSearch("");
             }}>취소</Button>
-            <Button onClick={handleMemberRegister} disabled={registering || selectedMemberIds.size === 0}>
-              {registering && <Loader2 size={14} className="mr-1 animate-spin" />}
-              {selectedMemberIds.size > 0 ? `${selectedMemberIds.size}명 등록` : "등록"}
+            <Button onClick={handleMemberRegister} disabled={registering || converting || selectedMemberIds.size === 0}>
+              {(registering || converting) && <Loader2 size={14} className="mr-1 animate-spin" />}
+              {selectedMemberIds.size > 0
+                ? memberMarkAttended
+                  ? `${selectedMemberIds.size}명 등록 + 참석 처리`
+                  : `${selectedMemberIds.size}명 등록`
+                : "등록"}
             </Button>
           </DialogFooter>
         </DialogContent>
