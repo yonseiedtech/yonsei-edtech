@@ -1,10 +1,15 @@
 "use client";
 
+import { useState } from "react";
+import { ChevronDown, ChevronUp, CalendarRange, CheckCircle2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import FileUploader from "@/components/ui/file-uploader";
 import ScheduleSelector from "@/components/ui/ScheduleSelector";
 import type { FormField, ScheduleSlot } from "@/types";
 import type { UploadedFile } from "@/lib/storage";
+
+const ALL_AVAILABLE_MARKER = "__ALL__";
 
 type AnswerValue = string | string[] | UploadedFile[];
 
@@ -181,31 +186,130 @@ export default function FormRenderer({ fields, value, onChange }: Props) {
                 />
               </div>
             );
-          case "schedule": {
-            // 답변은 JSON 문자열로 저장 (기존 AnswerValue 타입 유지)
-            let slots: ScheduleSlot[] = [];
-            if (typeof v === "string" && v) {
-              try {
-                const parsed = JSON.parse(v);
-                if (Array.isArray(parsed)) slots = parsed as ScheduleSlot[];
-              } catch { /* ignore */ }
-            }
+          case "schedule":
             return (
               <div key={f.id}>{base}
-                <ScheduleSelector
-                  startDate={f.scheduleStartDate ?? ""}
-                  endDate={f.scheduleEndDate ?? f.scheduleStartDate ?? ""}
-                  startTime={f.scheduleStartTime ?? "09:00"}
-                  endTime={f.scheduleEndTime ?? "18:00"}
-                  slotMinutes={f.scheduleSlotMinutes ?? 30}
-                  value={slots}
-                  onChange={(next) => onChange(f.id, JSON.stringify(next))}
-                />
+                <ScheduleField field={f} value={v} onChange={(next) => onChange(f.id, next)} />
               </div>
             );
-          }
         }
       })}
+    </div>
+  );
+}
+
+interface ScheduleFieldProps {
+  field: FormField;
+  value: AnswerValue | undefined;
+  onChange: (next: string) => void;
+}
+
+function ScheduleField({ field, value, onChange }: ScheduleFieldProps) {
+  let mode: "all" | "partial" = "all";
+  let slots: ScheduleSlot[] = [];
+  if (typeof value === "string" && value) {
+    if (value === ALL_AVAILABLE_MARKER) {
+      mode = "all";
+    } else {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) {
+          slots = parsed as ScheduleSlot[];
+          mode = slots.length > 0 ? "partial" : "all";
+        }
+      } catch { /* ignore */ }
+    }
+  } else {
+    mode = "all";
+  }
+
+  const [expanded, setExpanded] = useState(slots.length > 0);
+
+  function setMode(next: "all" | "partial") {
+    if (next === "all") {
+      onChange(ALL_AVAILABLE_MARKER);
+      setExpanded(false);
+    } else {
+      onChange(JSON.stringify(slots));
+      setExpanded(slots.length > 0);
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => setMode("all")}
+          className={cn(
+            "flex flex-col items-start gap-1 rounded-xl border-2 p-4 text-left transition-all",
+            mode === "all"
+              ? "border-emerald-500 bg-emerald-50 text-emerald-900 shadow-sm dark:bg-emerald-950/40 dark:text-emerald-100"
+              : "border-input bg-white text-muted-foreground hover:border-emerald-300 hover:bg-emerald-50/40 dark:bg-card dark:hover:bg-emerald-950/20",
+          )}
+        >
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={18} className={mode === "all" ? "text-emerald-600" : "text-muted-foreground"} />
+            <span className="text-sm font-semibold">전체 시간 가능</span>
+          </div>
+          <span className="text-[11px] leading-snug text-muted-foreground">
+            행사 전 일정에 모두 참여할 수 있습니다.
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("partial")}
+          className={cn(
+            "flex flex-col items-start gap-1 rounded-xl border-2 p-4 text-left transition-all",
+            mode === "partial"
+              ? "border-primary bg-primary/10 text-foreground shadow-sm"
+              : "border-input bg-white text-muted-foreground hover:border-primary/40 hover:bg-primary/5 dark:bg-card dark:hover:bg-primary/10",
+          )}
+        >
+          <div className="flex items-center gap-2">
+            <CalendarRange size={18} className={mode === "partial" ? "text-primary" : "text-muted-foreground"} />
+            <span className="text-sm font-semibold">부분 참여</span>
+          </div>
+          <span className="text-[11px] leading-snug text-muted-foreground">
+            가능한 시간대만 골라서 표시합니다.
+          </span>
+        </button>
+      </div>
+
+      {mode === "partial" && (
+        <div className="rounded-xl border bg-muted/10">
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium hover:bg-muted/30"
+            aria-expanded={expanded}
+          >
+            <span className="flex items-center gap-2">
+              <CalendarRange size={14} className="text-primary" />
+              가능한 시간대 선택
+              {slots.length > 0 && (
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                  {slots.length}개 선택됨
+                </span>
+              )}
+            </span>
+            {expanded ? <ChevronUp size={16} className="text-muted-foreground" /> : <ChevronDown size={16} className="text-muted-foreground" />}
+          </button>
+          {expanded && (
+            <div className="border-t bg-white p-3 dark:bg-card">
+              <ScheduleSelector
+                startDate={field.scheduleStartDate ?? ""}
+                endDate={field.scheduleEndDate ?? field.scheduleStartDate ?? ""}
+                startTime={field.scheduleStartTime ?? "09:00"}
+                endTime={field.scheduleEndTime ?? "18:00"}
+                slotMinutes={field.scheduleSlotMinutes ?? 30}
+                value={slots}
+                onChange={(next) => onChange(JSON.stringify(next))}
+              />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

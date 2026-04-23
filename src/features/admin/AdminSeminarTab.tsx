@@ -24,11 +24,14 @@ import { SEMINAR_STATUS_LABELS } from "@/types";
 import { getComputedStatus } from "@/lib/seminar-utils";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Pencil, BookOpen, Image as ImageIcon, Video, AlertTriangle, Trash2, Copy, Send, CalendarDays, Users, TrendingUp, FileEdit } from "lucide-react";
+import { Pencil, BookOpen, Image as ImageIcon, Video, AlertTriangle, Trash2, Copy, Send, CalendarDays, Users, TrendingUp, FileEdit, Plus, UserPlus } from "lucide-react";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { useCreateSeminar } from "@/features/seminar/useSeminar";
 import { createTimeline } from "@/features/seminar-admin/timeline-template";
 import { useSeminarAdminContext } from "@/features/seminar-admin/seminar-admin-store";
+import SpeakerRow, { emptySpeaker } from "@/features/seminar/SpeakerRow";
+import { useAllMembers } from "@/features/member/useMembers";
+import type { SeminarSpeaker } from "@/types";
 
 const STATUS_COLORS: Record<SeminarStatus, string> = {
   draft: "bg-gray-50 text-gray-500",
@@ -49,6 +52,7 @@ type EditSeminar = {
   onlineUrl: string;
   speaker: string;
   speakerBio: string;
+  speakers: SeminarSpeaker[];
   posterUrl: string;
   maxAttendees: string;
 };
@@ -59,6 +63,7 @@ export default function AdminSeminarTab() {
   const { deleteSeminar } = useDeleteSeminar();
   const { createSeminar } = useCreateSeminar();
   const setActiveSeminarId = useSeminarAdminContext((s) => s.setActiveSeminarId);
+  const { members } = useAllMembers();
 
   async function handleCloneSeminar(s: Seminar) {
     if (!confirm(`"${s.title}" 세미나를 복제하시겠습니까?`)) return;
@@ -152,6 +157,11 @@ export default function AdminSeminarTab() {
 
   function openEditSeminar(s: Seminar) {
     setActiveSeminarId(s.id);
+    // 다중 연사 우선, 없으면 단일 speaker/speakerBio로 1명 초기화 (backward-compat)
+    const initialSpeakers: SeminarSpeaker[] =
+      s.speakers && s.speakers.length > 0
+        ? s.speakers
+        : [{ type: "member", name: s.speaker ?? "", bio: s.speakerBio ?? "" }];
     setEditSeminar({
       id: s.id,
       title: s.title,
@@ -163,6 +173,7 @@ export default function AdminSeminarTab() {
       onlineUrl: s.onlineUrl ?? "",
       speaker: s.speaker,
       speakerBio: s.speakerBio ?? "",
+      speakers: initialSpeakers,
       posterUrl: s.posterUrl ?? "",
       maxAttendees: s.maxAttendees?.toString() ?? "",
     });
@@ -170,6 +181,9 @@ export default function AdminSeminarTab() {
 
   function handleSaveSeminar() {
     if (!editSeminar) return;
+    const cleanedSpeakers = editSeminar.speakers.filter((sp) => sp.name.trim());
+    const primary = cleanedSpeakers[0];
+    const speakerLabel = cleanedSpeakers.map((sp) => sp.name.trim()).join(", ");
     updateSeminar({
       id: editSeminar.id,
       data: {
@@ -178,8 +192,9 @@ export default function AdminSeminarTab() {
         date: editSeminar.date,
         time: editSeminar.time,
         location: editSeminar.location,
-        speaker: editSeminar.speaker,
-        speakerBio: editSeminar.speakerBio || undefined,
+        speaker: speakerLabel || editSeminar.speaker,
+        speakerBio: primary?.bio || undefined,
+        speakers: cleanedSpeakers.length > 0 ? cleanedSpeakers : undefined,
         isOnline: editSeminar.isOnline,
         onlineUrl: editSeminar.isOnline ? (editSeminar.onlineUrl || undefined) : undefined,
         posterUrl: editSeminar.posterUrl || undefined,
@@ -190,6 +205,30 @@ export default function AdminSeminarTab() {
     });
     toast.success("세미나 정보가 수정되었습니다.");
     setEditSeminar(null);
+  }
+
+  function updateSpeaker(idx: number, patch: Partial<SeminarSpeaker>) {
+    if (!editSeminar) return;
+    setEditSeminar({
+      ...editSeminar,
+      speakers: editSeminar.speakers.map((s, i) => (i === idx ? { ...s, ...patch } : s)),
+    });
+  }
+
+  function removeSpeaker(idx: number) {
+    if (!editSeminar || editSeminar.speakers.length <= 1) return;
+    setEditSeminar({
+      ...editSeminar,
+      speakers: editSeminar.speakers.filter((_, i) => i !== idx),
+    });
+  }
+
+  function addSpeaker() {
+    if (!editSeminar) return;
+    setEditSeminar({
+      ...editSeminar,
+      speakers: [...editSeminar.speakers, emptySpeaker("member")],
+    });
   }
 
   // 대시보드 통계
@@ -478,38 +517,47 @@ export default function AdminSeminarTab() {
                   />
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-1 block text-sm font-medium">발표자</label>
-                  <Input
-                    value={editSeminar.speaker}
-                    onChange={(e) =>
-                      setEditSeminar({ ...editSeminar, speaker: e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium">최대 인원</label>
-                  <Input
-                    type="number"
-                    value={editSeminar.maxAttendees}
-                    onChange={(e) =>
-                      setEditSeminar({
-                        ...editSeminar,
-                        maxAttendees: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">발표자 소개</label>
+                <label className="mb-1 block text-sm font-medium">최대 인원</label>
                 <Input
-                  value={editSeminar.speakerBio}
+                  type="number"
+                  value={editSeminar.maxAttendees}
                   onChange={(e) =>
-                    setEditSeminar({ ...editSeminar, speakerBio: e.target.value })
+                    setEditSeminar({
+                      ...editSeminar,
+                      maxAttendees: e.target.value,
+                    })
                   }
                 />
+              </div>
+              <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="flex items-center gap-1.5 text-sm font-semibold">
+                    <UserPlus size={14} />연사 ({editSeminar.speakers.length}명)
+                  </h3>
+                  <Button type="button" size="sm" variant="outline" onClick={addSpeaker}>
+                    <Plus size={13} className="mr-1" />연사 추가
+                  </Button>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  내부 회원: 회원 검색으로 자동 매칭. 외부 연사는 수기 입력하세요.
+                </p>
+                <div className="space-y-2">
+                  {editSeminar.speakers.map((sp, idx) => (
+                    <SpeakerRow
+                      key={idx}
+                      speaker={sp}
+                      index={idx}
+                      canRemove={editSeminar.speakers.length > 1}
+                      onChange={(patch) => updateSpeaker(idx, patch)}
+                      onRemove={() => removeSpeaker(idx)}
+                      allMembers={members}
+                      excludeIds={editSeminar.speakers
+                        .filter((x, i) => i !== idx && x.userId)
+                        .map((x) => x.userId as string)}
+                    />
+                  ))}
+                </div>
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium">포스터 URL</label>

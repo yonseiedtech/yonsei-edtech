@@ -1058,23 +1058,30 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             )}
             <div className="grid gap-3">
               <div>
-                <label className="mb-1 block text-sm font-medium">참석 유형 *</label>
-                <div className="flex flex-wrap gap-2">
-                  {(["speaker", "volunteer", "attendee"] as const).map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setApplyParticipantType(t)}
-                      className={cn(
-                        "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                        applyParticipantType === t
-                          ? `${EXTERNAL_PARTICIPANT_TYPE_COLORS[t]} border-transparent`
-                          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
-                      )}
-                    >
-                      {EXTERNAL_PARTICIPANT_TYPE_LABELS[t]}
-                    </button>
-                  ))}
+                <label className="mb-2 block text-sm font-semibold">참석 유형 <span className="text-red-500">*</span></label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["speaker", "volunteer", "attendee"] as const).map((t) => {
+                    const active = applyParticipantType === t;
+                    return (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setApplyParticipantType(t)}
+                        className={cn(
+                          "flex flex-col items-center justify-center gap-1 rounded-xl border-2 px-3 py-3 text-center transition-all",
+                          active
+                            ? `${EXTERNAL_PARTICIPANT_TYPE_COLORS[t]} border-current shadow-sm scale-[1.02]`
+                            : "border-input bg-white text-slate-600 hover:border-primary/40 hover:bg-muted/50 dark:bg-card",
+                        )}
+                        aria-pressed={active}
+                      >
+                        <span className="text-base font-bold">
+                          {EXTERNAL_PARTICIPANT_TYPE_LABELS[t]}
+                        </span>
+                        {active && <span className="text-[10px]">선택됨</span>}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
               <div><label className="mb-1 block text-sm font-medium">이름 *</label>
