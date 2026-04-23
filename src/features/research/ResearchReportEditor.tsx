@@ -26,13 +26,14 @@ import {
 } from "./useResearchReport";
 import { useResearchPapers } from "./useResearchPapers";
 import { useLogWritingActivity } from "./useWritingPaperHistory";
+import ResearchReportInterview from "./ResearchReportInterview";
 
 interface Props {
   user: User;
   readOnly?: boolean;
 }
 
-interface FormState {
+export interface FormState {
   fieldDescription: string;
   fieldProblem: string;
   problemPhenomenon: string;
@@ -64,6 +65,8 @@ interface FormState {
   theoryRelationRoles: string;
   theoryRelationIntegration: string;
 }
+
+export type SetField = <K extends keyof FormState>(key: K, value: FormState[K]) => void;
 
 const EMPTY: FormState = {
   fieldDescription: "",
@@ -558,61 +561,19 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
         </div>
       </section>
 
-      {/* 인터뷰 모드 안내 */}
-      {viewMode === "interview" && (
-        <section className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
-          <div className="flex items-start gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
-              <MessageSquareQuote size={16} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 text-xs font-medium text-primary">
-                <Sparkles size={12} />
-                Step {stepIdx + 1} / {STEPS.length} · {STEPS[stepIdx].label}
-              </div>
-              <p className="mt-1.5 text-base font-semibold text-foreground">
-                {STEPS[stepIdx].question}
-              </p>
-              <ul className="mt-2 space-y-1">
-                {STEPS[stepIdx].hints.map((h, i) => (
-                  <li key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground">
-                    <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-primary/50" />
-                    <span>{h}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-3 flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => canPrev && setStep(STEPS[stepIdx - 1].key)}
-                  disabled={!canPrev}
-                  className="h-7 px-2 text-[11px]"
-                >
-                  <ChevronLeft size={12} className="mr-0.5" />
-                  이전 챕터
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => canNext && setStep(STEPS[stepIdx + 1].key)}
-                  disabled={!canNext}
-                  className="h-7 px-2 text-[11px]"
-                >
-                  다음 챕터
-                  <ChevronRight size={12} className="ml-0.5" />
-                </Button>
-              </div>
-              {/* 진행도 바 */}
-              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full bg-primary transition-all"
-                  style={{ width: `${((stepIdx + 1) / STEPS.length) * 100}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
+      {/* 인터뷰 모드 — 전체화면 모달 */}
+      <ResearchReportInterview
+        open={viewMode === "interview"}
+        onClose={() => setViewMode("single")}
+        form={form}
+        setField={setField}
+        total={total}
+        saving={saving}
+        dirty={dirty}
+        savedAt={savedAt ?? undefined}
+        onSave={() => handleSave()}
+        onDraftSave={handleDraftSave}
+      />
 
       {/* 스텝 탭 */}
       <div className="flex items-center gap-1 rounded-xl border bg-white p-1.5">

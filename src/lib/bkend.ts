@@ -677,6 +677,11 @@ export const researchReportsApi = {
       "filter[userId]": userId,
       limit: 50,
     }),
+  listAll: (limit = 200) =>
+    dataApi.list<ResearchReport>("research_reports", {
+      sort: "updatedAt:desc",
+      limit,
+    }),
   get: (id: string) => dataApi.get<ResearchReport>("research_reports", id),
   create: (data: Record<string, unknown>) =>
     dataApi.create<ResearchReport>("research_reports", data),
