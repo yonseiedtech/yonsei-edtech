@@ -60,12 +60,14 @@ export default function SeminarsPage() {
 
     if (search.trim()) {
       const q = search.toLowerCase();
-      result = result.filter(
-        (s) =>
-          s.title.toLowerCase().includes(q) ||
-          s.speaker.toLowerCase().includes(q) ||
-          s.location?.toLowerCase().includes(q),
-      );
+      result = result.filter((s) => {
+        if (s.title.toLowerCase().includes(q)) return true;
+        if (s.speaker?.toLowerCase().includes(q)) return true;
+        if (s.location?.toLowerCase().includes(q)) return true;
+        // 다중 연사 모두 검색 대상
+        if (s.speakers?.some((sp) => sp.name?.toLowerCase().includes(q))) return true;
+        return false;
+      });
     }
 
     return result;

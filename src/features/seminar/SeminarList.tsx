@@ -33,6 +33,19 @@ function ParticipantCount({ seminar }: { seminar: Seminar }) {
   );
 }
 
+/**
+ * 세미나 카드의 발표자 표시 — 다중 연사 지원.
+ * speakers 배열이 비어있으면 legacy speaker 단일 필드로 폴백.
+ */
+function speakerDisplay(s: Seminar): string {
+  const list = s.speakers ?? [];
+  const names = list
+    .map((sp) => sp.name?.trim())
+    .filter((n): n is string => !!n);
+  if (names.length > 0) return names.join(", ");
+  return s.speaker;
+}
+
 const STATUS_STYLES: Record<SeminarStatus, string> = {
   draft: "bg-gray-100 text-gray-500",
   upcoming: "bg-primary/10 text-primary",
@@ -95,7 +108,7 @@ export default function SeminarList({ seminars, viewMode = "list" }: Props) {
                 </div>
               </div>
               <div className="mt-3 flex items-center justify-between border-t pt-3">
-                <span className="text-xs font-medium text-primary">발표: {seminar.speaker}</span>
+                <span className="text-xs font-medium text-primary">발표: {speakerDisplay(seminar)}</span>
                 {computed !== "cancelled" && (
                   <Button
                     variant="outline"
@@ -162,7 +175,7 @@ export default function SeminarList({ seminars, viewMode = "list" }: Props) {
             </div>
             <div className="mt-2 flex items-center justify-between">
               <span className="text-xs text-primary font-medium">
-                발표: {seminar.speaker}
+                발표: {speakerDisplay(seminar)}
               </span>
               {computed !== "cancelled" && (
                 <Button

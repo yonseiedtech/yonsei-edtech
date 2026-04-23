@@ -2,7 +2,17 @@
 
 import Link from "next/link";
 import { useSeminars } from "@/features/seminar/useSeminar";
+import type { Seminar } from "@/types";
 import { Calendar, MapPin, ArrowRight } from "lucide-react";
+
+function speakerDisplay(s: Seminar): string {
+  const names =
+    s.speakers
+      ?.map((sp) => sp.name?.trim())
+      .filter((n): n is string => !!n) ?? [];
+  if (names.length > 0) return names.join(", ");
+  return s.speaker;
+}
 
 export default function SeminarPreview() {
   const { seminars, isLoading } = useSeminars("upcoming");
@@ -50,7 +60,7 @@ export default function SeminarPreview() {
                 </div>
               </div>
               <div className="mt-3 text-xs text-primary font-medium">
-                발표: {seminar.speaker}
+                발표: {speakerDisplay(seminar)}
               </div>
             </Link>
           ))}

@@ -100,10 +100,35 @@ export default function ProfileAcademicActivities({ owner }: Props) {
     () => allActivities.filter((a) => isMember(a, owner)),
     [allActivities, owner],
   );
+
+  // 세미나에서 본인이 연사인지 판단 — speakers[] 배열 + 하위호환 단일 speaker 필드 모두 검사.
+  // 매칭 키: userId(가장 정확) > studentId > 이름 일치.
+  function isSpeaker(s: Seminar): boolean {
+    if (s.speakers && s.speakers.length > 0) {
+      return s.speakers.some(
+        (sp) =>
+          (sp.userId && sp.userId === owner.id) ||
+          (sp.studentId && owner.studentId && sp.studentId === owner.studentId) ||
+          (sp.type === "member" && sp.name && sp.name.trim() === owner.name?.trim()),
+      );
+    }
+    // 하위호환: 단일 speaker 필드 — 회원 매칭이 어려워 이름만 비교
+    if (s.speakerType === "member" && s.speaker?.trim() === owner.name?.trim()) return true;
+    return false;
+  }
+
   const mySeminars = useMemo(() => {
     const attendedIds = new Set(userAttendeeRecords.map((a) => a.seminarId));
-    return allSeminars.filter((s) => attendedIds.has(s.id));
-  }, [allSeminars, userAttendeeRecords]);
+    // 참여자(attendees)이거나 연사인 세미나 모두 포함. 중복은 id 기준 dedup.
+    const collected = allSeminars.filter((s) => attendedIds.has(s.id) || isSpeaker(s));
+    const seen = new Set<string>();
+    return collected.filter((s) => {
+      if (seen.has(s.id)) return false;
+      seen.add(s.id);
+      return true;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allSeminars, userAttendeeRecords, owner.id, owner.studentId, owner.name]);
 
   const filtered = useMemo(() => {
     if (tab === "seminar") return mySeminars;
@@ -177,11 +202,32 @@ export default function ProfileAcademicActivities({ owner }: Props) {
           {sliced.map((item) => {
             if (tab === "seminar") {
               const s = item as Seminar;
+              const speaker = isSpeaker(s);
               return (
-                <li key={s.id} className="rounded-xl border px-4 py-3 hover:border-primary/40">
+                <li
+                  key={s.id}
+                  className={cn(
+                    "rounded-xl border px-4 py-3 transition-colors",
+                    speaker
+                      ? "border-rose-200 bg-rose-50/40 hover:border-rose-300"
+                      : "hover:border-primary/40",
+                  )}
+                >
                   <Link href={`/seminars/${s.id}`} className="flex items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{s.title}</p>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {speaker && (
+                          <Badge
+                            variant="secondary"
+                            className="gap-0.5 bg-rose-100 text-[10px] font-semibold text-rose-700"
+                          >
+                            <Mic size={9} /> 연사
+                          </Badge>
+                        )}
+                      </div>
+                      <p className={cn("truncate text-sm", speaker ? "font-semibold text-rose-900" : "font-medium")}>
+                        {s.title}
+                      </p>
                       <p className="mt-0.5 text-[11px] text-muted-foreground">
                         {formatDate(s.date)}{s.time ? ` · ${s.time}` : ""}{s.location ? ` · ${s.location}` : ""}
                       </p>

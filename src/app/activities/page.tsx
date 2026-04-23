@@ -58,14 +58,21 @@ export default function ActivitiesPage() {
   });
 
   const highlights = useMemo(() => {
-    const completedSeminars = seminars.map((s) => ({
-      category: "세미나",
-      color: "bg-primary/10 text-primary",
-      title: s.title,
-      desc: `${s.speaker} 발표 · ${s.location}`,
-      date: s.date,
-      sortKey: s.date,
-    }));
+    const completedSeminars = seminars.map((s) => {
+      const speakerNames =
+        s.speakers
+          ?.map((sp) => sp.name?.trim())
+          .filter((n): n is string => !!n) ?? [];
+      const speakerLabel = speakerNames.length > 0 ? speakerNames.join(", ") : s.speaker;
+      return {
+        category: "세미나",
+        color: "bg-primary/10 text-primary",
+        title: s.title,
+        desc: `${speakerLabel} 발표 · ${s.location}`,
+        date: s.date,
+        sortKey: s.date,
+      };
+    });
 
     const recentPosts = posts
       .filter((p) => p.category === "notice" || p.category === "promotion")
