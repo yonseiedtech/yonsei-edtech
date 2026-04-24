@@ -22,19 +22,27 @@ import {
 // ─── Web Speech API 타입 (브라우저 표준 미적용) ───
 interface SpeechRecognitionResultLike {
   isFinal: boolean;
-  0: { transcript: string };
+  length: number;
+  [index: number]: { transcript: string; confidence?: number };
 }
 interface SpeechRecognitionEventLike {
   resultIndex: number;
-  results: ArrayLike<SpeechRecognitionResultLike>;
+  results: { length: number; [index: number]: SpeechRecognitionResultLike };
 }
 interface SpeechRecognitionInstance {
   lang: string;
   continuous: boolean;
   interimResults: boolean;
+  maxAlternatives?: number;
   onresult: ((e: SpeechRecognitionEventLike) => void) | null;
   onerror: ((e: { error: string }) => void) | null;
   onend: (() => void) | null;
+  onstart?: (() => void) | null;
+  onaudiostart?: (() => void) | null;
+  onaudioend?: (() => void) | null;
+  onspeechstart?: (() => void) | null;
+  onspeechend?: (() => void) | null;
+  onnomatch?: (() => void) | null;
   start: () => void;
   stop: () => void;
   abort: () => void;
@@ -47,7 +55,8 @@ interface WindowWithSpeech extends Window {
 function getRecognitionCtor(): (new () => SpeechRecognitionInstance) | null {
   if (typeof window === "undefined") return null;
   const w = window as unknown as WindowWithSpeech;
-  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
+  // Chrome/Edge는 webkitSpeechRecognition만 안정적, 표준 SpeechRecognition은 일부 환경에서 silent fail
+  return w.webkitSpeechRecognition ?? w.SpeechRecognition ?? null;
 }
 
 // ─── 한글 친화 토큰화 + Jaccard 유사도 ───
@@ -226,6 +235,10 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
   const [sttSupported, setSttSupported] = useState<boolean | null>(null);
   const [editingTranscript, setEditingTranscript] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  /** 진단용: STT 엔진 상태 표시 */
+  type SttStatus = "idle" | "starting" | "listening" | "speaking" | "processing" | "restarting" | "error";
+  const [sttStatus, setSttStatus] = useState<SttStatus>("idle");
+  const [sttDebug, setSttDebug] = useState<string>("");
 
   const recRef = useRef<SpeechRecognitionInstance | null>(null);
   const startedAtRef = useRef<number | null>(null);
@@ -257,6 +270,7 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
     wantRecordingRef.current = false;
     setRecording(false);
     setInterim("");
+    setSttStatus("idle");
     try { recRef.current?.stop(); } catch {/* noop */}
     const qid = currentQuestionIdRef.current;
     if (startedAtRef.current && qid) {
@@ -274,16 +288,50 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
     rec.lang = "ko-KR";
     rec.continuous = true;
     rec.interimResults = true;
+    rec.maxAlternatives = 1;
+    rec.onstart = () => {
+      console.log("[STT] onstart");
+      setSttStatus("listening");
+      setSttDebug("엔진 시작됨");
+    };
+    rec.onaudiostart = () => {
+      console.log("[STT] onaudiostart");
+      setSttDebug("오디오 캡처 시작");
+    };
+    rec.onspeechstart = () => {
+      console.log("[STT] onspeechstart");
+      setSttStatus("speaking");
+      setSttDebug("말하는 중 감지");
+    };
+    rec.onspeechend = () => {
+      console.log("[STT] onspeechend");
+      setSttStatus("processing");
+      setSttDebug("말 끝남, 처리 중");
+    };
+    rec.onaudioend = () => {
+      console.log("[STT] onaudioend");
+      setSttDebug("오디오 캡처 종료");
+    };
+    rec.onnomatch = () => {
+      console.log("[STT] onnomatch");
+      setSttDebug("매칭 결과 없음");
+    };
     rec.onresult = (e) => {
+      console.log("[STT] onresult resultIndex=", e.resultIndex, "results.length=", e.results.length);
       let finalText = "";
       let interimText = "";
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const r = e.results[i];
-        if (r.isFinal) finalText += r[0].transcript + " ";
-        else interimText += r[0].transcript;
+        const t = r[0]?.transcript ?? "";
+        if (r.isFinal) finalText += t + " ";
+        else interimText += t;
       }
+      console.log("[STT] final=", JSON.stringify(finalText), "interim=", JSON.stringify(interimText));
       const qid = currentQuestionIdRef.current;
-      if (!qid) return;
+      if (!qid) {
+        console.warn("[STT] no current question id, dropping result");
+        return;
+      }
       if (finalText) {
         setTranscripts((t) => ({
           ...t,
@@ -291,25 +339,36 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
         }));
       }
       setInterim(interimText);
+      setSttDebug(`결과 수신 (final: ${finalText.length}자, interim: ${interimText.length}자)`);
     };
     rec.onerror = (e) => {
-      console.warn("[STT] error:", e.error);
+      console.warn("[STT] onerror:", e.error);
+      setSttDebug(`에러: ${e.error}`);
       if (e.error === "no-speech" || e.error === "aborted") return;
       if (e.error === "not-allowed" || e.error === "service-not-allowed") {
         wantRecordingRef.current = false;
         toast.error("마이크 권한이 차단되었습니다. 브라우저 주소창의 자물쇠 → 마이크 → 허용으로 변경해주세요.");
         setRecording(false);
+        setSttStatus("error");
         return;
       }
       if (e.error === "audio-capture") {
         wantRecordingRef.current = false;
         toast.error("마이크를 찾을 수 없습니다. 입력 장치를 확인해주세요.");
         setRecording(false);
+        setSttStatus("error");
+        return;
+      }
+      if (e.error === "network") {
+        toast.error("네트워크 오류로 음성 인식이 끊어졌어요. 자동 재시도합니다.");
+        setSttStatus("restarting");
         return;
       }
       toast.error(`음성 인식 오류: ${e.error}`);
+      setSttStatus("error");
     };
     rec.onend = () => {
+      console.log("[STT] onend, wantRecording=", wantRecordingRef.current);
       const qid = currentQuestionIdRef.current;
       if (startedAtRef.current && qid) {
         const sec = Math.round((Date.now() - startedAtRef.current) / 1000);
@@ -317,20 +376,38 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
           (durationsRef.current[qid] ?? 0) + sec;
         startedAtRef.current = null;
       }
-      // 사용자가 정지를 누르지 않았다면 자동 재시작 (Chrome continuous는 침묵 ~5s 후 자동 종료)
+      // 사용자가 정지를 누르지 않았다면 fresh instance로 자동 재시작
+      // (Chrome은 같은 인스턴스 재시작 시 InvalidStateError 빈발 → setTimeout + 새 인스턴스)
       if (wantRecordingRef.current) {
-        try {
-          startedAtRef.current = Date.now();
-          recRef.current?.start();
-        } catch (err) {
-          console.warn("[STT] restart failed:", err);
-          wantRecordingRef.current = false;
-          setRecording(false);
-          setInterim("");
-        }
+        setSttStatus("restarting");
+        setSttDebug("자동 재시작 중...");
+        setTimeout(() => {
+          if (!wantRecordingRef.current) return;
+          try {
+            const fresh = buildRecognition();
+            if (!fresh) {
+              wantRecordingRef.current = false;
+              setRecording(false);
+              setSttStatus("error");
+              setSttDebug("재초기화 실패");
+              return;
+            }
+            recRef.current = fresh;
+            startedAtRef.current = Date.now();
+            fresh.start();
+          } catch (err) {
+            console.warn("[STT] restart failed:", err);
+            wantRecordingRef.current = false;
+            setRecording(false);
+            setInterim("");
+            setSttStatus("error");
+            setSttDebug(`재시작 실패: ${(err as Error).message}`);
+          }
+        }, 250);
       } else {
         setRecording(false);
         setInterim("");
+        setSttStatus("idle");
       }
     };
     return rec;
@@ -342,22 +419,30 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
       toast.error("이 브라우저는 음성 인식을 지원하지 않습니다. 직접 입력을 사용하세요.");
       return;
     }
+    setSttStatus("starting");
+    setSttDebug("마이크 권한 요청 중...");
     // 명시적 마이크 권한 요청 — Web Speech API만으로는 권한 프롬프트가 묻히는 경우가 있음
     try {
       if (typeof navigator !== "undefined" && navigator.mediaDevices?.getUserMedia) {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         // 즉시 트랙 정리 (Web Speech API가 자체 캡처)
         stream.getTracks().forEach((t) => t.stop());
+        setSttDebug("마이크 권한 OK");
       }
     } catch (err) {
       console.error("[STT] mic permission denied:", err);
       toast.error("마이크 권한이 필요합니다. 브라우저 설정에서 허용해주세요.");
+      setSttStatus("error");
+      setSttDebug("마이크 권한 거부됨");
       return;
     }
+    // 기존 인스턴스가 살아있다면 정리
+    try { recRef.current?.abort(); } catch {/* noop */}
     try {
       const rec = buildRecognition();
       if (!rec) {
         toast.error("음성 인식을 초기화할 수 없습니다.");
+        setSttStatus("error");
         return;
       }
       recRef.current = rec;
@@ -366,9 +451,12 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
       rec.start();
       setRecording(true);
       setInterim("");
+      setSttDebug("rec.start() 호출됨");
     } catch (err) {
       console.error("[STT] start failed:", err);
       wantRecordingRef.current = false;
+      setSttStatus("error");
+      setSttDebug(`start 실패: ${(err as Error).message}`);
       toast.error("음성 인식 시작에 실패했습니다. 페이지를 새로고침 후 다시 시도해주세요.");
     }
   };
@@ -612,6 +700,40 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                     </Button>
                   )}
                 </div>
+
+                {/* STT 진단 상태 표시 */}
+                {(recording || sttStatus !== "idle") && (
+                  <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border bg-muted/40 px-2.5 py-1.5 text-[11px]">
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold",
+                        sttStatus === "speaking"
+                          ? "bg-emerald-500 text-white"
+                          : sttStatus === "listening"
+                          ? "bg-blue-500 text-white"
+                          : sttStatus === "processing"
+                          ? "bg-amber-500 text-white"
+                          : sttStatus === "starting" || sttStatus === "restarting"
+                          ? "bg-zinc-500 text-white"
+                          : sttStatus === "error"
+                          ? "bg-rose-600 text-white"
+                          : "bg-zinc-300 text-zinc-700",
+                      )}
+                    >
+                      {sttStatus === "speaking" && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />}
+                      {sttStatus === "listening" && "듣는 중"}
+                      {sttStatus === "speaking" && "말하는 중 감지"}
+                      {sttStatus === "processing" && "처리 중"}
+                      {sttStatus === "starting" && "시작 중"}
+                      {sttStatus === "restarting" && "재시작 중"}
+                      {sttStatus === "error" && "오류"}
+                      {sttStatus === "idle" && "대기"}
+                    </span>
+                    {sttDebug && (
+                      <span className="text-muted-foreground">{sttDebug}</span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Expected answer / 비교 분석 toggle */}
