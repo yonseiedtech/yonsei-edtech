@@ -128,11 +128,6 @@ function readAlongMatchScore(spoken: string, target: string): number {
 const READALONG_THRESHOLDS = { easy: 50, normal: 70, hard: 90 } as const;
 type ReadAlongDifficulty = keyof typeof READALONG_THRESHOLDS;
 
-/** 임계값 이상이면 통과 */
-function isReadAlongPassed(spoken: string, target: string, threshold: number): boolean {
-  return readAlongMatchScore(spoken, target) >= threshold;
-}
-
 /** 한 문장(target)이 후보 문장 배열(pool) 중 가장 유사한 점수와 인덱스 반환 */
 function bestMatch(target: string, pool: string[]): { score: number; index: number } {
   if (!target || pool.length === 0) return { score: 0, index: -1 };
@@ -292,6 +287,19 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
   const [readAlongPassedByQ, setReadAlongPassedByQ] = useState<Record<string, number>>({});
   /** 따라 읽기 난이도 — 임계값 기반 (easy 50, normal 70, hard 90) */
   const [readAlongDifficulty, setReadAlongDifficulty] = useState<ReadAlongDifficulty>("normal");
+  /** 발화 종료 후 평가 결과 (null = 평가 전, 통과/미달 결과 표시용) */
+  const [readAlongResult, setReadAlongResult] = useState<{
+    score: number;
+    threshold: number;
+    passed: boolean;
+    spoken: string;
+  } | null>(null);
+  /** 평가 중 / 평가 완료 후 다음 입력을 받지 않는 짧은 잠금 (통과 시 자동 진행 동안) */
+  const [readAlongEvaluating, setReadAlongEvaluating] = useState(false);
+  /** STT 언어 — Web Speech API는 동시 다중 lang 미지원이므로 사용자가 토글 */
+  type SttLang = "ko-KR" | "en-US";
+  const [sttLang, setSttLang] = useState<SttLang>("ko-KR");
+  const sttLangRef = useRef<SttLang>("ko-KR");
 
   const recRef = useRef<SpeechRecognitionInstance | null>(null);
   const startedAtRef = useRef<number | null>(null);
@@ -311,6 +319,12 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
   const readAlongIdxRef = useRef(0);
   const readAlongTargetsRef = useRef<string[]>([]);
   const readAlongDifficultyRef = useRef<ReadAlongDifficulty>("normal");
+  const readAlongBufferRef = useRef<string>("");
+  const readAlongInterimRef = useRef<string>("");
+  /** 침묵 감지 평가 트리거 타이머 */
+  const readAlongSilenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** 통과 후 다음 문장 자동 진행용 타이머 (취소 가능) */
+  const readAlongAdvanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setSttSupported(getRecognitionCtor() !== null);
@@ -479,23 +493,40 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
     readAlongIdxRef.current = readAlongIdx;
   }, [readAlongIdx]);
 
-  // 난이도 ref 미러링
+  // 난이도/언어/buffer/interim ref 미러링
   useEffect(() => {
     readAlongDifficultyRef.current = readAlongDifficulty;
   }, [readAlongDifficulty]);
-
-  // 따라 읽기 통과 자동 검사 — buffer 또는 interim 변경 시 임계값 이상이면 다음 문장으로
   useEffect(() => {
-    if (practiceMode !== "readalong") return;
+    sttLangRef.current = sttLang;
+  }, [sttLang]);
+  useEffect(() => {
+    readAlongBufferRef.current = readAlongBuffer;
+  }, [readAlongBuffer]);
+  useEffect(() => {
+    readAlongInterimRef.current = interim;
+  }, [interim]);
+
+  /**
+   * 따라 읽기 평가 함수 — 발화가 끝났다고 판단되는 시점에서만 호출.
+   * 호출 트리거: (a) STT onspeechend, (b) 1.5초 침묵, (c) 사용자 "지금 평가" 버튼.
+   * 발화 중에는 호출하지 않음 → 사용자가 문장 도중 우연히 임계값 넘어도 자동 진행되지 않음.
+   */
+  const evaluateReadAlong = () => {
+    if (practiceModeRef.current !== "readalong") return;
     const targets = readAlongTargetsRef.current;
-    const idx0 = readAlongIdx;
+    const idx0 = readAlongIdxRef.current;
     if (idx0 >= targets.length) return;
     const target = targets[idx0];
     if (!target) return;
-    // final 누적 + interim 합쳐서 검사 (final이 도달하기 전 interim에서도 통과 가능하게)
-    const combined = (readAlongBuffer + " " + interim).trim();
-    const threshold = READALONG_THRESHOLDS[readAlongDifficulty];
-    if (isReadAlongPassed(combined, target, threshold)) {
+    const combined = (readAlongBufferRef.current + " " + readAlongInterimRef.current).trim();
+    if (!normalizeForCompare(combined)) return; // 빈 발화는 평가 스킵
+    if (readAlongAdvanceTimerRef.current) return; // 이미 다음 문장 자동 진행 대기 중
+    const threshold = READALONG_THRESHOLDS[readAlongDifficultyRef.current];
+    const score = readAlongMatchScore(combined, target);
+    const passed = score >= threshold;
+    setReadAlongResult({ score, threshold, passed, spoken: combined });
+    if (passed) {
       const qid = currentQuestionIdRef.current;
       const nextIdx = idx0 + 1;
       if (qid) {
@@ -504,17 +535,66 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
           [qid]: Math.max(prev[qid] ?? 0, nextIdx),
         }));
       }
-      const score = readAlongMatchScore(combined, target);
       if (nextIdx >= targets.length) {
         toast.success(`전체 ${targets.length}문장 따라 읽기 완료! (${score}점)`);
       } else {
         toast.success(`문장 ${idx0 + 1} 통과 ✓ (${score}점 / 기준 ${threshold}점)`);
       }
+      setReadAlongEvaluating(true);
+      // 1.2초 후 다음 문장 자동 진행 (잠깐 결과 보여주고)
+      readAlongAdvanceTimerRef.current = setTimeout(() => {
+        setReadAlongBuffer("");
+        setInterim("");
+        setReadAlongResult(null);
+        setReadAlongEvaluating(false);
+        setReadAlongIdx(nextIdx);
+        readAlongAdvanceTimerRef.current = null;
+      }, 1200);
+    } else {
+      toast.error(`미달 ${score}점 (기준 ${threshold}점) — 다시 시도하세요`);
+      // 미달이면 buffer/interim 자동 리셋 → 다음 시도는 깨끗한 slate
       setReadAlongBuffer("");
       setInterim("");
-      setReadAlongIdx(nextIdx);
     }
-  }, [readAlongBuffer, interim, readAlongIdx, practiceMode, readAlongDifficulty]);
+  };
+
+  // 침묵 1.5초 시 자동 평가 트리거 (발화 중에는 타이머가 계속 리셋되어 평가 안 됨)
+  useEffect(() => {
+    if (practiceMode !== "readalong") return;
+    if (readAlongEvaluating) return;
+    if (readAlongAdvanceTimerRef.current) return;
+    if (readAlongSilenceTimerRef.current) {
+      clearTimeout(readAlongSilenceTimerRef.current);
+      readAlongSilenceTimerRef.current = null;
+    }
+    const combined = (readAlongBuffer + " " + interim).trim();
+    if (!normalizeForCompare(combined)) return;
+    readAlongSilenceTimerRef.current = setTimeout(() => {
+      evaluateReadAlong();
+      readAlongSilenceTimerRef.current = null;
+    }, 1500);
+    return () => {
+      if (readAlongSilenceTimerRef.current) {
+        clearTimeout(readAlongSilenceTimerRef.current);
+        readAlongSilenceTimerRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [readAlongBuffer, interim, practiceMode, readAlongEvaluating]);
+
+  /** 따라 읽기 관련 타이머/상태 일괄 정리 */
+  const resetReadAlongTransientState = () => {
+    if (readAlongSilenceTimerRef.current) {
+      clearTimeout(readAlongSilenceTimerRef.current);
+      readAlongSilenceTimerRef.current = null;
+    }
+    if (readAlongAdvanceTimerRef.current) {
+      clearTimeout(readAlongAdvanceTimerRef.current);
+      readAlongAdvanceTimerRef.current = null;
+    }
+    setReadAlongResult(null);
+    setReadAlongEvaluating(false);
+  };
 
   const stopRecording = () => {
     wantRecordingRef.current = false;
@@ -522,6 +602,7 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
     setInterim("");
     setSttStatus("idle");
     setNoSpeechHint(false);
+    resetReadAlongTransientState();
     if (noSpeechTimerRef.current) {
       clearTimeout(noSpeechTimerRef.current);
       noSpeechTimerRef.current = null;
@@ -546,7 +627,7 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
     const Ctor = getRecognitionCtor();
     if (!Ctor) return null;
     const rec = new Ctor();
-    rec.lang = "ko-KR";
+    rec.lang = sttLangRef.current;
     rec.continuous = true;
     rec.interimResults = true;
     rec.maxAlternatives = 1;
@@ -580,6 +661,15 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
       console.log("[STT] onspeechend");
       setSttStatus("processing");
       setSttDebug("말 끝남, 처리 중");
+      // 따라 읽기 모드: 발화 종료 즉시 평가 트리거 (1.5s 침묵 타이머 대신 즉시)
+      if (practiceModeRef.current === "readalong") {
+        // 약간의 지연을 둬서 마지막 final transcript가 buffer에 반영될 시간 확보
+        setTimeout(() => {
+          if (practiceModeRef.current === "readalong") {
+            evaluateReadAlong();
+          }
+        }, 400);
+      }
     };
     rec.onaudioend = () => {
       console.log("[STT] onaudioend");
@@ -788,6 +878,7 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
     setEditingTranscript(false);
     setReadAlongIdx(0);
     setReadAlongBuffer("");
+    resetReadAlongTransientState();
     setIdx((i) => Math.max(0, i - 1));
   };
   const goNext = () => {
@@ -796,6 +887,7 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
     setEditingTranscript(false);
     setReadAlongIdx(0);
     setReadAlongBuffer("");
+    resetReadAlongTransientState();
     if (idx < questions.length - 1) {
       setIdx((i) => i + 1);
     } else {
@@ -987,6 +1079,44 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                 </div>
               )}
 
+              {/* STT 언어 선택 — 모든 모드 공통 (모범 답변이 있을 때만 노출 의미는 약하지만, 답변 모드에서도 영어 답변 가능) */}
+              <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 p-2">
+                <span className="text-xs font-semibold text-muted-foreground">인식 언어</span>
+                <div className="inline-flex rounded-md border bg-background p-0.5 text-xs">
+                  {(["ko-KR", "en-US"] as const).map((lng) => {
+                    const label = lng === "ko-KR" ? "한국어" : "English";
+                    const active = sttLang === lng;
+                    return (
+                      <button
+                        key={lng}
+                        type="button"
+                        onClick={() => {
+                          if (sttLang === lng) return;
+                          setSttLang(lng);
+                          sttLangRef.current = lng;
+                          // 녹음 중이라면 새 언어로 즉시 재시작
+                          if (recording) {
+                            stopRecording();
+                            setTimeout(() => { startRecording(); }, 200);
+                          }
+                        }}
+                        className={cn(
+                          "rounded px-3 py-1 font-medium transition-colors",
+                          active
+                            ? "bg-foreground text-background"
+                            : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <span className="ml-auto text-[10px] text-muted-foreground">
+                  Web Speech API는 동시 다중 언어 미지원 — 발화 전에 선택
+                </span>
+              </div>
+
               {/* 따라 읽기 난이도 선택 */}
               {practiceMode === "readalong" && expectedSentences.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 p-2">
@@ -1130,15 +1260,50 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                             )}
                           </div>
 
+                          {/* 평가 결과 (있을 때만) — 발화 종료 후 표시 */}
+                          {readAlongResult && (
+                            <div
+                              className={cn(
+                                "rounded-lg border-2 p-3 text-sm",
+                                readAlongResult.passed
+                                  ? "border-emerald-500 bg-emerald-50 text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-100"
+                                  : "border-rose-400 bg-rose-50 text-rose-950 dark:bg-rose-950/40 dark:text-rose-100",
+                              )}
+                            >
+                              <p className="font-semibold">
+                                {readAlongResult.passed
+                                  ? `통과 ✓ ${readAlongResult.score}점 (기준 ${readAlongResult.threshold}점)`
+                                  : `미달 — ${readAlongResult.score}점 (기준 ${readAlongResult.threshold}점)`}
+                              </p>
+                              <p className="mt-1 text-[11px] opacity-80">
+                                {readAlongResult.passed
+                                  ? "잠시 후 다음 문장으로 진행됩니다…"
+                                  : "다시 시도하거나 난이도를 조정해보세요."}
+                              </p>
+                            </div>
+                          )}
+
                           <div className="flex flex-wrap items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={evaluateReadAlong}
+                              disabled={
+                                readAlongEvaluating ||
+                                (!readAlongBuffer.trim() && !interim.trim())
+                              }
+                            >
+                              <CheckCircle2 size={12} className="mr-1" /> 지금 평가
+                            </Button>
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => {
                                 setReadAlongBuffer("");
                                 setInterim("");
+                                setReadAlongResult(null);
                               }}
-                              disabled={!readAlongBuffer && !interim}
+                              disabled={!readAlongBuffer && !interim && !readAlongResult}
                             >
                               <RotateCcw size={12} className="mr-1" /> 발화 비우기
                             </Button>
@@ -1149,6 +1314,7 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                                 // 건너뛰기 (수동으로 다음 문장 통과 처리 없이 이동)
                                 setReadAlongBuffer("");
                                 setInterim("");
+                                setReadAlongResult(null);
                                 setReadAlongIdx((i) => Math.min(expectedSentences.length, i + 1));
                               }}
                             >
@@ -1161,6 +1327,7 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                                 onClick={() => {
                                   setReadAlongBuffer("");
                                   setInterim("");
+                                  setReadAlongResult(null);
                                   setReadAlongIdx((i) => Math.max(0, i - 1));
                                 }}
                               >
@@ -1403,7 +1570,7 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                       </p>
                     )}
                     <p className="ml-auto text-[11px] text-muted-foreground">
-                      문장을 정확히 말하면 자동으로 다음 문장으로 진행됩니다.
+                      문장을 다 말하고 1.5초 멈추면 자동 평가 → 통과 시 다음 문장으로
                     </p>
                   </div>
                   {/* 진단 상태 (재사용) */}
