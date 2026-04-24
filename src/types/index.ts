@@ -2141,16 +2141,35 @@ export const DEFENSE_CATEGORY_LABELS: Record<DefensePracticeCategory, string> = 
   general: "일반",
 };
 
+/** 연습 모드 — 심사 답변(STT vs 모범) | 따라 읽기(문장 단위 통과) */
+export type DefensePracticeMode = "answer" | "readalong";
+
 export interface DefensePracticeAttempt {
   /** 시도 시각 ISO */
   at: string;
-  /** 전체 평균 유사도 (0~100) */
+  /** 모드 (구버전 데이터는 mode 누락 → "answer"로 간주) */
+  mode?: DefensePracticeMode;
+  /** STT 인식 언어 */
+  sttLang?: "ko-KR" | "en-US";
+  /** 전체 평균 점수 (answer: 평균 유사도, readalong: 통과율 0~100) */
   averageScore: number;
-  /** 질문별 결과 */
+  /** 답변 모드 결과 — 구버전 호환을 위해 results 키 유지 */
   results: Array<{
     questionId: string;
     transcript: string;
     score: number;
+    durationSec?: number;
+    /** 모범답변에 있는 학자 중 발화에 언급된 학자 (canonical) */
+    scholarsMentioned?: string[];
+    /** 모범답변에 등장한 전체 학자 (canonical) */
+    scholarsExpected?: string[];
+  }>;
+  /** 따라 읽기 모드 결과 (mode === "readalong"일 때만) */
+  readalongResults?: Array<{
+    questionId: string;
+    totalSentences: number;
+    passedSentences: number;
+    difficulty: "easy" | "normal" | "hard";
     durationSec?: number;
   }>;
 }
@@ -2164,8 +2183,10 @@ export interface DefensePracticeSet {
   /** 연구 주제·논문 제목 등 발표 맥락 */
   topic?: string;
   questions: DefenseQuestion[];
-  /** 마지막 연습 결과 (이력은 별도 컬렉션 없이 최근 1건만 저장) */
+  /** 마지막 연습 결과 (구버전 호환) */
   lastAttempt?: DefensePracticeAttempt;
+  /** 시도 이력 (시간 내림차순, 최대 50건 유지) */
+  attempts?: DefensePracticeAttempt[];
   /** 누적 시도 횟수 */
   attemptCount?: number;
   createdAt: string;

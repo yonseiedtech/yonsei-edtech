@@ -24,7 +24,7 @@ import { toast } from "sonner";
 import {
   Search, RefreshCw, UserPlus, Clock, Users, UserCheck, XCircle,
   RotateCcw, Settings, Download, ShieldCheck, AlertTriangle, AlertCircle,
-  CheckSquare, Square, Trash2,
+  CheckSquare, Square, Trash2, ArrowUp, ArrowDown, ArrowUpDown,
 } from "lucide-react";
 import { evaluateSignup, partitionPending } from "@/lib/auth/approval-rules";
 import AdminEmptyState from "@/components/admin/AdminEmptyState";
@@ -281,15 +281,57 @@ export default function AdminMemberTab() {
   const [newRoles, setNewRoles] = useState<{ memberId: string; role: UserRole }[]>([]);
   const { bulkChangeRoles, isLoading: bulkLoading } = useBulkChangeRoles();
 
-  // 현재 탭에 따른 표시 대상 회원 목록
+  // 정렬 (테이블 헤더 클릭 시 토글) — 컬럼별 asc/desc, null = 기본 순서
+  type SortKey =
+    | "name" | "studentId" | "enrollmentStatus" | "accumulatedSemesters"
+    | "currentStatus" | "phone" | "role" | "lastLoginAt";
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      // asc → desc → 해제
+      if (sortDir === "asc") setSortDir("desc");
+      else { setSortKey(null); setSortDir("asc"); }
+    } else {
+      setSortKey(key); setSortDir("asc");
+    }
+  }
+  function getSortValue(m: User, key: SortKey): string | number {
+    switch (key) {
+      case "name": return (m.name ?? "").toLowerCase();
+      case "studentId": return (m.studentId || m.username || "").toLowerCase();
+      case "enrollmentStatus":
+        return m.enrollmentStatus ? ENROLLMENT_STATUS_LABELS[m.enrollmentStatus] : "";
+      case "accumulatedSemesters": return m.accumulatedSemesters ?? -1;
+      case "currentStatus": {
+        const occ = m.occupation ? OCCUPATION_LABELS[m.occupation] : "";
+        return (occ || (m.enrollmentStatus ? ENROLLMENT_STATUS_LABELS[m.enrollmentStatus] : "")).toLowerCase();
+      }
+      case "phone": return (m.phone ?? "").replace(/\D/g, "");
+      case "role": return ROLE_LABELS[m.role] ?? "";
+      case "lastLoginAt": return m.lastLoginAt ? new Date(m.lastLoginAt).getTime() : 0;
+    }
+  }
+
+  // 현재 탭에 따른 표시 대상 회원 목록 (검색 + 정렬 적용)
   const displayMembers = useMemo(() => {
     const source = activeTab === "all" ? allMembers : members;
-    if (!searchQuery) return source;
     const q = searchQuery.toLowerCase();
-    return source.filter(
-      (m) => m.name.toLowerCase().includes(q) || m.username.toLowerCase().includes(q),
-    );
-  }, [activeTab, allMembers, members, searchQuery]);
+    const filtered = !searchQuery
+      ? source
+      : source.filter(
+          (m) => m.name.toLowerCase().includes(q) || m.username.toLowerCase().includes(q),
+        );
+    if (!sortKey) return filtered;
+    const sorted = [...filtered].sort((a, b) => {
+      const av = getSortValue(a, sortKey);
+      const bv = getSortValue(b, sortKey);
+      if (typeof av === "number" && typeof bv === "number") return av - bv;
+      return String(av).localeCompare(String(bv), "ko");
+    });
+    return sortDir === "desc" ? sorted.reverse() : sorted;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, allMembers, members, searchQuery, sortKey, sortDir]);
 
   function handleRoleChange(userId: string, newRole: UserRole) {
     const target = allMembers.find((m) => m.id === userId);
@@ -471,6 +513,29 @@ export default function AdminMemberTab() {
   }
 
   // ── 회원 테이블 ──
+  function SortableTh<K extends string>({ sortKey: key, label, current, dir, onClick }: {
+    sortKey: K; label: string; current: K | null; dir: "asc" | "desc"; onClick: (k: K) => void;
+  }) {
+    const active = current === key;
+    const Icon = !active ? ArrowUpDown : dir === "asc" ? ArrowUp : ArrowDown;
+    return (
+      <th
+        scope="col"
+        className={cn(
+          "px-4 py-3 text-left font-medium select-none cursor-pointer hover:bg-muted/50 transition-colors",
+          active && "text-primary",
+        )}
+        onClick={() => onClick(key)}
+        title={`${label} 정렬 (오름차순 → 내림차순 → 해제)`}
+      >
+        <span className="inline-flex items-center gap-1">
+          {label}
+          <Icon size={12} className={cn(!active && "opacity-40")} />
+        </span>
+      </th>
+    );
+  }
+
   function MemberTable({ data }: { data: User[]; showStatus?: boolean }) {
     return (
       <>
@@ -485,14 +550,14 @@ export default function AdminMemberTab() {
           <table className="w-full text-sm whitespace-nowrap">
             <thead className="border-b bg-muted/30">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">이름</th>
-                <th className="px-4 py-3 text-left font-medium">학번(아이디)</th>
-                <th className="px-4 py-3 text-left font-medium">신분유형</th>
-                <th className="px-4 py-3 text-left font-medium">누적학기</th>
-                <th className="px-4 py-3 text-left font-medium">현재 신분 유형</th>
-                <th className="px-4 py-3 text-left font-medium">연락처</th>
-                <th className="px-4 py-3 text-left font-medium">역할</th>
-                <th className="px-4 py-3 text-left font-medium">최근 접속</th>
+                <SortableTh sortKey="name" label="이름" current={sortKey} dir={sortDir} onClick={toggleSort} />
+                <SortableTh sortKey="studentId" label="학번(아이디)" current={sortKey} dir={sortDir} onClick={toggleSort} />
+                <SortableTh sortKey="enrollmentStatus" label="신분유형" current={sortKey} dir={sortDir} onClick={toggleSort} />
+                <SortableTh sortKey="accumulatedSemesters" label="누적학기" current={sortKey} dir={sortDir} onClick={toggleSort} />
+                <SortableTh sortKey="currentStatus" label="현재 신분 유형" current={sortKey} dir={sortDir} onClick={toggleSort} />
+                <SortableTh sortKey="phone" label="연락처" current={sortKey} dir={sortDir} onClick={toggleSort} />
+                <SortableTh sortKey="role" label="역할" current={sortKey} dir={sortDir} onClick={toggleSort} />
+                <SortableTh sortKey="lastLoginAt" label="최근 접속" current={sortKey} dir={sortDir} onClick={toggleSort} />
                 {canApprove && <th className="px-4 py-3 text-left font-medium">관리</th>}
               </tr>
             </thead>

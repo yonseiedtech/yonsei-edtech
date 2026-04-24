@@ -1118,12 +1118,18 @@ export const courseTodosApi = {
 export const guideTracksApi = {
   list: () =>
     dataApi.list<GuideTrack>("guide_tracks", { sort: "order:asc", limit: 50 }),
-  listPublished: () =>
-    dataApi.list<GuideTrack>("guide_tracks", {
-      "filter[published]": "true",
+  /**
+   * 회원 뷰 — published === true 트랙만.
+   * bkend의 boolean filter가 string "true"와 매칭되지 않아 콘솔 토글이 반영되지 않던 버그가 있어
+   * guideItemsApi.listPublishedByTrack과 동일한 클라이언트-사이드 필터 패턴으로 통일.
+   */
+  listPublished: async () => {
+    const res = await dataApi.list<GuideTrack>("guide_tracks", {
       sort: "order:asc",
       limit: 50,
-    }),
+    });
+    return { ...res, data: res.data.filter((t) => t.published === true) };
+  },
   get: (id: string) => dataApi.get<GuideTrack>("guide_tracks", id),
   create: (data: Record<string, unknown>) =>
     dataApi.create<GuideTrack>("guide_tracks", data),

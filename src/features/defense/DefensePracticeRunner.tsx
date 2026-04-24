@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Mic, MicOff, ChevronLeft, ChevronRight, X, RotateCcw,
   CheckCircle2, AlertCircle, Loader2, Pencil, Eye, EyeOff,
+  History, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { defensePracticesApi } from "@/lib/bkend";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,8 @@ import {
   DEFENSE_CATEGORY_LABELS,
   type DefensePracticeAttempt,
 } from "@/types";
+
+const MAX_ATTEMPTS_HISTORY = 50;
 
 // ─── Web Speech API 타입 (브라우저 표준 미적용) ───
 interface SpeechRecognitionResultLike {
@@ -207,6 +210,22 @@ function splitSentences(text: string): string[] {
     .split(/(?<=[.!?。!?])\s+|\n+/u)
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
+}
+
+/** 문단 분리 — 빈 줄(\n\n+) 기준. 빈 줄 없으면 전체를 1문단으로 처리 */
+function splitParagraphs(text: string): string[] {
+  if (!text) return [];
+  const cleaned = text.replace(/\r/g, "");
+  const parts = cleaned.split(/\n{2,}/u).map((s) => s.trim()).filter((s) => s.length > 0);
+  // 빈 줄이 없어 1개로만 분리되면 단일 문단으로 — sentence 모드와 효과적으로 동일
+  return parts.length > 0 ? parts : [];
+}
+
+export type ReadAlongUnit = "sentence" | "paragraph";
+
+/** 단위에 따라 텍스트를 segment 배열로 분리 */
+function splitSegments(text: string, unit: ReadAlongUnit): string[] {
+  return unit === "paragraph" ? splitParagraphs(text) : splitSentences(text);
 }
 
 /** 따라 읽기용 정규화 — 공백·구두점·대소문자 차이를 무시하고 글자만 비교 */
@@ -471,6 +490,18 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
   const [readAlongPassedByQ, setReadAlongPassedByQ] = useState<Record<string, number>>({});
   /** 따라 읽기 난이도 — 임계값 기반 (easy 50, normal 70, hard 90) */
   const [readAlongDifficulty, setReadAlongDifficulty] = useState<ReadAlongDifficulty>("normal");
+  /** 따라 읽기 단위 — 문장 / 문단 (모범답변에 빈 줄이 있어야 문단 단위가 의미 있음) */
+  const [readAlongUnit, setReadAlongUnit] = useState<ReadAlongUnit>("sentence");
+  /**
+   * 따라 읽기 발화 기록 — 질문별·세그먼트별 (마지막 평가된 발화만 보존).
+   * 완료 화면에서 모범 답변과 1:1로 비교하기 위함.
+   */
+  const [readAlongSpokenByQ, setReadAlongSpokenByQ] = useState<
+    Record<string, Array<{ idx: number; spoken: string; score: number; passed: boolean } | null>>
+  >({});
+  /** 모범 답변 인라인 편집용 — 완료 화면에서 textarea로 수정 후 저장 */
+  const [editingExpected, setEditingExpected] = useState(false);
+  const [editedExpectedDraft, setEditedExpectedDraft] = useState("");
   /** 발화 종료 후 평가 결과 (null = 평가 전, 통과/미달 결과 표시용) */
   const [readAlongResult, setReadAlongResult] = useState<{
     score: number;
@@ -480,6 +511,10 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
   } | null>(null);
   /** 평가 중 / 평가 완료 후 다음 입력을 받지 않는 짧은 잠금 (통과 시 자동 진행 동안) */
   const [readAlongEvaluating, setReadAlongEvaluating] = useState(false);
+  /** intro 화면 이력 패널 펼침 */
+  const [showHistory, setShowHistory] = useState(false);
+  /** 펼쳐진 attempt index (intro 화면 — 클릭 시 상세 노출) */
+  const [expandedAttemptIdx, setExpandedAttemptIdx] = useState<number | null>(null);
   /** STT 언어 — Web Speech API는 동시 다중 lang 미지원이므로 사용자가 토글 */
   type SttLang = "ko-KR" | "en-US";
   const [sttLang, setSttLang] = useState<SttLang>("ko-KR");
@@ -665,19 +700,20 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
     currentQuestionIdRef.current = current?.id ?? "";
   }, [current?.id]);
 
-  // 따라 읽기 모드용: 현재 질문의 모범 답변을 문장 단위로 분리
-  const expectedSentences = useMemo(
-    () => splitSentences(current?.expectedAnswer ?? ""),
-    [current?.expectedAnswer],
+  // 따라 읽기 모드용: 현재 질문의 모범 답변을 단위(문장/문단) 기준으로 분리
+  const expectedSegments = useMemo(
+    () => splitSegments(current?.expectedAnswer ?? "", readAlongUnit),
+    [current?.expectedAnswer, readAlongUnit],
   );
 
-  // 질문이 바뀌면 따라 읽기 진행상태 리셋
+  // 질문 또는 단위가 바뀌면 따라 읽기 진행상태 리셋
   useEffect(() => {
     setReadAlongIdx(0);
     setReadAlongBuffer("");
+    setReadAlongResult(null);
     readAlongIdxRef.current = 0;
-    readAlongTargetsRef.current = expectedSentences;
-  }, [current?.id, expectedSentences]);
+    readAlongTargetsRef.current = expectedSegments;
+  }, [current?.id, expectedSegments, readAlongUnit]);
 
   // mode/idx state → ref 미러링
   useEffect(() => {
@@ -720,8 +756,18 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
     const score = readAlongMatchScore(combined, target);
     const passed = score >= threshold;
     setReadAlongResult({ score, threshold, passed, spoken: combined });
+    const qid = currentQuestionIdRef.current;
+    // 발화 기록 누적 (통과/미달 모두) — 완료 화면 비교용
+    if (qid) {
+      setReadAlongSpokenByQ((prev) => {
+        const arr = (prev[qid] ?? []).slice();
+        // 배열 길이가 idx0보다 짧으면 빈 자리 채움
+        while (arr.length <= idx0) arr.push(null);
+        arr[idx0] = { idx: idx0, spoken: combined, score, passed };
+        return { ...prev, [qid]: arr };
+      });
+    }
     if (passed) {
-      const qid = currentQuestionIdRef.current;
       const nextIdx = idx0 + 1;
       if (qid) {
         setReadAlongPassedByQ((prev) => ({
@@ -729,13 +775,14 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
           [qid]: Math.max(prev[qid] ?? 0, nextIdx),
         }));
       }
-      if (nextIdx >= targets.length) {
-        toast.success(`전체 ${targets.length}문장 따라 읽기 완료! (${score}점)`);
+      const isLast = nextIdx >= targets.length;
+      if (isLast) {
+        toast.success(`전체 ${targets.length}개 통과 — 따라 읽기 완료! (${score}점)`);
       } else {
-        toast.success(`문장 ${idx0 + 1} 통과 ✓ (${score}점 / 기준 ${threshold}점)`);
+        toast.success(`${idx0 + 1}번 통과 ✓ (${score}점 / 기준 ${threshold}점)`);
       }
       setReadAlongEvaluating(true);
-      // 1.2초 후 다음 문장 자동 진행 (잠깐 결과 보여주고)
+      // 1.2초 후 다음 문장 자동 진행 (잠깐 결과 보여주고). 마지막이면 자동 녹음 정지.
       readAlongAdvanceTimerRef.current = setTimeout(() => {
         setReadAlongBuffer("");
         setInterim("");
@@ -743,6 +790,9 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
         setReadAlongEvaluating(false);
         setReadAlongIdx(nextIdx);
         readAlongAdvanceTimerRef.current = null;
+        if (isLast && wantRecordingRef.current) {
+          stopRecording();
+        }
       }, 1200);
     } else {
       toast.error(`미달 ${score}점 (기준 ${threshold}점) — 다시 시도하세요`);
@@ -1096,7 +1146,11 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
       const transcript = transcripts[q.id] ?? "";
       const score = similarityScore(transcript, q.expectedAnswer);
       const durationSec = durationsRef.current[q.id];
-      return { questionId: q.id, transcript, score, durationSec };
+      const scholarsExpected = Array.from(extractScholars(q.expectedAnswer));
+      const scholarsMentioned = Array.from(extractScholars(transcript)).filter((s) =>
+        scholarsExpected.includes(s),
+      );
+      return { questionId: q.id, transcript, score, durationSec, scholarsExpected, scholarsMentioned };
     });
   }, [practiceSet, transcripts]);
 
@@ -1104,23 +1158,81 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
     ? Math.round(results.reduce((s, r) => s + r.score, 0) / results.length)
     : 0;
 
+  /** 새 attempt를 attempts[] 앞에 push하고 최대 N개 유지 */
+  const pushAttemptAndUpdate = async (attempt: DefensePracticeAttempt) => {
+    if (!practiceSet) return;
+    const prevAttempts = Array.isArray(practiceSet.attempts) ? practiceSet.attempts : [];
+    const nextAttempts = [attempt, ...prevAttempts].slice(0, MAX_ATTEMPTS_HISTORY);
+    await defensePracticesApi.update(practiceSet.id, {
+      lastAttempt: attempt,
+      attempts: nextAttempts,
+      attemptCount: (practiceSet.attemptCount ?? 0) + 1,
+      updatedAt: attempt.at,
+    });
+    qc.invalidateQueries({ queryKey: ["defense_practice_sets"] });
+    qc.invalidateQueries({ queryKey: ["defense_practice_set", id] });
+  };
+
   const handleSaveAttempt = async () => {
     if (!practiceSet) return;
     setSubmitting(true);
     try {
       const attempt: DefensePracticeAttempt = {
         at: new Date().toISOString(),
+        mode: "answer",
+        sttLang,
         averageScore,
         results,
       };
-      await defensePracticesApi.update(practiceSet.id, {
-        lastAttempt: attempt,
-        attemptCount: (practiceSet.attemptCount ?? 0) + 1,
-        updatedAt: attempt.at,
-      });
-      qc.invalidateQueries({ queryKey: ["defense_practice_sets"] });
-      qc.invalidateQueries({ queryKey: ["defense_practice_set", id] });
-      toast.success("연습 결과가 저장되었습니다.");
+      await pushAttemptAndUpdate(attempt);
+      toast.success("심사 답변 결과가 이력에 저장되었습니다.");
+    } catch (e) {
+      console.error(e);
+      toast.error("결과 저장에 실패했습니다.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  /** 따라 읽기 모드 결과 저장 — 현재까지 통과한 문장 정보 기반 */
+  const handleSaveReadAlongAttempt = async () => {
+    if (!practiceSet) return;
+    setSubmitting(true);
+    try {
+      const readalongResults = practiceSet.questions
+        .map((q) => {
+          const total = splitSentences(q.expectedAnswer).length;
+          const passed = readAlongPassedByQ[q.id] ?? 0;
+          return total > 0
+            ? {
+                questionId: q.id,
+                totalSentences: total,
+                passedSentences: Math.min(passed, total),
+                difficulty: readAlongDifficulty,
+                durationSec: durationsRef.current[q.id],
+              }
+            : null;
+        })
+        .filter((r): r is NonNullable<typeof r> => r !== null);
+      if (readalongResults.length === 0) {
+        toast.warning("저장할 따라 읽기 기록이 없습니다.");
+        return;
+      }
+      const totalSentences = readalongResults.reduce((s, r) => s + r.totalSentences, 0);
+      const passedSentences = readalongResults.reduce((s, r) => s + r.passedSentences, 0);
+      const passRate = totalSentences > 0
+        ? Math.round((passedSentences / totalSentences) * 100)
+        : 0;
+      const attempt: DefensePracticeAttempt = {
+        at: new Date().toISOString(),
+        mode: "readalong",
+        sttLang,
+        averageScore: passRate,
+        results: [],
+        readalongResults,
+      };
+      await pushAttemptAndUpdate(attempt);
+      toast.success(`따라 읽기 결과 저장됨 (통과율 ${passRate}%)`);
     } catch (e) {
       console.error(e);
       toast.error("결과 저장에 실패했습니다.");
@@ -1200,6 +1312,139 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
             <Button size="lg" onClick={() => setStep("question")}>
               연습 시작
             </Button>
+
+            {/* 이력 보기 패널 — attempts[] 누적 기록 */}
+            {(() => {
+              const attempts = Array.isArray(practiceSet.attempts) ? practiceSet.attempts : [];
+              if (attempts.length === 0) return null;
+              return (
+                <div className="w-full rounded-lg border bg-card text-left">
+                  <button
+                    type="button"
+                    onClick={() => setShowHistory((v) => !v)}
+                    className="flex w-full items-center justify-between gap-2 px-4 py-3 text-sm font-semibold hover:bg-muted/40"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <History size={16} />
+                      이력 보기
+                      <Badge variant="secondary">{attempts.length}회</Badge>
+                    </span>
+                    {showHistory ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  </button>
+                  {showHistory && (
+                    <ol className="border-t divide-y">
+                      {attempts.slice(0, 20).map((a, i) => {
+                        const isOpen = expandedAttemptIdx === i;
+                        const dt = (() => {
+                          try { return new Date(a.at).toLocaleString("ko-KR"); }
+                          catch { return a.at; }
+                        })();
+                        const modeLabel = a.mode === "readalong" ? "따라 읽기" : "심사 답변";
+                        const modeColor = a.mode === "readalong"
+                          ? "bg-indigo-500 text-white"
+                          : "bg-blue-600 text-white";
+                        const score = a.averageScore ?? 0;
+                        const scoreColor = score >= 80
+                          ? "bg-emerald-600"
+                          : score >= 60
+                          ? "bg-amber-500"
+                          : "bg-rose-500";
+                        return (
+                          <li key={`${a.at}-${i}`} className="text-xs">
+                            <button
+                              type="button"
+                              onClick={() => setExpandedAttemptIdx(isOpen ? null : i)}
+                              className="flex w-full flex-wrap items-center gap-2 px-4 py-2 text-left hover:bg-muted/30"
+                            >
+                              <Badge className={modeColor}>{modeLabel}</Badge>
+                              <Badge className={cn("text-white", scoreColor)}>{score}점</Badge>
+                              {a.sttLang && (
+                                <Badge variant="outline">
+                                  {a.sttLang === "en-US" ? "EN" : "KO"}
+                                </Badge>
+                              )}
+                              <span className="ml-auto text-muted-foreground">{dt}</span>
+                              {isOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                            </button>
+                            {isOpen && (
+                              <div className="space-y-2 bg-muted/20 px-4 py-3 text-[11px]">
+                                {a.mode === "readalong" && a.readalongResults?.length ? (
+                                  <ul className="space-y-1">
+                                    {a.readalongResults.map((r, ri) => {
+                                      const q = practiceSet.questions.find((x) => x.id === r.questionId);
+                                      const rate = r.totalSentences > 0
+                                        ? Math.round((r.passedSentences / r.totalSentences) * 100)
+                                        : 0;
+                                      return (
+                                        <li key={`${r.questionId}-${ri}`} className="rounded bg-background p-2">
+                                          <div className="flex flex-wrap items-center gap-1">
+                                            <span className="font-semibold">Q{ri + 1}</span>
+                                            <Badge variant="outline" className="text-[10px]">
+                                              난이도 {r.difficulty}
+                                            </Badge>
+                                            <span className="ml-auto">
+                                              {r.passedSentences}/{r.totalSentences} ({rate}%)
+                                            </span>
+                                          </div>
+                                          {q?.question && (
+                                            <p className="mt-1 line-clamp-2 text-muted-foreground">
+                                              {q.question}
+                                            </p>
+                                          )}
+                                        </li>
+                                      );
+                                    })}
+                                  </ul>
+                                ) : a.results?.length ? (
+                                  <ul className="space-y-1">
+                                    {a.results.map((r, ri) => {
+                                      const q = practiceSet.questions.find((x) => x.id === r.questionId);
+                                      const sc = r.score ?? 0;
+                                      const scClr = sc >= 80
+                                        ? "bg-emerald-600"
+                                        : sc >= 60
+                                        ? "bg-amber-500"
+                                        : "bg-rose-500";
+                                      return (
+                                        <li key={`${r.questionId}-${ri}`} className="rounded bg-background p-2">
+                                          <div className="flex flex-wrap items-center gap-1">
+                                            <span className="font-semibold">Q{ri + 1}</span>
+                                            <Badge className={cn("text-white text-[10px]", scClr)}>
+                                              {sc}점
+                                            </Badge>
+                                            {r.durationSec ? (
+                                              <span className="ml-auto text-muted-foreground">
+                                                {r.durationSec}초
+                                              </span>
+                                            ) : null}
+                                          </div>
+                                          {q?.question && (
+                                            <p className="mt-1 line-clamp-2 text-muted-foreground">
+                                              {q.question}
+                                            </p>
+                                          )}
+                                          {r.transcript && (
+                                            <p className="mt-1 line-clamp-2 italic text-muted-foreground/80">
+                                              “{r.transcript}”
+                                            </p>
+                                          )}
+                                        </li>
+                                      );
+                                    })}
+                                  </ul>
+                                ) : (
+                                  <p className="italic text-muted-foreground">상세 기록이 없습니다.</p>
+                                )}
+                              </div>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         )}
 
@@ -1228,7 +1473,7 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
               </div>
 
               {/* 모드 토글 — 모범 답변 있을 때만 따라 읽기 모드 활성화 */}
-              {expectedSentences.length > 0 && (
+              {expectedSegments.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 p-2">
                   <span className="text-xs font-semibold text-muted-foreground">모드</span>
                   <div className="inline-flex rounded-md border bg-background p-0.5 text-xs">
@@ -1267,7 +1512,7 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                   </div>
                   {practiceMode === "readalong" && (
                     <span className="ml-auto text-[11px] text-muted-foreground">
-                      {Math.min(readAlongIdx, expectedSentences.length)} / {expectedSentences.length} 문장
+                      {Math.min(readAlongIdx, expectedSegments.length)} / {expectedSegments.length} 문장
                     </span>
                   )}
                 </div>
@@ -1312,7 +1557,7 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
               </div>
 
               {/* 따라 읽기 난이도 선택 */}
-              {practiceMode === "readalong" && expectedSentences.length > 0 && (
+              {practiceMode === "readalong" && expectedSegments.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 p-2">
                   <span className="text-xs font-semibold text-muted-foreground">난이도</span>
                   <div className="inline-flex gap-1">
@@ -1352,35 +1597,236 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                 </div>
               )}
 
-              {/* 따라 읽기 모드 패널 */}
-              {practiceMode === "readalong" && expectedSentences.length > 0 && (
-                <div className="rounded-xl border bg-card p-5">
-                  {readAlongIdx >= expectedSentences.length ? (
-                    <div className="flex flex-col items-center gap-3 py-6 text-center">
-                      <CheckCircle2 size={36} className="text-emerald-500" />
-                      <p className="text-base font-semibold">전체 문장 따라 읽기 완료!</p>
-                      <p className="text-xs text-muted-foreground">
-                        총 {expectedSentences.length}개 문장을 모두 통과했습니다.
-                      </p>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
+              {/* 따라 읽기 단위 선택 (난이도 아래) — 1문장 / 문단 */}
+              {practiceMode === "readalong" && current?.expectedAnswer && (
+                <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 p-2">
+                  <span className="text-xs font-semibold text-muted-foreground">단위</span>
+                  <div className="inline-flex rounded-md border bg-background p-0.5 text-xs">
+                    {(["sentence", "paragraph"] as const).map((u) => {
+                      const label = u === "sentence" ? "1문장" : "문단";
+                      const active = readAlongUnit === u;
+                      return (
+                        <button
+                          key={u}
+                          type="button"
                           onClick={() => {
+                            if (readAlongUnit === u) return;
+                            setReadAlongUnit(u);
                             setReadAlongIdx(0);
                             setReadAlongBuffer("");
+                            setReadAlongResult(null);
                           }}
+                          className={cn(
+                            "rounded px-3 py-1 font-medium transition-colors",
+                            active
+                              ? "bg-foreground text-background"
+                              : "text-muted-foreground hover:text-foreground",
+                          )}
                         >
-                          <RotateCcw size={12} className="mr-1" /> 처음부터
-                        </Button>
-                        <Button size="sm" onClick={goNext}>
-                          다음 질문 <ChevronRight size={14} className="ml-1" />
-                        </Button>
-                      </div>
-                    </div>
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <span className="ml-auto text-[10px] text-muted-foreground">
+                    {readAlongUnit === "paragraph"
+                      ? "문단 단위(빈 줄 기준) — 한 번에 길게 따라 읽기"
+                      : "1문장 단위 — 짧게 끊어 따라 읽기"}
+                    {" · 분리 결과: "}{expectedSegments.length}개
+                  </span>
+                </div>
+              )}
+
+              {/* 따라 읽기 모드 패널 */}
+              {practiceMode === "readalong" && expectedSegments.length > 0 && (
+                <div className="rounded-xl border bg-card p-5">
+                  {readAlongIdx >= expectedSegments.length ? (
+                    (() => {
+                      const qid = current?.id ?? "";
+                      const spokenLog = readAlongSpokenByQ[qid] ?? [];
+                      const unitLabel = readAlongUnit === "paragraph" ? "문단" : "문장";
+                      return (
+                        <div className="space-y-4">
+                          <div className="flex flex-col items-center gap-1 text-center">
+                            <CheckCircle2 size={36} className="text-emerald-500" />
+                            <p className="text-base font-semibold">전체 따라 읽기 완료!</p>
+                            <p className="text-xs text-muted-foreground">
+                              총 {expectedSegments.length}개 {unitLabel}을 모두 통과했습니다.
+                              {wantRecordingRef.current === false && recording === false && (
+                                <span className="ml-1 text-emerald-600">· 녹음 자동 종료됨</span>
+                              )}
+                            </p>
+                          </div>
+
+                          {/* 발화 vs 모범 비교 (단위별) */}
+                          <div className="rounded-lg border bg-background">
+                            <div className="flex items-center justify-between border-b px-3 py-2 text-xs">
+                              <span className="font-semibold">{unitLabel} 단위 비교</span>
+                              <span className="text-muted-foreground">내 발화 / 모범 답변</span>
+                            </div>
+                            <ul className="divide-y">
+                              {expectedSegments.map((seg, i) => {
+                                const log = spokenLog[i];
+                                const score = log?.score ?? 0;
+                                const passed = log?.passed ?? false;
+                                return (
+                                  <li key={i} className="px-3 py-2 text-sm">
+                                    <div className="mb-1 flex items-center gap-2 text-[11px]">
+                                      <span className="font-mono text-muted-foreground">{i + 1}.</span>
+                                      <span
+                                        className={cn(
+                                          "rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                                          passed
+                                            ? "bg-emerald-500 text-white"
+                                            : log
+                                            ? "bg-amber-500 text-white"
+                                            : "bg-zinc-300 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200",
+                                        )}
+                                      >
+                                        {log ? `${score}점` : "기록 없음"}
+                                      </span>
+                                    </div>
+                                    <div className="grid gap-2 md:grid-cols-2">
+                                      <div className="rounded-md bg-muted/40 p-2">
+                                        <p className="mb-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
+                                          내 발화
+                                        </p>
+                                        <p className="whitespace-pre-wrap leading-relaxed">
+                                          {log?.spoken || (
+                                            <span className="italic text-muted-foreground">기록 없음</span>
+                                          )}
+                                        </p>
+                                      </div>
+                                      <div className="rounded-md bg-emerald-50 p-2 dark:bg-emerald-950/30">
+                                        <p className="mb-0.5 text-[10px] font-semibold uppercase text-emerald-700 dark:text-emerald-200">
+                                          모범 답변
+                                        </p>
+                                        <p className="whitespace-pre-wrap leading-relaxed text-emerald-950 dark:text-emerald-50">
+                                          {renderWithScholarHighlight(seg)}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </div>
+
+                          {/* 모범 답변 인라인 편집 */}
+                          <div className="rounded-lg border bg-card p-3">
+                            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                              <p className="text-xs font-semibold">모범 답변 수정</p>
+                              {!editingExpected ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setEditedExpectedDraft(current?.expectedAnswer ?? "");
+                                    setEditingExpected(true);
+                                  }}
+                                >
+                                  <Pencil size={12} className="mr-1" /> 편집
+                                </Button>
+                              ) : (
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setEditingExpected(false)}
+                                  >
+                                    취소
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    disabled={submitting || !current}
+                                    onClick={async () => {
+                                      if (!practiceSet || !current) return;
+                                      setSubmitting(true);
+                                      try {
+                                        const newQuestions = practiceSet.questions.map((q) =>
+                                          q.id === current.id
+                                            ? { ...q, expectedAnswer: editedExpectedDraft }
+                                            : q,
+                                        );
+                                        await defensePracticesApi.update(practiceSet.id, {
+                                          questions: newQuestions,
+                                          updatedAt: new Date().toISOString(),
+                                        });
+                                        qc.invalidateQueries({ queryKey: ["defense_practice_sets"] });
+                                        qc.invalidateQueries({ queryKey: ["defense_practice_set", id] });
+                                        setEditingExpected(false);
+                                        toast.success("모범 답변이 수정되었습니다.");
+                                      } catch (e) {
+                                        console.error(e);
+                                        toast.error("모범 답변 저장에 실패했습니다.");
+                                      } finally {
+                                        setSubmitting(false);
+                                      }
+                                    }}
+                                  >
+                                    {submitting ? (
+                                      <Loader2 size={12} className="mr-1 animate-spin" />
+                                    ) : (
+                                      <CheckCircle2 size={12} className="mr-1" />
+                                    )}
+                                    저장
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                            {editingExpected ? (
+                              <Textarea
+                                value={editedExpectedDraft}
+                                onChange={(e) => setEditedExpectedDraft(e.target.value)}
+                                rows={Math.max(6, expectedSegments.length + 2)}
+                                placeholder="모범 답변을 수정하세요. 빈 줄(엔터 두 번)으로 문단을 구분하면 '문단' 단위 따라 읽기에서 분리됩니다."
+                                className="text-sm"
+                              />
+                            ) : (
+                              <p className="whitespace-pre-wrap rounded-md bg-muted/30 p-2 text-sm leading-relaxed">
+                                {current?.expectedAnswer}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setReadAlongIdx(0);
+                                setReadAlongBuffer("");
+                                setReadAlongResult(null);
+                                if (current?.id) {
+                                  setReadAlongSpokenByQ((prev) => ({ ...prev, [current.id]: [] }));
+                                }
+                              }}
+                            >
+                              <RotateCcw size={12} className="mr-1" /> 처음부터
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={handleSaveReadAlongAttempt}
+                              disabled={submitting}
+                            >
+                              {submitting ? (
+                                <Loader2 size={12} className="mr-1 animate-spin" />
+                              ) : (
+                                <CheckCircle2 size={12} className="mr-1" />
+                              )}
+                              이번 따라 읽기 이력 저장
+                            </Button>
+                            <Button size="sm" onClick={goNext} className="ml-auto">
+                              다음 질문 <ChevronRight size={14} className="ml-1" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })()
                   ) : (
                     (() => {
-                      const target = expectedSentences[readAlongIdx];
+                      const target = expectedSegments[readAlongIdx];
                       const spokenCombined = (readAlongBuffer + " " + interim).trim();
                       const score = readAlongMatchScore(spokenCombined, target);
                       const threshold = READALONG_THRESHOLDS[readAlongDifficulty];
@@ -1392,7 +1838,7 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                               지금 따라 읽을 문장
                             </p>
                             <Badge variant="outline" className="text-[10px]">
-                              {readAlongIdx + 1} / {expectedSentences.length}
+                              {readAlongIdx + 1} / {expectedSegments.length}
                             </Badge>
                           </div>
                           <div
@@ -1509,7 +1955,7 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                                 setReadAlongBuffer("");
                                 setInterim("");
                                 setReadAlongResult(null);
-                                setReadAlongIdx((i) => Math.min(expectedSentences.length, i + 1));
+                                setReadAlongIdx((i) => Math.min(expectedSegments.length, i + 1));
                               }}
                             >
                               건너뛰기 <ChevronRight size={12} className="ml-1" />
