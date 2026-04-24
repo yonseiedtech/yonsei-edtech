@@ -239,6 +239,13 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
   type SttStatus = "idle" | "starting" | "listening" | "speaking" | "processing" | "restarting" | "error";
   const [sttStatus, setSttStatus] = useState<SttStatus>("idle");
   const [sttDebug, setSttDebug] = useState<string>("");
+  /** 진단용: 실시간 마이크 입력 레벨 (0~100). 사용자가 마이크에 소리 들어가는지 즉답 가능 */
+  const [micLevel, setMicLevel] = useState(0);
+  /** 이퀄라이저용: 주파수 대역별 정규화 진폭 (0~100) 배열 */
+  const EQ_BARS = 24;
+  const [micBars, setMicBars] = useState<number[]>(() => Array(EQ_BARS).fill(0));
+  /** 진단용: 시작 후 onspeechstart까지 감지 안 될 때 노출되는 hint */
+  const [noSpeechHint, setNoSpeechHint] = useState(false);
 
   const recRef = useRef<SpeechRecognitionInstance | null>(null);
   const startedAtRef = useRef<number | null>(null);
@@ -247,16 +254,86 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
   const wantRecordingRef = useRef(false);
   /** onresult 클로저에서 항상 최신 question id를 참조하기 위한 ref */
   const currentQuestionIdRef = useRef<string>("");
+  /** 마이크 레벨 미터링용 AudioContext + Stream */
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const audioStreamRef = useRef<MediaStream | null>(null);
+  const rafIdRef = useRef<number | null>(null);
+  const noSpeechTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const speechSeenRef = useRef(false);
 
   useEffect(() => {
     setSttSupported(getRecognitionCtor() !== null);
     return () => {
       wantRecordingRef.current = false;
-      try {
-        recRef.current?.abort();
-      } catch {/* noop */}
+      try { recRef.current?.abort(); } catch {/* noop */}
+      if (rafIdRef.current != null) cancelAnimationFrame(rafIdRef.current);
+      if (noSpeechTimerRef.current) clearTimeout(noSpeechTimerRef.current);
+      try { audioStreamRef.current?.getTracks().forEach((t) => t.stop()); } catch {/* noop */}
+      try { audioCtxRef.current?.close(); } catch {/* noop */}
     };
   }, []);
+
+  /** 마이크 입력 레벨 실시간 측정 — 사용자가 마이크 자체가 입력을 받는지 즉답 가능 */
+  const startMicMetering = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioStreamRef.current = stream;
+      const AC: typeof AudioContext =
+        window.AudioContext ??
+        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext!;
+      const ctx = new AC();
+      audioCtxRef.current = ctx;
+      const source = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 512;
+      analyser.smoothingTimeConstant = 0.7;
+      source.connect(analyser);
+      const timeData = new Uint8Array(analyser.fftSize);
+      const freqData = new Uint8Array(analyser.frequencyBinCount); // = 256
+      // 사람 목소리는 80Hz~3kHz에 집중. 로그 스케일 빈을 EQ_BARS 그룹으로 매핑
+      const binCount = freqData.length;
+      const tick = () => {
+        // 1) 전체 레벨 (시간 도메인)
+        analyser.getByteTimeDomainData(timeData);
+        let max = 0;
+        for (let i = 0; i < timeData.length; i++) {
+          const v = Math.abs(timeData[i] - 128);
+          if (v > max) max = v;
+        }
+        setMicLevel(Math.min(100, Math.round((max / 128) * 100)));
+        // 2) 이퀄라이저 (주파수 도메인) — log scale로 EQ_BARS 그룹화
+        analyser.getByteFrequencyData(freqData);
+        const bars: number[] = new Array(EQ_BARS);
+        for (let b = 0; b < EQ_BARS; b++) {
+          // log scale: 저주파를 더 세밀하게
+          const lo = Math.floor(binCount * Math.pow(b / EQ_BARS, 1.6));
+          const hi = Math.max(lo + 1, Math.floor(binCount * Math.pow((b + 1) / EQ_BARS, 1.6)));
+          let sum = 0;
+          for (let i = lo; i < hi && i < binCount; i++) sum += freqData[i];
+          const avg = sum / Math.max(1, hi - lo);
+          bars[b] = Math.min(100, Math.round((avg / 255) * 100));
+        }
+        setMicBars(bars);
+        rafIdRef.current = requestAnimationFrame(tick);
+      };
+      tick();
+    } catch (err) {
+      console.warn("[STT] mic metering failed:", err);
+    }
+  };
+
+  const stopMicMetering = () => {
+    if (rafIdRef.current != null) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
+    try { audioStreamRef.current?.getTracks().forEach((t) => t.stop()); } catch {/* noop */}
+    audioStreamRef.current = null;
+    try { audioCtxRef.current?.close(); } catch {/* noop */}
+    audioCtxRef.current = null;
+    setMicLevel(0);
+    setMicBars(Array(EQ_BARS).fill(0));
+  };
 
   const questions = practiceSet?.questions ?? [];
   const current = questions[idx];
@@ -271,6 +348,12 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
     setRecording(false);
     setInterim("");
     setSttStatus("idle");
+    setNoSpeechHint(false);
+    if (noSpeechTimerRef.current) {
+      clearTimeout(noSpeechTimerRef.current);
+      noSpeechTimerRef.current = null;
+    }
+    stopMicMetering();
     try { recRef.current?.stop(); } catch {/* noop */}
     const qid = currentQuestionIdRef.current;
     if (startedAtRef.current && qid) {
@@ -302,6 +385,12 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
       console.log("[STT] onspeechstart");
       setSttStatus("speaking");
       setSttDebug("말하는 중 감지");
+      speechSeenRef.current = true;
+      setNoSpeechHint(false);
+      if (noSpeechTimerRef.current) {
+        clearTimeout(noSpeechTimerRef.current);
+        noSpeechTimerRef.current = null;
+      }
     };
     rec.onspeechend = () => {
       console.log("[STT] onspeechend");
@@ -318,6 +407,12 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
     };
     rec.onresult = (e) => {
       console.log("[STT] onresult resultIndex=", e.resultIndex, "results.length=", e.results.length);
+      speechSeenRef.current = true;
+      setNoSpeechHint(false);
+      if (noSpeechTimerRef.current) {
+        clearTimeout(noSpeechTimerRef.current);
+        noSpeechTimerRef.current = null;
+      }
       let finalText = "";
       let interimText = "";
       for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -421,13 +516,17 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
     }
     setSttStatus("starting");
     setSttDebug("마이크 권한 요청 중...");
-    // 명시적 마이크 권한 요청 — Web Speech API만으로는 권한 프롬프트가 묻히는 경우가 있음
+    setNoSpeechHint(false);
+    speechSeenRef.current = false;
+    // 마이크 입력 레벨 미터링 시작 (Web Speech API와 별개로 사용자가 마이크 신호 확인 가능)
+    await startMicMetering();
+    setSttDebug("마이크 권한 OK · 신호 감지 중");
+    // 명시적 마이크 권한 요청은 위에서 startMicMetering이 처리함 (권한 거부 시 catch)
     try {
-      if (typeof navigator !== "undefined" && navigator.mediaDevices?.getUserMedia) {
+      // 추가 안전망: getUserMedia가 차단된 채 startMicMetering이 실패한 경우 다시 시도
+      if (!audioStreamRef.current && typeof navigator !== "undefined" && navigator.mediaDevices?.getUserMedia) {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        // 즉시 트랙 정리 (Web Speech API가 자체 캡처)
         stream.getTracks().forEach((t) => t.stop());
-        setSttDebug("마이크 권한 OK");
       }
     } catch (err) {
       console.error("[STT] mic permission denied:", err);
@@ -452,6 +551,13 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
       setRecording(true);
       setInterim("");
       setSttDebug("rec.start() 호출됨");
+      // 5초 안에 onspeechstart/onresult가 안 오면 안내 표시
+      if (noSpeechTimerRef.current) clearTimeout(noSpeechTimerRef.current);
+      noSpeechTimerRef.current = setTimeout(() => {
+        if (!speechSeenRef.current && wantRecordingRef.current) {
+          setNoSpeechHint(true);
+        }
+      }, 5000);
     } catch (err) {
       console.error("[STT] start failed:", err);
       wantRecordingRef.current = false;
@@ -703,34 +809,82 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
 
                 {/* STT 진단 상태 표시 */}
                 {(recording || sttStatus !== "idle") && (
-                  <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border bg-muted/40 px-2.5 py-1.5 text-[11px]">
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold",
-                        sttStatus === "speaking"
-                          ? "bg-emerald-500 text-white"
-                          : sttStatus === "listening"
-                          ? "bg-blue-500 text-white"
-                          : sttStatus === "processing"
-                          ? "bg-amber-500 text-white"
-                          : sttStatus === "starting" || sttStatus === "restarting"
-                          ? "bg-zinc-500 text-white"
-                          : sttStatus === "error"
-                          ? "bg-rose-600 text-white"
-                          : "bg-zinc-300 text-zinc-700",
+                  <div className="mt-2 space-y-2 rounded-md border bg-muted/40 px-2.5 py-2 text-[11px]">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold",
+                          sttStatus === "speaking"
+                            ? "bg-emerald-500 text-white"
+                            : sttStatus === "listening"
+                            ? "bg-blue-500 text-white"
+                            : sttStatus === "processing"
+                            ? "bg-amber-500 text-white"
+                            : sttStatus === "starting" || sttStatus === "restarting"
+                            ? "bg-zinc-500 text-white"
+                            : sttStatus === "error"
+                            ? "bg-rose-600 text-white"
+                            : "bg-zinc-300 text-zinc-700",
+                        )}
+                      >
+                        {sttStatus === "speaking" && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />}
+                        {sttStatus === "listening" && "듣는 중"}
+                        {sttStatus === "speaking" && "말하는 중 감지"}
+                        {sttStatus === "processing" && "처리 중"}
+                        {sttStatus === "starting" && "시작 중"}
+                        {sttStatus === "restarting" && "재시작 중"}
+                        {sttStatus === "error" && "오류"}
+                        {sttStatus === "idle" && "대기"}
+                      </span>
+                      {sttDebug && (
+                        <span className="text-muted-foreground">{sttDebug}</span>
                       )}
-                    >
-                      {sttStatus === "speaking" && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />}
-                      {sttStatus === "listening" && "듣는 중"}
-                      {sttStatus === "speaking" && "말하는 중 감지"}
-                      {sttStatus === "processing" && "처리 중"}
-                      {sttStatus === "starting" && "시작 중"}
-                      {sttStatus === "restarting" && "재시작 중"}
-                      {sttStatus === "error" && "오류"}
-                      {sttStatus === "idle" && "대기"}
-                    </span>
-                    {sttDebug && (
-                      <span className="text-muted-foreground">{sttDebug}</span>
+                    </div>
+                    {/* 마이크 입력 신호 미터 — 사용자가 마이크 자체가 신호를 받는지 확인 */}
+                    <div className="flex items-center gap-2">
+                      <span className="w-12 shrink-0 text-muted-foreground">레벨</span>
+                      <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                        <div
+                          className={cn(
+                            "absolute inset-y-0 left-0 transition-all",
+                            micLevel > 50 ? "bg-emerald-500" : micLevel > 15 ? "bg-amber-500" : "bg-zinc-400",
+                          )}
+                          style={{ width: `${micLevel}%` }}
+                        />
+                      </div>
+                      <span className="w-8 shrink-0 text-right tabular-nums text-muted-foreground">{micLevel}</span>
+                    </div>
+                    {/* 이퀄라이저 바 — 24개 주파수 대역 진폭 시각화 */}
+                    <div className="flex items-end gap-[2px] h-12 rounded-md bg-zinc-50 dark:bg-zinc-900/60 px-2 py-1">
+                      {micBars.map((v, i) => (
+                        <div
+                          key={i}
+                          className={cn(
+                            "flex-1 rounded-sm transition-[height] duration-75",
+                            v > 70
+                              ? "bg-emerald-500"
+                              : v > 40
+                              ? "bg-emerald-400"
+                              : v > 20
+                              ? "bg-amber-400"
+                              : v > 5
+                              ? "bg-zinc-400"
+                              : "bg-zinc-300 dark:bg-zinc-700",
+                          )}
+                          style={{ height: `${Math.max(4, v)}%` }}
+                        />
+                      ))}
+                    </div>
+                    {noSpeechHint && (
+                      <div className="rounded-md border border-amber-300 bg-amber-50 p-2 text-[11px] text-amber-900 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-100">
+                        <p className="font-semibold">5초간 음성이 감지되지 않았어요</p>
+                        <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                          <li>위 마이크 바가 움직이는지 확인 (움직이면 마이크는 OK)</li>
+                          <li>움직이는데 전사가 안 되면: 시스템 마이크 입력 디바이스가 의도한 것인지 확인 (헤드셋·웹캠·내장 중 선택)</li>
+                          <li>회사/학교 네트워크에서 Google 음성 서비스 차단 가능 — Wi-Fi 변경 또는 모바일 핫스팟 시도</li>
+                          <li>Chrome 권장. Edge에서 ko-KR 인식 패키지 누락 시 silent fail 가능</li>
+                        </ul>
+                      </div>
                     )}
                   </div>
                 )}
