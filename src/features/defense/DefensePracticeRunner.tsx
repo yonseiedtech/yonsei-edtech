@@ -115,29 +115,22 @@ function normalizeForCompare(text: string): string {
     .trim();
 }
 
-/** 누적 발화에 목표 문장이 100% 포함되어 있으면 통과 */
-function isReadAlongPassed(spoken: string, target: string): boolean {
+/** 따라 읽기 일치 점수 (0~100) — 정규화 후 정확 포함이면 100, 아니면 Jaccard 유사도 */
+function readAlongMatchScore(spoken: string, target: string): number {
   const s = normalizeForCompare(spoken);
-  const g = normalizeForCompare(target);
-  if (!g) return false;
-  return s.includes(g);
-}
-
-/** 진행률 시각화: 누적 발화의 끝부분이 목표의 prefix를 얼마나 따라잡았는지 */
-function readAlongProgress(spoken: string, target: string): number {
   const g = normalizeForCompare(target);
   if (!g) return 0;
-  const s = normalizeForCompare(spoken);
   if (s.includes(g)) return 100;
-  // 가장 긴 prefix 매칭 길이 / 목표 길이
-  let best = 0;
-  for (let len = Math.min(s.length, g.length); len > 0; len--) {
-    if (s.endsWith(g.slice(0, len))) {
-      best = len;
-      break;
-    }
-  }
-  return Math.min(99, Math.round((best / g.length) * 100));
+  return similarityScore(spoken, target);
+}
+
+/** 난이도별 통과 임계값 */
+const READALONG_THRESHOLDS = { easy: 50, normal: 70, hard: 90 } as const;
+type ReadAlongDifficulty = keyof typeof READALONG_THRESHOLDS;
+
+/** 임계값 이상이면 통과 */
+function isReadAlongPassed(spoken: string, target: string, threshold: number): boolean {
+  return readAlongMatchScore(spoken, target) >= threshold;
 }
 
 /** 한 문장(target)이 후보 문장 배열(pool) 중 가장 유사한 점수와 인덱스 반환 */
@@ -297,6 +290,8 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
   const [readAlongBuffer, setReadAlongBuffer] = useState("");
   /** 따라 읽기 모드: 질문별 통과한 문장 수 (요약용) */
   const [readAlongPassedByQ, setReadAlongPassedByQ] = useState<Record<string, number>>({});
+  /** 따라 읽기 난이도 — 임계값 기반 (easy 50, normal 70, hard 90) */
+  const [readAlongDifficulty, setReadAlongDifficulty] = useState<ReadAlongDifficulty>("normal");
 
   const recRef = useRef<SpeechRecognitionInstance | null>(null);
   const startedAtRef = useRef<number | null>(null);
@@ -315,6 +310,7 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
   const practiceModeRef = useRef<PracticeMode>("answer");
   const readAlongIdxRef = useRef(0);
   const readAlongTargetsRef = useRef<string[]>([]);
+  const readAlongDifficultyRef = useRef<ReadAlongDifficulty>("normal");
 
   useEffect(() => {
     setSttSupported(getRecognitionCtor() !== null);
@@ -483,7 +479,12 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
     readAlongIdxRef.current = readAlongIdx;
   }, [readAlongIdx]);
 
-  // 따라 읽기 통과 자동 검사 — buffer 또는 interim 변경 시 normalize 100% 일치면 다음 문장으로
+  // 난이도 ref 미러링
+  useEffect(() => {
+    readAlongDifficultyRef.current = readAlongDifficulty;
+  }, [readAlongDifficulty]);
+
+  // 따라 읽기 통과 자동 검사 — buffer 또는 interim 변경 시 임계값 이상이면 다음 문장으로
   useEffect(() => {
     if (practiceMode !== "readalong") return;
     const targets = readAlongTargetsRef.current;
@@ -493,7 +494,8 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
     if (!target) return;
     // final 누적 + interim 합쳐서 검사 (final이 도달하기 전 interim에서도 통과 가능하게)
     const combined = (readAlongBuffer + " " + interim).trim();
-    if (isReadAlongPassed(combined, target)) {
+    const threshold = READALONG_THRESHOLDS[readAlongDifficulty];
+    if (isReadAlongPassed(combined, target, threshold)) {
       const qid = currentQuestionIdRef.current;
       const nextIdx = idx0 + 1;
       if (qid) {
@@ -502,16 +504,17 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
           [qid]: Math.max(prev[qid] ?? 0, nextIdx),
         }));
       }
+      const score = readAlongMatchScore(combined, target);
       if (nextIdx >= targets.length) {
-        toast.success(`전체 ${targets.length}문장 따라 읽기 완료!`);
+        toast.success(`전체 ${targets.length}문장 따라 읽기 완료! (${score}점)`);
       } else {
-        toast.success(`문장 ${idx0 + 1} 통과 ✓`);
+        toast.success(`문장 ${idx0 + 1} 통과 ✓ (${score}점 / 기준 ${threshold}점)`);
       }
       setReadAlongBuffer("");
       setInterim("");
       setReadAlongIdx(nextIdx);
     }
-  }, [readAlongBuffer, interim, readAlongIdx, practiceMode]);
+  }, [readAlongBuffer, interim, readAlongIdx, practiceMode, readAlongDifficulty]);
 
   const stopRecording = () => {
     wantRecordingRef.current = false;
@@ -984,6 +987,47 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                 </div>
               )}
 
+              {/* 따라 읽기 난이도 선택 */}
+              {practiceMode === "readalong" && expectedSentences.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 p-2">
+                  <span className="text-xs font-semibold text-muted-foreground">난이도</span>
+                  <div className="inline-flex gap-1">
+                    {(["easy", "normal", "hard"] as const).map((d) => {
+                      const label = d === "easy" ? "쉬움" : d === "normal" ? "보통" : "어려움";
+                      const pct = READALONG_THRESHOLDS[d];
+                      const active = readAlongDifficulty === d;
+                      const color =
+                        d === "easy"
+                          ? "border-emerald-500 bg-emerald-500 text-white"
+                          : d === "normal"
+                          ? "border-amber-500 bg-amber-500 text-white"
+                          : "border-rose-500 bg-rose-500 text-white";
+                      return (
+                        <button
+                          key={d}
+                          type="button"
+                          onClick={() => setReadAlongDifficulty(d)}
+                          className={cn(
+                            "rounded-md border px-2.5 py-1 text-[11px] font-medium transition-colors",
+                            active
+                              ? color
+                              : "border-zinc-200 bg-background text-muted-foreground hover:text-foreground dark:border-zinc-700",
+                          )}
+                        >
+                          {label}
+                          <span className={cn("ml-1 tabular-nums", active ? "opacity-90" : "opacity-60")}>
+                            {pct}%
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <span className="ml-auto text-[10px] text-muted-foreground">
+                    일치도 {READALONG_THRESHOLDS[readAlongDifficulty]}% 이상이면 통과
+                  </span>
+                </div>
+              )}
+
               {/* 따라 읽기 모드 패널 */}
               {practiceMode === "readalong" && expectedSentences.length > 0 && (
                 <div className="rounded-xl border bg-card p-5">
@@ -1014,7 +1058,9 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                     (() => {
                       const target = expectedSentences[readAlongIdx];
                       const spokenCombined = (readAlongBuffer + " " + interim).trim();
-                      const progress = readAlongProgress(spokenCombined, target);
+                      const score = readAlongMatchScore(spokenCombined, target);
+                      const threshold = READALONG_THRESHOLDS[readAlongDifficulty];
+                      const passed = score >= threshold;
                       return (
                         <div className="space-y-3">
                           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1028,9 +1074,9 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                           <div
                             className={cn(
                               "rounded-lg border-2 p-4 text-lg leading-relaxed sm:text-xl",
-                              progress >= 100
+                              passed
                                 ? "border-emerald-500 bg-emerald-50 text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-100"
-                                : progress >= 50
+                                : score >= threshold * 0.6
                                 ? "border-amber-400 bg-amber-50 text-amber-950 dark:bg-amber-950/30 dark:text-amber-50"
                                 : "border-zinc-300 bg-background dark:border-zinc-700",
                             )}
@@ -1038,19 +1084,27 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                             {target}
                           </div>
 
-                          {/* 진행률 바 */}
+                          {/* 진행률 바 — 임계값 표시 마커 포함 */}
                           <div className="space-y-1">
                             <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                              <span>진행률</span>
-                              <span className="tabular-nums font-semibold">{progress}%</span>
+                              <span>일치도</span>
+                              <span className="tabular-nums font-semibold">
+                                {score}점 / 기준 {threshold}점
+                              </span>
                             </div>
-                            <div className="h-2 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                            <div className="relative h-2 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
                               <div
                                 className={cn(
                                   "h-full transition-[width] duration-150",
-                                  progress >= 100 ? "bg-emerald-500" : progress >= 50 ? "bg-amber-500" : "bg-rose-400",
+                                  passed ? "bg-emerald-500" : score >= threshold * 0.6 ? "bg-amber-500" : "bg-rose-400",
                                 )}
-                                style={{ width: `${progress}%` }}
+                                style={{ width: `${score}%` }}
+                              />
+                              {/* 통과 임계값 마커 (세로선) */}
+                              <div
+                                className="absolute inset-y-0 w-px bg-foreground/40"
+                                style={{ left: `${threshold}%` }}
+                                title={`통과 기준 ${threshold}%`}
                               />
                             </div>
                           </div>
