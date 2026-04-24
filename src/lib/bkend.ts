@@ -45,6 +45,7 @@ import type {
   GuideTrack, GuideItem, GuideProgress,
   HostRetrospective, HostActivityType,
   SitePopup,
+  DefensePracticeSet,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -676,6 +677,21 @@ export const studySessionsApi = {
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<StudySession>("study_sessions", id, data),
   delete: (id: string) => dataApi.delete("study_sessions", id),
+};
+
+export const defensePracticesApi = {
+  listByUser: (userId: string) =>
+    dataApi.list<DefensePracticeSet>("defense_practice_sets", {
+      "filter[userId]": userId,
+      limit: 200,
+    }),
+  get: (id: string) =>
+    dataApi.get<DefensePracticeSet>("defense_practice_sets", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<DefensePracticeSet>("defense_practice_sets", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<DefensePracticeSet>("defense_practice_sets", id, data),
+  delete: (id: string) => dataApi.delete("defense_practice_sets", id),
 };
 
 export const researchReportsApi = {

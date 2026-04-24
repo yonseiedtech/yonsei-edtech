@@ -15,7 +15,7 @@ import {
   BarChart3, GraduationCap, Wallet, Users, BookUser,
   BookOpen, FlaskConical, FolderKanban, Globe, Award, NotebookPen,
   Settings, MessageCircle, ScrollText, ChevronDown, ChevronRight,
-  ShieldCheck, Megaphone, CalendarDays,
+  ShieldCheck, Megaphone, CalendarDays, MessageSquareQuote,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -125,6 +125,12 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
         { href: "/console/courses", label: "수강과목 마스터", icon: BookOpen },
         { href: "/console/research", label: "연구활동", icon: FlaskConical },
         { href: "/console/steppingstone", label: "인지디딤판", icon: ClipboardList },
+      ],
+    },
+    {
+      label: "대학원 생활",
+      items: [
+        { href: "/console/grad-life/thesis-defense", label: "논문 심사 연습", icon: MessageSquareQuote },
       ],
     },
     {

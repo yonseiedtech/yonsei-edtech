@@ -2115,3 +2115,59 @@ export interface SitePopup {
   updatedAt: string;
   createdBy: string;
 }
+
+// ── 논문 심사 연습 (Thesis Defense Practice) ──
+export interface DefenseQuestion {
+  id: string;
+  question: string;
+  /** 사전에 작성한 모범 답변 — STT 전사 결과와 비교 채점 기준 */
+  expectedAnswer: string;
+  /** 추가 메모/힌트 (선택) */
+  note?: string;
+}
+
+export type DefensePracticeCategory =
+  | "proposal"      // 연구계획서 심사
+  | "midterm"       // 중간발표
+  | "final"         // 최종 심사
+  | "qualifying"    // 자격시험
+  | "general";      // 일반
+
+export const DEFENSE_CATEGORY_LABELS: Record<DefensePracticeCategory, string> = {
+  proposal: "연구계획서 심사",
+  midterm: "중간발표",
+  final: "최종 심사",
+  qualifying: "자격시험",
+  general: "일반",
+};
+
+export interface DefensePracticeAttempt {
+  /** 시도 시각 ISO */
+  at: string;
+  /** 전체 평균 유사도 (0~100) */
+  averageScore: number;
+  /** 질문별 결과 */
+  results: Array<{
+    questionId: string;
+    transcript: string;
+    score: number;
+    durationSec?: number;
+  }>;
+}
+
+export interface DefensePracticeSet {
+  id: string;
+  userId: string;
+  title: string;
+  description?: string;
+  category: DefensePracticeCategory;
+  /** 연구 주제·논문 제목 등 발표 맥락 */
+  topic?: string;
+  questions: DefenseQuestion[];
+  /** 마지막 연습 결과 (이력은 별도 컬렉션 없이 최근 1건만 저장) */
+  lastAttempt?: DefensePracticeAttempt;
+  /** 누적 시도 횟수 */
+  attemptCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}

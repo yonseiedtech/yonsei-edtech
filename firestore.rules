@@ -364,6 +364,17 @@ service cloud.firestore {
         && resource.data.userId == request.auth.uid;
     }
 
+    // ─── Defense Practice Sets (논문 심사 연습 Q&A 세트) ───
+    match /defense_practice_sets/{docId} {
+      // 본인 + 운영진(staff 이상) read. 운영진은 회원 학습 자료 검토 필요
+      allow read: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+    }
+
     // ─── Writing Paper History (작성 활동 이력 — 잔디/통계용, append-only) ───
     match /writing_paper_history/{docId} {
       allow read: if isAuthenticated()
