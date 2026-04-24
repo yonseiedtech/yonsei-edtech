@@ -16,6 +16,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { isStaffOrAbove } from "@/lib/permissions";
 import {
   guideTracksApi,
   guideItemsApi,
@@ -104,11 +105,16 @@ interface ItemCardProps {
 }
 
 function ItemCard({ item, done, canCheck, onToggle }: ItemCardProps) {
+  const isPreview = !item.published;
   return (
     <div
       className={
         "rounded-xl border p-4 transition-colors " +
-        (done ? "bg-emerald-50/40 dark:bg-emerald-950/20" : "bg-card")
+        (isPreview
+          ? "border-amber-300 bg-amber-50/30 dark:bg-amber-950/20"
+          : done
+            ? "bg-emerald-50/40 dark:bg-emerald-950/20"
+            : "bg-card")
       }
     >
       <div className="flex items-start gap-3">
@@ -126,9 +132,16 @@ function ItemCard({ item, done, canCheck, onToggle }: ItemCardProps) {
           )}
         </button>
         <div className="flex-1 min-w-0">
-          <h3 className={"font-semibold " + (done ? "text-muted-foreground line-through" : "")}>
-            {item.title}
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className={"font-semibold " + (done ? "text-muted-foreground line-through" : "")}>
+              {item.title}
+            </h3>
+            {isPreview && (
+              <Badge variant="secondary" className="bg-amber-100 text-[9px] text-amber-800">
+                비공개 (운영진 미리보기)
+              </Badge>
+            )}
+          </div>
           {item.body && (
             <div className="mt-2">
               <MarkdownLite source={item.body} />
@@ -161,30 +174,54 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
 
+  const isStaffViewer = isStaffOrAbove(user);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
       try {
-        const tracksRes = await guideTracksApi.listPublished();
-        const onboardingTrack = tracksRes.data.find((t) => t.key === "onboarding") || null;
+        // 운영진은 비공개 트랙도 미리보기, 일반 회원은 published만.
+        const tracksRes = isStaffViewer
+          ? await guideTracksApi.list()
+          : await guideTracksApi.listPublished();
+        // 동일 키의 중복 트랙이 잔존할 수 있으므로 모두 모아 항목을 합산한다.
+        const onboardingTracks = tracksRes.data.filter((t) => t.key === "onboarding");
         if (cancelled) return;
-        setTrack(onboardingTrack);
 
-        if (onboardingTrack) {
-          const itemsRes = await guideItemsApi.listPublishedByTrack(onboardingTrack.id);
-          if (cancelled) return;
-          const visible = itemsRes.data.filter((i) => isItemActive(i));
-          visible.sort((a, b) => a.order - b.order);
-          setItems(visible);
-
-          if (user) {
-            const p = await guideProgressApi.getByUserAndTrack(user.id, onboardingTrack.id);
-            if (cancelled) return;
-            setProgress(p);
-          }
-        } else {
+        if (onboardingTracks.length === 0) {
+          setTrack(null);
           setItems([]);
+          return;
+        }
+
+        // 헤더/진행률 기준은 첫 트랙(공개 우선) 사용. 항목은 모든 트랙에서 병합.
+        const primaryTrack = onboardingTracks[0];
+        setTrack(primaryTrack);
+
+        const itemResults = await Promise.all(
+          onboardingTracks.map((t) =>
+            isStaffViewer
+              ? guideItemsApi.listByTrack(t.id)
+              : guideItemsApi.listPublishedByTrack(t.id),
+          ),
+        );
+        if (cancelled) return;
+        const merged = itemResults.flatMap((r) => r.data);
+        const seen = new Set<string>();
+        const unique = merged.filter((i) => {
+          if (seen.has(i.id)) return false;
+          seen.add(i.id);
+          return true;
+        });
+        const visible = unique.filter((i) => isItemActive(i));
+        visible.sort((a, b) => a.order - b.order);
+        setItems(visible);
+
+        if (user) {
+          const p = await guideProgressApi.getByUserAndTrack(user.id, primaryTrack.id);
+          if (cancelled) return;
+          setProgress(p);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -193,7 +230,7 @@ export default function OnboardingPage() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, isStaffViewer]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, GuideItem[]>();
@@ -267,6 +304,18 @@ export default function OnboardingPage() {
           </p>
         </div>
       </header>
+
+      {isStaffViewer && (track?.published === false || items.some((i) => !i.published)) && (
+        <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+          <div className="font-semibold">운영진 미리보기 모드</div>
+          <div className="mt-0.5">
+            비공개 트랙·항목도 함께 보입니다. 회원에게는 공개로 전환된 항목만 노출됩니다.
+            {track?.published === false && (
+              <span className="ml-1 font-semibold">현재 트랙이 비공개 상태입니다.</span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 진행률 카드 */}
       {totalCount > 0 && (

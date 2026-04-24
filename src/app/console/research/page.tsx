@@ -3,22 +3,51 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { FlaskConical, Search, BookOpen, Clock, FileText, ChevronRight } from "lucide-react";
+import { FlaskConical, Search, BookOpen, Clock, FileText, ChevronRight, ClipboardList } from "lucide-react";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { profilesApi, researchReportsApi, researchPapersApi, studySessionsApi } from "@/lib/bkend";
-import type { User, ResearchReport, ResearchPaper, StudySession } from "@/types";
+import {
+  profilesApi,
+  researchReportsApi,
+  researchPapersApi,
+  studySessionsApi,
+  researchProposalsApi,
+} from "@/lib/bkend";
+import type {
+  User,
+  ResearchReport,
+  ResearchPaper,
+  StudySession,
+  ResearchProposal,
+} from "@/types";
 import { cn } from "@/lib/utils";
 
 interface UserResearchSummary {
   user: User;
   report?: ResearchReport;
+  proposal?: ResearchProposal;
   papers: ResearchPaper[];
   sessions: StudySession[];
   totalMinutes: number;
   reportProgress: number; // 0~100
+  proposalProgress: number; // 0~100
   lastActivityAt?: string;
+}
+
+function calcProposalProgress(p?: ResearchProposal): number {
+  if (!p) return 0;
+  const checks = [
+    !!p.titleKo?.trim(),
+    !!p.titleEn?.trim(),
+    !!p.purpose?.trim(),
+    !!p.scope?.trim(),
+    !!p.method?.trim(),
+    !!p.content?.trim(),
+    (p.referencePaperIds?.length ?? 0) > 0,
+  ];
+  const filled = checks.filter(Boolean).length;
+  return Math.round((filled / checks.length) * 100);
 }
 
 function calcReportProgress(r?: ResearchReport): number {
@@ -73,8 +102,10 @@ export default function ConsoleResearchPage() {
     queryFn: () => researchReportsApi.listAll(500),
   });
 
-  const users = profilesData?.data ?? [];
-  const reports = reportsData?.data ?? [];
+  const { data: proposalsData, isLoading: loadingProposals } = useQuery({
+    queryKey: ["console-research", "proposals"],
+    queryFn: () => researchProposalsApi.listAll(500),
+  });
 
   // 모든 승인 회원의 논문·세션을 listAll 로 한 번에 로드 후 userId 로 그룹 (네트워크 절약)
   const { data: papersBundles, isLoading: loadingPapers } = useQuery({
@@ -111,37 +142,95 @@ export default function ConsoleResearchPage() {
     },
   });
 
+  const baseUsers = profilesData?.data ?? [];
+  const reports = reportsData?.data ?? [];
+  const proposals = proposalsData?.data ?? [];
+
+  // 연구 데이터가 있지만 approved 회원 목록에 없는 userId(예: 관리자, 미승인)를 별도 조회.
+  const baseUserIds = useMemo(() => new Set(baseUsers.map((u) => u.id)), [baseUsers]);
+  const dataOnlyUserIds = useMemo(() => {
+    const ids = new Set<string>();
+    reports.forEach((r) => r.userId && !baseUserIds.has(r.userId) && ids.add(r.userId));
+    proposals.forEach((p) => p.userId && !baseUserIds.has(p.userId) && ids.add(p.userId));
+    if (papersBundles) {
+      for (const uid of papersBundles.keys()) {
+        if (!baseUserIds.has(uid)) ids.add(uid);
+      }
+    }
+    if (sessionBundles) {
+      for (const uid of sessionBundles.keys()) {
+        if (!baseUserIds.has(uid)) ids.add(uid);
+      }
+    }
+    return Array.from(ids);
+  }, [reports, proposals, papersBundles, sessionBundles, baseUserIds]);
+
+  const { data: extraUsers = [] } = useQuery({
+    queryKey: ["console-research", "extra-users", dataOnlyUserIds.slice().sort().join(",")],
+    queryFn: async () => {
+      if (dataOnlyUserIds.length === 0) return [] as User[];
+      const results = await Promise.allSettled(
+        dataOnlyUserIds.map((id) => profilesApi.get(id)),
+      );
+      return results
+        .map((r) => (r.status === "fulfilled" ? (r.value.data as User | undefined) : undefined))
+        .filter((u): u is User => !!u);
+    },
+    enabled: dataOnlyUserIds.length > 0,
+  });
+
+  const users = useMemo(() => [...baseUsers, ...extraUsers], [baseUsers, extraUsers]);
+
   const summaries: UserResearchSummary[] = useMemo(() => {
     const reportMap = new Map(reports.map((r) => [r.userId, r]));
+    const proposalMap = new Map<string, ResearchProposal>();
+    // 동일 userId 의 중복 계획서가 있으면 가장 최근 updatedAt 1건만 사용.
+    for (const p of proposals) {
+      const existing = proposalMap.get(p.userId);
+      if (!existing || (p.updatedAt ?? "").localeCompare(existing.updatedAt ?? "") > 0) {
+        proposalMap.set(p.userId, p);
+      }
+    }
     return users
       .map((u) => {
         const report = reportMap.get(u.id);
+        const proposal = proposalMap.get(u.id);
         const papers = papersBundles?.get(u.id) ?? [];
         const sessions = sessionBundles?.get(u.id) ?? [];
         const totalMinutes = sessions.reduce((acc, s) => acc + (s.durationMinutes ?? 0), 0);
         const reportProgress = calcReportProgress(report);
+        const proposalProgress = calcProposalProgress(proposal);
         const lastFromReport = report?.updatedAt;
+        const lastFromProposal = proposal?.updatedAt ?? proposal?.lastSavedAt;
         const lastFromSession = sessions
           .map((s) => s.endTime ?? s.startTime)
           .filter(Boolean)
           .sort()
           .pop();
-        const lastActivityAt = [lastFromReport, lastFromSession]
+        const lastActivityAt = [lastFromReport, lastFromProposal, lastFromSession]
           .filter((x): x is string => !!x)
           .sort()
           .pop();
         return {
           user: u,
           report,
+          proposal,
           papers,
           sessions,
           totalMinutes,
           reportProgress,
+          proposalProgress,
           lastActivityAt,
         };
       })
-      .filter((s) => s.report || s.papers.length > 0 || s.sessions.length > 0);
-  }, [users, reports, papersBundles, sessionBundles]);
+      .filter(
+        (s) =>
+          s.report ||
+          s.proposal ||
+          s.papers.length > 0 ||
+          s.sessions.length > 0,
+      );
+  }, [users, reports, proposals, papersBundles, sessionBundles]);
 
   const filtered = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
@@ -167,14 +256,16 @@ export default function ConsoleResearchPage() {
   }, [summaries, keyword, sortBy]);
 
   const stats = useMemo(() => {
+    const proposalCount = summaries.filter((s) => !!s.proposal).length;
     const reportCount = summaries.filter((s) => !!s.report).length;
     const paperCount = summaries.reduce((acc, s) => acc + s.papers.length, 0);
     const sessionCount = summaries.reduce((acc, s) => acc + s.sessions.length, 0);
     const totalMinutes = summaries.reduce((acc, s) => acc + s.totalMinutes, 0);
-    return { reportCount, paperCount, sessionCount, totalMinutes };
+    return { proposalCount, reportCount, paperCount, sessionCount, totalMinutes };
   }, [summaries]);
 
-  const loading = loadingProfiles || loadingReports || loadingPapers || loadingSessions;
+  const loading =
+    loadingProfiles || loadingReports || loadingProposals || loadingPapers || loadingSessions;
 
   return (
     <div className="space-y-6">
@@ -185,7 +276,8 @@ export default function ConsoleResearchPage() {
       />
 
       {/* 통계 카드 */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <StatCard label="작성 중인 계획서" value={`${stats.proposalCount}`} unit="건" icon={ClipboardList} />
         <StatCard label="작성 중인 보고서" value={`${stats.reportCount}`} unit="건" icon={FileText} />
         <StatCard label="등록된 논문" value={`${stats.paperCount}`} unit="편" icon={BookOpen} />
         <StatCard label="누적 세션" value={`${stats.sessionCount}`} unit="회" icon={Clock} />
@@ -272,7 +364,17 @@ function StatCard({
 
 function ResearchRow({ summary }: { summary: UserResearchSummary }) {
   const [open, setOpen] = useState(false);
-  const { user, report, papers, sessions, totalMinutes, reportProgress, lastActivityAt } = summary;
+  const {
+    user,
+    report,
+    proposal,
+    papers,
+    sessions,
+    totalMinutes,
+    reportProgress,
+    proposalProgress,
+    lastActivityAt,
+  } = summary;
 
   return (
     <li>
@@ -296,6 +398,9 @@ function ResearchRow({ summary }: { summary: UserResearchSummary }) {
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1">
+              <ClipboardList size={11} /> 계획서 {proposalProgress}%
+            </span>
+            <span className="inline-flex items-center gap-1">
               <FileText size={11} /> 보고서 {reportProgress}%
             </span>
             <span className="inline-flex items-center gap-1">
@@ -318,7 +423,31 @@ function ResearchRow({ summary }: { summary: UserResearchSummary }) {
 
       {open && (
         <div className="border-t bg-muted/20 px-4 py-4 text-sm">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-3">
+            <DetailBlock title="연구 계획서">
+              {proposal ? (
+                <div className="space-y-2 text-xs">
+                  <KV label="국문 제목" value={proposal.titleKo} />
+                  <KV label="영문 제목" value={proposal.titleEn} />
+                  <KV label="연구 목적" value={proposal.purpose?.slice(0, 80)} />
+                  <KV label="연구 방법" value={proposal.method?.slice(0, 80)} />
+                  <KV
+                    label="참고문헌"
+                    value={`${proposal.referencePaperIds?.length ?? 0}편`}
+                  />
+                  <div className="pt-1 text-[11px] text-muted-foreground">
+                    마지막 수정: {formatDate(proposal.updatedAt ?? proposal.lastSavedAt)}
+                  </div>
+                  <div className="pt-1">
+                    <ProgressBar value={proposalProgress} />
+                    <div className="mt-1 text-[10px] text-muted-foreground">진행률 {proposalProgress}%</div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">아직 작성된 계획서가 없습니다.</p>
+              )}
+            </DetailBlock>
+
             <DetailBlock title="연구 보고서">
               {report ? (
                 <div className="space-y-2 text-xs">

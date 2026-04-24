@@ -303,8 +303,8 @@ function ConsoleSteppingStoneContent() {
         <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
           <div className="font-semibold">⚠️ 중복 트랙이 있습니다</div>
           <div className="mt-1 text-xs">
-            아래 키가 둘 이상의 트랙으로 등록되어 있습니다 — 회원 페이지가 첫 번째 트랙만 사용하므로,
-            중복은 삭제하는 것이 좋습니다:&nbsp;
+            아래 키가 둘 이상의 트랙으로 등록되어 있습니다 — 회원 페이지는 모든 중복 트랙의 항목을 합쳐 보여주지만,
+            관리 혼란을 줄이기 위해 중복은 삭제하는 것이 좋습니다:&nbsp;
             {duplicateKeys.map((k) => (
               <Badge key={k} variant="secondary" className="mr-1 text-[10px]">
                 {GUIDE_TRACK_LABELS[k]} ({k})
@@ -313,6 +313,28 @@ function ConsoleSteppingStoneContent() {
           </div>
         </div>
       )}
+
+      {activeTrackId && (() => {
+        const t = tracks.find((x) => x.id === activeTrackId);
+        if (!t) return null;
+        const unpublishedItems = items.filter((i) => !i.published).length;
+        if (t.published && unpublishedItems === 0) return null;
+        return (
+          <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+            {!t.published && (
+              <div>
+                <span className="font-semibold">⚠️ 비공개 트랙</span> — 이 트랙은 공개 페이지(/steppingstone/{t.key})에 표시되지 않습니다.
+                위 "공개로" 버튼을 눌러 공개 전환하세요.
+              </div>
+            )}
+            {unpublishedItems > 0 && (
+              <div className={t.published ? "" : "mt-1"}>
+                항목 중 <span className="font-semibold">{unpublishedItems}개</span>가 비공개 상태입니다 (각 항목의 ⏻ 버튼으로 공개/비공개 전환).
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* 트랙 선택 */}
       <div className="rounded-2xl border bg-card p-4">

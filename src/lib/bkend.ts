@@ -700,6 +700,12 @@ export const researchProposalsApi = {
       "filter[userId]": userId,
       limit: 50,
     }),
+  /** 운영진 콘솔용 — 모든 회원의 연구 계획서를 한 번에 로드 */
+  listAll: (limit = 500) =>
+    dataApi.list<ResearchProposal>("research_proposals", {
+      sort: "updatedAt:desc",
+      limit,
+    }),
   get: (id: string) => dataApi.get<ResearchProposal>("research_proposals", id),
   create: (data: Record<string, unknown>) =>
     dataApi.create<ResearchProposal>("research_proposals", data),
