@@ -138,7 +138,7 @@ const SLIDES: SlideDef[] = [
             setField("problemPhenomena", next);
           }}
           placeholder="예: 그룹 활동 시 1~2명이 발표를 도맡고 나머지는 침묵함"
-          rows={5}
+          rows={4}
           className="bg-white text-base"
           style={{ fontSize: "16px" }}
         />
@@ -324,7 +324,7 @@ const SLIDES: SlideDef[] = [
         value={form.priorResearchAnalysis}
         onChange={(e) => setField("priorResearchAnalysis", e.target.value)}
         placeholder="예: 협력학습 침묵 현상에 대한 연구는 크게 2가지 흐름으로 나뉜다. (1)... (2)... 본 연구는 (1)에 가까운 ..."
-        rows={8}
+        rows={6}
         className="bg-white text-base"
         style={{ fontSize: "16px" }}
       />
@@ -369,34 +369,41 @@ export default function ResearchReportInterview({
   return (
     <div className="fixed inset-0 z-50 flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-blue-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <header
-        className="flex items-center justify-between gap-2 border-b bg-white/70 px-3 py-2 backdrop-blur sm:px-4 sm:py-3 dark:bg-card/70"
+        className="flex items-center justify-between gap-1.5 border-b bg-white/70 px-2.5 py-2 backdrop-blur sm:gap-2 sm:px-4 sm:py-3 dark:bg-card/70"
         style={{ paddingTop: "max(0.5rem, env(safe-area-inset-top))" }}
       >
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary sm:h-9 sm:w-9">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <div className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary sm:flex sm:h-9 sm:w-9">
             <MessageSquareQuote size={16} />
           </div>
           <div className="min-w-0">
-            <p className="truncate text-[11px] text-muted-foreground sm:text-xs">연구보고서 · 인터뷰 모드</p>
-            <p className="truncate text-xs font-bold sm:text-sm">{total.toLocaleString()}자 작성</p>
+            <p className="truncate text-[10px] text-muted-foreground sm:text-xs">연구보고서 · 인터뷰</p>
+            <p className="truncate text-[11px] font-bold sm:text-sm">{total.toLocaleString()}자 작성</p>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           {savedAt && !saving && (
-            <span className="hidden text-[11px] text-muted-foreground sm:inline">
+            <span className="hidden text-[11px] text-muted-foreground md:inline">
               {new Date(savedAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })} 저장됨
             </span>
           )}
-          <Button variant="outline" size="sm" onClick={onDraftSave} disabled={saving || !dirty} className="h-8 px-2 text-[11px]">
-            <Save size={12} className="mr-1" />
-            임시저장
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onDraftSave}
+            disabled={saving || !dirty}
+            className="h-8 px-2 text-[11px]"
+            title="임시저장"
+          >
+            <Save size={12} className="sm:mr-1" />
+            <span className="hidden sm:inline">임시저장</span>
           </Button>
           <Button size="sm" onClick={onSave} disabled={saving} className="h-8 px-2 text-[11px]">
             저장
           </Button>
           <button
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-muted"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted"
             title="인터뷰 종료"
           >
             <X size={18} />
@@ -412,7 +419,7 @@ export default function ResearchReportInterview({
         />
       </div>
 
-      <main className="flex flex-1 items-center justify-center overflow-y-auto px-4 py-6 sm:px-6 sm:py-10">
+      <main className="flex flex-1 items-start justify-center overflow-y-auto overflow-x-hidden px-3 py-4 sm:items-center sm:px-6 sm:py-10">
         <AnimatePresence mode="wait">
           {slide ? (
             <motion.div
@@ -429,12 +436,12 @@ export default function ResearchReportInterview({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1, duration: 0.35 }}
-                className="mt-3 text-center text-xl font-bold leading-snug sm:text-3xl"
+                className="mt-3 text-center text-lg font-bold leading-snug sm:text-3xl"
               >
                 {slide.prompt}
               </motion.h2>
               {slide.hint && (
-                <p className="mt-3 rounded-lg bg-muted/40 p-3 text-center text-sm text-muted-foreground">
+                <p className="mt-2 rounded-lg bg-muted/40 p-2.5 text-center text-xs leading-relaxed text-muted-foreground sm:mt-3 sm:p-3 sm:text-sm">
                   {slide.hint}
                 </p>
               )}
@@ -442,7 +449,7 @@ export default function ResearchReportInterview({
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.35 }}
-                className="mt-8"
+                className="mt-4 sm:mt-8"
               >
                 {slide.render(form, setField)}
               </motion.div>
@@ -457,36 +464,37 @@ export default function ResearchReportInterview({
               className="mx-auto w-full max-w-2xl text-center"
             >
               <div className="mx-auto flex flex-col items-center gap-2">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <Sparkles size={26} />
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary sm:h-14 sm:w-14">
+                  <Sparkles size={22} className="sm:hidden" />
+                  <Sparkles size={26} className="hidden sm:block" />
                 </div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary/70">
                   Research Report · Interview Mode
                 </p>
               </div>
-              <h2 className="mt-6 text-2xl font-bold leading-snug sm:text-3xl">
+              <h2 className="mt-4 text-xl font-bold leading-snug sm:mt-6 sm:text-3xl">
                 질문에 답하다 보면 보고서 한 챕터가 완성돼요
               </h2>
-              <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:mt-4 sm:text-base">
                 총 <strong className="text-foreground">{totalSlides}개</strong>의 짧은 질문에 답하시면 됩니다.<br />
                 답변은 자동으로 보고서 본문에 저장됩니다.
               </p>
-              <div className="mt-6 flex justify-center gap-3 text-xs text-muted-foreground">
+              <div className="mt-4 flex flex-wrap justify-center gap-1.5 text-[11px] text-muted-foreground sm:mt-6 sm:gap-3 sm:text-xs">
                 {(Object.keys(chapterCounts) as Chapter[]).map((c) => {
                   const meta = CHAPTER_META[c];
                   const Icon = meta.icon;
                   return (
-                    <span key={c} className="flex items-center gap-1.5 rounded-full border bg-white px-2.5 py-1 dark:bg-card">
-                      <Icon size={12} />
+                    <span key={c} className="flex items-center gap-1 rounded-full border bg-white px-2 py-1 sm:gap-1.5 sm:px-2.5 dark:bg-card">
+                      <Icon size={11} />
                       {meta.label} {chapterCounts[c]}
                     </span>
                   );
                 })}
               </div>
-              <Button onClick={() => setIndex(0)} size="lg" className="mt-8">
+              <Button onClick={() => setIndex(0)} size="lg" className="mt-6 sm:mt-8">
                 시작하기
               </Button>
-              <p className="mt-3 text-[11px] text-muted-foreground">
+              <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
                 중간에 언제든지 ✕ 버튼으로 종료하면 작성한 내용은 그대로 유지됩니다.
               </p>
             </motion.div>
@@ -496,7 +504,7 @@ export default function ResearchReportInterview({
 
       {index >= 0 && (
         <footer
-          className="border-t bg-white/70 px-3 py-2 backdrop-blur sm:px-4 sm:py-3 dark:bg-card/70"
+          className="border-t bg-white/70 px-2.5 py-2 backdrop-blur sm:px-4 sm:py-3 dark:bg-card/70"
           style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
         >
           <div className="mx-auto flex max-w-2xl items-center justify-between gap-2">
@@ -505,12 +513,12 @@ export default function ResearchReportInterview({
               variant="outline"
               size="sm"
               onClick={() => setIndex((i) => Math.max(-1, i - 1))}
-              className="min-w-[72px]"
+              className="h-9 min-w-[64px] px-2 text-xs sm:min-w-[72px] sm:px-3 sm:text-sm"
             >
-              <ChevronLeft size={16} className="mr-1" />
-              이전
+              <ChevronLeft size={14} className="sm:mr-1" />
+              <span className="hidden sm:inline">이전</span>
             </Button>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-[11px] text-muted-foreground sm:text-xs">
               {index + 1} / {totalSlides}
             </span>
             {index === totalSlides - 1 ? (
@@ -522,7 +530,7 @@ export default function ResearchReportInterview({
                   onClose();
                 }}
                 disabled={saving}
-                className="min-w-[88px]"
+                className="h-9 min-w-[72px] px-2 text-xs sm:min-w-[88px] sm:px-3 sm:text-sm"
               >
                 {saving ? <Loader2 size={14} className="mr-1 animate-spin" /> : <Save size={14} className="mr-1" />}
                 완료
@@ -532,10 +540,10 @@ export default function ResearchReportInterview({
                 type="button"
                 size="sm"
                 onClick={() => setIndex((i) => Math.min(totalSlides - 1, i + 1))}
-                className="min-w-[72px]"
+                className="h-9 min-w-[64px] px-2 text-xs sm:min-w-[72px] sm:px-3 sm:text-sm"
               >
                 다음
-                <ChevronRight size={16} className="ml-1" />
+                <ChevronRight size={14} className="sm:ml-1" />
               </Button>
             )}
           </div>
@@ -551,12 +559,12 @@ function SlideHeader({
   const meta = CHAPTER_META[chapter];
   const Icon = meta.icon;
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className={cn("flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold text-white shadow-sm", `bg-gradient-to-r ${meta.color}`)}>
-        <Icon size={12} />
+    <div className="flex flex-col items-center gap-1.5 sm:gap-2">
+      <div className={cn("flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold text-white shadow-sm sm:gap-1.5 sm:px-3 sm:py-1 sm:text-xs", `bg-gradient-to-r ${meta.color}`)}>
+        <Icon size={11} />
         {meta.label}
       </div>
-      <p className="text-center text-xs font-semibold uppercase tracking-wider text-primary">
+      <p className="text-center text-[10px] font-semibold uppercase tracking-wider text-primary sm:text-xs">
         Q{index + 1} / {total}
         {optional && <span className="ml-2 rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground">선택</span>}
       </p>
