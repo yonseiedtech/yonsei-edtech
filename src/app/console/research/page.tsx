@@ -433,10 +433,17 @@ function ResearchRow({ summary }: { summary: UserResearchSummary }) {
 
   return (
     <li>
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-muted/40"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setOpen((v) => !v);
+          }
+        }}
+        className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition hover:bg-muted/40"
       >
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
           {user.name.charAt(0)}
@@ -450,6 +457,13 @@ function ResearchRow({ summary }: { summary: UserResearchSummary }) {
                 {user.field}
               </Badge>
             )}
+            <Link
+              href={`/profile/${user.id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="ml-1 inline-flex h-6 shrink-0 items-center justify-center rounded-md border border-input bg-background px-2 text-[11px] font-medium text-foreground hover:bg-accent"
+            >
+              프로필 보기
+            </Link>
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1">
@@ -474,7 +488,7 @@ function ResearchRow({ summary }: { summary: UserResearchSummary }) {
           size={16}
           className={cn("shrink-0 text-muted-foreground transition-transform", open && "rotate-90")}
         />
-      </button>
+      </div>
 
       {open && (
         <div className="border-t bg-muted/20 px-4 py-4 text-sm">
@@ -500,7 +514,6 @@ function ResearchRow({ summary }: { summary: UserResearchSummary }) {
                 charCount={writingCharCount}
                 writingMinutes={writingMinutes}
                 writingSessionCount={writingSessions.length}
-                userId={user.id}
               />
             </TabsContent>
 
@@ -509,7 +522,6 @@ function ResearchRow({ summary }: { summary: UserResearchSummary }) {
                 papers={papers}
                 readingMinutes={readingMinutes}
                 readingSessionCount={readingSessions.length}
-                userId={user.id}
               />
             </TabsContent>
 
@@ -519,7 +531,6 @@ function ResearchRow({ summary }: { summary: UserResearchSummary }) {
                 proposal={proposal}
                 reportProgress={reportProgress}
                 proposalProgress={proposalProgress}
-                userId={user.id}
               />
             </TabsContent>
           </Tabs>
@@ -534,14 +545,13 @@ function WritingTab({
   charCount,
   writingMinutes,
   writingSessionCount,
-  userId,
 }: {
   writing?: WritingPaper;
   charCount: number;
   writingMinutes: number;
   writingSessionCount: number;
-  userId: string;
 }) {
+  const [showFull, setShowFull] = useState(false);
   if (!writing) {
     return (
       <DetailBlock title="논문 작성">
@@ -551,49 +561,73 @@ function WritingTab({
   }
   const chapters = writing.chapters ?? {};
   return (
-    <div className="grid gap-3 md:grid-cols-2">
-      <DetailBlock title="논문 정보">
-        <div className="space-y-2 text-xs">
-          <KV label="제목" value={writing.title || "(제목 없음)"} />
-          <KV label="총 글자수" value={`${charCount.toLocaleString()}자`} />
-          <KV label="작성 타이머" value={`${writingSessionCount}회 · ${formatHours(writingMinutes)}`} />
-          <div className="pt-1 text-[11px] text-muted-foreground">
-            마지막 저장: {formatDate(writing.updatedAt ?? writing.lastSavedAt)}
+    <div className="space-y-3">
+      <div className="grid gap-3 md:grid-cols-2">
+        <DetailBlock title="논문 정보">
+          <div className="space-y-2 text-xs">
+            <KV label="제목" value={writing.title || "(제목 없음)"} />
+            <KV label="총 글자수" value={`${charCount.toLocaleString()}자`} />
+            <KV label="작성 타이머" value={`${writingSessionCount}회 · ${formatHours(writingMinutes)}`} />
+            <div className="pt-1 text-[11px] text-muted-foreground">
+              마지막 저장: {formatDate(writing.updatedAt ?? writing.lastSavedAt)}
+            </div>
+            <div className="pt-2">
+              <ToggleFullButton showFull={showFull} setShowFull={setShowFull} />
+            </div>
           </div>
-          <div className="pt-2">
-            <Link
-              href={`/profile/${userId}`}
-              className="inline-flex h-7 items-center justify-center rounded-md border border-input bg-background px-3 text-[11px] font-medium hover:bg-accent"
-            >
-              프로필 보기
-            </Link>
-          </div>
-        </div>
-      </DetailBlock>
-      <DetailBlock title="장별 진행">
-        <div className="space-y-1.5 text-xs">
-          {WRITING_CHAPTER_KEYS.map((key) => {
-            const text = chapters[key] ?? "";
-            const len = text.length;
-            return (
-              <div key={key} className="flex items-center gap-2">
-                <span className="w-20 shrink-0 text-muted-foreground">
-                  {WRITING_CHAPTER_LABELS[key] ?? key}
-                </span>
-                <div className="flex-1">
-                  <ProgressBar value={Math.min(100, (len / 1500) * 100)} />
+        </DetailBlock>
+        <DetailBlock title="장별 진행">
+          <div className="space-y-1.5 text-xs">
+            {WRITING_CHAPTER_KEYS.map((key) => {
+              const text = chapters[key] ?? "";
+              const len = text.length;
+              return (
+                <div key={key} className="flex items-center gap-2">
+                  <span className="w-20 shrink-0 text-muted-foreground">
+                    {WRITING_CHAPTER_LABELS[key] ?? key}
+                  </span>
+                  <div className="flex-1">
+                    <ProgressBar value={Math.min(100, (len / 1500) * 100)} />
+                  </div>
+                  <span className="w-16 shrink-0 text-right text-[11px] text-muted-foreground">
+                    {len.toLocaleString()}자
+                  </span>
                 </div>
-                <span className="w-16 shrink-0 text-right text-[11px] text-muted-foreground">
-                  {len.toLocaleString()}자
-                </span>
-              </div>
-            );
-          })}
-          <p className="pt-1 text-[10px] text-muted-foreground">
-            ※ 1,500자를 100%로 환산한 시각화입니다.
-          </p>
-        </div>
-      </DetailBlock>
+              );
+            })}
+            <p className="pt-1 text-[10px] text-muted-foreground">
+              ※ 1,500자를 100%로 환산한 시각화입니다.
+            </p>
+          </div>
+        </DetailBlock>
+      </div>
+
+      {showFull && (
+        <DetailBlock title="전체 본문">
+          <div className="space-y-3">
+            {WRITING_CHAPTER_KEYS.map((key) => {
+              const text = (chapters[key] ?? "").trim();
+              return (
+                <div key={key}>
+                  <h4 className="mb-1 flex items-center gap-2 text-[11px] font-semibold text-foreground">
+                    <span className="rounded bg-primary/10 px-1.5 py-0.5 text-primary">
+                      {WRITING_CHAPTER_LABELS[key] ?? key}
+                    </span>
+                    <span className="text-muted-foreground">{text.length.toLocaleString()}자</span>
+                  </h4>
+                  {text ? (
+                    <pre className="whitespace-pre-wrap rounded-md border bg-muted/30 p-3 text-[11px] leading-relaxed text-foreground">
+                      {text}
+                    </pre>
+                  ) : (
+                    <p className="text-[11px] text-muted-foreground">(아직 작성된 내용이 없습니다)</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </DetailBlock>
+      )}
     </div>
   );
 }
@@ -602,13 +636,12 @@ function ReadingTab({
   papers,
   readingMinutes,
   readingSessionCount,
-  userId,
 }: {
   papers: ResearchPaper[];
   readingMinutes: number;
   readingSessionCount: number;
-  userId: string;
 }) {
+  const [showFull, setShowFull] = useState(false);
   if (papers.length === 0 && readingSessionCount === 0) {
     return (
       <DetailBlock title="논문 읽기">
@@ -616,43 +649,91 @@ function ReadingTab({
       </DetailBlock>
     );
   }
+  const visible = showFull ? papers : papers.slice(0, 5);
   return (
-    <div className="grid gap-3 md:grid-cols-2">
-      <DetailBlock title="요약">
-        <div className="space-y-2 text-xs">
-          <KV label="정리한 논문" value={`${papers.length}편`} />
-          <KV label="읽기 타이머" value={`${readingSessionCount}회 · ${formatHours(readingMinutes)}`} />
-          <div className="pt-2">
-            <Link
-              href={`/profile/${userId}`}
-              className="inline-flex h-7 items-center justify-center rounded-md border border-input bg-background px-3 text-[11px] font-medium hover:bg-accent"
-            >
-              프로필 보기
-            </Link>
+    <div className="space-y-3">
+      <div className="grid gap-3 md:grid-cols-2">
+        <DetailBlock title="요약">
+          <div className="space-y-2 text-xs">
+            <KV label="정리한 논문" value={`${papers.length}편`} />
+            <KV label="읽기 타이머" value={`${readingSessionCount}회 · ${formatHours(readingMinutes)}`} />
+            <div className="pt-2">
+              <ToggleFullButton showFull={showFull} setShowFull={setShowFull} />
+            </div>
           </div>
+        </DetailBlock>
+        <DetailBlock
+          title={`정리 논문 (${showFull ? `${papers.length}편 전체` : papers.length > 5 ? "최근 5편" : `${papers.length}편`})`}
+        >
+          {papers.length === 0 ? (
+            <p className="text-xs text-muted-foreground">정리된 논문이 없습니다.</p>
+          ) : (
+            <ul className="space-y-1.5 text-xs">
+              {visible.map((p) => (
+                <li key={p.id} className="flex items-start gap-1.5">
+                  <BookOpen size={11} className="mt-0.5 shrink-0 text-muted-foreground" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{p.title || "(제목 없음)"}</p>
+                    {(p.authors || p.year) && (
+                      <p className="truncate text-[10px] text-muted-foreground">
+                        {[p.authors, p.year].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </DetailBlock>
+      </div>
+
+      {showFull && papers.length > 0 && (
+        <div className="space-y-2">
+          {papers.map((p) => (
+            <DetailBlock
+              key={p.id}
+              title={`${p.title || "(제목 없음)"}${p.year ? ` · ${p.year}` : ""}`}
+            >
+              <div className="space-y-1 text-[11px]">
+                {p.authors && <KV label="저자" value={p.authors} />}
+                {p.venue && <KV label="출처" value={p.venue} />}
+                {p.methodology && (
+                  <div>
+                    <p className="text-muted-foreground">방법론</p>
+                    <pre className="mt-0.5 whitespace-pre-wrap rounded-md border bg-muted/30 p-2 text-foreground">
+                      {p.methodology}
+                    </pre>
+                  </div>
+                )}
+                {p.findings && (
+                  <div>
+                    <p className="text-muted-foreground">주요 결과</p>
+                    <pre className="mt-0.5 whitespace-pre-wrap rounded-md border bg-muted/30 p-2 text-foreground">
+                      {p.findings}
+                    </pre>
+                  </div>
+                )}
+                {p.insights && (
+                  <div>
+                    <p className="text-muted-foreground">인사이트</p>
+                    <pre className="mt-0.5 whitespace-pre-wrap rounded-md border bg-muted/30 p-2 text-foreground">
+                      {p.insights}
+                    </pre>
+                  </div>
+                )}
+                {p.myConnection && (
+                  <div>
+                    <p className="text-muted-foreground">내 연구와의 연결</p>
+                    <pre className="mt-0.5 whitespace-pre-wrap rounded-md border bg-muted/30 p-2 text-foreground">
+                      {p.myConnection}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            </DetailBlock>
+          ))}
         </div>
-      </DetailBlock>
-      <DetailBlock title={`최근 정리 논문 (${papers.length > 5 ? "최근 5편" : `${papers.length}편`})`}>
-        {papers.length === 0 ? (
-          <p className="text-xs text-muted-foreground">정리된 논문이 없습니다.</p>
-        ) : (
-          <ul className="space-y-1.5 text-xs">
-            {papers.slice(0, 5).map((p) => (
-              <li key={p.id} className="flex items-start gap-1.5">
-                <BookOpen size={11} className="mt-0.5 shrink-0 text-muted-foreground" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{p.title || "(제목 없음)"}</p>
-                  {(p.authors || p.year) && (
-                    <p className="truncate text-[10px] text-muted-foreground">
-                      {[p.authors, p.year].filter(Boolean).join(" · ")}
-                    </p>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </DetailBlock>
+      )}
     </div>
   );
 }
@@ -662,85 +743,168 @@ function ReportTab({
   proposal,
   reportProgress,
   proposalProgress,
-  userId,
 }: {
   report?: ResearchReport;
   proposal?: ResearchProposal;
   reportProgress: number;
   proposalProgress: number;
-  userId: string;
+}) {
+  const [showFull, setShowFull] = useState(false);
+  return (
+    <div className="space-y-3">
+      <div className="grid gap-3 md:grid-cols-2">
+        <DetailBlock title="연구 계획서">
+          {proposal ? (
+            <div className="space-y-2 text-xs">
+              <KV label="국문 제목" value={proposal.titleKo} />
+              <KV label="영문 제목" value={proposal.titleEn} />
+              <KV label="연구 목적" value={proposal.purpose?.slice(0, 80)} />
+              <KV label="연구 방법" value={proposal.method?.slice(0, 80)} />
+              <KV
+                label="참고문헌"
+                value={`${proposal.referencePaperIds?.length ?? 0}편`}
+              />
+              <div className="pt-1 text-[11px] text-muted-foreground">
+                마지막 수정: {formatDate(proposal.updatedAt ?? proposal.lastSavedAt)}
+              </div>
+              <div className="pt-1">
+                <ProgressBar value={proposalProgress} />
+                <div className="mt-1 text-[10px] text-muted-foreground">진행률 {proposalProgress}%</div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">아직 작성된 계획서가 없습니다.</p>
+          )}
+        </DetailBlock>
+
+        <DetailBlock title="연구 보고서">
+          {report ? (
+            <div className="space-y-2 text-xs">
+              <KV label="대상 학습자" value={report.fieldAudience} />
+              <KV label="교육 형태" value={report.fieldFormat} />
+              <KV label="교과/주제" value={report.fieldSubject} />
+              <KV
+                label="현상"
+                value={(report.problemPhenomena ?? [])
+                  .filter((p) => p.trim())
+                  .slice(0, 2)
+                  .join(" / ")}
+              />
+              <KV label="이론 카드" value={`${report.theoryCards?.length ?? 0}개`} />
+              <KV
+                label="선행 연구 그룹"
+                value={`${report.priorResearchGroups?.length ?? 0}개 / 논문 ${report.priorResearchPaperIds?.length ?? 0}편 인용`}
+              />
+              <div className="pt-1 text-[11px] text-muted-foreground">
+                마지막 수정: {formatDate(report.updatedAt)}
+              </div>
+              <div className="pt-1">
+                <ProgressBar value={reportProgress} />
+                <div className="mt-1 text-[10px] text-muted-foreground">진행률 {reportProgress}%</div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">아직 작성된 보고서가 없습니다.</p>
+          )}
+        </DetailBlock>
+      </div>
+
+      {(proposal || report) && (
+        <div>
+          <ToggleFullButton showFull={showFull} setShowFull={setShowFull} />
+        </div>
+      )}
+
+      {showFull && proposal && (
+        <DetailBlock title="연구 계획서 전체">
+          <div className="space-y-3 text-[11px]">
+            <FullField label="국문 제목" value={proposal.titleKo} />
+            <FullField label="영문 제목" value={proposal.titleEn} />
+            <FullField label="연구 목적" value={proposal.purpose} />
+            <FullField label="연구 범위" value={proposal.scope} />
+            <FullField label="연구 방법" value={proposal.method} />
+            <FullField label="연구 내용" value={proposal.content} />
+          </div>
+        </DetailBlock>
+      )}
+
+      {showFull && report && (
+        <DetailBlock title="연구 보고서 전체">
+          <div className="space-y-3 text-[11px]">
+            <FullField label="대상 학습자" value={report.fieldAudience} />
+            <FullField label="교과/주제" value={report.fieldSubject} />
+            <FullField
+              label="관찰된 현상"
+              value={(report.problemPhenomena ?? []).filter((x) => x.trim()).join("\n\n")}
+            />
+            <FullField label="문제의 영향" value={report.problemImpact} />
+            <FullField label="문제의 중요성" value={report.problemImportance} />
+            {(report.theoryCards ?? []).length > 0 && (
+              <div>
+                <p className="mb-1 text-muted-foreground">이론 카드</p>
+                <div className="space-y-2">
+                  {(report.theoryCards ?? []).map((c) => (
+                    <pre
+                      key={c.id}
+                      className="whitespace-pre-wrap rounded-md border bg-muted/30 p-2 leading-relaxed text-foreground"
+                    >
+                      {[
+                        c.name && `이론: ${c.name}`,
+                        c.scholar && `학자: ${c.scholar}${c.year ? ` (${c.year})` : ""}`,
+                        c.selectionReason && `선택 이유:\n${c.selectionReason}`,
+                        c.problemLink && `문제 연결:\n${c.problemLink}`,
+                      ]
+                        .filter(Boolean)
+                        .join("\n\n")}
+                    </pre>
+                  ))}
+                </div>
+              </div>
+            )}
+            <FullField label="선행연구 분석" value={report.priorResearchAnalysis} />
+          </div>
+        </DetailBlock>
+      )}
+    </div>
+  );
+}
+
+function FullField({ label, value }: { label: string; value?: string | null }) {
+  const text = (value ?? "").trim();
+  return (
+    <div>
+      <p className="mb-1 text-muted-foreground">{label}</p>
+      {text ? (
+        <pre className="whitespace-pre-wrap rounded-md border bg-muted/30 p-2 leading-relaxed text-foreground">
+          {text}
+        </pre>
+      ) : (
+        <p className="text-muted-foreground">—</p>
+      )}
+    </div>
+  );
+}
+
+function ToggleFullButton({
+  showFull,
+  setShowFull,
+}: {
+  showFull: boolean;
+  setShowFull: (v: boolean) => void;
 }) {
   return (
-    <div className="grid gap-3 md:grid-cols-2">
-      <DetailBlock title="연구 계획서">
-        {proposal ? (
-          <div className="space-y-2 text-xs">
-            <KV label="국문 제목" value={proposal.titleKo} />
-            <KV label="영문 제목" value={proposal.titleEn} />
-            <KV label="연구 목적" value={proposal.purpose?.slice(0, 80)} />
-            <KV label="연구 방법" value={proposal.method?.slice(0, 80)} />
-            <KV
-              label="참고문헌"
-              value={`${proposal.referencePaperIds?.length ?? 0}편`}
-            />
-            <div className="pt-1 text-[11px] text-muted-foreground">
-              마지막 수정: {formatDate(proposal.updatedAt ?? proposal.lastSavedAt)}
-            </div>
-            <div className="pt-1">
-              <ProgressBar value={proposalProgress} />
-              <div className="mt-1 text-[10px] text-muted-foreground">진행률 {proposalProgress}%</div>
-            </div>
-          </div>
-        ) : (
-          <p className="text-xs text-muted-foreground">아직 작성된 계획서가 없습니다.</p>
-        )}
-      </DetailBlock>
-
-      <DetailBlock title="연구 보고서">
-        {report ? (
-          <div className="space-y-2 text-xs">
-            <KV label="대상 학습자" value={report.fieldAudience} />
-            <KV label="교육 형태" value={report.fieldFormat} />
-            <KV label="교과/주제" value={report.fieldSubject} />
-            <KV
-              label="현상"
-              value={(report.problemPhenomena ?? [])
-                .filter((p) => p.trim())
-                .slice(0, 2)
-                .join(" / ")}
-            />
-            <KV label="이론 카드" value={`${report.theoryCards?.length ?? 0}개`} />
-            <KV
-              label="선행 연구 그룹"
-              value={`${report.priorResearchGroups?.length ?? 0}개 / 논문 ${report.priorResearchPaperIds?.length ?? 0}편 인용`}
-            />
-            <div className="pt-1 text-[11px] text-muted-foreground">
-              마지막 수정: {formatDate(report.updatedAt)}
-            </div>
-            <div className="pt-1">
-              <ProgressBar value={reportProgress} />
-              <div className="mt-1 text-[10px] text-muted-foreground">진행률 {reportProgress}%</div>
-            </div>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <Link
-                href={`/console/research/${userId}`}
-                className="flex h-8 items-center justify-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-              >
-                자세히 보기
-              </Link>
-              <Link
-                href={`/profile/${userId}`}
-                className="flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
-              >
-                프로필
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <p className="text-xs text-muted-foreground">아직 작성된 보고서가 없습니다.</p>
-        )}
-      </DetailBlock>
-    </div>
+    <button
+      type="button"
+      onClick={() => setShowFull(!showFull)}
+      className={cn(
+        "inline-flex h-7 items-center justify-center rounded-md border px-3 text-[11px] font-medium transition",
+        showFull
+          ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90"
+          : "border-input bg-background text-foreground hover:bg-accent",
+      )}
+    >
+      {showFull ? "간단히 보기" : "전체 보기"}
+    </button>
   );
 }
 
