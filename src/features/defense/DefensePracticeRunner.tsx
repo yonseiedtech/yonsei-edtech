@@ -239,13 +239,18 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
   type SttStatus = "idle" | "starting" | "listening" | "speaking" | "processing" | "restarting" | "error";
   const [sttStatus, setSttStatus] = useState<SttStatus>("idle");
   const [sttDebug, setSttDebug] = useState<string>("");
-  /** 진단용: 실시간 마이크 입력 레벨 (0~100). 사용자가 마이크에 소리 들어가는지 즉답 가능 */
+  /** 진단용: 실시간 마이크 입력 레벨 (0~100). throttle 200ms — UI 카운터/색상용 */
   const [micLevel, setMicLevel] = useState(0);
-  /** 이퀄라이저용: 주파수 대역별 정규화 진폭 (0~100) 배열 */
+  /** 이퀄라이저 바: React state로 60fps 갱신은 reconciliation 비용 폭증 → ref + DOM 직접 조작 */
   const EQ_BARS = 24;
-  const [micBars, setMicBars] = useState<number[]>(() => Array(EQ_BARS).fill(0));
+  const barRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const levelBarRef = useRef<HTMLDivElement | null>(null);
+  const lastLevelStateAtRef = useRef(0);
   /** 진단용: 시작 후 onspeechstart까지 감지 안 될 때 노출되는 hint */
   const [noSpeechHint, setNoSpeechHint] = useState(false);
+  /** 녹음 시작 후 첫 전사까지 카운트다운 (초 단위, null이면 비활성) */
+  const [waitCountdown, setWaitCountdown] = useState<number | null>(null);
+  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   /** 사용자가 선택한 마이크 디바이스 ID */
   const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
@@ -277,6 +282,7 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
       try { recRef.current?.abort(); } catch {/* noop */}
       if (rafIdRef.current != null) cancelAnimationFrame(rafIdRef.current);
       if (noSpeechTimerRef.current) clearTimeout(noSpeechTimerRef.current);
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
       try { audioStreamRef.current?.getTracks().forEach((t) => t.stop()); } catch {/* noop */}
       try { audioCtxRef.current?.close(); } catch {/* noop */}
     };
@@ -326,27 +332,50 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
       // 사람 목소리는 80Hz~3kHz에 집중. 로그 스케일 빈을 EQ_BARS 그룹으로 매핑
       const binCount = freqData.length;
       const tick = () => {
-        // 1) 전체 레벨 (시간 도메인)
+        // 1) 전체 레벨 (시간 도메인) — DOM 직접 갱신
         analyser.getByteTimeDomainData(timeData);
         let max = 0;
         for (let i = 0; i < timeData.length; i++) {
           const v = Math.abs(timeData[i] - 128);
           if (v > max) max = v;
         }
-        setMicLevel(Math.min(100, Math.round((max / 128) * 100)));
-        // 2) 이퀄라이저 (주파수 도메인) — log scale로 EQ_BARS 그룹화
+        const level = Math.min(100, Math.round((max / 128) * 100));
+        if (levelBarRef.current) {
+          levelBarRef.current.style.width = `${level}%`;
+        }
+        // micLevel state는 200ms throttle (색상/카운터용)
+        const now = performance.now();
+        if (now - lastLevelStateAtRef.current > 200) {
+          setMicLevel(level);
+          lastLevelStateAtRef.current = now;
+        }
+        // 2) 이퀄라이저 (주파수 도메인) — DOM 직접 height 조작 (React state 미사용)
         analyser.getByteFrequencyData(freqData);
-        const bars: number[] = new Array(EQ_BARS);
         for (let b = 0; b < EQ_BARS; b++) {
-          // log scale: 저주파를 더 세밀하게
           const lo = Math.floor(binCount * Math.pow(b / EQ_BARS, 1.6));
           const hi = Math.max(lo + 1, Math.floor(binCount * Math.pow((b + 1) / EQ_BARS, 1.6)));
           let sum = 0;
           for (let i = lo; i < hi && i < binCount; i++) sum += freqData[i];
           const avg = sum / Math.max(1, hi - lo);
-          bars[b] = Math.min(100, Math.round((avg / 255) * 100));
+          const v = Math.min(100, Math.round((avg / 255) * 100));
+          const el = barRefs.current[b];
+          if (el) {
+            el.style.height = `${Math.max(4, v)}%`;
+            // 색상은 dataset으로만 갱신해서 className churn 방지
+            const tier = v > 70 ? "high" : v > 40 ? "mid" : v > 20 ? "low" : "min";
+            if (el.dataset.tier !== tier) {
+              el.dataset.tier = tier;
+              el.style.background =
+                tier === "high"
+                  ? "rgb(16 185 129)"
+                  : tier === "mid"
+                  ? "rgb(52 211 153)"
+                  : tier === "low"
+                  ? "rgb(251 191 36)"
+                  : "rgb(161 161 170)";
+            }
+          }
         }
-        setMicBars(bars);
         rafIdRef.current = requestAnimationFrame(tick);
       };
       tick();
@@ -365,7 +394,16 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
     try { audioCtxRef.current?.close(); } catch {/* noop */}
     audioCtxRef.current = null;
     setMicLevel(0);
-    setMicBars(Array(EQ_BARS).fill(0));
+    // EQ 바 DOM 초기화
+    for (let i = 0; i < EQ_BARS; i++) {
+      const el = barRefs.current[i];
+      if (el) {
+        el.style.height = "4%";
+        el.style.background = "";
+        delete el.dataset.tier;
+      }
+    }
+    if (levelBarRef.current) levelBarRef.current.style.width = "0%";
   };
 
   const questions = practiceSet?.questions ?? [];
@@ -386,6 +424,11 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
       clearTimeout(noSpeechTimerRef.current);
       noSpeechTimerRef.current = null;
     }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+    setWaitCountdown(null);
     stopMicMetering();
     try { recRef.current?.stop(); } catch {/* noop */}
     const qid = currentQuestionIdRef.current;
@@ -424,6 +467,12 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
         clearTimeout(noSpeechTimerRef.current);
         noSpeechTimerRef.current = null;
       }
+      // 카운트다운 종료 (첫 전사 감지됨)
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
+      setWaitCountdown(null);
     };
     rec.onspeechend = () => {
       console.log("[STT] onspeechend");
@@ -446,6 +495,11 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
         clearTimeout(noSpeechTimerRef.current);
         noSpeechTimerRef.current = null;
       }
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
+      setWaitCountdown(null);
       let finalText = "";
       let interimText = "";
       for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -591,6 +645,21 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
           setNoSpeechHint(true);
         }
       }, 5000);
+      // 5초 카운트다운 — 사용자가 "얼마나 기다려야 하나" 즉시 파악
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+      setWaitCountdown(5);
+      countdownIntervalRef.current = setInterval(() => {
+        setWaitCountdown((prev) => {
+          if (prev == null || prev <= 1) {
+            if (countdownIntervalRef.current) {
+              clearInterval(countdownIntervalRef.current);
+              countdownIntervalRef.current = null;
+            }
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
     } catch (err) {
       console.error("[STT] start failed:", err);
       wantRecordingRef.current = false;
@@ -779,7 +848,7 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                     className="text-base"
                   />
                 ) : (
-                  <div className="min-h-[120px] whitespace-pre-wrap rounded-md bg-muted/30 p-3 text-sm leading-relaxed">
+                  <div className="relative min-h-[120px] whitespace-pre-wrap rounded-md bg-muted/30 p-3 text-sm leading-relaxed">
                     {transcripts[current.id] && (
                       <span>{transcripts[current.id]}</span>
                     )}
@@ -797,6 +866,18 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                     )}
                     {recording && (transcripts[current.id] || interim) && (
                       <span className="ml-1 inline-block h-3 w-1 animate-pulse bg-rose-500 align-middle" />
+                    )}
+                    {/* 첫 전사까지 카운트다운 — 사용자 대기 시간 가시화 */}
+                    {recording && waitCountdown != null && !transcripts[current.id] && !interim && (
+                      <div className="absolute bottom-2 right-2 flex items-center gap-2 rounded-full border bg-background/90 px-3 py-1.5 shadow-sm backdrop-blur">
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">전사 대기</span>
+                        <span
+                          key={waitCountdown}
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-500 text-base font-bold text-white animate-in zoom-in duration-200"
+                        >
+                          {waitCountdown}
+                        </span>
+                      </div>
                     )}
                   </div>
                 )}
@@ -873,38 +954,29 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                         <span className="text-muted-foreground">{sttDebug}</span>
                       )}
                     </div>
-                    {/* 마이크 입력 신호 미터 — 사용자가 마이크 자체가 신호를 받는지 확인 */}
+                    {/* 마이크 입력 신호 미터 — DOM 직접 갱신으로 60fps 확보 */}
                     <div className="flex items-center gap-2">
                       <span className="w-12 shrink-0 text-muted-foreground">레벨</span>
                       <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
                         <div
+                          ref={levelBarRef}
                           className={cn(
-                            "absolute inset-y-0 left-0 transition-all",
+                            "absolute inset-y-0 left-0",
                             micLevel > 50 ? "bg-emerald-500" : micLevel > 15 ? "bg-amber-500" : "bg-zinc-400",
                           )}
-                          style={{ width: `${micLevel}%` }}
+                          style={{ width: "0%", willChange: "width" }}
                         />
                       </div>
                       <span className="w-8 shrink-0 text-right tabular-nums text-muted-foreground">{micLevel}</span>
                     </div>
-                    {/* 이퀄라이저 바 — 24개 주파수 대역 진폭 시각화 */}
+                    {/* 이퀄라이저 — DOM ref 직접 조작 (React state 미사용, transition 제거 → 부드러운 60fps) */}
                     <div className="flex items-end gap-[2px] h-12 rounded-md bg-zinc-50 dark:bg-zinc-900/60 px-2 py-1">
-                      {micBars.map((v, i) => (
+                      {Array.from({ length: EQ_BARS }, (_, i) => (
                         <div
                           key={i}
-                          className={cn(
-                            "flex-1 rounded-sm transition-[height] duration-75",
-                            v > 70
-                              ? "bg-emerald-500"
-                              : v > 40
-                              ? "bg-emerald-400"
-                              : v > 20
-                              ? "bg-amber-400"
-                              : v > 5
-                              ? "bg-zinc-400"
-                              : "bg-zinc-300 dark:bg-zinc-700",
-                          )}
-                          style={{ height: `${Math.max(4, v)}%` }}
+                          ref={(el) => { barRefs.current[i] = el; }}
+                          className="flex-1 rounded-sm bg-zinc-300 dark:bg-zinc-700"
+                          style={{ height: "4%", willChange: "height" }}
                         />
                       ))}
                     </div>
