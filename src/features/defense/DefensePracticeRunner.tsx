@@ -87,6 +87,127 @@ function similarityScore(transcript: string, expected: string): number {
   return Math.round((inter / union) * 100);
 }
 
+/** 한국어/영어 혼합 문장 분리 — `. ! ? 。 ! ?` 와 줄바꿈 기준 */
+function splitSentences(text: string): string[] {
+  if (!text) return [];
+  return text
+    .replace(/\r/g, "")
+    .split(/(?<=[.!?。!?])\s+|\n+/u)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+}
+
+/** 한 문장(target)이 후보 문장 배열(pool) 중 가장 유사한 점수와 인덱스 반환 */
+function bestMatch(target: string, pool: string[]): { score: number; index: number } {
+  if (!target || pool.length === 0) return { score: 0, index: -1 };
+  let bestScore = 0;
+  let bestIdx = -1;
+  for (let i = 0; i < pool.length; i++) {
+    const s = similarityScore(target, pool[i]);
+    if (s > bestScore) {
+      bestScore = s;
+      bestIdx = i;
+    }
+  }
+  return { score: bestScore, index: bestIdx };
+}
+
+/** 점수에 따른 형광펜 클래스 (light/dark 모두 대응) */
+function highlightClass(score: number): string {
+  if (score >= 70) return "bg-emerald-200/80 dark:bg-emerald-700/40 text-emerald-950 dark:text-emerald-50";
+  if (score >= 40) return "bg-amber-200/80 dark:bg-amber-700/40 text-amber-950 dark:text-amber-50";
+  if (score >= 15) return "bg-rose-200/70 dark:bg-rose-700/40 text-rose-950 dark:text-rose-50";
+  return "bg-zinc-200/70 dark:bg-zinc-700/40 text-zinc-700 dark:text-zinc-200";
+}
+
+/**
+ * 문장 단위 비교 뷰 — 좌측 내 답변 / 우측 모범 답변
+ * 각 문장에 형광펜 색상으로 일치도 표시. 모범 답변 누락 문장은 우측에서 회색.
+ */
+function SentenceDiffView({ transcript, expected }: { transcript: string; expected: string }) {
+  const tSents = splitSentences(transcript);
+  const eSents = splitSentences(expected);
+
+  if (tSents.length === 0 && eSents.length === 0) {
+    return (
+      <p className="rounded-md bg-muted/40 p-3 text-xs italic text-muted-foreground">
+        비교할 문장이 없습니다.
+      </p>
+    );
+  }
+
+  // 각 내 답변 문장 → 모범 답변 문장 중 best match 점수
+  const tMatches = tSents.map((s) => bestMatch(s, eSents));
+  // 각 모범 답변 문장이 어떤 내 답변 문장과 매칭되는지 (역방향)
+  const eMatches = eSents.map((s) => bestMatch(s, tSents));
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2 text-[11px]">
+        <span className="text-muted-foreground">형광펜:</span>
+        <span className="rounded px-1.5 py-0.5 bg-emerald-200/80 text-emerald-950 dark:bg-emerald-700/40 dark:text-emerald-50">일치 70+</span>
+        <span className="rounded px-1.5 py-0.5 bg-amber-200/80 text-amber-950 dark:bg-amber-700/40 dark:text-amber-50">부분 40~69</span>
+        <span className="rounded px-1.5 py-0.5 bg-rose-200/70 text-rose-950 dark:bg-rose-700/40 dark:text-rose-50">희미 15~39</span>
+        <span className="rounded px-1.5 py-0.5 bg-zinc-200/70 text-zinc-700 dark:bg-zinc-700/40 dark:text-zinc-200">미일치</span>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2">
+        <div>
+          <p className="mb-1.5 text-xs font-semibold text-muted-foreground">내 답변 (문장 비교)</p>
+          <div className="rounded-lg border bg-background p-3 text-sm leading-relaxed">
+            {tSents.length === 0 ? (
+              <span className="italic text-muted-foreground">답변 없음</span>
+            ) : (
+              tSents.map((s, i) => {
+                const m = tMatches[i];
+                return (
+                  <span
+                    key={i}
+                    className={cn(
+                      "mr-1 inline rounded px-1 py-0.5",
+                      highlightClass(m.score),
+                    )}
+                    title={`최고 일치 ${m.score}점${m.index >= 0 ? ` (모범 ${m.index + 1}번 문장)` : ""}`}
+                  >
+                    {s}{" "}
+                    <span className="ml-0.5 text-[10px] opacity-70">[{m.score}]</span>
+                  </span>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        <div>
+          <p className="mb-1.5 text-xs font-semibold text-muted-foreground">모범 답변 (커버리지)</p>
+          <div className="rounded-lg border bg-background p-3 text-sm leading-relaxed">
+            {eSents.length === 0 ? (
+              <span className="italic text-muted-foreground">모범 답변 없음</span>
+            ) : (
+              eSents.map((s, i) => {
+                const m = eMatches[i];
+                return (
+                  <span
+                    key={i}
+                    className={cn(
+                      "mr-1 inline rounded px-1 py-0.5",
+                      highlightClass(m.score),
+                    )}
+                    title={`내 답변에서 ${m.score}점 일치${m.index >= 0 ? ` (내 ${m.index + 1}번 문장)` : " — 누락"}`}
+                  >
+                    {s}{" "}
+                    <span className="ml-0.5 text-[10px] opacity-70">[{m.score}]</span>
+                  </span>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DefensePracticeRunner({ id }: { id: string }) {
   const router = useRouter();
   const qc = useQueryClient();
@@ -109,10 +230,15 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
   const recRef = useRef<SpeechRecognitionInstance | null>(null);
   const startedAtRef = useRef<number | null>(null);
   const durationsRef = useRef<Record<string, number>>({});
+  /** 사용자가 명시적으로 녹음 시작을 누른 상태인지 — Chrome continuous가 침묵으로 종료되어도 재시작 판단용 */
+  const wantRecordingRef = useRef(false);
+  /** onresult 클로저에서 항상 최신 question id를 참조하기 위한 ref */
+  const currentQuestionIdRef = useRef<string>("");
 
   useEffect(() => {
     setSttSupported(getRecognitionCtor() !== null);
     return () => {
+      wantRecordingRef.current = false;
       try {
         recRef.current?.abort();
       } catch {/* noop */}
@@ -122,71 +248,128 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
   const questions = practiceSet?.questions ?? [];
   const current = questions[idx];
 
+  // 현재 질문 id를 ref에 동기화 (onresult/onend 클로저용)
+  useEffect(() => {
+    currentQuestionIdRef.current = current?.id ?? "";
+  }, [current?.id]);
+
   const stopRecording = () => {
+    wantRecordingRef.current = false;
     setRecording(false);
+    setInterim("");
     try { recRef.current?.stop(); } catch {/* noop */}
-    if (startedAtRef.current && current) {
+    const qid = currentQuestionIdRef.current;
+    if (startedAtRef.current && qid) {
       const sec = Math.round((Date.now() - startedAtRef.current) / 1000);
-      durationsRef.current[current.id] =
-        (durationsRef.current[current.id] ?? 0) + sec;
+      durationsRef.current[qid] =
+        (durationsRef.current[qid] ?? 0) + sec;
       startedAtRef.current = null;
     }
   };
 
-  const startRecording = () => {
+  const buildRecognition = (): SpeechRecognitionInstance | null => {
     const Ctor = getRecognitionCtor();
-    if (!Ctor || !current) {
-      toast.error("이 브라우저는 음성 인식을 지원하지 않습니다. 텍스트로 답변을 입력하세요.");
+    if (!Ctor) return null;
+    const rec = new Ctor();
+    rec.lang = "ko-KR";
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.onresult = (e) => {
+      let finalText = "";
+      let interimText = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const r = e.results[i];
+        if (r.isFinal) finalText += r[0].transcript + " ";
+        else interimText += r[0].transcript;
+      }
+      const qid = currentQuestionIdRef.current;
+      if (!qid) return;
+      if (finalText) {
+        setTranscripts((t) => ({
+          ...t,
+          [qid]: ((t[qid] ?? "") + " " + finalText).replace(/\s+/g, " ").trim(),
+        }));
+      }
+      setInterim(interimText);
+    };
+    rec.onerror = (e) => {
+      console.warn("[STT] error:", e.error);
+      if (e.error === "no-speech" || e.error === "aborted") return;
+      if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+        wantRecordingRef.current = false;
+        toast.error("마이크 권한이 차단되었습니다. 브라우저 주소창의 자물쇠 → 마이크 → 허용으로 변경해주세요.");
+        setRecording(false);
+        return;
+      }
+      if (e.error === "audio-capture") {
+        wantRecordingRef.current = false;
+        toast.error("마이크를 찾을 수 없습니다. 입력 장치를 확인해주세요.");
+        setRecording(false);
+        return;
+      }
+      toast.error(`음성 인식 오류: ${e.error}`);
+    };
+    rec.onend = () => {
+      const qid = currentQuestionIdRef.current;
+      if (startedAtRef.current && qid) {
+        const sec = Math.round((Date.now() - startedAtRef.current) / 1000);
+        durationsRef.current[qid] =
+          (durationsRef.current[qid] ?? 0) + sec;
+        startedAtRef.current = null;
+      }
+      // 사용자가 정지를 누르지 않았다면 자동 재시작 (Chrome continuous는 침묵 ~5s 후 자동 종료)
+      if (wantRecordingRef.current) {
+        try {
+          startedAtRef.current = Date.now();
+          recRef.current?.start();
+        } catch (err) {
+          console.warn("[STT] restart failed:", err);
+          wantRecordingRef.current = false;
+          setRecording(false);
+          setInterim("");
+        }
+      } else {
+        setRecording(false);
+        setInterim("");
+      }
+    };
+    return rec;
+  };
+
+  const startRecording = async () => {
+    if (!current) return;
+    if (!getRecognitionCtor()) {
+      toast.error("이 브라우저는 음성 인식을 지원하지 않습니다. 직접 입력을 사용하세요.");
+      return;
+    }
+    // 명시적 마이크 권한 요청 — Web Speech API만으로는 권한 프롬프트가 묻히는 경우가 있음
+    try {
+      if (typeof navigator !== "undefined" && navigator.mediaDevices?.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // 즉시 트랙 정리 (Web Speech API가 자체 캡처)
+        stream.getTracks().forEach((t) => t.stop());
+      }
+    } catch (err) {
+      console.error("[STT] mic permission denied:", err);
+      toast.error("마이크 권한이 필요합니다. 브라우저 설정에서 허용해주세요.");
       return;
     }
     try {
-      const rec = new Ctor();
-      rec.lang = "ko-KR";
-      rec.continuous = true;
-      rec.interimResults = true;
-      rec.onresult = (e) => {
-        let finalText = "";
-        let interimText = "";
-        for (let i = e.resultIndex; i < e.results.length; i++) {
-          const r = e.results[i];
-          if (r.isFinal) finalText += r[0].transcript + " ";
-          else interimText += r[0].transcript;
-        }
-        if (finalText) {
-          setTranscripts((t) => ({
-            ...t,
-            [current.id]: ((t[current.id] ?? "") + " " + finalText).trim(),
-          }));
-        }
-        setInterim(interimText);
-      };
-      rec.onerror = (e) => {
-        if (e.error === "no-speech") return;
-        if (e.error === "not-allowed") {
-          toast.error("마이크 권한이 차단되었습니다. 브라우저 설정에서 허용해주세요.");
-        } else {
-          toast.error(`음성 인식 오류: ${e.error}`);
-        }
-        setRecording(false);
-      };
-      rec.onend = () => {
-        setRecording(false);
-        setInterim("");
-        if (startedAtRef.current && current) {
-          const sec = Math.round((Date.now() - startedAtRef.current) / 1000);
-          durationsRef.current[current.id] =
-            (durationsRef.current[current.id] ?? 0) + sec;
-          startedAtRef.current = null;
-        }
-      };
+      const rec = buildRecognition();
+      if (!rec) {
+        toast.error("음성 인식을 초기화할 수 없습니다.");
+        return;
+      }
       recRef.current = rec;
+      wantRecordingRef.current = true;
       startedAtRef.current = Date.now();
       rec.start();
       setRecording(true);
       setInterim("");
     } catch (err) {
-      console.error(err);
-      toast.error("음성 인식 시작에 실패했습니다.");
+      console.error("[STT] start failed:", err);
+      wantRecordingRef.current = false;
+      toast.error("음성 인식 시작에 실패했습니다. 페이지를 새로고침 후 다시 시도해주세요.");
     }
   };
 
@@ -370,13 +553,23 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                   />
                 ) : (
                   <div className="min-h-[120px] whitespace-pre-wrap rounded-md bg-muted/30 p-3 text-sm leading-relaxed">
-                    {transcripts[current.id] || (
-                      <span className="italic text-muted-foreground">
-                        아직 답변이 없습니다. 마이크 버튼을 눌러 시작하세요.
-                      </span>
+                    {transcripts[current.id] && (
+                      <span>{transcripts[current.id]}</span>
                     )}
                     {interim && (
-                      <span className="text-muted-foreground"> {interim}</span>
+                      <span className="text-muted-foreground/80">
+                        {transcripts[current.id] ? " " : ""}{interim}
+                      </span>
+                    )}
+                    {!transcripts[current.id] && !interim && (
+                      <span className="italic text-muted-foreground">
+                        {recording
+                          ? "🎙️ 듣고 있어요... 답변을 시작하세요."
+                          : "아직 답변이 없습니다. 마이크 버튼을 눌러 시작하세요."}
+                      </span>
+                    )}
+                    {recording && (transcripts[current.id] || interim) && (
+                      <span className="ml-1 inline-block h-3 w-1 animate-pulse bg-rose-500 align-middle" />
                     )}
                   </div>
                 )}
@@ -421,29 +614,44 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                 </div>
               </div>
 
-              {/* Expected answer toggle */}
+              {/* Expected answer / 비교 분석 toggle */}
               <div className="rounded-xl border bg-card p-4">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setShowAnswer((v) => !v)}
-                  className="w-full justify-start"
-                >
-                  {showAnswer ? <EyeOff size={13} className="mr-1" /> : <Eye size={13} className="mr-1" />}
-                  {showAnswer ? "모범 답변 숨기기" : "모범 답변 보기"}
-                </Button>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setShowAnswer((v) => !v)}
+                  >
+                    {showAnswer ? <EyeOff size={13} className="mr-1" /> : <Eye size={13} className="mr-1" />}
+                    {showAnswer ? "비교 분석 숨기기" : "모범 답변 / 비교 분석"}
+                  </Button>
+                  {transcripts[current.id] && current.expectedAnswer && (
+                    <p className="text-xs text-muted-foreground">
+                      전체 유사도{" "}
+                      <span className="font-bold text-foreground">
+                        {similarityScore(transcripts[current.id], current.expectedAnswer)}점
+                      </span>
+                    </p>
+                  )}
+                </div>
                 {showAnswer && (
-                  <div className="mt-3 whitespace-pre-wrap rounded-md bg-emerald-50 p-3 text-sm leading-relaxed text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100">
-                    {current.expectedAnswer || <span className="italic">모범 답변 미작성</span>}
+                  <div className="mt-3">
+                    {!current.expectedAnswer ? (
+                      <p className="rounded-md bg-muted/40 p-3 text-sm italic text-muted-foreground">
+                        모범 답변이 작성되지 않아 비교할 수 없습니다.
+                      </p>
+                    ) : !transcripts[current.id] ? (
+                      <div className="whitespace-pre-wrap rounded-md bg-emerald-50 p-3 text-sm leading-relaxed text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100">
+                        <p className="mb-1 text-[11px] font-semibold uppercase opacity-70">모범 답변</p>
+                        {current.expectedAnswer}
+                      </div>
+                    ) : (
+                      <SentenceDiffView
+                        transcript={transcripts[current.id]}
+                        expected={current.expectedAnswer}
+                      />
+                    )}
                   </div>
-                )}
-                {transcripts[current.id] && current.expectedAnswer && (
-                  <p className="mt-2 text-right text-xs text-muted-foreground">
-                    현재 유사도{" "}
-                    <span className="font-bold text-foreground">
-                      {similarityScore(transcripts[current.id], current.expectedAnswer)}점
-                    </span>
-                  </p>
                 )}
               </div>
             </motion.div>
@@ -498,19 +706,28 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                       ) : null}
                     </div>
                     <p className="text-sm font-medium">{q.question}</p>
-                    <div className="mt-3 grid gap-3 text-xs sm:grid-cols-2">
-                      <div className="rounded-md bg-muted/40 p-2">
-                        <p className="mb-1 font-semibold">내 답변</p>
-                        <p className="whitespace-pre-wrap text-muted-foreground">
-                          {r?.transcript || <span className="italic">미응답</span>}
-                        </p>
-                      </div>
-                      <div className="rounded-md bg-emerald-50 p-2 dark:bg-emerald-950/40">
-                        <p className="mb-1 font-semibold text-emerald-900 dark:text-emerald-100">모범 답변</p>
-                        <p className="whitespace-pre-wrap text-emerald-900/80 dark:text-emerald-100/80">
-                          {q.expectedAnswer || <span className="italic">미작성</span>}
-                        </p>
-                      </div>
+                    <div className="mt-3">
+                      {r?.transcript && q.expectedAnswer ? (
+                        <SentenceDiffView
+                          transcript={r.transcript}
+                          expected={q.expectedAnswer}
+                        />
+                      ) : (
+                        <div className="grid gap-3 text-xs sm:grid-cols-2">
+                          <div className="rounded-md bg-muted/40 p-2">
+                            <p className="mb-1 font-semibold">내 답변</p>
+                            <p className="whitespace-pre-wrap text-muted-foreground">
+                              {r?.transcript || <span className="italic">미응답</span>}
+                            </p>
+                          </div>
+                          <div className="rounded-md bg-emerald-50 p-2 dark:bg-emerald-950/40">
+                            <p className="mb-1 font-semibold text-emerald-900 dark:text-emerald-100">모범 답변</p>
+                            <p className="whitespace-pre-wrap text-emerald-900/80 dark:text-emerald-100/80">
+                              {q.expectedAnswer || <span className="italic">미작성</span>}
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </li>
                 );
