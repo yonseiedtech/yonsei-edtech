@@ -355,8 +355,9 @@ service cloud.firestore {
 
     // ─── Writing Papers (내가 쓰는 논문 — 사용자당 1건 단일 문서) ───
     match /writing_papers/{docId} {
+      // 운영진(staff 이상)은 /console/research 어드민에서 회원 작성 논문 조회 필요
       allow read: if isAuthenticated()
-        && resource.data.userId == request.auth.uid;
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
       allow create: if isAuthenticated()
         && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isAuthenticated()

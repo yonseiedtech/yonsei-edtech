@@ -3,16 +3,27 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { FlaskConical, Search, BookOpen, Clock, FileText, ChevronRight, ClipboardList } from "lucide-react";
+import {
+  FlaskConical,
+  Search,
+  BookOpen,
+  Clock,
+  FileText,
+  ChevronRight,
+  ClipboardList,
+  PenLine,
+} from "lucide-react";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   profilesApi,
   researchReportsApi,
   researchPapersApi,
   studySessionsApi,
   researchProposalsApi,
+  writingPapersApi,
 } from "@/lib/bkend";
 import type {
   User,
@@ -20,6 +31,7 @@ import type {
   ResearchPaper,
   StudySession,
   ResearchProposal,
+  WritingPaper,
 } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -27,13 +39,24 @@ interface UserResearchSummary {
   user: User;
   report?: ResearchReport;
   proposal?: ResearchProposal;
+  writing?: WritingPaper;
   papers: ResearchPaper[];
   sessions: StudySession[];
   totalMinutes: number;
   reportProgress: number; // 0~100
   proposalProgress: number; // 0~100
+  writingCharCount: number;
   lastActivityAt?: string;
 }
+
+const WRITING_CHAPTER_LABELS: Record<string, string> = {
+  intro: "서론",
+  background: "이론적 배경",
+  method: "연구 방법",
+  results: "연구 결과",
+  conclusion: "결론",
+};
+const WRITING_CHAPTER_KEYS = ["intro", "background", "method", "results", "conclusion"] as const;
 
 function calcProposalProgress(p?: ResearchProposal): number {
   if (!p) return 0;
@@ -52,8 +75,6 @@ function calcProposalProgress(p?: ResearchProposal): number {
 
 function calcReportProgress(r?: ResearchReport): number {
   if (!r) return 0;
-  let filled = 0;
-  let total = 0;
   const checks: Array<boolean> = [
     !!r.fieldAudience?.trim(),
     !!r.fieldFormat,
@@ -67,9 +88,16 @@ function calcReportProgress(r?: ResearchReport): number {
     !!r.theoryRelationProblem?.trim(),
     !!r.priorResearchAnalysis?.trim() || (r.priorResearchGroups?.length ?? 0) > 0,
   ];
-  total = checks.length;
-  filled = checks.filter(Boolean).length;
-  return Math.round((filled / total) * 100);
+  const filled = checks.filter(Boolean).length;
+  return Math.round((filled / checks.length) * 100);
+}
+
+function calcWritingCharCount(w?: WritingPaper): number {
+  if (!w?.chapters) return 0;
+  return Object.values(w.chapters).reduce(
+    (acc, t) => acc + (typeof t === "string" ? t.length : 0),
+    0,
+  );
 }
 
 function formatDate(iso?: string): string {
@@ -107,7 +135,12 @@ export default function ConsoleResearchPage() {
     queryFn: () => researchProposalsApi.listAll(500),
   });
 
-  // 모든 승인 회원의 논문·세션을 listAll 로 한 번에 로드 후 userId 로 그룹 (네트워크 절약)
+  const { data: writingsData, isLoading: loadingWritings } = useQuery({
+    queryKey: ["console-research", "writings"],
+    queryFn: () => writingPapersApi.listAll(1000),
+  });
+
+  // 모든 회원의 논문·세션을 listAll 로 한 번에 로드 후 userId 로 그룹 (네트워크 절약)
   const { data: papersBundles, isLoading: loadingPapers } = useQuery({
     queryKey: ["console-research", "papers-all"],
     queryFn: async () => {
@@ -119,7 +152,6 @@ export default function ConsoleResearchPage() {
         arr.push(p);
         map.set(p.userId, arr);
       }
-      // 사용자별로 createdAt 내림차순 정렬
       for (const [, arr] of map) {
         arr.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
       }
@@ -145,6 +177,7 @@ export default function ConsoleResearchPage() {
   const baseUsers = profilesData?.data ?? [];
   const reports = reportsData?.data ?? [];
   const proposals = proposalsData?.data ?? [];
+  const writings = writingsData?.data ?? [];
 
   // 연구 데이터가 있지만 approved 회원 목록에 없는 userId(예: 관리자, 미승인)를 별도 조회.
   const baseUserIds = useMemo(() => new Set(baseUsers.map((u) => u.id)), [baseUsers]);
@@ -152,18 +185,15 @@ export default function ConsoleResearchPage() {
     const ids = new Set<string>();
     reports.forEach((r) => r.userId && !baseUserIds.has(r.userId) && ids.add(r.userId));
     proposals.forEach((p) => p.userId && !baseUserIds.has(p.userId) && ids.add(p.userId));
+    writings.forEach((w) => w.userId && !baseUserIds.has(w.userId) && ids.add(w.userId));
     if (papersBundles) {
-      for (const uid of papersBundles.keys()) {
-        if (!baseUserIds.has(uid)) ids.add(uid);
-      }
+      for (const uid of papersBundles.keys()) if (!baseUserIds.has(uid)) ids.add(uid);
     }
     if (sessionBundles) {
-      for (const uid of sessionBundles.keys()) {
-        if (!baseUserIds.has(uid)) ids.add(uid);
-      }
+      for (const uid of sessionBundles.keys()) if (!baseUserIds.has(uid)) ids.add(uid);
     }
     return Array.from(ids);
-  }, [reports, proposals, papersBundles, sessionBundles, baseUserIds]);
+  }, [reports, proposals, writings, papersBundles, sessionBundles, baseUserIds]);
 
   const { data: extraUsers = [] } = useQuery({
     queryKey: ["console-research", "extra-users", dataOnlyUserIds.slice().sort().join(",")],
@@ -184,30 +214,40 @@ export default function ConsoleResearchPage() {
   const summaries: UserResearchSummary[] = useMemo(() => {
     const reportMap = new Map(reports.map((r) => [r.userId, r]));
     const proposalMap = new Map<string, ResearchProposal>();
-    // 동일 userId 의 중복 계획서가 있으면 가장 최근 updatedAt 1건만 사용.
     for (const p of proposals) {
       const existing = proposalMap.get(p.userId);
       if (!existing || (p.updatedAt ?? "").localeCompare(existing.updatedAt ?? "") > 0) {
         proposalMap.set(p.userId, p);
       }
     }
+    const writingMap = new Map<string, WritingPaper>();
+    for (const w of writings) {
+      const existing = writingMap.get(w.userId);
+      if (!existing || (w.updatedAt ?? "").localeCompare(existing.updatedAt ?? "") > 0) {
+        writingMap.set(w.userId, w);
+      }
+    }
     return users
       .map((u) => {
         const report = reportMap.get(u.id);
         const proposal = proposalMap.get(u.id);
+        const writing = writingMap.get(u.id);
         const papers = papersBundles?.get(u.id) ?? [];
         const sessions = sessionBundles?.get(u.id) ?? [];
         const totalMinutes = sessions.reduce((acc, s) => acc + (s.durationMinutes ?? 0), 0);
         const reportProgress = calcReportProgress(report);
         const proposalProgress = calcProposalProgress(proposal);
-        const lastFromReport = report?.updatedAt;
-        const lastFromProposal = proposal?.updatedAt ?? proposal?.lastSavedAt;
-        const lastFromSession = sessions
-          .map((s) => s.endTime ?? s.startTime)
-          .filter(Boolean)
-          .sort()
-          .pop();
-        const lastActivityAt = [lastFromReport, lastFromProposal, lastFromSession]
+        const writingCharCount = calcWritingCharCount(writing);
+        const lastActivityAt = [
+          report?.updatedAt,
+          proposal?.updatedAt ?? proposal?.lastSavedAt,
+          writing?.updatedAt ?? writing?.lastSavedAt,
+          sessions
+            .map((s) => s.endTime ?? s.startTime)
+            .filter(Boolean)
+            .sort()
+            .pop(),
+        ]
           .filter((x): x is string => !!x)
           .sort()
           .pop();
@@ -215,11 +255,13 @@ export default function ConsoleResearchPage() {
           user: u,
           report,
           proposal,
+          writing,
           papers,
           sessions,
           totalMinutes,
           reportProgress,
           proposalProgress,
+          writingCharCount,
           lastActivityAt,
         };
       })
@@ -227,10 +269,11 @@ export default function ConsoleResearchPage() {
         (s) =>
           s.report ||
           s.proposal ||
+          s.writing ||
           s.papers.length > 0 ||
           s.sessions.length > 0,
       );
-  }, [users, reports, proposals, papersBundles, sessionBundles]);
+  }, [users, reports, proposals, writings, papersBundles, sessionBundles]);
 
   const filtered = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
@@ -256,32 +299,37 @@ export default function ConsoleResearchPage() {
   }, [summaries, keyword, sortBy]);
 
   const stats = useMemo(() => {
+    const writingCount = summaries.filter((s) => !!s.writing).length;
     const proposalCount = summaries.filter((s) => !!s.proposal).length;
     const reportCount = summaries.filter((s) => !!s.report).length;
     const paperCount = summaries.reduce((acc, s) => acc + s.papers.length, 0);
-    const sessionCount = summaries.reduce((acc, s) => acc + s.sessions.length, 0);
     const totalMinutes = summaries.reduce((acc, s) => acc + s.totalMinutes, 0);
-    return { proposalCount, reportCount, paperCount, sessionCount, totalMinutes };
+    return { writingCount, proposalCount, reportCount, paperCount, totalMinutes };
   }, [summaries]);
 
   const loading =
-    loadingProfiles || loadingReports || loadingProposals || loadingPapers || loadingSessions;
+    loadingProfiles ||
+    loadingReports ||
+    loadingProposals ||
+    loadingWritings ||
+    loadingPapers ||
+    loadingSessions;
 
   return (
     <div className="space-y-6">
       <ConsolePageHeader
         icon={FlaskConical}
         title="회원 연구활동"
-        description="회원별 연구보고서 진행률·논문 정리·연구 타이머 세션을 한 화면에서 확인합니다."
+        description="회원별로 논문 작성·논문 읽기·연구 리포트 데이터를 탭으로 확인합니다."
       />
 
       {/* 통계 카드 */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-        <StatCard label="작성 중인 계획서" value={`${stats.proposalCount}`} unit="건" icon={ClipboardList} />
-        <StatCard label="작성 중인 보고서" value={`${stats.reportCount}`} unit="건" icon={FileText} />
-        <StatCard label="등록된 논문" value={`${stats.paperCount}`} unit="편" icon={BookOpen} />
-        <StatCard label="누적 세션" value={`${stats.sessionCount}`} unit="회" icon={Clock} />
-        <StatCard label="누적 시간" value={`${Math.floor(stats.totalMinutes / 60)}`} unit="시간" icon={Clock} />
+        <StatCard label="작성중인 논문" value={`${stats.writingCount}`} unit="명" icon={PenLine} />
+        <StatCard label="읽은 논문 노트" value={`${stats.paperCount}`} unit="편" icon={BookOpen} />
+        <StatCard label="작성중인 계획서" value={`${stats.proposalCount}`} unit="건" icon={ClipboardList} />
+        <StatCard label="작성중인 보고서" value={`${stats.reportCount}`} unit="건" icon={FileText} />
+        <StatCard label="누적 타이머" value={`${Math.floor(stats.totalMinutes / 60)}`} unit="시간" icon={Clock} />
       </div>
 
       {/* 검색·정렬 */}
@@ -368,13 +416,20 @@ function ResearchRow({ summary }: { summary: UserResearchSummary }) {
     user,
     report,
     proposal,
+    writing,
     papers,
     sessions,
     totalMinutes,
     reportProgress,
     proposalProgress,
+    writingCharCount,
     lastActivityAt,
   } = summary;
+
+  const writingSessions = sessions.filter((s) => s.type === "writing");
+  const readingSessions = sessions.filter((s) => s.type === "reading");
+  const writingMinutes = writingSessions.reduce((a, s) => a + (s.durationMinutes ?? 0), 0);
+  const readingMinutes = readingSessions.reduce((a, s) => a + (s.durationMinutes ?? 0), 0);
 
   return (
     <li>
@@ -398,22 +453,22 @@ function ResearchRow({ summary }: { summary: UserResearchSummary }) {
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1">
+              <PenLine size={11} /> 논문 {writingCharCount.toLocaleString()}자
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <BookOpen size={11} /> 읽기 {papers.length}편
+            </span>
+            <span className="inline-flex items-center gap-1">
               <ClipboardList size={11} /> 계획서 {proposalProgress}%
             </span>
             <span className="inline-flex items-center gap-1">
               <FileText size={11} /> 보고서 {reportProgress}%
             </span>
             <span className="inline-flex items-center gap-1">
-              <BookOpen size={11} /> 논문 {papers.length}편
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <Clock size={11} /> {sessions.length}회 · {formatHours(totalMinutes)}
+              <Clock size={11} /> {formatHours(totalMinutes)}
             </span>
             <span>최근: {formatDate(lastActivityAt)}</span>
           </div>
-        </div>
-        <div className="hidden w-32 shrink-0 sm:block">
-          <ProgressBar value={reportProgress} />
         </div>
         <ChevronRight
           size={16}
@@ -423,121 +478,269 @@ function ResearchRow({ summary }: { summary: UserResearchSummary }) {
 
       {open && (
         <div className="border-t bg-muted/20 px-4 py-4 text-sm">
-          <div className="grid gap-4 md:grid-cols-3">
-            <DetailBlock title="연구 계획서">
-              {proposal ? (
-                <div className="space-y-2 text-xs">
-                  <KV label="국문 제목" value={proposal.titleKo} />
-                  <KV label="영문 제목" value={proposal.titleEn} />
-                  <KV label="연구 목적" value={proposal.purpose?.slice(0, 80)} />
-                  <KV label="연구 방법" value={proposal.method?.slice(0, 80)} />
-                  <KV
-                    label="참고문헌"
-                    value={`${proposal.referencePaperIds?.length ?? 0}편`}
-                  />
-                  <div className="pt-1 text-[11px] text-muted-foreground">
-                    마지막 수정: {formatDate(proposal.updatedAt ?? proposal.lastSavedAt)}
-                  </div>
-                  <div className="pt-1">
-                    <ProgressBar value={proposalProgress} />
-                    <div className="mt-1 text-[10px] text-muted-foreground">진행률 {proposalProgress}%</div>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground">아직 작성된 계획서가 없습니다.</p>
-              )}
-            </DetailBlock>
+          <Tabs defaultValue="writing" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 sm:max-w-md">
+              <TabsTrigger value="writing" className="flex items-center gap-1.5 text-xs">
+                <PenLine size={12} />
+                논문 작성
+              </TabsTrigger>
+              <TabsTrigger value="reading" className="flex items-center gap-1.5 text-xs">
+                <BookOpen size={12} />
+                논문 읽기
+              </TabsTrigger>
+              <TabsTrigger value="report" className="flex items-center gap-1.5 text-xs">
+                <FileText size={12} />
+                연구 리포트
+              </TabsTrigger>
+            </TabsList>
 
-            <DetailBlock title="연구 보고서">
-              {report ? (
-                <div className="space-y-2 text-xs">
-                  <KV label="대상 학습자" value={report.fieldAudience} />
-                  <KV label="교육 형태" value={report.fieldFormat} />
-                  <KV label="교과/주제" value={report.fieldSubject} />
-                  <KV
-                    label="현상"
-                    value={(report.problemPhenomena ?? [])
-                      .filter((p) => p.trim())
-                      .slice(0, 2)
-                      .join(" / ")}
-                  />
-                  <KV label="이론 카드" value={`${report.theoryCards?.length ?? 0}개`} />
-                  <KV
-                    label="선행 연구 그룹"
-                    value={`${report.priorResearchGroups?.length ?? 0}개 / 논문 ${report.priorResearchPaperIds?.length ?? 0}편 인용`}
-                  />
-                  <div className="pt-1 text-[11px] text-muted-foreground">
-                    마지막 수정: {formatDate(report.updatedAt)}
-                  </div>
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    <Link
-                      href={`/console/research/${user.id}`}
-                      className="flex h-8 items-center justify-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-                    >
-                      자세히 보기
-                    </Link>
-                    <Link
-                      href={`/profile/${user.id}`}
-                      className="flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
-                    >
-                      프로필
-                    </Link>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground">아직 작성된 보고서가 없습니다.</p>
-              )}
-            </DetailBlock>
+            <TabsContent value="writing" className="mt-3 space-y-3">
+              <WritingTab
+                writing={writing}
+                charCount={writingCharCount}
+                writingMinutes={writingMinutes}
+                writingSessionCount={writingSessions.length}
+                userId={user.id}
+              />
+            </TabsContent>
 
-            <DetailBlock title="최근 정리 논문 / 세션">
-              {papers.length === 0 && sessions.length === 0 ? (
-                <p className="text-xs text-muted-foreground">최근 활동이 없습니다.</p>
-              ) : (
-                <div className="space-y-3">
-                  {papers.length > 0 && (
-                    <div>
-                      <p className="mb-1 text-[11px] font-semibold text-muted-foreground">
-                        논문 ({papers.length}편 중 최근 3편)
-                      </p>
-                      <ul className="space-y-1 text-xs">
-                        {papers.slice(0, 3).map((p) => (
-                          <li key={p.id} className="flex items-center gap-1">
-                            <BookOpen size={11} className="shrink-0 text-muted-foreground" />
-                            <span className="truncate">{p.title || "(제목 없음)"}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {sessions.length > 0 && (
-                    <div>
-                      <p className="mb-1 text-[11px] font-semibold text-muted-foreground">
-                        타이머 세션 (최근 3회)
-                      </p>
-                      <ul className="space-y-1 text-xs">
-                        {sessions
-                          .slice()
-                          .sort((a, b) => (b.startTime ?? "").localeCompare(a.startTime ?? ""))
-                          .slice(0, 3)
-                          .map((s) => (
-                            <li key={s.id} className="flex items-center gap-1">
-                              <Clock size={11} className="shrink-0 text-muted-foreground" />
-                              <span className="truncate">{s.targetTitle || s.type}</span>
-                              <span className="ml-auto shrink-0 text-muted-foreground">
-                                {formatHours(s.durationMinutes ?? 0)}
-                              </span>
-                            </li>
-                          ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              )}
-            </DetailBlock>
-          </div>
+            <TabsContent value="reading" className="mt-3 space-y-3">
+              <ReadingTab
+                papers={papers}
+                readingMinutes={readingMinutes}
+                readingSessionCount={readingSessions.length}
+                userId={user.id}
+              />
+            </TabsContent>
+
+            <TabsContent value="report" className="mt-3 space-y-3">
+              <ReportTab
+                report={report}
+                proposal={proposal}
+                reportProgress={reportProgress}
+                proposalProgress={proposalProgress}
+                userId={user.id}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
       )}
     </li>
+  );
+}
+
+function WritingTab({
+  writing,
+  charCount,
+  writingMinutes,
+  writingSessionCount,
+  userId,
+}: {
+  writing?: WritingPaper;
+  charCount: number;
+  writingMinutes: number;
+  writingSessionCount: number;
+  userId: string;
+}) {
+  if (!writing) {
+    return (
+      <DetailBlock title="논문 작성">
+        <p className="text-xs text-muted-foreground">아직 논문 작성을 시작하지 않았습니다.</p>
+      </DetailBlock>
+    );
+  }
+  const chapters = writing.chapters ?? {};
+  return (
+    <div className="grid gap-3 md:grid-cols-2">
+      <DetailBlock title="논문 정보">
+        <div className="space-y-2 text-xs">
+          <KV label="제목" value={writing.title || "(제목 없음)"} />
+          <KV label="총 글자수" value={`${charCount.toLocaleString()}자`} />
+          <KV label="작성 타이머" value={`${writingSessionCount}회 · ${formatHours(writingMinutes)}`} />
+          <div className="pt-1 text-[11px] text-muted-foreground">
+            마지막 저장: {formatDate(writing.updatedAt ?? writing.lastSavedAt)}
+          </div>
+          <div className="pt-2">
+            <Link
+              href={`/profile/${userId}`}
+              className="inline-flex h-7 items-center justify-center rounded-md border border-input bg-background px-3 text-[11px] font-medium hover:bg-accent"
+            >
+              프로필 보기
+            </Link>
+          </div>
+        </div>
+      </DetailBlock>
+      <DetailBlock title="장별 진행">
+        <div className="space-y-1.5 text-xs">
+          {WRITING_CHAPTER_KEYS.map((key) => {
+            const text = chapters[key] ?? "";
+            const len = text.length;
+            return (
+              <div key={key} className="flex items-center gap-2">
+                <span className="w-20 shrink-0 text-muted-foreground">
+                  {WRITING_CHAPTER_LABELS[key] ?? key}
+                </span>
+                <div className="flex-1">
+                  <ProgressBar value={Math.min(100, (len / 1500) * 100)} />
+                </div>
+                <span className="w-16 shrink-0 text-right text-[11px] text-muted-foreground">
+                  {len.toLocaleString()}자
+                </span>
+              </div>
+            );
+          })}
+          <p className="pt-1 text-[10px] text-muted-foreground">
+            ※ 1,500자를 100%로 환산한 시각화입니다.
+          </p>
+        </div>
+      </DetailBlock>
+    </div>
+  );
+}
+
+function ReadingTab({
+  papers,
+  readingMinutes,
+  readingSessionCount,
+  userId,
+}: {
+  papers: ResearchPaper[];
+  readingMinutes: number;
+  readingSessionCount: number;
+  userId: string;
+}) {
+  if (papers.length === 0 && readingSessionCount === 0) {
+    return (
+      <DetailBlock title="논문 읽기">
+        <p className="text-xs text-muted-foreground">아직 정리한 논문이 없습니다.</p>
+      </DetailBlock>
+    );
+  }
+  return (
+    <div className="grid gap-3 md:grid-cols-2">
+      <DetailBlock title="요약">
+        <div className="space-y-2 text-xs">
+          <KV label="정리한 논문" value={`${papers.length}편`} />
+          <KV label="읽기 타이머" value={`${readingSessionCount}회 · ${formatHours(readingMinutes)}`} />
+          <div className="pt-2">
+            <Link
+              href={`/profile/${userId}`}
+              className="inline-flex h-7 items-center justify-center rounded-md border border-input bg-background px-3 text-[11px] font-medium hover:bg-accent"
+            >
+              프로필 보기
+            </Link>
+          </div>
+        </div>
+      </DetailBlock>
+      <DetailBlock title={`최근 정리 논문 (${papers.length > 5 ? "최근 5편" : `${papers.length}편`})`}>
+        {papers.length === 0 ? (
+          <p className="text-xs text-muted-foreground">정리된 논문이 없습니다.</p>
+        ) : (
+          <ul className="space-y-1.5 text-xs">
+            {papers.slice(0, 5).map((p) => (
+              <li key={p.id} className="flex items-start gap-1.5">
+                <BookOpen size={11} className="mt-0.5 shrink-0 text-muted-foreground" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium">{p.title || "(제목 없음)"}</p>
+                  {(p.authors || p.year) && (
+                    <p className="truncate text-[10px] text-muted-foreground">
+                      {[p.authors, p.year].filter(Boolean).join(" · ")}
+                    </p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </DetailBlock>
+    </div>
+  );
+}
+
+function ReportTab({
+  report,
+  proposal,
+  reportProgress,
+  proposalProgress,
+  userId,
+}: {
+  report?: ResearchReport;
+  proposal?: ResearchProposal;
+  reportProgress: number;
+  proposalProgress: number;
+  userId: string;
+}) {
+  return (
+    <div className="grid gap-3 md:grid-cols-2">
+      <DetailBlock title="연구 계획서">
+        {proposal ? (
+          <div className="space-y-2 text-xs">
+            <KV label="국문 제목" value={proposal.titleKo} />
+            <KV label="영문 제목" value={proposal.titleEn} />
+            <KV label="연구 목적" value={proposal.purpose?.slice(0, 80)} />
+            <KV label="연구 방법" value={proposal.method?.slice(0, 80)} />
+            <KV
+              label="참고문헌"
+              value={`${proposal.referencePaperIds?.length ?? 0}편`}
+            />
+            <div className="pt-1 text-[11px] text-muted-foreground">
+              마지막 수정: {formatDate(proposal.updatedAt ?? proposal.lastSavedAt)}
+            </div>
+            <div className="pt-1">
+              <ProgressBar value={proposalProgress} />
+              <div className="mt-1 text-[10px] text-muted-foreground">진행률 {proposalProgress}%</div>
+            </div>
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">아직 작성된 계획서가 없습니다.</p>
+        )}
+      </DetailBlock>
+
+      <DetailBlock title="연구 보고서">
+        {report ? (
+          <div className="space-y-2 text-xs">
+            <KV label="대상 학습자" value={report.fieldAudience} />
+            <KV label="교육 형태" value={report.fieldFormat} />
+            <KV label="교과/주제" value={report.fieldSubject} />
+            <KV
+              label="현상"
+              value={(report.problemPhenomena ?? [])
+                .filter((p) => p.trim())
+                .slice(0, 2)
+                .join(" / ")}
+            />
+            <KV label="이론 카드" value={`${report.theoryCards?.length ?? 0}개`} />
+            <KV
+              label="선행 연구 그룹"
+              value={`${report.priorResearchGroups?.length ?? 0}개 / 논문 ${report.priorResearchPaperIds?.length ?? 0}편 인용`}
+            />
+            <div className="pt-1 text-[11px] text-muted-foreground">
+              마지막 수정: {formatDate(report.updatedAt)}
+            </div>
+            <div className="pt-1">
+              <ProgressBar value={reportProgress} />
+              <div className="mt-1 text-[10px] text-muted-foreground">진행률 {reportProgress}%</div>
+            </div>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <Link
+                href={`/console/research/${userId}`}
+                className="flex h-8 items-center justify-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                자세히 보기
+              </Link>
+              <Link
+                href={`/profile/${userId}`}
+                className="flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
+              >
+                프로필
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">아직 작성된 보고서가 없습니다.</p>
+        )}
+      </DetailBlock>
+    </div>
   );
 }
 

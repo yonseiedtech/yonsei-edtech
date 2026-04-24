@@ -637,6 +637,9 @@ export const writingPapersApi = {
       "filter[userId]": userId,
       limit: 50,
     }),
+  /** 운영진 콘솔용 — 모든 회원의 작성중 논문을 한 번에 로드 */
+  listAll: (limit: number = 1000) =>
+    dataApi.list<WritingPaper>("writing_papers", { limit }),
   get: (id: string) => dataApi.get<WritingPaper>("writing_papers", id),
   create: (data: Record<string, unknown>) =>
     dataApi.create<WritingPaper>("writing_papers", data),
