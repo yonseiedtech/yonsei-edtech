@@ -366,9 +366,9 @@ service cloud.firestore {
 
     // ─── Defense Practice Sets (논문 심사 연습 Q&A 세트) ───
     match /defense_practice_sets/{docId} {
-      // 본인 + 운영진(staff 이상) read. 운영진은 회원 학습 자료 검토 필요
+      // 개인 학습 자료 — 본인 + 관리자(admin)만 read. staff/president는 접근 불가
       allow read: if isAuthenticated()
-        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
+        && (resource.data.userId == request.auth.uid || isAdmin());
       allow create: if isAuthenticated()
         && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isAuthenticated()
