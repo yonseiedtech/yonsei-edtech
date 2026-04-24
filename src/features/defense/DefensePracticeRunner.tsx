@@ -246,6 +246,9 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
   const [micBars, setMicBars] = useState<number[]>(() => Array(EQ_BARS).fill(0));
   /** 진단용: 시작 후 onspeechstart까지 감지 안 될 때 노출되는 hint */
   const [noSpeechHint, setNoSpeechHint] = useState(false);
+  /** 사용자가 선택한 마이크 디바이스 ID */
+  const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
 
   const recRef = useRef<SpeechRecognitionInstance | null>(null);
   const startedAtRef = useRef<number | null>(null);
@@ -263,6 +266,12 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
 
   useEffect(() => {
     setSttSupported(getRecognitionCtor() !== null);
+    // 사용 가능한 마이크 디바이스 목록 (권한 요청 전에는 label이 비어있음 — 처음 시작 후 채워짐)
+    if (typeof navigator !== "undefined" && navigator.mediaDevices?.enumerateDevices) {
+      navigator.mediaDevices.enumerateDevices().then((devs) => {
+        setAudioDevices(devs.filter((d) => d.kind === "audioinput"));
+      }).catch(() => {/* noop */});
+    }
     return () => {
       wantRecordingRef.current = false;
       try { recRef.current?.abort(); } catch {/* noop */}
@@ -276,13 +285,37 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
   /** 마이크 입력 레벨 실시간 측정 — 사용자가 마이크 자체가 입력을 받는지 즉답 가능 */
   const startMicMetering = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // echoCancellation/noiseSuppression/autoGainControl이 일부 환경에서 신호를 0으로 깎는 경우가 있어 끔
+      const audioConstraints: MediaTrackConstraints = {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: true,
+      };
+      if (selectedDeviceId) {
+        audioConstraints.deviceId = { exact: selectedDeviceId };
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
       audioStreamRef.current = stream;
+      // 권한 받은 후 enumerateDevices가 label을 채워줌
+      try {
+        const devs = await navigator.mediaDevices.enumerateDevices();
+        setAudioDevices(devs.filter((d) => d.kind === "audioinput"));
+      } catch {/* noop */}
+      // 디바이스 진단 정보
+      const tracks = stream.getAudioTracks();
+      const labels = tracks.map((t) => `${t.label || "(이름없음)"}[${t.readyState}]`).join(", ");
+      console.log("[STT] mic tracks:", tracks);
+      setSttDebug(`마이크 권한 OK · 디바이스: ${labels}`);
       const AC: typeof AudioContext =
         window.AudioContext ??
         (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext!;
       const ctx = new AC();
       audioCtxRef.current = ctx;
+      // Chrome/Safari에서 getUserMedia 직후 ctx가 suspended일 수 있음 → 명시적 resume
+      if (ctx.state === "suspended") {
+        try { await ctx.resume(); } catch {/* noop */}
+      }
+      console.log("[STT] AudioContext state:", ctx.state);
       const source = ctx.createMediaStreamSource(stream);
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 512;
@@ -875,6 +908,32 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                         />
                       ))}
                     </div>
+                    {/* 입력 디바이스 선택 (권한 후 라벨이 채워짐) */}
+                    {audioDevices.length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <span className="w-12 shrink-0 text-muted-foreground">입력</span>
+                        <select
+                          value={selectedDeviceId}
+                          onChange={(e) => {
+                            const newId = e.target.value;
+                            setSelectedDeviceId(newId);
+                            // 디바이스 변경 시 즉시 재시작 (마이크 미터링 + STT)
+                            if (recording || micLevel > 0) {
+                              stopRecording();
+                              setTimeout(() => { startRecording(); }, 200);
+                            }
+                          }}
+                          className="flex-1 rounded border bg-background px-2 py-1 text-[11px]"
+                        >
+                          <option value="">시스템 기본</option>
+                          {audioDevices.map((d) => (
+                            <option key={d.deviceId} value={d.deviceId}>
+                              {d.label || `마이크 (${d.deviceId.slice(0, 8)})`}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                     {noSpeechHint && (
                       <div className="rounded-md border border-amber-300 bg-amber-50 p-2 text-[11px] text-amber-900 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-100">
                         <p className="font-semibold">5초간 음성이 감지되지 않았어요</p>
