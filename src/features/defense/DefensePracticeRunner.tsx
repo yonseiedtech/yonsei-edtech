@@ -442,7 +442,14 @@ function SentenceDiffView({ transcript, expected }: { transcript: string; expect
   );
 }
 
-export default function DefensePracticeRunner({ id }: { id: string }) {
+export default function DefensePracticeRunner({
+  id,
+  backHref = "/console/grad-life/thesis-defense",
+}: {
+  id: string;
+  /** 닫기/목록으로 버튼이 향하는 경로 — 콘솔/공개(steppingstone) 진입에 따라 다르게 사용 */
+  backHref?: string;
+}) {
   const router = useRouter();
   const qc = useQueryClient();
 
@@ -1243,7 +1250,7 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
 
   const handleClose = () => {
     stopRecording();
-    router.push("/console/grad-life/thesis-defense");
+    router.push(backHref);
   };
 
   if (isLoading) {

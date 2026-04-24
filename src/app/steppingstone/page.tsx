@@ -46,9 +46,9 @@ const STATIC_TRACKS: StaticTrack[] = [
   {
     key: "graduation",
     title: "졸업 준비",
-    description: "논문 일정·심사 절차·졸업 후 네트워크.",
+    description: "논문 심사 연습(음성 채점·따라 읽기) · 심사 절차 · 졸업 후 네트워크.",
     icon: Award,
-    href: null,
+    href: "/steppingstone/thesis-defense",
     color: "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300",
   },
 ];

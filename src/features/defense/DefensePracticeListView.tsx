@@ -31,7 +31,15 @@ function uid() {
   return `q_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export default function DefensePracticeListView() {
+export default function DefensePracticeListView({
+  runnerHrefPrefix = "/console/grad-life/thesis-defense",
+  variant = "console",
+}: {
+  /** 연습 시작 버튼이 향하는 prefix (예: /console/grad-life/thesis-defense 또는 /steppingstone/thesis-defense) */
+  runnerHrefPrefix?: string;
+  /** "console"은 ConsolePageHeader, "public"은 자체 헤더 외부에 둠 (래퍼가 hero 제공) */
+  variant?: "console" | "public";
+} = {}) {
   const qc = useQueryClient();
   const { user } = useAuthStore();
   const userId = user?.id ?? "";
@@ -74,16 +82,24 @@ export default function DefensePracticeListView() {
 
   return (
     <div className="space-y-6">
-      <ConsolePageHeader
-        icon={MessageSquareQuote}
-        title="논문 심사 연습"
-        description="사전에 예상 질문과 모범 답변을 작성한 뒤, 마이크로 답변을 녹음·전사하여 모범 답변과 비교 채점합니다."
-        actions={
+      {variant === "console" ? (
+        <ConsolePageHeader
+          icon={MessageSquareQuote}
+          title="논문 심사 연습"
+          description="사전에 예상 질문과 모범 답변을 작성한 뒤, 마이크로 답변을 녹음·전사하여 모범 답변과 비교 채점합니다."
+          actions={
+            <Button onClick={() => setEditing("new")}>
+              <Plus size={14} className="mr-1" /> 새 연습 세트
+            </Button>
+          }
+        />
+      ) : (
+        <div className="flex justify-end">
           <Button onClick={() => setEditing("new")}>
             <Plus size={14} className="mr-1" /> 새 연습 세트
           </Button>
-        }
-      />
+        </div>
+      )}
 
       {isLoading ? (
         <p className="py-8 text-center text-sm text-muted-foreground">불러오는 중...</p>
@@ -147,7 +163,7 @@ export default function DefensePracticeListView() {
                     )}
                   </div>
                   <div className="flex shrink-0 items-center gap-1.5">
-                    <Link href={`/console/grad-life/thesis-defense/${s.id}/practice`}>
+                    <Link href={`${runnerHrefPrefix}/${s.id}/practice`}>
                       <Button size="sm" disabled={s.questions.length === 0}>
                         <Play size={13} className="mr-1" /> 연습 시작
                       </Button>
