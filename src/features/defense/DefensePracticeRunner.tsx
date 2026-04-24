@@ -1,5 +1,6 @@
 "use client";
 
+import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -59,19 +60,105 @@ function getRecognitionCtor(): (new () => SpeechRecognitionInstance) | null {
   return w.webkitSpeechRecognition ?? w.SpeechRecognition ?? null;
 }
 
+// ─── 학자명 alias 사전 (교육공학·교육심리 도메인 자주 등장) ───
+// canonical token (한글) ← 가능한 모든 표기 (한글 음역 변형 + 영문 표기)
+// 사용자가 발화에서 어느 표기로 말하든 동일 토큰으로 정규화 → 점수 손실 방지
+const SCHOLAR_ALIASES: Record<string, string[]> = {
+  비고츠키: ["비고츠키", "비고스키", "비고트스키", "vygotsky", "lev vygotsky", "vygotskii"],
+  반두라: ["반두라", "밴두라", "bandura", "albert bandura"],
+  피아제: ["피아제", "삐아제", "piaget", "jean piaget"],
+  듀이: ["듀이", "dewey", "john dewey"],
+  스키너: ["스키너", "skinner", "b f skinner", "bf skinner"],
+  파블로프: ["파블로프", "파블롭", "pavlov", "ivan pavlov"],
+  손다이크: ["손다이크", "쏜다이크", "thorndike"],
+  메릴: ["메릴", "merrill", "david merrill"],
+  가네: ["가네", "가녜", "gagne", "robert gagne"],
+  켈러: ["켈러", "keller", "john keller"],
+  딕앤캐리: ["딕앤캐리", "딕앤케리", "dick and carey", "dick carey"],
+  애디: ["애디", "addie", "ADDIE"],
+  블룸: ["블룸", "bloom", "benjamin bloom"],
+  콜브: ["콜브", "kolb", "david kolb"],
+  마즐로: ["매슬로", "마즐로", "매슬로우", "maslow", "abraham maslow"],
+  에릭슨: ["에릭슨", "에릭손", "erikson", "erik erikson"],
+  브루너: ["브루너", "부르너", "bruner", "jerome bruner"],
+  로저스: ["로저스", "로저즈", "rogers", "carl rogers"],
+  메이거: ["메이거", "마저", "mager", "robert mager"],
+  라이겔루스: ["라이겔루스", "라이겔러스", "reigeluth", "charles reigeluth"],
+  조나센: ["조나센", "조나슨", "jonassen", "david jonassen"],
+  마이어: ["마이어", "메이어", "mayer", "richard mayer"],
+  스웰러: ["스웰러", "sweller", "john sweller"],
+  엥겔스트롬: ["엥겔스트롬", "engestrom"],
+  쇤: ["쇤", "schon", "donald schon"],
+  콜린스: ["콜린스", "collins", "allan collins"],
+  웽거: ["웽거", "wenger", "etienne wenger"],
+  레이브: ["레이브", "lave", "jean lave"],
+  쳐치랜드: ["쳐치랜드", "처치랜드", "churchland"],
+  콜버그: ["콜버그", "kohlberg", "lawrence kohlberg"],
+  치솜: ["치솜", "chisolm"],
+  앤더슨: ["앤더슨", "anderson", "lorin anderson"],
+};
+
+/** 모든 alias → canonical 매핑 (lowercase, 공백 무시) */
+const SCHOLAR_ALIAS_INDEX: Map<string, string> = (() => {
+  const m = new Map<string, string>();
+  for (const [canonical, aliases] of Object.entries(SCHOLAR_ALIASES)) {
+    for (const a of aliases) {
+      const key = a.toLowerCase().replace(/\s+/g, "");
+      m.set(key, canonical);
+    }
+    m.set(canonical.toLowerCase(), canonical);
+  }
+  return m;
+})();
+
+/** 텍스트 안에서 학자명을 모두 찾아 canonical 형태로 치환 */
+function normalizeScholarsInText(text: string): { normalized: string; foundCanonical: Set<string> } {
+  let out = text;
+  const found = new Set<string>();
+  // alias 길이 내림차순으로 매칭 (긴 alias 우선)
+  const allAliases = Array.from(SCHOLAR_ALIAS_INDEX.keys()).sort((a, b) => b.length - a.length);
+  for (const alias of allAliases) {
+    if (alias.length < 2) continue;
+    const canonical = SCHOLAR_ALIAS_INDEX.get(alias)!;
+    // alias가 한글이면 단어 경계 무시(한글은 띄어쓰기 보장 안 됨), 영문이면 단어 경계 적용
+    const isKorean = /[가-힣]/.test(alias);
+    const escaped = alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const re = isKorean
+      ? new RegExp(escaped, "gi")
+      : new RegExp(`\\b${escaped}\\b`, "gi");
+    if (re.test(out)) {
+      found.add(canonical);
+      out = out.replace(re, ` ${canonical} `);
+    }
+  }
+  return { normalized: out, foundCanonical: found };
+}
+
 // ─── 한글 친화 토큰화 + Jaccard 유사도 ───
 function tokenize(text: string): Set<string> {
-  const cleaned = text
+  // 학자명 먼저 canonical로 치환 (음역·영문 표기 차이 흡수)
+  const { normalized } = normalizeScholarsInText(text);
+  const cleaned = normalized
     .toLowerCase()
     .replace(/[^가-힣a-z0-9\s]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
   if (!cleaned) return new Set();
   const tokens = new Set<string>();
+  // 학자 canonical 목록 (소문자) — 2-gram 분해 시 학자명을 보존하기 위함
+  const scholarCanonicals = new Set(
+    Object.keys(SCHOLAR_ALIASES).map((s) => s.toLowerCase()),
+  );
   for (const word of cleaned.split(" ")) {
     if (word.length === 0) continue;
     if (/^[a-z0-9]+$/.test(word)) {
       tokens.add(word);
+      continue;
+    }
+    // 학자명은 2-gram 분해 안 함 (전체 단어 + canonical 자체만 토큰)
+    if (scholarCanonicals.has(word)) {
+      tokens.add(word);
+      tokens.add(`__scholar__${word}`); // 학자명 가중치 부여용 marker
       continue;
     }
     // 한글: 2-gram (자수 ≥ 2일 때) + 자체 단어
@@ -93,7 +180,23 @@ function similarityScore(transcript: string, expected: string): number {
   let inter = 0;
   for (const tok of a) if (b.has(tok)) inter++;
   const union = a.size + b.size - inter;
-  return Math.round((inter / union) * 100);
+  const baseScore = (inter / union) * 100;
+
+  // 학자명 보너스: 모범답변에 등장한 학자를 사용자가 언급할 때마다 +5점 (최대 +20)
+  const expectedScholars = extractScholars(expected);
+  const transcriptScholars = extractScholars(transcript);
+  let bonus = 0;
+  for (const s of expectedScholars) {
+    if (transcriptScholars.has(s)) bonus += 5;
+  }
+  bonus = Math.min(20, bonus);
+
+  return Math.min(100, Math.round(baseScore + bonus));
+}
+
+/** 텍스트에서 등장한 학자 canonical set */
+function extractScholars(text: string): Set<string> {
+  return normalizeScholarsInText(text).foundCanonical;
 }
 
 /** 한국어/영어 혼합 문장 분리 — `. ! ? 。 ! ?` 와 줄바꿈 기준 */
@@ -152,6 +255,45 @@ function highlightClass(score: number): string {
 }
 
 /**
+ * 학자명을 노란 형광펜으로 강조한 React node 배열 반환.
+ * 학자명 alias 매칭은 normalizeScholarsInText의 alias index를 그대로 사용.
+ */
+function renderWithScholarHighlight(text: string): React.ReactNode {
+  if (!text) return text;
+  // 학자 alias를 길이 내림차순으로 패턴화 — 짧은 것이 긴 것 안에 들어가는 경우 방지
+  const aliases = Array.from(SCHOLAR_ALIAS_INDEX.keys())
+    .filter((a) => a.length >= 2)
+    .sort((a, b) => b.length - a.length);
+  // alias 별로 표시 형태 보존을 위해 원문에서 substring을 통째로 잘라야 함
+  // 가장 단순한 접근: 문자열을 alias 매칭으로 token화
+  // 한글 alias는 단어 경계 없이, 영문은 \b 단어 경계로
+  const escaped = aliases.map((a) => {
+    const isKo = /[가-힣]/.test(a);
+    const e = a.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return isKo ? e : `\\b${e}\\b`;
+  });
+  if (escaped.length === 0) return text;
+  const re = new RegExp(`(${escaped.join("|")})`, "gi");
+  const parts = text.split(re);
+  return parts.map((part, i) => {
+    if (!part) return null;
+    // alias 일치 검사 — 공백 제거 후 lowercase
+    const key = part.toLowerCase().replace(/\s+/g, "");
+    if (SCHOLAR_ALIAS_INDEX.has(key)) {
+      return (
+        <mark
+          key={i}
+          className="rounded bg-yellow-200 px-0.5 font-semibold text-yellow-950 dark:bg-yellow-500/40 dark:text-yellow-50"
+        >
+          {part}
+        </mark>
+      );
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
+
+/**
  * 문장 단위 비교 뷰 — 좌측 내 답변 / 우측 모범 답변
  * 각 문장에 형광펜 색상으로 일치도 표시. 모범 답변 누락 문장은 우측에서 회색.
  */
@@ -172,6 +314,16 @@ function SentenceDiffView({ transcript, expected }: { transcript: string; expect
   // 각 모범 답변 문장이 어떤 내 답변 문장과 매칭되는지 (역방향)
   const eMatches = eSents.map((s) => bestMatch(s, tSents));
 
+  // 학자명 커버리지
+  const expectedScholars = extractScholars(expected);
+  const transcriptScholars = extractScholars(transcript);
+  const mentionedScholars = Array.from(expectedScholars).filter((s) =>
+    transcriptScholars.has(s),
+  );
+  const missingScholars = Array.from(expectedScholars).filter(
+    (s) => !transcriptScholars.has(s),
+  );
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2 text-[11px]">
@@ -181,6 +333,38 @@ function SentenceDiffView({ transcript, expected }: { transcript: string; expect
         <span className="rounded px-1.5 py-0.5 bg-rose-200/70 text-rose-950 dark:bg-rose-700/40 dark:text-rose-50">희미 15~39</span>
         <span className="rounded px-1.5 py-0.5 bg-zinc-200/70 text-zinc-700 dark:bg-zinc-700/40 dark:text-zinc-200">미일치</span>
       </div>
+
+      {/* 학자명 커버리지 카드 */}
+      {expectedScholars.size > 0 && (
+        <div className="rounded-lg border bg-gradient-to-br from-indigo-50 to-purple-50 p-3 dark:from-indigo-950/40 dark:to-purple-950/40">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs font-semibold text-indigo-900 dark:text-indigo-100">
+              📚 학자명 언급 {mentionedScholars.length} / {expectedScholars.size}명
+              <span className="ml-2 text-[10px] font-normal text-indigo-700/80 dark:text-indigo-200/80">
+                (각 +5점, 최대 +20)
+              </span>
+            </p>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {mentionedScholars.map((s) => (
+              <span
+                key={`m-${s}`}
+                className="rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-semibold text-white"
+              >
+                ✓ {s}
+              </span>
+            ))}
+            {missingScholars.map((s) => (
+              <span
+                key={`x-${s}`}
+                className="rounded-full border border-rose-300 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700 dark:border-rose-700 dark:bg-rose-950/40 dark:text-rose-200"
+              >
+                ✗ {s}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-3 md:grid-cols-2">
         <div>
@@ -226,7 +410,7 @@ function SentenceDiffView({ transcript, expected }: { transcript: string; expect
                     )}
                     title={`내 답변에서 ${m.score}점 일치${m.index >= 0 ? ` (내 ${m.index + 1}번 문장)` : " — 누락"}`}
                   >
-                    {s}{" "}
+                    {renderWithScholarHighlight(s)}{" "}
                     <span className="ml-0.5 text-[10px] opacity-70">[{m.score}]</span>
                   </span>
                 );
@@ -465,6 +649,16 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
 
   const questions = practiceSet?.questions ?? [];
   const current = questions[idx];
+
+  /** 첫 전사 대기 카운트다운 표시 여부 — 모드별로 "발화 결과가 아직 없는" 상태에서만 노출 */
+  const shouldShowWaitCountdown = (): boolean => {
+    if (!recording || waitCountdown == null) return false;
+    if (interim) return false;
+    if (practiceMode === "readalong") {
+      return !readAlongBuffer;
+    }
+    return !current || !transcripts[current.id];
+  };
 
   // 현재 질문 id를 ref에 동기화 (onresult/onend 클로저용)
   useEffect(() => {
@@ -1211,7 +1405,7 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                                 : "border-zinc-300 bg-background dark:border-zinc-700",
                             )}
                           >
-                            {target}
+                            {renderWithScholarHighlight(target)}
                           </div>
 
                           {/* 진행률 바 — 임계값 표시 마커 포함 */}
@@ -1387,7 +1581,7 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                       <span className="ml-1 inline-block h-3 w-1 animate-pulse bg-rose-500 align-middle" />
                     )}
                     {/* 첫 전사까지 카운트다운 — 사용자 대기 시간 가시화 */}
-                    {recording && waitCountdown != null && !transcripts[current.id] && !interim && (
+                    {shouldShowWaitCountdown() && (
                       <div className="absolute bottom-2 right-2 flex items-center gap-2 rounded-full border bg-background/90 px-3 py-1.5 shadow-sm backdrop-blur">
                         <span className="text-[10px] uppercase tracking-wider text-muted-foreground">전사 대기</span>
                         <span
@@ -1603,7 +1797,38 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                           {sttStatus === "idle" && "대기"}
                         </span>
                         {sttDebug && <span className="text-muted-foreground">{sttDebug}</span>}
+                        {shouldShowWaitCountdown() && (
+                          <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border bg-background px-2 py-0.5">
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">전사 대기</span>
+                            <span
+                              key={waitCountdown}
+                              className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[11px] font-bold text-white"
+                            >
+                              {waitCountdown}
+                            </span>
+                          </span>
+                        )}
                       </div>
+                      {/* 따라 읽기 모드: 마이크 레벨 미터도 함께 노출 (진단 용이) */}
+                      <div className="flex items-center gap-2">
+                        <span className="w-12 shrink-0 text-muted-foreground">레벨</span>
+                        <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                          <div
+                            ref={levelBarRef}
+                            className={cn(
+                              "absolute inset-y-0 left-0",
+                              micLevel > 50 ? "bg-emerald-500" : micLevel > 15 ? "bg-amber-500" : "bg-zinc-400",
+                            )}
+                            style={{ width: "0%", willChange: "width" }}
+                          />
+                        </div>
+                        <span className="w-8 shrink-0 text-right tabular-nums text-muted-foreground">{micLevel}</span>
+                      </div>
+                      {noSpeechHint && (
+                        <div className="rounded-md border border-amber-300 bg-amber-50 p-2 text-[11px] text-amber-900 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-100">
+                          5초간 음성이 감지되지 않았어요 — 마이크 레벨이 움직이는지 먼저 확인하세요.
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
