@@ -106,6 +106,40 @@ function splitSentences(text: string): string[] {
     .filter((s) => s.length > 0);
 }
 
+/** 따라 읽기용 정규화 — 공백·구두점·대소문자 차이를 무시하고 글자만 비교 */
+function normalizeForCompare(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFC")
+    .replace(/[^가-힣a-z0-9]/g, "")
+    .trim();
+}
+
+/** 누적 발화에 목표 문장이 100% 포함되어 있으면 통과 */
+function isReadAlongPassed(spoken: string, target: string): boolean {
+  const s = normalizeForCompare(spoken);
+  const g = normalizeForCompare(target);
+  if (!g) return false;
+  return s.includes(g);
+}
+
+/** 진행률 시각화: 누적 발화의 끝부분이 목표의 prefix를 얼마나 따라잡았는지 */
+function readAlongProgress(spoken: string, target: string): number {
+  const g = normalizeForCompare(target);
+  if (!g) return 0;
+  const s = normalizeForCompare(spoken);
+  if (s.includes(g)) return 100;
+  // 가장 긴 prefix 매칭 길이 / 목표 길이
+  let best = 0;
+  for (let len = Math.min(s.length, g.length); len > 0; len--) {
+    if (s.endsWith(g.slice(0, len))) {
+      best = len;
+      break;
+    }
+  }
+  return Math.min(99, Math.round((best / g.length) * 100));
+}
+
 /** 한 문장(target)이 후보 문장 배열(pool) 중 가장 유사한 점수와 인덱스 반환 */
 function bestMatch(target: string, pool: string[]): { score: number; index: number } {
   if (!target || pool.length === 0) return { score: 0, index: -1 };
@@ -254,6 +288,15 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
   /** 사용자가 선택한 마이크 디바이스 ID */
   const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
+  /** 연습 모드 — answer(심사 답변) | readalong(모범 답변 따라 읽기) */
+  type PracticeMode = "answer" | "readalong";
+  const [practiceMode, setPracticeMode] = useState<PracticeMode>("answer");
+  /** 따라 읽기 모드: 현재 따라 읽는 문장 인덱스 (질문 바뀌면 0으로 리셋) */
+  const [readAlongIdx, setReadAlongIdx] = useState(0);
+  /** 따라 읽기 모드: 현재 문장 누적 발화 (정규화 비교 후 100% 일치 시 다음 문장으로 자동 진행) */
+  const [readAlongBuffer, setReadAlongBuffer] = useState("");
+  /** 따라 읽기 모드: 질문별 통과한 문장 수 (요약용) */
+  const [readAlongPassedByQ, setReadAlongPassedByQ] = useState<Record<string, number>>({});
 
   const recRef = useRef<SpeechRecognitionInstance | null>(null);
   const startedAtRef = useRef<number | null>(null);
@@ -268,6 +311,10 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
   const rafIdRef = useRef<number | null>(null);
   const noSpeechTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const speechSeenRef = useRef(false);
+  /** 따라 읽기 모드 — onresult/onend 클로저에서 항상 최신 모드/인덱스/타겟 참조 */
+  const practiceModeRef = useRef<PracticeMode>("answer");
+  const readAlongIdxRef = useRef(0);
+  const readAlongTargetsRef = useRef<string[]>([]);
 
   useEffect(() => {
     setSttSupported(getRecognitionCtor() !== null);
@@ -414,6 +461,58 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
     currentQuestionIdRef.current = current?.id ?? "";
   }, [current?.id]);
 
+  // 따라 읽기 모드용: 현재 질문의 모범 답변을 문장 단위로 분리
+  const expectedSentences = useMemo(
+    () => splitSentences(current?.expectedAnswer ?? ""),
+    [current?.expectedAnswer],
+  );
+
+  // 질문이 바뀌면 따라 읽기 진행상태 리셋
+  useEffect(() => {
+    setReadAlongIdx(0);
+    setReadAlongBuffer("");
+    readAlongIdxRef.current = 0;
+    readAlongTargetsRef.current = expectedSentences;
+  }, [current?.id, expectedSentences]);
+
+  // mode/idx state → ref 미러링
+  useEffect(() => {
+    practiceModeRef.current = practiceMode;
+  }, [practiceMode]);
+  useEffect(() => {
+    readAlongIdxRef.current = readAlongIdx;
+  }, [readAlongIdx]);
+
+  // 따라 읽기 통과 자동 검사 — buffer 또는 interim 변경 시 normalize 100% 일치면 다음 문장으로
+  useEffect(() => {
+    if (practiceMode !== "readalong") return;
+    const targets = readAlongTargetsRef.current;
+    const idx0 = readAlongIdx;
+    if (idx0 >= targets.length) return;
+    const target = targets[idx0];
+    if (!target) return;
+    // final 누적 + interim 합쳐서 검사 (final이 도달하기 전 interim에서도 통과 가능하게)
+    const combined = (readAlongBuffer + " " + interim).trim();
+    if (isReadAlongPassed(combined, target)) {
+      const qid = currentQuestionIdRef.current;
+      const nextIdx = idx0 + 1;
+      if (qid) {
+        setReadAlongPassedByQ((prev) => ({
+          ...prev,
+          [qid]: Math.max(prev[qid] ?? 0, nextIdx),
+        }));
+      }
+      if (nextIdx >= targets.length) {
+        toast.success(`전체 ${targets.length}문장 따라 읽기 완료!`);
+      } else {
+        toast.success(`문장 ${idx0 + 1} 통과 ✓`);
+      }
+      setReadAlongBuffer("");
+      setInterim("");
+      setReadAlongIdx(nextIdx);
+    }
+  }, [readAlongBuffer, interim, readAlongIdx, practiceMode]);
+
   const stopRecording = () => {
     wantRecordingRef.current = false;
     setRecording(false);
@@ -514,6 +613,17 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
         console.warn("[STT] no current question id, dropping result");
         return;
       }
+      // 따라 읽기 모드: buffer에만 누적, 통과 검사는 useEffect가 처리
+      if (practiceModeRef.current === "readalong") {
+        if (finalText) {
+          setReadAlongBuffer((prev) => ((prev + " " + finalText).replace(/\s+/g, " ").trim()));
+        }
+        // interim은 진행률 시각화용으로 같이 노출
+        setInterim(interimText);
+        setSttDebug(`따라 읽기 (final: ${finalText.length}자, interim: ${interimText.length}자)`);
+        return;
+      }
+      // 심사 답변 모드 (기존)
       if (finalText) {
         setTranscripts((t) => ({
           ...t,
@@ -673,12 +783,16 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
     stopRecording();
     setShowAnswer(false);
     setEditingTranscript(false);
+    setReadAlongIdx(0);
+    setReadAlongBuffer("");
     setIdx((i) => Math.max(0, i - 1));
   };
   const goNext = () => {
     stopRecording();
     setShowAnswer(false);
     setEditingTranscript(false);
+    setReadAlongIdx(0);
+    setReadAlongBuffer("");
     if (idx < questions.length - 1) {
       setIdx((i) => i + 1);
     } else {
@@ -824,7 +938,191 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                 )}
               </div>
 
-              {/* Transcript area */}
+              {/* 모드 토글 — 모범 답변 있을 때만 따라 읽기 모드 활성화 */}
+              {expectedSentences.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 p-2">
+                  <span className="text-xs font-semibold text-muted-foreground">모드</span>
+                  <div className="inline-flex rounded-md border bg-background p-0.5 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (recording) stopRecording();
+                        setPracticeMode("answer");
+                      }}
+                      className={cn(
+                        "rounded px-3 py-1 font-medium transition-colors",
+                        practiceMode === "answer"
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      심사 답변
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (recording) stopRecording();
+                        setPracticeMode("readalong");
+                        setReadAlongIdx(0);
+                        setReadAlongBuffer("");
+                      }}
+                      className={cn(
+                        "rounded px-3 py-1 font-medium transition-colors",
+                        practiceMode === "readalong"
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      따라 읽기
+                    </button>
+                  </div>
+                  {practiceMode === "readalong" && (
+                    <span className="ml-auto text-[11px] text-muted-foreground">
+                      {Math.min(readAlongIdx, expectedSentences.length)} / {expectedSentences.length} 문장
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* 따라 읽기 모드 패널 */}
+              {practiceMode === "readalong" && expectedSentences.length > 0 && (
+                <div className="rounded-xl border bg-card p-5">
+                  {readAlongIdx >= expectedSentences.length ? (
+                    <div className="flex flex-col items-center gap-3 py-6 text-center">
+                      <CheckCircle2 size={36} className="text-emerald-500" />
+                      <p className="text-base font-semibold">전체 문장 따라 읽기 완료!</p>
+                      <p className="text-xs text-muted-foreground">
+                        총 {expectedSentences.length}개 문장을 모두 통과했습니다.
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setReadAlongIdx(0);
+                            setReadAlongBuffer("");
+                          }}
+                        >
+                          <RotateCcw size={12} className="mr-1" /> 처음부터
+                        </Button>
+                        <Button size="sm" onClick={goNext}>
+                          다음 질문 <ChevronRight size={14} className="ml-1" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    (() => {
+                      const target = expectedSentences[readAlongIdx];
+                      const spokenCombined = (readAlongBuffer + " " + interim).trim();
+                      const progress = readAlongProgress(spokenCombined, target);
+                      return (
+                        <div className="space-y-3">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <p className="text-xs font-semibold text-muted-foreground">
+                              지금 따라 읽을 문장
+                            </p>
+                            <Badge variant="outline" className="text-[10px]">
+                              {readAlongIdx + 1} / {expectedSentences.length}
+                            </Badge>
+                          </div>
+                          <div
+                            className={cn(
+                              "rounded-lg border-2 p-4 text-lg leading-relaxed sm:text-xl",
+                              progress >= 100
+                                ? "border-emerald-500 bg-emerald-50 text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-100"
+                                : progress >= 50
+                                ? "border-amber-400 bg-amber-50 text-amber-950 dark:bg-amber-950/30 dark:text-amber-50"
+                                : "border-zinc-300 bg-background dark:border-zinc-700",
+                            )}
+                          >
+                            {target}
+                          </div>
+
+                          {/* 진행률 바 */}
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                              <span>진행률</span>
+                              <span className="tabular-nums font-semibold">{progress}%</span>
+                            </div>
+                            <div className="h-2 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                              <div
+                                className={cn(
+                                  "h-full transition-[width] duration-150",
+                                  progress >= 100 ? "bg-emerald-500" : progress >= 50 ? "bg-amber-500" : "bg-rose-400",
+                                )}
+                                style={{ width: `${progress}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* 내 발화 미리보기 */}
+                          <div className="rounded-md bg-muted/40 p-3 text-sm">
+                            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                              내 발화
+                            </p>
+                            {readAlongBuffer || interim ? (
+                              <span>
+                                {readAlongBuffer}
+                                {interim && (
+                                  <span className="text-muted-foreground/80">
+                                    {readAlongBuffer ? " " : ""}{interim}
+                                  </span>
+                                )}
+                              </span>
+                            ) : (
+                              <span className="italic text-muted-foreground">
+                                {recording ? "🎙️ 위 문장을 그대로 따라 읽어보세요" : "마이크를 켜고 문장을 따라 읽어주세요"}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setReadAlongBuffer("");
+                                setInterim("");
+                              }}
+                              disabled={!readAlongBuffer && !interim}
+                            >
+                              <RotateCcw size={12} className="mr-1" /> 발화 비우기
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                // 건너뛰기 (수동으로 다음 문장 통과 처리 없이 이동)
+                                setReadAlongBuffer("");
+                                setInterim("");
+                                setReadAlongIdx((i) => Math.min(expectedSentences.length, i + 1));
+                              }}
+                            >
+                              건너뛰기 <ChevronRight size={12} className="ml-1" />
+                            </Button>
+                            {readAlongIdx > 0 && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setReadAlongBuffer("");
+                                  setInterim("");
+                                  setReadAlongIdx((i) => Math.max(0, i - 1));
+                                }}
+                              >
+                                <ChevronLeft size={12} className="mr-1" /> 이전 문장
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()
+                  )}
+                </div>
+              )}
+
+              {/* Transcript area — 심사 답변 모드에서만 노출 */}
+              {practiceMode === "answer" && (
               <div className="rounded-xl border bg-card p-4">
                 <div className="mb-2 flex items-center justify-between">
                   <p className="text-xs font-semibold text-muted-foreground">내 답변</p>
@@ -1020,6 +1318,75 @@ export default function DefensePracticeRunner({ id }: { id: string }) {
                   </div>
                 )}
               </div>
+              )}
+
+              {/* 따라 읽기 모드: 마이크 컨트롤 (심사 답변 모드 카드 외부에서 별도 노출) */}
+              {practiceMode === "readalong" && (
+                <div className="rounded-xl border bg-card p-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {sttSupported !== false ? (
+                      recording ? (
+                        <Button
+                          size="lg"
+                          variant="destructive"
+                          onClick={stopRecording}
+                          className="flex-1 sm:flex-none"
+                        >
+                          <MicOff size={16} className="mr-2" /> 녹음 중지
+                        </Button>
+                      ) : (
+                        <Button
+                          size="lg"
+                          onClick={startRecording}
+                          className="flex-1 sm:flex-none"
+                        >
+                          <Mic size={16} className="mr-2" /> 녹음 시작
+                        </Button>
+                      )
+                    ) : (
+                      <p className="text-xs text-amber-600">
+                        이 브라우저는 음성 인식을 지원하지 않습니다.
+                      </p>
+                    )}
+                    <p className="ml-auto text-[11px] text-muted-foreground">
+                      문장을 정확히 말하면 자동으로 다음 문장으로 진행됩니다.
+                    </p>
+                  </div>
+                  {/* 진단 상태 (재사용) */}
+                  {(recording || sttStatus !== "idle") && (
+                    <div className="mt-2 space-y-2 rounded-md border bg-muted/40 px-2.5 py-2 text-[11px]">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold",
+                            sttStatus === "speaking"
+                              ? "bg-emerald-500 text-white"
+                              : sttStatus === "listening"
+                              ? "bg-blue-500 text-white"
+                              : sttStatus === "processing"
+                              ? "bg-amber-500 text-white"
+                              : sttStatus === "starting" || sttStatus === "restarting"
+                              ? "bg-zinc-500 text-white"
+                              : sttStatus === "error"
+                              ? "bg-rose-600 text-white"
+                              : "bg-zinc-300 text-zinc-700",
+                          )}
+                        >
+                          {sttStatus === "speaking" && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />}
+                          {sttStatus === "listening" && "듣는 중"}
+                          {sttStatus === "speaking" && "말하는 중"}
+                          {sttStatus === "processing" && "처리 중"}
+                          {sttStatus === "starting" && "시작 중"}
+                          {sttStatus === "restarting" && "재시작 중"}
+                          {sttStatus === "error" && "오류"}
+                          {sttStatus === "idle" && "대기"}
+                        </span>
+                        {sttDebug && <span className="text-muted-foreground">{sttDebug}</span>}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Expected answer / 비교 분석 toggle */}
               <div className="rounded-xl border bg-card p-4">
