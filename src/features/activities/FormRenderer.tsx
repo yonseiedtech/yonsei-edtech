@@ -13,13 +13,22 @@ const ALL_AVAILABLE_MARKER = "__ALL__";
 
 type AnswerValue = string | string[] | UploadedFile[];
 
+interface ScheduleDefaults {
+  startDate?: string;
+  endDate?: string;
+  startTime?: string;
+  endTime?: string;
+  slotMinutes?: number;
+}
+
 interface Props {
   fields: FormField[];
   value: Record<string, AnswerValue>;
   onChange: (id: string, v: AnswerValue) => void;
+  scheduleDefaults?: ScheduleDefaults;
 }
 
-export default function FormRenderer({ fields, value, onChange }: Props) {
+export default function FormRenderer({ fields, value, onChange, scheduleDefaults }: Props) {
   return (
     <div className="space-y-3">
       {fields.map((f) => {
@@ -189,7 +198,7 @@ export default function FormRenderer({ fields, value, onChange }: Props) {
           case "schedule":
             return (
               <div key={f.id}>{base}
-                <ScheduleField field={f} value={v} onChange={(next) => onChange(f.id, next)} />
+                <ScheduleField field={f} value={v} onChange={(next) => onChange(f.id, next)} defaults={scheduleDefaults} />
               </div>
             );
         }
@@ -202,9 +211,10 @@ interface ScheduleFieldProps {
   field: FormField;
   value: AnswerValue | undefined;
   onChange: (next: string) => void;
+  defaults?: ScheduleDefaults;
 }
 
-function ScheduleField({ field, value, onChange }: ScheduleFieldProps) {
+function ScheduleField({ field, value, onChange, defaults }: ScheduleFieldProps) {
   let mode: "all" | "partial" = "all";
   let slots: ScheduleSlot[] = [];
   if (typeof value === "string" && value) {
@@ -223,7 +233,7 @@ function ScheduleField({ field, value, onChange }: ScheduleFieldProps) {
     mode = "all";
   }
 
-  const [expanded, setExpanded] = useState(slots.length > 0);
+  const [expanded, setExpanded] = useState(true);
 
   function setMode(next: "all" | "partial") {
     if (next === "all") {
@@ -231,9 +241,15 @@ function ScheduleField({ field, value, onChange }: ScheduleFieldProps) {
       setExpanded(false);
     } else {
       onChange(JSON.stringify(slots));
-      setExpanded(slots.length > 0);
+      setExpanded(true);
     }
   }
+
+  const effectiveStartDate = field.scheduleStartDate || defaults?.startDate || "";
+  const effectiveEndDate = field.scheduleEndDate || defaults?.endDate || effectiveStartDate;
+  const effectiveStartTime = field.scheduleStartTime || defaults?.startTime || "09:00";
+  const effectiveEndTime = field.scheduleEndTime || defaults?.endTime || "18:00";
+  const effectiveSlotMinutes = field.scheduleSlotMinutes ?? defaults?.slotMinutes ?? 30;
 
   return (
     <div className="space-y-3">
@@ -298,11 +314,11 @@ function ScheduleField({ field, value, onChange }: ScheduleFieldProps) {
           {expanded && (
             <div className="border-t bg-white p-3 dark:bg-card">
               <ScheduleSelector
-                startDate={field.scheduleStartDate ?? ""}
-                endDate={field.scheduleEndDate ?? field.scheduleStartDate ?? ""}
-                startTime={field.scheduleStartTime ?? "09:00"}
-                endTime={field.scheduleEndTime ?? "18:00"}
-                slotMinutes={field.scheduleSlotMinutes ?? 30}
+                startDate={effectiveStartDate}
+                endDate={effectiveEndDate}
+                startTime={effectiveStartTime}
+                endTime={effectiveEndTime}
+                slotMinutes={effectiveSlotMinutes}
                 value={slots}
                 onChange={(next) => onChange(JSON.stringify(next))}
               />

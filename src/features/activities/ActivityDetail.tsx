@@ -1097,6 +1097,10 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   fields={applicationForm}
                   value={applyAnswers}
                   onChange={(id, v) => setApplyAnswers((prev) => ({ ...prev, [id]: v }))}
+                  scheduleDefaults={{
+                    startDate: activity?.date,
+                    endDate: activity?.endDate || activity?.date,
+                  }}
                 />
               )}
             </div>
