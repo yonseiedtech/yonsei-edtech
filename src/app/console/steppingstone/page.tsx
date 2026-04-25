@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import AuthGuard from "@/features/auth/AuthGuard";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -402,8 +402,10 @@ function ConsoleSteppingStoneContent() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <LoadingSpinner />
+        <div className="space-y-3 py-2" aria-busy="true" aria-label="가이드 항목 불러오는 중">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-16 w-full rounded-xl" />
+          ))}
         </div>
       ) : !activeTrackId ? (
         <p className="text-sm text-muted-foreground">트랙을 선택하세요.</p>

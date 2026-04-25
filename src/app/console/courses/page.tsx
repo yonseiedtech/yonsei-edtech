@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import AuthGuard from "@/features/auth/AuthGuard";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -759,7 +759,11 @@ function ConsoleCoursesContent() {
             </div>
 
             {loading ? (
-              <LoadingSpinner className="mt-12" />
+              <div className="mt-12 space-y-3" aria-busy="true" aria-label="강의 목록 불러오는 중">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-16 w-full rounded-xl" />
+                ))}
+              </div>
             ) : error ? (
               <p className="mt-12 text-sm text-destructive">⚠ {error}</p>
             ) : visibleRows.length === 0 ? (
@@ -1864,7 +1868,11 @@ function ComprehensiveExamConsole({
         </div>
 
         {loading ? (
-          <LoadingSpinner className="mt-6" />
+          <div className="mt-6 space-y-3" aria-busy="true" aria-label="응시 기록 불러오는 중">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-14 w-full rounded-xl" />
+            ))}
+          </div>
         ) : records.length === 0 ? (
           <p className="mt-6 text-center text-xs text-muted-foreground">해당 학기에 등록된 응시 기록이 없습니다.</p>
         ) : (

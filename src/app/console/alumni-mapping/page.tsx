@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import AuthGuard from "@/features/auth/AuthGuard";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { Badge } from "@/components/ui/badge";
@@ -181,7 +181,11 @@ function ConsoleAlumniMappingContent() {
         </div>
 
         {loading ? (
-          <LoadingSpinner className="mt-12" />
+          <div className="mt-12 space-y-3" aria-busy="true" aria-label="졸업생 매핑 불러오는 중">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full rounded-xl" />
+            ))}
+          </div>
         ) : error ? (
           <p className="mt-12 text-sm text-destructive">⚠ {error}</p>
         ) : filtered.length === 0 ? (
