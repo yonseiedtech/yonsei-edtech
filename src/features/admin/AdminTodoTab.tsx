@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { useTodos, useCreateTodo, useUpdateTodo, useDeleteTodo } from "./useTodos";
 import { Button } from "@/components/ui/button";
@@ -110,7 +110,11 @@ export default function AdminTodoTab() {
           title="할 일 관리"
           description="운영진 할 일을 등록하고 진행 상황을 추적합니다."
         />
-        <LoadingSpinner />
+        <div className="mt-6 space-y-2" aria-busy="true" aria-label="할 일 목록 불러오는 중">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-16 w-full rounded-xl" />
+          ))}
+        </div>
       </div>
     );
   }

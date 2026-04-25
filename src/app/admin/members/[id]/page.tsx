@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { profilesApi, seminarsApi, attendeesApi, activitiesApi, reviewsApi, certificatesApi } from "@/lib/bkend";
@@ -140,7 +140,19 @@ function AdminMemberDetail({ id }: { id: string }) {
   }
 
   if (isLoading) {
-    return <LoadingSpinner className="min-h-[50vh] items-center" />;
+    return (
+      <div className="py-12" aria-busy="true" aria-label="회원 정보 불러오는 중">
+        <div className="mx-auto max-w-5xl px-4 space-y-6">
+          <Skeleton className="h-10 w-48" />
+          <Skeleton className="h-32 w-full rounded-xl" />
+          <div className="grid gap-4 sm:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full rounded-xl" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!member) {

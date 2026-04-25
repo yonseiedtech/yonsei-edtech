@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isStaffOrAbove } from "@/lib/permissions";
@@ -652,7 +652,11 @@ export default function AdminMemberTab() {
         <section>
           <ToolBar />
           {allLoading ? (
-            <LoadingSpinner />
+            <div className="mt-3 space-y-2" aria-busy="true" aria-label="회원 목록 불러오는 중">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full rounded-xl" />
+              ))}
+            </div>
           ) : displayMembers.length === 0 ? (
             <div className="mt-3 rounded-xl border bg-white p-12 text-center">
               <Users size={40} className="mx-auto text-muted-foreground/40" />
@@ -699,7 +703,11 @@ export default function AdminMemberTab() {
             </div>
           )}
           {pendingLoading ? (
-            <LoadingSpinner />
+            <div className="space-y-2" aria-busy="true" aria-label="승인 대기 목록 불러오는 중">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-20 w-full rounded-xl" />
+              ))}
+            </div>
           ) : truePending.length === 0 ? (
             <div className="rounded-xl border bg-white p-12 text-center">
               <Clock size={40} className="mx-auto text-muted-foreground/40" />
@@ -823,7 +831,11 @@ export default function AdminMemberTab() {
         <section>
           <ToolBar />
           {isLoading ? (
-            <LoadingSpinner />
+            <div className="mt-3 space-y-2" aria-busy="true" aria-label="졸업생 목록 불러오는 중">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full rounded-xl" />
+              ))}
+            </div>
           ) : displayMembers.length === 0 ? (
             <div className="mt-3">
               <AdminEmptyState
@@ -841,7 +853,11 @@ export default function AdminMemberTab() {
       {activeTab === "rejected" && (
         <section>
           {pendingLoading ? (
-            <LoadingSpinner />
+            <div className="space-y-2" aria-busy="true" aria-label="반려 목록 불러오는 중">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full rounded-xl" />
+              ))}
+            </div>
           ) : rejectedMembers.length === 0 ? (
             <div className="rounded-xl border bg-white p-12 text-center">
               <XCircle size={40} className="mx-auto text-muted-foreground/40" />
