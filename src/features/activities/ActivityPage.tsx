@@ -28,7 +28,8 @@ const RECRUIT_LABELS: Record<string, string> = { recruiting: "모집중", closed
 const RECRUIT_COLORS: Record<string, string> = { recruiting: "bg-green-50 text-green-700", closed: "bg-red-50 text-red-700", in_progress: "bg-amber-50 text-amber-700", completed: "bg-muted text-muted-foreground" };
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import type { Activity, ActivityType } from "@/types";
+import type { Activity, ActivityType, ExternalParticipantType } from "@/types";
+import { EXTERNAL_PARTICIPANT_TYPE_LABELS, EXTERNAL_PARTICIPANT_TYPE_COLORS } from "@/types";
 import { formatSemester } from "@/lib/semester";
 
 async function apiFetch(url: string, options?: RequestInit) {
@@ -50,8 +51,9 @@ interface FormData {
   year: string;
   semester: "" | "first" | "second";
   registrationMethod: "open" | "manual";
+  enabledParticipantTypes: ExternalParticipantType[];
 }
-const emptyForm: FormData = { title: "", description: "", detailContent: "", date: "", endDate: "", status: "upcoming", recruitmentStatus: "recruiting", maxParticipants: "", leader: "", leaderId: "", location: "", tags: "", organizerName: "", conferenceUrl: "", imageUrl: "", year: "", semester: "", registrationMethod: "manual" };
+const emptyForm: FormData = { title: "", description: "", detailContent: "", date: "", endDate: "", status: "upcoming", recruitmentStatus: "recruiting", maxParticipants: "", leader: "", leaderId: "", location: "", tags: "", organizerName: "", conferenceUrl: "", imageUrl: "", year: "", semester: "", registrationMethod: "manual", enabledParticipantTypes: ["speaker", "volunteer", "attendee"] };
 
 interface Props {
   type: ActivityType;
@@ -110,6 +112,9 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
         tags: form.tags ? form.tags.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
         organizerName: form.organizerName.trim() || undefined,
         conferenceUrl: form.conferenceUrl.trim() || undefined,
+        enabledParticipantTypes: type === "external"
+          ? (form.enabledParticipantTypes.length > 0 ? form.enabledParticipantTypes : undefined)
+          : undefined,
         imageUrl: form.imageUrl.trim() || undefined,
         year: form.year ? Number(form.year) : undefined,
         semester: form.semester || undefined,
@@ -186,7 +191,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
   function openCreate() { setEditId(null); setForm(emptyForm); setDialogOpen(true); }
   function openEdit(a: Activity) {
     setEditId(a.id);
-    setForm({ title: a.title, description: a.description, detailContent: a.detailContent || "", date: a.date, endDate: a.endDate || "", status: a.status, recruitmentStatus: a.recruitmentStatus || "recruiting", maxParticipants: a.maxParticipants ? String(a.maxParticipants) : "", leader: a.leader || "", leaderId: a.leaderId || "", location: a.location || "", tags: a.tags?.join(", ") || "", organizerName: a.organizerName || "", conferenceUrl: a.conferenceUrl || "", imageUrl: a.imageUrl || "", year: a.year ? String(a.year) : "", semester: a.semester || "", registrationMethod: a.registrationMethod || "manual" });
+    setForm({ title: a.title, description: a.description, detailContent: a.detailContent || "", date: a.date, endDate: a.endDate || "", status: a.status, recruitmentStatus: a.recruitmentStatus || "recruiting", maxParticipants: a.maxParticipants ? String(a.maxParticipants) : "", leader: a.leader || "", leaderId: a.leaderId || "", location: a.location || "", tags: a.tags?.join(", ") || "", organizerName: a.organizerName || "", conferenceUrl: a.conferenceUrl || "", imageUrl: a.imageUrl || "", year: a.year ? String(a.year) : "", semester: a.semester || "", registrationMethod: a.registrationMethod || "manual", enabledParticipantTypes: (a.enabledParticipantTypes && a.enabledParticipantTypes.length > 0) ? a.enabledParticipantTypes : ["speaker", "volunteer", "attendee"] });
     setDialogOpen(true);
   }
   function closeDialog() { setDialogOpen(false); setEditId(null); setForm(emptyForm); setAutoPost(false); }
@@ -528,6 +533,39 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
                     <div><label className="mb-1 block text-sm font-medium">학회 URL</label><Input value={form.conferenceUrl} onChange={(e) => setForm({ ...form, conferenceUrl: e.target.value })} placeholder="https://..." /></div>
                   </div>
                   <div>
+                    <label className="mb-1.5 block text-sm font-medium">신청 가능한 참석 유형</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(["speaker", "volunteer", "attendee"] as const).map((t) => {
+                        const enabled = form.enabledParticipantTypes.includes(t);
+                        return (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => setForm({
+                              ...form,
+                              enabledParticipantTypes: enabled
+                                ? form.enabledParticipantTypes.filter((x) => x !== t)
+                                : [...form.enabledParticipantTypes, t],
+                            })}
+                            className={cn(
+                              "flex items-center justify-center gap-1.5 rounded-lg border-2 px-3 py-2 text-xs font-medium transition-all",
+                              enabled
+                                ? `${EXTERNAL_PARTICIPANT_TYPE_COLORS[t]} border-current shadow-sm`
+                                : "border-input bg-white text-slate-400 hover:border-primary/40 hover:bg-muted/30",
+                            )}
+                            aria-pressed={enabled}
+                          >
+                            {enabled && <Check size={12} />}
+                            {EXTERNAL_PARTICIPANT_TYPE_LABELS[t]}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      비활성화된 유형은 참가 신청 화면에서 선택할 수 없습니다. 최소 1개 유형은 활성화해야 합니다.
+                    </p>
+                  </div>
+                  <div>
                     <label className="mb-1 block text-sm font-medium">포스터 이미지</label>
                     <div className="flex items-start gap-3">
                       {form.imageUrl ? (
@@ -562,7 +600,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={closeDialog}>취소</Button>
-              <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !form.title.trim() || !form.date || !form.description.trim()}>
+              <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !form.title.trim() || !form.date || !form.description.trim() || (type === "external" && form.enabledParticipantTypes.length === 0)}>
                 {saveMutation.isPending && <Loader2 size={14} className="mr-1 animate-spin" />}{editId ? "수정" : "등록"}
               </Button>
             </DialogFooter>

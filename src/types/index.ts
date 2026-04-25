@@ -1156,6 +1156,12 @@ export interface Activity { [key: string]: unknown;
   // 대외활동 전용
   organizerName?: string;
   conferenceUrl?: string;
+  /**
+   * 신청 시 선택 가능한 참석 유형 목록 (대외활동 전용).
+   * 미설정/빈 배열 시 전체 유형(speaker/volunteer/attendee) 선택 가능.
+   * 운영자가 일부만 선택해 두면 신청자가 해당 유형만 선택할 수 있다.
+   */
+  enabledParticipantTypes?: ExternalParticipantType[];
   /** 활동 학기 — 연도(yyyy) */
   year?: number;
   /** 활동 학기 — 전기(first) / 후기(second) */

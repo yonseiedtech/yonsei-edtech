@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -121,6 +121,17 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const isJoined = user ? participants.includes(user.id) : false;
   const hasApplied = user ? applicants.some((a) => a.userId === user?.id || (a.isGuest && a.email && user?.email && a.email.toLowerCase() === user.email.toLowerCase())) : false;
   const recruitmentStatus = activity?.recruitmentStatus ?? "recruiting";
+
+  // 신청 다이얼로그가 열릴 때 비활성화된 참석 유형이 선택돼 있으면 첫 번째 활성 유형으로 보정
+  useEffect(() => {
+    if (!applyDialog || type !== "external") return;
+    const configured = activity?.enabledParticipantTypes;
+    if (!configured || configured.length === 0) return;
+    if (!configured.includes(applyParticipantType)) {
+      setApplyParticipantType(configured[0]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [applyDialog, activity?.enabledParticipantTypes]);
 
   // 참여 신청 (대외활동: 신청서 기반, 기타: 즉시 참여)
   const applyMutation = useMutation({
@@ -1081,33 +1092,43 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               </p>
             )}
             <div className="grid gap-3">
-              <div>
-                <label className="mb-2 block text-sm font-semibold">참석 유형 <span className="text-red-500">*</span></label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(["speaker", "volunteer", "attendee"] as const).map((t) => {
-                    const active = applyParticipantType === t;
-                    return (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => setApplyParticipantType(t)}
-                        className={cn(
-                          "flex flex-col items-center justify-center gap-1 rounded-xl border-2 px-3 py-3 text-center transition-all",
-                          active
-                            ? `${EXTERNAL_PARTICIPANT_TYPE_COLORS[t]} border-current shadow-sm scale-[1.02]`
-                            : "border-input bg-white text-slate-600 hover:border-primary/40 hover:bg-muted/50 dark:bg-card",
-                        )}
-                        aria-pressed={active}
-                      >
-                        <span className="text-base font-bold">
-                          {EXTERNAL_PARTICIPANT_TYPE_LABELS[t]}
-                        </span>
-                        {active && <span className="text-[10px]">선택됨</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              {(() => {
+                const allTypes = ["speaker", "volunteer", "attendee"] as const;
+                const configured = activity?.enabledParticipantTypes;
+                const enabledTypes = (configured && configured.length > 0)
+                  ? allTypes.filter((t) => configured.includes(t))
+                  : allTypes;
+                const cols = enabledTypes.length === 1 ? "grid-cols-1" : enabledTypes.length === 2 ? "grid-cols-2" : "grid-cols-3";
+                return (
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold">참석 유형 <span className="text-red-500">*</span></label>
+                    <div className={cn("grid gap-2", cols)}>
+                      {enabledTypes.map((t) => {
+                        const active = applyParticipantType === t;
+                        return (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => setApplyParticipantType(t)}
+                            className={cn(
+                              "flex flex-col items-center justify-center gap-1 rounded-xl border-2 px-3 py-3 text-center transition-all",
+                              active
+                                ? `${EXTERNAL_PARTICIPANT_TYPE_COLORS[t]} border-current shadow-sm scale-[1.02]`
+                                : "border-input bg-white text-slate-600 hover:border-primary/40 hover:bg-muted/50 dark:bg-card",
+                            )}
+                            aria-pressed={active}
+                          >
+                            <span className="text-base font-bold">
+                              {EXTERNAL_PARTICIPANT_TYPE_LABELS[t]}
+                            </span>
+                            {active && <span className="text-[10px]">선택됨</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
               <div><label className="mb-1 block text-sm font-medium">이름 *</label>
                 <Input value={applyName} onChange={(e) => setApplyName(e.target.value)} /></div>
               <div><label className="mb-1 block text-sm font-medium">학번</label>
