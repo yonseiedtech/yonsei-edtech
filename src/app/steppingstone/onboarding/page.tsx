@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -348,8 +348,23 @@ export default function OnboardingPage() {
       )}
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <LoadingSpinner />
+        <div className="space-y-3" aria-busy="true" aria-label="온보딩 가이드 불러오는 중">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-xl border bg-card p-4">
+              <div className="flex items-start gap-3">
+                <Skeleton className="mt-0.5 h-5 w-5 shrink-0 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-2/3" />
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-5/6" />
+                  <div className="mt-2 flex gap-2">
+                    <Skeleton className="h-5 w-20 rounded-md" />
+                    <Skeleton className="h-5 w-16 rounded-md" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : items.length === 0 ? (
         <div className="rounded-2xl border border-dashed bg-muted/30 p-10 text-center">

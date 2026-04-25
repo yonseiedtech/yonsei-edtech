@@ -2,7 +2,7 @@
 
 import { Monitor, GraduationCap, Brain, Lightbulb, BarChart3, Users, type LucideIcon } from "lucide-react";
 import { useFields } from "@/features/site-settings/useSiteContent";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Monitor, GraduationCap, Brain, Lightbulb, BarChart3, Users,
@@ -20,7 +20,18 @@ export default function FieldsPage() {
 
       <section className="mx-auto mt-12 max-w-6xl px-4">
         {isLoading ? (
-          <LoadingSpinner />
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3" aria-busy="true" aria-label="활동 분야 불러오는 중">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex items-start gap-4 rounded-2xl border bg-white p-6 shadow-sm">
+                <Skeleton className="h-10 w-10 shrink-0 rounded-lg" />
+                <div className="flex-1">
+                  <Skeleton className="h-4 w-2/3" />
+                  <Skeleton className="mt-2 h-3 w-full" />
+                  <Skeleton className="mt-1 h-3 w-5/6" />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {fields.map((f) => {

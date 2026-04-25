@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useGreeting, type GreetingPerson } from "@/features/greeting/useGreeting";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function GreetingCard({ person, accent }: { person: GreetingPerson; accent: "advisor" | "president" }) {
   if (!person.name && !person.content) return null;
@@ -49,7 +49,30 @@ export default function GreetingPage() {
   const { advisor, president, isLoading } = useGreeting();
 
   if (isLoading) {
-    return <LoadingSpinner className="min-h-[40vh] items-center" />;
+    return (
+      <div className="py-16">
+        <section className="mx-auto max-w-6xl px-4 text-center">
+          <Skeleton className="mx-auto h-9 w-40" />
+          <Skeleton className="mx-auto mt-4 h-4 w-72" />
+        </section>
+        <section className="mx-auto mt-12 max-w-6xl space-y-8 px-4" aria-busy="true" aria-label="인사말 불러오는 중">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="flex flex-col items-center gap-6 rounded-2xl border bg-white p-5 shadow-sm sm:gap-10 sm:p-8 md:flex-row md:items-start md:p-12">
+              <Skeleton className="h-56 w-44 shrink-0 rounded-xl md:h-64 md:w-52" />
+              <div className="flex-1 space-y-3">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-11/12" />
+                <Skeleton className="h-4 w-10/12" />
+                <div className="mt-8 border-t pt-6">
+                  <Skeleton className="h-5 w-32" />
+                  <Skeleton className="mt-2 h-3 w-24" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </section>
+      </div>
+    );
   }
 
   const showAdvisor = !!(advisor.name || advisor.content);
