@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Target, Eye, Sparkles, ArrowRight, Info } from "lucide-react";
 import PageHeader from "@/components/ui/page-header";
 import { useAbout } from "@/features/site-settings/useSiteContent";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const ICONS = [Target, Eye, Sparkles];
 const LABELS = ["미션", "비전", "가치"];
@@ -30,7 +30,16 @@ export default function AboutPage() {
 
       <section className="mx-auto mt-16 max-w-6xl px-4">
         {isLoading ? (
-          <LoadingSpinner />
+          <div className="grid gap-6 md:grid-cols-3" aria-busy="true" aria-label="학회 소개 불러오는 중">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="rounded-2xl border bg-white p-8 shadow-sm">
+                <Skeleton className="mb-4 h-12 w-12 rounded-xl" />
+                <Skeleton className="h-6 w-2/3" />
+                <Skeleton className="mt-3 h-4 w-full" />
+                <Skeleton className="mt-1 h-4 w-5/6" />
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-3">
             {values.map((v) => (

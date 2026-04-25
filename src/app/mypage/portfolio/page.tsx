@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Award as AwardIcon,
   Globe,
@@ -291,7 +291,11 @@ function PortfolioContent() {
         )}
 
         {loading ? (
-          <LoadingSpinner className="mt-12" />
+          <div className="mt-6 space-y-4" aria-busy="true" aria-label="포트폴리오 불러오는 중">
+            <Skeleton className="h-32 w-full rounded-xl" />
+            <Skeleton className="h-24 w-full rounded-xl" />
+            <Skeleton className="h-24 w-full rounded-xl" />
+          </div>
         ) : (
           <div className="mt-6 space-y-6">
             {tab === "award" && (

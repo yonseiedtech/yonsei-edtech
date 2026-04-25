@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { GraduationCap, BookOpen, ScrollText, Award, ArrowRight, Compass } from "lucide-react";
 import { guideTracksApi } from "@/lib/bkend";
 import { GUIDE_TRACK_LABELS, type GuideTrack, type GuideTrackKey } from "@/types";
@@ -81,8 +81,18 @@ export default function SteppingstoneHubPage() {
       </header>
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <LoadingSpinner />
+        <div className="grid gap-4 md:grid-cols-2" aria-busy="true" aria-label="인지디딤판 트랙 불러오는 중">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex h-full flex-col rounded-2xl border p-6">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-10 w-10 rounded-lg" />
+                <Skeleton className="h-5 w-32" />
+              </div>
+              <Skeleton className="mt-4 h-4 w-full" />
+              <Skeleton className="mt-1 h-4 w-3/4" />
+              <Skeleton className="mt-4 h-3 w-24" />
+            </div>
+          ))}
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
