@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { BarChart3, BookOpen, GraduationCap, Sparkles, ArrowRight, Type, Network, Cloud } from "lucide-react";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { alumniThesesApi } from "@/lib/bkend";
@@ -146,7 +146,14 @@ export default function ResearchAnalyticsPage() {
         </div>
 
         {loading ? (
-          <LoadingSpinner className="mt-16" />
+          <div className="mt-10 space-y-4" aria-busy="true" aria-label="연구 데이터 불러오는 중">
+            <div className="flex flex-wrap gap-2">
+              <Skeleton className="h-9 w-28" />
+              <Skeleton className="h-9 w-28" />
+              <Skeleton className="h-9 w-28" />
+            </div>
+            <Skeleton className="h-[420px] w-full rounded-xl" />
+          </div>
         ) : error ? (
           <p className="mt-12 text-sm text-destructive">⚠ {error}</p>
         ) : (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { useMembers } from "@/features/member/useMembers";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -325,7 +325,28 @@ function DirectoryContent() {
         </div>
 
         {isLoading ? (
-          <LoadingSpinner className="mt-8" />
+          <div className="mt-6 overflow-x-auto rounded-xl border bg-white" aria-busy="true" aria-label="회원 명부 불러오는 중">
+            <table className="w-full text-xs sm:text-sm">
+              <thead className="border-b bg-muted/30">
+                <tr>
+                  {["입학시점", "이름", "학번", "핸드폰", "이메일", "직업유형"].map((h) => (
+                    <th key={h} className="px-2 py-2 text-left font-medium sm:px-4 sm:py-3">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <tr key={i}>
+                    {Array.from({ length: 6 }).map((__, j) => (
+                      <td key={j} className="px-2 py-2 sm:px-4 sm:py-3">
+                        <Skeleton className="h-4 w-full max-w-[120px]" />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
           <div className="mt-6">
             <p className="text-xs text-muted-foreground">

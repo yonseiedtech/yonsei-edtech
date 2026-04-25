@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -265,7 +265,15 @@ export default function AlumniThesisListPage() {
         )}
 
         {loading ? (
-          <LoadingSpinner className="mt-12" />
+          <ul className="mt-8 space-y-3" aria-busy="true" aria-label="졸업 논문 불러오는 중">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <li key={i} className="rounded-xl border bg-white p-4">
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton className="mt-2 h-5 w-3/4" />
+                <Skeleton className="mt-2 h-3 w-1/2" />
+              </li>
+            ))}
+          </ul>
         ) : error ? (
           <p className="mt-12 text-sm text-destructive">⚠ {error}</p>
         ) : (
