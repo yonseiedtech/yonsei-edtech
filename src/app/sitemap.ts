@@ -48,6 +48,48 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly",
       priority: 0.8,
     },
+    {
+      url: `${baseUrl}/notices`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/research`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/alumni/thesis`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/courses`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/newsletter`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/calendar`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/steppingstone`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
   ];
 
   // Dynamic seminar routes
@@ -71,6 +113,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       dynamicRoutes.push({
         url: `${baseUrl}/board/${doc.id}`,
         lastModified: data.updatedAt?.toDate?.() ?? new Date(),
+        changeFrequency: "monthly",
+        priority: 0.5,
+      });
+    }
+
+    const thesesSnapshot = await getDocs(collection(db, "alumni_theses"));
+    for (const doc of thesesSnapshot.docs) {
+      const data = doc.data();
+      dynamicRoutes.push({
+        url: `${baseUrl}/alumni/thesis/${doc.id}`,
+        lastModified: data.updatedAt?.toDate?.() ?? new Date(),
+        changeFrequency: "monthly",
+        priority: 0.5,
+      });
+    }
+
+    const newslettersSnapshot = await getDocs(collection(db, "newsletters"));
+    for (const doc of newslettersSnapshot.docs) {
+      const data = doc.data();
+      if (data.status !== "published") continue;
+      dynamicRoutes.push({
+        url: `${baseUrl}/newsletter/${doc.id}`,
+        lastModified: data.publishedAt?.toDate?.() ?? new Date(),
         changeFrequency: "monthly",
         priority: 0.5,
       });
