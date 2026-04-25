@@ -238,6 +238,23 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
     },
   });
 
+  // 거절 이력 삭제 (관리자) — applicants에서 완전 제거
+  const deleteApplicantMutation = useMutation({
+    mutationFn: async ({ key }: { key: string }) => {
+      if (!activity) return;
+      const target = applicants.find((a) => (a.userId ?? a.guestKey) === key);
+      const updated = applicants.filter((a) => (a.userId ?? a.guestKey) !== key);
+      const newParticipants = target?.userId
+        ? participants.filter((p) => p !== target.userId)
+        : participants;
+      await activitiesApi.update(activityId, { applicants: updated, participants: newParticipants });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+      toast.success("이력이 삭제되었습니다.");
+    },
+  });
+
   // 신청 승인/거절 (관리자)
   // 대외 학술대회의 경우 거절 시 신청현황에서 제거(=신청 취소)
   const updateApplicantMutation = useMutation({
@@ -860,7 +877,24 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                           </>
                         )}
                         {a.status === "approved" && <Badge className="bg-green-50 text-green-700 text-[10px]">승인</Badge>}
-                        {a.status === "rejected" && <Badge className="bg-red-50 text-red-700 text-[10px]">거절</Badge>}
+                        {a.status === "rejected" && (
+                          <>
+                            <Badge className="bg-red-50 text-red-700 text-[10px]">거절</Badge>
+                            {isStaff && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 gap-1 px-2 text-xs text-muted-foreground hover:text-destructive"
+                                onClick={() => {
+                                  if (!confirm(`${a.name}님의 거절 이력을 삭제하시겠습니까?\n신청현황에서 완전히 제거됩니다.`)) return;
+                                  deleteApplicantMutation.mutate({ key });
+                                }}
+                              >
+                                <Trash2 size={12} />이력 삭제
+                              </Button>
+                            )}
+                          </>
+                        )}
                         {a.status === "pending" && !isStaff && <Badge className="bg-amber-50 text-amber-700 text-[10px]">대기</Badge>}
                       </div>
                     </div>
