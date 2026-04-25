@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Mic, MicOff, ChevronLeft, ChevronRight, X, RotateCcw,
   CheckCircle2, AlertCircle, Loader2, Pencil, Eye, EyeOff,
-  History, ChevronDown, ChevronUp,
+  History, ChevronDown, ChevronUp, Keyboard,
 } from "lucide-react";
 import { defensePracticesApi } from "@/lib/bkend";
 import { Button } from "@/components/ui/button";
@@ -2164,6 +2164,19 @@ export default function DefensePracticeRunner({
                       이 브라우저는 음성 인식을 지원하지 않습니다. 직접 입력해주세요.
                     </p>
                   )}
+                  <Button
+                    size="lg"
+                    variant={editingTranscript ? "default" : "outline"}
+                    onClick={() => {
+                      if (recording) stopRecording();
+                      setEditingTranscript((v) => !v);
+                    }}
+                    className="flex-1 sm:flex-none"
+                    title="마이크 사용이 어려운 경우 직접 타이핑으로 답변할 수 있습니다."
+                  >
+                    <Keyboard size={16} className="mr-2" />
+                    {editingTranscript ? "타이핑 종료" : "타이핑"}
+                  </Button>
                   {transcripts[current.id] && (
                     <Button
                       size="sm"
