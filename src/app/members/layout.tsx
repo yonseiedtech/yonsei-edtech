@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BreadcrumbListJsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
   title: "멤버 소개",
@@ -10,5 +11,15 @@ export default function MembersLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return (
+    <>
+      <BreadcrumbListJsonLd
+        items={[
+          { name: "홈", href: "/" },
+          { name: "멤버 소개", href: "/members" },
+        ]}
+      />
+      {children}
+    </>
+  );
 }
