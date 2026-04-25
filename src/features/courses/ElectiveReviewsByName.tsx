@@ -24,7 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { courseOfferingsApi, courseReviewsApi } from "@/lib/bkend";
 import { isAtLeast } from "@/lib/permissions";
@@ -229,7 +229,13 @@ export default function ElectiveReviewsByName() {
   }, [groups, search, filterCategory]);
 
   if (loadingOfferings || loadingReviews) {
-    return <LoadingSpinner className="mt-12" />;
+    return (
+      <div className="mt-12 space-y-3" aria-busy="true" aria-label="강의 후기 불러오는 중">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-24 w-full rounded-xl" />
+        ))}
+      </div>
+    );
   }
 
   return (

@@ -20,7 +20,7 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -118,7 +118,21 @@ function FilterPill({
 
 export default function CoursesPage() {
   return (
-    <Suspense fallback={<LoadingSpinner className="mt-24" />}>
+    <Suspense
+      fallback={
+        <div className="mt-24" aria-busy="true" aria-label="강의 목록 불러오는 중">
+          <div className="mx-auto max-w-6xl space-y-4 px-4">
+            <Skeleton className="h-8 w-1/3" />
+            <Skeleton className="h-4 w-1/2" />
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-40 w-full rounded-xl" />
+              ))}
+            </div>
+          </div>
+        </div>
+      }
+    >
       <CoursesPageInner />
     </Suspense>
   );
@@ -448,7 +462,15 @@ function CourseListSection({
   showEnrollmentToggle: boolean;
   onToggle: (course: CourseOffering, next: EnrollMode) => Promise<void>;
 }) {
-  if (loading) return <LoadingSpinner className="mt-12" />;
+  if (loading) {
+    return (
+      <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true" aria-label="강의 불러오는 중">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-40 w-full rounded-xl" />
+        ))}
+      </div>
+    );
+  }
   if (error) return <p className="mt-12 text-sm text-destructive">⚠ {error}</p>;
   if (groups.length === 0) {
     return (
@@ -1055,7 +1077,16 @@ function TaReportSection({
     };
   }, [enrollmentsRes, offeringsRes]);
 
-  if (isLoading) return <LoadingSpinner className="mt-12" />;
+  if (isLoading) {
+    return (
+      <div className="mt-12 space-y-4" aria-busy="true" aria-label="수강 정보 불러오는 중">
+        <Skeleton className="h-6 w-1/4" />
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-24 w-full rounded-xl" />
+        ))}
+      </div>
+    );
+  }
 
   const totalEnrollments = (enrollmentsRes?.data ?? []).length;
   const totalStudents = courseGroups.reduce((acc, g) => acc + g.students.length, 0);
@@ -1454,7 +1485,11 @@ function CourseDetailDialog({
 
           {/* 학기별 수강생 리스트 */}
           {loading ? (
-            <LoadingSpinner className="mt-6" />
+            <div className="mt-6 space-y-3" aria-busy="true" aria-label="학기별 수강생 불러오는 중">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-20 w-full rounded-xl" />
+              ))}
+            </div>
           ) : selected.size === 0 ? (
             <p className="rounded-lg border bg-muted/20 p-6 text-center text-sm text-muted-foreground">
               학기를 하나 이상 선택해 주세요.
