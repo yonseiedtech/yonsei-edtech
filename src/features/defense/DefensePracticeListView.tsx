@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   MessageSquareQuote, Plus, Edit3, Trash2, Play, ChevronDown, ChevronRight,
-  GripVertical, ListChecks,
+  GripVertical, ListChecks, Sparkles, Mic, Target, ArrowRight,
 } from "lucide-react";
 import { defensePracticesApi, defenseQuestionTemplatesApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -21,6 +21,7 @@ import {
   type DefensePracticeCategory,
   type DefenseQuestion,
   type DefenseQuestionType,
+  type DefenseQuestionTemplate,
 } from "@/types";
 
 const QUESTION_TYPES: DefenseQuestionType[] = [
@@ -51,6 +52,7 @@ export default function DefensePracticeListView({
   const userId = user?.id ?? "";
 
   const [editing, setEditing] = useState<DefensePracticeSet | "new" | null>(null);
+  const [pendingTemplateId, setPendingTemplateId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const { data, isLoading } = useQuery({
@@ -58,6 +60,12 @@ export default function DefensePracticeListView({
     queryFn: () => defensePracticesApi.listByUser(userId),
     enabled: !!userId,
   });
+
+  const { data: templateData } = useQuery({
+    queryKey: ["defense_question_templates", "active"],
+    queryFn: () => defenseQuestionTemplatesApi.listActive(),
+  });
+  const templates = templateData?.data ?? [];
 
   const sets = (data?.data ?? []).slice().sort((a, b) =>
     (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""),
@@ -77,14 +85,24 @@ export default function DefensePracticeListView({
       <PracticeSetEditor
         practiceSet={editing === "new" ? null : editing}
         userId={userId}
-        onClose={() => setEditing(null)}
+        initialTemplateId={editing === "new" ? pendingTemplateId : null}
+        onClose={() => {
+          setEditing(null);
+          setPendingTemplateId(null);
+        }}
         onSaved={() => {
           qc.invalidateQueries({ queryKey: ["defense_practice_sets"] });
           setEditing(null);
+          setPendingTemplateId(null);
         }}
       />
     );
   }
+
+  const startWithTemplate = (templateId: string) => {
+    setPendingTemplateId(templateId);
+    setEditing("new");
+  };
 
   return (
     <div className="space-y-6">
@@ -110,13 +128,11 @@ export default function DefensePracticeListView({
       {isLoading ? (
         <p className="py-8 text-center text-sm text-muted-foreground">불러오는 중...</p>
       ) : sets.length === 0 ? (
-        <div className="rounded-2xl border border-dashed py-16 text-center">
-          <MessageSquareQuote size={32} className="mx-auto text-muted-foreground/40" />
-          <p className="mt-3 text-sm text-muted-foreground">아직 등록된 연습 세트가 없습니다.</p>
-          <Button className="mt-4" onClick={() => setEditing("new")}>
-            <Plus size={14} className="mr-1" /> 첫 세트 만들기
-          </Button>
-        </div>
+        <OnboardingEmptyState
+          templates={templates}
+          onStartFromScratch={() => setEditing("new")}
+          onStartFromTemplate={startWithTemplate}
+        />
       ) : (
         <ul className="space-y-3">
           {sets.map((s) => {
@@ -264,11 +280,13 @@ export default function DefensePracticeListView({
 function PracticeSetEditor({
   practiceSet,
   userId,
+  initialTemplateId,
   onClose,
   onSaved,
 }: {
   practiceSet: DefensePracticeSet | null;
   userId: string;
+  initialTemplateId?: string | null;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -284,6 +302,7 @@ function PracticeSetEditor({
   );
   const [saving, setSaving] = useState(false);
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
+  const [autoImported, setAutoImported] = useState(false);
 
   const { data: templateData } = useQuery({
     queryKey: ["defense_question_templates", "active"],
@@ -307,6 +326,17 @@ function PracticeSetEditor({
     setTemplatePickerOpen(false);
     toast.success(`"${tpl.name}" 템플릿 ${cloned.length}개 질문 ${mode === "replace" ? "교체됨" : "추가됨"}`);
   };
+
+  // 온보딩에서 선택한 템플릿 자동 import (신규 작성 + initialTemplateId 제공된 경우 한 번만)
+  useEffect(() => {
+    if (autoImported) return;
+    if (!initialTemplateId) return;
+    if (practiceSet) return; // 편집 모드에서는 무시
+    if (templates.length === 0) return;
+    importTemplate(initialTemplateId, "replace");
+    setAutoImported(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialTemplateId, practiceSet, templates.length, autoImported]);
 
   const addQuestion = () => {
     setQuestions((qs) => [
@@ -600,6 +630,151 @@ function PracticeSetEditor({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ───────── Onboarding (첫 사용자 전용 빈 화면) ─────────
+
+function OnboardingEmptyState({
+  templates,
+  onStartFromScratch,
+  onStartFromTemplate,
+}: {
+  templates: DefenseQuestionTemplate[];
+  onStartFromScratch: () => void;
+  onStartFromTemplate: (templateId: string) => void;
+}) {
+  // 분류별로 1개씩 우선 노출하여 다양성 확보 (그 후 남은 슬롯 채움) — 최대 6개
+  const ordered: DefenseQuestionTemplate[] = (() => {
+    const seen = new Set<string>();
+    const picked: DefenseQuestionTemplate[] = [];
+    for (const t of templates) {
+      if (!seen.has(t.category)) {
+        picked.push(t);
+        seen.add(t.category);
+      }
+    }
+    for (const t of templates) {
+      if (picked.length >= 6) break;
+      if (!picked.includes(t)) picked.push(t);
+    }
+    return picked;
+  })();
+
+  return (
+    <div className="space-y-6">
+      {/* 1단계: 안내 */}
+      <div className="rounded-2xl border bg-gradient-to-br from-indigo-50 to-violet-50 p-6 dark:from-indigo-950/40 dark:to-violet-950/40">
+        <div className="flex items-start gap-3">
+          <div className="rounded-full bg-white p-2.5 shadow-sm dark:bg-zinc-900">
+            <Sparkles size={20} className="text-indigo-600 dark:text-indigo-300" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-lg font-bold text-foreground">
+              논문 심사 연습을 처음 시작하시나요?
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              예상 질문에 마이크로 답변하면, 모범 답변과 비교해 점수와 키워드 일치도를 알려드립니다.
+              아래 추천 템플릿을 선택하면 1초 만에 첫 세트를 만들 수 있어요.
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-lg border bg-white p-3 dark:bg-zinc-900/60">
+                <div className="flex items-center gap-2">
+                  <ListChecks size={14} className="text-indigo-600" />
+                  <p className="text-xs font-semibold">1. 질문 준비</p>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  템플릿을 가져오거나 직접 질문·모범 답변을 작성합니다.
+                </p>
+              </div>
+              <div className="rounded-lg border bg-white p-3 dark:bg-zinc-900/60">
+                <div className="flex items-center gap-2">
+                  <Mic size={14} className="text-rose-600" />
+                  <p className="text-xs font-semibold">2. 마이크로 답변</p>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  녹음 또는 타이핑으로 답하면 자동 전사·채점됩니다.
+                </p>
+              </div>
+              <div className="rounded-lg border bg-white p-3 dark:bg-zinc-900/60">
+                <div className="flex items-center gap-2">
+                  <Target size={14} className="text-emerald-600" />
+                  <p className="text-xs font-semibold">3. 비교·복기</p>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  모범 답변과 1:1 비교, 통과한 문장을 형광펜으로 표시합니다.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2단계: 추천 템플릿 그리드 */}
+      {ordered.length > 0 ? (
+        <div className="space-y-3">
+          <div className="flex items-end justify-between">
+            <div>
+              <h3 className="text-base font-semibold">추천 템플릿으로 시작하기</h3>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                관리자가 등록한 표준 질문 세트입니다. 가져온 후 자유롭게 편집·삭제할 수 있어요.
+              </p>
+            </div>
+          </div>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {ordered.map((t) => (
+              <li
+                key={t.id}
+                className="group flex flex-col rounded-xl border bg-card p-4 transition-shadow hover:shadow-md"
+              >
+                <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                  <Badge variant="secondary" className="text-[10px]">
+                    {DEFENSE_CATEGORY_LABELS[t.category]}
+                  </Badge>
+                  <Badge variant="outline" className="text-[10px]">
+                    <ListChecks size={10} className="mr-1" /> {t.questions.length}문항
+                  </Badge>
+                </div>
+                <p className="text-sm font-semibold leading-snug">{t.name}</p>
+                {t.description && (
+                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                    {t.description}
+                  </p>
+                )}
+                <div className="mt-3 flex items-center justify-end">
+                  <Button
+                    size="sm"
+                    onClick={() => onStartFromTemplate(t.id)}
+                    className="group-hover:translate-x-0.5 transition-transform"
+                  >
+                    이 템플릿으로 시작 <ArrowRight size={12} className="ml-1" />
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-dashed bg-muted/30 p-6 text-center">
+          <p className="text-sm text-muted-foreground">
+            관리자가 등록한 템플릿이 아직 없습니다.
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            아래 "처음부터 만들기" 버튼으로 직접 질문을 작성해보세요.
+          </p>
+        </div>
+      )}
+
+      {/* 3단계: 처음부터 만들기 */}
+      <div className="flex flex-col items-center gap-2 rounded-xl border-2 border-dashed py-8 text-center">
+        <p className="text-sm text-muted-foreground">
+          또는 본인의 논문 주제에 맞춰 직접 작성할 수도 있습니다.
+        </p>
+        <Button variant="outline" onClick={onStartFromScratch}>
+          <Plus size={14} className="mr-1" /> 처음부터 만들기
+        </Button>
+      </div>
     </div>
   );
 }
