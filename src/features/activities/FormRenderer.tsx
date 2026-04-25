@@ -215,34 +215,42 @@ interface ScheduleFieldProps {
 }
 
 function ScheduleField({ field, value, onChange, defaults }: ScheduleFieldProps) {
-  let mode: "all" | "partial" = "all";
-  let slots: ScheduleSlot[] = [];
-  if (typeof value === "string" && value) {
-    if (value === ALL_AVAILABLE_MARKER) {
-      mode = "all";
-    } else {
+  const initialMode: "all" | "partial" = (() => {
+    if (typeof value === "string" && value && value !== ALL_AVAILABLE_MARKER) {
       try {
         const parsed = JSON.parse(value);
-        if (Array.isArray(parsed)) {
-          slots = parsed as ScheduleSlot[];
-          mode = slots.length > 0 ? "partial" : "all";
-        }
+        if (Array.isArray(parsed) && parsed.length > 0) return "partial";
       } catch { /* ignore */ }
     }
-  } else {
-    mode = "all";
-  }
+    return "all";
+  })();
+  const initialSlots: ScheduleSlot[] = (() => {
+    if (typeof value === "string" && value && value !== ALL_AVAILABLE_MARKER) {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) return parsed as ScheduleSlot[];
+      } catch { /* ignore */ }
+    }
+    return [];
+  })();
 
+  const [mode, setModeState] = useState<"all" | "partial">(initialMode);
+  const [slots, setSlots] = useState<ScheduleSlot[]>(initialSlots);
   const [expanded, setExpanded] = useState(true);
 
   function setMode(next: "all" | "partial") {
+    setModeState(next);
     if (next === "all") {
       onChange(ALL_AVAILABLE_MARKER);
-      setExpanded(false);
     } else {
       onChange(JSON.stringify(slots));
       setExpanded(true);
     }
+  }
+
+  function updateSlots(next: ScheduleSlot[]) {
+    setSlots(next);
+    onChange(JSON.stringify(next));
   }
 
   const effectiveStartDate = field.scheduleStartDate || defaults?.startDate || "";
@@ -320,7 +328,7 @@ function ScheduleField({ field, value, onChange, defaults }: ScheduleFieldProps)
                 endTime={effectiveEndTime}
                 slotMinutes={effectiveSlotMinutes}
                 value={slots}
-                onChange={(next) => onChange(JSON.stringify(next))}
+                onChange={updateSlots}
               />
             </div>
           )}
