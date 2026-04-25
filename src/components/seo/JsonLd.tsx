@@ -6,12 +6,14 @@ export function OrganizationJsonLd() {
     alternateName: [
       "Yonsei EdTech",
       "Yonsei Educational Technology Association",
+      "연세대학교 교육대학원 교육공학전공",
+      "연세대학교 교육공학전공",
       "연세대학교 교육공학 전공",
       "연세대 교육공학",
     ],
     url: "https://yonsei-edtech.vercel.app",
     description:
-      "연세대학교 교육공학 전공 학술 커뮤니티. 에듀테크, 교수설계, 학습과학 분야의 세미나, 프로젝트, 스터디 활동.",
+      "연세대학교 교육대학원 교육공학전공 학술 커뮤니티. 에듀테크, 교수설계, 학습과학 분야의 세미나, 프로젝트, 스터디 활동.",
     email: "yonsei.edtech@gmail.com",
     address: {
       "@type": "PostalAddress",
@@ -20,10 +22,16 @@ export function OrganizationJsonLd() {
       addressCountry: "KR",
     },
     parentOrganization: {
-      "@type": "CollegeOrUniversity",
-      name: "연세대학교",
-      alternateName: "Yonsei University",
-      sameAs: "https://www.yonsei.ac.kr",
+      "@type": "EducationalOrganization",
+      name: "연세대학교 교육대학원 교육공학전공",
+      alternateName: "Yonsei University Graduate School of Education, Educational Technology Major",
+      url: "https://gse.yonsei.ac.kr",
+      parentOrganization: {
+        "@type": "CollegeOrUniversity",
+        name: "연세대학교",
+        alternateName: "Yonsei University",
+        sameAs: "https://www.yonsei.ac.kr",
+      },
     },
     knowsAbout: [
       "Educational Technology",
@@ -51,7 +59,7 @@ export function WebsiteJsonLd() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "연세교육공학회",
-    alternateName: "연세대학교 교육공학 전공 학술 커뮤니티",
+    alternateName: "연세대학교 교육대학원 교육공학전공 학술 커뮤니티",
     url: "https://yonsei-edtech.vercel.app",
   };
 
