@@ -315,12 +315,22 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
       </div>
 
       <div ref={wheelHostRef}>
+        {/* 스크린리더용 동적 요약: 시대 페이지 변경 시 자동 알림 */}
+        <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+          {visibleEras.length > 0
+            ? `${visibleEras[0].label}부터 ${visibleEras[visibleEras.length - 1].label}까지 ${visibleEras.length}개 시대 표시 중`
+            : "표시할 시대가 없습니다."}
+        </p>
         <svg
           viewBox={`0 0 ${viewWidth} ${height}`}
           className="block w-full"
           preserveAspectRatio="xMidYMid meet"
           role="img"
-          aria-label="연도별 연구 키워드 계보도"
+          aria-label={
+            visibleEras.length > 0
+              ? `연도별 연구 키워드 계보도 (${visibleEras[0].label}~${visibleEras[visibleEras.length - 1].label})`
+              : "연도별 연구 키워드 계보도"
+          }
         >
           {/* Era column headers + dashed guide */}
           {visibleEras.map((era, ei) => (

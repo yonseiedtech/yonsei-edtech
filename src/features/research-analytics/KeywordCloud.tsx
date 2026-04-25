@@ -343,11 +343,15 @@ export default function KeywordCloud({
       </div>
 
       <div className="overflow-x-auto">
+        {/* 스크린리더용 동적 요약: 필터 변경 시 자동 알림 */}
+        <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+          {`${lo}년부터 ${hi}년까지 상위 ${placed.length}개 키워드를 표시합니다.`}
+        </p>
         <svg
           viewBox={`0 0 ${dims.width} ${dims.height}`}
           className="mx-auto block w-full max-w-[1040px]"
           role="img"
-          aria-label="연구 키워드 워드 클라우드"
+          aria-label={`연구 키워드 워드 클라우드 (${lo}년~${hi}년, ${placed.length}개 키워드)`}
         >
           {placed.map((p) => {
             const active = hover === p.word;

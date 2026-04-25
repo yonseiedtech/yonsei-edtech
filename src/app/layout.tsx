@@ -4,6 +4,7 @@ import { Noto_Serif_KR, Hahmlet, Gowun_Batang } from "next/font/google";
 // Inter font removed — Pretendard only
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import BottomNav from "@/components/layout/BottomNav";
 import QueryProvider from "@/lib/query-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { OrganizationJsonLd, WebsiteJsonLd } from "@/components/seo/JsonLd";
@@ -153,12 +154,13 @@ export default function RootLayout({
       >
         <QueryProvider>
           <AuthProvider>
-            <div className="flex min-h-screen flex-col">
+            <div className="flex min-h-screen flex-col pb-[calc(56px+env(safe-area-inset-bottom))] sm:pb-0">
               <ImpersonationBanner />
               <Header />
               <main className="flex-1">{children}</main>
               <Footer />
             </div>
+            <BottomNav />
             <ChatWidget />
             <ConsentGate />
             <UndergradInfoPrompt />
