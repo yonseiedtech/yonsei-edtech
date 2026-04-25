@@ -12,7 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ChevronLeft, ChevronRight, Download, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function NewsletterMagazinePage({
   params,
@@ -63,7 +63,25 @@ export default function NewsletterMagazinePage({
     return () => observer.disconnect();
   }, [sortedSections]);
 
-  if (isLoading) return <LoadingSpinner className="min-h-[60vh] items-center" />;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <div className="sticky top-0 z-20 border-b bg-white/95 backdrop-blur">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-7 w-20 rounded-lg" />
+          </div>
+        </div>
+        <div className="mx-auto max-w-7xl px-4 py-10" aria-busy="true" aria-label="매거진 불러오는 중">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Skeleton className="h-[60vh] w-full rounded-xl" />
+            <Skeleton className="h-[60vh] w-full rounded-xl" />
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (!issue) {
     return (
       <div className="py-16 text-center">

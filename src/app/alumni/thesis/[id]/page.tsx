@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -309,8 +309,20 @@ export default function AlumniThesisDetailPage() {
 
   if (loading) {
     return (
-      <div className="py-16">
-        <LoadingSpinner />
+      <div className="mx-auto max-w-5xl px-4 py-16" aria-busy="true" aria-label="졸업 논문 불러오는 중">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="mt-4 h-8 w-3/4" />
+        <Skeleton className="mt-2 h-4 w-1/2" />
+        <div className="mt-8 space-y-3">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-11/12" />
+          <Skeleton className="h-4 w-10/12" />
+          <Skeleton className="h-4 w-9/12" />
+        </div>
+        <div className="mt-10 grid gap-4 md:grid-cols-2">
+          <Skeleton className="h-32 w-full rounded-xl" />
+          <Skeleton className="h-32 w-full rounded-xl" />
+        </div>
       </div>
     );
   }

@@ -21,7 +21,7 @@ import {
 import { toast } from "sonner";
 
 import AuthGuard from "@/features/auth/AuthGuard";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -197,8 +197,20 @@ function SeminarHostInner({ seminarId }: { seminarId: string }) {
 
   if (seminarLoading) {
     return (
-      <div className="flex justify-center py-20">
-        <LoadingSpinner />
+      <div className="mx-auto max-w-5xl px-4 py-10" aria-busy="true" aria-label="세미나 호스트 대시보드 불러오는 중">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="mt-4 h-8 w-2/3" />
+        <Skeleton className="mt-2 h-4 w-1/2" />
+        <div className="mt-8 grid grid-cols-3 gap-3 sm:gap-4">
+          <Skeleton className="h-20 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-xl" />
+        </div>
+        <div className="mt-10 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-16 w-full rounded-xl" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -331,8 +343,11 @@ function SeminarHostInner({ seminarId }: { seminarId: string }) {
           </header>
 
           {retroLoading ? (
-            <div className="flex justify-center py-6">
-              <LoadingSpinner />
+            <div className="space-y-3 py-2" aria-busy="true" aria-label="회고 불러오는 중">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-24 w-full" />
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-24 w-full" />
             </div>
           ) : (
             <div className="space-y-5">
