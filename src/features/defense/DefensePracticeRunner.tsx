@@ -537,6 +537,10 @@ export default function DefensePracticeRunner({
   /** 모범 답변 인라인 편집용 — 완료 화면에서 textarea로 수정 후 저장 */
   const [editingExpected, setEditingExpected] = useState(false);
   const [editedExpectedDraft, setEditedExpectedDraft] = useState("");
+  /** 모범 답변 자동 등록 prompt — 사용자가 "나중에"를 선택한 질문 ID 집합 (세션 한정) */
+  const [expectedRegisterSkipped, setExpectedRegisterSkipped] = useState<Set<string>>(new Set());
+  /** 모범 답변 등록 진행 중 (스피너) */
+  const [registeringExpected, setRegisteringExpected] = useState(false);
   /** 발화 종료 후 평가 결과 (null = 평가 전, 통과/미달 결과 표시용) */
   const [readAlongResult, setReadAlongResult] = useState<{
     score: number;
@@ -1201,6 +1205,37 @@ export default function DefensePracticeRunner({
   const averageScore = results.length
     ? Math.round(results.reduce((s, r) => s + r.score, 0) / results.length)
     : 0;
+
+  /** 현재 질문에 모범 답변이 없을 경우, 사용자의 첫 답변을 모범 답변으로 등록 */
+  const registerCurrentAnswerAsExpected = async () => {
+    if (!practiceSet || !current) return;
+    const draft = (transcripts[current.id] ?? "").trim();
+    if (!draft) {
+      toast.error("등록할 답변이 비어 있습니다.");
+      return;
+    }
+    if (!window.confirm(`이 답변을 "${current.question}" 질문의 모범 답변으로 등록하시겠습니까?\n\n등록 후에는 다음 시도부터 비교 채점에 사용되며, 완료 화면에서 다시 수정할 수 있습니다.`)) {
+      return;
+    }
+    setRegisteringExpected(true);
+    try {
+      const newQuestions = practiceSet.questions.map((q) =>
+        q.id === current.id ? { ...q, expectedAnswer: draft } : q,
+      );
+      await defensePracticesApi.update(practiceSet.id, {
+        questions: newQuestions,
+        updatedAt: new Date().toISOString(),
+      });
+      qc.invalidateQueries({ queryKey: ["defense_practice_sets"] });
+      qc.invalidateQueries({ queryKey: ["defense_practice_set", id] });
+      toast.success("모범 답변으로 등록되었습니다.");
+    } catch (e) {
+      console.error(e);
+      toast.error("모범 답변 등록에 실패했습니다.");
+    } finally {
+      setRegisteringExpected(false);
+    }
+  };
 
   /** 새 attempt를 attempts[] 앞에 push하고 최대 N개 유지 */
   const pushAttemptAndUpdate = async (attempt: DefensePracticeAttempt) => {
@@ -2190,6 +2225,49 @@ export default function DefensePracticeRunner({
                     </Button>
                   )}
                 </div>
+
+                {/* 모범 답변 자동 등록 prompt — 모범 답변 없음 + 사용자가 답변을 적었을 때 노출 */}
+                {!recording &&
+                  !editingTranscript &&
+                  (current.expectedAnswer ?? "").trim().length === 0 &&
+                  (transcripts[current.id] ?? "").trim().length > 0 &&
+                  !expectedRegisterSkipped.has(current.id) && (
+                    <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 dark:border-emerald-900/50 dark:bg-emerald-950/30">
+                      <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
+                        💡 이 질문에는 아직 모범 답변이 없습니다
+                      </p>
+                      <p className="mt-1 text-xs text-emerald-800/80 dark:text-emerald-200/80">
+                        지금 입력한 답변을 모범 답변으로 등록하면 다음 시도부터 비교 채점에 활용되고, 따라 읽기 모드에서도 사용할 수 있습니다.
+                      </p>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <Button
+                          size="sm"
+                          onClick={registerCurrentAnswerAsExpected}
+                          disabled={registeringExpected}
+                        >
+                          {registeringExpected ? (
+                            <Loader2 size={12} className="mr-1 animate-spin" />
+                          ) : (
+                            <CheckCircle2 size={12} className="mr-1" />
+                          )}
+                          모범 답변으로 등록
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() =>
+                            setExpectedRegisterSkipped((s) => {
+                              const next = new Set(s);
+                              next.add(current.id);
+                              return next;
+                            })
+                          }
+                        >
+                          나중에
+                        </Button>
+                      </div>
+                    </div>
+                  )}
 
                 {/* STT 진단 상태 표시 */}
                 {(recording || sttStatus !== "idle") && (
