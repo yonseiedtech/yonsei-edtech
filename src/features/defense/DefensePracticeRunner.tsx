@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   DEFENSE_CATEGORY_LABELS,
+  DEFENSE_QUESTION_TYPE_LABELS,
   type DefensePracticeAttempt,
 } from "@/types";
 
@@ -244,6 +245,33 @@ function readAlongMatchScore(spoken: string, target: string): number {
   if (!g) return 0;
   if (s.includes(g)) return 100;
   return similarityScore(spoken, target);
+}
+
+/** 발화량이 목표 길이 대비 얼마나 진행되었는지 (0~1) — 자동 평가 시기 판단용 */
+function spokenCoverage(spoken: string, target: string): number {
+  const s = normalizeForCompare(spoken);
+  const g = normalizeForCompare(target);
+  if (!g) return 0;
+  return Math.min(1, s.length / g.length);
+}
+
+/**
+ * 모범 답변에서 `[헤딩]` 형식의 문단 핵심을 추출.
+ * - 줄 시작 또는 빈 줄 직후의 `[…]`만 헤딩으로 인정 (본문 중간의 [참고] 같은 표기는 제외)
+ * - 순서 보존, 빈 헤딩은 무시
+ */
+function extractFlowHeadings(text: string): string[] {
+  if (!text) return [];
+  const cleaned = text.replace(/\r/g, "");
+  const headings: string[] = [];
+  // 멀티라인 ^에 매칭되도록 m 플래그
+  const re = /^[ \t]*\[([^\]\n]+)\]/gm;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(cleaned)) !== null) {
+    const label = m[1].trim();
+    if (label) headings.push(label);
+  }
+  return headings;
 }
 
 /** 난이도별 통과 임계값 */
@@ -748,8 +776,11 @@ export default function DefensePracticeRunner({
    * 따라 읽기 평가 함수 — 발화가 끝났다고 판단되는 시점에서만 호출.
    * 호출 트리거: (a) STT onspeechend, (b) 1.5초 침묵, (c) 사용자 "지금 평가" 버튼.
    * 발화 중에는 호출하지 않음 → 사용자가 문장 도중 우연히 임계값 넘어도 자동 진행되지 않음.
+   *
+   * isAuto=true 인 호출(침묵·onspeechend)이며 아직 목표의 60% 미만만 발화되었으면
+   * '미달' 처리 없이 조용히 누적 → 문단 단위 따라 읽기에서 중간 끊김으로 미달 표시되는 문제 방지.
    */
-  const evaluateReadAlong = () => {
+  const evaluateReadAlong = (isAuto = false) => {
     if (practiceModeRef.current !== "readalong") return;
     const targets = readAlongTargetsRef.current;
     const idx0 = readAlongIdxRef.current;
@@ -762,6 +793,10 @@ export default function DefensePracticeRunner({
     const threshold = READALONG_THRESHOLDS[readAlongDifficultyRef.current];
     const score = readAlongMatchScore(combined, target);
     const passed = score >= threshold;
+    // 자동 트리거 + 발화량이 목표의 60% 미만이면 — 아직 진행 중으로 간주, 미달/리셋 생략
+    if (isAuto && !passed && spokenCoverage(combined, target) < 0.6) {
+      return;
+    }
     setReadAlongResult({ score, threshold, passed, spoken: combined });
     const qid = currentQuestionIdRef.current;
     // 발화 기록 누적 (통과/미달 모두) — 완료 화면 비교용
@@ -820,10 +855,12 @@ export default function DefensePracticeRunner({
     }
     const combined = (readAlongBuffer + " " + interim).trim();
     if (!normalizeForCompare(combined)) return;
+    // 침묵 시간: 문장 단위는 1.5s, 문단 단위는 4s (문단 중간 자연 휴지를 종료로 오인 방지)
+    const silenceMs = readAlongUnit === "paragraph" ? 4000 : 1500;
     readAlongSilenceTimerRef.current = setTimeout(() => {
-      evaluateReadAlong();
+      evaluateReadAlong(true);
       readAlongSilenceTimerRef.current = null;
-    }, 1500);
+    }, silenceMs);
     return () => {
       if (readAlongSilenceTimerRef.current) {
         clearTimeout(readAlongSilenceTimerRef.current);
@@ -917,7 +954,7 @@ export default function DefensePracticeRunner({
         // 약간의 지연을 둬서 마지막 final transcript가 buffer에 반영될 시간 확보
         setTimeout(() => {
           if (practiceModeRef.current === "readalong") {
-            evaluateReadAlong();
+            evaluateReadAlong(true);
           }
         }, 400);
       }
@@ -1489,9 +1526,16 @@ export default function DefensePracticeRunner({
               className="mx-auto flex min-h-full max-w-3xl flex-col gap-5 px-4 py-6 sm:px-6"
             >
               <div className="rounded-xl border bg-card p-5 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Q{idx + 1}
-                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Q{idx + 1}
+                  </p>
+                  {current.type && (
+                    <Badge variant="secondary" className="text-[10px]">
+                      {DEFENSE_QUESTION_TYPE_LABELS[current.type]}
+                    </Badge>
+                  )}
+                </div>
                 <h2 className="mt-2 text-xl font-bold leading-relaxed sm:text-2xl">
                   {current.question}
                 </h2>
@@ -1500,6 +1544,29 @@ export default function DefensePracticeRunner({
                     💡 {current.note}
                   </p>
                 )}
+                {(() => {
+                  const flow = extractFlowHeadings(current.expectedAnswer ?? "");
+                  if (flow.length === 0) return null;
+                  return (
+                    <div className="mt-3 rounded-md border border-indigo-200 bg-indigo-50 p-2.5 dark:border-indigo-900/50 dark:bg-indigo-950/30">
+                      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-300">
+                        답변 흐름
+                      </p>
+                      <div className="flex flex-wrap items-center gap-1">
+                        {flow.map((h, i) => (
+                          <span key={`${i}-${h}`} className="flex items-center gap-1">
+                            <span className="rounded-md border border-indigo-300 bg-white px-2 py-0.5 text-[11px] font-semibold text-indigo-900 dark:border-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-100">
+                              {h}
+                            </span>
+                            {i < flow.length - 1 && (
+                              <span className="text-indigo-400">→</span>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* 모드 토글 — 모범 답변 있을 때만 따라 읽기 모드 활성화 */}
@@ -1958,7 +2025,7 @@ export default function DefensePracticeRunner({
                             <Button
                               size="sm"
                               variant="default"
-                              onClick={evaluateReadAlong}
+                              onClick={() => evaluateReadAlong(false)}
                               disabled={
                                 readAlongEvaluating ||
                                 (!readAlongBuffer.trim() && !interim.trim())

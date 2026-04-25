@@ -2117,6 +2117,22 @@ export interface SitePopup {
 }
 
 // ── 논문 심사 연습 (Thesis Defense Practice) ──
+/** 질문 유형 — 답변 흐름·전략을 다르게 잡기 위한 분류 */
+export type DefenseQuestionType =
+  | "briefing"   // 브리핑 (연구 개요·전체 요약)
+  | "identity"   // 연구 정체성 (왜 이 연구인가, 차별점)
+  | "theory"     // 이론 이해 (이론적 배경·학자·개념)
+  | "method"     // 연구방법론 이해 (설계·도구·표집)
+  | "etc";       // 기타
+
+export const DEFENSE_QUESTION_TYPE_LABELS: Record<DefenseQuestionType, string> = {
+  briefing: "브리핑",
+  identity: "연구 정체성",
+  theory: "이론 이해",
+  method: "연구방법론 이해",
+  etc: "기타",
+};
+
 export interface DefenseQuestion {
   id: string;
   question: string;
@@ -2124,6 +2140,8 @@ export interface DefenseQuestion {
   expectedAnswer: string;
   /** 추가 메모/힌트 (선택) */
   note?: string;
+  /** 질문 유형 (선택, 기본 'etc') — 운영자/회원이 답변 흐름 설계에 활용 */
+  type?: DefenseQuestionType;
 }
 
 export type DefensePracticeCategory =

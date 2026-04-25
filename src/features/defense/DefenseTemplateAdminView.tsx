@@ -15,10 +15,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
   DEFENSE_CATEGORY_LABELS,
+  DEFENSE_QUESTION_TYPE_LABELS,
   type DefenseQuestionTemplate,
   type DefensePracticeCategory,
   type DefenseQuestion,
+  type DefenseQuestionType,
 } from "@/types";
+
+const QUESTION_TYPES: DefenseQuestionType[] = [
+  "briefing", "identity", "theory", "method", "etc",
+];
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -149,7 +155,14 @@ export default function DefenseTemplateAdminView() {
                   <ol className="space-y-2 border-t bg-muted/20 p-4 text-sm">
                     {t.questions.map((q, i) => (
                       <li key={q.id} className="rounded-md bg-background p-3">
-                        <p className="text-xs font-semibold text-muted-foreground">Q{i + 1}</p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-xs font-semibold text-muted-foreground">Q{i + 1}</p>
+                          {q.type && (
+                            <Badge variant="secondary" className="text-[10px]">
+                              {DEFENSE_QUESTION_TYPE_LABELS[q.type]}
+                            </Badge>
+                          )}
+                        </div>
                         <p className="mt-0.5 whitespace-pre-wrap">{q.question}</p>
                         {q.expectedAnswer && (
                           <div className="mt-2 rounded bg-emerald-50 p-2 text-xs text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100">
@@ -193,7 +206,7 @@ function TemplateEditor({
   const [saving, setSaving] = useState(false);
 
   const addQuestion = () => {
-    setQuestions((qs) => [...qs, { id: uid(), question: "", expectedAnswer: "" }]);
+    setQuestions((qs) => [...qs, { id: uid(), question: "", expectedAnswer: "", type: "etc" }]);
   };
 
   const handleSave = async () => {
@@ -223,6 +236,7 @@ function TemplateEditor({
           question: q.question.trim(),
           expectedAnswer: q.expectedAnswer.trim(),
           note: q.note?.trim() || null,
+          type: q.type ?? "etc",
         })),
         updatedAt: now,
       };
@@ -321,7 +335,21 @@ function TemplateEditor({
             {questions.map((q, i) => (
               <li key={q.id} className="space-y-2 rounded-lg border bg-card p-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold text-muted-foreground">Q{i + 1}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-semibold text-muted-foreground">Q{i + 1}</p>
+                    <select
+                      value={q.type ?? "etc"}
+                      onChange={(e) => {
+                        const v = e.target.value as DefenseQuestionType;
+                        setQuestions((qs) => qs.map((x, idx) => (idx === i ? { ...x, type: v } : x)));
+                      }}
+                      className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+                    >
+                      {QUESTION_TYPES.map((t) => (
+                        <option key={t} value={t}>{DEFENSE_QUESTION_TYPE_LABELS[t]}</option>
+                      ))}
+                    </select>
+                  </div>
                   <Button
                     size="sm"
                     variant="ghost"
@@ -345,8 +373,8 @@ function TemplateEditor({
                     const v = e.target.value;
                     setQuestions((qs) => qs.map((x, idx) => (idx === i ? { ...x, expectedAnswer: v } : x)));
                   }}
-                  placeholder="모범 답변 (회원이 import 후 자유롭게 수정 가능)"
-                  rows={4}
+                  placeholder={`모범 답변 — 줄 시작에 [도입] [본론] [결론] 같은 헤딩을 적으면 답변 흐름이 자동 표시됩니다.\n예) [도입] 본 연구는 ...\n\n[본론] 첫째, ...`}
+                  rows={5}
                 />
               </li>
             ))}

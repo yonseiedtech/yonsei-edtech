@@ -16,10 +16,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
   DEFENSE_CATEGORY_LABELS,
+  DEFENSE_QUESTION_TYPE_LABELS,
   type DefensePracticeSet,
   type DefensePracticeCategory,
   type DefenseQuestion,
+  type DefenseQuestionType,
 } from "@/types";
+
+const QUESTION_TYPES: DefenseQuestionType[] = [
+  "briefing", "identity", "theory", "method", "etc",
+];
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -196,7 +202,15 @@ export default function DefensePracticeListView({
                       <ol className="space-y-2 text-sm">
                         {s.questions.map((q, i) => (
                           <li key={q.id} className="rounded-lg border bg-background p-3">
-                            <p className="font-medium">Q{i + 1}. {q.question}</p>
+                            <div className="mb-1 flex flex-wrap items-center gap-2">
+                              <span className="font-medium">Q{i + 1}.</span>
+                              {q.type && (
+                                <Badge variant="secondary" className="text-[10px]">
+                                  {DEFENSE_QUESTION_TYPE_LABELS[q.type]}
+                                </Badge>
+                              )}
+                              <span className="font-medium">{q.question}</span>
+                            </div>
                             <p className="mt-1 whitespace-pre-wrap text-xs text-muted-foreground">
                               <span className="font-semibold text-foreground">모범답변:</span>{" "}
                               {q.expectedAnswer || <span className="italic">미작성</span>}
@@ -285,6 +299,7 @@ function PracticeSetEditor({
       question: q.question,
       expectedAnswer: q.expectedAnswer,
       note: q.note,
+      type: q.type ?? "etc",
     }));
     setQuestions((qs) => (mode === "replace" ? cloned : [...qs, ...cloned]));
     if (!title.trim() && mode === "replace") setTitle(tpl.name);
@@ -296,7 +311,7 @@ function PracticeSetEditor({
   const addQuestion = () => {
     setQuestions((qs) => [
       ...qs,
-      { id: uid(), question: "", expectedAnswer: "" },
+      { id: uid(), question: "", expectedAnswer: "", type: "etc" },
     ]);
   };
   const updateQuestion = (i: number, patch: Partial<DefenseQuestion>) => {
@@ -342,6 +357,7 @@ function PracticeSetEditor({
           question: q.question.trim(),
           expectedAnswer: q.expectedAnswer.trim(),
           note: q.note?.trim() || null,
+          type: q.type ?? "etc",
         })),
         updatedAt: now,
       };
@@ -467,6 +483,18 @@ function PracticeSetEditor({
                 </div>
                 <div className="space-y-2">
                   <div>
+                    <label className="mb-1 block text-xs font-semibold text-muted-foreground">질문 유형</label>
+                    <select
+                      value={q.type ?? "etc"}
+                      onChange={(e) => updateQuestion(i, { type: e.target.value as DefenseQuestionType })}
+                      className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    >
+                      {QUESTION_TYPES.map((t) => (
+                        <option key={t} value={t}>{DEFENSE_QUESTION_TYPE_LABELS[t]}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
                     <label className="mb-1 block text-xs font-semibold text-muted-foreground">질문</label>
                     <Textarea
                       value={q.question}
@@ -476,12 +504,17 @@ function PracticeSetEditor({
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-semibold text-muted-foreground">모범 답변</label>
+                    <label className="mb-1 block text-xs font-semibold text-muted-foreground">
+                      모범 답변
+                      <span className="ml-1 font-normal text-muted-foreground/70">
+                        — 줄 시작에 [도입] [본론] [결론] 처럼 적으면 답변 흐름이 자동 표시됩니다.
+                      </span>
+                    </label>
                     <Textarea
                       value={q.expectedAnswer}
                       onChange={(e) => updateQuestion(i, { expectedAnswer: e.target.value })}
-                      placeholder="STT 전사 결과와 비교 채점할 기준 답변"
-                      rows={4}
+                      placeholder={`예시 (빈 줄로 문단 구분):\n[도입] 본 연구는 ...\n\n[본론] 첫째, ...\n\n[결론] 따라서 ...`}
+                      rows={6}
                     />
                   </div>
                   <div>
