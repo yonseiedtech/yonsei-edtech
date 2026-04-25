@@ -50,26 +50,31 @@ export async function linkGuestAttendees({
   return { linked };
 }
 
-/** 게스트 참가 신청(activities.applicants[]) → userId 채우기 */
+/** 게스트 참가 신청(activities.applicants[]) → userId 채우기 (학번 우선, 이메일 보조) */
 export async function linkGuestApplicants({
   userId,
   userName,
+  studentId,
   email,
 }: LinkerInput): Promise<LinkerResult> {
-  if (!email) return { linked: 0 };
+  if (!studentId && !email) return { linked: 0 };
   let linked = 0;
   try {
-    const lower = email.toLowerCase();
+    const lowerEmail = email?.toLowerCase();
     const res = await activitiesApi.list();
     const activities = (res.data ?? []) as Activity[];
     for (const a of activities) {
       const apps = a.applicants ?? [];
-      const hasMatch = apps.some((x) => x.isGuest && x.email?.toLowerCase() === lower);
+      const matches = (x: NonNullable<Activity["applicants"]>[number]) => {
+        if (!x.isGuest) return false;
+        if (studentId && x.studentId && x.studentId === studentId) return true;
+        if (lowerEmail && x.email?.toLowerCase() === lowerEmail) return true;
+        return false;
+      };
+      const hasMatch = apps.some(matches);
       if (!hasMatch) continue;
       const updated = apps.map((x) =>
-        x.isGuest && x.email?.toLowerCase() === lower
-          ? { ...x, userId, name: x.name || userName || "", isGuest: false }
-          : x,
+        matches(x) ? { ...x, userId, name: x.name || userName || "", isGuest: false } : x,
       );
       await activitiesApi.update(a.id, { applicants: updated });
       linked += 1;

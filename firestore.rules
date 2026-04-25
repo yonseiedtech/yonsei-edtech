@@ -188,8 +188,21 @@ service cloud.firestore {
 
     // ─── Activities (프로젝트, 스터디, 대외활동) ───
     match /activities/{docId} {
+      // 회원 본인이 참가/취소 신청 시 applicants/participants 만 수정
+      function isApplyOnlyUpdate() {
+        return request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['applicants', 'participants', 'updatedAt']);
+      }
+      // 비회원 게스트 신청 시 applicants 만 수정
+      function isGuestApplyUpdate() {
+        return request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['applicants', 'updatedAt']);
+      }
       allow read: if true;
-      allow write: if isAuthenticated() && isStaffOrAbove();
+      allow create, delete: if isAuthenticated() && isStaffOrAbove();
+      allow update: if (isAuthenticated() && isStaffOrAbove())
+        || (isAuthenticated() && isApplyOnlyUpdate())
+        || isGuestApplyUpdate();
     }
 
     // ─── Fee Settings (학회비 설정) ───

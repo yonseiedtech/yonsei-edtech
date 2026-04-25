@@ -787,7 +787,9 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
       {/* 누적학기 선택 (재학/휴학만) */}
       {enrollmentStatus !== "graduated" && (
         <div>
-          <label className="mb-1.5 block text-sm font-medium">누적학기</label>
+          <label className="mb-1.5 block text-sm font-medium">
+            누적학기 <span className="text-destructive">*</span>
+          </label>
           <select
             {...register("generation", { required: "누적학기를 선택하세요" })}
             className="w-full rounded-lg border px-3 py-2.5 text-sm"

@@ -142,7 +142,9 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
           const newApplicant = { userId: user.id, name: applyName || user.name, studentId: applyStudentId, email: applyEmail || user.email, phone: applyPhone, answers: Object.keys(applyAnswers).length > 0 ? applyAnswers : undefined, appliedAt: new Date().toISOString(), status: "pending" as const, participantType: applyParticipantType };
           await activitiesApi.update(activityId, { applicants: [...applicants, newApplicant] });
         } else {
-          if (!applyName.trim() || !applyEmail.trim()) throw new Error("이름과 이메일은 필수입니다.");
+          if (!applyName.trim() || !applyEmail.trim() || !applyStudentId.trim()) {
+            throw new Error("비회원 신청은 이름·학번·이메일이 모두 필요합니다.");
+          }
           const guestKey = `guest_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
           const newApplicant = { guestKey, isGuest: true, name: applyName.trim(), studentId: applyStudentId, email: applyEmail.trim().toLowerCase(), phone: applyPhone, answers: Object.keys(applyAnswers).length > 0 ? applyAnswers : undefined, appliedAt: new Date().toISOString(), status: "pending" as const, participantType: applyParticipantType };
           await activitiesApi.update(activityId, { applicants: [...applicants, newApplicant] });
@@ -308,10 +310,10 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
 
   const TABS: { value: Tab; label: string; show: boolean }[] = [
     { value: "overview", label: "개요", show: true },
-    { value: "progress", label: `진행 현황${progressList.length > 0 ? ` (${progressPct}%)` : ""}`, show: type !== "external" },
-    { value: "staff", label: `운영진 (${staffPids.length})`, show: true },
-    { value: "participants", label: `참여자 (${regularPids.length})`, show: true },
-    { value: "applicants", label: `신청현황 (${applicants.length})`, show: registrationMethod === "open" && (type === "external" || isStaff) },
+    { value: "progress", label: `진행 현황${progressList.length > 0 ? ` (${progressPct}%)` : ""}`, show: !!user && type !== "external" },
+    { value: "staff", label: `운영진 (${staffPids.length})`, show: !!user },
+    { value: "participants", label: `참여자 (${regularPids.length})`, show: !!user },
+    { value: "applicants", label: `신청현황 (${applicants.length})`, show: !!user && registrationMethod === "open" && (type === "external" || isStaff) },
     { value: "form-settings", label: "신청 폼 설정", show: registrationMethod === "open" && isStaff },
     { value: "report", label: "리포트", show: isStaff },
     { value: "settings", label: "관리", show: isStaff },
@@ -394,18 +396,39 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
         <div className="mt-6">
           {activeTab === "overview" && (
             <div className="space-y-4">
-              <div className="rounded-xl border bg-white p-6">
-                <p className="whitespace-pre-wrap text-sm leading-relaxed">{activity.description}</p>
-                {activity.detailContent && (
-                  <div className="mt-4 border-t pt-4">
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{activity.detailContent}</p>
+              {!user ? (
+                activity.imageUrl ? (
+                  <div className="overflow-hidden rounded-xl border bg-white">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={activity.imageUrl} alt={`${activity.title} 포스터`} className="block w-full" />
                   </div>
-                )}
-              </div>
-              {activity.tags && activity.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {activity.tags.map((t) => <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>)}
-                </div>
+                ) : (
+                  <div className="rounded-xl border bg-white p-6 text-center text-sm text-muted-foreground">
+                    포스터가 등록되지 않았습니다. 자세한 정보는 로그인 후 확인할 수 있습니다.
+                  </div>
+                )
+              ) : (
+                <>
+                  {activity.imageUrl && (
+                    <div className="overflow-hidden rounded-xl border bg-white">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={activity.imageUrl} alt={`${activity.title} 포스터`} className="block w-full" />
+                    </div>
+                  )}
+                  <div className="rounded-xl border bg-white p-6">
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed">{activity.description}</p>
+                    {activity.detailContent && (
+                      <div className="mt-4 border-t pt-4">
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{activity.detailContent}</p>
+                      </div>
+                    )}
+                  </div>
+                  {activity.tags && activity.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {activity.tags.map((t) => <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>)}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -1088,7 +1111,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             <DialogHeader><DialogTitle>참가 신청{!user && " (비회원)"}</DialogTitle></DialogHeader>
             {!user && (
               <p className="rounded-lg bg-primary/5 p-3 text-xs text-muted-foreground">
-                비회원으로도 신청할 수 있습니다. 신청 후 동일한 이메일로 회원가입하시면 활동 기록이 자동 연결됩니다.
+                비회원으로도 신청할 수 있습니다. 추후 <strong>동일한 학번(또는 이메일)</strong>으로 회원가입하시면 이번 신청 기록이 자동으로 회원 활동에 연동됩니다.
               </p>
             )}
             <div className="grid gap-3">
@@ -1131,8 +1154,8 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               })()}
               <div><label className="mb-1 block text-sm font-medium">이름 *</label>
                 <Input value={applyName} onChange={(e) => setApplyName(e.target.value)} /></div>
-              <div><label className="mb-1 block text-sm font-medium">학번</label>
-                <Input value={applyStudentId} onChange={(e) => setApplyStudentId(e.target.value)} /></div>
+              <div><label className="mb-1 block text-sm font-medium">학번 {!user && "*"}</label>
+                <Input value={applyStudentId} onChange={(e) => setApplyStudentId(e.target.value)} placeholder={!user ? "예: 2023432001 (회원가입 시 기록 연동)" : undefined} /></div>
               <div><label className="mb-1 block text-sm font-medium">이메일 {!user && "*"}</label>
                 <Input type="email" value={applyEmail} onChange={(e) => setApplyEmail(e.target.value)} placeholder="name@example.com" /></div>
               <div><label className="mb-1 block text-sm font-medium">연락처</label>
@@ -1151,7 +1174,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setApplyDialog(false)}>취소</Button>
-              <Button onClick={() => applyMutation.mutate()} disabled={applyMutation.isPending || !applyName.trim() || (!user && !applyEmail.trim())}>
+              <Button onClick={() => applyMutation.mutate()} disabled={applyMutation.isPending || !applyName.trim() || (!user && (!applyEmail.trim() || !applyStudentId.trim()))}>
                 {applyMutation.isPending && <Loader2 size={14} className="mr-1 animate-spin" />}신청
               </Button>
             </DialogFooter>
