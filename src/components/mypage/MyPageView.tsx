@@ -232,7 +232,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
               {/* 내 학회활동 통합 안내 카드 */}
               <Link
                 href="/mypage/activities"
-                className="block rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-5 transition hover:border-primary/40 hover:shadow-md"
+                className="block rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-5 transition hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
               >
                 <div className="flex items-start gap-4">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
@@ -267,7 +267,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
               {/* 내 연구활동 카드 (학회활동과 동일 격) */}
               <Link
                 href="/mypage/research"
-                className="block rounded-2xl border-2 border-amber-200/60 bg-gradient-to-br from-amber-50 to-amber-100/60 p-5 transition hover:border-amber-300 hover:shadow-md"
+                className="block rounded-2xl border-2 border-amber-200/60 bg-gradient-to-br from-amber-50 to-amber-100/60 p-5 transition hover:border-amber-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 focus-visible:ring-offset-2"
               >
                 <div className="flex items-start gap-4">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-200/40 text-amber-700">

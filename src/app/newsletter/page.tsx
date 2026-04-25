@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   useNewsletters,
   SECTION_TYPE_LABELS,
@@ -106,7 +106,22 @@ export default function NewsletterPage() {
         </div>
 
         {isLoading ? (
-          <LoadingSpinner className="mt-12" />
+          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3" aria-busy="true" aria-label="학회보 불러오는 중">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="overflow-hidden rounded-2xl border bg-white shadow-sm">
+                <Skeleton className="h-48 w-full rounded-none" />
+                <div className="space-y-2 p-5">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-4 w-2/3" />
+                  <div className="mt-3 flex justify-between">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-3 w-4" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : publishedIssues.length === 0 ? (
           <div className="mt-12">
             <EmptyState
@@ -176,7 +191,7 @@ export default function NewsletterPage() {
                             <Link
                               key={issue.id}
                               href={`/newsletter/${issue.id}`}
-                              className="text-left"
+                              className="block rounded-2xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
                             >
                               <IssueCard issue={issue} />
                             </Link>

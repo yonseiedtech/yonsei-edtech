@@ -11,7 +11,7 @@ import { useProfessor } from "@/features/site-settings/useSiteContent";
 import { Mail, Globe, BookOpen, Users, Search } from "lucide-react";
 import PageHeader from "@/components/ui/page-header";
 import EmptyState from "@/components/ui/empty-state";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import type { User } from "@/types";
 
@@ -173,7 +173,16 @@ function MembersContent() {
         </nav>
         <div className="mt-8">
           {activeTab === "professor" ? <ProfessorView /> : isLoading ? (
-            <LoadingSpinner />
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4" aria-busy="true" aria-label="구성원 불러오는 중">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="rounded-2xl border bg-white p-6 text-center shadow-sm">
+                  <Skeleton className="mx-auto h-16 w-16 rounded-full" />
+                  <Skeleton className="mx-auto mt-4 h-5 w-24" />
+                  <Skeleton className="mx-auto mt-2 h-3 w-32" />
+                  <Skeleton className="mx-auto mt-3 h-3 w-20" />
+                </div>
+              ))}
+            </div>
           ) : (
             <>
               {activeTab === "staff" && (
