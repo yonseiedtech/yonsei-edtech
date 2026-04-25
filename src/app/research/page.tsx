@@ -155,7 +155,7 @@ export default function ResearchAnalyticsPage() {
             <Skeleton className="h-[420px] w-full rounded-xl" />
           </div>
         ) : error ? (
-          <p className="mt-12 text-sm text-destructive">⚠ {error}</p>
+          <p className="mt-12 text-sm text-destructive" role="alert">⚠ {error}</p>
         ) : (
           <>
             <Tabs defaultValue="keyword" className="mt-8">

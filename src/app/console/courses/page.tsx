@@ -765,7 +765,7 @@ function ConsoleCoursesContent() {
                 ))}
               </div>
             ) : error ? (
-              <p className="mt-12 text-sm text-destructive">⚠ {error}</p>
+              <p className="mt-12 text-sm text-destructive" role="alert">⚠ {error}</p>
             ) : visibleRows.length === 0 ? (
               <p className="mt-12 text-sm text-muted-foreground">
                 등록된 과목이 없습니다. <strong>과목 등록</strong> 탭에서 추가하세요.

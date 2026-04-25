@@ -331,7 +331,7 @@ export default function AlumniThesisDetailPage() {
     return (
       <div className="py-16">
         <div className="mx-auto max-w-3xl px-4">
-          <p className="text-sm text-destructive">⚠ {error ?? "논문을 찾을 수 없습니다."}</p>
+          <p className="text-sm text-destructive" role="alert">⚠ {error ?? "논문을 찾을 수 없습니다."}</p>
           <Button variant="outline" size="sm" className="mt-4" onClick={() => router.back()}>
             <ArrowLeft size={14} className="mr-1" /> 뒤로
           </Button>

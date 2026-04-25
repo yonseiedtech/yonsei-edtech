@@ -275,7 +275,7 @@ export default function AlumniThesisListPage() {
             ))}
           </ul>
         ) : error ? (
-          <p className="mt-12 text-sm text-destructive">⚠ {error}</p>
+          <p className="mt-12 text-sm text-destructive" role="alert">⚠ {error}</p>
         ) : (
           <>
             <p className="mt-6 text-xs text-muted-foreground">

@@ -471,7 +471,7 @@ function CourseListSection({
       </div>
     );
   }
-  if (error) return <p className="mt-12 text-sm text-destructive">⚠ {error}</p>;
+  if (error) return <p className="mt-12 text-sm text-destructive" role="alert">⚠ {error}</p>;
   if (groups.length === 0) {
     return (
       <div className="mt-6 rounded-lg border bg-muted/20 p-8 text-center">

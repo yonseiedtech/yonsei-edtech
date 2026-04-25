@@ -187,7 +187,7 @@ function ConsoleAlumniMappingContent() {
             ))}
           </div>
         ) : error ? (
-          <p className="mt-12 text-sm text-destructive">⚠ {error}</p>
+          <p className="mt-12 text-sm text-destructive" role="alert">⚠ {error}</p>
         ) : filtered.length === 0 ? (
           <p className="mt-12 text-sm text-muted-foreground">표시할 항목이 없습니다.</p>
         ) : (

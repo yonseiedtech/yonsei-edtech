@@ -874,7 +874,7 @@ function ComposeDialog({
             </label>
           </div>
 
-          {error && <p className="text-xs text-destructive">⚠ {error}</p>}
+          {error && <p className="text-xs text-destructive" role="alert">⚠ {error}</p>}
         </div>
 
         <DialogFooter>
