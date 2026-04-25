@@ -216,11 +216,13 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   });
 
   // 참여자 신청 상태 변경 (해당 사용자의 applicant row 가 있을 때만 의미가 있음)
+  // 대외 학술대회의 경우 거절 시 applicant까지 제거(=신청 취소)
   const updateParticipantStatusMutation = useMutation({
     mutationFn: async ({ pid, status }: { pid: string; status: "approved" | "rejected" | "pending" }) => {
-      const updated = applicants.map((a) =>
-        a.userId === pid ? { ...a, status } : a,
-      );
+      const isExternalReject = type === "external" && status === "rejected";
+      const updated = isExternalReject
+        ? applicants.filter((a) => a.userId !== pid)
+        : applicants.map((a) => (a.userId === pid ? { ...a, status } : a));
       const newParticipants = status === "rejected"
         ? participants.filter((p) => p !== pid)
         : participants;
@@ -228,26 +230,36 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
         applicants: updated,
         participants: newParticipants,
       });
+      return { isExternalReject };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
-      toast.success("상태가 변경되었습니다.");
+      toast.success(result?.isExternalReject ? "신청이 취소되었습니다." : "상태가 변경되었습니다.");
     },
   });
 
   // 신청 승인/거절 (관리자)
+  // 대외 학술대회의 경우 거절 시 신청현황에서 제거(=신청 취소)
   const updateApplicantMutation = useMutation({
     mutationFn: async ({ key, status }: { key: string; status: "approved" | "rejected" }) => {
       if (!activity) return;
-      const updated = applicants.map((a) => ((a.userId ?? a.guestKey) === key ? { ...a, status } : a));
       const target = applicants.find((a) => (a.userId ?? a.guestKey) === key);
-      const newParticipants = status === "approved" && target?.userId && !participants.includes(target.userId)
-        ? [...participants, target.userId] : participants;
+      const isExternalReject = type === "external" && status === "rejected";
+      const updated = isExternalReject
+        ? applicants.filter((a) => (a.userId ?? a.guestKey) !== key)
+        : applicants.map((a) => ((a.userId ?? a.guestKey) === key ? { ...a, status } : a));
+      let newParticipants = participants;
+      if (status === "approved" && target?.userId && !participants.includes(target.userId)) {
+        newParticipants = [...participants, target.userId];
+      } else if (isExternalReject && target?.userId && participants.includes(target.userId)) {
+        newParticipants = participants.filter((p) => p !== target.userId);
+      }
       await activitiesApi.update(activityId, { applicants: updated, participants: newParticipants });
+      return { isExternalReject };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
-      toast.success("처리되었습니다.");
+      toast.success(result?.isExternalReject ? "신청이 취소되었습니다." : "처리되었습니다.");
     },
   });
 
@@ -832,8 +844,18 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                             <Button size="sm" className="h-7 gap-1 text-xs" onClick={() => updateApplicantMutation.mutate({ key, status: "approved" })}>
                               <CheckCircle size={12} />승인
                             </Button>
-                            <Button variant="outline" size="sm" className="h-7 gap-1 text-xs text-destructive" onClick={() => updateApplicantMutation.mutate({ key, status: "rejected" })}>
-                              <XCircle size={12} />거절
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 gap-1 text-xs text-destructive"
+                              onClick={() => {
+                                if (type === "external") {
+                                  if (!confirm(`${a.name}님의 신청을 취소하시겠습니까?\n신청현황에서 제거됩니다.`)) return;
+                                }
+                                updateApplicantMutation.mutate({ key, status: "rejected" });
+                              }}
+                            >
+                              <XCircle size={12} />{type === "external" ? "신청 취소" : "거절"}
                             </Button>
                           </>
                         )}
