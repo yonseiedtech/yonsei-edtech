@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useNewsletters } from "@/features/newsletter/newsletter-store";
 import { formatDate } from "@/lib/utils";
 import { Newspaper, ArrowRight } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function NewsletterPreview() {
   const { issues, isLoading } = useNewsletters();
@@ -28,8 +29,10 @@ export default function NewsletterPreview() {
         </div>
         <div className="mt-4 divide-y rounded-xl border bg-white">
           {isLoading ? (
-            <div className="px-5 py-8 text-center text-sm text-muted-foreground">
-              불러오는 중...
+            <div className="space-y-2 px-5 py-3" aria-busy="true" aria-label="학회보 불러오는 중">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full rounded" />
+              ))}
             </div>
           ) : published.length === 0 ? (
             <div className="px-5 py-8 text-center text-sm text-muted-foreground">

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePosts } from "@/features/board/useBoard";
 import { formatDate } from "@/lib/utils";
 import { Megaphone, ArrowRight } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function PromotionPreview() {
   const { posts: promotions, isLoading } = usePosts("promotion");
@@ -25,8 +26,10 @@ export default function PromotionPreview() {
         </div>
         <div className="mt-4 rounded-xl border bg-white p-4">
           {isLoading ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">
-              불러오는 중...
+            <div className="grid gap-3 sm:grid-cols-3" aria-busy="true" aria-label="홍보글 불러오는 중">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-28 w-full rounded-lg" />
+              ))}
             </div>
           ) : promotions.length === 0 ? (
             <div className="py-8 text-center text-sm text-muted-foreground">
