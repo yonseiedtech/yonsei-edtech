@@ -11,7 +11,6 @@ import { useProfessor } from "@/features/site-settings/useSiteContent";
 import { Mail, Globe, BookOpen, Users, Search } from "lucide-react";
 import PageHeader from "@/components/ui/page-header";
 import EmptyState from "@/components/ui/empty-state";
-import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import type { User } from "@/types";
@@ -41,7 +40,25 @@ function filterByTab(members: User[], tabKey: string): User[] {
 function ProfessorView() {
   const { value: prof, isLoading } = useProfessor();
 
-  if (isLoading) return <LoadingSpinner />;
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-3xl" aria-busy="true" aria-label="주임교수 정보 불러오는 중">
+        <div className="flex flex-col items-center gap-8 rounded-2xl border bg-white p-8 shadow-sm md:flex-row md:items-start md:p-10">
+          <Skeleton className="h-52 w-40 shrink-0 rounded-xl" />
+          <div className="flex-1 space-y-3">
+            <Skeleton className="h-7 w-1/2" />
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="h-4 w-1/2" />
+            <div className="mt-4 space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-11/12" />
+              <Skeleton className="h-4 w-10/12" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (!prof.name) return <EmptyState icon={Users} title="주임교수 정보가 등록되지 않았습니다" description="운영진이 정보를 등록할 때까지 기다려주세요." />;
 
   return (
@@ -253,7 +270,21 @@ function MembersContent() {
 
 export default function MembersPage() {
   return (
-    <Suspense fallback={<LoadingSpinner className="py-24" />}>
+    <Suspense
+      fallback={
+        <div className="py-24" aria-busy="true" aria-label="회원 정보 불러오는 중">
+          <div className="mx-auto max-w-5xl space-y-3 px-4">
+            <Skeleton className="h-8 w-1/3" />
+            <Skeleton className="h-4 w-1/2" />
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-28 w-full rounded-xl" />
+              ))}
+            </div>
+          </div>
+        </div>
+      }
+    >
       <MembersContent />
     </Suspense>
   );

@@ -34,7 +34,7 @@ import {
   type CourseTodoType,
 } from "@/types";
 import PageHeader from "@/components/ui/page-header";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -503,7 +503,22 @@ function ScheduleContent({ courseId }: { courseId: string }) {
     setSettingsOpen(true);
   }
 
-  if (loadingCourse) return <LoadingSpinner className="py-24" />;
+  if (loadingCourse) {
+    return (
+      <div className="py-16" aria-busy="true" aria-label="과목 정보 불러오는 중">
+        <section className="mx-auto max-w-4xl px-4">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="mt-4 h-9 w-2/3" />
+          <Skeleton className="mt-2 h-4 w-1/2" />
+        </section>
+        <section className="mx-auto mt-8 max-w-4xl px-4 space-y-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-20 w-full rounded-xl" />
+          ))}
+        </section>
+      </div>
+    );
+  }
   if (!course) {
     return (
       <EmptyState
@@ -598,7 +613,11 @@ function ScheduleContent({ courseId }: { courseId: string }) {
 
       <section className="mx-auto mt-8 max-w-4xl px-4">
         {loadingSessions ? (
-          <LoadingSpinner />
+          <div className="space-y-3" aria-busy="true" aria-label="수업 일정 불러오는 중">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-20 w-full rounded-xl" />
+            ))}
+          </div>
         ) : weeks.length === 0 ? (
           <EmptyState
             icon={CalendarClock}

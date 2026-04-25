@@ -2,13 +2,25 @@
 
 import { motion } from "framer-motion";
 import { useHistory } from "@/features/site-settings/useSiteContent";
-import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Timeline() {
   const { value: history, isLoading } = useHistory();
 
   if (isLoading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="relative mt-10 space-y-8" aria-busy="true" aria-label="연혁 불러오는 중">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="flex items-start gap-6 pl-12">
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-5 w-2/3" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   }
 
   return (
