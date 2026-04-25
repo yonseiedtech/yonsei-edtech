@@ -1356,6 +1356,19 @@ export default function DefensePracticeRunner({
                           : score >= 60
                           ? "bg-amber-500"
                           : "bg-rose-500";
+                        const totalSec = (() => {
+                          if (a.mode === "readalong" && a.readalongResults?.length) {
+                            return a.readalongResults.reduce((s, r) => s + (r.durationSec ?? 0), 0);
+                          }
+                          return (a.results ?? []).reduce((s, r) => s + (r.durationSec ?? 0), 0);
+                        })();
+                        const fmtDuration = (sec: number) => {
+                          if (!sec) return "";
+                          if (sec < 60) return `${sec}초`;
+                          const m = Math.floor(sec / 60);
+                          const s = sec % 60;
+                          return s > 0 ? `${m}분 ${s}초` : `${m}분`;
+                        };
                         return (
                           <li key={`${a.at}-${i}`} className="text-xs">
                             <button
@@ -1368,6 +1381,11 @@ export default function DefensePracticeRunner({
                               {a.sttLang && (
                                 <Badge variant="outline">
                                   {a.sttLang === "en-US" ? "EN" : "KO"}
+                                </Badge>
+                              )}
+                              {totalSec > 0 && (
+                                <Badge variant="outline" className="text-[10px]">
+                                  ⏱ {fmtDuration(totalSec)}
                                 </Badge>
                               )}
                               <span className="ml-auto text-muted-foreground">{dt}</span>
@@ -1392,6 +1410,11 @@ export default function DefensePracticeRunner({
                                             <span className="ml-auto">
                                               {r.passedSentences}/{r.totalSentences} ({rate}%)
                                             </span>
+                                            {r.durationSec ? (
+                                              <span className="text-muted-foreground">
+                                                · ⏱ {fmtDuration(r.durationSec)}
+                                              </span>
+                                            ) : null}
                                           </div>
                                           {q?.question && (
                                             <p className="mt-1 line-clamp-2 text-muted-foreground">
@@ -1665,64 +1688,13 @@ export default function DefensePracticeRunner({
                             </p>
                           </div>
 
-                          {/* 발화 vs 모범 비교 (단위별) */}
+                          {/* 발화 vs 모범 비교 (단위별) — 세로 스택: 모범 답변 위, 내 발화 아래 + 모범 답변 인라인 편집 */}
                           <div className="rounded-lg border bg-background">
-                            <div className="flex items-center justify-between border-b px-3 py-2 text-xs">
-                              <span className="font-semibold">{unitLabel} 단위 비교</span>
-                              <span className="text-muted-foreground">내 발화 / 모범 답변</span>
-                            </div>
-                            <ul className="divide-y">
-                              {expectedSegments.map((seg, i) => {
-                                const log = spokenLog[i];
-                                const score = log?.score ?? 0;
-                                const passed = log?.passed ?? false;
-                                return (
-                                  <li key={i} className="px-3 py-2 text-sm">
-                                    <div className="mb-1 flex items-center gap-2 text-[11px]">
-                                      <span className="font-mono text-muted-foreground">{i + 1}.</span>
-                                      <span
-                                        className={cn(
-                                          "rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                                          passed
-                                            ? "bg-emerald-500 text-white"
-                                            : log
-                                            ? "bg-amber-500 text-white"
-                                            : "bg-zinc-300 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200",
-                                        )}
-                                      >
-                                        {log ? `${score}점` : "기록 없음"}
-                                      </span>
-                                    </div>
-                                    <div className="grid gap-2 md:grid-cols-2">
-                                      <div className="rounded-md bg-muted/40 p-2">
-                                        <p className="mb-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
-                                          내 발화
-                                        </p>
-                                        <p className="whitespace-pre-wrap leading-relaxed">
-                                          {log?.spoken || (
-                                            <span className="italic text-muted-foreground">기록 없음</span>
-                                          )}
-                                        </p>
-                                      </div>
-                                      <div className="rounded-md bg-emerald-50 p-2 dark:bg-emerald-950/30">
-                                        <p className="mb-0.5 text-[10px] font-semibold uppercase text-emerald-700 dark:text-emerald-200">
-                                          모범 답변
-                                        </p>
-                                        <p className="whitespace-pre-wrap leading-relaxed text-emerald-950 dark:text-emerald-50">
-                                          {renderWithScholarHighlight(seg)}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  </li>
-                                );
-                              })}
-                            </ul>
-                          </div>
-
-                          {/* 모범 답변 인라인 편집 */}
-                          <div className="rounded-lg border bg-card p-3">
-                            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                              <p className="text-xs font-semibold">모범 답변 수정</p>
+                            <div className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2 text-xs">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold">{unitLabel} 단위 비교</span>
+                                <span className="text-muted-foreground">모범 답변 / 내 발화</span>
+                              </div>
                               {!editingExpected ? (
                                 <Button
                                   size="sm"
@@ -1732,7 +1704,7 @@ export default function DefensePracticeRunner({
                                     setEditingExpected(true);
                                   }}
                                 >
-                                  <Pencil size={12} className="mr-1" /> 편집
+                                  <Pencil size={12} className="mr-1" /> 모범 답변 편집
                                 </Button>
                               ) : (
                                 <div className="flex gap-2">
@@ -1781,18 +1753,70 @@ export default function DefensePracticeRunner({
                                 </div>
                               )}
                             </div>
+
                             {editingExpected ? (
-                              <Textarea
-                                value={editedExpectedDraft}
-                                onChange={(e) => setEditedExpectedDraft(e.target.value)}
-                                rows={Math.max(6, expectedSegments.length + 2)}
-                                placeholder="모범 답변을 수정하세요. 빈 줄(엔터 두 번)으로 문단을 구분하면 '문단' 단위 따라 읽기에서 분리됩니다."
-                                className="text-sm"
-                              />
+                              <div className="p-3">
+                                <p className="mb-1.5 text-[10px] font-semibold uppercase text-emerald-700 dark:text-emerald-200">
+                                  모범 답변 (전체)
+                                </p>
+                                <Textarea
+                                  value={editedExpectedDraft}
+                                  onChange={(e) => setEditedExpectedDraft(e.target.value)}
+                                  rows={Math.max(8, expectedSegments.length + 3)}
+                                  placeholder="모범 답변을 수정하세요. 빈 줄(엔터 두 번)으로 문단을 구분하면 '문단' 단위 따라 읽기에서 분리됩니다."
+                                  className="text-sm"
+                                />
+                                <p className="mt-2 text-[11px] text-muted-foreground">
+                                  저장하면 이 질문의 모범 답변이 영구 갱신되며, 다음 라운드부터 새 답변과 비교됩니다.
+                                </p>
+                              </div>
                             ) : (
-                              <p className="whitespace-pre-wrap rounded-md bg-muted/30 p-2 text-sm leading-relaxed">
-                                {current?.expectedAnswer}
-                              </p>
+                              <ul className="divide-y">
+                                {expectedSegments.map((seg, i) => {
+                                  const log = spokenLog[i];
+                                  const score = log?.score ?? 0;
+                                  const passed = log?.passed ?? false;
+                                  return (
+                                    <li key={i} className="px-3 py-2 text-sm">
+                                      <div className="mb-1 flex items-center gap-2 text-[11px]">
+                                        <span className="font-mono text-muted-foreground">{i + 1}.</span>
+                                        <span
+                                          className={cn(
+                                            "rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                                            passed
+                                              ? "bg-emerald-500 text-white"
+                                              : log
+                                              ? "bg-amber-500 text-white"
+                                              : "bg-zinc-300 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200",
+                                          )}
+                                        >
+                                          {log ? `${score}점` : "기록 없음"}
+                                        </span>
+                                      </div>
+                                      <div className="flex flex-col gap-2">
+                                        <div className="rounded-md bg-emerald-50 p-2 dark:bg-emerald-950/30">
+                                          <p className="mb-0.5 text-[10px] font-semibold uppercase text-emerald-700 dark:text-emerald-200">
+                                            모범 답변
+                                          </p>
+                                          <p className="whitespace-pre-wrap leading-relaxed text-emerald-950 dark:text-emerald-50">
+                                            {renderWithScholarHighlight(seg)}
+                                          </p>
+                                        </div>
+                                        <div className="rounded-md bg-muted/40 p-2">
+                                          <p className="mb-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
+                                            내 발화
+                                          </p>
+                                          <p className="whitespace-pre-wrap leading-relaxed">
+                                            {log?.spoken || (
+                                              <span className="italic text-muted-foreground">기록 없음</span>
+                                            )}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
                             )}
                           </div>
 

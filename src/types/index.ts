@@ -2127,14 +2127,14 @@ export interface DefenseQuestion {
 }
 
 export type DefensePracticeCategory =
-  | "proposal"      // 연구계획서 심사
+  | "proposal"      // 예비심사
   | "midterm"       // 중간발표
   | "final"         // 최종 심사
   | "qualifying"    // 자격시험
   | "general";      // 일반
 
 export const DEFENSE_CATEGORY_LABELS: Record<DefensePracticeCategory, string> = {
-  proposal: "연구계획서 심사",
+  proposal: "예비심사",
   midterm: "중간발표",
   final: "최종 심사",
   qualifying: "자격시험",
@@ -2189,6 +2189,21 @@ export interface DefensePracticeSet {
   attempts?: DefensePracticeAttempt[];
   /** 누적 시도 횟수 */
   attemptCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** 운영 콘솔에서 관리자가 사전 등록하는 질문 템플릿 — 회원이 연습 세트 생성 시 import */
+export interface DefenseQuestionTemplate {
+  id: string;
+  /** 템플릿 이름 (예: "석사 예비심사 표준 질문 20선") */
+  name: string;
+  category: DefensePracticeCategory;
+  description?: string;
+  questions: DefenseQuestion[];
+  /** 비활성화 시 회원 화면에서 숨김 */
+  active: boolean;
+  createdBy: string;
   createdAt: string;
   updatedAt: string;
 }

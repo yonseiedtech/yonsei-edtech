@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { isPresidentOrAbove, isStaffOrAbove } from "@/lib/permissions";
+import { isPresidentOrAbove, isAdminOrSysadmin } from "@/lib/permissions";
 import { useInquiries } from "@/features/inquiry/useInquiry";
 import { usePosts } from "@/features/board/useBoard";
 import { profilesApi } from "@/lib/bkend";
@@ -24,6 +24,7 @@ interface NavItem {
   label: string;
   icon: React.ElementType;
   badge?: number;
+  adminOnly?: boolean;
 }
 
 interface NavGroup {
@@ -88,6 +89,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user } = useAuthStore();
   const isPresident = isPresidentOrAbove(user);
+  const isAdmin = isAdminOrSysadmin(user);
   const { inquiries } = useInquiries();
   const { posts } = usePosts("all");
   const unansweredCount = inquiries.filter((i) => i.status === "pending").length;
@@ -131,6 +133,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
       label: "대학원 생활",
       items: [
         { href: "/console/grad-life/thesis-defense", label: "논문 심사 연습", icon: MessageSquareQuote },
+        { href: "/console/grad-life/thesis-defense-templates", label: "심사 질문 템플릿", icon: ClipboardList, adminOnly: true },
       ],
     },
     {
@@ -183,7 +186,10 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
     },
   ];
 
-  const visibleGroups = NAV_GROUPS.filter((g) => !g.presidentOnly || isPresident);
+  const visibleGroups = NAV_GROUPS
+    .filter((g) => !g.presidentOnly || isPresident)
+    .map((g) => ({ ...g, items: g.items.filter((i) => !i.adminOnly || isAdmin) }))
+    .filter((g) => g.items.length > 0);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-16">

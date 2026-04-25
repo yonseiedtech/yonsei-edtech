@@ -74,6 +74,32 @@ export default function ChatbotAdminPage() {
     },
   });
 
+  // 노출 여부 조회 (기본: 숨김)
+  const { data: visibleSetting } = useQuery({
+    queryKey: ["site_settings", "chatbot_visible"],
+    queryFn: async () => {
+      const res = await siteSettingsApi.getByKey("chatbot_visible");
+      return res.data[0] as { id: string; value: string } | undefined;
+    },
+  });
+  const isVisible = visibleSetting?.value === "true";
+
+  const toggleVisibilityMutation = useMutation({
+    mutationFn: async (next: boolean) => {
+      const value = next ? "true" : "false";
+      if (visibleSetting?.id) {
+        await siteSettingsApi.update(visibleSetting.id, { key: "chatbot_visible", value });
+      } else {
+        await siteSettingsApi.create({ key: "chatbot_visible", value });
+      }
+    },
+    onSuccess: (_data, next) => {
+      queryClient.invalidateQueries({ queryKey: ["site_settings", "chatbot_visible"] });
+      toast.success(next ? "챗봇 플로팅 UI를 표시합니다." : "챗봇 플로팅 UI를 숨깁니다.");
+    },
+    onError: () => toast.error("설정 변경에 실패했습니다."),
+  });
+
   // 인사말 초기값 설정
   const currentGreeting = greetingSetting?.value || "안녕하세요! 연세교육공학회 챗봇입니다. 궁금한 점이 있으시면 편하게 질문해 주세요! 😊";
   if (greetingText === "" && greetingSetting?.value) setGreetingText(greetingSetting.value);
@@ -183,9 +209,51 @@ export default function ChatbotAdminPage() {
         title="연교공 챗봇 관리"
         description="회원과 방문자에게 노출되는 챗봇 인사말·채팅 기록·Q&A 자동응답을 관리합니다."
         actions={
-          <Badge variant="secondary" className="bg-green-50 text-green-700 text-xs">운영중</Badge>
+          <Badge
+            variant="secondary"
+            className={cn(
+              "text-xs",
+              isVisible ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700",
+            )}
+          >
+            {isVisible ? "노출중" : "숨김"}
+          </Badge>
         }
       />
+
+      <div className="rounded-xl border bg-white p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="font-semibold">챗봇 플로팅 UI 노출</h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              모든 페이지 우측 하단에 떠 있는 챗봇 버튼의 노출 여부를 제어합니다.
+              숨김으로 두면 회원·방문자에게 챗봇이 보이지 않습니다.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge
+              variant="secondary"
+              className={cn(
+                "text-xs",
+                isVisible ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700",
+              )}
+            >
+              {isVisible ? "현재: 노출" : "현재: 숨김"}
+            </Badge>
+            <Button
+              size="sm"
+              variant={isVisible ? "outline" : "default"}
+              disabled={toggleVisibilityMutation.isPending}
+              onClick={() => toggleVisibilityMutation.mutate(!isVisible)}
+            >
+              {toggleVisibilityMutation.isPending && (
+                <Loader2 size={14} className="mr-1 animate-spin" />
+              )}
+              {isVisible ? "숨김으로 전환" : "노출로 전환"}
+            </Button>
+          </div>
+        </div>
+      </div>
 
       <Tabs value={section} onValueChange={(v) => setSection(v as Section)}>
         <TabsList>

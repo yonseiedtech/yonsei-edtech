@@ -375,6 +375,13 @@ service cloud.firestore {
         && resource.data.userId == request.auth.uid;
     }
 
+    // ─── Defense Question Templates (운영진이 사전 등록하는 질문 템플릿) ───
+    match /defense_question_templates/{docId} {
+      // 회원 누구나 읽고 자기 세트에 import 가능, 작성/수정/삭제는 관리자(admin)만
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
     // ─── Writing Paper History (작성 활동 이력 — 잔디/통계용, append-only) ───
     match /writing_paper_history/{docId} {
       allow read: if isAuthenticated()

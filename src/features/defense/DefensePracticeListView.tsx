@@ -7,7 +7,7 @@ import {
   MessageSquareQuote, Plus, Edit3, Trash2, Play, ChevronDown, ChevronRight,
   GripVertical, ListChecks,
 } from "lucide-react";
-import { defensePracticesApi } from "@/lib/bkend";
+import { defensePracticesApi, defenseQuestionTemplatesApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { Button } from "@/components/ui/button";
@@ -131,9 +131,11 @@ export default function DefensePracticeListView({
                     {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                   </button>
                   <div className="min-w-0 flex-1">
+                    <div className="mb-1">
+                      <Badge variant="secondary">{DEFENSE_CATEGORY_LABELS[s.category]}</Badge>
+                    </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="text-base font-semibold">{s.title}</h3>
-                      <Badge variant="secondary">{DEFENSE_CATEGORY_LABELS[s.category]}</Badge>
                       <Badge variant="outline">
                         <ListChecks size={11} className="mr-1" /> {s.questions.length}문항
                       </Badge>
@@ -155,9 +157,6 @@ export default function DefensePracticeListView({
                         </Badge>
                       )}
                     </div>
-                    {s.topic && (
-                      <p className="mt-1 text-xs text-muted-foreground">주제: {s.topic}</p>
-                    )}
                     {s.description && (
                       <p className="mt-1 text-sm text-muted-foreground">{s.description}</p>
                     )}
@@ -261,7 +260,8 @@ function PracticeSetEditor({
 }) {
   const [title, setTitle] = useState(practiceSet?.title ?? "");
   const [description, setDescription] = useState(practiceSet?.description ?? "");
-  const [topic, setTopic] = useState(practiceSet?.topic ?? "");
+  // topic 필드 UI는 제거되었으나 기존 데이터 보존용으로 원본 값을 유지하여 저장 시 그대로 전달
+  const preservedTopic = practiceSet?.topic ?? null;
   const [category, setCategory] = useState<DefensePracticeCategory>(
     practiceSet?.category ?? "proposal",
   );
@@ -269,6 +269,29 @@ function PracticeSetEditor({
     practiceSet?.questions ?? [],
   );
   const [saving, setSaving] = useState(false);
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
+
+  const { data: templateData } = useQuery({
+    queryKey: ["defense_question_templates", "active"],
+    queryFn: () => defenseQuestionTemplatesApi.listActive(),
+  });
+  const templates = templateData?.data ?? [];
+
+  const importTemplate = (templateId: string, mode: "append" | "replace") => {
+    const tpl = templates.find((t) => t.id === templateId);
+    if (!tpl) return;
+    const cloned = tpl.questions.map((q) => ({
+      id: uid(),
+      question: q.question,
+      expectedAnswer: q.expectedAnswer,
+      note: q.note,
+    }));
+    setQuestions((qs) => (mode === "replace" ? cloned : [...qs, ...cloned]));
+    if (!title.trim() && mode === "replace") setTitle(tpl.name);
+    setCategory(tpl.category);
+    setTemplatePickerOpen(false);
+    toast.success(`"${tpl.name}" 템플릿 ${cloned.length}개 질문 ${mode === "replace" ? "교체됨" : "추가됨"}`);
+  };
 
   const addQuestion = () => {
     setQuestions((qs) => [
@@ -312,7 +335,7 @@ function PracticeSetEditor({
         userId,
         title: title.trim(),
         description: description.trim() || null,
-        topic: topic.trim() || null,
+        topic: preservedTopic,
         category,
         questions: questions.map((q) => ({
           id: q.id,
@@ -359,35 +382,25 @@ function PracticeSetEditor({
 
       <div className="space-y-4 rounded-xl border bg-card p-5">
         <div>
-          <label className="mb-1 block text-xs font-semibold text-muted-foreground">제목 *</label>
+          <label className="mb-1 block text-xs font-semibold text-muted-foreground">분류</label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value as DefensePracticeCategory)}
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+          >
+            {CATEGORIES.map((c) => (
+              <option key={c} value={c}>{DEFENSE_CATEGORY_LABELS[c]}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs font-semibold text-muted-foreground">논문 제목 *</label>
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="예: 석사 논문 계획서 발표 예상질문"
+            placeholder="예: 메타버스 기반 협력학습의 효과 분석"
           />
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-muted-foreground">분류</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value as DefensePracticeCategory)}
-              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-            >
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>{DEFENSE_CATEGORY_LABELS[c]}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-muted-foreground">발표 주제 / 논문 제목</label>
-            <Input
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder="예: 메타버스 기반 협력학습의 효과"
-            />
-          </div>
         </div>
 
         <div>
@@ -404,9 +417,20 @@ function PracticeSetEditor({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">질문 ({questions.length})</h2>
-          <Button size="sm" onClick={addQuestion}>
-            <Plus size={13} className="mr-1" /> 질문 추가
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setTemplatePickerOpen(true)}
+              disabled={templates.length === 0}
+              title={templates.length === 0 ? "관리자가 등록한 템플릿이 아직 없습니다." : ""}
+            >
+              <ListChecks size={13} className="mr-1" /> 템플릿
+            </Button>
+            <Button size="sm" onClick={addQuestion}>
+              <Plus size={13} className="mr-1" /> 질문 추가
+            </Button>
+          </div>
         </div>
         {questions.length === 0 ? (
           <div className="rounded-xl border border-dashed py-10 text-center text-sm text-muted-foreground">
@@ -474,6 +498,75 @@ function PracticeSetEditor({
           </ol>
         )}
       </div>
+
+      {templatePickerOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setTemplatePickerOpen(false)}
+        >
+          <div
+            className="w-full max-w-2xl max-h-[80vh] overflow-y-auto rounded-xl bg-card shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-card px-5 py-3">
+              <h3 className="text-base font-semibold">질문 템플릿 선택</h3>
+              <Button size="sm" variant="ghost" onClick={() => setTemplatePickerOpen(false)}>
+                닫기
+              </Button>
+            </div>
+            <div className="space-y-3 p-5">
+              <p className="text-xs text-muted-foreground">
+                관리자가 등록한 표준 질문 세트입니다. 가져온 후 자유롭게 편집·삭제할 수 있습니다.
+              </p>
+              {templates.length === 0 ? (
+                <p className="py-8 text-center text-sm text-muted-foreground">
+                  등록된 템플릿이 없습니다.
+                </p>
+              ) : (
+                <ul className="space-y-2">
+                  {templates.map((t) => (
+                    <li key={t.id} className="rounded-lg border bg-background p-3">
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
+                        <Badge variant="secondary">{DEFENSE_CATEGORY_LABELS[t.category]}</Badge>
+                        <Badge variant="outline">
+                          <ListChecks size={11} className="mr-1" /> {t.questions.length}문항
+                        </Badge>
+                      </div>
+                      <p className="text-sm font-semibold">{t.name}</p>
+                      {t.description && (
+                        <p className="mt-0.5 text-xs text-muted-foreground">{t.description}</p>
+                      )}
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => importTemplate(t.id, "append")}
+                        >
+                          <Plus size={12} className="mr-1" /> 현재 질문에 추가
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            if (
+                              questions.length > 0 &&
+                              !confirm("기존 질문을 모두 교체합니다. 진행할까요?")
+                            ) {
+                              return;
+                            }
+                            importTemplate(t.id, "replace");
+                          }}
+                        >
+                          전체 교체
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

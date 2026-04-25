@@ -2,11 +2,13 @@
 
 import { useState, useRef, useCallback, useEffect, lazy, Suspense } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { useQuery } from "@tanstack/react-query";
 import { MessageCircle, Loader2, Pause, Play, Square, BookOpen, Pencil } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { useStudyTimerStore } from "@/features/research/study-timer/study-timer-store";
 import { useEndSession } from "@/features/research/study-timer/useStudySessions";
+import { siteSettingsApi } from "@/lib/bkend";
 import { cn } from "@/lib/utils";
 
 const ChatPanel = lazy(() => import("./ChatPanel"));
@@ -40,6 +42,17 @@ function fmt(sec: number): string {
 }
 
 export default function ChatWidget() {
+  // 관리자 콘솔에서 토글 가능한 노출 설정 (기본값: 숨김)
+  const { data: visibleSetting, isLoading: visibleLoading } = useQuery({
+    queryKey: ["site_settings", "chatbot_visible"],
+    queryFn: async () => {
+      const res = await siteSettingsApi.getByKey("chatbot_visible");
+      return res.data[0] as { id: string; value: string } | undefined;
+    },
+    staleTime: 60_000,
+  });
+  const isVisible = visibleSetting?.value === "true";
+
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const [pillExpanded, setPillExpanded] = useState(false);
@@ -159,6 +172,9 @@ export default function ChatWidget() {
   const defaultStyle = pos
     ? { left: pos.x, top: pos.y, right: "auto" as const, bottom: "auto" as const }
     : { right: 24, bottom: 24 };
+
+  // 설정 로드 전 깜빡임 방지 + 숨김 상태에서 패널/FAB 모두 미노출
+  if (visibleLoading || !isVisible) return null;
 
   // 진행링 dasharray (25분 1cycle)
   const progress = active ? (elapsed % RING_PERIOD_SEC) / RING_PERIOD_SEC : 0;

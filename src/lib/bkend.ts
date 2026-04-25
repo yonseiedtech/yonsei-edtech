@@ -45,7 +45,7 @@ import type {
   GuideTrack, GuideItem, GuideProgress,
   HostRetrospective, HostActivityType,
   SitePopup,
-  DefensePracticeSet,
+  DefensePracticeSet, DefenseQuestionTemplate,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -692,6 +692,28 @@ export const defensePracticesApi = {
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<DefensePracticeSet>("defense_practice_sets", id, data),
   delete: (id: string) => dataApi.delete("defense_practice_sets", id),
+};
+
+export const defenseQuestionTemplatesApi = {
+  listActive: async () => {
+    const res = await dataApi.list<DefenseQuestionTemplate>(
+      "defense_question_templates",
+      { sort: "createdAt:desc", limit: 200 },
+    );
+    return { ...res, data: res.data.filter((t) => t.active === true) };
+  },
+  listAll: () =>
+    dataApi.list<DefenseQuestionTemplate>("defense_question_templates", {
+      sort: "createdAt:desc",
+      limit: 200,
+    }),
+  get: (id: string) =>
+    dataApi.get<DefenseQuestionTemplate>("defense_question_templates", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<DefenseQuestionTemplate>("defense_question_templates", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<DefenseQuestionTemplate>("defense_question_templates", id, data),
+  delete: (id: string) => dataApi.delete("defense_question_templates", id),
 };
 
 export const researchReportsApi = {
