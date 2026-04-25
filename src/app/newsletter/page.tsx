@@ -10,6 +10,7 @@ import {
 import type { NewsletterIssue } from "@/features/newsletter/newsletter-store";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import EmptyState from "@/components/ui/empty-state";
 import { Newspaper, ChevronRight, PenSquare } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
@@ -107,8 +108,12 @@ export default function NewsletterPage() {
         {isLoading ? (
           <LoadingSpinner className="mt-12" />
         ) : publishedIssues.length === 0 ? (
-          <div className="mt-12 text-center text-muted-foreground">
-            아직 발행된 학회보가 없습니다.
+          <div className="mt-12">
+            <EmptyState
+              icon={Newspaper}
+              title="아직 발행된 학회보가 없습니다"
+              description="새 호가 발행되면 이곳에서 만나보실 수 있습니다."
+            />
           </div>
         ) : (
           <>

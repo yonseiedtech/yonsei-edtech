@@ -20,6 +20,7 @@ import { auth } from "@/lib/firebase";
 import { toast } from "sonner";
 import type { Certificate } from "@/types";
 import { Badge } from "@/components/ui/badge";
+import EmptyState from "@/components/ui/empty-state";
 import { runAllGuestLinkers } from "@/lib/guestLinker";
 import {
   CertificatePreview,
@@ -496,7 +497,11 @@ export default function CertificatesPage() {
       {isLoading ? (
         <p className="py-12 text-center text-muted-foreground">불러오는 중...</p>
       ) : filtered.length === 0 ? (
-        <p className="py-12 text-center text-muted-foreground">발급 이력이 없습니다.</p>
+        <EmptyState
+          icon={Award}
+          title="발급 이력이 없습니다"
+          description="필터 조건에 해당하는 수료증/감사장이 없습니다."
+        />
       ) : (
         <div className="overflow-x-auto rounded-xl border bg-white">
           <table className="w-full text-xs sm:text-sm">

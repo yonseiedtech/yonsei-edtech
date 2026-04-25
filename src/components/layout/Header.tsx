@@ -99,6 +99,8 @@ function NavDropdown({ group }: { group: NavGroup }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const timeout = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const isSingle = group.items.length === 1;
   const isGroupActive = group.items.some((item) => isItemActive(pathname, item.href));
@@ -107,6 +109,28 @@ function NavDropdown({ group }: { group: NavGroup }) {
     return () => clearTimeout(timeout.current);
   }, []);
 
+  // 외부 클릭으로 닫기 (키보드/클릭 토글 사용 시 필요)
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        buttonRef.current?.focus();
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
   if (isSingle) {
     const item = group.items[0];
     const isActive = isItemActive(pathname, item.href);
@@ -114,7 +138,7 @@ function NavDropdown({ group }: { group: NavGroup }) {
       <Link
         href={item.href}
         className={cn(
-          "rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-muted",
+          "rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           isActive ? "font-semibold text-primary underline underline-offset-4" : "text-muted-foreground",
         )}
       >
@@ -125,13 +149,19 @@ function NavDropdown({ group }: { group: NavGroup }) {
 
   return (
     <div
+      ref={containerRef}
       className="relative"
       onMouseEnter={() => { clearTimeout(timeout.current); setOpen(true); }}
       onMouseLeave={() => { timeout.current = setTimeout(() => setOpen(false), 150); }}
     >
       <button
+        ref={buttonRef}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
         className={cn(
-          "flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-muted",
+          "flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           isGroupActive ? "font-semibold text-primary underline underline-offset-4" : "text-muted-foreground",
         )}
       >
@@ -140,15 +170,20 @@ function NavDropdown({ group }: { group: NavGroup }) {
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-1 min-w-[140px] rounded-lg border bg-popover py-1 shadow-lg">
+        <div
+          role="menu"
+          aria-label={group.label}
+          className="absolute left-0 top-full z-50 mt-1 min-w-[140px] rounded-lg border bg-popover py-1 shadow-lg"
+        >
           {group.items.map((item) => {
             const isActive = isItemActive(pathname, item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
+                role="menuitem"
                 className={cn(
-                  "block px-4 py-2 text-sm transition-colors hover:bg-muted",
+                  "block px-4 py-2 text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:bg-muted",
                   isActive ? "font-semibold text-primary" : "text-muted-foreground",
                 )}
                 onClick={() => setOpen(false)}

@@ -72,15 +72,15 @@ function StatCard({
 
 function DashboardContent() {
   const { user } = useAuthStore();
+  const isStaff = isAtLeast(user, "staff");
   const { posts } = usePosts();
   const { seminars } = useSeminars();
   const { issues } = useNewsletters();
-  const { pendingMembers } = usePendingMembers();
-  const { inquiries } = useInquiries();
+  // staff 전용 데이터 — 일반 회원은 쿼리 자체를 실행하지 않음
+  const { pendingMembers } = usePendingMembers({ enabled: isStaff });
+  const { inquiries } = useInquiries({ enabled: isStaff });
 
   if (!user) return null;
-
-  const isStaff = isAtLeast(user, "staff");
 
   const myPosts = posts.filter((p) => p.authorId === user.id);
   const mySeminars = seminars.filter((s) => s.attendeeIds.includes(user.id));

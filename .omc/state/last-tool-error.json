@@ -1,7 +1,7 @@
 {
-  "tool_name": "Read",
-  "tool_input_preview": "{\"file_path\":\"C:\\\\work\\\\yonsei-edtech\\\\src\\\\features\\\\seminar-admin\\\\RegistrationsTab.tsx\"}",
-  "error": "File content (25271 tokens) exceeds maximum allowed tokens (25000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file.",
-  "timestamp": "2026-04-22T17:08:30.097Z",
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"cat /c/work/yonsei-edtech/tailwind.config.ts 2>/dev/null || cat /c/work/yonsei-edtech/tailwind.config.js 2>/dev/null\"}",
+  "error": "Exit code 1",
+  "timestamp": "2026-04-25T07:25:14.623Z",
   "retry_count": 1
 }

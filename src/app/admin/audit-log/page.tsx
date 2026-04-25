@@ -9,6 +9,7 @@ import { Shield, Users, CalendarDays, FileText, Settings, Tag, Server } from "lu
 import { cn } from "@/lib/utils";
 import type { AuditLog } from "@/types";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
+import EmptyState from "@/components/ui/empty-state";
 
 const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   member: { label: "회원", icon: Users, color: "bg-blue-100 text-blue-700" },
@@ -85,10 +86,11 @@ export default function AuditLogPage() {
 
       {/* 로그 목록 */}
       {filtered.length === 0 ? (
-        <div className="rounded-xl border bg-white p-12 text-center">
-          <Tag size={40} className="mx-auto text-muted-foreground/40" />
-          <p className="mt-3 text-muted-foreground">기록된 감사 로그가 없습니다.</p>
-        </div>
+        <EmptyState
+          icon={Tag}
+          title="기록된 감사 로그가 없습니다"
+          description="시스템 활동이 발생하면 이곳에 자동으로 기록됩니다."
+        />
       ) : (
         <div className="overflow-x-auto rounded-xl border bg-white">
           <table className="w-full text-sm">

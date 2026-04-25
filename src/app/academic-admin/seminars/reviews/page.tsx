@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { MessageSquare } from "lucide-react";
 import { useSeminars } from "@/features/seminar/useSeminar";
 import ReviewManagement from "@/features/seminar-admin/ReviewManagement";
+import EmptyState from "@/components/ui/empty-state";
 
 export default function SeminarAdminReviewsPage() {
   const { seminars } = useSeminars();
@@ -30,9 +32,11 @@ export default function SeminarAdminReviewsPage() {
       {seminar ? (
         <ReviewManagement seminar={seminar} />
       ) : (
-        <div className="rounded-xl border bg-white p-12 text-center text-muted-foreground">
-          세미나를 선택하면 후기를 관리할 수 있습니다.
-        </div>
+        <EmptyState
+          icon={MessageSquare}
+          title="세미나를 선택하세요"
+          description="상단 드롭다운에서 세미나를 선택하면 후기를 관리할 수 있습니다."
+        />
       )}
     </div>
   );

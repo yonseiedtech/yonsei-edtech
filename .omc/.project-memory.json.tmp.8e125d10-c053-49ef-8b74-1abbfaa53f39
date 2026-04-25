@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1777024906487,
+  "lastScanned": 1776838097413,
   "projectRoot": "C:\\work\\yonsei-edtech",
   "techStack": {
     "languages": [
@@ -83,14 +83,14 @@
       "path": "${APPDATA}",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1777024906068,
+      "lastAccessed": 1776838097253,
       "keyFiles": []
     },
     "agent-server": {
       "path": "agent-server",
       "purpose": null,
       "fileCount": 8,
-      "lastAccessed": 1777024906258,
+      "lastAccessed": 1776838097279,
       "keyFiles": [
         "config.py",
         "main.py",
@@ -103,7 +103,7 @@
       "path": "docs",
       "purpose": "Documentation",
       "fileCount": 9,
-      "lastAccessed": 1777024906261,
+      "lastAccessed": 1776838097281,
       "keyFiles": [
         "AUTOMATION_PROGRESS.md",
         "PRD-연세교육공학회-고도화-v1.md",
@@ -116,7 +116,7 @@
       "path": "public",
       "purpose": "Public files",
       "fileCount": 13,
-      "lastAccessed": 1777024906263,
+      "lastAccessed": 1776838097283,
       "keyFiles": [
         "cert-emblem.png",
         "cert-seal.jpeg",
@@ -129,7 +129,7 @@
       "path": "ref",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1777024906264,
+      "lastAccessed": 1776838097285,
       "keyFiles": [
         "관리자모드 화면.png"
       ]
@@ -138,7 +138,7 @@
       "path": "scripts",
       "purpose": "Build/utility scripts",
       "fileCount": 14,
-      "lastAccessed": 1777024906266,
+      "lastAccessed": 1776838097286,
       "keyFiles": [
         "check-alumni-theses-count.mjs",
         "check-interview-data.mjs",
@@ -151,14 +151,14 @@
       "path": "src",
       "purpose": "Source code",
       "fileCount": 0,
-      "lastAccessed": 1777024906268,
+      "lastAccessed": 1776838097288,
       "keyFiles": []
     },
     "agent-server\\data": {
       "path": "agent-server\\data",
       "purpose": "Data files",
       "fileCount": 2,
-      "lastAccessed": 1777024906274,
+      "lastAccessed": 1776838097291,
       "keyFiles": [
         "agents.json",
         "tasks.json"
@@ -168,7 +168,7 @@
       "path": "src\\app",
       "purpose": "Application code",
       "fileCount": 10,
-      "lastAccessed": 1777024906283,
+      "lastAccessed": 1776838097298,
       "keyFiles": [
         "error.tsx",
         "globals.css",
@@ -179,7 +179,7 @@
       "path": "src\\components",
       "purpose": "UI components",
       "fileCount": 2,
-      "lastAccessed": 1777024906285,
+      "lastAccessed": 1776838097299,
       "keyFiles": [
         "ShareButton.tsx",
         "ThemeToggle.tsx"
@@ -189,7 +189,7 @@
       "path": "src\\lib",
       "purpose": "Library code",
       "fileCount": 34,
-      "lastAccessed": 1777024906287,
+      "lastAccessed": 1776838097301,
       "keyFiles": [
         "ai-client.ts",
         "ai-prompts.ts",
@@ -200,7 +200,7 @@
       "path": "src\\types",
       "purpose": "Type definitions",
       "fileCount": 1,
-      "lastAccessed": 1777024906289,
+      "lastAccessed": 1776838097303,
       "keyFiles": [
         "index.ts"
       ]
@@ -208,304 +208,304 @@
   },
   "hotPaths": [
     {
-      "path": "src\\features\\defense\\DefensePracticeRunner.tsx",
-      "accessCount": 137,
-      "lastAccessed": 1777101702905,
+      "path": "src",
+      "accessCount": 40,
+      "lastAccessed": 1776911287109,
+      "type": "directory"
+    },
+    {
+      "path": "src\\features\\dashboard\\DailyClassTimelineWidget.tsx",
+      "accessCount": 28,
+      "lastAccessed": 1776856702124,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\seminar-admin\\RegistrationsTab.tsx",
+      "accessCount": 28,
+      "lastAccessed": 1776881321524,
+      "type": "directory"
+    },
+    {
+      "path": "src\\features\\seminar\\SeminarForm.tsx",
+      "accessCount": 25,
+      "lastAccessed": 1776875753469,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\activities\\InlineMeetingTimer.tsx",
+      "accessCount": 24,
+      "lastAccessed": 1776877594387,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\courses\\[id]\\schedule\\page.tsx",
+      "accessCount": 21,
+      "lastAccessed": 1776858615215,
       "type": "file"
     },
     {
       "path": "src\\features\\activities\\ActivityDetail.tsx",
-      "accessCount": 69,
-      "lastAccessed": 1777097303265,
-      "type": "directory"
-    },
-    {
-      "path": "src\\features\\defense\\DefensePracticeListView.tsx",
-      "accessCount": 44,
-      "lastAccessed": 1777101726791,
-      "type": "file"
-    },
-    {
-      "path": "src",
-      "accessCount": 17,
-      "lastAccessed": 1777102650482,
+      "accessCount": 20,
+      "lastAccessed": 1776911251146,
       "type": "directory"
     },
     {
       "path": "src\\lib\\bkend.ts",
       "accessCount": 16,
-      "lastAccessed": 1777100635541,
-      "type": "file"
+      "lastAccessed": 1776877607926,
+      "type": "directory"
     },
     {
       "path": "src\\types\\index.ts",
-      "accessCount": 16,
-      "lastAccessed": 1777100713843,
+      "accessCount": 15,
+      "lastAccessed": 1776899595221,
       "type": "file"
     },
     {
-      "path": "src\\features\\activities\\ActivityPage.tsx",
-      "accessCount": 12,
-      "lastAccessed": 1777095577756,
-      "type": "directory"
-    },
-    {
-      "path": "firestore.rules",
-      "accessCount": 9,
-      "lastAccessed": 1777097037473,
+      "path": "src\\app\\seminars\\[id]\\page.tsx",
+      "accessCount": 11,
+      "lastAccessed": 1776875892973,
       "type": "file"
     },
     {
-      "path": "src\\app\\console\\layout.tsx",
+      "path": "src\\app\\progress-meetings\\[id]\\page.tsx",
       "accessCount": 8,
-      "lastAccessed": 1777076153015,
+      "lastAccessed": 1776877691528,
       "type": "file"
     },
     {
-      "path": "src\\features\\admin\\AdminMemberTab.tsx",
+      "path": "src\\components\\mypage\\MyPageView.tsx",
       "accessCount": 7,
-      "lastAccessed": 1777070036021,
-      "type": "file"
-    },
-    {
-      "path": "src\\features\\activities\\FormRenderer.tsx",
-      "accessCount": 7,
-      "lastAccessed": 1777094675204,
-      "type": "file"
-    },
-    {
-      "path": "src\\features\\defense\\DefenseTemplateAdminView.tsx",
-      "accessCount": 6,
-      "lastAccessed": 1777080873093,
-      "type": "file"
-    },
-    {
-      "path": "src\\components\\chat\\ChatWidget.tsx",
-      "accessCount": 5,
-      "lastAccessed": 1777077193499,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\admin\\chatbot\\page.tsx",
-      "accessCount": 5,
-      "lastAccessed": 1777077230432,
-      "type": "file"
-    },
-    {
-      "path": "src\\features\\member\\useMembers.ts",
-      "accessCount": 4,
-      "lastAccessed": 1777102720579,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\academic-admin\\seminars\\reviews\\page.tsx",
-      "accessCount": 4,
-      "lastAccessed": 1777102792727,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\admin\\audit-log\\page.tsx",
-      "accessCount": 4,
-      "lastAccessed": 1777102801645,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\admin\\certificates\\page.tsx",
-      "accessCount": 4,
-      "lastAccessed": 1777102806229,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\seminars\\page.tsx",
-      "accessCount": 4,
-      "lastAccessed": 1777102823020,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\steppingstone\\thesis-defense\\page.tsx",
-      "accessCount": 3,
-      "lastAccessed": 1777072279996,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\activities\\page.tsx",
-      "accessCount": 3,
-      "lastAccessed": 1777102734693,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\newsletter\\page.tsx",
-      "accessCount": 3,
-      "lastAccessed": 1777102756726,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\steppingstone\\page.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1777072313809,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\console\\grad-life\\thesis-defense\\page.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1777075783566,
-      "type": "file"
-    },
-    {
-      "path": "src\\lib\\guestLinker.ts",
-      "accessCount": 2,
-      "lastAccessed": 1777096862374,
-      "type": "file"
-    },
-    {
-      "path": "src\\features\\auth\\SignupForm.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1777098012281,
-      "type": "file"
-    },
-    {
-      "path": "src\\components\\layout\\Header.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1777102688327,
-      "type": "file"
-    },
-    {
-      "path": "src\\features\\inquiry\\useInquiry.ts",
-      "accessCount": 2,
-      "lastAccessed": 1777102702068,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\dashboard\\page.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1777102724580,
-      "type": "file"
-    },
-    {
-      "path": "src\\types",
-      "accessCount": 1,
-      "lastAccessed": 1777040018423,
-      "type": "directory"
-    },
-    {
-      "path": "src\\app\\console\\members\\page.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1777041932152,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\admin\\members\\page.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1777041946067,
-      "type": "file"
-    },
-    {
-      "path": "src\\features\\auth\\auth-store.ts",
-      "accessCount": 1,
-      "lastAccessed": 1777072226272,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\steppingstone\\thesis-defense\\[id]\\practice\\page.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1777072297303,
-      "type": "file"
-    },
-    {
-      "path": "firebase.json",
-      "accessCount": 1,
-      "lastAccessed": 1777073778150,
-      "type": "file"
-    },
-    {
-      "path": "src\\components\\admin",
-      "accessCount": 1,
-      "lastAccessed": 1777075804207,
-      "type": "directory"
-    },
-    {
-      "path": "src\\lib\\permissions.ts",
-      "accessCount": 1,
-      "lastAccessed": 1777075871738,
-      "type": "directory"
-    },
-    {
-      "path": "src\\components\\admin\\ConsolePageHeader.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1777075973841,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\console\\grad-life\\thesis-defense-templates\\page.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1777076000436,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\console\\ai\\page.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1777076904032,
-      "type": "file"
-    },
-    {
-      "path": "src\\components\\ui\\ScheduleSelector.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1777088083155,
-      "type": "file"
-    },
-    {
-      "path": "src\\features\\activities\\FormBuilder.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1777088126481,
+      "lastAccessed": 1776898714225,
       "type": "directory"
     },
     {
       "path": "src\\features\\activities",
-      "accessCount": 1,
-      "lastAccessed": 1777095271907,
+      "accessCount": 7,
+      "lastAccessed": 1776911236262,
       "type": "directory"
     },
     {
-      "path": "src\\features",
-      "accessCount": 1,
-      "lastAccessed": 1777095407871,
+      "path": "firestore.rules",
+      "accessCount": 6,
+      "lastAccessed": 1776843541152,
       "type": "directory"
     },
     {
-      "path": "src\\components\\ui\\empty-state.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1777102559399,
+      "path": "src\\components\\mypage\\MyResearchView.tsx",
+      "accessCount": 6,
+      "lastAccessed": 1776872020688,
+      "type": "directory"
+    },
+    {
+      "path": "src\\components\\mypage\\MyActivitiesView.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1776871387229,
+      "type": "directory"
+    },
+    {
+      "path": "src\\app\\console\\courses\\page.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1776873720053,
+      "type": "directory"
+    },
+    {
+      "path": "src\\components\\profile\\ProfileCourses.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1776840325596,
       "type": "file"
     },
     {
-      "path": "src\\components\\layout\\GlobalSearch.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1777102559624,
+      "path": "src\\features\\seminar\\SeminarList.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1776844041229,
       "type": "file"
     },
     {
-      "path": "src\\app",
-      "accessCount": 1,
-      "lastAccessed": 1777102583006,
+      "path": "src\\app\\courses\\page.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1776871994918,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\seminar\\detail\\EditDialogs.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1776911275533,
       "type": "directory"
     },
     {
-      "path": "src\\components\\members",
-      "accessCount": 1,
-      "lastAccessed": 1777102636516,
+      "path": "src\\features\\seminar\\detail\\HeroSection.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1776843624557,
+      "type": "file"
+    },
+    {
+      "path": "src\\types",
+      "accessCount": 3,
+      "lastAccessed": 1776862471692,
       "type": "directory"
     },
     {
-      "path": "src\\app\\newsletter",
-      "accessCount": 1,
-      "lastAccessed": 1777102636985,
+      "path": "src\\components\\profile\\ProfileAcademicActivities.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1776870164522,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\mypage",
+      "accessCount": 3,
+      "lastAccessed": 1776871835137,
       "type": "directory"
     },
     {
-      "path": "",
-      "accessCount": 1,
-      "lastAccessed": 1777102663385,
+      "path": "src\\features\\seminar",
+      "accessCount": 3,
+      "lastAccessed": 1776911268084,
       "type": "directory"
+    },
+    {
+      "path": "src\\app\\calendar\\page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1776840297544,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\semester.ts",
+      "accessCount": 2,
+      "lastAccessed": 1776843471216,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\mypage\\calendar\\page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1776871495580,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\mypage",
+      "accessCount": 2,
+      "lastAccessed": 1776871835639,
+      "type": "directory"
+    },
+    {
+      "path": "src\\app\\mypage\\layout.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1776871917918,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\mypage\\research\\page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1776871918109,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\seminar\\useSeminar.ts",
+      "accessCount": 2,
+      "lastAccessed": 1776881175847,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\layout.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1776898498164,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\seminar\\SpeakerRow.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1776911304935,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\courseSchedule.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776838130402,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\seminars\\create\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776843452386,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\seminars",
+      "accessCount": 1,
+      "lastAccessed": 1776843497850,
+      "type": "directory"
+    },
+    {
+      "path": "src\\app\\seminars\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776843516380,
+      "type": "file"
+    },
+    {
+      "path": "src/types/index.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776858484615,
+      "type": "directory"
+    },
+    {
+      "path": "src\\lib",
+      "accessCount": 1,
+      "lastAccessed": 1776862471612,
+      "type": "directory"
+    },
+    {
+      "path": "src\\app\\mypage\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776871363088,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\mypage\\portfolio\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776871541171,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\mypage\\activities\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776871918766,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\research\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776871993794,
+      "type": "directory"
+    },
+    {
+      "path": "src\\app\\dashboard\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776871995183,
+      "type": "directory"
+    },
+    {
+      "path": "src\\features\\seminar\\detail\\SpeakerCard.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776874005495,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\member\\useMembers.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776875878848,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\seminar-admin",
+      "accessCount": 1,
+      "lastAccessed": 1776877538080,
+      "type": "directory"
+    },
+    {
+      "path": "src\\lib\\upload.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776877625723,
+      "type": "file"
     }
   ],
   "userDirectives": []

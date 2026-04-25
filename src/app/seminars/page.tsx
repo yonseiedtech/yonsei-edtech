@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Calendar, Search, AlertCircle, List, LayoutGrid } from "lucide-react";
 import { usePageHeader } from "@/features/site-settings/useSiteContent";
+import EmptyState from "@/components/ui/empty-state";
 
 type StatusTab = "all" | "active" | "completed";
 
@@ -187,13 +188,13 @@ export default function SeminarsPage() {
               ))}
             </div>
           ) : error ? (
-            <div className="rounded-xl border bg-white p-12 text-center">
-              <AlertCircle size={32} className="mx-auto text-destructive/50" />
-              <p className="mt-2 text-muted-foreground">세미나를 불러오는 중 오류가 발생했습니다.</p>
-              <Button variant="outline" size="sm" className="mt-4" onClick={() => window.location.reload()}>
-                다시 시도
-              </Button>
-            </div>
+            <EmptyState
+              icon={AlertCircle}
+              title="세미나를 불러오는 중 오류가 발생했습니다"
+              description="네트워크 상태를 확인한 뒤 다시 시도해주세요."
+              actionLabel="다시 시도"
+              onAction={() => window.location.reload()}
+            />
           ) : (
             <SeminarList seminars={sorted} viewMode={viewMode} />
           )}

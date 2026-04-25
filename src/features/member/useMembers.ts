@@ -68,7 +68,7 @@ export function useAllMembers() {
 
 // ── 미승인 회원 (관리자용) ──
 
-export function usePendingMembers() {
+export function usePendingMembers(options?: { enabled?: boolean }) {
   const { data, isLoading } = useQuery({
     queryKey: ["members", "pending"],
     queryFn: async () => {
@@ -84,6 +84,7 @@ export function usePendingMembers() {
       );
     },
     retry: false,
+    enabled: options?.enabled ?? true,
   });
 
   return { pendingMembers: data ?? [], isLoading };

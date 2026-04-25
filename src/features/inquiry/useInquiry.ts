@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { inquiriesApi } from "@/lib/bkend";
 import type { Inquiry } from "@/types";
 
-export function useInquiries() {
+export function useInquiries(options?: { enabled?: boolean }) {
   const { data, isLoading } = useQuery({
     queryKey: ["inquiries"],
     queryFn: async () => {
@@ -12,6 +12,7 @@ export function useInquiries() {
       return res.data as unknown as Inquiry[];
     },
     retry: false,
+    enabled: options?.enabled ?? true,
   });
 
   return { inquiries: data ?? [], isLoading };
