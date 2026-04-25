@@ -18,14 +18,14 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Calendar, MapPin, Users, User, UserPlus, Check, X,
   Pencil, Globe, Loader2, CheckCircle, Clock, XCircle,
-  Plus, Trash2, FileUp, Download, ListChecks, Timer, UserCog,
+  Plus, Trash2, ListChecks, Timer, UserCog,
   ChevronDown, ChevronUp,
 } from "lucide-react";
 import InlineMeetingTimer from "./InlineMeetingTimer";
-import type { Activity, ActivityType, ActivityProgress, ActivityProgressMode, ActivityMaterial, FormField, EnrollmentStatus, ExternalParticipantType } from "@/types";
+import type { Activity, ActivityType, ActivityProgress, ActivityProgressMode, FormField, EnrollmentStatus, ExternalParticipantType } from "@/types";
 import { ENROLLMENT_STATUS_LABELS, ACTIVITY_PROGRESS_MODE_LABELS, EXTERNAL_PARTICIPANT_TYPE_LABELS, EXTERNAL_PARTICIPANT_TYPE_COLORS } from "@/types";
-import { activityProgressApi, activityMaterialsApi, progressMeetingsApi } from "@/lib/bkend";
-import { uploadToStorage, type UploadedFile } from "@/lib/storage";
+import { activityProgressApi, progressMeetingsApi } from "@/lib/bkend";
+import type { UploadedFile } from "@/lib/storage";
 import { formatSemester } from "@/lib/semester";
 import FormBuilder from "./FormBuilder";
 import FormRenderer from "./FormRenderer";
@@ -38,7 +38,7 @@ const RECRUIT_LABELS: Record<string, string> = { recruiting: "모집중", closed
 const RECRUIT_LABELS_STUDY: Record<string, string> = { recruiting: "모집중", closed: "모집완료" };
 const RECRUIT_COLORS: Record<string, string> = { recruiting: "bg-green-50 text-green-700", closed: "bg-red-50 text-red-700", in_progress: "bg-amber-50 text-amber-700", completed: "bg-muted text-muted-foreground" };
 
-type Tab = "overview" | "progress" | "materials" | "participants" | "applicants" | "form-settings" | "report" | "settings";
+type Tab = "overview" | "progress" | "participants" | "applicants" | "form-settings" | "report" | "settings";
 
 interface Props {
   activityId: string;
@@ -66,7 +66,6 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const [progressStartTime, setProgressStartTime] = useState("");
   const [progressEndTime, setProgressEndTime] = useState("");
   const [progressMode, setProgressMode] = useState<ActivityProgressMode>("in_person");
-  const [uploading, setUploading] = useState(false);
   const [roleDialog, setRoleDialog] = useState<{ pid: string; name: string } | null>(null);
   const [roleInput, setRoleInput] = useState("");
   const [noteDialog, setNoteDialog] = useState<{ pid: string; name: string } | null>(null);
@@ -105,14 +104,6 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
         if (aStart !== bStart) return aStart.localeCompare(bStart);
         return (a.week ?? 0) - (b.week ?? 0);
       });
-    },
-  });
-
-  const { data: materialsList = [] } = useQuery({
-    queryKey: ["activity-materials", activityId],
-    queryFn: async () => {
-      const res = await activityMaterialsApi.list(activityId);
-      return res.data as ActivityMaterial[];
     },
   });
 
@@ -304,7 +295,6 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const TABS: { value: Tab; label: string; show: boolean }[] = [
     { value: "overview", label: "개요", show: true },
     { value: "progress", label: `진행 현황${progressList.length > 0 ? ` (${progressPct}%)` : ""}`, show: type !== "external" },
-    { value: "materials", label: `산출물 (${materialsList.length})`, show: true },
     { value: "participants", label: `참여자 (${participants.length})`, show: true },
     { value: "applicants", label: `신청현황 (${applicants.length})`, show: registrationMethod === "open" && (type === "external" || isStaff) },
     { value: "form-settings", label: "신청 폼 설정", show: registrationMethod === "open" && isStaff },
@@ -587,71 +577,6 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             </div>
           )}
 
-          {activeTab === "materials" && (
-            <div className="space-y-4">
-              {/* 업로드 (운영진 또는 참여자) */}
-              {(isStaff || (user && participants.includes(user.id))) && (
-                <div className="rounded-xl border bg-white p-4">
-                  <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-primary hover:underline">
-                    {uploading ? <Loader2 size={14} className="animate-spin" /> : <FileUp size={14} />}
-                    파일 업로드
-                    <input type="file" className="hidden" disabled={uploading} onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file || !user) return;
-                      setUploading(true);
-                      try {
-                        const uploaded = await uploadToStorage(file, `activity-materials/${activityId}`);
-                        await activityMaterialsApi.create({
-                          activityId,
-                          title: file.name,
-                          fileName: file.name,
-                          fileUrl: uploaded.url,
-                          fileSize: file.size,
-                          uploadedBy: user.id,
-                          uploadedByName: user.name,
-                        });
-                        queryClient.invalidateQueries({ queryKey: ["activity-materials", activityId] });
-                        toast.success("파일이 업로드되었습니다.");
-                      } catch (err) { toast.error(err instanceof Error ? err.message : "업로드에 실패했습니다."); }
-                      finally { setUploading(false); e.target.value = ""; }
-                    }} />
-                  </label>
-                </div>
-              )}
-
-              {/* 파일 목록 */}
-              <div className="rounded-xl border bg-white divide-y">
-                {materialsList.length === 0 ? (
-                  <p className="p-6 text-center text-sm text-muted-foreground">등록된 산출물이 없습니다.</p>
-                ) : (
-                  materialsList.map((m) => (
-                    <div key={m.id} className="flex items-center gap-3 px-4 py-3 text-sm">
-                      <div className="flex-1 min-w-0">
-                        <span className="font-medium">{m.title}</span>
-                        <div className="mt-0.5 flex items-center gap-2 text-[10px] text-muted-foreground">
-                          <span>{m.uploadedByName}</span>
-                          <span>{(m.fileSize / 1024).toFixed(0)}KB</span>
-                          <span>{new Date(m.createdAt).toLocaleDateString("ko-KR")}</span>
-                        </div>
-                      </div>
-                      <a href={m.fileUrl} download={m.fileName} target="_blank" rel="noopener noreferrer">
-                        <Button variant="outline" size="sm" className="h-7 gap-1 text-xs"><Download size={12} />다운로드</Button>
-                      </a>
-                      {(isStaff || user?.id === m.uploadedBy) && (
-                        <button onClick={async () => {
-                          if (!confirm("삭제하시겠습니까?")) return;
-                          await activityMaterialsApi.delete(m.id);
-                          queryClient.invalidateQueries({ queryKey: ["activity-materials", activityId] });
-                          toast.success("삭제되었습니다.");
-                        }} className="shrink-0 rounded p-1 text-muted-foreground hover:text-red-500"><Trash2 size={14} /></button>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-
           {activeTab === "participants" && (
             <div className="space-y-3">
               {/* PR7: 모임장/운영진 직접 추가 */}
@@ -705,129 +630,174 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 </div>
               )}
 
-              {/* 참여자 테이블 */}
-              <div className="rounded-xl border bg-white overflow-hidden">
-                {participants.length === 0 ? (
-                  <p className="p-6 text-center text-sm text-muted-foreground">참여자가 없습니다.</p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[760px] text-sm">
-                      <thead className="bg-muted/40 text-xs text-muted-foreground">
-                        <tr className="text-left">
-                          <th className="px-3 py-2 font-medium">신분유형</th>
-                          <th className="px-3 py-2 font-medium">이름</th>
-                          <th className="px-3 py-2 font-medium">학번</th>
-                          <th className="px-3 py-2 font-medium">역할</th>
-                          <th className="px-3 py-2 font-medium">핸드폰 번호</th>
-                          <th className="px-3 py-2 font-medium">이메일</th>
-                          {canManageParticipants && <th className="px-3 py-2 font-medium text-right">관리</th>}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y">
-                        {participants.map((pid) => {
-                          const m = memberMap.get(pid);
-                          const role = participantRoles[pid];
-                          const note = participantNotes[pid];
-                          const applicant = applicants.find((a) => a.userId === pid);
-                          const status = applicant?.status;
-                          const enrollment = (m?.enrollmentStatus as EnrollmentStatus | undefined);
-                          const isLeaderRow = leaderId === pid;
-                          return (
-                            <tr key={pid} className="hover:bg-muted/20">
-                              <td className="px-3 py-2 align-top">
-                                {enrollment ? (
-                                  <Badge variant="secondary" className={cn(
-                                    "text-[10px]",
-                                    enrollment === "enrolled" && "bg-green-50 text-green-700",
-                                    enrollment === "on_leave" && "bg-amber-50 text-amber-700",
-                                    enrollment === "graduated" && "bg-slate-100 text-slate-700",
-                                  )}>
-                                    {ENROLLMENT_STATUS_LABELS[enrollment]}
-                                  </Badge>
-                                ) : (
-                                  <span className="text-xs text-muted-foreground">-</span>
-                                )}
-                              </td>
-                              <td className="px-3 py-2 align-top">
-                                <div className="flex flex-wrap items-center gap-1.5">
-                                  <span className="font-medium">{m?.name ?? "(이름 미확인)"}</span>
-                                  {m?.generation && <Badge variant="secondary" className="text-[10px]">{m.generation}기</Badge>}
-                                  {isLeaderRow && (
-                                    <Badge className="bg-amber-50 text-amber-700 text-[10px]">
-                                      {type === "study" ? "모임장" : "담당자"}
-                                    </Badge>
-                                  )}
-                                </div>
-                                {note && (
-                                  <p className="mt-1 text-[11px] text-muted-foreground italic">메모: {note}</p>
-                                )}
-                              </td>
-                              <td className="px-3 py-2 align-top text-xs text-muted-foreground">
-                                {m?.studentId ?? "-"}
-                              </td>
-                              <td className="px-3 py-2 align-top">
-                                {role ? (
-                                  <Badge variant="secondary" className="bg-sky-50 text-sky-700 text-[10px]">{role}</Badge>
-                                ) : (
-                                  <span className="text-xs text-muted-foreground">-</span>
-                                )}
-                              </td>
-                              <td className="px-3 py-2 align-top text-xs text-muted-foreground">
-                                {m?.phone ?? "-"}
-                              </td>
-                              <td className="px-3 py-2 align-top text-xs text-muted-foreground truncate max-w-[200px]">
-                                {m?.email ?? "-"}
-                              </td>
-                              {canManageParticipants && (
-                                <td className="px-3 py-2 align-top">
-                                  <div className="flex items-center justify-end gap-2">
-                                    {applicant && (
-                                      <select
-                                        value={status ?? "pending"}
-                                        onChange={(e) => updateParticipantStatusMutation.mutate({
-                                          pid,
-                                          status: e.target.value as "approved" | "rejected" | "pending",
-                                        })}
-                                        className="rounded border bg-background px-1.5 py-1 text-[11px]"
-                                        title="신청 상태 변경"
-                                      >
-                                        <option value="pending">대기</option>
-                                        <option value="approved">승인</option>
-                                        <option value="rejected">거절</option>
-                                      </select>
-                                    )}
-                                    <button
-                                      onClick={() => {
-                                        setNoteInput(note ?? "");
-                                        setNoteDialog({ pid, name: m?.name ?? "(이름 미확인)" });
-                                      }}
-                                      className="rounded p-1 text-muted-foreground hover:text-primary"
-                                      title="메모"
-                                    >
-                                      <Pencil size={13} />
-                                    </button>
-                                    {!isLeaderRow && (
-                                      <button
-                                        onClick={() => {
-                                          if (confirm("참여에서 제외하시겠습니까?")) removeParticipantMutation.mutate(pid);
-                                        }}
-                                        className="rounded p-1 text-muted-foreground hover:text-red-500"
-                                        title="제외"
-                                      >
-                                        <X size={14} />
-                                      </button>
-                                    )}
-                                  </div>
-                                </td>
-                              )}
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+              {/* 참여자 테이블 — 운영진(담당자/역할 보유자) vs 일반 참가자 분리 */}
+              {(() => {
+                const staffPids = participants.filter((pid) => leaderId === pid || !!participantRoles[pid]);
+                const regularPids = participants.filter((pid) => !staffPids.includes(pid));
+
+                const renderRow = (pid: string) => {
+                  const m = memberMap.get(pid);
+                  const role = participantRoles[pid];
+                  const note = participantNotes[pid];
+                  const applicant = applicants.find((a) => a.userId === pid);
+                  const status = applicant?.status;
+                  const enrollment = (m?.enrollmentStatus as EnrollmentStatus | undefined);
+                  const isLeaderRow = leaderId === pid;
+                  return (
+                    <tr key={pid} className="hover:bg-muted/20">
+                      <td className="px-3 py-2 align-top">
+                        {enrollment ? (
+                          <Badge variant="secondary" className={cn(
+                            "text-[10px]",
+                            enrollment === "enrolled" && "bg-green-50 text-green-700",
+                            enrollment === "on_leave" && "bg-amber-50 text-amber-700",
+                            enrollment === "graduated" && "bg-slate-100 text-slate-700",
+                          )}>
+                            {ENROLLMENT_STATUS_LABELS[enrollment]}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 align-top">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="font-medium">{m?.name ?? "(이름 미확인)"}</span>
+                          {m?.generation && <Badge variant="secondary" className="text-[10px]">{m.generation}기</Badge>}
+                          {isLeaderRow && (
+                            <Badge className="bg-amber-50 text-amber-700 text-[10px]">
+                              {type === "study" ? "모임장" : "담당자"}
+                            </Badge>
+                          )}
+                        </div>
+                        {note && (
+                          <p className="mt-1 text-[11px] text-muted-foreground italic">메모: {note}</p>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 align-top text-xs text-muted-foreground">
+                        {m?.studentId ?? "-"}
+                      </td>
+                      <td className="px-3 py-2 align-top">
+                        {role ? (
+                          <Badge variant="secondary" className="bg-sky-50 text-sky-700 text-[10px]">{role}</Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 align-top text-xs text-muted-foreground">
+                        {m?.phone ?? "-"}
+                      </td>
+                      <td className="px-3 py-2 align-top text-xs text-muted-foreground truncate max-w-[200px]">
+                        {m?.email ?? "-"}
+                      </td>
+                      {canManageParticipants && (
+                        <td className="px-3 py-2 align-top">
+                          <div className="flex items-center justify-end gap-2">
+                            {applicant && (
+                              <select
+                                value={status ?? "pending"}
+                                onChange={(e) => updateParticipantStatusMutation.mutate({
+                                  pid,
+                                  status: e.target.value as "approved" | "rejected" | "pending",
+                                })}
+                                className="rounded border bg-background px-1.5 py-1 text-[11px]"
+                                title="신청 상태 변경"
+                              >
+                                <option value="pending">대기</option>
+                                <option value="approved">승인</option>
+                                <option value="rejected">거절</option>
+                              </select>
+                            )}
+                            <button
+                              onClick={() => {
+                                setNoteInput(note ?? "");
+                                setNoteDialog({ pid, name: m?.name ?? "(이름 미확인)" });
+                              }}
+                              className="rounded p-1 text-muted-foreground hover:text-primary"
+                              title="메모"
+                            >
+                              <Pencil size={13} />
+                            </button>
+                            {!isLeaderRow && (
+                              <button
+                                onClick={() => {
+                                  if (confirm("참여에서 제외하시겠습니까?")) removeParticipantMutation.mutate(pid);
+                                }}
+                                className="rounded p-1 text-muted-foreground hover:text-red-500"
+                                title="제외"
+                              >
+                                <X size={14} />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                };
+
+                const tableHead = (
+                  <thead className="bg-muted/40 text-xs text-muted-foreground">
+                    <tr className="text-left">
+                      <th className="px-3 py-2 font-medium">신분유형</th>
+                      <th className="px-3 py-2 font-medium">이름</th>
+                      <th className="px-3 py-2 font-medium">학번</th>
+                      <th className="px-3 py-2 font-medium">역할</th>
+                      <th className="px-3 py-2 font-medium">핸드폰 번호</th>
+                      <th className="px-3 py-2 font-medium">이메일</th>
+                      {canManageParticipants && <th className="px-3 py-2 font-medium text-right">관리</th>}
+                    </tr>
+                  </thead>
+                );
+
+                if (participants.length === 0) {
+                  return (
+                    <div className="rounded-xl border bg-white overflow-hidden">
+                      <p className="p-6 text-center text-sm text-muted-foreground">참여자가 없습니다.</p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-4">
+                    {/* 운영진 */}
+                    <div className="rounded-xl border bg-white overflow-hidden">
+                      <div className="flex items-center gap-2 border-b bg-amber-50/60 px-4 py-2.5">
+                        <UserCog size={14} className="text-amber-700" />
+                        <h3 className="text-sm font-semibold text-amber-900">운영진 ({staffPids.length})</h3>
+                        <span className="text-[11px] text-muted-foreground">담당자 · 역할 보유자</span>
+                      </div>
+                      {staffPids.length === 0 ? (
+                        <p className="p-5 text-center text-xs text-muted-foreground">등록된 운영진이 없습니다.</p>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full min-w-[760px] text-sm">
+                            {tableHead}
+                            <tbody className="divide-y">{staffPids.map(renderRow)}</tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 일반 참가자 */}
+                    <div className="rounded-xl border bg-white overflow-hidden">
+                      <div className="flex items-center gap-2 border-b bg-slate-50 px-4 py-2.5">
+                        <Users size={14} className="text-slate-600" />
+                        <h3 className="text-sm font-semibold text-slate-700">일반 참가자 ({regularPids.length})</h3>
+                      </div>
+                      {regularPids.length === 0 ? (
+                        <p className="p-5 text-center text-xs text-muted-foreground">일반 참가자가 없습니다.</p>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full min-w-[760px] text-sm">
+                            {tableHead}
+                            <tbody className="divide-y">{regularPids.map(renderRow)}</tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
+                );
+              })()}
             </div>
           )}
 
