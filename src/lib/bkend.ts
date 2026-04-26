@@ -46,6 +46,7 @@ import type {
   HostRetrospective, HostActivityType,
   SitePopup,
   DefensePracticeSet, DefenseQuestionTemplate,
+  GradLifePosition,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -1259,4 +1260,28 @@ export const popupsApi = {
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<SitePopup>("site_popups", id, data),
   delete: (id: string) => dataApi.delete("site_popups", id),
+};
+
+// ── Grad Life Positions (대학원 생활 활동 이력 — 전공대표·조교·학회 운영진) ──
+export const gradLifePositionsApi = {
+  /** 전체 목록 (운영콘솔용) */
+  list: (params?: QueryParams) =>
+    dataApi.list<GradLifePosition>("grad_life_positions", {
+      sort: "startYear:desc",
+      limit: 2000,
+      ...params,
+    }),
+  /** 회원별 활동 이력 (프로필 표시용) */
+  listByUser: (userId: string) =>
+    dataApi.list<GradLifePosition>("grad_life_positions", {
+      "filter[userId]": userId,
+      sort: "startYear:desc",
+      limit: 200,
+    }),
+  get: (id: string) => dataApi.get<GradLifePosition>("grad_life_positions", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<GradLifePosition>("grad_life_positions", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<GradLifePosition>("grad_life_positions", id, data),
+  delete: (id: string) => dataApi.delete("grad_life_positions", id),
 };

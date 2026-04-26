@@ -682,6 +682,13 @@ service cloud.firestore {
         && (resource.data.userId == request.auth.uid || isStaffOrAbove());
     }
 
+    // ─── Grad Life Positions (대학원 생활 활동 이력 — 전공대표·조교·학회 운영진) ───
+    // 회원 read 허용 (프로필 sectionVisibility로 클라이언트 게이트), staff만 write
+    match /grad_life_positions/{docId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAuthenticated() && isStaffOrAbove();
+    }
+
     // ─── Labs (시크릿랩 프로젝트 카드) ───
     // 공개 read (디렉토리), 소유자(ownerId) 또는 운영진만 write
     match /labs/{docId} {

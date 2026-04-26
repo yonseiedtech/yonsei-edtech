@@ -15,6 +15,7 @@ const SECTIONS: SectionKey[] = [
   "socials",
   "bio",
   "researchInterests",
+  "gradLife",
   "academicActivities",
   "researchActivities",
   "graduateInfo",

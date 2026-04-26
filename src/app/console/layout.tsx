@@ -132,6 +132,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
     {
       label: "대학원 생활",
       items: [
+        { href: "/console/grad-life/positions", label: "활동 이력 (전공대표·조교·학회)", icon: GraduationCap },
         { href: "/console/grad-life/thesis-defense", label: "논문 심사 연습", icon: MessageSquareQuote },
         { href: "/console/grad-life/thesis-defense-templates", label: "심사 질문 템플릿", icon: ClipboardList, adminOnly: true },
       ],

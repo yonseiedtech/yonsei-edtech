@@ -21,6 +21,7 @@ import ProfileBio from "./ProfileBio";
 import ProfileContactInfo from "./ProfileContactInfo";
 import ProfileResearchInterests from "./ProfileResearchInterests";
 import ProfileAcademicActivities from "./ProfileAcademicActivities";
+import ProfileGradLife from "./ProfileGradLife";
 import ProfileResearchActivities from "./ProfileResearchActivities";
 import ProfileOutputs from "./ProfileOutputs";
 import ProfileCourses from "./ProfileCourses";
@@ -120,6 +121,7 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
   const showBio = canViewSection("bio", viewer, owner, via);
   const showResearchInterests = canViewSection("researchInterests", viewer, owner, via);
   const showAcademic = canViewSection("academicActivities", viewer, owner, via);
+  const showGradLife = canViewSection("gradLife", viewer, owner, via);
   const showResearch = canViewSection("researchActivities", viewer, owner, via);
   const showCourses = canViewSection("courses", viewer, owner, via);
   // 운영진 페이지 비로그인 케이스: 일부 항상 노출 + 운영진 공식 이메일 표시 보강
@@ -153,6 +155,8 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
         {showResearchInterests && (
           <ProfileResearchInterests interests={owner.researchInterests} field={owner.field} />
         )}
+
+        {showGradLife && <ProfileGradLife owner={owner} />}
 
         {showAcademic && <ProfileAcademicActivities owner={owner} />}
 
