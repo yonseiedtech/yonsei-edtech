@@ -13,8 +13,9 @@ import {
 import { getComputedStatus } from "@/lib/seminar-utils";
 import type { Seminar, Activity, CourseOffering, ClassSession } from "@/types";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, Calendar, MapPin, Clock, Users, BookOpen, Presentation, Globe, GraduationCap } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, MapPin, Clock, Users, BookOpen, Presentation, Globe, GraduationCap, CornerDownRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { parseSchedule, fmtMin } from "@/lib/courseSchedule";
 import { inferCurrentSemester } from "@/lib/semester";
@@ -176,7 +177,11 @@ export default function CalendarPage() {
     } catch {}
   };
 
-  const { data: seminars = [] } = useQuery({
+  const {
+    data: seminars = [],
+    isLoading: seminarsLoading,
+    error: seminarsError,
+  } = useQuery({
     queryKey: ["seminars"],
     queryFn: async () => {
       const res = await seminarsApi.list({ limit: 200 });
@@ -184,13 +189,20 @@ export default function CalendarPage() {
     },
   });
 
-  const { data: activities = [] } = useQuery({
+  const {
+    data: activities = [],
+    isLoading: activitiesLoading,
+    error: activitiesError,
+  } = useQuery({
     queryKey: ["activities-all"],
     queryFn: async () => {
       const res = await activitiesApi.list();
       return res.data as unknown as Activity[];
     },
   });
+
+  const isInitialLoading = seminarsLoading || activitiesLoading;
+  const loadError = seminarsError || activitiesError;
 
   // ── 수강과목 (로그인 사용자만) ──
   const { year: semYear, semester } = inferCurrentSemester(new Date());
@@ -385,12 +397,15 @@ export default function CalendarPage() {
     [filteredEvents, todayStr],
   );
 
+  const isThisMonth =
+    today.getFullYear() === year && today.getMonth() === month;
+
   return (
     <div className="py-16">
       <div className="mx-auto max-w-4xl px-4">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Calendar size={24} />
+            <Calendar size={24} aria-hidden="true" />
           </div>
           <div>
             <h1 className="text-2xl font-bold">{header.title}</h1>
@@ -400,7 +415,11 @@ export default function CalendarPage() {
 
         {/* 표시 카테고리 토글 + 뷰 모드 */}
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2">
+          <div
+            className="flex flex-wrap items-center gap-2"
+            role="group"
+            aria-label="이벤트 카테고리 필터"
+          >
             <span className="text-[11px] font-medium text-muted-foreground">표시:</span>
             {(isLoggedIn ? MEMBER_FILTER_OPTIONS : PUBLIC_FILTER_OPTIONS)
               .filter((opt) => opt.value !== "all")
@@ -412,45 +431,75 @@ export default function CalendarPage() {
                 return (
                   <button
                     key={opt.value}
+                    type="button"
                     onClick={() => toggleCat(cat)}
+                    aria-pressed={active}
+                    aria-label={`${opt.label} ${active ? "표시 중" : "숨김"}, 클릭하여 토글`}
                     className={cn(
-                      "flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-all",
+                      "flex min-h-[32px] items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
                       active
-                        ? cn(config.color, "border-transparent")
-                        : "border-input bg-background text-muted-foreground hover:bg-muted",
+                        ? cn(config.color, "border-transparent shadow-sm")
+                        : cn(
+                            config.color,
+                            "border-current/20 bg-background opacity-50 hover:opacity-80",
+                          ),
                     )}
                   >
-                    <Icon size={11} />
+                    <Icon size={12} aria-hidden="true" />
                     {opt.label}
                   </button>
                 );
               })}
             <button
+              type="button"
               onClick={() => setAllCats(visibleCats.size < ALL_CATS.length)}
-              className="ml-1 text-[11px] text-primary hover:underline"
+              className="ml-1 rounded-md px-1.5 py-1 text-[11px] text-primary hover:underline"
             >
               {visibleCats.size < ALL_CATS.length ? "모두 켜기" : "모두 끄기"}
             </button>
           </div>
-          <div className="flex gap-1 rounded-lg border p-0.5">
-            <button
-              onClick={() => setViewMode("month")}
-              className={cn(
-                "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                viewMode === "month" ? "bg-primary text-white" : "text-muted-foreground hover:bg-muted",
-              )}
+          <div className="flex items-center gap-2">
+            {!isThisMonth && (
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentMonth(new Date(today.getFullYear(), today.getMonth(), 1));
+                  setSelectedDate(null);
+                }}
+                className="rounded-md border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                aria-label="오늘이 포함된 달로 이동"
+              >
+                오늘
+              </button>
+            )}
+            <div
+              className="flex gap-1 rounded-lg border p-0.5"
+              role="group"
+              aria-label="캘린더 뷰 모드"
             >
-              월간
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={cn(
-                "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                viewMode === "list" ? "bg-primary text-white" : "text-muted-foreground hover:bg-muted",
-              )}
-            >
-              목록
-            </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("month")}
+                aria-pressed={viewMode === "month"}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                  viewMode === "month" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
+                )}
+              >
+                월간
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("list")}
+                aria-pressed={viewMode === "list"}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                  viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
+                )}
+              >
+                목록
+              </button>
+            </div>
           </div>
         </div>
 
@@ -474,12 +523,40 @@ export default function CalendarPage() {
             </button>
           </div>
 
-          {viewMode === "month" ? (
+          {isInitialLoading ? (
+            <div
+              className="mt-4 space-y-2"
+              aria-busy="true"
+              aria-label="캘린더 일정을 불러오는 중"
+            >
+              <Skeleton className="h-8 w-full" />
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-20 w-full" />
+              ))}
+            </div>
+          ) : loadError ? (
+            <p
+              className="mt-4 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
+              role="alert"
+            >
+              ⚠ 일정을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.
+            </p>
+          ) : viewMode === "month" ? (
             <>
               {/* 요일 헤더 */}
               <div className="mt-4 grid grid-cols-7 border-b text-center text-xs font-medium text-muted-foreground">
-                {WEEKDAYS.map((w) => (
-                  <div key={w} className="py-2">{w}</div>
+                {WEEKDAYS.map((w, idx) => (
+                  <div
+                    key={w}
+                    className={cn(
+                      "py-2",
+                      idx === 0 && "text-rose-500",
+                      idx === 6 && "text-blue-500",
+                    )}
+                    aria-hidden="true"
+                  >
+                    {w}
+                  </div>
                 ))}
               </div>
 
@@ -487,69 +564,120 @@ export default function CalendarPage() {
               <div className="flex flex-col divide-y">
                 {weeks.map((week, wi) => {
                   const laneCount = week.bars.reduce((max, b) => Math.max(max, b.lane + 1), 0);
-                  const BASE = 112;
+                  // 날짜 숫자 헤더 행: 36px 고정 (h-9). 바는 이 영역 아래 별도 zone에서만 그려짐.
+                  const HEADER_H = 36;
                   const BAR_ROW = 22;
-                  const weekMinHeight = BASE + laneCount * BAR_ROW;
-                  // 날짜 숫자(sm:p-2 + h-6 = 32px) + 12px 여백 → 진행바와 명확히 분리
-                  const BAR_TOP_OFFSET = 44;
+                  const BARS_AREA_MIN = 80; // 본문 영역 최소 높이
+                  const barsAreaH = Math.max(BARS_AREA_MIN, laneCount * BAR_ROW + 8);
+                  const weekMinHeight = HEADER_H + barsAreaH;
 
                   return (
                     <div
                       key={wi}
-                      className="relative grid grid-cols-7"
+                      className="relative"
                       style={{ minHeight: `${weekMinHeight}px` }}
                     >
-                      {week.cells.map((cell, di) => {
-                        const isSelected = cell.dateStr === selectedDate;
-                        return (
-                          <button
-                            key={di}
-                            onClick={() => setSelectedDate(isSelected ? null : cell.dateStr)}
-                            className={cn(
-                              "relative border-r border-border/40 p-1 text-left transition-colors last:border-r-0 hover:bg-muted/20 sm:p-2",
-                              !cell.inMonth && "bg-muted/10",
-                              isSelected && "ring-2 ring-primary ring-inset z-10",
-                            )}
-                          >
-                            <span
+                      {/* 날짜 숫자 헤더 행 (고정 높이) */}
+                      <div
+                        className="grid grid-cols-7"
+                        style={{ height: `${HEADER_H}px` }}
+                      >
+                        {week.cells.map((cell, di) => {
+                          const isSelected = cell.dateStr === selectedDate;
+                          const dow = di % 7;
+                          return (
+                            <div
+                              key={`h-${di}`}
                               className={cn(
-                                "relative z-30 inline-flex h-6 w-6 items-center justify-center rounded-full text-xs",
-                                cell.isToday && "bg-primary font-bold text-white",
-                                !cell.inMonth && "text-muted-foreground/40",
+                                "flex items-center px-1 sm:px-2",
+                                !cell.inMonth && "bg-muted/10",
+                                isSelected && "bg-primary/5",
                               )}
                             >
-                              {cell.day}
-                            </span>
-                          </button>
-                        );
-                      })}
+                              <span
+                                className={cn(
+                                  "inline-flex h-6 w-6 items-center justify-center rounded-full text-xs",
+                                  cell.isToday
+                                    ? "bg-primary font-bold text-primary-foreground"
+                                    : "",
+                                  !cell.inMonth && "text-muted-foreground/40",
+                                  cell.inMonth && !cell.isToday && dow === 0 && "text-rose-500",
+                                  cell.inMonth && !cell.isToday && dow === 6 && "text-blue-500",
+                                )}
+                              >
+                                {cell.day}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
 
-                      {/* 이어지는 이벤트 바 오버레이 */}
-                      {week.bars.map((bar, bi) => {
-                        const config = TYPE_CONFIG[bar.event.type];
-                        return (
-                          <Link
-                            key={`${bar.event.id}-${wi}-${bi}`}
-                            href={bar.event.href}
-                            onClick={(ev) => ev.stopPropagation()}
-                            title={bar.event.title}
-                            className={cn(
-                              "absolute z-20 flex items-center truncate border text-[10px] font-medium leading-tight transition-opacity hover:opacity-80",
-                              config.color,
-                              bar.isStart ? "rounded-l pl-1.5" : "pl-1",
-                              bar.isEnd ? "rounded-r pr-1.5" : "pr-1",
-                            )}
-                            style={{
-                              left: `calc(${(bar.startCol / 7) * 100}% + 2px)`,
-                              width: `calc(${(bar.span / 7) * 100}% - 4px)`,
-                              top: `${BAR_TOP_OFFSET + bar.lane * BAR_ROW}px`,
-                              height: "18px",
-                            }}
-                          >
-                            {bar.isStart ? bar.event.title : "\u00A0"}
-                          </Link>
-                        );
-                      })}
+                      {/* 바 zone — 헤더 아래 별도 영역 (바는 이 div 안에서만 absolute 배치) */}
+                      <div
+                        className="relative grid grid-cols-7"
+                        style={{ minHeight: `${barsAreaH}px` }}
+                      >
+                        {/* 클릭 영역 (셀 버튼) */}
+                        {week.cells.map((cell, di) => {
+                          const isSelected = cell.dateStr === selectedDate;
+                          const dayCount = filteredEvents.filter((ev) => {
+                            const end = ev.endDate ?? ev.date;
+                            return ev.date <= cell.dateStr && cell.dateStr <= end;
+                          }).length;
+                          return (
+                            <button
+                              key={`b-${di}`}
+                              type="button"
+                              onClick={() => setSelectedDate(isSelected ? null : cell.dateStr)}
+                              aria-label={`${cell.day}일${cell.isToday ? ", 오늘" : ""}${dayCount > 0 ? `, 일정 ${dayCount}건` : ""}${isSelected ? ", 선택됨" : ""}`}
+                              aria-pressed={isSelected}
+                              className={cn(
+                                "border-r border-border/40 transition-colors last:border-r-0 hover:bg-muted/20",
+                                !cell.inMonth && "bg-muted/10",
+                                isSelected && "ring-2 ring-primary ring-inset",
+                              )}
+                            />
+                          );
+                        })}
+
+                        {/* 이어지는 이벤트 바 오버레이 (헤더 아래 zone에서만, 날짜와 결코 겹치지 않음) */}
+                        {week.bars.map((bar, bi) => {
+                          const config = TYPE_CONFIG[bar.event.type];
+                          const continuationLabel = bar.isStart
+                            ? bar.event.title
+                            : `↳ ${bar.event.title}`;
+                          return (
+                            <Link
+                              key={`${bar.event.id}-${wi}-${bi}`}
+                              href={bar.event.href}
+                              onClick={(ev) => ev.stopPropagation()}
+                              title={bar.event.title}
+                              aria-label={`${TYPE_CONFIG[bar.event.type].label}: ${bar.event.title}${bar.isStart ? "" : " (이어짐)"}`}
+                              className={cn(
+                                "absolute z-10 flex items-center gap-0.5 truncate border text-[10px] font-medium leading-tight transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-primary",
+                                config.color,
+                                bar.isStart ? "rounded-l pl-1.5" : "pl-1",
+                                bar.isEnd ? "rounded-r pr-1.5" : "pr-1",
+                              )}
+                              style={{
+                                left: `calc(${(bar.startCol / 7) * 100}% + 2px)`,
+                                width: `calc(${(bar.span / 7) * 100}% - 4px)`,
+                                top: `${4 + bar.lane * BAR_ROW}px`,
+                                height: "18px",
+                              }}
+                            >
+                              {!bar.isStart && (
+                                <CornerDownRight
+                                  size={10}
+                                  className="shrink-0 opacity-70"
+                                  aria-hidden="true"
+                                />
+                              )}
+                              <span className="truncate">{continuationLabel}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
                     </div>
                   );
                 })}
@@ -567,7 +695,21 @@ export default function CalendarPage() {
           ) : (
             <div className="mt-4 space-y-2">
               {monthEvents.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">이번 달 일정이 없습니다.</p>
+                <div className="py-8 text-center">
+                  <p className="text-sm text-muted-foreground">이번 달 일정이 없습니다.</p>
+                  {!isThisMonth && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCurrentMonth(new Date(today.getFullYear(), today.getMonth(), 1));
+                        setSelectedDate(null);
+                      }}
+                      className="mt-2 text-xs text-primary hover:underline"
+                    >
+                      오늘이 포함된 달로 이동
+                    </button>
+                  )}
+                </div>
               ) : (
                 monthEvents.map((e) => <EventCard key={e.id} event={e} />)
               )}
