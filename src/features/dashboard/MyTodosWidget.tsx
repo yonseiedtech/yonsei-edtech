@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -12,7 +12,10 @@ import {
   ShieldAlert,
   ChevronRight,
   Plus,
+  Bell,
+  BellOff,
 } from "lucide-react";
+import { formatDday } from "@/lib/dday";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,6 +67,20 @@ const TODO_TYPE_OPTIONS: CourseTodoType[] = [
 
 type TabKey = "all" | "course" | "research" | "activity" | "staff";
 
+const POPUP_PREF_KEY = "dashboard_today_popup_enabled";
+
+function readPopupPref(): boolean {
+  if (typeof window === "undefined") return true;
+  const v = window.localStorage.getItem(POPUP_PREF_KEY);
+  return v !== "false";
+}
+
+function writePopupPref(enabled: boolean): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(POPUP_PREF_KEY, enabled ? "true" : "false");
+  window.dispatchEvent(new Event("dashboard-popup-pref-changed"));
+}
+
 const TYPE_ROUTE: Record<ActivityType, string> = {
   study: "/activities/studies",
   project: "/activities/projects",
@@ -88,11 +105,6 @@ function isUserInvolved(a: ActivityFlat, userId: string): boolean {
   return false;
 }
 
-function todayYmd(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
 export default function MyTodosWidget() {
   const { user } = useAuthStore();
   const qc = useQueryClient();
@@ -112,7 +124,6 @@ export default function MyTodosWidget() {
   });
 
   const courseTodos = (courseTodosRes?.data ?? []) as CourseTodo[];
-  const today = todayYmd();
   const incompleteCourseTodos = useMemo(
     () =>
       courseTodos
@@ -274,6 +285,20 @@ export default function MyTodosWidget() {
     staff: isStaff ? pendingMembers.length + unansweredInquiries.length : 0,
   };
   const totalCount = counts.course + counts.research + counts.activity + counts.staff;
+
+  // ── 오늘의 할 일 팝업 설정 (localStorage 영속) ──
+  const [popupEnabled, setPopupEnabled] = useState<boolean>(true);
+  useEffect(() => {
+    setPopupEnabled(readPopupPref());
+  }, []);
+  function togglePopupPref() {
+    const next = !popupEnabled;
+    setPopupEnabled(next);
+    writePopupPref(next);
+    toast.success(
+      next ? "로그인 시 오늘의 할 일 팝업을 다시 표시합니다." : "팝업 표시를 껐습니다.",
+    );
+  }
 
   // ── 빠른 추가 다이얼로그 ──
   const [addOpen, setAddOpen] = useState(false);
@@ -447,7 +472,6 @@ export default function MyTodosWidget() {
   // ── 렌더 헬퍼 ──
   function CourseTodoItem({ t }: { t: CourseTodo }) {
     const courseName = courseNameMap[t.courseOfferingId] ?? "(과목)";
-    const isOverdue = !t.completed && !!t.dueDate && t.dueDate < today;
     const sessionLabel = t.sessionDate
       ? (() => {
           const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(t.sessionDate);
@@ -490,17 +514,30 @@ export default function MyTodosWidget() {
         >
           {t.content}
         </span>
-        {t.dueDate && (
-          <span
-            className={cn(
-              "shrink-0 text-[10px]",
-              isOverdue ? "font-semibold text-rose-600" : "text-muted-foreground",
-            )}
-          >
-            ~{t.dueDate}
-            {isOverdue && " (지남)"}
-          </span>
-        )}
+        {t.dueDate &&
+          (() => {
+            const dd = formatDday(t.dueDate);
+            if (!dd) return null;
+            const cls =
+              dd.kind === "past"
+                ? "bg-rose-50 text-rose-700 border border-rose-200"
+                : dd.kind === "today"
+                  ? "bg-amber-50 text-amber-800 border border-amber-200"
+                  : dd.diffDays <= 3
+                    ? "bg-orange-50 text-orange-700 border border-orange-200"
+                    : "bg-muted/60 text-muted-foreground border";
+            return (
+              <span
+                className={cn(
+                  "shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium",
+                  cls,
+                )}
+                title={`기한 ${t.dueDate}`}
+              >
+                {dd.label}
+              </span>
+            );
+          })()}
       </li>
     );
   }
@@ -525,6 +562,16 @@ export default function MyTodosWidget() {
   }
 
   function ActivityItem({ a }: { a: ActivityFlat }) {
+    const dd = a.date ? formatDday(a.date) : null;
+    const ddCls = dd
+      ? dd.kind === "past"
+        ? "bg-rose-50 text-rose-700 border border-rose-200"
+        : dd.kind === "today"
+          ? "bg-amber-50 text-amber-800 border border-amber-200"
+          : dd.diffDays <= 3
+            ? "bg-orange-50 text-orange-700 border border-orange-200"
+            : "bg-muted/60 text-muted-foreground border"
+      : "";
     return (
       <li>
         <Link
@@ -537,6 +584,17 @@ export default function MyTodosWidget() {
                 {ACTIVITY_LABELS[a.type]}
               </Badge>
               <span className="truncate font-medium">{a.title}</span>
+              {dd && (
+                <span
+                  className={cn(
+                    "shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium",
+                    ddCls,
+                  )}
+                  title={`시작 ${a.date}`}
+                >
+                  {dd.label}
+                </span>
+              )}
             </div>
             <p className="mt-0.5 text-[10px] text-muted-foreground">
               {a.date}
@@ -600,6 +658,28 @@ export default function MyTodosWidget() {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[11px] text-muted-foreground">전체 {totalCount}건</span>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 px-2 text-[11px]"
+            onClick={togglePopupPref}
+            title={
+              popupEnabled
+                ? "로그인 시 오늘의 할 일 팝업을 표시합니다 — 클릭하여 끄기"
+                : "로그인 시 팝업이 표시되지 않습니다 — 클릭하여 켜기"
+            }
+            aria-label={popupEnabled ? "팝업 끄기" : "팝업 켜기"}
+          >
+            {popupEnabled ? (
+              <>
+                <Bell size={12} className="mr-0.5" /> 팝업 ON
+              </>
+            ) : (
+              <>
+                <BellOff size={12} className="mr-0.5 text-muted-foreground" /> 팝업 OFF
+              </>
+            )}
+          </Button>
           <Button
             size="sm"
             variant="outline"

@@ -18,6 +18,7 @@ import ActivityFeed from "@/features/dashboard/ActivityFeed";
 import AcademicCalendarProgress from "@/features/dashboard/AcademicCalendarProgress";
 import DailyClassTimelineWidget from "@/features/dashboard/DailyClassTimelineWidget";
 import MyTodosWidget from "@/features/dashboard/MyTodosWidget";
+import TodayTodosPopup from "@/features/dashboard/TodayTodosPopup";
 import MyAcademicActivitiesWidget from "@/features/dashboard/MyAcademicActivitiesWidget";
 import ComprehensiveExamCountdown from "@/features/dashboard/ComprehensiveExamCountdown";
 import PageHeader from "@/components/ui/page-header";
@@ -105,6 +106,7 @@ function DashboardContent() {
 
   return (
     <div className="py-16">
+      <TodayTodosPopup />
       <section className="mx-auto max-w-6xl px-4">
         <PageHeader
           icon={<LayoutDashboard size={24} />}
