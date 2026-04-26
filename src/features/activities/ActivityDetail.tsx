@@ -22,6 +22,7 @@ import {
   ChevronDown, ChevronUp,
 } from "lucide-react";
 import InlineMeetingTimer from "./InlineMeetingTimer";
+import ActivityConnectedTodos from "./ActivityConnectedTodos";
 import type { Activity, ActivityType, ActivityProgress, ActivityProgressMode, FormField, EnrollmentStatus, ExternalParticipantType } from "@/types";
 import { ENROLLMENT_STATUS_LABELS, ACTIVITY_PROGRESS_MODE_LABELS, EXTERNAL_PARTICIPANT_TYPE_LABELS, EXTERNAL_PARTICIPANT_TYPE_COLORS } from "@/types";
 import { activityProgressApi, progressMeetingsApi } from "@/lib/bkend";
@@ -826,6 +827,9 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                       </div>
                     )}
                   </div>
+
+                  {/* 연동된 운영 업무 — MyTodosWidget 학술활동 탭에서 추가된 admin_todos 표시 (양방향) */}
+                  <ActivityConnectedTodos activityId={activityId} />
                 </div>
               );
             }

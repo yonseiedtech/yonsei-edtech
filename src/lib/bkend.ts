@@ -512,6 +512,12 @@ export const auditLogsApi = {
 
 export const todosApi = {
   list: () => dataApi.list<AdminTodo>("admin_todos", { sort: "createdAt:desc" }),
+  /** 학술활동 연동 todo 조회 — relatedActivityId로 필터 */
+  listByActivity: (activityId: string) =>
+    dataApi.list<AdminTodo>("admin_todos", {
+      "filter[relatedActivityId]": activityId,
+      sort: "createdAt:desc",
+    }),
   create: (data: Record<string, unknown>) => dataApi.create<AdminTodo>("admin_todos", data),
   update: (id: string, data: Record<string, unknown>) => dataApi.update<AdminTodo>("admin_todos", id, data),
   delete: (id: string) => dataApi.delete("admin_todos", id),

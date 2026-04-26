@@ -52,7 +52,7 @@ import {
 } from "@/types";
 import { cn } from "@/lib/utils";
 
-type AddCategory = "course" | "staff";
+type AddCategory = "course" | "activity" | "staff";
 
 const TODO_TYPE_OPTIONS: CourseTodoType[] = [
   "assignment",
@@ -295,6 +295,14 @@ export default function MyTodosWidget() {
     priority: "medium" as "high" | "medium" | "low",
     dueDate: "",
   });
+  // 학술활동 추가 폼 — admin_todos에 relatedActivity* 필드를 채워 양방향 연동
+  const [activityForm, setActivityForm] = useState({
+    activityId: "",
+    title: "",
+    description: "",
+    priority: "medium" as "high" | "medium" | "low",
+    dueDate: "",
+  });
 
   // 수업 picker 옵션 — 본인 수강 과목 (이번 학기)
   const { year: curYear, semester: curSem } = inferCurrentSemester(new Date());
@@ -327,7 +335,7 @@ export default function MyTodosWidget() {
   }, [pickerOfferingsRes, myEnrollmentCourseIds]);
 
   function openAdd() {
-    setAddCategory(isStaff ? "course" : "course");
+    setAddCategory("course");
     setCourseForm({
       courseOfferingId: "",
       type: "assignment",
@@ -336,6 +344,13 @@ export default function MyTodosWidget() {
       sessionDate: "",
     });
     setStaffForm({
+      title: "",
+      description: "",
+      priority: "medium",
+      dueDate: "",
+    });
+    setActivityForm({
+      activityId: "",
       title: "",
       description: "",
       priority: "medium",
@@ -371,6 +386,37 @@ export default function MyTodosWidget() {
           queryKey: ["course-todos", courseForm.courseOfferingId, userId],
         });
         toast.success("수업 할 일에 추가되었습니다 — /수업/[id]/스케쥴 페이지에도 연동됩니다.");
+      } else if (addCategory === "activity") {
+        if (!activityForm.activityId) {
+          toast.error("학술활동을 선택하세요.");
+          return;
+        }
+        if (!activityForm.title.trim()) {
+          toast.error("제목을 입력하세요.");
+          return;
+        }
+        const target = myActivityTodos.find((a) => a.id === activityForm.activityId);
+        if (!target) {
+          toast.error("선택한 학술활동을 찾지 못했습니다.");
+          return;
+        }
+        await todosApi.create({
+          title: activityForm.title.trim(),
+          description: activityForm.description.trim() || undefined,
+          priority: activityForm.priority,
+          status: "todo",
+          dueDate: activityForm.dueDate || undefined,
+          createdBy: userId,
+          createdByName: user.name ?? "활동 운영진",
+          relatedActivityId: target.id,
+          relatedActivityTitle: target.title,
+          relatedActivityType: target.type,
+        });
+        await qc.invalidateQueries({ queryKey: ["admin-todos"] });
+        await qc.invalidateQueries({ queryKey: ["activity-todos", target.id] });
+        toast.success(
+          `학술활동 "${target.title}"에 연동된 업무가 추가되었습니다 — /activities/${target.type}/${target.id} 와 /staff-admin/todos 양쪽에 표시됩니다.`,
+        );
       } else {
         if (!staffForm.title.trim()) {
           toast.error("제목을 입력하세요.");
@@ -716,10 +762,26 @@ export default function MyTodosWidget() {
             onValueChange={(v) => setAddCategory(v as AddCategory)}
             className="mt-1"
           >
-            <TabsList className={cn("grid w-full", isStaff ? "grid-cols-2" : "grid-cols-1")}>
+            <TabsList
+              className={cn(
+                "grid w-full",
+                isStaff
+                  ? myActivityTodos.length > 0
+                    ? "grid-cols-3"
+                    : "grid-cols-2"
+                  : myActivityTodos.length > 0
+                    ? "grid-cols-2"
+                    : "grid-cols-1",
+              )}
+            >
               <TabsTrigger value="course" className="text-xs">
                 <BookOpen size={12} className="mr-1" /> 수업
               </TabsTrigger>
+              {myActivityTodos.length > 0 && (
+                <TabsTrigger value="activity" className="text-xs">
+                  <UsersIcon size={12} className="mr-1" /> 학술활동
+                </TabsTrigger>
+              )}
               {isStaff && (
                 <TabsTrigger value="staff" className="text-xs">
                   <ShieldAlert size={12} className="mr-1" /> 운영 업무
@@ -811,6 +873,84 @@ export default function MyTodosWidget() {
                 </label>
               </div>
             </TabsContent>
+
+            {myActivityTodos.length > 0 && (
+              <TabsContent value="activity" className="mt-3 space-y-3">
+                <p className="text-[11px] text-muted-foreground">
+                  본인이 운영진/멤버로 참여 중인 학술활동에 연동된 업무를 추가합니다.
+                  추가하면 <b>/staff-admin/todos</b> 운영 업무수행철과 해당 활동 상세 페이지 양쪽에 표시됩니다.
+                </p>
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="text-xs font-medium text-muted-foreground">학술활동</span>
+                  <select
+                    value={activityForm.activityId}
+                    onChange={(e) =>
+                      setActivityForm({ ...activityForm, activityId: e.target.value })
+                    }
+                    className="rounded-md border bg-white px-2 py-1.5 text-sm"
+                  >
+                    <option value="">— 선택 —</option>
+                    {myActivityTodos.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        [{ACTIVITY_LABELS[a.type]}] {a.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="text-xs font-medium text-muted-foreground">제목</span>
+                  <Input
+                    value={activityForm.title}
+                    onChange={(e) =>
+                      setActivityForm({ ...activityForm, title: e.target.value })
+                    }
+                    autoFocus
+                    placeholder="예) 발표 자료 1차 초안 공유"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="text-xs font-medium text-muted-foreground">설명 (선택)</span>
+                  <textarea
+                    value={activityForm.description}
+                    onChange={(e) =>
+                      setActivityForm({ ...activityForm, description: e.target.value })
+                    }
+                    rows={3}
+                    className="w-full rounded-md border bg-white px-3 py-2 text-sm"
+                    placeholder="자세한 설명을 입력하세요."
+                  />
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="flex flex-col gap-1 text-sm">
+                    <span className="text-xs font-medium text-muted-foreground">우선순위</span>
+                    <select
+                      value={activityForm.priority}
+                      onChange={(e) =>
+                        setActivityForm({
+                          ...activityForm,
+                          priority: e.target.value as "high" | "medium" | "low",
+                        })
+                      }
+                      className="rounded-md border bg-white px-2 py-1.5 text-sm"
+                    >
+                      <option value="high">높음</option>
+                      <option value="medium">보통</option>
+                      <option value="low">낮음</option>
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-1 text-sm">
+                    <span className="text-xs font-medium text-muted-foreground">기한 (선택)</span>
+                    <Input
+                      type="date"
+                      value={activityForm.dueDate}
+                      onChange={(e) =>
+                        setActivityForm({ ...activityForm, dueDate: e.target.value })
+                      }
+                    />
+                  </label>
+                </div>
+              </TabsContent>
+            )}
 
             {isStaff && (
               <TabsContent value="staff" className="mt-3 space-y-3">

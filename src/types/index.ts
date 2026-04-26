@@ -1345,6 +1345,12 @@ export interface AdminTodo {
   createdByName: string;
   createdAt: string;
   updatedAt?: string;
+  /** 학술활동(study/project/external) 연동 — MyTodosWidget +추가 다이얼로그에서 활동 컨텍스트 첨부 시 채워짐 */
+  relatedActivityId?: string;
+  /** denorm: 활동 제목 (조회 시 fetch 절감) */
+  relatedActivityTitle?: string;
+  /** denorm: 활동 타입 (활동 페이지 라우팅에 사용) */
+  relatedActivityType?: "study" | "project" | "external";
 }
 
 // ── 활동 진행 기록 ──
