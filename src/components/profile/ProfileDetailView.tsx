@@ -156,7 +156,7 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
           <ProfileResearchInterests interests={owner.researchInterests} field={owner.field} />
         )}
 
-        {showGradLife && <ProfileGradLife owner={owner} />}
+        {showGradLife && <ProfileGradLife owner={owner} isStaff={isStaff} />}
 
         {showAcademic && <ProfileAcademicActivities owner={owner} />}
 

@@ -12,6 +12,7 @@
  */
 
 import { useMemo } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { gradLifePositionsApi } from "@/lib/bkend";
 import {
@@ -23,11 +24,13 @@ import {
   type User,
 } from "@/types";
 import { Badge } from "@/components/ui/badge";
-import { GraduationCap, Crown, Briefcase, UserCog, Star, ShieldCheck } from "lucide-react";
+import { GraduationCap, Crown, Briefcase, UserCog, Star, ShieldCheck, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Props {
   owner: User;
+  /** 운영진 이상 여부 — true면 빈 상태/헤더에 빠른 진입 링크 노출 */
+  isStaff?: boolean;
 }
 
 const ROLE_ICONS: Record<GradLifeRole, typeof GraduationCap> = {
@@ -60,7 +63,7 @@ function isOngoing(p: GradLifePosition): boolean {
   return !p.endYear || !p.endSemester;
 }
 
-export default function ProfileGradLife({ owner }: Props) {
+export default function ProfileGradLife({ owner, isStaff = false }: Props) {
   const { data: res, isLoading } = useQuery({
     queryKey: ["grad-life-positions", owner.id],
     queryFn: () => gradLifePositionsApi.listByUser(owner.id),
@@ -102,7 +105,29 @@ export default function ProfileGradLife({ owner }: Props) {
   }
 
   if (positions.length === 0) {
-    return null; // 빈 상태는 표시하지 않음 — 가시성 절약
+    return (
+      <section className="rounded-2xl border bg-white p-5 shadow-sm">
+        <header className="mb-3 flex items-center gap-2">
+          <GraduationCap size={16} className="text-violet-600" />
+          <h2 className="text-sm font-semibold text-foreground">대학원 생활</h2>
+          {isStaff && (
+            <Link
+              href="/console/grad-life/positions"
+              className="ml-auto inline-flex items-center gap-1 rounded-md border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700 hover:bg-violet-100"
+            >
+              <Plus size={10} /> 활동 추가
+            </Link>
+          )}
+        </header>
+        <p className="rounded-lg border border-dashed bg-muted/20 px-3 py-4 text-center text-xs text-muted-foreground">
+          등록된 활동 이력이 없습니다.
+          <br />
+          <span className="text-[11px] text-muted-foreground/70">
+            전공대표·조교·학회·재학생 자문위원 등 학기 단위 활동 이력이 추가되면 이 영역에 표시됩니다.
+          </span>
+        </p>
+      </section>
+    );
   }
 
   return (
@@ -113,6 +138,14 @@ export default function ProfileGradLife({ owner }: Props) {
         <span className="text-[11px] text-muted-foreground">
           ({positions.length}건)
         </span>
+        {isStaff && (
+          <Link
+            href="/console/grad-life/positions"
+            className="ml-auto inline-flex items-center gap-1 rounded-md border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700 hover:bg-violet-100"
+          >
+            <Plus size={10} /> 추가
+          </Link>
+        )}
       </header>
 
       <div className="space-y-4">
