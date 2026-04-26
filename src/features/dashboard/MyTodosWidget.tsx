@@ -256,6 +256,13 @@ export default function MyTodosWidget() {
   function CourseTodoItem({ t }: { t: CourseTodo }) {
     const courseName = courseNameMap[t.courseOfferingId] ?? "(과목)";
     const isOverdue = !t.completed && !!t.dueDate && t.dueDate < today;
+    const sessionLabel = t.sessionDate
+      ? (() => {
+          const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(t.sessionDate);
+          if (!m) return null;
+          return `${Number(m[2])}/${Number(m[3])} 수업`;
+        })()
+      : null;
     return (
       <li className="flex items-center gap-2 rounded-md bg-white px-2.5 py-1.5 text-[12px]">
         <input
@@ -278,6 +285,11 @@ export default function MyTodosWidget() {
         >
           {courseName}
         </Link>
+        {sessionLabel && (
+          <span className="shrink-0 rounded bg-blue-50 px-1.5 py-0.5 text-[10px] text-blue-700">
+            {sessionLabel}
+          </span>
+        )}
         <span
           className={cn(
             "flex-1 truncate",

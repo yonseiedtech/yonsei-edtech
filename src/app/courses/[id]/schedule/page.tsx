@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -261,6 +261,30 @@ function ScheduleContent({ courseId }: { courseId: string }) {
       parsedSchedule.weekdays,
     );
   }, [course, parsedSchedule]);
+
+  // 현재 주차 자동 계산 + 첫 마운트 시 스크롤
+  const todayYmd = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const currentWeek = useMemo(
+    () => weeks.find((w) => todayYmd >= w.startDate && todayYmd <= w.endDate),
+    [weeks, todayYmd],
+  );
+  const didAutoScrollRef = useRef(false);
+  useEffect(() => {
+    if (didAutoScrollRef.current) return;
+    if (!currentWeek) return;
+    const el = document.getElementById(`week-${currentWeek.weekNo}`);
+    if (!el) return;
+    didAutoScrollRef.current = true;
+    requestAnimationFrame(() => {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [currentWeek]);
+
+  function jumpToCurrentWeek() {
+    if (!currentWeek) return;
+    const el = document.getElementById(`week-${currentWeek.weekNo}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   async function save() {
     if (!draft || !user) return;
@@ -596,7 +620,18 @@ function ScheduleContent({ courseId }: { courseId: string }) {
             course.classroom ? ` · ${course.classroom}` : ""
           }`}
           actions={
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              {currentWeek && (
+                <Button
+                  onClick={jumpToCurrentWeek}
+                  size="sm"
+                  variant="outline"
+                  className="border-primary/40 text-primary hover:bg-primary/5"
+                >
+                  <CalendarClock size={14} className="mr-1" />
+                  이번 주({currentWeek.weekNo}주차)로 이동
+                </Button>
+              )}
               {master && (
                 <Button onClick={openSettings} size="sm" variant="outline">
                   <Settings size={14} className="mr-1" /> 학기 설정
@@ -670,8 +705,9 @@ function ScheduleContent({ courseId }: { courseId: string }) {
               return (
                 <li
                   key={w.weekNo}
+                  id={`week-${w.weekNo}`}
                   className={cn(
-                    "rounded-xl border border-l-4 bg-white p-4",
+                    "scroll-mt-24 rounded-xl border border-l-4 bg-white p-4",
                     MODE_WEEK_BORDER[primaryMode],
                     isCurrentWeek && "ring-2 ring-primary/30",
                     isPast && !isCurrentWeek && "opacity-80",
