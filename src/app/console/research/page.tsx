@@ -492,19 +492,31 @@ function ResearchRow({ summary }: { summary: UserResearchSummary }) {
 
       {open && (
         <div className="border-t bg-muted/20 px-4 py-4 text-sm">
+          {/* 진행 현황 미니 요약 — 4개 트랙 한 줄 표시 */}
+          <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <MiniProgress label="논문 작성" value={Math.min(100, Math.round((writingCharCount / 7500) * 100))} hint={`${writingCharCount.toLocaleString()}자`} icon={PenLine} />
+            <MiniProgress label="연구 계획서" value={proposalProgress} hint={proposal ? "작성 중" : "미작성"} icon={ClipboardList} />
+            <MiniProgress label="연구 보고서" value={reportProgress} hint={report ? "작성 중" : "미작성"} icon={FileText} />
+            <MiniProgress label="논문 읽기" value={Math.min(100, papers.length * 10)} hint={`${papers.length}편`} icon={BookOpen} />
+          </div>
+
           <Tabs defaultValue="writing" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 sm:max-w-md">
+            <TabsList className="grid w-full grid-cols-2 gap-1 sm:grid-cols-4 sm:max-w-2xl">
               <TabsTrigger value="writing" className="flex items-center gap-1.5 text-xs">
                 <PenLine size={12} />
                 논문 작성
               </TabsTrigger>
-              <TabsTrigger value="reading" className="flex items-center gap-1.5 text-xs">
-                <BookOpen size={12} />
-                논문 읽기
+              <TabsTrigger value="proposal" className="flex items-center gap-1.5 text-xs">
+                <ClipboardList size={12} />
+                연구 계획서
               </TabsTrigger>
               <TabsTrigger value="report" className="flex items-center gap-1.5 text-xs">
                 <FileText size={12} />
-                연구 리포트
+                연구 보고서
+              </TabsTrigger>
+              <TabsTrigger value="reading" className="flex items-center gap-1.5 text-xs">
+                <BookOpen size={12} />
+                논문 읽기
               </TabsTrigger>
             </TabsList>
 
@@ -517,20 +529,19 @@ function ResearchRow({ summary }: { summary: UserResearchSummary }) {
               />
             </TabsContent>
 
+            <TabsContent value="proposal" className="mt-3 space-y-3">
+              <ProposalTab proposal={proposal} proposalProgress={proposalProgress} />
+            </TabsContent>
+
+            <TabsContent value="report" className="mt-3 space-y-3">
+              <ReportTab report={report} reportProgress={reportProgress} />
+            </TabsContent>
+
             <TabsContent value="reading" className="mt-3 space-y-3">
               <ReadingTab
                 papers={papers}
                 readingMinutes={readingMinutes}
                 readingSessionCount={readingSessions.length}
-              />
-            </TabsContent>
-
-            <TabsContent value="report" className="mt-3 space-y-3">
-              <ReportTab
-                report={report}
-                proposal={proposal}
-                reportProgress={reportProgress}
-                proposalProgress={proposalProgress}
               />
             </TabsContent>
           </Tabs>
@@ -738,84 +749,48 @@ function ReadingTab({
   );
 }
 
-function ReportTab({
-  report,
+function ProposalTab({
   proposal,
-  reportProgress,
   proposalProgress,
 }: {
-  report?: ResearchReport;
   proposal?: ResearchProposal;
-  reportProgress: number;
   proposalProgress: number;
 }) {
   const [showFull, setShowFull] = useState(false);
+  if (!proposal) {
+    return (
+      <DetailBlock title="연구 계획서">
+        <p className="text-xs text-muted-foreground">아직 작성된 계획서가 없습니다.</p>
+      </DetailBlock>
+    );
+  }
   return (
     <div className="space-y-3">
-      <div className="grid gap-3 md:grid-cols-2">
-        <DetailBlock title="연구 계획서">
-          {proposal ? (
-            <div className="space-y-2 text-xs">
-              <KV label="국문 제목" value={proposal.titleKo} />
-              <KV label="영문 제목" value={proposal.titleEn} />
-              <KV label="연구 목적" value={proposal.purpose?.slice(0, 80)} />
-              <KV label="연구 방법" value={proposal.method?.slice(0, 80)} />
-              <KV
-                label="참고문헌"
-                value={`${proposal.referencePaperIds?.length ?? 0}편`}
-              />
-              <div className="pt-1 text-[11px] text-muted-foreground">
-                마지막 수정: {formatDate(proposal.updatedAt ?? proposal.lastSavedAt)}
-              </div>
-              <div className="pt-1">
-                <ProgressBar value={proposalProgress} />
-                <div className="mt-1 text-[10px] text-muted-foreground">진행률 {proposalProgress}%</div>
-              </div>
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground">아직 작성된 계획서가 없습니다.</p>
-          )}
-        </DetailBlock>
-
-        <DetailBlock title="연구 보고서">
-          {report ? (
-            <div className="space-y-2 text-xs">
-              <KV label="대상 학습자" value={report.fieldAudience} />
-              <KV label="교육 형태" value={report.fieldFormat} />
-              <KV label="교과/주제" value={report.fieldSubject} />
-              <KV
-                label="현상"
-                value={(report.problemPhenomena ?? [])
-                  .filter((p) => p.trim())
-                  .slice(0, 2)
-                  .join(" / ")}
-              />
-              <KV label="이론 카드" value={`${report.theoryCards?.length ?? 0}개`} />
-              <KV
-                label="선행 연구 그룹"
-                value={`${report.priorResearchGroups?.length ?? 0}개 / 논문 ${report.priorResearchPaperIds?.length ?? 0}편 인용`}
-              />
-              <div className="pt-1 text-[11px] text-muted-foreground">
-                마지막 수정: {formatDate(report.updatedAt)}
-              </div>
-              <div className="pt-1">
-                <ProgressBar value={reportProgress} />
-                <div className="mt-1 text-[10px] text-muted-foreground">진행률 {reportProgress}%</div>
-              </div>
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground">아직 작성된 보고서가 없습니다.</p>
-          )}
-        </DetailBlock>
-      </div>
-
-      {(proposal || report) && (
-        <div>
-          <ToggleFullButton showFull={showFull} setShowFull={setShowFull} />
+      <DetailBlock title="연구 계획서">
+        <div className="space-y-2 text-xs">
+          <KV label="국문 제목" value={proposal.titleKo} />
+          <KV label="영문 제목" value={proposal.titleEn} />
+          <KV label="연구 목적" value={proposal.purpose?.slice(0, 120)} />
+          <KV label="연구 범위" value={proposal.scope?.slice(0, 120)} />
+          <KV label="연구 방법" value={proposal.method?.slice(0, 120)} />
+          <KV
+            label="참고문헌"
+            value={`${proposal.referencePaperIds?.length ?? 0}편`}
+          />
+          <div className="pt-1 text-[11px] text-muted-foreground">
+            마지막 수정: {formatDate(proposal.updatedAt ?? proposal.lastSavedAt)}
+          </div>
+          <div className="pt-1">
+            <ProgressBar value={proposalProgress} />
+            <div className="mt-1 text-[10px] text-muted-foreground">진행률 {proposalProgress}%</div>
+          </div>
+          <div className="pt-2">
+            <ToggleFullButton showFull={showFull} setShowFull={setShowFull} />
+          </div>
         </div>
-      )}
+      </DetailBlock>
 
-      {showFull && proposal && (
+      {showFull && (
         <DetailBlock title="연구 계획서 전체">
           <div className="space-y-3 text-[11px]">
             <FullField label="국문 제목" value={proposal.titleKo} />
@@ -827,8 +802,58 @@ function ReportTab({
           </div>
         </DetailBlock>
       )}
+    </div>
+  );
+}
 
-      {showFull && report && (
+function ReportTab({
+  report,
+  reportProgress,
+}: {
+  report?: ResearchReport;
+  reportProgress: number;
+}) {
+  const [showFull, setShowFull] = useState(false);
+  if (!report) {
+    return (
+      <DetailBlock title="연구 보고서">
+        <p className="text-xs text-muted-foreground">아직 작성된 보고서가 없습니다.</p>
+      </DetailBlock>
+    );
+  }
+  return (
+    <div className="space-y-3">
+      <DetailBlock title="연구 보고서">
+        <div className="space-y-2 text-xs">
+          <KV label="대상 학습자" value={report.fieldAudience} />
+          <KV label="교육 형태" value={report.fieldFormat} />
+          <KV label="교과/주제" value={report.fieldSubject} />
+          <KV
+            label="현상"
+            value={(report.problemPhenomena ?? [])
+              .filter((p) => p.trim())
+              .slice(0, 2)
+              .join(" / ")}
+          />
+          <KV label="이론 카드" value={`${report.theoryCards?.length ?? 0}개`} />
+          <KV
+            label="선행 연구 그룹"
+            value={`${report.priorResearchGroups?.length ?? 0}개 / 논문 ${report.priorResearchPaperIds?.length ?? 0}편 인용`}
+          />
+          <div className="pt-1 text-[11px] text-muted-foreground">
+            마지막 수정: {formatDate(report.updatedAt)}
+          </div>
+          <div className="pt-1">
+            <ProgressBar value={reportProgress} />
+            <div className="mt-1 text-[10px] text-muted-foreground">진행률 {reportProgress}%</div>
+          </div>
+          <div className="pt-2">
+            <ToggleFullButton showFull={showFull} setShowFull={setShowFull} />
+          </div>
+        </div>
+      </DetailBlock>
+
+      {showFull && (
         <DetailBlock title="연구 보고서 전체">
           <div className="space-y-3 text-[11px]">
             <FullField label="대상 학습자" value={report.fieldAudience} />
@@ -865,6 +890,35 @@ function ReportTab({
           </div>
         </DetailBlock>
       )}
+    </div>
+  );
+}
+
+function MiniProgress({
+  label,
+  value,
+  hint,
+  icon: Icon,
+}: {
+  label: string;
+  value: number;
+  hint: string;
+  icon: typeof FileText;
+}) {
+  const pct = Math.min(100, Math.max(0, Math.round(value)));
+  return (
+    <div className="rounded-md border bg-background p-2">
+      <div className="flex items-center justify-between gap-1.5 text-[10px] text-muted-foreground">
+        <span className="inline-flex items-center gap-1">
+          <Icon size={11} />
+          {label}
+        </span>
+        <span className="font-semibold text-foreground">{pct}%</span>
+      </div>
+      <div className="mt-1.5">
+        <ProgressBar value={pct} />
+      </div>
+      <div className="mt-1 text-[10px] text-muted-foreground">{hint}</div>
     </div>
   );
 }
