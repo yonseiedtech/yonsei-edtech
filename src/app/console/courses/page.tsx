@@ -31,6 +31,7 @@ import { toast } from "sonner";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import { courseOfferingsApi, courseEnrollmentsApi, profilesApi, comprehensiveExamsApi } from "@/lib/bkend";
+import { normalizePeriodSchedule } from "@/lib/courseSchedule";
 import ScheduleEditor from "@/features/courses/ScheduleEditor";
 import {
   COURSE_CATEGORY_LABELS,
@@ -136,6 +137,8 @@ function ConsoleCoursesContent() {
   const xlsxFileRef = useRef<HTMLInputElement>(null);
   const [xlsxBusy, setXlsxBusy] = useState(false);
   const [xlsxResult, setXlsxResult] = useState<string | null>(null);
+  const [periodBusy, setPeriodBusy] = useState(false);
+  const [periodResult, setPeriodResult] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState<CourseCategory | "all">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   // 회원 명단 — EnrollmentList 에서 회원 자동 매칭/연동에 사용. 첫 펼침 시점에 lazy fetch.
@@ -529,6 +532,61 @@ function ConsoleCoursesContent() {
     }
   }
 
+  /**
+   * 현재 학기 등록 과목 중 schedule에 교시 표기만 있고 HH:MM 범위가 없는 것을 일괄 변환.
+   *
+   * 기준 시각:
+   *   1교시 18:20~19:10, 2교시 19:10~20:00 (1·2교시 = 18:20~20:00)
+   *   3교시 20:10~21:00, 4교시 21:00~21:50 (3·4교시 = 20:10~21:50)
+   */
+  async function handleApplyPeriodTimes() {
+    const targets: Array<{ row: CourseOffering; next: string }> = [];
+    for (const r of rows) {
+      const next = normalizePeriodSchedule(r.schedule);
+      if (next && next !== r.schedule) targets.push({ row: r, next });
+    }
+    if (targets.length === 0) {
+      toast.info("변환할 과목이 없습니다 (교시 표기만 있고 시간 없는 과목 0건).", { duration: 6000 });
+      setPeriodResult("변환 대상 0건");
+      return;
+    }
+    const preview = targets
+      .slice(0, 5)
+      .map((t) => `· ${t.row.courseName}: "${t.row.schedule ?? ""}" → "${t.next}"`)
+      .join("\n");
+    const more = targets.length > 5 ? `\n…외 ${targets.length - 5}건` : "";
+    if (
+      !confirm(
+        `${targets.length}건의 과목 schedule을 표준 교시 시각으로 변환합니다.\n\n${preview}${more}\n\n계속할까요?`,
+      )
+    ) {
+      return;
+    }
+    setPeriodBusy(true);
+    setPeriodResult(null);
+    let ok = 0;
+    let fail = 0;
+    const updated: CourseOffering[] = [];
+    for (const t of targets) {
+      try {
+        await courseOfferingsApi.update(t.row.id, { schedule: t.next });
+        updated.push({ ...t.row, schedule: t.next });
+        ok++;
+      } catch (e) {
+        console.error("[courses/period-bulk] 실패", t.row.id, e);
+        fail++;
+      }
+    }
+    if (updated.length > 0) {
+      const idx = new Map(updated.map((u) => [u.id, u] as const));
+      setRows((prev) => prev.map((r) => idx.get(r.id) ?? r));
+    }
+    const msg = `완료: 변환 ${ok}건${fail ? ` / 실패 ${fail}건` : ""}`;
+    setPeriodResult(msg);
+    toast.success(msg, { duration: 6000 });
+    setPeriodBusy(false);
+  }
+
   if (!isStaff) {
     return (
       <div className="py-16">
@@ -628,6 +686,32 @@ function ConsoleCoursesContent() {
               </div>
               {xlsxResult && (
                 <p className="mt-2 text-xs text-emerald-700">✓ {xlsxResult}</p>
+              )}
+            </div>
+
+            {/* 교시 → 표준 시간 일괄 변환 */}
+            <div className="rounded-xl border bg-white p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className="flex items-center gap-2 text-sm font-semibold">
+                    <Wand2 size={14} />
+                    교시 → 표준 시간 일괄 적용
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    schedule에 "1·2교시" "3,4교시"처럼 교시 표기만 있는 과목을 표준 시각으로 변환합니다.
+                    <br />
+                    <span className="text-foreground/80">
+                      1·2교시 = 18:20~20:00 / 3·4교시 = 20:10~21:50 (요일은 그대로 유지)
+                    </span>
+                  </p>
+                </div>
+                <Button size="sm" variant="outline" onClick={handleApplyPeriodTimes} disabled={periodBusy || loading}>
+                  <Wand2 size={14} className="mr-1" />
+                  {periodBusy ? "변환 중..." : "현재 학기 일괄 변환"}
+                </Button>
+              </div>
+              {periodResult && (
+                <p className="mt-2 text-xs text-emerald-700">✓ {periodResult}</p>
               )}
             </div>
 
