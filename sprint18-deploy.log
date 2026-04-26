@@ -1,0 +1,285 @@
+Retrieving project…
+Deploying kimdaekyoungs-projects/yonsei-edtech
+Uploading [--------------------] (0.0B/525.6KB)
+Uploading [=====---------------] (144.0KB/525.6KB)
+Uploading [==========----------] (272.0KB/525.6KB)
+Uploading [===============-----] (400.0KB/525.6KB)
+Uploading [====================] (525.6KB/525.6KB)
+Inspect: https://vercel.com/kimdaekyoungs-projects/yonsei-edtech/3vLrFh4bSkpi8WUgpt1MCynaRKtk [7s]
+Production: https://yonsei-edtech-hi0ea869m-kimdaekyoungs-projects.vercel.app [7s]
+https://yonsei-edtech-hi0ea869m-kimdaekyoungs-projects.vercel.appBuilding...
+Building...
+Building: Running build in Washington, D.C., USA (East) – iad1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Downloading 863 deployment files...
+Building: Restored build cache from previous deployment (FwKU2GVn1ab7U1LwanZkD1v5knpA)
+Building: Running "vercel build"
+Building: Vercel CLI 51.6.1
+Building: Installing dependencies...
+Building: up to date in 2s
+Building: 281 packages are looking for funding
+Building: run `npm fund` for details
+Building: Detected Next.js version: 16.1.6
+Building: Running "npm run build"
+Building: > yonsei-edtech@0.1.0 build
+Building: > next build
+Building: ▲ Next.js 16.1.6 (Turbopack)
+Building: - Experiments (use with caution):
+Building: · optimizePackageImports
+Building: Creating an optimized production build ...
+Building: ✓ Compiled successfully in 82s
+Building: Running TypeScript ...
+Building: Collecting page data using 1 worker ...
+Building: ⚠ Using edge runtime on a page currently disables static generation for that page
+Building: Generating static pages using 1 worker (0/194) ...
+Building: Generating static pages using 1 worker (48/194)
+Building: Generating static pages using 1 worker (96/194)
+Building: Generating static pages using 1 worker (145/194)
+Building: ✓ Generating static pages using 1 worker (194/194) in 4.5s
+Building: Finalizing page optimization ...
+Building: Route (app)
+Building: ┌ ○ /
+Building: ├ ○ /_not-found
+Building: ├ ○ /about
+Building: ├ ○ /about/fields
+Building: ├ ○ /about/greeting
+Building: ├ ○ /about/history
+Building: ├ ○ /academic-admin
+Building: ├ ○ /academic-admin/certificates
+Building: ├ ○ /academic-admin/external
+Building: ├ ƒ /academic-admin/external/[id]
+Building: ├ ○ /academic-admin/projects
+Building: ├ ƒ /academic-admin/projects/[id]
+Building: ├ ○ /academic-admin/seminars
+Building: ├ ○ /academic-admin/seminars/certificate
+Building: ├ ○ /academic-admin/seminars/create
+Building: ├ ○ /academic-admin/seminars/poster
+Building: ├ ○ /academic-admin/seminars/promotion
+Building: ├ ○ /academic-admin/seminars/registrations
+Building: ├ ○ /academic-admin/seminars/report
+Building: ├ ○ /academic-admin/seminars/reviews
+Building: ├ ○ /academic-admin/seminars/timeline
+Building: ├ ○ /academic-admin/studies
+Building: ├ ƒ /academic-admin/studies/[id]
+Building: ├ ○ /activities
+Building: ├ ○ /activities/external
+Building: ├ ƒ /activities/external/[id]
+Building: ├ ○ /activities/projects
+Building: ├ ƒ /activities/projects/[id]
+Building: ├ ○ /activities/studies
+Building: ├ ƒ /activities/studies/[id]
+Building: ├ ○ /admin
+Building: ├ ○ /admin/activity-dashboard
+Building: ├ ○ /admin/agents
+Building: ├ ○ /admin/analytics
+Building: ├ ○ /admin/audit-log
+Building: ├ ○ /admin/certificates
+Building: ├ ○ /admin/chatbot
+Building: ├ ○ /admin/fees
+Building: ├ ○ /admin/inquiries
+Building: ├ ○ /admin/insights
+Building: ├ ○ /admin/members
+Building: ├ ƒ /admin/members/[id]
+Building: ├ ○ /admin/newsletter
+Building: ├ ○ /admin/posts
+Building: ├ ○ /admin/semester-report
+Building: ├ ○ /admin/seminars
+Building: ├ ○ /admin/settings
+Building: ├ ○ /admin/settings/about
+Building: ├ ○ /admin/settings/activities
+Building: ├ ○ /admin/settings/contact
+Building: ├ ○ /admin/settings/external
+Building: ├ ○ /admin/settings/fields
+Building: ├ ○ /admin/settings/greeting
+Building: ├ ○ /admin/settings/history
+Building: ├ ○ /admin/settings/org-chart
+Building: ├ ○ /admin/settings/page-headers
+Building: ├ ○ /admin/settings/presidents
+Building: ├ ○ /admin/settings/professor
+Building: ├ ○ /admin/settings/projects
+Building: ├ ○ /admin/settings/studies
+Building: ├ ○ /admin/todos
+Building: ├ ○ /admin/transition
+Building: ├ ○ /admin/user-audit
+Building: ├ ○ /alumni/thesis
+Building: ├ ƒ /alumni/thesis/[id]
+Building: ├ ƒ /api/activities
+Building: ├ ƒ /api/admin/audit-users
+Building: ├ ƒ /api/admin/impersonate
+Building: ├ ƒ /api/admin/impersonate/revert
+Building: ├ ƒ /api/ai/chat
+Building: ├ ƒ /api/ai/inquiry-reply
+Building: ├ ƒ /api/ai/poster
+Building: ├ ƒ /api/ai/press-release
+Building: ├ ƒ /api/ai/semester-report
+Building: ├ ƒ /api/auth/auto-approve
+Building: ├ ƒ /api/auth/check-username
+Building: ├ ƒ /api/auth/forgot-password/answer
+Building: ├ ƒ /api/auth/forgot-password/verify
+Building: ├ ƒ /api/auth/resolve-email
+Building: ├ ƒ /api/certificates/batch
+Building: ├ ƒ /api/certificates/email
+Building: ├ ƒ /api/certificates/pdf
+Building: ├ ƒ /api/chatbot
+Building: ├ ƒ /api/cron/activity-status
+Building: ├ ƒ /api/cron/newsletter-publisher
+Building: ├ ƒ /api/cron/seminar-reminder
+Building: ├ ƒ /api/cron/seminar-status
+Building: ├ ƒ /api/email/approval
+Building: ├ ƒ /api/email/inquiry-reply
+Building: ├ ƒ /api/email/newsletter
+Building: ├ ƒ /api/email/password-reset
+Building: ├ ƒ /api/newsletter/[id]/pdf
+Building: ├ ƒ /api/parse-excel
+Building: ├ ƒ /api/posts/[id]/vote
+Building: ├ ƒ /api/profile/[id]/certificate
+Building: ├ ƒ /api/reviews
+Building: ├ ƒ /api/reviews/cert-no
+Building: ├ ƒ /api/reviews/migrate
+Building: ├ ƒ /api/seminars/[id]/speaker-token
+Building: ├ ƒ /api/sheets
+Building: ├ ○ /board
+Building: ├ ƒ /board/[id]
+Building: ├ ƒ /board/[id]/edit
+Building: ├ ○ /board/free
+Building: ├ ○ /board/interview
+Building: ├ ○ /board/promotion
+Building: ├ ○ /board/resources
+Building: ├ ○ /board/seminar
+Building: ├ ○ /board/staff
+Building: ├ ○ /board/write
+Building: ├ ○ /calendar
+Building: ├ ○ /consent
+Building: ├ ○ /console
+Building: ├ ○ /console/academic
+Building: ├ ○ /console/academic-calendar
+Building: ├ ○ /console/academic/certificates
+Building: ├ ○ /console/academic/external
+Building: ├ ○ /console/academic/manage
+Building: ├ ○ /console/academic/projects
+Building: ├ ○ /console/academic/seminars
+Building: ├ ○ /console/academic/seminars/certificate
+Building: ├ ○ /console/academic/seminars/create
+Building: ├ ○ /console/academic/seminars/poster
+Building: ├ ○ /console/academic/seminars/promotion
+Building: ├ ○ /console/academic/seminars/registrations
+Building: ├ ○ /console/academic/seminars/report
+Building: ├ ○ /console/academic/seminars/reviews
+Building: ├ ○ /console/academic/seminars/timeline
+Building: ├ ○ /console/academic/studies
+Building: ├ ○ /console/agents
+Building: ├ ○ /console/ai
+Building: ├ ○ /console/alumni-mapping
+Building: ├ ○ /console/audit-log
+Building: ├ ○ /console/certificates
+Building: ├ ○ /console/courses
+Building: ├ ○ /console/directory
+Building: ├ ○ /console/fees
+Building: ├ ○ /console/grad-life/thesis-defense
+Building: ├ ○ /console/grad-life/thesis-defense-templates
+Building: ├ ƒ /console/grad-life/thesis-defense/[id]/practice
+Building: ├ ○ /console/handover
+Building: ├ ○ /console/handover/overview
+Building: ├ ○ /console/handover/report
+Building: ├ ○ /console/inquiries
+Building: ├ ○ /console/insights
+Building: ├ ○ /console/insights/analytics
+Building: ├ ○ /console/insights/semester
+Building: ├ ○ /console/labs
+Building: ├ ƒ /console/labs/[id]
+Building: ├ ○ /console/labs/new
+Building: ├ ○ /console/members
+Building: ├ ƒ /console/members/[id]
+Building: ├ ○ /console/members/audit
+Building: ├ ○ /console/newsletter
+Building: ├ ○ /console/popups
+Building: ├ ○ /console/portfolio-verification
+Building: ├ ○ /console/posts
+Building: ├ ○ /console/research
+Building: ├ ƒ /console/research/[userId]
+Building: ├ ○ /console/settings
+Building: ├ ○ /console/settings/about
+Building: ├ ○ /console/settings/activities
+Building: ├ ○ /console/settings/contact
+Building: ├ ○ /console/settings/external
+Building: ├ ○ /console/settings/fields
+Building: ├ ○ /console/settings/greeting
+Building: ├ ○ /console/settings/history
+Building: ├ ○ /console/settings/org-chart
+Building: ├ ○ /console/settings/presidents
+Building: ├ ○ /console/settings/professor
+Building: ├ ○ /console/settings/projects
+Building: ├ ○ /console/settings/studies
+Building: ├ ○ /console/steppingstone
+Building: ├ ○ /console/todos
+Building: ├ ○ /console/transition
+Building: ├ ○ /contact
+Building: ├ ○ /courses
+Building: ├ ƒ /courses/[id]/schedule
+Building: ├ ○ /dashboard
+Building: ├ ○ /directory
+Building: ├ ƒ /directory/[id]
+Building: ├ ƒ /directory/[id]/card
+Building: ├ ○ /forgot-password
+Building: ├ ○ /gallery
+Building: ├ ○ /icon.svg
+Building: ├ ○ /labs
+Building: ├ ƒ /labs/[id]
+Building: ├ ○ /login
+Building: ├ ƒ /manifest.webmanifest
+Building: ├ ○ /members
+Building: ├ ○ /mypage
+Building: ├ ○ /mypage/activities
+Building: ├ ○ /mypage/calendar
+Building: ├ ○ /mypage/card
+Building: ├ ○ /mypage/card/exchanges
+Building: ├ ○ /mypage/portfolio
+Building: ├ ○ /mypage/research
+Building: ├ ○ /newsletter
+Building: ├ ƒ /newsletter/[id]
+Building: ├ ƒ /newsletter/[id]/magazine
+Building: ├ ○ /newsletter/edit
+Building: ├ ○ /notices
+Building: ├ ƒ /notices/[id]
+Building: ├ ○ /offline
+Building: ├ ƒ /opengraph-image
+Building: ├ ○ /privacy
+Building: ├ ƒ /profile/[id]
+Building: ├ ○ /profile/me
+Building: ├ ƒ /progress-meetings/[id]
+Building: ├ ○ /research
+Building: ├ ○ /robots.txt
+Building: ├ ○ /seminars
+Building: ├ ƒ /seminars/[id]
+Building: ├ ƒ /seminars/[id]/checkin
+Building: ├ ƒ /seminars/[id]/host
+Building: ├ ƒ /seminars/[id]/lms
+Building: ├ ƒ /seminars/[id]/review
+Building: ├ ƒ /seminars/[id]/speaker-review
+Building: ├ ○ /seminars/create
+Building: ├ ○ /signup
+Building: ├ ○ /sitemap.xml
+Building: ├ ○ /staff-admin
+Building: ├ ○ /staff-admin/activity-dashboard
+Building: ├ ○ /staff-admin/handover-overview
+Building: ├ ○ /staff-admin/todos
+Building: ├ ○ /staff-admin/transition
+Building: ├ ○ /steppingstone
+Building: ├ ○ /steppingstone/onboarding
+Building: ├ ○ /steppingstone/thesis-defense
+Building: ├ ƒ /steppingstone/thesis-defense/[id]/practice
+Building: └ ○ /terms
+Building: ○  (Static)   prerendered as static content
+Building: ƒ  (Dynamic)  server-rendered on demand
+Building: Traced Next.js server files in: 52.571ms
+Building: Created all serverless functions in: 2.031s
+Building: Collected static files (public/, static/, .next/static): 44.284ms
+Building: Build Completed in /vercel/output [2m]
+Building: Deploying outputs...
+Building: Deployment completed
+Building: Creating build cache...
+[2K[1A[2K[GProduction: https://yonsei-edtech-hi0ea869m-kimdaekyoungs-projects.vercel.app [3m]
+Completing...
+Aliased: https://yonsei-edtech.vercel.app [3m]
+> Tip: Run `npx plugins add vercel/vercel-plugin` to enhance your agent experience

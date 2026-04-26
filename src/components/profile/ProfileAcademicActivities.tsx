@@ -7,9 +7,9 @@ import { activitiesApi, seminarsApi, attendeesApi } from "@/lib/bkend";
 import { EXTERNAL_PARTICIPANT_TYPE_LABELS, EXTERNAL_PARTICIPANT_TYPE_COLORS } from "@/types";
 import type { Activity, ExternalParticipantType, Seminar, SeminarAttendee, User } from "@/types";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, ChevronRight, Crown, FolderKanban, Globe, Mic, Tag } from "lucide-react";
+import { BookOpen, ChevronRight, Crown, FolderKanban, Globe, Mic, Tag, CalendarRange } from "lucide-react";
 import { formatDate, cn } from "@/lib/utils";
-import { formatSemester } from "@/lib/semester";
+import { formatSemester, inferCurrentSemester, type Semester } from "@/lib/semester";
 
 interface Props {
   owner: User;
@@ -145,10 +145,83 @@ export default function ProfileAcademicActivities({ owner }: Props) {
     [mySeminars, myActivities],
   );
 
+  // 학기 키 도출: 연도+학기. 없으면 date에서 추론, 둘 다 없으면 null(=기타).
+  function semesterKeyOf(item: Seminar | Activity): { year: number; semester: Semester } | null {
+    if (tab !== "seminar") {
+      const a = item as Activity;
+      if (a.year && (a.semester === "first" || a.semester === "second")) {
+        return { year: a.year, semester: a.semester as Semester };
+      }
+      if (a.date) {
+        const d = new Date(a.date);
+        if (!isNaN(d.getTime())) return inferCurrentSemester(d);
+      }
+      return null;
+    }
+    const s = item as Seminar;
+    if (s.date) {
+      const d = new Date(s.date);
+      if (!isNaN(d.getTime())) return inferCurrentSemester(d);
+    }
+    return null;
+  }
+
+  // 학기별 그룹핑 + 정렬(연도 desc, 후기→전기 desc, 기타는 최하단).
+  const groups = useMemo(() => {
+    const buckets = new Map<string, { year: number | null; semester: Semester | null; items: (Seminar | Activity)[] }>();
+    for (const item of filtered) {
+      const key = semesterKeyOf(item);
+      const k = key ? `${key.year}-${key.semester}` : "__other__";
+      if (!buckets.has(k)) {
+        buckets.set(k, { year: key?.year ?? null, semester: key?.semester ?? null, items: [] });
+      }
+      buckets.get(k)!.items.push(item);
+    }
+    const arr = Array.from(buckets.values());
+    arr.sort((a, b) => {
+      if (a.year === null) return 1;
+      if (b.year === null) return -1;
+      if (a.year !== b.year) return b.year - a.year;
+      // 후기(second)가 전기(first)보다 먼저
+      const av = a.semester === "second" ? 1 : 0;
+      const bv = b.semester === "second" ? 1 : 0;
+      return bv - av;
+    });
+    // 그룹 내 항목은 날짜 desc
+    for (const g of arr) {
+      g.items.sort((x, y) => {
+        const dx = (x as { date?: string }).date ?? "";
+        const dy = (y as { date?: string }).date ?? "";
+        return dy.localeCompare(dx);
+      });
+    }
+    return arr;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtered, tab]);
+
+  // visible 개수만큼 그룹 순회하며 슬라이스
+  const visibleGroups = useMemo(() => {
+    const result: { year: number | null; semester: Semester | null; items: (Seminar | Activity)[] }[] = [];
+    let remaining = visible;
+    for (const g of groups) {
+      if (remaining <= 0) break;
+      const take = g.items.slice(0, remaining);
+      if (take.length > 0) {
+        result.push({ year: g.year, semester: g.semester, items: take });
+        remaining -= take.length;
+      }
+    }
+    return result;
+  }, [groups, visible]);
+
   const totalCount = filtered.length;
-  const sliced = filtered.slice(0, visible);
   const hasMore = totalCount > visible;
   const isLoading = loadingActs || loadingSeminars;
+
+  function semesterLabel(year: number | null, semester: Semester | null): string {
+    if (year === null || semester === null) return "기타 / 미분류";
+    return formatSemester(year, semester);
+  }
 
   function changeTab(next: SubTab) {
     setTab(next);
@@ -198,85 +271,111 @@ export default function ProfileAcademicActivities({ owner }: Props) {
       ) : totalCount === 0 ? (
         <p className="py-6 text-center text-xs text-muted-foreground">표시할 항목이 없습니다.</p>
       ) : (
-        <ul className="space-y-2">
-          {sliced.map((item) => {
-            if (tab === "seminar") {
-              const s = item as Seminar;
-              const speaker = isSpeaker(s);
-              return (
-                <li
-                  key={s.id}
+        <div className="space-y-5">
+          {visibleGroups.map((group) => {
+            const headerKey = group.year === null ? "other" : `${group.year}-${group.semester}`;
+            const isOther = group.year === null;
+            return (
+              <section key={headerKey}>
+                <div
                   className={cn(
-                    "rounded-xl border px-4 py-3 transition-colors",
-                    speaker
-                      ? "border-rose-200 bg-rose-50/40 hover:border-rose-300"
-                      : "hover:border-primary/40",
+                    "sticky top-0 z-10 mb-2 -mx-1 flex items-center gap-2 bg-white/95 px-1 py-1 backdrop-blur-sm",
                   )}
                 >
-                  <Link href={`/seminars/${s.id}`} className="flex items-center justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        {speaker && (
-                          <Badge
-                            variant="secondary"
-                            className="gap-0.5 bg-rose-100 text-[10px] font-semibold text-rose-700"
-                          >
-                            <Mic size={9} /> 연사
-                          </Badge>
-                        )}
-                      </div>
-                      <p className={cn("truncate text-sm", speaker ? "font-semibold text-rose-900" : "font-medium")}>
-                        {s.title}
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-muted-foreground">
-                        {formatDate(s.date)}{s.time ? ` · ${s.time}` : ""}{s.location ? ` · ${s.location}` : ""}
-                      </p>
-                    </div>
-                    <ChevronRight size={14} className="shrink-0 text-muted-foreground" />
-                  </Link>
-                </li>
-              );
-            }
-            const a = item as Activity;
-            const role = roleOf(a, owner);
-            return (
-              <li key={a.id} className="rounded-xl border px-4 py-3">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {a.status && (
-                      <Badge variant="outline" className="text-[10px]">
-                        {a.status === "upcoming" ? "예정" : a.status === "ongoing" ? "진행중" : "완료"}
-                      </Badge>
+                  <div
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
+                      isOther
+                        ? "border-slate-200 bg-slate-50 text-slate-600"
+                        : group.semester === "first"
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                          : "border-amber-200 bg-amber-50 text-amber-700",
                     )}
-                    {(a.year || a.semester) && (
-                      <Badge variant="secondary" className="bg-blue-50 text-[10px] text-blue-700">
-                        {formatSemester(a.year, a.semester)}
-                      </Badge>
-                    )}
-                    {role && (
-                      <Badge
-                        variant="secondary"
-                        className={cn(
-                          "gap-0.5 text-[10px] font-medium",
-                          role.kind === "leader" && "bg-amber-50 text-amber-700",
-                          role.kind === "role" && "bg-violet-50 text-violet-700",
-                          role.kind === "external" && role.type && EXTERNAL_PARTICIPANT_TYPE_COLORS[role.type],
-                        )}
-                      >
-                        {role.kind === "leader" ? <Crown size={9} /> : <Tag size={9} />}
-                        {role.label}
-                      </Badge>
-                    )}
+                  >
+                    <CalendarRange size={11} />
+                    {semesterLabel(group.year, group.semester)}
                   </div>
-                  <p className="mt-1 truncate text-sm font-medium">{a.title}</p>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">
-                    {a.date ? formatDate(a.date) : ""}{a.location ? ` · ${a.location}` : ""}
-                  </p>
+                  <div className="h-px flex-1 bg-border" />
+                  <span className="text-[10px] font-medium text-muted-foreground">{group.items.length}건</span>
                 </div>
-              </li>
+                <ul className="space-y-2">
+                  {group.items.map((item) => {
+                    if (tab === "seminar") {
+                      const s = item as Seminar;
+                      const speaker = isSpeaker(s);
+                      return (
+                        <li
+                          key={s.id}
+                          className={cn(
+                            "rounded-xl border px-4 py-3 transition-colors",
+                            speaker
+                              ? "border-rose-200 bg-rose-50/40 hover:border-rose-300"
+                              : "hover:border-primary/40",
+                          )}
+                        >
+                          <Link href={`/seminars/${s.id}`} className="flex items-center justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                {speaker && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="gap-0.5 bg-rose-100 text-[10px] font-semibold text-rose-700"
+                                  >
+                                    <Mic size={9} /> 연사
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className={cn("truncate text-sm", speaker ? "font-semibold text-rose-900" : "font-medium")}>
+                                {s.title}
+                              </p>
+                              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                {formatDate(s.date)}{s.time ? ` · ${s.time}` : ""}{s.location ? ` · ${s.location}` : ""}
+                              </p>
+                            </div>
+                            <ChevronRight size={14} className="shrink-0 text-muted-foreground" />
+                          </Link>
+                        </li>
+                      );
+                    }
+                    const a = item as Activity;
+                    const role = roleOf(a, owner);
+                    return (
+                      <li key={a.id} className="rounded-xl border px-4 py-3">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {a.status && (
+                              <Badge variant="outline" className="text-[10px]">
+                                {a.status === "upcoming" ? "예정" : a.status === "ongoing" ? "진행중" : "완료"}
+                              </Badge>
+                            )}
+                            {role && (
+                              <Badge
+                                variant="secondary"
+                                className={cn(
+                                  "gap-0.5 text-[10px] font-medium",
+                                  role.kind === "leader" && "bg-amber-50 text-amber-700",
+                                  role.kind === "role" && "bg-violet-50 text-violet-700",
+                                  role.kind === "external" && role.type && EXTERNAL_PARTICIPANT_TYPE_COLORS[role.type],
+                                )}
+                              >
+                                {role.kind === "leader" ? <Crown size={9} /> : <Tag size={9} />}
+                                {role.label}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="mt-1 truncate text-sm font-medium">{a.title}</p>
+                          <p className="mt-0.5 text-[11px] text-muted-foreground">
+                            {a.date ? formatDate(a.date) : ""}{a.location ? ` · ${a.location}` : ""}
+                          </p>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
             );
           })}
-        </ul>
+        </div>
       )}
 
       {hasMore && (
