@@ -327,17 +327,16 @@ export default function ActivityList({ type, typeLabel, icon, description }: Pro
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium">{type === "study" ? "모임장" : "담당자"}</label>
-              {type === "study" ? (
-                <MemberAutocomplete
-                  value={form.leaderId}
-                  displayName={form.leaderId ? form.leader : undefined}
-                  onSelect={(m) => setForm({ ...form, leaderId: m.id, leader: m.name })}
-                  onClear={() => setForm({ ...form, leaderId: "", leader: "" })}
-                  placeholder="회원 이름 또는 학번을 입력하세요"
-                />
-              ) : (
-                <Input value={form.leader} onChange={(e) => setForm({ ...form, leader: e.target.value })} placeholder="예: 김대경" />
-              )}
+              <MemberAutocomplete
+                value={form.leaderId}
+                displayName={form.leaderId ? form.leader : undefined}
+                onSelect={(m) => setForm({ ...form, leaderId: m.id, leader: m.name })}
+                onClear={() => setForm({ ...form, leaderId: "", leader: "" })}
+                placeholder="회원 이름 또는 학번을 입력하세요"
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                회원 검색으로 선택하면 운영 페이지·프로필에서 자동 연동됩니다.
+              </p>
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium">참여자 (쉼표 구분)</label>

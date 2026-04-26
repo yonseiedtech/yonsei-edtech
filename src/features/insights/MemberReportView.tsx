@@ -1,27 +1,33 @@
 "use client";
 
 /**
- * 회원 보고서 (Sprint 37) — admin 전용.
+ * 회원 보고서 (Sprint 37 → Sprint 40 v2 산출식) — admin 전용.
  *
- * 사이트 접속 빈도(출석률) + 활동 참여율 + 운영진 직책을 종합한 로얄티 점수,
- * 운영진 저활동 인원, 장기 미접속 회원을 한 화면에서 식별.
+ * v2: 접속(login) 기반 점수 제거, 활동 기반 5개 카테고리로 재설계
+ *  - 참여(30) + 콘텐츠(25) + 연구(25) + 운영진(10) + 후기(10) = 100
  *
- * 향후 확장 슬롯:
- * - 게시물·댓글 활동 (computeMemberMetrics에 postCount/commentCount 시그니처 보유)
- * - 관심 연구분야 ↔ 졸업생 논문 키워드 매칭 추천 (별도 섹션 합류 예정)
+ * 데이터 소스:
+ *  - seminar_attendees, activity_participations, grad_life_positions (v1 유지)
+ *  - posts, comments, interview_responses (콘텐츠)
+ *  - study_sessions, writing_papers, research_proposals (연구)
+ *  - reviews (세미나), course_reviews (강의)
  */
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Users, AlertTriangle, Crown, Trophy, Clock, Search, Download,
-  ShieldAlert, Filter,
+  ShieldAlert, FileText,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAdminOrSysadmin } from "@/lib/permissions";
-import { profilesApi, dataApi, gradLifePositionsApi } from "@/lib/bkend";
+import {
+  profilesApi, dataApi, gradLifePositionsApi,
+} from "@/lib/bkend";
 import type {
   User, SeminarAttendee, ActivityParticipation, GradLifePosition,
+  Post, Comment, InterviewResponse, StudySession, WritingPaper,
+  ResearchProposal, SeminarReview, CourseReview, WritingPaperChapterKey,
 } from "@/types";
 import {
   computeMemberMetrics,
@@ -53,6 +59,12 @@ function formatDays(d: number): string {
   return `${Math.floor(d / 30)}개월 전`;
 }
 
+/** writing_papers.chapters의 모든 챕터 글자수 합 */
+function totalWritingChars(chapters?: Partial<Record<WritingPaperChapterKey, string>>): number {
+  if (!chapters) return 0;
+  return Object.values(chapters).reduce((sum, v) => sum + (typeof v === "string" ? v.length : 0), 0);
+}
+
 export default function MemberReportView() {
   const { user } = useAuthStore();
   const isAdmin = isAdminOrSysadmin(user);
@@ -82,18 +94,75 @@ export default function MemberReportView() {
     queryFn: () => gradLifePositionsApi.list({ limit: 2000 }),
   });
 
+  // ── v2 신규: 콘텐츠 ──
+  const { data: postsRes } = useQuery({
+    enabled: isAdmin,
+    queryKey: ["report-posts"],
+    queryFn: () => dataApi.list<Post>("posts", { limit: 5000 }),
+  });
+
+  const { data: commentsRes } = useQuery({
+    enabled: isAdmin,
+    queryKey: ["report-comments"],
+    queryFn: () => dataApi.list<Comment>("comments", { limit: 10000 }),
+  });
+
+  const { data: interviewResponsesRes } = useQuery({
+    enabled: isAdmin,
+    queryKey: ["report-interview-responses"],
+    queryFn: () => dataApi.list<InterviewResponse>("interview_responses", { limit: 5000 }),
+  });
+
+  // ── v2 신규: 연구활동 ──
+  const { data: studySessionsRes } = useQuery({
+    enabled: isAdmin,
+    queryKey: ["report-study-sessions"],
+    queryFn: () => dataApi.list<StudySession>("study_sessions", { limit: 10000 }),
+  });
+
+  const { data: writingPapersRes } = useQuery({
+    enabled: isAdmin,
+    queryKey: ["report-writing-papers"],
+    queryFn: () => dataApi.list<WritingPaper>("writing_papers", { limit: 2000 }),
+  });
+
+  const { data: researchProposalsRes } = useQuery({
+    enabled: isAdmin,
+    queryKey: ["report-research-proposals"],
+    queryFn: () => dataApi.list<ResearchProposal>("research_proposals", { limit: 2000 }),
+  });
+
+  // ── v2 신규: 후기 ──
+  const { data: seminarReviewsRes } = useQuery({
+    enabled: isAdmin,
+    queryKey: ["report-seminar-reviews"],
+    queryFn: () => dataApi.list<SeminarReview>("reviews", { limit: 5000 }),
+  });
+
+  const { data: courseReviewsRes } = useQuery({
+    enabled: isAdmin,
+    queryKey: ["report-course-reviews"],
+    queryFn: () => dataApi.list<CourseReview>("course_reviews", { limit: 5000 }),
+  });
+
   const members = (membersRes?.data ?? []) as User[];
   const attendees = (attendeesRes?.data ?? []) as SeminarAttendee[];
   const participations = (participationsRes?.data ?? []) as ActivityParticipation[];
   const gradLife = (gradLifeRes?.data ?? []) as GradLifePosition[];
+  const posts = (postsRes?.data ?? []) as Post[];
+  const comments = (commentsRes?.data ?? []) as Comment[];
+  const interviewResponses = (interviewResponsesRes?.data ?? []) as InterviewResponse[];
+  const studySessions = (studySessionsRes?.data ?? []) as StudySession[];
+  const writingPapers = (writingPapersRes?.data ?? []) as WritingPaper[];
+  const researchProposals = (researchProposalsRes?.data ?? []) as ResearchProposal[];
+  const seminarReviews = (seminarReviewsRes?.data ?? []) as SeminarReview[];
+  const courseReviews = (courseReviewsRes?.data ?? []) as CourseReview[];
 
-  // 회원별 카운트 맵 만들기 — O(N) 한 번 순회
+  // 회원별 카운트 맵 만들기 — O(N) 한 번씩 순회
   const rows = useMemo<MemberMetricsRow[]>(() => {
     const attMap = new Map<string, number>();
     for (const a of attendees) {
-      if (!a.checkedIn) continue;
-      if (a.isGuest) continue;
-      if (!a.userId) continue;
+      if (!a.checkedIn || a.isGuest || !a.userId) continue;
       attMap.set(a.userId, (attMap.get(a.userId) ?? 0) + 1);
     }
 
@@ -109,24 +178,88 @@ export default function MemberReportView() {
       ongoingMap.set(g.userId, (ongoingMap.get(g.userId) ?? 0) + 1);
     }
 
+    const postMap = new Map<string, number>();
+    for (const p of posts) {
+      if (p.deletedAt) continue;       // 삭제된 글 제외
+      if (!p.authorId) continue;
+      postMap.set(p.authorId, (postMap.get(p.authorId) ?? 0) + 1);
+    }
+
+    const commentMap = new Map<string, number>();
+    for (const c of comments) {
+      if (!c.authorId) continue;
+      commentMap.set(c.authorId, (commentMap.get(c.authorId) ?? 0) + 1);
+    }
+
+    const interviewMap = new Map<string, number>();
+    for (const r of interviewResponses) {
+      if (r.status !== "submitted") continue;
+      if (!r.respondentId) continue;
+      interviewMap.set(r.respondentId, (interviewMap.get(r.respondentId) ?? 0) + 1);
+    }
+
+    const studyMinutesMap = new Map<string, number>();
+    for (const s of studySessions) {
+      if (!s.userId) continue;
+      const mins = typeof s.durationMinutes === "number" ? s.durationMinutes : 0;
+      studyMinutesMap.set(s.userId, (studyMinutesMap.get(s.userId) ?? 0) + mins);
+    }
+
+    const writingMap = new Map<string, number>();
+    for (const w of writingPapers) {
+      if (!w.userId) continue;
+      writingMap.set(w.userId, (writingMap.get(w.userId) ?? 0) + totalWritingChars(w.chapters));
+    }
+
+    const proposalSet = new Set<string>();
+    for (const p of researchProposals) {
+      if (p.userId) proposalSet.add(p.userId);
+    }
+
+    const seminarReviewMap = new Map<string, number>();
+    for (const r of seminarReviews) {
+      if (!r.authorId) continue;
+      seminarReviewMap.set(r.authorId, (seminarReviewMap.get(r.authorId) ?? 0) + 1);
+    }
+
+    const courseReviewMap = new Map<string, number>();
+    for (const r of courseReviews) {
+      if (!r.authorId) continue;
+      courseReviewMap.set(r.authorId, (courseReviewMap.get(r.authorId) ?? 0) + 1);
+    }
+
     const now = Date.now();
-    return members
-      .map((m) =>
-        computeMemberMetrics({
-          member: m,
-          attendanceCount: attMap.get(m.id) ?? 0,
-          activityCount: partMap.get(m.id) ?? 0,
-          gradLifeOngoingCount: ongoingMap.get(m.id) ?? 0,
-          nowMs: now,
-        }),
-      );
-  }, [members, attendees, participations, gradLife]);
+    return members.map((m) =>
+      computeMemberMetrics({
+        member: m,
+        attendanceCount: attMap.get(m.id) ?? 0,
+        activityCount: partMap.get(m.id) ?? 0,
+        gradLifeOngoingCount: ongoingMap.get(m.id) ?? 0,
+        postCount: postMap.get(m.id) ?? 0,
+        commentCount: commentMap.get(m.id) ?? 0,
+        interviewResponseCount: interviewMap.get(m.id) ?? 0,
+        studyMinutes: studyMinutesMap.get(m.id) ?? 0,
+        writingChars: writingMap.get(m.id) ?? 0,
+        hasResearchProposal: proposalSet.has(m.id),
+        seminarReviewCount: seminarReviewMap.get(m.id) ?? 0,
+        courseReviewCount: courseReviewMap.get(m.id) ?? 0,
+        nowMs: now,
+      }),
+    );
+  }, [
+    members, attendees, participations, gradLife,
+    posts, comments, interviewResponses,
+    studySessions, writingPapers, researchProposals,
+    seminarReviews, courseReviews,
+  ]);
 
   // 필터·정렬
   const [search, setSearch] = useState("");
   const [filterSegment, setFilterSegment] = useState<MemberMetricsRow["segment"] | "all">("all");
   const [staffOnly, setStaffOnly] = useState(false);
-  const [sortKey, setSortKey] = useState<"loyaltyScore" | "daysSinceLogin" | "attendanceCount" | "activityCount">("loyaltyScore");
+  const [sortKey, setSortKey] = useState<
+    "loyaltyScore" | "daysSinceLogin" | "attendanceCount" | "activityCount" | "postCount" | "commentCount" | "studyHours"
+  >("loyaltyScore");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const filtered = useMemo(() => {
@@ -147,15 +280,17 @@ export default function MemberReportView() {
   // KPI 계산
   const kpi = useMemo(() => {
     const total = rows.length;
-    const active30 = rows.filter((r) => r.daysSinceLogin <= 30).length;
-    const dormant90 = rows.filter((r) => r.daysSinceLogin >= 90).length;
+    const champion = rows.filter((r) => r.segment === "champion").length;
+    const active = rows.filter((r) => r.segment === "active").length;
+    const dormant = rows.filter((r) => r.segment === "dormant").length;
     const staffLow = rows.filter((r) => r.staffLowActivity).length;
     return {
       total,
-      active30,
-      dormant90,
+      champion,
+      active,
+      dormant,
       staffLow,
-      activeRate: total ? Math.round((active30 / total) * 100) : 0,
+      activeRate: total ? Math.round(((champion + active) / total) * 100) : 0,
     };
   }, [rows]);
 
@@ -167,8 +302,8 @@ export default function MemberReportView() {
   const dormantList = useMemo(
     () =>
       [...rows]
-        .filter((r) => r.daysSinceLogin >= 60)
-        .sort((a, b) => b.daysSinceLogin - a.daysSinceLogin)
+        .filter((r) => r.segment === "dormant" || r.segment === "at_risk")
+        .sort((a, b) => a.loyaltyScore - b.loyaltyScore)
         .slice(0, 30),
     [rows],
   );
@@ -176,7 +311,9 @@ export default function MemberReportView() {
   function downloadCsv() {
     const headers = [
       "이름", "역할", "기수", "직책", "로얄티점수", "분류",
-      "최근접속(일전)", "세미나출석", "활동참여", "진행중운영진직책", "운영진저활동",
+      "세미나출석", "활동참여", "게시물", "댓글", "인터뷰응답",
+      "연구타이머(시간)", "논문글자수", "계획서보유",
+      "세미나후기", "강의후기", "진행중운영진직책", "운영진저활동",
     ];
     const rowsCsv = filtered.map((r) => [
       r.name,
@@ -185,9 +322,16 @@ export default function MemberReportView() {
       r.position ?? "",
       r.loyaltyScore,
       segmentLabel(r.segment),
-      r.daysSinceLogin >= 999 ? "기록없음" : r.daysSinceLogin,
       r.attendanceCount,
       r.activityCount,
+      r.postCount,
+      r.commentCount,
+      r.interviewResponseCount,
+      r.studyHours,
+      r.writingChars,
+      r.hasResearchProposal ? "Y" : "N",
+      r.seminarReviewCount,
+      r.courseReviewCount,
       r.gradLifeOngoingCount,
       r.staffLowActivity ? "Y" : "N",
     ]);
@@ -211,10 +355,10 @@ export default function MemberReportView() {
     <div className="space-y-6">
       {/* KPI */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Kpi icon={Users} color="bg-blue-50 text-blue-700" label="총 회원" value={kpi.total} sub={`${kpi.activeRate}% 활성(30일)`} />
-        <Kpi icon={Trophy} color="bg-violet-50 text-violet-700" label="30일 내 접속" value={kpi.active30} sub={`전체 ${kpi.total}명 중`} />
-        <Kpi icon={Clock} color="bg-amber-50 text-amber-700" label="90일+ 미접속" value={kpi.dormant90} sub="휴면 후보" />
-        <Kpi icon={ShieldAlert} color="bg-rose-50 text-rose-700" label="운영진 저활동" value={kpi.staffLow} sub="관리 필요" />
+        <Kpi icon={Users} color="bg-blue-50 text-blue-700" label="총 회원" value={kpi.total} sub={`${kpi.activeRate}% 챔피언+활성`} />
+        <Kpi icon={Trophy} color="bg-violet-50 text-violet-700" label="챔피언" value={kpi.champion} sub="loyalty 70+" />
+        <Kpi icon={Clock} color="bg-amber-50 text-amber-700" label="휴면" value={kpi.dormant} sub="loyalty 15 미만" />
+        <Kpi icon={ShieldAlert} color="bg-rose-50 text-rose-700" label="운영진 저활동" value={kpi.staffLow} sub="loyalty 30 미만" />
       </section>
 
       {/* 운영진 저활동 경보 */}
@@ -225,7 +369,7 @@ export default function MemberReportView() {
             운영진 저활동 경보 ({staffAlerts.length}명)
           </div>
           <p className="mb-3 text-xs text-rose-700/80">
-            staff 이상 권한 보유 인원 중 60일+ 미접속 또는 90일+ 미접속 인원입니다.
+            staff 이상 권한 보유 인원 중 로얄티 점수 30 미만 (참여·콘텐츠·연구 모두 저조).
           </p>
           <div className="overflow-x-auto rounded-lg border bg-white">
             <table className="w-full min-w-[640px] text-sm">
@@ -234,18 +378,22 @@ export default function MemberReportView() {
                   <th className="px-3 py-2 font-medium">이름</th>
                   <th className="px-3 py-2 font-medium">역할</th>
                   <th className="px-3 py-2 font-medium">직책</th>
-                  <th className="px-3 py-2 font-medium">최근 접속</th>
-                  <th className="px-3 py-2 text-right font-medium">출석/활동</th>
+                  <th className="px-3 py-2 font-medium">로얄티</th>
+                  <th className="px-3 py-2 text-right font-medium">출석/활동/콘텐츠</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {staffAlerts.map((r) => (
                   <tr key={r.userId} className="hover:bg-rose-50/30">
-                    <td className="px-3 py-2 font-medium">{r.name}</td>
+                    <td className="px-3 py-2 font-medium">
+                      <a href={`/profile/${r.userId}`} className="hover:underline">{r.name}</a>
+                    </td>
                     <td className="px-3 py-2"><Badge variant="outline" className="text-[10px]">{ROLE_LABEL[r.role]}</Badge></td>
                     <td className="px-3 py-2 text-xs text-muted-foreground">{r.position ?? "—"}</td>
-                    <td className="px-3 py-2 text-xs">{formatDays(r.daysSinceLogin)}</td>
-                    <td className="px-3 py-2 text-right text-xs">{r.attendanceCount} / {r.activityCount}</td>
+                    <td className="px-3 py-2 font-bold tabular-nums">{r.loyaltyScore}</td>
+                    <td className="px-3 py-2 text-right text-xs">
+                      {r.attendanceCount} / {r.activityCount} / {r.postCount + r.commentCount}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -280,22 +428,22 @@ export default function MemberReportView() {
                   <span className="w-12 text-right text-sm font-bold tabular-nums">{r.loyaltyScore}</span>
                 </div>
                 <div className="mt-1.5 flex flex-wrap gap-1 pl-8 text-[10px] text-muted-foreground">
-                  <ScoreChip label="접속" value={r.scoreBreakdown.login} max={35} tone="blue" />
-                  <ScoreChip label="출석" value={r.scoreBreakdown.attendance} max={25} tone="emerald" />
-                  <ScoreChip label="활동" value={r.scoreBreakdown.activity} max={25} tone="violet" />
+                  <ScoreChip label="참여" value={r.scoreBreakdown.engagement} max={30} tone="emerald" />
+                  <ScoreChip label="콘텐츠" value={r.scoreBreakdown.content} max={25} tone="blue" />
+                  <ScoreChip label="연구" value={r.scoreBreakdown.research} max={25} tone="violet" />
                   <ScoreChip label="운영진" value={r.scoreBreakdown.staff} max={10} tone="amber" />
-                  <ScoreChip label="콘텐츠" value={r.scoreBreakdown.content} max={5} tone="slate" />
+                  <ScoreChip label="후기" value={r.scoreBreakdown.review} max={10} tone="slate" />
                 </div>
               </li>
             ))}
           </ol>
         </section>
 
-        {/* 장기 미접속 */}
+        {/* 저활동·휴면 회원 */}
         <section className="rounded-xl border bg-white p-5">
           <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
             <Clock size={16} className="text-amber-600" />
-            장기 미접속 회원 (60일+)
+            저활동·휴면 회원 (loyalty 15 미만 우선)
           </div>
           {dormantList.length === 0 ? (
             <p className="rounded-lg border border-dashed bg-muted/20 p-4 text-center text-xs text-muted-foreground">
@@ -305,11 +453,10 @@ export default function MemberReportView() {
             <ul className="space-y-1.5">
               {dormantList.map((r) => (
                 <li key={r.userId} className="flex items-center gap-2 rounded-lg border bg-muted/10 px-3 py-2 text-sm">
-                  <span className="flex-1 truncate font-medium">{r.name}</span>
+                  <a href={`/profile/${r.userId}`} className="flex-1 truncate font-medium hover:underline">{r.name}</a>
                   <Badge variant="outline" className="text-[10px]">{ROLE_LABEL[r.role]}</Badge>
-                  <span className="w-20 text-right text-xs text-muted-foreground tabular-nums">
-                    {formatDays(r.daysSinceLogin)}
-                  </span>
+                  <Badge variant="outline" className={cn("text-[10px]", segmentColor(r.segment))}>{segmentLabel(r.segment)}</Badge>
+                  <span className="w-10 text-right text-xs font-bold tabular-nums">{r.loyaltyScore}</span>
                 </li>
               ))}
             </ul>
@@ -358,17 +505,20 @@ export default function MemberReportView() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[860px] text-sm">
+          <table className="w-full min-w-[1100px] text-sm">
             <thead className="bg-muted/40 text-xs text-muted-foreground">
               <tr className="text-left">
                 <th className="px-3 py-2 font-medium">이름</th>
                 <th className="px-3 py-2 font-medium">역할/직책</th>
                 <SortableHeader label="로얄티" current={sortKey} dir={sortDir} target="loyaltyScore" onClick={(k) => { setSortKey(k); setSortDir(sortKey === k && sortDir === "desc" ? "asc" : "desc"); }} />
                 <th className="px-3 py-2 font-medium">분류</th>
+                <SortableHeader label="출석" current={sortKey} dir={sortDir} target="attendanceCount" onClick={(k) => { setSortKey(k); setSortDir(sortKey === k && sortDir === "desc" ? "asc" : "desc"); }} />
+                <SortableHeader label="활동" current={sortKey} dir={sortDir} target="activityCount" onClick={(k) => { setSortKey(k); setSortDir(sortKey === k && sortDir === "desc" ? "asc" : "desc"); }} />
+                <SortableHeader label="게시물" current={sortKey} dir={sortDir} target="postCount" onClick={(k) => { setSortKey(k); setSortDir(sortKey === k && sortDir === "desc" ? "asc" : "desc"); }} />
+                <SortableHeader label="댓글" current={sortKey} dir={sortDir} target="commentCount" onClick={(k) => { setSortKey(k); setSortDir(sortKey === k && sortDir === "desc" ? "asc" : "desc"); }} />
+                <SortableHeader label="연구(시간)" current={sortKey} dir={sortDir} target="studyHours" onClick={(k) => { setSortKey(k); setSortDir(sortKey === k && sortDir === "desc" ? "asc" : "desc"); }} />
+                <th className="px-3 py-2 font-medium">계획서</th>
                 <SortableHeader label="최근접속" current={sortKey} dir={sortDir} target="daysSinceLogin" onClick={(k) => { setSortKey(k); setSortDir(sortKey === k && sortDir === "desc" ? "asc" : "desc"); }} />
-                <SortableHeader label="세미나출석" current={sortKey} dir={sortDir} target="attendanceCount" onClick={(k) => { setSortKey(k); setSortDir(sortKey === k && sortDir === "desc" ? "asc" : "desc"); }} />
-                <SortableHeader label="활동참여" current={sortKey} dir={sortDir} target="activityCount" onClick={(k) => { setSortKey(k); setSortDir(sortKey === k && sortDir === "desc" ? "asc" : "desc"); }} />
-                <th className="px-3 py-2 font-medium">진행중 직책</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -389,10 +539,21 @@ export default function MemberReportView() {
                     </Badge>
                     {r.staffLowActivity && <Badge variant="outline" className="ml-1 border-rose-200 bg-rose-50 text-[10px] text-rose-700">경보</Badge>}
                   </td>
-                  <td className="px-3 py-2 text-xs">{formatDays(r.daysSinceLogin)}</td>
                   <td className="px-3 py-2 text-center tabular-nums">{r.attendanceCount}</td>
                   <td className="px-3 py-2 text-center tabular-nums">{r.activityCount}</td>
-                  <td className="px-3 py-2 text-center tabular-nums">{r.gradLifeOngoingCount}</td>
+                  <td className="px-3 py-2 text-center tabular-nums">{r.postCount}</td>
+                  <td className="px-3 py-2 text-center tabular-nums">{r.commentCount}</td>
+                  <td className="px-3 py-2 text-center tabular-nums">{r.studyHours > 0 ? r.studyHours.toFixed(1) : "-"}</td>
+                  <td className="px-3 py-2 text-center">
+                    {r.hasResearchProposal ? (
+                      <Badge variant="outline" className="bg-violet-50 text-violet-700 text-[10px]">
+                        <FileText size={10} className="mr-0.5" />보유
+                      </Badge>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">-</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2 text-xs">{formatDays(r.daysSinceLogin)}</td>
                 </tr>
               ))}
             </tbody>
@@ -400,7 +561,9 @@ export default function MemberReportView() {
         </div>
 
         <p className="mt-3 text-[11px] text-muted-foreground">
-          로얄티 점수: 접속(35) + 출석(25) + 활동(25) + 운영진(10) + 콘텐츠(5). 향후 게시물·댓글·관심분야 매칭 추가 예정.
+          로얄티 점수 (총 100): 참여(30) — 출석×3·활동×5 / 콘텐츠(25) — 게시물×3·댓글×1·인터뷰응답×1.5 /
+          연구(25) — 타이머시간÷5·논문글자수÷500·계획서5점 / 운영진(10) — 권한5+직책5 / 후기(10) — 세미나후기×2·강의후기×2.
+          접속 기준은 산출에서 제외하고 보조 정보로만 표시합니다.
         </p>
       </section>
     </div>

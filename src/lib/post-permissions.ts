@@ -17,6 +17,7 @@ export const POST_CATEGORY_RULES: Record<PostCategory, CategoryRule> = {
   staff:     { read: ["sysadmin", "admin", "staff", "president"], write: ["sysadmin", "admin", "staff", "president"] },
   press:     { read: "public", write: ["sysadmin", "admin", "staff", "president"] },
   interview: { read: "public", write: ["sysadmin", "admin", "staff", "president"] },
+  paper_review: { read: "public", write: ["sysadmin", "admin", "member", "staff", "president", "alumni", "advisor"] },
 };
 
 export function canWritePost(category: PostCategory, role: UserRole | null | undefined): boolean {

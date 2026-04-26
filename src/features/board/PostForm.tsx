@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { CATEGORY_LABELS, ACTIVE_POST_CATEGORIES, type Post, type PostCategory, type PostPoll, type InterviewMeta } from "@/types";
+import { CATEGORY_LABELS, ACTIVE_POST_CATEGORIES, type Post, type PostCategory, type PostPoll, type InterviewMeta, type PostLinkedPaper } from "@/types";
 import PollEditor from "./PollEditor";
 import InterviewBuilder from "./InterviewBuilder";
+import LinkedPaperPicker from "./LinkedPaperPicker";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, Send, Save, Eye, PenLine, ImagePlus, X, Loader2 } from "lucide-react";
+import { ArrowLeft, Send, Save, Eye, PenLine, ImagePlus, X, Loader2, BookOpenCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useCreatePost, useUpdatePost } from "./useBoard";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -48,6 +49,8 @@ export default function PostForm({ mode = "create", initialData, initialCategory
       questions: [],
     }
   );
+  const [linkedPaper, setLinkedPaper] = useState<PostLinkedPaper | null>(initialData?.linkedPaper ?? null);
+  const [showPaperPicker, setShowPaperPicker] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { createPost } = useCreatePost();
@@ -100,6 +103,10 @@ export default function PostForm({ mode = "create", initialData, initialCategory
       toast.error("자료실 게시물은 첨부 파일이 1개 이상 필요합니다.");
       return;
     }
+    if (category === "paper_review" && !linkedPaper) {
+      toast.error("교육공학 논문 리뷰 게시판은 리뷰할 논문을 첨부해야 합니다.");
+      return;
+    }
     const isInterview = category === "interview" && isAtLeast(user, "staff");
     if (isInterview) {
       if (!interview.intro.trim()) {
@@ -116,9 +123,10 @@ export default function PostForm({ mode = "create", initialData, initialCategory
     const extra = isInterview
       ? { type: "interview" as const, interview }
       : { type: undefined, interview: undefined };
+    const paperPayload = category === "paper_review" && linkedPaper ? { linkedPaper } : { linkedPaper: undefined };
     try {
       if (mode === "edit" && initialData) {
-        await updatePost({ id: initialData.id, data: { ...data, category, imageUrls, poll: poll ?? undefined, ...extra } });
+        await updatePost({ id: initialData.id, data: { ...data, category, imageUrls, poll: poll ?? undefined, ...extra, ...paperPayload } });
         toast.success("게시글이 수정되었습니다.");
         if (onSubmitSuccess) {
           onSubmitSuccess();
@@ -126,7 +134,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
           router.push(`/board/${initialData.id}`);
         }
       } else {
-        const created = await createPost({ ...data, category, imageUrls, poll: poll ?? undefined, ...extra }) as unknown as { id: string };
+        const created = await createPost({ ...data, category, imageUrls, poll: poll ?? undefined, ...extra, ...paperPayload }) as unknown as { id: string };
         toast.success("게시글이 등록되었습니다.");
         if (created?.id) {
           router.push(`/board/${created.id}`);
@@ -140,6 +148,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
             resources: "/board/resources",
             staff: "/board/staff",
             interview: "/board/interview",
+            paper_review: "/board/paper-review",
           };
           router.push(categoryRoutes[category] ?? "/board");
         }
@@ -291,6 +300,72 @@ export default function PostForm({ mode = "create", initialData, initialCategory
               <p className="mt-1 text-xs text-destructive">{errors.content.message}</p>
             )}
           </div>
+          )}
+
+          {/* 교육공학 논문 리뷰 — 첨부 논문 */}
+          {category === "paper_review" && (
+            <div className="rounded-xl border border-violet-200 bg-violet-50/40 p-4">
+              <div className="flex items-center gap-2">
+                <BookOpenCheck size={16} className="text-violet-700" />
+                <p className="text-sm font-medium text-violet-800">리뷰할 논문 첨부</p>
+              </div>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                내 논문 읽기에 저장한 논문에서 가져오거나 메타데이터를 직접 입력하세요. 다른 회원이 이 글에서 논문을 자기 읽기 목록에 저장할 수 있습니다.
+              </p>
+              {linkedPaper ? (
+                <div className="mt-3 rounded-lg border bg-white p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant="outline"
+                          className={linkedPaper.paperType === "thesis" ? "border-violet-300 bg-violet-50 text-violet-700" : "border-blue-300 bg-blue-50 text-blue-700"}
+                        >
+                          {linkedPaper.paperType === "thesis"
+                            ? linkedPaper.thesisLevel === "doctoral"
+                              ? "박사논문"
+                              : "석사논문"
+                            : "학술논문"}
+                        </Badge>
+                        <span className="text-sm font-semibold">{linkedPaper.title}</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {[linkedPaper.authors, linkedPaper.year, linkedPaper.venue].filter(Boolean).join(" · ")}
+                      </div>
+                      {(linkedPaper.doi || linkedPaper.url) && (
+                        <div className="text-xs text-muted-foreground">
+                          {linkedPaper.doi && <span className="mr-2">DOI: {linkedPaper.doi}</span>}
+                          {linkedPaper.url && (
+                            <a href={linkedPaper.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+                              원문 링크
+                            </a>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-1">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setShowPaperPicker(true)}>
+                        변경
+                      </Button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => setLinkedPaper(null)}>
+                        <X size={12} />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <Button type="button" variant="outline" size="sm" className="mt-3" onClick={() => setShowPaperPicker(true)}>
+                  <BookOpenCheck size={14} className="mr-1.5" />
+                  논문 첨부하기
+                </Button>
+              )}
+              <LinkedPaperPicker
+                open={showPaperPicker}
+                onOpenChange={setShowPaperPicker}
+                userId={user?.id}
+                onSelect={setLinkedPaper}
+              />
+            </div>
           )}
 
           {/* 온라인 인터뷰 (인터뷰 게시판 + staff 이상) */}

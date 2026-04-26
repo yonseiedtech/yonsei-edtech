@@ -31,6 +31,7 @@ import ShareButton from "@/components/ShareButton";
 import { PostArticleJsonLd } from "@/components/seo/JsonLd";
 import InterviewPlayer from "@/features/board/InterviewPlayer";
 import InterviewResponses from "@/features/board/InterviewResponses";
+import LinkedPaperCard from "@/features/board/LinkedPaperCard";
 import { useMyInterviewForPost } from "@/features/board/interview-store";
 import { Mic } from "lucide-react";
 import LoginModal from "@/features/auth/LoginModal";
@@ -156,6 +157,7 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
       resources: "/board/resources",
       staff: "/board/staff",
       interview: "/board/interview",
+      paper_review: "/board/paper-review",
       press: "/newsletter",
     };
     router.push(routes[cat] ?? "/board");
@@ -229,6 +231,14 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
                 삭제
               </Button>
             </div>
+          )}
+
+          {post.linkedPaper && (
+            <LinkedPaperCard
+              paper={post.linkedPaper}
+              authorIsMe={isAuthor}
+              onLoginRequired={() => setShowLoginModal(true)}
+            />
           )}
 
           {post.type === "interview" && post.interview ? (

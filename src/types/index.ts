@@ -283,7 +283,8 @@ export interface SeminarSpeaker {
 
 // ── 게시판 ──
 // board-community-v2: "press"는 "promotion"으로 통합, "resources" 자료실 신규. 마이그레이션 기간 동안 "press" 읽기 호환 유지.
-export const POST_CATEGORIES = ["notice", "seminar", "free", "promotion", "resources", "staff", "interview"] as const;
+// Sprint 41d: "paper_review" 교육공학 논문 리뷰 게시판 추가 — 내 논문 읽기와 양방향 연동
+export const POST_CATEGORIES = ["notice", "seminar", "free", "promotion", "resources", "staff", "interview", "paper_review"] as const;
 
 export interface PostPollOption {
   id: string;
@@ -311,17 +312,39 @@ export interface PostAttachment {
   downloadCount?: number;
 }
 
+/**
+ * Sprint 41d — 게시물에 첨부된 논문 메타데이터.
+ * paper_review 카테고리 글에서 작성자가 본인의 ResearchPaper를 가져오거나, 직접 입력해 첨부할 수 있음.
+ * 다른 사용자가 이 메타를 자신의 ResearchPaper(논문 읽기)에 임포트할 수 있도록 표준 필드 보존.
+ */
+export interface PostLinkedPaper {
+  paperType: PaperType;
+  thesisLevel?: ThesisLevel;
+  title: string;
+  authors?: string;
+  year?: number;
+  venue?: string;
+  doi?: string;
+  url?: string;
+  /** 작성자가 가져올 때 원본 ResearchPaper id */
+  sourceResearchPaperId?: string;
+  /** 졸업생 학위논문 DB 에서 가져왔을 경우 원본 thesis id */
+  sourceAlumniThesisId?: string;
+}
+
 export interface Post {
   id: string;
   title: string;
   content: string;
-  category: "notice" | "seminar" | "free" | "promotion" | "resources" | "staff" | "press" | "interview"; // "press"는 legacy
+  category: "notice" | "seminar" | "free" | "promotion" | "resources" | "staff" | "press" | "interview" | "paper_review"; // "press"는 legacy
   imageUrls?: string[];
   attachments?: PostAttachment[];
   poll?: PostPoll;
   /** 특수 글타입. 지정되면 content 대신 전용 플레이어가 사용됨 */
   type?: "interview";
   interview?: InterviewMeta;
+  /** Sprint 41d — paper_review 글에 연결된 논문 메타데이터 */
+  linkedPaper?: PostLinkedPaper;
   authorId: string;
   authorName: string;
   viewCount: number;
@@ -737,6 +760,7 @@ export const CATEGORY_LABELS: Record<PostCategory, string> = {
   staff: "운영진 게시판",
   press: "보도자료", // legacy, 마이그레이션 이후 제거 예정
   interview: "인터뷰 게시판",
+  paper_review: "교육공학 논문 리뷰",
 };
 
 /** 현재 활성 카테고리 (글쓰기·탭에 노출) - press 제외 */
@@ -748,6 +772,7 @@ export const ACTIVE_POST_CATEGORIES: Exclude<PostCategory, "press">[] = [
   "resources",
   "staff",
   "interview",
+  "paper_review",
 ];
 
 // ── 세미나 ──

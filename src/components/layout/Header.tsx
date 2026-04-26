@@ -76,6 +76,7 @@ const PUBLIC_NAV: NavGroup[] = [
       { href: "/notices", label: "공지사항" },
       { href: "/board/free", label: "자유게시판" },
       { href: "/board/interview", label: "인터뷰 게시판" },
+      { href: "/board/paper-review", label: "교육공학 논문 리뷰" },
       { href: "/board/promotion", label: "홍보게시판" },
       { href: "/board/resources", label: "자료실" },
       { href: "/gallery", label: "포토갤러리" },

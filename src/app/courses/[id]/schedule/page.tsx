@@ -352,10 +352,12 @@ function ScheduleContent({ courseId }: { courseId: string }) {
     }
 
     // 모든 수업일이 이미 같은 모드인지 확인 (전부 in_person 기본값일 때도 포함)
+    // 같은 date에 여러 row(legacy 중복)가 누적되어 있다면 정합화 대상이므로 false 처리
     const allSame = args.classDates.every((d) => {
-      const ex = args.existing.find((s) => s.date === d);
-      const cur = ex?.mode ?? "in_person";
-      return cur === args.mode;
+      const exs = args.existing.filter((s) => s.date === d);
+      if (exs.length === 0) return args.mode === "in_person";
+      if (exs.length > 1) return false;
+      return exs[0].mode === args.mode;
     });
     if (allSame) {
       toast.info(`이미 ${CLASS_SESSION_MODE_LABELS[args.mode]}(으)로 설정되어 있습니다.`);
@@ -363,16 +365,21 @@ function ScheduleContent({ courseId }: { courseId: string }) {
     }
 
     // ── Optimistic update — 서버 응답을 기다리지 않고 캐시 먼저 변경 ──
+    // in_person으로 reset 시 기존 row를 모두 제거(기본값 복귀), 그 외 mode는 첫 row만 유지하고 중복은 삭제
     const queryKey = ["class-sessions", "by-course", courseId];
     const prev = qc.getQueryData<{ data: ClassSession[] }>(queryKey);
     if (prev) {
-      const next: ClassSession[] = [...(prev.data ?? [])];
+      let next: ClassSession[] = [...(prev.data ?? [])];
       const nowIso = new Date().toISOString();
       for (const d of args.classDates) {
-        const idx = next.findIndex((s) => s.date === d);
-        if (idx >= 0) {
-          next[idx] = { ...next[idx], mode: args.mode };
-        } else if (args.mode !== "in_person") {
+        const sameDate = next.filter((s) => s.date === d);
+        if (args.mode === "in_person") {
+          // 기본값(대면)으로 복귀 → 같은 date의 모든 row 제거
+          if (sameDate.length > 0) {
+            const removeIds = new Set(sameDate.map((s) => s.id));
+            next = next.filter((s) => !removeIds.has(s.id));
+          }
+        } else if (sameDate.length === 0) {
           next.push({
             id: `__optimistic_${d}_${Date.now()}`,
             courseOfferingId: courseId,
@@ -382,6 +389,17 @@ function ScheduleContent({ courseId }: { courseId: string }) {
             createdAt: nowIso,
             updatedAt: nowIso,
           } as ClassSession);
+        } else {
+          // 첫 번째 row의 mode 변경, 나머지 중복 row는 제거
+          const [keep, ...dups] = sameDate;
+          const idxKeep = next.findIndex((s) => s.id === keep.id);
+          if (idxKeep >= 0) {
+            next[idxKeep] = { ...next[idxKeep], mode: args.mode, updatedAt: nowIso };
+          }
+          if (dups.length > 0) {
+            const removeIds = new Set(dups.map((s) => s.id));
+            next = next.filter((s) => !removeIds.has(s.id));
+          }
         }
       }
       qc.setQueryData(queryKey, { ...prev, data: next });
@@ -391,21 +409,31 @@ function ScheduleContent({ courseId }: { courseId: string }) {
       // 병렬 처리로 속도 개선
       await Promise.all(
         args.classDates.map(async (d) => {
-          const ex = args.existing.find((s) => s.date === d);
-          if (ex) {
-            if (ex.mode !== args.mode) {
-              await classSessionsApi.update(ex.id, { mode: args.mode });
+          const exs = args.existing.filter((s) => s.date === d);
+          if (args.mode === "in_person") {
+            // 대면(기본값)으로 복귀 — 같은 date의 모든 기존 row 삭제하여 stale 데이터 잔존 차단
+            for (const ex of exs) {
+              await classSessionsApi.delete(ex.id);
             }
             return;
           }
-          // in_person이 기본값이므로 세션 row를 만들지 않음 (저장 공간 절약)
-          if (args.mode === "in_person") return;
-          await classSessionsApi.create({
-            courseOfferingId: courseId,
-            date: d,
-            mode: args.mode,
-            createdBy: user.id,
-          });
+          if (exs.length === 0) {
+            await classSessionsApi.create({
+              courseOfferingId: courseId,
+              date: d,
+              mode: args.mode,
+              createdBy: user.id,
+            });
+            return;
+          }
+          // 첫 번째 row만 유지(update), 나머지 중복은 삭제하여 단일 row 보장
+          const [keep, ...dups] = exs;
+          if (keep.mode !== args.mode) {
+            await classSessionsApi.update(keep.id, { mode: args.mode });
+          }
+          for (const ex of dups) {
+            await classSessionsApi.delete(ex.id);
+          }
         }),
       );
       // 정합화 — 임시 ID를 진짜 ID로 교체
