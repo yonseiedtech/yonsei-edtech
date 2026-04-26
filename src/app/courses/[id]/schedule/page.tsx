@@ -112,6 +112,13 @@ function formatWeekdayLabel(weekdays: number[]): string {
   return weekdays.map((d) => WEEKDAY_KOR[d]).join("·") + "요일";
 }
 
+/** "2026-04-26" → "4/26(일)" — 주차 안의 실제 수업일 표시용 */
+function formatClassDate(yyyymmdd: string): string {
+  const [y, m, d] = yyyymmdd.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  return `${m}/${d}(${WEEKDAY_KOR[dt.getDay()]})`;
+}
+
 const TODO_TYPES: CourseTodoType[] = [
   "assignment",
   "paper_reading",
@@ -311,23 +318,30 @@ function ScheduleContent({ courseId }: { courseId: string }) {
     }
 
     try {
-      for (const d of args.classDates) {
-        const ex = args.existing.find((s) => s.date === d);
-        if (ex) {
-          if (ex.mode !== args.mode) {
-            await classSessionsApi.update(ex.id, { mode: args.mode });
+      // 병렬 처리로 속도 개선
+      await Promise.all(
+        args.classDates.map(async (d) => {
+          const ex = args.existing.find((s) => s.date === d);
+          if (ex) {
+            if (ex.mode !== args.mode) {
+              await classSessionsApi.update(ex.id, { mode: args.mode });
+            }
+            return;
           }
-        } else {
-          // 기본값(in_person)으로 두고 싶을 땐 세션 미생성 — in_person 클릭 시 굳이 행 추가하지 않음
-          if (args.mode === "in_person") continue;
+          // in_person이 기본값이므로 세션 row를 만들지 않음 (저장 공간 절약)
+          if (args.mode === "in_person") return;
           await classSessionsApi.create({
             courseOfferingId: courseId,
             date: d,
             mode: args.mode,
             createdBy: user.id,
           });
-        }
-      }
+        }),
+      );
+      // 캐시 무효화 + 강제 refetch (UI에 즉시 반영되지 않는 이슈 방지)
+      await qc.invalidateQueries({
+        queryKey: ["class-sessions", "by-course", courseId],
+      });
       await qc.refetchQueries({
         queryKey: ["class-sessions", "by-course", courseId],
         type: "active",
@@ -335,6 +349,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
       await qc.invalidateQueries({ queryKey: ["class-sessions"] });
       toast.success(`${CLASS_SESSION_MODE_LABELS[args.mode]}(으)로 변경했습니다.`);
     } catch (e) {
+      console.error("[quickSetWeekMode]", e);
       toast.error(`변경 실패: ${(e as Error).message}`);
     }
   }
@@ -704,55 +719,32 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                     </div>
                   )}
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="secondary" className="text-xs">
                         {w.weekNo}주차
                       </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {w.startDate} ~ {w.endDate}
-                      </span>
+                      {classDates.length > 0 ? (
+                        <span className="text-xs font-medium text-slate-700">
+                          {classDates.map((d) => formatClassDate(d)).join(", ")}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          {w.startDate} ~ {w.endDate}
+                        </span>
+                      )}
                       {isCurrentWeek && (
                         <Badge className="bg-primary text-white text-[10px]">
                           이번 주
                         </Badge>
                       )}
                     </div>
-                    <div className="flex gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() =>
-                          setNoteDraft({ date: w.startDate, content: "" })
-                        }
-                      >
-                        <NotebookPen size={12} className="mr-1" /> 메모
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() =>
-                          setTodoDraft(blankTodoDraft(firstClassDate))
-                        }
-                      >
-                        <ListChecks size={12} className="mr-1" /> 할 일
-                      </Button>
-                    </div>
                   </div>
 
                   {/* 수업 운영 */}
                   {ws.length === 0 ? (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setNoteDraft({ date: firstClassDate, content: "" })
-                      }
-                      className="group mt-2 flex w-full items-center gap-2 rounded-md border border-dashed border-slate-200 px-3 py-2 text-left text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
-                    >
-                      <NotebookPen size={14} className="shrink-0" />
-                      <span>
-                        {dayLabel} 수업 메모 없어요. 지금 한번 남겨보시겠어요?
-                      </span>
-                    </button>
+                    <p className="mt-2 rounded-md border border-dashed border-slate-200 bg-slate-50/50 px-3 py-2 text-[11px] text-muted-foreground">
+                      운영진이 등록한 변경사항 없음 · 기본 <span className="font-medium text-emerald-700">대면</span> 진행
+                    </p>
                   ) : (
                     <ul className="mt-2 space-y-1">
                       {ws.map((s) => (
@@ -817,12 +809,25 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                     </ul>
                   )}
 
-                  {/* 개인 메모 */}
-                  {ns.length > 0 && (
-                    <div className="mt-3 rounded-md border border-blue-100 bg-blue-50/30 p-2">
-                      <p className="mb-1 text-[10px] font-medium text-blue-700">
-                        내 메모
+                  {/* 개인 메모 — 항상 표시 (인라인 추가 버튼) */}
+                  <div className="mt-3 rounded-md border border-blue-100 bg-blue-50/30 p-2">
+                    <div className="mb-1.5 flex items-center justify-between">
+                      <p className="text-[10px] font-medium text-blue-700">
+                        내 메모{ns.length > 0 ? ` (${ns.length})` : ""}
                       </p>
+                      <button
+                        type="button"
+                        onClick={() => setNoteDraft({ date: firstClassDate, content: "" })}
+                        className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-700 hover:bg-blue-200"
+                      >
+                        <Plus size={11} /> 메모 추가
+                      </button>
+                    </div>
+                    {ns.length === 0 ? (
+                      <p className="text-[11px] text-blue-700/70">
+                        이번 주 ({dayLabel}) 수업 메모를 남겨보세요.
+                      </p>
+                    ) : (
                       <ul className="space-y-1">
                         {ns.map((n) => (
                           <li
@@ -860,15 +865,28 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                           </li>
                         ))}
                       </ul>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
-                  {/* 개인 할 일 */}
-                  {ts.length > 0 && (
-                    <div className="mt-2 rounded-md border border-amber-100 bg-amber-50/30 p-2">
-                      <p className="mb-1 text-[10px] font-medium text-amber-700">
-                        내 할 일
+                  {/* 개인 할 일 — 항상 표시 (인라인 추가 버튼) */}
+                  <div className="mt-2 rounded-md border border-amber-100 bg-amber-50/30 p-2">
+                    <div className="mb-1.5 flex items-center justify-between">
+                      <p className="text-[10px] font-medium text-amber-700">
+                        내 할 일{ts.length > 0 ? ` (${ts.filter((t) => !t.completed).length}/${ts.length})` : ""}
                       </p>
+                      <button
+                        type="button"
+                        onClick={() => setTodoDraft(blankTodoDraft(firstClassDate))}
+                        className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 hover:bg-amber-200"
+                      >
+                        <Plus size={11} /> 할 일 추가
+                      </button>
+                    </div>
+                    {ts.length === 0 ? (
+                      <p className="text-[11px] text-amber-700/70">
+                        이번 주 과제·논문 읽기 등 할 일을 추가해보세요.
+                      </p>
+                    ) : (
                       <ul className="space-y-1">
                         {ts.map((t) => (
                           <li
@@ -932,8 +950,8 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                           </li>
                         ))}
                       </ul>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </li>
               );
             })}
@@ -1168,7 +1186,26 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-xs font-medium text-muted-foreground">기한 (선택)</span>
+                <span className="text-xs font-medium text-muted-foreground">
+                  관련 수업일 (선택) · 비워두면 주차 미배정으로 분류됩니다
+                </span>
+                <Input
+                  type="date"
+                  value={todoDraft.sessionDate ?? ""}
+                  onChange={(e) => {
+                    const v = e.target.value || undefined;
+                    setTodoDraft({
+                      ...todoDraft,
+                      sessionDate: v,
+                      dueDate: todoDraft.dueDate || defaultDueFromSession(v),
+                    });
+                  }}
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-xs font-medium text-muted-foreground">
+                  기한 (선택) · 수업일 선택 시 자동으로 하루 전 입력됩니다
+                </span>
                 <Input
                   type="date"
                   value={todoDraft.dueDate}

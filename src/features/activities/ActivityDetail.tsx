@@ -189,6 +189,25 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
     },
   });
 
+  // 운영진 직접 추가 — 회원을 참여자로 추가 후 역할 다이얼로그 자동 오픈
+  const addStaffMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      if (!activity) return memberId;
+      if (!participants.includes(memberId)) {
+        await activitiesApi.update(activityId, { participants: [...participants, memberId] });
+      }
+      return memberId;
+    },
+    onSuccess: async (memberId) => {
+      await queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+      const m = memberMap.get(memberId);
+      setRoleInput("");
+      setRoleDialog({ pid: memberId, name: m?.name ?? "(이름 미확인)" });
+      toast.success("운영진으로 추가되었습니다. 역할을 지정해주세요.");
+    },
+    onError: () => toast.error("추가에 실패했습니다."),
+  });
+
   // 참여자 역할 저장
   const updateRoleMutation = useMutation({
     mutationFn: async ({ pid, role }: { pid: string; role: string }) => {
@@ -327,57 +346,59 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
         </Link>
 
         {/* 헤더 */}
-        <div className="rounded-2xl border bg-white p-6">
+        <div className="rounded-2xl border bg-white p-6 shadow-sm sm:p-8">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary" className={cn("text-xs", STATUS_COLORS[activity.status])}>{STATUS_LABELS[activity.status]}</Badge>
             {activity.recruitmentStatus && !(type === "study" && (activity.recruitmentStatus === "in_progress" || activity.recruitmentStatus === "completed")) && (
               <Badge variant="secondary" className={cn("text-xs", RECRUIT_COLORS[activity.recruitmentStatus])}>{type === "study" ? (RECRUIT_LABELS_STUDY[activity.recruitmentStatus] ?? RECRUIT_LABELS[activity.recruitmentStatus]) : RECRUIT_LABELS[activity.recruitmentStatus]}</Badge>
             )}
           </div>
-          <h1 className="mt-2 text-2xl font-bold">{activity.title}</h1>
-          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1"><Calendar size={14} />{activity.date}{activity.endDate ? ` ~ ${activity.endDate}` : ""}</span>
+          <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight sm:mt-4 sm:text-3xl">{activity.title}</h1>
+          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground sm:mt-5">
+            <span className="flex items-center gap-1.5"><Calendar size={14} />{activity.date}{activity.endDate ? ` ~ ${activity.endDate}` : ""}</span>
             {(activity.year || activity.semester) && (
               <Badge variant="secondary" className="bg-blue-50 text-[10px] text-blue-700">
                 {formatSemester(activity.year, activity.semester)}
               </Badge>
             )}
-            {activity.leader && <span className="flex items-center gap-1"><User size={14} />{activity.leader}</span>}
-            {activity.location && <span className="flex items-center gap-1"><MapPin size={14} />{activity.location}</span>}
-            <span className="flex items-center gap-1"><Users size={14} />참여 {participants.length}{activity.maxParticipants ? `/${activity.maxParticipants}` : ""}명</span>
-            {activity.conferenceUrl && <a href={activity.conferenceUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-primary hover:underline"><Globe size={14} />학회 홈페이지</a>}
+            {activity.leader && <span className="flex items-center gap-1.5"><User size={14} />{activity.leader}</span>}
+            {activity.location && <span className="flex items-center gap-1.5"><MapPin size={14} />{activity.location}</span>}
+            <span className="flex items-center gap-1.5"><Users size={14} />참여 {participants.length}{activity.maxParticipants ? `/${activity.maxParticipants}` : ""}명</span>
+            {activity.conferenceUrl && <a href={activity.conferenceUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-primary hover:underline"><Globe size={14} />학회 홈페이지</a>}
           </div>
 
-          {/* 참여 버튼 */}
-          <div className="mt-4">
-            {!isJoined && !hasApplied && recruitmentStatus === "recruiting" && registrationMethod === "open" && (
-              type === "external" ? (
-                <Button size="sm" onClick={() => {
-                  setApplyName(user?.name ?? "");
-                  setApplyStudentId(user?.studentId ?? "");
-                  setApplyEmail(user?.email ?? "");
-                  setApplyPhone("");
-                  setApplyDialog(true);
-                }}>
-                  <UserPlus size={14} className="mr-1" />참가 신청{!user && " (비회원 가능)"}
-                </Button>
-              ) : user ? (
-                <Button size="sm" onClick={() => applyMutation.mutate()} disabled={applyMutation.isPending}>
-                  <UserPlus size={14} className="mr-1" />참여 신청
-                </Button>
-              ) : (
-                <Link href={`/login?next=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "")}`} className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-xs hover:bg-primary/90">
-                  <UserPlus size={14} className="mr-1" />로그인 후 참여 신청
-                </Link>
-              )
-            )}
-            {isJoined && <Badge className="bg-green-50 text-green-700"><Check size={12} className="mr-1" />참여 중</Badge>}
-            {hasApplied && !isJoined && <Badge className="bg-amber-50 text-amber-700"><Clock size={12} className="mr-1" />신청 대기중</Badge>}
-          </div>
+          {/* 참여 버튼 — 헤더와 시각적으로 분리 */}
+          {(((!isJoined && !hasApplied && recruitmentStatus === "recruiting" && registrationMethod === "open") || isJoined || (hasApplied && !isJoined))) && (
+            <div className="mt-6 border-t border-slate-100 pt-5 sm:mt-7 sm:pt-6">
+              {!isJoined && !hasApplied && recruitmentStatus === "recruiting" && registrationMethod === "open" && (
+                type === "external" ? (
+                  <Button size="lg" className="w-full font-semibold sm:w-auto" onClick={() => {
+                    setApplyName(user?.name ?? "");
+                    setApplyStudentId(user?.studentId ?? "");
+                    setApplyEmail(user?.email ?? "");
+                    setApplyPhone("");
+                    setApplyDialog(true);
+                  }}>
+                    <UserPlus size={16} className="mr-1.5" />참가 신청{!user && " (비회원 가능)"}
+                  </Button>
+                ) : user ? (
+                  <Button size="lg" className="w-full font-semibold sm:w-auto" onClick={() => applyMutation.mutate()} disabled={applyMutation.isPending}>
+                    <UserPlus size={16} className="mr-1.5" />참여 신청
+                  </Button>
+                ) : (
+                  <Link href={`/login?next=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "")}`} className="inline-flex h-11 w-full items-center justify-center rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 sm:w-auto">
+                    <UserPlus size={16} className="mr-1.5" />로그인 후 참여 신청
+                  </Link>
+                )
+              )}
+              {isJoined && <Badge className="bg-green-50 px-3 py-1 text-sm text-green-700"><Check size={14} className="mr-1" />참여 중</Badge>}
+              {hasApplied && !isJoined && <Badge className="bg-amber-50 px-3 py-1 text-sm text-amber-700"><Clock size={14} className="mr-1" />신청 대기중</Badge>}
+            </div>
+          )}
         </div>
 
-        {/* 탭 */}
-        <div className="mt-6 flex overflow-x-auto border-b">
+        {/* 탭 — 헤더와 본문 사이 여백 확대 */}
+        <div className="mt-8 flex overflow-x-auto border-b">
           {TABS.filter((t) => t.show).map((tab) => (
             <button
               key={tab.value}
@@ -733,41 +754,57 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             if (activeTab === "staff") {
               return (
                 <div className="space-y-3">
-                  {/* 운영진 추가: 회원 검색 후 추가하면 일반 참가자로 들어가며,
-                      역할을 부여하면 자동으로 운영진으로 분류됨 */}
+                  {/* 운영진 직접 추가 — 회원 검색 → 추가 → 역할 입력 다이얼로그 자동 오픈 */}
                   {canManageParticipants && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 space-y-2">
+                      <h3 className="text-sm font-semibold flex items-center gap-1 text-amber-900">
+                        <UserCog size={14} />운영진 추가
+                      </h3>
+                      <p className="text-xs text-amber-900/80">
+                        {type === "external"
+                          ? "학술대회 운영진(담당자·발표자·진행자·자원봉사 등)을 회원에서 검색하여 직접 추가합니다."
+                          : "운영진(담당자·발표자·기록자 등)을 회원에서 검색하여 직접 추가합니다."}
+                        {" "}추가 즉시 역할 입력 창이 열립니다.
+                      </p>
+                      <MemberAutocomplete
+                        value=""
+                        onSelect={(m) => addStaffMutation.mutate(m.id)}
+                        excludeIds={participants}
+                        placeholder="회원 이름 또는 학번으로 검색하여 운영진 추가"
+                      />
+                    </div>
+                  )}
+
+                  {/* 기존 참여자에 역할 부여 — 참여자 탭에서 추가된 일반 참가자에게 역할을 부여하면 운영진으로 승격 */}
+                  {canManageParticipants && participants.length > 0 && (
                     <div className="rounded-xl border bg-white p-4">
                       <h3 className="mb-2 text-sm font-semibold flex items-center gap-1">
-                        <Pencil size={14} />역할 등록
+                        <Pencil size={14} />기존 참여자 역할 부여
                       </h3>
                       <p className="mb-2 text-xs text-muted-foreground">
-                        참여자에게 담당자·발표자·기록자 등 역할을 부여합니다. 역할이 부여되면 자동으로 <strong>운영진</strong>으로 분류됩니다.
+                        참여자 탭에서 추가된 회원에게 역할을 부여하면 자동으로 <strong>운영진</strong>으로 분류됩니다.
                       </p>
-                      {participants.length === 0 ? (
-                        <p className="text-xs text-muted-foreground">먼저 참여자 탭에서 회원을 추가해주세요.</p>
-                      ) : (
-                        <div className="flex flex-wrap gap-2">
-                          {participants.map((pid) => {
-                            const m = memberMap.get(pid);
-                            const role = participantRoles[pid];
-                            return (
-                              <button
-                                key={`role-${pid}`}
-                                onClick={() => {
-                                  setRoleInput(role ?? "");
-                                  setRoleDialog({ pid, name: m?.name ?? "(이름 미확인)" });
-                                }}
-                                className="inline-flex items-center gap-1.5 rounded-md border bg-white px-3 py-1.5 text-xs hover:bg-muted/50"
-                              >
-                                <span className="font-medium">{m?.name ?? "(이름 미확인)"}</span>
-                                {role
-                                  ? <Badge variant="secondary" className="bg-sky-50 text-sky-700 text-[10px]">{role}</Badge>
-                                  : <span className="text-muted-foreground">+ 역할</span>}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
+                      <div className="flex flex-wrap gap-2">
+                        {participants.map((pid) => {
+                          const m = memberMap.get(pid);
+                          const role = participantRoles[pid];
+                          return (
+                            <button
+                              key={`role-${pid}`}
+                              onClick={() => {
+                                setRoleInput(role ?? "");
+                                setRoleDialog({ pid, name: m?.name ?? "(이름 미확인)" });
+                              }}
+                              className="inline-flex items-center gap-1.5 rounded-md border bg-white px-3 py-1.5 text-xs hover:bg-muted/50"
+                            >
+                              <span className="font-medium">{m?.name ?? "(이름 미확인)"}</span>
+                              {role
+                                ? <Badge variant="secondary" className="bg-sky-50 text-sky-700 text-[10px]">{role}</Badge>
+                                : <span className="text-muted-foreground">+ 역할</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
 
@@ -1105,16 +1142,19 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
           )}
         </div>
 
-        {/* 대외활동 참가 신청 Dialog */}
+        {/* 대외활동 참가 신청 Dialog — 섹션 단위 그룹화 + 여백 확대 */}
         <Dialog open={applyDialog} onOpenChange={setApplyDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader><DialogTitle>참가 신청{!user && " (비회원)"}</DialogTitle></DialogHeader>
+          <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogHeader className="pb-2">
+              <DialogTitle className="text-xl font-bold">참가 신청{!user && " (비회원)"}</DialogTitle>
+              <p className="mt-1 text-xs text-muted-foreground">{activity?.title}</p>
+            </DialogHeader>
             {!user && (
-              <p className="rounded-lg bg-primary/5 p-3 text-xs text-muted-foreground">
+              <p className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs text-slate-700">
                 비회원으로도 신청할 수 있습니다. 추후 <strong>동일한 학번(또는 이메일)</strong>으로 회원가입하시면 이번 신청 기록이 자동으로 회원 활동에 연동됩니다.
               </p>
             )}
-            <div className="grid gap-3">
+            <div className="grid gap-5">
               {(() => {
                 const allTypes = ["speaker", "volunteer", "attendee"] as const;
                 const configured = activity?.enabledParticipantTypes;
@@ -1123,8 +1163,8 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   : allTypes;
                 const cols = enabledTypes.length === 1 ? "grid-cols-1" : enabledTypes.length === 2 ? "grid-cols-2" : "grid-cols-3";
                 return (
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold">참석 유형 <span className="text-red-500">*</span></label>
+                  <section>
+                    <label className="mb-2.5 block text-sm font-semibold text-slate-800">참석 유형 <span className="text-red-500">*</span></label>
                     <div className={cn("grid gap-2", cols)}>
                       {enabledTypes.map((t) => {
                         const active = applyParticipantType === t;
@@ -1134,7 +1174,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                             type="button"
                             onClick={() => setApplyParticipantType(t)}
                             className={cn(
-                              "flex flex-col items-center justify-center gap-1 rounded-xl border-2 px-3 py-3 text-center transition-all",
+                              "flex flex-col items-center justify-center gap-1 rounded-xl border-2 px-3 py-3.5 text-center transition-all",
                               active
                                 ? `${EXTERNAL_PARTICIPANT_TYPE_COLORS[t]} border-current shadow-sm scale-[1.02]`
                                 : "border-input bg-white text-slate-600 hover:border-primary/40 hover:bg-muted/50 dark:bg-card",
@@ -1149,33 +1189,56 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                         );
                       })}
                     </div>
-                  </div>
+                  </section>
                 );
               })()}
-              <div><label className="mb-1 block text-sm font-medium">이름 *</label>
-                <Input value={applyName} onChange={(e) => setApplyName(e.target.value)} /></div>
-              <div><label className="mb-1 block text-sm font-medium">학번 {!user && "*"}</label>
-                <Input value={applyStudentId} onChange={(e) => setApplyStudentId(e.target.value)} placeholder={!user ? "예: 2023432001 (회원가입 시 기록 연동)" : undefined} /></div>
-              <div><label className="mb-1 block text-sm font-medium">이메일 {!user && "*"}</label>
-                <Input type="email" value={applyEmail} onChange={(e) => setApplyEmail(e.target.value)} placeholder="name@example.com" /></div>
-              <div><label className="mb-1 block text-sm font-medium">연락처</label>
-                <Input value={applyPhone} onChange={(e) => setApplyPhone(e.target.value)} placeholder="010-0000-0000" /></div>
+
+              <section className="space-y-3 border-t pt-4">
+                <h3 className="text-sm font-semibold text-slate-800">신청자 정보</h3>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-slate-600">이름 <span className="text-red-500">*</span></label>
+                    <Input value={applyName} onChange={(e) => setApplyName(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-slate-600">학번 {!user && <span className="text-red-500">*</span>}</label>
+                    <Input value={applyStudentId} onChange={(e) => setApplyStudentId(e.target.value)} placeholder={!user ? "예: 2023432001" : undefined} />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-slate-600">이메일 {!user && <span className="text-red-500">*</span>}</label>
+                    <Input type="email" value={applyEmail} onChange={(e) => setApplyEmail(e.target.value)} placeholder="name@example.com" />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-slate-600">연락처</label>
+                    <Input value={applyPhone} onChange={(e) => setApplyPhone(e.target.value)} placeholder="010-0000-0000" />
+                  </div>
+                </div>
+              </section>
+
               {applicationForm.length > 0 && (
-                <FormRenderer
-                  fields={applicationForm}
-                  value={applyAnswers}
-                  onChange={(id, v) => setApplyAnswers((prev) => ({ ...prev, [id]: v }))}
-                  scheduleDefaults={{
-                    startDate: activity?.date,
-                    endDate: activity?.endDate || activity?.date,
-                  }}
-                />
+                <section className="space-y-2 border-t pt-4">
+                  <h3 className="text-sm font-semibold text-slate-800">추가 질문</h3>
+                  <FormRenderer
+                    fields={applicationForm}
+                    value={applyAnswers}
+                    onChange={(id, v) => setApplyAnswers((prev) => ({ ...prev, [id]: v }))}
+                    scheduleDefaults={{
+                      startDate: activity?.date,
+                      endDate: activity?.endDate || activity?.date,
+                    }}
+                  />
+                </section>
               )}
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setApplyDialog(false)}>취소</Button>
-              <Button onClick={() => applyMutation.mutate()} disabled={applyMutation.isPending || !applyName.trim() || (!user && (!applyEmail.trim() || !applyStudentId.trim()))}>
-                {applyMutation.isPending && <Loader2 size={14} className="mr-1 animate-spin" />}신청
+            <DialogFooter className="mt-2 gap-2 sm:gap-0">
+              <Button variant="outline" onClick={() => setApplyDialog(false)} className="flex-1 sm:flex-none">취소</Button>
+              <Button
+                size="lg"
+                className="flex-1 font-semibold sm:flex-none"
+                onClick={() => applyMutation.mutate()}
+                disabled={applyMutation.isPending || !applyName.trim() || (!user && (!applyEmail.trim() || !applyStudentId.trim()))}
+              >
+                {applyMutation.isPending && <Loader2 size={14} className="mr-1 animate-spin" />}신청 제출
               </Button>
             </DialogFooter>
           </DialogContent>
