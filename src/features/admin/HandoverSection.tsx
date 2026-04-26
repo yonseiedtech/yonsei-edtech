@@ -18,6 +18,7 @@ import {
 import {
   FileText, Plus, Pencil, Trash2, ChevronDown,
   ChevronUp, Loader2, Heading2, Bold, List, CheckSquare, Printer,
+  Eye, Edit3, Columns2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -50,6 +51,7 @@ export default function HandoverSection() {
     priority: "medium" as HandoverDocument["priority"],
   });
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
+  const [previewMode, setPreviewMode] = useState<"edit" | "split" | "preview">("edit");
 
   function applyMarkdown(action: "heading" | "bold" | "list" | "checkbox") {
     const ta = contentRef.current;
@@ -227,7 +229,7 @@ export default function HandoverSection() {
       )}
 
       <Dialog open={showDocDialog} onOpenChange={setShowDocDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className={cn(previewMode === "split" ? "max-w-4xl" : "max-w-2xl")}>
           <DialogHeader>
             <DialogTitle>{editingDoc ? "문서 수정" : "업무수행 문서 작성"}</DialogTitle>
           </DialogHeader>
@@ -261,56 +263,113 @@ export default function HandoverSection() {
               <Input value={docForm.title} onChange={(e) => setDocForm((f) => ({ ...f, title: e.target.value }))} placeholder="업무 제목" />
             </div>
             <div>
-              <div className="mb-1 flex items-center justify-between">
+              <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
                 <label className="block text-sm font-medium">내용</label>
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => applyMarkdown("heading")}
-                    title="소제목 (## )"
-                    className="rounded border px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
-                  >
-                    <Heading2 size={12} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => applyMarkdown("bold")}
-                    title="굵게 (**)"
-                    className="rounded border px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
-                  >
-                    <Bold size={12} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => applyMarkdown("list")}
-                    title="목록 (- )"
-                    className="rounded border px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
-                  >
-                    <List size={12} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => applyMarkdown("checkbox")}
-                    title="체크박스 (- [ ] )"
-                    className="rounded border px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
-                  >
-                    <CheckSquare size={12} />
-                  </button>
+                <div className="flex items-center gap-2">
+                  {/* 모드 토글 */}
+                  <div className="flex items-center gap-0.5 rounded-md border bg-muted/40 p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewMode("edit")}
+                      title="편집"
+                      className={cn(
+                        "flex items-center gap-1 rounded px-2 py-0.5 text-[11px] transition-colors",
+                        previewMode === "edit" ? "bg-white shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      <Edit3 size={11} /> 편집
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewMode("split")}
+                      title="분할 (편집 + 미리보기)"
+                      className={cn(
+                        "flex items-center gap-1 rounded px-2 py-0.5 text-[11px] transition-colors",
+                        previewMode === "split" ? "bg-white shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      <Columns2 size={11} /> 분할
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewMode("preview")}
+                      title="미리보기"
+                      className={cn(
+                        "flex items-center gap-1 rounded px-2 py-0.5 text-[11px] transition-colors",
+                        previewMode === "preview" ? "bg-white shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      <Eye size={11} /> 미리보기
+                    </button>
+                  </div>
+                  {previewMode !== "preview" && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => applyMarkdown("heading")}
+                        title="소제목 (## )"
+                        className="rounded border px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+                      >
+                        <Heading2 size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => applyMarkdown("bold")}
+                        title="굵게 (**)"
+                        className="rounded border px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+                      >
+                        <Bold size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => applyMarkdown("list")}
+                        title="목록 (- )"
+                        className="rounded border px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+                      >
+                        <List size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => applyMarkdown("checkbox")}
+                        title="체크박스 (- [ ] )"
+                        className="rounded border px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+                      >
+                        <CheckSquare size={12} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
-              <textarea
-                ref={contentRef}
-                value={docForm.content}
-                onChange={(e) => setDocForm((f) => ({ ...f, content: e.target.value }))}
-                placeholder={`## 정기 업무
+              <div
+                className={cn(
+                  previewMode === "split" ? "grid grid-cols-2 gap-3" : "block",
+                )}
+              >
+                {previewMode !== "preview" && (
+                  <textarea
+                    ref={contentRef}
+                    value={docForm.content}
+                    onChange={(e) => setDocForm((f) => ({ ...f, content: e.target.value }))}
+                    placeholder={`## 정기 업무
 - 매주 월요일 회의 운영
 - 회비 입금 확인 (#재무 슬랙)
 
 ## 주의사항
 **중요**: 학기 초 신입 환영 행사 일정 조율`}
-                rows={10}
-                className="w-full rounded-lg border px-3 py-2 font-mono text-sm resize-y"
-              />
+                    rows={12}
+                    className="w-full rounded-lg border px-3 py-2 font-mono text-sm resize-y"
+                  />
+                )}
+                {previewMode !== "edit" && (
+                  <div className="min-h-[280px] overflow-auto rounded-lg border bg-muted/10 px-3 py-2">
+                    {docForm.content.trim() ? (
+                      <HandoverMarkdown content={docForm.content} className="text-sm leading-relaxed" />
+                    ) : (
+                      <p className="text-xs text-muted-foreground">미리보기할 내용이 없습니다.</p>
+                    )}
+                  </div>
+                )}
+              </div>
               <p className="mt-1 text-[11px] text-muted-foreground">
                 ## 소제목 · **굵게** · - 목록 · - [ ] 체크박스 (저장 후 본문/기수 리포트에서 서식이 적용됩니다)
               </p>

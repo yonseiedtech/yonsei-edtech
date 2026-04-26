@@ -74,17 +74,23 @@ function SeminarHostInner({ seminarId }: { seminarId: string }) {
   // ─────────────────────────────────────────
   // 신청자 / 출석자
   // ─────────────────────────────────────────
-  const { data: regs = [] } = useQuery<SeminarRegistration[]>({
+  const { data: regs = [], dataUpdatedAt: regsUpdatedAt } = useQuery<SeminarRegistration[]>({
     enabled: allowed,
     queryKey: ["host-regs", seminarId],
     queryFn: async () => (await registrationsApi.list(seminarId)).data,
+    refetchInterval: 5_000,
+    refetchIntervalInBackground: false,
   });
 
-  const { data: attendees = [] } = useQuery<SeminarAttendee[]>({
+  const { data: attendees = [], dataUpdatedAt: attendeesUpdatedAt } = useQuery<SeminarAttendee[]>({
     enabled: allowed,
     queryKey: ["host-attendees", seminarId],
     queryFn: async () => (await attendeesApi.list(seminarId)).data,
+    refetchInterval: 5_000,
+    refetchIntervalInBackground: false,
   });
+
+  const lastSyncAt = Math.max(regsUpdatedAt ?? 0, attendeesUpdatedAt ?? 0);
 
   const checkedInIds = useMemo(
     () => new Set(attendees.filter((a) => a.checkedIn).map((a) => a.userId)),
@@ -265,11 +271,20 @@ function SeminarHostInner({ seminarId }: { seminarId: string }) {
               운영진 보기 모드
             </Badge>
           )}
+          <Badge variant="outline" className="gap-1 border-emerald-200 bg-emerald-50 text-[10px] text-emerald-700">
+            <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+            실시간 (5초)
+          </Badge>
         </div>
         <h1 className="mt-3 text-3xl font-bold">{seminar.title}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {seminar.date} {seminar.time} · {seminar.location}
         </p>
+        {lastSyncAt > 0 && (
+          <p className="mt-1 text-[11px] text-muted-foreground/70">
+            마지막 갱신: {new Date(lastSyncAt).toLocaleTimeString("ko-KR")}
+          </p>
+        )}
       </header>
 
       {/* 집계 위젯 */}
