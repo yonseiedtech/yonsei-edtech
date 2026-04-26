@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { profilesApi } from "@/lib/bkend";
 import type { User } from "@/types";
 import ProfileDetailView from "@/components/profile/ProfileDetailView";
+import { BreadcrumbListJsonLd } from "@/components/seo/JsonLd";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -38,5 +39,19 @@ export default async function ProfilePage({ params }: PageProps) {
   } catch {
     initialOwner = null;
   }
-  return <ProfileDetailView ownerId={id} initialOwner={initialOwner} />;
+  return (
+    <>
+      <BreadcrumbListJsonLd
+        items={[
+          { name: "홈", href: "/" },
+          { name: "멤버 소개", href: "/members" },
+          {
+            name: initialOwner?.name ?? "회원 프로필",
+            href: `/profile/${id}`,
+          },
+        ]}
+      />
+      <ProfileDetailView ownerId={id} initialOwner={initialOwner} />
+    </>
+  );
 }
