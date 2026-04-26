@@ -39,6 +39,14 @@ export interface MemberMetricsRow {
   commentCount: number;
   /** 0~100 정규화 점수 */
   loyaltyScore: number;
+  /** 점수 산출 내역 (Top 10 표시용) */
+  scoreBreakdown: {
+    login: number;
+    attendance: number;
+    activity: number;
+    staff: number;
+    content: number;
+  };
   /** 분류 라벨 — 시각화용 */
   segment: "champion" | "active" | "at_risk" | "dormant" | "new";
   /** 운영진 저활동 경보 */
@@ -121,6 +129,13 @@ export function computeMemberMetrics(input: MemberMetricsInput): MemberMetricsRo
     postCount,
     commentCount,
     loyaltyScore,
+    scoreBreakdown: {
+      login: loginScore,
+      attendance: attendanceScore,
+      activity: activityScore,
+      staff: staffScore,
+      content: contentScore,
+    },
     segment,
     staffLowActivity,
   };

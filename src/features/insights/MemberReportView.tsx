@@ -261,20 +261,31 @@ export default function MemberReportView() {
             <Crown size={16} className="text-violet-600" />
             로얄티 Top 10
           </div>
-          <ol className="space-y-1.5">
+          <ol className="space-y-2">
             {champions.map((r, i) => (
-              <li key={r.userId} className="flex items-center gap-2 rounded-lg border bg-muted/10 px-3 py-2">
-                <span className={cn(
-                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                  i === 0 ? "bg-amber-400 text-white" : i < 3 ? "bg-amber-200 text-amber-900" : "bg-muted text-foreground",
-                )}>
-                  {i + 1}
-                </span>
-                <span className="flex-1 truncate text-sm font-medium">{r.name}</span>
-                <Badge variant="outline" className={cn("text-[10px]", segmentColor(r.segment))}>
-                  {segmentLabel(r.segment)}
-                </Badge>
-                <span className="w-12 text-right text-sm font-bold tabular-nums">{r.loyaltyScore}</span>
+              <li key={r.userId} className="rounded-lg border bg-muted/10 px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <span className={cn(
+                    "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                    i === 0 ? "bg-amber-400 text-white" : i < 3 ? "bg-amber-200 text-amber-900" : "bg-muted text-foreground",
+                  )}>
+                    {i + 1}
+                  </span>
+                  <a href={`/profile/${r.userId}`} className="flex-1 truncate text-sm font-medium hover:underline">
+                    {r.name}
+                  </a>
+                  <Badge variant="outline" className={cn("text-[10px]", segmentColor(r.segment))}>
+                    {segmentLabel(r.segment)}
+                  </Badge>
+                  <span className="w-12 text-right text-sm font-bold tabular-nums">{r.loyaltyScore}</span>
+                </div>
+                <div className="mt-1.5 flex flex-wrap gap-1 pl-8 text-[10px] text-muted-foreground">
+                  <ScoreChip label="접속" value={r.scoreBreakdown.login} max={35} tone="blue" />
+                  <ScoreChip label="출석" value={r.scoreBreakdown.attendance} max={25} tone="emerald" />
+                  <ScoreChip label="활동" value={r.scoreBreakdown.activity} max={25} tone="violet" />
+                  <ScoreChip label="운영진" value={r.scoreBreakdown.staff} max={10} tone="amber" />
+                  <ScoreChip label="콘텐츠" value={r.scoreBreakdown.content} max={5} tone="slate" />
+                </div>
               </li>
             ))}
           </ol>
@@ -412,6 +423,34 @@ function Kpi({ icon: Icon, color, label, value, sub }: {
         </div>
       </div>
     </div>
+  );
+}
+
+const SCORE_CHIP_TONE = {
+  blue: "bg-blue-50 text-blue-700 border-blue-200",
+  emerald: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  violet: "bg-violet-50 text-violet-700 border-violet-200",
+  amber: "bg-amber-50 text-amber-700 border-amber-200",
+  slate: "bg-slate-50 text-slate-600 border-slate-200",
+} as const;
+
+function ScoreChip({ label, value, max, tone }: {
+  label: string; value: number; max: number; tone: keyof typeof SCORE_CHIP_TONE;
+}) {
+  const dim = value === 0;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 tabular-nums",
+        SCORE_CHIP_TONE[tone],
+        dim && "opacity-50",
+      )}
+      title={`${label} ${value}/${max}`}
+    >
+      <span className="font-medium">{label}</span>
+      <span className="font-bold">{value}</span>
+      <span className="text-[9px] opacity-60">/{max}</span>
+    </span>
   );
 }
 

@@ -1,7 +1,7 @@
 {
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"ls /c/work/yonsei-edtech/src/features/admin/members 2>/dev/null && echo \\\"---\\\" && ls /c/work/yonsei-edtech/src/app/console/members 2>/dev/null\",\"description\":\"List member admin files\"}",
-  "error": "Exit code 2",
-  "timestamp": "2026-04-26T06:39:03.054Z",
+  "tool_name": "Glob",
+  "tool_input_preview": "{\"pattern\":\"src/app/courses/**/schedule/**/*.tsx\"}",
+  "error": "Ripgrep search timed out after 20 seconds. The search may have matched files but did not complete in time. Try searching a more specific path or pattern.",
+  "timestamp": "2026-04-26T12:56:40.579Z",
   "retry_count": 1
 }

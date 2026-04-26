@@ -12,6 +12,7 @@ import {
   NotebookPen,
   ListChecks,
   Settings,
+  Check,
 } from "lucide-react";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -72,6 +73,26 @@ const MODE_COLORS: Record<ClassSessionMode, string> = {
   cancelled: "bg-rose-50 text-rose-700 border-rose-200",
   field: "bg-purple-50 text-purple-700 border-purple-200",
   exam: "bg-rose-50 text-rose-700 border-rose-200",
+};
+
+/** 비활성 모드 칩 — 항상 모드별 옅은 배경을 입혀 한눈에 구분되게 함 */
+const MODE_BTN_DIM: Record<ClassSessionMode, string> = {
+  in_person: "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100",
+  zoom: "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100",
+  assignment: "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100",
+  cancelled: "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100",
+  field: "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100",
+  exam: "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100",
+};
+
+/** 활성 모드 칩 — 솔리드 배경 + 두꺼운 링으로 강하게 강조 */
+const MODE_BTN_ACTIVE: Record<ClassSessionMode, string> = {
+  in_person: "bg-emerald-500 text-white border-emerald-600 ring-2 ring-emerald-300 shadow-sm",
+  zoom: "bg-blue-500 text-white border-blue-600 ring-2 ring-blue-300 shadow-sm",
+  assignment: "bg-amber-500 text-white border-amber-600 ring-2 ring-amber-300 shadow-sm",
+  cancelled: "bg-rose-500 text-white border-rose-600 ring-2 ring-rose-300 shadow-sm",
+  field: "bg-purple-500 text-white border-purple-600 ring-2 ring-purple-300 shadow-sm",
+  exam: "bg-rose-500 text-white border-rose-600 ring-2 ring-rose-300 shadow-sm",
 };
 
 const MODE_WEEK_BORDER: Record<ClassSessionMode, string> = {
@@ -341,6 +362,31 @@ function ScheduleContent({ courseId }: { courseId: string }) {
       return;
     }
 
+    // ── Optimistic update — 서버 응답을 기다리지 않고 캐시 먼저 변경 ──
+    const queryKey = ["class-sessions", "by-course", courseId];
+    const prev = qc.getQueryData<{ data: ClassSession[] }>(queryKey);
+    if (prev) {
+      const next: ClassSession[] = [...(prev.data ?? [])];
+      const nowIso = new Date().toISOString();
+      for (const d of args.classDates) {
+        const idx = next.findIndex((s) => s.date === d);
+        if (idx >= 0) {
+          next[idx] = { ...next[idx], mode: args.mode };
+        } else if (args.mode !== "in_person") {
+          next.push({
+            id: `__optimistic_${d}_${Date.now()}`,
+            courseOfferingId: courseId,
+            date: d,
+            mode: args.mode,
+            createdBy: user.id,
+            createdAt: nowIso,
+            updatedAt: nowIso,
+          } as ClassSession);
+        }
+      }
+      qc.setQueryData(queryKey, { ...prev, data: next });
+    }
+
     try {
       // 병렬 처리로 속도 개선
       await Promise.all(
@@ -362,7 +408,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
           });
         }),
       );
-      // 캐시 무효화 + 강제 refetch (UI에 즉시 반영되지 않는 이슈 방지)
+      // 정합화 — 임시 ID를 진짜 ID로 교체
       await qc.invalidateQueries({
         queryKey: ["class-sessions", "by-course", courseId],
       });
@@ -373,6 +419,10 @@ function ScheduleContent({ courseId }: { courseId: string }) {
       await qc.invalidateQueries({ queryKey: ["class-sessions"] });
       toast.success(`${CLASS_SESSION_MODE_LABELS[args.mode]}(으)로 변경했습니다.`);
     } catch (e) {
+      // 실패 시 캐시 롤백
+      if (prev) {
+        qc.setQueryData(queryKey, prev);
+      }
       console.error("[quickSetWeekMode]", e);
       toast.error(`변경 실패: ${(e as Error).message}`);
     }
@@ -736,13 +786,13 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                                 mode: m,
                               })
                             }
+                            aria-pressed={active}
                             className={cn(
-                              "rounded-full border px-2.5 py-0.5 text-[10px] transition-colors",
-                              active
-                                ? cn(MODE_COLORS[m], "ring-1 ring-current/30 font-medium")
-                                : "border-slate-200 bg-white text-muted-foreground hover:border-slate-300 hover:bg-slate-50",
+                              "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-medium transition-all",
+                              active ? MODE_BTN_ACTIVE[m] : MODE_BTN_DIM[m],
                             )}
                           >
+                            {active && <Check size={10} className="shrink-0" />}
                             {CLASS_SESSION_MODE_LABELS[m]}
                           </button>
                         );
@@ -1068,13 +1118,13 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                         key={m}
                         type="button"
                         onClick={() => setDraft({ ...draft, mode: m })}
+                        aria-pressed={active}
                         className={cn(
-                          "rounded-full border px-3 py-1 text-xs transition-colors",
-                          active
-                            ? cn(MODE_COLORS[m], "ring-2 ring-offset-1 ring-current/30 font-medium")
-                            : "border-slate-200 bg-white text-muted-foreground hover:border-slate-300",
+                          "inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-all",
+                          active ? MODE_BTN_ACTIVE[m] : MODE_BTN_DIM[m],
                         )}
                       >
+                        {active && <Check size={12} className="shrink-0" />}
                         {CLASS_SESSION_MODE_LABELS[m]}
                       </button>
                     );

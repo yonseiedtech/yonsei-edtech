@@ -209,14 +209,14 @@
   "hotPaths": [
     {
       "path": "src",
-      "accessCount": 32,
-      "lastAccessed": 1777172445939,
+      "accessCount": 39,
+      "lastAccessed": 1777208212057,
       "type": "directory"
     },
     {
       "path": "src\\app\\courses\\[id]\\schedule\\page.tsx",
-      "accessCount": 29,
-      "lastAccessed": 1777168797380,
+      "accessCount": 35,
+      "lastAccessed": 1777209834084,
       "type": "directory"
     },
     {
@@ -235,6 +235,12 @@
       "path": "src\\app\\courses\\page.tsx",
       "accessCount": 10,
       "lastAccessed": 1777170634184,
+      "type": "directory"
+    },
+    {
+      "path": "src\\app\\seminars\\[id]\\host\\page.tsx",
+      "accessCount": 10,
+      "lastAccessed": 1777193389760,
       "type": "directory"
     },
     {
@@ -278,12 +284,6 @@
       "accessCount": 6,
       "lastAccessed": 1777162885971,
       "type": "file"
-    },
-    {
-      "path": "src\\app\\seminars\\[id]\\host\\page.tsx",
-      "accessCount": 5,
-      "lastAccessed": 1777124153727,
-      "type": "directory"
     },
     {
       "path": "src\\app\\console\\alumni-mapping\\page.tsx",
@@ -382,6 +382,12 @@
       "type": "directory"
     },
     {
+      "path": "src\\components\\ui\\MemberAutocomplete.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1777204976966,
+      "type": "file"
+    },
+    {
       "path": "src\\app\\research\\page.tsx",
       "accessCount": 2,
       "lastAccessed": 1777128040346,
@@ -446,12 +452,6 @@
       "accessCount": 2,
       "lastAccessed": 1777182421163,
       "type": "directory"
-    },
-    {
-      "path": "src\\components\\ui\\MemberAutocomplete.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1777182992968,
-      "type": "file"
     },
     {
       "path": "src\\app\\admin\\fees\\page.tsx",
