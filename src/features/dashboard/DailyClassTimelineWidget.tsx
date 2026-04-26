@@ -159,7 +159,13 @@ export default function DailyClassTimelineWidget() {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(VIEW_STORAGE_KEY);
-      if (saved === "daily" || saved === "weekly") setViewMode(saved);
+      if (saved === "daily" || saved === "weekly") {
+        setViewMode(saved);
+        return;
+      }
+      // 저장값 없을 때: 주말(토/일)이면 주간 모드로 자동 전환
+      const dow = new Date().getDay();
+      if (dow === 0 || dow === 6) setViewMode("weekly");
     } catch {}
   }, []);
   const handleSetView = (v: ViewMode) => {
@@ -744,8 +750,17 @@ export default function DailyClassTimelineWidget() {
                 {semesterLabel}에 등록된 수강과목이 없어요.
               </p>
               <p className="mt-1 text-[12px] text-muted-foreground">
-                /수강과목 페이지에서 본인 수강·청강 토글로 과목을 등록하면, 여기에 자동으로 표시됩니다.
+                <Link href="/courses?tab=mine" className="text-primary underline">
+                  수강과목 페이지
+                </Link>
+                의 <b>“이번 학기”</b> 탭에서 본인 수강 또는 청강 버튼을 누르면 여기에 자동으로 표시됩니다.
               </p>
+              {loadingEnrollments ? null : (enrollmentsRes?.data?.length ?? 0) > 0 ? (
+                <p className="mt-1 text-[11px] text-muted-foreground/80">
+                  ※ 다른 학기 수강 기록 {enrollmentsRes?.data?.length}건이 있지만,
+                  {semesterLabel} 학기에 해당하는 항목은 없습니다.
+                </p>
+              ) : null}
               <Link
                 href="/courses?tab=mine"
                 className="mt-3 inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-[12px] font-medium text-white hover:bg-primary/90"
@@ -759,8 +774,36 @@ export default function DailyClassTimelineWidget() {
                 {isShowingToday ? `오늘(${dayChar}요일)` : `${dateLabel}`}에 예정된 수업이 없어요.
               </p>
               <p className="mt-1 text-[11px] text-muted-foreground/70">
-                이번 학기 등록 과목 {parsedOfferings.length}건 — 다른 요일을 확인해보세요.
+                이번 학기 등록 과목 {parsedOfferings.length}건 — 주간 시간표에서 확인할 수 있어요.
               </p>
+              <ul className="mt-3 space-y-1.5 text-[12px]">
+                {parsedOfferings.map(({ offering: c, parsed }) => {
+                  const days = parsed.weekdays.map((d) => DAY_CHARS[d]).join("");
+                  const time = fmtTimeRange(parsed);
+                  const meta = [days, time].filter(Boolean).join(" ");
+                  return (
+                    <li key={c.id} className="flex items-center justify-between gap-2 rounded-md border bg-white px-2.5 py-1.5">
+                      <span className="truncate">
+                        <b className="font-medium">{c.courseName}</b>
+                        {meta && <span className="ml-1.5 text-muted-foreground">· {meta || c.schedule}</span>}
+                      </span>
+                      <Link
+                        href={`/courses/${c.id}/schedule`}
+                        className="shrink-0 text-[11px] text-primary hover:underline"
+                      >
+                        스케줄 →
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+              <button
+                type="button"
+                onClick={() => handleSetView("weekly")}
+                className="mt-3 inline-flex items-center gap-1 rounded-md border bg-white px-3 py-1.5 text-[11px] font-medium text-primary hover:bg-primary/5"
+              >
+                주간 시간표 보기 →
+              </button>
             </div>
           )
         ) : (

@@ -11,31 +11,56 @@ import {
   Users as UsersIcon,
   ShieldAlert,
   ChevronRight,
+  Plus,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import {
   courseTodosApi,
   courseOfferingsApi,
+  courseEnrollmentsApi,
+  todosApi,
   researchProposalsApi,
   researchReportsApi,
   activitiesApi,
 } from "@/lib/bkend";
 import { usePendingMembers } from "@/features/member/useMembers";
 import { useInquiries } from "@/features/inquiry/useInquiry";
+import { inferCurrentSemester } from "@/lib/semester";
 import {
   COURSE_TODO_TYPE_LABELS,
   COURSE_TODO_TYPE_COLORS,
   type CourseTodo,
+  type CourseTodoType,
   type CourseOffering,
   type ResearchProposal,
   type ResearchReport,
   type Activity,
   type ActivityType,
+  type CourseEnrollment,
 } from "@/types";
 import { cn } from "@/lib/utils";
+
+type AddCategory = "course" | "staff";
+
+const TODO_TYPE_OPTIONS: CourseTodoType[] = [
+  "assignment",
+  "paper_reading",
+  "paper_writing",
+  "presentation_prep",
+  "other",
+];
 
 type TabKey = "all" | "course" | "research" | "activity" | "staff";
 
@@ -250,6 +275,127 @@ export default function MyTodosWidget() {
   };
   const totalCount = counts.course + counts.research + counts.activity + counts.staff;
 
+  // ── 빠른 추가 다이얼로그 ──
+  const [addOpen, setAddOpen] = useState(false);
+  const [addCategory, setAddCategory] = useState<AddCategory>("course");
+  const [saving, setSaving] = useState(false);
+
+  // 수업 추가 폼
+  const [courseForm, setCourseForm] = useState({
+    courseOfferingId: "",
+    type: "assignment" as CourseTodoType,
+    content: "",
+    dueDate: "",
+    sessionDate: "",
+  });
+  // 운영진 추가 폼
+  const [staffForm, setStaffForm] = useState({
+    title: "",
+    description: "",
+    priority: "medium" as "high" | "medium" | "low",
+    dueDate: "",
+  });
+
+  // 수업 picker 옵션 — 본인 수강 과목 (이번 학기)
+  const { year: curYear, semester: curSem } = inferCurrentSemester(new Date());
+  const curTerm = curSem === "first" ? "spring" : "fall";
+  const { data: enrollmentsRes } = useQuery({
+    queryKey: ["my-enrollments-for-todo", userId],
+    queryFn: async () => {
+      if (!userId) return { data: [], total: 0 };
+      return await courseEnrollmentsApi.listByUser(userId);
+    },
+    enabled: !!userId && addOpen && addCategory === "course",
+    staleTime: 5 * 60_000,
+  });
+  const myEnrollmentCourseIds = useMemo(() => {
+    return ((enrollmentsRes?.data ?? []) as CourseEnrollment[])
+      .filter((e) => e.year === curYear && e.term === curTerm)
+      .map((e) => e.courseOfferingId);
+  }, [enrollmentsRes, curYear, curTerm]);
+
+  const { data: pickerOfferingsRes } = useQuery({
+    queryKey: ["course-offerings", curYear, curTerm],
+    queryFn: () => courseOfferingsApi.listBySemester(curYear, curTerm),
+    enabled: addOpen && addCategory === "course",
+    staleTime: 5 * 60_000,
+  });
+  const pickerOfferings: CourseOffering[] = useMemo(() => {
+    return ((pickerOfferingsRes?.data ?? []) as CourseOffering[]).filter((o) =>
+      myEnrollmentCourseIds.includes(o.id),
+    );
+  }, [pickerOfferingsRes, myEnrollmentCourseIds]);
+
+  function openAdd() {
+    setAddCategory(isStaff ? "course" : "course");
+    setCourseForm({
+      courseOfferingId: "",
+      type: "assignment",
+      content: "",
+      dueDate: "",
+      sessionDate: "",
+    });
+    setStaffForm({
+      title: "",
+      description: "",
+      priority: "medium",
+      dueDate: "",
+    });
+    setAddOpen(true);
+  }
+
+  async function saveAdd() {
+    if (!user || !userId) return;
+    setSaving(true);
+    try {
+      if (addCategory === "course") {
+        if (!courseForm.courseOfferingId) {
+          toast.error("수업을 선택하세요.");
+          return;
+        }
+        if (!courseForm.content.trim()) {
+          toast.error("내용을 입력하세요.");
+          return;
+        }
+        await courseTodosApi.create({
+          courseOfferingId: courseForm.courseOfferingId,
+          userId,
+          type: courseForm.type,
+          content: courseForm.content.trim(),
+          dueDate: courseForm.dueDate || undefined,
+          sessionDate: courseForm.sessionDate || undefined,
+          completed: false,
+        });
+        await qc.invalidateQueries({ queryKey: ["my-course-todos", userId] });
+        await qc.invalidateQueries({
+          queryKey: ["course-todos", courseForm.courseOfferingId, userId],
+        });
+        toast.success("수업 할 일에 추가되었습니다 — /수업/[id]/스케쥴 페이지에도 연동됩니다.");
+      } else {
+        if (!staffForm.title.trim()) {
+          toast.error("제목을 입력하세요.");
+          return;
+        }
+        await todosApi.create({
+          title: staffForm.title.trim(),
+          description: staffForm.description.trim() || undefined,
+          priority: staffForm.priority,
+          status: "todo",
+          dueDate: staffForm.dueDate || undefined,
+          createdBy: userId,
+          createdByName: user.name ?? "운영진",
+        });
+        await qc.invalidateQueries({ queryKey: ["admin-todos"] });
+        toast.success("운영 업무에 추가되었습니다 — /staff-admin/todos 에도 표시됩니다.");
+      }
+      setAddOpen(false);
+    } catch (e) {
+      toast.error(`저장 실패: ${(e as Error).message}`);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   if (!user) return null;
 
   // ── 렌더 헬퍼 ──
@@ -406,7 +552,17 @@ export default function MyTodosWidget() {
           <ListChecks size={18} className="text-primary" />
           <h2 className="font-bold">나의 할 일</h2>
         </div>
-        <span className="text-[11px] text-muted-foreground">전체 {totalCount}건</span>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-muted-foreground">전체 {totalCount}건</span>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 px-2 text-[11px]"
+            onClick={openAdd}
+          >
+            <Plus size={12} className="mr-0.5" /> 추가
+          </Button>
+        </div>
       </div>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)} className="mt-3">
@@ -547,6 +703,184 @@ export default function MyTodosWidget() {
           </TabsContent>
         )}
       </Tabs>
+
+      {/* 빠른 추가 Dialog — 카테고리별로 실제 컬렉션에 양방향 기록 */}
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>할 일 추가</DialogTitle>
+          </DialogHeader>
+
+          <Tabs
+            value={addCategory}
+            onValueChange={(v) => setAddCategory(v as AddCategory)}
+            className="mt-1"
+          >
+            <TabsList className={cn("grid w-full", isStaff ? "grid-cols-2" : "grid-cols-1")}>
+              <TabsTrigger value="course" className="text-xs">
+                <BookOpen size={12} className="mr-1" /> 수업
+              </TabsTrigger>
+              {isStaff && (
+                <TabsTrigger value="staff" className="text-xs">
+                  <ShieldAlert size={12} className="mr-1" /> 운영 업무
+                </TabsTrigger>
+              )}
+            </TabsList>
+
+            <TabsContent value="course" className="mt-3 space-y-3">
+              <p className="text-[11px] text-muted-foreground">
+                추가하면 <b>/courses/[id]/schedule</b> 의 주차별 할 일 카드에도 자동으로 표시됩니다.
+              </p>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-xs font-medium text-muted-foreground">수업 (이번 학기 본인 수강)</span>
+                <select
+                  value={courseForm.courseOfferingId}
+                  onChange={(e) =>
+                    setCourseForm({ ...courseForm, courseOfferingId: e.target.value })
+                  }
+                  className="rounded-md border bg-white px-2 py-1.5 text-sm"
+                >
+                  <option value="">— 선택 —</option>
+                  {pickerOfferings.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.courseName}
+                      {c.professor ? ` · ${c.professor}` : ""}
+                    </option>
+                  ))}
+                </select>
+                {pickerOfferings.length === 0 && (
+                  <span className="text-[10px] text-muted-foreground">
+                    수강 과목이 없으면{" "}
+                    <Link href="/courses?tab=mine" className="text-primary underline">
+                      수강과목 등록
+                    </Link>
+                    에서 본인 수강을 먼저 토글하세요.
+                  </span>
+                )}
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-xs font-medium text-muted-foreground">유형</span>
+                <div className="flex flex-wrap gap-1">
+                  {TODO_TYPE_OPTIONS.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setCourseForm({ ...courseForm, type: t })}
+                      className={`rounded-md px-2 py-1 text-[11px] ${
+                        courseForm.type === t
+                          ? COURSE_TODO_TYPE_COLORS[t] + " ring-1 ring-offset-1 ring-primary/40"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      }`}
+                    >
+                      {COURSE_TODO_TYPE_LABELS[t]}
+                    </button>
+                  ))}
+                </div>
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-xs font-medium text-muted-foreground">내용</span>
+                <Input
+                  value={courseForm.content}
+                  onChange={(e) =>
+                    setCourseForm({ ...courseForm, content: e.target.value })
+                  }
+                  autoFocus
+                  placeholder="예) Dewey 챕터 2 읽기"
+                />
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="text-xs font-medium text-muted-foreground">관련 수업일 (선택)</span>
+                  <Input
+                    type="date"
+                    value={courseForm.sessionDate}
+                    onChange={(e) =>
+                      setCourseForm({ ...courseForm, sessionDate: e.target.value })
+                    }
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="text-xs font-medium text-muted-foreground">기한 (선택)</span>
+                  <Input
+                    type="date"
+                    value={courseForm.dueDate}
+                    onChange={(e) =>
+                      setCourseForm({ ...courseForm, dueDate: e.target.value })
+                    }
+                  />
+                </label>
+              </div>
+            </TabsContent>
+
+            {isStaff && (
+              <TabsContent value="staff" className="mt-3 space-y-3">
+                <p className="text-[11px] text-muted-foreground">
+                  추가하면 <b>/staff-admin/todos</b> 운영 업무수행철에도 자동으로 등록됩니다.
+                </p>
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="text-xs font-medium text-muted-foreground">제목</span>
+                  <Input
+                    value={staffForm.title}
+                    onChange={(e) => setStaffForm({ ...staffForm, title: e.target.value })}
+                    placeholder="예) 26년 1학기 모집 공고 게시"
+                    autoFocus
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="text-xs font-medium text-muted-foreground">설명 (선택)</span>
+                  <textarea
+                    value={staffForm.description}
+                    onChange={(e) =>
+                      setStaffForm({ ...staffForm, description: e.target.value })
+                    }
+                    rows={3}
+                    className="w-full rounded-md border bg-white px-3 py-2 text-sm"
+                    placeholder="자세한 설명을 입력하세요."
+                  />
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="flex flex-col gap-1 text-sm">
+                    <span className="text-xs font-medium text-muted-foreground">우선순위</span>
+                    <select
+                      value={staffForm.priority}
+                      onChange={(e) =>
+                        setStaffForm({
+                          ...staffForm,
+                          priority: e.target.value as "high" | "medium" | "low",
+                        })
+                      }
+                      className="rounded-md border bg-white px-2 py-1.5 text-sm"
+                    >
+                      <option value="high">높음</option>
+                      <option value="medium">보통</option>
+                      <option value="low">낮음</option>
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-1 text-sm">
+                    <span className="text-xs font-medium text-muted-foreground">기한 (선택)</span>
+                    <Input
+                      type="date"
+                      value={staffForm.dueDate}
+                      onChange={(e) =>
+                        setStaffForm({ ...staffForm, dueDate: e.target.value })
+                      }
+                    />
+                  </label>
+                </div>
+              </TabsContent>
+            )}
+          </Tabs>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddOpen(false)} disabled={saving}>
+              취소
+            </Button>
+            <Button onClick={saveAdd} disabled={saving}>
+              {saving ? "저장 중..." : "추가"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
