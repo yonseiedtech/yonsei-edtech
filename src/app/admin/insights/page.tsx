@@ -3,7 +3,7 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
-import { BarChart3, FileText, Loader2 } from "lucide-react";
+import { BarChart3, Loader2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 
@@ -25,7 +25,16 @@ const SemesterReportView = dynamic(() => import("../semester-report/page"), {
   ),
 });
 
-type SubTab = "dashboard" | "report";
+const MemberReportView = dynamic(() => import("@/features/insights/MemberReportView"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center py-16">
+      <Loader2 size={24} className="animate-spin text-muted-foreground" />
+    </div>
+  ),
+});
+
+type SubTab = "dashboard" | "report" | "members";
 
 function InsightsInner() {
   const searchParams = useSearchParams();
@@ -50,6 +59,7 @@ function InsightsInner() {
         <TabsList>
           <TabsTrigger value="dashboard">실시간 대시보드</TabsTrigger>
           <TabsTrigger value="report">학기 보고서</TabsTrigger>
+          <TabsTrigger value="members">회원 보고서</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="mt-4">
@@ -57,6 +67,9 @@ function InsightsInner() {
         </TabsContent>
         <TabsContent value="report" className="mt-4">
           <SemesterReportView />
+        </TabsContent>
+        <TabsContent value="members" className="mt-4">
+          <MemberReportView />
         </TabsContent>
       </Tabs>
     </div>

@@ -1271,11 +1271,11 @@ export const gradLifePositionsApi = {
       limit: 2000,
       ...params,
     }),
-  /** 회원별 활동 이력 (프로필 표시용) */
+  /** 회원별 활동 이력 (프로필 표시용)
+   * NOTE: where(userId)+orderBy(startYear) 복합 인덱스 회피 — 클라이언트 정렬에 의존(ProfileGradLife) */
   listByUser: (userId: string) =>
     dataApi.list<GradLifePosition>("grad_life_positions", {
       "filter[userId]": userId,
-      sort: "startYear:desc",
       limit: 200,
     }),
   get: (id: string) => dataApi.get<GradLifePosition>("grad_life_positions", id),
