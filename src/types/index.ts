@@ -1152,6 +1152,12 @@ export interface Activity { [key: string]: unknown;
   participantRoles?: Record<string, string>;
   /** 운영자가 참여자별로 남기는 메모 (key: userId/guestKey/applicantKey) */
   participantNotes?: Record<string, string>;
+  /**
+   * 비회원(시스템에 가입되지 않은 인물) 참여자 목록.
+   * 운영자가 회원 검색으로 못 찾는 인물을 이름만으로 추가할 때 사용.
+   * id는 `guest_${ts}_${rand}` 형태로 발급되며 participants 배열에도 함께 포함된다.
+   */
+  guestParticipants?: { id: string; name: string; addedAt: string; addedBy: string }[];
   location?: string;
   tags?: string[];
   imageUrl?: string;

@@ -71,6 +71,8 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const [roleInput, setRoleInput] = useState("");
   const [noteDialog, setNoteDialog] = useState<{ pid: string; name: string } | null>(null);
   const [noteInput, setNoteInput] = useState("");
+  const [guestStaffName, setGuestStaffName] = useState("");
+  const [guestParticipantName, setGuestParticipantName] = useState("");
   const [expandedTimers, setExpandedTimers] = useState<Set<string>>(new Set());
 
   const toggleTimer = (pid: string) => {
@@ -114,11 +116,17 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const applicants = (activity?.applicants as Activity["applicants"]) ?? [];
   const participantRoles = (activity?.participantRoles as Record<string, string> | undefined) ?? {};
   const participantNotes = (activity?.participantNotes as Record<string, string> | undefined) ?? {};
+  const guestParticipants = (activity?.guestParticipants as { id: string; name: string; addedAt: string; addedBy: string }[] | undefined) ?? [];
+  const guestMap = new Map(guestParticipants.map((g) => [g.id, g]));
+  const isGuestPid = (pid: string) => pid.startsWith("guest_");
   const registrationMethod = (activity?.registrationMethod as "open" | "manual" | undefined) ?? "manual";
   const isLeader = !!user && !!leaderId && user.id === leaderId;
   const canManageParticipants = isLeader || isStaff;
   const { members: allMembers } = useAllMembers();
   const memberMap = new Map(allMembers.map((m) => [m.id, m]));
+  /** 회원/비회원 통합 이름 조회 */
+  const displayName = (pid: string): string =>
+    memberMap.get(pid)?.name ?? guestMap.get(pid)?.name ?? "(이름 미확인)";
   const isJoined = user ? participants.includes(user.id) : false;
   const hasApplied = user ? applicants.some((a) => a.userId === user?.id || (a.isGuest && a.email && user?.email && a.email.toLowerCase() === user.email.toLowerCase())) : false;
   const recruitmentStatus = activity?.recruitmentStatus ?? "recruiting";
@@ -182,7 +190,24 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const removeParticipantMutation = useMutation({
     mutationFn: async (memberId: string) => {
       if (!activity) return;
-      await activitiesApi.update(activityId, { participants: participants.filter((p) => p !== memberId) });
+      const updates: Record<string, unknown> = {
+        participants: participants.filter((p) => p !== memberId),
+      };
+      if (isGuestPid(memberId)) {
+        updates.guestParticipants = guestParticipants.filter((g) => g.id !== memberId);
+      }
+      // 역할/메모도 함께 정리 (남아있으면 staff 분류 잔류 유발)
+      if (participantRoles[memberId]) {
+        const nextRoles = { ...participantRoles };
+        delete nextRoles[memberId];
+        updates.participantRoles = nextRoles;
+      }
+      if (participantNotes[memberId]) {
+        const nextNotes = { ...participantNotes };
+        delete nextNotes[memberId];
+        updates.participantNotes = nextNotes;
+      }
+      await activitiesApi.update(activityId, updates);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
@@ -190,23 +215,68 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
     },
   });
 
-  // 운영진 직접 추가 — 회원을 참여자로 추가 후 역할 다이얼로그 자동 오픈
+  // 운영진 직접 추가 — 회원을 참여자로 추가 + 기본 역할("운영진") 자동 부여 → 역할이 비어있어도 운영진 분류됨
   const addStaffMutation = useMutation({
     mutationFn: async (memberId: string) => {
       if (!activity) return memberId;
+      const updates: Record<string, unknown> = {};
       if (!participants.includes(memberId)) {
-        await activitiesApi.update(activityId, { participants: [...participants, memberId] });
+        updates.participants = [...participants, memberId];
+      }
+      if (!participantRoles[memberId]) {
+        updates.participantRoles = { ...participantRoles, [memberId]: "운영진" };
+      }
+      if (Object.keys(updates).length > 0) {
+        await activitiesApi.update(activityId, updates);
       }
       return memberId;
     },
     onSuccess: async (memberId) => {
       await queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
-      const m = memberMap.get(memberId);
-      setRoleInput("");
-      setRoleDialog({ pid: memberId, name: m?.name ?? "(이름 미확인)" });
-      toast.success("운영진으로 추가되었습니다. 역할을 지정해주세요.");
+      setRoleInput("운영진");
+      setRoleDialog({ pid: memberId, name: displayName(memberId) });
+      toast.success("운영진으로 추가되었습니다. 필요 시 세부 역할을 변경하세요.");
     },
     onError: () => toast.error("추가에 실패했습니다."),
+  });
+
+  // 비회원 게스트 추가 — 회원으로 검색되지 않는 사람을 이름만으로 추가 (참가자/운영진 공통)
+  const addGuestParticipantMutation = useMutation({
+    mutationFn: async ({ name, asStaff }: { name: string; asStaff: boolean }) => {
+      if (!activity) return null;
+      const trimmed = name.trim();
+      if (!trimmed) throw new Error("이름을 입력해주세요.");
+      const guestId = `guest_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const newGuest = {
+        id: guestId,
+        name: trimmed,
+        addedAt: new Date().toISOString(),
+        addedBy: user?.id ?? "unknown",
+      };
+      const updates: Record<string, unknown> = {
+        participants: [...participants, guestId],
+        guestParticipants: [...guestParticipants, newGuest],
+      };
+      if (asStaff && !participantRoles[guestId]) {
+        updates.participantRoles = { ...participantRoles, [guestId]: "운영진" };
+      }
+      await activitiesApi.update(activityId, updates);
+      return { guestId, name: trimmed, asStaff };
+    },
+    onSuccess: async (result) => {
+      await queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+      if (!result) return;
+      if (result.asStaff) {
+        setGuestStaffName("");
+        setRoleInput("운영진");
+        setRoleDialog({ pid: result.guestId, name: result.name });
+        toast.success(`비회원 운영진 "${result.name}"이(가) 추가되었습니다.`);
+      } else {
+        setGuestParticipantName("");
+        toast.success(`비회원 참가자 "${result.name}"이(가) 추가되었습니다.`);
+      }
+    },
+    onError: (e: Error) => toast.error(e.message || "추가에 실패했습니다."),
   });
 
   // 참여자 역할 저장
@@ -640,6 +710,8 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
           {(activeTab === "staff" || activeTab === "participants") && (() => {
             const renderRow = (pid: string) => {
               const m = memberMap.get(pid);
+              const guest = guestMap.get(pid);
+              const isGuest = isGuestPid(pid);
               const role = participantRoles[pid];
               const note = participantNotes[pid];
               const applicant = applicants.find((a) => a.userId === pid);
@@ -649,7 +721,9 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               return (
                 <tr key={pid} className="hover:bg-muted/20">
                   <td className="px-3 py-2 align-top">
-                    {enrollment ? (
+                    {isGuest ? (
+                      <Badge variant="secondary" className="bg-slate-100 text-slate-600 text-[10px]">비회원</Badge>
+                    ) : enrollment ? (
                       <Badge variant="secondary" className={cn(
                         "text-[10px]",
                         enrollment === "enrolled" && "bg-green-50 text-green-700",
@@ -664,12 +738,17 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   </td>
                   <td className="px-3 py-2 align-top">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="font-medium">{m?.name ?? "(이름 미확인)"}</span>
+                      <span className="font-medium">{displayName(pid)}</span>
                       {m?.generation && <Badge variant="secondary" className="text-[10px]">{m.generation}기</Badge>}
                       {isLeaderRow && (
                         <Badge className="bg-amber-50 text-amber-700 text-[10px]">
                           {type === "study" ? "모임장" : "담당자"}
                         </Badge>
+                      )}
+                      {isGuest && guest && (
+                        <span className="text-[10px] text-muted-foreground">
+                          추가일 {new Date(guest.addedAt).toLocaleDateString("ko-KR")}
+                        </span>
                       )}
                     </div>
                     {note && (
@@ -677,7 +756,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                     )}
                   </td>
                   <td className="px-3 py-2 align-top text-xs text-muted-foreground">
-                    {m?.studentId ?? "-"}
+                    {m?.studentId ?? (isGuest ? "비회원" : "-")}
                   </td>
                   <td className="px-3 py-2 align-top">
                     {role ? (
@@ -713,7 +792,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                         <button
                           onClick={() => {
                             setNoteInput(note ?? "");
-                            setNoteDialog({ pid, name: m?.name ?? "(이름 미확인)" });
+                            setNoteDialog({ pid, name: displayName(pid) });
                           }}
                           className="rounded p-1 text-muted-foreground hover:text-primary"
                           title="메모"
@@ -755,9 +834,9 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             if (activeTab === "staff") {
               return (
                 <div className="space-y-3">
-                  {/* 운영진 직접 추가 — 회원 검색 → 추가 → 역할 입력 다이얼로그 자동 오픈 */}
+                  {/* 운영진 직접 추가 — 회원 검색 → 추가(기본 역할 "운영진" 자동 부여) → 역할 다이얼로그 자동 오픈 */}
                   {canManageParticipants && (
-                    <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 space-y-2">
+                    <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 space-y-3">
                       <h3 className="text-sm font-semibold flex items-center gap-1 text-amber-900">
                         <UserCog size={14} />운영진 추가
                       </h3>
@@ -765,7 +844,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                         {type === "external"
                           ? "학술대회 운영진(담당자·발표자·진행자·자원봉사 등)을 회원에서 검색하여 직접 추가합니다."
                           : "운영진(담당자·발표자·기록자 등)을 회원에서 검색하여 직접 추가합니다."}
-                        {" "}추가 즉시 역할 입력 창이 열립니다.
+                        {" "}추가 즉시 기본 역할 <strong>"운영진"</strong>이 자동 부여되며, 필요 시 세부 역할을 변경할 수 있습니다.
                       </p>
                       <MemberAutocomplete
                         value=""
@@ -773,6 +852,37 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                         excludeIds={participants}
                         placeholder="회원 이름 또는 학번으로 검색하여 운영진 추가"
                       />
+                      {/* 비회원 운영진 추가 — 회원 DB에 없는 외부 인사를 이름만으로 추가 */}
+                      <div className="rounded-lg border border-amber-200 bg-white/70 p-3">
+                        <p className="mb-2 text-xs font-medium text-amber-900">
+                          회원으로 검색되지 않는 외부 인사 추가 (비회원)
+                        </p>
+                        <div className="flex gap-2">
+                          <Input
+                            value={guestStaffName}
+                            onChange={(e) => setGuestStaffName(e.target.value)}
+                            placeholder="예: 홍길동 교수 (외부 발표자)"
+                            className="h-9 text-sm"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && guestStaffName.trim()) {
+                                e.preventDefault();
+                                addGuestParticipantMutation.mutate({ name: guestStaffName, asStaff: true });
+                              }
+                            }}
+                          />
+                          <Button
+                            size="sm"
+                            className="h-9 gap-1 whitespace-nowrap"
+                            disabled={!guestStaffName.trim() || addGuestParticipantMutation.isPending}
+                            onClick={() => addGuestParticipantMutation.mutate({ name: guestStaffName, asStaff: true })}
+                          >
+                            <UserPlus size={13} />이름만으로 추가
+                          </Button>
+                        </div>
+                        <p className="mt-1.5 text-[11px] text-amber-900/70">
+                          학번·이메일 등 추가 정보 없이 이름만 등록됩니다. 추가 후 메모 또는 역할에 추가 정보를 기재할 수 있습니다.
+                        </p>
+                      </div>
                     </div>
                   )}
 
@@ -787,18 +897,19 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {participants.map((pid) => {
-                          const m = memberMap.get(pid);
                           const role = participantRoles[pid];
+                          const isGuest = isGuestPid(pid);
                           return (
                             <button
                               key={`role-${pid}`}
                               onClick={() => {
                                 setRoleInput(role ?? "");
-                                setRoleDialog({ pid, name: m?.name ?? "(이름 미확인)" });
+                                setRoleDialog({ pid, name: displayName(pid) });
                               }}
                               className="inline-flex items-center gap-1.5 rounded-md border bg-white px-3 py-1.5 text-xs hover:bg-muted/50"
                             >
-                              <span className="font-medium">{m?.name ?? "(이름 미확인)"}</span>
+                              <span className="font-medium">{displayName(pid)}</span>
+                              {isGuest && <Badge variant="secondary" className="bg-slate-100 text-slate-600 text-[10px]">비회원</Badge>}
                               {role
                                 ? <Badge variant="secondary" className="bg-sky-50 text-sky-700 text-[10px]">{role}</Badge>
                                 : <span className="text-muted-foreground">+ 역할</span>}
@@ -838,9 +949,9 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             return (
               <div className="space-y-3">
                 {canManageParticipants && (
-                  <div className="rounded-xl border bg-white p-4">
-                    <h3 className="mb-2 text-sm font-semibold flex items-center gap-1">
-                      <UserPlus size={14} />회원 추가
+                  <div className="rounded-xl border bg-white p-4 space-y-3">
+                    <h3 className="text-sm font-semibold flex items-center gap-1">
+                      <UserPlus size={14} />참가자 추가
                     </h3>
                     <MemberAutocomplete
                       value=""
@@ -848,9 +959,41 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                       excludeIds={participants}
                       placeholder="회원 이름 또는 학번으로 검색"
                     />
-                    <p className="mt-1 text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       {type === "study" && isLeader ? "모임장 권한으로 참여자를 추가할 수 있습니다." : "운영진 권한으로 참여자를 추가/제거할 수 있습니다. 역할을 부여하면 운영진 탭으로 이동합니다."}
                     </p>
+                    {/* 비회원 참가자 추가 — 회원 DB에 없는 외부 인원을 이름만으로 추가 */}
+                    <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3">
+                      <p className="mb-2 text-xs font-medium text-slate-700">
+                        회원으로 검색되지 않는 사람 추가 (비회원)
+                      </p>
+                      <div className="flex gap-2">
+                        <Input
+                          value={guestParticipantName}
+                          onChange={(e) => setGuestParticipantName(e.target.value)}
+                          placeholder="예: 김철수 (외부 참석자)"
+                          className="h-9 text-sm"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && guestParticipantName.trim()) {
+                              e.preventDefault();
+                              addGuestParticipantMutation.mutate({ name: guestParticipantName, asStaff: false });
+                            }
+                          }}
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-9 gap-1 whitespace-nowrap"
+                          disabled={!guestParticipantName.trim() || addGuestParticipantMutation.isPending}
+                          onClick={() => addGuestParticipantMutation.mutate({ name: guestParticipantName, asStaff: false })}
+                        >
+                          <UserPlus size={13} />이름만으로 추가
+                        </Button>
+                      </div>
+                      <p className="mt-1.5 text-[11px] text-muted-foreground">
+                        학번·이메일 등 추가 정보 없이 이름만 등록됩니다.
+                      </p>
+                    </div>
                   </div>
                 )}
 
