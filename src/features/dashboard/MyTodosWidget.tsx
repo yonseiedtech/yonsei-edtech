@@ -15,6 +15,10 @@ import {
   Bell,
   BellOff,
   Mic,
+  Pencil,
+  Trash2,
+  Check,
+  X,
 } from "lucide-react";
 import { formatDday } from "@/lib/dday";
 import { parseSchedule, fmtMin } from "@/lib/courseSchedule";
@@ -118,6 +122,8 @@ export default function MyTodosWidget() {
   const userId = user?.id;
   const [tab, setTab] = useState<TabKey>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("open");
+  const [editingCourseTodoId, setEditingCourseTodoId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState("");
 
   // ── 1) 수업 할 일 ──
   const { data: courseTodosRes } = useQuery({
@@ -193,8 +199,60 @@ export default function MyTodosWidget() {
         completedAt: !t.completed ? new Date().toISOString() : undefined,
       });
       await qc.refetchQueries({ queryKey: ["my-course-todos", userId], type: "active" });
+      await qc.invalidateQueries({
+        queryKey: ["course-todos", t.courseOfferingId, userId],
+      });
     } catch (e) {
       toast.error(`변경 실패: ${(e as Error).message}`);
+    }
+  }
+
+  function startEditCourseTodo(t: CourseTodo) {
+    setEditingCourseTodoId(t.id);
+    setEditingContent(t.content);
+  }
+
+  function cancelEditCourseTodo() {
+    setEditingCourseTodoId(null);
+    setEditingContent("");
+  }
+
+  async function saveEditCourseTodo(t: CourseTodo) {
+    if (!userId) return;
+    const next = editingContent.trim();
+    if (!next) {
+      toast.error("내용을 입력하세요.");
+      return;
+    }
+    if (next === t.content) {
+      cancelEditCourseTodo();
+      return;
+    }
+    try {
+      await courseTodosApi.update(t.id, { content: next });
+      await qc.refetchQueries({ queryKey: ["my-course-todos", userId], type: "active" });
+      await qc.invalidateQueries({
+        queryKey: ["course-todos", t.courseOfferingId, userId],
+      });
+      cancelEditCourseTodo();
+      toast.success("수정되었습니다.");
+    } catch (e) {
+      toast.error(`수정 실패: ${(e as Error).message}`);
+    }
+  }
+
+  async function deleteCourseTodo(t: CourseTodo) {
+    if (!userId) return;
+    if (!confirm(`"${t.content}" 할 일을 삭제할까요?`)) return;
+    try {
+      await courseTodosApi.delete(t.id);
+      await qc.refetchQueries({ queryKey: ["my-course-todos", userId], type: "active" });
+      await qc.invalidateQueries({
+        queryKey: ["course-todos", t.courseOfferingId, userId],
+      });
+      toast.success("삭제되었습니다.");
+    } catch (e) {
+      toast.error(`삭제 실패: ${(e as Error).message}`);
     }
   }
 
@@ -286,8 +344,15 @@ export default function MyTodosWidget() {
 
   const myActivitiesAll = useMemo(() => {
     if (!user) return [] as ActivityFlat[];
+    const today = new Date().toISOString().slice(0, 10);
     return allActivities
       .filter((a) => isUserInvolved(a, user.id))
+      .filter((a) => {
+        // 종료일(없으면 시작일)이 오늘 이후인 활동만 표시 — 이미 지난 활동 제외
+        const endish = a.endDate ?? a.date;
+        if (!endish) return true;
+        return endish >= today;
+      })
       .sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""));
   }, [allActivities, user]);
   const myActivityTodos = useMemo(
@@ -587,14 +652,16 @@ export default function MyTodosWidget() {
           return `${Number(m[2])}/${Number(m[3])} 수업`;
         })()
       : null;
+    const isEditing = editingCourseTodoId === t.id;
     return (
-      <li className="flex items-center gap-2 rounded-md bg-white px-2.5 py-1.5 text-[12px]">
+      <li className="group flex items-center gap-2 rounded-md bg-white px-2.5 py-1.5 text-[12px]">
         <input
           type="checkbox"
           checked={!!t.completed}
           onChange={() => toggleCourseTodo(t)}
           className="shrink-0"
           aria-label="완료 토글"
+          disabled={isEditing}
         />
         <Badge
           variant="secondary"
@@ -614,15 +681,33 @@ export default function MyTodosWidget() {
             {sessionLabel}
           </span>
         )}
-        <span
-          className={cn(
-            "flex-1 truncate",
-            t.completed && "text-muted-foreground line-through",
-          )}
-        >
-          {t.content}
-        </span>
-        {t.dueDate &&
+        {isEditing ? (
+          <Input
+            value={editingContent}
+            onChange={(e) => setEditingContent(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void saveEditCourseTodo(t);
+              } else if (e.key === "Escape") {
+                e.preventDefault();
+                cancelEditCourseTodo();
+              }
+            }}
+            autoFocus
+            className="h-6 flex-1 px-2 py-0 text-[12px]"
+          />
+        ) : (
+          <span
+            className={cn(
+              "flex-1 truncate",
+              t.completed && "text-muted-foreground line-through",
+            )}
+          >
+            {t.content}
+          </span>
+        )}
+        {!isEditing && t.dueDate &&
           (() => {
             const dd = formatDday(t.dueDate, dueTime);
             if (!dd) return null;
@@ -646,6 +731,49 @@ export default function MyTodosWidget() {
               </span>
             );
           })()}
+        {isEditing ? (
+          <div className="flex shrink-0 items-center gap-0.5">
+            <button
+              type="button"
+              onClick={() => void saveEditCourseTodo(t)}
+              className="rounded p-1 text-emerald-600 hover:bg-emerald-50"
+              title="저장 (Enter)"
+              aria-label="저장"
+            >
+              <Check size={12} />
+            </button>
+            <button
+              type="button"
+              onClick={cancelEditCourseTodo}
+              className="rounded p-1 text-muted-foreground hover:bg-muted"
+              title="취소 (Esc)"
+              aria-label="취소"
+            >
+              <X size={12} />
+            </button>
+          </div>
+        ) : (
+          <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+            <button
+              type="button"
+              onClick={() => startEditCourseTodo(t)}
+              className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-primary"
+              title="수정"
+              aria-label="수정"
+            >
+              <Pencil size={11} />
+            </button>
+            <button
+              type="button"
+              onClick={() => void deleteCourseTodo(t)}
+              className="rounded p-1 text-muted-foreground hover:bg-rose-50 hover:text-rose-600"
+              title="삭제"
+              aria-label="삭제"
+            >
+              <Trash2 size={11} />
+            </button>
+          </div>
+        )}
       </li>
     );
   }
@@ -799,31 +927,6 @@ export default function MyTodosWidget() {
         </div>
       </div>
 
-      {/* 상태 필터 */}
-      <div className="mt-3 flex items-center gap-1 rounded-md bg-muted/40 p-0.5 text-[11px]">
-        {(
-          [
-            { v: "all", label: "전체" },
-            { v: "open", label: "예정·진행중" },
-            { v: "done", label: "완료" },
-          ] as { v: StatusFilter; label: string }[]
-        ).map((opt) => (
-          <button
-            key={opt.v}
-            type="button"
-            onClick={() => setStatusFilter(opt.v)}
-            className={cn(
-              "flex-1 rounded px-2 py-1 transition-colors",
-              statusFilter === opt.v
-                ? "bg-white font-semibold text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-
       <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)} className="mt-3">
         <TabsList
           className={cn(
@@ -849,6 +952,31 @@ export default function MyTodosWidget() {
             </TabsTrigger>
           )}
         </TabsList>
+
+        {/* 상태 필터 — 카테고리 탭 하위에 위치 (전체/수업/연구활동/학술활동/운영진 공통) */}
+        <div className="mt-2 flex items-center gap-1 rounded-md bg-muted/40 p-0.5 text-[11px]">
+          {(
+            [
+              { v: "all", label: "전체" },
+              { v: "open", label: "예정·진행중" },
+              { v: "done", label: "완료" },
+            ] as { v: StatusFilter; label: string }[]
+          ).map((opt) => (
+            <button
+              key={opt.v}
+              type="button"
+              onClick={() => setStatusFilter(opt.v)}
+              className={cn(
+                "flex-1 rounded px-2 py-1 transition-colors",
+                statusFilter === opt.v
+                  ? "bg-white font-semibold text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
 
         {/* 전체 */}
         <TabsContent value="all" className="mt-3 space-y-4">
