@@ -240,7 +240,8 @@ export default function CalendarPage() {
 
   // 현재 월의 class_sessions 일괄 조회 (mode 오버라이드용)
   const { data: courseSessionsRes } = useQuery({
-    queryKey: ["class-sessions-by-courses", myCourseIds],
+    // prefix 통일: invalidate({queryKey:["class-sessions"]}) 시 함께 무효화되도록
+    queryKey: ["class-sessions", "by-courses", myCourseIds],
     queryFn: () => classSessionsApi.listByCourses(myCourseIds),
     enabled: isLoggedIn && myCourseIds.length > 0,
     staleTime: 1000 * 60 * 2,
