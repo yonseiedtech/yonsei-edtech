@@ -423,25 +423,47 @@ export default function DailyClassTimelineWidget() {
   const weekEndStr = weekDates.length > 0 ? ymd(weekDates[weekDates.length - 1]) : today;
 
   // 오늘 / 주간 모두에서 사용할 class_sessions
+  // 데이터 소스를 listByCourses(myCourseIds)로 통일 — schedule 페이지(listByCourse)와 같은
+  // courseOfferingId 인덱스를 사용해서 인덱스 경로 차이로 인한 stale mode 표시 버그를 차단한다.
+  const myOfferingIdsForSessions = useMemo(
+    () => myOfferings.map((o) => o.id).sort(),
+    [myOfferings],
+  );
+  const myOfferingIdsKey = myOfferingIdsForSessions.join(",");
+
   const { data: dailySessionsRes } = useQuery({
-    queryKey: ["class-sessions", today],
-    queryFn: () => classSessionsApi.listByDate(today),
+    queryKey: ["class-sessions", "by-my-courses-day", today, myOfferingIdsKey],
+    queryFn: async () => {
+      if (myOfferingIdsForSessions.length === 0)
+        return { data: [] as ClassSession[] };
+      const res = await classSessionsApi.listByCourses(myOfferingIdsForSessions);
+      return {
+        data: ((res?.data ?? []) as ClassSession[]).filter(
+          (s) => s.date === today,
+        ),
+      };
+    },
     staleTime: 1000 * 60,
     enabled: viewMode === "daily" && todayOfferings.length > 0,
   });
 
   const { data: weeklySessionsRes } = useQuery({
-    // 키 prefix를 "class-sessions"로 통일 — 다른 페이지에서 invalidate({queryKey:["class-sessions"]}) 시
-    // 주간 뷰도 함께 무효화되도록 한다 (이전 "class-sessions-range" 키는 prefix 매칭 안 됨).
-    queryKey: ["class-sessions", "range", weekStartStr, weekEndStr],
+    queryKey: [
+      "class-sessions",
+      "by-my-courses-week",
+      weekStartStr,
+      weekEndStr,
+      myOfferingIdsKey,
+    ],
     queryFn: async () => {
-      // listByDate를 평일별로 호출
-      const all: ClassSession[] = [];
-      for (const d of weekDates) {
-        const res = await classSessionsApi.listByDate(ymd(d));
-        all.push(...((res?.data ?? []) as ClassSession[]));
-      }
-      return { data: all };
+      if (myOfferingIdsForSessions.length === 0)
+        return { data: [] as ClassSession[] };
+      const res = await classSessionsApi.listByCourses(myOfferingIdsForSessions);
+      return {
+        data: ((res?.data ?? []) as ClassSession[]).filter(
+          (s) => s.date >= weekStartStr && s.date <= weekEndStr,
+        ),
+      };
     },
     staleTime: 1000 * 60,
     enabled: viewMode === "weekly" && parsedOfferings.length > 0,
@@ -755,8 +777,17 @@ export default function DailyClassTimelineWidget() {
   // 다음주 같은 요일의 수업 세션 (종료 수업 프롬프트에서 수업형태 편집용)
   const nextWeekDate = useMemo(() => addDaysYmd(actualToday, 7), [actualToday]);
   const { data: nextWeekSessionsRes } = useQuery({
-    queryKey: ["class-sessions", "next-week", nextWeekDate],
-    queryFn: () => classSessionsApi.listByDate(nextWeekDate),
+    queryKey: ["class-sessions", "next-week", nextWeekDate, myOfferingIdsKey],
+    queryFn: async () => {
+      if (myOfferingIdsForSessions.length === 0)
+        return { data: [] as ClassSession[] };
+      const res = await classSessionsApi.listByCourses(myOfferingIdsForSessions);
+      return {
+        data: ((res?.data ?? []) as ClassSession[]).filter(
+          (s) => s.date === nextWeekDate,
+        ),
+      };
+    },
     enabled: isViewingToday && finishedToday.length > 0,
     staleTime: 30_000,
   });
