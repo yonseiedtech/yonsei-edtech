@@ -98,3 +98,18 @@ export function isDueToday(dueDate?: string | null, now: Date = new Date()): boo
 export function todayYmdLocal(now: Date = new Date()): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
+
+/**
+ * Asia/Seoul 시간대 기준 YYYY-MM-DD.
+ * 서버사이드(Vercel = UTC)에서 KST 날짜를 정확히 얻기 위해 사용.
+ * 클라이언트(브라우저=KST)에서도 안전하게 동작.
+ */
+export function todayYmdKst(now: Date = new Date()): string {
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  return fmt.format(now);
+}

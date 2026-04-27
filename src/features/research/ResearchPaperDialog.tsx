@@ -23,6 +23,7 @@ import type {
 } from "@/types";
 import VariablesInput from "./VariablesInput";
 import TagInput from "./TagInput";
+import { todayYmdLocal } from "@/lib/dday";
 import { cn } from "@/lib/utils";
 
 const TOTAL_STEPS = 5 as const;
@@ -503,7 +504,7 @@ export default function ResearchPaperDialog({
                         key={s}
                         type="button"
                         onClick={() => {
-                          const today = new Date().toISOString().slice(0, 10);
+                          const today = todayYmdLocal();
                           setForm((prev) => {
                             const next = { ...prev, readStatus: s };
                             if (s === "reading" && !prev.readStartedAt) next.readStartedAt = today;

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { StudySession, StudySessionType } from "@/types";
 import { toast } from "sonner";
+import { todayYmdLocal } from "@/lib/dday";
 
 interface Props {
   open: boolean;
@@ -105,7 +106,7 @@ export default function EditSessionDialog({ open, session, onClose }: Props) {
             <Input
               type="date"
               value={date}
-              max={new Date().toISOString().slice(0, 10)}
+              max={todayYmdLocal()}
               onChange={(e) => setDate(e.target.value)}
             />
           </div>

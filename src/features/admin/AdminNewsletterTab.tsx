@@ -11,6 +11,7 @@ import {
   AUTHOR_TYPE_LABELS,
 } from "@/features/newsletter/newsletter-store";
 import type { NewsletterSection, NewsletterIssue } from "@/features/newsletter/newsletter-store";
+import { todayYmdLocal } from "@/lib/dday";
 import { usePosts } from "@/features/board/useBoard";
 import { useMembers } from "@/features/member/useMembers";
 import { Button } from "@/components/ui/button";
@@ -290,7 +291,7 @@ export default function AdminNewsletterTab() {
       title,
       subtitle,
       coverColor,
-      publishDate: new Date().toISOString().split("T")[0],
+      publishDate: todayYmdLocal(),
       editorName: editorName || "편집팀",
       sections,
       status,
@@ -800,7 +801,7 @@ export default function AdminNewsletterTab() {
                 value={publishAt}
                 onChange={(e) => setPublishAt(e.target.value)}
                 className="rounded-md border px-3 py-1.5 text-sm"
-                min={new Date().toISOString().slice(0, 16)}
+                min={`${todayYmdLocal()}T${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}`}
               />
               <span className="text-xs text-muted-foreground">초안으로 저장 후 지정 시각에 자동 발행됩니다</span>
             </>

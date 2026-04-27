@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { useStudySessions } from "./useStudySessions";
 import { Clock, Flame, Target, BookOpen } from "lucide-react";
+import { todayYmdLocal } from "@/lib/dday";
 import type { StudySession } from "@/types";
 
 function fmtMinutes(min: number): string {
@@ -19,7 +20,7 @@ function semesterStartIso(): string {
   const m = now.getMonth();
   // 1학기: 3월 1일 / 2학기: 9월 1일 기준
   const start = m < 6 ? new Date(y, 2, 1) : new Date(y, 8, 1);
-  return start.toISOString().slice(0, 10);
+  return todayYmdLocal(start);
 }
 
 function weekStartIso(): string {
@@ -27,7 +28,7 @@ function weekStartIso(): string {
   const day = now.getDay() || 7; // 일=0 → 7로
   const monday = new Date(now);
   monday.setDate(now.getDate() - (day - 1));
-  return monday.toISOString().slice(0, 10);
+  return todayYmdLocal(monday);
 }
 
 interface DailyBucket {
@@ -41,12 +42,11 @@ function buildLast7Days(sessions: StudySession[]): DailyBucket[] {
   for (let i = 6; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
-    const iso = d.toISOString().slice(0, 10);
-    buckets.push({ date: iso, minutes: 0 });
+    buckets.push({ date: todayYmdLocal(d), minutes: 0 });
   }
   for (const s of sessions) {
     if (!s.endTime || !s.startTime) continue;
-    const day = s.startTime.slice(0, 10);
+    const day = todayYmdLocal(new Date(s.startTime));
     const b = buckets.find((x) => x.date === day);
     if (b) b.minutes += s.durationMinutes || 0;
   }
@@ -78,7 +78,7 @@ export default function StudyTimerStats() {
   const { sessions, isLoading } = useStudySessions();
 
   const stats = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayYmdLocal();
     const weekStart = weekStartIso();
     const semStart = semesterStartIso();
 
@@ -90,7 +90,7 @@ export default function StudyTimerStats() {
     let focusSum = 0;
     let focusCount = 0;
     for (const s of completed) {
-      const day = s.startTime?.slice(0, 10) ?? "";
+      const day = s.startTime ? todayYmdLocal(new Date(s.startTime)) : "";
       const dur = s.durationMinutes || 0;
       if (day === today) todayMin += dur;
       if (day >= weekStart) weekMin += dur;

@@ -40,6 +40,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { todayYmdLocal } from "@/lib/dday";
 
 interface FeePayment {
   id: string;
@@ -125,7 +126,7 @@ export default function FeesPage() {
     category: "",
     description: "",
     amount: "",
-    date: new Date().toISOString().slice(0, 10),
+    date: todayYmdLocal(),
     memo: "",
   });
   const [ledgerFilter, setLedgerFilter] = useState<"all" | "income" | "expense">("all");
@@ -391,7 +392,7 @@ export default function FeesPage() {
       queryClient.invalidateQueries({ queryKey: ["transactions", selectedSemester] });
       setShowTxDialog(false);
       setEditingTx(null);
-      setTxForm({ type: "expense", category: "", description: "", amount: "", date: new Date().toISOString().slice(0, 10), memo: "" });
+      setTxForm({ type: "expense", category: "", description: "", amount: "", date: todayYmdLocal(), memo: "" });
       toast.success(editingTx ? "거래가 수정되었습니다." : "거래가 등록되었습니다.");
     },
   });
@@ -419,7 +420,7 @@ export default function FeesPage() {
       setTxForm({ type: tx.type, category: tx.category, description: tx.description, amount: String(tx.amount), date: tx.date, memo: tx.memo ?? "" });
     } else {
       setEditingTx(null);
-      setTxForm({ type: "expense", category: "", description: "", amount: "", date: new Date().toISOString().slice(0, 10), memo: "" });
+      setTxForm({ type: "expense", category: "", description: "", amount: "", date: todayYmdLocal(), memo: "" });
     }
     setShowTxDialog(true);
   }

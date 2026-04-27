@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import InlineMeetingTimer from "./InlineMeetingTimer";
 import ActivityConnectedTodos from "./ActivityConnectedTodos";
+import { todayYmdLocal } from "@/lib/dday";
 import type { Activity, ActivityType, ActivityProgress, ActivityProgressMode, FormField, EnrollmentStatus, ExternalParticipantType } from "@/types";
 import { ENROLLMENT_STATUS_LABELS, ACTIVITY_PROGRESS_MODE_LABELS, EXTERNAL_PARTICIPANT_TYPE_LABELS, EXTERNAL_PARTICIPANT_TYPE_COLORS } from "@/types";
 import { activityProgressApi, progressMeetingsApi } from "@/lib/bkend";
@@ -577,7 +578,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                         await activityProgressApi.create({
                           activityId,
                           week: nextWeek,
-                          date: progressDate || new Date().toISOString().split("T")[0],
+                          date: progressDate || todayYmdLocal(),
                           startTime: progressStartTime || undefined,
                           endTime: progressEndTime || undefined,
                           mode: progressMode,

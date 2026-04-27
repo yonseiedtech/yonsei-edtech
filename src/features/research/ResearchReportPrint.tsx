@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import type { ResearchPaper, User, WritingPaper, WritingPaperHistory } from "@/types";
 import { formatPeriodLabel, isPaperInPeriod } from "@/lib/research-period";
+import { todayYmdLocal } from "@/lib/dday";
 import {
   computeWritingDays,
   computeParticipationRate,
@@ -118,7 +119,7 @@ export default function ResearchReportPrint({
             <InfoRow label="기수" value={`${user.generation}기`} />
           )}
           <InfoRow label="기간" value={periodLabel} />
-          <InfoRow label="발행일" value={new Date().toISOString().slice(0, 10)} />
+          <InfoRow label="발행일" value={todayYmdLocal()} />
         </section>
 
         {/* 메인 4지표 */}

@@ -7,6 +7,7 @@ import { useOrgChart, type OrgPosition } from "@/features/admin/settings/useOrgC
 import { useAuthStore } from "@/features/auth/auth-store";
 import { certificatesApi } from "@/lib/bkend";
 import { notifyCertificateIssued } from "@/features/notifications/notify";
+import { todayYmdLocal } from "@/lib/dday";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -1539,7 +1540,7 @@ export default function CertificateGenerator() {
     setCertType(type);
     setBodyText("");
     if (type === "appointment") {
-      if (!semester) setSemester(inferSemester(new Date().toISOString().slice(0, 10)));
+      if (!semester) setSemester(inferSemester(todayYmdLocal()));
       setCertificateNo(await generateCertificateNo(type));
     }
   }

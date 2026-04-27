@@ -18,6 +18,7 @@ import {
 } from "@/types";
 import { toast } from "sonner";
 import SitePopupModal from "@/components/popup/SitePopupModal";
+import { todayYmdLocal } from "@/lib/dday";
 
 interface Props {
   popup: SitePopup | null;
@@ -28,7 +29,7 @@ interface Props {
 function todayPlus(days: number): string {
   const d = new Date();
   d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  return todayYmdLocal(d);
 }
 
 export default function PopupEditor({ popup, onClose, onSaved }: Props) {

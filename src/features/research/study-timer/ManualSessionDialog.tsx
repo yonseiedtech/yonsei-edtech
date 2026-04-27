@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { StudySessionType } from "@/types";
 import { toast } from "sonner";
+import { todayYmdLocal } from "@/lib/dday";
 
 interface Props {
   open: boolean;
@@ -24,7 +25,7 @@ export default function ManualSessionDialog({
 }: Props) {
   const { mutateAsync: createManual, isPending } = useCreateManualSession();
   const [type, setType] = useState<StudySessionType>(defaultType);
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => todayYmdLocal());
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("10:00");
   const [memo, setMemo] = useState("");
@@ -97,7 +98,7 @@ export default function ManualSessionDialog({
             <Input
               type="date"
               value={date}
-              max={new Date().toISOString().slice(0, 10)}
+              max={todayYmdLocal()}
               onChange={(e) => setDate(e.target.value)}
             />
           </div>

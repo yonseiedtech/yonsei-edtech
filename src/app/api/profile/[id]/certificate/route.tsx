@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyAuth } from "@/lib/api-auth";
+import { todayYmdKst } from "@/lib/dday";
 import { pdf } from "@react-pdf/renderer";
 import {
   ProfileCertificatePdfDocument,
@@ -67,7 +68,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
       papers: (user.recentPapers ?? []) as RecentPaper[],
     };
 
-    const issuedAt = new Date().toISOString().slice(0, 10);
+    const issuedAt = todayYmdKst();
     const certNumber = `YEDT-${id.slice(0, 6).toUpperCase()}-${issuedAt.replace(/-/g, "")}`;
     const verifyUrl = `https://yonsei-edtech.vercel.app/profile/${id}`;
 

@@ -17,6 +17,7 @@ import EmptyState from "@/components/ui/empty-state";
 import { Plus, Upload, BookOpen, Search, X, Save, FileEdit, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import type { ResearchPaper, User, RecentPaper, AlumniThesis } from "@/types";
+import { todayYmdLocal } from "@/lib/dday";
 import {
   useResearchPapers,
   useCreateResearchPaper,
@@ -536,7 +537,7 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
                           try {
                             const enriched: Record<string, unknown> = { ...patch };
                             if (patch.readStatus) {
-                              const today = new Date().toISOString().slice(0, 10);
+                              const today = todayYmdLocal();
                               if (patch.readStatus === "reading" && !p.readStartedAt) {
                                 enriched.readStartedAt = today;
                               }

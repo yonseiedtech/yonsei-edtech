@@ -38,6 +38,7 @@ import type {
   ContentCreation,
   ContentCreationType,
 } from "@/types";
+import { todayYmdLocal } from "@/lib/dday";
 
 type TabKey = "award" | "external" | "content";
 
@@ -48,7 +49,7 @@ const TABS: { key: TabKey; label: string; icon: typeof AwardIcon }[] = [
 ];
 
 function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
+  return todayYmdLocal();
 }
 
 function PortfolioContent() {

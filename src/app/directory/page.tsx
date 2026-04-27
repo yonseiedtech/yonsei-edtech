@@ -13,6 +13,7 @@ import { Shield, Lock, Mail, Download, Search, ArrowUpDown } from "lucide-react"
 import { cn } from "@/lib/utils";
 import { OCCUPATION_LABELS, OCCUPATION_SHORT_LABELS } from "@/types";
 import type { User, ContactVisibility, OccupationType } from "@/types";
+import { todayYmdLocal } from "@/lib/dday";
 
 function filterContactByVisibility(member: User, viewer: User | null): User {
   const vis: ContactVisibility = member.contactVisibility ?? "members";
@@ -206,7 +207,7 @@ function DirectoryContent() {
           : activeTab === "students"
             ? `재휴학생_${studentSub}`
             : "졸업생";
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayYmdLocal();
     downloadCsv(`연락망_${tabLabel}_${today}.csv`, buildCsvRows(filteredAndSorted));
   }
 

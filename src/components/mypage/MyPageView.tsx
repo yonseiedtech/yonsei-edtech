@@ -11,6 +11,7 @@ import { useSeminars } from "@/features/seminar/useSeminar";
 import { useQuery } from "@tanstack/react-query";
 import { certificatesApi, activitiesApi, profilesApi, reviewsApi } from "@/lib/bkend";
 import { enrichCertificates } from "@/lib/denorm-sync";
+import { todayYmdLocal } from "@/lib/dday";
 import { useResearchPapers } from "@/features/research/useResearchPapers";
 import { useMyInterviewResponses } from "@/features/board/interview-store";
 import type { Certificate, Activity, User, SeminarReview } from "@/types";
@@ -292,7 +293,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
               </Link>
 
               {(() => {
-                const today = new Date().toISOString().slice(0, 10);
+                const today = todayYmdLocal();
                 const upcomingActivities = myActivities
                   .filter((a) => (a.date || "") >= today)
                   .map((a) => ({ id: a.id, title: a.title, date: a.date, meta: "학술활동", href: `/activities` }));
@@ -333,7 +334,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
               })()}
 
               {isSelf && !readOnly && (() => {
-                const today = new Date().toISOString().slice(0, 10);
+                const today = todayYmdLocal();
 
                 const pendingApps = allActivities
                   .map((a) => ({ a, mine: a.applicants?.find((ap) => ap.userId === userId && ap.status !== "approved") }))
@@ -402,7 +403,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
               })()}
 
               {isSelf && !readOnly && (() => {
-                const today = new Date().toISOString().slice(0, 10);
+                const today = todayYmdLocal();
                 const ACTIVITY_LABELS: Record<string, string> = {
                   study: "스터디",
                   project: "프로젝트",

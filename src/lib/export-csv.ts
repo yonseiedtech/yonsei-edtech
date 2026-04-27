@@ -3,6 +3,8 @@
  * BOM(Byte Order Mark)을 추가하여 Excel에서 한글이 깨지지 않도록 처리
  */
 
+import { todayYmdLocal } from "./dday";
+
 export function exportCSV(
   filename: string,
   headers: string[],
@@ -29,7 +31,7 @@ export function exportCSV(
 
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${filename}_${new Date().toISOString().split("T")[0]}.csv`;
+  a.download = `${filename}_${todayYmdLocal()}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
