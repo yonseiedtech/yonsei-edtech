@@ -431,7 +431,9 @@ export default function DailyClassTimelineWidget() {
   });
 
   const { data: weeklySessionsRes } = useQuery({
-    queryKey: ["class-sessions-range", weekStartStr, weekEndStr],
+    // 키 prefix를 "class-sessions"로 통일 — 다른 페이지에서 invalidate({queryKey:["class-sessions"]}) 시
+    // 주간 뷰도 함께 무효화되도록 한다 (이전 "class-sessions-range" 키는 prefix 매칭 안 됨).
+    queryKey: ["class-sessions", "range", weekStartStr, weekEndStr],
     queryFn: async () => {
       // listByDate를 평일별로 호출
       const all: ClassSession[] = [];
@@ -785,13 +787,18 @@ export default function DailyClassTimelineWidget() {
     setSavingNextMode(key);
     try {
       const ex = nextWeekSessionByCourse.get(courseOfferingId);
-      if (ex) {
+      // 대면(기본값)으로 복귀할 때는 row를 삭제해 stale 데이터를 남기지 않는다.
+      // 그 외 mode는 update(있으면) / create(없으면).
+      if (mode === "in_person") {
+        if (ex) {
+          await classSessionsApi.delete(ex.id);
+        }
+        // ex 없으면 no-op (이미 기본 대면 상태)
+      } else if (ex) {
         if (ex.mode !== mode) {
           await classSessionsApi.update(ex.id, { mode });
         }
       } else {
-        // in_person 기본값은 세션 생성 없이 유지 가능하지만,
-        // 명시적 선택이므로 기록을 남긴다
         await classSessionsApi.create({
           courseOfferingId,
           date: nextWeekDate,
@@ -804,6 +811,10 @@ export default function DailyClassTimelineWidget() {
         type: "active",
       });
       await qc.invalidateQueries({ queryKey: ["class-sessions"] });
+      // 과목 schedule 페이지 캐시도 함께 무효화
+      await qc.invalidateQueries({
+        queryKey: ["class-sessions", "by-course", courseOfferingId],
+      });
       toast.success(
         `다음주 ${CLASS_SESSION_MODE_LABELS[mode]}(으)로 설정했습니다.`,
       );

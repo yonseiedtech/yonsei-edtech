@@ -55,6 +55,8 @@ import {
   buildSemesterWeeks,
   inferSemesterStartDate,
   DEFAULT_TOTAL_WEEKS,
+  findCurrentCalendarWeek,
+  getCalendarWeekRange,
   type WeekRange,
 } from "@/lib/semesterWeeks";
 
@@ -295,9 +297,11 @@ function ScheduleContent({ courseId }: { courseId: string }) {
 
   // 현재 주차 자동 계산 + 첫 마운트 시 스크롤
   // KST 등 로컬 기준 오늘 — toISOString().slice는 UTC라 자정~09시에 어제로 밀리는 버그가 있어 todayYmdLocal 사용
+  // "이번 주" 기준은 달력 주(월~일). 학기 주차 범위(수업일~다음 수업일 전날)와 어긋날 때
+  // 사용자 직관(예: 월요일에 보면 같은 주 목요일 수업 = 이번 주)을 우선.
   const todayYmd = useMemo(() => todayYmdLocal(), []);
   const currentWeek = useMemo(
-    () => weeks.find((w) => todayYmd >= w.startDate && todayYmd <= w.endDate),
+    () => findCurrentCalendarWeek(weeks, todayYmd),
     [weeks, todayYmd],
   );
   const didAutoScrollRef = useRef(false);
@@ -662,6 +666,9 @@ function ScheduleContent({ courseId }: { courseId: string }) {
   }
 
   const today = todayYmdLocal();
+  // 달력 주(월~일) 범위 — "이번 주" 판정과 과거/미래 분류에 공통 사용
+  const { mondayYmd: thisWeekMonday, sundayYmd: thisWeekSunday } =
+    getCalendarWeekRange(today);
 
   // 주차별 그룹: 세션·메모·할일을 주차에 정렬해 집계
   const sessionsByWeek = new Map<number, ClassSession[]>();
@@ -773,8 +780,10 @@ function ScheduleContent({ courseId }: { courseId: string }) {
               const ws = sessionsByWeek.get(w.weekNo) ?? [];
               const ns = notesByWeek.get(w.weekNo) ?? [];
               const ts = todosByWeek.get(w.weekNo) ?? [];
-              const isCurrentWeek = today >= w.startDate && today <= w.endDate;
-              const isPast = today > w.endDate;
+              // 달력 주 기준 "이번 주" — 그 주차의 수업일이 이번 주 월~일에 포함되는가
+              const isCurrentWeek =
+                w.startDate >= thisWeekMonday && w.startDate <= thisWeekSunday;
+              const isPast = w.startDate < thisWeekMonday;
               const classDates = computeClassDatesInWeek(
                 w.startDate,
                 parsedSchedule.weekdays,

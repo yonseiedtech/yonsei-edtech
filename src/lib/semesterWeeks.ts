@@ -109,3 +109,46 @@ export function findWeekForDate(
 ): WeekRange | null {
   return weeks.find((w) => isInWeek(w, dateIso)) ?? null;
 }
+
+/**
+ * YYYY-MM-DD를 받아 그 날이 속한 달력 주(월~일) 범위를 반환.
+ * 사용자 직관 "이번 주" = 월요일~일요일.
+ */
+export function getCalendarWeekRange(dateIso: string): {
+  mondayYmd: string;
+  sundayYmd: string;
+} {
+  const d = parseYmd(dateIso);
+  const dow = d.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+  const daysFromMonday = (dow + 6) % 7; // Mon→0, Sun→6
+  const monday = addDays(d, -daysFromMonday);
+  const sunday = addDays(monday, 6);
+  return { mondayYmd: ymd(monday), sundayYmd: ymd(sunday) };
+}
+
+/**
+ * 학기 주차 N이 "이번 주(달력 기준 월~일)" 인지 판정.
+ * 기준: 그 주차의 수업일(startDate)이 오늘이 속한 달력 주에 포함되는가.
+ *
+ * 학기 주차 범위(수업일~다음 수업일 전날)와 사용자 직관(월~일)이 어긋날 때
+ * 후자를 우선한다. 예) 오늘 월요일이고 수업이 목요일인 경우, 이번 주 목요일 수업은
+ * 학기 주차로는 다음 주차에 속하지만 사용자는 "이번 주 수업"으로 인지함.
+ */
+export function isCurrentCalendarWeek(week: WeekRange, todayIso: string): boolean {
+  const { mondayYmd, sundayYmd } = getCalendarWeekRange(todayIso);
+  return week.startDate >= mondayYmd && week.startDate <= sundayYmd;
+}
+
+/**
+ * 오늘 기준 "이번 주" 학기 주차를 반환. 없으면 null.
+ */
+export function findCurrentCalendarWeek(
+  weeks: WeekRange[],
+  todayIso: string,
+): WeekRange | null {
+  const { mondayYmd, sundayYmd } = getCalendarWeekRange(todayIso);
+  return (
+    weeks.find((w) => w.startDate >= mondayYmd && w.startDate <= sundayYmd) ??
+    null
+  );
+}
