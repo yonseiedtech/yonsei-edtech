@@ -15,8 +15,8 @@ export function useMembers(options?: {
     queryKey: ["members", options],
     queryFn: async () => {
       const params: Record<string, string | number | undefined> = {
-        limit: 200,
-        // sort를 제거: Firestore에서 where + orderBy 복합 인덱스 없이 사용 불가
+        // 누락 방지: 200건 → 500건. Firestore 인덱스 미사용으로 sort는 클라이언트 처리.
+        limit: 500,
       };
       if (options?.approved !== undefined) {
         params["filter[approved]"] = String(options.approved);

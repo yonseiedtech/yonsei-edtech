@@ -227,20 +227,20 @@
     },
     {
       "path": "src\\types\\index.ts",
-      "accessCount": 35,
-      "lastAccessed": 1777261185192,
+      "accessCount": 37,
+      "lastAccessed": 1777269425347,
+      "type": "directory"
+    },
+    {
+      "path": "src",
+      "accessCount": 29,
+      "lastAccessed": 1777269320313,
       "type": "directory"
     },
     {
       "path": "src\\lib\\bkend.ts",
       "accessCount": 28,
       "lastAccessed": 1777262498741,
-      "type": "directory"
-    },
-    {
-      "path": "src",
-      "accessCount": 26,
-      "lastAccessed": 1777268266309,
       "type": "directory"
     },
     {
@@ -304,6 +304,12 @@
       "type": "file"
     },
     {
+      "path": "src\\lib",
+      "accessCount": 4,
+      "lastAccessed": 1777269309405,
+      "type": "directory"
+    },
+    {
       "path": "src\\lib\\post-permissions.ts",
       "accessCount": 3,
       "lastAccessed": 1777221041760,
@@ -326,12 +332,6 @@
       "accessCount": 3,
       "lastAccessed": 1777249076487,
       "type": "file"
-    },
-    {
-      "path": "src\\lib",
-      "accessCount": 3,
-      "lastAccessed": 1777262443063,
-      "type": "directory"
     },
     {
       "path": "src\\features\\insights\\computeMemberMetrics.ts",
