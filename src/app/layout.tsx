@@ -96,20 +96,11 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     title: SITE_TITLE_DEFAULT,
     description: SITE_DESCRIPTION,
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "연세교육공학회 - 연세대학교 교육대학원 교육공학전공 학술 커뮤니티",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: SITE_TITLE_DEFAULT,
     description: SITE_DESCRIPTION,
-    images: ["/og-image.png"],
   },
   robots: {
     index: true,

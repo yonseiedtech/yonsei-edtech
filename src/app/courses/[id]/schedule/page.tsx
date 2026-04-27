@@ -1120,8 +1120,8 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                   <Badge variant="secondary" className="text-[10px]">
                     {CLASS_SESSION_MODE_LABELS[s.mode]}
                   </Badge>
-                  {s.note && (
-                    <span className="flex-1 text-muted-foreground">{s.note}</span>
+                  {s.notes && (
+                    <span className="flex-1 text-muted-foreground">{s.notes}</span>
                   )}
                   <button
                     type="button"
