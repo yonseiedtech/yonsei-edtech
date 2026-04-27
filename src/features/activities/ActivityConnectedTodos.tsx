@@ -56,7 +56,12 @@ export default function ActivityConnectedTodos({ activityId }: Props) {
     enabled: !!activityId,
     staleTime: 30_000,
   });
-  const todos = useMemo(() => (res?.data ?? []) as AdminTodo[], [res]);
+  const todos = useMemo(() => {
+    const arr = ((res?.data ?? []) as AdminTodo[]).slice();
+    // API에서 sort 옵션을 빼서 (인덱스 회피) 클라이언트에서 createdAt desc 정렬.
+    arr.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+    return arr;
+  }, [res]);
 
   async function cycleStatus(t: AdminTodo) {
     const next: AdminTodo["status"] =

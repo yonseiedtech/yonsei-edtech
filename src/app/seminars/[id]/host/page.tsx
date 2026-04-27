@@ -33,6 +33,7 @@ import {
   attendeesApi,
   hostRetrospectivesApi,
 } from "@/lib/bkend";
+import SeminarConnectedTodos from "@/features/seminar/SeminarConnectedTodos";
 import {
   HOST_RETROSPECTIVE_TAG_SUGGESTIONS,
   type Seminar,
@@ -335,6 +336,15 @@ function SeminarHostInner({ seminarId }: { seminarId: string }) {
             })}
           </div>
         )}
+      </section>
+
+      {/* 세미나 연동 운영 업무 */}
+      <section className="mb-10">
+        <SeminarConnectedTodos
+          seminarId={seminarId}
+          seminarTitle={seminar.title}
+          seminarDate={seminar.date}
+        />
       </section>
 
       {/* F6: 호스트 회고 */}

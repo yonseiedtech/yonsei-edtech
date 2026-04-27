@@ -14,6 +14,7 @@ import {
   Plus,
   Bell,
   BellOff,
+  Mic,
 } from "lucide-react";
 import { formatDday } from "@/lib/dday";
 import { parseSchedule, fmtMin } from "@/lib/courseSchedule";
@@ -38,6 +39,7 @@ import {
   researchProposalsApi,
   researchReportsApi,
   activitiesApi,
+  seminarsApi,
 } from "@/lib/bkend";
 import { usePendingMembers } from "@/features/member/useMembers";
 import { useInquiries } from "@/features/inquiry/useInquiry";
@@ -53,10 +55,13 @@ import {
   type Activity,
   type ActivityType,
   type CourseEnrollment,
+  type Seminar,
 } from "@/types";
 import { cn } from "@/lib/utils";
 
-type AddCategory = "course" | "activity" | "staff";
+type AddCategory = "course" | "activity" | "seminar" | "staff";
+
+type StatusFilter = "all" | "open" | "done";
 
 const TODO_TYPE_OPTIONS: CourseTodoType[] = [
   "assignment",
@@ -112,6 +117,7 @@ export default function MyTodosWidget() {
   const isStaff = isAtLeast(user, "staff");
   const userId = user?.id;
   const [tab, setTab] = useState<TabKey>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("open");
 
   // ── 1) 수업 할 일 ──
   const { data: courseTodosRes } = useQuery({
@@ -136,6 +142,19 @@ export default function MyTodosWidget() {
         }),
     [courseTodos],
   );
+  const completedCourseTodos = useMemo(
+    () =>
+      courseTodos
+        .filter((t) => t.completed)
+        .sort((a, b) => (b.completedAt ?? "").localeCompare(a.completedAt ?? "")),
+    [courseTodos],
+  );
+  const filteredCourseTodos =
+    statusFilter === "done"
+      ? completedCourseTodos
+      : statusFilter === "open"
+        ? incompleteCourseTodos
+        : [...incompleteCourseTodos, ...completedCourseTodos];
 
   const todoCourseIds = useMemo(() => {
     const set = new Set<string>();
@@ -265,13 +284,26 @@ export default function MyTodosWidget() {
     staleTime: 60_000,
   });
 
-  const myActivityTodos = useMemo(() => {
+  const myActivitiesAll = useMemo(() => {
     if (!user) return [] as ActivityFlat[];
     return allActivities
-      .filter((a) => a.status !== "completed")
       .filter((a) => isUserInvolved(a, user.id))
       .sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""));
   }, [allActivities, user]);
+  const myActivityTodos = useMemo(
+    () => myActivitiesAll.filter((a) => a.status !== "completed"),
+    [myActivitiesAll],
+  );
+  const myCompletedActivities = useMemo(
+    () => myActivitiesAll.filter((a) => a.status === "completed"),
+    [myActivitiesAll],
+  );
+  const filteredActivityList =
+    statusFilter === "done"
+      ? myCompletedActivities
+      : statusFilter === "open"
+        ? myActivityTodos
+        : myActivitiesAll;
 
   // ── 4) 운영진 (staff 전용) ──
   const { pendingMembers } = usePendingMembers({ enabled: isStaff });
@@ -332,6 +364,14 @@ export default function MyTodosWidget() {
     priority: "medium" as "high" | "medium" | "low",
     dueDate: "",
   });
+  // 세미나 추가 폼 — admin_todos에 relatedSeminar* 필드 양방향 연동
+  const [seminarForm, setSeminarForm] = useState({
+    seminarId: "",
+    title: "",
+    description: "",
+    priority: "medium" as "high" | "medium" | "low",
+    dueDate: "",
+  });
 
   // 수업 picker 옵션 — 본인 수강 과목 (이번 학기)
   const { year: curYear, semester: curSem } = inferCurrentSemester(new Date());
@@ -363,6 +403,30 @@ export default function MyTodosWidget() {
     );
   }, [pickerOfferingsRes, myEnrollmentCourseIds]);
 
+  // 세미나 picker — staff: 전체, 호스트: 본인 호스트 세미나만. 미래·최근 30일 이내 우선
+  const { data: seminarsListRes } = useQuery({
+    queryKey: ["seminars-for-todo-picker"],
+    queryFn: () => seminarsApi.list({ limit: 100 }),
+    enabled: addOpen && addCategory === "seminar",
+    staleTime: 5 * 60_000,
+  });
+  const pickerSeminars: Seminar[] = useMemo(() => {
+    const all = ((seminarsListRes?.data ?? []) as Seminar[]).slice();
+    if (!user) return [];
+    const filtered = isStaff
+      ? all
+      : all.filter((s) => (s.hostUserIds ?? []).includes(user.id));
+    // 미래 → 최근 과거 순 정렬, 30일 초과 과거는 컷
+    const today = new Date().toISOString().slice(0, 10);
+    return filtered
+      .filter((s) => {
+        if (!s.date) return true;
+        const days = (new Date(today).getTime() - new Date(s.date).getTime()) / 86400000;
+        return days <= 30; // 30일 초과 과거 제외
+      })
+      .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
+  }, [seminarsListRes, isStaff, user]);
+
   function openAdd() {
     setAddCategory("course");
     setCourseForm({
@@ -380,6 +444,13 @@ export default function MyTodosWidget() {
     });
     setActivityForm({
       activityId: "",
+      title: "",
+      description: "",
+      priority: "medium",
+      dueDate: "",
+    });
+    setSeminarForm({
+      seminarId: "",
       title: "",
       description: "",
       priority: "medium",
@@ -445,6 +516,37 @@ export default function MyTodosWidget() {
         await qc.invalidateQueries({ queryKey: ["activity-todos", target.id] });
         toast.success(
           `학술활동 "${target.title}"에 연동된 업무가 추가되었습니다 — /activities/${target.type}/${target.id} 와 /staff-admin/todos 양쪽에 표시됩니다.`,
+        );
+      } else if (addCategory === "seminar") {
+        if (!seminarForm.seminarId) {
+          toast.error("세미나를 선택하세요.");
+          return;
+        }
+        if (!seminarForm.title.trim()) {
+          toast.error("제목을 입력하세요.");
+          return;
+        }
+        const target = pickerSeminars.find((s) => s.id === seminarForm.seminarId);
+        if (!target) {
+          toast.error("선택한 세미나를 찾지 못했습니다.");
+          return;
+        }
+        await todosApi.create({
+          title: seminarForm.title.trim(),
+          description: seminarForm.description.trim() || undefined,
+          priority: seminarForm.priority,
+          status: "todo",
+          dueDate: seminarForm.dueDate || undefined,
+          createdBy: userId,
+          createdByName: user.name ?? "운영진",
+          relatedSeminarId: target.id,
+          relatedSeminarTitle: target.title,
+          relatedSeminarDate: target.date || undefined,
+        });
+        await qc.invalidateQueries({ queryKey: ["admin-todos"] });
+        await qc.invalidateQueries({ queryKey: ["seminar-todos", target.id] });
+        toast.success(
+          `세미나 "${target.title}"에 연동된 업무가 추가되었습니다 — /seminars/${target.id}/host 와 /staff-admin/todos 양쪽에 표시됩니다.`,
         );
       } else {
         if (!staffForm.title.trim()) {
@@ -697,6 +799,31 @@ export default function MyTodosWidget() {
         </div>
       </div>
 
+      {/* 상태 필터 */}
+      <div className="mt-3 flex items-center gap-1 rounded-md bg-muted/40 p-0.5 text-[11px]">
+        {(
+          [
+            { v: "all", label: "전체" },
+            { v: "open", label: "예정·진행중" },
+            { v: "done", label: "완료" },
+          ] as { v: StatusFilter; label: string }[]
+        ).map((opt) => (
+          <button
+            key={opt.v}
+            type="button"
+            onClick={() => setStatusFilter(opt.v)}
+            className={cn(
+              "flex-1 rounded px-2 py-1 transition-colors",
+              statusFilter === opt.v
+                ? "bg-white font-semibold text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
       <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)} className="mt-3">
         <TabsList
           className={cn(
@@ -725,25 +852,30 @@ export default function MyTodosWidget() {
 
         {/* 전체 */}
         <TabsContent value="all" className="mt-3 space-y-4">
-          {totalCount === 0 ? (
+          {filteredCourseTodos.length === 0 &&
+          (statusFilter !== "open" || researchTodos.length === 0) &&
+          filteredActivityList.length === 0 &&
+          (!isStaff || statusFilter === "done" || counts.staff === 0) ? (
             <p className="rounded-md bg-muted/30 px-3 py-3 text-center text-[11px] text-muted-foreground">
-              표시할 할 일이 없어요.
+              {statusFilter === "done"
+                ? "완료된 항목이 없어요."
+                : "표시할 할 일이 없어요."}
             </p>
           ) : (
             <>
-              {incompleteCourseTodos.length > 0 && (
+              {filteredCourseTodos.length > 0 && (
                 <section>
                   <p className="mb-1.5 flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
                     <BookOpen size={12} /> 수업
                   </p>
                   <ul className="space-y-1">
-                    {incompleteCourseTodos.slice(0, 5).map((t) => (
+                    {filteredCourseTodos.slice(0, 5).map((t) => (
                       <CourseTodoItem key={t.id} t={t} />
                     ))}
                   </ul>
                 </section>
               )}
-              {researchTodos.length > 0 && (
+              {statusFilter !== "done" && researchTodos.length > 0 && (
                 <section>
                   <p className="mb-1.5 flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
                     <Microscope size={12} /> 연구활동
@@ -755,19 +887,19 @@ export default function MyTodosWidget() {
                   </ul>
                 </section>
               )}
-              {myActivityTodos.length > 0 && (
+              {filteredActivityList.length > 0 && (
                 <section>
                   <p className="mb-1.5 flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
                     <UsersIcon size={12} /> 학술활동
                   </p>
                   <ul className="space-y-1">
-                    {myActivityTodos.slice(0, 5).map((a) => (
+                    {filteredActivityList.slice(0, 5).map((a) => (
                       <ActivityItem key={a.id} a={a} />
                     ))}
                   </ul>
                 </section>
               )}
-              {isStaff && counts.staff > 0 && (
+              {isStaff && statusFilter !== "done" && counts.staff > 0 && (
                 <section>
                   <p className="mb-1.5 flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
                     <ShieldAlert size={12} /> 운영진
@@ -783,13 +915,19 @@ export default function MyTodosWidget() {
 
         {/* 수업 */}
         <TabsContent value="course" className="mt-3">
-          {incompleteCourseTodos.length === 0 ? (
+          {filteredCourseTodos.length === 0 ? (
             <p className="rounded-md bg-muted/30 px-3 py-3 text-center text-[11px] text-muted-foreground">
-              수업 할 일이 없어요. 수업 일정에서 <ListChecks size={11} className="inline" /> 할 일 버튼으로 추가할 수 있어요.
+              {statusFilter === "done"
+                ? "완료한 수업 할 일이 없어요."
+                : (
+                  <>
+                    수업 할 일이 없어요. 수업 일정에서 <ListChecks size={11} className="inline" /> 할 일 버튼으로 추가할 수 있어요.
+                  </>
+                )}
             </p>
           ) : (
             <ul className="space-y-1">
-              {incompleteCourseTodos.map((t) => (
+              {filteredCourseTodos.map((t) => (
                 <CourseTodoItem key={t.id} t={t} />
               ))}
             </ul>
@@ -798,9 +936,11 @@ export default function MyTodosWidget() {
 
         {/* 연구활동 */}
         <TabsContent value="research" className="mt-3">
-          {researchTodos.length === 0 ? (
+          {researchTodos.length === 0 || statusFilter === "done" ? (
             <p className="rounded-md bg-muted/30 px-3 py-3 text-center text-[11px] text-muted-foreground">
-              표시할 연구활동 할 일이 없어요.
+              {statusFilter === "done"
+                ? "완료 상태로 표기된 연구활동 항목이 없어요."
+                : "표시할 연구활동 할 일이 없어요."}
             </p>
           ) : (
             <ul className="space-y-1">
@@ -813,13 +953,15 @@ export default function MyTodosWidget() {
 
         {/* 학술활동 */}
         <TabsContent value="activity" className="mt-3">
-          {myActivityTodos.length === 0 ? (
+          {filteredActivityList.length === 0 ? (
             <p className="rounded-md bg-muted/30 px-3 py-3 text-center text-[11px] text-muted-foreground">
-              참여 중인 학술활동이 없어요.
+              {statusFilter === "done"
+                ? "완료된 학술활동이 없어요."
+                : "참여 중인 학술활동이 없어요."}
             </p>
           ) : (
             <ul className="space-y-1">
-              {myActivityTodos.map((a) => (
+              {filteredActivityList.map((a) => (
                 <ActivityItem key={a.id} a={a} />
               ))}
             </ul>
@@ -851,13 +993,20 @@ export default function MyTodosWidget() {
             <TabsList
               className={cn(
                 "grid w-full",
-                isStaff
-                  ? myActivityTodos.length > 0
-                    ? "grid-cols-3"
-                    : "grid-cols-2"
-                  : myActivityTodos.length > 0
-                    ? "grid-cols-2"
-                    : "grid-cols-1",
+                (() => {
+                  let n = 1; // 수업
+                  if (myActivityTodos.length > 0) n++;
+                  if (isStaff) n += 2; // 세미나 + 운영 업무
+                  // Tailwind JIT 정적 추출용 룩업
+                  return (
+                    {
+                      1: "grid-cols-1",
+                      2: "grid-cols-2",
+                      3: "grid-cols-3",
+                      4: "grid-cols-4",
+                    } as Record<number, string>
+                  )[n] ?? "grid-cols-4";
+                })(),
               )}
             >
               <TabsTrigger value="course" className="text-xs">
@@ -866,6 +1015,11 @@ export default function MyTodosWidget() {
               {myActivityTodos.length > 0 && (
                 <TabsTrigger value="activity" className="text-xs">
                   <UsersIcon size={12} className="mr-1" /> 학술활동
+                </TabsTrigger>
+              )}
+              {isStaff && (
+                <TabsTrigger value="seminar" className="text-xs">
+                  <Mic size={12} className="mr-1" /> 세미나
                 </TabsTrigger>
               )}
               {isStaff && (
@@ -1031,6 +1185,89 @@ export default function MyTodosWidget() {
                       value={activityForm.dueDate}
                       onChange={(e) =>
                         setActivityForm({ ...activityForm, dueDate: e.target.value })
+                      }
+                    />
+                  </label>
+                </div>
+              </TabsContent>
+            )}
+
+            {isStaff && (
+              <TabsContent value="seminar" className="mt-3 space-y-3">
+                <p className="text-[11px] text-muted-foreground">
+                  세미나 운영 업무를 추가하면 <b>/seminars/[id]/host</b> 호스트 대시보드와 <b>/staff-admin/todos</b> 운영 업무수행철 양쪽에 표시됩니다.
+                </p>
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="text-xs font-medium text-muted-foreground">세미나 (최근 30일 + 예정)</span>
+                  <select
+                    value={seminarForm.seminarId}
+                    onChange={(e) =>
+                      setSeminarForm({ ...seminarForm, seminarId: e.target.value })
+                    }
+                    className="rounded-md border bg-white px-2 py-1.5 text-sm"
+                  >
+                    <option value="">— 선택 —</option>
+                    {pickerSeminars.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.date ? `[${s.date}] ` : ""}
+                        {s.title}
+                      </option>
+                    ))}
+                  </select>
+                  {pickerSeminars.length === 0 && (
+                    <span className="text-[10px] text-muted-foreground">
+                      표시할 세미나가 없습니다.
+                    </span>
+                  )}
+                </label>
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="text-xs font-medium text-muted-foreground">제목</span>
+                  <Input
+                    value={seminarForm.title}
+                    onChange={(e) =>
+                      setSeminarForm({ ...seminarForm, title: e.target.value })
+                    }
+                    autoFocus
+                    placeholder="예) 다과 발주, 사회 대본 검토, 포스터 인쇄"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="text-xs font-medium text-muted-foreground">설명 (선택)</span>
+                  <textarea
+                    value={seminarForm.description}
+                    onChange={(e) =>
+                      setSeminarForm({ ...seminarForm, description: e.target.value })
+                    }
+                    rows={3}
+                    className="w-full rounded-md border bg-white px-3 py-2 text-sm"
+                    placeholder="자세한 설명을 입력하세요."
+                  />
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="flex flex-col gap-1 text-sm">
+                    <span className="text-xs font-medium text-muted-foreground">우선순위</span>
+                    <select
+                      value={seminarForm.priority}
+                      onChange={(e) =>
+                        setSeminarForm({
+                          ...seminarForm,
+                          priority: e.target.value as "high" | "medium" | "low",
+                        })
+                      }
+                      className="rounded-md border bg-white px-2 py-1.5 text-sm"
+                    >
+                      <option value="high">높음</option>
+                      <option value="medium">보통</option>
+                      <option value="low">낮음</option>
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-1 text-sm">
+                    <span className="text-xs font-medium text-muted-foreground">기한 (선택)</span>
+                    <Input
+                      type="date"
+                      value={seminarForm.dueDate}
+                      onChange={(e) =>
+                        setSeminarForm({ ...seminarForm, dueDate: e.target.value })
                       }
                     />
                   </label>

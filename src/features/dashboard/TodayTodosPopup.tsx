@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils";
 
 const POPUP_PREF_KEY = "dashboard_today_popup_enabled";
 const SESSION_GATE_PREFIX = "dashboard_today_popup_shown_";
+const UNDERGRAD_DISMISS_KEY = "undergrad-info-prompt-dismissed-session";
 
 const TYPE_ROUTE: Record<ActivityType, string> = {
   study: "/activities/studies",
@@ -75,6 +76,23 @@ function shownThisSession(ymd: string): boolean {
   return window.sessionStorage.getItem(SESSION_GATE_PREFIX + ymd) === "1";
 }
 
+/**
+ * 학부 정보 미입력 팝업이 떠 있는지 (또는 곧 뜰지) 추정.
+ * UndergradInfoPrompt 와 동시에 표시되면 사용자 혼란이 커서, 그 팝업이 활성일 때는 오늘의 할 일 팝업을 보류한다.
+ */
+function isUndergradPopupActive(
+  role: string | undefined,
+  undergrad: string | undefined,
+): boolean {
+  if (!role) return false;
+  if (role === "sysadmin" || role === "admin") return false;
+  if (undergrad && undergrad.trim()) return false;
+  if (typeof window === "undefined") return false;
+  // 사용자가 학부정보 팝업을 닫았으면(세션 기준) 더 이상 표시되지 않음 → 오늘의 할 일 팝업 진행 가능
+  if (window.sessionStorage.getItem(UNDERGRAD_DISMISS_KEY) === "1") return false;
+  return true;
+}
+
 function markShownThisSession(ymd: string): void {
   if (typeof window === "undefined") return;
   window.sessionStorage.setItem(SESSION_GATE_PREFIX + ymd, "1");
@@ -86,7 +104,15 @@ export default function TodayTodosPopup() {
   const userId = user?.id;
   const [open, setOpen] = useState(false);
   const [decided, setDecided] = useState(false);
+  const [undergradTick, setUndergradTick] = useState(0);
   const today = todayYmdLocal();
+
+  // 학부 정보 팝업이 닫히면 재평가 트리거
+  useEffect(() => {
+    const handler = () => setUndergradTick((t) => t + 1);
+    window.addEventListener("undergrad-info-prompt-dismissed", handler);
+    return () => window.removeEventListener("undergrad-info-prompt-dismissed", handler);
+  }, []);
 
   // 수업 할 일
   const { data: courseTodosRes } = useQuery({
@@ -181,6 +207,11 @@ export default function TodayTodosPopup() {
       setDecided(true);
       return;
     }
+    // 학부 정보 미입력 팝업이 떠 있는 동안에는 보류 — 두 다이얼로그 동시 노출 방지.
+    // decided=false 유지하여 사용자가 학부 팝업을 닫은 뒤(또는 정보를 채운 뒤) 다시 평가됨.
+    if (isUndergradPopupActive(user.role, user.undergraduateUniversity)) {
+      return;
+    }
     if (totalCount === 0) {
       // 표시할 게 없으면 게이트만 체크해두고 닫음
       markShownThisSession(today);
@@ -190,7 +221,7 @@ export default function TodayTodosPopup() {
     setOpen(true);
     markShownThisSession(today);
     setDecided(true);
-  }, [user, courseTodosRes, allActivities, totalCount, today, decided]);
+  }, [user, courseTodosRes, allActivities, totalCount, today, decided, undergradTick]);
 
   async function toggleCourseTodo(t: CourseTodo) {
     if (!userId) return;

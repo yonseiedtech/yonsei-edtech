@@ -41,7 +41,11 @@ export default function UndergradInfoPrompt() {
   }, [user, initialized, pathname]);
 
   function dismiss() {
-    if (typeof window !== "undefined") sessionStorage.setItem(DISMISS_KEY, "1");
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(DISMISS_KEY, "1");
+      // 다른 팝업(예: 오늘의 할 일)이 보류 중일 수 있어 재평가 신호를 보낸다.
+      window.dispatchEvent(new Event("undergrad-info-prompt-dismissed"));
+    }
     setOpen(false);
   }
 

@@ -1384,6 +1384,12 @@ export interface AdminTodo {
   relatedActivityTitle?: string;
   /** denorm: 활동 타입 (활동 페이지 라우팅에 사용) */
   relatedActivityType?: "study" | "project" | "external";
+  /** 세미나 연동 — 세미나 운영 워크플로우(D-day 타임라인)에 비정형 업무를 묶기 위해 사용 */
+  relatedSeminarId?: string;
+  /** denorm: 세미나 제목 */
+  relatedSeminarTitle?: string;
+  /** denorm: 세미나 개최일자(YYYY-MM-DD) — 위젯에서 D-day 배지 계산에 활용 */
+  relatedSeminarDate?: string;
 }
 
 // ── 활동 진행 기록 ──

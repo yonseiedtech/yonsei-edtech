@@ -537,6 +537,8 @@ export default function DefensePracticeRunner({
   /** 모범 답변 인라인 편집용 — 완료 화면에서 textarea로 수정 후 저장 */
   const [editingExpected, setEditingExpected] = useState(false);
   const [editedExpectedDraft, setEditedExpectedDraft] = useState("");
+  /** 따라 읽기 모드 — 마이크 대신 직접 타이핑 입력으로 평가받기 (심사 답변 모드와 동일 패턴) */
+  const [editingReadalong, setEditingReadalong] = useState(false);
   /** 모범 답변 자동 등록 prompt — 사용자가 "나중에"를 선택한 질문 ID 집합 (세션 한정) */
   const [expectedRegisterSkipped, setExpectedRegisterSkipped] = useState<Set<string>>(new Set());
   /** 모범 답변 등록 진행 중 (스피너) */
@@ -2012,12 +2014,46 @@ export default function DefensePracticeRunner({
                             </div>
                           </div>
 
-                          {/* 내 발화 미리보기 */}
+                          {/* 내 발화 미리보기 / 직접 타이핑 입력 */}
                           <div className="rounded-md bg-muted/40 p-3 text-sm">
-                            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                              내 발화
-                            </p>
-                            {readAlongBuffer || interim ? (
+                            <div className="mb-1 flex items-center justify-between gap-2">
+                              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                {editingReadalong ? "직접 입력" : "내 발화"}
+                              </p>
+                              <Button
+                                size="sm"
+                                variant={editingReadalong ? "default" : "ghost"}
+                                onClick={() => {
+                                  if (recording) stopRecording();
+                                  setEditingReadalong((v) => !v);
+                                }}
+                                className="h-6 px-2 text-[10px]"
+                                title="마이크 대신 키보드로 입력해 평가받을 수 있습니다."
+                              >
+                                <Keyboard size={12} className="mr-1" />
+                                {editingReadalong ? "타이핑 종료" : "타이핑"}
+                              </Button>
+                            </div>
+                            {editingReadalong ? (
+                              <Textarea
+                                value={readAlongBuffer}
+                                onChange={(e) => {
+                                  setReadAlongBuffer(e.target.value);
+                                  setReadAlongResult(null);
+                                }}
+                                onKeyDown={(e) => {
+                                  // Cmd/Ctrl+Enter로 즉시 평가
+                                  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                                    e.preventDefault();
+                                    evaluateReadAlong(false);
+                                  }
+                                }}
+                                placeholder="위 문장을 그대로 입력하세요. Cmd/Ctrl + Enter로 즉시 평가."
+                                rows={3}
+                                className="text-sm"
+                                autoFocus
+                              />
+                            ) : readAlongBuffer || interim ? (
                               <span>
                                 {readAlongBuffer}
                                 {interim && (
@@ -2028,7 +2064,7 @@ export default function DefensePracticeRunner({
                               </span>
                             ) : (
                               <span className="italic text-muted-foreground">
-                                {recording ? "🎙️ 위 문장을 그대로 따라 읽어보세요" : "마이크를 켜고 문장을 따라 읽어주세요"}
+                                {recording ? "🎙️ 위 문장을 그대로 따라 읽어보세요" : "마이크를 켜거나 '타이핑' 버튼으로 직접 입력하세요"}
                               </span>
                             )}
                           </div>

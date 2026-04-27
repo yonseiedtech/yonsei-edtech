@@ -513,11 +513,19 @@ export const auditLogsApi = {
 
 export const todosApi = {
   list: () => dataApi.list<AdminTodo>("admin_todos", { sort: "createdAt:desc" }),
-  /** 학술활동 연동 todo 조회 — relatedActivityId로 필터 */
+  /** 학술활동 연동 todo 조회 — relatedActivityId로 필터.
+   * 복합 인덱스 회피: 정렬은 클라이언트에서 처리 (참고: course_todos 동일 패턴) */
   listByActivity: (activityId: string) =>
     dataApi.list<AdminTodo>("admin_todos", {
       "filter[relatedActivityId]": activityId,
-      sort: "createdAt:desc",
+      limit: 200,
+    }),
+  /** 세미나 연동 todo 조회 — relatedSeminarId로 필터.
+   * 복합 인덱스 회피: 정렬은 클라이언트에서 처리. */
+  listBySeminar: (seminarId: string) =>
+    dataApi.list<AdminTodo>("admin_todos", {
+      "filter[relatedSeminarId]": seminarId,
+      limit: 200,
     }),
   create: (data: Record<string, unknown>) => dataApi.create<AdminTodo>("admin_todos", data),
   update: (id: string, data: Record<string, unknown>) => dataApi.update<AdminTodo>("admin_todos", id, data),
@@ -1129,10 +1137,14 @@ export const courseTodosApi = {
       sort: "createdAt:desc",
       limit: 500,
     }),
+  /**
+   * 복합 인덱스 회피: filter[userId]만 사용, 정렬은 클라이언트에서.
+   * (userId, createdAt DESC) 인덱스가 없어 sort 옵션을 함께 보내면 silent empty 반환됨
+   * → 대시보드/팝업의 "수업 할 일"이 비어 보이는 버그 유발.
+   */
   listByUser: (userId: string) =>
     dataApi.list<CourseTodo>("course_todos", {
       "filter[userId]": userId,
-      sort: "createdAt:desc",
       limit: 500,
     }),
   create: (data: Record<string, unknown>) =>
