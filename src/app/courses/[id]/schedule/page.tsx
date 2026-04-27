@@ -133,6 +133,16 @@ function formatWeekdayLabel(weekdays: number[]): string {
   return weekdays.map((d) => WEEKDAY_KOR[d]).join("·") + "요일";
 }
 
+/**
+ * 로컬(브라우저 = 일반적으로 KST) 기준 오늘 YYYY-MM-DD.
+ * `new Date().toISOString().slice(0,10)`은 UTC 변환 후 자르므로 KST 자정 직후 ~ 09:00 사이
+ * 하루 밀린 날짜가 나오는 버그가 있어 별도 헬퍼로 분리.
+ */
+function todayYmdLocal(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 /** "2026-04-26" → "4/26(일)" — 주차 안의 실제 수업일 표시용 */
 function formatClassDate(yyyymmdd: string): string {
   const [y, m, d] = yyyymmdd.split("-").map(Number);
@@ -157,7 +167,7 @@ interface SessionDraft {
 }
 
 const blankDraft = (date?: string): SessionDraft => ({
-  date: date ?? new Date().toISOString().slice(0, 10),
+  date: date ?? todayYmdLocal(),
   mode: "in_person",
   link: "",
   notes: "",
@@ -284,7 +294,8 @@ function ScheduleContent({ courseId }: { courseId: string }) {
   }, [course, parsedSchedule]);
 
   // 현재 주차 자동 계산 + 첫 마운트 시 스크롤
-  const todayYmd = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  // KST 등 로컬 기준 오늘 — toISOString().slice는 UTC라 자정~09시에 어제로 밀리는 버그가 있어 todayYmdLocal 사용
+  const todayYmd = useMemo(() => todayYmdLocal(), []);
   const currentWeek = useMemo(
     () => weeks.find((w) => todayYmd >= w.startDate && todayYmd <= w.endDate),
     [weeks, todayYmd],
@@ -575,6 +586,8 @@ function ScheduleContent({ courseId }: { courseId: string }) {
       await qc.refetchQueries({
         queryKey: ["course-todos", courseId, user.id],
       });
+      // 대시보드 "나의 할 일" 위젯과 즉시 동기화
+      await qc.invalidateQueries({ queryKey: ["my-course-todos", user.id] });
       toast.success("할 일을 저장했습니다.");
       setTodoDraft(null);
     } catch (e) {
@@ -594,6 +607,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
       await qc.invalidateQueries({
         queryKey: ["course-todos", courseId, user.id],
       });
+      await qc.invalidateQueries({ queryKey: ["my-course-todos", user.id] });
     } catch (e) {
       toast.error(`변경 실패: ${(e as Error).message}`);
     }
@@ -607,6 +621,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
       await qc.invalidateQueries({
         queryKey: ["course-todos", courseId, user.id],
       });
+      await qc.invalidateQueries({ queryKey: ["my-course-todos", user.id] });
       toast.success("삭제했습니다.");
     } catch (e) {
       toast.error(`삭제 실패: ${(e as Error).message}`);
@@ -646,7 +661,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
     );
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayYmdLocal();
 
   // 주차별 그룹: 세션·메모·할일을 주차에 정렬해 집계
   const sessionsByWeek = new Map<number, ClassSession[]>();

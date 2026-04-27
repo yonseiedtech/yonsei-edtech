@@ -16,6 +16,7 @@ import {
   BellOff,
 } from "lucide-react";
 import { formatDday } from "@/lib/dday";
+import { parseSchedule, fmtMin } from "@/lib/courseSchedule";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -142,15 +143,18 @@ export default function MyTodosWidget() {
     return Array.from(set);
   }, [courseTodos]);
 
-  const { data: courseNameMap = {} } = useQuery({
-    queryKey: ["my-course-todo-names", todoCourseIds.sort().join(",")],
+  const { data: courseInfoMap = {} } = useQuery({
+    queryKey: ["my-course-todo-info", todoCourseIds.sort().join(",")],
     queryFn: async () => {
-      const map: Record<string, string> = {};
+      const map: Record<string, { name: string; startMin: number | null }> = {};
       await Promise.all(
         todoCourseIds.map(async (id) => {
           try {
             const c = (await courseOfferingsApi.get(id)) as unknown as CourseOffering;
-            if (c) map[id] = c.courseName;
+            if (c) {
+              const parsed = parseSchedule(c.schedule);
+              map[id] = { name: c.courseName, startMin: parsed.startMin };
+            }
           } catch {
             // skip
           }
@@ -471,7 +475,9 @@ export default function MyTodosWidget() {
 
   // ── 렌더 헬퍼 ──
   function CourseTodoItem({ t }: { t: CourseTodo }) {
-    const courseName = courseNameMap[t.courseOfferingId] ?? "(과목)";
+    const info = courseInfoMap[t.courseOfferingId];
+    const courseName = info?.name ?? "(과목)";
+    const dueTime = info?.startMin != null ? fmtMin(info.startMin) : undefined;
     const sessionLabel = t.sessionDate
       ? (() => {
           const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(t.sessionDate);
@@ -516,7 +522,7 @@ export default function MyTodosWidget() {
         </span>
         {t.dueDate &&
           (() => {
-            const dd = formatDday(t.dueDate);
+            const dd = formatDday(t.dueDate, dueTime);
             if (!dd) return null;
             const cls =
               dd.kind === "past"

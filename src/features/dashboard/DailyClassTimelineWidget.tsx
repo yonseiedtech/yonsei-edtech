@@ -315,6 +315,7 @@ export default function DailyClassTimelineWidget() {
       await qc.invalidateQueries({
         queryKey: ["course-todos", todoDraft.courseOfferingId, userId],
       });
+      await qc.invalidateQueries({ queryKey: ["my-course-todos", userId] });
       toast.success("할 일을 저장했습니다.");
       setTodoDraft(null);
     } catch (e) {

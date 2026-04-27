@@ -29,6 +29,7 @@ import {
   type ActivityType,
 } from "@/types";
 import { formatDday, todayYmdLocal } from "@/lib/dday";
+import { parseSchedule, fmtMin } from "@/lib/courseSchedule";
 import { cn } from "@/lib/utils";
 
 const POPUP_PREF_KEY = "dashboard_today_popup_enabled";
@@ -138,15 +139,18 @@ export default function TodayTodosPopup() {
     return Array.from(set);
   }, [todayCourseTodos]);
 
-  const { data: courseNameMap = {} } = useQuery({
-    queryKey: ["my-course-todo-names", todoCourseIds.sort().join(",")],
+  const { data: courseInfoMap = {} } = useQuery({
+    queryKey: ["my-course-todo-info", todoCourseIds.sort().join(",")],
     queryFn: async () => {
-      const map: Record<string, string> = {};
+      const map: Record<string, { name: string; startMin: number | null }> = {};
       await Promise.all(
         todoCourseIds.map(async (id) => {
           try {
             const c = (await courseOfferingsApi.get(id)) as unknown as CourseOffering;
-            if (c) map[id] = c.courseName;
+            if (c) {
+              const parsed = parseSchedule(c.schedule);
+              map[id] = { name: c.courseName, startMin: parsed.startMin };
+            }
           } catch {
             // skip
           }
@@ -228,8 +232,10 @@ export default function TodayTodosPopup() {
               </p>
               <ul className="space-y-1">
                 {todayCourseTodos.map((t) => {
-                  const dd = formatDday(t.dueDate ?? today);
-                  const courseName = courseNameMap[t.courseOfferingId] ?? "(과목)";
+                  const info = courseInfoMap[t.courseOfferingId];
+                  const courseName = info?.name ?? "(과목)";
+                  const dueTime = info?.startMin != null ? fmtMin(info.startMin) : undefined;
+                  const dd = formatDday(t.dueDate ?? today, dueTime);
                   return (
                     <li
                       key={t.id}
