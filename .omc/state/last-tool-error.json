@@ -1,7 +1,7 @@
 {
-  "tool_name": "Glob",
-  "tool_input_preview": "{\"pattern\":\"src/app/courses/**/schedule/**/*.tsx\"}",
-  "error": "Ripgrep search timed out after 20 seconds. The search may have matched files but did not complete in time. Try searching a more specific path or pattern.",
-  "timestamp": "2026-04-26T12:56:40.579Z",
+  "tool_name": "Read",
+  "tool_input_preview": "{\"file_path\":\"C:\\\\work\\\\yonsei-edtech\\\\src\\\\features\\\\dashboard\\\\DailyClassTimelineWidget.tsx\"}",
+  "error": "File content (25793 tokens) exceeds maximum allowed tokens (25000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file.",
+  "timestamp": "2026-04-27T03:58:51.222Z",
   "retry_count": 1
 }

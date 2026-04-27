@@ -702,6 +702,11 @@ function ScheduleContent({ courseId }: { courseId: string }) {
   }
   const unassignedTodos = todos.filter((t) => !t.sessionDate);
 
+  // 학기 weeks 범위 밖에 있는 잔존 class_sessions — 운영진이 직접 정리할 수 있도록 노출
+  const orphanSessions = sessions.filter(
+    (s) => !weeks.some((w) => s.date >= w.startDate && s.date <= w.endDate),
+  );
+
   return (
     <div className="py-16">
       <section className="mx-auto max-w-4xl px-4">
@@ -1094,6 +1099,42 @@ function ScheduleContent({ courseId }: { courseId: string }) {
               );
             })}
           </ul>
+        )}
+
+        {/* 학기 주차 범위 밖에 있는 잔존 변경 기록 */}
+        {orphanSessions.length > 0 && (
+          <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50/40 p-4">
+            <p className="mb-2 text-xs font-medium text-amber-900">
+              주차에 매핑되지 않은 변경 기록 ({orphanSessions.length}건)
+              <span className="ml-2 text-amber-700/80">
+                — 학기 범위 밖이거나 잘못된 날짜의 잔존 데이터입니다. 정리하려면 삭제하세요.
+              </span>
+            </p>
+            <ul className="space-y-1">
+              {orphanSessions.map((s) => (
+                <li
+                  key={s.id}
+                  className="flex items-center gap-2 rounded-md bg-white px-2 py-1.5 text-[11px]"
+                >
+                  <span className="font-mono font-medium text-amber-900">{s.date}</span>
+                  <Badge variant="secondary" className="text-[10px]">
+                    {CLASS_SESSION_MODE_LABELS[s.mode]}
+                  </Badge>
+                  {s.note && (
+                    <span className="flex-1 text-muted-foreground">{s.note}</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => remove(s)}
+                    className="ml-auto inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-rose-100 hover:text-destructive"
+                    aria-label="잔존 일정 삭제"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
 
         {/* 주차 미배정 할 일 */}
