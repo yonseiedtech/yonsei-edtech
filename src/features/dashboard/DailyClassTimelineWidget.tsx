@@ -648,6 +648,42 @@ export default function DailyClassTimelineWidget() {
     });
   }, [weekDates, parsedOfferings, weeklySessionsByDateCourse, MIN_START, MIN_END]);
 
+  // [Sprint50 debug] 4/30 mode 결정 근거 출력 — root cause 진단용 임시 로그
+  useEffect(() => {
+    if (viewMode !== "weekly") return;
+    const target = "2026-04-30";
+    const dayBlock = placedWeekly.find((w) => ymd(w.date) === target);
+    if (!dayBlock) return;
+    const rawSessions = ((weeklySessionsRes?.data ?? []) as ClassSession[])
+      .filter((s) => s.date === target)
+      .map((s) => ({
+        id: s.id,
+        courseOfferingId: s.courseOfferingId,
+        mode: s.mode,
+        updatedAt: s.updatedAt,
+        createdAt: s.createdAt,
+      }));
+    const placed = dayBlock.items.map((it) => ({
+      courseId: it.offering.id,
+      courseName: it.offering.courseName,
+      mode: it.mode,
+      sessionId: it.session?.id ?? null,
+      sessionMode: it.session?.mode ?? null,
+      sessionUpdatedAt: it.session?.updatedAt ?? null,
+    }));
+    console.warn("[Sprint50] 4/30 RAW listByCourses:", rawSessions);
+    console.warn("[Sprint50] 4/30 placedWeekly:", placed);
+    console.warn(
+      "[Sprint50] myOfferingIds:",
+      myOfferingIdsForSessions,
+    );
+  }, [
+    viewMode,
+    placedWeekly,
+    weeklySessionsRes,
+    myOfferingIdsForSessions,
+  ]);
+
   // ── Sprint 41a: 학술활동(스터디/프로젝트/대외) 진행현황을 타임라인에 통합 ──
   const { data: allActivitiesRes } = useQuery({
     queryKey: ["my-activities-timeline", userId],
