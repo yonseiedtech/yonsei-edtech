@@ -209,8 +209,8 @@
   "hotPaths": [
     {
       "path": "src\\features\\dashboard\\DailyClassTimelineWidget.tsx",
-      "accessCount": 54,
-      "lastAccessed": 1777266939534,
+      "accessCount": 70,
+      "lastAccessed": 1777271752607,
       "type": "file"
     },
     {
@@ -221,8 +221,8 @@
     },
     {
       "path": "src\\app\\courses\\[id]\\schedule\\page.tsx",
-      "accessCount": 48,
-      "lastAccessed": 1777267986589,
+      "accessCount": 50,
+      "lastAccessed": 1777271551542,
       "type": "file"
     },
     {
@@ -280,6 +280,12 @@
       "type": "file"
     },
     {
+      "path": "src\\lib",
+      "accessCount": 5,
+      "lastAccessed": 1777271630240,
+      "type": "directory"
+    },
+    {
       "path": "src\\components\\layout\\Header.tsx",
       "accessCount": 4,
       "lastAccessed": 1777221138030,
@@ -302,12 +308,6 @@
       "accessCount": 4,
       "lastAccessed": 1777249235245,
       "type": "file"
-    },
-    {
-      "path": "src\\lib",
-      "accessCount": 4,
-      "lastAccessed": 1777269309405,
-      "type": "directory"
     },
     {
       "path": "src\\lib\\post-permissions.ts",

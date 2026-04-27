@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarClock, ChevronLeft, ChevronRight, ExternalLink, Settings, NotebookPen, ListChecks, BookOpen, Users } from "lucide-react";
+import { CalendarClock, ChevronLeft, ChevronRight, ExternalLink, Settings, NotebookPen, ListChecks, BookOpen, Users, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -322,6 +322,20 @@ export default function DailyClassTimelineWidget() {
       toast.error(`저장 실패: ${(e as Error).message}`);
     } finally {
       setSavingTodo(false);
+    }
+  }
+
+  // 변경 기록(class_session) 직접 삭제 — 잔존 row를 schedule 페이지 안 거치고 정리
+  async function handleResetSession(sessionId: string, label: string) {
+    if (!window.confirm(`"${label}" 의 변경 기록을 삭제하고 기본 대면으로 복원할까요?`)) {
+      return;
+    }
+    try {
+      await classSessionsApi.delete(sessionId);
+      await qc.invalidateQueries({ queryKey: ["class-sessions"] });
+      toast.success("변경 기록을 삭제했습니다. 기본 대면으로 표시됩니다.");
+    } catch (e) {
+      toast.error(`삭제 실패: ${(e as Error).message}`);
     }
   }
 
@@ -1079,6 +1093,7 @@ export default function DailyClassTimelineWidget() {
           actualToday={actualToday}
           nowPx={nowPx}
           nowLabel={nowLabel}
+          onResetSession={handleResetSession}
         />
       )}
 
@@ -1604,6 +1619,7 @@ function WeeklyGrid({
   actualToday,
   nowPx,
   nowLabel,
+  onResetSession,
 }: {
   placedWeekly: Array<{ date: Date; dayIndex: number; items: PlacedClass[] }>;
   placedWeeklyActivities: Map<string, PlacedActivity[]>;
@@ -1612,6 +1628,7 @@ function WeeklyGrid({
   actualToday: string;
   nowPx: number | null;
   nowLabel: string;
+  onResetSession?: (sessionId: string, label: string) => void;
 }) {
   const hasAny =
     placedWeekly.some((d) => d.items.length > 0) ||
@@ -1693,34 +1710,58 @@ function WeeklyGrid({
                 {items.map(({ offering: c, parsed, session, mode, topPx, heightPx }) => {
                   const isCancelled = mode === "cancelled";
                   const timeLabel = fmtTimeRange(parsed);
+                  // 변경 기록이 있고 기본(in_person)이 아닐 때 — 1클릭 복원 버튼 노출
+                  const hasOverride = session && session.mode !== "in_person";
                   return (
-                    <Link
+                    <div
                       key={c.id}
-                      href={`/courses/${c.id}/schedule`}
-                      className={cn(
-                        "absolute left-1 right-1 overflow-hidden rounded-md border border-l-4 bg-white p-1.5 text-[10px] shadow-sm transition-shadow hover:shadow",
-                        MODE_BORDER[mode],
-                        isCancelled && "opacity-60",
-                      )}
+                      className="absolute left-1 right-1"
                       style={{ top: topPx, height: Math.max(heightPx, 40) }}
                     >
-                      <p
+                      <Link
+                        href={`/courses/${c.id}/schedule`}
                         className={cn(
-                          "truncate text-[11px] font-semibold leading-tight",
-                          isCancelled && "line-through text-muted-foreground",
+                          "block h-full overflow-hidden rounded-md border border-l-4 bg-white p-1.5 text-[10px] shadow-sm transition-shadow hover:shadow",
+                          MODE_BORDER[mode],
+                          isCancelled && "opacity-60",
                         )}
                       >
-                        {c.courseName}
-                      </p>
-                      <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
-                        {timeLabel}
-                      </p>
-                      {c.classroom && (
-                        <p className="truncate text-[10px] text-muted-foreground">
-                          {c.classroom}
+                        <p
+                          className={cn(
+                            "truncate text-[11px] font-semibold leading-tight",
+                            isCancelled && "line-through text-muted-foreground",
+                          )}
+                        >
+                          {c.courseName}
                         </p>
+                        <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
+                          {timeLabel}
+                        </p>
+                        {c.classroom && (
+                          <p className="truncate text-[10px] text-muted-foreground">
+                            {c.classroom}
+                          </p>
+                        )}
+                      </Link>
+                      {hasOverride && session && onResetSession && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onResetSession(
+                              session.id,
+                              `${c.courseName} ${session.date}`,
+                            );
+                          }}
+                          aria-label="변경 기록 삭제 (대면으로 복원)"
+                          title="변경 기록 삭제 — 기본 대면으로 복원"
+                          className="absolute right-0.5 top-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full border border-amber-300 bg-white/95 text-amber-700 shadow-sm hover:bg-amber-50"
+                        >
+                          <RotateCcw size={10} />
+                        </button>
                       )}
-                    </Link>
+                    </div>
                   );
                 })}
                 {/* 학술활동 진행현황 카드 */}
