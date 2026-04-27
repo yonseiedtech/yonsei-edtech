@@ -671,11 +671,17 @@ export default function DailyClassTimelineWidget() {
       sessionMode: it.session?.mode ?? null,
       sessionUpdatedAt: it.session?.updatedAt ?? null,
     }));
-    console.warn("[Sprint50] 4/30 RAW listByCourses:", rawSessions);
-    console.warn("[Sprint50] 4/30 placedWeekly:", placed);
     console.warn(
-      "[Sprint50] myOfferingIds:",
-      myOfferingIdsForSessions,
+      "[Sprint50-JSON] 4/30 RAW:",
+      JSON.stringify(rawSessions),
+    );
+    console.warn(
+      "[Sprint50-JSON] 4/30 placed:",
+      JSON.stringify(placed),
+    );
+    console.warn(
+      "[Sprint50-JSON] myOfferingIds:",
+      JSON.stringify(myOfferingIdsForSessions),
     );
   }, [
     viewMode,
