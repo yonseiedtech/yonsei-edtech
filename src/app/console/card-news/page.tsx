@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CardArtFit } from "@/features/card-news/CardArtFit";
 import { loadAllSeries } from "@/features/card-news/loader";
+import { CARD_NEWS_SERIES } from "@/features/card-news/series";
+import SeriesActions from "@/features/card-news/SeriesActions";
 
 export const metadata = {
   title: "카드뉴스 | 운영콘솔",
@@ -20,6 +22,8 @@ function formatDate(iso: string) {
     day: "numeric",
   });
 }
+
+const STATIC_IDS = new Set(CARD_NEWS_SERIES.map((s) => s.id));
 
 export default async function CardNewsListPage() {
   const series = await loadAllSeries();
@@ -52,6 +56,7 @@ export default async function CardNewsListPage() {
         <div className="grid gap-4 sm:grid-cols-2">
           {series.map((s) => {
             const cover = s.cards[0];
+            const isPersisted = !STATIC_IDS.has(s.id);
             return (
               <Card
                 key={s.id}
@@ -96,6 +101,7 @@ export default async function CardNewsListPage() {
                       {s.cards.length}장
                     </span>
                     <div className="flex items-center gap-2">
+                      <SeriesActions series={s} isPersisted={isPersisted} />
                       <Link
                         href={`/console/card-news/${s.id}/edit`}
                         className="inline-flex items-center gap-1 rounded-lg border bg-background px-3 py-1.5 text-xs font-medium text-foreground shadow-sm transition hover:bg-muted"

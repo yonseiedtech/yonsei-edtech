@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -57,6 +57,9 @@ export default function CardNewsEditor({ initial, isNew }: Props) {
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [dirty, setDirty] = useState(false);
+  const initialSnapshotRef = useRef<string>(JSON.stringify(initial));
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const total = series.cards.length;
   const card = series.cards[activeIdx];
@@ -130,14 +133,15 @@ export default function CardNewsEditor({ initial, isNew }: Props) {
     setActiveIdx(series.cards.length);
   }
 
-  async function handleSave() {
-    setError(null);
+  async function handleSave(opts: { silent?: boolean } = {}) {
+    if (!opts.silent) setError(null);
     if (!series.title.trim()) {
-      setError("시리즈 제목은 비울 수 없습니다.");
+      if (!opts.silent) setError("시리즈 제목은 비울 수 없습니다.");
       return;
     }
     if (idTaken) {
-      setError("카드 ID가 중복되었습니다. 각 카드의 ID를 고유하게 지정하세요.");
+      if (!opts.silent)
+        setError("카드 ID가 중복되었습니다. 각 카드의 ID를 고유하게 지정하세요.");
       return;
     }
     setSaving(true);
@@ -151,19 +155,51 @@ export default function CardNewsEditor({ initial, isNew }: Props) {
       };
       await cardNewsApi.upsert(series.id, payload);
       setSavedAt(new Date());
-      if (isNew) {
+      setDirty(false);
+      initialSnapshotRef.current = JSON.stringify(series);
+      if (isNew && !opts.silent) {
         router.replace(`/console/card-news/${series.id}/edit`);
         router.refresh();
-      } else {
+      } else if (!opts.silent) {
         router.refresh();
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "알 수 없는 오류";
-      setError(`저장 실패: ${msg}`);
+      if (!opts.silent) setError(`저장 실패: ${msg}`);
     } finally {
       setSaving(false);
     }
   }
+
+  // dirty 추적: series가 초기 스냅샷과 달라지면 dirty=true
+  useEffect(() => {
+    const current = JSON.stringify(series);
+    setDirty(current !== initialSnapshotRef.current);
+  }, [series]);
+
+  // 자동 저장: dirty 상태에서 4초간 변경 없으면 silent 저장 (신규 시리즈는 제외)
+  useEffect(() => {
+    if (!dirty || isNew || saving) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      void handleSave({ silent: true });
+    }, 4000);
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [series, dirty, isNew, saving]);
+
+  // 페이지 이탈 경고: dirty인 채로 닫으면 브라우저 기본 경고 표시
+  useEffect(() => {
+    if (!dirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [dirty]);
 
   return (
     <div className="space-y-4 pb-12">
@@ -186,11 +222,18 @@ export default function CardNewsEditor({ initial, isNew }: Props) {
           )}
         </div>
         <div className="flex items-center gap-2">
-          {savedAt && !saving && (
+          {saving ? (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              자동 저장 중…
+            </span>
+          ) : dirty ? (
+            <span className="text-xs text-amber-600">변경됨 · 자동 저장 대기</span>
+          ) : savedAt ? (
             <span className="text-xs text-muted-foreground">
               저장됨 · {savedAt.toLocaleTimeString("ko-KR")}
             </span>
-          )}
+          ) : null}
           <Link
             href={`/console/card-news/${series.id}`}
             target="_blank"
@@ -199,13 +242,13 @@ export default function CardNewsEditor({ initial, isNew }: Props) {
             <Eye className="h-3.5 w-3.5" />
             슬라이드 보기
           </Link>
-          <Button size="sm" onClick={handleSave} disabled={saving}>
+          <Button size="sm" onClick={() => handleSave()} disabled={saving}>
             {saving ? (
               <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
             ) : (
               <Save className="mr-1 h-3.5 w-3.5" />
             )}
-            저장
+            {isNew ? "저장" : "지금 저장"}
           </Button>
         </div>
       </div>
