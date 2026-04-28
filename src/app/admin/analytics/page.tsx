@@ -9,12 +9,21 @@ import {
 } from "recharts";
 import {
   BarChart3, Users, FileText, CalendarDays, TrendingUp,
-  Star, Award, Download,
+  Star, Award, Download, Eye, UserCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { exportCSV } from "@/lib/export-csv";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { todayYmdKst } from "@/lib/dday";
 import type { User, Post, Seminar, SeminarAttendee, SeminarReview, Certificate } from "@/types";
+
+interface DailyVisitDoc {
+  date?: string;
+  visits?: number;
+  uniqueVisitors?: string[];
+}
 
 // ── helpers ──
 
@@ -86,6 +95,16 @@ export default function AnalyticsPage() {
   const { data: certsRes } = useQuery({
     queryKey: ["analytics", "certificates"],
     queryFn: () => dataApi.list<Certificate>("certificates", { limit: 2000 }),
+  });
+  const todayKey = todayYmdKst();
+  const { data: todayVisits } = useQuery({
+    queryKey: ["analytics", "daily_visits", todayKey],
+    queryFn: async (): Promise<DailyVisitDoc | null> => {
+      const snap = await getDoc(doc(db, "daily_visits", todayKey));
+      return snap.exists() ? (snap.data() as DailyVisitDoc) : null;
+    },
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
   });
 
   const members = membersRes?.data ?? [];
@@ -278,6 +297,20 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard icon={FileText} label="게시글" value={analytics.totalPosts} color="bg-emerald-50 text-emerald-600" />
         <StatCard icon={Award} label="수료증/감사장" value={analytics.totalCerts} color="bg-pink-50 text-pink-600" />
+        <StatCard
+          icon={Eye}
+          label="오늘 방문수"
+          value={todayVisits?.visits ?? 0}
+          sub={`KST ${todayKey}`}
+          color="bg-cyan-50 text-cyan-600"
+        />
+        <StatCard
+          icon={UserCheck}
+          label="오늘 방문자수"
+          value={todayVisits?.uniqueVisitors?.length ?? 0}
+          sub="중복 제외"
+          color="bg-indigo-50 text-indigo-600"
+        />
       </div>
 
       {/* Charts row 1 */}

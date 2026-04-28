@@ -725,5 +725,13 @@ service cloud.firestore {
       allow update, delete: if isAuthenticated()
         && (resource.data.authorId == request.auth.uid || isStaffOrAbove());
     }
+
+    // ─── Daily Visits (사이트 일별 방문 통계) ───
+    // 모든 방문자(비로그인 포함)가 카운터 증가 가능. 통계 조회는 admin만.
+    match /daily_visits/{day} {
+      allow read: if isAuthenticated() && isAdmin();
+      allow create, update: if true;
+      allow delete: if isAuthenticated() && isAdmin();
+    }
   }
 }

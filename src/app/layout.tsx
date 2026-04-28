@@ -16,6 +16,7 @@ import UndergradInfoPrompt from "@/components/auth/UndergradInfoPrompt";
 import SitePopupGate from "@/components/popup/SitePopupGate";
 import InstallPromptBanner from "@/components/pwa/InstallPromptBanner";
 import ScrollToTopOnNav from "@/components/layout/ScrollToTopOnNav";
+import VisitTracker from "@/components/layout/VisitTracker";
 import "./globals.css";
 
 const pretendard = localFont({
@@ -156,6 +157,7 @@ export default function RootLayout({
         <QueryProvider>
           <AuthProvider>
             <ScrollToTopOnNav />
+            <VisitTracker />
             <div className="flex min-h-screen flex-col pb-[calc(56px+env(safe-area-inset-bottom))] sm:pb-0">
               <ImpersonationBanner />
               <Header />
