@@ -697,6 +697,29 @@ service cloud.firestore {
       allow create, update, delete: if isAuthenticated() && isStaffOrAbove();
     }
 
+    // ─── Conference Programs (대외학술대회 시간표 v3) ───
+    // 누구나 read (홍보), staff 이상이 write
+    match /conference_programs/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAuthenticated() && isStaffOrAbove();
+    }
+
+    // ─── User Session Plans (회원 세션 선택·후기 v3) ───
+    // 본인은 자신의 plan CRUD, 운영진은 통계용 read
+    match /user_session_plans/{docId} {
+      allow read: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
+      // list (운영자 통계 / 본인 모아보기) — query 단에서 userId 필터를 강제
+      allow list: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
     // ─── Labs (시크릿랩 프로젝트 카드) ───
     // 공개 read (디렉토리), 소유자(ownerId) 또는 운영진만 write
     match /labs/{docId} {

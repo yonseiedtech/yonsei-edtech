@@ -47,6 +47,7 @@ import type {
   SitePopup,
   DefensePracticeSet, DefenseQuestionTemplate,
   GradLifePosition,
+  ConferenceProgram, UserSessionPlan,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -449,6 +450,61 @@ export const activitiesApi = {
   create: (data: Record<string, unknown>) => dataApi.create<Activity>("activities", data),
   update: (id: string, data: Record<string, unknown>) => dataApi.update<Activity>("activities", id, data),
   delete: (id: string) => dataApi.delete("activities", id),
+};
+
+// ── 대외학술대회 시간표 (v3) ──
+export const conferenceProgramsApi = {
+  /** 활동에 연결된 프로그램 (보통 1개) */
+  listByActivity: (activityId: string) =>
+    dataApi.list<ConferenceProgram>("conference_programs", {
+      "filter[activityId]": activityId,
+      sort: "createdAt:desc",
+      limit: 10,
+    }),
+  get: (id: string) => dataApi.get<ConferenceProgram>("conference_programs", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<ConferenceProgram>("conference_programs", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<ConferenceProgram>("conference_programs", id, data),
+  delete: (id: string) => dataApi.delete("conference_programs", id),
+};
+
+// ── 회원의 학술대회 세션 선택·후기 (v3) ──
+export const userSessionPlansApi = {
+  /** 한 회원의 한 프로그램 내 모든 선택 */
+  listByUserAndProgram: (userId: string, programId: string) =>
+    dataApi.list<UserSessionPlan>("user_session_plans", {
+      "filter[userId]": userId,
+      "filter[programId]": programId,
+      limit: 500,
+    }),
+  /** 한 회원의 모든 학술대회 일정 (마이페이지 모아보기) */
+  listByUser: (userId: string) =>
+    dataApi.list<UserSessionPlan>("user_session_plans", {
+      "filter[userId]": userId,
+      sort: "selectedAt:desc",
+      limit: 500,
+    }),
+  /** 운영자: 한 프로그램의 모든 선택 (인기 세션 통계용) */
+  listByProgram: (programId: string) =>
+    dataApi.list<UserSessionPlan>("user_session_plans", {
+      "filter[programId]": programId,
+      limit: 2000,
+    }),
+  get: (id: string) => dataApi.get<UserSessionPlan>("user_session_plans", id),
+  /** ID 명시 upsert (idempotent: {userId}_{programId}_{sessionId}) */
+  upsert: async (id: string, data: Record<string, unknown>): Promise<UserSessionPlan> => {
+    const ref = doc(db, "user_session_plans", id);
+    const cleaned = stripUndefinedDeep(data);
+    await setDoc(
+      ref,
+      { ...cleaned, updatedAt: serverTimestamp() },
+      { merge: true },
+    );
+    const snap = await getDoc(ref);
+    return serializeDoc(snap) as unknown as UserSessionPlan;
+  },
+  delete: (id: string) => dataApi.delete("user_session_plans", id),
 };
 
 export const pollsApi = {

@@ -439,6 +439,25 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             {activity.conferenceUrl && <a href={activity.conferenceUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-primary hover:underline"><Globe size={14} />학회 홈페이지</a>}
           </div>
 
+          {type === "external" && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link
+                href={`/activities/external/${activityId}/program`}
+                className="inline-flex items-center gap-1.5 rounded-md border bg-white px-3 py-1.5 text-xs font-medium text-foreground shadow-xs hover:bg-muted"
+              >
+                <Calendar size={14} /> 학술대회 프로그램 · 내 일정
+              </Link>
+              {isStaff && backHref.includes("academic-admin") && (
+                <Link
+                  href={`/academic-admin/external/${activityId}/program`}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
+                >
+                  <Pencil size={14} /> 시간표 편집
+                </Link>
+              )}
+            </div>
+          )}
+
           {/* 참여 버튼 — 헤더와 시각적으로 분리 */}
           {(((!isJoined && !hasApplied && recruitmentStatus === "recruiting" && registrationMethod === "open") || isJoined || (hasApplied && !isJoined))) && (
             <div className="mt-6 border-t border-slate-100 pt-5 sm:mt-7 sm:pt-6">

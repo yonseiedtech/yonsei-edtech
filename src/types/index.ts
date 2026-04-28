@@ -1211,6 +1211,97 @@ export interface Activity { [key: string]: unknown;
   updatedAt: string;
 }
 
+// ── 대외학술대회 시간표 (v3) ──
+/** 학술대회 세션 카테고리 */
+export type ConferenceSessionCategory =
+  | "keynote" | "symposium" | "panel" | "paper" | "poster"
+  | "workshop" | "networking" | "ceremony" | "break" | "other";
+
+export const CONFERENCE_SESSION_CATEGORY_LABELS: Record<ConferenceSessionCategory, string> = {
+  keynote: "기조강연",
+  symposium: "심포지엄",
+  panel: "패널 토의",
+  paper: "논문 발표",
+  poster: "포스터",
+  workshop: "워크숍",
+  networking: "네트워킹",
+  ceremony: "개·폐회식",
+  break: "휴식·식사",
+  other: "기타",
+};
+
+export const CONFERENCE_SESSION_CATEGORY_COLORS: Record<ConferenceSessionCategory, string> = {
+  keynote: "bg-purple-100 text-purple-800 border-purple-200",
+  symposium: "bg-blue-100 text-blue-800 border-blue-200",
+  panel: "bg-indigo-100 text-indigo-800 border-indigo-200",
+  paper: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  poster: "bg-amber-100 text-amber-800 border-amber-200",
+  workshop: "bg-rose-100 text-rose-800 border-rose-200",
+  networking: "bg-pink-100 text-pink-800 border-pink-200",
+  ceremony: "bg-slate-200 text-slate-800 border-slate-300",
+  break: "bg-gray-100 text-gray-600 border-gray-200",
+  other: "bg-gray-100 text-gray-700 border-gray-200",
+};
+
+export interface ConferenceSession {
+  id: string;
+  startTime: string;          // HH:MM
+  endTime: string;            // HH:MM
+  track?: string;             // ex: "Track A", "Room 201"
+  category: ConferenceSessionCategory;
+  title: string;
+  speakers?: string[];
+  affiliation?: string;
+  abstract?: string;
+  location?: string;
+}
+
+export interface ConferenceDay {
+  date: string;               // YYYY-MM-DD
+  dayLabel?: string;          // ex: "1일차"
+  sessions: ConferenceSession[];
+}
+
+export interface ConferenceProgram {
+  id: string;                 // doc id
+  activityId: string;         // 부모 Activity (type=external)
+  title: string;
+  uploadedSourceUrl?: string;
+  uploadedSourceType?: "image" | "pdf";
+  uploadedSourceName?: string;
+  /** 추가 안내 메모 (장소 약도, 식사 안내 등) */
+  notes?: string;
+  days: ConferenceDay[];
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** 회원이 학술대회 세션을 선택·참석·후기 기록 */
+export type SessionPlanStatus = "planned" | "attended" | "skipped";
+
+export interface UserSessionPlan {
+  id: string;                 // {userId}_{programId}_{sessionId} 권장
+  userId: string;
+  userName?: string;
+  programId: string;
+  activityId: string;
+  sessionId: string;
+  /** 비정규화: 목록 조회 시 join 부담 줄이기 */
+  sessionTitle?: string;
+  sessionDate?: string;
+  sessionStartTime?: string;
+  sessionEndTime?: string;
+  sessionTrack?: string;
+  status: SessionPlanStatus;
+  reasonForSelection?: string;
+  reflection?: string;
+  rating?: number;            // 1-5
+  selectedAt: string;
+  attendedAt?: string;
+  reflectedAt?: string;
+}
+
 // ── 투표/설문 ──
 export type PollType = "vote" | "survey";
 export type PollStatus = "draft" | "active" | "closed";
