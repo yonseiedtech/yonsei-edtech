@@ -21,14 +21,16 @@ export default function Footer() {
         <div className="grid gap-8 md:grid-cols-3">
           {/* Logo & Description */}
           <div>
-            <div className="flex items-center gap-2">
-              <Image
-                src="/card-news/brand/shield.png"
-                alt="연세대학교 엠블럼"
-                width={40}
-                height={40}
-                className="h-10 w-10 brightness-0 invert"
-              />
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white p-1 shadow-sm">
+                <Image
+                  src="/card-news/brand/shield.png"
+                  alt="연세대학교 엠블럼"
+                  width={36}
+                  height={36}
+                  className="h-9 w-9"
+                />
+              </div>
               <span className="text-lg font-bold text-white">연세교육공학회</span>
             </div>
             <p className="mt-3 text-sm text-slate-400">
