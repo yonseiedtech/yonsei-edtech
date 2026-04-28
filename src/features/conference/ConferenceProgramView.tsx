@@ -12,6 +12,7 @@ import {
   MapPin,
   MessageSquare,
   NotebookPen,
+  Sparkles,
   Star,
   User as UserIcon,
   X,
@@ -244,7 +245,7 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
           {program.notes && <p className="text-sm text-muted-foreground">{program.notes}</p>}
         </CardHeader>
         <CardContent className="flex flex-wrap items-center justify-between gap-3 text-sm">
-          <div className="flex flex-wrap gap-3 text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-3 text-muted-foreground">
             <span>{program.days.length}일간 · 총 {program.days.reduce((s, d) => s + d.sessions.length, 0)}개 세션</span>
             {program.uploadedSourceUrl && (
               <a
@@ -256,6 +257,13 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                 원본 자료 보기
               </a>
             )}
+            <Link
+              href={`/activities/external/${activityId}/program/roundup`}
+              className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-900 hover:bg-amber-100"
+              title="참석자들의 후기를 세션별로 모아 봅니다"
+            >
+              <Sparkles className="h-3 w-3" /> 후기 라운드업
+            </Link>
           </div>
           {user && (
             <div className="flex flex-wrap items-center gap-2">
