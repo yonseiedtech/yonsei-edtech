@@ -24,7 +24,7 @@ const CARDS: CardSpec[] = [
     id: "01-cover",
     kind: "cover",
     title: "연세교육공학회",
-    english: "Yonsei University Graduate School of Education · Educational Technology",
+    english: "Yonsei University Graduate School of Education\nEducational Technology",
     badge: "공식 웹사이트 OPEN",
     body: "yonsei-edtech.vercel.app",
   },
@@ -33,14 +33,14 @@ const CARDS: CardSpec[] = [
     kind: "intro",
     title: "학술 커뮤니티의 새로운 시작",
     body:
-      "연세대학교 교육대학원 교육공학전공 구성원이 함께 만드는\n학회 운영·연구·교류 통합 플랫폼이 정식 오픈했습니다.",
+      "연세대학교 교육대학원 교육공학전공 구성원이 함께 만드는\n학회 운영 · 연구 · 교류 통합 플랫폼이 정식 오픈했습니다.",
     bullets: ["에듀테크", "교수설계", "학습과학", "현장 연구"],
   },
   {
     id: "03-home",
     kind: "feature",
     title: "한 화면에서 만나는 학회 활동",
-    subtitle: "메인 · 학사일정 · 오늘의 수업",
+    subtitle: "Dashboard",
     page: "/",
     screenshot: "home",
     bullets: [
@@ -150,11 +150,14 @@ const CARDS: CardSpec[] = [
   },
 ];
 
-const NAVY = "#0a1f44";
-const NAVY_DEEP = "#061635";
-const GOLD = "#d4af37";
-const GOLD_LIGHT = "#f4d77a";
-const CREAM = "#f5f1e6";
+// 연세대학교 공식 컬러 시스템
+const YONSEI_BLUE = "#003876"; // PMS 281 — Yonsei primary
+const YONSEI_BLUE_DEEP = "#002857"; // 그라데이션 깊은 쪽
+const YONSEI_GOLD = "#C5A572"; // 보조 골드 (학교 휘장 톤)
+const YONSEI_GOLD_LIGHT = "#dcc89a";
+const WHITE = "#ffffff";
+const BG_LIGHT = "#f7f9fc";
+const TEXT_MUTED = "#5b6878";
 
 interface CardArtProps {
   spec: CardSpec;
@@ -171,12 +174,11 @@ function CardArt({ spec, refCb }: CardArtProps) {
         height: 1080,
         position: "relative",
         background:
-          spec.kind === "cover"
-            ? `linear-gradient(135deg, ${NAVY} 0%, ${NAVY_DEEP} 100%)`
-            : spec.kind === "cta"
-              ? `linear-gradient(135deg, ${NAVY_DEEP} 0%, ${NAVY} 100%)`
-              : CREAM,
-        color: spec.kind === "feature" || spec.kind === "intro" ? NAVY : CREAM,
+          spec.kind === "cover" || spec.kind === "cta"
+            ? `linear-gradient(135deg, ${YONSEI_BLUE} 0%, ${YONSEI_BLUE_DEEP} 100%)`
+            : WHITE,
+        color:
+          spec.kind === "feature" || spec.kind === "intro" ? YONSEI_BLUE : WHITE,
         fontFamily:
           "var(--font-pretendard), system-ui, -apple-system, 'Segoe UI', sans-serif",
         overflow: "hidden",
@@ -190,60 +192,87 @@ function CardArt({ spec, refCb }: CardArtProps) {
   );
 }
 
-function GoldRule({ width = 80 }: { width?: number }) {
+function GoldRule({ width = 80, color = YONSEI_GOLD }: { width?: number; color?: string }) {
   return (
     <div
       style={{
-        height: 4,
+        height: 3,
         width,
-        background: `linear-gradient(90deg, ${GOLD} 0%, ${GOLD_LIGHT} 100%)`,
-        borderRadius: 2,
+        background: color,
+        borderRadius: 1.5,
       }}
     />
   );
 }
 
-function YMonogram({ size = 360 }: { size?: number }) {
+/**
+ * 연세대 방패 엠블럼 모티프 — 공식 로고가 아닌 추상화된 방패 실루엣 + Y 워드마크.
+ * 학교 정식 휘장 사용은 저작권 이슈가 있어 형태만 차용.
+ */
+function YonseiShield({ size = 320, mode = "dark" }: { size?: number; mode?: "dark" | "light" }) {
+  const stroke = mode === "dark" ? YONSEI_GOLD : YONSEI_BLUE;
+  const fill = mode === "dark" ? "transparent" : WHITE;
+  const textColor = mode === "dark" ? WHITE : YONSEI_BLUE;
+  const accent = YONSEI_GOLD;
   return (
-    <div
-      style={{
-        position: "relative",
-        width: size,
-        height: size,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
+    <div style={{ width: size, height: size * 1.18, position: "relative" }}>
+      <svg
+        viewBox="0 0 200 235"
+        style={{ width: "100%", height: "100%", display: "block" }}
+      >
+        <path
+          d="M100 8 L190 38 L190 130 C190 178 156 210 100 228 C44 210 10 178 10 130 L10 38 Z"
+          fill={fill}
+          stroke={stroke}
+          strokeWidth="3"
+        />
+        <path
+          d="M100 22 L178 48 L178 130 C178 170 150 198 100 214 C50 198 22 170 22 130 L22 48 Z"
+          fill="none"
+          stroke={accent}
+          strokeOpacity="0.4"
+          strokeWidth="1"
+        />
+        {/* 가로 골드 띠 */}
+        <line x1="22" y1="92" x2="178" y2="92" stroke={accent} strokeWidth="1.5" opacity="0.6" />
+      </svg>
+      {/* 중앙 Y */}
       <div
         style={{
           position: "absolute",
           inset: 0,
-          borderRadius: "50%",
-          border: `2px solid ${GOLD}55`,
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          inset: 30,
-          borderRadius: "50%",
-          border: `2px solid ${GOLD}33`,
-        }}
-      />
-      <div
-        style={{
-          fontSize: size * 0.7,
-          fontWeight: 900,
-          fontStyle: "italic",
-          background: `linear-gradient(180deg, ${GOLD_LIGHT} 0%, ${GOLD} 100%)`,
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          fontFamily: "var(--font-noto-serif-kr), serif",
-          lineHeight: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          paddingTop: size * 0.12,
         }}
       >
-        Y
+        <div
+          style={{
+            fontSize: size * 0.55,
+            fontWeight: 800,
+            fontStyle: "italic",
+            color: textColor,
+            fontFamily: "var(--font-noto-serif-kr), serif",
+            lineHeight: 1,
+          }}
+        >
+          Y
+        </div>
+        <div
+          style={{
+            marginTop: size * 0.02,
+            fontSize: size * 0.05,
+            letterSpacing: size * 0.012,
+            color: textColor,
+            opacity: 0.85,
+            fontWeight: 600,
+            textTransform: "uppercase",
+          }}
+        >
+          Yonsei
+        </div>
       </div>
     </div>
   );
@@ -251,82 +280,252 @@ function YMonogram({ size = 360 }: { size?: number }) {
 
 function CoverCard({ spec }: { spec: CardSpec }) {
   return (
-    <>
+    <div
+      style={{
+        position: "absolute",
+        inset: 60,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+      }}
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+        <GoldRule width={120} />
+        <div
+          style={{
+            fontSize: 22,
+            letterSpacing: 6,
+            textTransform: "uppercase",
+            color: YONSEI_GOLD_LIGHT,
+            fontWeight: 600,
+          }}
+        >
+          Yonsei University · Graduate School of Education
+        </div>
+      </div>
+
       <div
         style={{
-          position: "absolute",
-          inset: 60,
           display: "flex",
-          flexDirection: "column",
+          alignItems: "center",
           justifyContent: "space-between",
+          gap: 32,
         }}
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-          <GoldRule width={120} />
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 24 }}>
+          <div
+            style={{
+              display: "inline-flex",
+              alignSelf: "flex-start",
+              padding: "8px 18px",
+              background: YONSEI_GOLD,
+              color: YONSEI_BLUE_DEEP,
+              borderRadius: 4,
+              fontSize: 18,
+              fontWeight: 800,
+              letterSpacing: 3,
+            }}
+          >
+            {spec.badge}
+          </div>
+          <div
+            style={{
+              fontSize: 110,
+              fontWeight: 800,
+              lineHeight: 1.05,
+              letterSpacing: -2,
+              color: WHITE,
+            }}
+          >
+            {spec.title}
+          </div>
           <div
             style={{
               fontSize: 22,
-              letterSpacing: 6,
-              textTransform: "uppercase",
-              color: GOLD_LIGHT,
-              fontWeight: 600,
+              color: `${WHITE}cc`,
+              lineHeight: 1.45,
+              maxWidth: 540,
+              fontFamily: "var(--font-noto-serif-kr), serif",
+              whiteSpace: "pre-line",
+              fontStyle: "italic",
             }}
           >
-            Yonsei · Graduate School of Education
+            {spec.english}
           </div>
         </div>
+        <YonseiShield size={300} mode="dark" />
+      </div>
 
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          paddingTop: 20,
+          borderTop: `1px solid ${YONSEI_GOLD}66`,
+        }}
+      >
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 40,
+            fontSize: 22,
+            color: YONSEI_GOLD_LIGHT,
+            fontWeight: 600,
+            letterSpacing: 1,
+            fontFamily: "var(--font-noto-serif-kr), serif",
           }}
         >
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 24 }}>
+          {spec.body}
+        </div>
+        <div
+          style={{
+            fontSize: 18,
+            color: `${WHITE}88`,
+            letterSpacing: 4,
+            textTransform: "uppercase",
+          }}
+        >
+          교육공학전공
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FeatureHeaderStrip({ subtitle, idx }: { subtitle?: string; idx: number }) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 70,
+        background: YONSEI_BLUE,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "0 64px",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <div
+          style={{
+            width: 26,
+            height: 26,
+            background: YONSEI_GOLD,
+            borderRadius: 2,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 16,
+            fontWeight: 800,
+            fontStyle: "italic",
+            color: YONSEI_BLUE,
+            fontFamily: "var(--font-noto-serif-kr), serif",
+          }}
+        >
+          Y
+        </div>
+        <div
+          style={{
+            fontSize: 18,
+            color: WHITE,
+            letterSpacing: 4,
+            textTransform: "uppercase",
+            fontWeight: 600,
+          }}
+        >
+          연세교육공학회
+        </div>
+        <span style={{ color: `${WHITE}55`, fontSize: 18 }}>|</span>
+        <div
+          style={{
+            fontSize: 16,
+            color: YONSEI_GOLD_LIGHT,
+            letterSpacing: 3,
+            textTransform: "uppercase",
+            fontWeight: 500,
+          }}
+        >
+          {subtitle}
+        </div>
+      </div>
+      <div
+        style={{
+          fontSize: 16,
+          color: YONSEI_GOLD_LIGHT,
+          fontWeight: 700,
+          letterSpacing: 2,
+        }}
+      >
+        {String(idx).padStart(2, "0")} / 11
+      </div>
+    </div>
+  );
+}
+
+function IntroCard({ spec }: { spec: CardSpec }) {
+  return (
+    <>
+      <FeatureHeaderStrip subtitle="ABOUT" idx={2} />
+      <div
+        style={{
+          position: "absolute",
+          top: 70,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          padding: "70px 80px 60px",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          background: BG_LIGHT,
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 36 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+            <GoldRule width={90} color={YONSEI_BLUE} />
             <div
               style={{
-                display: "inline-flex",
-                alignSelf: "flex-start",
-                padding: "8px 18px",
-                background: `${GOLD}22`,
-                border: `1px solid ${GOLD}`,
-                borderRadius: 999,
-                color: GOLD_LIGHT,
-                fontSize: 18,
-                fontWeight: 700,
-                letterSpacing: 2,
-              }}
-            >
-              {spec.badge}
-            </div>
-            <div
-              style={{
-                fontSize: 110,
+                fontSize: 70,
                 fontWeight: 800,
-                lineHeight: 1.05,
-                letterSpacing: -2,
-                color: CREAM,
-                fontFamily: "var(--font-pretendard), sans-serif",
+                lineHeight: 1.15,
+                color: YONSEI_BLUE,
+                letterSpacing: -1,
               }}
             >
               {spec.title}
             </div>
-            <div
-              style={{
-                fontSize: 22,
-                fontStyle: "italic",
-                color: `${CREAM}cc`,
-                lineHeight: 1.45,
-                maxWidth: 540,
-                fontFamily: "var(--font-noto-serif-kr), serif",
-              }}
-            >
-              {spec.english}
-            </div>
           </div>
-          <YMonogram size={320} />
+          <div
+            style={{
+              fontSize: 30,
+              color: TEXT_MUTED,
+              lineHeight: 1.55,
+              whiteSpace: "pre-line",
+            }}
+          >
+            {spec.body}
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 14 }}>
+            {(spec.bullets ?? []).map((b) => (
+              <span
+                key={b}
+                style={{
+                  padding: "12px 24px",
+                  fontSize: 22,
+                  fontWeight: 700,
+                  color: YONSEI_BLUE,
+                  background: WHITE,
+                  border: `2px solid ${YONSEI_BLUE}`,
+                  borderRadius: 4,
+                  letterSpacing: 1,
+                }}
+              >
+                {b}
+              </span>
+            ))}
+          </div>
         </div>
 
         <div
@@ -334,261 +533,141 @@ function CoverCard({ spec }: { spec: CardSpec }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            paddingTop: 20,
-            borderTop: `1px solid ${GOLD}55`,
+            paddingTop: 24,
+            borderTop: `1px solid ${YONSEI_BLUE}22`,
+            color: TEXT_MUTED,
+            fontSize: 16,
+            letterSpacing: 2,
           }}
         >
-          <div
-            style={{
-              fontSize: 22,
-              color: GOLD_LIGHT,
-              fontWeight: 600,
-              letterSpacing: 1,
-              fontFamily: "var(--font-noto-serif-kr), serif",
-            }}
-          >
-            {spec.body}
-          </div>
-          <div
-            style={{
-              fontSize: 18,
-              color: `${CREAM}88`,
-              letterSpacing: 4,
-              textTransform: "uppercase",
-            }}
-          >
-            교육공학전공
-          </div>
+          <span style={{ fontFamily: "var(--font-noto-serif-kr), serif" }}>
+            yonsei-edtech.vercel.app
+          </span>
+          <span style={{ color: YONSEI_GOLD, fontWeight: 700 }}>
+            EDUCATIONAL TECHNOLOGY
+          </span>
         </div>
       </div>
     </>
   );
 }
 
-function IntroCard({ spec }: { spec: CardSpec }) {
-  return (
-    <div
-      style={{
-        position: "absolute",
-        inset: 80,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-      }}
-    >
-      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        <GoldRule width={100} />
-        <div style={{ fontSize: 20, letterSpacing: 5, color: NAVY, opacity: 0.55 }}>
-          ABOUT
-        </div>
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 36 }}>
-        <div
-          style={{
-            fontSize: 70,
-            fontWeight: 800,
-            lineHeight: 1.15,
-            color: NAVY,
-            letterSpacing: -1,
-          }}
-        >
-          {spec.title}
-        </div>
-        <div
-          style={{
-            fontSize: 30,
-            color: NAVY,
-            opacity: 0.8,
-            lineHeight: 1.55,
-            whiteSpace: "pre-line",
-          }}
-        >
-          {spec.body}
-        </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 14 }}>
-          {(spec.bullets ?? []).map((b) => (
-            <span
-              key={b}
-              style={{
-                padding: "12px 24px",
-                fontSize: 22,
-                fontWeight: 700,
-                color: NAVY,
-                background: `${GOLD}33`,
-                border: `1px solid ${GOLD}`,
-                borderRadius: 999,
-                letterSpacing: 1,
-              }}
-            >
-              {b}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          paddingTop: 24,
-          borderTop: `1px solid ${NAVY}33`,
-          color: NAVY,
-          opacity: 0.7,
-          fontSize: 18,
-          letterSpacing: 3,
-          textTransform: "uppercase",
-        }}
-      >
-        <span>연세교육공학회 · YONSEI EDTECH</span>
-        <span style={{ color: GOLD, opacity: 1, fontWeight: 700 }}>02 / 11</span>
-      </div>
-    </div>
-  );
-}
-
 function FeatureCard({ spec }: { spec: CardSpec }) {
   const idx = parseInt(spec.id.split("-")[0], 10);
   return (
-    <div
-      style={{
-        position: "absolute",
-        inset: 64,
-        display: "flex",
-        flexDirection: "column",
-        gap: 28,
-      }}
-    >
+    <>
+      <FeatureHeaderStrip subtitle={spec.subtitle} idx={idx} />
       <div
         style={{
+          position: "absolute",
+          top: 70,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          padding: "48px 64px 40px",
           display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
+          flexDirection: "column",
+          gap: 28,
+          background: WHITE,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-          <GoldRule width={60} />
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <GoldRule width={60} color={YONSEI_GOLD} />
           <div
             style={{
-              fontSize: 18,
-              color: NAVY,
-              opacity: 0.55,
-              letterSpacing: 4,
-              textTransform: "uppercase",
-              fontWeight: 600,
+              fontSize: 54,
+              fontWeight: 800,
+              color: YONSEI_BLUE,
+              letterSpacing: -1,
+              lineHeight: 1.18,
             }}
           >
-            {spec.subtitle}
+            {spec.title}
           </div>
         </div>
+
+        {spec.screenshot && (
+          <div
+            style={{
+              position: "relative",
+              width: "100%",
+              height: 530,
+              borderRadius: 8,
+              overflow: "hidden",
+              background: BG_LIGHT,
+              border: `2px solid ${YONSEI_BLUE}22`,
+              boxShadow: `0 12px 32px ${YONSEI_BLUE}1a`,
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`/card-news/screenshots/${spec.screenshot}.png`}
+              alt={spec.title ?? ""}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: "top center",
+                display: "block",
+              }}
+            />
+          </div>
+        )}
+
         <div
           style={{
-            fontSize: 18,
-            color: GOLD,
-            fontWeight: 700,
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+            flex: 1,
+            justifyContent: "flex-end",
+          }}
+        >
+          {(spec.bullets ?? []).map((b) => (
+            <div
+              key={b}
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 14,
+                fontSize: 22,
+                color: YONSEI_BLUE,
+                lineHeight: 1.45,
+              }}
+            >
+              <span
+                style={{
+                  marginTop: 12,
+                  width: 8,
+                  height: 8,
+                  background: YONSEI_GOLD,
+                  flexShrink: 0,
+                }}
+              />
+              <span>{b}</span>
+            </div>
+          ))}
+        </div>
+
+        <div
+          style={{
+            paddingTop: 16,
+            borderTop: `1px solid ${YONSEI_BLUE}22`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            color: TEXT_MUTED,
+            fontSize: 16,
             letterSpacing: 2,
           }}
         >
-          {String(idx).padStart(2, "0")} / 11
+          <span style={{ fontFamily: "var(--font-noto-serif-kr), serif" }}>
+            yonsei-edtech.vercel.app{spec.page}
+          </span>
+          <span style={{ color: YONSEI_GOLD, fontWeight: 700 }}>YONSEI EDTECH</span>
         </div>
       </div>
-
-      <div
-        style={{
-          fontSize: 56,
-          fontWeight: 800,
-          color: NAVY,
-          letterSpacing: -1,
-          lineHeight: 1.18,
-        }}
-      >
-        {spec.title}
-      </div>
-
-      {spec.screenshot && (
-        <div
-          style={{
-            position: "relative",
-            width: "100%",
-            height: 540,
-            borderRadius: 18,
-            overflow: "hidden",
-            background: `${NAVY}11`,
-            border: `2px solid ${NAVY}22`,
-            boxShadow: `0 18px 40px ${NAVY}22`,
-          }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={`/card-news/screenshots/${spec.screenshot}.png`}
-            alt={spec.title ?? ""}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              objectPosition: "top center",
-              display: "block",
-            }}
-          />
-        </div>
-      )}
-
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-          flex: 1,
-          justifyContent: "flex-end",
-        }}
-      >
-        {(spec.bullets ?? []).map((b) => (
-          <div
-            key={b}
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 14,
-              fontSize: 22,
-              color: NAVY,
-              lineHeight: 1.45,
-            }}
-          >
-            <span
-              style={{
-                marginTop: 12,
-                width: 8,
-                height: 8,
-                borderRadius: 999,
-                background: GOLD,
-                flexShrink: 0,
-              }}
-            />
-            <span>{b}</span>
-          </div>
-        ))}
-      </div>
-
-      <div
-        style={{
-          paddingTop: 18,
-          borderTop: `1px solid ${NAVY}22`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          color: NAVY,
-          opacity: 0.7,
-          fontSize: 16,
-          letterSpacing: 2,
-        }}
-      >
-        <span style={{ fontFamily: "var(--font-noto-serif-kr), serif" }}>
-          yonsei-edtech.vercel.app{spec.page}
-        </span>
-        <span style={{ color: GOLD, fontWeight: 700, opacity: 1 }}>YONSEI EDTECH</span>
-      </div>
-    </div>
+    </>
   );
 }
 
@@ -601,22 +680,32 @@ function CtaCard({ spec }: { spec: CardSpec }) {
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        color: CREAM,
+        color: WHITE,
       }}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-        <GoldRule width={120} />
-        <div
-          style={{
-            fontSize: 20,
-            letterSpacing: 5,
-            color: GOLD_LIGHT,
-            textTransform: "uppercase",
-            fontWeight: 600,
-          }}
-        >
-          Join us
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 32,
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <GoldRule width={120} />
+          <div
+            style={{
+              fontSize: 20,
+              letterSpacing: 5,
+              color: YONSEI_GOLD_LIGHT,
+              textTransform: "uppercase",
+              fontWeight: 600,
+            }}
+          >
+            Join us
+          </div>
         </div>
+        <YonseiShield size={180} mode="dark" />
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
@@ -633,7 +722,7 @@ function CtaCard({ spec }: { spec: CardSpec }) {
         <div
           style={{
             fontSize: 30,
-            color: `${CREAM}cc`,
+            color: `${WHITE}cc`,
             lineHeight: 1.5,
             maxWidth: 760,
           }}
@@ -645,11 +734,11 @@ function CtaCard({ spec }: { spec: CardSpec }) {
             display: "inline-flex",
             alignSelf: "flex-start",
             padding: "20px 36px",
-            background: GOLD,
-            color: NAVY_DEEP,
+            background: YONSEI_GOLD,
+            color: YONSEI_BLUE_DEEP,
             fontSize: 36,
             fontWeight: 800,
-            borderRadius: 16,
+            borderRadius: 4,
             fontFamily: "var(--font-noto-serif-kr), serif",
             letterSpacing: 1,
           }}
@@ -661,18 +750,18 @@ function CtaCard({ spec }: { spec: CardSpec }) {
       <div
         style={{
           paddingTop: 20,
-          borderTop: `1px solid ${GOLD}55`,
+          borderTop: `1px solid ${YONSEI_GOLD}66`,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           fontSize: 18,
-          color: `${CREAM}99`,
+          color: `${WHITE}99`,
           letterSpacing: 3,
           textTransform: "uppercase",
         }}
       >
         <span>{spec.badge}</span>
-        <span style={{ color: GOLD_LIGHT, fontWeight: 700 }}>11 / 11</span>
+        <span style={{ color: YONSEI_GOLD_LIGHT, fontWeight: 700 }}>11 / 11</span>
       </div>
     </div>
   );
@@ -723,7 +812,7 @@ export default function CardNewsPage() {
       <ConsolePageHeader
         icon={Images}
         title="카드뉴스 (사이트 런칭 · 주요 기능)"
-        description="1080×1080 정사각 카드 11장 — 인스타그램·카카오톡 채널·블로그 공유용. 우측 다운로드 버튼으로 개별 PNG 저장 또는 일괄 다운로드."
+        description="1080×1080 정사각 카드 11장 — 인스타그램·카카오톡 채널·블로그 공유용. 연세대 컬러 시스템(Yonsei Blue + Gold) 적용."
         actions={
           <Button onClick={downloadAll} disabled={bulkBusy}>
             {bulkBusy ? (
@@ -760,7 +849,6 @@ export default function CardNewsPage() {
                 PNG
               </Button>
             </div>
-            {/* 미리보기 (1080x1080을 약 360px로 스케일) */}
             <div className="relative aspect-square w-full overflow-hidden rounded-lg border border-border/50 bg-muted">
               <div
                 style={{
@@ -797,9 +885,9 @@ export default function CardNewsPage() {
           <li>다운로드된 PNG는 1080×1080 (인스타그램 정사각 / 카카오톡 채널 추천)</li>
           <li>스크린샷이 오래되었을 경우 <code className="rounded bg-background px-1">node scripts/capture-card-news-screenshots.mjs</code> 재실행</li>
           <li>카피 수정은 <code className="rounded bg-background px-1">src/app/console/card-news/page.tsx</code>의 <code className="rounded bg-background px-1">CARDS</code> 배열</li>
+          <li>컬러: Yonsei Blue <code className="rounded bg-background px-1">#003876</code> · Gold <code className="rounded bg-background px-1">#C5A572</code> (학교 정식 휘장은 저작권으로 미사용, 형태만 차용)</li>
         </ul>
       </div>
-
     </div>
   );
 }
