@@ -74,6 +74,9 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
   const [reflectionDialog, setReflectionDialog] = useState<{ plan: UserSessionPlan; reflection: string; rating: number } | null>(null);
   const [notesDialog, setNotesDialog] = useState<{ plan: UserSessionPlan; notes: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<ConferenceSession["category"] | "all">("all");
+  const [onlyMine, setOnlyMine] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -397,14 +400,72 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
 
       {day && (
         <div className="space-y-3">
+          <div className="flex flex-col gap-2 rounded-md border bg-muted/30 p-3 sm:flex-row sm:items-center">
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="제목·연사·소속·장소·트랙 검색"
+              className="h-8 flex-1 rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+            />
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setCategoryFilter("all")}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${categoryFilter === "all" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted"}`}
+              >
+                전체
+              </button>
+              {(Object.keys(CONFERENCE_SESSION_CATEGORY_LABELS) as Array<ConferenceSession["category"]>).map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setCategoryFilter(c)}
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${categoryFilter === c ? CONFERENCE_SESSION_CATEGORY_COLORS[c] + " ring-2 ring-offset-1" : "bg-background text-muted-foreground hover:bg-muted"}`}
+                >
+                  {CONFERENCE_SESSION_CATEGORY_LABELS[c]}
+                </button>
+              ))}
+              {user && (
+                <button
+                  type="button"
+                  onClick={() => setOnlyMine((v) => !v)}
+                  className={`ml-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${onlyMine ? "bg-blue-100 text-blue-800 ring-2 ring-blue-300 ring-offset-1" : "bg-background text-muted-foreground hover:bg-muted"}`}
+                  title="내 일정만 보기"
+                >
+                  내 일정만
+                </button>
+              )}
+            </div>
+          </div>
           {day.sessions.length === 0 ? (
             <p className="rounded-md border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
               이 날짜의 세션이 비어 있습니다.
             </p>
-          ) : (
-            [...day.sessions]
+          ) : (() => {
+            const q = searchQuery.trim().toLowerCase();
+            const filteredSessions = [...day.sessions]
               .sort((a, b) => (a.startTime > b.startTime ? 1 : -1))
-              .map((s) => {
+              .filter((s) => {
+                if (categoryFilter !== "all" && s.category !== categoryFilter) return false;
+                if (onlyMine && !planBySessionId.has(s.id)) return false;
+                if (q) {
+                  const hay = [s.title, s.location, s.track, s.affiliation, s.abstract, ...(s.speakers ?? [])]
+                    .filter(Boolean)
+                    .join(" ")
+                    .toLowerCase();
+                  if (!hay.includes(q)) return false;
+                }
+                return true;
+              });
+            if (filteredSessions.length === 0) {
+              return (
+                <p className="rounded-md border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
+                  조건에 맞는 세션이 없습니다.
+                </p>
+              );
+            }
+            return filteredSessions.map((s) => {
                 const plan = planBySessionId.get(s.id);
                 const companions = companionsBySessionId.get(s.id) ?? [];
                 const conflicts = conflictsBySessionId.get(s.id) ?? [];
@@ -562,8 +623,8 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                     </CardContent>
                   </Card>
                 );
-              })
-          )}
+              });
+          })()}
         </div>
       )}
 
