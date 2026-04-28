@@ -1063,7 +1063,27 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                             </Button>
                           </>
                         )}
-                        {a.status === "approved" && <Badge className="bg-green-50 text-green-700 text-[10px]">승인</Badge>}
+                        {a.status === "approved" && (
+                          <>
+                            <Badge className="bg-green-50 text-green-700 text-[10px]">승인</Badge>
+                            {isStaff && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 gap-1 text-xs text-destructive"
+                                onClick={() => {
+                                  const msg = type === "external"
+                                    ? `${a.name}님의 승인을 취소하시겠습니까?\n참여자 목록과 신청 현황에서 모두 제거됩니다.`
+                                    : `${a.name}님의 승인을 취소하시겠습니까?\n참여자 목록에서 제거되고 신청은 거절 상태로 변경됩니다.`;
+                                  if (!confirm(msg)) return;
+                                  updateApplicantMutation.mutate({ key, status: "rejected" });
+                                }}
+                              >
+                                <XCircle size={12} />승인 취소
+                              </Button>
+                            )}
+                          </>
+                        )}
                         {a.status === "rejected" && (
                           <>
                             <Badge className="bg-red-50 text-red-700 text-[10px]">거절</Badge>

@@ -37,8 +37,8 @@ const STATIC_TRACKS: StaticTrack[] = [
   },
   {
     key: "comprehensive_exam",
-    title: "종합시험 대비",
-    description: "응시 자격·출제 영역·기출·스터디 가이드.",
+    title: "학술대회 대비",
+    description: "주요 학회·학술대회 일정, 발표 신청 방법, 발표문/포스터 작성 가이드.",
     icon: ScrollText,
     href: null,
     color: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",

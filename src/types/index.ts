@@ -2059,13 +2059,13 @@ export interface CourseTodo {
 export type GuideTrackKey =
   | "onboarding"           // 신입생 온보딩
   | "current_student"      // 재학생 학습
-  | "comprehensive_exam"   // 종합시험
+  | "comprehensive_exam"   // 학술대회 대비 (legacy key)
   | "graduation";          // 졸업
 
 export const GUIDE_TRACK_LABELS: Record<GuideTrackKey, string> = {
   onboarding: "신입생 온보딩",
   current_student: "재학생 학습 가이드",
-  comprehensive_exam: "종합시험 대비",
+  comprehensive_exam: "학술대회 대비",
   graduation: "졸업 준비",
 };
 

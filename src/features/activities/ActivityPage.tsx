@@ -200,8 +200,26 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
   const completed = activities.filter((a) => a.status === "completed");
 
   const [statusTab, setStatusTab] = useState<"all" | "active" | "completed">("all");
+
+  // 전체 탭: 미완료(행사일 가까운 순) → 완료(최근 종료 순)
+  const sortedAll = (() => {
+    const dateNum = (s?: string) => {
+      if (!s) return Number.POSITIVE_INFINITY;
+      const t = new Date(`${s}T00:00:00`).getTime();
+      return Number.isNaN(t) ? Number.POSITIVE_INFINITY : t;
+    };
+    return [...activities].sort((a, b) => {
+      const aDone = a.status === "completed";
+      const bDone = b.status === "completed";
+      if (aDone !== bDone) return aDone ? 1 : -1;
+      return aDone
+        ? dateNum(b.date) - dateNum(a.date)  // 완료끼리: 최근 종료 먼저
+        : dateNum(a.date) - dateNum(b.date); // 미완료끼리: 행사일 가까운 순
+    });
+  })();
+
   const filteredList =
-    statusTab === "active" ? ongoing : statusTab === "completed" ? completed : activities;
+    statusTab === "active" ? ongoing : statusTab === "completed" ? completed : sortedAll;
 
   const isExternal = type === "external";
   const defaultView = isExternal ? "gallery" : "list";
