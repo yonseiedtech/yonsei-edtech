@@ -15,7 +15,7 @@ import {
   BarChart3, GraduationCap, Wallet, Users, BookUser,
   BookOpen, FlaskConical, FolderKanban, Globe, Award, NotebookPen,
   Settings, MessageCircle, ScrollText, ChevronDown, ChevronRight,
-  ShieldCheck, Megaphone, CalendarDays, MessageSquareQuote,
+  ShieldCheck, Megaphone, CalendarDays, MessageSquareQuote, Images,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -152,6 +152,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
       items: [
         { href: "/console/posts", label: "게시글", icon: FileText },
         { href: "/console/newsletter", label: "학회보", icon: Newspaper },
+        { href: "/console/card-news", label: "카드뉴스", icon: Images },
       ],
     },
     {
