@@ -1254,6 +1254,8 @@ export interface ConferenceSession {
   affiliation?: string;
   abstract?: string;
   location?: string;
+  /** 사전 학습 자료 (PDF/슬라이드/논문 등) */
+  materialUrls?: string[];
 }
 
 export interface ConferenceDay {
@@ -1297,6 +1299,8 @@ export interface UserSessionPlan {
   reasonForSelection?: string;
   reflection?: string;
   rating?: number;            // 1-5
+  /** 본인만 보는 세션 노트 (필기/메모) */
+  personalNotes?: string;
   selectedAt: string;
   attendedAt?: string;
   reflectedAt?: string;

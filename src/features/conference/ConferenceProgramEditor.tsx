@@ -565,6 +565,20 @@ function SessionRow({
         rows={2}
         className="mt-2"
       />
+      <Textarea
+        value={(session.materialUrls ?? []).join("\n")}
+        onChange={(e) =>
+          onChange({
+            materialUrls: e.target.value
+              .split(/\n+/)
+              .map((u) => u.trim())
+              .filter((u) => /^https?:\/\//i.test(u)),
+          })
+        }
+        placeholder={"사전 자료 링크 (한 줄당 하나)\n예: https://drive.google.com/file/...\nhttps://arxiv.org/abs/..."}
+        rows={2}
+        className="mt-2 font-mono text-xs"
+      />
     </div>
   );
 }

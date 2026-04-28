@@ -6,9 +6,11 @@ import {
   Calendar,
   Check,
   Clock,
+  FileText,
   Loader2,
   MapPin,
   MessageSquare,
+  NotebookPen,
   Star,
   User as UserIcon,
   X,
@@ -64,6 +66,7 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
   const [activeDayIdx, setActiveDayIdx] = useState(0);
   const [reasonDialog, setReasonDialog] = useState<{ session: ConferenceSession; reason: string } | null>(null);
   const [reflectionDialog, setReflectionDialog] = useState<{ plan: UserSessionPlan; reflection: string; rating: number } | null>(null);
+  const [notesDialog, setNotesDialog] = useState<{ plan: UserSessionPlan; notes: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -158,6 +161,26 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
       reflection: plan.reflection ?? "",
       rating: plan.rating ?? 0,
     });
+  }
+
+  async function submitNotes() {
+    if (!notesDialog) return;
+    const { plan, notes } = notesDialog;
+    setBusy(true);
+    try {
+      const updated: UserSessionPlan = {
+        ...plan,
+        personalNotes: notes.trim() || undefined,
+      };
+      await userSessionPlansApi.upsert(plan.id, updated as unknown as Record<string, unknown>);
+      setPlans((prev) => prev.map((p) => (p.id === plan.id ? updated : p)));
+      setNotesDialog(null);
+      toast.success("개인 노트를 저장했습니다.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "저장 실패");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function submitReflection() {
@@ -315,6 +338,22 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                       )}
                       {s.abstract && <p className="whitespace-pre-wrap text-sm text-foreground/80">{s.abstract}</p>}
 
+                      {s.materialUrls && s.materialUrls.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {s.materialUrls.map((u, i) => (
+                            <a
+                              key={u}
+                              href={u}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 rounded-md border bg-white px-2 py-0.5 text-xs text-primary hover:bg-primary/5"
+                            >
+                              <FileText className="h-3 w-3" /> 사전 자료 {s.materialUrls!.length > 1 ? i + 1 : ""}
+                            </a>
+                          ))}
+                        </div>
+                      )}
+
                       {plan?.reasonForSelection && (
                         <div className="rounded-md bg-blue-50 p-2 text-xs text-blue-900">
                           <strong>선택 이유:</strong> {plan.reasonForSelection}
@@ -324,6 +363,14 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                         <div className="rounded-md bg-emerald-50 p-2 text-xs text-emerald-900">
                           <strong>참석 후기:</strong> {plan.reflection}
                           {plan.rating ? <span className="ml-2">★ {plan.rating}/5</span> : null}
+                        </div>
+                      )}
+                      {plan?.personalNotes && (
+                        <div className="rounded-md border border-amber-200 bg-amber-50/60 p-2 text-xs text-amber-900">
+                          <div className="mb-0.5 flex items-center gap-1 font-semibold">
+                            <NotebookPen className="h-3 w-3" /> 내 노트 (비공개)
+                          </div>
+                          <p className="whitespace-pre-wrap">{plan.personalNotes}</p>
                         </div>
                       )}
 
@@ -342,6 +389,16 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                           {plan && plan.status === "attended" && (
                             <Button size="sm" variant="outline" disabled={busy} onClick={() => markAttended(plan)}>
                               <MessageSquare className="mr-1 h-3 w-3" /> 후기 수정
+                            </Button>
+                          )}
+                          {plan && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={busy}
+                              onClick={() => setNotesDialog({ plan, notes: plan.personalNotes ?? "" })}
+                            >
+                              <NotebookPen className="mr-1 h-3 w-3" /> {plan.personalNotes ? "노트 수정" : "노트 작성"}
                             </Button>
                           )}
                           {plan && (
@@ -398,6 +455,38 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
             </Button>
             <Button onClick={submitSelection} disabled={busy}>
               {busy ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : null}추가
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!notesDialog} onOpenChange={(o) => !o && setNotesDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>세션 노트 (비공개)</DialogTitle>
+          </DialogHeader>
+          {notesDialog && (
+            <div className="space-y-3">
+              <div className="rounded-md border bg-muted/30 p-3 text-sm">
+                <div className="font-semibold">{notesDialog.plan.sessionTitle}</div>
+                <div className="text-xs text-muted-foreground">
+                  {notesDialog.plan.sessionDate} · {notesDialog.plan.sessionStartTime} – {notesDialog.plan.sessionEndTime}
+                </div>
+              </div>
+              <Textarea
+                rows={10}
+                value={notesDialog.notes}
+                onChange={(e) => setNotesDialog({ ...notesDialog, notes: e.target.value })}
+                placeholder="청취하면서 적은 메모, 인용, 추후 확인할 키워드 등 (본인만 볼 수 있어요)"
+              />
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNotesDialog(null)} disabled={busy}>
+              취소
+            </Button>
+            <Button onClick={submitNotes} disabled={busy}>
+              {busy ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : null}저장
             </Button>
           </DialogFooter>
         </DialogContent>
