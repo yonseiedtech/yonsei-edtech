@@ -10,7 +10,7 @@ import {
 import { ChevronLeft, ChevronRight, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CardArtFit } from "./CardArtFit";
-import { exportCardToPng } from "./download";
+import { exportCardToPng, exportCardsToZip } from "./download";
 import type { CardSpec } from "./types";
 
 interface CardSliderProps {
@@ -84,12 +84,16 @@ export default function CardSlider({ cards, seriesId }: CardSliderProps) {
   async function downloadAll() {
     setBulkBusy(true);
     try {
-      for (const card of cards) {
-        const el = refs.current[card.id];
-        if (!el) continue;
-        await exportCardToPng(el, `${seriesId}-${card.id}.png`);
-        await new Promise((r) => setTimeout(r, 250));
-      }
+      const entries = cards
+        .map((card, i) => {
+          const el = refs.current[card.id];
+          if (!el) return null;
+          const seq = String(i + 1).padStart(2, "0");
+          return { el, filename: `${seriesId}-${seq}-${card.id}.png` };
+        })
+        .filter((x): x is { el: HTMLDivElement; filename: string } => x !== null);
+      if (entries.length === 0) return;
+      await exportCardsToZip(entries, `${seriesId}.zip`);
     } finally {
       setBulkBusy(false);
     }
@@ -187,7 +191,7 @@ export default function CardSlider({ cards, seriesId }: CardSliderProps) {
           </Button>
           <Button size="sm" onClick={downloadAll} disabled={bulkBusy || !!busy}>
             {bulkBusy ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Download className="mr-1 h-3 w-3" />}
-            전체 ({total}장)
+            전체 ZIP ({total}장)
           </Button>
         </div>
       </div>
