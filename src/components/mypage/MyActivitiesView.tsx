@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { Calendar, X, FileText, Award, ChevronRight, FolderKanban, BookOpen, Globe, Eye, ClipboardList, Mic } from "lucide-react";
 import { useMyInterviewResponses } from "@/features/board/interview-store";
 import MyInterviewAnswersDialog from "@/features/board/MyInterviewAnswersDialog";
+import MyConferenceSessions from "@/features/conference/MyConferenceSessions";
 import EmptyState from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/utils";
 import { formatSemester } from "@/lib/semester";
@@ -24,6 +25,7 @@ import { toast } from "sonner";
 
 const TABS = [
   { key: "activities", label: "학술활동", icon: BookOpen },
+  { key: "conferences", label: "학회 참여", icon: Globe },
   { key: "certificates", label: "수료증", icon: Award },
   { key: "posts", label: "내 글", icon: FileText },
   { key: "interviews", label: "인터뷰", icon: Mic },
@@ -384,6 +386,8 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
           )}
 
           {activeTab === "posts" && <MyPostList posts={myPosts} />}
+
+          {activeTab === "conferences" && <MyConferenceSessions userId={userId} />}
 
           {viewingAnswerOf && viewingAnswerOf.post.interview && (
             <MyInterviewAnswersDialog

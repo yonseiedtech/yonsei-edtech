@@ -6,20 +6,29 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import { useAuth } from "@/features/auth/useAuth";
 import { activitiesApi } from "@/lib/bkend";
 import ConferenceProgramEditor from "@/features/conference/ConferenceProgramEditor";
-import type { Activity } from "@/types";
+import ConferenceProgramStats from "@/features/conference/ConferenceProgramStats";
+import { conferenceProgramsApi } from "@/lib/bkend";
+import type { Activity, ConferenceProgram } from "@/types";
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user, isLoading } = useAuth();
   const [activity, setActivity] = useState<Activity | null>(null);
+  const [program, setProgram] = useState<ConferenceProgram | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await activitiesApi.get(id);
-        if (!cancelled) setActivity(res as Activity);
+        const [activityRes, progRes] = await Promise.all([
+          activitiesApi.get(id),
+          conferenceProgramsApi.listByActivity(id),
+        ]);
+        if (!cancelled) {
+          setActivity(activityRes as Activity);
+          setProgram(progRes?.data?.[0] ?? null);
+        }
       } catch (e) {
         if (!cancelled) setLoadError(e instanceof Error ? e.message : "활동 정보를 불러오지 못했습니다.");
       }
@@ -68,6 +77,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         activityTitle={activity?.title ?? ""}
         currentUserId={user.id}
       />
+      {program && <ConferenceProgramStats programId={program.id} />}
     </div>
   );
 }
