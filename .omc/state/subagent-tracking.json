@@ -936,10 +936,37 @@
       "started_at": "2026-04-27T02:27:38.818Z",
       "parent_mode": "none",
       "status": "running"
+    },
+    {
+      "agent_id": "af46c425e56aae511",
+      "agent_type": "Explore",
+      "started_at": "2026-04-28T07:52:03.804Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-28T07:55:26.628Z",
+      "duration_ms": 202824
+    },
+    {
+      "agent_id": "a0144fa0873103a30",
+      "agent_type": "Explore",
+      "started_at": "2026-04-28T08:46:09.692Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-28T08:47:40.024Z",
+      "duration_ms": 90332
+    },
+    {
+      "agent_id": "af01652f625f3f3af",
+      "agent_type": "claude-code-guide",
+      "started_at": "2026-04-28T11:55:07.459Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-28T11:55:37.710Z",
+      "duration_ms": 30251
     }
   ],
-  "total_spawned": 105,
-  "total_completed": 101,
+  "total_spawned": 108,
+  "total_completed": 104,
   "total_failed": 0,
-  "last_updated": "2026-04-27T06:39:27.366Z"
+  "last_updated": "2026-04-28T17:48:04.672Z"
 }

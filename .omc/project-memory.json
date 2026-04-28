@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1777211068256,
+  "lastScanned": 1777345908766,
   "projectRoot": "C:\\work\\yonsei-edtech",
   "techStack": {
     "languages": [
@@ -83,14 +83,14 @@
       "path": "${APPDATA}",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1777211067995,
+      "lastAccessed": 1777345908522,
       "keyFiles": []
     },
     "agent-server": {
       "path": "agent-server",
       "purpose": null,
       "fileCount": 8,
-      "lastAccessed": 1777211067997,
+      "lastAccessed": 1777345908571,
       "keyFiles": [
         "config.py",
         "main.py",
@@ -103,7 +103,7 @@
       "path": "docs",
       "purpose": "Documentation",
       "fileCount": 9,
-      "lastAccessed": 1777211068000,
+      "lastAccessed": 1777345908574,
       "keyFiles": [
         "AUTOMATION_PROGRESS.md",
         "PRD-연세교육공학회-고도화-v1.md",
@@ -116,7 +116,7 @@
       "path": "public",
       "purpose": "Public files",
       "fileCount": 13,
-      "lastAccessed": 1777211068052,
+      "lastAccessed": 1777345908577,
       "keyFiles": [
         "cert-emblem.png",
         "cert-seal.jpeg",
@@ -129,7 +129,7 @@
       "path": "ref",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1777211068055,
+      "lastAccessed": 1777345908579,
       "keyFiles": [
         "관리자모드 화면.png"
       ]
@@ -137,28 +137,28 @@
     "scripts": {
       "path": "scripts",
       "purpose": "Build/utility scripts",
-      "fileCount": 14,
-      "lastAccessed": 1777211068057,
+      "fileCount": 15,
+      "lastAccessed": 1777345908582,
       "keyFiles": [
+        "capture-card-news-screenshots.mjs",
         "check-alumni-theses-count.mjs",
         "check-interview-data.mjs",
         "check-interview-post.mjs",
-        "check-student-2026431009.mjs",
-        "create-admin.mjs"
+        "check-student-2026431009.mjs"
       ]
     },
     "src": {
       "path": "src",
       "purpose": "Source code",
       "fileCount": 0,
-      "lastAccessed": 1777211068059,
+      "lastAccessed": 1777345908585,
       "keyFiles": []
     },
     "agent-server\\data": {
       "path": "agent-server\\data",
       "purpose": "Data files",
       "fileCount": 2,
-      "lastAccessed": 1777211068064,
+      "lastAccessed": 1777345908591,
       "keyFiles": [
         "agents.json",
         "tasks.json"
@@ -168,7 +168,7 @@
       "path": "src\\app",
       "purpose": "Application code",
       "fileCount": 10,
-      "lastAccessed": 1777211068072,
+      "lastAccessed": 1777345908602,
       "keyFiles": [
         "error.tsx",
         "globals.css",
@@ -179,7 +179,7 @@
       "path": "src\\components",
       "purpose": "UI components",
       "fileCount": 2,
-      "lastAccessed": 1777211068074,
+      "lastAccessed": 1777345908604,
       "keyFiles": [
         "ShareButton.tsx",
         "ThemeToggle.tsx"
@@ -188,8 +188,8 @@
     "src\\lib": {
       "path": "src\\lib",
       "purpose": "Library code",
-      "fileCount": 34,
-      "lastAccessed": 1777211068077,
+      "fileCount": 35,
+      "lastAccessed": 1777345908607,
       "keyFiles": [
         "ai-client.ts",
         "ai-prompts.ts",
@@ -200,7 +200,7 @@
       "path": "src\\types",
       "purpose": "Type definitions",
       "fileCount": 1,
-      "lastAccessed": 1777211068079,
+      "lastAccessed": 1777345908610,
       "keyFiles": [
         "index.ts"
       ]
@@ -208,303 +208,303 @@
   },
   "hotPaths": [
     {
-      "path": "src\\features\\dashboard\\DailyClassTimelineWidget.tsx",
-      "accessCount": 70,
-      "lastAccessed": 1777271752607,
+      "path": "src\\lib\\bkend.ts",
+      "accessCount": 28,
+      "lastAccessed": 1777398047470,
       "type": "file"
     },
     {
-      "path": "src\\features\\dashboard\\MyTodosWidget.tsx",
-      "accessCount": 50,
-      "lastAccessed": 1777257711140,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\courses\\[id]\\schedule\\page.tsx",
-      "accessCount": 50,
-      "lastAccessed": 1777271551542,
+      "path": "src\\app\\console\\card-news\\page.tsx",
+      "accessCount": 24,
+      "lastAccessed": 1777390696552,
       "type": "file"
     },
     {
       "path": "src\\types\\index.ts",
-      "accessCount": 37,
-      "lastAccessed": 1777269425347,
-      "type": "directory"
+      "accessCount": 15,
+      "lastAccessed": 1777398074499,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\seminar-admin\\CertificateGenerator.tsx",
+      "accessCount": 11,
+      "lastAccessed": 1777366015212,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\card-news\\CardNewsEditor.tsx",
+      "accessCount": 11,
+      "lastAccessed": 1777390678202,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\console\\card-news\\[seriesId]\\page.tsx",
+      "accessCount": 10,
+      "lastAccessed": 1777363849202,
+      "type": "file"
+    },
+    {
+      "path": "firestore.rules",
+      "accessCount": 10,
+      "lastAccessed": 1777392268505,
+      "type": "file"
     },
     {
       "path": "src",
-      "accessCount": 29,
-      "lastAccessed": 1777269320313,
-      "type": "directory"
-    },
-    {
-      "path": "src\\lib\\bkend.ts",
-      "accessCount": 28,
-      "lastAccessed": 1777262498741,
+      "accessCount": 9,
+      "lastAccessed": 1777392774806,
       "type": "directory"
     },
     {
       "path": "src\\features\\activities\\ActivityDetail.tsx",
-      "accessCount": 22,
-      "lastAccessed": 1777254419727,
+      "accessCount": 9,
+      "lastAccessed": 1777395791755,
+      "type": "directory"
+    },
+    {
+      "path": "src\\features\\card-news\\CardSlider.tsx",
+      "accessCount": 7,
+      "lastAccessed": 1777362847459,
       "type": "file"
     },
     {
-      "path": "src\\features\\dashboard\\TodayTodosPopup.tsx",
-      "accessCount": 11,
-      "lastAccessed": 1777256883675,
-      "type": "file"
+      "path": "",
+      "accessCount": 7,
+      "lastAccessed": 1777397962941,
+      "type": "directory"
     },
     {
-      "path": "src\\features\\board\\PostForm.tsx",
-      "accessCount": 8,
-      "lastAccessed": 1777221336508,
-      "type": "file"
-    },
-    {
-      "path": "src\\components\\mypage\\MyPageView.tsx",
+      "path": "src\\features\\card-news\\series.ts",
       "accessCount": 6,
-      "lastAccessed": 1777249187041,
+      "lastAccessed": 1777389174132,
       "type": "file"
     },
     {
-      "path": "src\\app\\board\\[id]\\page.tsx",
+      "path": "src\\features\\card-news\\download.ts",
       "accessCount": 5,
-      "lastAccessed": 1777221404221,
+      "lastAccessed": 1777362858093,
       "type": "file"
     },
     {
-      "path": "src\\features\\research\\ResearchPaperList.tsx",
-      "accessCount": 5,
-      "lastAccessed": 1777249416224,
-      "type": "file"
-    },
-    {
-      "path": "src\\lib",
-      "accessCount": 5,
-      "lastAccessed": 1777271630240,
-      "type": "directory"
-    },
-    {
-      "path": "src\\components\\layout\\Header.tsx",
+      "path": "src\\components\\layout\\BottomNav.tsx",
       "accessCount": 4,
-      "lastAccessed": 1777221138030,
+      "lastAccessed": 1777353731715,
       "type": "file"
     },
     {
-      "path": "src\\app\\console\\research\\page.tsx",
+      "path": "src\\components\\layout\\Footer.tsx",
       "accessCount": 4,
-      "lastAccessed": 1777240623253,
+      "lastAccessed": 1777362000383,
       "type": "file"
     },
     {
-      "path": "src\\features\\research\\study-timer\\useStudySessions.ts",
+      "path": "src\\features\\card-news\\types.ts",
       "accessCount": 4,
-      "lastAccessed": 1777249154601,
+      "lastAccessed": 1777381196921,
       "type": "file"
     },
     {
-      "path": "src\\app\\directory\\page.tsx",
+      "path": "src\\features\\card-news\\loader.ts",
       "accessCount": 4,
-      "lastAccessed": 1777249235245,
+      "lastAccessed": 1777389174379,
       "type": "file"
     },
     {
-      "path": "src\\lib\\post-permissions.ts",
+      "path": "src\\features\\card-news\\art.tsx",
       "accessCount": 3,
-      "lastAccessed": 1777221041760,
+      "lastAccessed": 1777366148853,
       "type": "file"
     },
     {
-      "path": "src\\types",
-      "accessCount": 3,
-      "lastAccessed": 1777246399489,
-      "type": "directory"
-    },
-    {
-      "path": "src\\app\\dashboard\\page.tsx",
-      "accessCount": 3,
-      "lastAccessed": 1777246621213,
-      "type": "file"
-    },
-    {
-      "path": "src\\lib\\dday.ts",
-      "accessCount": 3,
-      "lastAccessed": 1777249076487,
-      "type": "file"
-    },
-    {
-      "path": "src\\features\\insights\\computeMemberMetrics.ts",
+      "path": "src\\features\\card-news\\CardArtFit.tsx",
       "accessCount": 2,
-      "lastAccessed": 1777217160318,
+      "lastAccessed": 1777363558142,
       "type": "file"
     },
     {
-      "path": "src\\features\\insights\\MemberReportView.tsx",
+      "path": "src\\app\\steppingstone\\page.tsx",
       "accessCount": 2,
-      "lastAccessed": 1777217274682,
+      "lastAccessed": 1777366862295,
       "type": "file"
     },
     {
-      "path": "src\\features\\admin\\settings\\ActivityList.tsx",
+      "path": "src\\app\\console\\layout.tsx",
       "accessCount": 2,
-      "lastAccessed": 1777217856756,
-      "type": "file"
-    },
-    {
-      "path": "src\\components\\mypage\\MyResearchView.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1777220600560,
-      "type": "directory"
-    },
-    {
-      "path": "src\\app\\board\\resources\\page.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1777221048598,
-      "type": "file"
-    },
-    {
-      "path": "src\\features\\research\\useResearchPapers.ts",
-      "accessCount": 2,
-      "lastAccessed": 1777221150003,
-      "type": "directory"
-    },
-    {
-      "path": "src\\app\\console\\members",
-      "accessCount": 2,
-      "lastAccessed": 1777240195584,
-      "type": "directory"
-    },
-    {
-      "path": "vercel.json",
-      "accessCount": 2,
-      "lastAccessed": 1777245052468,
-      "type": "file"
-    },
-    {
-      "path": "src\\lib\\courseSchedule.ts",
-      "accessCount": 2,
-      "lastAccessed": 1777247766477,
-      "type": "directory"
-    },
-    {
-      "path": "src\\features\\seminar-admin\\timeline-utils.ts",
-      "accessCount": 2,
-      "lastAccessed": 1777249111679,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\courses\\[id]\\schedule",
-      "accessCount": 2,
-      "lastAccessed": 1777259547695,
-      "type": "directory"
-    },
-    {
-      "path": "src\\app\\academic-admin\\projects\\page.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1777217813919,
-      "type": "file"
-    },
-    {
-      "path": "src\\features\\board\\CategoryTabs.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1777220693881,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\board\\page.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1777220694091,
-      "type": "file"
-    },
-    {
-      "path": "src\\features\\board\\CategoryBoardPage.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1777220707095,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\board\\paper-review\\page.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1777221087389,
-      "type": "file"
-    },
-    {
-      "path": "src\\features\\board",
-      "accessCount": 1,
-      "lastAccessed": 1777221108485,
-      "type": "directory"
-    },
-    {
-      "path": "src\\features\\board\\LinkedPaperPicker.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1777221253603,
-      "type": "file"
-    },
-    {
-      "path": "src\\features\\board\\LinkedPaperCard.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1777221367620,
-      "type": "file"
-    },
-    {
-      "path": "src\\components\\mypage",
-      "accessCount": 1,
-      "lastAccessed": 1777221421492,
-      "type": "directory"
-    },
-    {
-      "path": "src\\features\\board\\useBoard.ts",
-      "accessCount": 1,
-      "lastAccessed": 1777221571346,
-      "type": "directory"
-    },
-    {
-      "path": "src\\app\\console\\research",
-      "accessCount": 1,
-      "lastAccessed": 1777240280447,
-      "type": "directory"
-    },
-    {
-      "path": "src\\app\\console\\research\\[userId]\\page.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1777240290256,
+      "lastAccessed": 1777366882273,
       "type": "file"
     },
     {
       "path": "src\\app\\console\\members\\page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1777366898014,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\activities\\ActivityPage.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1777366909523,
+      "type": "file"
+    },
+    {
+      "path": "src\\types",
+      "accessCount": 2,
+      "lastAccessed": 1777391373771,
+      "type": "directory"
+    },
+    {
+      "path": "src\\app\\activities\\external\\page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1777391401919,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\activities\\external\\[id]\\page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1777392743889,
+      "type": "file"
+    },
+    {
+      "path": ".tmp\\cardnews-template\\ppt\\media\\image3.png",
       "accessCount": 1,
-      "lastAccessed": 1777244810256,
+      "lastAccessed": 1777346079796,
+      "type": "file"
+    },
+    {
+      "path": ".tmp\\cardnews-template\\ppt\\media\\image2.png",
+      "accessCount": 1,
+      "lastAccessed": 1777346081076,
+      "type": "file"
+    },
+    {
+      "path": ".tmp\\cardnews-template\\ppt\\media\\image4.png",
+      "accessCount": 1,
+      "lastAccessed": 1777346081135,
+      "type": "file"
+    },
+    {
+      "path": ".tmp\\cardnews-template\\ppt\\media\\image5.png",
+      "accessCount": 1,
+      "lastAccessed": 1777346094095,
+      "type": "file"
+    },
+    {
+      "path": ".tmp\\cardnews-template\\docProps\\thumbnail.jpeg",
+      "accessCount": 1,
+      "lastAccessed": 1777346094475,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\ui\\button.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1777348904167,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\layout",
+      "accessCount": 1,
+      "lastAccessed": 1777353352976,
+      "type": "directory"
+    },
+    {
+      "path": "public\\yonsei-emblem.svg",
+      "accessCount": 1,
+      "lastAccessed": 1777353411965,
+      "type": "file"
+    },
+    {
+      "path": "public\\card-news\\brand\\shield.png",
+      "accessCount": 1,
+      "lastAccessed": 1777353681514,
+      "type": "file"
+    },
+    {
+      "path": "public\\card-news\\brand\\logo-society.png",
+      "accessCount": 1,
+      "lastAccessed": 1777353707770,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\console\\academic\\certificates\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1777362833550,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\board\\PostForm.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1777362836496,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\admin\\certificates\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1777362849084,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\upload.ts",
+      "accessCount": 1,
+      "lastAccessed": 1777362875851,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\board\\write\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1777362886106,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\seminar-admin",
+      "accessCount": 1,
+      "lastAccessed": 1777362890377,
+      "type": "directory"
+    },
+    {
+      "path": "src\\components\\admin\\ConsolePageHeader.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1777363517091,
+      "type": "directory"
+    },
+    {
+      "path": "src\\app\\console\\card-news\\[seriesId]\\edit\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1777363546478,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\console",
+      "accessCount": 1,
+      "lastAccessed": 1777366711169,
+      "type": "directory"
+    },
+    {
+      "path": "src\\app\\console\\steppingstone\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1777366748741,
       "type": "file"
     },
     {
       "path": "src\\app\\admin\\members\\page.tsx",
       "accessCount": 1,
-      "lastAccessed": 1777244828167,
+      "lastAccessed": 1777366791865,
       "type": "file"
     },
     {
-      "path": "src\\features\\admin\\AdminMemberTab.tsx",
+      "path": "src\\app\\steppingstone\\thesis-defense\\page.tsx",
       "accessCount": 1,
-      "lastAccessed": 1777244865336,
+      "lastAccessed": 1777366792065,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\activities\\external",
+      "accessCount": 1,
+      "lastAccessed": 1777367124446,
       "type": "directory"
     },
     {
-      "path": "src\\app\\api\\cron\\seminar-reminder\\route.ts",
+      "path": "src\\app\\api\\activities",
       "accessCount": 1,
-      "lastAccessed": 1777244886735,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\api\\cron\\seminar-review-request\\route.ts",
-      "accessCount": 1,
-      "lastAccessed": 1777245023707,
-      "type": "file"
-    },
-    {
-      "path": "src\\features\\dashboard",
-      "accessCount": 1,
-      "lastAccessed": 1777247810411,
+      "lastAccessed": 1777367125271,
       "type": "directory"
     }
   ],

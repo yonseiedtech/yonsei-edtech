@@ -6,6 +6,7 @@ import {
   Calendar,
   Check,
   Clock,
+  Download,
   FileText,
   Loader2,
   MapPin,
@@ -257,9 +258,26 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
             )}
           </div>
           {user && (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Badge className="bg-blue-50 text-blue-700">내 일정 {myCount}개</Badge>
               {attendedCount > 0 && <Badge className="bg-emerald-50 text-emerald-700">참석 완료 {attendedCount}개</Badge>}
+              {myCount > 0 && (
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  className="h-7 gap-1 text-xs"
+                  title="내 일정만 모은 PDF 다운로드"
+                >
+                  <a
+                    href={`/api/conference/${program.id}/my-schedule/pdf?userId=${encodeURIComponent(user.id)}${user.name ? `&userName=${encodeURIComponent(user.name)}` : ""}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Download className="h-3 w-3" /> 내 일정 PDF
+                  </a>
+                </Button>
+              )}
             </div>
           )}
         </CardContent>
