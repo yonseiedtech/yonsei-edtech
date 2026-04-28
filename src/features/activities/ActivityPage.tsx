@@ -23,6 +23,7 @@ import { uploadImageSmart } from "@/lib/storage";
 import EmptyState from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import MemberAutocomplete from "@/components/ui/MemberAutocomplete";
+import MyActivitiesSection from "./MyActivitiesSection";
 
 const RECRUIT_LABELS: Record<string, string> = { recruiting: "모집중", closed: "모집마감", in_progress: "진행중", completed: "완료" };
 const RECRUIT_COLORS: Record<string, string> = { recruiting: "bg-green-50 text-green-700", closed: "bg-red-50 text-red-700", in_progress: "bg-amber-50 text-amber-700", completed: "bg-muted text-muted-foreground" };
@@ -403,6 +404,10 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
             <Button size="sm" onClick={openCreate}><Plus size={14} className="mr-1" />{title} 등록</Button>
           ) : undefined}
         />
+
+        {(type === "study" || type === "project") && (
+          <MyActivitiesSection activities={activities} type={type} isLoading={isLoading} />
+        )}
 
         <div className="mt-8">
           <div className="flex flex-wrap items-center justify-between gap-3">

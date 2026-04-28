@@ -547,6 +547,16 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
 
           {activeTab === "progress" && (
             <div className="space-y-4">
+              {(type === "study" || type === "project") && (
+                <div className="flex justify-end">
+                  <Link
+                    href={`/activities/${type === "study" ? "studies" : "projects"}/${activityId}/weeks`}
+                    className="inline-flex items-center gap-1 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium hover:border-primary hover:text-primary"
+                  >
+                    <ListChecks size={12} /> 주차 페이지 전용 화면 열기
+                  </Link>
+                </div>
+              )}
               {/* 진행률 바 */}
               {progressList.length > 0 && (
                 <div className="rounded-xl border bg-white p-4">

@@ -1,7 +1,7 @@
 {
   "tool_name": "Glob",
-  "tool_input_preview": "{\"pattern\":\"src/app/newsletter/**/pdf/route.ts\",\"path\":\"C:\\\\work\\\\yonsei-edtech\"}",
+  "tool_input_preview": "{\"pattern\":\"src/app/activities/**/page.tsx\"}",
   "error": "Ripgrep search timed out after 20 seconds. The search may have matched files but did not complete in time. Try searching a more specific path or pattern.",
-  "timestamp": "2026-04-28T17:38:56.521Z",
+  "timestamp": "2026-04-28T22:49:43.487Z",
   "retry_count": 1
 }

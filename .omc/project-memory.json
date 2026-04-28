@@ -209,8 +209,8 @@
   "hotPaths": [
     {
       "path": "src\\lib\\bkend.ts",
-      "accessCount": 28,
-      "lastAccessed": 1777398047470,
+      "accessCount": 29,
+      "lastAccessed": 1777400717150,
       "type": "file"
     },
     {
@@ -221,9 +221,15 @@
     },
     {
       "path": "src\\types\\index.ts",
-      "accessCount": 15,
-      "lastAccessed": 1777398074499,
+      "accessCount": 16,
+      "lastAccessed": 1777401014435,
       "type": "file"
+    },
+    {
+      "path": "src\\features\\activities\\ActivityDetail.tsx",
+      "accessCount": 12,
+      "lastAccessed": 1777417033469,
+      "type": "directory"
     },
     {
       "path": "src\\features\\seminar-admin\\CertificateGenerator.tsx",
@@ -238,27 +244,21 @@
       "type": "file"
     },
     {
+      "path": "firestore.rules",
+      "accessCount": 11,
+      "lastAccessed": 1777416763539,
+      "type": "file"
+    },
+    {
       "path": "src\\app\\console\\card-news\\[seriesId]\\page.tsx",
       "accessCount": 10,
       "lastAccessed": 1777363849202,
       "type": "file"
     },
     {
-      "path": "firestore.rules",
-      "accessCount": 10,
-      "lastAccessed": 1777392268505,
-      "type": "file"
-    },
-    {
       "path": "src",
-      "accessCount": 9,
-      "lastAccessed": 1777392774806,
-      "type": "directory"
-    },
-    {
-      "path": "src\\features\\activities\\ActivityDetail.tsx",
-      "accessCount": 9,
-      "lastAccessed": 1777395791755,
+      "accessCount": 10,
+      "lastAccessed": 1777416681110,
       "type": "directory"
     },
     {
@@ -283,6 +283,12 @@
       "path": "src\\features\\card-news\\download.ts",
       "accessCount": 5,
       "lastAccessed": 1777362858093,
+      "type": "file"
+    },
+    {
+      "path": "src\\features\\activities\\ActivityPage.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1777417001624,
       "type": "file"
     },
     {
@@ -340,12 +346,6 @@
       "type": "file"
     },
     {
-      "path": "src\\features\\activities\\ActivityPage.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1777366909523,
-      "type": "file"
-    },
-    {
       "path": "src\\types",
       "accessCount": 2,
       "lastAccessed": 1777391373771,
@@ -361,6 +361,12 @@
       "path": "src\\app\\activities\\external\\[id]\\page.tsx",
       "accessCount": 2,
       "lastAccessed": 1777392743889,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\ui\\button.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1777398583266,
       "type": "file"
     },
     {
@@ -391,12 +397,6 @@
       "path": ".tmp\\cardnews-template\\docProps\\thumbnail.jpeg",
       "accessCount": 1,
       "lastAccessed": 1777346094475,
-      "type": "file"
-    },
-    {
-      "path": "src\\components\\ui\\button.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1777348904167,
       "type": "file"
     },
     {
