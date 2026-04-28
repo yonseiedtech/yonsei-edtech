@@ -65,6 +65,7 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
   const [loading, setLoading] = useState(true);
   const [program, setProgram] = useState<ConferenceProgram | null>(null);
   const [plans, setPlans] = useState<UserSessionPlan[]>([]);
+  const [allPlans, setAllPlans] = useState<UserSessionPlan[]>([]);
   const [activeDayIdx, setActiveDayIdx] = useState(0);
   const [reasonDialog, setReasonDialog] = useState<{ session: ConferenceSession; reason: string } | null>(null);
   const [reflectionDialog, setReflectionDialog] = useState<{ plan: UserSessionPlan; reflection: string; rating: number } | null>(null);
@@ -79,9 +80,20 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
         const res = await conferenceProgramsApi.listByActivity(activityId);
         const first = res?.data?.[0] ?? null;
         if (!cancelled) setProgram(first);
-        if (first && user) {
-          const userPlansRes = await userSessionPlansApi.listByUserAndProgram(user.id, first.id);
-          if (!cancelled) setPlans(userPlansRes?.data ?? []);
+        if (first) {
+          const tasks: Promise<unknown>[] = [
+            userSessionPlansApi.listByProgram(first.id).then((r) => {
+              if (!cancelled) setAllPlans(r?.data ?? []);
+            }),
+          ];
+          if (user) {
+            tasks.push(
+              userSessionPlansApi.listByUserAndProgram(user.id, first.id).then((r) => {
+                if (!cancelled) setPlans(r?.data ?? []);
+              }),
+            );
+          }
+          await Promise.all(tasks);
         }
       } catch (e) {
         console.error("[ConferenceProgramView] load failed", e);
@@ -99,6 +111,17 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
     for (const p of plans) m.set(p.sessionId, p);
     return m;
   }, [plans]);
+
+  const companionsBySessionId = useMemo(() => {
+    const m = new Map<string, UserSessionPlan[]>();
+    for (const p of allPlans) {
+      if (user && p.userId === user.id) continue;
+      const cur = m.get(p.sessionId) ?? [];
+      cur.push(p);
+      m.set(p.sessionId, cur);
+    }
+    return m;
+  }, [allPlans, user]);
 
   async function selectSession(session: ConferenceSession) {
     if (!user || !program) return;
@@ -322,6 +345,7 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
               .sort((a, b) => (a.startTime > b.startTime ? 1 : -1))
               .map((s) => {
                 const plan = planBySessionId.get(s.id);
+                const companions = companionsBySessionId.get(s.id) ?? [];
                 return (
                   <Card key={s.id} className={plan ? "border-blue-300 bg-blue-50/30" : ""}>
                     <CardContent className="space-y-2 p-4">
@@ -342,6 +366,15 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                         )}
                         {plan && (
                           <Badge className={`${STATUS_COLORS[plan.status]} text-xs`}>{STATUS_LABELS[plan.status]}</Badge>
+                        )}
+                        {companions.length > 0 && (
+                          <Badge
+                            variant="secondary"
+                            className="bg-purple-50 text-xs text-purple-700"
+                            title={companions.map((c) => c.userName ?? "회원").join(", ")}
+                          >
+                            함께 {companions.length}명
+                          </Badge>
                         )}
                       </div>
                       <h3 className="text-base font-semibold leading-snug">{s.title}</h3>
@@ -374,6 +407,26 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                         </div>
                       )}
 
+                      {plan && companions.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1 rounded-md border border-purple-100 bg-purple-50/50 p-2 text-xs text-purple-900">
+                          <UserIcon className="h-3 w-3" />
+                          <span className="font-semibold">함께 참석:</span>
+                          {companions.slice(0, 6).map((c) => (
+                            <Badge
+                              key={c.id}
+                              variant="secondary"
+                              className="bg-white text-[11px] text-purple-800"
+                            >
+                              {c.userName ?? "회원"}
+                            </Badge>
+                          ))}
+                          {companions.length > 6 && (
+                            <span className="text-[11px] text-purple-700">
+                              +{companions.length - 6}명
+                            </span>
+                          )}
+                        </div>
+                      )}
                       {plan?.reasonForSelection && (
                         <div className="rounded-md bg-blue-50 p-2 text-xs text-blue-900">
                           <strong>선택 이유:</strong> {plan.reasonForSelection}
