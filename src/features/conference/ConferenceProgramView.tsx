@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  AlertTriangle,
   Calendar,
   Check,
   Clock,
@@ -124,6 +125,38 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
     }
     return m;
   }, [allPlans, user]);
+
+  /** 같은 날짜에 시간이 겹치는 본인 일정 sessionId 집합 */
+  const conflictsBySessionId = useMemo(() => {
+    const map = new Map<string, UserSessionPlan[]>();
+    const list = plans.filter((p) => p.status !== "skipped" && p.sessionDate && p.sessionStartTime && p.sessionEndTime);
+    for (let i = 0; i < list.length; i += 1) {
+      for (let j = i + 1; j < list.length; j += 1) {
+        const a = list[i];
+        const b = list[j];
+        if (a.sessionDate !== b.sessionDate) continue;
+        const aStart = a.sessionStartTime!;
+        const aEnd = a.sessionEndTime!;
+        const bStart = b.sessionStartTime!;
+        const bEnd = b.sessionEndTime!;
+        if (aStart < bEnd && bStart < aEnd) {
+          const aArr = map.get(a.sessionId) ?? [];
+          aArr.push(b);
+          map.set(a.sessionId, aArr);
+          const bArr = map.get(b.sessionId) ?? [];
+          bArr.push(a);
+          map.set(b.sessionId, bArr);
+        }
+      }
+    }
+    return map;
+  }, [plans]);
+
+  const conflictPairCount = useMemo(() => {
+    let total = 0;
+    for (const arr of conflictsBySessionId.values()) total += arr.length;
+    return Math.floor(total / 2);
+  }, [conflictsBySessionId]);
 
   async function selectSession(session: ConferenceSession) {
     if (!user || !program) return;
@@ -310,6 +343,16 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
             <div className="flex flex-wrap items-center gap-2">
               <Badge className="bg-blue-50 text-blue-700">내 일정 {myCount}개</Badge>
               {attendedCount > 0 && <Badge className="bg-emerald-50 text-emerald-700">참석 완료 {attendedCount}개</Badge>}
+              {conflictPairCount > 0 && (
+                <Badge
+                  variant="outline"
+                  className="border-rose-300 bg-rose-50 text-rose-700"
+                  title="같은 시간대에 여러 세션을 선택했습니다"
+                >
+                  <AlertTriangle className="mr-1 h-3 w-3" />
+                  시간 충돌 {conflictPairCount}건
+                </Badge>
+              )}
               {myCount > 0 && (
                 <a
                   href={`/api/conference/${program.id}/my-schedule/pdf?userId=${encodeURIComponent(user.id)}${user.name ? `&userName=${encodeURIComponent(user.name)}` : ""}`}
@@ -364,6 +407,7 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
               .map((s) => {
                 const plan = planBySessionId.get(s.id);
                 const companions = companionsBySessionId.get(s.id) ?? [];
+                const conflicts = conflictsBySessionId.get(s.id) ?? [];
                 return (
                   <Card key={s.id} className={plan ? "border-blue-300 bg-blue-50/30" : ""}>
                     <CardContent className="space-y-2 p-4">
@@ -392,6 +436,16 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                             title={companions.map((c) => c.userName ?? "회원").join(", ")}
                           >
                             함께 {companions.length}명
+                          </Badge>
+                        )}
+                        {conflicts.length > 0 && (
+                          <Badge
+                            variant="outline"
+                            className="border-rose-300 bg-rose-50 text-xs text-rose-700"
+                            title={`시간이 겹치는 일정: ${conflicts.map((c) => `${c.sessionStartTime}~${c.sessionEndTime} ${c.sessionTitle ?? ""}`).join(", ")}`}
+                          >
+                            <AlertTriangle className="mr-1 h-3 w-3" />
+                            시간 충돌 {conflicts.length}
                           </Badge>
                         )}
                       </div>
