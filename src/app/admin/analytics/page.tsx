@@ -9,7 +9,7 @@ import {
 } from "recharts";
 import {
   BarChart3, Users, FileText, CalendarDays, TrendingUp,
-  Star, Award, Download, Eye, UserCheck,
+  Star, Award, Download, Eye, UserCheck, Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { exportCSV } from "@/lib/export-csv";
@@ -17,12 +17,16 @@ import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { todayYmdKst } from "@/lib/dday";
+import { pathGroupLabel } from "@/lib/visit-tracker";
 import type { User, Post, Seminar, SeminarAttendee, SeminarReview, Certificate } from "@/types";
 
 interface DailyVisitDoc {
   date?: string;
   visits?: number;
   uniqueVisitors?: string[];
+  pageViews?: number;
+  hourBuckets?: Record<string, number>;
+  pathCounts?: Record<string, number>;
 }
 
 // ── helpers ──
@@ -245,6 +249,20 @@ export default function AnalyticsPage() {
     };
   }, [members, seminars, posts, attendees, reviews, certs]);
 
+  const visitInsights = useMemo(() => {
+    const buckets = todayVisits?.hourBuckets ?? {};
+    const hourly = Array.from({ length: 24 }, (_, i) => {
+      const k = String(i).padStart(2, "0");
+      return { hour: `${i}시`, count: Number(buckets[k] ?? 0) };
+    });
+    const counts = todayVisits?.pathCounts ?? {};
+    const paths = Object.entries(counts)
+      .map(([key, value]) => ({ name: pathGroupLabel(key), count: Number(value ?? 0) }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+    return { hourly, paths };
+  }, [todayVisits]);
+
   function exportMembers() {
     exportCSV("회원목록", ["이름", "아이디", "이메일", "학번", "역할", "기수", "분야", "가입일"],
       members.map((m) => [m.name, m.username, m.email, m.studentId, m.role, m.generation, m.field, m.createdAt?.split("T")[0]]),
@@ -311,6 +329,46 @@ export default function AnalyticsPage() {
           sub="중복 제외"
           color="bg-indigo-50 text-indigo-600"
         />
+        <StatCard
+          icon={Activity}
+          label="오늘 페이지뷰"
+          value={todayVisits?.pageViews ?? 0}
+          sub="전체 화면 이동 합계"
+          color="bg-rose-50 text-rose-600"
+        />
+      </div>
+
+      {/* 방문 분석 */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <ChartCard title={`시간대별 방문 분포 (오늘 KST · ${todayKey})`}>
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={visitInsights.hourly}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="hour" tick={{ fontSize: 10 }} interval={1} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+              <Tooltip />
+              <Bar dataKey="count" name="페이지뷰" fill="#06b6d4" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="자주 보는 페이지 그룹 (오늘 Top 10)">
+          {visitInsights.paths.length === 0 ? (
+            <div className="flex h-[240px] items-center justify-center text-sm text-muted-foreground">
+              아직 집계된 페이지뷰가 없습니다.
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={visitInsights.paths} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
+                <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} />
+                <Tooltip />
+                <Bar dataKey="count" name="페이지뷰" fill="#ec4899" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </ChartCard>
       </div>
 
       {/* Charts row 1 */}
