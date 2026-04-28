@@ -23,11 +23,11 @@ export default function Footer() {
           <div>
             <div className="flex items-center gap-2">
               <Image
-                src="/yonsei-emblem.svg"
+                src="/card-news/brand/shield.png"
                 alt="연세대학교 엠블럼"
-                width={32}
-                height={32}
-                className="h-8 w-8 brightness-0 invert"
+                width={40}
+                height={40}
+                className="h-10 w-10 brightness-0 invert"
               />
               <span className="text-lg font-bold text-white">연세교육공학회</span>
             </div>

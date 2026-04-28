@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, CalendarDays, BookOpen, MessagesSquare, User } from "lucide-react";
+import { Home, Microscope, BookOpen, MessagesSquare, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
 
@@ -22,16 +22,16 @@ const ITEMS: NavItem[] = [
     matchPrefixes: ["/dashboard", "/"],
   },
   {
-    href: "/seminars",
-    label: "세미나",
-    icon: CalendarDays,
-    matchPrefixes: ["/seminars", "/calendar"],
+    href: "/research",
+    label: "연구활동",
+    icon: Microscope,
+    matchPrefixes: ["/research"],
   },
   {
     href: "/activities",
     label: "학술활동",
     icon: BookOpen,
-    matchPrefixes: ["/activities", "/research", "/courses"],
+    matchPrefixes: ["/activities", "/seminars", "/calendar", "/courses"],
   },
   {
     href: "/board/free",
