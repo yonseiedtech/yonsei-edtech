@@ -1,21 +1,19 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Calendar, Layers } from "lucide-react";
+import { ArrowLeft, Calendar, Layers, Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import CardSlider from "@/features/card-news/CardSlider";
-import { CARD_NEWS_SERIES, findSeries } from "@/features/card-news/series";
+import { loadSeries } from "@/features/card-news/loader";
 
 interface PageProps {
   params: Promise<{ seriesId: string }>;
 }
 
-export function generateStaticParams() {
-  return CARD_NEWS_SERIES.map((s) => ({ seriesId: s.id }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: PageProps) {
   const { seriesId } = await params;
-  const series = findSeries(seriesId);
+  const series = await loadSeries(seriesId);
   return {
     title: series ? `${series.title} | 카드뉴스` : "카드뉴스",
   };
@@ -31,7 +29,7 @@ function formatDate(iso: string) {
 
 export default async function CardNewsDetailPage({ params }: PageProps) {
   const { seriesId } = await params;
-  const series = findSeries(seriesId);
+  const series = await loadSeries(seriesId);
   if (!series) notFound();
 
   return (
@@ -59,12 +57,23 @@ export default async function CardNewsDetailPage({ params }: PageProps) {
             {series.cards.length}장
           </span>
         </div>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
-          {series.title}
-        </h1>
-        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          {series.description}
-        </p>
+        <div className="mt-2 flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              {series.title}
+            </h1>
+            <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+              {series.description}
+            </p>
+          </div>
+          <Link
+            href={`/console/card-news/${series.id}/edit`}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border bg-background px-3 py-1.5 text-xs font-medium shadow-sm transition hover:bg-muted"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            편집
+          </Link>
+        </div>
       </div>
 
       <CardSlider cards={series.cards} seriesId={series.id} />

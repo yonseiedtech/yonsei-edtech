@@ -604,6 +604,14 @@ service cloud.firestore {
         && getUserRole() in ['president', 'admin', 'sysadmin'];
     }
 
+    // ─── Card News Series (인스타그램 카드뉴스) ───
+    // 운영진이 편집·발행하면 비로그인 방문자도 슬라이더로 볼 수 있어야 함
+    match /card_news_series/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated()
+        && getUserRole() in ['president', 'admin', 'sysadmin'];
+    }
+
     // ─── Host Retrospectives (Track 7 F6: 호스트 회고) ───
     // 작성/수정/삭제: 호스트 본인만
     // 열람: 호스트 본인 + 운영진(published만)

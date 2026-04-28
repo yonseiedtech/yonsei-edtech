@@ -1,14 +1,16 @@
 import Link from "next/link";
-import { ArrowRight, Calendar, Images, Layers } from "lucide-react";
+import { ArrowRight, Calendar, Images, Layers, Pencil, Plus } from "lucide-react";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CardArtFit } from "@/features/card-news/CardArtFit";
-import { CARD_NEWS_SERIES } from "@/features/card-news/series";
+import { loadAllSeries } from "@/features/card-news/loader";
 
 export const metadata = {
   title: "카드뉴스 | 운영콘솔",
 };
+
+export const dynamic = "force-dynamic";
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -19,10 +21,8 @@ function formatDate(iso: string) {
   });
 }
 
-export default function CardNewsListPage() {
-  const series = [...CARD_NEWS_SERIES].sort((a, b) =>
-    b.publishedAt.localeCompare(a.publishedAt),
-  );
+export default async function CardNewsListPage() {
+  const series = await loadAllSeries();
 
   return (
     <div className="space-y-6">
@@ -30,6 +30,15 @@ export default function CardNewsListPage() {
         title="카드뉴스 이력"
         description="발행한 카드뉴스 시리즈 목록입니다. 인스타그램 스타일 슬라이드로 확인하고 PNG로 내려받을 수 있습니다."
         icon={Images}
+        actions={
+          <Link
+            href="/console/card-news/new/edit"
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
+          >
+            <Plus className="h-4 w-4" />
+            새 시리즈
+          </Link>
+        }
       />
 
       {series.length === 0 ? (
@@ -86,13 +95,22 @@ export default function CardNewsListPage() {
                       <Layers className="h-3 w-3" />
                       {s.cards.length}장
                     </span>
-                    <Link
-                      href={`/console/card-news/${s.id}`}
-                      className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
-                    >
-                      슬라이드 보기
-                      <ArrowRight className="h-3 w-3" />
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/console/card-news/${s.id}/edit`}
+                        className="inline-flex items-center gap-1 rounded-lg border bg-background px-3 py-1.5 text-xs font-medium text-foreground shadow-sm transition hover:bg-muted"
+                      >
+                        <Pencil className="h-3 w-3" />
+                        편집
+                      </Link>
+                      <Link
+                        href={`/console/card-news/${s.id}`}
+                        className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
+                      >
+                        슬라이드
+                        <ArrowRight className="h-3 w-3" />
+                      </Link>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

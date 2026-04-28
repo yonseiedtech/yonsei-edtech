@@ -1257,6 +1257,31 @@ export const hostRetrospectivesApi = {
   delete: (id: string) => dataApi.delete("host_retrospectives", id),
 };
 
+// ── Card News Series (인스타그램 스타일 시리즈) ──
+import type { CardNewsSeries } from "@/features/card-news/types";
+
+export const cardNewsApi = {
+  list: () =>
+    dataApi.list<CardNewsSeries>("card_news_series", {
+      sort: "publishedAt:desc",
+      limit: 200,
+    }),
+  get: (id: string) => dataApi.get<CardNewsSeries>("card_news_series", id),
+  /** 사용자 지정 ID로 upsert (정적 fallback과 동일한 ID를 유지하기 위해 setDoc 사용) */
+  upsert: async (id: string, data: Record<string, unknown>): Promise<CardNewsSeries> => {
+    const ref = doc(db, "card_news_series", id);
+    const cleaned = stripUndefinedDeep(data);
+    await setDoc(
+      ref,
+      { ...cleaned, updatedAt: serverTimestamp() },
+      { merge: true },
+    );
+    const snap = await getDoc(ref);
+    return serializeDoc(snap) as unknown as CardNewsSeries;
+  },
+  delete: (id: string) => dataApi.delete("card_news_series", id),
+};
+
 // ── Site Popups (사이트 팝업 공지) ──
 export const popupsApi = {
   list: () =>
