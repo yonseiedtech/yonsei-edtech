@@ -3,6 +3,7 @@ import { ArrowRight, Calendar, Images, Layers } from "lucide-react";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardArtFit } from "@/features/card-news/CardArtFit";
 import { CARD_NEWS_SERIES } from "@/features/card-news/series";
 
 export const metadata = {
@@ -40,42 +41,63 @@ export default function CardNewsListPage() {
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          {series.map((s) => (
-            <Card key={s.id} className="flex flex-col transition hover:shadow-md">
-              <CardHeader className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  {s.category && (
-                    <Badge variant="secondary" className="text-xs">
-                      {s.category}
-                    </Badge>
+          {series.map((s) => {
+            const cover = s.cards[0];
+            return (
+              <Card
+                key={s.id}
+                className="flex flex-col overflow-hidden p-0 transition hover:shadow-md"
+              >
+                <Link
+                  href={`/console/card-news/${s.id}`}
+                  aria-label={`${s.title} 슬라이드 보기`}
+                  className="block border-b bg-muted/40"
+                >
+                  {cover ? (
+                    <CardArtFit spec={cover} />
+                  ) : (
+                    <div className="flex aspect-square w-full items-center justify-center text-muted-foreground">
+                      <Images className="h-10 w-10 opacity-40" />
+                    </div>
                   )}
-                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
-                    {formatDate(s.publishedAt)}
-                  </span>
-                </div>
-                <CardTitle className="text-lg leading-snug">{s.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-1 flex-col justify-between gap-4">
-                <p className="text-sm text-muted-foreground line-clamp-3">
-                  {s.description}
-                </p>
-                <div className="flex items-center justify-between gap-2 pt-2">
-                  <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
-                    <Layers className="h-3 w-3" />
-                    {s.cards.length}장
-                  </span>
-                  <Link
-                    href={`/console/card-news/${s.id}`}
-                    className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
-                  >
-                    슬라이드 보기
-                    <ArrowRight className="h-3 w-3" />
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </Link>
+                <CardHeader className="space-y-2 px-5 pt-5">
+                  <div className="flex items-center justify-between gap-2">
+                    {s.category && (
+                      <Badge variant="secondary" className="text-xs">
+                        {s.category}
+                      </Badge>
+                    )}
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      {formatDate(s.publishedAt)}
+                    </span>
+                  </div>
+                  <CardTitle className="text-lg leading-snug">
+                    {s.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-1 flex-col justify-between gap-4 px-5 pb-5">
+                  <p className="text-sm text-muted-foreground line-clamp-3">
+                    {s.description}
+                  </p>
+                  <div className="flex items-center justify-between gap-2 pt-2">
+                    <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                      <Layers className="h-3 w-3" />
+                      {s.cards.length}장
+                    </span>
+                    <Link
+                      href={`/console/card-news/${s.id}`}
+                      className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
+                    >
+                      슬라이드 보기
+                      <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

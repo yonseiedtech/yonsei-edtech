@@ -9,7 +9,7 @@ import {
 } from "react";
 import { ChevronLeft, ChevronRight, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CardArt } from "./art";
+import { CardArtFit } from "./CardArtFit";
 import { exportCardToPng } from "./download";
 import type { CardSpec } from "./types";
 
@@ -50,8 +50,8 @@ export default function CardSlider({ cards, seriesId }: CardSliderProps) {
   }, [goPrev, goNext]);
 
   function onPointerDown(e: React.PointerEvent) {
+    if ((e.target as HTMLElement).closest("button")) return;
     dragState.current = { startX: e.clientX, lastX: e.clientX, active: true };
-    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
   }
   function onPointerMove(e: React.PointerEvent) {
     if (!dragState.current.active) return;
@@ -147,22 +147,12 @@ export default function CardSlider({ cards, seriesId }: CardSliderProps) {
                 className="relative h-full shrink-0"
                 style={{ width: `${100 / total}%` }}
               >
-                <div
-                  className="absolute left-0 top-0"
-                  style={{
-                    width: 1080,
-                    height: 1080,
-                    transform: "scale(var(--cn-scale))",
-                    transformOrigin: "top left",
+                <CardArtFit
+                  spec={card}
+                  refCb={(el) => {
+                    refs.current[card.id] = el;
                   }}
-                >
-                  <CardArt
-                    spec={card}
-                    refCb={(el) => {
-                      refs.current[card.id] = el;
-                    }}
-                  />
-                </div>
+                />
               </div>
             ))}
           </div>
@@ -201,17 +191,6 @@ export default function CardSlider({ cards, seriesId }: CardSliderProps) {
           </Button>
         </div>
       </div>
-
-      <style jsx>{`
-        :global(:root) {
-          --cn-scale: 0.5926;
-        }
-        @media (max-width: 640px) {
-          :global(:root) {
-            --cn-scale: 0.3148;
-          }
-        }
-      `}</style>
     </div>
   );
 }
