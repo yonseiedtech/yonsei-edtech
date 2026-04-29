@@ -589,8 +589,13 @@ export const todosApi = {
 };
 
 export const activityProgressApi = {
+  /**
+   * 복합 인덱스 회피: filter[activityId]만 사용, 정렬은 클라이언트에서.
+   * (activityId, week ASC) 인덱스가 없어 sort 옵션을 함께 보내면 silent empty 반환됨
+   * → 대시보드 타임라인의 스터디/프로젝트/대외 활동 일정이 안 뜨는 버그 유발.
+   */
   list: (activityId: string) =>
-    dataApi.list<ActivityProgress>("activity_progress", { "filter[activityId]": activityId, sort: "week:asc" }),
+    dataApi.list<ActivityProgress>("activity_progress", { "filter[activityId]": activityId }),
   create: (data: Record<string, unknown>) => dataApi.create<ActivityProgress>("activity_progress", data),
   update: (id: string, data: Record<string, unknown>) => dataApi.update<ActivityProgress>("activity_progress", id, data),
   delete: (id: string) => dataApi.delete("activity_progress", id),
