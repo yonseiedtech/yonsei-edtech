@@ -24,6 +24,7 @@ import {
   courseTodosApi,
 } from "@/lib/bkend";
 import { AttendanceChecklist } from "@/components/courses/AttendanceChecklist";
+import { CourseAttendanceStats } from "@/components/courses/CourseAttendanceStats";
 import { summarizeAttendance, isAttendanceEnabled } from "@/lib/attendance";
 import {
   CLASS_SESSION_MODE_LABELS,
@@ -768,6 +769,14 @@ function ScheduleContent({ courseId }: { courseId: string }) {
           )}
         </p>
       </section>
+
+      {master && (
+        <CourseAttendanceStats
+          enrollments={enrollmentsRes?.data ?? []}
+          sessions={sessions}
+          weeks={weeks}
+        />
+      )}
 
       <section className="mx-auto mt-8 max-w-4xl px-4">
         {loadingSessions ? (

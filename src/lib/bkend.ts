@@ -1134,10 +1134,14 @@ export const courseReviewsApi = {
 
 // 수업 진행 스케쥴 (날짜별 운영방식 기록)
 export const classSessionsApi = {
+  /**
+   * 복합 인덱스 회피: filter[courseOfferingId]만 사용, 정렬은 클라이언트에서.
+   * (courseOfferingId, date ASC) 인덱스가 없어 sort 옵션을 함께 보내면 silent empty 반환됨
+   * → 수업형태 변경 후 refetch가 빈 결과로 optimistic update를 덮어쓰는 버그 유발.
+   */
   listByCourse: (courseOfferingId: string) =>
     dataApi.list<ClassSession>("class_sessions", {
       "filter[courseOfferingId]": courseOfferingId,
-      sort: "date:asc",
       limit: 500,
     }),
   listByDate: (date: string) =>
@@ -1149,9 +1153,9 @@ export const classSessionsApi = {
     if (courseIds.length === 0) {
       return Promise.resolve({ data: [] as ClassSession[], total: 0 });
     }
+    // 복합 인덱스 회피: filter[in]+sort 조합도 silent empty 위험. 정렬은 호출자에서.
     return dataApi.list<ClassSession>("class_sessions", {
       "filter[courseOfferingId][in]": courseIds.join(","),
-      sort: "date:asc",
       limit: 1000,
     });
   },
