@@ -255,13 +255,40 @@ export default function AnalyticsPage() {
       const k = String(i).padStart(2, "0");
       return { hour: `${i}시`, count: Number(buckets[k] ?? 0) };
     });
+    const hourlyTotal = hourly.reduce((sum, h) => sum + h.count, 0);
     const counts = todayVisits?.pathCounts ?? {};
     const paths = Object.entries(counts)
       .map(([key, value]) => ({ name: pathGroupLabel(key), count: Number(value ?? 0) }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
-    return { hourly, paths };
-  }, [todayVisits]);
+    const pathsTotal = paths.reduce((sum, p) => sum + p.count, 0);
+
+    // 회원 vs 익명 분리
+    const memberMap = new Map(members.map((m) => [m.id, m]));
+    const visitors = todayVisits?.uniqueVisitors ?? [];
+    const memberVisitors: User[] = [];
+    let anonCount = 0;
+    let unknownCount = 0;
+    for (const id of visitors) {
+      if (typeof id !== "string") continue;
+      if (id.startsWith("anon-")) { anonCount++; continue; }
+      const m = memberMap.get(id);
+      if (m) memberVisitors.push(m);
+      else unknownCount++;
+    }
+    // 역할 우선 정렬 (admin > president > staff > advisor > alumni > member) 후 이름순
+    const ROLE_ORDER: Record<string, number> = {
+      admin: 0, president: 1, staff: 2, advisor: 3, alumni: 4, member: 5,
+    };
+    memberVisitors.sort((a, b) => {
+      const ra = ROLE_ORDER[a.role] ?? 9;
+      const rb = ROLE_ORDER[b.role] ?? 9;
+      if (ra !== rb) return ra - rb;
+      return (a.name ?? "").localeCompare(b.name ?? "", "ko");
+    });
+
+    return { hourly, hourlyTotal, paths, pathsTotal, memberVisitors, anonCount, unknownCount };
+  }, [todayVisits, members]);
 
   function exportMembers() {
     exportCSV("회원목록", ["이름", "아이디", "이메일", "학번", "역할", "기수", "분야", "가입일"],
@@ -338,18 +365,85 @@ export default function AnalyticsPage() {
         />
       </div>
 
+      {/* 오늘 방문 회원 명단 */}
+      <ChartCard title={`오늘 방문 회원 (KST · ${todayKey})`}>
+        <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-indigo-700 font-medium">
+            회원 {visitInsights.memberVisitors.length}명
+          </span>
+          {visitInsights.anonCount > 0 && (
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">
+              익명/비로그인 {visitInsights.anonCount}명
+            </span>
+          )}
+          {visitInsights.unknownCount > 0 && (
+            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-amber-700">
+              미식별 {visitInsights.unknownCount}명
+            </span>
+          )}
+        </div>
+        {visitInsights.memberVisitors.length === 0 ? (
+          <div className="flex h-[160px] items-center justify-center text-sm text-muted-foreground">
+            아직 로그인 상태로 방문한 회원이 없습니다.
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {visitInsights.memberVisitors.map((m) => {
+              const ROLE_KR: Record<string, string> = {
+                admin: "관리자", president: "회장", staff: "운영진",
+                advisor: "자문위원", alumni: "졸업생", member: "회원",
+              };
+              const ROLE_COLOR: Record<string, string> = {
+                admin: "bg-rose-50 text-rose-700 border-rose-200",
+                president: "bg-violet-50 text-violet-700 border-violet-200",
+                staff: "bg-blue-50 text-blue-700 border-blue-200",
+                advisor: "bg-amber-50 text-amber-700 border-amber-200",
+                alumni: "bg-emerald-50 text-emerald-700 border-emerald-200",
+                member: "bg-slate-50 text-slate-700 border-slate-200",
+              };
+              return (
+                <div
+                  key={m.id}
+                  className={`flex items-center gap-2 rounded-full border px-3 py-1 text-xs ${ROLE_COLOR[m.role] ?? "bg-white text-slate-700 border-slate-200"}`}
+                  title={`${m.name} · ${ROLE_KR[m.role] ?? m.role}${m.studentId ? ` · ${m.studentId}` : ""}`}
+                >
+                  <span className="font-medium">{m.name}</span>
+                  <span className="opacity-70">·</span>
+                  <span className="opacity-80">{ROLE_KR[m.role] ?? m.role}</span>
+                  {m.studentId && (
+                    <>
+                      <span className="opacity-70">·</span>
+                      <span className="opacity-70">{m.studentId}</span>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </ChartCard>
+
       {/* 방문 분석 */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <ChartCard title={`시간대별 방문 분포 (오늘 KST · ${todayKey})`}>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={visitInsights.hourly}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="hour" tick={{ fontSize: 10 }} interval={1} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
-              <Tooltip />
-              <Bar dataKey="count" name="페이지뷰" fill="#06b6d4" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {visitInsights.hourlyTotal === 0 ? (
+            <div className="flex h-[240px] items-center justify-center text-sm text-muted-foreground">
+              아직 오늘 집계된 방문이 없습니다.
+            </div>
+          ) : (
+            <>
+              <p className="mb-1 text-xs text-muted-foreground">총 {visitInsights.hourlyTotal} 페이지뷰</p>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={visitInsights.hourly}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="hour" tick={{ fontSize: 10 }} interval={1} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                  <Tooltip />
+                  <Bar dataKey="count" name="페이지뷰" fill="#06b6d4" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </>
+          )}
         </ChartCard>
 
         <ChartCard title="자주 보는 페이지 그룹 (오늘 Top 10)">
@@ -358,15 +452,18 @@ export default function AnalyticsPage() {
               아직 집계된 페이지뷰가 없습니다.
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={visitInsights.paths} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
-                <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Bar dataKey="count" name="페이지뷰" fill="#ec4899" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <>
+              <p className="mb-1 text-xs text-muted-foreground">상위 {visitInsights.paths.length}개 그룹 / 합계 {visitInsights.pathsTotal} 페이지뷰</p>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={visitInsights.paths} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
+                  <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Bar dataKey="count" name="페이지뷰" fill="#ec4899" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </>
           )}
         </ChartCard>
       </div>

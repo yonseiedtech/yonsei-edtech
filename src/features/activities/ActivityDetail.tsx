@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -17,9 +17,10 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   ArrowLeft, Calendar, MapPin, Users, User, UserPlus, Check, X,
-  Pencil, Globe, Loader2, CheckCircle, Clock, XCircle,
+  Pencil, Globe, Loader2, CheckCircle, CheckCircle2, Circle, Clock, XCircle,
   Plus, Trash2, ListChecks, Timer, UserCog,
   ChevronDown, ChevronUp,
+  Upload, Paperclip, FileText, Download, CalendarPlus,
 } from "lucide-react";
 import InlineMeetingTimer from "./InlineMeetingTimer";
 import ActivityConnectedTodos from "./ActivityConnectedTodos";
@@ -27,6 +28,7 @@ import { todayYmdLocal } from "@/lib/dday";
 import type { Activity, ActivityType, ActivityProgress, ActivityProgressMode, FormField, EnrollmentStatus, ExternalParticipantType } from "@/types";
 import { ENROLLMENT_STATUS_LABELS, ACTIVITY_PROGRESS_MODE_LABELS, EXTERNAL_PARTICIPANT_TYPE_LABELS, EXTERNAL_PARTICIPANT_TYPE_COLORS } from "@/types";
 import { activityProgressApi, progressMeetingsApi } from "@/lib/bkend";
+import { uploadToStorage } from "@/lib/storage";
 import type { UploadedFile } from "@/lib/storage";
 import { formatSemester } from "@/lib/semester";
 import FormBuilder from "./FormBuilder";
@@ -75,6 +77,16 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const [guestStaffName, setGuestStaffName] = useState("");
   const [guestParticipantName, setGuestParticipantName] = useState("");
   const [expandedTimers, setExpandedTimers] = useState<Set<string>>(new Set());
+  const [uploadingPid, setUploadingPid] = useState<string | null>(null);
+  const fileInputRefs = useRef<Map<string, HTMLInputElement | null>>(new Map());
+  // 일괄 주차 생성
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkStartDate, setBulkStartDate] = useState("");
+  const [bulkCount, setBulkCount] = useState(8);
+  const [bulkStart, setBulkStart] = useState("19:00");
+  const [bulkEnd, setBulkEnd] = useState("21:00");
+  const [bulkMode, setBulkMode] = useState<ActivityProgressMode>("in_person");
+  const [bulking, setBulking] = useState(false);
 
   const toggleTimer = (pid: string) => {
     setExpandedTimers((prev) => {
@@ -547,16 +559,6 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
 
           {activeTab === "progress" && (
             <div className="space-y-4">
-              {(type === "study" || type === "project") && (
-                <div className="flex justify-end">
-                  <Link
-                    href={`/activities/${type === "study" ? "studies" : "projects"}/${activityId}/weeks`}
-                    className="inline-flex items-center gap-1 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium hover:border-primary hover:text-primary"
-                  >
-                    <ListChecks size={12} /> 주차 페이지 전용 화면 열기
-                  </Link>
-                </div>
-              )}
               {/* 진행률 바 */}
               {progressList.length > 0 && (
                 <div className="rounded-xl border bg-white p-4">
@@ -573,7 +575,20 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               {/* 주차 추가 (운영진 또는 스터디/프로젝트 모임장) — 리스트 위로 이동 */}
               {(isStaff || isLeader) && (
                 <div className="rounded-xl border bg-white p-4 space-y-3">
-                  <h3 className="text-sm font-semibold flex items-center gap-1"><ListChecks size={14} />주차 추가</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold flex items-center gap-1"><ListChecks size={14} />주차 추가</h3>
+                    {(type === "study" || type === "project") && (
+                      <Button
+                        size="sm"
+                        variant={bulkOpen ? "default" : "outline"}
+                        onClick={() => setBulkOpen((v) => !v)}
+                        className="h-7 gap-1 px-2 text-[11px]"
+                      >
+                        <CalendarPlus size={12} />
+                        {bulkOpen ? "일괄 생성 닫기" : "주 단위 일괄 생성"}
+                      </Button>
+                    )}
+                  </div>
                   <Input value={progressTitle} onChange={(e) => setProgressTitle(e.target.value)} placeholder="활동 내용 (예: 논문 리뷰 #1)" />
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                     <div>
@@ -628,6 +643,85 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                       }
                     }}><Plus size={14} className="mr-1" />추가</Button>
                   </div>
+
+                  {/* 일괄 생성 폼 (스터디/프로젝트만) */}
+                  {bulkOpen && (type === "study" || type === "project") && (
+                    <div className="space-y-2 rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3">
+                      <p className="text-[11px] text-muted-foreground">
+                        시작 날짜부터 7일 간격으로 N개 주차를 한 번에 생성합니다. 제목은 "Week 1, Week 2..." 형식으로 자동 입력되며 나중에 개별 편집 가능합니다.
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        <div>
+                          <label className="mb-1 block text-[11px] text-muted-foreground">시작 날짜</label>
+                          <Input type="date" value={bulkStartDate} onChange={(e) => setBulkStartDate(e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-[11px] text-muted-foreground">주차 수</label>
+                          <Input type="number" min={1} max={20} value={bulkCount} onChange={(e) => setBulkCount(Math.max(1, Math.min(20, Number(e.target.value) || 1)))} />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-[11px] text-muted-foreground">시작 시간</label>
+                          <Input type="time" value={bulkStart} onChange={(e) => setBulkStart(e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-[11px] text-muted-foreground">종료 시간</label>
+                          <Input type="time" value={bulkEnd} onChange={(e) => setBulkEnd(e.target.value)} />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <select
+                          value={bulkMode}
+                          onChange={(e) => setBulkMode(e.target.value as ActivityProgressMode)}
+                          className="w-32 rounded-md border bg-background px-2 py-1.5 text-sm"
+                        >
+                          <option value="in_person">대면</option>
+                          <option value="zoom">ZOOM</option>
+                        </select>
+                        <Button
+                          size="sm"
+                          disabled={!bulkStartDate || bulking}
+                          onClick={async () => {
+                            if (!bulkStartDate) {
+                              toast.error("시작 날짜를 선택하세요.");
+                              return;
+                            }
+                            setBulking(true);
+                            try {
+                              const start = new Date(bulkStartDate + "T00:00:00");
+                              const baseWeek = progressList.reduce((max, p) => Math.max(max, p.week ?? 0), 0);
+                              for (let i = 0; i < bulkCount; i++) {
+                                const d = new Date(start);
+                                d.setDate(start.getDate() + i * 7);
+                                const ymd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                                await activityProgressApi.create({
+                                  activityId,
+                                  week: baseWeek + i + 1,
+                                  date: ymd,
+                                  startTime: bulkStart || undefined,
+                                  endTime: bulkEnd || undefined,
+                                  mode: bulkMode,
+                                  title: `Week ${baseWeek + i + 1}`,
+                                  status: "planned",
+                                });
+                              }
+                              await queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
+                              await queryClient.refetchQueries({ queryKey: ["activity-progress", activityId] });
+                              toast.success(`${bulkCount}개 주차가 생성되었습니다.`);
+                              setBulkOpen(false);
+                            } catch (e) {
+                              console.error("[activity-progress/bulk]", e);
+                              toast.error(e instanceof Error ? `일괄 생성 실패: ${e.message}` : "일괄 생성 실패");
+                            } finally {
+                              setBulking(false);
+                            }
+                          }}
+                        >
+                          {bulking ? <Loader2 size={12} className="mr-1 animate-spin" /> : <CalendarPlus size={12} className="mr-1" />}
+                          {bulkCount}개 주차 일괄 생성
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -717,18 +811,203 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                             )}
                           </div>
                         </div>
-                        {isExpanded && (
-                          <div className="border-t bg-muted/20 px-4 py-3">
-                            <InlineMeetingTimer
-                              activityId={activityId}
-                              activityProgressId={p.id}
-                              weekLabel={`Week ${displayWeek} · ${p.title}`}
-                              canControl={isStaff || isLeader}
-                              canStart={isStaff || isLeader}
-                              createdBy={user?.id}
-                            />
-                          </div>
-                        )}
+                        {isExpanded && (() => {
+                          const attendedSet = new Set((p.attendedUserIds as string[] | undefined) ?? []);
+                          const materials = (p.materials as ActivityProgress["materials"]) ?? [];
+                          const isUploading = uploadingPid === p.id;
+                          return (
+                            <div className="border-t bg-muted/20 px-4 py-3 space-y-4">
+                              <InlineMeetingTimer
+                                activityId={activityId}
+                                activityProgressId={p.id}
+                                weekLabel={`Week ${displayWeek} · ${p.title}`}
+                                canControl={isStaff || isLeader}
+                                canStart={isStaff || isLeader}
+                                createdBy={user?.id}
+                              />
+
+                              {/* 출석 체크 */}
+                              <div className="rounded-lg border bg-white p-3 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="flex items-center gap-1.5 text-xs font-semibold">
+                                    <Users size={12} /> 출석 ({attendedSet.size}/{participants.length})
+                                  </h4>
+                                  {!(isStaff || isLeader) && (
+                                    <span className="text-[10px] text-muted-foreground">운영진/리더만 변경 가능</span>
+                                  )}
+                                </div>
+                                {participants.length === 0 ? (
+                                  <p className="rounded border border-dashed bg-muted/20 px-2 py-3 text-center text-[11px] text-muted-foreground">
+                                    아직 등록된 참여자가 없습니다.
+                                  </p>
+                                ) : (
+                                  <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 md:grid-cols-4">
+                                    {participants.map((pid) => {
+                                      const m = memberMap.get(pid);
+                                      const guest = guestMap.get(pid);
+                                      const name = m?.name ?? guest?.name ?? "(이름 미확인)";
+                                      const attended = attendedSet.has(pid);
+                                      return (
+                                        <button
+                                          key={pid}
+                                          type="button"
+                                          disabled={!(isStaff || isLeader)}
+                                          onClick={async () => {
+                                            const next = attended
+                                              ? Array.from(attendedSet).filter((x) => x !== pid)
+                                              : [...Array.from(attendedSet), pid];
+                                            try {
+                                              await activityProgressApi.update(p.id, { attendedUserIds: next });
+                                              queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
+                                            } catch (e) {
+                                              console.error("[attendance]", e);
+                                              toast.error(e instanceof Error ? `출석 변경 실패: ${e.message}` : "출석 변경 실패");
+                                            }
+                                          }}
+                                          className={cn(
+                                            "flex items-center gap-1.5 rounded-md border px-2 py-1 text-left text-[11px] transition",
+                                            attended
+                                              ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                                              : "border-border bg-background text-foreground hover:border-primary/30",
+                                            !(isStaff || isLeader) && "cursor-default opacity-80",
+                                          )}
+                                        >
+                                          {attended ? (
+                                            <CheckCircle2 size={12} className="shrink-0 text-emerald-600" />
+                                          ) : (
+                                            <Circle size={12} className="shrink-0 text-muted-foreground" />
+                                          )}
+                                          <span className="truncate">
+                                            {name}
+                                            {pid === leaderId && (
+                                              <span className="ml-1 text-[9px] text-amber-600">(리더)</span>
+                                            )}
+                                          </span>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* 자료 업로드 */}
+                              <div className="rounded-lg border bg-white p-3 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="flex items-center gap-1.5 text-xs font-semibold">
+                                    <Paperclip size={12} /> 자료 ({materials.length})
+                                  </h4>
+                                  {(isStaff || isLeader) && (
+                                    <>
+                                      <input
+                                        ref={(el) => { fileInputRefs.current.set(p.id, el); }}
+                                        type="file"
+                                        className="hidden"
+                                        onChange={async (e) => {
+                                          const f = e.target.files?.[0];
+                                          if (!f) return;
+                                          setUploadingPid(p.id);
+                                          try {
+                                            const folder = `activities/${activityId}/week-${displayWeek}/materials`;
+                                            const uploaded = await uploadToStorage(f, folder);
+                                            const next = [...materials, uploaded];
+                                            await activityProgressApi.update(p.id, { materials: next });
+                                            await queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
+                                            toast.success(`${f.name} 업로드 완료`);
+                                          } catch (err) {
+                                            console.error("[material/upload]", err);
+                                            toast.error(err instanceof Error ? `업로드 실패: ${err.message}` : "업로드 실패");
+                                          } finally {
+                                            setUploadingPid(null);
+                                            const ref = fileInputRefs.current.get(p.id);
+                                            if (ref) ref.value = "";
+                                          }
+                                        }}
+                                      />
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-6 px-2 text-[10px]"
+                                        disabled={isUploading}
+                                        onClick={() => fileInputRefs.current.get(p.id)?.click()}
+                                      >
+                                        {isUploading ? (
+                                          <Loader2 size={10} className="mr-1 animate-spin" />
+                                        ) : (
+                                          <Upload size={10} className="mr-1" />
+                                        )}
+                                        파일 업로드
+                                      </Button>
+                                    </>
+                                  )}
+                                </div>
+                                {materials.length === 0 ? (
+                                  <p className="rounded border border-dashed bg-muted/20 px-2 py-3 text-center text-[11px] text-muted-foreground">
+                                    아직 업로드된 자료가 없습니다.
+                                  </p>
+                                ) : (
+                                  <ul className="space-y-1">
+                                    {materials.map((m, mi) => (
+                                      <li
+                                        key={`${m.url}-${mi}`}
+                                        className="flex items-center justify-between gap-2 rounded border bg-background px-2 py-1.5 text-[11px]"
+                                      >
+                                        <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                                          <FileText size={11} className="shrink-0 text-muted-foreground" />
+                                          <a
+                                            href={m.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="truncate font-medium text-foreground hover:text-primary hover:underline"
+                                          >
+                                            {m.name}
+                                          </a>
+                                          {typeof m.size === "number" && (
+                                            <span className="shrink-0 text-[9px] text-muted-foreground">
+                                              {(m.size / 1024).toFixed(1)} KB
+                                            </span>
+                                          )}
+                                        </div>
+                                        <div className="flex shrink-0 items-center gap-0.5">
+                                          <a
+                                            href={m.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            download={m.name}
+                                            className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                                            title="다운로드"
+                                          >
+                                            <Download size={11} />
+                                          </a>
+                                          {(isStaff || isLeader) && (
+                                            <button
+                                              type="button"
+                                              onClick={async () => {
+                                                if (!confirm("이 자료를 삭제하시겠습니까?")) return;
+                                                const next = materials.filter((_, i) => i !== mi);
+                                                try {
+                                                  await activityProgressApi.update(p.id, { materials: next });
+                                                  await queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
+                                                  toast.success("삭제되었습니다.");
+                                                } catch (err) {
+                                                  console.error("[material/delete]", err);
+                                                  toast.error(err instanceof Error ? `삭제 실패: ${err.message}` : "삭제 실패");
+                                                }
+                                              }}
+                                              className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                              title="삭제"
+                                            >
+                                              <Trash2 size={11} />
+                                            </button>
+                                          )}
+                                        </div>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     );
                   })
