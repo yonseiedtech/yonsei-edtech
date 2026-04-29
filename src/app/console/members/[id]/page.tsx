@@ -25,6 +25,7 @@ import { useAuthStore } from "@/features/auth/auth-store";
 import { isPresidentOrAbove } from "@/lib/permissions";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CONSENT_LABELS, CURRENT_TERMS, type ConsentKey } from "@/lib/legal";
+import { logAudit } from "@/lib/audit";
 
 const ASSIGNABLE_ROLES: UserRole[] = ["member", "alumni", "advisor", "staff", "president", "admin", "sysadmin"];
 
@@ -66,6 +67,14 @@ function AdminMemberDetail({ id }: { id: string }) {
       const data = await res.json();
       try { sessionStorage.setItem("impersonatorUid", data.impersonatorUid); } catch { /* ignore */ }
       await signInWithCustomToken(auth, data.customToken);
+      logAudit({
+        action: "계정 임퍼소네이트",
+        category: "member",
+        detail: `대상: ${id}`,
+        targetId: id,
+        userId: currentUser?.id ?? "",
+        userName: currentUser?.name ?? "",
+      });
       toast.success("계정 전환이 완료되었습니다.");
       router.push("/mypage");
     } catch (err) {
@@ -86,8 +95,24 @@ function AdminMemberDetail({ id }: { id: string }) {
 
   async function handleRoleChange(newRole: UserRole) {
     if (!member) return;
+    // president 이상 권한자만 admin/sysadmin 권한 부여 가능
+    const isElevatedRole = newRole === "admin" || newRole === "sysadmin";
+    if (isElevatedRole && !isPresidentOrAbove(currentUser)) {
+      toast.error("admin/sysadmin 역할 부여는 학회장 이상만 가능합니다.");
+      return;
+    }
     try {
+      const prevRole = member.role;
       await updateProfile({ id: member.id, data: { role: newRole } });
+      logAudit({
+        action: "역할 변경",
+        category: "role",
+        detail: `${member.name}: ${prevRole} → ${newRole}`,
+        targetId: member.id,
+        targetName: member.name,
+        userId: currentUser?.id ?? "",
+        userName: currentUser?.name ?? "",
+      });
       toast.success(`역할이 ${ROLE_LABELS[newRole]}(으)로 변경되었습니다.`);
     } catch {
       toast.error("역할 변경에 실패했습니다.");
@@ -99,6 +124,15 @@ function AdminMemberDetail({ id }: { id: string }) {
     try {
       await approveMember(member.id);
       notifyMemberApproved(member.id, member.name);
+      logAudit({
+        action: "회원 승인",
+        category: "role",
+        detail: `${member.name}(@${member.username})`,
+        targetId: member.id,
+        targetName: member.name,
+        userId: currentUser?.id ?? "",
+        userName: currentUser?.name ?? "",
+      });
       toast.success(`${member.name} 승인 완료`);
     } catch {
       toast.error("승인에 실패했습니다.");
@@ -110,6 +144,15 @@ function AdminMemberDetail({ id }: { id: string }) {
     try {
       await profilesApi.update(member.id, { approved: false, rejected: true });
       notifyMemberRejected(member.id, member.name);
+      logAudit({
+        action: "회원 거절",
+        category: "role",
+        detail: `${member.name}(@${member.username})`,
+        targetId: member.id,
+        targetName: member.name,
+        userId: currentUser?.id ?? "",
+        userName: currentUser?.name ?? "",
+      });
       toast.success(`${member.name} 거절 완료`);
     } catch {
       toast.error("거절에 실패했습니다.");
@@ -128,6 +171,15 @@ function AdminMemberDetail({ id }: { id: string }) {
         body: JSON.stringify({ email: member.email, name: member.name }),
       });
       if (res.ok) {
+        logAudit({
+          action: "비밀번호 초기화",
+          category: "member",
+          detail: `${member.name}(${member.email}) 재설정 이메일 발송`,
+          targetId: member.id,
+          targetName: member.name,
+          userId: currentUser?.id ?? "",
+          userName: currentUser?.name ?? "",
+        });
         toast.success(`${member.email}로 비밀번호 재설정 이메일을 발송했습니다.`);
       } else {
         const data = await res.json();
