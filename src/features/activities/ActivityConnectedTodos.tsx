@@ -107,7 +107,7 @@ export default function ActivityConnectedTodos({ activityId }: Props) {
           </h3>
         </div>
         <Link
-          href="/staff-admin/todos"
+          href="/console/todos"
           className="flex items-center gap-1 text-xs text-primary hover:underline"
         >
           <ExternalLink size={11} />

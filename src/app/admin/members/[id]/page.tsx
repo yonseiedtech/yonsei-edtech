@@ -159,7 +159,7 @@ function AdminMemberDetail({ id }: { id: string }) {
     return (
       <div className="py-16 text-center">
         <p className="text-muted-foreground">회원을 찾을 수 없습니다.</p>
-        <Button variant="outline" className="mt-4" onClick={() => router.push("/admin/members")}>
+        <Button variant="outline" className="mt-4" onClick={() => router.push("/console/members")}>
           <ArrowLeft size={16} className="mr-1" /> 회원 목록으로
         </Button>
       </div>
@@ -171,7 +171,7 @@ function AdminMemberDetail({ id }: { id: string }) {
       <div className="mx-auto max-w-2xl px-4">
         {/* 헤더 */}
         <button
-          onClick={() => router.push("/admin/members")}
+          onClick={() => router.push("/console/members")}
           className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft size={16} /> 회원 목록으로

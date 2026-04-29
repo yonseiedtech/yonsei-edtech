@@ -171,7 +171,7 @@ export default function SeminarConnectedTodos({ seminarId, seminarTitle, seminar
         </div>
         <div className="flex items-center gap-2">
           <Link
-            href="/staff-admin/todos"
+            href="/console/todos"
             className="flex items-center gap-1 text-xs text-primary hover:underline"
           >
             <ExternalLink size={11} />

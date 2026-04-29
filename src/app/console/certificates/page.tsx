@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 export default function ConsoleCertificatesRedirect() {
   const router = useRouter();
   useEffect(() => {
-    router.replace("/academic-admin/certificates");
+    router.replace("/console/academic/certificates");
   }, [router]);
   return (
     <div className="py-12 text-center text-sm text-muted-foreground">
