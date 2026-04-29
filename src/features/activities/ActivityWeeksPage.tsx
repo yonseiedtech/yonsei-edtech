@@ -11,10 +11,9 @@ import {
   Circle,
   Clock,
   Loader2,
-  Pencil,
+  Paperclip,
   Plus,
-  Save,
-  X,
+  Users,
 } from "lucide-react";
 import { activitiesApi, activityProgressApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -303,6 +302,18 @@ export default function ActivityWeeksPage({
                         </span>
                       )}
                       {p.mode && <Badge variant="secondary" className="text-[9px]">{ACTIVITY_PROGRESS_MODE_LABELS[p.mode]}</Badge>}
+                      {((p.attendedUserIds as string[] | undefined)?.length ?? 0) > 0 && (
+                        <span className="flex items-center gap-0.5 rounded bg-emerald-50 px-1 py-0.5 text-emerald-700">
+                          <Users size={9} />
+                          {(p.attendedUserIds as string[]).length}
+                        </span>
+                      )}
+                      {((p.materials as ActivityProgress["materials"])?.length ?? 0) > 0 && (
+                        <span className="flex items-center gap-0.5 rounded bg-blue-50 px-1 py-0.5 text-blue-700">
+                          <Paperclip size={9} />
+                          {(p.materials as ActivityProgress["materials"])!.length}
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center justify-end pt-1 text-[11px] font-medium text-primary">
                       열기 <ChevronRight size={12} />

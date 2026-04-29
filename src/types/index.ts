@@ -1507,6 +1507,10 @@ export interface ActivityProgress {
   description?: string;
   status: "planned" | "in_progress" | "completed";
   attachments?: string[];
+  /** 주차별 출석한 회원 id (Sprint K) */
+  attendedUserIds?: string[];
+  /** 주차별 자료 (Sprint K) */
+  materials?: { url: string; name: string; size?: number; type?: string }[];
   createdAt: string;
 }
 

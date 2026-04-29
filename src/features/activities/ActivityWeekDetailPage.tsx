@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -11,12 +11,19 @@ import {
   ChevronRight,
   Circle,
   Clock,
+  Download,
+  FileText,
   Loader2,
+  Paperclip,
   Pencil,
   Save,
+  Trash2,
+  Upload,
+  Users,
   X,
 } from "lucide-react";
-import { activitiesApi, activityProgressApi } from "@/lib/bkend";
+import { activitiesApi, activityProgressApi, profilesApi } from "@/lib/bkend";
+import { uploadToStorage } from "@/lib/storage";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,7 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import type { Activity, ActivityProgress, ActivityProgressMode } from "@/types";
+import type { Activity, ActivityProgress, ActivityProgressMode, User } from "@/types";
 import { ACTIVITY_PROGRESS_MODE_LABELS } from "@/types";
 
 const STATUS_LABELS: Record<ActivityProgress["status"], string> = {
@@ -80,6 +87,31 @@ export default function ActivityWeekDetailPage({
   const isLeader = !!user && activity?.leaderId === user.id;
   const canEdit = isStaff || isLeader;
 
+  const participantIds = useMemo(() => {
+    if (!activity) return [] as string[];
+    const set = new Set<string>();
+    ((activity.participants as string[] | undefined) ?? []).forEach((id) => id && set.add(id));
+    if (activity.leaderId) set.add(activity.leaderId);
+    return Array.from(set);
+  }, [activity]);
+
+  const { data: participantUsers = [] } = useQuery({
+    queryKey: ["activity-participants-users", activityId, participantIds.join(",")],
+    enabled: participantIds.length > 0,
+    queryFn: async () => {
+      const results = await Promise.all(
+        participantIds.map(async (id) => {
+          try {
+            return (await profilesApi.get(id)) as User;
+          } catch {
+            return null;
+          }
+        }),
+      );
+      return results.filter((u): u is User => !!u);
+    },
+  });
+
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -88,6 +120,8 @@ export default function ActivityWeekDetailPage({
   const [editEnd, setEditEnd] = useState("");
   const [editMode, setEditMode] = useState<ActivityProgressMode>("in_person");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (week) {
@@ -160,6 +194,57 @@ export default function ActivityWeekDetailPage({
       toast.error(e instanceof Error ? `상태 변경 실패: ${e.message}` : "상태 변경 실패");
     }
   }
+
+  async function toggleAttendance(uid: string) {
+    if (!week || !canEdit) return;
+    const current = (week.attendedUserIds as string[] | undefined) ?? [];
+    const next = current.includes(uid) ? current.filter((x) => x !== uid) : [...current, uid];
+    try {
+      await activityProgressApi.update(week.id, { attendedUserIds: next });
+      await queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
+    } catch (e) {
+      console.error("[week/attendance]", e);
+      toast.error(e instanceof Error ? `출석 변경 실패: ${e.message}` : "출석 변경 실패");
+    }
+  }
+
+  async function handleUploadFile(file: File) {
+    if (!week || !canEdit) return;
+    setUploading(true);
+    try {
+      const folder = `activities/${activityId}/week-${weekNumber}/materials`;
+      const uploaded = await uploadToStorage(file, folder);
+      const current = (week.materials as ActivityProgress["materials"]) ?? [];
+      const next = [...current, uploaded];
+      await activityProgressApi.update(week.id, { materials: next });
+      await queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
+      toast.success(`${file.name} 업로드 완료`);
+    } catch (e) {
+      console.error("[week/upload]", e);
+      toast.error(e instanceof Error ? `업로드 실패: ${e.message}` : "업로드 실패");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  async function handleDeleteMaterial(idx: number) {
+    if (!week || !canEdit) return;
+    if (!confirm("이 자료를 삭제하시겠습니까?")) return;
+    const current = (week.materials as ActivityProgress["materials"]) ?? [];
+    const next = current.filter((_, i) => i !== idx);
+    try {
+      await activityProgressApi.update(week.id, { materials: next });
+      await queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
+      toast.success("삭제되었습니다.");
+    } catch (e) {
+      console.error("[week/material/delete]", e);
+      toast.error(e instanceof Error ? `삭제 실패: ${e.message}` : "삭제 실패");
+    }
+  }
+
+  const attendedSet = new Set((week?.attendedUserIds as string[] | undefined) ?? []);
+  const materials = (week?.materials as ActivityProgress["materials"]) ?? [];
 
   return (
     <div className="mx-auto max-w-4xl space-y-4 px-4 py-6">
@@ -291,6 +376,147 @@ export default function ActivityWeekDetailPage({
                 </Button>
               </div>
             </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="space-y-3 py-4">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+              <Users size={14} /> 출석 ({attendedSet.size}/{participantUsers.length})
+            </h2>
+            {!canEdit && (
+              <span className="text-[11px] text-muted-foreground">운영진/리더만 변경 가능</span>
+            )}
+          </div>
+          {participantUsers.length === 0 ? (
+            <p className="rounded-lg border border-dashed bg-muted/20 px-3 py-4 text-center text-xs text-muted-foreground">
+              아직 등록된 참여자가 없습니다.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 md:grid-cols-4">
+              {participantUsers.map((p) => {
+                const attended = attendedSet.has(p.id);
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => toggleAttendance(p.id)}
+                    disabled={!canEdit}
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left text-xs transition",
+                      attended
+                        ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                        : "border-border bg-background text-foreground hover:border-primary/30",
+                      !canEdit && "cursor-default opacity-80",
+                      canEdit && "cursor-pointer",
+                    )}
+                  >
+                    {attended ? (
+                      <CheckCircle2 size={14} className="shrink-0 text-emerald-600" />
+                    ) : (
+                      <Circle size={14} className="shrink-0 text-muted-foreground" />
+                    )}
+                    <span className="truncate">
+                      {p.name}
+                      {p.id === activity.leaderId && (
+                        <span className="ml-1 text-[10px] text-amber-600">(리더)</span>
+                      )}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="space-y-3 py-4">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+              <Paperclip size={14} /> 자료 ({materials.length})
+            </h2>
+            {canEdit && (
+              <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleUploadFile(f);
+                  }}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? (
+                    <Loader2 size={12} className="mr-1 animate-spin" />
+                  ) : (
+                    <Upload size={12} className="mr-1" />
+                  )}
+                  파일 업로드
+                </Button>
+              </>
+            )}
+          </div>
+          {materials.length === 0 ? (
+            <p className="rounded-lg border border-dashed bg-muted/20 px-3 py-4 text-center text-xs text-muted-foreground">
+              아직 업로드된 자료가 없습니다.
+            </p>
+          ) : (
+            <ul className="space-y-1.5">
+              {materials.map((m, idx) => (
+                <li
+                  key={`${m.url}-${idx}`}
+                  className="flex items-center justify-between gap-2 rounded-lg border bg-background px-3 py-2 text-xs"
+                >
+                  <div className="flex min-w-0 flex-1 items-center gap-2">
+                    <FileText size={14} className="shrink-0 text-muted-foreground" />
+                    <a
+                      href={m.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="truncate font-medium text-foreground hover:text-primary hover:underline"
+                    >
+                      {m.name}
+                    </a>
+                    {typeof m.size === "number" && (
+                      <span className="shrink-0 text-[10px] text-muted-foreground">
+                        {(m.size / 1024).toFixed(1)} KB
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <a
+                      href={m.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      download={m.name}
+                      className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      title="다운로드"
+                    >
+                      <Download size={13} />
+                    </a>
+                    {canEdit && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteMaterial(idx)}
+                        className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        title="삭제"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
           )}
         </CardContent>
       </Card>
