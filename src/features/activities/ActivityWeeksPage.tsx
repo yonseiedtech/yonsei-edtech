@@ -83,6 +83,16 @@ export default function ActivityWeeksPage({
   const [newMode, setNewMode] = useState<ActivityProgressMode>("in_person");
   const [adding, setAdding] = useState(false);
 
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkStartDate, setBulkStartDate] = useState("");
+  const [bulkCount, setBulkCount] = useState(8);
+  const [bulkStart, setBulkStart] = useState("19:00");
+  const [bulkEnd, setBulkEnd] = useState("21:00");
+  const [bulkMode, setBulkMode] = useState<ActivityProgressMode>("in_person");
+  const [bulking, setBulking] = useState(false);
+
+  const todayStr = todayYmdLocal();
+
   const totalWeeks = progressList.length;
   const completedWeeks = progressList.filter((p) => p.status === "completed").length;
   const pct = totalWeeks > 0 ? Math.round((completedWeeks / totalWeeks) * 100) : 0;
@@ -114,6 +124,52 @@ export default function ActivityWeeksPage({
       toast.error(e instanceof Error ? `추가 실패: ${e.message}` : "추가 실패");
     } finally {
       setAdding(false);
+    }
+  }
+
+  async function handleBulkGenerate() {
+    if (!bulkStartDate) {
+      toast.error("시작 날짜를 선택하세요.");
+      return;
+    }
+    if (bulkCount < 1 || bulkCount > 30) {
+      toast.error("주차 수는 1~30 사이여야 합니다.");
+      return;
+    }
+    setBulking(true);
+    try {
+      const startMax = progressList.reduce((max, p) => Math.max(max, p.week ?? 0), 0);
+      const start = new Date(bulkStartDate + "T00:00:00");
+      let created = 0;
+      for (let i = 0; i < bulkCount; i++) {
+        const d = new Date(start);
+        d.setDate(start.getDate() + i * 7);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        const dateStr = `${yyyy}-${mm}-${dd}`;
+        const week = startMax + i + 1;
+        await activityProgressApi.create({
+          activityId,
+          week,
+          date: dateStr,
+          startTime: bulkStart || undefined,
+          endTime: bulkEnd || undefined,
+          mode: bulkMode,
+          title: `Week ${week}`,
+          status: "planned",
+        });
+        created += 1;
+      }
+      await queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
+      toast.success(`${created}개 주차가 생성되었습니다.`);
+      setBulkOpen(false);
+      setBulkStartDate("");
+    } catch (e) {
+      console.error("[weeks/bulk]", e);
+      toast.error(e instanceof Error ? `일괄 생성 실패: ${e.message}` : "일괄 생성 실패");
+    } finally {
+      setBulking(false);
     }
   }
 
@@ -197,10 +253,67 @@ export default function ActivityWeeksPage({
       {canEdit && (
         <Card>
           <CardContent className="space-y-3 py-4">
-            <h3 className="text-sm font-semibold flex items-center gap-1">
-              <Plus size={14} />
-              새 주차 추가
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold flex items-center gap-1">
+                <Plus size={14} />
+                새 주차 추가
+              </h3>
+              <Button
+                size="sm"
+                variant={bulkOpen ? "default" : "outline"}
+                onClick={() => setBulkOpen((v) => !v)}
+              >
+                {bulkOpen ? "단일 추가로 전환" : "일괄 생성 (N주)"}
+              </Button>
+            </div>
+            {bulkOpen && (
+              <div className="space-y-3 rounded-lg border bg-primary/5 p-3">
+                <p className="text-[11px] text-muted-foreground">
+                  시작 날짜부터 매주 같은 요일·시간에 N개의 빈 주차를 생성합니다.
+                </p>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                  <div>
+                    <label className="mb-1 block text-[11px] text-muted-foreground">시작 날짜</label>
+                    <Input type="date" value={bulkStartDate} onChange={(e) => setBulkStartDate(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[11px] text-muted-foreground">주차 수 (1~30)</label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={30}
+                      value={bulkCount}
+                      onChange={(e) => setBulkCount(Number.parseInt(e.target.value, 10) || 1)}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[11px] text-muted-foreground">시작</label>
+                    <Input type="time" value={bulkStart} onChange={(e) => setBulkStart(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[11px] text-muted-foreground">종료</label>
+                    <Input type="time" value={bulkEnd} onChange={(e) => setBulkEnd(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[11px] text-muted-foreground">방법</label>
+                    <select
+                      value={bulkMode}
+                      onChange={(e) => setBulkMode(e.target.value as ActivityProgressMode)}
+                      className="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
+                    >
+                      <option value="in_person">대면</option>
+                      <option value="zoom">ZOOM</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button size="sm" disabled={!bulkStartDate || bulking} onClick={handleBulkGenerate}>
+                    {bulking ? <Loader2 size={14} className="mr-1 animate-spin" /> : <Plus size={14} className="mr-1" />}
+                    {bulkCount}주차 생성
+                  </Button>
+                </div>
+              </div>
+            )}
             <Input
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
@@ -253,23 +366,33 @@ export default function ActivityWeeksPage({
           {progressList.map((p, idx) => {
             const displayWeek = idx + 1;
             const href = `${detailHref}/weeks/${displayWeek}`;
+            const isToday = p.date === todayStr;
             return (
               <Link key={p.id} href={href}>
                 <Card
                   className={cn(
                     "h-full border-2 transition hover:shadow-md",
-                    p.status === "completed"
-                      ? "border-emerald-200 bg-emerald-50/40"
-                      : p.status === "in_progress"
-                        ? "border-amber-200 bg-amber-50/40"
-                        : "border-border",
+                    isToday
+                      ? "border-primary bg-primary/5 ring-2 ring-primary/30"
+                      : p.status === "completed"
+                        ? "border-emerald-200 bg-emerald-50/40"
+                        : p.status === "in_progress"
+                          ? "border-amber-200 bg-amber-50/40"
+                          : "border-border",
                   )}
                 >
                   <CardContent className="space-y-2 py-4">
-                    <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="bg-white text-xs font-bold">
-                        Week {displayWeek}
-                      </Badge>
+                    <div className="flex items-center justify-between gap-1">
+                      <div className="flex items-center gap-1">
+                        <Badge variant="outline" className="bg-white text-xs font-bold">
+                          Week {displayWeek}
+                        </Badge>
+                        {isToday && (
+                          <Badge variant="default" className="bg-primary text-[10px] text-primary-foreground">
+                            오늘
+                          </Badge>
+                        )}
+                      </div>
                       <Badge
                         variant="outline"
                         className={cn("text-[10px]", STATUS_BG[p.status])}
