@@ -789,6 +789,27 @@ export default function DailyClassTimelineWidget() {
     return result.sort((x, y) => x.startMin - y.startMin);
   }, [myActivityIds, activityById, progressByActivity, today, MIN_START, MIN_END, userId]);
 
+  // 시간 미정 활동(오늘) — 진행 일자는 오늘이지만 startTime/endTime 미설정인 항목
+  const undatedDailyActivities = useMemo(() => {
+    if (!userId) return [] as { activity: Activity; progress: ActivityProgress; isLeader: boolean }[];
+    const result: { activity: Activity; progress: ActivityProgress; isLeader: boolean }[] = [];
+    for (const id of myActivityIds) {
+      const a = activityById.get(id);
+      if (!a) continue;
+      const list = progressByActivity[id] ?? [];
+      for (const p of list) {
+        if (p.date !== today) continue;
+        const startMin = parseHHMM(p.startTime);
+        const endMin = parseHHMM(p.endTime);
+        if (startMin !== null && endMin !== null) continue; // 그리드에 이미 배치됨
+        result.push({ activity: a, progress: p, isLeader: a.leaderId === userId });
+      }
+    }
+    return result.sort((x, y) =>
+      (x.progress.startTime ?? "").localeCompare(y.progress.startTime ?? ""),
+    );
+  }, [myActivityIds, activityById, progressByActivity, today, userId]);
+
   // weekly 활동 배치 — 주의 평일(월~금)에 매칭
   const weekDateStrs = useMemo(() => weekDates.map((d) => ymd(d)), [weekDates]);
   const placedWeeklyActivities: Map<string, PlacedActivity[]> = useMemo(() => {
@@ -821,6 +842,26 @@ export default function DailyClassTimelineWidget() {
     for (const arr of byDate.values()) arr.sort((x, y) => x.startMin - y.startMin);
     return byDate;
   }, [weekDateStrs, myActivityIds, activityById, progressByActivity, MIN_START, MIN_END, userId]);
+
+  // 시간 미정 활동(이번 주) — 그리드에 표시 안 되는 항목을 하단 칩 리스트로 노출
+  const undatedWeeklyActivities = useMemo(() => {
+    if (!userId) return [] as { activity: Activity; progress: ActivityProgress; isLeader: boolean }[];
+    const result: { activity: Activity; progress: ActivityProgress; isLeader: boolean }[] = [];
+    const dateSet = new Set(weekDateStrs);
+    for (const id of myActivityIds) {
+      const a = activityById.get(id);
+      if (!a) continue;
+      const list = progressByActivity[id] ?? [];
+      for (const p of list) {
+        if (!dateSet.has(p.date)) continue;
+        const startMin = parseHHMM(p.startTime);
+        const endMin = parseHHMM(p.endTime);
+        if (startMin !== null && endMin !== null) continue;
+        result.push({ activity: a, progress: p, isLeader: a.leaderId === userId });
+      }
+    }
+    return result.sort((x, y) => (x.progress.date ?? "").localeCompare(y.progress.date ?? ""));
+  }, [weekDateStrs, myActivityIds, activityById, progressByActivity, userId]);
 
   // 오늘 종료된 수업들 — 메모·할 일 입력 프롬프트용
   const finishedToday = useMemo(() => {
@@ -1010,7 +1051,9 @@ export default function DailyClassTimelineWidget() {
       {isLoading ? (
         <div className="mt-4 h-72 animate-pulse rounded-lg bg-muted" />
       ) : viewMode === "daily" ? (
-        todayOfferings.length === 0 ? (
+        todayOfferings.length === 0 &&
+        placedDailyActivities.length === 0 &&
+        undatedDailyActivities.length === 0 ? (
           parsedOfferings.length === 0 ? (
             <div className="mt-4 rounded-xl border border-dashed bg-muted/20 p-4 text-sm">
               <p className="font-medium">
@@ -1078,6 +1121,7 @@ export default function DailyClassTimelineWidget() {
             placed={placedDaily}
             placedActivities={placedDailyActivities}
             undated={undated}
+            undatedActivities={undatedDailyActivities}
             hourRows={hourRows}
             totalHeight={totalHeight}
             nowPx={isViewingToday ? nowPx : null}
@@ -1088,6 +1132,7 @@ export default function DailyClassTimelineWidget() {
         <WeeklyGrid
           placedWeekly={placedWeekly}
           placedWeeklyActivities={placedWeeklyActivities}
+          undatedActivities={undatedWeeklyActivities}
           hourRows={hourRows}
           totalHeight={totalHeight}
           actualToday={actualToday}
@@ -1393,6 +1438,7 @@ function DailyGrid({
   placed,
   placedActivities,
   undated,
+  undatedActivities,
   hourRows,
   totalHeight,
   nowPx,
@@ -1401,6 +1447,7 @@ function DailyGrid({
   placed: PlacedClass[];
   placedActivities: PlacedActivity[];
   undated: { offering: CourseOffering; parsed: ParsedSchedule }[];
+  undatedActivities: { activity: Activity; progress: ActivityProgress; isLeader: boolean }[];
   hourRows: number[];
   totalHeight: number;
   nowPx: number | null;
@@ -1605,6 +1652,49 @@ function DailyGrid({
           </ul>
         </div>
       )}
+
+      {undatedActivities.length > 0 && (
+        <div className="mt-3 rounded-lg border border-dashed border-violet-200 bg-violet-50/40 p-3 text-xs">
+          <p className="font-medium text-violet-800">
+            오늘 학술활동 (시간 미정 · {undatedActivities.length}개)
+          </p>
+          <ul className="mt-1.5 space-y-1">
+            {undatedActivities.map(({ activity, progress, isLeader }) => {
+              const typePath = ACTIVITY_TYPE_PATH[activity.type];
+              return (
+                <li
+                  key={progress.id}
+                  className="flex items-center justify-between gap-2"
+                >
+                  <span className="min-w-0 flex-1 truncate">
+                    <span className="mr-1 inline-flex items-center gap-1 rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700">
+                      {ACTIVITY_TYPE_LABEL[activity.type]} · {progress.week}주차
+                    </span>
+                    <span className="font-medium">{activity.title}</span>
+                    {progress.title && (
+                      <span className="ml-1 text-muted-foreground">· {progress.title}</span>
+                    )}
+                    {progress.startTime && (
+                      <span className="ml-1 text-muted-foreground">({progress.startTime}~)</span>
+                    )}
+                    {isLeader && (
+                      <span className="ml-1 rounded bg-amber-100 px-1 py-0 text-[10px] font-medium text-amber-700">
+                        운영진
+                      </span>
+                    )}
+                  </span>
+                  <Link
+                    href={`/activities/${typePath}/${activity.id}`}
+                    className="shrink-0 text-violet-700 hover:underline"
+                  >
+                    열기 →
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
     </>
   );
 }
@@ -1614,6 +1704,7 @@ function DailyGrid({
 function WeeklyGrid({
   placedWeekly,
   placedWeeklyActivities,
+  undatedActivities,
   hourRows,
   totalHeight,
   actualToday,
@@ -1623,6 +1714,7 @@ function WeeklyGrid({
 }: {
   placedWeekly: Array<{ date: Date; dayIndex: number; items: PlacedClass[] }>;
   placedWeeklyActivities: Map<string, PlacedActivity[]>;
+  undatedActivities: { activity: Activity; progress: ActivityProgress; isLeader: boolean }[];
   hourRows: number[];
   totalHeight: number;
   actualToday: string;
@@ -1632,7 +1724,8 @@ function WeeklyGrid({
 }) {
   const hasAny =
     placedWeekly.some((d) => d.items.length > 0) ||
-    Array.from(placedWeeklyActivities.values()).some((arr) => arr.length > 0);
+    Array.from(placedWeeklyActivities.values()).some((arr) => arr.length > 0) ||
+    undatedActivities.length > 0;
   return (
     <>
       <div className="mt-4 overflow-x-auto">
@@ -1801,6 +1894,46 @@ function WeeklyGrid({
           })}
         </div>
       </div>
+      {undatedActivities.length > 0 && (
+        <div className="mt-3 rounded-lg border border-dashed border-violet-200 bg-violet-50/40 p-3 text-xs">
+          <p className="font-medium text-violet-800">
+            이번 주 학술활동 (시간 미정 · {undatedActivities.length}개)
+          </p>
+          <ul className="mt-1.5 space-y-1">
+            {undatedActivities.map(({ activity, progress, isLeader }) => {
+              const typePath = ACTIVITY_TYPE_PATH[activity.type];
+              return (
+                <li
+                  key={progress.id}
+                  className="flex items-center justify-between gap-2"
+                >
+                  <span className="min-w-0 flex-1 truncate">
+                    <span className="mr-1 inline-flex items-center gap-1 rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700">
+                      {ACTIVITY_TYPE_LABEL[activity.type]} · {progress.week}주차
+                    </span>
+                    <span className="font-medium">{activity.title}</span>
+                    {progress.title && (
+                      <span className="ml-1 text-muted-foreground">· {progress.title}</span>
+                    )}
+                    <span className="ml-1 text-muted-foreground">({progress.date})</span>
+                    {isLeader && (
+                      <span className="ml-1 rounded bg-amber-100 px-1 py-0 text-[10px] font-medium text-amber-700">
+                        운영진
+                      </span>
+                    )}
+                  </span>
+                  <Link
+                    href={`/activities/${typePath}/${activity.id}`}
+                    className="shrink-0 text-violet-700 hover:underline"
+                  >
+                    열기 →
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
       {!hasAny && (
         <p className="mt-4 text-sm text-muted-foreground">
           이번 주 평일에 해당하는 수강과목·학술활동 일정이 없습니다.
