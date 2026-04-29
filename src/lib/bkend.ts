@@ -41,7 +41,7 @@ import type {
   ProfileLike, ProfileView, StudySession,
   ActivityParticipation, Award, ExternalActivity, ContentCreation,
   AlumniThesis, ThesisReference, ThesisClaim,
-  CourseOffering, CourseEnrollment, ClassSession, CourseSessionNote, CourseTodo, SemesterTerm, ComprehensiveExamRecord, CourseReview,
+  CourseOffering, CourseEnrollment, ClassSession, ClassSessionMode, CourseSessionNote, CourseTodo, SemesterTerm, ComprehensiveExamRecord, CourseReview,
   GuideTrack, GuideItem, GuideProgress,
   HostRetrospective, HostActivityType,
   SitePopup,
@@ -1160,6 +1160,55 @@ export const classSessionsApi = {
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<ClassSession>("class_sessions", id, data),
   delete: (id: string) => dataApi.delete("class_sessions", id),
+  saveAttendance: (
+    id: string,
+    payload: {
+      attendedUserIds: string[];
+      attendedStudentIds: string[];
+      absenceNotes: Record<string, string>;
+      attendanceUpdatedBy: string;
+    },
+  ) =>
+    dataApi.update<ClassSession>("class_sessions", id, {
+      ...payload,
+      attendanceUpdatedAt: new Date().toISOString(),
+    }),
+  bulkUpsertAttendance: async (
+    courseOfferingId: string,
+    date: string,
+    payload: {
+      attendedUserIds: string[];
+      attendedStudentIds: string[];
+      absenceNotes: Record<string, string>;
+      attendanceUpdatedBy: string;
+    },
+    fallback: { mode: ClassSessionMode; createdBy: string },
+  ) => {
+    const existing = await dataApi.list<ClassSession>("class_sessions", {
+      "filter[courseOfferingId]": courseOfferingId,
+      "filter[date]": date,
+      limit: 1,
+    });
+    const attendanceUpdatedAt = new Date().toISOString();
+    const target = existing.data[0];
+    if (target) {
+      return dataApi.update<ClassSession>("class_sessions", target.id, {
+        ...payload,
+        attendanceUpdatedAt,
+      });
+    }
+    const now = new Date().toISOString();
+    return dataApi.create<ClassSession>("class_sessions", {
+      courseOfferingId,
+      date,
+      mode: fallback.mode,
+      createdBy: fallback.createdBy,
+      createdAt: now,
+      updatedAt: now,
+      ...payload,
+      attendanceUpdatedAt,
+    });
+  },
 };
 
 // 수업 개인 메모 (수강생이 수업일별로 남기는 메모)

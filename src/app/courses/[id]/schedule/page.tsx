@@ -23,6 +23,8 @@ import {
   courseSessionNotesApi,
   courseTodosApi,
 } from "@/lib/bkend";
+import { AttendanceChecklist } from "@/components/courses/AttendanceChecklist";
+import { summarizeAttendance, isAttendanceEnabled } from "@/lib/attendance";
 import {
   CLASS_SESSION_MODE_LABELS,
   COURSE_TODO_TYPE_LABELS,
@@ -224,6 +226,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
   const [savingNote, setSavingNote] = useState(false);
   const [todoDraft, setTodoDraft] = useState<TodoDraft | null>(null);
   const [savingTodo, setSavingTodo] = useState(false);
+  const [attendanceDate, setAttendanceDate] = useState<string | null>(null);
 
   const isStaff = isStaffOrAbove(user);
 
@@ -952,6 +955,91 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                     </ul>
                   )}
 
+                  {/* 학생 본인 출석 배지 — 회원 연동된 수강생만 */}
+                  {!master && myEnrollment && classDates.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {classDates.map((d) => {
+                        const ses = sessionsByDate.get(d);
+                        const enabled = isAttendanceEnabled(ses?.mode ?? "in_person");
+                        const recorded = !!(
+                          ses?.attendedUserIds || ses?.attendedStudentIds || ses?.attendanceUpdatedAt
+                        );
+                        const present =
+                          (ses?.attendedUserIds ?? []).includes(user?.id ?? "") ||
+                          (ses?.attendedStudentIds ?? []).includes(myEnrollment.id);
+                        const myNote =
+                          ses?.absenceNotes?.[`user:${user?.id}`] ??
+                          ses?.absenceNotes?.[`enrollment:${myEnrollment.id}`];
+                        return (
+                          <div
+                            key={`my-att-${d}`}
+                            className="flex flex-wrap items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1.5"
+                          >
+                            <span className="text-[11px] font-medium text-slate-700">
+                              {d} 내 출석
+                            </span>
+                            {!enabled ? (
+                              <Badge variant="outline" className="border-slate-300 text-[10px] text-slate-600">
+                                비대상
+                              </Badge>
+                            ) : !recorded ? (
+                              <Badge variant="outline" className="border-slate-300 text-[10px] text-slate-600">
+                                미체크
+                              </Badge>
+                            ) : present ? (
+                              <Badge className="bg-emerald-500 text-white text-[10px]">출석</Badge>
+                            ) : (
+                              <Badge className="bg-rose-500 text-white text-[10px]">결석</Badge>
+                            )}
+                            {myNote && (
+                              <span className="text-[11px] text-muted-foreground">사유: {myNote}</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* 출석 체크 (운영진/조교 전용) */}
+                  {master && classDates.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {classDates.map((d) => {
+                        const ses = sessionsByDate.get(d);
+                        const mode = ses?.mode ?? "in_person";
+                        const enabled = isAttendanceEnabled(mode);
+                        const sum = summarizeAttendance(ses, enrollmentsRes?.data ?? []);
+                        return (
+                          <div
+                            key={`att-${d}`}
+                            className="flex flex-wrap items-center gap-2 rounded-md border border-emerald-100 bg-emerald-50/30 px-2 py-1.5"
+                          >
+                            <span className="text-[11px] font-medium text-emerald-800">
+                              {d} 출석
+                            </span>
+                            {sum.total > 0 ? (
+                              <span className="text-[11px] text-slate-600">
+                                {sum.unmarked > 0
+                                  ? `미체크 (${sum.total}명)`
+                                  : `${sum.attended}/${sum.total} 출석 · 결석 ${sum.absent}`}
+                              </span>
+                            ) : (
+                              <span className="text-[11px] text-amber-700">수강생 없음</span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setAttendanceDate(d)}
+                              disabled={!enabled || sum.total === 0}
+                              className="ml-auto inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-white px-2 py-0.5 text-[11px] font-medium text-emerald-700 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
+                              title={!enabled ? "비대면·휴강·과제 회차는 비활성화" : ""}
+                            >
+                              {sum.unmarked > 0 ? "출석 체크" : "출석 수정"}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
                   {/* 개인 메모 — 항상 표시 (인라인 추가 버튼) */}
                   <div className="mt-3 rounded-md border border-blue-100 bg-blue-50/30 p-2">
                     <div className="mb-1.5 flex items-center justify-between">
@@ -1401,6 +1489,21 @@ function ScheduleContent({ courseId }: { courseId: string }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 출석 체크 모달 (운영진/조교 전용) */}
+      {master && attendanceDate && user && (
+        <AttendanceChecklist
+          open={!!attendanceDate}
+          onOpenChange={(next) => !next && setAttendanceDate(null)}
+          courseOfferingId={courseId}
+          date={attendanceDate}
+          session={(sessionsRes?.data ?? []).find(
+            (s) => s.date === attendanceDate,
+          )}
+          enrollments={enrollmentsRes?.data ?? []}
+          actorUserId={user.id}
+        />
+      )}
     </div>
   );
 }

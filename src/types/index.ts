@@ -2090,6 +2090,16 @@ export interface ClassSession {
   /** 줌 링크/외부 링크 */
   link?: string;
   notes?: string;
+  /** 출석한 수강생 userId (CourseEnrollment.userId 보유분) */
+  attendedUserIds?: string[];
+  /** userId 미연동 외부 수강생용 — CourseEnrollment.id */
+  attendedStudentIds?: string[];
+  /** 결석 사유 메모 — key 형식: "user:<uid>" 또는 "enrollment:<id>" */
+  absenceNotes?: Record<string, string>;
+  /** 마지막 출석 저장 시각 ISO */
+  attendanceUpdatedAt?: string;
+  /** 마지막 출석 저장자 userId */
+  attendanceUpdatedBy?: string;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
