@@ -454,11 +454,14 @@ export const activitiesApi = {
 
 // ── 대외학술대회 시간표 (v3) ──
 export const conferenceProgramsApi = {
-  /** 활동에 연결된 프로그램 (보통 1개) */
+  /**
+   * 활동에 연결된 프로그램 (보통 1개)
+   * 복합 인덱스 회피: filter[activityId]만 사용. (activityId, createdAt DESC) 인덱스가 없어
+   * sort 옵션을 함께 보내면 silent empty 반환 → 학술대회 프로그램이 안 보이는 버그 유발.
+   */
   listByActivity: (activityId: string) =>
     dataApi.list<ConferenceProgram>("conference_programs", {
       "filter[activityId]": activityId,
-      sort: "createdAt:desc",
       limit: 10,
     }),
   get: (id: string) => dataApi.get<ConferenceProgram>("conference_programs", id),

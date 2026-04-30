@@ -1111,6 +1111,19 @@ export const EXTERNAL_PARTICIPANT_TYPE_COLORS: Record<ExternalParticipantType, s
   attendee: "bg-slate-100 text-slate-700",
 };
 
+/** 발표자 신청 시 발표 유형 (학술대회 발표 트랙 분류) */
+export type SpeakerSubmissionType = "paper" | "poster" | "media";
+export const SPEAKER_SUBMISSION_TYPE_LABELS: Record<SpeakerSubmissionType, string> = {
+  paper: "논문",
+  poster: "포스터",
+  media: "미디어전",
+};
+export const SPEAKER_SUBMISSION_TYPE_COLORS: Record<SpeakerSubmissionType, string> = {
+  paper: "bg-violet-50 text-violet-700",
+  poster: "bg-amber-50 text-amber-700",
+  media: "bg-rose-50 text-rose-700",
+};
+
 export type FormFieldType =
   | "short_text" | "long_text" | "radio" | "checkbox" | "select"
   | "date" | "time" | "datetime" | "email" | "phone" | "url" | "number"
@@ -1170,7 +1183,7 @@ export interface Activity { [key: string]: unknown;
   leaderId?: string;
   members?: string[];
   participants?: string[];
-  applicants?: { userId?: string; guestKey?: string; isGuest?: boolean; email?: string; phone?: string; name: string; studentId?: string; answers?: Record<string, string | string[] | { url: string; name: string; size: number; type: string }[]>; appliedAt: string; status: "pending" | "approved" | "rejected"; participantType?: ExternalParticipantType }[];
+  applicants?: { userId?: string; guestKey?: string; isGuest?: boolean; email?: string; phone?: string; name: string; studentId?: string; answers?: Record<string, string | string[] | { url: string; name: string; size: number; type: string }[]>; appliedAt: string; status: "pending" | "approved" | "rejected"; participantType?: ExternalParticipantType; speakerSubmissionType?: SpeakerSubmissionType; speakerPaperTitle?: string }[];
   applicationQuestions?: string[];
   applicationForm?: FormField[];
   registrationMethod?: "open" | "manual";

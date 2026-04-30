@@ -224,7 +224,7 @@ export default function ActivityList({ type, typeLabel, icon, description }: Pro
                 </div>
                 <div className="flex shrink-0 gap-1 self-end sm:self-start">
                   <Link
-                    href={`/academic-admin/${TYPE_TO_PATH[type]}/${a.id}`}
+                    href={`/console/academic/${TYPE_TO_PATH[type]}/${a.id}`}
                     title="운영 페이지 열기"
                     className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 gap-1 text-xs")}
                   >

@@ -25,8 +25,8 @@ import {
 import InlineMeetingTimer from "./InlineMeetingTimer";
 import ActivityConnectedTodos from "./ActivityConnectedTodos";
 import { todayYmdLocal } from "@/lib/dday";
-import type { Activity, ActivityType, ActivityProgress, ActivityProgressMode, FormField, EnrollmentStatus, ExternalParticipantType } from "@/types";
-import { ENROLLMENT_STATUS_LABELS, ACTIVITY_PROGRESS_MODE_LABELS, EXTERNAL_PARTICIPANT_TYPE_LABELS, EXTERNAL_PARTICIPANT_TYPE_COLORS } from "@/types";
+import type { Activity, ActivityType, ActivityProgress, ActivityProgressMode, FormField, EnrollmentStatus, ExternalParticipantType, SpeakerSubmissionType } from "@/types";
+import { ENROLLMENT_STATUS_LABELS, ACTIVITY_PROGRESS_MODE_LABELS, EXTERNAL_PARTICIPANT_TYPE_LABELS, EXTERNAL_PARTICIPANT_TYPE_COLORS, SPEAKER_SUBMISSION_TYPE_LABELS, SPEAKER_SUBMISSION_TYPE_COLORS } from "@/types";
 import { activityProgressApi, progressMeetingsApi } from "@/lib/bkend";
 import { uploadToStorage } from "@/lib/storage";
 import type { UploadedFile } from "@/lib/storage";
@@ -64,6 +64,9 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const [applyPhone, setApplyPhone] = useState("");
   const [applyAnswers, setApplyAnswers] = useState<Record<string, string | string[] | UploadedFile[]>>({});
   const [applyParticipantType, setApplyParticipantType] = useState<ExternalParticipantType>("attendee");
+  const [applySpeakerSubmissionType, setApplySpeakerSubmissionType] = useState<SpeakerSubmissionType>("paper");
+  const [applySpeakerPaperTitle, setApplySpeakerPaperTitle] = useState("");
+  const [applicantsTypeFilter, setApplicantsTypeFilter] = useState<"all" | ExternalParticipantType>("all");
   const [signupCtaOpen, setSignupCtaOpen] = useState(false);
   const [progressTitle, setProgressTitle] = useState("");
   const [progressDate, setProgressDate] = useState("");
@@ -160,15 +163,22 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
     mutationFn: async () => {
       if (!activity) return;
       if (type === "external") {
+        const isSpeaker = applyParticipantType === "speaker";
+        if (isSpeaker && !applySpeakerPaperTitle.trim()) {
+          throw new Error("발표자 신청은 논문/작품 제목이 필요합니다.");
+        }
+        const speakerExtras = isSpeaker
+          ? { speakerSubmissionType: applySpeakerSubmissionType, speakerPaperTitle: applySpeakerPaperTitle.trim() }
+          : {};
         if (user) {
-          const newApplicant = { userId: user.id, name: applyName || user.name, studentId: applyStudentId, email: applyEmail || user.email, phone: applyPhone, answers: Object.keys(applyAnswers).length > 0 ? applyAnswers : undefined, appliedAt: new Date().toISOString(), status: "pending" as const, participantType: applyParticipantType };
+          const newApplicant = { userId: user.id, name: applyName || user.name, studentId: applyStudentId, email: applyEmail || user.email, phone: applyPhone, answers: Object.keys(applyAnswers).length > 0 ? applyAnswers : undefined, appliedAt: new Date().toISOString(), status: "pending" as const, participantType: applyParticipantType, ...speakerExtras };
           await activitiesApi.update(activityId, { applicants: [...applicants, newApplicant] });
         } else {
           if (!applyName.trim() || !applyEmail.trim() || !applyStudentId.trim()) {
             throw new Error("비회원 신청은 이름·학번·이메일이 모두 필요합니다.");
           }
           const guestKey = `guest_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-          const newApplicant = { guestKey, isGuest: true, name: applyName.trim(), studentId: applyStudentId, email: applyEmail.trim().toLowerCase(), phone: applyPhone, answers: Object.keys(applyAnswers).length > 0 ? applyAnswers : undefined, appliedAt: new Date().toISOString(), status: "pending" as const, participantType: applyParticipantType };
+          const newApplicant = { guestKey, isGuest: true, name: applyName.trim(), studentId: applyStudentId, email: applyEmail.trim().toLowerCase(), phone: applyPhone, answers: Object.keys(applyAnswers).length > 0 ? applyAnswers : undefined, appliedAt: new Date().toISOString(), status: "pending" as const, participantType: applyParticipantType, ...speakerExtras };
           await activitiesApi.update(activityId, { applicants: [...applicants, newApplicant] });
         }
       } else {
@@ -459,9 +469,9 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               >
                 <Calendar size={14} /> 학술대회 프로그램 · 내 일정
               </Link>
-              {isStaff && backHref.includes("academic-admin") && (
+              {isStaff && (backHref.includes("academic-admin") || backHref.includes("/console/academic")) && (
                 <Link
-                  href={`/academic-admin/external/${activityId}/program`}
+                  href={`/console/academic/external/${activityId}/program`}
                   className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
                 >
                   <Pencil size={14} /> 시간표 편집
@@ -480,6 +490,8 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                     setApplyStudentId(user?.studentId ?? "");
                     setApplyEmail(user?.email ?? "");
                     setApplyPhone("");
+                    setApplySpeakerSubmissionType("paper");
+                    setApplySpeakerPaperTitle("");
                     setApplyDialog(true);
                   }}>
                     <UserPlus size={16} className="mr-1.5" />참가 신청{!user && " (비회원 가능)"}
@@ -1326,21 +1338,70 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             );
           })()}
 
-          {activeTab === "applicants" && (
-            <div className="rounded-xl border bg-white">
-              {applicants.length === 0 ? (
-                <p className="p-6 text-center text-sm text-muted-foreground">신청 내역이 없습니다.</p>
+          {activeTab === "applicants" && (() => {
+            const filtered = type === "external" && applicantsTypeFilter !== "all"
+              ? applicants.filter((a) => (a.participantType ?? "attendee") === applicantsTypeFilter)
+              : applicants;
+            const counts = {
+              all: applicants.length,
+              speaker: applicants.filter((a) => a.participantType === "speaker").length,
+              volunteer: applicants.filter((a) => a.participantType === "volunteer").length,
+              attendee: applicants.filter((a) => (a.participantType ?? "attendee") === "attendee").length,
+            };
+            return (
+            <div className="space-y-3">
+              {type === "external" && applicants.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 rounded-xl border bg-white p-2">
+                  {([
+                    { v: "all" as const, label: "전체", count: counts.all },
+                    { v: "speaker" as const, label: "발표자", count: counts.speaker },
+                    { v: "volunteer" as const, label: "자원봉사자", count: counts.volunteer },
+                    { v: "attendee" as const, label: "참석", count: counts.attendee },
+                  ]).map((opt) => {
+                    const active = applicantsTypeFilter === opt.v;
+                    const colorCls = opt.v !== "all" ? EXTERNAL_PARTICIPANT_TYPE_COLORS[opt.v] : "";
+                    return (
+                      <button
+                        key={opt.v}
+                        type="button"
+                        onClick={() => setApplicantsTypeFilter(opt.v)}
+                        className={cn(
+                          "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                          active
+                            ? opt.v === "all"
+                              ? "bg-primary text-primary-foreground"
+                              : `${colorCls} ring-2 ring-current ring-offset-1`
+                            : "text-slate-600 hover:bg-muted/60",
+                        )}
+                      >
+                        {opt.label} <span className="ml-1 opacity-70">{opt.count}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              <div className="rounded-xl border bg-white">
+              {filtered.length === 0 ? (
+                <p className="p-6 text-center text-sm text-muted-foreground">
+                  {applicants.length === 0 ? "신청 내역이 없습니다." : "해당 유형의 신청자가 없습니다."}
+                </p>
               ) : (
                 <div className="divide-y">
-                  {applicants.map((a) => {
+                  {filtered.map((a) => {
                     const key = a.userId ?? a.guestKey ?? `${a.name}-${a.appliedAt}`;
+                    const isSpeaker = type === "external" && a.participantType === "speaker";
                     return (
-                    <div key={key} className="flex items-center justify-between px-4 py-3 text-sm">
-                      <div>
+                    <div key={key} className="flex flex-col gap-1.5 px-4 py-3 text-sm sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0 flex-1">
                         <span className="font-medium">{a.name}</span>
                         {type === "external" && (
                           <Badge variant="secondary" className={cn("ml-2 text-[10px]", EXTERNAL_PARTICIPANT_TYPE_COLORS[(a.participantType ?? "attendee") as ExternalParticipantType])}>
                             {EXTERNAL_PARTICIPANT_TYPE_LABELS[(a.participantType ?? "attendee") as ExternalParticipantType]}
+                          </Badge>
+                        )}
+                        {isSpeaker && a.speakerSubmissionType && (
+                          <Badge variant="secondary" className={cn("ml-1 text-[10px]", SPEAKER_SUBMISSION_TYPE_COLORS[a.speakerSubmissionType as SpeakerSubmissionType])}>
+                            {SPEAKER_SUBMISSION_TYPE_LABELS[a.speakerSubmissionType as SpeakerSubmissionType]}
                           </Badge>
                         )}
                         {a.isGuest && <Badge variant="secondary" className="ml-2 bg-slate-100 text-[10px] text-slate-600">비회원</Badge>}
@@ -1349,8 +1410,13 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                         <span className="ml-2 text-xs text-muted-foreground">
                           {new Date(a.appliedAt).toLocaleDateString("ko-KR")}
                         </span>
+                        {isSpeaker && a.speakerPaperTitle && (
+                          <p className="mt-1 truncate text-xs text-slate-600">
+                            <span className="font-medium text-slate-500">제목:</span> {a.speakerPaperTitle}
+                          </p>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex shrink-0 items-center gap-2 sm:self-start">
                         {a.status === "pending" && isStaff && (
                           <>
                             <Button size="sm" className="h-7 gap-1 text-xs" onClick={() => updateApplicantMutation.mutate({ key, status: "approved" })}>
@@ -1416,8 +1482,10 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   );})}
                 </div>
               )}
+              </div>
             </div>
-          )}
+            );
+          })()}
 
           {activeTab === "form-settings" && isStaff && (
             <div className="rounded-xl border bg-white p-6 space-y-4">
@@ -1489,6 +1557,58 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 </div>
               )}
 
+              {type === "external" && (() => {
+                const speakers = applicants.filter((a) => a.participantType === "speaker");
+                if (speakers.length === 0) return null;
+                const subCounts = (["paper", "poster", "media"] as const).map((s) => ({
+                  s, count: speakers.filter((a) => a.speakerSubmissionType === s).length,
+                }));
+                return (
+                  <div className="rounded-xl border bg-white p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold">발표자 신청 현황 ({speakers.length})</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {subCounts.map(({ s, count }) => (
+                        <div key={s} className={cn("rounded-lg p-2.5 text-center", SPEAKER_SUBMISSION_TYPE_COLORS[s])}>
+                          <p className="text-[11px]">{SPEAKER_SUBMISSION_TYPE_LABELS[s]}</p>
+                          <p className="text-lg font-bold">{count}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="overflow-x-auto rounded-lg border">
+                      <table className="w-full min-w-[560px] text-xs">
+                        <thead className="bg-muted/40 text-muted-foreground">
+                          <tr className="text-left">
+                            <th className="px-3 py-2 font-medium">이름</th>
+                            <th className="px-3 py-2 font-medium">발표 유형</th>
+                            <th className="px-3 py-2 font-medium">제목</th>
+                            <th className="px-3 py-2 font-medium">상태</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {speakers.map((a) => {
+                            const k = a.userId ?? a.guestKey ?? `${a.name}-${a.appliedAt}`;
+                            return (
+                              <tr key={k}>
+                                <td className="px-3 py-2 font-medium">{a.name}</td>
+                                <td className="px-3 py-2">
+                                  {a.speakerSubmissionType
+                                    ? <Badge variant="secondary" className={cn("text-[10px]", SPEAKER_SUBMISSION_TYPE_COLORS[a.speakerSubmissionType as SpeakerSubmissionType])}>{SPEAKER_SUBMISSION_TYPE_LABELS[a.speakerSubmissionType as SpeakerSubmissionType]}</Badge>
+                                    : <span className="text-muted-foreground">미지정</span>}
+                                </td>
+                                <td className="px-3 py-2 text-slate-700">{a.speakerPaperTitle ?? <span className="text-muted-foreground">—</span>}</td>
+                                <td className="px-3 py-2">{a.status === "approved" ? "승인" : a.status === "rejected" ? "거절" : "대기"}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* 신청 답변 요약 */}
               {applicationForm.length > 0 && applicants.length > 0 && (
                 <div className="rounded-xl border bg-white p-6">
@@ -1540,9 +1660,9 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               {/* 참여자 목록 CSV 내보내기 */}
               <Button variant="outline" size="sm" onClick={() => {
                 const bom = "\uFEFF";
-                const header = type === "external" ? "이름,학번,참석유형,상태,신청일\n" : "이름,학번,상태,신청일\n";
+                const header = type === "external" ? "이름,학번,참석유형,발표유형,논문제목,상태,신청일\n" : "이름,학번,상태,신청일\n";
                 const rows = applicants.map((a) => type === "external"
-                  ? `"${a.name}","${a.studentId ?? ""}","${EXTERNAL_PARTICIPANT_TYPE_LABELS[(a.participantType ?? "attendee") as ExternalParticipantType]}","${a.status}","${a.appliedAt}"`
+                  ? `"${a.name}","${a.studentId ?? ""}","${EXTERNAL_PARTICIPANT_TYPE_LABELS[(a.participantType ?? "attendee") as ExternalParticipantType]}","${a.speakerSubmissionType ? SPEAKER_SUBMISSION_TYPE_LABELS[a.speakerSubmissionType as SpeakerSubmissionType] : ""}","${(a.speakerPaperTitle ?? "").replace(/"/g, '""')}","${a.status}","${a.appliedAt}"`
                   : `"${a.name}","${a.studentId ?? ""}","${a.status}","${a.appliedAt}"`).join("\n");
                 const blob = new Blob([bom + header + rows], { type: "text/csv" });
                 const url = URL.createObjectURL(blob);
@@ -1669,6 +1789,48 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 );
               })()}
 
+              {applyParticipantType === "speaker" && (
+                <section className="space-y-4 rounded-xl border-2 border-purple-200 bg-purple-50/40 p-4">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-slate-800">
+                      발표 유형 <span className="text-red-500">*</span>
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(["paper", "poster", "media"] as const).map((s) => {
+                        const active = applySpeakerSubmissionType === s;
+                        return (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => setApplySpeakerSubmissionType(s)}
+                            className={cn(
+                              "rounded-lg border-2 px-3 py-2.5 text-center text-sm font-medium transition-all",
+                              active
+                                ? `${SPEAKER_SUBMISSION_TYPE_COLORS[s]} border-current shadow-sm`
+                                : "border-input bg-white text-slate-600 hover:border-primary/40",
+                            )}
+                            aria-pressed={active}
+                          >
+                            {SPEAKER_SUBMISSION_TYPE_LABELS[s]}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-sm font-semibold text-slate-800">
+                      {applySpeakerSubmissionType === "media" ? "작품 제목" : "논문 제목"} <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      value={applySpeakerPaperTitle}
+                      onChange={(e) => setApplySpeakerPaperTitle(e.target.value)}
+                      placeholder={applySpeakerSubmissionType === "media" ? "예: AI 기반 학습환경 인터랙션 데모" : "예: 교육공학 전공 대학원생의 학업 몰입 요인 탐색"}
+                    />
+                    <p className="text-[11px] text-muted-foreground">발표/심사 진행을 위한 식별용 제목입니다. 추후 운영진이 일괄 확인합니다.</p>
+                  </div>
+                </section>
+              )}
+
               <section className="space-y-3 border-t pt-4">
                 <h3 className="text-sm font-semibold text-slate-800">신청자 정보</h3>
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -1712,7 +1874,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 size="lg"
                 className="flex-1 font-semibold sm:flex-none"
                 onClick={() => applyMutation.mutate()}
-                disabled={applyMutation.isPending || !applyName.trim() || (!user && (!applyEmail.trim() || !applyStudentId.trim()))}
+                disabled={applyMutation.isPending || !applyName.trim() || (!user && (!applyEmail.trim() || !applyStudentId.trim())) || (applyParticipantType === "speaker" && !applySpeakerPaperTitle.trim())}
               >
                 {applyMutation.isPending && <Loader2 size={14} className="mr-1 animate-spin" />}신청 제출
               </Button>
