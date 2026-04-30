@@ -32,6 +32,16 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "대상 사용자를 찾을 수 없습니다." }, { status: 404 });
     }
 
+    // ID 토큰 자동 갱신(1h) 시 developer claims가 사라져 revert가 실패하는 버그를 막기 위해
+    // 영구 customClaims로 impersonatedBy를 보관한다. 기존 claims는 보존.
+    const userRecord = await adminAuth.getUser(targetUserId);
+    const existingClaims = userRecord.customClaims ?? {};
+    await adminAuth.setCustomUserClaims(targetUserId, {
+      ...existingClaims,
+      impersonatedBy: authResult.uid,
+    });
+
+    // 즉시 사용 가능한 customToken에도 동일 claim을 함께 실어 보낸다 (refresh 전까지 빠른 경로).
     const token = await adminAuth.createCustomToken(targetUserId, {
       impersonatedBy: authResult.uid,
     });
