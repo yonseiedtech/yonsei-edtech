@@ -13,8 +13,6 @@ import {
   MapPin,
   MessageSquare,
   NotebookPen,
-  QrCode,
-  ScanLine,
   Sparkles,
   Star,
   User as UserIcon,
@@ -324,22 +322,6 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
               title="참석자들의 후기를 세션별로 모아 봅니다"
             >
               <Sparkles className="h-3 w-3" /> 후기 라운드업
-            </Link>
-            {user && (
-              <Link
-                href={`/activities/external/${activityId}/program/checkin`}
-                className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-900 hover:bg-emerald-100"
-                title="세션 입구 QR을 스캔해 참석을 기록합니다"
-              >
-                <ScanLine className="h-3 w-3" /> QR 체크인
-              </Link>
-            )}
-            <Link
-              href={`/activities/external/${activityId}/program/qr`}
-              className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/5 px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/10"
-              title="운영자용: 세션별 QR 인쇄"
-            >
-              <QrCode className="h-3 w-3" /> QR 보드
             </Link>
           </div>
           {user && (
