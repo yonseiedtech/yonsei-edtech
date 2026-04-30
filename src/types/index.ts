@@ -1106,9 +1106,9 @@ export const EXTERNAL_PARTICIPANT_TYPE_LABELS: Record<ExternalParticipantType, s
   attendee: "참석",
 };
 export const EXTERNAL_PARTICIPANT_TYPE_COLORS: Record<ExternalParticipantType, string> = {
-  speaker: "bg-purple-50 text-purple-700",
-  volunteer: "bg-emerald-50 text-emerald-700",
-  attendee: "bg-slate-100 text-slate-700",
+  speaker: "bg-purple-100 text-purple-800 border border-purple-200",
+  volunteer: "bg-emerald-100 text-emerald-800 border border-emerald-200",
+  attendee: "bg-slate-100 text-slate-700 border border-slate-200",
 };
 
 /** 발표자 신청 시 발표 유형 (학술대회 발표 트랙 분류) */
@@ -1227,7 +1227,7 @@ export interface Activity { [key: string]: unknown;
 // ── 대외학술대회 시간표 (v3) ──
 /** 학술대회 세션 카테고리 */
 export type ConferenceSessionCategory =
-  | "keynote" | "symposium" | "panel" | "paper" | "poster"
+  | "keynote" | "symposium" | "panel" | "paper" | "poster" | "media"
   | "workshop" | "networking" | "ceremony" | "break" | "other";
 
 export const CONFERENCE_SESSION_CATEGORY_LABELS: Record<ConferenceSessionCategory, string> = {
@@ -1236,6 +1236,7 @@ export const CONFERENCE_SESSION_CATEGORY_LABELS: Record<ConferenceSessionCategor
   panel: "패널 토의",
   paper: "논문 발표",
   poster: "포스터",
+  media: "미디어전",
   workshop: "워크숍",
   networking: "네트워킹",
   ceremony: "개·폐회식",
@@ -1249,6 +1250,7 @@ export const CONFERENCE_SESSION_CATEGORY_COLORS: Record<ConferenceSessionCategor
   panel: "bg-indigo-100 text-indigo-800 border-indigo-200",
   paper: "bg-emerald-100 text-emerald-800 border-emerald-200",
   poster: "bg-amber-100 text-amber-800 border-amber-200",
+  media: "bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200",
   workshop: "bg-rose-100 text-rose-800 border-rose-200",
   networking: "bg-pink-100 text-pink-800 border-pink-200",
   ceremony: "bg-slate-200 text-slate-800 border-slate-300",

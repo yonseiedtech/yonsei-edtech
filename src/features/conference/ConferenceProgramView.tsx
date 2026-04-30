@@ -75,6 +75,9 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<ConferenceSession["category"] | "all">("all");
   const [onlyMine, setOnlyMine] = useState(false);
+  const [viewMode, setViewMode] = useState<"schedule" | "presenters">("schedule");
+  const [presenterCategoryFilter, setPresenterCategoryFilter] = useState<"all" | "paper" | "poster" | "media">("all");
+  const [presenterSearchQuery, setPresenterSearchQuery] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -361,6 +364,35 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
         </div>
       )}
 
+      {/* 상위 보기 모드: 일자별 프로그램 / 발표자 */}
+      <div className="flex flex-wrap gap-1 rounded-lg border bg-muted/40 p-1">
+        <button
+          type="button"
+          onClick={() => setViewMode("schedule")}
+          className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+            viewMode === "schedule" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:bg-background/60"
+          }`}
+        >
+          일자별 프로그램
+        </button>
+        <button
+          type="button"
+          onClick={() => setViewMode("presenters")}
+          className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+            viewMode === "presenters" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:bg-background/60"
+          }`}
+        >
+          발표자
+          {(() => {
+            const cnt = program.days
+              .flatMap((d) => d.sessions)
+              .filter((s) => s.category === "paper" || s.category === "poster" || s.category === "media").length;
+            return cnt > 0 ? <span className="ml-1.5 text-[10px] text-muted-foreground">({cnt})</span> : null;
+          })()}
+        </button>
+      </div>
+
+      {viewMode === "schedule" && (
       <div className="flex flex-wrap gap-2 border-b">
         {program.days.map((d, i) => {
           const cnt = d.sessions.length;
@@ -379,8 +411,129 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
           );
         })}
       </div>
+      )}
 
-      {day && (
+      {viewMode === "presenters" && (() => {
+        const allPresenterSessions = program.days.flatMap((d) =>
+          d.sessions
+            .filter((s) => s.category === "paper" || s.category === "poster" || s.category === "media")
+            .map((s) => ({ session: s, date: d.date, dayLabel: d.dayLabel })),
+        );
+        const q = presenterSearchQuery.trim().toLowerCase();
+        const filtered = allPresenterSessions
+          .filter(({ session }) => {
+            if (presenterCategoryFilter !== "all" && session.category !== presenterCategoryFilter) return false;
+            if (q) {
+              const hay = [session.title, session.affiliation, ...(session.speakers ?? [])]
+                .filter(Boolean).join(" ").toLowerCase();
+              if (!hay.includes(q)) return false;
+            }
+            return true;
+          })
+          .sort((a, b) => {
+            if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+            return a.session.startTime.localeCompare(b.session.startTime);
+          });
+
+        const counts = {
+          all: allPresenterSessions.length,
+          paper: allPresenterSessions.filter((x) => x.session.category === "paper").length,
+          poster: allPresenterSessions.filter((x) => x.session.category === "poster").length,
+          media: allPresenterSessions.filter((x) => x.session.category === "media").length,
+        };
+
+        return (
+          <div className="space-y-3">
+            <div className="flex flex-col gap-2 rounded-md border bg-muted/30 p-3 sm:flex-row sm:items-center">
+              <input
+                type="search"
+                value={presenterSearchQuery}
+                onChange={(e) => setPresenterSearchQuery(e.target.value)}
+                placeholder="제목·발표자·소속 검색"
+                className="h-8 flex-1 rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setPresenterCategoryFilter("all")}
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${presenterCategoryFilter === "all" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted"}`}
+                >
+                  전체 {counts.all}
+                </button>
+                {(["paper", "poster", "media"] as const).map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setPresenterCategoryFilter(c)}
+                    className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${presenterCategoryFilter === c ? CONFERENCE_SESSION_CATEGORY_COLORS[c] + " ring-2 ring-offset-1" : "bg-background text-muted-foreground hover:bg-muted"}`}
+                  >
+                    {CONFERENCE_SESSION_CATEGORY_LABELS[c]} {counts[c]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {filtered.length === 0 ? (
+              <p className="rounded-md border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
+                조건에 맞는 발표가 없습니다.
+              </p>
+            ) : (
+              <div className="overflow-hidden rounded-md border">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50 text-xs text-muted-foreground">
+                    <tr>
+                      <th className="w-[110px] px-3 py-2 text-left font-medium">발표 구분</th>
+                      <th className="w-[180px] px-3 py-2 text-left font-medium">발표자</th>
+                      <th className="px-3 py-2 text-left font-medium">논문 제목</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {filtered.map(({ session: s, date, dayLabel }) => (
+                      <tr key={s.id} className="align-top hover:bg-muted/20">
+                        <td className="px-3 py-2.5">
+                          <Badge className={`${CONFERENCE_SESSION_CATEGORY_COLORS[s.category]} text-xs`}>
+                            {CONFERENCE_SESSION_CATEGORY_LABELS[s.category]}
+                          </Badge>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="font-medium leading-snug">
+                              {s.speakers && s.speakers.length > 0 ? s.speakers.join(", ") : <span className="text-muted-foreground">미정</span>}
+                            </span>
+                            {s.affiliation && (
+                              <span className="text-xs text-muted-foreground">{s.affiliation}</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="font-medium leading-snug">{s.title}</span>
+                            <span className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                              <span>
+                                <Clock className="mr-1 inline h-3 w-3" />
+                                {dayLabel ?? date} {s.startTime}–{s.endTime}
+                              </span>
+                              {s.location && (
+                                <span>
+                                  <MapPin className="mr-1 inline h-3 w-3" />
+                                  {s.location}
+                                </span>
+                              )}
+                              {s.track && <Badge variant="outline" className="text-[10px]">{s.track}</Badge>}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {viewMode === "schedule" && day && (
         <div className="space-y-3">
           <div className="flex flex-col gap-2 rounded-md border bg-muted/30 p-3 sm:flex-row sm:items-center">
             <input

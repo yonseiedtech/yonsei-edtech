@@ -1048,6 +1048,24 @@ export default function DailyClassTimelineWidget() {
         </div>
       </div>
 
+      {/* 색상 범례 */}
+      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border border-dashed bg-muted/10 px-3 py-2 text-[11px]">
+        <span className="font-medium text-muted-foreground">수업</span>
+        {(Object.keys(CLASS_SESSION_MODE_LABELS) as ClassSessionMode[]).map((m) => (
+          <span key={`cls-${m}`} className="inline-flex items-center gap-1">
+            <span className={cn("inline-block h-2.5 w-2.5 rounded-sm", MODE_BADGE[m])} />
+            <span className="text-muted-foreground">{CLASS_SESSION_MODE_LABELS[m]}</span>
+          </span>
+        ))}
+        <span className="ml-2 font-medium text-muted-foreground">학술활동</span>
+        {(Object.keys(ACTIVITY_PROGRESS_MODE_LABELS) as ActivityProgressMode[]).map((m) => (
+          <span key={`act-${m}`} className="inline-flex items-center gap-1">
+            <span className={cn("inline-block h-2.5 w-2.5 rounded-sm", ACTIVITY_MODE_BADGE[m])} />
+            <span className="text-muted-foreground">{ACTIVITY_PROGRESS_MODE_LABELS[m]}</span>
+          </span>
+        ))}
+      </div>
+
       {isLoading ? (
         <div className="mt-4 h-72 animate-pulse rounded-lg bg-muted" />
       ) : viewMode === "daily" ? (

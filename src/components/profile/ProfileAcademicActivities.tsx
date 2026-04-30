@@ -7,7 +7,7 @@ import { activitiesApi, seminarsApi, attendeesApi } from "@/lib/bkend";
 import { EXTERNAL_PARTICIPANT_TYPE_LABELS, EXTERNAL_PARTICIPANT_TYPE_COLORS } from "@/types";
 import type { Activity, ExternalParticipantType, Seminar, SeminarAttendee, User } from "@/types";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, ChevronRight, Crown, FolderKanban, Globe, Mic, Tag, CalendarRange } from "lucide-react";
+import { BookOpen, ChevronRight, Crown, FolderKanban, Globe, Mic, Tag, CalendarRange, HandHeart, Users } from "lucide-react";
 import { formatDate, cn } from "@/lib/utils";
 import { formatSemester, inferCurrentSemester, type Semester } from "@/lib/semester";
 
@@ -54,15 +54,15 @@ function roleOf(a: Activity, owner: User): RoleInfo | null {
   if (role && role.trim()) {
     return { label: role, kind: "role" };
   }
-  // 3) 대외활동 신청 시 선택한 참석 유형
+  // 3) 대외활동 신청 시 선택한 참석 유형 — 미지정 시 일반 참석으로 폴백
   if (a.type === "external") {
     const ap = a.applicants?.find(
       (x) =>
         (x.userId === owner.id || x.email?.toLowerCase() === owner.email?.toLowerCase()) &&
         x.status !== "rejected",
     );
-    const t = ap?.participantType as ExternalParticipantType | undefined;
-    if (t) return { label: EXTERNAL_PARTICIPANT_TYPE_LABELS[t], kind: "external", type: t };
+    const t = (ap?.participantType as ExternalParticipantType | undefined) ?? "attendee";
+    return { label: EXTERNAL_PARTICIPANT_TYPE_LABELS[t], kind: "external", type: t };
   }
   return null;
 }
@@ -358,7 +358,17 @@ export default function ProfileAcademicActivities({ owner }: Props) {
                                   role.kind === "external" && role.type && EXTERNAL_PARTICIPANT_TYPE_COLORS[role.type],
                                 )}
                               >
-                                {role.kind === "leader" ? <Crown size={9} /> : <Tag size={9} />}
+                                {role.kind === "leader" ? (
+                                  <Crown size={9} />
+                                ) : role.kind === "external" && role.type === "speaker" ? (
+                                  <Mic size={9} />
+                                ) : role.kind === "external" && role.type === "volunteer" ? (
+                                  <HandHeart size={9} />
+                                ) : role.kind === "external" && role.type === "attendee" ? (
+                                  <Users size={9} />
+                                ) : (
+                                  <Tag size={9} />
+                                )}
                                 {role.label}
                               </Badge>
                             )}

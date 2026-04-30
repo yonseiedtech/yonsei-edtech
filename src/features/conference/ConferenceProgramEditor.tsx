@@ -44,7 +44,7 @@ interface Props {
 }
 
 const CATEGORY_OPTIONS: ConferenceSessionCategory[] = [
-  "keynote", "symposium", "panel", "paper", "poster",
+  "keynote", "symposium", "panel", "paper", "poster", "media",
   "workshop", "networking", "ceremony", "break", "other",
 ];
 
