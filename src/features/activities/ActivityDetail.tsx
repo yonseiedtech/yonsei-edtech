@@ -42,7 +42,7 @@ const RECRUIT_LABELS: Record<string, string> = { recruiting: "모집중", closed
 const RECRUIT_LABELS_STUDY: Record<string, string> = { recruiting: "모집중", closed: "모집완료" };
 const RECRUIT_COLORS: Record<string, string> = { recruiting: "bg-green-50 text-green-700", closed: "bg-red-50 text-red-700", in_progress: "bg-amber-50 text-amber-700", completed: "bg-muted text-muted-foreground" };
 
-type Tab = "overview" | "progress" | "staff" | "participants" | "applicants" | "presenters" | "form-settings" | "report" | "settings";
+type Tab = "overview" | "progress" | "staff" | "presenters" | "volunteers" | "participants" | "applicants" | "form-settings" | "report" | "settings";
 
 interface Props {
   activityId: string;
@@ -422,14 +422,16 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const regularPids = participants.filter((pid) => !staffPids.includes(pid));
 
   const speakerApplicants = applicants.filter((a) => a.participantType === "speaker");
+  const volunteerApplicants = applicants.filter((a) => a.participantType === "volunteer");
 
   const TABS: { value: Tab; label: string; show: boolean }[] = [
     { value: "overview", label: "개요", show: true },
     { value: "progress", label: `진행 현황${progressList.length > 0 ? ` (${progressPct}%)` : ""}`, show: !!user && type !== "external" },
     { value: "staff", label: `운영진 (${staffPids.length})`, show: !!user },
+    { value: "presenters", label: `발표자 (${speakerApplicants.length})`, show: type === "external" },
+    { value: "volunteers", label: `자원봉사자 (${volunteerApplicants.length})`, show: type === "external" },
     { value: "participants", label: `참여자 (${regularPids.length})`, show: !!user },
     { value: "applicants", label: `신청현황 (${applicants.length})`, show: !!user && registrationMethod === "open" && (type === "external" || isStaff) },
-    { value: "presenters", label: `발표자 (${speakerApplicants.length})`, show: type === "external" },
     { value: "form-settings", label: "신청 폼 설정", show: registrationMethod === "open" && isStaff },
     { value: "report", label: "리포트", show: isStaff },
     { value: "settings", label: "관리", show: isStaff },
@@ -1577,6 +1579,86 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                               </tr>
                             );
                           })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
+          {activeTab === "volunteers" && (() => {
+            const list = volunteerApplicants;
+            const counts = {
+              all: list.length,
+              approved: list.filter((a) => a.status === "approved").length,
+              pending: list.filter((a) => a.status === "pending").length,
+              rejected: list.filter((a) => a.status === "rejected").length,
+            };
+            const sorted = [...list].sort((a, b) => {
+              const sa = a.status === "approved" ? 0 : a.status === "pending" ? 1 : 2;
+              const sb = b.status === "approved" ? 0 : b.status === "pending" ? 1 : 2;
+              if (sa !== sb) return sa - sb;
+              return (a.appliedAt || "").localeCompare(b.appliedAt || "");
+            });
+            return (
+              <div className="space-y-3">
+                <div className="rounded-xl border bg-white p-4">
+                  <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
+                    <Badge className="bg-slate-100 text-slate-700">전체 {counts.all}</Badge>
+                    <Badge className={EXTERNAL_PARTICIPANT_TYPE_COLORS.volunteer}>{EXTERNAL_PARTICIPANT_TYPE_LABELS.volunteer}</Badge>
+                    <span className="ml-auto text-muted-foreground">
+                      승인 {counts.approved} · 대기 {counts.pending} · 반려 {counts.rejected}
+                    </span>
+                  </div>
+                  {sorted.length === 0 ? (
+                    <p className="rounded-md border border-dashed bg-muted/30 p-8 text-center text-sm text-muted-foreground">
+                      아직 자원봉사자 신청이 없습니다.
+                    </p>
+                  ) : (
+                    <div className="overflow-x-auto rounded-md border">
+                      <table className="w-full text-sm">
+                        <thead className="bg-muted/50 text-xs text-muted-foreground">
+                          <tr>
+                            <th className="w-[180px] px-3 py-2 text-left font-medium">자원봉사자</th>
+                            <th className="w-[120px] px-3 py-2 text-left font-medium">학번</th>
+                            <th className="px-3 py-2 text-left font-medium">신청일</th>
+                            <th className="w-[88px] px-3 py-2 text-left font-medium">상태</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {sorted.map((a) => (
+                            <tr key={`${a.userId ?? a.guestKey ?? a.email ?? a.name}-${a.appliedAt}`} className="align-top hover:bg-muted/20">
+                              <td className="px-3 py-2.5">
+                                <span className="font-medium leading-snug">{a.name || "익명"}</span>
+                              </td>
+                              <td className="px-3 py-2.5">
+                                {a.studentId ? (
+                                  <span className="text-xs text-muted-foreground">{a.studentId}</span>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground/60">—</span>
+                                )}
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <span className="text-xs text-muted-foreground">
+                                  {a.appliedAt ? new Date(a.appliedAt).toLocaleDateString("ko-KR") : "—"}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <Badge
+                                  className={cn(
+                                    "text-[11px]",
+                                    a.status === "approved" && "bg-green-50 text-green-700",
+                                    a.status === "pending" && "bg-amber-50 text-amber-700",
+                                    a.status === "rejected" && "bg-red-50 text-red-700",
+                                  )}
+                                >
+                                  {a.status === "approved" ? "승인" : a.status === "pending" ? "대기" : "반려"}
+                                </Badge>
+                              </td>
+                            </tr>
+                          ))}
                         </tbody>
                       </table>
                     </div>
