@@ -11,6 +11,8 @@ import {
   Lightbulb,
   Variable as VariableIcon,
   Ruler,
+  Plus,
+  Pencil,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +21,8 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/ui/page-header";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { isAtLeast } from "@/lib/permissions";
+import ArchiveItemDialog from "@/components/archive/ArchiveItemDialog";
 import {
   archiveConceptsApi,
   archiveVariablesApi,
@@ -86,6 +90,10 @@ export default function ArchiveTypeListPage() {
   const [favorites, setFavorites] = useState<ArchiveFavorite[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<ArchiveItem | null>(null);
+
+  const canManage = isAtLeast(user, "staff");
 
   if (type !== "concept" && type !== "variable" && type !== "measurement") {
     notFound();
@@ -226,15 +234,29 @@ export default function ArchiveTypeListPage() {
         })}
       </div>
 
-      {/* 검색 */}
-      <div className="mt-6 relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder={`${meta.title} 이름·설명·태그로 검색`}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="pl-9"
-        />
+      {/* 검색 + 새로 추가 */}
+      <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative max-w-md flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder={`${meta.title} 이름·설명·태그로 검색`}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        {canManage && (
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => {
+              setEditTarget(null);
+              setDialogOpen(true);
+            }}
+          >
+            <Plus className="mr-1 h-4 w-4" />새로 추가
+          </Button>
+        )}
       </div>
 
       <div className="mt-2 text-xs text-muted-foreground">
@@ -261,12 +283,40 @@ export default function ArchiveTypeListPage() {
               item={it}
               isFav={favIdSet.has(it.id)}
               canFav={!!user}
+              canEdit={canManage}
               onToggleFav={() => handleToggleFav(it)}
+              onEdit={() => {
+                setEditTarget(it);
+                setDialogOpen(true);
+              }}
               borderClass={meta.borderClass}
             />
           ))
         )}
       </div>
+
+      {canManage && (
+        <ArchiveItemDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          type={type}
+          item={editTarget}
+          userId={user?.id}
+          canDelete={isAtLeast(user, "admin")}
+          onSaved={(saved) => {
+            setItems((prev) => {
+              const idx = prev.findIndex((x) => x.id === saved.id);
+              if (idx === -1) return [saved as ArchiveItem, ...prev];
+              const next = [...prev];
+              next[idx] = saved as ArchiveItem;
+              return next;
+            });
+          }}
+          onDeleted={(id) => {
+            setItems((prev) => prev.filter((x) => x.id !== id));
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -276,14 +326,18 @@ function ArchiveCard({
   item,
   isFav,
   canFav,
+  canEdit,
   onToggleFav,
+  onEdit,
   borderClass,
 }: {
   type: ArchiveItemType;
   item: ArchiveItem;
   isFav: boolean;
   canFav: boolean;
+  canEdit: boolean;
   onToggleFav: () => void;
+  onEdit: () => void;
   borderClass: string;
 }) {
   const altNames = (item as { altNames?: string[] }).altNames ?? [];
@@ -316,21 +370,33 @@ function ArchiveCard({
               </p>
             )}
           </div>
-          {canFav && (
-            <button
-              type="button"
-              onClick={onToggleFav}
-              className={cn(
-                "rounded-md p-1 transition-colors",
-                isFav
-                  ? "text-amber-500 hover:bg-amber-50"
-                  : "text-muted-foreground hover:bg-muted hover:text-amber-500",
-              )}
-              aria-label={isFav ? "관심 해제" : "관심 저장"}
-            >
-              <Star className={cn("h-4 w-4", isFav && "fill-current")} />
-            </button>
-          )}
+          <div className="flex items-center gap-1">
+            {canEdit && (
+              <button
+                type="button"
+                onClick={onEdit}
+                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                aria-label="수정"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+            )}
+            {canFav && (
+              <button
+                type="button"
+                onClick={onToggleFav}
+                className={cn(
+                  "rounded-md p-1 transition-colors",
+                  isFav
+                    ? "text-amber-500 hover:bg-amber-50"
+                    : "text-muted-foreground hover:bg-muted hover:text-amber-500",
+                )}
+                aria-label={isFav ? "관심 해제" : "관심 저장"}
+              >
+                <Star className={cn("h-4 w-4", isFav && "fill-current")} />
+              </button>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="pt-0">

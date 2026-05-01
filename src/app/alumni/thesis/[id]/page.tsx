@@ -26,6 +26,7 @@ import {
 import {
   alumniThesesApi,
   profilesApi,
+  archiveConceptsApi,
   archiveVariablesApi,
   archiveMeasurementsApi,
 } from "@/lib/bkend";
@@ -37,6 +38,7 @@ import { cn } from "@/lib/utils";
 import type {
   AlumniThesis,
   User,
+  ArchiveConcept,
   ArchiveVariable,
   ArchiveMeasurementTool,
 } from "@/types";
@@ -76,6 +78,7 @@ interface EditDraft {
   advisorName: string;
   awardedYearMonth: string;
   keywords: string;
+  conceptIds: string[];
   variableIds: string[];
   measurementIds: string[];
   abstract: string;
@@ -90,6 +93,7 @@ function toDraft(t: AlumniThesis): EditDraft {
     advisorName: t.advisorName ?? "",
     awardedYearMonth: t.awardedYearMonth ?? "",
     keywords: (t.keywords ?? []).join(", "),
+    conceptIds: t.conceptIds ?? [],
     variableIds: t.variableIds ?? [],
     measurementIds: t.measurementIds ?? [],
     abstract: t.abstract ?? "",
@@ -115,21 +119,28 @@ export default function AlumniThesisDetailPage() {
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
   const [readingPending, setReadingPending] = useState(false);
+  const [concepts, setConcepts] = useState<ArchiveConcept[]>([]);
   const [variables, setVariables] = useState<ArchiveVariable[]>([]);
   const [measurements, setMeasurements] = useState<ArchiveMeasurementTool[]>([]);
 
   const inReadingList = !!viewer?.thesisReadingList?.includes(thesis?.id ?? "");
 
   useEffect(() => {
-    if (!canEdit && !thesis?.variableIds?.length && !thesis?.measurementIds?.length) return;
+    const hasLinks =
+      !!thesis?.conceptIds?.length ||
+      !!thesis?.variableIds?.length ||
+      !!thesis?.measurementIds?.length;
+    if (!canEdit && !hasLinks) return;
     let cancelled = false;
     (async () => {
       try {
-        const [v, m] = await Promise.all([
+        const [c, v, m] = await Promise.all([
+          archiveConceptsApi.list(),
           archiveVariablesApi.list(),
           archiveMeasurementsApi.list(),
         ]);
         if (cancelled) return;
+        setConcepts(c.data);
         setVariables(v.data);
         setMeasurements(m.data);
       } catch (err) {
@@ -139,7 +150,7 @@ export default function AlumniThesisDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [canEdit, thesis?.variableIds, thesis?.measurementIds]);
+  }, [canEdit, thesis?.conceptIds, thesis?.variableIds, thesis?.measurementIds]);
 
   useEffect(() => {
     if (!params?.id) return;
@@ -291,6 +302,7 @@ export default function AlumniThesisDetailPage() {
           .split(/[,\n]+/)
           .map((k) => k.trim())
           .filter(Boolean),
+        conceptIds: draft.conceptIds.length > 0 ? draft.conceptIds : null,
         variableIds: draft.variableIds.length > 0 ? draft.variableIds : null,
         measurementIds: draft.measurementIds.length > 0 ? draft.measurementIds : null,
         abstract: draft.abstract.trim() || null,
@@ -457,6 +469,34 @@ export default function AlumniThesisDetailPage() {
                     {k}
                   </Badge>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {thesis.conceptIds && thesis.conceptIds.length > 0 && (
+            <div className="mt-5">
+              <h2 className="text-xs font-semibold text-muted-foreground">개념</h2>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {thesis.conceptIds.map((id) => {
+                  const c = concepts.find((x) => x.id === id);
+                  if (!c) {
+                    return (
+                      <Badge key={id} variant="outline" className="text-xs opacity-60">
+                        ({id.slice(0, 6)}…)
+                      </Badge>
+                    );
+                  }
+                  return (
+                    <Link key={id} href={`/archive/concept/${id}`}>
+                      <Badge
+                        variant="outline"
+                        className={cn("cursor-pointer text-xs", ARCHIVE_ITEM_TYPE_COLORS.concept)}
+                      >
+                        {c.name}
+                      </Badge>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -652,6 +692,18 @@ export default function AlumniThesisDetailPage() {
               </div>
 
               <div className="mt-3">
+                <Field label="개념 (교육공학 아카이브)">
+                  <ArchivePickerField
+                    type="concept"
+                    items={concepts.map((c) => ({ id: c.id, name: c.name }))}
+                    selected={draft.conceptIds}
+                    onChange={(ids) => setDraft({ ...draft, conceptIds: ids })}
+                    emptyHint="아카이브 개념이 없습니다. /console/archive에서 추가하세요."
+                  />
+                </Field>
+              </div>
+
+              <div className="mt-3">
                 <Field label="변인 (교육공학 아카이브)">
                   <ArchivePickerField
                     type="variable"
@@ -768,7 +820,7 @@ function ArchivePickerField({
   onChange,
   emptyHint,
 }: {
-  type: "variable" | "measurement";
+  type: "concept" | "variable" | "measurement";
   items: { id: string; name: string; meta?: string }[];
   selected: string[];
   onChange: (next: string[]) => void;
@@ -805,7 +857,7 @@ function ArchivePickerField({
   return (
     <div className="space-y-2">
       <Input
-        placeholder={`${type === "variable" ? "변인" : "측정도구"} 검색`}
+        placeholder={`${type === "concept" ? "개념" : type === "variable" ? "변인" : "측정도구"} 검색`}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         className="h-8 text-xs"
@@ -825,9 +877,11 @@ function ArchivePickerField({
                   className={cn(
                     "rounded-md border px-2 py-1 text-[11px] transition-colors",
                     active
-                      ? type === "variable"
-                        ? "border-blue-300 bg-blue-100 text-blue-800"
-                        : "border-emerald-300 bg-emerald-100 text-emerald-800"
+                      ? type === "concept"
+                        ? "border-violet-300 bg-violet-100 text-violet-800"
+                        : type === "variable"
+                          ? "border-blue-300 bg-blue-100 text-blue-800"
+                          : "border-emerald-300 bg-emerald-100 text-emerald-800"
                       : "border-muted bg-white text-muted-foreground hover:bg-muted/50",
                   )}
                 >

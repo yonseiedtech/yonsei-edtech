@@ -1836,6 +1836,8 @@ export interface AlumniThesis {
   keywords: string[];
   /** 원본 자유 텍스트 키워드 (정규화 전) */
   keywordsRaw?: string;
+  /** 교육공학 아카이브 개념 ID (archive_concepts) */
+  conceptIds?: string[];
   /** 교육공학 아카이브 변인 ID (archive_variables) */
   variableIds?: string[];
   /** 교육공학 아카이브 측정도구 ID (archive_measurements) */

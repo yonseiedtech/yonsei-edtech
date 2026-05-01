@@ -3,17 +3,21 @@
 import { useEffect, useState } from "react";
 import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Star, ExternalLink, BookText, Network, Tag } from "lucide-react";
+import { ArrowLeft, Star, ExternalLink, BookText, Network, Tag, Pencil, GraduationCap, BookmarkPlus, BookmarkCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { isAtLeast } from "@/lib/permissions";
+import ArchiveItemDialog from "@/components/archive/ArchiveItemDialog";
 import {
   archiveConceptsApi,
   archiveVariablesApi,
   archiveMeasurementsApi,
   archiveFavoritesApi,
+  alumniThesesApi,
+  profilesApi,
 } from "@/lib/bkend";
 import {
   ARCHIVE_ITEM_TYPE_COLORS,
@@ -23,6 +27,7 @@ import {
   type ArchiveVariable,
   type ArchiveMeasurementTool,
   type ArchiveItemType,
+  type AlumniThesis,
 } from "@/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -37,8 +42,14 @@ export default function ArchiveDetailPage() {
   const [variables, setVariables] = useState<ArchiveVariable[]>([]);
   const [measurements, setMeasurements] = useState<ArchiveMeasurementTool[]>([]);
   const [concepts, setConcepts] = useState<ArchiveConcept[]>([]);
+  const [relatedTheses, setRelatedTheses] = useState<AlumniThesis[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFav, setIsFav] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [readingPending, setReadingPending] = useState<string | null>(null);
+
+  const canManage = isAtLeast(user, "staff");
+  const canDelete = isAtLeast(user, "admin");
 
   if (type !== "concept" && type !== "variable" && type !== "measurement") {
     notFound();
@@ -131,6 +142,61 @@ export default function ArchiveDetailPage() {
     };
   }, [user, type, id]);
 
+  // 관련 졸업생 논문 로드 (variableIds/measurementIds/conceptIds로 매칭)
+  useEffect(() => {
+    if (!id || !type) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await alumniThesesApi.list();
+        if (cancelled) return;
+        const key: keyof AlumniThesis =
+          type === "concept" ? "conceptIds" : type === "variable" ? "variableIds" : "measurementIds";
+        const matched = res.data.filter((t) => {
+          const arr = (t[key] as string[] | undefined) ?? [];
+          return arr.includes(id);
+        });
+        setRelatedTheses(matched);
+      } catch (err) {
+        console.error("[archive-detail] related theses load failed", err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [type, id]);
+
+  const handleToggleReading = async (thesisId: string) => {
+    if (!user) {
+      toast.error("로그인이 필요합니다");
+      return;
+    }
+    setReadingPending(thesisId);
+    const current = user.thesisReadingList ?? [];
+    const isInList = current.includes(thesisId);
+    const next = isInList
+      ? current.filter((x) => x !== thesisId)
+      : [...current, thesisId];
+    try {
+      await profilesApi.update(user.id, {
+        thesisReadingList: next.length > 0 ? next : undefined,
+      });
+      const authState = useAuthStore.getState();
+      if (authState.user && authState.user.id === user.id) {
+        authState.setUser({
+          ...authState.user,
+          thesisReadingList: next.length > 0 ? next : undefined,
+        });
+      }
+      toast.success(isInList ? "읽기 리스트에서 제거" : "읽기 리스트에 추가");
+    } catch (err) {
+      console.error("[archive-detail] reading list toggle failed", err);
+      toast.error("읽기 리스트 갱신 실패");
+    } finally {
+      setReadingPending(null);
+    }
+  };
+
   const handleToggleFav = async () => {
     if (!user || !item) {
       toast.error("로그인이 필요합니다");
@@ -215,17 +281,29 @@ export default function ArchiveDetailPage() {
                 </p>
               )}
             </div>
-            {user && (
-              <Button
-                variant={isFav ? "default" : "outline"}
-                size="sm"
-                onClick={handleToggleFav}
-                className={cn(isFav && "bg-amber-500 hover:bg-amber-600 border-amber-500")}
-              >
-                <Star className={cn("mr-1 h-4 w-4", isFav && "fill-current")} />
-                {isFav ? "관심 저장됨" : "관심 저장"}
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {canManage && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditOpen(true)}
+                >
+                  <Pencil className="mr-1 h-4 w-4" />
+                  수정
+                </Button>
+              )}
+              {user && (
+                <Button
+                  variant={isFav ? "default" : "outline"}
+                  size="sm"
+                  onClick={handleToggleFav}
+                  className={cn(isFav && "bg-amber-500 hover:bg-amber-600 border-amber-500")}
+                >
+                  <Star className={cn("mr-1 h-4 w-4", isFav && "fill-current")} />
+                  {isFav ? "관심 저장됨" : "관심 저장"}
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -379,6 +457,102 @@ export default function ArchiveDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* 관련 졸업생 논문 */}
+      <Card className="mt-6">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <GraduationCap className="h-4 w-4 text-muted-foreground" />
+            이 {ARCHIVE_ITEM_TYPE_LABELS[type]}을(를) 활용한 졸업생 논문
+            {relatedTheses.length > 0 && (
+              <span className="text-xs text-muted-foreground font-normal">
+                · {relatedTheses.length}편
+              </span>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {relatedTheses.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              아직 이 {ARCHIVE_ITEM_TYPE_LABELS[type]}과(와) 연결된 졸업생 논문이 없습니다.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {relatedTheses.map((t) => {
+                const inList = !!user?.thesisReadingList?.includes(t.id);
+                return (
+                  <li
+                    key={t.id}
+                    className="flex items-start justify-between gap-3 rounded-md border p-3 hover:bg-muted/40 transition-colors"
+                  >
+                    <Link href={`/alumni/thesis/${t.id}`} className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground line-clamp-2 hover:underline">
+                        {t.title}
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {[t.authorName, t.awardedYearMonth, t.graduationType]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                      {t.keywords && t.keywords.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {t.keywords.slice(0, 5).map((k) => (
+                            <Badge
+                              key={k}
+                              variant="outline"
+                              className="text-[10px] font-normal"
+                            >
+                              {k}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </Link>
+                    {user && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={inList ? "default" : "outline"}
+                        disabled={readingPending === t.id}
+                        onClick={() => handleToggleReading(t.id)}
+                        className={cn(
+                          "shrink-0",
+                          inList && "bg-emerald-600 hover:bg-emerald-700 border-emerald-600",
+                        )}
+                      >
+                        {inList ? (
+                          <BookmarkCheck className="mr-1 h-4 w-4" />
+                        ) : (
+                          <BookmarkPlus className="mr-1 h-4 w-4" />
+                        )}
+                        {inList ? "저장됨" : "읽기 리스트"}
+                      </Button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      {canManage && (
+        <ArchiveItemDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          type={type}
+          item={item}
+          userId={user?.id}
+          canDelete={canDelete}
+          onSaved={(saved) => {
+            setItem(saved);
+          }}
+          onDeleted={() => {
+            // 삭제 후 목록으로
+            window.location.href = `/archive/${type}`;
+          }}
+        />
+      )}
     </div>
   );
 }
