@@ -137,8 +137,15 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
   const watchedUsername = watch("username");
   const watchedSecurityQ = watch("securityQuestionSelect");
   const watchedPassword = watch("password");
+  const watchedEmail = watch("email");
   const watchedActivity = watch("activity") as "" | OccupationType;
   const occLabels = watchedActivity ? OCCUPATION_FIELD_LABELS[watchedActivity] : null;
+
+  // 학번 형식: 정확히 숫자 10자리
+  const isStudentIdFormatValid = /^\d{10}$/.test(watchedUsername || "");
+  // 연세 메일 도메인 확인 (자동 승인 조건)
+  const isYonseiEmail = /@yonsei\.ac\.kr$/i.test((watchedEmail || "").trim());
+  const hasEmailInput = !!(watchedEmail || "").trim();
 
   // 학번에서 입학 시점 추출
   function parseEnrollmentFromStudentId(sid: string) {
@@ -156,8 +163,8 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
   }
 
   async function checkUsernameAvailability() {
-    if (!watchedUsername || watchedUsername.length < 5) {
-      toast.error("학번을 5자 이상 입력하세요.");
+    if (!watchedUsername || !/^\d{10}$/.test(watchedUsername)) {
+      toast.error("학번은 숫자 10자리로 입력하세요.");
       return;
     }
     setCheckingUsername(true);
@@ -411,11 +418,11 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
           <Input
             {...register("username", {
               required: "학번을 입력하세요",
-              minLength: { value: 5, message: "5자 이상 입력하세요" },
-              maxLength: { value: 20, message: "20자 이하로 입력하세요" },
-              pattern: { value: /^[a-zA-Z0-9_]+$/, message: "영문, 숫자, 밑줄(_)만 사용 가능합니다" },
+              pattern: { value: /^\d{10}$/, message: "학번은 숫자 10자리여야 합니다" },
               onChange: () => { setUsernameChecked(false); setUsernameAvailable(false); },
             })}
+            inputMode="numeric"
+            maxLength={10}
             placeholder="예: 2023432001"
             autoComplete="username"
           />
@@ -425,7 +432,7 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
             size="sm"
             className="shrink-0 whitespace-nowrap"
             onClick={checkUsernameAvailability}
-            disabled={checkingUsername || !watchedUsername || watchedUsername.length < 5}
+            disabled={checkingUsername || !isStudentIdFormatValid}
           >
             {checkingUsername ? <Loader2 size={14} className="animate-spin" /> : "가입 확인"}
           </Button>
@@ -435,8 +442,13 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
             ? usernameAvailable
               ? "✓ 사용 가능한 학번입니다."
               : "✗ 이미 가입된 학번입니다."
-            : "로그인 시 아이디로 사용됩니다."}
+            : "숫자 10자리로 입력하세요. 로그인 시 아이디로 사용됩니다."}
         </p>
+        {watchedUsername && !isStudentIdFormatValid && !errors.username && (
+          <p className="mt-1 text-xs text-amber-600">
+            학번은 숫자 10자리여야 합니다 ({watchedUsername.length}/10).
+          </p>
+        )}
         {errors.username && (
           <p className="mt-1 text-xs text-destructive">{errors.username.message}</p>
         )}
@@ -472,6 +484,11 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
         </p>
         {errors.email && (
           <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>
+        )}
+        {hasEmailInput && !errors.email && !isYonseiEmail && (
+          <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800">
+            연세 메일이 아닐 경우 관리자에 의해 확인 후 승인됩니다.
+          </p>
         )}
       </div>
 
