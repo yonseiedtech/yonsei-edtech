@@ -48,6 +48,7 @@ import type {
   DefensePracticeSet, DefenseQuestionTemplate,
   GradLifePosition,
   ConferenceProgram, UserSessionPlan,
+  ArchiveConcept, ArchiveVariable, ArchiveMeasurementTool, ArchiveFavorite, ArchiveItemType,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -264,6 +265,18 @@ export const dataApi = {
 
   delete: async (table: string, id: string): Promise<void> => {
     await deleteDoc(doc(db, table, id));
+  },
+
+  upsert: async <T>(table: string, id: string, data: Record<string, unknown>): Promise<T> => {
+    const ref = doc(db, table, id);
+    const cleaned = stripUndefinedDeep(data);
+    await setDoc(
+      ref,
+      { ...cleaned, createdAt: serverTimestamp(), updatedAt: serverTimestamp() },
+      { merge: true },
+    );
+    const snap = await getDoc(ref);
+    return serializeDoc(snap) as T;
   },
 };
 
@@ -1438,4 +1451,49 @@ export const gradLifePositionsApi = {
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<GradLifePosition>("grad_life_positions", id, data),
   delete: (id: string) => dataApi.delete("grad_life_positions", id),
+};
+
+// ── 교육공학 아카이브 ──
+export const archiveConceptsApi = {
+  list: () => dataApi.list<ArchiveConcept>("archive_concepts", { limit: 500 }),
+  get: (id: string) => dataApi.get<ArchiveConcept>("archive_concepts", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<ArchiveConcept>("archive_concepts", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<ArchiveConcept>("archive_concepts", id, data),
+  delete: (id: string) => dataApi.delete("archive_concepts", id),
+};
+
+export const archiveVariablesApi = {
+  list: () => dataApi.list<ArchiveVariable>("archive_variables", { limit: 500 }),
+  get: (id: string) => dataApi.get<ArchiveVariable>("archive_variables", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<ArchiveVariable>("archive_variables", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<ArchiveVariable>("archive_variables", id, data),
+  delete: (id: string) => dataApi.delete("archive_variables", id),
+};
+
+export const archiveMeasurementsApi = {
+  list: () => dataApi.list<ArchiveMeasurementTool>("archive_measurements", { limit: 500 }),
+  get: (id: string) => dataApi.get<ArchiveMeasurementTool>("archive_measurements", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<ArchiveMeasurementTool>("archive_measurements", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<ArchiveMeasurementTool>("archive_measurements", id, data),
+  delete: (id: string) => dataApi.delete("archive_measurements", id),
+};
+
+export const archiveFavoritesApi = {
+  listByUser: (userId: string) =>
+    dataApi.list<ArchiveFavorite>("archive_favorites", {
+      "filter[userId]": userId,
+      limit: 500,
+    }),
+  upsert: (id: string, data: Record<string, unknown>) =>
+    dataApi.upsert<ArchiveFavorite>("archive_favorites", id, data),
+  delete: (id: string) => dataApi.delete("archive_favorites", id),
+  /** 즐겨찾기 단축 ID — 사용자×아이템 단일성 보장 */
+  makeId: (userId: string, itemType: ArchiveItemType, itemId: string) =>
+    `${userId}_${itemType}_${itemId}`,
 };

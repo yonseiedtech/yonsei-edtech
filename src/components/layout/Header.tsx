@@ -56,6 +56,7 @@ const PUBLIC_NAV: NavGroup[] = [
     items: [
       { href: "/research", label: "연세교육공학 연구 분석" },
       { href: "/alumni/thesis", label: "졸업생 학위논문" },
+      { href: "/archive", label: "교육공학 아카이브" },
       { href: "/mypage/research", label: "내 연구활동" },
     ],
   },

@@ -756,5 +756,34 @@ service cloud.firestore {
       allow create, update: if true;
       allow delete: if isAuthenticated() && isAdmin();
     }
+
+    // ─── 교육공학 아카이브 (Concept / Variable / MeasurementTool) ───
+    // 공개 read (탐색용), staff 이상이 write
+    match /archive_concepts/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAuthenticated() && isStaffOrAbove();
+    }
+    match /archive_variables/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAuthenticated() && isStaffOrAbove();
+    }
+    match /archive_measurements/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAuthenticated() && isStaffOrAbove();
+    }
+
+    // ─── Archive Favorites (관심 저장) ───
+    // 본인만 자신의 즐겨찾기 read/write. ID는 {userId}_{itemType}_{itemId} 형식.
+    match /archive_favorites/{docId} {
+      allow read, list: if isAuthenticated()
+        && (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+    }
   }
 }
