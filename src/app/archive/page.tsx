@@ -1,11 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Library, Search, Star, Network, Tag } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Library,
+  Star,
+  Lightbulb,
+  Variable as VariableIcon,
+  Ruler,
+  ArrowRight,
+  Network,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,60 +26,74 @@ import {
 import {
   ARCHIVE_ITEM_TYPE_COLORS,
   ARCHIVE_ITEM_TYPE_LABELS,
-  VARIABLE_TYPE_LABELS,
-  type ArchiveConcept,
-  type ArchiveVariable,
-  type ArchiveMeasurementTool,
   type ArchiveFavorite,
   type ArchiveItemType,
 } from "@/types";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-type AnyItem = ArchiveConcept | ArchiveVariable | ArchiveMeasurementTool;
-
-function FavoriteStar({
-  type,
-  item,
-  favorites,
-  onToggle,
-}: {
+interface TypeGuide {
   type: ArchiveItemType;
-  item: AnyItem;
-  favorites: Map<string, ArchiveFavorite>;
-  onToggle: (type: ArchiveItemType, item: AnyItem, isFav: boolean) => void;
-}) {
-  const { user } = useAuthStore();
-  const key = `${type}_${item.id}`;
-  const isFav = favorites.has(key);
-  if (!user) return null;
-  return (
-    <button
-      type="button"
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        onToggle(type, item, isFav);
-      }}
-      className={cn(
-        "rounded-full p-1.5 transition-colors hover:bg-amber-50",
-        isFav ? "text-amber-500" : "text-muted-foreground/50",
-      )}
-      aria-label={isFav ? "관심 해제" : "관심 저장"}
-    >
-      <Star className={cn("h-4 w-4", isFav && "fill-current")} />
-    </button>
-  );
+  title: string;
+  oneLiner: string;
+  description: string;
+  examples: string[];
+  icon: typeof Lightbulb;
+  accent: string;
+  borderClass: string;
+  iconBg: string;
+  iconText: string;
 }
 
-export default function ArchivePage() {
+const TYPE_GUIDES: TypeGuide[] = [
+  {
+    type: "concept",
+    title: "개념",
+    oneLiner: "이론·구성개념을 모아둔 출발점",
+    description:
+      "자기효능감, 학습몰입처럼 교육공학 연구에서 자주 다루는 추상적 개념을 정의·별칭·관련 변인과 함께 정리합니다.",
+    examples: ["자기효능감", "학습몰입", "메타인지", "사회적 실재감"],
+    icon: Lightbulb,
+    accent: "violet",
+    borderClass: "border-l-violet-400",
+    iconBg: "bg-violet-100",
+    iconText: "text-violet-700",
+  },
+  {
+    type: "variable",
+    title: "변인",
+    oneLiner: "개념을 측정 가능한 단위로 좁힌 것",
+    description:
+      "개념을 양적 연구에서 다룰 수 있도록 정의한 변인입니다. 인지적·정의적·행동적 등 유형별로 분류하고, 측정 가능한 도구와 연결됩니다.",
+    examples: ["과제 자기효능감", "학습 몰입도", "자기조절학습 전략 사용"],
+    icon: VariableIcon,
+    accent: "blue",
+    borderClass: "border-l-blue-400",
+    iconBg: "bg-blue-100",
+    iconText: "text-blue-700",
+  },
+  {
+    type: "measurement",
+    title: "측정도구",
+    oneLiner: "변인을 실제로 측정하는 검증된 척도",
+    description:
+      "신뢰도·타당도가 검증된 설문/척도. 문항 수, Likert 척도, 저자, 참고문헌, Cronbach α 등을 한눈에 확인하고 외부 자료로 바로 이동할 수 있습니다.",
+    examples: ["GSE-K (Schwarzer, 1995)", "MSLQ", "Flow State Scale"],
+    icon: Ruler,
+    accent: "emerald",
+    borderClass: "border-l-emerald-400",
+    iconBg: "bg-emerald-100",
+    iconText: "text-emerald-700",
+  },
+];
+
+export default function ArchiveLandingPage() {
   const { user } = useAuthStore();
-  const [tab, setTab] = useState<ArchiveItemType>("concept");
-  const [q, setQ] = useState("");
-  const [concepts, setConcepts] = useState<ArchiveConcept[]>([]);
-  const [variables, setVariables] = useState<ArchiveVariable[]>([]);
-  const [measurements, setMeasurements] = useState<ArchiveMeasurementTool[]>([]);
-  const [favorites, setFavorites] = useState<Map<string, ArchiveFavorite>>(new Map());
+  const [counts, setCounts] = useState<Record<ArchiveItemType, number>>({
+    concept: 0,
+    variable: 0,
+    measurement: 0,
+  });
+  const [favorites, setFavorites] = useState<ArchiveFavorite[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -87,12 +107,13 @@ export default function ArchivePage() {
           archiveMeasurementsApi.list(),
         ]);
         if (cancelled) return;
-        setConcepts(c.data);
-        setVariables(v.data);
-        setMeasurements(m.data);
+        setCounts({
+          concept: c.data.length,
+          variable: v.data.length,
+          measurement: m.data.length,
+        });
       } catch (err) {
-        console.error("[archive] load failed", err);
-        toast.error("아카이브 로드 실패");
+        console.error("[archive-landing] count load failed", err);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -104,7 +125,7 @@ export default function ArchivePage() {
 
   useEffect(() => {
     if (!user) {
-      setFavorites(new Map());
+      setFavorites([]);
       return;
     }
     let cancelled = false;
@@ -112,11 +133,9 @@ export default function ArchivePage() {
       try {
         const res = await archiveFavoritesApi.listByUser(user.id);
         if (cancelled) return;
-        const map = new Map<string, ArchiveFavorite>();
-        res.data.forEach((f) => map.set(`${f.itemType}_${f.itemId}`, f));
-        setFavorites(map);
+        setFavorites(res.data);
       } catch (err) {
-        console.error("[archive] favorites load failed", err);
+        console.error("[archive-landing] favorites load failed", err);
       }
     })();
     return () => {
@@ -124,98 +143,136 @@ export default function ArchivePage() {
     };
   }, [user]);
 
-  const handleToggleFavorite = async (
-    type: ArchiveItemType,
-    item: AnyItem,
-    isFav: boolean,
-  ) => {
-    if (!user) {
-      toast.error("로그인이 필요합니다");
-      return;
-    }
-    const id = archiveFavoritesApi.makeId(user.id, type, item.id);
-    const key = `${type}_${item.id}`;
-    try {
-      if (isFav) {
-        await archiveFavoritesApi.delete(id);
-        setFavorites((m) => {
-          const n = new Map(m);
-          n.delete(key);
-          return n;
-        });
-        toast.success("관심 해제");
-      } else {
-        const fav = await archiveFavoritesApi.upsert(id, {
-          userId: user.id,
-          itemType: type,
-          itemId: item.id,
-          itemName: item.name,
-        });
-        setFavorites((m) => new Map(m).set(key, fav));
-        toast.success("관심 저장");
-      }
-    } catch (err) {
-      console.error("[archive] favorite toggle failed", err);
-      toast.error("관심 저장 실패");
-    }
-  };
-
-  const filtered = useMemo(() => {
-    const term = q.trim().toLowerCase();
-    const filterFn = <T extends AnyItem>(items: T[]) => {
-      if (!term) return items;
-      return items.filter((it) => {
-        const blob = [
-          it.name,
-          it.description ?? "",
-          ...((it as { altNames?: string[] }).altNames ?? []),
-          ...((it as { tags?: string[] }).tags ?? []),
-        ]
-          .join(" ")
-          .toLowerCase();
-        return blob.includes(term);
-      });
-    };
-    return {
-      concept: filterFn(concepts),
-      variable: filterFn(variables),
-      measurement: filterFn(measurements),
-    };
-  }, [q, concepts, variables, measurements]);
-
-  const favList = useMemo(() => Array.from(favorites.values()), [favorites]);
-
   return (
-    <div className="container mx-auto max-w-6xl py-8">
+    <div className="container mx-auto max-w-5xl py-8">
       <PageHeader
         icon={Library}
         title="교육공학 아카이브"
         description="개념 · 변인 · 측정도구를 연결고리로 탐색하는 연구 자원 라이브러리"
       />
 
-      {/* 검색 */}
-      <div className="mt-6 relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="개념명 · 변인명 · 측정도구명 · 태그 검색"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          className="pl-9"
-        />
+      {/* 흐름 안내 */}
+      <Card className="mt-6 border-dashed bg-muted/20">
+        <CardContent className="py-5">
+          <div className="flex items-center gap-2 text-sm font-medium mb-2">
+            <Network className="h-4 w-4 text-muted-foreground" />
+            연결 흐름
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <Badge variant="outline" className="bg-violet-50 text-violet-800 border-violet-200">
+              개념
+            </Badge>
+            <ArrowRight className="h-4 w-4 text-muted-foreground" />
+            <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200">
+              변인
+            </Badge>
+            <ArrowRight className="h-4 w-4 text-muted-foreground" />
+            <Badge variant="outline" className="bg-emerald-50 text-emerald-800 border-emerald-200">
+              측정도구
+            </Badge>
+            <span className="ml-2 text-xs text-muted-foreground">
+              어떤 위치에서 시작하든 양방향으로 연결된 다른 항목을 따라갈 수 있습니다.
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 3개 가이드 카드 */}
+      <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+        {TYPE_GUIDES.map((g) => {
+          const Icon = g.icon;
+          return (
+            <Link key={g.type} href={`/archive/${g.type}`} className="group">
+              <Card
+                className={cn(
+                  "h-full border-l-4 transition-all hover:shadow-lg group-hover:-translate-y-0.5",
+                  g.borderClass,
+                )}
+              >
+                <CardHeader className="pb-2">
+                  <div className="flex items-start justify-between">
+                    <div
+                      className={cn(
+                        "inline-flex h-10 w-10 items-center justify-center rounded-lg",
+                        g.iconBg,
+                        g.iconText,
+                      )}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    {loading ? (
+                      <Skeleton className="h-5 w-12" />
+                    ) : (
+                      <span className="text-2xl font-bold tabular-nums text-muted-foreground/80">
+                        {counts[g.type]}
+                      </span>
+                    )}
+                  </div>
+                  <CardTitle className="mt-3 text-lg">{g.title}</CardTitle>
+                  <p className="text-xs text-muted-foreground">{g.oneLiner}</p>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {g.description}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-1">
+                    {g.examples.map((ex) => (
+                      <Badge key={ex} variant="outline" className="text-[10px] font-normal">
+                        {ex}
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="mt-4 flex items-center gap-1 text-sm font-medium text-primary group-hover:underline">
+                    둘러보기
+                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          );
+        })}
       </div>
 
-      {/* 관심 저장 모음 (로그인 시) */}
-      {user && favList.length > 0 && (
+      {/* 사용 가이드 */}
+      <Card className="mt-6">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">사용 가이드</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ol className="list-decimal list-inside space-y-1.5 text-sm text-muted-foreground leading-relaxed">
+            <li>
+              <span className="text-foreground font-medium">개념</span>에서 시작 — 관심 있는
+              이론(예: 자기효능감)을 골라 어떤 변인으로 측정될 수 있는지 확인합니다.
+            </li>
+            <li>
+              <span className="text-foreground font-medium">변인</span>에서 시작 — 본인 연구가
+              어떤 개념과 닿아 있고 어떤 측정도구로 잴 수 있는지 양방향으로 추적합니다.
+            </li>
+            <li>
+              <span className="text-foreground font-medium">측정도구</span>에서 시작 — 신뢰도·문항
+              수·저자가 검증된 척도를 먼저 확인하고, 그 도구가 측정하는 변인·개념을 역으로
+              파악합니다.
+            </li>
+            <li>
+              관심 항목은 <Star className="inline h-3 w-3 text-amber-500 fill-current" />{" "}
+              관심 저장으로 모아두면 다음 방문 때 상단에서 바로 열어볼 수 있습니다.
+            </li>
+          </ol>
+        </CardContent>
+      </Card>
+
+      {/* 즐겨찾기 모음 */}
+      {user && favorites.length > 0 && (
         <Card className="mt-6 border-amber-200 bg-amber-50/40">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <Star className="h-4 w-4 fill-amber-400 text-amber-500" />
-              관심 저장 ({favList.length})
+              내 관심 저장 ({favorites.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-1.5">
-              {favList.map((f) => (
+              {favorites.map((f) => (
                 <Link key={f.id} href={`/archive/${f.itemType}/${f.itemId}`}>
                   <Badge
                     variant="outline"
@@ -232,183 +289,6 @@ export default function ArchivePage() {
           </CardContent>
         </Card>
       )}
-
-      {/* 탭 */}
-      <Tabs
-        value={tab}
-        onValueChange={(v) => setTab(v as ArchiveItemType)}
-        className="mt-6"
-      >
-        <TabsList>
-          <TabsTrigger value="concept">개념 ({concepts.length})</TabsTrigger>
-          <TabsTrigger value="variable">변인 ({variables.length})</TabsTrigger>
-          <TabsTrigger value="measurement">측정도구 ({measurements.length})</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="concept">
-          <ItemGrid
-            type="concept"
-            items={filtered.concept}
-            loading={loading}
-            favorites={favorites}
-            onToggleFavorite={handleToggleFavorite}
-            renderMeta={(c) => {
-              const item = c as ArchiveConcept;
-              return (
-                <span className="text-xs text-muted-foreground">
-                  연결 변인 {item.variableIds?.length ?? 0}
-                </span>
-              );
-            }}
-          />
-        </TabsContent>
-
-        <TabsContent value="variable">
-          <ItemGrid
-            type="variable"
-            items={filtered.variable}
-            loading={loading}
-            favorites={favorites}
-            onToggleFavorite={handleToggleFavorite}
-            renderMeta={(c) => {
-              const item = c as ArchiveVariable;
-              return (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  {item.type && (
-                    <Badge variant="outline" className="text-[10px]">
-                      {VARIABLE_TYPE_LABELS[item.type]}
-                    </Badge>
-                  )}
-                  <span>측정도구 {item.measurementIds?.length ?? 0}</span>
-                </div>
-              );
-            }}
-          />
-        </TabsContent>
-
-        <TabsContent value="measurement">
-          <ItemGrid
-            type="measurement"
-            items={filtered.measurement}
-            loading={loading}
-            favorites={favorites}
-            onToggleFavorite={handleToggleFavorite}
-            renderMeta={(c) => {
-              const item = c as ArchiveMeasurementTool;
-              return (
-                <span className="text-xs text-muted-foreground">
-                  {item.author ? `${item.author} · ` : ""}
-                  {item.itemCount ? `${item.itemCount}문항` : ""}
-                </span>
-              );
-            }}
-          />
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-}
-
-function ItemGrid({
-  type,
-  items,
-  loading,
-  favorites,
-  onToggleFavorite,
-  renderMeta,
-}: {
-  type: ArchiveItemType;
-  items: AnyItem[];
-  loading: boolean;
-  favorites: Map<string, ArchiveFavorite>;
-  onToggleFavorite: (type: ArchiveItemType, item: AnyItem, isFav: boolean) => void;
-  renderMeta: (item: AnyItem) => React.ReactNode;
-}) {
-  if (loading) {
-    return (
-      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-32 w-full" />
-        ))}
-      </div>
-    );
-  }
-  if (items.length === 0) {
-    return (
-      <div className="mt-8 rounded-lg border border-dashed p-12 text-center text-sm text-muted-foreground">
-        등록된 항목이 없습니다.
-      </div>
-    );
-  }
-  return (
-    <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {items.map((item) => {
-        const tags = (item as { tags?: string[] }).tags ?? [];
-        return (
-          <Card
-            key={item.id}
-            className={cn("transition-shadow hover:shadow-md", "border-l-4")}
-            style={{
-              borderLeftColor:
-                type === "concept"
-                  ? "rgb(167 139 250)"
-                  : type === "variable"
-                    ? "rgb(96 165 250)"
-                    : "rgb(52 211 153)",
-            }}
-          >
-            <CardHeader className="pb-2">
-              <div className="flex items-start justify-between gap-2">
-                <Link
-                  href={`/archive/${type}/${item.id}`}
-                  className="flex-1 min-w-0"
-                >
-                  <CardTitle className="text-base hover:underline truncate">
-                    {item.name}
-                  </CardTitle>
-                </Link>
-                <FavoriteStar
-                  type={type}
-                  item={item}
-                  favorites={favorites}
-                  onToggle={onToggleFavorite}
-                />
-              </div>
-              {(item as { altNames?: string[] }).altNames?.length ? (
-                <p className="text-xs text-muted-foreground italic">
-                  {(item as { altNames?: string[] }).altNames!.join(" · ")}
-                </p>
-              ) : null}
-            </CardHeader>
-            <CardContent className="pt-0">
-              {item.description && (
-                <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                  {item.description}
-                </p>
-              )}
-              <div className="flex items-center justify-between gap-2">
-                {renderMeta(item)}
-                <Link href={`/archive/${type}/${item.id}`}>
-                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs">
-                    <Network className="mr-1 h-3 w-3" />
-                    연결 보기
-                  </Button>
-                </Link>
-              </div>
-              {tags.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {tags.slice(0, 4).map((t) => (
-                    <Badge key={t} variant="outline" className="text-[10px]">
-                      <Tag className="mr-0.5 h-2.5 w-2.5" />
-                      {t}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        );
-      })}
     </div>
   );
 }

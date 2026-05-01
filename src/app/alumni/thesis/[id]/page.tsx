@@ -23,12 +23,24 @@ import {
   Bookmark,
   BookmarkCheck,
 } from "lucide-react";
-import { alumniThesesApi, profilesApi } from "@/lib/bkend";
+import {
+  alumniThesesApi,
+  profilesApi,
+  archiveVariablesApi,
+  archiveMeasurementsApi,
+} from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import type { AlumniThesis, User } from "@/types";
+import { cn } from "@/lib/utils";
+import type {
+  AlumniThesis,
+  User,
+  ArchiveVariable,
+  ArchiveMeasurementTool,
+} from "@/types";
+import { ARCHIVE_ITEM_TYPE_COLORS } from "@/types";
 
 function jaccardWithMatches(a: string[], b: string[]): { score: number; matches: string[] } {
   const A = new Map<string, string>();
@@ -64,6 +76,8 @@ interface EditDraft {
   advisorName: string;
   awardedYearMonth: string;
   keywords: string;
+  variableIds: string[];
+  measurementIds: string[];
   abstract: string;
   dcollectionUrl: string;
 }
@@ -76,6 +90,8 @@ function toDraft(t: AlumniThesis): EditDraft {
     advisorName: t.advisorName ?? "",
     awardedYearMonth: t.awardedYearMonth ?? "",
     keywords: (t.keywords ?? []).join(", "),
+    variableIds: t.variableIds ?? [],
+    measurementIds: t.measurementIds ?? [],
     abstract: t.abstract ?? "",
     dcollectionUrl: t.dcollectionUrl ?? "",
   };
@@ -99,8 +115,31 @@ export default function AlumniThesisDetailPage() {
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
   const [readingPending, setReadingPending] = useState(false);
+  const [variables, setVariables] = useState<ArchiveVariable[]>([]);
+  const [measurements, setMeasurements] = useState<ArchiveMeasurementTool[]>([]);
 
   const inReadingList = !!viewer?.thesisReadingList?.includes(thesis?.id ?? "");
+
+  useEffect(() => {
+    if (!canEdit && !thesis?.variableIds?.length && !thesis?.measurementIds?.length) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [v, m] = await Promise.all([
+          archiveVariablesApi.list(),
+          archiveMeasurementsApi.list(),
+        ]);
+        if (cancelled) return;
+        setVariables(v.data);
+        setMeasurements(m.data);
+      } catch (err) {
+        console.error("[alumni-thesis] archive load failed", err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [canEdit, thesis?.variableIds, thesis?.measurementIds]);
 
   useEffect(() => {
     if (!params?.id) return;
@@ -252,6 +291,8 @@ export default function AlumniThesisDetailPage() {
           .split(/[,\n]+/)
           .map((k) => k.trim())
           .filter(Boolean),
+        variableIds: draft.variableIds.length > 0 ? draft.variableIds : null,
+        measurementIds: draft.measurementIds.length > 0 ? draft.measurementIds : null,
         abstract: draft.abstract.trim() || null,
         dcollectionUrl: draft.dcollectionUrl.trim() || null,
       };
@@ -420,6 +461,68 @@ export default function AlumniThesisDetailPage() {
             </div>
           )}
 
+          {thesis.variableIds && thesis.variableIds.length > 0 && (
+            <div className="mt-5">
+              <h2 className="text-xs font-semibold text-muted-foreground">변인</h2>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {thesis.variableIds.map((id) => {
+                  const v = variables.find((x) => x.id === id);
+                  if (!v) {
+                    return (
+                      <Badge key={id} variant="outline" className="text-xs opacity-60">
+                        ({id.slice(0, 6)}…)
+                      </Badge>
+                    );
+                  }
+                  return (
+                    <Link key={id} href={`/archive/variable/${id}`}>
+                      <Badge
+                        variant="outline"
+                        className={cn("cursor-pointer text-xs", ARCHIVE_ITEM_TYPE_COLORS.variable)}
+                      >
+                        {v.name}
+                      </Badge>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {thesis.measurementIds && thesis.measurementIds.length > 0 && (
+            <div className="mt-5">
+              <h2 className="text-xs font-semibold text-muted-foreground">측정도구</h2>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {thesis.measurementIds.map((id) => {
+                  const m = measurements.find((x) => x.id === id);
+                  if (!m) {
+                    return (
+                      <Badge key={id} variant="outline" className="text-xs opacity-60">
+                        ({id.slice(0, 6)}…)
+                      </Badge>
+                    );
+                  }
+                  return (
+                    <Link key={id} href={`/archive/measurement/${id}`}>
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "cursor-pointer text-xs",
+                          ARCHIVE_ITEM_TYPE_COLORS.measurement,
+                        )}
+                      >
+                        {m.name}
+                        {m.author && (
+                          <span className="ml-1 opacity-70">· {m.author}</span>
+                        )}
+                      </Badge>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {thesis.abstract && (
             <div className="mt-6">
               <h2 className="text-sm font-semibold">초록</h2>
@@ -549,6 +652,34 @@ export default function AlumniThesisDetailPage() {
               </div>
 
               <div className="mt-3">
+                <Field label="변인 (교육공학 아카이브)">
+                  <ArchivePickerField
+                    type="variable"
+                    items={variables.map((v) => ({ id: v.id, name: v.name }))}
+                    selected={draft.variableIds}
+                    onChange={(ids) => setDraft({ ...draft, variableIds: ids })}
+                    emptyHint="아카이브 변인이 없습니다. /console/archive에서 추가하세요."
+                  />
+                </Field>
+              </div>
+
+              <div className="mt-3">
+                <Field label="측정도구 (교육공학 아카이브)">
+                  <ArchivePickerField
+                    type="measurement"
+                    items={measurements.map((m) => ({
+                      id: m.id,
+                      name: m.name,
+                      meta: m.author,
+                    }))}
+                    selected={draft.measurementIds}
+                    onChange={(ids) => setDraft({ ...draft, measurementIds: ids })}
+                    emptyHint="아카이브 측정도구가 없습니다. /console/archive에서 추가하세요."
+                  />
+                </Field>
+              </div>
+
+              <div className="mt-3">
                 <Field label="초록">
                   <Textarea
                     value={draft.abstract}
@@ -626,6 +757,91 @@ export default function AlumniThesisDetailPage() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function ArchivePickerField({
+  type,
+  items,
+  selected,
+  onChange,
+  emptyHint,
+}: {
+  type: "variable" | "measurement";
+  items: { id: string; name: string; meta?: string }[];
+  selected: string[];
+  onChange: (next: string[]) => void;
+  emptyHint: string;
+}) {
+  const [query, setQuery] = useState("");
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter(
+      (it) =>
+        it.name.toLowerCase().includes(q) ||
+        (it.meta ?? "").toLowerCase().includes(q),
+    );
+  }, [items, query]);
+  const selectedSet = new Set(selected);
+
+  const toggle = (id: string) => {
+    if (selectedSet.has(id)) {
+      onChange(selected.filter((x) => x !== id));
+    } else {
+      onChange([...selected, id]);
+    }
+  };
+
+  if (items.length === 0) {
+    return (
+      <p className="rounded-md border border-dashed px-3 py-2 text-[11px] text-muted-foreground">
+        {emptyHint}
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <Input
+        placeholder={`${type === "variable" ? "변인" : "측정도구"} 검색`}
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        className="h-8 text-xs"
+      />
+      <div className="max-h-48 overflow-y-auto rounded-md border bg-white p-2">
+        <div className="flex flex-wrap gap-1.5">
+          {filtered.length === 0 ? (
+            <span className="text-[11px] text-muted-foreground">검색 결과 없음</span>
+          ) : (
+            filtered.map((it) => {
+              const active = selectedSet.has(it.id);
+              return (
+                <button
+                  key={it.id}
+                  type="button"
+                  onClick={() => toggle(it.id)}
+                  className={cn(
+                    "rounded-md border px-2 py-1 text-[11px] transition-colors",
+                    active
+                      ? type === "variable"
+                        ? "border-blue-300 bg-blue-100 text-blue-800"
+                        : "border-emerald-300 bg-emerald-100 text-emerald-800"
+                      : "border-muted bg-white text-muted-foreground hover:bg-muted/50",
+                  )}
+                >
+                  {it.name}
+                  {it.meta && <span className="ml-1 opacity-70">· {it.meta}</span>}
+                </button>
+              );
+            })
+          )}
+        </div>
+      </div>
+      <p className="text-[10px] text-muted-foreground">
+        선택됨: {selected.length}개
+      </p>
     </div>
   );
 }
