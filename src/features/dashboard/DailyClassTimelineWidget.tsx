@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { isAtLeast } from "@/lib/permissions";
 import {
   courseEnrollmentsApi,
   courseOfferingsApi,
@@ -49,8 +50,8 @@ import {
 import { cn } from "@/lib/utils";
 
 const DAY_CHARS = ["일", "월", "화", "수", "목", "금", "토"] as const;
-// 주간 그리드는 평일만(월~금)
-const WEEK_DAY_INDICES = [1, 2, 3, 4, 5] as const;
+// 주간 그리드는 월~일 7일 (학술활동/스터디가 주말에도 일반 수업처럼 인라인 표시되도록)
+const WEEK_DAY_INDICES = [1, 2, 3, 4, 5, 6, 0] as const;
 
 const DEFAULT_HOUR_START = 17;
 const DEFAULT_HOUR_END = 24; // 24 = 자정 (00:00)
@@ -256,8 +257,7 @@ export default function DailyClassTimelineWidget() {
       );
     } catch {}
   };
-  const MIN_START = hourStart * 60;
-  const MIN_END = hourEnd * 60;
+  // 사용자 설정 기준 시간 범위 (분 단위) — 실제 그리드 범위는 effHourRange에서 자동 확장
 
   // 수업 종료 후 메모·할 일 입력 Dialog 상태
   const [memoDraft, setMemoDraft] = useState<QuickMemoDraft | null>(null);
@@ -355,12 +355,8 @@ export default function DailyClassTimelineWidget() {
     };
   }, []);
 
-  // 현재 시각 위치 (분 단위)
+  // 현재 시각 위치 (분 단위) — nowPx는 effHourRange 계산 후 다시 정의된다
   const nowMin = currentTime.getHours() * 60 + currentTime.getMinutes();
-  const nowPx =
-    nowMin >= MIN_START && nowMin <= MIN_END
-      ? ((nowMin - MIN_START) / 60) * ROW_HEIGHT_PX
-      : null;
   const nowLabel = `${String(currentTime.getHours()).padStart(2, "0")}:${String(currentTime.getMinutes()).padStart(2, "0")}`;
 
   // 실제 오늘(selectedDate와 무관) — NOW 라인 표시 여부 판별용
@@ -602,108 +598,6 @@ export default function DailyClassTimelineWidget() {
     return map;
   }, [weeklySessionsRes]);
 
-  // daily 배치
-  const placedDaily: PlacedClass[] = useMemo(() => {
-    const result: PlacedClass[] = [];
-    for (const { offering, parsed } of todayOfferings) {
-      if (parsed.startMin === null || parsed.endMin === null) continue;
-      const s = Math.max(MIN_START, parsed.startMin);
-      const e = Math.min(MIN_END, parsed.endMin);
-      if (e <= s) continue;
-      const session = pickLatestSession(dailySessionsByCourse.get(offering.id) ?? []);
-      const mode: ClassSessionMode = session?.mode ?? "in_person";
-      result.push({
-        offering,
-        parsed,
-        session,
-        mode,
-        topPx: ((s - MIN_START) / 60) * ROW_HEIGHT_PX,
-        heightPx: ((e - s) / 60) * ROW_HEIGHT_PX,
-      });
-    }
-    return result;
-  }, [todayOfferings, dailySessionsByCourse, MIN_START, MIN_END]);
-
-  const undated = useMemo(() => {
-    return todayOfferings.filter(
-      ({ parsed }) => parsed.startMin === null || parsed.endMin === null,
-    );
-  }, [todayOfferings]);
-
-  // weekly 배치 — 요일별
-  const placedWeekly: Array<{
-    date: Date;
-    dayIndex: number;
-    items: PlacedClass[];
-  }> = useMemo(() => {
-    return weekDates.map((d) => {
-      const dayIdx = d.getDay();
-      const dateStr = ymd(d);
-      const items: PlacedClass[] = [];
-      for (const { offering, parsed } of parsedOfferings) {
-        if (!parsed.weekdays.includes(dayIdx)) continue;
-        if (parsed.startMin === null || parsed.endMin === null) continue;
-        const s = Math.max(MIN_START, parsed.startMin);
-        const e = Math.min(MIN_END, parsed.endMin);
-        if (e <= s) continue;
-        const sessions = weeklySessionsByDateCourse.get(`${dateStr}__${offering.id}`) ?? [];
-        const session = pickLatestSession(sessions);
-        const mode: ClassSessionMode = session?.mode ?? "in_person";
-        items.push({
-          offering,
-          parsed,
-          session,
-          mode,
-          topPx: ((s - MIN_START) / 60) * ROW_HEIGHT_PX,
-          heightPx: ((e - s) / 60) * ROW_HEIGHT_PX,
-        });
-      }
-      return { date: d, dayIndex: dayIdx, items };
-    });
-  }, [weekDates, parsedOfferings, weeklySessionsByDateCourse, MIN_START, MIN_END]);
-
-  // [Sprint50 debug] 4/30 mode 결정 근거 출력 — root cause 진단용 임시 로그
-  useEffect(() => {
-    if (viewMode !== "weekly") return;
-    const target = "2026-04-30";
-    const dayBlock = placedWeekly.find((w) => ymd(w.date) === target);
-    if (!dayBlock) return;
-    const rawSessions = ((weeklySessionsRes?.data ?? []) as ClassSession[])
-      .filter((s) => s.date === target)
-      .map((s) => ({
-        id: s.id,
-        courseOfferingId: s.courseOfferingId,
-        mode: s.mode,
-        updatedAt: s.updatedAt,
-        createdAt: s.createdAt,
-      }));
-    const placed = dayBlock.items.map((it) => ({
-      courseId: it.offering.id,
-      courseName: it.offering.courseName,
-      mode: it.mode,
-      sessionId: it.session?.id ?? null,
-      sessionMode: it.session?.mode ?? null,
-      sessionUpdatedAt: it.session?.updatedAt ?? null,
-    }));
-    console.warn(
-      "[Sprint50-JSON] 4/30 RAW:",
-      JSON.stringify(rawSessions),
-    );
-    console.warn(
-      "[Sprint50-JSON] 4/30 placed:",
-      JSON.stringify(placed),
-    );
-    console.warn(
-      "[Sprint50-JSON] myOfferingIds:",
-      JSON.stringify(myOfferingIdsForSessions),
-    );
-  }, [
-    viewMode,
-    placedWeekly,
-    weeklySessionsRes,
-    myOfferingIdsForSessions,
-  ]);
-
   // ── Sprint 41a: 학술활동(스터디/프로젝트/대외) 진행현황을 타임라인에 통합 ──
   const { data: allActivitiesRes } = useQuery({
     queryKey: ["my-activities-timeline", userId],
@@ -717,17 +611,20 @@ export default function DailyClassTimelineWidget() {
   });
 
   // 내가 참여중인 활동만 (운영진=leaderId 일치 OR participants OR members 포함)
+  // 관리자(admin 이상)는 모든 학술활동을 기본으로 본다.
+  const isAdmin = isAtLeast(user, "admin");
   const myActivities: Activity[] = useMemo(() => {
     if (!userId) return [];
     const all = (allActivitiesRes?.data ?? []) as Activity[];
     return all.filter((a) => {
       if (a.type !== "study" && a.type !== "project" && a.type !== "external") return false;
+      if (isAdmin) return true;
       const isLeader = a.leaderId === userId;
       const inParticipants = (a.participants ?? []).includes(userId);
       const inMembers = (a.members ?? []).includes(userId);
       return isLeader || inParticipants || inMembers;
     });
-  }, [allActivitiesRes, userId]);
+  }, [allActivitiesRes, userId, isAdmin]);
 
   const myActivityIds = useMemo(() => myActivities.map((a) => a.id), [myActivities]);
   const myActivityIdsKey = myActivityIds.slice().sort().join(",");
@@ -759,7 +656,115 @@ export default function DailyClassTimelineWidget() {
     return m;
   }, [myActivities]);
 
+  // weekly 모드용 — 주(월~일) 날짜 문자열
+  const weekDateStrs = useMemo(() => weekDates.map((d) => ymd(d)), [weekDates]);
+
+  // ── 효과적 시간 범위 계산 ──
+  // 사용자가 설정한 hourStart~hourEnd를 기준으로 하되,
+  // 현재 뷰에 들어오는 수업 + 학술활동의 실제 시작/종료시각이 그 밖에 있으면
+  // 자동으로 범위를 확장해서 모두 그리드 안에 표시한다.
+  const effHourRange = useMemo(() => {
+    let minStart = hourStart * 60;
+    let maxEnd = hourEnd * 60;
+    const consume = (sm: number | null, em: number | null) => {
+      if (sm !== null) minStart = Math.min(minStart, sm);
+      if (em !== null) maxEnd = Math.max(maxEnd, em);
+    };
+    if (viewMode === "daily") {
+      for (const { parsed } of todayOfferings) consume(parsed.startMin, parsed.endMin);
+      for (const id of myActivityIds) {
+        for (const p of progressByActivity[id] ?? []) {
+          if (p.date !== today) continue;
+          consume(parseHHMM(p.startTime), parseHHMM(p.endTime));
+        }
+      }
+    } else {
+      for (const { parsed } of parsedOfferings) consume(parsed.startMin, parsed.endMin);
+      const weekSet = new Set(weekDateStrs);
+      for (const id of myActivityIds) {
+        for (const p of progressByActivity[id] ?? []) {
+          if (!weekSet.has(p.date)) continue;
+          consume(parseHHMM(p.startTime), parseHHMM(p.endTime));
+        }
+      }
+    }
+    const startH = Math.max(0, Math.floor(minStart / 60));
+    const endH = Math.min(24, Math.ceil(maxEnd / 60));
+    // 안전: end > start 보장
+    const safeEnd = endH > startH ? endH : Math.min(24, startH + 1);
+    return { startH, endH: safeEnd, startMin: startH * 60, endMin: safeEnd * 60 };
+  }, [viewMode, hourStart, hourEnd, todayOfferings, parsedOfferings, myActivityIds, progressByActivity, today, weekDateStrs]);
+  const effMinStart = effHourRange.startMin;
+  const effMinEnd = effHourRange.endMin;
+
+  // 현재 시각 위치 (분 단위) — effective range 기준으로 NOW 라인 위치 결정
+  const nowPx =
+    nowMin >= effMinStart && nowMin <= effMinEnd
+      ? ((nowMin - effMinStart) / 60) * ROW_HEIGHT_PX
+      : null;
+
+  // daily 수업 배치
+  const placedDaily: PlacedClass[] = useMemo(() => {
+    const result: PlacedClass[] = [];
+    for (const { offering, parsed } of todayOfferings) {
+      if (parsed.startMin === null || parsed.endMin === null) continue;
+      const s = Math.max(effMinStart, parsed.startMin);
+      const e = Math.min(effMinEnd, parsed.endMin);
+      if (e <= s) continue;
+      const session = pickLatestSession(dailySessionsByCourse.get(offering.id) ?? []);
+      const mode: ClassSessionMode = session?.mode ?? "in_person";
+      result.push({
+        offering,
+        parsed,
+        session,
+        mode,
+        topPx: ((s - effMinStart) / 60) * ROW_HEIGHT_PX,
+        heightPx: ((e - s) / 60) * ROW_HEIGHT_PX,
+      });
+    }
+    return result;
+  }, [todayOfferings, dailySessionsByCourse, effMinStart, effMinEnd]);
+
+  const undated = useMemo(() => {
+    return todayOfferings.filter(
+      ({ parsed }) => parsed.startMin === null || parsed.endMin === null,
+    );
+  }, [todayOfferings]);
+
+  // weekly 수업 배치 — 요일별
+  const placedWeekly: Array<{
+    date: Date;
+    dayIndex: number;
+    items: PlacedClass[];
+  }> = useMemo(() => {
+    return weekDates.map((d) => {
+      const dayIdx = d.getDay();
+      const dateStr = ymd(d);
+      const items: PlacedClass[] = [];
+      for (const { offering, parsed } of parsedOfferings) {
+        if (!parsed.weekdays.includes(dayIdx)) continue;
+        if (parsed.startMin === null || parsed.endMin === null) continue;
+        const s = Math.max(effMinStart, parsed.startMin);
+        const e = Math.min(effMinEnd, parsed.endMin);
+        if (e <= s) continue;
+        const sessions = weeklySessionsByDateCourse.get(`${dateStr}__${offering.id}`) ?? [];
+        const session = pickLatestSession(sessions);
+        const mode: ClassSessionMode = session?.mode ?? "in_person";
+        items.push({
+          offering,
+          parsed,
+          session,
+          mode,
+          topPx: ((s - effMinStart) / 60) * ROW_HEIGHT_PX,
+          heightPx: ((e - s) / 60) * ROW_HEIGHT_PX,
+        });
+      }
+      return { date: d, dayIndex: dayIdx, items };
+    });
+  }, [weekDates, parsedOfferings, weeklySessionsByDateCourse, effMinStart, effMinEnd]);
+
   // daily 활동 배치 — 오늘(today) date 매칭 + 시작/종료시간 있는 것만
+  // 시간 미정 항목은 그리드에 표시 불가 → 활동 페이지에서 직접 확인
   const placedDailyActivities: PlacedActivity[] = useMemo(() => {
     const result: PlacedActivity[] = [];
     for (const id of myActivityIds) {
@@ -771,15 +776,15 @@ export default function DailyClassTimelineWidget() {
         const startMin = parseHHMM(p.startTime);
         const endMin = parseHHMM(p.endTime);
         if (startMin === null || endMin === null) continue;
-        const s = Math.max(MIN_START, startMin);
-        const e = Math.min(MIN_END, endMin);
+        const s = Math.max(effMinStart, startMin);
+        const e = Math.min(effMinEnd, endMin);
         if (e <= s) continue;
         result.push({
           activity: a,
           progress: p,
           startMin,
           endMin,
-          topPx: ((s - MIN_START) / 60) * ROW_HEIGHT_PX,
+          topPx: ((s - effMinStart) / 60) * ROW_HEIGHT_PX,
           heightPx: ((e - s) / 60) * ROW_HEIGHT_PX,
           isLeader: a.leaderId === userId,
           mode: p.mode ?? "in_person",
@@ -787,51 +792,9 @@ export default function DailyClassTimelineWidget() {
       }
     }
     return result.sort((x, y) => x.startMin - y.startMin);
-  }, [myActivityIds, activityById, progressByActivity, today, MIN_START, MIN_END, userId]);
+  }, [myActivityIds, activityById, progressByActivity, today, effMinStart, effMinEnd, userId]);
 
-  // 그리드 외 활동(오늘) — 시간미정 OR 시간외(17~23 범위 밖) 항목 모두 칩으로 노출
-  const undatedDailyActivities = useMemo(() => {
-    if (!userId)
-      return [] as {
-        activity: Activity;
-        progress: ActivityProgress;
-        isLeader: boolean;
-        reason: "untimed" | "out_of_range";
-      }[];
-    const result: {
-      activity: Activity;
-      progress: ActivityProgress;
-      isLeader: boolean;
-      reason: "untimed" | "out_of_range";
-    }[] = [];
-    for (const id of myActivityIds) {
-      const a = activityById.get(id);
-      if (!a) continue;
-      const list = progressByActivity[id] ?? [];
-      for (const p of list) {
-        if (p.date !== today) continue;
-        const startMin = parseHHMM(p.startTime);
-        const endMin = parseHHMM(p.endTime);
-        const isUntimed = startMin === null || endMin === null;
-        const s = !isUntimed ? Math.max(MIN_START, startMin!) : 0;
-        const e = !isUntimed ? Math.min(MIN_END, endMin!) : 0;
-        const isOutOfRange = !isUntimed && e <= s;
-        if (!isUntimed && !isOutOfRange) continue; // 그리드에 정상 배치됨
-        result.push({
-          activity: a,
-          progress: p,
-          isLeader: a.leaderId === userId,
-          reason: isUntimed ? "untimed" : "out_of_range",
-        });
-      }
-    }
-    return result.sort((x, y) =>
-      (x.progress.startTime ?? "").localeCompare(y.progress.startTime ?? ""),
-    );
-  }, [myActivityIds, activityById, progressByActivity, today, MIN_START, MIN_END, userId]);
-
-  // weekly 활동 배치 — 주의 평일(월~금)에 매칭
-  const weekDateStrs = useMemo(() => weekDates.map((d) => ymd(d)), [weekDates]);
+  // weekly 활동 배치 — 주의 월~일 모두 매칭 (주말 활동도 일반 수업처럼 인라인 표시)
   const placedWeeklyActivities: Map<string, PlacedActivity[]> = useMemo(() => {
     const byDate = new Map<string, PlacedActivity[]>();
     for (const ds of weekDateStrs) byDate.set(ds, []);
@@ -844,15 +807,15 @@ export default function DailyClassTimelineWidget() {
         const startMin = parseHHMM(p.startTime);
         const endMin = parseHHMM(p.endTime);
         if (startMin === null || endMin === null) continue;
-        const s = Math.max(MIN_START, startMin);
-        const e = Math.min(MIN_END, endMin);
+        const s = Math.max(effMinStart, startMin);
+        const e = Math.min(effMinEnd, endMin);
         if (e <= s) continue;
         byDate.get(p.date)!.push({
           activity: a,
           progress: p,
           startMin,
           endMin,
-          topPx: ((s - MIN_START) / 60) * ROW_HEIGHT_PX,
+          topPx: ((s - effMinStart) / 60) * ROW_HEIGHT_PX,
           heightPx: ((e - s) / 60) * ROW_HEIGHT_PX,
           isLeader: a.leaderId === userId,
           mode: p.mode ?? "in_person",
@@ -861,59 +824,7 @@ export default function DailyClassTimelineWidget() {
     }
     for (const arr of byDate.values()) arr.sort((x, y) => x.startMin - y.startMin);
     return byDate;
-  }, [weekDateStrs, myActivityIds, activityById, progressByActivity, MIN_START, MIN_END, userId]);
-
-  // 그리드 외 활동(이번 주) — 시간미정 / 시간외(17~23 범위 밖) / 주말(토·일) 모두 칩으로 노출
-  const undatedWeeklyActivities = useMemo(() => {
-    if (!userId)
-      return [] as {
-        activity: Activity;
-        progress: ActivityProgress;
-        isLeader: boolean;
-        reason: "untimed" | "out_of_range" | "weekend";
-      }[];
-    const result: {
-      activity: Activity;
-      progress: ActivityProgress;
-      isLeader: boolean;
-      reason: "untimed" | "out_of_range" | "weekend";
-    }[] = [];
-    // 이번 주 월~일 전체 범위
-    const fullWeekSet = new Set<string>();
-    if (weekDates.length > 0) {
-      const monday = weekDates[0];
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(monday);
-        d.setDate(d.getDate() + i);
-        fullWeekSet.add(ymd(d));
-      }
-    }
-    const weekdaySet = new Set(weekDateStrs); // 월~금만
-    for (const id of myActivityIds) {
-      const a = activityById.get(id);
-      if (!a) continue;
-      const list = progressByActivity[id] ?? [];
-      for (const p of list) {
-        if (!fullWeekSet.has(p.date)) continue;
-        const startMin = parseHHMM(p.startTime);
-        const endMin = parseHHMM(p.endTime);
-        const isWeekend = !weekdaySet.has(p.date);
-        const isUntimed = startMin === null || endMin === null;
-        const s = !isUntimed ? Math.max(MIN_START, startMin!) : 0;
-        const e = !isUntimed ? Math.min(MIN_END, endMin!) : 0;
-        const isOutOfRange = !isUntimed && e <= s;
-        // 그리드에 정상 배치되는 경우는 제외 (평일 + 시간있음 + 17~23 겹침)
-        if (!isWeekend && !isUntimed && !isOutOfRange) continue;
-        const reason: "untimed" | "out_of_range" | "weekend" = isWeekend
-          ? "weekend"
-          : isUntimed
-            ? "untimed"
-            : "out_of_range";
-        result.push({ activity: a, progress: p, isLeader: a.leaderId === userId, reason });
-      }
-    }
-    return result.sort((x, y) => (x.progress.date ?? "").localeCompare(y.progress.date ?? ""));
-  }, [weekDateStrs, weekDates, myActivityIds, activityById, progressByActivity, MIN_START, MIN_END, userId]);
+  }, [weekDateStrs, myActivityIds, activityById, progressByActivity, effMinStart, effMinEnd, userId]);
 
   // 오늘 종료된 수업들 — 메모·할 일 입력 프롬프트용
   const finishedToday = useMemo(() => {
@@ -1009,10 +920,10 @@ export default function DailyClassTimelineWidget() {
   const isLoading = loadingEnrollments || loadingOfferings;
 
   const hourRows = Array.from(
-    { length: hourEnd - hourStart + 1 },
-    (_, i) => hourStart + i,
+    { length: effHourRange.endH - effHourRange.startH + 1 },
+    (_, i) => effHourRange.startH + i,
   );
-  const totalHeight = ROW_HEIGHT_PX * (hourEnd - hourStart);
+  const totalHeight = ROW_HEIGHT_PX * (effHourRange.endH - effHourRange.startH);
 
   const currentWeekContainsToday = weekDates.some((d) => ymd(d) === actualToday);
   const headerTitle =
@@ -1023,11 +934,11 @@ export default function DailyClassTimelineWidget() {
       : currentWeekContainsToday
         ? "이번 주 수업"
         : "선택 주 수업";
-  const hourRangeLabel = `${formatHour(hourStart)}~${formatHour(hourEnd)}`;
+  const hourRangeLabel = `${formatHour(effHourRange.startH)}~${formatHour(effHourRange.endH)}`;
   const headerLabel =
     viewMode === "daily"
       ? `${dateLabel} · ${semesterLabel} · ${hourRangeLabel}`
-      : `${weekDates[0]?.getMonth() + 1}/${weekDates[0]?.getDate()} ~ ${weekDates[4]?.getMonth() + 1}/${weekDates[4]?.getDate()} · ${semesterLabel}`;
+      : `${weekDates[0]?.getMonth() + 1}/${weekDates[0]?.getDate()} ~ ${weekDates[6]?.getMonth() + 1}/${weekDates[6]?.getDate()} · ${semesterLabel}`;
 
   return (
     <div className="rounded-2xl border bg-white p-6">
@@ -1132,8 +1043,7 @@ export default function DailyClassTimelineWidget() {
         <div className="mt-4 h-72 animate-pulse rounded-lg bg-muted" />
       ) : viewMode === "daily" ? (
         todayOfferings.length === 0 &&
-        placedDailyActivities.length === 0 &&
-        undatedDailyActivities.length === 0 ? (
+        placedDailyActivities.length === 0 ? (
           parsedOfferings.length === 0 ? (
             <div className="mt-4 rounded-xl border border-dashed bg-muted/20 p-4 text-sm">
               <p className="font-medium">
@@ -1201,7 +1111,6 @@ export default function DailyClassTimelineWidget() {
             placed={placedDaily}
             placedActivities={placedDailyActivities}
             undated={undated}
-            undatedActivities={undatedDailyActivities}
             hourRows={hourRows}
             totalHeight={totalHeight}
             nowPx={isViewingToday ? nowPx : null}
@@ -1212,7 +1121,6 @@ export default function DailyClassTimelineWidget() {
         <WeeklyGrid
           placedWeekly={placedWeekly}
           placedWeeklyActivities={placedWeeklyActivities}
-          undatedActivities={undatedWeeklyActivities}
           hourRows={hourRows}
           totalHeight={totalHeight}
           actualToday={actualToday}
@@ -1518,7 +1426,6 @@ function DailyGrid({
   placed,
   placedActivities,
   undated,
-  undatedActivities,
   hourRows,
   totalHeight,
   nowPx,
@@ -1527,12 +1434,6 @@ function DailyGrid({
   placed: PlacedClass[];
   placedActivities: PlacedActivity[];
   undated: { offering: CourseOffering; parsed: ParsedSchedule }[];
-  undatedActivities: {
-    activity: Activity;
-    progress: ActivityProgress;
-    isLeader: boolean;
-    reason: "untimed" | "out_of_range";
-  }[];
   hourRows: number[];
   totalHeight: number;
   nowPx: number | null;
@@ -1738,58 +1639,6 @@ function DailyGrid({
         </div>
       )}
 
-      {undatedActivities.length > 0 && (
-        <div className="mt-3 rounded-lg border border-dashed border-violet-200 bg-violet-50/40 p-3 text-xs">
-          <p className="font-medium text-violet-800">
-            오늘 학술활동 (그리드 외 · {undatedActivities.length}개)
-          </p>
-          <ul className="mt-1.5 space-y-1">
-            {undatedActivities.map(({ activity, progress, isLeader, reason }) => {
-              const typePath = ACTIVITY_TYPE_PATH[activity.type];
-              const reasonLabel =
-                reason === "untimed" ? "시간 미정" : "시간표 시간외";
-              return (
-                <li
-                  key={progress.id}
-                  className="flex items-center justify-between gap-2"
-                >
-                  <span className="min-w-0 flex-1 truncate">
-                    <span className="mr-1 inline-flex items-center gap-1 rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700">
-                      {ACTIVITY_TYPE_LABEL[activity.type]} · {progress.week}주차
-                    </span>
-                    <span className="mr-1 inline-flex items-center rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-700">
-                      {reasonLabel}
-                    </span>
-                    <span className="font-medium">{activity.title}</span>
-                    {progress.title && (
-                      <span className="ml-1 text-muted-foreground">· {progress.title}</span>
-                    )}
-                    {progress.startTime && progress.endTime && (
-                      <span className="ml-1 text-muted-foreground">
-                        ({progress.startTime}~{progress.endTime})
-                      </span>
-                    )}
-                    {progress.startTime && !progress.endTime && (
-                      <span className="ml-1 text-muted-foreground">({progress.startTime}~)</span>
-                    )}
-                    {isLeader && (
-                      <span className="ml-1 rounded bg-amber-100 px-1 py-0 text-[10px] font-medium text-amber-700">
-                        운영진
-                      </span>
-                    )}
-                  </span>
-                  <Link
-                    href={`/activities/${typePath}/${activity.id}`}
-                    className="shrink-0 text-violet-700 hover:underline"
-                  >
-                    열기 →
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
     </>
   );
 }
@@ -1799,7 +1648,6 @@ function DailyGrid({
 function WeeklyGrid({
   placedWeekly,
   placedWeeklyActivities,
-  undatedActivities,
   hourRows,
   totalHeight,
   actualToday,
@@ -1809,12 +1657,6 @@ function WeeklyGrid({
 }: {
   placedWeekly: Array<{ date: Date; dayIndex: number; items: PlacedClass[] }>;
   placedWeeklyActivities: Map<string, PlacedActivity[]>;
-  undatedActivities: {
-    activity: Activity;
-    progress: ActivityProgress;
-    isLeader: boolean;
-    reason: "untimed" | "out_of_range" | "weekend";
-  }[];
   hourRows: number[];
   totalHeight: number;
   actualToday: string;
@@ -1824,8 +1666,7 @@ function WeeklyGrid({
 }) {
   const hasAny =
     placedWeekly.some((d) => d.items.length > 0) ||
-    Array.from(placedWeeklyActivities.values()).some((arr) => arr.length > 0) ||
-    undatedActivities.length > 0;
+    Array.from(placedWeeklyActivities.values()).some((arr) => arr.length > 0);
   return (
     <>
       <div className="mt-4 overflow-x-auto">
@@ -1994,67 +1835,9 @@ function WeeklyGrid({
           })}
         </div>
       </div>
-      {undatedActivities.length > 0 && (
-        <div className="mt-3 rounded-lg border border-dashed border-violet-200 bg-violet-50/40 p-3 text-xs">
-          <p className="font-medium text-violet-800">
-            이번 주 학술활동 (그리드 외 · {undatedActivities.length}개)
-          </p>
-          <p className="mt-0.5 text-[10px] text-violet-700/80">
-            주말(토·일) · 시간 미정 · 시간표 시간외 항목 — 시간표 시간 범위를 넓히면 그리드에 표시됩니다.
-          </p>
-          <ul className="mt-1.5 space-y-1">
-            {undatedActivities.map(({ activity, progress, isLeader, reason }) => {
-              const typePath = ACTIVITY_TYPE_PATH[activity.type];
-              const reasonLabel =
-                reason === "weekend"
-                  ? "주말"
-                  : reason === "untimed"
-                    ? "시간 미정"
-                    : "시간표 시간외";
-              return (
-                <li
-                  key={progress.id}
-                  className="flex items-center justify-between gap-2"
-                >
-                  <span className="min-w-0 flex-1 truncate">
-                    <span className="mr-1 inline-flex items-center gap-1 rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700">
-                      {ACTIVITY_TYPE_LABEL[activity.type]} · {progress.week}주차
-                    </span>
-                    <span className="mr-1 inline-flex items-center rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-700">
-                      {reasonLabel}
-                    </span>
-                    <span className="font-medium">{activity.title}</span>
-                    {progress.title && (
-                      <span className="ml-1 text-muted-foreground">· {progress.title}</span>
-                    )}
-                    <span className="ml-1 text-muted-foreground">
-                      ({progress.date}
-                      {progress.startTime && progress.endTime
-                        ? ` ${progress.startTime}~${progress.endTime}`
-                        : ""}
-                      )
-                    </span>
-                    {isLeader && (
-                      <span className="ml-1 rounded bg-amber-100 px-1 py-0 text-[10px] font-medium text-amber-700">
-                        운영진
-                      </span>
-                    )}
-                  </span>
-                  <Link
-                    href={`/activities/${typePath}/${activity.id}`}
-                    className="shrink-0 text-violet-700 hover:underline"
-                  >
-                    열기 →
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
       {!hasAny && (
         <p className="mt-4 text-sm text-muted-foreground">
-          이번 주 평일에 해당하는 수강과목·학술활동 일정이 없습니다.
+          이번 주(월~일)에 해당하는 수강과목·학술활동 일정이 없습니다.
         </p>
       )}
     </>
