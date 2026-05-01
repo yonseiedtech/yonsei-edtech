@@ -22,7 +22,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/ui/page-header";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
-import ArchiveItemDialog from "@/components/archive/ArchiveItemDialog";
 import {
   archiveConceptsApi,
   archiveVariablesApi,
@@ -90,8 +89,6 @@ export default function ArchiveTypeListPage() {
   const [favorites, setFavorites] = useState<ArchiveFavorite[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<ArchiveItem | null>(null);
 
   const canManage = isAtLeast(user, "staff");
 
@@ -246,16 +243,11 @@ export default function ArchiveTypeListPage() {
           />
         </div>
         {canManage && (
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => {
-              setEditTarget(null);
-              setDialogOpen(true);
-            }}
-          >
-            <Plus className="mr-1 h-4 w-4" />새로 추가
-          </Button>
+          <Link href={`/archive/${type}/new`}>
+            <Button type="button" size="sm">
+              <Plus className="mr-1 h-4 w-4" />새로 추가
+            </Button>
+          </Link>
         )}
       </div>
 
@@ -285,38 +277,11 @@ export default function ArchiveTypeListPage() {
               canFav={!!user}
               canEdit={canManage}
               onToggleFav={() => handleToggleFav(it)}
-              onEdit={() => {
-                setEditTarget(it);
-                setDialogOpen(true);
-              }}
               borderClass={meta.borderClass}
             />
           ))
         )}
       </div>
-
-      {canManage && (
-        <ArchiveItemDialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          type={type}
-          item={editTarget}
-          userId={user?.id}
-          canDelete={isAtLeast(user, "admin")}
-          onSaved={(saved) => {
-            setItems((prev) => {
-              const idx = prev.findIndex((x) => x.id === saved.id);
-              if (idx === -1) return [saved as ArchiveItem, ...prev];
-              const next = [...prev];
-              next[idx] = saved as ArchiveItem;
-              return next;
-            });
-          }}
-          onDeleted={(id) => {
-            setItems((prev) => prev.filter((x) => x.id !== id));
-          }}
-        />
-      )}
     </div>
   );
 }
@@ -328,7 +293,6 @@ function ArchiveCard({
   canFav,
   canEdit,
   onToggleFav,
-  onEdit,
   borderClass,
 }: {
   type: ArchiveItemType;
@@ -337,7 +301,6 @@ function ArchiveCard({
   canFav: boolean;
   canEdit: boolean;
   onToggleFav: () => void;
-  onEdit: () => void;
   borderClass: string;
 }) {
   const altNames = (item as { altNames?: string[] }).altNames ?? [];
@@ -372,14 +335,13 @@ function ArchiveCard({
           </div>
           <div className="flex items-center gap-1">
             {canEdit && (
-              <button
-                type="button"
-                onClick={onEdit}
+              <Link
+                href={`/archive/${type}/${item.id}/edit`}
                 className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 aria-label="수정"
               >
                 <Pencil className="h-4 w-4" />
-              </button>
+              </Link>
             )}
             {canFav && (
               <button

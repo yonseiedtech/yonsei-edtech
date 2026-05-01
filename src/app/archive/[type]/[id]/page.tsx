@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
-import ArchiveItemDialog from "@/components/archive/ArchiveItemDialog";
 import {
   archiveConceptsApi,
   archiveVariablesApi,
@@ -45,11 +44,9 @@ export default function ArchiveDetailPage() {
   const [relatedTheses, setRelatedTheses] = useState<AlumniThesis[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFav, setIsFav] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
   const [readingPending, setReadingPending] = useState<string | null>(null);
 
   const canManage = isAtLeast(user, "staff");
-  const canDelete = isAtLeast(user, "admin");
 
   if (type !== "concept" && type !== "variable" && type !== "measurement") {
     notFound();
@@ -283,14 +280,12 @@ export default function ArchiveDetailPage() {
             </div>
             <div className="flex items-center gap-2">
               {canManage && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEditOpen(true)}
-                >
-                  <Pencil className="mr-1 h-4 w-4" />
-                  수정
-                </Button>
+                <Link href={`/archive/${type}/${id}/edit`}>
+                  <Button variant="outline" size="sm">
+                    <Pencil className="mr-1 h-4 w-4" />
+                    수정
+                  </Button>
+                </Link>
               )}
               {user && (
                 <Button
@@ -536,23 +531,6 @@ export default function ArchiveDetailPage() {
         </CardContent>
       </Card>
 
-      {canManage && (
-        <ArchiveItemDialog
-          open={editOpen}
-          onOpenChange={setEditOpen}
-          type={type}
-          item={item}
-          userId={user?.id}
-          canDelete={canDelete}
-          onSaved={(saved) => {
-            setItem(saved);
-          }}
-          onDeleted={() => {
-            // 삭제 후 목록으로
-            window.location.href = `/archive/${type}`;
-          }}
-        />
-      )}
     </div>
   );
 }

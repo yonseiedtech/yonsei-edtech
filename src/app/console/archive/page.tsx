@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Library, Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Library, Plus, Pencil, Trash2, Search, Sparkles, Loader2 } from "lucide-react";
+import { importArchiveSeed } from "@/lib/archive-seed";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -46,8 +47,34 @@ export default function ConsoleArchivePage() {
   const [measurements, setMeasurements] = useState<ArchiveMeasurementTool[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<{ type: ArchiveItemType; item?: AnyItem } | null>(null);
+  const [seeding, setSeeding] = useState(false);
 
   const allowed = isAtLeast(user, "staff");
+
+  const handleSeed = async () => {
+    if (!user) return;
+    if (
+      !confirm(
+        "KCI 등재 논문 기준 기본 시드(개념 8 · 변인 8 · 측정도구 7)를 불러오시겠습니까?\n동일 이름의 항목은 건너뜁니다.",
+      )
+    )
+      return;
+    setSeeding(true);
+    try {
+      const r = await importArchiveSeed(user.id);
+      toast.success(
+        `시드 적재 완료 — 개념 +${r.concepts.created}/스킵 ${r.concepts.skipped}, ` +
+          `변인 +${r.variables.created}/스킵 ${r.variables.skipped}, ` +
+          `측정도구 +${r.measurements.created}/스킵 ${r.measurements.skipped}`,
+      );
+      load();
+    } catch (err) {
+      console.error("[console-archive] seed import failed", err);
+      toast.error(err instanceof Error ? err.message : "시드 적재 실패");
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -112,10 +139,25 @@ export default function ConsoleArchivePage() {
         title="교육공학 아카이브 관리"
         description="개념·변인·측정도구 CRUD"
         actions={
-          <Button onClick={() => setEditing({ type: tab })} size="sm">
-            <Plus className="mr-1 h-4 w-4" />
-            새 {ARCHIVE_ITEM_TYPE_LABELS[tab]}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSeed}
+              disabled={seeding}
+              title="KCI 등재 논문 기준 대표 개념·변인·측정도구를 일괄 적재"
+            >
+              {seeding ? (
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="mr-1 h-4 w-4" />
+              )}
+              기본 시드 불러오기
+            </Button>
+            <Button onClick={() => setEditing({ type: tab })} size="sm">
+              <Plus className="mr-1 h-4 w-4" />새 {ARCHIVE_ITEM_TYPE_LABELS[tab]}
+            </Button>
+          </div>
         }
       />
 
