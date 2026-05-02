@@ -2148,6 +2148,7 @@ export type CourseTodoType =
   | "paper_reading"       // 논문 읽기
   | "paper_writing"       // 논문 작성
   | "presentation_prep"   // 발표 준비
+  | "lecture_review"      // 수업 후기 (cron 자동 생성, 한 줄 후기 → course_reviews 적재)
   | "other";              // 기타
 
 export const COURSE_TODO_TYPE_LABELS: Record<CourseTodoType, string> = {
@@ -2155,6 +2156,7 @@ export const COURSE_TODO_TYPE_LABELS: Record<CourseTodoType, string> = {
   paper_reading: "논문 읽기",
   paper_writing: "논문 작성",
   presentation_prep: "발표 준비",
+  lecture_review: "수업 후기",
   other: "기타",
 };
 
@@ -2163,6 +2165,7 @@ export const COURSE_TODO_TYPE_COLORS: Record<CourseTodoType, string> = {
   paper_reading: "bg-blue-100 text-blue-700",
   paper_writing: "bg-purple-100 text-purple-700",
   presentation_prep: "bg-emerald-100 text-emerald-700",
+  lecture_review: "bg-rose-100 text-rose-700",
   other: "bg-slate-100 text-slate-700",
 };
 
