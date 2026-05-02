@@ -1,6 +1,7 @@
 import { initializeApp, getApps, cert, type App, type ServiceAccount } from "firebase-admin/app";
 import { getAuth, type Auth } from "firebase-admin/auth";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
+import { getMessaging, type Messaging } from "firebase-admin/messaging";
 
 let _app: App | null = null;
 
@@ -31,4 +32,9 @@ export function getAdminAuth(): Auth {
 /** Lazy-initialized Firebase Admin Firestore */
 export function getAdminDb(): Firestore {
   return getFirestore(getAdminApp());
+}
+
+/** Lazy-initialized Firebase Admin Messaging (FCM) — Sprint 53 */
+export function getAdminMessaging(): Messaging {
+  return getMessaging(getAdminApp());
 }

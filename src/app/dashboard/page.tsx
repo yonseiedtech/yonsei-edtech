@@ -20,6 +20,7 @@ import DailyClassTimelineWidget from "@/features/dashboard/DailyClassTimelineWid
 import MyTodosWidget from "@/features/dashboard/MyTodosWidget";
 import TodayTodosPopup from "@/features/dashboard/TodayTodosPopup";
 import NextActionBanner from "@/features/dashboard/NextActionBanner";
+import PushPermissionPrompt from "@/features/dashboard/PushPermissionPrompt";
 import MyAcademicActivitiesWidget from "@/features/dashboard/MyAcademicActivitiesWidget";
 import ComprehensiveExamCountdown from "@/features/dashboard/ComprehensiveExamCountdown";
 import PageHeader from "@/components/ui/page-header";
@@ -109,6 +110,7 @@ function DashboardContent() {
     <div className="py-16">
       <TodayTodosPopup />
       <NextActionBanner />
+      <PushPermissionPrompt />
       <section className="mx-auto mt-3 max-w-6xl px-4">
         <PageHeader
           icon={<LayoutDashboard size={24} />}

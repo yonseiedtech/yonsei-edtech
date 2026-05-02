@@ -23,6 +23,14 @@
     {
       "path": "/api/cron/lecture-review-todos",
       "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/cron/push-class-reminder",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/push-token-cleanup",
+      "schedule": "0 18 * * 6"
     }
   ]
 }

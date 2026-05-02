@@ -785,5 +785,18 @@ service cloud.firestore {
       allow delete: if isAuthenticated()
         && resource.data.userId == request.auth.uid;
     }
+
+    // ─── Push Tokens (Sprint 53) ───
+    // 클라이언트는 직접 read/write 불가 — /api/push/* 엔드포인트(Admin SDK)만 사용.
+    // 모든 클라이언트 요청 차단으로 토큰 노출 방지. 운영진은 콘솔(Firestore)에서 직접 조회.
+    match /push_tokens/{docId} {
+      allow read, write: if false;
+    }
+
+    // ─── Push Logs (Sprint 53) ───
+    // 발송 중복 방지용 — 클라이언트 read/write 차단, 서버(Admin SDK)만 사용.
+    match /push_logs/{docId} {
+      allow read, write: if false;
+    }
   }
 }
