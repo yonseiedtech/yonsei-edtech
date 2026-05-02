@@ -39,6 +39,7 @@ import {
   AlertCircle,
   PenSquare,
   Sparkles,
+  Bell,
 } from "lucide-react";
 import EmptyState from "@/components/ui/empty-state";
 import { useAuth } from "@/features/auth/useAuth";
@@ -633,10 +634,78 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                   )}
                 </div>
               </div>
+              {!readOnly && <NotificationSettingsCard user={user} />}
               {!readOnly && <SelfDeleteSection user={user} onDeleted={() => { logout(); router.push("/"); }} />}
             </>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+/** Sprint 54: 알림 수신 설정 — 현재는 주간 다이제스트 토글만 노출 */
+function NotificationSettingsCard({ user }: { user: User }) {
+  const initial = (user as User & { notificationPrefs?: { weeklyDigest?: boolean } })
+    .notificationPrefs?.weeklyDigest;
+  const [enabled, setEnabled] = useState<boolean>(initial !== false);
+  const [busy, setBusy] = useState(false);
+
+  async function toggle() {
+    if (busy) return;
+    setBusy(true);
+    const next = !enabled;
+    setEnabled(next);
+    try {
+      await profilesApi.update(user.id, {
+        notificationPrefs: {
+          ...((user as User & { notificationPrefs?: Record<string, unknown> }).notificationPrefs ?? {}),
+          weeklyDigest: next,
+        },
+      });
+      const { toast } = await import("sonner");
+      toast.success(next ? "주간 다이제스트를 받습니다." : "주간 다이제스트를 끕니다.");
+    } catch (e) {
+      setEnabled(!next);
+      const { toast } = await import("sonner");
+      toast.error(`설정 변경 실패: ${(e as Error).message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-6 rounded-2xl border bg-card p-6">
+      <h3 className="flex items-center gap-2 text-base font-semibold">
+        <Bell size={18} /> 알림 설정
+      </h3>
+      <div className="mt-4 flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium">주간 다이제스트 메일</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            매주 월요일 09:00 — 다가오는 세미나 5건, 인기 게시글 3건, 다가오는 활동 3건을 한 번에 보내드립니다.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={toggle}
+          disabled={busy}
+          role="switch"
+          aria-checked={enabled}
+          aria-label="주간 다이제스트 메일 수신 토글"
+          className={cn(
+            "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors",
+            enabled ? "bg-primary" : "bg-muted",
+            busy && "opacity-50",
+          )}
+        >
+          <span
+            className={cn(
+              "inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform",
+              enabled ? "translate-x-6" : "translate-x-1",
+            )}
+          />
+        </button>
       </div>
     </div>
   );

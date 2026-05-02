@@ -122,6 +122,12 @@ export interface SocialLink {
 
 import type { UserConsents } from "@/lib/legal";
 
+/** Sprint 54: 주간 다이제스트 이메일 등 알림 수신 설정 (default: 모두 true 로 처리) */
+export interface NotificationPrefs {
+  /** 매주 월요일 09:00 KST 다이제스트 메일 — false 로 명시될 때만 옵트아웃 */
+  weeklyDigest?: boolean;
+}
+
 export interface User { [key: string]: unknown;
   id: string;
   username: string;
@@ -129,6 +135,8 @@ export interface User { [key: string]: unknown;
   name: string;
   role: Exclude<UserRole, "guest">;
   generation: number;
+  /** Sprint 54: 알림 수신 설정 */
+  notificationPrefs?: NotificationPrefs;
   /** 학적 기준 누적 학기 (가입 시점 기준, generation/기수와는 별개) */
   accumulatedSemesters?: number;
   field: string;
