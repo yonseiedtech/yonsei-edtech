@@ -122,10 +122,12 @@ export interface SocialLink {
 
 import type { UserConsents } from "@/lib/legal";
 
-/** Sprint 54: 주간 다이제스트 이메일 등 알림 수신 설정 (default: 모두 true 로 처리) */
+/** Sprint 54·55: 알림 수신 + 피드 노출 설정 (default: 모두 true 로 처리) */
 export interface NotificationPrefs {
-  /** 매주 월요일 09:00 KST 다이제스트 메일 — false 로 명시될 때만 옵트아웃 */
+  /** 매주 월요일 09:00 KST 다이제스트 메일 — false 로 명시될 때만 옵트아웃 (Sprint 54) */
   weeklyDigest?: boolean;
+  /** 동료의 활동 피드(대시보드)에 내 활동 노출 여부 — false 로 명시될 때만 옵트아웃 (Sprint 55) */
+  feedOptIn?: boolean;
 }
 
 export interface User { [key: string]: unknown;

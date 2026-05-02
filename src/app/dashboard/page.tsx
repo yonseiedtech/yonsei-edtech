@@ -21,6 +21,7 @@ import MyTodosWidget from "@/features/dashboard/MyTodosWidget";
 import TodayTodosPopup from "@/features/dashboard/TodayTodosPopup";
 import NextActionBanner from "@/features/dashboard/NextActionBanner";
 import PushPermissionPrompt from "@/features/dashboard/PushPermissionPrompt";
+import PeerActivityFeed from "@/features/dashboard/PeerActivityFeed";
 import MyAcademicActivitiesWidget from "@/features/dashboard/MyAcademicActivitiesWidget";
 import ComprehensiveExamCountdown from "@/features/dashboard/ComprehensiveExamCountdown";
 import PageHeader from "@/components/ui/page-header";
@@ -270,7 +271,12 @@ function DashboardContent() {
           <ComprehensiveExamCountdown />
         </div>
 
-        {/* 활동 피드 */}
+        {/* 동료의 최근 활동 (Sprint 55) */}
+        <div className="mt-6">
+          <PeerActivityFeed />
+        </div>
+
+        {/* 활동 피드 (개인 타임라인) */}
         <div className="mt-6 rounded-2xl border bg-white p-6">
           <div className="flex items-center gap-2">
             <MessageSquare size={18} className="text-primary" />

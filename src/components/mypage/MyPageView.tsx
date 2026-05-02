@@ -644,55 +644,71 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
   );
 }
 
-/** Sprint 54: 알림 수신 설정 — 현재는 주간 다이제스트 토글만 노출 */
+/** Sprint 54·55: 알림 + 피드 노출 설정 카드 */
 function NotificationSettingsCard({ user }: { user: User }) {
-  const initial = (user as User & { notificationPrefs?: { weeklyDigest?: boolean } })
-    .notificationPrefs?.weeklyDigest;
-  const [enabled, setEnabled] = useState<boolean>(initial !== false);
-  const [busy, setBusy] = useState(false);
+  const prefs = (user as User & {
+    notificationPrefs?: { weeklyDigest?: boolean; feedOptIn?: boolean };
+  }).notificationPrefs;
+  const [digest, setDigest] = useState<boolean>(prefs?.weeklyDigest !== false);
+  const [feed, setFeed] = useState<boolean>(prefs?.feedOptIn !== false);
+  const [busyKey, setBusyKey] = useState<"digest" | "feed" | null>(null);
 
-  async function toggle() {
-    if (busy) return;
-    setBusy(true);
-    const next = !enabled;
-    setEnabled(next);
+  async function updatePref(
+    key: "weeklyDigest" | "feedOptIn",
+    next: boolean,
+    setter: (v: boolean) => void,
+    label: string,
+  ) {
+    setBusyKey(key === "weeklyDigest" ? "digest" : "feed");
+    setter(next);
     try {
       await profilesApi.update(user.id, {
         notificationPrefs: {
-          ...((user as User & { notificationPrefs?: Record<string, unknown> }).notificationPrefs ?? {}),
-          weeklyDigest: next,
+          ...((user as User & {
+            notificationPrefs?: Record<string, unknown>;
+          }).notificationPrefs ?? {}),
+          [key]: next,
         },
       });
       const { toast } = await import("sonner");
-      toast.success(next ? "주간 다이제스트를 받습니다." : "주간 다이제스트를 끕니다.");
+      toast.success(next ? `${label} 켰습니다.` : `${label} 껐습니다.`);
     } catch (e) {
-      setEnabled(!next);
+      setter(!next);
       const { toast } = await import("sonner");
       toast.error(`설정 변경 실패: ${(e as Error).message}`);
     } finally {
-      setBusy(false);
+      setBusyKey(null);
     }
   }
 
-  return (
-    <div className="mt-6 rounded-2xl border bg-card p-6">
-      <h3 className="flex items-center gap-2 text-base font-semibold">
-        <Bell size={18} /> 알림 설정
-      </h3>
-      <div className="mt-4 flex items-start justify-between gap-3">
+  function ToggleRow({
+    title,
+    description,
+    enabled,
+    busy,
+    onToggle,
+    ariaLabel,
+  }: {
+    title: string;
+    description: string;
+    enabled: boolean;
+    busy: boolean;
+    onToggle: () => void;
+    ariaLabel: string;
+  }) {
+    return (
+      <div className="flex items-start justify-between gap-3 py-3">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium">주간 다이제스트 메일</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            매주 월요일 09:00 — 다가오는 세미나 5건, 인기 게시글 3건, 다가오는 활동 3건을 한 번에 보내드립니다.
-          </p>
+          <p className="text-sm font-medium">{title}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{description}</p>
         </div>
         <button
           type="button"
-          onClick={toggle}
+          onClick={onToggle}
           disabled={busy}
           role="switch"
           aria-checked={enabled}
-          aria-label="주간 다이제스트 메일 수신 토글"
+          aria-label={ariaLabel}
           className={cn(
             "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors",
             enabled ? "bg-primary" : "bg-muted",
@@ -706,6 +722,36 @@ function NotificationSettingsCard({ user }: { user: User }) {
             )}
           />
         </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-6 rounded-2xl border bg-card p-6">
+      <h3 className="flex items-center gap-2 text-base font-semibold">
+        <Bell size={18} /> 알림 / 피드 설정
+      </h3>
+      <div className="mt-2 divide-y">
+        <ToggleRow
+          title="주간 다이제스트 메일"
+          description="매주 월요일 09:00 — 다가오는 세미나 5건, 인기 게시글 3건, 다가오는 활동 3건."
+          enabled={digest}
+          busy={busyKey === "digest"}
+          onToggle={() =>
+            void updatePref("weeklyDigest", !digest, setDigest, "주간 다이제스트를")
+          }
+          ariaLabel="주간 다이제스트 메일 수신 토글"
+        />
+        <ToggleRow
+          title="활동 피드 노출"
+          description="다른 회원의 대시보드 '동료의 최근 활동'에 내가 작성한 글·강의 후기가 표시됩니다."
+          enabled={feed}
+          busy={busyKey === "feed"}
+          onToggle={() =>
+            void updatePref("feedOptIn", !feed, setFeed, "활동 피드 노출을")
+          }
+          ariaLabel="활동 피드 노출 토글"
+        />
       </div>
     </div>
   );
