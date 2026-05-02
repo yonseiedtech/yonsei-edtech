@@ -655,7 +655,7 @@ export default function CalendarPage() {
                               title={bar.event.title}
                               aria-label={`${TYPE_CONFIG[bar.event.type].label}: ${bar.event.title}${bar.isStart ? "" : " (이어짐)"}`}
                               className={cn(
-                                "absolute z-10 flex items-center gap-0.5 truncate border text-[10px] font-medium leading-tight transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-primary",
+                                "absolute z-10 flex items-center gap-0.5 truncate border text-[10px] font-medium leading-tight transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-primary sm:text-[11px]",
                                 config.color,
                                 bar.isStart ? "rounded-l pl-1.5" : "pl-1",
                                 bar.isEnd ? "rounded-r pr-1.5" : "pr-1",
@@ -763,7 +763,7 @@ function EventCard({ event }: { event: CalendarEvent }) {
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className={cn("text-[10px]", config.color)}>
+          <Badge variant="outline" className={cn("text-[11px] sm:text-xs", config.color)}>
             {config.label}
           </Badge>
         </div>
@@ -794,12 +794,12 @@ function CompactEventRow({ event }: { event: CalendarEvent }) {
       className="block rounded-lg p-2 transition-colors hover:bg-muted/50"
     >
       <div className="flex items-center gap-1.5">
-        <Badge variant="outline" className={cn("text-[10px]", config.color)}>
+        <Badge variant="outline" className={cn("text-[11px] sm:text-xs", config.color)}>
           {config.label}
         </Badge>
-        <span className="text-[10px] text-muted-foreground">{dateLabel}</span>
+        <span className="text-[11px] text-muted-foreground sm:text-xs">{dateLabel}</span>
       </div>
-      <p className="mt-0.5 text-xs font-medium leading-tight">{event.title}</p>
+      <p className="mt-1 text-sm font-medium leading-tight">{event.title}</p>
     </Link>
   );
 }

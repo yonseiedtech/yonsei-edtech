@@ -19,6 +19,7 @@ import AcademicCalendarProgress from "@/features/dashboard/AcademicCalendarProgr
 import DailyClassTimelineWidget from "@/features/dashboard/DailyClassTimelineWidget";
 import MyTodosWidget from "@/features/dashboard/MyTodosWidget";
 import TodayTodosPopup from "@/features/dashboard/TodayTodosPopup";
+import NextActionBanner from "@/features/dashboard/NextActionBanner";
 import MyAcademicActivitiesWidget from "@/features/dashboard/MyAcademicActivitiesWidget";
 import ComprehensiveExamCountdown from "@/features/dashboard/ComprehensiveExamCountdown";
 import PageHeader from "@/components/ui/page-header";
@@ -107,7 +108,8 @@ function DashboardContent() {
   return (
     <div className="py-16">
       <TodayTodosPopup />
-      <section className="mx-auto max-w-6xl px-4">
+      <NextActionBanner />
+      <section className="mx-auto mt-3 max-w-6xl px-4">
         <PageHeader
           icon={<LayoutDashboard size={24} />}
           title={`안녕하세요, ${user.name}님`}
