@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Star, Clock, BookOpen, Pencil, Trash2, ExternalLink, GraduationCap, FileText, CheckCircle2, Play, Timer } from "lucide-react";
+import { Star, Clock, BookOpen, Pencil, Trash2, ExternalLink, GraduationCap, FileText, CheckCircle2, Play, Timer, Square } from "lucide-react";
 import type { ResearchPaper, PaperReadStatus } from "@/types";
 import { cn } from "@/lib/utils";
 import { useStudyTimerStore } from "./study-timer/study-timer-store";
@@ -30,7 +30,7 @@ function nextStatus(current: PaperReadStatus | undefined): PaperReadStatus {
 }
 
 export default function ResearchPaperCard({ paper, onEdit, onDelete, onQuickUpdate }: Props) {
-  const { active, start: startTimer } = useStudyTimerStore();
+  const { active, start: startTimer, stop: stopTimer } = useStudyTimerStore();
   const { mutateAsync: createSession } = useCreateSession();
   const totalMinutes = usePaperTotalMinutes(paper.id);
   const isTimerActive = active?.paperId === paper.id;
@@ -234,10 +234,26 @@ export default function ResearchPaperCard({ paper, onEdit, onDelete, onQuickUpda
           </button>
         )}
         {isTimerActive && (
-          <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary animate-pulse">
-            <Timer size={10} />
-            측정 중
-          </span>
+          <div className="inline-flex items-center gap-1">
+            <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary animate-pulse">
+              <Timer size={10} />
+              측정 중
+            </span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                stopTimer();
+                toast.success(`「${paper.title || "(제목 없음)"}」 읽기 종료됨`);
+              }}
+              className="inline-flex items-center gap-0.5 rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-700 hover:bg-rose-100"
+              aria-label="읽기 측정 종료"
+              title="읽기 측정 종료"
+            >
+              <Square size={10} />
+              종료
+            </button>
+          </div>
         )}
       </div>
     </article>

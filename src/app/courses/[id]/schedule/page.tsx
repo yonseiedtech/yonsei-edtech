@@ -770,6 +770,109 @@ function ScheduleContent({ courseId }: { courseId: string }) {
         </p>
       </section>
 
+      {/* Sprint 65: 이번 주차 하이라이트 카드 — currentWeek 있을 때만 노출 */}
+      {currentWeek && (() => {
+        const cw = currentWeek;
+        const cwSessions = sessionsByWeek.get(cw.weekNo) ?? [];
+        const cwNotes = notesByWeek.get(cw.weekNo) ?? [];
+        const cwTodos = todosByWeek.get(cw.weekNo) ?? [];
+        const cwClassDates = computeClassDatesInWeek(cw.startDate, parsedSchedule.weekdays);
+        const cwSessionsByDate = new Map(cwSessions.map((s) => [s.date, s]));
+        const cwModes: ClassSessionMode[] =
+          cwClassDates.length > 0
+            ? cwClassDates.map((d) => cwSessionsByDate.get(d)?.mode ?? "in_person")
+            : cwSessions.map((s) => s.mode);
+        const cwAllSame = cwModes.length > 0 && cwModes.every((m) => m === cwModes[0]);
+        const cwPrimaryMode: ClassSessionMode = cwAllSame
+          ? cwModes[0]
+          : (cwSessions[0]?.mode ?? "in_person");
+        const todoOpen = cwTodos.filter((t) => !t.completed).length;
+        const todoDone = cwTodos.length - todoOpen;
+        return (
+          <section className="mx-auto mt-6 max-w-4xl px-4">
+            <div
+              className={cn(
+                "rounded-2xl border border-l-4 bg-white p-4 shadow-sm sm:p-5",
+                MODE_WEEK_BORDER[cwPrimaryMode],
+              )}
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                  이번 주
+                </span>
+                <h2 className="text-base font-bold sm:text-lg">{cw.weekNo}주차</h2>
+                <span
+                  className={cn(
+                    "rounded-full border px-2 py-0.5 text-[10px] font-medium",
+                    MODE_COLORS[cwPrimaryMode],
+                  )}
+                  title={cwAllSame ? "전 수업일 동일 모드" : "수업일별 모드 다름"}
+                >
+                  {cwAllSame ? CLASS_SESSION_MODE_LABELS[cwPrimaryMode] : "수업일별 다름"}
+                </span>
+                <Button
+                  onClick={jumpToCurrentWeek}
+                  size="sm"
+                  variant="ghost"
+                  className="ml-auto h-8 text-xs"
+                >
+                  상세 보기 ↓
+                </Button>
+              </div>
+
+              {cwClassDates.length > 0 && (
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <CalendarClock size={12} className="text-muted-foreground" aria-hidden="true" />
+                  {cwClassDates.map((d, i) => {
+                    const sessionMode = cwSessionsByDate.get(d)?.mode ?? "in_person";
+                    return (
+                      <span
+                        key={d}
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-medium",
+                          MODE_COLORS[sessionMode],
+                        )}
+                        title={`${formatClassDate(d)} · ${CLASS_SESSION_MODE_LABELS[sessionMode]}`}
+                      >
+                        {formatClassDate(d)}
+                        {!cwAllSame && (
+                          <span className="text-[9px] opacity-70">
+                            · {CLASS_SESSION_MODE_LABELS[sessionMode]}
+                          </span>
+                        )}
+                        {i < cwClassDates.length - 1 && <span className="sr-only">,</span>}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
+                {cwSessions.length > 0 && (
+                  <span>
+                    변경 <strong className="text-foreground">{cwSessions.length}</strong>건
+                  </span>
+                )}
+                {cwNotes.length > 0 && (
+                  <span>
+                    메모 <strong className="text-foreground">{cwNotes.length}</strong>건
+                  </span>
+                )}
+                {cwTodos.length > 0 && (
+                  <span className={todoOpen > 0 ? "text-amber-700" : ""}>
+                    할 일 <strong className={todoOpen > 0 ? "text-amber-800" : "text-foreground"}>{todoOpen}</strong>
+                    {todoDone > 0 && <span className="opacity-60"> / {todoDone} 완료</span>}
+                  </span>
+                )}
+                {cwSessions.length === 0 && cwNotes.length === 0 && cwTodos.length === 0 && (
+                  <span className="italic">이번 주차에 등록된 변경/메모/할 일이 없습니다.</span>
+                )}
+              </div>
+            </div>
+          </section>
+        );
+      })()}
+
       {master && (
         <CourseAttendanceStats
           enrollments={enrollmentsRes?.data ?? []}

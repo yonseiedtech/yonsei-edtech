@@ -285,15 +285,18 @@ export default function AdminMemberTab() {
   type SortKey =
     | "name" | "studentId" | "enrollmentStatus" | "accumulatedSemesters"
     | "currentStatus" | "phone" | "role" | "lastLoginAt";
-  const [sortKey, setSortKey] = useState<SortKey | null>(null);
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  // 기본 정렬: 최근 접속 desc — 운영진이 가장 최근 접속한 회원부터 보도록
+  const [sortKey, setSortKey] = useState<SortKey | null>("lastLoginAt");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
-      // asc → desc → 해제
-      if (sortDir === "asc") setSortDir("desc");
+      // desc → asc → 해제 (lastLoginAt 의 경우 자연스러운 순환)
+      if (sortDir === "desc") setSortDir("asc");
       else { setSortKey(null); setSortDir("asc"); }
     } else {
-      setSortKey(key); setSortDir("asc");
+      setSortKey(key);
+      // lastLoginAt 은 항상 desc 부터 (최근이 위), 다른 키는 asc 부터
+      setSortDir(key === "lastLoginAt" ? "desc" : "asc");
     }
   }
   function getSortValue(m: User, key: SortKey): string | number {
