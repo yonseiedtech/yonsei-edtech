@@ -10,59 +10,35 @@ import { archiveConceptsApi } from "@/lib/bkend";
 import type { ArchiveConcept, TheoryConcept } from "@/types";
 import {
   X, ChevronLeft, ChevronRight, Save, Loader2, Sparkles, MessageSquareQuote,
-  School, BookOpen, FlaskConical, Stethoscope, ArrowRight, AlertTriangle,
-  Repeat, Layers,
+  School, BookOpen, FlaskConical, ArrowRight, AlertTriangle, GraduationCap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FormState, SetField } from "./ResearchReportEditor";
 import type {
-  CauseType,
   EducationFormat,
-  EvidenceType,
-  ProblemCauseItem,
-  ProblemEvidenceItem,
-  ResearchApproach,
   TheoryCard,
-} from "@/types";
-import {
-  CAUSE_TYPE_LABELS,
-  EVIDENCE_TYPE_LABELS,
-  RESEARCH_APPROACH_HINTS,
-  RESEARCH_APPROACH_LABELS,
 } from "@/types";
 
 /**
- * Sprint 57: "diagnosis" 챕터 신설 (1과 2 사이) + bridge 챕터로 챕터 전환 시각화
- * Sprint 58: "approach" 챕터 (패러다임 선택) + "inquiry" 챕터 (생성·구성형 트랙)
+ * Sprint 67: 5트랙 시스템 폐지, 단일 4챕터 흐름으로 단순화
+ * 1. 교육현장 문제 정의 → 2. 학습자와 학습 목표 → 3. 교육공학 이론 → 4. 선행연구 분석
+ * (기존 approach/diagnosis/inquiry/action/mixed 챕터는 schema 만 보존, 인터뷰 미노출)
  */
-type Chapter =
-  | "approach"
-  | "field"
-  | "diagnosis"
-  | "inquiry"
-  | "action"
-  | "mixed"
-  | "theory"
-  | "prior"
-  | "bridge";
+type Chapter = "field" | "learner" | "theory" | "prior" | "bridge";
 
 const CHAPTER_META: Record<
   Chapter,
   { label: string; icon: React.ElementType; color: string }
 > = {
-  approach: { label: "연구 접근", icon: Sparkles, color: "from-violet-500 to-fuchsia-500" },
   field: { label: "교육현장의 문제 정의", icon: School, color: "from-amber-500 to-orange-500" },
-  diagnosis: { label: "문제 진단", icon: Stethoscope, color: "from-rose-500 to-pink-500" },
-  inquiry: { label: "맥락 탐구", icon: Sparkles, color: "from-cyan-500 to-sky-500" },
-  action: { label: "액션 사이클", icon: Repeat, color: "from-orange-500 to-red-500" },
-  mixed: { label: "혼합 디자인", icon: Layers, color: "from-indigo-500 to-purple-500" },
+  learner: { label: "학습자와 학습 목표", icon: GraduationCap, color: "from-purple-500 to-fuchsia-500" },
   theory: { label: "교육공학 이론", icon: BookOpen, color: "from-emerald-500 to-teal-500" },
   prior: { label: "선행연구 분석", icon: FlaskConical, color: "from-blue-500 to-indigo-500" },
   bridge: { label: "연결", icon: ArrowRight, color: "from-slate-400 to-slate-500" },
 };
 
-/** 챕터 진행률 표시에서 bridge / approach 는 제외. 1.5 (diagnosis|inquiry|action|mixed) 는 트랙에 따라 자동 분기 */
-const REAL_CHAPTERS: Chapter[] = ["field", "diagnosis", "inquiry", "action", "mixed", "theory", "prior"];
+/** 챕터 진행률 표시에서 bridge 는 제외. 단일 4챕터 흐름. */
+const REAL_CHAPTERS: Chapter[] = ["field", "learner", "theory", "prior"];
 
 interface SlideDef {
   id: string;
@@ -75,8 +51,6 @@ interface SlideDef {
   crossRef?: (form: FormState) => React.ReactNode;
   /** 일관성 lint — 약한 연결 감지 시 경고 노출 */
   lint?: (form: FormState) => string | null;
-  /** Sprint 58: 이 슬라이드가 노출되는 ResearchApproach 트랙 — 미지정이면 모든 트랙 */
-  approaches?: ResearchApproach[];
 }
 
 const FORMAT_OPTIONS: { value: EducationFormat; label: string }[] = [
@@ -111,50 +85,6 @@ function ensureFirstTheoryCard(form: FormState, setField: SetField, patch: Parti
   setField("theoryCards", next);
 }
 
-// ─── Sprint 57 helpers ──────────────────────────────────────────────────────
-function upsertEvidence(
-  form: FormState,
-  setField: SetField,
-  index: number,
-  patch: Partial<ProblemEvidenceItem>,
-) {
-  const next = [...form.problemEvidences];
-  if (next[index]) next[index] = { ...next[index], ...patch };
-  else next[index] = { id: newId(), type: "" as EvidenceType, content: "", ...patch };
-  setField("problemEvidences", next);
-}
-function removeEvidence(form: FormState, setField: SetField, index: number) {
-  const next = form.problemEvidences.filter((_, i) => i !== index);
-  setField("problemEvidences", next);
-}
-function addEvidence(form: FormState, setField: SetField) {
-  setField("problemEvidences", [
-    ...form.problemEvidences,
-    { id: newId(), type: "" as EvidenceType, content: "" },
-  ]);
-}
-
-function getCauseByType(form: FormState, type: CauseType): ProblemCauseItem | undefined {
-  return form.problemCauses.find((c) => c.type === type);
-}
-function setCauseByType(
-  form: FormState,
-  setField: SetField,
-  type: CauseType,
-  content: string,
-) {
-  const existing = getCauseByType(form, type);
-  let next: ProblemCauseItem[];
-  if (existing) {
-    next = form.problemCauses.map((c) =>
-      c.id === existing.id ? { ...c, content } : c,
-    );
-  } else {
-    next = [...form.problemCauses, { id: newId(), type, content }];
-  }
-  setField("problemCauses", next);
-}
-
 /** 한국어/영문 키워드 단순 추출 — 2자 이상 토큰 */
 function extractKeywords(text: string): string[] {
   if (!text) return [];
@@ -175,20 +105,6 @@ function hasKeywordOverlap(a: string, b: string): boolean {
   return ks.some((k) => lowerB.includes(k));
 }
 
-const EVIDENCE_OPTIONS: { value: EvidenceType; label: string }[] = [
-  { value: "" as EvidenceType, label: "유형" },
-  ...(Object.entries(EVIDENCE_TYPE_LABELS) as [Exclude<EvidenceType, "">, string][]).map(
-    ([value, label]) => ({ value: value as EvidenceType, label }),
-  ),
-];
-
-const APPROACH_OPTIONS: { value: Exclude<ResearchApproach, "">; }[] = [
-  { value: "analytical" },
-  { value: "generative" },
-  { value: "action_research" },
-  { value: "mixed_methods" },
-  { value: "free" },
-];
 
 // ─── Sprint 59: archive_concepts 자동 추천 ──────────────────────────────────
 function ArchiveConceptRecommender({
@@ -272,8 +188,6 @@ interface LogicNode {
 }
 
 function calcLogicMap(form: FormState): LogicNode[] {
-  const a = form.researchApproach;
-
   // 1. field
   const fieldChecks = [
     form.fieldAudience,
@@ -287,47 +201,21 @@ function calcLogicMap(form: FormState): LogicNode[] {
     (fieldChecks.filter((v) => (v ?? "").toString().trim().length > 0).length / fieldChecks.length) * 100,
   );
 
-  // 1.5 middle (approach-dependent)
-  let middleFill = 0;
-  let middleLabel = "1.5 (skip)";
-  let middleText = "";
-  if (a === "analytical") {
-    const checks = [
-      form.problemEvidences.length > 0,
-      form.problemCauses.length > 0,
-      form.diagnosisAttempts.trim().length > 0,
-      form.diagnosisGap.trim().length > 0,
-      form.diagnosisPrimaryCause.trim().length > 0,
-    ];
-    middleFill = Math.round((checks.filter(Boolean).length / checks.length) * 100);
-    middleLabel = "문제 진단";
-    middleText = form.diagnosisPrimaryCause;
-  } else if (a === "generative") {
-    const fields = [form.inquiryMeaning, form.inquiryContext, form.inquiryCycle];
-    middleFill = Math.round((fields.filter((s) => s.trim().length > 0).length / fields.length) * 100);
-    middleLabel = "맥락 탐구";
-    middleText = `${form.inquiryMeaning} ${form.inquiryContext}`;
-  } else if (a === "action_research") {
-    const fields = [form.actionRole, form.actionCycle, form.actionCommunity];
-    middleFill = Math.round((fields.filter((s) => s.trim().length > 0).length / fields.length) * 100);
-    middleLabel = "액션 사이클";
-    middleText = `${form.actionRole} ${form.actionCycle}`;
-  } else if (a === "mixed_methods") {
-    const fields = [form.mixedDesign, form.mixedQuant, form.mixedQual, form.mixedIntegration];
-    middleFill = Math.round((fields.filter((s) => s.trim().length > 0).length / fields.length) * 100);
-    middleLabel = "혼합 디자인";
-    middleText = form.mixedDesign;
-  } else if (a === "free") {
-    middleFill = 0;
-    middleLabel = "1.5 (skip)";
-    middleText = "";
-  } else {
-    middleFill = 0;
-    middleLabel = "1.5 (선택 전)";
-    middleText = "";
-  }
+  // 2. learner + outcome (Sprint 67: 트랙 시스템 폐지, 단일 학습자·목표 챕터)
+  const learnerChecks = [
+    form.learnerProfile,
+    form.learnerCognitive,
+    form.learnerAffective,
+    form.outcomeCognitive,
+    form.outcomeSkillAttitude,
+  ];
+  const middleFill = Math.round(
+    (learnerChecks.filter((v) => (v ?? "").trim().length > 0).length / learnerChecks.length) * 100,
+  );
+  const middleLabel = "학습자·목표";
+  const middleText = `${form.learnerProfile} ${form.outcomeCognitive} ${form.outcomeSkillAttitude}`.trim();
 
-  // 2. theory
+  // 3. theory
   const card = form.theoryCards[0];
   const theoryChecks = [card?.name, card?.selectionReason, card?.problemLink];
   const theoryFill = card
@@ -353,9 +241,9 @@ function calcLogicMap(form: FormState): LogicNode[] {
 
   return [
     { id: "field", label: "1. 현장 문제", fill: fieldFill, bridgeStrength: fieldToMiddle },
-    { id: "middle", label: "1.5 " + middleLabel, fill: middleFill, sublabel: middleLabel, bridgeStrength: middleToTheory },
-    { id: "theory", label: "2. 교육공학 이론", fill: theoryFill, bridgeStrength: theoryToPrior },
-    { id: "prior", label: "3. 선행연구", fill: priorFill, bridgeStrength: 0 },
+    { id: "middle", label: "2. " + middleLabel, fill: middleFill, sublabel: middleLabel, bridgeStrength: middleToTheory },
+    { id: "theory", label: "3. 교육공학 이론", fill: theoryFill, bridgeStrength: theoryToPrior },
+    { id: "prior", label: "4. 선행연구", fill: priorFill, bridgeStrength: 0 },
   ];
 }
 
@@ -507,42 +395,7 @@ function TheoryNameRenderer({ form, setField }: { form: FormState; setField: Set
 }
 
 const SLIDES: SlideDef[] = [
-  // ── Sprint 58: 연구 접근 패러다임 선택 (가장 첫 슬라이드)
-  {
-    id: "approach-select",
-    chapter: "approach",
-    prompt: "어떤 연구 접근으로 작성하실 건가요?",
-    hint: "선택에 따라 1.5 챕터가 분기됩니다 — 분석형은 ‘진단 5단계’, 생성형은 ‘맥락 탐구 3단계’, 자유는 1.5 챕터 자체를 건너뜁니다. 언제든 다시 바꿀 수 있어요.",
-    render: (form, setField) => (
-      <div className="space-y-2">
-        {APPROACH_OPTIONS.map((opt) => {
-          const active = form.researchApproach === opt.value;
-          return (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => setField("researchApproach", opt.value)}
-              className={cn(
-                "w-full rounded-xl border-2 p-4 text-left transition-all",
-                active
-                  ? "border-[#003876] bg-[#003876]/5 shadow-sm"
-                  : "border-muted bg-white hover:border-[#003876]/40 hover:bg-blue-50/40",
-              )}
-            >
-              <div className="flex items-center gap-2 text-base font-semibold">
-                {active && <span className="inline-block h-2 w-2 rounded-full bg-[#003876]" />}
-                {RESEARCH_APPROACH_LABELS[opt.value]}
-              </div>
-              <p className={cn("mt-1.5 text-xs leading-relaxed", active ? "text-foreground" : "text-muted-foreground")}>
-                {RESEARCH_APPROACH_HINTS[opt.value]}
-              </p>
-            </button>
-          );
-        })}
-      </div>
-    ),
-  },
-  // ── Chapter 1: 교육현장의 문제 정의
+  // ── Chapter 1: 교육현장의 문제 정의 (Sprint 66: 트랙 시스템 폐지, 단일 흐름)
   {
     id: "field-audience",
     chapter: "field",
@@ -705,464 +558,138 @@ const SLIDES: SlideDef[] = [
     ),
   },
 
-  // ── Bridge: field → diagnosis (Sprint 57, analytical 트랙 한정)
+  // ── Bridge: field → learner (Sprint 67)
   {
-    id: "bridge-field-diag",
+    id: "bridge-field-learner",
     chapter: "bridge",
-    approaches: ["analytical"],
-    prompt: "이제 정의한 현상을 다층적으로 진단해보겠습니다",
-    hint: "관찰된 문제를 학습자·수업설계·환경의 어느 층위에서 비롯되는지 분해합니다. 진단 결과가 다음 챕터(이론 선택)의 근거가 됩니다. (※ 본 진단 흐름은 ADDIE·체제적 교수설계 등 ‘분석·처방형’ 패러다임에 가깝습니다. 구성주의·DBR·참여실행연구 같은 ‘생성형’ 접근이라면 다음 5개 슬라이드의 답을 비워두고 통과해도 무방하며, 후속 업데이트에서 별도 트랙이 추가될 예정입니다.)",
+    prompt: "이제 누구를, 어떤 모습으로 키울지 정의해보겠습니다",
+    hint: "현장의 문제(1장)를 해결하기 위해 *학습자가 어떤 사람*인지, 그리고 *어떤 모습으로 변해야 하는지* 한 챕터에서 정리합니다. 이 답변이 다음 챕터(이론 선택)의 직접적 근거가 됩니다.",
     optional: true,
     render: (form) => {
       const phenomena = form.problemPhenomena.filter((p) => p.trim()).slice(0, 3);
       return (
-        <div className="rounded-xl border-2 border-dashed border-rose-200 bg-rose-50/50 p-4 text-sm">
-          <p className="font-semibold text-rose-900">정의한 현상 미리보기</p>
+        <div className="rounded-xl border-2 border-dashed border-purple-200 bg-purple-50/50 p-4 text-sm">
+          <p className="font-semibold text-purple-900">정의한 현장 문제 미리보기</p>
           {phenomena.length === 0 ? (
             <p className="mt-2 text-muted-foreground">아직 현상이 입력되지 않았어요.</p>
           ) : (
-            <ul className="mt-2 space-y-1 text-rose-900/90">
+            <ul className="mt-2 space-y-1 text-purple-900/90">
               {phenomena.map((p, i) => (
                 <li key={i} className="line-clamp-2">• {p}</li>
               ))}
             </ul>
           )}
-          <p className="mt-3 rounded-md bg-white/60 px-2.5 py-1.5 text-[11px] text-rose-900/80 ring-1 ring-rose-200">
-            ⓘ 분석·처방형 트랙 — 구성주의/DBR 접근은 다음 단계에서 비워두고 통과해도 됩니다.
-          </p>
         </div>
       );
     },
   },
 
-  // ── Chapter 1.5: 문제 진단 (Sprint 57)
+  // ── Chapter 2: 학습자와 학습 목표 (Sprint 67)
   {
-    id: "diag-evidences",
-    chapter: "diagnosis",
-    approaches: ["analytical"],
-    prompt: "현상의 근거가 되는 데이터는 무엇인가요?",
-    hint: "유형(관찰/평가/설문/선행연구)을 고르고 한 줄씩 적어주세요. 추가/삭제 가능.",
-    render: (form, setField) => {
-      const list = form.problemEvidences.length > 0
-        ? form.problemEvidences
-        : [{ id: "_seed", type: "" as EvidenceType, content: "" }];
+    id: "learner-profile",
+    chapter: "learner",
+    prompt: "누구를 가르치는 연구인가요?",
+    hint: "학년·인원·배경(전공/직업)을 한 줄로 적어주세요. 일상 관찰 그대로 적으면 됩니다.",
+    render: (form, setField) => (
+      <Input
+        value={form.learnerProfile}
+        onChange={(e) => setField("learnerProfile", e.target.value)}
+        placeholder="예: 교육대학원 1학년 30명 (현직 교사 20명 + 일반 직장인 10명)"
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+  {
+    id: "learner-cognitive",
+    chapter: "learner",
+    prompt: "학습자의 인지·지식 수준은 어떠한가요?",
+    hint: "사전 지식, 학습 습관, 전형적 오개념 등 — 학생들의 *머릿속*에서 일어나는 일을 묘사하세요.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.learnerCognitive}
+        onChange={(e) => setField("learnerCognitive", e.target.value)}
+        placeholder={"예: 통계 입문은 들었지만 R/SPSS 미경험. 협력학습은 ‘조별과제’ 정도로만 인식 — 비계 개념 모름."}
+        rows={5}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+  {
+    id: "learner-affective",
+    chapter: "learner",
+    prompt: "학습자의 정서·동기 상태는 어떠한가요?",
+    hint: "학습에 대한 관심도, 자신감, 불안, 흥미 — 학생들의 *마음*에서 일어나는 일을 묘사하세요.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.learnerAffective}
+        onChange={(e) => setField("learnerAffective", e.target.value)}
+        placeholder={"예: ‘틀릴까봐 말 못함’ 두려움이 큼. 동료 평가에 민감. 수업 주제 자체에 대한 호기심은 높음."}
+        rows={5}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+  {
+    id: "outcome-cognitive",
+    chapter: "learner",
+    prompt: "이 연구가 끝나면 학습자가 무엇을 *알고·이해* 할 수 있어야 하나요?",
+    hint: "Bloom 인지 영역 — 기억/이해/적용/분석/평가/창조 중 *행동 동사* 로 적어주세요. 가능한 한 구체적으로.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.outcomeCognitive}
+        onChange={(e) => setField("outcomeCognitive", e.target.value)}
+        placeholder={"예: 협력학습의 3대 원리(상호의존성·개별책무성·평등참여)를 *설명*할 수 있다."}
+        rows={5}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+  {
+    id: "outcome-skill-attitude",
+    chapter: "learner",
+    prompt: "이 연구가 끝나면 학습자가 무엇을 *할 수* 있어야 하고, 어떤 *태도* 를 가져야 하나요?",
+    hint: "행동(Skill)·태도(Attitude) 두 축 — ‘경청한다’, ‘논리적으로 응답한다’, ‘동료 의견을 존중한다’ 같은 형태.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.outcomeSkillAttitude}
+        onChange={(e) => setField("outcomeSkillAttitude", e.target.value)}
+        placeholder={"예: 모둠 토의 시 동료 의견을 1회 이상 인용하며 응답할 수 있다."}
+        rows={5}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+
+  // ── Bridge: learner → theory (Sprint 67)
+  {
+    id: "bridge-learner-theory",
+    chapter: "bridge",
+    prompt: "이 학습자·목표를 가장 잘 설명하는 이론을 선택해보세요",
+    hint: "학습자의 인지·정서 + 학습 목표(인지·기능·태도) — 이 두 축을 받쳐주는 이론을 다음 단계에서 고르면 자연스럽습니다.",
+    optional: true,
+    render: (form) => {
+      const profile = form.learnerProfile.trim();
+      const outcome = form.outcomeCognitive.trim() || form.outcomeSkillAttitude.trim();
       return (
         <div className="space-y-2">
-          {list.map((ev, i) => (
-            <div key={ev.id} className="flex flex-col gap-2 rounded-lg border bg-white p-2 sm:flex-row">
-              <select
-                value={ev.type}
-                onChange={(e) => upsertEvidence(form, setField, i, { type: e.target.value as EvidenceType })}
-                className="h-9 rounded-md border bg-white px-2 text-sm sm:w-32"
-                aria-label="근거 유형"
-              >
-                {EVIDENCE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-              <Input
-                value={ev.content}
-                onChange={(e) => upsertEvidence(form, setField, i, { content: e.target.value })}
-                placeholder="예: 4개 그룹 중 3개에서 발화 격차 5배 이상 관찰"
-                className="flex-1 bg-white"
-                style={{ fontSize: "16px" }}
-              />
-              {form.problemEvidences.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeEvidence(form, setField, i)}
-                  className="h-9 shrink-0 rounded-md border px-2 text-xs text-muted-foreground hover:bg-muted"
-                  aria-label="근거 삭제"
-                >
-                  삭제
-                </button>
-              )}
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={() => addEvidence(form, setField)}
-            className="w-full rounded-md border-2 border-dashed py-2 text-xs text-muted-foreground hover:bg-muted/40"
-          >
-            + 근거 추가
-          </button>
-        </div>
-      );
-    },
-  },
-  {
-    id: "diag-causes-multi",
-    chapter: "diagnosis",
-    approaches: ["analytical"],
-    prompt: "원인을 학습자 / 수업설계 / 환경 차원으로 분해하면?",
-    hint: "각 층위마다 가능한 원인을 한 줄씩. 비워둘 수 있어요. 다층 분해는 처방을 정확하게 만듭니다.",
-    render: (form, setField) => {
-      const layers: { type: CauseType; label: string; placeholder: string }[] = [
-        { type: "learner", label: CAUSE_TYPE_LABELS.learner, placeholder: "예: 발화 자신감 부족, 한국어 의사 표현 어려움" },
-        { type: "instructional_design", label: CAUSE_TYPE_LABELS.instructional_design, placeholder: "예: 발화 차례 보장 장치 없음, 평가가 결과물 중심" },
-        { type: "environment", label: CAUSE_TYPE_LABELS.environment, placeholder: "예: 좌석 배치가 일렬, 협력용 도구 미제공" },
-      ];
-      return (
-        <div className="space-y-3">
-          {layers.map((l) => {
-            const cur = getCauseByType(form, l.type);
-            return (
-              <div key={l.type} className="rounded-lg border bg-white p-3">
-                <p className="text-xs font-semibold text-muted-foreground">{l.label}</p>
-                <Input
-                  value={cur?.content ?? ""}
-                  onChange={(e) => setCauseByType(form, setField, l.type, e.target.value)}
-                  placeholder={l.placeholder}
-                  className="mt-1.5 bg-white"
-                  style={{ fontSize: "16px" }}
-                />
-              </div>
-            );
-          })}
-        </div>
-      );
-    },
-  },
-  {
-    id: "diag-tried",
-    chapter: "diagnosis",
-    approaches: ["analytical"],
-    prompt: "이미 시도해본 해법과 그 결과는?",
-    hint: "통한 부분 / 통하지 않은 부분을 분리해서 적으면 본 연구의 새로움이 명확해집니다.",
-    render: (form, setField) => (
-      <Textarea
-        value={form.diagnosisAttempts}
-        onChange={(e) => setField("diagnosisAttempts", e.target.value)}
-        placeholder="예: 작년 학기에 ‘발표자 로테이션’ 규칙을 도입 → 발화 빈도는 늘었으나 깊이는 그대로. 침묵의 본질은 자신감 부족이었던 것 같다."
-        rows={6}
-        className="bg-white text-base"
-        style={{ fontSize: "16px" }}
-      />
-    ),
-  },
-  {
-    id: "diag-gap",
-    chapter: "diagnosis",
-    approaches: ["analytical"],
-    prompt: "현재 상태(AS-IS) vs 도달하려는 상태(TO-BE)의 격차는?",
-    hint: "두 상태를 한 줄씩 대비해 적으면 결과 챕터에서 그대로 검증 지표가 됩니다.",
-    render: (form, setField) => (
-      <Textarea
-        value={form.diagnosisGap}
-        onChange={(e) => setField("diagnosisGap", e.target.value)}
-        placeholder={"AS-IS: 30% 학생만 의미 있는 발화 / 평균 발화 시간 5초\nTO-BE: 80% 학생이 자기 의견 1회 이상 표명 / 평균 30초 이상"}
-        rows={6}
-        className="bg-white text-base"
-        style={{ fontSize: "16px" }}
-      />
-    ),
-  },
-  {
-    id: "diag-primary",
-    chapter: "diagnosis",
-    approaches: ["analytical"],
-    prompt: "본 연구가 집중할 핵심 원인은?",
-    hint: "여러 원인 중 하나만 골라주세요. 이 답변이 다음 챕터(이론 선택)의 직접적인 근거가 됩니다.",
-    render: (form, setField) => (
-      <Textarea
-        value={form.diagnosisPrimaryCause}
-        onChange={(e) => setField("diagnosisPrimaryCause", e.target.value)}
-        placeholder="예: 학습자 차원의 ‘발화 자신감 부족’을 핵심 원인으로 본다. 수업설계·환경 요인은 부차적으로 다룬다."
-        rows={5}
-        className="bg-white text-base"
-        style={{ fontSize: "16px" }}
-      />
-    ),
-  },
-
-  // ── Bridge: diagnosis → theory (Sprint 57, analytical 트랙 한정)
-  {
-    id: "bridge-diag-theory",
-    chapter: "bridge",
-    approaches: ["analytical"],
-    prompt: "이 핵심 원인을 가장 잘 설명하는 이론을 선택해보세요",
-    hint: "다음 단계에서 적을 이론의 ‘선택 이유’ 에 방금 정한 핵심 원인 키워드가 자연스럽게 등장하면 좋습니다.",
-    optional: true,
-    render: (form) => {
-      const cause = form.diagnosisPrimaryCause.trim();
-      return (
-        <div className="rounded-xl border-2 border-dashed border-emerald-200 bg-emerald-50/60 p-4 text-sm">
-          <p className="font-semibold text-emerald-900">방금 정한 핵심 원인</p>
-          <p className="mt-2 whitespace-pre-wrap text-emerald-900/90">
-            {cause ? cause : <span className="italic text-muted-foreground">(아직 입력 안 함)</span>}
-          </p>
-        </div>
-      );
-    },
-  },
-
-  // ── Bridge: field → inquiry (Sprint 58, generative 트랙 한정)
-  {
-    id: "bridge-field-inquiry",
-    chapter: "bridge",
-    approaches: ["generative"],
-    prompt: "이제 현장의 의미와 맥락을 함께 탐구해보겠습니다",
-    hint: "구성주의·DBR·참여실행연구 흐름은 ‘외부에서 진단’ 하지 않고 학습자/교사와 ‘함께 의미를 구성’ 합니다. 다음 3 슬라이드는 그 단서를 모으는 단계입니다.",
-    optional: true,
-    render: (form) => {
-      const phenomena = form.problemPhenomena.filter((p) => p.trim()).slice(0, 3);
-      return (
-        <div className="rounded-xl border-2 border-dashed border-cyan-200 bg-cyan-50/50 p-4 text-sm">
-          <p className="font-semibold text-cyan-900">정의한 현상 미리보기</p>
-          {phenomena.length === 0 ? (
-            <p className="mt-2 text-muted-foreground">아직 현상이 입력되지 않았어요.</p>
-          ) : (
-            <ul className="mt-2 space-y-1 text-cyan-900/90">
-              {phenomena.map((p, i) => (
-                <li key={i} className="line-clamp-2">• {p}</li>
-              ))}
-            </ul>
-          )}
-          <p className="mt-3 rounded-md bg-white/60 px-2.5 py-1.5 text-[11px] text-cyan-900/80 ring-1 ring-cyan-200">
-            ⓘ 생성·구성형 트랙 — ‘원인 진단’ 대신 ‘맥락과 의미’ 를 묻습니다.
-          </p>
-        </div>
-      );
-    },
-  },
-
-  // ── Chapter 1.5 (대안): 맥락 탐구 — Sprint 58 generative 트랙
-  {
-    id: "inq-meaning",
-    chapter: "inquiry",
-    approaches: ["generative"],
-    prompt: "학습자·교사는 이 현상에 어떤 의미를 부여하고 있나요?",
-    hint: "‘문제’ 라는 외부적 정의 대신 행위자 자신의 시선·해석·정서를 적어주세요. 인용/관찰 메모로도 좋습니다.",
-    render: (form, setField) => (
-      <Textarea
-        value={form.inquiryMeaning}
-        onChange={(e) => setField("inquiryMeaning", e.target.value)}
-        placeholder={"예: 학생들은 ‘내가 잘못 말하면 친구들이 어떻게 볼까’ 라는 두려움을 자주 표현했다. 교사는 침묵을 ‘소극적’으로 봤지만, 인터뷰에서 학생들은 ‘자기 검열’ 로 묘사했다."}
-        rows={6}
-        className="bg-white text-base"
-        style={{ fontSize: "16px" }}
-      />
-    ),
-  },
-  {
-    id: "inq-context",
-    chapter: "inquiry",
-    approaches: ["generative"],
-    prompt: "어떤 설계 맥락·도구·상호작용이 학습 경험을 형성하나요?",
-    hint: "환경을 ‘원인’ 으로 환원하지 않고 학습 경험과 *함께 작동하는 요소* 로 묘사하세요. 좌석 배치·도구·관계 모두 포함.",
-    render: (form, setField) => (
-      <Textarea
-        value={form.inquiryContext}
-        onChange={(e) => setField("inquiryContext", e.target.value)}
-        placeholder="예: 4인 모둠은 책상을 마주보고 앉지만, Padlet 게시는 익명이 가능해서 텍스트로는 활발히 교류한다. 즉 침묵은 ‘말’ 채널 한정이며, 글 채널에서는 다른 행위 양상이 나타난다."
-        rows={6}
-        className="bg-white text-base"
-        style={{ fontSize: "16px" }}
-      />
-    ),
-  },
-  {
-    id: "inq-cycle",
-    chapter: "inquiry",
-    approaches: ["generative"],
-    prompt: "본 연구는 어떤 반복 설계 사이클로 진행되나요?",
-    hint: "DBR/SAM 식 ‘설계 → 실행 → 성찰 → 재설계’ 사이클을 1~2 단계만이라도 적어주세요. 함께 만드는 동료(co-designer)가 있다면 명시.",
-    render: (form, setField) => (
-      <Textarea
-        value={form.inquiryCycle}
-        onChange={(e) => setField("inquiryCycle", e.target.value)}
-        placeholder={"예: Cycle 1 (4주) — 글 채널 중심 활동 시제로 도입 → 학생 인터뷰 → 말 채널 비계 추가 / Cycle 2 (4주) — 비계 효과 관찰 → 학생·교사 공동 평가."}
-        rows={6}
-        className="bg-white text-base"
-        style={{ fontSize: "16px" }}
-      />
-    ),
-  },
-
-  // ── Bridge: inquiry → theory (Sprint 58, generative 트랙 한정)
-  {
-    id: "bridge-inquiry-theory",
-    chapter: "bridge",
-    approaches: ["generative"],
-    prompt: "탐구한 의미·맥락을 함께 만들어갈 이론을 선택해보세요",
-    hint: "구성주의 흐름에서는 이론이 ‘처방’ 이 아니라 ‘함께 보는 렌즈’ 입니다. 다음 단계의 이론 선택 이유에 방금 적은 의미·맥락 키워드가 자연스럽게 등장하면 좋습니다.",
-    optional: true,
-    render: (form) => {
-      const meaning = form.inquiryMeaning.trim();
-      const context = form.inquiryContext.trim();
-      return (
-        <div className="space-y-2">
-          {meaning && (
-            <div className="rounded-xl border-2 border-dashed border-cyan-200 bg-cyan-50/60 p-3 text-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-cyan-700">행위자의 의미</p>
-              <p className="mt-1 whitespace-pre-wrap text-cyan-900/90 line-clamp-3">{meaning}</p>
+          {profile && (
+            <div className="rounded-xl border-2 border-dashed border-purple-200 bg-purple-50/60 p-3 text-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-purple-700">학습자 프로필</p>
+              <p className="mt-1 text-purple-900/90 line-clamp-2">{profile}</p>
             </div>
           )}
-          {context && (
-            <div className="rounded-xl border-2 border-dashed border-sky-200 bg-sky-50/60 p-3 text-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-sky-700">설계 맥락</p>
-              <p className="mt-1 whitespace-pre-wrap text-sky-900/90 line-clamp-3">{context}</p>
+          {outcome && (
+            <div className="rounded-xl border-2 border-dashed border-fuchsia-200 bg-fuchsia-50/60 p-3 text-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-fuchsia-700">학습 목표</p>
+              <p className="mt-1 whitespace-pre-wrap text-fuchsia-900/90 line-clamp-3">{outcome}</p>
             </div>
           )}
-          {!meaning && !context && (
-            <p className="text-sm italic text-muted-foreground">앞 단계 답변이 비어있어요. 채워두면 다음 챕터에서 자동 표시됩니다.</p>
-          )}
-        </div>
-      );
-    },
-  },
-
-  // ── Bridge: field → action_research (Sprint 60)
-  {
-    id: "bridge-field-action",
-    chapter: "bridge",
-    approaches: ["action_research"],
-    prompt: "Plan-Act-Observe-Reflect 사이클을 함께 설계해보겠습니다",
-    hint: "액션리서치는 ‘외부 진단’ 도 ‘함께 의미 구성’ 도 아닌, 본인이 자기 실천을 직접 개선하는 사이클입니다.",
-    optional: true,
-    render: () => (
-      <div className="rounded-xl border-2 border-dashed border-orange-200 bg-orange-50/50 p-4 text-sm">
-        <p className="font-semibold text-orange-900">액션리서치 트랙</p>
-        <ul className="mt-2 space-y-1 text-orange-900/90">
-          <li>• <strong>Plan</strong> — 어떤 변화를 시도할지 계획</li>
-          <li>• <strong>Act</strong> — 현장에서 실행</li>
-          <li>• <strong>Observe</strong> — 무슨 일이 일어났는지 관찰·기록</li>
-          <li>• <strong>Reflect</strong> — 동료와 함께 성찰 → 다음 사이클 재계획</li>
-        </ul>
-      </div>
-    ),
-  },
-
-  // ── Chapter 1.5 (대안): 액션 사이클 — Sprint 60 action_research 트랙
-  {
-    id: "act-role",
-    chapter: "action",
-    approaches: ["action_research"],
-    prompt: "본인이 현장에서 어떤 위치·역할인가요?",
-    hint: "교사·강사·관리자·전문가·학습자 — 자기 위치를 명확히 해야 액션의 권한과 한계가 보입니다.",
-    render: (form, setField) => (
-      <Textarea
-        value={form.actionRole}
-        onChange={(e) => setField("actionRole", e.target.value)}
-        placeholder="예: 본 강좌의 담당 강사로 학기 전 과정 운영을 책임지며, 평가 방식과 자료 선정 권한을 가진다."
-        rows={5}
-        className="bg-white text-base"
-        style={{ fontSize: "16px" }}
-      />
-    ),
-  },
-  {
-    id: "act-cycle",
-    chapter: "action",
-    approaches: ["action_research"],
-    prompt: "사이클을 어떻게 설계할 건가요?",
-    hint: "Plan → Act → Observe → Reflect 1~2 사이클을 구체적으로 적어주세요. 무엇을 바꾸고, 무엇을 관찰할지.",
-    render: (form, setField) => (
-      <Textarea
-        value={form.actionCycle}
-        onChange={(e) => setField("actionCycle", e.target.value)}
-        placeholder={"예:\nCycle 1 (4주) — Plan: 발화 차례 보장 도입 / Act: 매주 실행 / Observe: 발화 빈도+질 기록 / Reflect: 학생 인터뷰\nCycle 2 (4주) — Plan: 비계 추가 / Act: ..."}
-        rows={7}
-        className="bg-white text-base"
-        style={{ fontSize: "16px" }}
-      />
-    ),
-  },
-  {
-    id: "act-community",
-    chapter: "action",
-    approaches: ["action_research"],
-    prompt: "함께 성찰할 동료·공동 연구자는?",
-    hint: "혼자 하는 액션리서치는 ‘자기 정당화’ 위험이 큽니다. 비판적으로 봐줄 동료/소그룹/지도교수를 명시하세요.",
-    render: (form, setField) => (
-      <Textarea
-        value={form.actionCommunity}
-        onChange={(e) => setField("actionCommunity", e.target.value)}
-        placeholder="예: 동료 강사 2인 + 지도교수 1인 + 학기말 학생 6인 인터뷰. 격주 1회 60분 정기 미팅."
-        rows={4}
-        className="bg-white text-base"
-        style={{ fontSize: "16px" }}
-      />
-    ),
-  },
-  {
-    id: "act-baseline",
-    chapter: "action",
-    approaches: ["action_research"],
-    prompt: "사이클 시작 전 기준선(baseline)은 무엇인가요?",
-    hint: "변화·개선을 판단하려면 ‘출발점’ 측정이 필요합니다. 양적 지표 + 질적 묘사를 함께 적어주세요.",
-    render: (form, setField) => (
-      <Textarea
-        value={form.actionBaseline}
-        onChange={(e) => setField("actionBaseline", e.target.value)}
-        placeholder={"예: 양적 — 1주차 모둠활동 평균 발화 시간 5초/명, 발화자 3명/모둠.\n질적 — 첫 인터뷰 6명 모두 ‘틀릴까봐 말 못함’ 언급."}
-        rows={5}
-        className="bg-white text-base"
-        style={{ fontSize: "16px" }}
-      />
-    ),
-  },
-  {
-    id: "act-data-collection",
-    chapter: "action",
-    approaches: ["action_research"],
-    prompt: "사이클 동안 어떤 데이터를 수집하나요?",
-    hint: "교사 저널 / 현장 노트 / 학생 인터뷰 / 영상 / 산출물 — 다중 출처(multi-source)가 신뢰성을 높입니다.",
-    render: (form, setField) => (
-      <Textarea
-        value={form.actionDataCollection}
-        onChange={(e) => setField("actionDataCollection", e.target.value)}
-        placeholder={"예: 교사 일지(매주) + 모둠활동 영상 4회 + 학생 짧은 메모(매수업 5분) + 종료 시점 6명 인터뷰(60분)."}
-        rows={5}
-        className="bg-white text-base"
-        style={{ fontSize: "16px" }}
-      />
-    ),
-  },
-  {
-    id: "act-validity",
-    chapter: "action",
-    approaches: ["action_research"],
-    prompt: "자기 정당화 위험은 어떻게 방어하나요?",
-    hint: "Member checking(학생 확인), Peer debriefing(동료 검토), Triangulation(다중 출처 비교) 중 적용 방안을 적어주세요.",
-    render: (form, setField) => (
-      <Textarea
-        value={form.actionValidity}
-        onChange={(e) => setField("actionValidity", e.target.value)}
-        placeholder={"예: 매 사이클 종료 시 학생 6명에게 해석 요약본 보여주고 ‘맞나요?’ 확인(member check). 동료 강사 2인이 매월 데이터 검토."}
-        rows={5}
-        className="bg-white text-base"
-        style={{ fontSize: "16px" }}
-      />
-    ),
-  },
-
-  // ── Bridge: action → theory (Sprint 60)
-  {
-    id: "bridge-action-theory",
-    chapter: "bridge",
-    approaches: ["action_research"],
-    prompt: "사이클의 의미를 함께 해석할 이론을 선택해보세요",
-    hint: "액션리서치에서 이론은 ‘처방’ 도 ‘외부 렌즈’ 도 아닌, 본인의 실천을 더 깊이 이해하기 위한 *공동 사고 자원* 입니다.",
-    optional: true,
-    render: (form) => {
-      const role = form.actionRole.trim();
-      const cycle = form.actionCycle.trim();
-      return (
-        <div className="space-y-2">
-          {role && (
-            <div className="rounded-xl border-2 border-dashed border-orange-200 bg-orange-50/60 p-3 text-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-orange-700">현장 위치</p>
-              <p className="mt-1 whitespace-pre-wrap text-orange-900/90 line-clamp-2">{role}</p>
-            </div>
-          )}
-          {cycle && (
-            <div className="rounded-xl border-2 border-dashed border-amber-200 bg-amber-50/60 p-3 text-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">사이클 설계</p>
-              <p className="mt-1 whitespace-pre-wrap text-amber-900/90 line-clamp-3">{cycle}</p>
-            </div>
-          )}
-          {!role && !cycle && (
+          {!profile && !outcome && (
             <p className="text-sm italic text-muted-foreground">앞 단계 답변이 비어있어요.</p>
           )}
         </div>
@@ -1170,170 +697,7 @@ const SLIDES: SlideDef[] = [
     },
   },
 
-  // ── Bridge: field → mixed_methods (Sprint 60)
-  {
-    id: "bridge-field-mixed",
-    chapter: "bridge",
-    approaches: ["mixed_methods"],
-    prompt: "혼합방법론으로 양적·질적 데이터를 통합 설계해보겠습니다",
-    hint: "Creswell 의 4 디자인 — Convergent(동시·대조), Explanatory(양→질로 설명), Exploratory(질→양으로 검증), Embedded(한쪽 보조).",
-    optional: true,
-    render: () => (
-      <div className="rounded-xl border-2 border-dashed border-indigo-200 bg-indigo-50/50 p-4 text-sm">
-        <p className="font-semibold text-indigo-900">혼합방법론 트랙</p>
-        <ul className="mt-2 space-y-1 text-indigo-900/90">
-          <li>• <strong>Convergent</strong> — 양적·질적 동시 수집 → 결과 대조</li>
-          <li>• <strong>Explanatory</strong> — 양적 결과를 질적으로 설명</li>
-          <li>• <strong>Exploratory</strong> — 질적 발견을 양적으로 검증</li>
-          <li>• <strong>Embedded</strong> — 한쪽이 주축, 다른 한쪽이 보조</li>
-        </ul>
-      </div>
-    ),
-  },
-
-  // ── Chapter 1.5 (대안): 혼합 디자인 — Sprint 60 mixed_methods 트랙
-  {
-    id: "mix-design",
-    chapter: "mixed",
-    approaches: ["mixed_methods"],
-    prompt: "어떤 혼합 디자인을 채택하나요?",
-    hint: "Convergent / Explanatory / Exploratory / Embedded 중 가장 가까운 것 + 그 이유.",
-    render: (form, setField) => (
-      <Textarea
-        value={form.mixedDesign}
-        onChange={(e) => setField("mixedDesign", e.target.value)}
-        placeholder="예: Explanatory Sequential — 1단계 양적 설문(N=120)으로 패턴 발견 → 2단계 6명 심층 인터뷰로 ‘왜 그런지’ 설명한다."
-        rows={5}
-        className="bg-white text-base"
-        style={{ fontSize: "16px" }}
-      />
-    ),
-  },
-  {
-    id: "mix-quant",
-    chapter: "mixed",
-    approaches: ["mixed_methods"],
-    prompt: "양적 데이터는 무엇을 어떻게 수집·분석하나요?",
-    hint: "도구(설문/평가/로그), 표본 크기, 분석 방법(t-test, ANOVA, regression 등) 한 줄.",
-    render: (form, setField) => (
-      <Textarea
-        value={form.mixedQuant}
-        onChange={(e) => setField("mixedQuant", e.target.value)}
-        placeholder="예: 협력자기효능감 5점 척도 12문항 (N=120, 사전·사후) → paired t-test 로 변화량 검증."
-        rows={5}
-        className="bg-white text-base"
-        style={{ fontSize: "16px" }}
-      />
-    ),
-  },
-  {
-    id: "mix-qual",
-    chapter: "mixed",
-    approaches: ["mixed_methods"],
-    prompt: "질적 데이터는 무엇을 어떻게 수집·분석하나요?",
-    hint: "방법(인터뷰/관찰/문서), 분석 절차(thematic/grounded/IPA 등), 신뢰성 확보 방안.",
-    render: (form, setField) => (
-      <Textarea
-        value={form.mixedQual}
-        onChange={(e) => setField("mixedQual", e.target.value)}
-        placeholder="예: 6명 반구조화 인터뷰(60분) + 모둠활동 영상 6시간. Braun & Clarke thematic analysis. 동료 검토 1회."
-        rows={5}
-        className="bg-white text-base"
-        style={{ fontSize: "16px" }}
-      />
-    ),
-  },
-  {
-    id: "mix-integration",
-    chapter: "mixed",
-    approaches: ["mixed_methods"],
-    prompt: "두 데이터를 어떻게 통합·대조할 건가요?",
-    hint: "Joint display(병렬 표/도표), Meta-inference(상위 해석), Triangulation(일치/불일치 검토) 등.",
-    render: (form, setField) => (
-      <Textarea
-        value={form.mixedIntegration}
-        onChange={(e) => setField("mixedIntegration", e.target.value)}
-        placeholder="예: Joint display 로 ‘설문 점수 변화 vs 인터뷰 주제’ 매트릭스 작성. 일치하는 영역과 모순되는 영역을 별도 섹션으로 해석."
-        rows={5}
-        className="bg-white text-base"
-        style={{ fontSize: "16px" }}
-      />
-    ),
-  },
-  {
-    id: "mix-priority",
-    chapter: "mixed",
-    approaches: ["mixed_methods"],
-    prompt: "양적·질적 데이터 중 어느 쪽이 주(主)·보조(補)인가요?",
-    hint: "Creswell 표기 — QUAN+qual / quan+QUAL / QUAN+QUAL(동등). 우선순위가 결과 해석의 중심을 결정합니다.",
-    render: (form, setField) => (
-      <Textarea
-        value={form.mixedPriority}
-        onChange={(e) => setField("mixedPriority", e.target.value)}
-        placeholder="예: QUAN + qual — 양적 결과(설문)가 본 연구의 주축, 질적 인터뷰는 ‘왜’를 보충 설명하는 보조 역할."
-        rows={4}
-        className="bg-white text-base"
-        style={{ fontSize: "16px" }}
-      />
-    ),
-  },
-  {
-    id: "mix-sampling",
-    chapter: "mixed",
-    approaches: ["mixed_methods"],
-    prompt: "양·질 표집은 어떻게 연결하나요?",
-    hint: "Identical(동일 표본), Nested(질적이 양적의 부분집합), Multilevel(다른 수준), Parallel(독립 표본) 중 선택.",
-    render: (form, setField) => (
-      <Textarea
-        value={form.mixedSampling}
-        onChange={(e) => setField("mixedSampling", e.target.value)}
-        placeholder="예: Nested — 양적 설문 N=120 중 점수 상·중·하 그룹에서 각 2명씩(총 6명) 의도적 표집해 인터뷰."
-        rows={4}
-        className="bg-white text-base"
-        style={{ fontSize: "16px" }}
-      />
-    ),
-  },
-  {
-    id: "mix-validity",
-    chapter: "mixed",
-    approaches: ["mixed_methods"],
-    prompt: "메타-추론 타당성은 어떻게 확보하나요?",
-    hint: "Interpretive consistency(해석 일관성), Sample integration(표본 통합), Inside-outside legitimation(내·외부자 시각). Onwuegbuzie & Johnson 9가지 적법성 중 적용 방안.",
-    render: (form, setField) => (
-      <Textarea
-        value={form.mixedValidity}
-        onChange={(e) => setField("mixedValidity", e.target.value)}
-        placeholder="예: Sample integration — 동일 6명에게 양·질 모두 적용. Interpretive consistency — 양적 결과와 질적 주제가 충돌할 때 ‘재해석 라운드’ 1회 진행."
-        rows={5}
-        className="bg-white text-base"
-        style={{ fontSize: "16px" }}
-      />
-    ),
-  },
-
-  // ── Bridge: mixed → theory (Sprint 60)
-  {
-    id: "bridge-mixed-theory",
-    chapter: "bridge",
-    approaches: ["mixed_methods"],
-    prompt: "혼합 디자인을 받쳐줄 이론적 틀을 선택해보세요",
-    hint: "혼합방법론은 ‘paradigm war’ 이후 실용주의(pragmatism) 가 대표 메타-패러다임 — 이론은 양적·질적 결과를 통합 해석하는 골격이 됩니다.",
-    optional: true,
-    render: (form) => {
-      const design = form.mixedDesign.trim();
-      return design ? (
-        <div className="rounded-xl border-2 border-dashed border-indigo-200 bg-indigo-50/60 p-3 text-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-indigo-700">선택 디자인</p>
-          <p className="mt-1 whitespace-pre-wrap text-indigo-900/90 line-clamp-3">{design}</p>
-        </div>
-      ) : (
-        <p className="text-sm italic text-muted-foreground">앞 단계 답변이 비어있어요.</p>
-      );
-    },
-  },
-
-  // ── Chapter 2: 교육공학 이론
+  // ── Chapter 3: 교육공학 이론 (was Chapter 2)
   {
     id: "theory-name",
     chapter: "theory",
@@ -1357,18 +721,18 @@ const SLIDES: SlideDef[] = [
       />
     ),
     crossRef: (form) => {
-      const cause = form.diagnosisPrimaryCause.trim();
-      const meaning = form.inquiryMeaning.trim();
+      const profile = form.learnerProfile.trim();
+      const outcome = form.outcomeCognitive.trim() || form.outcomeSkillAttitude.trim();
       return (
         <div className="space-y-1">
-          {cause && (
-            <p className="rounded-md bg-emerald-50 px-2 py-1.5 text-[11px] text-emerald-900">
-              🩺 방금 정한 핵심 원인: <strong className="ml-0.5">{cause.slice(0, 80)}</strong>
+          {profile && (
+            <p className="rounded-md bg-purple-50 px-2 py-1.5 text-[11px] text-purple-900">
+              👥 학습자: <strong className="ml-0.5">{profile.slice(0, 80)}</strong>
             </p>
           )}
-          {meaning && (
-            <p className="rounded-md bg-cyan-50 px-2 py-1.5 text-[11px] text-cyan-900">
-              💭 행위자의 의미: <strong className="ml-0.5">{meaning.slice(0, 80)}</strong>
+          {outcome && (
+            <p className="rounded-md bg-fuchsia-50 px-2 py-1.5 text-[11px] text-fuchsia-900">
+              🎯 학습 목표: <strong className="ml-0.5">{outcome.slice(0, 80)}</strong>
             </p>
           )}
         </div>
@@ -1377,14 +741,9 @@ const SLIDES: SlideDef[] = [
     lint: (form) => {
       const reason = form.theoryCards[0]?.selectionReason ?? "";
       if (!reason.trim()) return null;
-      const cause = form.diagnosisPrimaryCause;
-      const meaning = form.inquiryMeaning;
-      // 분석형: 핵심 원인 키워드 검사 / 생성형: 의미 키워드 검사 / 둘 다 비어있으면 lint skip
-      if (cause.trim() && !hasKeywordOverlap(cause, reason)) {
-        return "선택 이유에 ‘핵심 원인’ 의 키워드가 안 보입니다. 원인 → 이론의 연결을 한두 단어 명시하면 논리가 단단해집니다.";
-      }
-      if (!cause.trim() && meaning.trim() && !hasKeywordOverlap(meaning, reason)) {
-        return "선택 이유에 ‘행위자의 의미’ 키워드가 안 보입니다. 의미 → 이론(렌즈)의 연결을 한두 단어 명시하면 논리가 단단해집니다.";
+      const outcome = `${form.outcomeCognitive} ${form.outcomeSkillAttitude}`.trim();
+      if (outcome && !hasKeywordOverlap(outcome, reason)) {
+        return "선택 이유에 ‘학습 목표’ 키워드가 안 보입니다. 목표 → 이론의 연결을 한두 단어 명시하면 논리가 단단해집니다.";
       }
       return null;
     },
@@ -1441,13 +800,13 @@ const SLIDES: SlideDef[] = [
     optional: true,
     render: (form) => {
       const theoryName = form.theoryCards[0]?.name?.trim() ?? "";
-      const cause = form.diagnosisPrimaryCause.trim();
-      const meaning = form.inquiryMeaning.trim();
+      const outcome = `${form.outcomeCognitive} ${form.outcomeSkillAttitude}`.trim();
+      const profile = form.learnerProfile.trim();
       const keywords = Array.from(
         new Set([
           ...(theoryName ? extractKeywords(theoryName).slice(0, 3) : []),
-          ...(cause ? extractKeywords(cause).slice(0, 3) : []),
-          ...(meaning ? extractKeywords(meaning).slice(0, 3) : []),
+          ...(outcome ? extractKeywords(outcome).slice(0, 3) : []),
+          ...(profile ? extractKeywords(profile).slice(0, 2) : []),
         ]),
       ).slice(0, 6);
       return (
@@ -1492,9 +851,9 @@ const SLIDES: SlideDef[] = [
     ),
     crossRef: (form) => {
       const theoryName = form.theoryCards[0]?.name?.trim() ?? "";
-      const cause = form.diagnosisPrimaryCause.trim();
-      const context = form.inquiryContext.trim();
-      if (!theoryName && !cause && !context) return null;
+      const profile = form.learnerProfile.trim();
+      const outcome = (form.outcomeCognitive.trim() || form.outcomeSkillAttitude.trim());
+      if (!theoryName && !profile && !outcome) return null;
       return (
         <div className="space-y-1">
           {theoryName && (
@@ -1502,14 +861,14 @@ const SLIDES: SlideDef[] = [
               📚 선택 이론: <strong className="ml-0.5">{theoryName}</strong>
             </p>
           )}
-          {cause && (
-            <p className="rounded-md bg-rose-50 px-2 py-1.5 text-[11px] text-rose-900">
-              🩺 핵심 원인: <strong className="ml-0.5">{cause.slice(0, 80)}</strong>
+          {profile && (
+            <p className="rounded-md bg-purple-50 px-2 py-1.5 text-[11px] text-purple-900">
+              👥 학습자: <strong className="ml-0.5">{profile.slice(0, 80)}</strong>
             </p>
           )}
-          {context && (
-            <p className="rounded-md bg-sky-50 px-2 py-1.5 text-[11px] text-sky-900">
-              🌱 설계 맥락: <strong className="ml-0.5">{context.slice(0, 80)}</strong>
+          {outcome && (
+            <p className="rounded-md bg-fuchsia-50 px-2 py-1.5 text-[11px] text-fuchsia-900">
+              🎯 학습 목표: <strong className="ml-0.5">{outcome.slice(0, 80)}</strong>
             </p>
           )}
         </div>
@@ -1559,15 +918,8 @@ export default function ResearchReportInterview({
     if (open) setIndex(-1);
   }, [open]);
 
-  // Sprint 58: ResearchApproach 별 슬라이드 필터링
-  const slides = useMemo(() => {
-    const a = form.researchApproach;
-    return SLIDES.filter((s) => {
-      if (!s.approaches || s.approaches.length === 0) return true;
-      if (!a) return false; // 사용자가 아직 트랙을 고르지 않음 — 트랙 한정 슬라이드 숨김
-      return s.approaches.includes(a);
-    });
-  }, [form.researchApproach]);
+  // Sprint 67: 트랙 시스템 폐지 — 단일 흐름이라 slides 는 SLIDES 그대로
+  const slides = SLIDES;
 
   const totalSlides = slides.length;
   const progress = index < 0 ? 0 : ((index + 1) / totalSlides) * 100;
@@ -1582,12 +934,8 @@ export default function ResearchReportInterview({
 
   const chapterCounts = useMemo(() => {
     const m: Record<Chapter, number> = {
-      approach: 0,
       field: 0,
-      diagnosis: 0,
-      inquiry: 0,
-      action: 0,
-      mixed: 0,
+      learner: 0,
       theory: 0,
       prior: 0,
       bridge: 0,
@@ -1749,11 +1097,6 @@ export default function ResearchReportInterview({
                   );
                 })}
               </div>
-              {!form.researchApproach && (
-                <p className="mt-3 inline-block rounded-full bg-violet-50 px-3 py-1 text-[11px] font-medium text-violet-900 ring-1 ring-violet-200">
-                  ※ 첫 슬라이드에서 연구 접근(분석·처방형 / 생성·구성형 / 자유)을 고르시면 1.5 챕터가 자동 분기됩니다.
-                </p>
-              )}
               <Button onClick={() => setIndex(0)} size="lg" className="mt-6 sm:mt-8">
                 시작하기
               </Button>
