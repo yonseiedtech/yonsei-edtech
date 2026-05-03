@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { archiveConceptsApi } from "@/lib/bkend";
+import type { ArchiveConcept, TheoryConcept } from "@/types";
 import {
   X, ChevronLeft, ChevronRight, Save, Loader2, Sparkles, MessageSquareQuote,
   School, BookOpen, FlaskConical, Stethoscope, ArrowRight, AlertTriangle,
@@ -172,6 +175,158 @@ const APPROACH_OPTIONS: { value: Exclude<ResearchApproach, "">; }[] = [
   { value: "generative" },
   { value: "free" },
 ];
+
+// ─── Sprint 59: archive_concepts 자동 추천 ──────────────────────────────────
+function ArchiveConceptRecommender({
+  query,
+  onPick,
+  alreadyPicked,
+}: {
+  query: string;
+  onPick: (c: ArchiveConcept) => void;
+  alreadyPicked: Set<string>;
+}) {
+  const { data: res } = useQuery({
+    queryKey: ["archive-concepts-all"],
+    queryFn: () => archiveConceptsApi.list(),
+    staleTime: 30 * 60_000,
+  });
+  const all = (res?.data ?? []) as ArchiveConcept[];
+  const matches = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (q.length < 2) return [];
+    const scored: { c: ArchiveConcept; score: number }[] = [];
+    for (const c of all) {
+      const name = c.name.toLowerCase();
+      const altText = (c.altNames ?? []).join(" ").toLowerCase();
+      const tagText = (c.tags ?? []).join(" ").toLowerCase();
+      let score = 0;
+      if (name.includes(q)) score += 5;
+      if (name.startsWith(q)) score += 3;
+      if (altText.includes(q)) score += 3;
+      if (tagText.includes(q)) score += 1;
+      if (score > 0) scored.push({ c, score });
+    }
+    scored.sort((a, b) => b.score - a.score);
+    return scored.slice(0, 6).map((s) => s.c);
+  }, [all, query]);
+
+  if (matches.length === 0) return null;
+  return (
+    <div className="rounded-lg border border-emerald-200 bg-emerald-50/40 p-3">
+      <p className="text-[11px] font-semibold text-emerald-900">
+        🔍 archive 매칭 개념 — 클릭 시 이론카드 핵심개념 목록에 자동 추가
+      </p>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {matches.map((c) => {
+          const picked = alreadyPicked.has(c.name.trim().toLowerCase());
+          return (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => !picked && onPick(c)}
+              disabled={picked}
+              className={cn(
+                "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+                picked
+                  ? "cursor-not-allowed bg-emerald-200 text-emerald-700"
+                  : "bg-white text-emerald-900 ring-1 ring-emerald-300 hover:bg-emerald-100",
+              )}
+              title={c.description ?? ""}
+              aria-label={`${c.name} 개념 추가`}
+            >
+              {picked ? "✓ " : "+ "}
+              {c.name}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function TheoryNameRenderer({ form, setField }: { form: FormState; setField: SetField }) {
+  const card = form.theoryCards[0];
+  const conceptNamesPicked = useMemo(
+    () =>
+      new Set(
+        (card?.concepts ?? []).map((k) => k.name.trim().toLowerCase()),
+      ),
+    [card?.concepts],
+  );
+
+  function handlePickConcept(c: ArchiveConcept) {
+    const cardNow = form.theoryCards[0];
+    const newConcept: TheoryConcept = {
+      id: newId(),
+      name: c.name,
+      definition: c.description ?? "",
+    };
+    const nextConcepts = [...(cardNow?.concepts ?? []), newConcept];
+    ensureFirstTheoryCard(form, setField, { concepts: nextConcepts });
+  }
+
+  return (
+    <div className="space-y-2">
+      <Input
+        value={card?.name ?? ""}
+        onChange={(e) => ensureFirstTheoryCard(form, setField, { name: e.target.value })}
+        placeholder="이론명 (예: 사회적 구성주의)"
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+      <div className="grid grid-cols-2 gap-2">
+        <Input
+          value={card?.scholar ?? ""}
+          onChange={(e) => ensureFirstTheoryCard(form, setField, { scholar: e.target.value })}
+          placeholder="학자 (예: Vygotsky)"
+          className="bg-white"
+          style={{ fontSize: "16px" }}
+        />
+        <Input
+          value={card?.year ?? ""}
+          onChange={(e) => ensureFirstTheoryCard(form, setField, { year: e.target.value })}
+          placeholder="연도 (예: 1978)"
+          className="bg-white"
+          style={{ fontSize: "16px" }}
+        />
+      </div>
+      <ArchiveConceptRecommender
+        query={card?.name ?? ""}
+        onPick={handlePickConcept}
+        alreadyPicked={conceptNamesPicked}
+      />
+      {(card?.concepts ?? []).length > 0 && (
+        <div className="rounded-md border bg-white p-2.5">
+          <p className="text-[11px] font-semibold text-muted-foreground">
+            추가된 핵심 개념 ({(card?.concepts ?? []).length}개)
+          </p>
+          <div className="mt-1.5 flex flex-wrap gap-1">
+            {(card?.concepts ?? []).map((k) => (
+              <span
+                key={k.id}
+                className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] text-emerald-900"
+              >
+                {k.name}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = (card?.concepts ?? []).filter((x) => x.id !== k.id);
+                    ensureFirstTheoryCard(form, setField, { concepts: next });
+                  }}
+                  className="ml-0.5 text-emerald-700 hover:text-rose-600"
+                  aria-label={`${k.name} 개념 삭제`}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const SLIDES: SlideDef[] = [
   // ── Sprint 58: 연구 접근 패러다임 선택 (가장 첫 슬라이드)
@@ -684,37 +839,8 @@ const SLIDES: SlideDef[] = [
     id: "theory-name",
     chapter: "theory",
     prompt: "이 문제를 설명할 수 있는 핵심 이론은 무엇인가요?",
-    hint: "이론 이름과 학자(연도)를 함께 적으면 좋아요. 여러 이론은 전체 모드에서 카드로 추가할 수 있습니다.",
-    render: (form, setField) => {
-      const card = form.theoryCards[0];
-      return (
-        <div className="space-y-2">
-          <Input
-            value={card?.name ?? ""}
-            onChange={(e) => ensureFirstTheoryCard(form, setField, { name: e.target.value })}
-            placeholder="이론명 (예: 사회적 구성주의)"
-            className="bg-white text-base"
-            style={{ fontSize: "16px" }}
-          />
-          <div className="grid grid-cols-2 gap-2">
-            <Input
-              value={card?.scholar ?? ""}
-              onChange={(e) => ensureFirstTheoryCard(form, setField, { scholar: e.target.value })}
-              placeholder="학자 (예: Vygotsky)"
-              className="bg-white"
-              style={{ fontSize: "16px" }}
-            />
-            <Input
-              value={card?.year ?? ""}
-              onChange={(e) => ensureFirstTheoryCard(form, setField, { year: e.target.value })}
-              placeholder="연도 (예: 1978)"
-              className="bg-white"
-              style={{ fontSize: "16px" }}
-            />
-          </div>
-        </div>
-      );
-    },
+    hint: "이론 이름과 학자(연도)를 함께 적으면 좋아요. archive에 등록된 개념과 매칭되면 chip 추천이 뜹니다 — 클릭으로 핵심개념 목록에 추가.",
+    render: (form, setField) => <TheoryNameRenderer form={form} setField={setField} />,
   },
   {
     id: "theory-reason",
