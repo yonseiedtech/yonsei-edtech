@@ -509,6 +509,22 @@ export type EducationFormat = "" | "offline" | "online" | "blended";
 export type EvidenceType = "" | "observation" | "assessment" | "survey" | "prior_research" | "other";
 export type CauseType = "" | "learner" | "instructional_design" | "environment" | "other";
 
+/** Sprint 57: 인터뷰 모드 라벨 (진단 단계 5슬라이드 신설용) */
+export const EVIDENCE_TYPE_LABELS: Record<Exclude<EvidenceType, "">, string> = {
+  observation: "수업 관찰",
+  assessment: "평가/시험 결과",
+  survey: "설문/인터뷰",
+  prior_research: "선행연구",
+  other: "기타",
+};
+
+export const CAUSE_TYPE_LABELS: Record<Exclude<CauseType, "">, string> = {
+  learner: "학습자 요인",
+  instructional_design: "수업·매체 설계",
+  environment: "환경·자원",
+  other: "기타",
+};
+
 export interface ProblemEvidenceItem {
   id: string;
   type: EvidenceType;
@@ -593,6 +609,14 @@ export interface ResearchReport {
   scopeExclusion?: string;
   /** 1-5. 측정 가능성 — 문제 요소 + 관찰 가능한 지표 */
   problemMeasurements?: ProblemMeasurementItem[];
+  // ── v3: 1.5 문제 진단 — Sprint 57 (이론을 끌어오기 전 다층 분석 단계, 분석·처방형 한정) ──
+  // ※ Sprint 58 에서 패러다임 분기(분석형 vs 생성·구성형) 추가 예정 — 그 전까지는 분석형 흐름만 노출.
+  /** 1.5-3. 이미 시도해본 해결책과 그 결과 */
+  diagnosisAttempts?: string;
+  /** 1.5-4. 현재 상태 vs 도달하려는 상태의 격차 (Performance Gap) */
+  diagnosisGap?: string;
+  /** 1.5-5. 본 연구가 집중할 핵심 원인 — 이론 선택의 근거가 됨 */
+  diagnosisPrimaryCause?: string;
   // ── v2: 2. 교육공학 이론 — 구조화 입력 (옵셔널, 구버전 호환) ──
   /** 2. 적용 이론 카드 — 1~다수 */
   theoryCards?: TheoryCard[];

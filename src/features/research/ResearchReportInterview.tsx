@@ -7,19 +7,36 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   X, ChevronLeft, ChevronRight, Save, Loader2, Sparkles, MessageSquareQuote,
-  School, BookOpen, FlaskConical,
+  School, BookOpen, FlaskConical, Stethoscope, ArrowRight, AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FormState, SetField } from "./ResearchReportEditor";
-import type { EducationFormat, TheoryCard } from "@/types";
+import type {
+  CauseType,
+  EducationFormat,
+  EvidenceType,
+  ProblemCauseItem,
+  ProblemEvidenceItem,
+  TheoryCard,
+} from "@/types";
+import { CAUSE_TYPE_LABELS, EVIDENCE_TYPE_LABELS } from "@/types";
 
-type Chapter = "field" | "theory" | "prior";
+/** Sprint 57: "diagnosis" 챕터 신설 (1과 2 사이) + bridge 챕터로 챕터 전환 시각화 */
+type Chapter = "field" | "diagnosis" | "theory" | "prior" | "bridge";
 
-const CHAPTER_META: Record<Chapter, { label: string; icon: React.ElementType; color: string }> = {
+const CHAPTER_META: Record<
+  Chapter,
+  { label: string; icon: React.ElementType; color: string }
+> = {
   field: { label: "교육현장의 문제 정의", icon: School, color: "from-amber-500 to-orange-500" },
+  diagnosis: { label: "문제 진단", icon: Stethoscope, color: "from-rose-500 to-pink-500" },
   theory: { label: "교육공학 이론", icon: BookOpen, color: "from-emerald-500 to-teal-500" },
   prior: { label: "선행연구 분석", icon: FlaskConical, color: "from-blue-500 to-indigo-500" },
+  bridge: { label: "연결", icon: ArrowRight, color: "from-slate-400 to-slate-500" },
 };
+
+/** 챕터 진행률 표시에서 bridge 는 제외 */
+const REAL_CHAPTERS: Chapter[] = ["field", "diagnosis", "theory", "prior"];
 
 interface SlideDef {
   id: string;
@@ -28,6 +45,10 @@ interface SlideDef {
   hint?: string;
   optional?: boolean;
   render: (form: FormState, setField: SetField) => React.ReactNode;
+  /** 직전 챕터 답변 요약을 노출 (cross-ref) */
+  crossRef?: (form: FormState) => React.ReactNode;
+  /** 일관성 lint — 약한 연결 감지 시 경고 노출 */
+  lint?: (form: FormState) => string | null;
 }
 
 const FORMAT_OPTIONS: { value: EducationFormat; label: string }[] = [
@@ -61,6 +82,77 @@ function ensureFirstTheoryCard(form: FormState, setField: SetField, patch: Parti
   next[0] = { ...next[0], ...patch };
   setField("theoryCards", next);
 }
+
+// ─── Sprint 57 helpers ──────────────────────────────────────────────────────
+function upsertEvidence(
+  form: FormState,
+  setField: SetField,
+  index: number,
+  patch: Partial<ProblemEvidenceItem>,
+) {
+  const next = [...form.problemEvidences];
+  if (next[index]) next[index] = { ...next[index], ...patch };
+  else next[index] = { id: newId(), type: "" as EvidenceType, content: "", ...patch };
+  setField("problemEvidences", next);
+}
+function removeEvidence(form: FormState, setField: SetField, index: number) {
+  const next = form.problemEvidences.filter((_, i) => i !== index);
+  setField("problemEvidences", next);
+}
+function addEvidence(form: FormState, setField: SetField) {
+  setField("problemEvidences", [
+    ...form.problemEvidences,
+    { id: newId(), type: "" as EvidenceType, content: "" },
+  ]);
+}
+
+function getCauseByType(form: FormState, type: CauseType): ProblemCauseItem | undefined {
+  return form.problemCauses.find((c) => c.type === type);
+}
+function setCauseByType(
+  form: FormState,
+  setField: SetField,
+  type: CauseType,
+  content: string,
+) {
+  const existing = getCauseByType(form, type);
+  let next: ProblemCauseItem[];
+  if (existing) {
+    next = form.problemCauses.map((c) =>
+      c.id === existing.id ? { ...c, content } : c,
+    );
+  } else {
+    next = [...form.problemCauses, { id: newId(), type, content }];
+  }
+  setField("problemCauses", next);
+}
+
+/** 한국어/영문 키워드 단순 추출 — 2자 이상 토큰 */
+function extractKeywords(text: string): string[] {
+  if (!text) return [];
+  const tokens = text
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .split(/\s+/)
+    .filter((t) => t.length >= 2);
+  return Array.from(new Set(tokens));
+}
+
+/** A 텍스트의 키워드가 B 텍스트에 등장하는지 — 일관성 lint 용 */
+function hasKeywordOverlap(a: string, b: string): boolean {
+  if (!a || !b) return false;
+  const ks = extractKeywords(a);
+  if (ks.length === 0) return false;
+  const lowerB = b.toLowerCase();
+  return ks.some((k) => lowerB.includes(k));
+}
+
+const EVIDENCE_OPTIONS: { value: EvidenceType; label: string }[] = [
+  { value: "" as EvidenceType, label: "유형" },
+  ...(Object.entries(EVIDENCE_TYPE_LABELS) as [Exclude<EvidenceType, "">, string][]).map(
+    ([value, label]) => ({ value: value as EvidenceType, label }),
+  ),
+];
 
 const SLIDES: SlideDef[] = [
   // ── Chapter 1: 교육현장의 문제 정의
@@ -226,6 +318,190 @@ const SLIDES: SlideDef[] = [
     ),
   },
 
+  // ── Bridge: field → diagnosis (Sprint 57)
+  {
+    id: "bridge-field-diag",
+    chapter: "bridge",
+    prompt: "이제 정의한 현상을 다층적으로 진단해보겠습니다",
+    hint: "관찰된 문제를 학습자·수업설계·환경의 어느 층위에서 비롯되는지 분해합니다. 진단 결과가 다음 챕터(이론 선택)의 근거가 됩니다. (※ 본 진단 흐름은 ADDIE·체제적 교수설계 등 ‘분석·처방형’ 패러다임에 가깝습니다. 구성주의·DBR·참여실행연구 같은 ‘생성형’ 접근이라면 다음 5개 슬라이드의 답을 비워두고 통과해도 무방하며, 후속 업데이트에서 별도 트랙이 추가될 예정입니다.)",
+    optional: true,
+    render: (form) => {
+      const phenomena = form.problemPhenomena.filter((p) => p.trim()).slice(0, 3);
+      return (
+        <div className="rounded-xl border-2 border-dashed border-rose-200 bg-rose-50/50 p-4 text-sm">
+          <p className="font-semibold text-rose-900">정의한 현상 미리보기</p>
+          {phenomena.length === 0 ? (
+            <p className="mt-2 text-muted-foreground">아직 현상이 입력되지 않았어요.</p>
+          ) : (
+            <ul className="mt-2 space-y-1 text-rose-900/90">
+              {phenomena.map((p, i) => (
+                <li key={i} className="line-clamp-2">• {p}</li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-3 rounded-md bg-white/60 px-2.5 py-1.5 text-[11px] text-rose-900/80 ring-1 ring-rose-200">
+            ⓘ 분석·처방형 트랙 — 구성주의/DBR 접근은 다음 단계에서 비워두고 통과해도 됩니다.
+          </p>
+        </div>
+      );
+    },
+  },
+
+  // ── Chapter 1.5: 문제 진단 (Sprint 57)
+  {
+    id: "diag-evidences",
+    chapter: "diagnosis",
+    prompt: "현상의 근거가 되는 데이터는 무엇인가요?",
+    hint: "유형(관찰/평가/설문/선행연구)을 고르고 한 줄씩 적어주세요. 추가/삭제 가능.",
+    render: (form, setField) => {
+      const list = form.problemEvidences.length > 0
+        ? form.problemEvidences
+        : [{ id: "_seed", type: "" as EvidenceType, content: "" }];
+      return (
+        <div className="space-y-2">
+          {list.map((ev, i) => (
+            <div key={ev.id} className="flex flex-col gap-2 rounded-lg border bg-white p-2 sm:flex-row">
+              <select
+                value={ev.type}
+                onChange={(e) => upsertEvidence(form, setField, i, { type: e.target.value as EvidenceType })}
+                className="h-9 rounded-md border bg-white px-2 text-sm sm:w-32"
+                aria-label="근거 유형"
+              >
+                {EVIDENCE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+              <Input
+                value={ev.content}
+                onChange={(e) => upsertEvidence(form, setField, i, { content: e.target.value })}
+                placeholder="예: 4개 그룹 중 3개에서 발화 격차 5배 이상 관찰"
+                className="flex-1 bg-white"
+                style={{ fontSize: "16px" }}
+              />
+              {form.problemEvidences.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeEvidence(form, setField, i)}
+                  className="h-9 shrink-0 rounded-md border px-2 text-xs text-muted-foreground hover:bg-muted"
+                  aria-label="근거 삭제"
+                >
+                  삭제
+                </button>
+              )}
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => addEvidence(form, setField)}
+            className="w-full rounded-md border-2 border-dashed py-2 text-xs text-muted-foreground hover:bg-muted/40"
+          >
+            + 근거 추가
+          </button>
+        </div>
+      );
+    },
+  },
+  {
+    id: "diag-causes-multi",
+    chapter: "diagnosis",
+    prompt: "원인을 학습자 / 수업설계 / 환경 차원으로 분해하면?",
+    hint: "각 층위마다 가능한 원인을 한 줄씩. 비워둘 수 있어요. 다층 분해는 처방을 정확하게 만듭니다.",
+    render: (form, setField) => {
+      const layers: { type: CauseType; label: string; placeholder: string }[] = [
+        { type: "learner", label: CAUSE_TYPE_LABELS.learner, placeholder: "예: 발화 자신감 부족, 한국어 의사 표현 어려움" },
+        { type: "instructional_design", label: CAUSE_TYPE_LABELS.instructional_design, placeholder: "예: 발화 차례 보장 장치 없음, 평가가 결과물 중심" },
+        { type: "environment", label: CAUSE_TYPE_LABELS.environment, placeholder: "예: 좌석 배치가 일렬, 협력용 도구 미제공" },
+      ];
+      return (
+        <div className="space-y-3">
+          {layers.map((l) => {
+            const cur = getCauseByType(form, l.type);
+            return (
+              <div key={l.type} className="rounded-lg border bg-white p-3">
+                <p className="text-xs font-semibold text-muted-foreground">{l.label}</p>
+                <Input
+                  value={cur?.content ?? ""}
+                  onChange={(e) => setCauseByType(form, setField, l.type, e.target.value)}
+                  placeholder={l.placeholder}
+                  className="mt-1.5 bg-white"
+                  style={{ fontSize: "16px" }}
+                />
+              </div>
+            );
+          })}
+        </div>
+      );
+    },
+  },
+  {
+    id: "diag-tried",
+    chapter: "diagnosis",
+    prompt: "이미 시도해본 해법과 그 결과는?",
+    hint: "통한 부분 / 통하지 않은 부분을 분리해서 적으면 본 연구의 새로움이 명확해집니다.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.diagnosisAttempts}
+        onChange={(e) => setField("diagnosisAttempts", e.target.value)}
+        placeholder="예: 작년 학기에 ‘발표자 로테이션’ 규칙을 도입 → 발화 빈도는 늘었으나 깊이는 그대로. 침묵의 본질은 자신감 부족이었던 것 같다."
+        rows={6}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+  {
+    id: "diag-gap",
+    chapter: "diagnosis",
+    prompt: "현재 상태(AS-IS) vs 도달하려는 상태(TO-BE)의 격차는?",
+    hint: "두 상태를 한 줄씩 대비해 적으면 결과 챕터에서 그대로 검증 지표가 됩니다.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.diagnosisGap}
+        onChange={(e) => setField("diagnosisGap", e.target.value)}
+        placeholder={"AS-IS: 30% 학생만 의미 있는 발화 / 평균 발화 시간 5초\nTO-BE: 80% 학생이 자기 의견 1회 이상 표명 / 평균 30초 이상"}
+        rows={6}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+  {
+    id: "diag-primary",
+    chapter: "diagnosis",
+    prompt: "본 연구가 집중할 핵심 원인은?",
+    hint: "여러 원인 중 하나만 골라주세요. 이 답변이 다음 챕터(이론 선택)의 직접적인 근거가 됩니다.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.diagnosisPrimaryCause}
+        onChange={(e) => setField("diagnosisPrimaryCause", e.target.value)}
+        placeholder="예: 학습자 차원의 ‘발화 자신감 부족’을 핵심 원인으로 본다. 수업설계·환경 요인은 부차적으로 다룬다."
+        rows={5}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+
+  // ── Bridge: diagnosis → theory (Sprint 57)
+  {
+    id: "bridge-diag-theory",
+    chapter: "bridge",
+    prompt: "이 핵심 원인을 가장 잘 설명하는 이론을 선택해보세요",
+    hint: "다음 단계에서 적을 이론의 ‘선택 이유’ 에 방금 정한 핵심 원인 키워드가 자연스럽게 등장하면 좋습니다.",
+    optional: true,
+    render: (form) => {
+      const cause = form.diagnosisPrimaryCause.trim();
+      return (
+        <div className="rounded-xl border-2 border-dashed border-emerald-200 bg-emerald-50/60 p-4 text-sm">
+          <p className="font-semibold text-emerald-900">방금 정한 핵심 원인</p>
+          <p className="mt-2 whitespace-pre-wrap text-emerald-900/90">
+            {cause ? cause : <span className="italic text-muted-foreground">(아직 입력 안 함)</span>}
+          </p>
+        </div>
+      );
+    },
+  },
+
   // ── Chapter 2: 교육공학 이론
   {
     id: "theory-name",
@@ -278,6 +554,21 @@ const SLIDES: SlideDef[] = [
         style={{ fontSize: "16px" }}
       />
     ),
+    crossRef: (form) =>
+      form.diagnosisPrimaryCause.trim() ? (
+        <p className="rounded-md bg-emerald-50 px-2 py-1.5 text-[11px] text-emerald-900">
+          🩺 방금 정한 핵심 원인: <strong className="ml-0.5">{form.diagnosisPrimaryCause.trim().slice(0, 80)}</strong>
+        </p>
+      ) : null,
+    lint: (form) => {
+      const cause = form.diagnosisPrimaryCause;
+      const reason = form.theoryCards[0]?.selectionReason ?? "";
+      if (!cause.trim() || !reason.trim()) return null;
+      if (!hasKeywordOverlap(cause, reason)) {
+        return "선택 이유에 ‘핵심 원인’ 의 키워드가 안 보입니다. 원인 → 이론의 연결을 한두 단어 명시하면 논리가 단단해집니다.";
+      }
+      return null;
+    },
   },
   {
     id: "theory-link",
@@ -294,6 +585,15 @@ const SLIDES: SlideDef[] = [
         style={{ fontSize: "16px" }}
       />
     ),
+    crossRef: (form) => {
+      const phen = form.problemPhenomena.find((p) => p.trim());
+      if (!phen) return null;
+      return (
+        <p className="rounded-md bg-amber-50 px-2 py-1.5 text-[11px] text-amber-900">
+          🏫 정의한 현상: <strong className="ml-0.5">{phen.trim().slice(0, 80)}</strong>
+        </p>
+      );
+    },
   },
   {
     id: "theory-integration",
@@ -313,6 +613,46 @@ const SLIDES: SlideDef[] = [
     ),
   },
 
+  // ── Bridge: theory → prior (Sprint 57)
+  {
+    id: "bridge-theory-prior",
+    chapter: "bridge",
+    prompt: "이론의 핵심 개념을 키워드로 선행연구를 찾아보세요",
+    hint: "선택한 이론과 핵심 원인 키워드 — 이 두 가지로 검색하면 가장 가까운 선행연구가 나옵니다.",
+    optional: true,
+    render: (form) => {
+      const theoryName = form.theoryCards[0]?.name?.trim() ?? "";
+      const cause = form.diagnosisPrimaryCause.trim();
+      const keywords = Array.from(
+        new Set([
+          ...(theoryName ? extractKeywords(theoryName).slice(0, 3) : []),
+          ...(cause ? extractKeywords(cause).slice(0, 4) : []),
+        ]),
+      ).slice(0, 6);
+      return (
+        <div className="rounded-xl border-2 border-dashed border-blue-200 bg-blue-50/60 p-4 text-sm">
+          <p className="font-semibold text-blue-900">검색 키워드 후보</p>
+          {keywords.length === 0 ? (
+            <p className="mt-2 text-muted-foreground">
+              앞 단계 답변이 비어있어 키워드를 추출하지 못했어요.
+            </p>
+          ) : (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {keywords.map((k) => (
+                <span
+                  key={k}
+                  className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-blue-900 ring-1 ring-blue-200"
+                >
+                  {k}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    },
+  },
+
   // ── Chapter 3: 선행연구
   {
     id: "prior-summary",
@@ -329,6 +669,34 @@ const SLIDES: SlideDef[] = [
         style={{ fontSize: "16px" }}
       />
     ),
+    crossRef: (form) => {
+      const theoryName = form.theoryCards[0]?.name?.trim() ?? "";
+      const cause = form.diagnosisPrimaryCause.trim();
+      if (!theoryName && !cause) return null;
+      return (
+        <div className="space-y-1">
+          {theoryName && (
+            <p className="rounded-md bg-emerald-50 px-2 py-1.5 text-[11px] text-emerald-900">
+              📚 선택 이론: <strong className="ml-0.5">{theoryName}</strong>
+            </p>
+          )}
+          {cause && (
+            <p className="rounded-md bg-rose-50 px-2 py-1.5 text-[11px] text-rose-900">
+              🩺 핵심 원인: <strong className="ml-0.5">{cause.slice(0, 80)}</strong>
+            </p>
+          )}
+        </div>
+      );
+    },
+    lint: (form) => {
+      const concepts = (form.theoryCards[0]?.name ?? "").trim();
+      const prior = form.priorResearchAnalysis;
+      if (!concepts || !prior) return null;
+      if (!hasKeywordOverlap(concepts, prior)) {
+        return "선행연구 분석에 ‘이론’ 키워드가 안 보입니다. 본 연구의 이론적 위치를 한 줄 명시하면 흐름이 명확해집니다.";
+      }
+      return null;
+    },
   },
 ];
 
@@ -359,7 +727,13 @@ export default function ResearchReportInterview({
   const slide = index >= 0 ? SLIDES[index] : null;
 
   const chapterCounts = useMemo(() => {
-    const m: Record<Chapter, number> = { field: 0, theory: 0, prior: 0 };
+    const m: Record<Chapter, number> = {
+      field: 0,
+      diagnosis: 0,
+      theory: 0,
+      prior: 0,
+      bridge: 0,
+    };
     for (const s of SLIDES) m[s.chapter] += 1;
     return m;
   }, []);
@@ -453,6 +827,32 @@ export default function ResearchReportInterview({
               >
                 {slide.render(form, setField)}
               </motion.div>
+              {slide.crossRef && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.32, duration: 0.3 }}
+                  className="mt-3 space-y-1"
+                >
+                  {slide.crossRef(form)}
+                </motion.div>
+              )}
+              {slide.lint &&
+                (() => {
+                  const msg = slide.lint(form);
+                  if (!msg) return null;
+                  return (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4, duration: 0.3 }}
+                      className="mt-3 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-2.5 text-[11px] text-amber-900 sm:text-xs"
+                    >
+                      <AlertTriangle size={14} className="mt-0.5 shrink-0 text-amber-600" />
+                      <span>{msg}</span>
+                    </motion.div>
+                  );
+                })()}
             </motion.div>
           ) : (
             <motion.div
@@ -480,7 +880,7 @@ export default function ResearchReportInterview({
                 답변은 자동으로 보고서 본문에 저장됩니다.
               </p>
               <div className="mt-4 flex flex-wrap justify-center gap-1.5 text-[11px] text-muted-foreground sm:mt-6 sm:gap-3 sm:text-xs">
-                {(Object.keys(chapterCounts) as Chapter[]).map((c) => {
+                {REAL_CHAPTERS.map((c) => {
                   const meta = CHAPTER_META[c];
                   const Icon = meta.icon;
                   return (

@@ -59,6 +59,10 @@ export interface FormState {
   scopeContext: string;
   scopeExclusion: string;
   problemMeasurements: ProblemMeasurementItem[];
+  // v3 — 1.5 문제 진단 (Sprint 57: 이론을 끌어오기 전 다층 분석)
+  diagnosisAttempts: string;
+  diagnosisGap: string;
+  diagnosisPrimaryCause: string;
   // v2 — 2. 교육공학 이론
   theoryCards: TheoryCard[];
   theoryRelationProblem: string;
@@ -96,6 +100,9 @@ const EMPTY: FormState = {
     { id: "default-m1", factor: "", indicator: "" },
     { id: "default-m2", factor: "", indicator: "" },
   ],
+  diagnosisAttempts: "",
+  diagnosisGap: "",
+  diagnosisPrimaryCause: "",
   theoryCards: [],
   theoryRelationProblem: "",
   theoryRelationRoles: "",
@@ -159,6 +166,9 @@ function fromReport(r: ResearchReport | undefined): FormState {
     scopeContext: r.scopeContext ?? "",
     scopeExclusion: r.scopeExclusion ?? "",
     problemMeasurements: migratedMeasurements,
+    diagnosisAttempts: r.diagnosisAttempts ?? "",
+    diagnosisGap: r.diagnosisGap ?? "",
+    diagnosisPrimaryCause: r.diagnosisPrimaryCause ?? "",
     theoryCards: migrateTheoryCards(r),
     theoryRelationProblem: r.theoryRelationProblem ?? r.theoryConnection ?? "",
     theoryRelationRoles: r.theoryRelationRoles ?? "",
@@ -196,6 +206,7 @@ function totalChars(form: FormState): number {
     form.fieldAudience, form.fieldSubject,
     form.problemImpact, form.problemImportance,
     form.scopeAudience, form.scopeContext, form.scopeExclusion,
+    form.diagnosisAttempts, form.diagnosisGap, form.diagnosisPrimaryCause,
   ];
   let sum = textFields.reduce((s, v) => s + v.length, 0);
   for (const g of form.priorResearchGroups) {
