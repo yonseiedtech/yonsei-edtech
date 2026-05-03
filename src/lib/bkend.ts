@@ -34,7 +34,7 @@ import type {
   User, Post, Comment, Seminar, SeminarSession, SeminarAttendee,
   SeminarRegistration, Certificate, PromotionContent, SeminarMaterial,
   SeminarReview, Inquiry, Activity, AppNotification, WaitlistEntry,
-  Poll, PollResponse, PhotoAlbum, Photo, AdminTodo, AuditLog,
+  Poll, PollResponse, PhotoAlbum, Photo, AdminTodo, AuditLog, UserActivityLog,
   ActivityProgress, ActivityMaterial, EmailLog, ProgressMeeting,
   Lab, LabReaction, LabComment, ResearchPaper, ResearchReport, ResearchProposal, WritingPaper, WritingPaperHistory,
   InterviewResponseReaction, InterviewResponseComment,
@@ -581,6 +581,21 @@ export const auditLogsApi = {
     dataApi.list<AuditLog>("audit_logs", { sort: "createdAt:desc", ...params }),
   create: (data: Record<string, unknown>) =>
     dataApi.create<AuditLog>("audit_logs", data),
+};
+
+/** Sprint 63: 사용자 페이지 접속 이력 (관리자 read only). 클라이언트 write 만 허용 (자기 본인 userId). */
+export const userActivityLogsApi = {
+  list: (params?: QueryParams) =>
+    dataApi.list<UserActivityLog>("user_activity_logs", { sort: "createdAt:desc", limit: 200, ...params }),
+  listByUser: (userId: string, limit: number = 200) =>
+    dataApi.list<UserActivityLog>("user_activity_logs", {
+      "filter[userId]": userId,
+      sort: "createdAt:desc",
+      limit,
+    }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<UserActivityLog>("user_activity_logs", data),
+  delete: (id: string) => dataApi.delete("user_activity_logs", id),
 };
 
 export const todosApi = {

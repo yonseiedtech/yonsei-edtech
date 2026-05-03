@@ -798,5 +798,15 @@ service cloud.firestore {
     match /push_logs/{docId} {
       allow read, write: if false;
     }
+
+    // ─── User Activity Logs (Sprint 63) ───
+    // 회원 페이지 접속 이력 — admin 만 read. 본인은 자기 본인 userId 로만 create 가능.
+    // update/delete 는 admin 만 (정리·수동 보정).
+    match /user_activity_logs/{docId} {
+      allow read, list: if isAuthenticated() && isAdmin();
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated() && isAdmin();
+    }
   }
 }

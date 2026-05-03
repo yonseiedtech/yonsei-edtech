@@ -505,6 +505,22 @@ export interface ResearchGroup {
   insight: string;
 }
 
+/** Sprint 63: 회원 페이지 접속 이력 (관리자 전용) */
+export interface UserActivityLog {
+  id: string;
+  userId: string;
+  /** denorm: 빠른 표시용 */
+  userName?: string;
+  /** 전체 경로 */
+  path: string;
+  /** 첫 세그먼트 그룹 (visit-tracker 와 동일 규칙) */
+  pathGroup: string;
+  /** 한국어 라벨 */
+  pathLabel: string;
+  /** ISO datetime */
+  createdAt: string;
+}
+
 export type EducationFormat = "" | "offline" | "online" | "blended";
 export type EvidenceType = "" | "observation" | "assessment" | "survey" | "prior_research" | "other";
 export type CauseType = "" | "learner" | "instructional_design" | "environment" | "other";

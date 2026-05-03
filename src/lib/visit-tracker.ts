@@ -1,4 +1,4 @@
-import { doc, setDoc, increment, arrayUnion, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, increment, arrayUnion, serverTimestamp, addDoc, collection } from "firebase/firestore";
 import { db } from "./firebase";
 import { todayYmdKst } from "./dday";
 
@@ -106,5 +106,48 @@ export async function trackVisit(opts: TrackOptions = {}): Promise<void> {
         // noop
       }
     }
+  }
+}
+
+// ─── Sprint 63: 회원 개별 페이지 접속 이력 ─────────────────────────────────
+const ACTIVITY_THROTTLE_MS = 30 * 1000; // 동일 (userId+pathGroup) 30초 throttle
+const ACTIVITY_KEY_PREFIX = "user-activity-last-";
+
+interface UserActivityOpts {
+  userId: string;
+  userName?: string;
+  pathname: string;
+}
+
+export async function trackUserActivity(opts: UserActivityOpts): Promise<void> {
+  if (typeof window === "undefined") return;
+  const { userId, userName, pathname } = opts;
+  if (!userId || !pathname) return;
+  const group = pathGroup(pathname);
+  // 의미 없는 그룹 제외 (정적 자산 등)
+  if (group === "_next" || group === "api" || group === "favicon.ico") return;
+
+  // throttle: 같은 회원 + 같은 path group 30초 내 중복 기록 방지
+  const throttleKey = `${ACTIVITY_KEY_PREFIX}${userId}-${group}`;
+  try {
+    const last = sessionStorage.getItem(throttleKey);
+    if (last && Date.now() - Number(last) < ACTIVITY_THROTTLE_MS) return;
+    sessionStorage.setItem(throttleKey, String(Date.now()));
+  } catch {
+    return;
+  }
+
+  const payload = {
+    userId,
+    userName: userName ?? "",
+    path: pathname,
+    pathGroup: group,
+    pathLabel: pathGroupLabel(group),
+    createdAt: new Date().toISOString(),
+  };
+  try {
+    await addDoc(collection(db, "user_activity_logs"), payload);
+  } catch {
+    // 활동 로그 실패는 본 작업에 영향 X — silent
   }
 }

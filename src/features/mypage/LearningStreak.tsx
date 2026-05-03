@@ -18,9 +18,9 @@
  *  - 신규 달성한 마일스톤은 sessionStorage 게이트로 1회 토스트
  */
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Flame, Trophy, Sprout } from "lucide-react";
+import { Flame, Trophy, Sprout, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import {
   attendeesApi,
@@ -115,18 +115,53 @@ interface Stats {
   weeklyActive: boolean[]; // length 53
 }
 
-function computeStats(scoresByDay: Map<string, number>): Stats {
+// ─── Sprint 64: 학기 기반 그리드 + 연도 스크롤 ─────────────────────────────
+type Semester = { year: number; half: 1 | 2 };
+
+function currentSemester(now: Date = new Date()): Semester {
+  const y = now.getFullYear();
+  const m = now.getMonth() + 1;
+  if (m >= 3 && m <= 8) return { year: y, half: 1 };
+  if (m >= 9) return { year: y, half: 2 };
+  // Jan/Feb → 작년 후기
+  return { year: y - 1, half: 2 };
+}
+
+function semesterStartDate(s: Semester): Date {
+  // 전기: 3월 1일 / 후기: 9월 1일
+  return s.half === 1 ? new Date(s.year, 2, 1) : new Date(s.year, 8, 1);
+}
+
+function semesterPrev(s: Semester): Semester {
+  if (s.half === 1) return { year: s.year - 1, half: 2 };
+  return { year: s.year, half: 1 };
+}
+
+function semesterNext(s: Semester): Semester {
+  if (s.half === 1) return { year: s.year, half: 2 };
+  return { year: s.year + 1, half: 1 };
+}
+
+function semesterCmp(a: Semester, b: Semester): number {
+  if (a.year !== b.year) return a.year - b.year;
+  return a.half - b.half;
+}
+
+function semesterLabel(s: Semester): string {
+  return `${s.year}년 ${s.half === 1 ? "전기 (3월~)" : "후기 (9월~)"}`;
+}
+
+function computeStats(scoresByDay: Map<string, number>, semester: Semester): Stats {
   const cells: DayCell[] = [];
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  // grid 마지막 컬럼이 이번 주가 되도록 조정 — 일요일을 주 시작으로
-  // 오늘이 속한 주의 토요일을 그리드 마지막 셀로
-  const lastSat = new Date(today);
-  const dayOfWeek = today.getDay(); // 0..6 (일..토)
-  lastSat.setDate(lastSat.getDate() + (6 - dayOfWeek));
-  // 마지막 칸으로부터 TOTAL_DAYS-1 일 전이 그리드 시작
-  const start = new Date(lastSat);
-  start.setDate(start.getDate() - (TOTAL_DAYS - 1));
+  const todayYmd = ymdLocal(today);
+
+  // 학기 시작일을 포함하는 주의 일요일을 그리드 시작으로
+  const semStart = semesterStartDate(semester);
+  const start = new Date(semStart);
+  const startDow = start.getDay(); // 0=일
+  start.setDate(start.getDate() - startDow);
 
   for (let i = 0; i < TOTAL_DAYS; i++) {
     const d = new Date(start);
@@ -142,13 +177,12 @@ function computeStats(scoresByDay: Map<string, number>): Stats {
     });
   }
 
-  // 미래 일자(오늘 이후 ~ 토요일까지)는 score=0 강제
-  const todayYmd = ymdLocal(today);
+  // 미래 일자(오늘 이후) 는 score=0 강제
   for (const c of cells) {
     if (c.ymd > todayYmd) c.score = 0;
   }
 
-  // 통계
+  // 통계 (해당 학기 안 + 오늘 이전만)
   let totalScore = 0;
   let activeDays = 0;
   for (const c of cells) {
@@ -157,14 +191,14 @@ function computeStats(scoresByDay: Map<string, number>): Stats {
     if (c.score > 0) activeDays++;
   }
 
-  // 이번 달
+  // 이번 달 (오늘이 그리드 안에 있는 경우만 의미)
   const thisMonth = `${today.getFullYear()}-${pad2(today.getMonth() + 1)}`;
   let thisMonthCount = 0;
   for (const c of cells) {
     if (c.score > 0 && c.ymd.startsWith(thisMonth)) thisMonthCount++;
   }
 
-  // 주 단위 streak (최근 주부터 거꾸로)
+  // 주 단위 streak (오늘이 속한 주부터 과거로 — 그리드가 현재 학기일 때만 의미)
   const weeklyActive: boolean[] = new Array(WEEKS).fill(false);
   for (const c of cells) {
     if (c.score > 0 && c.ymd <= todayYmd) {
@@ -246,11 +280,19 @@ export default function LearningStreak() {
   const { user } = useAuthStore();
   const userId = user?.id;
 
-  const cutoffIso = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - TOTAL_DAYS - 1);
-    return d.toISOString();
-  }, []);
+  // Sprint 64: 학기 기반 그리드 + 좌·우 스크롤 + 입학시점 가드
+  const cur = useMemo(() => currentSemester(), []);
+  const [semester, setSemester] = useState<Semester>(cur);
+
+  const minSemester: Semester | null = useMemo(() => {
+    if (!user?.enrollmentYear) return null;
+    const half: 1 | 2 = user.enrollmentHalf === 2 ? 2 : 1;
+    return { year: user.enrollmentYear, half };
+  }, [user?.enrollmentYear, user?.enrollmentHalf]);
+
+  const canPrev = !minSemester || semesterCmp(semesterPrev(semester), minSemester) >= 0;
+  const canNext = semesterCmp(semester, cur) < 0;
+  const isCurrentSem = semesterCmp(semester, cur) === 0;
 
   const { data: attendeesRes } = useQuery({
     queryKey: ["streak", "attendees", userId],
@@ -305,7 +347,7 @@ export default function LearningStreak() {
     for (const a of (attendeesRes?.data ?? []) as SeminarAttendee[]) {
       if (!a.checkedIn) continue;
       const ymd = isoToYmdLocal(a.checkedInAt) ?? isoToYmdLocal(a.createdAt);
-      if (!ymd || ymd < cutoffIso.slice(0, 10)) continue;
+      if (!ymd) continue;
       add(ymd, SCORES.attendance);
     }
     for (const s of (studyRes?.data ?? []) as StudySession[]) {
@@ -328,8 +370,8 @@ export default function LearningStreak() {
       add(ymd, SCORES.comment);
     }
 
-    return computeStats(scores);
-  }, [attendeesRes, studyRes, postsRes, courseReviewsRes, commentsRes, cutoffIso]);
+    return computeStats(scores, semester);
+  }, [attendeesRes, studyRes, postsRes, courseReviewsRes, commentsRes, semester]);
 
   const achievedMilestones = useMemo(
     () => MILESTONES.filter((m) => m.achieved(stats)),
@@ -372,11 +414,53 @@ export default function LearningStreak() {
         <span className="ml-auto flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           <span>활동 <strong className="text-foreground">{stats.activeDays}</strong>일</span>
           <span>누적 <strong className="text-foreground">{stats.totalScore}</strong>점</span>
-          <span className="inline-flex items-center gap-1">
-            <Flame size={12} className="text-rose-500" />
-            <strong className="text-foreground">{stats.weekStreak}</strong>주 streak
-          </span>
+          {isCurrentSem && (
+            <span className="inline-flex items-center gap-1">
+              <Flame size={12} className="text-rose-500" />
+              <strong className="text-foreground">{stats.weekStreak}</strong>주 streak
+            </span>
+          )}
         </span>
+      </div>
+
+      {/* Sprint 64: 학기 네비게이션 */}
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={() => setSemester(semesterPrev(semester))}
+          disabled={!canPrev}
+          className={cn(
+            "inline-flex h-8 min-w-[88px] items-center gap-1 rounded-lg border px-2 text-xs transition-colors",
+            canPrev ? "bg-white hover:bg-muted/40" : "cursor-not-allowed bg-muted/30 text-muted-foreground",
+          )}
+          aria-label="이전 학기"
+          title={canPrev ? `이전: ${semesterLabel(semesterPrev(semester))}` : "입학 시점 이전으로는 이동할 수 없어요"}
+        >
+          <ChevronLeft size={14} />
+          이전 학기
+        </button>
+        <p className="flex-1 text-center text-sm font-semibold">
+          {semesterLabel(semester)}
+          {isCurrentSem && (
+            <span className="ml-1.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
+              현재
+            </span>
+          )}
+        </p>
+        <button
+          type="button"
+          onClick={() => setSemester(semesterNext(semester))}
+          disabled={!canNext}
+          className={cn(
+            "inline-flex h-8 min-w-[88px] items-center justify-end gap-1 rounded-lg border px-2 text-xs transition-colors",
+            canNext ? "bg-white hover:bg-muted/40" : "cursor-not-allowed bg-muted/30 text-muted-foreground",
+          )}
+          aria-label="다음 학기"
+          title={canNext ? `다음: ${semesterLabel(semesterNext(semester))}` : "현재 학기 이후는 아직 시작되지 않았어요"}
+        >
+          다음 학기
+          <ChevronRight size={14} />
+        </button>
       </div>
 
       {/* 그리드 영역 — 가로 스크롤 가능 */}
