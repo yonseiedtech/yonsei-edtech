@@ -42,6 +42,7 @@ import {
   Bell,
 } from "lucide-react";
 import EmptyState from "@/components/ui/empty-state";
+import LearningStreak from "@/features/mypage/LearningStreak";
 import { useAuth } from "@/features/auth/useAuth";
 import { ROLE_LABELS, ENROLLMENT_STATUS_LABELS } from "@/types";
 import { formatDate } from "@/lib/utils";
@@ -231,6 +232,9 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
         <div className="mt-6">
           {activeTab === "home" && (
             <div className="space-y-4">
+              {/* Sprint 56: 학습 잔디 — 365일 활동 그리드 + streak + 마일스톤 */}
+              <LearningStreak />
+
               {/* 내 학회활동 통합 안내 카드 */}
               <Link
                 href="/mypage/activities"
