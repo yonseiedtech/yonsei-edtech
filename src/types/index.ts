@@ -509,6 +509,24 @@ export type EducationFormat = "" | "offline" | "online" | "blended";
 export type EvidenceType = "" | "observation" | "assessment" | "survey" | "prior_research" | "other";
 export type CauseType = "" | "learner" | "instructional_design" | "environment" | "other";
 
+/** Sprint 58: 연구 접근 — 분석·처방형(ADDIE/체제적 ID) / 생성·구성형(구성주의·DBR·PAR) / 자유 */
+export type ResearchApproach = "" | "analytical" | "generative" | "free";
+
+export const RESEARCH_APPROACH_LABELS: Record<Exclude<ResearchApproach, "">, string> = {
+  analytical: "분석·처방형",
+  generative: "생성·구성형",
+  free: "자유 진행",
+};
+
+export const RESEARCH_APPROACH_HINTS: Record<Exclude<ResearchApproach, "">, string> = {
+  analytical:
+    "ADDIE / 체제적 교수설계 / 행동주의·인지주의 ID. ‘현상 → 원인 진단 → 이론적 처방’ 흐름. (1.5 진단 5슬라이드 노출)",
+  generative:
+    "구성주의 학습설계 / DBR / 참여실행연구. ‘맥락 이해 → 함께 만들기 → 반복 진화’ 흐름. (1.5 탐구 3슬라이드 노출)",
+  free:
+    "패러다임 분기를 건너뛰고 1 → 2 → 3 으로 곧장 진행. (1.5 슬라이드 모두 skip)",
+};
+
 /** Sprint 57: 인터뷰 모드 라벨 (진단 단계 5슬라이드 신설용) */
 export const EVIDENCE_TYPE_LABELS: Record<Exclude<EvidenceType, "">, string> = {
   observation: "수업 관찰",
@@ -609,14 +627,21 @@ export interface ResearchReport {
   scopeExclusion?: string;
   /** 1-5. 측정 가능성 — 문제 요소 + 관찰 가능한 지표 */
   problemMeasurements?: ProblemMeasurementItem[];
-  // ── v3: 1.5 문제 진단 — Sprint 57 (이론을 끌어오기 전 다층 분석 단계, 분석·처방형 한정) ──
-  // ※ Sprint 58 에서 패러다임 분기(분석형 vs 생성·구성형) 추가 예정 — 그 전까지는 분석형 흐름만 노출.
-  /** 1.5-3. 이미 시도해본 해결책과 그 결과 */
+  // ── v3: 1.5 문제 진단/탐구 — Sprint 57+58 (이론 챕터 진입 전 단계, 패러다임 분기) ──
+  /** Sprint 58: 연구 접근 패러다임 — 인터뷰 1.5 챕터 슬라이드 분기에 사용 */
+  researchApproach?: ResearchApproach;
+  /** 1.5-3 (분석형). 이미 시도해본 해결책과 그 결과 */
   diagnosisAttempts?: string;
-  /** 1.5-4. 현재 상태 vs 도달하려는 상태의 격차 (Performance Gap) */
+  /** 1.5-4 (분석형). 현재 상태 vs 도달하려는 상태의 격차 (Performance Gap) */
   diagnosisGap?: string;
-  /** 1.5-5. 본 연구가 집중할 핵심 원인 — 이론 선택의 근거가 됨 */
+  /** 1.5-5 (분석형). 본 연구가 집중할 핵심 원인 — 이론 선택의 근거가 됨 */
   diagnosisPrimaryCause?: string;
+  /** 1.5-i1 (생성형). 학습자·교사가 현상에 부여하는 의미 */
+  inquiryMeaning?: string;
+  /** 1.5-i2 (생성형). 설계 맥락·도구·상호작용 */
+  inquiryContext?: string;
+  /** 1.5-i3 (생성형). 반복 설계 사이클 — 어떻게 함께 진화시킬지 */
+  inquiryCycle?: string;
   // ── v2: 2. 교육공학 이론 — 구조화 입력 (옵셔널, 구버전 호환) ──
   /** 2. 적용 이론 카드 — 1~다수 */
   theoryCards?: TheoryCard[];

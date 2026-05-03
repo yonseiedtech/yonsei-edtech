@@ -17,26 +17,37 @@ import type {
   EvidenceType,
   ProblemCauseItem,
   ProblemEvidenceItem,
+  ResearchApproach,
   TheoryCard,
 } from "@/types";
-import { CAUSE_TYPE_LABELS, EVIDENCE_TYPE_LABELS } from "@/types";
+import {
+  CAUSE_TYPE_LABELS,
+  EVIDENCE_TYPE_LABELS,
+  RESEARCH_APPROACH_HINTS,
+  RESEARCH_APPROACH_LABELS,
+} from "@/types";
 
-/** Sprint 57: "diagnosis" 챕터 신설 (1과 2 사이) + bridge 챕터로 챕터 전환 시각화 */
-type Chapter = "field" | "diagnosis" | "theory" | "prior" | "bridge";
+/**
+ * Sprint 57: "diagnosis" 챕터 신설 (1과 2 사이) + bridge 챕터로 챕터 전환 시각화
+ * Sprint 58: "approach" 챕터 (패러다임 선택) + "inquiry" 챕터 (생성·구성형 트랙)
+ */
+type Chapter = "approach" | "field" | "diagnosis" | "inquiry" | "theory" | "prior" | "bridge";
 
 const CHAPTER_META: Record<
   Chapter,
   { label: string; icon: React.ElementType; color: string }
 > = {
+  approach: { label: "연구 접근", icon: Sparkles, color: "from-violet-500 to-fuchsia-500" },
   field: { label: "교육현장의 문제 정의", icon: School, color: "from-amber-500 to-orange-500" },
   diagnosis: { label: "문제 진단", icon: Stethoscope, color: "from-rose-500 to-pink-500" },
+  inquiry: { label: "맥락 탐구", icon: Sparkles, color: "from-cyan-500 to-sky-500" },
   theory: { label: "교육공학 이론", icon: BookOpen, color: "from-emerald-500 to-teal-500" },
   prior: { label: "선행연구 분석", icon: FlaskConical, color: "from-blue-500 to-indigo-500" },
   bridge: { label: "연결", icon: ArrowRight, color: "from-slate-400 to-slate-500" },
 };
 
-/** 챕터 진행률 표시에서 bridge 는 제외 */
-const REAL_CHAPTERS: Chapter[] = ["field", "diagnosis", "theory", "prior"];
+/** 챕터 진행률 표시에서 bridge / approach 는 제외. 1.5 (diagnosis | inquiry) 는 트랙 선택에 따라 자동 분기 */
+const REAL_CHAPTERS: Chapter[] = ["field", "diagnosis", "inquiry", "theory", "prior"];
 
 interface SlideDef {
   id: string;
@@ -49,6 +60,8 @@ interface SlideDef {
   crossRef?: (form: FormState) => React.ReactNode;
   /** 일관성 lint — 약한 연결 감지 시 경고 노출 */
   lint?: (form: FormState) => string | null;
+  /** Sprint 58: 이 슬라이드가 노출되는 ResearchApproach 트랙 — 미지정이면 모든 트랙 */
+  approaches?: ResearchApproach[];
 }
 
 const FORMAT_OPTIONS: { value: EducationFormat; label: string }[] = [
@@ -154,7 +167,48 @@ const EVIDENCE_OPTIONS: { value: EvidenceType; label: string }[] = [
   ),
 ];
 
+const APPROACH_OPTIONS: { value: Exclude<ResearchApproach, "">; }[] = [
+  { value: "analytical" },
+  { value: "generative" },
+  { value: "free" },
+];
+
 const SLIDES: SlideDef[] = [
+  // ── Sprint 58: 연구 접근 패러다임 선택 (가장 첫 슬라이드)
+  {
+    id: "approach-select",
+    chapter: "approach",
+    prompt: "어떤 연구 접근으로 작성하실 건가요?",
+    hint: "선택에 따라 1.5 챕터가 분기됩니다 — 분석형은 ‘진단 5단계’, 생성형은 ‘맥락 탐구 3단계’, 자유는 1.5 챕터 자체를 건너뜁니다. 언제든 다시 바꿀 수 있어요.",
+    render: (form, setField) => (
+      <div className="space-y-2">
+        {APPROACH_OPTIONS.map((opt) => {
+          const active = form.researchApproach === opt.value;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setField("researchApproach", opt.value)}
+              className={cn(
+                "w-full rounded-xl border-2 p-4 text-left transition-all",
+                active
+                  ? "border-[#003876] bg-[#003876]/5 shadow-sm"
+                  : "border-muted bg-white hover:border-[#003876]/40 hover:bg-blue-50/40",
+              )}
+            >
+              <div className="flex items-center gap-2 text-base font-semibold">
+                {active && <span className="inline-block h-2 w-2 rounded-full bg-[#003876]" />}
+                {RESEARCH_APPROACH_LABELS[opt.value]}
+              </div>
+              <p className={cn("mt-1.5 text-xs leading-relaxed", active ? "text-foreground" : "text-muted-foreground")}>
+                {RESEARCH_APPROACH_HINTS[opt.value]}
+              </p>
+            </button>
+          );
+        })}
+      </div>
+    ),
+  },
   // ── Chapter 1: 교육현장의 문제 정의
   {
     id: "field-audience",
@@ -318,10 +372,11 @@ const SLIDES: SlideDef[] = [
     ),
   },
 
-  // ── Bridge: field → diagnosis (Sprint 57)
+  // ── Bridge: field → diagnosis (Sprint 57, analytical 트랙 한정)
   {
     id: "bridge-field-diag",
     chapter: "bridge",
+    approaches: ["analytical"],
     prompt: "이제 정의한 현상을 다층적으로 진단해보겠습니다",
     hint: "관찰된 문제를 학습자·수업설계·환경의 어느 층위에서 비롯되는지 분해합니다. 진단 결과가 다음 챕터(이론 선택)의 근거가 됩니다. (※ 본 진단 흐름은 ADDIE·체제적 교수설계 등 ‘분석·처방형’ 패러다임에 가깝습니다. 구성주의·DBR·참여실행연구 같은 ‘생성형’ 접근이라면 다음 5개 슬라이드의 답을 비워두고 통과해도 무방하며, 후속 업데이트에서 별도 트랙이 추가될 예정입니다.)",
     optional: true,
@@ -351,6 +406,7 @@ const SLIDES: SlideDef[] = [
   {
     id: "diag-evidences",
     chapter: "diagnosis",
+    approaches: ["analytical"],
     prompt: "현상의 근거가 되는 데이터는 무엇인가요?",
     hint: "유형(관찰/평가/설문/선행연구)을 고르고 한 줄씩 적어주세요. 추가/삭제 가능.",
     render: (form, setField) => {
@@ -404,6 +460,7 @@ const SLIDES: SlideDef[] = [
   {
     id: "diag-causes-multi",
     chapter: "diagnosis",
+    approaches: ["analytical"],
     prompt: "원인을 학습자 / 수업설계 / 환경 차원으로 분해하면?",
     hint: "각 층위마다 가능한 원인을 한 줄씩. 비워둘 수 있어요. 다층 분해는 처방을 정확하게 만듭니다.",
     render: (form, setField) => {
@@ -436,6 +493,7 @@ const SLIDES: SlideDef[] = [
   {
     id: "diag-tried",
     chapter: "diagnosis",
+    approaches: ["analytical"],
     prompt: "이미 시도해본 해법과 그 결과는?",
     hint: "통한 부분 / 통하지 않은 부분을 분리해서 적으면 본 연구의 새로움이 명확해집니다.",
     render: (form, setField) => (
@@ -452,6 +510,7 @@ const SLIDES: SlideDef[] = [
   {
     id: "diag-gap",
     chapter: "diagnosis",
+    approaches: ["analytical"],
     prompt: "현재 상태(AS-IS) vs 도달하려는 상태(TO-BE)의 격차는?",
     hint: "두 상태를 한 줄씩 대비해 적으면 결과 챕터에서 그대로 검증 지표가 됩니다.",
     render: (form, setField) => (
@@ -468,6 +527,7 @@ const SLIDES: SlideDef[] = [
   {
     id: "diag-primary",
     chapter: "diagnosis",
+    approaches: ["analytical"],
     prompt: "본 연구가 집중할 핵심 원인은?",
     hint: "여러 원인 중 하나만 골라주세요. 이 답변이 다음 챕터(이론 선택)의 직접적인 근거가 됩니다.",
     render: (form, setField) => (
@@ -482,10 +542,11 @@ const SLIDES: SlideDef[] = [
     ),
   },
 
-  // ── Bridge: diagnosis → theory (Sprint 57)
+  // ── Bridge: diagnosis → theory (Sprint 57, analytical 트랙 한정)
   {
     id: "bridge-diag-theory",
     chapter: "bridge",
+    approaches: ["analytical"],
     prompt: "이 핵심 원인을 가장 잘 설명하는 이론을 선택해보세요",
     hint: "다음 단계에서 적을 이론의 ‘선택 이유’ 에 방금 정한 핵심 원인 키워드가 자연스럽게 등장하면 좋습니다.",
     optional: true,
@@ -497,6 +558,122 @@ const SLIDES: SlideDef[] = [
           <p className="mt-2 whitespace-pre-wrap text-emerald-900/90">
             {cause ? cause : <span className="italic text-muted-foreground">(아직 입력 안 함)</span>}
           </p>
+        </div>
+      );
+    },
+  },
+
+  // ── Bridge: field → inquiry (Sprint 58, generative 트랙 한정)
+  {
+    id: "bridge-field-inquiry",
+    chapter: "bridge",
+    approaches: ["generative"],
+    prompt: "이제 현장의 의미와 맥락을 함께 탐구해보겠습니다",
+    hint: "구성주의·DBR·참여실행연구 흐름은 ‘외부에서 진단’ 하지 않고 학습자/교사와 ‘함께 의미를 구성’ 합니다. 다음 3 슬라이드는 그 단서를 모으는 단계입니다.",
+    optional: true,
+    render: (form) => {
+      const phenomena = form.problemPhenomena.filter((p) => p.trim()).slice(0, 3);
+      return (
+        <div className="rounded-xl border-2 border-dashed border-cyan-200 bg-cyan-50/50 p-4 text-sm">
+          <p className="font-semibold text-cyan-900">정의한 현상 미리보기</p>
+          {phenomena.length === 0 ? (
+            <p className="mt-2 text-muted-foreground">아직 현상이 입력되지 않았어요.</p>
+          ) : (
+            <ul className="mt-2 space-y-1 text-cyan-900/90">
+              {phenomena.map((p, i) => (
+                <li key={i} className="line-clamp-2">• {p}</li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-3 rounded-md bg-white/60 px-2.5 py-1.5 text-[11px] text-cyan-900/80 ring-1 ring-cyan-200">
+            ⓘ 생성·구성형 트랙 — ‘원인 진단’ 대신 ‘맥락과 의미’ 를 묻습니다.
+          </p>
+        </div>
+      );
+    },
+  },
+
+  // ── Chapter 1.5 (대안): 맥락 탐구 — Sprint 58 generative 트랙
+  {
+    id: "inq-meaning",
+    chapter: "inquiry",
+    approaches: ["generative"],
+    prompt: "학습자·교사는 이 현상에 어떤 의미를 부여하고 있나요?",
+    hint: "‘문제’ 라는 외부적 정의 대신 행위자 자신의 시선·해석·정서를 적어주세요. 인용/관찰 메모로도 좋습니다.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.inquiryMeaning}
+        onChange={(e) => setField("inquiryMeaning", e.target.value)}
+        placeholder={"예: 학생들은 ‘내가 잘못 말하면 친구들이 어떻게 볼까’ 라는 두려움을 자주 표현했다. 교사는 침묵을 ‘소극적’으로 봤지만, 인터뷰에서 학생들은 ‘자기 검열’ 로 묘사했다."}
+        rows={6}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+  {
+    id: "inq-context",
+    chapter: "inquiry",
+    approaches: ["generative"],
+    prompt: "어떤 설계 맥락·도구·상호작용이 학습 경험을 형성하나요?",
+    hint: "환경을 ‘원인’ 으로 환원하지 않고 학습 경험과 *함께 작동하는 요소* 로 묘사하세요. 좌석 배치·도구·관계 모두 포함.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.inquiryContext}
+        onChange={(e) => setField("inquiryContext", e.target.value)}
+        placeholder="예: 4인 모둠은 책상을 마주보고 앉지만, Padlet 게시는 익명이 가능해서 텍스트로는 활발히 교류한다. 즉 침묵은 ‘말’ 채널 한정이며, 글 채널에서는 다른 행위 양상이 나타난다."
+        rows={6}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+  {
+    id: "inq-cycle",
+    chapter: "inquiry",
+    approaches: ["generative"],
+    prompt: "본 연구는 어떤 반복 설계 사이클로 진행되나요?",
+    hint: "DBR/SAM 식 ‘설계 → 실행 → 성찰 → 재설계’ 사이클을 1~2 단계만이라도 적어주세요. 함께 만드는 동료(co-designer)가 있다면 명시.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.inquiryCycle}
+        onChange={(e) => setField("inquiryCycle", e.target.value)}
+        placeholder={"예: Cycle 1 (4주) — 글 채널 중심 활동 시제로 도입 → 학생 인터뷰 → 말 채널 비계 추가 / Cycle 2 (4주) — 비계 효과 관찰 → 학생·교사 공동 평가."}
+        rows={6}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+
+  // ── Bridge: inquiry → theory (Sprint 58, generative 트랙 한정)
+  {
+    id: "bridge-inquiry-theory",
+    chapter: "bridge",
+    approaches: ["generative"],
+    prompt: "탐구한 의미·맥락을 함께 만들어갈 이론을 선택해보세요",
+    hint: "구성주의 흐름에서는 이론이 ‘처방’ 이 아니라 ‘함께 보는 렌즈’ 입니다. 다음 단계의 이론 선택 이유에 방금 적은 의미·맥락 키워드가 자연스럽게 등장하면 좋습니다.",
+    optional: true,
+    render: (form) => {
+      const meaning = form.inquiryMeaning.trim();
+      const context = form.inquiryContext.trim();
+      return (
+        <div className="space-y-2">
+          {meaning && (
+            <div className="rounded-xl border-2 border-dashed border-cyan-200 bg-cyan-50/60 p-3 text-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-cyan-700">행위자의 의미</p>
+              <p className="mt-1 whitespace-pre-wrap text-cyan-900/90 line-clamp-3">{meaning}</p>
+            </div>
+          )}
+          {context && (
+            <div className="rounded-xl border-2 border-dashed border-sky-200 bg-sky-50/60 p-3 text-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-sky-700">설계 맥락</p>
+              <p className="mt-1 whitespace-pre-wrap text-sky-900/90 line-clamp-3">{context}</p>
+            </div>
+          )}
+          {!meaning && !context && (
+            <p className="text-sm italic text-muted-foreground">앞 단계 답변이 비어있어요. 채워두면 다음 챕터에서 자동 표시됩니다.</p>
+          )}
         </div>
       );
     },
@@ -554,18 +731,35 @@ const SLIDES: SlideDef[] = [
         style={{ fontSize: "16px" }}
       />
     ),
-    crossRef: (form) =>
-      form.diagnosisPrimaryCause.trim() ? (
-        <p className="rounded-md bg-emerald-50 px-2 py-1.5 text-[11px] text-emerald-900">
-          🩺 방금 정한 핵심 원인: <strong className="ml-0.5">{form.diagnosisPrimaryCause.trim().slice(0, 80)}</strong>
-        </p>
-      ) : null,
+    crossRef: (form) => {
+      const cause = form.diagnosisPrimaryCause.trim();
+      const meaning = form.inquiryMeaning.trim();
+      return (
+        <div className="space-y-1">
+          {cause && (
+            <p className="rounded-md bg-emerald-50 px-2 py-1.5 text-[11px] text-emerald-900">
+              🩺 방금 정한 핵심 원인: <strong className="ml-0.5">{cause.slice(0, 80)}</strong>
+            </p>
+          )}
+          {meaning && (
+            <p className="rounded-md bg-cyan-50 px-2 py-1.5 text-[11px] text-cyan-900">
+              💭 행위자의 의미: <strong className="ml-0.5">{meaning.slice(0, 80)}</strong>
+            </p>
+          )}
+        </div>
+      );
+    },
     lint: (form) => {
-      const cause = form.diagnosisPrimaryCause;
       const reason = form.theoryCards[0]?.selectionReason ?? "";
-      if (!cause.trim() || !reason.trim()) return null;
-      if (!hasKeywordOverlap(cause, reason)) {
+      if (!reason.trim()) return null;
+      const cause = form.diagnosisPrimaryCause;
+      const meaning = form.inquiryMeaning;
+      // 분석형: 핵심 원인 키워드 검사 / 생성형: 의미 키워드 검사 / 둘 다 비어있으면 lint skip
+      if (cause.trim() && !hasKeywordOverlap(cause, reason)) {
         return "선택 이유에 ‘핵심 원인’ 의 키워드가 안 보입니다. 원인 → 이론의 연결을 한두 단어 명시하면 논리가 단단해집니다.";
+      }
+      if (!cause.trim() && meaning.trim() && !hasKeywordOverlap(meaning, reason)) {
+        return "선택 이유에 ‘행위자의 의미’ 키워드가 안 보입니다. 의미 → 이론(렌즈)의 연결을 한두 단어 명시하면 논리가 단단해집니다.";
       }
       return null;
     },
@@ -623,10 +817,12 @@ const SLIDES: SlideDef[] = [
     render: (form) => {
       const theoryName = form.theoryCards[0]?.name?.trim() ?? "";
       const cause = form.diagnosisPrimaryCause.trim();
+      const meaning = form.inquiryMeaning.trim();
       const keywords = Array.from(
         new Set([
           ...(theoryName ? extractKeywords(theoryName).slice(0, 3) : []),
-          ...(cause ? extractKeywords(cause).slice(0, 4) : []),
+          ...(cause ? extractKeywords(cause).slice(0, 3) : []),
+          ...(meaning ? extractKeywords(meaning).slice(0, 3) : []),
         ]),
       ).slice(0, 6);
       return (
@@ -672,7 +868,8 @@ const SLIDES: SlideDef[] = [
     crossRef: (form) => {
       const theoryName = form.theoryCards[0]?.name?.trim() ?? "";
       const cause = form.diagnosisPrimaryCause.trim();
-      if (!theoryName && !cause) return null;
+      const context = form.inquiryContext.trim();
+      if (!theoryName && !cause && !context) return null;
       return (
         <div className="space-y-1">
           {theoryName && (
@@ -683,6 +880,11 @@ const SLIDES: SlideDef[] = [
           {cause && (
             <p className="rounded-md bg-rose-50 px-2 py-1.5 text-[11px] text-rose-900">
               🩺 핵심 원인: <strong className="ml-0.5">{cause.slice(0, 80)}</strong>
+            </p>
+          )}
+          {context && (
+            <p className="rounded-md bg-sky-50 px-2 py-1.5 text-[11px] text-sky-900">
+              🌱 설계 맥락: <strong className="ml-0.5">{context.slice(0, 80)}</strong>
             </p>
           )}
         </div>
@@ -722,21 +924,40 @@ export default function ResearchReportInterview({
     if (open) setIndex(-1);
   }, [open]);
 
-  const totalSlides = SLIDES.length;
+  // Sprint 58: ResearchApproach 별 슬라이드 필터링
+  const slides = useMemo(() => {
+    const a = form.researchApproach;
+    return SLIDES.filter((s) => {
+      if (!s.approaches || s.approaches.length === 0) return true;
+      if (!a) return false; // 사용자가 아직 트랙을 고르지 않음 — 트랙 한정 슬라이드 숨김
+      return s.approaches.includes(a);
+    });
+  }, [form.researchApproach]);
+
+  const totalSlides = slides.length;
   const progress = index < 0 ? 0 : ((index + 1) / totalSlides) * 100;
-  const slide = index >= 0 ? SLIDES[index] : null;
+  const slide = index >= 0 ? slides[index] : null;
+
+  // index가 새로운 slides 길이를 넘는 경우 안전 클램프
+  useEffect(() => {
+    if (index >= totalSlides) {
+      setIndex(totalSlides - 1);
+    }
+  }, [totalSlides, index]);
 
   const chapterCounts = useMemo(() => {
     const m: Record<Chapter, number> = {
+      approach: 0,
       field: 0,
       diagnosis: 0,
+      inquiry: 0,
       theory: 0,
       prior: 0,
       bridge: 0,
     };
-    for (const s of SLIDES) m[s.chapter] += 1;
+    for (const s of slides) m[s.chapter] += 1;
     return m;
-  }, []);
+  }, [slides]);
 
   if (!open) return null;
 
@@ -880,7 +1101,7 @@ export default function ResearchReportInterview({
                 답변은 자동으로 보고서 본문에 저장됩니다.
               </p>
               <div className="mt-4 flex flex-wrap justify-center gap-1.5 text-[11px] text-muted-foreground sm:mt-6 sm:gap-3 sm:text-xs">
-                {REAL_CHAPTERS.map((c) => {
+                {REAL_CHAPTERS.filter((c) => chapterCounts[c] > 0).map((c) => {
                   const meta = CHAPTER_META[c];
                   const Icon = meta.icon;
                   return (
@@ -891,6 +1112,11 @@ export default function ResearchReportInterview({
                   );
                 })}
               </div>
+              {!form.researchApproach && (
+                <p className="mt-3 inline-block rounded-full bg-violet-50 px-3 py-1 text-[11px] font-medium text-violet-900 ring-1 ring-violet-200">
+                  ※ 첫 슬라이드에서 연구 접근(분석·처방형 / 생성·구성형 / 자유)을 고르시면 1.5 챕터가 자동 분기됩니다.
+                </p>
+              )}
               <Button onClick={() => setIndex(0)} size="lg" className="mt-6 sm:mt-8">
                 시작하기
               </Button>

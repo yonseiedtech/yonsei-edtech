@@ -18,6 +18,7 @@ import type {
   EducationFormat, EvidenceType, CauseType,
   ProblemEvidenceItem, ProblemCauseItem, ProblemMeasurementItem,
   TheoryCard, TheoryConcept,
+  ResearchApproach,
 } from "@/types";
 import {
   useResearchReport,
@@ -59,10 +60,14 @@ export interface FormState {
   scopeContext: string;
   scopeExclusion: string;
   problemMeasurements: ProblemMeasurementItem[];
-  // v3 — 1.5 문제 진단 (Sprint 57: 이론을 끌어오기 전 다층 분석)
+  // v3 — 1.5 문제 진단/탐구 (Sprint 57+58: 패러다임 분기)
+  researchApproach: ResearchApproach;
   diagnosisAttempts: string;
   diagnosisGap: string;
   diagnosisPrimaryCause: string;
+  inquiryMeaning: string;
+  inquiryContext: string;
+  inquiryCycle: string;
   // v2 — 2. 교육공학 이론
   theoryCards: TheoryCard[];
   theoryRelationProblem: string;
@@ -100,9 +105,13 @@ const EMPTY: FormState = {
     { id: "default-m1", factor: "", indicator: "" },
     { id: "default-m2", factor: "", indicator: "" },
   ],
+  researchApproach: "",
   diagnosisAttempts: "",
   diagnosisGap: "",
   diagnosisPrimaryCause: "",
+  inquiryMeaning: "",
+  inquiryContext: "",
+  inquiryCycle: "",
   theoryCards: [],
   theoryRelationProblem: "",
   theoryRelationRoles: "",
@@ -166,9 +175,13 @@ function fromReport(r: ResearchReport | undefined): FormState {
     scopeContext: r.scopeContext ?? "",
     scopeExclusion: r.scopeExclusion ?? "",
     problemMeasurements: migratedMeasurements,
+    researchApproach: r.researchApproach ?? "",
     diagnosisAttempts: r.diagnosisAttempts ?? "",
     diagnosisGap: r.diagnosisGap ?? "",
     diagnosisPrimaryCause: r.diagnosisPrimaryCause ?? "",
+    inquiryMeaning: r.inquiryMeaning ?? "",
+    inquiryContext: r.inquiryContext ?? "",
+    inquiryCycle: r.inquiryCycle ?? "",
     theoryCards: migrateTheoryCards(r),
     theoryRelationProblem: r.theoryRelationProblem ?? r.theoryConnection ?? "",
     theoryRelationRoles: r.theoryRelationRoles ?? "",
@@ -207,6 +220,7 @@ function totalChars(form: FormState): number {
     form.problemImpact, form.problemImportance,
     form.scopeAudience, form.scopeContext, form.scopeExclusion,
     form.diagnosisAttempts, form.diagnosisGap, form.diagnosisPrimaryCause,
+    form.inquiryMeaning, form.inquiryContext, form.inquiryCycle,
   ];
   let sum = textFields.reduce((s, v) => s + v.length, 0);
   for (const g of form.priorResearchGroups) {
