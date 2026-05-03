@@ -509,20 +509,39 @@ export type EducationFormat = "" | "offline" | "online" | "blended";
 export type EvidenceType = "" | "observation" | "assessment" | "survey" | "prior_research" | "other";
 export type CauseType = "" | "learner" | "instructional_design" | "environment" | "other";
 
-/** Sprint 58: 연구 접근 — 분석·처방형(ADDIE/체제적 ID) / 생성·구성형(구성주의·DBR·PAR) / 자유 */
-export type ResearchApproach = "" | "analytical" | "generative" | "free";
+/**
+ * Sprint 58/60: 연구 접근 패러다임
+ *  - analytical : 분석·처방형 (ADDIE / 체제적 ID)
+ *  - generative : 생성·구성형 (구성주의 · DBR · PAR)
+ *  - action_research : 액션리서치 (Sprint 60: 자기 실천 사이클)
+ *  - mixed_methods   : 혼합방법론 (Sprint 60: 양적+질적 통합)
+ *  - free       : 1.5 챕터 skip
+ */
+export type ResearchApproach =
+  | ""
+  | "analytical"
+  | "generative"
+  | "action_research"
+  | "mixed_methods"
+  | "free";
 
 export const RESEARCH_APPROACH_LABELS: Record<Exclude<ResearchApproach, "">, string> = {
   analytical: "분석·처방형",
   generative: "생성·구성형",
+  action_research: "액션리서치",
+  mixed_methods: "혼합방법론",
   free: "자유 진행",
 };
 
 export const RESEARCH_APPROACH_HINTS: Record<Exclude<ResearchApproach, "">, string> = {
   analytical:
-    "ADDIE / 체제적 교수설계 / 행동주의·인지주의 ID. ‘현상 → 원인 진단 → 이론적 처방’ 흐름. (1.5 진단 5슬라이드 노출)",
+    "ADDIE / 체제적 교수설계 / 행동주의·인지주의 ID. ‘현상 → 원인 진단 → 이론적 처방’ 흐름. (1.5 진단 5슬라이드)",
   generative:
-    "구성주의 학습설계 / DBR / 참여실행연구. ‘맥락 이해 → 함께 만들기 → 반복 진화’ 흐름. (1.5 탐구 3슬라이드 노출)",
+    "구성주의 학습설계 / DBR / 참여실행연구. ‘맥락 이해 → 함께 만들기 → 반복 진화’ 흐름. (1.5 탐구 3슬라이드)",
+  action_research:
+    "현장 교사·연구자가 자기 실천을 스스로 개선하는 Plan-Act-Observe-Reflect 사이클. (1.5 액션 3슬라이드)",
+  mixed_methods:
+    "양적 + 질적 데이터를 통합/대조해 한 연구 문제에 답하는 디자인. 수렴/설명/탐색/내포형. (1.5 혼합 4슬라이드)",
   free:
     "패러다임 분기를 건너뛰고 1 → 2 → 3 으로 곧장 진행. (1.5 슬라이드 모두 skip)",
 };
@@ -642,6 +661,20 @@ export interface ResearchReport {
   inquiryContext?: string;
   /** 1.5-i3 (생성형). 반복 설계 사이클 — 어떻게 함께 진화시킬지 */
   inquiryCycle?: string;
+  /** 1.5-a1 (액션리서치). 본인의 현장 위치·역할 */
+  actionRole?: string;
+  /** 1.5-a2 (액션리서치). Plan-Act-Observe-Reflect 사이클 설계 */
+  actionCycle?: string;
+  /** 1.5-a3 (액션리서치). 함께 성찰할 동료/공동연구자 */
+  actionCommunity?: string;
+  /** 1.5-m1 (혼합방법론). 채택한 혼합 디자인 (convergent/explanatory/exploratory/embedded) */
+  mixedDesign?: string;
+  /** 1.5-m2 (혼합방법론). 양적 데이터 — 무엇을 어떻게 */
+  mixedQuant?: string;
+  /** 1.5-m3 (혼합방법론). 질적 데이터 — 무엇을 어떻게 */
+  mixedQual?: string;
+  /** 1.5-m4 (혼합방법론). 두 데이터의 통합 / 대조 방식 */
+  mixedIntegration?: string;
   // ── v2: 2. 교육공학 이론 — 구조화 입력 (옵셔널, 구버전 호환) ──
   /** 2. 적용 이론 카드 — 1~다수 */
   theoryCards?: TheoryCard[];

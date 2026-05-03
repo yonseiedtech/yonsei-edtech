@@ -11,6 +11,7 @@ import type { ArchiveConcept, TheoryConcept } from "@/types";
 import {
   X, ChevronLeft, ChevronRight, Save, Loader2, Sparkles, MessageSquareQuote,
   School, BookOpen, FlaskConical, Stethoscope, ArrowRight, AlertTriangle,
+  Repeat, Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FormState, SetField } from "./ResearchReportEditor";
@@ -34,7 +35,16 @@ import {
  * Sprint 57: "diagnosis" 챕터 신설 (1과 2 사이) + bridge 챕터로 챕터 전환 시각화
  * Sprint 58: "approach" 챕터 (패러다임 선택) + "inquiry" 챕터 (생성·구성형 트랙)
  */
-type Chapter = "approach" | "field" | "diagnosis" | "inquiry" | "theory" | "prior" | "bridge";
+type Chapter =
+  | "approach"
+  | "field"
+  | "diagnosis"
+  | "inquiry"
+  | "action"
+  | "mixed"
+  | "theory"
+  | "prior"
+  | "bridge";
 
 const CHAPTER_META: Record<
   Chapter,
@@ -44,13 +54,15 @@ const CHAPTER_META: Record<
   field: { label: "교육현장의 문제 정의", icon: School, color: "from-amber-500 to-orange-500" },
   diagnosis: { label: "문제 진단", icon: Stethoscope, color: "from-rose-500 to-pink-500" },
   inquiry: { label: "맥락 탐구", icon: Sparkles, color: "from-cyan-500 to-sky-500" },
+  action: { label: "액션 사이클", icon: Repeat, color: "from-orange-500 to-red-500" },
+  mixed: { label: "혼합 디자인", icon: Layers, color: "from-indigo-500 to-purple-500" },
   theory: { label: "교육공학 이론", icon: BookOpen, color: "from-emerald-500 to-teal-500" },
   prior: { label: "선행연구 분석", icon: FlaskConical, color: "from-blue-500 to-indigo-500" },
   bridge: { label: "연결", icon: ArrowRight, color: "from-slate-400 to-slate-500" },
 };
 
-/** 챕터 진행률 표시에서 bridge / approach 는 제외. 1.5 (diagnosis | inquiry) 는 트랙 선택에 따라 자동 분기 */
-const REAL_CHAPTERS: Chapter[] = ["field", "diagnosis", "inquiry", "theory", "prior"];
+/** 챕터 진행률 표시에서 bridge / approach 는 제외. 1.5 (diagnosis|inquiry|action|mixed) 는 트랙에 따라 자동 분기 */
+const REAL_CHAPTERS: Chapter[] = ["field", "diagnosis", "inquiry", "action", "mixed", "theory", "prior"];
 
 interface SlideDef {
   id: string;
@@ -173,6 +185,8 @@ const EVIDENCE_OPTIONS: { value: EvidenceType; label: string }[] = [
 const APPROACH_OPTIONS: { value: Exclude<ResearchApproach, "">; }[] = [
   { value: "analytical" },
   { value: "generative" },
+  { value: "action_research" },
+  { value: "mixed_methods" },
   { value: "free" },
 ];
 
@@ -241,6 +255,170 @@ function ArchiveConceptRecommender({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// ─── Sprint 61: 연구 흐름 Logic Map ─────────────────────────────────────────
+interface LogicNode {
+  id: "field" | "middle" | "theory" | "prior";
+  label: string;
+  /** 0~100 채움 정도 */
+  fill: number;
+  /** 1.5 챕터 선택 라벨 (진단/탐구/액션/혼합/skip) */
+  sublabel?: string;
+  /** 다음 노드와의 연결 강도 (0~100). 마지막 노드는 무시. */
+  bridgeStrength: number;
+}
+
+function calcLogicMap(form: FormState): LogicNode[] {
+  const a = form.researchApproach;
+
+  // 1. field
+  const fieldChecks = [
+    form.fieldAudience,
+    form.fieldFormat,
+    form.fieldSubject,
+    form.problemPhenomena.find((p) => p.trim()),
+    form.problemImpact,
+    form.problemImportance,
+  ];
+  const fieldFill = Math.round(
+    (fieldChecks.filter((v) => (v ?? "").toString().trim().length > 0).length / fieldChecks.length) * 100,
+  );
+
+  // 1.5 middle (approach-dependent)
+  let middleFill = 0;
+  let middleLabel = "1.5 (skip)";
+  let middleText = "";
+  if (a === "analytical") {
+    const checks = [
+      form.problemEvidences.length > 0,
+      form.problemCauses.length > 0,
+      form.diagnosisAttempts.trim().length > 0,
+      form.diagnosisGap.trim().length > 0,
+      form.diagnosisPrimaryCause.trim().length > 0,
+    ];
+    middleFill = Math.round((checks.filter(Boolean).length / checks.length) * 100);
+    middleLabel = "문제 진단";
+    middleText = form.diagnosisPrimaryCause;
+  } else if (a === "generative") {
+    const fields = [form.inquiryMeaning, form.inquiryContext, form.inquiryCycle];
+    middleFill = Math.round((fields.filter((s) => s.trim().length > 0).length / fields.length) * 100);
+    middleLabel = "맥락 탐구";
+    middleText = `${form.inquiryMeaning} ${form.inquiryContext}`;
+  } else if (a === "action_research") {
+    const fields = [form.actionRole, form.actionCycle, form.actionCommunity];
+    middleFill = Math.round((fields.filter((s) => s.trim().length > 0).length / fields.length) * 100);
+    middleLabel = "액션 사이클";
+    middleText = `${form.actionRole} ${form.actionCycle}`;
+  } else if (a === "mixed_methods") {
+    const fields = [form.mixedDesign, form.mixedQuant, form.mixedQual, form.mixedIntegration];
+    middleFill = Math.round((fields.filter((s) => s.trim().length > 0).length / fields.length) * 100);
+    middleLabel = "혼합 디자인";
+    middleText = form.mixedDesign;
+  } else if (a === "free") {
+    middleFill = 0;
+    middleLabel = "1.5 (skip)";
+    middleText = "";
+  } else {
+    middleFill = 0;
+    middleLabel = "1.5 (선택 전)";
+    middleText = "";
+  }
+
+  // 2. theory
+  const card = form.theoryCards[0];
+  const theoryChecks = [card?.name, card?.selectionReason, card?.problemLink];
+  const theoryFill = card
+    ? Math.round((theoryChecks.filter((v) => (v ?? "").trim().length > 0).length / theoryChecks.length) * 100)
+    : 0;
+
+  // 3. prior
+  const pr = form.priorResearchAnalysis.trim().length;
+  const priorFill = pr > 200 ? 100 : pr > 50 ? 60 : pr > 10 ? 30 : 0;
+
+  // 연결 강도: 키워드 overlap (0/40/100 단계)
+  const phenomenonText = form.problemPhenomena.filter((p) => p.trim()).join(" ");
+  const reason = card?.selectionReason ?? "";
+  const theoryName = card?.name ?? "";
+  const prior = form.priorResearchAnalysis;
+
+  const fieldToMiddle =
+    !middleText ? 0 : hasKeywordOverlap(phenomenonText, middleText) ? 100 : 40;
+  const middleToTheory =
+    !middleText || !reason ? 0 : hasKeywordOverlap(middleText, reason) ? 100 : 40;
+  const theoryToPrior =
+    !theoryName || !prior ? 0 : hasKeywordOverlap(theoryName, prior) ? 100 : 40;
+
+  return [
+    { id: "field", label: "1. 현장 문제", fill: fieldFill, bridgeStrength: fieldToMiddle },
+    { id: "middle", label: "1.5 " + middleLabel, fill: middleFill, sublabel: middleLabel, bridgeStrength: middleToTheory },
+    { id: "theory", label: "2. 교육공학 이론", fill: theoryFill, bridgeStrength: theoryToPrior },
+    { id: "prior", label: "3. 선행연구", fill: priorFill, bridgeStrength: 0 },
+  ];
+}
+
+function NodeFillBar({ percent }: { percent: number }) {
+  const color =
+    percent >= 80 ? "bg-emerald-500" : percent >= 40 ? "bg-amber-500" : "bg-rose-400";
+  return (
+    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/60">
+      <div
+        className={cn("h-full transition-all", color)}
+        style={{ width: `${Math.max(2, percent)}%` }}
+      />
+    </div>
+  );
+}
+
+function BridgeArrow({ strength }: { strength: number }) {
+  const cls =
+    strength >= 80
+      ? "border-emerald-500"
+      : strength >= 40
+        ? "border-amber-500 border-dashed"
+        : "border-rose-300 border-dotted";
+  const label = strength >= 80 ? "강한 연결" : strength >= 40 ? "연결 약함" : "연결 거의 없음";
+  return (
+    <div className="flex flex-col items-center justify-center gap-0.5 px-1">
+      <div className={cn("h-0 w-10 border-t-2 sm:w-16", cls)} />
+      <span className="text-[9px] text-muted-foreground">{label}</span>
+    </div>
+  );
+}
+
+function ResearchLogicMap({ form }: { form: FormState }) {
+  const nodes = useMemo(() => calcLogicMap(form), [form]);
+  const overall = Math.round(nodes.reduce((s, n) => s + n.fill, 0) / nodes.length);
+  const overallStrength = Math.round(
+    (nodes[0].bridgeStrength + nodes[1].bridgeStrength + nodes[2].bridgeStrength) / 3,
+  );
+
+  return (
+    <div className="rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-blue-50/40 p-4">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-bold text-primary">📐 연구 흐름 Logic Map</p>
+        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+          <span>채움 <strong className="text-foreground">{overall}%</strong></span>
+          <span>연결 <strong className="text-foreground">{overallStrength}%</strong></span>
+        </div>
+      </div>
+      <div className="mt-3 flex items-stretch overflow-x-auto pb-1">
+        {nodes.map((n, i) => (
+          <div key={n.id} className="flex shrink-0 items-stretch">
+            <div className="flex w-28 flex-col items-center gap-1 rounded-xl border bg-white p-2 shadow-sm sm:w-32">
+              <p className="text-[10px] font-semibold text-foreground sm:text-[11px]">{n.label}</p>
+              <NodeFillBar percent={n.fill} />
+              <p className="text-[10px] tabular-nums text-muted-foreground">{n.fill}%</p>
+            </div>
+            {i < nodes.length - 1 && <BridgeArrow strength={n.bridgeStrength} />}
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-[11px] text-muted-foreground">
+        🟢 강한 연결 (키워드 overlap) · 🟡 연결 약함 · 🔴 거의 없음. 채움 ≥ 80% + 연결 ≥ 80% 이면 논리 흐름이 단단합니다.
+      </p>
     </div>
   );
 }
@@ -834,6 +1012,225 @@ const SLIDES: SlideDef[] = [
     },
   },
 
+  // ── Bridge: field → action_research (Sprint 60)
+  {
+    id: "bridge-field-action",
+    chapter: "bridge",
+    approaches: ["action_research"],
+    prompt: "Plan-Act-Observe-Reflect 사이클을 함께 설계해보겠습니다",
+    hint: "액션리서치는 ‘외부 진단’ 도 ‘함께 의미 구성’ 도 아닌, 본인이 자기 실천을 직접 개선하는 사이클입니다.",
+    optional: true,
+    render: () => (
+      <div className="rounded-xl border-2 border-dashed border-orange-200 bg-orange-50/50 p-4 text-sm">
+        <p className="font-semibold text-orange-900">액션리서치 트랙</p>
+        <ul className="mt-2 space-y-1 text-orange-900/90">
+          <li>• <strong>Plan</strong> — 어떤 변화를 시도할지 계획</li>
+          <li>• <strong>Act</strong> — 현장에서 실행</li>
+          <li>• <strong>Observe</strong> — 무슨 일이 일어났는지 관찰·기록</li>
+          <li>• <strong>Reflect</strong> — 동료와 함께 성찰 → 다음 사이클 재계획</li>
+        </ul>
+      </div>
+    ),
+  },
+
+  // ── Chapter 1.5 (대안): 액션 사이클 — Sprint 60 action_research 트랙
+  {
+    id: "act-role",
+    chapter: "action",
+    approaches: ["action_research"],
+    prompt: "본인이 현장에서 어떤 위치·역할인가요?",
+    hint: "교사·강사·관리자·전문가·학습자 — 자기 위치를 명확히 해야 액션의 권한과 한계가 보입니다.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.actionRole}
+        onChange={(e) => setField("actionRole", e.target.value)}
+        placeholder="예: 본 강좌의 담당 강사로 학기 전 과정 운영을 책임지며, 평가 방식과 자료 선정 권한을 가진다."
+        rows={5}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+  {
+    id: "act-cycle",
+    chapter: "action",
+    approaches: ["action_research"],
+    prompt: "사이클을 어떻게 설계할 건가요?",
+    hint: "Plan → Act → Observe → Reflect 1~2 사이클을 구체적으로 적어주세요. 무엇을 바꾸고, 무엇을 관찰할지.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.actionCycle}
+        onChange={(e) => setField("actionCycle", e.target.value)}
+        placeholder={"예:\nCycle 1 (4주) — Plan: 발화 차례 보장 도입 / Act: 매주 실행 / Observe: 발화 빈도+질 기록 / Reflect: 학생 인터뷰\nCycle 2 (4주) — Plan: 비계 추가 / Act: ..."}
+        rows={7}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+  {
+    id: "act-community",
+    chapter: "action",
+    approaches: ["action_research"],
+    prompt: "함께 성찰할 동료·공동 연구자는?",
+    hint: "혼자 하는 액션리서치는 ‘자기 정당화’ 위험이 큽니다. 비판적으로 봐줄 동료/소그룹/지도교수를 명시하세요.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.actionCommunity}
+        onChange={(e) => setField("actionCommunity", e.target.value)}
+        placeholder="예: 동료 강사 2인 + 지도교수 1인 + 학기말 학생 6인 인터뷰. 격주 1회 60분 정기 미팅."
+        rows={4}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+
+  // ── Bridge: action → theory (Sprint 60)
+  {
+    id: "bridge-action-theory",
+    chapter: "bridge",
+    approaches: ["action_research"],
+    prompt: "사이클의 의미를 함께 해석할 이론을 선택해보세요",
+    hint: "액션리서치에서 이론은 ‘처방’ 도 ‘외부 렌즈’ 도 아닌, 본인의 실천을 더 깊이 이해하기 위한 *공동 사고 자원* 입니다.",
+    optional: true,
+    render: (form) => {
+      const role = form.actionRole.trim();
+      const cycle = form.actionCycle.trim();
+      return (
+        <div className="space-y-2">
+          {role && (
+            <div className="rounded-xl border-2 border-dashed border-orange-200 bg-orange-50/60 p-3 text-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-orange-700">현장 위치</p>
+              <p className="mt-1 whitespace-pre-wrap text-orange-900/90 line-clamp-2">{role}</p>
+            </div>
+          )}
+          {cycle && (
+            <div className="rounded-xl border-2 border-dashed border-amber-200 bg-amber-50/60 p-3 text-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">사이클 설계</p>
+              <p className="mt-1 whitespace-pre-wrap text-amber-900/90 line-clamp-3">{cycle}</p>
+            </div>
+          )}
+          {!role && !cycle && (
+            <p className="text-sm italic text-muted-foreground">앞 단계 답변이 비어있어요.</p>
+          )}
+        </div>
+      );
+    },
+  },
+
+  // ── Bridge: field → mixed_methods (Sprint 60)
+  {
+    id: "bridge-field-mixed",
+    chapter: "bridge",
+    approaches: ["mixed_methods"],
+    prompt: "혼합방법론으로 양적·질적 데이터를 통합 설계해보겠습니다",
+    hint: "Creswell 의 4 디자인 — Convergent(동시·대조), Explanatory(양→질로 설명), Exploratory(질→양으로 검증), Embedded(한쪽 보조).",
+    optional: true,
+    render: () => (
+      <div className="rounded-xl border-2 border-dashed border-indigo-200 bg-indigo-50/50 p-4 text-sm">
+        <p className="font-semibold text-indigo-900">혼합방법론 트랙</p>
+        <ul className="mt-2 space-y-1 text-indigo-900/90">
+          <li>• <strong>Convergent</strong> — 양적·질적 동시 수집 → 결과 대조</li>
+          <li>• <strong>Explanatory</strong> — 양적 결과를 질적으로 설명</li>
+          <li>• <strong>Exploratory</strong> — 질적 발견을 양적으로 검증</li>
+          <li>• <strong>Embedded</strong> — 한쪽이 주축, 다른 한쪽이 보조</li>
+        </ul>
+      </div>
+    ),
+  },
+
+  // ── Chapter 1.5 (대안): 혼합 디자인 — Sprint 60 mixed_methods 트랙
+  {
+    id: "mix-design",
+    chapter: "mixed",
+    approaches: ["mixed_methods"],
+    prompt: "어떤 혼합 디자인을 채택하나요?",
+    hint: "Convergent / Explanatory / Exploratory / Embedded 중 가장 가까운 것 + 그 이유.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.mixedDesign}
+        onChange={(e) => setField("mixedDesign", e.target.value)}
+        placeholder="예: Explanatory Sequential — 1단계 양적 설문(N=120)으로 패턴 발견 → 2단계 6명 심층 인터뷰로 ‘왜 그런지’ 설명한다."
+        rows={5}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+  {
+    id: "mix-quant",
+    chapter: "mixed",
+    approaches: ["mixed_methods"],
+    prompt: "양적 데이터는 무엇을 어떻게 수집·분석하나요?",
+    hint: "도구(설문/평가/로그), 표본 크기, 분석 방법(t-test, ANOVA, regression 등) 한 줄.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.mixedQuant}
+        onChange={(e) => setField("mixedQuant", e.target.value)}
+        placeholder="예: 협력자기효능감 5점 척도 12문항 (N=120, 사전·사후) → paired t-test 로 변화량 검증."
+        rows={5}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+  {
+    id: "mix-qual",
+    chapter: "mixed",
+    approaches: ["mixed_methods"],
+    prompt: "질적 데이터는 무엇을 어떻게 수집·분석하나요?",
+    hint: "방법(인터뷰/관찰/문서), 분석 절차(thematic/grounded/IPA 등), 신뢰성 확보 방안.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.mixedQual}
+        onChange={(e) => setField("mixedQual", e.target.value)}
+        placeholder="예: 6명 반구조화 인터뷰(60분) + 모둠활동 영상 6시간. Braun & Clarke thematic analysis. 동료 검토 1회."
+        rows={5}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+  {
+    id: "mix-integration",
+    chapter: "mixed",
+    approaches: ["mixed_methods"],
+    prompt: "두 데이터를 어떻게 통합·대조할 건가요?",
+    hint: "Joint display(병렬 표/도표), Meta-inference(상위 해석), Triangulation(일치/불일치 검토) 등.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.mixedIntegration}
+        onChange={(e) => setField("mixedIntegration", e.target.value)}
+        placeholder="예: Joint display 로 ‘설문 점수 변화 vs 인터뷰 주제’ 매트릭스 작성. 일치하는 영역과 모순되는 영역을 별도 섹션으로 해석."
+        rows={5}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+
+  // ── Bridge: mixed → theory (Sprint 60)
+  {
+    id: "bridge-mixed-theory",
+    chapter: "bridge",
+    approaches: ["mixed_methods"],
+    prompt: "혼합 디자인을 받쳐줄 이론적 틀을 선택해보세요",
+    hint: "혼합방법론은 ‘paradigm war’ 이후 실용주의(pragmatism) 가 대표 메타-패러다임 — 이론은 양적·질적 결과를 통합 해석하는 골격이 됩니다.",
+    optional: true,
+    render: (form) => {
+      const design = form.mixedDesign.trim();
+      return design ? (
+        <div className="rounded-xl border-2 border-dashed border-indigo-200 bg-indigo-50/60 p-3 text-sm">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-indigo-700">선택 디자인</p>
+          <p className="mt-1 whitespace-pre-wrap text-indigo-900/90 line-clamp-3">{design}</p>
+        </div>
+      ) : (
+        <p className="text-sm italic text-muted-foreground">앞 단계 답변이 비어있어요.</p>
+      );
+    },
+  },
+
   // ── Chapter 2: 교육공학 이론
   {
     id: "theory-name",
@@ -1026,6 +1423,16 @@ const SLIDES: SlideDef[] = [
       return null;
     },
   },
+
+  // ── Sprint 61: 완료 슬라이드 — Logic Map (모든 트랙 공통, 마지막)
+  {
+    id: "completion-map",
+    chapter: "bridge",
+    prompt: "연구 흐름이 잘 짜여졌는지 한눈에 확인해보세요",
+    hint: "각 챕터의 채움 정도와 챕터 간 연결 강도(키워드 overlap)를 시각화한 지도입니다. 약한 연결은 다시 돌아가 보강하시면 좋아요.",
+    optional: true,
+    render: (form) => <ResearchLogicMap form={form} />,
+  },
 ];
 
 interface Props {
@@ -1077,6 +1484,8 @@ export default function ResearchReportInterview({
       field: 0,
       diagnosis: 0,
       inquiry: 0,
+      action: 0,
+      mixed: 0,
       theory: 0,
       prior: 0,
       bridge: 0,

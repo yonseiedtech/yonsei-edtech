@@ -68,6 +68,15 @@ export interface FormState {
   inquiryMeaning: string;
   inquiryContext: string;
   inquiryCycle: string;
+  // Sprint 60 — 액션리서치 트랙
+  actionRole: string;
+  actionCycle: string;
+  actionCommunity: string;
+  // Sprint 60 — 혼합방법론 트랙
+  mixedDesign: string;
+  mixedQuant: string;
+  mixedQual: string;
+  mixedIntegration: string;
   // v2 — 2. 교육공학 이론
   theoryCards: TheoryCard[];
   theoryRelationProblem: string;
@@ -112,6 +121,13 @@ const EMPTY: FormState = {
   inquiryMeaning: "",
   inquiryContext: "",
   inquiryCycle: "",
+  actionRole: "",
+  actionCycle: "",
+  actionCommunity: "",
+  mixedDesign: "",
+  mixedQuant: "",
+  mixedQual: "",
+  mixedIntegration: "",
   theoryCards: [],
   theoryRelationProblem: "",
   theoryRelationRoles: "",
@@ -182,6 +198,13 @@ function fromReport(r: ResearchReport | undefined): FormState {
     inquiryMeaning: r.inquiryMeaning ?? "",
     inquiryContext: r.inquiryContext ?? "",
     inquiryCycle: r.inquiryCycle ?? "",
+    actionRole: r.actionRole ?? "",
+    actionCycle: r.actionCycle ?? "",
+    actionCommunity: r.actionCommunity ?? "",
+    mixedDesign: r.mixedDesign ?? "",
+    mixedQuant: r.mixedQuant ?? "",
+    mixedQual: r.mixedQual ?? "",
+    mixedIntegration: r.mixedIntegration ?? "",
     theoryCards: migrateTheoryCards(r),
     theoryRelationProblem: r.theoryRelationProblem ?? r.theoryConnection ?? "",
     theoryRelationRoles: r.theoryRelationRoles ?? "",
@@ -221,6 +244,8 @@ function totalChars(form: FormState): number {
     form.scopeAudience, form.scopeContext, form.scopeExclusion,
     form.diagnosisAttempts, form.diagnosisGap, form.diagnosisPrimaryCause,
     form.inquiryMeaning, form.inquiryContext, form.inquiryCycle,
+    form.actionRole, form.actionCycle, form.actionCommunity,
+    form.mixedDesign, form.mixedQuant, form.mixedQual, form.mixedIntegration,
   ];
   let sum = textFields.reduce((s, v) => s + v.length, 0);
   for (const g of form.priorResearchGroups) {
