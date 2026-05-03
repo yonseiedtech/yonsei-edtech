@@ -72,11 +72,19 @@ export interface FormState {
   actionRole: string;
   actionCycle: string;
   actionCommunity: string;
+  // Sprint 62 — 액션리서치 추가 슬라이드
+  actionBaseline: string;
+  actionDataCollection: string;
+  actionValidity: string;
   // Sprint 60 — 혼합방법론 트랙
   mixedDesign: string;
   mixedQuant: string;
   mixedQual: string;
   mixedIntegration: string;
+  // Sprint 62 — 혼합방법론 추가 슬라이드
+  mixedPriority: string;
+  mixedSampling: string;
+  mixedValidity: string;
   // v2 — 2. 교육공학 이론
   theoryCards: TheoryCard[];
   theoryRelationProblem: string;
@@ -124,10 +132,16 @@ const EMPTY: FormState = {
   actionRole: "",
   actionCycle: "",
   actionCommunity: "",
+  actionBaseline: "",
+  actionDataCollection: "",
+  actionValidity: "",
   mixedDesign: "",
   mixedQuant: "",
   mixedQual: "",
   mixedIntegration: "",
+  mixedPriority: "",
+  mixedSampling: "",
+  mixedValidity: "",
   theoryCards: [],
   theoryRelationProblem: "",
   theoryRelationRoles: "",
@@ -201,10 +215,16 @@ function fromReport(r: ResearchReport | undefined): FormState {
     actionRole: r.actionRole ?? "",
     actionCycle: r.actionCycle ?? "",
     actionCommunity: r.actionCommunity ?? "",
+    actionBaseline: r.actionBaseline ?? "",
+    actionDataCollection: r.actionDataCollection ?? "",
+    actionValidity: r.actionValidity ?? "",
     mixedDesign: r.mixedDesign ?? "",
     mixedQuant: r.mixedQuant ?? "",
     mixedQual: r.mixedQual ?? "",
     mixedIntegration: r.mixedIntegration ?? "",
+    mixedPriority: r.mixedPriority ?? "",
+    mixedSampling: r.mixedSampling ?? "",
+    mixedValidity: r.mixedValidity ?? "",
     theoryCards: migrateTheoryCards(r),
     theoryRelationProblem: r.theoryRelationProblem ?? r.theoryConnection ?? "",
     theoryRelationRoles: r.theoryRelationRoles ?? "",
@@ -245,7 +265,9 @@ function totalChars(form: FormState): number {
     form.diagnosisAttempts, form.diagnosisGap, form.diagnosisPrimaryCause,
     form.inquiryMeaning, form.inquiryContext, form.inquiryCycle,
     form.actionRole, form.actionCycle, form.actionCommunity,
+    form.actionBaseline, form.actionDataCollection, form.actionValidity,
     form.mixedDesign, form.mixedQuant, form.mixedQual, form.mixedIntegration,
+    form.mixedPriority, form.mixedSampling, form.mixedValidity,
   ];
   let sum = textFields.reduce((s, v) => s + v.length, 0);
   for (const g of form.priorResearchGroups) {

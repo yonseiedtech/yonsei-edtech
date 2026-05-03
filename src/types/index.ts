@@ -667,6 +667,12 @@ export interface ResearchReport {
   actionCycle?: string;
   /** 1.5-a3 (액션리서치). 함께 성찰할 동료/공동연구자 */
   actionCommunity?: string;
+  /** 1.5-a4 (액션리서치, Sprint 62). 시작 기준선 — 변화 측정 대상 */
+  actionBaseline?: string;
+  /** 1.5-a5 (액션리서치, Sprint 62). 사이클 동안 수집할 데이터 (저널/현장노트/인터뷰 등) */
+  actionDataCollection?: string;
+  /** 1.5-a6 (액션리서치, Sprint 62). 자기 정당화 방어 (member check / peer debrief / triangulation) */
+  actionValidity?: string;
   /** 1.5-m1 (혼합방법론). 채택한 혼합 디자인 (convergent/explanatory/exploratory/embedded) */
   mixedDesign?: string;
   /** 1.5-m2 (혼합방법론). 양적 데이터 — 무엇을 어떻게 */
@@ -675,6 +681,12 @@ export interface ResearchReport {
   mixedQual?: string;
   /** 1.5-m4 (혼합방법론). 두 데이터의 통합 / 대조 방식 */
   mixedIntegration?: string;
+  /** 1.5-m5 (혼합방법론, Sprint 62). 양·질 우선순위 (양주도/질주도/동등) */
+  mixedPriority?: string;
+  /** 1.5-m6 (혼합방법론, Sprint 62). 표집 전략 (연결된/대조된/내포된) */
+  mixedSampling?: string;
+  /** 1.5-m7 (혼합방법론, Sprint 62). 메타-추론 타당성 — 두 데이터 통합 신뢰성 확보 */
+  mixedValidity?: string;
   // ── v2: 2. 교육공학 이론 — 구조화 입력 (옵셔널, 구버전 호환) ──
   /** 2. 적용 이론 카드 — 1~다수 */
   theoryCards?: TheoryCard[];

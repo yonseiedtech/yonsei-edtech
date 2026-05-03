@@ -99,13 +99,11 @@ function formatRemaining(diffMs: number): string {
   return `${d}일 후`;
 }
 
-/** 잔여 시간에 따른 색상 (긴급도 시각화) */
+/** 잔여 시간에 따른 색상 — 부담 줄이기: 임계값(<=30분)만 강조, 나머지는 중성 */
 function urgencyClass(diffMs: number): string {
-  if (diffMs <= 0) return "border-rose-300 bg-rose-50";
-  if (diffMs < 30 * 60_000) return "border-rose-300 bg-rose-50";
-  if (diffMs < 3 * 60 * 60_000) return "border-amber-300 bg-amber-50";
-  if (diffMs < 12 * 60 * 60_000) return "border-blue-300 bg-blue-50";
-  return "border-slate-200 bg-slate-50/60";
+  if (diffMs <= 30 * 60_000) return "border-rose-200 bg-rose-50/50";
+  if (diffMs < 3 * 60 * 60_000) return "border-amber-200 bg-amber-50/40";
+  return "border-slate-200 bg-white";
 }
 
 const KIND_META: Record<NextActionKind, { label: string; iconClass: string; Icon: typeof CalendarClock }> = {
@@ -318,66 +316,79 @@ export default function NextActionBanner() {
   const urgent = urgencyClass(diffMs);
   const timeLabel = `${pad2(top.startAt.getHours())}:${pad2(top.startAt.getMinutes())}`;
 
+  // ≤30분은 chip-bold 색상, 그 외는 부드러운 muted chip
+  const remainChipClass =
+    diffMs <= 30 * 60_000
+      ? "bg-rose-600 text-white"
+      : diffMs <= 3 * 60 * 60_000
+        ? "bg-amber-100 text-amber-900"
+        : "bg-slate-100 text-slate-700";
+
   return (
-    <div className="sticky top-2 z-30 mx-auto mt-3 max-w-6xl px-4">
-      <div
+    <div className="mx-auto mt-2 max-w-6xl px-4">
+      <Link
+        href={top.href}
         className={cn(
-          "flex items-center gap-3 rounded-2xl border-2 px-3 py-2.5 shadow-sm sm:px-4 sm:py-3",
+          "group flex items-center gap-2 rounded-xl border px-3 py-1.5 transition-colors hover:bg-muted/30 sm:gap-3 sm:py-2",
           urgent,
         )}
         role="status"
-        aria-live="polite"
+        aria-label={`${meta.label} 바로가기: ${top.title}`}
       >
         <div
           className={cn(
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+            "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
             meta.iconClass,
           )}
           aria-hidden="true"
         >
-          <Icon size={20} />
+          <Icon size={14} />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-            <span className="font-semibold">{meta.label}</span>
-            <span aria-hidden="true">·</span>
-            <span className="font-mono tabular-nums">{timeLabel}</span>
+          <div className="flex items-center gap-1.5">
+            <span className="truncate text-sm font-semibold text-foreground">
+              {top.title}
+            </span>
             <span
               className={cn(
-                "rounded-full px-2 py-0.5 text-[11px] font-semibold",
-                diffMs <= 30 * 60_000
-                  ? "bg-rose-600 text-white"
-                  : diffMs <= 3 * 60 * 60_000
-                    ? "bg-amber-500 text-white"
-                    : "bg-slate-700 text-white",
+                "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+                remainChipClass,
               )}
             >
               {remainingLabel}
             </span>
           </div>
-          <p className="mt-0.5 truncate text-sm font-bold sm:text-base">{top.title}</p>
-          {top.subtitle && (
-            <p className="truncate text-xs text-muted-foreground">{top.subtitle}</p>
-          )}
+          <p className="truncate text-[11px] text-muted-foreground">
+            <span>{meta.label}</span>
+            <span className="mx-1" aria-hidden="true">·</span>
+            <span className="font-mono tabular-nums">{timeLabel}</span>
+            {top.subtitle && (
+              <>
+                <span className="mx-1" aria-hidden="true">·</span>
+                <span>{top.subtitle}</span>
+              </>
+            )}
+          </p>
         </div>
-        <Link
-          href={top.href}
-          className="inline-flex min-h-[44px] shrink-0 items-center gap-1 rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-700 sm:text-sm"
-          aria-label={`${meta.label} 바로가기: ${top.title}`}
-        >
-          바로가기
-          <ChevronRight size={14} aria-hidden="true" />
-        </Link>
+        <ChevronRight
+          size={14}
+          className="shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+          aria-hidden="true"
+        />
         <button
           type="button"
-          onClick={hideUntilTomorrow}
-          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-white/60"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            hideUntilTomorrow();
+          }}
+          className="ml-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted/60"
           aria-label="오늘 하루 이 배너 숨기기"
           title="오늘 하루 숨기기"
         >
-          <Bell size={16} />
+          <Bell size={12} />
         </button>
-      </div>
+      </Link>
     </div>
   );
 }

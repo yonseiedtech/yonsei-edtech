@@ -1085,6 +1085,57 @@ const SLIDES: SlideDef[] = [
       />
     ),
   },
+  {
+    id: "act-baseline",
+    chapter: "action",
+    approaches: ["action_research"],
+    prompt: "사이클 시작 전 기준선(baseline)은 무엇인가요?",
+    hint: "변화·개선을 판단하려면 ‘출발점’ 측정이 필요합니다. 양적 지표 + 질적 묘사를 함께 적어주세요.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.actionBaseline}
+        onChange={(e) => setField("actionBaseline", e.target.value)}
+        placeholder={"예: 양적 — 1주차 모둠활동 평균 발화 시간 5초/명, 발화자 3명/모둠.\n질적 — 첫 인터뷰 6명 모두 ‘틀릴까봐 말 못함’ 언급."}
+        rows={5}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+  {
+    id: "act-data-collection",
+    chapter: "action",
+    approaches: ["action_research"],
+    prompt: "사이클 동안 어떤 데이터를 수집하나요?",
+    hint: "교사 저널 / 현장 노트 / 학생 인터뷰 / 영상 / 산출물 — 다중 출처(multi-source)가 신뢰성을 높입니다.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.actionDataCollection}
+        onChange={(e) => setField("actionDataCollection", e.target.value)}
+        placeholder={"예: 교사 일지(매주) + 모둠활동 영상 4회 + 학생 짧은 메모(매수업 5분) + 종료 시점 6명 인터뷰(60분)."}
+        rows={5}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+  {
+    id: "act-validity",
+    chapter: "action",
+    approaches: ["action_research"],
+    prompt: "자기 정당화 위험은 어떻게 방어하나요?",
+    hint: "Member checking(학생 확인), Peer debriefing(동료 검토), Triangulation(다중 출처 비교) 중 적용 방안을 적어주세요.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.actionValidity}
+        onChange={(e) => setField("actionValidity", e.target.value)}
+        placeholder={"예: 매 사이클 종료 시 학생 6명에게 해석 요약본 보여주고 ‘맞나요?’ 확인(member check). 동료 강사 2인이 매월 데이터 검토."}
+        rows={5}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
 
   // ── Bridge: action → theory (Sprint 60)
   {
@@ -1203,6 +1254,57 @@ const SLIDES: SlideDef[] = [
         value={form.mixedIntegration}
         onChange={(e) => setField("mixedIntegration", e.target.value)}
         placeholder="예: Joint display 로 ‘설문 점수 변화 vs 인터뷰 주제’ 매트릭스 작성. 일치하는 영역과 모순되는 영역을 별도 섹션으로 해석."
+        rows={5}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+  {
+    id: "mix-priority",
+    chapter: "mixed",
+    approaches: ["mixed_methods"],
+    prompt: "양적·질적 데이터 중 어느 쪽이 주(主)·보조(補)인가요?",
+    hint: "Creswell 표기 — QUAN+qual / quan+QUAL / QUAN+QUAL(동등). 우선순위가 결과 해석의 중심을 결정합니다.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.mixedPriority}
+        onChange={(e) => setField("mixedPriority", e.target.value)}
+        placeholder="예: QUAN + qual — 양적 결과(설문)가 본 연구의 주축, 질적 인터뷰는 ‘왜’를 보충 설명하는 보조 역할."
+        rows={4}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+  {
+    id: "mix-sampling",
+    chapter: "mixed",
+    approaches: ["mixed_methods"],
+    prompt: "양·질 표집은 어떻게 연결하나요?",
+    hint: "Identical(동일 표본), Nested(질적이 양적의 부분집합), Multilevel(다른 수준), Parallel(독립 표본) 중 선택.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.mixedSampling}
+        onChange={(e) => setField("mixedSampling", e.target.value)}
+        placeholder="예: Nested — 양적 설문 N=120 중 점수 상·중·하 그룹에서 각 2명씩(총 6명) 의도적 표집해 인터뷰."
+        rows={4}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+  {
+    id: "mix-validity",
+    chapter: "mixed",
+    approaches: ["mixed_methods"],
+    prompt: "메타-추론 타당성은 어떻게 확보하나요?",
+    hint: "Interpretive consistency(해석 일관성), Sample integration(표본 통합), Inside-outside legitimation(내·외부자 시각). Onwuegbuzie & Johnson 9가지 적법성 중 적용 방안.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.mixedValidity}
+        onChange={(e) => setField("mixedValidity", e.target.value)}
+        placeholder="예: Sample integration — 동일 6명에게 양·질 모두 적용. Interpretive consistency — 양적 결과와 질적 주제가 충돌할 때 ‘재해석 라운드’ 1회 진행."
         rows={5}
         className="bg-white text-base"
         style={{ fontSize: "16px" }}
