@@ -46,12 +46,14 @@ service cloud.firestore {
     // board-community-v2: 카테고리별 read/write 권한 재검증
     function postCategoryReadable(cat) {
       // staff/resources는 인증 필요, 그 외 public
-      return cat in ['notice', 'seminar', 'free', 'promotion', 'press', 'interview']
+      // paper_review (Sprint 41d): 교육공학 논문 리뷰 — public read
+      return cat in ['notice', 'seminar', 'free', 'promotion', 'press', 'interview', 'paper_review']
         || (cat == 'resources' && isAuthenticated())
         || (cat == 'staff' && isAuthenticated() && isStaffOrAbove());
     }
     function postCategoryWritable(cat) {
-      return (cat == 'free' && isAuthenticated())
+      // free / paper_review: 회원 누구나 작성 가능
+      return (cat in ['free', 'paper_review'] && isAuthenticated())
         || (cat in ['notice', 'seminar', 'promotion', 'resources', 'staff', 'press', 'interview']
             && isAuthenticated() && isStaffOrAbove());
     }

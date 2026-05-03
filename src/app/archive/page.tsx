@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/ui/page-header";
+import EduTechOverview from "@/components/archive/EduTechOverview";
 import { useAuthStore } from "@/features/auth/auth-store";
 import {
   archiveConceptsApi,
@@ -150,6 +151,9 @@ export default function ArchiveLandingPage() {
         title="교육공학 아카이브"
         description="개념 · 변인 · 측정도구를 연결고리로 탐색하는 연구 자원 라이브러리"
       />
+
+      {/* Sprint 66+: 교육공학 정의·탐구분야 개관 */}
+      <EduTechOverview />
 
       {/* 흐름 안내 */}
       <Card className="mt-6 border-dashed bg-muted/20">

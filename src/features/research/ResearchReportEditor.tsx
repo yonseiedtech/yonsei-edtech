@@ -65,6 +65,13 @@ export interface FormState {
   diagnosisAttempts: string;
   diagnosisGap: string;
   diagnosisPrimaryCause: string;
+  // Sprint 66 — 학습자와 학습 목표 (NEW 챕터, 모든 학생 공통)
+  learnerProfile: string;
+  learnerCognitive: string;
+  learnerAffective: string;
+  outcomeCognitive: string;
+  outcomeSkillAttitude: string;
+  // Sprint 60 → 66 schema 보존: 인터뷰 미노출, 고급 모드에서 활용 가능
   inquiryMeaning: string;
   inquiryContext: string;
   inquiryCycle: string;
@@ -126,6 +133,11 @@ const EMPTY: FormState = {
   diagnosisAttempts: "",
   diagnosisGap: "",
   diagnosisPrimaryCause: "",
+  learnerProfile: "",
+  learnerCognitive: "",
+  learnerAffective: "",
+  outcomeCognitive: "",
+  outcomeSkillAttitude: "",
   inquiryMeaning: "",
   inquiryContext: "",
   inquiryCycle: "",
@@ -209,6 +221,11 @@ function fromReport(r: ResearchReport | undefined): FormState {
     diagnosisAttempts: r.diagnosisAttempts ?? "",
     diagnosisGap: r.diagnosisGap ?? "",
     diagnosisPrimaryCause: r.diagnosisPrimaryCause ?? "",
+    learnerProfile: r.learnerProfile ?? "",
+    learnerCognitive: r.learnerCognitive ?? "",
+    learnerAffective: r.learnerAffective ?? "",
+    outcomeCognitive: r.outcomeCognitive ?? "",
+    outcomeSkillAttitude: r.outcomeSkillAttitude ?? "",
     inquiryMeaning: r.inquiryMeaning ?? "",
     inquiryContext: r.inquiryContext ?? "",
     inquiryCycle: r.inquiryCycle ?? "",
@@ -268,6 +285,9 @@ function totalChars(form: FormState): number {
     form.actionBaseline, form.actionDataCollection, form.actionValidity,
     form.mixedDesign, form.mixedQuant, form.mixedQual, form.mixedIntegration,
     form.mixedPriority, form.mixedSampling, form.mixedValidity,
+    // Sprint 66 — 학습자·목표 챕터
+    form.learnerProfile, form.learnerCognitive, form.learnerAffective,
+    form.outcomeCognitive, form.outcomeSkillAttitude,
   ];
   let sum = textFields.reduce((s, v) => s + v.length, 0);
   for (const g of form.priorResearchGroups) {
@@ -324,6 +344,16 @@ const STEPS = [
       "학습자(누가)·교육 형식(어떻게)·과목/주제(무엇)을 먼저 정의해 보세요.",
       "그 다음 현장에서 관찰되는 ‘현상’ → ‘근거’ → ‘원인’ → ‘영향’ → ‘중요성’ 순서로 한 카드씩 채우면 자연스럽습니다.",
       "마지막에 측정 지표를 정해두면 결과 챕터에서 바로 활용할 수 있습니다.",
+    ],
+  },
+  {
+    key: "learner",
+    label: "학습자와 학습 목표",
+    icon: School,
+    question: "이 문제를 해결하기 위해, 누구를 어떤 모습으로 키울 것인가요?",
+    hints: [
+      "학습자 프로필(학년·인원·배경) + 인지·정서 상태를 적어보세요.",
+      "그 다음 학습 목표를 ‘지식·이해(Bloom 인지)’ + ‘기능·태도(행동·정의적)’ 두 축으로 정리하면 다음 챕터에서 이론 선택이 쉬워집니다.",
     ],
   },
   {
@@ -679,6 +709,55 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
             setField={setField}
             readOnly={readOnly}
           />
+        )}
+
+        {step === "learner" && (
+          <div className="space-y-4">
+            <Section title="2-1. 학습자 프로필" sub="학년·인원·배경 — 일상 관찰 그대로 적으세요.">
+              <Input
+                value={form.learnerProfile}
+                onChange={(e) => setField("learnerProfile", e.target.value)}
+                placeholder="예: 교육대학원 1학년 30명 (현직 교사 20명 + 일반 직장인 10명)"
+                disabled={readOnly}
+              />
+            </Section>
+            <Section title="2-2. 학습자의 인지·지식 수준" sub="사전 지식, 학습 습관, 전형적 오개념 등.">
+              <Textarea
+                value={form.learnerCognitive}
+                onChange={(e) => setField("learnerCognitive", e.target.value)}
+                placeholder="예: 통계 입문은 들었지만 R/SPSS 미경험. 협력학습은 ‘조별과제’ 정도로만 인식..."
+                rows={4}
+                disabled={readOnly}
+              />
+            </Section>
+            <Section title="2-3. 학습자의 정서·동기 상태" sub="관심도, 자신감, 불안, 흥미.">
+              <Textarea
+                value={form.learnerAffective}
+                onChange={(e) => setField("learnerAffective", e.target.value)}
+                placeholder="예: ‘틀릴까봐 말 못함’ 두려움이 큼. 동료 평가에 민감..."
+                rows={4}
+                disabled={readOnly}
+              />
+            </Section>
+            <Section title="2-4. 학습 목표 — 지식·이해 (Bloom 인지)" sub="기억/이해/적용/분석/평가/창조 행동 동사로.">
+              <Textarea
+                value={form.outcomeCognitive}
+                onChange={(e) => setField("outcomeCognitive", e.target.value)}
+                placeholder="예: 협력학습의 3대 원리(상호의존성·개별책무성·평등참여)를 설명할 수 있다..."
+                rows={4}
+                disabled={readOnly}
+              />
+            </Section>
+            <Section title="2-5. 학습 목표 — 기능·태도" sub="할 수 있어야 하는 행동 + 가져야 할 태도.">
+              <Textarea
+                value={form.outcomeSkillAttitude}
+                onChange={(e) => setField("outcomeSkillAttitude", e.target.value)}
+                placeholder="예: 모둠 토의 시 동료 의견을 1회 이상 인용하며 응답할 수 있다..."
+                rows={4}
+                disabled={readOnly}
+              />
+            </Section>
+          </div>
         )}
 
         {step === "theory" && (

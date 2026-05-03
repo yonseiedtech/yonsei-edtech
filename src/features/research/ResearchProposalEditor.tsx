@@ -363,6 +363,15 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
     [referencedPapers],
   );
 
+  // ⚠️ Sprint 66 fix: 모든 hook(useMemo/useState 등)을 early return *이전*에 호출해야 React Hooks Rules 위반 방지.
+  // 이전: line 366 early return → 375 useMemo 호출 → "Rendered more hooks than previous render" → 전역 error boundary 트리거.
+  const totalSteps = INTERVIEW_STEPS.length;
+  const filledSteps = useMemo(
+    () => INTERVIEW_STEPS.filter((s) => isFieldFilled(form, s.key)).length,
+    [form],
+  );
+  const completionPercent = Math.round((filledSteps / totalSteps) * 100);
+
   if (isLoading || (!proposal && !readOnly)) {
     return (
       <p className="rounded-2xl border bg-white py-10 text-center text-sm text-muted-foreground">
@@ -370,13 +379,6 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
       </p>
     );
   }
-
-  const totalSteps = INTERVIEW_STEPS.length;
-  const filledSteps = useMemo(
-    () => INTERVIEW_STEPS.filter((s) => isFieldFilled(form, s.key)).length,
-    [form],
-  );
-  const completionPercent = Math.round((filledSteps / totalSteps) * 100);
 
   async function moveToStep(target: number) {
     const next = Math.max(0, Math.min(totalSteps - 1, target));

@@ -671,6 +671,18 @@ export interface ResearchReport {
   diagnosisGap?: string;
   /** 1.5-5 (분석형). 본 연구가 집중할 핵심 원인 — 이론 선택의 근거가 됨 */
   diagnosisPrimaryCause?: string;
+  // ── v4: 2. 학습자와 학습 목표 — Sprint 66 (NEW 챕터, 모든 학생 공통) ──
+  /** 2-1. 누구를 가르치는가 (학년·인원·배경) */
+  learnerProfile?: string;
+  /** 2-2. 학습자 인지·지식 수준 (사전지식·습관) */
+  learnerCognitive?: string;
+  /** 2-3. 학습자 정서·동기 상태 (관심·자신감·불안) */
+  learnerAffective?: string;
+  /** 2-4. 배워야 할 지식·이해 (Bloom 인지) */
+  outcomeCognitive?: string;
+  /** 2-5. 배워야 할 기능·태도 (행동·정의적) */
+  outcomeSkillAttitude?: string;
+  // ── v3 트랙 필드 (Sprint 66 에서 인터뷰 미노출, schema 만 보존 — 추후 고급 모드에서 활용 가능) ──
   /** 1.5-i1 (생성형). 학습자·교사가 현상에 부여하는 의미 */
   inquiryMeaning?: string;
   /** 1.5-i2 (생성형). 설계 맥락·도구·상호작용 */
