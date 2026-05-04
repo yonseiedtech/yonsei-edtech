@@ -54,7 +54,7 @@ export default function LinkedPaperCard({ paper, authorIsMe, onLoginRequired }: 
         readStatus: "to_read",
         isDraft: false,
       });
-      toast.success("내 논문 읽기에 저장되었습니다.");
+      toast.success("내 분석 노트에 추가되었습니다. 마이페이지 → 연구 → 논문 읽기 탭에서 확인하세요.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "저장에 실패했습니다.");
     } finally {
@@ -106,17 +106,17 @@ export default function LinkedPaperCard({ paper, authorIsMe, onLoginRequired }: 
           !user ? (
             <Button size="sm" variant="outline" onClick={() => onLoginRequired?.()}>
               <LogIn size={14} className="mr-1.5" />
-              로그인 후 내 논문 읽기에 저장
+              로그인 후 내 분석 노트에 추가
             </Button>
           ) : alreadySaved ? (
             <Button size="sm" variant="outline" disabled>
               <Check size={14} className="mr-1.5" />
-              이미 내 논문 읽기에 있음
+              이미 내 분석 노트에 있음
             </Button>
           ) : (
             <Button size="sm" onClick={handleSave} disabled={saving}>
               <BookmarkPlus size={14} className="mr-1.5" />
-              {saving ? "저장 중…" : "내 논문 읽기에 저장"}
+              {saving ? "추가 중…" : "내 분석 노트에 추가"}
             </Button>
           )
         ) : (

@@ -236,22 +236,30 @@ export default function PostForm({ mode = "create", initialData, initialCategory
                   <button
                     key={cat}
                     type="button"
-                    onClick={() => setCategory(cat)}
+                    disabled={isEdit}
+                    onClick={() => !isEdit && setCategory(cat)}
                     className={cn(
                       "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
                       category === cat
                         ? "bg-primary text-white"
-                        : "bg-muted text-muted-foreground"
+                        : "bg-muted text-muted-foreground",
+                      isEdit && "cursor-not-allowed opacity-60",
                     )}
                   >
                     {CATEGORY_LABELS[cat]}
                   </button>
                 ))}
               </div>
-              {!isAtLeast(user, "staff") && (
+              {isEdit ? (
                 <p className="mt-1.5 text-xs text-muted-foreground">
-                  공지사항·홍보·자료실은 운영진 이상만 작성할 수 있습니다.
+                  ⓘ 카테고리는 변경할 수 없습니다. 다른 카테고리에 작성하려면 새 글로 등록해 주세요.
                 </p>
+              ) : (
+                !isAtLeast(user, "staff") && (
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    공지사항·홍보·자료실은 운영진 이상만 작성할 수 있습니다.
+                  </p>
+                )
               )}
             </div>
           )}

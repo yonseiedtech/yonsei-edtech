@@ -326,7 +326,7 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-semibold">
-              연구 논문 ({hasPeriodFilter ? `${periodFiltered.length}/${published.length}` : published.length})
+              분석 노트 ({hasPeriodFilter ? `${periodFiltered.length}/${published.length}` : published.length})
             </h3>
             {hasPeriodFilter && (
               <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] text-blue-700">
