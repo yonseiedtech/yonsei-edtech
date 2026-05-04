@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { verifyCronAuth } from "@/lib/cron-auth";
 
 function escapeHtml(str: string): string {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -95,8 +96,7 @@ async function sendReviewRequestEmails(
  * 인앱 알림 + 이메일을 1회만 발송한다.
  */
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!verifyCronAuth(req)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -144,16 +144,18 @@ export async function GET(req: NextRequest) {
       const pendingUserIds = attendeeUserIds.filter((uid) => !reviewedUserIds.has(uid));
       if (pendingUserIds.length === 0) continue;
 
-      // 인앱 알림 중복 방지(세미나 단위 1회)
+      // Sprint 69 핫픽스: 사용자 단위 가드 (기존: 1건이라도 있으면 batch 전체 skip → 후속 attendee 누락)
       const existingNotif = await db
         .collection("notifications")
         .where("type", "==", "seminar_review_request")
         .where("link", "==", `/seminars/${seminarId}/review`)
-        .limit(1)
         .get();
-      if (existingNotif.empty) {
+      const sentSet = new Set(existingNotif.docs.map((d) => d.data().userId as string));
+      const newRecipients = pendingUserIds.filter((uid) => !sentSet.has(uid));
+
+      if (newRecipients.length > 0) {
         const batch = db.batch();
-        for (const uid of pendingUserIds) {
+        for (const uid of newRecipients) {
           const ref = db.collection("notifications").doc();
           batch.set(ref, {
             userId: uid,

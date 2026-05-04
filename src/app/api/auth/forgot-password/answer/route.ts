@@ -2,10 +2,12 @@ import { NextRequest } from "next/server";
 import { createHash } from "crypto";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
 
-// 단순 in-memory rate limit (1분 5회)
+// Sprint 69: brute-force 비용 상승을 위한 rate-limit 대폭 강화
+// 30분 5회. securityAnswerHash 가 sha256(salt 미적용) 인 동안 leak 시 피해 최소화.
+// TODO: 별도 sprint 에서 PBKDF2/scrypt + per-user salt 마이그레이션.
 const bucket = new Map<string, { count: number; resetAt: number }>();
 const LIMIT = 5;
-const WINDOW_MS = 60_000;
+const WINDOW_MS = 30 * 60_000;
 
 function rateLimit(key: string): boolean {
   const now = Date.now();
@@ -24,7 +26,8 @@ function sha256Hex(text: string): string {
 }
 
 export async function POST(req: NextRequest) {
-  await new Promise((r) => setTimeout(r, 300));
+  // Sprint 69: 응답 지연 1.5s — 자동화된 brute-force 비용 상승 (정상 사용자 UX 영향 미미)
+  await new Promise((r) => setTimeout(r, 1500));
 
   const ip =
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||

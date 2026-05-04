@@ -18,6 +18,22 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["lucide-react", "@tanstack/react-query"],
   },
 
+  // Sprint 69 보안: 기본 보안 헤더
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(self), microphone=(self), geolocation=()" },
+        ],
+      },
+    ];
+  },
+
   // 구 seminar-admin 경로 → 학술활동 관리 허브로 이관
   async redirects() {
     return [

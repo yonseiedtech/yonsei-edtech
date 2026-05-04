@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { verifyCronAuth } from "@/lib/cron-auth";
 import { Resend } from "resend";
 
 function escapeHtml(str: string): string {
@@ -16,8 +17,7 @@ function escapeHtml(str: string): string {
  * publishAt <= now 인 draft 학회보를 찾아 이메일 발송 후 status를 published로 업데이트
  */
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!verifyCronAuth(req)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -64,6 +64,20 @@ export async function GET(req: NextRequest) {
       try { sections = JSON.parse(issue.sections); } catch { sections = []; }
     } else if (Array.isArray(issue.sections)) {
       sections = issue.sections as typeof sections;
+    }
+
+    // Sprint 69 핫픽스: 중복 발송 방지를 위한 낙관적 락
+    // 발송 시작 전에 status='publishing' 으로 즉시 변경 → 다음 cron tick 재진입 차단
+    // 발송 완료 후 'published' 로 최종 변경. 발송 중 실패해도 'publishing' 상태로 남아 재발송 안 됨.
+    try {
+      await db.collection("newsletters").doc(docSnap.id).update({
+        status: "publishing",
+        publishingStartedAt: new Date().toISOString(),
+      });
+    } catch (lockErr) {
+      console.error("[cron/newsletter-publisher] lock failed:", docSnap.id, lockErr);
+      errors.push(docSnap.id);
+      continue;
     }
 
     try {
@@ -125,28 +139,38 @@ export async function GET(req: NextRequest) {
       await db.collection("newsletters").doc(docSnap.id).update({
         status: "published",
         publishAt: null,
+        publishedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
 
-      // 알림 fan-out
-      usersSnap.forEach(async (userDoc) => {
-        try {
-          await db.collection("notifications").add({
-            userId: userDoc.id,
-            type: "newsletter",
-            title: "새 학회보가 발행되었습니다",
-            message: `${title} (제${issueNumber}호)`,
-            link: "/newsletter",
-            read: false,
-            createdAt: new Date().toISOString(),
-          });
-        } catch { /* non-blocking */ }
-      });
+      // Sprint 69 핫픽스: forEach + async (fire-and-forget) → for...of + chunked Promise.all
+      // serverless 종료 후 dangling promise 방지 + 알림 누락 차단
+      const NOTIF_CHUNK = 50;
+      const userIds: string[] = [];
+      usersSnap.forEach((u) => userIds.push(u.id));
+      for (let i = 0; i < userIds.length; i += NOTIF_CHUNK) {
+        const chunk = userIds.slice(i, i + NOTIF_CHUNK);
+        await Promise.all(
+          chunk.map((userId) =>
+            db.collection("notifications").add({
+              userId,
+              type: "newsletter",
+              title: "새 학회보가 발행되었습니다",
+              message: `${title} (제${issueNumber}호)`,
+              link: "/newsletter",
+              read: false,
+              createdAt: new Date().toISOString(),
+            }).catch((e) => console.warn("[newsletter] notif failed", userId, e)),
+          ),
+        );
+      }
 
       published++;
     } catch (err) {
       console.error("[cron/newsletter-publisher] issue", docSnap.id, err);
       errors.push(docSnap.id);
+      // 실패 시 status='publishing' 그대로 유지 → 운영자가 수동 점검 후 재발행
+      // (자동 retry 시 부분 발송된 회원에게 중복 발송 위험)
     }
   }
 

@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { verifyCronAuth } from "@/lib/cron-auth";
+import { nextCertSeq, formatCertNo } from "@/lib/cert-counter";
 
 /**
  * 활동 상태 자동 전환 + 자동 수료증/참석확인서 발급 Cron (매일 09:00 KST 실행)
@@ -12,8 +14,7 @@ import { getAdminDb } from "@/lib/firebase-admin";
  *    - external: participation (참석확인서) — 주관기관/일정 포함
  */
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!verifyCronAuth(req)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -178,20 +179,8 @@ async function autoIssueActivityCertificates(
   const activityTitle = (activity.title as string) ?? "";
   const organizerName = (activity.organizerName as string) ?? undefined;
 
-  // certificateNo 시퀀스 (YY-NNN, 전 cert 공통)
+  // Sprint 69 핫픽스: transaction 카운터 (YY-NNN, 전 cert 공통)
   const year = new Date().getFullYear().toString().slice(-2);
-  const lastCertSnap = await db
-    .collection("certificates")
-    .orderBy("certificateNo", "desc")
-    .limit(1)
-    .get();
-  let lastSeq = 0;
-  if (!lastCertSnap.empty) {
-    const no = lastCertSnap.docs[0].data().certificateNo as string | undefined;
-    if (no && no.startsWith(year + "-")) {
-      lastSeq = parseInt(no.slice(3), 10) || 0;
-    }
-  }
 
   const nowIso = new Date().toISOString();
   let createdCount = 0;
@@ -199,8 +188,8 @@ async function autoIssueActivityCertificates(
   for (const r of recipients) {
     if (!r.name) continue;
     try {
-      lastSeq += 1;
-      const certificateNo = `${year}-${String(lastSeq).padStart(3, "0")}`;
+      const seq = await nextCertSeq(db, year);
+      const certificateNo = formatCertNo(year, seq);
 
       // 학번 → 이메일 fallback 매칭
       let recipientUserId: string | null = r.userId ?? null;
@@ -248,7 +237,7 @@ async function autoIssueActivityCertificates(
       createdCount++;
     } catch (e) {
       console.error("[activity-cert] issue error:", r.name, e);
-      lastSeq -= 1;
+      // Sprint 69: transaction 카운터 — 결번 처리, rollback 불필요
     }
   }
 

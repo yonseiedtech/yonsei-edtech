@@ -15,6 +15,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cardNewsApi } from "@/lib/bkend";
+import { todayYmdKst } from "@/lib/dday";
 import type { CardNewsSeries } from "./types";
 
 interface Props {
@@ -62,7 +63,8 @@ export default function SeriesActions({ series, isPersisted }: Props) {
       const payload = {
         title: `${series.title} (복제)`,
         description: series.description,
-        publishedAt: new Date().toISOString().slice(0, 10),
+        // Sprint 69: KST 기준으로 publishedAt 기록 (UTC drift 픽스)
+        publishedAt: todayYmdKst(),
         category: series.category ?? "",
         cards: series.cards.map((c) => ({ ...c })),
       };

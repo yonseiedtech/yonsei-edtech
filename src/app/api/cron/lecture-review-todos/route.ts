@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { verifyCronAuth } from "@/lib/cron-auth";
 
 /**
  * 강의 후기 todo 자동 생성 Cron (매일 13:00 UTC = 22:00 KST)
@@ -46,33 +47,37 @@ function ymdToKoreanShort(ymd: string): string {
 const SKIP_MODES = new Set(["cancelled", "exam"]);
 
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!verifyCronAuth(req)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const db = getAdminDb();
     const today = todayYmdKst();
-    const dueDate = addDaysYmd(today, 3);
+    // Sprint 69 핫픽스: cron 1회 실패 시 영구 누락 방지를 위해 최근 3일 룩백
+    // (today, today-1, today-2) 모두 훑어 sessionDate 별 todo 생성. 중복 가드로 안전.
+    const lookbackDates = [today, addDaysYmd(today, -1), addDaysYmd(today, -2)];
 
-    // 1) 오늘 진행된 class_sessions
+    // 1) 최근 3일 진행된 class_sessions
     const sessionsSnap = await db
       .collection("class_sessions")
-      .where("date", "==", today)
+      .where("date", "in", lookbackDates)
       .get();
 
     let createdTodos = 0;
     let skippedExisting = 0;
     let skippedMode = 0;
-    const processed: { courseOfferingId: string; userCount: number }[] = [];
+    const processed: { courseOfferingId: string; sessionDate: string; userCount: number }[] = [];
 
     for (const sessionDoc of sessionsSnap.docs) {
       const session = sessionDoc.data() as {
         courseOfferingId?: string;
         mode?: string;
+        date?: string;
       };
       const courseOfferingId = session.courseOfferingId;
+      const sessionDate = session.date ?? today;
+      const dueDate = addDaysYmd(sessionDate, 3);
       if (!courseOfferingId) continue;
       if (session.mode && SKIP_MODES.has(session.mode)) {
         skippedMode++;
@@ -105,7 +110,7 @@ export async function GET(req: NextRequest) {
           .collection("course_todos")
           .where("courseOfferingId", "==", courseOfferingId)
           .where("userId", "==", userId)
-          .where("sessionDate", "==", today)
+          .where("sessionDate", "==", sessionDate)
           .where("type", "==", "lecture_review")
           .limit(1)
           .get();
@@ -119,9 +124,9 @@ export async function GET(req: NextRequest) {
           courseOfferingId,
           userId,
           type: "lecture_review",
-          content: `${courseName} ${ymdToKoreanShort(today)} 수업 한 줄 후기`,
+          content: `${courseName} ${ymdToKoreanShort(sessionDate)} 수업 한 줄 후기`,
           dueDate,
-          sessionDate: today,
+          sessionDate,
           completed: false,
           createdAt: nowIso,
           updatedAt: nowIso,
@@ -129,13 +134,13 @@ export async function GET(req: NextRequest) {
         createdTodos++;
         perCourseCreated++;
       }
-      processed.push({ courseOfferingId, userCount: perCourseCreated });
+      processed.push({ courseOfferingId, sessionDate, userCount: perCourseCreated });
     }
 
     return Response.json({
       ok: true,
       today,
-      dueDate,
+      lookbackDates,
       createdTodos,
       skippedExisting,
       skippedMode,

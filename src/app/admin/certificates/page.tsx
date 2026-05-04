@@ -353,9 +353,14 @@ export default function CertificatesPage() {
       }
     };
     walk(target, clone);
+    // Sprint 69 보안: cert/pdf staff 권한 요구 → 토큰 첨부
+    const idToken = await auth.currentUser?.getIdToken();
     const res = await fetch("/api/certificates/pdf", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+      },
       body: JSON.stringify({ html: clone.outerHTML, fileName }),
     });
     if (!res.ok) throw new Error(`서버 응답 오류: ${res.status}`);

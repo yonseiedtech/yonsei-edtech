@@ -5,6 +5,7 @@ import { useSeminars, useAttendees } from "@/features/seminar/useSeminar";
 import { useSeminarAdminContext } from "./seminar-admin-store";
 import { useOrgChart, type OrgPosition } from "@/features/admin/settings/useOrgChart";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { auth } from "@/lib/firebase";
 import { certificatesApi } from "@/lib/bkend";
 import { notifyCertificateIssued } from "@/features/notifications/notify";
 import { todayYmdLocal } from "@/lib/dday";
@@ -1484,9 +1485,14 @@ export default function CertificateGenerator() {
       const html = clone.outerHTML;
       const fileName = `${CERT_LABELS[certType].label}_${recipientName || "미입력"}_${certificateNo || "번호없음"}.pdf`;
 
+      // Sprint 69 보안: cert/pdf staff 권한 요구 → 토큰 첨부
+      const idToken = await auth.currentUser?.getIdToken();
       const res = await fetch("/api/certificates/pdf", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+        },
         body: JSON.stringify({ html, fileName }),
       });
       if (!res.ok) {

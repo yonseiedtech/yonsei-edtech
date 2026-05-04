@@ -41,6 +41,22 @@ export async function POST(req: NextRequest) {
       return Response.json({ approved: true, alreadyApproved: true });
     }
 
+    // Sprint 69 보안: 가입 직후(60분 이내)에만 자동 승인 허용
+    // → 가입 후 학번/이름을 위조 변경 후 자동승인을 다시 시도하는 우회 차단
+    const createdAtRaw = data.createdAt as string | undefined;
+    if (createdAtRaw) {
+      const createdMs = new Date(createdAtRaw).getTime();
+      if (!Number.isNaN(createdMs)) {
+        const ageMs = Date.now() - createdMs;
+        if (ageMs > 60 * 60 * 1000) {
+          return Response.json({
+            approved: false,
+            reason: "자동 승인 가능 시간(가입 후 1시간)이 지났습니다. 운영진 승인을 기다려주세요.",
+          });
+        }
+      }
+    }
+
     const candidate: User = {
       id: uid,
       username: (data.username as string) ?? "",

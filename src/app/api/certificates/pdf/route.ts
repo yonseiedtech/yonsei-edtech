@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/api-auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
+
+// Sprint 69 보안: HTML 입력 크기 상한 (Puppeteer DoS 방지)
+const MAX_HTML_BYTES = 1_500_000; // 1.5MB
 
 const CHROMIUM_PACK_URL =
   "https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar";
@@ -75,11 +79,21 @@ function buildHtml(bodyHtml: string, extraStyles: string, fileTitle: string, bas
 }
 
 export async function POST(req: NextRequest) {
+  // Sprint 69 보안: staff 이상만 PDF 생성 가능 (DoS·SSRF 차단)
+  const auth = await requireAuth(req, "staff");
+  if (auth instanceof NextResponse) return auth;
+
   let browser: Awaited<ReturnType<typeof getBrowser>> | null = null;
   try {
     const { html, styles = "", fileName = "certificate.pdf" } = await req.json();
     if (!html || typeof html !== "string") {
       return NextResponse.json({ error: "html 필드가 필요합니다." }, { status: 400 });
+    }
+    if (html.length > MAX_HTML_BYTES) {
+      return NextResponse.json(
+        { error: `HTML 크기는 ${MAX_HTML_BYTES} bytes 이하여야 합니다.` },
+        { status: 413 },
+      );
     }
 
     const origin = req.nextUrl.origin.replace(/\/$/, "") + "/";

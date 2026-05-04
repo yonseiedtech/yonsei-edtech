@@ -1,6 +1,22 @@
 import { NextRequest } from "next/server";
-import { getAdminDb } from "@/lib/firebase-admin";
+import { getAdminDb, getAdminAuth } from "@/lib/firebase-admin";
 import { checkRateLimit } from "@/lib/rate-limit";
+
+// Sprint 69 보안: 토큰이 있을 때만 검증 (게스트 후기 작성 호환)
+// 반환값: { uid: string, role: string } | null (토큰 없거나 검증 실패)
+async function verifyOptionalAuth(req: NextRequest): Promise<{ uid: string; role: string } | null> {
+  const header = req.headers.get("authorization");
+  if (!header?.startsWith("Bearer ")) return null;
+  const token = header.slice(7);
+  try {
+    const decoded = await getAdminAuth().verifyIdToken(token);
+    const userDoc = await getAdminDb().collection("users").doc(decoded.uid).get();
+    const role = (userDoc.data()?.role as string) ?? "member";
+    return { uid: decoded.uid, role };
+  } catch {
+    return null;
+  }
+}
 
 // 후기 목록 조회 또는 참석자 인증 API
 export async function GET(req: NextRequest) {
@@ -157,9 +173,12 @@ export async function POST(req: NextRequest) {
   const rateLimited = checkRateLimit(`review_${ip}`, { limit: 10, windowSec: 60 });
   if (rateLimited) return rateLimited;
 
+  // Sprint 69 보안: 토큰이 있으면 검증 + authorId 위장 차단
+  const auth = await verifyOptionalAuth(req);
+
   try {
     const body = await req.json();
-    const { seminarId, type, content, rating, authorId, authorName, studentId, visibility, questionAnswers, recommendedTopics, recommendedSpeakers, speakerToken, authorRole } = body as {
+    const { seminarId, type, content, rating, authorId, authorName, studentId, visibility, questionAnswers, recommendedTopics, recommendedSpeakers, speakerToken } = body as {
       seminarId: string;
       type: string;
       content: string;
@@ -172,8 +191,8 @@ export async function POST(req: NextRequest) {
       recommendedTopics?: string;
       recommendedSpeakers?: string;
       speakerToken?: string;
-      authorRole?: string;
     };
+    // 보안: authorRole은 클라이언트가 지정 못 함 — 항상 서버에서 결정
 
     if (!seminarId || !content || !authorName) {
       return Response.json({ error: "필수 항목 누락" }, { status: 400 });
@@ -187,11 +206,16 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "이름이 너무 깁니다." }, { status: 400 });
     }
 
+    // 보안: 인증된 사용자면 authorId 가 token uid 와 일치해야 함 (다른 회원 위장 차단)
+    if (auth && authorId && !authorId.startsWith("guest_") && authorId !== auth.uid) {
+      return Response.json({ error: "본인의 후기만 작성할 수 있습니다." }, { status: 403 });
+    }
+
     const db = getAdminDb();
 
     // 작성자가 staff 이상이면 자동으로 운영진 후기로 분류
     let resolvedType = type || "attendee";
-    let resolvedAuthorRole = authorRole || null;
+    let resolvedAuthorRole: string | null = null;
     if (resolvedType === "attendee") {
       try {
         // 1차: userId로 매칭

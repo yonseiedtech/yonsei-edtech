@@ -28,6 +28,7 @@ import {
 import { conferenceProgramsApi } from "@/lib/bkend";
 import { uploadToStorage } from "@/lib/storage";
 import { auth } from "@/lib/firebase";
+import { todayYmdKst } from "@/lib/dday";
 import {
   CONFERENCE_SESSION_CATEGORY_COLORS,
   CONFERENCE_SESSION_CATEGORY_LABELS,
@@ -142,7 +143,8 @@ export default function ConferenceProgramEditor({
       ? new Date(new Date(lastDate).getTime() + 86_400_000)
           .toISOString()
           .slice(0, 10)
-      : new Date().toISOString().slice(0, 10);
+      // Sprint 69: KST 기준 오늘 (UTC drift 픽스)
+      : todayYmdKst();
     const label = `${draft.days.length + 1}일차`;
     setDraft((d) => ({ ...d, days: [...d.days, blankDay(next, label)] }));
   }

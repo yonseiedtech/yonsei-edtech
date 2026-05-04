@@ -92,7 +92,9 @@ export async function trackVisit(opts: TrackOptions = {}): Promise<void> {
       sessionStorage.setItem(visitorsKey, JSON.stringify(tracked));
       isNewVisitorThisSession = true;
     }
-  } catch {
+  } catch (storageErr) {
+    // Sprint 69 핫픽스: silent failure → console.warn 으로 진단 가능하게
+    console.warn("[visit-tracker] sessionStorage access failed:", storageErr);
     return;
   }
 
@@ -113,7 +115,9 @@ export async function trackVisit(opts: TrackOptions = {}): Promise<void> {
 
   try {
     await setDoc(doc(db, "daily_visits", ymd), payload, { merge: true });
-  } catch {
+  } catch (writeErr) {
+    // Sprint 69 핫픽스: silent failure → console.warn 으로 진단 + 운영자가 통계 누락 원인 파악 가능
+    console.warn("[visit-tracker] daily_visits write failed:", writeErr);
     if (isFirstSessionVisit) {
       try {
         sessionStorage.removeItem(sessionKey);

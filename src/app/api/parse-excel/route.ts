@@ -5,7 +5,8 @@ import { requireAuth } from "@/lib/api-auth";
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export async function POST(req: NextRequest) {
-  const authResult = await requireAuth(req, "member");
+  // Sprint 69 보안: xlsx 파싱은 ReDoS/메모리 폭증 위험이 있어 staff 이상으로 제한
+  const authResult = await requireAuth(req, "staff");
   if (authResult instanceof Response) return authResult;
 
   try {

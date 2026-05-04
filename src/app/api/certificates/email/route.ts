@@ -46,9 +46,14 @@ async function generatePdfBuffer(req: NextRequest, cert: Certificate): Promise<B
   const html = buildCertificateHtml(cert);
   const fileName = `certificate-${cert.certificateNo || cert.id}.pdf`;
   const origin = req.nextUrl.origin;
+  // Sprint 69 보안: cert/pdf staff 권한 요구 → caller 의 Authorization 그대로 forward
+  const callerAuth = req.headers.get("authorization");
   const res = await fetch(`${origin}/api/certificates/pdf`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(callerAuth ? { Authorization: callerAuth } : {}),
+    },
     body: JSON.stringify({ html, fileName }),
   });
   if (!res.ok) {

@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { verifyCronAuth } from "@/lib/cron-auth";
 
 function escapeHtml(str: string): string {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -105,8 +106,7 @@ async function sendReminderEmails(
  * D-3, D-1 세미나에 대해 참석 예정 회원에게 알림 + 이메일 발송
  */
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!verifyCronAuth(req)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -142,20 +142,21 @@ export async function GET(req: NextRequest) {
       const attendeeIds: string[] = seminar.attendeeIds ?? [];
       if (attendeeIds.length === 0) continue;
 
-      // 알림 중복 방지
+      // Sprint 69 핫픽스: 사용자 단위 가드 (기존: 1건이라도 있으면 전체 skip → 후속 attendee 누락)
       const existingSnapshot = await db
         .collection("notifications")
         .where("type", "==", "seminar_reminder")
         .where("link", "==", `/seminars/${doc.id}`)
         .where("title", "==", `세미나 D-${daysLeft} 리마인더`)
-        .limit(1)
         .get();
+      const sentUserIds = new Set(existingSnapshot.docs.map((d) => d.data().userId as string));
+      const newRecipients = attendeeIds.filter((uid) => !sentUserIds.has(uid));
 
-      if (!existingSnapshot.empty) continue;
+      if (newRecipients.length === 0) continue;
 
       // 인앱 알림 생성
       const batch = db.batch();
-      for (const userId of attendeeIds) {
+      for (const userId of newRecipients) {
         const ref = db.collection("notifications").doc();
         batch.set(ref, {
           userId,

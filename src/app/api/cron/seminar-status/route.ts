@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { verifyCronAuth } from "@/lib/cron-auth";
+import { nextCertSeq, formatCertNo } from "@/lib/cert-counter";
 
 function escapeHtml(str: string): string {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -15,8 +17,7 @@ function escapeHtml(str: string): string {
  * 5. 수료증 발급 준비 알림 (후기 3건 이상 시)
  */
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!verifyCronAuth(req)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -68,30 +69,33 @@ export async function GET(req: NextRequest) {
       if (newStatus === "completed") {
         const attendeeIds: string[] = seminar.attendeeIds ?? [];
 
-        // 리뷰 요청 알림 (중복 방지)
-        const existing = await db
-          .collection("notifications")
-          .where("type", "==", "review_request")
-          .where("link", "==", `/seminars/${docSnap.id}/review`)
-          .limit(1)
-          .get();
+        // Sprint 69 핫픽스: 사용자 단위 가드 (기존: 1건이라도 있으면 batch 전체 skip → 후속 attendee 영구 누락)
+        if (attendeeIds.length > 0) {
+          const existing = await db
+            .collection("notifications")
+            .where("type", "==", "review_request")
+            .where("link", "==", `/seminars/${docSnap.id}/review`)
+            .get();
+          const sentUserIds = new Set(existing.docs.map((d) => d.data().userId as string));
+          const newRecipients = attendeeIds.filter((uid) => !sentUserIds.has(uid));
 
-        if (existing.empty && attendeeIds.length > 0) {
-          const batch = db.batch();
-          for (const userId of attendeeIds) {
-            const ref = db.collection("notifications").doc();
-            batch.set(ref, {
-              userId,
-              type: "review_request",
-              title: "세미나 후기를 남겨주세요!",
-              message: `"${seminar.title}" 세미나에 참석해 주셔서 감사합니다. 후기를 남겨주세요.`,
-              link: `/seminars/${docSnap.id}/review`,
-              read: false,
-              createdAt: new Date().toISOString(),
-            });
-            reviewNotifSent++;
+          if (newRecipients.length > 0) {
+            const batch = db.batch();
+            for (const userId of newRecipients) {
+              const ref = db.collection("notifications").doc();
+              batch.set(ref, {
+                userId,
+                type: "review_request",
+                title: "세미나 후기를 남겨주세요!",
+                message: `"${seminar.title}" 세미나에 참석해 주셔서 감사합니다. 후기를 남겨주세요.`,
+                link: `/seminars/${docSnap.id}/review`,
+                read: false,
+                createdAt: new Date().toISOString(),
+              });
+              reviewNotifSent++;
+            }
+            await batch.commit();
           }
-          await batch.commit();
         }
 
         // 리뷰 요청 이메일 발송
@@ -125,16 +129,14 @@ export async function GET(req: NextRequest) {
       const attendeeIds: string[] = seminar.attendeeIds ?? [];
       if (attendeeIds.length === 0) continue;
 
-      // 중복 방지
+      // Sprint 69 핫픽스: 사용자 단위 가드 (기존: 1건이라도 있으면 전체 skip)
       const existingReminder = await db
         .collection("notifications")
         .where("type", "==", "review_request")
         .where("link", "==", `/seminars/${docSnap.id}/review`)
         .where("title", "==", "아직 후기를 남기지 않으셨나요?")
-        .limit(1)
         .get();
-
-      if (!existingReminder.empty) continue;
+      const reminderSentSet = new Set(existingReminder.docs.map((d) => d.data().userId as string));
 
       // 이미 후기를 남긴 사용자 제외
       const reviewsSnap = await db
@@ -144,7 +146,9 @@ export async function GET(req: NextRequest) {
         .get();
       const reviewedUserIds = new Set(reviewsSnap.docs.map((d) => d.data().authorId));
 
-      const unreviewed = attendeeIds.filter((id) => !reviewedUserIds.has(id));
+      const unreviewed = attendeeIds.filter(
+        (id) => !reviewedUserIds.has(id) && !reminderSentSet.has(id),
+      );
       if (unreviewed.length === 0) continue;
 
       const batch = db.batch();
@@ -283,13 +287,34 @@ async function sendSpeakerThankYouEmail(
     .limit(1).get();
   if (!logSnap.empty) return;
 
-  // 연사 이메일 찾기 (연사가 회원인 경우 또는 등록 정보에서)
+  // Sprint 69 핫픽스: speakerUserId / speakers[].userId 우선 매칭 (동명이인 오발송 차단)
   let speakerEmail: string | null = null;
-  if (seminar.speakerType === "member") {
-    // attendees에서 연사 이름으로 검색
+  let speakerName: string = (seminar.speaker as string) ?? "";
+  type Speaker = { userId?: string; name?: string };
+  const speakersArr: Speaker[] = Array.isArray(seminar.speakers)
+    ? (seminar.speakers as Speaker[])
+    : [];
+
+  // 1차: speakerUserId (단일 연사) — 가장 안전
+  const speakerUid = (seminar.speakerUserId as string | undefined) ?? speakersArr[0]?.userId;
+  if (speakerUid) {
+    try {
+      const u = await db.collection("users").doc(speakerUid).get();
+      const data = u.data();
+      if (data?.email) {
+        speakerEmail = data.email as string;
+        if (data.name) speakerName = data.name as string;
+      }
+    } catch (e) {
+      console.warn("[seminar-status] speaker uid lookup failed", speakerUid, e);
+    }
+  }
+
+  // 2차: 이름 매칭 fallback (구 데이터 호환)
+  if (!speakerEmail && seminar.speakerType === "member" && speakerName) {
     const regSnap = await db.collection("seminar_registrations")
       .where("seminarId", "==", seminarId)
-      .where("name", "==", seminar.speaker)
+      .where("name", "==", speakerName)
       .limit(1).get();
     if (!regSnap.empty) speakerEmail = regSnap.docs[0].data().email;
   }
@@ -318,7 +343,7 @@ async function sendSpeakerThankYouEmail(
     await resend.emails.send({
       from: "연세교육공학회 <noreply@yonsei-edtech.vercel.app>",
       to: speakerEmail,
-      subject: `[연세교육공학회] ${seminar.speaker}님, 발표해 주셔서 감사합니다`,
+      subject: `[연세교육공학회] ${speakerName}님, 발표해 주셔서 감사합니다`,
       html,
     });
     await db.collection("email_logs").add({
@@ -374,20 +399,6 @@ async function autoIssueCompletionCertificates(
   const seminarTitle = (seminar.title as string) ?? "";
   const year = new Date().getFullYear().toString().slice(-2);
 
-  // 기존 certificateNo 최대값 (YY-NNN)
-  const lastCertSnap = await db
-    .collection("certificates")
-    .orderBy("certificateNo", "desc")
-    .limit(1)
-    .get();
-  let lastSeq = 0;
-  if (!lastCertSnap.empty) {
-    const no = lastCertSnap.docs[0].data().certificateNo as string | undefined;
-    if (no && no.startsWith(year + "-")) {
-      lastSeq = parseInt(no.slice(3), 10) || 0;
-    }
-  }
-
   const now = new Date().toISOString();
   let createdCount = 0;
 
@@ -400,8 +411,9 @@ async function autoIssueCompletionCertificates(
     if (!userName) continue;
 
     try {
-      lastSeq += 1;
-      const certificateNo = `${year}-${String(lastSeq).padStart(3, "0")}`;
+      // Sprint 69 핫픽스: transaction 카운터로 race-free 번호 발급
+      const seq = await nextCertSeq(db, year);
+      const certificateNo = formatCertNo(year, seq);
 
       // 학번 → 이메일 순 매칭 (cron 환경에서 attendee.userId 비어있을 수 있음)
       let recipientUserId: string | null = userId;
@@ -444,7 +456,7 @@ async function autoIssueCompletionCertificates(
       createdCount++;
     } catch (e) {
       console.error("[cron/auto-cert] issue error:", userName, e);
-      lastSeq -= 1; // rollback seq
+      // Sprint 69: transaction 카운터는 rollback 불필요 (실패 시 해당 seq 는 결번 처리)
     }
   }
 

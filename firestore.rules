@@ -801,6 +801,12 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // ─── Counters (Sprint 69 — 트랜잭션 시퀀스 발급용) ───
+    // 클라이언트는 read/write 불가. 서버(Admin SDK)만 사용. cert_YY 등.
+    match /counters/{docId} {
+      allow read, write: if false;
+    }
+
     // ─── User Activity Logs (Sprint 63) ───
     // 회원 페이지 접속 이력 — admin 만 read. 본인은 자기 본인 userId 로만 create 가능.
     // update/delete 는 admin 만 (정리·수동 보정).

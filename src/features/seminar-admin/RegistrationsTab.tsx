@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { useSeminars, useSeminar, useAttendees } from "@/features/seminar/useSeminar";
 import { useAllMembers } from "@/features/member/useMembers";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { auth } from "@/lib/firebase";
 import { useSeminarAdminContext } from "./seminar-admin-store";
 import { registrationsApi, attendeesApi, seminarsApi } from "@/lib/bkend";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -809,7 +810,13 @@ export default function RegistrationsTab() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch("/api/parse-excel", { method: "POST", body: formData });
+      // Sprint 69 보안: parse-excel staff 권한 요구 → 토큰 첨부
+      const idToken = await auth.currentUser?.getIdToken();
+      const res = await fetch("/api/parse-excel", {
+        method: "POST",
+        body: formData,
+        headers: idToken ? { Authorization: `Bearer ${idToken}` } : undefined,
+      });
       if (!res.ok) { const err = await res.json(); toast.error(err.error || "파싱 실패"); return; }
       const { headers, rows, total } = await res.json() as { headers: string[]; rows: Record<string, string>[]; total: number };
       if (total === 0) { toast.error("데이터가 없습니다."); return; }

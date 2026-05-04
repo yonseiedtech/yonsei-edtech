@@ -1,7 +1,13 @@
 import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest) {
+  // Sprint 69 보안: 학번 enumeration 차단을 위한 IP rate-limit
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const rateLimited = checkRateLimit(`check_username_${ip}`, { limit: 10, windowSec: 60 });
+  if (rateLimited) return rateLimited;
+
   const username = req.nextUrl.searchParams.get("username");
 
   if (!username || username.length < 5) {

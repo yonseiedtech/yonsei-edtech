@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { loadSeries } from "@/features/card-news/loader";
 import CardNewsEditor from "@/features/card-news/CardNewsEditor";
 import type { CardNewsSeries } from "@/features/card-news/types";
+import { todayYmdKst } from "@/lib/dday";
 
 interface PageProps {
   params: Promise<{ seriesId: string }>;
@@ -10,7 +11,8 @@ interface PageProps {
 export const dynamic = "force-dynamic";
 export const metadata = { title: "카드뉴스 편집 | 운영콘솔" };
 
-const TODAY = () => new Date().toISOString().slice(0, 10);
+// Sprint 69: KST 자정~09:00 사이 발행 시 어제 날짜로 기록되는 UTC drift 픽스
+const TODAY = () => todayYmdKst();
 
 function newSeries(): CardNewsSeries {
   const id = `draft-${Date.now().toString(36)}`;
