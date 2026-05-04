@@ -187,6 +187,7 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
               resources: "/board/resources",
               staff: "/board/staff",
               interview: "/board/interview",
+              paper_review: "/board/paper-review",
               press: "/newsletter",
             };
             router.push(routes[post.category] ?? "/board");

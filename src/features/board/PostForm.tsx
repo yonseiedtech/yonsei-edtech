@@ -12,7 +12,7 @@ import PollEditor from "./PollEditor";
 import InterviewBuilder from "./InterviewBuilder";
 import LinkedPaperPicker from "./LinkedPaperPicker";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, Send, Save, Eye, PenLine, ImagePlus, X, Loader2, BookOpenCheck } from "lucide-react";
+import { ArrowLeft, Send, Save, Eye, PenLine, ImagePlus, X, Loader2, BookOpenCheck, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useCreatePost, useUpdatePost } from "./useBoard";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -42,6 +42,8 @@ export default function PostForm({ mode = "create", initialData, initialCategory
   const [showPreview, setShowPreview] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>(initialData?.imageUrls ?? []);
   const [poll, setPoll] = useState<PostPoll | null>(initialData?.poll ?? null);
+  // Sprint 76e: 투표 첨부 영역 선택적 노출 (이미 첨부된 글이면 자동으로 펼침)
+  const [pollSectionOpen, setPollSectionOpen] = useState<boolean>(!!initialData?.poll);
   const [interview, setInterview] = useState<InterviewMeta>(
     initialData?.interview ?? {
       intro: "",
@@ -381,8 +383,25 @@ export default function PostForm({ mode = "create", initialData, initialCategory
             </div>
           )}
 
-          {/* 투표 (선택) */}
-          <PollEditor value={poll} onChange={setPoll} />
+          {/* 투표 (선택) — Sprint 76e: 사용자가 명시적으로 첨부할 때만 노출 */}
+          {pollSectionOpen ? (
+            <PollEditor
+              value={poll}
+              onChange={(v) => {
+                setPoll(v);
+                if (v === null) setPollSectionOpen(false);
+              }}
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setPollSectionOpen(true)}
+              className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed bg-muted/10 px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:bg-muted/30 hover:text-foreground"
+            >
+              <Plus size={14} />
+              투표 첨부 (선택)
+            </button>
+          )}
 
           {/* 첨부된 이미지 목록 */}
           {imageUrls.length > 0 && (

@@ -125,6 +125,8 @@ export function useCreatePost() {
       if (data.attachments?.length) payload.attachments = data.attachments;
       if (data.type) payload.type = data.type;
       if (data.interview) payload.interview = data.interview;
+      // Sprint 76e: paper_review 게시판의 첨부 논문 — 누락되어 있던 필드 보존
+      if (data.linkedPaper) payload.linkedPaper = data.linkedPaper;
       payload.likeCount = 0;
       const res = await postsApi.create(payload);
       // 공지사항이면 전체 회원에게 알림
@@ -166,6 +168,8 @@ export function useUpdatePost() {
       if (data.attachments) payload.attachments = data.attachments;
       if ("type" in data) payload.type = data.type ?? null;
       if ("interview" in data) payload.interview = data.interview ?? null;
+      // Sprint 76e: paper_review 첨부 논문 — 추가/제거 모두 반영 (undefined 도 명시 저장)
+      if ("linkedPaper" in data) payload.linkedPaper = data.linkedPaper ?? null;
       return await postsApi.update(id, payload);
     },
     onSuccess: (_data, { id }) => {
