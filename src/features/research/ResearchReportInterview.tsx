@@ -665,6 +665,111 @@ const POPULAR_THEORIES: { name: string; scholar: string; year: string; tag?: str
   { name: "행동주의", scholar: "Skinner", year: "1953", tag: "기초이론" },
 ];
 
+// Sprint 75 F5: task-decompose 동적 list UI (인터뷰·Editor 양쪽에서 사용)
+export function TaskStepsField({
+  form, setField, compact = false,
+}: { form: FormState; setField: SetField; compact?: boolean }) {
+  // legacy taskDecompose 가 있고 taskSteps 가 비어있으면 1회 자동 split 으로 표시
+  const steps = useMemo<string[]>(() => {
+    if (form.taskSteps && form.taskSteps.length > 0) return form.taskSteps;
+    if (!form.taskDecompose) return [];
+    return form.taskDecompose
+      .split(/\r?\n+/)
+      .map((s) => s.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, "").trim())
+      .filter((s) => s.length > 0);
+  }, [form.taskSteps, form.taskDecompose]);
+
+  function commit(next: string[]) {
+    setField("taskSteps", next);
+    // legacy 동기화 — 보고서 본문 출력 호환
+    setField("taskDecompose", next.filter((s) => s.trim()).join("\n"));
+  }
+
+  function updateAt(idx: number, value: string) {
+    const next = steps.length > 0 ? [...steps] : [];
+    while (next.length <= idx) next.push("");
+    next[idx] = value;
+    commit(next);
+  }
+  function addStep() { commit([...(steps ?? []), ""]); }
+  function removeAt(idx: number) { commit(steps.filter((_, i) => i !== idx)); }
+  function moveUp(idx: number) {
+    if (idx <= 0) return;
+    const next = [...steps];
+    [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+    commit(next);
+  }
+  function moveDown(idx: number) {
+    if (idx >= steps.length - 1) return;
+    const next = [...steps];
+    [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+    commit(next);
+  }
+
+  const visible = steps.length > 0 ? steps : [""];
+
+  return (
+    <div className="space-y-1.5">
+      {visible.map((s, idx) => (
+        <div key={idx} className="flex items-center gap-1.5 sm:gap-2">
+          <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary tabular-nums sm:h-8 sm:w-8 sm:text-xs">
+            {idx + 1}
+          </span>
+          <Input
+            value={s}
+            onChange={(e) => updateAt(idx, e.target.value)}
+            placeholder={
+              idx === 0
+                ? "예: 협력학습 정의 인식"
+                : idx === 1
+                ? "예: 3대 원리 구분 (상호의존성·개별책무성·평등참여)"
+                : "단계 내용을 적어주세요"
+            }
+            className={cn("flex-1 bg-white", compact ? "" : "text-base")}
+            style={compact ? undefined : { fontSize: "16px" }}
+          />
+          <button
+            type="button"
+            onClick={() => moveUp(idx)}
+            disabled={idx === 0}
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted disabled:opacity-30"
+            aria-label="위로"
+            title="위로"
+          >↑</button>
+          <button
+            type="button"
+            onClick={() => moveDown(idx)}
+            disabled={idx === visible.length - 1}
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted disabled:opacity-30"
+            aria-label="아래로"
+            title="아래로"
+          >↓</button>
+          <button
+            type="button"
+            onClick={() => removeAt(idx)}
+            disabled={visible.length === 1 && !s.trim()}
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:opacity-30"
+            aria-label="삭제"
+            title="삭제"
+          >×</button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={addStep}
+        className="inline-flex items-center gap-1 rounded-lg border border-dashed border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
+      >
+        + 단계 추가
+      </button>
+      {form.taskDecompose && (!form.taskSteps || form.taskSteps.length === 0) && (
+        <p className="text-[10px] text-muted-foreground">
+          💡 기존에 한 번에 입력하신 내용을 자동으로 단계별로 분리했습니다. 자유롭게 편집해 주세요.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function TheoryNameRenderer({ form, setField }: { form: FormState; setField: SetField }) {
   const card = form.theoryCards[0];
   const [showAllPresets, setShowAllPresets] = useState(false);
@@ -1137,17 +1242,8 @@ const SLIDES: SlideDef[] = [
     id: "task-decompose",
     chapter: "task",
     prompt: "학습 과제를 작은 단위로 쪼개면? (Task Analysis · 과제 분석)",
-    hint: "🎓 ID 용어: Gagné 위계 / Jonassen 정보처리. 큰 학습 목표를 *순서 있는 작은 단위* 로 분해. 학습자가 어떤 순서로 익혀야 하는지.",
-    render: (form, setField) => (
-      <Textarea
-        value={form.taskDecompose}
-        onChange={(e) => setField("taskDecompose", e.target.value)}
-        placeholder={"예:\n1) 협력학습 정의 인식\n2) 3대 원리 구분 (상호의존성·개별책무성·평등참여)\n3) 자기 수업에 원리 적용 사례 작성\n4) 동료 사례 비교 분석"}
-        rows={6}
-        className="bg-white text-base"
-        style={{ fontSize: "16px" }}
-      />
-    ),
+    hint: "🎓 ID 용어: Gagné 위계 / Jonassen 정보처리. 큰 학습 목표를 순서 있는 작은 단위로 분해해 학습자가 어떤 순서로 익혀야 하는지 정리합니다.",
+    render: (form, setField) => <TaskStepsField form={form} setField={setField} />,
   },
   {
     id: "outcome-priority-domain",

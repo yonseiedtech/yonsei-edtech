@@ -27,7 +27,7 @@ import {
 } from "./useResearchReport";
 import { useResearchPapers } from "./useResearchPapers";
 import { useLogWritingActivity } from "./useWritingPaperHistory";
-import ResearchReportInterview from "./ResearchReportInterview";
+import ResearchReportInterview, { TaskStepsField } from "./ResearchReportInterview";
 
 interface Props {
   user: User;
@@ -844,14 +844,19 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
 
         {step === "task" && (
           <div className="space-y-4">
-            <Section title="4-1. 과제 분해 (Task Analysis)" sub="🎓 Gagné 위계 / Jonassen 정보처리. 큰 학습을 작은 단위로 쪼개 단계 정리.">
-              <Textarea
-                value={form.taskDecompose}
-                onChange={(e) => setField("taskDecompose", e.target.value)}
-                placeholder={"예:\n1) 협력학습 정의 인식\n2) 3대 원리 구분 (상호의존성·개별책무성·평등참여)\n3) 자기 수업에 원리 적용 사례 작성\n4) 동료 사례 비교 분석"}
-                rows={5}
-                disabled={readOnly}
-              />
+            <Section title="4-1. 과제 분해 (Task Analysis)" sub="🎓 Gagné 위계 / Jonassen 정보처리. 큰 학습을 작은 단위로 쪼개 단계로 정리하세요. (단계별 입력 · 추가 · 삭제 · 순서 변경)">
+              {readOnly ? (
+                <Textarea
+                  value={(form.taskSteps && form.taskSteps.length > 0
+                    ? form.taskSteps
+                    : (form.taskDecompose ?? "").split(/\r?\n+/)).filter((s) => s.trim())
+                    .map((s, i) => `${i + 1}. ${s}`).join("\n")}
+                  readOnly
+                  rows={5}
+                />
+              ) : (
+                <TaskStepsField form={form} setField={setField} compact />
+              )}
             </Section>
             <Section
               title="4-2. 학습 영역 우선순위 (Bloom 3대 영역)"
