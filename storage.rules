@@ -9,17 +9,27 @@ service firebase.storage {
                    && request.resource.contentType.matches('image/.*');
     }
 
-    // 활동 산출물 — 로그인 회원만 업로드/조회
+    // 활동 산출물 — 로그인 회원만 업로드/조회 (이미지/PDF/Office 문서)
     match /activity-materials/{activityId}/{fileName} {
       allow read: if request.auth != null;
       allow write: if request.auth != null
-                   && request.resource.size < 20 * 1024 * 1024;
+                   && request.resource.size < 20 * 1024 * 1024
+                   && (request.resource.contentType.matches('image/.*')
+                       || request.resource.contentType == 'application/pdf'
+                       || request.resource.contentType.matches('application/vnd.openxmlformats-officedocument.*')
+                       || request.resource.contentType == 'application/msword'
+                       || request.resource.contentType == 'application/vnd.ms-excel'
+                       || request.resource.contentType == 'application/vnd.ms-powerpoint'
+                       || request.resource.contentType == 'application/zip');
     }
 
     // 신청 폼 첨부 파일 — 비로그인도 업로드 허용 (비회원 참가 신청)
+    // 보안: MIME 화이트리스트 적용 (이미지/PDF만 허용)
     match /applications/{fieldId}/{fileName} {
       allow read: if request.auth != null;
-      allow create: if request.resource.size < 20 * 1024 * 1024;
+      allow create: if request.resource.size < 20 * 1024 * 1024
+                    && (request.resource.contentType.matches('image/.*')
+                        || request.resource.contentType == 'application/pdf');
     }
 
     // 인터뷰 응답 이미지

@@ -25,7 +25,8 @@ export default function Error({
         잠시 후 다시 시도해주세요.
       </p>
 
-      {/* Sprint 70: 진단 정보 (접혀있음, 클릭 시 펼침) */}
+      {/* Sprint 70: 진단 정보 (접혀있음, 클릭 시 펼침)
+          보안: stack은 개발 환경에서만 노출 (운영에서는 message + digest만 사용자/운영진에게 전달) */}
       <details className="mt-6 max-w-2xl rounded-lg border bg-muted/30 px-4 py-2 text-left text-xs text-muted-foreground">
         <summary className="cursor-pointer select-none font-medium">
           오류 상세 (운영진에게 전달용)
@@ -43,7 +44,7 @@ export default function Error({
               <code className="rounded bg-background px-1 py-0.5">{error.digest}</code>
             </p>
           )}
-          {error?.stack && (
+          {error?.stack && process.env.NODE_ENV !== "production" && (
             <pre className="max-h-48 overflow-auto rounded bg-background p-2 text-[10px] leading-relaxed">
               {error.stack}
             </pre>

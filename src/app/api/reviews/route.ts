@@ -292,6 +292,9 @@ export async function PATCH(req: NextRequest) {
   const rateLimited = checkRateLimit(`review_patch_${ip}`, { limit: 10, windowSec: 60 });
   if (rateLimited) return rateLimited;
 
+  // Sprint 보안: 토큰이 있을 때만 검증 (회원 후기 스푸핑 차단). 게스트 후기는 호환 유지.
+  const auth = await verifyOptionalAuth(req);
+
   try {
     const body = await req.json();
     const { reviewId, content, rating, questionAnswers, authorId, recommendedTopics, recommendedSpeakers } = body as {
@@ -319,9 +322,25 @@ export async function PATCH(req: NextRequest) {
       return Response.json({ error: "후기를 찾을 수 없습니다." }, { status: 404 });
     }
 
-    // 본인 확인
-    if (doc.data()?.authorId !== authorId) {
-      return Response.json({ error: "본인의 후기만 수정할 수 있습니다." }, { status: 403 });
+    // 본인 확인 (보안 강화):
+    // - 회원 후기(authorId가 guest_ 접두사 아님): 반드시 토큰 uid와 일치해야 함 (클라이언트 위장 차단)
+    // - 게스트 후기(guest_*): 기존 방식 유지 (authorId 일치만 확인, 호환성)
+    const docAuthorId = doc.data()?.authorId as string | undefined;
+    const isGuestReview = docAuthorId?.startsWith("guest_") ?? false;
+
+    if (!isGuestReview) {
+      // 회원 후기는 인증 토큰 필수
+      if (!auth) {
+        return Response.json({ error: "회원 후기 수정은 로그인이 필요합니다." }, { status: 401 });
+      }
+      if (docAuthorId !== auth.uid) {
+        return Response.json({ error: "본인의 후기만 수정할 수 있습니다." }, { status: 403 });
+      }
+    } else {
+      // 게스트 후기: authorId 일치 (기존 호환)
+      if (docAuthorId !== authorId) {
+        return Response.json({ error: "본인의 후기만 수정할 수 있습니다." }, { status: 403 });
+      }
     }
 
     const safeRating = Math.min(5, Math.max(1, Number(rating) || 5));
