@@ -77,6 +77,11 @@ export interface FormState {
   envConstraint: string;
   taskDecompose: string;
   outcomeMagerABCD: string;
+  // Sprint 72 F4: Mager ABCD 분리 (legacy outcomeMagerABCD 와 호환)
+  outcomeMagerA: string;
+  outcomeMagerB: string;
+  outcomeMagerC: string;
+  outcomeMagerD: string;
   outcomePriorityDomain: "" | "cognitive" | "affective" | "psychomotor" | "integrated";
   // Sprint 60 → 66 schema 보존: 인터뷰 미노출, 고급 모드에서 활용 가능
   inquiryMeaning: string;
@@ -150,6 +155,10 @@ const EMPTY: FormState = {
   envConstraint: "",
   taskDecompose: "",
   outcomeMagerABCD: "",
+  outcomeMagerA: "",
+  outcomeMagerB: "",
+  outcomeMagerC: "",
+  outcomeMagerD: "",
   outcomePriorityDomain: "",
   inquiryMeaning: "",
   inquiryContext: "",
@@ -244,6 +253,10 @@ function fromReport(r: ResearchReport | undefined): FormState {
     envConstraint: r.envConstraint ?? "",
     taskDecompose: r.taskDecompose ?? "",
     outcomeMagerABCD: r.outcomeMagerABCD ?? "",
+    outcomeMagerA: r.outcomeMagerA ?? "",
+    outcomeMagerB: r.outcomeMagerB ?? "",
+    outcomeMagerC: r.outcomeMagerC ?? "",
+    outcomeMagerD: r.outcomeMagerD ?? "",
     outcomePriorityDomain: r.outcomePriorityDomain ?? "",
     inquiryMeaning: r.inquiryMeaning ?? "",
     inquiryContext: r.inquiryContext ?? "",
@@ -310,6 +323,7 @@ function totalChars(form: FormState): number {
     // Sprint 68 — 환경·과제·Mager
     form.envLearning, form.envTransfer, form.envConstraint,
     form.taskDecompose, form.outcomeMagerABCD,
+    form.outcomeMagerA, form.outcomeMagerB, form.outcomeMagerC, form.outcomeMagerD,
   ];
   let sum = textFields.reduce((s, v) => s + v.length, 0);
   for (const g of form.priorResearchGroups) {
@@ -915,14 +929,49 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
                 disabled={readOnly}
               />
             </Section>
-            <Section title="4-4. Mager ABCD 형식 정교화" sub="🎓 Mager 행동 목표. Audience·Behavior·Condition·Degree 네 요소 모두 포함.">
-              <Textarea
-                value={form.outcomeMagerABCD}
-                onChange={(e) => setField("outcomeMagerABCD", e.target.value)}
-                placeholder={"예: [A] 교육대학원 1학년이\n[B] 협력학습 사례를 보고 3대 원리 적용 여부를\n[C] 5분 내 모둠 토의로\n[D] 4개 사례 중 3개 이상 정확히 판별할 수 있다."}
-                rows={5}
-                disabled={readOnly}
-              />
+            <Section title="4-4. Mager ABCD 형식 정교화" sub="🎓 Mager 행동 목표. Audience·Behavior·Condition·Degree 네 요소를 분리해 적어주세요.">
+              <div className="space-y-2">
+                <div>
+                  <p className="mb-0.5 text-[11px] font-semibold text-muted-foreground">A — Audience (학습자)</p>
+                  <Textarea
+                    value={form.outcomeMagerA}
+                    onChange={(e) => setField("outcomeMagerA", e.target.value)}
+                    placeholder="예: 교육대학원 1학년이"
+                    rows={1}
+                    disabled={readOnly}
+                  />
+                </div>
+                <div>
+                  <p className="mb-0.5 text-[11px] font-semibold text-muted-foreground">B — Behavior (관찰 가능한 행동)</p>
+                  <Textarea
+                    value={form.outcomeMagerB}
+                    onChange={(e) => setField("outcomeMagerB", e.target.value)}
+                    placeholder="예: 협력학습 사례를 보고 3대 원리 적용 여부를"
+                    rows={2}
+                    disabled={readOnly}
+                  />
+                </div>
+                <div>
+                  <p className="mb-0.5 text-[11px] font-semibold text-muted-foreground">C — Condition (수행 조건)</p>
+                  <Textarea
+                    value={form.outcomeMagerC}
+                    onChange={(e) => setField("outcomeMagerC", e.target.value)}
+                    placeholder="예: 5분 내 모둠 토의로"
+                    rows={1}
+                    disabled={readOnly}
+                  />
+                </div>
+                <div>
+                  <p className="mb-0.5 text-[11px] font-semibold text-muted-foreground">D — Degree (성취 기준)</p>
+                  <Textarea
+                    value={form.outcomeMagerD}
+                    onChange={(e) => setField("outcomeMagerD", e.target.value)}
+                    placeholder="예: 4개 사례 중 3개 이상 정확히 판별할 수 있다."
+                    rows={1}
+                    disabled={readOnly}
+                  />
+                </div>
+              </div>
             </Section>
           </div>
         )}

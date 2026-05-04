@@ -332,8 +332,31 @@ function ResearchLogicMap({ form }: { form: FormState }) {
   );
 }
 
+// Sprint 72 F2: 교육공학 대표 이론 프리셋 — 클릭 한 번으로 이름·학자·연도 자동 채움
+const POPULAR_THEORIES: { name: string; scholar: string; year: string; tag?: string }[] = [
+  { name: "사회적 구성주의", scholar: "Vygotsky", year: "1978", tag: "구성주의" },
+  { name: "구성주의 학습이론", scholar: "Piaget", year: "1972", tag: "구성주의" },
+  { name: "ARCS 동기이론", scholar: "Keller", year: "1987", tag: "동기" },
+  { name: "자기효능감 이론", scholar: "Bandura", year: "1977", tag: "동기" },
+  { name: "자기조절학습", scholar: "Zimmerman", year: "1989", tag: "학습전략" },
+  { name: "성취목표이론", scholar: "Dweck", year: "1986", tag: "동기" },
+  { name: "인지부하이론", scholar: "Sweller", year: "1988", tag: "인지" },
+  { name: "Mayer 멀티미디어 학습", scholar: "Mayer", year: "2001", tag: "인지" },
+  { name: "다중지능이론", scholar: "Gardner", year: "1983", tag: "학습자" },
+  { name: "협동학습이론", scholar: "Johnson & Johnson", year: "1989", tag: "교수전략" },
+  { name: "상황학습이론", scholar: "Lave & Wenger", year: "1991", tag: "구성주의" },
+  { name: "인지적 도제이론", scholar: "Collins, Brown & Newman", year: "1989", tag: "교수전략" },
+  { name: "Gagné 9 Events of Instruction", scholar: "Gagné", year: "1985", tag: "교수설계" },
+  { name: "체제적 교수설계 (Dick & Carey)", scholar: "Dick & Carey", year: "1978", tag: "교수설계" },
+  { name: "TPACK", scholar: "Mishra & Koehler", year: "2006", tag: "테크놀로지" },
+  { name: "혁신확산이론", scholar: "Rogers", year: "1962", tag: "확산·정책" },
+  { name: "거꾸로교실(플립러닝)", scholar: "Bergmann & Sams", year: "2012", tag: "교수전략" },
+  { name: "행동주의", scholar: "Skinner", year: "1953", tag: "기초이론" },
+];
+
 function TheoryNameRenderer({ form, setField }: { form: FormState; setField: SetField }) {
   const card = form.theoryCards[0];
+  const [showAllPresets, setShowAllPresets] = useState(false);
   const conceptNamesPicked = useMemo(
     () =>
       new Set(
@@ -353,12 +376,60 @@ function TheoryNameRenderer({ form, setField }: { form: FormState; setField: Set
     ensureFirstTheoryCard(form, setField, { concepts: nextConcepts });
   }
 
+  function handlePickPreset(preset: typeof POPULAR_THEORIES[number]) {
+    ensureFirstTheoryCard(form, setField, {
+      name: preset.name,
+      scholar: preset.scholar,
+      year: preset.year,
+    });
+  }
+
+  const presetVisible = showAllPresets ? POPULAR_THEORIES : POPULAR_THEORIES.slice(0, 8);
+  const currentName = (card?.name ?? "").trim();
+
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
+      {/* Sprint 72 F2: 대표 이론 프리셋 chip */}
+      <div className="rounded-lg border-2 border-dashed border-emerald-200 bg-emerald-50/40 p-2.5">
+        <p className="mb-1.5 text-[11px] font-semibold text-emerald-900">
+          💡 자주 쓰이는 교육공학 이론 — 한 번 클릭하면 자동 입력됩니다 (수정 가능)
+        </p>
+        <div className="flex flex-wrap gap-1">
+          {presetVisible.map((preset) => {
+            const active = currentName === preset.name;
+            return (
+              <button
+                key={preset.name}
+                type="button"
+                onClick={() => handlePickPreset(preset)}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-colors",
+                  active
+                    ? "border-emerald-600 bg-emerald-600 text-white"
+                    : "border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100",
+                )}
+              >
+                <span className="font-medium">{preset.name}</span>
+                <span className="text-[10px] opacity-70">· {preset.scholar}</span>
+              </button>
+            );
+          })}
+          {!showAllPresets && (
+            <button
+              type="button"
+              onClick={() => setShowAllPresets(true)}
+              className="inline-flex items-center rounded-full border border-emerald-200 bg-white px-2.5 py-1 text-[11px] text-emerald-700 hover:bg-emerald-50"
+            >
+              + {POPULAR_THEORIES.length - 8}개 더 보기
+            </button>
+          )}
+        </div>
+      </div>
+
       <Input
         value={card?.name ?? ""}
         onChange={(e) => ensureFirstTheoryCard(form, setField, { name: e.target.value })}
-        placeholder="이론명 (예: 사회적 구성주의)"
+        placeholder="이론명 (예: 사회적 구성주의) — 위에서 선택하거나 직접 입력"
         className="bg-white text-base"
         style={{ fontSize: "16px" }}
       />
@@ -875,17 +946,58 @@ const SLIDES: SlideDef[] = [
     id: "outcome-mager-abcd",
     chapter: "task",
     prompt: "학습 목표를 Mager ABCD 형식으로 정교화하면? (선택)",
-    hint: "🎓 Mager 행동 목표. Audience(누가)·Behavior(무엇을)·Condition(어떤 조건)·Degree(얼마나) 네 요소 모두 포함.",
+    hint: "🎓 Mager 행동 목표. Audience(누가) · Behavior(무엇을) · Condition(어떤 조건) · Degree(얼마나) 네 요소를 분리해 적어주세요.",
     optional: true,
     render: (form, setField) => (
-      <Textarea
-        value={form.outcomeMagerABCD}
-        onChange={(e) => setField("outcomeMagerABCD", e.target.value)}
-        placeholder={"예:\n[A] 교육대학원 1학년이\n[B] 협력학습 사례를 보고 3대 원리 적용 여부를\n[C] 5분 내 모둠 토의로\n[D] 4개 사례 중 3개 이상 정확히 판별할 수 있다."}
-        rows={6}
-        className="bg-white text-base"
-        style={{ fontSize: "16px" }}
-      />
+      <div className="space-y-2">
+        <div className="rounded-lg border bg-white p-2.5">
+          <p className="mb-1 text-[11px] font-semibold text-blue-900">A · Audience (학습자)</p>
+          <Input
+            value={form.outcomeMagerA}
+            onChange={(e) => setField("outcomeMagerA", e.target.value)}
+            placeholder="예: 교육대학원 1학년이"
+            className="bg-white text-base"
+            style={{ fontSize: "16px" }}
+          />
+        </div>
+        <div className="rounded-lg border bg-white p-2.5">
+          <p className="mb-1 text-[11px] font-semibold text-emerald-900">B · Behavior (관찰 가능한 행동)</p>
+          <Textarea
+            value={form.outcomeMagerB}
+            onChange={(e) => setField("outcomeMagerB", e.target.value)}
+            placeholder="예: 협력학습 사례를 보고 3대 원리 적용 여부를"
+            rows={2}
+            className="bg-white text-base"
+            style={{ fontSize: "16px" }}
+          />
+        </div>
+        <div className="rounded-lg border bg-white p-2.5">
+          <p className="mb-1 text-[11px] font-semibold text-amber-900">C · Condition (수행 조건)</p>
+          <Input
+            value={form.outcomeMagerC}
+            onChange={(e) => setField("outcomeMagerC", e.target.value)}
+            placeholder="예: 5분 내 모둠 토의로"
+            className="bg-white text-base"
+            style={{ fontSize: "16px" }}
+          />
+        </div>
+        <div className="rounded-lg border bg-white p-2.5">
+          <p className="mb-1 text-[11px] font-semibold text-rose-900">D · Degree (성취 기준)</p>
+          <Input
+            value={form.outcomeMagerD}
+            onChange={(e) => setField("outcomeMagerD", e.target.value)}
+            placeholder="예: 4개 사례 중 3개 이상 정확히 판별할 수 있다."
+            className="bg-white text-base"
+            style={{ fontSize: "16px" }}
+          />
+        </div>
+        {form.outcomeMagerABCD && !form.outcomeMagerA && !form.outcomeMagerB && !form.outcomeMagerC && !form.outcomeMagerD && (
+          <details className="rounded-md border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-900">
+            <summary className="cursor-pointer font-medium">예전에 통합 입력하신 내용 보기 (참고용)</summary>
+            <p className="mt-1 whitespace-pre-wrap text-amber-900/80">{form.outcomeMagerABCD}</p>
+          </details>
+        )}
+      </div>
     ),
   },
 
@@ -905,7 +1017,7 @@ const SLIDES: SlideDef[] = [
         <div className="space-y-2">
           {domain && (
             <div className="rounded-xl border-2 border-dashed border-amber-200 bg-amber-50/60 p-3 text-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">우선 영역</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">학습자에게 우선적으로 변화시키려는 영역</p>
               <p className="mt-1 text-amber-900/90 font-bold">{domainLabel}</p>
             </div>
           )}
@@ -1151,7 +1263,15 @@ export default function ResearchReportInterview({
   }, [open]);
 
   // Sprint 67: 트랙 시스템 폐지 — 단일 흐름이라 slides 는 SLIDES 그대로
-  const slides = SLIDES;
+  // Sprint 72 F3: 조건부 슬라이드 — theory-integration 은 이론 카드 2개 이상일 때만 노출
+  const slides = useMemo(
+    () =>
+      SLIDES.filter((s) => {
+        if (s.id === "theory-integration") return (form.theoryCards?.length ?? 0) >= 2;
+        return true;
+      }),
+    [form.theoryCards?.length],
+  );
 
   const totalSlides = slides.length;
   const progress = index < 0 ? 0 : ((index + 1) / totalSlides) * 100;

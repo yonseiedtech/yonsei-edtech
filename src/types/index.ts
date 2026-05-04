@@ -691,8 +691,13 @@ export interface ResearchReport {
   envConstraint?: string;
   /** 4-1. Task Analysis — 학습 과제 위계 분해 (Gagné/Jonassen) */
   taskDecompose?: string;
-  /** 4-4. Mager ABCD — Audience·Behavior·Condition·Degree 형식 학습 목표 */
+  /** 4-4. Mager ABCD — Audience·Behavior·Condition·Degree 형식 학습 목표 (legacy 단일 필드) */
   outcomeMagerABCD?: string;
+  /** Sprint 72 F4: Mager ABCD 분리 입력 — 4 영역별 독립 필드 */
+  outcomeMagerA?: string;
+  outcomeMagerB?: string;
+  outcomeMagerC?: string;
+  outcomeMagerD?: string;
   /** 4-2. Sprint 68: 처치를 통해 변화시키려는 학습 영역 (Bloom 3대 영역) — 처치 적합성·차시 수 가이드 트리거 */
   outcomePriorityDomain?: "" | "cognitive" | "affective" | "psychomotor" | "integrated";
   // ── v3 트랙 필드 (Sprint 66 에서 인터뷰 미노출, schema 만 보존 — 추후 고급 모드에서 활용 가능) ──
