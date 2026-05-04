@@ -293,7 +293,7 @@ export default function NextActionBanner() {
   // 숨김 상태일 때는 작은 "다시 보기" 버튼만
   if (hidden) {
     return (
-      <div className="mx-auto mt-2 flex max-w-6xl items-center justify-end px-4">
+      <div className="mx-auto flex max-w-6xl items-center justify-end px-4 pt-1">
         <button
           type="button"
           onClick={show}
@@ -325,7 +325,7 @@ export default function NextActionBanner() {
         : "bg-slate-100 text-slate-700";
 
   return (
-    <div className="mx-auto mt-2 max-w-6xl px-4">
+    <div className="mx-auto max-w-6xl px-4 pt-1">
       <Link
         href={top.href}
         className={cn(

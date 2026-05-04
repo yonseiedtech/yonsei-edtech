@@ -455,12 +455,16 @@ function ResearchLogicMap({
     return "border-rose-300 bg-rose-50/80";
   }
   function lineColor(strength: number) {
-    if (strength >= 80) return "stroke-emerald-500";
-    if (strength >= 40) return "stroke-amber-500";
-    return "stroke-rose-300";
+    if (strength >= 80) return "stroke-emerald-600";
+    if (strength >= 40) return "stroke-amber-600";
+    return "stroke-rose-500";
+  }
+  // Sprint 76: 연결강도 비례 두께 (1.8 ~ 4)
+  function lineWidth(strength: number) {
+    return 1.8 + (Math.max(0, Math.min(100, strength)) / 100) * 2.2;
   }
   function lineDash(strength: number) {
-    if (strength >= 80) return "0";
+    if (strength >= 80) return undefined; // solid
     if (strength >= 40) return "6 4";
     return "2 4";
   }
@@ -488,23 +492,52 @@ function ResearchLogicMap({
 
       {/* 사각형 4꼭지점 — 한 화면에 모두 노출 */}
       <div className="relative mx-auto mt-4 aspect-[5/4] max-w-md">
-        {/* 라인 SVG (배경) */}
+        {/* 라인 SVG (배경) — Sprint 76: framer-motion strokeDashoffset 애니메이션 + 두께 강조 */}
         <svg
           viewBox="0 0 100 80"
           preserveAspectRatio="none"
           className="absolute inset-0 h-full w-full"
         >
-          {/* top: field ↔ middle */}
-          <line x1="22" y1="14" x2="78" y2="14" strokeWidth="1.4" className={lineColor(stTop)} strokeDasharray={lineDash(stTop)} />
-          {/* bottom: prior ↔ theory */}
-          <line x1="22" y1="66" x2="78" y2="66" strokeWidth="1.4" className={lineColor(stBottom)} strokeDasharray={lineDash(stBottom)} />
-          {/* left: field ↔ prior */}
-          <line x1="22" y1="14" x2="22" y2="66" strokeWidth="1.4" className={lineColor(stLeft)} strokeDasharray={lineDash(stLeft)} />
-          {/* right (대각): middle ↔ theory */}
-          <line x1="78" y1="14" x2="78" y2="66" strokeWidth="1.4" className={lineColor(stRightDiag)} strokeDasharray={lineDash(stRightDiag)} />
-          {/* 대각선 2개 (보조 — 옅게) */}
-          <line x1="22" y1="14" x2="78" y2="66" strokeWidth="0.8" className="stroke-primary/30" strokeDasharray="2 3" />
-          <line x1="78" y1="14" x2="22" y2="66" strokeWidth="0.8" className="stroke-primary/30" strokeDasharray="2 3" />
+          {[
+            { x1: 22, y1: 14, x2: 78, y2: 14, st: stTop, key: "top" },
+            { x1: 22, y1: 66, x2: 78, y2: 66, st: stBottom, key: "bottom" },
+            { x1: 22, y1: 14, x2: 22, y2: 66, st: stLeft, key: "left" },
+            { x1: 78, y1: 14, x2: 78, y2: 66, st: stRightDiag, key: "right" },
+          ].map((seg, i) => (
+            <motion.line
+              key={seg.key}
+              x1={seg.x1}
+              y1={seg.y1}
+              x2={seg.x2}
+              y2={seg.y2}
+              strokeWidth={lineWidth(seg.st)}
+              className={lineColor(seg.st)}
+              strokeLinecap="round"
+              strokeDasharray={lineDash(seg.st) ?? "200"}
+              initial={{ strokeDashoffset: 200, opacity: 0 }}
+              animate={{ strokeDashoffset: 0, opacity: 1 }}
+              transition={{ duration: 0.9, delay: 0.15 + i * 0.12, ease: "easeOut" }}
+            />
+          ))}
+          {/* 보조 대각선 2개 — 옅게, 더 늦게 */}
+          {[
+            { x1: 22, y1: 14, x2: 78, y2: 66, key: "diag1" },
+            { x1: 78, y1: 14, x2: 22, y2: 66, key: "diag2" },
+          ].map((seg, i) => (
+            <motion.line
+              key={seg.key}
+              x1={seg.x1}
+              y1={seg.y1}
+              x2={seg.x2}
+              y2={seg.y2}
+              strokeWidth="0.6"
+              className="stroke-primary/25"
+              strokeDasharray="2 3"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.7 + i * 0.1 }}
+            />
+          ))}
         </svg>
 
         {/* 4 노드 카드 */}
@@ -539,7 +572,7 @@ function ResearchLogicMap({
       </div>
 
       <p className="mt-3 text-[11px] text-muted-foreground">
-        🟢 강한 연결 (키워드 일치) · 🟡 연결 약함 · 🔴 거의 없음. 각 꼭지점을 클릭하면 해당 챕터의 미작성 질문으로 바로 이동합니다.
+        🟢 진한 초록(굵음) = 강한 연결 (키워드 일치) · 🟡 노란 점선 = 연결 약함 · 🔴 빨간 점선 = 거의 없음. 선의 두께가 굵을수록 연결강도가 높습니다. 각 꼭지점을 클릭하면 해당 챕터의 미작성 질문으로 바로 이동합니다.
       </p>
     </div>
   );
@@ -1680,6 +1713,17 @@ export default function ResearchReportInterview({
     if (open) setIndex(-1);
   }, [open]);
 
+  // Sprint 76: 작성 중 페이지 이탈 방지 — beforeunload 확인 (브라우저 새로고침/탭닫기/외부링크)
+  useEffect(() => {
+    if (!open || !dirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [open, dirty]);
+
   // Sprint 67: 트랙 시스템 폐지 — 단일 흐름이라 slides 는 SLIDES 그대로
   // Sprint 72 F3: 조건부 슬라이드 — theory-integration 은 이론 카드 2개 이상일 때만 노출
   // Sprint 75 F7: 중복 슬라이드 제거 — field-audience(Q1)·field-scope-context(Q8) 비공개.
@@ -1699,6 +1743,14 @@ export default function ResearchReportInterview({
 
   const totalSlides = slides.length;
   const progress = index < 0 ? 0 : ((index + 1) / totalSlides) * 100;
+  // Sprint 76: 진행률 바 작성/미작성 색상 분리 — bridge 제외 real 슬라이드 기준
+  const realSlides = useMemo(() => slides.filter((s) => s.chapter !== "bridge"), [slides]);
+  const answeredRealCount = useMemo(
+    () => realSlides.filter((s) => isSlideAnswered(s.id, form)).length,
+    [realSlides, form],
+  );
+  const totalReal = realSlides.length;
+  const answeredPct = totalReal > 0 ? (answeredRealCount / totalReal) * 100 : 0;
   const slide = index >= 0 ? slides[index] : null;
 
   // index가 새로운 slides 길이를 넘는 경우 안전 클램프
@@ -1760,7 +1812,15 @@ export default function ResearchReportInterview({
             저장
           </Button>
           <button
-            onClick={onClose}
+            onClick={() => {
+              if (dirty) {
+                const ok = window.confirm(
+                  "작성 중인 내용이 있습니다. 저장하지 않고 종료하면 마지막 임시저장 이후의 변경 사항은 사라집니다. 정말 종료할까요?",
+                );
+                if (!ok) return;
+              }
+              onClose();
+            }}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted"
             title="인터뷰 종료"
           >
@@ -1769,12 +1829,30 @@ export default function ResearchReportInterview({
         </div>
       </header>
 
-      <div className="h-1 w-full bg-muted">
-        <motion.div
-          className="h-full bg-gradient-to-r from-[#003876] to-[#1a5fa0]"
-          animate={{ width: `${progress}%` }}
-          transition={{ duration: 0.4 }}
-        />
+      {/* Sprint 76: 진행률 바 — 작성(emerald) / 미작성(rose) 두 영역으로 분리. 현재 위치는 위 마커. */}
+      <div className="relative h-1.5 w-full bg-muted">
+        <div className="flex h-full w-full overflow-hidden">
+          <motion.div
+            className="h-full bg-emerald-500"
+            animate={{ width: `${answeredPct}%` }}
+            transition={{ duration: 0.4 }}
+            title={`작성 완료 ${answeredRealCount}/${totalReal} (${Math.round(answeredPct)}%)`}
+          />
+          <motion.div
+            className="h-full bg-rose-300"
+            animate={{ width: `${100 - answeredPct}%` }}
+            transition={{ duration: 0.4 }}
+            title={`미작성 ${totalReal - answeredRealCount}개`}
+          />
+        </div>
+        {/* 현재 슬라이드 위치 마커 */}
+        {index >= 0 && (
+          <motion.div
+            className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary bg-white shadow-md"
+            animate={{ left: `${progress}%` }}
+            transition={{ duration: 0.4 }}
+          />
+        )}
       </div>
 
       {/* Sprint 73: 챕터별 슬라이드 navigator (인트로에선 숨김) */}
@@ -2094,12 +2172,12 @@ function SlideNavigator({
                     title={`Q${idx + 1}. ${slide.prompt}`}
                     aria-label={`Q${idx + 1} ${answered ? "(작성)" : "(미작성)"}: ${slide.prompt}`}
                     className={cn(
-                      "h-5 w-5 rounded-full border transition-all sm:h-6 sm:w-6",
+                      "h-5 w-5 rounded-full border-2 transition-all sm:h-6 sm:w-6",
                       isCurrent
                         ? "border-primary bg-primary/30 ring-2 ring-primary/40"
                         : answered
                         ? "border-emerald-500 bg-emerald-500"
-                        : "border-slate-300 bg-white hover:border-slate-400 hover:bg-slate-50",
+                        : "border-rose-400 bg-rose-100 hover:bg-rose-200",
                     )}
                   >
                     {answered && !isCurrent && (
