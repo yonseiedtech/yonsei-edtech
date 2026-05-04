@@ -999,7 +999,7 @@ const SLIDES: SlideDef[] = [
     id: "field-phenomenon",
     chapter: "field",
     prompt: "현장에서 어떤 문제(현상)를 관찰하셨나요?",
-    hint: "관찰 가능한 사실 위주로. 추상적 진단보다는 실제 장면을 적어보세요.",
+    hint: "추상적인 진단보다는 직접 관찰한 사실·장면을 위주로 적어주세요.",
     render: (form, setField) => {
       const list = form.problemPhenomena.length > 0 ? form.problemPhenomena : [""];
       return (
@@ -1055,7 +1055,7 @@ const SLIDES: SlideDef[] = [
     id: "field-scope-audience",
     chapter: "field",
     prompt: "연구 대상 범위는 어디까지인가요?",
-    hint: "대상의 학년·인원·기간 등 구체적인 범위를 한 문장으로.",
+    hint: "대상의 학년·인원·기간 등 구체적인 범위를 한 문장으로 적어주세요.",
     optional: true,
     render: (form, setField) => (
       <Input
@@ -1184,7 +1184,7 @@ const SLIDES: SlideDef[] = [
     id: "bridge-env-learner",
     chapter: "bridge",
     prompt: "이제 그 환경에서 배우는 학습자를 분석해보겠습니다",
-    hint: "🎓 ID 용어: Learner Analysis(학습자 분석, Smith & Ragan / Dick & Carey). 학습자를 모르고 만들면 처방이 빗나갑니다 — '1학년인데 4학년 수준 자료를 줬다' 같은 일이 자주 발생.",
+    hint: "🎓 ID 용어: Learner Analysis(학습자 분석, Smith & Ragan / Dick & Carey). 학습자를 모른 채 설계하면 처방이 빗나갑니다 — '1학년인데 4학년 수준 자료를 줬다'와 같은 일이 자주 발생합니다.",
     optional: true,
     render: (form) => {
       const env = form.envLearning.trim();
@@ -1203,7 +1203,7 @@ const SLIDES: SlideDef[] = [
   {
     id: "learner-profile",
     chapter: "learner",
-    prompt: "누구를 가르치는 연구인가요?",
+    prompt: "이 연구의 학습자는 어떤 사람들인가요?",
     hint: "학년·인원·배경(전공/직업)을 한 줄로 적어주세요. 일상 관찰 그대로 적으면 됩니다.",
     render: (form, setField) => (
       <Input
@@ -1378,7 +1378,7 @@ const SLIDES: SlideDef[] = [
     chapter: "task",
     prompt: "학습 목표 — 학습자가 무엇을 할 수 있어야 하고, 어떤 태도를 가져야 하나요?",
     references: [{ slideId: "outcome-priority-domain" }],
-    hint: "🎓 Krathwohl 정의적 영역(Affective Domain) + Simpson 심동적 영역(Psychomotor Domain). '경청한다', '논리적으로 응답한다', '동료 의견을 존중한다' 같은 형태.",
+    hint: "🎓 Krathwohl 정의적 영역(Affective Domain) + Simpson 심동적 영역(Psychomotor Domain). '경청한다', '논리적으로 응답한다', '동료 의견을 존중한다'와 같이 행동 표현으로 적어주세요.",
     render: (form, setField) => (
       <Textarea
         value={form.outcomeSkillAttitude}
@@ -1393,7 +1393,7 @@ const SLIDES: SlideDef[] = [
   {
     id: "outcome-mager-abcd",
     chapter: "task",
-    prompt: "학습 목표를 Mager ABCD 형식으로 정교화하면? (선택)",
+    prompt: "학습 목표를 Mager ABCD 형식으로 구체화하면? (선택)",
     hint: "🎓 Mager 행동 목표. Audience(누가) · Behavior(무엇을) · Condition(어떤 조건) · Degree(얼마나) 네 요소를 분리해 적어주세요.",
     optional: true,
     render: (form, setField) => (
@@ -1500,7 +1500,7 @@ const SLIDES: SlideDef[] = [
   {
     id: "theory-reason",
     chapter: "theory",
-    prompt: "이 이론을 선택한 이유는?",
+    prompt: "이 이론을 선택한 이유는 무엇인가요?",
     references: [{ slideId: "theory-name" }, { slideId: "field-phenomenon" }],
     hint: "현장의 문제와 어떻게 맞닿아 있는지 한두 문장으로 말해주세요.",
     render: (form, setField) => (
@@ -1570,8 +1570,8 @@ const SLIDES: SlideDef[] = [
   {
     id: "theory-integration",
     chapter: "theory",
-    prompt: "(여러 이론이라면) 통합적인 시각은?",
-    hint: "이론이 1개라면 비워둬도 됩니다. 2개 이상이라면 어떻게 합쳐서 봐야 하는지 적어주세요.",
+    prompt: "여러 이론을 함께 본다면 어떻게 통합할 수 있을까요?",
+    hint: "각 이론이 다루는 측면이 다르다면, 어떤 이론으로 무엇을 설명하고 어떻게 보완할지 정리해 주세요.",
     optional: true,
     render: (form, setField) => (
       <Textarea
@@ -1631,7 +1631,7 @@ const SLIDES: SlideDef[] = [
   {
     id: "prior-summary",
     chapter: "prior",
-    prompt: "선행연구 흐름을 한 문단으로 요약하면?",
+    prompt: "선행연구의 전반적인 흐름을 한 문단으로 요약해 주세요",
     references: [{ slideId: "field-phenomenon" }, { slideId: "theory-name" }],
     hint: "어떤 연구들이 있고 어떤 흐름을 보이는지, 내 연구와의 관계까지 적으면 좋아요. 개별 논문 연결은 전체 모드에서 가능합니다.",
     render: (form, setField) => (
