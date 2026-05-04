@@ -71,18 +71,30 @@ export async function trackVisit(opts: TrackOptions = {}): Promise<void> {
   const { userId, pathname } = opts;
   const ymd = todayYmdKst();
   const sessionKey = `${SESSION_PREFIX}${ymd}`;
-  let isFirstVisit = false;
+  // Sprint 68: 각 visitorId 별도 추적 — 비로그인→로그인 시 userId 도 uniqueVisitors 에 추가되도록
+  const visitorsKey = `${SESSION_PREFIX}${ymd}-ids`;
+
+  const visitorId = userId || anonId();
+  const hour = hourBucketKey(new Date());
+  const group = pathGroup(pathname || "/");
+
+  let isFirstSessionVisit = false;
+  let isNewVisitorThisSession = false;
   try {
     if (!sessionStorage.getItem(sessionKey)) {
       sessionStorage.setItem(sessionKey, "1");
-      isFirstVisit = true;
+      isFirstSessionVisit = true;
+    }
+    const trackedRaw = sessionStorage.getItem(visitorsKey) ?? "[]";
+    const tracked: string[] = JSON.parse(trackedRaw);
+    if (!tracked.includes(visitorId)) {
+      tracked.push(visitorId);
+      sessionStorage.setItem(visitorsKey, JSON.stringify(tracked));
+      isNewVisitorThisSession = true;
     }
   } catch {
     return;
   }
-  const visitorId = userId || anonId();
-  const hour = hourBucketKey(new Date());
-  const group = pathGroup(pathname || "/");
 
   const payload: Record<string, unknown> = {
     date: ymd,
@@ -91,17 +103,28 @@ export async function trackVisit(opts: TrackOptions = {}): Promise<void> {
     [`pathCounts.${group}`]: increment(1),
     updatedAt: serverTimestamp(),
   };
-  if (isFirstVisit) {
+  if (isFirstSessionVisit) {
     payload.visits = increment(1);
+  }
+  // 새 visitorId 가 등장하면 uniqueVisitors arrayUnion (로그인 후 userId 등장 케이스 포함)
+  if (isNewVisitorThisSession) {
     payload.uniqueVisitors = arrayUnion(visitorId);
   }
 
   try {
     await setDoc(doc(db, "daily_visits", ymd), payload, { merge: true });
   } catch {
-    if (isFirstVisit) {
+    if (isFirstSessionVisit) {
       try {
         sessionStorage.removeItem(sessionKey);
+      } catch {
+        // noop
+      }
+    }
+    if (isNewVisitorThisSession) {
+      try {
+        const tracked: string[] = JSON.parse(sessionStorage.getItem(visitorsKey) ?? "[]");
+        sessionStorage.setItem(visitorsKey, JSON.stringify(tracked.filter((v) => v !== visitorId)));
       } catch {
         // noop
       }
