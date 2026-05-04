@@ -112,7 +112,7 @@ function DashboardContent() {
       <TodayTodosPopup />
       <NextActionBanner />
       <PushPermissionPrompt />
-      <section className="mx-auto mt-3 max-w-6xl px-4">
+      <section className="mx-auto mt-6 max-w-6xl px-4 sm:mt-8">
         <PageHeader
           icon={<LayoutDashboard size={24} />}
           title={`안녕하세요, ${user.name}님`}
