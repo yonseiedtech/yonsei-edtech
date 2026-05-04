@@ -3,21 +3,34 @@
 import { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, useAnimationFrame, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { motion, useAnimationFrame, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 
 function AuroraBackground() {
+  const reduce = useReducedMotion();
   const b1x = useMotionValue(0);
   const b1y = useMotionValue(0);
   const b2x = useMotionValue(0);
   const b2y = useMotionValue(0);
   useAnimationFrame((t) => {
+    if (reduce) return; // a11y: prefers-reduced-motion 시 애니메이션 중단
     const s = t / 1000;
     b1x.set(Math.sin(s * 0.3) * 40);
     b1y.set(Math.cos(s * 0.25) * 30);
     b2x.set(Math.cos(s * 0.2) * 50);
     b2y.set(Math.sin(s * 0.35) * 40);
   });
+
+  // reduced-motion: 정적 그라데이션 fallback
+  if (reduce) {
+    return (
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10"
+      />
+    );
+  }
+
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
       <motion.div
@@ -37,10 +50,12 @@ function AuroraBackground() {
 }
 
 function MagneticLink({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) {
+  const reduce = useReducedMotion();
   const ref = useRef<HTMLAnchorElement>(null);
   const x = useSpring(0, { stiffness: 200, damping: 18 });
   const y = useSpring(0, { stiffness: 200, damping: 18 });
   function onMove(e: React.MouseEvent<HTMLAnchorElement>) {
+    if (reduce) return; // a11y: 모션 비활성 시 마우스 추적 끔
     const el = ref.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
@@ -52,7 +67,7 @@ function MagneticLink({ href, children, className }: { href: string; children: R
     <motion.a
       ref={ref}
       href={href}
-      style={{ x, y }}
+      style={reduce ? undefined : { x, y }}
       onMouseMove={onMove}
       onMouseLeave={onLeave}
       className={className}
@@ -63,6 +78,7 @@ function MagneticLink({ href, children, className }: { href: string; children: R
 }
 
 function TiltCard({ children }: { children: React.ReactNode }) {
+  const reduce = useReducedMotion();
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const rotateX = useTransform(y, [-40, 40], [6, -6]);
@@ -70,6 +86,7 @@ function TiltCard({ children }: { children: React.ReactNode }) {
   const sx = useSpring(rotateX, { stiffness: 200, damping: 18 });
   const sy = useSpring(rotateY, { stiffness: 200, damping: 18 });
   function onMove(e: React.MouseEvent<HTMLDivElement>) {
+    if (reduce) return; // a11y: 3D tilt 비활성
     const r = e.currentTarget.getBoundingClientRect();
     x.set(e.clientX - (r.left + r.width / 2));
     y.set(e.clientY - (r.top + r.height / 2));
@@ -79,7 +96,7 @@ function TiltCard({ children }: { children: React.ReactNode }) {
     <motion.div
       onMouseMove={onMove}
       onMouseLeave={onLeave}
-      style={{ rotateX: sx, rotateY: sy, transformPerspective: 800 }}
+      style={reduce ? undefined : { rotateX: sx, rotateY: sy, transformPerspective: 800 }}
       className="will-change-transform"
     >
       {children}
@@ -96,7 +113,7 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="mb-6 inline-flex items-center gap-2 rounded-full border bg-white/70 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur"
+          className="mb-6 inline-flex items-center gap-2 rounded-full border bg-card/70 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur"
         >
           <span className="relative flex h-2 w-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
@@ -140,7 +157,7 @@ export default function HeroSection() {
               </MagneticLink>
               <Link
                 href="/activities"
-                className="inline-flex items-center gap-2 rounded-xl border bg-white/80 px-5 py-2.5 text-sm font-medium text-foreground shadow-sm backdrop-blur transition-colors hover:bg-white"
+                className="inline-flex items-center gap-2 rounded-xl border bg-card/80 px-5 py-2.5 text-sm font-medium text-foreground shadow-sm backdrop-blur transition-colors hover:bg-card"
               >
                 활동 둘러보기
               </Link>

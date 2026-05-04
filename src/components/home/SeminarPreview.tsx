@@ -43,7 +43,7 @@ export default function SeminarPreview() {
             <Link
               key={seminar.id}
               href={`/seminars/${seminar.id}`}
-              className="rounded-xl border bg-white p-6 transition-colors hover:bg-muted/30"
+              className="rounded-xl border bg-card p-6 transition-colors hover:bg-muted/30"
             >
               <h3 className="text-lg font-semibold">{seminar.title}</h3>
               <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">

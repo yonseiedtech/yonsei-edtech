@@ -24,7 +24,7 @@ export default function PromotionPreview() {
             더보기 <ArrowRight size={14} />
           </Link>
         </div>
-        <div className="mt-4 rounded-xl border bg-white p-4">
+        <div className="mt-4 rounded-xl border bg-card p-4">
           {isLoading ? (
             <div className="grid gap-3 sm:grid-cols-3" aria-busy="true" aria-label="홍보글 불러오는 중">
               {Array.from({ length: 3 }).map((_, i) => (

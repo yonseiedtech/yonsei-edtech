@@ -161,7 +161,7 @@ export default function RootLayout({
             <div className="flex min-h-screen flex-col pb-[calc(56px+env(safe-area-inset-bottom))] sm:pb-0">
               <ImpersonationBanner />
               <Header />
-              <main className="flex-1">{children}</main>
+              <main id="main-content" className="flex-1">{children}</main>
               <Footer />
             </div>
             <BottomNav />

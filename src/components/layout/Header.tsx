@@ -328,7 +328,20 @@ export default function Header() {
   }, [mobileOpen]);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg">
+    <header
+      className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg"
+      style={{
+        paddingLeft: "max(0px, env(safe-area-inset-left))",
+        paddingRight: "max(0px, env(safe-area-inset-right))",
+      }}
+    >
+      {/* 키보드 접근성: 메인 콘텐츠로 건너뛰기 (Tab 첫 포커스 시 표시) */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white focus:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        메인 콘텐츠로 건너뛰기
+      </a>
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
@@ -362,10 +375,16 @@ export default function Header() {
           )}
         </div>
 
-        {/* Mobile: theme + hamburger */}
+        {/* Mobile: theme + hamburger (WCAG 2.5.5: 44px 터치 타겟) */}
         <div className="flex items-center gap-1 md:hidden">
           <ThemeToggle />
-          <button onClick={() => setMobileOpen(!mobileOpen)} aria-label="메뉴 열기">
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-lg transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label={mobileOpen ? "메뉴 닫기" : "메뉴 열기"}
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-nav"
+          >
             {mobileOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
@@ -373,7 +392,10 @@ export default function Header() {
 
       {/* Mobile Nav */}
       {mobileOpen && (
-        <div className="animate-in slide-in-from-top-2 fade-in duration-200 border-t bg-popover md:hidden flex flex-col max-h-[calc(100vh-4rem)]">
+        <div
+          id="mobile-nav"
+          className="animate-in slide-in-from-top-2 fade-in duration-200 border-t bg-popover md:hidden flex flex-col max-h-[calc(100vh-4rem)]"
+        >
           {/* 모바일 프로필 카드 (스크롤 영역 바깥에 고정) */}
           {user && (
             <div className="shrink-0 border-b bg-popover px-4 pt-2 pb-2">

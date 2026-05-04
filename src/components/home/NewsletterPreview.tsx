@@ -27,7 +27,7 @@ export default function NewsletterPreview() {
             더보기 <ArrowRight size={14} />
           </Link>
         </div>
-        <div className="mt-4 divide-y rounded-xl border bg-white">
+        <div className="mt-4 divide-y rounded-xl border bg-card">
           {isLoading ? (
             <div className="space-y-2 px-5 py-3" aria-busy="true" aria-label="학회보 불러오는 중">
               {Array.from({ length: 2 }).map((_, i) => (

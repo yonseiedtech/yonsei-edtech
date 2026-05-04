@@ -44,7 +44,7 @@ export default function ThemeToggle() {
     <button
       onClick={toggle}
       className={cn(
-        "rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+        "inline-flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
       )}
       aria-label={theme === "dark" ? "라이트 모드로 전환" : "다크 모드로 전환"}
     >

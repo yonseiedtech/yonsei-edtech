@@ -37,7 +37,7 @@ nav.overflow-x-auto > button {
   --secondary: 42 63% 55%;
   --secondary-foreground: 0 0% 100%;
   --muted: 210 18% 95%;
-  --muted-foreground: 212 16% 47%;
+  --muted-foreground: 212 16% 35%; /* WCAG AA: 47% → 35% (background 98% 대비 약 5.0:1) */
   --accent: 220 100% 55%;
   --accent-foreground: 0 0% 100%;
   --destructive: 0 84% 60%;
@@ -88,7 +88,7 @@ nav.overflow-x-auto > button {
   --secondary: 42 50% 45%;
   --secondary-foreground: 0 0% 100%;
   --muted: 222 20% 18%;
-  --muted-foreground: 210 14% 60%;
+  --muted-foreground: 210 14% 70%; /* WCAG AA: 60% → 70% (dark bg 10% 대비 약 7.5:1) */
   --accent: 220 80% 60%;
   --accent-foreground: 0 0% 100%;
   --destructive: 0 70% 50%;
@@ -111,6 +111,15 @@ nav.overflow-x-auto > button {
 /* 모바일 최적화: 반응형 폰트 크기 */
 html {
   font-size: clamp(14px, 0.875rem + 0.2vw, 16px);
+}
+
+/* iOS Safari 자동 줌 방지: 폼 입력 폰트 16px 이상 강제 */
+@media (max-width: 640px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
 
 @media (max-width: 639px) {

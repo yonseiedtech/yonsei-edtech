@@ -34,7 +34,7 @@ function SpeakerCard({ s }: { s: Seminar }) {
       onMouseMove={onMove}
       onMouseLeave={onLeave}
       style={{ rotateX: sx, rotateY: sy, transformPerspective: 1000 }}
-      className="group relative flex h-[360px] w-[260px] shrink-0 snap-center flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition-shadow hover:shadow-2xl hover:shadow-amber-200/40"
+      className="group relative flex h-[360px] w-[260px] shrink-0 snap-center flex-col overflow-hidden rounded-2xl border bg-card shadow-sm transition-shadow hover:shadow-2xl hover:shadow-amber-200/40"
     >
       {/* glow follows cursor */}
       <motion.div
@@ -112,14 +112,14 @@ export default function GuestSpeakersSection() {
             <button
               onClick={() => scroll(-1)}
               aria-label="이전"
-              className="rounded-full border bg-white p-2 shadow-sm transition-colors hover:bg-muted"
+              className="rounded-full border bg-card p-2 shadow-sm transition-colors hover:bg-muted"
             >
               <ChevronLeft size={16} />
             </button>
             <button
               onClick={() => scroll(1)}
               aria-label="다음"
-              className="rounded-full border bg-white p-2 shadow-sm transition-colors hover:bg-muted"
+              className="rounded-full border bg-card p-2 shadow-sm transition-colors hover:bg-muted"
             >
               <ChevronRight size={16} />
             </button>
