@@ -20,25 +20,27 @@ import type {
 } from "@/types";
 
 /**
- * Sprint 67: 5트랙 시스템 폐지, 단일 4챕터 흐름으로 단순화
- * 1. 교육현장 문제 정의 → 2. 학습자와 학습 목표 → 3. 교육공학 이론 → 4. 선행연구 분석
- * (기존 approach/diagnosis/inquiry/action/mixed 챕터는 schema 만 보존, 인터뷰 미노출)
+ * Sprint 68: 정통 ID 6챕터 흐름으로 확장
+ * 1. 교육현장 문제 정의 → 2. 환경 분석 → 3. 학습자 분석 → 4. 학습 과제·목표 분석 → 5. 교육공학 이론 → 6. 선행연구 분석
+ * 학술 용어 + 친절한 설명 + 구체 예시 (저학기에게도 작성 가능, 학기 후반에 정통 ID 학습 효과)
  */
-type Chapter = "field" | "learner" | "theory" | "prior" | "bridge";
+type Chapter = "field" | "env" | "learner" | "task" | "theory" | "prior" | "bridge";
 
 const CHAPTER_META: Record<
   Chapter,
   { label: string; icon: React.ElementType; color: string }
 > = {
   field: { label: "교육현장의 문제 정의", icon: School, color: "from-amber-500 to-orange-500" },
-  learner: { label: "학습자와 학습 목표", icon: GraduationCap, color: "from-purple-500 to-fuchsia-500" },
+  env: { label: "환경 분석", icon: School, color: "from-cyan-500 to-blue-500" },
+  learner: { label: "학습자 분석", icon: GraduationCap, color: "from-purple-500 to-fuchsia-500" },
+  task: { label: "학습 과제·목표 분석", icon: GraduationCap, color: "from-rose-500 to-pink-500" },
   theory: { label: "교육공학 이론", icon: BookOpen, color: "from-emerald-500 to-teal-500" },
   prior: { label: "선행연구 분석", icon: FlaskConical, color: "from-blue-500 to-indigo-500" },
   bridge: { label: "연결", icon: ArrowRight, color: "from-slate-400 to-slate-500" },
 };
 
-/** 챕터 진행률 표시에서 bridge 는 제외. 단일 4챕터 흐름. */
-const REAL_CHAPTERS: Chapter[] = ["field", "learner", "theory", "prior"];
+/** 챕터 진행률 표시에서 bridge 는 제외. 정통 ID 6챕터 흐름. */
+const REAL_CHAPTERS: Chapter[] = ["field", "env", "learner", "task", "theory", "prior"];
 
 interface SlideDef {
   id: string;
@@ -201,19 +203,27 @@ function calcLogicMap(form: FormState): LogicNode[] {
     (fieldChecks.filter((v) => (v ?? "").toString().trim().length > 0).length / fieldChecks.length) * 100,
   );
 
-  // 2. learner + outcome (Sprint 67: 트랙 시스템 폐지, 단일 학습자·목표 챕터)
-  const learnerChecks = [
+  // 2~4. env + learner + task (Sprint 68: 정통 ID 6챕터 — middle 노드는 환경+학습자+과제·목표 통합 충족률)
+  const middleChecks = [
+    // 환경 (3)
+    form.envLearning,
+    form.envTransfer,
+    form.envConstraint,
+    // 학습자 (3)
     form.learnerProfile,
     form.learnerCognitive,
     form.learnerAffective,
+    // 과제·목표 (4 + 영역 선택)
+    form.taskDecompose,
     form.outcomeCognitive,
     form.outcomeSkillAttitude,
+    form.outcomePriorityDomain,
   ];
   const middleFill = Math.round(
-    (learnerChecks.filter((v) => (v ?? "").trim().length > 0).length / learnerChecks.length) * 100,
+    (middleChecks.filter((v) => (v ?? "").toString().trim().length > 0).length / middleChecks.length) * 100,
   );
-  const middleLabel = "학습자·목표";
-  const middleText = `${form.learnerProfile} ${form.outcomeCognitive} ${form.outcomeSkillAttitude}`.trim();
+  const middleLabel = "환경·학습자·과제";
+  const middleText = `${form.learnerProfile} ${form.outcomeCognitive} ${form.outcomeSkillAttitude} ${form.envLearning}`.trim();
 
   // 3. theory
   const card = form.theoryCards[0];
@@ -241,9 +251,9 @@ function calcLogicMap(form: FormState): LogicNode[] {
 
   return [
     { id: "field", label: "1. 현장 문제", fill: fieldFill, bridgeStrength: fieldToMiddle },
-    { id: "middle", label: "2. " + middleLabel, fill: middleFill, sublabel: middleLabel, bridgeStrength: middleToTheory },
-    { id: "theory", label: "3. 교육공학 이론", fill: theoryFill, bridgeStrength: theoryToPrior },
-    { id: "prior", label: "4. 선행연구", fill: priorFill, bridgeStrength: 0 },
+    { id: "middle", label: "2~4. " + middleLabel, fill: middleFill, sublabel: middleLabel, bridgeStrength: middleToTheory },
+    { id: "theory", label: "5. 교육공학 이론", fill: theoryFill, bridgeStrength: theoryToPrior },
+    { id: "prior", label: "6. 선행연구", fill: priorFill, bridgeStrength: 0 },
   ];
 }
 
@@ -558,22 +568,22 @@ const SLIDES: SlideDef[] = [
     ),
   },
 
-  // ── Bridge: field → learner (Sprint 67)
+  // ── Bridge: field → env (Sprint 68)
   {
-    id: "bridge-field-learner",
+    id: "bridge-field-env",
     chapter: "bridge",
-    prompt: "이제 누구를, 어떤 모습으로 키울지 정의해보겠습니다",
-    hint: "현장의 문제(1장)를 해결하기 위해 *학습자가 어떤 사람*인지, 그리고 *어떤 모습으로 변해야 하는지* 한 챕터에서 정리합니다. 이 답변이 다음 챕터(이론 선택)의 직접적 근거가 됩니다.",
+    prompt: "이제 학습이 일어나는 환경을 분석해보겠습니다",
+    hint: "🎓 ID 분야 용어: Context Analysis (Tessmer & Richey). 정의한 현상이 어떤 학습 환경에서 일어나는지, 학습 후 어디서 발휘되는지, 어떤 제약이 있는지 살핍니다.",
     optional: true,
     render: (form) => {
       const phenomena = form.problemPhenomena.filter((p) => p.trim()).slice(0, 3);
       return (
-        <div className="rounded-xl border-2 border-dashed border-purple-200 bg-purple-50/50 p-4 text-sm">
-          <p className="font-semibold text-purple-900">정의한 현장 문제 미리보기</p>
+        <div className="rounded-xl border-2 border-dashed border-cyan-200 bg-cyan-50/50 p-4 text-sm">
+          <p className="font-semibold text-cyan-900">정의한 현장 문제 미리보기</p>
           {phenomena.length === 0 ? (
             <p className="mt-2 text-muted-foreground">아직 현상이 입력되지 않았어요.</p>
           ) : (
-            <ul className="mt-2 space-y-1 text-purple-900/90">
+            <ul className="mt-2 space-y-1 text-cyan-900/90">
               {phenomena.map((p, i) => (
                 <li key={i} className="line-clamp-2">• {p}</li>
               ))}
@@ -584,7 +594,77 @@ const SLIDES: SlideDef[] = [
     },
   },
 
-  // ── Chapter 2: 학습자와 학습 목표 (Sprint 67)
+  // ── Chapter 2: 환경 분석 (Sprint 68 — Tessmer & Richey)
+  {
+    id: "env-learning",
+    chapter: "env",
+    prompt: "학습이 일어나는 환경은 어떠한가요? (Learning Context)",
+    hint: "🎓 ID 용어: Learning Context. 학생들이 어디서·언제·무엇으로 공부하는가 — 강의실, 시간, 매체, 자원.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.envLearning}
+        onChange={(e) => setField("envLearning", e.target.value)}
+        placeholder="예: 90분 대면 강의실 (좌석 25석, 빔프로젝터). 모둠활동 시 4명씩 배치. Padlet·Slack 사용 가능."
+        rows={5}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+  {
+    id: "env-transfer",
+    chapter: "env",
+    prompt: "학습 후 어디서 발휘·활용되나요? (Transfer Context)",
+    hint: "🎓 ID 용어: Transfer Context. 배운 걸 *어디서 써먹을* 것인가 — 학교 수업·직장·생활 어디서?",
+    render: (form, setField) => (
+      <Textarea
+        value={form.envTransfer}
+        onChange={(e) => setField("envTransfer", e.target.value)}
+        placeholder="예: 본인 학교 현장에서 협력학습 도입 — 수업 시간 단 45분, 학생 30명 환경에서 즉시 적용 예정."
+        rows={5}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+  {
+    id: "env-constraint",
+    chapter: "env",
+    prompt: "어떤 제약과 맥락이 있나요? (Orienting Context)",
+    hint: "🎓 ID 용어: Orienting Context. 정책·문화·예산·기간 등 — 넘어가야 할 *제약과 맥락*.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.envConstraint}
+        onChange={(e) => setField("envConstraint", e.target.value)}
+        placeholder="예: 1학기 12주 내 완료. 학교 평가 정책 상 객관식 비중 ≥70%. 학부모 반응 민감."
+        rows={4}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+
+  // ── Bridge: env → learner (Sprint 68)
+  {
+    id: "bridge-env-learner",
+    chapter: "bridge",
+    prompt: "이제 그 환경에서 배우는 학습자를 분석해보겠습니다",
+    hint: "🎓 ID 용어: Learner Analysis (Smith & Ragan / Dick & Carey). 학습자를 모르고 만들면 처방이 빗나갑니다 — ‘1학년인데 4학년 수준 자료를 줬다’ 같은 일이 자주 발생.",
+    optional: true,
+    render: (form) => {
+      const env = form.envLearning.trim();
+      return env ? (
+        <div className="rounded-xl border-2 border-dashed border-cyan-200 bg-cyan-50/60 p-3 text-sm">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-cyan-700">정의한 학습 환경</p>
+          <p className="mt-1 whitespace-pre-wrap text-cyan-900/90 line-clamp-3">{env}</p>
+        </div>
+      ) : (
+        <p className="text-sm italic text-muted-foreground">앞 단계 답변이 비어있어요.</p>
+      );
+    },
+  },
+
+  // ── Chapter 3: 학습자 분석 (Sprint 68 — Smith & Ragan)
   {
     id: "learner-profile",
     chapter: "learner",
@@ -632,11 +712,124 @@ const SLIDES: SlideDef[] = [
       />
     ),
   },
+
+  // ── Bridge: learner → task (Sprint 68)
+  {
+    id: "bridge-learner-task",
+    chapter: "bridge",
+    prompt: "이제 학습 과제와 목표를 정의해보겠습니다",
+    hint: "🎓 ID 용어: Task Analysis (Gagné/Jonassen) + Goal Analysis (Bloom·Mager·Krathwohl·Simpson). 학습자를 알았으니 이제 ‘무엇을 어떻게 배워야 하는지’ 정리합니다.",
+    optional: true,
+    render: (form) => {
+      const profile = form.learnerProfile.trim();
+      return profile ? (
+        <div className="rounded-xl border-2 border-dashed border-purple-200 bg-purple-50/60 p-3 text-sm">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-purple-700">분석한 학습자</p>
+          <p className="mt-1 text-purple-900/90 line-clamp-2">{profile}</p>
+        </div>
+      ) : (
+        <p className="text-sm italic text-muted-foreground">앞 단계 답변이 비어있어요.</p>
+      );
+    },
+  },
+
+  // ── Chapter 4: 학습 과제·목표 분석 (Sprint 68 — Gagné + Bloom + Krathwohl + Simpson + Mager)
+  {
+    id: "task-decompose",
+    chapter: "task",
+    prompt: "학습 과제를 작은 단위로 쪼개면? (Task Analysis)",
+    hint: "🎓 ID 용어: Gagné 위계 / Jonassen 정보처리. 큰 학습 목표를 *순서 있는 작은 단위* 로 분해. 학습자가 어떤 순서로 익혀야 하는지.",
+    render: (form, setField) => (
+      <Textarea
+        value={form.taskDecompose}
+        onChange={(e) => setField("taskDecompose", e.target.value)}
+        placeholder={"예:\n1) 협력학습 정의 인식\n2) 3대 원리 구분 (상호의존성·개별책무성·평등참여)\n3) 자기 수업에 원리 적용 사례 작성\n4) 동료 사례 비교 분석"}
+        rows={6}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+  {
+    id: "outcome-priority-domain",
+    chapter: "task",
+    prompt: "이 처치로 학습자의 어느 영역을 가장 우선적으로 변화시키려 하나요?",
+    hint: "🎓 Bloom 3대 영역 — 인지(Bloom 1956) / 정의(Krathwohl 1964) / 심동(Simpson). 영역에 따라 *적합한 차시 수와 평가 방법*이 결정됩니다 (지도교수 핵심 질문).",
+    render: (form, setField) => {
+      const opts: { v: "cognitive" | "affective" | "psychomotor" | "integrated"; label: string; desc: string }[] = [
+        { v: "cognitive", label: "🧠 인지", desc: "지식·이해·사고" },
+        { v: "affective", label: "❤️ 정의(태도)", desc: "태도·동기·가치" },
+        { v: "psychomotor", label: "✋ 심동(기능)", desc: "기능·행동·실연" },
+        { v: "integrated", label: "🔗 통합", desc: "2영역 이상" },
+      ];
+      const cur = form.outcomePriorityDomain;
+      return (
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            {opts.map((opt) => {
+              const active = cur === opt.v;
+              return (
+                <button
+                  key={opt.v}
+                  type="button"
+                  onClick={() => setField("outcomePriorityDomain", opt.v)}
+                  className={cn(
+                    "rounded-xl border-2 p-3 text-left transition-all",
+                    active
+                      ? "border-[#003876] bg-[#003876]/5 shadow-sm"
+                      : "border-muted bg-white hover:border-[#003876]/40 hover:bg-blue-50/40",
+                  )}
+                >
+                  <p className="text-sm font-bold">{opt.label}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{opt.desc}</p>
+                </button>
+              );
+            })}
+          </div>
+          {cur && (
+            <div className="rounded-lg border-l-4 border-l-amber-400 bg-amber-50/60 p-3 text-xs leading-relaxed">
+              <p className="font-semibold text-amber-900">📋 처치 적합성·차시 가이드</p>
+              <div className="mt-1.5 space-y-1 text-amber-900/90">
+                {cur === "cognitive" && (
+                  <>
+                    <p>✅ 적합 차시: <strong>2~6차시 (단기 가능)</strong></p>
+                    <p>📊 평가: 객관식·서술형·수행평가</p>
+                    <p>⚠️ 단순 암기로 측정하면 ‘이해·적용’ 누락 위험. Bloom 6단계 중 어느 수준까지 목표인지 명시.</p>
+                  </>
+                )}
+                {cur === "affective" && (
+                  <>
+                    <p>✅ 적합 차시: <strong>최소 12차시 권장 (Krathwohl 1964)</strong></p>
+                    <p>📊 평가: 자기보고 + 행동관찰 + 심층면담 (자기보고만으론 한계)</p>
+                    <p>⚠️ 단기 처치(&lt;8차시)는 ‘일시 변화’ 가능성. 사전·사후 + 지연(2~4주 후) 측정 권장.</p>
+                  </>
+                )}
+                {cur === "psychomotor" && (
+                  <>
+                    <p>✅ 적합 차시: <strong>충분한 연습 횟수 (단순 시연 X)</strong></p>
+                    <p>📊 평가: 관찰 체크리스트·실연 평가·루브릭</p>
+                    <p>⚠️ 모델링 + 반복 + 즉시 피드백 3종 세트 필수. 1회 시연 ≠ 학습.</p>
+                  </>
+                )}
+                {cur === "integrated" && (
+                  <>
+                    <p>✅ 적합 차시: <strong>정의적 목표가 있다면 12차시 이상</strong></p>
+                    <p>📊 평가: 영역별 도구 분리 (인지 + 정의 + 심동 각각)</p>
+                    <p>⚠️ 어느 영역이 ‘주(主)’ 인지 명시 필요.</p>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    },
+  },
   {
     id: "outcome-cognitive",
-    chapter: "learner",
-    prompt: "이 연구가 끝나면 학습자가 무엇을 *알고·이해* 할 수 있어야 하나요?",
-    hint: "Bloom 인지 영역 — 기억/이해/적용/분석/평가/창조 중 *행동 동사* 로 적어주세요. 가능한 한 구체적으로.",
+    chapter: "task",
+    prompt: "학습 목표 — 학습자가 무엇을 *알고·이해* 할 수 있어야 하나요?",
+    hint: "🎓 Bloom 인지 영역 (1956). 기억/이해/적용/분석/평가/창조 — *행동 동사* 로 구체적으로.",
     render: (form, setField) => (
       <Textarea
         value={form.outcomeCognitive}
@@ -650,9 +843,9 @@ const SLIDES: SlideDef[] = [
   },
   {
     id: "outcome-skill-attitude",
-    chapter: "learner",
-    prompt: "이 연구가 끝나면 학습자가 무엇을 *할 수* 있어야 하고, 어떤 *태도* 를 가져야 하나요?",
-    hint: "행동(Skill)·태도(Attitude) 두 축 — ‘경청한다’, ‘논리적으로 응답한다’, ‘동료 의견을 존중한다’ 같은 형태.",
+    chapter: "task",
+    prompt: "학습 목표 — 학습자가 무엇을 *할 수* 있어야 하고, 어떤 *태도* 를 가져야 하나요?",
+    hint: "🎓 Krathwohl 정의적 + Simpson 심동적. ‘경청한다’, ‘논리적으로 응답한다’, ‘동료 의견을 존중한다’ 같은 형태.",
     render: (form, setField) => (
       <Textarea
         value={form.outcomeSkillAttitude}
@@ -664,19 +857,44 @@ const SLIDES: SlideDef[] = [
       />
     ),
   },
-
-  // ── Bridge: learner → theory (Sprint 67)
   {
-    id: "bridge-learner-theory",
+    id: "outcome-mager-abcd",
+    chapter: "task",
+    prompt: "학습 목표를 Mager ABCD 형식으로 정교화하면? (선택)",
+    hint: "🎓 Mager 행동 목표. Audience(누가)·Behavior(무엇을)·Condition(어떤 조건)·Degree(얼마나) 네 요소 모두 포함.",
+    optional: true,
+    render: (form, setField) => (
+      <Textarea
+        value={form.outcomeMagerABCD}
+        onChange={(e) => setField("outcomeMagerABCD", e.target.value)}
+        placeholder={"예:\n[A] 교육대학원 1학년이\n[B] 협력학습 사례를 보고 3대 원리 적용 여부를\n[C] 5분 내 모둠 토의로\n[D] 4개 사례 중 3개 이상 정확히 판별할 수 있다."}
+        rows={6}
+        className="bg-white text-base"
+        style={{ fontSize: "16px" }}
+      />
+    ),
+  },
+
+  // ── Bridge: task → theory (Sprint 68)
+  {
+    id: "bridge-task-theory",
     chapter: "bridge",
-    prompt: "이 학습자·목표를 가장 잘 설명하는 이론을 선택해보세요",
-    hint: "학습자의 인지·정서 + 학습 목표(인지·기능·태도) — 이 두 축을 받쳐주는 이론을 다음 단계에서 고르면 자연스럽습니다.",
+    prompt: "이 학습 과제·목표를 받쳐줄 이론을 선택해보세요",
+    hint: "🎓 분석한 학습자 + 정의한 학습 목표 — 이 두 축을 받쳐주는 교육공학 이론을 다음 단계에서 선택합니다.",
     optional: true,
     render: (form) => {
       const profile = form.learnerProfile.trim();
       const outcome = form.outcomeCognitive.trim() || form.outcomeSkillAttitude.trim();
+      const domain = form.outcomePriorityDomain;
+      const domainLabel = domain === "cognitive" ? "🧠 인지" : domain === "affective" ? "❤️ 정의(태도)" : domain === "psychomotor" ? "✋ 심동(기능)" : domain === "integrated" ? "🔗 통합" : "";
       return (
         <div className="space-y-2">
+          {domain && (
+            <div className="rounded-xl border-2 border-dashed border-amber-200 bg-amber-50/60 p-3 text-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">우선 영역</p>
+              <p className="mt-1 text-amber-900/90 font-bold">{domainLabel}</p>
+            </div>
+          )}
           {profile && (
             <div className="rounded-xl border-2 border-dashed border-purple-200 bg-purple-50/60 p-3 text-sm">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-purple-700">학습자 프로필</p>
@@ -689,7 +907,7 @@ const SLIDES: SlideDef[] = [
               <p className="mt-1 whitespace-pre-wrap text-fuchsia-900/90 line-clamp-3">{outcome}</p>
             </div>
           )}
-          {!profile && !outcome && (
+          {!domain && !profile && !outcome && (
             <p className="text-sm italic text-muted-foreground">앞 단계 답변이 비어있어요.</p>
           )}
         </div>
@@ -697,7 +915,7 @@ const SLIDES: SlideDef[] = [
     },
   },
 
-  // ── Chapter 3: 교육공학 이론 (was Chapter 2)
+  // ── Chapter 5: 교육공학 이론 (was Chapter 3)
   {
     id: "theory-name",
     chapter: "theory",
@@ -935,7 +1153,9 @@ export default function ResearchReportInterview({
   const chapterCounts = useMemo(() => {
     const m: Record<Chapter, number> = {
       field: 0,
+      env: 0,
       learner: 0,
+      task: 0,
       theory: 0,
       prior: 0,
       bridge: 0,

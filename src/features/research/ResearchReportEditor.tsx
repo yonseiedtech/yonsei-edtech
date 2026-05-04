@@ -65,12 +65,19 @@ export interface FormState {
   diagnosisAttempts: string;
   diagnosisGap: string;
   diagnosisPrimaryCause: string;
-  // Sprint 66 — 학습자와 학습 목표 (NEW 챕터, 모든 학생 공통)
+  // Sprint 66 — 학습자와 학습 목표 (Sprint 68 에서 챕터 분리)
   learnerProfile: string;
   learnerCognitive: string;
   learnerAffective: string;
   outcomeCognitive: string;
   outcomeSkillAttitude: string;
+  // Sprint 68 — 환경 분석 + 학습 과제·목표 보강 (정통 ID 6챕터)
+  envLearning: string;
+  envTransfer: string;
+  envConstraint: string;
+  taskDecompose: string;
+  outcomeMagerABCD: string;
+  outcomePriorityDomain: "" | "cognitive" | "affective" | "psychomotor" | "integrated";
   // Sprint 60 → 66 schema 보존: 인터뷰 미노출, 고급 모드에서 활용 가능
   inquiryMeaning: string;
   inquiryContext: string;
@@ -138,6 +145,12 @@ const EMPTY: FormState = {
   learnerAffective: "",
   outcomeCognitive: "",
   outcomeSkillAttitude: "",
+  envLearning: "",
+  envTransfer: "",
+  envConstraint: "",
+  taskDecompose: "",
+  outcomeMagerABCD: "",
+  outcomePriorityDomain: "",
   inquiryMeaning: "",
   inquiryContext: "",
   inquiryCycle: "",
@@ -226,6 +239,12 @@ function fromReport(r: ResearchReport | undefined): FormState {
     learnerAffective: r.learnerAffective ?? "",
     outcomeCognitive: r.outcomeCognitive ?? "",
     outcomeSkillAttitude: r.outcomeSkillAttitude ?? "",
+    envLearning: r.envLearning ?? "",
+    envTransfer: r.envTransfer ?? "",
+    envConstraint: r.envConstraint ?? "",
+    taskDecompose: r.taskDecompose ?? "",
+    outcomeMagerABCD: r.outcomeMagerABCD ?? "",
+    outcomePriorityDomain: r.outcomePriorityDomain ?? "",
     inquiryMeaning: r.inquiryMeaning ?? "",
     inquiryContext: r.inquiryContext ?? "",
     inquiryCycle: r.inquiryCycle ?? "",
@@ -288,6 +307,9 @@ function totalChars(form: FormState): number {
     // Sprint 66 — 학습자·목표 챕터
     form.learnerProfile, form.learnerCognitive, form.learnerAffective,
     form.outcomeCognitive, form.outcomeSkillAttitude,
+    // Sprint 68 — 환경·과제·Mager
+    form.envLearning, form.envTransfer, form.envConstraint,
+    form.taskDecompose, form.outcomeMagerABCD,
   ];
   let sum = textFields.reduce((s, v) => s + v.length, 0);
   for (const g of form.priorResearchGroups) {
@@ -347,13 +369,36 @@ const STEPS = [
     ],
   },
   {
-    key: "learner",
-    label: "학습자와 학습 목표",
+    key: "env",
+    label: "환경 분석",
     icon: School,
-    question: "이 문제를 해결하기 위해, 누구를 어떤 모습으로 키울 것인가요?",
+    question: "이 학습은 어떤 환경에서 일어나고, 학습 후 어디서 활용되나요?",
     hints: [
-      "학습자 프로필(학년·인원·배경) + 인지·정서 상태를 적어보세요.",
-      "그 다음 학습 목표를 ‘지식·이해(Bloom 인지)’ + ‘기능·태도(행동·정의적)’ 두 축으로 정리하면 다음 챕터에서 이론 선택이 쉬워집니다.",
+      "🎓 ID 분야 용어: Context Analysis (Tessmer & Richey).",
+      "Learning Context(공부 환경) — 강의실/시간/매체/자원, Transfer Context(적용 환경) — 학습 후 어디서 발휘, Orienting Context(제약·맥락) — 정책·문화·예산.",
+      "이 분석이 누락되면 ‘만든 자료가 현장에서 안 통하는’ 일이 자주 발생합니다.",
+    ],
+  },
+  {
+    key: "learner",
+    label: "학습자 분석",
+    icon: School,
+    question: "이 학습의 대상 학습자는 누구이며, 인지·정서 특성은 어떠한가요?",
+    hints: [
+      "🎓 ID 분야 용어: Learner Analysis (Smith & Ragan / Dick & Carey).",
+      "프로필(학년·인원·배경) + 사전 지식·학습양식(인지) + 동기·자신감·태도(정서) 세 축으로 정리.",
+      "학습자를 모르고 만들면 처방이 빗나갑니다 — ‘1학년인데 4학년 수준 자료를 줬다’ 등.",
+    ],
+  },
+  {
+    key: "task",
+    label: "학습 과제·목표 분석",
+    icon: School,
+    question: "학습자가 무엇을 배워야 하고, 그것을 어떻게 측정 가능한 목표로 진술하나요?",
+    hints: [
+      "🎓 ID 분야 용어: Task Analysis(Gagné/Jonassen) + Goal Analysis(Bloom·Mager·Krathwohl·Simpson).",
+      "과제 분해(큰 학습을 작은 단위로) + 인지 목표(Bloom 행동 동사) + 기능·태도 목표 + Mager ABCD(Audience·Behavior·Condition·Degree) 형식.",
+      "이 분석 결과가 다음 챕터(이론 선택)와 결과 챕터(평가 도구) 의 직접 근거가 됩니다.",
     ],
   },
   {
@@ -711,9 +756,41 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
           />
         )}
 
+        {step === "env" && (
+          <div className="space-y-4">
+            <Section title="2-1. 학습 환경 (Learning Context)" sub="🎓 학생들이 어디서·언제·무엇으로 공부하는가 — 강의실, 시간, 매체, 자원.">
+              <Textarea
+                value={form.envLearning}
+                onChange={(e) => setField("envLearning", e.target.value)}
+                placeholder="예: 90분 대면 강의실 (좌석 25석, 빔프로젝터). 모둠활동 시 책상 4명씩 배치. Padlet·Slack 사용 가능."
+                rows={4}
+                disabled={readOnly}
+              />
+            </Section>
+            <Section title="2-2. 적용 환경 (Transfer Context)" sub="🎓 배운 걸 어디서 써먹을 것인가 — 학교 수업/직장/생활 어디서?">
+              <Textarea
+                value={form.envTransfer}
+                onChange={(e) => setField("envTransfer", e.target.value)}
+                placeholder="예: 본인 학교 현장에서 협력학습 도입 — 수업 시간 단 45분, 학생 30명 환경에서 즉시 적용 예정."
+                rows={4}
+                disabled={readOnly}
+              />
+            </Section>
+            <Section title="2-3. 제약·맥락 (Orienting Context)" sub="🎓 넘어가야 할 제약과 맥락 — 정책·문화·예산·기간 등.">
+              <Textarea
+                value={form.envConstraint}
+                onChange={(e) => setField("envConstraint", e.target.value)}
+                placeholder="예: 1학기 12주 내 완료, 학교 평가 정책 상 객관식 시험 비중 ≥70%, 학부모 반응 민감."
+                rows={4}
+                disabled={readOnly}
+              />
+            </Section>
+          </div>
+        )}
+
         {step === "learner" && (
           <div className="space-y-4">
-            <Section title="2-1. 학습자 프로필" sub="학년·인원·배경 — 일상 관찰 그대로 적으세요.">
+            <Section title="3-1. 학습자 프로필 (Profile)" sub="🎓 ID: Learner Analysis. 학년·인원·배경 — 일상 관찰 그대로 적으세요.">
               <Input
                 value={form.learnerProfile}
                 onChange={(e) => setField("learnerProfile", e.target.value)}
@@ -721,39 +798,129 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
                 disabled={readOnly}
               />
             </Section>
-            <Section title="2-2. 학습자의 인지·지식 수준" sub="사전 지식, 학습 습관, 전형적 오개념 등.">
+            <Section title="3-2. 인지·지식 수준 (Cognitive)" sub="🎓 사전 지식·학습 양식·전형적 오개념. ‘학생들 머릿속에서 일어나는 일’.">
               <Textarea
                 value={form.learnerCognitive}
                 onChange={(e) => setField("learnerCognitive", e.target.value)}
-                placeholder="예: 통계 입문은 들었지만 R/SPSS 미경험. 협력학습은 ‘조별과제’ 정도로만 인식..."
+                placeholder="예: 통계 입문은 들었지만 R/SPSS 미경험. 협력학습은 ‘조별과제’ 정도로만 인식 — 비계 개념 모름."
                 rows={4}
                 disabled={readOnly}
               />
             </Section>
-            <Section title="2-3. 학습자의 정서·동기 상태" sub="관심도, 자신감, 불안, 흥미.">
+            <Section title="3-3. 정서·동기 상태 (Affective)" sub="🎓 ARCS — Attention/Relevance/Confidence/Satisfaction. ‘학생들 마음에서 일어나는 일’.">
               <Textarea
                 value={form.learnerAffective}
                 onChange={(e) => setField("learnerAffective", e.target.value)}
-                placeholder="예: ‘틀릴까봐 말 못함’ 두려움이 큼. 동료 평가에 민감..."
+                placeholder="예: ‘틀릴까봐 말 못함’ 두려움이 큼. 동료 평가에 민감. 수업 주제 자체에 대한 호기심은 높음."
                 rows={4}
                 disabled={readOnly}
               />
             </Section>
-            <Section title="2-4. 학습 목표 — 지식·이해 (Bloom 인지)" sub="기억/이해/적용/분석/평가/창조 행동 동사로.">
+          </div>
+        )}
+
+        {step === "task" && (
+          <div className="space-y-4">
+            <Section title="4-1. 과제 분해 (Task Analysis)" sub="🎓 Gagné 위계 / Jonassen 정보처리. 큰 학습을 작은 단위로 쪼개 단계 정리.">
+              <Textarea
+                value={form.taskDecompose}
+                onChange={(e) => setField("taskDecompose", e.target.value)}
+                placeholder={"예:\n1) 협력학습 정의 인식\n2) 3대 원리 구분 (상호의존성·개별책무성·평등참여)\n3) 자기 수업에 원리 적용 사례 작성\n4) 동료 사례 비교 분석"}
+                rows={5}
+                disabled={readOnly}
+              />
+            </Section>
+            <Section
+              title="4-2. 학습 영역 우선순위 (Bloom 3대 영역)"
+              sub="🎓 ‘이 처치로 학습자의 어느 영역을 변화시키려 하나요?’ — Bloom(1956) 인지 + Krathwohl(1964) 정의 + Simpson 심동. 처치-영역 적합성·차시 수의 직접 근거."
+            >
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {[
+                  { v: "cognitive", label: "🧠 인지", desc: "지식·이해·사고" },
+                  { v: "affective", label: "❤️ 정의(태도)", desc: "태도·동기·가치" },
+                  { v: "psychomotor", label: "✋ 심동(기능)", desc: "기능·행동·실연" },
+                  { v: "integrated", label: "🔗 통합", desc: "2영역 이상" },
+                ].map((opt) => {
+                  const active = form.outcomePriorityDomain === opt.v;
+                  return (
+                    <button
+                      key={opt.v}
+                      type="button"
+                      onClick={() => !readOnly && setField("outcomePriorityDomain", opt.v as "cognitive" | "affective" | "psychomotor" | "integrated")}
+                      disabled={readOnly}
+                      className={cn(
+                        "rounded-xl border-2 p-3 text-left transition-all",
+                        active
+                          ? "border-[#003876] bg-[#003876]/5 shadow-sm"
+                          : "border-muted bg-white hover:border-[#003876]/40 hover:bg-blue-50/40",
+                      )}
+                    >
+                      <p className="text-sm font-bold">{opt.label}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{opt.desc}</p>
+                    </button>
+                  );
+                })}
+              </div>
+              {form.outcomePriorityDomain && (
+                <div className="mt-3 rounded-lg border-l-4 border-l-amber-400 bg-amber-50/60 p-3 text-xs leading-relaxed">
+                  <p className="font-semibold text-amber-900">📋 처치 적합성·차시 가이드</p>
+                  <div className="mt-1.5 space-y-1 text-amber-900/90">
+                    {form.outcomePriorityDomain === "cognitive" && (
+                      <>
+                        <p>✅ 적합 차시: <strong>2~6차시 (단기 가능)</strong></p>
+                        <p>📊 평가: 객관식·서술형·수행평가</p>
+                        <p>⚠️ 단순 암기로만 측정하면 ‘이해·적용’ 영역 누락 위험. Bloom 6단계 중 어느 수준까지 목표인지 명시.</p>
+                      </>
+                    )}
+                    {form.outcomePriorityDomain === "affective" && (
+                      <>
+                        <p>✅ 적합 차시: <strong>최소 12차시 권장 (Krathwohl 1964)</strong></p>
+                        <p>📊 평가: 자기보고 + 행동관찰 + 심층면담 (자기보고만으론 한계)</p>
+                        <p>⚠️ 단기간(&lt;8차시) 처치는 ‘즉시 효과’ 가 아닌 ‘일시 변화’ 가능성 높음. 사전·사후 + 지연(2~4주 후) 측정 권장.</p>
+                      </>
+                    )}
+                    {form.outcomePriorityDomain === "psychomotor" && (
+                      <>
+                        <p>✅ 적합 차시: <strong>충분한 연습 횟수 (단순 시연 X)</strong></p>
+                        <p>📊 평가: 관찰 체크리스트·실연 평가·루브릭</p>
+                        <p>⚠️ 모델링 + 반복 + 즉시 피드백 3종 세트 필수. ‘1회 시연 = 학습’ 으로 보면 신뢰성 ↓.</p>
+                      </>
+                    )}
+                    {form.outcomePriorityDomain === "integrated" && (
+                      <>
+                        <p>✅ 적합 차시: <strong>정의적 목표가 있다면 12차시 이상</strong></p>
+                        <p>📊 평가: 영역별 도구 분리 (인지 + 정의 + 심동 각각)</p>
+                        <p>⚠️ 어느 영역이 ‘주(主)’ 인지 명시 필요. 모든 영역 동일 가중치는 분석 어려움.</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+            </Section>
+            <Section title="4-2. 학습 목표 — 지식·이해 (Bloom 인지)" sub="🎓 Bloom 인지 영역. 기억/이해/적용/분석/평가/창조 행동 동사로.">
               <Textarea
                 value={form.outcomeCognitive}
                 onChange={(e) => setField("outcomeCognitive", e.target.value)}
-                placeholder="예: 협력학습의 3대 원리(상호의존성·개별책무성·평등참여)를 설명할 수 있다..."
+                placeholder="예: 협력학습의 3대 원리(상호의존성·개별책무성·평등참여)를 *설명*할 수 있다."
                 rows={4}
                 disabled={readOnly}
               />
             </Section>
-            <Section title="2-5. 학습 목표 — 기능·태도" sub="할 수 있어야 하는 행동 + 가져야 할 태도.">
+            <Section title="4-3. 학습 목표 — 기능·태도" sub="🎓 Krathwohl 정의적 + Simpson 심동적. 행동·태도 두 축.">
               <Textarea
                 value={form.outcomeSkillAttitude}
                 onChange={(e) => setField("outcomeSkillAttitude", e.target.value)}
-                placeholder="예: 모둠 토의 시 동료 의견을 1회 이상 인용하며 응답할 수 있다..."
+                placeholder="예: 모둠 토의 시 동료 의견을 1회 이상 인용하며 응답할 수 있다."
                 rows={4}
+                disabled={readOnly}
+              />
+            </Section>
+            <Section title="4-4. Mager ABCD 형식 정교화" sub="🎓 Mager 행동 목표. Audience·Behavior·Condition·Degree 네 요소 모두 포함.">
+              <Textarea
+                value={form.outcomeMagerABCD}
+                onChange={(e) => setField("outcomeMagerABCD", e.target.value)}
+                placeholder={"예: [A] 교육대학원 1학년이\n[B] 협력학습 사례를 보고 3대 원리 적용 여부를\n[C] 5분 내 모둠 토의로\n[D] 4개 사례 중 3개 이상 정확히 판별할 수 있다."}
+                rows={5}
                 disabled={readOnly}
               />
             </Section>
