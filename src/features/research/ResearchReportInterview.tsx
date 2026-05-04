@@ -11,6 +11,7 @@ import type { ArchiveConcept, TheoryConcept } from "@/types";
 import {
   X, ChevronLeft, ChevronRight, Save, Loader2, Sparkles, MessageSquareQuote,
   School, BookOpen, FlaskConical, ArrowRight, AlertTriangle, GraduationCap,
+  CheckCircle2, Circle, Pencil, PartyPopper, Trophy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FormState, SetField } from "./ResearchReportEditor";
@@ -53,6 +54,16 @@ interface SlideDef {
   crossRef?: (form: FormState) => React.ReactNode;
   /** 일관성 lint — 약한 연결 감지 시 경고 노출 */
   lint?: (form: FormState) => string | null;
+  /**
+   * Sprint 71: 답변 작성 여부 판단 — SlideNavigator(미작성 색상 표시)·이전답변보기·진행률 산출에 사용.
+   * 슬라이드별 form 필드를 보고 의미있는 답변이 있는지 (보통 trim().length >= 5) 검증.
+   */
+  isAnswered?: (form: FormState) => boolean;
+  /**
+   * Sprint 71: 이전 답변 참조 — 의미상 직전 답변에 의존하는 슬라이드에서 카드로 노출.
+   * 사용자는 카드를 클릭해 해당 슬라이드로 즉시 점프할 수 있음.
+   */
+  references?: { slideId: string; getValue?: (form: FormState) => string | null }[];
 }
 
 const FORMAT_OPTIONS: { value: EducationFormat; label: string }[] = [
@@ -424,8 +435,8 @@ const SLIDES: SlideDef[] = [
   {
     id: "field-format",
     chapter: "field",
-    prompt: "어떤 교육 형식을 다루나요?",
-    hint: "대면 / 비대면 / 혼합(블렌디드) 중 가장 가까운 것을 골라주세요.",
+    prompt: "현재 관심 있는 교육 현장은 어떤 형태인가요?",
+    hint: "지금 관찰·경험하고 계신(또는 다루고 싶은) 교육 현장의 운영 방식과 가장 가까운 것을 골라주세요. 대면 / 비대면 / 혼합(블렌디드).",
     render: (form, setField) => (
       <div className="grid grid-cols-3 gap-3">
         {FORMAT_OPTIONS.map((opt) => {
@@ -538,8 +549,8 @@ const SLIDES: SlideDef[] = [
   {
     id: "field-scope-context",
     chapter: "field",
-    prompt: "어떤 맥락(상황)에서 진행되나요?",
-    hint: "강의 형태, 회기 수, 도구·플랫폼 등을 적어주세요.",
+    prompt: "이 교육은 구체적으로 어떤 환경·조건에서 진행되나요?",
+    hint: "수업 단위(예: 4주 8회기), 운영 형태(예: 토요일 대면 강의실 + 평일 비대면 토론), 사용 도구·플랫폼(예: Zoom · Padlet · Slack) 등 가능한 한 구체적으로 적어주세요.",
     optional: true,
     render: (form, setField) => (
       <Input
@@ -573,7 +584,7 @@ const SLIDES: SlideDef[] = [
     id: "bridge-field-env",
     chapter: "bridge",
     prompt: "이제 학습이 일어나는 환경을 분석해보겠습니다",
-    hint: "🎓 ID 분야 용어: Context Analysis (Tessmer & Richey). 정의한 현상이 어떤 학습 환경에서 일어나는지, 학습 후 어디서 발휘되는지, 어떤 제약이 있는지 살핍니다.",
+    hint: "🎓 ID 분야 용어: Context Analysis(맥락 분석, Tessmer & Richey 1997). 정의한 현상이 어떤 학습 환경에서 일어나는지, 학습 후 어디서 발휘되는지, 어떤 제약이 있는지 살핍니다.",
     optional: true,
     render: (form) => {
       const phenomena = form.problemPhenomena.filter((p) => p.trim()).slice(0, 3);
@@ -594,12 +605,12 @@ const SLIDES: SlideDef[] = [
     },
   },
 
-  // ── Chapter 2: 환경 분석 (Sprint 68 — Tessmer & Richey)
+  // ── Chapter 2: 환경 분석 (Sprint 68 — Tessmer & Richey 맥락 분석 모형)
   {
     id: "env-learning",
     chapter: "env",
-    prompt: "학습이 일어나는 환경은 어떠한가요? (Learning Context)",
-    hint: "🎓 ID 용어: Learning Context. 학생들이 어디서·언제·무엇으로 공부하는가 — 강의실, 시간, 매체, 자원.",
+    prompt: "학습이 일어나는 환경은 어떠한가요? (Learning Context · 학습 맥락)",
+    hint: "🎓 ID 용어: Learning Context(학습 맥락). 학생들이 어디서·언제·무엇으로 공부하는가 — 강의실, 시간, 매체, 자원.",
     render: (form, setField) => (
       <Textarea
         value={form.envLearning}
@@ -614,8 +625,8 @@ const SLIDES: SlideDef[] = [
   {
     id: "env-transfer",
     chapter: "env",
-    prompt: "학습 후 어디서 발휘·활용되나요? (Transfer Context)",
-    hint: "🎓 ID 용어: Transfer Context. 배운 걸 *어디서 써먹을* 것인가 — 학교 수업·직장·생활 어디서?",
+    prompt: "내가 설계한 프로그램을 적용한 후, 학습자가 획득한 능력은 어디에서 발휘·활용되나요? (Transfer Context · 전이 맥락)",
+    hint: "🎓 ID 용어: Transfer Context(전이 맥락). 배운 능력을 어디에서 실제로 활용할지 — 다음 단원 학습, 후속 수업, 학교 밖 직장·일상·진로 등 구체적인 장면을 떠올려 적어주세요.",
     render: (form, setField) => (
       <Textarea
         value={form.envTransfer}
@@ -630,8 +641,8 @@ const SLIDES: SlideDef[] = [
   {
     id: "env-constraint",
     chapter: "env",
-    prompt: "어떤 제약과 맥락이 있나요? (Orienting Context)",
-    hint: "🎓 ID 용어: Orienting Context. 정책·문화·예산·기간 등 — 넘어가야 할 *제약과 맥락*.",
+    prompt: "학습자는 어떤 동기·기대로 이 학습에 참여하며, 운영에는 어떤 외적 제약(정책·시간·예산·문화)이 있나요? (Orienting Context · 지향 맥락)",
+    hint: "🎓 ID 용어: Orienting Context(지향 맥락). ① 학습자 측면 — 왜 이 학습에 참여하는지, 어떤 기대 또는 우려를 가지는지. ② 운영 측면 — 학교 또는 기관 정책, 차시 수 제한, 예산, 문화나 관행 등 반드시 고려해야 할 외적 제약을 함께 적어주세요.",
     render: (form, setField) => (
       <Textarea
         value={form.envConstraint}
@@ -649,7 +660,7 @@ const SLIDES: SlideDef[] = [
     id: "bridge-env-learner",
     chapter: "bridge",
     prompt: "이제 그 환경에서 배우는 학습자를 분석해보겠습니다",
-    hint: "🎓 ID 용어: Learner Analysis (Smith & Ragan / Dick & Carey). 학습자를 모르고 만들면 처방이 빗나갑니다 — ‘1학년인데 4학년 수준 자료를 줬다’ 같은 일이 자주 발생.",
+    hint: "🎓 ID 용어: Learner Analysis(학습자 분석, Smith & Ragan / Dick & Carey). 학습자를 모르고 만들면 처방이 빗나갑니다 — '1학년인데 4학년 수준 자료를 줬다' 같은 일이 자주 발생.",
     optional: true,
     render: (form) => {
       const env = form.envLearning.trim();
@@ -664,7 +675,7 @@ const SLIDES: SlideDef[] = [
     },
   },
 
-  // ── Chapter 3: 학습자 분석 (Sprint 68 — Smith & Ragan)
+  // ── Chapter 3: 학습자 분석 (Sprint 68 — Smith & Ragan 학습자 분석 모형)
   {
     id: "learner-profile",
     chapter: "learner",
@@ -718,7 +729,7 @@ const SLIDES: SlideDef[] = [
     id: "bridge-learner-task",
     chapter: "bridge",
     prompt: "이제 학습 과제와 목표를 정의해보겠습니다",
-    hint: "🎓 ID 용어: Task Analysis (Gagné/Jonassen) + Goal Analysis (Bloom·Mager·Krathwohl·Simpson). 학습자를 알았으니 이제 ‘무엇을 어떻게 배워야 하는지’ 정리합니다.",
+    hint: "🎓 ID 용어: Task Analysis(과제 분석, Gagné / Jonassen) + Goal Analysis(목표 분석, Bloom · Mager · Krathwohl · Simpson). 학습자를 분석했으니 이제 무엇을 어떤 순서로 배워야 하는지 정리합니다.",
     optional: true,
     render: (form) => {
       const profile = form.learnerProfile.trim();
@@ -733,11 +744,11 @@ const SLIDES: SlideDef[] = [
     },
   },
 
-  // ── Chapter 4: 학습 과제·목표 분석 (Sprint 68 — Gagné + Bloom + Krathwohl + Simpson + Mager)
+  // ── Chapter 4: 학습 과제·목표 분석 (Sprint 68 — Gagné 과제 분석 + Bloom · Krathwohl · Simpson 3대 영역 + Mager ABCD)
   {
     id: "task-decompose",
     chapter: "task",
-    prompt: "학습 과제를 작은 단위로 쪼개면? (Task Analysis)",
+    prompt: "학습 과제를 작은 단위로 쪼개면? (Task Analysis · 과제 분석)",
     hint: "🎓 ID 용어: Gagné 위계 / Jonassen 정보처리. 큰 학습 목표를 *순서 있는 작은 단위* 로 분해. 학습자가 어떤 순서로 익혀야 하는지.",
     render: (form, setField) => (
       <Textarea
@@ -754,7 +765,7 @@ const SLIDES: SlideDef[] = [
     id: "outcome-priority-domain",
     chapter: "task",
     prompt: "이 처치로 학습자의 어느 영역을 가장 우선적으로 변화시키려 하나요?",
-    hint: "🎓 Bloom 3대 영역 — 인지(Bloom 1956) / 정의(Krathwohl 1964) / 심동(Simpson). 영역에 따라 *적합한 차시 수와 평가 방법*이 결정됩니다 (지도교수 핵심 질문).",
+    hint: "🎓 Bloom 3대 영역 — 인지(Cognitive · Bloom 1956) / 정의(Affective · Krathwohl 1964) / 심동(Psychomotor · Simpson). 한 가지 영역만 선택해 주세요. 우선순위에 따라 적합한 차시 수와 평가 방법이 달라집니다 (지도교수님께서 자주 확인하시는 항목입니다).",
     render: (form, setField) => {
       const opts: { v: "cognitive" | "affective" | "psychomotor" | "integrated"; label: string; desc: string }[] = [
         { v: "cognitive", label: "🧠 인지", desc: "지식·이해·사고" },
@@ -792,32 +803,35 @@ const SLIDES: SlideDef[] = [
               <div className="mt-1.5 space-y-1 text-amber-900/90">
                 {cur === "cognitive" && (
                   <>
-                    <p>✅ 적합 차시: <strong>2~6차시 (단기 가능)</strong></p>
+                    <p>✅ 권장 차시 예시: <strong>2~6차시 (단기 가능)</strong></p>
                     <p>📊 평가: 객관식·서술형·수행평가</p>
-                    <p>⚠️ 단순 암기로 측정하면 ‘이해·적용’ 누락 위험. Bloom 6단계 중 어느 수준까지 목표인지 명시.</p>
+                    <p>⚠️ 단순 암기로 측정하면 이해·적용 누락 위험. Bloom 6단계 중 어느 수준까지 목표인지 명시해 주세요.</p>
                   </>
                 )}
                 {cur === "affective" && (
                   <>
-                    <p>✅ 적합 차시: <strong>최소 12차시 권장 (Krathwohl 1964)</strong></p>
-                    <p>📊 평가: 자기보고 + 행동관찰 + 심층면담 (자기보고만으론 한계)</p>
-                    <p>⚠️ 단기 처치(&lt;8차시)는 ‘일시 변화’ 가능성. 사전·사후 + 지연(2~4주 후) 측정 권장.</p>
+                    <p>✅ 권장 차시 예시: <strong>최소 12차시 (Krathwohl 1964)</strong></p>
+                    <p>📊 평가: 자기보고 + 행동관찰 + 심층면담 (자기보고만으로는 한계)</p>
+                    <p>⚠️ 단기 처치(8차시 미만)는 일시적 변화일 가능성이 있어 사전·사후 + 지연(2~4주 후) 측정을 함께 권장합니다.</p>
                   </>
                 )}
                 {cur === "psychomotor" && (
                   <>
-                    <p>✅ 적합 차시: <strong>충분한 연습 횟수 (단순 시연 X)</strong></p>
+                    <p>✅ 권장 차시 예시: <strong>충분한 반복 연습 횟수 확보</strong></p>
                     <p>📊 평가: 관찰 체크리스트·실연 평가·루브릭</p>
-                    <p>⚠️ 모델링 + 반복 + 즉시 피드백 3종 세트 필수. 1회 시연 ≠ 학습.</p>
+                    <p>⚠️ 모델링 + 반복 + 즉시 피드백 3종이 필수입니다. 1회 시연만으로는 학습이 일어나기 어렵습니다.</p>
                   </>
                 )}
                 {cur === "integrated" && (
                   <>
-                    <p>✅ 적합 차시: <strong>정의적 목표가 있다면 12차시 이상</strong></p>
+                    <p>✅ 권장 차시 예시: <strong>정의적 목표가 포함되면 12차시 이상</strong></p>
                     <p>📊 평가: 영역별 도구 분리 (인지 + 정의 + 심동 각각)</p>
-                    <p>⚠️ 어느 영역이 ‘주(主)’ 인지 명시 필요.</p>
+                    <p>⚠️ 어느 영역이 주(主)인지 명시해 주세요.</p>
                   </>
                 )}
+                <p className="mt-2 rounded-md border border-amber-300/70 bg-white/60 px-2 py-1.5 text-[11px] font-medium text-amber-900">
+                  ⓘ 위 차시 안내는 일반적 권장 범위입니다. 실제 차시 수는 연구 맥락·연구 일정에 따라 달라지므로 반드시 지도교수님과 상의해 결정하세요.
+                </p>
               </div>
             </div>
           )}
@@ -828,13 +842,13 @@ const SLIDES: SlideDef[] = [
   {
     id: "outcome-cognitive",
     chapter: "task",
-    prompt: "학습 목표 — 학습자가 무엇을 *알고·이해* 할 수 있어야 하나요?",
-    hint: "🎓 Bloom 인지 영역 (1956). 기억/이해/적용/분석/평가/창조 — *행동 동사* 로 구체적으로.",
+    prompt: "학습 목표 — 학습자가 무엇을 알고 이해할 수 있어야 하나요?",
+    hint: "🎓 Bloom 인지 영역(Cognitive Domain, 1956). 기억/이해/적용/분석/평가/창조 — 학습자가 보여줄 행동 동사로 구체적으로 적어주세요.",
     render: (form, setField) => (
       <Textarea
         value={form.outcomeCognitive}
         onChange={(e) => setField("outcomeCognitive", e.target.value)}
-        placeholder={"예: 협력학습의 3대 원리(상호의존성·개별책무성·평등참여)를 *설명*할 수 있다."}
+        placeholder={"예: 협력학습의 3대 원리(상호의존성·개별책무성·평등참여)를 설명할 수 있다."}
         rows={5}
         className="bg-white text-base"
         style={{ fontSize: "16px" }}
@@ -844,8 +858,8 @@ const SLIDES: SlideDef[] = [
   {
     id: "outcome-skill-attitude",
     chapter: "task",
-    prompt: "학습 목표 — 학습자가 무엇을 *할 수* 있어야 하고, 어떤 *태도* 를 가져야 하나요?",
-    hint: "🎓 Krathwohl 정의적 + Simpson 심동적. ‘경청한다’, ‘논리적으로 응답한다’, ‘동료 의견을 존중한다’ 같은 형태.",
+    prompt: "학습 목표 — 학습자가 무엇을 할 수 있어야 하고, 어떤 태도를 가져야 하나요?",
+    hint: "🎓 Krathwohl 정의적 영역(Affective Domain) + Simpson 심동적 영역(Psychomotor Domain). '경청한다', '논리적으로 응답한다', '동료 의견을 존중한다' 같은 형태.",
     render: (form, setField) => (
       <Textarea
         value={form.outcomeSkillAttitude}
