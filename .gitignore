@@ -30,6 +30,12 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# build / deploy logs (sprint*, generic)
+sprint*-build.log
+sprint*-deploy.log
+*-build.log
+*-deploy.log
+
 # env files (can opt-in for committing if needed)
 .env*
 
