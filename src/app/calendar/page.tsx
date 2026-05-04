@@ -306,8 +306,15 @@ export default function CalendarPage() {
         href: `/seminars/${s.id}`,
       });
     }
+    // Sprint 76d: 라우트 폴더는 복수형(studies/projects), 활동 type 은 단수(study/project) — 매핑 필요
+    const ACTIVITY_ROUTE_PATH: Record<string, string> = {
+      study: "studies",
+      project: "projects",
+      external: "external",
+    };
     for (const a of activities) {
       if (!a.date) continue;
+      const routePath = ACTIVITY_ROUTE_PATH[a.type] ?? a.type;
       result.push({
         id: a.id,
         title: a.title,
@@ -316,7 +323,7 @@ export default function CalendarPage() {
         location: a.location,
         type: a.type as CalendarEvent["type"],
         status: a.status,
-        href: `/activities/${a.type}/${a.id}`,
+        href: `/activities/${routePath}/${a.id}`,
       });
     }
     result.push(...courseEvents);
@@ -644,9 +651,8 @@ export default function CalendarPage() {
                         {/* 이어지는 이벤트 바 오버레이 (헤더 아래 zone에서만, 날짜와 결코 겹치지 않음) */}
                         {week.bars.map((bar, bi) => {
                           const config = TYPE_CONFIG[bar.event.type];
-                          const continuationLabel = bar.isStart
-                            ? bar.event.title
-                            : `↳ ${bar.event.title}`;
+                          // Sprint 76d: ↳ 텍스트 제거 — CornerDownRight 아이콘 한 번만 표시
+                          const continuationLabel = bar.event.title;
                           return (
                             <Link
                               key={`${bar.event.id}-${wi}-${bi}`}
