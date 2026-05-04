@@ -118,6 +118,93 @@ function hasKeywordOverlap(a: string, b: string): boolean {
   return ks.some((k) => lowerB.includes(k));
 }
 
+// Sprint 73: 슬라이드별 답변 작성 여부 판단 (5자 이상 의미있는 답변 기준)
+function isSlideAnswered(slideId: string, form: FormState): boolean {
+  const ok = (s: string | undefined | null) => (s?.trim().length ?? 0) >= 5;
+  const okShort = (s: string | undefined | null) => (s?.trim().length ?? 0) >= 1;
+  switch (slideId) {
+    case "field-audience": return ok(form.fieldAudience);
+    case "field-format": return okShort(form.fieldFormat);
+    case "field-subject": return ok(form.fieldSubject);
+    case "field-phenomenon": return form.problemPhenomena?.some((p) => p.trim().length >= 5) ?? false;
+    case "field-impact": return ok(form.problemImpact);
+    case "field-importance": return ok(form.problemImportance);
+    case "field-scope-audience": return ok(form.scopeAudience);
+    case "field-scope-context": return ok(form.scopeContext);
+    case "field-scope-exclude": return ok(form.scopeExclusion);
+    case "env-learning": return ok(form.envLearning);
+    case "env-transfer": return ok(form.envTransfer);
+    case "env-constraint": return ok(form.envConstraint);
+    case "learner-profile": return ok(form.learnerProfile);
+    case "learner-cognitive": return ok(form.learnerCognitive);
+    case "learner-affective": return ok(form.learnerAffective);
+    case "task-decompose": return ok(form.taskDecompose);
+    case "outcome-priority-domain": return okShort(form.outcomePriorityDomain);
+    case "outcome-cognitive": return ok(form.outcomeCognitive);
+    case "outcome-skill-attitude": return ok(form.outcomeSkillAttitude);
+    case "outcome-mager-abcd":
+      return ok(form.outcomeMagerA) || ok(form.outcomeMagerB) ||
+             ok(form.outcomeMagerC) || ok(form.outcomeMagerD) ||
+             ok(form.outcomeMagerABCD);
+    case "theory-name": return ok(form.theoryCards?.[0]?.name);
+    case "theory-reason": return ok(form.theoryCards?.[0]?.selectionReason);
+    case "theory-link": return ok(form.theoryCards?.[0]?.problemLink);
+    case "theory-integration": return ok(form.theoryRelationIntegration);
+    case "prior-summary": return ok(form.priorResearchAnalysis);
+    default: return false;
+  }
+}
+
+// Sprint 73: 슬라이드 답변을 사람이 읽을 수 있는 한 줄로 — PreviousAnswerCard 표시용
+function getSlideAnswerPreview(slideId: string, form: FormState): string {
+  switch (slideId) {
+    case "field-audience": return form.fieldAudience ?? "";
+    case "field-format": {
+      const map: Record<string, string> = { offline: "대면", online: "비대면", blended: "혼합" };
+      return form.fieldFormat ? (map[form.fieldFormat] ?? form.fieldFormat) : "";
+    }
+    case "field-subject": return form.fieldSubject ?? "";
+    case "field-phenomenon": return (form.problemPhenomena ?? []).filter((p) => p.trim()).join(" / ");
+    case "field-impact": return form.problemImpact ?? "";
+    case "field-importance": return form.problemImportance ?? "";
+    case "field-scope-audience": return form.scopeAudience ?? "";
+    case "field-scope-context": return form.scopeContext ?? "";
+    case "field-scope-exclude": return form.scopeExclusion ?? "";
+    case "env-learning": return form.envLearning ?? "";
+    case "env-transfer": return form.envTransfer ?? "";
+    case "env-constraint": return form.envConstraint ?? "";
+    case "learner-profile": return form.learnerProfile ?? "";
+    case "learner-cognitive": return form.learnerCognitive ?? "";
+    case "learner-affective": return form.learnerAffective ?? "";
+    case "task-decompose": return form.taskDecompose ?? "";
+    case "outcome-priority-domain": {
+      const map: Record<string, string> = {
+        cognitive: "🧠 인지", affective: "❤️ 정의(태도)",
+        psychomotor: "✋ 심동(기능)", integrated: "🔗 통합",
+      };
+      return form.outcomePriorityDomain ? (map[form.outcomePriorityDomain] ?? "") : "";
+    }
+    case "outcome-cognitive": return form.outcomeCognitive ?? "";
+    case "outcome-skill-attitude": return form.outcomeSkillAttitude ?? "";
+    case "outcome-mager-abcd": {
+      const parts = [form.outcomeMagerA, form.outcomeMagerB, form.outcomeMagerC, form.outcomeMagerD]
+        .filter((s) => s?.trim());
+      if (parts.length > 0) return parts.join(" / ");
+      return form.outcomeMagerABCD ?? "";
+    }
+    case "theory-name": {
+      const c = form.theoryCards?.[0];
+      if (!c) return "";
+      return [c.name, c.scholar].filter(Boolean).join(" — ");
+    }
+    case "theory-reason": return form.theoryCards?.[0]?.selectionReason ?? "";
+    case "theory-link": return form.theoryCards?.[0]?.problemLink ?? "";
+    case "theory-integration": return form.theoryRelationIntegration ?? "";
+    case "prior-summary": return form.priorResearchAnalysis ?? "";
+    default: return "";
+  }
+}
+
 
 // ─── Sprint 59: archive_concepts 자동 추천 ──────────────────────────────────
 function ArchiveConceptRecommender({
@@ -297,38 +384,262 @@ function BridgeArrow({ strength }: { strength: number }) {
   );
 }
 
-function ResearchLogicMap({ form }: { form: FormState }) {
+// Sprint 74: 사각형 4꼭지점 Logic Map — 한 화면에 모두 표시 + 채움 낮은 노드 클릭 시 점프
+const NODE_CHAPTERS_MAP: Record<LogicNode["id"], Chapter[]> = {
+  field: ["field"],
+  middle: ["env", "learner", "task"],
+  theory: ["theory"],
+  prior: ["prior"],
+};
+
+function ResearchLogicMap({
+  form, slides, onJump,
+}: {
+  form: FormState;
+  slides?: SlideDef[];
+  onJump?: (idx: number) => void;
+}) {
   const nodes = useMemo(() => calcLogicMap(form), [form]);
   const overall = Math.round(nodes.reduce((s, n) => s + n.fill, 0) / nodes.length);
   const overallStrength = Math.round(
     (nodes[0].bridgeStrength + nodes[1].bridgeStrength + nodes[2].bridgeStrength) / 3,
   );
 
+  // id → node lookup
+  const byId = useMemo(() => {
+    const m = new Map<LogicNode["id"], LogicNode>();
+    for (const n of nodes) m.set(n.id, n);
+    return m;
+  }, [nodes]);
+
+  // 사각형 4꼭지점 배치
+  // ┌────────────────────────────┐
+  // │  field          middle     │
+  // │   (TL)           (TR)       │
+  // │      \         /           │
+  // │       \       /            │
+  // │        \     /             │
+  // │         X                  │
+  // │        / \                 │
+  // │       /   \                │
+  // │      /     \               │
+  // │   (BL)           (BR)       │
+  // │  prior          theory     │
+  // └────────────────────────────┘
+  const corners: { id: LogicNode["id"]; cls: string }[] = [
+    { id: "field", cls: "col-start-1 row-start-1" },
+    { id: "middle", cls: "col-start-2 row-start-1" },
+    { id: "prior", cls: "col-start-1 row-start-2" },
+    { id: "theory", cls: "col-start-2 row-start-2" },
+  ];
+
+  function jumpToNode(nodeId: LogicNode["id"]) {
+    if (!onJump || !slides) return;
+    const targets = NODE_CHAPTERS_MAP[nodeId];
+    // 1순위: 해당 챕터의 첫 미작성 슬라이드
+    const unanswered = slides.findIndex(
+      (s) => targets.includes(s.chapter) && !isSlideAnswered(s.id, form),
+    );
+    if (unanswered >= 0) {
+      onJump(unanswered);
+      return;
+    }
+    // 2순위: 모두 작성됐으면 첫 슬라이드
+    const first = slides.findIndex((s) => targets.includes(s.chapter));
+    if (first >= 0) onJump(first);
+  }
+
+  function fillBg(percent: number) {
+    if (percent >= 80) return "border-emerald-300 bg-emerald-50/80";
+    if (percent >= 40) return "border-amber-300 bg-amber-50/80";
+    return "border-rose-300 bg-rose-50/80";
+  }
+  function lineColor(strength: number) {
+    if (strength >= 80) return "stroke-emerald-500";
+    if (strength >= 40) return "stroke-amber-500";
+    return "stroke-rose-300";
+  }
+  function lineDash(strength: number) {
+    if (strength >= 80) return "0";
+    if (strength >= 40) return "6 4";
+    return "2 4";
+  }
+
+  // 4변 strength
+  // 기존 1차원 (field → middle → theory → prior) bridge 를 사각형 4변에 매핑:
+  //  - field ↔ middle  (top)        : nodes[0].bridgeStrength
+  //  - middle ↔ theory (right diag) : nodes[1].bridgeStrength
+  //  - theory ↔ prior  (bottom)     : nodes[2].bridgeStrength
+  //  - prior ↔ field   (left)       : 평균 (보조선)
+  const stTop = byId.get("field")?.bridgeStrength ?? 0;
+  const stRightDiag = byId.get("middle")?.bridgeStrength ?? 0;
+  const stBottom = byId.get("theory")?.bridgeStrength ?? 0;
+  const stLeft = Math.round((stTop + stRightDiag + stBottom) / 3);
+
   return (
     <div className="rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-blue-50/40 p-4">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-bold text-primary">📐 연구 흐름 Logic Map</p>
         <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
           <span>채움 <strong className="text-foreground">{overall}%</strong></span>
           <span>연결 <strong className="text-foreground">{overallStrength}%</strong></span>
         </div>
       </div>
-      <div className="mt-3 flex items-stretch overflow-x-auto pb-1">
-        {nodes.map((n, i) => (
-          <div key={n.id} className="flex shrink-0 items-stretch">
-            <div className="flex w-28 flex-col items-center gap-1 rounded-xl border bg-white p-2 shadow-sm sm:w-32">
-              <p className="text-[10px] font-semibold text-foreground sm:text-[11px]">{n.label}</p>
-              <NodeFillBar percent={n.fill} />
-              <p className="text-[10px] tabular-nums text-muted-foreground">{n.fill}%</p>
-            </div>
-            {i < nodes.length - 1 && <BridgeArrow strength={n.bridgeStrength} />}
-          </div>
-        ))}
+
+      {/* 사각형 4꼭지점 — 한 화면에 모두 노출 */}
+      <div className="relative mx-auto mt-4 aspect-[5/4] max-w-md">
+        {/* 라인 SVG (배경) */}
+        <svg
+          viewBox="0 0 100 80"
+          preserveAspectRatio="none"
+          className="absolute inset-0 h-full w-full"
+        >
+          {/* top: field ↔ middle */}
+          <line x1="22" y1="14" x2="78" y2="14" strokeWidth="1.4" className={lineColor(stTop)} strokeDasharray={lineDash(stTop)} />
+          {/* bottom: prior ↔ theory */}
+          <line x1="22" y1="66" x2="78" y2="66" strokeWidth="1.4" className={lineColor(stBottom)} strokeDasharray={lineDash(stBottom)} />
+          {/* left: field ↔ prior */}
+          <line x1="22" y1="14" x2="22" y2="66" strokeWidth="1.4" className={lineColor(stLeft)} strokeDasharray={lineDash(stLeft)} />
+          {/* right (대각): middle ↔ theory */}
+          <line x1="78" y1="14" x2="78" y2="66" strokeWidth="1.4" className={lineColor(stRightDiag)} strokeDasharray={lineDash(stRightDiag)} />
+          {/* 대각선 2개 (보조 — 옅게) */}
+          <line x1="22" y1="14" x2="78" y2="66" strokeWidth="0.8" className="stroke-primary/30" strokeDasharray="2 3" />
+          <line x1="78" y1="14" x2="22" y2="66" strokeWidth="0.8" className="stroke-primary/30" strokeDasharray="2 3" />
+        </svg>
+
+        {/* 4 노드 카드 */}
+        <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-2 p-2">
+          {corners.map(({ id, cls }) => {
+            const n = byId.get(id);
+            if (!n) return null;
+            const clickable = !!onJump && !!slides;
+            const Element = clickable ? "button" : "div";
+            return (
+              <Element
+                key={id}
+                type={clickable ? "button" : undefined}
+                onClick={clickable ? () => jumpToNode(id) : undefined}
+                className={cn(
+                  "relative z-10 flex flex-col items-center justify-center gap-1 rounded-xl border-2 bg-white p-2 shadow-sm transition-all",
+                  cls,
+                  fillBg(n.fill),
+                  clickable && "cursor-pointer hover:scale-[1.03] hover:shadow-md",
+                )}
+                title={clickable ? `${n.label} — 클릭하면 ${n.fill < 80 ? "미작성 질문으로 이동" : "이 챕터 첫 질문으로 이동"}` : undefined}
+              >
+                <p className="text-center text-[10px] font-bold leading-tight sm:text-xs">{n.label}</p>
+                <p className="text-base font-bold tabular-nums sm:text-lg">{n.fill}%</p>
+                {clickable && n.fill < 80 && (
+                  <p className="text-[9px] font-medium text-rose-700">미작성 → 이동</p>
+                )}
+              </Element>
+            );
+          })}
+        </div>
       </div>
+
       <p className="mt-3 text-[11px] text-muted-foreground">
-        🟢 강한 연결 (키워드 overlap) · 🟡 연결 약함 · 🔴 거의 없음. 채움 ≥ 80% + 연결 ≥ 80% 이면 논리 흐름이 단단합니다.
+        🟢 강한 연결 (키워드 일치) · 🟡 연결 약함 · 🔴 거의 없음. 각 꼭지점을 클릭하면 해당 챕터의 미작성 질문으로 바로 이동합니다.
       </p>
     </div>
+  );
+}
+
+// Sprint 74: 챕터 완료 축하 컴포넌트 — bridge 슬라이드에서 노출
+const BRIDGE_TRANSITIONS: Record<string, { from: Chapter; to: Chapter }> = {
+  "bridge-field-env": { from: "field", to: "env" },
+  "bridge-env-learner": { from: "env", to: "learner" },
+  "bridge-learner-task": { from: "learner", to: "task" },
+  "bridge-task-theory": { from: "task", to: "theory" },
+  "bridge-theory-prior": { from: "theory", to: "prior" },
+};
+
+function ChapterCelebration({
+  bridgeId, slides, form,
+}: {
+  bridgeId: string;
+  slides: SlideDef[];
+  form: FormState;
+}) {
+  const transition = BRIDGE_TRANSITIONS[bridgeId];
+  if (!transition) return null;
+  const { from, to } = transition;
+  const fromMeta = CHAPTER_META[from];
+  const toMeta = CHAPTER_META[to];
+  const ToIcon = toMeta.icon;
+
+  const fromSlides = slides.filter((s) => s.chapter === from);
+  const fromAnswered = fromSlides.filter((s) => isSlideAnswered(s.id, form)).length;
+  const fromTotal = fromSlides.length;
+  const completedChapterIdx = REAL_CHAPTERS.indexOf(from);
+
+  return (
+    <motion.div
+      initial={{ scale: 0.92, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.45, ease: "easeOut" }}
+      className="rounded-2xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50/50 p-4 text-center sm:p-6"
+    >
+      <motion.div
+        initial={{ scale: 0, rotate: -90 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{ delay: 0.18, type: "spring", stiffness: 220, damping: 12 }}
+        className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500 shadow-lg sm:h-14 sm:w-14"
+      >
+        <PartyPopper size={22} className="text-white sm:hidden" />
+        <PartyPopper size={26} className="hidden text-white sm:block" />
+      </motion.div>
+
+      <motion.p
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.35, duration: 0.3 }}
+        className="mt-2.5 text-base font-bold text-emerald-900 sm:text-lg"
+      >
+        🎉 {completedChapterIdx + 1}장 완료!
+      </motion.p>
+      <p className="text-sm text-emerald-800">
+        {fromMeta.label} ({fromAnswered}/{fromTotal})
+      </p>
+
+      <div className="mt-3 flex items-center justify-center gap-1.5">
+        {REAL_CHAPTERS.map((c, idx) => (
+          <motion.div
+            key={c}
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.4 + idx * 0.05 }}
+            className={cn(
+              "h-2 w-2 rounded-full",
+              idx <= completedChapterIdx ? "bg-emerald-500" : "bg-emerald-200",
+            )}
+          />
+        ))}
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6, duration: 0.35 }}
+        className="mt-4 rounded-xl bg-white/70 p-3 text-left sm:mt-5 sm:p-4"
+      >
+        <div className="flex items-center gap-2">
+          <div
+            className={cn(
+              "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white",
+              "bg-gradient-to-r",
+              toMeta.color,
+            )}
+          >
+            <ToIcon size={13} />
+          </div>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            다음 — {completedChapterIdx + 2}장
+          </p>
+        </div>
+        <p className="mt-1.5 text-sm font-bold sm:text-base">{toMeta.label}</p>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -590,6 +901,7 @@ const SLIDES: SlideDef[] = [
     chapter: "field",
     prompt: "이 문제는 왜 중요한가요?",
     hint: "사회적 가치, 교육과정·정책 맥락, 후속 학습/진로에 미치는 영향 등을 적어주세요.",
+    references: [{ slideId: "field-phenomenon" }],
     render: (form, setField) => (
       <Textarea
         value={form.problemImportance}
@@ -622,6 +934,7 @@ const SLIDES: SlideDef[] = [
     chapter: "field",
     prompt: "이 교육은 구체적으로 어떤 환경·조건에서 진행되나요?",
     hint: "수업 단위(예: 4주 8회기), 운영 형태(예: 토요일 대면 강의실 + 평일 비대면 토론), 사용 도구·플랫폼(예: Zoom · Padlet · Slack) 등 가능한 한 구체적으로 적어주세요.",
+    references: [{ slideId: "field-format" }, { slideId: "field-subject" }],
     optional: true,
     render: (form, setField) => (
       <Input
@@ -636,7 +949,8 @@ const SLIDES: SlideDef[] = [
   {
     id: "field-scope-exclude",
     chapter: "field",
-    prompt: "이 연구에서 제외할 범위는?",
+    prompt: "이 연구에서 다루지 않는 것은 무엇인가요?",
+    hint: "후속 비판을 사전에 방어하기 위해 명확히 합니다. ① 대상(예: 'A대학 1학년만, 대학원생은 제외') ② 매체(예: '비동기 학습은 제외, 동기 줌만') ③ 유형(예: '평가 도구 개발은 별도 연구') ④ 기간(예: '학기 중 중간고사 주는 제외')",
     hint: "다루지 않을 학년/매체/유형을 명시하면 후속 비판을 사전에 방어할 수 있어요.",
     optional: true,
     render: (form, setField) => (
@@ -698,6 +1012,7 @@ const SLIDES: SlideDef[] = [
     chapter: "env",
     prompt: "내가 설계한 프로그램을 적용한 후, 학습자가 획득한 능력은 어디에서 발휘·활용되나요? (Transfer Context · 전이 맥락)",
     hint: "🎓 ID 용어: Transfer Context(전이 맥락). 배운 능력을 어디에서 실제로 활용할지 — 다음 단원 학습, 후속 수업, 학교 밖 직장·일상·진로 등 구체적인 장면을 떠올려 적어주세요.",
+    references: [{ slideId: "env-learning" }],
     render: (form, setField) => (
       <Textarea
         value={form.envTransfer}
@@ -714,6 +1029,7 @@ const SLIDES: SlideDef[] = [
     chapter: "env",
     prompt: "학습자는 어떤 동기·기대로 이 학습에 참여하며, 운영에는 어떤 외적 제약(정책·시간·예산·문화)이 있나요? (Orienting Context · 지향 맥락)",
     hint: "🎓 ID 용어: Orienting Context(지향 맥락). ① 학습자 측면 — 왜 이 학습에 참여하는지, 어떤 기대 또는 우려를 가지는지. ② 운영 측면 — 학교 또는 기관 정책, 차시 수 제한, 예산, 문화나 관행 등 반드시 고려해야 할 외적 제약을 함께 적어주세요.",
+    references: [{ slideId: "env-learning" }, { slideId: "env-transfer" }],
     render: (form, setField) => (
       <Textarea
         value={form.envConstraint}
@@ -766,6 +1082,7 @@ const SLIDES: SlideDef[] = [
     id: "learner-cognitive",
     chapter: "learner",
     prompt: "학습자의 인지·지식 수준은 어떠한가요?",
+    references: [{ slideId: "learner-profile" }],
     hint: "사전 지식, 학습 습관, 전형적 오개념 등 — 학생들의 *머릿속*에서 일어나는 일을 묘사하세요.",
     render: (form, setField) => (
       <Textarea
@@ -782,6 +1099,7 @@ const SLIDES: SlideDef[] = [
     id: "learner-affective",
     chapter: "learner",
     prompt: "학습자의 정서·동기 상태는 어떠한가요?",
+    references: [{ slideId: "learner-profile" }],
     hint: "학습에 대한 관심도, 자신감, 불안, 흥미 — 학생들의 *마음*에서 일어나는 일을 묘사하세요.",
     render: (form, setField) => (
       <Textarea
@@ -914,6 +1232,7 @@ const SLIDES: SlideDef[] = [
     id: "outcome-cognitive",
     chapter: "task",
     prompt: "학습 목표 — 학습자가 무엇을 알고 이해할 수 있어야 하나요?",
+    references: [{ slideId: "outcome-priority-domain" }],
     hint: "🎓 Bloom 인지 영역(Cognitive Domain, 1956). 기억/이해/적용/분석/평가/창조 — 학습자가 보여줄 행동 동사로 구체적으로 적어주세요.",
     render: (form, setField) => (
       <Textarea
@@ -930,6 +1249,7 @@ const SLIDES: SlideDef[] = [
     id: "outcome-skill-attitude",
     chapter: "task",
     prompt: "학습 목표 — 학습자가 무엇을 할 수 있어야 하고, 어떤 태도를 가져야 하나요?",
+    references: [{ slideId: "outcome-priority-domain" }],
     hint: "🎓 Krathwohl 정의적 영역(Affective Domain) + Simpson 심동적 영역(Psychomotor Domain). '경청한다', '논리적으로 응답한다', '동료 의견을 존중한다' 같은 형태.",
     render: (form, setField) => (
       <Textarea
@@ -1053,6 +1373,7 @@ const SLIDES: SlideDef[] = [
     id: "theory-reason",
     chapter: "theory",
     prompt: "이 이론을 선택한 이유는?",
+    references: [{ slideId: "theory-name" }, { slideId: "field-phenomenon" }],
     hint: "현장의 문제와 어떻게 맞닿아 있는지 한두 문장으로 말해주세요.",
     render: (form, setField) => (
       <Textarea
@@ -1096,6 +1417,7 @@ const SLIDES: SlideDef[] = [
     id: "theory-link",
     chapter: "theory",
     prompt: "이론과 현장 문제는 어떻게 연결되나요?",
+    references: [{ slideId: "theory-name" }, { slideId: "field-phenomenon" }],
     hint: "이론의 핵심 개념이 현장 문제의 어떤 부분을 설명·해결하는지 적어주세요.",
     render: (form, setField) => (
       <Textarea
@@ -1182,6 +1504,7 @@ const SLIDES: SlideDef[] = [
     id: "prior-summary",
     chapter: "prior",
     prompt: "선행연구 흐름을 한 문단으로 요약하면?",
+    references: [{ slideId: "field-phenomenon" }, { slideId: "theory-name" }],
     hint: "어떤 연구들이 있고 어떤 흐름을 보이는지, 내 연구와의 관계까지 적으면 좋아요. 개별 논문 연결은 전체 모드에서 가능합니다.",
     render: (form, setField) => (
       <Textarea
@@ -1264,9 +1587,15 @@ export default function ResearchReportInterview({
 
   // Sprint 67: 트랙 시스템 폐지 — 단일 흐름이라 slides 는 SLIDES 그대로
   // Sprint 72 F3: 조건부 슬라이드 — theory-integration 은 이론 카드 2개 이상일 때만 노출
+  // Sprint 75 F7: 중복 슬라이드 제거 — field-audience(Q1)·field-scope-context(Q8) 비공개.
+  //   - field-audience 는 learner-profile 에서 통합
+  //   - field-scope-context 는 env-learning(Learning Context) 에서 통합
+  //   - DB 데이터(fieldAudience/scopeContext)는 보존 — 보고서 본문 출력에는 그대로 반영
+  const SLIDES_HIDDEN = new Set(["field-audience", "field-scope-context"]);
   const slides = useMemo(
     () =>
       SLIDES.filter((s) => {
+        if (SLIDES_HIDDEN.has(s.id)) return false;
         if (s.id === "theory-integration") return (form.theoryCards?.length ?? 0) >= 2;
         return true;
       }),
@@ -1353,6 +1682,17 @@ export default function ResearchReportInterview({
         />
       </div>
 
+      {/* Sprint 73: 챕터별 슬라이드 navigator (인트로에선 숨김) */}
+      {index >= 0 && (
+        <details className="border-b bg-white/40 dark:bg-card/40">
+          <summary className="flex cursor-pointer items-center justify-between px-3 py-1.5 text-[11px] text-muted-foreground hover:bg-muted/30 sm:px-4">
+            <span>📍 진행 위치 — 클릭으로 이동, 채워진 점 = 작성 완료</span>
+            <span className="tabular-nums">{Math.round(progress)}%</span>
+          </summary>
+          <SlideNavigator slides={slides} currentIdx={index} form={form} onJump={setIndex} />
+        </details>
+      )}
+
       <main className="flex flex-1 items-start justify-center overflow-y-auto overflow-x-hidden px-3 py-4 sm:items-center sm:px-6 sm:py-10">
         <AnimatePresence mode="wait">
           {slide ? (
@@ -1379,13 +1719,33 @@ export default function ResearchReportInterview({
                   {slide.hint}
                 </p>
               )}
+              {/* Sprint 74: bridge 슬라이드일 때 챕터 완료 축하 (5종 매핑된 것만) */}
+              {slide.chapter === "bridge" && BRIDGE_TRANSITIONS[slide.id] && (
+                <div className="mt-4 sm:mt-6">
+                  <ChapterCelebration bridgeId={slide.id} slides={slides} form={form} />
+                </div>
+              )}
+              {/* Sprint 73: 이전 답변 참조 카드 (references 있는 슬라이드에서만) */}
+              {slide.references && slide.references.length > 0 && (
+                <PreviousAnswerCard
+                  references={slide.references}
+                  form={form}
+                  slides={slides}
+                  onJump={setIndex}
+                />
+              )}
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.35 }}
                 className="mt-4 sm:mt-8"
               >
-                {slide.render(form, setField)}
+                {/* Sprint 74: completion-map 은 직접 렌더 (slides+onJump 전달) */}
+                {slide.id === "completion-map" ? (
+                  <ResearchLogicMap form={form} slides={slides} onJump={setIndex} />
+                ) : (
+                  slide.render(form, setField)
+                )}
               </motion.div>
               {slide.crossRef && (
                 <motion.div
@@ -1509,6 +1869,157 @@ export default function ResearchReportInterview({
           </div>
         </footer>
       )}
+    </div>
+  );
+}
+
+// Sprint 73: 이전 답변 참조 카드 — 의미상 직전 답변에 의존하는 슬라이드에서 노출
+function PreviousAnswerCard({
+  references, form, slides, onJump,
+}: {
+  references: { slideId: string; getValue?: (form: FormState) => string | null }[];
+  form: FormState;
+  slides: SlideDef[];
+  onJump: (idx: number) => void;
+}) {
+  const items = references.map((ref) => {
+    const targetIdx = slides.findIndex((s) => s.id === ref.slideId);
+    const targetSlide = targetIdx >= 0 ? slides[targetIdx] : null;
+    const value = ref.getValue ? ref.getValue(form) : getSlideAnswerPreview(ref.slideId, form);
+    return { ref, targetIdx, targetSlide, value: value?.trim() ?? "" };
+  });
+
+  // 모든 참조가 비어있으면 가운데 CTA 형태로 안내
+  const allEmpty = items.every((it) => !it.value);
+  if (allEmpty) {
+    const firstRef = items[0];
+    if (!firstRef?.targetSlide || firstRef.targetIdx < 0) return null;
+    return (
+      <div className="mt-3 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-amber-300 bg-amber-50/60 px-4 py-5 text-center sm:py-6">
+        <div className="mb-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-amber-700 sm:h-10 sm:w-10">
+          <Pencil size={16} />
+        </div>
+        <p className="text-sm font-semibold text-amber-900">앞 단계 답변이 비어있어요</p>
+        <p className="mt-1 max-w-md text-[11px] leading-relaxed text-amber-900/80 sm:text-xs">
+          이 질문은 앞서 작성한 <strong>{firstRef.targetSlide.prompt}</strong> 답변을 토대로 풀어가면 더 자연스럽습니다.
+          먼저 그 답변부터 채워보세요.
+        </p>
+        <button
+          type="button"
+          onClick={() => onJump(firstRef.targetIdx)}
+          className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-amber-700 sm:text-sm"
+        >
+          <ArrowRight size={14} />
+          답변하러 가기
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 space-y-1.5">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        💭 앞서 작성한 답변
+      </p>
+      {items.filter((it) => it.value).map((it) => (
+        <div
+          key={it.ref.slideId}
+          className="flex items-start gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2"
+        >
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-medium text-muted-foreground">
+              {it.targetSlide?.prompt ?? it.ref.slideId}
+            </p>
+            <p className="mt-0.5 line-clamp-2 text-xs text-foreground/90">{it.value}</p>
+          </div>
+          {it.targetIdx >= 0 && (
+            <button
+              type="button"
+              onClick={() => onJump(it.targetIdx)}
+              className="shrink-0 inline-flex items-center gap-0.5 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-medium text-slate-700 hover:bg-slate-100"
+              title="이 답변을 수정하러 가기"
+            >
+              <Pencil size={10} />
+              수정
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Sprint 73: 챕터별 dot navigator + 미작성 색상 + 클릭 점프
+function SlideNavigator({
+  slides, currentIdx, form, onJump,
+}: {
+  slides: SlideDef[];
+  currentIdx: number;
+  form: FormState;
+  onJump: (idx: number) => void;
+}) {
+  // chapter별 그룹
+  const groups = useMemo(() => {
+    const map = new Map<Chapter, { slide: SlideDef; idx: number }[]>();
+    slides.forEach((s, idx) => {
+      if (s.chapter === "bridge") return; // bridge 는 별도 처리 안 함
+      const arr = map.get(s.chapter) ?? [];
+      arr.push({ slide: s, idx });
+      map.set(s.chapter, arr);
+    });
+    return REAL_CHAPTERS
+      .filter((c) => map.has(c))
+      .map((c) => ({ chapter: c, items: map.get(c) ?? [] }));
+  }, [slides]);
+
+  return (
+    <div className="space-y-1.5 px-3 pb-2 pt-1.5 sm:px-4">
+      {groups.map(({ chapter, items }) => {
+        const meta = CHAPTER_META[chapter];
+        const Icon = meta.icon;
+        const answeredCount = items.filter((it) => isSlideAnswered(it.slide.id, form)).length;
+        return (
+          <div key={chapter} className="flex items-center gap-2">
+            <div className="flex w-32 shrink-0 items-center gap-1.5 text-[11px]">
+              <Icon size={11} className="text-muted-foreground" />
+              <span className="truncate font-medium">{meta.label}</span>
+              <span className="ml-auto text-[10px] tabular-nums text-muted-foreground">
+                {answeredCount}/{items.length}
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {items.map(({ slide, idx }) => {
+                const answered = isSlideAnswered(slide.id, form);
+                const isCurrent = idx === currentIdx;
+                return (
+                  <button
+                    key={slide.id}
+                    type="button"
+                    onClick={() => onJump(idx)}
+                    title={`Q${idx + 1}. ${slide.prompt}`}
+                    aria-label={`Q${idx + 1} ${answered ? "(작성)" : "(미작성)"}: ${slide.prompt}`}
+                    className={cn(
+                      "h-5 w-5 rounded-full border transition-all sm:h-6 sm:w-6",
+                      isCurrent
+                        ? "border-primary bg-primary/30 ring-2 ring-primary/40"
+                        : answered
+                        ? "border-emerald-500 bg-emerald-500"
+                        : "border-slate-300 bg-white hover:border-slate-400 hover:bg-slate-50",
+                    )}
+                  >
+                    {answered && !isCurrent && (
+                      <CheckCircle2 size={10} className="mx-auto text-white sm:hidden" />
+                    )}
+                    {answered && !isCurrent && (
+                      <CheckCircle2 size={12} className="mx-auto hidden text-white sm:block" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

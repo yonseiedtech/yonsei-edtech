@@ -76,6 +76,8 @@ export interface FormState {
   envTransfer: string;
   envConstraint: string;
   taskDecompose: string;
+  // Sprint 75 F5: 단계 list (legacy taskDecompose 와 호환)
+  taskSteps: string[];
   outcomeMagerABCD: string;
   // Sprint 72 F4: Mager ABCD 분리 (legacy outcomeMagerABCD 와 호환)
   outcomeMagerA: string;
@@ -154,6 +156,7 @@ const EMPTY: FormState = {
   envTransfer: "",
   envConstraint: "",
   taskDecompose: "",
+  taskSteps: [],
   outcomeMagerABCD: "",
   outcomeMagerA: "",
   outcomeMagerB: "",
@@ -252,6 +255,12 @@ function fromReport(r: ResearchReport | undefined): FormState {
     envTransfer: r.envTransfer ?? "",
     envConstraint: r.envConstraint ?? "",
     taskDecompose: r.taskDecompose ?? "",
+    taskSteps: r.taskSteps && r.taskSteps.length > 0
+      ? r.taskSteps
+      : (r.taskDecompose ?? "")
+          .split(/\r?\n+/)
+          .map((s) => s.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, "").trim())
+          .filter((s) => s.length > 0),
     outcomeMagerABCD: r.outcomeMagerABCD ?? "",
     outcomeMagerA: r.outcomeMagerA ?? "",
     outcomeMagerB: r.outcomeMagerB ?? "",
@@ -322,7 +331,7 @@ function totalChars(form: FormState): number {
     form.outcomeCognitive, form.outcomeSkillAttitude,
     // Sprint 68 — 환경·과제·Mager
     form.envLearning, form.envTransfer, form.envConstraint,
-    form.taskDecompose, form.outcomeMagerABCD,
+    form.taskDecompose, ...(form.taskSteps ?? []), form.outcomeMagerABCD,
     form.outcomeMagerA, form.outcomeMagerB, form.outcomeMagerC, form.outcomeMagerD,
   ];
   let sum = textFields.reduce((s, v) => s + v.length, 0);

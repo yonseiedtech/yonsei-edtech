@@ -689,8 +689,10 @@ export interface ResearchReport {
   envTransfer?: string;
   /** 2-3. Orienting Context — 제약·정책·문화 맥락 */
   envConstraint?: string;
-  /** 4-1. Task Analysis — 학습 과제 위계 분해 (Gagné/Jonassen) */
+  /** 4-1. Task Analysis — 학습 과제 위계 분해 (Gagné/Jonassen) — legacy 단일 textarea */
   taskDecompose?: string;
+  /** Sprint 75 F5: Task Analysis 단계 분리 입력 — 우선시. 비어있으면 taskDecompose 줄단위로 자동 변환 */
+  taskSteps?: string[];
   /** 4-4. Mager ABCD — Audience·Behavior·Condition·Degree 형식 학습 목표 (legacy 단일 필드) */
   outcomeMagerABCD?: string;
   /** Sprint 72 F4: Mager ABCD 분리 입력 — 4 영역별 독립 필드 */
