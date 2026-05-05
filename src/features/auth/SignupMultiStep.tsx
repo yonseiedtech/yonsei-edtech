@@ -1,22 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
 import { toast } from "sonner";
-
-/** SSR 안전한 reduced-motion hook — framer-motion useReducedMotion 의 빌드 호환 대체 */
-function usePrefersReducedMotion(): boolean {
-  const [reduce, setReduce] = useState(false);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduce(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setReduce(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-  return reduce;
-}
 import { useSignupForm } from "./signup-steps/useSignupForm";
 import StepProgress from "./signup-steps/StepProgress";
 import StepNavigation from "./signup-steps/StepNavigation";
@@ -51,15 +36,6 @@ export default function SignupMultiStep({
     useState<EnrollmentStatus>("enrolled");
   const [consents, setConsents] = useState<UserConsents>(buildFreshConsents());
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const reduce = usePrefersReducedMotion();
-  const variants = reduce
-    ? { initial: {}, animate: {}, exit: {} }
-    : {
-        initial: { opacity: 0, y: 16 },
-        animate: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-        exit: { opacity: 0, y: -8, transition: { duration: 0.2 } },
-      };
 
   async function handleNext() {
     if (step === 5) return;
@@ -113,29 +89,21 @@ export default function SignupMultiStep({
     >
       <StepProgress current={step} total={5} />
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={step}
-          variants={variants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-        >
-          {step === 1 && <Step1AccountInfo form={form} />}
-          {step === 2 && (
-            <Step2Academic
-              form={form}
-              enrollmentStatus={enrollmentStatus}
-              setEnrollmentStatus={setEnrollmentStatus}
-            />
-          )}
-          {step === 3 && <Step3Security form={form} />}
-          {step === 4 && <Step4Optional form={form} />}
-          {step === 5 && (
-            <Step5Consents consents={consents} setConsents={setConsents} />
-          )}
-        </motion.div>
-      </AnimatePresence>
+      <div key={step} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+        {step === 1 && <Step1AccountInfo form={form} />}
+        {step === 2 && (
+          <Step2Academic
+            form={form}
+            enrollmentStatus={enrollmentStatus}
+            setEnrollmentStatus={setEnrollmentStatus}
+          />
+        )}
+        {step === 3 && <Step3Security form={form} />}
+        {step === 4 && <Step4Optional form={form} />}
+        {step === 5 && (
+          <Step5Consents consents={consents} setConsents={setConsents} />
+        )}
+      </div>
 
       <StepNavigation
         step={step}
