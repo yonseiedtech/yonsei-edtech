@@ -9,6 +9,7 @@ import {
   CONSENT_LINKS,
   CONSENT_SUMMARIES,
   buildFreshConsents,
+  type ConsentKey,
   type UserConsents,
 } from "@/lib/legal";
 
@@ -17,42 +18,43 @@ interface Step5ConsentsProps {
   setConsents: (next: UserConsents) => void;
 }
 
-const REQUIRED_KEYS: Array<"terms" | "privacy" | "collection"> = [
-  "terms",
-  "privacy",
-  "collection",
-];
-const ALL_KEYS: Array<"terms" | "privacy" | "collection" | "marketing"> = [
-  ...REQUIRED_KEYS,
-  "marketing",
-];
+const REQUIRED_KEYS: ConsentKey[] = ["terms", "privacy", "collection"];
+const ALL_KEYS: ConsentKey[] = [...REQUIRED_KEYS, "marketing"];
+
+function toBoolMap(c: UserConsents) {
+  return {
+    terms: !!c.terms?.agreed,
+    privacy: !!c.privacy?.agreed,
+    collection: !!c.collection?.agreed,
+    marketing: !!c.marketing?.agreed,
+  };
+}
 
 export default function Step5Consents({
   consents,
   setConsents,
 }: Step5ConsentsProps) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const map = toBoolMap(consents);
 
-  const allRequiredOk = REQUIRED_KEYS.every((k) => consents[k]);
-  const allChecked = allRequiredOk && consents.marketing;
+  const allRequiredOk = REQUIRED_KEYS.every((k) => map[k]);
+  const allChecked = allRequiredOk && map.marketing;
 
   function toggleAll() {
     const next = !allChecked;
-    if (next) {
-      setConsents({
-        ...buildFreshConsents(),
-        terms: true,
-        privacy: true,
-        collection: true,
-        marketing: true,
-      });
-    } else {
-      setConsents(buildFreshConsents());
-    }
+    setConsents(
+      buildFreshConsents({
+        terms: next,
+        privacy: next,
+        collection: next,
+        marketing: next,
+      }),
+    );
   }
 
-  function toggleOne(key: "terms" | "privacy" | "collection" | "marketing") {
-    setConsents({ ...consents, [key]: !consents[key] });
+  function toggleOne(key: ConsentKey) {
+    const nextMap = { ...map, [key]: !map[key] };
+    setConsents(buildFreshConsents(nextMap));
   }
 
   function toggleExpand(key: string) {
@@ -86,7 +88,9 @@ export default function Step5Consents({
             allChecked ? "border-primary bg-primary" : "border-input",
           )}
         >
-          {allChecked && <Check size={12} className="text-primary-foreground" />}
+          {allChecked && (
+            <Check size={12} className="text-primary-foreground" />
+          )}
         </span>
         <span className="font-semibold">전체 동의 (마케팅 수신 포함)</span>
       </button>
@@ -95,13 +99,12 @@ export default function Step5Consents({
       <ul className="space-y-2">
         {ALL_KEYS.map((key) => {
           const required = key !== "marketing";
-          const checked = !!consents[key];
+          const checked = map[key];
           const isOpen = !!expanded[key];
+          const summary = CONSENT_SUMMARIES[key];
+          const link = CONSENT_LINKS[key];
           return (
-            <li
-              key={key}
-              className="rounded-lg border bg-card"
-            >
+            <li key={key} className="rounded-lg border bg-card">
               <div className="flex items-center gap-2 px-3 py-2.5">
                 <button
                   type="button"
@@ -121,16 +124,18 @@ export default function Step5Consents({
                 </button>
                 <div className="flex-1">
                   <span className="text-sm font-medium">
-                    {required && <span className="text-destructive">[필수] </span>}
+                    {required && (
+                      <span className="text-destructive">[필수] </span>
+                    )}
                     {!required && (
                       <span className="text-muted-foreground">[선택] </span>
                     )}
                     {CONSENT_LABELS[key]}
                   </span>
                 </div>
-                {CONSENT_LINKS[key] && (
+                {link && (
                   <Link
-                    href={CONSENT_LINKS[key]!}
+                    href={link}
                     target="_blank"
                     className="text-xs text-primary hover:underline"
                   >
@@ -143,13 +148,20 @@ export default function Step5Consents({
                   className="rounded p-1 text-muted-foreground hover:bg-muted"
                   aria-label="요약 펼침"
                 >
-                  {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  {isOpen ? (
+                    <ChevronUp size={14} />
+                  ) : (
+                    <ChevronDown size={14} />
+                  )}
                 </button>
               </div>
               {isOpen && (
-                <p className="border-t px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
-                  {CONSENT_SUMMARIES[key]}
-                </p>
+                <div className="border-t px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
+                  <p className="font-medium text-foreground">
+                    {summary.oneLine}
+                  </p>
+                  <p className="mt-1.5">{summary.body}</p>
+                </div>
               )}
             </li>
           );
@@ -158,7 +170,7 @@ export default function Step5Consents({
 
       {!allRequiredOk && (
         <p className="text-xs text-muted-foreground">
-          * 필수 항목 모두 동의 시 "가입 완료" 버튼이 활성화됩니다.
+          * 필수 항목 모두 동의 시 &quot;가입 완료&quot; 버튼이 활성화됩니다.
         </p>
       )}
     </section>

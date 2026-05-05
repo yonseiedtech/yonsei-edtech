@@ -11,8 +11,6 @@ const ENROLLMENT_OPTIONS: EnrollmentStatus[] = [
   "enrolled",
   "on_leave",
   "graduated",
-  "applicant",
-  "external",
 ];
 
 const ENROLLMENT_YEAR_OPTIONS = Array.from({ length: 15 }, (_, i) => 2026 - i);

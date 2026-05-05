@@ -34,7 +34,9 @@ export default function SignupMultiStep({
   const [step, setStep] = useState<StepNum>(1);
   const [enrollmentStatus, setEnrollmentStatus] =
     useState<EnrollmentStatus>("enrolled");
-  const [consents, setConsents] = useState<UserConsents>(buildFreshConsents());
+  const [consents, setConsents] = useState<UserConsents>(
+    buildFreshConsents({ terms: false, privacy: false, collection: false }),
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleNext() {
@@ -51,8 +53,11 @@ export default function SignupMultiStep({
     setStep((s) => Math.max(1, s - 1) as StepNum);
   }
 
-  const canProceed =
-    consents.terms && consents.privacy && consents.collection;
+  const canProceed = !!(
+    consents.terms?.agreed &&
+    consents.privacy?.agreed &&
+    consents.collection?.agreed
+  );
 
   async function handleSubmit() {
     if (!canProceed) {
