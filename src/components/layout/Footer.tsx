@@ -16,7 +16,7 @@ export default function Footer() {
   const { user } = useAuthStore();
 
   return (
-    <footer className="border-t bg-slate-900 text-slate-300">
+    <footer className="border-t bg-gradient-to-b from-[hsl(212,80%,15%)] via-slate-900 to-[hsl(212,40%,8%)] text-slate-300">
       <div className="mx-auto max-w-6xl px-4 py-12">
         <div className="grid gap-8 md:grid-cols-3">
           {/* Logo & Description */}
