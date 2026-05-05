@@ -816,5 +816,14 @@ service cloud.firestore {
         && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isAuthenticated() && isAdmin();
     }
+
+    // ─── Yonsei Agent Jobs (학회 도메인 에이전트 v2) ───
+    // 본인 작업만 read/list 가능. create/update/delete 는 모두 서버(Admin SDK)만 수행.
+    // 칸반 페이지에서 onSnapshot 으로 실시간 구독.
+    match /agent_jobs/{docId} {
+      allow read, list: if isAuthenticated()
+        && (resource == null || resource.data.userId == request.auth.uid);
+      allow create, update, delete: if false;
+    }
   }
 }
