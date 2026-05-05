@@ -193,7 +193,7 @@ export default function AgentsPage() {
         <Bot size={36} className="mx-auto text-primary" />
         <h1 className="mt-4 text-2xl font-bold">에이전트 워크플로우</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          학회 회원 전용 기능입니다. 로그인 후 이용해 주세요.
+          학회 운영 자동화 도구 — 관리자 전용 영역입니다. 로그인 후 이용해 주세요.
         </p>
         <div className="mt-6 flex items-center justify-center gap-2">
           <Link
@@ -202,18 +202,34 @@ export default function AgentsPage() {
           >
             로그인
           </Link>
-          <Link
-            href="/signup"
-            className="inline-flex h-10 items-center rounded-lg border border-input bg-card px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-          >
-            회원가입
-          </Link>
         </div>
       </div>
     );
   }
 
   const userRoleLevel = ROLE_HIERARCHY[user.role] ?? 0;
+  const ADMIN_LEVEL = ROLE_HIERARCHY["admin"] ?? 0;
+
+  // 관리자 미만 접근 차단
+  if (userRoleLevel < ADMIN_LEVEL) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-16 text-center">
+        <Lock size={36} className="mx-auto text-muted-foreground" />
+        <h1 className="mt-4 text-2xl font-bold">관리자 전용 영역</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          에이전트 워크플로우는 학회 운영 자동화 도구로, 관리자(admin) 이상만 사용할 수 있습니다.
+        </p>
+        <div className="mt-6">
+          <Link
+            href="/"
+            className="inline-flex h-10 items-center rounded-lg border border-input bg-card px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+          >
+            홈으로
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // 에이전트를 카테고리별로 그룹화
   const agentsByCategory = YONSEI_AGENTS.reduce<
@@ -241,9 +257,12 @@ export default function AgentsPage() {
         <div className="flex items-center gap-2">
           <Bot size={22} className="text-primary" />
           <h1 className="text-2xl font-bold">에이전트 워크플로우</h1>
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+            관리자
+          </span>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
-          학회 데이터를 활용해 자동화 작업을 수행하는 AI 에이전트입니다.
+          학회 운영 업무를 자동화하는 AI 에이전트입니다.
           카드를 클릭해 실행하면 아래 칸반에 실시간으로 진행 상황이 표시됩니다.
         </p>
       </header>
