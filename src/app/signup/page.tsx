@@ -1,28 +1,25 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
-import SignupForm from "@/features/auth/SignupForm";
-import ConsentSteps from "@/components/auth/ConsentSteps";
-import type { UserConsents } from "@/lib/legal";
-
-type Step = "consent" | "form" | "done";
+import SignupMultiStep from "@/features/auth/SignupMultiStep";
 
 function SignupContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const defaultName = searchParams.get("name") || undefined;
   const defaultStudentId = searchParams.get("studentId") || undefined;
   const nextParam = searchParams.get("next") || "";
-  const safeNext = nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "";
-  const [step, setStep] = useState<Step>("consent");
-  const [consents, setConsents] = useState<UserConsents | undefined>(undefined);
+  const safeNext =
+    nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "";
+  const [done, setDone] = useState(false);
 
-  if (step === "done") {
-    const loginHref = safeNext ? `/login?next=${encodeURIComponent(safeNext)}` : "/login";
+  if (done) {
+    const loginHref = safeNext
+      ? `/login?next=${encodeURIComponent(safeNext)}`
+      : "/login";
     return (
       <div className="flex min-h-[70vh] items-center justify-center px-4">
         <div className="max-w-md text-center">
@@ -50,38 +47,19 @@ function SignupContent() {
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-2xl">
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-bold">회원가입</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            {step === "consent"
-              ? "먼저 약관을 확인하고 동의해주세요"
-              : "연세교육공학회 회원으로 가입하세요"}
+            연세교육공학회 회원으로 가입하세요
           </p>
         </div>
 
-        {step === "consent" && (
-          <div className="rounded-2xl border bg-card p-6 shadow-sm">
-            <ConsentSteps
-              mode="signup"
-              onComplete={(c) => {
-                setConsents(c);
-                setStep("form");
-              }}
-              onCancel={() => router.push("/")}
-              cancelLabel="취소"
-            />
-          </div>
-        )}
-
-        {step === "form" && (
-          <SignupForm
-            initialConsents={consents}
-            onSuccess={() => setStep("done")}
-            defaultName={defaultName}
-            defaultStudentId={defaultStudentId}
-          />
-        )}
+        <SignupMultiStep
+          onSuccess={() => setDone(true)}
+          defaultName={defaultName}
+          defaultStudentId={defaultStudentId}
+        />
       </div>
     </div>
   );
