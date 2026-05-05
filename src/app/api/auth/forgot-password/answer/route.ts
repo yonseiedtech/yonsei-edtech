@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createHash } from "crypto";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
+import { forgotPasswordAnswerSchema } from "@/lib/api-validators";
 
 // Sprint 69: brute-force 비용 상승을 위한 rate-limit 대폭 강화
 // 30분 5회. securityAnswerHash 가 sha256(salt 미적용) 인 동안 leak 시 피해 최소화.
@@ -34,22 +35,19 @@ export async function POST(req: NextRequest) {
     req.headers.get("x-real-ip") ||
     "unknown";
 
-  let body: {
-    name?: string;
-    username?: string;
-    birthDate?: string;
-    answer?: string;
-  };
+  let raw: unknown;
   try {
-    body = await req.json();
+    raw = await req.json();
   } catch {
     return Response.json({ ok: false }, { status: 400 });
   }
 
-  const { name, username, birthDate, answer } = body;
-  if (!name || !username || !birthDate || !answer) {
+  // 보안 응답 통일 — schema 실패 시 401
+  const parsed = forgotPasswordAnswerSchema.safeParse(raw);
+  if (!parsed.success) {
     return Response.json({ ok: false }, { status: 401 });
   }
+  const { name, username, birthDate, answer } = parsed.data;
 
   const rateKey = `${ip}:${username}`;
   if (!rateLimit(rateKey)) {

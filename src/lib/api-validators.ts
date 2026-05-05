@@ -74,3 +74,20 @@ export const newsletterEmailSchema = z.object({
     )
     .optional(),
 });
+
+/**
+ * forgot-password 보안 라우트용 — 검증 실패 시 401(보안 응답 통일)을 반환하는 헬퍼.
+ * parseJsonBody는 400을 자동 반환하므로 보안 라우트에는 직접 safeParse 사용.
+ */
+export const forgotPasswordVerifySchema = z.object({
+  name: z.string().min(1),
+  username: z.string().min(1),
+  birthDate: z.string().min(1),
+});
+
+export const forgotPasswordAnswerSchema = z.object({
+  name: z.string().min(1),
+  username: z.string().min(1),
+  birthDate: z.string().min(1),
+  answer: z.string().min(1),
+});

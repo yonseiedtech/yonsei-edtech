@@ -1,21 +1,24 @@
 import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { forgotPasswordVerifySchema } from "@/lib/api-validators";
 
 export async function POST(req: NextRequest) {
   // 응답 시간 일정화
   await new Promise((r) => setTimeout(r, 300));
 
-  let body: { name?: string; username?: string; birthDate?: string };
+  let raw: unknown;
   try {
-    body = await req.json();
+    raw = await req.json();
   } catch {
     return Response.json({ ok: false }, { status: 400 });
   }
 
-  const { name, username, birthDate } = body;
-  if (!name || !username || !birthDate) {
+  // 보안 응답 통일 — schema 실패 시 401 (입력 형식까지 노출 안 함)
+  const parsed = forgotPasswordVerifySchema.safeParse(raw);
+  if (!parsed.success) {
     return Response.json({ ok: false }, { status: 401 });
   }
+  const { name, username, birthDate } = parsed.data;
 
   try {
     const db = getAdminDb();
