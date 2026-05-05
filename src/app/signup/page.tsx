@@ -3,9 +3,23 @@
 import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
-import { CheckCircle } from "lucide-react";
-import SignupMultiStep from "@/features/auth/SignupMultiStep";
+import { CheckCircle, Loader2 } from "lucide-react";
+
+// SignupMultiStep은 framer-motion useReducedMotion을 사용하므로 SSR 비활성 (Vercel build 호환)
+const SignupMultiStep = dynamic(
+  () => import("@/features/auth/SignupMultiStep"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex min-h-[200px] items-center justify-center rounded-2xl border bg-card p-8 text-muted-foreground">
+        <Loader2 size={20} className="mr-2 animate-spin" />
+        회원가입 폼 불러오는 중…
+      </div>
+    ),
+  },
+);
 
 function SignupContent() {
   const searchParams = useSearchParams();
