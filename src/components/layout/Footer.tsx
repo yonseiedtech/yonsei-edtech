@@ -89,8 +89,13 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 border-t border-slate-700 pt-6 text-center text-xs text-slate-500">
-          &copy; 2025 연세교육공학회 (Yonsei EdTech). All rights reserved.
+        <div className="mt-8 flex flex-col items-center justify-center gap-3 border-t border-slate-700 pt-6 text-xs text-slate-500 sm:flex-row sm:gap-4">
+          <p>&copy; 2025 연세교육공학회 (Yonsei EdTech). All rights reserved.</p>
+          <div className="flex items-center gap-3">
+            <Link href="/terms" className="hover:text-slate-300">이용약관</Link>
+            <span aria-hidden>·</span>
+            <Link href="/privacy" className="hover:text-slate-300">개인정보처리방침</Link>
+          </div>
         </div>
       </div>
     </footer>
