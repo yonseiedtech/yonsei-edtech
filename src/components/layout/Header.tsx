@@ -19,36 +19,70 @@ interface NavLink {
   label: string;
 }
 
+interface NavSection {
+  /** sub-section 헤더 라벨 (옵셔널). 없으면 헤더 없이 링크만 렌더 */
+  sectionLabel?: string;
+  links: NavLink[];
+}
+
 interface NavGroup {
   label: string;
-  items: NavLink[];
+  /** 평탄 구조 — 단일 sub-section과 동일. items 또는 sections 중 하나만 사용 */
+  items?: NavLink[];
+  /** sub-section 분리 구조 — 청자/카테고리 구분 시 사용 */
+  sections?: NavSection[];
+}
+
+/** NavGroup 의 모든 링크를 sections 구조로 정규화 */
+function getSections(group: NavGroup): NavSection[] {
+  if (group.sections && group.sections.length > 0) return group.sections;
+  return [{ links: group.items ?? [] }];
+}
+
+/** NavGroup 의 모든 링크를 평탄화 */
+function getAllLinks(group: NavGroup): NavLink[] {
+  return getSections(group).flatMap((s) => s.links);
 }
 
 const PUBLIC_NAV: NavGroup[] = [
   {
     label: "학회소개",
-    items: [
-      { href: "/about/greeting", label: "인사말" },
-      { href: "/about", label: "학회 소개" },
-      { href: "/about/fields", label: "활동 분야" },
-      { href: "/about/history", label: "연혁" },
-    ],
-  },
-  {
-    label: "구성원",
-    items: [
-      { href: "/members?tab=professor", label: "주임교수" },
-      { href: "/members?tab=staff", label: "운영진" },
-      { href: "/members?tab=student", label: "재학생 회원" },
-      { href: "/members?tab=alumni", label: "졸업생 회원" },
+    sections: [
+      {
+        links: [
+          { href: "/about/greeting", label: "인사말" },
+          { href: "/about", label: "학회 소개" },
+          { href: "/about/fields", label: "활동 분야" },
+          { href: "/about/history", label: "연혁" },
+        ],
+      },
+      {
+        sectionLabel: "주요 구성원",
+        links: [
+          { href: "/members?tab=professor", label: "주임교수" },
+          { href: "/members?tab=staff", label: "운영진" },
+        ],
+      },
     ],
   },
   {
     label: "대학원 생활",
-    items: [
-      { href: "/steppingstone", label: "인지디딤판" },
-      { href: "/courses", label: "내 수강과목" },
-      { href: "/mypage/calendar", label: "캘린더" },
+    sections: [
+      {
+        sectionLabel: "학사 도구",
+        links: [
+          { href: "/steppingstone", label: "인지디딤판" },
+          { href: "/courses", label: "내 수강과목" },
+          { href: "/mypage/calendar", label: "캘린더" },
+        ],
+      },
+      {
+        sectionLabel: "구성원",
+        links: [
+          { href: "/members?tab=student", label: "재학생 회원" },
+          { href: "/members?tab=alumni", label: "졸업생 회원" },
+        ],
+      },
     ],
   },
   {
@@ -104,8 +138,10 @@ function NavDropdown({ group }: { group: NavGroup }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const isSingle = group.items.length === 1;
-  const isGroupActive = group.items.some((item) => isItemActive(pathname, item.href));
+  const sections = getSections(group);
+  const allLinks = getAllLinks(group);
+  const isSingle = allLinks.length === 1;
+  const isGroupActive = allLinks.some((item) => isItemActive(pathname, item.href));
 
   useEffect(() => {
     return () => clearTimeout(timeout.current);
@@ -134,7 +170,7 @@ function NavDropdown({ group }: { group: NavGroup }) {
   }, [open]);
 
   if (isSingle) {
-    const item = group.items[0];
+    const item = allLinks[0];
     const isActive = isItemActive(pathname, item.href);
     return (
       <Link
@@ -175,25 +211,37 @@ function NavDropdown({ group }: { group: NavGroup }) {
         <div
           role="menu"
           aria-label={group.label}
-          className="absolute left-0 top-full z-50 mt-1 min-w-[140px] rounded-lg border bg-popover py-1 shadow-lg"
+          className="absolute left-0 top-full z-50 mt-1 min-w-[160px] rounded-lg border bg-popover py-1 shadow-lg"
         >
-          {group.items.map((item) => {
-            const isActive = isItemActive(pathname, item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                role="menuitem"
-                className={cn(
-                  "block px-4 py-2 text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:bg-muted",
-                  isActive ? "font-semibold text-primary" : "text-muted-foreground",
-                )}
-                onClick={() => setOpen(false)}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
+          {sections.map((section, sIdx) => (
+            <div key={section.sectionLabel ?? `__section_${sIdx}`}>
+              {section.sectionLabel && (
+                <>
+                  {sIdx > 0 && <div className="my-1 border-t border-border/50" />}
+                  <div className="px-4 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                    {section.sectionLabel}
+                  </div>
+                </>
+              )}
+              {section.links.map((item) => {
+                const isActive = isItemActive(pathname, item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    role="menuitem"
+                    className={cn(
+                      "block px-4 py-2 text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:bg-muted",
+                      isActive ? "font-semibold text-primary" : "text-muted-foreground",
+                    )}
+                    onClick={() => setOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -284,29 +332,39 @@ function UserDropdown() {
 /* ── Mobile group ── */
 function MobileNavGroup({ group, onClose }: { group: NavGroup; onClose: () => void }) {
   const pathname = usePathname();
+  const sections = getSections(group);
 
   return (
     <div>
       <div className="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
         {group.label}
       </div>
-      {group.items.map((item) => {
-        const isActive = isItemActive(pathname, item.href);
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onClose}
-            aria-current={isActive ? "page" : undefined}
-            className={cn(
-              "block rounded-lg px-3 py-2 pl-6 text-sm font-medium transition-colors",
-              isActive ? "bg-primary/10 font-semibold text-primary" : "text-muted-foreground hover:bg-muted",
-            )}
-          >
-            {item.label}
-          </Link>
-        );
-      })}
+      {sections.map((section, sIdx) => (
+        <div key={section.sectionLabel ?? `__section_${sIdx}`}>
+          {section.sectionLabel && (
+            <div className="px-6 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">
+              {section.sectionLabel}
+            </div>
+          )}
+          {section.links.map((item) => {
+            const isActive = isItemActive(pathname, item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onClose}
+                aria-current={isActive ? "page" : undefined}
+                className={cn(
+                  "block rounded-lg px-3 py-2 pl-6 text-sm font-medium transition-colors",
+                  isActive ? "bg-primary/10 font-semibold text-primary" : "text-muted-foreground hover:bg-muted",
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+      ))}
     </div>
   );
 }
