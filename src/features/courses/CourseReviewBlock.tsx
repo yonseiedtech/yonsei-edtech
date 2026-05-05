@@ -182,7 +182,7 @@ export default function CourseReviewBlock({
             <p className="text-[11px] text-muted-foreground">불러오는 중…</p>
           ) : (
             reviews.map((r) => (
-              <div key={r.id} className="rounded border bg-white p-2">
+              <div key={r.id} className="rounded border bg-card p-2">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
@@ -265,7 +265,7 @@ export default function CourseReviewBlock({
                       type="button"
                       onClick={() => handleHelpful(r)}
                       disabled={!user || (r.helpfulBy ?? []).includes(user?.id ?? "")}
-                      className="inline-flex items-center gap-0.5 rounded-md border bg-white px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-muted disabled:opacity-50"
+                      className="inline-flex items-center gap-0.5 rounded-md border bg-card px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-muted disabled:opacity-50"
                     >
                       <ThumbsUp size={10} />
                       {r.helpfulCount ?? 0}
@@ -274,7 +274,7 @@ export default function CourseReviewBlock({
                       <button
                         type="button"
                         onClick={() => handleDelete(r)}
-                        className="inline-flex items-center gap-0.5 rounded-md border border-destructive/30 bg-white px-1.5 py-0.5 text-[10px] text-destructive hover:bg-destructive/5"
+                        className="inline-flex items-center gap-0.5 rounded-md border border-destructive/30 bg-card px-1.5 py-0.5 text-[10px] text-destructive hover:bg-destructive/5"
                       >
                         <Trash2 size={10} />
                       </button>
@@ -434,7 +434,7 @@ function ReviewComposeDialog({
                 value={profName}
                 onChange={(e) => setProfName(e.target.value)}
                 placeholder="담당 교수"
-                className="mt-1 h-9 w-full rounded-md border bg-white px-2 text-sm"
+                className="mt-1 h-9 w-full rounded-md border bg-card px-2 text-sm"
               />
             </div>
           </div>
@@ -497,7 +497,7 @@ function ReviewComposeDialog({
                 type="number"
                 value={year}
                 onChange={(e) => setYear(Number(e.target.value))}
-                className="mt-1 h-9 w-full rounded-md border bg-white px-2 text-sm"
+                className="mt-1 h-9 w-full rounded-md border bg-card px-2 text-sm"
                 min={2000}
                 max={2100}
               />
@@ -507,7 +507,7 @@ function ReviewComposeDialog({
               <select
                 value={term}
                 onChange={(e) => setTerm(e.target.value as SemesterTerm)}
-                className="mt-1 h-9 w-full rounded-md border bg-white px-2 text-sm"
+                className="mt-1 h-9 w-full rounded-md border bg-card px-2 text-sm"
               >
                 <option value="spring">봄학기 (전기)</option>
                 <option value="fall">가을학기 (후기)</option>
@@ -525,7 +525,7 @@ function ReviewComposeDialog({
                 <select
                   value={midtermType}
                   onChange={(e) => setMidtermType(e.target.value as ExamType)}
-                  className="mt-1 h-9 w-full rounded-md border bg-white px-2 text-sm"
+                  className="mt-1 h-9 w-full rounded-md border bg-card px-2 text-sm"
                 >
                   {Object.entries(EXAM_TYPE_LABELS).map(([k, label]) => (
                     <option key={k} value={k}>
@@ -539,7 +539,7 @@ function ReviewComposeDialog({
                 <select
                   value={finalType}
                   onChange={(e) => setFinalType(e.target.value as ExamType)}
-                  className="mt-1 h-9 w-full rounded-md border bg-white px-2 text-sm"
+                  className="mt-1 h-9 w-full rounded-md border bg-card px-2 text-sm"
                 >
                   {Object.entries(EXAM_TYPE_LABELS).map(([k, label]) => (
                     <option key={k} value={k}>
@@ -568,7 +568,7 @@ function ReviewComposeDialog({
                   value={assignmentType}
                   onChange={(e) => setAssignmentType(e.target.value)}
                   placeholder="개인 보고서 / 팀 프로젝트 / 발표 등"
-                  className="mt-1 h-9 w-full rounded-md border bg-white px-2 text-sm"
+                  className="mt-1 h-9 w-full rounded-md border bg-card px-2 text-sm"
                 />
               </div>
               <div>
@@ -576,7 +576,7 @@ function ReviewComposeDialog({
                 <select
                   value={assignmentFrequency}
                   onChange={(e) => setAssignmentFrequency(e.target.value as AssignmentFrequency)}
-                  className="mt-1 h-9 w-full rounded-md border bg-white px-2 text-sm"
+                  className="mt-1 h-9 w-full rounded-md border bg-card px-2 text-sm"
                 >
                   {Object.entries(ASSIGNMENT_FREQUENCY_LABELS).map(([k, label]) => (
                     <option key={k} value={k}>
@@ -604,7 +604,7 @@ function ReviewComposeDialog({
               value={recommendedFor}
               onChange={(e) => setRecommendedFor(e.target.value)}
               placeholder="예: 1학기 신입생 / 통계 배경 있는 학생 / 학부 청강생"
-              className="mt-1 h-9 w-full rounded-md border bg-white px-2 text-sm"
+              className="mt-1 h-9 w-full rounded-md border bg-card px-2 text-sm"
             />
           </div>
 

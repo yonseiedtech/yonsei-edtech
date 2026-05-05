@@ -201,7 +201,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
 
       {showPreview ? (
         /* ── 미리보기 ── */
-        <div className="mt-6 rounded-2xl border bg-white p-8">
+        <div className="mt-6 rounded-2xl border bg-card p-8">
           <div className="flex items-center gap-2">
             <Badge variant="secondary">{CATEGORY_LABELS[category]}</Badge>
           </div>
@@ -226,7 +226,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
         /* ── 편집 폼 ── */
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="mt-6 space-y-4 rounded-2xl border bg-white p-8"
+          className="mt-6 space-y-4 rounded-2xl border bg-card p-8"
         >
           {!lockCategory && (
             <div>
@@ -323,7 +323,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
                 내 논문 읽기에 저장한 논문에서 가져오거나 메타데이터를 직접 입력하세요. 다른 회원이 이 글에서 논문을 자기 읽기 목록에 저장할 수 있습니다.
               </p>
               {linkedPaper ? (
-                <div className="mt-3 rounded-lg border bg-white p-3">
+                <div className="mt-3 rounded-lg border bg-card p-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">

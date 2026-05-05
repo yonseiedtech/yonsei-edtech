@@ -941,7 +941,7 @@ export default function DailyClassTimelineWidget() {
       : `${weekDates[0]?.getMonth() + 1}/${weekDates[0]?.getDate()} ~ ${weekDates[6]?.getMonth() + 1}/${weekDates[6]?.getDate()} · ${semesterLabel}`;
 
   return (
-    <div className="rounded-2xl border bg-white p-6">
+    <div className="rounded-2xl border bg-card p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <CalendarClock size={18} className="text-primary" />
@@ -1082,7 +1082,7 @@ export default function DailyClassTimelineWidget() {
                   const time = fmtTimeRange(parsed);
                   const meta = [days, time].filter(Boolean).join(" ");
                   return (
-                    <li key={c.id} className="flex items-center justify-between gap-2 rounded-md border bg-white px-2.5 py-1.5">
+                    <li key={c.id} className="flex items-center justify-between gap-2 rounded-md border bg-card px-2.5 py-1.5">
                       <span className="truncate">
                         <b className="font-medium">{c.courseName}</b>
                         {meta && <span className="ml-1.5 text-muted-foreground">· {meta || c.schedule}</span>}
@@ -1100,7 +1100,7 @@ export default function DailyClassTimelineWidget() {
               <button
                 type="button"
                 onClick={() => handleSetView("weekly")}
-                className="mt-3 inline-flex items-center gap-1 rounded-md border bg-white px-3 py-1.5 text-[11px] font-medium text-primary hover:bg-primary/5"
+                className="mt-3 inline-flex items-center gap-1 rounded-md border bg-card px-3 py-1.5 text-[11px] font-medium text-primary hover:bg-primary/5"
               >
                 주간 시간표 보기 →
               </button>
@@ -1223,7 +1223,7 @@ export default function DailyClassTimelineWidget() {
                                   MODE_BADGE[m],
                                   "border-current/30 ring-1 ring-current/30 font-medium",
                                 )
-                              : "border-emerald-200 bg-white text-emerald-700/70 hover:border-emerald-300 hover:bg-emerald-50",
+                              : "border-emerald-200 bg-card text-emerald-700/70 hover:border-emerald-300 hover:bg-emerald-50",
                             isSavingThis && !saving && "opacity-50",
                           )}
                         >
@@ -1337,7 +1337,7 @@ export default function DailyClassTimelineWidget() {
                 }
                 rows={6}
                 autoFocus
-                className="w-full rounded-md border bg-white px-3 py-2 text-sm"
+                className="w-full rounded-md border bg-card px-3 py-2 text-sm"
                 placeholder="오늘 수업에서 배운 내용, 느낀 점, 질문 등을 자유롭게 기록하세요."
               />
             </div>
@@ -1489,7 +1489,7 @@ function DailyGrid({
                   href={`/courses/${c.id}/schedule`}
                   aria-label={`${c.courseName} 강의 스케줄로 이동`}
                   className={cn(
-                    "absolute left-3 right-3 block overflow-hidden rounded-xl border border-l-4 bg-white p-3 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer",
+                    "absolute left-3 right-3 block overflow-hidden rounded-xl border border-l-4 bg-card p-3 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer",
                     MODE_BORDER[mode],
                     isCancelled && "opacity-70",
                   )}
@@ -1533,7 +1533,7 @@ function DailyGrid({
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="flex items-center gap-1 rounded-md border bg-white px-2 py-1 text-[11px] font-medium text-primary hover:bg-primary/5"
+                          className="flex items-center gap-1 rounded-md border bg-card px-2 py-1 text-[11px] font-medium text-primary hover:bg-primary/5"
                         >
                           입장 <ExternalLink size={11} />
                         </a>
@@ -1557,7 +1557,7 @@ function DailyGrid({
                 href={`/activities/${typePath}/${activity.id}`}
                 aria-label={`${activity.title} ${progress.week}주차 활동으로 이동`}
                 className={cn(
-                  "absolute left-3 right-3 block overflow-hidden rounded-xl border border-l-4 bg-white p-3 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/40 cursor-pointer",
+                  "absolute left-3 right-3 block overflow-hidden rounded-xl border border-l-4 bg-card p-3 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/40 cursor-pointer",
                   ACTIVITY_MODE_BORDER[mode],
                 )}
                 style={{ top: topPx, height: Math.max(heightPx, 64) }}
@@ -1755,7 +1755,7 @@ function WeeklyGrid({
                       <Link
                         href={`/courses/${c.id}/schedule`}
                         className={cn(
-                          "block h-full overflow-hidden rounded-md border border-l-4 bg-white p-1.5 text-[10px] shadow-sm transition-shadow hover:shadow",
+                          "block h-full overflow-hidden rounded-md border border-l-4 bg-card p-1.5 text-[10px] shadow-sm transition-shadow hover:shadow",
                           MODE_BORDER[mode],
                           isCancelled && "opacity-60",
                         )}
@@ -1790,7 +1790,7 @@ function WeeklyGrid({
                           }}
                           aria-label="변경 기록 삭제 (대면으로 복원)"
                           title="변경 기록 삭제 — 기본 대면으로 복원"
-                          className="absolute right-0.5 top-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full border border-amber-300 bg-white/95 text-amber-700 shadow-sm hover:bg-amber-50"
+                          className="absolute right-0.5 top-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full border border-amber-300 bg-card/95 text-amber-700 shadow-sm hover:bg-amber-50"
                         >
                           <RotateCcw size={10} />
                         </button>
@@ -1806,7 +1806,7 @@ function WeeklyGrid({
                       key={progress.id}
                       href={`/activities/${typePath}/${activity.id}`}
                       className={cn(
-                        "absolute left-1 right-1 overflow-hidden rounded-md border border-l-4 bg-white p-1.5 text-[10px] shadow-sm transition-shadow hover:shadow",
+                        "absolute left-1 right-1 overflow-hidden rounded-md border border-l-4 bg-card p-1.5 text-[10px] shadow-sm transition-shadow hover:shadow",
                         ACTIVITY_MODE_BORDER[mode],
                       )}
                       style={{ top: topPx, height: Math.max(heightPx, 40) }}

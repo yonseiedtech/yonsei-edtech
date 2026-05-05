@@ -103,7 +103,7 @@ function PipelineBar({ registrations, attendees, seminar }: {
   ];
 
   return (
-    <div className="rounded-xl border bg-white p-4">
+    <div className="rounded-xl border bg-card p-4">
       <div className="flex items-center gap-1">
         {steps.map((step, i) => (
           <div key={step.label} className="flex flex-1 items-center">
@@ -215,23 +215,23 @@ function RegistrationAnalysis({
 
       {/* 통계 카드 */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-        <div className="rounded-xl border bg-white p-4 text-center">
+        <div className="rounded-xl border bg-card p-4 text-center">
           <p className="text-2xl font-bold text-blue-600">{total}</p>
           <p className="text-xs text-muted-foreground">총 신청</p>
         </div>
-        <div className="rounded-xl border bg-white p-4 text-center">
+        <div className="rounded-xl border bg-card p-4 text-center">
           <p className="text-2xl font-bold text-primary">{members}</p>
           <p className="text-xs text-muted-foreground">회원</p>
         </div>
-        <div className="rounded-xl border bg-white p-4 text-center">
+        <div className="rounded-xl border bg-card p-4 text-center">
           <p className="text-2xl font-bold text-green-600">{converted}</p>
           <p className="text-xs text-muted-foreground">참석자 전환</p>
         </div>
-        <div className="rounded-xl border bg-white p-4 text-center">
+        <div className="rounded-xl border bg-card p-4 text-center">
           <p className="text-2xl font-bold text-emerald-600">{checkedIn}</p>
           <p className="text-xs text-muted-foreground">실제 출석</p>
         </div>
-        <div className="rounded-xl border bg-white p-4 text-center">
+        <div className="rounded-xl border bg-card p-4 text-center">
           <p className="text-2xl font-bold text-red-500">{cancelled}</p>
           <p className="text-xs text-muted-foreground">취소</p>
         </div>
@@ -239,7 +239,7 @@ function RegistrationAnalysis({
 
       {/* 전환율 / 출석률 */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl border bg-white p-4">
+        <div className="rounded-xl border bg-card p-4">
           <div className="mb-1 flex items-center justify-between text-sm">
             <span>참석 전환율</span>
             <span className="font-medium">{convRate}%</span>
@@ -248,7 +248,7 @@ function RegistrationAnalysis({
             <div className="h-full rounded-full bg-green-500 transition-all" style={{ width: `${convRate}%` }} />
           </div>
         </div>
-        <div className="rounded-xl border bg-white p-4">
+        <div className="rounded-xl border bg-card p-4">
           <div className="mb-1 flex items-center justify-between text-sm">
             <span>실제 출석률</span>
             <span className="font-medium">{checkRate}%</span>
@@ -261,7 +261,7 @@ function RegistrationAnalysis({
 
       {/* 소속별 분포 */}
       {affEntries.length > 1 && (
-        <div className="rounded-xl border bg-white p-5">
+        <div className="rounded-xl border bg-card p-5">
           <h5 className="mb-3 text-sm font-medium">소속별 분포</h5>
           <div className="space-y-2">
             {affEntries.map(([aff, count]) => (
@@ -279,7 +279,7 @@ function RegistrationAnalysis({
 
       {/* 사전 질문/메모 */}
       {questions.length > 0 && (
-        <div className="rounded-xl border bg-white p-5">
+        <div className="rounded-xl border bg-card p-5">
           <h5 className="mb-3 text-sm font-medium">사전 질문/메모 ({questions.length}건)</h5>
           <div className="max-h-60 space-y-2 overflow-y-auto">
             {questions.map((q) => (
@@ -413,7 +413,7 @@ function QuestionManager({ registrations, refetch }: { registrations: SeminarReg
       ) : (
         <div className="space-y-2">
           {withMemo.map((r) => (
-            <div key={r.id} className="rounded-xl border bg-white p-4">
+            <div key={r.id} className="rounded-xl border bg-card p-4">
               {editingId === r.id ? (
                 <div className="space-y-2">
                   <p className="text-xs font-medium">{r.name}</p>
@@ -1099,7 +1099,7 @@ export default function RegistrationsTab() {
       {selectedId && activeTab === "manage" && (
         <div className="space-y-4">
           {/* 등록 버튼 */}
-          <div className="rounded-xl border bg-white p-4">
+          <div className="rounded-xl border bg-card p-4">
             <div className="flex items-center justify-between">
               <h4 className="flex items-center gap-1.5 text-sm font-medium"><UserPlus size={16} />신청자 등록</h4>
               <div className="flex flex-wrap gap-2">
@@ -1135,7 +1135,7 @@ export default function RegistrationsTab() {
           </div>
 
           {/* 신청 목록 */}
-          <div className="rounded-xl border bg-white">
+          <div className="rounded-xl border bg-card">
             <div className="flex items-center justify-between border-b px-4 py-3">
               <span className="text-sm font-medium">신청자 {filteredRegistrations.length}명</span>
               <div className="flex gap-2">
@@ -1217,7 +1217,7 @@ export default function RegistrationsTab() {
           </div>
 
           {/* 사전 질문 관리 */}
-          <div className="rounded-xl border bg-white p-5">
+          <div className="rounded-xl border bg-card p-5">
             <QuestionManager registrations={registrations} refetch={refetch} />
           </div>
         </div>
@@ -1240,7 +1240,7 @@ export default function RegistrationsTab() {
 
       {/* 폼 설정 탭 */}
       {selectedId && activeTab === "settings" && seminarDetail && (
-        <div className="rounded-xl border bg-white p-5">
+        <div className="rounded-xl border bg-card p-5">
           <FormFieldsEditor seminarId={selectedId} fields={(seminarDetail.registrationFields as RegistrationFieldConfig[]) ?? []} autoConvert={seminarDetail.autoConvertRegistration as boolean | undefined} />
         </div>
       )}

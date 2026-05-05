@@ -431,7 +431,7 @@ export default function LearningStreak() {
           disabled={!canPrev}
           className={cn(
             "inline-flex h-8 min-w-[88px] items-center gap-1 rounded-lg border px-2 text-xs transition-colors",
-            canPrev ? "bg-white hover:bg-muted/40" : "cursor-not-allowed bg-muted/30 text-muted-foreground",
+            canPrev ? "bg-card hover:bg-muted/40" : "cursor-not-allowed bg-muted/30 text-muted-foreground",
           )}
           aria-label="이전 학기"
           title={canPrev ? `이전: ${semesterLabel(semesterPrev(semester))}` : "입학 시점 이전으로는 이동할 수 없어요"}
@@ -453,7 +453,7 @@ export default function LearningStreak() {
           disabled={!canNext}
           className={cn(
             "inline-flex h-8 min-w-[88px] items-center justify-end gap-1 rounded-lg border px-2 text-xs transition-colors",
-            canNext ? "bg-white hover:bg-muted/40" : "cursor-not-allowed bg-muted/30 text-muted-foreground",
+            canNext ? "bg-card hover:bg-muted/40" : "cursor-not-allowed bg-muted/30 text-muted-foreground",
           )}
           aria-label="다음 학기"
           title={canNext ? `다음: ${semesterLabel(semesterNext(semester))}` : "현재 학기 이후는 아직 시작되지 않았어요"}

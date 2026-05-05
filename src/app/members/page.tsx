@@ -43,7 +43,7 @@ function ProfessorView() {
   if (isLoading) {
     return (
       <div className="mx-auto max-w-3xl" aria-busy="true" aria-label="주임교수 정보 불러오는 중">
-        <div className="flex flex-col items-center gap-8 rounded-2xl border bg-white p-8 shadow-sm md:flex-row md:items-start md:p-10">
+        <div className="flex flex-col items-center gap-8 rounded-2xl border bg-card p-8 shadow-sm md:flex-row md:items-start md:p-10">
           <Skeleton className="h-52 w-40 shrink-0 rounded-xl" />
           <div className="flex-1 space-y-3">
             <Skeleton className="h-7 w-1/2" />
@@ -63,7 +63,7 @@ function ProfessorView() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <div className="flex flex-col items-center gap-8 rounded-2xl border bg-white p-8 shadow-sm md:flex-row md:items-start md:p-10">
+      <div className="flex flex-col items-center gap-8 rounded-2xl border bg-card p-8 shadow-sm md:flex-row md:items-start md:p-10">
         {prof.photo ? (
           <div className="relative h-52 w-40 shrink-0 overflow-hidden rounded-xl bg-muted">
             <Image src={prof.photo} alt={prof.name} fill className="object-cover" />
@@ -193,7 +193,7 @@ function MembersContent() {
           {activeTab === "professor" ? <ProfessorView /> : isLoading ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4" aria-busy="true" aria-label="구성원 불러오는 중">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="rounded-2xl border bg-white p-6 text-center shadow-sm">
+                <div key={i} className="rounded-2xl border bg-card p-6 text-center shadow-sm">
                   <Skeleton className="mx-auto h-16 w-16 rounded-full" />
                   <Skeleton className="mx-auto mt-4 h-5 w-24" />
                   <Skeleton className="mx-auto mt-2 h-3 w-32" />
@@ -209,7 +209,7 @@ function MembersContent() {
                 </div>
               )}
               {showFilters && (
-                <div className="mb-6 flex flex-col gap-3 rounded-xl border bg-white p-3 sm:flex-row sm:items-center">
+                <div className="mb-6 flex flex-col gap-3 rounded-xl border bg-card p-3 sm:flex-row sm:items-center">
                   <div className="relative flex-1">
                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -224,7 +224,7 @@ function MembersContent() {
                       <select
                         value={generationFilter}
                         onChange={(e) => setGenerationFilter(e.target.value)}
-                        className="rounded-md border bg-white px-3 py-2 text-sm"
+                        className="rounded-md border bg-card px-3 py-2 text-sm"
                         aria-label="기수 필터"
                       >
                         <option value="all">전체 기수</option>
@@ -237,7 +237,7 @@ function MembersContent() {
                       <select
                         value={enrollmentFilter}
                         onChange={(e) => setEnrollmentFilter(e.target.value)}
-                        className="rounded-md border bg-white px-3 py-2 text-sm"
+                        className="rounded-md border bg-card px-3 py-2 text-sm"
                         aria-label="재학 상태 필터"
                       >
                         <option value="all">재학·휴학</option>

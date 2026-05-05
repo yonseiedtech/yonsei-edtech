@@ -11,7 +11,7 @@ interface Props {
 
 export default function ActivityCard({ icon: Icon, category, title, desc, schedule, color }: Props) {
   return (
-    <div className="rounded-2xl border bg-white p-8 shadow-sm transition-shadow hover:shadow-md">
+    <div className="rounded-2xl border bg-card p-8 shadow-sm transition-shadow hover:shadow-md">
       <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl ${color}`}>
         <Icon size={24} />
       </div>

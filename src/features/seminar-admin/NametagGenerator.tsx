@@ -594,7 +594,7 @@ export default function NametagGenerator() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border bg-white p-6 space-y-4">
+      <div className="rounded-xl border bg-card p-6 space-y-4">
         <div>
           <label className="mb-2 block text-sm font-medium">세미나 선택</label>
           <select

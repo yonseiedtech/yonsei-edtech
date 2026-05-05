@@ -93,7 +93,7 @@ export default function AdminAgentTab() {
             {tasks.length === 0 ? (
               <p className="text-sm text-muted-foreground">아직 작업이 없습니다. 에이전트에 작업을 할당해보세요.</p>
             ) : (
-              <div className="rounded-xl border bg-white divide-y">
+              <div className="rounded-xl border bg-card divide-y">
                 {tasks.map((task) => (
                   <TaskListItem
                     key={task.id}

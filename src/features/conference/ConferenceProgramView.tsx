@@ -667,7 +667,7 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                               href={u}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 rounded-md border bg-white px-2 py-0.5 text-xs text-primary hover:bg-primary/5"
+                              className="inline-flex items-center gap-1 rounded-md border bg-card px-2 py-0.5 text-xs text-primary hover:bg-primary/5"
                             >
                               <FileText className="h-3 w-3" /> 사전 자료 {s.materialUrls!.length > 1 ? i + 1 : ""}
                             </a>
@@ -683,7 +683,7 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                             <Badge
                               key={c.id}
                               variant="secondary"
-                              className="bg-white text-[11px] text-purple-800"
+                              className="bg-card text-[11px] text-purple-800"
                             >
                               {c.userName ?? "회원"}
                             </Badge>

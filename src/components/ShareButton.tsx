@@ -99,7 +99,7 @@ export default function ShareButton({ title, text, url, size = "sm" }: ShareButt
       </Button>
 
       {showMenu && (
-        <div className="absolute right-0 top-full z-50 mt-1 w-44 rounded-lg border bg-white p-1.5 shadow-lg">
+        <div className="absolute right-0 top-full z-50 mt-1 w-44 rounded-lg border bg-card p-1.5 shadow-lg">
           <button
             onClick={handleCopyLink}
             className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted"

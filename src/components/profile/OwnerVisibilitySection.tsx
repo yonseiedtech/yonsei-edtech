@@ -40,7 +40,7 @@ export default function OwnerVisibilitySection({ owner }: Props) {
   }
 
   return (
-    <div className="rounded-2xl border bg-white">
+    <div className="rounded-2xl border bg-card">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

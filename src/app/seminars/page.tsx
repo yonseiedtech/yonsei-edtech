@@ -116,7 +116,7 @@ export default function SeminarsPage() {
         </div>
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="inline-flex rounded-lg border bg-white p-1 text-sm shadow-sm">
+          <div className="inline-flex rounded-lg border bg-card p-1 text-sm shadow-sm">
             {(["all", "active", "completed"] as const).map((k) => (
               <button
                 key={k}
@@ -136,7 +136,7 @@ export default function SeminarsPage() {
               </button>
             ))}
           </div>
-          <div className="inline-flex rounded-lg border bg-white p-0.5 shadow-sm">
+          <div className="inline-flex rounded-lg border bg-card p-0.5 shadow-sm">
             <button
               onClick={() => setViewMode("list")}
               className={cn(
@@ -168,7 +168,7 @@ export default function SeminarsPage() {
           {isLoading ? (
             <div className="grid gap-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="rounded-xl border bg-white p-6">
+                <div key={i} className="rounded-xl border bg-card p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">

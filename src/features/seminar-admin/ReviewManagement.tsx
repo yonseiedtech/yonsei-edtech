@@ -236,7 +236,7 @@ export default function ReviewManagement({ seminar }: Props) {
         </h3>
         {speakerToken ? (
           <div className="space-y-2">
-            <div className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2">
+            <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
               <Link2 size={14} className="shrink-0 text-muted-foreground" />
               <span className="flex-1 truncate text-xs text-muted-foreground">
                 /seminars/{seminar.id}/speaker-review?token={speakerToken.slice(0, 8)}...
@@ -286,15 +286,15 @@ export default function ReviewManagement({ seminar }: Props) {
       {section === "stats" && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
-            <div className="rounded-lg border bg-white p-3 text-center">
+            <div className="rounded-lg border bg-card p-3 text-center">
               <p className="text-2xl font-bold">{stats.total}</p>
               <p className="text-xs text-muted-foreground">총 후기</p>
             </div>
-            <div className="rounded-lg border bg-white p-3 text-center">
+            <div className="rounded-lg border bg-card p-3 text-center">
               <p className="text-2xl font-bold text-amber-500">★ {stats.avgRating}</p>
               <p className="text-xs text-muted-foreground">평균 평점</p>
             </div>
-            <div className="rounded-lg border bg-white p-3 text-center">
+            <div className="rounded-lg border bg-card p-3 text-center">
               <div className="flex items-center justify-center gap-2 text-sm">
                 <span>연사 {stats.byType.speaker}</span>
                 <span className="text-muted-foreground">|</span>
@@ -304,7 +304,7 @@ export default function ReviewManagement({ seminar }: Props) {
               </div>
               <p className="text-xs text-muted-foreground">유형별 분포</p>
             </div>
-            <div className="rounded-lg border bg-white p-3 text-center">
+            <div className="rounded-lg border bg-card p-3 text-center">
               <p className="text-2xl font-bold text-muted-foreground">{stats.hidden}</p>
               <p className="text-xs text-muted-foreground">숨김 처리</p>
             </div>
@@ -320,7 +320,7 @@ export default function ReviewManagement({ seminar }: Props) {
                   <select
                     value={writeType}
                     onChange={(e) => setWriteType(e.target.value as typeof writeType)}
-                    className="w-full rounded-md border bg-white px-2 py-1 text-sm sm:w-auto"
+                    className="w-full rounded-md border bg-card px-2 py-1 text-sm sm:w-auto"
                   >
                     <option value="attendee">참석자</option>
                     <option value="speaker">연사</option>
@@ -333,7 +333,7 @@ export default function ReviewManagement({ seminar }: Props) {
                     <select
                       value={writeVisibility}
                       onChange={(e) => setWriteVisibility(e.target.value as typeof writeVisibility)}
-                      className="rounded-md border bg-white px-2 py-1 text-sm"
+                      className="rounded-md border bg-card px-2 py-1 text-sm"
                     >
                       <option value="public">공개</option>
                       <option value="internal">비공개 (운영진만)</option>
@@ -370,7 +370,7 @@ export default function ReviewManagement({ seminar }: Props) {
           ) : (
             <div className="space-y-2">
               {memos.map((r) => (
-                <div key={r.id} className="rounded-lg border bg-white px-4 py-3">
+                <div key={r.id} className="rounded-lg border bg-card px-4 py-3">
                   <div className="flex items-start justify-between">
                     <div>
                       <span className="text-sm font-medium">{r.name}</span>
@@ -398,7 +398,7 @@ export default function ReviewManagement({ seminar }: Props) {
                 className={cn(
                   "flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors sm:px-3 sm:text-sm",
                   questionType === tab.value
-                    ? "bg-white text-foreground shadow-sm"
+                    ? "bg-card text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -409,7 +409,7 @@ export default function ReviewManagement({ seminar }: Props) {
 
           <div className="space-y-2">
             {currentQuestions.map((q, i) => (
-              <div key={i} className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2">
+              <div key={i} className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
                 <span className="flex-1 text-sm">{q}</span>
                 <button onClick={() => removeQuestion(i)} className="shrink-0 rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-500">
                   <X size={14} />
@@ -444,7 +444,7 @@ export default function ReviewManagement({ seminar }: Props) {
                 className={cn(
                   "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                   reviewSubTab === tab.value
-                    ? "bg-white text-foreground shadow-sm"
+                    ? "bg-card text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -465,7 +465,7 @@ export default function ReviewManagement({ seminar }: Props) {
                 const isHidden = (r.status ?? "published") === "hidden";
                 const isInternal = (r.visibility ?? "public") === "internal";
                 return (
-                  <div key={r.id} className={cn("rounded-lg border bg-white p-4", isHidden && "opacity-50")}>
+                  <div key={r.id} className={cn("rounded-lg border bg-card p-4", isHidden && "opacity-50")}>
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">

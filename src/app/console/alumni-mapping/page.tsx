@@ -161,7 +161,7 @@ function ConsoleAlumniMappingContent() {
               className={`rounded-lg border px-3 py-3 text-left transition-colors ${
                 statusFilter === f.key
                   ? "border-primary bg-primary/5"
-                  : "border-border bg-white hover:bg-muted/30"
+                  : "border-border bg-card hover:bg-muted/30"
               }`}
             >
               <p className="text-xs text-muted-foreground">{f.label}</p>
@@ -196,7 +196,7 @@ function ConsoleAlumniMappingContent() {
               const candidates = candidatesByName.get(t.authorName.trim()) ?? [];
               const status = t.authorMappingStatus ?? "unmapped";
               return (
-                <li key={t.id} className="rounded-xl border bg-white p-4">
+                <li key={t.id} className="rounded-xl border bg-card p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <Link

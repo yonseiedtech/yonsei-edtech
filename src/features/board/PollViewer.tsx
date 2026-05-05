@@ -79,7 +79,7 @@ export default function PollViewer({ poll, myVote, canVote, onSubmit }: Props) {
               onClick={() => toggle(opt.id)}
               disabled={!canVote || deadlinePassed || voted}
               className={cn(
-                "relative w-full overflow-hidden rounded-lg border bg-white p-2 text-left text-sm transition-colors",
+                "relative w-full overflow-hidden rounded-lg border bg-card p-2 text-left text-sm transition-colors",
                 isSelected && "border-primary",
                 mine && "ring-2 ring-primary/40",
                 (!canVote || deadlinePassed || voted) && "cursor-default",

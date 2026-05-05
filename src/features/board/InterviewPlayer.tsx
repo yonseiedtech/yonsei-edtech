@@ -350,7 +350,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
 
       {/* 헤더 */}
       <header
-        className="flex items-center justify-between gap-2 border-b bg-white/60 px-3 py-2 backdrop-blur sm:px-4 sm:py-3"
+        className="flex items-center justify-between gap-2 border-b bg-card/60 px-3 py-2 backdrop-blur sm:px-4 sm:py-3"
         style={{ paddingTop: "max(0.5rem, env(safe-area-inset-top))" }}
       >
         <img
@@ -492,7 +492,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                       onChange={(e) => patchAnswer({ text: e.target.value })}
                       placeholder="여기에 답변을 입력하세요..."
                       rows={5}
-                      className="bg-white text-base"
+                      className="bg-card text-base"
                       style={{ fontSize: "16px" }}
                     />
                     {currentQ.maxChars && (
@@ -515,7 +515,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                           className={`block w-full rounded-xl border-2 px-4 py-3 text-left text-base transition-all ${
                             selected
                               ? "border-[#003876] bg-[#003876]/5 font-semibold text-[#003876] shadow-sm"
-                              : "border-muted bg-white hover:border-[#003876]/40 hover:bg-blue-50/40"
+                              : "border-muted bg-card hover:border-[#003876]/40 hover:bg-blue-50/40"
                           }`}
                         >
                           <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full border-2 align-middle" style={{ borderColor: selected ? "#003876" : "#cbd5e1" }}>
@@ -530,7 +530,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                         className={`rounded-xl border-2 px-4 py-3 transition-all ${
                           currentAnswer?.selectedOptionId === CUSTOM_OPTION_ID
                             ? "border-[#003876] bg-[#003876]/5 shadow-sm"
-                            : "border-dashed border-muted bg-white hover:border-[#003876]/40"
+                            : "border-dashed border-muted bg-card hover:border-[#003876]/40"
                         }`}
                       >
                         <button
@@ -560,7 +560,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                             value={currentAnswer?.customOptionText ?? ""}
                             onChange={(e) => patchAnswer({ customOptionText: e.target.value })}
                             placeholder="직접 입력할 선지를 적어주세요"
-                            className="mt-2 bg-white"
+                            className="mt-2 bg-card"
                             style={{ fontSize: "16px" }}
                           />
                         )}
@@ -604,7 +604,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                             className={`block w-full rounded-xl border-2 px-4 py-3 text-left text-base transition-all ${
                               selected
                                 ? "border-[#003876] bg-[#003876]/5 font-semibold text-[#003876] shadow-sm"
-                                : "border-muted bg-white hover:border-[#003876]/40 hover:bg-blue-50/40"
+                                : "border-muted bg-card hover:border-[#003876]/40 hover:bg-blue-50/40"
                             }`}
                           >
                             <span
@@ -627,7 +627,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                             className={`rounded-xl border-2 px-4 py-3 transition-all ${
                               selected
                                 ? "border-[#003876] bg-[#003876]/5 shadow-sm"
-                                : "border-dashed border-muted bg-white hover:border-[#003876]/40"
+                                : "border-dashed border-muted bg-card hover:border-[#003876]/40"
                             }`}
                           >
                             <button
@@ -651,7 +651,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                                 value={currentAnswer?.customOptionText ?? ""}
                                 onChange={(e) => patchAnswer({ customOptionText: e.target.value })}
                                 placeholder="직접 입력할 선지를 적어주세요"
-                                className="mt-2 bg-white"
+                                className="mt-2 bg-card"
                                 style={{ fontSize: "16px" }}
                               />
                             )}
@@ -696,7 +696,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                             value={v}
                             onChange={(e) => updateItem(i, e.target.value)}
                             placeholder={`항목 ${i + 1}`}
-                            className="bg-white"
+                            className="bg-card"
                             style={{ fontSize: "16px" }}
                           />
                           <button
@@ -730,7 +730,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                     value={currentAnswer?.text ?? ""}
                     onChange={(e) => patchAnswer({ text: e.target.value })}
                     placeholder="답변을 입력하세요"
-                    className="bg-white"
+                    className="bg-card"
                     style={{ fontSize: "16px" }}
                   />
                 )}
@@ -750,7 +750,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                               ? isO
                                 ? "border-emerald-500 bg-emerald-50 text-emerald-600 shadow-lg"
                                 : "border-rose-500 bg-rose-50 text-rose-600 shadow-lg"
-                              : "border-muted bg-white text-muted-foreground hover:border-[#003876]/40 hover:bg-blue-50/40"
+                              : "border-muted bg-card text-muted-foreground hover:border-[#003876]/40 hover:bg-blue-50/40"
                           }`}
                         >
                           {isO ? "⭕" : "❌"}
@@ -762,7 +762,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
 
                 {(currentQ.answerType === "photo" || currentQ.answerType === "text_and_photo") && (
                   <div>
-                    <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border bg-white px-3 py-1.5 text-sm hover:bg-muted">
+                    <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border bg-card px-3 py-1.5 text-sm hover:bg-muted">
                       {uploading ? (
                         <Loader2 size={14} className="animate-spin" />
                       ) : (
@@ -809,7 +809,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
       {/* 하단 컨트롤 */}
       {index >= 0 && (
         <footer
-          className="border-t bg-white/70 px-3 py-2 backdrop-blur sm:px-4 sm:py-3"
+          className="border-t bg-card/70 px-3 py-2 backdrop-blur sm:px-4 sm:py-3"
           style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
         >
           <div className="mx-auto flex max-w-2xl items-center justify-between gap-2">

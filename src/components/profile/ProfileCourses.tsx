@@ -121,7 +121,7 @@ export default function ProfileCourses({ ownerId, canSeeSensitive }: Props) {
 
   if (isLoading) {
     return (
-      <section className="rounded-2xl border bg-white p-5">
+      <section className="rounded-2xl border bg-card p-5">
         <header className="flex items-center gap-2">
           <GraduationCap size={16} className="text-primary" />
           <h2 className="text-sm font-semibold">수강 내역</h2>
@@ -133,7 +133,7 @@ export default function ProfileCourses({ ownerId, canSeeSensitive }: Props) {
 
   if (groups.length === 0) {
     return (
-      <section className="rounded-2xl border bg-white p-5">
+      <section className="rounded-2xl border bg-card p-5">
         <header className="flex items-center gap-2">
           <GraduationCap size={16} className="text-primary" />
           <h2 className="text-sm font-semibold">수강 내역</h2>
@@ -198,7 +198,7 @@ function ProfileCoursesView({
       : groups.filter((g) => `${g.year}-${g.term}` === activeTab);
 
   return (
-    <section className="rounded-2xl border bg-white p-5">
+    <section className="rounded-2xl border bg-card p-5">
       <header className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <GraduationCap size={16} className="text-primary" />
@@ -255,7 +255,7 @@ function ProfileCoursesView({
               {g.items.map((it) => {
                 const course = it.course;
                 return (
-                  <li key={it.id} className="rounded-md border bg-white px-3 py-2">
+                  <li key={it.id} className="rounded-md border bg-card px-3 py-2">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-1.5">

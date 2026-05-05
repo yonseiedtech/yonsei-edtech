@@ -72,7 +72,7 @@ export default function AlumniThesisListPage() {
     return (
       <div className="py-16">
         <div className="mx-auto max-w-2xl px-4">
-          <div className="rounded-2xl border bg-white p-10 text-center shadow-sm">
+          <div className="rounded-2xl border bg-card p-10 text-center shadow-sm">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <Lock size={26} />
             </div>
@@ -96,7 +96,7 @@ export default function AlumniThesisListPage() {
               </Link>
               <Link
                 href="/research"
-                className="inline-flex h-10 items-center rounded-md border bg-white px-5 text-sm font-medium text-muted-foreground hover:bg-muted"
+                className="inline-flex h-10 items-center rounded-md border bg-card px-5 text-sm font-medium text-muted-foreground hover:bg-muted"
               >
                 <BarChart3 size={14} className="mr-1.5" />
                 연구 분석 페이지로
@@ -215,7 +215,7 @@ export default function AlumniThesisListPage() {
             onChange={(e) =>
               setYearFilter(e.target.value === "all" ? "all" : Number(e.target.value))
             }
-            className="h-9 rounded-md border border-input bg-white px-3 text-sm"
+            className="h-9 rounded-md border border-input bg-card px-3 text-sm"
             aria-label="졸업연도 필터"
           >
             <option value="all">전체 연도</option>
@@ -228,7 +228,7 @@ export default function AlumniThesisListPage() {
           <select
             value={advisorFilter}
             onChange={(e) => setAdvisorFilter(e.target.value)}
-            className="h-9 rounded-md border border-input bg-white px-3 text-sm max-w-[200px]"
+            className="h-9 rounded-md border border-input bg-card px-3 text-sm max-w-[200px]"
             aria-label="지도교수 필터"
           >
             <option value="all">전체 지도교수</option>
@@ -267,7 +267,7 @@ export default function AlumniThesisListPage() {
         {loading ? (
           <ul className="mt-8 space-y-3" aria-busy="true" aria-label="졸업 논문 불러오는 중">
             {Array.from({ length: 5 }).map((_, i) => (
-              <li key={i} className="rounded-xl border bg-white p-4">
+              <li key={i} className="rounded-xl border bg-card p-4">
                 <Skeleton className="h-4 w-1/3" />
                 <Skeleton className="mt-2 h-5 w-3/4" />
                 <Skeleton className="mt-2 h-3 w-1/2" />
@@ -298,7 +298,7 @@ export default function AlumniThesisListPage() {
                     <li key={t.id}>
                       <Link
                         href={`/alumni/thesis/${t.id}`}
-                        className={`block rounded-xl border bg-white p-4 transition-colors hover:border-primary/40 hover:bg-primary/5 ${
+                        className={`block rounded-xl border bg-card p-4 transition-colors hover:border-primary/40 hover:bg-primary/5 ${
                           restriction?.restricted ? "border-amber-300/70 bg-amber-50/30" : ""
                         }`}
                       >

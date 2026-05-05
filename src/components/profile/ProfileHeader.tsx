@@ -17,7 +17,7 @@ export default function ProfileHeader({ owner, isOwner, viewer }: Props) {
     !!viewer && ["sysadmin", "admin", "president", "staff"].includes(viewer.role);
 
   return (
-    <section className="rounded-2xl border bg-white p-6 shadow-sm">
+    <section className="rounded-2xl border bg-card p-6 shadow-sm">
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
         {/* 프로필 이미지 */}
         <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full bg-primary/10 ring-4 ring-white">

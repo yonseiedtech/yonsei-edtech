@@ -202,7 +202,7 @@ export function AttendanceChecklist({
                         className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
                           isAttended
                             ? "border-emerald-500 bg-emerald-500 text-white"
-                            : "border-slate-300 bg-white text-transparent"
+                            : "border-slate-300 bg-card text-transparent"
                         }`}
                         aria-label={isAttended ? "출석 해제" : "출석 표시"}
                       >
@@ -239,7 +239,7 @@ export function AttendanceChecklist({
                               });
                             }}
                             placeholder="결석 사유 (선택)"
-                            className="mt-1 w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs"
+                            className="mt-1 w-full rounded border border-slate-200 bg-card px-2 py-1 text-xs"
                           />
                         )}
                       </div>
@@ -257,7 +257,7 @@ export function AttendanceChecklist({
               value={bulkAbsenceMemo}
               onChange={(ev) => setBulkAbsenceMemo(ev.target.value)}
               placeholder="예: 재택 과제 제출"
-              className="flex-1 rounded border border-slate-200 bg-white px-2 py-1"
+              className="flex-1 rounded border border-slate-200 bg-card px-2 py-1"
             />
             <Button type="button" size="sm" variant="outline" onClick={applyBulkMemo}>
               미체크자에게 일괄 적용

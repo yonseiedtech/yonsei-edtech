@@ -32,7 +32,7 @@ export default function AboutPage() {
         {isLoading ? (
           <div className="grid gap-6 md:grid-cols-3" aria-busy="true" aria-label="학회 소개 불러오는 중">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="rounded-2xl border bg-white p-8 shadow-sm">
+              <div key={i} className="rounded-2xl border bg-card p-8 shadow-sm">
                 <Skeleton className="mb-4 h-12 w-12 rounded-xl" />
                 <Skeleton className="h-6 w-2/3" />
                 <Skeleton className="mt-3 h-4 w-full" />
@@ -43,7 +43,7 @@ export default function AboutPage() {
         ) : (
           <div className="grid gap-6 md:grid-cols-3">
             {values.map((v) => (
-              <div key={v.title} className="rounded-2xl border bg-white p-8 shadow-sm">
+              <div key={v.title} className="rounded-2xl border bg-card p-8 shadow-sm">
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   <v.icon size={24} />
                 </div>

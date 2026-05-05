@@ -30,7 +30,7 @@ export default function ProfileVisibilitySettings({ value, onChange, disabled }:
   }
 
   return (
-    <div className="space-y-3 rounded-2xl border bg-white p-5">
+    <div className="space-y-3 rounded-2xl border bg-card p-5">
       <div>
         <h3 className="text-sm font-semibold">프로필 섹션별 공개 범위</h3>
         <p className="mt-0.5 text-xs text-muted-foreground">
@@ -48,7 +48,7 @@ export default function ProfileVisibilitySettings({ value, onChange, disabled }:
                 value={current}
                 onChange={(e) => setLevel(key, e.target.value as SectionVisibility)}
                 disabled={disabled}
-                className="rounded-md border bg-white px-2 py-1 text-xs"
+                className="rounded-md border bg-card px-2 py-1 text-xs"
               >
                 {LEVELS.map((lv) => (
                   <option key={lv} value={lv}>

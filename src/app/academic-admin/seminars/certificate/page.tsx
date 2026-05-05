@@ -27,7 +27,7 @@ export default function CertificatePage() {
             className={cn(
               "flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors",
               activeTab === tab.value
-                ? "bg-white text-foreground shadow-sm"
+                ? "bg-card text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >

@@ -667,7 +667,7 @@ function OnboardingEmptyState({
       {/* 1단계: 안내 */}
       <div className="rounded-2xl border bg-gradient-to-br from-indigo-50 to-violet-50 p-6 dark:from-indigo-950/40 dark:to-violet-950/40">
         <div className="flex items-start gap-3">
-          <div className="rounded-full bg-white p-2.5 shadow-sm dark:bg-zinc-900">
+          <div className="rounded-full bg-card p-2.5 shadow-sm dark:bg-zinc-900">
             <Sparkles size={20} className="text-indigo-600 dark:text-indigo-300" />
           </div>
           <div className="min-w-0 flex-1">
@@ -679,7 +679,7 @@ function OnboardingEmptyState({
               아래 추천 템플릿을 선택하면 1초 만에 첫 세트를 만들 수 있어요.
             </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-lg border bg-white p-3 dark:bg-zinc-900/60">
+              <div className="rounded-lg border bg-card p-3 dark:bg-zinc-900/60">
                 <div className="flex items-center gap-2">
                   <ListChecks size={14} className="text-indigo-600" />
                   <p className="text-xs font-semibold">1. 질문 준비</p>
@@ -688,7 +688,7 @@ function OnboardingEmptyState({
                   템플릿을 가져오거나 직접 질문·모범 답변을 작성합니다.
                 </p>
               </div>
-              <div className="rounded-lg border bg-white p-3 dark:bg-zinc-900/60">
+              <div className="rounded-lg border bg-card p-3 dark:bg-zinc-900/60">
                 <div className="flex items-center gap-2">
                   <Mic size={14} className="text-rose-600" />
                   <p className="text-xs font-semibold">2. 마이크로 답변</p>
@@ -697,7 +697,7 @@ function OnboardingEmptyState({
                   녹음 또는 타이핑으로 답하면 자동 전사·채점됩니다.
                 </p>
               </div>
-              <div className="rounded-lg border bg-white p-3 dark:bg-zinc-900/60">
+              <div className="rounded-lg border bg-card p-3 dark:bg-zinc-900/60">
                 <div className="flex items-center gap-2">
                   <Target size={14} className="text-emerald-600" />
                   <p className="text-xs font-semibold">3. 비교·복기</p>

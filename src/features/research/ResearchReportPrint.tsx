@@ -84,7 +84,7 @@ export default function ResearchReportPrint({
   }
 
   return (
-    <div className="rounded-2xl border bg-white">
+    <div className="rounded-2xl border bg-card">
       {/* 헤더 — 인쇄 시 숨김 */}
       <div className="flex items-center justify-between border-b px-5 py-3 print:hidden">
         <div>
@@ -98,7 +98,7 @@ export default function ResearchReportPrint({
       </div>
 
       {/* 인쇄 영역 */}
-      <article className="report-print mx-auto max-w-[820px] bg-white px-8 py-8 text-sm leading-relaxed text-foreground print:max-w-none print:px-0 print:py-0">
+      <article className="report-print mx-auto max-w-[820px] bg-card px-8 py-8 text-sm leading-relaxed text-foreground print:max-w-none print:px-0 print:py-0">
         {/* 학회 브랜드 헤더 */}
         <header className="border-b-2 border-primary pb-4">
           <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-primary">
@@ -286,7 +286,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 
 function BigStat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-lg border bg-white p-3 text-center">
+    <div className="rounded-lg border bg-card p-3 text-center">
       <p className="text-lg font-bold leading-tight">{value}</p>
       <p className="mt-0.5 text-[10px] text-muted-foreground">{label}</p>
       {hint && <p className="text-[9px] text-muted-foreground/80">{hint}</p>}

@@ -191,7 +191,7 @@ export default function ResearchAnalyticsPage() {
                     title="키워드 워드 클라우드"
                     desc={`총 ${keywordCount}개 키워드를 수집했습니다. 상위 항목 수와 조회 기간을 조정할 수 있으며, 글자 크기는 등장 빈도에 비례합니다.`}
                   />
-                  <div className="mt-4 rounded-2xl border bg-white p-5">
+                  <div className="mt-4 rounded-2xl border bg-card p-5">
                     <KeywordCloud theses={theses} defaultTopN={30} />
                   </div>
                 </section>
@@ -206,7 +206,7 @@ export default function ResearchAnalyticsPage() {
                     {eras.map((era) => (
                       <div
                         key={era.label}
-                        className="rounded-2xl border bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+                        className="rounded-2xl border bg-card p-5 shadow-sm transition-shadow hover:shadow-md"
                       >
                         <div className="flex items-center justify-between">
                           <div>
@@ -248,7 +248,7 @@ export default function ResearchAnalyticsPage() {
                     title="제목 N-gram 트렌드"
                     desc="논문 제목에서 추출한 2~3어절 표현의 등장 빈도와 시대별 분포를 보여줍니다. 키워드(명사 단위)로는 잡히지 않는 구문 단위 표현을 분석할 수 있습니다."
                   />
-                  <div className="mt-4 rounded-2xl border bg-white p-5">
+                  <div className="mt-4 rounded-2xl border bg-card p-5">
                     <TitleNgramTrend theses={theses} />
                   </div>
                 </section>
@@ -284,7 +284,7 @@ export default function ResearchAnalyticsPage() {
                     title="연구 계보도"
                     desc="시대별 핵심 키워드가 어떻게 이어지고 분기되었는지를 보여줍니다. 같은 키워드는 시대 사이를 곡선으로 잇고, 곡선의 굵기는 해당 시대의 연구 비중을 나타냅니다."
                   />
-                  <div className="mt-4 rounded-2xl border bg-white p-3 sm:p-5 overflow-hidden">
+                  <div className="mt-4 rounded-2xl border bg-card p-3 sm:p-5 overflow-hidden">
                     <ResearchLineageMap theses={theses} />
                   </div>
                 </section>
@@ -318,7 +318,7 @@ export default function ResearchAnalyticsPage() {
                     </Link>
                     <Link
                       href="/signup"
-                      className="inline-flex h-10 items-center rounded-md border border-primary bg-white px-5 text-sm font-medium text-primary hover:bg-primary/5"
+                      className="inline-flex h-10 items-center rounded-md border border-primary bg-card px-5 text-sm font-medium text-primary hover:bg-primary/5"
                     >
                       회원가입
                     </Link>
@@ -339,7 +339,7 @@ export default function ResearchAnalyticsPage() {
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border bg-white p-4">
+    <div className="rounded-xl border bg-card p-4">
       <p className="text-[11px] text-muted-foreground">{label}</p>
       <p className="mt-1 text-base font-bold sm:text-lg">{value}</p>
     </div>

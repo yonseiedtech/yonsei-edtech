@@ -227,7 +227,7 @@ export default function WritingHeatmap({ history }: Props) {
   const handleCellLeave = useCallback(() => setTooltip(null), []);
 
   return (
-    <section className="rounded-2xl border bg-white p-4">
+    <section className="rounded-2xl border bg-card p-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1">
@@ -257,7 +257,7 @@ export default function WritingHeatmap({ history }: Props) {
             <select
               value={draftPeriod}
               onChange={(e) => setDraftPeriod(e.target.value as PeriodType)}
-              className="h-7 rounded-md border bg-white px-2 text-xs"
+              className="h-7 rounded-md border bg-card px-2 text-xs"
             >
               <option value="spring">전기 (3월)</option>
               <option value="fall">후기 (9월)</option>
@@ -338,7 +338,7 @@ export default function WritingHeatmap({ history }: Props) {
 
           {tooltip && (
             <div
-              className="pointer-events-none absolute z-50 rounded-md border bg-white px-2.5 py-1.5 text-[11px] leading-relaxed shadow-lg"
+              className="pointer-events-none absolute z-50 rounded-md border bg-card px-2.5 py-1.5 text-[11px] leading-relaxed shadow-lg"
               style={{ left: tooltip.x, top: tooltip.y - 4, transform: "translate(-50%, -100%)" }}
             >
               <p className="font-semibold text-foreground">{tooltip.dateStr}</p>

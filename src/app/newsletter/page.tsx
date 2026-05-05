@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 
 function IssueCard({ issue }: { issue: NewsletterIssue }) {
   return (
-    <div className="group overflow-hidden rounded-2xl border bg-white shadow-sm transition-shadow hover:shadow-md">
+    <div className="group overflow-hidden rounded-2xl border bg-card shadow-sm transition-shadow hover:shadow-md">
       {/* 표지 */}
       <div
         className={cn(
@@ -108,7 +108,7 @@ export default function NewsletterPage() {
         {isLoading ? (
           <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3" aria-busy="true" aria-label="학회보 불러오는 중">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="overflow-hidden rounded-2xl border bg-white shadow-sm">
+              <div key={i} className="overflow-hidden rounded-2xl border bg-card shadow-sm">
                 <Skeleton className="h-48 w-full rounded-none" />
                 <div className="space-y-2 p-5">
                   <Skeleton className="h-4 w-3/4" />
@@ -155,7 +155,7 @@ export default function NewsletterPage() {
                   { label: "최신 발행일", value: latest?.publishDate ?? "—" },
                 ];
                 return stats.map((s) => (
-                  <div key={s.label} className="rounded-2xl border bg-white p-4">
+                  <div key={s.label} className="rounded-2xl border bg-card p-4">
                     <div className="text-xs text-muted-foreground">{s.label}</div>
                     <div className="mt-1 text-lg font-bold">{s.value}</div>
                   </div>

@@ -84,7 +84,7 @@ export default function FileUploader({ folder, accept, multiple = false, value =
       {value.length > 0 && (
         <ul className="space-y-1.5">
           {value.map((f, i) => (
-            <li key={`${f.url}-${i}`} className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2 text-xs">
+            <li key={`${f.url}-${i}`} className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2 text-xs">
               {f.type.startsWith("image/") ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={f.url} alt={f.name} className="h-10 w-10 flex-none rounded object-cover" />

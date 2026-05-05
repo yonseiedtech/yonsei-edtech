@@ -82,7 +82,7 @@ export default function SeminarRegistrationForm({ seminarId, seminarTitle, field
 
   if (submitted) {
     return (
-      <div className="rounded-2xl border bg-white p-8 text-center">
+      <div className="rounded-2xl border bg-card p-8 text-center">
         <CheckCircle size={48} className="mx-auto mb-4 text-green-500" />
         <h3 className="text-lg font-bold">신청 완료</h3>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -95,7 +95,7 @@ export default function SeminarRegistrationForm({ seminarId, seminarTitle, field
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="space-y-4 rounded-2xl border bg-white p-8"
+      className="space-y-4 rounded-2xl border bg-card p-8"
     >
       <h3 className="text-lg font-bold">세미나 참석 신청</h3>
       <p className="text-sm text-muted-foreground">

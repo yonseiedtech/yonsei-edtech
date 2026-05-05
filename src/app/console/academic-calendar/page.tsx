@@ -129,7 +129,7 @@ export default function AcademicCalendarConsolePage() {
         )}
 
         {entries.map((e, idx) => (
-          <div key={idx} className="rounded-xl border bg-white p-4">
+          <div key={idx} className="rounded-xl border bg-card p-4">
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">
                 <Input
@@ -152,7 +152,7 @@ export default function AcademicCalendarConsolePage() {
                       ev.target.value as "first" | "second",
                     )
                   }
-                  className="rounded-md border bg-white px-3 py-2 text-sm"
+                  className="rounded-md border bg-card px-3 py-2 text-sm"
                 >
                   <option value="first">1학기 (전기)</option>
                   <option value="second">2학기 (후기)</option>

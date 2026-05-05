@@ -169,7 +169,7 @@ export default function AdminPostTab() {
       {/* 모바일 카드 뷰 */}
       <div className="space-y-2 sm:hidden">
         {sorted.map((post) => (
-          <div key={post.id} className="rounded-xl border bg-white p-4">
+          <div key={post.id} className="rounded-xl border bg-card p-4">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-1.5">
@@ -214,7 +214,7 @@ export default function AdminPostTab() {
       </div>
 
       {/* 데스크톱 테이블 */}
-      <div className="hidden overflow-x-auto rounded-xl border bg-white sm:block">
+      <div className="hidden overflow-x-auto rounded-xl border bg-card sm:block">
         <table className="w-full text-sm">
           <thead className="border-b bg-muted/30">
             <tr>

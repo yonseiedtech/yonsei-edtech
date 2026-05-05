@@ -23,7 +23,7 @@ export default function AgentCard({
 }) {
   return (
     <div
-      className="cursor-pointer rounded-xl border bg-white p-4 transition hover:shadow-md"
+      className="cursor-pointer rounded-xl border bg-card p-4 transition hover:shadow-md"
       onClick={onEdit}
     >
       <div className="flex items-start justify-between">

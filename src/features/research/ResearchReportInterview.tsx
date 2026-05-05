@@ -260,7 +260,7 @@ function ArchiveConceptRecommender({
                 "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
                 picked
                   ? "cursor-not-allowed bg-emerald-200 text-emerald-700"
-                  : "bg-white text-emerald-900 ring-1 ring-emerald-300 hover:bg-emerald-100",
+                  : "bg-card text-emerald-900 ring-1 ring-emerald-300 hover:bg-emerald-100",
               )}
               title={c.description ?? ""}
               aria-label={`${c.name} 개념 추가`}
@@ -553,7 +553,7 @@ function ResearchLogicMap({
                 type={clickable ? "button" : undefined}
                 onClick={clickable ? () => jumpToNode(id) : undefined}
                 className={cn(
-                  "relative z-10 flex flex-col items-center justify-center gap-1 rounded-xl border-2 bg-white p-2 shadow-sm transition-all",
+                  "relative z-10 flex flex-col items-center justify-center gap-1 rounded-xl border-2 bg-card p-2 shadow-sm transition-all",
                   cls,
                   fillBg(n.fill),
                   clickable && "cursor-pointer hover:scale-[1.03] hover:shadow-md",
@@ -654,7 +654,7 @@ function ChapterCelebration({
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6, duration: 0.35 }}
-        className="mt-4 rounded-xl bg-white/70 p-3 text-left sm:mt-5 sm:p-4"
+        className="mt-4 rounded-xl bg-card/70 p-3 text-left sm:mt-5 sm:p-4"
       >
         <div className="flex items-center gap-2">
           <div
@@ -758,7 +758,7 @@ export function TaskStepsField({
                 ? "예: 3대 원리 구분 (상호의존성·개별책무성·평등참여)"
                 : "단계 내용을 적어주세요"
             }
-            className={cn("flex-1 bg-white", compact ? "" : "text-base")}
+            className={cn("flex-1 bg-card", compact ? "" : "text-base")}
             style={compact ? undefined : { fontSize: "16px" }}
           />
           <button
@@ -855,7 +855,7 @@ function TheoryNameRenderer({ form, setField }: { form: FormState; setField: Set
                   "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-colors",
                   active
                     ? "border-emerald-600 bg-emerald-600 text-white"
-                    : "border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100",
+                    : "border-emerald-300 bg-card text-emerald-900 hover:bg-emerald-100",
                 )}
               >
                 <span className="font-medium">{preset.name}</span>
@@ -867,7 +867,7 @@ function TheoryNameRenderer({ form, setField }: { form: FormState; setField: Set
             <button
               type="button"
               onClick={() => setShowAllPresets(true)}
-              className="inline-flex items-center rounded-full border border-emerald-200 bg-white px-2.5 py-1 text-[11px] text-emerald-700 hover:bg-emerald-50"
+              className="inline-flex items-center rounded-full border border-emerald-200 bg-card px-2.5 py-1 text-[11px] text-emerald-700 hover:bg-emerald-50"
             >
               + {POPULAR_THEORIES.length - 8}개 더 보기
             </button>
@@ -879,7 +879,7 @@ function TheoryNameRenderer({ form, setField }: { form: FormState; setField: Set
         value={card?.name ?? ""}
         onChange={(e) => ensureFirstTheoryCard(form, setField, { name: e.target.value })}
         placeholder="이론명 (예: 사회적 구성주의) — 위에서 선택하거나 직접 입력"
-        className="bg-white text-base"
+        className="bg-card text-base"
         style={{ fontSize: "16px" }}
       />
       <div className="grid grid-cols-2 gap-2">
@@ -887,14 +887,14 @@ function TheoryNameRenderer({ form, setField }: { form: FormState; setField: Set
           value={card?.scholar ?? ""}
           onChange={(e) => ensureFirstTheoryCard(form, setField, { scholar: e.target.value })}
           placeholder="학자 (예: Vygotsky)"
-          className="bg-white"
+          className="bg-card"
           style={{ fontSize: "16px" }}
         />
         <Input
           value={card?.year ?? ""}
           onChange={(e) => ensureFirstTheoryCard(form, setField, { year: e.target.value })}
           placeholder="연도 (예: 1978)"
-          className="bg-white"
+          className="bg-card"
           style={{ fontSize: "16px" }}
         />
       </div>
@@ -904,7 +904,7 @@ function TheoryNameRenderer({ form, setField }: { form: FormState; setField: Set
         alreadyPicked={conceptNamesPicked}
       />
       {(card?.concepts ?? []).length > 0 && (
-        <div className="rounded-md border bg-white p-2.5">
+        <div className="rounded-md border bg-card p-2.5">
           <p className="text-[11px] font-semibold text-muted-foreground">
             추가된 핵심 개념 ({(card?.concepts ?? []).length}개)
           </p>
@@ -947,7 +947,7 @@ const SLIDES: SlideDef[] = [
         value={form.fieldAudience}
         onChange={(e) => setField("fieldAudience", e.target.value)}
         placeholder="예: 교육공학과 학부생 30명"
-        className="bg-white text-base"
+        className="bg-card text-base"
         style={{ fontSize: "16px" }}
       />
     ),
@@ -970,7 +970,7 @@ const SLIDES: SlideDef[] = [
                 "rounded-xl border-2 px-4 py-4 text-base font-semibold transition-all",
                 active
                   ? "border-[#003876] bg-[#003876]/5 text-[#003876] shadow-sm"
-                  : "border-muted bg-white text-muted-foreground hover:border-[#003876]/40 hover:bg-blue-50/40",
+                  : "border-muted bg-card text-muted-foreground hover:border-[#003876]/40 hover:bg-blue-50/40",
               )}
             >
               {opt.label}
@@ -990,7 +990,7 @@ const SLIDES: SlideDef[] = [
         value={form.fieldSubject}
         onChange={(e) => setField("fieldSubject", e.target.value)}
         placeholder="예: 교육방법 및 교육공학 - 협력학습"
-        className="bg-white text-base"
+        className="bg-card text-base"
         style={{ fontSize: "16px" }}
       />
     ),
@@ -1012,7 +1012,7 @@ const SLIDES: SlideDef[] = [
           }}
           placeholder="예: 그룹 활동 시 1~2명이 발표를 도맡고 나머지는 침묵함"
           rows={4}
-          className="bg-white text-base"
+          className="bg-card text-base"
           style={{ fontSize: "16px" }}
         />
       );
@@ -1029,7 +1029,7 @@ const SLIDES: SlideDef[] = [
         onChange={(e) => setField("problemImpact", e.target.value)}
         placeholder="예: 학습자 간 참여 격차가 누적되어, 일부 학생은 협력 학습의 장점을 경험하지 못함"
         rows={5}
-        className="bg-white text-base"
+        className="bg-card text-base"
         style={{ fontSize: "16px" }}
       />
     ),
@@ -1046,7 +1046,7 @@ const SLIDES: SlideDef[] = [
         onChange={(e) => setField("problemImportance", e.target.value)}
         placeholder="예: 협력 역량은 2022 개정 교육과정의 핵심 역량이며, 미래 직무 환경에서도 ..."
         rows={5}
-        className="bg-white text-base"
+        className="bg-card text-base"
         style={{ fontSize: "16px" }}
       />
     ),
@@ -1062,7 +1062,7 @@ const SLIDES: SlideDef[] = [
         value={form.scopeAudience}
         onChange={(e) => setField("scopeAudience", e.target.value)}
         placeholder="예: A 대학 사범대학 2학년 1학기 수강생 28명"
-        className="bg-white text-base"
+        className="bg-card text-base"
         style={{ fontSize: "16px" }}
       />
     ),
@@ -1079,7 +1079,7 @@ const SLIDES: SlideDef[] = [
         value={form.scopeContext}
         onChange={(e) => setField("scopeContext", e.target.value)}
         placeholder="예: 8주간 주 1회 90분 대면 수업, Padlet · Slack 사용"
-        className="bg-white text-base"
+        className="bg-card text-base"
         style={{ fontSize: "16px" }}
       />
     ),
@@ -1095,7 +1095,7 @@ const SLIDES: SlideDef[] = [
         value={form.scopeExclusion}
         onChange={(e) => setField("scopeExclusion", e.target.value)}
         placeholder="예: 비대면 수업, 대학원생, 4학년은 제외"
-        className="bg-white text-base"
+        className="bg-card text-base"
         style={{ fontSize: "16px" }}
       />
     ),
@@ -1139,7 +1139,7 @@ const SLIDES: SlideDef[] = [
         onChange={(e) => setField("envLearning", e.target.value)}
         placeholder="예: 90분 대면 강의실 (좌석 25석, 빔프로젝터). 모둠활동 시 4명씩 배치. Padlet·Slack 사용 가능."
         rows={5}
-        className="bg-white text-base"
+        className="bg-card text-base"
         style={{ fontSize: "16px" }}
       />
     ),
@@ -1156,7 +1156,7 @@ const SLIDES: SlideDef[] = [
         onChange={(e) => setField("envTransfer", e.target.value)}
         placeholder="예: 본인 학교 현장에서 협력학습 도입 — 수업 시간 단 45분, 학생 30명 환경에서 즉시 적용 예정."
         rows={5}
-        className="bg-white text-base"
+        className="bg-card text-base"
         style={{ fontSize: "16px" }}
       />
     ),
@@ -1173,7 +1173,7 @@ const SLIDES: SlideDef[] = [
         onChange={(e) => setField("envConstraint", e.target.value)}
         placeholder="예: 1학기 12주 내 완료. 학교 평가 정책 상 객관식 비중 ≥70%. 학부모 반응 민감."
         rows={4}
-        className="bg-white text-base"
+        className="bg-card text-base"
         style={{ fontSize: "16px" }}
       />
     ),
@@ -1210,7 +1210,7 @@ const SLIDES: SlideDef[] = [
         value={form.learnerProfile}
         onChange={(e) => setField("learnerProfile", e.target.value)}
         placeholder="예: 교육대학원 1학년 30명 (현직 교사 20명 + 일반 직장인 10명)"
-        className="bg-white text-base"
+        className="bg-card text-base"
         style={{ fontSize: "16px" }}
       />
     ),
@@ -1227,7 +1227,7 @@ const SLIDES: SlideDef[] = [
         onChange={(e) => setField("learnerCognitive", e.target.value)}
         placeholder={"예: 통계 입문은 들었지만 R/SPSS 미경험. 협력학습은 ‘조별과제’ 정도로만 인식 — 비계 개념 모름."}
         rows={5}
-        className="bg-white text-base"
+        className="bg-card text-base"
         style={{ fontSize: "16px" }}
       />
     ),
@@ -1244,7 +1244,7 @@ const SLIDES: SlideDef[] = [
         onChange={(e) => setField("learnerAffective", e.target.value)}
         placeholder={"예: ‘틀릴까봐 말 못함’ 두려움이 큼. 동료 평가에 민감. 수업 주제 자체에 대한 호기심은 높음."}
         rows={5}
-        className="bg-white text-base"
+        className="bg-card text-base"
         style={{ fontSize: "16px" }}
       />
     ),
@@ -1305,7 +1305,7 @@ const SLIDES: SlideDef[] = [
                     "rounded-xl border-2 p-3 text-left transition-all",
                     active
                       ? "border-[#003876] bg-[#003876]/5 shadow-sm"
-                      : "border-muted bg-white hover:border-[#003876]/40 hover:bg-blue-50/40",
+                      : "border-muted bg-card hover:border-[#003876]/40 hover:bg-blue-50/40",
                   )}
                 >
                   <p className="text-sm font-bold">{opt.label}</p>
@@ -1346,7 +1346,7 @@ const SLIDES: SlideDef[] = [
                     <p>⚠️ 어느 영역이 주(主)인지 명시해 주세요.</p>
                   </>
                 )}
-                <p className="mt-2 rounded-md border border-amber-300/70 bg-white/60 px-2 py-1.5 text-[11px] font-medium text-amber-900">
+                <p className="mt-2 rounded-md border border-amber-300/70 bg-card/60 px-2 py-1.5 text-[11px] font-medium text-amber-900">
                   ⓘ 위 차시 안내는 일반적 권장 범위입니다. 실제 차시 수는 연구 맥락·연구 일정에 따라 달라지므로 반드시 지도교수님과 상의해 결정하세요.
                 </p>
               </div>
@@ -1368,7 +1368,7 @@ const SLIDES: SlideDef[] = [
         onChange={(e) => setField("outcomeCognitive", e.target.value)}
         placeholder={"예: 협력학습의 3대 원리(상호의존성·개별책무성·평등참여)를 설명할 수 있다."}
         rows={5}
-        className="bg-white text-base"
+        className="bg-card text-base"
         style={{ fontSize: "16px" }}
       />
     ),
@@ -1385,7 +1385,7 @@ const SLIDES: SlideDef[] = [
         onChange={(e) => setField("outcomeSkillAttitude", e.target.value)}
         placeholder={"예: 모둠 토의 시 동료 의견을 1회 이상 인용하며 응답할 수 있다."}
         rows={5}
-        className="bg-white text-base"
+        className="bg-card text-base"
         style={{ fontSize: "16px" }}
       />
     ),
@@ -1398,44 +1398,44 @@ const SLIDES: SlideDef[] = [
     optional: true,
     render: (form, setField) => (
       <div className="space-y-2">
-        <div className="rounded-lg border bg-white p-2.5">
+        <div className="rounded-lg border bg-card p-2.5">
           <p className="mb-1 text-[11px] font-semibold text-blue-900">A · Audience (학습자)</p>
           <Input
             value={form.outcomeMagerA}
             onChange={(e) => setField("outcomeMagerA", e.target.value)}
             placeholder="예: 교육대학원 1학년이"
-            className="bg-white text-base"
+            className="bg-card text-base"
             style={{ fontSize: "16px" }}
           />
         </div>
-        <div className="rounded-lg border bg-white p-2.5">
+        <div className="rounded-lg border bg-card p-2.5">
           <p className="mb-1 text-[11px] font-semibold text-emerald-900">B · Behavior (관찰 가능한 행동)</p>
           <Textarea
             value={form.outcomeMagerB}
             onChange={(e) => setField("outcomeMagerB", e.target.value)}
             placeholder="예: 협력학습 사례를 보고 3대 원리 적용 여부를"
             rows={2}
-            className="bg-white text-base"
+            className="bg-card text-base"
             style={{ fontSize: "16px" }}
           />
         </div>
-        <div className="rounded-lg border bg-white p-2.5">
+        <div className="rounded-lg border bg-card p-2.5">
           <p className="mb-1 text-[11px] font-semibold text-amber-900">C · Condition (수행 조건)</p>
           <Input
             value={form.outcomeMagerC}
             onChange={(e) => setField("outcomeMagerC", e.target.value)}
             placeholder="예: 5분 내 모둠 토의로"
-            className="bg-white text-base"
+            className="bg-card text-base"
             style={{ fontSize: "16px" }}
           />
         </div>
-        <div className="rounded-lg border bg-white p-2.5">
+        <div className="rounded-lg border bg-card p-2.5">
           <p className="mb-1 text-[11px] font-semibold text-rose-900">D · Degree (성취 기준)</p>
           <Input
             value={form.outcomeMagerD}
             onChange={(e) => setField("outcomeMagerD", e.target.value)}
             placeholder="예: 4개 사례 중 3개 이상 정확히 판별할 수 있다."
-            className="bg-white text-base"
+            className="bg-card text-base"
             style={{ fontSize: "16px" }}
           />
         </div>
@@ -1509,7 +1509,7 @@ const SLIDES: SlideDef[] = [
         onChange={(e) => ensureFirstTheoryCard(form, setField, { selectionReason: e.target.value })}
         placeholder="예: 학습자 간 상호작용이 학습의 주요 메커니즘이라는 점에서, 침묵 현상을 설명하기 적합하다."
         rows={5}
-        className="bg-white text-base"
+        className="bg-card text-base"
         style={{ fontSize: "16px" }}
       />
     ),
@@ -1553,7 +1553,7 @@ const SLIDES: SlideDef[] = [
         onChange={(e) => ensureFirstTheoryCard(form, setField, { problemLink: e.target.value })}
         placeholder="예: ZPD 개념은 ‘침묵하는 학생도 적절한 비계만 있으면 참여 가능’임을 시사하므로..."
         rows={5}
-        className="bg-white text-base"
+        className="bg-card text-base"
         style={{ fontSize: "16px" }}
       />
     ),
@@ -1579,7 +1579,7 @@ const SLIDES: SlideDef[] = [
         onChange={(e) => setField("theoryRelationIntegration", e.target.value)}
         placeholder="예: 사회적 구성주의로 ‘왜’를, ARCS로 ‘어떻게 동기화할지’를 본다."
         rows={4}
-        className="bg-white text-base"
+        className="bg-card text-base"
         style={{ fontSize: "16px" }}
       />
     ),
@@ -1615,7 +1615,7 @@ const SLIDES: SlideDef[] = [
               {keywords.map((k) => (
                 <span
                   key={k}
-                  className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-blue-900 ring-1 ring-blue-200"
+                  className="rounded-full bg-card px-2 py-0.5 text-xs font-medium text-blue-900 ring-1 ring-blue-200"
                 >
                   {k}
                 </span>
@@ -1640,7 +1640,7 @@ const SLIDES: SlideDef[] = [
         onChange={(e) => setField("priorResearchAnalysis", e.target.value)}
         placeholder="예: 협력학습 침묵 현상에 대한 연구는 크게 2가지 흐름으로 나뉜다. (1)... (2)... 본 연구는 (1)에 가까운 ..."
         rows={6}
-        className="bg-white text-base"
+        className="bg-card text-base"
         style={{ fontSize: "16px" }}
       />
     ),
@@ -1779,7 +1779,7 @@ export default function ResearchReportInterview({
   return (
     <div className="fixed inset-0 z-50 flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-blue-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <header
-        className="flex items-center justify-between gap-1.5 border-b bg-white/70 px-2.5 py-2 backdrop-blur sm:gap-2 sm:px-4 sm:py-3 dark:bg-card/70"
+        className="flex items-center justify-between gap-1.5 border-b bg-card/70 px-2.5 py-2 backdrop-blur sm:gap-2 sm:px-4 sm:py-3 dark:bg-card/70"
         style={{ paddingTop: "max(0.5rem, env(safe-area-inset-top))" }}
       >
         <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -1848,7 +1848,7 @@ export default function ResearchReportInterview({
         {/* 현재 슬라이드 위치 마커 */}
         {index >= 0 && (
           <motion.div
-            className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary bg-white shadow-md"
+            className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary bg-card shadow-md"
             animate={{ left: `${progress}%` }}
             transition={{ duration: 0.4 }}
           />
@@ -1857,7 +1857,7 @@ export default function ResearchReportInterview({
 
       {/* Sprint 73: 챕터별 슬라이드 navigator (인트로에선 숨김) */}
       {index >= 0 && (
-        <details className="border-b bg-white/40 dark:bg-card/40">
+        <details className="border-b bg-card/40 dark:bg-card/40">
           <summary className="flex cursor-pointer items-center justify-between px-3 py-1.5 text-[11px] text-muted-foreground hover:bg-muted/30 sm:px-4">
             <span>📍 진행 위치 — 클릭으로 이동, 채워진 점 = 작성 완료</span>
             <span className="tabular-nums">{Math.round(progress)}%</span>
@@ -1977,7 +1977,7 @@ export default function ResearchReportInterview({
                   const meta = CHAPTER_META[c];
                   const Icon = meta.icon;
                   return (
-                    <span key={c} className="flex items-center gap-1 rounded-full border bg-white px-2 py-1 sm:gap-1.5 sm:px-2.5 dark:bg-card">
+                    <span key={c} className="flex items-center gap-1 rounded-full border bg-card px-2 py-1 sm:gap-1.5 sm:px-2.5 dark:bg-card">
                       <Icon size={11} />
                       {meta.label} {chapterCounts[c]}
                     </span>
@@ -1997,7 +1997,7 @@ export default function ResearchReportInterview({
 
       {index >= 0 && (
         <footer
-          className="border-t bg-white/70 px-2.5 py-2 backdrop-blur sm:px-4 sm:py-3 dark:bg-card/70"
+          className="border-t bg-card/70 px-2.5 py-2 backdrop-blur sm:px-4 sm:py-3 dark:bg-card/70"
           style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
         >
           <div className="mx-auto flex max-w-2xl items-center justify-between gap-2">
@@ -2097,7 +2097,7 @@ function PreviousAnswerCard({
       {items.filter((it) => it.value).map((it) => (
         <div
           key={it.ref.slideId}
-          className="flex items-start gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2"
+          className="flex items-start gap-2 rounded-lg border border-slate-200 bg-card px-3 py-2"
         >
           <div className="min-w-0 flex-1">
             <p className="text-[10px] font-medium text-muted-foreground">

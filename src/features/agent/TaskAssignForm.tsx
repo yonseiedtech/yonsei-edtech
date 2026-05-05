@@ -48,7 +48,7 @@ export default function TaskAssignForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border bg-white p-5">
+    <form onSubmit={handleSubmit} className="rounded-xl border bg-card p-5">
       <h3 className="font-semibold">새 작업 할당</h3>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <div>
@@ -56,7 +56,7 @@ export default function TaskAssignForm({
           <select
             value={agentId}
             onChange={(e) => setAgentId(e.target.value)}
-            className="w-full rounded-lg border bg-white px-3 py-2 text-sm"
+            className="w-full rounded-lg border bg-card px-3 py-2 text-sm"
           >
             <option value="">선택...</option>
             {agents?.map((a) => (
@@ -71,7 +71,7 @@ export default function TaskAssignForm({
           <select
             value={type}
             onChange={(e) => setType(e.target.value)}
-            className="w-full rounded-lg border bg-white px-3 py-2 text-sm"
+            className="w-full rounded-lg border bg-card px-3 py-2 text-sm"
           >
             {TASK_TYPES.map((t) => (
               <option key={t.value} value={t.value}>{t.label}</option>

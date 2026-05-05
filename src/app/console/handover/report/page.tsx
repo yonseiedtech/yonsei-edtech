@@ -139,7 +139,7 @@ function ReportInner() {
       )}
 
       {isEmpty && (
-        <div className="rounded-lg border bg-white py-12 text-center">
+        <div className="rounded-lg border bg-card py-12 text-center">
           <FileText size={32} className="mx-auto text-muted-foreground/30" />
           <p className="mt-2 text-sm text-muted-foreground">
             {formatTerm(term)}에 등록된 인수인계 자료가 없습니다.
@@ -161,7 +161,7 @@ function ReportInner() {
             {orgWithHandover.map((p) => (
               <li
                 key={p.id}
-                className="rounded-lg border bg-white p-4 print:break-inside-avoid"
+                className="rounded-lg border bg-card p-4 print:break-inside-avoid"
               >
                 <div className="flex flex-wrap items-baseline gap-2">
                   <span className="text-sm font-semibold">{p.title}</span>
@@ -194,7 +194,7 @@ function ReportInner() {
               {docsByRole.get(role)!.map((doc) => (
                 <article
                   key={doc.id}
-                  className="rounded-lg border bg-white p-4 print:break-inside-avoid"
+                  className="rounded-lg border bg-card p-4 print:break-inside-avoid"
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge

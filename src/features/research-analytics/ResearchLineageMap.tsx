@@ -226,7 +226,7 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
                 className={`rounded-md px-2 py-1 font-medium transition ${
                   active
                     ? "bg-primary text-primary-foreground"
-                    : "border bg-white text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                    : "border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
                 }`}
               >
                 {n}년
@@ -244,7 +244,7 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
               }
             }}
             disabled={!canZoomIn}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md border bg-white text-slate-700 transition disabled:cursor-not-allowed disabled:opacity-30 hover:enabled:bg-slate-50"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md border bg-card text-slate-700 transition disabled:cursor-not-allowed disabled:opacity-30 hover:enabled:bg-slate-50"
             aria-label="확대 (간격 줄이기)"
             title="확대"
           >
@@ -259,7 +259,7 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
               }
             }}
             disabled={!canZoomOut}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md border bg-white text-slate-700 transition disabled:cursor-not-allowed disabled:opacity-30 hover:enabled:bg-slate-50"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md border bg-card text-slate-700 transition disabled:cursor-not-allowed disabled:opacity-30 hover:enabled:bg-slate-50"
             aria-label="축소 (간격 늘리기)"
             title="축소"
           >
@@ -277,7 +277,7 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
           type="button"
           onClick={() => setStartIdx((i) => Math.max(0, i - 1))}
           disabled={safeStart === 0}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-md border bg-white text-slate-700 transition disabled:cursor-not-allowed disabled:opacity-30 hover:enabled:bg-slate-50"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-md border bg-card text-slate-700 transition disabled:cursor-not-allowed disabled:opacity-30 hover:enabled:bg-slate-50"
           aria-label="이전 시대"
         >
           <ChevronLeft size={16} />
@@ -307,7 +307,7 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
           type="button"
           onClick={() => setStartIdx((i) => Math.min(maxStart, i + 1))}
           disabled={safeStart === maxStart}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-md border bg-white text-slate-700 transition disabled:cursor-not-allowed disabled:opacity-30 hover:enabled:bg-slate-50"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-md border bg-card text-slate-700 transition disabled:cursor-not-allowed disabled:opacity-30 hover:enabled:bg-slate-50"
           aria-label="다음 시대"
         >
           <ChevronRight size={16} />

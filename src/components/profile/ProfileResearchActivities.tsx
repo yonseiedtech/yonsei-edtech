@@ -18,7 +18,7 @@ export default function ProfileResearchActivities({ papers }: Props) {
   const hasMore = total > visible;
 
   return (
-    <section className="rounded-2xl border bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border bg-card p-5 shadow-sm">
       <div className="mb-3 flex items-baseline justify-between">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">연구활동 · 최근 논문</h2>
         <span className="text-[11px] text-muted-foreground">총 {total}건</span>

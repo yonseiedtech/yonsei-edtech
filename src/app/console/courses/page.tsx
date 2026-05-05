@@ -602,7 +602,7 @@ function ConsoleCoursesContent() {
   // 학기 선택 + 통계 위젯 — 등록/조회 탭에서 공유
   const semesterPicker = (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <div className="rounded-lg border bg-white p-3">
+      <div className="rounded-lg border bg-card p-3">
         <p className="text-xs text-muted-foreground">학기</p>
         <div className="mt-1 flex gap-2">
           <select
@@ -652,7 +652,7 @@ function ConsoleCoursesContent() {
             {semesterPicker}
 
             {/* 수강편람 .xlsx 일괄 등록/업데이트 */}
-            <div className="rounded-xl border bg-white p-4">
+            <div className="rounded-xl border bg-card p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="flex items-center gap-2 text-sm font-semibold">
@@ -690,7 +690,7 @@ function ConsoleCoursesContent() {
             </div>
 
             {/* 교시 → 표준 시간 일괄 변환 */}
-            <div className="rounded-xl border bg-white p-4">
+            <div className="rounded-xl border bg-card p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="flex items-center gap-2 text-sm font-semibold">
@@ -716,7 +716,7 @@ function ConsoleCoursesContent() {
             </div>
 
             {/* CSV 일괄 등록 */}
-            <div className="rounded-xl border bg-white">
+            <div className="rounded-xl border bg-card">
               <button
                 type="button"
                 onClick={() => setCsvOpen((v) => !v)}
@@ -752,7 +752,7 @@ function ConsoleCoursesContent() {
             </div>
 
             {/* 새 과목 추가 폼 */}
-            <div className="rounded-xl border bg-white p-4">
+            <div className="rounded-xl border bg-card p-4">
               <p className="text-sm font-semibold">새 과목 추가</p>
               <div className="mt-3 grid gap-2 sm:grid-cols-3">
                 <Input
@@ -859,7 +859,7 @@ function ConsoleCoursesContent() {
                 {visibleRows.map((r) => (
                   <li
                     key={r.id}
-                    className={`rounded-lg border bg-white p-3 ${r.active ? "" : "opacity-60"}`}
+                    className={`rounded-lg border bg-card p-3 ${r.active ? "" : "opacity-60"}`}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
@@ -968,7 +968,7 @@ function StatCard({
   tone?: "primary" | "muted";
 }) {
   return (
-    <div className="rounded-lg border bg-white p-3">
+    <div className="rounded-lg border bg-card p-3">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p
         className={`mt-1 text-2xl font-bold ${
@@ -1059,7 +1059,7 @@ function InlineEditor({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-2 inline-flex items-center gap-1 rounded-md border bg-white px-2 py-1 text-[11px] text-muted-foreground hover:bg-muted/30 hover:text-primary"
+        className="mt-2 inline-flex items-center gap-1 rounded-md border bg-card px-2 py-1 text-[11px] text-muted-foreground hover:bg-muted/30 hover:text-primary"
       >
         <Pencil size={11} /> 편집
       </button>
@@ -1449,7 +1449,7 @@ function EnrollmentList({
       {err && <p className="mt-2 text-[11px] text-destructive">⚠ {err}</p>}
 
       {adding && (
-        <div className="mt-3 rounded-md border bg-white p-3">
+        <div className="mt-3 rounded-md border bg-card p-3">
           <div className="grid gap-2 sm:grid-cols-3">
             <div className="sm:col-span-3">
               <MemberPicker
@@ -1534,7 +1534,7 @@ function EnrollmentList({
             const isEditing = editingId === r.id;
             if (isEditing) {
               return (
-                <li key={r.id} className="rounded-md border bg-white p-3">
+                <li key={r.id} className="rounded-md border bg-card p-3">
                   <div className="grid gap-2 sm:grid-cols-3">
                     <div className="sm:col-span-3">
                       <MemberPicker
@@ -1620,7 +1620,7 @@ function EnrollmentList({
             return (
               <li
                 key={r.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-white px-3 py-2"
+                className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-card px-3 py-2"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
@@ -1794,7 +1794,7 @@ function MemberPicker({
         autoComplete="off"
       />
       {open && matches.length > 0 && (
-        <ul className="absolute left-0 right-0 top-full z-50 mt-1 max-h-72 overflow-auto rounded-md border bg-white shadow-lg">
+        <ul className="absolute left-0 right-0 top-full z-50 mt-1 max-h-72 overflow-auto rounded-md border bg-card shadow-lg">
           {matches.map((u) => (
             <li key={u.id}>
               <button
@@ -1825,7 +1825,7 @@ function MemberPicker({
         </ul>
       )}
       {open && !membersLoading && matches.length === 0 && (displayName.trim() || query.trim()) && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-md border bg-white px-3 py-2 text-[11px] text-muted-foreground shadow-lg">
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-md border bg-card px-3 py-2 text-[11px] text-muted-foreground shadow-lg">
           매칭되는 회원이 없습니다 — 이대로 저장하면 회원 비연동 외부 수강생으로 등록됩니다
         </div>
       )}
@@ -1911,7 +1911,7 @@ function ComprehensiveExamConsole({
   return (
     <>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <div className="rounded-lg border bg-white p-3">
+        <div className="rounded-lg border bg-card p-3">
           <p className="text-xs text-muted-foreground">학기</p>
           <div className="mt-1 flex gap-2">
             <select
@@ -1940,7 +1940,7 @@ function ComprehensiveExamConsole({
         <StatCard label="불합격" value={counts.failed} tone="muted" />
       </div>
 
-      <div className="rounded-xl border bg-white p-4">
+      <div className="rounded-xl border bg-card p-4">
         <div className="flex flex-wrap items-start gap-2">
           <GraduationCap size={18} className="text-primary" />
           <div className="flex-1">

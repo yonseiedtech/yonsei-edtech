@@ -49,7 +49,7 @@ export default function CommentList({ comments, currentUserId, isAdmin, onDelete
   return (
     <div className="space-y-3">
       {comments.map((comment) => (
-        <div key={comment.id} className="rounded-xl border bg-white p-4">
+        <div key={comment.id} className="rounded-xl border bg-card p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-muted-foreground">

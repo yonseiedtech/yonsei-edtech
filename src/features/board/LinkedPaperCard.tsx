@@ -69,7 +69,7 @@ export default function LinkedPaperCard({ paper, authorIsMe, onLoginRequired }: 
         <span className="text-sm font-bold">리뷰한 논문</span>
         <Badge
           variant="outline"
-          className={paper.paperType === "thesis" ? "border-violet-300 bg-white text-violet-700" : "border-blue-300 bg-white text-blue-700"}
+          className={paper.paperType === "thesis" ? "border-violet-300 bg-card text-violet-700" : "border-blue-300 bg-card text-blue-700"}
         >
           {paper.paperType === "thesis"
             ? paper.thesisLevel === "doctoral"

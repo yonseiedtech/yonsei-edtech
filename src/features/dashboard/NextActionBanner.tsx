@@ -103,7 +103,7 @@ function formatRemaining(diffMs: number): string {
 function urgencyClass(diffMs: number): string {
   if (diffMs <= 30 * 60_000) return "border-rose-200 bg-rose-50/50";
   if (diffMs < 3 * 60 * 60_000) return "border-amber-200 bg-amber-50/40";
-  return "border-slate-200 bg-white";
+  return "border-slate-200 bg-card";
 }
 
 const KIND_META: Record<NextActionKind, { label: string; iconClass: string; Icon: typeof CalendarClock }> = {
@@ -297,7 +297,7 @@ export default function NextActionBanner() {
         <button
           type="button"
           onClick={show}
-          className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted/50"
+          className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-slate-200 bg-card px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted/50"
           aria-label="다음 액션 배너 다시 보기"
         >
           <BellOff size={12} />

@@ -19,7 +19,7 @@ function GreetingCard({ person, accent }: { person: GreetingPerson; accent: "adv
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
-      className="flex flex-col items-center gap-6 rounded-2xl border bg-white p-5 shadow-sm sm:gap-10 sm:p-8 md:flex-row md:items-start md:p-12"
+      className="flex flex-col items-center gap-6 rounded-2xl border bg-card p-5 shadow-sm sm:gap-10 sm:p-8 md:flex-row md:items-start md:p-12"
     >
       {person.photo ? (
         <div className="relative h-56 w-44 shrink-0 overflow-hidden rounded-xl bg-muted md:h-64 md:w-52">
@@ -57,7 +57,7 @@ export default function GreetingPage() {
         </section>
         <section className="mx-auto mt-12 max-w-6xl space-y-8 px-4" aria-busy="true" aria-label="인사말 불러오는 중">
           {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="flex flex-col items-center gap-6 rounded-2xl border bg-white p-5 shadow-sm sm:gap-10 sm:p-8 md:flex-row md:items-start md:p-12">
+            <div key={i} className="flex flex-col items-center gap-6 rounded-2xl border bg-card p-5 shadow-sm sm:gap-10 sm:p-8 md:flex-row md:items-start md:p-12">
               <Skeleton className="h-56 w-44 shrink-0 rounded-xl md:h-64 md:w-52" />
               <div className="flex-1 space-y-3">
                 <Skeleton className="h-4 w-full" />

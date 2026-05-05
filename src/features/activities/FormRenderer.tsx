@@ -156,7 +156,7 @@ export default function FormRenderer({ fields, value, onChange, scheduleDefaults
                   value={typeof v === "string" ? v : ""}
                   onChange={(e) => onChange(f.id, e.target.value)}
                   required={f.required}
-                  className="w-full rounded-lg border bg-white px-3 py-2 text-sm"
+                  className="w-full rounded-lg border bg-card px-3 py-2 text-sm"
                 >
                   <option value="">선택하세요</option>
                   {(f.options ?? []).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
@@ -269,7 +269,7 @@ function ScheduleField({ field, value, onChange, defaults }: ScheduleFieldProps)
             "flex flex-col items-start gap-1 rounded-xl border-2 p-4 text-left transition-all",
             mode === "all"
               ? "border-emerald-500 bg-emerald-50 text-emerald-900 shadow-sm dark:bg-emerald-950/40 dark:text-emerald-100"
-              : "border-input bg-white text-muted-foreground hover:border-emerald-300 hover:bg-emerald-50/40 dark:bg-card dark:hover:bg-emerald-950/20",
+              : "border-input bg-card text-muted-foreground hover:border-emerald-300 hover:bg-emerald-50/40 dark:bg-card dark:hover:bg-emerald-950/20",
           )}
         >
           <div className="flex items-center gap-2">
@@ -287,7 +287,7 @@ function ScheduleField({ field, value, onChange, defaults }: ScheduleFieldProps)
             "flex flex-col items-start gap-1 rounded-xl border-2 p-4 text-left transition-all",
             mode === "partial"
               ? "border-primary bg-primary/10 text-foreground shadow-sm"
-              : "border-input bg-white text-muted-foreground hover:border-primary/40 hover:bg-primary/5 dark:bg-card dark:hover:bg-primary/10",
+              : "border-input bg-card text-muted-foreground hover:border-primary/40 hover:bg-primary/5 dark:bg-card dark:hover:bg-primary/10",
           )}
         >
           <div className="flex items-center gap-2">
@@ -320,7 +320,7 @@ function ScheduleField({ field, value, onChange, defaults }: ScheduleFieldProps)
             {expanded ? <ChevronUp size={16} className="text-muted-foreground" /> : <ChevronDown size={16} className="text-muted-foreground" />}
           </button>
           {expanded && (
-            <div className="border-t bg-white p-3 dark:bg-card">
+            <div className="border-t bg-card p-3 dark:bg-card">
               <ScheduleSelector
                 startDate={effectiveStartDate}
                 endDate={effectiveEndDate}

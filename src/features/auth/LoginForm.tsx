@@ -85,7 +85,7 @@ export default function LoginForm({ onSuccess, hideSignupLink, signupHref }: Log
   // 승인 대기 상태 UI
   if (pendingApproval) {
     return (
-      <div className="space-y-4 rounded-2xl border bg-white p-8 shadow-sm">
+      <div className="space-y-4 rounded-2xl border bg-card p-8 shadow-sm">
         <div className="flex flex-col items-center gap-3 py-4">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-100">
             <Clock size={28} className="text-amber-600" />
@@ -134,7 +134,7 @@ export default function LoginForm({ onSuccess, hideSignupLink, signupHref }: Log
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 rounded-2xl border bg-white p-8 shadow-sm"
+      className="space-y-4 rounded-2xl border bg-card p-8 shadow-sm"
     >
       <div>
         <label className="mb-1.5 block text-sm font-medium">아이디</label>

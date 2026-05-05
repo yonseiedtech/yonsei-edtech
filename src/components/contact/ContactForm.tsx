@@ -25,7 +25,7 @@ export default function ContactForm() {
 
   if (submitted) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-2xl border bg-white p-12 text-center">
+      <div className="flex flex-col items-center justify-center rounded-2xl border bg-card p-12 text-center">
         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary/10 text-secondary">
           <Send size={28} />
         </div>
@@ -47,7 +47,7 @@ export default function ContactForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 rounded-2xl border bg-white p-8 shadow-sm"
+      className="space-y-4 rounded-2xl border bg-card p-8 shadow-sm"
     >
       <div>
         <label className="mb-1.5 block text-sm font-medium">이름</label>

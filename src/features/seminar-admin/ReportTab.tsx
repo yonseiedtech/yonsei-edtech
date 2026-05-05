@@ -137,11 +137,11 @@ function AnalysisDashboard({ attendees, seminarTitle, seminarDate }: { attendees
 
       {/* 회원/미가입 비율 */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl border bg-white p-4 text-center">
+        <div className="rounded-xl border bg-card p-4 text-center">
           <p className="text-2xl font-bold text-primary">{members}</p>
           <p className="text-xs text-muted-foreground">가입 회원</p>
         </div>
-        <div className="rounded-xl border bg-white p-4 text-center">
+        <div className="rounded-xl border bg-card p-4 text-center">
           <p className="text-2xl font-bold text-amber-600">{guests}</p>
           <p className="text-xs text-muted-foreground">미가입 참석자</p>
         </div>
@@ -149,7 +149,7 @@ function AnalysisDashboard({ attendees, seminarTitle, seminarDate }: { attendees
 
       {/* 관심분야 분포 */}
       {interestEntries.length > 0 && (
-        <div className="rounded-xl border bg-white p-5">
+        <div className="rounded-xl border bg-card p-5">
           <h5 className="mb-3 text-sm font-medium">관심분야 분포</h5>
           <div className="space-y-2">
             {interestEntries.map(([interest, count]) => (
@@ -161,7 +161,7 @@ function AnalysisDashboard({ attendees, seminarTitle, seminarDate }: { attendees
 
       {/* 누적학기 분포 */}
       {semesterEntries.length > 0 && (
-        <div className="rounded-xl border bg-white p-5">
+        <div className="rounded-xl border bg-card p-5">
           <h5 className="mb-3 text-sm font-medium">누적학기 분포</h5>
           <div className="space-y-2">
             {semesterEntries.map(([sem, count]) => (
@@ -173,7 +173,7 @@ function AnalysisDashboard({ attendees, seminarTitle, seminarDate }: { attendees
 
       {/* 사전 질문사항 */}
       {questions.length > 0 && (
-        <div className="rounded-xl border bg-white p-5">
+        <div className="rounded-xl border bg-card p-5">
           <h5 className="mb-3 text-sm font-medium">사전 질문사항 ({questions.length}건)</h5>
           <div className="max-h-60 space-y-2 overflow-y-auto">
             {questions.map((q, i) => (
@@ -549,7 +549,7 @@ export function SeminarReport({ seminarId, seminarTitle, seminarDate }: { semina
   return (
     <div className="space-y-6">
       {/* 참석자 등록 */}
-      <div className="rounded-xl border bg-white p-4">
+      <div className="rounded-xl border bg-card p-4">
         <div className="flex items-center justify-between">
           <h4 className="flex items-center gap-1.5 text-sm font-medium">
             <UserPlus size={16} />
@@ -594,17 +594,17 @@ export function SeminarReport({ seminarId, seminarTitle, seminarDate }: { semina
 
       {/* 통계 카드 */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-        <div className="rounded-xl border bg-white p-4 text-center">
+        <div className="rounded-xl border bg-card p-4 text-center">
           <Users size={20} className="mx-auto mb-1 text-blue-500" />
           <p className="text-2xl font-bold">{total}</p>
           <p className="text-xs text-muted-foreground">신청</p>
         </div>
-        <div className="rounded-xl border bg-white p-4 text-center">
+        <div className="rounded-xl border bg-card p-4 text-center">
           <UserCheck size={20} className="mx-auto mb-1 text-green-500" />
           <p className="text-2xl font-bold">{checkedIn}</p>
           <p className="text-xs text-muted-foreground">출석</p>
         </div>
-        <div className="rounded-xl border bg-white p-4 text-center">
+        <div className="rounded-xl border bg-card p-4 text-center">
           <UserX size={20} className="mx-auto mb-1 text-amber-500" />
           <p className="text-2xl font-bold">{total - checkedIn}</p>
           <p className="text-xs text-muted-foreground">미출석</p>
@@ -650,7 +650,7 @@ export function SeminarReport({ seminarId, seminarTitle, seminarDate }: { semina
             CSV 내보내기
           </Button>
         </div>
-        <div className="max-h-80 overflow-y-auto rounded-lg border bg-white">
+        <div className="max-h-80 overflow-y-auto rounded-lg border bg-card">
           {attendees.length === 0 ? (
             <p className="p-4 text-center text-sm text-muted-foreground">참석자가 없습니다.</p>
           ) : (
@@ -779,7 +779,7 @@ export default function ReportTab() {
       {seminar && <SeminarReport seminarId={seminar.id} seminarTitle={seminar.title} seminarDate={seminar.date} />}
 
       {completedSeminars.length > 1 && (
-        <div className="rounded-xl border bg-white p-6">
+        <div className="rounded-xl border bg-card p-6">
           <h3 className="mb-4 text-sm font-medium">완료된 세미나 참석률 비교</h3>
           <div className="space-y-2">
             {completedSeminars.map((s) => {

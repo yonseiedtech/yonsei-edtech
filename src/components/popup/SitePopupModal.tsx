@@ -38,7 +38,7 @@ export default function SitePopupModal({ popup, onClose, onDismissUntil, preview
       >
         {/* 가상 페이지 배경 */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10" />
-        <div className="absolute inset-x-3 top-3 rounded-md bg-white/80 px-3 py-2 text-[10px] text-muted-foreground">
+        <div className="absolute inset-x-3 top-3 rounded-md bg-card/80 px-3 py-2 text-[10px] text-muted-foreground">
           ━━━━━ 사이트 미리보기 ━━━━━
         </div>
 
@@ -95,7 +95,7 @@ function PopupCard({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-xl border bg-white shadow-2xl",
+        "relative overflow-hidden rounded-xl border bg-card shadow-2xl",
         compact ? "w-[300px]" : "w-[460px] max-w-[92vw]",
       )}
     >

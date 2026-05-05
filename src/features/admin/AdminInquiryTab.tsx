@@ -135,7 +135,7 @@ export default function AdminInquiryTab() {
       {/* 모바일 카드 뷰 */}
       <div className="space-y-2 sm:hidden">
         {inquiries.map((inq) => (
-          <div key={inq.id} className="rounded-xl border bg-white p-4">
+          <div key={inq.id} className="rounded-xl border bg-card p-4">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-1.5">
@@ -181,7 +181,7 @@ export default function AdminInquiryTab() {
       </div>
 
       {/* 데스크톱 테이블 */}
-      <div className="hidden overflow-x-auto rounded-xl border bg-white sm:block">
+      <div className="hidden overflow-x-auto rounded-xl border bg-card sm:block">
         <table className="w-full text-sm">
           <thead className="border-b bg-muted/30">
             <tr>
@@ -314,7 +314,7 @@ export default function AdminInquiryTab() {
                   onChange={(e) => setReplyText(e.target.value)}
                   rows={6}
                   placeholder="답변을 직접 작성하거나 AI 초안을 생성하세요..."
-                  className="w-full rounded-lg border border-input bg-white px-3 py-2 text-sm leading-relaxed outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                  className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm leading-relaxed outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                   readOnly={replyDialog.status === "replied"}
                 />
               </div>

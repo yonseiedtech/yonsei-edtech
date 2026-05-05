@@ -257,7 +257,7 @@ export default function ElectiveReviewsByName() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="강의명·교수·과목코드로 검색"
-            className="h-9 w-full rounded-md border bg-white pl-8 pr-2 text-sm"
+            className="h-9 w-full rounded-md border bg-card pl-8 pr-2 text-sm"
           />
         </div>
         <select
@@ -265,7 +265,7 @@ export default function ElectiveReviewsByName() {
           onChange={(e) =>
             setFilterCategory(e.target.value as CourseCategory | "all")
           }
-          className="h-9 rounded-md border bg-white px-2 text-sm"
+          className="h-9 rounded-md border bg-card px-2 text-sm"
         >
           <option value="all">전체 카테고리</option>
           {ELECTIVE_CATS.map((c) => (
@@ -313,7 +313,7 @@ function NameCard({
   );
 
   return (
-    <li className="rounded-xl border bg-white p-4 shadow-sm">
+    <li className="rounded-xl border bg-card p-4 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
@@ -546,7 +546,7 @@ function ReviewItem({ review }: { review: CourseReview }) {
             type="button"
             onClick={handleHelpful}
             disabled={!user || alreadyHelpful}
-            className="inline-flex items-center gap-0.5 rounded-md border bg-white px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-muted disabled:opacity-50"
+            className="inline-flex items-center gap-0.5 rounded-md border bg-card px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-muted disabled:opacity-50"
           >
             <ThumbsUp size={10} />
             {review.helpfulCount ?? 0}
@@ -555,7 +555,7 @@ function ReviewItem({ review }: { review: CourseReview }) {
             <button
               type="button"
               onClick={handleDelete}
-              className="inline-flex items-center gap-0.5 rounded-md border border-destructive/30 bg-white px-1.5 py-0.5 text-[10px] text-destructive hover:bg-destructive/5"
+              className="inline-flex items-center gap-0.5 rounded-md border border-destructive/30 bg-card px-1.5 py-0.5 text-[10px] text-destructive hover:bg-destructive/5"
             >
               <Trash2 size={10} />
             </button>
@@ -689,7 +689,7 @@ function ComposeDialog({
                   const o = group.offerings.find((x) => x.id === e.target.value);
                   if (o) setProfName(o.professor ?? "");
                 }}
-                className="mt-1 h-9 w-full rounded-md border bg-white px-2 text-sm"
+                className="mt-1 h-9 w-full rounded-md border bg-card px-2 text-sm"
               >
                 {group.offerings.map((o) => (
                   <option key={o.id} value={o.id}>
@@ -706,7 +706,7 @@ function ComposeDialog({
                 value={profName}
                 onChange={(e) => setProfName(e.target.value)}
                 placeholder="담당 교수"
-                className="mt-1 h-9 w-full rounded-md border bg-white px-2 text-sm"
+                className="mt-1 h-9 w-full rounded-md border bg-card px-2 text-sm"
               />
             </div>
           </div>
@@ -762,7 +762,7 @@ function ComposeDialog({
                 <select
                   value={midtermType}
                   onChange={(e) => setMidtermType(e.target.value as ExamType)}
-                  className="mt-1 h-9 w-full rounded-md border bg-white px-2 text-sm"
+                  className="mt-1 h-9 w-full rounded-md border bg-card px-2 text-sm"
                 >
                   {Object.entries(EXAM_TYPE_LABELS).map(([k, label]) => (
                     <option key={k} value={k}>{label}</option>
@@ -774,7 +774,7 @@ function ComposeDialog({
                 <select
                   value={finalType}
                   onChange={(e) => setFinalType(e.target.value as ExamType)}
-                  className="mt-1 h-9 w-full rounded-md border bg-white px-2 text-sm"
+                  className="mt-1 h-9 w-full rounded-md border bg-card px-2 text-sm"
                 >
                   {Object.entries(EXAM_TYPE_LABELS).map(([k, label]) => (
                     <option key={k} value={k}>{label}</option>
@@ -801,7 +801,7 @@ function ComposeDialog({
                   value={assignmentType}
                   onChange={(e) => setAssignmentType(e.target.value)}
                   placeholder="개인 보고서 / 팀 프로젝트 / 발표 등"
-                  className="mt-1 h-9 w-full rounded-md border bg-white px-2 text-sm"
+                  className="mt-1 h-9 w-full rounded-md border bg-card px-2 text-sm"
                 />
               </div>
               <div>
@@ -811,7 +811,7 @@ function ComposeDialog({
                   onChange={(e) =>
                     setAssignmentFrequency(e.target.value as AssignmentFrequency)
                   }
-                  className="mt-1 h-9 w-full rounded-md border bg-white px-2 text-sm"
+                  className="mt-1 h-9 w-full rounded-md border bg-card px-2 text-sm"
                 >
                   {Object.entries(ASSIGNMENT_FREQUENCY_LABELS).map(([k, label]) => (
                     <option key={k} value={k}>{label}</option>
@@ -837,7 +837,7 @@ function ComposeDialog({
               value={recommendedFor}
               onChange={(e) => setRecommendedFor(e.target.value)}
               placeholder="예: 1학기 신입생 / 통계 배경 있는 학생 / 학부 청강생"
-              className="mt-1 h-9 w-full rounded-md border bg-white px-2 text-sm"
+              className="mt-1 h-9 w-full rounded-md border bg-card px-2 text-sm"
             />
           </div>
 

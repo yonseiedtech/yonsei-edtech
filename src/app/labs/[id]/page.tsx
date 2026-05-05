@@ -167,7 +167,7 @@ function LabDetailContent({ id }: { id: string }) {
           <p className="flex items-center gap-2 font-medium text-foreground">
             <FlaskConical size={14} /> 내부 프로토타입
           </p>
-          {lab.featureFlag && <p className="mt-1">Feature Flag: <code className="rounded bg-white px-1">{lab.featureFlag}</code></p>}
+          {lab.featureFlag && <p className="mt-1">Feature Flag: <code className="rounded bg-card px-1">{lab.featureFlag}</code></p>}
           {lab.previewRoute && (
             <p className="mt-1">
               미리보기: <Link href={lab.previewRoute} className="text-primary underline">{lab.previewRoute}</Link>

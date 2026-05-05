@@ -476,7 +476,7 @@ function SeminarDetail({ id }: { id: string }) {
 
         {/* Section 3: Description */}
         {seminar.description && (
-          <div className="mt-4 rounded-2xl border bg-white p-5 sm:mt-6 sm:p-8">
+          <div className="mt-4 rounded-2xl border bg-card p-5 sm:mt-6 sm:p-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 <BookOpen size={16} />
@@ -570,7 +570,7 @@ function SeminarDetail({ id }: { id: string }) {
         )}
 
         {/* Section 7: Reviews */}
-        <div className="mt-4 rounded-2xl border bg-white p-5 sm:mt-6 sm:p-8">
+        <div className="mt-4 rounded-2xl border bg-card p-5 sm:mt-6 sm:p-8">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
             <Star size={16} />
             세미나 후기
@@ -639,7 +639,7 @@ function SeminarDetail({ id }: { id: string }) {
                     className={cn(
                       "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
                       selectedFormat === key
-                        ? "bg-white text-foreground shadow-sm"
+                        ? "bg-card text-foreground shadow-sm"
                         : "text-muted-foreground hover:text-foreground",
                     )}
                   >

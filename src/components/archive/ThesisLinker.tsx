@@ -94,7 +94,7 @@ export default function ThesisLinker({ selectedIds, onChange }: Props) {
                 <button
                   type="button"
                   onClick={() => removeOne(t.id)}
-                  className="ml-0.5 rounded-full p-0.5 hover:bg-white/20"
+                  className="ml-0.5 rounded-full p-0.5 hover:bg-card/20"
                   aria-label="제거"
                 >
                   <X className="h-3 w-3" />

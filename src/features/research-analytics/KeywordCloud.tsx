@@ -280,7 +280,7 @@ export default function KeywordCloud({
                 className={`rounded-md px-2 py-1 font-medium transition ${
                   active
                     ? "bg-primary text-primary-foreground"
-                    : "border bg-white text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                    : "border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
                 }`}
               >
                 {n}개
@@ -434,7 +434,7 @@ export default function KeywordCloud({
                       {hoverDetail.coKeywords.map(([k, c]) => (
                         <span
                           key={k}
-                          className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10.5px]"
+                          className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-card px-2 py-0.5 text-[10.5px]"
                         >
                           <span className="font-medium text-foreground">{k}</span>
                           <span className="tabular-nums text-muted-foreground">{c}</span>

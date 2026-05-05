@@ -167,8 +167,8 @@ export default function LabDetailPage({ params }: { params: Promise<{ id: string
           <p className="flex items-center gap-2 font-medium text-foreground">
             <FlaskConical size={14} /> 내부 프로토타입
           </p>
-          {lab.featureFlag && <p className="mt-1">Feature Flag: <code className="rounded bg-white px-1">{lab.featureFlag}</code></p>}
-          {lab.previewRoute && <p className="mt-1">Preview: <code className="rounded bg-white px-1">{lab.previewRoute}</code></p>}
+          {lab.featureFlag && <p className="mt-1">Feature Flag: <code className="rounded bg-card px-1">{lab.featureFlag}</code></p>}
+          {lab.previewRoute && <p className="mt-1">Preview: <code className="rounded bg-card px-1">{lab.previewRoute}</code></p>}
           <p className="mt-2 text-[11px]">Registry 연결은 Phase 3에서 자동 마운트됩니다.</p>
         </section>
       )}

@@ -112,7 +112,7 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
       <div className="py-16">
         <div className="mx-auto max-w-6xl px-4">
           <Skeleton className="mb-6 h-5 w-20" />
-          <div className="rounded-2xl border bg-white p-8">
+          <div className="rounded-2xl border bg-card p-8">
             <Skeleton className="h-6 w-24" />
             <Skeleton className="mt-3 h-8 w-3/4" />
             <Skeleton className="mt-3 h-4 w-48" />
@@ -198,7 +198,7 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
           목록으로
         </button>
 
-        <article className="rounded-2xl border bg-white p-8">
+        <article className="rounded-2xl border bg-card p-8">
           <div className="flex items-center gap-2">
             <Badge variant="secondary">{CATEGORY_LABELS[post.category]}</Badge>
           </div>
@@ -247,11 +247,11 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
               <div className="flex items-center gap-2 text-[#003876]">
                 <Mic size={18} />
                 <span className="text-sm font-bold">온라인 인터뷰</span>
-                <Badge variant="outline" className="border-blue-300 bg-white text-[#003876] text-[10px]">
+                <Badge variant="outline" className="border-blue-300 bg-card text-[#003876] text-[10px]">
                   {post.interview.questions.length}문항
                 </Badge>
                 {post.interview.deadline && (
-                  <Badge variant="outline" className="border-amber-300 bg-white text-amber-700 text-[10px]">
+                  <Badge variant="outline" className="border-amber-300 bg-card text-amber-700 text-[10px]">
                     마감 {new Date(post.interview.deadline).toLocaleDateString("ko-KR")}
                   </Badge>
                 )}

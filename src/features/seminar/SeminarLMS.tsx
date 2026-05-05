@@ -192,7 +192,7 @@ export default function SeminarLMS({ seminarId }: Props) {
             </h3>
             {speakerToken ? (
               <div className="space-y-2">
-                <div className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2">
+                <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
                   <Link2 size={14} className="shrink-0 text-muted-foreground" />
                   <span className="flex-1 truncate text-xs text-muted-foreground">
                     /seminars/{seminar.id}/speaker-review?token={speakerToken.slice(0, 8)}...
@@ -220,7 +220,7 @@ export default function SeminarLMS({ seminarId }: Props) {
           </div>
         )}
 
-        <div className="rounded-2xl border bg-white">
+        <div className="rounded-2xl border bg-card">
           {/* 탭 네비게이션 */}
           <div className="flex overflow-x-auto border-b">
             {TABS.map((tab) => (

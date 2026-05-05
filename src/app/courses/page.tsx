@@ -318,7 +318,7 @@ function CoursesPageInner() {
 
         {/* 학기 선택 + 검색 */}
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-lg border bg-white p-3">
+          <div className="rounded-lg border bg-card p-3">
             <p className="text-xs text-muted-foreground">학기</p>
             <div className="mt-1 flex gap-2">
               <select
@@ -341,7 +341,7 @@ function CoursesPageInner() {
               </select>
             </div>
           </div>
-          <div className="rounded-lg border bg-white p-3 sm:col-span-2">
+          <div className="rounded-lg border bg-card p-3 sm:col-span-2">
             <p className="text-xs text-muted-foreground">검색</p>
             <input
               type="search"
@@ -533,7 +533,7 @@ function CourseRow({
     mine?.role === "auditor" ? "auditor" : mine ? "student" : "none";
 
   return (
-    <li className="rounded-lg border bg-white p-3 transition-shadow hover:shadow-sm">
+    <li className="rounded-lg border bg-card p-3 transition-shadow hover:shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
@@ -629,10 +629,10 @@ function ToggleChip({
     color === "emerald"
       ? active
         ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-        : "bg-white text-muted-foreground border-border hover:bg-emerald-50"
+        : "bg-card text-muted-foreground border-border hover:bg-emerald-50"
       : active
       ? "bg-amber-100 text-amber-800 border-amber-300"
-      : "bg-white text-muted-foreground border-border hover:bg-amber-50";
+      : "bg-card text-muted-foreground border-border hover:bg-amber-50";
   return (
     <button
       type="button"
@@ -819,7 +819,7 @@ function ComprehensiveExamPanel() {
   }
 
   return (
-    <div className="mt-3 rounded-xl border bg-white p-4">
+    <div className="mt-3 rounded-xl border bg-card p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex items-center gap-2">
           <GraduationCap size={16} className="text-primary" />
@@ -892,7 +892,7 @@ function ComprehensiveExamPanel() {
                 <select
                   value={draft.plannedYear}
                   onChange={(e) => setDraft({ ...draft, plannedYear: Number(e.target.value) })}
-                  className="rounded-md border bg-white px-3 py-2 text-sm"
+                  className="rounded-md border bg-card px-3 py-2 text-sm"
                 >
                   {yearOptions.map((y) => (
                     <option key={y} value={y}>{y}년</option>
@@ -904,7 +904,7 @@ function ComprehensiveExamPanel() {
                 <select
                   value={draft.plannedTerm}
                   onChange={(e) => setDraft({ ...draft, plannedTerm: e.target.value as SemesterTerm })}
-                  className="rounded-md border bg-white px-3 py-2 text-sm"
+                  className="rounded-md border bg-card px-3 py-2 text-sm"
                 >
                   {TERMS.map((t) => (
                     <option key={t} value={t}>{SEMESTER_TERM_LABELS[t]}</option>
@@ -917,7 +917,7 @@ function ComprehensiveExamPanel() {
               <select
                 value={draft.status}
                 onChange={(e) => setDraft({ ...draft, status: e.target.value as ComprehensiveExamStatus })}
-                className="rounded-md border bg-white px-3 py-2 text-sm"
+                className="rounded-md border bg-card px-3 py-2 text-sm"
               >
                 {(["planning", "applied", "passed", "failed"] as ComprehensiveExamStatus[]).map((s) => (
                   <option key={s} value={s}>{COMPREHENSIVE_EXAM_STATUS_LABELS[s]}</option>
@@ -1119,7 +1119,7 @@ function TaReportSection({
             {orphanEnrollments.map((e) => (
               <span
                 key={e.id}
-                className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-white pl-2 pr-0.5 py-0.5 text-[11px] text-amber-900"
+                className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-card pl-2 pr-0.5 py-0.5 text-[11px] text-amber-900"
               >
                 <Link
                   href={e.userId ? `/profile/${e.userId}` : "#"}
@@ -1159,7 +1159,7 @@ function TaReportSection({
           {courseGroups.map((g) => {
             const total = g.students.length + g.auditors.length + g.tas.length;
             return (
-              <li key={g.course.id} className="rounded-lg border bg-white p-3">
+              <li key={g.course.id} className="rounded-lg border bg-card p-3">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <button
                     type="button"
@@ -1455,7 +1455,7 @@ function CourseDetailDialog({
                       className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] transition ${
                         isOn
                           ? "border-primary bg-primary/10 text-primary"
-                          : "border-input bg-white text-muted-foreground hover:bg-muted"
+                          : "border-input bg-card text-muted-foreground hover:bg-muted"
                       }`}
                     >
                       <span>{o.year}년 {SEMESTER_TERM_LABELS[o.term]}</span>
@@ -1468,7 +1468,7 @@ function CourseDetailDialog({
           </div>
 
           {/* 요약 */}
-          <div className="grid grid-cols-3 gap-2 rounded-lg border bg-white p-3 text-center">
+          <div className="grid grid-cols-3 gap-2 rounded-lg border bg-card p-3 text-center">
             <div>
               <p className="text-[10px] text-muted-foreground">선택 학기</p>
               <p className="text-sm font-semibold">{selected.size}개</p>
@@ -1500,7 +1500,7 @@ function CourseDetailDialog({
                 const total =
                   group.students.length + group.auditors.length + group.tas.length;
                 return (
-                  <div key={k} className="rounded-lg border bg-white p-3">
+                  <div key={k} className="rounded-lg border bg-card p-3">
                     <p className="text-xs font-semibold text-primary">
                       {group.offering.year}년 {SEMESTER_TERM_LABELS[group.offering.term]}
                       <span className="ml-2 font-normal text-muted-foreground">

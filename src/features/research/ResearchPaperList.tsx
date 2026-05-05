@@ -249,7 +249,7 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
   return (
     <div className="space-y-5">
       {/* 관심 연구분야 */}
-      <section className="rounded-2xl border bg-white p-5">
+      <section className="rounded-2xl border bg-card p-5">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold">관심 연구분야</h3>
           {interestsDirty && !readOnly && (
@@ -368,7 +368,7 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
                 return (
                   <li
                     key={d.id}
-                    className="flex flex-wrap items-center gap-2 rounded-xl border border-amber-200/70 bg-white px-3 py-2.5"
+                    className="flex flex-wrap items-center gap-2 rounded-xl border border-amber-200/70 bg-card px-3 py-2.5"
                   >
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-foreground">
@@ -464,7 +464,7 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
               <select
                 value={sortKey}
                 onChange={(e) => setSortKey(e.target.value as SortKey)}
-                className="rounded-md border bg-white px-2 py-1 text-xs"
+                className="rounded-md border bg-card px-2 py-1 text-xs"
               >
                 <option value="recent">최근 추가순</option>
                 <option value="year">연도순</option>
@@ -482,7 +482,7 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
                       "rounded-full border px-2 py-0.5 transition",
                       activeTagFilter === t
                         ? "border-primary bg-primary/10 text-primary"
-                        : "border-muted bg-white text-muted-foreground hover:border-primary/40"
+                        : "border-muted bg-card text-muted-foreground hover:border-primary/40"
                     )}
                   >
                     #{t}
@@ -742,7 +742,7 @@ function AlumniThesisRecommendations({ interests }: { interests: string[] }) {
               <button
                 type="button"
                 onClick={() => setVisible((v) => v + RECO_PAGE_SIZE)}
-                className="rounded-md border bg-white px-3 py-1.5 text-[11px] text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                className="rounded-md border bg-card px-3 py-1.5 text-[11px] text-muted-foreground hover:border-primary/40 hover:text-foreground"
               >
                 더 많은 추천 보기 ({matched.length - visible}건 남음)
               </button>
@@ -788,7 +788,7 @@ function RecoCard({
   disabled?: boolean;
 }) {
   return (
-    <li className="rounded-lg border bg-white p-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5">
+    <li className="rounded-lg border bg-card p-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5">
       <div className="flex items-start gap-2">
         <Link href={`/alumni/thesis/${thesis.id}`} className="block min-w-0 flex-1">
           <p className="line-clamp-2 text-xs font-medium leading-snug">{thesis.title}</p>
@@ -893,7 +893,7 @@ function SavedAlumniTheses({
   if (readingIds.length === 0) return null;
 
   return (
-    <section className="rounded-2xl border bg-white p-5">
+    <section className="rounded-2xl border bg-card p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <BookmarkCheck size={16} className="text-primary" />

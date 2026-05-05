@@ -70,7 +70,7 @@ export default function BottomNav() {
   return (
     <nav
       aria-label="주요 메뉴"
-      className="fixed bottom-0 left-0 right-0 z-40 border-t bg-white/95 backdrop-blur shadow-[0_-2px_8px_rgba(0,0,0,0.04)] supports-[backdrop-filter]:bg-white/80 sm:hidden"
+      className="fixed bottom-0 left-0 right-0 z-40 border-t bg-card/95 backdrop-blur shadow-[0_-2px_8px_rgba(0,0,0,0.04)] supports-[backdrop-filter]:bg-card/80 sm:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <ul className="flex items-stretch justify-around">

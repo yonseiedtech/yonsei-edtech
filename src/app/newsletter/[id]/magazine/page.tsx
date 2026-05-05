@@ -66,7 +66,7 @@ export default function NewsletterMagazinePage({
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50">
-        <div className="sticky top-0 z-20 border-b bg-white/95 backdrop-blur">
+        <div className="sticky top-0 z-20 border-b bg-card/95 backdrop-blur">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3">
             <Skeleton className="h-4 w-20" />
             <Skeleton className="h-4 w-40" />
@@ -99,7 +99,7 @@ export default function NewsletterMagazinePage({
   return (
     <div className="min-h-screen bg-slate-50">
       {/* 상단 바 */}
-      <div className="sticky top-0 z-20 border-b bg-white/95 backdrop-blur">
+      <div className="sticky top-0 z-20 border-b bg-card/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3">
           <Link
             href={`/newsletter/${issue.id}`}
@@ -133,7 +133,7 @@ export default function NewsletterMagazinePage({
 
       <div className="mx-auto flex max-w-7xl gap-6 px-4 py-8 lg:py-12">
         {/* 사이드바 (PC) */}
-        <aside className="sticky top-20 hidden h-[calc(100vh-7rem)] w-64 shrink-0 overflow-y-auto rounded-xl border bg-white p-4 lg:block">
+        <aside className="sticky top-20 hidden h-[calc(100vh-7rem)] w-64 shrink-0 overflow-y-auto rounded-xl border bg-card p-4 lg:block">
           <p className="mb-3 text-xs font-semibold text-muted-foreground">섹션</p>
           <button
             type="button"
@@ -183,7 +183,7 @@ export default function NewsletterMagazinePage({
                     "shrink-0 rounded-full border px-3 py-1 text-[11px] font-medium transition-colors",
                     activeMobileId === "mag-cover"
                       ? "border-primary bg-primary/10 text-primary"
-                      : "bg-white text-muted-foreground hover:bg-muted"
+                      : "bg-card text-muted-foreground hover:bg-muted"
                   )}
                 >
                   표지
@@ -199,7 +199,7 @@ export default function NewsletterMagazinePage({
                         "shrink-0 rounded-full border px-3 py-1 text-[11px] font-medium transition-colors",
                         isActive
                           ? "border-primary bg-primary/10 text-primary"
-                          : "bg-white text-muted-foreground hover:bg-muted"
+                          : "bg-card text-muted-foreground hover:bg-muted"
                       )}
                     >
                       <span
@@ -270,7 +270,7 @@ export default function NewsletterMagazinePage({
                 type="button"
                 onClick={() => setPageIndex((p) => Math.max(0, p - 1))}
                 disabled={pageIndex === 0}
-                className="inline-flex items-center gap-1 rounded-lg border bg-white px-3 py-2 text-sm hover:bg-muted disabled:opacity-40"
+                className="inline-flex items-center gap-1 rounded-lg border bg-card px-3 py-2 text-sm hover:bg-muted disabled:opacity-40"
               >
                 <ChevronLeft size={16} /> 이전
               </button>
@@ -281,7 +281,7 @@ export default function NewsletterMagazinePage({
                 type="button"
                 onClick={() => setPageIndex((p) => Math.min(totalPages - 1, p + 1))}
                 disabled={pageIndex >= totalPages - 1}
-                className="inline-flex items-center gap-1 rounded-lg border bg-white px-3 py-2 text-sm hover:bg-muted disabled:opacity-40"
+                className="inline-flex items-center gap-1 rounded-lg border bg-card px-3 py-2 text-sm hover:bg-muted disabled:opacity-40"
               >
                 다음 <ChevronRight size={16} />
               </button>
@@ -346,7 +346,7 @@ function SectionCard({
   return (
     <article
       className={cn(
-        "rounded-2xl border bg-white p-6 shadow-sm sm:p-8",
+        "rounded-2xl border bg-card p-6 shadow-sm sm:p-8",
         tall && "flex h-[70vh] min-h-[480px] flex-col"
       )}
     >
@@ -386,7 +386,7 @@ function SectionCard({
 
 function BlankPage() {
   return (
-    <div className="flex h-[70vh] min-h-[480px] items-center justify-center rounded-2xl border-2 border-dashed bg-white/40 text-xs text-muted-foreground">
+    <div className="flex h-[70vh] min-h-[480px] items-center justify-center rounded-2xl border-2 border-dashed bg-card/40 text-xs text-muted-foreground">
       마지막 페이지입니다
     </div>
   );

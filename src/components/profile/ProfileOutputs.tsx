@@ -42,7 +42,7 @@ export default function ProfileOutputs({ owner }: Props) {
   if (outputs.length === 0) return null;
 
   return (
-    <section className="rounded-2xl border bg-white p-5">
+    <section className="rounded-2xl border bg-card p-5">
       <h2 className="flex items-center gap-1.5 text-sm font-semibold">
         <Layers size={14} className="text-primary" />
         산출물 <span className="text-xs font-normal text-muted-foreground">({outputs.length})</span>

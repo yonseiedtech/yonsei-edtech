@@ -111,7 +111,7 @@ function LabsContent() {
               <Link
                 key={l.id}
                 href={`/labs/${l.id}`}
-                className="group flex flex-col overflow-hidden rounded-xl border bg-white transition-shadow hover:shadow-md"
+                className="group flex flex-col overflow-hidden rounded-xl border bg-card transition-shadow hover:shadow-md"
               >
                 {l.thumbnailUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element

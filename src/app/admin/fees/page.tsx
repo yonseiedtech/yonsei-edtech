@@ -482,38 +482,38 @@ export default function FeesPage() {
         <TabsContent value="dashboard" className="mt-4">
           <div className="space-y-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
-            <div className="rounded-lg border bg-white p-4 text-center">
+            <div className="rounded-lg border bg-card p-4 text-center">
               <p className="text-3xl font-bold">{stats.total}</p>
               <p className="text-xs text-muted-foreground">전체 회원</p>
             </div>
-            <div className="rounded-lg border bg-white p-4 text-center">
+            <div className="rounded-lg border bg-card p-4 text-center">
               <p className="text-3xl font-bold text-green-600">{stats.paid}</p>
               <p className="text-xs text-muted-foreground">납부 완료</p>
             </div>
-            <div className="rounded-lg border bg-white p-4 text-center">
+            <div className="rounded-lg border bg-card p-4 text-center">
               <p className="text-3xl font-bold text-red-500">{stats.unpaid}</p>
               <p className="text-xs text-muted-foreground">미납</p>
             </div>
-            <div className="rounded-lg border bg-white p-4 text-center">
+            <div className="rounded-lg border bg-card p-4 text-center">
               <p className="text-3xl font-bold text-primary">{paidRate}%</p>
               <p className="text-xs text-muted-foreground">납부율</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
-            <div className="rounded-lg border bg-white p-4">
+            <div className="rounded-lg border bg-card p-4">
               <p className="text-sm text-muted-foreground">{formatSemester(selectedSemester)} 학회비</p>
               <p className="mt-1 text-2xl font-bold">{feeAmount > 0 ? `${feeAmount.toLocaleString()}원` : "미설정"}</p>
               {currentSetting?.dueDate && (
                 <p className="mt-1 text-xs text-muted-foreground">납부 기한: {currentSetting.dueDate}</p>
               )}
             </div>
-            <div className="rounded-lg border bg-white p-4">
+            <div className="rounded-lg border bg-card p-4">
               <p className="text-sm text-muted-foreground">총 납부 금액</p>
               <p className="mt-1 text-2xl font-bold text-green-600">{stats.totalAmount.toLocaleString()}원</p>
               <p className="mt-1 text-xs text-muted-foreground">면제 {stats.exempt}명</p>
             </div>
-            <div className="rounded-lg border bg-white p-4">
+            <div className="rounded-lg border bg-card p-4">
               <p className="text-sm text-muted-foreground">총 수입 / 지출</p>
               <p className="mt-1 text-lg font-bold">
                 <span className="text-green-600">+{ledgerStats.income.toLocaleString()}</span>
@@ -521,7 +521,7 @@ export default function FeesPage() {
                 <span className="text-red-500">-{ledgerStats.expense.toLocaleString()}</span>
               </p>
             </div>
-            <div className="rounded-lg border bg-white p-4">
+            <div className="rounded-lg border bg-card p-4">
               <p className="text-sm text-muted-foreground">잔액</p>
               <p className={cn("mt-1 text-2xl font-bold", ledgerStats.balance >= 0 ? "text-primary" : "text-red-500")}>
                 {ledgerStats.balance >= 0 ? "+" : ""}{ledgerStats.balance.toLocaleString()}원
@@ -530,7 +530,7 @@ export default function FeesPage() {
           </div>
 
           {/* 납부율 프로그레스 바 */}
-          <div className="rounded-lg border bg-white p-4">
+          <div className="rounded-lg border bg-card p-4">
             <div className="flex items-center justify-between text-sm">
               <span>납부 진행률</span>
               <span className="font-medium">{stats.paid} / {stats.total}명</span>
@@ -548,7 +548,7 @@ export default function FeesPage() {
         <TabsContent value="payments" className="mt-4">
           <div className="space-y-3">
           {/* 엑셀 대조 카드 */}
-          <div className="rounded-lg border bg-white">
+          <div className="rounded-lg border bg-card">
             <button
               onClick={() => setReconcileExpanded((v) => !v)}
               className="flex w-full items-center justify-between px-4 py-3 text-left"
@@ -710,7 +710,7 @@ export default function FeesPage() {
           </div>
 
           {/* 회원 목록 */}
-          <div className="rounded-lg border bg-white">
+          <div className="rounded-lg border bg-card">
             <div className="hidden sm:grid grid-cols-[1fr_100px_80px_100px_80px] items-center gap-2 border-b bg-muted/30 px-4 py-2.5 text-xs font-medium text-muted-foreground">
               <span>회원</span>
               <span>학번</span>
@@ -791,21 +791,21 @@ export default function FeesPage() {
           <div className="space-y-4">
           {/* 요약 카드 */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div className="rounded-lg border bg-white p-4 text-center">
+            <div className="rounded-lg border bg-card p-4 text-center">
               <div className="flex items-center justify-center gap-1.5 text-green-600">
                 <ArrowDownCircle size={16} />
                 <span className="text-xs font-medium">수입</span>
               </div>
               <p className="mt-1 text-2xl font-bold text-green-600">{ledgerStats.income.toLocaleString()}원</p>
             </div>
-            <div className="rounded-lg border bg-white p-4 text-center">
+            <div className="rounded-lg border bg-card p-4 text-center">
               <div className="flex items-center justify-center gap-1.5 text-red-500">
                 <ArrowUpCircle size={16} />
                 <span className="text-xs font-medium">지출</span>
               </div>
               <p className="mt-1 text-2xl font-bold text-red-500">{ledgerStats.expense.toLocaleString()}원</p>
             </div>
-            <div className="rounded-lg border bg-white p-4 text-center">
+            <div className="rounded-lg border bg-card p-4 text-center">
               <div className="flex items-center justify-center gap-1.5 text-primary">
                 <Wallet size={16} />
                 <span className="text-xs font-medium">잔액</span>
@@ -839,7 +839,7 @@ export default function FeesPage() {
           </div>
 
           {/* 거래 목록 */}
-          <div className="rounded-lg border bg-white">
+          <div className="rounded-lg border bg-card">
             <div className="hidden sm:grid grid-cols-[80px_100px_1fr_120px_60px] items-center gap-2 border-b bg-muted/30 px-4 py-2.5 text-xs font-medium text-muted-foreground">
               <span>날짜</span>
               <span>분류</span>
@@ -885,7 +885,7 @@ export default function FeesPage() {
 
         <TabsContent value="settings" className="mt-4">
           <div className="space-y-4">
-          <div className="rounded-lg border bg-white p-6">
+          <div className="rounded-lg border bg-card p-6">
             <h3 className="text-sm font-semibold">학기별 학회비 설정</h3>
             <p className="mt-1 text-xs text-muted-foreground">학기를 선택하고 학회비 금액과 납부 기한을 설정합니다.</p>
 
@@ -925,7 +925,7 @@ export default function FeesPage() {
             </div>
           </div>
 
-          <div className="rounded-lg border bg-white p-6">
+          <div className="rounded-lg border bg-card p-6">
             <h3 className="text-sm font-semibold">학기별 설정 내역</h3>
             <div className="mt-3 space-y-2">
               {feeSettings.length === 0 ? (

@@ -123,7 +123,7 @@ function PaperSelector({
             논문 연결 (참고문헌 추가)
           </button>
           {open && (
-            <div className="absolute left-0 top-full z-10 mt-1 w-80 rounded-lg border bg-white p-2 shadow-lg">
+            <div className="absolute left-0 top-full z-10 mt-1 w-80 rounded-lg border bg-card p-2 shadow-lg">
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -374,7 +374,7 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
 
   if (isLoading || (!proposal && !readOnly)) {
     return (
-      <p className="rounded-2xl border bg-white py-10 text-center text-sm text-muted-foreground">
+      <p className="rounded-2xl border bg-card py-10 text-center text-sm text-muted-foreground">
         연구 계획서를 불러오는 중...
       </p>
     );
@@ -391,7 +391,7 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
 
   function renderHeader() {
     return (
-      <section className="rounded-2xl border bg-white p-5">
+      <section className="rounded-2xl border bg-card p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-center gap-2">
             <ClipboardList size={18} className="text-primary" />
@@ -412,7 +412,7 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
                   "flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium transition-colors",
                   viewMode === "single"
                     ? "bg-primary text-primary-foreground"
-                    : "bg-white text-muted-foreground hover:bg-muted",
+                    : "bg-card text-muted-foreground hover:bg-muted",
                 )}
                 title="단순 화면 — 모든 항목을 한 번에 작성"
               >
@@ -430,7 +430,7 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
                   "flex items-center gap-1 border-l px-2.5 py-1.5 text-[11px] font-medium transition-colors",
                   viewMode === "interview"
                     ? "bg-primary text-primary-foreground"
-                    : "bg-white text-muted-foreground hover:bg-muted",
+                    : "bg-card text-muted-foreground hover:bg-muted",
                 )}
                 title="인터뷰 모드 — 한 항목씩 차근차근 답변"
               >
@@ -485,7 +485,7 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
                         ? "border-primary bg-primary/10 text-primary"
                         : filled
                           ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300"
-                          : "border-muted bg-white text-muted-foreground hover:border-primary/40",
+                          : "border-muted bg-card text-muted-foreground hover:border-primary/40",
                     )}
                     title={s.title}
                   >
@@ -524,7 +524,7 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
           <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{step.hint}</p>
 
           {step.helpers && step.helpers.length > 0 && (
-            <ul className="mt-3 space-y-1 rounded-xl bg-white/70 p-3 text-xs text-muted-foreground">
+            <ul className="mt-3 space-y-1 rounded-xl bg-card/70 p-3 text-xs text-muted-foreground">
               {step.helpers.map((h, i) => (
                 <li key={i} className="flex items-start gap-1.5">
                   <span className="mt-0.5 text-primary/60">•</span>
@@ -590,7 +590,7 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
                     </p>
                   </div>
                 ) : (
-                  <ol className="space-y-2 rounded-xl border bg-white p-4 text-sm leading-relaxed">
+                  <ol className="space-y-2 rounded-xl border bg-card p-4 text-sm leading-relaxed">
                     {apa7Sorted.map((p, i) => (
                       <li key={p.id} className="flex items-start gap-2">
                         <span className="shrink-0 text-xs font-medium text-muted-foreground">
@@ -767,7 +767,7 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
               </p>
             </div>
           ) : (
-            <ol className="space-y-2 rounded-xl border bg-white p-4 text-sm leading-relaxed">
+            <ol className="space-y-2 rounded-xl border bg-card p-4 text-sm leading-relaxed">
               {apa7Sorted.map((p, i) => (
                 <li key={p.id} className="flex items-start gap-2">
                   <span className="shrink-0 text-xs font-medium text-muted-foreground">
@@ -794,7 +794,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border bg-white p-5">
+    <section className="rounded-2xl border bg-card p-5">
       <h4 className="text-sm font-semibold">{title}</h4>
       {sub && <p className="mt-0.5 mb-3 text-xs leading-relaxed text-muted-foreground">{sub}</p>}
       {children}

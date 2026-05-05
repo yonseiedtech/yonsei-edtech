@@ -161,7 +161,7 @@ export default function ReviewsSection({ seminar, type }: Props) {
       ) : (
         <div className="space-y-3">
           {reviews.map((r) => (
-            <div key={r.id} className="rounded-lg border bg-white p-4">
+            <div key={r.id} className="rounded-lg border bg-card p-4">
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2">

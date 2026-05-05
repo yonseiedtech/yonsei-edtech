@@ -229,7 +229,7 @@ export default function SeminarForm() {
 
       {showPreview ? (
         /* ── 세미나 미리보기 ── */
-        <div className="mt-6 rounded-2xl border bg-white p-8">
+        <div className="mt-6 rounded-2xl border bg-card p-8">
           <div className="flex flex-wrap items-center gap-2">
             <Badge className="bg-primary/10 text-xs text-primary" variant="secondary">예정</Badge>
             {selectedSemester && (
@@ -322,7 +322,7 @@ export default function SeminarForm() {
         </div>
       ) : (
         /* ── 편집 폼 ── */
-        <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4 rounded-2xl border bg-white p-8">
+        <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4 rounded-2xl border bg-card p-8">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-sm font-medium">

@@ -43,7 +43,7 @@ export default function ProfileContactInfo({
   if (!hasEmail && !hasPhone && !hasSocials) return null;
 
   return (
-    <section className="space-y-2 rounded-2xl border bg-white p-5 shadow-sm">
+    <section className="space-y-2 rounded-2xl border bg-card p-5 shadow-sm">
       <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">개인정보</h2>
       <ul className="divide-y divide-muted/40">
         {hasEmail && (

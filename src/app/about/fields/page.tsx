@@ -22,7 +22,7 @@ export default function FieldsPage() {
         {isLoading ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3" aria-busy="true" aria-label="활동 분야 불러오는 중">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex items-start gap-4 rounded-2xl border bg-white p-6 shadow-sm">
+              <div key={i} className="flex items-start gap-4 rounded-2xl border bg-card p-6 shadow-sm">
                 <Skeleton className="h-10 w-10 shrink-0 rounded-lg" />
                 <div className="flex-1">
                   <Skeleton className="h-4 w-2/3" />
@@ -37,7 +37,7 @@ export default function FieldsPage() {
             {fields.map((f) => {
               const Icon = ICON_MAP[f.icon] || Lightbulb;
               return (
-                <div key={f.title} className="flex items-start gap-4 rounded-2xl border bg-white p-6 shadow-sm">
+                <div key={f.title} className="flex items-start gap-4 rounded-2xl border bg-card p-6 shadow-sm">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary/10 text-secondary">
                     <Icon size={20} />
                   </div>

@@ -64,7 +64,7 @@ export default function ServerConnectionCard() {
     <div className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50/50 px-3 py-2">
       <Terminal size={14} className="shrink-0 text-blue-600" />
       <span className="text-xs text-blue-700">프로젝트 경로</span>
-      <code className="flex-1 rounded bg-white/80 px-2 py-1 font-mono text-xs text-blue-900">
+      <code className="flex-1 rounded bg-card/80 px-2 py-1 font-mono text-xs text-blue-900">
         C:\work\yonsei-edtech
       </code>
       <button onClick={handleCopyPath} className="rounded p-1 hover:bg-blue-100" title="경로 복사">
@@ -98,7 +98,7 @@ export default function ServerConnectionCard() {
   }
 
   return (
-    <div className="rounded-xl border bg-white p-5">
+    <div className="rounded-xl border bg-card p-5">
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -122,7 +122,7 @@ export default function ServerConnectionCard() {
           <li>
             1. 프로젝트 폴더에서 터미널을 열어주세요
             <div className="mt-1 flex items-center gap-2">
-              <code className="flex-1 rounded bg-white/80 px-2.5 py-1.5 font-mono text-xs text-blue-900">
+              <code className="flex-1 rounded bg-card/80 px-2.5 py-1.5 font-mono text-xs text-blue-900">
                 C:\work\yonsei-edtech
               </code>
               <button onClick={handleCopyPath} className="rounded p-1 hover:bg-blue-100" title="경로 복사">
@@ -133,7 +133,7 @@ export default function ServerConnectionCard() {
           <li>
             2. 아래 명령어를 실행하세요
             <div className="mt-1 flex items-center gap-2">
-              <code className="flex-1 rounded bg-white/80 px-2.5 py-1.5 font-mono text-xs text-blue-900">
+              <code className="flex-1 rounded bg-card/80 px-2.5 py-1.5 font-mono text-xs text-blue-900">
                 cd agent-server; python main.py
               </code>
               <button onClick={handleCopyCommand} className="rounded p-1 hover:bg-blue-100" title="복사">

@@ -252,16 +252,16 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                       학술활동·수료증·내 글·인터뷰를 한 화면에서 관리해보세요.
                     </p>
                     <div className="mt-3 flex flex-wrap gap-1.5 text-[11px]">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-muted-foreground">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-card px-2 py-0.5 text-muted-foreground">
                         <BookOpen size={11} /> 학술 {myActivities.length + mySeminars.length}
                       </span>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-muted-foreground">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-card px-2 py-0.5 text-muted-foreground">
                         <Award size={11} /> 수료증 {myCertificates.length}
                       </span>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-muted-foreground">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-card px-2 py-0.5 text-muted-foreground">
                         <FileText size={11} /> 내 글 {myPosts.length}
                       </span>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-muted-foreground">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-card px-2 py-0.5 text-muted-foreground">
                         <Mic size={11} /> 인터뷰
                       </span>
                     </div>
@@ -288,7 +288,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                       관심 연구분야 · 논문 분석 노트를 단계별로 정리해보세요.
                     </p>
                     <div className="mt-3 flex flex-wrap gap-1.5 text-[11px]">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-muted-foreground">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-card px-2 py-0.5 text-muted-foreground">
                         <BookOpen size={11} /> 논문 {publishedPaperCount}
                       </span>
                     </div>
@@ -721,7 +721,7 @@ function NotificationSettingsCard({ user }: { user: User }) {
         >
           <span
             className={cn(
-              "inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform",
+              "inline-block h-5 w-5 transform rounded-full bg-card shadow transition-transform",
               enabled ? "translate-x-6" : "translate-x-1",
             )}
           />
@@ -822,7 +822,7 @@ function SelfDeleteSection({ user, onDeleted }: { user: User; onDeleted: () => v
           value={confirmText}
           onChange={(e) => setConfirmText(e.target.value)}
           placeholder={user.name}
-          className="w-full rounded-md border bg-white px-3 py-2 text-sm"
+          className="w-full rounded-md border bg-card px-3 py-2 text-sm"
         />
       </div>
       <div className="mt-4 flex justify-end gap-2">

@@ -29,7 +29,7 @@ export default function ProfileContentCreations({ owner }: Props) {
   );
 
   return (
-    <section className="rounded-2xl border bg-white p-5">
+    <section className="rounded-2xl border bg-card p-5">
       <h2 className="flex items-center gap-1.5 text-sm font-semibold">
         <Sparkles size={14} className="text-primary" />
         콘텐츠 제작 <span className="text-xs font-normal text-muted-foreground">({items.length})</span>

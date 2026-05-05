@@ -73,7 +73,7 @@ export default function SpeakerRow({
   }
 
   return (
-    <div className="rounded-lg border bg-white p-3 space-y-3">
+    <div className="rounded-lg border bg-card p-3 space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold text-muted-foreground">
           연사 #{index + 1}
@@ -104,7 +104,7 @@ export default function SpeakerRow({
                   ? t === "guest"
                     ? "border-amber-300 bg-amber-50 text-amber-800"
                     : "border-primary bg-primary/10 text-primary"
-                  : "border-input bg-white text-muted-foreground hover:bg-muted"
+                  : "border-input bg-card text-muted-foreground hover:bg-muted"
               }`}
             >
               {SPEAKER_TYPE_LABELS[t]}
@@ -145,7 +145,7 @@ export default function SpeakerRow({
                 />
               </div>
               {showResults && search.trim() && (
-                <div className="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border bg-white shadow-lg">
+                <div className="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border bg-card shadow-lg">
                   {matches.length === 0 ? (
                     <div className="px-3 py-2 text-xs text-muted-foreground">
                       일치하는 회원이 없습니다 — 아래에 직접 입력하세요.

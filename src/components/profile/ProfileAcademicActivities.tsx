@@ -229,7 +229,7 @@ export default function ProfileAcademicActivities({ owner }: Props) {
   }
 
   return (
-    <section className="rounded-2xl border bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border bg-card p-5 shadow-sm">
       <div className="mb-3 flex items-baseline justify-between">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">학술활동</h2>
         <span className="text-[11px] text-muted-foreground">총 {totalCount}건</span>
@@ -279,7 +279,7 @@ export default function ProfileAcademicActivities({ owner }: Props) {
               <section key={headerKey}>
                 <div
                   className={cn(
-                    "sticky top-0 z-10 mb-2 -mx-1 flex items-center gap-2 bg-white/95 px-1 py-1 backdrop-blur-sm",
+                    "sticky top-0 z-10 mb-2 -mx-1 flex items-center gap-2 bg-card/95 px-1 py-1 backdrop-blur-sm",
                   )}
                 >
                   <div

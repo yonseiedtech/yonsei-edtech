@@ -188,7 +188,7 @@ export default function InterviewResponses({ postId, meta }: Props) {
           {visibleResponses.map((r: InterviewResponse) => (
             <article
               key={r.id}
-              className={`rounded-2xl border bg-white p-5 ${
+              className={`rounded-2xl border bg-card p-5 ${
                 r.status !== "submitted" ? "border-amber-300 bg-amber-50/40" : ""
               }`}
             >

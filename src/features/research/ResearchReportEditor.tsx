@@ -495,7 +495,7 @@ function PaperSelector({
           논문 연결
         </button>
         {open && (
-          <div className="absolute left-0 top-full z-10 mt-1 w-80 rounded-lg border bg-white p-2 shadow-lg">
+          <div className="absolute left-0 top-full z-10 mt-1 w-80 rounded-lg border bg-card p-2 shadow-lg">
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -653,7 +653,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
 
   if (isLoading || (!report && !readOnly)) {
     return (
-      <p className="rounded-2xl border bg-white py-10 text-center text-sm text-muted-foreground">
+      <p className="rounded-2xl border bg-card py-10 text-center text-sm text-muted-foreground">
         연구 보고서를 불러오는 중...
       </p>
     );
@@ -662,7 +662,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
   return (
     <div className="space-y-4">
       {/* 헤더 */}
-      <section className="rounded-2xl border bg-white p-5 dark:bg-card">
+      <section className="rounded-2xl border bg-card p-5 dark:bg-card">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-center gap-2">
             <FileText size={18} className="text-primary" />
@@ -746,7 +746,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
       />
 
       {/* 스텝 탭 */}
-      <div className="flex items-center gap-1 rounded-xl border bg-white p-1.5">
+      <div className="flex items-center gap-1 rounded-xl border bg-card p-1.5">
         {STEPS.map((s, i) => {
           const active = step === s.key;
           return (
@@ -880,7 +880,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
                         "rounded-xl border-2 p-3 text-left transition-all",
                         active
                           ? "border-[#003876] bg-[#003876]/5 shadow-sm"
-                          : "border-muted bg-white hover:border-[#003876]/40 hover:bg-blue-50/40",
+                          : "border-muted bg-card hover:border-[#003876]/40 hover:bg-blue-50/40",
                       )}
                     >
                       <p className="text-sm font-bold">{opt.label}</p>
@@ -1084,7 +1084,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
       </div>
 
       {/* 이전 / 다음 네비게이션 */}
-      <div className="flex items-center justify-between rounded-xl border bg-white p-3">
+      <div className="flex items-center justify-between rounded-xl border bg-card p-3">
         <Button
           variant="outline"
           size="sm"
@@ -1123,7 +1123,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border bg-white p-5">
+    <section className="rounded-2xl border bg-card p-5">
       <div className="flex items-center gap-2">
         {icon}
         <h4 className="text-sm font-semibold">{title}</h4>
@@ -1214,7 +1214,7 @@ function Field11Context({ form, setField, readOnly }: FieldStepProps) {
                     "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
                     active
                       ? "border-primary bg-primary text-primary-foreground"
-                      : "border-muted bg-white text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                      : "border-muted bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground",
                   )}
                 >
                   {opt.label}
@@ -1354,7 +1354,7 @@ function Field12Problem({ form, setField, readOnly }: FieldStepProps) {
                     value={ev.type}
                     onChange={(e) => updateEvidence(ev.id, { type: e.target.value as EvidenceType })}
                     disabled={readOnly}
-                    className="rounded-md border bg-white px-2 py-1.5 text-xs"
+                    className="rounded-md border bg-card px-2 py-1.5 text-xs"
                   >
                     {EVIDENCE_TYPE_OPTIONS.map((o) => (
                       <option key={o.value} value={o.value}>{o.label}</option>
@@ -1418,7 +1418,7 @@ function Field12Problem({ form, setField, readOnly }: FieldStepProps) {
                           "rounded-full border px-2.5 py-1 text-[11px] transition-colors",
                           active
                             ? "border-primary bg-primary/10 text-primary"
-                            : "border-muted bg-white text-muted-foreground hover:border-primary/40",
+                            : "border-muted bg-card text-muted-foreground hover:border-primary/40",
                         )}
                       >
                         {opt.label}
@@ -1664,10 +1664,10 @@ function Field16Definition({ form, setField, readOnly }: FieldStepProps) {
         <div className="rounded-lg border border-dashed bg-amber-50/40 px-3 py-2 text-[11px] text-amber-900">
           <p className="font-medium">템플릿 (참고용)</p>
           <p className="mt-1 leading-relaxed">
-            <span className="rounded bg-white px-1 py-0.5 font-mono">[환경]</span>에서{" "}
-            <span className="rounded bg-white px-1 py-0.5 font-mono">[대상]</span>은{" "}
-            <span className="rounded bg-white px-1 py-0.5 font-mono">[원인]</span>으로 인해{" "}
-            <span className="rounded bg-white px-1 py-0.5 font-mono">[문제]</span>를 겪고 있다.
+            <span className="rounded bg-card px-1 py-0.5 font-mono">[환경]</span>에서{" "}
+            <span className="rounded bg-card px-1 py-0.5 font-mono">[대상]</span>은{" "}
+            <span className="rounded bg-card px-1 py-0.5 font-mono">[원인]</span>으로 인해{" "}
+            <span className="rounded bg-card px-1 py-0.5 font-mono">[문제]</span>를 겪고 있다.
           </p>
         </div>
 
@@ -1765,7 +1765,7 @@ function TheoryStep({ form, setField, readOnly }: FieldStepProps) {
                     "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-colors",
                     used
                       ? "border-primary bg-primary/10 text-primary"
-                      : "border-border bg-white text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                      : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground",
                     readOnly && "cursor-not-allowed opacity-60",
                   )}
                   title={used ? "이미 추가됨" : `${p.name} 카드 추가`}
@@ -1888,7 +1888,7 @@ function TheoryCardEditor({ index, total, card, readOnly, onChange, onRemove, on
   }
 
   return (
-    <section className="rounded-2xl border bg-white p-5">
+    <section className="rounded-2xl border bg-card p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-primary/10 px-1.5 text-[11px] font-semibold text-primary">

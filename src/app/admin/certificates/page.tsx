@@ -508,7 +508,7 @@ export default function CertificatesPage() {
           description="필터 조건에 해당하는 수료증/감사장이 없습니다."
         />
       ) : (
-        <div className="overflow-x-auto rounded-xl border bg-white">
+        <div className="overflow-x-auto rounded-xl border bg-card">
           <table className="w-full text-xs sm:text-sm">
             <thead>
               <tr className="border-b bg-gray-50 text-left">

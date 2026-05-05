@@ -313,7 +313,7 @@ function DirectoryContent() {
               className="pl-9"
             />
           </div>
-          <div className="flex items-center gap-1 rounded-lg border bg-white px-2 py-1">
+          <div className="flex items-center gap-1 rounded-lg border bg-card px-2 py-1">
             <span className="text-[11px] text-muted-foreground">정렬</span>
             {sortBtn("enrollment", "입학시점")}
             {sortBtn("name", "이름")}
@@ -326,7 +326,7 @@ function DirectoryContent() {
         </div>
 
         {isLoading ? (
-          <div className="mt-6 overflow-x-auto rounded-xl border bg-white" aria-busy="true" aria-label="회원 명부 불러오는 중">
+          <div className="mt-6 overflow-x-auto rounded-xl border bg-card" aria-busy="true" aria-label="회원 명부 불러오는 중">
             <table className="w-full text-xs sm:text-sm">
               <thead className="border-b bg-muted/30">
                 <tr>
@@ -357,7 +357,7 @@ function DirectoryContent() {
             {filteredAndSorted.length === 0 ? (
               <p className="mt-4 text-sm text-muted-foreground">표시할 회원이 없습니다.</p>
             ) : (
-              <div className="mt-3 overflow-x-auto rounded-xl border bg-white">
+              <div className="mt-3 overflow-x-auto rounded-xl border bg-card">
                 <table className="w-full text-xs sm:text-sm">
                   <thead className="border-b bg-muted/30">
                     <tr>

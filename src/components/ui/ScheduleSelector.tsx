@@ -170,7 +170,7 @@ export default function ScheduleSelector({
             <button
               type="button"
               onClick={clearAll}
-              className="ml-auto rounded border bg-white px-2 py-1 text-[11px] hover:bg-muted"
+              className="ml-auto rounded border bg-card px-2 py-1 text-[11px] hover:bg-muted"
             >
               전체 초기화
             </button>
@@ -184,7 +184,7 @@ export default function ScheduleSelector({
           style={{ gridTemplateColumns: `repeat(${dates.length}, minmax(140px, 1fr))` }}
         >
           {dates.map((date) => (
-            <div key={date} className="rounded-lg border bg-white">
+            <div key={date} className="rounded-lg border bg-card">
               <div className="flex items-center justify-between border-b bg-muted/30 px-2 py-1.5">
                 <div className="text-xs font-semibold">{formatDateLabel(date)}</div>
                 {!readOnly && value.some((s) => s.date === date) && (
@@ -223,7 +223,7 @@ export default function ScheduleSelector({
                         readOnly && "cursor-default",
                         visualSelected
                           ? "bg-primary/80 text-primary-foreground"
-                          : "bg-white text-muted-foreground hover:bg-primary/10",
+                          : "bg-card text-muted-foreground hover:bg-primary/10",
                       )}
                     >
                       <span>{slot.label}</span>

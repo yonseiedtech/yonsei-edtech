@@ -136,7 +136,7 @@ export default function UserActivityLogView() {
         </span>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-white p-3">
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-card p-3">
         <div className="relative min-w-[220px] flex-1">
           <Search
             size={14}
@@ -153,7 +153,7 @@ export default function UserActivityLogView() {
         <select
           value={pathFilter}
           onChange={(e) => setPathFilter(e.target.value)}
-          className="h-9 rounded-md border bg-white px-2 text-sm"
+          className="h-9 rounded-md border bg-card px-2 text-sm"
           aria-label="경로 그룹 필터"
         >
           {PATH_GROUP_FILTER_OPTIONS.map((opt) => (
@@ -186,7 +186,7 @@ export default function UserActivityLogView() {
         </div>
       )}
 
-      <div className="mt-3 overflow-x-auto rounded-xl border bg-white">
+      <div className="mt-3 overflow-x-auto rounded-xl border bg-card">
         <table className="w-full text-sm">
           <thead className="bg-muted/30">
             <tr>

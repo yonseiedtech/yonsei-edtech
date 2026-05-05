@@ -88,7 +88,7 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
     return (
       <div className="min-h-screen bg-slate-50 py-12">
         <div className="mx-auto max-w-md px-4">
-          <div className="rounded-2xl border bg-white p-8 text-center shadow-sm">
+          <div className="rounded-2xl border bg-card p-8 text-center shadow-sm">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-muted">
               <Lock size={22} className="text-muted-foreground" />
             </div>
@@ -172,7 +172,7 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
         )}
 
         {isStaffPublic && (
-          <p className="rounded-xl border border-dashed bg-white p-3 text-center text-xs text-muted-foreground">
+          <p className="rounded-xl border border-dashed bg-card p-3 text-center text-xs text-muted-foreground">
             연세교육공학회 회원이신가요?{" "}
             <Link
               href={`/login?next=${encodeURIComponent(`/profile/${owner.id}`)}`}

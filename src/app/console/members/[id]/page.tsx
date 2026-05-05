@@ -248,7 +248,7 @@ function AdminMemberDetail({ id }: { id: string }) {
         </TabsContent>
 
         <TabsContent value="admin" className="mt-4">
-          <div className="mt-6 rounded-2xl border bg-white p-6">
+          <div className="mt-6 rounded-2xl border bg-card p-6">
             <div className="flex items-center gap-4">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <UserIcon size={28} />
@@ -276,7 +276,7 @@ function AdminMemberDetail({ id }: { id: string }) {
             </div>
           </div>
 
-          <div className="mt-4 rounded-2xl border bg-white p-6 space-y-4">
+          <div className="mt-4 rounded-2xl border bg-card p-6 space-y-4">
             <h3 className="flex items-center gap-2 text-sm font-bold">
               <Shield size={16} /> 관리자 액션
             </h3>
@@ -325,7 +325,7 @@ function AdminMemberDetail({ id }: { id: string }) {
           <ConsentStatusSection member={member} />
           <MemberActivityHistory memberId={id} />
 
-          <div className="mt-4 rounded-2xl border bg-white p-6">
+          <div className="mt-4 rounded-2xl border bg-card p-6">
             <h3 className="text-lg font-bold">프로필 정보 수정</h3>
             <ProfileEditor user={member} />
           </div>
@@ -343,7 +343,7 @@ function ConsentStatusSection({ member }: { member: User }) {
     try { return new Date(iso).toLocaleString("ko-KR"); } catch { return iso; }
   }
   return (
-    <div className="mt-4 rounded-2xl border bg-white p-6 space-y-3">
+    <div className="mt-4 rounded-2xl border bg-card p-6 space-y-3">
       <h3 className="flex items-center gap-2 text-lg font-bold">
         <FileCheck size={18} /> 동의 현황
       </h3>
@@ -422,7 +422,7 @@ function MemberActivityHistory({ memberId }: { memberId: string }) {
   const totalActivities = seminars.length + activities.length;
 
   return (
-    <div className="mt-4 rounded-2xl border bg-white p-6 space-y-4">
+    <div className="mt-4 rounded-2xl border bg-card p-6 space-y-4">
       <h3 className="flex items-center gap-2 text-lg font-bold">
         <BookOpen size={18} /> 학술활동 이력
       </h3>

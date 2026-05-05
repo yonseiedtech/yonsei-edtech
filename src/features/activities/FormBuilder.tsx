@@ -99,21 +99,21 @@ export default function FormBuilder({ value, onChange }: Props) {
         <button
           type="button"
           onClick={() => setMode("edit")}
-          className={`rounded-md px-3 py-1 text-xs font-medium ${mode === "edit" ? "bg-white shadow-sm" : "text-muted-foreground"}`}
+          className={`rounded-md px-3 py-1 text-xs font-medium ${mode === "edit" ? "bg-card shadow-sm" : "text-muted-foreground"}`}
         >
           편집
         </button>
         <button
           type="button"
           onClick={() => setMode("preview")}
-          className={`rounded-md px-3 py-1 text-xs font-medium ${mode === "preview" ? "bg-white shadow-sm" : "text-muted-foreground"}`}
+          className={`rounded-md px-3 py-1 text-xs font-medium ${mode === "preview" ? "bg-card shadow-sm" : "text-muted-foreground"}`}
         >
           미리보기
         </button>
       </div>
 
       {mode === "preview" ? (
-        <div className="rounded-xl border bg-white p-4">
+        <div className="rounded-xl border bg-card p-4">
           {value.length === 0 ? (
             <p className="text-center text-xs text-muted-foreground">추가된 질문이 없습니다.</p>
           ) : (
@@ -132,7 +132,7 @@ export default function FormBuilder({ value, onChange }: Props) {
         const Icon = TYPE_META[f.type].icon;
         const isSection = f.type === "section_break";
         return (
-          <div key={f.id} className="rounded-xl border bg-white p-4">
+          <div key={f.id} className="rounded-xl border bg-card p-4">
             <div className="flex items-start gap-2">
               <div className="mt-1 flex flex-col items-center gap-0.5 text-muted-foreground">
                 <GripVertical size={14} />
@@ -149,7 +149,7 @@ export default function FormBuilder({ value, onChange }: Props) {
                   <select
                     value={f.type}
                     onChange={(e) => changeType(i, e.target.value as FormFieldType)}
-                    className="rounded border bg-white px-1.5 py-0.5 text-[10px]"
+                    className="rounded border bg-card px-1.5 py-0.5 text-[10px]"
                   >
                     {Object.entries(TYPE_META).map(([k, m]) => (
                       <option key={k} value={k}>{m.label}</option>
@@ -228,7 +228,7 @@ export default function FormBuilder({ value, onChange }: Props) {
                       <select
                         value={f.scheduleSlotMinutes ?? 30}
                         onChange={(e) => update(i, { scheduleSlotMinutes: Number(e.target.value) })}
-                        className="h-7 rounded border bg-white px-2 text-xs"
+                        className="h-7 rounded border bg-card px-2 text-xs"
                       >
                         <option value={15}>15분</option>
                         <option value={30}>30분</option>
@@ -271,7 +271,7 @@ export default function FormBuilder({ value, onChange }: Props) {
         <select
           value={newType}
           onChange={(e) => setNewType(e.target.value as FormFieldType)}
-          className="rounded-md border bg-white px-2 py-1.5 text-xs"
+          className="rounded-md border bg-card px-2 py-1.5 text-xs"
         >
           {Object.entries(TYPE_META).map(([k, m]) => (
             <option key={k} value={k}>{m.label}</option>

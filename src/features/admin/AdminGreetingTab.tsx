@@ -20,7 +20,7 @@ import { toast } from "sonner";
 // ── 섹션 래퍼 ──
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border bg-white p-6">
+    <div className="rounded-xl border bg-card p-6">
       <h3 className="mb-4 text-lg font-bold">{title}</h3>
       {children}
     </div>
@@ -51,7 +51,7 @@ function PersonGreetingForm({ label, value, onChange, optional }: { label: strin
       </div>
       <div className="mt-3">
         <label className="mb-1 block text-xs text-muted-foreground">인사말 본문</label>
-        <textarea value={value.content} onChange={(e) => onChange({ ...value, content: e.target.value })} rows={6} className="w-full rounded-lg border bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+        <textarea value={value.content} onChange={(e) => onChange({ ...value, content: e.target.value })} rows={6} className="w-full rounded-lg border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
       </div>
     </div>
   );

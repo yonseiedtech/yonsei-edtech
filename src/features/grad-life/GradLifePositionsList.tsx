@@ -229,7 +229,7 @@ export default function GradLifePositionsList() {
       />
 
       {/* 필터 */}
-      <div className="rounded-xl border bg-white p-4">
+      <div className="rounded-xl border bg-card p-4">
         <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
           <Filter size={12} />필터
         </div>
@@ -280,7 +280,7 @@ export default function GradLifePositionsList() {
       </div>
 
       {/* 목록 */}
-      <div className="rounded-xl border bg-white">
+      <div className="rounded-xl border bg-card">
         {isLoading ? (
           <p className="p-6 text-center text-sm text-muted-foreground">불러오는 중…</p>
         ) : filtered.length === 0 ? (

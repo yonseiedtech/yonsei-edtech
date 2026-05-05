@@ -94,7 +94,7 @@ export default function ProfileGradLife({ owner, isStaff = false }: Props) {
 
   if (isLoading) {
     return (
-      <section className="rounded-2xl border bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border bg-card p-5 shadow-sm">
         <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
           <GraduationCap size={16} className="text-violet-600" />
           대학원 생활
@@ -106,7 +106,7 @@ export default function ProfileGradLife({ owner, isStaff = false }: Props) {
 
   if (positions.length === 0) {
     return (
-      <section className="rounded-2xl border bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border bg-card p-5 shadow-sm">
         <header className="mb-3 flex items-center gap-2">
           <GraduationCap size={16} className="text-violet-600" />
           <h2 className="text-sm font-semibold text-foreground">대학원 생활</h2>
@@ -131,7 +131,7 @@ export default function ProfileGradLife({ owner, isStaff = false }: Props) {
   }
 
   return (
-    <section className="rounded-2xl border bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border bg-card p-5 shadow-sm">
       <header className="mb-4 flex items-center gap-2">
         <GraduationCap size={16} className="text-violet-600" />
         <h2 className="text-sm font-semibold text-foreground">대학원 생활</h2>

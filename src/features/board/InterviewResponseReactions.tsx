@@ -76,7 +76,7 @@ export default function InterviewResponseReactions({
             className={`inline-flex items-center gap-1 rounded-full border transition ${sizeCls} ${
               isMine
                 ? "border-blue-400 bg-blue-50 text-blue-800"
-                : "border-input bg-white text-muted-foreground hover:bg-muted"
+                : "border-input bg-card text-muted-foreground hover:bg-muted"
             } ${isToggling || isLoading ? "opacity-60" : ""}`}
             aria-pressed={isMine}
             title={INTERVIEW_REACTION_LABELS[type]}

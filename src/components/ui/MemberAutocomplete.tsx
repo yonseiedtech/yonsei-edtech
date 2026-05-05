@@ -94,7 +94,7 @@ export default function MemberAutocomplete({
         placeholder={placeholder}
       />
       {open && query.trim() && (
-        <div className="absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-lg border bg-white shadow-lg">
+        <div className="absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-lg border bg-card shadow-lg">
           {isLoading ? (
             <div className="flex items-center justify-center py-4 text-sm text-muted-foreground">
               <Loader2 size={14} className="mr-2 animate-spin" />

@@ -100,7 +100,7 @@ export default function TitleNgramTrend({ theses }: { theses: AlumniThesis[] }) 
                   className={`rounded-md px-2 py-1 font-medium transition ${
                     active
                       ? "bg-primary text-primary-foreground"
-                      : "border bg-white text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                      : "border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
                   }`}
                 >
                   {opt}어절
@@ -120,7 +120,7 @@ export default function TitleNgramTrend({ theses }: { theses: AlumniThesis[] }) 
                   className={`rounded-md px-2 py-1 font-medium transition ${
                     active
                       ? "bg-primary text-primary-foreground"
-                      : "border bg-white text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                      : "border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
                   }`}
                 >
                   {opt}개
@@ -182,7 +182,7 @@ export default function TitleNgramTrend({ theses }: { theses: AlumniThesis[] }) 
           해당 N-gram이 추출되지 않았습니다.
         </p>
       ) : (
-        <div className="rounded-lg border bg-white">
+        <div className="rounded-lg border bg-card">
           {/* 타이틀 행 */}
           <div className="grid grid-cols-[28px_minmax(0,1fr)_140px_36px] items-center gap-3 border-b bg-slate-50/70 px-3 py-2 text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
             <span className="text-right">순위</span>

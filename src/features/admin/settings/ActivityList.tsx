@@ -194,7 +194,7 @@ export default function ActivityList({ type, typeLabel, icon, description }: Pro
       ) : (
         <div className="space-y-3">
           {activities.map((a) => (
-            <div key={a.id} className="rounded-lg border bg-white p-4">
+            <div key={a.id} className="rounded-lg border bg-card p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">

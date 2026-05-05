@@ -153,7 +153,7 @@ function Dashboard() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* 이번 주 일정 */}
-        <div className="rounded-xl border bg-white p-5">
+        <div className="rounded-xl border bg-card p-5">
           <h2 className="flex items-center gap-2 font-semibold"><Calendar size={16} />이번 주 일정</h2>
           {upcomingEvents.length === 0 ? (
             <p className="mt-4 text-sm text-muted-foreground">이번 주 예정된 일정이 없습니다.</p>
@@ -172,7 +172,7 @@ function Dashboard() {
         </div>
 
         {/* 주의 필요 */}
-        <div className="rounded-xl border bg-white p-5">
+        <div className="rounded-xl border bg-card p-5">
           <h2 className="flex items-center gap-2 font-semibold text-amber-600"><AlertTriangle size={16} />주의 필요</h2>
           {warnings.length === 0 ? (
             <p className="mt-4 text-sm text-muted-foreground">현재 주의가 필요한 항목이 없습니다.</p>
@@ -194,7 +194,7 @@ function Dashboard() {
 
 function StatCard({ icon, title, color, stats }: { icon: React.ReactNode; title: string; color: string; stats: { label: string; value: number }[] }) {
   return (
-    <div className={cn("rounded-xl border-l-4 border bg-white p-4", color)}>
+    <div className={cn("rounded-xl border-l-4 border bg-card p-4", color)}>
       <div className="flex items-center gap-2 text-sm font-semibold">{icon}{title}</div>
       <div className="mt-3 grid grid-cols-2 gap-2">
         {stats.map((s) => (

@@ -260,7 +260,7 @@ export default function ChatWidget() {
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); resume(); }}
-                      className="rounded-full p-1 hover:bg-white/20"
+                      className="rounded-full p-1 hover:bg-card/20"
                       aria-label="계속하기"
                     >
                       <Play className="h-3.5 w-3.5" />
@@ -269,7 +269,7 @@ export default function ChatWidget() {
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); pause(); }}
-                      className="rounded-full p-1 hover:bg-white/20"
+                      className="rounded-full p-1 hover:bg-card/20"
                       aria-label="일시정지"
                     >
                       <Pause className="h-3.5 w-3.5" />
@@ -282,7 +282,7 @@ export default function ChatWidget() {
                       stop();
                       toast.success(`「${active.targetTitle}」 ${fmt(elapsed)} 기록됨`);
                     }}
-                    className="rounded-full bg-white/20 p-1 hover:bg-white/30"
+                    className="rounded-full bg-card/20 p-1 hover:bg-card/30"
                     aria-label="종료"
                   >
                     <Square className="h-3 w-3" />

@@ -65,7 +65,7 @@ export default function ComprehensiveExamCountdown() {
   if (!user) return null;
   if (isLoading) {
     return (
-      <div className="rounded-2xl border bg-white p-6">
+      <div className="rounded-2xl border bg-card p-6">
         <p className="text-sm text-muted-foreground">불러오는 중…</p>
       </div>
     );
@@ -87,7 +87,7 @@ export default function ComprehensiveExamCountdown() {
       </div>
 
       {upcoming ? (
-        <div className="mt-4 rounded-lg bg-white p-4">
+        <div className="mt-4 rounded-lg bg-card p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs text-muted-foreground">다음 응시 예정</p>
@@ -110,13 +110,13 @@ export default function ComprehensiveExamCountdown() {
           </div>
         </div>
       ) : exams.length === 0 ? (
-        <div className="mt-4 rounded-lg border border-dashed bg-white p-4 text-center">
+        <div className="mt-4 rounded-lg border border-dashed bg-card p-4 text-center">
           <p className="text-xs text-muted-foreground">
             등록된 종합시험 응시 계획이 없습니다.
           </p>
           <Link
             href="/courses?tab=mine"
-            className="mt-2 inline-flex items-center gap-1 rounded-md border border-amber-300 bg-white px-2 py-1 text-[11px] font-medium text-amber-800 hover:bg-amber-50"
+            className="mt-2 inline-flex items-center gap-1 rounded-md border border-amber-300 bg-card px-2 py-1 text-[11px] font-medium text-amber-800 hover:bg-amber-50"
           >
             응시 계획 등록 <ArrowRight size={11} />
           </Link>

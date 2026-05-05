@@ -193,7 +193,7 @@ export default function InterviewBuilder({ value, onChange }: Props) {
               className={`flex cursor-pointer items-start gap-2 rounded-lg border p-3 transition ${
                 (value.responseVisibility ?? "public") === "staff_only"
                   ? "border-blue-500 bg-blue-100/60 ring-2 ring-blue-300 dark:bg-blue-950/40"
-                  : "border-input bg-white hover:bg-blue-50/40 dark:bg-card dark:hover:bg-blue-950/20"
+                  : "border-input bg-card hover:bg-blue-50/40 dark:bg-card dark:hover:bg-blue-950/20"
               }`}
             >
               <input
@@ -218,7 +218,7 @@ export default function InterviewBuilder({ value, onChange }: Props) {
               className={`flex cursor-pointer items-start gap-2 rounded-lg border p-3 transition ${
                 (value.responseVisibility ?? "public") === "public"
                   ? "border-blue-500 bg-blue-100/60 ring-2 ring-blue-300 dark:bg-blue-950/40"
-                  : "border-input bg-white hover:bg-blue-50/40 dark:bg-card dark:hover:bg-blue-950/20"
+                  : "border-input bg-card hover:bg-blue-50/40 dark:bg-card dark:hover:bg-blue-950/20"
               }`}
             >
               <input
@@ -258,7 +258,7 @@ export default function InterviewBuilder({ value, onChange }: Props) {
         </div>
 
         {value.questions.length === 0 && (
-          <div className="mt-3 rounded-lg border border-dashed border-blue-300 bg-white p-6 text-center text-sm text-muted-foreground">
+          <div className="mt-3 rounded-lg border border-dashed border-blue-300 bg-card p-6 text-center text-sm text-muted-foreground">
             아직 질문이 없습니다. &quot;질문 추가&quot;로 시작하세요.
           </div>
         )}
@@ -268,7 +268,7 @@ export default function InterviewBuilder({ value, onChange }: Props) {
             const needsCharCount =
               q.answerType === "text" || q.answerType === "text_and_photo";
             return (
-              <div key={q.id} className="rounded-lg border bg-white p-4">
+              <div key={q.id} className="rounded-lg border bg-card p-4">
                 <div className="flex items-start gap-3">
                   <span className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
                     Q{i + 1}
@@ -295,7 +295,7 @@ export default function InterviewBuilder({ value, onChange }: Props) {
                         onChange={(e) =>
                           changeAnswerType(q.id, e.target.value as InterviewAnswerType)
                         }
-                        className="rounded-md border bg-white px-2 py-1"
+                        className="rounded-md border bg-card px-2 py-1"
                       >
                         {(Object.keys(ANSWER_TYPE_LABELS) as InterviewAnswerType[]).map((t) => (
                           <option key={t} value={t}>
@@ -323,7 +323,7 @@ export default function InterviewBuilder({ value, onChange }: Props) {
                               onChange={(e) =>
                                 updateQuestion(q.id, { maxChars: Number(e.target.value) || undefined })
                               }
-                              className="w-16 rounded-md border bg-white px-2 py-1 disabled:bg-muted disabled:opacity-50"
+                              className="w-16 rounded-md border bg-card px-2 py-1 disabled:bg-muted disabled:opacity-50"
                             />
                           </label>
                           <label className="flex items-center gap-1">
@@ -352,7 +352,7 @@ export default function InterviewBuilder({ value, onChange }: Props) {
                               onChange={(e) =>
                                 updateQuestion(q.id, { minCount: Math.max(0, Number(e.target.value) || 0) })
                               }
-                              className="w-14 rounded-md border bg-white px-2 py-1"
+                              className="w-14 rounded-md border bg-card px-2 py-1"
                             />
                           </label>
                           <label className="flex items-center gap-1">
@@ -365,7 +365,7 @@ export default function InterviewBuilder({ value, onChange }: Props) {
                               onChange={(e) =>
                                 updateQuestion(q.id, { maxCount: Math.max(1, Number(e.target.value) || 1) })
                               }
-                              className="w-14 rounded-md border bg-white px-2 py-1"
+                              className="w-14 rounded-md border bg-card px-2 py-1"
                             />
                           </label>
                         </>
@@ -437,10 +437,10 @@ export default function InterviewBuilder({ value, onChange }: Props) {
                       <div className="rounded-md border border-emerald-200 bg-emerald-50/60 p-3 text-xs text-emerald-900">
                         <p className="font-semibold">빈칸 채우기</p>
                         <p className="mt-1">
-                          질문에 <code className="rounded bg-white px-1">(   )</code> 또는 <code className="rounded bg-white px-1">___</code>을 넣으면 그 자리에 응답자의 입력창이 표시됩니다.
+                          질문에 <code className="rounded bg-card px-1">(   )</code> 또는 <code className="rounded bg-card px-1">___</code>을 넣으면 그 자리에 응답자의 입력창이 표시됩니다.
                         </p>
                         {fillBlankPreview(q.prompt) ? (
-                          <div className="mt-2 rounded bg-white p-2 text-sm text-foreground">
+                          <div className="mt-2 rounded bg-card p-2 text-sm text-foreground">
                             <span className="text-xs font-semibold text-emerald-700">미리보기: </span>
                             {fillBlankPreview(q.prompt)}
                           </div>
@@ -475,7 +475,7 @@ export default function InterviewBuilder({ value, onChange }: Props) {
               type="button"
               variant="outline"
               onClick={addQuestion}
-              className="border-blue-300 bg-white text-blue-700 hover:bg-blue-50 hover:text-blue-900"
+              className="border-blue-300 bg-card text-blue-700 hover:bg-blue-50 hover:text-blue-900"
             >
               <Plus size={16} className="mr-1" />
               질문 추가

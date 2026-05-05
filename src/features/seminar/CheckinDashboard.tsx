@@ -15,7 +15,7 @@ function MiniStat({ icon: Icon, label, value, color }: {
   color: string;
 }) {
   return (
-    <div className="rounded-lg border bg-white p-3 text-center">
+    <div className="rounded-lg border bg-card p-3 text-center">
       <Icon size={18} className={`mx-auto ${color}`} />
       <p className="mt-1 text-xl font-bold">{value}</p>
       <p className="text-[10px] text-muted-foreground">{label}</p>

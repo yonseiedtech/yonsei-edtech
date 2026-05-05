@@ -445,7 +445,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
         </Link>
 
         {/* 헤더 */}
-        <div className="rounded-2xl border bg-white p-6 shadow-sm sm:p-8">
+        <div className="rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary" className={cn("text-xs", STATUS_COLORS[activity.status])}>{STATUS_LABELS[activity.status]}</Badge>
             {activity.recruitmentStatus && !(type === "study" && (activity.recruitmentStatus === "in_progress" || activity.recruitmentStatus === "completed")) && (
@@ -470,7 +470,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             <div className="mt-3 flex flex-wrap gap-2">
               <Link
                 href={`/activities/external/${activityId}/program`}
-                className="inline-flex items-center gap-1.5 rounded-md border bg-white px-3 py-1.5 text-xs font-medium text-foreground shadow-xs hover:bg-muted"
+                className="inline-flex items-center gap-1.5 rounded-md border bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-xs hover:bg-muted"
               >
                 <Calendar size={14} /> 학술대회 프로그램 · 내 일정
               </Link>
@@ -539,24 +539,24 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             <div className="space-y-4">
               {!user ? (
                 activity.imageUrl ? (
-                  <div className="overflow-hidden rounded-xl border bg-white">
+                  <div className="overflow-hidden rounded-xl border bg-card">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={activity.imageUrl} alt={`${activity.title} 포스터`} className="block w-full" />
                   </div>
                 ) : (
-                  <div className="rounded-xl border bg-white p-6 text-center text-sm text-muted-foreground">
+                  <div className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground">
                     포스터가 등록되지 않았습니다. 자세한 정보는 로그인 후 확인할 수 있습니다.
                   </div>
                 )
               ) : (
                 <>
                   {activity.imageUrl && (
-                    <div className="overflow-hidden rounded-xl border bg-white">
+                    <div className="overflow-hidden rounded-xl border bg-card">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={activity.imageUrl} alt={`${activity.title} 포스터`} className="block w-full" />
                     </div>
                   )}
-                  <div className="rounded-xl border bg-white p-6">
+                  <div className="rounded-xl border bg-card p-6">
                     <p className="whitespace-pre-wrap text-sm leading-relaxed">{activity.description}</p>
                     {activity.detailContent && (
                       <div className="mt-4 border-t pt-4">
@@ -578,7 +578,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             <div className="space-y-4">
               {/* 진행률 바 */}
               {progressList.length > 0 && (
-                <div className="rounded-xl border bg-white p-4">
+                <div className="rounded-xl border bg-card p-4">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium">전체 진행률</span>
                     <span className="text-muted-foreground">{progressDone}/{progressList.length} 완료 ({progressPct}%)</span>
@@ -591,7 +591,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
 
               {/* 주차 추가 (운영진 또는 스터디/프로젝트 모임장) — 리스트 위로 이동 */}
               {(isStaff || isLeader) && (
-                <div className="rounded-xl border bg-white p-4 space-y-3">
+                <div className="rounded-xl border bg-card p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-semibold flex items-center gap-1"><ListChecks size={14} />주차 추가</h3>
                     {(type === "study" || type === "project") && (
@@ -743,7 +743,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               )}
 
               {/* 주차별 기록 */}
-              <div className="rounded-xl border bg-white divide-y">
+              <div className="rounded-xl border bg-card divide-y">
                 {progressList.length === 0 ? (
                   <p className="p-6 text-center text-sm text-muted-foreground">등록된 진행 기록이 없습니다.</p>
                 ) : (
@@ -844,7 +844,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                               />
 
                               {/* 출석 체크 */}
-                              <div className="rounded-lg border bg-white p-3 space-y-2">
+                              <div className="rounded-lg border bg-card p-3 space-y-2">
                                 <div className="flex items-center justify-between">
                                   <h4 className="flex items-center gap-1.5 text-xs font-semibold">
                                     <Users size={12} /> 출석 ({attendedSet.size}/{participants.length})
@@ -908,7 +908,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                               </div>
 
                               {/* 자료 업로드 */}
-                              <div className="rounded-lg border bg-white p-3 space-y-2">
+                              <div className="rounded-lg border bg-card p-3 space-y-2">
                                 <div className="flex items-center justify-between">
                                   <h4 className="flex items-center gap-1.5 text-xs font-semibold">
                                     <Paperclip size={12} /> 자료 ({materials.length})
@@ -1179,7 +1179,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                         placeholder="회원 이름 또는 학번으로 검색하여 운영진 추가"
                       />
                       {/* 비회원 운영진 추가 — 회원 DB에 없는 외부 인사를 이름만으로 추가 */}
-                      <div className="rounded-lg border border-amber-200 bg-white/70 p-3">
+                      <div className="rounded-lg border border-amber-200 bg-card/70 p-3">
                         <p className="mb-2 text-xs font-medium text-amber-900">
                           회원으로 검색되지 않는 외부 인사 추가 (비회원)
                         </p>
@@ -1214,7 +1214,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
 
                   {/* 기존 참여자에 역할 부여 — 참여자 탭에서 추가된 일반 참가자에게 역할을 부여하면 운영진으로 승격 */}
                   {canManageParticipants && participants.length > 0 && (
-                    <div className="rounded-xl border bg-white p-4">
+                    <div className="rounded-xl border bg-card p-4">
                       <h3 className="mb-2 text-sm font-semibold flex items-center gap-1">
                         <Pencil size={14} />기존 참여자 역할 부여
                       </h3>
@@ -1232,7 +1232,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                                 setRoleInput(role ?? "");
                                 setRoleDialog({ pid, name: displayName(pid) });
                               }}
-                              className="inline-flex items-center gap-1.5 rounded-md border bg-white px-3 py-1.5 text-xs hover:bg-muted/50"
+                              className="inline-flex items-center gap-1.5 rounded-md border bg-card px-3 py-1.5 text-xs hover:bg-muted/50"
                             >
                               <span className="font-medium">{displayName(pid)}</span>
                               {isGuest && <Badge variant="secondary" className="bg-slate-100 text-slate-600 text-[10px]">비회원</Badge>}
@@ -1247,7 +1247,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   )}
 
                   {/* 운영진 테이블 */}
-                  <div className="rounded-xl border bg-white overflow-hidden">
+                  <div className="rounded-xl border bg-card overflow-hidden">
                     <div className="flex items-center gap-2 border-b bg-amber-50/60 px-4 py-2.5">
                       <UserCog size={14} className="text-amber-700" />
                       <h3 className="text-sm font-semibold text-amber-900">운영진 ({staffPids.length})</h3>
@@ -1275,7 +1275,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             return (
               <div className="space-y-3">
                 {canManageParticipants && (
-                  <div className="rounded-xl border bg-white p-4 space-y-3">
+                  <div className="rounded-xl border bg-card p-4 space-y-3">
                     <h3 className="text-sm font-semibold flex items-center gap-1">
                       <UserPlus size={14} />참가자 추가
                     </h3>
@@ -1323,7 +1323,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   </div>
                 )}
 
-                <div className="rounded-xl border bg-white overflow-hidden">
+                <div className="rounded-xl border bg-card overflow-hidden">
                   <div className="flex items-center gap-2 border-b bg-slate-50 px-4 py-2.5">
                     <Users size={14} className="text-slate-600" />
                     <h3 className="text-sm font-semibold text-slate-700">일반 참가자 ({regularPids.length})</h3>
@@ -1356,7 +1356,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             return (
             <div className="space-y-3">
               {type === "external" && applicants.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 rounded-xl border bg-white p-2">
+                <div className="flex flex-wrap gap-1.5 rounded-xl border bg-card p-2">
                   {([
                     { v: "all" as const, label: "전체", count: counts.all },
                     { v: "speaker" as const, label: "발표자", count: counts.speaker },
@@ -1385,7 +1385,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   })}
                 </div>
               )}
-              <div className="rounded-xl border bg-white">
+              <div className="rounded-xl border bg-card">
               {filtered.length === 0 ? (
                 <p className="p-6 text-center text-sm text-muted-foreground">
                   {applicants.length === 0 ? "신청 내역이 없습니다." : "해당 유형의 신청자가 없습니다."}
@@ -1514,7 +1514,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             });
             return (
               <div className="space-y-3">
-                <div className="rounded-xl border bg-white p-4">
+                <div className="rounded-xl border bg-card p-4">
                   <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
                     <Badge className="bg-slate-100 text-slate-700">전체 {counts.all}</Badge>
                     <Badge className={SPEAKER_SUBMISSION_TYPE_COLORS.paper}>{SPEAKER_SUBMISSION_TYPE_LABELS.paper} {counts.paper}</Badge>
@@ -1604,7 +1604,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             });
             return (
               <div className="space-y-3">
-                <div className="rounded-xl border bg-white p-4">
+                <div className="rounded-xl border bg-card p-4">
                   <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
                     <Badge className="bg-slate-100 text-slate-700">전체 {counts.all}</Badge>
                     <Badge className={EXTERNAL_PARTICIPANT_TYPE_COLORS.volunteer}>{EXTERNAL_PARTICIPANT_TYPE_LABELS.volunteer}</Badge>
@@ -1669,7 +1669,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
           })()}
 
           {activeTab === "form-settings" && isStaff && (
-            <div className="rounded-xl border bg-white p-6 space-y-4">
+            <div className="rounded-xl border bg-card p-6 space-y-4">
               <div>
                 <h3 className="font-semibold">신청 폼 빌더</h3>
                 <p className="mt-1 text-xs text-muted-foreground">구글 폼처럼 단답·장문·객관식·체크박스·드롭다운·날짜·파일 업로드 등 다양한 질문을 구성할 수 있습니다.</p>
@@ -1695,34 +1695,34 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
           {activeTab === "report" && isStaff && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                <div className="rounded-lg border bg-white p-4 text-center">
+                <div className="rounded-lg border bg-card p-4 text-center">
                   <p className="text-2xl font-bold">{reportStats.totalApplicants}</p>
                   <p className="text-xs text-muted-foreground">총 신청</p>
                 </div>
-                <div className="rounded-lg border bg-white p-4 text-center">
+                <div className="rounded-lg border bg-card p-4 text-center">
                   <p className="text-2xl font-bold text-green-600">{reportStats.approved}</p>
                   <p className="text-xs text-muted-foreground">승인</p>
                 </div>
-                <div className="rounded-lg border bg-white p-4 text-center">
+                <div className="rounded-lg border bg-card p-4 text-center">
                   <p className="text-2xl font-bold text-red-500">{reportStats.rejected}</p>
                   <p className="text-xs text-muted-foreground">거절</p>
                 </div>
-                <div className="rounded-lg border bg-white p-4 text-center">
+                <div className="rounded-lg border bg-card p-4 text-center">
                   <p className="text-2xl font-bold text-amber-500">{reportStats.pending}</p>
                   <p className="text-xs text-muted-foreground">대기</p>
                 </div>
-                <div className="rounded-lg border bg-white p-4 text-center">
+                <div className="rounded-lg border bg-card p-4 text-center">
                   <p className="text-2xl font-bold text-primary">{reportStats.participants}</p>
                   <p className="text-xs text-muted-foreground">참여자</p>
                 </div>
-                <div className="rounded-lg border bg-white p-4 text-center">
+                <div className="rounded-lg border bg-card p-4 text-center">
                   <p className="text-2xl font-bold">{reportStats.approvalRate}%</p>
                   <p className="text-xs text-muted-foreground">승인율</p>
                 </div>
               </div>
 
               {type === "external" && applicants.length > 0 && (
-                <div className="rounded-xl border bg-white p-4">
+                <div className="rounded-xl border bg-card p-4">
                   <p className="mb-2 text-sm font-semibold">참석 유형별 신청</p>
                   <div className="grid grid-cols-3 gap-3">
                     {(["speaker", "volunteer", "attendee"] as const).map((t) => {
@@ -1745,7 +1745,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   s, count: speakers.filter((a) => a.speakerSubmissionType === s).length,
                 }));
                 return (
-                  <div className="rounded-xl border bg-white p-4 space-y-3">
+                  <div className="rounded-xl border bg-card p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-semibold">발표자 신청 현황 ({speakers.length})</p>
                     </div>
@@ -1792,7 +1792,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
 
               {/* 신청 답변 요약 */}
               {applicationForm.length > 0 && applicants.length > 0 && (
-                <div className="rounded-xl border bg-white p-6">
+                <div className="rounded-xl border bg-card p-6">
                   <h3 className="font-semibold">신청 답변 요약</h3>
                   {applicationForm.map((field) => {
                     const answers = applicants
@@ -1858,7 +1858,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
 
           {activeTab === "settings" && isStaff && (
             <div className="space-y-4">
-              <div className="rounded-xl border bg-white p-6 space-y-4">
+              <div className="rounded-xl border bg-card p-6 space-y-4">
                 <h3 className="font-semibold">참여자 등록 방식</h3>
                 <select
                   value={registrationMethod}
@@ -1878,7 +1878,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                     : "수기 등록 모드: 참여자 탭에서 관리자 또는 모임장이 직접 회원을 추가합니다."}
                 </p>
               </div>
-              <div className="rounded-xl border bg-white p-6 space-y-3">
+              <div className="rounded-xl border bg-card p-6 space-y-3">
                 <h3 className="font-semibold">완료 시 자동 발급</h3>
                 <label className="flex cursor-pointer items-start gap-2 text-sm">
                   <input
@@ -1909,7 +1909,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   </div>
                 </label>
               </div>
-              <div className="rounded-xl border bg-white p-6">
+              <div className="rounded-xl border bg-card p-6">
                 <p className="text-sm text-muted-foreground">활동 정보 수정/삭제는 목록 페이지에서 가능합니다.</p>
                 <Link href={backHref}>
                   <Button variant="outline" size="sm" className="mt-3"><Pencil size={14} className="mr-1" />목록으로 이동</Button>
@@ -1954,7 +1954,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                               "flex flex-col items-center justify-center gap-1 rounded-xl border-2 px-3 py-3.5 text-center transition-all",
                               active
                                 ? `${EXTERNAL_PARTICIPANT_TYPE_COLORS[t]} border-current shadow-sm scale-[1.02]`
-                                : "border-input bg-white text-slate-600 hover:border-primary/40 hover:bg-muted/50 dark:bg-card",
+                                : "border-input bg-card text-slate-600 hover:border-primary/40 hover:bg-muted/50 dark:bg-card",
                             )}
                             aria-pressed={active}
                           >
@@ -1988,7 +1988,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                               "rounded-lg border-2 px-3 py-2.5 text-center text-sm font-medium transition-all",
                               active
                                 ? `${SPEAKER_SUBMISSION_TYPE_COLORS[s]} border-current shadow-sm`
-                                : "border-input bg-white text-slate-600 hover:border-primary/40",
+                                : "border-input bg-card text-slate-600 hover:border-primary/40",
                             )}
                             aria-pressed={active}
                           >
@@ -2092,7 +2092,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                           "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
                           active
                             ? "border-primary bg-primary text-primary-foreground"
-                            : "border-slate-200 bg-white text-slate-700 hover:border-primary/40 hover:bg-primary/5",
+                            : "border-slate-200 bg-card text-slate-700 hover:border-primary/40 hover:bg-primary/5",
                         )}
                       >
                         {r}

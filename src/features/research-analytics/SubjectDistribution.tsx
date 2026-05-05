@@ -98,7 +98,7 @@ export default function SubjectDistribution({ theses }: { theses: AlumniThesis[]
                   className={`rounded-md px-2 py-1 font-medium transition ${
                     active
                       ? "bg-primary text-primary-foreground"
-                      : "border bg-white text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                      : "border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
                   }`}
                 >
                   {MODE_LABEL[m]}
@@ -118,7 +118,7 @@ export default function SubjectDistribution({ theses }: { theses: AlumniThesis[]
                   className={`rounded-md px-2 py-1 font-medium transition ${
                     active
                       ? "bg-primary text-primary-foreground"
-                      : "border bg-white text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                      : "border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
                   }`}
                 >
                   {opt}년
@@ -134,7 +134,7 @@ export default function SubjectDistribution({ theses }: { theses: AlumniThesis[]
 
       <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
         {/* Donut */}
-        <div className="rounded-lg border bg-white p-4">
+        <div className="rounded-lg border bg-card p-4">
           <h5 className="mb-2 text-[12px] font-semibold text-muted-foreground">전체 비중</h5>
           <div className="flex flex-col items-center">
             <svg viewBox="-110 -110 220 220" className="h-40 w-40">
@@ -185,7 +185,7 @@ export default function SubjectDistribution({ theses }: { theses: AlumniThesis[]
         </div>
 
         {/* Stacked bars by era */}
-        <div className="rounded-lg border bg-white p-4">
+        <div className="rounded-lg border bg-card p-4">
           <h5 className="mb-3 text-[12px] font-semibold text-muted-foreground">시대별 분포</h5>
           <div className="space-y-1.5 max-h-[400px] overflow-y-auto pr-1">
             {buckets.map((bucket, bi) => {

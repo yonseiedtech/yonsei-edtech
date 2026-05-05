@@ -65,7 +65,7 @@ export default function ActivityEditor({ settingsKey, defaultTitle }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border bg-white p-6">
+      <div className="rounded-xl border bg-card p-6">
         <h2 className="text-lg font-bold">{defaultTitle} 관리</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           활동 페이지에 표시되는 내용을 편집합니다.

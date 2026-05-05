@@ -36,7 +36,7 @@ export default function WritingHistoryList({ history }: Props) {
   const hasMore = visible.length < history.length;
 
   return (
-    <section className="rounded-2xl border bg-white">
+    <section className="rounded-2xl border bg-card">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

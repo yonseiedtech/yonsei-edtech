@@ -98,7 +98,7 @@ export default function ConferenceCheckinQrBoard({ activityId, activityTitle }: 
             {day.sessions.map((s) => (
               <Card key={s.id} className="break-inside-avoid">
                 <CardContent className="space-y-2 p-3">
-                  <div className="flex items-center justify-center rounded-md border bg-white p-2">
+                  <div className="flex items-center justify-center rounded-md border bg-card p-2">
                     <QRCodeSVG
                       value={buildCheckinToken(program.id, s.id)}
                       size={160}

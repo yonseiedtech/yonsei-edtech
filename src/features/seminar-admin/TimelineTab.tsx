@@ -263,7 +263,7 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
             onClick={() => setViewMode("timeline")}
             className={cn(
               "flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors",
-              viewMode === "timeline" ? "bg-white text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+              viewMode === "timeline" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
             )}
           >
             <Check size={14} />
@@ -276,7 +276,7 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
             }}
             className={cn(
               "flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors",
-              viewMode === "template" ? "bg-white text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+              viewMode === "template" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
             )}
           >
             <FileText size={14} />
@@ -287,7 +287,7 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
 
       {/* ── 운영 타임라인 뷰 ── */}
       {viewMode === "timeline" && seminar && timeline.length > 0 && (
-        <div className="rounded-xl border bg-white">
+        <div className="rounded-xl border bg-card">
           <div className="border-b px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -477,7 +477,7 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
       )}
 
       {viewMode === "timeline" && seminar && timeline.length === 0 && (
-        <div className="rounded-xl border bg-white p-8 text-center text-sm text-muted-foreground">
+        <div className="rounded-xl border bg-card p-8 text-center text-sm text-muted-foreground">
           <p>아직 타임라인이 설정되지 않았습니다.</p>
           <p className="mt-1">
             이 세미나는 <strong>{isOnline ? "온라인(ZOOM)" : "오프라인"}</strong> 세미나입니다.
@@ -488,7 +488,7 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
 
       {/* ── 템플릿 관리 뷰 ── */}
       {viewMode === "template" && seminar && (
-        <div className="rounded-xl border bg-white">
+        <div className="rounded-xl border bg-card">
           <div className="border-b px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -498,7 +498,7 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
                     onClick={() => loadTemplate("offline")}
                     className={cn(
                       "rounded px-2.5 py-1 text-xs font-medium transition-colors",
-                      templateType === "offline" ? "bg-white shadow-sm" : "text-muted-foreground",
+                      templateType === "offline" ? "bg-card shadow-sm" : "text-muted-foreground",
                     )}
                   >
                     오프라인
@@ -507,7 +507,7 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
                     onClick={() => loadTemplate("online")}
                     className={cn(
                       "rounded px-2.5 py-1 text-xs font-medium transition-colors",
-                      templateType === "online" ? "bg-white shadow-sm" : "text-muted-foreground",
+                      templateType === "online" ? "bg-card shadow-sm" : "text-muted-foreground",
                     )}
                   >
                     온라인(ZOOM)

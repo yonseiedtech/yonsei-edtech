@@ -147,7 +147,7 @@ export default function SeminarReviews({ seminar }: Props) {
             className={cn(
               "flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors sm:px-3 sm:text-sm",
               subTab === tab.value
-                ? "bg-white text-foreground shadow-sm"
+                ? "bg-card text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
@@ -198,7 +198,7 @@ export default function SeminarReviews({ seminar }: Props) {
       ) : (
         <div className="space-y-3">
           {filteredReviews.map((r) => (
-            <div key={r.id} className="rounded-lg border bg-white p-4">
+            <div key={r.id} className="rounded-lg border bg-card p-4">
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2">

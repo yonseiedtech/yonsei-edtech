@@ -33,7 +33,7 @@ export default function ProfileExternalActivities({ owner, verifiedOnly = false 
   );
 
   return (
-    <section className="rounded-2xl border bg-white p-5">
+    <section className="rounded-2xl border bg-card p-5">
       <h2 className="flex items-center gap-1.5 text-sm font-semibold">
         <Globe size={14} className="text-primary" />
         대외활동 <span className="text-xs font-normal text-muted-foreground">({visible.length})</span>

@@ -94,7 +94,7 @@ function MyActivityCard({
   const detailHref = `${detailPrefix}/${activity.id}`;
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border bg-white p-3 shadow-sm transition hover:shadow-md">
+    <div className="flex flex-col gap-2 rounded-lg border bg-card p-3 shadow-sm transition hover:shadow-md">
       <div className="flex flex-wrap items-center gap-1.5">
         <Badge variant="secondary" className={cn("text-[10px]", STATUS_COLORS[activity.status])}>
           {STATUS_LABELS[activity.status]}

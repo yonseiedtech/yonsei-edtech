@@ -58,7 +58,7 @@ function CardTab({ user, qrUrl, cardRef, handleShare, handleSavePng }: {
         </Button>
       </div>
 
-      <div className="mt-6 rounded-xl border bg-white p-4 text-xs text-muted-foreground">
+      <div className="mt-6 rounded-xl border bg-card p-4 text-xs text-muted-foreground">
         <p className="font-semibold text-foreground">사용 안내</p>
         <ul className="mt-2 list-disc space-y-1 pl-4">
           <li>공유하기: 카카오톡·메시지로 명함 링크 전송</li>
@@ -85,13 +85,13 @@ function ExchangeSection({
     <section>
       <h2 className="mb-2 text-sm font-semibold">{title} ({items.length})</h2>
       {loading ? (
-        <div className="rounded-xl border bg-white p-6 text-center text-xs text-muted-foreground">불러오는 중…</div>
+        <div className="rounded-xl border bg-card p-6 text-center text-xs text-muted-foreground">불러오는 중…</div>
       ) : items.length === 0 ? (
         <EmptyState icon={Users} title={emptyMsg} />
       ) : (
         <ul className="space-y-2">
           {items.map((x) => (
-            <li key={x.id} className="rounded-xl border bg-white px-4 py-3">
+            <li key={x.id} className="rounded-xl border bg-card px-4 py-3">
               <Link href={linkPrefix(x)} className="flex items-center justify-between hover:text-primary">
                 <div>
                   <p className="font-medium">{x[nameKey]}</p>

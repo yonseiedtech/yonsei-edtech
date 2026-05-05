@@ -77,7 +77,7 @@ export default function StaffTransitionPage() {
         </div>
       </div>
 
-      <div className="rounded-lg border bg-white p-4">
+      <div className="rounded-lg border bg-card p-4">
         <h3 className="flex items-center gap-2 text-sm font-semibold mb-3">
           <Shield size={16} className="text-primary" />
           현재 운영진

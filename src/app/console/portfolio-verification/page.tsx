@@ -105,7 +105,7 @@ function VerifyActions({ kind, itemId }: VerifyActionsProps) {
         )}
       </div>
       {open && (
-        <div className="w-72 rounded-lg border bg-white p-2 shadow-md">
+        <div className="w-72 rounded-lg border bg-card p-2 shadow-md">
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
@@ -165,7 +165,7 @@ function useOwnerLabels(userIds: string[]) {
 
 function EmptyState({ label }: { label: string }) {
   return (
-    <div className="rounded-2xl border border-dashed bg-white p-10 text-center">
+    <div className="rounded-2xl border border-dashed bg-card p-10 text-center">
       <Inbox size={28} className="mx-auto mb-2 text-muted-foreground" />
       <p className="text-sm text-muted-foreground">{label}</p>
     </div>
@@ -243,7 +243,7 @@ export default function PortfolioVerificationPage() {
             return (
               <article
                 key={x.id}
-                className="rounded-2xl border bg-white p-4 shadow-sm"
+                className="rounded-2xl border bg-card p-4 shadow-sm"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
@@ -306,7 +306,7 @@ export default function PortfolioVerificationPage() {
             return (
               <article
                 key={x.id}
-                className="rounded-2xl border bg-white p-4 shadow-sm"
+                className="rounded-2xl border bg-card p-4 shadow-sm"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">

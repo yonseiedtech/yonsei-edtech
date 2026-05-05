@@ -66,7 +66,7 @@ export default function InstallPromptBanner() {
   if (!visible || !event) return null;
 
   return (
-    <div className="fixed bottom-4 left-1/2 z-50 w-[min(420px,92vw)] -translate-x-1/2 rounded-xl border bg-white p-3 shadow-xl">
+    <div className="fixed bottom-4 left-1/2 z-50 w-[min(420px,92vw)] -translate-x-1/2 rounded-xl border bg-card p-3 shadow-xl">
       <div className="flex items-start gap-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
           <Download size={18} />
@@ -85,7 +85,7 @@ export default function InstallPromptBanner() {
             </button>
             <button
               onClick={dismiss}
-              className="rounded-md border bg-white px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted"
+              className="rounded-md border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted"
             >
               나중에
             </button>

@@ -37,7 +37,7 @@ export default function ProfileSocialsEditor({ value, onChange, disabled }: Prop
   }
 
   return (
-    <div className="space-y-3 rounded-2xl border bg-white p-5">
+    <div className="space-y-3 rounded-2xl border bg-card p-5">
       <div className="flex items-baseline justify-between gap-2">
         <div>
           <h3 className="text-sm font-semibold">SNS · 외부 링크</h3>
@@ -68,7 +68,7 @@ export default function ProfileSocialsEditor({ value, onChange, disabled }: Prop
                   value={s.platform}
                   onChange={(e) => update(i, { platform: e.target.value as SocialPlatform })}
                   disabled={disabled}
-                  className="rounded-md border bg-white px-2 py-1 text-xs"
+                  className="rounded-md border bg-card px-2 py-1 text-xs"
                 >
                   {PLATFORMS.map((p) => (
                     <option key={p} value={p}>

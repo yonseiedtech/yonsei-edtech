@@ -114,7 +114,7 @@ export default function PopupEditor({ popup, onClose, onSaved }: Props) {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_minmax(0,420px)]">
         {/* 편집 폼 */}
-        <div className="space-y-4 rounded-xl border bg-white p-5">
+        <div className="space-y-4 rounded-xl border bg-card p-5">
           <Field label="제목" required>
             <input
               value={form.title}

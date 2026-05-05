@@ -51,7 +51,7 @@ export default function NewsletterDetailPage({
             <Skeleton className="h-4 w-20" />
             <Skeleton className="h-7 w-28 rounded-lg" />
           </div>
-          <div className="rounded-2xl border bg-white p-8 shadow-sm">
+          <div className="rounded-2xl border bg-card p-8 shadow-sm">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="mt-3 h-8 w-2/3" />
             <Skeleton className="mt-2 h-4 w-1/2" />
@@ -149,7 +149,7 @@ export default function NewsletterDetailPage({
         </div>
 
         {/* 목차 */}
-        <div className="mt-8 rounded-2xl border bg-white p-6">
+        <div className="mt-8 rounded-2xl border bg-card p-6">
           <h2 className="text-lg font-bold">목차</h2>
           <div className="mt-4 divide-y">
             {issue.sections
@@ -205,7 +205,7 @@ export default function NewsletterDetailPage({
             <article
               key={section.id}
               id={`section-${section.id}`}
-              className="mt-8 rounded-2xl border bg-white p-8"
+              className="mt-8 rounded-2xl border bg-card p-8"
             >
               <div className="flex items-center gap-2">
                 <Badge

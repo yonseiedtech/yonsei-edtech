@@ -128,7 +128,7 @@ export default function AdminUserList({ users }: Props) {
 
   if (users.length === 0) {
     return (
-      <div className="rounded-xl border bg-white p-8 text-center text-muted-foreground">
+      <div className="rounded-xl border bg-card p-8 text-center text-muted-foreground">
         대기 중인 회원이 없습니다.
       </div>
     );
@@ -190,7 +190,7 @@ export default function AdminUserList({ users }: Props) {
       {users.map((u) => (
         <div
           key={u.id}
-          className={`flex items-center justify-between rounded-xl border bg-white p-4 transition-colors ${
+          className={`flex items-center justify-between rounded-xl border bg-card p-4 transition-colors ${
             selected.has(u.id) ? "ring-2 ring-primary/30 bg-primary/5" : ""
           }`}
         >

@@ -141,7 +141,7 @@ export default function MaterialsSection({ seminar }: Props) {
           {materials.map((m) => (
             <div
               key={m.id}
-              className="flex items-center justify-between rounded-lg border bg-white px-4 py-3"
+              className="flex items-center justify-between rounded-lg border bg-card px-4 py-3"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <FileText size={20} className="shrink-0 text-primary" />

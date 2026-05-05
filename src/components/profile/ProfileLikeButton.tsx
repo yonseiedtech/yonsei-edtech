@@ -45,7 +45,7 @@ export default function ProfileLikeButton({ profileId, isOwner }: Props) {
         className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
           likedByMe
             ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100"
-            : "border-border bg-white text-muted-foreground hover:border-rose-200 hover:text-rose-600"
+            : "border-border bg-card text-muted-foreground hover:border-rose-200 hover:text-rose-600"
         }`}
         aria-pressed={likedByMe}
       >

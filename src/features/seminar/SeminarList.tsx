@@ -59,7 +59,7 @@ export default function SeminarList({ seminars, viewMode = "list" }: Props) {
 
   if (seminars.length === 0) {
     return (
-      <div className="rounded-xl border bg-white p-12 text-center text-muted-foreground">
+      <div className="rounded-xl border bg-card p-12 text-center text-muted-foreground">
         세미나가 없습니다.
       </div>
     );
@@ -75,7 +75,7 @@ export default function SeminarList({ seminars, viewMode = "list" }: Props) {
             <Link
               key={seminar.id}
               href={`/seminars/${seminar.id}`}
-              className="flex flex-col rounded-xl border bg-white p-5 transition-colors hover:bg-muted/30"
+              className="flex flex-col rounded-xl border bg-card p-5 transition-colors hover:bg-muted/30"
             >
               <div className="flex flex-wrap items-center gap-1.5">
                 <Badge className={cn("text-xs", badge.className)} variant="secondary">
@@ -141,7 +141,7 @@ export default function SeminarList({ seminars, viewMode = "list" }: Props) {
           <Link
             key={seminar.id}
             href={`/seminars/${seminar.id}`}
-            className="block rounded-xl border bg-white p-4 transition-colors hover:bg-muted/30 sm:p-6"
+            className="block rounded-xl border bg-card p-4 transition-colors hover:bg-muted/30 sm:p-6"
           >
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">

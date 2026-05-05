@@ -45,7 +45,7 @@ export default function NoticeDetailPage({
           목록으로
         </button>
 
-        <article className="rounded-2xl border bg-white p-8">
+        <article className="rounded-2xl border bg-card p-8">
           <div className="flex items-center gap-2">
             <Badge variant="secondary">{CATEGORY_LABELS[post.category]}</Badge>
           </div>

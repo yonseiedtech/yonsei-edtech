@@ -174,7 +174,7 @@ export default function AdminTodoTab() {
               <div
                 key={todo.id}
                 className={cn(
-                  "flex items-start gap-3 rounded-xl border bg-white p-4 transition-colors",
+                  "flex items-start gap-3 rounded-xl border bg-card p-4 transition-colors",
                   todo.status === "done" && "opacity-60",
                 )}
               >
@@ -255,7 +255,7 @@ export default function AdminTodoTab() {
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 rows={3}
                 placeholder="자세한 내용 (선택사항)"
-                className="w-full rounded-lg border border-input bg-white px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">

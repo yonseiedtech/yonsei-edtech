@@ -45,7 +45,7 @@ export default function HandoverOverviewPage() {
         ) : (
           <ul className="mt-8 space-y-4">
             {sorted.map((p) => (
-              <li key={p.id} className="rounded-2xl border bg-white p-5">
+              <li key={p.id} className="rounded-2xl border bg-card p-5">
                 <div className="flex items-center gap-3">
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
                     {p.userName?.[0] ?? <UserIcon size={14} />}

@@ -132,7 +132,7 @@ export default function EditSessionDialog({ open, session, onClose }: Props) {
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
               rows={2}
-              className="w-full rounded-md border bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full rounded-md border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="간단한 메모"
             />
           </div>

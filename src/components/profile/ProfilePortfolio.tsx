@@ -178,7 +178,7 @@ export default function ProfilePortfolio({ owner, isOwner }: Props) {
   }, [items]);
 
   return (
-    <section className="rounded-2xl border bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border bg-card p-5 shadow-sm">
       <div className="mb-3 flex items-baseline justify-between">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           학술 포트폴리오
@@ -190,7 +190,7 @@ export default function ProfilePortfolio({ owner, isOwner }: Props) {
           {isOwner && (
             <Link
               href="/mypage/portfolio"
-              className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-white px-2 py-0.5 text-[10px] font-medium text-primary hover:bg-primary/5"
+              className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-card px-2 py-0.5 text-[10px] font-medium text-primary hover:bg-primary/5"
             >
               <Pencil size={10} /> 편집
             </Link>

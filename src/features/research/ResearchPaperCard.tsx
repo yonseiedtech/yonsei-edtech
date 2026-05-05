@@ -95,7 +95,7 @@ export default function ResearchPaperCard({ paper, onEdit, onDelete, onQuickUpda
   })();
 
   return (
-    <article className="group rounded-2xl border bg-white p-5 transition hover:border-primary/40 hover:shadow-sm">
+    <article className="group rounded-2xl border bg-card p-5 transition hover:border-primary/40 hover:shadow-sm">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 text-xs">
           <Badge variant="secondary" className={isThesis ? "bg-blue-50 text-blue-700" : "bg-blue-50 text-blue-700"}>

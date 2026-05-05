@@ -183,7 +183,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
 
   if (isLoading || (!paper && !readOnly)) {
     return (
-      <p className="rounded-2xl border bg-white py-10 text-center text-sm text-muted-foreground">
+      <p className="rounded-2xl border bg-card py-10 text-center text-sm text-muted-foreground">
         논문을 불러오는 중...
       </p>
     );
@@ -200,7 +200,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   return (
     <div className="space-y-4">
       {/* 헤더 */}
-      <section className="rounded-2xl border bg-white p-5">
+      <section className="rounded-2xl border bg-card p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2">
             <FileText size={18} className="text-primary" />
@@ -271,7 +271,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       </section>
 
       {/* 스텝 탭 */}
-      <div className="flex items-center gap-1 rounded-xl border bg-white p-1.5">
+      <div className="flex items-center gap-1 rounded-xl border bg-card p-1.5">
         {STEPS.map((s, i) => {
           const active = step === s.key;
           return (
@@ -295,7 +295,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       </div>
 
       {/* 스텝 내용 */}
-      <section className="rounded-2xl border bg-white p-5">
+      <section className="rounded-2xl border bg-card p-5">
         <div className="flex items-center justify-between">
           <h4 className="text-sm font-semibold">
             {stepIdx + 1}. {STEPS[stepIdx].label}
@@ -315,7 +315,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       </section>
 
       {/* 이전 / 다음 네비게이션 */}
-      <div className="flex items-center justify-between rounded-xl border bg-white p-3">
+      <div className="flex items-center justify-between rounded-xl border bg-card p-3">
         <Button
           variant="outline"
           size="sm"

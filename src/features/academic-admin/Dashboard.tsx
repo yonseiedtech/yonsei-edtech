@@ -14,7 +14,7 @@ function StatCard({ icon, title, color, stats, href }: { icon: React.ReactNode; 
     <Link
       href={href}
       className={cn(
-        "block rounded-xl border-l-4 border bg-white p-4 transition-shadow hover:shadow-md",
+        "block rounded-xl border-l-4 border bg-card p-4 transition-shadow hover:shadow-md",
         color,
       )}
     >
@@ -150,7 +150,7 @@ export default function AcademicDashboard() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-xl border bg-white p-5">
+        <div className="rounded-xl border bg-card p-5">
           <h2 className="flex items-center gap-2 font-semibold"><Calendar size={16} />이번 주 일정</h2>
           {upcomingEvents.length === 0 ? (
             <p className="mt-4 text-sm text-muted-foreground">이번 주 예정된 일정이 없습니다.</p>
@@ -168,7 +168,7 @@ export default function AcademicDashboard() {
           )}
         </div>
 
-        <div className="rounded-xl border bg-white p-5">
+        <div className="rounded-xl border bg-card p-5">
           <h2 className="flex items-center gap-2 font-semibold text-amber-600"><AlertTriangle size={16} />주의 필요</h2>
           {warnings.length === 0 ? (
             <p className="mt-4 text-sm text-muted-foreground">현재 주의가 필요한 항목이 없습니다.</p>

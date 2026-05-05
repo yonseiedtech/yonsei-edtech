@@ -23,7 +23,7 @@ export default function ProfileGraduateInfo({ user }: Props) {
   if (enroll) rows.push({ label: "입학학기", value: enroll });
 
   return (
-    <section className="rounded-2xl border bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border bg-card p-5 shadow-sm">
       <h2 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         <GraduationCap size={13} />
         대학원 정보

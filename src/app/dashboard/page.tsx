@@ -54,7 +54,7 @@ function StatCard({
   href?: string;
 }) {
   const content = (
-    <div className="rounded-xl border bg-white p-5 transition-shadow hover:shadow-sm">
+    <div className="rounded-xl border bg-card p-5 transition-shadow hover:shadow-sm">
       <div className="flex items-center gap-3">
         <div
           className={`flex h-10 w-10 items-center justify-center rounded-lg ${color}`}
@@ -226,7 +226,7 @@ function DashboardContent() {
         {/* 2열 그리드: 최근 공지 + 미니 캘린더 */}
         <div className="mt-8 grid gap-6 md:grid-cols-2">
           {/* 최근 공지 */}
-          <div className="rounded-2xl border bg-white p-6">
+          <div className="rounded-2xl border bg-card p-6">
             <div className="flex items-center gap-2">
               <Megaphone size={18} className="text-primary" />
               <h2 className="font-bold">최근 공지</h2>
@@ -254,7 +254,7 @@ function DashboardContent() {
           </div>
 
           {/* 미니 캘린더 */}
-          <div className="rounded-2xl border bg-white p-6">
+          <div className="rounded-2xl border bg-card p-6">
             <div className="flex items-center gap-2">
               <Calendar size={18} className="text-primary" />
               <h2 className="font-bold">세미나 일정</h2>
@@ -277,7 +277,7 @@ function DashboardContent() {
         </div>
 
         {/* 활동 피드 (개인 타임라인) */}
-        <div className="mt-6 rounded-2xl border bg-white p-6">
+        <div className="mt-6 rounded-2xl border bg-card p-6">
           <div className="flex items-center gap-2">
             <MessageSquare size={18} className="text-primary" />
             <h2 className="font-bold">최근 활동</h2>
@@ -289,7 +289,7 @@ function DashboardContent() {
 
         {/* 내 신청 세미나 */}
         {mySeminars.length > 0 && (
-          <div className="mt-6 rounded-2xl border bg-white p-6">
+          <div className="mt-6 rounded-2xl border bg-card p-6">
             <div className="flex items-center gap-2">
               <BookOpen size={18} className="text-primary" />
               <h2 className="font-bold">내 신청 세미나</h2>
@@ -336,7 +336,7 @@ function DashboardContent() {
               {pendingCount > 0 && (
                 <Link
                   href="/console/members"
-                  className="flex items-center justify-between rounded-lg bg-white px-4 py-3 transition-colors hover:bg-amber-50"
+                  className="flex items-center justify-between rounded-lg bg-card px-4 py-3 transition-colors hover:bg-amber-50"
                 >
                   <span className="text-sm font-medium">
                     승인 대기 회원 {pendingCount}명
@@ -349,7 +349,7 @@ function DashboardContent() {
               {unansweredCount > 0 && (
                 <Link
                   href="/console/inquiries"
-                  className="flex items-center justify-between rounded-lg bg-white px-4 py-3 transition-colors hover:bg-amber-50"
+                  className="flex items-center justify-between rounded-lg bg-card px-4 py-3 transition-colors hover:bg-amber-50"
                 >
                   <span className="text-sm font-medium">
                     미답변 문의 {unansweredCount}건

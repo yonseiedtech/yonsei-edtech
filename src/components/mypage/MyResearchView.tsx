@@ -269,7 +269,7 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
           <h3 className="text-sm font-semibold text-foreground">연구 현황</h3>
 
           {/* 기간 선택기 */}
-          <div className="rounded-2xl border bg-white p-4">
+          <div className="rounded-2xl border bg-card p-4">
             <div className="flex flex-wrap items-center gap-2 mb-3">
               <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
                 <CalendarRange size={12} />
@@ -344,7 +344,7 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
           {/* ── 내 논문 작성 ── */}
           <TabsContent value="writing" className="mt-5">
             {/* 서브탭 */}
-            <div className="inline-flex rounded-lg border bg-white p-1 gap-1 mb-5">
+            <div className="inline-flex rounded-lg border bg-card p-1 gap-1 mb-5">
               <SubTabBtn
                 label="연구 보고서"
                 icon={<FileEdit size={13} />}
@@ -393,7 +393,7 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
           <TabsContent value="report" className="mt-5">
             <div className="space-y-6">
               {/* 기간 필터 */}
-              <section className="rounded-2xl border bg-white p-4">
+              <section className="rounded-2xl border bg-card p-4">
                 <div className="flex flex-col gap-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
@@ -445,7 +445,7 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
                 <button
                   type="button"
                   onClick={() => setShowPrint((v) => !v)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border bg-white px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-lg border bg-card px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
                 >
                   <Printer size={14} />
                   {showPrint ? "리포트 닫기" : "연구활동 리포트 출력"}
@@ -471,7 +471,7 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
               <div className="space-y-6">
                 <StudyTimerStats />
 
-                <div className="rounded-2xl border bg-white p-4">
+                <div className="rounded-2xl border bg-card p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div>
                       <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
@@ -489,7 +489,7 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
                   </div>
                 </div>
 
-                <div className="rounded-2xl border bg-white p-4">
+                <div className="rounded-2xl border bg-card p-4">
                   <h3 className="text-sm font-semibold text-foreground mb-3">최근 세션</h3>
                   {studySessions.length === 0 ? (
                     <p className="text-xs text-muted-foreground py-6 text-center">
@@ -593,7 +593,7 @@ function QuickBtn({ label, onClick, active }: { label: string; onClick: () => vo
       className={`rounded-md border px-2 py-1 text-[11px] transition-colors ${
         active
           ? "border-primary bg-primary text-primary-foreground"
-          : "border-border bg-white text-muted-foreground hover:border-primary/40 hover:text-foreground"
+          : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
       }`}
     >
       {label}

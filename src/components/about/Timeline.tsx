@@ -37,7 +37,7 @@ export default function Timeline() {
             transition={{ duration: 0.4, delay: i * 0.1 }}
             className={`relative flex items-start gap-6 pl-12 md:pl-0 ${i % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"}`}
           >
-            <div className="absolute left-3 top-1.5 h-3 w-3 rounded-full border-2 border-primary bg-white md:left-1/2 md:-translate-x-1.5" />
+            <div className="absolute left-3 top-1.5 h-3 w-3 rounded-full border-2 border-primary bg-card md:left-1/2 md:-translate-x-1.5" />
             <div className={`md:w-1/2 ${i % 2 === 0 ? "md:pr-12 md:text-right" : "md:pl-12"}`}>
               <span className="text-sm font-bold text-primary">{item.year}</span>
               <h3 className="font-semibold">{item.title}</h3>

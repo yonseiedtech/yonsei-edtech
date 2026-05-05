@@ -113,7 +113,7 @@ export default function GalleryPage() {
             <button
               key={album.id}
               onClick={() => setSelectedAlbum(album)}
-              className="group overflow-hidden rounded-xl border bg-white text-left transition-shadow hover:shadow-lg"
+              className="group overflow-hidden rounded-xl border bg-card text-left transition-shadow hover:shadow-lg"
             >
               <div className="relative aspect-[4/3] bg-muted">
                 {album.coverUrl ? (
@@ -379,7 +379,7 @@ function Lightbox({
     >
       <button
         onClick={onClose}
-        className="absolute right-4 top-4 z-10 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+        className="absolute right-4 top-4 z-10 rounded-full bg-card/10 p-2 text-white hover:bg-card/20"
       >
         <X size={24} />
       </button>
@@ -387,7 +387,7 @@ function Lightbox({
       {index > 0 && (
         <button
           onClick={(e) => { e.stopPropagation(); onChange(index - 1); }}
-          className="absolute left-4 z-10 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+          className="absolute left-4 z-10 rounded-full bg-card/10 p-2 text-white hover:bg-card/20"
         >
           <ChevronLeft size={24} />
         </button>
@@ -396,7 +396,7 @@ function Lightbox({
       {index < photos.length - 1 && (
         <button
           onClick={(e) => { e.stopPropagation(); onChange(index + 1); }}
-          className="absolute right-4 z-10 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+          className="absolute right-4 z-10 rounded-full bg-card/10 p-2 text-white hover:bg-card/20"
         >
           <ChevronRight size={24} />
         </button>

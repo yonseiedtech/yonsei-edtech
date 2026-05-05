@@ -41,7 +41,7 @@ export default function HeroSection({ seminar, isStaff, onEditInfo }: Props) {
   };
 
   return (
-    <div className="overflow-hidden rounded-2xl border bg-white">
+    <div className="overflow-hidden rounded-2xl border bg-card">
       {/* 이미지 + 제목 오버레이 */}
       <div className="relative h-48 sm:h-64 w-full">
         <img
@@ -54,7 +54,7 @@ export default function HeroSection({ seminar, isStaff, onEditInfo }: Props) {
         {isStaff && !seminar.posterUrl && (
           <button
             onClick={onEditInfo}
-            className="absolute top-3 right-3 z-10 inline-flex items-center gap-1 rounded-md bg-white/80 px-3 py-1.5 text-xs text-muted-foreground shadow-sm hover:bg-white transition-colors"
+            className="absolute top-3 right-3 z-10 inline-flex items-center gap-1 rounded-md bg-card/80 px-3 py-1.5 text-xs text-muted-foreground shadow-sm hover:bg-card transition-colors"
           >
             <Pencil size={12} />
             포스터 변경

@@ -779,7 +779,7 @@ export default function MyTodosWidget() {
                   "h-7 w-7 rounded-full text-xs font-bold transition-colors",
                   rating >= n
                     ? "bg-amber-400 text-white shadow-sm"
-                    : "bg-white text-muted-foreground hover:bg-amber-50",
+                    : "bg-card text-muted-foreground hover:bg-amber-50",
                 )}
                 aria-pressed={rating === n}
                 aria-label={`${n}점`}
@@ -843,7 +843,7 @@ export default function MyTodosWidget() {
 
     const isEditing = editingCourseTodoId === t.id;
     return (
-      <li className="group flex items-center gap-2 rounded-md bg-white px-2.5 py-1.5 text-[12px]">
+      <li className="group flex items-center gap-2 rounded-md bg-card px-2.5 py-1.5 text-[12px]">
         <input
           type="checkbox"
           checked={!!t.completed}
@@ -972,7 +972,7 @@ export default function MyTodosWidget() {
       <li>
         <Link
           href={item.href}
-          className="flex items-center justify-between gap-2 rounded-md bg-white px-2.5 py-2 text-[12px] transition-colors hover:bg-muted/40"
+          className="flex items-center justify-between gap-2 rounded-md bg-card px-2.5 py-2 text-[12px] transition-colors hover:bg-muted/40"
         >
           <div className="min-w-0 flex-1">
             <p className="truncate font-medium">{item.title}</p>
@@ -1001,7 +1001,7 @@ export default function MyTodosWidget() {
       <li>
         <Link
           href={`${TYPE_ROUTE[a.type]}/${a.id}`}
-          className="flex items-center justify-between gap-2 rounded-md bg-white px-2.5 py-2 text-[12px] transition-colors hover:bg-muted/40"
+          className="flex items-center justify-between gap-2 rounded-md bg-card px-2.5 py-2 text-[12px] transition-colors hover:bg-muted/40"
         >
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
@@ -1037,7 +1037,7 @@ export default function MyTodosWidget() {
     if (!isStaff) return null;
     if (pendingMembers.length === 0 && unansweredInquiries.length === 0) {
       return (
-        <p className="rounded-md bg-white px-3 py-2 text-[11px] text-muted-foreground">
+        <p className="rounded-md bg-card px-3 py-2 text-[11px] text-muted-foreground">
           처리할 운영 항목이 없습니다.
         </p>
       );
@@ -1048,7 +1048,7 @@ export default function MyTodosWidget() {
           <li>
             <Link
               href="/console/members"
-              className="flex items-center justify-between rounded-md bg-white px-2.5 py-2 text-[12px] hover:bg-amber-50"
+              className="flex items-center justify-between rounded-md bg-card px-2.5 py-2 text-[12px] hover:bg-amber-50"
             >
               <span className="font-medium">
                 승인 대기 회원 {pendingMembers.length}명
@@ -1061,7 +1061,7 @@ export default function MyTodosWidget() {
           <li>
             <Link
               href="/console/inquiries"
-              className="flex items-center justify-between rounded-md bg-white px-2.5 py-2 text-[12px] hover:bg-amber-50"
+              className="flex items-center justify-between rounded-md bg-card px-2.5 py-2 text-[12px] hover:bg-amber-50"
             >
               <span className="font-medium">
                 미답변 문의 {unansweredInquiries.length}건
@@ -1075,7 +1075,7 @@ export default function MyTodosWidget() {
   }
 
   return (
-    <div className="rounded-2xl border bg-white p-4 sm:p-5">
+    <div className="rounded-2xl border bg-card p-4 sm:p-5">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <ListChecks size={18} className="text-primary" />
@@ -1158,7 +1158,7 @@ export default function MyTodosWidget() {
               className={cn(
                 "flex-1 rounded px-2 py-1 transition-colors",
                 statusFilter === opt.v
-                  ? "bg-white font-semibold text-foreground shadow-sm"
+                  ? "bg-card font-semibold text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -1357,7 +1357,7 @@ export default function MyTodosWidget() {
                   onChange={(e) =>
                     setCourseForm({ ...courseForm, courseOfferingId: e.target.value })
                   }
-                  className="rounded-md border bg-white px-2 py-1.5 text-sm"
+                  className="rounded-md border bg-card px-2 py-1.5 text-sm"
                 >
                   <option value="">— 선택 —</option>
                   {pickerOfferings.map((c) => (
@@ -1444,7 +1444,7 @@ export default function MyTodosWidget() {
                     onChange={(e) =>
                       setActivityForm({ ...activityForm, activityId: e.target.value })
                     }
-                    className="rounded-md border bg-white px-2 py-1.5 text-sm"
+                    className="rounded-md border bg-card px-2 py-1.5 text-sm"
                   >
                     <option value="">— 선택 —</option>
                     {myActivityTodos.map((a) => (
@@ -1473,7 +1473,7 @@ export default function MyTodosWidget() {
                       setActivityForm({ ...activityForm, description: e.target.value })
                     }
                     rows={3}
-                    className="w-full rounded-md border bg-white px-3 py-2 text-sm"
+                    className="w-full rounded-md border bg-card px-3 py-2 text-sm"
                     placeholder="자세한 설명을 입력하세요."
                   />
                 </label>
@@ -1488,7 +1488,7 @@ export default function MyTodosWidget() {
                           priority: e.target.value as "high" | "medium" | "low",
                         })
                       }
-                      className="rounded-md border bg-white px-2 py-1.5 text-sm"
+                      className="rounded-md border bg-card px-2 py-1.5 text-sm"
                     >
                       <option value="high">높음</option>
                       <option value="medium">보통</option>
@@ -1521,7 +1521,7 @@ export default function MyTodosWidget() {
                     onChange={(e) =>
                       setSeminarForm({ ...seminarForm, seminarId: e.target.value })
                     }
-                    className="rounded-md border bg-white px-2 py-1.5 text-sm"
+                    className="rounded-md border bg-card px-2 py-1.5 text-sm"
                   >
                     <option value="">— 선택 —</option>
                     {pickerSeminars.map((s) => (
@@ -1556,7 +1556,7 @@ export default function MyTodosWidget() {
                       setSeminarForm({ ...seminarForm, description: e.target.value })
                     }
                     rows={3}
-                    className="w-full rounded-md border bg-white px-3 py-2 text-sm"
+                    className="w-full rounded-md border bg-card px-3 py-2 text-sm"
                     placeholder="자세한 설명을 입력하세요."
                   />
                 </label>
@@ -1571,7 +1571,7 @@ export default function MyTodosWidget() {
                           priority: e.target.value as "high" | "medium" | "low",
                         })
                       }
-                      className="rounded-md border bg-white px-2 py-1.5 text-sm"
+                      className="rounded-md border bg-card px-2 py-1.5 text-sm"
                     >
                       <option value="high">높음</option>
                       <option value="medium">보통</option>
@@ -1614,7 +1614,7 @@ export default function MyTodosWidget() {
                       setStaffForm({ ...staffForm, description: e.target.value })
                     }
                     rows={3}
-                    className="w-full rounded-md border bg-white px-3 py-2 text-sm"
+                    className="w-full rounded-md border bg-card px-3 py-2 text-sm"
                     placeholder="자세한 설명을 입력하세요."
                   />
                 </label>
@@ -1629,7 +1629,7 @@ export default function MyTodosWidget() {
                           priority: e.target.value as "high" | "medium" | "low",
                         })
                       }
-                      className="rounded-md border bg-white px-2 py-1.5 text-sm"
+                      className="rounded-md border bg-card px-2 py-1.5 text-sm"
                     >
                       <option value="high">높음</option>
                       <option value="medium">보통</option>

@@ -260,7 +260,7 @@ export default function RisImporter({ open, onOpenChange, onImport }: Props) {
               {records.map((r, i) => (
                 <li
                   key={i}
-                  className={`rounded-lg border p-3 transition ${r.selected ? "border-primary/40 bg-primary/5" : "bg-white"}`}
+                  className={`rounded-lg border p-3 transition ${r.selected ? "border-primary/40 bg-primary/5" : "bg-card"}`}
                 >
                   <label className="flex cursor-pointer items-start gap-2">
                     <input

@@ -325,7 +325,7 @@ export default function AlumniThesisDetailPage() {
     return (
       <div className="py-16">
         <div className="mx-auto max-w-2xl px-4">
-          <div className="rounded-2xl border bg-white p-10 text-center shadow-sm">
+          <div className="rounded-2xl border bg-card p-10 text-center shadow-sm">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <Lock size={26} />
             </div>
@@ -348,7 +348,7 @@ export default function AlumniThesisDetailPage() {
               </Link>
               <Link
                 href="/research"
-                className="inline-flex h-10 items-center rounded-md border bg-white px-5 text-sm font-medium text-muted-foreground hover:bg-muted"
+                className="inline-flex h-10 items-center rounded-md border bg-card px-5 text-sm font-medium text-muted-foreground hover:bg-muted"
               >
                 <BarChart3 size={14} className="mr-1.5" />
                 연구 분석 페이지로
@@ -403,7 +403,7 @@ export default function AlumniThesisDetailPage() {
           <ArrowLeft size={12} /> 학위논문 목록
         </Link>
 
-        <div className="mt-4 rounded-2xl border bg-white p-6 sm:p-8">
+        <div className="mt-4 rounded-2xl border bg-card p-6 sm:p-8">
           <div className="flex items-start gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <GraduationCap size={22} />
@@ -767,7 +767,7 @@ export default function AlumniThesisDetailPage() {
         </div>
 
         {(related.byAdvisor.length > 0 || related.byKeyword.length > 0) && (
-          <div className="mt-6 rounded-2xl border bg-white">
+          <div className="mt-6 rounded-2xl border bg-card">
             <Tabs defaultValue="advisor" className="w-full">
               <div className="border-b px-3 pt-3">
                 <TabsList>
@@ -862,7 +862,7 @@ function ArchivePickerField({
         onChange={(e) => setQuery(e.target.value)}
         className="h-8 text-xs"
       />
-      <div className="max-h-48 overflow-y-auto rounded-md border bg-white p-2">
+      <div className="max-h-48 overflow-y-auto rounded-md border bg-card p-2">
         <div className="flex flex-wrap gap-1.5">
           {filtered.length === 0 ? (
             <span className="text-[11px] text-muted-foreground">검색 결과 없음</span>
@@ -882,7 +882,7 @@ function ArchivePickerField({
                         : type === "variable"
                           ? "border-blue-300 bg-blue-100 text-blue-800"
                           : "border-emerald-300 bg-emerald-100 text-emerald-800"
-                      : "border-muted bg-white text-muted-foreground hover:bg-muted/50",
+                      : "border-muted bg-card text-muted-foreground hover:bg-muted/50",
                   )}
                 >
                   {it.name}
@@ -978,7 +978,7 @@ function RelatedList({
           <button
             type="button"
             onClick={() => setVisible((v) => v + PAGE)}
-            className="rounded-md border bg-white px-3 py-1.5 text-[11px] text-muted-foreground hover:border-primary/40 hover:text-foreground"
+            className="rounded-md border bg-card px-3 py-1.5 text-[11px] text-muted-foreground hover:border-primary/40 hover:text-foreground"
           >
             추가 추천 보기 ({items.length - visible}건 남음)
           </button>

@@ -11,7 +11,7 @@ export default function ProfileResearchInterests({ interests, field }: Props) {
   const tags = splitByComma(interests ?? []);
   if (tags.length === 0 && !field) return null;
   return (
-    <section className="rounded-2xl border bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border bg-card p-5 shadow-sm">
       <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">관심 연구 키워드</h2>
       <div className="flex flex-wrap gap-1.5">
         {field && splitByComma([field]).map((f) => (

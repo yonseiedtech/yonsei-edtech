@@ -1592,7 +1592,7 @@ export default function DefensePracticeRunner({
                       <div className="flex flex-wrap items-center gap-1">
                         {flow.map((h, i) => (
                           <span key={`${i}-${h}`} className="flex items-center gap-1">
-                            <span className="rounded-md border border-indigo-300 bg-white px-2 py-0.5 text-[11px] font-semibold text-indigo-900 dark:border-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-100">
+                            <span className="rounded-md border border-indigo-300 bg-card px-2 py-0.5 text-[11px] font-semibold text-indigo-900 dark:border-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-100">
                               {h}
                             </span>
                             {i < flow.length - 1 && (
@@ -2325,7 +2325,7 @@ export default function DefensePracticeRunner({
                             : "bg-zinc-300 text-zinc-700",
                         )}
                       >
-                        {sttStatus === "speaking" && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />}
+                        {sttStatus === "speaking" && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-card" />}
                         {sttStatus === "listening" && "듣는 중"}
                         {sttStatus === "speaking" && "말하는 중 감지"}
                         {sttStatus === "processing" && "처리 중"}
@@ -2458,7 +2458,7 @@ export default function DefensePracticeRunner({
                               : "bg-zinc-300 text-zinc-700",
                           )}
                         >
-                          {sttStatus === "speaking" && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />}
+                          {sttStatus === "speaking" && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-card" />}
                           {sttStatus === "listening" && "듣는 중"}
                           {sttStatus === "speaking" && "말하는 중"}
                           {sttStatus === "processing" && "처리 중"}

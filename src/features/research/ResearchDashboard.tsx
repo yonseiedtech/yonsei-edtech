@@ -76,7 +76,7 @@ export default function ResearchDashboard({ papers, history, periodStart, period
           <h2 className="text-sm font-semibold">작성 세부 지표</h2>
         </div>
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-          <div className="rounded-2xl border bg-white p-4">
+          <div className="rounded-2xl border bg-card p-4">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Flame size={14} />
               최대 연속 작성일
@@ -85,7 +85,7 @@ export default function ResearchDashboard({ papers, history, periodStart, period
             <p className="mt-2 text-[11px] text-muted-foreground">중단 없이 매일 저장한 최장 기간</p>
           </div>
 
-          <div className="rounded-2xl border bg-white p-4 lg:col-span-2">
+          <div className="rounded-2xl border bg-card p-4 lg:col-span-2">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Clock4 size={14} />
               작성 시간대 (저장 시각 기준)
@@ -106,7 +106,7 @@ export default function ResearchDashboard({ papers, history, periodStart, period
             </div>
           </div>
 
-          <div className="rounded-2xl border bg-white p-4 lg:col-span-3">
+          <div className="rounded-2xl border bg-card p-4 lg:col-span-3">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <BarChart3 size={14} />
               요일별 작성 활동
@@ -142,7 +142,7 @@ export default function ResearchDashboard({ papers, history, periodStart, period
         </div>
 
         <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
-          <div className="rounded-2xl border bg-white p-4">
+          <div className="rounded-2xl border bg-card p-4">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Hash size={14} />
               주요 키워드 (Top 12)
@@ -164,7 +164,7 @@ export default function ResearchDashboard({ papers, history, periodStart, period
             )}
           </div>
 
-          <div className="rounded-2xl border bg-white p-4">
+          <div className="rounded-2xl border bg-card p-4">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Variable size={14} />
               변인별 정리
@@ -228,7 +228,7 @@ function MetricCard({ icon, label, value, hint, tone = "sky" }: { icon: React.Re
 
 function MiniStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-2xl border bg-white p-3 text-center">
+    <div className="rounded-2xl border bg-card p-3 text-center">
       <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
         {icon}
         <span>{label}</span>

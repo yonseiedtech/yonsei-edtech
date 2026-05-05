@@ -102,7 +102,7 @@ export default function PosterGenerator({ seminarId: propSeminarId }: { seminarI
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border bg-white p-6">
+      <div className="rounded-xl border bg-card p-6">
         <h2 className="mb-4 text-lg font-semibold">AI 포스터 생성</h2>
         <p className="mb-6 text-sm text-muted-foreground">
           세미나 정보를 기반으로 AI가 포스터를 자동 생성합니다.
@@ -174,7 +174,7 @@ export default function PosterGenerator({ seminarId: propSeminarId }: { seminarI
 
       {/* 미리보기 */}
       {imageUrl && (
-        <div className="rounded-xl border bg-white p-6">
+        <div className="rounded-xl border bg-card p-6">
           <h3 className="mb-4 text-lg font-semibold">생성된 포스터</h3>
           <div className="flex justify-center rounded-lg bg-muted/30 p-4">
             <img

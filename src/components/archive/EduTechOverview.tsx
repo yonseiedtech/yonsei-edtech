@@ -170,7 +170,7 @@ export default function EduTechOverview() {
             </div>
 
             {/* AECT 5대 영역 */}
-            <div className="rounded-lg border bg-white p-4">
+            <div className="rounded-lg border bg-card p-4">
               <p className="text-sm font-semibold">
                 📐 교육공학의 5대 탐구 영역
                 <span className="ml-2 text-[10px] font-normal text-muted-foreground">
@@ -189,7 +189,7 @@ export default function EduTechOverview() {
                     <div
                       key={d.key}
                       className={cn(
-                        "rounded-md border border-l-4 bg-white p-2.5",
+                        "rounded-md border border-l-4 bg-card p-2.5",
                         d.border,
                       )}
                     >
@@ -280,7 +280,7 @@ export default function EduTechOverview() {
                     <Badge
                       key={k.label}
                       variant="outline"
-                      className="border-sky-200 bg-white text-[10px] font-normal"
+                      className="border-sky-200 bg-card text-[10px] font-normal"
                       title={k.note}
                     >
                       {k.label}
@@ -296,7 +296,7 @@ export default function EduTechOverview() {
 
               {/* AECT 핵심 자원 */}
               <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                <div className="rounded-md border bg-white p-2.5">
+                <div className="rounded-md border bg-card p-2.5">
                   <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                     <BookMarked size={10} />
                     주요 학술지
@@ -312,7 +312,7 @@ export default function EduTechOverview() {
                     </li>
                   </ul>
                 </div>
-                <div className="rounded-md border bg-white p-2.5">
+                <div className="rounded-md border bg-card p-2.5">
                   <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                     <Users size={10} />
                     Divisions (관심 분야)
@@ -336,7 +336,7 @@ export default function EduTechOverview() {
                     ))}
                   </div>
                 </div>
-                <div className="rounded-md border bg-white p-2.5">
+                <div className="rounded-md border bg-card p-2.5">
                   <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                     <GraduationCap size={10} />
                     핵심 개념·이론 산출
@@ -364,7 +364,7 @@ export default function EduTechOverview() {
               </div>
 
               {/* 정의 변천 타임라인 */}
-              <div className="mt-3 rounded-md border bg-white p-3">
+              <div className="mt-3 rounded-md border bg-card p-3">
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   📜 AECT 정의 변천사
                 </p>

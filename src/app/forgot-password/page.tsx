@@ -80,7 +80,7 @@ export default function ForgotPasswordPage() {
         {step === "verify" && (
           <form
             onSubmit={handleVerify}
-            className="space-y-4 rounded-2xl border bg-white p-8 shadow-sm"
+            className="space-y-4 rounded-2xl border bg-card p-8 shadow-sm"
           >
             <div>
               <label className="mb-1.5 block text-sm font-medium">이름</label>
@@ -107,7 +107,7 @@ export default function ForgotPasswordPage() {
         {step === "answer" && (
           <form
             onSubmit={handleAnswer}
-            className="space-y-4 rounded-2xl border bg-white p-8 shadow-sm"
+            className="space-y-4 rounded-2xl border bg-card p-8 shadow-sm"
           >
             <div>
               <label className="mb-1.5 block text-sm font-medium">보안 질문</label>
@@ -136,7 +136,7 @@ export default function ForgotPasswordPage() {
         )}
 
         {step === "done" && (
-          <div className="rounded-2xl border bg-white p-8 text-center shadow-sm">
+          <div className="rounded-2xl border bg-card p-8 text-center shadow-sm">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary/10 text-secondary">
               <CheckCircle size={32} />
             </div>

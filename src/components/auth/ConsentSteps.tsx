@@ -231,7 +231,7 @@ function StepConsentBlock({
       </button>
 
       {expanded && (
-        <div className="mt-2 max-h-48 overflow-y-auto rounded-md bg-white p-3 text-xs leading-relaxed text-foreground/80">
+        <div className="mt-2 max-h-48 overflow-y-auto rounded-md bg-card p-3 text-xs leading-relaxed text-foreground/80">
           {summary.body}
         </div>
       )}

@@ -175,7 +175,7 @@ export default function PeerActivityFeed() {
   if (items.length === 0) return null;
 
   return (
-    <div className="rounded-2xl border bg-white p-6">
+    <div className="rounded-2xl border bg-card p-6">
       <div className="flex items-center gap-2">
         <MessageSquare size={18} className="text-primary" />
         <h2 className="font-bold">동료의 최근 활동</h2>

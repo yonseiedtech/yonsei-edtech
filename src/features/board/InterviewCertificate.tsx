@@ -62,7 +62,7 @@ export default function InterviewCertificate({ post, respondentName, answerCount
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/60 p-4">
       <button
         onClick={onClose}
-        className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white backdrop-blur hover:bg-white/20"
+        className="absolute right-4 top-4 rounded-full bg-card/10 p-2 text-white backdrop-blur hover:bg-card/20"
         aria-label="닫기"
       >
         <X size={20} />
@@ -79,13 +79,13 @@ export default function InterviewCertificate({ post, respondentName, answerCount
           className="relative aspect-square w-full overflow-hidden rounded-3xl bg-gradient-to-br from-[#003876] via-[#00275c] to-[#001a3d] shadow-2xl"
         >
           {/* 장식 그라디언트 블롭 */}
-          <div className="absolute -left-12 -top-12 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
+          <div className="absolute -left-12 -top-12 h-56 w-56 rounded-full bg-card/10 blur-3xl" />
           <div className="absolute -bottom-20 -right-8 h-72 w-72 rounded-full bg-[#1a5fa0]/30 blur-3xl" />
 
           {/* 콘텐츠 */}
           <div className="relative flex h-full flex-col items-center justify-between p-8 text-white">
             <div className="flex flex-col items-center">
-              <div className="flex items-center gap-2 rounded-xl bg-white/95 px-4 py-2 text-sm font-bold text-[#003876] shadow">
+              <div className="flex items-center gap-2 rounded-xl bg-card/95 px-4 py-2 text-sm font-bold text-[#003876] shadow">
                 <img
                   src="/yonsei-emblem.svg"
                   alt="연세대학교"
@@ -108,7 +108,7 @@ export default function InterviewCertificate({ post, respondentName, answerCount
             </div>
 
             <div className="w-full">
-              <div className="rounded-2xl bg-white/10 px-4 py-3 text-center backdrop-blur-sm">
+              <div className="rounded-2xl bg-card/10 px-4 py-3 text-center backdrop-blur-sm">
                 <p className="text-xs opacity-70">응답자</p>
                 <p className="mt-0.5 text-lg font-bold">{respondentName}</p>
                 <p className="mt-1 text-[11px] opacity-70">{dateStr}</p>
@@ -124,7 +124,7 @@ export default function InterviewCertificate({ post, respondentName, answerCount
           <Button
             variant="outline"
             onClick={copyLink}
-            className="flex-1 bg-white/90 text-foreground hover:bg-white"
+            className="flex-1 bg-card/90 text-foreground hover:bg-card"
           >
             {copied ? <Check size={16} className="mr-1" /> : <Copy size={16} className="mr-1" />}
             {copied ? "복사됨" : "링크 복사"}

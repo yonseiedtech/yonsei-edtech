@@ -29,7 +29,7 @@ const BusinessCard = forwardRef<HTMLDivElement, BusinessCardProps>(
         <div className="relative flex h-full flex-col px-6 pt-8 pb-6">
           {/* 학회 로고 + 엠블럼 */}
           <div className="flex items-center gap-2 text-white">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-white/40">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-card shadow-sm ring-1 ring-white/40">
               <Image src="/yonsei-emblem.svg" alt="연세대학교 엠블럼" width={22} height={22} className="h-5 w-5" />
             </div>
             <span className="text-xs font-semibold tracking-wide">연세교육공학회</span>
@@ -37,7 +37,7 @@ const BusinessCard = forwardRef<HTMLDivElement, BusinessCardProps>(
 
           {/* 프로필 사진 */}
           <div className="mt-6 flex justify-center">
-            <div className="relative h-24 w-24 overflow-hidden rounded-full bg-white ring-4 ring-white shadow-md">
+            <div className="relative h-24 w-24 overflow-hidden rounded-full bg-card ring-4 ring-white shadow-md">
               {user.profileImage ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={user.profileImage} alt={user.name} className="h-full w-full object-cover" />
@@ -67,7 +67,7 @@ const BusinessCard = forwardRef<HTMLDivElement, BusinessCardProps>(
 
           {/* QR */}
           <div className="mt-auto flex flex-col items-center gap-1.5 pt-4">
-            <div className="rounded-xl bg-white p-2 shadow-sm ring-1 ring-slate-200">
+            <div className="rounded-xl bg-card p-2 shadow-sm ring-1 ring-slate-200">
               <QRCodeSVG value={qrValue} size={96} level="M" />
             </div>
             {!hideExchangeHint && (

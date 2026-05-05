@@ -221,7 +221,7 @@ export default function ChatbotAdminPage() {
         }
       />
 
-      <div className="rounded-xl border bg-white p-5">
+      <div className="rounded-xl border bg-card p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="font-semibold">챗봇 플로팅 UI 노출</h3>
@@ -272,7 +272,7 @@ export default function ChatbotAdminPage() {
         </TabsList>
 
         <TabsContent value="greeting" className="mt-4">
-          <div className="rounded-xl border bg-white p-6 space-y-4">
+          <div className="rounded-xl border bg-card p-6 space-y-4">
           <h3 className="font-semibold">챗봇 인사말 설정</h3>
           <p className="text-xs text-muted-foreground">챗봇을 열었을 때 처음 표시되는 인사말을 설정합니다.</p>
           <div>
@@ -313,7 +313,7 @@ export default function ChatbotAdminPage() {
           ) : (
             <div className="space-y-2">
               {filteredLogs.map((log) => (
-                <div key={log.id} className="rounded-lg border bg-white p-4">
+                <div key={log.id} className="rounded-lg border bg-card p-4">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <User size={12} />
                     <span>{log.userName || "익명"}</span>
@@ -354,7 +354,7 @@ export default function ChatbotAdminPage() {
           ) : (
             <div className="space-y-2">
               {qaList.map((qa) => (
-                <div key={qa.id} className={cn("rounded-lg border bg-white p-4", !qa.enabled && "opacity-50")}>
+                <div key={qa.id} className={cn("rounded-lg border bg-card p-4", !qa.enabled && "opacity-50")}>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">

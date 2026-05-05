@@ -557,7 +557,7 @@ function MeetingPanel({ meeting, canControl, weekLabel, onMutated }: PanelProps)
 
       {/* 아젠다 추가 — 진행 중에도 추가 가능 (status: completed 만 제외, 단 reopen 후엔 paused 가 되어 표시됨) */}
       {canControl && status !== "completed" && (
-        <div className="rounded-md border border-dashed bg-white p-3">
+        <div className="rounded-md border border-dashed bg-card p-3">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_110px_auto]">
             <Input
               placeholder="아젠다 (예: 논문 검토, Q&A)"
@@ -682,7 +682,7 @@ function SortableSection(props: SortableSectionProps) {
       ref={setNodeRef}
       style={style}
       className={cn(
-        "rounded-md border bg-white px-3 py-2 text-xs transition-shadow",
+        "rounded-md border bg-card px-3 py-2 text-xs transition-shadow",
         isActive && "border-primary shadow-sm",
         isDone && "opacity-70",
         isDragging && "z-10 opacity-90 shadow-lg ring-2 ring-primary/30",

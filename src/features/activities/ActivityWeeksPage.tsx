@@ -206,7 +206,7 @@ export default function ActivityWeeksPage({
       <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
         <CardContent className="space-y-3 py-5">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className="bg-white text-xs">
+            <Badge variant="outline" className="bg-card text-xs">
               {typeLabel}
             </Badge>
             <h1 className="text-xl font-bold text-foreground">{activity.title} · 주차별 진행</h1>
@@ -384,7 +384,7 @@ export default function ActivityWeeksPage({
                   <CardContent className="space-y-2 py-4">
                     <div className="flex items-center justify-between gap-1">
                       <div className="flex items-center gap-1">
-                        <Badge variant="outline" className="bg-white text-xs font-bold">
+                        <Badge variant="outline" className="bg-card text-xs font-bold">
                           Week {displayWeek}
                         </Badge>
                         {isToday && (

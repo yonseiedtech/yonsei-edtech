@@ -371,7 +371,7 @@ export default function MemberReportView() {
           <p className="mb-3 text-xs text-rose-700/80">
             staff 이상 권한 보유 인원 중 로얄티 점수 30 미만 (참여·콘텐츠·연구 모두 저조).
           </p>
-          <div className="overflow-x-auto rounded-lg border bg-white">
+          <div className="overflow-x-auto rounded-lg border bg-card">
             <table className="w-full min-w-[640px] text-sm">
               <thead className="bg-rose-50/60 text-xs text-rose-800">
                 <tr className="text-left">
@@ -404,7 +404,7 @@ export default function MemberReportView() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         {/* 챔피언 Top 10 */}
-        <section className="rounded-xl border bg-white p-5">
+        <section className="rounded-xl border bg-card p-5">
           <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
             <Crown size={16} className="text-violet-600" />
             로얄티 Top 10
@@ -440,7 +440,7 @@ export default function MemberReportView() {
         </section>
 
         {/* 저활동·휴면 회원 */}
-        <section className="rounded-xl border bg-white p-5">
+        <section className="rounded-xl border bg-card p-5">
           <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
             <Clock size={16} className="text-amber-600" />
             저활동·휴면 회원 (loyalty 15 미만 우선)
@@ -465,7 +465,7 @@ export default function MemberReportView() {
       </div>
 
       {/* 전체 회원 테이블 */}
-      <section className="rounded-xl border bg-white p-5">
+      <section className="rounded-xl border bg-card p-5">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-2 text-sm font-semibold">
             <Users size={16} />
@@ -574,7 +574,7 @@ function Kpi({ icon: Icon, color, label, value, sub }: {
   icon: React.ElementType; color: string; label: string; value: number; sub?: string;
 }) {
   return (
-    <div className="rounded-xl border bg-white p-4">
+    <div className="rounded-xl border bg-card p-4">
       <div className="flex items-center gap-3">
         <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", color)}>
           <Icon size={18} />

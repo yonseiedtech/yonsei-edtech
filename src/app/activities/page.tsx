@@ -114,7 +114,7 @@ export default function ActivitiesPage() {
             <Link
               key={a.title}
               href={a.href}
-              className="group rounded-2xl border bg-white p-6 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+              className="group rounded-2xl border bg-card p-6 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
             >
               <div className="flex items-start gap-3">
                 <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${a.color}`}>
@@ -154,7 +154,7 @@ export default function ActivitiesPage() {
             </div>
           ) : (
             highlights.map((h, i) => (
-              <div key={i} className="flex gap-4 rounded-xl border bg-white p-4 transition-all duration-150 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-sm">
+              <div key={i} className="flex gap-4 rounded-xl border bg-card p-4 transition-all duration-150 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-sm">
                 <div className="shrink-0 text-sm font-bold text-primary">
                   {h.date.length > 10 ? h.date : formatDate(h.date)}
                 </div>

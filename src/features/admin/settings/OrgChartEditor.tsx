@@ -75,7 +75,7 @@ function EditDialog({ position, allPositions, open, onClose, onSave }: EditDialo
               <select
                 value={form.level}
                 onChange={(e) => setForm({ ...form, level: Number(e.target.value), parentId: undefined })}
-                className="w-full rounded-lg border bg-white px-3 py-2 text-sm"
+                className="w-full rounded-lg border bg-card px-3 py-2 text-sm"
               >
                 {Object.entries(LEVEL_LABELS).map(([lv, label]) => (
                   <option key={lv} value={lv}>{lv} - {label}</option>
@@ -93,7 +93,7 @@ function EditDialog({ position, allPositions, open, onClose, onSave }: EditDialo
               <select
                 value={form.parentId ?? ""}
                 onChange={(e) => setForm({ ...form, parentId: e.target.value || undefined })}
-                className="w-full rounded-lg border bg-white px-3 py-2 text-sm"
+                className="w-full rounded-lg border bg-card px-3 py-2 text-sm"
               >
                 <option value="">없음</option>
                 {parentOptions.map((p) => (
@@ -111,7 +111,7 @@ function EditDialog({ position, allPositions, open, onClose, onSave }: EditDialo
                   const role = (e.target.value || undefined) as OrgRole | undefined;
                   setForm({ ...form, role, isDirectAide: role === "direct_aide" });
                 }}
-                className="w-full rounded-lg border bg-white px-3 py-2 text-sm"
+                className="w-full rounded-lg border bg-card px-3 py-2 text-sm"
               >
                 <option value="">선택 안 함</option>
                 {Object.entries(ROLE_LABELS).map(([v, l]) => (
@@ -139,7 +139,7 @@ function EditDialog({ position, allPositions, open, onClose, onSave }: EditDialo
               onChange={(e) => setForm({ ...form, handover: e.target.value || undefined })}
               placeholder="차기 임원에게 전달할 업무 노하우·주의사항·연락처 등"
               rows={4}
-              className="w-full rounded-lg border bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              className="w-full rounded-lg border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
           </div>
           <div>
@@ -155,7 +155,7 @@ function EditDialog({ position, allPositions, open, onClose, onSave }: EditDialo
                   userPhoto: member?.profileImage,
                 });
               }}
-              className="w-full rounded-lg border bg-white px-3 py-2 text-sm"
+              className="w-full rounded-lg border bg-card px-3 py-2 text-sm"
             >
               <option value="">공석</option>
               {staffMembers.map((m) => (
@@ -244,7 +244,7 @@ export default function OrgChartEditor() {
           </h4>
           <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
             {grouped.get(level)!.map((pos) => (
-              <div key={pos.id} className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2.5">
+              <div key={pos.id} className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2.5">
                 {pos.userName ? (
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
                     {pos.userName[0]}

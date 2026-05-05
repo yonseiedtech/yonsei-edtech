@@ -512,7 +512,7 @@ export default function CalendarPage() {
         </div>
 
         {/* 캘린더 본체 */}
-        <div className="mt-3 rounded-xl border bg-white p-4 sm:p-6">
+        <div className="mt-3 rounded-xl border bg-card p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <button
               onClick={() => { setCurrentMonth(new Date(year, month - 1, 1)); setSelectedDate(null); }}
@@ -725,7 +725,7 @@ export default function CalendarPage() {
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
-          <div className="rounded-xl border bg-white p-4">
+          <div className="rounded-xl border bg-card p-4">
             <h3 className="text-sm font-semibold">진행중인 학술활동</h3>
             {ongoingEvents.length === 0 ? (
               <p className="mt-2 text-xs text-muted-foreground">진행 중인 활동이 없습니다.</p>
@@ -738,7 +738,7 @@ export default function CalendarPage() {
             )}
           </div>
 
-          <div className="rounded-xl border bg-white p-4">
+          <div className="rounded-xl border bg-card p-4">
             <h3 className="text-sm font-semibold">다가오는 일정</h3>
             {upcomingEvents.length === 0 ? (
               <p className="mt-2 text-xs text-muted-foreground">예정된 일정이 없습니다.</p>

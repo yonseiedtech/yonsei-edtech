@@ -242,7 +242,7 @@ export default function ResearchTypeChart({ theses }: { theses: AlumniThesis[] }
                 className={`rounded-md px-2 py-1 font-medium transition ${
                   active
                     ? "bg-primary text-primary-foreground"
-                    : "border bg-white text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                    : "border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
                 }`}
               >
                 {opt}년
@@ -254,7 +254,7 @@ export default function ResearchTypeChart({ theses }: { theses: AlumniThesis[] }
       </div>
 
       {/* 초록 기반 양적/질적/혼합 (NEW) */}
-      <div className="rounded-lg border bg-white p-4">
+      <div className="rounded-lg border bg-card p-4">
         <div className="mb-3 flex items-baseline justify-between gap-2">
           <h4 className="text-sm font-bold">
             초록 기반 연구 방법
@@ -289,7 +289,7 @@ export default function ResearchTypeChart({ theses }: { theses: AlumniThesis[] }
       </div>
 
       {/* 제목 기반 정량 ↔ 정성 */}
-      <div className="rounded-lg border bg-white p-4">
+      <div className="rounded-lg border bg-card p-4">
         <h4 className="mb-3 text-sm font-bold">
           제목 기반 정량 ↔ 정성
           <span className="ml-2 text-[10px] font-normal text-muted-foreground">
@@ -307,7 +307,7 @@ export default function ResearchTypeChart({ theses }: { theses: AlumniThesis[] }
       </div>
 
       {/* 제목 기반 개발 ↔ 분석 */}
-      <div className="rounded-lg border bg-white p-4">
+      <div className="rounded-lg border bg-card p-4">
         <h4 className="mb-3 text-sm font-bold">제목 기반 개발 ↔ 분석</h4>
         <StackedBars
           data={{

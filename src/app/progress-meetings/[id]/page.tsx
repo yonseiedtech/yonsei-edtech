@@ -265,7 +265,7 @@ export default function ProgressMeetingPage({ params }: PageProps) {
         </Link>
 
         {/* 헤더 */}
-        <div className="rounded-2xl border bg-white p-6">
+        <div className="rounded-2xl border bg-card p-6">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
               <p className="text-xs text-muted-foreground">실시간 미팅 타이머</p>
@@ -336,7 +336,7 @@ export default function ProgressMeetingPage({ params }: PageProps) {
         </div>
 
         {/* 슬라이드 (PDF) — 발표 자료 공유 */}
-        <div className="mt-4 rounded-2xl border bg-white p-4">
+        <div className="mt-4 rounded-2xl border bg-card p-4">
           <div className="mb-2 flex items-center justify-between gap-2">
             <h2 className="flex items-center gap-1.5 text-sm font-semibold">
               <FileText size={14} />발표 슬라이드
@@ -346,7 +346,7 @@ export default function ProgressMeetingPage({ params }: PageProps) {
             </h2>
             {canControl && (
               <div className="flex items-center gap-1.5">
-                <label className="relative inline-flex cursor-pointer items-center gap-1 rounded-md border bg-white px-2 py-1 text-xs font-medium text-muted-foreground hover:border-primary hover:text-primary">
+                <label className="relative inline-flex cursor-pointer items-center gap-1 rounded-md border bg-card px-2 py-1 text-xs font-medium text-muted-foreground hover:border-primary hover:text-primary">
                   {uploadingSlides ? (
                     <span>업로드 중…</span>
                   ) : (
@@ -428,7 +428,7 @@ export default function ProgressMeetingPage({ params }: PageProps) {
               <div
                 key={s.id}
                 className={cn(
-                  "rounded-xl border bg-white p-4 transition-shadow",
+                  "rounded-xl border bg-card p-4 transition-shadow",
                   isActive && "border-primary shadow-md",
                   isDone && "opacity-70",
                 )}
@@ -510,7 +510,7 @@ export default function ProgressMeetingPage({ params }: PageProps) {
 
           {/* 섹션 추가 (planning 단계에서만, 컨트롤 권한자만) */}
           {canControl && status === "planning" && (
-            <div className="rounded-xl border border-dashed bg-white p-4">
+            <div className="rounded-xl border border-dashed bg-card p-4">
               <p className="text-sm font-semibold">아젠다 추가</p>
               <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_120px_auto]">
                 <Input

@@ -22,7 +22,7 @@ export default function Footer() {
           {/* Logo & Description */}
           <div>
             <div className="flex items-center gap-2.5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white p-1 shadow-sm dark:bg-slate-100">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-card p-1 shadow-sm dark:bg-slate-100">
                 <Image
                   src="/card-news/brand/shield.png"
                   alt="연세대학교 엠블럼"

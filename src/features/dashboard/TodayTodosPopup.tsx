@@ -270,7 +270,7 @@ export default function TodayTodosPopup() {
                   return (
                     <li
                       key={t.id}
-                      className="flex items-center gap-2 rounded-md border bg-white px-2.5 py-2 text-[12px]"
+                      className="flex items-center gap-2 rounded-md border bg-card px-2.5 py-2 text-[12px]"
                     >
                       <input
                         type="checkbox"
@@ -325,7 +325,7 @@ export default function TodayTodosPopup() {
                       <Link
                         href={`${TYPE_ROUTE[a.type]}/${a.id}`}
                         onClick={() => setOpen(false)}
-                        className="flex items-center justify-between gap-2 rounded-md border bg-white px-2.5 py-2 text-[12px] transition-colors hover:bg-muted/40"
+                        className="flex items-center justify-between gap-2 rounded-md border bg-card px-2.5 py-2 text-[12px] transition-colors hover:bg-muted/40"
                       >
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">

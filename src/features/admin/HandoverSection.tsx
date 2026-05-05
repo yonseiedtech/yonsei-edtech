@@ -182,14 +182,14 @@ export default function HandoverSection() {
       </div>
 
       {filteredDocs.length === 0 ? (
-        <div className="rounded-lg border bg-white py-12 text-center">
+        <div className="rounded-lg border bg-card py-12 text-center">
           <FileText size={32} className="mx-auto text-muted-foreground/30" />
           <p className="mt-2 text-sm text-muted-foreground">등록된 업무수행 문서가 없습니다.</p>
         </div>
       ) : (
         <div className="space-y-2">
           {filteredDocs.map((doc) => (
-            <div key={doc.id} className="rounded-lg border bg-white">
+            <div key={doc.id} className="rounded-lg border bg-card">
               <button
                 onClick={() => setExpandedDoc(expandedDoc === doc.id ? null : doc.id)}
                 className="flex w-full items-center gap-3 px-4 py-3 text-left"
@@ -274,7 +274,7 @@ export default function HandoverSection() {
                       title="편집"
                       className={cn(
                         "flex items-center gap-1 rounded px-2 py-0.5 text-[11px] transition-colors",
-                        previewMode === "edit" ? "bg-white shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground",
+                        previewMode === "edit" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground",
                       )}
                     >
                       <Edit3 size={11} /> 편집
@@ -285,7 +285,7 @@ export default function HandoverSection() {
                       title="분할 (편집 + 미리보기)"
                       className={cn(
                         "flex items-center gap-1 rounded px-2 py-0.5 text-[11px] transition-colors",
-                        previewMode === "split" ? "bg-white shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground",
+                        previewMode === "split" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground",
                       )}
                     >
                       <Columns2 size={11} /> 분할
@@ -296,7 +296,7 @@ export default function HandoverSection() {
                       title="미리보기"
                       className={cn(
                         "flex items-center gap-1 rounded px-2 py-0.5 text-[11px] transition-colors",
-                        previewMode === "preview" ? "bg-white shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground",
+                        previewMode === "preview" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground",
                       )}
                     >
                       <Eye size={11} /> 미리보기

@@ -245,7 +245,7 @@ export default function ConferenceRoundupView({ activityId, activityTitle }: Pro
 
 function Stat({ label, value, icon }: { label: string; value: number | string; icon?: React.ReactNode }) {
   return (
-    <div className="rounded-md border bg-white/70 p-3">
+    <div className="rounded-md border bg-card/70 p-3">
       <div className="flex items-center gap-1 text-xs text-muted-foreground">
         {icon}
         {label}

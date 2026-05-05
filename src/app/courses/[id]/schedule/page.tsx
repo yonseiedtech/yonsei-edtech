@@ -792,7 +792,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
           <section className="mx-auto mt-6 max-w-4xl px-4">
             <div
               className={cn(
-                "rounded-2xl border border-l-4 bg-white p-4 shadow-sm sm:p-5",
+                "rounded-2xl border border-l-4 bg-card p-4 shadow-sm sm:p-5",
                 MODE_WEEK_BORDER[cwPrimaryMode],
               )}
             >
@@ -929,7 +929,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                   key={w.weekNo}
                   id={`week-${w.weekNo}`}
                   className={cn(
-                    "scroll-mt-24 rounded-xl border border-l-4 bg-white p-4",
+                    "scroll-mt-24 rounded-xl border border-l-4 bg-card p-4",
                     MODE_WEEK_BORDER[primaryMode],
                     isCurrentWeek && "ring-2 ring-primary/30",
                     isPast && !isCurrentWeek && "opacity-80",
@@ -1085,7 +1085,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                         return (
                           <div
                             key={`my-att-${d}`}
-                            className="flex flex-wrap items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1.5"
+                            className="flex flex-wrap items-center gap-2 rounded-md border border-slate-200 bg-card px-2 py-1.5"
                           >
                             <span className="text-[11px] font-medium text-slate-700">
                               {d} 내 출석
@@ -1141,7 +1141,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                               type="button"
                               onClick={() => setAttendanceDate(d)}
                               disabled={!enabled || sum.total === 0}
-                              className="ml-auto inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-white px-2 py-0.5 text-[11px] font-medium text-emerald-700 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="ml-auto inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-card px-2 py-0.5 text-[11px] font-medium text-emerald-700 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
                               title={!enabled ? "비대면·휴강·과제 회차는 비활성화" : ""}
                             >
                               {sum.unmarked > 0 ? "출석 체크" : "출석 수정"}
@@ -1314,7 +1314,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
               {orphanSessions.map((s) => (
                 <li
                   key={s.id}
-                  className="flex items-center gap-2 rounded-md bg-white px-2 py-1.5 text-[11px]"
+                  className="flex items-center gap-2 rounded-md bg-card px-2 py-1.5 text-[11px]"
                 >
                   <span className="font-mono font-medium text-amber-900">{s.date}</span>
                   <Badge variant="secondary" className="text-[10px]">
@@ -1339,7 +1339,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
 
         {/* 주차 미배정 할 일 */}
         {unassignedTodos.length > 0 && (
-          <div className="mt-6 rounded-xl border bg-white p-4">
+          <div className="mt-6 rounded-xl border bg-card p-4">
             <p className="mb-2 text-xs font-medium text-muted-foreground">
               주차 미배정 할 일
             </p>
@@ -1519,7 +1519,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                   value={noteDraft.content}
                   onChange={(e) => setNoteDraft({ ...noteDraft, content: e.target.value })}
                   rows={5}
-                  className="rounded-md border bg-white px-3 py-2 text-sm"
+                  className="rounded-md border bg-card px-3 py-2 text-sm"
                   placeholder="수업에서 배운 내용, 느낀 점, 질문 등을 자유롭게 기록하세요."
                 />
               </label>
@@ -1549,7 +1549,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                   onChange={(e) =>
                     setTodoDraft({ ...todoDraft, type: e.target.value as CourseTodoType })
                   }
-                  className="rounded-md border bg-white px-3 py-2 text-sm"
+                  className="rounded-md border bg-card px-3 py-2 text-sm"
                 >
                   {TODO_TYPES.map((t) => (
                     <option key={t} value={t}>{COURSE_TODO_TYPE_LABELS[t]}</option>

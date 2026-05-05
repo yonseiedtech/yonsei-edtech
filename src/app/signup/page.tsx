@@ -61,7 +61,7 @@ function SignupContent() {
         </div>
 
         {step === "consent" && (
-          <div className="rounded-2xl border bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border bg-card p-6 shadow-sm">
             <ConsentSteps
               mode="signup"
               onComplete={(c) => {

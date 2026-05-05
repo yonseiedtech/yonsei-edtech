@@ -50,7 +50,7 @@ export default function AcademicCalendarProgress() {
 
   if (isLoading) {
     return (
-      <div className="rounded-2xl border bg-white p-6">
+      <div className="rounded-2xl border bg-card p-6">
         <div className="h-32 animate-pulse rounded-xl bg-muted" />
       </div>
     );
@@ -61,7 +61,7 @@ export default function AcademicCalendarProgress() {
 
   if (!entry) {
     return (
-      <div className="rounded-2xl border bg-white p-6">
+      <div className="rounded-2xl border bg-card p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <CalendarDays size={18} className="text-primary" />
@@ -89,7 +89,7 @@ export default function AcademicCalendarProgress() {
   if (!progress) {
     const semesterLabel = `${entry.year}년 ${entry.semester === "first" ? "1학기" : "2학기"}`;
     return (
-      <div className="rounded-2xl border bg-white p-6">
+      <div className="rounded-2xl border bg-card p-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <CalendarDays size={18} className="text-primary" />
@@ -122,7 +122,7 @@ export default function AcademicCalendarProgress() {
   const totalMs = Math.max(1, semEnd.getTime() - semStart.getTime());
 
   return (
-    <div className="rounded-2xl border bg-white p-6">
+    <div className="rounded-2xl border bg-card p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <CalendarDays size={18} className="text-primary" />

@@ -122,7 +122,7 @@ export default function MiniCalendar({ seminars }: MiniCalendarProps) {
                 <span
                   className={cn(
                     "absolute bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full",
-                    isSelected ? "bg-white" : "bg-primary"
+                    isSelected ? "bg-card" : "bg-primary"
                   )}
                 />
               )}

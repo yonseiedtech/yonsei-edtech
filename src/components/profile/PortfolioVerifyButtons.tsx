@@ -105,7 +105,7 @@ export default function PortfolioVerifyButtons({ kind, itemId, ownerId }: Props)
         </>
       )}
       {rejectOpen && (
-        <div className="absolute right-3 z-10 mt-8 w-64 rounded-lg border bg-white p-2 shadow-lg">
+        <div className="absolute right-3 z-10 mt-8 w-64 rounded-lg border bg-card p-2 shadow-lg">
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}

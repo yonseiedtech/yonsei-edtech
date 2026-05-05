@@ -130,7 +130,7 @@ export default function AttendanceCertificate({
         </Button>
 
         {showShare && (
-          <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border bg-white p-2 shadow-lg">
+          <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border bg-card p-2 shadow-lg">
             <button
               onClick={() => { handleSaveImage(); setShowShare(false); }}
               className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted"

@@ -254,7 +254,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
     const poster = a.imageUrl as string | undefined;
 
     return (
-      <div className="group flex flex-col overflow-hidden rounded-xl border bg-white shadow-sm transition hover:shadow-md">
+      <div className="group flex flex-col overflow-hidden rounded-xl border bg-card shadow-sm transition hover:shadow-md">
         <Link href={href} className="relative block aspect-[3/4] w-full overflow-hidden bg-muted">
           {poster ? (
             // 외부 도메인 호환을 위해 일반 img 사용
@@ -411,7 +411,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
 
         <div className="mt-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="inline-flex rounded-lg border bg-white p-1 text-sm shadow-sm">
+            <div className="inline-flex rounded-lg border bg-card p-1 text-sm shadow-sm">
               {(["all", "active", "completed"] as const).map((k) => (
                 <button
                   key={k}
@@ -425,7 +425,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
                 </button>
               ))}
             </div>
-            <div className="inline-flex rounded-lg border bg-white p-0.5 shadow-sm">
+            <div className="inline-flex rounded-lg border bg-card p-0.5 shadow-sm">
               <button onClick={() => setViewMode("list")} className={cn("rounded-md p-1.5 transition-colors", viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted")} title="리스트">
                 <List size={16} />
               </button>
@@ -439,7 +439,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
             viewMode === "gallery" ? (
               <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {[0, 1, 2].map((i) => (
-                  <div key={i} className="overflow-hidden rounded-xl border bg-white">
+                  <div key={i} className="overflow-hidden rounded-xl border bg-card">
                     <Skeleton className="aspect-[3/4] w-full" />
                     <div className="p-4 space-y-2"><Skeleton className="h-5 w-3/4" /><Skeleton className="h-4 w-full" /></div>
                   </div>
@@ -448,7 +448,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
             ) : (
               <div className="mt-4 space-y-3">
                 {[0, 1, 2].map((i) => (
-                  <div key={i} className="rounded-xl border bg-white p-5">
+                  <div key={i} className="rounded-xl border bg-card p-5">
                     <div className="flex items-center gap-2"><Skeleton className="h-5 w-12" /><Skeleton className="h-5 w-14" /><Skeleton className="h-6 w-40" /></div>
                     <Skeleton className="mt-3 h-4 w-full" /><Skeleton className="mt-2 h-4 w-2/3" />
                   </div>
@@ -574,7 +574,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
                               "flex items-center justify-center gap-1.5 rounded-lg border-2 px-3 py-2 text-xs font-medium transition-all",
                               enabled
                                 ? `${EXTERNAL_PARTICIPANT_TYPE_COLORS[t]} border-current shadow-sm`
-                                : "border-input bg-white text-slate-400 hover:border-primary/40 hover:bg-muted/30",
+                                : "border-input bg-card text-slate-400 hover:border-primary/40 hover:bg-muted/30",
                             )}
                             aria-pressed={enabled}
                           >
@@ -598,7 +598,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
                         <div className="flex h-24 w-18 shrink-0 items-center justify-center rounded-lg border bg-muted/30 text-muted-foreground/40"><ImageIcon size={22} /></div>
                       )}
                       <div className="flex-1 space-y-2">
-                        <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium hover:bg-muted">
+                        <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border bg-card px-3 py-1.5 text-xs font-medium hover:bg-muted">
                           {uploadingPoster ? <Loader2 size={12} className="animate-spin" /> : <ImageIcon size={12} />}
                           {uploadingPoster ? "업로드 중..." : "파일 업로드"}
                           <input type="file" accept="image/*" className="hidden" disabled={uploadingPoster} onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePosterFile(f); e.target.value = ""; }} />

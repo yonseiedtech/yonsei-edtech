@@ -114,7 +114,7 @@ export default function StudyTimerStats() {
 
   if (isLoading) {
     return (
-      <div className="rounded-2xl border bg-white p-4 text-sm text-muted-foreground">
+      <div className="rounded-2xl border bg-card p-4 text-sm text-muted-foreground">
         타이머 통계 불러오는 중...
       </div>
     );
@@ -123,7 +123,7 @@ export default function StudyTimerStats() {
   const maxMin = Math.max(1, ...stats.buckets.map((b) => b.minutes));
 
   return (
-    <section className="rounded-2xl border bg-white p-4 space-y-4">
+    <section className="rounded-2xl border bg-card p-4 space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
           <Clock size={14} className="text-primary" />

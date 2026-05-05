@@ -57,7 +57,7 @@ export default function MyAcademicActivitiesWidget() {
   if (!user) return null;
 
   return (
-    <div className="rounded-2xl border bg-white p-6">
+    <div className="rounded-2xl border bg-card p-6">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <ClipboardList size={18} className="text-primary" />
@@ -80,13 +80,13 @@ export default function MyAcademicActivitiesWidget() {
             참여 중인 스터디·프로젝트·대외학술활동이 없습니다.
           </p>
           <div className="mt-3 flex flex-wrap justify-center gap-2 text-[11px]">
-            <Link href="/activities/studies" className="rounded-md border bg-white px-2 py-1 hover:border-primary/40">
+            <Link href="/activities/studies" className="rounded-md border bg-card px-2 py-1 hover:border-primary/40">
               스터디 둘러보기
             </Link>
-            <Link href="/activities/projects" className="rounded-md border bg-white px-2 py-1 hover:border-primary/40">
+            <Link href="/activities/projects" className="rounded-md border bg-card px-2 py-1 hover:border-primary/40">
               프로젝트 둘러보기
             </Link>
-            <Link href="/activities/external" className="rounded-md border bg-white px-2 py-1 hover:border-primary/40">
+            <Link href="/activities/external" className="rounded-md border bg-card px-2 py-1 hover:border-primary/40">
               대외활동 둘러보기
             </Link>
           </div>
@@ -97,7 +97,7 @@ export default function MyAcademicActivitiesWidget() {
             <Link
               key={a.id}
               href={`${TYPE_ROUTE[a.type]}/${a.id}`}
-              className="flex items-center justify-between rounded-lg border bg-white px-3 py-2 text-sm transition-colors hover:bg-muted/40"
+              className="flex items-center justify-between rounded-lg border bg-card px-3 py-2 text-sm transition-colors hover:bg-muted/40"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-1.5">

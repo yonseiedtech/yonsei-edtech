@@ -260,28 +260,28 @@ export default function AdminSeminarTab() {
       />
       {/* 대시보드 통계 카드 */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-xl border bg-white p-4">
+        <div className="rounded-xl border bg-card p-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <CalendarDays size={16} className="text-blue-500" />
             <span>예정</span>
           </div>
           <p className="mt-1 text-2xl font-bold">{stats.upcoming}<span className="ml-1 text-sm font-normal text-muted-foreground">건</span></p>
         </div>
-        <div className="rounded-xl border bg-white p-4">
+        <div className="rounded-xl border bg-card p-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <TrendingUp size={16} className="text-green-500" />
             <span>완료</span>
           </div>
           <p className="mt-1 text-2xl font-bold">{stats.completed}<span className="ml-1 text-sm font-normal text-muted-foreground">건</span></p>
         </div>
-        <div className="rounded-xl border bg-white p-4">
+        <div className="rounded-xl border bg-card p-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Users size={16} className="text-primary" />
             <span>총 참석자</span>
           </div>
           <p className="mt-1 text-2xl font-bold">{stats.totalAttendees}<span className="ml-1 text-sm font-normal text-muted-foreground">명</span></p>
         </div>
-        <div className="rounded-xl border bg-white p-4">
+        <div className="rounded-xl border bg-card p-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <FileEdit size={16} className="text-gray-400" />
             <span>임시저장</span>
@@ -302,7 +302,7 @@ export default function AdminSeminarTab() {
               const pct = total > 0 ? Math.round((done / total) * 100) : 0;
               const dDay = Math.round((new Date(s.date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
               return (
-                <div key={s.id} className="flex items-center gap-3 rounded-lg bg-white/80 px-3 py-2 text-sm">
+                <div key={s.id} className="flex items-center gap-3 rounded-lg bg-card/80 px-3 py-2 text-sm">
                   <Badge variant="secondary" className="shrink-0 bg-blue-50 text-blue-700">D{dDay <= 0 ? "" : "-"}{Math.abs(dDay)}</Badge>
                   <div className="min-w-0 flex-1">
                     <span className="font-medium line-clamp-1">{s.title}</span>
@@ -326,7 +326,7 @@ export default function AdminSeminarTab() {
         </div>
       )}
 
-    <div className="space-y-0 rounded-xl border bg-white">
+    <div className="space-y-0 rounded-xl border bg-card">
       {/* 테이블 헤더 (데스크톱만) */}
       <div className="hidden lg:grid grid-cols-[48px_1fr_120px_140px_80px_100px_80px_80px_80px] items-center gap-1 border-b bg-muted/30 px-4 py-3 text-sm font-medium">
         <span>포스터</span>
@@ -620,7 +620,7 @@ export default function AdminSeminarTab() {
                       onChange={(e) => setCancelReason(e.target.value)}
                       placeholder="취소 사유를 입력하세요..."
                       rows={2}
-                      className="w-full rounded-lg border border-input bg-white px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                      className="w-full rounded-lg border border-input bg-card px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                     />
                     <div className="flex gap-2">
                       <Button

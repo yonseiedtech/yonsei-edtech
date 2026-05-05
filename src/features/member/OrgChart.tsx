@@ -79,7 +79,7 @@ function OrgNode({ node, isRoot, isIndependent }: { node: OrgTreeNode; isRoot?: 
     <div className="flex flex-col items-center">
       {/* 부모 카드 + 우측 독립 사이드카. absolute로 부모의 수평 중심축 보존 */}
       <div className="relative">
-        <div className={`flex flex-col items-center rounded-xl border bg-white px-4 py-3 shadow-sm ${cardClass}`}>
+        <div className={`flex flex-col items-center rounded-xl border bg-card px-4 py-3 shadow-sm ${cardClass}`}>
           <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${style.avatar}`}>
             {node.userName ? node.userName[0] : "?"}
           </div>
@@ -168,7 +168,7 @@ function MobileOrgList({ nodes, depth = 0 }: { nodes: OrgTreeNode[]; depth?: num
                 return (
                   <span
                     key={n.id}
-                    className="inline-flex items-center gap-1.5 rounded-full border bg-white px-2 py-1"
+                    className="inline-flex items-center gap-1.5 rounded-full border bg-card px-2 py-1"
                   >
                     <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${s.avatar}`}>
                       {n.userName ? n.userName[0] : "?"}
@@ -235,7 +235,7 @@ export default function OrgChart() {
   if (tree.length === 0) return null;
 
   return (
-    <div className="rounded-2xl border bg-white p-6">
+    <div className="rounded-2xl border bg-card p-6">
       <h3 className="mb-4 text-center text-lg font-bold">조직도</h3>
 
       {/* 데스크톱: 트리 시각화 */}

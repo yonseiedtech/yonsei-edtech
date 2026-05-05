@@ -286,7 +286,7 @@ function PortfolioContent() {
         </div>
 
         {msg && (
-          <div className="mt-4 rounded-md border bg-white px-3 py-2 text-xs">
+          <div className="mt-4 rounded-md border bg-card px-3 py-2 text-xs">
             {msg}
           </div>
         )}
@@ -301,7 +301,7 @@ function PortfolioContent() {
           <div className="mt-6 space-y-6">
             {tab === "award" && (
               <>
-                <div className="rounded-xl border bg-white p-5">
+                <div className="rounded-xl border bg-card p-5">
                   <h2 className="text-sm font-semibold">새 수상 등록</h2>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <Input
@@ -321,7 +321,7 @@ function PortfolioContent() {
                       onChange={(e) =>
                         setAwardForm({ ...awardForm, scope: e.target.value as AwardScope })
                       }
-                      className="h-9 rounded-md border border-input bg-white px-3 text-sm"
+                      className="h-9 rounded-md border border-input bg-card px-3 text-sm"
                     >
                       {Object.entries(AWARD_SCOPE_LABELS).map(([k, v]) => (
                         <option key={k} value={k}>
@@ -365,7 +365,7 @@ function PortfolioContent() {
 
             {tab === "external" && (
               <>
-                <div className="rounded-xl border bg-white p-5">
+                <div className="rounded-xl border bg-card p-5">
                   <h2 className="text-sm font-semibold">새 대외활동 등록</h2>
                   <p className="mt-0.5 text-[11px] text-muted-foreground">
                     신분 표기: <span className="font-medium">{DEFAULT_EXTERNAL_AFFILIATION}</span>
@@ -381,7 +381,7 @@ function PortfolioContent() {
                       onChange={(e) =>
                         setExtForm({ ...extForm, type: e.target.value as ExternalActivityType })
                       }
-                      className="h-9 rounded-md border border-input bg-white px-3 text-sm"
+                      className="h-9 rounded-md border border-input bg-card px-3 text-sm"
                     >
                       {Object.entries(EXTERNAL_ACTIVITY_TYPE_LABELS).map(([k, v]) => (
                         <option key={k} value={k}>
@@ -449,7 +449,7 @@ function PortfolioContent() {
 
             {tab === "content" && (
               <>
-                <div className="rounded-xl border bg-white p-5">
+                <div className="rounded-xl border bg-card p-5">
                   <h2 className="text-sm font-semibold">새 콘텐츠 등록</h2>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <Input
@@ -467,7 +467,7 @@ function PortfolioContent() {
                           type: e.target.value as ContentCreationType,
                         })
                       }
-                      className="h-9 rounded-md border border-input bg-white px-3 text-sm"
+                      className="h-9 rounded-md border border-input bg-card px-3 text-sm"
                     >
                       {Object.entries(CONTENT_CREATION_TYPE_LABELS).map(([k, v]) => (
                         <option key={k} value={k}>
@@ -549,7 +549,7 @@ function ItemList({
 }) {
   if (items.length === 0) {
     return (
-      <p className="rounded-xl border border-dashed bg-white p-6 text-center text-xs text-muted-foreground">
+      <p className="rounded-xl border border-dashed bg-card p-6 text-center text-xs text-muted-foreground">
         {emptyText}
       </p>
     );
@@ -557,7 +557,7 @@ function ItemList({
   return (
     <ul className="space-y-2">
       {items.map((it) => (
-        <li key={it.id} className="rounded-xl border bg-white p-4">
+        <li key={it.id} className="rounded-xl border bg-card p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">

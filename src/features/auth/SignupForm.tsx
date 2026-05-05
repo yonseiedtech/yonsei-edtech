@@ -407,7 +407,7 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
   return (
     <form
       onSubmit={handleSubmit(onSubmit, onInvalid)}
-      className="space-y-4 rounded-2xl border bg-white p-8 shadow-sm"
+      className="space-y-4 rounded-2xl border bg-card p-8 shadow-sm"
     >
       {/* ── 필수 정보 ── */}
       <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">필수 정보</p>
@@ -763,7 +763,7 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
                 "flex-1 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors",
                 enrollmentStatus === key
                   ? "border-primary bg-primary/10 text-primary"
-                  : "border-muted bg-white text-muted-foreground hover:bg-muted/50",
+                  : "border-muted bg-card text-muted-foreground hover:bg-muted/50",
               )}
             >
               {label}

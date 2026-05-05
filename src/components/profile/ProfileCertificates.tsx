@@ -40,7 +40,7 @@ export default function ProfileCertificates({ owner }: Props) {
   if (myCerts.length === 0) return null;
 
   return (
-    <section className="rounded-2xl border bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border bg-card p-5 shadow-sm">
       <div className="mb-3 flex items-baseline justify-between">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">수료증</h2>
         <span className="text-[11px] text-muted-foreground">총 {myCerts.length}건</span>

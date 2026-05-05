@@ -31,7 +31,7 @@ export default function ProfileAwards({ owner, verifiedOnly = false }: Props) {
   const sorted = [...visible].sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
 
   return (
-    <section className="rounded-2xl border bg-white p-5">
+    <section className="rounded-2xl border bg-card p-5">
       <h2 className="flex items-center gap-1.5 text-sm font-semibold">
         <AwardIcon size={14} className="text-primary" />
         수상 <span className="text-xs font-normal text-muted-foreground">({visible.length})</span>
