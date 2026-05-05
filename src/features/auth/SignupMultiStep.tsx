@@ -1,8 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+
+/** SSR 안전한 reduced-motion hook — framer-motion useReducedMotion 의 빌드 호환 대체 */
+function usePrefersReducedMotion(): boolean {
+  const [reduce, setReduce] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduce(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setReduce(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return reduce;
+}
 import { useSignupForm } from "./signup-steps/useSignupForm";
 import StepProgress from "./signup-steps/StepProgress";
 import StepNavigation from "./signup-steps/StepNavigation";
@@ -38,7 +52,7 @@ export default function SignupMultiStep({
   const [consents, setConsents] = useState<UserConsents>(buildFreshConsents());
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const reduce = useReducedMotion();
+  const reduce = usePrefersReducedMotion();
   const variants = reduce
     ? { initial: {}, animate: {}, exit: {} }
     : {
