@@ -1,25 +1,15 @@
 import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/api-auth";
 import { getAdminAuth } from "@/lib/firebase-admin";
+import { parseJsonBody, passwordResetSchema } from "@/lib/api-validators";
 
 export async function POST(req: NextRequest) {
   const authResult = await requireAuth(req, "staff");
   if (authResult instanceof Response) return authResult;
 
-  let email: string;
-  try {
-    const body = await req.json();
-    email = body.email;
-  } catch {
-    return Response.json({ error: "잘못된 요청 형식입니다." }, { status: 400 });
-  }
-
-  if (!email) {
-    return Response.json({ error: "이메일이 필요합니다." }, { status: 400 });
-  }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return Response.json({ error: "올바른 이메일 형식이 아닙니다." }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(req, passwordResetSchema);
+  if (parsed instanceof Response) return parsed;
+  const { email } = parsed;
 
   try {
     const adminAuth = getAdminAuth();

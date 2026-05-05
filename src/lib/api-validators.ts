@@ -48,3 +48,14 @@ export const approvalEmailSchema = z.object({
   name: z.string().optional(),
   approved: z.boolean(),
 });
+
+export const inquiryReplyEmailSchema = z.object({
+  email: z.string().email("유효한 이메일 형식이 아닙니다."),
+  name: z.string().optional(),
+  message: z.string().optional(),
+  reply: z.string().min(1, "답변 내용이 필요합니다."),
+});
+
+export const passwordResetSchema = z.object({
+  email: z.string().email("유효한 이메일 형식이 아닙니다."),
+});
