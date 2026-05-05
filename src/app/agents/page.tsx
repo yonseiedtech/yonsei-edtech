@@ -11,7 +11,6 @@ import {
   Loader2,
   Lock,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { ROLE_HIERARCHY } from "@/lib/permissions";
 import {
@@ -197,12 +196,18 @@ export default function AgentsPage() {
           학회 회원 전용 기능입니다. 로그인 후 이용해 주세요.
         </p>
         <div className="mt-6 flex items-center justify-center gap-2">
-          <Button asChild>
-            <Link href="/login">로그인</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/signup">회원가입</Link>
-          </Button>
+          <Link
+            href="/login"
+            className="inline-flex h-10 items-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            로그인
+          </Link>
+          <Link
+            href="/signup"
+            className="inline-flex h-10 items-center rounded-lg border border-input bg-card px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+          >
+            회원가입
+          </Link>
         </div>
       </div>
     );
