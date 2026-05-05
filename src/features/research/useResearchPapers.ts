@@ -18,6 +18,21 @@ export function useResearchPapers(userId: string | undefined) {
   return { papers: data ?? [], isLoading };
 }
 
+/** 단건 조회 — paper-edit-page 용 */
+export function useResearchPaper(paperId: string | undefined) {
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ["research_papers", "single", paperId],
+    queryFn: async () => {
+      if (!paperId) return null;
+      const res = await researchPapersApi.get(paperId);
+      return (res as { data?: ResearchPaper }).data ?? (res as ResearchPaper);
+    },
+    enabled: !!paperId,
+    staleTime: 1000 * 30,
+  });
+  return { paper: data, isLoading, error, refetch };
+}
+
 export function useCreateResearchPaper() {
   const qc = useQueryClient();
   return useMutation({

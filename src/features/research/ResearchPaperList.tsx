@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -65,6 +66,7 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
     setInterestsDirty(false);
   }, [user.id, user.researchInterests]);
 
+  const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<ResearchPaper | null>(null);
   const [risOpen, setRisOpen] = useState(false);
@@ -163,6 +165,12 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
   }
 
   function openEdit(p: ResearchPaper) {
+    // 편집 가능 모드: 별도 편집 페이지로 이동 (paper-edit-page PDCA)
+    if (!readOnly) {
+      router.push(`/mypage/research/papers/${p.id}`);
+      return;
+    }
+    // readOnly(운영 콘솔 등): 기존 다이얼로그 보기 모드 유지
     setEditing(p);
     setDialogOpen(true);
   }
@@ -188,7 +196,14 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
         if (opts.isDraft && res && typeof res === "object" && "id" in res) {
           setEditing(res as ResearchPaper);
         } else if (!opts.isDraft) {
-          toast.success("논문이 추가되었습니다.");
+          toast.success("논문이 추가되었습니다. 상세 페이지로 이동합니다.");
+          // 추가 완료 → 상세 편집 페이지로 자동 이동 (paper-edit-page PDCA)
+          if (!readOnly && res && typeof res === "object" && "id" in res) {
+            const newId = (res as ResearchPaper).id;
+            setDialogOpen(false);
+            // 다이얼로그 닫힘 트랜지션 후 라우트 이동
+            setTimeout(() => router.push(`/mypage/research/papers/${newId}`), 150);
+          }
         }
         return res as ResearchPaper;
       }
