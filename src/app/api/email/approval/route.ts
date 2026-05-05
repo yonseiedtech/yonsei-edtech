@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { Resend } from "resend";
 import { requireAuth } from "@/lib/api-auth";
+import { parseJsonBody, approvalEmailSchema } from "@/lib/api-validators";
 
 function escapeHtml(str: string): string {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -16,19 +17,9 @@ export async function POST(req: NextRequest) {
   const authResult = await requireAuth(req, "staff");
   if (authResult instanceof Response) return authResult;
 
-  let email: string, name: string, approved: boolean;
-  try {
-    const body = await req.json();
-    email = body.email;
-    name = body.name;
-    approved = body.approved;
-  } catch {
-    return Response.json({ error: "잘못된 요청 형식입니다." }, { status: 400 });
-  }
-
-  if (!email) {
-    return Response.json({ error: "이메일이 필요합니다." }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(req, approvalEmailSchema);
+  if (parsed instanceof Response) return parsed;
+  const { email, name, approved } = parsed;
 
   const resend = getResend();
   if (!resend) {

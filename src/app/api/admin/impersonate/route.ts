@@ -2,22 +2,16 @@ import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/api-auth";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
+import { parseJsonBody, impersonateSchema } from "@/lib/api-validators";
 
 export async function POST(req: NextRequest) {
   const authResult = await requireAuth(req, "president");
   if (authResult instanceof Response) return authResult;
 
-  let targetUserId: string;
-  try {
-    const body = await req.json();
-    targetUserId = body.targetUserId;
-  } catch {
-    return Response.json({ error: "잘못된 요청 형식입니다." }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(req, impersonateSchema);
+  if (parsed instanceof Response) return parsed;
+  const { targetUserId } = parsed;
 
-  if (!targetUserId) {
-    return Response.json({ error: "targetUserId가 필요합니다." }, { status: 400 });
-  }
   if (targetUserId === authResult.uid) {
     return Response.json({ error: "본인 계정으로는 전환할 수 없습니다." }, { status: 400 });
   }
