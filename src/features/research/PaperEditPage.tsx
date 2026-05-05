@@ -75,24 +75,24 @@ function paperToForm(p: ResearchPaper): FormState {
 }
 
 function formToPayload(form: FormState): Record<string, unknown> {
+  const { rating, ...rest } = form;
   return {
-    ...form,
+    ...rest,
     year: form.year ? Number(form.year) : null,
+    // rating 은 ResearchPaper 타입상 1~5 (0 = 미평가). 0 이면 필드 제외.
+    ...(rating > 0 ? { rating } : { rating: null }),
   };
 }
 
 const READ_STATUS_OPTIONS: { value: PaperReadStatus; label: string }[] = [
   { value: "to_read", label: "읽을 예정" },
   { value: "reading", label: "읽는 중" },
-  { value: "read", label: "완독" },
+  { value: "completed", label: "완독" },
 ];
 
 const PAPER_TYPE_OPTIONS: { value: PaperType; label: string }[] = [
   { value: "academic", label: "학술 논문" },
   { value: "thesis", label: "학위논문" },
-  { value: "book", label: "단행본" },
-  { value: "report", label: "보고서" },
-  { value: "other", label: "기타" },
 ];
 
 interface PaperEditPageProps {
