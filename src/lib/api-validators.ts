@@ -59,3 +59,18 @@ export const inquiryReplyEmailSchema = z.object({
 export const passwordResetSchema = z.object({
   email: z.string().email("유효한 이메일 형식이 아닙니다."),
 });
+
+export const newsletterEmailSchema = z.object({
+  title: z.string().min(1, "제목이 필요합니다."),
+  subtitle: z.string().optional(),
+  issueNumber: z.number().int().positive().optional(),
+  sections: z
+    .array(
+      z.object({
+        title: z.string(),
+        type: z.string(),
+        authorName: z.string(),
+      }),
+    )
+    .optional(),
+});

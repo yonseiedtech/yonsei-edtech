@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { Resend } from "resend";
 import { requireAuth } from "@/lib/api-auth";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { parseJsonBody, newsletterEmailSchema } from "@/lib/api-validators";
 
 function escapeHtml(str: string): string {
   return str
@@ -22,20 +23,9 @@ export async function POST(req: NextRequest) {
   const authResult = await requireAuth(req, "staff");
   if (authResult instanceof Response) return authResult;
 
-  let title: string, subtitle: string, issueNumber: number, sections: { title: string; type: string; authorName: string }[];
-  try {
-    const body = await req.json();
-    title = body.title;
-    subtitle = body.subtitle;
-    issueNumber = body.issueNumber;
-    sections = body.sections ?? [];
-  } catch {
-    return Response.json({ error: "잘못된 요청 형식입니다." }, { status: 400 });
-  }
-
-  if (!title) {
-    return Response.json({ error: "제목이 필요합니다." }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(req, newsletterEmailSchema);
+  if (parsed instanceof Response) return parsed;
+  const { title, subtitle, issueNumber, sections = [] } = parsed;
 
   const resend = getResend();
   if (!resend) {
