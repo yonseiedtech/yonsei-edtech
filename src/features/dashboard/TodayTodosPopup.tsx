@@ -31,6 +31,7 @@ import {
 import { formatDday, todayYmdLocal } from "@/lib/dday";
 import { parseSchedule, fmtMin } from "@/lib/courseSchedule";
 import { cn } from "@/lib/utils";
+import { publishTodayPopupActive } from "@/features/dashboard/popup-coordination";
 
 const POPUP_PREF_KEY = "dashboard_today_popup_enabled";
 const SESSION_GATE_PREFIX = "dashboard_today_popup_shown_";
@@ -222,6 +223,15 @@ export default function TodayTodosPopup() {
     markShownThisSession(today);
     setDecided(true);
   }, [user, courseTodosRes, allActivities, totalCount, today, decided, undergradTick]);
+
+  // dashboard-quickwins: open 상태를 다른 알림(PushPermissionPrompt 등)에 알림
+  useEffect(() => {
+    publishTodayPopupActive(open);
+    return () => {
+      // 언마운트 시 비활성 상태로 정리 (이중 보장)
+      publishTodayPopupActive(false);
+    };
+  }, [open]);
 
   async function toggleCourseTodo(t: CourseTodo) {
     if (!userId) return;

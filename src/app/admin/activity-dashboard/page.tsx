@@ -10,6 +10,7 @@ import type { Seminar, Activity } from "@/types";
 import { Calendar, BookOpen, Users, FolderKanban, Globe, AlertTriangle, Activity as ActivityIcon } from "lucide-react";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import Link from "next/link";
+import SkeletonWidget from "@/components/ui/skeleton-widget";
 
 const STATUS_COLORS: Record<string, string> = {
   upcoming: "bg-blue-50 text-blue-700",
@@ -27,7 +28,7 @@ export default function ActivityDashboardPage() {
 }
 
 function Dashboard() {
-  const { data: seminars = [] } = useQuery({
+  const seminarQ = useQuery({
     queryKey: ["seminars-dashboard"],
     queryFn: async () => {
       const res = await seminarsApi.list({ limit: 100 });
@@ -35,20 +36,74 @@ function Dashboard() {
     },
   });
 
-  const { data: projects = [] } = useQuery({
+  const projectQ = useQuery({
     queryKey: ["activities-project"],
     queryFn: async () => { const r = await activitiesApi.list("project"); return r.data as Activity[]; },
   });
 
-  const { data: studies = [] } = useQuery({
+  const studyQ = useQuery({
     queryKey: ["activities-study"],
     queryFn: async () => { const r = await activitiesApi.list("study"); return r.data as Activity[]; },
   });
 
-  const { data: externals = [] } = useQuery({
+  const externalQ = useQuery({
     queryKey: ["activities-external"],
     queryFn: async () => { const r = await activitiesApi.list("external"); return r.data as Activity[]; },
   });
+
+  const seminars = seminarQ.data ?? [];
+  const projects = projectQ.data ?? [];
+  const studies = studyQ.data ?? [];
+  const externals = externalQ.data ?? [];
+
+  const isLoading =
+    seminarQ.isLoading || projectQ.isLoading || studyQ.isLoading || externalQ.isLoading;
+  const isError =
+    seminarQ.isError || projectQ.isError || studyQ.isError || externalQ.isError;
+  const firstError =
+    seminarQ.error ?? projectQ.error ?? studyQ.error ?? externalQ.error;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 p-6">
+        <ConsolePageHeader
+          icon={ActivityIcon}
+          title="활동 대시보드"
+          description="회원별 누적 활동(세미나/게시글/연구) 통계를 확인합니다."
+        />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonWidget key={i} rows={3} hasHeader />
+          ))}
+        </div>
+        <SkeletonWidget rows={4} hasHeader />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="space-y-6 p-6">
+        <ConsolePageHeader
+          icon={ActivityIcon}
+          title="활동 대시보드"
+          description="회원별 누적 활동(세미나/게시글/연구) 통계를 확인합니다."
+        />
+        <div
+          role="alert"
+          className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50/60 p-5 text-sm dark:border-rose-800 dark:bg-rose-950/30"
+        >
+          <AlertTriangle size={20} className="mt-0.5 shrink-0 text-rose-700 dark:text-rose-300" />
+          <div>
+            <p className="font-bold text-rose-900 dark:text-rose-100">대시보드 데이터를 불러오지 못했어요</p>
+            <p className="mt-1 text-rose-800/90 dark:text-rose-200/90">
+              {firstError instanceof Error ? firstError.message : "잠시 후 다시 시도해주세요."}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // 통계
   const seminarStats = {
