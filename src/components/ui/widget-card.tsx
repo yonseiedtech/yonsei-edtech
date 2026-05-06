@@ -20,6 +20,14 @@ import {
   type SemanticTone,
 } from "@/lib/design-tokens";
 
+/**
+ * 위젯 시각 위계 (dashboard-persona-redesign Sprint 2 / F2):
+ *  - primary: 핵심 위젯 (NextActionBanner·AcademicCalendar·MyTodos) — shadow + 강한 헤더
+ *  - secondary: 일반 위젯 (기본값)
+ *  - tertiary: 보조 위젯 — 약한 톤 + 압축 padding
+ */
+export type WidgetPriority = "primary" | "secondary" | "tertiary";
+
 interface WidgetCardProps {
   /** 섹션 헤더 텍스트. 미지정 시 헤더 영역 자체를 그리지 않음 (커스텀 헤더가 children 안에 있을 때) */
   title?: string;
@@ -29,6 +37,8 @@ interface WidgetCardProps {
   actions?: React.ReactNode;
   /** 시맨틱 색상 — default(중성) / info / warning / danger / success */
   semantic?: SemanticTone;
+  /** 시각 위계 — primary(핵심) / secondary(일반) / tertiary(보조) */
+  priority?: WidgetPriority;
   /** 카드 내부 컨텐츠 */
   children: React.ReactNode;
   /** 추가 클래스명 (외부 padding/gap 보정 용) */
@@ -37,25 +47,49 @@ interface WidgetCardProps {
   iconSize?: number;
 }
 
+const PRIORITY_STYLES: Record<WidgetPriority, { card: string; title: string }> = {
+  primary: {
+    card: "shadow-sm",
+    title: "text-lg sm:text-xl",
+  },
+  secondary: {
+    card: "",
+    title: "",
+  },
+  tertiary: {
+    card: "",
+    title: "text-sm",
+  },
+};
+
+const PRIORITY_PADDING: Record<WidgetPriority, string> = {
+  primary: WIDGET_PADDING,
+  secondary: WIDGET_PADDING,
+  tertiary: "p-4 sm:p-5",
+};
+
 export default function WidgetCard({
   title,
   icon: Icon,
   actions,
   semantic = "default",
+  priority = "secondary",
   children,
   className,
   iconSize = SECTION_ICON_SIZE,
 }: WidgetCardProps) {
   const tone = SEMANTIC[semantic];
   const isDefault = semantic === "default";
+  const priorityStyle = PRIORITY_STYLES[priority];
 
   return (
     <div
       className={cn(
         "rounded-2xl border",
-        WIDGET_PADDING,
+        PRIORITY_PADDING[priority],
         tone.bg,
         tone.border,
+        priorityStyle.card,
         className,
       )}
     >
@@ -74,6 +108,7 @@ export default function WidgetCard({
                 className={cn(
                   "font-bold truncate",
                   isDefault ? "text-foreground" : tone.text,
+                  priorityStyle.title,
                 )}
               >
                 {title}

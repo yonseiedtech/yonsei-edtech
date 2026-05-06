@@ -25,6 +25,7 @@ import PeerActivityFeed from "@/features/dashboard/PeerActivityFeed";
 import MyAcademicActivitiesWidget from "@/features/dashboard/MyAcademicActivitiesWidget";
 import ComprehensiveExamCountdown from "@/features/dashboard/ComprehensiveExamCountdown";
 import PageHeader from "@/components/ui/page-header";
+import { canShowWidget } from "@/features/dashboard/widget-visibility";
 import {
   LayoutDashboard,
   FileText,
@@ -33,7 +34,6 @@ import {
   Newspaper,
   PenSquare,
   BookOpen,
-  User,
   Shield,
   Megaphone,
   MessageSquare,
@@ -117,23 +117,51 @@ function DashboardContent() {
           icon={<LayoutDashboard size={24} />}
           title={`안녕하세요, ${user.name}님`}
           description="오늘의 학회 활동 현황을 확인하세요."
-          actions={<Badge>{ROLE_LABELS[user.role]}</Badge>}
+          actions={
+            <div className="flex flex-wrap items-center gap-2">
+              <Link href="/board/write">
+                <Button variant="outline" size="sm" className="shrink-0">
+                  <PenSquare size={14} className="mr-1.5" />
+                  글 작성
+                </Button>
+              </Link>
+              <Link href="/seminars">
+                <Button variant="outline" size="sm" className="shrink-0">
+                  <BookOpen size={14} className="mr-1.5" />
+                  세미나
+                </Button>
+              </Link>
+              {isStaff && (
+                <Link href="/console">
+                  <Button variant="outline" size="sm" className="shrink-0">
+                    <Shield size={14} className="mr-1.5" />
+                    운영 콘솔
+                  </Button>
+                </Link>
+              )}
+              <Badge variant="secondary" className="ml-1">{ROLE_LABELS[user.role]}</Badge>
+            </div>
+          }
         />
       </section>
 
       <section className="mx-auto mt-8 max-w-6xl px-4">
-        {/* 학사일정 진행바 (최상단) */}
-        <AcademicCalendarProgress />
+        {/* 학사일정 진행바 (최상단) — 재학생 전용 */}
+        {canShowWidget(user.role, "academicCalendar") && <AcademicCalendarProgress />}
 
-        {/* 오늘의 수업 — 일일 타임라인 (17~23시 시간축에 카드가 떠있는 뷰) */}
-        <div className="mt-6">
-          <DailyClassTimelineWidget />
-        </div>
+        {/* 오늘의 수업 — 일일 타임라인 (17~23시 시간축에 카드가 떠있는 뷰) — 재학생 전용 */}
+        {canShowWidget(user.role, "dailyClassTimeline") && (
+          <div className="mt-6">
+            <DailyClassTimelineWidget />
+          </div>
+        )}
 
-        {/* 나의 할 일 — 수업/연구활동/학술활동/운영진 통합 (수업 할 일은 여기에서 관리) */}
-        <div className="mt-6">
-          <MyTodosWidget />
-        </div>
+        {/* 나의 할 일 — 수업/연구활동/학술활동/운영진 통합 — 재학생 전용 */}
+        {canShowWidget(user.role, "myTodos") && (
+          <div className="mt-6">
+            <MyTodosWidget />
+          </div>
+        )}
 
         {/* 통계 카드 */}
         <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -192,36 +220,7 @@ function DashboardContent() {
           )}
         </div>
 
-        {/* 빠른 액션 */}
-        <h2 className="mt-6 text-sm font-semibold text-muted-foreground">빠른 액션</h2>
-        <div className="mt-2 flex flex-wrap gap-2 sm:gap-3">
-          <Link href="/board/write">
-            <Button variant="outline" size="sm" className="shrink-0">
-              <PenSquare size={14} className="mr-1.5" />
-              게시글 작성
-            </Button>
-          </Link>
-          <Link href="/seminars">
-            <Button variant="outline" size="sm" className="shrink-0">
-              <BookOpen size={14} className="mr-1.5" />
-              세미나
-            </Button>
-          </Link>
-          <Link href="/mypage">
-            <Button variant="outline" size="sm" className="shrink-0">
-              <User size={14} className="mr-1.5" />
-              마이페이지
-            </Button>
-          </Link>
-          {isStaff && (
-            <Link href="/console">
-              <Button variant="outline" size="sm" className="shrink-0">
-                <Shield size={14} className="mr-1.5" />
-                운영 콘솔
-              </Button>
-            </Link>
-          )}
-        </div>
+        {/* 빠른 액션은 PageHeader actions 로 통합 (dashboard-persona-redesign Sprint 2 / F3) */}
 
         {/* 2열 그리드: 최근 공지 + 미니 캘린더 */}
         <div className="mt-8 grid gap-6 md:grid-cols-2">
@@ -265,11 +264,14 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* 학술 위젯: 참여 학술활동 + 종합시험 D-Day */}
-        <div className="mt-6 grid gap-6 md:grid-cols-2">
-          <MyAcademicActivitiesWidget />
-          <ComprehensiveExamCountdown />
-        </div>
+        {/* 학술 위젯: 참여 학술활동 + 종합시험 D-Day — 재학생 전용 */}
+        {(canShowWidget(user.role, "myAcademicActivities") ||
+          canShowWidget(user.role, "comprehensiveExam")) && (
+          <div className="mt-6 grid gap-6 md:grid-cols-2">
+            {canShowWidget(user.role, "myAcademicActivities") && <MyAcademicActivitiesWidget />}
+            {canShowWidget(user.role, "comprehensiveExam") && <ComprehensiveExamCountdown />}
+          </div>
+        )}
 
         {/* 동료의 최근 활동 (Sprint 55) */}
         <div className="mt-6">
