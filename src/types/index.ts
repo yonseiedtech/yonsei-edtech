@@ -1,3 +1,6 @@
+// types-domain-split: Phase 2 분해 후 잔존 도메인(seminar 등)이 board 의 타입을 사용 → cross-import
+import type { SpeakerType, SeminarSpeaker } from "./board";
+
 // ── 연구활동 (Research Papers) ──
 export type PaperType = "thesis" | "academic";
 export type ThesisLevel = "master" | "doctoral";
