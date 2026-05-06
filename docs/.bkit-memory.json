@@ -158,6 +158,17 @@
       "startedAt": "2026-04-18T22:10:00Z",
       "completedAt": "2026-04-18T22:30:00Z",
       "notes": "MyResearchView 재구성: (1) 연구 현황(period selector + WritingHeatmap)을 탭 위로 lift하여 모든 탭에서 항상 노출, (2) 4번째 '연구 타이머' 탭 신규(StudyTimerStats + 수동 세션 추가 + 최근 세션 20개 리스트), (3) 작성 이력(WritingHistoryList)을 페이지 하단으로 이동. 사용자 직접 지적 3건 한 사이클에 통합."
+    },
+    "types-domain-split": {
+      "phase": "archived",
+      "matchRate": null,
+      "iterationCount": 0,
+      "startedAt": "2026-05-06T00:00:00Z",
+      "completedAt": "2026-05-06T15:00:00Z",
+      "archivedAt": "2026-05-06T15:30:00Z",
+      "archivedTo": "docs/archive/2026-05/types-domain-split/",
+      "lastCommit": "b6c12a99",
+      "notes": "src/types/index.ts 2719줄 → 34줄 (98.7% 감소). 16개 도메인 sub 파일 분리, re-export 패턴으로 @/types 사용처 영향 0. 9 commit (Phase 1~6 + 2 fixup + 1 report + 1 후속). 후속작업 FU-3(ESLint no-restricted-imports) 즉시 적용, FU-1/FU-2 별도 sprint 연기. matchRate N/A — type-only refactor 는 외형 변화 없이 tsc/build/Vercel SSG 통과로 검증."
     }
   }
 }
