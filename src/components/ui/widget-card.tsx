@@ -29,8 +29,8 @@ import {
 export type WidgetPriority = "primary" | "secondary" | "tertiary";
 
 interface WidgetCardProps {
-  /** 섹션 헤더 텍스트. 미지정 시 헤더 영역 자체를 그리지 않음 (커스텀 헤더가 children 안에 있을 때) */
-  title?: string;
+  /** 섹션 헤더 텍스트. 미지정 시 헤더 영역 자체를 그리지 않음. ReactNode 허용 (예: 동적 라벨 + 칩) */
+  title?: React.ReactNode;
   /** 섹션 헤더 좌측 아이콘 */
   icon?: LucideIcon;
   /** 헤더 우측 슬롯 (전체 보기 링크, 액션 버튼 등) */

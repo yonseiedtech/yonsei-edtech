@@ -11,6 +11,8 @@ import {
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isPresidentOrAbove } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
+import WidgetCard from "@/components/ui/widget-card";
+import SkeletonWidget from "@/components/ui/skeleton-widget";
 
 const PHASE_COLORS: Record<SemesterPhase, string> = {
   before: "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
@@ -49,39 +51,35 @@ export default function AcademicCalendarProgress() {
   const canEdit = isPresidentOrAbove(user);
 
   if (isLoading) {
-    return (
-      <div className="rounded-2xl border bg-card p-6">
-        <div className="h-32 animate-pulse rounded-xl bg-muted" />
-      </div>
-    );
+    return <SkeletonWidget rows={3} />;
   }
 
   const entry = pickActiveEntry(value.entries);
   const progress = entry ? computeProgress(entry) : null;
 
+  const editAction = canEdit ? (
+    <Link
+      href="/console/academic-calendar"
+      className="flex items-center gap-1 rounded-md border px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+    >
+      <Settings size={12} /> {entry ? "편집" : "학사일정 입력"}
+    </Link>
+  ) : null;
+
   if (!entry) {
     return (
-      <div className="rounded-2xl border bg-card p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CalendarDays size={18} className="text-primary" />
-            <h2 className="font-bold">학사일정</h2>
-          </div>
-          {canEdit && (
-            <Link
-              href="/console/academic-calendar"
-              className="flex items-center gap-1 rounded-md border px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
-            >
-              <Settings size={12} /> 학사일정 입력
-            </Link>
-          )}
-        </div>
+      <WidgetCard
+        title="학사일정"
+        icon={CalendarDays}
+        priority="primary"
+        actions={editAction ?? undefined}
+      >
         <p className="mt-4 text-sm text-muted-foreground">
           {canEdit
             ? "학사일정이 등록되지 않았습니다. 운영콘솔에서 입력해 주세요."
             : "학사일정이 아직 등록되지 않았습니다."}
         </p>
-      </div>
+      </WidgetCard>
     );
   }
 
@@ -89,27 +87,18 @@ export default function AcademicCalendarProgress() {
   if (!progress) {
     const semesterLabel = `${entry.year}년 ${entry.semester === "first" ? "1학기" : "2학기"}`;
     return (
-      <div className="rounded-2xl border bg-card p-6">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <CalendarDays size={18} className="text-primary" />
-            <h2 className="font-bold">학사일정 — {semesterLabel}</h2>
-          </div>
-          {canEdit && (
-            <Link
-              href="/console/academic-calendar"
-              className="flex items-center gap-1 rounded-md border px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
-            >
-              <Settings size={12} /> 편집
-            </Link>
-          )}
-        </div>
+      <WidgetCard
+        title={`학사일정 — ${semesterLabel}`}
+        icon={CalendarDays}
+        priority="primary"
+        actions={editAction ?? undefined}
+      >
         <p className="mt-4 rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
           {canEdit
             ? "개강일·종강일이 비어 있어 진행도를 계산할 수 없습니다. 학사일정을 다시 확인해 주세요."
             : "개강일·종강일 정보가 등록되지 않아 진행도를 계산할 수 없습니다."}
         </p>
-      </div>
+      </WidgetCard>
     );
   }
 
@@ -121,31 +110,27 @@ export default function AcademicCalendarProgress() {
   const semEnd = parseDate(entry.breakEnd) ?? parseDate(entry.semesterEnd)!;
   const totalMs = Math.max(1, semEnd.getTime() - semStart.getTime());
 
-  return (
-    <div className="rounded-2xl border bg-card p-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <CalendarDays size={18} className="text-primary" />
-          <h2 className="font-bold">학사일정 — {semesterLabel}</h2>
-          <span
-            className={cn(
-              "rounded-full px-2 py-0.5 text-[11px] font-semibold",
-              PHASE_COLORS[progress.phase],
-            )}
-          >
-            {progress.phaseLabel}
-          </span>
-        </div>
-        {canEdit && (
-          <Link
-            href="/console/academic-calendar"
-            className="flex items-center gap-1 rounded-md border px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
-          >
-            <Settings size={12} /> 편집
-          </Link>
+  const titleNode = (
+    <span className="flex items-center gap-2">
+      <span>학사일정 — {semesterLabel}</span>
+      <span
+        className={cn(
+          "rounded-full px-2 py-0.5 text-[11px] font-semibold",
+          PHASE_COLORS[progress.phase],
         )}
-      </div>
+      >
+        {progress.phaseLabel}
+      </span>
+    </span>
+  );
 
+  return (
+    <WidgetCard
+      title={titleNode}
+      icon={CalendarDays}
+      priority="primary"
+      actions={editAction ?? undefined}
+    >
       <div className="mt-4">
         <p className="text-sm text-muted-foreground">
           현재 학기의{" "}
@@ -211,7 +196,7 @@ export default function AcademicCalendarProgress() {
           </span>
         </div>
       </div>
-    </div>
+    </WidgetCard>
   );
 }
 

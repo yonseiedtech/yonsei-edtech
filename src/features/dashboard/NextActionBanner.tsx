@@ -329,7 +329,7 @@ export default function NextActionBanner() {
       <Link
         href={top.href}
         className={cn(
-          "group flex items-center gap-2 rounded-xl border px-3 py-1.5 transition-colors hover:bg-muted/30 sm:gap-3 sm:py-2",
+          "group flex items-center gap-2 rounded-xl border px-3 py-1.5 shadow-sm transition-colors hover:bg-muted/30 sm:gap-3 sm:py-2",
           urgent,
         )}
         role="status"

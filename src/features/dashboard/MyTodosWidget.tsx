@@ -1075,11 +1075,11 @@ export default function MyTodosWidget() {
   }
 
   return (
-    <div className="rounded-2xl border bg-card p-4 sm:p-5">
+    <div className="rounded-2xl border bg-card p-4 shadow-sm sm:p-5">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <ListChecks size={18} className="text-primary" />
-          <h2 className="font-bold">나의 할 일</h2>
+          <h2 className="text-lg font-bold sm:text-xl">나의 할 일</h2>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[11px] text-muted-foreground">전체 {totalCount}건</span>
