@@ -70,7 +70,7 @@ export default function MiniCalendar({ seminars }: MiniCalendarProps) {
       <div className="flex items-center justify-between">
         <button
           onClick={prevMonth}
-          className="rounded p-1 text-muted-foreground hover:bg-muted"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           aria-label="이전 달"
         >
           &lt;
@@ -80,7 +80,7 @@ export default function MiniCalendar({ seminars }: MiniCalendarProps) {
         </span>
         <button
           onClick={nextMonth}
-          className="rounded p-1 text-muted-foreground hover:bg-muted"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           aria-label="다음 달"
         >
           &gt;
@@ -110,7 +110,8 @@ export default function MiniCalendar({ seminars }: MiniCalendarProps) {
               key={day}
               onClick={() => hasSeminar && setSelectedDate(isSelected ? null : dateStr)}
               className={cn(
-                "relative mx-auto flex h-8 w-8 items-center justify-center rounded-full text-xs transition-colors",
+                "relative mx-auto flex h-10 w-10 items-center justify-center rounded-full text-xs transition-colors sm:h-9 sm:w-9",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                 isToday && "font-bold text-primary",
                 isSelected && "bg-primary text-white",
                 hasSeminar && !isSelected && "hover:bg-muted",

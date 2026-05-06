@@ -942,7 +942,7 @@ export default function MyTodosWidget() {
             </button>
           </div>
         ) : (
-          <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+          <div className="flex shrink-0 items-center gap-0.5 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100">
             <button
               type="button"
               onClick={() => startEditCourseTodo(t)}
@@ -1119,24 +1119,26 @@ export default function MyTodosWidget() {
       <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)} className="mt-3">
         <TabsList
           className={cn(
-            "grid w-full",
-            isStaff ? "grid-cols-5" : "grid-cols-4",
+            // 모바일: 가로 스크롤 — 텍스트 압축 방지 (375px 5탭 → 11px 줄어드는 문제 해결)
+            "flex w-full overflow-x-auto whitespace-nowrap pb-0.5 sm:overflow-visible",
+            // 데스크톱: 균등 분할 그리드
+            isStaff ? "sm:grid sm:grid-cols-5" : "sm:grid sm:grid-cols-4",
           )}
         >
-          <TabsTrigger value="all" className="text-[11px] sm:text-xs">
+          <TabsTrigger value="all" className="shrink-0 text-xs sm:text-xs">
             전체 {totalCount > 0 && <span className="ml-1 text-muted-foreground">{totalCount}</span>}
           </TabsTrigger>
-          <TabsTrigger value="course" className="text-[11px] sm:text-xs">
+          <TabsTrigger value="course" className="shrink-0 text-xs sm:text-xs">
             수업 {counts.course > 0 && <span className="ml-1 text-muted-foreground">{counts.course}</span>}
           </TabsTrigger>
-          <TabsTrigger value="research" className="text-[11px] sm:text-xs">
+          <TabsTrigger value="research" className="shrink-0 text-xs sm:text-xs">
             연구활동 {counts.research > 0 && <span className="ml-1 text-muted-foreground">{counts.research}</span>}
           </TabsTrigger>
-          <TabsTrigger value="activity" className="text-[11px] sm:text-xs">
+          <TabsTrigger value="activity" className="shrink-0 text-xs sm:text-xs">
             학술활동 {counts.activity > 0 && <span className="ml-1 text-muted-foreground">{counts.activity}</span>}
           </TabsTrigger>
           {isStaff && (
-            <TabsTrigger value="staff" className="text-[11px] sm:text-xs">
+            <TabsTrigger value="staff" className="shrink-0 text-xs sm:text-xs">
               운영진 {counts.staff > 0 && <span className="ml-1 text-muted-foreground">{counts.staff}</span>}
             </TabsTrigger>
           )}
