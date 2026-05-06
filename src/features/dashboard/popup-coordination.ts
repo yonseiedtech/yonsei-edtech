@@ -1,17 +1,28 @@
 /**
- * 대시보드 알림/팝업 동시 노출 조율 (dashboard-quickwins Sprint 67)
+ * 대시보드 팝업 조율 (Sprint 1 → Sprint 2 마이그레이션 후 deprecate 예정)
  *
- * 단순 시작 — TodayTodosPopup 만 시그널을 발행하고 PushPermissionPrompt 가 구독.
- * 향후 P1 단계에서 NotificationOrchestrator 로 확장 (운영 알림, 일반 토스트 등 통합 우선순위 큐).
+ * Sprint 2 부터 NotificationOrchestrator 로 일괄 통합.
+ * 본 파일은 Sprint 1 시점에 만들어진 인터페이스의 back-compat 어댑터.
+ * 신규 코드는 `notification-orchestrator.ts` 의 publishActiveModal / canShowNotification 를 직접 사용하세요.
  *
- * 분석 근거: docs/03-analysis/dashboard-uiux-synthesis.md §1 C4
+ * @deprecated Sprint 2 — notification-orchestrator.ts 사용
  */
 
+import { publishActiveModal } from "./notification-orchestrator";
+
+// Sprint 1 시점의 외부 키 — TodayTodosPopup 의 상태 broadcast 용
 export const TODAY_POPUP_ACTIVE_KEY = "dashboard_today_popup_active";
 export const TODAY_POPUP_ACTIVE_EVENT = "dashboard:today-popup-active";
 
-/** TodayTodosPopup open 상태를 sessionStorage + window event 로 발행 */
+/**
+ * @deprecated Sprint 2 — publishActiveModal("today-todos" | null) 사용 권장.
+ *
+ * Sprint 1 호환성을 위해 두 가지를 동시 발행:
+ *  - notification-orchestrator 의 active modal 키
+ *  - Sprint 1 시점의 sessionStorage / window event (혹시 외부 구독자가 남아 있을 경우)
+ */
 export function publishTodayPopupActive(active: boolean): void {
+  publishActiveModal(active ? "today-todos" : null);
   if (typeof window === "undefined") return;
   if (active) {
     window.sessionStorage.setItem(TODAY_POPUP_ACTIVE_KEY, "1");

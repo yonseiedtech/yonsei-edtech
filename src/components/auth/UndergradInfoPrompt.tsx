@@ -6,6 +6,7 @@ import { useAuthStore } from "@/features/auth/auth-store";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, X } from "lucide-react";
 import type { User } from "@/types";
+import { publishActiveModal } from "@/features/dashboard/notification-orchestrator";
 
 const SKIP_PATHS = ["/login", "/signup", "/reset-password", "/change-password"];
 const DISMISS_KEY = "undergrad-info-prompt-dismissed-session";
@@ -39,6 +40,14 @@ export default function UndergradInfoPrompt() {
     }
     setOpen(needsUndergradInfo(user));
   }, [user, initialized, pathname]);
+
+  // Sprint 2: NotificationOrchestrator — modal slot 점유 발행 (우선순위 1, 최우선)
+  useEffect(() => {
+    publishActiveModal(open ? "undergrad-info" : null);
+    return () => {
+      publishActiveModal(null);
+    };
+  }, [open]);
 
   function dismiss() {
     if (typeof window !== "undefined") {

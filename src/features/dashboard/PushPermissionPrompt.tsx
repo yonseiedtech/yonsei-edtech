@@ -25,9 +25,9 @@ import {
   getPermissionState,
 } from "@/lib/push";
 import {
-  TODAY_POPUP_ACTIVE_KEY,
-  TODAY_POPUP_ACTIVE_EVENT,
-} from "@/features/dashboard/popup-coordination";
+  canShowNotification,
+  subscribeActiveModalChange,
+} from "@/features/dashboard/notification-orchestrator";
 import { SEMANTIC } from "@/lib/design-tokens";
 
 const DISMISS_KEY = "push.promptDismissedUntil";
@@ -48,17 +48,13 @@ function setDismissedFor(days: number): void {
   markPermissionDeclined();
 }
 
-function isTodayPopupActive(): boolean {
-  if (typeof window === "undefined") return false;
-  return window.sessionStorage.getItem(TODAY_POPUP_ACTIVE_KEY) === "1";
-}
-
 export default function PushPermissionPrompt() {
   const { user } = useAuthStore();
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [todayPopupActive, setTodayPopupActive] = useState<boolean>(() =>
-    isTodayPopupActive(),
+  // Sprint 2: NotificationOrchestrator — modal 이 active 면 banner 자동 보류
+  const [modalSuppressed, setModalSuppressed] = useState<boolean>(() =>
+    !canShowNotification("push-permission"),
   );
 
   useEffect(() => {
@@ -90,20 +86,14 @@ export default function PushPermissionPrompt() {
     };
   }, [user]);
 
-  // dashboard-quickwins: TodayTodosPopup 활성 상태 추적 — 두 알림 동시 노출 방지
+  // Sprint 2: NotificationOrchestrator — 어떤 modal 이든 active 면 banner 자동 보류
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent<{ active: boolean }>).detail;
-      setTodayPopupActive(!!detail?.active);
-    };
-    window.addEventListener(TODAY_POPUP_ACTIVE_EVENT, handler);
-    return () => {
-      window.removeEventListener(TODAY_POPUP_ACTIVE_EVENT, handler);
-    };
+    return subscribeActiveModalChange(() => {
+      setModalSuppressed(!canShowNotification("push-permission"));
+    });
   }, []);
 
-  if (!show || !user || todayPopupActive) return null;
+  if (!show || !user || modalSuppressed) return null;
 
   async function enable() {
     setBusy(true);

@@ -6,6 +6,12 @@ import { popupsApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import type { SitePopup, PopupDismissDuration } from "@/types";
 import SitePopupModal from "./SitePopupModal";
+import {
+  canShowNotification,
+  getActiveModal,
+  publishActiveModal,
+  subscribeActiveModalChange,
+} from "@/features/dashboard/notification-orchestrator";
 
 const STORAGE_KEY_PREFIX = "site_popup_dismiss_";
 const SESSION_KEY_PREFIX = "site_popup_session_";
@@ -53,6 +59,18 @@ export default function SitePopupGate() {
     retry: false,
   });
 
+  // Sprint 2: NotificationOrchestrator — undergrad-info 등 더 높은 우선순위 modal 이 활성이면 보류
+  const [modalSuppressed, setModalSuppressed] = useState<boolean>(() => {
+    const active = getActiveModal();
+    return active !== null && active !== "site-popup";
+  });
+
+  useEffect(() => {
+    return subscribeActiveModalChange(() => {
+      setModalSuppressed(!canShowNotification("site-popup"));
+    });
+  }, []);
+
   const visiblePopup: SitePopup | null = useMemo(() => {
     const all = data?.data ?? [];
     if (all.length === 0) return null;
@@ -88,7 +106,18 @@ export default function SitePopupGate() {
     }
   }, [visiblePopup]);
 
-  if (!visiblePopup) return null;
+  // Sprint 2: 자기 modal slot 점유/해제 발행 — visiblePopup 가 mount 될 때만
+  useEffect(() => {
+    if (visiblePopup && !modalSuppressed) {
+      publishActiveModal("site-popup");
+      return () => {
+        publishActiveModal(null);
+      };
+    }
+    return undefined;
+  }, [visiblePopup, modalSuppressed]);
+
+  if (!visiblePopup || modalSuppressed) return null;
 
   return (
     <SitePopupModal
