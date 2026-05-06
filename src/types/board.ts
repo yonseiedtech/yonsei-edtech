@@ -1,7 +1,6 @@
-// PaperType/ThesisLevel 은 research-paper 도메인 정의 (현재 types/index.ts 에 잔존, 추후 분리 예정)
-// InterviewMeta 는 interview 도메인 (현재 types/index.ts 에 잔존, 추후 분리 예정)
-// 분리 전까지는 types/index 를 통한 re-export 경로로 type-only import — circular ESM 안전.
-import type { PaperType, ThesisLevel, InterviewMeta } from "./index";
+// 도메인 분해 (Phase 3·6) 후 직접 경로 import — 더 이상 index 우회 불요.
+import type { PaperType, ThesisLevel } from "./research-paper";
+import type { InterviewMeta } from "./interview";
 
 // ── 세미나 발표자 ──
 export type SpeakerType = "member" | "guest";
