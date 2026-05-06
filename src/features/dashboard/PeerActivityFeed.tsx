@@ -16,7 +16,7 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { MessageSquare, FileText, GraduationCap } from "lucide-react";
+import { MessageSquare, FileText, GraduationCap, Users } from "lucide-react";
 import {
   postsApi,
   courseReviewsApi,
@@ -24,6 +24,8 @@ import {
 } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import type { Post, CourseReview, User } from "@/types";
+import WidgetCard from "@/components/ui/widget-card";
+import EmptyState from "@/components/ui/empty-state";
 
 type FeedKind = "post" | "course_review";
 
@@ -172,15 +174,34 @@ export default function PeerActivityFeed() {
   }, [rawItems, authorMap]);
 
   if (!user) return null;
-  if (items.length === 0) return null;
+
+  if (items.length === 0) {
+    return (
+      <WidgetCard
+        title="동료의 최근 활동"
+        icon={MessageSquare}
+        actions={<span className="text-xs text-muted-foreground">최근 7일</span>}
+      >
+        <EmptyState
+          icon={Users}
+          title="최근 7일간 동료 활동이 없어요"
+          description="내가 먼저 글을 쓰거나 강의 후기를 남기면 동료에게도 보입니다."
+          compact
+          className="mt-4 bg-transparent"
+          actions={[
+            { label: "자유게시판 가기", href: "/board?category=free", variant: "outline" },
+          ]}
+        />
+      </WidgetCard>
+    );
+  }
 
   return (
-    <div className="rounded-2xl border bg-card p-6">
-      <div className="flex items-center gap-2">
-        <MessageSquare size={18} className="text-primary" />
-        <h2 className="font-bold">동료의 최근 활동</h2>
-        <span className="ml-auto text-xs text-muted-foreground">최근 7일</span>
-      </div>
+    <WidgetCard
+      title="동료의 최근 활동"
+      icon={MessageSquare}
+      actions={<span className="text-xs text-muted-foreground">최근 7일</span>}
+    >
       <ul className="mt-4 space-y-1">
         {items.map((it) => {
           const meta = KIND_META[it.kind];
@@ -215,6 +236,6 @@ export default function PeerActivityFeed() {
       <p className="mt-3 text-[11px] text-muted-foreground">
         내 활동을 노출하지 않으려면 마이페이지 → 알림 설정에서 "활동 피드 노출"을 끄세요.
       </p>
-    </div>
+    </WidgetCard>
   );
 }

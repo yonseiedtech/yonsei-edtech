@@ -5,6 +5,8 @@ import { dataApi } from "@/lib/bkend";
 import type { Comment, Post } from "@/types";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
+import { MessageSquare } from "lucide-react";
+import EmptyState from "@/components/ui/empty-state";
 
 interface ActivityFeedProps {
   userId: string;
@@ -54,9 +56,13 @@ export default function ActivityFeed({
 
   if (recentComments.length === 0) {
     return (
-      <p className="py-6 text-center text-sm text-muted-foreground">
-        아직 활동 내역이 없습니다.
-      </p>
+      <EmptyState
+        icon={MessageSquare}
+        title="아직 활동 내역이 없어요"
+        description="내 게시글에 댓글이 달리면 여기에 모아 보여드려요."
+        compact
+        className="bg-transparent"
+      />
     );
   }
 

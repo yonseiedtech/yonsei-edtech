@@ -12,6 +12,10 @@ import {
   type ComprehensiveExamRecord,
   type SemesterTerm,
 } from "@/types";
+import WidgetCard from "@/components/ui/widget-card";
+import SkeletonWidget from "@/components/ui/skeleton-widget";
+import EmptyState from "@/components/ui/empty-state";
+import { SEMANTIC } from "@/lib/design-tokens";
 
 /** 학기 → 대표 시작일 (D-Day 계산용 근사치) */
 function termStartDate(year: number, term: SemesterTerm): Date {
@@ -37,6 +41,7 @@ function dDayLabel(target: Date): string {
 
 export default function ComprehensiveExamCountdown() {
   const { user } = useAuthStore();
+  const tone = SEMANTIC.warning;
 
   const { data: exams = [], isLoading } = useQuery({
     queryKey: ["dashboard-comp-exams", user?.id],
@@ -64,28 +69,25 @@ export default function ComprehensiveExamCountdown() {
 
   if (!user) return null;
   if (isLoading) {
-    return (
-      <div className="rounded-2xl border bg-card p-6">
-        <p className="text-sm text-muted-foreground">불러오는 중…</p>
-      </div>
-    );
+    return <SkeletonWidget rows={2} />;
   }
 
-  return (
-    <div className="rounded-2xl border border-amber-200 bg-amber-50/40 p-6">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <GraduationCap size={18} className="text-amber-700" />
-          <h2 className="font-bold text-amber-900">종합시험</h2>
-        </div>
-        <Link
-          href="/courses?tab=mine"
-          className="inline-flex items-center gap-1 text-xs text-amber-800 hover:text-amber-900"
-        >
-          관리하기 <ArrowRight size={11} />
-        </Link>
-      </div>
+  const headerActions = (
+    <Link
+      href="/courses?tab=mine"
+      className={`inline-flex items-center gap-1 text-xs hover:underline ${tone.text}`}
+    >
+      관리하기 <ArrowRight size={11} />
+    </Link>
+  );
 
+  return (
+    <WidgetCard
+      title="종합시험"
+      icon={GraduationCap}
+      semantic="warning"
+      actions={headerActions}
+    >
       {upcoming ? (
         <div className="mt-4 rounded-lg bg-card p-4">
           <div className="flex items-center justify-between gap-3">
@@ -93,7 +95,9 @@ export default function ComprehensiveExamCountdown() {
               <p className="text-xs text-muted-foreground">다음 응시 예정</p>
               <p className="mt-0.5 text-sm font-semibold">
                 {upcoming.exam.plannedYear}년 {SEMESTER_TERM_LABELS[upcoming.exam.plannedTerm]}
-                <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                <span
+                  className={`ml-2 rounded px-1.5 py-0.5 text-[10px] font-medium ${tone.chipBg} ${tone.chipText}`}
+                >
                   {COMPREHENSIVE_EXAM_STATUS_LABELS[upcoming.exam.status]}
                 </span>
               </p>
@@ -102,7 +106,7 @@ export default function ComprehensiveExamCountdown() {
               )}
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold text-amber-700">{dDayLabel(upcoming.when)}</p>
+              <p className={`text-2xl font-bold ${tone.accent}`}>{dDayLabel(upcoming.when)}</p>
               <p className="text-[10px] text-muted-foreground">
                 {upcoming.when.toLocaleDateString("ko-KR")}
               </p>
@@ -110,22 +114,21 @@ export default function ComprehensiveExamCountdown() {
           </div>
         </div>
       ) : exams.length === 0 ? (
-        <div className="mt-4 rounded-lg border border-dashed bg-card p-4 text-center">
-          <p className="text-xs text-muted-foreground">
-            등록된 종합시험 응시 계획이 없습니다.
-          </p>
-          <Link
-            href="/courses?tab=mine"
-            className="mt-2 inline-flex items-center gap-1 rounded-md border border-amber-300 bg-card px-2 py-1 text-[11px] font-medium text-amber-800 hover:bg-amber-50"
-          >
-            응시 계획 등록 <ArrowRight size={11} />
-          </Link>
-        </div>
+        <EmptyState
+          icon={GraduationCap}
+          title="등록된 종합시험 응시 계획이 없어요"
+          description="응시 학기와 영역을 미리 등록해 두면 D-day로 알려드려요."
+          compact
+          className="mt-4 bg-transparent"
+          actions={[
+            { label: "응시 계획 등록", href: "/courses?tab=mine", variant: "outline" },
+          ]}
+        />
       ) : (
         <p className="mt-4 text-sm text-muted-foreground">
           예정·신청된 시험이 없습니다. 결과는 /courses 내 수강기록 탭에서 관리하세요.
         </p>
       )}
-    </div>
+    </WidgetCard>
   );
 }
