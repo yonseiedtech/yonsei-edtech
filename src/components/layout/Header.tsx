@@ -83,6 +83,12 @@ const PUBLIC_NAV: NavGroup[] = [
           { href: "/members?tab=alumni", label: "졸업생 회원" },
         ],
       },
+      {
+        sectionLabel: "네트워크",
+        links: [
+          { href: "/network", label: "전공 네트워킹 Map" },
+        ],
+      },
     ],
   },
   {

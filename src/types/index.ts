@@ -32,3 +32,6 @@ export * from "./interview";
 export * from "./portfolio";
 export * from "./alumni";
 export * from "./courses";
+
+// Sprint 67 — 전공 네트워킹 map (major-network-map MVP)
+export * from "./network";
