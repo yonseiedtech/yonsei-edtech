@@ -2,7 +2,7 @@
 // 일부 타입은 board(SeminarSpeaker)/academic(ActivityType) 의존 → cross-import.
 // ActivityType 은 아직 index.ts 잔존 → 분리 후 import 경로 갱신 필요.
 import type { SpeakerType, SeminarSpeaker } from "./board";
-import type { ActivityType } from "./index";
+import type { ActivityType } from "./academic";
 
 // ── 세미나 ──
 export interface SeminarSession {
