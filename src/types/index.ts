@@ -1,11 +1,12 @@
-// ── 도메인별 분해 (types-domain-split Phase 1) — 신규 sub 파일에서 re-export ──
-// 사용처(`import { ... } from "@/types"`) 영향 없음. 단순 분리.
-export * from "./steppingstone";
-export * from "./popup";
-export * from "./defense";
-export * from "./grad-life";
-export * from "./edutech-archive";
+// ── 역할 ──
+export type UserRole = "sysadmin" | "admin" | "president" | "staff" | "advisor" | "alumni" | "member" | "guest";
 
+export const ROLE_LABELS: Record<UserRole, string> = {
+  sysadmin: "시스템 관리자",
+  admin: "관리자",
+  president: "회장",
+  staff: "운영진",
+  advisor: "자문위원",
   alumni: "졸업생",
   member: "회원",
   guest: "게스트",
@@ -2338,11 +2339,11 @@ export interface CourseTodo {
   updatedAt?: string;
 }
 
+
 // ── 도메인별 분해 (types-domain-split Phase 1) — 신규 sub 파일에서 re-export ──
-// 사용처(`import { ... } from "@/types"`) 영향 없음. 단순 분리.
+// 사용처(@/types) 영향 없음. 단순 분리.
 export * from "./steppingstone";
 export * from "./popup";
 export * from "./defense";
 export * from "./grad-life";
 export * from "./edutech-archive";
-
