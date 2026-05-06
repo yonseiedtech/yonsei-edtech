@@ -114,3 +114,29 @@ export interface Post {
   /** 마이그레이션 백업 (구 category 값) */
   _legacyCategory?: "press";
 }
+
+export type PostCategory = Post["category"];
+
+export const CATEGORY_LABELS: Record<PostCategory, string> = {
+  notice: "공지사항",
+  seminar: "세미나 자료",
+  free: "자유게시판",
+  promotion: "홍보·보도자료",
+  resources: "자료실",
+  staff: "운영진 게시판",
+  press: "보도자료", // legacy, 마이그레이션 이후 제거 예정
+  interview: "인터뷰 게시판",
+  paper_review: "교육공학 논문 리뷰",
+};
+
+/** 현재 활성 카테고리 (글쓰기·탭에 노출) - press 제외 */
+export const ACTIVE_POST_CATEGORIES: Exclude<PostCategory, "press">[] = [
+  "notice",
+  "seminar",
+  "free",
+  "promotion",
+  "resources",
+  "staff",
+  "interview",
+  "paper_review",
+];
