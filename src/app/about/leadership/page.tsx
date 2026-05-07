@@ -1,18 +1,22 @@
 "use client";
 
 /**
- * 대학원 생활 → 구성원 (재학생 + 졸업생)
+ * 학회 소개 → 주요 구성원 (주임교수 + 운영진)
  *
- * 학회 운영 컨텍스트의 주임교수·운영진은 /about/leadership 으로 분리됨.
- * legacy URL ?tab=professor / ?tab=staff 는 /about/leadership 으로 자동 이동.
+ * 기존 /members 의 4-탭 구조 (professor / staff / student / alumni) 중
+ * 학회 운영 컨텍스트(주임교수, 운영진) 를 별도 페이지로 분리.
+ * 재학생·졸업생은 /members 에서 별도 노출.
  */
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useMemo, Suspense } from "react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import MemberCard from "@/components/members/MemberCard";
+import OrgChart from "@/features/member/OrgChart";
 import { useMembers } from "@/features/member/useMembers";
-import { Users, Search } from "lucide-react";
+import { useProfessor } from "@/features/site-settings/useSiteContent";
+import { Mail, Globe, BookOpen, Users, Search } from "lucide-react";
 import PageHeader from "@/components/ui/page-header";
 import EmptyState from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,68 +24,154 @@ import { Input } from "@/components/ui/input";
 import type { User } from "@/types";
 
 const ROLE_TABS = [
-  { key: "student", label: "재학생 회원", roles: ["member", "president", "staff"] },
-  { key: "alumni", label: "졸업생 회원", roles: ["alumni"] },
+  { key: "professor", label: "주임교수" },
+  { key: "staff", label: "운영진", roles: ["president", "staff"] },
 ] as const;
 
-type MembersTabKey = (typeof ROLE_TABS)[number]["key"];
+type LeadershipTabKey = (typeof ROLE_TABS)[number]["key"];
 
-function isMembersTab(value: string | null): value is MembersTabKey {
-  return value === "student" || value === "alumni";
+function isLeadershipTab(value: string | null): value is LeadershipTabKey {
+  return value === "professor" || value === "staff";
 }
 
-function filterByTab(members: User[], tabKey: MembersTabKey): User[] {
+function filterByTab(members: User[], tabKey: LeadershipTabKey): User[] {
   const tab = ROLE_TABS.find((t) => t.key === tabKey);
-  if (!tab) return [];
+  if (!tab || !("roles" in tab)) return [];
   const roles = tab.roles as readonly string[];
-  return members.filter((m) => {
-    if (!roles.includes(m.role)) return false;
-    // 재학생 탭: 졸업 상태 제외 (graduated 식별)
-    if (tabKey === "student") {
-      const status = m.enrollmentStatus ?? "enrolled";
-      if (status === "graduated") return false;
-    }
-    return true;
-  });
+  return members.filter((m) => roles.includes(m.role));
 }
 
-function MembersContent() {
+function ProfessorView() {
+  const { value: prof, isLoading } = useProfessor();
+
+  if (isLoading) {
+    return (
+      <div
+        className="mx-auto max-w-3xl"
+        aria-busy="true"
+        aria-label="주임교수 정보 불러오는 중"
+      >
+        <div className="flex flex-col items-center gap-8 rounded-2xl border bg-card p-8 shadow-sm md:flex-row md:items-start md:p-10">
+          <Skeleton className="h-52 w-40 shrink-0 rounded-xl" />
+          <div className="flex-1 space-y-3">
+            <Skeleton className="h-7 w-1/2" />
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="h-4 w-1/2" />
+            <div className="mt-4 space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-11/12" />
+              <Skeleton className="h-4 w-10/12" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  if (!prof.name)
+    return (
+      <EmptyState
+        icon={Users}
+        title="주임교수 정보가 등록되지 않았습니다"
+        description="운영진이 정보를 등록할 때까지 기다려주세요."
+      />
+    );
+
+  return (
+    <div className="mx-auto max-w-3xl">
+      <div className="flex flex-col items-center gap-8 rounded-2xl border bg-card p-8 shadow-sm md:flex-row md:items-start md:p-10">
+        {prof.photo ? (
+          <div className="relative h-52 w-40 shrink-0 overflow-hidden rounded-xl bg-muted">
+            <Image src={prof.photo} alt={prof.name} fill className="object-cover" />
+          </div>
+        ) : (
+          <div className="flex h-52 w-40 shrink-0 items-center justify-center rounded-xl bg-primary/5 text-5xl font-bold text-primary/30">
+            {prof.name[0]}
+          </div>
+        )}
+        <div className="flex-1">
+          <h2 className="text-2xl font-bold">{prof.name}</h2>
+          <p className="mt-1 text-muted-foreground">
+            {prof.title} · {prof.department}
+          </p>
+          <p className="text-sm text-muted-foreground">{prof.affiliation}</p>
+          {prof.bio && (
+            <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+              {prof.bio}
+            </p>
+          )}
+          {prof.research.length > 0 && (
+            <div className="mt-4">
+              <h4 className="flex items-center gap-1 text-sm font-semibold">
+                <BookOpen size={14} /> 연구 분야
+              </h4>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {prof.research.map((r) => (
+                  <span
+                    key={r}
+                    className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
+                  >
+                    {r}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="mt-4 flex flex-wrap gap-4 text-sm">
+            {prof.email && (
+              <a
+                href={`mailto:${prof.email}`}
+                className="flex items-center gap-1 text-primary hover:underline"
+              >
+                <Mail size={14} /> {prof.email}
+              </a>
+            )}
+            {prof.website && (
+              <a
+                href={prof.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-primary hover:underline"
+              >
+                <Globe size={14} /> 홈페이지
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LeadershipContent() {
   const { members, isLoading } = useMembers();
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
-
-  // legacy URL 보정 — professor·staff 는 /about/leadership 으로 이동
-  useEffect(() => {
-    if (tabParam === "professor" || tabParam === "staff") {
-      router.replace(`/about/leadership?tab=${tabParam}`);
-    }
-  }, [tabParam, router]);
-
-  const initialTab: MembersTabKey = isMembersTab(tabParam) ? tabParam : "student";
-  const [activeTab, setActiveTab] = useState<MembersTabKey>(initialTab);
+  const initialTab: LeadershipTabKey = isLeadershipTab(tabParam) ? tabParam : "professor";
+  const [activeTab, setActiveTab] = useState<LeadershipTabKey>(initialTab);
 
   const [search, setSearch] = useState("");
   const [generationFilter, setGenerationFilter] = useState<string>("all");
-  const [enrollmentFilter, setEnrollmentFilter] = useState<string>("all");
 
   useEffect(() => {
-    if (isMembersTab(tabParam)) setActiveTab(tabParam);
+    if (isLeadershipTab(tabParam)) setActiveTab(tabParam);
   }, [tabParam]);
 
-  function handleTabChange(key: MembersTabKey) {
+  function handleTabChange(key: LeadershipTabKey) {
     setActiveTab(key);
     setSearch("");
     setGenerationFilter("all");
-    setEnrollmentFilter("all");
     const qs = new URLSearchParams(searchParams.toString());
-    if (key === "student") qs.delete("tab");
+    if (key === "professor") qs.delete("tab");
     else qs.set("tab", key);
     const next = qs.toString();
-    router.replace(next ? `/members?${next}` : "/members", { scroll: false });
+    router.replace(next ? `/about/leadership?${next}` : "/about/leadership", {
+      scroll: false,
+    });
   }
 
-  const filteredByTab = filterByTab(members, activeTab);
+  const filteredByTab =
+    activeTab === "staff" ? filterByTab(members, "staff") : [];
 
   const generations = useMemo(() => {
     const set = new Set<number>();
@@ -95,11 +185,6 @@ function MembersContent() {
     let list = filteredByTab;
     if (generationFilter !== "all") {
       list = list.filter((m) => String(m.generation ?? "") === generationFilter);
-    }
-    if (enrollmentFilter !== "all" && activeTab === "student") {
-      list = list.filter(
-        (m) => (m.enrollmentStatus ?? "enrolled") === enrollmentFilter,
-      );
     }
     const q = search.trim().toLowerCase();
     if (q) {
@@ -119,21 +204,21 @@ function MembersContent() {
       });
     }
     return list;
-  }, [filteredByTab, generationFilter, enrollmentFilter, search, activeTab]);
+  }, [filteredByTab, generationFilter, search]);
 
   return (
     <div className="py-16">
       <section className="mx-auto max-w-6xl px-4">
         <PageHeader
           icon={<Users size={24} />}
-          title="구성원"
-          description="대학원에서 함께 공부하는 재학생·졸업생 회원입니다."
+          title="주요 구성원"
+          description="학회를 이끌어가는 주임교수님과 운영진을 소개합니다."
         />
       </section>
       <section className="mx-auto mt-12 max-w-6xl px-4">
         <nav
           className="flex gap-1 overflow-x-auto border-b"
-          aria-label="회원 분류"
+          aria-label="주요 구성원 분류"
         >
           {ROLE_TABS.map((tab) => {
             const isActive = activeTab === tab.key;
@@ -155,11 +240,13 @@ function MembersContent() {
           })}
         </nav>
         <div className="mt-8">
-          {isLoading ? (
+          {activeTab === "professor" ? (
+            <ProfessorView />
+          ) : isLoading ? (
             <div
               className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
               aria-busy="true"
-              aria-label="구성원 불러오는 중"
+              aria-label="운영진 불러오는 중"
             >
               {Array.from({ length: 8 }).map((_, i) => (
                 <div
@@ -175,6 +262,9 @@ function MembersContent() {
             </div>
           ) : (
             <>
+              <div className="mb-8">
+                <OrgChart />
+              </div>
               <div className="mb-6 flex flex-col gap-3 rounded-xl border bg-card p-3 sm:flex-row sm:items-center">
                 <div className="relative flex-1">
                   <Search
@@ -204,33 +294,19 @@ function MembersContent() {
                       ))}
                     </select>
                   )}
-                  {activeTab === "student" && (
-                    <select
-                      value={enrollmentFilter}
-                      onChange={(e) => setEnrollmentFilter(e.target.value)}
-                      className="rounded-md border bg-card px-3 py-2 text-sm"
-                      aria-label="재학 상태 필터"
-                    >
-                      <option value="all">재학·휴학</option>
-                      <option value="enrolled">재학</option>
-                      <option value="on_leave">휴학</option>
-                    </select>
-                  )}
                 </div>
               </div>
-
               <p className="mb-3 text-xs text-muted-foreground">
                 총 {visible.length}명{search && ` · "${search}" 검색 결과`}
               </p>
-
               {visible.length === 0 ? (
                 <EmptyState
                   icon={Users}
-                  title="해당 회원이 없습니다"
+                  title="해당 운영진이 없습니다"
                   description={
                     search
-                      ? "검색 조건에 맞는 회원이 없습니다."
-                      : "조건에 맞는 회원이 아직 등록되지 않았습니다."
+                      ? "검색 조건에 맞는 운영진이 없습니다."
+                      : "운영진이 아직 등록되지 않았습니다."
                   }
                 />
               ) : (
@@ -248,11 +324,11 @@ function MembersContent() {
   );
 }
 
-export default function MembersPage() {
+export default function LeadershipPage() {
   return (
     <Suspense
       fallback={
-        <div className="py-24" aria-busy="true" aria-label="회원 정보 불러오는 중">
+        <div className="py-24" aria-busy="true" aria-label="구성원 정보 불러오는 중">
           <div className="mx-auto max-w-5xl space-y-3 px-4">
             <Skeleton className="h-8 w-1/3" />
             <Skeleton className="h-4 w-1/2" />
@@ -265,7 +341,7 @@ export default function MembersPage() {
         </div>
       }
     >
-      <MembersContent />
+      <LeadershipContent />
     </Suspense>
   );
 }

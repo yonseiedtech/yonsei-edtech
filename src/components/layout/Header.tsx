@@ -59,8 +59,8 @@ const PUBLIC_NAV: NavGroup[] = [
       {
         sectionLabel: "주요 구성원",
         links: [
-          { href: "/members?tab=professor", label: "주임교수" },
-          { href: "/members?tab=staff", label: "운영진" },
+          { href: "/about/leadership?tab=professor", label: "주임교수" },
+          { href: "/about/leadership?tab=staff", label: "운영진" },
         ],
       },
     ],
