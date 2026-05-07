@@ -19,6 +19,7 @@ import {
   Trash2,
   Check,
   X,
+  ChevronLeft,
 } from "lucide-react";
 import { formatDday } from "@/lib/dday";
 import { parseSchedule, fmtMin } from "@/lib/courseSchedule";
@@ -424,6 +425,8 @@ export default function MyTodosWidget() {
   // ── 빠른 추가 다이얼로그 ──
   const [addOpen, setAddOpen] = useState(false);
   const [addCategory, setAddCategory] = useState<AddCategory>("course");
+  // F5 (Sprint 2): 모바일 다이얼로그 단계화 — picker(컨텍스트 선택) → form(선택 폼)
+  const [mobileStep, setMobileStep] = useState<"picker" | "form">("picker");
   const [saving, setSaving] = useState(false);
 
   // 수업 추가 폼
@@ -513,6 +516,7 @@ export default function MyTodosWidget() {
   }, [seminarsListRes, isStaff, user]);
 
   function openAdd() {
+    setMobileStep("picker");
     setAddCategory("course");
     setCourseForm({
       courseOfferingId: "",
@@ -1304,14 +1308,86 @@ export default function MyTodosWidget() {
             <DialogTitle>할 일 추가</DialogTitle>
           </DialogHeader>
 
+          {/* F5 (Sprint 2): 모바일 picker — 카테고리 큰 버튼으로 단계화 (sm:hidden) */}
+          {mobileStep === "picker" && (
+            <div className="grid grid-cols-2 gap-2 sm:hidden">
+              <button
+                type="button"
+                onClick={() => {
+                  setAddCategory("course");
+                  setMobileStep("form");
+                }}
+                className="flex flex-col items-center justify-center gap-1 rounded-xl border bg-card p-4 text-sm font-medium transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <BookOpen size={20} className="text-blue-600" />
+                수업
+              </button>
+              {myActivityTodos.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddCategory("activity");
+                    setMobileStep("form");
+                  }}
+                  className="flex flex-col items-center justify-center gap-1 rounded-xl border bg-card p-4 text-sm font-medium transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <UsersIcon size={20} className="text-emerald-600" />
+                  학술활동
+                </button>
+              )}
+              {isStaff && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddCategory("seminar");
+                    setMobileStep("form");
+                  }}
+                  className="flex flex-col items-center justify-center gap-1 rounded-xl border bg-card p-4 text-sm font-medium transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <Mic size={20} className="text-violet-600" />
+                  세미나
+                </button>
+              )}
+              {isStaff && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddCategory("staff");
+                    setMobileStep("form");
+                  }}
+                  className="flex flex-col items-center justify-center gap-1 rounded-xl border bg-card p-4 text-sm font-medium transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <ShieldAlert size={20} className="text-amber-600" />
+                  운영 업무
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* F5: 모바일 form 단계의 back 버튼 (sm:hidden) */}
+          {mobileStep === "form" && (
+            <button
+              type="button"
+              onClick={() => setMobileStep("picker")}
+              className="inline-flex items-center gap-1 self-start text-xs text-muted-foreground hover:text-foreground sm:hidden"
+            >
+              <ChevronLeft size={14} /> 카테고리 변경
+            </button>
+          )}
+
           <Tabs
             value={addCategory}
             onValueChange={(v) => setAddCategory(v as AddCategory)}
-            className="mt-1"
+            // F5: 모바일 picker 단계에서는 Tabs 자체 숨김 (form 으로 진입 시 다시 노출)
+            className={cn(
+              "mt-1",
+              mobileStep === "picker" && "hidden sm:block",
+            )}
           >
             <TabsList
               className={cn(
-                "grid w-full",
+                // F5: TabsList 는 데스크톱 전용 (모바일은 picker 가 대체)
+                "hidden w-full sm:grid",
                 (() => {
                   let n = 1; // 수업
                   if (myActivityTodos.length > 0) n++;
@@ -1319,12 +1395,12 @@ export default function MyTodosWidget() {
                   // Tailwind JIT 정적 추출용 룩업
                   return (
                     {
-                      1: "grid-cols-1",
-                      2: "grid-cols-2",
-                      3: "grid-cols-3",
-                      4: "grid-cols-4",
+                      1: "sm:grid-cols-1",
+                      2: "sm:grid-cols-2",
+                      3: "sm:grid-cols-3",
+                      4: "sm:grid-cols-4",
                     } as Record<number, string>
-                  )[n] ?? "grid-cols-4";
+                  )[n] ?? "sm:grid-cols-4";
                 })(),
               )}
             >

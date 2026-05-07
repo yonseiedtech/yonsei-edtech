@@ -47,27 +47,44 @@ export default function MemberNode({ data }: NodeProps<MemberNodeData>) {
   return (
     <div
       className={cn(
-        "group relative flex items-center justify-center rounded-full font-semibold transition-opacity",
-        ROLE_COLOR[data.role],
-        sizeClass,
+        "relative flex flex-col items-center transition-opacity",
         data.dimmed && !data.highlighted && "opacity-25",
-        data.highlighted && "ring-2 ring-primary/80 shadow-lg",
       )}
-      title={`${data.name} · ${data.generation}기`}
     >
-      {/* 호버용 미니 라벨 */}
-      <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-card px-1.5 py-0.5 text-[10px] font-medium text-foreground opacity-0 shadow-sm transition-opacity group-hover:opacity-100">
-        {data.name} · {data.generation}기
-      </span>
-      <span aria-hidden="true">
-        {data.name?.[0] ?? "?"}
-      </span>
+      {/* 노드 원 */}
+      <div
+        className={cn(
+          "flex items-center justify-center rounded-full font-semibold",
+          ROLE_COLOR[data.role],
+          sizeClass,
+          data.highlighted && "ring-2 ring-primary/80 shadow-lg",
+        )}
+        title={`${data.name} · ${data.generation}기`}
+        aria-label={`${data.name} ${data.generation}기`}
+      >
+        <span aria-hidden="true">{data.name?.[0] ?? "?"}</span>
 
-      {/* react-flow 엣지 연결 핸들 — 노드 사방 */}
-      <Handle type="source" position={Position.Top} className="!opacity-0" />
-      <Handle type="target" position={Position.Bottom} className="!opacity-0" />
-      <Handle type="source" position={Position.Left} className="!opacity-0" />
-      <Handle type="target" position={Position.Right} className="!opacity-0" />
+        {/* react-flow 엣지 연결 핸들 — 노드 사방 (시각적으로 숨김) */}
+        <Handle type="source" position={Position.Top} className="!opacity-0" />
+        <Handle type="target" position={Position.Bottom} className="!opacity-0" />
+        <Handle type="source" position={Position.Left} className="!opacity-0" />
+        <Handle type="target" position={Position.Right} className="!opacity-0" />
+      </div>
+
+      {/* 노드 라벨 — 전체 이름 + 기수 (항상 표시) */}
+      <span
+        className={cn(
+          "mt-1 whitespace-nowrap rounded px-1 text-[11px] font-medium leading-tight",
+          data.isMe
+            ? "bg-primary/10 text-primary"
+            : "text-foreground/90",
+        )}
+      >
+        {data.name}
+        <span className="ml-0.5 text-[10px] text-muted-foreground">
+          · {data.generation}기
+        </span>
+      </span>
     </div>
   );
 }
