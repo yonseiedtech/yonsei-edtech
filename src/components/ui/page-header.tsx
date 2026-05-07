@@ -47,18 +47,18 @@ export default function PageHeader({
   const isConsole = variant === "console";
 
   return (
-    <div className="flex items-start justify-between gap-4">
-      <div className="flex items-center gap-3">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+      <div className="flex min-w-0 items-center gap-3">
         {icon && renderIcon(icon, isConsole)}
-        <div>
-          <h1 className="text-2xl font-bold">{title}</h1>
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold sm:text-2xl">{title}</h1>
           {description && (
             <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
           )}
         </div>
       </div>
       {actions && (
-        <div className="flex shrink-0 items-center gap-2">{actions}</div>
+        <div className="flex flex-wrap items-center gap-2 sm:shrink-0">{actions}</div>
       )}
     </div>
   );

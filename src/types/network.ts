@@ -1,14 +1,16 @@
-// ── 전공 네트워킹 Map (major-network-map MVP / Phase 1) ──
-// 분석 근거: docs/01-plan/features/major-network-map.plan.md §3-1
+// ── 전공 네트워킹 Map ──
+// MVP(Phase 1): cohort + identity
+// Phase 2: school_level 추가 (이 파일)
+// Phase 3+ : office (교육청), interest (관심사 Jaccard) 추가 예정
 
-import type { OccupationType, UserRole } from "./user";
+import type { OccupationType, SchoolLevel, UserRole } from "./user";
 
-/** 관계(엣지) 종류 — Phase 1 은 cohort + identity 2종, Phase 2~3 에서 schoolLevel·office·interest 추가 */
-export type NetworkRelationKind = "cohort" | "identity";
+export type NetworkRelationKind = "cohort" | "identity" | "school_level";
 
 export const NETWORK_RELATION_LABELS: Record<NetworkRelationKind, string> = {
   cohort: "동기 (입학 시점)",
   identity: "같은 신분 유형",
+  school_level: "같은 학교급",
 };
 
 /** 그래프 노드 — 한 회원 */
@@ -21,6 +23,8 @@ export interface NetworkNode {
   cohortKey: string | null;
   /** 신분 식별 키 — `${occupation ?? "_"}_${role}` */
   identityKey: string;
+  /** 학교급 (Phase 2) — 미입력 시 null. null 인 페어는 school_level 매칭에서 제외 */
+  schoolLevel: SchoolLevel | null;
   role: UserRole;
   occupation?: OccupationType;
   profileImage?: string;
@@ -51,6 +55,8 @@ export interface NetworkEdge {
 export interface NetworkGraph {
   nodes: NetworkNode[];
   edges: NetworkEdge[];
+  /** 옵트아웃으로 그래프에서 제외된 회원 수 (본인 제외) — Phase 2 */
+  excludedOptOutCount: number;
 }
 
 /** 컨트롤 패널 필터 상태 */

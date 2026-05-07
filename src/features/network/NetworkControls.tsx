@@ -21,15 +21,18 @@ interface NetworkControlsProps {
     visibleNodeCount: number;
     edgeCount: number;
     visibleEdgeCount: number;
+    /** 옵트아웃으로 노드에서 제외된 회원 수 (Phase 2) */
+    excludedOptOutCount?: number;
   };
 }
 
 const KIND_LEGEND: Record<NetworkRelationKind, string> = {
   cohort: "굵은 선",
   identity: "보통 선",
+  school_level: "초록 선",
 };
 
-const DEFAULT_KINDS: NetworkRelationKind[] = ["cohort", "identity"];
+const DEFAULT_KINDS: NetworkRelationKind[] = ["cohort", "identity", "school_level"];
 
 export default function NetworkControls({
   filter,
@@ -140,6 +143,14 @@ export default function NetworkControls({
             {stats.visibleEdgeCount}/{stats.edgeCount}
           </span>
         </div>
+        {typeof stats.excludedOptOutCount === "number" && stats.excludedOptOutCount > 0 && (
+          <div className="mt-1 flex items-center justify-between">
+            <span>비공개</span>
+            <span className="font-semibold text-foreground">
+              {stats.excludedOptOutCount}명
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -15,7 +15,13 @@ import type {
   EnrollmentStatus,
   SocialLink,
 } from "@/types";
-import { OCCUPATION_LABELS, VISIBILITY_LABELS, ENROLLMENT_STATUS_LABELS } from "@/types";
+import {
+  OCCUPATION_LABELS,
+  VISIBILITY_LABELS,
+  ENROLLMENT_STATUS_LABELS,
+  SCHOOL_LEVEL_LABELS,
+  type SchoolLevel,
+} from "@/types";
 import { calcGeneration } from "@/lib/generation";
 import ProfileSocialsEditor from "@/components/profile/ProfileSocialsEditor";
 import Link from "next/link";
@@ -35,6 +41,8 @@ interface ProfileData {
   field: string;
   bio: string;
   occupation: OccupationType | "";
+  /** Phase 2 (major-network-map): 학교급 — 네트워킹 Map 의 school_level 차원 매칭에 사용 */
+  schoolLevel: SchoolLevel | "";
   affiliation: string;
   department: string;
   position: string;
@@ -88,6 +96,7 @@ export default function ProfileEditor({ user }: Props) {
       field: user.field,
       bio: user.bio || "",
       occupation: user.occupation || "",
+      schoolLevel: user.schoolLevel || "",
       affiliation: user.affiliation || "",
       department: user.department || "",
       position: user.position || "",
@@ -143,6 +152,7 @@ export default function ProfileEditor({ user }: Props) {
         enrollmentYear,
         enrollmentHalf,
         enrollmentStatus: data.enrollmentStatus || undefined,
+        schoolLevel: data.schoolLevel || undefined,
         generation: computedGen || data.generation,
         accumulatedSemesters: data.accumulatedSemesters ? Number(data.accumulatedSemesters) : undefined,
       };
@@ -281,6 +291,26 @@ export default function ProfileEditor({ user }: Props) {
                 <option key={key} value={key}>{label}</option>
               ))}
             </select>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium">학교급 (선택)</label>
+            <select
+              {...register("schoolLevel")}
+              className="w-full rounded-lg border border-input px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              <option value="">선택 안 함</option>
+              {(Object.entries(SCHOOL_LEVEL_LABELS) as [SchoolLevel, string][]).map(
+                ([key, label]) => (
+                  <option key={key} value={key}>
+                    {label}
+                  </option>
+                ),
+              )}
+            </select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              초/중/고/대학 등 — 전공 네트워킹 Map의 학교급 매칭에 활용됩니다.
+            </p>
           </div>
 
           {occFields && (

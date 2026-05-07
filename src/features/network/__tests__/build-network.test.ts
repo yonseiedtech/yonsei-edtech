@@ -116,6 +116,66 @@ describe("buildNetwork", () => {
     }
   });
 
+  it("excludes opt-out users (networkOptIn=false) from nodes but counts them", () => {
+    const users: User[] = [
+      makeUser({ id: "me" }),
+      makeUser({ id: "visible" }),
+      makeUser({
+        id: "hidden",
+        notificationPrefs: { networkOptIn: false },
+      }),
+    ];
+    const g = buildNetwork(users, "me");
+    expect(g.nodes.map((n) => n.id).sort()).toEqual(["me", "visible"]);
+    expect(g.excludedOptOutCount).toBe(1);
+  });
+
+  it("keeps me as a node even if I opted out", () => {
+    const users: User[] = [
+      makeUser({
+        id: "me",
+        notificationPrefs: { networkOptIn: false },
+      }),
+      makeUser({ id: "peer" }),
+    ];
+    const g = buildNetwork(users, "me");
+    const meNode = g.nodes.find((n) => n.id === "me");
+    expect(meNode).toBeDefined();
+    expect(g.excludedOptOutCount).toBe(0); // me 는 카운트에서 제외
+  });
+
+  it("creates school_level edge for same schoolLevel", () => {
+    const users: User[] = [
+      makeUser({ id: "a", schoolLevel: "elementary", occupation: "teacher", enrollmentYear: 2024, enrollmentHalf: 1 }),
+      makeUser({ id: "b", schoolLevel: "elementary", occupation: "researcher", enrollmentYear: 2025, enrollmentHalf: 2 }),
+      makeUser({ id: "c", schoolLevel: "middle", occupation: "researcher", enrollmentYear: 2025, enrollmentHalf: 2 }),
+    ];
+    const g = buildNetwork(users, "a");
+    const ab = g.edges.find((e) => e.source === "a" && e.target === "b");
+    expect(ab?.kinds).toContain("school_level");
+    expect(ab?.kinds).not.toContain("cohort");
+    expect(ab?.kinds).not.toContain("identity");
+    expect(ab?.weight).toBe(1.5);
+    // b vs c: schoolLevel 다름, occupation 동일 → identity 만
+    const bc = g.edges.find(
+      (e) => (e.source === "b" && e.target === "c") || (e.source === "c" && e.target === "b"),
+    );
+    expect(bc?.kinds).toContain("identity");
+    expect(bc?.kinds).not.toContain("school_level");
+  });
+
+  it("ignores school_level matching when one user has no schoolLevel", () => {
+    const users: User[] = [
+      makeUser({ id: "a", schoolLevel: "high", occupation: "teacher", enrollmentYear: 2024, enrollmentHalf: 1 }),
+      makeUser({ id: "b", occupation: "researcher", enrollmentYear: 2025, enrollmentHalf: 2 }),
+    ];
+    const g = buildNetwork(users, "a");
+    const ab = g.edges.find(
+      (e) => (e.source === "a" && e.target === "b") || (e.source === "b" && e.target === "a"),
+    );
+    expect(ab).toBeUndefined();
+  });
+
   it("computes weight 1.5 for identity-only, 2.5 for cohort-only", () => {
     const users: User[] = [
       // identity only

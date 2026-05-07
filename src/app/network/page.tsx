@@ -39,12 +39,14 @@ function NetworkPageContent() {
   const users = (usersRes?.data ?? []) as User[];
 
   const graph = useMemo(() => {
-    if (!currentUserId) return { nodes: [], edges: [] };
+    if (!currentUserId) {
+      return { nodes: [], edges: [], excludedOptOutCount: 0 };
+    }
     return buildNetwork(users, currentUserId);
   }, [users, currentUserId]);
 
   const [filter, setFilter] = useState<NetworkFilterState>({
-    enabledKinds: new Set(["cohort", "identity"]),
+    enabledKinds: new Set(["cohort", "identity", "school_level"]),
     firstDegreeOnly: false,
     searchText: "",
   });
@@ -68,6 +70,7 @@ function NetworkPageContent() {
       visibleNodeCount: visibleNodes.length,
       edgeCount: graph.edges.length,
       visibleEdgeCount: visibleEdges.length,
+      excludedOptOutCount: graph.excludedOptOutCount,
     };
   }, [graph, filter, currentUserId]);
 

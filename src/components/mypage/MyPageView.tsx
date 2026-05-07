@@ -648,22 +648,31 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
   );
 }
 
-/** Sprint 54·55: 알림 + 피드 노출 설정 카드 */
+/** Sprint 54·55·67: 알림 + 피드 노출 + 네트워크 노출 설정 카드 */
 function NotificationSettingsCard({ user }: { user: User }) {
   const prefs = (user as User & {
-    notificationPrefs?: { weeklyDigest?: boolean; feedOptIn?: boolean };
+    notificationPrefs?: {
+      weeklyDigest?: boolean;
+      feedOptIn?: boolean;
+      networkOptIn?: boolean;
+    };
   }).notificationPrefs;
   const [digest, setDigest] = useState<boolean>(prefs?.weeklyDigest !== false);
   const [feed, setFeed] = useState<boolean>(prefs?.feedOptIn !== false);
-  const [busyKey, setBusyKey] = useState<"digest" | "feed" | null>(null);
+  const [network, setNetwork] = useState<boolean>(prefs?.networkOptIn !== false);
+  const [busyKey, setBusyKey] = useState<
+    "digest" | "feed" | "network" | null
+  >(null);
 
   async function updatePref(
-    key: "weeklyDigest" | "feedOptIn",
+    key: "weeklyDigest" | "feedOptIn" | "networkOptIn",
     next: boolean,
     setter: (v: boolean) => void,
     label: string,
   ) {
-    setBusyKey(key === "weeklyDigest" ? "digest" : "feed");
+    setBusyKey(
+      key === "weeklyDigest" ? "digest" : key === "feedOptIn" ? "feed" : "network",
+    );
     setter(next);
     try {
       await profilesApi.update(user.id, {
@@ -755,6 +764,16 @@ function NotificationSettingsCard({ user }: { user: User }) {
             void updatePref("feedOptIn", !feed, setFeed, "활동 피드 노출을")
           }
           ariaLabel="활동 피드 노출 토글"
+        />
+        <ToggleRow
+          title="전공 네트워킹 Map 노출"
+          description="대학원 생활 → 네트워크 → 전공 네트워킹 Map 그래프에 내 노드가 표시됩니다. 끄면 다른 회원에게 비공개되며, 본인 화면에서는 항상 보입니다."
+          enabled={network}
+          busy={busyKey === "network"}
+          onToggle={() =>
+            void updatePref("networkOptIn", !network, setNetwork, "전공 네트워킹 Map 노출을")
+          }
+          ariaLabel="전공 네트워킹 Map 노출 토글"
         />
       </div>
     </div>

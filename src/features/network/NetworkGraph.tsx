@@ -161,18 +161,25 @@ export default function NetworkGraph({
       if (!filter.firstDegreeOnly) return true;
       return e.source === currentUserId || e.target === currentUserId;
     })
-    .map((e) => ({
-      id: e.id,
-      source: e.source,
-      target: e.target,
-      style: {
-        strokeWidth: e.weight,
-        stroke: e.kinds.includes("cohort")
-          ? "var(--color-primary, hsl(217 91% 60%))"
-          : "var(--color-muted-foreground, hsl(220 9% 46%))",
-        opacity: 0.6,
-      },
-    }));
+    .map((e) => {
+      // 우선순위: cohort(primary) > school_level(emerald) > identity(muted)
+      let stroke = "var(--color-muted-foreground, hsl(220 9% 46%))";
+      if (e.kinds.includes("cohort")) {
+        stroke = "var(--color-primary, hsl(217 91% 60%))";
+      } else if (e.kinds.includes("school_level")) {
+        stroke = "hsl(160 84% 39%)"; // emerald-600
+      }
+      return {
+        id: e.id,
+        source: e.source,
+        target: e.target,
+        style: {
+          strokeWidth: e.weight,
+          stroke,
+          opacity: 0.6,
+        },
+      };
+    });
 
   // ESC: 모달 빠지면 onNodeClick null 처리는 부모에서
   const [, setMounted] = useState(false);

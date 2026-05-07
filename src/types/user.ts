@@ -128,7 +128,25 @@ export interface NotificationPrefs {
   weeklyDigest?: boolean;
   /** 동료의 활동 피드(대시보드)에 내 활동 노출 여부 — false 로 명시될 때만 옵트아웃 (Sprint 55) */
   feedOptIn?: boolean;
+  /** 전공 네트워킹 Map 그래프에 내 노드 노출 여부 — false 로 명시될 때만 옵트아웃 (Sprint 67 / major-network-map Phase 2) */
+  networkOptIn?: boolean;
 }
+
+/** 학교급 (소속 학교 단위) — major-network-map Phase 2 */
+export type SchoolLevel =
+  | "elementary"   // 초등학교
+  | "middle"       // 중학교
+  | "high"         // 고등학교
+  | "university"   // 대학교
+  | "etc";         // 기타 (특수교육 / 평생교육 / 사설학원 등)
+
+export const SCHOOL_LEVEL_LABELS: Record<SchoolLevel, string> = {
+  elementary: "초등학교",
+  middle: "중학교",
+  high: "고등학교",
+  university: "대학교",
+  etc: "기타",
+};
 
 export interface User { [key: string]: unknown;
   id: string;
@@ -157,6 +175,12 @@ export interface User { [key: string]: unknown;
   affiliation?: string;
   department?: string;
   position?: string;
+  /**
+   * 학교급 — major-network-map Phase 2.
+   * 교사·연구자 등 학교 단위가 의미 있는 직업 유형에서 활용.
+   * 미입력 시 학교급 기반 매칭에서 제외.
+   */
+  schoolLevel?: SchoolLevel;
   /** PR6 신규: 직업유형별 세부 정보 */
   /** 기업 담당업무 */
   corporateDuty?: string;
