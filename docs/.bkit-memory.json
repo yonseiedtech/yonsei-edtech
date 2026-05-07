@@ -169,6 +169,50 @@
       "archivedTo": "docs/archive/2026-05/types-domain-split/",
       "lastCommit": "b6c12a99",
       "notes": "src/types/index.ts 2719줄 → 34줄 (98.7% 감소). 16개 도메인 sub 파일 분리, re-export 패턴으로 @/types 사용처 영향 0. 9 commit (Phase 1~6 + 2 fixup + 1 report + 1 후속). 후속작업 FU-3(ESLint no-restricted-imports) 즉시 적용, FU-1/FU-2 별도 sprint 연기. matchRate N/A — type-only refactor 는 외형 변화 없이 tsc/build/Vercel SSG 통과로 검증."
+    },
+    "dashboard-quickwins": {
+      "phase": "archived",
+      "matchRate": null,
+      "iterationCount": 0,
+      "startedAt": "2026-05-06T00:00:00Z",
+      "completedAt": "2026-05-06T15:00:00Z",
+      "archivedAt": "2026-05-07T00:00:00Z",
+      "archivedTo": "docs/archive/2026-05/dashboard-quickwins/",
+      "lastCommits": ["c2e201ee", "4420e084", "96c6cfc3"],
+      "notes": "Sprint 1 Quick Wins 8건 (Bundle A·B·C). 토큰·표준 컴포넌트 인프라 + 모바일 접근성 + 알림 순차화. Codex × Claude 분석에서 양 모델 모두 P0 분류한 항목 일괄 적용."
+    },
+    "dashboard-persona-redesign": {
+      "phase": "archived",
+      "matchRate": null,
+      "iterationCount": 0,
+      "startedAt": "2026-05-06T00:00:00Z",
+      "completedAt": "2026-05-07T00:00:00Z",
+      "archivedAt": "2026-05-07T00:00:00Z",
+      "archivedTo": "docs/archive/2026-05/dashboard-persona-redesign/",
+      "lastCommits": ["8ec2b154", "08f54109", "79d1bbed", "12fe58bc"],
+      "notes": "Sprint 2 페르소나·위계 재설계 (F1~F5). widget-visibility 페르소나 가시성 + WidgetCard priority + PageHeader actions 통합 + NotificationOrchestrator 4종 알림 큐 + MyTodos 모바일 단계화."
+    },
+    "major-network-map": {
+      "phase": "archived",
+      "matchRate": null,
+      "iterationCount": 0,
+      "startedAt": "2026-05-06T00:00:00Z",
+      "completedAt": "2026-05-07T00:00:00Z",
+      "archivedAt": "2026-05-07T00:00:00Z",
+      "archivedTo": "docs/archive/2026-05/major-network-map/",
+      "lastCommits": ["93df2c3a", "12fe58bc"],
+      "notes": "Phase 1 MVP — /network 신규. 회원 노드 + 동기/신분 자동 엣지 (react-flow). 4종 MVP 기능 + vitest 7/7. Phase 2~4(옵트아웃·교육청·클러스터·추천)는 별도 사이클."
+    },
+    "members-split": {
+      "phase": "archived",
+      "matchRate": null,
+      "iterationCount": 0,
+      "startedAt": "2026-05-07T00:00:00Z",
+      "completedAt": "2026-05-07T00:00:00Z",
+      "archivedAt": "2026-05-07T00:00:00Z",
+      "archivedTo": "docs/archive/2026-05/members-split/",
+      "lastCommit": "db63dab7",
+      "notes": "/members 단일 4탭 → 두 컨텍스트 페이지로 분리. /about/leadership(주임교수+운영진) + /members(재학생+졸업생). Legacy URL 자동 redirect. chore-scale (Plan 없이 Report 만)."
     }
   }
 }
