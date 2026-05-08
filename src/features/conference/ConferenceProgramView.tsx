@@ -71,6 +71,22 @@ function planId(userId: string, programId: string, sessionId: string) {
   return `${userId}_${programId}_${sessionId}`;
 }
 
+/**
+ * Sprint 67-I: 세션 카드의 트랙·SESSION 번호 추출 — A-1, B-2 식의 prefix.
+ * 정렬 우선순위: 시간 → SESSION 번호(1,2,3,4) → 트랙 letter(A,B,...,G)
+ * 결과: A-1~G-1 → A-2~G-2 → A-3~G-3 → A-4~G-4 순서로 자연스럽게 정렬됨
+ */
+function extractTrackOrder(title: string | undefined, track: string | undefined): {
+  sessionNum: number;
+  trackLetter: string;
+} {
+  const t = title ?? "";
+  const m = t.match(/^\s*\[([A-Z])-(\d)\]/);
+  if (m) return { sessionNum: parseInt(m[2], 10), trackLetter: m[1] };
+  const tm = (track ?? "").match(/^([A-Z])\b/);
+  return { sessionNum: 99, trackLetter: tm?.[1] ?? "Z" };
+}
+
 export default function ConferenceProgramView({ activityId, activityTitle, user }: Props) {
   const [loading, setLoading] = useState(true);
   const [program, setProgram] = useState<ConferenceProgram | null>(null);
@@ -471,7 +487,13 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
           })
           .sort((a, b) => {
             if (a.date !== b.date) return a.date < b.date ? -1 : 1;
-            return a.session.startTime.localeCompare(b.session.startTime);
+            if (a.session.startTime !== b.session.startTime)
+              return a.session.startTime.localeCompare(b.session.startTime);
+            // Sprint 67-I: 같은 시간이면 SESSION 번호 → 트랙 letter 순
+            const ak = extractTrackOrder(a.session.title, a.session.track);
+            const bk = extractTrackOrder(b.session.title, b.session.track);
+            if (ak.sessionNum !== bk.sessionNum) return ak.sessionNum - bk.sessionNum;
+            return ak.trackLetter.localeCompare(bk.trackLetter);
           });
 
         const counts = {
@@ -627,7 +649,15 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
           ) : (() => {
             const q = searchQuery.trim().toLowerCase();
             const filteredSessions = [...day.sessions]
-              .sort((a, b) => (a.startTime > b.startTime ? 1 : -1))
+              .sort((a, b) => {
+                if (a.startTime !== b.startTime)
+                  return a.startTime > b.startTime ? 1 : -1;
+                // Sprint 67-I: 같은 시간이면 SESSION 번호 → 트랙 letter 순
+                const ak = extractTrackOrder(a.title, a.track);
+                const bk = extractTrackOrder(b.title, b.track);
+                if (ak.sessionNum !== bk.sessionNum) return ak.sessionNum - bk.sessionNum;
+                return ak.trackLetter.localeCompare(bk.trackLetter);
+              })
               .filter((s) => {
                 if (categoryFilter !== "all" && s.category !== categoryFilter) return false;
                 if (onlyMine && !planBySessionId.has(s.id)) return false;
