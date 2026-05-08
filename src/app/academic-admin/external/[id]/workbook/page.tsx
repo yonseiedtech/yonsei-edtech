@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -439,7 +439,15 @@ function WorkbookAdminPage({ activityId }: { activityId: string }) {
     enabled: !!activityId,
   });
 
-  const tasks = data ?? [];
+  // Sprint 67-N: 복합 인덱스 회피로 client-side 정렬 (order asc, then createdAt asc)
+  const tasks = useMemo(
+    () =>
+      [...(data ?? [])].sort((a, b) => {
+        if ((a.order ?? 0) !== (b.order ?? 0)) return (a.order ?? 0) - (b.order ?? 0);
+        return (a.createdAt ?? "").localeCompare(b.createdAt ?? "");
+      }),
+    [data],
+  );
 
   const createMutation = useMutation({
     mutationFn: (form: TaskForm) =>

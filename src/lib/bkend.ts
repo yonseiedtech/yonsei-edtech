@@ -546,9 +546,9 @@ export const receivedCardsApi = {
 // ── 학술대회 워크북 (Sprint 67-F) ──
 export const workbookTasksApi = {
   listByActivity: (activityId: string) =>
+    // 복합 인덱스 회피: filter[activityId] 만. client side 정렬.
     dataApi.list<ConferenceWorkbookTask>("conference_workbook_tasks", {
       "filter[activityId]": activityId,
-      sort: "order:asc",
       limit: 500,
     }),
   get: (id: string) =>
@@ -621,11 +621,11 @@ export const workbookReviewsApi = {
   get: (id: string) =>
     dataApi.get<ConferenceWorkbookReview>("conference_workbook_reviews", id),
   listByActivity: (activityId: string) =>
+    // 복합 인덱스 회피
     dataApi.list<ConferenceWorkbookReview>(
       "conference_workbook_reviews",
       {
         "filter[activityId]": activityId,
-        sort: "submittedAt:desc",
         limit: 1000,
       },
     ),

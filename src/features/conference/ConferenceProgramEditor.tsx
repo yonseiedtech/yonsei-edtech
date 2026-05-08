@@ -104,7 +104,7 @@ export default function ConferenceProgramEditor({
   const aiFileInputRef = useRef<HTMLInputElement | null>(null);
   const csvFileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Sprint 67-G: 세션 추가/수정 dialog (mode: add | edit)
+  // Sprint 67-G/M: 세션 추가/수정 dialog (mode: add | edit) — 모든 핵심 필드 포함
   const [addSessionDialog, setAddSessionDialog] = useState<{
     mode: "add" | "edit";
     dayIdx: number;
@@ -115,6 +115,9 @@ export default function ConferenceProgramEditor({
     category: ConferenceSession["category"];
     title: string;
     speakers: string;
+    affiliation: string;
+    location: string;
+    abstract: string;
   } | null>(null);
 
   // Sprint 67-G: 시간 충돌 dialog (전체 검사 결과 list)
@@ -187,7 +190,7 @@ export default function ConferenceProgramEditor({
   }
 
   function addSession(dayIdx: number) {
-    // Sprint 67-G: dialog 형태로 — 시간/제목/발표자/트랙 입력 후 추가
+    // Sprint 67-G/M: dialog 형태로 — 모든 핵심 필드
     setAddSessionDialog({
       mode: "add",
       dayIdx,
@@ -197,11 +200,14 @@ export default function ConferenceProgramEditor({
       category: "paper",
       title: "",
       speakers: "",
+      affiliation: "",
+      location: "",
+      abstract: "",
     });
   }
 
   function editSession(dayIdx: number, sessionIdx: number) {
-    // Sprint 67-G: 기존 세션 dialog 형태로 수정 — 동일 dialog 재활용
+    // Sprint 67-G/M: 기존 세션 dialog 형태로 수정 — 모든 필드 로드
     const session = draft.days[dayIdx]?.sessions[sessionIdx];
     if (!session) return;
     setAddSessionDialog({
@@ -214,13 +220,28 @@ export default function ConferenceProgramEditor({
       category: session.category ?? "paper",
       title: session.title ?? "",
       speakers: (session.speakers ?? []).join(", "),
+      affiliation: session.affiliation ?? "",
+      location: session.location ?? "",
+      abstract: session.abstract ?? "",
     });
   }
 
   function confirmAddSession() {
     if (!addSessionDialog) return;
-    const { mode, dayIdx, sessionIdx, startTime, endTime, track, category, title, speakers } =
-      addSessionDialog;
+    const {
+      mode,
+      dayIdx,
+      sessionIdx,
+      startTime,
+      endTime,
+      track,
+      category,
+      title,
+      speakers,
+      affiliation,
+      location,
+      abstract,
+    } = addSessionDialog;
     if (!title.trim()) {
       toast.error("발표 제목을 입력하세요.");
       return;
@@ -240,6 +261,9 @@ export default function ConferenceProgramEditor({
         category,
         title: title.trim(),
         speakers: speakersArr,
+        affiliation: affiliation.trim() || undefined,
+        location: location.trim() || undefined,
+        abstract: abstract.trim() || undefined,
       });
       // 시간 변경 시 정렬 재적용
       setDraft((d) => ({
@@ -267,6 +291,9 @@ export default function ConferenceProgramEditor({
       category,
       title: title.trim(),
       speakers: speakersArr,
+      affiliation: affiliation.trim() || undefined,
+      location: location.trim() || undefined,
+      abstract: abstract.trim() || undefined,
     };
     setDraft((d) => ({
       ...d,
@@ -309,6 +336,8 @@ export default function ConferenceProgramEditor({
           const a = sessions[i];
           const b = sessions[j];
           if (!(a.start < b.end && b.start < a.end)) continue;
+          // Sprint 67-N: 정확히 같은 시간이면 슬롯 공유 → 충돌 아님
+          if (a.start === b.start && a.end === b.end) continue;
           if (PARALLEL_OK.has(a.category) || PARALLEL_OK.has(b.category)) continue;
           if (a.track && b.track && a.track !== b.track) continue;
           items.push({
@@ -713,6 +742,8 @@ export default function ConferenceProgramEditor({
           const a = sessionsByTime[i];
           const b = sessionsByTime[j];
           if (!(a.start < b.end && b.start < a.end)) continue;
+          // Sprint 67-N: 정확히 같은 시간이면 슬롯 공유(SESSION 01 등 1시간 슬롯에 여러 발표 순차) → 충돌 아님
+          if (a.start === b.start && a.end === b.end) continue;
           // 동시 진행 OK 카테고리 (포스터·휴식 등) 는 충돌 무시
           if (
             PARALLEL_OK_CATEGORIES.has(a.category) ||
@@ -721,7 +752,7 @@ export default function ConferenceProgramEditor({
             continue;
           // 트랙이 다르면 병렬 진행으로 간주 (정상)
           if (a.track && b.track && a.track !== b.track) continue;
-          // 트랙 정보가 없으면 동일 공간으로 간주 → 충돌
+          // 트랙 정보가 없으면 동일 공간으로 간주 → 충돌 (단 부분 겹침에 한해)
           errors.push(
             `${day.date} 시간 충돌: "${a.title}" (${a.start}~${a.end}) ↔ "${b.title}" (${b.start}~${b.end})${a.track ? ` [${a.track}]` : ""}`,
           );
@@ -1227,9 +1258,37 @@ export default function ConferenceProgramEditor({
                   </select>
                 </Field>
               </div>
+              <Field label="소속 (선택)">
+                <Input
+                  value={addSessionDialog.affiliation}
+                  onChange={(e) =>
+                    setAddSessionDialog({ ...addSessionDialog, affiliation: e.target.value })
+                  }
+                  placeholder="예: 서울대학교 교육학과"
+                />
+              </Field>
+              <Field label="장소·강의실 (선택)">
+                <Input
+                  value={addSessionDialog.location}
+                  onChange={(e) =>
+                    setAddSessionDialog({ ...addSessionDialog, location: e.target.value })
+                  }
+                  placeholder="예: 이화여자대학교 학관 409호"
+                />
+              </Field>
+              <Field label="요약·메모 (선택, 사회자·세부 안내 등)">
+                <Textarea
+                  rows={3}
+                  value={addSessionDialog.abstract}
+                  onChange={(e) =>
+                    setAddSessionDialog({ ...addSessionDialog, abstract: e.target.value })
+                  }
+                  placeholder="예: 사회: 김OO(이화여대) · 발표 요약 또는 세부 안내…"
+                />
+              </Field>
               <p className="text-xs text-muted-foreground">
-                💡 같은 시간대에 여러 트랙(예: A·B·C)이 동시 진행되어도 트랙이 다르면 충돌로 표시되지 않습니다.
-                트랙을 비워두면 동일 공간으로 간주되어 시간 충돌로 표시됩니다.
+                💡 같은 시간대 여러 트랙(예: A·B·C)이 동시 진행되어도 트랙이 다르면 충돌로 표시되지 않습니다.
+                같은 트랙에 동일 시간(예: SESSION 01의 1시간 슬롯) 발표가 여러 개여도 슬롯 공유로 인식됩니다.
               </p>
             </div>
           )}
