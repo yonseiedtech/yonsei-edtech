@@ -17,12 +17,13 @@ import {
   MapPin,
   MessageSquare,
   Star,
+  Users,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import EmptyState from "@/components/ui/empty-state";
-import { userSessionPlansApi } from "@/lib/bkend";
-import type { UserSessionPlan } from "@/types";
+import { userSessionPlansApi, conferenceProgramsApi } from "@/lib/bkend";
+import type { ConferenceProgram, UserSessionPlan } from "@/types";
 
 interface Props {
   activityId: string;
@@ -43,6 +44,7 @@ const STATUS_COLORS: Record<UserSessionPlan["status"], string> = {
 
 export default function MyActivitySessionsTab({ activityId, userId }: Props) {
   const [plans, setPlans] = useState<UserSessionPlan[]>([]);
+  const [allPlans, setAllPlans] = useState<UserSessionPlan[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -50,11 +52,20 @@ export default function MyActivitySessionsTab({ activityId, userId }: Props) {
     (async () => {
       setLoading(true);
       try {
-        // userSessionPlansApi 에 activityId 직접 조회 메서드가 없어 listByUser + 클라이언트 필터
-        const res = await userSessionPlansApi.listByUser(userId);
-        if (!cancelled) {
-          const filtered = (res?.data ?? []).filter((p) => p.activityId === activityId);
-          setPlans(filtered);
+        // 1) 본인 plans (전체) — activityId 로 클라이언트 필터
+        const mineRes = await userSessionPlansApi.listByUser(userId);
+        if (cancelled) return;
+        const mine = (mineRes?.data ?? []).filter((p) => p.activityId === activityId);
+        setPlans(mine);
+
+        // 2) 동일 program 의 모든 회원 plans — '함께 참석' 표시용
+        // listByActivity 가 없어서 program 을 먼저 조회 후 listByProgram 사용
+        const progRes = await conferenceProgramsApi.listByActivity(activityId);
+        if (cancelled) return;
+        const program = progRes?.data?.[0] as ConferenceProgram | undefined;
+        if (program?.id) {
+          const allRes = await userSessionPlansApi.listByProgram(program.id);
+          if (!cancelled) setAllPlans(allRes?.data ?? []);
         }
       } catch (e) {
         console.error("[MyActivitySessionsTab]", e);
@@ -66,6 +77,19 @@ export default function MyActivitySessionsTab({ activityId, userId }: Props) {
       cancelled = true;
     };
   }, [activityId, userId]);
+
+  // sessionId → 본인 외 다른 참석자 plans (planned/attended)
+  const companionsBySessionId = useMemo(() => {
+    const map = new Map<string, UserSessionPlan[]>();
+    for (const p of allPlans) {
+      if (p.userId === userId) continue;
+      if (p.status === "skipped") continue;
+      const arr = map.get(p.sessionId) ?? [];
+      arr.push(p);
+      map.set(p.sessionId, arr);
+    }
+    return map;
+  }, [allPlans, userId]);
 
   const sorted = useMemo(
     () =>
@@ -121,52 +145,76 @@ export default function MyActivitySessionsTab({ activityId, userId }: Props) {
       </div>
 
       <div className="space-y-2">
-        {sorted.map((p) => (
-          <div
-            key={p.id}
-            className="flex flex-col gap-2 rounded-lg border bg-card p-3 sm:flex-row sm:items-start"
-          >
-            <div className="shrink-0 sm:w-32">
-              <div className="font-mono text-sm font-semibold tabular-nums">
-                {p.sessionStartTime ?? "—"}~{p.sessionEndTime ?? "—"}
+        {sorted.map((p) => {
+          const companions = companionsBySessionId.get(p.sessionId) ?? [];
+          return (
+            <div
+              key={p.id}
+              className="flex flex-col gap-2 rounded-lg border bg-card p-3 sm:flex-row sm:items-start"
+            >
+              <div className="shrink-0 sm:w-32">
+                <div className="font-mono text-sm font-semibold tabular-nums">
+                  {p.sessionStartTime ?? "—"}~{p.sessionEndTime ?? "—"}
+                </div>
+                <div className="mt-0.5 text-xs text-muted-foreground">
+                  {p.sessionDate ?? "—"}
+                </div>
               </div>
-              <div className="mt-0.5 text-xs text-muted-foreground">
-                {p.sessionDate ?? "—"}
-              </div>
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <h4 className="font-medium leading-snug">
-                  {p.sessionTitle ?? "(세션 제목 없음)"}
-                </h4>
-                <Badge className={`${STATUS_COLORS[p.status]} text-[10px]`}>
-                  {STATUS_LABELS[p.status]}
-                </Badge>
-                {p.rating && (
-                  <span className="inline-flex items-center gap-0.5 text-xs text-amber-700 dark:text-amber-300">
-                    <Star className="h-3 w-3 fill-current" /> {p.rating}/5
-                  </span>
-                )}
-              </div>
-              {(p.sessionTrack || p.sessionStartTime) && (
-                <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                  {p.sessionTrack && (
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h4 className="font-medium leading-snug">
+                    {p.sessionTitle ?? "(세션 제목 없음)"}
+                  </h4>
+                  <Badge className={`${STATUS_COLORS[p.status]} text-[10px]`}>
+                    {STATUS_LABELS[p.status]}
+                  </Badge>
+                  {p.rating && (
+                    <span className="inline-flex items-center gap-0.5 text-xs text-amber-700 dark:text-amber-300">
+                      <Star className="h-3 w-3 fill-current" /> {p.rating}/5
+                    </span>
+                  )}
+                </div>
+                {p.sessionTrack && (
+                  <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1">
                       <MapPin className="h-3 w-3" />
                       {p.sessionTrack}
                     </span>
-                  )}
-                </div>
-              )}
-              {p.reflection && (
-                <p className="mt-1 line-clamp-2 rounded bg-emerald-50 px-2 py-1 text-xs text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200">
-                  <MessageSquare className="mr-1 inline h-3 w-3" />
-                  {p.reflection}
-                </p>
-              )}
+                  </div>
+                )}
+                {/* Sprint 67 — 함께 참석 (본인 외): 회원명 chip 으로 표시 */}
+                {companions.length > 0 && (
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1 rounded-md bg-purple-50 px-2 py-1 text-[11px] dark:bg-purple-950/30">
+                    <Users className="h-3 w-3 shrink-0 text-purple-700 dark:text-purple-300" />
+                    <span className="font-semibold text-purple-900 dark:text-purple-200">
+                      함께 {companions.length}명:
+                    </span>
+                    {companions.slice(0, 6).map((c) => (
+                      <Badge
+                        key={c.id}
+                        variant="secondary"
+                        className="bg-card text-[10px] text-purple-800 dark:text-purple-200"
+                      >
+                        {c.userName ?? "회원"}
+                      </Badge>
+                    ))}
+                    {companions.length > 6 && (
+                      <span className="text-purple-700 dark:text-purple-300">
+                        +{companions.length - 6}명
+                      </span>
+                    )}
+                  </div>
+                )}
+                {p.reflection && (
+                  <p className="mt-1 line-clamp-2 rounded bg-emerald-50 px-2 py-1 text-xs text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200">
+                    <MessageSquare className="mr-1 inline h-3 w-3" />
+                    {p.reflection}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
