@@ -92,7 +92,7 @@ function CardTab({ user, qrUrl, cardRef, handleShare, handleSavePng, handlePhoto
         <ul className="mt-2 list-disc space-y-1 pl-4">
           <li>프로필 사진: 명함에 표시할 사진을 업로드하세요</li>
           <li>공유하기: 카카오톡·메시지로 명함 링크 전송</li>
-          <li>이미지 저장: 명함을 PNG로 저장해 프로필에 활용</li>
+          <li>이미지 저장: 명함을 JPG로 저장해 프로필에 활용</li>
           <li>vCard: 연락처 앱에서 바로 열 수 있는 파일</li>
           <li>상대가 내 QR을 스캔하면 교환 기록 탭에 남아요</li>
         </ul>
@@ -225,15 +225,21 @@ function CardInner() {
   async function handleSavePng() {
     if (!cardRef.current) return;
     try {
-      const { toPng } = await import("html-to-image");
-      const dataUrl = await toPng(cardRef.current, { pixelRatio: 2, cacheBust: true });
+      const { toJpeg } = await import("html-to-image");
+      const dataUrl = await toJpeg(cardRef.current, {
+        quality: 0.95,
+        backgroundColor: "#ffffff",
+        pixelRatio: 2,
+        cacheBust: true,
+      });
       const a = document.createElement("a");
       a.href = dataUrl;
-      a.download = `${user!.name.replace(/\s+/g, "_")}_명함.png`;
+      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+      a.download = `명함-${user!.name ?? "card"}-${dateStr}.jpg`;
       a.click();
-      toast.success("이미지로 저장했습니다.");
+      toast.success("명함이 저장되었습니다.");
     } catch {
-      toast.error("이미지 생성에 실패했습니다.");
+      toast.error("JPG 저장 실패");
     }
   }
 

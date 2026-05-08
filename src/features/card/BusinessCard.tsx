@@ -59,7 +59,13 @@ const BusinessCard = forwardRef<HTMLDivElement, BusinessCardProps>(
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-card shadow-sm ring-1 ring-white/40">
               <Image src="/yonsei-emblem.svg" alt="연세대학교 엠블럼" width={22} height={22} className="h-5 w-5" />
             </div>
-            <Image src="/logo-text.png" alt="연세교육공학회" width={200} height={40} className="h-8 w-auto" />
+            <Image
+              src="/logo-text.png"
+              alt="연세교육공학회"
+              width={200}
+              height={40}
+              className="h-8 w-auto brightness-0 invert"
+            />
           </div>
 
           {/* 프로필 사진 */}
@@ -76,11 +82,11 @@ const BusinessCard = forwardRef<HTMLDivElement, BusinessCardProps>(
             </div>
           </div>
 
-          {/* 이름 + 직함 */}
+          {/* 이름 + 소속 + 직함 (Sprint 67-G: 순서 변경 — 이름→소속→직함) */}
           <div className="mt-3 text-center">
             <h2 className="text-xl font-bold text-slate-900">{user.name}</h2>
-            {user.position && <p className="mt-0.5 text-sm text-slate-600">{user.position}</p>}
-            {affiliationLine && <p className="mt-0.5 text-xs text-slate-500">{affiliationLine}</p>}
+            {affiliationLine && <p className="mt-0.5 text-sm text-slate-600">{affiliationLine}</p>}
+            {user.position && <p className="mt-0.5 text-xs text-slate-500">{user.position}</p>}
           </div>
 
           {/* 연락처 */}
