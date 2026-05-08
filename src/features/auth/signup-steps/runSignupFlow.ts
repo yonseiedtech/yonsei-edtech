@@ -91,6 +91,12 @@ export async function runSignupFlow(
     consents,
     securityQuestion,
     securityAnswerHash,
+    // Sprint 67 P0: 가입 시 알림·노출 기본값 명시 — 모두 ON (false 로 명시할 때만 옵트아웃)
+    notificationPrefs: {
+      weeklyDigest: true,
+      feedOptIn: true,
+      networkOptIn: true,
+    },
     undergraduateUniversity: data.undergraduateUniversity.trim(),
     undergraduateCollege: data.undergraduateCollege.trim(),
     undergraduateMajor1: data.undergraduateMajor1.trim(),

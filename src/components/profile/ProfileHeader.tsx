@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import type { User } from "@/types";
-import { ROLE_LABELS } from "@/types";
+import { ROLE_LABELS, SCHOOL_LEVEL_LABELS } from "@/types";
 import ProfileLikeButton from "./ProfileLikeButton";
 import ProfileShareMenu from "./ProfileShareMenu";
 import ProfileCertificateDownloadButton from "./ProfileCertificateDownloadButton";
@@ -43,11 +43,31 @@ export default function ProfileHeader({ owner, isOwner, viewer }: Props) {
           {owner.position && (
             <p className="mt-1 text-sm text-slate-700">{owner.position}</p>
           )}
-          {(owner.affiliation || owner.department) && (
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              {[owner.affiliation, owner.department].filter(Boolean).join(" · ")}
-            </p>
-          )}
+          {(() => {
+            // Sprint 67 P1: 학교 교사는 교육청 + 학교급 + 학교명 + 담당과목 분리 노출
+            if (owner.occupation === "teacher") {
+              const parts = [
+                owner.affiliationOffice,
+                owner.schoolLevel ? SCHOOL_LEVEL_LABELS[owner.schoolLevel] : null,
+                owner.affiliation,
+              ].filter(Boolean);
+              if (parts.length === 0) return null;
+              return (
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {parts.join(" · ")}
+                </p>
+              );
+            }
+            // 그 외 직업유형 — 기존 affiliation + department
+            if (owner.affiliation || owner.department) {
+              return (
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {[owner.affiliation, owner.department].filter(Boolean).join(" · ")}
+                </p>
+              );
+            }
+            return null;
+          })()}
           <p className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/5 px-2 py-0.5 text-[11px] font-medium text-primary">
             학술 포트폴리오
           </p>
