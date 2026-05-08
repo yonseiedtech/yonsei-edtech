@@ -1,10 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Save } from "lucide-react";
+import { Save, Plus, X, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useUpdateProfile } from "@/features/member/useMembers";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -27,6 +28,8 @@ import { calcGeneration } from "@/lib/generation";
 import ProfileSocialsEditor from "@/components/profile/ProfileSocialsEditor";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
+import { EDU_TECH_KEYWORD_CATEGORIES } from "@/lib/edu-keywords";
+import { cn } from "@/lib/utils";
 
 const ENROLLMENT_YEAR_OPTIONS = Array.from({ length: 15 }, (_, i) => 2026 - i);
 
@@ -102,6 +105,20 @@ const OCCUPATION_FIELDS: Record<
 };
 
 export default function ProfileEditor({ user }: Props) {
+  // ── 관심 분야 키워드 (카탈로그 + 직접 입력) ──
+  const [interestKeywords, setInterestKeywords] = useState<string[]>(
+    user.interestKeywords ?? [],
+  );
+  const [keywordDraft, setKeywordDraft] = useState("");
+
+  // ── 관심 연구 주제 (자유서술 복수) ──
+  const [researchTopics, setResearchTopics] = useState<string[]>(
+    user.researchTopics ?? [],
+  );
+  const [topicDraft, setTopicDraft] = useState("");
+  const [editingTopicIdx, setEditingTopicIdx] = useState<number | null>(null);
+  const [editingTopicText, setEditingTopicText] = useState("");
+
   const { register, handleSubmit, control, setValue } = useForm<ProfileData>({
     defaultValues: {
       name: user.name,
@@ -175,6 +192,8 @@ export default function ProfileEditor({ user }: Props) {
         schoolLevel: data.schoolLevel || undefined,
         generation: computedGen || data.generation,
         accumulatedSemesters: data.accumulatedSemesters ? Number(data.accumulatedSemesters) : undefined,
+        interestKeywords,
+        researchTopics,
       };
       await updateProfile({ id: user.id, data: payload as unknown as Record<string, unknown> });
       // 본인 프로필을 편집한 경우에만 authStore를 갱신.
@@ -294,6 +313,205 @@ export default function ProfileEditor({ user }: Props) {
           placeholder="간단한 자기소개를 작성해주세요."
           rows={3}
         />
+      </div>
+
+      {/* 관심 분야 키워드 */}
+      <div className="border-t pt-6">
+        <h3 className="text-sm font-bold">관심 분야 키워드</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          카탈로그에서 선택하거나 직접 입력하세요. 명함에도 표시됩니다.
+        </p>
+
+        {/* 선택된 키워드 chips */}
+        {interestKeywords.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {interestKeywords.map((k) => (
+              <span
+                key={k}
+                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
+              >
+                {k}
+                <button
+                  type="button"
+                  onClick={() => setInterestKeywords((prev) => prev.filter((x) => x !== k))}
+                  aria-label={`${k} 제거`}
+                  className="rounded-full p-0.5 hover:bg-primary/20"
+                >
+                  <X size={11} />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* 카탈로그: 카테고리별 그룹 */}
+        <div className="mt-3 space-y-3">
+          {EDU_TECH_KEYWORD_CATEGORIES.map((cat) => (
+            <div key={cat.label}>
+              <p className="mb-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+                {cat.label}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {cat.keywords.map((kw) => {
+                  const active = interestKeywords.includes(kw);
+                  return (
+                    <button
+                      key={kw}
+                      type="button"
+                      onClick={() =>
+                        setInterestKeywords((prev) =>
+                          active ? prev.filter((x) => x !== kw) : [...prev, kw],
+                        )
+                      }
+                      className={cn(
+                        "rounded-full border px-2.5 py-1 text-xs transition-colors",
+                        active
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-input bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                      )}
+                    >
+                      {kw}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* 직접 입력 */}
+        <div className="mt-3 flex gap-2">
+          <Input
+            value={keywordDraft}
+            onChange={(e) => setKeywordDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                const trimmed = keywordDraft.trim();
+                if (trimmed && !interestKeywords.includes(trimmed)) {
+                  setInterestKeywords((prev) => [...prev, trimmed]);
+                }
+                setKeywordDraft("");
+              }
+            }}
+            placeholder="카탈로그에 없는 키워드 직접 입력"
+            maxLength={40}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              const trimmed = keywordDraft.trim();
+              if (trimmed && !interestKeywords.includes(trimmed)) {
+                setInterestKeywords((prev) => [...prev, trimmed]);
+              }
+              setKeywordDraft("");
+            }}
+            disabled={!keywordDraft.trim()}
+            className="inline-flex shrink-0 items-center gap-1 rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground hover:bg-muted disabled:opacity-50"
+          >
+            <Plus size={14} /> 추가
+          </button>
+        </div>
+      </div>
+
+      {/* 관심 연구 주제 */}
+      <div className="border-t pt-6">
+        <h3 className="text-sm font-bold">관심 연구 주제</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          연구 관심사를 1–3문장으로 서술해 주세요. 여러 주제를 추가할 수 있습니다.
+        </p>
+
+        {/* 등록된 주제 목록 */}
+        {researchTopics.length > 0 && (
+          <ul className="mt-3 space-y-2">
+            {researchTopics.map((topic, idx) => (
+              <li key={idx} className="rounded-lg border bg-muted/30 p-3 text-sm">
+                {editingTopicIdx === idx ? (
+                  <div className="space-y-2">
+                    <Textarea
+                      value={editingTopicText}
+                      onChange={(e) => setEditingTopicText(e.target.value)}
+                      rows={3}
+                      className="text-sm"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => { setEditingTopicIdx(null); setEditingTopicText(""); }}
+                      >
+                        취소
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => {
+                          const trimmed = editingTopicText.trim();
+                          if (!trimmed) return;
+                          setResearchTopics((prev) =>
+                            prev.map((t, i) => (i === idx ? trimmed : t)),
+                          );
+                          setEditingTopicIdx(null);
+                          setEditingTopicText("");
+                        }}
+                      >
+                        저장
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-2">
+                    <p className="flex-1 text-sm leading-relaxed">{topic}</p>
+                    <div className="flex shrink-0 gap-1">
+                      <button
+                        type="button"
+                        onClick={() => { setEditingTopicIdx(idx); setEditingTopicText(topic); }}
+                        aria-label="편집"
+                        className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      >
+                        <Pencil size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setResearchTopics((prev) => prev.filter((_, i) => i !== idx))}
+                        aria-label="삭제"
+                        className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* 새 주제 추가 */}
+        <div className="mt-3 space-y-2">
+          <Textarea
+            value={topicDraft}
+            onChange={(e) => setTopicDraft(e.target.value)}
+            placeholder="예: 생성형 AI를 활용한 개인화 학습 설계에 관심이 있습니다."
+            rows={3}
+          />
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                const trimmed = topicDraft.trim();
+                if (!trimmed) return;
+                setResearchTopics((prev) => [...prev, trimmed]);
+                setTopicDraft("");
+              }}
+              disabled={!topicDraft.trim()}
+              className="inline-flex items-center gap-1 rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground hover:bg-muted disabled:opacity-50"
+            >
+              <Plus size={14} /> 주제 추가
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* 소속 정보 */}

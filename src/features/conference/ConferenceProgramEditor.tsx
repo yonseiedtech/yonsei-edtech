@@ -104,9 +104,11 @@ export default function ConferenceProgramEditor({
   const aiFileInputRef = useRef<HTMLInputElement | null>(null);
   const csvFileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Sprint 67-G: 세션 추가 dialog
+  // Sprint 67-G: 세션 추가/수정 dialog (mode: add | edit)
   const [addSessionDialog, setAddSessionDialog] = useState<{
+    mode: "add" | "edit";
     dayIdx: number;
+    sessionIdx?: number;
     startTime: string;
     endTime: string;
     track: string;
@@ -187,6 +189,7 @@ export default function ConferenceProgramEditor({
   function addSession(dayIdx: number) {
     // Sprint 67-G: dialog 형태로 — 시간/제목/발표자/트랙 입력 후 추가
     setAddSessionDialog({
+      mode: "add",
       dayIdx,
       startTime: "",
       endTime: "",
@@ -197,9 +200,26 @@ export default function ConferenceProgramEditor({
     });
   }
 
+  function editSession(dayIdx: number, sessionIdx: number) {
+    // Sprint 67-G: 기존 세션 dialog 형태로 수정 — 동일 dialog 재활용
+    const session = draft.days[dayIdx]?.sessions[sessionIdx];
+    if (!session) return;
+    setAddSessionDialog({
+      mode: "edit",
+      dayIdx,
+      sessionIdx,
+      startTime: session.startTime ?? "",
+      endTime: session.endTime ?? "",
+      track: session.track ?? "",
+      category: session.category ?? "paper",
+      title: session.title ?? "",
+      speakers: (session.speakers ?? []).join(", "),
+    });
+  }
+
   function confirmAddSession() {
     if (!addSessionDialog) return;
-    const { dayIdx, startTime, endTime, track, category, title, speakers } =
+    const { mode, dayIdx, sessionIdx, startTime, endTime, track, category, title, speakers } =
       addSessionDialog;
     if (!title.trim()) {
       toast.error("발표 제목을 입력하세요.");
@@ -209,6 +229,36 @@ export default function ConferenceProgramEditor({
       toast.error("종료 시각이 시작 시각보다 늦어야 합니다.");
       return;
     }
+    const speakersArr = speakers.trim()
+      ? speakers.split(/[,;/]/).map((s) => s.trim()).filter(Boolean)
+      : undefined;
+    if (mode === "edit" && sessionIdx !== undefined) {
+      patchSession(dayIdx, sessionIdx, {
+        startTime: startTime || "00:00",
+        endTime: endTime || "00:00",
+        track: track.trim() || undefined,
+        category,
+        title: title.trim(),
+        speakers: speakersArr,
+      });
+      // 시간 변경 시 정렬 재적용
+      setDraft((d) => ({
+        ...d,
+        days: d.days.map((day, i) =>
+          i === dayIdx
+            ? {
+                ...day,
+                sessions: [...day.sessions].sort((a, b) =>
+                  (a.startTime ?? "").localeCompare(b.startTime ?? ""),
+                ),
+              }
+            : day,
+        ),
+      }));
+      setAddSessionDialog(null);
+      toast.success("세션이 수정되었습니다.");
+      return;
+    }
     const newSession: ConferenceSession = {
       ...blankSession(),
       startTime: startTime || "00:00",
@@ -216,12 +266,7 @@ export default function ConferenceProgramEditor({
       track: track.trim() || undefined,
       category,
       title: title.trim(),
-      speakers: speakers.trim()
-        ? speakers
-            .split(/[,;/]/)
-            .map((s) => s.trim())
-            .filter(Boolean)
-        : undefined,
+      speakers: speakersArr,
     };
     setDraft((d) => ({
       ...d,
@@ -1005,6 +1050,7 @@ export default function ConferenceProgramEditor({
                   onMoveUp={() => moveSession(dayIdx, sIdx, -1)}
                   onMoveDown={() => moveSession(dayIdx, sIdx, 1)}
                   onRemove={() => removeSession(dayIdx, sIdx)}
+                  onEditDialog={() => editSession(dayIdx, sIdx)}
                   isFirst={sIdx === 0}
                   isLast={sIdx === day.sessions.length - 1}
                 />
@@ -1101,7 +1147,9 @@ export default function ConferenceProgramEditor({
       <Dialog open={!!addSessionDialog} onOpenChange={(o) => !o && setAddSessionDialog(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>세션 추가</DialogTitle>
+            <DialogTitle>
+              {addSessionDialog?.mode === "edit" ? "세션 수정" : "세션 추가"}
+            </DialogTitle>
           </DialogHeader>
           {addSessionDialog && (
             <div className="space-y-3">
@@ -1190,8 +1238,17 @@ export default function ConferenceProgramEditor({
               취소
             </Button>
             <Button onClick={confirmAddSession}>
-              <Plus className="mr-1 h-3.5 w-3.5" />
-              추가
+              {addSessionDialog?.mode === "edit" ? (
+                <>
+                  <Save className="mr-1 h-3.5 w-3.5" />
+                  저장
+                </>
+              ) : (
+                <>
+                  <Plus className="mr-1 h-3.5 w-3.5" />
+                  추가
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1260,6 +1317,7 @@ function SessionRow({
   onMoveUp,
   onMoveDown,
   onRemove,
+  onEditDialog,
   isFirst,
   isLast,
 }: {
@@ -1268,6 +1326,7 @@ function SessionRow({
   onMoveUp: () => void;
   onMoveDown: () => void;
   onRemove: () => void;
+  onEditDialog?: () => void;
   isFirst: boolean;
   isLast: boolean;
 }) {
@@ -1315,6 +1374,17 @@ function SessionRow({
           </span>
         )}
         <div className="ml-auto flex items-center gap-1">
+          {onEditDialog && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={onEditDialog}
+              title="Dialog 폼으로 수정"
+              className="h-7 px-2 text-xs"
+            >
+              수정
+            </Button>
+          )}
           <Button
             size="sm"
             variant="ghost"

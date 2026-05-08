@@ -255,6 +255,10 @@ export interface User { [key: string]: unknown;
   birthDate?: string;
   /** 관심 연구분야 */
   researchInterests?: string[];
+  /** Sprint 67-E: 관심 분야 키워드 (카탈로그 + 직접 입력) */
+  interestKeywords?: string[];
+  /** Sprint 67-E: 관심 연구 주제 (1-3문장 자유서술, 복수) */
+  researchTopics?: string[];
   /** 최근 논문 */
   recentPapers?: RecentPaper[];
   /** 졸업생 학위논문 읽기 리스트 (alumniThesis id 배열) */

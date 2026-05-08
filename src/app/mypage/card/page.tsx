@@ -1,10 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
 import { ArrowLeft, Download, Share2, Users, CreditCard, History, Camera, BookUser } from "lucide-react";
+import Cropper from "react-easy-crop";
+import type { Area } from "react-easy-crop";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { useAuthStore } from "@/features/auth/auth-store";
 import BusinessCard from "@/features/card/BusinessCard";
@@ -12,13 +14,38 @@ import ReceivedCardsSection from "@/features/card/ReceivedCardsSection";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import EmptyState from "@/components/ui/empty-state";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { downloadVCard, userToContact } from "@/features/card/vcard";
 import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import type { BusinessCardExchange } from "@/types";
 import { toast } from "sonner";
-import { uploadImageSmart } from "@/lib/storage";
+import { uploadToStorage } from "@/lib/storage";
 import { useUpdateProfile } from "@/features/member/useMembers";
+
+async function getCroppedBlob(src: string, area: Area): Promise<Blob> {
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const i = new Image();
+    i.onload = () => resolve(i);
+    i.onerror = reject;
+    i.src = src;
+  });
+  const canvas = document.createElement("canvas");
+  canvas.width = area.width;
+  canvas.height = area.height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas not supported");
+  ctx.drawImage(img, area.x, area.y, area.width, area.height, 0, 0, area.width, area.height);
+  return new Promise<Blob>((resolve, reject) =>
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Canvas toBlob failed"))), "image/jpeg", 0.92),
+  );
+}
 
 type TabKey = "card" | "exchanges" | "received";
 
@@ -41,7 +68,7 @@ function CardTab({ user, qrUrl, cardRef, handleShare, handleSavePng, handlePhoto
   cardRef: React.RefObject<HTMLDivElement | null>;
   handleShare: () => void;
   handleSavePng: () => void;
-  handlePhotoUpload: (file: File) => Promise<void>;
+  handlePhotoUpload: (file: File) => void;
   isUploading: boolean;
 }) {
   if (!user) return null;
@@ -183,6 +210,16 @@ function CardInner() {
   const [isUploading, setIsUploading] = useState(false);
   const { updateProfile } = useUpdateProfile();
 
+  // Crop dialog state
+  const [cropDialog, setCropDialog] = useState<{ src: string; file: File } | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+
+  const onCropComplete = useCallback((_: Area, areaPixels: Area) => {
+    setCroppedAreaPixels(areaPixels);
+  }, []);
+
   if (!user) return null;
 
   const siteOrigin = typeof window !== "undefined" ? window.location.origin : "https://yonsei-edtech.vercel.app";
@@ -207,14 +244,28 @@ function CardInner() {
     }
   }
 
-  async function handlePhotoUpload(file: File) {
-    if (!user) return;
+  function handlePhotoUpload(file: File) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+      setCroppedAreaPixels(null);
+      setCropDialog({ src: reader.result as string, file });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function confirmCrop() {
+    if (!user || !cropDialog || !croppedAreaPixels) return;
     setIsUploading(true);
     try {
-      const url = await uploadImageSmart(file, `profile-photos/${user.id}`);
+      const blob = await getCroppedBlob(cropDialog.src, croppedAreaPixels);
+      const croppedFile = new File([blob], `profile-${Date.now()}.jpg`, { type: "image/jpeg" });
+      const { url } = await uploadToStorage(croppedFile, `profile-photos/${user.id}`);
       await updateProfile({ id: user.id, data: { profileImage: url } });
       setUser({ ...user, profileImage: url });
       toast.success("프로필 사진을 업데이트했습니다.");
+      setCropDialog(null);
     } catch {
       toast.error("사진 업로드에 실패했습니다.");
     } finally {
@@ -292,6 +343,57 @@ function CardInner() {
           )}
         </div>
       </div>
+
+      {/* 프로필 사진 크롭 다이얼로그 */}
+      <Dialog open={!!cropDialog} onOpenChange={(open) => { if (!open && !isUploading) setCropDialog(null); }}>
+        <DialogContent showCloseButton={false} className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>프로필 사진 크롭</DialogTitle>
+          </DialogHeader>
+
+          {cropDialog && (
+            <div className="relative h-72 w-full overflow-hidden rounded-lg bg-black">
+              <Cropper
+                image={cropDialog.src}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                cropShape="round"
+                showGrid={false}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+              />
+            </div>
+          )}
+
+          <div className="px-1">
+            <label className="mb-1 block text-xs text-muted-foreground">확대</label>
+            <input
+              type="range"
+              min={1}
+              max={3}
+              step={0.05}
+              value={zoom}
+              onChange={(e) => setZoom(Number(e.target.value))}
+              className="w-full accent-primary"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              disabled={isUploading}
+              onClick={() => setCropDialog(null)}
+            >
+              취소
+            </Button>
+            <Button disabled={isUploading || !croppedAreaPixels} onClick={confirmCrop}>
+              {isUploading ? "저장 중…" : "크롭하여 저장"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

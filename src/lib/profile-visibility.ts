@@ -64,8 +64,14 @@ export function canViewSection(
 ): boolean {
   if (viewer?.id && viewer.id === owner.id) return true;
 
+  // Sprint 67-G: 섹션별 기본 공개 범위 — 명함 핵심 정보(이메일/전화/SNS)는 공유자까지 기본 공개
+  const SECTION_DEFAULT: Partial<Record<SectionKey, SectionVisibility>> = {
+    email: "shared",
+    phone: "shared",
+    socials: "shared",
+  };
   const level: SectionVisibility =
-    owner.sectionVisibility?.[section] ?? "members";
+    owner.sectionVisibility?.[section] ?? SECTION_DEFAULT[section] ?? "members";
   const viewerStaff = isStaffRole(viewer?.role);
   const hasVia = via === "qr" || via === "link";
 

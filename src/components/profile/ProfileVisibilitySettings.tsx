@@ -24,6 +24,13 @@ const SECTIONS: SectionKey[] = [
 
 const LEVELS: SectionVisibility[] = ["members", "staff", "shared", "private"];
 
+// Sprint 67-G: 섹션별 기본 공개 범위 — 명함의 핵심 정보(이메일/전화/SNS)는 공유자까지 기본 공개
+const SECTION_DEFAULT_VISIBILITY: Partial<Record<SectionKey, SectionVisibility>> = {
+  email: "shared",
+  phone: "shared",
+  socials: "shared",
+};
+
 export default function ProfileVisibilitySettings({ value, onChange, disabled }: Props) {
   function setLevel(key: SectionKey, level: SectionVisibility) {
     onChange({ ...(value ?? {}), [key]: level });
@@ -40,7 +47,7 @@ export default function ProfileVisibilitySettings({ value, onChange, disabled }:
       </div>
       <ul className="space-y-2">
         {SECTIONS.map((key) => {
-          const current: SectionVisibility = (value?.[key] ?? "members") as SectionVisibility;
+          const current: SectionVisibility = (value?.[key] ?? SECTION_DEFAULT_VISIBILITY[key] ?? "members") as SectionVisibility;
           return (
             <li key={key} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-muted/20 px-3 py-2">
               <span className="text-sm font-medium">{SECTION_LABELS[key]}</span>

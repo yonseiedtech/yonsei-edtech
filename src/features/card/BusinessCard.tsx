@@ -98,6 +98,27 @@ const BusinessCard = forwardRef<HTMLDivElement, BusinessCardProps>(
             {user.field ? <p className="italic text-slate-500">#{user.field}</p> : null}
           </div>
 
+          {/* 관심 분야 키워드 */}
+          {user.interestKeywords && user.interestKeywords.length > 0 && (
+            <div className="mt-3 flex flex-wrap justify-center gap-1">
+              {user.interestKeywords.slice(0, 6).map((kw) => (
+                <span
+                  key={kw}
+                  className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary"
+                >
+                  {kw}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* 관심 연구 주제 (첫 번째 1개, 축약) */}
+          {user.researchTopics && user.researchTopics.length > 0 && (
+            <p className="mt-2 line-clamp-2 text-center text-[10px] leading-relaxed text-slate-500 px-1">
+              {user.researchTopics[0]}
+            </p>
+          )}
+
           {/* QR */}
           <div className="mt-auto flex flex-col items-center gap-1.5 pt-4">
             <div className="rounded-xl bg-card p-2 shadow-sm ring-1 ring-slate-200">
