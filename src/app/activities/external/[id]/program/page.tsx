@@ -2,10 +2,13 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Settings } from "lucide-react";
 import { useAuth } from "@/features/auth/useAuth";
+import { useAuthStore } from "@/features/auth/auth-store";
+import { isAtLeast } from "@/lib/permissions";
 import { activitiesApi } from "@/lib/bkend";
 import ConferenceProgramView from "@/features/conference/ConferenceProgramView";
+import { Button } from "@/components/ui/button";
 import type { Activity } from "@/types";
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
@@ -45,14 +48,27 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     );
   }
 
+  const authUser = useAuthStore((s) => s.user);
+  const isStaff = isAtLeast(authUser, "staff");
+
   return (
     <div className="mx-auto max-w-5xl space-y-4 px-4 py-6">
-      <Link
-        href={`/activities/external/${id}`}
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" /> 활동 상세로 돌아가기
-      </Link>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Link
+          href={`/activities/external/${id}`}
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" /> 활동 상세로 돌아가기
+        </Link>
+        {isStaff && (
+          <Link href={`/academic-admin/external/${id}/program`}>
+            <Button size="sm" variant="outline" className="gap-1.5">
+              <Settings className="h-3.5 w-3.5" />
+              프로그램 편집·세션 추가
+            </Button>
+          </Link>
+        )}
+      </div>
       <ConferenceProgramView
         activityId={id}
         activityTitle={activity?.title ?? ""}

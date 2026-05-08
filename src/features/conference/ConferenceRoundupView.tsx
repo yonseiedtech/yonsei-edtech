@@ -15,6 +15,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { conferenceProgramsApi, userSessionPlansApi } from "@/lib/bkend";
+import Stat from "./Stat";
 import {
   CONFERENCE_SESSION_CATEGORY_COLORS,
   CONFERENCE_SESSION_CATEGORY_LABELS,
@@ -156,10 +157,11 @@ export default function ConferenceRoundupView({ activityId, activityTitle }: Pro
           </p>
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-          <Stat label="후기 작성" value={summary.reflectionCount} icon={<MessageSquare className="h-3 w-3" />} />
-          <Stat label="후기 작성자" value={summary.userCount} icon={<Users className="h-3 w-3" />} />
-          <Stat label="후기 있는 세션" value={summary.sessionCount} icon={<Award className="h-3 w-3" />} />
+          <Stat variant="muted" label="후기 작성" value={summary.reflectionCount} icon={<MessageSquare className="h-3 w-3" />} />
+          <Stat variant="muted" label="후기 작성자" value={summary.userCount} icon={<Users className="h-3 w-3" />} />
+          <Stat variant="muted" label="후기 있는 세션" value={summary.sessionCount} icon={<Award className="h-3 w-3" />} />
           <Stat
+            variant="muted"
             label="평균 별점"
             value={summary.overall ? `★ ${summary.overall.toFixed(1)}` : "—"}
             icon={<Star className="h-3 w-3" />}
@@ -243,17 +245,7 @@ export default function ConferenceRoundupView({ activityId, activityTitle }: Pro
   );
 }
 
-function Stat({ label, value, icon }: { label: string; value: number | string; icon?: React.ReactNode }) {
-  return (
-    <div className="rounded-md border bg-card/70 p-3">
-      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-        {icon}
-        {label}
-      </div>
-      <div className="mt-1 text-xl font-bold">{value}</div>
-    </div>
-  );
-}
+// Stat 은 ./Stat.tsx 로 추출됨 (F2 — option A)
 
 function DateChip({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
   return (

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { userSessionPlansApi } from "@/lib/bkend";
 import type { UserSessionPlan } from "@/types";
+import Stat from "./Stat";
 
 interface Props {
   programId: string;
@@ -172,14 +173,4 @@ export default function ConferenceProgramStats({ programId }: Props) {
   );
 }
 
-function Stat({ label, value, icon }: { label: string; value: number; icon?: React.ReactNode }) {
-  return (
-    <div className="rounded-md border bg-background p-3">
-      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-        {icon}
-        {label}
-      </div>
-      <div className="mt-1 text-xl font-bold">{value}</div>
-    </div>
-  );
-}
+// Stat 은 ./Stat.tsx 로 추출됨 (F2 — option A)

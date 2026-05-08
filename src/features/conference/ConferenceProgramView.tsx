@@ -32,6 +32,13 @@ import {
 import { conferenceProgramsApi, userSessionPlansApi } from "@/lib/bkend";
 import { toast } from "sonner";
 import {
+  getSessionCardVariant,
+  cardClassesForVariant,
+  contentPaddingForVariant,
+  titleClassForVariant,
+  CATEGORY_ACCENT_BAR,
+} from "./session-card-variant";
+import {
   CONFERENCE_SESSION_CATEGORY_COLORS,
   CONFERENCE_SESSION_CATEGORY_LABELS,
   type ConferenceProgram,
@@ -535,15 +542,33 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
 
       {viewMode === "schedule" && day && (
         <div className="space-y-3">
-          <div className="flex flex-col gap-2 rounded-md border bg-muted/30 p-3 sm:flex-row sm:items-center">
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="제목·연사·소속·장소·트랙 검색"
-              className="h-8 flex-1 rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-            />
-            <div className="flex flex-wrap items-center gap-1.5">
+          {/* 검색·필터 — 줄 분리 (option A 추가 요청): 1행 검색, 2행 카테고리 필터 + 내 일정만 */}
+          <div className="space-y-2 rounded-md border bg-muted/30 p-3">
+            {/* 1행: 검색창 + 내 일정만 토글 */}
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="제목·연사·소속·장소·트랙 검색"
+                className="h-9 flex-1 rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              {user && (
+                <button
+                  type="button"
+                  onClick={() => setOnlyMine((v) => !v)}
+                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${onlyMine ? "bg-blue-100 text-blue-800 ring-2 ring-blue-300 dark:bg-blue-950/50 dark:text-blue-200 dark:ring-blue-700" : "border border-input bg-background text-muted-foreground hover:bg-muted"}`}
+                  title="내가 추가한 세션만 보기"
+                  aria-pressed={onlyMine}
+                >
+                  ★ 내 일정만 보기
+                </button>
+              )}
+            </div>
+
+            {/* 2행: 카테고리 필터 (별도 줄) */}
+            <div className="flex flex-wrap items-center gap-1.5 border-t border-border/60 pt-2">
+              <span className="text-[11px] font-medium text-muted-foreground">카테고리</span>
               <button
                 type="button"
                 onClick={() => setCategoryFilter("all")}
@@ -561,16 +586,6 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                   {CONFERENCE_SESSION_CATEGORY_LABELS[c]}
                 </button>
               ))}
-              {user && (
-                <button
-                  type="button"
-                  onClick={() => setOnlyMine((v) => !v)}
-                  className={`ml-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${onlyMine ? "bg-blue-100 text-blue-800 ring-2 ring-blue-300 ring-offset-1" : "bg-background text-muted-foreground hover:bg-muted"}`}
-                  title="내 일정만 보기"
-                >
-                  내 일정만
-                </button>
-              )}
             </div>
           </div>
           {day.sessions.length === 0 ? (
@@ -604,9 +619,24 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                 const plan = planBySessionId.get(s.id);
                 const companions = companionsBySessionId.get(s.id) ?? [];
                 const conflicts = conflictsBySessionId.get(s.id) ?? [];
+                const variant = getSessionCardVariant(s.category);
+                const hasConflict = conflicts.length > 0;
                 return (
-                  <Card key={s.id} className={plan ? "border-blue-300 bg-blue-50/30" : ""}>
-                    <CardContent className="space-y-2 p-4">
+                  <Card
+                    key={s.id}
+                    className={`${cardClassesForVariant(variant, !!plan)} ${
+                      hasConflict
+                        ? "ring-2 ring-rose-400/40 dark:ring-rose-500/40"
+                        : ""
+                    }`}
+                  >
+                    {variant === "primary" && (
+                      <span
+                        aria-hidden="true"
+                        className={`absolute left-0 top-0 h-full w-1 ${CATEGORY_ACCENT_BAR[s.category]}`}
+                      />
+                    )}
+                    <CardContent className={`space-y-2 ${contentPaddingForVariant(variant)}`}>
                       <div className="flex flex-wrap items-start gap-2">
                         <Badge className={`${CONFERENCE_SESSION_CATEGORY_COLORS[s.category]} text-xs`}>
                           {CONFERENCE_SESSION_CATEGORY_LABELS[s.category]}
@@ -628,16 +658,16 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                         {companions.length > 0 && (
                           <Badge
                             variant="secondary"
-                            className="bg-purple-50 text-xs text-purple-700"
+                            className="bg-purple-50 text-xs text-purple-700 dark:bg-purple-950/40 dark:text-purple-200"
                             title={companions.map((c) => c.userName ?? "회원").join(", ")}
                           >
                             함께 {companions.length}명
                           </Badge>
                         )}
-                        {conflicts.length > 0 && (
+                        {hasConflict && (
                           <Badge
                             variant="outline"
-                            className="border-rose-300 bg-rose-50 text-xs text-rose-700"
+                            className="border-rose-300 bg-rose-50 text-xs text-rose-700 dark:border-rose-700 dark:bg-rose-950/40 dark:text-rose-200"
                             title={`시간이 겹치는 일정: ${conflicts.map((c) => `${c.sessionStartTime}~${c.sessionEndTime} ${c.sessionTitle ?? ""}`).join(", ")}`}
                           >
                             <AlertTriangle className="mr-1 h-3 w-3" />
@@ -645,7 +675,7 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                           </Badge>
                         )}
                       </div>
-                      <h3 className="text-base font-semibold leading-snug">{s.title}</h3>
+                      <h3 className={titleClassForVariant(variant)}>{s.title}</h3>
                       {(s.speakers || s.affiliation) && (
                         <p className="text-sm text-muted-foreground">
                           {s.speakers && (
