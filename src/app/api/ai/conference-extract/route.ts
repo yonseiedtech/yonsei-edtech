@@ -95,57 +95,78 @@ export async function POST(req: NextRequest) {
   const isPdf = mimeType === "application/pdf";
   const buffer = Buffer.from(base64, "base64");
 
-  try {
-    const google = createGoogleGenerativeAI({ apiKey });
+  const google = createGoogleGenerativeAI({ apiKey });
 
-    const promptText = [
-      "이미지/PDF는 학술대회·세미나 프로그램(시간표) 자료입니다.",
-      "JSON 스키마에 맞춰 일자(days)·세션(sessions)을 추출하세요.",
-      "",
-      "추출 규칙:",
-      "- date는 YYYY-MM-DD (연도가 누락되면 현재 또는 자료에 명시된 연도 사용).",
-      "- startTime/endTime은 24시간제 HH:MM. 단일 시각만 보이면 endTime을 startTime과 같게.",
-      "- category는 다음 중 하나: keynote(기조), symposium(심포지엄), panel(패널), paper(논문발표), poster(포스터), media(미디어전·전시·작품), workshop(워크숍), networking(네트워킹), ceremony(개·폐회식), break(휴식·식사), other.",
-      "- track은 트랙명·세션명·룸명을 명시 (예: '포스터 세션B', '본관 201호', 'Track A').",
-      "- speakers는 발표자명 배열 (소속은 affiliation에 별도). 콤마/슬래시로 구분된 사람들 분리.",
-      "- 포스터의 경우 번호가 있으면 title 앞에 '[N]' 유지.",
-      "- 동일 시간대 여러 트랙이면 각 세션을 별도 entry로.",
-      hint ? `\n추가 힌트:\n${hint}` : "",
-    ].join("\n");
+  const promptText = [
+    "이미지/PDF는 학술대회·세미나 프로그램(시간표) 자료입니다.",
+    "JSON 스키마에 맞춰 일자(days)·세션(sessions)을 추출하세요.",
+    "",
+    "추출 규칙:",
+    "- date는 YYYY-MM-DD (연도가 누락되면 현재 또는 자료에 명시된 연도 사용).",
+    "- startTime/endTime은 24시간제 HH:MM. 단일 시각만 보이면 endTime을 startTime과 같게.",
+    "- category는 다음 중 하나: keynote(기조), symposium(심포지엄), panel(패널), paper(논문발표), poster(포스터), media(미디어전·전시·작품), workshop(워크숍), networking(네트워킹), ceremony(개·폐회식), break(휴식·식사), other.",
+    "- track은 트랙명·세션명·룸명을 명시 (예: '포스터 세션B', '본관 201호', 'Track A').",
+    "- speakers는 발표자명 배열 (소속은 affiliation에 별도). 콤마/슬래시로 구분된 사람들 분리.",
+    "- 포스터의 경우 번호가 있으면 title 앞에 '[N]' 유지하고, 각 포스터를 개별 sessions entry 로 분리하세요. (24개 포스터면 24개 entry)",
+    "- 동일 시간대 여러 트랙이면 각 세션을 별도 entry로.",
+    "- 한국어가 흐릿하더라도 최선을 다해 추측하세요. 모르는 글자는 '?' 로 표시.",
+    hint ? `\n추가 힌트:\n${hint}` : "",
+  ].join("\n");
 
-    const { object } = await generateObject({
-      model: google("gemini-2.5-flash"),
-      schema: ResultSchema,
-      messages: [
-        {
-          role: "user",
-          content: [
-            { type: "text", text: promptText },
-            isPdf
-              ? { type: "file", data: buffer, mediaType: "application/pdf" }
-              : { type: "image", image: buffer },
-          ],
-        },
-      ],
-    });
+  // Sprint 67: 모델 fallback — flash 실패 시 pro 로 재시도 (포스터 24개 같은 대용량 이미지)
+  const models = ["gemini-2.5-flash", "gemini-2.5-pro"] as const;
+  let lastError: unknown = null;
 
-    return Response.json(object);
-  } catch (err) {
-    console.error("[conference-extract] AI error:", err);
-    const msg = err instanceof Error ? err.message : "AI 추출 실패";
-    if (
-      msg.includes("quota") ||
-      msg.includes("429") ||
-      msg.includes("RESOURCE_EXHAUSTED")
-    ) {
-      return Response.json(
-        { error: "AI API 할당량 초과. 잠시 후 다시 시도해주세요." },
-        { status: 429 },
+  for (const modelName of models) {
+    try {
+      const { object } = await generateObject({
+        model: google(modelName),
+        schema: ResultSchema,
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: promptText },
+              isPdf
+                ? { type: "file", data: buffer, mediaType: "application/pdf" }
+                : { type: "image", image: buffer },
+            ],
+          },
+        ],
+      });
+      console.log(
+        `[conference-extract] success with ${modelName}: ${object.days?.length ?? 0} days, ${
+          object.days?.reduce((n, d) => n + (d.sessions?.length ?? 0), 0) ?? 0
+        } sessions`,
       );
+      return Response.json(object);
+    } catch (err) {
+      lastError = err;
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`[conference-extract] ${modelName} failed:`, msg);
+      // 할당량 초과는 즉시 종료 (다른 모델도 같은 키 사용)
+      if (
+        msg.includes("quota") ||
+        msg.includes("429") ||
+        msg.includes("RESOURCE_EXHAUSTED")
+      ) {
+        return Response.json(
+          { error: "AI API 할당량 초과. 잠시 후 다시 시도해주세요." },
+          { status: 429 },
+        );
+      }
+      // schema 실패·timeout 은 다음 모델로 재시도
     }
-    return Response.json(
-      { error: "AI 추출에 실패했습니다. 이미지를 더 선명하게 또는 다른 페이지로 다시 시도해주세요." },
-      { status: 500 },
-    );
   }
+
+  // 모든 모델 실패
+  const msg = lastError instanceof Error ? lastError.message : String(lastError);
+  return Response.json(
+    {
+      error:
+        "AI 추출 실패 — 모든 모델 시도 실패. 이미지가 너무 복잡하거나 흐릿할 수 있습니다. 이미지를 분할(예: 포스터 12개씩)해서 재시도하거나 수동 입력을 고려하세요.",
+      detail: msg.slice(0, 300),
+    },
+    { status: 500 },
+  );
 }
