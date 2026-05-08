@@ -376,9 +376,11 @@ export default function AdminMemberTab() {
   }
 
   // ── 검색/필터/액션 바 ──
-  function ToolBar() {
-    return (
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+  // Sprint 67: 함수 컴포넌트 → JSX 상수로 변경 (검색 input focus 손실 버그 수정).
+  // 함수 컴포넌트를 컴포넌트 내부에 정의하면 매 render 마다 새 컴포넌트 identity 가 생성되어
+  // React 가 unmount/remount → input 이 첫 글자 입력 후 blur 됨.
+  const toolBarJsx = (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative w-full sm:w-auto">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -438,8 +440,7 @@ export default function AdminMemberTab() {
           )}
         </div>
       </div>
-    );
-  }
+  );
 
   // ── 역할 인라인 셀렉트 (배지 스타일) ──
   function RoleCell({ member: m }: { member: User }) {
@@ -653,7 +654,7 @@ export default function AdminMemberTab() {
       {/* ── 전체 탭 ── */}
       {activeTab === "all" && (
         <section>
-          <ToolBar />
+          {toolBarJsx}
           {allLoading ? (
             <div className="mt-3 space-y-2" aria-busy="true" aria-label="회원 목록 불러오는 중">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -832,7 +833,7 @@ export default function AdminMemberTab() {
       {/* ── 승인 완료 탭 ── */}
       {activeTab === "approved" && (
         <section>
-          <ToolBar />
+          {toolBarJsx}
           {isLoading ? (
             <div className="mt-3 space-y-2" aria-busy="true" aria-label="졸업생 목록 불러오는 중">
               {Array.from({ length: 5 }).map((_, i) => (
