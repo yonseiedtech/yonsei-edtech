@@ -104,6 +104,26 @@ export default function ConferenceProgramEditor({
   const aiFileInputRef = useRef<HTMLInputElement | null>(null);
   const csvFileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Sprint 67-G: 세션 추가 dialog
+  const [addSessionDialog, setAddSessionDialog] = useState<{
+    dayIdx: number;
+    startTime: string;
+    endTime: string;
+    track: string;
+    category: ConferenceSession["category"];
+    title: string;
+    speakers: string;
+  } | null>(null);
+
+  // Sprint 67-G: 시간 충돌 dialog (전체 검사 결과 list)
+  const [conflictsDialog, setConflictsDialog] = useState<{
+    items: Array<{
+      date: string;
+      sessionA: { title: string; start: string; end: string; track: string };
+      sessionB: { title: string; start: string; end: string; track: string };
+    }>;
+  } | null>(null);
+
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -165,14 +185,96 @@ export default function ConferenceProgramEditor({
   }
 
   function addSession(dayIdx: number) {
+    // Sprint 67-G: dialog 형태로 — 시간/제목/발표자/트랙 입력 후 추가
+    setAddSessionDialog({
+      dayIdx,
+      startTime: "",
+      endTime: "",
+      track: "",
+      category: "paper",
+      title: "",
+      speakers: "",
+    });
+  }
+
+  function confirmAddSession() {
+    if (!addSessionDialog) return;
+    const { dayIdx, startTime, endTime, track, category, title, speakers } =
+      addSessionDialog;
+    if (!title.trim()) {
+      toast.error("발표 제목을 입력하세요.");
+      return;
+    }
+    if (startTime && endTime && endTime <= startTime) {
+      toast.error("종료 시각이 시작 시각보다 늦어야 합니다.");
+      return;
+    }
+    const newSession: ConferenceSession = {
+      ...blankSession(),
+      startTime: startTime || "00:00",
+      endTime: endTime || "00:00",
+      track: track.trim() || undefined,
+      category,
+      title: title.trim(),
+      speakers: speakers.trim()
+        ? speakers
+            .split(/[,;/]/)
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : undefined,
+    };
     setDraft((d) => ({
       ...d,
       days: d.days.map((day, i) =>
         i === dayIdx
-          ? { ...day, sessions: [...day.sessions, blankSession()] }
+          ? {
+              ...day,
+              sessions: [...day.sessions, newSession].sort((a, b) =>
+                (a.startTime ?? "").localeCompare(b.startTime ?? ""),
+              ),
+            }
           : day,
       ),
     }));
+    setAddSessionDialog(null);
+    toast.success("세션이 추가되었습니다.");
+  }
+
+  // Sprint 67-G: 시간 충돌 별도 검사 — 동일 트랙끼리만, parallel-ok 카테고리는 무시
+  function detectConflicts() {
+    const PARALLEL_OK = new Set([
+      "poster",
+      "break",
+      "networking",
+      "media",
+    ]);
+    const items: NonNullable<typeof conflictsDialog>["items"] = [];
+    for (const day of draft.days) {
+      const sessions = day.sessions
+        .filter((s) => s.startTime && s.endTime)
+        .map((s) => ({
+          title: s.title,
+          start: s.startTime,
+          end: s.endTime,
+          track: (s.track ?? "").trim(),
+          category: s.category ?? "other",
+        }));
+      for (let i = 0; i < sessions.length; i++) {
+        for (let j = i + 1; j < sessions.length; j++) {
+          const a = sessions[i];
+          const b = sessions[j];
+          if (!(a.start < b.end && b.start < a.end)) continue;
+          if (PARALLEL_OK.has(a.category) || PARALLEL_OK.has(b.category)) continue;
+          if (a.track && b.track && a.track !== b.track) continue;
+          items.push({
+            date: day.date,
+            sessionA: { title: a.title, start: a.start, end: a.end, track: a.track || "(트랙 미지정)" },
+            sessionB: { title: b.title, start: b.start, end: b.end, track: b.track || "(트랙 미지정)" },
+          });
+        }
+      }
+    }
+    setConflictsDialog({ items });
   }
 
   function patchSession(
@@ -787,6 +889,15 @@ export default function ConferenceProgramEditor({
             <CalendarPlus className="mr-1 h-3.5 w-3.5" />
             일자 추가
           </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            type="button"
+            onClick={detectConflicts}
+            title="동일 트랙·동일 시간 충돌 검사"
+          >
+            충돌 확인
+          </Button>
           <input
             ref={csvFileInputRef}
             type="file"
@@ -982,6 +1093,160 @@ export default function ConferenceProgramEditor({
               <Plus className="mr-1 h-3.5 w-3.5" />
               초안에 병합
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sprint 67-G: 세션 추가 Dialog */}
+      <Dialog open={!!addSessionDialog} onOpenChange={(o) => !o && setAddSessionDialog(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>세션 추가</DialogTitle>
+          </DialogHeader>
+          {addSessionDialog && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="시작 시각">
+                  <Input
+                    type="time"
+                    value={addSessionDialog.startTime}
+                    onChange={(e) =>
+                      setAddSessionDialog({ ...addSessionDialog, startTime: e.target.value })
+                    }
+                  />
+                </Field>
+                <Field label="종료 시각">
+                  <Input
+                    type="time"
+                    value={addSessionDialog.endTime}
+                    onChange={(e) =>
+                      setAddSessionDialog({ ...addSessionDialog, endTime: e.target.value })
+                    }
+                  />
+                </Field>
+              </div>
+              <Field label="발표 제목 *">
+                <Input
+                  value={addSessionDialog.title}
+                  onChange={(e) =>
+                    setAddSessionDialog({ ...addSessionDialog, title: e.target.value })
+                  }
+                  placeholder="예: 자기조절학습 메타분석"
+                  autoFocus
+                />
+              </Field>
+              <Field label="발표자 (콤마/슬래시 구분)">
+                <Input
+                  value={addSessionDialog.speakers}
+                  onChange={(e) =>
+                    setAddSessionDialog({ ...addSessionDialog, speakers: e.target.value })
+                  }
+                  placeholder="예: 김OO, 이OO"
+                />
+              </Field>
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="트랙·룸 (선택)">
+                  <Input
+                    value={addSessionDialog.track}
+                    onChange={(e) =>
+                      setAddSessionDialog({ ...addSessionDialog, track: e.target.value })
+                    }
+                    placeholder="예: A 트랙 409호"
+                  />
+                </Field>
+                <Field label="카테고리">
+                  <select
+                    className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                    value={addSessionDialog.category}
+                    onChange={(e) =>
+                      setAddSessionDialog({
+                        ...addSessionDialog,
+                        category: e.target.value as ConferenceSession["category"],
+                      })
+                    }
+                  >
+                    <option value="paper">논문발표</option>
+                    <option value="keynote">기조강연</option>
+                    <option value="symposium">심포지엄</option>
+                    <option value="panel">패널</option>
+                    <option value="poster">포스터</option>
+                    <option value="media">미디어·전시</option>
+                    <option value="workshop">워크숍</option>
+                    <option value="networking">네트워킹</option>
+                    <option value="ceremony">개·폐회식</option>
+                    <option value="break">휴식·식사</option>
+                    <option value="other">기타</option>
+                  </select>
+                </Field>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                💡 같은 시간대에 여러 트랙(예: A·B·C)이 동시 진행되어도 트랙이 다르면 충돌로 표시되지 않습니다.
+                트랙을 비워두면 동일 공간으로 간주되어 시간 충돌로 표시됩니다.
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddSessionDialog(null)}>
+              취소
+            </Button>
+            <Button onClick={confirmAddSession}>
+              <Plus className="mr-1 h-3.5 w-3.5" />
+              추가
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sprint 67-G: 시간 충돌 검사 Dialog */}
+      <Dialog open={!!conflictsDialog} onOpenChange={(o) => !o && setConflictsDialog(null)}>
+        <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>시간 충돌 검사 결과</DialogTitle>
+          </DialogHeader>
+          {conflictsDialog && conflictsDialog.items.length === 0 ? (
+            <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100">
+              ✓ 동일 트랙·동일 시간 충돌이 발견되지 않았습니다.
+              <p className="mt-1 text-xs text-emerald-800/80 dark:text-emerald-200/70">
+                포스터·휴식·네트워킹·미디어 카테고리 및 다른 트랙끼리는 동시 진행으로 정상 처리됩니다.
+              </p>
+            </div>
+          ) : conflictsDialog ? (
+            <div className="space-y-3">
+              <p className="text-sm">
+                <b className="text-destructive">{conflictsDialog.items.length}건</b>의 동일 트랙 시간 충돌이 발견되었습니다.
+                포스터·휴식·네트워킹·미디어 카테고리 및 트랙이 다른 세션은 자동으로 제외됩니다.
+              </p>
+              <ul className="space-y-2">
+                {conflictsDialog.items.map((c, i) => (
+                  <li
+                    key={i}
+                    className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm"
+                  >
+                    <div className="text-xs font-mono font-semibold text-muted-foreground">
+                      {c.date} · {c.sessionA.track === c.sessionB.track ? c.sessionA.track : `${c.sessionA.track} / ${c.sessionB.track}`}
+                    </div>
+                    <div className="mt-1 grid gap-1 text-xs">
+                      <div>
+                        <span className="font-mono tabular-nums text-muted-foreground">
+                          {c.sessionA.start}~{c.sessionA.end}
+                        </span>{" "}
+                        — {c.sessionA.title}
+                      </div>
+                      <div className="text-destructive">↕ 충돌</div>
+                      <div>
+                        <span className="font-mono tabular-nums text-muted-foreground">
+                          {c.sessionB.start}~{c.sessionB.end}
+                        </span>{" "}
+                        — {c.sessionB.title}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button onClick={() => setConflictsDialog(null)}>닫기</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

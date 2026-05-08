@@ -431,7 +431,10 @@ export default function ReceivedCardsSection({ ownerId }: ReceivedCardsSectionPr
       setDialogOpen(false);
       toast.success("명함을 등록했습니다.");
     },
-    onError: () => toast.error("명함 등록에 실패했습니다."),
+    onError: (e: unknown) =>
+      toast.error(
+        `명함 등록에 실패했습니다: ${e instanceof Error ? e.message : "권한 또는 네트워크 오류"}`,
+      ),
   });
 
   const updateMutation = useMutation({
