@@ -132,20 +132,22 @@ export interface NotificationPrefs {
   networkOptIn?: boolean;
 }
 
-/** 학교급 (소속 학교 단위) — major-network-map Phase 2 */
+/**
+ * 학교급 — major-network-map Phase 2.
+ * 학교 교사 등 학교 단위가 의미 있는 직업에서 활용.
+ * 4단계: 유아교육 / 초등학교 / 중학교 / 고등학교
+ */
 export type SchoolLevel =
-  | "elementary"   // 초등학교
-  | "middle"       // 중학교
-  | "high"         // 고등학교
-  | "university"   // 대학교
-  | "etc";         // 기타 (특수교육 / 평생교육 / 사설학원 등)
+  | "kindergarten"  // 유아교육
+  | "elementary"    // 초등학교
+  | "middle"        // 중학교
+  | "high";         // 고등학교
 
 export const SCHOOL_LEVEL_LABELS: Record<SchoolLevel, string> = {
+  kindergarten: "유아교육",
   elementary: "초등학교",
   middle: "중학교",
   high: "고등학교",
-  university: "대학교",
-  etc: "기타",
 };
 
 export interface User { [key: string]: unknown;
@@ -172,7 +174,16 @@ export interface User { [key: string]: unknown;
   privacyAgreedAt?: string;
   /** 소속 정보 */
   occupation?: OccupationType;
+  /**
+   * 소속 (학교 교사: 학교명 / 기업: 회사명 / 연구자: 기관명 등).
+   * 학교 교사의 교육청은 별도 `affiliationOffice` 필드로 분리.
+   */
   affiliation?: string;
+  /**
+   * 학교 교사의 소속 교육청 (예: "서울특별시교육청").
+   * 학교 교사 외 직업유형에서는 사용하지 않음.
+   */
+  affiliationOffice?: string;
   department?: string;
   position?: string;
   /**

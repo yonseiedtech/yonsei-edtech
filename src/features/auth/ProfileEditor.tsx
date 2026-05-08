@@ -44,6 +44,8 @@ interface ProfileData {
   /** Phase 2 (major-network-map): 학교급 — 네트워킹 Map 의 school_level 차원 매칭에 사용 */
   schoolLevel: SchoolLevel | "";
   affiliation: string;
+  /** Phase 2 fix: 학교 교사 — 소속 교육청 (affiliation 과 분리) */
+  affiliationOffice: string;
   department: string;
   position: string;
   // PR6 신규: 직업유형별 세부 필드
@@ -70,12 +72,27 @@ interface Props {
   user: User;
 }
 
-/** PR6: 직업유형별 입력 필드 라벨 */
+/** PR6 / Sprint 67(Phase 2 fix): 직업유형별 입력 필드 라벨 */
 const OCCUPATION_FIELDS: Record<
   OccupationType,
-  { affiliation: string; department: string; position: string; title?: string; duty?: string; notes?: string }
+  {
+    affiliation: string;
+    department: string;
+    position: string;
+    title?: string;
+    duty?: string;
+    notes?: string;
+    /** 학교 교사 전용 — 교육청 (affiliation 과 별개) */
+    office?: string;
+  }
 > = {
-  teacher: { affiliation: "소속 교육청/학교", department: "학교급 (초/중/고)", position: "담당 과목" },
+  teacher: {
+    office: "소속 교육청",
+    affiliation: "소속 학교",
+    // 학교급은 schoolLevel 구조화 필드가 대체 → department 자유텍스트 제거
+    department: "",
+    position: "담당 과목",
+  },
   corporate: { affiliation: "회사명", department: "부서", position: "직책", duty: "담당업무" },
   researcher: { affiliation: "기관명", department: "부서", position: "", title: "직책", duty: "담당업무" },
   public: { affiliation: "기관명", department: "부서", position: "", title: "직책", duty: "담당업무" },
@@ -98,6 +115,7 @@ export default function ProfileEditor({ user }: Props) {
       occupation: user.occupation || "",
       schoolLevel: user.schoolLevel || "",
       affiliation: user.affiliation || "",
+      affiliationOffice: user.affiliationOffice || "",
       department: user.department || "",
       position: user.position || "",
       corporateDuty: user.corporateDuty || "",
@@ -309,12 +327,21 @@ export default function ProfileEditor({ user }: Props) {
               )}
             </select>
             <p className="mt-1 text-xs text-muted-foreground">
-              초/중/고/대학 등 — 전공 네트워킹 Map의 학교급 매칭에 활용됩니다.
+              유아교육 / 초·중·고 — 전공 네트워킹 Map의 학교급 매칭에 활용됩니다. 학교 교사가 아닌 경우 비워 두세요.
             </p>
           </div>
 
           {occFields && (
             <>
+              {occFields.office && occupation === "teacher" && (
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">{occFields.office}</label>
+                  <Input
+                    {...register("affiliationOffice")}
+                    placeholder="예: 서울특별시교육청"
+                  />
+                </div>
+              )}
               <div>
                 <label className="mb-1.5 block text-sm font-medium">{occFields.affiliation}</label>
                 <Input {...register("affiliation")} placeholder={occFields.affiliation} />
