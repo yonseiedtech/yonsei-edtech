@@ -87,6 +87,30 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
   const [presenterCategoryFilter, setPresenterCategoryFilter] = useState<"all" | "paper" | "poster" | "media">("all");
   const [presenterSearchQuery, setPresenterSearchQuery] = useState("");
 
+  // D2: now-line — 현재 시각·날짜 (1분마다 갱신, 백그라운드 탭 호환)
+  const [now, setNow] = useState<Date>(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      setNow(new Date());
+    }, 60_000);
+    return () => clearInterval(id);
+  }, []);
+  const todayYmd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const nowHm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  function getSessionTimeStatus(
+    sessionDate: string,
+    startTime: string,
+    endTime: string,
+  ): "live" | "past" | "upcoming" | "future" {
+    if (sessionDate < todayYmd) return "past";
+    if (sessionDate > todayYmd) return "future";
+    // 오늘 — 시간 비교
+    if (nowHm >= startTime && nowHm <= endTime) return "live";
+    if (nowHm > endTime) return "past";
+    return "upcoming";
+  }
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -402,7 +426,7 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
       </div>
 
       {viewMode === "schedule" && (
-      <div className="flex flex-wrap gap-2 border-b">
+      <div className="sticky top-0 z-20 -mx-4 flex gap-2 overflow-x-auto whitespace-nowrap border-b bg-background/95 px-4 py-1 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-0 sm:px-0">
         {program.days.map((d, i) => {
           const cnt = d.sessions.length;
           const myDay = plans.filter((p) => p.sessionDate === d.date).length;
@@ -410,7 +434,7 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
             <button
               key={d.date + i}
               onClick={() => setActiveDayIdx(i)}
-              className={`px-3 py-2 text-sm font-medium transition-colors border-b-2 ${
+              className={`shrink-0 px-3 py-2 text-sm font-medium transition-colors border-b-2 ${
                 i === activeDayIdx ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -623,15 +647,34 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                 const conflicts = conflictsBySessionId.get(s.id) ?? [];
                 const variant = getSessionCardVariant(s.category);
                 const hasConflict = conflicts.length > 0;
+                // D2: 진행 상태 (live/past/upcoming/future)
+                const timeStatus = getSessionTimeStatus(day.date, s.startTime, s.endTime);
+                const isLive = timeStatus === "live";
+                const isPast = timeStatus === "past";
                 return (
                   <Card
                     key={s.id}
-                    className={`${cardClassesForVariant(variant, !!plan)} ${
-                      hasConflict
-                        ? "ring-2 ring-rose-400/40 dark:ring-rose-500/40"
-                        : ""
-                    }`}
+                    className={`relative ${cardClassesForVariant(variant, !!plan)} ${
+                      isLive
+                        ? "ring-2 ring-emerald-500/60 dark:ring-emerald-400/60 shadow-md"
+                        : hasConflict
+                          ? "ring-2 ring-rose-400/40 dark:ring-rose-500/40"
+                          : ""
+                    } ${isPast ? "opacity-60" : ""}`}
                   >
+                    {isLive && (
+                      <span
+                        aria-label="지금 진행 중"
+                        title="지금 진행 중"
+                        className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold text-white shadow"
+                      >
+                        <span className="relative flex h-2 w-2">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+                          <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
+                        </span>
+                        LIVE
+                      </span>
+                    )}
                     {variant === "primary" && (
                       <span
                         aria-hidden="true"

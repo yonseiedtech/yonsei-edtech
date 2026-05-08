@@ -150,17 +150,17 @@ export const CONFERENCE_SESSION_CATEGORY_LABELS: Record<ConferenceSessionCategor
 };
 
 export const CONFERENCE_SESSION_CATEGORY_COLORS: Record<ConferenceSessionCategory, string> = {
-  keynote: "bg-purple-100 text-purple-800 border-purple-200",
-  symposium: "bg-blue-100 text-blue-800 border-blue-200",
-  panel: "bg-indigo-100 text-indigo-800 border-indigo-200",
-  paper: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  poster: "bg-amber-100 text-amber-800 border-amber-200",
-  media: "bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200",
-  workshop: "bg-rose-100 text-rose-800 border-rose-200",
-  networking: "bg-pink-100 text-pink-800 border-pink-200",
-  ceremony: "bg-slate-200 text-slate-800 border-slate-300",
-  break: "bg-gray-100 text-gray-600 border-gray-200",
-  other: "bg-gray-100 text-gray-700 border-gray-200",
+  keynote: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/40 dark:text-purple-200 dark:border-purple-800",
+  symposium: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/40 dark:text-blue-200 dark:border-blue-800",
+  panel: "bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-200 dark:border-indigo-800",
+  paper: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-200 dark:border-emerald-800",
+  poster: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-200 dark:border-amber-800",
+  media: "bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200 dark:bg-fuchsia-950/40 dark:text-fuchsia-200 dark:border-fuchsia-800",
+  workshop: "bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-200 dark:border-rose-800",
+  networking: "bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-950/40 dark:text-pink-200 dark:border-pink-800",
+  ceremony: "bg-slate-200 text-slate-800 border-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600",
+  break: "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700",
+  other: "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700",
 };
 
 export interface ConferenceSession {
