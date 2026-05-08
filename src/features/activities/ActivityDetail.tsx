@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import InlineMeetingTimer from "./InlineMeetingTimer";
 import ActivityConnectedTodos from "./ActivityConnectedTodos";
+import MyActivitySessionsTab from "@/features/conference/MyActivitySessionsTab";
 import { todayYmdLocal } from "@/lib/dday";
 import type { Activity, ActivityType, ActivityProgress, ActivityProgressMode, FormField, EnrollmentStatus, ExternalParticipantType, SpeakerSubmissionType } from "@/types";
 import { ENROLLMENT_STATUS_LABELS, ACTIVITY_PROGRESS_MODE_LABELS, EXTERNAL_PARTICIPANT_TYPE_LABELS, EXTERNAL_PARTICIPANT_TYPE_COLORS, SPEAKER_SUBMISSION_TYPE_LABELS, SPEAKER_SUBMISSION_TYPE_COLORS } from "@/types";
@@ -42,7 +43,7 @@ const RECRUIT_LABELS: Record<string, string> = { recruiting: "모집중", closed
 const RECRUIT_LABELS_STUDY: Record<string, string> = { recruiting: "모집중", closed: "모집완료" };
 const RECRUIT_COLORS: Record<string, string> = { recruiting: "bg-green-50 text-green-700", closed: "bg-red-50 text-red-700", in_progress: "bg-amber-50 text-amber-700", completed: "bg-muted text-muted-foreground" };
 
-type Tab = "overview" | "progress" | "staff" | "presenters" | "volunteers" | "participants" | "applicants" | "form-settings" | "report" | "settings";
+type Tab = "overview" | "progress" | "staff" | "presenters" | "volunteers" | "participants" | "applicants" | "form-settings" | "report" | "settings" | "my-sessions";
 
 interface Props {
   activityId: string;
@@ -427,11 +428,14 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const TABS: { value: Tab; label: string; show: boolean }[] = [
     { value: "overview", label: "개요", show: true },
     { value: "progress", label: `진행 현황${progressList.length > 0 ? ` (${progressPct}%)` : ""}`, show: !!user && type !== "external" },
+    // Sprint 67: 외부 학술대회 — 본인이 추가한 세션(plans) 모아 보기 (요청)
+    { value: "my-sessions", label: "내 일정", show: type === "external" && !!user },
     { value: "staff", label: `운영진 (${staffPids.length})`, show: !!user },
     { value: "presenters", label: `발표자 (${speakerApplicants.length})`, show: type === "external" },
     { value: "volunteers", label: `자원봉사자 (${volunteerApplicants.length})`, show: type === "external" },
     { value: "participants", label: `참여자 (${regularPids.length})`, show: !!user },
-    { value: "applicants", label: `신청현황 (${applicants.length})`, show: !!user && registrationMethod === "open" && (type === "external" || isStaff) },
+    // Sprint 67: 신청현황은 운영진+ 만 노출 (요청 — 일반 신청자 미노출)
+    { value: "applicants", label: `신청현황 (${applicants.length})`, show: !!user && registrationMethod === "open" && isStaff },
     { value: "form-settings", label: "신청 폼 설정", show: registrationMethod === "open" && isStaff },
     { value: "report", label: "리포트", show: isStaff },
     { value: "settings", label: "관리", show: isStaff },
@@ -1342,6 +1346,11 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               </div>
             );
           })()}
+
+          {/* Sprint 67: 내 일정 탭 — 외부 학술대회 본인 plans 모아보기 */}
+          {activeTab === "my-sessions" && type === "external" && user && (
+            <MyActivitySessionsTab activityId={activityId} userId={user.id} />
+          )}
 
           {activeTab === "applicants" && (() => {
             const filtered = type === "external" && applicantsTypeFilter !== "all"
