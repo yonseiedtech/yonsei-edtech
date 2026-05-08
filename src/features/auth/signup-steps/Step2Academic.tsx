@@ -13,7 +13,7 @@ const ENROLLMENT_OPTIONS: EnrollmentStatus[] = [
   "graduated",
 ];
 
-const ENROLLMENT_YEAR_OPTIONS = Array.from({ length: 15 }, (_, i) => 2026 - i);
+// 입학 시점은 Step 1 로 이동 (Sprint 67)
 const LEAVE_YEAR_OPTIONS = Array.from({ length: 20 }, (_, i) => 2026 - i + 4);
 const RETURN_YEAR_OPTIONS = Array.from({ length: 10 }, (_, i) => 2026 + i - 3);
 const GRADUATION_YEAR_OPTIONS = Array.from({ length: 20 }, (_, i) => 2028 - i);
@@ -26,7 +26,6 @@ interface Step2Props {
 
 export default function Step2Academic({ form, enrollmentStatus, setEnrollmentStatus }: Step2Props) {
   const { register, formState: { errors } } = form;
-  const showAcademic = enrollmentStatus === "enrolled" || enrollmentStatus === "on_leave";
 
   return (
     <section className="space-y-4">
@@ -40,6 +39,9 @@ export default function Step2Academic({ form, enrollmentStatus, setEnrollmentSta
       {/* 신분 유형 */}
       <div>
         <label className="mb-1.5 block text-sm font-medium">신분 유형 <span className="text-destructive">*</span></label>
+        <p className="mb-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-100">
+          현재 시점 기준으로 선택해주세요. (재학·휴학·졸업 중 하나)
+        </p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
           {ENROLLMENT_OPTIONS.map((opt) => (
             <button
@@ -62,6 +64,11 @@ export default function Step2Academic({ form, enrollmentStatus, setEnrollmentSta
       {/* 학부 정보 */}
       <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
         <p className="text-sm font-medium">학부 정보 <span className="text-destructive">*</span></p>
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+          구성원분들 학부(대학) 전공 데이터(교육학 전공·비전공생 구분) 기반 세미나 기획을 위해 <b>학부(대학교) 정보</b>를 입력하는 영역입니다.
+          <br />
+          <b>대학원 정보가 아닙니다!</b> 학사 학위 취득 대학교 기준으로 작성해주세요.
+        </div>
         <div>
           <label className="mb-1 block text-xs font-medium">대학교</label>
           <Input {...register("undergraduateUniversity", { required: "대학교를 입력하세요" })} placeholder="예: 연세대학교" />
@@ -91,34 +98,7 @@ export default function Step2Academic({ form, enrollmentStatus, setEnrollmentSta
         </div>
       </div>
 
-      {/* 입학 시점 (재학·휴학) */}
-      {showAcademic && (
-        <div>
-          <label className="mb-1.5 block text-sm font-medium">입학 시점 <span className="text-destructive">*</span></label>
-          <div className="flex gap-2">
-            <select
-              {...register("enrollmentYear", { required: "입학 연도를 선택하세요" })}
-              className="rounded-lg border bg-card px-3 py-2 text-sm"
-            >
-              <option value="">연도</option>
-              {ENROLLMENT_YEAR_OPTIONS.map((y) => (
-                <option key={y} value={String(y)}>{y}</option>
-              ))}
-            </select>
-            <select
-              {...register("enrollmentHalf", { required: "반기를 선택하세요" })}
-              className="rounded-lg border bg-card px-3 py-2 text-sm"
-            >
-              <option value="">반기</option>
-              <option value="1">1학기</option>
-              <option value="2">2학기</option>
-            </select>
-          </div>
-          {(errors.enrollmentYear || errors.enrollmentHalf) && (
-            <p className="mt-1 text-xs text-destructive">입학 시점을 모두 선택하세요.</p>
-          )}
-        </div>
-      )}
+      {/* 입학 시점은 Step 1 (계정 정보) 로 이동됨 (Sprint 67) */}
 
       {/* 휴학 분기 */}
       {enrollmentStatus === "on_leave" && (

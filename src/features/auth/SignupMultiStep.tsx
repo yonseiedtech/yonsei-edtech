@@ -7,7 +7,6 @@ import StepProgress from "./signup-steps/StepProgress";
 import StepNavigation from "./signup-steps/StepNavigation";
 import Step1AccountInfo from "./signup-steps/Step1AccountInfo";
 import Step2Academic from "./signup-steps/Step2Academic";
-import Step3Security from "./signup-steps/Step3Security";
 import Step4Optional from "./signup-steps/Step4Optional";
 import Step5Consents from "./signup-steps/Step5Consents";
 import { runSignupFlow } from "./signup-steps/runSignupFlow";
@@ -20,7 +19,8 @@ interface Props {
   defaultStudentId?: string;
 }
 
-type StepNum = 1 | 2 | 3 | 4 | 5;
+// Sprint 67: 5단계 → 4단계 (계정 정보+입학시점+보안 통합)
+type StepNum = 1 | 2 | 3 | 4;
 
 export default function SignupMultiStep({
   onSuccess,
@@ -40,13 +40,13 @@ export default function SignupMultiStep({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleNext() {
-    if (step === 5) return;
-    const ok = await validateStep(step as 1 | 2 | 3 | 4, enrollmentStatus);
+    if (step === 4) return;
+    const ok = await validateStep(step as 1 | 2 | 3, enrollmentStatus);
     if (!ok) {
       toast.error("입력값을 확인해 주세요.");
       return;
     }
-    setStep((s) => Math.min(5, s + 1) as StepNum);
+    setStep((s) => Math.min(4, s + 1) as StepNum);
   }
 
   function handlePrev() {
@@ -92,7 +92,7 @@ export default function SignupMultiStep({
       onSubmit={(e) => e.preventDefault()}
       className="rounded-2xl border bg-card p-6 shadow-sm sm:p-8"
     >
-      <StepProgress current={step} total={5} />
+      <StepProgress current={step} total={4} />
 
       <div key={step} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
         {step === 1 && <Step1AccountInfo form={form} />}
@@ -103,9 +103,8 @@ export default function SignupMultiStep({
             setEnrollmentStatus={setEnrollmentStatus}
           />
         )}
-        {step === 3 && <Step3Security form={form} />}
-        {step === 4 && <Step4Optional form={form} />}
-        {step === 5 && (
+        {step === 3 && <Step4Optional form={form} />}
+        {step === 4 && (
           <Step5Consents consents={consents} setConsents={setConsents} />
         )}
       </div>

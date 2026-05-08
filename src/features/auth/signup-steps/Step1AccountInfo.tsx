@@ -1,13 +1,24 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import type { UseFormReturn } from "react-hook-form";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { SignupFormValues } from "./useSignupForm";
+
+const ENROLLMENT_YEAR_OPTIONS = Array.from({ length: 15 }, (_, i) => 2026 - i);
+const SECURITY_QUESTIONS = [
+  "첫 반려동물 이름",
+  "출신 초등학교",
+  "좋아하는 책",
+  "어머니 성함",
+  "첫 직장 이름",
+  "직접 입력",
+];
 
 interface Step1Props {
   form: UseFormReturn<SignupFormValues>;
@@ -24,12 +35,13 @@ export default function Step1AccountInfo({ form }: Step1Props) {
   const [usernameChecked, setUsernameChecked] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState(false);
   const [checkingUsername, setCheckingUsername] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
   const watchedUsername = watch("username") || "";
-  const watchedEmail = watch("email") || "";
+  const watchedPassword = watch("password");
+  const watchedSecurityQ = watch("securityQuestionSelect");
   const isStudentIdFormatValid = /^\d{10}$/.test(watchedUsername);
-  const isYonseiEmail = /@yonsei\.ac\.kr$/i.test(watchedEmail.trim());
-  const hasEmailInput = !!watchedEmail.trim();
 
   // birthDate 통합 동기화
   useEffect(() => {
@@ -70,7 +82,14 @@ export default function Step1AccountInfo({ form }: Step1Props) {
       if (!data.available) {
         setUsernameAvailable(false);
         setUsernameChecked(true);
-        toast.error("이미 가입된 학번입니다.");
+        toast.error("이미 가입된 학번입니다.", {
+          action: {
+            label: "비밀번호 찾기",
+            onClick: () => {
+              window.location.href = "/forgot-password";
+            },
+          },
+        });
       } else {
         setUsernameAvailable(true);
         setUsernameChecked(true);
@@ -122,7 +141,17 @@ export default function Step1AccountInfo({ form }: Step1Props) {
           {usernameChecked
             ? usernameAvailable
               ? "✓ 사용 가능한 학번입니다."
-              : "✗ 이미 가입된 학번입니다."
+              : (
+                <span className="inline-flex flex-wrap items-center gap-1.5">
+                  <span className="text-destructive">✗ 이미 가입된 학번입니다.</span>
+                  <Link
+                    href="/forgot-password"
+                    className="font-medium text-primary hover:underline"
+                  >
+                    비밀번호 찾기 →
+                  </Link>
+                </span>
+              )
             : "숫자 10자리로 입력하세요."}
         </p>
         {errors.username && (
@@ -139,25 +168,48 @@ export default function Step1AccountInfo({ form }: Step1Props) {
         {errors.name && <p className="mt-1 text-xs text-destructive">{errors.name.message}</p>}
       </div>
 
-      {/* 이메일 */}
+      {/* 가입 이메일 — @yonsei.ac.kr 만 허용 */}
       <div>
         <label className="mb-1.5 block text-sm font-medium">
-          이메일 <span className="text-destructive">*</span>
+          가입 이메일 <span className="text-destructive">*</span>
         </label>
         <Input
           {...register("email", {
             required: "이메일을 입력하세요",
-            pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "올바른 이메일 형식이 아닙니다" },
+            pattern: {
+              value: /^[^\s@]+@yonsei\.ac\.kr$/i,
+              message: "@yonsei.ac.kr 메일만 가입 가능합니다",
+            },
           })}
           type="email"
           placeholder="email@yonsei.ac.kr"
         />
-        <p className="mt-1 text-xs text-muted-foreground">연세 메일(@yonsei.ac.kr) 권장.</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          연세 메일(@yonsei.ac.kr) 만 가입에 사용됩니다.
+        </p>
         {errors.email && <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>}
-        {hasEmailInput && !errors.email && !isYonseiEmail && (
-          <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800">
-            연세 메일이 아닐 경우 관리자 승인 후 이용 가능합니다.
-          </p>
+      </div>
+
+      {/* 연락용 이메일 (선택) — 일반 메일도 가능 */}
+      <div>
+        <label className="mb-1.5 block text-sm font-medium">
+          연락용 이메일 <span className="text-xs text-muted-foreground">(선택)</span>
+        </label>
+        <Input
+          {...register("contactEmail", {
+            pattern: {
+              value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+              message: "올바른 이메일 형식이 아닙니다",
+            },
+          })}
+          type="email"
+          placeholder="example@gmail.com"
+        />
+        <p className="mt-1 text-xs text-muted-foreground">
+          평소 자주 쓰시는 메일을 입력하면 학회 안내·뉴스레터 등이 함께 전달됩니다.
+        </p>
+        {errors.contactEmail && (
+          <p className="mt-1 text-xs text-destructive">{errors.contactEmail.message}</p>
         )}
       </div>
 
@@ -242,6 +294,161 @@ export default function Step1AccountInfo({ form }: Step1Props) {
           <span className="text-muted-foreground">일</span>
         </div>
         {errors.birthDate && <p className="mt-1 text-xs text-destructive">{errors.birthDate.message}</p>}
+      </div>
+
+      {/* 입학 시점 — 학번 가입 확인 시 자동 채워짐 (Sprint 67: Step 2 → Step 1 이동) */}
+      <div>
+        <label className="mb-1.5 block text-sm font-medium">
+          입학 시점 <span className="text-destructive">*</span>
+        </label>
+        <p className="mb-2 text-xs text-muted-foreground">
+          학번 입력 후 &ldquo;가입 확인&rdquo; 을 누르면 학번 기반으로 자동 채워집니다.
+        </p>
+        <div className="flex gap-2">
+          <select
+            {...register("enrollmentYear", { required: "입학 연도를 선택하세요" })}
+            className="rounded-lg border bg-card px-3 py-2 text-sm"
+          >
+            <option value="">연도</option>
+            {ENROLLMENT_YEAR_OPTIONS.map((y) => (
+              <option key={y} value={String(y)}>{y}</option>
+            ))}
+          </select>
+          <select
+            {...register("enrollmentHalf", { required: "반기를 선택하세요" })}
+            className="rounded-lg border bg-card px-3 py-2 text-sm"
+          >
+            <option value="">반기</option>
+            <option value="1">1학기</option>
+            <option value="2">2학기</option>
+          </select>
+        </div>
+        {(errors.enrollmentYear || errors.enrollmentHalf) && (
+          <p className="mt-1 text-xs text-destructive">입학 시점을 모두 선택하세요.</p>
+        )}
+      </div>
+
+      {/* 누적 학기 — Sprint 67: 입학 시점 하단 */}
+      <div>
+        <label className="mb-1.5 block text-sm font-medium">
+          누적 학기 <span className="text-destructive">*</span>
+        </label>
+        <p className="mb-2 text-xs text-muted-foreground">
+          휴학 제외 실제 다닌 학기 수 (예: 신입생 1, 2학기 차 2). 가입 시점 기준.
+        </p>
+        <Input
+          {...register("accumulatedSemesters", {
+            required: "누적 학기를 입력하세요",
+            pattern: { value: /^\d+$/, message: "숫자로 입력하세요" },
+            validate: (v) => {
+              const n = Number(v);
+              return (n >= 1 && n <= 30) || "1~30 사이의 숫자로 입력하세요";
+            },
+          })}
+          inputMode="numeric"
+          maxLength={2}
+          placeholder="예: 1, 2, 3 …"
+          className="w-32"
+        />
+        {errors.accumulatedSemesters && (
+          <p className="mt-1 text-xs text-destructive">{errors.accumulatedSemesters.message}</p>
+        )}
+      </div>
+
+      {/* 계정 보안 — Sprint 67: Step 3 통합 */}
+      <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
+        <p className="text-sm font-medium">계정 보안</p>
+
+        <div>
+          <label className="mb-1.5 block text-xs font-medium">
+            비밀번호 <span className="text-destructive">*</span>
+          </label>
+          <div className="relative">
+            <Input
+              {...register("password", {
+                required: "비밀번호를 입력하세요",
+                minLength: { value: 8, message: "8자 이상 입력하세요" },
+                validate: (v) =>
+                  /(?=.*[a-zA-Z])(?=.*\d)/.test(v) || "영문과 숫자를 모두 포함해야 합니다",
+              })}
+              type={showPassword ? "text" : "password"}
+              placeholder="8자 이상, 영문+숫자 포함"
+              className={cn("pr-10", errors.password && "border-destructive")}
+            />
+            <button
+              type="button"
+              tabIndex={-1}
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
+              aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+          {errors.password && <p className="mt-1 text-xs text-destructive">{errors.password.message}</p>}
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-xs font-medium">
+            비밀번호 확인 <span className="text-destructive">*</span>
+          </label>
+          <div className="relative">
+            <Input
+              {...register("passwordConfirm", {
+                required: "비밀번호를 한 번 더 입력하세요",
+                validate: (v) => v === watchedPassword || "비밀번호가 일치하지 않습니다",
+              })}
+              type={showPasswordConfirm ? "text" : "password"}
+              placeholder="위 비밀번호와 동일하게"
+              className={cn("pr-10", errors.passwordConfirm && "border-destructive")}
+            />
+            <button
+              type="button"
+              tabIndex={-1}
+              onClick={() => setShowPasswordConfirm((v) => !v)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
+              aria-label={showPasswordConfirm ? "비밀번호 숨기기" : "비밀번호 보기"}
+            >
+              {showPasswordConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+          {errors.passwordConfirm && <p className="mt-1 text-xs text-destructive">{errors.passwordConfirm.message}</p>}
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-xs font-medium">
+            보안 질문 <span className="text-destructive">*</span>
+          </label>
+          <select
+            {...register("securityQuestionSelect", { required: true })}
+            className="w-full rounded-lg border bg-card px-3 py-2 text-sm"
+          >
+            {SECURITY_QUESTIONS.map((q) => (
+              <option key={q} value={q}>{q}</option>
+            ))}
+          </select>
+          {watchedSecurityQ === "직접 입력" && (
+            <Input
+              {...register("securityQuestionCustom", { required: "직접 입력 시 질문을 입력하세요" })}
+              placeholder="질문 내용을 입력"
+              className="mt-2"
+            />
+          )}
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-xs font-medium">
+            보안 질문 답변 <span className="text-destructive">*</span>
+          </label>
+          <Input
+            {...register("securityAnswer", { required: "답변을 입력하세요" })}
+            placeholder="답변 (대소문자 구분 없음)"
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            비밀번호 찾기 시 본인 확인에 사용됩니다. 안전하게 보관해 주세요.
+          </p>
+          {errors.securityAnswer && <p className="mt-1 text-xs text-destructive">{errors.securityAnswer.message}</p>}
+        </div>
       </div>
     </section>
   );

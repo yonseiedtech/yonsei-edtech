@@ -137,11 +137,11 @@ export default function LoginForm({ onSuccess, hideSignupLink, signupHref }: Log
       className="space-y-4 rounded-2xl border bg-card p-8 shadow-sm"
     >
       <div>
-        <label className="mb-1.5 block text-sm font-medium">아이디</label>
+        <label className="mb-1.5 block text-sm font-medium">아이디(학번)</label>
         <Input
           type="text"
           name="username"
-          placeholder="아이디를 입력하세요"
+          placeholder="아이디(학번)을 입력하세요"
           autoComplete="username"
           defaultValue={savedUsername}
           required

@@ -63,19 +63,30 @@ export async function runSignupFlow(
     username: data.username,
     name: data.name,
     email: data.email,
+    // Sprint 67: 연락용 이메일 (선택, 일반 메일도 가능)
+    contactEmail: data.contactEmail?.trim() || undefined,
     memberType: enrollmentStatus === "graduated" ? "alumni" : "student",
     enrollmentStatus,
     generation: calcGeneration(
       data.enrollmentYear ? Number(data.enrollmentYear) : null,
       data.enrollmentHalf ? Number(data.enrollmentHalf) : null,
     ),
-    accumulatedSemesters: data.generation ? Number(data.generation) : undefined,
+    // Sprint 67 fix: 누적 학기는 accumulatedSemesters 필드 사용 (data.generation 오용 수정)
+    accumulatedSemesters: data.accumulatedSemesters
+      ? Number(data.accumulatedSemesters)
+      : undefined,
     studentId: data.username || "",
     phone: data.phone || "",
     birthDate: data.birthDate || "",
     enrollmentYear: data.enrollmentYear ? Number(data.enrollmentYear) : null,
     enrollmentHalf: data.enrollmentHalf ? Number(data.enrollmentHalf) : null,
     field: data.field || "",
+    // Sprint 67: 관심 키워드 + 연구 주제
+    researchInterests:
+      Array.isArray(data.researchInterests) && data.researchInterests.length > 0
+        ? data.researchInterests
+        : undefined,
+    researchTopic: data.researchTopic?.trim() || undefined,
     privacyAgreedAt: new Date().toISOString(),
     consents,
     securityQuestion,
@@ -104,6 +115,17 @@ export async function runSignupFlow(
   if (data.affiliation1) profileData.affiliation = data.affiliation1;
   if (data.affiliation2) profileData.department = data.affiliation2;
   if (data.position) profileData.position = data.position;
+
+  // Sprint 67: 학교 교사 — 교육청·학교급 분리 저장
+  if (data.activity === "teacher") {
+    if (data.affiliationOffice) {
+      profileData.affiliationOffice = data.affiliationOffice;
+    }
+    if (data.schoolLevel) {
+      profileData.schoolLevel = data.schoolLevel;
+    }
+  }
+
   if (data.activity === "corporate" && data.corporateDuty) {
     profileData.corporateDuty = data.corporateDuty;
   }
