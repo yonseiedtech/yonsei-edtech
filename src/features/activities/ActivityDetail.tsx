@@ -25,6 +25,7 @@ import {
 import InlineMeetingTimer from "./InlineMeetingTimer";
 import ActivityConnectedTodos from "./ActivityConnectedTodos";
 import MyActivitySessionsTab from "@/features/conference/MyActivitySessionsTab";
+import ActivityInfoEditor from "./ActivityInfoEditor";
 import { todayYmdLocal } from "@/lib/dday";
 import type { Activity, ActivityType, ActivityProgress, ActivityProgressMode, FormField, EnrollmentStatus, ExternalParticipantType, SpeakerSubmissionType } from "@/types";
 import { ENROLLMENT_STATUS_LABELS, ACTIVITY_PROGRESS_MODE_LABELS, EXTERNAL_PARTICIPANT_TYPE_LABELS, EXTERNAL_PARTICIPANT_TYPE_COLORS, SPEAKER_SUBMISSION_TYPE_LABELS, SPEAKER_SUBMISSION_TYPE_COLORS } from "@/types";
@@ -2021,12 +2022,13 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   </div>
                 </label>
               </div>
-              <div className="rounded-xl border bg-card p-6">
-                <p className="text-sm text-muted-foreground">활동 정보 수정/삭제는 목록 페이지에서 가능합니다.</p>
-                <Link href={backHref}>
-                  <Button variant="outline" size="sm" className="mt-3"><Pencil size={14} className="mr-1" />목록으로 이동</Button>
-                </Link>
-              </div>
+              {/* 활동 정보 인라인 편집 (Sprint 67 요청) */}
+              <ActivityInfoEditor
+                activity={activity}
+                isExternal={type === "external"}
+                onSaved={() => queryClient.invalidateQueries({ queryKey: ["activity", activityId] })}
+                onDeleted={() => router.push(backHref)}
+              />
             </div>
           )}
         </div>
