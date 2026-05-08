@@ -1790,29 +1790,129 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 );
               })()}
 
-              {/* 신청 답변 요약 */}
+              {/* 신청 답변 요약 — 가시성 강화: 선택형은 그룹핑·카운트, 자유텍스트는 카드 */}
               {applicationForm.length > 0 && applicants.length > 0 && (
                 <div className="rounded-xl border bg-card p-6">
-                  <h3 className="font-semibold">신청 답변 요약</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">신청 답변 요약</h3>
+                    <span className="text-xs text-muted-foreground">총 {applicants.length}명</span>
+                  </div>
                   {applicationForm.map((field) => {
-                    const answers = applicants
-                      .map((a) => ({ name: a.name, v: a.answers?.[field.id] ?? a.answers?.[field.label] }))
+                    // 답변 추출 + 정규화
+                    const rawAnswers = applicants
+                      .map((a) => ({
+                        name: a.name,
+                        v: a.answers?.[field.id] ?? a.answers?.[field.label],
+                      }))
                       .filter((x) => x.v !== undefined && x.v !== "");
+
+                    // 그룹핑 가능 type: radio/select/checkbox
+                    const isGroupable =
+                      field.type === "radio" ||
+                      field.type === "select" ||
+                      field.type === "checkbox";
+
+                    // 자유텍스트로 표시할 type
+                    const isFreeText =
+                      field.type === "short_text" ||
+                      field.type === "long_text" ||
+                      field.type === "email" ||
+                      field.type === "phone" ||
+                      field.type === "url";
+
+                    // 답변별 그룹핑 (radio/select/checkbox)
+                    type Group = { option: string; count: number; names: string[] };
+                    let groups: Group[] = [];
+                    if (isGroupable) {
+                      const groupMap = new Map<string, Group>();
+                      for (const a of rawAnswers) {
+                        const values: string[] = Array.isArray(a.v)
+                          ? (a.v as string[])
+                          : [String(a.v)];
+                        for (const opt of values) {
+                          const key = opt;
+                          const existing = groupMap.get(key);
+                          if (existing) {
+                            existing.count++;
+                            existing.names.push(a.name);
+                          } else {
+                            groupMap.set(key, { option: key, count: 1, names: [a.name] });
+                          }
+                        }
+                      }
+                      groups = Array.from(groupMap.values()).sort((a, b) => b.count - a.count);
+                    }
+
                     return (
-                      <div key={field.id} className="mt-4">
-                        <p className="text-sm font-medium text-primary">{field.label}</p>
-                        {answers.length === 0 ? (
+                      <div key={field.id} className="mt-5 border-t border-border/60 pt-4 first:mt-3 first:border-t-0 first:pt-0">
+                        <p className="text-sm font-semibold text-primary">{field.label}</p>
+                        {rawAnswers.length === 0 ? (
                           <p className="mt-1 text-xs text-muted-foreground">답변 없음</p>
+                        ) : isGroupable ? (
+                          <div className="mt-2 space-y-2">
+                            {groups.map((g) => {
+                              const ratio = Math.round((g.count / applicants.length) * 100);
+                              return (
+                                <div
+                                  key={g.option}
+                                  className="rounded-lg border bg-muted/30 p-3"
+                                >
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="text-sm font-medium">{g.option}</span>
+                                    <span className="inline-flex items-center gap-1 text-xs">
+                                      <span className="rounded-full bg-primary/10 px-2 py-0.5 font-bold text-primary">
+                                        {g.count}명
+                                      </span>
+                                      <span className="text-muted-foreground">{ratio}%</span>
+                                    </span>
+                                  </div>
+                                  {/* 막대그래프 */}
+                                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                                    <div
+                                      className="h-full bg-primary/70 transition-all"
+                                      style={{ width: `${ratio}%` }}
+                                    />
+                                  </div>
+                                  <div className="mt-2 flex flex-wrap gap-1">
+                                    {g.names.map((n, i) => (
+                                      <span
+                                        key={`${n}-${i}`}
+                                        className="inline-flex rounded-full bg-card px-2 py-0.5 text-[11px] text-foreground"
+                                      >
+                                        {n}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : isFreeText ? (
+                          <div className="mt-2 space-y-2">
+                            {rawAnswers.map((a, i) => (
+                              <div
+                                key={i}
+                                className="rounded-lg border-l-4 border-primary/40 bg-muted/30 px-3 py-2 text-sm"
+                              >
+                                <div className="mb-1 inline-flex rounded-full bg-card px-2 py-0.5 text-[11px] font-medium text-foreground">
+                                  {a.name}
+                                </div>
+                                <p className="whitespace-pre-wrap text-sm text-foreground/90">
+                                  {String(a.v)}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
                         ) : (
+                          // 기타 type (date/time/file/schedule 등) — 기본 표시
                           <div className="mt-2 space-y-1">
-                            {answers.map((a, i) => {
+                            {rawAnswers.map((a, i) => {
                               let display: string;
                               if (Array.isArray(a.v)) {
                                 display = typeof (a.v as unknown[])[0] === "string"
                                   ? (a.v as string[]).join(", ")
                                   : `${(a.v as { name: string }[]).length}개 파일 첨부`;
                               } else if (field.type === "schedule" && typeof a.v === "string") {
-                                // PR8: 스케줄 답변은 JSON 문자열
                                 try {
                                   const slots = JSON.parse(a.v) as { date: string; start: string; end: string }[];
                                   display = slots.length === 0
@@ -1826,7 +1926,10 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                               }
                               return (
                                 <div key={i} className="rounded-lg bg-muted/30 px-3 py-2 text-sm">
-                                  <span className="font-medium">{a.name}:</span> {display}
+                                  <span className="rounded-full bg-card px-2 py-0.5 text-[11px] font-medium text-foreground">
+                                    {a.name}
+                                  </span>
+                                  <span className="ml-2">{display}</span>
                                 </div>
                               );
                             })}
