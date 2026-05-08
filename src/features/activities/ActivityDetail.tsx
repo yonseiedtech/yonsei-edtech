@@ -479,12 +479,28 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               >
                 <Calendar size={14} /> 학술대회 프로그램 · 내 일정
               </Link>
+              {user && (
+                <Link
+                  href={`/activities/external/${activityId}/workbook`}
+                  className="inline-flex items-center gap-1.5 rounded-md border bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-xs hover:bg-muted"
+                >
+                  <ListChecks size={14} /> 워크북
+                </Link>
+              )}
               {isStaff && (backHref.includes("academic-admin") || backHref.includes("/console/academic")) && (
                 <Link
                   href={`/console/academic/external/${activityId}/program`}
                   className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
                 >
                   <Pencil size={14} /> 시간표 편집
+                </Link>
+              )}
+              {isStaff && backHref.includes("academic-admin") && (
+                <Link
+                  href={`/academic-admin/external/${activityId}/workbook`}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
+                >
+                  <ListChecks size={14} /> 워크북 관리
                 </Link>
               )}
             </div>
