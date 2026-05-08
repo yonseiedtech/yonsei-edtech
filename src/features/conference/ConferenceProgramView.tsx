@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -85,6 +85,30 @@ function extractTrackOrder(title: string | undefined, track: string | undefined)
   if (m) return { sessionNum: parseInt(m[2], 10), trackLetter: m[1] };
   const tm = (track ?? "").match(/^([A-Z])\b/);
   return { sessionNum: 99, trackLetter: tm?.[1] ?? "Z" };
+}
+
+/**
+ * Sprint 67-L: 시간 그룹별 헤더 라벨 — 카테고리·SESSION 번호로 결정.
+ * SESSION 01 / SESSION 02 / 포스터 세션 / 개회식 / 폐회식 / 점심 / 휴식 등.
+ */
+function getSessionGroupLabel(s: ConferenceSession): string {
+  const tk = extractTrackOrder(s.title, s.track);
+  if (s.category === "paper" && tk.sessionNum >= 1 && tk.sessionNum <= 4) {
+    return `SESSION 0${tk.sessionNum}`;
+  }
+  if (s.category === "poster") return "포스터 세션";
+  if (s.category === "ceremony") return (s.title ?? "").replace(/^\s*\[[A-Z]-\d\]\s*/, "") || "개·폐회식";
+  if (s.category === "break") return (s.title ?? "").replace(/^\s*\[[A-Z]-\d\]\s*/, "") || "휴식";
+  if (s.category === "panel" && tk.sessionNum >= 1 && tk.sessionNum <= 4) {
+    return `패널 (${tk.trackLetter}-${tk.sessionNum})`;
+  }
+  if (s.category === "panel") return "패널";
+  if (s.category === "keynote") return "기조강연";
+  if (s.category === "symposium") return "심포지엄";
+  if (s.category === "networking") return "네트워킹";
+  if (s.category === "media") return "미디어·전시";
+  if (s.category === "workshop") return "워크숍";
+  return `${s.startTime}–${s.endTime}`;
 }
 
 export default function ConferenceProgramView({ activityId, activityTitle, user }: Props) {
@@ -685,7 +709,12 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                 </p>
               );
             }
+            // Sprint 67-L: 시간 그룹별 헤더 (SESSION 01/02/03/04 / 포스터 / 개·폐회식 / 휴식 등)
+            let prevStart: string | null = null;
             return filteredSessions.map((s) => {
+                const showHeader = s.startTime !== prevStart;
+                const groupLabel = showHeader ? getSessionGroupLabel(s) : "";
+                prevStart = s.startTime;
                 const plan = planBySessionId.get(s.id);
                 const companions = companionsBySessionId.get(s.id) ?? [];
                 const conflicts = conflictsBySessionId.get(s.id) ?? [];
@@ -696,8 +725,16 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                 const isLive = timeStatus === "live";
                 const isPast = timeStatus === "past";
                 return (
+                  <Fragment key={s.id}>
+                    {showHeader && (
+                      <div className="sticky top-0 z-[5] mt-2 mb-1 flex items-baseline justify-between rounded-md border border-primary/30 bg-primary/10 px-3 py-1.5 backdrop-blur dark:bg-primary/15">
+                        <h4 className="text-sm font-bold text-primary">{groupLabel}</h4>
+                        <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                          {s.startTime}–{s.endTime}
+                        </span>
+                      </div>
+                    )}
                   <Card
-                    key={s.id}
                     className={`relative ${cardClassesForVariant(variant, !!plan)} ${
                       isLive
                         ? "ring-2 ring-emerald-500/60 dark:ring-emerald-400/60 shadow-md"
@@ -875,6 +912,7 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                       )}
                     </CardContent>
                   </Card>
+                  </Fragment>
                 );
               });
           })()}
