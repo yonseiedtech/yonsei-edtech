@@ -102,6 +102,7 @@ export default function ConferenceProgramEditor({
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const aiFileInputRef = useRef<HTMLInputElement | null>(null);
+  const csvFileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -362,6 +363,144 @@ export default function ConferenceProgramEditor({
     toast.success("기존 일자가 교체되었습니다. 검토 후 저장하세요.");
   }
 
+  // ─────────────────────────────────────────────────────────────────
+  // Sprint 67-C: CSV 업로드 — AI 추출 실패 시 대체 경로
+  // 헤더: date,startTime,endTime,track,category,title,speakers,affiliation,location,abstract
+  // ─────────────────────────────────────────────────────────────────
+  function parseCsvText(text: string): ConferenceDay[] {
+    text = text.replace(/^﻿/, "");
+    const rows: string[][] = [];
+    let cur = "";
+    let inQuote = false;
+    let row: string[] = [];
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (inQuote) {
+        if (c === '"') {
+          if (text[i + 1] === '"') {
+            cur += '"';
+            i++;
+          } else {
+            inQuote = false;
+          }
+        } else {
+          cur += c;
+        }
+      } else {
+        if (c === '"') inQuote = true;
+        else if (c === ",") {
+          row.push(cur);
+          cur = "";
+        } else if (c === "\n") {
+          row.push(cur);
+          rows.push(row);
+          row = [];
+          cur = "";
+        } else if (c === "\r") {
+          // skip CR (handled by LF)
+        } else {
+          cur += c;
+        }
+      }
+    }
+    if (cur.length || row.length) {
+      row.push(cur);
+      rows.push(row);
+    }
+    if (rows.length === 0) throw new Error("빈 CSV 파일입니다.");
+
+    const header = (rows.shift() ?? []).map((s) => s.trim().toLowerCase());
+    const idx = (k: string) => header.indexOf(k.toLowerCase());
+    const dateI = idx("date");
+    const startI = idx("starttime");
+    const endI = idx("endtime");
+    const trackI = idx("track");
+    const catI = idx("category");
+    const titleI = idx("title");
+    const speakersI = idx("speakers");
+    const affI = idx("affiliation");
+    const locI = idx("location");
+    const abstractI = idx("abstract");
+
+    if (dateI < 0 || startI < 0 || endI < 0 || titleI < 0) {
+      throw new Error(
+        "CSV 헤더에 date,startTime,endTime,title 컬럼이 모두 필요합니다.",
+      );
+    }
+
+    const VALID_CATS = new Set([
+      "keynote",
+      "symposium",
+      "panel",
+      "paper",
+      "poster",
+      "media",
+      "workshop",
+      "networking",
+      "ceremony",
+      "break",
+      "other",
+    ]);
+
+    const byDate = new Map<string, ConferenceDay["sessions"]>();
+    for (const r of rows) {
+      if (!r.length || r.every((v) => !v?.trim())) continue;
+      const date = r[dateI]?.trim();
+      if (!date) continue;
+      const rawCat = (catI >= 0 ? r[catI]?.trim() : "") || "other";
+      const category = (VALID_CATS.has(rawCat) ? rawCat : "other") as ConferenceDay["sessions"][number]["category"];
+      const speakersRaw = speakersI >= 0 ? r[speakersI]?.trim() ?? "" : "";
+      const speakers = speakersRaw
+        ? speakersRaw.split(/[;,/]/).map((s) => s.trim()).filter(Boolean)
+        : undefined;
+      const session = {
+        id: uid(),
+        startTime: r[startI]?.trim() ?? "",
+        endTime: r[endI]?.trim() ?? "",
+        track: trackI >= 0 ? r[trackI]?.trim() || undefined : undefined,
+        category,
+        title: r[titleI]?.trim() ?? "",
+        speakers,
+        affiliation: affI >= 0 ? r[affI]?.trim() || undefined : undefined,
+        location: locI >= 0 ? r[locI]?.trim() || undefined : undefined,
+        abstract: abstractI >= 0 ? r[abstractI]?.trim() || undefined : undefined,
+      };
+      if (!byDate.has(date)) byDate.set(date, []);
+      byDate.get(date)!.push(session);
+    }
+
+    const days: ConferenceDay[] = [...byDate.entries()].map(([date, sessions]) => ({
+      date,
+      sessions: sessions.sort((a, b) => a.startTime.localeCompare(b.startTime)),
+    }));
+    days.sort((a, b) => a.date.localeCompare(b.date));
+    if (days.length === 0) {
+      throw new Error("유효한 데이터 행이 없습니다. CSV 내용을 확인하세요.");
+    }
+    return days;
+  }
+
+  async function handleCsvUpload(file: File) {
+    setError(null);
+    try {
+      const text = await file.text();
+      const days = parseCsvText(text);
+      setExtractPreview({
+        title: undefined,
+        notes: undefined,
+        days,
+      });
+      const total = days.reduce((n, d) => n + d.sessions.length, 0);
+      toast.success(
+        `CSV 파싱 완료 — ${days.length}일 / ${total}개 세션. 미리보기에서 병합 또는 교체를 선택하세요.`,
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "CSV 파싱 실패";
+      setError(msg);
+      toast.error(msg);
+    }
+  }
+
   /**
    * Phase 0 P0: 저장 전 무결성 검증 — 필수값·시간 순서·중복 일자 등.
    * 반환: 에러 메시지 배열 (빈 배열이면 통과).
@@ -384,9 +523,23 @@ export default function ConferenceProgramEditor({
       dateSeen.add(day.date);
     }
 
-    // 세션 검사 — 빈 제목·시간 역전·동일 일자 시간 충돌
+    // 세션 검사 — 빈 제목·시간 역전·동일 일자·동일 트랙 시간 충돌
+    // (포스터·휴식·식사·네트워킹 카테고리는 동시 진행이 정상이므로 충돌 검사 제외)
+    const PARALLEL_OK_CATEGORIES = new Set([
+      "poster",
+      "break",
+      "networking",
+      "media",
+    ]);
     for (const day of d.days) {
-      const sessionsByTime: { id: string; title: string; start: string; end: string }[] = [];
+      const sessionsByTime: {
+        id: string;
+        title: string;
+        start: string;
+        end: string;
+        track: string;
+        category: string;
+      }[] = [];
       for (const s of day.sessions) {
         if (!s.title?.trim()) {
           errors.push(`${day.date} — 빈 세션 제목이 있습니다.`);
@@ -398,16 +551,33 @@ export default function ConferenceProgramEditor({
         if (s.endTime <= s.startTime) {
           errors.push(`${day.date} "${s.title}" — 종료 시각이 시작 시각보다 같거나 빠릅니다 (${s.startTime}~${s.endTime}).`);
         }
-        sessionsByTime.push({ id: s.id, title: s.title, start: s.startTime, end: s.endTime });
+        sessionsByTime.push({
+          id: s.id,
+          title: s.title,
+          start: s.startTime,
+          end: s.endTime,
+          track: (s.track ?? "").trim(),
+          category: s.category ?? "other",
+        });
       }
-      // 시간 충돌 (같은 트랙 우선 고려는 차후 — 일자 전체 충돌만 표시)
+      // 시간 충돌 — 동일 트랙끼리만 검사. 트랙이 다르거나 한쪽이 parallel-ok 카테고리면 무시.
       for (let i = 0; i < sessionsByTime.length; i++) {
         for (let j = i + 1; j < sessionsByTime.length; j++) {
           const a = sessionsByTime[i];
           const b = sessionsByTime[j];
-          if (a.start < b.end && b.start < a.end) {
-            errors.push(`${day.date} 시간 충돌: "${a.title}" (${a.start}~${a.end}) ↔ "${b.title}" (${b.start}~${b.end})`);
-          }
+          if (!(a.start < b.end && b.start < a.end)) continue;
+          // 동시 진행 OK 카테고리 (포스터·휴식 등) 는 충돌 무시
+          if (
+            PARALLEL_OK_CATEGORIES.has(a.category) ||
+            PARALLEL_OK_CATEGORIES.has(b.category)
+          )
+            continue;
+          // 트랙이 다르면 병렬 진행으로 간주 (정상)
+          if (a.track && b.track && a.track !== b.track) continue;
+          // 트랙 정보가 없으면 동일 공간으로 간주 → 충돌
+          errors.push(
+            `${day.date} 시간 충돌: "${a.title}" (${a.start}~${a.end}) ↔ "${b.title}" (${b.start}~${b.end})${a.track ? ` [${a.track}]` : ""}`,
+          );
         }
       }
     }
@@ -616,6 +786,28 @@ export default function ConferenceProgramEditor({
           <Button size="sm" variant="outline" onClick={addDay}>
             <CalendarPlus className="mr-1 h-3.5 w-3.5" />
             일자 추가
+          </Button>
+          <input
+            ref={csvFileInputRef}
+            type="file"
+            accept=".csv,text/csv"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) {
+                handleCsvUpload(f);
+                e.target.value = "";
+              }
+            }}
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            type="button"
+            onClick={() => csvFileInputRef.current?.click()}
+            title="CSV 파일에서 세션 일괄 가져오기 (헤더: date,startTime,endTime,track,category,title,speakers,affiliation,location,abstract)"
+          >
+            CSV 업로드
           </Button>
           <Button size="sm" onClick={() => handleSave()} disabled={saving}>
             {saving ? (

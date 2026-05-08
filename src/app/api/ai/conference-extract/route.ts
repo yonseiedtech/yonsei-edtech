@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { generateObject } from "ai";
+import { generateObject, generateText } from "ai";
 import { z } from "zod";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { requireAuth } from "@/lib/api-auth";
@@ -77,9 +77,9 @@ export async function POST(req: NextRequest) {
 
   // base64 데이터 URL prefix 제거
   const base64 = imageData.replace(/^data:[^;]+;base64,/, "");
-  if (base64.length > 8 * 1024 * 1024) {
+  if (base64.length > 12 * 1024 * 1024) {
     return Response.json(
-      { error: "이미지가 너무 큽니다. (최대 6MB)" },
+      { error: "이미지가 너무 큽니다. (최대 9MB) — 분할해서 업로드하거나 해상도를 낮춰주세요." },
       { status: 413 },
     );
   }
@@ -159,12 +159,68 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 모든 모델 실패
+  // Sprint 67-B: 모든 schema 모드 실패 시 freeform JSON 텍스트 fallback
+  // (gemini schema 모드는 24+ entry 시 timeout/parse 실패 빈발 — text mode 가 안정적)
+  console.log("[conference-extract] schema mode failed, trying freeform JSON text mode (gemini-2.5-pro)");
+  try {
+    const freeformPrompt = [
+      promptText,
+      "",
+      "출력 형식: 순수 JSON 만. 마크다운 코드블록(```) 사용 금지. 추가 설명 금지.",
+      "구조:",
+      `{"title":"학술대회명","notes":"비고","days":[{"date":"YYYY-MM-DD","dayLabel":"1일차","sessions":[{"startTime":"HH:MM","endTime":"HH:MM","track":"트랙","category":"poster","title":"...","speakers":["..."],"affiliation":"...","location":"...","abstract":"..."}]}]}`,
+      "category 허용값: keynote|symposium|panel|paper|poster|media|workshop|networking|ceremony|break|other",
+    ].join("\n");
+    const { text } = await generateText({
+      model: google("gemini-2.5-pro"),
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: freeformPrompt },
+            isPdf
+              ? { type: "file", data: buffer, mediaType: "application/pdf" }
+              : { type: "image", image: buffer },
+          ],
+        },
+      ],
+    });
+    // 코드블록 제거 시도
+    const cleaned = text
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/\s*```\s*$/i, "")
+      .trim();
+    // 첫 { ~ 마지막 } 만 추출 (전후 잡담 컷)
+    const firstBrace = cleaned.indexOf("{");
+    const lastBrace = cleaned.lastIndexOf("}");
+    const jsonStr =
+      firstBrace >= 0 && lastBrace > firstBrace
+        ? cleaned.slice(firstBrace, lastBrace + 1)
+        : cleaned;
+    const parsed = JSON.parse(jsonStr);
+    const validated = ResultSchema.parse(parsed);
+    console.log(
+      `[conference-extract] freeform fallback success: ${validated.days?.length ?? 0} days, ${
+        validated.days?.reduce((n, d) => n + (d.sessions?.length ?? 0), 0) ?? 0
+      } sessions`,
+    );
+    return Response.json(validated);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[conference-extract] freeform fallback also failed:", msg);
+    lastError = err;
+  }
+
+  // 모든 모델/모드 실패
   const msg = lastError instanceof Error ? lastError.message : String(lastError);
   return Response.json(
     {
       error:
-        "AI 추출 실패 — 모든 모델 시도 실패. 이미지가 너무 복잡하거나 흐릿할 수 있습니다. 이미지를 분할(예: 포스터 12개씩)해서 재시도하거나 수동 입력을 고려하세요.",
+        "AI 추출 실패 — 모든 모델·모드 시도 실패. 다음 중 하나를 시도해보세요:\n" +
+        "  1) 이미지를 분할 (포스터 12개씩 잘라서 2번 추출)\n" +
+        "  2) 이미지 해상도를 낮춰서 (예: 1920px 너비) 재업로드\n" +
+        "  3) 'AI 추출' 대신 '수동 추가' 버튼으로 직접 입력\n" +
+        "  4) 동일 이미지로 1~2분 후 재시도 (일시적 모델 부하)",
       detail: msg.slice(0, 300),
     },
     { status: 500 },
