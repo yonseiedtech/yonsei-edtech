@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { conferenceProgramsApi } from "@/lib/bkend";
 import { uploadToStorage } from "@/lib/storage";
+import KeywordMultiSelect from "@/components/ui/keyword-multi-select";
 import { auth } from "@/lib/firebase";
 import { todayYmdKst } from "@/lib/dday";
 import {
@@ -904,23 +905,21 @@ function SessionRow({
       </div>
       {expanded && (
         <>
-          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          <div className="mt-2">
             <Input
               value={session.title}
               onChange={(e) => onChange({ title: e.target.value })}
               placeholder="세션 제목"
             />
-            <Input
-              value={(session.speakers ?? []).join(", ")}
-              onChange={(e) =>
-                onChange({
-                  speakers: e.target.value
-                    .split(",")
-                    .map((s) => s.trim())
-                    .filter(Boolean),
-                })
-              }
-              placeholder="발표자 (쉼표로 구분)"
+          </div>
+          {/* Phase 1 — 발표자 Chip 입력 (Enter 로 추가, X 로 제거) */}
+          <div className="mt-2">
+            <p className="mb-1 text-[11px] font-medium text-muted-foreground">발표자</p>
+            <KeywordMultiSelect
+              value={session.speakers ?? []}
+              onChange={(speakers) => onChange({ speakers })}
+              suggestions={[]}
+              placeholder="발표자 이름 (Enter)"
             />
           </div>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
