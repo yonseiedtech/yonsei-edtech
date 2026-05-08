@@ -14,6 +14,14 @@ interface BusinessCardProps {
   hideExchangeHint?: boolean;
 }
 
+function formatPhone(raw: string | undefined): string {
+  if (!raw) return "";
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length === 11) return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+  if (digits.length === 10) return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  return raw;
+}
+
 const BusinessCard = forwardRef<HTMLDivElement, BusinessCardProps>(
   function BusinessCard({ user, qrValue, hideExchangeHint }, ref) {
     // Sprint 67: occupation 인지 + 중복 제거 (legacy 데이터에서 affiliation == department 이거나
@@ -51,7 +59,7 @@ const BusinessCard = forwardRef<HTMLDivElement, BusinessCardProps>(
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-card shadow-sm ring-1 ring-white/40">
               <Image src="/yonsei-emblem.svg" alt="연세대학교 엠블럼" width={22} height={22} className="h-5 w-5" />
             </div>
-            <span className="text-xs font-semibold tracking-wide">연세교육공학회</span>
+            <Image src="/logo-text.png" alt="연세교육공학회" width={200} height={40} className="h-8 w-auto" />
           </div>
 
           {/* 프로필 사진 */}
@@ -80,7 +88,7 @@ const BusinessCard = forwardRef<HTMLDivElement, BusinessCardProps>(
             {user.contactEmail || user.email ? (
               <p className="truncate">{user.contactEmail ?? user.email}</p>
             ) : null}
-            {user.phone ? <p>{user.phone}</p> : null}
+            {user.phone ? <p>{formatPhone(user.phone)}</p> : null}
             {user.field ? <p className="italic text-slate-500">#{user.field}</p> : null}
           </div>
 

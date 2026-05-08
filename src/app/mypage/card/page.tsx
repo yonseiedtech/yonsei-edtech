@@ -4,10 +4,11 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
-import { ArrowLeft, Download, Share2, Users, CreditCard, History } from "lucide-react";
+import { ArrowLeft, Download, Share2, Users, CreditCard, History, Camera, BookUser } from "lucide-react";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { useAuthStore } from "@/features/auth/auth-store";
 import BusinessCard from "@/features/card/BusinessCard";
+import ReceivedCardsSection from "@/features/card/ReceivedCardsSection";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import EmptyState from "@/components/ui/empty-state";
@@ -16,8 +17,10 @@ import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import type { BusinessCardExchange } from "@/types";
 import { toast } from "sonner";
+import { uploadImageSmart } from "@/lib/storage";
+import { useUpdateProfile } from "@/features/member/useMembers";
 
-type TabKey = "card" | "exchanges";
+type TabKey = "card" | "exchanges" | "received";
 
 interface ExchangeGroup {
   received: BusinessCardExchange[];
@@ -32,12 +35,14 @@ function parseDocs(snap: Awaited<ReturnType<typeof getDocs>>): BusinessCardExcha
   });
 }
 
-function CardTab({ user, qrUrl, cardRef, handleShare, handleSavePng }: {
+function CardTab({ user, qrUrl, cardRef, handleShare, handleSavePng, handlePhotoUpload, isUploading }: {
   user: ReturnType<typeof useAuthStore.getState>["user"];
   qrUrl: string;
   cardRef: React.RefObject<HTMLDivElement | null>;
   handleShare: () => void;
   handleSavePng: () => void;
+  handlePhotoUpload: (file: File) => Promise<void>;
+  isUploading: boolean;
 }) {
   if (!user) return null;
   return (
@@ -46,7 +51,31 @@ function CardTab({ user, qrUrl, cardRef, handleShare, handleSavePng }: {
         <BusinessCard ref={cardRef} user={user} qrValue={qrUrl} />
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-3">
+      {/* 프로필 사진 업로드 */}
+      <div className="mt-4 flex justify-center">
+        <label className={cn("cursor-pointer", isUploading && "pointer-events-none opacity-60")}>
+          <input
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            disabled={isUploading}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handlePhotoUpload(file);
+              e.target.value = "";
+            }}
+          />
+          <span className={cn(
+            "inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground",
+            isUploading && "opacity-60",
+          )}>
+            <Camera size={14} />
+            {isUploading ? "업로드 중…" : "프로필 사진 변경"}
+          </span>
+        </label>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
         <Button variant="outline" onClick={handleShare}>
           <Share2 size={16} className="mr-1" />공유하기
         </Button>
@@ -61,6 +90,7 @@ function CardTab({ user, qrUrl, cardRef, handleShare, handleSavePng }: {
       <div className="mt-6 rounded-xl border bg-card p-4 text-xs text-muted-foreground">
         <p className="font-semibold text-foreground">사용 안내</p>
         <ul className="mt-2 list-disc space-y-1 pl-4">
+          <li>프로필 사진: 명함에 표시할 사진을 업로드하세요</li>
           <li>공유하기: 카카오톡·메시지로 명함 링크 전송</li>
           <li>이미지 저장: 명함을 PNG로 저장해 프로필에 활용</li>
           <li>vCard: 연락처 앱에서 바로 열 수 있는 파일</li>
@@ -147,9 +177,11 @@ function ExchangesTab({ userId }: { userId: string }) {
 }
 
 function CardInner() {
-  const { user } = useAuthStore();
+  const { user, setUser } = useAuthStore();
   const cardRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState<TabKey>("card");
+  const [isUploading, setIsUploading] = useState(false);
+  const { updateProfile } = useUpdateProfile();
 
   if (!user) return null;
 
@@ -175,6 +207,21 @@ function CardInner() {
     }
   }
 
+  async function handlePhotoUpload(file: File) {
+    if (!user) return;
+    setIsUploading(true);
+    try {
+      const url = await uploadImageSmart(file, `profile-photos/${user.id}`);
+      await updateProfile({ id: user.id, data: { profileImage: url } });
+      setUser({ ...user, profileImage: url });
+      toast.success("프로필 사진을 업데이트했습니다.");
+    } catch {
+      toast.error("사진 업로드에 실패했습니다.");
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
   async function handleSavePng() {
     if (!cardRef.current) return;
     try {
@@ -190,7 +237,7 @@ function CardInner() {
     }
   }
 
-  const isWide = tab === "exchanges";
+  const isWide = tab === "exchanges" || tab === "received";
 
   return (
     <div className="min-h-screen bg-slate-50 py-10">
@@ -211,6 +258,7 @@ function CardInner() {
           {[
             { key: "card" as const, label: "내 명함", icon: CreditCard },
             { key: "exchanges" as const, label: "교환 기록", icon: History },
+            { key: "received" as const, label: "받은 명함", icon: BookUser },
           ].map((t) => {
             const active = tab === t.key;
             return (
@@ -230,9 +278,11 @@ function CardInner() {
 
         <div className="mt-6">
           {tab === "card" ? (
-            <CardTab user={user} qrUrl={qrUrl} cardRef={cardRef} handleShare={handleShare} handleSavePng={handleSavePng} />
-          ) : (
+            <CardTab user={user} qrUrl={qrUrl} cardRef={cardRef} handleShare={handleShare} handleSavePng={handleSavePng} handlePhotoUpload={handlePhotoUpload} isUploading={isUploading} />
+          ) : tab === "exchanges" ? (
             <ExchangesTab userId={user.id} />
+          ) : (
+            <ReceivedCardsSection ownerId={user.id} />
           )}
         </div>
       </div>

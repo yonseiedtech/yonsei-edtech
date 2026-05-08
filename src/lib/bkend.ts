@@ -49,6 +49,10 @@ import type {
   GradLifePosition,
   ConferenceProgram, UserSessionPlan,
   ArchiveConcept, ArchiveVariable, ArchiveMeasurementTool, ArchiveFavorite, ArchiveItemType,
+  ReceivedBusinessCard,
+  ConferenceWorkbookTask,
+  ConferenceWorkbookSubmission,
+  ConferenceWorkbookReview,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -521,6 +525,126 @@ export const userSessionPlansApi = {
     return serializeDoc(snap) as unknown as UserSessionPlan;
   },
   delete: (id: string) => dataApi.delete("user_session_plans", id),
+};
+
+// ── 받은 명함 (Received Business Cards) ──
+export const receivedCardsApi = {
+  listByOwner: (ownerId: string) =>
+    dataApi.list<ReceivedBusinessCard>("received_business_cards", {
+      "filter[ownerId]": ownerId,
+      sort: "createdAt:desc",
+      limit: 500,
+    }),
+  get: (id: string) => dataApi.get<ReceivedBusinessCard>("received_business_cards", id),
+  create: (data: Omit<ReceivedBusinessCard, "id" | "createdAt">) =>
+    dataApi.create<ReceivedBusinessCard>("received_business_cards", data as unknown as Record<string, unknown>),
+  update: (id: string, data: Partial<ReceivedBusinessCard>) =>
+    dataApi.update<ReceivedBusinessCard>("received_business_cards", id, data as unknown as Record<string, unknown>),
+  delete: (id: string) => dataApi.delete("received_business_cards", id),
+};
+
+// ── 학술대회 워크북 (Sprint 67-F) ──
+export const workbookTasksApi = {
+  listByActivity: (activityId: string) =>
+    dataApi.list<ConferenceWorkbookTask>("conference_workbook_tasks", {
+      "filter[activityId]": activityId,
+      sort: "order:asc",
+      limit: 500,
+    }),
+  get: (id: string) =>
+    dataApi.get<ConferenceWorkbookTask>("conference_workbook_tasks", id),
+  create: (data: Omit<ConferenceWorkbookTask, "id" | "createdAt">) =>
+    dataApi.create<ConferenceWorkbookTask>(
+      "conference_workbook_tasks",
+      data as unknown as Record<string, unknown>,
+    ),
+  update: (id: string, data: Partial<ConferenceWorkbookTask>) =>
+    dataApi.update<ConferenceWorkbookTask>(
+      "conference_workbook_tasks",
+      id,
+      data as unknown as Record<string, unknown>,
+    ),
+  delete: (id: string) =>
+    dataApi.delete("conference_workbook_tasks", id),
+};
+
+export const workbookSubmissionsApi = {
+  listByUser: (userId: string, activityId: string) =>
+    dataApi.list<ConferenceWorkbookSubmission>(
+      "conference_workbook_submissions",
+      {
+        "filter[userId]": userId,
+        "filter[activityId]": activityId,
+        limit: 500,
+      },
+    ),
+  listByTask: (taskId: string) =>
+    dataApi.list<ConferenceWorkbookSubmission>(
+      "conference_workbook_submissions",
+      {
+        "filter[taskId]": taskId,
+        limit: 1000,
+      },
+    ),
+  listByActivity: (activityId: string) =>
+    dataApi.list<ConferenceWorkbookSubmission>(
+      "conference_workbook_submissions",
+      {
+        "filter[activityId]": activityId,
+        limit: 5000,
+      },
+    ),
+  get: (id: string) =>
+    dataApi.get<ConferenceWorkbookSubmission>(
+      "conference_workbook_submissions",
+      id,
+    ),
+  upsert: async (
+    id: string,
+    data: Record<string, unknown>,
+  ): Promise<ConferenceWorkbookSubmission> => {
+    const ref = doc(db, "conference_workbook_submissions", id);
+    const cleaned = stripUndefinedDeep(data);
+    await setDoc(
+      ref,
+      { ...cleaned, updatedAt: serverTimestamp() },
+      { merge: true },
+    );
+    const snap = await getDoc(ref);
+    return serializeDoc(snap) as unknown as ConferenceWorkbookSubmission;
+  },
+  delete: (id: string) =>
+    dataApi.delete("conference_workbook_submissions", id),
+};
+
+export const workbookReviewsApi = {
+  get: (id: string) =>
+    dataApi.get<ConferenceWorkbookReview>("conference_workbook_reviews", id),
+  listByActivity: (activityId: string) =>
+    dataApi.list<ConferenceWorkbookReview>(
+      "conference_workbook_reviews",
+      {
+        "filter[activityId]": activityId,
+        sort: "submittedAt:desc",
+        limit: 1000,
+      },
+    ),
+  upsert: async (
+    id: string,
+    data: Record<string, unknown>,
+  ): Promise<ConferenceWorkbookReview> => {
+    const ref = doc(db, "conference_workbook_reviews", id);
+    const cleaned = stripUndefinedDeep(data);
+    await setDoc(
+      ref,
+      { ...cleaned, updatedAt: serverTimestamp() },
+      { merge: true },
+    );
+    const snap = await getDoc(ref);
+    return serializeDoc(snap) as unknown as ConferenceWorkbookReview;
+  },
+  delete: (id: string) =>
+    dataApi.delete("conference_workbook_reviews", id),
 };
 
 export const pollsApi = {

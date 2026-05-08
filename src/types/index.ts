@@ -35,3 +35,9 @@ export * from "./courses";
 
 // Sprint 67 — 전공 네트워킹 map (major-network-map MVP)
 export * from "./network";
+
+// 받은 명함 (Received Business Cards)
+export * from "./cards";
+
+// 학술대회 워크북 (Sprint 67-F)
+export * from "./workbook";
