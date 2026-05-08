@@ -359,7 +359,67 @@ export default function ConferenceProgramEditor({
     toast.success("기존 일자가 교체되었습니다. 검토 후 저장하세요.");
   }
 
-  async function handleSave() {
+  /**
+   * Phase 0 P0: 저장 전 무결성 검증 — 필수값·시간 순서·중복 일자 등.
+   * 반환: 에러 메시지 배열 (빈 배열이면 통과).
+   */
+  function validateProgramDraft(d: typeof draft): string[] {
+    const errors: string[] = [];
+    if (!d.title?.trim()) errors.push("프로그램 제목을 입력하세요.");
+    if (d.days.length === 0) errors.push("최소 1개의 일자가 필요합니다.");
+
+    // 일자 중복 검사
+    const dateSeen = new Set<string>();
+    for (const day of d.days) {
+      if (!day.date) {
+        errors.push("빈 일자가 있습니다 — 날짜를 입력하세요.");
+        continue;
+      }
+      if (dateSeen.has(day.date)) {
+        errors.push(`일자 중복: ${day.date}`);
+      }
+      dateSeen.add(day.date);
+    }
+
+    // 세션 검사 — 빈 제목·시간 역전·동일 일자 시간 충돌
+    for (const day of d.days) {
+      const sessionsByTime: { id: string; title: string; start: string; end: string }[] = [];
+      for (const s of day.sessions) {
+        if (!s.title?.trim()) {
+          errors.push(`${day.date} — 빈 세션 제목이 있습니다.`);
+        }
+        if (!s.startTime || !s.endTime) {
+          errors.push(`${day.date} "${s.title || "(제목 없음)"}" — 시간이 비어있습니다.`);
+          continue;
+        }
+        if (s.endTime <= s.startTime) {
+          errors.push(`${day.date} "${s.title}" — 종료 시각이 시작 시각보다 같거나 빠릅니다 (${s.startTime}~${s.endTime}).`);
+        }
+        sessionsByTime.push({ id: s.id, title: s.title, start: s.startTime, end: s.endTime });
+      }
+      // 시간 충돌 (같은 트랙 우선 고려는 차후 — 일자 전체 충돌만 표시)
+      for (let i = 0; i < sessionsByTime.length; i++) {
+        for (let j = i + 1; j < sessionsByTime.length; j++) {
+          const a = sessionsByTime[i];
+          const b = sessionsByTime[j];
+          if (a.start < b.end && b.start < a.end) {
+            errors.push(`${day.date} 시간 충돌: "${a.title}" (${a.start}~${a.end}) ↔ "${b.title}" (${b.start}~${b.end})`);
+          }
+        }
+      }
+    }
+    return errors;
+  }
+
+  async function handleSave(opts?: { silent?: boolean }) {
+    const errs = validateProgramDraft(draft);
+    if (errs.length > 0) {
+      setError(errs.join("\n"));
+      if (!opts?.silent) {
+        toast.error(`저장 전 ${errs.length}건 확인이 필요합니다 (상단 알림 참조)`);
+      }
+      return false;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -381,12 +441,25 @@ export default function ConferenceProgramEditor({
         setProgram(created);
       }
       setSavedAt(new Date());
+      return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : "저장 실패");
+      return false;
     } finally {
       setSaving(false);
     }
   }
+
+  // Phase 0 P0: 자동저장 (debounced, 30s) — 기존 program 이 있을 때만 (신규는 명시적 첫 저장 후 활성)
+  useEffect(() => {
+    if (!program) return; // 신규 program 은 사용자가 명시적으로 첫 저장
+    const id = setTimeout(() => {
+      // silent — 사용자에게 toast 띄우지 않고 조용히 저장 시도
+      void handleSave({ silent: true });
+    }, 30_000);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft, program?.id]);
 
   if (loading) {
     return (
