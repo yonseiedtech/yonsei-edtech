@@ -88,6 +88,8 @@ export default function ConferenceProgramEditor({
   });
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
+  // Phase 0 P0: dirty 상태 — draft 가 마지막 저장과 다를 때 true
+  const [isDirty, setIsDirty] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const [extractPreview, setExtractPreview] = useState<{
@@ -441,6 +443,7 @@ export default function ConferenceProgramEditor({
         setProgram(created);
       }
       setSavedAt(new Date());
+      setIsDirty(false);
       return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : "저장 실패");
@@ -449,6 +452,20 @@ export default function ConferenceProgramEditor({
       setSaving(false);
     }
   }
+
+  // Phase 0 P0: draft 변경 추적 — 초기 로드 직후 첫 변화부터 dirty 처리
+  const initialDraftRef = useRef<string>("");
+  useEffect(() => {
+    if (loading) return;
+    const current = JSON.stringify(draft);
+    if (!initialDraftRef.current) {
+      initialDraftRef.current = current;
+      return;
+    }
+    if (current !== initialDraftRef.current) {
+      setIsDirty(true);
+    }
+  }, [draft, loading]);
 
   // Phase 0 P0: 자동저장 (debounced, 30s) — 기존 program 이 있을 때만 (신규는 명시적 첫 저장 후 활성)
   useEffect(() => {
@@ -581,16 +598,25 @@ export default function ConferenceProgramEditor({
           전체 {draft.days.length}일 · {totalSessions}개 세션
         </div>
         <div className="flex items-center gap-2">
-          {savedAt && !saving && (
-            <span className="text-xs text-muted-foreground">
-              저장됨 · {savedAt.toLocaleTimeString("ko-KR")}
+          {/* Phase 0 P0: dirty / 저장 중 / 저장됨 상태 표시 */}
+          {saving ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+              <Loader2 className="h-3 w-3 animate-spin" /> 저장 중…
             </span>
-          )}
+          ) : isDirty ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+              ● 저장 안 됨
+            </span>
+          ) : savedAt ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+              ✓ 저장됨 · {savedAt.toLocaleTimeString("ko-KR")}
+            </span>
+          ) : null}
           <Button size="sm" variant="outline" onClick={addDay}>
             <CalendarPlus className="mr-1 h-3.5 w-3.5" />
             일자 추가
           </Button>
-          <Button size="sm" onClick={handleSave} disabled={saving}>
+          <Button size="sm" onClick={() => handleSave()} disabled={saving}>
             {saving ? (
               <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
             ) : (
