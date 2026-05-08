@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import EmptyState from "@/components/ui/empty-state";
 import {
   Dialog,
   DialogContent,
@@ -289,11 +290,12 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
 
   if (!program) {
     return (
-      <div className="mx-auto max-w-3xl rounded-md border bg-muted/30 p-8 text-center">
-        <Calendar className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">아직 학술대회 프로그램이 등록되지 않았습니다.</p>
-        <p className="mt-1 text-xs text-muted-foreground">운영진이 프로그램을 등록하면 여기서 확인할 수 있어요.</p>
-      </div>
+      <EmptyState
+        icon={Calendar}
+        title="아직 학술대회 프로그램이 등록되지 않았습니다"
+        description="운영진이 프로그램을 등록하면 여기서 확인할 수 있어요."
+        className="mx-auto max-w-3xl"
+      />
     );
   }
 
@@ -642,9 +644,9 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                           {CONFERENCE_SESSION_CATEGORY_LABELS[s.category]}
                         </Badge>
                         {s.track && <Badge variant="outline" className="text-xs">{s.track}</Badge>}
-                        <span className="text-xs text-muted-foreground">
-                          <Clock className="mr-1 inline h-3 w-3" />
-                          {s.startTime} – {s.endTime}
+                        <span className="inline-flex items-center gap-1 font-mono text-sm font-semibold tabular-nums text-foreground">
+                          <Clock className="h-3 w-3 text-muted-foreground" />
+                          {s.startTime}~{s.endTime}
                         </span>
                         {s.location && (
                           <span className="text-xs text-muted-foreground">
