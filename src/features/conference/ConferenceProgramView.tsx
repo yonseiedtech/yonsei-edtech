@@ -493,7 +493,11 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
             const ak = extractTrackOrder(a.session.title, a.session.track);
             const bk = extractTrackOrder(b.session.title, b.session.track);
             if (ak.sessionNum !== bk.sessionNum) return ak.sessionNum - bk.sessionNum;
-            return ak.trackLetter.localeCompare(bk.trackLetter);
+            if (ak.trackLetter !== bk.trackLetter)
+              return ak.trackLetter.localeCompare(bk.trackLetter);
+            // Sprint 67-J: 같은 트랙 내 발표는 제목(prefix 제거 후)으로 정렬 — 역순 방지·일관성
+            const stripPrefix = (t?: string) => (t ?? "").replace(/^\s*\[[A-Z]-\d\]\s*/, "");
+            return stripPrefix(a.session.title).localeCompare(stripPrefix(b.session.title));
           });
 
         const counts = {
@@ -656,7 +660,11 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                 const ak = extractTrackOrder(a.title, a.track);
                 const bk = extractTrackOrder(b.title, b.track);
                 if (ak.sessionNum !== bk.sessionNum) return ak.sessionNum - bk.sessionNum;
-                return ak.trackLetter.localeCompare(bk.trackLetter);
+                if (ak.trackLetter !== bk.trackLetter)
+                  return ak.trackLetter.localeCompare(bk.trackLetter);
+                // Sprint 67-J: 같은 트랙 내 발표는 제목으로 정렬 — 역순 방지
+                const stripPrefix = (t?: string) => (t ?? "").replace(/^\s*\[[A-Z]-\d\]\s*/, "");
+                return stripPrefix(a.title).localeCompare(stripPrefix(b.title));
               })
               .filter((s) => {
                 if (categoryFilter !== "all" && s.category !== categoryFilter) return false;

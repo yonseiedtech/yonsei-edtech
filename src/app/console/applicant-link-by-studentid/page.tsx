@@ -105,6 +105,8 @@ function MigrationPageContent() {
         const act = activities.find((a) => a.id === activityId);
         if (!act) continue;
         const applicants = [...(act.applicants ?? [])];
+        const existingParticipants: string[] = [...((act.participants as string[] | undefined) ?? [])];
+        const newParticipants = [...existingParticipants];
         for (const link of links) {
           const a = applicants[link.applicantIndex];
           if (!a) continue;
@@ -113,8 +115,12 @@ function MigrationPageContent() {
             userId: link.matchedUserId,
             isGuest: false,
           };
+          // 연동된 회원을 participants 배열에도 추가 (미포함 시에만)
+          if (!newParticipants.includes(link.matchedUserId)) {
+            newParticipants.push(link.matchedUserId);
+          }
         }
-        await activitiesApi.update(activityId, { applicants });
+        await activitiesApi.update(activityId, { applicants, participants: newParticipants });
         okCount += links.length;
       } catch (e) {
         errs.push(`${activityId}: ${(e as Error).message}`);
