@@ -21,11 +21,8 @@ import { Input } from "@/components/ui/input";
 import PageHeader from "@/components/ui/page-header";
 import EmptyState from "@/components/ui/empty-state";
 import SkeletonWidget from "@/components/ui/skeleton-widget";
-import {
-  OFFICE_OF_EDUCATION_OPTIONS,
-  type SchoolLevel,
-  type User,
-} from "@/types";
+import { OFFICE_OF_EDUCATION_OPTIONS, type SchoolLevel, type User } from "@/types";
+import OfficeOfEducationField from "@/components/ui/office-of-education-field";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { GraduationCap } from "lucide-react";
 
@@ -234,17 +231,11 @@ function MigratePageContent() {
                 <div className="mt-4 grid gap-3 md:grid-cols-3">
                   <div>
                     <label className="mb-1 block text-xs font-medium">소속 교육청</label>
-                    <Input
+                    <OfficeOfEducationField
                       value={e.office}
-                      onChange={(ev) => patchEdit(row.user.id, { office: ev.target.value })}
-                      list={`migrate-office-${row.user.id}`}
-                      placeholder="목록에서 선택"
+                      onChange={(next) => patchEdit(row.user.id, { office: next })}
+                      compact
                     />
-                    <datalist id={`migrate-office-${row.user.id}`}>
-                      {OFFICE_OF_EDUCATION_OPTIONS.map((opt) => (
-                        <option key={opt} value={opt} />
-                      ))}
-                    </datalist>
                   </div>
                   <div>
                     <label className="mb-1 block text-xs font-medium">소속 학교</label>

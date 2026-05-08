@@ -20,9 +20,9 @@ import {
   VISIBILITY_LABELS,
   ENROLLMENT_STATUS_LABELS,
   SCHOOL_LEVEL_LABELS,
-  OFFICE_OF_EDUCATION_OPTIONS,
   type SchoolLevel,
 } from "@/types";
+import OfficeOfEducationField from "@/components/ui/office-of-education-field";
 import { calcGeneration } from "@/lib/generation";
 import ProfileSocialsEditor from "@/components/profile/ProfileSocialsEditor";
 import Link from "next/link";
@@ -140,6 +140,7 @@ export default function ProfileEditor({ user }: Props) {
 
   const occupation = useWatch({ control, name: "occupation" });
   const watchedStudentId = useWatch({ control, name: "studentId" });
+  const watchedOffice = useWatch({ control, name: "affiliationOffice" });
   const occFields = occupation ? OCCUPATION_FIELDS[occupation as OccupationType] : null;
   const { updateProfile, isLoading: isSaving } = useUpdateProfile();
 
@@ -337,19 +338,12 @@ export default function ProfileEditor({ user }: Props) {
               {occFields.office && occupation === "teacher" && (
                 <div>
                   <label className="mb-1.5 block text-sm font-medium">{occFields.office}</label>
-                  <Input
-                    {...register("affiliationOffice")}
-                    list="office-of-education-options"
-                    placeholder="목록에서 선택하거나 직접 입력"
+                  <OfficeOfEducationField
+                    value={watchedOffice ?? ""}
+                    onChange={(next) =>
+                      setValue("affiliationOffice", next, { shouldDirty: true })
+                    }
                   />
-                  <datalist id="office-of-education-options">
-                    {OFFICE_OF_EDUCATION_OPTIONS.map((opt) => (
-                      <option key={opt} value={opt} />
-                    ))}
-                  </datalist>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    17개 시·도교육청 자동완성 — 사립·국립 등은 직접 입력해도 됩니다.
-                  </p>
                 </div>
               )}
               <div>
