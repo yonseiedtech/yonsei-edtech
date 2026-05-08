@@ -217,14 +217,42 @@ export interface UserSessionPlan {
   sessionTrack?: string;
   status: SessionPlanStatus;
   reasonForSelection?: string;
+  /** Sprint 67-D: 선택 이유 다중 선택 (예: ["연구주제 관련", "발표자 관심"]) */
+  reasons?: string[];
   reflection?: string;
   rating?: number;            // 1-5
-  /** 본인만 보는 세션 노트 (필기/메모) */
+  /** 본인만 보는 세션 노트 (필기/메모) — 짧은 메모 (deprecated, 호환 유지) */
   personalNotes?: string;
+  /** Sprint 67-D: 연구 분석 노트 (긴 분석문, 마크다운) */
+  analysisNote?: string;
+  /** Sprint 67-D: 핵심 인사이트 (bullet) */
+  keyInsights?: string[];
+  /** Sprint 67-D: 발표자/세션에 대한 질문 목록 */
+  questions?: string[];
+  /** Sprint 67-D: 참고 자료 링크/인용 */
+  references?: string[];
   selectedAt: string;
   attendedAt?: string;
   reflectedAt?: string;
+  /** Sprint 67-D: 노트 마지막 수정 시각 */
+  notedAt?: string;
 }
+
+/** Sprint 67-D: 세션 선택 이유 — 사전 정의 옵션 (다중 선택) */
+export const SESSION_SELECTION_REASONS = [
+  "연구주제 관련",
+  "발표자 관심",
+  "방법론 학습",
+  "협력 기회 모색",
+  "지도교수 추천",
+  "동료 추천",
+  "트렌드 파악",
+  "수업 자료",
+  "학위논문 참고",
+  "동향 모니터링",
+  "기타",
+] as const;
+export type SessionSelectionReason = (typeof SESSION_SELECTION_REASONS)[number];
 
 // ── 투표/설문 ──
 export type PollType = "vote" | "survey";

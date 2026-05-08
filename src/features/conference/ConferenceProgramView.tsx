@@ -42,6 +42,7 @@ import {
 import {
   CONFERENCE_SESSION_CATEGORY_COLORS,
   CONFERENCE_SESSION_CATEGORY_LABELS,
+  SESSION_SELECTION_REASONS,
   type ConferenceProgram,
   type ConferenceSession,
   type SessionPlanStatus,
@@ -76,7 +77,11 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
   const [plans, setPlans] = useState<UserSessionPlan[]>([]);
   const [allPlans, setAllPlans] = useState<UserSessionPlan[]>([]);
   const [activeDayIdx, setActiveDayIdx] = useState(0);
-  const [reasonDialog, setReasonDialog] = useState<{ session: ConferenceSession; reason: string } | null>(null);
+  const [reasonDialog, setReasonDialog] = useState<{
+    session: ConferenceSession;
+    reason: string;
+    reasons: string[];
+  } | null>(null);
   const [reflectionDialog, setReflectionDialog] = useState<{ plan: UserSessionPlan; reflection: string; rating: number } | null>(null);
   const [notesDialog, setNotesDialog] = useState<{ plan: UserSessionPlan; notes: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -196,12 +201,12 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
 
   async function selectSession(session: ConferenceSession) {
     if (!user || !program) return;
-    setReasonDialog({ session, reason: "" });
+    setReasonDialog({ session, reason: "", reasons: [] });
   }
 
   async function submitSelection() {
     if (!reasonDialog || !user || !program) return;
-    const { session, reason } = reasonDialog;
+    const { session, reason, reasons } = reasonDialog;
     const day = program.days.find((d) => d.sessions.some((s) => s.id === session.id));
     setBusy(true);
     try {
@@ -221,6 +226,7 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
         sessionTrack: session.track,
         status: "planned",
         reasonForSelection: reason.trim() || undefined,
+        reasons: reasons.length > 0 ? reasons : undefined,
         selectedAt: now,
       };
       await userSessionPlansApi.upsert(id, payload as unknown as Record<string, unknown>);
@@ -797,6 +803,15 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                               <Check className="mr-1 h-3 w-3" /> 내 일정에 추가
                             </Button>
                           )}
+                          {/* Sprint 67-D: 노트 작성을 참석 후기 왼쪽으로 + 별도 페이지 이동 */}
+                          {plan && (
+                            <Link href={`/activities/external/${activityId}/program/notes/${plan.id}`}>
+                              <Button size="sm" variant="outline" disabled={busy}>
+                                <NotebookPen className="mr-1 h-3 w-3" />
+                                {plan.analysisNote || plan.personalNotes ? "노트 수정" : "노트 작성"}
+                              </Button>
+                            </Link>
+                          )}
                           {plan && plan.status !== "attended" && (
                             <Button size="sm" disabled={busy} onClick={() => markAttended(plan)}>
                               <MessageSquare className="mr-1 h-3 w-3" /> 참석 후기 남기기
@@ -805,16 +820,6 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                           {plan && plan.status === "attended" && (
                             <Button size="sm" variant="outline" disabled={busy} onClick={() => markAttended(plan)}>
                               <MessageSquare className="mr-1 h-3 w-3" /> 후기 수정
-                            </Button>
-                          )}
-                          {plan && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              disabled={busy}
-                              onClick={() => setNotesDialog({ plan, notes: plan.personalNotes ?? "" })}
-                            >
-                              <NotebookPen className="mr-1 h-3 w-3" /> {plan.personalNotes ? "노트 수정" : "노트 작성"}
                             </Button>
                           )}
                           {plan && (
@@ -853,14 +858,45 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                 </div>
               </div>
               <div>
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                  선택 이유 (다중 선택 가능)
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {SESSION_SELECTION_REASONS.map((r) => {
+                    const checked = reasonDialog.reasons.includes(r);
+                    return (
+                      <button
+                        key={r}
+                        type="button"
+                        onClick={() =>
+                          setReasonDialog({
+                            ...reasonDialog,
+                            reasons: checked
+                              ? reasonDialog.reasons.filter((x) => x !== r)
+                              : [...reasonDialog.reasons, r],
+                          })
+                        }
+                        className={`rounded-full border px-2.5 py-1 text-xs transition ${
+                          checked
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-input bg-background hover:bg-muted"
+                        }`}
+                      >
+                        {r}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
                 <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                  이 세션을 선택한 이유 (선택)
+                  추가 메모 (선택, 자유 기술)
                 </label>
                 <Textarea
-                  rows={4}
+                  rows={3}
                   value={reasonDialog.reason}
                   onChange={(e) => setReasonDialog({ ...reasonDialog, reason: e.target.value })}
-                  placeholder="예: 교육공학 분야의 최신 연구 동향이 궁금해서, 발표자가 학위논문 주제와 관련된 분이라…"
+                  placeholder="예: 학위논문 주제와 직접 연관, 지난 학회 발표 후속 등 구체적인 맥락이 있다면 메모해두세요."
                 />
               </div>
             </div>
