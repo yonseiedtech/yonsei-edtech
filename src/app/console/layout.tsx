@@ -144,6 +144,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
         { href: "/console/directory", label: "연락망", icon: BookUser },
         { href: "/console/members/audit", label: "회원 검증", icon: ShieldCheck },
         { href: "/console/members/migrate-teacher-affiliation", label: "교사 affiliation 분리", icon: GraduationCap, adminOnly: true },
+        { href: "/console/applicant-link-by-studentid", label: "신청자 학번 연동", icon: GraduationCap, adminOnly: true },
         { href: "/console/portfolio-verification", label: "포트폴리오 검증", icon: Award },
         { href: "/console/alumni-mapping", label: "졸업논문 매핑", icon: GraduationCap },
       ],
