@@ -651,7 +651,8 @@ export default function ConferenceProgramEditor({
       <div className="space-y-6">
         {draft.days.map((day, dayIdx) => (
           <Card key={dayIdx}>
-            <CardHeader className="pb-3">
+            {/* Phase 1 — 일자 헤더 sticky: 긴 세션 목록에서도 컨텍스트 보존 */}
+            <CardHeader className="sticky top-0 z-10 rounded-t-xl bg-card/95 pb-3 backdrop-blur supports-[backdrop-filter]:bg-card/80">
               <div className="flex flex-wrap items-center gap-3">
                 <Input
                   type="date"
@@ -812,6 +813,8 @@ function SessionRow({
   isFirst: boolean;
   isLast: boolean;
 }) {
+  // Phase 1: 세션 카드 접기/펼치기 — 기본값 false (간결 표시), 토글로 상세 편집
+  const [expanded, setExpanded] = useState(false);
   return (
     <div className="rounded-lg border bg-muted/20 p-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -847,7 +850,27 @@ function SessionRow({
           placeholder="트랙 / 룸"
           className="h-8 w-32"
         />
+        {/* Phase 1: 접힘 상태에서 제목 미리보기 (편집은 펼쳐야 가능) */}
+        {!expanded && (
+          <span className="ml-2 max-w-[200px] truncate text-xs text-muted-foreground sm:max-w-[300px]">
+            {session.title?.trim() || "(제목 없음)"}
+          </span>
+        )}
         <div className="ml-auto flex items-center gap-1">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setExpanded((v) => !v)}
+            title={expanded ? "접기" : "펼쳐서 편집"}
+            className="h-7 w-7 p-0"
+            aria-expanded={expanded}
+          >
+            {expanded ? (
+              <ChevronUp className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5" />
+            )}
+          </Button>
           <Button
             size="sm"
             variant="ghost"
@@ -879,58 +902,62 @@ function SessionRow({
           </Button>
         </div>
       </div>
-      <div className="mt-2 grid gap-2 sm:grid-cols-2">
-        <Input
-          value={session.title}
-          onChange={(e) => onChange({ title: e.target.value })}
-          placeholder="세션 제목"
-        />
-        <Input
-          value={(session.speakers ?? []).join(", ")}
-          onChange={(e) =>
-            onChange({
-              speakers: e.target.value
-                .split(",")
-                .map((s) => s.trim())
-                .filter(Boolean),
-            })
-          }
-          placeholder="발표자 (쉼표로 구분)"
-        />
-      </div>
-      <div className="mt-2 grid gap-2 sm:grid-cols-2">
-        <Input
-          value={session.affiliation ?? ""}
-          onChange={(e) => onChange({ affiliation: e.target.value })}
-          placeholder="소속 (예: 연세대 교육공학과)"
-        />
-        <Input
-          value={session.location ?? ""}
-          onChange={(e) => onChange({ location: e.target.value })}
-          placeholder="장소 (예: 본관 201호)"
-        />
-      </div>
-      <Textarea
-        value={session.abstract ?? ""}
-        onChange={(e) => onChange({ abstract: e.target.value })}
-        placeholder="초록 / 발표 요약 (선택)"
-        rows={2}
-        className="mt-2"
-      />
-      <Textarea
-        value={(session.materialUrls ?? []).join("\n")}
-        onChange={(e) =>
-          onChange({
-            materialUrls: e.target.value
-              .split(/\n+/)
-              .map((u) => u.trim())
-              .filter((u) => /^https?:\/\//i.test(u)),
-          })
-        }
-        placeholder={"사전 자료 링크 (한 줄당 하나)\n예: https://drive.google.com/file/...\nhttps://arxiv.org/abs/..."}
-        rows={2}
-        className="mt-2 font-mono text-xs"
-      />
+      {expanded && (
+        <>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            <Input
+              value={session.title}
+              onChange={(e) => onChange({ title: e.target.value })}
+              placeholder="세션 제목"
+            />
+            <Input
+              value={(session.speakers ?? []).join(", ")}
+              onChange={(e) =>
+                onChange({
+                  speakers: e.target.value
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean),
+                })
+              }
+              placeholder="발표자 (쉼표로 구분)"
+            />
+          </div>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            <Input
+              value={session.affiliation ?? ""}
+              onChange={(e) => onChange({ affiliation: e.target.value })}
+              placeholder="소속 (예: 연세대 교육공학과)"
+            />
+            <Input
+              value={session.location ?? ""}
+              onChange={(e) => onChange({ location: e.target.value })}
+              placeholder="장소 (예: 본관 201호)"
+            />
+          </div>
+          <Textarea
+            value={session.abstract ?? ""}
+            onChange={(e) => onChange({ abstract: e.target.value })}
+            placeholder="초록 / 발표 요약 (선택)"
+            rows={2}
+            className="mt-2"
+          />
+          <Textarea
+            value={(session.materialUrls ?? []).join("\n")}
+            onChange={(e) =>
+              onChange({
+                materialUrls: e.target.value
+                  .split(/\n+/)
+                  .map((u) => u.trim())
+                  .filter((u) => /^https?:\/\//i.test(u)),
+              })
+            }
+            placeholder={"사전 자료 링크 (한 줄당 하나)\n예: https://drive.google.com/file/...\nhttps://arxiv.org/abs/..."}
+            rows={2}
+            className="mt-2 font-mono text-xs"
+          />
+        </>
+      )}
     </div>
   );
 }
