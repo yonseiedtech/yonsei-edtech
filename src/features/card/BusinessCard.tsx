@@ -4,6 +4,7 @@ import { forwardRef } from "react";
 import Image from "next/image";
 import { QRCodeSVG } from "qrcode.react";
 import type { User } from "@/types";
+import { SCHOOL_LEVEL_LABELS } from "@/types";
 
 interface BusinessCardProps {
   user: User;
@@ -15,7 +16,25 @@ interface BusinessCardProps {
 
 const BusinessCard = forwardRef<HTMLDivElement, BusinessCardProps>(
   function BusinessCard({ user, qrValue, hideExchangeHint }, ref) {
-    const affiliationLine = [user.affiliation, user.department].filter(Boolean).join(" ");
+    // Sprint 67: occupation 인지 + 중복 제거 (legacy 데이터에서 affiliation == department 이거나
+    // 교사 직군에서 학교명이 두 번 들어가는 케이스 방지).
+    const affiliationLine = (() => {
+      const parts: string[] = [];
+      if (user.occupation === "teacher") {
+        // 교사: [교육청] · [학교급] [학교명]
+        if (user.affiliationOffice) parts.push(user.affiliationOffice);
+        const schoolBlock: string[] = [];
+        if (user.schoolLevel) schoolBlock.push(SCHOOL_LEVEL_LABELS[user.schoolLevel]);
+        if (user.affiliation) schoolBlock.push(user.affiliation);
+        if (schoolBlock.length > 0) parts.push(schoolBlock.join(" "));
+      } else {
+        if (user.affiliation) parts.push(user.affiliation);
+        if (user.department && user.department !== user.affiliation) {
+          parts.push(user.department);
+        }
+      }
+      return parts.join(" · ");
+    })();
 
     return (
       <div

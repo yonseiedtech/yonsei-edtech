@@ -30,16 +30,20 @@ export function isStaffRole(role?: UserRole): boolean {
 /**
  * 페이지 접근 게이트.
  * - 로그인 회원 → "full"
+ * - 비로그인 + via=qr|link → "staff-public-only" (명함 교환 컨텍스트 — 기본 정보만 노출)
  * - 비로그인 + 운영진 페이지 → "staff-public-only"
  * - 그 외 비로그인 → "blocked"
+ *
+ * Sprint 67: QR/링크 명함 교환 시 비로그인도 기본 정보를 볼 수 있어야 명함 기능이 동작.
  */
 export function canAccessProfilePage(
   viewer: ViewerInfo | null,
   owner: User,
-  _via: ViaParam,
+  via: ViaParam,
 ): PageAccess {
-  void _via;
   if (viewer?.id) return "full";
+  // QR/링크 명함 교환 컨텍스트 — 비로그인도 기본 정보(이름·사진·연락처 일부) 노출
+  if (via === "qr" || via === "link") return "staff-public-only";
   if (isStaffRole(owner.role)) return "staff-public-only";
   return "blocked";
 }
