@@ -150,6 +150,33 @@ export const SCHOOL_LEVEL_LABELS: Record<SchoolLevel, string> = {
   high: "고등학교",
 };
 
+/**
+ * 17개 시·도교육청 (대한민국, 2026 기준) + "기타".
+ * affiliationOffice 의 추천 dropdown 옵션.
+ * 자유 텍스트도 허용 (User.affiliationOffice 는 string).
+ */
+export const OFFICE_OF_EDUCATION_OPTIONS: readonly string[] = [
+  "서울특별시교육청",
+  "부산광역시교육청",
+  "대구광역시교육청",
+  "인천광역시교육청",
+  "광주광역시교육청",
+  "대전광역시교육청",
+  "울산광역시교육청",
+  "세종특별자치시교육청",
+  "경기도교육청",
+  "강원특별자치도교육청",
+  "충청북도교육청",
+  "충청남도교육청",
+  "전북특별자치도교육청",
+  "전라남도교육청",
+  "경상북도교육청",
+  "경상남도교육청",
+  "제주특별자치도교육청",
+] as const;
+
+export const OFFICE_OF_EDUCATION_OTHER_LABEL = "기타 (직접 입력)" as const;
+
 export interface User { [key: string]: unknown;
   id: string;
   username: string;
