@@ -14,6 +14,8 @@ import type { Activity } from "@/types";
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user, isLoading } = useAuth();
+  // 모든 hook 은 early return 이전에 호출 (React rules of hooks — error #310 방지)
+  const authUser = useAuthStore((s) => s.user);
   const [activity, setActivity] = useState<Activity | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -32,6 +34,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     };
   }, [id]);
 
+  const isStaff = isAtLeast(authUser, "staff");
+
   if (isLoading || (!activity && !loadError)) {
     return (
       <div className="flex items-center justify-center py-20 text-sm text-muted-foreground">
@@ -47,9 +51,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       </div>
     );
   }
-
-  const authUser = useAuthStore((s) => s.user);
-  const isStaff = isAtLeast(authUser, "staff");
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 px-4 py-6">
