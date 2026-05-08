@@ -159,6 +159,65 @@ export default function Step1AccountInfo({ form }: Step1Props) {
         )}
       </div>
 
+      {/* 비밀번호 + 확인 — 학번 바로 아래로 (Sprint 67 동선 개선) */}
+      <div>
+        <label className="mb-1.5 block text-sm font-medium">
+          비밀번호 <span className="text-destructive">*</span>
+        </label>
+        <div className="relative">
+          <Input
+            {...register("password", {
+              required: "비밀번호를 입력하세요",
+              minLength: { value: 8, message: "8자 이상 입력하세요" },
+              validate: (v) =>
+                /(?=.*[a-zA-Z])(?=.*\d)/.test(v) || "영문과 숫자를 모두 포함해야 합니다",
+            })}
+            type={showPassword ? "text" : "password"}
+            placeholder="8자 이상, 영문+숫자 포함"
+            autoComplete="new-password"
+            className={cn("pr-10", errors.password && "border-destructive")}
+          />
+          <button
+            type="button"
+            tabIndex={-1}
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
+            aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
+          >
+            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        </div>
+        {errors.password && <p className="mt-1 text-xs text-destructive">{errors.password.message}</p>}
+      </div>
+
+      <div>
+        <label className="mb-1.5 block text-sm font-medium">
+          비밀번호 확인 <span className="text-destructive">*</span>
+        </label>
+        <div className="relative">
+          <Input
+            {...register("passwordConfirm", {
+              required: "비밀번호를 한 번 더 입력하세요",
+              validate: (v) => v === watchedPassword || "비밀번호가 일치하지 않습니다",
+            })}
+            type={showPasswordConfirm ? "text" : "password"}
+            placeholder="위 비밀번호와 동일하게"
+            autoComplete="new-password"
+            className={cn("pr-10", errors.passwordConfirm && "border-destructive")}
+          />
+          <button
+            type="button"
+            tabIndex={-1}
+            onClick={() => setShowPasswordConfirm((v) => !v)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
+            aria-label={showPasswordConfirm ? "비밀번호 숨기기" : "비밀번호 보기"}
+          >
+            {showPasswordConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        </div>
+        {errors.passwordConfirm && <p className="mt-1 text-xs text-destructive">{errors.passwordConfirm.message}</p>}
+      </div>
+
       {/* 이름 */}
       <div>
         <label className="mb-1.5 block text-sm font-medium">
@@ -355,65 +414,12 @@ export default function Step1AccountInfo({ form }: Step1Props) {
         )}
       </div>
 
-      {/* 계정 보안 — Sprint 67: Step 3 통합 */}
+      {/* 비밀번호 찾기용 보안 질문 — 비밀번호 본체는 학번 바로 아래로 분리됨 */}
       <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
-        <p className="text-sm font-medium">계정 보안</p>
-
-        <div>
-          <label className="mb-1.5 block text-xs font-medium">
-            비밀번호 <span className="text-destructive">*</span>
-          </label>
-          <div className="relative">
-            <Input
-              {...register("password", {
-                required: "비밀번호를 입력하세요",
-                minLength: { value: 8, message: "8자 이상 입력하세요" },
-                validate: (v) =>
-                  /(?=.*[a-zA-Z])(?=.*\d)/.test(v) || "영문과 숫자를 모두 포함해야 합니다",
-              })}
-              type={showPassword ? "text" : "password"}
-              placeholder="8자 이상, 영문+숫자 포함"
-              className={cn("pr-10", errors.password && "border-destructive")}
-            />
-            <button
-              type="button"
-              tabIndex={-1}
-              onClick={() => setShowPassword((v) => !v)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
-              aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
-            >
-              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
-          </div>
-          {errors.password && <p className="mt-1 text-xs text-destructive">{errors.password.message}</p>}
-        </div>
-
-        <div>
-          <label className="mb-1.5 block text-xs font-medium">
-            비밀번호 확인 <span className="text-destructive">*</span>
-          </label>
-          <div className="relative">
-            <Input
-              {...register("passwordConfirm", {
-                required: "비밀번호를 한 번 더 입력하세요",
-                validate: (v) => v === watchedPassword || "비밀번호가 일치하지 않습니다",
-              })}
-              type={showPasswordConfirm ? "text" : "password"}
-              placeholder="위 비밀번호와 동일하게"
-              className={cn("pr-10", errors.passwordConfirm && "border-destructive")}
-            />
-            <button
-              type="button"
-              tabIndex={-1}
-              onClick={() => setShowPasswordConfirm((v) => !v)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
-              aria-label={showPasswordConfirm ? "비밀번호 숨기기" : "비밀번호 보기"}
-            >
-              {showPasswordConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
-          </div>
-          {errors.passwordConfirm && <p className="mt-1 text-xs text-destructive">{errors.passwordConfirm.message}</p>}
-        </div>
+        <p className="text-sm font-medium">비밀번호 찾기 정보</p>
+        <p className="text-xs text-muted-foreground">
+          비밀번호를 잊으셨을 때 본인 확인용으로 사용됩니다.
+        </p>
 
         <div>
           <label className="mb-1.5 block text-xs font-medium">
