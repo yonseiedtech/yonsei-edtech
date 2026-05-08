@@ -530,9 +530,9 @@ export const userSessionPlansApi = {
 // ── 받은 명함 (Received Business Cards) ──
 export const receivedCardsApi = {
   listByOwner: (ownerId: string) =>
+    // 복합 인덱스 회피: filter[ownerId] 만 사용. client side 정렬.
     dataApi.list<ReceivedBusinessCard>("received_business_cards", {
       "filter[ownerId]": ownerId,
-      sort: "createdAt:desc",
       limit: 500,
     }),
   get: (id: string) => dataApi.get<ReceivedBusinessCard>("received_business_cards", id),

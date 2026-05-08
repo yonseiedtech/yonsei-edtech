@@ -398,7 +398,16 @@ export default function ReceivedCardsSection({ ownerId }: ReceivedCardsSectionPr
     enabled: !!ownerId,
   });
 
-  const cards = data ?? [];
+  // Sprint 67-G: 복합 인덱스 회피로 client-side 정렬 (createdAt desc)
+  const cards = useMemo(
+    () =>
+      [...(data ?? [])].sort((a, b) => {
+        const ta = a.createdAt ?? "";
+        const tb = b.createdAt ?? "";
+        return tb.localeCompare(ta);
+      }),
+    [data],
+  );
 
   const filtered = useMemo(() => {
     if (!search.trim()) return cards;
