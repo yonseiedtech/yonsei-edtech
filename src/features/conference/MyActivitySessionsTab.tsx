@@ -11,14 +11,15 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Calendar,
-  Clock,
   ExternalLink,
   Loader2,
   MapPin,
   MessageSquare,
   Star,
+  Trash2,
   Users,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import EmptyState from "@/components/ui/empty-state";
@@ -46,6 +47,36 @@ export default function MyActivitySessionsTab({ activityId, userId }: Props) {
   const [plans, setPlans] = useState<UserSessionPlan[]>([]);
   const [allPlans, setAllPlans] = useState<UserSessionPlan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+
+  // Sprint 67-W: 내 일정 삭제 (해당 plan 만 제거 — 본인만)
+  async function handleDelete(plan: UserSessionPlan) {
+    if (
+      !confirm(
+        `"${plan.sessionTitle ?? "세션"}" 을(를) 내 일정에서 제거하시겠습니까?`,
+      )
+    )
+      return;
+    setDeletingIds((prev) => {
+      const next = new Set(prev);
+      next.add(plan.id);
+      return next;
+    });
+    try {
+      await userSessionPlansApi.delete(plan.id);
+      setPlans((prev) => prev.filter((p) => p.id !== plan.id));
+      setAllPlans((prev) => prev.filter((p) => p.id !== plan.id));
+      toast.success("내 일정에서 제거되었습니다.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "삭제 실패");
+    } finally {
+      setDeletingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(plan.id);
+        return next;
+      });
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -173,6 +204,21 @@ export default function MyActivitySessionsTab({ activityId, userId }: Props) {
                       <Star className="h-3 w-3 fill-current" /> {p.rating}/5
                     </span>
                   )}
+                  {/* Sprint 67-W: 내 일정에서 제거 */}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="ml-auto h-6 px-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => handleDelete(p)}
+                    disabled={deletingIds.has(p.id)}
+                    title="내 일정에서 제거"
+                  >
+                    {deletingIds.has(p.id) ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3 w-3" />
+                    )}
+                  </Button>
                 </div>
                 {p.sessionTrack && (
                   <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
