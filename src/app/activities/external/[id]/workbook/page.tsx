@@ -457,9 +457,10 @@ function WorkbookPage({ activityId }: { activityId: string }) {
     queryFn: async () => {
       const res = await workbookTasksApi.listByActivity(activityId);
       const all = res.data as ConferenceWorkbookTask[];
+      // QA-D2: order undefined 방어 (admin 페이지와 일관)
       return all
         .filter((t) => t.active)
-        .sort((a, b) => a.order - b.order);
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     },
     enabled: !!activityId,
   });

@@ -742,7 +742,8 @@ service cloud.firestore {
     match /conference_workbook_tasks/{docId} {
       allow read: if isAuthenticated();
       allow list: if isAuthenticated();
-      allow create, update, delete: if isStaffOrAbove();
+      // QA-F1: isAuthenticated() 전제 조건 명시 (다른 collection 과 일관성)
+      allow create, update, delete: if isAuthenticated() && isStaffOrAbove();
     }
     // 참여자 본인 제출만 본인이 read·write 가능, 운영진은 모두 read·feedback write 가능
     match /conference_workbook_submissions/{docId} {

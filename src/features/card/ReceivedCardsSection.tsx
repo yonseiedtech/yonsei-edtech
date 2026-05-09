@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Plus, Search, Pencil, Trash2, Camera, User, Phone, Mail, MapPin, Calendar, Tag,
@@ -84,8 +84,10 @@ function CardFormDialog({
   const [form, setForm] = useState<FormState>(initial);
   const [isUploading, setIsUploading] = useState(false);
 
-  // sync when initial changes (edit mode)
-  useState(() => { setForm(initial); });
+  // QA-S1: initial 변경 시 form 동기화 (잘못된 useState initializer 패턴 → useEffect 로 수정)
+  useEffect(() => {
+    setForm(initial);
+  }, [initial]);
 
   function patch(key: keyof FormState, value: string | string[]) {
     setForm((f) => ({ ...f, [key]: value }));
