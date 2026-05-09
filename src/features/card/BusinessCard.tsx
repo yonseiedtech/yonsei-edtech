@@ -45,6 +45,8 @@ const BusinessCard = forwardRef<HTMLDivElement, BusinessCardProps>(
     })();
 
     return (
+      // QA-D1: 명함은 인쇄·캡처(JPG 저장) 목적이므로 의도적으로 라이트 모드 색상 고정.
+      // 다크 모드에서도 이 카드는 흰 배경 + 검은 텍스트로 일관 표시되도록 시맨틱 색상 사용 안 함.
       <div
         ref={ref}
         className="relative mx-auto w-[320px] overflow-hidden rounded-3xl bg-gradient-to-b from-white to-slate-50 shadow-xl ring-1 ring-slate-200"

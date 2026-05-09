@@ -88,6 +88,24 @@ function extractTrackOrder(title: string | undefined, track: string | undefined)
 }
 
 /**
+ * Sprint 67-Q: 세션 정렬 비교 함수 — 두 호출 위치(발표자 모아보기 / 일자별 리스트)에서 공유.
+ * 우선순위: startTime → SESSION 번호 → 트랙 letter → 제목(prefix 제거)
+ */
+function compareSessions(
+  a: { startTime: string; title?: string; track?: string },
+  b: { startTime: string; title?: string; track?: string },
+): number {
+  if (a.startTime !== b.startTime) return a.startTime.localeCompare(b.startTime);
+  const ak = extractTrackOrder(a.title, a.track);
+  const bk = extractTrackOrder(b.title, b.track);
+  if (ak.sessionNum !== bk.sessionNum) return ak.sessionNum - bk.sessionNum;
+  if (ak.trackLetter !== bk.trackLetter)
+    return ak.trackLetter.localeCompare(bk.trackLetter);
+  const stripPrefix = (t?: string) => (t ?? "").replace(/^\s*\[[A-Z]-\d\]\s*/, "");
+  return stripPrefix(a.title).localeCompare(stripPrefix(b.title));
+}
+
+/**
  * Sprint 67-L: 시간 그룹별 헤더 라벨 — 카테고리·SESSION 번호로 결정.
  * SESSION 01 / SESSION 02 / 포스터 세션 / 개회식 / 폐회식 / 점심 / 휴식 등.
  */
@@ -511,17 +529,7 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
           })
           .sort((a, b) => {
             if (a.date !== b.date) return a.date < b.date ? -1 : 1;
-            if (a.session.startTime !== b.session.startTime)
-              return a.session.startTime.localeCompare(b.session.startTime);
-            // Sprint 67-I: 같은 시간이면 SESSION 번호 → 트랙 letter 순
-            const ak = extractTrackOrder(a.session.title, a.session.track);
-            const bk = extractTrackOrder(b.session.title, b.session.track);
-            if (ak.sessionNum !== bk.sessionNum) return ak.sessionNum - bk.sessionNum;
-            if (ak.trackLetter !== bk.trackLetter)
-              return ak.trackLetter.localeCompare(bk.trackLetter);
-            // Sprint 67-J: 같은 트랙 내 발표는 제목(prefix 제거 후)으로 정렬 — 역순 방지·일관성
-            const stripPrefix = (t?: string) => (t ?? "").replace(/^\s*\[[A-Z]-\d\]\s*/, "");
-            return stripPrefix(a.session.title).localeCompare(stripPrefix(b.session.title));
+            return compareSessions(a.session, b.session);
           });
 
         const counts = {
@@ -677,19 +685,8 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
           ) : (() => {
             const q = searchQuery.trim().toLowerCase();
             const filteredSessions = [...day.sessions]
-              .sort((a, b) => {
-                if (a.startTime !== b.startTime)
-                  return a.startTime > b.startTime ? 1 : -1;
-                // Sprint 67-I: 같은 시간이면 SESSION 번호 → 트랙 letter 순
-                const ak = extractTrackOrder(a.title, a.track);
-                const bk = extractTrackOrder(b.title, b.track);
-                if (ak.sessionNum !== bk.sessionNum) return ak.sessionNum - bk.sessionNum;
-                if (ak.trackLetter !== bk.trackLetter)
-                  return ak.trackLetter.localeCompare(bk.trackLetter);
-                // Sprint 67-J: 같은 트랙 내 발표는 제목으로 정렬 — 역순 방지
-                const stripPrefix = (t?: string) => (t ?? "").replace(/^\s*\[[A-Z]-\d\]\s*/, "");
-                return stripPrefix(a.title).localeCompare(stripPrefix(b.title));
-              })
+              // Sprint 67-Q: compareSessions 공통 함수 사용 (정렬 일관성)
+              .sort(compareSessions)
               .filter((s) => {
                 if (categoryFilter !== "all" && s.category !== categoryFilter) return false;
                 if (onlyMine && !planBySessionId.has(s.id)) return false;
