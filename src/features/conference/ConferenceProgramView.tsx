@@ -803,13 +803,13 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                       </div>
                     )}
                   <Card
-                    className={`relative ${cardClassesForVariant(variant, !!plan)} ${
+                    className={`relative transition-all hover:shadow-md hover:-translate-y-0.5 ${cardClassesForVariant(variant, !!plan)} ${
                       isLive
                         ? "ring-2 ring-emerald-500/60 dark:ring-emerald-400/60 shadow-md"
                         : hasConflict
                           ? "ring-2 ring-rose-400/40 dark:ring-rose-500/40"
                           : ""
-                    } ${isPast ? "opacity-60" : ""}`}
+                    } ${isPast ? "opacity-75" : ""}`}
                   >
                     {isLive && (
                       <span
@@ -824,7 +824,8 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                         LIVE
                       </span>
                     )}
-                    {variant === "primary" && (
+                    {/* Sprint 67-X: compact 외 모든 카드에 좌측 컬러 바 적용 (시각 위계 강화) */}
+                    {variant !== "compact" && (
                       <span
                         aria-hidden="true"
                         className={`absolute left-0 top-0 h-full w-1 ${CATEGORY_ACCENT_BAR[s.category]}`}

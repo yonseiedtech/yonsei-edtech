@@ -44,15 +44,16 @@ export function cardClassesForVariant(
   variant: SessionCardVariant,
   isPlanned: boolean,
 ): string {
+  // Sprint 67-X: 시각 위계 강화 — plan 없어도 카드가 활성 느낌이 나도록
   const base = isPlanned
-    ? "border-blue-300 bg-blue-50/40 dark:border-blue-700 dark:bg-blue-950/30"
-    : "";
+    ? "border-blue-300 bg-blue-50/60 shadow-sm dark:border-blue-700 dark:bg-blue-950/40"
+    : "border-border/80 bg-card";
 
   if (variant === "primary") {
     return `${base} relative overflow-hidden shadow-sm`;
   }
   if (variant === "compact") {
-    return `${base} bg-muted/20`;
+    return isPlanned ? base : "bg-muted/40 border-border/60";
   }
   return base;
 }
