@@ -138,6 +138,45 @@ function MigrationPageContent() {
     }
   }
 
+  // Sprint 67-V: 기존 연동 정합성 보강 — applicants 의 연동된 회원이 participants 배열에 빠진 경우 push
+  // (도구 fix 이전에 수행된 연동 케이스 — 박진아님 등 — 일괄 복구)
+  async function reconcileParticipants() {
+    if (!confirm(
+      "모든 학술대회를 순회하며, 연동된 신청자(applicants[].isGuest=false, userId 보유) 중 " +
+      "참여자 배열에 빠진 회원을 일괄 추가합니다. 데이터를 변경합니다. 계속할까요?"
+    )) return;
+    setRunning(true);
+    let updatedActs = 0;
+    let addedCount = 0;
+    const errs: string[] = [];
+    for (const act of activities) {
+      try {
+        const apps = (act.applicants ?? []) as Array<{ userId?: string; isGuest?: boolean }>;
+        const linkedIds = apps
+          .map((a) => (a && a.isGuest === false && a.userId ? a.userId : undefined))
+          .filter((v): v is string => !!v);
+        if (linkedIds.length === 0) continue;
+        const existing: string[] = [...((act.participants as string[] | undefined) ?? [])];
+        const missing = linkedIds.filter((id) => !existing.includes(id));
+        if (missing.length === 0) continue;
+        const next = [...existing, ...missing];
+        await activitiesApi.update(act.id, { participants: next });
+        updatedActs += 1;
+        addedCount += missing.length;
+      } catch (e) {
+        errs.push(`${act.id}: ${(e as Error).message}`);
+      }
+    }
+    setRunning(false);
+    setErrors(errs);
+    await qc.invalidateQueries({ queryKey: ["console-link-actsx"] });
+    if (errs.length === 0) {
+      toast.success(`${updatedActs}개 학술대회 / ${addedCount}명 보강 완료`);
+    } else {
+      toast.error(`보강 부분 성공: ${addedCount}명 / 실패 ${errs.length}건`);
+    }
+  }
+
   if (isLoadingActs || isLoadingUsers) {
     return (
       <div className="flex items-center justify-center py-20 text-sm text-muted-foreground">
@@ -167,6 +206,31 @@ function MigrationPageContent() {
             </ul>
           </div>
         </div>
+      </div>
+
+      {/* Sprint 67-V: 기존 연동 정합성 보강 — applicants 연동됐지만 participants 누락된 케이스 일괄 복구 */}
+      <div className="rounded-md border bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950/30">
+        <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+          기존 연동 정합성 보강
+        </p>
+        <p className="mt-1 text-xs text-blue-800 dark:text-blue-200">
+          이전에 연동된 신청자(applicants[].isGuest=false) 가 학술대회 참여자 배열에 누락된 경우
+          일괄 추가합니다. (박진아님 등 도구 fix 이전 케이스 복구용)
+        </p>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="mt-2"
+          onClick={reconcileParticipants}
+          disabled={running}
+        >
+          {running ? (
+            <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> 보강 중…</>
+          ) : (
+            "참여자 누락 일괄 보강"
+          )}
+        </Button>
       </div>
 
       {proposed.length === 0 ? (
