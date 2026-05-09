@@ -146,6 +146,9 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<ConferenceSession["category"] | "all">("all");
   const [onlyMine, setOnlyMine] = useState(false);
+  // Sprint 67-R: 하위 필터 — 트랙(A~G) + SESSION 번호(1~4)
+  const [trackFilter, setTrackFilter] = useState<string | "all">("all");
+  const [sessionNumFilter, setSessionNumFilter] = useState<number | "all">("all");
   const [viewMode, setViewMode] = useState<"schedule" | "presenters">("schedule");
   const [presenterCategoryFilter, setPresenterCategoryFilter] = useState<"all" | "paper" | "poster" | "media">("all");
   const [presenterSearchQuery, setPresenterSearchQuery] = useState("");
@@ -239,6 +242,17 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
         const bStart = b.sessionStartTime!;
         const bEnd = b.sessionEndTime!;
         if (aStart < bEnd && bStart < aEnd) {
+          // Sprint 67-N: 정확히 같은 시간 + 같은 트랙 = SESSION 슬롯 공유(1시간 슬롯에 발표 여러 개 순차) → 충돌 아님
+          // 정확히 같은 시간 + 트랙 다름 = 병렬 진행 (사용자가 둘 중 선택해야 함, 충돌 표시는 유지)
+          if (
+            aStart === bStart &&
+            aEnd === bEnd &&
+            a.sessionTrack &&
+            b.sessionTrack &&
+            a.sessionTrack === b.sessionTrack
+          ) {
+            continue;
+          }
           const aArr = map.get(a.sessionId) ?? [];
           aArr.push(b);
           map.set(a.sessionId, aArr);
@@ -677,6 +691,62 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                 </button>
               ))}
             </div>
+
+            {/* Sprint 67-R: 3행 — 트랙(A~G) 하위 필터 */}
+            <div className="flex flex-wrap items-center gap-1.5 border-t border-border/60 pt-2">
+              <span className="text-[11px] font-medium text-muted-foreground">트랙</span>
+              <button
+                type="button"
+                onClick={() => setTrackFilter("all")}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${trackFilter === "all" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted"}`}
+              >
+                전체
+              </button>
+              {(["A", "B", "C", "D", "E", "F", "G"] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setTrackFilter(t)}
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${trackFilter === t ? "bg-primary text-primary-foreground ring-2 ring-offset-1" : "bg-background text-muted-foreground hover:bg-muted"}`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+
+            {/* Sprint 67-R: 4행 — SESSION 번호 하위 필터 */}
+            <div className="flex flex-wrap items-center gap-1.5 border-t border-border/60 pt-2">
+              <span className="text-[11px] font-medium text-muted-foreground">SESSION</span>
+              <button
+                type="button"
+                onClick={() => setSessionNumFilter("all")}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${sessionNumFilter === "all" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted"}`}
+              >
+                전체
+              </button>
+              {([1, 2, 3, 4] as const).map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setSessionNumFilter(n)}
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${sessionNumFilter === n ? "bg-primary text-primary-foreground ring-2 ring-offset-1" : "bg-background text-muted-foreground hover:bg-muted"}`}
+                >
+                  SESSION 0{n}
+                </button>
+              ))}
+              {(trackFilter !== "all" || sessionNumFilter !== "all") && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTrackFilter("all");
+                    setSessionNumFilter("all");
+                  }}
+                  className="ml-auto rounded-full px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted"
+                >
+                  하위 필터 초기화
+                </button>
+              )}
+            </div>
           </div>
           {day.sessions.length === 0 ? (
             <p className="rounded-md border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
@@ -690,6 +760,12 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
               .filter((s) => {
                 if (categoryFilter !== "all" && s.category !== categoryFilter) return false;
                 if (onlyMine && !planBySessionId.has(s.id)) return false;
+                // Sprint 67-R: 트랙·SESSION 하위 필터
+                if (trackFilter !== "all" || sessionNumFilter !== "all") {
+                  const tk = extractTrackOrder(s.title, s.track);
+                  if (trackFilter !== "all" && tk.trackLetter !== trackFilter) return false;
+                  if (sessionNumFilter !== "all" && tk.sessionNum !== sessionNumFilter) return false;
+                }
                 if (q) {
                   const hay = [s.title, s.location, s.track, s.affiliation, s.abstract, ...(s.speakers ?? [])]
                     .filter(Boolean)
