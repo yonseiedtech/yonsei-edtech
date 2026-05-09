@@ -129,11 +129,13 @@ export default function ConferenceProgramEditor({
     }>;
   } | null>(null);
 
-  // Sprint 67-O: 편집기 검색·카테고리 필터
+  // Sprint 67-O/T: 편집기 검색·카테고리·트랙·SESSION 하위 필터
   const [editorSearch, setEditorSearch] = useState("");
   const [editorCategoryFilter, setEditorCategoryFilter] = useState<
     ConferenceSession["category"] | "all"
   >("all");
+  const [editorTrackFilter, setEditorTrackFilter] = useState<string | "all">("all");
+  const [editorSessionNumFilter, setEditorSessionNumFilter] = useState<number | "all">("all");
 
   useEffect(() => {
     let alive = true;
@@ -1058,13 +1060,50 @@ export default function ConferenceProgramEditor({
               <option value="break">휴식·식사</option>
               <option value="other">기타</option>
             </select>
-            {(editorSearch || editorCategoryFilter !== "all") && (
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">트랙</span>
+            <select
+              className="h-9 rounded-md border border-input bg-background px-2 text-xs"
+              value={editorTrackFilter}
+              onChange={(e) => setEditorTrackFilter(e.target.value)}
+            >
+              <option value="all">전체</option>
+              {(["A", "B", "C", "D", "E", "F", "G"] as const).map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+            <span className="text-xs font-medium text-muted-foreground">SESSION</span>
+            <select
+              className="h-9 rounded-md border border-input bg-background px-2 text-xs"
+              value={editorSessionNumFilter === "all" ? "all" : String(editorSessionNumFilter)}
+              onChange={(e) =>
+                setEditorSessionNumFilter(
+                  e.target.value === "all" ? "all" : parseInt(e.target.value, 10),
+                )
+              }
+            >
+              <option value="all">전체</option>
+              {[1, 2, 3, 4].map((n) => (
+                <option key={n} value={n}>
+                  {`SESSION 0${n}`}
+                </option>
+              ))}
+            </select>
+            {(editorSearch ||
+              editorCategoryFilter !== "all" ||
+              editorTrackFilter !== "all" ||
+              editorSessionNumFilter !== "all") && (
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={() => {
                   setEditorSearch("");
                   setEditorCategoryFilter("all");
+                  setEditorTrackFilter("all");
+                  setEditorSessionNumFilter("all");
                 }}
                 className="h-8 px-2 text-xs"
               >
@@ -1142,6 +1181,14 @@ export default function ConferenceProgramEditor({
                     s.category !== editorCategoryFilter
                   )
                     return false;
+                  // Sprint 67-T: 트랙·SESSION 하위 필터
+                  if (editorTrackFilter !== "all" || editorSessionNumFilter !== "all") {
+                    const m = (s.title ?? "").match(/^\s*\[([A-Z])-(\d)\]/);
+                    const trackLetter = m?.[1] ?? (s.track ?? "").match(/^([A-Z])\b/)?.[1] ?? null;
+                    const sessionNum = m?.[2] ? parseInt(m[2], 10) : null;
+                    if (editorTrackFilter !== "all" && trackLetter !== editorTrackFilter) return false;
+                    if (editorSessionNumFilter !== "all" && sessionNum !== editorSessionNumFilter) return false;
+                  }
                   if (q) {
                     const hay = [
                       s.title,
