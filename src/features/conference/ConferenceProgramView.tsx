@@ -242,15 +242,10 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
         const bStart = b.sessionStartTime!;
         const bEnd = b.sessionEndTime!;
         if (aStart < bEnd && bStart < aEnd) {
-          // Sprint 67-N: 정확히 같은 시간 + 같은 트랙 = SESSION 슬롯 공유(1시간 슬롯에 발표 여러 개 순차) → 충돌 아님
-          // 정확히 같은 시간 + 트랙 다름 = 병렬 진행 (사용자가 둘 중 선택해야 함, 충돌 표시는 유지)
-          if (
-            aStart === bStart &&
-            aEnd === bEnd &&
-            a.sessionTrack &&
-            b.sessionTrack &&
-            a.sessionTrack === b.sessionTrack
-          ) {
+          // Sprint 67-N/S: 정확히 같은 시간 = SESSION 슬롯 공유 → 충돌 아님
+          // (학술대회는 1시간 SESSION 슬롯에 발표 여러 개 순차 진행이 표준 구조이므로
+          //  같은 시간이면 회원이 그 슬롯에 머물면서 모두 듣는다는 의미로 해석)
+          if (aStart === bStart && aEnd === bEnd) {
             continue;
           }
           const aArr = map.get(a.sessionId) ?? [];
