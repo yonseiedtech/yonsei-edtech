@@ -129,6 +129,12 @@ export default function ConferenceProgramEditor({
     }>;
   } | null>(null);
 
+  // Sprint 67-O: 편집기 검색·카테고리 필터
+  const [editorSearch, setEditorSearch] = useState("");
+  const [editorCategoryFilter, setEditorCategoryFilter] = useState<
+    ConferenceSession["category"] | "all"
+  >("all");
+
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -1016,6 +1022,59 @@ export default function ConferenceProgramEditor({
         </div>
       )}
 
+      {/* Sprint 67-O: 편집기 검색·카테고리 필터 */}
+      {draft.days.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/20 p-3">
+          <div className="flex flex-1 items-center gap-2 min-w-[240px]">
+            <span className="text-xs font-medium text-muted-foreground">검색</span>
+            <Input
+              value={editorSearch}
+              onChange={(e) => setEditorSearch(e.target.value)}
+              placeholder="제목·발표자·소속·장소·트랙·요약…"
+              className="h-9 flex-1"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">카테고리</span>
+            <select
+              className="h-9 rounded-md border border-input bg-background px-2 text-xs"
+              value={editorCategoryFilter}
+              onChange={(e) =>
+                setEditorCategoryFilter(
+                  e.target.value as ConferenceSession["category"] | "all",
+                )
+              }
+            >
+              <option value="all">전체</option>
+              <option value="paper">논문발표</option>
+              <option value="keynote">기조강연</option>
+              <option value="symposium">심포지엄</option>
+              <option value="panel">패널</option>
+              <option value="poster">포스터</option>
+              <option value="media">미디어·전시</option>
+              <option value="workshop">워크숍</option>
+              <option value="networking">네트워킹</option>
+              <option value="ceremony">개·폐회식</option>
+              <option value="break">휴식·식사</option>
+              <option value="other">기타</option>
+            </select>
+            {(editorSearch || editorCategoryFilter !== "all") && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setEditorSearch("");
+                  setEditorCategoryFilter("all");
+                }}
+                className="h-8 px-2 text-xs"
+              >
+                초기화
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
       {draft.days.length === 0 && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center text-muted-foreground">
@@ -1073,19 +1132,55 @@ export default function ConferenceProgramEditor({
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              {day.sessions.map((s, sIdx) => (
-                <SessionRow
-                  key={s.id}
-                  session={s}
-                  onChange={(patch) => patchSession(dayIdx, sIdx, patch)}
-                  onMoveUp={() => moveSession(dayIdx, sIdx, -1)}
-                  onMoveDown={() => moveSession(dayIdx, sIdx, 1)}
-                  onRemove={() => removeSession(dayIdx, sIdx)}
-                  onEditDialog={() => editSession(dayIdx, sIdx)}
-                  isFirst={sIdx === 0}
-                  isLast={sIdx === day.sessions.length - 1}
-                />
-              ))}
+              {(() => {
+                // Sprint 67-O: 검색·카테고리 필터 적용 (편집기)
+                const q = editorSearch.trim().toLowerCase();
+                const indexed = day.sessions.map((s, idx) => ({ s, idx }));
+                const filtered = indexed.filter(({ s }) => {
+                  if (
+                    editorCategoryFilter !== "all" &&
+                    s.category !== editorCategoryFilter
+                  )
+                    return false;
+                  if (q) {
+                    const hay = [
+                      s.title,
+                      s.location,
+                      s.track,
+                      s.affiliation,
+                      s.abstract,
+                      ...(s.speakers ?? []),
+                    ]
+                      .filter(Boolean)
+                      .join(" ")
+                      .toLowerCase();
+                    if (!hay.includes(q)) return false;
+                  }
+                  return true;
+                });
+                if (filtered.length === 0) {
+                  return (
+                    <p className="py-4 text-center text-xs text-muted-foreground">
+                      {q || editorCategoryFilter !== "all"
+                        ? "검색·필터 결과 없음"
+                        : "이 일자의 세션이 비어 있습니다."}
+                    </p>
+                  );
+                }
+                return filtered.map(({ s, idx }) => (
+                  <SessionRow
+                    key={s.id}
+                    session={s}
+                    onChange={(patch) => patchSession(dayIdx, idx, patch)}
+                    onMoveUp={() => moveSession(dayIdx, idx, -1)}
+                    onMoveDown={() => moveSession(dayIdx, idx, 1)}
+                    onRemove={() => removeSession(dayIdx, idx)}
+                    onEditDialog={() => editSession(dayIdx, idx)}
+                    isFirst={idx === 0}
+                    isLast={idx === day.sessions.length - 1}
+                  />
+                ));
+              })()}
             </CardContent>
           </Card>
         ))}
