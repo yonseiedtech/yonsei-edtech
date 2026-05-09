@@ -130,8 +130,15 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
 
   const rawParticipants = (activity?.participants as string[] | undefined) ?? [];
   const leaderId = (activity?.leaderId as string | undefined) ?? undefined;
-  const participants = leaderId && !rawParticipants.includes(leaderId) ? [leaderId, ...rawParticipants] : rawParticipants;
   const applicants = (activity?.applicants as Activity["applicants"]) ?? [];
+  // Sprint 67-K/V: 학번 연동된 applicant(isGuest=false, userId 보유)를 참여자에도 자동 합산.
+  // applicant-link-by-studentid 도구가 participants 에 push 하지만, 도구 fix 이전 데이터는 누락 가능 → 표시 시 보강.
+  const linkedFromApplicants = (applicants as Array<{ userId?: string; isGuest?: boolean }>)
+    .map((a) => (a && a.isGuest === false && a.userId ? a.userId : undefined))
+    .filter((v): v is string => !!v);
+  const merged = Array.from(new Set([...rawParticipants, ...linkedFromApplicants]));
+  const participants =
+    leaderId && !merged.includes(leaderId) ? [leaderId, ...merged] : merged;
   const participantRoles = (activity?.participantRoles as Record<string, string> | undefined) ?? {};
   const participantNotes = (activity?.participantNotes as Record<string, string> | undefined) ?? {};
   const guestParticipants = (activity?.guestParticipants as { id: string; name: string; addedAt: string; addedBy: string }[] | undefined) ?? [];
