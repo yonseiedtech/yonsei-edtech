@@ -498,11 +498,10 @@ export const userSessionPlansApi = {
       "filter[programId]": programId,
       limit: 500,
     }),
-  /** 한 회원의 모든 학술대회 일정 (마이페이지 모아보기) */
+  /** 한 회원의 모든 학술대회 일정 (마이페이지 모아보기) — 복합 인덱스 회피, client-side 정렬 */
   listByUser: (userId: string) =>
     dataApi.list<UserSessionPlan>("user_session_plans", {
       "filter[userId]": userId,
-      sort: "selectedAt:desc",
       limit: 500,
     }),
   /** 운영자: 한 프로그램의 모든 선택 (인기 세션 통계용) */
