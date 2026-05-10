@@ -260,14 +260,20 @@ function CardInner() {
     setIsUploading(true);
     try {
       const blob = await getCroppedBlob(cropDialog.src, croppedAreaPixels);
-      const croppedFile = new File([blob], `profile-${Date.now()}.jpg`, { type: "image/jpeg" });
-      const { url } = await uploadToStorage(croppedFile, `profile-photos/${user.id}`);
+      const croppedFile = new File([blob], `profile-${user.id}-${Date.now()}.jpg`, {
+        type: "image/jpeg",
+      });
+      // Sprint 67-Y: profile-photos/{userId} 경로는 storage.rules deploy 필요 (Storage 미활성화 시 실패)
+      // → 이미 deploy 된 'images/' 경로 활용 (storage.rules line 43~49 권한 있음)
+      const { url } = await uploadToStorage(croppedFile, "images");
       await updateProfile({ id: user.id, data: { profileImage: url } });
       setUser({ ...user, profileImage: url });
       toast.success("프로필 사진을 업데이트했습니다.");
       setCropDialog(null);
-    } catch {
-      toast.error("사진 업로드에 실패했습니다.");
+    } catch (e) {
+      toast.error(
+        `사진 업로드에 실패했습니다: ${e instanceof Error ? e.message : "권한 또는 네트워크 오류"}`,
+      );
     } finally {
       setIsUploading(false);
     }
