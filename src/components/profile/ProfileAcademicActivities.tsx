@@ -1,13 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { activitiesApi, seminarsApi, attendeesApi } from "@/lib/bkend";
+import { activitiesApi, attendeeReviewsApi, attendeesApi, seminarsApi } from "@/lib/bkend";
+import { useAuthStore } from "@/features/auth/auth-store";
 import { EXTERNAL_PARTICIPANT_TYPE_LABELS, EXTERNAL_PARTICIPANT_TYPE_COLORS } from "@/types";
 import type { Activity, ExternalParticipantType, Seminar, SeminarAttendee, User } from "@/types";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, ChevronRight, Crown, FolderKanban, Globe, Mic, Tag, CalendarRange, HandHeart, Users } from "lucide-react";
+import { BookOpen, ChevronRight, Crown, FolderKanban, Globe, Mic, Sparkles, Tag, CalendarRange, HandHeart, MessageSquare, Users } from "lucide-react";
 import { formatDate, cn } from "@/lib/utils";
 import { formatSemester, inferCurrentSemester, type Semester } from "@/lib/semester";
 
@@ -70,6 +72,48 @@ function roleOf(a: Activity, owner: User): RoleInfo | null {
 export default function ProfileAcademicActivities({ owner }: Props) {
   const [tab, setTab] = useState<SubTab>("seminar");
   const [visible, setVisible] = useState<number>(PAGE_SIZE);
+  // Sprint 67-AA: 후기 작성 직후 redirect 받은 reviewedActivityId 강조 + NEW 애니메이션
+  const searchParams = useSearchParams();
+  const reviewedActivityId = searchParams?.get("reviewedActivityId") ?? null;
+  const initialSubTab = (searchParams?.get("subTab") ?? "") as SubTab | "";
+  const { user: currentUser } = useAuthStore();
+  const isOwner = !!currentUser && currentUser.id === owner.id;
+  const newCardRef = useRef<HTMLLIElement | null>(null);
+  const [showNewBadge, setShowNewBadge] = useState<boolean>(!!reviewedActivityId);
+
+  // 초기 subTab 자동 적용 (후기 작성 redirect 시 'external' 자동 선택)
+  useEffect(() => {
+    if (initialSubTab && (["seminar", "study", "project", "external"] as const).includes(initialSubTab as SubTab)) {
+      setTab(initialSubTab as SubTab);
+    }
+  }, [initialSubTab]);
+
+  // NEW 강조된 카드로 자동 scroll + 6초 후 NEW 배지 fade out
+  useEffect(() => {
+    if (!reviewedActivityId) return;
+    const t1 = setTimeout(() => {
+      newCardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
+    const t2 = setTimeout(() => setShowNewBadge(false), 6000);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [reviewedActivityId]);
+
+  // 본인 프로필일 때 — 후기 작성한 활동 IDs fetch
+  const { data: myReviews = [] } = useQuery({
+    queryKey: ["profile-attendee-reviews", owner.id],
+    queryFn: async () => {
+      const res = await attendeeReviewsApi.listByUser(owner.id);
+      return res.data ?? [];
+    },
+    enabled: isOwner && !!owner.id,
+  });
+  const reviewedActivityIds = useMemo(
+    () => new Set(myReviews.map((r) => r.activityId)),
+    [myReviews],
+  );
 
   const { data: allActivities = [], isLoading: loadingActs } = useQuery({
     queryKey: ["profile-activities-all"],
@@ -339,10 +383,42 @@ export default function ProfileAcademicActivities({ owner }: Props) {
                     }
                     const a = item as Activity;
                     const role = roleOf(a, owner);
+                    // Sprint 67-AA: 후기 작성 강조 (NEW 애니메이션 + ✓ 배지)
+                    const isNewlyReviewed = a.id === reviewedActivityId;
+                    const hasReview = isOwner && reviewedActivityIds.has(a.id);
                     return (
-                      <li key={a.id} className="rounded-xl border px-4 py-3">
-                        <div className="min-w-0">
+                      <li
+                        key={a.id}
+                        ref={isNewlyReviewed ? newCardRef : undefined}
+                        className={cn(
+                          "rounded-xl border px-4 py-3 transition-all",
+                          isNewlyReviewed && showNewBadge &&
+                            "relative overflow-hidden border-primary/60 bg-primary/5 shadow-lg ring-2 ring-primary/40 animate-in slide-in-from-bottom-4 fade-in duration-700",
+                          hasReview && !isNewlyReviewed && "border-emerald-200 bg-emerald-50/30 dark:border-emerald-900 dark:bg-emerald-950/10",
+                        )}
+                      >
+                        {/* NEW sparkle 효과 */}
+                        {isNewlyReviewed && showNewBadge && (
+                          <>
+                            <Sparkles className="absolute right-2 top-2 h-4 w-4 animate-pulse text-amber-400" />
+                            <Sparkles className="absolute right-8 top-3 h-3 w-3 animate-pulse text-amber-400 [animation-delay:0.3s]" />
+                          </>
+                        )}
+                        <div className="min-w-0 relative">
                           <div className="flex flex-wrap items-center gap-1.5">
+                            {isNewlyReviewed && showNewBadge && (
+                              <Badge className="gap-0.5 bg-amber-500 text-white text-[10px] font-bold animate-in zoom-in duration-500">
+                                <Sparkles size={9} /> NEW
+                              </Badge>
+                            )}
+                            {hasReview && (
+                              <Badge
+                                variant="secondary"
+                                className="gap-0.5 bg-emerald-100 text-[10px] font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                              >
+                                <MessageSquare size={9} /> 후기 작성
+                              </Badge>
+                            )}
                             {a.status && (
                               <Badge variant="outline" className="text-[10px]">
                                 {a.status === "upcoming" ? "예정" : a.status === "ongoing" ? "진행중" : "완료"}

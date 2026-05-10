@@ -192,9 +192,11 @@ export default function AttendeeReviewPage() {
         submittedAt: originalSubmittedAt ?? new Date().toISOString(),
       } as unknown as Record<string, unknown>);
       setShowSuccess(true);
-      // 4초 후 활동 페이지로 자동 이동
+      // Sprint 67-AA: 4초 후 본인 프로필 학술활동 영역으로 자동 이동 (대외 탭 + NEW 강조)
       setTimeout(() => {
-        router.push(`/activities/external/${activityId}?via=review`);
+        router.push(
+          `/profile/${user.id}?tab=activities&subTab=external&reviewedActivityId=${activityId}`,
+        );
       }, 4000);
     } catch (e) {
       toast.error(
