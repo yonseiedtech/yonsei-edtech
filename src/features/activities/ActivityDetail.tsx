@@ -31,7 +31,7 @@ import ActivityInfoEditor from "./ActivityInfoEditor";
 import { todayYmdLocal } from "@/lib/dday";
 import type { Activity, ActivityType, ActivityProgress, ActivityProgressMode, FormField, EnrollmentStatus, ExternalParticipantType, SpeakerSubmissionType } from "@/types";
 import { ENROLLMENT_STATUS_LABELS, ACTIVITY_PROGRESS_MODE_LABELS, EXTERNAL_PARTICIPANT_TYPE_LABELS, EXTERNAL_PARTICIPANT_TYPE_COLORS, SPEAKER_SUBMISSION_TYPE_LABELS, SPEAKER_SUBMISSION_TYPE_COLORS } from "@/types";
-import { activityProgressApi, progressMeetingsApi } from "@/lib/bkend";
+import { activityProgressApi, progressMeetingsApi, userSessionPlansApi } from "@/lib/bkend";
 import { uploadToStorage } from "@/lib/storage";
 import type { UploadedFile } from "@/lib/storage";
 import { formatSemester } from "@/lib/semester";
@@ -128,6 +128,20 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
         return (a.week ?? 0) - (b.week ?? 0);
       });
     },
+  });
+
+  // Sprint 67-AC: 내 일정 탭 count — 본인 plans 의 활동별 개수 (skipped 제외)
+  const { data: mySessionsCount = 0 } = useQuery({
+    queryKey: ["activity-my-sessions-count", activityId, user?.id],
+    queryFn: async () => {
+      if (!user?.id) return 0;
+      const res = await userSessionPlansApi.listByUser(user.id);
+      const plans = res?.data ?? [];
+      return plans.filter(
+        (p) => p.activityId === activityId && p.status !== "skipped",
+      ).length;
+    },
+    enabled: !!user?.id && !!activityId,
   });
 
   const rawParticipants = (activity?.participants as string[] | undefined) ?? [];
@@ -439,7 +453,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
     { value: "overview", label: "개요", show: true },
     { value: "progress", label: `진행 현황${progressList.length > 0 ? ` (${progressPct}%)` : ""}`, show: !!user && type !== "external" },
     // Sprint 67: 외부 학술대회 — 본인이 추가한 세션(plans) 모아 보기 (요청)
-    { value: "my-sessions", label: "내 일정", show: type === "external" && !!user },
+    { value: "my-sessions", label: `내 일정${mySessionsCount > 0 ? ` (${mySessionsCount})` : ""}`, show: type === "external" && !!user },
     { value: "staff", label: `운영진 (${staffPids.length})`, show: !!user },
     { value: "presenters", label: `발표자 (${speakerApplicants.length})`, show: type === "external" },
     { value: "volunteers", label: `자원봉사자 (${volunteerApplicants.length})`, show: type === "external" },

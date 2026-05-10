@@ -196,9 +196,12 @@ export default function MyActivitySessionsTab({ activityId, userId }: Props) {
                   <h4 className="font-medium leading-snug">
                     {p.sessionTitle ?? "(세션 제목 없음)"}
                   </h4>
-                  <Badge className={`${STATUS_COLORS[p.status]} text-[10px]`}>
-                    {STATUS_LABELS[p.status]}
-                  </Badge>
+                  {/* Sprint 67-AC: '계획' 상태 배지는 숨김 (참석/건너뜀만 표시) */}
+                  {p.status !== "planned" && (
+                    <Badge className={`${STATUS_COLORS[p.status]} text-[10px]`}>
+                      {STATUS_LABELS[p.status]}
+                    </Badge>
+                  )}
                   {p.rating && (
                     <span className="inline-flex items-center gap-0.5 text-xs text-amber-700 dark:text-amber-300">
                       <Star className="h-3 w-3 fill-current" /> {p.rating}/5
