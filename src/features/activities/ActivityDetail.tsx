@@ -31,7 +31,7 @@ import ActivityInfoEditor from "./ActivityInfoEditor";
 import { todayYmdLocal } from "@/lib/dday";
 import type { Activity, ActivityType, ActivityProgress, ActivityProgressMode, FormField, EnrollmentStatus, ExternalParticipantType, SpeakerSubmissionType } from "@/types";
 import { ENROLLMENT_STATUS_LABELS, ACTIVITY_PROGRESS_MODE_LABELS, EXTERNAL_PARTICIPANT_TYPE_LABELS, EXTERNAL_PARTICIPANT_TYPE_COLORS, SPEAKER_SUBMISSION_TYPE_LABELS, SPEAKER_SUBMISSION_TYPE_COLORS } from "@/types";
-import { activityProgressApi, progressMeetingsApi, userSessionPlansApi } from "@/lib/bkend";
+import { activityProgressApi, attendeeReviewsApi, progressMeetingsApi, userSessionPlansApi } from "@/lib/bkend";
 import { uploadToStorage } from "@/lib/storage";
 import type { UploadedFile } from "@/lib/storage";
 import { formatSemester } from "@/lib/semester";
@@ -142,6 +142,16 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
       ).length;
     },
     enabled: !!user?.id && !!activityId,
+  });
+
+  // Sprint 67-AD: 활동 리포트 — 후기 통계 (운영진만)
+  const { data: attendeeReviews = [] } = useQuery({
+    queryKey: ["activity-attendee-reviews", activityId],
+    queryFn: async () => {
+      const res = await attendeeReviewsApi.listByActivity(activityId);
+      return res?.data ?? [];
+    },
+    enabled: !!activityId && type === "external",
   });
 
   const rawParticipants = (activity?.participants as string[] | undefined) ?? [];
@@ -1786,6 +1796,86 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   <p className="text-xs text-muted-foreground">승인율</p>
                 </div>
               </div>
+
+              {/* Sprint 67-AD: 후기 작성 진행률 + 통계 (external 만) */}
+              {type === "external" && (
+                <div className="rounded-xl border bg-card p-4 space-y-3">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <p className="text-sm font-semibold">참석자 후기</p>
+                    <p className="text-xs text-muted-foreground">
+                      {attendeeReviews.length}건 / 참여자 {participants.length}명 (
+                      {participants.length > 0
+                        ? Math.round(
+                            (attendeeReviews.length / participants.length) * 100,
+                          )
+                        : 0}
+                      %)
+                    </p>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full bg-primary transition-all"
+                      style={{
+                        width: `${
+                          participants.length > 0
+                            ? Math.min(
+                                100,
+                                Math.round(
+                                  (attendeeReviews.length / participants.length) * 100,
+                                ),
+                              )
+                            : 0
+                        }%`,
+                      }}
+                    />
+                  </div>
+                  {attendeeReviews.length > 0 && (
+                    <>
+                      {/* 재참석 의사 분포 */}
+                      <div className="grid grid-cols-3 gap-2 pt-1">
+                        {(["yes", "maybe", "no"] as const).map((opt) => {
+                          const count = attendeeReviews.filter(
+                            (r) => r.willAttendAgain === opt,
+                          ).length;
+                          const labels = {
+                            yes: { label: "꼭 다시", emoji: "🙌", color: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300" },
+                            maybe: { label: "기회되면", emoji: "🤔", color: "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300" },
+                            no: { label: "당분간", emoji: "🥲", color: "bg-muted text-muted-foreground" },
+                          } as const;
+                          return (
+                            <div
+                              key={opt}
+                              className={cn("rounded-md p-2 text-center text-xs", labels[opt].color)}
+                            >
+                              <p className="text-base">{labels[opt].emoji}</p>
+                              <p className="font-semibold">{count}</p>
+                              <p className="text-[10px] opacity-80">
+                                {labels[opt].label}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {/* 평균 별점 */}
+                      {(() => {
+                        const ratings = attendeeReviews
+                          .map((r) => r.overallRating)
+                          .filter((v): v is number => typeof v === "number" && v > 0);
+                        if (ratings.length === 0) return null;
+                        const avg = ratings.reduce((s, v) => s + v, 0) / ratings.length;
+                        return (
+                          <div className="flex items-center justify-between border-t pt-2 text-xs">
+                            <span className="text-muted-foreground">평균 별점</span>
+                            <span className="font-semibold text-amber-600 dark:text-amber-400">
+                              ⭐ {avg.toFixed(1)} / 5 ({ratings.length}명 응답)
+                            </span>
+                          </div>
+                        );
+                      })()}
+                    </>
+                  )}
+                </div>
+              )}
 
               {type === "external" && applicants.length > 0 && (
                 <div className="rounded-xl border bg-card p-4">
