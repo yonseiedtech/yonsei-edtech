@@ -28,6 +28,7 @@ import {
   type Post,
 } from "@/types";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { matchesInterviewTarget, describeInterviewTarget } from "@/lib/interview-target";
 import { useSaveInterviewResponse, useInterviewResponses } from "./interview-store";
 import InterviewCertificate from "./InterviewCertificate";
 
@@ -80,6 +81,8 @@ interface Props {
 export default function InterviewPlayer({ post, existing, onClose, onSubmitted }: Props) {
   const { user } = useAuthStore();
   const meta = post.interview as InterviewMeta;
+  // Sprint 67-AE: 인터뷰 대상자 필터 매칭 — 비대상자는 응답 불가
+  const canRespond = matchesInterviewTarget(user, meta.targetCriteria);
   const questions = useMemo(
     () => [...meta.questions].sort((a, b) => a.order - b.order),
     [meta.questions]
@@ -428,9 +431,22 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                 {meta.intro || "안녕하세요! 몇 가지 질문을 드릴게요."}
               </p>
               <p className="mt-6 text-sm text-muted-foreground">총 {total}개의 질문</p>
-              <Button onClick={handleStart} size="lg" className="mt-8">
-                시작하기
-              </Button>
+              {/* Sprint 67-AE: 인터뷰 대상자 필터 — 비매칭 시 응답 불가 안내 */}
+              {!canRespond ? (
+                <div className="mx-auto mt-8 max-w-md rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                  <p className="font-semibold">이 인터뷰는 특정 대상에게만 열려 있습니다</p>
+                  <p className="mt-1 text-xs">
+                    대상: {describeInterviewTarget(meta.targetCriteria)}
+                  </p>
+                  <p className="mt-2 text-[11px] text-amber-800/80 dark:text-amber-200/80">
+                    응답 권한이 필요한 경우 운영진에게 문의하세요.
+                  </p>
+                </div>
+              ) : (
+                <Button onClick={handleStart} size="lg" className="mt-8">
+                  시작하기
+                </Button>
+              )}
               {isFirstParticipant && (
                 <motion.p
                   initial={{ opacity: 0, y: 6 }}

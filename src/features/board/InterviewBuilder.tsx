@@ -9,8 +9,12 @@ import type {
   InterviewQuestion,
   InterviewAnswerType,
   InterviewChoice,
+  InterviewTargetCriteria,
+  InterviewTargetRole,
 } from "@/types";
-import { Plus, Trash2, ArrowUp, ArrowDown, Sparkles, X, Lock, Globe } from "lucide-react";
+import { INTERVIEW_TARGET_ROLE_LABELS } from "@/types";
+import { SEMESTER_COUNT_OPTIONS } from "@/lib/interview-target";
+import { Plus, Trash2, ArrowUp, ArrowDown, Sparkles, X, Lock, Globe, Users, Target } from "lucide-react";
 
 interface Props {
   value: InterviewMeta;
@@ -244,6 +248,9 @@ export default function InterviewBuilder({ value, onChange }: Props) {
             게시 후에도 언제든 변경 가능하며, 변경 즉시 적용됩니다.
           </p>
         </div>
+
+        {/* Sprint 67-AE: 인터뷰 대상자 필터 */}
+        <TargetCriteriaSection value={value} onChange={onChange} />
       </div>
 
       <div className="mt-5">
@@ -482,6 +489,177 @@ export default function InterviewBuilder({ value, onChange }: Props) {
             </Button>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Sprint 67-AE: 인터뷰 대상자 필터 UI
+ * 4가지 카테고리 중 한 가지라도 매칭되면 응답 가능 (OR 조건)
+ */
+function TargetCriteriaSection({
+  value,
+  onChange,
+}: {
+  value: InterviewMeta;
+  onChange: (v: InterviewMeta) => void;
+}) {
+  const criteria: InterviewTargetCriteria = value.targetCriteria ?? {};
+
+  const update = (next: InterviewTargetCriteria) => {
+    // 모든 필드 비어있으면 undefined 로 초기화
+    const hasAny =
+      !!(next.userIds && next.userIds.length > 0) ||
+      !!(next.entryYears && next.entryYears.length > 0) ||
+      !!(next.semesterCounts && next.semesterCounts.length > 0) ||
+      !!(next.roles && next.roles.length > 0);
+    onChange({ ...value, targetCriteria: hasAny ? next : undefined });
+  };
+
+  function toggleEntryYear(y: number) {
+    const cur = criteria.entryYears ?? [];
+    update({
+      ...criteria,
+      entryYears: cur.includes(y) ? cur.filter((v) => v !== y) : [...cur, y],
+    });
+  }
+
+  function toggleSemesterCount(c: number) {
+    const cur = criteria.semesterCounts ?? [];
+    update({
+      ...criteria,
+      semesterCounts: cur.includes(c) ? cur.filter((v) => v !== c) : [...cur, c],
+    });
+  }
+
+  function toggleRole(r: InterviewTargetRole) {
+    const cur = criteria.roles ?? [];
+    update({
+      ...criteria,
+      roles: cur.includes(r) ? cur.filter((v) => v !== r) : [...cur, r],
+    });
+  }
+
+  function setUserIdsFromText(text: string) {
+    const ids = text.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean);
+    update({ ...criteria, userIds: ids.length > 0 ? ids : undefined });
+  }
+
+  // 입학연도 옵션: 최근 8년 (현재 연도 ~ -7)
+  const currentYear = new Date().getFullYear();
+  const entryYearOptions = Array.from({ length: 8 }, (_, i) => currentYear - i);
+
+  const roles: InterviewTargetRole[] = ["masters", "doctoral", "alumni", "professor", "staff", "guest"];
+
+  return (
+    <div className="mt-5 rounded-lg border border-blue-200 bg-blue-50/40 p-4 dark:border-blue-900 dark:bg-blue-950/20">
+      <div className="mb-3 flex items-center gap-2">
+        <Target size={14} className="text-blue-700 dark:text-blue-300" />
+        <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+          인터뷰 대상자 (선택)
+        </h3>
+      </div>
+      <p className="mb-3 text-[11px] leading-relaxed text-blue-800/80 dark:text-blue-200/80">
+        대상을 비워두면 모든 회원이 응답 가능합니다. 여러 카테고리 동시 사용 시 한 가지라도 일치하면 응답 가능 (OR 조건).
+      </p>
+
+      <div className="space-y-3">
+        {/* 입학시점 */}
+        <div>
+          <label className="mb-1 block text-xs font-medium text-blue-900 dark:text-blue-100">
+            입학시점 별 (입학연도)
+          </label>
+          <div className="flex flex-wrap gap-1.5">
+            {entryYearOptions.map((y) => {
+              const checked = criteria.entryYears?.includes(y) ?? false;
+              return (
+                <button
+                  key={y}
+                  type="button"
+                  onClick={() => toggleEntryYear(y)}
+                  className={`rounded-full border px-2.5 py-1 text-xs transition ${
+                    checked
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-input bg-card hover:bg-muted"
+                  }`}
+                >
+                  {y}학년도
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 누적 학기차 */}
+        <div>
+          <label className="mb-1 block text-xs font-medium text-blue-900 dark:text-blue-100">
+            누적 학기차
+          </label>
+          <div className="flex flex-wrap gap-1.5">
+            {SEMESTER_COUNT_OPTIONS.map((opt) => {
+              const checked = criteria.semesterCounts?.includes(opt.value) ?? false;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => toggleSemesterCount(opt.value)}
+                  className={`rounded-full border px-2.5 py-1 text-xs transition ${
+                    checked
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-input bg-card hover:bg-muted"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 계층/역할 */}
+        <div>
+          <label className="mb-1 block text-xs font-medium text-blue-900 dark:text-blue-100">
+            계층 / 역할
+          </label>
+          <div className="flex flex-wrap gap-1.5">
+            {roles.map((r) => {
+              const checked = criteria.roles?.includes(r) ?? false;
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => toggleRole(r)}
+                  className={`rounded-full border px-2.5 py-1 text-xs transition ${
+                    checked
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-input bg-card hover:bg-muted"
+                  }`}
+                >
+                  {INTERVIEW_TARGET_ROLE_LABELS[r]}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 특정 회원 (학번 또는 userId 콤마 구분) */}
+        <div>
+          <label className="mb-1 block text-xs font-medium text-blue-900 dark:text-blue-100">
+            특정 회원 (학번 또는 userId, 콤마/공백 구분)
+          </label>
+          <Input
+            value={(criteria.userIds ?? []).join(", ")}
+            onChange={(e) => setUserIdsFromText(e.target.value)}
+            placeholder="예: 2024123456, 2025456789"
+          />
+          {criteria.userIds && criteria.userIds.length > 0 && (
+            <p className="mt-1 text-[11px] text-blue-800/80 dark:text-blue-200/80">
+              <Users size={10} className="mr-0.5 inline" />
+              {criteria.userIds.length}명 지정됨
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -37,10 +37,45 @@ export interface InterviewQuestion {
   allowCustomOption?: boolean;
 }
 
+/**
+ * Sprint 67-AE: 인터뷰 대상자 필터.
+ * 빈 객체이거나 모든 필드 비어있으면 — 모든 인증 회원이 응답 가능 (기본).
+ * 여러 카테고리 동시 사용 시 OR 조건 (한 카테고리라도 매칭되면 응답 가능).
+ */
+export interface InterviewTargetCriteria {
+  /** 특정 회원 userId 목록 */
+  userIds?: string[];
+  /** 입학연도 (YYYY) — 복수 선택 */
+  entryYears?: number[];
+  /** 누적 학기차 — 복수 선택 (1~7+) */
+  semesterCounts?: number[];
+  /** 계층/역할 — 복수 선택 */
+  roles?: InterviewTargetRole[];
+}
+
+export type InterviewTargetRole =
+  | "masters"
+  | "doctoral"
+  | "alumni"
+  | "professor"
+  | "staff"
+  | "guest";
+
+export const INTERVIEW_TARGET_ROLE_LABELS: Record<InterviewTargetRole, string> = {
+  masters: "석사 과정",
+  doctoral: "박사 과정",
+  alumni: "졸업생",
+  professor: "교수",
+  staff: "운영진",
+  guest: "외부 / 게스트",
+};
+
 export interface InterviewMeta {
   intro: string;
   deadline?: string;
   responseVisibility?: "public" | "staff_only";
+  /** Sprint 67-AE: 인터뷰 대상자 필터 (없으면 모든 회원 응답 가능) */
+  targetCriteria?: InterviewTargetCriteria;
   questions: InterviewQuestion[];
 }
 
