@@ -10,6 +10,12 @@ import type {
   User,
 } from "@/types";
 
+/** 회원의 입학 학기 — user.entrySemester 가 없으면 'first' 폴백 */
+export function getUserEntrySemester(user: User): "first" | "second" {
+  const v = (user as { entrySemester?: "first" | "second" }).entrySemester;
+  return v === "second" ? "second" : "first";
+}
+
 /** 회원의 입학연도 추출 — user.entryYear → studentId 앞 4자리 fallback */
 export function getUserEntryYear(user: User): number | null {
   const fromField = (user as { entryYear?: number }).entryYear;
@@ -50,23 +56,26 @@ export function getUserCumulativeSemesterCount(
   return count + 1; // 1-indexed
 }
 
-/** 회원이 어느 계층(role)에 속하는지 판정 */
+/**
+ * 회원의 학회 운영 계층 매핑.
+ * user.societyPosition (chair / vice_chair / major_rep / ta / alumni_rep) 우선,
+ * user.role (staff / admin / sysadmin) 매칭 시 staff 추가, 그 외 general.
+ * 한 사용자가 여러 계층 (예: staff + chair) 동시 보유 가능.
+ */
 export function getUserInterviewRoles(user: User): InterviewTargetRole[] {
   const roles: InterviewTargetRole[] = [];
-  const academicLevel = (user as { academicLevel?: string }).academicLevel;
-  const occupation = (user as { occupation?: string }).occupation;
   const role = (user as { role?: string }).role;
+  const societyPosition = (user as { societyPosition?: string }).societyPosition;
 
-  if (academicLevel === "masters" || academicLevel === "ms") roles.push("masters");
-  if (academicLevel === "doctoral" || academicLevel === "phd") roles.push("doctoral");
-  if (academicLevel === "alumni" || (user as { isAlumni?: boolean }).isAlumni)
-    roles.push("alumni");
-  if (occupation === "professor" || academicLevel === "professor")
-    roles.push("professor");
-  if (role === "staff" || role === "admin" || role === "sysadmin")
-    roles.push("staff");
-  // 회원 정보 부족 시 guest 폴백
-  if (roles.length === 0) roles.push("guest");
+  if (role === "staff" || role === "admin" || role === "sysadmin") roles.push("staff");
+  if (societyPosition === "chair") roles.push("chair");
+  if (societyPosition === "vice_chair") roles.push("vice_chair");
+  if (societyPosition === "major_rep") roles.push("major_rep");
+  if (societyPosition === "ta") roles.push("ta");
+  if (societyPosition === "alumni_rep") roles.push("alumni_rep");
+  // 직책이 없으면 일반 회원
+  if (roles.length === 0) roles.push("general");
+  // staff 가 학회장/부학회장 등 동시 보유한 경우 general 폴백 안 함
 
   return roles;
 }
@@ -93,10 +102,15 @@ export function matchesInterviewTarget(
   if (criteria.userIds?.includes(user.id)) return true;
   if (user.studentId && criteria.userIds?.includes(String(user.studentId))) return true;
 
-  // entryYears
-  if (criteria.entryYears && criteria.entryYears.length > 0) {
+  // entryYears + entrySemesters (둘 다 있으면 AND, 학기만 있으면 학기만 매칭)
+  const hasYears = criteria.entryYears && criteria.entryYears.length > 0;
+  const hasSemesters = criteria.entrySemesters && criteria.entrySemesters.length > 0;
+  if (hasYears || hasSemesters) {
     const y = getUserEntryYear(user);
-    if (y != null && criteria.entryYears.includes(y)) return true;
+    const s = getUserEntrySemester(user);
+    const yearMatch = !hasYears || (y != null && criteria.entryYears!.includes(y));
+    const semMatch = !hasSemesters || criteria.entrySemesters!.includes(s);
+    if (yearMatch && semMatch && (hasYears || hasSemesters)) return true;
   }
 
   // semesterCounts (1~6, 7+ 처리)
@@ -124,8 +138,16 @@ export function describeInterviewTarget(criteria: InterviewTargetCriteria | unde
   const parts: string[] = [];
   if (criteria.userIds && criteria.userIds.length > 0)
     parts.push(`특정 회원 ${criteria.userIds.length}명`);
-  if (criteria.entryYears && criteria.entryYears.length > 0)
-    parts.push(`입학 ${criteria.entryYears.join("·")}`);
+  if (criteria.entryYears && criteria.entryYears.length > 0) {
+    const semSuffix = criteria.entrySemesters && criteria.entrySemesters.length > 0
+      ? ` (${criteria.entrySemesters.map((s) => (s === "first" ? "전기" : "후기")).join("·")})`
+      : "";
+    parts.push(`입학 ${criteria.entryYears.join("·")}${semSuffix}`);
+  } else if (criteria.entrySemesters && criteria.entrySemesters.length > 0) {
+    parts.push(
+      `입학 ${criteria.entrySemesters.map((s) => (s === "first" ? "전기" : "후기")).join("·")} 학기`,
+    );
+  }
   if (criteria.semesterCounts && criteria.semesterCounts.length > 0)
     parts.push(
       `${criteria.semesterCounts.map((c) => (c >= 7 ? "7학기차+" : `${c}학기차`)).join("·")}`,

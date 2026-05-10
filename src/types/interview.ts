@@ -47,27 +47,35 @@ export interface InterviewTargetCriteria {
   userIds?: string[];
   /** 입학연도 (YYYY) — 복수 선택 */
   entryYears?: number[];
+  /** 입학 학기 — 복수 선택 (전기/후기). entryYears 와 AND 조건 (둘 다 매칭해야 통과) */
+  entrySemesters?: Array<"first" | "second">;
   /** 누적 학기차 — 복수 선택 (1~7+) */
   semesterCounts?: number[];
   /** 계층/역할 — 복수 선택 */
   roles?: InterviewTargetRole[];
 }
 
+/**
+ * Sprint 67-AE/AF: 학회 운영 계층 (organizational tier)
+ * 학사적 분류(석박사) 가 아닌 학회 운영 직책 기준.
+ */
 export type InterviewTargetRole =
-  | "masters"
-  | "doctoral"
-  | "alumni"
-  | "professor"
+  | "general"
   | "staff"
-  | "guest";
+  | "chair"
+  | "vice_chair"
+  | "major_rep"
+  | "ta"
+  | "alumni_rep";
 
 export const INTERVIEW_TARGET_ROLE_LABELS: Record<InterviewTargetRole, string> = {
-  masters: "석사 과정",
-  doctoral: "박사 과정",
-  alumni: "졸업생",
-  professor: "교수",
+  general: "일반 회원",
   staff: "운영진",
-  guest: "외부 / 게스트",
+  chair: "학회장",
+  vice_chair: "부학회장",
+  major_rep: "전공대표",
+  ta: "조교",
+  alumni_rep: "졸업생 대표",
 };
 
 export interface InterviewMeta {

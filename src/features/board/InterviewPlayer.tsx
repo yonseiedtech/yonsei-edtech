@@ -17,6 +17,7 @@ import {
   Save,
   Plus,
   Minus,
+  Target,
 } from "lucide-react";
 import { uploadImageSmart } from "@/lib/storage";
 import {
@@ -430,6 +431,13 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
               <p className="mt-5 whitespace-pre-wrap text-sm leading-relaxed text-foreground/80 sm:mt-6 sm:text-base">
                 {meta.intro || "안녕하세요! 몇 가지 질문을 드릴게요."}
               </p>
+              {/* Sprint 67-AE/AF: 인터뷰 대상 표시 (모든 회원에게 노출) */}
+              {meta.targetCriteria && (
+                <div className="mx-auto mt-4 inline-flex max-w-md items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50/60 px-3 py-1 text-[11px] text-blue-900 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200">
+                  <Target size={11} />
+                  <span>대상: {describeInterviewTarget(meta.targetCriteria)}</span>
+                </div>
+              )}
               <p className="mt-6 text-sm text-muted-foreground">총 {total}개의 질문</p>
               {/* Sprint 67-AE: 인터뷰 대상자 필터 — 비매칭 시 응답 불가 안내 */}
               {!canRespond ? (

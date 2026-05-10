@@ -14,7 +14,11 @@ import type {
 } from "@/types";
 import { INTERVIEW_TARGET_ROLE_LABELS } from "@/types";
 import { SEMESTER_COUNT_OPTIONS } from "@/lib/interview-target";
-import { Plus, Trash2, ArrowUp, ArrowDown, Sparkles, X, Lock, Globe, Users, Target } from "lucide-react";
+import { Plus, Trash2, ArrowUp, ArrowDown, Sparkles, X, Lock, Globe, Users, Target, Search } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { profilesApi } from "@/lib/bkend";
+import type { User } from "@/types";
 
 interface Props {
   value: InterviewMeta;
@@ -506,12 +510,50 @@ function TargetCriteriaSection({
   onChange: (v: InterviewMeta) => void;
 }) {
   const criteria: InterviewTargetCriteria = value.targetCriteria ?? {};
+  const [memberQuery, setMemberQuery] = useState("");
+
+  // 회원 검색용 — 모든 회원 list 한 번 fetch (보통 학과 규모이므로 부담 없음)
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ["interview-target-users"],
+    queryFn: async () => {
+      const res = await profilesApi.list();
+      return (res?.data ?? []) as User[];
+    },
+    staleTime: 60_000,
+  });
+
+  // 검색 결과 (이름·학번·이메일 부분 일치)
+  const searchResults = useMemo(() => {
+    const q = memberQuery.trim().toLowerCase();
+    if (!q) return [];
+    const selected = new Set(criteria.userIds ?? []);
+    return allUsers
+      .filter((u) => {
+        if (selected.has(u.id)) return false;
+        if (u.studentId && selected.has(String(u.studentId))) return false;
+        const hay = [u.name, u.studentId, u.email, u.affiliation, u.department]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return hay.includes(q);
+      })
+      .slice(0, 20);
+  }, [memberQuery, allUsers, criteria.userIds]);
+
+  // 선택된 userIds → user info 매핑 (display 용)
+  const selectedUsers = useMemo(() => {
+    const ids = criteria.userIds ?? [];
+    return ids.map((id) => {
+      const u = allUsers.find((x) => x.id === id || String(x.studentId) === id);
+      return { id, user: u };
+    });
+  }, [criteria.userIds, allUsers]);
 
   const update = (next: InterviewTargetCriteria) => {
-    // 모든 필드 비어있으면 undefined 로 초기화
     const hasAny =
       !!(next.userIds && next.userIds.length > 0) ||
       !!(next.entryYears && next.entryYears.length > 0) ||
+      !!(next.entrySemesters && next.entrySemesters.length > 0) ||
       !!(next.semesterCounts && next.semesterCounts.length > 0) ||
       !!(next.roles && next.roles.length > 0);
     onChange({ ...value, targetCriteria: hasAny ? next : undefined });
@@ -522,6 +564,14 @@ function TargetCriteriaSection({
     update({
       ...criteria,
       entryYears: cur.includes(y) ? cur.filter((v) => v !== y) : [...cur, y],
+    });
+  }
+
+  function toggleEntrySemester(s: "first" | "second") {
+    const cur = criteria.entrySemesters ?? [];
+    update({
+      ...criteria,
+      entrySemesters: cur.includes(s) ? cur.filter((v) => v !== s) : [...cur, s],
     });
   }
 
@@ -541,16 +591,23 @@ function TargetCriteriaSection({
     });
   }
 
-  function setUserIdsFromText(text: string) {
-    const ids = text.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean);
-    update({ ...criteria, userIds: ids.length > 0 ? ids : undefined });
+  function addUser(u: User) {
+    const cur = criteria.userIds ?? [];
+    if (cur.includes(u.id)) return;
+    update({ ...criteria, userIds: [...cur, u.id] });
+    setMemberQuery("");
+  }
+
+  function removeUser(id: string) {
+    const cur = criteria.userIds ?? [];
+    update({ ...criteria, userIds: cur.filter((x) => x !== id) });
   }
 
   // 입학연도 옵션: 최근 8년 (현재 연도 ~ -7)
   const currentYear = new Date().getFullYear();
   const entryYearOptions = Array.from({ length: 8 }, (_, i) => currentYear - i);
 
-  const roles: InterviewTargetRole[] = ["masters", "doctoral", "alumni", "professor", "staff", "guest"];
+  const roles: InterviewTargetRole[] = ["general", "staff", "chair", "vice_chair", "major_rep", "ta", "alumni_rep"];
 
   return (
     <div className="mt-5 rounded-lg border border-blue-200 bg-blue-50/40 p-4 dark:border-blue-900 dark:bg-blue-950/20">
@@ -565,10 +622,10 @@ function TargetCriteriaSection({
       </p>
 
       <div className="space-y-3">
-        {/* 입학시점 */}
+        {/* 입학시점: 연도 + 학기 (전기/후기) */}
         <div>
           <label className="mb-1 block text-xs font-medium text-blue-900 dark:text-blue-100">
-            입학시점 별 (입학연도)
+            입학시점 별 (연도 · 학기)
           </label>
           <div className="flex flex-wrap gap-1.5">
             {entryYearOptions.map((y) => {
@@ -589,6 +646,28 @@ function TargetCriteriaSection({
               );
             })}
           </div>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {(["first", "second"] as const).map((s) => {
+              const checked = criteria.entrySemesters?.includes(s) ?? false;
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => toggleEntrySemester(s)}
+                  className={`rounded-full border px-2.5 py-1 text-xs transition ${
+                    checked
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-input bg-card hover:bg-muted"
+                  }`}
+                >
+                  {s === "first" ? "전기 입학 (3월)" : "후기 입학 (9월)"}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-1 text-[10px] text-blue-800/70 dark:text-blue-200/70">
+            연도와 학기 함께 선택 시 둘 다 일치하는 회원만 매칭 (AND).
+          </p>
         </div>
 
         {/* 누적 학기차 */}
@@ -643,21 +722,79 @@ function TargetCriteriaSection({
           </div>
         </div>
 
-        {/* 특정 회원 (학번 또는 userId 콤마 구분) */}
+        {/* 특정 회원: 검색 → 결과 → 선택 chip */}
         <div>
           <label className="mb-1 block text-xs font-medium text-blue-900 dark:text-blue-100">
-            특정 회원 (학번 또는 userId, 콤마/공백 구분)
+            특정 회원 (이름·학번·이메일로 검색 후 선택)
           </label>
-          <Input
-            value={(criteria.userIds ?? []).join(", ")}
-            onChange={(e) => setUserIdsFromText(e.target.value)}
-            placeholder="예: 2024123456, 2025456789"
-          />
-          {criteria.userIds && criteria.userIds.length > 0 && (
-            <p className="mt-1 text-[11px] text-blue-800/80 dark:text-blue-200/80">
-              <Users size={10} className="mr-0.5 inline" />
-              {criteria.userIds.length}명 지정됨
+          <div className="relative">
+            <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={memberQuery}
+              onChange={(e) => setMemberQuery(e.target.value)}
+              placeholder="회원 검색…"
+              className="pl-7"
+            />
+          </div>
+          {memberQuery.trim() && searchResults.length > 0 && (
+            <ul className="mt-2 max-h-52 overflow-y-auto rounded-md border bg-card">
+              {searchResults.map((u) => (
+                <li
+                  key={u.id}
+                  className="flex items-center justify-between gap-2 border-b px-2 py-1.5 text-xs last:border-b-0 hover:bg-muted"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">
+                      {u.name}{" "}
+                      {u.studentId && (
+                        <span className="text-muted-foreground">· {u.studentId}</span>
+                      )}
+                    </p>
+                    {(u.affiliation || u.email) && (
+                      <p className="truncate text-[10px] text-muted-foreground">
+                        {[u.affiliation, u.email].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => addUser(u)}
+                    className="h-6 px-2 text-[11px]"
+                  >
+                    <Plus size={10} />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {memberQuery.trim() && searchResults.length === 0 && (
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              검색 결과가 없습니다.
             </p>
+          )}
+          {selectedUsers.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {selectedUsers.map(({ id, user: u }) => (
+                <span
+                  key={id}
+                  className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] text-primary"
+                >
+                  <Users size={10} />
+                  {u?.name ?? id}
+                  {u?.studentId ? ` (${u.studentId})` : ""}
+                  <button
+                    type="button"
+                    onClick={() => removeUser(id)}
+                    className="ml-0.5 hover:text-destructive"
+                    aria-label="제거"
+                  >
+                    <X size={10} />
+                  </button>
+                </span>
+              ))}
+            </div>
           )}
         </div>
       </div>
