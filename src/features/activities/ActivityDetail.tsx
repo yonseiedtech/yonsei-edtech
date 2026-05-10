@@ -21,6 +21,7 @@ import {
   Plus, Trash2, ListChecks, Timer, UserCog,
   ChevronDown, ChevronUp,
   Upload, Paperclip, FileText, Download, CalendarPlus,
+  MessageSquare,
 } from "lucide-react";
 import InlineMeetingTimer from "./InlineMeetingTimer";
 import ActivityConnectedTodos from "./ActivityConnectedTodos";
@@ -493,6 +494,15 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   className="inline-flex items-center gap-1.5 rounded-md border bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-xs hover:bg-muted"
                 >
                   <ListChecks size={14} /> 워크북
+                </Link>
+              )}
+              {/* Sprint 67-Z: 후기 작성 버튼 (학술대회 프로그램·워크북과 동일 형식) */}
+              {user && (
+                <Link
+                  href={`/activities/external/${activityId}/review`}
+                  className="inline-flex items-center gap-1.5 rounded-md border bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-xs hover:bg-muted"
+                >
+                  <MessageSquare size={14} /> 후기 작성
                 </Link>
               )}
               {isStaff && (backHref.includes("academic-admin") || backHref.includes("/console/academic")) && (
