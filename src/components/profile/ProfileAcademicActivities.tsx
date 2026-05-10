@@ -453,6 +453,20 @@ export default function ProfileAcademicActivities({ owner }: Props) {
                           <p className="mt-0.5 text-[11px] text-muted-foreground">
                             {a.date ? formatDate(a.date) : ""}{a.location ? ` · ${a.location}` : ""}
                           </p>
+                          {/* Sprint 67-AB: 후기 미작성 시 노란 안내 박스 + 작성 버튼 (본인 + external 만) */}
+                          {isOwner && !hasReview && a.type === "external" && (
+                            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-200/80 bg-amber-50/70 px-2.5 py-1.5 dark:border-amber-900 dark:bg-amber-950/20">
+                              <p className="flex-1 text-[11px] leading-snug text-amber-900 dark:text-amber-200">
+                                ✨ 후기 작성으로 대외활동 참여 경험을 등록하세요
+                              </p>
+                              <Link
+                                href={`/activities/external/${a.id}/review`}
+                                className="inline-flex items-center gap-1 rounded-md border border-amber-300 bg-card px-2 py-1 text-[11px] font-medium text-amber-900 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100 dark:hover:bg-amber-900/40"
+                              >
+                                <MessageSquare size={11} /> 후기 작성
+                              </Link>
+                            </div>
+                          )}
                         </div>
                       </li>
                     );
