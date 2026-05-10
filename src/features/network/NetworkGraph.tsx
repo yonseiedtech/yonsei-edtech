@@ -23,6 +23,7 @@ import type {
   NetworkGraph as NetworkGraphType,
   NetworkNode,
 } from "@/types";
+import { NETWORK_RELATION_LABELS } from "@/types";
 
 const nodeTypes = { member: MemberNode };
 
@@ -115,6 +116,8 @@ export default function NetworkGraph({
   onNodeClick,
 }: NetworkGraphProps) {
   const positionedNodes = useMemo(() => layoutNodes(graph), [graph]);
+  // Sprint 67-AH: edge hover 시 연결 이유 표시
+  const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null);
 
   const searchLower = filter.searchText.trim().toLowerCase();
   const matchesSearch = (n: NetworkNode) => {
@@ -169,14 +172,30 @@ export default function NetworkGraph({
       } else if (e.kinds.includes("school_level")) {
         stroke = "hsl(160 84% 39%)"; // emerald-600
       }
+      // Sprint 67-AH: hover 시 label + opacity 강조
+      const isHovered = hoveredEdgeId === e.id;
+      const labelText = e.kinds.map((k) => NETWORK_RELATION_LABELS[k]).join(" · ");
       return {
         id: e.id,
         source: e.source,
         target: e.target,
+        label: isHovered ? labelText : undefined,
+        labelStyle: {
+          fontSize: 11,
+          fontWeight: 600,
+          fill: stroke,
+        },
+        labelBgStyle: {
+          fill: "hsl(0 0% 100% / 0.95)",
+          fillOpacity: 1,
+        },
+        labelBgPadding: [6, 4] as [number, number],
+        labelBgBorderRadius: 4,
         style: {
-          strokeWidth: e.weight,
+          strokeWidth: isHovered ? e.weight + 1 : e.weight,
           stroke,
-          opacity: 0.6,
+          opacity: isHovered ? 1 : 0.6,
+          cursor: "help",
         },
       };
     });
@@ -194,6 +213,8 @@ export default function NetworkGraph({
         const original = graph.nodes.find((g) => g.id === node.id);
         if (original) onNodeClick(original);
       }}
+      onEdgeMouseEnter={(_, edge) => setHoveredEdgeId(edge.id)}
+      onEdgeMouseLeave={() => setHoveredEdgeId(null)}
       fitView
       fitViewOptions={{ padding: 0.2 }}
       minZoom={0.2}

@@ -128,7 +128,12 @@ function NetworkPageContent() {
           </div>
         )}
 
-        <MemberMiniDialog node={selectedNode} onClose={() => setSelectedNode(null)} />
+        <MemberMiniDialog
+          node={selectedNode}
+          onClose={() => setSelectedNode(null)}
+          edges={graph?.edges}
+          currentUserId={currentUserId}
+        />
       </section>
     </div>
   );
