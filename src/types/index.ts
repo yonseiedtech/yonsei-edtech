@@ -41,3 +41,6 @@ export * from "./cards";
 
 // 학술대회 워크북 (Sprint 67-F)
 export * from "./workbook";
+
+// 학술대회 참석자 후기 (Sprint 67-Z)
+export * from "./attendee-review";

@@ -25,6 +25,7 @@ import {
 import InlineMeetingTimer from "./InlineMeetingTimer";
 import ActivityConnectedTodos from "./ActivityConnectedTodos";
 import MyActivitySessionsTab from "@/features/conference/MyActivitySessionsTab";
+import AttendeeReviewsSection from "@/features/conference/AttendeeReviewsSection";
 import ActivityInfoEditor from "./ActivityInfoEditor";
 import { todayYmdLocal } from "@/lib/dday";
 import type { Activity, ActivityType, ActivityProgress, ActivityProgressMode, FormField, EnrollmentStatus, ExternalParticipantType, SpeakerSubmissionType } from "@/types";
@@ -596,6 +597,14 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                     <div className="flex flex-wrap gap-1">
                       {activity.tags.map((t) => <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>)}
                     </div>
+                  )}
+                  {/* Sprint 67-Z: 학술대회 참석자 후기 섹션 (external 활동에서만 노출) */}
+                  {type === "external" && (
+                    <AttendeeReviewsSection
+                      activityId={activityId}
+                      currentUserId={user?.id}
+                      isStaff={canManageParticipants}
+                    />
                   )}
                 </>
               )}

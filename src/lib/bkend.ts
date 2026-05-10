@@ -53,6 +53,7 @@ import type {
   ConferenceWorkbookTask,
   ConferenceWorkbookSubmission,
   ConferenceWorkbookReview,
+  ConferenceAttendeeReview,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -644,6 +645,41 @@ export const workbookReviewsApi = {
   },
   delete: (id: string) =>
     dataApi.delete("conference_workbook_reviews", id),
+};
+
+// ── 학술대회 참석자 후기 (Sprint 67-Z) ──
+export const attendeeReviewsApi = {
+  /** 한 학술대회의 모든 후기 (개요 하단 표시용) — 복합 인덱스 회피 */
+  listByActivity: (activityId: string) =>
+    dataApi.list<ConferenceAttendeeReview>("conference_attendee_reviews", {
+      "filter[activityId]": activityId,
+      limit: 1000,
+    }),
+  /** 한 회원의 모든 학술대회 후기 (프로필 학술활동 리스트용) */
+  listByUser: (userId: string) =>
+    dataApi.list<ConferenceAttendeeReview>("conference_attendee_reviews", {
+      "filter[userId]": userId,
+      limit: 500,
+    }),
+  get: (id: string) =>
+    dataApi.get<ConferenceAttendeeReview>("conference_attendee_reviews", id),
+  /** ID 명시 upsert (idempotent: {userId}_{activityId}) */
+  upsert: async (
+    id: string,
+    data: Record<string, unknown>,
+  ): Promise<ConferenceAttendeeReview> => {
+    const ref = doc(db, "conference_attendee_reviews", id);
+    const cleaned = stripUndefinedDeep(data);
+    await setDoc(
+      ref,
+      { ...cleaned, updatedAt: serverTimestamp() },
+      { merge: true },
+    );
+    const snap = await getDoc(ref);
+    return serializeDoc(snap) as unknown as ConferenceAttendeeReview;
+  },
+  delete: (id: string) =>
+    dataApi.delete("conference_attendee_reviews", id),
 };
 
 export const pollsApi = {
