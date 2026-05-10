@@ -45,6 +45,8 @@ export default function AttendeeReviewsSection({
   const [reviews, setReviews] = useState<ConferenceAttendeeReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  // QA-H1: regrets 는 별도 collection 에서 권한별 fetch
+  const [regretsMap, setRegretsMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!activityId) return;
@@ -54,6 +56,28 @@ export default function AttendeeReviewsSection({
       try {
         const res = await attendeeReviewsApi.listByActivity(activityId);
         if (!cancelled) setReviews(res?.data ?? []);
+        // 본인 regrets 또는 staff 라면 모든 regrets fetch
+        const regretsResult: Record<string, string> = {};
+        if (isStaff) {
+          try {
+            const regRes = await attendeeReviewsApi.listRegretsByActivity(activityId);
+            for (const r of regRes?.data ?? []) {
+              if (r.regrets) regretsResult[r.id] = r.regrets;
+            }
+          } catch {
+            /* 권한 없으면 무시 */
+          }
+        } else if (currentUserId) {
+          try {
+            const myReg = await attendeeReviewsApi
+              .getMyRegrets(`${currentUserId}_${activityId}`)
+              .catch(() => null);
+            if (myReg?.regrets) regretsResult[myReg.id] = myReg.regrets;
+          } catch {
+            /* 없으면 무시 */
+          }
+        }
+        if (!cancelled) setRegretsMap(regretsResult);
       } catch (e) {
         console.error("[AttendeeReviewsSection]", e);
         if (!cancelled) setReviews([]);
@@ -64,7 +88,7 @@ export default function AttendeeReviewsSection({
     return () => {
       cancelled = true;
     };
-  }, [activityId]);
+  }, [activityId, currentUserId, isStaff]);
 
   const sorted = useMemo(
     () =>
@@ -216,10 +240,11 @@ export default function AttendeeReviewsSection({
                         <p className="text-foreground/80">{r.finalWords}</p>
                       </Field>
                     )}
-                    {showRegrets && r.regrets && (
+                    {/* QA-H1: regrets 는 별도 collection 에서 권한별 fetch — 페이로드 노출 차단 */}
+                    {showRegrets && regretsMap[r.id] && (
                       <Field label="⚠️ 아쉬운 점 (운영진/본인만 열람)">
                         <p className="rounded-md bg-amber-50 p-2 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
-                          {r.regrets}
+                          {regretsMap[r.id]}
                         </p>
                       </Field>
                     )}

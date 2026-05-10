@@ -54,6 +54,7 @@ import type {
   ConferenceWorkbookSubmission,
   ConferenceWorkbookReview,
   ConferenceAttendeeReview,
+  ConferenceAttendeeReviewRegrets,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -663,14 +664,19 @@ export const attendeeReviewsApi = {
     }),
   get: (id: string) =>
     dataApi.get<ConferenceAttendeeReview>("conference_attendee_reviews", id),
-  /** ID 명시 upsert (idempotent: {userId}_{activityId}) */
+  /**
+   * ID 명시 upsert (idempotent: {userId}_{activityId})
+   * QA-H1: regrets 필드는 별도 collection (conference_attendee_review_regrets) 으로 분리 저장.
+   * 일반 reviews 에서는 regrets 제외 → 다른 사용자가 페이로드에서 열람 불가.
+   */
   upsert: async (
     id: string,
     data: Record<string, unknown>,
   ): Promise<ConferenceAttendeeReview> => {
     const ref = doc(db, "conference_attendee_reviews", id);
-    const cleaned = stripUndefinedDeep(data);
-    // QA-M3: 신규 생성 시 createdAt 자동 설정 (merge:true 라 기존 값 보존)
+    // regrets 분리 — 일반 doc 에서 제거
+    const { regrets, ...mainData } = data as { regrets?: string } & Record<string, unknown>;
+    const cleaned = stripUndefinedDeep(mainData);
     const existing = await getDoc(ref);
     const isNew = !existing.exists();
     await setDoc(
@@ -682,9 +688,49 @@ export const attendeeReviewsApi = {
       },
       { merge: true },
     );
+    // regrets 별도 collection 저장 (있을 때만)
+    if (typeof regrets === "string" && regrets.trim()) {
+      const regRef = doc(db, "conference_attendee_review_regrets", id);
+      const regExisting = await getDoc(regRef);
+      const regIsNew = !regExisting.exists();
+      await setDoc(
+        regRef,
+        {
+          id,
+          userId: (mainData as { userId?: string }).userId,
+          activityId: (mainData as { activityId?: string }).activityId,
+          regrets: regrets.trim(),
+          ...(regIsNew ? { createdAt: serverTimestamp() } : {}),
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true },
+      );
+    } else {
+      // regrets 빈 문자열로 저장 시도 → 기존 regrets 삭제
+      try {
+        await dataApi.delete("conference_attendee_review_regrets", id);
+      } catch {
+        /* 없으면 무시 */
+      }
+    }
     const snap = await getDoc(ref);
     return serializeDoc(snap) as unknown as ConferenceAttendeeReview;
   },
+  /** 본인 또는 운영진이 단일 doc 의 regrets 조회 */
+  getMyRegrets: (id: string) =>
+    dataApi.get<ConferenceAttendeeReviewRegrets>(
+      "conference_attendee_review_regrets",
+      id,
+    ),
+  /** 운영진이 한 학술대회의 모든 regrets 조회 */
+  listRegretsByActivity: (activityId: string) =>
+    dataApi.list<ConferenceAttendeeReviewRegrets>(
+      "conference_attendee_review_regrets",
+      {
+        "filter[activityId]": activityId,
+        limit: 1000,
+      },
+    ),
   delete: (id: string) =>
     dataApi.delete("conference_attendee_reviews", id),
 };

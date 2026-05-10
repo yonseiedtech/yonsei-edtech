@@ -775,13 +775,28 @@ service cloud.firestore {
     }
 
     // ─── Sprint 67-Z: 학술대회 참석자 후기 ───
-    // 회원이 학술대회 종료 후 작성하는 종합 후기 (regrets 는 운영진만 열람)
+    // 회원이 학술대회 종료 후 작성하는 종합 후기.
     // - 모든 인증 회원이 read 가능 (개요 하단 표시용)
     // - 본인만 write 가능
-    // - regrets 필드 노출 권한은 클라이언트에서 처리 (운영진/본인만 화면 표시)
+    // - regrets 필드는 별도 collection (conference_attendee_review_regrets) 로 분리됨
     match /conference_attendee_reviews/{docId} {
       allow read: if isAuthenticated();
       allow list: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // QA-H1: 아쉬운 점 (regrets) 별도 collection — 본인 + 운영진만 read.
+    // 일반 conference_attendee_reviews 와 같은 ID ({userId}_{activityId}) 로 매칭.
+    match /conference_attendee_review_regrets/{docId} {
+      allow read: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
+      allow list: if isAuthenticated() && isStaffOrAbove();
       allow create: if isAuthenticated()
         && request.resource.data.userId == request.auth.uid;
       allow update: if isAuthenticated()

@@ -94,10 +94,13 @@ export default function AttendeeReviewPage() {
     (async () => {
       setLoading(true);
       try {
-        const [actRes, plansRes, existingRes] = await Promise.all([
+        const id = `${user.id}_${activityId}`;
+        const [actRes, plansRes, existingRes, regretsRes] = await Promise.all([
           activitiesApi.get(activityId),
           userSessionPlansApi.listByUser(user.id),
-          attendeeReviewsApi.get(`${user.id}_${activityId}`).catch(() => null),
+          attendeeReviewsApi.get(id).catch(() => null),
+          // QA-H1: regrets 는 별도 collection 에서 본인만 fetch
+          attendeeReviewsApi.getMyRegrets(id).catch(() => null),
         ]);
         if (cancelled) return;
         setActivity(actRes as Activity | null);
@@ -114,7 +117,8 @@ export default function AttendeeReviewPage() {
           setPosterReason(existingRes.mostImpressivePosterReason ?? "");
           setRecommendTo(existingRes.recommendTo ?? "");
           setWillAttendAgain(existingRes.willAttendAgain);
-          setRegrets(existingRes.regrets ?? "");
+          // QA-H1: regrets 는 별도 collection 에서 fetch
+          setRegrets(regretsRes?.regrets ?? "");
           setResearchTakeaway(existingRes.researchTakeaway ?? "");
           setFinalWords(existingRes.finalWords ?? "");
           setOverallRating(existingRes.overallRating ?? 0);

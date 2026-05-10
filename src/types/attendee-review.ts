@@ -37,7 +37,11 @@ export interface ConferenceAttendeeReview {
   /** 5. 향후 재참석 의사 */
   willAttendAgain?: "yes" | "maybe" | "no";
 
-  /** 6. 아쉬운 점 (운영진만 열람) */
+  /**
+   * 6. 아쉬운 점은 별도 collection 'conference_attendee_review_regrets/{id}' 에 저장
+   * (read 권한 = 본인 + 운영진).
+   * 이 필드는 type 호환을 위해 유지되지만 Firestore 저장 시 분리됨.
+   */
   regrets?: string;
 
   /** 7. 학술대회에서 배운 점 중 내 연구(논문)에 참고할 만한 내용 */
@@ -58,3 +62,18 @@ export const WILL_ATTEND_AGAIN_LABELS: Record<NonNullable<ConferenceAttendeeRevi
   maybe: "기회되면",
   no: "당분간 안 갈 듯",
 };
+
+/**
+ * 아쉬운 점 — 별도 collection 'conference_attendee_review_regrets/{id}' 에 저장
+ * (read 권한 = 본인 + 운영진. write = 본인만).
+ * id 는 ConferenceAttendeeReview 와 동일한 {userId}_{activityId}.
+ */
+export interface ConferenceAttendeeReviewRegrets {
+  /** {userId}_{activityId} (review 와 동일) */
+  id: string;
+  userId: string;
+  activityId: string;
+  regrets: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
