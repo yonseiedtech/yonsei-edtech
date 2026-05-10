@@ -33,7 +33,8 @@ import InterviewPlayer from "@/features/board/InterviewPlayer";
 import InterviewResponses from "@/features/board/InterviewResponses";
 import LinkedPaperCard from "@/features/board/LinkedPaperCard";
 import { useMyInterviewForPost } from "@/features/board/interview-store";
-import { Mic } from "lucide-react";
+import { Mic, Target } from "lucide-react";
+import { describeInterviewTarget } from "@/lib/interview-target";
 import LoginModal from "@/features/auth/LoginModal";
 
 /** 이미지 마크다운을 img 태그로, 나머지는 XSS 방지 후 렌더링 */
@@ -253,6 +254,17 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
                 {post.interview.deadline && (
                   <Badge variant="outline" className="border-amber-300 bg-card text-amber-700 text-[10px]">
                     마감 {new Date(post.interview.deadline).toLocaleDateString("ko-KR")}
+                  </Badge>
+                )}
+                {/* Sprint 67-AF: 대상자 표시 */}
+                {post.interview.targetCriteria && (
+                  <Badge
+                    variant="outline"
+                    className="border-blue-300 bg-card text-[#003876] text-[10px] gap-1"
+                    title={describeInterviewTarget(post.interview.targetCriteria)}
+                  >
+                    <Target size={9} />
+                    대상: {describeInterviewTarget(post.interview.targetCriteria)}
                   </Badge>
                 )}
               </div>
