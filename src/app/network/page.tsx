@@ -18,6 +18,8 @@ import { buildNetwork } from "@/features/network/build-network";
 import NetworkGraph from "@/features/network/NetworkGraph";
 import NetworkControls from "@/features/network/NetworkControls";
 import MemberMiniDialog from "@/features/network/MemberMiniDialog";
+import NetworkAnalyticsReport from "@/features/network/NetworkAnalyticsReport";
+import { BarChart3, Network as NetworkTabIcon } from "lucide-react";
 import {
   type NetworkFilterState,
   type NetworkNode,
@@ -28,6 +30,9 @@ import { AlertTriangle } from "lucide-react";
 function NetworkPageContent() {
   const { user } = useAuthStore();
   const currentUserId = user?.id ?? "";
+  // Sprint 67-AI: 운영진 분석 리포트 탭
+  const isStaff = user?.role === "staff" || user?.role === "admin" || user?.role === "sysadmin";
+  const [activeTab, setActiveTab] = useState<"map" | "analytics">("map");
 
   const { data: usersRes, isLoading, isError, error } = useQuery({
     queryKey: ["network-members"],
@@ -103,29 +108,67 @@ function NetworkPageContent() {
             </div>
           </div>
         ) : (
-          <div className="mt-6 grid gap-4 lg:grid-cols-[260px_1fr]">
-            {/* 좌측 컨트롤 패널 */}
-            <aside className="rounded-2xl border bg-card p-4 shadow-sm">
-              <NetworkControls filter={filter} onChange={setFilter} stats={stats} />
-              <div className="mt-4 rounded-md bg-muted/30 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
-                <p>
-                  <span className="inline-block h-2 w-2 rounded-full bg-blue-400 align-middle" /> 본인 ·
-                  <span className="ml-1 inline-block h-2 w-2 rounded-full bg-emerald-400 align-middle" /> 1촌
-                </p>
-                <p className="mt-1">선 굵기: 동기 굵음 / 신분 보통 / 둘 다 가장 굵음</p>
-              </div>
-            </aside>
+          <>
+            {/* Sprint 67-AI: 운영진 탭 (지도 / 분석 리포트) */}
+            {isStaff && (
+              <nav className="mt-4 flex gap-1 border-b">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("map")}
+                  className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
+                    activeTab === "map"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <NetworkTabIcon size={14} /> 네트워킹 지도
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("analytics")}
+                  className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
+                    activeTab === "analytics"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <BarChart3 size={14} /> 분석 리포트
+                </button>
+              </nav>
+            )}
 
-            {/* 그래프 */}
-            <div className="h-[640px] rounded-2xl border bg-card shadow-sm">
-              <NetworkGraph
-                graph={graph}
-                filter={filter}
-                currentUserId={currentUserId}
-                onNodeClick={setSelectedNode}
-              />
-            </div>
-          </div>
+            {(!isStaff || activeTab === "map") && (
+              <div className="mt-6 grid gap-4 lg:grid-cols-[260px_1fr]">
+                {/* 좌측 컨트롤 패널 */}
+                <aside className="rounded-2xl border bg-card p-4 shadow-sm">
+                  <NetworkControls filter={filter} onChange={setFilter} stats={stats} />
+                  <div className="mt-4 rounded-md bg-muted/30 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+                    <p>
+                      <span className="inline-block h-2 w-2 rounded-full bg-blue-400 align-middle" /> 본인 ·
+                      <span className="ml-1 inline-block h-2 w-2 rounded-full bg-emerald-400 align-middle" /> 1촌
+                    </p>
+                    <p className="mt-1">선 굵기: 동기 굵음 / 신분 보통 / 둘 다 가장 굵음</p>
+                  </div>
+                </aside>
+
+                {/* 그래프 */}
+                <div className="h-[640px] rounded-2xl border bg-card shadow-sm">
+                  <NetworkGraph
+                    graph={graph}
+                    filter={filter}
+                    currentUserId={currentUserId}
+                    onNodeClick={setSelectedNode}
+                  />
+                </div>
+              </div>
+            )}
+
+            {isStaff && activeTab === "analytics" && (
+              <div className="mt-6">
+                <NetworkAnalyticsReport graph={graph} />
+              </div>
+            )}
+          </>
         )}
 
         <MemberMiniDialog
