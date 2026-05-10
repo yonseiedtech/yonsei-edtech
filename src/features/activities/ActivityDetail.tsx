@@ -608,12 +608,12 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                       {activity.tags.map((t) => <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>)}
                     </div>
                   )}
-                  {/* Sprint 67-Z: 학술대회 참석자 후기 섹션 (external 활동에서만 노출) */}
+                  {/* Sprint 67-Z/QA-H2: 학술대회 참석자 후기 섹션 — isStaff 만 (leader 제외, regrets 권한 정확화) */}
                   {type === "external" && (
                     <AttendeeReviewsSection
                       activityId={activityId}
                       currentUserId={user?.id}
-                      isStaff={canManageParticipants}
+                      isStaff={isStaff}
                     />
                   )}
                 </>

@@ -68,6 +68,7 @@ export default function AttendeeReviewPage() {
   const [plans, setPlans] = useState<UserSessionPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [originalSubmittedAt, setOriginalSubmittedAt] = useState<string | null>(null);
 
   const [generalImpression, setGeneralImpression] = useState("");
   const [paperId, setPaperId] = useState<string>("");
@@ -117,6 +118,8 @@ export default function AttendeeReviewPage() {
           setResearchTakeaway(existingRes.researchTakeaway ?? "");
           setFinalWords(existingRes.finalWords ?? "");
           setOverallRating(existingRes.overallRating ?? 0);
+          // QA-H3: 최초 제출 시각 보존
+          if (existingRes.submittedAt) setOriginalSubmittedAt(existingRes.submittedAt);
         }
       } catch (e) {
         if (!cancelled) {
@@ -131,14 +134,22 @@ export default function AttendeeReviewPage() {
     };
   }, [activityId, user]);
 
-  const paperPlans = useMemo(
-    () => plans.filter((p) => /\[[A-Z]-\d\]/.test(p.sessionTitle ?? "")),
-    [plans],
-  );
+  // QA-M1: 포스터 plans 먼저 분류 후, 나머지에서 [A-N] 패턴 매칭으로 논문 추출 (중복 방지)
   const posterPlans = useMemo(
-    () => plans.filter((p) => /포스터|poster/i.test(p.sessionTitle ?? "") || /포스터/.test(p.sessionTrack ?? "")),
+    () =>
+      plans.filter(
+        (p) =>
+          /포스터|poster/i.test(p.sessionTitle ?? "") ||
+          /포스터/.test(p.sessionTrack ?? ""),
+      ),
     [plans],
   );
+  const paperPlans = useMemo(() => {
+    const posterIds = new Set(posterPlans.map((p) => p.id));
+    return plans.filter(
+      (p) => !posterIds.has(p.id) && /\[[A-Z]-\d\]/.test(p.sessionTitle ?? ""),
+    );
+  }, [plans, posterPlans]);
 
   async function handleSubmit() {
     if (!user || !activity) return;
@@ -173,7 +184,8 @@ export default function AttendeeReviewPage() {
         researchTakeaway: researchTakeaway.trim() || undefined,
         finalWords: finalWords.trim() || undefined,
         overallRating: overallRating > 0 ? overallRating : undefined,
-        submittedAt: new Date().toISOString(),
+        // QA-H3: 최초 제출 시각 보존 (수정 시에도 작성일 변하지 않음)
+        submittedAt: originalSubmittedAt ?? new Date().toISOString(),
       } as unknown as Record<string, unknown>);
       setShowSuccess(true);
       // 4초 후 활동 페이지로 자동 이동

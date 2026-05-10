@@ -670,9 +670,16 @@ export const attendeeReviewsApi = {
   ): Promise<ConferenceAttendeeReview> => {
     const ref = doc(db, "conference_attendee_reviews", id);
     const cleaned = stripUndefinedDeep(data);
+    // QA-M3: 신규 생성 시 createdAt 자동 설정 (merge:true 라 기존 값 보존)
+    const existing = await getDoc(ref);
+    const isNew = !existing.exists();
     await setDoc(
       ref,
-      { ...cleaned, updatedAt: serverTimestamp() },
+      {
+        ...cleaned,
+        ...(isNew ? { createdAt: serverTimestamp() } : {}),
+        updatedAt: serverTimestamp(),
+      },
       { merge: true },
     );
     const snap = await getDoc(ref);

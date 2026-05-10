@@ -145,7 +145,8 @@ export default function AttendeeReviewsSection({
                           {WILL_LABELS[r.willAttendAgain].label}
                         </Badge>
                       )}
-                      {r.overallRating && (
+                      {/* QA-M2: overallRating falsy 방어 (0 저장 케이스 차단) */}
+                      {r.overallRating != null && r.overallRating > 0 && (
                         <span className="inline-flex items-center gap-0.5 text-xs text-amber-700 dark:text-amber-300">
                           <Star className="h-3 w-3 fill-current" />
                           {r.overallRating}/5
