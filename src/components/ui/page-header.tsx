@@ -51,9 +51,20 @@ export default function PageHeader({
       <div className="flex min-w-0 items-center gap-3">
         {icon && renderIcon(icon, isConsole)}
         <div className="min-w-0">
-          <h1 className="text-xl font-bold sm:text-2xl">{title}</h1>
+          {/* Sprint 67-AP Phase 1: 헤드라인 폰트 크기 ↑ (토스 패턴 — 큰 임팩트) */}
+          <h1
+            className={
+              isConsole
+                ? "text-xl font-bold sm:text-2xl"
+                : "text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl"
+            }
+          >
+            {title}
+          </h1>
           {description && (
-            <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
+            <p className="mt-1 text-sm text-muted-foreground sm:mt-1.5 sm:text-base">
+              {description}
+            </p>
           )}
         </div>
       </div>
