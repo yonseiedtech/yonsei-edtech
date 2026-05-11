@@ -91,7 +91,7 @@ export interface Post {
   id: string;
   title: string;
   content: string;
-  category: "notice" | "seminar" | "free" | "promotion" | "resources" | "staff" | "press" | "interview" | "paper_review"; // "press"는 legacy
+  category: "notice" | "seminar" | "free" | "promotion" | "resources" | "staff" | "press" | "interview" | "paper_review" | "update"; // "press"는 legacy, "update"는 Sprint 67-AL 신규
   imageUrls?: string[];
   attachments?: PostAttachment[];
   poll?: PostPoll;
@@ -126,6 +126,7 @@ export const CATEGORY_LABELS: Record<PostCategory, string> = {
   press: "보도자료", // legacy, 마이그레이션 이후 제거 예정
   interview: "인터뷰 게시판",
   paper_review: "교육공학 논문 리뷰",
+  update: "업데이트 게시판",
 };
 
 /** 현재 활성 카테고리 (글쓰기·탭에 노출) - press 제외 */
@@ -138,4 +139,5 @@ export const ACTIVE_POST_CATEGORIES: Exclude<PostCategory, "press">[] = [
   "staff",
   "interview",
   "paper_review",
+  "update",
 ];

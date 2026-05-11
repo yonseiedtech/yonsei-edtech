@@ -44,60 +44,34 @@ function getAllLinks(group: NavGroup): NavLink[] {
   return getSections(group).flatMap((s) => s.links);
 }
 
+// Sprint 67-AL: IA 개편 — 1차 메뉴 6 → 4개로 슬림화.
+// 학회소개·문의는 Footer 로 이동 (자주 안 쓰는 메뉴 = 1차에서 제거).
+// 디딤판은 '대학원 생활' 그룹 최상단에 강조 (필수 섹션).
 const PUBLIC_NAV: NavGroup[] = [
-  {
-    label: "학회소개",
-    sections: [
-      {
-        links: [
-          { href: "/about/greeting", label: "인사말" },
-          { href: "/about", label: "학회 소개" },
-          { href: "/about/fields", label: "활동 분야" },
-          { href: "/about/history", label: "연혁" },
-        ],
-      },
-      {
-        sectionLabel: "주요 구성원",
-        links: [
-          { href: "/about/leadership?tab=professor", label: "주임교수" },
-          { href: "/about/leadership?tab=staff", label: "운영진" },
-        ],
-      },
-    ],
-  },
   {
     label: "대학원 생활",
     sections: [
       {
-        sectionLabel: "학사 도구",
+        sectionLabel: "🌱 필수 — 학기별 로드맵",
         links: [
           { href: "/steppingstone", label: "인지디딤판" },
+        ],
+      },
+      {
+        sectionLabel: "학사 도구",
+        links: [
           { href: "/courses", label: "내 수강과목" },
           { href: "/mypage/calendar", label: "캘린더" },
         ],
       },
       {
-        sectionLabel: "구성원",
+        sectionLabel: "구성원·네트워크",
         links: [
           { href: "/members?tab=student", label: "재학생 회원" },
           { href: "/members?tab=alumni", label: "졸업생 회원" },
-        ],
-      },
-      {
-        sectionLabel: "네트워크",
-        links: [
           { href: "/network", label: "전공 네트워킹 Map" },
         ],
       },
-    ],
-  },
-  {
-    label: "연구 활동",
-    items: [
-      { href: "/research", label: "연세교육공학 연구 분석" },
-      { href: "/alumni/thesis", label: "졸업생 학위논문" },
-      { href: "/archive", label: "교육공학 아카이브" },
-      { href: "/mypage/research", label: "내 연구활동" },
     ],
   },
   {
@@ -112,6 +86,15 @@ const PUBLIC_NAV: NavGroup[] = [
     ],
   },
   {
+    label: "연구",
+    items: [
+      { href: "/research", label: "연세교육공학 연구 분석" },
+      { href: "/alumni/thesis", label: "졸업생 학위논문" },
+      { href: "/archive", label: "교육공학 아카이브" },
+      { href: "/mypage/research", label: "내 연구활동" },
+    ],
+  },
+  {
     label: "커뮤니티",
     items: [
       { href: "/notices", label: "공지사항" },
@@ -120,13 +103,10 @@ const PUBLIC_NAV: NavGroup[] = [
       { href: "/board/paper-review", label: "교육공학 논문 리뷰" },
       { href: "/board/promotion", label: "홍보게시판" },
       { href: "/board/resources", label: "자료실" },
+      { href: "/board/update", label: "업데이트 게시판" },
       { href: "/gallery", label: "포토갤러리" },
       { href: "/newsletter", label: "학회보" },
     ],
-  },
-  {
-    label: "문의",
-    items: [{ href: "/contact", label: "문의하기" }],
   },
 ];
 

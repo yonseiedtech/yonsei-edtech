@@ -40,14 +40,16 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Quick Links */}
+          {/* Quick Links — Sprint 67-AL: 학회소개·문의를 1차 메뉴에서 옮긴 항목 강화 */}
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-white">바로가기</h3>
+            <h3 className="mb-3 text-sm font-semibold text-white">학회소개</h3>
             <nav className="flex flex-col gap-2">
+              <Link href="/about/greeting" className="text-sm text-slate-400 hover:text-white">인사말</Link>
               <Link href="/about" className="text-sm text-slate-400 hover:text-white">학회 소개</Link>
-              <Link href="/seminars" className="text-sm text-slate-400 hover:text-white">세미나</Link>
-              <Link href="/notices" className="text-sm text-slate-400 hover:text-white">공지사항</Link>
-              <Link href="/contact" className="text-sm text-slate-400 hover:text-white">문의</Link>
+              <Link href="/about/fields" className="text-sm text-slate-400 hover:text-white">활동 분야</Link>
+              <Link href="/about/history" className="text-sm text-slate-400 hover:text-white">연혁</Link>
+              <Link href="/about/leadership?tab=professor" className="text-sm text-slate-400 hover:text-white">주임교수·운영진</Link>
+              <Link href="/contact" className="text-sm text-slate-400 hover:text-white">문의하기</Link>
             </nav>
 
             {user && (
