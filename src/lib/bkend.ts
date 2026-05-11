@@ -784,7 +784,7 @@ export const postReactionsApi = {
       "filter[postId]": postId,
       limit: 2000,
     }),
-  /** 본인이 한 게시글에 한 reaction toggle (있으면 삭제, 없으면 추가) */
+  /** 본인이 한 게시글에 한 reaction toggle (있으면 삭제, 없으면 추가) — Post.reactionCount 도 increment/decrement */
   toggle: async (
     userId: string,
     postId: string,
@@ -792,10 +792,17 @@ export const postReactionsApi = {
   ): Promise<boolean> => {
     const id = `${userId}_${postId}_${type}`;
     const ref = doc(db, "post_reactions", id);
+    const postRef = doc(db, "posts", postId);
     const existing = await getDoc(ref);
     if (existing.exists()) {
       await deleteDoc(ref);
-      return false; // 제거됨
+      // post.reactionCount 자동 감소 — 권한 거부 시 무시 (count 약간 부정확해도 critical 아님)
+      try {
+        await updateDoc(postRef, { reactionCount: increment(-1) });
+      } catch {
+        /* 권한 없으면 skip — count 정합성 후속 보강 */
+      }
+      return false;
     }
     await setDoc(ref, {
       id,
@@ -804,7 +811,12 @@ export const postReactionsApi = {
       type,
       createdAt: serverTimestamp(),
     });
-    return true; // 추가됨
+    try {
+      await updateDoc(postRef, { reactionCount: increment(1) });
+    } catch {
+      /* 권한 없으면 skip */
+    }
+    return true;
   },
 };
 

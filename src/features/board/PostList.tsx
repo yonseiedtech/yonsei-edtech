@@ -59,6 +59,15 @@ export default function PostList({ posts, hrefPrefix = "/board" }: Props) {
                   {post.responseCount}명 참여
                 </span>
               )}
+              {/* Sprint 67-AO: 게시글 공감 reaction 총 합 표시 (인터뷰 외) */}
+              {post.category !== "interview" && (post.reactionCount ?? 0) > 0 && (
+                <span
+                  className="flex items-center gap-1 text-rose-600 dark:text-rose-400"
+                  title="공감 (👍 ✨ 💗 📣) 총 합"
+                >
+                  💗 {post.reactionCount}
+                </span>
+              )}
               {/* Sprint 67-AG: 인터뷰 메타 — 마감일·진행상태·대상 */}
               {post.category === "interview" && post.interview && (() => {
                 const meta = post.interview;

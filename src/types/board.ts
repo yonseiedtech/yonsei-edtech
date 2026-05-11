@@ -107,6 +107,8 @@ export interface Post {
   /** 인터뷰 카테고리 전용 — 제출(submitted)된 응답 수. interview-store가 increment/decrement로 관리. */
   responseCount?: number;
   likeCount?: number;
+  /** Sprint 67-AO: 공감 reaction 총 합계 (post_reactions toggle 시 increment/decrement) */
+  reactionCount?: number;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;

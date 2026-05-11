@@ -62,6 +62,15 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount'])
         && request.resource.data.viewCount == resource.data.viewCount + 1;
     }
+    // Sprint 67-AO: reactionCount 단일 필드 변경 (+1 또는 -1) — 인증 회원 허용
+    function isReactionCountOnlyChange() {
+      return isAuthenticated()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactionCount'])
+        && (
+          request.resource.data.reactionCount == (resource.data.get('reactionCount', 0) + 1)
+          || request.resource.data.reactionCount == (resource.data.get('reactionCount', 0) - 1)
+        );
+    }
     match /posts/{postId} {
       allow read: if postCategoryReadable(resource.data.category);
       // 카테고리별 쓰기 권한 재검증
@@ -69,6 +78,7 @@ service cloud.firestore {
         && postCategoryWritable(request.resource.data.category)
         && request.resource.data.authorId == request.auth.uid;
       allow update: if isViewCountOnlyIncrement()
+        || isReactionCountOnlyChange()
         || (isAuthenticated()
           && (resource.data.authorId == request.auth.uid || isStaffOrAbove())
           && postCategoryWritable(request.resource.data.category));
