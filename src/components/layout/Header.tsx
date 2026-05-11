@@ -31,6 +31,11 @@ interface NavGroup {
   items?: NavLink[];
   /** sub-section 분리 구조 — 청자/카테고리 구분 시 사용 */
   sections?: NavSection[];
+  /**
+   * Sprint 67-AM: 그룹 가시성 — 'both'(기본) / 'public'(비로그인만) / 'auth'(로그인만) / 'staff'(운영진만)
+   * 사용자 유형별 다른 IA 노출.
+   */
+  visibility?: "both" | "public" | "auth" | "staff";
 }
 
 /** NavGroup 의 모든 링크를 sections 구조로 정규화 */
@@ -44,12 +49,53 @@ function getAllLinks(group: NavGroup): NavLink[] {
   return getSections(group).flatMap((s) => s.links);
 }
 
-// Sprint 67-AL: IA 개편 — 1차 메뉴 6 → 4개로 슬림화.
-// 학회소개·문의는 Footer 로 이동 (자주 안 쓰는 메뉴 = 1차에서 제거).
-// 디딤판은 '대학원 생활' 그룹 최상단에 강조 (필수 섹션).
+/**
+ * Sprint 67-AM: 그룹 가시성 분기.
+ *   - both/undefined: 항상 노출
+ *   - public: 비로그인만
+ *   - auth: 로그인만
+ *   - staff: 로그인 + 운영진(staff/admin/sysadmin)만
+ */
+function isGroupVisible(group: NavGroup, user: { role?: string } | null | undefined): boolean {
+  const vis = group.visibility ?? "both";
+  if (vis === "both") return true;
+  if (vis === "public") return !user;
+  if (vis === "auth") return !!user;
+  if (vis === "staff") {
+    if (!user) return false;
+    return user.role === "staff" || user.role === "admin" || user.role === "sysadmin";
+  }
+  return true;
+}
+
+// Sprint 67-AL/AM: IA 개편 — 1차 메뉴 4개 + 로그인 전·후 분기.
+// 비로그인 방문자: 학회소개·학술활동·연구 (외부 홍보 중심)
+// 로그인 회원: 대학원 생활(디딤판 강조)·학술활동·연구·커뮤니티 (도구 중심)
 const PUBLIC_NAV: NavGroup[] = [
   {
+    label: "학회소개",
+    visibility: "public",
+    sections: [
+      {
+        links: [
+          { href: "/about/greeting", label: "인사말" },
+          { href: "/about", label: "학회 소개" },
+          { href: "/about/fields", label: "활동 분야" },
+          { href: "/about/history", label: "연혁" },
+        ],
+      },
+      {
+        sectionLabel: "주요 구성원",
+        links: [
+          { href: "/about/leadership?tab=professor", label: "주임교수" },
+          { href: "/about/leadership?tab=staff", label: "운영진" },
+        ],
+      },
+    ],
+  },
+  {
     label: "대학원 생활",
+    visibility: "auth",
     sections: [
       {
         sectionLabel: "🌱 필수 — 학기별 로드맵",
@@ -76,6 +122,7 @@ const PUBLIC_NAV: NavGroup[] = [
   },
   {
     label: "학술 활동",
+    visibility: "both",
     items: [
       { href: "/activities", label: "활동 소개" },
       { href: "/calendar", label: "학술 캘린더" },
@@ -87,6 +134,7 @@ const PUBLIC_NAV: NavGroup[] = [
   },
   {
     label: "연구",
+    visibility: "both",
     items: [
       { href: "/research", label: "연세교육공학 연구 분석" },
       { href: "/alumni/thesis", label: "졸업생 학위논문" },
@@ -96,6 +144,7 @@ const PUBLIC_NAV: NavGroup[] = [
   },
   {
     label: "커뮤니티",
+    visibility: "auth",
     items: [
       { href: "/notices", label: "공지사항" },
       { href: "/board/free", label: "자유게시판" },
@@ -395,7 +444,7 @@ export default function Header() {
 
         {/* Desktop Nav */}
         <nav className="hidden items-center gap-3 md:flex">
-          {PUBLIC_NAV.filter((group) => !(user && group.label === "문의")).map((group) => (
+          {PUBLIC_NAV.filter((group) => isGroupVisible(group, user)).map((group) => (
             <NavDropdown key={group.label} group={group} />
           ))}
         </nav>
@@ -521,7 +570,7 @@ export default function Header() {
                 <Separator className="my-1" />
               </>
             )}
-            {PUBLIC_NAV.filter((group) => !(user && group.label === "문의")).map((group) => (
+            {PUBLIC_NAV.filter((group) => isGroupVisible(group, user)).map((group) => (
               <MobileNavGroup key={group.label} group={group} onClose={() => setMobileOpen(false)} />
             ))}
             {user && (
