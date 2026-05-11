@@ -55,6 +55,7 @@ import type {
   ConferenceWorkbookReview,
   ConferenceAttendeeReview,
   ConferenceAttendeeReviewRegrets,
+  VolunteerAssignment,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -733,6 +734,44 @@ export const attendeeReviewsApi = {
     ),
   delete: (id: string) =>
     dataApi.delete("conference_attendee_reviews", id),
+};
+
+// ── 학술대회 자원봉사자 (Sprint 67-AJ) ──
+export const volunteerAssignmentsApi = {
+  listByActivity: (activityId: string) =>
+    // 복합 인덱스 회피: filter[activityId] 만
+    dataApi.list<VolunteerAssignment>("volunteer_assignments", {
+      "filter[activityId]": activityId,
+      limit: 500,
+    }),
+  listByUser: (userId: string) =>
+    dataApi.list<VolunteerAssignment>("volunteer_assignments", {
+      "filter[userId]": userId,
+      limit: 500,
+    }),
+  get: (id: string) =>
+    dataApi.get<VolunteerAssignment>("volunteer_assignments", id),
+  upsert: async (
+    id: string,
+    data: Record<string, unknown>,
+  ): Promise<VolunteerAssignment> => {
+    const ref = doc(db, "volunteer_assignments", id);
+    const cleaned = stripUndefinedDeep(data);
+    const existing = await getDoc(ref);
+    const isNew = !existing.exists();
+    await setDoc(
+      ref,
+      {
+        ...cleaned,
+        ...(isNew ? { createdAt: serverTimestamp() } : {}),
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true },
+    );
+    const snap = await getDoc(ref);
+    return serializeDoc(snap) as unknown as VolunteerAssignment;
+  },
+  delete: (id: string) => dataApi.delete("volunteer_assignments", id),
 };
 
 export const pollsApi = {

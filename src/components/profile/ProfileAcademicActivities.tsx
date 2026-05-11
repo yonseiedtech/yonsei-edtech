@@ -411,14 +411,7 @@ export default function ProfileAcademicActivities({ owner }: Props) {
                                 <Sparkles size={9} /> NEW
                               </Badge>
                             )}
-                            {hasReview && (
-                              <Badge
-                                variant="secondary"
-                                className="gap-0.5 bg-emerald-100 text-[10px] font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
-                              >
-                                <MessageSquare size={9} /> 후기 작성
-                              </Badge>
-                            )}
+                            {/* Sprint 67-AK: '후기 작성' 영구 배지 제거 (사용자 요청) */}
                             {a.status && (
                               <Badge variant="outline" className="text-[10px]">
                                 {a.status === "upcoming" ? "예정" : a.status === "ongoing" ? "진행중" : "완료"}
@@ -453,8 +446,14 @@ export default function ProfileAcademicActivities({ owner }: Props) {
                           <p className="mt-0.5 text-[11px] text-muted-foreground">
                             {a.date ? formatDate(a.date) : ""}{a.location ? ` · ${a.location}` : ""}
                           </p>
-                          {/* Sprint 67-AB: 후기 미작성 시 노란 안내 박스 + 작성 버튼 (본인 + external 만) */}
-                          {isOwner && !hasReview && a.type === "external" && (
+                          {/* Sprint 67-AB/AK: 후기 미작성 안내 박스 — 본인 + external + 미래(오늘 이후) 학회 만 */}
+                          {isOwner && !hasReview && a.type === "external" && (() => {
+                            // 학회 종료일/시작일 기준 — 오늘 이전이면 안내 박스 숨김
+                            const today = new Date().toISOString().slice(0, 10);
+                            const eventDate = a.endDate ?? a.date;
+                            const isPast = eventDate ? eventDate < today : false;
+                            return !isPast;
+                          })() && (
                             <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-200/80 bg-amber-50/70 px-2.5 py-1.5 dark:border-amber-900 dark:bg-amber-950/20">
                               <p className="flex-1 text-[11px] leading-snug text-amber-900 dark:text-amber-200">
                                 ✨ 후기 작성으로 대외활동 참여 경험을 등록하세요

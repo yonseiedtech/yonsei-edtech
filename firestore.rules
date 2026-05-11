@@ -791,6 +791,15 @@ service cloud.firestore {
         && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
+    // ─── Sprint 67-AJ: 학술대회 자원봉사자 배정 ───
+    // 운영진(staff+)이 write, 본인은 read 가능. 모든 인증 사용자가 list 가능 (참여자 봉사 명단 확인용)
+    match /volunteer_assignments/{docId} {
+      allow read: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
+      allow list: if isAuthenticated();
+      allow create, update, delete: if isAuthenticated() && isStaffOrAbove();
+    }
+
     // QA-H1: 아쉬운 점 (regrets) 별도 collection — 본인 + 운영진만 read.
     // 일반 conference_attendee_reviews 와 같은 ID ({userId}_{activityId}) 로 매칭.
     match /conference_attendee_review_regrets/{docId} {

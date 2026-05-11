@@ -44,3 +44,6 @@ export * from "./workbook";
 
 // 학술대회 참석자 후기 (Sprint 67-Z)
 export * from "./attendee-review";
+
+// 학술대회 자원봉사자 운영 (Sprint 67-AJ)
+export * from "./volunteer";

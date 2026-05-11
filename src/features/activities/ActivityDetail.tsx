@@ -529,6 +529,17 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   <MessageSquare size={14} /> 후기 작성
                 </Link>
               )}
+              {/* Sprint 67-AJ: 내 봉사 페이지 — volunteer participantType 자만 노출 */}
+              {user && applicants.some(
+                (a) => a.userId === user.id && a.participantType === "volunteer",
+              ) && (
+                <Link
+                  href={`/activities/external/${activityId}/my-volunteer`}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-900 shadow-xs hover:bg-rose-100 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-100"
+                >
+                  <span>💗</span> 내 봉사
+                </Link>
+              )}
               {isStaff && (backHref.includes("academic-admin") || backHref.includes("/console/academic")) && (
                 <Link
                   href={`/console/academic/external/${activityId}/program`}
