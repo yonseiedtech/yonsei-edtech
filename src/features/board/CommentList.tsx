@@ -56,8 +56,17 @@ export default function CommentList({ comments, currentUserId, isAdmin, onDelete
                 <User size={14} />
               </div>
               <span className="text-sm font-medium">{comment.authorName}</span>
-              <span className="text-xs text-muted-foreground">
-                {formatDate(comment.createdAt)}
+              <span
+                className="text-xs text-muted-foreground"
+                title={new Date(comment.createdAt).toLocaleString("ko-KR")}
+              >
+                {/* Sprint 67-AN: 일자 + HH:MM:SS 시각 함께 표시 */}
+                {formatDate(comment.createdAt)}{" "}
+                <span className="font-mono tabular-nums">
+                  {new Date(comment.createdAt).toLocaleTimeString("ko-KR", {
+                    hour12: false,
+                  })}
+                </span>
               </span>
             </div>
             {(currentUserId === comment.authorId || isAdmin) && editingId !== comment.id && (
