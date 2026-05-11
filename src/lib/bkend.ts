@@ -56,6 +56,8 @@ import type {
   ConferenceAttendeeReview,
   ConferenceAttendeeReviewRegrets,
   VolunteerAssignment,
+  PostReaction,
+  PostReactionType,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -772,6 +774,38 @@ export const volunteerAssignmentsApi = {
     return serializeDoc(snap) as unknown as VolunteerAssignment;
   },
   delete: (id: string) => dataApi.delete("volunteer_assignments", id),
+};
+
+// ── 게시글 공감 reaction (Sprint 67-AO) ──
+export const postReactionsApi = {
+  /** 한 게시글의 모든 reaction (카운트·본인 표시용) — 복합 인덱스 회피 */
+  listByPost: (postId: string) =>
+    dataApi.list<PostReaction>("post_reactions", {
+      "filter[postId]": postId,
+      limit: 2000,
+    }),
+  /** 본인이 한 게시글에 한 reaction toggle (있으면 삭제, 없으면 추가) */
+  toggle: async (
+    userId: string,
+    postId: string,
+    type: PostReactionType,
+  ): Promise<boolean> => {
+    const id = `${userId}_${postId}_${type}`;
+    const ref = doc(db, "post_reactions", id);
+    const existing = await getDoc(ref);
+    if (existing.exists()) {
+      await deleteDoc(ref);
+      return false; // 제거됨
+    }
+    await setDoc(ref, {
+      id,
+      userId,
+      postId,
+      type,
+      createdAt: serverTimestamp(),
+    });
+    return true; // 추가됨
+  },
 };
 
 export const pollsApi = {

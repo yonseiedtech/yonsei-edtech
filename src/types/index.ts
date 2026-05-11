@@ -47,3 +47,6 @@ export * from "./attendee-review";
 
 // 학술대회 자원봉사자 운영 (Sprint 67-AJ)
 export * from "./volunteer";
+
+// 게시글 공감 reaction (Sprint 67-AO)
+export * from "./post-reaction";

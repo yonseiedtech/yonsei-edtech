@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/auth-store";
 import CommentList from "@/features/board/CommentList";
+import PostReactions from "@/features/board/PostReactions";
 import CommentForm from "@/features/board/CommentForm";
 import PollViewer from "@/features/board/PollViewer";
 import { usePost, useComments, useDeletePost, useDeleteComment, useUpdateComment, useIncrementViewCount } from "@/features/board/useBoard";
@@ -340,6 +341,13 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
               toast.success("응답이 제출되었습니다!");
             }}
           />
+        )}
+
+        {/* Sprint 67-AO: 게시글 공감 reaction (인터뷰 외 모든 카테고리) */}
+        {post.type !== "interview" && (
+          <section className="mt-8">
+            <PostReactions postId={post.id} />
+          </section>
         )}
 
         {post.type !== "interview" && (
