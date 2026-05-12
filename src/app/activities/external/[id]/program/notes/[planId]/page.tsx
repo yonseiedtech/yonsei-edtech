@@ -25,6 +25,7 @@ import {
   Plus,
   Save,
   X,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -34,7 +35,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import EmptyState from "@/components/ui/empty-state";
+import InlineNotification from "@/components/ui/inline-notification";
 
 export default function SessionNotePage() {
   const router = useRouter();
@@ -58,6 +61,9 @@ export default function SessionNotePage() {
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [dirty, setDirty] = useState(false);
   const skipDirtyRef = useRef(true);
+
+  // Kolb 4단계 템플릿 토글
+  const [kolbMode, setKolbMode] = useState(false);
 
   // 데이터 로드
   useEffect(() => {
@@ -286,19 +292,99 @@ export default function SessionNotePage() {
       </div>
 
       {/* 분석 노트 (긴 마크다운) */}
-      <div className="rounded-lg border bg-card p-4 space-y-2">
-        <div>
-          <h4 className="font-medium">분석 노트</h4>
-          <p className="text-xs text-muted-foreground">
-            발표 핵심 주장·이론적 배경·연구 방법·한계·내 연구와의 연결점 등을 자유롭게 정리하세요. 마크다운 문법 사용 가능.
-          </p>
+      <div className="rounded-lg border bg-card p-4 space-y-3">
+        {/* 헤더 + Kolb 토글 */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h4 className="font-medium">분석 노트</h4>
+            <p className="text-xs text-muted-foreground">
+              발표 핵심 주장·이론적 배경·연구 방법·한계·내 연구와의 연결점 등을 자유롭게 정리하세요. 마크다운 문법 사용 가능.
+            </p>
+          </div>
+          {/* Kolb 템플릿 토글 */}
+          <label
+            htmlFor="kolb-toggle"
+            className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-dashed border-primary/40 bg-primary/5 px-2.5 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+          >
+            <Checkbox
+              id="kolb-toggle"
+              checked={kolbMode}
+              onCheckedChange={(checked) => setKolbMode(checked === true)}
+              aria-label="Kolb 4단계 템플릿 사용"
+            />
+            <RefreshCw className="h-3 w-3" aria-hidden />
+            Kolb 4단계 템플릿
+          </label>
         </div>
+
+        {/* Kolb 4단계 가이드 패널 */}
+        {kolbMode && (
+          <div
+            role="note"
+            aria-label="Kolb 경험학습 4단계 안내"
+            className="animate-in fade-in slide-in-from-top-2 duration-300 rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2"
+          >
+            <p className="text-xs font-semibold text-primary">
+              Kolb 경험학습 4단계 (Kolb, 1984)
+            </p>
+            <ol className="space-y-1.5 text-xs">
+              <li className="flex items-start gap-2">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                  1
+                </span>
+                <span>
+                  <span className="font-semibold text-emerald-800 dark:text-emerald-200">구체적 경험 (Concrete Experience)</span>
+                  <span className="ml-1 text-muted-foreground">— 이 발표에서 무엇을 직접 경험·관찰했는가?</span>
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-[10px] font-bold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+                  2
+                </span>
+                <span>
+                  <span className="font-semibold text-blue-800 dark:text-blue-200">반성적 관찰 (Reflective Observation)</span>
+                  <span className="ml-1 text-muted-foreground">— 무엇을 느꼈는가? 어떤 점이 인상적이었는가?</span>
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-100 text-[10px] font-bold text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+                  3
+                </span>
+                <span>
+                  <span className="font-semibold text-amber-800 dark:text-amber-200">추상적 개념화 (Abstract Conceptualization)</span>
+                  <span className="ml-1 text-muted-foreground">— 이 경험에서 어떤 패턴·원리·이론을 추출할 수 있는가?</span>
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-rose-100 text-[10px] font-bold text-rose-700 dark:bg-rose-950/60 dark:text-rose-300">
+                  4
+                </span>
+                <span>
+                  <span className="font-semibold text-rose-800 dark:text-rose-200">능동적 실험 (Active Experimentation)</span>
+                  <span className="ml-1 text-muted-foreground">— 다음에 어떻게 시도하거나 적용해 볼 것인가?</span>
+                </span>
+              </li>
+            </ol>
+            <InlineNotification
+              kind="info"
+              title="아래 텍스트 영역에 4단계 구조로 작성해 보세요."
+              description="각 단계 헤더(## 1. 구체적 경험)를 복사해 붙여넣기하면 빠르게 시작할 수 있어요."
+              className="mt-1 text-[11px]"
+            />
+          </div>
+        )}
+
         <Textarea
           rows={14}
           value={analysisNote}
           onChange={(e) => setAnalysisNote(e.target.value)}
-          placeholder={`예:\n\n## 발표 요약\n- ...\n\n## 이론적 배경\n- ...\n\n## 연구 방법\n- 표본:\n- 분석 방법:\n\n## 결과\n- ...\n\n## 비판적 검토\n- ...\n\n## 내 연구와의 연관성\n- ...`}
+          placeholder={
+            kolbMode
+              ? `## 1. 구체적 경험 (Concrete Experience)\n이 발표에서 무엇을 경험·관찰했는가?\n- \n\n## 2. 반성적 관찰 (Reflective Observation)\n무엇을 느꼈는가? 어떤 점이 인상적이었는가?\n- \n\n## 3. 추상적 개념화 (Abstract Conceptualization)\n이 경험에서 어떤 패턴·원리·이론을 추출할 수 있는가?\n- \n\n## 4. 능동적 실험 (Active Experimentation)\n다음에 어떻게 시도하거나 적용해 볼 것인가?\n- `
+              : `예:\n\n## 발표 요약\n- ...\n\n## 이론적 배경\n- ...\n\n## 연구 방법\n- 표본:\n- 분석 방법:\n\n## 결과\n- ...\n\n## 비판적 검토\n- ...\n\n## 내 연구와의 연관성\n- ...`
+          }
           className="font-mono text-sm"
+          aria-label="분석 노트 본문"
         />
       </div>
 

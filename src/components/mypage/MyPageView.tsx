@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import EmptyState from "@/components/ui/empty-state";
 import LearningStreak from "@/features/mypage/LearningStreak";
+import ARCSPanel from "@/features/mypage/ARCSPanel";
 import { useAuth } from "@/features/auth/useAuth";
 import { ROLE_LABELS, ENROLLMENT_STATUS_LABELS } from "@/types";
 import { formatDate } from "@/lib/utils";
@@ -234,6 +235,21 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
             <div className="space-y-4">
               {/* Sprint 56: 학습 잔디 — 365일 활동 그리드 + streak + 마일스톤 */}
               <LearningStreak />
+
+              {/* ARCS 동기 프로파일 — Keller (1987) 4축 시각화 */}
+              <ARCSPanel
+                inputs={{
+                  interestKeywordCount: user.interestKeywords?.length ?? 0,
+                  researchTopicCount: user.researchTopics?.length ?? 0,
+                  researchInterestCount: user.researchInterests?.length ?? 0,
+                  activityCount: myActivities.length + mySeminars.length,
+                  certificateCount: myCertificates.length,
+                  interviewCount: myInterviewResponses.filter(
+                    (r) => r.status === "submitted",
+                  ).length,
+                  postCount: myPosts.length,
+                }}
+              />
 
               {/* 내 학회활동 통합 안내 카드 */}
               <Link
