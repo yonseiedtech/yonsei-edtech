@@ -14,7 +14,7 @@ import { buildFreshConsents, type UserConsents } from "@/lib/legal";
 import type { EnrollmentStatus } from "@/types";
 
 interface Props {
-  onSuccess: () => void;
+  onSuccess: (autoApproved: boolean) => void;
   defaultName?: string;
   defaultStudentId?: string;
 }
@@ -77,7 +77,7 @@ export default function SignupMultiStep({
           ? "가입이 완료되었습니다. 바로 로그인하실 수 있습니다."
           : "가입 신청이 완료되었습니다. 관리자 승인 후 로그인할 수 있습니다.",
       );
-      onSuccess();
+      onSuccess(autoApproved);
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "가입 중 오류가 발생했습니다.",

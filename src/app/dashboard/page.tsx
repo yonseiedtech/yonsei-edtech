@@ -26,6 +26,7 @@ import MyAcademicActivitiesWidget from "@/features/dashboard/MyAcademicActivitie
 import ComprehensiveExamCountdown from "@/features/dashboard/ComprehensiveExamCountdown";
 import PageHeader from "@/components/ui/page-header";
 import TermBriefHero from "@/components/dashboard/TermBriefHero";
+import NewMemberWelcomeBanner from "@/features/dashboard/NewMemberWelcomeBanner";
 import { canShowWidget } from "@/features/dashboard/widget-visibility";
 import {
   LayoutDashboard,
@@ -114,6 +115,7 @@ function DashboardContent() {
       <NextActionBanner />
       <PushPermissionPrompt />
       <section className="mx-auto mt-6 max-w-6xl px-4 sm:mt-8">
+        <NewMemberWelcomeBanner />
         <PageHeader
           icon={<LayoutDashboard size={24} />}
           title={`안녕하세요, ${user.name}님`}

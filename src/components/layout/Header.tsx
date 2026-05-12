@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
-import { Menu, X, User, Shield, ChevronDown, BookUser, LayoutDashboard, LogOut, Settings, BookOpen, Users, QrCode, ClipboardList, IdCard, FlaskConical } from "lucide-react";
+import { Menu, X, User, Shield, ChevronDown, BookUser, LayoutDashboard, LogOut, Settings, Users, FlaskConical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -153,6 +153,7 @@ const PUBLIC_NAV: NavGroup[] = [
       { href: "/board/promotion", label: "홍보게시판" },
       { href: "/board/resources", label: "자료실" },
       { href: "/board/update", label: "업데이트 게시판" },
+      { href: "/ai-forum", label: "AI 포럼 (실험)" },
       { href: "/gallery", label: "포토갤러리" },
       { href: "/newsletter", label: "학회보" },
     ],
@@ -302,13 +303,10 @@ function UserDropdown() {
 
   if (!user) return null;
 
+  // Sprint 67-AR (마이페이지 통합): 진입점 1개로 통합 — `/mypage` 내부 탭으로 안내
   const menuItems = [
     { href: "/dashboard", label: "대시보드", icon: LayoutDashboard },
     { href: "/mypage", label: "마이페이지", icon: User },
-    { href: "/profile/me", label: "개인 페이지", icon: IdCard },
-    { href: "/mypage/activities", label: "내 학회활동", icon: ClipboardList },
-    { href: "/mypage/research", label: "내 연구활동", icon: BookOpen },
-    { href: "/mypage/card", label: "내 명함", icon: QrCode },
     { href: "/labs", label: "실험실", icon: FlaskConical },
     ...(showAdmin
       ? [
@@ -538,12 +536,9 @@ export default function Header() {
                   <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">내 메뉴</span>
                 </div>
                 {[
+                  // Sprint 67-AR (마이페이지 통합): 모바일도 desktop과 동일하게 마이페이지 1개 진입점
                   { href: "/dashboard", label: "대시보드", icon: LayoutDashboard },
                   { href: "/mypage", label: "마이페이지", icon: User },
-                  { href: "/profile/me", label: "개인 페이지", icon: IdCard },
-                  { href: "/mypage/activities", label: "내 학회활동", icon: ClipboardList },
-                  { href: "/mypage/research", label: "내 연구활동", icon: BookOpen },
-                  { href: "/mypage/card", label: "내 명함", icon: QrCode },
                   { href: "/labs", label: "실험실", icon: FlaskConical },
                   ...(showAdmin
                     ? [

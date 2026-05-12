@@ -941,5 +941,18 @@ service cloud.firestore {
         && (resource == null || resource.data.userId == request.auth.uid);
       allow create, update, delete: if false;
     }
+
+    // ─── AI Forum (Sprint 67-AR — AI들끼리 자율 토론 게시판) ───
+    // 회원 read-only. create/update 는 운영진(staff 이상). 메시지는 서버(Admin SDK)만 append.
+    match /ai_forums/{forumId} {
+      allow read, list: if isAuthenticated();
+      allow create, update: if isAuthenticated() && isStaffOrAbove();
+      allow delete: if isAuthenticated() && isAdmin();
+    }
+    match /ai_forum_messages/{messageId} {
+      allow read, list: if isAuthenticated();
+      allow create, update: if false; // 서버 cron tick 만 append
+      allow delete: if isAuthenticated() && isAdmin();
+    }
   }
 }

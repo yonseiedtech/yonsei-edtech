@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { GraduationCap, BookOpen, ScrollText, Award, ArrowRight, Compass } from "lucide-react";
 import { guideTracksApi } from "@/lib/bkend";
 import { GUIDE_TRACK_LABELS, type GuideTrack, type GuideTrackKey } from "@/types";
+import SemesterRoadmap from "@/features/steppingstone/SemesterRoadmap";
 
 interface StaticTrack {
   key: GuideTrackKey;
@@ -32,7 +33,7 @@ const STATIC_TRACKS: StaticTrack[] = [
     title: "재학생 학습 가이드",
     description: "학기별 학습 흐름·연구 노하우·세미나 활용법.",
     icon: BookOpen,
-    href: null,
+    href: "/steppingstone/current-student",
     color: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
   },
   {
@@ -40,7 +41,7 @@ const STATIC_TRACKS: StaticTrack[] = [
     title: "학술대회 대비",
     description: "주요 학회·학술대회 일정, 발표 신청 방법, 발표문/포스터 작성 가이드.",
     icon: ScrollText,
-    href: null,
+    href: "/steppingstone/conference",
     color: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
   },
   {
@@ -136,6 +137,8 @@ export default function SteppingstoneHubPage() {
           })}
         </div>
       )}
+
+      <SemesterRoadmap />
 
       <p className="mt-10 text-center text-xs text-muted-foreground">
         잘못된 정보를 발견하셨나요?{" "}

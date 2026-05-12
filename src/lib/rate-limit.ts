@@ -1,6 +1,11 @@
 /**
  * Simple in-memory rate limiter for AI API endpoints.
  * Tracks requests per identifier (userId or IP) with a sliding window.
+ *
+ * ⚠️ KNOWN LIMITATION (Sprint 67-AR audit, 2026-05-12):
+ * Vercel serverless 환경에서는 인스턴스간 메모리가 공유되지 않아 본 limiter는
+ * 사실상 무효. 다음 스프린트에서 Vercel KV(Upstash Redis) 또는 동등 분산 저장소로 전환 필요.
+ * 단일 인스턴스(Node 서버)에서는 정상 동작.
  */
 
 interface RateLimitEntry {
