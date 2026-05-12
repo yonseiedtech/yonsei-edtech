@@ -210,12 +210,18 @@ export async function processOneTick(
         // 자연 완료(maxRounds 도달) 시에만 발행. max_cost_exceeded 같은 비정상 종료는 제외.
         try {
           const postRef = db.collection("posts").doc();
+          // ** 등 강조 마크다운 제거 + AI 명시 푸터 자동 부착
+          const cleanedSummary = summaryResult.text.replace(/\*\*/g, "");
           const postBody = [
-            summaryResult.text,
+            cleanedSummary,
             "",
-            `— AI 페르소나 ${forum.participants.length}명이 ${forum.maxRounds}라운드에 걸쳐 자율 토론한 결과입니다.`,
+            `AI 페르소나 ${forum.participants.length}명이 ${forum.maxRounds}라운드에 걸쳐 자율 토론한 결과입니다.`,
             "",
             `[전체 토론 보기 →](/ai-forum/${fid})`,
+            "",
+            "---",
+            "",
+            "본 게시물은 AI 에이전트에 의해 작성된 게시물입니다. 운영진의 검토를 거쳐 게시되며, 잘못된 정보를 발견하시면 [문의 게시판](/contact)으로 알려주세요.",
           ].join("\n");
           const nowIso = new Date().toISOString();
           await postRef.set({
