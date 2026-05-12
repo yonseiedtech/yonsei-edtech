@@ -25,6 +25,7 @@ import PeerActivityFeed from "@/features/dashboard/PeerActivityFeed";
 import MyAcademicActivitiesWidget from "@/features/dashboard/MyAcademicActivitiesWidget";
 import ComprehensiveExamCountdown from "@/features/dashboard/ComprehensiveExamCountdown";
 import PageHeader from "@/components/ui/page-header";
+import TermBriefHero from "@/components/dashboard/TermBriefHero";
 import { canShowWidget } from "@/features/dashboard/widget-visibility";
 import {
   LayoutDashboard,
@@ -143,6 +144,8 @@ function DashboardContent() {
             </div>
           }
         />
+        {/* Sprint 67-AP Phase 2: 학기 진행 Hero (토스 패턴) */}
+        <TermBriefHero user={user} />
       </section>
 
       <section className="mx-auto mt-8 max-w-6xl px-4">
