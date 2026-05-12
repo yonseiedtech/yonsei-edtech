@@ -28,6 +28,7 @@ import PageHeader from "@/components/ui/page-header";
 import TermBriefHero from "@/components/dashboard/TermBriefHero";
 import NewMemberWelcomeBanner from "@/features/dashboard/NewMemberWelcomeBanner";
 import AIForumLiveWidget from "@/features/dashboard/AIForumLiveWidget";
+import SpacedRepetitionWidget from "@/features/dashboard/SpacedRepetitionWidget";
 import { canShowWidget } from "@/features/dashboard/widget-visibility";
 import {
   LayoutDashboard,
@@ -283,9 +284,12 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* AI 포럼 라이브 위젯 (Sprint 67-AR) + 동료의 최근 활동 (Sprint 55) */}
+        {/* AI 포럼 라이브 위젯 + Spaced Repetition (교육공학 이론 보강) + 동료의 최근 활동 */}
         <div className="mt-6 grid gap-6 md:grid-cols-2">
           <AIForumLiveWidget />
+          <SpacedRepetitionWidget />
+        </div>
+        <div className="mt-6">
           <PeerActivityFeed />
         </div>
 
