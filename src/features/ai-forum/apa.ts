@@ -52,13 +52,22 @@ export function formatInText(citation: APACitation): string {
   return `(${first}${etal}, ${citation.year})`;
 }
 
+/** 마침표 중복 방지: 문자열 끝이 이미 "."면 추가하지 않음 */
+function withTrailingPeriod(s: string): string {
+  return s.endsWith(".") ? s : `${s}.`;
+}
+
 /** 전체 참고문헌 항목 (APA 7) */
 export function formatAPA7Reference(c: APACitation): string {
   const authors = formatAuthors(c.authors, c.language);
   const year = `(${c.year})`;
   const title = c.title.trim();
 
-  const parts: string[] = [`${authors}.`, `${year}.`, `${title}.`];
+  const parts: string[] = [
+    withTrailingPeriod(authors),
+    `${year}.`,
+    withTrailingPeriod(title),
+  ];
 
   if (c.type === "journal" && c.journal) {
     let journalPart = c.journal;

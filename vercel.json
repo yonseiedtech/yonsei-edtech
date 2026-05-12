@@ -38,7 +38,7 @@
     },
     {
       "path": "/api/cron/ai-forum-tick",
-      "schedule": "0 */6 * * *"
+      "schedule": "0 6 * * *"
     }
   ]
 }
