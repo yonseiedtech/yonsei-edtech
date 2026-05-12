@@ -44,6 +44,7 @@ import {
 import EmptyState from "@/components/ui/empty-state";
 import LearningStreak from "@/features/mypage/LearningStreak";
 import ARCSPanel from "@/features/mypage/ARCSPanel";
+import ConnectivismPanel from "@/features/mypage/ConnectivismPanel";
 import { useAuth } from "@/features/auth/useAuth";
 import { ROLE_LABELS, ENROLLMENT_STATUS_LABELS } from "@/types";
 import { formatDate } from "@/lib/utils";
@@ -250,6 +251,9 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                   postCount: myPosts.length,
                 }}
               />
+
+              {/* Connectivism 패널 — Siemens (2005) 네트워크 학습 이론 */}
+              <ConnectivismPanel />
 
               {/* 내 학회활동 통합 안내 카드 */}
               <Link

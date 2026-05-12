@@ -14,6 +14,7 @@
 
 import { useMemo } from "react";
 import { Users, Network, AlertCircle, TrendingUp, GraduationCap, Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   NETWORK_RELATION_LABELS,
   type NetworkEdge,
@@ -253,10 +254,15 @@ function StatCard({
   tone?: "default" | "warning";
 }) {
   return (
-    <div className="rounded-xl border bg-card p-4 text-center">
-      <div className={`mx-auto mb-1 flex h-8 w-8 items-center justify-center rounded-full ${
-        tone === "warning" ? "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300" : "bg-primary/10 text-primary"
-      }`}>
+    <div className="rounded-2xl border bg-card p-4 text-center shadow-sm">
+      <div
+        className={cn(
+          "mx-auto mb-1.5 flex h-8 w-8 items-center justify-center rounded-full",
+          tone === "warning"
+            ? "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+            : "bg-primary/10 text-primary",
+        )}
+      >
         <Icon size={16} />
       </div>
       <p className="text-2xl font-bold">{value}</p>
@@ -275,7 +281,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border bg-card p-4">
+    <div className="rounded-2xl border bg-card p-4 shadow-sm">
       <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
         <Icon size={14} className="text-primary" />
         {title}
