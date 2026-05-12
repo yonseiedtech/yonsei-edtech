@@ -141,6 +141,12 @@ export interface APACitation {
   language: "ko" | "en";
   /** 검색일 (웹 자료에만 사용) */
   retrievedDate?: string;
+  /**
+   * 인용 검증 상태 (Sprint 67-AR — hallucination 안전장치)
+   * - true: 운영진 또는 자동 검증으로 DOI/URL 실재 확인됨
+   * - false 또는 undefined: AI 자동 생성, 1차 자료 미검증
+   */
+  verified?: boolean;
 }
 
 export interface AIForumMessage {

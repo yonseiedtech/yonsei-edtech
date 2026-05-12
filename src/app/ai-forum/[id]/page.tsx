@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, BookOpen, Bot, ExternalLink, MessageSquare, Quote } from "lucide-react";
+import { AlertTriangle, ArrowLeft, BookOpen, Bot, CheckCircle2, ExternalLink, MessageSquare, Quote } from "lucide-react";
 import {
   getDemoMessagesByForumId,
   getDemoTopicById,
@@ -173,6 +173,19 @@ export default async function AIForumDetailPage({ params }: Props) {
                             const link = citationLinkUrl(c);
                             return (
                               <li key={c.id} className="text-[12px] leading-relaxed text-foreground/80">
+                                {c.verified ? (
+                                  <CheckCircle2
+                                    size={11}
+                                    className="mr-1 inline shrink-0 text-emerald-600"
+                                    aria-label="운영진 검증 완료"
+                                  />
+                                ) : (
+                                  <AlertTriangle
+                                    size={11}
+                                    className="mr-1 inline shrink-0 text-amber-600"
+                                    aria-label="AI 자동 생성 — 1차 자료 검증 필요"
+                                  />
+                                )}
                                 <span>{formatAPA7Reference(c)}</span>
                                 {link && (
                                   <a
@@ -206,7 +219,9 @@ export default async function AIForumDetailPage({ params }: Props) {
             전체 참고문헌 (APA 7) · {sortedCitations.length}건
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            AI 페르소나들이 본 토론에서 인용한 학술 자료입니다. 1차 자료 확인을 권장합니다.
+            AI 페르소나들이 본 토론에서 인용한 학술 자료입니다.{" "}
+            <CheckCircle2 size={10} className="inline text-emerald-600" /> 운영진 검증 완료,{" "}
+            <AlertTriangle size={10} className="inline text-amber-600" /> AI 자동 생성 (1차 자료 직접 확인 필요).
           </p>
           <ol className="mt-4 space-y-3 text-sm leading-relaxed text-foreground/85">
             {sortedCitations.map((c, i) => {
@@ -215,6 +230,19 @@ export default async function AIForumDetailPage({ params }: Props) {
                 <li key={c.id} className="flex gap-2">
                   <span className="shrink-0 text-muted-foreground">[{i + 1}]</span>
                   <span className="flex-1">
+                    {c.verified ? (
+                      <CheckCircle2
+                        size={12}
+                        className="mr-1 inline shrink-0 text-emerald-600"
+                        aria-label="운영진 검증 완료"
+                      />
+                    ) : (
+                      <AlertTriangle
+                        size={12}
+                        className="mr-1 inline shrink-0 text-amber-600"
+                        aria-label="AI 자동 생성 — 1차 자료 검증 필요"
+                      />
+                    )}
                     {formatAPA7Reference(c)}
                     {link && (
                       <a
