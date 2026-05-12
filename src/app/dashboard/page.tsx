@@ -27,6 +27,7 @@ import ComprehensiveExamCountdown from "@/features/dashboard/ComprehensiveExamCo
 import PageHeader from "@/components/ui/page-header";
 import TermBriefHero from "@/components/dashboard/TermBriefHero";
 import NewMemberWelcomeBanner from "@/features/dashboard/NewMemberWelcomeBanner";
+import AIForumLiveWidget from "@/features/dashboard/AIForumLiveWidget";
 import { canShowWidget } from "@/features/dashboard/widget-visibility";
 import {
   LayoutDashboard,
@@ -282,8 +283,9 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* 동료의 최근 활동 (Sprint 55) */}
-        <div className="mt-6">
+        {/* AI 포럼 라이브 위젯 (Sprint 67-AR) + 동료의 최근 활동 (Sprint 55) */}
+        <div className="mt-6 grid gap-6 md:grid-cols-2">
+          <AIForumLiveWidget />
           <PeerActivityFeed />
         </div>
 
