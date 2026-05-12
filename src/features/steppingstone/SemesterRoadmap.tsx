@@ -9,12 +9,14 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { BookOpen, Check, CheckCircle2, Sparkles, Star, Target } from "lucide-react";
+import { BookOpen, Brain, Check, CheckCircle2, Sparkles, Star, Target } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { getUserCumulativeSemesterCount } from "@/lib/interview-target";
 import { roadmapStagesApi } from "@/lib/bkend";
 import {
+  BLOOM_STAGE_LABELS,
   ROADMAP_COLOR_PRESETS,
+  type BloomStage,
   type RoadmapColorPreset,
   type RoadmapStage,
 } from "@/types/steppingstone";
@@ -27,6 +29,7 @@ interface RoadmapItem {
   color: string;
   bgColor: string;
   isAlumni?: boolean;
+  bloomStage?: BloomStage;
 }
 
 /** Firestore 가 비어있을 때 사용할 정적 fallback */
@@ -37,6 +40,7 @@ const STATIC_FALLBACK: RoadmapItem[] = [
     shortTag: "정착",
     color: "text-blue-700 dark:text-blue-300",
     bgColor: "border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20",
+    bloomStage: "understand",
     items: [
       "신입생 OT 참여 + 학회 가입 신청",
       "지도교수님 정하기 (1학기 말 권장)",
@@ -51,6 +55,7 @@ const STATIC_FALLBACK: RoadmapItem[] = [
     shortTag: "탐색",
     color: "text-emerald-700 dark:text-emerald-300",
     bgColor: "border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/20",
+    bloomStage: "apply",
     items: [
       "관심 분야 키워드·연구 주제 명확화 (마이페이지)",
       "지도교수 연구실 합류 또는 프로젝트 참여",
@@ -65,6 +70,7 @@ const STATIC_FALLBACK: RoadmapItem[] = [
     shortTag: "본격",
     color: "text-amber-700 dark:text-amber-300",
     bgColor: "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20",
+    bloomStage: "analyze",
     items: [
       "논문 주제 1차 구체화 + 지도교수 협의",
       "관련 선행연구 정리 — 에듀테크 아카이브 활용",
@@ -79,6 +85,7 @@ const STATIC_FALLBACK: RoadmapItem[] = [
     shortTag: "집필",
     color: "text-rose-700 dark:text-rose-300",
     bgColor: "border-rose-200 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20",
+    bloomStage: "evaluate",
     items: [
       "학위논문 초고 작성 (지도교수와 격주 미팅 권장)",
       "데이터 수집·분석 완료",
@@ -93,6 +100,7 @@ const STATIC_FALLBACK: RoadmapItem[] = [
     shortTag: "심사",
     color: "text-purple-700 dark:text-purple-300",
     bgColor: "border-purple-200 bg-purple-50/50 dark:border-purple-900 dark:bg-purple-950/20",
+    bloomStage: "create",
     items: [
       "디펜스 연습 (음성 채점·따라 읽기) 매주 1회",
       "심사위원 구성 + 사전 발표",
@@ -107,6 +115,7 @@ const STATIC_FALLBACK: RoadmapItem[] = [
     shortTag: "동문",
     color: "text-slate-700 dark:text-slate-300",
     bgColor: "border-slate-200 bg-slate-50/50 dark:border-slate-900 dark:bg-slate-950/20",
+    bloomStage: "create",
     items: [
       "졸업생 회원으로 전환 + 본인 학위논문 등록",
       "후배 세미나·인터뷰 참여 — 멘토로",
@@ -132,6 +141,7 @@ function stageToItem(s: RoadmapStage): RoadmapItem {
     color,
     bgColor,
     isAlumni: s.isAlumni,
+    bloomStage: s.bloomStage,
   };
 }
 
@@ -223,10 +233,19 @@ export default function SemesterRoadmap() {
                 >
                   {stage.semester === 7 ? "졸" : stage.semester}
                 </span>
-                <h3 className={`font-bold ${isMine ? "text-primary" : stage.color}`}>
+                <h3 className={`flex-1 font-bold ${isMine ? "text-primary" : stage.color}`}>
                   {stage.title}
                 </h3>
               </div>
+              {stage.bloomStage && (
+                <div
+                  className="mt-2 inline-flex items-center gap-1 rounded-full border bg-card/60 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground"
+                  title="Bloom's Taxonomy (Anderson & Krathwohl, 2001) — 본 학기 주된 인지 활동 단계"
+                >
+                  <Brain size={9} aria-hidden />
+                  인지 단계 · {BLOOM_STAGE_LABELS[stage.bloomStage]}
+                </div>
+              )}
               <ul className="mt-3 space-y-1.5">
                 {stage.items.map((item, i) => (
                   <li

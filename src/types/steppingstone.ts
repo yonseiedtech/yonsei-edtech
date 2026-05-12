@@ -120,6 +120,36 @@ export const ROADMAP_COLOR_PRESETS: Record<
   },
 };
 
+/**
+ * Bloom's Taxonomy 인지 단계 (Anderson & Krathwohl 2001 개정판)
+ * 학습자 메타인지 자각 지원 — 본인 학기에 요구되는 인지 단계 명시.
+ */
+export type BloomStage =
+  | "remember" // 기억 — 사실 회상
+  | "understand" // 이해 — 의미 파악
+  | "apply" // 응용 — 새 상황 적용
+  | "analyze" // 분석 — 구성 요소 분해·관계 파악
+  | "evaluate" // 평가 — 판단·비평
+  | "create"; // 창조 — 새 산출물 생성
+
+export const BLOOM_STAGE_LABELS: Record<BloomStage, string> = {
+  remember: "기억",
+  understand: "이해",
+  apply: "응용",
+  analyze: "분석",
+  evaluate: "평가",
+  create: "창조",
+};
+
+export const BLOOM_STAGE_ORDER: BloomStage[] = [
+  "remember",
+  "understand",
+  "apply",
+  "analyze",
+  "evaluate",
+  "create",
+];
+
 /** 학기별 로드맵의 한 단계 카드 — 운영진이 콘솔에서 수정 */
 export interface RoadmapStage {
   id: string;
@@ -137,6 +167,12 @@ export interface RoadmapStage {
   colorPreset: RoadmapColorPreset;
   /** 졸업 후 단계 — alumni 사용자 자동 매칭 */
   isAlumni: boolean;
+  /**
+   * 본 단계의 주된 Bloom 인지 단계 — 학습자가 본인이 현재 어떤
+   * 인지 활동을 하고 있는지 메타인지 자각하도록 노출.
+   * 옵션 — 미지정 시 표시 안 함.
+   */
+  bloomStage?: BloomStage;
   /** 게시 여부 — false 면 회원에게 숨김 */
   published: boolean;
   createdAt: string;
