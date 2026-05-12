@@ -1,11 +1,45 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Bot, Quote } from "lucide-react";
+import { ArrowLeft, BookOpen, Bot, ExternalLink, Quote } from "lucide-react";
 import {
   getDemoMessagesByForumId,
   getDemoTopicById,
 } from "@/features/ai-forum/demo-data";
-import { AI_PERSONAS } from "@/types/ai-forum";
+import {
+  AI_PERSONAS,
+  type AIForumMessage,
+  type AIForumTopic,
+  type APACitation,
+} from "@/types/ai-forum";
+import { citationLinkUrl, formatAPA7Reference } from "@/features/ai-forum/apa";
+import { aiForumMessagesApi, aiForumsApi } from "@/lib/bkend";
+
+async function fetchTopic(id: string): Promise<AIForumTopic | undefined> {
+  try {
+    const live = (await aiForumsApi.get(id)) as unknown as AIForumTopic;
+    if (live && live.approved && live.status !== "archived") return live;
+  } catch {
+    // ignore - fallback to demo
+  }
+  return getDemoTopicById(id);
+}
+
+async function fetchMessages(id: string): Promise<AIForumMessage[]> {
+  try {
+    const live = await aiForumMessagesApi.listByForum(id);
+    if (live.data && live.data.length > 0) {
+      return [...live.data].sort((a, b) => {
+        if (a.round !== b.round) return a.round - b.round;
+        const at = typeof a.createdAt === "string" ? a.createdAt : "";
+        const bt = typeof b.createdAt === "string" ? b.createdAt : "";
+        return at.localeCompare(bt);
+      });
+    }
+  } catch {
+    // ignore - fallback to demo
+  }
+  return getDemoMessagesByForumId(id);
+}
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -13,7 +47,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props) {
   const { id } = await params;
-  const topic = getDemoTopicById(id);
+  const topic = await fetchTopic(id);
   if (!topic) return { title: "AI 포럼 — 연세교육공학회" };
   return {
     title: `${topic.title} — AI 포럼`,
@@ -28,8 +62,8 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function AIForumDetailPage({ params }: Props) {
   const { id } = await params;
-  const topic = getDemoTopicById(id);
-  const messages = getDemoMessagesByForumId(id);
+  const topic = await fetchTopic(id);
+  const messages = await fetchMessages(id);
   if (!topic) notFound();
 
   // 라운드별 그룹화
@@ -39,6 +73,19 @@ export default async function AIForumDetailPage({ params }: Props) {
     rounds.get(m.round)!.push(m);
   }
   const sortedRounds = Array.from(rounds.entries()).sort((a, b) => a[0] - b[0]);
+
+  // 전체 참고문헌 통합 (중복 제거 — id 기준)
+  const allCitations = new Map<string, APACitation>();
+  for (const m of messages) {
+    for (const c of m.citations ?? []) {
+      if (!allCitations.has(c.id)) allCitations.set(c.id, c);
+    }
+  }
+  const sortedCitations = Array.from(allCitations.values()).sort((a, b) => {
+    const aFirst = a.authors[0] ?? "";
+    const bFirst = b.authors[0] ?? "";
+    return aFirst.localeCompare(bFirst, undefined, { sensitivity: "base" });
+  });
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -115,6 +162,35 @@ export default async function AIForumDetailPage({ params }: Props) {
                     <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
                       {m.content}
                     </div>
+
+                    {m.citations && m.citations.length > 0 && (
+                      <details className="mt-3 rounded-xl border bg-muted/30 p-3">
+                        <summary className="cursor-pointer text-xs font-semibold text-muted-foreground">
+                          참고문헌 {m.citations.length}건 (APA 7) — Human-in-the-loop 검증
+                        </summary>
+                        <ul className="mt-2 space-y-2">
+                          {m.citations.map((c) => {
+                            const link = citationLinkUrl(c);
+                            return (
+                              <li key={c.id} className="text-[12px] leading-relaxed text-foreground/80">
+                                <span>{formatAPA7Reference(c)}</span>
+                                {link && (
+                                  <a
+                                    href={link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="ml-1 inline-flex items-center gap-0.5 text-primary underline-offset-2 hover:underline"
+                                  >
+                                    <ExternalLink size={10} />
+                                    <span className="sr-only">외부 링크</span>
+                                  </a>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </details>
+                    )}
                   </article>
                 );
               })}
@@ -122,6 +198,42 @@ export default async function AIForumDetailPage({ params }: Props) {
           </section>
         ))}
       </div>
+
+      {sortedCitations.length > 0 && (
+        <section className="mt-10 rounded-2xl border bg-card p-5 shadow-sm">
+          <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-foreground">
+            <BookOpen size={14} className="text-primary" />
+            전체 참고문헌 (APA 7) · {sortedCitations.length}건
+          </h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            AI 페르소나들이 본 토론에서 인용한 학술 자료입니다. 1차 자료 확인을 권장합니다.
+          </p>
+          <ol className="mt-4 space-y-3 text-sm leading-relaxed text-foreground/85">
+            {sortedCitations.map((c, i) => {
+              const link = citationLinkUrl(c);
+              return (
+                <li key={c.id} className="flex gap-2">
+                  <span className="shrink-0 text-muted-foreground">[{i + 1}]</span>
+                  <span className="flex-1">
+                    {formatAPA7Reference(c)}
+                    {link && (
+                      <a
+                        href={link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-1 inline-flex items-center gap-0.5 text-primary underline-offset-2 hover:underline"
+                      >
+                        <ExternalLink size={11} />
+                        링크
+                      </a>
+                    )}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      )}
 
       {topic.summary && (
         <section className="mt-10 rounded-2xl border-2 border-primary/20 bg-primary/5 p-5">

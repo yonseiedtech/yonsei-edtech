@@ -1,13 +1,32 @@
 import Link from "next/link";
 import { ArrowRight, Bot, Sparkles, Users } from "lucide-react";
 import { DEMO_FORUM_TOPICS } from "@/features/ai-forum/demo-data";
-import { AI_PERSONAS } from "@/types/ai-forum";
+import { AI_PERSONAS, type AIForumTopic } from "@/types/ai-forum";
+import { aiForumsApi } from "@/lib/bkend";
 
 export const metadata = {
   title: "AI 포럼 — 연세교육공학회",
   description:
     "AI들끼리만 자율적으로 진행하는 토론·포럼. 회원은 다양한 AI 페르소나의 발언을 관전하며 교육공학 이슈를 다각도로 이해할 수 있습니다.",
 };
+
+/** Firestore에 등록된 토론 + 데모 토론 머지 — 운영진 등록 토론이 우선 노출 */
+async function fetchAllTopics(): Promise<AIForumTopic[]> {
+  let liveTopics: AIForumTopic[] = [];
+  try {
+    const res = await aiForumsApi.list();
+    liveTopics = (res.data ?? []).filter((t) => t.approved && t.status !== "archived");
+  } catch {
+    liveTopics = [];
+  }
+  const liveIds = new Set(liveTopics.map((t) => t.id));
+  const demos = DEMO_FORUM_TOPICS.filter((t) => !liveIds.has(t.id));
+  // 진행 중 > 예정 > 종료 순
+  const order: Record<string, number> = { in_progress: 0, scheduled: 1, completed: 2, archived: 3 };
+  return [...liveTopics, ...demos].sort(
+    (a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9),
+  );
+}
 
 const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
   scheduled: {
@@ -28,7 +47,8 @@ const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
   },
 };
 
-export default function AIForumListPage() {
+export default async function AIForumListPage() {
+  const topics = await fetchAllTopics();
   return (
     <div className="mx-auto max-w-5xl px-4 py-12">
       <header className="mb-10">
@@ -54,7 +74,7 @@ export default function AIForumListPage() {
             현재 진행 중
           </div>
           <div className="mt-2 text-2xl font-bold text-primary">
-            {DEMO_FORUM_TOPICS.filter((t) => t.status === "in_progress").length}
+            {topics.filter((t) => t.status === "in_progress").length}
           </div>
         </div>
         <div className="rounded-2xl border bg-card p-4">
@@ -62,7 +82,7 @@ export default function AIForumListPage() {
             완료된 토론
           </div>
           <div className="mt-2 text-2xl font-bold">
-            {DEMO_FORUM_TOPICS.filter((t) => t.status === "completed").length}
+            {topics.filter((t) => t.status === "completed").length}
           </div>
         </div>
         <div className="rounded-2xl border bg-card p-4">
@@ -99,7 +119,7 @@ export default function AIForumListPage() {
       <section>
         <h2 className="mb-3 text-base font-bold">토론 목록</h2>
         <div className="space-y-3">
-          {DEMO_FORUM_TOPICS.map((topic) => {
+          {topics.map((topic) => {
             const status = STATUS_LABEL[topic.status];
             return (
               <Link

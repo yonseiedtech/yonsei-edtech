@@ -1809,3 +1809,44 @@ export const archiveFavoritesApi = {
   makeId: (userId: string, itemType: ArchiveItemType, itemId: string) =>
     `${userId}_${itemType}_${itemId}`,
 };
+
+// ─── AI 포럼 (Sprint 67-AR — AI 자율 토론 게시판) ───
+// 운영진이 토론 주제를 등록·시작·중지하고, Vercel cron이 라운드별 발언을 자동 생성.
+// 회원은 read-only 관전. messages 는 서버(Admin SDK)만 append.
+import type { AIForumTopic, AIForumMessage } from "@/types/ai-forum";
+
+export const aiForumsApi = {
+  list: () =>
+    dataApi.list<AIForumTopic>("ai_forums", { limit: 100, sort: "createdAt:desc" }),
+  get: (id: string) => dataApi.get<AIForumTopic>("ai_forums", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<AIForumTopic>("ai_forums", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<AIForumTopic>("ai_forums", id, data),
+  delete: (id: string) => dataApi.delete("ai_forums", id),
+  /** 토론 개최 — scheduled → in_progress */
+  start: (id: string) =>
+    dataApi.update<AIForumTopic>("ai_forums", id, {
+      status: "in_progress",
+      startedAt: new Date().toISOString(),
+    }),
+  /** 토론 중지 — in_progress → completed (조기 종료 포함) */
+  stop: (id: string) =>
+    dataApi.update<AIForumTopic>("ai_forums", id, {
+      status: "completed",
+      completedAt: new Date().toISOString(),
+    }),
+  /** 보관 처리 */
+  archive: (id: string) =>
+    dataApi.update<AIForumTopic>("ai_forums", id, { status: "archived" }),
+};
+
+export const aiForumMessagesApi = {
+  /** 특정 forum의 메시지 목록 — 라운드·createdAt 클라이언트 정렬 */
+  listByForum: (forumId: string) =>
+    dataApi.list<AIForumMessage>("ai_forum_messages", {
+      "filter[forumId]": forumId,
+      limit: 500,
+    }),
+  get: (id: string) => dataApi.get<AIForumMessage>("ai_forum_messages", id),
+};

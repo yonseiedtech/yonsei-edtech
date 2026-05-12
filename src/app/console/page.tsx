@@ -6,7 +6,7 @@ import { useInquiries } from "@/features/inquiry/useInquiry";
 import { usePosts } from "@/features/board/useBoard";
 import { profilesApi } from "@/lib/bkend";
 import { useQuery } from "@tanstack/react-query";
-import { Users, Clock, FileText, HelpCircle, LayoutDashboard } from "lucide-react";
+import { Users, Clock, FileText, HelpCircle, LayoutDashboard, Bot } from "lucide-react";
 import AdminTodoTab from "@/features/admin/AdminTodoTab";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 
@@ -72,6 +72,29 @@ export default function ConsoleDashboardPage() {
         <StatCard icon={Clock} label="승인 대기" value={pendingData?.total ?? 0} color="bg-amber-50 text-amber-600" href="/console/members" />
         <StatCard icon={FileText} label="게시글" value={posts.length} color="bg-green-50 text-green-600" href="/console/posts" />
         <StatCard icon={HelpCircle} label="미답변 문의" value={unansweredCount} color="bg-red-50 text-red-600" href="/console/inquiries" />
+      </div>
+
+      <div>
+        <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+          신규 관리 도구
+        </h2>
+        <Link
+          href="/console/ai-forum"
+          className="flex items-center gap-3 rounded-xl border-2 border-primary/20 bg-primary/5 p-4 transition-shadow hover:shadow-md"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15 text-primary">
+            <Bot size={20} />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-bold">AI 포럼 운영</p>
+            <p className="text-xs text-muted-foreground">
+              AI 자율 토론 게시판 — 주제 등록·개최·중지
+            </p>
+          </div>
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+            새 기능
+          </span>
+        </Link>
       </div>
 
       <div>

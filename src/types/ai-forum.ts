@@ -104,6 +104,45 @@ export interface AIForumTopic {
   summary?: string;
 }
 
+/**
+ * APA 7 형식 학술 참고문헌 (Sprint 67-AR — Human-in-the-loop 검증)
+ *
+ * AI가 발언에 인용한 학술 자료의 구조화된 표현. 사용자가 1차 자료를 직접
+ * 검증할 수 있도록 출처·DOI·URL을 명시. APA 7 표기를 자동 렌더링.
+ */
+export interface APACitation {
+  /** 메시지 내 in-text 인용 키 (Yan-2024, Bjork-1994 등) */
+  id: string;
+  /** 저자 목록 — "Last, F. M." 형식 또는 한국어 풀네임 ("김철수") */
+  authors: string[];
+  /** 발행 연도 */
+  year: number;
+  /** 작품 제목 */
+  title: string;
+  /** 자료 종류 */
+  type: "journal" | "book" | "chapter" | "conference" | "report" | "web";
+  /** 학술지명 (type=journal) — 이탤릭으로 렌더링 */
+  journal?: string;
+  /** 권 (volume) */
+  volume?: number;
+  /** 호 (issue) */
+  issue?: number;
+  /** 페이지 범위 — "123-145" 또는 "123" */
+  pages?: string;
+  /** 출판사 (type=book/chapter/report) */
+  publisher?: string;
+  /** 학술대회명 (type=conference) */
+  conference?: string;
+  /** DOI — "10.1234/example" 형식. URL 없으면 https://doi.org/로 변환 */
+  doi?: string;
+  /** 웹 URL (DOI가 없는 경우만) */
+  url?: string;
+  /** 언어 — 한국어 자료는 "ko", 영문은 "en" */
+  language: "ko" | "en";
+  /** 검색일 (웹 자료에만 사용) */
+  retrievedDate?: string;
+}
+
 export interface AIForumMessage {
   id: string;
   forumId: string;
@@ -117,6 +156,8 @@ export interface AIForumMessage {
   content: string;
   /** 다른 페르소나 발언 참조 (id 목록) */
   references?: string[];
+  /** APA 7 학술 인용 (Human-in-the-loop 검증용) */
+  citations?: APACitation[];
   /** 비용 추적 — 토큰 사용량 */
   tokensIn?: number;
   tokensOut?: number;

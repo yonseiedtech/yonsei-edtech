@@ -50,3 +50,6 @@ export * from "./volunteer";
 
 // 게시글 공감 reaction (Sprint 67-AO)
 export * from "./post-reaction";
+
+// AI 포럼 (Sprint 67-AR — AI 자율 토론 게시판)
+export * from "./ai-forum";
