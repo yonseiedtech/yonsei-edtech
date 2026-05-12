@@ -69,15 +69,28 @@ export default function SteppingstoneHubPage() {
   const publishedKeys = new Set(tracks.map((t) => t.key));
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12">
-      <header className="mb-10 flex items-start gap-4">
-        <Compass size={32} className="mt-1 shrink-0 text-primary" />
-        <div>
-          <h1 className="text-3xl font-bold">인지디딤판</h1>
-          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-            연세교육공학 구성원이 입학부터 졸업까지 자력으로 따라갈 수 있도록 안내하는 가이드 모음입니다.
-            각 트랙은 단계별 체크리스트·자료·신청 안내를 한 곳에 모아 보여줍니다.
-          </p>
+    <div className="mx-auto max-w-6xl px-4 py-12 sm:py-16">
+      <header className="mb-12 sm:mb-14">
+        <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+          </span>
+          학회 자체 운영 가이드 시스템
+        </div>
+        <div className="mt-4 flex items-start gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-sky-400/15 text-primary shadow-sm">
+            <Compass size={28} />
+          </div>
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
+              인지디딤판
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+              연세교육공학 구성원이 입학부터 졸업까지 자력으로 따라갈 수 있도록 안내하는 가이드 모음입니다.
+              각 트랙은 단계별 체크리스트·자료·신청 안내를 한 곳에 모아 보여줍니다.
+            </p>
+          </div>
         </div>
       </header>
 
@@ -103,23 +116,35 @@ export default function SteppingstoneHubPage() {
             const card = (
               <div
                 className={
-                  "group flex h-full flex-col rounded-2xl border p-6 transition-shadow " +
-                  (isReady ? "hover:shadow-md" : "opacity-60")
+                  "group relative flex h-full flex-col overflow-hidden rounded-2xl border bg-card p-6 transition-all duration-300 " +
+                  (isReady
+                    ? "hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg"
+                    : "opacity-60")
                 }
               >
+                {/* 트랙별 색상 좌측 strip — 시각 식별 강화 */}
+                {isReady && (
+                  <div
+                    aria-hidden
+                    className={
+                      "absolute inset-y-0 left-0 w-1 transition-all group-hover:w-1.5 " +
+                      t.color.split(" ").find((c) => c.startsWith("text-"))?.replace("text-", "bg-")
+                    }
+                  />
+                )}
                 <div className="flex items-center gap-3">
-                  <div className={"flex h-12 w-12 items-center justify-center rounded-xl " + t.color}>
-                    <Icon size={22} />
+                  <div className={"flex h-14 w-14 items-center justify-center rounded-2xl shadow-sm transition-transform group-hover:scale-105 " + t.color}>
+                    <Icon size={26} />
                   </div>
                   <div className="flex-1">
-                    <h2 className="text-lg font-bold">{t.title}</h2>
+                    <h2 className="text-lg font-bold tracking-tight sm:text-xl">{t.title}</h2>
                     <p className="text-xs text-muted-foreground">{GUIDE_TRACK_LABELS[t.key]}</p>
                   </div>
                   {!isReady && <Badge variant="secondary">준비 중</Badge>}
                 </div>
-                <p className="mt-4 flex-1 text-sm text-muted-foreground">{t.description}</p>
+                <p className="mt-4 flex-1 text-sm leading-relaxed text-muted-foreground">{t.description}</p>
                 {isReady && (
-                  <div className="mt-4 flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
+                  <div className="mt-5 flex items-center gap-1 text-sm font-semibold text-primary transition-all group-hover:gap-2">
                     <span>바로가기</span>
                     <ArrowRight size={16} />
                   </div>

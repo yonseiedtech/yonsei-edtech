@@ -84,13 +84,28 @@ export default function BottomNav() {
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex min-h-[52px] flex-col items-center justify-center gap-0.5 px-2 py-1.5 text-[11px] font-medium transition-colors",
+                  "relative flex min-h-[56px] flex-col items-center justify-center gap-0.5 px-2 py-1.5 text-[11px] font-medium transition-all duration-200",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/50",
                   active ? "text-primary" : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                <Icon size={20} className={cn(active && "scale-110 transition-transform")} />
-                <span className="leading-none">{item.label}</span>
+                {/* 활성 상태 상단 인디케이터 — Carbon DataTable 스타일 시각 강화 */}
+                {active && (
+                  <span
+                    aria-hidden
+                    className="absolute top-0 left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full bg-primary animate-in fade-in slide-in-from-top-1 duration-300"
+                  />
+                )}
+                <Icon
+                  size={20}
+                  className={cn(
+                    "transition-transform duration-200",
+                    active && "scale-110",
+                  )}
+                />
+                <span className={cn("leading-none transition-all", active && "font-semibold")}>
+                  {item.label}
+                </span>
               </Link>
             </li>
           );
