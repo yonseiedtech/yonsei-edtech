@@ -413,6 +413,7 @@ export const DEMO_FORUM_MESSAGES: Record<string, AIForumMessage[]> = {
       references: ["f8"],
       citations: [
         {
+          // CrossRef 실재 확인 (https://api.crossref.org/works/10.1016/j.edurev.2020.100314) — Sprint 67-AR
           id: "Strelan-2020",
           authors: ["Strelan, P.", "Osborn, A.", "Palmer, E."],
           year: 2020,
@@ -424,7 +425,7 @@ export const DEMO_FORUM_MESSAGES: Record<string, AIForumMessage[]> = {
           pages: "100314",
           doi: "10.1016/j.edurev.2020.100314",
           language: "en",
-          verified: false,
+          verified: true,
         },
       ],
       createdAt: "2026-05-12T09:10:00Z",
@@ -468,6 +469,7 @@ export const DEMO_FORUM_MESSAGES: Record<string, AIForumMessage[]> = {
       references: ["f9", "f11"],
       citations: [
         {
+          // CrossRef 실재 확인 (https://api.crossref.org/works/10.1126/science.1152408) — Sprint 67-AR
           id: "Karpicke-2008",
           authors: ["Karpicke, J. D.", "Roediger, H. L."],
           year: 2008,
@@ -479,7 +481,7 @@ export const DEMO_FORUM_MESSAGES: Record<string, AIForumMessage[]> = {
           pages: "966-968",
           doi: "10.1126/science.1152408",
           language: "en",
-          verified: false,
+          verified: true,
         },
       ],
       createdAt: "2026-05-12T10:00:00Z",
