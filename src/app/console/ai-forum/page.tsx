@@ -25,6 +25,7 @@ import {
 import { auth as firebaseAuth } from "@/lib/firebase";
 import AuthGuard from "@/features/auth/AuthGuard";
 import EmptyState from "@/components/ui/empty-state";
+import InlineNotification from "@/components/ui/inline-notification";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { aiForumsApi } from "@/lib/bkend";
 import {
@@ -460,8 +461,17 @@ function AdminContent() {
         )}
       </section>
 
-      <div className="mt-10 rounded-2xl border-2 border-dashed border-muted-foreground/20 bg-muted/30 p-4 text-xs text-muted-foreground">
-        <strong>Phase 1 안내</strong>: 현재는 토론 등록·개최·중지만 가능합니다. AI 페르소나의 자동 라운드 진행은 Phase 2(Vercel Cron 도입) 이후 활성화됩니다. 그 전까지는 관전 페이지에 데모 토론 2건만 표시됩니다.
+      <div className="mt-10">
+        <InlineNotification
+          kind="success"
+          title="Phase 2 활성화 완료 — AI 페르소나 자동 라운드 진행 중"
+          description={
+            <>
+              매일 06:00 UTC (15:00 KST) Vercel Cron 이 1 tick 당 최대 6 step (≒1 라운드) 자동 진행합니다.
+              운영진이 즉시 진행을 원하면 각 토론 카드의 <strong>"다음 진행"</strong> 버튼 사용. 비용 캡 $0.5/토론.
+            </>
+          }
+        />
       </div>
     </div>
   );
