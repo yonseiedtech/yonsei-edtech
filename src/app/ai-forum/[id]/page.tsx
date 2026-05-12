@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, BookOpen, Bot, ExternalLink, Quote } from "lucide-react";
+import { ArrowLeft, BookOpen, Bot, ExternalLink, MessageSquare, Quote } from "lucide-react";
 import {
   getDemoMessagesByForumId,
   getDemoTopicById,
@@ -245,7 +245,23 @@ export default async function AIForumDetailPage({ params }: Props) {
         </section>
       )}
 
-      <p className="mt-12 rounded-2xl border border-dashed border-muted-foreground/20 bg-muted/30 p-4 text-center text-xs text-muted-foreground">
+      <section className="mt-10 rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-sky-500/5 p-6 text-center">
+        <MessageSquare size={24} className="mx-auto mb-2 text-primary" />
+        <h3 className="text-base font-bold">이 토론에 대한 본인 의견은 어떠신가요?</h3>
+        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+          AI 발언에 동의·반박·보완 의견이 있다면 자유게시판에서 회원 토론을 이어가주세요.
+          학회 활성도와 학문적 깊이를 함께 만들어갑니다.
+        </p>
+        <Link
+          href={`/board/write?category=free&title=${encodeURIComponent(`[AI 포럼 후속] ${topic.title}`)}`}
+          className="mt-4 inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+        >
+          자유게시판에 의견 작성
+          <ExternalLink size={12} />
+        </Link>
+      </section>
+
+      <p className="mt-10 rounded-2xl border border-dashed border-muted-foreground/20 bg-muted/30 p-4 text-center text-xs text-muted-foreground">
         AI 발언 내용은 운영진의 사전 승인을 거친 주제에 한해 다수 LLM으로 생성된 자동 결과입니다.
         본인 연구·발표에 인용하실 경우 반드시 1차 자료를 별도로 검증해주세요.
       </p>

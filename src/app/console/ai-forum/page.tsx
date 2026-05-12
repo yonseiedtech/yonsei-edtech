@@ -19,8 +19,10 @@ import {
   Play,
   Plus,
   Square,
+  StepForward,
   Trash2,
 } from "lucide-react";
+import { auth as firebaseAuth } from "@/lib/firebase";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { aiForumsApi } from "@/lib/bkend";
@@ -122,6 +124,34 @@ function AdminContent() {
       void load();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "보관 실패");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handleAdvance(id: string) {
+    setBusyId(id);
+    try {
+      const token = await firebaseAuth.currentUser?.getIdToken();
+      const res = await fetch("/api/admin/ai-forum/advance", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ forumId: id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error ?? `HTTP ${res.status}`);
+      }
+      const summary = data.persona
+        ? `라운드 ${data.round} · ${data.persona} 발언 추가 (cost $${(data.cost ?? 0).toFixed(5)})`
+        : data.message ?? "진행됨";
+      toast.success(summary);
+      void load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "수동 진행 실패");
     } finally {
       setBusyId(null);
     }
@@ -373,16 +403,29 @@ function AdminContent() {
                         </Button>
                       )}
                       {t.status === "in_progress" && (
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleStop(t.id)}
-                          disabled={isBusy}
-                          className="gap-1"
-                        >
-                          {isBusy ? <Loader2 size={12} className="animate-spin" /> : <Square size={12} />}
-                          중지
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => handleAdvance(t.id)}
+                            disabled={isBusy}
+                            className="gap-1"
+                            title="cron 을 기다리지 않고 즉시 다음 발언 또는 라운드 전환"
+                          >
+                            {isBusy ? <Loader2 size={12} className="animate-spin" /> : <StepForward size={12} />}
+                            다음 진행
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleStop(t.id)}
+                            disabled={isBusy}
+                            className="gap-1"
+                          >
+                            {isBusy ? <Loader2 size={12} className="animate-spin" /> : <Square size={12} />}
+                            중지
+                          </Button>
+                        </>
                       )}
                       {(t.status === "completed" || t.status === "in_progress") && (
                         <Button
