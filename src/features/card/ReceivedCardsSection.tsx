@@ -557,9 +557,13 @@ export default function ReceivedCardsSection({ ownerId }: ReceivedCardsSectionPr
             불러오는 중…
           </div>
         ) : filtered.length === 0 && search ? (
-          <div className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground">
-            검색 결과가 없습니다.
-          </div>
+          <EmptyState
+            icon={User}
+            title={`"${search}"에 대한 명함 검색 결과 없음`}
+            description="이름·소속·메모 키워드를 다시 확인하거나 검색을 초기화하세요."
+            actionLabel="검색 초기화"
+            onAction={() => setSearch("")}
+          />
         ) : cards.length === 0 ? (
           <EmptyState
             icon={User}

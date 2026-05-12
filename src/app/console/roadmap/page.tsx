@@ -22,6 +22,7 @@ import {
   Trash2,
 } from "lucide-react";
 import AuthGuard from "@/features/auth/AuthGuard";
+import EmptyState from "@/components/ui/empty-state";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { roadmapStagesApi } from "@/lib/bkend";
 import { isAtLeast } from "@/lib/permissions";
@@ -414,12 +415,13 @@ function AdminContent() {
           불러오는 중…
         </div>
       ) : stages.length === 0 ? (
-        <div className="rounded-2xl border-2 border-dashed border-muted-foreground/30 bg-muted/30 p-8 text-center text-sm text-muted-foreground">
-          <Eye size={20} className="mx-auto mb-2 text-muted-foreground/60" />
-          <p>아직 Firestore 에 단계가 없습니다. 정적 fallback (6단계)이 회원에게 노출 중입니다.</p>
-          <p className="mt-2">"새 단계 추가"로 운영진 관리 데이터로 전환하세요.</p>
-          <p className="mt-2 text-[11px]">초기 시드 권장: order/매칭 학기 1~5 + 졸업 후 7 (isAlumni=true) 총 6건.</p>
-        </div>
+        <EmptyState
+          icon={Eye}
+          title="아직 Firestore에 단계가 없습니다"
+          description="현재 정적 fallback 6단계가 회원에게 노출 중입니다. 신규 단계를 등록하면 Firestore 데이터가 우선 적용됩니다."
+          actionLabel="새 단계 추가"
+          onAction={() => setNewStage(newDraft((stages[stages.length - 1]?.order ?? 0) + 1))}
+        />
       ) : (
         <div className="space-y-4">
           {stages.map((s, i) => (

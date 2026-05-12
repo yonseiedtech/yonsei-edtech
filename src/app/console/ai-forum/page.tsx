@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { auth as firebaseAuth } from "@/lib/firebase";
 import AuthGuard from "@/features/auth/AuthGuard";
+import EmptyState from "@/components/ui/empty-state";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { aiForumsApi } from "@/lib/bkend";
 import {
@@ -356,9 +357,13 @@ function AdminContent() {
             불러오는 중…
           </div>
         ) : topics.length === 0 ? (
-          <div className="rounded-2xl border-2 border-dashed border-muted-foreground/30 p-8 text-center text-sm text-muted-foreground">
-            아직 등록된 토론이 없습니다. 우측 상단 "새 토론 등록"으로 시작하세요.
-          </div>
+          <EmptyState
+            icon={Bot}
+            title="아직 등록된 AI 포럼 토론이 없습니다"
+            description="새 토론을 등록하면 회원이 관전 페이지에서 라운드별 발언을 볼 수 있습니다. 등록 직후에는 데모 토론 2건만 노출됩니다."
+            actionLabel="새 토론 등록"
+            onAction={() => setShowNew(true)}
+          />
         ) : (
           <div className="space-y-3">
             {topics.map((t) => {
