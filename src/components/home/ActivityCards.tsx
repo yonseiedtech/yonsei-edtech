@@ -57,15 +57,16 @@ export default function ActivityCards() {
   if (!isLoading && activities.length === 0) return null;
 
   return (
-    <section className="py-16 md:py-24">
+    <section className="py-12 sm:py-16 md:py-24">
       <div className="mx-auto max-w-6xl px-4">
-        <div className="flex items-end justify-between">
-          <h2 className="text-2xl font-bold md:text-3xl">최근 활동</h2>
+        <div className="flex items-end justify-between gap-3">
+          <h2 className="text-2xl font-bold tracking-tight md:text-3xl lg:text-4xl">최근 활동</h2>
           <Link
             href="/activities"
-            className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+            className="group inline-flex items-center gap-1 text-sm font-semibold text-primary transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
           >
-            전체 보기 <ArrowRight size={14} />
+            전체 보기
+            <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
           </Link>
         </div>
 
@@ -73,22 +74,22 @@ export default function ActivityCards() {
           {activities.map((a, i) => (
             <motion.div
               key={`${a.category}-${a.title}`}
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
+              initial={{ opacity: 0, y: 4 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.3, delay: i * 0.05 }}
               className="grid gap-2 py-6 md:grid-cols-12 md:items-center md:gap-4"
             >
               <div className="md:col-span-2">
-                <span className="text-xs font-medium text-primary">
+                <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
                   {a.category}
                 </span>
-                <span className="ml-2 text-xs text-muted-foreground md:ml-0 md:block">
+                <span className="ml-2 text-xs text-muted-foreground md:ml-0 md:mt-1.5 md:block">
                   {a.date}
                 </span>
               </div>
-              <h3 className="font-semibold md:col-span-4">{a.title}</h3>
-              <p className="text-sm text-muted-foreground md:col-span-6">
+              <h3 className="font-bold tracking-tight md:col-span-4">{a.title}</h3>
+              <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground md:col-span-6">
                 {a.desc}
               </p>
             </motion.div>

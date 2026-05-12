@@ -2,10 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { BarChart3, BookOpen, GraduationCap, Sparkles, ArrowRight, Type, Network, Cloud } from "lucide-react";
+import { BarChart3, BookOpen, GraduationCap, Sparkles, ArrowRight, Type, Network, Cloud, AlertCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import PageHeader from "@/components/ui/page-header";
+import EmptyState from "@/components/ui/empty-state";
 import { alumniThesesApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import type { AlumniThesis } from "@/types";
@@ -125,37 +129,45 @@ export default function ResearchAnalyticsPage() {
   }, [theses]);
 
   return (
-    <div className="py-12">
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
       <div className="mx-auto max-w-6xl px-4">
-        <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <BarChart3 size={24} />
-          </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold sm:text-3xl">{header.title}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {header.description}
-            </p>
-          </div>
-        </div>
 
+        {/* ── 페이지 헤더 ── */}
+        <PageHeader
+          icon={BarChart3}
+          title={header.title}
+          description={header.description}
+        />
+
+        <Separator className="mt-6" />
+
+        {/* ── 스탯 카드 ── */}
         <div className="mt-6 grid grid-cols-3 gap-3">
-          <StatCard label="수집 논문" value={`${stats.total}건`} />
-          <StatCard label="기간" value={stats.yearRange} />
-          <StatCard label="고유 키워드" value={`${keywordCount}개`} />
+          <StatCard label="수집 논문" value={`${stats.total}건`} loading={loading} />
+          <StatCard label="기간" value={stats.yearRange} loading={loading} />
+          <StatCard label="고유 키워드" value={`${keywordCount}개`} loading={loading} />
         </div>
 
+        {/* ── 본문 ── */}
         {loading ? (
-          <div className="mt-10 space-y-4" aria-busy="true" aria-label="연구 데이터 불러오는 중">
+          <div className="mt-8 space-y-4" aria-busy="true" aria-label="연구 데이터 불러오는 중">
             <div className="flex flex-wrap gap-2">
-              <Skeleton className="h-9 w-28" />
-              <Skeleton className="h-9 w-28" />
-              <Skeleton className="h-9 w-28" />
+              <Skeleton className="h-9 w-28 rounded-lg" />
+              <Skeleton className="h-9 w-28 rounded-lg" />
+              <Skeleton className="h-9 w-28 rounded-lg" />
             </div>
-            <Skeleton className="h-[420px] w-full rounded-xl" />
+            <Skeleton className="h-[420px] w-full rounded-2xl" />
           </div>
         ) : error ? (
-          <p className="mt-12 text-sm text-destructive" role="alert">⚠ {error}</p>
+          <div className="mt-8">
+            <EmptyState
+              icon={AlertCircle}
+              title="연구 데이터를 불러오는 중 오류가 발생했습니다"
+              description="네트워크 상태를 확인한 뒤 다시 시도해주세요."
+              actionLabel="다시 시도"
+              onAction={() => window.location.reload()}
+            />
+          </div>
         ) : (
           <>
             <Tabs defaultValue="keyword" className="mt-8">
@@ -183,7 +195,7 @@ export default function ResearchAnalyticsPage() {
                 </TabsTrigger>
               </TabsList>
 
-              {/* Tab 1: Keyword Analysis */}
+              {/* Tab 1: 키워드 분석 */}
               <TabsContent value="keyword" className="mt-6">
                 <section>
                   <SectionHeader
@@ -191,7 +203,7 @@ export default function ResearchAnalyticsPage() {
                     title="키워드 워드 클라우드"
                     desc={`총 ${keywordCount}개 키워드를 수집했습니다. 상위 항목 수와 조회 기간을 조정할 수 있으며, 글자 크기는 등장 빈도에 비례합니다.`}
                   />
-                  <div className="mt-4 rounded-2xl border bg-card p-5">
+                  <div className="mt-4 rounded-2xl border bg-card p-5 shadow-sm">
                     <KeywordCloud theses={theses} defaultTopN={30} />
                   </div>
                 </section>
@@ -204,7 +216,7 @@ export default function ResearchAnalyticsPage() {
                   />
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     {eras.map((era) => (
-                      <div
+                      <article
                         key={era.label}
                         className="rounded-2xl border bg-card p-5 shadow-sm transition-shadow hover:shadow-md"
                       >
@@ -234,13 +246,13 @@ export default function ResearchAnalyticsPage() {
                             ))}
                           </div>
                         )}
-                      </div>
+                      </article>
                     ))}
                   </div>
                 </section>
               </TabsContent>
 
-              {/* Tab 2: Title Analysis */}
+              {/* Tab 2: 제목 분석 */}
               <TabsContent value="title" className="mt-6">
                 <section>
                   <SectionHeader
@@ -248,7 +260,7 @@ export default function ResearchAnalyticsPage() {
                     title="제목 N-gram 트렌드"
                     desc="논문 제목에서 추출한 2~3어절 표현의 등장 빈도와 시대별 분포를 보여줍니다. 키워드(명사 단위)로는 잡히지 않는 구문 단위 표현을 분석할 수 있습니다."
                   />
-                  <div className="mt-4 rounded-2xl border bg-card p-5">
+                  <div className="mt-4 rounded-2xl border bg-card p-5 shadow-sm">
                     <TitleNgramTrend theses={theses} />
                   </div>
                 </section>
@@ -259,7 +271,7 @@ export default function ResearchAnalyticsPage() {
                     title="연구 유형 자동 분류"
                     desc="제목 어휘를 사전과 매칭해 정량/정성, 개발/분석 두 축으로 자동 태깅하고 시대별 추세를 보여줍니다."
                   />
-                  <div className="mt-4">
+                  <div className="mt-4 rounded-2xl border bg-card p-5 shadow-sm">
                     <ResearchTypeChart theses={theses} />
                   </div>
                 </section>
@@ -270,13 +282,13 @@ export default function ResearchAnalyticsPage() {
                     title="연구 대상자 · 응용 영역 분포"
                     desc="제목에 등장한 연구 대상자(학생·교사·성인 등)와 응용 영역(초중등·대학·평생교육 등)을 분류해 비중과 시대별 변화를 보여줍니다."
                   />
-                  <div className="mt-4">
+                  <div className="mt-4 rounded-2xl border bg-card p-5 shadow-sm">
                     <SubjectDistribution theses={theses} />
                   </div>
                 </section>
               </TabsContent>
 
-              {/* Tab 3: Lineage Map */}
+              {/* Tab 3: 연구 계보 */}
               <TabsContent value="lineage" className="mt-6">
                 <section>
                   <SectionHeader
@@ -284,49 +296,50 @@ export default function ResearchAnalyticsPage() {
                     title="연구 계보도"
                     desc="시대별 핵심 키워드가 어떻게 이어지고 분기되었는지를 보여줍니다. 같은 키워드는 시대 사이를 곡선으로 잇고, 곡선의 굵기는 해당 시대의 연구 비중을 나타냅니다."
                   />
-                  <div className="mt-4 rounded-2xl border bg-card p-3 sm:p-5 overflow-hidden">
+                  <div className="mt-4 overflow-hidden rounded-2xl border bg-card p-3 shadow-sm sm:p-5">
                     <ResearchLineageMap theses={theses} />
                   </div>
                 </section>
               </TabsContent>
             </Tabs>
 
-            {/* Member CTA */}
-            <section className="mt-10 rounded-2xl border bg-gradient-to-br from-primary/5 to-primary/10 p-6 sm:p-8">
+            {/* ── 회원 CTA ── */}
+            <section
+              aria-label="학위논문 목록 안내"
+              className="mt-10 rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-sky-500/5 to-primary/5 p-6 shadow-sm sm:p-8"
+            >
               <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h3 className="text-base font-bold sm:text-lg">전체 {stats.total}건 학위논문 목록을 열람하세요</h3>
+                  <h3 className="text-base font-bold tracking-tight sm:text-lg">
+                    전체 {stats.total}건 학위논문 목록을 열람하세요
+                  </h3>
                   <p className="mt-1 text-sm text-muted-foreground">
                     저자·지도교수·초록·원문(dCollection) 링크는 학회 회원에게만 공개됩니다.
                   </p>
                 </div>
                 {user ? (
-                  <Link
-                    href="/alumni/thesis"
-                    className="inline-flex h-10 items-center rounded-md bg-primary px-5 text-sm font-medium text-white hover:bg-primary/90"
-                  >
-                    학위논문 목록 보기
-                    <ArrowRight size={14} className="ml-1.5" />
+                  <Link href="/alumni/thesis">
+                    <Button className="shrink-0">
+                      학위논문 목록 보기
+                      <ArrowRight size={14} className="ml-1.5" aria-hidden />
+                    </Button>
                   </Link>
                 ) : (
-                  <div className="flex gap-2">
-                    <Link
-                      href="/login"
-                      className="inline-flex h-10 items-center rounded-md bg-primary px-5 text-sm font-medium text-white hover:bg-primary/90"
-                    >
-                      로그인
+                  <div className="flex flex-wrap gap-2">
+                    <Link href="/login">
+                      <Button className="shrink-0">로그인</Button>
                     </Link>
-                    <Link
-                      href="/signup"
-                      className="inline-flex h-10 items-center rounded-md border border-primary bg-card px-5 text-sm font-medium text-primary hover:bg-primary/5"
-                    >
-                      회원가입
+                    <Link href="/signup">
+                      <Button variant="outline" className="shrink-0">
+                        회원가입
+                      </Button>
                     </Link>
                   </div>
                 )}
               </div>
             </section>
 
+            {/* ── 데이터 출처 ── */}
             <p className="mt-6 text-[11px] text-muted-foreground">
               ※ 데이터 출처: 연세대학교 교육대학원 학위논문 dCollection (수집 시점: 2026년 4월).
             </p>
@@ -337,11 +350,23 @@ export default function ResearchAnalyticsPage() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({
+  label,
+  value,
+  loading = false,
+}: {
+  label: string;
+  value: string;
+  loading?: boolean;
+}) {
   return (
-    <div className="rounded-xl border bg-card p-4">
+    <div className="rounded-2xl border bg-card p-4 shadow-sm">
       <p className="text-[11px] text-muted-foreground">{label}</p>
-      <p className="mt-1 text-base font-bold sm:text-lg">{value}</p>
+      {loading ? (
+        <Skeleton className="mt-2 h-5 w-3/4" />
+      ) : (
+        <p className="mt-1 text-base font-bold tabular-nums sm:text-lg">{value}</p>
+      )}
     </div>
   );
 }
