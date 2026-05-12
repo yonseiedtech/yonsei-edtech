@@ -26,6 +26,7 @@ import EmptyState from "@/components/ui/empty-state";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { roadmapStagesApi } from "@/lib/bkend";
 import { isAtLeast } from "@/lib/permissions";
+import { auth as firebaseAuth } from "@/lib/firebase";
 import {
   ROADMAP_COLOR_PRESETS,
   type RoadmapColorPreset,
@@ -178,6 +179,29 @@ function AdminContent() {
       void load();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "등록 실패");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handleSeedDefaults() {
+    if (!confirm("기본 6단계 (1학기차 ~ 졸업 후)를 1-click 으로 등록합니다. 이미 등록된 단계는 건너뜁니다. 계속할까요?")) return;
+    setBusyId("__seed__");
+    try {
+      const token = await firebaseAuth.currentUser?.getIdToken();
+      const res = await fetch("/api/admin/roadmap/seed", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error ?? `HTTP ${res.status}`);
+      toast.success(data.message ?? `${data.created ?? 0}개 단계 등록됨`);
+      void load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "시드 등록 실패");
     } finally {
       setBusyId(null);
     }
@@ -415,13 +439,25 @@ function AdminContent() {
           불러오는 중…
         </div>
       ) : stages.length === 0 ? (
-        <EmptyState
-          icon={Eye}
-          title="아직 Firestore에 단계가 없습니다"
-          description="현재 정적 fallback 6단계가 회원에게 노출 중입니다. 신규 단계를 등록하면 Firestore 데이터가 우선 적용됩니다."
-          actionLabel="새 단계 추가"
-          onAction={() => setNewStage(newDraft((stages[stages.length - 1]?.order ?? 0) + 1))}
-        />
+        <div className="space-y-3">
+          <EmptyState
+            icon={Eye}
+            title="아직 Firestore에 단계가 없습니다"
+            description="현재 정적 fallback 6단계가 회원에게 노출 중입니다. 한 번 클릭으로 기본 6단계를 모두 등록할 수 있습니다."
+            actions={[
+              {
+                label: busyId === "__seed__" ? "등록 중…" : "기본 6단계 1-click 등록",
+                onClick: handleSeedDefaults,
+                variant: "default",
+              },
+              {
+                label: "직접 새 단계 추가",
+                onClick: () => setNewStage(newDraft(1)),
+                variant: "outline",
+              },
+            ]}
+          />
+        </div>
       ) : (
         <div className="space-y-4">
           {stages.map((s, i) => (
