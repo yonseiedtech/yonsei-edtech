@@ -205,13 +205,43 @@ export async function processOneTick(
           completedAt: new Date().toISOString(),
           summary: summaryResult.text,
         });
+
+        // Sprint 67-AR: 자동 자유게시판 게시 — 회원 발견성 강화
+        // 자연 완료(maxRounds 도달) 시에만 발행. max_cost_exceeded 같은 비정상 종료는 제외.
+        try {
+          const postRef = db.collection("posts").doc();
+          const postBody = [
+            summaryResult.text,
+            "",
+            `— AI 페르소나 ${forum.participants.length}명이 ${forum.maxRounds}라운드에 걸쳐 자율 토론한 결과입니다.`,
+            "",
+            `[전체 토론 보기 →](/ai-forum/${fid})`,
+          ].join("\n");
+          const nowIso = new Date().toISOString();
+          await postRef.set({
+            title: `[AI 포럼 결과] ${forum.title}`,
+            content: postBody,
+            category: "free",
+            authorId: "system:ai-forum",
+            authorName: "연세교육공학회 AI 포럼",
+            viewCount: 0,
+            createdAt: nowIso,
+            updatedAt: nowIso,
+          });
+        } catch (publishErr) {
+          // 게시 실패는 토론 종료를 막지 않음 — 로그만 남김
+          console.error(
+            "[ai-forum-engine] 자유게시판 자동 게시 실패:",
+            publishErr instanceof Error ? publishErr.message : publishErr,
+          );
+        }
       } catch {
         await forumSnap.ref.update({
           status: "completed",
           completedAt: new Date().toISOString(),
         });
       }
-      return { ok: true, message: "토론 완료 + 요약 생성", forumId: fid };
+      return { ok: true, message: "토론 완료 + 요약 생성 + 자유게시판 게시", forumId: fid };
     }
     await forumSnap.ref.update({ currentRound: nextRound });
     return {
