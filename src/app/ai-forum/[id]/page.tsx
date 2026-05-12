@@ -13,6 +13,7 @@ import {
 } from "@/types/ai-forum";
 import { citationLinkUrl, formatAPA7Reference } from "@/features/ai-forum/apa";
 import { aiForumMessagesApi, aiForumsApi } from "@/lib/bkend";
+import InlineNotification from "@/components/ui/inline-notification";
 
 async function fetchTopic(id: string): Promise<AIForumTopic | undefined> {
   try {
@@ -118,6 +119,32 @@ export default async function AIForumDetailPage({ params }: Props) {
           </div>
         </div>
       </header>
+
+      {sortedCitations.length > 0 && (
+        <div className="mb-6">
+          {(() => {
+            const total = sortedCitations.length;
+            const verified = sortedCitations.filter((c) => c.verified).length;
+            const unverified = total - verified;
+            if (unverified === 0) {
+              return (
+                <InlineNotification
+                  kind="success"
+                  title={`참고문헌 ${total}건 전체 검증 완료`}
+                  description="모든 인용의 DOI·출처가 CrossRef 또는 운영진 검수를 통해 실재 확인되었습니다."
+                />
+              );
+            }
+            return (
+              <InlineNotification
+                kind="warning"
+                title={`참고문헌 ${unverified}건 검증 미완료 (전체 ${total}건 중)`}
+                description="AI 자동 생성 인용은 ⚠️ 표시됩니다. 본인 연구·발표에 인용하실 경우 1차 자료를 직접 검증해주세요."
+              />
+            );
+          })()}
+        </div>
+      )}
 
       <div className="space-y-8">
         {sortedRounds.map(([round, msgs]) => (

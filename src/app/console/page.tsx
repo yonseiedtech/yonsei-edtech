@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Users, Clock, FileText, HelpCircle, LayoutDashboard, Bot, Map } from "lucide-react";
 import AdminTodoTab from "@/features/admin/AdminTodoTab";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
+import ActionableBanner from "@/components/ui/actionable-banner";
 
 function StatCard({ icon: Icon, label, value, color, href }: {
   icon: React.ElementType;
@@ -66,6 +67,23 @@ export default function ConsoleDashboardPage() {
         title="운영 콘솔"
         description={`${user?.name}님, 안녕하세요.`}
       />
+
+      {(pendingData?.total ?? 0) > 0 && (
+        <ActionableBanner
+          kind="warning"
+          title={`승인 대기 회원 ${pendingData?.total ?? 0}명`}
+          description="새 가입 신청이 누적되어 있습니다. 자동 승인 가능한 회원도 함께 처리하세요."
+          action={{ label: "회원 관리로 이동", href: "/console/members" }}
+        />
+      )}
+      {unansweredCount > 0 && (
+        <ActionableBanner
+          kind="error"
+          title={`미답변 문의 ${unansweredCount}건`}
+          description="답변 대기 중인 회원 문의가 있습니다. 24시간 내 응답이 학회 운영 표준입니다."
+          action={{ label: "문의 답변하기", href: "/console/inquiries" }}
+        />
+      )}
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <StatCard icon={Users} label="전체 회원" value={membersData?.total ?? 0} color="bg-blue-50 text-blue-600" href="/console/members" />
