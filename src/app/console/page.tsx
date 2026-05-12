@@ -6,7 +6,11 @@ import { useInquiries } from "@/features/inquiry/useInquiry";
 import { usePosts } from "@/features/board/useBoard";
 import { profilesApi } from "@/lib/bkend";
 import { useQuery } from "@tanstack/react-query";
-import { Users, Clock, FileText, HelpCircle, LayoutDashboard, Bot, Map } from "lucide-react";
+import { Users, Clock, FileText, HelpCircle, LayoutDashboard, Bot, Map, FileUp, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { auth as firebaseAuth } from "@/lib/firebase";
+import { Button } from "@/components/ui/button";
 import AdminTodoTab from "@/features/admin/AdminTodoTab";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import ActionableBanner from "@/components/ui/actionable-banner";
@@ -48,6 +52,29 @@ export default function ConsoleDashboardPage() {
   const { inquiries } = useInquiries();
   const { posts } = usePosts("all");
   const unansweredCount = inquiries.filter((i) => i.status === "pending").length;
+  const [seeding, setSeeding] = useState(false);
+
+  async function handleSeedContent() {
+    if (!confirm("운영진이 작성한 콘텐츠 초안 7건을 게시판에 일괄 등록합니다.\n이미 등록된 동일 제목은 건너뜁니다. 계속할까요?")) return;
+    setSeeding(true);
+    try {
+      const token = await firebaseAuth.currentUser?.getIdToken();
+      const res = await fetch("/api/admin/seed-board-content", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error ?? `HTTP ${res.status}`);
+      toast.success(data.message ?? `${data.created ?? 0}건 등록 / ${data.skipped ?? 0}건 기존 유지`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "콘텐츠 시드 등록 실패");
+    } finally {
+      setSeeding(false);
+    }
+  }
 
   const { data: membersData } = useQuery({
     queryKey: ["admin", "members"],
@@ -90,6 +117,24 @@ export default function ConsoleDashboardPage() {
         <StatCard icon={Clock} label="승인 대기" value={pendingData?.total ?? 0} color="bg-amber-50 text-amber-600" href="/console/members" />
         <StatCard icon={FileText} label="게시글" value={posts.length} color="bg-green-50 text-green-600" href="/console/posts" />
         <StatCard icon={HelpCircle} label="미답변 문의" value={unansweredCount} color="bg-red-50 text-red-600" href="/console/inquiries" />
+      </div>
+
+      <div className="rounded-2xl border-2 border-dashed border-primary/20 bg-primary/5 p-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+            <FileUp size={20} />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-bold">운영진 콘텐츠 시드 — 1-click 일괄 등록</p>
+            <p className="text-xs text-muted-foreground">
+              docs/board-content/ 7건 (디딤판·추천도서·포스터 5원칙·ADDIE·AI 시대 역할 등) 을 게시판에 한 번에 등록. Idempotent.
+            </p>
+          </div>
+          <Button onClick={handleSeedContent} disabled={seeding} className="gap-1.5">
+            {seeding ? <Loader2 size={14} className="animate-spin" /> : <FileUp size={14} />}
+            {seeding ? "등록 중…" : "콘텐츠 7건 등록"}
+          </Button>
+        </div>
       </div>
 
       <div>
