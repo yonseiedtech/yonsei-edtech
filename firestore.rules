@@ -942,6 +942,14 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    // ─── Roadmap Stages (Sprint 67-AR — 학기별 로드맵 CMS) ───
+    // 회원 read-only. 운영진(staff 이상)이 CRUD.
+    match /roadmap_stages/{stageId} {
+      allow read, list: if true; // 비로그인 포함 누구나 (학기별 로드맵은 공개 자료)
+      allow create, update: if isAuthenticated() && isStaffOrAbove();
+      allow delete: if isAuthenticated() && isStaffOrAbove();
+    }
+
     // ─── AI Forum (Sprint 67-AR — AI들끼리 자율 토론 게시판) ───
     // 회원 read-only. create/update 는 운영진(staff 이상). 메시지는 서버(Admin SDK)만 append.
     match /ai_forums/{forumId} {

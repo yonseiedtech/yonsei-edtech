@@ -68,3 +68,77 @@ export interface GuideProgress {
   startedAt: string;
   updatedAt: string;
 }
+
+// ── 학기별 로드맵 (Sprint 67-AR — 운영진 콘텐츠 관리) ──
+
+/** 색상 프리셋 — free-form 색상 문자열 위험 차단 */
+export type RoadmapColorPreset =
+  | "blue"
+  | "emerald"
+  | "amber"
+  | "rose"
+  | "purple"
+  | "slate";
+
+export const ROADMAP_COLOR_PRESETS: Record<
+  RoadmapColorPreset,
+  { textColor: string; bgColor: string; label: string }
+> = {
+  blue: {
+    textColor: "text-blue-700 dark:text-blue-300",
+    bgColor: "border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20",
+    label: "파랑",
+  },
+  emerald: {
+    textColor: "text-emerald-700 dark:text-emerald-300",
+    bgColor:
+      "border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/20",
+    label: "초록",
+  },
+  amber: {
+    textColor: "text-amber-700 dark:text-amber-300",
+    bgColor:
+      "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20",
+    label: "노랑",
+  },
+  rose: {
+    textColor: "text-rose-700 dark:text-rose-300",
+    bgColor: "border-rose-200 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20",
+    label: "빨강",
+  },
+  purple: {
+    textColor: "text-purple-700 dark:text-purple-300",
+    bgColor:
+      "border-purple-200 bg-purple-50/50 dark:border-purple-900 dark:bg-purple-950/20",
+    label: "보라",
+  },
+  slate: {
+    textColor: "text-slate-700 dark:text-slate-300",
+    bgColor:
+      "border-slate-200 bg-slate-50/50 dark:border-slate-900 dark:bg-slate-950/20",
+    label: "회색",
+  },
+};
+
+/** 학기별 로드맵의 한 단계 카드 — 운영진이 콘솔에서 수정 */
+export interface RoadmapStage {
+  id: string;
+  /** 표시 순서 (1=첫 카드) */
+  order: number;
+  /** 본인 학기 매칭에 사용할 누적 학기 번호 (matchSemester==N 면 N학기차 사용자 카드 강조) */
+  matchSemester: number;
+  /** 카드 헤더 라벨 (예: "1학기차 — 적응과 시작") */
+  title: string;
+  /** 짧은 태그 (예: "정착") */
+  shortTag: string;
+  /** 체크리스트 항목 */
+  items: string[];
+  /** 색상 프리셋 */
+  colorPreset: RoadmapColorPreset;
+  /** 졸업 후 단계 — alumni 사용자 자동 매칭 */
+  isAlumni: boolean;
+  /** 게시 여부 — false 면 회원에게 숨김 */
+  published: boolean;
+  createdAt: string;
+  updatedAt: string;
+}

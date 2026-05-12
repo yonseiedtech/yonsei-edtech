@@ -1810,6 +1810,27 @@ export const archiveFavoritesApi = {
     `${userId}_${itemType}_${itemId}`,
 };
 
+// ─── 학기별 로드맵 (Sprint 67-AR — 운영진 콘텐츠 관리) ───
+// 회원 read-only (published=true 만), 운영진(staff 이상)이 CRUD.
+import type { RoadmapStage } from "@/types/steppingstone";
+
+export const roadmapStagesApi = {
+  list: () =>
+    dataApi.list<RoadmapStage>("roadmap_stages", { limit: 100, sort: "order:asc" }),
+  listPublished: () =>
+    dataApi.list<RoadmapStage>("roadmap_stages", {
+      "filter[published]": "true",
+      limit: 100,
+      sort: "order:asc",
+    }),
+  get: (id: string) => dataApi.get<RoadmapStage>("roadmap_stages", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<RoadmapStage>("roadmap_stages", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<RoadmapStage>("roadmap_stages", id, data),
+  delete: (id: string) => dataApi.delete("roadmap_stages", id),
+};
+
 // ─── AI 포럼 (Sprint 67-AR — AI 자율 토론 게시판) ───
 // 운영진이 토론 주제를 등록·시작·중지하고, Vercel cron이 라운드별 발언을 자동 생성.
 // 회원은 read-only 관전. messages 는 서버(Admin SDK)만 append.

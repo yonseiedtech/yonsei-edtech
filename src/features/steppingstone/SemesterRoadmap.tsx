@@ -1,27 +1,36 @@
 "use client";
 
 /**
- * 학기별 로드맵 (Sprint 67-AR — 외부 피드백 핵심 해결)
+ * 학기별 로드맵 (Sprint 67-AR — 운영진 CMS 전환)
  *
- * 입학부터 졸업까지 "이 학기에 무엇을 해야 하는지" 본인 학기 자동 매칭 + 강조.
- * 디딤판 hub 페이지의 핵심 콘텐츠 — '학기별 로드맵 자동 안내' 요청 직접 반영.
+ * Firestore `roadmap_stages` 컬렉션에서 동적으로 불러오며, 운영진이 콘솔에서
+ * 즉시 수정 가능. Firestore 가 비어있으면 정적 fallback 로 동작.
+ * 본인 학기 자동 매칭 + 강조 유지.
  */
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BookOpen, Check, CheckCircle2, Sparkles, Star, Target } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { getUserCumulativeSemesterCount } from "@/lib/interview-target";
+import { roadmapStagesApi } from "@/lib/bkend";
+import {
+  ROADMAP_COLOR_PRESETS,
+  type RoadmapColorPreset,
+  type RoadmapStage,
+} from "@/types/steppingstone";
 
 interface RoadmapItem {
-  semester: number; // 1~6+ (1=첫학기, 6=디펜스 학기, 7=졸업 후)
+  semester: number;
   title: string;
   shortTag: string;
   items: string[];
   color: string;
   bgColor: string;
+  isAlumni?: boolean;
 }
 
-const ROADMAP: RoadmapItem[] = [
+/** Firestore 가 비어있을 때 사용할 정적 fallback */
+const STATIC_FALLBACK: RoadmapItem[] = [
   {
     semester: 1,
     title: "1학기차 — 적응과 시작",
@@ -108,20 +117,66 @@ const ROADMAP: RoadmapItem[] = [
   },
 ];
 
+function presetToColors(preset: RoadmapColorPreset): { color: string; bgColor: string } {
+  const p = ROADMAP_COLOR_PRESETS[preset];
+  return { color: p.textColor, bgColor: p.bgColor };
+}
+
+function stageToItem(s: RoadmapStage): RoadmapItem {
+  const { color, bgColor } = presetToColors(s.colorPreset);
+  return {
+    semester: s.matchSemester,
+    title: s.title,
+    shortTag: s.shortTag,
+    items: s.items,
+    color,
+    bgColor,
+    isAlumni: s.isAlumni,
+  };
+}
+
 export default function SemesterRoadmap() {
   const { user } = useAuthStore();
   const myCumulative = user ? getUserCumulativeSemesterCount(user) ?? 1 : null;
   const isAlumni = !!(user as { isAlumni?: boolean } | null)?.isAlumni;
 
-  // 본인 학기 매칭 (alumni 인 경우 7, 5학기차 이상은 5로 매핑, 그 외는 정확 매칭)
+  // Firestore 에서 운영진이 관리하는 stage 들 불러오기 (없으면 fallback)
+  const [stages, setStages] = useState<RoadmapItem[]>(STATIC_FALLBACK);
+  useEffect(() => {
+    roadmapStagesApi
+      .listPublished()
+      .then((res) => {
+        const data = (res.data ?? []) as RoadmapStage[];
+        if (data.length > 0) {
+          const sorted = [...data].sort((a, b) => a.order - b.order);
+          setStages(sorted.map(stageToItem));
+        }
+      })
+      .catch(() => {
+        // ignore - keep fallback
+      });
+  }, []);
+
+  // 본인 학기 매칭 — Firestore 가 isAlumni 단계를 정의했는지에 따라 동작
   const myMatchedSemester = useMemo(() => {
     if (!user) return null;
-    if (isAlumni) return 7;
+    // alumni 우선 — isAlumni stage 가 있으면 그 matchSemester, 없으면 데이터 중 최대값
+    if (isAlumni) {
+      const alumniStage = stages.find((s) => s.isAlumni);
+      return alumniStage?.semester ?? null;
+    }
     if (myCumulative == null) return null;
-    if (myCumulative >= 7) return 7;
-    if (myCumulative >= 5) return 5;
-    return myCumulative;
-  }, [user, myCumulative, isAlumni]);
+    // 사용자 학기 이상 중 가장 가까운 stage 매칭 — 정확 일치 우선
+    const exact = stages.find((s) => s.semester === myCumulative);
+    if (exact) return exact.semester;
+    // 그 외엔 가장 큰 stage 중 사용자 학기 이하인 것 (e.g. 7학기 사용자 → 5학기차 stage)
+    const eligible = stages
+      .filter((s) => !s.isAlumni && s.semester <= myCumulative)
+      .sort((a, b) => b.semester - a.semester);
+    return eligible[0]?.semester ?? null;
+  }, [user, myCumulative, isAlumni, stages]);
+
+  const ROADMAP = stages;
 
   return (
     <section className="mt-12">
