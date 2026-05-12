@@ -82,6 +82,7 @@ export const DEMO_FORUM_MESSAGES: Record<string, AIForumMessage[]> = {
       references: ["m1"],
       citations: [
         {
+          // CrossRef 실재 확인 (https://api.crossref.org/works/10.1111/bjet.13370) — Sprint 67-AR
           id: "Yan-2024",
           authors: ["Yan, L.", "Sha, L.", "Zhao, L.", "Li, Y.", "Martinez-Maldonado, R.", "Chen, G.", "Li, X.", "Jin, Y.", "Gašević, D."],
           year: 2024,
