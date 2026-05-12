@@ -144,13 +144,17 @@ function DashboardContent() {
             </div>
           }
         />
-        {/* Sprint 67-AP Phase 2: 학기 진행 Hero (토스 패턴) */}
-        <TermBriefHero user={user} />
+        {/* Sprint 67-AP Phase 2 + 2-B: 학기 진행 Hero (학사일정 통합) */}
+        <TermBriefHero
+          user={user}
+          academicCalendarSlot={
+            canShowWidget(user.role, "academicCalendar") ? <AcademicCalendarProgress /> : null
+          }
+        />
       </section>
 
       <section className="mx-auto mt-8 max-w-6xl px-4">
-        {/* 학사일정 진행바 (최상단) — 재학생 전용 */}
-        {canShowWidget(user.role, "academicCalendar") && <AcademicCalendarProgress />}
+        {/* 학사일정 진행바 (구) 위치 — TermBriefHero 안으로 흡수됨 */}
 
         {/* 오늘의 수업 — 일일 타임라인 (17~23시 시간축에 카드가 떠있는 뷰) — 재학생 전용 */}
         {canShowWidget(user.role, "dailyClassTimeline") && (

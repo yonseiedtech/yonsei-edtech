@@ -133,7 +133,7 @@ const PUBLIC_NAV: NavGroup[] = [
     ],
   },
   {
-    label: "연구",
+    label: "연구 활동",
     visibility: "both",
     items: [
       { href: "/research", label: "연세교육공학 연구 분석" },

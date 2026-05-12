@@ -8,15 +8,22 @@
  */
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { ArrowRight, Sparkles, Target } from "lucide-react";
 import type { User } from "@/types";
 import { getUserCumulativeSemesterCount, getUserEntryYear, getUserEntrySemester } from "@/lib/interview-target";
 
 interface Props {
   user: User;
+  /**
+   * Sprint 67-AP Phase 2-B: 학사일정 진행률 영역 통합.
+   * dashboard 에서 AcademicCalendarProgress 를 children 으로 전달하면
+   * hero 카드 내부에 통합 표시.
+   */
+  academicCalendarSlot?: ReactNode;
 }
 
-export default function TermBriefHero({ user }: Props) {
+export default function TermBriefHero({ user, academicCalendarSlot }: Props) {
   const entryYear = getUserEntryYear(user);
   const entrySem = getUserEntrySemester(user);
   const cumulativeSem = getUserCumulativeSemesterCount(user) ?? null;
@@ -84,6 +91,16 @@ export default function TermBriefHero({ user }: Props) {
           </Link>
         </div>
       </div>
+
+      {/* Sprint 67-AP Phase 2-B: 학사일정 진행률 통합 표시 (제공 시) */}
+      {academicCalendarSlot && (
+        <div className="relative mt-6 border-t border-primary/15 pt-5">
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-primary/70">
+            학사 일정 진행률
+          </p>
+          {academicCalendarSlot}
+        </div>
+      )}
     </section>
   );
 }
