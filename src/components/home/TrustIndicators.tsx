@@ -74,12 +74,12 @@ function StatCard({
   suffix?: string;
 }) {
   return (
-    <div className="bg-card p-4 sm:p-5">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <Icon size={12} />
+    <div className="group relative bg-card p-4 transition-colors hover:bg-muted/30 sm:p-5">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors group-hover:text-foreground/80">
+        <Icon size={13} aria-hidden className="transition-transform group-hover:scale-110" />
         {label}
       </div>
-      <p className="mt-1.5 text-2xl font-bold text-primary sm:text-3xl">
+      <p className="mt-1.5 text-2xl font-bold tracking-tight text-primary sm:text-3xl">
         {value > 0 ? `${value.toLocaleString()}${suffix ?? ""}` : "—"}
       </p>
     </div>
