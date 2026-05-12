@@ -18,6 +18,7 @@ import {
 import Link from "next/link";
 import PageHeader from "@/components/ui/page-header";
 import { Calendar, MapPin, Users, User, Plus, Pencil, Trash2, Loader2, UserPlus, Check, Megaphone, CalendarClock, ImageIcon, LayoutGrid, List } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import { postsApi } from "@/lib/bkend";
 import { uploadImageSmart } from "@/lib/storage";
 import EmptyState from "@/components/ui/empty-state";
@@ -26,7 +27,12 @@ import MemberAutocomplete from "@/components/ui/MemberAutocomplete";
 import MyActivitiesSection from "./MyActivitiesSection";
 
 const RECRUIT_LABELS: Record<string, string> = { recruiting: "모집중", closed: "모집마감", in_progress: "진행중", completed: "완료" };
-const RECRUIT_COLORS: Record<string, string> = { recruiting: "bg-green-50 text-green-700", closed: "bg-red-50 text-red-700", in_progress: "bg-amber-50 text-amber-700", completed: "bg-muted text-muted-foreground" };
+const RECRUIT_COLORS: Record<string, string> = {
+  recruiting: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
+  closed: "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300",
+  in_progress: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
+  completed: "bg-muted text-muted-foreground",
+};
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { Activity, ActivityType, ExternalParticipantType } from "@/types";
@@ -39,7 +45,11 @@ async function apiFetch(url: string, options?: RequestInit) {
 }
 
 const STATUS_LABELS: Record<string, string> = { upcoming: "예정", ongoing: "진행 중", completed: "완료" };
-const STATUS_COLORS: Record<string, string> = { upcoming: "bg-blue-50 text-blue-700", ongoing: "bg-amber-50 text-amber-700", completed: "bg-muted text-muted-foreground" };
+const STATUS_COLORS: Record<string, string> = {
+  upcoming: "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",
+  ongoing: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
+  completed: "bg-muted text-muted-foreground",
+};
 
 interface FormData {
   title: string; description: string; detailContent: string; date: string; endDate: string;
@@ -254,57 +264,111 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
     const poster = a.imageUrl as string | undefined;
 
     return (
-      <div className="group flex flex-col overflow-hidden rounded-xl border bg-card shadow-sm transition hover:shadow-md">
-        <Link href={href} className="relative block aspect-[3/4] w-full overflow-hidden bg-muted">
+      <article className="group flex flex-col overflow-hidden rounded-2xl border bg-card shadow-sm transition-shadow hover:shadow-md">
+        <Link
+          href={href}
+          aria-label={`${a.title} 상세 보기`}
+          className="relative block aspect-[3/4] w-full overflow-hidden bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
           {poster ? (
             // 외부 도메인 호환을 위해 일반 img 사용
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={poster} alt={a.title} className="absolute inset-0 h-full w-full object-cover transition-transform group-hover:scale-[1.02]" />
+            <img src={poster} alt={a.title} className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-muted-foreground/40">
-              <ImageIcon size={56} strokeWidth={1.2} />
+            <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-muted-foreground/30">
+              <ImageIcon size={48} strokeWidth={1} />
+              <span className="text-[11px] font-medium tracking-wide text-muted-foreground/40">포스터 없음</span>
             </div>
           )}
+          {/* D-day 배지 — 좌상단 */}
           {dday && (
-            <span className={cn("absolute left-3 top-3 rounded-full px-2.5 py-1 text-xs font-bold shadow", dday.tone)}>
+            <span className={cn("absolute left-3 top-3 rounded-full px-2.5 py-0.5 text-xs font-bold shadow-sm", dday.tone)}>
               {dday.label}
             </span>
           )}
-          <span className={cn("absolute right-3 top-3 rounded-full px-2 py-0.5 text-[10px] font-medium shadow-sm", STATUS_COLORS[a.status])}>
+          {/* 진행 상태 배지 — 우상단 */}
+          <span className={cn(
+            "absolute right-3 top-3 rounded-full px-2 py-0.5 text-[10px] font-semibold shadow-sm",
+            STATUS_COLORS[a.status],
+          )}>
             {STATUS_LABELS[a.status]}
           </span>
         </Link>
+
         <div className="flex flex-1 flex-col gap-2 p-4">
-          <Link href={href} className="line-clamp-2 text-base font-semibold leading-snug hover:text-primary">{a.title}</Link>
-          {a.description && <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">{a.description}</p>}
+          <Link
+            href={href}
+            className="line-clamp-2 text-base font-semibold leading-snug transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-sm"
+          >
+            {a.title}
+          </Link>
+          {a.description && (
+            <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">{a.description}</p>
+          )}
+
+          {/* 메타 정보 */}
           <div className="mt-auto flex flex-col gap-1 pt-2 text-[11px] text-muted-foreground">
-            <span className="flex items-center gap-1"><Calendar size={11} />{a.date}{a.endDate ? ` ~ ${a.endDate}` : ""}</span>
-            {a.location && <span className="flex items-center gap-1"><MapPin size={11} />{a.location}</span>}
-            {a.organizerName && <span className="flex items-center gap-1"><User size={11} />{a.organizerName}</span>}
+            <span className="flex items-center gap-1.5">
+              <Calendar size={11} className="shrink-0" />
+              {a.date}{a.endDate ? ` ~ ${a.endDate}` : ""}
+            </span>
+            {a.location && (
+              <span className="flex items-center gap-1.5">
+                <MapPin size={11} className="shrink-0" />{a.location}
+              </span>
+            )}
+            {a.organizerName && (
+              <span className="flex items-center gap-1.5">
+                <User size={11} className="shrink-0" />{a.organizerName}
+              </span>
+            )}
           </div>
+
+          {/* 하단 액션 바 */}
           <div className="flex items-center justify-between gap-2 pt-2">
-            <span className="flex items-center gap-1 text-[11px] text-muted-foreground"><Users size={11} />참여 {participants.length}명</span>
+            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+              <Users size={11} />참여 {participants.length}명
+            </span>
             <div className="flex gap-1">
               {canJoin && (
-                <Link href={href} className="inline-flex h-7 items-center gap-1 rounded-md bg-primary px-2.5 text-[11px] font-medium text-primary-foreground hover:bg-primary/90">
+                <Link
+                  href={href}
+                  className="inline-flex h-7 items-center gap-1 rounded-md bg-primary px-2.5 text-[11px] font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
                   <UserPlus size={11} />신청
                 </Link>
               )}
               {isJoined && (
-                <Button variant="outline" size="sm" className="h-7 gap-1 px-2 text-[11px] text-green-600" onClick={() => leaveMutation.mutate(a.id)} disabled={leaveMutation.isPending}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 gap-1 px-2 text-[11px] text-emerald-600 dark:text-emerald-400"
+                  onClick={() => leaveMutation.mutate(a.id)}
+                  disabled={leaveMutation.isPending}
+                >
                   <Check size={11} />참여 중
                 </Button>
               )}
               {isStaff && (
                 <>
-                  <Button variant="outline" size="sm" className="h-7 px-2" onClick={() => openEdit(a)}><Pencil size={11} /></Button>
-                  <Button variant="outline" size="sm" className="h-7 px-2 text-destructive" onClick={() => { if (confirm("삭제하시겠습니까?")) deleteMutation.mutate(a.id); }}><Trash2 size={11} /></Button>
+                  <Button variant="outline" size="sm" className="h-7 px-2" onClick={() => openEdit(a)} aria-label="수정">
+                    <Pencil size={11} />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2 text-destructive"
+                    aria-label="삭제"
+                    onClick={() => { if (confirm("삭제하시겠습니까?")) deleteMutation.mutate(a.id); }}
+                  >
+                    <Trash2 size={11} />
+                  </Button>
                 </>
               )}
             </div>
           </div>
         </div>
-      </div>
+      </article>
     );
   }
 
@@ -316,9 +380,9 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
     // 진행 상태별 카드 배경색 — 진행 중: 앰버, 예정: 블루, 완료: 회색
     const statusCardBg =
       a.status === "ongoing"
-        ? "bg-amber-50/60 border-amber-200"
+        ? "bg-amber-50/60 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900"
         : a.status === "upcoming"
-          ? "bg-blue-50/50 border-blue-200"
+          ? "bg-blue-50/50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-900"
           : "bg-muted/30 border-muted";
 
     // 모집 상태 배지 — 상태(ongoing/upcoming)와 의미가 겹치는 legacy 'in_progress'는 표시 생략
@@ -327,7 +391,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
       !(type === "study" && a.recruitmentStatus === "in_progress");
 
     return (
-      <div className={cn("rounded-xl border p-5 transition-colors", statusCardBg)}>
+      <article className={cn("rounded-2xl border p-5 transition-colors", statusCardBg)}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1">
             {/* 학기 · 모집 상태 — 제목 위 메타 라인 */}
@@ -350,7 +414,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
             </div>
             <Link
               href={`/activities/${type === "project" ? "projects" : type === "study" ? "studies" : "external"}/${a.id}`}
-              className="mt-1.5 block text-lg font-semibold hover:text-primary hover:underline"
+              className="mt-1.5 block text-lg font-semibold transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
             >
               {a.title}
             </Link>
@@ -371,30 +435,36 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
             {canJoin && (
               <Link
                 href={`/activities/${type === "project" ? "projects" : type === "study" ? "studies" : "external"}/${a.id}`}
-                className="inline-flex h-8 items-center gap-1 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+                className="inline-flex h-8 items-center gap-1 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <UserPlus size={12} />상세·신청
               </Link>
             )}
             {isJoined && (
-              <Button variant="outline" size="sm" className="h-8 gap-1 text-xs text-green-600" onClick={() => leaveMutation.mutate(a.id)} disabled={leaveMutation.isPending}>
+              <Button variant="outline" size="sm" className="h-8 gap-1 text-xs text-emerald-600 dark:text-emerald-400" onClick={() => leaveMutation.mutate(a.id)} disabled={leaveMutation.isPending}>
                 <Check size={12} />참여 중
               </Button>
             )}
             {isStaff && (
               <>
-                <Button variant="outline" size="sm" className="h-8" onClick={() => openEdit(a)}><Pencil size={12} /></Button>
-                <Button variant="outline" size="sm" className="h-8 text-destructive" onClick={() => { if (confirm("삭제하시겠습니까?")) deleteMutation.mutate(a.id); }}><Trash2 size={12} /></Button>
+                <Button variant="outline" size="sm" className="h-8" aria-label="수정" onClick={() => openEdit(a)}><Pencil size={12} /></Button>
+                <Button variant="outline" size="sm" className="h-8 text-destructive" aria-label="삭제" onClick={() => { if (confirm("삭제하시겠습니까?")) deleteMutation.mutate(a.id); }}><Trash2 size={12} /></Button>
               </>
             )}
           </div>
         </div>
-      </div>
+      </article>
     );
   }
 
+  const TAB_META = [
+    { key: "all" as const,       label: "전체",     count: activities.length },
+    { key: "active" as const,    label: "예정·진행", count: ongoing.length },
+    { key: "completed" as const, label: "완료",     count: completed.length },
+  ];
+
   return (
-    <div className="py-16">
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
       <div className="mx-auto max-w-6xl px-4">
         <PageHeader
           icon={icon}
@@ -405,32 +475,78 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
           ) : undefined}
         />
 
+        <Separator className="mt-6" />
+
         {(type === "study" || type === "project") && (
           <MyActivitiesSection activities={activities} type={type} isLoading={isLoading} />
         )}
 
-        <div className="mt-8">
+        <div className="mt-5">
+          {/* ── 필터 컨트롤 바 ── */}
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="inline-flex rounded-lg border bg-card p-1 text-sm shadow-sm">
-              {(["all", "active", "completed"] as const).map((k) => (
+            {/* 상태 탭 */}
+            <div
+              role="tablist"
+              aria-label="활동 상태 필터"
+              className="inline-flex rounded-lg border bg-muted/40 p-0.5 text-sm shadow-sm"
+            >
+              {TAB_META.map(({ key, label, count }) => (
                 <button
-                  key={k}
-                  onClick={() => setStatusTab(k)}
+                  key={key}
+                  role="tab"
+                  aria-selected={statusTab === key}
+                  onClick={() => setStatusTab(key)}
                   className={cn(
-                    "rounded-md px-4 py-1.5 font-medium transition-colors",
-                    statusTab === k ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
+                    "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm",
+                    statusTab === key
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  {k === "all" ? `전체 (${activities.length})` : k === "active" ? `예정·진행중 (${ongoing.length})` : `완료 (${completed.length})`}
+                  {label}
+                  {!isLoading && (
+                    <span
+                      className={cn(
+                        "inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[10px] font-semibold tabular-nums",
+                        statusTab === key
+                          ? "bg-primary/15 text-primary"
+                          : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {count}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
-            <div className="inline-flex rounded-lg border bg-card p-0.5 shadow-sm">
-              <button onClick={() => setViewMode("list")} className={cn("rounded-md p-1.5 transition-colors", viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted")} title="리스트">
-                <List size={16} />
+
+            {/* 뷰 모드 토글 */}
+            <div className="inline-flex rounded-lg border bg-muted/40 p-0.5 shadow-sm">
+              <button
+                onClick={() => setViewMode("list")}
+                aria-label="리스트 보기"
+                aria-pressed={viewMode === "list"}
+                className={cn(
+                  "rounded-md p-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  viewMode === "list"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <List size={15} />
               </button>
-              <button onClick={() => setViewMode("gallery")} className={cn("rounded-md p-1.5 transition-colors", viewMode === "gallery" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted")} title="갤러리">
-                <LayoutGrid size={16} />
+              <button
+                onClick={() => setViewMode("gallery")}
+                aria-label="갤러리 보기"
+                aria-pressed={viewMode === "gallery"}
+                className={cn(
+                  "rounded-md p-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  viewMode === "gallery"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <LayoutGrid size={15} />
               </button>
             </div>
           </div>
@@ -439,18 +555,39 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
             viewMode === "gallery" ? (
               <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {[0, 1, 2].map((i) => (
-                  <div key={i} className="overflow-hidden rounded-xl border bg-card">
+                  <div key={i} className="overflow-hidden rounded-2xl border bg-card shadow-sm">
                     <Skeleton className="aspect-[3/4] w-full" />
-                    <div className="p-4 space-y-2"><Skeleton className="h-5 w-3/4" /><Skeleton className="h-4 w-full" /></div>
+                    <div className="space-y-2 p-4">
+                      <div className="flex gap-2">
+                        <Skeleton className="h-5 w-12 rounded-full" />
+                        <Skeleton className="h-5 w-14 rounded-full" />
+                      </div>
+                      <Skeleton className="h-5 w-3/4" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </div>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="mt-4 space-y-3">
                 {[0, 1, 2].map((i) => (
-                  <div key={i} className="rounded-xl border bg-card p-5">
-                    <div className="flex items-center gap-2"><Skeleton className="h-5 w-12" /><Skeleton className="h-5 w-14" /><Skeleton className="h-6 w-40" /></div>
-                    <Skeleton className="mt-3 h-4 w-full" /><Skeleton className="mt-2 h-4 w-2/3" />
+                  <div key={i} className="rounded-2xl border bg-card p-5 shadow-sm">
+                    <div className="flex items-start gap-4">
+                      <div className="min-w-0 flex-1 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="h-5 w-12 rounded-full" />
+                          <Skeleton className="h-5 w-14 rounded-full" />
+                        </div>
+                        <Skeleton className="h-5 w-4/5" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-2/3" />
+                        <div className="flex gap-4 pt-1">
+                          <Skeleton className="h-4 w-24" />
+                          <Skeleton className="h-4 w-20" />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -463,12 +600,28 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
               className="mt-6"
             />
           ) : viewMode === "gallery" ? (
-            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredList.map((a) => <ExternalCard key={a.id} a={a} />)}
+            <div
+              role="list"
+              aria-label={`${title} 갤러리 목록`}
+              className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
+            >
+              {filteredList.map((a) => (
+                <div key={a.id} role="listitem">
+                  <ExternalCard a={a} />
+                </div>
+              ))}
             </div>
           ) : (
-            <div className="mt-4 space-y-3">
-              {filteredList.map((a) => <ActivityCard key={a.id} a={a} />)}
+            <div
+              role="list"
+              aria-label={`${title} 목록`}
+              className="mt-4 space-y-3"
+            >
+              {filteredList.map((a) => (
+                <div key={a.id} role="listitem">
+                  <ActivityCard a={a} />
+                </div>
+              ))}
             </div>
           )}
         </div>
