@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -11,11 +11,12 @@ import {
   Filter,
   GraduationCap,
   Headphones,
-  Megaphone,
   Plus,
+  Search,
   ShieldCheck,
   Trash2,
   Users,
+  X,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -24,6 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -33,6 +35,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import PageHeader from "@/components/ui/page-header";
+import EmptyState from "@/components/ui/empty-state";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import {
@@ -105,7 +109,7 @@ function FilterPill({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full px-3 py-1 text-xs transition-colors ${
+      className={`rounded-full px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
         active
           ? "bg-primary text-primary-foreground"
           : "bg-muted text-muted-foreground hover:bg-muted/70"
@@ -120,13 +124,23 @@ export default function CoursesPage() {
   return (
     <Suspense
       fallback={
-        <div className="mt-24" aria-busy="true" aria-label="강의 목록 불러오는 중">
+        <div
+          className="animate-in fade-in duration-300 py-8 sm:py-14"
+          aria-busy="true"
+          aria-label="강의 목록 불러오는 중"
+        >
           <div className="mx-auto max-w-6xl space-y-4 px-4">
-            <Skeleton className="h-8 w-1/3" />
-            <Skeleton className="h-4 w-1/2" />
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-12 w-12 rounded-xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-4 w-72" />
+              </div>
+            </div>
+            <Skeleton className="mt-4 h-px w-full" />
             <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-40 w-full rounded-xl" />
+                <Skeleton key={i} className="h-40 w-full rounded-2xl" />
               ))}
             </div>
           </div>
@@ -301,39 +315,41 @@ function CoursesPageInner() {
   }
 
   return (
-    <div className="py-12">
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
       <div className="mx-auto max-w-6xl px-4">
-        {/* 헤더 */}
-        <div className="flex items-start gap-3">
-          <div className="rounded-lg bg-primary/10 p-2 text-primary">
-            <BookOpen size={22} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">수강과목</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              학기별 개설 전공·교직·타전공 과목을 한눈에 보고, 본인 수강 여부를 표시하세요.
-            </p>
-          </div>
-        </div>
+        {/* ── 페이지 헤더 ── */}
+        <PageHeader
+          icon={GraduationCap}
+          title="수강과목"
+          description="학기별 개설 전공·교직·타전공 과목을 한눈에 보고, 본인 수강 여부를 표시하세요."
+        />
 
-        {/* 학기 선택 + 검색 */}
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-lg border bg-card p-3">
-            <p className="text-xs text-muted-foreground">학기</p>
-            <div className="mt-1 flex gap-2">
+        <Separator className="mt-6" />
+
+        {/* ── 학기 선택 + 검색 ── */}
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end">
+          {/* 학기 선택 */}
+          <div className="flex gap-2">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-muted-foreground">연도</label>
               <select
                 value={year}
                 onChange={(e) => setYear(Number(e.target.value))}
-                className="flex-1 rounded-md border bg-background px-2 py-1.5 text-sm"
+                aria-label="연도 선택"
+                className="h-9 rounded-md border bg-background px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {yearOptions.map((y) => (
                   <option key={y} value={y}>{y}년</option>
                 ))}
               </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-muted-foreground">학기</label>
               <select
                 value={term}
                 onChange={(e) => setTerm(e.target.value as SemesterTerm)}
-                className="flex-1 rounded-md border bg-background px-2 py-1.5 text-sm"
+                aria-label="학기 선택"
+                className="h-9 rounded-md border bg-background px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {TERMS.map((t) => (
                   <option key={t} value={t}>{SEMESTER_TERM_LABELS[t]}</option>
@@ -341,23 +357,40 @@ function CoursesPageInner() {
               </select>
             </div>
           </div>
-          <div className="rounded-lg border bg-card p-3 sm:col-span-2">
-            <p className="text-xs text-muted-foreground">검색</p>
-            <input
+
+          {/* 검색 */}
+          <div className="relative flex-1 sm:max-w-xs">
+            <Search
+              size={15}
+              aria-hidden
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            />
+            <Input
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="과목명·교수·강의실로 검색"
-              className="mt-1 w-full rounded-md border bg-background px-2 py-1.5 text-sm"
+              className="pl-9 pr-8 text-sm"
+              aria-label="과목 검색"
             />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                aria-label="검색어 지우기"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <X size={13} />
+              </button>
+            )}
           </div>
         </div>
 
         {/* 종합시험 입력 (검색창 하단) */}
         <ComprehensiveExamPanel />
 
-        {/* 카테고리 필터 */}
-        <div className="mt-6 flex flex-wrap items-center gap-1.5">
+        {/* ── 카테고리 필터 ── */}
+        <div className="mt-5 flex flex-wrap items-center gap-1.5">
           <Filter size={13} className="text-muted-foreground" />
           <FilterPill active={filterCategory === "all"} onClick={() => setFilterCategory("all")}>
             전체 ({rows.length})
@@ -415,9 +448,13 @@ function CoursesPageInner() {
             {user ? (
               <ProfileCourses ownerId={user.id} canSeeSensitive />
             ) : (
-              <p className="rounded-xl border bg-muted/20 p-6 text-center text-sm text-muted-foreground">
-                로그인 후 이용 가능합니다.
-              </p>
+              <EmptyState
+                icon={GraduationCap}
+                title="로그인 후 이용 가능합니다"
+                description="본인 수강 이력을 학기별로 확인하고 관리할 수 있어요."
+                actionLabel="로그인하기"
+                actionHref="/login"
+              />
             )}
           </TabsContent>
 
@@ -429,7 +466,8 @@ function CoursesPageInner() {
           )}
         </Tabs>
 
-        <p className="mt-8 text-center text-[11px] text-muted-foreground">
+        <Separator className="mt-10" />
+        <p className="mt-4 text-center text-[11px] text-muted-foreground">
           ※ 본 정보는 학과 공식 시간표가 아닌 참고용입니다. 정확한 개설 여부는 학과 공지를 확인해 주세요.
         </p>
       </div>
@@ -474,21 +512,21 @@ function CourseListSection({
   if (error) return <p className="mt-12 text-sm text-destructive" role="alert">⚠ {error}</p>;
   if (groups.length === 0) {
     return (
-      <div className="mt-6 rounded-lg border bg-muted/20 p-8 text-center">
-        <BookOpen size={28} className="mx-auto text-muted-foreground" />
-        <p className="mt-3 text-sm text-muted-foreground">
-          {total === 0
+      <EmptyState
+        icon={BookOpen}
+        title={
+          total === 0
             ? `${year}년 ${SEMESTER_TERM_LABELS[term]}에 등록된 전공 과목이 없습니다.`
-            : "조건에 맞는 전공 과목이 없습니다."}
-        </p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          운영진 등록 요청은{" "}
-          <Link href="/contact" className="text-primary hover:underline">
-            문의하기
-          </Link>
-          를 이용해 주세요.
-        </p>
-      </div>
+            : "조건에 맞는 전공 과목이 없습니다."
+        }
+        description={
+          total === 0
+            ? "운영진 등록 요청은 문의하기를 이용해 주세요."
+            : "검색어나 카테고리 필터를 변경해 보세요."
+        }
+        actionLabel={total === 0 ? "문의하기" : undefined}
+        actionHref={total === 0 ? "/contact" : undefined}
+      />
     );
   }
 
@@ -496,10 +534,12 @@ function CourseListSection({
     <div className="space-y-6">
       {groups.map(([cat, list]) => (
         <section key={cat}>
-          <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold">
-            <span className="inline-block h-2 w-2 rounded-full bg-primary" />
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold tracking-tight">
+            <span className="inline-block h-2 w-2 rounded-full bg-primary" aria-hidden />
             {COURSE_CATEGORY_LABELS[cat]}
-            <span className="text-xs font-normal text-muted-foreground">{list.length}과목</span>
+            <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+              {list.length}과목
+            </span>
           </h2>
           <ul className="space-y-2">
             {list.map((r) => (
@@ -533,7 +573,7 @@ function CourseRow({
     mine?.role === "auditor" ? "auditor" : mine ? "student" : "none";
 
   return (
-    <li className="rounded-lg border bg-card p-3 transition-shadow hover:shadow-sm">
+    <li className="rounded-2xl border bg-card p-4 shadow-sm transition-shadow hover:shadow-md">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
@@ -549,23 +589,29 @@ function CourseRow({
               </Badge>
             )}
             {current === "student" && (
-              <Badge className="bg-emerald-100 text-emerald-700 text-[10px]">수강 중</Badge>
+              <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                수강 중
+              </span>
             )}
             {current === "auditor" && (
-              <Badge className="bg-amber-100 text-amber-700 text-[10px]">청강 중</Badge>
+              <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                청강 중
+              </span>
             )}
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {[
-              course.professor ? `👤 ${course.professor}` : null,
-              course.schedule ? `🗓 ${course.schedule}` : null,
-              course.classroom ? `📍 ${course.classroom}` : null,
-            ]
-              .filter(Boolean)
-              .join(" · ")}
-          </p>
+          {(course.professor || course.schedule || course.classroom) && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {[
+                course.professor,
+                course.schedule,
+                course.classroom,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          )}
           {course.notes && (
-            <p className="mt-1 text-[11px] text-foreground/70">📝 {course.notes}</p>
+            <p className="mt-1 text-[11px] text-foreground/60 italic">{course.notes}</p>
           )}
         </div>
         {course.syllabusUrl && (
@@ -819,11 +865,11 @@ function ComprehensiveExamPanel() {
   }
 
   return (
-    <div className="mt-3 rounded-xl border bg-card p-4">
+    <div className="mt-4 rounded-2xl border bg-card p-4 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex items-center gap-2">
           <GraduationCap size={16} className="text-primary" />
-          <h2 className="text-sm font-semibold">종합시험 소요 등록</h2>
+          <h2 className="text-sm font-semibold tracking-tight">종합시험 소요 등록</h2>
         </div>
         <Button size="sm" onClick={() => setOpen(true)} disabled={!isEligible}>
           <Plus size={13} className="mr-1" /> 소요 등록
@@ -833,8 +879,8 @@ function ComprehensiveExamPanel() {
         응시 예정 학기를 미리 등록(소요조사)하고, 본인 수강 과목 중 2과목을 선택해 주세요. 신청·결과는 나중에 직접 갱신 가능합니다. 등록한 정보는 운영진(전공대표·학회장)이 학기별로 모아 확인합니다.
       </p>
       {!isEligible && (
-        <p className="mt-2 rounded-md border border-amber-200 bg-amber-50/70 px-2 py-1.5 text-[11px] text-amber-800">
-          ⓘ 종합시험 소요 등록은 <b>누적학기 3학기 이상</b> 회원만 가능합니다. (현재: {accumulated}학기)
+        <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50/70 px-3 py-2 text-[11px] text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+          종합시험 소요 등록은 <b>누적학기 3학기 이상</b> 회원만 가능합니다. (현재: {accumulated}학기)
         </p>
       )}
 
@@ -1096,11 +1142,11 @@ function TaReportSection({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-3">
-        <div className="flex items-center gap-2 text-sm font-semibold text-blue-800">
-          <ShieldCheck size={14} /> 조교 리포트 — 운영진 전용
+      <div className="rounded-2xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
+        <div className="flex items-center gap-2 text-sm font-semibold text-blue-800 dark:text-blue-300">
+          <ShieldCheck size={14} aria-hidden /> 조교 리포트 — 운영진 전용
         </div>
-        <p className="mt-1 text-[11px] text-blue-800/80">
+        <p className="mt-1 text-[11px] text-blue-800/80 dark:text-blue-400">
           {year}년 {SEMESTER_TERM_LABELS[term]} · 등록 {totalEnrollments}건
           (수강 {totalStudents} · 청강 {totalAuditors} · TA {totalTAs}
           {totalOrphans > 0 ? ` · 과목 매칭 실패 ${totalOrphans}` : ""})
@@ -1108,11 +1154,11 @@ function TaReportSection({
       </div>
 
       {totalOrphans > 0 && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3">
-          <p className="text-xs font-semibold text-amber-900">
-            ⚠ 등록되었으나 과목 정보가 없는 수강생 {totalOrphans}명
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-800 dark:bg-amber-950/30">
+          <p className="text-xs font-semibold text-amber-900 dark:text-amber-300">
+            과목 정보가 없는 수강생 {totalOrphans}명
           </p>
-          <p className="mt-1 text-[11px] text-amber-900/80">
+          <p className="mt-1 text-[11px] text-amber-900/80 dark:text-amber-400">
             등록 시점에는 존재했으나 이후 과목이 삭제되었거나 학기/연도 정보가 다른 데이터입니다. 운영콘솔의 수강과목에서 정리해 주세요.
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5">
@@ -1148,18 +1194,18 @@ function TaReportSection({
       )}
 
       {courseGroups.length === 0 ? (
-        <div className="rounded-lg border bg-muted/20 p-8 text-center">
-          <Users size={28} className="mx-auto text-muted-foreground" />
-          <p className="mt-3 text-sm text-muted-foreground">
-            해당 학기에 등록된 수강생 정보가 없습니다.
-          </p>
-        </div>
+        <EmptyState
+          icon={Users}
+          title="등록된 수강생 정보가 없습니다"
+          description={`${year}년 ${SEMESTER_TERM_LABELS[term]}에 수강 표시를 한 회원이 없습니다.`}
+          compact
+        />
       ) : (
         <ul className="space-y-3">
           {courseGroups.map((g) => {
             const total = g.students.length + g.auditors.length + g.tas.length;
             return (
-              <li key={g.course.id} className="rounded-lg border bg-card p-3">
+              <li key={g.course.id} className="rounded-2xl border bg-card p-4 shadow-sm transition-shadow hover:shadow-md">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <button
                     type="button"
@@ -1417,7 +1463,7 @@ function CourseDetailDialog({
 
         <div className="space-y-4">
           {/* 학기 선택 영역 */}
-          <div className="rounded-lg border bg-muted/20 p-3">
+          <div className="rounded-2xl border bg-muted/20 p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs font-semibold">학기 선택 ({selected.size}/{semesterKeys.length})</p>
               <div className="flex gap-1">
@@ -1468,7 +1514,7 @@ function CourseDetailDialog({
           </div>
 
           {/* 요약 */}
-          <div className="grid grid-cols-3 gap-2 rounded-lg border bg-card p-3 text-center">
+          <div className="grid grid-cols-3 gap-2 rounded-2xl border bg-card p-4 text-center shadow-sm">
             <div>
               <p className="text-[10px] text-muted-foreground">선택 학기</p>
               <p className="text-sm font-semibold">{selected.size}개</p>
@@ -1491,16 +1537,18 @@ function CourseDetailDialog({
               ))}
             </div>
           ) : selected.size === 0 ? (
-            <p className="rounded-lg border bg-muted/20 p-6 text-center text-sm text-muted-foreground">
-              학기를 하나 이상 선택해 주세요.
-            </p>
+            <EmptyState
+              icon={BookOpen}
+              title="학기를 하나 이상 선택해 주세요"
+              compact
+            />
           ) : (
             <div className="max-h-[40vh] space-y-3 overflow-y-auto pr-1">
               {bySemester.map(([k, group]) => {
                 const total =
                   group.students.length + group.auditors.length + group.tas.length;
                 return (
-                  <div key={k} className="rounded-lg border bg-card p-3">
+                  <div key={k} className="rounded-2xl border bg-card p-4">
                     <p className="text-xs font-semibold text-primary">
                       {group.offering.year}년 {SEMESTER_TERM_LABELS[group.offering.term]}
                       <span className="ml-2 font-normal text-muted-foreground">
