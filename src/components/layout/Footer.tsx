@@ -49,6 +49,7 @@ export default function Footer() {
               <Link href="/about/fields" className="text-sm text-slate-400 hover:text-white">활동 분야</Link>
               <Link href="/about/history" className="text-sm text-slate-400 hover:text-white">연혁</Link>
               <Link href="/about/leadership?tab=professor" className="text-sm text-slate-400 hover:text-white">주임교수·운영진</Link>
+              <Link href="/help" className="text-sm text-slate-400 hover:text-white">도움말 (FAQ)</Link>
               <Link href="/contact" className="text-sm text-slate-400 hover:text-white">문의하기</Link>
             </nav>
 
