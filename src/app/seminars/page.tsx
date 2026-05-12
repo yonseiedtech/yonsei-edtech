@@ -11,11 +11,19 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Calendar, Search, AlertCircle, List, LayoutGrid } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import PageHeader from "@/components/ui/page-header";
+import { Plus, Calendar, Search, AlertCircle, List, LayoutGrid, X } from "lucide-react";
 import { usePageHeader } from "@/features/site-settings/useSiteContent";
 import EmptyState from "@/components/ui/empty-state";
 
 type StatusTab = "all" | "active" | "completed";
+
+const TAB_META: { key: StatusTab; label: string }[] = [
+  { key: "all", label: "전체" },
+  { key: "active", label: "예정·진행" },
+  { key: "completed", label: "완료" },
+];
 
 export default function SeminarsPage() {
   const [statusTab, setStatusTab] = useState<StatusTab>("all");
@@ -51,6 +59,12 @@ export default function SeminarsPage() {
     [visibleSeminars],
   );
 
+  const tabCounts: Record<StatusTab, number> = {
+    all: visibleSeminars.length,
+    active: ongoingSeminars.length,
+    completed: completedSeminars.length,
+  };
+
   const filtered = useMemo(() => {
     let result =
       statusTab === "all"
@@ -76,108 +90,145 @@ export default function SeminarsPage() {
 
   const sorted = useMemo(
     () => [...filtered].sort((a, b) => b.date.localeCompare(a.date)),
-    [filtered]
+    [filtered],
   );
 
+  const staffActions = isStaffOrAbove(user) ? (
+    <Link href="/seminars/create">
+      <Button size="sm" className="shrink-0">
+        <Plus size={15} className="mr-1.5" />
+        세미나 등록
+      </Button>
+    </Link>
+  ) : null;
+
   return (
-    <div className="py-8 sm:py-16">
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
       <div className="mx-auto max-w-4xl px-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary sm:h-12 sm:w-12">
-              <Calendar size={22} />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold sm:text-2xl">{header.title}</h1>
-              <p className="text-xs text-muted-foreground sm:text-sm">
-                {header.description}
-              </p>
-            </div>
-          </div>
-          {isStaffOrAbove(user) && (
-            <Link href="/seminars/create">
-              <Button size="sm" className="w-full shrink-0 sm:w-auto">
-                <Plus size={16} className="mr-1" />
-                세미나 등록
-              </Button>
-            </Link>
-          )}
-        </div>
+        {/* ── 페이지 헤더 ── */}
+        <PageHeader
+          icon={Calendar}
+          title={header.title}
+          description={header.description}
+          actions={staffActions}
+        />
 
-        {/* Search */}
-        <div className="mt-4 relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="제목, 발표자, 장소 검색..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 w-full sm:max-w-sm"
-          />
-        </div>
+        <Separator className="mt-6" />
 
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="inline-flex rounded-lg border bg-card p-1 text-sm shadow-sm">
-            {(["all", "active", "completed"] as const).map((k) => (
+        {/* ── 검색 + 탭 + 뷰 토글 ── */}
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* 검색 */}
+          <div className="relative w-full sm:max-w-xs">
+            <Search
+              size={15}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              aria-hidden
+            />
+            <Input
+              placeholder="제목, 발표자, 장소 검색…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 pr-8 text-sm"
+              aria-label="세미나 검색"
+            />
+            {search && (
               <button
-                key={k}
-                onClick={() => setStatusTab(k)}
+                type="button"
+                onClick={() => setSearch("")}
+                aria-label="검색어 지우기"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+
+          {/* 탭 + 뷰 모드 */}
+          <div className="flex items-center gap-2">
+            {/* 상태 탭 */}
+            <div
+              role="tablist"
+              aria-label="세미나 상태 필터"
+              className="inline-flex rounded-lg border bg-muted/40 p-0.5 text-sm shadow-sm"
+            >
+              {TAB_META.map(({ key, label }) => (
+                <button
+                  key={key}
+                  role="tab"
+                  aria-selected={statusTab === key}
+                  onClick={() => setStatusTab(key)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm",
+                    statusTab === key
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {label}
+                  {!isLoading && (
+                    <span
+                      className={cn(
+                        "inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[10px] font-semibold tabular-nums",
+                        statusTab === key
+                          ? "bg-primary/15 text-primary"
+                          : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {tabCounts[key]}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* 뷰 모드 토글 */}
+            <div className="inline-flex rounded-lg border bg-muted/40 p-0.5 shadow-sm">
+              <button
+                onClick={() => setViewMode("list")}
+                aria-label="리스트 보기"
+                aria-pressed={viewMode === "list"}
                 className={cn(
-                  "rounded-md px-4 py-1.5 font-medium transition-colors",
-                  statusTab === k
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted",
+                  "rounded-md p-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  viewMode === "list"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                {k === "all"
-                  ? `전체 (${visibleSeminars.length})`
-                  : k === "active"
-                    ? `예정·진행중 (${ongoingSeminars.length})`
-                    : `완료 (${completedSeminars.length})`}
+                <List size={15} />
               </button>
-            ))}
-          </div>
-          <div className="inline-flex rounded-lg border bg-card p-0.5 shadow-sm">
-            <button
-              onClick={() => setViewMode("list")}
-              className={cn(
-                "rounded-md p-1.5 transition-colors",
-                viewMode === "list"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted",
-              )}
-              title="리스트"
-            >
-              <List size={16} />
-            </button>
-            <button
-              onClick={() => setViewMode("gallery")}
-              className={cn(
-                "rounded-md p-1.5 transition-colors",
-                viewMode === "gallery"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted",
-              )}
-              title="갤러리"
-            >
-              <LayoutGrid size={16} />
-            </button>
+              <button
+                onClick={() => setViewMode("gallery")}
+                aria-label="갤러리 보기"
+                aria-pressed={viewMode === "gallery"}
+                className={cn(
+                  "rounded-md p-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  viewMode === "gallery"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <LayoutGrid size={15} />
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="mt-6">
+        {/* ── 본문 ── */}
+        <div className="mt-5">
           {isLoading ? (
-            <div className="grid gap-4">
+            <div className="grid gap-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="rounded-xl border bg-card p-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0 flex-1">
+                <div key={i} className="rounded-2xl border bg-card p-5 shadow-sm">
+                  <div className="flex items-start gap-4">
+                    <div className="min-w-0 flex-1 space-y-2">
                       <div className="flex items-center gap-2">
-                        <Skeleton className="h-5 w-12 rounded-full" />
-                        <Skeleton className="h-6 w-64" />
+                        <Skeleton className="h-5 w-14 rounded-full" />
+                        <Skeleton className="h-5 w-11 rounded-full" />
                       </div>
-                      <Skeleton className="mt-2 h-4 w-full" />
-                      <Skeleton className="mt-1 h-4 w-3/4" />
-                      <div className="mt-3 flex gap-4">
+                      <Skeleton className="h-5 w-4/5" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-2/3" />
+                      <div className="flex gap-4 pt-1">
                         <Skeleton className="h-4 w-28" />
                         <Skeleton className="h-4 w-20" />
                         <Skeleton className="h-4 w-16" />

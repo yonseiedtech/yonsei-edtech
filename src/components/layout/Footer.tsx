@@ -91,12 +91,14 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 flex flex-col items-center justify-center gap-3 border-t border-slate-700 pt-6 text-xs text-slate-500 sm:flex-row sm:gap-4">
-          <p>&copy; 2025 연세교육공학회 (Yonsei EdTech). All rights reserved.</p>
+        <div className="mt-10 flex flex-col items-center justify-center gap-3 border-t border-slate-700/60 pt-6 text-xs text-slate-500 sm:flex-row sm:gap-5">
+          <p>&copy; 2026 연세교육공학회 (Yonsei EdTech). All rights reserved.</p>
           <div className="flex items-center gap-3">
-            <Link href="/terms" className="hover:text-slate-300">이용약관</Link>
-            <span aria-hidden>·</span>
-            <Link href="/privacy" className="hover:text-slate-300">개인정보처리방침</Link>
+            <Link href="/terms" className="transition-colors hover:text-slate-200">이용약관</Link>
+            <span aria-hidden className="text-slate-700">·</span>
+            <Link href="/privacy" className="transition-colors hover:text-slate-200">개인정보처리방침</Link>
+            <span aria-hidden className="text-slate-700">·</span>
+            <Link href="/contact" className="transition-colors hover:text-slate-200">문의</Link>
           </div>
         </div>
       </div>
