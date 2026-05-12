@@ -134,7 +134,8 @@ export default function HeroSection() {
               연세대학교 교육공학 학술 커뮤니티
             </p>
 
-            <h1 className="mt-4 text-3xl font-bold leading-snug text-foreground md:text-5xl md:leading-snug">
+            {/* Sprint 67-AQ: Apple·토스 패턴 — 헤드라인 한 단계 ↑ + tracking-tight + 가입 CTA 우선 */}
+            <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
               교육의 미래를
               <br />
               <span className="bg-gradient-to-r from-primary via-sky-500 to-blue-500 bg-clip-text text-transparent">
@@ -142,24 +143,26 @@ export default function HeroSection() {
               </span>
             </h1>
 
-            <p className="mt-5 max-w-lg text-base leading-relaxed text-muted-foreground">
-              에듀테크, 교수설계, 학습과학 분야의 최신 트렌드를 연구하고
-              공유합니다. 매 학기 세미나와 프로젝트를 중심으로 활동합니다.
+            <p className="mt-5 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg">
+              에듀테크·교수설계·학습과학 분야의 최신 트렌드를 연구하고
+              공유합니다. 매 학기 세미나·프로젝트·학술대회로 함께 성장해요.
             </p>
 
-            <div className="mt-8 flex flex-wrap items-center gap-3 sm:gap-4">
+            {/* Apple 패턴: 2단 CTA — 주(가입) + 보조(학회 소개 텍스트 링크) */}
+            <div className="mt-8 flex flex-wrap items-center gap-4 sm:gap-5">
               <MagneticLink
-                href="/seminars"
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary/90"
+                href="/auth/signup"
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary/90"
               >
-                세미나 일정 보기
-                <ArrowRight size={15} />
+                회원 가입하기
+                <ArrowRight size={16} />
               </MagneticLink>
               <Link
                 href="/about"
-                className="inline-flex items-center gap-2 rounded-xl border bg-card/80 px-5 py-2.5 text-sm font-medium text-foreground shadow-sm backdrop-blur transition-colors hover:bg-card"
+                className="inline-flex items-center gap-1 text-base font-medium text-primary hover:underline"
               >
-                학회 소개
+                학회 소개 알아보기
+                <ArrowRight size={14} />
               </Link>
             </div>
           </motion.div>

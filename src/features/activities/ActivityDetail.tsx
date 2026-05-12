@@ -506,9 +506,10 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
 
           {type === "external" && (
             <div className="mt-3 flex flex-wrap gap-2">
+              {/* Sprint 67-AQ: 핵심 CTA — primary 강조 (시각 위계) */}
               <Link
                 href={`/activities/external/${activityId}/program`}
-                className="inline-flex items-center gap-1.5 rounded-md border bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-xs hover:bg-muted"
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary/90 hover:shadow-md"
               >
                 <Calendar size={14} /> 학술대회 프로그램 · 내 일정
               </Link>

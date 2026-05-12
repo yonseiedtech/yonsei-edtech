@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Microscope, BookOpen, MessagesSquare, User } from "lucide-react";
+import { GraduationCap, Microscope, BookOpen, MessagesSquare, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
 
@@ -16,10 +16,11 @@ interface NavItem {
 
 const ITEMS: NavItem[] = [
   {
-    href: "/dashboard",
-    label: "홈",
-    icon: Home,
-    matchPrefixes: ["/dashboard", "/"],
+    // Sprint 67-AQ: 외부 피드백 — 디딤판을 첫 탭으로 강조 (대시보드 진입 시에도 활성)
+    href: "/steppingstone",
+    label: "디딤판",
+    icon: GraduationCap,
+    matchPrefixes: ["/steppingstone", "/dashboard", "/"],
   },
   {
     href: "/research",
