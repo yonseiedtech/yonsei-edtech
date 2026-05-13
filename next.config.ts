@@ -70,6 +70,8 @@ const nextConfig: NextConfig = {
       // Sprint 70: /admin/settings/* 하위 경로 (about, activities, contact, fields, greeting, history, org-chart, page-headers, presidents, professor, projects, studies, external) — 14 orphan 보안 게이트
       { source: "/admin/settings/:path*", destination: "/console/settings/:path*", permanent: false },
       { source: "/admin/user-audit", destination: "/console/members/audit", permanent: false },
+      // Sprint 70 추가 보안: /admin/members/:id 동적 라우트 — 부모 exact redirect 가 catch 안 함
+      { source: "/admin/members/:path*", destination: "/console/members/:path*", permanent: false },
       // Sprint 70: 수료증 메뉴 학술활동 관리로 이동 (클라이언트 redirect → server-side)
       { source: "/console/certificates", destination: "/console/academic/certificates", permanent: false },
       { source: "/admin/semester-report", destination: "/console/insights/semester", permanent: false },
