@@ -7,7 +7,7 @@
  * admin_todos 컬렉션에 relatedActivityId 필드와 함께 저장된다.
  * 본 컴포넌트는 그 활동에 연동된 todo만 모아 보여주고 상태 토글/삭제를 지원한다.
  *
- * 양방향 연동: 같은 항목이 /staff-admin/todos 운영 업무수행철에도 표시된다.
+ * 양방향 연동: 같은 항목이 /console/todos 운영 업무수행철에도 표시된다.
  */
 
 import { useMemo } from "react";
@@ -76,7 +76,7 @@ export default function ActivityConnectedTodos({ activityId }: Props) {
   }
 
   async function remove(t: AdminTodo) {
-    if (!confirm(`"${t.title}" 업무를 삭제하시겠습니까?\n/staff-admin/todos 운영 업무수행철에서도 사라집니다.`)) {
+    if (!confirm(`"${t.title}" 업무를 삭제하시겠습니까?\n/console/todos 운영 업무수행철에서도 사라집니다.`)) {
       return;
     }
     try {

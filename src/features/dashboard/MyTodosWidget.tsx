@@ -604,7 +604,7 @@ export default function MyTodosWidget() {
         await qc.invalidateQueries({ queryKey: ["admin-todos"] });
         await qc.invalidateQueries({ queryKey: ["activity-todos", target.id] });
         toast.success(
-          `학술활동 "${target.title}"에 연동된 업무가 추가되었습니다 — /activities/${target.type}/${target.id} 와 /staff-admin/todos 양쪽에 표시됩니다.`,
+          `학술활동 "${target.title}"에 연동된 업무가 추가되었습니다 — /activities/${target.type}/${target.id} 와 /console/todos 양쪽에 표시됩니다.`,
         );
       } else if (addCategory === "seminar") {
         if (!seminarForm.seminarId) {
@@ -635,7 +635,7 @@ export default function MyTodosWidget() {
         await qc.invalidateQueries({ queryKey: ["admin-todos"] });
         await qc.invalidateQueries({ queryKey: ["seminar-todos", target.id] });
         toast.success(
-          `세미나 "${target.title}"에 연동된 업무가 추가되었습니다 — /seminars/${target.id}/host 와 /staff-admin/todos 양쪽에 표시됩니다.`,
+          `세미나 "${target.title}"에 연동된 업무가 추가되었습니다 — /seminars/${target.id}/host 와 /console/todos 양쪽에 표시됩니다.`,
         );
       } else {
         if (!staffForm.title.trim()) {
@@ -652,7 +652,7 @@ export default function MyTodosWidget() {
           createdByName: user.name ?? "운영진",
         });
         await qc.invalidateQueries({ queryKey: ["admin-todos"] });
-        toast.success("운영 업무에 추가되었습니다 — /staff-admin/todos 에도 표시됩니다.");
+        toast.success("운영 업무에 추가되었습니다 — /console/todos 에도 표시됩니다.");
       }
       setAddOpen(false);
     } catch (e) {
@@ -1513,7 +1513,7 @@ export default function MyTodosWidget() {
               <TabsContent value="activity" className="mt-3 space-y-3">
                 <p className="text-[11px] text-muted-foreground">
                   본인이 운영진/멤버로 참여 중인 학술활동에 연동된 업무를 추가합니다.
-                  추가하면 <b>/staff-admin/todos</b> 운영 업무수행철과 해당 활동 상세 페이지 양쪽에 표시됩니다.
+                  추가하면 <b>/console/todos</b> 운영 업무수행철과 해당 활동 상세 페이지 양쪽에 표시됩니다.
                 </p>
                 <label className="flex flex-col gap-1 text-sm">
                   <span className="text-xs font-medium text-muted-foreground">학술활동</span>
@@ -1590,7 +1590,7 @@ export default function MyTodosWidget() {
             {isStaff && (
               <TabsContent value="seminar" className="mt-3 space-y-3">
                 <p className="text-[11px] text-muted-foreground">
-                  세미나 운영 업무를 추가하면 <b>/seminars/[id]/host</b> 호스트 대시보드와 <b>/staff-admin/todos</b> 운영 업무수행철 양쪽에 표시됩니다.
+                  세미나 운영 업무를 추가하면 <b>/seminars/[id]/host</b> 호스트 대시보드와 <b>/console/todos</b> 운영 업무수행철 양쪽에 표시됩니다.
                 </p>
                 <label className="flex flex-col gap-1 text-sm">
                   <span className="text-xs font-medium text-muted-foreground">세미나 (최근 30일 + 예정)</span>
@@ -1673,7 +1673,7 @@ export default function MyTodosWidget() {
             {isStaff && (
               <TabsContent value="staff" className="mt-3 space-y-3">
                 <p className="text-[11px] text-muted-foreground">
-                  추가하면 <b>/staff-admin/todos</b> 운영 업무수행철에도 자동으로 등록됩니다.
+                  추가하면 <b>/console/todos</b> 운영 업무수행철에도 자동으로 등록됩니다.
                 </p>
                 <label className="flex flex-col gap-1 text-sm">
                   <span className="text-xs font-medium text-muted-foreground">제목</span>

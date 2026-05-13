@@ -7,7 +7,7 @@
  * MyTodosWidget의 +추가 다이얼로그에서 "세미나" 카테고리로 추가하면
  * admin_todos 컬렉션에 relatedSeminarId 필드와 함께 저장된다.
  *
- * 양방향 연동: 같은 항목이 /staff-admin/todos 운영 업무수행철에도 표시되고,
+ * 양방향 연동: 같은 항목이 /console/todos 운영 업무수행철에도 표시되고,
  * 대시보드 "나의 할 일" 위젯에도 노출된다.
  */
 
@@ -100,7 +100,7 @@ export default function SeminarConnectedTodos({ seminarId, seminarTitle, seminar
   }
 
   async function remove(t: AdminTodo) {
-    if (!confirm(`"${t.title}" 업무를 삭제하시겠습니까?\n/staff-admin/todos 운영 업무수행철에서도 사라집니다.`)) {
+    if (!confirm(`"${t.title}" 업무를 삭제하시겠습니까?\n/console/todos 운영 업무수행철에서도 사라집니다.`)) {
       return;
     }
     try {
@@ -141,7 +141,7 @@ export default function SeminarConnectedTodos({ seminarId, seminarTitle, seminar
         qc.invalidateQueries({ queryKey: ["my-admin-todos", user.id] }),
       ]);
       toast.success(
-        `세미나 "${seminarTitle}"에 업무가 추가되었습니다 — /staff-admin/todos 와 대시보드에도 표시됩니다.`,
+        `세미나 "${seminarTitle}"에 업무가 추가되었습니다 — /console/todos 와 대시보드에도 표시됩니다.`,
       );
       setDraft({ title: "", description: "", priority: "medium", dueDate: "" });
       setAdding(false);
