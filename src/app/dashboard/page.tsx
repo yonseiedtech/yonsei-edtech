@@ -116,7 +116,7 @@ function DashboardContent() {
   ).length;
 
   return (
-    <div className="py-16">
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
       {/* ── 플로팅 레이어: 팝업·배너·알림 (레이아웃 흐름 밖) ── */}
       <TodayTodosPopup />
       <PushPermissionPrompt />
@@ -129,7 +129,7 @@ function DashboardContent() {
          * PageHeader 인사 다음에 이어지는 것이 자연스러운 플로우.
          */}
         <PageHeader
-          icon={<LayoutDashboard size={24} />}
+          icon={LayoutDashboard}
           title={`안녕하세요, ${user.name}님`}
           description="오늘의 학회 활동 현황을 확인하세요."
           actions={
