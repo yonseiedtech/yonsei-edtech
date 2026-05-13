@@ -21,7 +21,7 @@ import {
   Plus, Trash2, ListChecks, Timer, UserCog,
   ChevronDown, ChevronUp,
   Upload, Paperclip, FileText, Download, CalendarPlus,
-  MessageSquare, MessageSquareQuote,
+  MessageSquare, MessageSquareQuote, HeartHandshake,
 } from "lucide-react";
 import InlineMeetingTimer from "./InlineMeetingTimer";
 import ActivityConnectedTodos from "./ActivityConnectedTodos";
@@ -557,9 +557,10 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   <Pencil size={14} /> 시간표 편집
                 </Link>
               )}
-              {isStaff && backHref.includes("academic-admin") && (
+              {/* Sprint 70: 워크북 관리 — /academic-admin → /console/academic 통합 (매칭 GAP #2-3) */}
+              {isStaff && type === "external" && (backHref.includes("academic-admin") || backHref.includes("/console/academic")) && (
                 <Link
-                  href={`/academic-admin/external/${activityId}/workbook`}
+                  href={`/console/academic/external/${activityId}/workbook`}
                   className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
                 >
                   <ListChecks size={14} /> 워크북 관리
@@ -572,6 +573,15 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
                 >
                   <MessageSquareQuote size={14} /> 후기 모니터링
+                </Link>
+              )}
+              {/* Sprint 70: 운영진 — 자원봉사자 운영 (매칭 GAP #4) */}
+              {isStaff && type === "external" && (backHref.includes("academic-admin") || backHref.includes("/console/academic")) && (
+                <Link
+                  href={`/console/academic/external/${activityId}/volunteers`}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
+                >
+                  <HeartHandshake size={14} /> 봉사자 운영
                 </Link>
               )}
             </div>
