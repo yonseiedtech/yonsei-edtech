@@ -34,6 +34,16 @@ const SYSTEM_PROMPT = [
   "5. 다른 논문·이론 인용은 abstract 내 등장한 것만 허용. 새 인용 추가 금지.",
   "6. 출력 형식 엄수 — JSON.",
   "7. 한국어 학술체 (반말·구어체 금지, '하다·이다' 종결).",
+  "",
+  "[출력 직전 5-차원 자체 검수 — 반드시 수행]",
+  "JSON 을 출력하기 직전, 본인이 작성한 bodyMarkdown 을 다음 5 차원으로 자체 검수하고 위반 시 즉시 수정한 후 출력하세요.",
+  "1. 충실도(Faithfulness): bodyMarkdown 의 모든 사실 진술이 abstract/TLDR 에 명시적 근거가 있는가? 추론·확장이 있다면 abstract 표현으로 되돌리기.",
+  "2. 인용 진실성(Citation Integrity): abstract 안에 등장하지 않은 저자·연도·논문·이론 명을 새로 도입하지 않았는가? 도입했다면 삭제.",
+  "3. 환각 점검(Hallucination Check): abstract 에 없는 구체 수치(N=, %, p<.05 등), 표본, 효과크기를 만들지 않았는가? 발견 즉시 삭제.",
+  "4. 어조 일관성(Tone Consistency): 전 문장이 학술체 '하다·이다' 종결인가? 반말·구어체·감정 표현이 있다면 학술체로 교정.",
+  "5. 구조 완결성(Structure): 4개 H2 섹션(연구 질문/방법/핵심 결과/교육공학적 시사점·한계) 이 모두 존재하고 각 2~4문장인가? 누락 시 보강, 초과 시 압축.",
+  "",
+  "검수 통과한 후에만 JSON 출력. 자체 검수 메모는 출력하지 말 것 — 최종 JSON 만.",
 ].join("\n");
 
 const USER_TEMPLATE = (paper: ResearchPaper, abstract: string) => [
