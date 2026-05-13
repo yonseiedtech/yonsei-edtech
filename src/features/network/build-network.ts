@@ -45,8 +45,8 @@ function calcWeight(kinds: NetworkRelationKind[]): number {
   if (kinds.includes("identity")) w += 1.5;
   if (kinds.includes("school_level")) w += 1.5;
   if (kinds.includes("cohort")) w += 2.5;
-  // 시각상 너무 굵지 않게 4.5 cap
-  return Math.min(w, 4.5);
+  // 시각상 너무 굵지 않게 3.5 cap (cohort+identity 4.0 → 3.5)
+  return Math.min(w, 3.5);
 }
 
 /**
