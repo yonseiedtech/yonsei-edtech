@@ -6,7 +6,7 @@ import { useInquiries } from "@/features/inquiry/useInquiry";
 import { usePosts } from "@/features/board/useBoard";
 import { profilesApi } from "@/lib/bkend";
 import { useQuery } from "@tanstack/react-query";
-import { Users, Clock, FileText, HelpCircle, LayoutDashboard, Bot, Map, FileUp, Loader2 } from "lucide-react";
+import { Users, Clock, FileText, HelpCircle, LayoutDashboard, Bot, Map, FileUp, Loader2, Globe } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { auth as firebaseAuth } from "@/lib/firebase";
@@ -212,6 +212,25 @@ export default function ConsoleDashboardPage() {
             </div>
             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
               새 기능
+            </span>
+          </Link>
+
+          {/* Sprint 70: 매칭 GAP #1·4 신설 — 대외 학술대회 후기·봉사자 운영 */}
+          <Link
+            href="/console/academic/external"
+            className="flex items-center gap-3 rounded-xl border-2 border-primary/20 bg-primary/5 p-4 transition-shadow hover:shadow-md sm:col-span-2"
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15 text-primary">
+              <Globe size={20} />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold">대외 학술대회 후기·봉사자 운영</p>
+              <p className="text-xs text-muted-foreground">
+                활동 상세 진입 → 신설 페이지: 참석자 후기 모니터링·자원봉사자 명부·임무 체크 진행률
+              </p>
+            </div>
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+              신설
             </span>
           </Link>
         </div>
