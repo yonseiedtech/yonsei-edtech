@@ -63,7 +63,7 @@ export interface TickResult {
   status?: number;
 }
 
-function buildSystemPrompt(persona: AIPersonaKey, topic: ForumDoc): string {
+export function buildSystemPrompt(persona: AIPersonaKey, topic: ForumDoc): string {
   const p = AI_PERSONAS[persona];
   return [
     `당신은 "${p.name}" 입니다.`,
