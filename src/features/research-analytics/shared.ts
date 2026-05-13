@@ -91,7 +91,9 @@ export function dynamicEras(
     }
     return out;
   }
-  const start = Math.floor(yearMin / step) * step;
+  // step 배수 정렬: yearMin 이하의 배수에서 시작하되, 실제 첫 버킷은 yearMin부터 시작
+  const alignedStart = Math.floor(yearMin / step) * step;
+  const start = alignedStart < yearMin ? yearMin : alignedStart;
   for (let s = start; s <= yearMax; s += step) {
     const e = s + step - 1;
     const label = step >= 5 ? `${s}–${String(e).slice(-2)}` : `${s}–${e}`;
