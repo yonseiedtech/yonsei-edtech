@@ -53,9 +53,21 @@ export default function ConsoleDashboardPage() {
   const { posts } = usePosts("all");
   const unansweredCount = inquiries.filter((i) => i.status === "pending").length;
   const [seeding, setSeeding] = useState(false);
+  // 시드 완료 상태 (localStorage 영속 + 세션 내 즉시 반영)
+  const [seedDone, setSeedDone] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.localStorage.getItem("yedu_content_seed_done_v1") === "1";
+    } catch {
+      return false;
+    }
+  });
 
   async function handleSeedContent() {
-    if (!confirm("운영진이 작성한 콘텐츠 초안 7건을 게시판에 일괄 등록합니다.\n이미 등록된 동일 제목은 건너뜁니다. 계속할까요?")) return;
+    if (seedDone) {
+      toast.info("모든 콘텐츠가 이미 등록되어 있습니다.");
+      return;
+    }
     setSeeding(true);
     try {
       const token = await firebaseAuth.currentUser?.getIdToken();
@@ -68,7 +80,30 @@ export default function ConsoleDashboardPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error ?? `HTTP ${res.status}`);
-      toast.success(data.message ?? `${data.created ?? 0}건 등록 / ${data.skipped ?? 0}건 기존 유지`);
+      const created = Number(data?.created ?? 0);
+      const skipped = Number(data?.skipped ?? 0);
+      const total = Number(data?.total ?? created + skipped);
+      // 신규 등록이 0건 + 모두 skip → 완료 상태로 마킹
+      if (created === 0 && skipped >= total && total > 0) {
+        try {
+          window.localStorage.setItem("yedu_content_seed_done_v1", "1");
+        } catch {
+          // ignore
+        }
+        setSeedDone(true);
+        toast.info("모든 콘텐츠가 이미 등록되어 있습니다.");
+      } else {
+        toast.success(`${created}건 신규 등록 / ${skipped}건 기존 유지`);
+        // 모두 처리 완료한 경우에도 잠금 (skipped + created = total)
+        if (created + skipped >= total && total > 0) {
+          try {
+            window.localStorage.setItem("yedu_content_seed_done_v1", "1");
+          } catch {
+            // ignore
+          }
+          setSeedDone(true);
+        }
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "콘텐츠 시드 등록 실패");
     } finally {
@@ -119,23 +154,25 @@ export default function ConsoleDashboardPage() {
         <StatCard icon={HelpCircle} label="미답변 문의" value={unansweredCount} color="bg-red-50 text-red-600" href="/console/inquiries" />
       </div>
 
-      <div className="rounded-2xl border-2 border-dashed border-primary/20 bg-primary/5 p-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
-            <FileUp size={20} />
+      {!seedDone && (
+        <div className="rounded-2xl border-2 border-dashed border-primary/20 bg-primary/5 p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+              <FileUp size={20} />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold">운영진 콘텐츠 시드 — 1-click 일괄 등록</p>
+              <p className="text-xs text-muted-foreground">
+                docs/board-content/ 의 운영진 콘텐츠 초안을 게시판에 한 번에 등록. Idempotent — 중복 등록되지 않습니다.
+              </p>
+            </div>
+            <Button onClick={handleSeedContent} disabled={seeding} className="gap-1.5">
+              {seeding ? <Loader2 size={14} className="animate-spin" /> : <FileUp size={14} />}
+              {seeding ? "등록 중…" : "콘텐츠 일괄 등록"}
+            </Button>
           </div>
-          <div className="flex-1">
-            <p className="text-sm font-bold">운영진 콘텐츠 시드 — 1-click 일괄 등록</p>
-            <p className="text-xs text-muted-foreground">
-              docs/board-content/ 7건 (디딤판·추천도서·포스터 5원칙·ADDIE·AI 시대 역할 등) 을 게시판에 한 번에 등록. Idempotent.
-            </p>
-          </div>
-          <Button onClick={handleSeedContent} disabled={seeding} className="gap-1.5">
-            {seeding ? <Loader2 size={14} className="animate-spin" /> : <FileUp size={14} />}
-            {seeding ? "등록 중…" : "콘텐츠 7건 등록"}
-          </Button>
         </div>
-      </div>
+      )}
 
       <div>
         <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">

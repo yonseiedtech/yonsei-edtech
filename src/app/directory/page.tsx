@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { useMembers } from "@/features/member/useMembers";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -9,6 +10,8 @@ import { isAtLeast } from "@/lib/permissions";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import PageHeader from "@/components/ui/page-header";
+import EmptyState from "@/components/ui/empty-state";
 import { Shield, Lock, Mail, Download, Search, ArrowUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { OCCUPATION_LABELS, OCCUPATION_SHORT_LABELS } from "@/types";
@@ -235,28 +238,24 @@ function DirectoryContent() {
   );
 
   return (
-    <div className="py-16">
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
       <div className="mx-auto max-w-6xl px-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Shield size={24} />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">연락망</h1>
-              <p className="text-sm text-muted-foreground">
-                학회원 연락처 정보를 확인하세요.
-              </p>
-            </div>
-          </div>
-          <Badge variant="secondary" className="gap-1">
-            <Lock size={12} />
-            학회원 전용
-          </Badge>
-        </div>
+        <PageHeader
+          icon={Shield}
+          title="연락망"
+          description="학회원 연락처 정보를 확인하세요."
+          actions={
+            <Badge variant="secondary" className="gap-1">
+              <Lock size={12} />
+              학회원 전용
+            </Badge>
+          }
+        />
+
+        <Separator className="mt-6" />
 
         {/* Tabs */}
-        <div className="mt-8 flex flex-wrap gap-2">
+        <nav className="mt-6 flex gap-1 overflow-x-auto border-b" aria-label="연락망 분류">
           {tabs.map((tab) => (
             <button
               key={tab.key}
@@ -264,17 +263,18 @@ function DirectoryContent() {
                 setActiveTab(tab.key);
                 setSearch("");
               }}
+              aria-current={activeTab === tab.key ? "page" : undefined}
               className={cn(
-                "rounded-full px-5 py-2 text-sm font-medium transition-colors",
+                "flex flex-none items-center border-b-2 px-3 py-2 text-xs font-medium transition-colors sm:px-5 sm:py-2.5 sm:text-sm",
                 activeTab === tab.key
-                  ? "bg-primary text-white"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
               )}
             >
               {tab.label}
             </button>
           ))}
-        </div>
+        </nav>
 
         {/* 재(휴)학생 서브필터 */}
         {activeTab === "students" && (
@@ -355,7 +355,16 @@ function DirectoryContent() {
               {search && ` · "${search}" 검색 결과`}
             </p>
             {filteredAndSorted.length === 0 ? (
-              <p className="mt-4 text-sm text-muted-foreground">표시할 회원이 없습니다.</p>
+              <EmptyState
+                icon={Shield}
+                title={search ? `"${search}"에 대한 결과 없음` : "표시할 회원이 없습니다"}
+                description={
+                  search
+                    ? "키워드를 다시 확인하거나 검색을 초기화해보세요."
+                    : "조건에 맞는 회원이 아직 등록되지 않았습니다."
+                }
+                {...(search ? { actionLabel: "검색 초기화", onAction: () => setSearch("") } : {})}
+              />
             ) : (
               <div className="mt-3 overflow-x-auto rounded-xl border bg-card">
                 <table className="w-full text-xs sm:text-sm">
