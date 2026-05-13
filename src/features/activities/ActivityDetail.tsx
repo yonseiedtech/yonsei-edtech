@@ -1998,14 +1998,23 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 );
               })()}
 
-              {/* 신청 답변 요약 — 가시성 강화: 선택형은 그룹핑·카운트, 자유텍스트는 카드 */}
-              {applicationForm.length > 0 && applicants.length > 0 && (
+              {/* 신청 답변 요약 — 공통 + 유형별 폼 모두 순회 (Sprint 70). 선택형은 그룹핑·카운트, 자유텍스트는 카드 */}
+              {(() => {
+                const allFormFields: FormField[] = [
+                  ...applicationForm,
+                  ...Object.values(applicationFormByType).flat() as FormField[],
+                ];
+                return allFormFields.length > 0 && applicants.length > 0;
+              })() && (
                 <div className="rounded-xl border bg-card p-6">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold">신청 답변 요약</h3>
                     <span className="text-xs text-muted-foreground">총 {applicants.length}명</span>
                   </div>
-                  {applicationForm.map((field) => {
+                  {[
+                    ...applicationForm,
+                    ...Object.values(applicationFormByType).flat() as FormField[],
+                  ].map((field) => {
                     // 답변 추출 + 정규화
                     const rawAnswers = applicants
                       .map((a) => ({
