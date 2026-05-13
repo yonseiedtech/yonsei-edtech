@@ -1,1 +1,7 @@
-export { default } from "@/app/admin/newsletter/page";
+"use client";
+
+import AdminNewsletterTab from "@/features/admin/AdminNewsletterTab";
+
+export default function ConsoleNewsletterPage() {
+  return <AdminNewsletterTab />;
+}
