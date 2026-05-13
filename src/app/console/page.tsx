@@ -215,7 +215,7 @@ export default function ConsoleDashboardPage() {
             </span>
           </Link>
 
-          {/* Sprint 70: 매칭 GAP #1·4 신설 — 대외 학술대회 후기·봉사자 운영 */}
+          {/* Sprint 70: 매칭 GAP #1·#4·#5 신설 — 대외 학술대회 운영 통합 */}
           <Link
             href="/console/academic/external"
             className="flex items-center gap-3 rounded-xl border-2 border-primary/20 bg-primary/5 p-4 transition-shadow hover:shadow-md sm:col-span-2"
@@ -224,9 +224,9 @@ export default function ConsoleDashboardPage() {
               <Globe size={20} />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-bold">대외 학술대회 후기·봉사자 운영</p>
+              <p className="text-sm font-bold">대외 학술대회 운영 통합 (후기·봉사자·세션 분석)</p>
               <p className="text-xs text-muted-foreground">
-                활동 상세 진입 → 신설 페이지: 참석자 후기 모니터링·자원봉사자 명부·임무 체크 진행률
+                활동 상세 진입 → 4개 신설 페이지: 참석자 후기 모니터링 · 자원봉사자 명부·임무 체크 · 세션 분석 통계(인기도·출석률·이유 분포) · 워크북 관리
               </p>
             </div>
             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
