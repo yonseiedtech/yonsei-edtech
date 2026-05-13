@@ -21,7 +21,7 @@ import {
   Plus, Trash2, ListChecks, Timer, UserCog,
   ChevronDown, ChevronUp,
   Upload, Paperclip, FileText, Download, CalendarPlus,
-  MessageSquare,
+  MessageSquare, MessageSquareQuote,
 } from "lucide-react";
 import InlineMeetingTimer from "./InlineMeetingTimer";
 import ActivityConnectedTodos from "./ActivityConnectedTodos";
@@ -563,6 +563,15 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
                 >
                   <ListChecks size={14} /> 워크북 관리
+                </Link>
+              )}
+              {/* Sprint 70: 운영진 — 참석자 후기 모니터링 (매칭 GAP #1) */}
+              {isStaff && type === "external" && (backHref.includes("academic-admin") || backHref.includes("/console/academic")) && (
+                <Link
+                  href={`/console/academic/external/${activityId}/reviews`}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
+                >
+                  <MessageSquareQuote size={14} /> 후기 모니터링
                 </Link>
               )}
             </div>
