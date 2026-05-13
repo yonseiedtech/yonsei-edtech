@@ -549,49 +549,52 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   <span>💗</span> 내 봉사
                 </Link>
               )}
+              {/* Sprint 70: 운영자 통합 박스 — 5개 운영 진입 버튼 시각적 강조 */}
               {isStaff && (backHref.includes("academic-admin") || backHref.includes("/console/academic")) && (
-                <Link
-                  href={`/console/academic/external/${activityId}/program`}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
-                >
-                  <Pencil size={14} /> 시간표 편집
-                </Link>
-              )}
-              {/* Sprint 70: 워크북 관리 — /academic-admin → /console/academic 통합 (매칭 GAP #2-3) */}
-              {isStaff && type === "external" && (backHref.includes("academic-admin") || backHref.includes("/console/academic")) && (
-                <Link
-                  href={`/console/academic/external/${activityId}/workbook`}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
-                >
-                  <ListChecks size={14} /> 워크북 관리
-                </Link>
-              )}
-              {/* Sprint 70: 운영진 — 참석자 후기 모니터링 (매칭 GAP #1) */}
-              {isStaff && type === "external" && (backHref.includes("academic-admin") || backHref.includes("/console/academic")) && (
-                <Link
-                  href={`/console/academic/external/${activityId}/reviews`}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
-                >
-                  <MessageSquareQuote size={14} /> 후기 모니터링
-                </Link>
-              )}
-              {/* Sprint 70: 운영진 — 자원봉사자 운영 (매칭 GAP #4) */}
-              {isStaff && type === "external" && (backHref.includes("academic-admin") || backHref.includes("/console/academic")) && (
-                <Link
-                  href={`/console/academic/external/${activityId}/volunteers`}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
-                >
-                  <HeartHandshake size={14} /> 봉사자 운영
-                </Link>
-              )}
-              {/* Sprint 70: 운영진 — 세션 분석 통계 (매칭 GAP #5) */}
-              {isStaff && type === "external" && (backHref.includes("academic-admin") || backHref.includes("/console/academic")) && (
-                <Link
-                  href={`/console/academic/external/${activityId}/session-analytics`}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
-                >
-                  <BarChart3 size={14} /> 세션 분석 통계
-                </Link>
+                <div className="basis-full rounded-xl border-2 border-primary/30 bg-primary/5 p-3">
+                  <div className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-primary">
+                    <UserCog size={12} /> 운영 도구 {type === "external" && "(대외 학술대회)"}
+                    <span className="ml-1 rounded-full bg-primary/15 px-1.5 py-0.5 text-[9px] font-semibold normal-case">
+                      🆕 Sprint 70 신설 4건
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    <Link
+                      href={`/console/academic/external/${activityId}/program`}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-card px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
+                    >
+                      <Pencil size={14} /> 시간표 편집
+                    </Link>
+                    {type === "external" && (
+                      <>
+                        <Link
+                          href={`/console/academic/external/${activityId}/workbook`}
+                          className="inline-flex items-center gap-1.5 rounded-md border border-rose-300 bg-rose-50/50 px-3 py-1.5 text-xs font-medium text-rose-800 hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-200"
+                        >
+                          <ListChecks size={14} /> 워크북 관리
+                        </Link>
+                        <Link
+                          href={`/console/academic/external/${activityId}/reviews`}
+                          className="inline-flex items-center gap-1.5 rounded-md border border-blue-300 bg-blue-50/50 px-3 py-1.5 text-xs font-medium text-blue-800 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-200"
+                        >
+                          <MessageSquareQuote size={14} /> 후기 모니터링
+                        </Link>
+                        <Link
+                          href={`/console/academic/external/${activityId}/volunteers`}
+                          className="inline-flex items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50/50 px-3 py-1.5 text-xs font-medium text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200"
+                        >
+                          <HeartHandshake size={14} /> 봉사자 운영
+                        </Link>
+                        <Link
+                          href={`/console/academic/external/${activityId}/session-analytics`}
+                          className="inline-flex items-center gap-1.5 rounded-md border border-purple-300 bg-purple-50/50 px-3 py-1.5 text-xs font-medium text-purple-800 hover:bg-purple-100 dark:border-purple-800 dark:bg-purple-950/30 dark:text-purple-200"
+                        >
+                          <BarChart3 size={14} /> 세션 분석 통계
+                        </Link>
+                      </>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
           )}

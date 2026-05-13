@@ -6,7 +6,7 @@ import { useInquiries } from "@/features/inquiry/useInquiry";
 import { usePosts } from "@/features/board/useBoard";
 import { profilesApi } from "@/lib/bkend";
 import { useQuery } from "@tanstack/react-query";
-import { Users, Clock, FileText, HelpCircle, LayoutDashboard, Bot, Map, FileUp, Loader2, Globe } from "lucide-react";
+import { Users, Clock, FileText, HelpCircle, LayoutDashboard, Bot, Map, FileUp, Loader2, Globe, ClipboardCheck, MessageSquareQuote, HeartHandshake, BarChart3, ListChecks } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { auth as firebaseAuth } from "@/lib/firebase";
@@ -215,22 +215,105 @@ export default function ConsoleDashboardPage() {
             </span>
           </Link>
 
-          {/* Sprint 70: 매칭 GAP #1·#4·#5 신설 — 대외 학술대회 운영 통합 */}
+          {/* Sprint 70: 신청 승인 통합 대시보드 — 단독 진입 가능 */}
           <Link
-            href="/console/academic/external"
-            className="flex items-center gap-3 rounded-xl border-2 border-primary/20 bg-primary/5 p-4 transition-shadow hover:shadow-md sm:col-span-2"
+            href="/console/academic/applications"
+            className="flex items-center gap-3 rounded-xl border-2 border-amber-300 bg-amber-50/60 p-4 transition-shadow hover:shadow-md dark:border-amber-700 dark:bg-amber-950/20 sm:col-span-2"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15 text-primary">
-              <Globe size={20} />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-200">
+              <ClipboardCheck size={20} />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-bold">대외 학술대회 운영 통합 (후기·봉사자·세션 분석)</p>
+              <p className="text-sm font-bold">신청 승인 통합 대시보드</p>
               <p className="text-xs text-muted-foreground">
-                활동 상세 진입 → 4개 신설 페이지: 참석자 후기 모니터링 · 자원봉사자 명부·임무 체크 · 세션 분석 통계(인기도·출석률·이유 분포) · 워크북 관리
+                모든 학술활동(외부·프로젝트·스터디)의 pending 신청자를 한 화면에서 확인·즉시 처리
               </p>
             </div>
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-900/50 dark:text-amber-200">
+              🆕 신설
+            </span>
+          </Link>
+        </div>
+      </div>
+
+      {/* Sprint 70 신설 — 학술대회 운영 통합 (활동 상세 진입 후 사용) */}
+      <div>
+        <h2 className="mb-1 text-sm font-bold uppercase tracking-wider text-primary">
+          🆕 Sprint 70 신설 — 학술대회 운영 통합
+        </h2>
+        <p className="mb-3 text-xs text-muted-foreground">
+          아래 4개 기능은 <strong className="text-foreground">활동 상세 페이지</strong> 진입 후 사용합니다. 카드를 클릭해 대외 학술대회 목록으로 이동 → 활동 클릭 → 상세 페이지 우측 운영 영역에서 진입 버튼 표시.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Link
+            href="/console/academic/external"
+            className="flex items-start gap-3 rounded-xl border-2 border-blue-200 bg-blue-50/40 p-4 transition-shadow hover:shadow-md dark:border-blue-800 dark:bg-blue-950/20"
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-200">
+              <MessageSquareQuote size={20} />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold">참석자 후기 모니터링</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
+                회원이 작성한 종합 후기·재참석 의사·연구 시사점·별점을 통계로 분석. (GAP #1)
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-900/50 dark:text-blue-200">
               신설
+            </span>
+          </Link>
+
+          <Link
+            href="/console/academic/external"
+            className="flex items-start gap-3 rounded-xl border-2 border-emerald-200 bg-emerald-50/40 p-4 transition-shadow hover:shadow-md dark:border-emerald-800 dark:bg-emerald-950/20"
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200">
+              <HeartHandshake size={20} />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold">자원봉사자 운영</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
+                전체 봉사자 명부·역할·시간대·임무 체크 진행률 + 본부석 인쇄. (GAP #4)
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200">
+              신설
+            </span>
+          </Link>
+
+          <Link
+            href="/console/academic/external"
+            className="flex items-start gap-3 rounded-xl border-2 border-purple-200 bg-purple-50/40 p-4 transition-shadow hover:shadow-md dark:border-purple-800 dark:bg-purple-950/20"
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-200">
+              <BarChart3 size={20} />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold">세션 분석 통계</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
+                인기 세션 TOP 10·카테고리 분포·선택 이유 분포·출석률·평균 별점. (GAP #5)
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-700 dark:bg-purple-900/50 dark:text-purple-200">
+              신설
+            </span>
+          </Link>
+
+          <Link
+            href="/console/academic/external"
+            className="flex items-start gap-3 rounded-xl border-2 border-rose-200 bg-rose-50/40 p-4 transition-shadow hover:shadow-md dark:border-rose-800 dark:bg-rose-950/20"
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-200">
+              <ListChecks size={20} />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold">워크북 관리</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
+                과제 task CRUD + 제출 모니터링 + 검토 워크플로우. (GAP #2-3, 통합)
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-700 dark:bg-rose-900/50 dark:text-rose-200">
+              console 통합
             </span>
           </Link>
         </div>
