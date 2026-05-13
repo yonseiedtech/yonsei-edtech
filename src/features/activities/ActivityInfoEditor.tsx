@@ -41,9 +41,13 @@ export default function ActivityInfoEditor({
 }: Props) {
   const [title, setTitle] = useState(activity.title ?? "");
   const [description, setDescription] = useState(activity.description ?? "");
+  const [detailContent, setDetailContent] = useState(activity.detailContent ?? "");
   const [date, setDate] = useState(activity.date ?? "");
   const [endDate, setEndDate] = useState(activity.endDate ?? "");
   const [location, setLocation] = useState(activity.location ?? "");
+  const [tags, setTags] = useState(
+    Array.isArray(activity.tags) ? activity.tags.join(", ") : "",
+  );
   const [organizerName, setOrganizerName] = useState(activity.organizerName ?? "");
   const [conferenceUrl, setConferenceUrl] = useState(activity.conferenceUrl ?? "");
   // Sprint 70: 대외활동 — 활성 참석유형 + 정원
@@ -61,9 +65,11 @@ export default function ActivityInfoEditor({
   useEffect(() => {
     setTitle(activity.title ?? "");
     setDescription(activity.description ?? "");
+    setDetailContent(activity.detailContent ?? "");
     setDate(activity.date ?? "");
     setEndDate(activity.endDate ?? "");
     setLocation(activity.location ?? "");
+    setTags(Array.isArray(activity.tags) ? activity.tags.join(", ") : "");
     setOrganizerName(activity.organizerName ?? "");
     setConferenceUrl(activity.conferenceUrl ?? "");
     const next = (activity.enabledParticipantTypes as ExternalParticipantType[] | undefined) ?? [];
@@ -99,12 +105,18 @@ export default function ActivityInfoEditor({
         setSaving(false);
         return;
       }
+      const tagsArr = tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
       await activitiesApi.update(activity.id, {
         title: title.trim(),
         description: description.trim() || undefined,
+        detailContent: detailContent.trim() || undefined,
         date,
         endDate: endDate || undefined,
         location: location.trim() || undefined,
+        tags: tagsArr.length > 0 ? tagsArr : undefined,
         organizerName: isExternal ? organizerName.trim() || undefined : undefined,
         conferenceUrl: isExternal ? conferenceUrl.trim() || undefined : undefined,
         enabledParticipantTypes: isExternal ? enabledTypes : undefined,
@@ -153,6 +165,19 @@ export default function ActivityInfoEditor({
         />
       </div>
 
+      <div>
+        <label className="mb-1 block text-xs font-medium">
+          상세 내용
+          <span className="ml-1 text-[10px] font-normal text-muted-foreground">(마크다운 지원)</span>
+        </label>
+        <Textarea
+          value={detailContent}
+          onChange={(e) => setDetailContent(e.target.value)}
+          placeholder="활동의 자세한 안내·일정·준비물 등 (선택)"
+          rows={6}
+        />
+      </div>
+
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <label className="mb-1 block text-xs font-medium">시작일 <span className="text-destructive">*</span></label>
@@ -167,6 +192,18 @@ export default function ActivityInfoEditor({
       <div>
         <label className="mb-1 block text-xs font-medium">장소</label>
         <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="예: 서울시 종로구 OOO" />
+      </div>
+
+      <div>
+        <label className="mb-1 block text-xs font-medium">
+          태그
+          <span className="ml-1 text-[10px] font-normal text-muted-foreground">(쉼표로 구분)</span>
+        </label>
+        <Input
+          value={tags}
+          onChange={(e) => setTags(e.target.value)}
+          placeholder="예: AI, 학습분석, 디지털리터러시"
+        />
       </div>
 
       {isExternal && (
