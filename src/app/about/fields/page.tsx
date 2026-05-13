@@ -1,8 +1,10 @@
 "use client";
 
-import { Monitor, GraduationCap, Brain, Lightbulb, BarChart3, Users, type LucideIcon } from "lucide-react";
+import { Monitor, GraduationCap, Brain, Lightbulb, BarChart3, Users, Compass, type LucideIcon } from "lucide-react";
 import { useFields } from "@/features/site-settings/useSiteContent";
 import { Skeleton } from "@/components/ui/skeleton";
+import PageHeader from "@/components/ui/page-header";
+import { Separator } from "@/components/ui/separator";
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Monitor, GraduationCap, Brain, Lightbulb, BarChart3, Users,
@@ -12,13 +14,17 @@ export default function FieldsPage() {
   const { value: fields, isLoading } = useFields();
 
   return (
-    <div className="py-16">
-      <section className="mx-auto max-w-6xl px-4 text-center">
-        <h1 className="text-3xl font-bold md:text-4xl">활동 분야</h1>
-        <p className="mt-4 text-muted-foreground">연세교육공학회가 탐구하고 실천하는 주요 분야입니다.</p>
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
+      <section className="mx-auto max-w-6xl px-4">
+        <PageHeader
+          icon={Compass}
+          title="활동 분야"
+          description="연세교육공학회가 탐구하고 실천하는 주요 분야입니다."
+        />
+        <Separator className="mt-6" />
       </section>
 
-      <section className="mx-auto mt-12 max-w-6xl px-4">
+      <section className="mx-auto mt-10 max-w-6xl px-4">
         {isLoading ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3" aria-busy="true" aria-label="활동 분야 불러오는 중">
             {Array.from({ length: 6 }).map((_, i) => (

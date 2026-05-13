@@ -18,6 +18,7 @@ import { useMembers } from "@/features/member/useMembers";
 import { useProfessor } from "@/features/site-settings/useSiteContent";
 import { Mail, Globe, BookOpen, Users, Search } from "lucide-react";
 import PageHeader from "@/components/ui/page-header";
+import { Separator } from "@/components/ui/separator";
 import EmptyState from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -207,15 +208,16 @@ function LeadershipContent() {
   }, [filteredByTab, generationFilter, search]);
 
   return (
-    <div className="py-16">
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
       <section className="mx-auto max-w-6xl px-4">
         <PageHeader
-          icon={<Users size={24} />}
+          icon={Users}
           title="주요 구성원"
           description="학회를 이끌어가는 주임교수님과 운영진을 소개합니다."
         />
+        <Separator className="mt-6" />
       </section>
-      <section className="mx-auto mt-12 max-w-6xl px-4">
+      <section className="mx-auto mt-8 max-w-6xl px-4">
         <nav
           className="flex gap-1 overflow-x-auto border-b"
           aria-label="주요 구성원 분류"
@@ -328,7 +330,7 @@ export default function LeadershipPage() {
   return (
     <Suspense
       fallback={
-        <div className="py-24" aria-busy="true" aria-label="구성원 정보 불러오는 중">
+        <div className="py-8 sm:py-14" aria-busy="true" aria-label="구성원 정보 불러오는 중">
           <div className="mx-auto max-w-5xl space-y-3 px-4">
             <Skeleton className="h-8 w-1/3" />
             <Skeleton className="h-4 w-1/2" />

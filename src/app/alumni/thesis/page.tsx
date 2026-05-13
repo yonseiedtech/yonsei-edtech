@@ -88,7 +88,7 @@ export default function AlumniThesisListPage() {
   /* ── 비로그인 게이트 ── */
   if (initialized && !user) {
     return (
-      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-16">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
         <div className="mx-auto max-w-2xl px-4">
           <div className="rounded-2xl border bg-card p-10 text-center shadow-sm">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">

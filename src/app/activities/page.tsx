@@ -9,6 +9,9 @@ import { useSeminars } from "@/features/seminar/useSeminar";
 import { usePosts } from "@/features/board/useBoard";
 import { formatDate } from "@/lib/utils";
 import { usePageHeader } from "@/features/site-settings/useSiteContent";
+import PageHeader from "@/components/ui/page-header";
+import { Separator } from "@/components/ui/separator";
+import EmptyState from "@/components/ui/empty-state";
 
 const activities = [
   {
@@ -91,20 +94,15 @@ export default function ActivitiesPage() {
   }, [seminars, posts]);
 
   return (
-    <div className="py-16">
-      {/* 헤더 */}
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
       <div className="mx-auto max-w-6xl px-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <BookOpen size={24} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">{header.title}</h1>
-            <p className="text-sm text-muted-foreground">
-              {header.description}
-            </p>
-          </div>
-        </div>
+        {/* 페이지 헤더 */}
+        <PageHeader
+          icon={BookOpen}
+          title={header.title}
+          description={header.description}
+        />
+        <Separator className="mt-6" />
       </div>
 
       {/* 활동 카드 */}
@@ -149,8 +147,12 @@ export default function ActivitiesPage() {
         <h2 className="text-lg font-bold">주요 활동 내역</h2>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {highlights.length === 0 ? (
-            <div className="col-span-2 py-8 text-center text-sm text-muted-foreground">
-              활동 내역이 없습니다.
+            <div className="col-span-2">
+              <EmptyState
+                icon={BookOpen}
+                title="활동 내역이 없습니다"
+                description="완료된 세미나 및 게시물이 등록되면 이곳에 표시됩니다."
+              />
             </div>
           ) : (
             highlights.map((h, i) => (

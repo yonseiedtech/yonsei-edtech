@@ -2,8 +2,11 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { MessageSquareQuote } from "lucide-react";
 import { useGreeting, type GreetingPerson } from "@/features/greeting/useGreeting";
 import { Skeleton } from "@/components/ui/skeleton";
+import PageHeader from "@/components/ui/page-header";
+import { Separator } from "@/components/ui/separator";
 
 function GreetingCard({ person, accent }: { person: GreetingPerson; accent: "advisor" | "president" }) {
   if (!person.name && !person.content) return null;
@@ -48,14 +51,17 @@ function GreetingCard({ person, accent }: { person: GreetingPerson; accent: "adv
 export default function GreetingPage() {
   const { advisor, president, isLoading } = useGreeting();
 
+  const showAdvisor = !!(advisor.name || advisor.content);
+
   if (isLoading) {
     return (
-      <div className="py-16">
-        <section className="mx-auto max-w-6xl px-4 text-center">
-          <Skeleton className="mx-auto h-9 w-40" />
-          <Skeleton className="mx-auto mt-4 h-4 w-72" />
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
+        <section className="mx-auto max-w-6xl px-4">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="mt-3 h-4 w-72" />
+          <Skeleton className="mt-6 h-px w-full" />
         </section>
-        <section className="mx-auto mt-12 max-w-6xl space-y-8 px-4" aria-busy="true" aria-label="인사말 불러오는 중">
+        <section className="mx-auto mt-10 max-w-6xl space-y-8 px-4" aria-busy="true" aria-label="인사말 불러오는 중">
           {Array.from({ length: 2 }).map((_, i) => (
             <div key={i} className="flex flex-col items-center gap-6 rounded-2xl border bg-card p-5 shadow-sm sm:gap-10 sm:p-8 md:flex-row md:items-start md:p-12">
               <Skeleton className="h-56 w-44 shrink-0 rounded-xl md:h-64 md:w-52" />
@@ -75,20 +81,22 @@ export default function GreetingPage() {
     );
   }
 
-  const showAdvisor = !!(advisor.name || advisor.content);
-
   return (
-    <div className="py-16">
-      <section className="mx-auto max-w-6xl px-4 text-center">
-        <h1 className="text-3xl font-bold md:text-4xl">인사말</h1>
-        <p className="mt-4 text-muted-foreground">
-          {showAdvisor
-            ? "연세교육공학회 주임교수와 학회장의 인사말입니다."
-            : "연세교육공학회 학회장의 인사말입니다."}
-        </p>
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
+      <section className="mx-auto max-w-6xl px-4">
+        <PageHeader
+          icon={MessageSquareQuote}
+          title="인사말"
+          description={
+            showAdvisor
+              ? "연세교육공학회 주임교수와 학회장의 인사말입니다."
+              : "연세교육공학회 학회장의 인사말입니다."
+          }
+        />
+        <Separator className="mt-6" />
       </section>
 
-      <section className="mx-auto mt-12 max-w-6xl space-y-8 px-4">
+      <section className="mx-auto mt-10 max-w-6xl space-y-8 px-4">
         {showAdvisor && <GreetingCard person={advisor} accent="advisor" />}
         <GreetingCard person={president} accent="president" />
       </section>
