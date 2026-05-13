@@ -21,7 +21,7 @@ import {
   Plus, Trash2, ListChecks, Timer, UserCog,
   ChevronDown, ChevronUp,
   Upload, Paperclip, FileText, Download, CalendarPlus,
-  MessageSquare, MessageSquareQuote, HeartHandshake,
+  MessageSquare, MessageSquareQuote, HeartHandshake, BarChart3,
 } from "lucide-react";
 import InlineMeetingTimer from "./InlineMeetingTimer";
 import ActivityConnectedTodos from "./ActivityConnectedTodos";
@@ -582,6 +582,15 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
                 >
                   <HeartHandshake size={14} /> 봉사자 운영
+                </Link>
+              )}
+              {/* Sprint 70: 운영진 — 세션 분석 통계 (매칭 GAP #5) */}
+              {isStaff && type === "external" && (backHref.includes("academic-admin") || backHref.includes("/console/academic")) && (
+                <Link
+                  href={`/console/academic/external/${activityId}/session-analytics`}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
+                >
+                  <BarChart3 size={14} /> 세션 분석 통계
                 </Link>
               )}
             </div>
