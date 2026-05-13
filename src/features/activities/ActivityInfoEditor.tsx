@@ -58,6 +58,31 @@ export default function ActivityInfoEditor({
   const [maxParticipants, setMaxParticipants] = useState<string>(
     activity.maxParticipants != null ? String(activity.maxParticipants) : "",
   );
+  // Sprint 70 Phase 6: status·recruitmentStatus·registrationMethod·leader·imageUrl·year·semester
+  const [status, setStatus] = useState<"upcoming" | "ongoing" | "completed">(
+    (activity.status as "upcoming" | "ongoing" | "completed" | undefined) ?? "upcoming",
+  );
+  const [recruitmentStatus, setRecruitmentStatus] = useState<
+    "recruiting" | "closed" | "in_progress" | "completed"
+  >(
+    (activity.recruitmentStatus as
+      | "recruiting"
+      | "closed"
+      | "in_progress"
+      | "completed"
+      | undefined) ?? "recruiting",
+  );
+  const [registrationMethod, setRegistrationMethod] = useState<"open" | "manual">(
+    (activity.registrationMethod as "open" | "manual" | undefined) ?? "manual",
+  );
+  const [leader, setLeader] = useState(activity.leader ?? "");
+  const [imageUrl, setImageUrl] = useState(activity.imageUrl ?? "");
+  const [year, setYear] = useState<string>(
+    activity.year != null ? String(activity.year) : "",
+  );
+  const [semester, setSemester] = useState<"" | "first" | "second">(
+    (activity.semester as "first" | "second" | undefined) ?? "",
+  );
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -75,6 +100,22 @@ export default function ActivityInfoEditor({
     const next = (activity.enabledParticipantTypes as ExternalParticipantType[] | undefined) ?? [];
     setEnabledTypes(next.length > 0 ? next : [...ALL_PARTICIPANT_TYPES]);
     setMaxParticipants(activity.maxParticipants != null ? String(activity.maxParticipants) : "");
+    setStatus((activity.status as "upcoming" | "ongoing" | "completed" | undefined) ?? "upcoming");
+    setRecruitmentStatus(
+      (activity.recruitmentStatus as
+        | "recruiting"
+        | "closed"
+        | "in_progress"
+        | "completed"
+        | undefined) ?? "recruiting",
+    );
+    setRegistrationMethod(
+      (activity.registrationMethod as "open" | "manual" | undefined) ?? "manual",
+    );
+    setLeader(activity.leader ?? "");
+    setImageUrl(activity.imageUrl ?? "");
+    setYear(activity.year != null ? String(activity.year) : "");
+    setSemester((activity.semester as "first" | "second" | undefined) ?? "");
   }, [activity]);
 
   function toggleType(t: ExternalParticipantType) {
@@ -109,6 +150,12 @@ export default function ActivityInfoEditor({
         .split(",")
         .map((t) => t.trim())
         .filter(Boolean);
+      const parsedYear = year.trim() === "" ? undefined : Number(year);
+      if (parsedYear !== undefined && (!Number.isFinite(parsedYear) || parsedYear < 2000 || parsedYear > 2100)) {
+        toast.error("연도는 2000~2100 사이의 숫자여야 합니다.");
+        setSaving(false);
+        return;
+      }
       await activitiesApi.update(activity.id, {
         title: title.trim(),
         description: description.trim() || undefined,
@@ -121,6 +168,13 @@ export default function ActivityInfoEditor({
         conferenceUrl: isExternal ? conferenceUrl.trim() || undefined : undefined,
         enabledParticipantTypes: isExternal ? enabledTypes : undefined,
         maxParticipants: parsedMax,
+        status,
+        recruitmentStatus,
+        registrationMethod,
+        leader: leader.trim() || undefined,
+        imageUrl: imageUrl.trim() || undefined,
+        year: parsedYear,
+        semester: semester === "" ? undefined : semester,
       });
       toast.success("활동 정보가 저장되었습니다.");
       onSaved?.();
@@ -276,6 +330,97 @@ export default function ActivityInfoEditor({
           value={maxParticipants}
           onChange={(e) => setMaxParticipants(e.target.value)}
           placeholder="예: 50"
+        />
+      </div>
+
+      {/* Phase 6 — 잔여 modal 필드: 상태·모집상태·신청방법·리더·이미지·학기 */}
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div>
+          <label className="mb-1 block text-xs font-medium">활동 상태</label>
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value as "upcoming" | "ongoing" | "completed")}
+            className="w-full rounded-md border bg-card px-2 py-2 text-sm"
+          >
+            <option value="upcoming">예정</option>
+            <option value="ongoing">진행 중</option>
+            <option value="completed">종료</option>
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium">모집 상태</label>
+          <select
+            value={recruitmentStatus}
+            onChange={(e) =>
+              setRecruitmentStatus(
+                e.target.value as "recruiting" | "closed" | "in_progress" | "completed",
+              )
+            }
+            className="w-full rounded-md border bg-card px-2 py-2 text-sm"
+          >
+            <option value="recruiting">모집 중</option>
+            <option value="closed">모집 마감</option>
+            <option value="in_progress">진행 중</option>
+            <option value="completed">종료</option>
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium">신청 방법</label>
+          <select
+            value={registrationMethod}
+            onChange={(e) => setRegistrationMethod(e.target.value as "open" | "manual")}
+            className="w-full rounded-md border bg-card px-2 py-2 text-sm"
+          >
+            <option value="manual">운영진 승인</option>
+            <option value="open">자동 승인</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div>
+          <label className="mb-1 block text-xs font-medium">활동 학기 — 연도</label>
+          <Input
+            type="number"
+            min={2000}
+            max={2100}
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
+            placeholder="예: 2026"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium">활동 학기 — 학기</label>
+          <select
+            value={semester}
+            onChange={(e) => setSemester(e.target.value as "" | "first" | "second")}
+            className="w-full rounded-md border bg-card px-2 py-2 text-sm"
+          >
+            <option value="">(미선택)</option>
+            <option value="first">전기 (3월~8월)</option>
+            <option value="second">후기 (9월~익년 2월)</option>
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium">리더 (자유 텍스트)</label>
+          <Input
+            value={leader}
+            onChange={(e) => setLeader(e.target.value)}
+            placeholder="예: 홍길동 (운영진)"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="mb-1 block text-xs font-medium">
+          대표 이미지 URL
+          <span className="ml-1 text-[10px] font-normal text-muted-foreground">(목록·카드 노출)</span>
+        </label>
+        <Input
+          type="url"
+          value={imageUrl}
+          onChange={(e) => setImageUrl(e.target.value)}
+          placeholder="https://..."
         />
       </div>
 
