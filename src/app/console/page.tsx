@@ -239,7 +239,7 @@ export default function ConsoleDashboardPage() {
       {/* Sprint 70 신설 — 학술대회 운영 통합 (활동 상세 진입 후 사용) */}
       <div>
         <h2 className="mb-1 text-sm font-bold uppercase tracking-wider text-primary">
-          🆕 Sprint 70 신설 — 학술대회 운영 통합
+          🆕 학술대회 운영 통합
         </h2>
         <p className="mb-3 text-xs text-muted-foreground">
           아래 4개 기능은 <strong className="text-foreground">활동 상세 페이지</strong> 진입 후 사용합니다. 카드를 클릭해 대외 학술대회 목록으로 이동 → 활동 클릭 → 상세 페이지 우측 운영 영역에서 진입 버튼 표시.
@@ -255,7 +255,7 @@ export default function ConsoleDashboardPage() {
             <div className="flex-1">
               <p className="text-sm font-bold">참석자 후기 모니터링</p>
               <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
-                회원이 작성한 종합 후기·재참석 의사·연구 시사점·별점을 통계로 분석. (GAP #1)
+                회원이 작성한 종합 후기·재참석 의사·연구 시사점·별점을 통계로 분석.
               </p>
             </div>
             <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-900/50 dark:text-blue-200">
@@ -273,7 +273,7 @@ export default function ConsoleDashboardPage() {
             <div className="flex-1">
               <p className="text-sm font-bold">자원봉사자 운영</p>
               <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
-                전체 봉사자 명부·역할·시간대·임무 체크 진행률 + 본부석 인쇄. (GAP #4)
+                전체 봉사자 명부·역할·시간대·임무 체크 진행률 + 본부석 인쇄.
               </p>
             </div>
             <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200">
@@ -291,7 +291,7 @@ export default function ConsoleDashboardPage() {
             <div className="flex-1">
               <p className="text-sm font-bold">세션 분석 통계</p>
               <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
-                인기 세션 TOP 10·카테고리 분포·선택 이유 분포·출석률·평균 별점. (GAP #5)
+                인기 세션 TOP 10·카테고리 분포·선택 이유 분포·출석률·평균 별점.
               </p>
             </div>
             <span className="shrink-0 rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-700 dark:bg-purple-900/50 dark:text-purple-200">
@@ -309,7 +309,7 @@ export default function ConsoleDashboardPage() {
             <div className="flex-1">
               <p className="text-sm font-bold">워크북 관리</p>
               <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
-                과제 task CRUD + 제출 모니터링 + 검토 워크플로우. (GAP #2-3, 통합)
+                과제 task CRUD + 제출 모니터링 + 검토 워크플로우.
               </p>
             </div>
             <span className="shrink-0 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-700 dark:bg-rose-900/50 dark:text-rose-200">

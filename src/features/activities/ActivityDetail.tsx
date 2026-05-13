@@ -555,7 +555,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   <div className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-primary">
                     <UserCog size={12} /> 운영 도구 {type === "external" && "(대외 학술대회)"}
                     <span className="ml-1 rounded-full bg-primary/15 px-1.5 py-0.5 text-[9px] font-semibold normal-case">
-                      🆕 Sprint 70 신설 4건
+                      운영진 전용
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
