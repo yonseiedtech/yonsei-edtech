@@ -1,29 +1,38 @@
 "use client";
 
 /**
- * Spaced Repetition 위젯 (Sprint 67-AR — 교육공학 이론 보강)
+ * Spaced Repetition 위젯 v2 (Sprint 70 — 데이터 소스 확장)
  *
  * 이론 근거: Ebbinghaus 망각곡선 (1885) + Cepeda et al. (2008) 메타분석
  * - 학습 후 1일·7일·14일·30일 간격으로 다시 보면 장기 기억 강화
  * - 본 위젯은 사용자가 N일 전 본인이 작성·참여한 콘텐츠를 다시 안내
  *
- * MVP 데이터 소스: 본인이 작성한 게시글 (postsApi). 향후 분석 노트·세미나 후기 확장 가능.
+ * v2 변경: 게시글 외에 본인 작성 세미나 후기(SeminarReview)도 통합. 각 종류는 라벨·링크가 다름.
  */
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Brain, RotateCcw, Sparkles } from "lucide-react";
+import { ArrowRight, Brain, RotateCcw, Sparkles, MessageSquare, FileText } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { postsApi } from "@/lib/bkend";
-import type { Post } from "@/types";
+import { postsApi, reviewsApi } from "@/lib/bkend";
+import type { Post, SeminarReview } from "@/types";
+
+/** 위젯에 노출되는 통일 아이템 */
+interface ReviewItem {
+  kind: "post" | "seminar-review";
+  id: string;
+  title: string;
+  href: string;
+  createdAt: unknown;
+}
 
 interface IntervalGroup {
   /** 표시 라벨 (예: "1주 전 작성") */
   label: string;
   /** 망각곡선 간격 (일) */
   daysAgo: number;
-  /** 해당 간격에 해당하는 게시글 (각 그룹 1개씩만 노출) */
-  post: Post | null;
+  /** 해당 간격에 해당하는 아이템 (각 그룹 1개씩만 노출) */
+  item: ReviewItem | null;
 }
 
 const REVIEW_INTERVALS: { days: number; label: string }[] = [
@@ -53,7 +62,7 @@ function parseCreatedAt(value: unknown): Date | null {
 
 export default function SpacedRepetitionWidget() {
   const { user } = useAuthStore();
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [items, setItems] = useState<ReviewItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -61,40 +70,64 @@ export default function SpacedRepetitionWidget() {
       setLoading(false);
       return;
     }
-    postsApi
-      .list({ limit: 50, sort: "createdAt:desc" })
-      .then((res) => {
-        const all = (res.data ?? []) as Post[];
-        // 본인 작성 게시글만 (composite-index 회피 — 클라이언트 필터)
-        const mine = all.filter((p) => p.authorId === user.id);
-        setPosts(mine);
+    const myUserId = user.id;
+    Promise.all([
+      postsApi
+        .list({ limit: 50, sort: "createdAt:desc" })
+        .then((res) => (res.data ?? []) as Post[])
+        .catch(() => [] as Post[]),
+      reviewsApi
+        .listByAuthor(myUserId)
+        .then((res) => (res.data ?? []) as SeminarReview[])
+        .catch(() => [] as SeminarReview[]),
+    ])
+      .then(([posts, reviews]) => {
+        const myPosts: ReviewItem[] = posts
+          .filter((p) => p.authorId === myUserId)
+          .map((p) => ({
+            kind: "post" as const,
+            id: p.id,
+            title: p.title,
+            href: `/board/${p.id}`,
+            createdAt: p.createdAt,
+          }));
+        const myReviews: ReviewItem[] = reviews
+          .filter((r) => r.status !== "hidden")
+          .map((r) => ({
+            kind: "seminar-review" as const,
+            id: r.id,
+            // 후기 본문 첫 60자 (title 필드 없음) — 1줄 미리보기
+            title: (r.content ?? "").slice(0, 60) || "(내용 없음)",
+            href: `/seminars/${r.seminarId}`,
+            createdAt: r.createdAt,
+          }));
+        setItems([...myPosts, ...myReviews]);
       })
-      .catch(() => setPosts([]))
       .finally(() => setLoading(false));
   }, [user?.id]);
 
   const groups = useMemo<IntervalGroup[]>(() => {
-    if (posts.length === 0) {
+    if (items.length === 0) {
       return REVIEW_INTERVALS.map((iv) => ({
         label: iv.label,
         daysAgo: iv.days,
-        post: null,
+        item: null,
       }));
     }
     const now = new Date();
     return REVIEW_INTERVALS.map((iv) => {
-      // 각 간격 ±1일 이내 작성된 게시글 1건 매칭
-      const match = posts.find((p) => {
-        const created = parseCreatedAt(p.createdAt);
+      // 각 간격 ±1일 이내 작성된 아이템 1건 매칭 (게시글·후기 모두 후보)
+      const match = items.find((it) => {
+        const created = parseCreatedAt(it.createdAt);
         if (!created) return false;
         const diff = daysBetween(now, created);
         return diff >= iv.days - 1 && diff <= iv.days + 1;
       });
-      return { label: iv.label, daysAgo: iv.days, post: match ?? null };
+      return { label: iv.label, daysAgo: iv.days, item: match ?? null };
     });
-  }, [posts]);
+  }, [items]);
 
-  const hasAnyMatch = groups.some((g) => g.post != null);
+  const hasAnyMatch = groups.some((g) => g.item != null);
 
   if (!user) return null;
 
@@ -124,7 +157,7 @@ export default function SpacedRepetitionWidget() {
       {loading ? (
         <div className="flex h-24 items-center justify-center text-xs text-muted-foreground">
           <Sparkles size={14} className="mr-2 animate-pulse" />
-          본인 게시글 분석 중…
+          본인 게시글·세미나 후기 분석 중…
         </div>
       ) : !hasAnyMatch ? (
         <div className="rounded-xl border-2 border-dashed border-muted-foreground/20 bg-muted/30 p-4 text-center">
@@ -139,29 +172,38 @@ export default function SpacedRepetitionWidget() {
       ) : (
         <ul className="space-y-2">
           {groups
-            .filter((g) => g.post != null)
-            .map((g) => (
-              <li key={g.daysAgo}>
-                <Link
-                  href={`/board/${g.post!.id}`}
-                  className="group flex items-start gap-2.5 rounded-xl border bg-background p-3 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <span className="inline-flex shrink-0 items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                    {g.label}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium transition-colors group-hover:text-primary">
-                      {g.post!.title}
-                    </p>
-                  </div>
-                  <ArrowRight
-                    size={12}
-                    className="mt-1 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
-                    aria-hidden
-                  />
-                </Link>
-              </li>
-            ))}
+            .filter((g) => g.item != null)
+            .map((g) => {
+              const it = g.item!;
+              const KindIcon = it.kind === "post" ? FileText : MessageSquare;
+              const kindLabel = it.kind === "post" ? "게시글" : "세미나 후기";
+              return (
+                <li key={`${it.kind}-${it.id}`}>
+                  <Link
+                    href={it.href}
+                    className="group flex items-start gap-2.5 rounded-xl border bg-background p-3 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <span className="inline-flex shrink-0 items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                      {g.label}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium transition-colors group-hover:text-primary">
+                        {it.title}
+                      </p>
+                      <p className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground">
+                        <KindIcon size={10} aria-hidden />
+                        {kindLabel}
+                      </p>
+                    </div>
+                    <ArrowRight
+                      size={12}
+                      className="mt-1 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
+                      aria-hidden
+                    />
+                  </Link>
+                </li>
+              );
+            })}
         </ul>
       )}
 
