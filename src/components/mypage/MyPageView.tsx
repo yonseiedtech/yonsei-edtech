@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import { useAuthStore } from "@/features/auth/auth-store";
 import ProfileEditor from "@/features/auth/ProfileEditor";
 import PasswordChangeForm from "@/features/auth/PasswordChangeForm";
@@ -40,7 +41,19 @@ import {
   PenSquare,
   Sparkles,
   Bell,
+  Settings,
 } from "lucide-react";
+
+// react-easy-crop(39KB gzipped) — 명함 탭 클릭 시에만 chunk 로드
+const CardSection = dynamic(
+  () => import("@/features/card/CardSection"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="animate-pulse h-96 rounded-2xl bg-muted" aria-busy="true" aria-label="명함 불러오는 중" />
+    ),
+  },
+);
 import EmptyState from "@/components/ui/empty-state";
 import LearningStreak from "@/features/mypage/LearningStreak";
 import ARCSPanel from "@/features/mypage/ARCSPanel";
@@ -50,12 +63,22 @@ import { ROLE_LABELS, ENROLLMENT_STATUS_LABELS } from "@/types";
 import { formatDate } from "@/lib/utils";
 
 const TABS = [
-  { key: "home", label: "홈", icon: Home },
-  { key: "profile", label: "프로필", icon: UserCog },
-  { key: "password", label: "비밀번호", icon: KeyRound },
+  { key: "overview", label: "개요", icon: Home },
+  { key: "card", label: "내 명함", icon: QrCode },
+  { key: "activities", label: "내 활동", icon: ClipboardList },
+  { key: "research", label: "내 연구", icon: BookOpen },
+  { key: "settings", label: "설정", icon: Settings },
 ] as const;
 
-const LEGACY_TABS = ["activities", "certificates", "posts", "interviews"] as const;
+// 구 URL ?tab=X 에 대한 레거시 매핑
+const LEGACY_TAB_MAP: Record<string, (typeof TABS)[number]["key"]> = {
+  home: "overview",
+  profile: "settings",
+  password: "settings",
+  certificates: "activities",
+  posts: "activities",
+  interviews: "activities",
+};
 
 type TabKey = (typeof TABS)[number]["key"];
 
@@ -71,9 +94,9 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
   const { seminars } = useSeminars();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState<TabKey>("home");
+  const [activeTab, setActiveTab] = useState<TabKey>("overview");
 
-  // Legacy URL 자동 리다이렉트
+  // Legacy URL 자동 리다이렉트 + 탭 동기화
   useEffect(() => {
     if (readOnly) return;
     const t = searchParams.get("tab");
@@ -83,14 +106,26 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
       router.replace("/mypage/research");
       return;
     }
-    if (t && (LEGACY_TABS as readonly string[]).includes(t)) {
-      const qs = new URLSearchParams();
-      qs.set("tab", t);
-      if (sub) qs.set("sub", sub);
-      router.replace(`/mypage/activities?${qs.toString()}`);
+    if (!t) {
+      setActiveTab("overview");
       return;
     }
-    if (t && TABS.some((x) => x.key === t)) setActiveTab(t as TabKey);
+    // 현재 탭 키면 그대로 적용
+    if (TABS.some((x) => x.key === t)) {
+      setActiveTab(t as TabKey);
+      return;
+    }
+    // 레거시 탭 키면 매핑
+    if (t in LEGACY_TAB_MAP) {
+      const mapped = LEGACY_TAB_MAP[t];
+      setActiveTab(mapped);
+      // URL도 정규화
+      const qs = new URLSearchParams(searchParams.toString());
+      if (mapped === "overview") qs.delete("tab");
+      else qs.set("tab", mapped);
+      const next = qs.toString();
+      router.replace(next ? `/mypage?${next}` : "/mypage", { scroll: false });
+    }
   }, [searchParams, router, readOnly]);
 
   const isSelf = authUser?.id === userId;
@@ -199,7 +234,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
         </div>
 
         {/* 탭 네비게이션 */}
-        <nav className="mt-6 flex gap-1 overflow-x-auto border-b">
+        <nav className="mt-6 flex gap-1 overflow-x-auto border-b" aria-label="마이페이지 탭">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.key;
             return (
@@ -209,7 +244,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                   setActiveTab(tab.key);
                   if (!readOnly) {
                     const qs = new URLSearchParams(searchParams.toString());
-                    if (tab.key === "home") qs.delete("tab");
+                    if (tab.key === "overview") qs.delete("tab");
                     else qs.set("tab", tab.key);
                     const next = qs.toString();
                     router.replace(next ? `/mypage?${next}` : "/mypage", { scroll: false });
@@ -232,7 +267,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
 
         {/* 탭 콘텐츠 */}
         <div className="mt-6">
-          {activeTab === "home" && (
+          {activeTab === "overview" && (
             <div className="space-y-4">
               {/* Sprint 56: 학습 잔디 — 365일 활동 그리드 + streak + 마일스톤 */}
               <LearningStreak />
@@ -607,13 +642,22 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
 
               {isSelf && !readOnly && (
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <Link href="/mypage/card" className="rounded-2xl border bg-card p-4 hover:border-primary/40 hover:shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab("card");
+                      const qs = new URLSearchParams(searchParams.toString());
+                      qs.set("tab", "card");
+                      router.replace(`/mypage?${qs.toString()}`, { scroll: false });
+                    }}
+                    className="rounded-2xl border bg-card p-4 text-left hover:border-primary/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                  >
                     <div className="flex items-center gap-2">
                       <QrCode size={16} className="text-primary" />
                       <p className="text-sm font-semibold">내 모바일 명함</p>
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">QR·vCard·공유·교환 기록 관리</p>
-                  </Link>
+                  </button>
                   <Link href="/activities" className="rounded-2xl border bg-card p-4 hover:border-primary/40 hover:shadow-sm">
                     <p className="text-sm font-semibold">학술활동 둘러보기</p>
                     <p className="mt-1 text-xs text-muted-foreground">프로젝트·스터디·대외활동</p>
@@ -631,36 +675,119 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
             </div>
           )}
 
-          {activeTab === "profile" && (
-            <div className="rounded-2xl border bg-card p-6">
-              {readOnly ? (
-                <div className="space-y-2 text-sm">
-                  <p><span className="font-medium">이름:</span> {user.name}</p>
-                  <p><span className="font-medium">이메일:</span> {user.email}</p>
-                  <p><span className="font-medium">학번:</span> {user.studentId || "-"}</p>
-                  <p className="text-xs text-muted-foreground pt-2">읽기 전용 모드에서는 프로필을 수정할 수 없습니다.</p>
+          {activeTab === "card" && isSelf && !readOnly && (
+            <CardSection />
+          )}
+
+          {activeTab === "activities" && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                학술활동·수료증·내 글·인터뷰를 한 화면에서 관리할 수 있습니다.
+              </p>
+              <Link
+                href="/mypage/activities"
+                className="flex items-center justify-between rounded-2xl border bg-card px-5 py-4 transition hover:border-primary/40 hover:shadow-sm"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <ClipboardList size={20} />
+                  </div>
+                  <div>
+                    <p className="font-semibold">내 학회활동 전체 보기</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">학술활동 {myActivities.length + mySeminars.length}건 · 수료증 {myCertificates.length}장 · 글 {myPosts.length}편</p>
+                  </div>
                 </div>
-              ) : (
-                <ProfileEditor user={user} />
-              )}
+                <ArrowRight size={16} className="shrink-0 text-muted-foreground" />
+              </Link>
+              <Link
+                href="/mypage/activities?tab=certificates"
+                className="flex items-center justify-between rounded-2xl border bg-card px-5 py-4 transition hover:border-primary/40 hover:shadow-sm"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                    <Award size={20} />
+                  </div>
+                  <div>
+                    <p className="font-semibold">수료증 · 임명장</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">발급된 수료증 {myCertificates.length}장</p>
+                  </div>
+                </div>
+                <ArrowRight size={16} className="shrink-0 text-muted-foreground" />
+              </Link>
+              <Link
+                href="/mypage/activities?tab=posts"
+                className="flex items-center justify-between rounded-2xl border bg-card px-5 py-4 transition hover:border-primary/40 hover:shadow-sm"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                    <FileText size={20} />
+                  </div>
+                  <div>
+                    <p className="font-semibold">내 글</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">작성한 글 {myPosts.length}편</p>
+                  </div>
+                </div>
+                <ArrowRight size={16} className="shrink-0 text-muted-foreground" />
+              </Link>
             </div>
           )}
 
-          {activeTab === "password" && (
-            <>
-              <div className="rounded-2xl border bg-card p-6">
-                <h3 className="text-lg font-bold">비밀번호 변경</h3>
-                <div className="mt-4">
-                  {readOnly ? (
-                    <p className="text-sm text-muted-foreground">읽기 전용 모드에서는 비밀번호를 변경할 수 없습니다.</p>
-                  ) : (
-                    <PasswordChangeForm />
-                  )}
+          {activeTab === "research" && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                관심 연구분야·논문 분석 노트를 단계별로 정리할 수 있습니다.
+              </p>
+              <Link
+                href="/mypage/research"
+                className="flex items-center justify-between rounded-2xl border-2 border-amber-200/60 bg-gradient-to-br from-amber-50 to-amber-100/60 px-5 py-4 transition hover:border-amber-300 hover:shadow-sm dark:border-amber-800/40 dark:from-amber-950/20 dark:to-amber-900/10"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-200/40 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                    <BookOpen size={20} />
+                  </div>
+                  <div>
+                    <p className="font-semibold">내 연구활동 전체 보기</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">논문 {publishedPaperCount}편 · 분석 노트</p>
+                  </div>
                 </div>
+                <ArrowRight size={16} className="shrink-0 text-amber-700 dark:text-amber-300" />
+              </Link>
+            </div>
+          )}
+
+          {activeTab === "settings" && (
+            <div className="space-y-6">
+              {/* 프로필 수정 */}
+              <div className="rounded-2xl border bg-card p-6">
+                <h3 className="mb-4 text-base font-bold">프로필 수정</h3>
+                {readOnly ? (
+                  <div className="space-y-2 text-sm">
+                    <p><span className="font-medium">이름:</span> {user.name}</p>
+                    <p><span className="font-medium">이메일:</span> {user.email}</p>
+                    <p><span className="font-medium">학번:</span> {user.studentId || "-"}</p>
+                    <p className="text-xs text-muted-foreground pt-2">읽기 전용 모드에서는 프로필을 수정할 수 없습니다.</p>
+                  </div>
+                ) : (
+                  <ProfileEditor user={user} />
+                )}
               </div>
+
+              {/* 비밀번호 변경 */}
+              <div className="rounded-2xl border bg-card p-6">
+                <h3 className="mb-4 text-base font-bold">비밀번호 변경</h3>
+                {readOnly ? (
+                  <p className="text-sm text-muted-foreground">읽기 전용 모드에서는 비밀번호를 변경할 수 없습니다.</p>
+                ) : (
+                  <PasswordChangeForm />
+                )}
+              </div>
+
+              {/* 알림 / 피드 설정 */}
               {!readOnly && <NotificationSettingsCard user={user} />}
+
+              {/* 회원 탈퇴 */}
               {!readOnly && <SelfDeleteSection user={user} onDeleted={() => { logout(); router.push("/"); }} />}
-            </>
+            </div>
           )}
         </div>
       </div>

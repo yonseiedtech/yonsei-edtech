@@ -74,6 +74,10 @@ const nextConfig: NextConfig = {
       { source: "/admin/seminars", destination: "/console/academic/manage", permanent: false },
       { source: "/admin/analytics", destination: "/console/insights", permanent: false },
 
+      // /mypage/card → /mypage?tab=card (탭 통합)
+      { source: "/mypage/card", destination: "/mypage?tab=card", permanent: false },
+      { source: "/mypage/card/exchanges", destination: "/mypage?tab=card", permanent: false },
+
       // /staff-admin/* → /console/*
       { source: "/staff-admin", destination: "/console", permanent: false },
       { source: "/staff-admin/todos", destination: "/console/todos", permanent: false },
