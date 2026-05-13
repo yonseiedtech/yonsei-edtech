@@ -36,6 +36,7 @@ import { uploadToStorage } from "@/lib/storage";
 import type { UploadedFile } from "@/lib/storage";
 import { formatSemester } from "@/lib/semester";
 import FormBuilder from "./FormBuilder";
+import FormBuilderByType from "./FormBuilderByType";
 import FormRenderer from "./FormRenderer";
 import MemberAutocomplete from "@/components/ui/MemberAutocomplete";
 import { useAllMembers } from "@/features/member/useMembers";
@@ -439,6 +440,13 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const applicationQuestions = (activity?.applicationQuestions as string[] | undefined) ?? [];
   const applicationForm: FormField[] = (activity?.applicationForm as FormField[] | undefined)
     ?? applicationQuestions.map((q, i) => ({ id: `legacy_${i}`, type: "long_text" as const, label: q }));
+  // Sprint 70: 대외활동에서 신청자가 선택한 참석유형의 추가 폼 (공통 폼 + 유형별 폼 = 신청 다이얼로그 표시 폼)
+  const applicationFormByType = (activity?.applicationFormByType as
+    | Partial<Record<ExternalParticipantType, FormField[]>>
+    | undefined) ?? {};
+  const typeSpecificForm: FormField[] =
+    type === "external" ? applicationFormByType[applyParticipantType] ?? [] : [];
+  const combinedApplicationFields: FormField[] = [...applicationForm, ...typeSpecificForm];
 
   // 리포트 통계
   const reportStats = {
@@ -1762,21 +1770,53 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 <h3 className="font-semibold">신청 폼 빌더</h3>
                 <p className="mt-1 text-xs text-muted-foreground">구글 폼처럼 단답·장문·객관식·체크박스·드롭다운·날짜·파일 업로드 등 다양한 질문을 구성할 수 있습니다.</p>
               </div>
-              <FormBuilder
-                value={applicationForm}
-                onChange={async (fields) => {
-                  queryClient.setQueryData(["activity", activityId], (prev: unknown) => {
-                    if (!prev || typeof prev !== "object") return prev;
-                    return { ...(prev as Record<string, unknown>), applicationForm: fields };
-                  });
-                  try {
-                    await activitiesApi.update(activityId, { applicationForm: fields });
-                  } catch (e) {
-                    toast.error(e instanceof Error ? e.message : "폼 저장 실패");
-                    queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
-                  }
-                }}
-              />
+              {type === "external" ? (
+                <FormBuilderByType
+                  commonForm={applicationForm}
+                  onCommonChange={async (fields) => {
+                    queryClient.setQueryData(["activity", activityId], (prev: unknown) => {
+                      if (!prev || typeof prev !== "object") return prev;
+                      return { ...(prev as Record<string, unknown>), applicationForm: fields };
+                    });
+                    try {
+                      await activitiesApi.update(activityId, { applicationForm: fields });
+                    } catch (e) {
+                      toast.error(e instanceof Error ? e.message : "공통 폼 저장 실패");
+                      queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+                    }
+                  }}
+                  enabledTypes={activity?.enabledParticipantTypes as ExternalParticipantType[] | undefined}
+                  byType={(activity?.applicationFormByType ?? {}) as Partial<Record<ExternalParticipantType, FormField[]>>}
+                  onByTypeChange={async (next) => {
+                    queryClient.setQueryData(["activity", activityId], (prev: unknown) => {
+                      if (!prev || typeof prev !== "object") return prev;
+                      return { ...(prev as Record<string, unknown>), applicationFormByType: next };
+                    });
+                    try {
+                      await activitiesApi.update(activityId, { applicationFormByType: next });
+                    } catch (e) {
+                      toast.error(e instanceof Error ? e.message : "유형별 폼 저장 실패");
+                      queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+                    }
+                  }}
+                />
+              ) : (
+                <FormBuilder
+                  value={applicationForm}
+                  onChange={async (fields) => {
+                    queryClient.setQueryData(["activity", activityId], (prev: unknown) => {
+                      if (!prev || typeof prev !== "object") return prev;
+                      return { ...(prev as Record<string, unknown>), applicationForm: fields };
+                    });
+                    try {
+                      await activitiesApi.update(activityId, { applicationForm: fields });
+                    } catch (e) {
+                      toast.error(e instanceof Error ? e.message : "폼 저장 실패");
+                      queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+                    }
+                  }}
+                />
+              )}
             </div>
           )}
 
@@ -2306,11 +2346,18 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 </div>
               </section>
 
-              {applicationForm.length > 0 && (
+              {combinedApplicationFields.length > 0 && (
                 <section className="space-y-2 border-t pt-4">
-                  <h3 className="text-sm font-semibold text-slate-800">추가 질문</h3>
+                  <h3 className="text-sm font-semibold text-slate-800">
+                    추가 질문
+                    {type === "external" && typeSpecificForm.length > 0 && (
+                      <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                        선택 유형: {applyParticipantType === "speaker" ? "발표자" : applyParticipantType === "volunteer" ? "자원봉사자" : "참석자"} 추가 질문 포함
+                      </span>
+                    )}
+                  </h3>
                   <FormRenderer
-                    fields={applicationForm}
+                    fields={combinedApplicationFields}
                     value={applyAnswers}
                     onChange={(id, v) => setApplyAnswers((prev) => ({ ...prev, [id]: v }))}
                     scheduleDefaults={{

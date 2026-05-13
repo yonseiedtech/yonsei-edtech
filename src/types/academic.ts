@@ -90,7 +90,18 @@ export interface Activity { [key: string]: unknown;
   participants?: string[];
   applicants?: { userId?: string; guestKey?: string; isGuest?: boolean; email?: string; phone?: string; name: string; studentId?: string; answers?: Record<string, string | string[] | { url: string; name: string; size: number; type: string }[]>; appliedAt: string; status: "pending" | "approved" | "rejected"; participantType?: ExternalParticipantType; speakerSubmissionType?: SpeakerSubmissionType; speakerPaperTitle?: string }[];
   applicationQuestions?: string[];
+  /**
+   * 공통 신청폼 — 모든 참석유형에 표시. (Sprint 70 이전부터 존재)
+   * 대외활동에서 참석유형별 폼을 사용하면 공통 폼은 모든 신청자에게 먼저 표시되고
+   * 이후 선택한 유형의 applicationFormByType 폼이 이어 표시된다.
+   */
   applicationForm?: FormField[];
+  /**
+   * Sprint 70: 참석유형별 신청폼 (대외활동 전용).
+   * 신청자가 참석유형(발표자/자원봉사자/참석자)을 선택하면 해당 유형의 폼이 공통 폼 다음에 표시됨.
+   * 키가 없는 유형은 공통 폼만 사용.
+   */
+  applicationFormByType?: Partial<Record<ExternalParticipantType, FormField[]>>;
   registrationMethod?: "open" | "manual";
   participantRoles?: Record<string, string>;
   /** 운영자가 참여자별로 남기는 메모 (key: userId/guestKey/applicantKey) */
