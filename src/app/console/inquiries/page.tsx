@@ -1,1 +1,7 @@
-export { default } from "@/app/admin/inquiries/page";
+"use client";
+
+import AdminInquiryTab from "@/features/admin/AdminInquiryTab";
+
+export default function ConsoleInquiriesPage() {
+  return <AdminInquiryTab />;
+}
