@@ -15,7 +15,7 @@ import {
   BarChart3, GraduationCap, Wallet, Users, BookUser,
   BookOpen, FlaskConical, FolderKanban, Globe, Award, NotebookPen,
   Settings, MessageCircle, ScrollText, ChevronDown, ChevronRight,
-  ShieldCheck, Megaphone, CalendarDays, MessageSquareQuote, Images, ClipboardCheck,
+  ShieldCheck, Megaphone, CalendarDays, MessageSquareQuote, Images, ClipboardCheck, Workflow,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -185,6 +185,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
         { href: "/console/popups", label: "팝업 공지", icon: Megaphone },
         { href: "/console/ai", label: "챗봇 설정", icon: MessageCircle },
         { href: "/console/agents", label: "AI 에이전트 관리", icon: ShieldCheck },
+        { href: "/console/agent-workflows", label: "에이전트 워크플로우", icon: Workflow },
         { href: "/console/audit-log", label: "감사로그", icon: ScrollText },
         { href: "/console/labs", label: "실험실", icon: FlaskConical },
         { href: "/console/inquiries", label: "문의 답변", icon: MessageSquare, badge: unansweredCount },
