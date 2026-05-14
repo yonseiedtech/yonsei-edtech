@@ -62,6 +62,9 @@
 | 해시 | 메시지 |
 |------|--------|
 | `bfdb5ffa` | fix: 운영 콘솔 하위 nav ↔ 헤더 순서 통일 + 헤더 표준화 (19파일) |
+| `abe0d523` | docs: console UI consistency 사이클 보고서 commit 해시 기입 |
+| `81c05a9b` | fix: AdminMemberTab 자동 승인 실패 은폐 수정 |
+| (다음) | fix: members/[id] 회원 관리 헤더를 ConsolePageHeader 로 전환 |
 
 ---
 
@@ -72,20 +75,27 @@
 - 학술활동 대시보드: https://yonsei-edtech.vercel.app/console/academic/manage
 - AI 포럼 운영: https://yonsei-edtech.vercel.app/console/ai-forum
 - 로드맵 관리: https://yonsei-edtech.vercel.app/console/roadmap
+- 회원 상세: https://yonsei-edtech.vercel.app/console/members → 회원 클릭
 
 ---
 
-## 6. 잔여 작업
+## 6. 상세 페이지 헤더 검토 결과
 
-- 상세·폼 페이지의 비표준 헤더 표준화 검토: `members/[id]`("회원 관리" h1),
-  `labs/new`("새 실험 등록" h1), `card-news/[seriesId]`, `handover/report` — 상세
-  페이지는 엔티티 제목 표시 등 맥락이 달라 일괄 적용 전 개별 판단 필요.
+- `members/[id]` — "회원 관리" h1 + 액션 → `ConsolePageHeader`로 전환 (완료).
+- `labs/new` — 단순 폼 페이지의 "새 실험 등록" h1. 폼 페이지 맥락상 현 상태 허용, 보류.
+- `card-news/[seriesId]` — `<h1>{series.title}</h1>`는 **엔티티 제목**(시리즈 이름)이지
+  섹션 헤더가 아님 → 그대로 유지가 정상.
+- `handover/report` — `{/* 인쇄 헤더 */}` 블록의 h1은 **인쇄 출력용** 헤더 →
+  그대로 유지가 정상.
+
+## 7. 잔여 작업
+
 - `admin/*` ↔ `console/*` ↔ `academic-admin/*` 다중 라우트(같은 컴포넌트 N경로)
   정리는 별도 계획 사이클 권장.
 
 ---
 
-## 7. 교훈
+## 8. 교훈
 
 - **컴포넌트 통일 ≠ 레이아웃 구조 통일**: `ConsolePageHeader`라는 컴포넌트를
   표준화해도, 그것이 `layout.tsx`에 있느냐 `page.tsx`에 있느냐에 따라 렌더 순서가

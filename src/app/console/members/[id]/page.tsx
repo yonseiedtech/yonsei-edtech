@@ -26,6 +26,7 @@ import { isPresidentOrAbove } from "@/lib/permissions";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CONSENT_LABELS, CURRENT_TERMS, type ConsentKey } from "@/lib/legal";
 import { logAudit } from "@/lib/audit";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 
 const ASSIGNABLE_ROLES: UserRole[] = ["member", "alumni", "advisor", "staff", "president", "admin", "sysadmin"];
 
@@ -224,20 +225,24 @@ function AdminMemberDetail({ id }: { id: string }) {
         <ArrowLeft size={16} /> 회원 목록으로
       </button>
 
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">회원 관리</h1>
-        <div className="flex items-center gap-2">
-          {canImpersonate && (
-            <Button size="sm" variant="outline" onClick={handleImpersonate} disabled={impersonating}>
-              {impersonating ? <Loader2 size={14} className="mr-1 animate-spin" /> : <UserCog size={14} className="mr-1" />}
-              이 계정으로 전환
-            </Button>
-          )}
-          <Badge className="text-xs">관리자 모드</Badge>
-        </div>
-      </div>
+      <ConsolePageHeader
+        icon={UserCog}
+        title="회원 관리"
+        description="회원 프로필·역할·활동 이력을 운영진 관점에서 관리합니다."
+        actions={
+          <div className="flex items-center gap-2">
+            {canImpersonate && (
+              <Button size="sm" variant="outline" onClick={handleImpersonate} disabled={impersonating}>
+                {impersonating ? <Loader2 size={14} className="mr-1 animate-spin" /> : <UserCog size={14} className="mr-1" />}
+                이 계정으로 전환
+              </Button>
+            )}
+            <Badge className="text-xs">관리자 모드</Badge>
+          </div>
+        }
+      />
 
-      <Tabs defaultValue="admin" className="mt-6">
+      <Tabs defaultValue="admin">
         <TabsList>
           <TabsTrigger value="admin">관리</TabsTrigger>
           <TabsTrigger value="mypage-preview">마이페이지 미리보기</TabsTrigger>
