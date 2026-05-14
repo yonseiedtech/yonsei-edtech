@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Bot } from "lucide-react";
+import Link from "next/link";
+import { Plus, Bot, Workflow, LayoutGrid, Sparkles, ChevronRight, Server } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ServerConnectionCard from "@/features/agent/ServerConnectionCard";
 import AgentCard from "@/features/agent/AgentCard";
@@ -13,6 +14,8 @@ import { useAgents, useTasks, useServerHealth, useCreateAgent } from "@/features
 import { toast } from "sonner";
 import type { Agent, AgentTask } from "@/features/agent/agent-types";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
+import { YONSEI_AGENTS } from "@/features/yonsei-agents/agents-config";
+import { AGENT_WORKFLOWS } from "@/features/yonsei-agents/workflows-config";
 
 export default function AdminAgentTab() {
   const { data: health } = useServerHealth();
@@ -46,8 +49,73 @@ export default function AdminAgentTab() {
       <ConsolePageHeader
         icon={Bot}
         title="AI 에이전트"
-        description="외부 에이전트 서버를 연결하고 작업을 할당합니다."
+        description="학회 도메인 에이전트는 바로 사용할 수 있고, 외부 에이전트 서버는 별도 연결이 필요합니다."
       />
+
+      {/* ── 학회 AI 에이전트 (서버 불필요 — 바로 사용) ── */}
+      <div className="rounded-2xl border-2 border-primary/20 bg-primary/5 p-5">
+        <div className="mb-3 flex items-center gap-2">
+          <Sparkles size={16} className="text-primary" />
+          <h3 className="text-sm font-bold">학회 AI 에이전트</h3>
+          <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary">
+            서버 불필요 · 바로 사용
+          </span>
+        </div>
+        <p className="mb-3 text-xs leading-relaxed text-muted-foreground">
+          학회 운영에 특화된 {YONSEI_AGENTS.length}개 에이전트가 별도 설정 없이 즉시 동작합니다.
+          여러 에이전트를 묶은 워크플로우와 실시간 작업 보드도 함께 제공됩니다.
+        </p>
+        {/* 학회 에이전트 목록 */}
+        <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {YONSEI_AGENTS.map((a) => (
+            <div
+              key={a.id}
+              className="flex items-center gap-2 rounded-xl border bg-card px-2.5 py-2"
+            >
+              <span className="text-base">{a.emoji}</span>
+              <div className="min-w-0">
+                <p className="truncate text-[11px] font-semibold">{a.name}</p>
+                <p className="truncate text-[10px] text-muted-foreground">
+                  {a.shortDescription}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* 진입 링크 */}
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/agents"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 bg-card px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
+          >
+            <Bot size={13} /> 에이전트 실행
+          </Link>
+          <Link
+            href="/console/agent-workflows"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 bg-card px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
+          >
+            <Workflow size={13} /> 워크플로우 ({AGENT_WORKFLOWS.length})
+          </Link>
+          <Link
+            href="/console/agent-board"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 bg-card px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
+          >
+            <LayoutGrid size={13} /> 작업 보드
+          </Link>
+        </div>
+      </div>
+
+      {/* ── 외부 에이전트 서버 (고급 — 로컬 서버 연결 필요) ── */}
+      <div className="flex items-center gap-2 pt-2">
+        <Server size={15} className="text-muted-foreground" />
+        <h3 className="text-sm font-bold">외부 에이전트 서버</h3>
+        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+          고급 · 로컬 서버 연결 필요
+        </span>
+      </div>
+      <p className="-mt-3 text-xs leading-relaxed text-muted-foreground">
+        커스텀 에이전트 서버를 운영하는 경우에만 사용합니다. 아래 가이드대로 로컬 서버를 실행하고 토큰을 입력하세요.
+      </p>
       <ServerConnectionCard />
 
       {!connected ? (
