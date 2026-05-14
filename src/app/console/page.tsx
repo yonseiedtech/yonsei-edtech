@@ -35,7 +35,7 @@ function StatCard({ icon: Icon, label, value, color, href }: {
   );
 
   return (
-    <div className="rounded-xl border bg-card p-5">
+    <div className="rounded-xl border bg-card p-4">
       {href ? (
         <Link href={href} className="block hover:opacity-80 transition-opacity">
           {inner}
