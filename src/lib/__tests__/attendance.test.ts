@@ -99,12 +99,16 @@ describe("isAttendanceEnabled", () => {
     expect(isAttendanceEnabled(undefined)).toBe(true);
   });
 
-  it("mode=offline → true", () => {
-    expect(isAttendanceEnabled("offline")).toBe(true);
+  it("mode=in_person → true", () => {
+    expect(isAttendanceEnabled("in_person")).toBe(true);
   });
 
-  it("mode=online → true", () => {
-    expect(isAttendanceEnabled("online")).toBe(true);
+  it("mode=field → true", () => {
+    expect(isAttendanceEnabled("field")).toBe(true);
+  });
+
+  it("mode=exam → true", () => {
+    expect(isAttendanceEnabled("exam")).toBe(true);
   });
 
   it("mode=cancelled → false", () => {
