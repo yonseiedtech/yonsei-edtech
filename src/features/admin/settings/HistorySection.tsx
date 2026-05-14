@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Clock } from "lucide-react";
 import { useHistory, useUpdateHistory, type HistoryItem } from "@/features/site-settings/useSiteContent";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Section from "./SectionWrapper";
 import { toast } from "sonner";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 
 export default function HistorySection() {
   const { value, recordId, isLoading } = useHistory();
@@ -31,6 +32,8 @@ export default function HistorySection() {
   if (isLoading) return <div className="py-4 text-sm text-muted-foreground">불러오는 중...</div>;
 
   return (
+    <div className="space-y-6">
+      <ConsolePageHeader icon={Clock} title="연혁" description="학회 주요 연혁 항목을 관리합니다." />
     <Section title="연혁">
       <div className="space-y-3">
         {items.map((item, i) => (
@@ -49,5 +52,6 @@ export default function HistorySection() {
         </Button>
       </div>
     </Section>
+    </div>
   );
 }

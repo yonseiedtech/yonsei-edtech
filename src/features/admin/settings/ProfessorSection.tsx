@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Section from "./SectionWrapper";
 import { toast } from "sonner";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
+import { GraduationCap } from "lucide-react";
 
 export default function ProfessorSection() {
   const { value, recordId, isLoading } = useProfessor();
@@ -24,6 +26,8 @@ export default function ProfessorSection() {
   if (isLoading) return <div className="py-4 text-sm text-muted-foreground">불러오는 중...</div>;
 
   return (
+    <div className="space-y-6">
+      <ConsolePageHeader icon={GraduationCap} title="주임교수" description="주임교수 프로필 및 소개 정보를 관리합니다." />
     <Section title="주임교수">
       <div className="grid gap-4 md:grid-cols-2">
         <div>
@@ -67,5 +71,6 @@ export default function ProfessorSection() {
         {updateMutation.isPending ? "저장 중..." : "저장"}
       </Button>
     </Section>
+    </div>
   );
 }

@@ -20,7 +20,7 @@ import { toast } from "sonner";
 // ── 섹션 래퍼 ──
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border bg-card p-6">
+    <div className="rounded-xl border bg-card p-5">
       <h3 className="mb-4 text-lg font-bold">{title}</h3>
       {children}
     </div>

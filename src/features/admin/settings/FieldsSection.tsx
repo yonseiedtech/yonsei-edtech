@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Tag } from "lucide-react";
 import { useFields, useUpdateFields, type FieldItem } from "@/features/site-settings/useSiteContent";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Section from "./SectionWrapper";
 import { toast } from "sonner";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 
 export default function FieldsSection() {
   const { value, recordId, isLoading } = useFields();
@@ -31,6 +32,8 @@ export default function FieldsSection() {
   if (isLoading) return <div className="py-4 text-sm text-muted-foreground">불러오는 중...</div>;
 
   return (
+    <div className="space-y-6">
+      <ConsolePageHeader icon={Tag} title="활동 분야" description="학회의 주요 활동 분야 목록을 관리합니다." />
     <Section title="활동 분야">
       <div className="space-y-3">
         {items.map((item, i) => (
@@ -48,5 +51,6 @@ export default function FieldsSection() {
         </Button>
       </div>
     </Section>
+    </div>
   );
 }

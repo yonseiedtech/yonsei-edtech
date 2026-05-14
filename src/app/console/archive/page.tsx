@@ -126,14 +126,14 @@ export default function ConsoleArchivePage() {
 
   if (!allowed) {
     return (
-      <div className="container mx-auto max-w-4xl py-12 text-center">
+      <div className="py-12 text-center">
         <p className="text-muted-foreground">접근 권한이 없습니다 (staff 이상).</p>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto max-w-6xl py-8">
+    <div className="space-y-6">
       <ConsolePageHeader
         icon={Library}
         title="교육공학 아카이브 관리"

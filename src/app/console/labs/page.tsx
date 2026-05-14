@@ -40,7 +40,7 @@ export default function LabsPage() {
   );
 
   return (
-    <div>
+    <div className="space-y-6">
       <ConsolePageHeader
         icon={FlaskConical}
         title="실험실"
@@ -55,7 +55,7 @@ export default function LabsPage() {
         ) : undefined}
       />
 
-      <div className="mb-5 flex flex-wrap gap-2 text-xs">
+      <div className="flex flex-wrap gap-2 text-xs">
         {[
           { k: "all", label: "전체" },
           { k: "external", label: "외부 링크" },

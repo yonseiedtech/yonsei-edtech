@@ -5,6 +5,8 @@ import { useActivities, useUpdateActivities, type ActivitiesData } from "@/featu
 import { Button } from "@/components/ui/button";
 import Section from "./SectionWrapper";
 import { toast } from "sonner";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
+import { ClipboardList } from "lucide-react";
 
 export default function ActivitiesSection() {
   const { value, recordId, isLoading } = useActivities();
@@ -23,6 +25,8 @@ export default function ActivitiesSection() {
   if (isLoading) return <div className="py-4 text-sm text-muted-foreground">불러오는 중...</div>;
 
   return (
+    <div className="space-y-6">
+      <ConsolePageHeader icon={ClipboardList} title="학술활동 소개" description="학술활동 페이지에 표시될 소개 텍스트를 관리합니다." />
     <Section title="학술활동 소개">
       <div>
         <label className="mb-1 block text-xs text-muted-foreground">활동 소개</label>
@@ -38,5 +42,6 @@ export default function ActivitiesSection() {
         {updateMutation.isPending ? "저장 중..." : "저장"}
       </Button>
     </Section>
+    </div>
   );
 }

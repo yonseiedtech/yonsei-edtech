@@ -5,6 +5,8 @@ import { useAbout, useUpdateAbout, type AboutData } from "@/features/site-settin
 import { Button } from "@/components/ui/button";
 import Section from "./SectionWrapper";
 import { toast } from "sonner";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
+import { Info } from "lucide-react";
 
 export default function AboutSection() {
   const { value, recordId, isLoading } = useAbout();
@@ -23,6 +25,8 @@ export default function AboutSection() {
   if (isLoading) return <div className="py-4 text-sm text-muted-foreground">불러오는 중...</div>;
 
   return (
+    <div className="space-y-6">
+      <ConsolePageHeader icon={Info} title="학회 소개" description="학회의 미션, 비전, 핵심 가치를 관리합니다." />
     <Section title="학회 소개 (미션/비전/가치)">
       {(["mission", "vision", "values"] as const).map((key) => (
         <div key={key} className="mt-4 first:mt-0">
@@ -36,5 +40,6 @@ export default function AboutSection() {
         {updateMutation.isPending ? "저장 중..." : "저장"}
       </Button>
     </Section>
+    </div>
   );
 }

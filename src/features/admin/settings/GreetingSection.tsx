@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Section from "./SectionWrapper";
 import { toast } from "sonner";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
+import { MessageCircle } from "lucide-react";
 
 interface PersonFormProps {
   label: string;
@@ -75,6 +77,8 @@ export default function GreetingSection() {
   if (isLoading) return <div className="py-4 text-sm text-muted-foreground">불러오는 중...</div>;
 
   return (
+    <div className="space-y-6">
+      <ConsolePageHeader icon={MessageCircle} title="인사말" description="주임교수 및 학회장 인사말을 관리합니다." />
     <Section title="인사말">
       <div className="space-y-4">
         <PersonForm label="주임교수 인사말" value={advisorForm} onChange={setAdvisorForm} optional />
@@ -84,5 +88,6 @@ export default function GreetingSection() {
         {updateMutation.isPending ? "저장 중..." : "저장"}
       </Button>
     </Section>
+    </div>
   );
 }

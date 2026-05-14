@@ -20,7 +20,8 @@ import { Input } from "@/components/ui/input";
 import Section from "./SectionWrapper";
 import { toast } from "sonner";
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Image } from "lucide-react";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 
 const PAGE_KEYS = Object.keys(PAGE_HEADER_META) as PageHeaderKey[];
 
@@ -84,6 +85,8 @@ export default function PageHeadersSection() {
   }
 
   return (
+    <div className="space-y-6">
+      <ConsolePageHeader icon={Image} title="페이지 헤더" description="각 페이지의 상단 타이틀과 설명문을 관리합니다." />
     <Section title="페이지 헤더">
       <p className="mb-4 text-xs text-muted-foreground">
         각 페이지의 상단 타이틀과 설명문을 직접 수정할 수 있습니다. 빈 값으로 저장하면 기본 문구가 표시됩니다.
@@ -140,5 +143,6 @@ export default function PageHeadersSection() {
         {updateMutation.isPending ? "저장 중..." : "전체 저장"}
       </Button>
     </Section>
+    </div>
   );
 }
