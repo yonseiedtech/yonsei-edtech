@@ -229,15 +229,22 @@ export default function AdminMemberTab() {
     (async () => {
       setBulkApproving(true);
       let ok = 0;
+      let fail = 0;
       for (const u of qualifyingPending) {
         try {
           await profilesApi.approve(u.id);
           await notifyMemberApproved(u.id, u.name);
           ok++;
-        } catch {}
+        } catch {
+          fail++;
+        }
       }
       setBulkApproving(false);
-      if (ok > 0) toast.success(`자동 승인 완료: ${ok}명`);
+      if (ok > 0) {
+        toast.success(`자동 승인 완료: ${ok}명${fail > 0 ? ` (실패 ${fail}명)` : ""}`);
+      } else if (fail > 0) {
+        toast.error(`자동 승인 실패: ${fail}명 — 잠시 후 다시 시도됩니다`);
+      }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoApprove, qualifyingPending.length]);

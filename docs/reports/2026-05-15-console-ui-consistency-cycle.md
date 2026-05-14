@@ -46,6 +46,15 @@
 검증: `<Tabs>` 기반 페이지(`handover`·`archive`·`courses`·`research`·
 `portfolio-verification`·`insights`)는 모두 이미 헤더 → nav 순서로 정상.
 
+### 3-2. 콘솔 전반 기능 점검 (추가)
+
+- 사이드바 nav 37개 링크 전수 검증 → 전부 실제 라우트 존재, dead link 없음.
+- 코드 이슈 마커(`TODO`/`FIXME`/`@ts-ignore`) 점검 → 콘솔·운영 영역 0건 (양호).
+- **`AdminMemberTab` 자동 승인 실패 은폐 수정**: 자동 승인 루프가 `catch {}`로
+  개별 실패를 조용히 삼켜, 운영진이 "자동 승인 완료 N명"만 보고 실패를 인지 못 하던
+  문제. 수동 일괄 승인은 실패를 보고하는데 자동 경로만 누락 → 실패 카운트를 토스트에
+  노출하도록 통일.
+
 ---
 
 ## 4. Commits
