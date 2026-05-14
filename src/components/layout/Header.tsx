@@ -156,6 +156,7 @@ const PUBLIC_NAV: NavGroup[] = [
       { href: "/ai-forum", label: "AI 포럼 (실험)" },
       { href: "/gallery", label: "포토갤러리" },
       { href: "/newsletter", label: "학회보" },
+      { href: "/card-news", label: "카드뉴스" },
     ],
   },
 ];
