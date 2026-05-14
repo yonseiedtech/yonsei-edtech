@@ -270,7 +270,7 @@ export const staffTools = {
 
   analyze_member_loyalty: tool({
     description:
-      "회원 로얄티(충성도) 점수를 분석합니다. 세미나 출석·활동 참여·졸업생활 기록을 종합해 0-100 점수와 세그먼트(champion/active/at_risk/dormant/new)를 산출하고, 로얄티 높은 순으로 반환합니다. '로얄티 높은 회원', '회원 활동성 분석', '챔피언 회원' 등의 요청에 사용하세요.",
+      "회원 로얄티(충성도) 점수를 분석합니다. 참여(세미나 출석·활동)·콘텐츠(게시물·댓글·인터뷰)·연구(타이머·논문·계획서)·운영진·후기 기록을 종합해 0-100 점수와 세그먼트(champion/active/at_risk/dormant/new)를 산출하고, 로얄티 높은 순으로 반환합니다. 운영 콘솔 회원 보고서(/console/insights)와 동일한 산출식을 사용합니다. '로얄티 높은 회원', '회원 활동성 분석', '챔피언 회원' 등의 요청에 사용하세요.",
     inputSchema: z.object({
       limit: z
         .number()
@@ -294,41 +294,108 @@ export const staffTools = {
         return { error: "분석할 승인 회원이 없습니다." };
       }
 
-      // 2. 활동 카운트 맵 — computeMemberMetrics required 입력 3종
-      //    (optional 카운트는 미수집 시 0 으로 자연 무시되도록 설계됨)
-      const attMap = new Map<string, number>();
-      const partMap = new Map<string, number>();
-      const gradMap = new Map<string, number>();
-
-      const [attSnap, partSnap, gradSnap] = await Promise.all([
+      // 2. 콘솔 회원 보고서와 동일한 11개 활동 컬렉션 병렬 조회
+      const [
+        attSnap, partSnap, gradSnap,
+        postSnap, commentSnap, interviewSnap,
+        studySnap, writingSnap, proposalSnap,
+        seminarReviewSnap, courseReviewSnap,
+      ] = await Promise.all([
         db.collection("seminar_attendees").where("checkedIn", "==", true).get(),
         db.collection("activity_participations").get(),
         db.collection("grad_life_positions").get(),
+        db.collection("posts").get(),
+        db.collection("comments").get(),
+        db.collection("interview_responses").get(),
+        db.collection("study_sessions").get(),
+        db.collection("writing_papers").get(),
+        db.collection("research_proposals").get(),
+        db.collection("seminar_reviews").get(),
+        db.collection("course_reviews").get(),
       ]);
+
+      const inc = (map: Map<string, number>, key: unknown, by = 1) => {
+        if (typeof key !== "string" || !key) return;
+        map.set(key, (map.get(key) ?? 0) + by);
+      };
+
+      const attMap = new Map<string, number>();
       for (const doc of attSnap.docs) {
         const d = doc.data();
-        if (d.isGuest || !d.userId) continue;
-        attMap.set(d.userId, (attMap.get(d.userId) ?? 0) + 1);
+        if (d.isGuest) continue;
+        inc(attMap, d.userId);
       }
-      for (const doc of partSnap.docs) {
-        const d = doc.data();
-        if (d.userId) partMap.set(d.userId, (partMap.get(d.userId) ?? 0) + 1);
-      }
+      const partMap = new Map<string, number>();
+      for (const doc of partSnap.docs) inc(partMap, doc.data().userId);
+
+      const gradMap = new Map<string, number>();
       for (const doc of gradSnap.docs) {
         const d = doc.data();
-        // 진행 중(endYear 없음) 직책만
-        if (d.userId && !d.endYear) {
-          gradMap.set(d.userId, (gradMap.get(d.userId) ?? 0) + 1);
-        }
+        // 진행 중(endYear·endSemester 없음) 직책만
+        if (!d.endYear || !d.endSemester) inc(gradMap, d.userId);
       }
 
-      // 3. 로얄티 점수 계산
+      const postMap = new Map<string, number>();
+      for (const doc of postSnap.docs) {
+        const d = doc.data();
+        if (d.deletedAt) continue; // 삭제된 글 제외
+        inc(postMap, d.authorId);
+      }
+      const commentMap = new Map<string, number>();
+      for (const doc of commentSnap.docs) inc(commentMap, doc.data().authorId);
+
+      const interviewMap = new Map<string, number>();
+      for (const doc of interviewSnap.docs) {
+        const d = doc.data();
+        if (d.status === "submitted") inc(interviewMap, d.respondentId);
+      }
+
+      const studyMinutesMap = new Map<string, number>();
+      for (const doc of studySnap.docs) {
+        const d = doc.data();
+        const mins = typeof d.durationMinutes === "number" ? d.durationMinutes : 0;
+        inc(studyMinutesMap, d.userId, mins);
+      }
+
+      const writingMap = new Map<string, number>();
+      for (const doc of writingSnap.docs) {
+        const d = doc.data();
+        const chapters = (d.chapters ?? {}) as Record<string, unknown>;
+        const chars = Object.values(chapters).reduce<number>(
+          (sum, v) => sum + (typeof v === "string" ? v.length : 0),
+          0,
+        );
+        inc(writingMap, d.userId, chars);
+      }
+
+      const proposalSet = new Set<string>();
+      for (const doc of proposalSnap.docs) {
+        const uid = doc.data().userId;
+        if (typeof uid === "string" && uid) proposalSet.add(uid);
+      }
+
+      const seminarReviewMap = new Map<string, number>();
+      for (const doc of seminarReviewSnap.docs) inc(seminarReviewMap, doc.data().authorId);
+      const courseReviewMap = new Map<string, number>();
+      for (const doc of courseReviewSnap.docs) inc(courseReviewMap, doc.data().authorId);
+
+      // 3. 로얄티 점수 계산 (콘솔과 동일한 5개 카테고리 산출식)
+      const now = Date.now();
       const rows = members.map((m) =>
         computeMemberMetrics({
           member: m as unknown as User,
           attendanceCount: attMap.get(m.id) ?? 0,
           activityCount: partMap.get(m.id) ?? 0,
           gradLifeOngoingCount: gradMap.get(m.id) ?? 0,
+          postCount: postMap.get(m.id) ?? 0,
+          commentCount: commentMap.get(m.id) ?? 0,
+          interviewResponseCount: interviewMap.get(m.id) ?? 0,
+          studyMinutes: studyMinutesMap.get(m.id) ?? 0,
+          writingChars: writingMap.get(m.id) ?? 0,
+          hasResearchProposal: proposalSet.has(m.id),
+          seminarReviewCount: seminarReviewMap.get(m.id) ?? 0,
+          courseReviewCount: courseReviewMap.get(m.id) ?? 0,
+          nowMs: now,
         }),
       );
 
@@ -342,6 +409,9 @@ export const staffTools = {
         segment: r.segment,
         attendanceCount: r.attendanceCount,
         activityCount: r.activityCount,
+        postCount: r.postCount,
+        commentCount: r.commentCount,
+        studyHours: r.studyHours,
         gradLifeOngoingCount: r.gradLifeOngoingCount,
       }));
 
@@ -355,7 +425,7 @@ export const staffTools = {
         totalMembers: rows.length,
         segmentDistribution: segmentCounts,
         topByLoyalty: top,
-        note: "로얄티 점수는 세미나 출석·활동 참여·졸업생활 기록 기반입니다. 게시글·후기 등 세부 활동을 포함한 정밀 분석은 운영 콘솔의 회원 보고서(/console/insights)를 참고하세요.",
+        note: "로얄티 점수(0-100) = 참여(30) + 콘텐츠(25) + 연구(25) + 운영진(10) + 후기(10). 운영 콘솔 회원 보고서(/console/insights)와 동일한 산출식·데이터 소스를 사용합니다.",
       };
     },
   }),
