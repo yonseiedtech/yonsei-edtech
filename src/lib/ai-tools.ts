@@ -3,6 +3,8 @@ import { z } from "zod";
 import { generateText } from "ai";
 import { models } from "./ai";
 import { getAdminDb } from "./firebase-admin";
+import { computeMemberMetrics } from "@/features/insights/computeMemberMetrics";
+import type { User } from "@/types";
 
 // ── 공개 도구 (모든 사용자) ──
 
@@ -262,6 +264,98 @@ export const staffTools = {
         draft: reply,
         message: "답변 초안이 생성되었습니다. 운영진 확인 후 저장해주세요.",
         requiresConfirmation: true,
+      };
+    },
+  }),
+
+  analyze_member_loyalty: tool({
+    description:
+      "회원 로얄티(충성도) 점수를 분석합니다. 세미나 출석·활동 참여·졸업생활 기록을 종합해 0-100 점수와 세그먼트(champion/active/at_risk/dormant/new)를 산출하고, 로얄티 높은 순으로 반환합니다. '로얄티 높은 회원', '회원 활동성 분석', '챔피언 회원' 등의 요청에 사용하세요.",
+    inputSchema: z.object({
+      limit: z
+        .number()
+        .min(1)
+        .max(30)
+        .optional()
+        .describe("반환할 상위 회원 수 (기본 10, 최대 30)"),
+    }),
+    execute: async ({ limit = 10 }) => {
+      const db = getAdminDb();
+      // 1. 승인 회원
+      const membersSnap = await db
+        .collection("users")
+        .where("approved", "==", true)
+        .get();
+      const members = membersSnap.docs.map((d) => ({
+        id: d.id,
+        ...(d.data() as Record<string, unknown>),
+      }));
+      if (members.length === 0) {
+        return { error: "분석할 승인 회원이 없습니다." };
+      }
+
+      // 2. 활동 카운트 맵 — computeMemberMetrics required 입력 3종
+      //    (optional 카운트는 미수집 시 0 으로 자연 무시되도록 설계됨)
+      const attMap = new Map<string, number>();
+      const partMap = new Map<string, number>();
+      const gradMap = new Map<string, number>();
+
+      const [attSnap, partSnap, gradSnap] = await Promise.all([
+        db.collection("seminar_attendees").where("checkedIn", "==", true).get(),
+        db.collection("activity_participations").get(),
+        db.collection("grad_life_positions").get(),
+      ]);
+      for (const doc of attSnap.docs) {
+        const d = doc.data();
+        if (d.isGuest || !d.userId) continue;
+        attMap.set(d.userId, (attMap.get(d.userId) ?? 0) + 1);
+      }
+      for (const doc of partSnap.docs) {
+        const d = doc.data();
+        if (d.userId) partMap.set(d.userId, (partMap.get(d.userId) ?? 0) + 1);
+      }
+      for (const doc of gradSnap.docs) {
+        const d = doc.data();
+        // 진행 중(endYear 없음) 직책만
+        if (d.userId && !d.endYear) {
+          gradMap.set(d.userId, (gradMap.get(d.userId) ?? 0) + 1);
+        }
+      }
+
+      // 3. 로얄티 점수 계산
+      const rows = members.map((m) =>
+        computeMemberMetrics({
+          member: m as unknown as User,
+          attendanceCount: attMap.get(m.id) ?? 0,
+          activityCount: partMap.get(m.id) ?? 0,
+          gradLifeOngoingCount: gradMap.get(m.id) ?? 0,
+        }),
+      );
+
+      // 4. 로얄티 높은 순 정렬 + 상위 N
+      rows.sort((a, b) => b.loyaltyScore - a.loyaltyScore);
+      const top = rows.slice(0, limit).map((r) => ({
+        name: r.name,
+        role: r.role,
+        generation: r.generation,
+        loyaltyScore: r.loyaltyScore,
+        segment: r.segment,
+        attendanceCount: r.attendanceCount,
+        activityCount: r.activityCount,
+        gradLifeOngoingCount: r.gradLifeOngoingCount,
+      }));
+
+      // 세그먼트 분포 요약
+      const segmentCounts: Record<string, number> = {};
+      for (const r of rows) {
+        segmentCounts[r.segment] = (segmentCounts[r.segment] ?? 0) + 1;
+      }
+
+      return {
+        totalMembers: rows.length,
+        segmentDistribution: segmentCounts,
+        topByLoyalty: top,
+        note: "로얄티 점수는 세미나 출석·활동 참여·졸업생활 기록 기반입니다. 게시글·후기 등 세부 활동을 포함한 정밀 분석은 운영 콘솔의 회원 보고서(/console/insights)를 참고하세요.",
       };
     },
   }),
