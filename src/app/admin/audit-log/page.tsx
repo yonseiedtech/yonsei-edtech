@@ -92,7 +92,7 @@ export default function AuditLogPage() {
           description="시스템 활동이 발생하면 이곳에 자동으로 기록됩니다."
         />
       ) : (
-        <div className="overflow-x-auto rounded-xl border bg-card">
+        <div className="overflow-x-auto rounded-2xl border bg-card">
           <table className="w-full text-sm">
             <thead className="border-b bg-muted/30">
               <tr>

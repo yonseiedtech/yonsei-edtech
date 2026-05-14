@@ -90,7 +90,7 @@ export default function LabsPage() {
       {isLoading ? (
         <p className="text-sm text-muted-foreground">불러오는 중…</p>
       ) : filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
+        <div className="rounded-2xl border border-dashed p-10 text-center text-sm text-muted-foreground">
           등록된 실험이 없습니다.
         </div>
       ) : (
@@ -103,7 +103,7 @@ export default function LabsPage() {
               <Link
                 key={l.id}
                 href={`/console/labs/${l.id}`}
-                className="group flex flex-col overflow-hidden rounded-xl border bg-card transition-shadow hover:shadow-md"
+                className="group flex flex-col overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-md"
               >
                 {l.thumbnailUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element

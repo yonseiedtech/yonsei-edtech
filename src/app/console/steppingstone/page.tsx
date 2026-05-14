@@ -495,7 +495,7 @@ function ConsoleSteppingStoneContent() {
                   {catItems.map((item) => {
                     const isEditing = editingId === item.id;
                     return (
-                      <div key={item.id} className="rounded-xl border bg-card p-3">
+                      <div key={item.id} className="rounded-2xl border bg-card p-3">
                         {isEditing ? (
                           <div className="space-y-2">
                             <Input

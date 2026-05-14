@@ -276,7 +276,7 @@ export default function ExternalActivitySessionAnalyticsConsole({
             ) : (
               <ul className="space-y-2">
                 {topSessions.map((s, i) => (
-                  <li key={s.session.id} className="rounded-xl border bg-background p-3">
+                  <li key={s.session.id} className="rounded-2xl border bg-background p-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold">
@@ -379,7 +379,7 @@ function StatCard({
   color: string;
 }) {
   return (
-    <div className="rounded-xl border bg-card p-4">
+    <div className="rounded-2xl border bg-card p-4">
       <div className="flex items-center gap-3">
         <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${color}`}>
           <Icon size={18} />

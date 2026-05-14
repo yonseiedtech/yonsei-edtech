@@ -102,7 +102,7 @@ function SemesterReportPage() {
       />
 
       {/* 학기 선택 */}
-      <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-5">
+      <div className="flex flex-wrap items-end gap-3 rounded-2xl border bg-card p-5">
         <div>
           <label className="mb-1 block text-sm font-medium">연도</label>
           <select
@@ -139,7 +139,7 @@ function SemesterReportPage() {
 
       {/* 보고서 결과 */}
       {report && (
-        <div className="rounded-xl border bg-card">
+        <div className="rounded-2xl border bg-card">
           <div className="flex items-center justify-end gap-2 border-b px-5 py-3">
             <Button size="sm" variant="outline" onClick={handleCopy}>
               <Copy size={14} className="mr-1" /> 복사

@@ -193,7 +193,7 @@ function ConsoleAlumniMappingContent() {
               const candidates = candidatesByName.get(t.authorName.trim()) ?? [];
               const status = t.authorMappingStatus ?? "unmapped";
               return (
-                <li key={t.id} className="rounded-xl border bg-card p-4">
+                <li key={t.id} className="rounded-2xl border bg-card p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <Link

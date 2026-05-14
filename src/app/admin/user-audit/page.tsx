@@ -113,7 +113,7 @@ export default function UserAuditPage() {
                     </Badge>
                   )}
                 </h2>
-                <div className="overflow-x-auto rounded-xl border bg-card">
+                <div className="overflow-x-auto rounded-2xl border bg-card">
                   <table className="w-full text-sm">
                     <thead className="bg-muted/50 text-left text-xs">
                       <tr>
@@ -170,7 +170,7 @@ export default function UserAuditPage() {
 
 function StatCard({ label, value, alert }: { label: string; value: number; alert?: boolean }) {
   return (
-    <div className={`rounded-xl border bg-card p-4 ${alert && value > 0 ? "border-amber-300 bg-amber-50" : ""}`}>
+    <div className={`rounded-2xl border bg-card p-4 ${alert && value > 0 ? "border-amber-300 bg-amber-50" : ""}`}>
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="mt-1 text-2xl font-bold">{value}</p>
     </div>

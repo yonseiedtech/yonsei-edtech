@@ -50,7 +50,7 @@ function StatCard({ icon: Icon, label, value, sub, color }: {
   icon: React.ElementType; label: string; value: string | number; sub?: string; color: string;
 }) {
   return (
-    <div className="rounded-xl border bg-card p-5">
+    <div className="rounded-2xl border bg-card p-5">
       <div className="flex items-center gap-3">
         <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${color}`}>
           <Icon size={20} />
@@ -67,7 +67,7 @@ function StatCard({ icon: Icon, label, value, sub, color }: {
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border bg-card p-5">
+    <div className="rounded-2xl border bg-card p-5">
       <h3 className="mb-4 text-sm font-semibold">{title}</h3>
       {children}
     </div>

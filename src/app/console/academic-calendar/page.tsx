@@ -112,7 +112,7 @@ export default function AcademicCalendarConsolePage() {
       />
 
       {activeProgress && (
-        <div className="rounded-xl border bg-primary/5 p-4 text-sm">
+        <div className="rounded-2xl border bg-primary/5 p-4 text-sm">
           <p className="font-semibold">
             현재 적용 학기: {activeProgress.entry.year}년{" "}
             {activeProgress.entry.semester === "first" ? "1학기" : "2학기"} · 진행도{" "}
@@ -123,13 +123,13 @@ export default function AcademicCalendarConsolePage() {
 
       <div className="space-y-4">
         {entries.length === 0 && !isLoading && (
-          <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+          <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
             등록된 학기가 없습니다. &quot;학기 추가&quot; 버튼으로 첫 학기를 추가하세요.
           </div>
         )}
 
         {entries.map((e, idx) => (
-          <div key={idx} className="rounded-xl border bg-card p-4">
+          <div key={idx} className="rounded-2xl border bg-card p-4">
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">
                 <Input

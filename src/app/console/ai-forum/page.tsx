@@ -315,7 +315,7 @@ function AdminContent() {
                   return (
                     <label
                       key={p.key}
-                      className={`flex cursor-pointer items-start gap-2 rounded-xl border p-3 transition-colors ${
+                      className={`flex cursor-pointer items-start gap-2 rounded-2xl border p-3 transition-colors ${
                         checked ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
                       }`}
                     >

@@ -198,7 +198,7 @@ export default function ExternalActivityVolunteersConsole({
               </div>
               <ul className="space-y-3">
                 {list.map((v) => (
-                  <li key={v.id} className="rounded-xl border bg-background p-4">
+                  <li key={v.id} className="rounded-2xl border bg-background p-4">
                     <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                       <div>
                         <p className="text-sm font-semibold">
@@ -301,7 +301,7 @@ function StatCard({
   color: string;
 }) {
   return (
-    <div className="rounded-xl border bg-card p-4">
+    <div className="rounded-2xl border bg-card p-4">
       <div className="flex items-center gap-3">
         <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${color}`}>
           <Icon size={18} />

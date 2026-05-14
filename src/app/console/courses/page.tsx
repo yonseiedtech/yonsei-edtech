@@ -651,7 +651,7 @@ function ConsoleCoursesContent() {
             {semesterPicker}
 
             {/* 수강편람 .xlsx 일괄 등록/업데이트 */}
-            <div className="rounded-xl border bg-card p-4">
+            <div className="rounded-2xl border bg-card p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="flex items-center gap-2 text-sm font-semibold">
@@ -689,7 +689,7 @@ function ConsoleCoursesContent() {
             </div>
 
             {/* 교시 → 표준 시간 일괄 변환 */}
-            <div className="rounded-xl border bg-card p-4">
+            <div className="rounded-2xl border bg-card p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="flex items-center gap-2 text-sm font-semibold">
@@ -715,7 +715,7 @@ function ConsoleCoursesContent() {
             </div>
 
             {/* CSV 일괄 등록 */}
-            <div className="rounded-xl border bg-card">
+            <div className="rounded-2xl border bg-card">
               <button
                 type="button"
                 onClick={() => setCsvOpen((v) => !v)}
@@ -751,7 +751,7 @@ function ConsoleCoursesContent() {
             </div>
 
             {/* 새 과목 추가 폼 */}
-            <div className="rounded-xl border bg-card p-4">
+            <div className="rounded-2xl border bg-card p-4">
               <p className="text-sm font-semibold">새 과목 추가</p>
               <div className="mt-3 grid gap-2 sm:grid-cols-3">
                 <Input
@@ -1938,7 +1938,7 @@ function ComprehensiveExamConsole({
         <StatCard label="불합격" value={counts.failed} tone="muted" />
       </div>
 
-      <div className="rounded-xl border bg-card p-4">
+      <div className="rounded-2xl border bg-card p-4">
         <div className="flex flex-wrap items-start gap-2">
           <GraduationCap size={18} className="text-primary" />
           <div className="flex-1">

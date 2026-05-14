@@ -133,7 +133,7 @@ export default function ApplicationsConsole() {
                 <li key={activity.id}>
                   <Link
                     href={detailHref}
-                    className="group flex items-center gap-3 rounded-xl border bg-background p-3 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-sm"
+                    className="group flex items-center gap-3 rounded-2xl border bg-background p-3 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-sm"
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                       <Icon size={18} />
@@ -181,7 +181,7 @@ function StatCard({
   color: string;
 }) {
   return (
-    <div className="rounded-xl border bg-card p-4">
+    <div className="rounded-2xl border bg-card p-4">
       <div className="flex items-center gap-3">
         <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${color}`}>
           <Icon size={18} />

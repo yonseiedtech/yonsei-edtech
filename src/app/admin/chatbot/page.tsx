@@ -221,7 +221,7 @@ export default function ChatbotAdminPage() {
         }
       />
 
-      <div className="rounded-xl border bg-card p-5">
+      <div className="rounded-2xl border bg-card p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="font-semibold">챗봇 플로팅 UI 노출</h3>
@@ -272,7 +272,7 @@ export default function ChatbotAdminPage() {
         </TabsList>
 
         <TabsContent value="greeting" className="mt-4">
-          <div className="rounded-xl border bg-card p-6 space-y-4">
+          <div className="rounded-2xl border bg-card p-6 space-y-4">
           <h3 className="font-semibold">챗봇 인사말 설정</h3>
           <p className="text-xs text-muted-foreground">챗봇을 열었을 때 처음 표시되는 인사말을 설정합니다.</p>
           <div>

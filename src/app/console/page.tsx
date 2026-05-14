@@ -35,7 +35,7 @@ function StatCard({ icon: Icon, label, value, color, href }: {
   );
 
   return (
-    <div className="rounded-xl border bg-card p-4">
+    <div className="rounded-2xl border bg-card p-4">
       {href ? (
         <Link href={href} className="block hover:opacity-80 transition-opacity">
           {inner}
@@ -181,7 +181,7 @@ export default function ConsoleDashboardPage() {
         <div className="grid gap-3 sm:grid-cols-2">
           <Link
             href="/console/ai-forum"
-            className="flex items-center gap-3 rounded-xl border-2 border-primary/20 bg-primary/5 p-4 transition-shadow hover:shadow-md"
+            className="flex items-center gap-3 rounded-2xl border-2 border-primary/20 bg-primary/5 p-4 transition-shadow hover:shadow-md"
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15 text-primary">
               <Bot size={20} />
@@ -199,7 +199,7 @@ export default function ConsoleDashboardPage() {
 
           <Link
             href="/console/roadmap"
-            className="flex items-center gap-3 rounded-xl border-2 border-primary/20 bg-primary/5 p-4 transition-shadow hover:shadow-md"
+            className="flex items-center gap-3 rounded-2xl border-2 border-primary/20 bg-primary/5 p-4 transition-shadow hover:shadow-md"
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15 text-primary">
               <Map size={20} />
@@ -218,7 +218,7 @@ export default function ConsoleDashboardPage() {
           {/* Sprint 70: 신청 승인 통합 대시보드 — 단독 진입 가능 */}
           <Link
             href="/console/academic/applications"
-            className="flex items-center gap-3 rounded-xl border-2 border-amber-300 bg-amber-50/60 p-4 transition-shadow hover:shadow-md dark:border-amber-700 dark:bg-amber-950/20 sm:col-span-2"
+            className="flex items-center gap-3 rounded-2xl border-2 border-amber-300 bg-amber-50/60 p-4 transition-shadow hover:shadow-md dark:border-amber-700 dark:bg-amber-950/20 sm:col-span-2"
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-200">
               <ClipboardCheck size={20} />
@@ -247,7 +247,7 @@ export default function ConsoleDashboardPage() {
         <div className="grid gap-3 sm:grid-cols-2">
           <Link
             href="/console/academic/external"
-            className="flex items-start gap-3 rounded-xl border-2 border-blue-200 bg-blue-50/40 p-4 transition-shadow hover:shadow-md dark:border-blue-800 dark:bg-blue-950/20"
+            className="flex items-start gap-3 rounded-2xl border-2 border-blue-200 bg-blue-50/40 p-4 transition-shadow hover:shadow-md dark:border-blue-800 dark:bg-blue-950/20"
           >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-200">
               <MessageSquareQuote size={20} />
@@ -265,7 +265,7 @@ export default function ConsoleDashboardPage() {
 
           <Link
             href="/console/academic/external"
-            className="flex items-start gap-3 rounded-xl border-2 border-emerald-200 bg-emerald-50/40 p-4 transition-shadow hover:shadow-md dark:border-emerald-800 dark:bg-emerald-950/20"
+            className="flex items-start gap-3 rounded-2xl border-2 border-emerald-200 bg-emerald-50/40 p-4 transition-shadow hover:shadow-md dark:border-emerald-800 dark:bg-emerald-950/20"
           >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200">
               <HeartHandshake size={20} />
@@ -283,7 +283,7 @@ export default function ConsoleDashboardPage() {
 
           <Link
             href="/console/academic/external"
-            className="flex items-start gap-3 rounded-xl border-2 border-purple-200 bg-purple-50/40 p-4 transition-shadow hover:shadow-md dark:border-purple-800 dark:bg-purple-950/20"
+            className="flex items-start gap-3 rounded-2xl border-2 border-purple-200 bg-purple-50/40 p-4 transition-shadow hover:shadow-md dark:border-purple-800 dark:bg-purple-950/20"
           >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-200">
               <BarChart3 size={20} />
@@ -301,7 +301,7 @@ export default function ConsoleDashboardPage() {
 
           <Link
             href="/console/academic/external"
-            className="flex items-start gap-3 rounded-xl border-2 border-rose-200 bg-rose-50/40 p-4 transition-shadow hover:shadow-md dark:border-rose-800 dark:bg-rose-950/20"
+            className="flex items-start gap-3 rounded-2xl border-2 border-rose-200 bg-rose-50/40 p-4 transition-shadow hover:shadow-md dark:border-rose-800 dark:bg-rose-950/20"
           >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-200">
               <ListChecks size={20} />
