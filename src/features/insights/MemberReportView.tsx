@@ -16,7 +16,7 @@
 import { useMemo, useState } from "react";
 import {
   Users, AlertTriangle, Crown, Trophy, Clock, Search, Download,
-  ShieldAlert, FileText, PieChart,
+  ShieldAlert, FileText, PieChart, BarChart3,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAdminOrSysadmin } from "@/lib/permissions";
@@ -109,6 +109,29 @@ export default function MemberReportView() {
       const count = counts.get(seg) ?? 0;
       return { seg, count, pct: Math.round((count / total) * 100) };
     });
+  }, [rows]);
+
+  const generationStats = useMemo(() => {
+    const map = new Map<
+      number,
+      { count: number; sumLoyalty: number; engaged: number }
+    >();
+    for (const r of rows) {
+      const gen = Number.isFinite(r.generation) ? r.generation : 0;
+      const e = map.get(gen) ?? { count: 0, sumLoyalty: 0, engaged: 0 };
+      e.count += 1;
+      e.sumLoyalty += r.loyaltyScore;
+      if (r.segment === "champion" || r.segment === "active") e.engaged += 1;
+      map.set(gen, e);
+    }
+    return [...map.entries()]
+      .map(([gen, e]) => ({
+        gen,
+        count: e.count,
+        avgLoyalty: Math.round(e.sumLoyalty / e.count),
+        engagedRate: Math.round((e.engaged / e.count) * 100),
+      }))
+      .sort((a, b) => b.gen - a.gen);
   }, [rows]);
 
   const champions = useMemo(
@@ -208,6 +231,43 @@ export default function MemberReportView() {
           ))}
         </div>
       </section>
+
+      {/* 기수별 평균 로얄티 */}
+      {generationStats.length > 0 && (
+        <section className="rounded-2xl border bg-card p-5">
+          <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
+            <BarChart3 size={16} className="text-muted-foreground" />
+            기수별 평균 로얄티
+          </div>
+          <div className="space-y-1.5">
+            {generationStats.map(({ gen, count, avgLoyalty, engagedRate }) => (
+              <div key={gen} className="flex items-center gap-3 text-xs">
+                <span className="w-12 shrink-0 font-medium tabular-nums">
+                  {gen > 0 ? `${gen}기` : "미상"}
+                </span>
+                <span className="w-10 shrink-0 text-right tabular-nums text-muted-foreground">
+                  {count}명
+                </span>
+                <div className="relative h-4 flex-1 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-violet-500"
+                    style={{ width: `${avgLoyalty}%` }}
+                  />
+                </div>
+                <span className="w-9 shrink-0 text-right font-bold tabular-nums">
+                  {avgLoyalty}
+                </span>
+                <span className="w-20 shrink-0 text-right tabular-nums text-muted-foreground">
+                  활성 {engagedRate}%
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            막대 = 기수 평균 로얄티 점수(0-100) · 활성% = 챔피언+활성 세그먼트 비율
+          </p>
+        </section>
+      )}
 
       {/* 운영진 저활동 경보 */}
       {staffAlerts.length > 0 && (
