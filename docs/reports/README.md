@@ -12,6 +12,7 @@
 | 날짜 | 사이클 | 핵심 |
 |------|--------|------|
 | 2026-05-14 | [console-matching-cycle](./2026-05-14-console-matching-cycle.md) | 운영 콘솔 ↔ 서비스 매칭 분석 · 8 GAP 해소 · 신설 운영 페이지 6개 · dead code 25+ 정리 |
+| 2026-05-14 | [insights-agent-cycle](./2026-05-14-insights-agent-cycle.md) | AI 에이전트 로얄티 분석 도구 신설 · insights 데이터 버그 수정 · useMemberMetrics 훅 추출 · 세그먼트 분포 차트 |
 
 ## 활용
 - 신규 운영진 온보딩 자료
