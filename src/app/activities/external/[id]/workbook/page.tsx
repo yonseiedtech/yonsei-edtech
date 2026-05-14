@@ -202,7 +202,7 @@ function TaskWidget({
   const isCompleted = submission?.status === "completed";
 
   return (
-    <div className="rounded-xl border bg-card p-4 shadow-sm space-y-3">
+    <div className="rounded-2xl border bg-card p-4 shadow-sm space-y-3">
       {/* 헤더 */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
@@ -399,7 +399,7 @@ function ReviewSection({
   }
 
   return (
-    <div className="mt-8 rounded-xl border bg-card p-5 shadow-sm space-y-4">
+    <div className="mt-8 rounded-2xl border bg-card p-5 shadow-sm space-y-4">
       <h2 className="text-base font-bold">학술대회 전체 후기</h2>
 
       <div className="space-y-1">
@@ -520,7 +520,7 @@ function WorkbookPage({ activityId }: { activityId: string }) {
 
         {/* 진행률 */}
         {total > 0 && (
-          <div className="mt-5 rounded-xl border bg-card p-4 shadow-sm">
+          <div className="mt-5 rounded-2xl border bg-card p-4 shadow-sm">
             <div className="flex items-center justify-between text-sm mb-2">
               <span className="font-medium">진행률</span>
               <span className="text-muted-foreground">
@@ -539,11 +539,11 @@ function WorkbookPage({ activityId }: { activityId: string }) {
         {/* 과제 목록 */}
         <div className="mt-6 space-y-3">
           {isLoading ? (
-            <div className="rounded-xl border bg-card p-8 text-center text-sm text-muted-foreground">
+            <div className="rounded-2xl border bg-card p-8 text-center text-sm text-muted-foreground">
               불러오는 중…
             </div>
           ) : tasks.length === 0 ? (
-            <div className="rounded-xl border bg-card p-8 text-center">
+            <div className="rounded-2xl border bg-card p-8 text-center">
               <ClipboardList size={32} className="mx-auto mb-3 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
                 아직 등록된 과제가 없습니다.

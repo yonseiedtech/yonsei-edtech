@@ -149,7 +149,7 @@ export default function MyVolunteerPage() {
 
       {/* 시간대 슬롯 */}
       {assignment.shifts.length > 0 && (
-        <div className="rounded-xl border bg-card p-4">
+        <div className="rounded-2xl border bg-card p-4">
           <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold">
             <Clock size={14} className="text-primary" /> 시간·장소
           </h3>
@@ -185,7 +185,7 @@ export default function MyVolunteerPage() {
 
       {/* 체크리스트 */}
       {assignment.duties.length > 0 && (
-        <div className="rounded-xl border bg-card p-4">
+        <div className="rounded-2xl border bg-card p-4">
           <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold">
             <CheckCircle2 size={14} className="text-primary" /> 체크리스트 · 세부 임무
           </h3>
@@ -214,7 +214,7 @@ export default function MyVolunteerPage() {
 
       {/* 비상 연락처 */}
       {assignment.emergencyContact && (
-        <div className="rounded-xl border-2 border-rose-200 bg-rose-50/60 p-4 dark:border-rose-900 dark:bg-rose-950/30">
+        <div className="rounded-2xl border-2 border-rose-200 bg-rose-50/60 p-4 dark:border-rose-900 dark:bg-rose-950/30">
           <h3 className="mb-1 flex items-center gap-2 text-sm font-semibold text-rose-900 dark:text-rose-100">
             <ShieldAlert size={14} /> 비상 연락처 (학회장 본부석)
           </h3>
@@ -232,7 +232,7 @@ export default function MyVolunteerPage() {
 
       {/* 운영진 메모 */}
       {assignment.notes && (
-        <div className="rounded-xl border bg-card p-4 text-sm">
+        <div className="rounded-2xl border bg-card p-4 text-sm">
           <h3 className="mb-1 text-xs font-semibold text-muted-foreground">운영진 메모</h3>
           <p className="whitespace-pre-wrap text-foreground/80">{assignment.notes}</p>
         </div>

@@ -75,7 +75,7 @@ export default function Step5Consents({
         type="button"
         onClick={toggleAll}
         className={cn(
-          "flex w-full items-center gap-3 rounded-xl border-2 px-4 py-3 text-left transition-colors",
+          "flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left transition-colors",
           allChecked
             ? "border-primary bg-primary/5"
             : "border-input bg-card hover:bg-muted/50",

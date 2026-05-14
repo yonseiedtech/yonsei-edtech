@@ -958,7 +958,7 @@ function EventCard({ event }: { event: CalendarEvent }) {
   return (
     <Link
       href={event.href}
-      className="group flex items-start gap-3 rounded-xl border bg-background p-3 transition-all hover:border-border hover:bg-muted/30 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="group flex items-start gap-3 rounded-2xl border bg-background p-3 transition-all hover:border-border hover:bg-muted/30 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div
         className={cn(

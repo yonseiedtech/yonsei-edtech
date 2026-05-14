@@ -283,7 +283,7 @@ function ReceivedCardItem({
   onDelete: (id: string) => void;
 }) {
   return (
-    <div className="rounded-xl border bg-card px-4 py-3 shadow-sm">
+    <div className="rounded-2xl border bg-card px-4 py-3 shadow-sm">
       <div className="flex items-start gap-3">
         {/* 사진 */}
         <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-muted ring-1 ring-border">
@@ -553,7 +553,7 @@ export default function ReceivedCardsSection({ ownerId }: ReceivedCardsSectionPr
       {/* 리스트 */}
       <div className="mt-3">
         {isLoading ? (
-          <div className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground">
+          <div className="rounded-2xl border bg-card p-6 text-center text-sm text-muted-foreground">
             불러오는 중…
           </div>
         ) : filtered.length === 0 && search ? (

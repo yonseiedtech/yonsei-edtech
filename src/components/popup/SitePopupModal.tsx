@@ -32,7 +32,7 @@ export default function SitePopupModal({ popup, onClose, onDismissUntil, preview
     return (
       <div
         className={cn(
-          "relative mx-auto overflow-hidden rounded-xl border bg-muted/40",
+          "relative mx-auto overflow-hidden rounded-2xl border bg-muted/40",
           isMobile ? "h-[560px] w-[320px]" : "h-[480px] w-full max-w-2xl",
         )}
       >
@@ -95,7 +95,7 @@ function PopupCard({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-xl border bg-card shadow-2xl",
+        "relative overflow-hidden rounded-2xl border bg-card shadow-2xl",
         compact ? "w-[300px]" : "w-[460px] max-w-[92vw]",
       )}
     >

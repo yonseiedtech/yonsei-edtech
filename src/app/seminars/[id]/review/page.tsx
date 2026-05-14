@@ -235,7 +235,7 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
 
         {/* Step 1: 참석자 인증 */}
         {step === "verify" && (
-          <div className="space-y-4 rounded-xl border bg-card p-6">
+          <div className="space-y-4 rounded-2xl border bg-card p-6">
             <div className="flex items-center gap-2 text-sm font-medium">
               <ShieldCheck size={18} className="text-primary" />
               참석자 인증
@@ -284,7 +284,7 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
 
         {/* Step 2: 후기 작성 */}
         {step === "write" && verifiedAttendee && (
-          <div className="space-y-4 rounded-xl border bg-card p-6">
+          <div className="space-y-4 rounded-2xl border bg-card p-6">
             <div className="flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
               <CheckCircle size={16} className="shrink-0" />
               <span><strong>{verifiedAttendee.name}</strong>님 인증 완료{editMode ? " — 후기 수정 모드" : ""}</span>
@@ -340,14 +340,14 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
         {/* Step 3: 완료 + 작성한 후기 표시 */}
         {step === "done" && submittedReview && (
           <div className="space-y-4">
-            <div className="rounded-xl border bg-card p-6 text-center">
+            <div className="rounded-2xl border bg-card p-6 text-center">
               <CheckCircle size={48} className="mx-auto mb-4 text-green-500" />
               <h2 className="text-xl font-bold">{editMode ? "후기가 수정되었습니다!" : "후기가 등록되었습니다!"}</h2>
               <p className="mt-2 text-sm text-muted-foreground">소중한 의견 감사합니다.</p>
             </div>
 
             {/* 작성한 후기 미리보기 */}
-            <div className="rounded-xl border bg-muted/10 p-4">
+            <div className="rounded-2xl border bg-muted/10 p-4">
               <p className="mb-2 text-xs font-medium text-muted-foreground">내가 작성한 후기</p>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">{verifiedAttendee?.name}</span>

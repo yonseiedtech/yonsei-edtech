@@ -18,7 +18,7 @@ export default function CheckinResult({ result, onDismiss }: Props) {
 
   if (result.success) {
     return (
-      <div className="animate-in fade-in slide-in-from-bottom-2 rounded-xl border-2 border-green-200 bg-green-50 p-4">
+      <div className="animate-in fade-in slide-in-from-bottom-2 rounded-2xl border-2 border-green-200 bg-green-50 p-4">
         <div className="flex items-center gap-3">
           <CheckCircle size={28} className="shrink-0 text-green-600" />
           <div>
@@ -43,7 +43,7 @@ export default function CheckinResult({ result, onDismiss }: Props) {
         })
       : "";
     return (
-      <div className="animate-in fade-in slide-in-from-bottom-2 rounded-xl border-2 border-amber-200 bg-amber-50 p-4">
+      <div className="animate-in fade-in slide-in-from-bottom-2 rounded-2xl border-2 border-amber-200 bg-amber-50 p-4">
         <div className="flex items-center gap-3">
           <AlertTriangle size={28} className="shrink-0 text-amber-600" />
           <div>
@@ -58,7 +58,7 @@ export default function CheckinResult({ result, onDismiss }: Props) {
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 rounded-xl border-2 border-red-200 bg-red-50 p-4">
+    <div className="animate-in fade-in slide-in-from-bottom-2 rounded-2xl border-2 border-red-200 bg-red-50 p-4">
       <div className="flex items-center gap-3">
         <XCircle size={28} className="shrink-0 text-red-600" />
         <div>

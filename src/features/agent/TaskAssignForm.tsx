@@ -48,7 +48,7 @@ export default function TaskAssignForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border bg-card p-5">
+    <form onSubmit={handleSubmit} className="rounded-2xl border bg-card p-5">
       <h3 className="font-semibold">새 작업 할당</h3>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <div>

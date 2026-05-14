@@ -49,21 +49,21 @@ export default function ConnectivismPanel() {
       </p>
 
       <div className="mt-4 grid gap-2 sm:grid-cols-3">
-        <div className="flex items-start gap-2 rounded-xl border bg-card p-3">
+        <div className="flex items-start gap-2 rounded-2xl border bg-card p-3">
           <Users size={14} className="mt-0.5 shrink-0 text-blue-600" aria-hidden />
           <div>
             <p className="text-xs font-bold">동기 (Cohort)</p>
             <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">같은 학기에 입학한 회원</p>
           </div>
         </div>
-        <div className="flex items-start gap-2 rounded-xl border bg-card p-3">
+        <div className="flex items-start gap-2 rounded-2xl border bg-card p-3">
           <Users size={14} className="mt-0.5 shrink-0 text-emerald-600" aria-hidden />
           <div>
             <p className="text-xs font-bold">신분 유형</p>
             <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">동일 직업·역할 회원</p>
           </div>
         </div>
-        <div className="flex items-start gap-2 rounded-xl border bg-card p-3">
+        <div className="flex items-start gap-2 rounded-2xl border bg-card p-3">
           <Users size={14} className="mt-0.5 shrink-0 text-amber-600" aria-hidden />
           <div>
             <p className="text-xs font-bold">학교급</p>

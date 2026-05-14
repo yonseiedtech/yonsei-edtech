@@ -11,7 +11,7 @@ interface Props {
 
 export default function AdminEmptyState({ icon: Icon, title, description, action }: Props) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-10 text-center">
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed p-10 text-center">
       <Icon size={40} className="text-muted-foreground/40" />
       <p className="mt-3 text-sm font-medium text-muted-foreground">{title}</p>
       {description && (

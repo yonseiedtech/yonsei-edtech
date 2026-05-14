@@ -105,7 +105,7 @@ export default function AttendeeReviewsSection({
     : sorted.length;
 
   return (
-    <div className="rounded-xl border bg-card">
+    <div className="rounded-2xl border bg-card">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b p-4">
         <div className="flex items-center gap-2">
           <MessageSquare className="h-4 w-4 text-primary" />

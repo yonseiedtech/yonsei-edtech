@@ -1562,7 +1562,7 @@ export default function DefensePracticeRunner({
               transition={{ duration: 0.2 }}
               className="mx-auto flex min-h-full max-w-3xl flex-col gap-5 px-4 py-6 sm:px-6"
             >
-              <div className="rounded-xl border bg-card p-5 shadow-sm">
+              <div className="rounded-2xl border bg-card p-5 shadow-sm">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Q{idx + 1}
@@ -1773,7 +1773,7 @@ export default function DefensePracticeRunner({
 
               {/* 따라 읽기 모드 패널 */}
               {practiceMode === "readalong" && expectedSegments.length > 0 && (
-                <div className="rounded-xl border bg-card p-5">
+                <div className="rounded-2xl border bg-card p-5">
                   {readAlongIdx >= expectedSegments.length ? (
                     (() => {
                       const qid = current?.id ?? "";
@@ -2153,7 +2153,7 @@ export default function DefensePracticeRunner({
 
               {/* Transcript area — 심사 답변 모드에서만 노출 */}
               {practiceMode === "answer" && (
-              <div className="rounded-xl border bg-card p-4">
+              <div className="rounded-2xl border bg-card p-4">
                 <div className="mb-2 flex items-center justify-between">
                   <p className="text-xs font-semibold text-muted-foreground">내 답변</p>
                   <Button
@@ -2408,7 +2408,7 @@ export default function DefensePracticeRunner({
 
               {/* 따라 읽기 모드: 마이크 컨트롤 (심사 답변 모드 카드 외부에서 별도 노출) */}
               {practiceMode === "readalong" && (
-                <div className="rounded-xl border bg-card p-4">
+                <div className="rounded-2xl border bg-card p-4">
                   <div className="flex flex-wrap items-center gap-2">
                     {sttSupported !== false ? (
                       recording ? (
@@ -2506,7 +2506,7 @@ export default function DefensePracticeRunner({
               )}
 
               {/* Expected answer / 비교 분석 toggle */}
-              <div className="rounded-xl border bg-card p-4">
+              <div className="rounded-2xl border bg-card p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <Button
                     size="sm"
@@ -2575,7 +2575,7 @@ export default function DefensePracticeRunner({
                 const r = results.find((x) => x.questionId === q.id);
                 const score = r?.score ?? 0;
                 return (
-                  <li key={q.id} className="rounded-xl border bg-card p-4">
+                  <li key={q.id} className="rounded-2xl border bg-card p-4">
                     <div className="mb-2 flex flex-wrap items-center gap-2">
                       <span className="text-xs font-semibold text-muted-foreground">Q{i + 1}</span>
                       <Badge

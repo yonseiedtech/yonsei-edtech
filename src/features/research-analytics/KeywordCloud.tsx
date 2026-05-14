@@ -384,7 +384,7 @@ export default function KeywordCloud({
       </div>
 
       {/* Hover 상세 패널 */}
-      <div className="mt-3 min-h-[112px] rounded-xl border bg-gradient-to-br from-slate-50 to-white p-3 transition-all duration-200">
+      <div className="mt-3 min-h-[112px] rounded-2xl border bg-gradient-to-br from-slate-50 to-white p-3 transition-all duration-200">
         {hover && hoverDetail ? (
           <div className="animate-in fade-in slide-in-from-bottom-1 duration-200">
             {/* 헤더: 키워드명 + 총 건수 */}

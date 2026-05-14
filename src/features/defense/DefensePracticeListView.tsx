@@ -141,7 +141,7 @@ export default function DefensePracticeListView({
             return (
               <li
                 key={s.id}
-                className="rounded-xl border bg-card"
+                className="rounded-2xl border bg-card"
               >
                 <div className="flex items-start gap-3 p-4">
                   <button
@@ -426,7 +426,7 @@ function PracticeSetEditor({
         }
       />
 
-      <div className="space-y-4 rounded-xl border bg-card p-5">
+      <div className="space-y-4 rounded-2xl border bg-card p-5">
         <div>
           <label className="mb-1 block text-xs font-semibold text-muted-foreground">분류</label>
           <select
@@ -479,13 +479,13 @@ function PracticeSetEditor({
           </div>
         </div>
         {questions.length === 0 ? (
-          <div className="rounded-xl border border-dashed py-10 text-center text-sm text-muted-foreground">
+          <div className="rounded-2xl border border-dashed py-10 text-center text-sm text-muted-foreground">
             아래 버튼으로 첫 질문을 추가해주세요.
           </div>
         ) : (
           <ol className="space-y-3">
             {questions.map((q, i) => (
-              <li key={q.id} className="rounded-xl border bg-card p-4">
+              <li key={q.id} className="rounded-2xl border bg-card p-4">
                 <div className="mb-2 flex items-center gap-2">
                   <GripVertical size={14} className="text-muted-foreground" />
                   <span className="text-sm font-semibold">Q{i + 1}</span>
@@ -726,7 +726,7 @@ function OnboardingEmptyState({
             {ordered.map((t) => (
               <li
                 key={t.id}
-                className="group flex flex-col rounded-xl border bg-card p-4 transition-shadow hover:shadow-md"
+                className="group flex flex-col rounded-2xl border bg-card p-4 transition-shadow hover:shadow-md"
               >
                 <div className="mb-2 flex flex-wrap items-center gap-1.5">
                   <Badge variant="secondary" className="text-[10px]">
@@ -756,7 +756,7 @@ function OnboardingEmptyState({
           </ul>
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed bg-muted/30 p-6 text-center">
+        <div className="rounded-2xl border border-dashed bg-muted/30 p-6 text-center">
           <p className="text-sm text-muted-foreground">
             관리자가 등록한 템플릿이 아직 없습니다.
           </p>
@@ -767,7 +767,7 @@ function OnboardingEmptyState({
       )}
 
       {/* 3단계: 처음부터 만들기 */}
-      <div className="flex flex-col items-center gap-2 rounded-xl border-2 border-dashed py-8 text-center">
+      <div className="flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed py-8 text-center">
         <p className="text-sm text-muted-foreground">
           또는 본인의 논문 주제에 맞춰 직접 작성할 수도 있습니다.
         </p>

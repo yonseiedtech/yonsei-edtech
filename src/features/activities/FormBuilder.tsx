@@ -113,7 +113,7 @@ export default function FormBuilder({ value, onChange }: Props) {
       </div>
 
       {mode === "preview" ? (
-        <div className="rounded-xl border bg-card p-4">
+        <div className="rounded-2xl border bg-card p-4">
           {value.length === 0 ? (
             <p className="text-center text-xs text-muted-foreground">추가된 질문이 없습니다.</p>
           ) : (
@@ -132,7 +132,7 @@ export default function FormBuilder({ value, onChange }: Props) {
         const Icon = TYPE_META[f.type].icon;
         const isSection = f.type === "section_break";
         return (
-          <div key={f.id} className="rounded-xl border bg-card p-4">
+          <div key={f.id} className="rounded-2xl border bg-card p-4">
             <div className="flex items-start gap-2">
               <div className="mt-1 flex flex-col items-center gap-0.5 text-muted-foreground">
                 <GripVertical size={14} />
@@ -267,7 +267,7 @@ export default function FormBuilder({ value, onChange }: Props) {
         );
       })}
 
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-dashed bg-muted/10 p-3">
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-dashed bg-muted/10 p-3">
         <select
           value={newType}
           onChange={(e) => setNewType(e.target.value as FormFieldType)}

@@ -140,7 +140,7 @@ function CheckinContent({ id }: { id: string }) {
 
         {/* 셀프 체크인 폼 */}
         {mode === "self" && (
-          <div className="mt-4 rounded-xl border bg-card p-5 space-y-3">
+          <div className="mt-4 rounded-2xl border bg-card p-5 space-y-3">
             <p className="text-xs text-muted-foreground">이름과 학번을 입력하여 출석 체크합니다.</p>
             <div>
               <label className="mb-1 block text-sm font-medium">이름 *</label>
@@ -179,7 +179,7 @@ function CheckinContent({ id }: { id: string }) {
 
         {/* 최근 체크인 로그 */}
         {scanLog.length > 0 && (
-          <div className="mt-4 rounded-xl border bg-card p-4">
+          <div className="mt-4 rounded-2xl border bg-card p-4">
             <h3 className="text-sm font-medium">최근 체크인</h3>
             <div className="mt-2 space-y-1">
               {scanLog.map((log, i) => (

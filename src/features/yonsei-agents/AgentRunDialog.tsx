@@ -148,7 +148,7 @@ export default function AgentRunDialog({
           </div>
         )}
         {output && (
-          <div className="rounded-xl border bg-muted/30 p-4">
+          <div className="rounded-2xl border bg-muted/30 p-4">
             <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
               <Sparkles size={12} className="text-primary" />
               결과

@@ -136,7 +136,7 @@ export default function UserActivityLogView() {
         </span>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-card p-3">
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border bg-card p-3">
         <div className="relative min-w-[220px] flex-1">
           <Search
             size={14}
@@ -186,7 +186,7 @@ export default function UserActivityLogView() {
         </div>
       )}
 
-      <div className="mt-3 overflow-x-auto rounded-xl border bg-card">
+      <div className="mt-3 overflow-x-auto rounded-2xl border bg-card">
         <table className="w-full text-sm">
           <thead className="bg-muted/30">
             <tr>

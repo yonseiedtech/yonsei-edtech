@@ -71,7 +71,7 @@ export default function InlineNotification({
       role={kind === "error" ? "alert" : "status"}
       aria-live={kind === "error" ? "assertive" : "polite"}
       className={cn(
-        "flex items-start gap-3 rounded-xl border px-4 py-3",
+        "flex items-start gap-3 rounded-2xl border px-4 py-3",
         cfg.bgClass,
         className,
       )}

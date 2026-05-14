@@ -314,7 +314,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
 
           {/* 교육공학 논문 리뷰 — 첨부 논문 */}
           {category === "paper_review" && (
-            <div className="rounded-xl border border-violet-200 bg-violet-50/40 p-4">
+            <div className="rounded-2xl border border-violet-200 bg-violet-50/40 p-4">
               <div className="flex items-center gap-2">
                 <BookOpenCheck size={16} className="text-violet-700" />
                 <p className="text-sm font-medium text-violet-800">리뷰할 논문 첨부</p>
@@ -380,7 +380,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
 
           {/* 온라인 인터뷰 (인터뷰 게시판 + staff 이상) */}
           {category === "interview" && isAtLeast(user, "staff") && (
-            <div className="rounded-xl border border-blue-200 bg-blue-50/40 p-4">
+            <div className="rounded-2xl border border-blue-200 bg-blue-50/40 p-4">
               <p className="text-sm font-medium text-blue-800">🎙️ 온라인 인터뷰 설정</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 인터뷰 게시판 글은 자동으로 온라인 인터뷰로 발행됩니다. 소개문과 질문을 입력하세요.

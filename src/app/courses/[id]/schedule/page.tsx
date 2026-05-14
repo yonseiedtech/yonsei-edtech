@@ -929,7 +929,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                   key={w.weekNo}
                   id={`week-${w.weekNo}`}
                   className={cn(
-                    "scroll-mt-24 rounded-xl border border-l-4 bg-card p-4",
+                    "scroll-mt-24 rounded-2xl border border-l-4 bg-card p-4",
                     MODE_WEEK_BORDER[primaryMode],
                     isCurrentWeek && "ring-2 ring-primary/30",
                     isPast && !isCurrentWeek && "opacity-80",
@@ -1303,7 +1303,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
 
         {/* 학기 주차 범위 밖에 있는 잔존 변경 기록 */}
         {orphanSessions.length > 0 && (
-          <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50/40 p-4">
+          <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50/40 p-4">
             <p className="mb-2 text-xs font-medium text-amber-900">
               주차에 매핑되지 않은 변경 기록 ({orphanSessions.length}건)
               <span className="ml-2 text-amber-700/80">
@@ -1339,7 +1339,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
 
         {/* 주차 미배정 할 일 */}
         {unassignedTodos.length > 0 && (
-          <div className="mt-6 rounded-xl border bg-card p-4">
+          <div className="mt-6 rounded-2xl border bg-card p-4">
             <p className="mb-2 text-xs font-medium text-muted-foreground">
               주차 미배정 할 일
             </p>

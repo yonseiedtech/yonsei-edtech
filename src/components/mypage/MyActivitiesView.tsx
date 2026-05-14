@@ -204,7 +204,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
               grouped.push({
                 type: "seminar",
                 items: mySeminars.map((s) => (
-                  <li key={`sem-${s.id}`} className="rounded-xl border bg-card px-5 py-4 hover:border-primary/40">
+                  <li key={`sem-${s.id}`} className="rounded-2xl border bg-card px-5 py-4 hover:border-primary/40">
                     <div className="flex items-center justify-between">
                       <Link href={`/seminars/${s.id}`} className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
@@ -251,7 +251,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                     const Icon = meta.icon;
                     const role = user && a.participantRoles ? (a.participantRoles as Record<string, string>)[user.id] : undefined;
                     return (
-                      <li key={a.id} className="rounded-xl border bg-card px-5 py-4 hover:border-primary/40">
+                      <li key={a.id} className="rounded-2xl border bg-card px-5 py-4 hover:border-primary/40">
                         <Link href={`${meta.href}/${a.id}`} className="flex items-center justify-between">
                           <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
@@ -323,7 +323,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                         const statusLabel = mine?.status === "rejected" ? "반려" : "승인 대기";
                         const statusColor = mine?.status === "rejected" ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700";
                         return (
-                          <li key={a.id} className="rounded-xl border bg-card px-5 py-4 hover:border-primary/40">
+                          <li key={a.id} className="rounded-2xl border bg-card px-5 py-4 hover:border-primary/40">
                             <Link href={`${meta.href}/${a.id}`} className="flex items-center justify-between">
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2">
@@ -360,7 +360,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2">
                   {myCertificates.map((c) => (
-                    <div key={c.id} className="rounded-xl border bg-card px-5 py-4">
+                    <div key={c.id} className="rounded-2xl border bg-card px-5 py-4">
                       <div className="flex items-start justify-between">
                         <div>
                           <div className="flex items-center gap-2">
@@ -418,7 +418,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                       .map((r) => {
                         const p = postById.get(r.postId)!;
                         return (
-                          <li key={r.id} className="rounded-xl border bg-card px-5 py-4 hover:border-primary/40">
+                          <li key={r.id} className="rounded-2xl border bg-card px-5 py-4 hover:border-primary/40">
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
                                 <Mic size={14} className="text-blue-600" />
@@ -471,7 +471,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                   <h3 className="mb-2 text-sm font-semibold">내가 개설한 인터뷰 ({myCreatedInterviews.length})</h3>
                   <ul className="space-y-2">
                     {myCreatedInterviews.map((p) => (
-                      <li key={p.id} className="rounded-xl border bg-card px-5 py-4 hover:border-primary/40">
+                      <li key={p.id} className="rounded-2xl border bg-card px-5 py-4 hover:border-primary/40">
                         <Link href={`/board/${p.id}`} className="flex items-center justify-between">
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">

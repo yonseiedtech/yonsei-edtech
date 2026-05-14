@@ -154,14 +154,14 @@ export default function SeminarConnectedTodos({ seminarId, seminarTitle, seminar
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border bg-card p-4">
+      <div className="rounded-2xl border bg-card p-4">
         <p className="text-sm text-muted-foreground">연동된 업무 불러오는 중…</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border bg-card">
+    <div className="rounded-2xl border bg-card">
       <div className="flex items-center justify-between gap-2 border-b bg-slate-50 px-4 py-2.5">
         <div className="flex items-center gap-2">
           <ListChecks size={14} className="text-slate-600" />

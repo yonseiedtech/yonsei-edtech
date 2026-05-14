@@ -110,7 +110,7 @@ export default function ConferenceGuidePage() {
           {MAJOR_CONFERENCES.map((conf) => (
             <li
               key={conf.name}
-              className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 dark:border-amber-900 dark:bg-amber-950/20"
+              className="rounded-2xl border border-amber-200 bg-amber-50/40 p-4 dark:border-amber-900 dark:bg-amber-950/20"
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="text-sm font-bold text-amber-700 dark:text-amber-300">{conf.name}</span>
@@ -143,7 +143,7 @@ export default function ConferenceGuidePage() {
         </p>
         <ol className="mt-4 space-y-3">
           {PRESENTATION_STEPS.map((s) => (
-            <li key={s.step} className="flex gap-3 rounded-xl border bg-background p-4">
+            <li key={s.step} className="flex gap-3 rounded-2xl border bg-background p-4">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary text-xs font-bold text-primary-foreground">
                 {s.step}
               </span>

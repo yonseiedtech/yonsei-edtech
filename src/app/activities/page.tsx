@@ -156,7 +156,7 @@ export default function ActivitiesPage() {
             </div>
           ) : (
             highlights.map((h, i) => (
-              <div key={i} className="flex gap-4 rounded-xl border bg-card p-4 transition-all duration-150 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-sm">
+              <div key={i} className="flex gap-4 rounded-2xl border bg-card p-4 transition-all duration-150 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-sm">
                 <div className="shrink-0 text-sm font-bold text-primary">
                   {h.date.length > 10 ? h.date : formatDate(h.date)}
                 </div>

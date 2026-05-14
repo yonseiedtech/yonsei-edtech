@@ -553,7 +553,7 @@ function ResearchLogicMap({
                 type={clickable ? "button" : undefined}
                 onClick={clickable ? () => jumpToNode(id) : undefined}
                 className={cn(
-                  "relative z-10 flex flex-col items-center justify-center gap-1 rounded-xl border-2 bg-card p-2 shadow-sm transition-all",
+                  "relative z-10 flex flex-col items-center justify-center gap-1 rounded-2xl border-2 bg-card p-2 shadow-sm transition-all",
                   cls,
                   fillBg(n.fill),
                   clickable && "cursor-pointer hover:scale-[1.03] hover:shadow-md",
@@ -967,7 +967,7 @@ const SLIDES: SlideDef[] = [
               type="button"
               onClick={() => setField("fieldFormat", opt.value)}
               className={cn(
-                "rounded-xl border-2 px-4 py-4 text-base font-semibold transition-all",
+                "rounded-2xl border-2 px-4 py-4 text-base font-semibold transition-all",
                 active
                   ? "border-[#003876] bg-[#003876]/5 text-[#003876] shadow-sm"
                   : "border-muted bg-card text-muted-foreground hover:border-[#003876]/40 hover:bg-blue-50/40",
@@ -1111,7 +1111,7 @@ const SLIDES: SlideDef[] = [
     render: (form) => {
       const phenomena = form.problemPhenomena.filter((p) => p.trim()).slice(0, 3);
       return (
-        <div className="rounded-xl border-2 border-dashed border-cyan-200 bg-cyan-50/50 p-4 text-sm">
+        <div className="rounded-2xl border-2 border-dashed border-cyan-200 bg-cyan-50/50 p-4 text-sm">
           <p className="font-semibold text-cyan-900">정의한 현장 문제 미리보기</p>
           {phenomena.length === 0 ? (
             <p className="mt-2 text-muted-foreground">아직 현상이 입력되지 않았어요.</p>
@@ -1189,7 +1189,7 @@ const SLIDES: SlideDef[] = [
     render: (form) => {
       const env = form.envLearning.trim();
       return env ? (
-        <div className="rounded-xl border-2 border-dashed border-cyan-200 bg-cyan-50/60 p-3 text-sm">
+        <div className="rounded-2xl border-2 border-dashed border-cyan-200 bg-cyan-50/60 p-3 text-sm">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-cyan-700">정의한 학습 환경</p>
           <p className="mt-1 whitespace-pre-wrap text-cyan-900/90 line-clamp-3">{env}</p>
         </div>
@@ -1260,7 +1260,7 @@ const SLIDES: SlideDef[] = [
     render: (form) => {
       const profile = form.learnerProfile.trim();
       return profile ? (
-        <div className="rounded-xl border-2 border-dashed border-purple-200 bg-purple-50/60 p-3 text-sm">
+        <div className="rounded-2xl border-2 border-dashed border-purple-200 bg-purple-50/60 p-3 text-sm">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-purple-700">분석한 학습자</p>
           <p className="mt-1 text-purple-900/90 line-clamp-2">{profile}</p>
         </div>
@@ -1302,7 +1302,7 @@ const SLIDES: SlideDef[] = [
                   type="button"
                   onClick={() => setField("outcomePriorityDomain", opt.v)}
                   className={cn(
-                    "rounded-xl border-2 p-3 text-left transition-all",
+                    "rounded-2xl border-2 p-3 text-left transition-all",
                     active
                       ? "border-[#003876] bg-[#003876]/5 shadow-sm"
                       : "border-muted bg-card hover:border-[#003876]/40 hover:bg-blue-50/40",
@@ -1464,19 +1464,19 @@ const SLIDES: SlideDef[] = [
       return (
         <div className="space-y-2">
           {domain && (
-            <div className="rounded-xl border-2 border-dashed border-amber-200 bg-amber-50/60 p-3 text-sm">
+            <div className="rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50/60 p-3 text-sm">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">학습자에게 우선적으로 변화시키려는 영역</p>
               <p className="mt-1 text-amber-900/90 font-bold">{domainLabel}</p>
             </div>
           )}
           {profile && (
-            <div className="rounded-xl border-2 border-dashed border-purple-200 bg-purple-50/60 p-3 text-sm">
+            <div className="rounded-2xl border-2 border-dashed border-purple-200 bg-purple-50/60 p-3 text-sm">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-purple-700">학습자 프로필</p>
               <p className="mt-1 text-purple-900/90 line-clamp-2">{profile}</p>
             </div>
           )}
           {outcome && (
-            <div className="rounded-xl border-2 border-dashed border-fuchsia-200 bg-fuchsia-50/60 p-3 text-sm">
+            <div className="rounded-2xl border-2 border-dashed border-fuchsia-200 bg-fuchsia-50/60 p-3 text-sm">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-fuchsia-700">학습 목표</p>
               <p className="mt-1 whitespace-pre-wrap text-fuchsia-900/90 line-clamp-3">{outcome}</p>
             </div>
@@ -1604,7 +1604,7 @@ const SLIDES: SlideDef[] = [
         ]),
       ).slice(0, 6);
       return (
-        <div className="rounded-xl border-2 border-dashed border-blue-200 bg-blue-50/60 p-4 text-sm">
+        <div className="rounded-2xl border-2 border-dashed border-blue-200 bg-blue-50/60 p-4 text-sm">
           <p className="font-semibold text-blue-900">검색 키워드 후보</p>
           {keywords.length === 0 ? (
             <p className="mt-2 text-muted-foreground">
@@ -2068,7 +2068,7 @@ function PreviousAnswerCard({
     const firstRef = items[0];
     if (!firstRef?.targetSlide || firstRef.targetIdx < 0) return null;
     return (
-      <div className="mt-3 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-amber-300 bg-amber-50/60 px-4 py-5 text-center sm:py-6">
+      <div className="mt-3 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-amber-300 bg-amber-50/60 px-4 py-5 text-center sm:py-6">
         <div className="mb-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-amber-700 sm:h-10 sm:w-10">
           <Pencil size={16} />
         </div>

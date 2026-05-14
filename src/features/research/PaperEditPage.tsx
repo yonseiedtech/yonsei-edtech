@@ -215,7 +215,7 @@ export default function PaperEditPage({ paperId }: PaperEditPageProps) {
       </div>
 
       {/* 헤더 */}
-      <header className="mb-6 rounded-xl border bg-card p-5">
+      <header className="mb-6 rounded-2xl border bg-card p-5">
         <Input
           value={form.title}
           onChange={(e) => patch("title", e.target.value)}
@@ -386,7 +386,7 @@ export default function PaperEditPage({ paperId }: PaperEditPageProps) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mb-5 rounded-xl border bg-card p-5">
+    <section className="mb-5 rounded-2xl border bg-card p-5">
       <h2 className="mb-3 text-base font-semibold">{title}</h2>
       <div className="space-y-3">{children}</div>
     </section>

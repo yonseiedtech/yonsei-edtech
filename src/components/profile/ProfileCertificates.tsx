@@ -47,7 +47,7 @@ export default function ProfileCertificates({ owner }: Props) {
       </div>
       <ul className="space-y-2">
         {myCerts.map((cert) => (
-          <li key={cert.id} className="flex items-start gap-3 rounded-xl border px-4 py-3">
+          <li key={cert.id} className="flex items-start gap-3 rounded-2xl border px-4 py-3">
             <Award size={16} className="mt-0.5 shrink-0 text-primary" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{cert.seminarTitle}</p>

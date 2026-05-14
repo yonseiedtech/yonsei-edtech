@@ -77,7 +77,7 @@ export default function ServerConnectionCard() {
   if (connected && !showSetup) {
     return (
       <div className="space-y-3">
-        <div className="rounded-xl border border-green-200 bg-green-50/50 p-4">
+        <div className="rounded-2xl border border-green-200 bg-green-50/50 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CheckCircle size={18} className="text-green-600" />
@@ -98,7 +98,7 @@ export default function ServerConnectionCard() {
   }
 
   return (
-    <div className="rounded-xl border bg-card p-5">
+    <div className="rounded-2xl border bg-card p-5">
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">

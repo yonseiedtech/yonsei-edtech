@@ -167,7 +167,7 @@ function KanbanCard({ job }: { job: AgentJob }) {
   const timeRef = job.completedAt || job.startedAt || job.createdAt;
 
   return (
-    <article className="animate-in fade-in slide-in-from-bottom-2 duration-300 rounded-xl border bg-card p-3 shadow-sm transition-shadow hover:shadow-md">
+    <article className="animate-in fade-in slide-in-from-bottom-2 duration-300 rounded-2xl border bg-card p-3 shadow-sm transition-shadow hover:shadow-md">
       <div className="flex items-start gap-2">
         <Icon
           size={14}

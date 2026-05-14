@@ -48,7 +48,7 @@ export default function MyActivitiesSection({ activities, type, isLoading }: Pro
   const detailPrefix = type === "study" ? "/activities/studies" : "/activities/projects";
 
   return (
-    <section className="mt-8 rounded-xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5 p-5 shadow-sm">
+    <section className="mt-8 rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5 p-5 shadow-sm">
       <div className="mb-3 flex items-center gap-2">
         <Sparkles size={16} className="text-primary" />
         <h2 className="text-sm font-semibold text-foreground">

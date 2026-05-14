@@ -351,7 +351,7 @@ export default function ProfileAcademicActivities({ owner }: Props) {
                         <li
                           key={s.id}
                           className={cn(
-                            "rounded-xl border px-4 py-3 transition-colors",
+                            "rounded-2xl border px-4 py-3 transition-colors",
                             speaker
                               ? "border-rose-200 bg-rose-50/40 hover:border-rose-300"
                               : "hover:border-primary/40",
@@ -391,7 +391,7 @@ export default function ProfileAcademicActivities({ owner }: Props) {
                         key={a.id}
                         ref={isNewlyReviewed ? newCardRef : undefined}
                         className={cn(
-                          "rounded-xl border px-4 py-3 transition-all",
+                          "rounded-2xl border px-4 py-3 transition-all",
                           isNewlyReviewed && showNewBadge &&
                             "relative overflow-hidden border-primary/60 bg-primary/5 shadow-lg ring-2 ring-primary/40 animate-in slide-in-from-bottom-4 fade-in duration-700",
                           hasReview && !isNewlyReviewed && "border-emerald-200 bg-emerald-50/30 dark:border-emerald-900 dark:bg-emerald-950/10",

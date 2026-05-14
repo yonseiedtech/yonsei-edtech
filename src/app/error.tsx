@@ -50,7 +50,7 @@ export default function Error({
         </div>
 
         {/* 오류 상세 — Sprint 70 진단 정보 보존 */}
-        <details className="mb-6 rounded-xl border bg-muted/30 px-4 py-3 text-left text-xs text-muted-foreground">
+        <details className="mb-6 rounded-2xl border bg-muted/30 px-4 py-3 text-left text-xs text-muted-foreground">
           <summary className="cursor-pointer select-none font-semibold text-foreground/80 hover:text-foreground">
             오류 상세 (운영진에게 전달용)
           </summary>

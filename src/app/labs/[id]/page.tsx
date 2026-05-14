@@ -143,7 +143,7 @@ function LabDetailContent({ id }: { id: string }) {
       </header>
 
       {lab.kind === "external" && lab.externalUrl && (
-        <section className="mb-6 overflow-hidden rounded-xl border">
+        <section className="mb-6 overflow-hidden rounded-2xl border">
           {lab.thumbnailUrl && (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={lab.thumbnailUrl} alt={lab.title} className="max-h-80 w-full object-cover" />
@@ -163,7 +163,7 @@ function LabDetailContent({ id }: { id: string }) {
       )}
 
       {lab.kind === "internal" && (
-        <section className="mb-6 rounded-xl border bg-muted/30 p-4 text-xs text-muted-foreground">
+        <section className="mb-6 rounded-2xl border bg-muted/30 p-4 text-xs text-muted-foreground">
           <p className="flex items-center gap-2 font-medium text-foreground">
             <FlaskConical size={14} /> 내부 프로토타입
           </p>

@@ -114,7 +114,7 @@ export default function AIForumLiveWidget() {
             <Link
               key={t.id}
               href={`/ai-forum/${t.id}`}
-              className="group block rounded-xl border bg-background p-3 transition-shadow hover:shadow-sm"
+              className="group block rounded-2xl border bg-background p-3 transition-shadow hover:shadow-sm"
             >
               <div className="flex items-center gap-2">
                 <span

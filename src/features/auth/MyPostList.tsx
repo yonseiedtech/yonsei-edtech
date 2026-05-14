@@ -10,14 +10,14 @@ interface Props {
 export default function MyPostList({ posts }: Props) {
   if (posts.length === 0) {
     return (
-      <div className="rounded-xl border bg-card p-8 text-center text-muted-foreground">
+      <div className="rounded-2xl border bg-card p-8 text-center text-muted-foreground">
         작성한 게시글이 없습니다.
       </div>
     );
   }
 
   return (
-    <div className="divide-y rounded-xl border bg-card">
+    <div className="divide-y rounded-2xl border bg-card">
       {posts.map((post) => (
         <Link
           key={post.id}

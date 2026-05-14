@@ -102,7 +102,7 @@ export default async function AIForumListPage() {
           {Object.values(AI_PERSONAS).map((p) => (
             <div
               key={p.key}
-              className="flex items-start gap-3 rounded-xl border bg-card p-3"
+              className="flex items-start gap-3 rounded-2xl border bg-card p-3"
             >
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-lg">
                 {p.avatarEmoji}

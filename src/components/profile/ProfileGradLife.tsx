@@ -165,7 +165,7 @@ export default function ProfileGradLife({ owner, isStaff = false }: Props) {
                   <li
                     key={p.id}
                     className={cn(
-                      "rounded-xl border bg-muted/20 px-3 py-2.5 text-sm",
+                      "rounded-2xl border bg-muted/20 px-3 py-2.5 text-sm",
                       isOngoing(p) && "border-l-4 border-l-violet-400 bg-violet-50/30",
                     )}
                   >

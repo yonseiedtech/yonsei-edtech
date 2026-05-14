@@ -375,7 +375,7 @@ export default function ARCSPanel({ inputs }: ARCSPanelProps) {
 
           {/* 보강 안내 — 가장 약한 축 */}
           {axisScores[weakestAxis.key] < WEAK_THRESHOLD && (
-            <div className="mt-4 flex items-start gap-2 rounded-xl border border-dashed border-muted-foreground/30 bg-muted/20 px-4 py-3">
+            <div className="mt-4 flex items-start gap-2 rounded-2xl border border-dashed border-muted-foreground/30 bg-muted/20 px-4 py-3">
               <span className="mt-0.5 shrink-0 text-[10px] font-bold text-muted-foreground">
                 TIP
               </span>

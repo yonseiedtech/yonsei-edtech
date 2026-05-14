@@ -98,7 +98,7 @@ export default function TrustIndicators() {
           </p>
         </div>
         <div
-          className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-4"
+          className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border bg-border sm:grid-cols-4"
           aria-busy={isLoading}
           aria-label="학회 누적 활동 지표"
         >

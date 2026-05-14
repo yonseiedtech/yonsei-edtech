@@ -583,14 +583,14 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
                   disabled={readOnly}
                 />
                 {apa7Sorted.length === 0 ? (
-                  <div className="rounded-xl border border-dashed bg-muted/20 p-6 text-center">
+                  <div className="rounded-2xl border border-dashed bg-muted/20 p-6 text-center">
                     <BookMarked size={28} className="mx-auto text-muted-foreground/40" />
                     <p className="mt-2 text-xs text-muted-foreground">
                       등록된 참고문헌이 없습니다. 위에서 ‘논문 연결’ 버튼으로 논문을 추가해 주세요.
                     </p>
                   </div>
                 ) : (
-                  <ol className="space-y-2 rounded-xl border bg-card p-4 text-sm leading-relaxed">
+                  <ol className="space-y-2 rounded-2xl border bg-card p-4 text-sm leading-relaxed">
                     {apa7Sorted.map((p, i) => (
                       <li key={p.id} className="flex items-start gap-2">
                         <span className="shrink-0 text-xs font-medium text-muted-foreground">
@@ -760,14 +760,14 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
           />
 
           {apa7Sorted.length === 0 ? (
-            <div className="rounded-xl border border-dashed bg-muted/20 p-6 text-center">
+            <div className="rounded-2xl border border-dashed bg-muted/20 p-6 text-center">
               <BookMarked size={28} className="mx-auto text-muted-foreground/40" />
               <p className="mt-2 text-xs text-muted-foreground">
                 등록된 참고문헌이 없습니다. 위에서 ‘논문 연결’ 버튼으로 논문을 추가해 주세요.
               </p>
             </div>
           ) : (
-            <ol className="space-y-2 rounded-xl border bg-card p-4 text-sm leading-relaxed">
+            <ol className="space-y-2 rounded-2xl border bg-card p-4 text-sm leading-relaxed">
               {apa7Sorted.map((p, i) => (
                 <li key={p.id} className="flex items-start gap-2">
                   <span className="shrink-0 text-xs font-medium text-muted-foreground">

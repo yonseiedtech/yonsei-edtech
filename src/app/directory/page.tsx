@@ -326,7 +326,7 @@ function DirectoryContent() {
         </div>
 
         {isLoading ? (
-          <div className="mt-6 overflow-x-auto rounded-xl border bg-card" aria-busy="true" aria-label="회원 명부 불러오는 중">
+          <div className="mt-6 overflow-x-auto rounded-2xl border bg-card" aria-busy="true" aria-label="회원 명부 불러오는 중">
             <table className="w-full text-xs sm:text-sm">
               <thead className="border-b bg-muted/30">
                 <tr>
@@ -366,7 +366,7 @@ function DirectoryContent() {
                 {...(search ? { actionLabel: "검색 초기화", onAction: () => setSearch("") } : {})}
               />
             ) : (
-              <div className="mt-3 overflow-x-auto rounded-xl border bg-card">
+              <div className="mt-3 overflow-x-auto rounded-2xl border bg-card">
                 <table className="w-full text-xs sm:text-sm">
                   <thead className="border-b bg-muted/30">
                     <tr>

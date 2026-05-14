@@ -160,7 +160,7 @@ export default function SpacedRepetitionWidget() {
           본인 게시글·세미나 후기 분석 중…
         </div>
       ) : !hasAnyMatch ? (
-        <div className="rounded-xl border-2 border-dashed border-muted-foreground/20 bg-muted/30 p-4 text-center">
+        <div className="rounded-2xl border-2 border-dashed border-muted-foreground/20 bg-muted/30 p-4 text-center">
           <RotateCcw size={18} className="mx-auto mb-1.5 text-muted-foreground/60" aria-hidden />
           <p className="text-xs font-medium">
             다시 볼 본인 콘텐츠가 아직 충분하지 않습니다.
@@ -181,7 +181,7 @@ export default function SpacedRepetitionWidget() {
                 <li key={`${it.kind}-${it.id}`}>
                   <Link
                     href={it.href}
-                    className="group flex items-start gap-2.5 rounded-xl border bg-background p-3 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="group flex items-start gap-2.5 rounded-2xl border bg-background p-3 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <span className="inline-flex shrink-0 items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
                       {g.label}

@@ -201,7 +201,7 @@ export default function ActivityInfoEditor({
   }
 
   return (
-    <div className="rounded-xl border bg-card p-6 space-y-4">
+    <div className="rounded-2xl border bg-card p-6 space-y-4">
       <h3 className="font-semibold">활동 정보 수정</h3>
 
       <div>

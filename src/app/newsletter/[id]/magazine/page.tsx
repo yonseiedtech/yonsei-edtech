@@ -133,7 +133,7 @@ export default function NewsletterMagazinePage({
 
       <div className="mx-auto flex max-w-7xl gap-6 px-4 py-8 lg:py-12">
         {/* 사이드바 (PC) */}
-        <aside className="sticky top-20 hidden h-[calc(100vh-7rem)] w-64 shrink-0 overflow-y-auto rounded-xl border bg-card p-4 lg:block">
+        <aside className="sticky top-20 hidden h-[calc(100vh-7rem)] w-64 shrink-0 overflow-y-auto rounded-2xl border bg-card p-4 lg:block">
           <p className="mb-3 text-xs font-semibold text-muted-foreground">섹션</p>
           <button
             type="button"

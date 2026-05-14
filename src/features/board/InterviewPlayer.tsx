@@ -536,7 +536,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                           key={opt.id}
                           type="button"
                           onClick={() => patchAnswer({ selectedOptionId: opt.id, text: undefined })}
-                          className={`block w-full rounded-xl border-2 px-4 py-3 text-left text-base transition-all ${
+                          className={`block w-full rounded-2xl border-2 px-4 py-3 text-left text-base transition-all ${
                             selected
                               ? "border-[#003876] bg-[#003876]/5 font-semibold text-[#003876] shadow-sm"
                               : "border-muted bg-card hover:border-[#003876]/40 hover:bg-blue-50/40"
@@ -551,7 +551,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                     })}
                     {currentQ.allowCustomOption && (
                       <div
-                        className={`rounded-xl border-2 px-4 py-3 transition-all ${
+                        className={`rounded-2xl border-2 px-4 py-3 transition-all ${
                           currentAnswer?.selectedOptionId === CUSTOM_OPTION_ID
                             ? "border-[#003876] bg-[#003876]/5 shadow-sm"
                             : "border-dashed border-muted bg-card hover:border-[#003876]/40"
@@ -625,7 +625,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                             key={opt.id}
                             type="button"
                             onClick={() => toggle(opt.id)}
-                            className={`block w-full rounded-xl border-2 px-4 py-3 text-left text-base transition-all ${
+                            className={`block w-full rounded-2xl border-2 px-4 py-3 text-left text-base transition-all ${
                               selected
                                 ? "border-[#003876] bg-[#003876]/5 font-semibold text-[#003876] shadow-sm"
                                 : "border-muted bg-card hover:border-[#003876]/40 hover:bg-blue-50/40"
@@ -648,7 +648,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                         const selected = selectedIds.includes(CUSTOM_OPTION_ID);
                         return (
                           <div
-                            className={`rounded-xl border-2 px-4 py-3 transition-all ${
+                            className={`rounded-2xl border-2 px-4 py-3 transition-all ${
                               selected
                                 ? "border-[#003876] bg-[#003876]/5 shadow-sm"
                                 : "border-dashed border-muted bg-card hover:border-[#003876]/40"

@@ -271,7 +271,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       </section>
 
       {/* 스텝 탭 */}
-      <div className="flex items-center gap-1 rounded-xl border bg-card p-1.5">
+      <div className="flex items-center gap-1 rounded-2xl border bg-card p-1.5">
         {STEPS.map((s, i) => {
           const active = step === s.key;
           return (
@@ -315,7 +315,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       </section>
 
       {/* 이전 / 다음 네비게이션 */}
-      <div className="flex items-center justify-between rounded-xl border bg-card p-3">
+      <div className="flex items-center justify-between rounded-2xl border bg-card p-3">
         <Button
           variant="outline"
           size="sm"

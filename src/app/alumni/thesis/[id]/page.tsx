@@ -606,7 +606,7 @@ export default function AlumniThesisDetailPage() {
           </div>
 
           {canEdit && editing && draft && (
-            <div className="mt-6 rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 p-5">
+            <div className="mt-6 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 p-5">
               <div className="flex items-center justify-between">
                 <h2 className="flex items-center gap-2 text-sm font-bold text-primary">
                   <Pencil size={14} />

@@ -172,7 +172,7 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
         )}
 
         {isStaffPublic && (
-          <p className="rounded-xl border border-dashed bg-card p-3 text-center text-xs text-muted-foreground">
+          <p className="rounded-2xl border border-dashed bg-card p-3 text-center text-xs text-muted-foreground">
             연세교육공학회 회원이신가요?{" "}
             <Link
               href={`/login?next=${encodeURIComponent(`/profile/${owner.id}`)}`}

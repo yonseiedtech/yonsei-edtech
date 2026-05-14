@@ -1715,7 +1715,7 @@ export default function CertificateGenerator() {
     <div className="flex flex-col gap-6 lg:flex-row">
       {/* 좌측: 설정 패널 */}
       <div className="w-full shrink-0 space-y-4 lg:w-80">
-        <div className="rounded-xl border bg-white p-5 space-y-4">
+        <div className="rounded-2xl border bg-white p-5 space-y-4">
           {certType !== "appointment" ? (
             <div>
               <label className="mb-1.5 block text-sm font-medium">세미나 선택</label>

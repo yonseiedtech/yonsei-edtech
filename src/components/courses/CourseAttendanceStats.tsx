@@ -106,7 +106,7 @@ export function CourseAttendanceStats({ enrollments, sessions, weeks }: Props) {
 
   return (
     <section className="mx-auto mt-6 max-w-4xl px-4">
-      <div className="rounded-xl border bg-card">
+      <div className="rounded-2xl border bg-card">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}

@@ -267,7 +267,7 @@ function LeadershipContent() {
               <div className="mb-8">
                 <OrgChart />
               </div>
-              <div className="mb-6 flex flex-col gap-3 rounded-xl border bg-card p-3 sm:flex-row sm:items-center">
+              <div className="mb-6 flex flex-col gap-3 rounded-2xl border bg-card p-3 sm:flex-row sm:items-center">
                 <div className="relative flex-1">
                   <Search
                     size={14}

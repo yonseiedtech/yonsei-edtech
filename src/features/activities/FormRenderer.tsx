@@ -266,7 +266,7 @@ function ScheduleField({ field, value, onChange, defaults }: ScheduleFieldProps)
           type="button"
           onClick={() => setMode("all")}
           className={cn(
-            "flex flex-col items-start gap-1 rounded-xl border-2 p-4 text-left transition-all",
+            "flex flex-col items-start gap-1 rounded-2xl border-2 p-4 text-left transition-all",
             mode === "all"
               ? "border-emerald-500 bg-emerald-50 text-emerald-900 shadow-sm dark:bg-emerald-950/40 dark:text-emerald-100"
               : "border-input bg-card text-muted-foreground hover:border-emerald-300 hover:bg-emerald-50/40 dark:bg-card dark:hover:bg-emerald-950/20",
@@ -284,7 +284,7 @@ function ScheduleField({ field, value, onChange, defaults }: ScheduleFieldProps)
           type="button"
           onClick={() => setMode("partial")}
           className={cn(
-            "flex flex-col items-start gap-1 rounded-xl border-2 p-4 text-left transition-all",
+            "flex flex-col items-start gap-1 rounded-2xl border-2 p-4 text-left transition-all",
             mode === "partial"
               ? "border-primary bg-primary/10 text-foreground shadow-sm"
               : "border-input bg-card text-muted-foreground hover:border-primary/40 hover:bg-primary/5 dark:bg-card dark:hover:bg-primary/10",
@@ -301,7 +301,7 @@ function ScheduleField({ field, value, onChange, defaults }: ScheduleFieldProps)
       </div>
 
       {mode === "partial" && (
-        <div className="rounded-xl border bg-muted/10">
+        <div className="rounded-2xl border bg-muted/10">
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}

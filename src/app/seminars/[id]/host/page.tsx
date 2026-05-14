@@ -313,7 +313,7 @@ function SeminarHostInner({ seminarId }: { seminarId: string }) {
                 <div
                   key={r.id}
                   className={
-                    "rounded-xl border p-3 " +
+                    "rounded-2xl border p-3 " +
                     (checked ? "bg-emerald-50/40 dark:bg-emerald-950/20" : "bg-card")
                   }
                 >
@@ -485,7 +485,7 @@ function SeminarHostInner({ seminarId }: { seminarId: string }) {
           ) : (
             <div className="space-y-4">
               {publishedRetros.map((r) => (
-                <div key={r.id} className="rounded-xl border bg-background p-4">
+                <div key={r.id} className="rounded-2xl border bg-background p-4">
                   <div className="mb-2 flex items-center justify-between text-xs">
                     <span className="font-semibold">{r.hostUserName || "연사"}</span>
                     <span className="text-muted-foreground">
@@ -530,7 +530,7 @@ function StatCard({
     muted: "bg-muted/30",
   };
   return (
-    <div className={`rounded-xl border p-3 sm:p-4 ${tones[tone]}`}>
+    <div className={`rounded-2xl border p-3 sm:p-4 ${tones[tone]}`}>
       <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         {icon}
         {label}

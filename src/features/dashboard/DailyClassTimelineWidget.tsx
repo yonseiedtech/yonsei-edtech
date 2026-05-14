@@ -1045,7 +1045,7 @@ export default function DailyClassTimelineWidget() {
         todayOfferings.length === 0 &&
         placedDailyActivities.length === 0 ? (
           parsedOfferings.length === 0 ? (
-            <div className="mt-4 rounded-xl border border-dashed bg-muted/20 p-4 text-sm">
+            <div className="mt-4 rounded-2xl border border-dashed bg-muted/20 p-4 text-sm">
               <p className="font-medium">
                 {semesterLabel}에 등록된 수강과목이 없어요.
               </p>
@@ -1069,7 +1069,7 @@ export default function DailyClassTimelineWidget() {
               </Link>
             </div>
           ) : (
-            <div className="mt-4 rounded-xl border border-dashed bg-muted/10 p-4 text-sm">
+            <div className="mt-4 rounded-2xl border border-dashed bg-muted/10 p-4 text-sm">
               <p className="text-muted-foreground">
                 {isShowingToday ? `오늘(${dayChar}요일)` : `${dateLabel}`}에 예정된 수업이 없어요.
               </p>
@@ -1147,7 +1147,7 @@ export default function DailyClassTimelineWidget() {
             return (
               <div
                 key={offering.id}
-                className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3"
+                className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-3"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex-1 text-[13px]">
@@ -1489,7 +1489,7 @@ function DailyGrid({
                   href={`/courses/${c.id}/schedule`}
                   aria-label={`${c.courseName} 강의 스케줄로 이동`}
                   className={cn(
-                    "absolute left-3 right-3 block overflow-hidden rounded-xl border border-l-4 bg-card p-3 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer",
+                    "absolute left-3 right-3 block overflow-hidden rounded-2xl border border-l-4 bg-card p-3 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer",
                     MODE_BORDER[mode],
                     isCancelled && "opacity-70",
                   )}
@@ -1557,7 +1557,7 @@ function DailyGrid({
                 href={`/activities/${typePath}/${activity.id}`}
                 aria-label={`${activity.title} ${progress.week}주차 활동으로 이동`}
                 className={cn(
-                  "absolute left-3 right-3 block overflow-hidden rounded-xl border border-l-4 bg-card p-3 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/40 cursor-pointer",
+                  "absolute left-3 right-3 block overflow-hidden rounded-2xl border border-l-4 bg-card p-3 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/40 cursor-pointer",
                   ACTIVITY_MODE_BORDER[mode],
                 )}
                 style={{ top: topPx, height: Math.max(heightPx, 64) }}

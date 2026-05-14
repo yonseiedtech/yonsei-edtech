@@ -248,7 +248,7 @@ function NavDropdown({ group }: { group: NavGroup }) {
         <div
           role="menu"
           aria-label={group.label}
-          className="absolute left-0 top-full z-50 mt-1.5 min-w-[180px] rounded-xl border bg-popover py-1.5 shadow-xl animate-in fade-in slide-in-from-top-1 duration-150"
+          className="absolute left-0 top-full z-50 mt-1.5 min-w-[180px] rounded-2xl border bg-popover py-1.5 shadow-xl animate-in fade-in slide-in-from-top-1 duration-150"
         >
           {sections.map((section, sIdx) => (
             <div key={section.sectionLabel ?? `__section_${sIdx}`}>

@@ -443,7 +443,7 @@ function MeetingPanel({ meeting, canControl, weekLabel, onMutated }: PanelProps)
   const sm = statusMap[status];
 
   return (
-    <div className="space-y-3 rounded-xl border bg-gradient-to-b from-primary/[0.04] to-white p-4">
+    <div className="space-y-3 rounded-2xl border bg-gradient-to-b from-primary/[0.04] to-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <Timer size={14} className="text-primary" />

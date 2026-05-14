@@ -172,7 +172,7 @@ export default function SeminarLMS({ seminarId }: Props) {
 
         {/* 미참석자 안내 */}
         {!hasAccess && (
-          <div className="mb-4 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          <div className="mb-4 flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
             <AlertCircle size={18} className="shrink-0" />
             <div>
               <p className="font-medium">참석 신청 후 이용 가능합니다</p>
@@ -185,7 +185,7 @@ export default function SeminarLMS({ seminarId }: Props) {
 
         {/* 연사 후기 링크 (staff 전용) */}
         {isStaff && (
-          <div className="mb-4 rounded-xl border border-blue-200 bg-blue-50/60 p-4">
+          <div className="mb-4 rounded-2xl border border-blue-200 bg-blue-50/60 p-4">
             <h3 className="mb-2 flex items-center gap-2 text-sm font-medium">
               <Mic size={14} className="text-blue-600" />
               연사 후기 링크

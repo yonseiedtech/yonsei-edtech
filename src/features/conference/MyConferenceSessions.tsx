@@ -73,7 +73,7 @@ export default function MyConferenceSessions({ userId }: Props) {
   return (
     <div className="space-y-6">
       {grouped.map(({ activityId, items, attendedCount, reflectedCount }) => (
-        <section key={activityId} className="rounded-xl border bg-card p-4">
+        <section key={activityId} className="rounded-2xl border bg-card p-4">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <Globe size={14} className="text-emerald-600" />

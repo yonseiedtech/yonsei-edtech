@@ -109,7 +109,7 @@ function ItemCard({ item, done, canCheck, onToggle }: ItemCardProps) {
   return (
     <div
       className={
-        "rounded-xl border p-4 transition-colors " +
+        "rounded-2xl border p-4 transition-colors " +
         (isPreview
           ? "border-amber-300 bg-amber-50/30 dark:bg-amber-950/20"
           : done
@@ -306,7 +306,7 @@ export default function OnboardingPage() {
       </header>
 
       {isStaffViewer && (track?.published === false || items.some((i) => !i.published)) && (
-        <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+        <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
           <div className="font-semibold">운영진 미리보기 모드</div>
           <div className="mt-0.5">
             비공개 트랙·항목도 함께 보입니다. 회원에게는 공개로 전환된 항목만 노출됩니다.
@@ -350,7 +350,7 @@ export default function OnboardingPage() {
       {loading ? (
         <div className="space-y-3" aria-busy="true" aria-label="온보딩 가이드 불러오는 중">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="rounded-xl border bg-card p-4">
+            <div key={i} className="rounded-2xl border bg-card p-4">
               <div className="flex items-start gap-3">
                 <Skeleton className="mt-0.5 h-5 w-5 shrink-0 rounded-full" />
                 <div className="flex-1 space-y-2">

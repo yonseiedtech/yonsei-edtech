@@ -79,7 +79,7 @@ function OrgNode({ node, isRoot, isIndependent }: { node: OrgTreeNode; isRoot?: 
     <div className="flex flex-col items-center">
       {/* 부모 카드 + 우측 독립 사이드카. absolute로 부모의 수평 중심축 보존 */}
       <div className="relative">
-        <div className={`flex flex-col items-center rounded-xl border bg-card px-4 py-3 shadow-sm ${cardClass}`}>
+        <div className={`flex flex-col items-center rounded-2xl border bg-card px-4 py-3 shadow-sm ${cardClass}`}>
           <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${style.avatar}`}>
             {node.userName ? node.userName[0] : "?"}
           </div>

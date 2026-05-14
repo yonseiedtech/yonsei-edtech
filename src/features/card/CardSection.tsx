@@ -131,7 +131,7 @@ function CardTab({
         </Button>
       </div>
 
-      <div className="mt-6 rounded-xl border bg-card p-4 text-xs text-muted-foreground">
+      <div className="mt-6 rounded-2xl border bg-card p-4 text-xs text-muted-foreground">
         <p className="font-semibold text-foreground">사용 안내</p>
         <ul className="mt-2 list-disc space-y-1 pl-4">
           <li>프로필 사진: 명함에 표시할 사진을 업로드하세요</li>
@@ -166,7 +166,7 @@ function ExchangeSection({
         {title} ({items.length})
       </h2>
       {loading ? (
-        <div className="rounded-xl border bg-card p-6 text-center text-xs text-muted-foreground">
+        <div className="rounded-2xl border bg-card p-6 text-center text-xs text-muted-foreground">
           불러오는 중…
         </div>
       ) : items.length === 0 ? (
@@ -174,7 +174,7 @@ function ExchangeSection({
       ) : (
         <ul className="space-y-2">
           {items.map((x) => (
-            <li key={x.id} className="rounded-xl border bg-card px-4 py-3">
+            <li key={x.id} className="rounded-2xl border bg-card px-4 py-3">
               <Link
                 href={linkPrefix(x)}
                 className="flex items-center justify-between hover:text-primary"

@@ -175,7 +175,7 @@ export default function QrScanner({ onScan, enabled = true }: Props) {
       <canvas ref={canvasRef} className="hidden" />
       {/* 스캔 가이드 오버레이 */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <div className="h-48 w-48 rounded-xl border-2 border-white/60" />
+        <div className="h-48 w-48 rounded-2xl border-2 border-white/60" />
       </div>
       <div className="absolute bottom-3 left-0 right-0 text-center">
         <div className="inline-flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-xs text-white">

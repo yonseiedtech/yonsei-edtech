@@ -453,7 +453,7 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
 
         {/* 토큰 검증 중 */}
         {step === "verifying" && (
-          <div className="rounded-xl border bg-card p-6 text-center">
+          <div className="rounded-2xl border bg-card p-6 text-center">
             <Loader2 size={32} className="mx-auto mb-4 animate-spin text-primary" />
             <p className="text-sm text-muted-foreground">연사 인증 중...</p>
           </div>
@@ -461,7 +461,7 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
 
         {/* 에러 */}
         {step === "error" && (
-          <div className="rounded-xl border bg-card p-6 text-center">
+          <div className="rounded-2xl border bg-card p-6 text-center">
             <AlertCircle size={48} className="mx-auto mb-4 text-red-400" />
             <h2 className="text-lg font-bold text-red-600">접근 불가</h2>
             <p className="mt-2 text-sm text-muted-foreground">{errorMsg}</p>
@@ -473,7 +473,7 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
 
         {/* 후기 작성 */}
         {step === "write" && (
-          <div className="space-y-4 rounded-xl border bg-card p-6">
+          <div className="space-y-4 rounded-2xl border bg-card p-6">
             <div className="flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-700">
               <Mic size={16} className="shrink-0" />
               <span><strong>{speakerName}</strong> 연사님 환영합니다{editMode ? " — 후기 수정 모드" : ""}</span>
@@ -554,7 +554,7 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
         {/* 완료: 후기 + 감사장 + 갤러리 */}
         {step === "done" && submittedReview && seminar && (
           <div className="space-y-6">
-            <div className="rounded-xl border bg-card p-6 text-center">
+            <div className="rounded-2xl border bg-card p-6 text-center">
               <CheckCircle size={48} className="mx-auto mb-4 text-green-500" />
               <h2 className="text-xl font-bold">
                 {existingReview && !editMode ? "후기가 등록되어 있습니다" : editMode ? "후기가 수정되었습니다!" : "후기가 등록되었습니다!"}
@@ -563,7 +563,7 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
             </div>
 
             {/* 작성한 후기 미리보기 */}
-            <div className="rounded-xl border bg-muted/10 p-4">
+            <div className="rounded-2xl border bg-muted/10 p-4">
               <p className="mb-2 text-xs font-medium text-muted-foreground">작성된 후기</p>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">{speakerName}</span>
@@ -583,7 +583,7 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
             </div>
 
             {/* 감사장 섹션 — 반짝이는 테두리 */}
-            <div className="rounded-xl border bg-card p-6">
+            <div className="rounded-2xl border bg-card p-6">
               <h3 className="mb-4 text-center text-sm font-semibold">연세교육공학회 감사장</h3>
 
               {/* 반짝이 애니메이션 CSS */}
@@ -683,7 +683,7 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
 
             {/* 포토갤러리 — 연세교육공학과 함께한 순간 */}
             {seminarPhotos.length > 0 && (
-              <div className="rounded-xl border bg-card p-6">
+              <div className="rounded-2xl border bg-card p-6">
                 <div className="mb-4 text-center">
                   <div className="mx-auto mb-2 flex items-center justify-center gap-2">
                     <Camera size={18} className="text-primary" />

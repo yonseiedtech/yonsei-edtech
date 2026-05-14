@@ -191,7 +191,7 @@ export default async function AIForumDetailPage({ params }: Props) {
                     </div>
 
                     {m.citations && m.citations.length > 0 && (
-                      <details className="mt-3 rounded-xl border bg-muted/30 p-3">
+                      <details className="mt-3 rounded-2xl border bg-muted/30 p-3">
                         <summary className="cursor-pointer text-xs font-semibold text-muted-foreground">
                           참고문헌 {m.citations.length}건 (APA 7) — Human-in-the-loop 검증
                         </summary>

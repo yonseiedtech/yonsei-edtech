@@ -256,7 +256,7 @@ export default function TitleNgramTrend({ theses }: { theses: AlumniThesis[] }) 
       )}
 
       {/* Hover 상세 — 해당 N-gram 포함 논문 미리보기 */}
-      <div className="mt-3 min-h-[88px] rounded-xl border bg-gradient-to-br from-slate-50 to-white p-3 transition-all duration-200">
+      <div className="mt-3 min-h-[88px] rounded-2xl border bg-gradient-to-br from-slate-50 to-white p-3 transition-all duration-200">
         {hoverIdx != null && hoverPapers.length > 0 ? (
           <div className="animate-in fade-in slide-in-from-bottom-1 duration-200">
             <div className="mb-2 flex items-baseline justify-between border-b pb-1.5">

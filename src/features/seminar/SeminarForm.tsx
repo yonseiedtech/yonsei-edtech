@@ -425,7 +425,7 @@ export default function SeminarForm() {
           </div>
 
           {/* ── 연사 (다중) ── */}
-          <div className="rounded-xl border border-primary/20 bg-primary/[0.03] p-4 space-y-3">
+          <div className="rounded-2xl border border-primary/20 bg-primary/[0.03] p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="flex items-center gap-1.5 text-sm font-semibold">
                 <UserPlus size={14} />연사 ({speakers.length}명)

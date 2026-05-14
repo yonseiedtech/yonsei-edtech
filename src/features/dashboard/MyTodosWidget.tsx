@@ -1317,7 +1317,7 @@ export default function MyTodosWidget() {
                   setAddCategory("course");
                   setMobileStep("form");
                 }}
-                className="flex flex-col items-center justify-center gap-1 rounded-xl border bg-card p-4 text-sm font-medium transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex flex-col items-center justify-center gap-1 rounded-2xl border bg-card p-4 text-sm font-medium transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <BookOpen size={20} className="text-blue-600" />
                 수업
@@ -1329,7 +1329,7 @@ export default function MyTodosWidget() {
                     setAddCategory("activity");
                     setMobileStep("form");
                   }}
-                  className="flex flex-col items-center justify-center gap-1 rounded-xl border bg-card p-4 text-sm font-medium transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="flex flex-col items-center justify-center gap-1 rounded-2xl border bg-card p-4 text-sm font-medium transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <UsersIcon size={20} className="text-emerald-600" />
                   학술활동
@@ -1342,7 +1342,7 @@ export default function MyTodosWidget() {
                     setAddCategory("seminar");
                     setMobileStep("form");
                   }}
-                  className="flex flex-col items-center justify-center gap-1 rounded-xl border bg-card p-4 text-sm font-medium transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="flex flex-col items-center justify-center gap-1 rounded-2xl border bg-card p-4 text-sm font-medium transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <Mic size={20} className="text-violet-600" />
                   세미나
@@ -1355,7 +1355,7 @@ export default function MyTodosWidget() {
                     setAddCategory("staff");
                     setMobileStep("form");
                   }}
-                  className="flex flex-col items-center justify-center gap-1 rounded-xl border bg-card p-4 text-sm font-medium transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="flex flex-col items-center justify-center gap-1 rounded-2xl border bg-card p-4 text-sm font-medium transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <ShieldAlert size={20} className="text-amber-600" />
                   운영 업무

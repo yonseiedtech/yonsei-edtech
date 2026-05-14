@@ -123,7 +123,7 @@ export default function DailyReflectionPrompt() {
         </span>
       </div>
 
-      <p className="rounded-xl border bg-card p-4 text-sm leading-relaxed text-foreground/90">
+      <p className="rounded-2xl border bg-card p-4 text-sm leading-relaxed text-foreground/90">
         {prompt.text}
       </p>
 

@@ -44,7 +44,7 @@ export default function PromotionPreview() {
                 <Link
                   key={post.id}
                   href={`/board/${post.id}`}
-                  className="group rounded-xl border bg-background p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="group rounded-2xl border bg-background p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <h3 className="line-clamp-2 font-bold tracking-tight transition-colors group-hover:text-primary">{post.title}</h3>
                   <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">

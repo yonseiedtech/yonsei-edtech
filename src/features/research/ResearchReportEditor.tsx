@@ -746,7 +746,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
       />
 
       {/* 스텝 탭 */}
-      <div className="flex items-center gap-1 rounded-xl border bg-card p-1.5">
+      <div className="flex items-center gap-1 rounded-2xl border bg-card p-1.5">
         {STEPS.map((s, i) => {
           const active = step === s.key;
           return (
@@ -877,7 +877,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
                       onClick={() => !readOnly && setField("outcomePriorityDomain", opt.v as "cognitive" | "affective" | "psychomotor" | "integrated")}
                       disabled={readOnly}
                       className={cn(
-                        "rounded-xl border-2 p-3 text-left transition-all",
+                        "rounded-2xl border-2 p-3 text-left transition-all",
                         active
                           ? "border-[#003876] bg-[#003876]/5 shadow-sm"
                           : "border-muted bg-card hover:border-[#003876]/40 hover:bg-blue-50/40",
@@ -1016,7 +1016,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
             <Section title="3-2. 선행연구간 관계성" sub="여러 선행연구를 그룹으로 묶고, 그룹별 통합력과 인사이트를 작성해 주세요.">
               <div className="space-y-4">
                 {form.priorResearchGroups.map((group, gi) => (
-                  <div key={group.id} className="rounded-xl border bg-muted/20 p-4">
+                  <div key={group.id} className="rounded-2xl border bg-muted/20 p-4">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
@@ -1084,7 +1084,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
       </div>
 
       {/* 이전 / 다음 네비게이션 */}
-      <div className="flex items-center justify-between rounded-xl border bg-card p-3">
+      <div className="flex items-center justify-between rounded-2xl border bg-card p-3">
         <Button
           variant="outline"
           size="sm"

@@ -62,7 +62,7 @@ export default function DefenseTemplateAdminView() {
 
   if (!isAdmin) {
     return (
-      <div className="rounded-xl border bg-card p-10 text-center">
+      <div className="rounded-2xl border bg-card p-10 text-center">
         <p className="text-sm text-muted-foreground">
           템플릿 관리는 관리자(admin) 권한이 필요합니다.
         </p>
@@ -100,7 +100,7 @@ export default function DefenseTemplateAdminView() {
       {isLoading ? (
         <p className="py-12 text-center text-sm text-muted-foreground">불러오는 중...</p>
       ) : templates.length === 0 ? (
-        <div className="rounded-xl border border-dashed bg-card p-10 text-center">
+        <div className="rounded-2xl border border-dashed bg-card p-10 text-center">
           <p className="text-sm text-muted-foreground">
             등록된 템플릿이 없습니다. 새 템플릿을 만들어보세요.
           </p>
@@ -110,7 +110,7 @@ export default function DefenseTemplateAdminView() {
           {templates.map((t) => {
             const open = expanded[t.id] ?? false;
             return (
-              <li key={t.id} className="rounded-xl border bg-card">
+              <li key={t.id} className="rounded-2xl border bg-card">
                 <div className="flex items-start gap-3 p-4">
                   <button
                     type="button"
@@ -276,7 +276,7 @@ function TemplateEditor({
         }
       />
 
-      <div className="space-y-4 rounded-xl border bg-card p-5">
+      <div className="space-y-4 rounded-2xl border bg-card p-5">
         <div>
           <label className="mb-1 block text-xs font-semibold text-muted-foreground">분류</label>
           <select

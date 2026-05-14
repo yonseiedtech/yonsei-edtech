@@ -287,7 +287,7 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
 
       {/* ── 운영 타임라인 뷰 ── */}
       {viewMode === "timeline" && seminar && timeline.length > 0 && (
-        <div className="rounded-xl border bg-card">
+        <div className="rounded-2xl border bg-card">
           <div className="border-b px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -477,7 +477,7 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
       )}
 
       {viewMode === "timeline" && seminar && timeline.length === 0 && (
-        <div className="rounded-xl border bg-card p-8 text-center text-sm text-muted-foreground">
+        <div className="rounded-2xl border bg-card p-8 text-center text-sm text-muted-foreground">
           <p>아직 타임라인이 설정되지 않았습니다.</p>
           <p className="mt-1">
             이 세미나는 <strong>{isOnline ? "온라인(ZOOM)" : "오프라인"}</strong> 세미나입니다.
@@ -488,7 +488,7 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
 
       {/* ── 템플릿 관리 뷰 ── */}
       {viewMode === "template" && seminar && (
-        <div className="rounded-xl border bg-card">
+        <div className="rounded-2xl border bg-card">
           <div className="border-b px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">

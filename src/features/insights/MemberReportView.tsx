@@ -340,7 +340,7 @@ export default function MemberReportView() {
 
   if (!isAdmin) {
     return (
-      <div className="rounded-xl border bg-amber-50 p-6 text-center text-sm text-amber-800">
+      <div className="rounded-2xl border bg-amber-50 p-6 text-center text-sm text-amber-800">
         <ShieldAlert className="mx-auto mb-2" size={24} />
         관리자 전용 페이지입니다.
       </div>
@@ -363,7 +363,7 @@ export default function MemberReportView() {
 
       {/* 운영진 저활동 경보 */}
       {staffAlerts.length > 0 && (
-        <section className="rounded-xl border border-rose-200 bg-rose-50/40 p-5">
+        <section className="rounded-2xl border border-rose-200 bg-rose-50/40 p-5">
           <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-rose-800">
             <AlertTriangle size={16} />
             운영진 저활동 경보 ({staffAlerts.length}명)
@@ -404,7 +404,7 @@ export default function MemberReportView() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         {/* 챔피언 Top 10 */}
-        <section className="rounded-xl border bg-card p-5">
+        <section className="rounded-2xl border bg-card p-5">
           <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
             <Crown size={16} className="text-violet-600" />
             로얄티 Top 10
@@ -440,7 +440,7 @@ export default function MemberReportView() {
         </section>
 
         {/* 저활동·휴면 회원 */}
-        <section className="rounded-xl border bg-card p-5">
+        <section className="rounded-2xl border bg-card p-5">
           <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
             <Clock size={16} className="text-amber-600" />
             저활동·휴면 회원 (loyalty 15 미만 우선)
@@ -465,7 +465,7 @@ export default function MemberReportView() {
       </div>
 
       {/* 전체 회원 테이블 */}
-      <section className="rounded-xl border bg-card p-5">
+      <section className="rounded-2xl border bg-card p-5">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-2 text-sm font-semibold">
             <Users size={16} />
@@ -574,7 +574,7 @@ function Kpi({ icon: Icon, color, label, value, sub }: {
   icon: React.ElementType; color: string; label: string; value: number; sub?: string;
 }) {
   return (
-    <div className="rounded-xl border bg-card p-4">
+    <div className="rounded-2xl border bg-card p-4">
       <div className="flex items-center gap-3">
         <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", color)}>
           <Icon size={18} />

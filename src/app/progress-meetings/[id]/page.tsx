@@ -411,7 +411,7 @@ export default function ProgressMeetingPage({ params }: PageProps) {
         {/* 섹션 목록 */}
         <div className="mt-4 space-y-2">
           {sections.length === 0 && (
-            <div className="rounded-xl border border-dashed bg-muted/30 p-6 text-center text-sm text-muted-foreground">
+            <div className="rounded-2xl border border-dashed bg-muted/30 p-6 text-center text-sm text-muted-foreground">
               아직 등록된 아젠다(섹션)가 없습니다.
               {canControl && " 아래에서 추가하세요."}
             </div>
@@ -428,7 +428,7 @@ export default function ProgressMeetingPage({ params }: PageProps) {
               <div
                 key={s.id}
                 className={cn(
-                  "rounded-xl border bg-card p-4 transition-shadow",
+                  "rounded-2xl border bg-card p-4 transition-shadow",
                   isActive && "border-primary shadow-md",
                   isDone && "opacity-70",
                 )}
@@ -510,7 +510,7 @@ export default function ProgressMeetingPage({ params }: PageProps) {
 
           {/* 섹션 추가 (planning 단계에서만, 컨트롤 권한자만) */}
           {canControl && status === "planning" && (
-            <div className="rounded-xl border border-dashed bg-card p-4">
+            <div className="rounded-2xl border border-dashed bg-card p-4">
               <p className="text-sm font-semibold">아젠다 추가</p>
               <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_120px_auto]">
                 <Input

@@ -306,7 +306,7 @@ export default function PromotionTab({ seminarId: propSeminarId }: { seminarId?:
 
       {/* 결과 */}
       {(result || loading) && (
-        <div className="rounded-xl border bg-card p-6">
+        <div className="rounded-2xl border bg-card p-6">
           <div className="mb-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles size={16} className="text-primary" />
@@ -347,7 +347,7 @@ export default function PromotionTab({ seminarId: propSeminarId }: { seminarId?:
 
       {/* 저장된 콘텐츠 이력 */}
       {selectedId && savedContents && savedContents.length > 0 && (
-        <div className="rounded-xl border bg-card">
+        <div className="rounded-2xl border bg-card">
           <div className="border-b px-4 py-3">
             <div className="flex items-center gap-2">
               <Clock size={16} className="text-muted-foreground" />
@@ -409,7 +409,7 @@ export default function PromotionTab({ seminarId: propSeminarId }: { seminarId?:
           {REMINDER_TEMPLATES.map((tpl) => {
             const msg = tpl.getMessage(seminar);
             return (
-              <div key={tpl.id} className="rounded-xl border bg-card overflow-hidden">
+              <div key={tpl.id} className="rounded-2xl border bg-card overflow-hidden">
                 <div className="flex items-center justify-between border-b bg-muted/20 px-4 py-3">
                   <div>
                     <h4 className="text-sm font-medium">{tpl.label}</h4>

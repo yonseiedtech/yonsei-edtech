@@ -301,7 +301,7 @@ function PortfolioContent() {
           <div className="mt-6 space-y-6">
             {tab === "award" && (
               <>
-                <div className="rounded-xl border bg-card p-5">
+                <div className="rounded-2xl border bg-card p-5">
                   <h2 className="text-sm font-semibold">새 수상 등록</h2>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <Input
@@ -365,7 +365,7 @@ function PortfolioContent() {
 
             {tab === "external" && (
               <>
-                <div className="rounded-xl border bg-card p-5">
+                <div className="rounded-2xl border bg-card p-5">
                   <h2 className="text-sm font-semibold">새 대외활동 등록</h2>
                   <p className="mt-0.5 text-[11px] text-muted-foreground">
                     신분 표기: <span className="font-medium">{DEFAULT_EXTERNAL_AFFILIATION}</span>
@@ -449,7 +449,7 @@ function PortfolioContent() {
 
             {tab === "content" && (
               <>
-                <div className="rounded-xl border bg-card p-5">
+                <div className="rounded-2xl border bg-card p-5">
                   <h2 className="text-sm font-semibold">새 콘텐츠 등록</h2>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <Input
@@ -549,7 +549,7 @@ function ItemList({
 }) {
   if (items.length === 0) {
     return (
-      <p className="rounded-xl border border-dashed bg-card p-6 text-center text-xs text-muted-foreground">
+      <p className="rounded-2xl border border-dashed bg-card p-6 text-center text-xs text-muted-foreground">
         {emptyText}
       </p>
     );
@@ -557,7 +557,7 @@ function ItemList({
   return (
     <ul className="space-y-2">
       {items.map((it) => (
-        <li key={it.id} className="rounded-xl border bg-card p-4">
+        <li key={it.id} className="rounded-2xl border bg-card p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">

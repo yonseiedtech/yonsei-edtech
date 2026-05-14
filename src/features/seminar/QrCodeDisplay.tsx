@@ -12,7 +12,7 @@ interface Props {
 export default function QrCodeDisplay({ token, size = 200, checkedIn = false }: Props) {
   return (
     <div className="relative inline-flex flex-col items-center">
-      <div className="rounded-xl border-2 border-primary/20 bg-card p-3">
+      <div className="rounded-2xl border-2 border-primary/20 bg-card p-3">
         <QRCodeSVG
           value={token}
           size={size}
