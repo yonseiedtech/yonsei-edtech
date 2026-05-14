@@ -125,7 +125,7 @@
 4. **콘솔 페이지 셸 표준 미강제**: `<div space-y-6>` + `ConsolePageHeader` 관례를
    강제하는 메커니즘이 없어 페이지마다 제각각.
 
-### 수정 (커밋: 별도)
+### 수정 (커밋 `f4332334`)
 - `ActivityList` → `ConsolePageHeader` 복원 (회귀 수정).
 - `settings/layout.tsx` 학술활동 그룹에서 projects/studies/external 제거 — academic
   콘솔이 정식 위치. `settings/projects·studies·external` 라우트는 `/console/academic/*`
