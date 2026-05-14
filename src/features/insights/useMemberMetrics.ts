@@ -40,8 +40,22 @@ function totalWritingChars(
   );
 }
 
+/**
+ * 회원 활동 모멘텀 — 최근 30일 vs 이전 30일(31~60일 전) 활동 이벤트 수 비교.
+ * 스냅샷 적재 없이 활동 컬렉션의 타임스탬프만으로 산출.
+ */
+export interface MemberMomentum {
+  /** 최근 30일 활동 이벤트 수 */
+  recentCount: number;
+  /** 31~60일 전 활동 이벤트 수 */
+  prevCount: number;
+  trend: "rising" | "falling" | "flat" | "inactive";
+}
+
 export interface UseMemberMetricsResult {
   rows: MemberMetricsRow[];
+  /** userId → 활동 모멘텀 (최근 60일 내 활동 있는 회원만 포함) */
+  momentumByUser: Map<string, MemberMomentum>;
   isLoading: boolean;
 }
 
@@ -246,5 +260,59 @@ export function useMemberMetrics(enabled: boolean): UseMemberMetricsResult {
     seminarReviews, courseReviews,
   ]);
 
-  return { rows, isLoading: loadingMembers };
+  // 활동 모멘텀 — 최근 30일 vs 이전 30일 활동 이벤트 수 비교
+  const momentumByUser = useMemo<Map<string, MemberMomentum>>(() => {
+    const now = Date.now();
+    const day30 = now - 30 * 86_400_000;
+    const day60 = now - 60 * 86_400_000;
+
+    const recent = new Map<string, number>();
+    const prev = new Map<string, number>();
+
+    const bucket = (userId: unknown, tsRaw: unknown) => {
+      if (typeof userId !== "string" || !userId) return;
+      if (typeof tsRaw !== "string" || !tsRaw) return;
+      const ts = Date.parse(tsRaw);
+      if (Number.isNaN(ts)) return;
+      if (ts >= day30) recent.set(userId, (recent.get(userId) ?? 0) + 1);
+      else if (ts >= day60) prev.set(userId, (prev.get(userId) ?? 0) + 1);
+    };
+
+    for (const a of attendees) {
+      if (!a.checkedIn || a.isGuest) continue;
+      bucket(a.userId, a.checkedInAt);
+    }
+    for (const p of participations) bucket(p.userId, p.createdAt);
+    for (const p of posts) {
+      if (p.deletedAt) continue;
+      bucket(p.authorId, p.createdAt);
+    }
+    for (const c of comments) bucket(c.authorId, c.createdAt);
+    for (const r of interviewResponses) {
+      if (r.status !== "submitted") continue;
+      bucket(r.respondentId, r.submittedAt ?? r.createdAt);
+    }
+    for (const s of studySessions) bucket(s.userId, s.createdAt);
+    for (const r of seminarReviews) bucket(r.authorId, r.createdAt);
+    for (const r of courseReviews) bucket(r.authorId, r.createdAt);
+
+    const map = new Map<string, MemberMomentum>();
+    const allIds = new Set<string>([...recent.keys(), ...prev.keys()]);
+    for (const id of allIds) {
+      const recentCount = recent.get(id) ?? 0;
+      const prevCount = prev.get(id) ?? 0;
+      let trend: MemberMomentum["trend"];
+      if (recentCount === 0 && prevCount === 0) trend = "inactive";
+      else if (recentCount > prevCount) trend = "rising";
+      else if (recentCount < prevCount) trend = "falling";
+      else trend = "flat";
+      map.set(id, { recentCount, prevCount, trend });
+    }
+    return map;
+  }, [
+    attendees, participations, posts, comments,
+    interviewResponses, studySessions, seminarReviews, courseReviews,
+  ]);
+
+  return { rows, momentumByUser, isLoading: loadingMembers };
 }

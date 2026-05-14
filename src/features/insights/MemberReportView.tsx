@@ -10,13 +10,14 @@
  *  - seminar_attendees, activity_participations, grad_life_positions (v1 유지)
  *  - posts, comments, interview_responses (콘텐츠)
  *  - study_sessions, writing_papers, research_proposals (연구)
- *  - reviews (세미나), course_reviews (강의)
+ *  - seminar_reviews (세미나), course_reviews (강의)
  */
 
 import { useMemo, useState } from "react";
 import {
   Users, AlertTriangle, Crown, Trophy, Clock, Search, Download,
   ShieldAlert, FileText, PieChart, BarChart3,
+  TrendingUp, ArrowUpRight, ArrowRight, ArrowDownRight,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAdminOrSysadmin } from "@/lib/permissions";
@@ -26,7 +27,7 @@ import {
   segmentLabel,
   type MemberMetricsRow,
 } from "./computeMemberMetrics";
-import { useMemberMetrics } from "./useMemberMetrics";
+import { useMemberMetrics, type MemberMomentum } from "./useMemberMetrics";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,7 +56,8 @@ export default function MemberReportView() {
   const { user } = useAuthStore();
   const isAdmin = isAdminOrSysadmin(user);
 
-  const { rows, isLoading: loadingMembers } = useMemberMetrics(isAdmin);
+  const { rows, momentumByUser, isLoading: loadingMembers } =
+    useMemberMetrics(isAdmin);
 
   // 필터·정렬
   const [search, setSearch] = useState("");
@@ -133,6 +135,27 @@ export default function MemberReportView() {
       }))
       .sort((a, b) => b.gen - a.gen);
   }, [rows]);
+
+  const momentum = useMemo(() => {
+    let rising = 0;
+    let falling = 0;
+    let flat = 0;
+    const cooling: { row: MemberMetricsRow; m: MemberMomentum }[] = [];
+    for (const r of rows) {
+      const m = momentumByUser.get(r.userId);
+      if (!m) continue; // 최근 60일 활동 없음
+      if (m.trend === "rising") rising += 1;
+      else if (m.trend === "falling") {
+        falling += 1;
+        cooling.push({ row: r, m });
+      } else if (m.trend === "flat") flat += 1;
+    }
+    cooling.sort(
+      (a, b) =>
+        b.m.prevCount - b.m.recentCount - (a.m.prevCount - a.m.recentCount),
+    );
+    return { rising, falling, flat, cooling: cooling.slice(0, 20) };
+  }, [rows, momentumByUser]);
 
   const champions = useMemo(
     () => [...rows].sort((a, b) => b.loyaltyScore - a.loyaltyScore).slice(0, 10),
@@ -265,6 +288,73 @@ export default function MemberReportView() {
           </div>
           <p className="mt-3 text-[11px] text-muted-foreground">
             막대 = 기수 평균 로얄티 점수(0-100) · 활성% = 챔피언+활성 세그먼트 비율
+          </p>
+        </section>
+      )}
+
+      {/* 활동 모멘텀 */}
+      {momentum.rising + momentum.falling + momentum.flat > 0 && (
+        <section className="rounded-2xl border bg-card p-5">
+          <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
+            <TrendingUp size={16} className="text-muted-foreground" />
+            활동 모멘텀
+            <span className="text-xs font-normal text-muted-foreground">
+              (최근 30일 vs 이전 30일)
+            </span>
+          </div>
+          <div className="mb-4 flex flex-wrap gap-x-4 gap-y-1.5 text-xs">
+            <span className="flex items-center gap-1.5">
+              <ArrowUpRight size={14} className="text-emerald-600" />
+              상승 <b className="tabular-nums">{momentum.rising}</b>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <ArrowRight size={14} className="text-slate-400" />
+              유지 <b className="tabular-nums">{momentum.flat}</b>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <ArrowDownRight size={14} className="text-rose-600" />
+              하락 <b className="tabular-nums">{momentum.falling}</b>
+            </span>
+          </div>
+          {momentum.cooling.length > 0 ? (
+            <>
+              <p className="mb-2 text-xs font-medium text-rose-700">
+                최근 활동이 식어가는 회원 (하락폭 큰 순)
+              </p>
+              <ul className="space-y-1.5">
+                {momentum.cooling.map(({ row, m }) => (
+                  <li
+                    key={row.userId}
+                    className="flex items-center gap-2 rounded-lg border bg-muted/10 px-3 py-2 text-sm"
+                  >
+                    <a
+                      href={`/profile/${row.userId}`}
+                      className="flex-1 truncate font-medium hover:underline"
+                    >
+                      {row.name}
+                    </a>
+                    <Badge variant="outline" className="text-[10px]">
+                      {ROLE_LABEL[row.role]}
+                    </Badge>
+                    <span className="tabular-nums text-xs text-muted-foreground">
+                      {m.prevCount} → {m.recentCount}
+                    </span>
+                    <span className="flex items-center gap-0.5 text-xs font-bold tabular-nums text-rose-600">
+                      <ArrowDownRight size={12} />
+                      {m.prevCount - m.recentCount}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p className="rounded-lg border border-dashed bg-muted/20 p-3 text-center text-xs text-muted-foreground">
+              최근 30일 활동이 감소한 회원이 없습니다.
+            </p>
+          )}
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            활동 이벤트 = 세미나 출석·활동 참여·게시물·댓글·인터뷰 응답·연구 세션·후기 작성.
+            최근 60일 내 활동 회원만 집계합니다.
           </p>
         </section>
       )}
