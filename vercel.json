@@ -39,6 +39,10 @@
     {
       "path": "/api/cron/ai-forum-tick",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/loyalty-snapshot",
+      "schedule": "0 0 * * 1"
     }
   ]
 }

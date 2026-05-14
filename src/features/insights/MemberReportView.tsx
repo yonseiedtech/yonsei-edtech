@@ -28,6 +28,7 @@ import {
   type MemberMetricsRow,
 } from "./computeMemberMetrics";
 import { useMemberMetrics, type MemberMomentum } from "./useMemberMetrics";
+import LoyaltyTrendSection from "./LoyaltyTrendSection";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -358,6 +359,9 @@ export default function MemberReportView() {
           </p>
         </section>
       )}
+
+      {/* 로얄티 추이 (스냅샷 기반) */}
+      <LoyaltyTrendSection isAdmin={isAdmin} />
 
       {/* 운영진 저활동 경보 */}
       {staffAlerts.length > 0 && (

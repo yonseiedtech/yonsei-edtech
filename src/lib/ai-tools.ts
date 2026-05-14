@@ -3,8 +3,7 @@ import { z } from "zod";
 import { generateText } from "ai";
 import { models } from "./ai";
 import { getAdminDb } from "./firebase-admin";
-import { computeMemberMetrics } from "@/features/insights/computeMemberMetrics";
-import type { User } from "@/types";
+import { snapshotMemberMetrics } from "@/features/insights/snapshotMemberMetrics";
 
 // ── 공개 도구 (모든 사용자) ──
 
@@ -281,125 +280,13 @@ export const staffTools = {
     }),
     execute: async ({ limit = 10 }) => {
       const db = getAdminDb();
-      // 1. 승인 회원
-      const membersSnap = await db
-        .collection("users")
-        .where("approved", "==", true)
-        .get();
-      const members = membersSnap.docs.map((d) => ({
-        id: d.id,
-        ...(d.data() as Record<string, unknown>),
-      }));
-      if (members.length === 0) {
+      // 콘솔 회원 보고서와 동일한 12개 컬렉션 산출식 (공용 서버 함수)
+      const rows = await snapshotMemberMetrics(db);
+      if (rows.length === 0) {
         return { error: "분석할 승인 회원이 없습니다." };
       }
 
-      // 2. 콘솔 회원 보고서와 동일한 11개 활동 컬렉션 병렬 조회
-      const [
-        attSnap, partSnap, gradSnap,
-        postSnap, commentSnap, interviewSnap,
-        studySnap, writingSnap, proposalSnap,
-        seminarReviewSnap, courseReviewSnap,
-      ] = await Promise.all([
-        db.collection("seminar_attendees").where("checkedIn", "==", true).get(),
-        db.collection("activity_participations").get(),
-        db.collection("grad_life_positions").get(),
-        db.collection("posts").get(),
-        db.collection("comments").get(),
-        db.collection("interview_responses").get(),
-        db.collection("study_sessions").get(),
-        db.collection("writing_papers").get(),
-        db.collection("research_proposals").get(),
-        db.collection("seminar_reviews").get(),
-        db.collection("course_reviews").get(),
-      ]);
-
-      const inc = (map: Map<string, number>, key: unknown, by = 1) => {
-        if (typeof key !== "string" || !key) return;
-        map.set(key, (map.get(key) ?? 0) + by);
-      };
-
-      const attMap = new Map<string, number>();
-      for (const doc of attSnap.docs) {
-        const d = doc.data();
-        if (d.isGuest) continue;
-        inc(attMap, d.userId);
-      }
-      const partMap = new Map<string, number>();
-      for (const doc of partSnap.docs) inc(partMap, doc.data().userId);
-
-      const gradMap = new Map<string, number>();
-      for (const doc of gradSnap.docs) {
-        const d = doc.data();
-        // 진행 중(endYear·endSemester 없음) 직책만
-        if (!d.endYear || !d.endSemester) inc(gradMap, d.userId);
-      }
-
-      const postMap = new Map<string, number>();
-      for (const doc of postSnap.docs) {
-        const d = doc.data();
-        if (d.deletedAt) continue; // 삭제된 글 제외
-        inc(postMap, d.authorId);
-      }
-      const commentMap = new Map<string, number>();
-      for (const doc of commentSnap.docs) inc(commentMap, doc.data().authorId);
-
-      const interviewMap = new Map<string, number>();
-      for (const doc of interviewSnap.docs) {
-        const d = doc.data();
-        if (d.status === "submitted") inc(interviewMap, d.respondentId);
-      }
-
-      const studyMinutesMap = new Map<string, number>();
-      for (const doc of studySnap.docs) {
-        const d = doc.data();
-        const mins = typeof d.durationMinutes === "number" ? d.durationMinutes : 0;
-        inc(studyMinutesMap, d.userId, mins);
-      }
-
-      const writingMap = new Map<string, number>();
-      for (const doc of writingSnap.docs) {
-        const d = doc.data();
-        const chapters = (d.chapters ?? {}) as Record<string, unknown>;
-        const chars = Object.values(chapters).reduce<number>(
-          (sum, v) => sum + (typeof v === "string" ? v.length : 0),
-          0,
-        );
-        inc(writingMap, d.userId, chars);
-      }
-
-      const proposalSet = new Set<string>();
-      for (const doc of proposalSnap.docs) {
-        const uid = doc.data().userId;
-        if (typeof uid === "string" && uid) proposalSet.add(uid);
-      }
-
-      const seminarReviewMap = new Map<string, number>();
-      for (const doc of seminarReviewSnap.docs) inc(seminarReviewMap, doc.data().authorId);
-      const courseReviewMap = new Map<string, number>();
-      for (const doc of courseReviewSnap.docs) inc(courseReviewMap, doc.data().authorId);
-
-      // 3. 로얄티 점수 계산 (콘솔과 동일한 5개 카테고리 산출식)
-      const now = Date.now();
-      const rows = members.map((m) =>
-        computeMemberMetrics({
-          member: m as unknown as User,
-          attendanceCount: attMap.get(m.id) ?? 0,
-          activityCount: partMap.get(m.id) ?? 0,
-          gradLifeOngoingCount: gradMap.get(m.id) ?? 0,
-          postCount: postMap.get(m.id) ?? 0,
-          commentCount: commentMap.get(m.id) ?? 0,
-          interviewResponseCount: interviewMap.get(m.id) ?? 0,
-          studyMinutes: studyMinutesMap.get(m.id) ?? 0,
-          writingChars: writingMap.get(m.id) ?? 0,
-          hasResearchProposal: proposalSet.has(m.id),
-          seminarReviewCount: seminarReviewMap.get(m.id) ?? 0,
-          courseReviewCount: courseReviewMap.get(m.id) ?? 0,
-          nowMs: now,
-        }),
-      );
-
-      // 4. 로얄티 높은 순 정렬 + 상위 N
+      // 로얄티 높은 순 정렬 + 상위 N
       rows.sort((a, b) => b.loyaltyScore - a.loyaltyScore);
       const top = rows.slice(0, limit).map((r) => ({
         name: r.name,
