@@ -28,9 +28,6 @@ const SETTINGS_GROUPS = [
     label: "학술활동",
     tabs: [
       { href: "/console/settings/activities", label: "활동 소개" },
-      { href: "/console/settings/projects", label: "프로젝트" },
-      { href: "/console/settings/studies", label: "스터디" },
-      { href: "/console/settings/external", label: "대외활동" },
     ],
   },
   {

@@ -186,7 +186,7 @@ function MigrationPageContent() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       <ConsolePageHeader
         icon={GraduationCap}
         title="신청자 학번 기반 회원 연동"

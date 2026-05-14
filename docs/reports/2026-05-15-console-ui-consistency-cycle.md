@@ -102,3 +102,44 @@
   갈린다. UI 통일은 "어떤 컴포넌트를 쓰는가"뿐 아니라 "어디서 렌더되는가"까지 봐야 함.
 - Next.js `layout.tsx`는 항상 `page.tsx`를 감싸므로, 레이아웃의 요소는 페이지 헤더보다
   먼저 렌더된다. 섹션 공통 헤더는 레이아웃이 소유하는 것이 자연스럽다.
+
+---
+
+## 9. 2차 — 사용자 추가 지적 + 회귀 수정
+
+운영진이 "프로젝트·스터디·대외 학술대회, 신청자 학번 연동, 연락망, 회원검증 헤더가
+다 다르다"고 추가 지적. 정밀 점검 결과 **1차 작업에서 도입된 회귀 1건 포함** 4개
+구조적 원인 확인:
+
+### 원인
+1. **공유 컴포넌트의 맥락 무지 (회귀)**: `ActivityList`가 `settings/*`(레이아웃 헤더 O)와
+   `academic/*`(레이아웃 헤더 X) 양쪽에서 쓰이는데, 1차 작업 시 settings 맥락만 보고
+   `ConsolePageHeader`를 제거 → `academic/projects·studies·external` 페이지가 작은
+   `text-base` h2만 남는 회귀 발생.
+2. **공개/admin 페이지의 콘솔 re-export**: `console/directory`(공개 `/directory`),
+   `console/members/audit`(`admin/user-audit`)가 자체 헤더 변형·컨테이너를 가진 페이지를
+   그대로 re-export → 콘솔 셸과 이중 컨테이너·헤더 변형 불일치.
+3. **일회성 유틸 페이지의 `p-6` 복붙**: `applicant-link-by-studentid`,
+   `inject-spring-2026-schedule`, `migrate-teacher-affiliation`가 모두 `space-y-6 p-6`
+   루트 — 콘솔 레이아웃이 이미 패딩을 제공하는데 중복.
+4. **콘솔 페이지 셸 표준 미강제**: `<div space-y-6>` + `ConsolePageHeader` 관례를
+   강제하는 메커니즘이 없어 페이지마다 제각각.
+
+### 수정 (커밋: 별도)
+- `ActivityList` → `ConsolePageHeader` 복원 (회귀 수정).
+- `settings/layout.tsx` 학술활동 그룹에서 projects/studies/external 제거 — academic
+  콘솔이 정식 위치. `settings/projects·studies·external` 라우트는 `/console/academic/*`
+  로 redirect (북마크 보존).
+- `console/directory` → `/directory` redirect (공개 페이지가 자체 완결 — 이중 셸 제거).
+- `admin/user-audit` 루트 컨테이너 `mx-auto max-w-5xl px-4 py-10` → `space-y-6`.
+  (`admin/layout.tsx`가 `/console` redirect이므로 이 페이지는 `console/members/audit`
+  re-export 경로로만 렌더됨 — 자체 컨테이너는 순수 중복.)
+- `applicant-link-by-studentid`·`inject-spring-2026-schedule`·
+  `migrate-teacher-affiliation` 루트 `space-y-6 p-6` → `space-y-6`.
+
+### 교훈 (추가)
+- **"전수 점검"의 함정**: 1차에서 `ConsolePageHeader` 사용 여부와 `text-3xl` 패턴만 보고
+  "전수 점검 완료"라고 했으나, 실제로는 각 페이지가 *일관된 헤더를 렌더하는지*를 검증하지
+  않았다. 패턴 grep ≠ 실제 렌더 결과 검증.
+- **공유 컴포넌트를 수정할 땐 모든 호출부의 레이아웃 맥락을 확인**해야 한다. `ActivityList`
+  는 두 라우트 트리에서 쓰였고, 한쪽 맥락만 보고 고치면 다른 쪽이 깨진다.

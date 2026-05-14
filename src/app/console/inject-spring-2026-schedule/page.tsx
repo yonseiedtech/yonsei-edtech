@@ -983,7 +983,7 @@ function MigratePageContent() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       <ConsolePageHeader
         icon={Calendar}
         title="2026 춘계학술대회 시간표 일괄 등록"

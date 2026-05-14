@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import type { Activity, ActivityType } from "@/types";
 import { formatSemester, type Semester } from "@/lib/semester";
 import MemberAutocomplete from "@/components/ui/MemberAutocomplete";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 
 const STATUS_LABELS: Record<string, string> = {
   upcoming: "예정",
@@ -87,7 +88,8 @@ const emptyForm: FormData = {
 };
 
 export default function ActivityList({ type, typeLabel, icon, description }: Props) {
-  const TypeIcon = icon ?? TYPE_DEFAULTS[type].icon;
+  const resolvedIcon = icon ?? TYPE_DEFAULTS[type].icon;
+  const resolvedDescription = description ?? TYPE_DEFAULTS[type].description;
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [editId, setEditId] = useState<string | null>(null);
@@ -174,17 +176,18 @@ export default function ActivityList({ type, typeLabel, icon, description }: Pro
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 text-base font-semibold">
-          <TypeIcon size={18} className="text-primary" />
-          {typeLabel} 관리
-        </h2>
-        <Button size="sm" onClick={openCreate}>
-          <Plus size={14} className="mr-1" />
-          {typeLabel} 등록
-        </Button>
-      </div>
+    <div className="space-y-6">
+      <ConsolePageHeader
+        icon={resolvedIcon}
+        title={`${typeLabel} 관리`}
+        description={resolvedDescription}
+        actions={
+          <Button size="sm" onClick={openCreate}>
+            <Plus size={14} className="mr-1" />
+            {typeLabel} 등록
+          </Button>
+        }
+      />
 
       {activities.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">등록된 {typeLabel}이(가) 없습니다.</p>
