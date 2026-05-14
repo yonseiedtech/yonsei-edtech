@@ -6,17 +6,13 @@ import { Eye } from "lucide-react";
 
 export default function UserActivityLogPage() {
   return (
-    <div className="py-12">
-      <section className="mx-auto max-w-6xl px-4">
-        <ConsolePageHeader
-          icon={Eye}
-          title="회원 활동 로그"
-          description="개별 회원의 페이지 접속 이력을 관리자만 조회합니다."
-        />
-        <div className="mt-6">
-          <UserActivityLogView />
-        </div>
-      </section>
+    <div className="space-y-6">
+      <ConsolePageHeader
+        icon={Eye}
+        title="회원 활동 로그"
+        description="개별 회원의 페이지 접속 이력을 관리자만 조회합니다."
+      />
+      <UserActivityLogView />
     </div>
   );
 }

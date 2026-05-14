@@ -52,7 +52,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     return (
       <div
         role="alert"
-        className="mx-auto max-w-3xl rounded-md border border-destructive/40 bg-destructive/5 p-6 text-sm text-destructive"
+        className="rounded-md border border-destructive/40 bg-destructive/5 p-6 text-sm text-destructive"
       >
         {loadError}
       </div>
@@ -61,14 +61,14 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
   if (!user) {
     return (
-      <div className="mx-auto max-w-3xl rounded-md border bg-muted/30 p-6 text-sm text-muted-foreground">
+      <div className="rounded-md border bg-muted/30 p-6 text-sm text-muted-foreground">
         로그인이 필요합니다.
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4 px-4 py-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <Link
           href={`/activities/external/${id}`}

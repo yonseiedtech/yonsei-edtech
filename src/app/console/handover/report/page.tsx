@@ -99,7 +99,7 @@ function ReportInner() {
   const isEmpty = !orgLoading && !docsLoading && orgWithHandover.length === 0 && termDocs.length === 0;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 print:max-w-none print:px-0 print:py-0">
+    <div className="space-y-6 print:py-0">
       {/* 화면 전용 컨트롤 (인쇄 시 숨김) */}
       <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
         <div className="flex items-center gap-2">

@@ -122,10 +122,8 @@ function ConsoleAlumniMappingContent() {
 
   if (!isStaff) {
     return (
-      <div className="py-16">
-        <div className="mx-auto max-w-3xl px-4">
-          <p className="text-sm text-destructive">⚠ 운영진 권한이 필요합니다.</p>
-        </div>
+      <div className="py-12 text-center">
+        <p className="text-sm text-destructive">⚠ 운영진 권한이 필요합니다.</p>
       </div>
     );
   }
@@ -145,15 +143,14 @@ function ConsoleAlumniMappingContent() {
   ];
 
   return (
-    <div className="py-12">
-      <div className="mx-auto max-w-6xl px-4">
-        <ConsolePageHeader
-          icon={GraduationCap}
-          title="졸업논문 회원 매핑"
-          description="학위논문 저자명과 학회 회원을 연결합니다. 동명이인은 모호 처리하세요."
-        />
+    <div className="space-y-6">
+      <ConsolePageHeader
+        icon={GraduationCap}
+        title="졸업논문 회원 매핑"
+        description="학위논문 저자명과 학회 회원을 연결합니다. 동명이인은 모호 처리하세요."
+      />
 
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {filters.map((f) => (
             <button
               key={f.key}
@@ -311,7 +308,6 @@ function ConsoleAlumniMappingContent() {
             })}
           </ul>
         )}
-      </div>
     </div>
   );
 }

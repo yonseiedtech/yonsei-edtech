@@ -589,7 +589,7 @@ function ConsoleCoursesContent() {
 
   if (!isStaff) {
     return (
-      <div className="py-16">
+      <div className="py-12 text-center">
         <p className="text-sm text-destructive">⚠ 운영진 권한이 필요합니다.</p>
       </div>
     );
@@ -632,15 +632,14 @@ function ConsoleCoursesContent() {
   );
 
   return (
-    <div className="py-12">
-      <div className="mx-auto max-w-6xl px-4">
-        <ConsolePageHeader
-          icon={BookOpen}
-          title="수강과목 마스터"
-          description="학기별 개설 전공/교직/타전공 과목과 수강생 명단을 관리합니다."
-        />
+    <div className="space-y-6">
+      <ConsolePageHeader
+        icon={BookOpen}
+        title="수강과목 마스터"
+        description="학기별 개설 전공/교직/타전공 과목과 수강생 명단을 관리합니다."
+      />
 
-        <Tabs value={tab} onValueChange={(v) => setTab(v as string)} className="mt-6">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as string)}>
           <TabsList>
             <TabsTrigger value="register">과목 등록</TabsTrigger>
             <TabsTrigger value="browse">과목 조회</TabsTrigger>
@@ -952,8 +951,7 @@ function ConsoleCoursesContent() {
           <TabsContent value="exam" className="mt-4 space-y-4">
             <ComprehensiveExamConsole year={year} term={term} setYear={setYear} setTerm={setTerm} />
           </TabsContent>
-        </Tabs>
-      </div>
+      </Tabs>
     </div>
   );
 }

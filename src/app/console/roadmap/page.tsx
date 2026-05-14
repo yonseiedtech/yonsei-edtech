@@ -230,7 +230,7 @@ function AdminContent() {
 
   if (!canManage) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-12">
+      <div className="py-12 text-center">
         <div className="rounded-2xl border-2 border-amber-200 bg-amber-50/50 p-6 text-center dark:border-amber-900 dark:bg-amber-950/20">
           <AlertTriangle size={28} className="mx-auto mb-2 text-amber-600" />
           <h2 className="text-lg font-bold">접근 권한 없음</h2>
@@ -397,8 +397,8 @@ function AdminContent() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-3">
+    <div className="space-y-6">
+      <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
             운영진 콘솔
