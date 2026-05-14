@@ -40,6 +40,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 
 const STATUS_LABEL: Record<AIForumStatus, { label: string; cls: string }> = {
   scheduled: { label: "개최 대기", cls: "bg-slate-100 text-slate-700" },
@@ -228,22 +229,17 @@ function AdminContent() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-            <Bot size={11} />
-            운영진 콘솔
-          </div>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight">AI 포럼 운영</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            토론 주제를 등록(개최)하고 진행 중인 토론을 중지하거나 보관 처리할 수 있습니다.
-          </p>
-        </div>
-        <Button onClick={() => setShowNew((v) => !v)} className="gap-1">
-          <Plus size={14} />
-          {showNew ? "닫기" : "새 토론 등록"}
-        </Button>
-      </header>
+      <ConsolePageHeader
+        icon={Bot}
+        title="AI 포럼 운영"
+        description="토론 주제를 등록(개최)하고 진행 중인 토론을 중지하거나 보관 처리할 수 있습니다."
+        actions={
+          <Button onClick={() => setShowNew((v) => !v)} className="gap-1">
+            <Plus size={14} />
+            {showNew ? "닫기" : "새 토론 등록"}
+          </Button>
+        }
+      />
 
       {showNew && (
         <section className="mb-8 rounded-2xl border-2 border-primary/30 bg-primary/5 p-6">

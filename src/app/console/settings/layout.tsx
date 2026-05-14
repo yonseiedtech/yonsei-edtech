@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { Settings } from "lucide-react";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 
 const SETTINGS_GROUPS = [
   {
@@ -43,8 +45,14 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   const pathname = usePathname();
 
   return (
-    <div>
-      <nav className="flex flex-wrap items-center gap-x-1 gap-y-2 pb-4">
+    <div className="space-y-6">
+      {/* 섹션 헤더 → 하위 nav → 콘텐츠 순서 (콘솔 전체 통일) */}
+      <ConsolePageHeader
+        icon={Settings}
+        title="홈페이지 설정"
+        description="홈페이지에 노출되는 학회 소개·구성원·학술활동 정보를 관리합니다."
+      />
+      <nav className="flex flex-wrap items-center gap-x-1 gap-y-2">
         {SETTINGS_GROUPS.map((group, gi) => (
           <div key={group.label} className="flex items-center gap-0.5">
             {gi > 0 && <div className="mx-1.5 h-4 w-px bg-border" />}

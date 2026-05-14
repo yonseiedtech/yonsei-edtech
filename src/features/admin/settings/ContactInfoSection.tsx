@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Section from "./SectionWrapper";
 import { toast } from "sonner";
-import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
-import { Phone } from "lucide-react";
 
 export default function ContactInfoSection() {
   const { value, recordId, isLoading } = useContactInfo();
@@ -27,7 +25,6 @@ export default function ContactInfoSection() {
 
   return (
     <div className="space-y-6">
-      <ConsolePageHeader icon={Phone} title="문의 연락처" description="학회 이메일, 정기 모임 일정, 주소 정보를 관리합니다." />
     <Section title="문의 연락처">
       <div className="grid gap-4 md:grid-cols-3">
         <div>

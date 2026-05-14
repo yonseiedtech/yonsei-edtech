@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Trash2, ChevronUp, ChevronDown, Pencil, Sparkles, Network } from "lucide-react";
+import { Plus, Trash2, ChevronUp, ChevronDown, Pencil, Sparkles } from "lucide-react";
 import { useOrgChart, useUpdateOrgChart, DEFAULT_ORG_SEED, type OrgPosition, type OrgRole } from "./useOrgChart";
 import { useMembers } from "@/features/member/useMembers";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import Section from "./SectionWrapper";
 import { toast } from "sonner";
-import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 
 const LEVEL_LABELS: Record<number, string> = {
   0: "주임교수",
@@ -234,7 +233,6 @@ export default function OrgChartEditor() {
 
   return (
     <div className="space-y-6">
-      <ConsolePageHeader icon={Network} title="운영진 조직도" description="학회 운영진 직책과 담당자를 관리합니다." />
     <Section title="운영진 조직도">
       {levels.length === 0 && (
         <p className="py-6 text-center text-sm text-muted-foreground">등록된 직책이 없습니다.</p>

@@ -25,7 +25,6 @@ import { getComputedStatus } from "@/lib/seminar-utils";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Pencil, BookOpen, Image as ImageIcon, Video, AlertTriangle, Trash2, Copy, Send, CalendarDays, Users, TrendingUp, FileEdit, Plus, UserPlus } from "lucide-react";
-import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { useCreateSeminar } from "@/features/seminar/useSeminar";
 import { createTimeline } from "@/features/seminar-admin/timeline-template";
 import { useSeminarAdminContext } from "@/features/seminar-admin/seminar-admin-store";
@@ -253,11 +252,7 @@ export default function AdminSeminarTab() {
 
   return (
     <div className="space-y-6">
-      <ConsolePageHeader
-        icon={CalendarDays}
-        title="세미나 관리"
-        description="세미나 일정을 등록하고 출석/리뷰/수료증을 관리합니다."
-      />
+      {/* 섹션 헤더는 seminars/layout.tsx 가 소유 (헤더 → 하위 nav → 콘텐츠 순서 통일) */}
       {/* 대시보드 통계 카드 */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="rounded-2xl border bg-card p-4">

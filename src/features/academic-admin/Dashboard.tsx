@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { getComputedStatus } from "@/lib/seminar-utils";
 import type { Seminar, Activity } from "@/types";
-import { Calendar, BookOpen, Users, FolderKanban, Globe, AlertTriangle } from "lucide-react";
+import { Calendar, BookOpen, Users, FolderKanban, Globe, AlertTriangle, GraduationCap } from "lucide-react";
 import Link from "next/link";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 
 function StatCard({ icon, title, color, stats, href }: { icon: React.ReactNode; title: string; color: string; stats: { label: string; value: number }[]; href: string }) {
   return (
@@ -122,6 +123,11 @@ export default function AcademicDashboard() {
 
   return (
     <div className="space-y-6">
+      <ConsolePageHeader
+        icon={GraduationCap}
+        title="학술활동 관리"
+        description="세미나·스터디·프로젝트·대외 학술대회 운영 현황을 한눈에 확인합니다."
+      />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard icon={<BookOpen size={20} />} title="세미나" color="border-l-blue-500" href="/console/academic/seminars" stats={[
           { label: "완료", value: seminarStats.completed },

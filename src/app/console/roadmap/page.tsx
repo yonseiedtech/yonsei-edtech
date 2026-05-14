@@ -20,8 +20,10 @@ import {
   Plus,
   Save,
   Trash2,
+  Map as MapIcon,
 } from "lucide-react";
 import AuthGuard from "@/features/auth/AuthGuard";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import EmptyState from "@/components/ui/empty-state";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { roadmapStagesApi } from "@/lib/bkend";
@@ -398,23 +400,19 @@ function AdminContent() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-            운영진 콘솔
-          </div>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight">학기별 로드맵 관리</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            디딤판 메인의 학기별 로드맵 카드를 코드 수정 없이 즉시 편집할 수 있습니다.
-          </p>
-        </div>
-        {!newStage && (
-          <Button onClick={() => setNewStage(newDraft((stages[stages.length - 1]?.order ?? 0) + 1))} className="gap-1">
-            <Plus size={14} />
-            새 단계 추가
-          </Button>
-        )}
-      </header>
+      <ConsolePageHeader
+        icon={MapIcon}
+        title="학기별 로드맵 관리"
+        description="디딤판 메인의 학기별 로드맵 카드를 코드 수정 없이 즉시 편집할 수 있습니다."
+        actions={
+          !newStage ? (
+            <Button onClick={() => setNewStage(newDraft((stages[stages.length - 1]?.order ?? 0) + 1))} className="gap-1">
+              <Plus size={14} />
+              새 단계 추가
+            </Button>
+          ) : undefined
+        }
+      />
 
       {newStage && (
         <section className="mb-6">

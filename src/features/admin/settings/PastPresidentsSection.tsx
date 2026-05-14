@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Trash2, Award } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { usePastPresidents, useUpdatePastPresidents, type PastPresidentItem } from "@/features/site-settings/useSiteContent";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Section from "./SectionWrapper";
 import { toast } from "sonner";
-import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 
 export default function PastPresidentsSection() {
   const { value, recordId, isLoading } = usePastPresidents();
@@ -33,7 +32,6 @@ export default function PastPresidentsSection() {
 
   return (
     <div className="space-y-6">
-      <ConsolePageHeader icon={Award} title="역대 회장" description="역대 학회장 명단과 임기 정보를 관리합니다." />
     <Section title="역대 회장">
       <div className="space-y-3">
         {items.map((item, i) => (

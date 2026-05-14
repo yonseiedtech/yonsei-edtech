@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Section from "./SectionWrapper";
 import { toast } from "sonner";
-import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
-import { GraduationCap } from "lucide-react";
 
 export default function ProfessorSection() {
   const { value, recordId, isLoading } = useProfessor();
@@ -27,7 +25,6 @@ export default function ProfessorSection() {
 
   return (
     <div className="space-y-6">
-      <ConsolePageHeader icon={GraduationCap} title="주임교수" description="주임교수 프로필 및 소개 정보를 관리합니다." />
     <Section title="주임교수">
       <div className="grid gap-4 md:grid-cols-2">
         <div>
