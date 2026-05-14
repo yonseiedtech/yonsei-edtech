@@ -64,7 +64,7 @@
 | `bfdb5ffa` | fix: 운영 콘솔 하위 nav ↔ 헤더 순서 통일 + 헤더 표준화 (19파일) |
 | `abe0d523` | docs: console UI consistency 사이클 보고서 commit 해시 기입 |
 | `81c05a9b` | fix: AdminMemberTab 자동 승인 실패 은폐 수정 |
-| (다음) | fix: members/[id] 회원 관리 헤더를 ConsolePageHeader 로 전환 |
+| `9915801c` | fix: members/[id] 회원 관리 헤더를 ConsolePageHeader 로 전환 |
 
 ---
 
