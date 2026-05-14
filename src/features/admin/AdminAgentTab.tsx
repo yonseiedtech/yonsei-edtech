@@ -51,7 +51,7 @@ export default function AdminAgentTab() {
       <ServerConnectionCard />
 
       {!connected ? (
-        <div className="rounded-xl border border-dashed bg-muted/30 p-8 text-center">
+        <div className="rounded-2xl border border-dashed bg-muted/30 p-8 text-center">
           <Bot size={40} className="mx-auto text-muted-foreground/40" />
           <p className="mt-3 font-medium text-muted-foreground">에이전트 서버에 연결하면 AI 에이전트를 관리할 수 있습니다</p>
           <p className="mt-1 text-sm text-muted-foreground/70">
@@ -93,7 +93,7 @@ export default function AdminAgentTab() {
             {tasks.length === 0 ? (
               <p className="text-sm text-muted-foreground">아직 작업이 없습니다. 에이전트에 작업을 할당해보세요.</p>
             ) : (
-              <div className="rounded-xl border bg-card divide-y">
+              <div className="rounded-2xl border bg-card divide-y">
                 {tasks.map((task) => (
                   <TaskListItem
                     key={task.id}

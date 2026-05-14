@@ -465,7 +465,7 @@ export default function AdminMemberTab() {
   function MemberMobileCard({ m }: { m: User; showStatus?: boolean }) {
     const cardCls = cardStatusClass(m);
     return (
-      <div className={cn("rounded-xl border bg-card p-4", cardCls)}>
+      <div className={cn("rounded-2xl border bg-card p-4", cardCls)}>
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-1.5">
@@ -550,7 +550,7 @@ export default function AdminMemberTab() {
           ))}
         </div>
         {/* 데스크톱 테이블 */}
-        <div className="mt-3 hidden overflow-x-auto rounded-xl border bg-card sm:block">
+        <div className="mt-3 hidden overflow-x-auto rounded-2xl border bg-card sm:block">
           <table className="w-full text-sm whitespace-nowrap">
             <thead className="border-b bg-muted/30">
               <tr>
@@ -662,7 +662,7 @@ export default function AdminMemberTab() {
               ))}
             </div>
           ) : displayMembers.length === 0 ? (
-            <div className="mt-3 rounded-xl border bg-card p-12 text-center">
+            <div className="mt-3 rounded-2xl border bg-card p-12 text-center">
               <Users size={40} className="mx-auto text-muted-foreground/40" />
               <p className="mt-3 text-muted-foreground">
                 {searchQuery ? "검색 결과가 없습니다." : "등록된 회원이 없습니다."}
@@ -679,7 +679,7 @@ export default function AdminMemberTab() {
         <section>
           {/* 자동 승인 토글 — 대기자 유무 관계없이 항상 표시 */}
           {canApprove && (
-            <div className="mb-4 flex items-center justify-between rounded-xl border bg-card p-4">
+            <div className="mb-4 flex items-center justify-between rounded-2xl border bg-card p-4">
               <div>
                 <p className="text-sm font-medium">자동 승인</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
@@ -713,7 +713,7 @@ export default function AdminMemberTab() {
               ))}
             </div>
           ) : truePending.length === 0 ? (
-            <div className="rounded-xl border bg-card p-12 text-center">
+            <div className="rounded-2xl border bg-card p-12 text-center">
               <Clock size={40} className="mx-auto text-muted-foreground/40" />
               <p className="mt-3 text-muted-foreground">승인 대기 중인 회원이 없습니다.</p>
               {autoApprove && (
@@ -782,7 +782,7 @@ export default function AdminMemberTab() {
                     ? "border-amber-200 bg-amber-50"
                     : "border-red-200 bg-red-50";
                   return (
-                    <div key={u.id} className={cn("flex items-start justify-between rounded-xl border p-4", riskColor)}>
+                    <div key={u.id} className={cn("flex items-start justify-between rounded-2xl border p-4", riskColor)}>
                       {canApprove && (
                         <button
                           type="button"
@@ -863,7 +863,7 @@ export default function AdminMemberTab() {
               ))}
             </div>
           ) : rejectedMembers.length === 0 ? (
-            <div className="rounded-xl border bg-card p-12 text-center">
+            <div className="rounded-2xl border bg-card p-12 text-center">
               <XCircle size={40} className="mx-auto text-muted-foreground/40" />
               <p className="mt-3 text-muted-foreground">거절된 회원이 없습니다.</p>
             </div>
@@ -874,7 +874,7 @@ export default function AdminMemberTab() {
               </p>
               <div className="space-y-3">
                 {rejectedMembers.map((u) => (
-                  <div key={u.id} className="flex items-center justify-between rounded-xl border bg-card p-4">
+                  <div key={u.id} className="flex items-center justify-between rounded-2xl border bg-card p-4">
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{u.name}</span>

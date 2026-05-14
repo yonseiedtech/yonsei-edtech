@@ -18,7 +18,7 @@ interface PersonFormProps {
 
 function PersonForm({ label, value, onChange, optional }: PersonFormProps) {
   return (
-    <div className="rounded-xl border bg-muted/20 p-4">
+    <div className="rounded-2xl border bg-muted/20 p-4">
       <h4 className="mb-3 text-sm font-semibold">
         {label}
         {optional && <span className="ml-2 text-[11px] font-normal text-muted-foreground">(선택 — 비워두면 공개 페이지에 표시되지 않습니다)</span>}

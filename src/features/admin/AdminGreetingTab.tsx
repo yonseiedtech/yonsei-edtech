@@ -20,7 +20,7 @@ import { toast } from "sonner";
 // ── 섹션 래퍼 ──
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border bg-card p-5">
+    <div className="rounded-2xl border bg-card p-5">
       <h3 className="mb-4 text-lg font-bold">{title}</h3>
       {children}
     </div>
@@ -30,7 +30,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 // ── 인사말 (주임교수 + 학회장 2인 체제) ──
 function PersonGreetingForm({ label, value, onChange, optional }: { label: string; value: GreetingPerson; onChange: (next: GreetingPerson) => void; optional?: boolean }) {
   return (
-    <div className="rounded-xl border bg-muted/20 p-4">
+    <div className="rounded-2xl border bg-muted/20 p-4">
       <h4 className="mb-3 text-sm font-semibold">
         {label}
         {optional && <span className="ml-2 text-[11px] font-normal text-muted-foreground">(선택 — 비워두면 공개 페이지에 표시되지 않습니다)</span>}

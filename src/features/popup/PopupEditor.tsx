@@ -114,7 +114,7 @@ export default function PopupEditor({ popup, onClose, onSaved }: Props) {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_minmax(0,420px)]">
         {/* 편집 폼 */}
-        <div className="space-y-4 rounded-xl border bg-card p-5">
+        <div className="space-y-4 rounded-2xl border bg-card p-5">
           <Field label="제목" required>
             <input
               value={form.title}
@@ -281,7 +281,7 @@ export default function PopupEditor({ popup, onClose, onSaved }: Props) {
               preview={previewMode}
             />
           ) : (
-            <div className="flex h-[480px] items-center justify-center rounded-xl border border-dashed text-sm text-muted-foreground">
+            <div className="flex h-[480px] items-center justify-center rounded-2xl border border-dashed text-sm text-muted-foreground">
               제목·본문을 입력하면 미리보기가 표시됩니다.
             </div>
           )}

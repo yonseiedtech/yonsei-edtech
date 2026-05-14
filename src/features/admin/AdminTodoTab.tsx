@@ -138,7 +138,7 @@ export default function AdminTodoTab() {
             key={key}
             onClick={() => setStatusFilter(key)}
             className={cn(
-              "rounded-xl border p-4 text-left transition-all",
+              "rounded-2xl border p-4 text-left transition-all",
               statusFilter === key ? "ring-2 ring-primary/30 shadow-sm" : "hover:shadow-sm",
               color,
             )}
@@ -174,7 +174,7 @@ export default function AdminTodoTab() {
               <div
                 key={todo.id}
                 className={cn(
-                  "flex items-start gap-3 rounded-xl border bg-card p-4 transition-colors",
+                  "flex items-start gap-3 rounded-2xl border bg-card p-4 transition-colors",
                   todo.status === "done" && "opacity-60",
                 )}
               >

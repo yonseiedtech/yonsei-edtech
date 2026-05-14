@@ -260,28 +260,28 @@ export default function AdminSeminarTab() {
       />
       {/* 대시보드 통계 카드 */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-xl border bg-card p-4">
+        <div className="rounded-2xl border bg-card p-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <CalendarDays size={16} className="text-blue-500" />
             <span>예정</span>
           </div>
           <p className="mt-1 text-2xl font-bold">{stats.upcoming}<span className="ml-1 text-sm font-normal text-muted-foreground">건</span></p>
         </div>
-        <div className="rounded-xl border bg-card p-4">
+        <div className="rounded-2xl border bg-card p-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <TrendingUp size={16} className="text-green-500" />
             <span>완료</span>
           </div>
           <p className="mt-1 text-2xl font-bold">{stats.completed}<span className="ml-1 text-sm font-normal text-muted-foreground">건</span></p>
         </div>
-        <div className="rounded-xl border bg-card p-4">
+        <div className="rounded-2xl border bg-card p-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Users size={16} className="text-primary" />
             <span>총 참석자</span>
           </div>
           <p className="mt-1 text-2xl font-bold">{stats.totalAttendees}<span className="ml-1 text-sm font-normal text-muted-foreground">명</span></p>
         </div>
-        <div className="rounded-xl border bg-card p-4">
+        <div className="rounded-2xl border bg-card p-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <FileEdit size={16} className="text-gray-400" />
             <span>임시저장</span>
@@ -292,7 +292,7 @@ export default function AdminSeminarTab() {
 
       {/* 다가오는 세미나 하이라이트 */}
       {upcomingSeminars.length > 0 && (
-        <div className="rounded-xl border bg-gradient-to-r from-primary/5 to-blue-50 p-4">
+        <div className="rounded-2xl border bg-gradient-to-r from-primary/5 to-blue-50 p-4">
           <h3 className="text-sm font-semibold text-primary">다가오는 세미나</h3>
           <div className="mt-2 space-y-2">
             {upcomingSeminars.map((s) => {
@@ -326,7 +326,7 @@ export default function AdminSeminarTab() {
         </div>
       )}
 
-    <div className="space-y-0 rounded-xl border bg-card">
+    <div className="space-y-0 rounded-2xl border bg-card">
       {/* 테이블 헤더 (데스크톱만) */}
       <div className="hidden lg:grid grid-cols-[48px_1fr_120px_140px_80px_100px_80px_80px_80px] items-center gap-1 border-b bg-muted/30 px-4 py-3 text-sm font-medium">
         <span>포스터</span>

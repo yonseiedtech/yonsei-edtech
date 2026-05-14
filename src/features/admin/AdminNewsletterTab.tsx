@@ -393,7 +393,7 @@ export default function AdminNewsletterTab() {
               { label: "최신 발행일", value: latest?.publishDate ?? "—" },
             ];
             return stats.map((s) => (
-              <div key={s.label} className="rounded-xl border bg-card p-4">
+              <div key={s.label} className="rounded-2xl border bg-card p-4">
                 <div className="text-xs text-muted-foreground">{s.label}</div>
                 <div className="mt-1 text-lg font-bold">{s.value}</div>
               </div>
@@ -404,7 +404,7 @@ export default function AdminNewsletterTab() {
 
       {/* 기존 학회보 목록 */}
       {!issuesLoading && issues.length > 0 && (
-        <div className="mt-6 rounded-xl border bg-card p-5">
+        <div className="mt-6 rounded-2xl border bg-card p-5">
           <h3 className="font-bold">발행 이력 ({issues.length})</h3>
           <div className="mt-3 divide-y">
             {issues.map((issue) => (
@@ -473,7 +473,7 @@ export default function AdminNewsletterTab() {
       )}
 
       {/* 기본 정보 */}
-      <div className="mt-6 space-y-4 rounded-xl border bg-card p-5">
+      <div className="mt-6 space-y-4 rounded-2xl border bg-card p-5">
         <h3 className="font-bold">{editingId ? "학회보 정보 편집" : "새 학회보"}</h3>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
@@ -541,7 +541,7 @@ export default function AdminNewsletterTab() {
       </div>
 
       {/* 섹션 목록 */}
-      <div className="mt-6 rounded-xl border bg-card p-5">
+      <div className="mt-6 rounded-2xl border bg-card p-5">
         <div className="flex items-center justify-between">
           <h3 className="font-bold">섹션 ({sections.length})</h3>
           <div className="flex gap-2">
@@ -626,7 +626,7 @@ export default function AdminNewsletterTab() {
               .map((section) => (
                 <div
                   key={section.id}
-                  className="rounded-xl border bg-muted/10 p-4"
+                  className="rounded-2xl border bg-muted/10 p-4"
                 >
                   <div className="flex items-start gap-3">
                     <div className="flex flex-col gap-0.5 pt-1">
@@ -992,7 +992,7 @@ export default function AdminNewsletterTab() {
             </p>
           </div>
 
-          <div className="rounded-xl border p-4">
+          <div className="rounded-2xl border p-4">
             <h3 className="text-sm font-bold">목차</h3>
             <div className="mt-2 space-y-1.5">
               {sections
@@ -1014,7 +1014,7 @@ export default function AdminNewsletterTab() {
           {sections
             .sort((a, b) => a.order - b.order)
             .map((s) => (
-              <div key={s.id} className="rounded-xl border p-4">
+              <div key={s.id} className="rounded-2xl border p-4">
                 <Badge variant="secondary" className="text-[10px]">
                   {SECTION_TYPE_LABELS[s.type]}
                 </Badge>
