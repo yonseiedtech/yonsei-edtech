@@ -23,6 +23,12 @@ import type {
 } from "@/types";
 import { computeMemberMetrics, type MemberMetricsRow } from "./computeMemberMetrics";
 
+/**
+ * 12개 컬렉션은 모두 무겁고(comments·study_sessions 1만건 한도) 자주 바뀌지 않으므로
+ * 5분간 캐시 신선도 유지 — insights 탭 간 이동 시 중복 조회 방지.
+ */
+const STALE_TIME = 5 * 60_000;
+
 /** writing_papers.chapters의 모든 챕터 글자수 합 */
 function totalWritingChars(
   chapters?: Partial<Record<WritingPaperChapterKey, string>>,
@@ -46,18 +52,21 @@ export interface UseMemberMetricsResult {
 export function useMemberMetrics(enabled: boolean): UseMemberMetricsResult {
   const { data: membersRes, isLoading: loadingMembers } = useQuery({
     enabled,
+    staleTime: STALE_TIME,
     queryKey: ["report-members"],
     queryFn: () => profilesApi.list({ limit: 2000 }),
   });
 
   const { data: attendeesRes } = useQuery({
     enabled,
+    staleTime: STALE_TIME,
     queryKey: ["report-attendees"],
     queryFn: () => dataApi.list<SeminarAttendee>("seminar_attendees", { limit: 5000 }),
   });
 
   const { data: participationsRes } = useQuery({
     enabled,
+    staleTime: STALE_TIME,
     queryKey: ["report-participations"],
     queryFn: () =>
       dataApi.list<ActivityParticipation>("activity_participations", { limit: 5000 }),
@@ -65,6 +74,7 @@ export function useMemberMetrics(enabled: boolean): UseMemberMetricsResult {
 
   const { data: gradLifeRes } = useQuery({
     enabled,
+    staleTime: STALE_TIME,
     queryKey: ["report-gradlife"],
     queryFn: () => gradLifePositionsApi.list({ limit: 2000 }),
   });
@@ -72,18 +82,21 @@ export function useMemberMetrics(enabled: boolean): UseMemberMetricsResult {
   // ── 콘텐츠 ──
   const { data: postsRes } = useQuery({
     enabled,
+    staleTime: STALE_TIME,
     queryKey: ["report-posts"],
     queryFn: () => dataApi.list<Post>("posts", { limit: 5000 }),
   });
 
   const { data: commentsRes } = useQuery({
     enabled,
+    staleTime: STALE_TIME,
     queryKey: ["report-comments"],
     queryFn: () => dataApi.list<Comment>("comments", { limit: 10000 }),
   });
 
   const { data: interviewResponsesRes } = useQuery({
     enabled,
+    staleTime: STALE_TIME,
     queryKey: ["report-interview-responses"],
     queryFn: () => dataApi.list<InterviewResponse>("interview_responses", { limit: 5000 }),
   });
@@ -91,18 +104,21 @@ export function useMemberMetrics(enabled: boolean): UseMemberMetricsResult {
   // ── 연구활동 ──
   const { data: studySessionsRes } = useQuery({
     enabled,
+    staleTime: STALE_TIME,
     queryKey: ["report-study-sessions"],
     queryFn: () => dataApi.list<StudySession>("study_sessions", { limit: 10000 }),
   });
 
   const { data: writingPapersRes } = useQuery({
     enabled,
+    staleTime: STALE_TIME,
     queryKey: ["report-writing-papers"],
     queryFn: () => dataApi.list<WritingPaper>("writing_papers", { limit: 2000 }),
   });
 
   const { data: researchProposalsRes } = useQuery({
     enabled,
+    staleTime: STALE_TIME,
     queryKey: ["report-research-proposals"],
     queryFn: () => dataApi.list<ResearchProposal>("research_proposals", { limit: 2000 }),
   });
@@ -110,12 +126,14 @@ export function useMemberMetrics(enabled: boolean): UseMemberMetricsResult {
   // ── 후기 ──
   const { data: seminarReviewsRes } = useQuery({
     enabled,
+    staleTime: STALE_TIME,
     queryKey: ["report-seminar-reviews"],
     queryFn: () => dataApi.list<SeminarReview>("seminar_reviews", { limit: 5000 }),
   });
 
   const { data: courseReviewsRes } = useQuery({
     enabled,
+    staleTime: STALE_TIME,
     queryKey: ["report-course-reviews"],
     queryFn: () => dataApi.list<CourseReview>("course_reviews", { limit: 5000 }),
   });
