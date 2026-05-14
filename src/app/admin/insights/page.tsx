@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { BarChart3, Loader2 } from "lucide-react";
@@ -48,12 +48,15 @@ type SubTab = "dashboard" | "report" | "members" | "activity";
 function InsightsInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const pathname = usePathname();
   const active: SubTab = (searchParams.get("view") as SubTab) ?? "dashboard";
 
   function handleChange(next: string) {
     const params = new URLSearchParams(searchParams.toString());
     params.set("view", next);
-    router.replace(`/admin/insights?${params.toString()}`);
+    // 같은 컴포넌트가 /admin/insights·/console/insights 양쪽에 서빙되므로
+    // 하드코딩 대신 현재 경로 유지 (탭 전환 시 콘솔 이탈 방지)
+    router.replace(`${pathname}?${params.toString()}`);
   }
 
   return (
