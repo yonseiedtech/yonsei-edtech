@@ -23,6 +23,7 @@ import { useWritingPaper } from "@/features/research/useWritingPaper";
 import { useWritingPaperHistory } from "@/features/research/useWritingPaperHistory";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import PageHeader from "@/components/ui/page-header";
 import type { User, StudySession } from "@/types";
 import {
   BookOpen, FileText, BookOpenCheck, FileBarChart2,
@@ -248,21 +249,21 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
   return (
     <div className="py-12">
       <div className="mx-auto max-w-6xl px-4">
-        <div className="flex items-center justify-between print-hide">
-          <div className="flex items-center gap-2">
-            <BookOpen size={22} className="text-primary" />
-            <h1 className="text-2xl font-bold">내 연구활동</h1>
-          </div>
-          <Link
-            href="/mypage"
-            className="text-xs text-muted-foreground hover:text-foreground"
-          >
-            마이페이지로 돌아가기
-          </Link>
+        <div className="print-hide">
+          <PageHeader
+            icon={BookOpen}
+            title="내 연구활동"
+            description="직접 쓰는 논문과 분석한 논문을 한 곳에서 관리하세요."
+            actions={
+              <Link
+                href="/mypage"
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                마이페이지로 돌아가기
+              </Link>
+            }
+          />
         </div>
-        <p className="mt-1 text-sm text-muted-foreground print-hide">
-          직접 쓰는 논문과 분석한 논문을 한 곳에서 관리하세요.
-        </p>
 
         {/* ── 연구 현황 (탭 위 공유 섹션, 모든 탭에 노출) ── */}
         <div className="space-y-4 mt-6 print-hide">

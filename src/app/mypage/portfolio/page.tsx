@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import PageHeader from "@/components/ui/page-header";
 import {
   Award as AwardIcon,
   Globe,
@@ -242,16 +243,12 @@ function PortfolioContent() {
           <ArrowLeft size={12} /> 마이페이지
         </Link>
 
-        <div className="mt-3 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Sparkles size={22} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">학술 포트폴리오</h1>
-            <p className="text-sm text-muted-foreground">
-              수상·대외활동·콘텐츠 제작 이력을 직접 등록하세요. 운영진 검증 후 프로필에 정식 표기됩니다.
-            </p>
-          </div>
+        <div className="mt-3">
+          <PageHeader
+            icon={Sparkles}
+            title="학술 포트폴리오"
+            description="수상·대외활동·콘텐츠 제작 이력을 직접 등록하세요. 운영진 검증 후 프로필에 정식 표기됩니다."
+          />
         </div>
 
         <div className="mt-6 flex gap-1 overflow-x-auto border-b">

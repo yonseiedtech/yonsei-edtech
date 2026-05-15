@@ -14,6 +14,7 @@ import ReceivedCardsSection from "@/features/card/ReceivedCardsSection";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import EmptyState from "@/components/ui/empty-state";
+import PageHeader from "@/components/ui/page-header";
 import {
   Dialog,
   DialogContent,
@@ -311,10 +312,11 @@ function CardInner() {
           </Link>
         </div>
 
-        <h1 className="text-2xl font-bold">모바일 명함</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          QR·링크로 명함을 주고받고, 기록을 한곳에서 관리할 수 있어요.
-        </p>
+        <PageHeader
+          icon={CreditCard}
+          title="모바일 명함"
+          description="QR·링크로 명함을 주고받고, 기록을 한곳에서 관리할 수 있어요."
+        />
 
         {/* 탭 네비게이션 */}
         <nav className="mt-6 flex gap-1 border-b">

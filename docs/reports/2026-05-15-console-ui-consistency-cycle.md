@@ -149,6 +149,19 @@
   `card-news/[seriesId]`·`labs/[id]`·`academic/*/[id]`(엔티티 제목)·`labs/new`(폼)은 의도된
   비표준 — 유지.
 
+### 4차 — 회원 영역(mypage) 헤더 표준화
+- 콘솔에서 일반 서비스로 점검을 확장. dashboard·research·network·notices·gallery·
+  calendar 는 모두 `PageHeader` 사용으로 정상이나, **mypage 영역 5개 컴포넌트가 커스텀
+  h1(`text-2xl font-bold`)을 사용**해 다른 회원 페이지보다 작고 평범한 헤더로 보이던 드리프트.
+- 변환:
+  - `MyPageView` 메인 마이페이지 — 커스텀 h1 → `PageHeader`(icon=User, actions=로그아웃/읽기전용)
+  - `MyActivitiesView` 내 학회활동 — 손으로 흉내낸 아이콘+h1+백링크 → `PageHeader`(actions=백링크)
+  - `MyResearchView` 내 연구활동 — 동일 패턴 → `PageHeader` (print-hide 보존)
+  - `mypage/card` 모바일 명함 — 커스텀 h1 → `PageHeader`(icon=CreditCard)
+  - `mypage/portfolio` 학술 포트폴리오 — 이미 손으로 PageHeader 흉내내던 구조 → 정식 `PageHeader`
+- 효과: 회원이 보는 마이페이지가 dashboard·research 등 다른 회원 페이지와 동일한 헤더 크기·
+  아이콘 박스 스타일로 통일 (desktop `text-2xl sm:text-3xl lg:text-4xl`).
+
 ### 교훈 (추가)
 - **"전수 점검"의 함정**: 1차에서 `ConsolePageHeader` 사용 여부와 `text-3xl` 패턴만 보고
   "전수 점검 완료"라고 했으나, 실제로는 각 페이지가 *일관된 헤더를 렌더하는지*를 검증하지

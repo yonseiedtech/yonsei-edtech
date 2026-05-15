@@ -19,6 +19,7 @@ import { useMyInterviewResponses } from "@/features/board/interview-store";
 import MyInterviewAnswersDialog from "@/features/board/MyInterviewAnswersDialog";
 import MyConferenceSessions from "@/features/conference/MyConferenceSessions";
 import EmptyState from "@/components/ui/empty-state";
+import PageHeader from "@/components/ui/page-header";
 import { formatDate } from "@/lib/utils";
 import { formatSemester } from "@/lib/semester";
 import { toast } from "sonner";
@@ -152,21 +153,19 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
   return (
     <div className="py-12">
       <div className="mx-auto max-w-3xl px-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ClipboardList size={22} className="text-primary" />
-            <h1 className="text-2xl font-bold">내 학회활동</h1>
-          </div>
-          <Link
-            href="/mypage"
-            className="text-xs text-muted-foreground hover:text-foreground"
-          >
-            마이페이지로 돌아가기
-          </Link>
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          학술활동·수료증·내 글·인터뷰를 한 곳에서 모아보세요.
-        </p>
+        <PageHeader
+          icon={ClipboardList}
+          title="내 학회활동"
+          description="학술활동·수료증·내 글·인터뷰를 한 곳에서 모아보세요."
+          actions={
+            <Link
+              href="/mypage"
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              마이페이지로 돌아가기
+            </Link>
+          }
+        />
 
         <nav className="mt-6 flex gap-1 overflow-x-auto border-b">
           {TABS.map((tab) => {

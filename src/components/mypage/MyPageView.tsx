@@ -18,6 +18,7 @@ import { useMyInterviewResponses } from "@/features/board/interview-store";
 import type { Certificate, Activity, User, SeminarReview } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import PageHeader from "@/components/ui/page-header";
 import { cn } from "@/lib/utils";
 import {
   User as UserIcon,
@@ -199,18 +200,23 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
     <div className="py-16">
       <div className="mx-auto max-w-2xl px-4">
         {/* 헤더 */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">마이페이지{readOnly && <span className="ml-2 text-sm font-normal text-muted-foreground">(미리보기)</span>}</h1>
-          {!readOnly && isSelf && (
-            <Button variant="outline" size="sm" onClick={logout}>
-              <LogOut size={16} className="mr-1" />
-              로그아웃
-            </Button>
-          )}
-          {readOnly && (
-            <Badge variant="secondary"><Eye size={12} className="mr-1" />읽기 전용</Badge>
-          )}
-        </div>
+        <PageHeader
+          icon={UserIcon}
+          title="마이페이지"
+          actions={
+            !readOnly && isSelf ? (
+              <Button variant="outline" size="sm" onClick={logout}>
+                <LogOut size={16} className="mr-1" />
+                로그아웃
+              </Button>
+            ) : readOnly ? (
+              <Badge variant="secondary">
+                <Eye size={12} className="mr-1" />
+                읽기 전용
+              </Badge>
+            ) : null
+          }
+        />
 
         {/* 프로필 카드 */}
         <div className="mt-8 rounded-2xl border bg-card p-6">
