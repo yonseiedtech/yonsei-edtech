@@ -2,11 +2,12 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, CalendarDays } from "lucide-react";
 import { useAuth } from "@/features/auth/useAuth";
 import { activitiesApi, conferenceProgramsApi } from "@/lib/bkend";
 import ConferenceProgramEditor from "@/features/conference/ConferenceProgramEditor";
 import ConferenceProgramStats from "@/features/conference/ConferenceProgramStats";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import type { Activity, ConferenceProgram } from "@/types";
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
@@ -69,14 +70,21 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <Link
-          href={`/activities/external/${id}`}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" /> 활동 상세로 돌아가기
-        </Link>
-      </div>
+      <Link
+        href={`/activities/external/${id}`}
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" /> 활동 상세로 돌아가기
+      </Link>
+      <ConsolePageHeader
+        icon={CalendarDays}
+        title="학술대회 프로그램 편집"
+        description={
+          activity?.title
+            ? `${activity.title} 프로그램·트랙·세션을 편집합니다.`
+            : "학술대회 프로그램·트랙·세션을 편집합니다."
+        }
+      />
       <ConferenceProgramEditor
         activityId={id}
         activityTitle={activity?.title ?? ""}

@@ -137,6 +137,18 @@
 - `applicant-link-by-studentid`·`inject-spring-2026-schedule`·
   `migrate-teacher-affiliation` 루트 `space-y-6 p-6` → `space-y-6`.
 
+### 3차 추가 — academic/external/[id] 하위 점검
+- `academic-admin/external/[id]/workbook` 커스텀 `text-xl font-bold` h1 + 액션 행 →
+  `ConsolePageHeader`(actions) 로 통일. (`/console/academic/external/[id]/workbook`
+  re-export 경로 자동 반영.)
+- `console/academic/external/[id]/program` 헤더 누락 → `ConsolePageHeader`
+  ("학술대회 프로그램 편집", 활동명 description) 추가.
+- 검증: 콘솔 페이지 ~80개 헤더 사용 전수 grep — 나머지(`labs`·`grad-life/*`·`popups`·
+  `agents`·`card-news`·`steppingstone`·`academic-calendar`·`alumni-mapping` 등)는 모두
+  컴포넌트 위임 또는 직접 `ConsolePageHeader` 사용으로 정상. `handover/report`(인쇄용)·
+  `card-news/[seriesId]`·`labs/[id]`·`academic/*/[id]`(엔티티 제목)·`labs/new`(폼)은 의도된
+  비표준 — 유지.
+
 ### 교훈 (추가)
 - **"전수 점검"의 함정**: 1차에서 `ConsolePageHeader` 사용 여부와 `text-3xl` 패턴만 보고
   "전수 점검 완료"라고 했으나, 실제로는 각 페이지가 *일관된 헤더를 렌더하는지*를 검증하지

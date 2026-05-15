@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import {
   Dialog,
   DialogContent,
@@ -525,26 +526,23 @@ function WorkbookAdminPage({ activityId }: { activityId: string }) {
           <ArrowLeft size={16} /> 학술대회 상세로
         </Link>
 
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <ClipboardList size={20} className="text-primary" />
-            <h1 className="text-xl font-bold">워크북 과제 관리</h1>
-          </div>
-          <Button
-            size="sm"
-            onClick={() => {
-              setEditing(null);
-              setDialogOpen(true);
-            }}
-          >
-            <Plus size={15} className="mr-1" />
-            과제 추가
-          </Button>
-        </div>
-
-        <p className="mt-1 text-sm text-muted-foreground">
-          참여자에게 과제를 부여하고 제출현황과 피드백을 관리합니다.
-        </p>
+        <ConsolePageHeader
+          icon={ClipboardList}
+          title="워크북 과제 관리"
+          description="참여자에게 과제를 부여하고 제출현황과 피드백을 관리합니다."
+          actions={
+            <Button
+              size="sm"
+              onClick={() => {
+                setEditing(null);
+                setDialogOpen(true);
+              }}
+            >
+              <Plus size={15} className="mr-1" />
+              과제 추가
+            </Button>
+          }
+        />
 
         <div className="mt-6 space-y-3">
           {isLoading ? (
