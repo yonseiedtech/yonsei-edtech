@@ -21,6 +21,36 @@ curl -s -o /dev/null -w "%{http_code}" https://yonsei-edtech.vercel.app/{새_라
 # 200이 아니면 npx vercel --prod --force 재배포
 ```
 
+## 운영 콘솔 페이지 컨벤션 (필독)
+
+신규 `/console/**` 페이지는 **`ConsolePage` 래퍼**(`src/components/admin/ConsolePage.tsx`)를
+기본값으로 사용한다. 손으로 `<div className="space-y-6"><ConsolePageHeader .../>` 를
+조립하지 말 것 — 누락·드리프트의 원인.
+
+```tsx
+import ConsolePage from "@/components/admin/ConsolePage";
+import { Users } from "lucide-react";
+
+export default function Page() {
+  return (
+    <ConsolePage icon={Users} title="회원 관리" description="..." actions={...}>
+      {/* 본문만 */}
+    </ConsolePage>
+  );
+}
+```
+
+**금지 사항:**
+- 페이지 루트에 자체 외곽 패딩/너비 추가 금지 (`p-6`, `mx-auto max-w-Nxl`, `px-4 py-10` 등).
+  콘솔 레이아웃(`mx-auto max-w-7xl px-4 py-16` + 사이드바)이 이미 제공한다.
+- 공개·`/admin/*` 페이지를 콘솔 라우트에서 `export { default } from` 으로 그대로 re-export
+  하지 말 것 — 셸 스타일 충돌. 콘솔용 래퍼/리다이렉트로 분리한다.
+- 하위 nav 가 `layout.tsx` 에 있는 섹션은 **헤더도 layout 이 소유** (헤더 → nav → children
+  순서). page 가 헤더를 또 렌더하면 중복.
+
+**근거:** 2026-05-15 콘솔 UI 통일성 사이클 보고서
+(`docs/reports/2026-05-15-console-ui-consistency-cycle.md`).
+
 ## 작업 내역
 
 ### 2026-03-20: 커뮤니티/소식 메뉴 구조 개선 및 Post "newsletter" 카테고리 정리
