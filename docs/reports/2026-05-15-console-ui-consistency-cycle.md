@@ -149,6 +149,18 @@
   `card-news/[seriesId]`·`labs/[id]`·`academic/*/[id]`(엔티티 제목)·`labs/new`(폼)은 의도된
   비표준 — 유지.
 
+### 4-1차 — 연락망(directory) 콘솔 통합 (2차 redirect 회피책 → 정식 통합)
+
+2차에서 `console/directory`를 `/directory`로 redirect한 회피책이 운영진을 콘솔 셸
+밖으로 내보내는 UX 부작용 — 사용자 지적. 정식 통합으로 전환:
+- `app/directory/page.tsx`의 `DirectoryContent`에 `variant?: "public" | "console"` prop
+  추가. variant에 따라 외곽 컨테이너(`py-8 sm:py-14`·`mx-auto max-w-6xl px-4`)와
+  `PageHeader` 변형(`public`/`console`)을 조건부 렌더.
+- `DirectoryContent`를 named export 로 노출.
+- `console/directory/page.tsx`: redirect 제거 → `AuthGuard` + `DirectoryContent variant="console"`.
+- 효과: 운영진이 콘솔 사이드바 "연락망" 클릭 시 **콘솔 셸 안에서** 연락망 표시.
+  공개 `/directory`는 기존 디자인 그대로 유지. 두 경로가 동일 본체 컴포넌트 공유.
+
 ### 4차 — 회원 영역(mypage) 헤더 표준화
 - 콘솔에서 일반 서비스로 점검을 확장. dashboard·research·network·notices·gallery·
   calendar 는 모두 `PageHeader` 사용으로 정상이나, **mypage 영역 5개 컴포넌트가 커스텀

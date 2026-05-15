@@ -1,7 +1,18 @@
-import { redirect } from "next/navigation";
+"use client";
 
-// 연락망은 /directory 가 자체 AuthGuard·헤더·컨테이너를 갖춘 완결 페이지 —
-// 콘솔 re-export 시 이중 컨테이너·헤더 변형 불일치가 생겨 redirect 로 통일
-export default function ConsoleDirectoryRedirect() {
-  redirect("/directory");
+import AuthGuard from "@/features/auth/AuthGuard";
+import { DirectoryContent } from "@/app/directory/page";
+
+/**
+ * 운영 콘솔 — 연락망.
+ * `/directory` 와 동일한 본체(DirectoryContent)를 콘솔 변형으로 렌더 —
+ * 콘솔 셸(사이드바·max-w-7xl 컨테이너) 안에서 ConsolePageHeader 와
+ * 외곽 컨테이너 없는 레이아웃으로 표시.
+ */
+export default function ConsoleDirectoryPage() {
+  return (
+    <AuthGuard>
+      <DirectoryContent variant="console" />
+    </AuthGuard>
+  );
 }

@@ -119,7 +119,16 @@ function buildCsvRows(members: User[]): string[][] {
   return [header, ...rows];
 }
 
-function DirectoryContent() {
+/**
+ * 연락망 본체 — 공개(`/directory`)와 콘솔(`/console/directory`) 양쪽에서 사용.
+ * variant 에 따라 외곽 컨테이너와 PageHeader 변형이 달라진다.
+ * - public: 자체 `mx-auto max-w-6xl px-4 py-8 sm:py-14` 컨테이너 + PageHeader 공개 변형
+ * - console: 콘솔 레이아웃이 이미 컨테이너 제공 → 외곽 패딩 제거 + PageHeader console 변형
+ */
+export function DirectoryContent({
+  variant = "public",
+}: { variant?: "public" | "console" } = {}) {
+  const isConsole = variant === "console";
   const [activeTab, setActiveTab] = useState<Tab>("staff");
   const [studentSub, setStudentSub] = useState<StudentSubFilter>("all");
   const [search, setSearch] = useState("");
@@ -238,9 +247,10 @@ function DirectoryContent() {
   );
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-      <div className="mx-auto max-w-6xl px-4">
+    <div className={isConsole ? "" : "animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14"}>
+      <div className={isConsole ? "" : "mx-auto max-w-6xl px-4"}>
         <PageHeader
+          variant={isConsole ? "console" : "public"}
           icon={Shield}
           title="연락망"
           description="학회원 연락처 정보를 확인하세요."
@@ -439,7 +449,7 @@ function DirectoryContent() {
 export default function DirectoryPage() {
   return (
     <AuthGuard>
-      <DirectoryContent />
+      <DirectoryContent variant="public" />
     </AuthGuard>
   );
 }
