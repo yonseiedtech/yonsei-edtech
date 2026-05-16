@@ -58,6 +58,9 @@ import type {
   VolunteerAssignment,
   PostReaction,
   PostReactionType,
+  StudySessionReflection,
+  StudyAssignment,
+  StudyAssignmentSubmission,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -1870,4 +1873,121 @@ export const aiForumMessagesApi = {
       limit: 500,
     }),
   get: (id: string) => dataApi.get<AIForumMessage>("ai_forum_messages", id),
+};
+
+// ─────────────────────────────────────────────────────────────
+// 스터디 회고 (Sprint 1 — Study Enhancement)
+// ─────────────────────────────────────────────────────────────
+export const studySessionReflectionsApi = {
+  /** 활동 전체 회고 — 운영진/리더가 모든 회원 회고 조회 */
+  listByActivity: (activityId: string) =>
+    dataApi.list<StudySessionReflection>("study_session_reflections", {
+      "filter[activityId]": activityId,
+      limit: 1000,
+    }),
+  /** 회차 단위 회고 — 회원 본인이 작성한 회고 조회 시 사용 */
+  listByProgress: (activityProgressId: string) =>
+    dataApi.list<StudySessionReflection>("study_session_reflections", {
+      "filter[activityProgressId]": activityProgressId,
+      limit: 200,
+    }),
+  /** 본인의 활동 전체 회고 */
+  listByUser: (userId: string, activityId: string) =>
+    dataApi.list<StudySessionReflection>("study_session_reflections", {
+      "filter[userId]": userId,
+      "filter[activityId]": activityId,
+      limit: 200,
+    }),
+  /** 회차×본인 단건 (없으면 null) */
+  getMine: async (
+    activityProgressId: string,
+    userId: string,
+  ): Promise<StudySessionReflection | null> => {
+    const res = await dataApi.list<StudySessionReflection>("study_session_reflections", {
+      "filter[activityProgressId]": activityProgressId,
+      "filter[userId]": userId,
+      limit: 1,
+    });
+    return res.data[0] ?? null;
+  },
+  get: (id: string) =>
+    dataApi.get<StudySessionReflection>("study_session_reflections", id),
+  create: (data: Omit<StudySessionReflection, "id" | "createdAt">) =>
+    dataApi.create<StudySessionReflection>(
+      "study_session_reflections",
+      data as unknown as Record<string, unknown>,
+    ),
+  update: (id: string, data: Partial<StudySessionReflection>) =>
+    dataApi.update<StudySessionReflection>(
+      "study_session_reflections",
+      id,
+      data as unknown as Record<string, unknown>,
+    ),
+  delete: (id: string) => dataApi.delete("study_session_reflections", id),
+};
+
+// ─────────────────────────────────────────────────────────────
+// 스터디 과제 (Sprint 2 — Study Enhancement)
+// ─────────────────────────────────────────────────────────────
+export const studyAssignmentsApi = {
+  listByActivity: (activityId: string) =>
+    dataApi.list<StudyAssignment>("study_assignments", {
+      "filter[activityId]": activityId,
+      limit: 500,
+    }),
+  listByProgress: (activityProgressId: string) =>
+    dataApi.list<StudyAssignment>("study_assignments", {
+      "filter[activityProgressId]": activityProgressId,
+      limit: 100,
+    }),
+  get: (id: string) => dataApi.get<StudyAssignment>("study_assignments", id),
+  create: (data: Omit<StudyAssignment, "id" | "createdAt">) =>
+    dataApi.create<StudyAssignment>(
+      "study_assignments",
+      data as unknown as Record<string, unknown>,
+    ),
+  update: (id: string, data: Partial<StudyAssignment>) =>
+    dataApi.update<StudyAssignment>(
+      "study_assignments",
+      id,
+      data as unknown as Record<string, unknown>,
+    ),
+  delete: (id: string) => dataApi.delete("study_assignments", id),
+};
+
+export const studyAssignmentSubmissionsApi = {
+  listByUser: (userId: string, activityId: string) =>
+    dataApi.list<StudyAssignmentSubmission>("study_assignment_submissions", {
+      "filter[userId]": userId,
+      "filter[activityId]": activityId,
+      limit: 500,
+    }),
+  listByAssignment: (assignmentId: string) =>
+    dataApi.list<StudyAssignmentSubmission>("study_assignment_submissions", {
+      "filter[assignmentId]": assignmentId,
+      limit: 1000,
+    }),
+  listByActivity: (activityId: string) =>
+    dataApi.list<StudyAssignmentSubmission>("study_assignment_submissions", {
+      "filter[activityId]": activityId,
+      limit: 5000,
+    }),
+  get: (id: string) =>
+    dataApi.get<StudyAssignmentSubmission>("study_assignment_submissions", id),
+  /** {userId}_{assignmentId} 컨벤션으로 upsert. 본인 제출 / 운영진 피드백 모두 사용. */
+  upsert: async (
+    id: string,
+    data: Record<string, unknown>,
+  ): Promise<StudyAssignmentSubmission> => {
+    const ref = doc(db, "study_assignment_submissions", id);
+    const cleaned = stripUndefinedDeep(data);
+    await setDoc(
+      ref,
+      { ...cleaned, updatedAt: serverTimestamp() },
+      { merge: true },
+    );
+    const snap = await getDoc(ref);
+    return serializeDoc(snap) as unknown as StudyAssignmentSubmission;
+  },
+  delete: (id: string) => dataApi.delete("study_assignment_submissions", id),
 };

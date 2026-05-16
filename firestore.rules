@@ -962,5 +962,48 @@ service cloud.firestore {
       allow create, update: if false; // 서버 cron tick 만 append
       allow delete: if isAuthenticated() && isAdmin();
     }
+
+    // ─── Study Session Reflections (Sprint 1 — Study Enhancement) ───
+    // 회차 단위 개인 회고.
+    // - read: 본인 + 운영진 (isPrivate=true 일 때도 운영진은 열람 가능; 모임장이 staff가 아닐 경우의 제약은 MVP 한계로 수용)
+    // - write: 본인만
+    match /study_session_reflections/{docId} {
+      allow read: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
+      allow list: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // ─── Study Assignments (Sprint 2 — Study Enhancement) ───
+    // 운영진이 과제를 부여. 모든 인증 회원이 read.
+    // (모임장만 부여 가능하게 하려면 cross-doc lookup 필요 → staff+ 로 단순화)
+    match /study_assignments/{docId} {
+      allow read, list: if isAuthenticated();
+      allow create, update, delete: if isAuthenticated() && isStaffOrAbove();
+    }
+
+    // ─── Study Assignment Submissions (Sprint 2 — Study Enhancement) ───
+    // 본인 제출 + 운영진 피드백.
+    match /study_assignment_submissions/{docId} {
+      allow read: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
+      allow list: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated()
+        && (
+          (resource.data.userId == request.auth.uid
+            && request.resource.data.userId == request.auth.uid)
+          || isStaffOrAbove()
+        );
+      allow delete: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isAdmin());
+    }
   }
 }

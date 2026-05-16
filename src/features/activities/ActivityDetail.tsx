@@ -25,6 +25,8 @@ import {
 } from "lucide-react";
 import InlineMeetingTimer from "./InlineMeetingTimer";
 import ActivityConnectedTodos from "./ActivityConnectedTodos";
+import StudySessionReflectionCard from "./StudySessionReflectionCard";
+import StudySessionAssignmentsCard from "./StudySessionAssignmentsCard";
 import MyActivitySessionsTab from "@/features/conference/MyActivitySessionsTab";
 import AttendeeReviewsSection from "@/features/conference/AttendeeReviewsSection";
 import ActivityInfoEditor from "./ActivityInfoEditor";
@@ -1144,6 +1146,33 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                                   </ul>
                                 )}
                               </div>
+
+                              {/* Sprint 1 — 회차 회고 (study/project 만) */}
+                              {(type === "study" || type === "project") && (
+                                <StudySessionReflectionCard
+                                  activityId={activityId}
+                                  activityProgressId={p.id}
+                                  week={displayWeek}
+                                  progressStatus={p.status}
+                                  currentUserId={user?.id}
+                                  currentUserName={user?.name}
+                                  canViewAll={isStaff || isLeader}
+                                  participantIds={participants}
+                                />
+                              )}
+
+                              {/* Sprint 2 — 회차 과제 (study/project 만) */}
+                              {(type === "study" || type === "project") && (
+                                <StudySessionAssignmentsCard
+                                  activityId={activityId}
+                                  activityProgressId={p.id}
+                                  week={displayWeek}
+                                  currentUserId={user?.id}
+                                  currentUserName={user?.name}
+                                  canManage={isStaff || isLeader}
+                                  participantIds={participants}
+                                />
+                              )}
                             </div>
                           );
                         })()}

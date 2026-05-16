@@ -1,15 +1,17 @@
 "use client";
 
 /**
- * 학습 스트릭 / 잔디밭 — Sprint 56
+ * 학습 스트릭 / 잔디밭 — Sprint 56 (+ Study Enhancement Sprint 1·2)
  *
  * MyPage 홈 상단에 GitHub 스타일 365일 활동 그리드 노출.
  * 가중치 점수(일별 합산):
- *  - 세미나 출석(checkedIn=true)  : +10
- *  - 강의 후기 작성              : +5
- *  - 게시글 작성                 : +5
- *  - 학습 타이머 ≥30분 세션      : +3
- *  - 댓글 작성                   : +1
+ *  - 세미나 출석(checkedIn=true)   : +10
+ *  - 강의 후기 작성               : +5
+ *  - 게시글 작성                  : +5
+ *  - 스터디 과제 완료 제출         : +5  (Sprint 2)
+ *  - 스터디 회차 회고 작성         : +3  (Sprint 1)
+ *  - 학습 타이머 ≥30분 세션       : +3
+ *  - 댓글 작성                    : +1
  *
  * 표시:
  *  - 53주 × 7일 그리드 (오늘로부터 365일 전까지)
@@ -34,6 +36,8 @@ import type {
   Post,
   CourseReview,
   Comment,
+  StudySessionReflection,
+  StudyAssignmentSubmission,
 } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +51,8 @@ const SCORES = {
   attendance: 10,
   courseReview: 5,
   post: 5,
+  assignmentComplete: 5,
+  reflection: 3,
   timer30: 3,
   comment: 1,
 } as const;
@@ -336,6 +342,28 @@ export default function LearningStreak() {
     enabled: !!userId,
     staleTime: 5 * 60_000,
   });
+  // Sprint 1 — 스터디 회차 회고 작성
+  const { data: reflectionsRes } = useQuery({
+    queryKey: ["streak", "study-reflections", userId],
+    queryFn: () =>
+      dataApi.list<StudySessionReflection>("study_session_reflections", {
+        "filter[userId]": userId!,
+        limit: 1000,
+      }),
+    enabled: !!userId,
+    staleTime: 5 * 60_000,
+  });
+  // Sprint 2 — 스터디 과제 완료 제출 (status=completed 만 합산)
+  const { data: assignmentSubmissionsRes } = useQuery({
+    queryKey: ["streak", "study-assignment-submissions", userId],
+    queryFn: () =>
+      dataApi.list<StudyAssignmentSubmission>("study_assignment_submissions", {
+        "filter[userId]": userId!,
+        limit: 1000,
+      }),
+    enabled: !!userId,
+    staleTime: 5 * 60_000,
+  });
 
   const stats = useMemo<Stats>(() => {
     const scores = new Map<string, number>();
@@ -369,9 +397,29 @@ export default function LearningStreak() {
       const ymd = isoToYmdLocal(c.createdAt);
       add(ymd, SCORES.comment);
     }
+    // Sprint 1 — 회고 작성 (createdAt 기준, updatedAt이 더 최신이면 그 날짜에도 가산은 X — 1회만)
+    for (const r of (reflectionsRes?.data ?? []) as StudySessionReflection[]) {
+      const ymd = isoToYmdLocal(r.createdAt);
+      add(ymd, SCORES.reflection);
+    }
+    // Sprint 2 — 과제 완료 제출 (status=completed 만, submittedAt 기준)
+    for (const s of (assignmentSubmissionsRes?.data ?? []) as StudyAssignmentSubmission[]) {
+      if (s.status !== "completed") continue;
+      const ymd = isoToYmdLocal(s.submittedAt) ?? isoToYmdLocal(s.updatedAt);
+      add(ymd, SCORES.assignmentComplete);
+    }
 
     return computeStats(scores, semester);
-  }, [attendeesRes, studyRes, postsRes, courseReviewsRes, commentsRes, semester]);
+  }, [
+    attendeesRes,
+    studyRes,
+    postsRes,
+    courseReviewsRes,
+    commentsRes,
+    reflectionsRes,
+    assignmentSubmissionsRes,
+    semester,
+  ]);
 
   const achievedMilestones = useMemo(
     () => MILESTONES.filter((m) => m.achieved(stats)),
