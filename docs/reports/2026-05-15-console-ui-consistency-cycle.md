@@ -161,6 +161,20 @@
 - 효과: 운영진이 콘솔 사이드바 "연락망" 클릭 시 **콘솔 셸 안에서** 연락망 표시.
   공개 `/directory`는 기존 디자인 그대로 유지. 두 경로가 동일 본체 컴포넌트 공유.
 
+### 5차 — 사이드바 그룹 재구성 + 신청자 승인 버그 수정 (2026-05-16)
+
+- **사이드바 그룹 분리·재정렬** (`51f8a5dc`, `a678a28e`)
+  - "연구활동"을 "학술활동" 하위 8번째 항목에서 빼서 별도 **"연구"** 그룹으로 분리
+  - 그룹 순서를 운영 우선순위에 맞춰: **대학원 생활 → 학술활동 → 연구** 로 정렬
+- **신청자 status 누락 시 승인 컨트롤 사라지던 버그 수정** (`9715c7d6`)
+  - `ActivityDetail` 신청자 행 렌더링이 `a.status`를 `pending`/`approved`/`rejected`
+    3가지로만 체크 → status 필드가 없는 옛 신청 데이터는 세 조건 모두 false 가 되어
+    승인 버튼·뱃지가 모두 사라지고 빈 공간으로 표시되던 UI 버그.
+  - 사용자 사례: `/activities/external/4WMIvSwobAIrqT4Nm5Ks` 공주희님 신청 행.
+  - 수정: `effectiveStatus = (a.status === "approved" || "rejected") ? a.status : "pending"`
+    으로 정규화. 4개 조건문(승인 버튼/승인 뱃지/거절 뱃지/대기 뱃지) 일관 적용.
+    리포트 통계의 pending 카운트도 `(a.status ?? "pending")` 로 보강.
+
 ### 4차 — 회원 영역(mypage) 헤더 표준화
 - 콘솔에서 일반 서비스로 점검을 확장. dashboard·research·network·notices·gallery·
   calendar 는 모두 `PageHeader` 사용으로 정상이나, **mypage 영역 5개 컴포넌트가 커스텀
