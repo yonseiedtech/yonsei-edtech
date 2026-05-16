@@ -94,20 +94,10 @@ export default function StudySessionReflectionCard({
     [allReflections],
   );
   const { data: reflectionUsers = [] } = useQuery({
-    queryKey: ["study-reflection", "users", reflectionUserIds.join(",")],
+    // polish: 일괄 fetch (profilesApi.listByIds) — 회원당 1 round-trip 회피
+    queryKey: ["study-reflection", "users", [...reflectionUserIds].sort().join(",")],
     enabled: reflectionUserIds.length > 0,
-    queryFn: async () => {
-      const results = await Promise.all(
-        reflectionUserIds.map(async (uid) => {
-          try {
-            return (await profilesApi.get(uid)) as User;
-          } catch {
-            return null;
-          }
-        }),
-      );
-      return results.filter((u): u is User => !!u);
-    },
+    queryFn: () => profilesApi.listByIds(reflectionUserIds),
   });
   const userNameMap = useMemo(() => {
     const m = new Map<string, string>();
@@ -295,18 +285,24 @@ export default function StudySessionReflectionCard({
             />
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-1.5">
+            <div
+              className="flex items-center gap-1.5"
+              role="radiogroup"
+              aria-label="회고 평가 별점"
+            >
               <span className="text-[11px] text-muted-foreground">평가</span>
               {[1, 2, 3, 4, 5].map((n) => (
                 <button
                   key={n}
                   type="button"
+                  role="radio"
+                  aria-checked={rating === n}
+                  aria-label={`${n}점`}
                   onClick={() => setRating((r) => (r === n ? 0 : n))}
                   className={cn(
-                    "rounded p-0.5",
-                    rating >= n ? "text-amber-500" : "text-muted-foreground/40",
+                    "rounded p-0.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+                    rating >= n ? "text-amber-500" : "text-muted-foreground/40 hover:text-amber-400",
                   )}
-                  aria-label={`${n}점`}
                 >
                   <Star size={14} className={cn(rating >= n && "fill-current")} />
                 </button>

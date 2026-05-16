@@ -69,20 +69,10 @@ export default function StudySessionPreClassCard({
 
   // 발제자 프로필
   const { data: presenters = [] } = useQuery({
-    queryKey: ["pre-class", "presenters", progress.id, presenterIds.join(",")],
+    // polish: 일괄 fetch
+    queryKey: ["pre-class", "presenters", progress.id, [...presenterIds].sort().join(",")],
     enabled: presenterIds.length > 0,
-    queryFn: async () => {
-      const results = await Promise.all(
-        presenterIds.map(async (uid) => {
-          try {
-            return (await profilesApi.get(uid)) as User;
-          } catch {
-            return null;
-          }
-        }),
-      );
-      return results.filter((u): u is User => !!u);
-    },
+    queryFn: () => profilesApi.listByIds(presenterIds),
   });
 
   // 편집 상태

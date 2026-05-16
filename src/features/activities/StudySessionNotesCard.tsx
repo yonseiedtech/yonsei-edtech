@@ -83,20 +83,10 @@ export default function StudySessionNotesCard({
   );
 
   const { data: authors = [] } = useQuery({
-    queryKey: ["study-notes", "authors", authorIds.join(",")],
+    // polish: 일괄 fetch
+    queryKey: ["study-notes", "authors", [...authorIds].sort().join(",")],
     enabled: authorIds.length > 0,
-    queryFn: async () => {
-      const results = await Promise.all(
-        authorIds.map(async (uid) => {
-          try {
-            return (await profilesApi.get(uid)) as User;
-          } catch {
-            return null;
-          }
-        }),
-      );
-      return results.filter((u): u is User => !!u);
-    },
+    queryFn: () => profilesApi.listByIds(authorIds),
   });
   const authorNameMap = useMemo(() => {
     const m = new Map<string, string>();
@@ -182,18 +172,26 @@ export default function StudySessionNotesCard({
 
       {addOpen && currentUserId && (
         <div className="space-y-2 rounded-md border border-primary/30 bg-primary/5 p-2">
-          <div className="flex flex-wrap gap-1">
+          <div
+            className="flex flex-wrap gap-1"
+            role="radiogroup"
+            aria-label="노트 유형"
+          >
             {(Object.keys(STUDY_SESSION_NOTE_KIND_LABELS) as StudySessionNoteKind[]).map(
               (k) => {
                 const Icon = KIND_ICONS[k];
+                const selected = kind === k;
                 return (
                   <button
                     key={k}
                     type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    aria-pressed={selected}
                     onClick={() => setKind(k)}
                     className={cn(
-                      "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] transition",
-                      kind === k
+                      "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+                      selected
                         ? STUDY_SESSION_NOTE_KIND_COLORS[k]
                         : "border-border bg-background text-muted-foreground hover:border-primary/30",
                     )}

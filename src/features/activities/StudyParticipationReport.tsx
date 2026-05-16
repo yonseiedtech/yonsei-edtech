@@ -96,20 +96,10 @@ export default function StudyParticipationReport({
     [participantIds],
   );
   const { data: memberUsers = [] } = useQuery({
-    queryKey: ["study-report", "members", realMemberIds.join(",")],
+    // polish: 일괄 fetch — 참여자 30명이라도 1 round-trip (30개 청크)
+    queryKey: ["study-report", "members", [...realMemberIds].sort().join(",")],
     enabled: realMemberIds.length > 0,
-    queryFn: async () => {
-      const results = await Promise.all(
-        realMemberIds.map(async (uid) => {
-          try {
-            return (await profilesApi.get(uid)) as User;
-          } catch {
-            return null;
-          }
-        }),
-      );
-      return results.filter((u): u is User => !!u);
-    },
+    queryFn: () => profilesApi.listByIds(realMemberIds),
   });
 
   const nameMap = useMemo(() => {

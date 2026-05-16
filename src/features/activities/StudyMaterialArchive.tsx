@@ -43,7 +43,8 @@ export default function StudyMaterialArchive({ progressList }: Props) {
       .slice()
       .sort((a, b) => (a.week ?? 0) - (b.week ?? 0))
       .forEach((p, idx) => {
-        const week = idx + 1;
+        // hotfix: 실제 progress.week 사용 (cancelled/skipped 회차 있을 때 정확). idx+1 은 fallback.
+        const week = p.week ?? idx + 1;
         const weekTitle = p.title ?? `Week ${week}`;
         const weekDate = p.date;
         (p.materials ?? []).forEach((m) =>

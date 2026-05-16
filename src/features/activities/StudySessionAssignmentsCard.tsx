@@ -143,20 +143,10 @@ export default function StudySessionAssignmentsCard({
     [allSubmissionsRaw],
   );
   const { data: submitterUsers = [] } = useQuery({
+    // polish: 일괄 fetch (profilesApi.listByIds) — 회원당 1 round-trip 회피
     queryKey: ["study-submissions", "users", submitterIds.join(",")],
     enabled: submitterIds.length > 0,
-    queryFn: async () => {
-      const results = await Promise.all(
-        submitterIds.map(async (uid) => {
-          try {
-            return (await profilesApi.get(uid)) as User;
-          } catch {
-            return null;
-          }
-        }),
-      );
-      return results.filter((u): u is User => !!u);
-    },
+    queryFn: () => profilesApi.listByIds(submitterIds),
   });
   const userNameMap = useMemo(() => {
     const m = new Map<string, string>();
@@ -611,13 +601,15 @@ function AssignmentItem({
             type="button"
             disabled={submitting}
             onClick={handleQuickToggle}
+            role="checkbox"
+            aria-checked={checked}
+            aria-label={`${a.title} — ${checked ? "완료" : "미완료"}`}
             className={cn(
-              "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors",
+              "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
               checked
                 ? "border-emerald-500 bg-emerald-500 text-white"
                 : "border-muted-foreground/30 hover:border-primary",
             )}
-            aria-label={checked ? "완료 해제" : "완료 표시"}
           >
             {checked && <CheckCircle2 size={12} />}
           </button>
@@ -737,15 +729,22 @@ function AssignmentItem({
             />
           )}
           {a.type === "rating" && (
-            <div className="flex items-center gap-1.5">
+            <div
+              className="flex items-center gap-1.5"
+              role="radiogroup"
+              aria-label="과제 자기평가 별점"
+            >
               {[1, 2, 3, 4, 5].map((n) => (
                 <button
                   key={n}
                   type="button"
+                  role="radio"
+                  aria-checked={rating === n}
+                  aria-label={`${n}점`}
                   onClick={() => setRating((r) => (r === n ? 0 : n))}
                   className={cn(
-                    "rounded p-0.5",
-                    rating >= n ? "text-amber-500" : "text-muted-foreground/40",
+                    "rounded p-0.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+                    rating >= n ? "text-amber-500" : "text-muted-foreground/40 hover:text-amber-400",
                   )}
                 >
                   <Star size={16} className={cn(rating >= n && "fill-current")} />

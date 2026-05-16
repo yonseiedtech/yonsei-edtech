@@ -12,6 +12,7 @@ import {
 import {
   collection,
   doc,
+  documentId,
   getDoc,
   getDocs,
   addDoc,
@@ -324,6 +325,25 @@ export const commentsApi = {
 export const profilesApi = {
   list: (params?: QueryParams) => dataApi.list<User>("users", params),
   get: (id: string) => dataApi.get<User>("users", id),
+  /**
+   * 여러 사용자 프로필을 일괄 조회 — N+1 회피용.
+   * Firestore `where(__name__, "in", [...])` 는 한 번에 최대 30개라 30개 단위로 청킹.
+   * 중복 ID 제거 후 처리. 결과 순서는 보장되지 않으므로 호출자가 Map 화 필요.
+   */
+  listByIds: async (ids: string[]): Promise<User[]> => {
+    const unique = Array.from(new Set(ids.filter(Boolean)));
+    if (unique.length === 0) return [];
+    const chunks: string[][] = [];
+    for (let i = 0; i < unique.length; i += 30) chunks.push(unique.slice(i, i + 30));
+    const results = await Promise.all(
+      chunks.map(async (chunk) => {
+        const q = query(collection(db, "users"), where(documentId(), "in", chunk));
+        const snap = await getDocs(q);
+        return snap.docs.map((d) => serializeDoc(d) as User);
+      }),
+    );
+    return results.flat();
+  },
   getByEmail: (email: string) => dataApi.list<User>("users", { "filter[email]": email }),
   getByStudentId: (studentId: string) => dataApi.list<User>("users", { "filter[studentId]": studentId }),
   update: (id: string, data: Record<string, unknown>) => dataApi.update<User>("users", id, data),
