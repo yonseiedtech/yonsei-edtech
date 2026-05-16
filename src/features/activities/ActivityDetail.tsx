@@ -448,12 +448,12 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
     type === "external" ? applicationFormByType[applyParticipantType] ?? [] : [];
   const combinedApplicationFields: FormField[] = [...applicationForm, ...typeSpecificForm];
 
-  // 리포트 통계
+  // 리포트 통계 — status 필드가 없는 옛 데이터는 "pending" 으로 간주 (집계 누락 방지)
   const reportStats = {
     totalApplicants: applicants.length,
     approved: applicants.filter((a) => a.status === "approved").length,
     rejected: applicants.filter((a) => a.status === "rejected").length,
-    pending: applicants.filter((a) => a.status === "pending").length,
+    pending: applicants.filter((a) => (a.status ?? "pending") === "pending").length,
     participants: participants.length,
     approvalRate: applicants.length > 0 ? Math.round((applicants.filter((a) => a.status === "approved").length / applicants.length) * 100) : 0,
   };
@@ -1522,6 +1522,9 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   {filtered.map((a) => {
                     const key = a.userId ?? a.guestKey ?? `${a.name}-${a.appliedAt}`;
                     const isSpeaker = type === "external" && a.participantType === "speaker";
+                    // status 필드가 없는 옛 신청 데이터는 "pending" 으로 간주 (승인 컨트롤이 누락되는 버그 방지)
+                    const effectiveStatus: "approved" | "rejected" | "pending" =
+                      a.status === "approved" || a.status === "rejected" ? a.status : "pending";
                     return (
                     <div key={key} className="flex flex-col gap-1.5 px-4 py-3 text-sm sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0 flex-1">
@@ -1549,7 +1552,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                         )}
                       </div>
                       <div className="flex shrink-0 items-center gap-2 sm:self-start">
-                        {a.status === "pending" && isStaff && (
+                        {effectiveStatus === "pending" && isStaff && (
                           <>
                             <Button size="sm" className="h-7 gap-1 text-xs" onClick={() => updateApplicantMutation.mutate({ key, status: "approved" })}>
                               <CheckCircle size={12} />승인
@@ -1569,7 +1572,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                             </Button>
                           </>
                         )}
-                        {a.status === "approved" && (
+                        {effectiveStatus === "approved" && (
                           <>
                             <Badge className="bg-green-50 text-green-700 text-[10px]">승인</Badge>
                             {isStaff && (
@@ -1590,7 +1593,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                             )}
                           </>
                         )}
-                        {a.status === "rejected" && (
+                        {effectiveStatus === "rejected" && (
                           <>
                             <Badge className="bg-red-50 text-red-700 text-[10px]">거절</Badge>
                             {isStaff && (
@@ -1608,7 +1611,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                             )}
                           </>
                         )}
-                        {a.status === "pending" && !isStaff && <Badge className="bg-amber-50 text-amber-700 text-[10px]">대기</Badge>}
+                        {effectiveStatus === "pending" && !isStaff && <Badge className="bg-amber-50 text-amber-700 text-[10px]">대기</Badge>}
                       </div>
                     </div>
                   );})}
