@@ -7,7 +7,7 @@
  * - 학술대회 워크북(ConferenceWorkbookTask) 패턴을 스터디 회차 단위로 적용
  */
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle2,
@@ -112,18 +112,25 @@ export default function StudySessionAssignmentsCard({
   });
 
   // 운영진용 — 회차의 모든 제출
-  const { data: allSubmissionsRaw = [] } = useQuery({
-    queryKey: ["study-submissions", "progress", activityProgressId],
+  // hotfix: queryKey 를 activity 단위로 통일 — 회차 N개 마운트 시 동일 캐시 공유 (이전엔 회차별로 listByActivity 가 N번 호출됨)
+  const { data: allSubmissionsForActivity = [] } = useQuery({
+    queryKey: ["study-submissions", "activity", activityId],
     enabled: canManage,
     queryFn: async () => {
       const res = await studyAssignmentSubmissionsApi.listByActivity(activityId);
-      return ((res.data as StudyAssignmentSubmission[]) ?? []).filter(
-        (s) => s.activityProgressId === activityProgressId,
-      );
+      return (res.data as StudyAssignmentSubmission[]) ?? [];
     },
   });
+  // 회차 단위 슬라이스 — 클라이언트 필터
+  const allSubmissionsRaw = useMemo(
+    () =>
+      (allSubmissionsForActivity as StudyAssignmentSubmission[]).filter(
+        (s) => s.activityProgressId === activityProgressId,
+      ),
+    [allSubmissionsForActivity, activityProgressId],
+  );
 
-  // 제출자 이름
+  // 제출자 이름 (id 정렬로 캐시 키 안정화)
   const submitterIds = useMemo(
     () =>
       Array.from(
@@ -132,7 +139,7 @@ export default function StudySessionAssignmentsCard({
             .filter((s) => !s.userName)
             .map((s) => s.userId),
         ),
-      ),
+      ).sort(),
     [allSubmissionsRaw],
   );
   const { data: submitterUsers = [] } = useQuery({
@@ -395,7 +402,7 @@ export default function StudySessionAssignmentsCard({
                 });
                 if (canManage) {
                   await queryClient.invalidateQueries({
-                    queryKey: ["study-submissions", "progress", activityProgressId],
+                    queryKey: ["study-submissions", "activity", activityId],
                   });
                 }
               }}
@@ -438,6 +445,12 @@ function AssignmentItem({
   const [text, setText] = useState(mySubmission?.text ?? "");
   const [rating, setRating] = useState<number>(mySubmission?.rating ?? 0);
   const [checked, setChecked] = useState<boolean>(!!mySubmission?.checked);
+  // hotfix: mySubmission 비동기 도착 시 폼 초기값 동기화 (race condition 방지)
+  useEffect(() => {
+    setText(mySubmission?.text ?? "");
+    setRating(mySubmission?.rating ?? 0);
+    setChecked(!!mySubmission?.checked);
+  }, [mySubmission?.id, mySubmission?.text, mySubmission?.rating, mySubmission?.checked]);
   const [submitting, setSubmitting] = useState(false);
   const [staffOpen, setStaffOpen] = useState(false);
   const [feedbackDraft, setFeedbackDraft] = useState<Record<string, string>>({});
