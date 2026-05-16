@@ -61,6 +61,7 @@ import type {
   StudySessionReflection,
   StudyAssignment,
   StudyAssignmentSubmission,
+  StudySessionNote,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -1990,4 +1991,30 @@ export const studyAssignmentSubmissionsApi = {
     return serializeDoc(snap) as unknown as StudyAssignmentSubmission;
   },
   delete: (id: string) => dataApi.delete("study_assignment_submissions", id),
+};
+
+// ─────────────────────────────────────────────────────────────
+// 스터디 회차 토론 노트 (Sprint 4 — Study Enhancement)
+// ─────────────────────────────────────────────────────────────
+export const studySessionNotesApi = {
+  listByProgress: (activityProgressId: string) =>
+    dataApi.list<StudySessionNote>("study_session_notes", {
+      "filter[activityProgressId]": activityProgressId,
+      limit: 500,
+    }),
+  listByActivity: (activityId: string) =>
+    dataApi.list<StudySessionNote>("study_session_notes", {
+      "filter[activityId]": activityId,
+      limit: 2000,
+    }),
+  get: (id: string) => dataApi.get<StudySessionNote>("study_session_notes", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<StudySessionNote>("study_session_notes", data),
+  update: (id: string, data: Partial<StudySessionNote>) =>
+    dataApi.update<StudySessionNote>(
+      "study_session_notes",
+      id,
+      data as unknown as Record<string, unknown>,
+    ),
+  delete: (id: string) => dataApi.delete("study_session_notes", id),
 };

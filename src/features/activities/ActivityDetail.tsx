@@ -27,6 +27,10 @@ import InlineMeetingTimer from "./InlineMeetingTimer";
 import ActivityConnectedTodos from "./ActivityConnectedTodos";
 import StudySessionReflectionCard from "./StudySessionReflectionCard";
 import StudySessionAssignmentsCard from "./StudySessionAssignmentsCard";
+import StudySessionPreClassCard from "./StudySessionPreClassCard";
+import StudySessionNotesCard from "./StudySessionNotesCard";
+import StudyMaterialArchive from "./StudyMaterialArchive";
+import StudyParticipationReport from "./StudyParticipationReport";
 import MyActivitySessionsTab from "@/features/conference/MyActivitySessionsTab";
 import AttendeeReviewsSection from "@/features/conference/AttendeeReviewsSection";
 import ActivityInfoEditor from "./ActivityInfoEditor";
@@ -49,7 +53,7 @@ const RECRUIT_LABELS: Record<string, string> = { recruiting: "모집중", closed
 const RECRUIT_LABELS_STUDY: Record<string, string> = { recruiting: "모집중", closed: "모집완료" };
 const RECRUIT_COLORS: Record<string, string> = { recruiting: "bg-green-50 text-green-700", closed: "bg-red-50 text-red-700", in_progress: "bg-amber-50 text-amber-700", completed: "bg-muted text-muted-foreground" };
 
-type Tab = "overview" | "progress" | "staff" | "presenters" | "volunteers" | "participants" | "applicants" | "form-settings" | "report" | "settings" | "my-sessions";
+type Tab = "overview" | "progress" | "staff" | "presenters" | "volunteers" | "participants" | "applicants" | "form-settings" | "report" | "settings" | "my-sessions" | "archive" | "study-report";
 
 interface Props {
   activityId: string;
@@ -469,11 +473,22 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const speakerApplicants = applicants.filter((a) => a.participantType === "speaker");
   const volunteerApplicants = applicants.filter((a) => a.participantType === "volunteer");
 
+  // Sprint 4 — 자료 아카이브 노출 조건: study/project 이고 자료(materials 또는 preReadMaterials)가 1개 이상 존재
+  const hasArchive =
+    (type === "study" || type === "project") &&
+    progressList.some(
+      (p) =>
+        ((p.materials as ActivityProgress["materials"])?.length ?? 0) > 0 ||
+        ((p.preReadMaterials as ActivityProgress["preReadMaterials"])?.length ?? 0) > 0,
+    );
+
   const TABS: { value: Tab; label: string; show: boolean }[] = [
     { value: "overview", label: "개요", show: true },
     { value: "progress", label: `진행 현황${progressList.length > 0 ? ` (${progressPct}%)` : ""}`, show: !!user && type !== "external" },
     // Sprint 67: 외부 학술대회 — 본인이 추가한 세션(plans) 모아 보기 (요청)
     { value: "my-sessions", label: `내 일정${mySessionsCount > 0 ? ` (${mySessionsCount})` : ""}`, show: type === "external" && !!user },
+    // Sprint 4 — 자료 아카이브 (study/project 전용)
+    { value: "archive", label: "자료 아카이브", show: !!user && hasArchive },
     { value: "staff", label: `운영진 (${staffPids.length})`, show: !!user },
     { value: "presenters", label: `발표자 (${speakerApplicants.length})`, show: type === "external" },
     { value: "volunteers", label: `자원봉사자 (${volunteerApplicants.length})`, show: type === "external" },
@@ -482,6 +497,8 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
     { value: "applicants", label: `신청현황 (${applicants.length})`, show: !!user && registrationMethod === "open" && isStaff },
     { value: "form-settings", label: "신청 폼 설정", show: registrationMethod === "open" && isStaff },
     { value: "report", label: "리포트", show: isStaff },
+    // Sprint 5 — 스터디 참여도 리포트 (study/project 전용, 운영진/리더)
+    { value: "study-report", label: "참여도 리포트", show: (type === "study" || type === "project") && (isStaff || isLeader) },
     { value: "settings", label: "관리", show: isStaff },
   ];
 
@@ -958,6 +975,17 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                           const isUploading = uploadingPid === p.id;
                           return (
                             <div className="border-t bg-muted/20 px-4 py-3 space-y-4">
+                              {/* Sprint 3 — 사전 학습 (study/project 만) */}
+                              {(type === "study" || type === "project") && (
+                                <StudySessionPreClassCard
+                                  activityId={activityId}
+                                  progress={p}
+                                  week={displayWeek}
+                                  canManage={isStaff || isLeader}
+                                  participantIds={participants}
+                                />
+                              )}
+
                               <InlineMeetingTimer
                                 activityId={activityId}
                                 activityProgressId={p.id}
@@ -1171,6 +1199,18 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                                   currentUserName={user?.name}
                                   canManage={isStaff || isLeader}
                                   participantIds={participants}
+                                />
+                              )}
+
+                              {/* Sprint 4 — 회차 토론 노트 (study/project 만) */}
+                              {(type === "study" || type === "project") && (
+                                <StudySessionNotesCard
+                                  activityId={activityId}
+                                  activityProgressId={p.id}
+                                  week={displayWeek}
+                                  currentUserId={user?.id}
+                                  currentUserName={user?.name}
+                                  canModerate={isStaff || isLeader}
                                 />
                               )}
                             </div>
@@ -2300,6 +2340,24 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 onDeleted={() => router.push(backHref)}
               />
             </div>
+          )}
+
+          {/* Sprint 4 — 자료 아카이브 (study/project 전용) */}
+          {activeTab === "archive" && (
+            <StudyMaterialArchive progressList={progressList} />
+          )}
+
+          {/* Sprint 5 — 참여도 리포트 (study/project 전용, 운영진/리더) */}
+          {activeTab === "study-report" && (isStaff || isLeader) && (
+            <StudyParticipationReport
+              activityId={activityId}
+              activityTitle={activity.title}
+              progressList={progressList}
+              participantIds={participants}
+              guestParticipants={guestParticipants}
+              participantRoles={participantRoles}
+              leaderId={leaderId}
+            />
           )}
         </div>
 

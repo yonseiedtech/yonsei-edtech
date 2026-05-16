@@ -140,6 +140,15 @@ export interface ActivityProgress {
   attendedUserIds?: string[];
   /** 주차별 자료 (Sprint K) */
   materials?: { url: string; name: string; size?: number; type?: string }[];
+  /**
+   * Sprint 3 — 사전 학습 (선택적).
+   * 발제자를 명시적으로 지정해야 하는 스터디만 사용. 비어 있으면 전원 발제 가정.
+   */
+  presenterUserIds?: string[];
+  /** Sprint 3 — Pre-read 자료 (당일 자료 materials 와 별도로 사전 배포용). */
+  preReadMaterials?: { url: string; name: string; size?: number; type?: string }[];
+  /** Sprint 3 — 사전에 공유하는 핵심 토론 질문 (회원이 미리 생각해 오도록). */
+  discussionQuestions?: string[];
   createdAt: string;
 }
 
@@ -328,4 +337,44 @@ export interface StudyAssignmentSubmission {
   feedbackAt?: string;
   submittedAt?: string;
   updatedAt: string;
+}
+
+// ─────────────────────────────────────────────────────────────
+// 스터디 회차 토론 노트 (Sprint 4 — Study Enhancement)
+// 회원이 회차 도중/직후에 자유롭게 남기는 토론 질문/인사이트/하이라이트.
+// 다중(한 회원이 여러 노트 작성 가능), 익명 옵션 지원.
+// ─────────────────────────────────────────────────────────────
+
+export type StudySessionNoteKind = "question" | "insight" | "highlight" | "quote";
+
+export const STUDY_SESSION_NOTE_KIND_LABELS: Record<StudySessionNoteKind, string> = {
+  question: "질문",
+  insight: "인사이트",
+  highlight: "하이라이트",
+  quote: "인용",
+};
+
+export const STUDY_SESSION_NOTE_KIND_COLORS: Record<StudySessionNoteKind, string> = {
+  question: "border-blue-200 bg-blue-50 text-blue-800",
+  insight: "border-emerald-200 bg-emerald-50 text-emerald-800",
+  highlight: "border-amber-200 bg-amber-50 text-amber-800",
+  quote: "border-purple-200 bg-purple-50 text-purple-800",
+};
+
+export interface StudySessionNote {
+  id: string;
+  activityId: string;
+  activityProgressId: string;
+  week?: number;
+  /** 작성자 (익명일 때도 보안 식별을 위해 저장하지만 노출은 표시 토글에 따름) */
+  userId: string;
+  userName?: string;
+  kind: StudySessionNoteKind;
+  body: string;
+  /** 익명 표시 여부. true 면 UI 에서 이름 숨김. (소유 권한은 userId 기준) */
+  anonymous: boolean;
+  /** 회원들의 공감 (userId 배열). */
+  likedBy?: string[];
+  createdAt: string;
+  updatedAt?: string;
 }
