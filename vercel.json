@@ -59,6 +59,10 @@
     {
       "path": "/api/cron/seminar-push-review-request",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/archive-seed-sync",
+      "schedule": "0 0 * * *"
     }
   ]
 }
