@@ -254,8 +254,32 @@ export default function ActivityWeekDetailPage({
   const attendedSet = new Set((week?.attendedUserIds as string[] | undefined) ?? []);
   const materials = (week?.materials as ActivityProgress["materials"]) ?? [];
 
+  // UX polish: 키보드 ← → 로 회차 이동 (편집 중에는 비활성)
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      // 폼 입력 중에는 무시
+      const t = e.target as HTMLElement | null;
+      if (
+        t && (
+          t.tagName === "INPUT" ||
+          t.tagName === "TEXTAREA" ||
+          t.tagName === "SELECT" ||
+          t.isContentEditable
+        )
+      ) return;
+      if (e.key === "ArrowLeft" && prevWeek) {
+        window.location.href = `${weeksHref}/${prevWeek}`;
+      } else if (e.key === "ArrowRight" && nextWeek) {
+        window.location.href = `${weeksHref}/${nextWeek}`;
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [prevWeek, nextWeek, weeksHref]);
+
   return (
     <div className="mx-auto max-w-4xl space-y-4 px-4 py-6">
+      {/* 브레드크럼 */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Link
           href={weeksHref}
@@ -266,6 +290,46 @@ export default function ActivityWeekDetailPage({
         <Link href={detailHref} className="text-xs text-muted-foreground hover:text-foreground">
           {typeLabel} 상세 →
         </Link>
+      </div>
+
+      {/* UX polish: sticky 헤더 — 긴 페이지에서 회차 정보·prev/next 항상 노출 */}
+      <div className="sticky top-0 z-20 -mx-4 flex items-center justify-between gap-2 border-b bg-background/95 px-4 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <div className="flex min-w-0 items-center gap-2">
+          <Badge variant="outline" className="bg-primary text-[10px] font-bold text-primary-foreground">
+            Week {weekNumber}
+          </Badge>
+          <span className="truncate text-xs font-medium text-foreground">{week.title}</span>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          {prevWeek ? (
+            <Link
+              href={`${weeksHref}/${prevWeek}`}
+              className="inline-flex h-7 items-center gap-1 rounded-md border bg-card px-2 text-[11px] text-foreground hover:bg-muted"
+              aria-label={`Week ${prevWeek} 로 이동 (←)`}
+              title="키보드 ← 로도 이동"
+            >
+              <ChevronLeft size={12} /> W{prevWeek}
+            </Link>
+          ) : (
+            <span className="inline-flex h-7 items-center gap-1 rounded-md border bg-muted/30 px-2 text-[11px] text-muted-foreground/60">
+              <ChevronLeft size={12} /> —
+            </span>
+          )}
+          {nextWeek ? (
+            <Link
+              href={`${weeksHref}/${nextWeek}`}
+              className="inline-flex h-7 items-center gap-1 rounded-md border bg-card px-2 text-[11px] text-foreground hover:bg-muted"
+              aria-label={`Week ${nextWeek} 로 이동 (→)`}
+              title="키보드 → 로도 이동"
+            >
+              W{nextWeek} <ChevronRight size={12} />
+            </Link>
+          ) : (
+            <span className="inline-flex h-7 items-center gap-1 rounded-md border bg-muted/30 px-2 text-[11px] text-muted-foreground/60">
+              — <ChevronRight size={12} />
+            </span>
+          )}
+        </div>
       </div>
 
       <Card className="border-primary/20">

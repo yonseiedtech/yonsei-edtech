@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -35,9 +35,16 @@ import MyActivitySessionsTab from "@/features/conference/MyActivitySessionsTab";
 import AttendeeReviewsSection from "@/features/conference/AttendeeReviewsSection";
 import ActivityInfoEditor from "./ActivityInfoEditor";
 import { todayYmdLocal } from "@/lib/dday";
-import type { Activity, ActivityType, ActivityProgress, ActivityProgressMode, FormField, EnrollmentStatus, ExternalParticipantType, SpeakerSubmissionType } from "@/types";
+import type { Activity, ActivityType, ActivityProgress, ActivityProgressMode, FormField, EnrollmentStatus, ExternalParticipantType, SpeakerSubmissionType, StudySessionReflection, StudyAssignment } from "@/types";
 import { ENROLLMENT_STATUS_LABELS, ACTIVITY_PROGRESS_MODE_LABELS, EXTERNAL_PARTICIPANT_TYPE_LABELS, EXTERNAL_PARTICIPANT_TYPE_COLORS, SPEAKER_SUBMISSION_TYPE_LABELS, SPEAKER_SUBMISSION_TYPE_COLORS } from "@/types";
-import { activityProgressApi, attendeeReviewsApi, progressMeetingsApi, userSessionPlansApi } from "@/lib/bkend";
+import {
+  activityProgressApi,
+  attendeeReviewsApi,
+  progressMeetingsApi,
+  userSessionPlansApi,
+  studySessionReflectionsApi,
+  studyAssignmentsApi,
+} from "@/lib/bkend";
 import { uploadToStorage } from "@/lib/storage";
 import type { UploadedFile } from "@/lib/storage";
 import { formatSemester } from "@/lib/semester";
@@ -136,6 +143,39 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
       });
     },
   });
+
+  // UX polish: 회차 row 배지 — 활동 단위 1쿼리로 reflections / assignments 집계 (study/project 만)
+  const showWeekBadges = (type === "study" || type === "project") && !!user;
+  const { data: allReflections = [] } = useQuery({
+    queryKey: ["activity-reflections-all", activityId],
+    enabled: showWeekBadges,
+    queryFn: async () => {
+      const res = await studySessionReflectionsApi.listByActivity(activityId);
+      return (res.data as StudySessionReflection[]) ?? [];
+    },
+  });
+  const { data: allAssignments = [] } = useQuery({
+    queryKey: ["activity-assignments-all", activityId],
+    enabled: showWeekBadges,
+    queryFn: async () => {
+      const res = await studyAssignmentsApi.listByActivity(activityId);
+      return ((res.data as StudyAssignment[]) ?? []).filter((a) => a.active !== false);
+    },
+  });
+  const weekBadgeMap = useMemo(() => {
+    const m = new Map<string, { reflectionCount: number; assignmentCount: number }>();
+    (allReflections as StudySessionReflection[]).forEach((r) => {
+      if (!r.activityProgressId) return;
+      const prev = m.get(r.activityProgressId) ?? { reflectionCount: 0, assignmentCount: 0 };
+      m.set(r.activityProgressId, { ...prev, reflectionCount: prev.reflectionCount + 1 });
+    });
+    (allAssignments as StudyAssignment[]).forEach((a) => {
+      if (!a.activityProgressId) return;
+      const prev = m.get(a.activityProgressId) ?? { reflectionCount: 0, assignmentCount: 0 };
+      m.set(a.activityProgressId, { ...prev, assignmentCount: prev.assignmentCount + 1 });
+    });
+    return m;
+  }, [allReflections, allAssignments]);
 
   // Sprint 67-AC: 내 일정 탭 count — 본인 plans 의 활동별 개수 (skipped 제외)
   const { data: mySessionsCount = 0 } = useQuery({
@@ -938,6 +978,48 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                                   {p.startTime}
                                   {p.startTime && p.endTime && " ~ "}
                                   {p.endTime}
+                                </span>
+                              )}
+                              {/* UX polish: 회고/과제 N건 배지 — 회차당 활동 진척 한눈에 */}
+                              {showWeekBadges && (() => {
+                                const stat = weekBadgeMap.get(p.id);
+                                if (!stat || (stat.reflectionCount === 0 && stat.assignmentCount === 0)) return null;
+                                return (
+                                  <span className="flex items-center gap-1">
+                                    {stat.reflectionCount > 0 && (
+                                      <span
+                                        className="inline-flex items-center gap-0.5 rounded bg-blue-50 px-1 py-0.5 text-[9px] text-blue-700"
+                                        title={`회고 ${stat.reflectionCount}건`}
+                                      >
+                                        💬 {stat.reflectionCount}
+                                      </span>
+                                    )}
+                                    {stat.assignmentCount > 0 && (
+                                      <span
+                                        className="inline-flex items-center gap-0.5 rounded bg-purple-50 px-1 py-0.5 text-[9px] text-purple-700"
+                                        title={`과제 ${stat.assignmentCount}건`}
+                                      >
+                                        📝 {stat.assignmentCount}
+                                      </span>
+                                    )}
+                                  </span>
+                                );
+                              })()}
+                              {/* UX polish: 출석/자료 카운트도 같은 행에 노출 (이미 expanded view 에는 있음) */}
+                              {((p.attendedUserIds as string[] | undefined)?.length ?? 0) > 0 && (
+                                <span
+                                  className="inline-flex items-center gap-0.5 rounded bg-emerald-50 px-1 py-0.5 text-[9px] text-emerald-700"
+                                  title={`출석 ${(p.attendedUserIds as string[]).length}명`}
+                                >
+                                  ✓ {(p.attendedUserIds as string[]).length}
+                                </span>
+                              )}
+                              {((p.materials as ActivityProgress["materials"])?.length ?? 0) > 0 && (
+                                <span
+                                  className="inline-flex items-center gap-0.5 rounded bg-amber-50 px-1 py-0.5 text-[9px] text-amber-700"
+                                  title={`자료 ${(p.materials as ActivityProgress["materials"])!.length}건`}
+                                >
+                                  📎 {(p.materials as ActivityProgress["materials"])!.length}
                                 </span>
                               )}
                             </div>
