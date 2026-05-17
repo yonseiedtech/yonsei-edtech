@@ -918,10 +918,11 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // ─── Push Logs (Sprint 53) ───
-    // 발송 중복 방지용 — 클라이언트 read/write 차단, 서버(Admin SDK)만 사용.
+    // ─── Push Logs (Sprint 53 + Cron-Logs 운영 대시보드) ───
+    // 발송 중복 방지용. write 는 서버(Admin SDK)만. read 는 admin 운영 대시보드에서 허용.
     match /push_logs/{docId} {
-      allow read, write: if false;
+      allow read, list: if isAuthenticated() && isAdmin();
+      allow write: if false;
     }
 
     // ─── Counters (Sprint 69 — 트랜잭션 시퀀스 발급용) ───

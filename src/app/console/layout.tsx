@@ -193,6 +193,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
         { href: "/console/agent-workflows", label: "에이전트 워크플로우", icon: Workflow },
         { href: "/console/agent-board", label: "에이전트 작업 보드", icon: LayoutGrid },
         { href: "/console/audit-log", label: "감사로그", icon: ScrollText },
+        { href: "/console/cron-logs", label: "Cron 실행 이력", icon: ScrollText, adminOnly: true },
         { href: "/console/labs", label: "실험실", icon: FlaskConical },
         { href: "/console/inquiries", label: "문의 답변", icon: MessageSquare, badge: unansweredCount },
       ],
