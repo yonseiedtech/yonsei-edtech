@@ -50,6 +50,52 @@ async function loadTokensForUsers(userIds: string[]): Promise<{ id: string; data
 }
 
 /**
+ * Notif-Pref Sprint: kind 별 사용자 수신 선호도 필터.
+ * notificationPrefs.<fieldByKind> === false 인 사용자만 제외.
+ * fieldByKind 매핑은 types/user.ts 의 PUSH_PREF_FIELD 와 동일하지만 server side 라 직접 매핑.
+ */
+const PUSH_PREF_FIELD_BY_KIND: Record<string, string> = {
+  study_session_reminder: "pushStudySession",
+  study_assignment_reminder: "pushStudyAssignment",
+  seminar_push_reminder: "pushSeminarReminder",
+  seminar_push_review_request: "pushSeminarReview",
+  class_reminder_daily: "pushClassReminder",
+};
+
+export async function filterRecipientsByPreference(
+  userIds: string[],
+  kind: string,
+): Promise<string[]> {
+  const field = PUSH_PREF_FIELD_BY_KIND[kind];
+  if (!field) return userIds; // 미정의 kind 는 기본 통과
+  if (userIds.length === 0) return [];
+  const unique = Array.from(new Set(userIds));
+  const db = getAdminDb();
+  const allowed: string[] = [];
+  // 'in' 제한 30 → 30개씩 chunk + 누락 ID 는 통과 (기본값 true 가정)
+  for (let i = 0; i < unique.length; i += 30) {
+    const chunk = unique.slice(i, i + 30);
+    const snap = await db
+      .collection("users")
+      .where("__name__", "in", chunk)
+      .get();
+    const seen = new Set<string>();
+    for (const d of snap.docs) {
+      seen.add(d.id);
+      const data = d.data() as { notificationPrefs?: Record<string, boolean | undefined> };
+      const v = data.notificationPrefs?.[field];
+      // 명시 false 만 옵트아웃, undefined/true 는 허용
+      if (v !== false) allowed.push(d.id);
+    }
+    // 도큐먼트 없는 ID 도 default true 로 통과
+    for (const uid of chunk) {
+      if (!seen.has(uid)) allowed.push(uid);
+    }
+  }
+  return allowed;
+}
+
+/**
  * 여러 회원에게 푸시 발송. 발송 결과 통계 반환.
  */
 export async function sendPushToUsers(

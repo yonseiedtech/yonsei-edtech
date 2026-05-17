@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
-import { sendPushToUsers } from "@/lib/push-admin";
+import { sendPushToUsers, filterRecipientsByPreference } from "@/lib/push-admin";
 
 /**
  * 스터디/프로젝트 회차 D-1 알림 — Study Enhancement (Sprint 6)
@@ -87,7 +87,9 @@ export async function GET(req: NextRequest) {
       (p.presenterUserIds ?? []).forEach((uid) => {
         if (uid) recipients.add(uid);
       });
-      const userIds = Array.from(recipients);
+      const rawUserIds = Array.from(recipients);
+      if (rawUserIds.length === 0) continue;
+      const userIds = await filterRecipientsByPreference(rawUserIds, "study_session_reminder");
       if (userIds.length === 0) continue;
 
       // 중복 방지 (회차당 1회)

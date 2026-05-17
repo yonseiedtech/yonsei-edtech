@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
-import { sendPushToUsers } from "@/lib/push-admin";
+import { sendPushToUsers, filterRecipientsByPreference } from "@/lib/push-admin";
 
 /**
  * 세미나 D-1 push 알림 — Seminar Push (Sprint 6 extension)
@@ -88,11 +88,10 @@ export async function GET(req: NextRequest) {
         if (uid) recipients.add(uid);
       });
 
-      const userIds = Array.from(recipients);
-      if (userIds.length === 0) {
-        // 수신자 없음 — 굳이 dup log 남기지 않고 다음으로
-        continue;
-      }
+      const rawUserIds = Array.from(recipients);
+      if (rawUserIds.length === 0) continue;
+      const userIds = await filterRecipientsByPreference(rawUserIds, "seminar_push_reminder");
+      if (userIds.length === 0) continue;
 
       const startTime = s.startTime ?? "";
       const locationTag = s.location ? ` · ${s.location}` : "";

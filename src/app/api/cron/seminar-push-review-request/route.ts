@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
-import { sendPushToUsers } from "@/lib/push-admin";
+import { sendPushToUsers, filterRecipientsByPreference } from "@/lib/push-admin";
 
 /**
  * 세미나 D+1 후기 push 알림 — Seminar Push Review Request
@@ -94,8 +94,11 @@ export async function GET(req: NextRequest) {
         eligibleUserIds.push(uid);
       }
       if (eligibleUserIds.length === 0) continue;
+      // Notif-Pref: 사용자 수신 선호도 필터
+      const allowedUserIds = await filterRecipientsByPreference(eligibleUserIds, "seminar_push_review_request");
+      if (allowedUserIds.length === 0) continue;
 
-      const result = await sendPushToUsers(eligibleUserIds, {
+      const result = await sendPushToUsers(allowedUserIds, {
         title: "세미나 후기를 남겨주세요",
         body: `${s.title ?? "세미나"} — 어제 참석한 세미나 후기 부탁드립니다.`,
         link: `/seminars/${doc.id}/review`,
@@ -110,10 +113,10 @@ export async function GET(req: NextRequest) {
         recipientCount: result.successful,
       });
 
-      // dedup 기록 (보낸 사용자 단위)
+      // dedup 기록 (보낸 사용자 단위) — 옵트아웃된 사용자는 기록 안 함
       const sentAt = new Date().toISOString();
       await Promise.all(
-        eligibleUserIds.map((uid) =>
+        allowedUserIds.map((uid) =>
           db
             .collection("push_logs")
             .doc(`seminar_push_review_${doc.id}_${uid}`)

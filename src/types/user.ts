@@ -130,7 +130,47 @@ export interface NotificationPrefs {
   feedOptIn?: boolean;
   /** 전공 네트워킹 Map 그래프에 내 노드 노출 여부 — false 로 명시될 때만 옵트아웃 (Sprint 67 / major-network-map Phase 2) */
   networkOptIn?: boolean;
+  // ─────────────────────────────────────────────────────────────
+  // Push 알림 수신 설정 — Notif-Pref Sprint
+  // cron route 에서 sendPushToUsers 직전에 본 prefs 를 확인해 false 인 사용자 스킵.
+  // 기본값(undefined): true 로 간주 → 명시 false 일 때만 옵트아웃.
+  // ─────────────────────────────────────────────────────────────
+  /** 스터디/프로젝트 회차 D-1 push (kind=study_session_reminder) */
+  pushStudySession?: boolean;
+  /** 스터디/프로젝트 과제 마감 D-1 push (kind=study_assignment_reminder) */
+  pushStudyAssignment?: boolean;
+  /** 세미나 D-1 push (kind=seminar_push_reminder) */
+  pushSeminarReminder?: boolean;
+  /** 세미나 D+1 후기 push (kind=seminar_push_review_request) */
+  pushSeminarReview?: boolean;
+  /** 수업 일일 push (kind=class_reminder_daily) */
+  pushClassReminder?: boolean;
 }
+
+/** kind → notificationPrefs 필드 매핑 — 서버 cron / 클라이언트 UI 공용 */
+export const PUSH_PREF_FIELD: Record<string, keyof NotificationPrefs> = {
+  study_session_reminder: "pushStudySession",
+  study_assignment_reminder: "pushStudyAssignment",
+  seminar_push_reminder: "pushSeminarReminder",
+  seminar_push_review_request: "pushSeminarReview",
+  class_reminder_daily: "pushClassReminder",
+};
+
+/** UI 라벨 — MyPage 알림 설정 섹션에서 사용 */
+export const PUSH_PREF_LABELS: Record<
+  | "pushStudySession"
+  | "pushStudyAssignment"
+  | "pushSeminarReminder"
+  | "pushSeminarReview"
+  | "pushClassReminder",
+  { label: string; description: string }
+> = {
+  pushStudySession: { label: "스터디 회차 D-1", description: "내일 진행될 스터디/프로젝트 회차 알림" },
+  pushStudyAssignment: { label: "스터디 과제 마감 D-1", description: "마감 24시간 이내 미제출 과제 알림" },
+  pushSeminarReminder: { label: "세미나 D-1", description: "내일 진행될 세미나 알림" },
+  pushSeminarReview: { label: "세미나 후기 요청 D+1", description: "참석한 세미나의 후기 작성 요청" },
+  pushClassReminder: { label: "수업 일일 안내", description: "오늘 진행될 수업 안내" },
+};
 
 /**
  * 학교급 — major-network-map Phase 2.

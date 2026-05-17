@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
-import { sendPushToUsers } from "@/lib/push-admin";
+import { sendPushToUsers, filterRecipientsByPreference } from "@/lib/push-admin";
 
 /**
  * 오늘 수업 안내 푸시 — Sprint 53 (Vercel Hobby 호환 daily 버전)
@@ -146,9 +146,12 @@ export async function GET(req: NextRequest) {
         .collection("course_enrollments")
         .where("courseOfferingId", "==", doc.id)
         .get();
-      const userIds = enrSnap.docs
+      const rawUserIds = enrSnap.docs
         .map((d) => (d.data() as { userId?: string }).userId)
         .filter((x): x is string => !!x);
+      if (rawUserIds.length === 0) continue;
+      // Notif-Pref: 사용자 수신 선호도 필터
+      const userIds = await filterRecipientsByPreference(rawUserIds, "class_reminder_daily");
       if (userIds.length === 0) continue;
 
       const courseName = o.courseName ?? "수업";

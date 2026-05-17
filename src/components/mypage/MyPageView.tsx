@@ -801,38 +801,42 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
   );
 }
 
-/** Sprint 54·55·67: 알림 + 피드 노출 + 네트워크 노출 설정 카드 */
+/** Sprint 54·55·67 + Notif-Pref: 알림 + 피드 노출 + 네트워크 노출 + Push 5종 설정 카드 */
 function NotificationSettingsCard({ user }: { user: User }) {
-  const prefs = (user as User & {
-    notificationPrefs?: {
-      weeklyDigest?: boolean;
-      feedOptIn?: boolean;
-      networkOptIn?: boolean;
-    };
-  }).notificationPrefs;
+  type PrefShape = {
+    weeklyDigest?: boolean;
+    feedOptIn?: boolean;
+    networkOptIn?: boolean;
+    pushStudySession?: boolean;
+    pushStudyAssignment?: boolean;
+    pushSeminarReminder?: boolean;
+    pushSeminarReview?: boolean;
+    pushClassReminder?: boolean;
+  };
+  const prefs = (user as User & { notificationPrefs?: PrefShape }).notificationPrefs;
   const [digest, setDigest] = useState<boolean>(prefs?.weeklyDigest !== false);
   const [feed, setFeed] = useState<boolean>(prefs?.feedOptIn !== false);
   const [network, setNetwork] = useState<boolean>(prefs?.networkOptIn !== false);
-  const [busyKey, setBusyKey] = useState<
-    "digest" | "feed" | "network" | null
-  >(null);
+  // Notif-Pref: push 5종 (default true, undefined 도 true 로 해석)
+  const [pushStudySession, setPushStudySession] = useState<boolean>(prefs?.pushStudySession !== false);
+  const [pushStudyAssignment, setPushStudyAssignment] = useState<boolean>(prefs?.pushStudyAssignment !== false);
+  const [pushSeminarReminder, setPushSeminarReminder] = useState<boolean>(prefs?.pushSeminarReminder !== false);
+  const [pushSeminarReview, setPushSeminarReview] = useState<boolean>(prefs?.pushSeminarReview !== false);
+  const [pushClassReminder, setPushClassReminder] = useState<boolean>(prefs?.pushClassReminder !== false);
+  const [busyKey, setBusyKey] = useState<string | null>(null);
 
   async function updatePref(
-    key: "weeklyDigest" | "feedOptIn" | "networkOptIn",
+    key: keyof PrefShape,
     next: boolean,
     setter: (v: boolean) => void,
     label: string,
   ) {
-    setBusyKey(
-      key === "weeklyDigest" ? "digest" : key === "feedOptIn" ? "feed" : "network",
-    );
+    setBusyKey(key);
     setter(next);
     try {
       await profilesApi.update(user.id, {
         notificationPrefs: {
-          ...((user as User & {
-            notificationPrefs?: Record<string, unknown>;
-          }).notificationPrefs ?? {}),
+          ...((user as User & { notificationPrefs?: Record<string, unknown> }).notificationPrefs ?? {}),
           [key]: next,
         },
       });
@@ -902,7 +906,7 @@ function NotificationSettingsCard({ user }: { user: User }) {
           title="주간 다이제스트 메일"
           description="매주 월요일 09:00 — 다가오는 세미나 5건, 인기 게시글 3건, 다가오는 활동 3건."
           enabled={digest}
-          busy={busyKey === "digest"}
+          busy={busyKey === "weeklyDigest"}
           onToggle={() =>
             void updatePref("weeklyDigest", !digest, setDigest, "주간 다이제스트를")
           }
@@ -912,7 +916,7 @@ function NotificationSettingsCard({ user }: { user: User }) {
           title="활동 피드 노출"
           description="다른 회원의 대시보드 '동료의 최근 활동'에 내가 작성한 글·강의 후기가 표시됩니다."
           enabled={feed}
-          busy={busyKey === "feed"}
+          busy={busyKey === "feedOptIn"}
           onToggle={() =>
             void updatePref("feedOptIn", !feed, setFeed, "활동 피드 노출을")
           }
@@ -922,12 +926,72 @@ function NotificationSettingsCard({ user }: { user: User }) {
           title="전공 네트워킹 Map 노출"
           description="대학원 생활 → 네트워크 → 전공 네트워킹 Map 그래프에 내 노드가 표시됩니다. 끄면 다른 회원에게 비공개되며, 본인 화면에서는 항상 보입니다."
           enabled={network}
-          busy={busyKey === "network"}
+          busy={busyKey === "networkOptIn"}
           onToggle={() =>
             void updatePref("networkOptIn", !network, setNetwork, "전공 네트워킹 Map 노출을")
           }
           ariaLabel="전공 네트워킹 Map 노출 토글"
         />
+      </div>
+
+      {/* Notif-Pref Sprint: Push 알림 5종 */}
+      <div className="mt-6 border-t pt-4">
+        <h4 className="text-sm font-semibold text-foreground">Push 알림 (브라우저/모바일 알림)</h4>
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          서버 cron 이 각 일정 24시간 전 09:00 KST 에 자동 발송. 끄면 해당 종류 push 만 받지 않습니다 (이메일 별도).
+        </p>
+        <div className="mt-2 divide-y">
+          <ToggleRow
+            title="스터디 회차 D-1"
+            description="내일 진행될 스터디/프로젝트 회차의 발제자/Pre-read/시간 안내."
+            enabled={pushStudySession}
+            busy={busyKey === "pushStudySession"}
+            onToggle={() =>
+              void updatePref("pushStudySession", !pushStudySession, setPushStudySession, "스터디 회차 D-1 알림을")
+            }
+            ariaLabel="스터디 회차 D-1 push 알림 토글"
+          />
+          <ToggleRow
+            title="스터디 과제 마감 D-1"
+            description="24시간 이내 마감인 미제출 과제 알림."
+            enabled={pushStudyAssignment}
+            busy={busyKey === "pushStudyAssignment"}
+            onToggle={() =>
+              void updatePref("pushStudyAssignment", !pushStudyAssignment, setPushStudyAssignment, "스터디 과제 마감 D-1 알림을")
+            }
+            ariaLabel="스터디 과제 마감 D-1 push 알림 토글"
+          />
+          <ToggleRow
+            title="세미나 D-1"
+            description="내일 진행될 세미나의 시간·장소 안내 (이메일과 별도)."
+            enabled={pushSeminarReminder}
+            busy={busyKey === "pushSeminarReminder"}
+            onToggle={() =>
+              void updatePref("pushSeminarReminder", !pushSeminarReminder, setPushSeminarReminder, "세미나 D-1 알림을")
+            }
+            ariaLabel="세미나 D-1 push 알림 토글"
+          />
+          <ToggleRow
+            title="세미나 후기 요청 D+1"
+            description="참석한 세미나 후기 작성 요청 (체크인 완료 + 미작성자만)."
+            enabled={pushSeminarReview}
+            busy={busyKey === "pushSeminarReview"}
+            onToggle={() =>
+              void updatePref("pushSeminarReview", !pushSeminarReview, setPushSeminarReview, "세미나 후기 요청 D+1 알림을")
+            }
+            ariaLabel="세미나 후기 요청 D+1 push 알림 토글"
+          />
+          <ToggleRow
+            title="수업 일일 안내"
+            description="오늘 진행될 수업의 시간·자료 사전 확인 안내."
+            enabled={pushClassReminder}
+            busy={busyKey === "pushClassReminder"}
+            onToggle={() =>
+              void updatePref("pushClassReminder", !pushClassReminder, setPushClassReminder, "수업 일일 안내를")
+            }
+            ariaLabel="수업 일일 안내 push 알림 토글"
+          />
+        </div>
       </div>
     </div>
   );

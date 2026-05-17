@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
-import { sendPushToUsers } from "@/lib/push-admin";
+import { sendPushToUsers, filterRecipientsByPreference } from "@/lib/push-admin";
 
 /**
  * 스터디/프로젝트 과제 마감 D-1 알림 (미제출자) — Study Enhancement (Sprint 6)
@@ -90,6 +90,9 @@ export async function GET(req: NextRequest) {
         eligibleUserIds.push(uid);
       }
       if (eligibleUserIds.length === 0) continue;
+      // Notif-Pref: 사용자 수신 선호도 필터
+      const allowedUserIds = await filterRecipientsByPreference(eligibleUserIds, "study_assignment_reminder");
+      if (allowedUserIds.length === 0) continue;
 
       const due = new Date(a.dueAt);
       const dueLabel = due.toLocaleString("ko-KR", {
@@ -101,7 +104,7 @@ export async function GET(req: NextRequest) {
       });
       const requiredTag = a.required ? "[필수] " : "";
 
-      const result = await sendPushToUsers(eligibleUserIds, {
+      const result = await sendPushToUsers(allowedUserIds, {
         title: `${requiredTag}과제 마감 임박 — ${dueLabel}`,
         body: `${act.title ?? "활동"} — ${a.title ?? "과제"} 가 곧 마감됩니다.`,
         link: `/activities/${act.type === "study" ? "studies" : "projects"}/${a.activityId}?tab=progress`,
@@ -117,9 +120,9 @@ export async function GET(req: NextRequest) {
         recipientCount: result.successful,
       });
 
-      // 발송 완료된 사용자들에 대해 push_log 기록 (개별)
+      // 발송 완료된 사용자들에 대해 push_log 기록 (개별) — 옵트아웃된 사용자는 dedup 로그 안 남김 (다음 cron 에서 prefs 재변경 시 다시 시도 가능)
       const sentAt = new Date().toISOString();
-      const writes = eligibleUserIds.map((uid) => {
+      const writes = allowedUserIds.map((uid) => {
         const dupRef = db.collection("push_logs").doc(`study_assignment_reminder_${doc.id}_${uid}`);
         return dupRef.set({
           kind: "study_assignment_reminder",
