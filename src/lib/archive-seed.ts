@@ -149,6 +149,186 @@ export const SEED_CONCEPTS: SeedConcept[] = [
       "강명희, 임병노 (2009). CSCL 환경에서 협력학습 효과에 영향을 미치는 요인. 교육공학연구, 25(3), 53-88.",
     ],
   },
+  // ─── 2026 보강: 교육공학 분야 핵심 개념 16개 추가 ───
+  {
+    name: "교육공학",
+    altNames: ["Educational Technology", "Instructional Technology", "EdTech"],
+    description:
+      "AECT(2023) 최신 정의: \"학습경험과 학습환경의 전략적 설계·관리·구현·평가를 통해 지식의 진보, 학습·수행의 향상, 학습자 권한 강화를 추구하는 이론·연구·실천에 대한 윤리적 학문과 응용\". 2008년 정의(학습 촉진·수행 향상)에서 2023년 학습자 권한 강화(empower learners) + 학습경험·환경(learning experiences and environments) 두 축이 신규 추가됨.",
+    tags: ["AECT", "정의", "학문분야"],
+    references: [
+      "AECT (2023). Definition of Educational Technology. https://www.aect.org/aect/about/aect-definition",
+      "Januszewski, A., & Molenda, M. (Eds.). (2008). Educational technology: A definition with commentary. Routledge.",
+      "Seels, B. B., & Richey, R. C. (1994). Instructional technology: The definition and domains of the field. AECT.",
+    ],
+  },
+  {
+    name: "교수설계",
+    altNames: ["Instructional Design", "ID", "교수체제설계", "ISD"],
+    description:
+      "학습 목표 달성을 위해 교수·학습 과정을 체계적으로 분석·설계·개발·실행·평가하는 절차. ADDIE 모델, Dick & Carey, Gagné의 9 events, Merrill의 First Principles, 4C/ID 등이 대표 모델. 교육공학 5도메인 중 '설계' 영역의 중심 활동이며 모든 학습 콘텐츠 개발의 기초.",
+    tags: ["설계", "ADDIE", "ID", "체제적 접근"],
+    references: [
+      "Dick, W., Carey, L., & Carey, J. O. (2015). The systematic design of instruction (8th ed.). Pearson.",
+      "Gagné, R. M., Wager, W. W., Golas, K. C., & Keller, J. M. (2005). Principles of instructional design (5th ed.). Wadsworth.",
+      "Merrill, M. D. (2002). First principles of instruction. ETR&D, 50(3), 43-59.",
+    ],
+  },
+  {
+    name: "ADDIE 모델",
+    altNames: ["ADDIE Model"],
+    description:
+      "교수설계(ID)의 가장 보편적인 절차 모델. Analysis(분석) → Design(설계) → Development(개발) → Implementation(실행) → Evaluation(평가)의 5단계 순환. 단계별 산출물이 다음 단계 입력이 되며, 마지막 평가에서 이전 단계로 피드백되는 형성·총괄 평가 흐름을 포함한다.",
+    tags: ["ID", "절차", "설계 모델"],
+    references: [
+      "Branch, R. M. (2009). Instructional design: The ADDIE approach. Springer.",
+      "Molenda, M. (2003). In search of the elusive ADDIE model. Performance Improvement, 42(5), 34-36.",
+    ],
+  },
+  {
+    name: "TPACK",
+    altNames: ["Technological Pedagogical Content Knowledge", "TPCK"],
+    description:
+      "Mishra & Koehler(2006)가 Shulman(1986)의 PCK를 확장한 교사 지식 프레임워크. 내용지식(CK)·교수지식(PK)·테크놀로지지식(TK)의 3원 교집합에서 형성되는 통합 지식. 디지털 기술을 효과적으로 수업에 통합하기 위한 교사 역량 측정 및 양성 프로그램 설계의 핵심 개념.",
+    tags: ["교사역량", "테크놀로지 통합", "PCK"],
+    references: [
+      "Mishra, P., & Koehler, M. J. (2006). Technological pedagogical content knowledge: A framework for teacher knowledge. Teachers College Record, 108(6), 1017-1054.",
+      "Schmidt, D. A. et al. (2009). Technological pedagogical content knowledge (TPACK): The development and validation of an assessment instrument for preservice teachers. JRTE, 42(2), 123-149.",
+    ],
+  },
+  {
+    name: "SAMR 모델",
+    altNames: ["SAMR Model"],
+    description:
+      "Puentedura(2006)가 제안한 테크놀로지 통합 수준 평가 프레임워크. Substitution(대체)·Augmentation(증강)·Modification(변형)·Redefinition(재정의)의 4단계로 디지털 도구 활용 깊이를 진단. 위 단계로 갈수록 기술이 수업의 본질을 변화시키는 정도가 커진다. 디지털 전환 시대 교사 컨설팅과 연수 설계의 단골 frame.",
+    tags: ["테크놀로지 통합", "디지털 전환", "교사 연수"],
+    references: [
+      "Puentedura, R. R. (2006). Transformation, technology, and education. http://hippasus.com/resources/tte/",
+      "Hamilton, E. R., Rosenberg, J. M., & Akcaoglu, M. (2016). The substitution augmentation modification redefinition (SAMR) model: A critical review and suggestions for its use. TechTrends, 60(5), 433-441.",
+    ],
+  },
+  {
+    name: "학습분석",
+    altNames: ["Learning Analytics", "LA"],
+    description:
+      "학습자의 행동·맥락·산출 데이터를 수집·측정·분석·보고하여 학습과 학습환경을 이해·최적화하는 분야. SoLAR(Society for Learning Analytics Research, 2011~) 와 학술지 Journal of Learning Analytics 가 주도. 학습관리시스템(LMS) 로그, 디지털 교재 사용 기록, 협업 도구 활동을 활용한 위험학습자 조기 진단·개입(Early Warning) 연구가 활발하다.",
+    tags: ["데이터", "LMS", "LA", "조기 진단"],
+    references: [
+      "Siemens, G., & Long, P. (2011). Penetrating the fog: Analytics in learning and education. EDUCAUSE Review, 46(5), 30-32.",
+      "Gašević, D., Dawson, S., & Siemens, G. (2015). Let's not forget: Learning analytics are about learning. TechTrends, 59(1), 64-71.",
+    ],
+  },
+  {
+    name: "디지털 리터러시",
+    altNames: ["Digital Literacy", "디지털 문해력", "Digital Competence"],
+    description:
+      "디지털 도구·정보·미디어를 비판적으로 탐색·평가·활용·창출·공유할 수 있는 통합 역량. 유럽연합 DigComp 2.2(2022) 프레임워크가 5영역(정보·소통·콘텐츠 창출·안전·문제해결) 21역량으로 표준화. 한국에서는 2022 개정 교육과정 핵심 역량과 디지털 교과서 정책의 기초 개념.",
+    tags: ["역량", "DigComp", "교육과정"],
+    references: [
+      "Vuorikari, R., Kluzer, S., & Punie, Y. (2022). DigComp 2.2: The Digital Competence Framework for Citizens. Publications Office of the EU.",
+      "노은희, 신호재, 이재진 (2018). 디지털 리터러시 역량 강화 교육과정 구성 방안. 한국교육과정평가원.",
+    ],
+  },
+  {
+    name: "플립러닝",
+    altNames: ["Flipped Learning", "Flipped Classroom", "거꾸로 학습"],
+    description:
+      "전통적 교실 수업과 가정 학습의 순서를 뒤집어, 개념 학습은 사전 영상·자료로 가정에서, 적용·토론·문제해결은 교실에서 진행하는 혼합학습 모델. Bergmann & Sams(2012)가 보급. 메타분석(Lo & Hew, 2017)에서 전통 강의 대비 학업성취·만족도 효과크기 양(+) 보고. 사전학습 충실도가 효과 결정 변인.",
+    tags: ["혼합학습", "거꾸로", "Bergmann"],
+    references: [
+      "Bergmann, J., & Sams, A. (2012). Flip your classroom: Reach every student in every class every day. ISTE.",
+      "Lo, C. K., & Hew, K. F. (2017). A critical review of flipped classroom challenges in K-12 education. RPTEL, 12(4).",
+      "이지연, 김영환, 김영배 (2014). 학습자 중심 플립드 러닝 수업의 적용 사례. 교육공학연구, 30(2), 163-191.",
+    ],
+  },
+  {
+    name: "게이미피케이션",
+    altNames: ["Gamification", "교육 게이미피케이션"],
+    description:
+      "게임 메커닉스(점수·배지·리더보드·서사·미션)를 비게임 학습 맥락에 적용해 동기·몰입·지속을 높이는 설계 전략. Deterding et al.(2011) 정의 표준. 자기결정성이론(SDT)의 자율성·유능감·관계성 욕구 충족이 효과 매개. 단순 PBL(Points-Badges-Leaderboards) 보다 서사·선택권 설계가 깊은 학습 유발.",
+    tags: ["동기", "게임", "PBL"],
+    references: [
+      "Deterding, S., Dixon, D., Khaled, R., & Nacke, L. (2011). From game design elements to gamefulness: Defining \"gamification\". MindTrek 2011.",
+      "Hamari, J., Koivisto, J., & Sarsa, H. (2014). Does gamification work? A literature review of empirical studies on gamification. HICSS 2014.",
+    ],
+  },
+  {
+    name: "마이크로러닝",
+    altNames: ["Microlearning", "마이크로 콘텐츠"],
+    description:
+      "5~15분 분량의 짧은 단위 콘텐츠로 단일 학습 목표 1개를 즉시 학습·적용하는 형식. 모바일 사용 환경·HRD 의 just-in-time 학습 흐름과 결합되어 2010년대 후반 확산. 인지부하이론의 작업기억 한계 + 망각곡선 보상(반복) 원리 기반. SCORM 단편화·xAPI 추적이 기술 인프라.",
+    tags: ["모바일", "HRD", "JIT"],
+    references: [
+      "Hug, T. (Ed.). (2007). Didactics of microlearning. Waxmann.",
+      "Major, A., & Calandrino, T. (2018). Beyond chunking: Micro-learning secrets for effective online design. FDLA Journal, 3(13).",
+    ],
+  },
+  {
+    name: "컴퓨팅 사고력",
+    altNames: ["Computational Thinking", "CT"],
+    description:
+      "Wing(2006)이 제시한 문제를 컴퓨터가 처리할 수 있는 형태로 표현·해결하는 사고 능력. 분해(decomposition)·패턴 인식(pattern recognition)·추상화(abstraction)·알고리즘(algorithm)의 4가지 핵심 요소. 한국 2015·2022 개정 교육과정 SW·AI 교육 핵심 목표이며 디지털 새싹·SW중심학교 사업의 기초.",
+    tags: ["SW교육", "AI교육", "Wing"],
+    references: [
+      "Wing, J. M. (2006). Computational thinking. Communications of the ACM, 49(3), 33-35.",
+      "Shute, V. J., Sun, C., & Asbell-Clarke, J. (2017). Demystifying computational thinking. Educational Research Review, 22, 142-158.",
+    ],
+  },
+  {
+    name: "적응학습",
+    altNames: ["Adaptive Learning", "맞춤형 학습", "Adaptive Instruction"],
+    description:
+      "학습자의 사전지식·수행·선호·맥락 데이터에 기반해 콘텐츠·난이도·경로·피드백을 실시간 개인화하는 학습 시스템. ITS(Intelligent Tutoring System)·AI 학습 플랫폼이 기술 기반. Knewton·ALEKS·Smart Sparrow 등이 상용 사례. 한국에선 AI 디지털교과서(2025~) 정책으로 본격 도입.",
+    tags: ["AI", "개인화", "ITS"],
+    references: [
+      "VanLehn, K. (2011). The relative effectiveness of human tutoring, intelligent tutoring systems, and other tutoring systems. Educational Psychologist, 46(4), 197-221.",
+      "Aleven, V. et al. (2016). Help helps, but only so much: Research on help seeking with intelligent tutoring systems. IJAIED, 26(1), 205-223.",
+    ],
+  },
+  {
+    name: "멀티미디어 학습 인지이론",
+    altNames: ["Cognitive Theory of Multimedia Learning", "CTML"],
+    description:
+      "Mayer(2009)의 통합 이론으로, 학습자는 시각·청각 이중 채널, 제한된 작업기억, 능동적 처리의 3가지 가정 하에 학습. 12가지 멀티미디어 설계 원리(coherence, signaling, redundancy, contiguity, segmenting, pre-training, modality, personalization 등)가 도출되며, 동영상·이러닝 콘텐츠 품질 평가의 표준 frame.",
+    tags: ["Mayer", "이러닝", "설계원리"],
+    references: [
+      "Mayer, R. E. (2009). Multimedia learning (2nd ed.). Cambridge University Press.",
+      "Mayer, R. E. (2014). The Cambridge handbook of multimedia learning (2nd ed.). Cambridge University Press.",
+    ],
+  },
+  {
+    name: "학습공동체",
+    altNames: ["Community of Practice", "CoP", "전문학습공동체", "PLC"],
+    description:
+      "공통 관심·전문성을 공유한 사람들이 정기적 상호작용을 통해 지식·실천을 함께 발전시키는 사회적 학습 단위. Lave & Wenger(1991)가 상황학습(situated learning) 맥락에서 제안. 교사 전문학습공동체(PLC), 기업 내 CoP, MOOC 학습자 커뮤니티 등이 응용 사례. 정체성 형성·상호 멘토링이 핵심 메커니즘.",
+    tags: ["사회적 학습", "PLC", "Wenger"],
+    references: [
+      "Lave, J., & Wenger, E. (1991). Situated learning: Legitimate peripheral participation. Cambridge University Press.",
+      "Wenger, E. (1998). Communities of practice: Learning, meaning, and identity. Cambridge University Press.",
+    ],
+  },
+  {
+    name: "사회적 실재감",
+    altNames: ["Social Presence", "Community of Inquiry CoI"],
+    description:
+      "온라인 학습 환경에서 학습자가 다른 참여자를 '실제 사람'으로 지각하는 정도. Garrison, Anderson, Archer(2000)의 탐구공동체(CoI) 모델 3요소 중 하나로 인지적 실재감(cognitive presence)·교수적 실재감(teaching presence)과 함께 작동. 원격·블렌디드 학습의 학습 만족도·지속의도를 설명하는 핵심 매개변인.",
+    tags: ["온라인학습", "CoI", "Garrison"],
+    references: [
+      "Garrison, D. R., Anderson, T., & Archer, W. (2000). Critical inquiry in a text-based environment: Computer conferencing in higher education. The Internet and Higher Education, 2(2-3), 87-105.",
+      "강명희, 임병노, 이지연 (2013). 이러닝에서 사회적 실재감이 학습 성과에 미치는 영향. 교육공학연구, 29(3), 545-572.",
+    ],
+  },
+  {
+    name: "학습경험 디자인",
+    altNames: ["Learning Experience Design", "LX Design", "LXD"],
+    description:
+      "UX(User Experience) 설계 원리를 학습 설계에 적용해 학습자의 인지·정서·맥락 경험을 총체적으로 디자인하는 접근. 전통 ID 가 콘텐츠·절차 중심이라면 LXD 는 학습자 여정(learner journey)·터치포인트·정서적 흐름을 중시. AECT 2023 정의의 '학습경험과 학습환경' 강화와 직접 연결되는 최신 흐름.",
+    tags: ["UX", "LX", "AECT 2023"],
+    references: [
+      "Floor, N. (2018). Learning experience design (LXD): An introduction. Learning Experience Design.",
+      "Jahnke, I., Lee, Y. M., Pham, M., He, H., & Austin, L. (2020). Unpacking the inherent design principles of mobile microlearning. Technology, Knowledge and Learning, 25, 585-619.",
+    ],
+  },
 ];
 
 // ─── 변인 (Variables) ─────────────────────────────────────────

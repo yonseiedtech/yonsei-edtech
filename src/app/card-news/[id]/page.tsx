@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Calendar } from "lucide-react";
 import { loadSeries } from "@/features/card-news/loader";
-import { CardArt } from "@/features/card-news/art";
+import { CardArtFit } from "@/features/card-news/CardArtFit";
 
 export const dynamic = "force-dynamic";
 
@@ -64,9 +64,8 @@ export default async function CardNewsDetailPage({
             className="rounded-2xl border bg-card p-1 shadow-sm"
             aria-label={`${i + 1} / ${series.cards.length}`}
           >
-            <div className="aspect-square w-full overflow-hidden rounded-xl">
-              <CardArt spec={card} />
-            </div>
+            {/* CardArtFit 이 내부에서 aspect-square + 1080px 캔버스 자동 scale 처리 */}
+            <CardArtFit spec={card} className="rounded-xl" />
             <p className="px-3 py-2 text-center text-[11px] text-muted-foreground">
               {i + 1} / {series.cards.length}
             </p>

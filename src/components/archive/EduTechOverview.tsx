@@ -119,12 +119,11 @@ export default function EduTechOverview() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* 정의 한 줄 */}
+        {/* 정의 한 줄 — AECT 2023 최신 정의 반영 */}
         <p className="text-sm leading-relaxed">
-          교육공학(Educational Technology)은 <strong>전통적 교육</strong>과{" "}
-          <strong>체제적 접근</strong>을 더해 <strong>대안적 교육방법</strong>을 모색하고,
-          교수·학습 과정을 재설계(<em>Reengineering of Instruction &amp; Learning</em>)하여{" "}
-          <strong>교육의 효과성·효율성</strong>을 높이는 학문·실천 분야입니다.
+          교육공학(Educational Technology)은 <strong>학습경험과 학습환경</strong>을{" "}
+          <strong>전략적으로 설계·관리·구현·평가</strong>하여 <strong>학습자를 권한화(empower)</strong>하고,
+          <strong>학습·수행을 향상</strong>시키는 <em>이론·연구·실천에 대한 윤리적 학문과 응용</em>입니다 (AECT, 2023).
         </p>
 
         {expanded && (
@@ -248,34 +247,38 @@ export default function EduTechOverview() {
               <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
                 <strong>Association for Educational Communications and Technology</strong> (1923~).
                 전 세계 교육공학 학자·실무자 협회로, 우리 분야의 정의·표준·학술지(ETR&amp;D)를 주도합니다.
-                1994년 5도메인 모델, 2008년 정의는 모두 AECT 공식 작업의 산물입니다.
+                1994년 5도메인 모델, 2008년·2023년 정의는 모두 AECT 공식 작업의 산물입니다.
               </p>
 
-              {/* AECT 2008 공식 정의 */}
-              <div className="mt-3 rounded-md border-l-4 border-l-sky-400 bg-sky-50/60 p-3">
+              {/* AECT 2023 최신 공식 정의 */}
+              <div className="mt-3 rounded-md border-l-4 border-l-sky-500 bg-sky-50/80 p-3">
                 <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-sky-900">
                   <Quote size={10} />
-                  AECT 2008 공식 정의
+                  AECT 2023 최신 공식 정의
+                  <Badge className="ml-1 bg-sky-600 text-[9px] text-white">NEW</Badge>
                 </p>
                 <p className="mt-1.5 text-xs italic leading-relaxed text-sky-950">
-                  &ldquo;Educational technology is the <strong>study</strong> and <strong>ethical practice</strong>{" "}
-                  of <strong>facilitating learning</strong> and <strong>improving performance</strong> by{" "}
-                  <strong>creating, using, and managing</strong> appropriate{" "}
-                  <strong>technological processes and resources</strong>.&rdquo;
+                  &ldquo;Educational technology is the <strong>ethical study and application</strong>{" "}
+                  of <strong>theory, research, and practices</strong> to{" "}
+                  <strong>advance knowledge, improve learning and performance</strong>, and{" "}
+                  <strong>empower learners</strong> through <strong>strategic design, management, implementation, and evaluation</strong>{" "}
+                  of <strong>learning experiences and environments</strong> using appropriate{" "}
+                  <strong>processes and resources</strong>.&rdquo;
                 </p>
                 <p className="mt-2 text-[11px] leading-relaxed text-foreground">
-                  <strong>의역</strong> — 교육공학은 적절한 <em>기술적 과정과 자원</em>을{" "}
-                  <em>창조·활용·관리</em>함으로써 <em>학습을 촉진</em>하고 <em>수행을 향상</em>시키는{" "}
-                  <em>학문적 연구이자 윤리적 실천</em>이다.
+                  <strong>의역</strong> — 교육공학은 <em>학습경험과 학습환경</em>의 전략적{" "}
+                  <em>설계·관리·구현·평가</em>를 통해 <em>지식의 진보, 학습·수행의 향상, 학습자 권한 강화</em>를 추구하는{" "}
+                  <em>이론·연구·실천에 대한 윤리적 학문과 응용</em>이다.
                 </p>
                 <div className="mt-2 flex flex-wrap gap-1">
                   {[
-                    { label: "Study", note: "체계적 연구" },
-                    { label: "Ethical practice", note: "윤리적 실천" },
-                    { label: "Facilitating learning", note: "학습 촉진" },
-                    { label: "Improving performance", note: "수행 향상" },
-                    { label: "Creating · Using · Managing", note: "창조·활용·관리" },
-                    { label: "Processes & Resources", note: "과정·자원" },
+                    { label: "Ethical study & application", note: "윤리적 학문과 응용" },
+                    { label: "Theory · Research · Practices", note: "이론·연구·실천" },
+                    { label: "Advance knowledge", note: "지식의 진보" },
+                    { label: "Improve learning & performance", note: "학습·수행 향상" },
+                    { label: "Empower learners", note: "학습자 권한 강화 (신규)" },
+                    { label: "Strategic Design/Mgmt/Impl/Eval", note: "전략적 설계·관리·구현·평가" },
+                    { label: "Learning experiences & environments", note: "학습경험·환경 (신규)" },
                   ].map((k) => (
                     <Badge
                       key={k.label}
@@ -288,10 +291,46 @@ export default function EduTechOverview() {
                   ))}
                 </div>
                 <p className="mt-2 text-[10px] text-muted-foreground">
-                  💡 1994년 정의(<em>theory and practice of design, development, utilization, management, evaluation</em>)
-                  와 비교하면 2008년 정의는 <strong>윤리</strong>·<strong>수행 향상</strong>이 추가되어
-                  HRD(인적자원개발)·기업 교육 영역과의 연결성이 강화되었습니다.
+                  Task Force: Albert Ritzhaupt &amp; Keith Heggart (Co-Chairs) · Christopher Prokes ·
+                  Kamla Al Amri · Monalisa Dash · Michelle R. Gould · Royce Kimmons (2023).
                 </p>
+              </div>
+
+              {/* 정의의 진화 — 1994 → 2008 → 2023 */}
+              <div className="mt-3 rounded-md border bg-card p-3">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  📜 정의의 진화 1994 → 2008 → 2023
+                </p>
+                <div className="mt-2 space-y-2">
+                  <div className="rounded-md border-l-4 border-l-slate-300 bg-muted/30 p-2">
+                    <p className="text-[10px] font-semibold text-slate-700">1994 (Seels &amp; Richey)</p>
+                    <p className="text-[11px] italic text-foreground/80">
+                      &ldquo;Theory and practice of design, development, utilization, management, evaluation of processes and resources for learning.&rdquo;
+                    </p>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground">
+                      <strong>핵심 추가:</strong> 5도메인 모델 (설계·개발·활용·관리·평가)
+                    </p>
+                  </div>
+                  <div className="rounded-md border-l-4 border-l-sky-300 bg-sky-50/40 p-2">
+                    <p className="text-[10px] font-semibold text-slate-700">2008</p>
+                    <p className="text-[11px] italic text-foreground/80">
+                      &ldquo;Study and ethical practice of facilitating learning and improving performance by creating, using, and managing appropriate technological processes and resources.&rdquo;
+                    </p>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground">
+                      <strong>핵심 추가:</strong> <em>윤리(ethical)</em> + <em>수행 향상(improving performance)</em> → HRD/기업교육 연결
+                    </p>
+                  </div>
+                  <div className="rounded-md border-l-4 border-l-sky-500 bg-sky-100/60 p-2">
+                    <p className="text-[10px] font-semibold text-slate-700">2023 (최신)</p>
+                    <p className="text-[11px] italic text-foreground/80">
+                      &ldquo;Ethical study and application … advance knowledge, improve learning and performance, and empower learners … learning experiences and environments using appropriate processes and resources.&rdquo;
+                    </p>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground">
+                      <strong>핵심 추가:</strong> <em>학습자 권한 강화(empower learners)</em> + <em>학습경험·환경(learning experiences and environments)</em> →
+                      LX(Learning Experience) · UDL · 학습자 주체성 강화 흐름 반영
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {/* AECT 핵심 자원 */}

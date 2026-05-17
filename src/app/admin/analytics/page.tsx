@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { dataApi, profilesApi, seminarsApi } from "@/lib/bkend";
 import {
@@ -100,15 +100,28 @@ export default function AnalyticsPage() {
     queryKey: ["analytics", "certificates"],
     queryFn: () => dataApi.list<Certificate>("certificates", { limit: 2000 }),
   });
-  const todayKey = todayYmdKst();
+  // Insights 날짜 선택: 기본 오늘(KST), 임의 일자 조회 가능
+  const todayKstStr = todayYmdKst();
+  const [selectedDate, setSelectedDate] = useState<string>(todayKstStr);
+  const isToday = selectedDate === todayKstStr;
+
+  function shiftDate(days: number) {
+    const [y, m, d] = selectedDate.split("-").map(Number);
+    const next = new Date(Date.UTC(y, m - 1, d));
+    next.setUTCDate(next.getUTCDate() + days);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    setSelectedDate(`${next.getUTCFullYear()}-${pad(next.getUTCMonth() + 1)}-${pad(next.getUTCDate())}`);
+  }
+
   const { data: todayVisits } = useQuery({
-    queryKey: ["analytics", "daily_visits", todayKey],
+    queryKey: ["analytics", "daily_visits", selectedDate],
     queryFn: async (): Promise<DailyVisitDoc | null> => {
-      const snap = await getDoc(doc(db, "daily_visits", todayKey));
+      const snap = await getDoc(doc(db, "daily_visits", selectedDate));
       return snap.exists() ? (snap.data() as DailyVisitDoc) : null;
     },
-    refetchInterval: 60_000,
-    refetchOnWindowFocus: true,
+    // 오늘 선택 시에만 실시간 refetch — 과거/미래는 데이터 고정
+    refetchInterval: isToday ? 60_000 : false,
+    refetchOnWindowFocus: isToday,
   });
 
   const members = membersRes?.data ?? [];
@@ -339,34 +352,65 @@ export default function AnalyticsPage() {
         <StatCard icon={Star} label="평균 만족도" value={analytics.avgRating} sub={`후기 ${analytics.totalReviews}건`} color="bg-amber-50 text-amber-600" />
       </div>
 
+      {/* Insights 날짜 선택 — 임의 일자 조회. 어제/오늘/내일 quick + date picker */}
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border bg-card px-3 py-2 text-xs">
+        <span className="font-medium text-foreground">조회 일자 (KST)</span>
+        <input
+          type="date"
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value || todayKstStr)}
+          className="h-7 rounded-md border bg-background px-2 text-xs"
+          aria-label="방문 통계 조회 일자"
+        />
+        <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => shiftDate(-1)}>
+          ← 하루 전
+        </Button>
+        <Button
+          size="sm"
+          variant={isToday ? "default" : "outline"}
+          className="h-7 px-2 text-[11px]"
+          onClick={() => setSelectedDate(todayKstStr)}
+        >
+          오늘
+        </Button>
+        <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => shiftDate(1)}>
+          하루 후 →
+        </Button>
+        {!isToday && (
+          <span className="ml-2 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] text-amber-700">
+            과거/미래 조회 — 실시간 갱신 꺼짐
+          </span>
+        )}
+      </div>
+
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard icon={FileText} label="게시글" value={analytics.totalPosts} color="bg-emerald-50 text-emerald-600" />
         <StatCard icon={Award} label="수료증/감사장" value={analytics.totalCerts} color="bg-pink-50 text-pink-600" />
         <StatCard
           icon={Eye}
-          label="오늘 방문수"
+          label={`${isToday ? "오늘" : selectedDate} 방문수`}
           value={todayVisits?.visits ?? 0}
-          sub={`KST ${todayKey}`}
+          sub={`KST ${selectedDate}`}
           color="bg-cyan-50 text-cyan-600"
         />
         <StatCard
           icon={UserCheck}
-          label="오늘 방문자수"
+          label={`${isToday ? "오늘" : selectedDate} 방문자수`}
           value={todayVisits?.uniqueVisitors?.length ?? 0}
           sub="중복 제외"
           color="bg-indigo-50 text-indigo-600"
         />
         <StatCard
           icon={Activity}
-          label="오늘 페이지뷰"
+          label={`${isToday ? "오늘" : selectedDate} 페이지뷰`}
           value={todayVisits?.pageViews ?? 0}
           sub="전체 화면 이동 합계"
           color="bg-rose-50 text-rose-600"
         />
       </div>
 
-      {/* 오늘 방문 회원 명단 */}
-      <ChartCard title={`오늘 방문 회원 (KST · ${todayKey})`}>
+      {/* 선택 일자 방문 회원 명단 */}
+      <ChartCard title={`${isToday ? "오늘" : selectedDate} 방문 회원 (KST · ${selectedDate})`}>
         <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-indigo-700 font-medium">
             회원 {visitInsights.memberVisitors.length}명
@@ -425,7 +469,7 @@ export default function AnalyticsPage() {
 
       {/* 방문 분석 */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <ChartCard title={`시간대별 방문 분포 (오늘 KST · ${todayKey})`}>
+        <ChartCard title={`시간대별 방문 분포 (KST · ${selectedDate})`}>
           {visitInsights.hourlyTotal === 0 ? (
             <div className="flex h-[240px] items-center justify-center text-sm text-muted-foreground">
               아직 오늘 집계된 방문이 없습니다.
