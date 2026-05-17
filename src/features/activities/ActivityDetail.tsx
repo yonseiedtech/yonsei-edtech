@@ -19,7 +19,7 @@ import {
   ArrowLeft, Calendar, MapPin, Users, User, UserPlus, Check, X,
   Pencil, Globe, Loader2, CheckCircle, CheckCircle2, Circle, Clock, XCircle,
   Plus, Trash2, ListChecks, Timer, UserCog,
-  ChevronDown, ChevronUp,
+  ChevronDown, ChevronUp, ChevronRight,
   Upload, Paperclip, FileText, Download, CalendarPlus,
   MessageSquare, MessageSquareQuote, HeartHandshake, BarChart3,
 } from "lucide-react";
@@ -943,6 +943,17 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                             </div>
                           </div>
                           <div className="flex shrink-0 items-center gap-1">
+                            {/* Week-Page: 회차 별도 페이지로 이동 (study/project 만, 회의록·과제·노트·회고 통합 페이지) */}
+                            {(type === "study" || type === "project") && (
+                              <Link
+                                href={`/activities/${type === "study" ? "studies" : "projects"}/${activityId}/weeks/${displayWeek}`}
+                                className="inline-flex h-7 items-center gap-1 rounded-md border border-primary/40 bg-primary/5 px-2 text-[11px] font-medium text-primary hover:bg-primary/10"
+                                aria-label={`Week ${displayWeek} 전체 페이지 열기`}
+                              >
+                                <span className="hidden sm:inline">전체 페이지</span>
+                                <ChevronRight size={12} />
+                              </Link>
+                            )}
                             <Button
                               size="sm"
                               variant={isExpanded ? "default" : "outline"}

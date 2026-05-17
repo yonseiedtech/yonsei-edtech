@@ -32,8 +32,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import type { Activity, ActivityProgress, ActivityProgressMode, User } from "@/types";
+import type { Activity, ActivityProgress, ActivityProgressMode, ActivityType, User } from "@/types";
 import { ACTIVITY_PROGRESS_MODE_LABELS } from "@/types";
+import InlineMeetingTimer from "./InlineMeetingTimer";
+import StudySessionPreClassCard from "./StudySessionPreClassCard";
+import StudySessionReflectionCard from "./StudySessionReflectionCard";
+import StudySessionAssignmentsCard from "./StudySessionAssignmentsCard";
+import StudySessionNotesCard from "./StudySessionNotesCard";
 
 const STATUS_LABELS: Record<ActivityProgress["status"], string> = {
   planned: "예정",
@@ -52,6 +57,8 @@ interface Props {
   weeksHref: string;
   detailHref: string;
   typeLabel: string;
+  /** 활동 타입 — 회고/과제/토론 카드 노출 분기 (study/project 만). */
+  type: ActivityType;
 }
 
 export default function ActivityWeekDetailPage({
@@ -60,6 +67,7 @@ export default function ActivityWeekDetailPage({
   weeksHref,
   detailHref,
   typeLabel,
+  type,
 }: Props) {
   const { user } = useAuthStore();
   const isStaff = isAtLeast(user, "staff");
@@ -520,6 +528,115 @@ export default function ActivityWeekDetailPage({
           )}
         </CardContent>
       </Card>
+
+      {/* 회의록 / 진행 타이머 — 회차 라이브 진행 관리 */}
+      <InlineMeetingTimer
+        activityId={activityId}
+        activityProgressId={week.id}
+        weekLabel={`Week ${weekNumber} · ${week.title}`}
+        canControl={canEdit}
+        canStart={canEdit}
+        createdBy={user?.id}
+      />
+
+      {/* 사전 학습 — 발제자(선택)/Pre-read/토론질문 */}
+      {(type === "study" || type === "project") && (
+        <Card>
+          <CardContent className="py-4">
+            <StudySessionPreClassCard
+              activityId={activityId}
+              progress={week}
+              week={weekNumber}
+              canManage={canEdit}
+              participantIds={participantIds}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 회고 (Sprint 1) */}
+      {(type === "study" || type === "project") && (
+        <Card>
+          <CardContent className="py-4">
+            <StudySessionReflectionCard
+              activityId={activityId}
+              activityProgressId={week.id}
+              week={weekNumber}
+              progressStatus={week.status}
+              currentUserId={user?.id}
+              currentUserName={user?.name}
+              canViewAll={canEdit}
+              participantIds={participantIds}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 과제 (Sprint 2) */}
+      {(type === "study" || type === "project") && (
+        <Card>
+          <CardContent className="py-4">
+            <StudySessionAssignmentsCard
+              activityId={activityId}
+              activityProgressId={week.id}
+              week={weekNumber}
+              currentUserId={user?.id}
+              currentUserName={user?.name}
+              canManage={canEdit}
+              participantIds={participantIds}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 토론 노트 (Sprint 4) */}
+      {(type === "study" || type === "project") && (
+        <Card>
+          <CardContent className="py-4">
+            <StudySessionNotesCard
+              activityId={activityId}
+              activityProgressId={week.id}
+              week={weekNumber}
+              currentUserId={user?.id}
+              currentUserName={user?.name}
+              canModerate={canEdit}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 회차 삭제 (canEdit) — 회차 자체 삭제. 자료/회고/과제는 ref 삭제 안되므로 별도 정리 필요. */}
+      {canEdit && (
+        <div className="flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+            onClick={async () => {
+              if (
+                !confirm(
+                  `Week ${weekNumber} ("${week.title}") 회차를 삭제하시겠습니까?\n해당 회차의 회고/과제/노트는 남고, 회차 자체만 사라집니다.`,
+                )
+              )
+                return;
+              try {
+                await activityProgressApi.delete(week.id);
+                await queryClient.invalidateQueries({
+                  queryKey: ["activity-progress", activityId],
+                });
+                toast.success("회차가 삭제되었습니다.");
+                // 회차 목록으로 이동
+                window.location.href = detailHref + "?tab=progress";
+              } catch (e) {
+                console.error("[week/delete]", e);
+                toast.error(e instanceof Error ? `삭제 실패: ${e.message}` : "삭제 실패");
+              }
+            }}
+          >
+            <Trash2 size={14} className="mr-1" /> 이 회차 삭제
+          </Button>
+        </div>
+      )}
 
       <div className="flex items-center justify-between gap-2">
         {prevWeek ? (
