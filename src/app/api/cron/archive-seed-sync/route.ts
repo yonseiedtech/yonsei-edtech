@@ -5,6 +5,8 @@ import {
   SEED_CONCEPTS,
   SEED_VARIABLES,
   SEED_MEASUREMENTS,
+  SEED_CONCEPT_VARIABLE_LINKS,
+  SEED_VARIABLE_MEASUREMENT_LINKS,
 } from "@/lib/archive-seed";
 
 /**
@@ -91,13 +93,129 @@ export async function GET(req: NextRequest) {
       references: s.references ?? [],
     }));
 
+    // ─── Linking — 이름→ID 매핑 후 양방향 연결 (멱등) ───
+    const [cSnap, vSnap, mSnap] = await Promise.all([
+      db.collection("archive_concepts").get(),
+      db.collection("archive_variables").get(),
+      db.collection("archive_measurements").get(),
+    ]);
+    const conceptByName = new Map<string, { id: string; variableIds?: string[] }>();
+    cSnap.docs.forEach((d) => {
+      const data = d.data() as { name?: string; variableIds?: string[] };
+      if (data?.name) conceptByName.set(data.name, { id: d.id, variableIds: data.variableIds });
+    });
+    const variableByName = new Map<
+      string,
+      { id: string; conceptIds?: string[]; measurementIds?: string[] }
+    >();
+    vSnap.docs.forEach((d) => {
+      const data = d.data() as {
+        name?: string;
+        conceptIds?: string[];
+        measurementIds?: string[];
+      };
+      if (data?.name)
+        variableByName.set(data.name, {
+          id: d.id,
+          conceptIds: data.conceptIds,
+          measurementIds: data.measurementIds,
+        });
+    });
+    const measurementByName = new Map<string, { id: string; variableIds?: string[] }>();
+    mSnap.docs.forEach((d) => {
+      const data = d.data() as { name?: string; variableIds?: string[] };
+      if (data?.name)
+        measurementByName.set(data.name, { id: d.id, variableIds: data.variableIds });
+    });
+
+    let conceptToVariableLinks = 0;
+    let variableToMeasurementLinks = 0;
+    const variableConceptAcc = new Map<string, Set<string>>();
+
+    // 개념 → 변인
+    for (const [conceptName, variableNames] of Object.entries(SEED_CONCEPT_VARIABLE_LINKS)) {
+      const c = conceptByName.get(conceptName);
+      if (!c) continue;
+      const varIds = variableNames
+        .map((n) => variableByName.get(n)?.id)
+        .filter((id): id is string => !!id);
+      if (varIds.length === 0) continue;
+      const existing = new Set(c.variableIds ?? []);
+      const before = existing.size;
+      varIds.forEach((id) => existing.add(id));
+      if (existing.size > before) {
+        await db
+          .collection("archive_concepts")
+          .doc(c.id)
+          .update({ variableIds: Array.from(existing), updatedAt: NOW_ISO() });
+        conceptToVariableLinks += existing.size - before;
+      }
+      for (const vName of variableNames) {
+        const v = variableByName.get(vName);
+        if (!v) continue;
+        let set = variableConceptAcc.get(v.id);
+        if (!set) {
+          set = new Set(v.conceptIds ?? []);
+          variableConceptAcc.set(v.id, set);
+        }
+        set.add(c.id);
+      }
+    }
+    for (const [vId, set] of variableConceptAcc) {
+      await db
+        .collection("archive_variables")
+        .doc(vId)
+        .update({ conceptIds: Array.from(set), updatedAt: NOW_ISO() });
+    }
+
+    // 변인 → 측정도구
+    const measurementVariableAcc = new Map<string, Set<string>>();
+    for (const [variableName, measurementNames] of Object.entries(
+      SEED_VARIABLE_MEASUREMENT_LINKS,
+    )) {
+      const v = variableByName.get(variableName);
+      if (!v) continue;
+      const mIds = measurementNames
+        .map((n) => measurementByName.get(n)?.id)
+        .filter((id): id is string => !!id);
+      if (mIds.length === 0) continue;
+      const existing = new Set(v.measurementIds ?? []);
+      const before = existing.size;
+      mIds.forEach((id) => existing.add(id));
+      if (existing.size > before) {
+        await db
+          .collection("archive_variables")
+          .doc(v.id)
+          .update({ measurementIds: Array.from(existing), updatedAt: NOW_ISO() });
+        variableToMeasurementLinks += existing.size - before;
+      }
+      for (const mName of measurementNames) {
+        const m = measurementByName.get(mName);
+        if (!m) continue;
+        let set = measurementVariableAcc.get(m.id);
+        if (!set) {
+          set = new Set(m.variableIds ?? []);
+          measurementVariableAcc.set(m.id, set);
+        }
+        set.add(v.id);
+      }
+    }
+    for (const [mId, set] of measurementVariableAcc) {
+      await db
+        .collection("archive_measurements")
+        .doc(mId)
+        .update({ variableIds: Array.from(set), updatedAt: NOW_ISO() });
+    }
+
     return Response.json({
       ok: true,
       concepts,
       variables,
       measurements,
+      links: { conceptToVariableLinks, variableToMeasurementLinks },
       summary: {
         totalCreated: concepts.created + variables.created + measurements.created,
+        totalLinks: conceptToVariableLinks + variableToMeasurementLinks,
       },
     });
   } catch (err) {

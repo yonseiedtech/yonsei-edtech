@@ -65,7 +65,8 @@ export default function ConsoleArchivePage() {
       toast.success(
         `시드 적재 완료 — 개념 +${r.concepts.created}/스킵 ${r.concepts.skipped}, ` +
           `변인 +${r.variables.created}/스킵 ${r.variables.skipped}, ` +
-          `측정도구 +${r.measurements.created}/스킵 ${r.measurements.skipped}`,
+          `측정도구 +${r.measurements.created}/스킵 ${r.measurements.skipped}, ` +
+          `연결 개념↔변인 ${r.links?.conceptToVariable ?? 0}건, 변인↔측정도구 ${r.links?.variableToMeasurement ?? 0}건`,
       );
       load();
     } catch (err) {

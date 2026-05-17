@@ -289,11 +289,12 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     name: "멀티미디어 학습 인지이론",
     altNames: ["Cognitive Theory of Multimedia Learning", "CTML"],
     description:
-      "Mayer(2009)의 통합 이론으로, 학습자는 시각·청각 이중 채널, 제한된 작업기억, 능동적 처리의 3가지 가정 하에 학습. 12가지 멀티미디어 설계 원리(coherence, signaling, redundancy, contiguity, segmenting, pre-training, modality, personalization 등)가 도출되며, 동영상·이러닝 콘텐츠 품질 평가의 표준 frame.",
+      "Mayer 의 통합 이론으로, 학습자는 시각·청각 이중 채널, 제한된 작업기억, 능동적 처리의 3가지 가정 하에 학습. 12가지 멀티미디어 설계 원리(coherence, signaling, redundancy, spatial/temporal contiguity, segmenting, pre-training, modality, personalization, voice, image, embodiment, generative activity)가 도출되며, 동영상·이러닝 콘텐츠 품질 평가의 표준 frame.",
     tags: ["Mayer", "이러닝", "설계원리"],
     references: [
+      "Mayer, R. E. (2020). Multimedia learning (3rd ed.). Cambridge University Press.",
       "Mayer, R. E. (2009). Multimedia learning (2nd ed.). Cambridge University Press.",
-      "Mayer, R. E. (2014). The Cambridge handbook of multimedia learning (2nd ed.). Cambridge University Press.",
+      "Mayer, R. E., & Fiorella, L. (Eds.). (2021). The Cambridge handbook of multimedia learning (3rd ed.). Cambridge University Press.",
     ],
   },
   {
@@ -325,8 +326,9 @@ export const SEED_CONCEPTS: SeedConcept[] = [
       "UX(User Experience) 설계 원리를 학습 설계에 적용해 학습자의 인지·정서·맥락 경험을 총체적으로 디자인하는 접근. 전통 ID 가 콘텐츠·절차 중심이라면 LXD 는 학습자 여정(learner journey)·터치포인트·정서적 흐름을 중시. AECT 2023 정의의 '학습경험과 학습환경' 강화와 직접 연결되는 최신 흐름.",
     tags: ["UX", "LX", "AECT 2023"],
     references: [
-      "Floor, N. (2018). Learning experience design (LXD): An introduction. Learning Experience Design.",
+      "Schmidt, M., & Huang, R. (2022). Defining learning experience design: Voices from the field of learning design & technology. TechTrends, 66(2), 141-158.",
       "Jahnke, I., Lee, Y. M., Pham, M., He, H., & Austin, L. (2020). Unpacking the inherent design principles of mobile microlearning. Technology, Knowledge and Learning, 25, 585-619.",
+      "Floor, N. (2018). Learning experience design (LXD): An introduction. lxd.org.",
     ],
   },
 ];
@@ -572,11 +574,54 @@ export const SEED_MEASUREMENTS: SeedMeasurement[] = [
   },
 ];
 
+// ─── 연결관계 매핑 (Linking) ──────────────────────────────────
+// 개념 이름 → 관련 변인 이름들. 시드 적용 시 자동으로 variableIds 채움 + 변인에 역참조 conceptIds 갱신.
+// 이름이 정확히 일치해야 하며 (SEED_VARIABLES.name 또는 기존 DB), 일치 안 하면 해당 링크만 skip.
+export const SEED_CONCEPT_VARIABLE_LINKS: Record<string, string[]> = {
+  // 기존 8개
+  "자기효능감": ["학업적 자기효능감"],
+  "학습동기": ["내재적 동기"],
+  "인지부하": ["외재적 인지부하"],
+  "메타인지": ["자기조절 학습전략"],
+  "자기조절학습": ["자기조절 학습전략"],
+  "학습몰입": ["학습몰입"],
+  "테크놀로지 수용": ["학습 지속의도"],
+  "협력학습": ["학업성취도", "학습 만족도"],
+  // 신규 16개 중 변인과 연결되는 것 (메타 개념은 변인 매핑 없음)
+  "학습분석": ["학업성취도", "학습 지속의도"],
+  "플립러닝": ["학업성취도", "학습 만족도", "학습몰입"],
+  "게이미피케이션": ["내재적 동기", "학습몰입", "학습 지속의도"],
+  "마이크로러닝": ["학습 지속의도"],
+  "적응학습": ["학업성취도", "학습 지속의도"],
+  "멀티미디어 학습 인지이론": ["외재적 인지부하", "학습 만족도"],
+  "학습공동체": ["학습 만족도", "학업적 자기효능감"],
+  "사회적 실재감": ["학습 만족도", "학습 지속의도"],
+  "학습경험 디자인": ["학습 만족도", "학습몰입"],
+};
+
+// 변인 이름 → 관련 측정도구 이름들. 시드 적용 시 자동으로 measurementIds 채움 + 측정도구에 역참조 variableIds.
+export const SEED_VARIABLE_MEASUREMENT_LINKS: Record<string, string[]> = {
+  "학업적 자기효능감": ["학업적 자기효능감 척도 (김아영, 2007)"],
+  "내재적 동기": ["IMI (내재적 동기 검사)", "MSLQ (학습동기·전략 검사)"],
+  "학습몰입": ["K-MOLT 학습몰입 척도 (석임복, 2007)"],
+  "자기조절 학습전략": [
+    "MSLQ (학습동기·전략 검사)",
+    "자기조절학습 검사 (양명희, 2002)",
+  ],
+  "외재적 인지부하": ["Cognitive Load Scale (Leppink et al., 2013)"],
+  "학습 지속의도": ["TAM 척도 (Davis, 1989)"],
+};
+
 // ─── Import 함수 ──────────────────────────────────────────────
 export interface SeedImportResult {
   concepts: { created: number; skipped: number };
   variables: { created: number; skipped: number };
   measurements: { created: number; skipped: number };
+  /** 연결관계 갱신 통계 (Linking) */
+  links: {
+    conceptToVariable: number;
+    variableToMeasurement: number;
+  };
 }
 
 export async function importArchiveSeed(
@@ -586,6 +631,7 @@ export async function importArchiveSeed(
     concepts: { created: 0, skipped: 0 },
     variables: { created: 0, skipped: 0 },
     measurements: { created: 0, skipped: 0 },
+    links: { conceptToVariable: 0, variableToMeasurement: 0 },
   };
 
   // 기존 데이터 로드 (이름 중복 검사용)
@@ -632,6 +678,84 @@ export async function importArchiveSeed(
       createdBy,
     } as Partial<ArchiveMeasurementTool>);
     result.measurements.created++;
+  }
+
+  // ─── Linking — 시드 적용 후 이름→ID 매핑으로 양방향 연결 ───
+  const [finalC, finalV, finalM] = await Promise.all([
+    archiveConceptsApi.list(),
+    archiveVariablesApi.list(),
+    archiveMeasurementsApi.list(),
+  ]);
+  const conceptByName = new Map(finalC.data.map((c) => [c.name, c]));
+  const variableByName = new Map(finalV.data.map((v) => [v.name, v]));
+  const measurementByName = new Map(finalM.data.map((m) => [m.name, m]));
+
+  // 개념 → 변인 양방향
+  // 변인 측 conceptIds 누적 위한 buffer
+  const variableConceptAccumulator = new Map<string, Set<string>>();
+  for (const [conceptName, variableNames] of Object.entries(
+    SEED_CONCEPT_VARIABLE_LINKS,
+  )) {
+    const c = conceptByName.get(conceptName);
+    if (!c) continue;
+    const varIds = variableNames
+      .map((n) => variableByName.get(n)?.id)
+      .filter((id): id is string => !!id);
+    if (varIds.length === 0) continue;
+    const existing = new Set((c.variableIds as string[] | undefined) ?? []);
+    varIds.forEach((id) => existing.add(id));
+    await archiveConceptsApi.update(c.id, {
+      variableIds: Array.from(existing),
+    });
+    result.links.conceptToVariable += varIds.length;
+    // 변인 측 역참조 누적
+    for (const vName of variableNames) {
+      const v = variableByName.get(vName);
+      if (!v) continue;
+      let set = variableConceptAccumulator.get(v.id);
+      if (!set) {
+        set = new Set((v.conceptIds as string[] | undefined) ?? []);
+        variableConceptAccumulator.set(v.id, set);
+      }
+      set.add(c.id);
+    }
+  }
+  // 변인 conceptIds 일괄 갱신
+  for (const [vId, set] of variableConceptAccumulator) {
+    await archiveVariablesApi.update(vId, { conceptIds: Array.from(set) });
+  }
+
+  // 변인 → 측정도구 양방향
+  const measurementVariableAccumulator = new Map<string, Set<string>>();
+  for (const [variableName, measurementNames] of Object.entries(
+    SEED_VARIABLE_MEASUREMENT_LINKS,
+  )) {
+    const v = variableByName.get(variableName);
+    if (!v) continue;
+    const mIds = measurementNames
+      .map((n) => measurementByName.get(n)?.id)
+      .filter((id): id is string => !!id);
+    if (mIds.length === 0) continue;
+    const existing = new Set((v.measurementIds as string[] | undefined) ?? []);
+    mIds.forEach((id) => existing.add(id));
+    await archiveVariablesApi.update(v.id, {
+      measurementIds: Array.from(existing),
+    });
+    result.links.variableToMeasurement += mIds.length;
+    // 측정도구 측 역참조 누적
+    for (const mName of measurementNames) {
+      const m = measurementByName.get(mName);
+      if (!m) continue;
+      let set = measurementVariableAccumulator.get(m.id);
+      if (!set) {
+        set = new Set((m.variableIds as string[] | undefined) ?? []);
+        measurementVariableAccumulator.set(m.id, set);
+      }
+      set.add(v.id);
+    }
+  }
+  for (const [mId, set] of measurementVariableAccumulator) {
+    await archiveMeasurementsApi.update(mId, { variableIds: Array.from(set) });
   }
 
   return result;
