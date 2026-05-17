@@ -25,7 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { isAdmin } from "@/lib/permissions";
+import { isAdminOrSysadmin } from "@/lib/permissions";
 
 interface PushLog {
   id: string;
@@ -56,7 +56,7 @@ function kindMeta(k?: string) {
 
 export default function CronLogsPage() {
   const { user } = useAuthStore();
-  const admin = isAdmin(user);
+  const admin = isAdminOrSysadmin(user);
 
   const [kindFilter, setKindFilter] = useState<string>("all");
 
