@@ -55,7 +55,7 @@ export default function ConsoleArchivePage() {
     if (!user) return;
     if (
       !confirm(
-        "KCI 등재 논문 기준 기본 시드(개념 8 · 변인 8 · 측정도구 7)를 불러오시겠습니까?\n동일 이름의 항목은 건너뜁니다.",
+        "교육공학 분야 핵심 시드(개념 24 · 변인 8 · 측정도구 7)를 불러오시겠습니까?\n2026-05 추가 16개 개념(교육공학·ID·ADDIE·TPACK·SAMR·학습분석·LXD 등) 포함. 동일 이름의 항목은 건너뜁니다.",
       )
     )
       return;

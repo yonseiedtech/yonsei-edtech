@@ -147,23 +147,76 @@ export default function ArchiveTypeListPage() {
     [favorites, type],
   );
 
+  // Archive-UX: 태그 chip 필터 (다중 AND), 즐겨찾기만, 정렬
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [sortMode, setSortMode] = useState<"name" | "recent" | "alt">("name");
+
+  /** 전체 항목에서 unique 태그 + 빈도 추출 */
+  const allTags = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const it of items) {
+      const tags = (it as { tags?: string[] }).tags ?? [];
+      for (const t of tags) {
+        const trimmed = t.trim();
+        if (!trimmed) continue;
+        counts.set(trimmed, (counts.get(trimmed) ?? 0) + 1);
+      }
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([tag, count]) => ({ tag, count }));
+  }, [items]);
+
+  function toggleTag(tag: string) {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+    );
+  }
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter((it) => {
-      const altNames = (it as { altNames?: string[] }).altNames ?? [];
-      const tags = (it as { tags?: string[] }).tags ?? [];
-      const haystack = [
-        it.name,
-        it.description ?? "",
-        ...altNames,
-        ...tags,
-      ]
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(q);
-    });
-  }, [items, query]);
+    let pool = items;
+    if (favoritesOnly) {
+      pool = pool.filter((it) => favIdSet.has(it.id));
+    }
+    if (selectedTags.length > 0) {
+      pool = pool.filter((it) => {
+        const tags = (it as { tags?: string[] }).tags ?? [];
+        return selectedTags.every((t) => tags.includes(t));
+      });
+    }
+    if (q) {
+      pool = pool.filter((it) => {
+        const altNames = (it as { altNames?: string[] }).altNames ?? [];
+        const tags = (it as { tags?: string[] }).tags ?? [];
+        const haystack = [
+          it.name,
+          it.description ?? "",
+          ...altNames,
+          ...tags,
+        ]
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(q);
+      });
+    }
+    // 정렬
+    const sorted = [...pool];
+    if (sortMode === "name") {
+      sorted.sort((a, b) => a.name.localeCompare(b.name, "ko"));
+    } else if (sortMode === "recent") {
+      sorted.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+    } else if (sortMode === "alt") {
+      // 별칭 많은 것이 위 (더 풍부한 항목)
+      sorted.sort(
+        (a, b) =>
+          ((b as { altNames?: string[] }).altNames?.length ?? 0) -
+          ((a as { altNames?: string[] }).altNames?.length ?? 0),
+      );
+    }
+    return sorted;
+  }, [items, query, selectedTags, favoritesOnly, favIdSet, sortMode]);
 
   const handleToggleFav = async (item: ArchiveItem) => {
     if (!user) {
@@ -231,7 +284,7 @@ export default function ArchiveTypeListPage() {
         })}
       </div>
 
-      {/* 검색 + 새로 추가 */}
+      {/* 검색 + 정렬 + 새로 추가 */}
       <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative max-w-md flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -242,17 +295,92 @@ export default function ArchiveTypeListPage() {
             className="pl-9"
           />
         </div>
-        {canManage && (
-          <Link href={`/archive/${type}/new`}>
-            <Button type="button" size="sm">
-              <Plus className="mr-1 h-4 w-4" />새로 추가
+        <div className="flex items-center gap-2">
+          <select
+            value={sortMode}
+            onChange={(e) => setSortMode(e.target.value as typeof sortMode)}
+            className="h-9 rounded-md border bg-background px-2 text-xs"
+            aria-label="정렬 방식"
+          >
+            <option value="name">이름순 (가나다)</option>
+            <option value="recent">최신 추가순</option>
+            <option value="alt">별칭 많은 순</option>
+          </select>
+          {user && (
+            <Button
+              type="button"
+              size="sm"
+              variant={favoritesOnly ? "default" : "outline"}
+              onClick={() => setFavoritesOnly((v) => !v)}
+              aria-pressed={favoritesOnly}
+              className="h-9 gap-1 text-xs"
+            >
+              ★ 즐겨찾기만
             </Button>
-          </Link>
-        )}
+          )}
+          {canManage && (
+            <Link href={`/archive/${type}/new`}>
+              <Button type="button" size="sm" className="h-9">
+                <Plus className="mr-1 h-4 w-4" />새로 추가
+              </Button>
+            </Link>
+          )}
+        </div>
       </div>
 
+      {/* Archive-UX: 태그 chip 다중 선택 필터 */}
+      {allTags.length > 0 && (
+        <div className="mt-3 rounded-lg border bg-card p-3">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="mr-1 text-[11px] font-semibold text-muted-foreground">
+              태그 필터 (AND)
+            </span>
+            {allTags.slice(0, 30).map(({ tag, count }) => {
+              const selected = selectedTags.includes(tag);
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => toggleTag(tag)}
+                  aria-pressed={selected}
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+                    selected
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-background text-muted-foreground hover:border-primary/40",
+                  )}
+                >
+                  {tag}
+                  <span className="text-[9px] opacity-70">{count}</span>
+                </button>
+              );
+            })}
+            {selectedTags.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setSelectedTags([])}
+                className="ml-1 inline-flex items-center gap-0.5 rounded-full border border-dashed border-rose-300 px-2 py-0.5 text-[11px] text-rose-700 hover:bg-rose-50"
+              >
+                초기화 ({selectedTags.length})
+              </button>
+            )}
+            {allTags.length > 30 && (
+              <span className="text-[10px] text-muted-foreground">
+                +{allTags.length - 30}개 더 (검색 사용)
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="mt-2 text-xs text-muted-foreground">
-        {loading ? "불러오는 중..." : `총 ${filtered.length}개${query ? ` (전체 ${items.length})` : ""}`}
+        {loading
+          ? "불러오는 중..."
+          : `총 ${filtered.length}개${
+              query || selectedTags.length > 0 || favoritesOnly
+                ? ` (전체 ${items.length})`
+                : ""
+            }`}
       </div>
 
       {/* 리스트 */}
