@@ -51,6 +51,10 @@
     {
       "path": "/api/cron/study-assignment-reminder",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/seminar-push-reminder",
+      "schedule": "0 0 * * *"
     }
   ]
 }
