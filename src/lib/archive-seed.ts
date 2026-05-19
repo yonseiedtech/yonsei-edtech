@@ -68,7 +68,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     tags: ["동기", "사회인지이론", "정의적 영역"],
     references: [
       "Bandura, A. (1997). Self-efficacy: The exercise of control. W.H. Freeman.",
-      "김아영 (2007). 학업적 자기효능감 척도 개발 및 타당화 연구. 교육심리연구, 21(4), 1145-1167.",
+      // 검증결과 (2026-05): 김아영 (2007) 교육심리연구 인용은 RISS/KCI 검증 불가 → 삭제. 1차 척도 논문은 아래 김아영·박인영(2001).
       "김아영, 박인영 (2001). 학업적 자기효능감 척도 개발 및 타당화 연구. 교육학연구, 39(1), 95-123.",
     ],
   },
@@ -80,8 +80,9 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     tags: ["동기", "ARCS", "자기결정성"],
     references: [
       "Keller, J. M. (1987). Development and use of the ARCS model of instructional design. Journal of Instructional Development, 10(3), 2-10.",
-      "봉미미, 김혜연, 신지연, 이수현, 이화숙 (2008). 한국형 학업동기 척도 개발 및 타당화. 교육심리연구, 22(4), 815-839.",
-      "김아영 (2010). 자기결정성이론과 한국 학생들의 학업 동기. 한국심리학회지: 학교, 7(1), 1-18.",
+      // 검증결과: 봉미미외(2008) 교육심리연구 22(4) 815-839 — RISS/KCI 검증 불가 → 삭제
+      // 검증결과: 김아영(2010) 정정 — 학술지·권호·페이지 모두 변경
+      "김아영 (2010). 자기결정성이론과 현장 적용 연구. 교육심리연구, 24(3), 583-609.",
     ],
   },
   {
@@ -92,8 +93,8 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     tags: ["인지", "멀티미디어 학습", "교수설계"],
     references: [
       "Sweller, J. (1988). Cognitive load during problem solving: Effects on learning. Cognitive Science, 12(2), 257-285.",
-      "이상수 (2008). 멀티미디어 학습환경에서 인지부하 측정과 활용에 관한 연구. 교육공학연구, 24(2), 1-26.",
-      "유영만, 김민정 (2010). 멀티미디어 학습원리에 대한 인지부하이론적 접근. 교육공학연구, 26(2), 1-22.",
+      // 검증결과: 이상수(2008) 교육공학연구 24(2) 1-26 — RISS/KCI 검증 불가 → 삭제
+      // 검증결과: 유영만·김민정(2010) 교육공학연구 26(2) 1-22 — RISS/KCI 검증 불가 → 삭제
     ],
   },
   {
@@ -104,7 +105,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     tags: ["인지", "자기조절", "고차사고"],
     references: [
       "Flavell, J. H. (1979). Metacognition and cognitive monitoring: A new area of cognitive-developmental inquiry. American Psychologist, 34(10), 906-911.",
-      "신종호, 진성희 (2009). 학습자의 메타인지 활동 지원을 위한 시스템 설계 원리. 교육공학연구, 25(4), 167-198.",
+      // 검증결과: 신종호·진성희(2009) 교육공학연구 25(4) 167-198 — RISS/KCI 검증 불가 → 삭제
     ],
   },
   {
@@ -115,8 +116,9 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     tags: ["자기조절", "학습전략", "메타인지"],
     references: [
       "Zimmerman, B. J. (2000). Attaining self-regulation: A social cognitive perspective. In M. Boekaerts et al. (Eds.), Handbook of self-regulation (pp. 13-39). Academic Press.",
-      "양명희 (2002). 자기조절학습의 모형 탐색과 학업 성취와의 관계 연구. 서울대학교 박사학위논문.",
-      "정한호 (2008). 자기조절학습이 학업성취에 미치는 영향에 관한 메타분석. 교육공학연구, 24(3), 277-302.",
+      // 검증결과: 양명희(2002) 박사학위논문 제목 정정 — RISS 실제 제목과 일치하도록 "모형 탐색과" 구절 제거
+      "양명희 (2002). 자기조절학습 구성변인과 학업 성취와의 관계 연구. 서울대학교 박사학위논문.",
+      // 검증결과: 정한호(2008) 교육공학연구 24(3) — RISS/KCI 검증 불가 → 삭제
     ],
   },
   {
@@ -127,8 +129,9 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     tags: ["몰입", "최적경험", "정의적 영역"],
     references: [
       "Csikszentmihalyi, M. (1990). Flow: The psychology of optimal experience. Harper & Row.",
-      "석임복 (2007). 학습 몰입의 구성 요인, 수준, 관련 변인 탐색. 경북대학교 박사학위논문.",
-      "김진호 (2003). 학습몰입의 이론적 고찰과 측정 도구 개발. 교육심리연구, 17(4), 363-381.",
+      // 검증결과: 석임복(2007) 박사학위논문 제목 정정 — RISS 실제 제목과 일치
+      "석임복 (2007). 학습 몰입의 구조: 척도, 성격, 조건, 관여. 경북대학교 박사학위논문.",
+      // 검증결과: 김진호(2003) 교육심리연구 17(4) — 학술지 17권 4호 목차 조회 시 해당 저자 논문 없음 → 삭제
     ],
   },
   {
@@ -139,8 +142,9 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     tags: ["에듀테크", "수용성", "사용 의도"],
     references: [
       "Davis, F. D. (1989). Perceived usefulness, perceived ease of use, and user acceptance of information technology. MIS Quarterly, 13(3), 319-340.",
-      "이종연 (2014). 대학생의 모바일 러닝 수용에 영향을 미치는 요인 연구. 교육공학연구, 30(2), 207-235.",
-      "임걸 (2011). 스마트러닝 수용 의도에 영향을 미치는 요인. 교육공학연구, 27(4), 749-775.",
+      // 검증결과: 이종연(2014) 교육공학연구 30(2) — RISS/KCI 검증 불가 → 삭제
+      // 검증결과: 임걸(2011) 정정 — 학술지명 + 제목 모두 변경 (KCI 직접 확인)
+      "임걸 (2011). 스마트 러닝 교수학습 설계모형 탐구. 컴퓨터교육학회 논문지, 14(2), 33-45.",
     ],
   },
   {
@@ -151,8 +155,8 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     tags: ["협력", "CSCL", "사회적 학습"],
     references: [
       "Johnson, D. W., & Johnson, R. T. (1989). Cooperation and competition: Theory and research. Interaction Book Company.",
-      "이수정, 강명희 (2015). 협력적 문제해결 능력 측정 도구 개발 및 타당화. 교육공학연구, 31(4), 711-743.",
-      "강명희, 임병노 (2009). CSCL 환경에서 협력학습 효과에 영향을 미치는 요인. 교육공학연구, 25(3), 53-88.",
+      // 검증결과: 이수정·강명희(2015) 교육공학연구 31(4) — RISS/KCI 검증 불가 → 삭제
+      // 검증결과: 강명희·임병노(2009) 교육공학연구 25(3) — RISS/KCI 검증 불가 → 삭제
     ],
   },
   // ─── 2026 보강: 교육공학 분야 핵심 개념 16개 추가 ───
@@ -349,7 +353,8 @@ export const SEED_VARIABLES: SeedVariable[] = [
     type: "affective",
     tags: ["자기효능감", "동기"],
     references: [
-      "김아영 (2007). 학업적 자기효능감 척도 개발 및 타당화 연구. 교육심리연구, 21(4), 1145-1167.",
+      // 검증결과: 김아영(2007) 교육심리연구 인용은 RISS/KCI 검증 불가 → 1차 척도 논문 김아영·박인영(2001)로 정정
+      "김아영, 박인영 (2001). 학업적 자기효능감 척도 개발 및 타당화 연구. 교육학연구, 39(1), 95-123.",
     ],
   },
   {
@@ -372,7 +377,8 @@ export const SEED_VARIABLES: SeedVariable[] = [
     type: "affective",
     tags: ["몰입", "정의적 영역"],
     references: [
-      "석임복 (2007). 학습 몰입의 구성 요인, 수준, 관련 변인 탐색. 경북대학교 박사학위논문.",
+      // 검증결과: 석임복(2007) 박사학위논문 제목 정정 (RISS 실제 제목)
+      "석임복 (2007). 학습 몰입의 구조: 척도, 성격, 조건, 관여. 경북대학교 박사학위논문.",
     ],
   },
   {
@@ -392,7 +398,7 @@ export const SEED_VARIABLES: SeedVariable[] = [
     type: "affective",
     tags: ["만족도", "이러닝"],
     references: [
-      "임정훈 (2003). 이러닝 학습 만족도에 영향을 미치는 요인 분석. 교육공학연구, 19(2), 1-26.",
+      // 검증결과: 임정훈(2003) 교육공학연구 19(2) — 검증 round 미포함, 보수적으로 제거. 운영진 RISS 확인 후 보강 권장.
     ],
   },
   {
@@ -403,7 +409,8 @@ export const SEED_VARIABLES: SeedVariable[] = [
     type: "behavioral",
     tags: ["자기조절", "학습전략"],
     references: [
-      "양명희 (2002). 자기조절학습의 모형 탐색과 학업 성취와의 관계 연구. 서울대학교 박사학위논문.",
+      // 검증결과: 양명희(2002) 박사학위논문 제목 정정 (RISS 실제 제목)
+      "양명희 (2002). 자기조절학습 구성변인과 학업 성취와의 관계 연구. 서울대학교 박사학위논문.",
     ],
   },
   {
@@ -450,7 +457,9 @@ export const SEED_MEASUREMENTS: SeedMeasurement[] = [
     ],
     tags: ["자기효능감", "한국형", "KCI"],
     references: [
-      "김아영 (2007). 학업적 자기효능감 척도 개발 및 타당화 연구. 교육심리연구, 21(4), 1145-1167.",
+      // 검증결과: 1차 척도 논문은 김아영·박인영(2001) 교육학연구 — 단행본은 학지사 2007년 발간
+      "김아영, 박인영 (2001). 학업적 자기효능감 척도 개발 및 타당화 연구. 교육학연구, 39(1), 95-123.",
+      "김아영 (2007). 학업적 자기효능감: 이론과 현장연구. 학지사.",
     ],
   },
   {
@@ -492,7 +501,8 @@ export const SEED_MEASUREMENTS: SeedMeasurement[] = [
     ],
     tags: ["몰입", "한국형", "KCI"],
     references: [
-      "석임복 (2007). 학습 몰입의 구성 요인, 수준, 관련 변인 탐색. 경북대학교 박사학위논문.",
+      // 검증결과: 석임복(2007) 박사학위논문 제목 정정 (RISS 실제 제목)
+      "석임복 (2007). 학습 몰입의 구조: 척도, 성격, 조건, 관여. 경북대학교 박사학위논문.",
     ],
   },
   {
@@ -512,7 +522,8 @@ export const SEED_MEASUREMENTS: SeedMeasurement[] = [
     ],
     tags: ["자기조절", "한국형", "KCI"],
     references: [
-      "양명희 (2002). 자기조절학습의 모형 탐색과 학업 성취와의 관계 연구. 서울대학교 박사학위논문.",
+      // 검증결과: 양명희(2002) 박사학위논문 제목 정정 (RISS 실제 제목)
+      "양명희 (2002). 자기조절학습 구성변인과 학업 성취와의 관계 연구. 서울대학교 박사학위논문.",
     ],
   },
   {
@@ -764,5 +775,147 @@ export async function importArchiveSeed(
     await archiveMeasurementsApi.update(mId, { variableIds: Array.from(set) });
   }
 
+  return result;
+}
+
+// ─── References 갱신 함수 — 이미 DB 에 적재된 항목의 메타데이터(references/description/altNames) 만 시드 기준으로 덮어쓰기 ───
+// 사용 시나리오: 한국어 인용 정정 후 기존 DB 항목 일괄 갱신. variableIds 등 연결관계는 보존.
+// 멱등성 보장: 시드와 동일한 항목은 변경 없음, 차이 있는 것만 update.
+
+export interface SeedRefreshResult {
+  concepts: { updated: number; skipped: number; notFound: number };
+  variables: { updated: number; skipped: number; notFound: number };
+  measurements: { updated: number; skipped: number; notFound: number };
+}
+
+function deepEqualArr(a: unknown[] | undefined, b: unknown[] | undefined): boolean {
+  const aa = a ?? [];
+  const bb = b ?? [];
+  if (aa.length !== bb.length) return false;
+  for (let i = 0; i < aa.length; i++) if (aa[i] !== bb[i]) return false;
+  return true;
+}
+
+export async function refreshArchiveSeedReferences(
+  updatedBy: string,
+): Promise<SeedRefreshResult> {
+  const result: SeedRefreshResult = {
+    concepts: { updated: 0, skipped: 0, notFound: 0 },
+    variables: { updated: 0, skipped: 0, notFound: 0 },
+    measurements: { updated: 0, skipped: 0, notFound: 0 },
+  };
+
+  const [existingC, existingV, existingM] = await Promise.all([
+    archiveConceptsApi.list(),
+    archiveVariablesApi.list(),
+    archiveMeasurementsApi.list(),
+  ]);
+  const conceptByName = new Map(existingC.data.map((c) => [c.name, c]));
+  const variableByName = new Map(existingV.data.map((v) => [v.name, v]));
+  const measurementByName = new Map(existingM.data.map((m) => [m.name, m]));
+
+  // 개념
+  for (const c of SEED_CONCEPTS) {
+    const existing = conceptByName.get(c.name);
+    if (!existing) {
+      result.concepts.notFound++;
+      continue;
+    }
+    const seedRefs = c.references ?? [];
+    const seedAlts = c.altNames ?? [];
+    const seedTags = c.tags ?? [];
+    const same =
+      existing.description === c.description &&
+      deepEqualArr(existing.references as string[] | undefined, seedRefs) &&
+      deepEqualArr(existing.altNames as string[] | undefined, seedAlts) &&
+      deepEqualArr(existing.tags as string[] | undefined, seedTags);
+    if (same) {
+      result.concepts.skipped++;
+      continue;
+    }
+    await archiveConceptsApi.update(existing.id, {
+      description: c.description,
+      references: seedRefs,
+      altNames: seedAlts,
+      tags: seedTags,
+      // variableIds 등 연결관계는 보존 (별도 mutation 으로만 변경)
+    } as Partial<ArchiveConcept>);
+    result.concepts.updated++;
+  }
+
+  // 변인
+  for (const v of SEED_VARIABLES) {
+    const existing = variableByName.get(v.name);
+    if (!existing) {
+      result.variables.notFound++;
+      continue;
+    }
+    const seedRefs = v.references ?? [];
+    const seedAlts = v.altNames ?? [];
+    const seedTags = v.tags ?? [];
+    const same =
+      existing.description === v.description &&
+      existing.type === v.type &&
+      deepEqualArr(existing.references as string[] | undefined, seedRefs) &&
+      deepEqualArr(existing.altNames as string[] | undefined, seedAlts) &&
+      deepEqualArr(existing.tags as string[] | undefined, seedTags);
+    if (same) {
+      result.variables.skipped++;
+      continue;
+    }
+    await archiveVariablesApi.update(existing.id, {
+      description: v.description,
+      type: v.type,
+      references: seedRefs,
+      altNames: seedAlts,
+      tags: seedTags,
+    } as Partial<ArchiveVariable>);
+    result.variables.updated++;
+  }
+
+  // 측정도구 (altNames 는 ArchiveMeasurementTool 타입에 없으므로 동적 필드로 처리)
+  for (const m of SEED_MEASUREMENTS) {
+    const existing = measurementByName.get(m.name);
+    if (!existing) {
+      result.measurements.notFound++;
+      continue;
+    }
+    const seedRefs = m.references ?? [];
+    const seedTags = m.tags ?? [];
+    const seedSamples = m.sampleItems ?? [];
+    const same =
+      existing.description === m.description &&
+      existing.originalName === m.originalName &&
+      existing.author === m.author &&
+      existing.itemCount === m.itemCount &&
+      existing.scaleType === m.scaleType &&
+      existing.reliability === m.reliability &&
+      existing.validity === m.validity &&
+      existing.resourceUrl === m.resourceUrl &&
+      deepEqualArr(existing.references as string[] | undefined, seedRefs) &&
+      deepEqualArr(existing.tags as string[] | undefined, seedTags) &&
+      deepEqualArr(existing.sampleItems as string[] | undefined, seedSamples);
+    if (same) {
+      result.measurements.skipped++;
+      continue;
+    }
+    await archiveMeasurementsApi.update(existing.id, {
+      description: m.description,
+      originalName: m.originalName,
+      author: m.author,
+      itemCount: m.itemCount,
+      scaleType: m.scaleType,
+      reliability: m.reliability,
+      validity: m.validity,
+      resourceUrl: m.resourceUrl,
+      sampleItems: seedSamples,
+      references: seedRefs,
+      tags: seedTags,
+    } as Partial<ArchiveMeasurementTool>);
+    result.measurements.updated++;
+  }
+
+  // updatedBy 메타 — 로그용
+  void updatedBy;
   return result;
 }

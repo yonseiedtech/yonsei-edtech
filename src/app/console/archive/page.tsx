@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Library, Plus, Pencil, Trash2, Search, Sparkles, Loader2 } from "lucide-react";
-import { importArchiveSeed } from "@/lib/archive-seed";
+import { Library, Plus, Pencil, Trash2, Search, Sparkles, Loader2, RefreshCw } from "lucide-react";
+import { importArchiveSeed, refreshArchiveSeedReferences } from "@/lib/archive-seed";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,7 @@ export default function ConsoleArchivePage() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<{ type: ArchiveItemType; item?: AnyItem } | null>(null);
   const [seeding, setSeeding] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const allowed = isAtLeast(user, "staff");
 
@@ -74,6 +75,39 @@ export default function ConsoleArchivePage() {
       toast.error(err instanceof Error ? err.message : "시드 적재 실패");
     } finally {
       setSeeding(false);
+    }
+  };
+
+  /**
+   * 검증된 시드 references/description/altNames 로 기존 DB 항목을 일괄 정정.
+   * 이름 일치 시에만 update, 연결관계(variableIds/conceptIds/measurementIds)는 보존.
+   * 한국어 인용 정정 후 1회 실행해 기존 DB 메타데이터 동기화 목적.
+   */
+  const handleRefresh = async () => {
+    if (!user) return;
+    if (
+      !confirm(
+        "현재 archive-seed.ts 의 references/description/altNames/tags 를 기존 DB 항목에 일괄 적용합니다.\n" +
+          "- 이름이 일치하는 항목만 update (새로 생성하지 않음)\n" +
+          "- 연결관계(variableIds 등)는 보존\n" +
+          "- 시드와 동일한 항목은 skip\n\n진행하시겠습니까?",
+      )
+    )
+      return;
+    setRefreshing(true);
+    try {
+      const r = await refreshArchiveSeedReferences(user.id);
+      toast.success(
+        `References 갱신 완료 — 개념 +${r.concepts.updated}/스킵 ${r.concepts.skipped}/없음 ${r.concepts.notFound}, ` +
+          `변인 +${r.variables.updated}/스킵 ${r.variables.skipped}/없음 ${r.variables.notFound}, ` +
+          `측정도구 +${r.measurements.updated}/스킵 ${r.measurements.skipped}/없음 ${r.measurements.notFound}`,
+      );
+      load();
+    } catch (err) {
+      console.error("[console-archive] refresh failed", err);
+      toast.error(err instanceof Error ? err.message : "References 갱신 실패");
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -145,7 +179,7 @@ export default function ConsoleArchivePage() {
               variant="outline"
               size="sm"
               onClick={handleSeed}
-              disabled={seeding}
+              disabled={seeding || refreshing}
               title="KCI 등재 논문 기준 대표 개념·변인·측정도구를 일괄 적재"
             >
               {seeding ? (
@@ -154,6 +188,20 @@ export default function ConsoleArchivePage() {
                 <Sparkles className="mr-1 h-4 w-4" />
               )}
               기본 시드 불러오기
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={seeding || refreshing}
+              title="시드 데이터의 references/description/altNames 를 기존 DB 항목에 일괄 적용 (연결관계 보존)"
+            >
+              {refreshing ? (
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-1 h-4 w-4" />
+              )}
+              메타데이터 갱신
             </Button>
             <Button onClick={() => setEditing({ type: tab })} size="sm">
               <Plus className="mr-1 h-4 w-4" />새 {ARCHIVE_ITEM_TYPE_LABELS[tab]}
