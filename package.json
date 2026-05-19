@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "deploy:vercel": "node scripts/deploy-vercel.js"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.43",
