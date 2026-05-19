@@ -79,7 +79,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
       "학습 행동을 시작·유지·종결하게 만드는 내적·외적 추동의 총칭. Keller(1987)의 ARCS 모형(주의-관련성-자신감-만족감)이 교수설계 영역의 표준 프레임으로 자리 잡았으며, 한국 교육공학 연구에서는 자기결정성 이론(SDT) 기반 내재적/외재적 동기 구분이 함께 사용된다.",
     tags: ["동기", "ARCS", "자기결정성"],
     references: [
-      "Keller, J. M. (1987). Development and use of the ARCS model of instructional design. Journal of Instructional Development, 10(3), 2-10.",
+      "Keller, J. M. (1987). Development and use of the ARCS model of motivational design. Journal of Instructional Development, 10(3), 2-10.",
       // 검증결과: 봉미미외(2008) 교육심리연구 22(4) 815-839 — RISS/KCI 검증 불가 → 삭제
       // 검증결과: 김아영(2010) 정정 — 학술지·권호·페이지 모두 변경
       "김아영 (2010). 자기결정성이론과 현장 적용 연구. 교육심리연구, 24(3), 583-609.",
@@ -586,7 +586,7 @@ export const SEED_MEASUREMENTS: SeedMeasurement[] = [
     ],
     tags: ["동기", "자기결정성", "다차원"],
     references: [
-      "Ryan, R. M. (1982). Control and information in the intrapersonal sphere. Journal of Personality and Social Psychology, 43(3), 450-461.",
+      "Ryan, R. M. (1982). Control and information in the intrapersonal sphere: An extension of cognitive evaluation theory. Journal of Personality and Social Psychology, 43(3), 450-461.",
     ],
   },
 ];
