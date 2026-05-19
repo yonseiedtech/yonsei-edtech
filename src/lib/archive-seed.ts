@@ -1,11 +1,17 @@
 /**
  * 교육공학 아카이브 기본 시드 데이터
  *
- * KCI 등재 한국 교육공학·교육심리 논문을 기준으로 정리한
+ * KCI 등재 한국 교육공학·교육심리 논문 + 영문 교과서를 기준으로 정리한
  * 대표 개념·변인·측정도구.
  *
  * "/console/archive"의 "기본 시드 불러오기" 버튼이 호출하는 데이터.
  * 동일 이름의 항목이 이미 있으면 건너뜀 (중복 방지).
+ *
+ * ⚠️ 한국어 KCI/박사학위 인용 정확성 주의 ⚠️
+ * 본 파일에 포함된 한국어 학술 인용(저자·연도·학술지·페이지)은
+ * 자동 생성/요약 과정에서 할루시네이션(부정확한 메타데이터) 가능성이 있습니다.
+ * 운영진이 RISS/국립중앙도서관 직접 검증 후 보강해 주세요.
+ * 영문 인용은 비교적 안정적이지만 판본·페이지는 동일하게 검증 권장.
  */
 
 import type {
@@ -226,7 +232,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     tags: ["역량", "DigComp", "교육과정"],
     references: [
       "Vuorikari, R., Kluzer, S., & Punie, Y. (2022). DigComp 2.2: The Digital Competence Framework for Citizens. Publications Office of the EU.",
-      "노은희, 신호재, 이재진 (2018). 디지털 리터러시 역량 강화 교육과정 구성 방안. 한국교육과정평가원.",
+      // 한국어 KCI/한국교육과정평가원 인용은 자동 생성 시 할루시네이션 가능성이 있어 제거 — 운영진 검증 후 보강 필요
     ],
   },
   {
@@ -238,7 +244,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     references: [
       "Bergmann, J., & Sams, A. (2012). Flip your classroom: Reach every student in every class every day. ISTE.",
       "Lo, C. K., & Hew, K. F. (2017). A critical review of flipped classroom challenges in K-12 education. RPTEL, 12(4).",
-      "이지연, 김영환, 김영배 (2014). 학습자 중심 플립드 러닝 수업의 적용 사례. 교육공학연구, 30(2), 163-191.",
+      // 한국어 KCI 인용은 자동 생성 시 할루시네이션 가능성이 있어 제거 — 운영진 검증 후 보강 필요
     ],
   },
   {
@@ -316,7 +322,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     tags: ["온라인학습", "CoI", "Garrison"],
     references: [
       "Garrison, D. R., Anderson, T., & Archer, W. (2000). Critical inquiry in a text-based environment: Computer conferencing in higher education. The Internet and Higher Education, 2(2-3), 87-105.",
-      "강명희, 임병노, 이지연 (2013). 이러닝에서 사회적 실재감이 학습 성과에 미치는 영향. 교육공학연구, 29(3), 545-572.",
+      // 한국어 KCI 인용은 자동 생성 시 할루시네이션 가능성이 있어 제거 — 운영진 검증 후 보강 필요
     ],
   },
   {
