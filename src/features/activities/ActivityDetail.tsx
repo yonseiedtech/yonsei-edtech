@@ -62,6 +62,25 @@ const RECRUIT_COLORS: Record<string, string> = { recruiting: "bg-green-50 text-g
 
 type Tab = "overview" | "progress" | "staff" | "presenters" | "volunteers" | "participants" | "applicants" | "form-settings" | "report" | "settings" | "my-sessions" | "archive" | "study-report";
 
+/** 필수 폼 필드 미입력 여부 — schedule/datetime_slots 의 빈 JSON 배열([])도 미입력으로 간주 */
+function isAnswerEmpty(field: FormField, v: unknown): boolean {
+  if (field.type === "section_break") return false; // 답변 대상 아님
+  if (v === undefined || v === null) return true;
+  if (typeof v === "string") {
+    const t = v.trim();
+    if (t === "") return true;
+    if (field.type === "schedule" || field.type === "datetime_slots") {
+      try {
+        const parsed = JSON.parse(t);
+        if (Array.isArray(parsed) && parsed.length === 0) return true;
+      } catch { /* __ALL__ 등 비-JSON 마커는 입력으로 인정 */ }
+    }
+    return false;
+  }
+  if (Array.isArray(v)) return v.length === 0; // checkbox / file / image
+  return false;
+}
+
 interface Props {
   activityId: string;
   type: ActivityType;
@@ -248,6 +267,14 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
         const isSpeaker = applyParticipantType === "speaker";
         if (isSpeaker && !applySpeakerPaperTitle.trim()) {
           throw new Error("발표자 신청은 논문/작품 제목이 필요합니다.");
+        }
+        const missingRequired = combinedApplicationFields.filter(
+          (f) => f.required && isAnswerEmpty(f, applyAnswers[f.id]),
+        );
+        if (missingRequired.length > 0) {
+          throw new Error(
+            `필수 항목을 입력해주세요 — ${missingRequired.map((f) => f.label).join(", ")}`,
+          );
         }
         const speakerExtras = isSpeaker
           ? { speakerSubmissionType: applySpeakerSubmissionType, speakerPaperTitle: applySpeakerPaperTitle.trim() }
