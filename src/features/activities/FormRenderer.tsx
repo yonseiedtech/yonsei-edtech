@@ -344,6 +344,14 @@ function ScheduleField({ field, value, onChange, defaults }: ScheduleFieldProps)
   );
 }
 
+/** "HH:MM" 에 1시간을 더한 값 (23:59 상한). 파싱 실패 시 원본 반환. */
+function addHour(t: string): string {
+  const [h, m] = t.split(":").map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return t;
+  const total = Math.min(h * 60 + m + 60, 23 * 60 + 59);
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
 interface DateTimeSlotsFieldProps {
   field: FormField;
   value: AnswerValue | undefined;
@@ -379,7 +387,17 @@ function DateTimeSlotsField({ field, value, onChange, defaults }: DateTimeSlotsF
     commit([...entries, { date: minDate ?? "", start: "09:00", end: "10:00" }]);
   }
   function updateEntry(i: number, patch: Partial<ScheduleSlot>) {
-    commit(entries.map((e, idx) => (idx === i ? { ...e, ...patch } : e)));
+    commit(
+      entries.map((e, idx) => {
+        if (idx !== i) return e;
+        const merged = { ...e, ...patch };
+        // 시작 시간 변경으로 종료 ≤ 시작이 되면 종료를 시작 +1시간으로 자동 보정
+        if (patch.start && merged.start && merged.end && merged.end <= merged.start) {
+          merged.end = addHour(merged.start);
+        }
+        return merged;
+      }),
+    );
   }
   function removeEntry(i: number) {
     commit(entries.filter((_, idx) => idx !== i));
@@ -392,39 +410,48 @@ function DateTimeSlotsField({ field, value, onChange, defaults }: DateTimeSlotsF
           참여 가능한 날짜와 시간을 추가해주세요.
         </p>
       )}
-      {entries.map((e, i) => (
-        <div key={i} className="flex flex-wrap items-center gap-2 rounded-lg border bg-card p-2">
-          <Input
-            type="date"
-            value={e.date}
-            min={minDate}
-            max={maxDate}
-            onChange={(ev) => updateEntry(i, { date: ev.target.value })}
-            className="h-8 w-auto flex-1 text-xs"
-          />
-          <Input
-            type="time"
-            value={e.start}
-            onChange={(ev) => updateEntry(i, { start: ev.target.value })}
-            className="h-8 w-auto text-xs"
-          />
-          <span className="text-xs text-muted-foreground">~</span>
-          <Input
-            type="time"
-            value={e.end}
-            onChange={(ev) => updateEntry(i, { end: ev.target.value })}
-            className="h-8 w-auto text-xs"
-          />
-          <button
-            type="button"
-            onClick={() => removeEntry(i)}
-            className="shrink-0 rounded p-1 text-muted-foreground hover:text-red-500"
-            title="삭제"
-          >
-            <Trash2 size={14} />
-          </button>
-        </div>
-      ))}
+      {entries.map((e, i) => {
+        const invalid = !!e.start && !!e.end && e.end <= e.start;
+        return (
+          <div key={i} className="flex flex-wrap items-center gap-2 rounded-lg border bg-card p-2">
+            <Input
+              type="date"
+              value={e.date}
+              min={minDate}
+              max={maxDate}
+              onChange={(ev) => updateEntry(i, { date: ev.target.value })}
+              className="h-8 w-auto flex-1 text-xs"
+            />
+            <Input
+              type="time"
+              value={e.start}
+              onChange={(ev) => updateEntry(i, { start: ev.target.value })}
+              className="h-8 w-auto text-xs"
+            />
+            <span className="text-xs text-muted-foreground">~</span>
+            <Input
+              type="time"
+              value={e.end}
+              min={e.start || undefined}
+              onChange={(ev) => updateEntry(i, { end: ev.target.value })}
+              className={cn("h-8 w-auto text-xs", invalid && "border-red-400 focus-visible:border-red-400")}
+            />
+            <button
+              type="button"
+              onClick={() => removeEntry(i)}
+              className="shrink-0 rounded p-1 text-muted-foreground hover:text-red-500"
+              title="삭제"
+            >
+              <Trash2 size={14} />
+            </button>
+            {invalid && (
+              <p className="w-full text-[11px] font-medium text-red-500">
+                종료 시간이 시작 시간보다 빠르거나 같습니다.
+              </p>
+            )}
+          </div>
+        );
+      })}
       <button
         type="button"
         onClick={addEntry}
