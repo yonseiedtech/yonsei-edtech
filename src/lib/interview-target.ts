@@ -49,8 +49,8 @@ export function getUserCumulativeSemesterCount(
   let count = yearDiff * 2;
   // 입학 학기 → 현재 학기 보정
   if (entrySemester === "first" && nowSemester === "second") count += 1;
-  if (entrySemester === "second" && nowSemester === "first")
-    count = count - 1 + 1; // 9월 입학 → 익년 3월 = +1 학기
+  // 9월 입학(후기) 후 익년 1학기: yearDiff*2 가 1학기 과다 → -1 보정
+  if (entrySemester === "second" && nowSemester === "first") count -= 1;
   // 같은 학기면 1학기차
   if (entrySemester === nowSemester && yearDiff === 0) count = 0;
   return count + 1; // 1-indexed

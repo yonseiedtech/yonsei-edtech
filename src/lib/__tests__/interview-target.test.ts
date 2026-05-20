@@ -119,14 +119,34 @@ describe("getUserCumulativeSemesterCount", () => {
     expect(getUserCumulativeSemesterCount(user, now)).toBe(6);
   });
 
-  it("9월 입학(second) → 익년 3월 1학기 = 3학기차 (함수 정의)", () => {
-    // 함수 정의: second→first 보정 -1+1 = 0, yearDiff=1: 1*2 + 0 + 1 = 3
+  it("9월 입학(second) → 익년 3월 1학기 = 2학기차", () => {
+    // 2025-2학기(1) → 2026-1학기(2). yearDiff=1: 1*2 - 1 + 1 = 2
     const user = mkUser({
       entryYear: 2025,
       entrySemester: "second",
     } as Partial<User>);
     const now = new Date("2026-03-15");
+    expect(getUserCumulativeSemesterCount(user, now)).toBe(2);
+  });
+
+  it("9월 입학(second) → 익년 9월 2학기 = 3학기차", () => {
+    // 2024-2학기(1) → 2025-1학기(2) → 2025-2학기(3)
+    const user = mkUser({
+      entryYear: 2024,
+      entrySemester: "second",
+    } as Partial<User>);
+    const now = new Date("2025-09-15");
     expect(getUserCumulativeSemesterCount(user, now)).toBe(3);
+  });
+
+  it("2023-1학기 입학 → 2026-1학기 = 7학기차", () => {
+    // 2023-1(1)·2023-2(2)·2024-1(3)·2024-2(4)·2025-1(5)·2025-2(6)·2026-1(7)
+    const user = mkUser({
+      entryYear: 2023,
+      entrySemester: "first",
+    } as Partial<User>);
+    const now = new Date("2026-05-21");
+    expect(getUserCumulativeSemesterCount(user, now)).toBe(7);
   });
 
   it("studentId 만으로 입학연도 추정 (2024-1 → 2026-1 = 5학기차)", () => {
