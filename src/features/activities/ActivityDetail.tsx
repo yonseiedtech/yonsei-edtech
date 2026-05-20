@@ -2325,7 +2325,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                                 display = typeof (a.v as unknown[])[0] === "string"
                                   ? (a.v as string[]).join(", ")
                                   : `${(a.v as { name: string }[]).length}개 파일 첨부`;
-                              } else if (field.type === "schedule" && typeof a.v === "string") {
+                              } else if ((field.type === "schedule" || field.type === "datetime_slots") && typeof a.v === "string") {
                                 try {
                                   const slots = JSON.parse(a.v) as { date: string; start: string; end: string }[];
                                   display = slots.length === 0

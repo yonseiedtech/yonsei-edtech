@@ -33,7 +33,8 @@ export type FormFieldType =
   | "short_text" | "long_text" | "radio" | "checkbox" | "select"
   | "date" | "time" | "datetime" | "email" | "phone" | "url" | "number"
   | "linear_scale" | "file" | "image" | "section_break"
-  | "schedule"; // PR8: 시간표 드래그 선택 (학술대회 신청 등)
+  | "schedule" // PR8: 시간표 드래그 선택 (학술대회 신청 등)
+  | "datetime_slots"; // 신청자가 가능한 날짜+시간 범위를 목록으로 직접 추가
 
 /** PR8: 가능한 시간대 슬롯 */
 export interface ScheduleSlot {

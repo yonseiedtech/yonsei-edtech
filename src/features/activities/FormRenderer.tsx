@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp, CalendarRange, CheckCircle2 } from "lucide-react";
+import { ChevronDown, ChevronUp, CalendarRange, CheckCircle2, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import FileUploader from "@/components/ui/file-uploader";
@@ -201,6 +201,12 @@ export default function FormRenderer({ fields, value, onChange, scheduleDefaults
                 <ScheduleField field={f} value={v} onChange={(next) => onChange(f.id, next)} defaults={scheduleDefaults} />
               </div>
             );
+          case "datetime_slots":
+            return (
+              <div key={f.id}>{base}
+                <DateTimeSlotsField field={f} value={v} onChange={(next) => onChange(f.id, next)} defaults={scheduleDefaults} />
+              </div>
+            );
         }
       })}
     </div>
@@ -334,6 +340,98 @@ function ScheduleField({ field, value, onChange, defaults }: ScheduleFieldProps)
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+interface DateTimeSlotsFieldProps {
+  field: FormField;
+  value: AnswerValue | undefined;
+  onChange: (next: string) => void;
+  defaults?: ScheduleDefaults;
+}
+
+/**
+ * 가능한 날짜·시간 — 신청자가 (날짜 + 시작~종료 시간) 항목을 자유롭게 추가하는 목록 입력.
+ * schedule(시간표 그리드)과 달리 고정 시간 창 없이 임의의 시간 범위를 여러 개 입력할 수 있다.
+ * 저장 형식: JSON.stringify(ScheduleSlot[]) — schedule 과 동일 shape 이라 답변 표시 로직을 공유한다.
+ */
+function DateTimeSlotsField({ field, value, onChange, defaults }: DateTimeSlotsFieldProps) {
+  const initialEntries: ScheduleSlot[] = (() => {
+    if (typeof value === "string" && value) {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) return parsed as ScheduleSlot[];
+      } catch { /* ignore */ }
+    }
+    return [];
+  })();
+  const [entries, setEntries] = useState<ScheduleSlot[]>(initialEntries);
+
+  const minDate = field.scheduleStartDate || defaults?.startDate || undefined;
+  const maxDate = field.scheduleEndDate || defaults?.endDate || undefined;
+
+  function commit(next: ScheduleSlot[]) {
+    setEntries(next);
+    onChange(JSON.stringify(next));
+  }
+  function addEntry() {
+    commit([...entries, { date: minDate ?? "", start: "09:00", end: "10:00" }]);
+  }
+  function updateEntry(i: number, patch: Partial<ScheduleSlot>) {
+    commit(entries.map((e, idx) => (idx === i ? { ...e, ...patch } : e)));
+  }
+  function removeEntry(i: number) {
+    commit(entries.filter((_, idx) => idx !== i));
+  }
+
+  return (
+    <div className="space-y-2">
+      {entries.length === 0 && (
+        <p className="rounded-lg border border-dashed bg-muted/10 p-3 text-center text-xs text-muted-foreground">
+          참여 가능한 날짜와 시간을 추가해주세요.
+        </p>
+      )}
+      {entries.map((e, i) => (
+        <div key={i} className="flex flex-wrap items-center gap-2 rounded-lg border bg-card p-2">
+          <Input
+            type="date"
+            value={e.date}
+            min={minDate}
+            max={maxDate}
+            onChange={(ev) => updateEntry(i, { date: ev.target.value })}
+            className="h-8 w-auto flex-1 text-xs"
+          />
+          <Input
+            type="time"
+            value={e.start}
+            onChange={(ev) => updateEntry(i, { start: ev.target.value })}
+            className="h-8 w-auto text-xs"
+          />
+          <span className="text-xs text-muted-foreground">~</span>
+          <Input
+            type="time"
+            value={e.end}
+            onChange={(ev) => updateEntry(i, { end: ev.target.value })}
+            className="h-8 w-auto text-xs"
+          />
+          <button
+            type="button"
+            onClick={() => removeEntry(i)}
+            className="shrink-0 rounded p-1 text-muted-foreground hover:text-red-500"
+            title="삭제"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={addEntry}
+        className="flex items-center gap-1 rounded-lg border border-dashed px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/5"
+      >
+        <Plus size={14} />가능한 날짜·시간 추가
+      </button>
     </div>
   );
 }

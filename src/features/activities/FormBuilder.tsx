@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Plus, Trash2, GripVertical, Copy, Type, AlignLeft, CircleDot, SquareCheck,
   ChevronDown, ChevronUp, Calendar, Clock, CalendarClock, Mail, Phone, FileText,
-  Image as ImageIcon, Link2, Hash, SlidersHorizontal, Minus, CalendarRange,
+  Image as ImageIcon, Link2, Hash, SlidersHorizontal, Minus, CalendarRange, CalendarCheck2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -30,10 +30,14 @@ const TYPE_META: Record<FormFieldType, { label: string; icon: typeof Type }> = {
   image: { label: "이미지 업로드", icon: ImageIcon },
   section_break: { label: "섹션 구분", icon: Minus },
   schedule: { label: "가능 시간대 (시간표)", icon: CalendarRange },
+  datetime_slots: { label: "가능한 날짜·시간", icon: CalendarCheck2 },
 };
 
 const HAS_OPTIONS: FormFieldType[] = ["radio", "checkbox", "select"];
 const HIDE_REQUIRED: FormFieldType[] = ["section_break"];
+
+/** 부모로의 onChange 전파 디바운스 (ms) — 키 입력마다 네트워크 저장/캐시 round-trip 방지 */
+const COMMIT_DEBOUNCE_MS = 400;
 
 function uid() { return `f_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`; }
 
@@ -47,6 +51,50 @@ export default function FormBuilder({ value, onChange }: Props) {
   const [mode, setMode] = useState<"edit" | "preview">("edit");
   const [previewAnswers, setPreviewAnswers] = useState<Record<string, string | string[] | UploadedFile[]>>({});
 
+  // 로컬 작업 사본 — 입력 필드는 이 state 를 읽는다.
+  // value prop 은 React Query 캐시를 거쳐 돌아오므로, 한글 IME 조합 중
+  // controlled <Input> 값이 캐시 churn 으로 재설정되면 조합 버퍼가 깨진다.
+  // 로컬 state 로 입력을 격리하면 IME 가 안전하다. (ActivityInfoEditor 와 동일 패턴)
+  const [fields, setFields] = useState<FormField[]>(value);
+  const lastEmitted = useRef<FormField[]>(value);
+  const dirty = useRef(false);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onChangeRef = useRef(onChange);
+  useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
+
+  // 외부(value prop) 변경 동기화 — 단, 보류 중인 로컬 편집이 있으면 덮어쓰지 않는다.
+  useEffect(() => {
+    if (dirty.current) return;
+    if (value !== lastEmitted.current) {
+      setFields(value);
+      lastEmitted.current = value;
+    }
+  }, [value]);
+
+  // 보류 중인 변경 즉시 전파 (언마운트 시 유실 방지)
+  const flush = useCallback(() => {
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+      debounceTimer.current = null;
+      dirty.current = false;
+      onChangeRef.current(lastEmitted.current);
+    }
+  }, []);
+  useEffect(() => flush, [flush]);
+
+  // 로컬 state 즉시 갱신 + 부모로의 전파는 디바운스
+  const commit = useCallback((next: FormField[]) => {
+    setFields(next);
+    lastEmitted.current = next;
+    dirty.current = true;
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      debounceTimer.current = null;
+      dirty.current = false;
+      onChangeRef.current(next);
+    }, COMMIT_DEBOUNCE_MS);
+  }, []);
+
   function defaultsFor(t: FormFieldType): Partial<FormField> {
     if (t === "linear_scale") return { min: 1, max: 5, minLabel: "매우 아니다", maxLabel: "매우 그렇다" };
     if (t === "number") return {};
@@ -57,6 +105,7 @@ export default function FormBuilder({ value, onChange }: Props) {
       scheduleEndTime: "18:00",
       scheduleSlotMinutes: 30,
     };
+    if (t === "datetime_slots") return { scheduleStartDate: "", scheduleEndDate: "" };
     return {};
   }
   function add() {
@@ -68,28 +117,28 @@ export default function FormBuilder({ value, onChange }: Props) {
       options: HAS_OPTIONS.includes(newType) ? ["옵션 1"] : undefined,
       ...defaultsFor(newType),
     };
-    onChange([...value, f]);
+    commit([...fields, f]);
   }
   function update(i: number, patch: Partial<FormField>) {
-    onChange(value.map((f, idx) => idx === i ? { ...f, ...patch } : f));
+    commit(fields.map((f, idx) => idx === i ? { ...f, ...patch } : f));
   }
   function changeType(i: number, t: FormFieldType) {
-    const f = value[i]; if (!f) return;
+    const f = fields[i]; if (!f) return;
     update(i, {
       type: t,
       options: HAS_OPTIONS.includes(t) ? (f.options ?? ["옵션 1"]) : undefined,
       ...defaultsFor(t),
     });
   }
-  function remove(i: number) { onChange(value.filter((_, idx) => idx !== i)); }
+  function remove(i: number) { commit(fields.filter((_, idx) => idx !== i)); }
   function move(i: number, dir: -1 | 1) {
-    const next = [...value]; const j = i + dir;
+    const next = [...fields]; const j = i + dir;
     if (j < 0 || j >= next.length) return;
-    [next[i], next[j]] = [next[j], next[i]]; onChange(next);
+    [next[i], next[j]] = [next[j], next[i]]; commit(next);
   }
   function duplicate(i: number) {
-    const f = value[i]; if (!f) return;
-    onChange([...value.slice(0, i + 1), { ...f, id: uid() }, ...value.slice(i + 1)]);
+    const f = fields[i]; if (!f) return;
+    commit([...fields.slice(0, i + 1), { ...f, id: uid() }, ...fields.slice(i + 1)]);
   }
 
   return (
@@ -105,7 +154,7 @@ export default function FormBuilder({ value, onChange }: Props) {
         </button>
         <button
           type="button"
-          onClick={() => setMode("preview")}
+          onClick={() => { flush(); setMode("preview"); }}
           className={`rounded-md px-3 py-1 text-xs font-medium ${mode === "preview" ? "bg-card shadow-sm" : "text-muted-foreground"}`}
         >
           미리보기
@@ -114,21 +163,21 @@ export default function FormBuilder({ value, onChange }: Props) {
 
       {mode === "preview" ? (
         <div className="rounded-2xl border bg-card p-4">
-          {value.length === 0 ? (
+          {fields.length === 0 ? (
             <p className="text-center text-xs text-muted-foreground">추가된 질문이 없습니다.</p>
           ) : (
-            <FormRenderer fields={value} value={previewAnswers} onChange={(id, v) => setPreviewAnswers((p) => ({ ...p, [id]: v }))} />
+            <FormRenderer fields={fields} value={previewAnswers} onChange={(id, v) => setPreviewAnswers((p) => ({ ...p, [id]: v }))} />
           )}
         </div>
       ) : (
       <>
-      {value.length === 0 && (
+      {fields.length === 0 && (
         <p className="rounded-lg border bg-muted/20 p-4 text-center text-xs text-muted-foreground">
           아직 추가된 질문이 없습니다. 아래에서 질문 유형을 선택해 추가하세요.
         </p>
       )}
 
-      {value.map((f, i) => {
+      {fields.map((f, i) => {
         const Icon = TYPE_META[f.type].icon;
         const isSection = f.type === "section_break";
         return (
@@ -139,7 +188,7 @@ export default function FormBuilder({ value, onChange }: Props) {
                 <button type="button" title="위로" onClick={() => move(i, -1)} className="rounded p-0.5 hover:bg-muted hover:text-foreground disabled:opacity-30" disabled={i === 0}>
                   <ChevronUp size={12} />
                 </button>
-                <button type="button" title="아래로" onClick={() => move(i, 1)} className="rounded p-0.5 hover:bg-muted hover:text-foreground disabled:opacity-30" disabled={i === value.length - 1}>
+                <button type="button" title="아래로" onClick={() => move(i, 1)} className="rounded p-0.5 hover:bg-muted hover:text-foreground disabled:opacity-30" disabled={i === fields.length - 1}>
                   <ChevronDown size={12} />
                 </button>
               </div>
@@ -235,6 +284,24 @@ export default function FormBuilder({ value, onChange }: Props) {
                         <option value={60}>60분</option>
                       </select>
                     </label>
+                  </div>
+                )}
+                {f.type === "datetime_slots" && (
+                  <div className="space-y-1.5 rounded-lg bg-muted/20 p-2">
+                    <p className="text-[10px] leading-relaxed text-muted-foreground">
+                      신청자가 <strong className="text-foreground">날짜 + 시작·종료 시간</strong>을 직접 추가해 여러 개 입력합니다.
+                      아래 날짜 범위를 지정하면 신청자의 날짜 선택이 해당 범위로 제한됩니다. (비워두면 제한 없음)
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className="flex flex-col gap-1 text-[10px] text-muted-foreground">
+                        선택 가능 시작일 (선택)
+                        <Input type="date" value={f.scheduleStartDate ?? ""} onChange={(e) => update(i, { scheduleStartDate: e.target.value })} className="h-7 text-xs" />
+                      </label>
+                      <label className="flex flex-col gap-1 text-[10px] text-muted-foreground">
+                        선택 가능 종료일 (선택)
+                        <Input type="date" value={f.scheduleEndDate ?? ""} onChange={(e) => update(i, { scheduleEndDate: e.target.value })} className="h-7 text-xs" />
+                      </label>
+                    </div>
                   </div>
                 )}
                 {f.type === "linear_scale" && (
