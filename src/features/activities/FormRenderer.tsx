@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp, CalendarRange, CheckCircle2, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, CalendarRange, CheckCircle2, Plus, Trash2, Ban } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import FileUploader from "@/components/ui/file-uploader";
@@ -10,6 +10,7 @@ import type { FormField, ScheduleSlot } from "@/types";
 import type { UploadedFile } from "@/lib/storage";
 
 const ALL_AVAILABLE_MARKER = "__ALL__";
+const RESTRICTED_MARKER = "__RESTRICTED__";
 
 type AnswerValue = string | string[] | UploadedFile[];
 
@@ -221,9 +222,10 @@ interface ScheduleFieldProps {
 }
 
 function ScheduleField({ field, value, onChange, defaults }: ScheduleFieldProps) {
-  const initialMode: "all" | "partial" = (() => {
-    // 저장된 답변이 있으면 그 값 우선 — "전체 가능"(__ALL__) 답변이 깨지지 않도록
+  const initialMode: "all" | "partial" | "restricted" = (() => {
+    // 저장된 답변이 있으면 그 값 우선 — 마커 답변(__ALL__/__RESTRICTED__)이 깨지지 않도록
     if (value === ALL_AVAILABLE_MARKER) return "all";
+    if (value === RESTRICTED_MARKER) return "restricted";
     if (typeof value === "string" && value) {
       try {
         const parsed = JSON.parse(value);
@@ -234,7 +236,10 @@ function ScheduleField({ field, value, onChange, defaults }: ScheduleFieldProps)
     return "partial";
   })();
   const initialSlots: ScheduleSlot[] = (() => {
-    if (typeof value === "string" && value && value !== ALL_AVAILABLE_MARKER) {
+    if (
+      typeof value === "string" && value &&
+      value !== ALL_AVAILABLE_MARKER && value !== RESTRICTED_MARKER
+    ) {
       try {
         const parsed = JSON.parse(value);
         if (Array.isArray(parsed)) return parsed as ScheduleSlot[];
@@ -243,14 +248,16 @@ function ScheduleField({ field, value, onChange, defaults }: ScheduleFieldProps)
     return [];
   })();
 
-  const [mode, setModeState] = useState<"all" | "partial">(initialMode);
+  const [mode, setModeState] = useState<"all" | "partial" | "restricted">(initialMode);
   const [slots, setSlots] = useState<ScheduleSlot[]>(initialSlots);
   const [expanded, setExpanded] = useState(true);
 
-  function setMode(next: "all" | "partial") {
+  function setMode(next: "all" | "partial" | "restricted") {
     setModeState(next);
     if (next === "all") {
       onChange(ALL_AVAILABLE_MARKER);
+    } else if (next === "restricted") {
+      onChange(RESTRICTED_MARKER);
     } else {
       onChange(JSON.stringify(slots));
       setExpanded(true);
@@ -271,38 +278,53 @@ function ScheduleField({ field, value, onChange, defaults }: ScheduleFieldProps)
   return (
     <div className="space-y-3">
       <div className="space-y-1.5">
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <button
             type="button"
             onClick={() => setMode("all")}
             className={cn(
-              "flex items-center justify-center gap-1.5 rounded-xl border-2 px-3 py-2 text-sm font-medium transition-all",
+              "flex flex-col items-center justify-center gap-1 rounded-xl border-2 px-2 py-2.5 text-xs font-medium leading-tight transition-all",
               mode === "all"
                 ? "border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100"
                 : "border-input bg-card text-muted-foreground hover:border-emerald-300 hover:bg-emerald-50/40 dark:bg-card dark:hover:bg-emerald-950/20",
             )}
           >
-            <CheckCircle2 size={15} className={mode === "all" ? "text-emerald-600" : "text-muted-foreground"} />
+            <CheckCircle2 size={16} className={mode === "all" ? "text-emerald-600" : "text-muted-foreground"} />
             전체 시간 가능
           </button>
           <button
             type="button"
             onClick={() => setMode("partial")}
             className={cn(
-              "flex items-center justify-center gap-1.5 rounded-xl border-2 px-3 py-2 text-sm font-medium transition-all",
+              "flex flex-col items-center justify-center gap-1 rounded-xl border-2 px-2 py-2.5 text-xs font-medium leading-tight transition-all",
               mode === "partial"
                 ? "border-primary bg-primary/10 text-foreground"
                 : "border-input bg-card text-muted-foreground hover:border-primary/40 hover:bg-primary/5 dark:bg-card dark:hover:bg-primary/10",
             )}
           >
-            <CalendarRange size={15} className={mode === "partial" ? "text-primary" : "text-muted-foreground"} />
+            <CalendarRange size={16} className={mode === "partial" ? "text-primary" : "text-muted-foreground"} />
             부분 참여
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("restricted")}
+            className={cn(
+              "flex flex-col items-center justify-center gap-1 rounded-xl border-2 px-2 py-2.5 text-xs font-medium leading-tight transition-all",
+              mode === "restricted"
+                ? "border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-950/40 dark:text-rose-100"
+                : "border-input bg-card text-muted-foreground hover:border-rose-300 hover:bg-rose-50/40 dark:bg-card dark:hover:bg-rose-950/20",
+            )}
+          >
+            <Ban size={16} className={mode === "restricted" ? "text-rose-600" : "text-muted-foreground"} />
+            참여 제한
           </button>
         </div>
         <p className="text-[11px] leading-snug text-muted-foreground">
           {mode === "all"
             ? "행사 전 일정에 모두 참여할 수 있습니다."
-            : "아래 시간표에서 가능한 시간대만 선택하세요."}
+            : mode === "restricted"
+              ? "참여가 어렵거나 제한적임을 운영진에게 알립니다."
+              : "아래 시간표에서 가능한 시간대만 선택하세요."}
         </p>
       </div>
 

@@ -2431,13 +2431,19 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                                   ? (a.v as string[]).join(", ")
                                   : `${(a.v as { name: string }[]).length}개 파일 첨부`;
                               } else if ((field.type === "schedule" || field.type === "datetime_slots") && typeof a.v === "string") {
-                                try {
-                                  const slots = JSON.parse(a.v) as { date: string; start: string; end: string }[];
-                                  display = slots.length === 0
-                                    ? "(선택 없음)"
-                                    : slots.map((s) => `${s.date} ${s.start}-${s.end}`).join(", ");
-                                } catch {
-                                  display = String(a.v);
+                                if (a.v === "__ALL__") {
+                                  display = "전체 시간 가능";
+                                } else if (a.v === "__RESTRICTED__") {
+                                  display = "참여 제한";
+                                } else {
+                                  try {
+                                    const slots = JSON.parse(a.v) as { date: string; start: string; end: string }[];
+                                    display = slots.length === 0
+                                      ? "(선택 없음)"
+                                      : slots.map((s) => `${s.date} ${s.start}-${s.end}`).join(", ");
+                                  } catch {
+                                    display = String(a.v);
+                                  }
                                 }
                               } else {
                                 display = String(a.v);
