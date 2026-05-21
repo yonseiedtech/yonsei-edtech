@@ -11,6 +11,7 @@ import {
   ArrowRight,
   Network,
   Anchor,
+  BookText,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -270,6 +271,31 @@ export default function ArchiveLandingPage() {
             );
           })}
         </div>
+
+        {/* ── APA 7판 참고문헌 가이드 ── */}
+        <Link
+          href="/archive/apa-style"
+          className="group mt-6 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+          aria-label="APA 7판 참고문헌 작성 가이드 보기"
+        >
+          <article className="rounded-2xl border-l-4 border-l-amber-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+            <div className="flex items-center gap-4 p-5">
+              <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+                <BookText className="h-5 w-5" aria-hidden />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-lg font-semibold tracking-tight">APA 7판 참고문헌 작성 가이드</h2>
+                <p className="text-sm text-muted-foreground">
+                  학위논문·학술지 투고를 위한 인용·참고문헌 형식 요약 — 자료 유형별 형식과 교육공학 예시
+                </p>
+              </div>
+              <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">
+                보기
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+              </div>
+            </div>
+          </article>
+        </Link>
 
         {/* ── 사용 가이드 ── */}
         <Card className="mt-6 rounded-2xl shadow-sm">
