@@ -5,6 +5,7 @@ import {
   Plus, Trash2, GripVertical, Copy, Type, AlignLeft, CircleDot, SquareCheck,
   ChevronDown, ChevronUp, Calendar, Clock, CalendarClock, Mail, Phone, FileText,
   Image as ImageIcon, Link2, Hash, SlidersHorizontal, Minus, CalendarRange, CalendarCheck2,
+  Save, Check,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,8 @@ interface Props {
 export default function FormBuilder({ value, onChange }: Props) {
   const [newType, setNewType] = useState<FormFieldType>("short_text");
   const [mode, setMode] = useState<"edit" | "preview">("edit");
+  // 저장 상태 — "unsaved": 변경 후 저장 대기, "saved": 백엔드 전파 완료
+  const [saveState, setSaveState] = useState<"saved" | "unsaved">("saved");
   const [previewAnswers, setPreviewAnswers] = useState<Record<string, string | string[] | UploadedFile[]>>({});
 
   // 로컬 작업 사본 — 입력 필드는 이 state 를 읽는다.
@@ -71,13 +74,14 @@ export default function FormBuilder({ value, onChange }: Props) {
     }
   }, [value]);
 
-  // 보류 중인 변경 즉시 전파 (언마운트 시 유실 방지)
+  // 보류 중인 변경 즉시 전파 (언마운트 시 유실 방지 / 저장 버튼)
   const flush = useCallback(() => {
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
       debounceTimer.current = null;
       dirty.current = false;
       onChangeRef.current(lastEmitted.current);
+      setSaveState("saved");
     }
   }, []);
   useEffect(() => flush, [flush]);
@@ -87,11 +91,13 @@ export default function FormBuilder({ value, onChange }: Props) {
     setFields(next);
     lastEmitted.current = next;
     dirty.current = true;
+    setSaveState("unsaved");
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(() => {
       debounceTimer.current = null;
       dirty.current = false;
       onChangeRef.current(next);
+      setSaveState("saved");
     }, COMMIT_DEBOUNCE_MS);
   }, []);
 
@@ -143,22 +149,44 @@ export default function FormBuilder({ value, onChange }: Props) {
 
   return (
     <div className="space-y-3">
-      {/* 편집/미리보기 탭 */}
-      <div className="flex items-center gap-1 rounded-lg border bg-muted/30 p-1 w-fit">
-        <button
-          type="button"
-          onClick={() => setMode("edit")}
-          className={`rounded-md px-3 py-1 text-xs font-medium ${mode === "edit" ? "bg-card shadow-sm" : "text-muted-foreground"}`}
-        >
-          편집
-        </button>
-        <button
-          type="button"
-          onClick={() => { flush(); setMode("preview"); }}
-          className={`rounded-md px-3 py-1 text-xs font-medium ${mode === "preview" ? "bg-card shadow-sm" : "text-muted-foreground"}`}
-        >
-          미리보기
-        </button>
+      {/* 편집/미리보기 탭 + 저장 상태 */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-1 rounded-lg border bg-muted/30 p-1 w-fit">
+          <button
+            type="button"
+            onClick={() => setMode("edit")}
+            className={`rounded-md px-3 py-1 text-xs font-medium ${mode === "edit" ? "bg-card shadow-sm" : "text-muted-foreground"}`}
+          >
+            편집
+          </button>
+          <button
+            type="button"
+            onClick={() => { flush(); setMode("preview"); }}
+            className={`rounded-md px-3 py-1 text-xs font-medium ${mode === "preview" ? "bg-card shadow-sm" : "text-muted-foreground"}`}
+          >
+            미리보기
+          </button>
+        </div>
+        <div className="flex items-center gap-2">
+          {saveState === "unsaved" ? (
+            <span className="flex items-center gap-1 text-[11px] font-medium text-amber-600">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />저장 대기 중
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600">
+              <Check size={12} />저장됨
+            </span>
+          )}
+          <Button
+            type="button"
+            size="sm"
+            variant={saveState === "unsaved" ? "default" : "outline"}
+            disabled={saveState === "saved"}
+            onClick={flush}
+          >
+            <Save size={14} className="mr-1" />저장
+          </Button>
+        </div>
       </div>
 
       {mode === "preview" ? (
