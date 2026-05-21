@@ -2703,13 +2703,13 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               <Button
                 variant="outline"
                 onClick={() => { setApplyDialog(false); setEditingApplicantKey(null); }}
-                className="flex-1 sm:flex-none"
+                className="h-12 flex-1 text-base sm:h-8 sm:flex-none sm:text-sm"
               >
                 취소
               </Button>
               <Button
                 size="lg"
-                className="flex-1 font-semibold sm:flex-none"
+                className="h-12 flex-1 text-base font-semibold sm:h-9 sm:flex-none sm:text-sm"
                 onClick={() => applyMutation.mutate()}
                 disabled={applyMutation.isPending || !applyName.trim() || (!user && (!applyEmail.trim() || !applyStudentId.trim())) || (applyParticipantType === "speaker" && !applySpeakerPaperTitle.trim())}
               >
