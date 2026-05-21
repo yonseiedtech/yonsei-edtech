@@ -621,7 +621,7 @@ export default function RegistrationsTab() {
   const [sheetUrl, setSheetUrl] = useState("");
   const [sheetLoading, setSheetLoading] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
-  const [manualForm, setManualForm] = useState({ name: "", email: "", affiliation: "", phone: "", memo: "" });
+  const [manualForm, setManualForm] = useState({ name: "", email: "", studentId: "", affiliation: "", phone: "", memo: "" });
   const [memberPickerOpen, setMemberPickerOpen] = useState(false);
   const [memberSearch, setMemberSearch] = useState("");
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
@@ -874,8 +874,8 @@ export default function RegistrationsTab() {
 
   async function handleManualRegister() {
     if (!manualForm.name.trim()) { toast.error("이름은 필수입니다."); return; }
-    await registerFromData([{ ...manualForm, studentId: "", semester: "", interests: "" }]);
-    setManualForm({ name: "", email: "", affiliation: "", phone: "", memo: "" });
+    await registerFromData([{ ...manualForm, semester: "", interests: "" }]);
+    setManualForm({ name: "", email: "", studentId: "", affiliation: "", phone: "", memo: "" });
     setManualOpen(false);
   }
 
@@ -1489,6 +1489,11 @@ export default function RegistrationsTab() {
             <div className="grid grid-cols-2 gap-3">
               <div><label className="mb-1 block text-xs font-medium">이름 *</label><Input value={manualForm.name} onChange={(e) => setManualForm({ ...manualForm, name: e.target.value })} /></div>
               <div><label className="mb-1 block text-xs font-medium">이메일 *</label><Input value={manualForm.email} onChange={(e) => setManualForm({ ...manualForm, email: e.target.value })} /></div>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium">학번</label>
+              <Input value={manualForm.studentId} onChange={(e) => setManualForm({ ...manualForm, studentId: e.target.value })} placeholder="예: 2025431009" />
+              <p className="mt-1 text-[11px] text-muted-foreground">학번은 고유값이라, 비회원도 입력해 두면 추후 회원 계정과 자동 연동됩니다.</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div><label className="mb-1 block text-xs font-medium">소속</label><Input value={manualForm.affiliation} onChange={(e) => setManualForm({ ...manualForm, affiliation: e.target.value })} /></div>
