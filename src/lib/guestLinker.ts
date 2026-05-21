@@ -73,10 +73,12 @@ export async function linkGuestApplicants({
       };
       const hasMatch = apps.some(matches);
       if (!hasMatch) continue;
-      const updated = apps.map((x) =>
-        matches(x) ? { ...x, userId, name: x.name || userName || "", isGuest: false } : x,
-      );
-      await activitiesApi.update(a.id, { applicants: updated });
+      // 트랜잭션으로 최신 applicants 에 반영 — 전체 배열 덮어쓰기로 인한 신청자 누락 방지
+      await activitiesApi.mutateRoster(a.id, ({ applicants }) => ({
+        applicants: applicants.map((x) =>
+          matches(x) ? { ...x, userId, name: x.name || userName || "", isGuest: false } : x,
+        ),
+      }));
       linked += 1;
     }
   } catch {

@@ -19,6 +19,7 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
+  runTransaction,
   query,
   where,
   orderBy,
@@ -495,6 +496,30 @@ export const activitiesApi = {
   get: (id: string) => dataApi.get<Activity>("activities", id),
   create: (data: Record<string, unknown>) => dataApi.create<Activity>("activities", data),
   update: (id: string, data: Record<string, unknown>) => dataApi.update<Activity>("activities", id, data),
+  /**
+   * applicants/participants 를 Firestore 트랜잭션으로 원자적 수정.
+   * mutator 는 항상 최신 값을 받으므로 동시 신청·stale 캐시로 인한
+   * lost update(신청자 누락)를 방지한다.
+   */
+  mutateRoster: async (
+    id: string,
+    mutator: (current: {
+      applicants: NonNullable<Activity["applicants"]>;
+      participants: string[];
+    }) => { applicants?: unknown[]; participants?: string[] },
+  ): Promise<void> => {
+    const ref = doc(db, "activities", id);
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists()) throw new Error("활동을 찾을 수 없습니다.");
+      const data = snap.data();
+      const patch = mutator({
+        applicants: (data.applicants as NonNullable<Activity["applicants"]>) ?? [],
+        participants: (data.participants as string[]) ?? [],
+      });
+      tx.update(ref, { ...stripUndefinedDeep(patch), updatedAt: serverTimestamp() });
+    });
+  },
   delete: (id: string) => dataApi.delete("activities", id),
 };
 

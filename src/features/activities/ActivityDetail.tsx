@@ -278,37 +278,38 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             `필수 항목을 입력해주세요 — ${missingRequired.map((f) => f.label).join(", ")}`,
           );
         }
-        // 수정 모드 — 기존 applicant 항목을 교체 (append 대신)
+        // 수정 모드 — 기존 applicant 항목을 교체 (트랜잭션으로 최신 배열에 반영)
         if (editingApplicantKey) {
-          const idx = applicants.findIndex(
-            (a) => (a.userId ?? a.guestKey ?? `${a.name}-${a.appliedAt}`) === editingApplicantKey,
-          );
-          if (idx < 0) throw new Error("수정할 신청을 찾을 수 없습니다.");
-          const existing = applicants[idx];
-          const isSelfEdit = !!user && existing.userId === user.id;
-          const wasApproved = existing.status === "approved";
-          // 본인이 승인된 신청을 수정하면 대기중으로 되돌려 재검토 (운영진 수정은 상태 유지)
-          const nextStatus = isSelfEdit && wasApproved ? "pending" : existing.status;
-          const nextParticipants =
-            isSelfEdit && wasApproved && existing.userId
-              ? participants.filter((p) => p !== existing.userId)
-              : participants;
-          const updatedEntry = {
-            ...existing,
-            name: applyName.trim() || existing.name,
-            studentId: applyStudentId,
-            email: applyEmail.trim() || existing.email,
-            phone: applyPhone,
-            answers: Object.keys(applyAnswers).length > 0 ? applyAnswers : undefined,
-            participantType: applyParticipantType,
-            status: nextStatus,
-            speakerSubmissionType: isSpeaker ? applySpeakerSubmissionType : undefined,
-            speakerPaperTitle: isSpeaker ? applySpeakerPaperTitle.trim() : undefined,
-          };
-          const updated = applicants.map((a, i) => (i === idx ? updatedEntry : a));
-          await activitiesApi.update(activityId, {
-            applicants: updated,
-            participants: nextParticipants,
+          await activitiesApi.mutateRoster(activityId, ({ applicants: cur, participants: curP }) => {
+            const idx = cur.findIndex(
+              (a) => (a.userId ?? a.guestKey ?? `${a.name}-${a.appliedAt}`) === editingApplicantKey,
+            );
+            if (idx < 0) throw new Error("수정할 신청을 찾을 수 없습니다.");
+            const existing = cur[idx];
+            const isSelfEdit = !!user && existing.userId === user.id;
+            const wasApproved = existing.status === "approved";
+            // 본인이 승인된 신청을 수정하면 대기중으로 되돌려 재검토 (운영진 수정은 상태 유지)
+            const nextStatus = isSelfEdit && wasApproved ? "pending" : existing.status;
+            const nextParticipants =
+              isSelfEdit && wasApproved && existing.userId
+                ? curP.filter((p) => p !== existing.userId)
+                : curP;
+            const updatedEntry = {
+              ...existing,
+              name: applyName.trim() || existing.name,
+              studentId: applyStudentId,
+              email: applyEmail.trim() || existing.email,
+              phone: applyPhone,
+              answers: Object.keys(applyAnswers).length > 0 ? applyAnswers : undefined,
+              participantType: applyParticipantType,
+              status: nextStatus,
+              speakerSubmissionType: isSpeaker ? applySpeakerSubmissionType : undefined,
+              speakerPaperTitle: isSpeaker ? applySpeakerPaperTitle.trim() : undefined,
+            };
+            return {
+              applicants: cur.map((a, i) => (i === idx ? updatedEntry : a)),
+              participants: nextParticipants,
+            };
           });
           return;
         }
@@ -317,19 +318,20 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
           : {};
         if (user) {
           const newApplicant = { userId: user.id, name: applyName || user.name, studentId: applyStudentId, email: applyEmail || user.email, phone: applyPhone, answers: Object.keys(applyAnswers).length > 0 ? applyAnswers : undefined, appliedAt: new Date().toISOString(), status: "pending" as const, participantType: applyParticipantType, ...speakerExtras };
-          await activitiesApi.update(activityId, { applicants: [...applicants, newApplicant] });
+          await activitiesApi.mutateRoster(activityId, ({ applicants: cur }) => ({ applicants: [...cur, newApplicant] }));
         } else {
           if (!applyName.trim() || !applyEmail.trim() || !applyStudentId.trim()) {
             throw new Error("비회원 신청은 이름·학번·이메일이 모두 필요합니다.");
           }
           const guestKey = `guest_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
           const newApplicant = { guestKey, isGuest: true, name: applyName.trim(), studentId: applyStudentId, email: applyEmail.trim().toLowerCase(), phone: applyPhone, answers: Object.keys(applyAnswers).length > 0 ? applyAnswers : undefined, appliedAt: new Date().toISOString(), status: "pending" as const, participantType: applyParticipantType, ...speakerExtras };
-          await activitiesApi.update(activityId, { applicants: [...applicants, newApplicant] });
+          await activitiesApi.mutateRoster(activityId, ({ applicants: cur }) => ({ applicants: [...cur, newApplicant] }));
         }
       } else {
         if (!user) return;
-        if (participants.includes(user.id)) return;
-        await activitiesApi.update(activityId, { participants: [...participants, user.id] });
+        await activitiesApi.mutateRoster(activityId, ({ participants: curP }) =>
+          curP.includes(user.id) ? {} : { participants: [...curP, user.id] },
+        );
       }
     },
     onSuccess: () => {
@@ -528,12 +530,13 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const deleteApplicantMutation = useMutation({
     mutationFn: async ({ key }: { key: string }) => {
       if (!activity) return;
-      const target = applicants.find((a) => (a.userId ?? a.guestKey) === key);
-      const updated = applicants.filter((a) => (a.userId ?? a.guestKey) !== key);
-      const newParticipants = target?.userId
-        ? participants.filter((p) => p !== target.userId)
-        : participants;
-      await activitiesApi.update(activityId, { applicants: updated, participants: newParticipants });
+      await activitiesApi.mutateRoster(activityId, ({ applicants: cur, participants: curP }) => {
+        const target = cur.find((a) => (a.userId ?? a.guestKey) === key);
+        return {
+          applicants: cur.filter((a) => (a.userId ?? a.guestKey) !== key),
+          participants: target?.userId ? curP.filter((p) => p !== target.userId) : curP,
+        };
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
@@ -546,18 +549,20 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const updateApplicantMutation = useMutation({
     mutationFn: async ({ key, status }: { key: string; status: "approved" | "rejected" }) => {
       if (!activity) return;
-      const target = applicants.find((a) => (a.userId ?? a.guestKey) === key);
       const isExternalReject = type === "external" && status === "rejected";
-      const updated = isExternalReject
-        ? applicants.filter((a) => (a.userId ?? a.guestKey) !== key)
-        : applicants.map((a) => ((a.userId ?? a.guestKey) === key ? { ...a, status } : a));
-      let newParticipants = participants;
-      if (status === "approved" && target?.userId && !participants.includes(target.userId)) {
-        newParticipants = [...participants, target.userId];
-      } else if (isExternalReject && target?.userId && participants.includes(target.userId)) {
-        newParticipants = participants.filter((p) => p !== target.userId);
-      }
-      await activitiesApi.update(activityId, { applicants: updated, participants: newParticipants });
+      await activitiesApi.mutateRoster(activityId, ({ applicants: cur, participants: curP }) => {
+        const target = cur.find((a) => (a.userId ?? a.guestKey) === key);
+        const updated = isExternalReject
+          ? cur.filter((a) => (a.userId ?? a.guestKey) !== key)
+          : cur.map((a) => ((a.userId ?? a.guestKey) === key ? { ...a, status } : a));
+        let newParticipants = curP;
+        if (status === "approved" && target?.userId && !curP.includes(target.userId)) {
+          newParticipants = [...curP, target.userId];
+        } else if (isExternalReject && target?.userId && curP.includes(target.userId)) {
+          newParticipants = curP.filter((p) => p !== target.userId);
+        }
+        return { applicants: updated, participants: newParticipants };
+      });
       return { isExternalReject };
     },
     onSuccess: (result) => {
