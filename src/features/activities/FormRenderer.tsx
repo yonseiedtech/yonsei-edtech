@@ -222,13 +222,16 @@ interface ScheduleFieldProps {
 
 function ScheduleField({ field, value, onChange, defaults }: ScheduleFieldProps) {
   const initialMode: "all" | "partial" = (() => {
-    if (typeof value === "string" && value && value !== ALL_AVAILABLE_MARKER) {
+    // 저장된 답변이 있으면 그 값 우선 — "전체 가능"(__ALL__) 답변이 깨지지 않도록
+    if (value === ALL_AVAILABLE_MARKER) return "all";
+    if (typeof value === "string" && value) {
       try {
         const parsed = JSON.parse(value);
         if (Array.isArray(parsed) && parsed.length > 0) return "partial";
       } catch { /* ignore */ }
     }
-    return "all";
+    // 기본값: 부분 참여 — 신청자가 시간표를 바로 보고 선택하도록 노출
+    return "partial";
   })();
   const initialSlots: ScheduleSlot[] = (() => {
     if (typeof value === "string" && value && value !== ALL_AVAILABLE_MARKER) {
@@ -267,43 +270,40 @@ function ScheduleField({ field, value, onChange, defaults }: ScheduleFieldProps)
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={() => setMode("all")}
-          className={cn(
-            "flex flex-col items-start gap-1 rounded-2xl border-2 p-4 text-left transition-all",
-            mode === "all"
-              ? "border-emerald-500 bg-emerald-50 text-emerald-900 shadow-sm dark:bg-emerald-950/40 dark:text-emerald-100"
-              : "border-input bg-card text-muted-foreground hover:border-emerald-300 hover:bg-emerald-50/40 dark:bg-card dark:hover:bg-emerald-950/20",
-          )}
-        >
-          <div className="flex items-center gap-2">
-            <CheckCircle2 size={18} className={mode === "all" ? "text-emerald-600" : "text-muted-foreground"} />
-            <span className="text-sm font-semibold">전체 시간 가능</span>
-          </div>
-          <span className="text-[11px] leading-snug text-muted-foreground">
-            행사 전 일정에 모두 참여할 수 있습니다.
-          </span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode("partial")}
-          className={cn(
-            "flex flex-col items-start gap-1 rounded-2xl border-2 p-4 text-left transition-all",
-            mode === "partial"
-              ? "border-primary bg-primary/10 text-foreground shadow-sm"
-              : "border-input bg-card text-muted-foreground hover:border-primary/40 hover:bg-primary/5 dark:bg-card dark:hover:bg-primary/10",
-          )}
-        >
-          <div className="flex items-center gap-2">
-            <CalendarRange size={18} className={mode === "partial" ? "text-primary" : "text-muted-foreground"} />
-            <span className="text-sm font-semibold">부분 참여</span>
-          </div>
-          <span className="text-[11px] leading-snug text-muted-foreground">
-            가능한 시간대만 골라서 표시합니다.
-          </span>
-        </button>
+      <div className="space-y-1.5">
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setMode("all")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 rounded-xl border-2 px-3 py-2 text-sm font-medium transition-all",
+              mode === "all"
+                ? "border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100"
+                : "border-input bg-card text-muted-foreground hover:border-emerald-300 hover:bg-emerald-50/40 dark:bg-card dark:hover:bg-emerald-950/20",
+            )}
+          >
+            <CheckCircle2 size={15} className={mode === "all" ? "text-emerald-600" : "text-muted-foreground"} />
+            전체 시간 가능
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("partial")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 rounded-xl border-2 px-3 py-2 text-sm font-medium transition-all",
+              mode === "partial"
+                ? "border-primary bg-primary/10 text-foreground"
+                : "border-input bg-card text-muted-foreground hover:border-primary/40 hover:bg-primary/5 dark:bg-card dark:hover:bg-primary/10",
+            )}
+          >
+            <CalendarRange size={15} className={mode === "partial" ? "text-primary" : "text-muted-foreground"} />
+            부분 참여
+          </button>
+        </div>
+        <p className="text-[11px] leading-snug text-muted-foreground">
+          {mode === "all"
+            ? "행사 전 일정에 모두 참여할 수 있습니다."
+            : "아래 시간표에서 가능한 시간대만 선택하세요."}
+        </p>
       </div>
 
       {mode === "partial" && (
