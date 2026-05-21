@@ -103,6 +103,8 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const [applyParticipantType, setApplyParticipantType] = useState<ExternalParticipantType>("attendee");
   const [applySpeakerSubmissionType, setApplySpeakerSubmissionType] = useState<SpeakerSubmissionType>("paper");
   const [applySpeakerPaperTitle, setApplySpeakerPaperTitle] = useState("");
+  // 신청 정보 수정 모드 — null 이면 신규 신청, 값이 있으면 해당 applicant 수정
+  const [editingApplicantKey, setEditingApplicantKey] = useState<string | null>(null);
   const [applicantsTypeFilter, setApplicantsTypeFilter] = useState<"all" | ExternalParticipantType>("all");
   const [signupCtaOpen, setSignupCtaOpen] = useState(false);
   const [progressTitle, setProgressTitle] = useState("");
@@ -276,6 +278,40 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             `필수 항목을 입력해주세요 — ${missingRequired.map((f) => f.label).join(", ")}`,
           );
         }
+        // 수정 모드 — 기존 applicant 항목을 교체 (append 대신)
+        if (editingApplicantKey) {
+          const idx = applicants.findIndex(
+            (a) => (a.userId ?? a.guestKey ?? `${a.name}-${a.appliedAt}`) === editingApplicantKey,
+          );
+          if (idx < 0) throw new Error("수정할 신청을 찾을 수 없습니다.");
+          const existing = applicants[idx];
+          const isSelfEdit = !!user && existing.userId === user.id;
+          const wasApproved = existing.status === "approved";
+          // 본인이 승인된 신청을 수정하면 대기중으로 되돌려 재검토 (운영진 수정은 상태 유지)
+          const nextStatus = isSelfEdit && wasApproved ? "pending" : existing.status;
+          const nextParticipants =
+            isSelfEdit && wasApproved && existing.userId
+              ? participants.filter((p) => p !== existing.userId)
+              : participants;
+          const updatedEntry = {
+            ...existing,
+            name: applyName.trim() || existing.name,
+            studentId: applyStudentId,
+            email: applyEmail.trim() || existing.email,
+            phone: applyPhone,
+            answers: Object.keys(applyAnswers).length > 0 ? applyAnswers : undefined,
+            participantType: applyParticipantType,
+            status: nextStatus,
+            speakerSubmissionType: isSpeaker ? applySpeakerSubmissionType : undefined,
+            speakerPaperTitle: isSpeaker ? applySpeakerPaperTitle.trim() : undefined,
+          };
+          const updated = applicants.map((a, i) => (i === idx ? updatedEntry : a));
+          await activitiesApi.update(activityId, {
+            applicants: updated,
+            participants: nextParticipants,
+          });
+          return;
+        }
         const speakerExtras = isSpeaker
           ? { speakerSubmissionType: applySpeakerSubmissionType, speakerPaperTitle: applySpeakerPaperTitle.trim() }
           : {};
@@ -298,12 +334,36 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
-      toast.success(type === "external" ? "참가 신청이 완료되었습니다." : "참여 신청이 완료되었습니다.");
+      const wasEdit = !!editingApplicantKey;
+      toast.success(
+        wasEdit
+          ? "신청 정보가 수정되었습니다."
+          : type === "external"
+            ? "참가 신청이 완료되었습니다."
+            : "참여 신청이 완료되었습니다.",
+      );
       setApplyDialog(false);
-      if (!user && type === "external") setSignupCtaOpen(true);
+      setEditingApplicantKey(null);
+      if (!wasEdit && !user && type === "external") setSignupCtaOpen(true);
     },
     onError: (e: Error) => { toast.error(e.message || "신청에 실패했습니다."); },
   });
+
+  /** 기존 신청 항목을 신청 다이얼로그(수정 모드)로 연다 — 신청자 본인/운영진 공용 */
+  function openEditApplication(a: NonNullable<Activity["applicants"]>[number]) {
+    setEditingApplicantKey(a.userId ?? a.guestKey ?? `${a.name}-${a.appliedAt}`);
+    setApplyName(a.name ?? "");
+    setApplyStudentId(a.studentId ?? "");
+    setApplyEmail(a.email ?? "");
+    setApplyPhone(a.phone ?? "");
+    setApplyParticipantType((a.participantType as ExternalParticipantType) ?? "attendee");
+    setApplySpeakerSubmissionType((a.speakerSubmissionType as SpeakerSubmissionType) ?? "paper");
+    setApplySpeakerPaperTitle(a.speakerPaperTitle ?? "");
+    setApplyAnswers(
+      (a.answers as Record<string, string | string[] | UploadedFile[]>) ?? {},
+    );
+    setApplyDialog(true);
+  }
 
   // PR7: 참여자 추가/제거 (운영진 또는 스터디 모임장)
   const addParticipantMutation = useMutation({
@@ -713,6 +773,14 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               )}
               {isJoined && <Badge className="bg-green-50 px-3 py-1 text-sm text-green-700"><Check size={14} className="mr-1" />참여 중</Badge>}
               {hasApplied && !isJoined && <Badge className="bg-amber-50 px-3 py-1 text-sm text-amber-700"><Clock size={14} className="mr-1" />신청 대기중</Badge>}
+              {type === "external" && user && (() => {
+                const mine = applicants.find((a) => a.userId === user.id);
+                return mine ? (
+                  <Button variant="outline" size="sm" className="ml-2 gap-1" onClick={() => openEditApplication(mine)}>
+                    <Pencil size={14} />신청 정보 수정
+                  </Button>
+                ) : null;
+              })()}
             </div>
           )}
         </div>
@@ -1740,7 +1808,12 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                           </p>
                         )}
                       </div>
-                      <div className="flex shrink-0 items-center gap-2 sm:self-start">
+                      <div className="flex shrink-0 flex-wrap items-center gap-2 sm:self-start">
+                        {isStaff && (
+                          <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => openEditApplication(a)}>
+                            <Pencil size={12} />수정
+                          </Button>
+                        )}
                         {effectiveStatus === "pending" && isStaff && (
                           <>
                             <Button size="sm" className="h-7 gap-1 text-xs" onClick={() => updateApplicantMutation.mutate({ key, status: "approved" })}>
@@ -2482,10 +2555,18 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
         </div>
 
         {/* 대외활동 참가 신청 Dialog — 섹션 단위 그룹화 + 여백 확대 */}
-        <Dialog open={applyDialog} onOpenChange={setApplyDialog}>
-          <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <Dialog
+          open={applyDialog}
+          onOpenChange={(o) => {
+            setApplyDialog(o);
+            if (!o) setEditingApplicantKey(null);
+          }}
+        >
+          <DialogContent className="sm:max-w-lg">
             <DialogHeader className="pb-2">
-              <DialogTitle className="text-xl font-bold">참가 신청{!user && " (비회원)"}</DialogTitle>
+              <DialogTitle className="text-lg font-bold sm:text-xl">
+                {editingApplicantKey ? "신청 정보 수정" : <>참가 신청{!user && " (비회원)"}</>}
+              </DialogTitle>
               <p className="mt-1 text-xs text-muted-foreground">{activity?.title}</p>
             </DialogHeader>
             {!user && (
@@ -2493,7 +2574,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 비회원으로도 신청할 수 있습니다. 추후 <strong>동일한 학번(또는 이메일)</strong>으로 회원가입하시면 이번 신청 기록이 자동으로 회원 활동에 연동됩니다.
               </p>
             )}
-            <div className="grid gap-5">
+            <div className="grid gap-4 sm:gap-5">
               {(() => {
                 const allTypes = ["speaker", "volunteer", "attendee"] as const;
                 const configured = activity?.enabledParticipantTypes;
@@ -2520,7 +2601,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                             )}
                             aria-pressed={active}
                           >
-                            <span className="text-base font-bold">
+                            <span className="text-sm font-bold sm:text-base">
                               {EXTERNAL_PARTICIPANT_TYPE_LABELS[t]}
                             </span>
                             {active && <span className="text-[10px]">선택됨</span>}
@@ -2619,14 +2700,21 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               )}
             </div>
             <DialogFooter className="mt-2 gap-2 sm:gap-0">
-              <Button variant="outline" onClick={() => setApplyDialog(false)} className="flex-1 sm:flex-none">취소</Button>
+              <Button
+                variant="outline"
+                onClick={() => { setApplyDialog(false); setEditingApplicantKey(null); }}
+                className="flex-1 sm:flex-none"
+              >
+                취소
+              </Button>
               <Button
                 size="lg"
                 className="flex-1 font-semibold sm:flex-none"
                 onClick={() => applyMutation.mutate()}
                 disabled={applyMutation.isPending || !applyName.trim() || (!user && (!applyEmail.trim() || !applyStudentId.trim())) || (applyParticipantType === "speaker" && !applySpeakerPaperTitle.trim())}
               >
-                {applyMutation.isPending && <Loader2 size={14} className="mr-1 animate-spin" />}신청 제출
+                {applyMutation.isPending && <Loader2 size={14} className="mr-1 animate-spin" />}
+                {editingApplicantKey ? "수정 저장" : "신청 제출"}
               </Button>
             </DialogFooter>
           </DialogContent>
