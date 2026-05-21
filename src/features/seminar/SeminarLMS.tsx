@@ -151,6 +151,14 @@ export default function SeminarLMS({ seminarId }: Props) {
     toast.success("연사 후기 링크가 클립보드에 복사되었습니다.");
   }
 
+  function handleCopyAttendeeLink() {
+    if (!seminar) return;
+    // 참석자 후기는 토큰 불필요 — 이름·학번 인증 페이지로 바로 연결
+    const url = `${window.location.origin}/seminars/${seminar.id}/review`;
+    navigator.clipboard.writeText(url);
+    toast.success("참석자 후기 링크가 클립보드에 복사되었습니다.");
+  }
+
   if (!seminar) {
     return (
       <div className="py-16 text-center text-muted-foreground">
@@ -217,6 +225,31 @@ export default function SeminarLMS({ seminarId }: Props) {
                 </Button>
               </div>
             )}
+          </div>
+        )}
+
+        {/* 참석자 후기 링크 (staff 전용) */}
+        {isStaff && (
+          <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4">
+            <h3 className="mb-2 flex items-center gap-2 text-sm font-medium">
+              <MessageSquare size={14} className="text-emerald-600" />
+              참석자 후기 링크
+            </h3>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
+                <Link2 size={14} className="shrink-0 text-muted-foreground" />
+                <span className="flex-1 truncate text-xs text-muted-foreground">
+                  /seminars/{seminar.id}/review
+                </span>
+                <Button size="sm" variant="ghost" onClick={handleCopyAttendeeLink} className="h-7 shrink-0 px-2">
+                  <Copy size={12} className="mr-1" />
+                  복사
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                이 링크를 참석자에게 공유하면 이름·학번 인증 후 후기를 작성할 수 있습니다.
+              </p>
+            </div>
           </div>
         )}
 
