@@ -25,6 +25,7 @@ import {
 } from "@/types";
 import OfficeOfEducationField from "@/components/ui/office-of-education-field";
 import { calcGeneration } from "@/lib/generation";
+import { currentSemesterKey } from "@/lib/semester";
 import ProfileSocialsEditor from "@/components/profile/ProfileSocialsEditor";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
@@ -192,6 +193,8 @@ export default function ProfileEditor({ user }: Props) {
         schoolLevel: data.schoolLevel || undefined,
         generation: computedGen || data.generation,
         accumulatedSemesters: data.accumulatedSemesters ? Number(data.accumulatedSemesters) : undefined,
+        // 누적학기를 수동 입력하면 "지금 학기 기준" 으로 앵커 — cron 이 이번 학기에 중복 +1 하지 않도록
+        accumulatedSemestersAsOf: data.accumulatedSemesters ? currentSemesterKey() : undefined,
         interestKeywords,
         researchTopics,
       };

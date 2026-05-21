@@ -57,6 +57,24 @@ export function getUserCumulativeSemesterCount(
 }
 
 /**
+ * 표시·매칭용 실효 학기차.
+ * 학적 기준 누적학기(accumulatedSemesters)가 있으면 그 값을 우선 사용하고,
+ * 없으면 입학연도 기준 달력 계산(getUserCumulativeSemesterCount)으로 폴백한다.
+ *
+ * accumulatedSemesters 는 휴학을 제외한 실제 등록 학기 수이므로 휴학자에게 정확하며,
+ * 마이페이지·회원관리·수강 정책과 동일한 단일 기준이 된다.
+ * (달력 계산은 휴학을 무시하므로 휴학자에게 과다 계산됨)
+ */
+export function getEffectiveSemesterCount(
+  user: User,
+  now: Date = new Date(),
+): number | null {
+  const acc = (user as { accumulatedSemesters?: number }).accumulatedSemesters;
+  if (typeof acc === "number" && acc > 0) return acc;
+  return getUserCumulativeSemesterCount(user, now);
+}
+
+/**
  * 회원의 학회 운영 계층 매핑.
  * user.societyPosition (chair / vice_chair / major_rep / ta / alumni_rep) 우선,
  * user.role (staff / admin / sysadmin) 매칭 시 staff 추가, 그 외 general.
@@ -113,9 +131,9 @@ export function matchesInterviewTarget(
     if (yearMatch && semMatch && (hasYears || hasSemesters)) return true;
   }
 
-  // semesterCounts (1~6, 7+ 처리)
+  // semesterCounts (1~6, 7+ 처리) — 학적 기준 실효 학기차로 매칭
   if (criteria.semesterCounts && criteria.semesterCounts.length > 0) {
-    const c = getUserCumulativeSemesterCount(user);
+    const c = getEffectiveSemesterCount(user);
     if (c != null) {
       if (criteria.semesterCounts.includes(c)) return true;
       // 7+ (7 또는 그 이상)

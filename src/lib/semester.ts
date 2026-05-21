@@ -24,6 +24,20 @@ export function inferCurrentSemester(now: Date = new Date()): {
   return { year, semester: "second" };
 }
 
+/**
+ * 현재 학기 키 — "YYYY-1"(전기) | "YYYY-2"(후기).
+ * KST 기준이라 클라이언트/서버(UTC) 어디서 호출해도 동일 결과.
+ * 학기 자동 진행 cron 의 멱등성 앵커 + 프로필 저장 시 앵커 스탬프에 사용.
+ */
+export function currentSemesterKey(now: Date = new Date()): string {
+  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  const y = kst.getUTCFullYear();
+  const m = kst.getUTCMonth() + 1;
+  if (m >= 3 && m <= 8) return `${y}-1`;
+  // 9~12월: 그 해 후기 / 1~2월: 작년 후기
+  return m >= 9 ? `${y}-2` : `${y - 1}-2`;
+}
+
 /** YYYY-MM 형식의 from/to 범위 */
 export interface SemesterRange {
   from: string;

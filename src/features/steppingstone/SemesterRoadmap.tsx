@@ -24,7 +24,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { getUserCumulativeSemesterCount } from "@/lib/interview-target";
+import { getEffectiveSemesterCount } from "@/lib/interview-target";
 import { roadmapStagesApi } from "@/lib/bkend";
 import {
   BLOOM_STAGE_LABELS,
@@ -388,7 +388,7 @@ function StageCard({ stage, isMine, isLoggedIn, onProgressChange }: StageCardPro
 // ── Main Component ─────────────────────────────────────────────────────────────
 export default function SemesterRoadmap() {
   const { user } = useAuthStore();
-  const myCumulative = user ? (getUserCumulativeSemesterCount(user) ?? 1) : null;
+  const myCumulative = user ? (getEffectiveSemesterCount(user) ?? 1) : null;
   const isAlumni = !!(user as { isAlumni?: boolean } | null)?.isAlumni;
   const isLoggedIn = !!user;
 

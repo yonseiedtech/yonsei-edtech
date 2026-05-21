@@ -226,8 +226,10 @@ export interface User { [key: string]: unknown;
   generation: number;
   /** Sprint 54: 알림 수신 설정 */
   notificationPrefs?: NotificationPrefs;
-  /** 학적 기준 누적 학기 (가입 시점 기준, generation/기수와는 별개) */
+  /** 학적 기준 누적 학기 (휴학 제외 실제 다닌 학기 수, generation/기수와는 별개) */
   accumulatedSemesters?: number;
+  /** accumulatedSemesters 가 기준한 학기 키 ("YYYY-1"|"YYYY-2") — 학기 자동 진행 cron 의 멱등성 앵커 */
+  accumulatedSemestersAsOf?: string;
   field: string;
   profileImage?: string;
   bio?: string;

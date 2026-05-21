@@ -8,6 +8,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getUserCumulativeSemesterCount,
+  getEffectiveSemesterCount,
   getUserEntryYear,
   getUserEntrySemester,
 } from "@/lib/interview-target";
@@ -166,5 +167,41 @@ describe("getUserCumulativeSemesterCount", () => {
     } as Partial<User>);
     const now = new Date("2026-10-15"); // 2학기
     expect(getUserCumulativeSemesterCount(user, now)).toBe(1);
+  });
+});
+
+describe("getEffectiveSemesterCount", () => {
+  it("accumulatedSemesters 가 있으면 그 값을 우선 (휴학 반영 — 달력 계산보다 우선)", () => {
+    // 2023-1 입학 → 2026-1 달력 계산은 7 이지만, 휴학으로 실제 누적학기는 3
+    const user = mkUser({
+      entryYear: 2023,
+      entrySemester: "first",
+      accumulatedSemesters: 3,
+    } as Partial<User>);
+    const now = new Date("2026-05-21");
+    expect(getEffectiveSemesterCount(user, now)).toBe(3);
+  });
+
+  it("accumulatedSemesters 가 없으면 달력 계산으로 폴백", () => {
+    const user = mkUser({
+      entryYear: 2023,
+      entrySemester: "first",
+    } as Partial<User>);
+    const now = new Date("2026-05-21");
+    expect(getEffectiveSemesterCount(user, now)).toBe(7);
+  });
+
+  it("accumulatedSemesters 가 0 또는 음수면 폴백", () => {
+    const user = mkUser({
+      entryYear: 2024,
+      entrySemester: "first",
+      accumulatedSemesters: 0,
+    } as Partial<User>);
+    const now = new Date("2026-04-15");
+    expect(getEffectiveSemesterCount(user, now)).toBe(5);
+  });
+
+  it("entryYear·accumulatedSemesters 모두 없으면 null", () => {
+    expect(getEffectiveSemesterCount(mkUser({}))).toBeNull();
   });
 });

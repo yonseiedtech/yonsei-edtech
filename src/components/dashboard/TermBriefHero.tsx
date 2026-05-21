@@ -11,7 +11,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArrowRight, Sparkles, Target } from "lucide-react";
 import type { User } from "@/types";
-import { getUserCumulativeSemesterCount, getUserEntryYear, getUserEntrySemester } from "@/lib/interview-target";
+import { getEffectiveSemesterCount, getUserEntryYear, getUserEntrySemester } from "@/lib/interview-target";
 
 interface Props {
   user: User;
@@ -26,7 +26,7 @@ interface Props {
 export default function TermBriefHero({ user, academicCalendarSlot }: Props) {
   const entryYear = getUserEntryYear(user);
   const entrySem = getUserEntrySemester(user);
-  const cumulativeSem = getUserCumulativeSemesterCount(user) ?? null;
+  const cumulativeSem = getEffectiveSemesterCount(user) ?? null;
 
   // 현재 학기 라벨
   const now = new Date();
