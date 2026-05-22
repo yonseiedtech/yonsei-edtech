@@ -242,22 +242,34 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
 
         {/* 프로필 카드 */}
         <div className="mt-8 rounded-2xl border bg-card p-6">
-          <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <UserIcon size={28} />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold">{user.name}</h2>
-              <div className="mt-1 flex flex-wrap items-center gap-2">
-                <Badge>{ROLE_LABELS[user.role]}</Badge>
-                {user.enrollmentStatus && (
-                  <Badge variant="outline">{ENROLLMENT_STATUS_LABELS[user.enrollmentStatus]}</Badge>
-                )}
-                {user.studentId && (
-                  <span className="text-xs text-muted-foreground">{user.studentId}</span>
-                )}
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-4">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <UserIcon size={28} />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-xl font-bold">{user.name}</h2>
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  <Badge>{ROLE_LABELS[user.role]}</Badge>
+                  {user.enrollmentStatus && (
+                    <Badge variant="outline">{ENROLLMENT_STATUS_LABELS[user.enrollmentStatus]}</Badge>
+                  )}
+                  {user.studentId && (
+                    <span className="text-xs text-muted-foreground">{user.studentId}</span>
+                  )}
+                </div>
               </div>
             </div>
+            {!readOnly && (
+              <Link
+                href={`/profile/${user.id}?from=mypage`}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-md border bg-card px-3 py-2 text-xs font-medium text-foreground shadow-xs hover:bg-muted"
+              >
+                <UserIcon size={14} />
+                <span className="hidden sm:inline">공개 프로필 보기</span>
+                <span className="sm:hidden">프로필</span>
+              </Link>
+            )}
           </div>
         </div>
 
