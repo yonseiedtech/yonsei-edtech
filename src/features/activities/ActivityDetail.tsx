@@ -128,6 +128,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
     PublicLookupResult | "notfound" | "loading" | null
   >(null);
   const [applicantsTypeFilter, setApplicantsTypeFilter] = useState<"all" | ExternalParticipantType>("all");
+  const [presentersTypeFilter, setPresentersTypeFilter] = useState<"all" | SpeakerSubmissionType>("all");
   const [signupCtaOpen, setSignupCtaOpen] = useState(false);
   const [progressTitle, setProgressTitle] = useState("");
   const [progressDate, setProgressDate] = useState("");
@@ -2130,14 +2131,39 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               }
               return (a.name || "").localeCompare(b.name || "");
             });
+            // 발표 구분(논문·포스터·미디어전) 필터 적용
+            const visible = sorted.filter(
+              (a) =>
+                presentersTypeFilter === "all" ||
+                (a.speakerSubmissionType ?? "paper") === presentersTypeFilter,
+            );
             return (
               <div className="space-y-3">
                 <div className="rounded-2xl border bg-card p-4">
-                  <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
-                    <Badge className="bg-slate-100 text-slate-700">전체 {counts.all}</Badge>
-                    <Badge className={SPEAKER_SUBMISSION_TYPE_COLORS.paper}>{SPEAKER_SUBMISSION_TYPE_LABELS.paper} {counts.paper}</Badge>
-                    <Badge className={SPEAKER_SUBMISSION_TYPE_COLORS.poster}>{SPEAKER_SUBMISSION_TYPE_LABELS.poster} {counts.poster}</Badge>
-                    <Badge className={SPEAKER_SUBMISSION_TYPE_COLORS.media}>{SPEAKER_SUBMISSION_TYPE_LABELS.media} {counts.media}</Badge>
+                  <div className="mb-3 flex flex-wrap items-center gap-1.5 text-xs">
+                    {([
+                      { v: "all" as const, label: "전체", count: counts.all, cls: "bg-slate-100 text-slate-700" },
+                      { v: "paper" as const, label: SPEAKER_SUBMISSION_TYPE_LABELS.paper, count: counts.paper, cls: SPEAKER_SUBMISSION_TYPE_COLORS.paper },
+                      { v: "poster" as const, label: SPEAKER_SUBMISSION_TYPE_LABELS.poster, count: counts.poster, cls: SPEAKER_SUBMISSION_TYPE_COLORS.poster },
+                      { v: "media" as const, label: SPEAKER_SUBMISSION_TYPE_LABELS.media, count: counts.media, cls: SPEAKER_SUBMISSION_TYPE_COLORS.media },
+                    ]).map((opt) => {
+                      const active = presentersTypeFilter === opt.v;
+                      return (
+                        <button
+                          key={opt.v}
+                          type="button"
+                          onClick={() => setPresentersTypeFilter(opt.v)}
+                          aria-pressed={active}
+                          className={cn(
+                            "rounded-full px-2.5 py-1 font-medium transition-all",
+                            opt.cls,
+                            active ? "ring-2 ring-current ring-offset-1" : "opacity-55 hover:opacity-90",
+                          )}
+                        >
+                          {opt.label} {opt.count}
+                        </button>
+                      );
+                    })}
                     {isStaff && (
                       <span className="ml-auto text-muted-foreground">
                         승인 {counts.approved} · 대기 {counts.pending} · 반려 {counts.rejected}
@@ -2147,6 +2173,10 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   {sorted.length === 0 ? (
                     <p className="rounded-md border border-dashed bg-muted/30 p-8 text-center text-sm text-muted-foreground">
                       아직 발표자 신청이 없습니다.
+                    </p>
+                  ) : visible.length === 0 ? (
+                    <p className="rounded-md border border-dashed bg-muted/30 p-8 text-center text-sm text-muted-foreground">
+                      해당 발표 구분의 발표자가 없습니다.
                     </p>
                   ) : (
                     <div className="overflow-x-auto rounded-md border">
@@ -2160,7 +2190,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                           </tr>
                         </thead>
                         <tbody className="divide-y">
-                          {sorted.map((a, idx) => {
+                          {visible.map((a, idx) => {
                             const sub = (a.speakerSubmissionType ?? "paper") as SpeakerSubmissionType;
                             return (
                               <tr key={`presenter-${a.name}-${sub}-${idx}`} className="align-top hover:bg-muted/20">
