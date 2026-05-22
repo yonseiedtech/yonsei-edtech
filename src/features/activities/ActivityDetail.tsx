@@ -21,7 +21,7 @@ import {
   Plus, Trash2, ListChecks, Timer, UserCog,
   ChevronDown, ChevronUp, ChevronRight,
   Upload, Paperclip, FileText, Download, CalendarPlus,
-  MessageSquare, MessageSquareQuote, HeartHandshake, BarChart3,
+  MessageSquare, MessageSquareQuote, HeartHandshake, BarChart3, Search,
 } from "lucide-react";
 import InlineMeetingTimer from "./InlineMeetingTimer";
 import ActivityConnectedTodos from "./ActivityConnectedTodos";
@@ -81,6 +81,30 @@ function isAnswerEmpty(field: FormField, v: unknown): boolean {
   return false;
 }
 
+/** 신청 답변을 사람이 읽을 수 있는 문자열로 정규화 (schedule/datetime_slots 마커·슬롯 처리) */
+function formatApplicantAnswer(field: FormField, raw: unknown): string {
+  if (raw === undefined || raw === null || raw === "") return "";
+  if (Array.isArray(raw)) {
+    if (raw.length > 0 && typeof raw[0] === "object") {
+      return (raw as { name: string }[]).map((f) => f.name).join(", ");
+    }
+    return (raw as string[]).join(", ");
+  }
+  if ((field.type === "schedule" || field.type === "datetime_slots") && typeof raw === "string") {
+    if (raw === "__ALL__") return "전체 시간 가능";
+    if (raw === "__RESTRICTED__") return "참여 제한";
+    try {
+      const slots = JSON.parse(raw) as { date: string; start: string; end: string }[];
+      return slots.length === 0
+        ? "(선택 없음)"
+        : slots.map((s) => `${s.date} ${s.start}-${s.end}`).join(", ");
+    } catch {
+      return String(raw);
+    }
+  }
+  return String(raw);
+}
+
 interface Props {
   activityId: string;
   type: ActivityType;
@@ -105,6 +129,13 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const [applySpeakerPaperTitle, setApplySpeakerPaperTitle] = useState("");
   // 신청 정보 수정 모드 — null 이면 신규 신청, 값이 있으면 해당 applicant 수정
   const [editingApplicantKey, setEditingApplicantKey] = useState<string | null>(null);
+  // 신청현황 조회 — 비회원 포함, 이름+학번으로 본인 신청 내역 확인
+  const [lookupDialog, setLookupDialog] = useState(false);
+  const [lookupName, setLookupName] = useState("");
+  const [lookupStudentId, setLookupStudentId] = useState("");
+  const [lookupResult, setLookupResult] = useState<
+    NonNullable<Activity["applicants"]>[number] | "notfound" | null
+  >(null);
   const [applicantsTypeFilter, setApplicantsTypeFilter] = useState<"all" | ExternalParticipantType>("all");
   const [signupCtaOpen, setSignupCtaOpen] = useState(false);
   const [progressTitle, setProgressTitle] = useState("");
@@ -755,17 +786,32 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             <div className="mt-6 border-t border-slate-100 pt-5 sm:mt-7 sm:pt-6">
               {!isJoined && !hasApplied && recruitmentStatus === "recruiting" && registrationMethod === "open" && (
                 type === "external" ? (
-                  <Button size="lg" className="w-full font-semibold sm:w-auto" onClick={() => {
-                    setApplyName(user?.name ?? "");
-                    setApplyStudentId(user?.studentId ?? "");
-                    setApplyEmail(user?.email ?? "");
-                    setApplyPhone("");
-                    setApplySpeakerSubmissionType("paper");
-                    setApplySpeakerPaperTitle("");
-                    setApplyDialog(true);
-                  }}>
-                    <UserPlus size={16} className="mr-1.5" />참가 신청{!user && " (비회원 가능)"}
-                  </Button>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <Button size="lg" className="w-full font-semibold sm:w-auto" onClick={() => {
+                      setApplyName(user?.name ?? "");
+                      setApplyStudentId(user?.studentId ?? "");
+                      setApplyEmail(user?.email ?? "");
+                      setApplyPhone("");
+                      setApplySpeakerSubmissionType("paper");
+                      setApplySpeakerPaperTitle("");
+                      setApplyDialog(true);
+                    }}>
+                      <UserPlus size={16} className="mr-1.5" />참가 신청{!user && " (비회원 가능)"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="w-full font-medium sm:w-auto"
+                      onClick={() => {
+                        setLookupName(user?.name ?? "");
+                        setLookupStudentId(user?.studentId ?? "");
+                        setLookupResult(null);
+                        setLookupDialog(true);
+                      }}
+                    >
+                      <Search size={16} className="mr-1.5" />신청현황 조회
+                    </Button>
+                  </div>
                 ) : user ? (
                   <Button size="lg" className="w-full font-semibold sm:w-auto" onClick={() => applyMutation.mutate()} disabled={applyMutation.isPending}>
                     <UserPlus size={16} className="mr-1.5" />참여 신청
@@ -2825,6 +2871,141 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               >
                 {applyMutation.isPending && <Loader2 size={14} className="mr-1 animate-spin" />}
                 {editingApplicantKey ? "수정 저장" : "신청 제출"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* 신청현황 조회 Dialog — 이름+학번으로 본인 신청 내역 확인 (비회원 포함) */}
+        <Dialog
+          open={lookupDialog}
+          onOpenChange={(o) => {
+            setLookupDialog(o);
+            if (!o) setLookupResult(null);
+          }}
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader className="pb-2">
+              <DialogTitle className="text-lg font-bold sm:text-xl">신청현황 조회</DialogTitle>
+              <p className="mt-1 text-xs text-muted-foreground">{activity?.title}</p>
+            </DialogHeader>
+            <p className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs text-slate-700">
+              신청 시 입력한 <strong>이름과 학번</strong>으로 본인의 신청 내역만 조회할 수 있습니다.
+            </p>
+            <div className="grid gap-3">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-600">
+                  이름 <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  value={lookupName}
+                  onChange={(e) => setLookupName(e.target.value)}
+                  placeholder="신청 시 입력한 이름"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-600">
+                  학번 <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  value={lookupStudentId}
+                  onChange={(e) => setLookupStudentId(e.target.value)}
+                  placeholder="예: 2023432001"
+                />
+              </div>
+            </div>
+
+            {lookupResult === "notfound" && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                입력하신 이름·학번과 일치하는 신청 내역을 찾을 수 없습니다. 입력값을 다시 확인해 주세요.
+              </div>
+            )}
+            {lookupResult && lookupResult !== "notfound" && (() => {
+              const r = lookupResult;
+              const statusLabel =
+                r.status === "approved" ? "승인 완료"
+                : r.status === "rejected" ? "신청 취소 / 거절"
+                : "신청 대기중";
+              const statusCls =
+                r.status === "approved" ? "bg-green-50 text-green-700"
+                : r.status === "rejected" ? "bg-rose-50 text-rose-700"
+                : "bg-amber-50 text-amber-700";
+              const ptype = (r.participantType ?? "attendee") as ExternalParticipantType;
+              const resultFields: FormField[] = [
+                ...applicationForm,
+                ...(applicationFormByType[ptype] ?? []),
+              ];
+              return (
+                <div className="space-y-3 rounded-xl border bg-muted/20 p-3.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-semibold">{r.name}</span>
+                    <Badge className={cn("text-xs", statusCls)}>{statusLabel}</Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                    <div>
+                      <span className="text-muted-foreground">참석유형</span>
+                      <p className="font-medium">{EXTERNAL_PARTICIPANT_TYPE_LABELS[ptype]}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">신청일</span>
+                      <p className="font-medium">
+                        {r.appliedAt ? new Date(r.appliedAt).toLocaleDateString("ko-KR") : "-"}
+                      </p>
+                    </div>
+                    {r.speakerPaperTitle && (
+                      <div className="col-span-2">
+                        <span className="text-muted-foreground">제목</span>
+                        <p className="font-medium">{r.speakerPaperTitle}</p>
+                      </div>
+                    )}
+                  </div>
+                  {(() => {
+                    const answered = resultFields
+                      .map((f) => ({ f, raw: r.answers?.[f.id] ?? r.answers?.[f.label] }))
+                      .filter((x) => x.raw !== undefined && x.raw !== "");
+                    if (answered.length === 0) return null;
+                    return (
+                      <div className="space-y-1.5 border-t pt-2">
+                        {answered.map(({ f, raw }) => (
+                          <div key={f.id} className="text-xs">
+                            <span className="text-muted-foreground">{f.label}</span>
+                            <p className="whitespace-pre-wrap font-medium">
+                              {formatApplicantAnswer(f, raw)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                  <p className="text-[11px] text-muted-foreground">
+                    신청 내용을 수정하시려면 운영진에게 문의해 주세요.
+                  </p>
+                </div>
+              );
+            })()}
+
+            <DialogFooter className="mt-2 gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                onClick={() => setLookupDialog(false)}
+                className="h-12 flex-1 text-base sm:h-8 sm:flex-none sm:text-sm"
+              >
+                닫기
+              </Button>
+              <Button
+                size="lg"
+                className="h-12 flex-1 text-base font-semibold sm:h-9 sm:flex-none sm:text-sm"
+                disabled={!lookupName.trim() || !lookupStudentId.trim()}
+                onClick={() => {
+                  const name = lookupName.trim();
+                  const sid = lookupStudentId.trim();
+                  const found = applicants.find(
+                    (a) => (a.name ?? "").trim() === name && (a.studentId ?? "").trim() === sid,
+                  );
+                  setLookupResult(found ?? "notfound");
+                }}
+              >
+                <Search size={14} className="mr-1" />조회
               </Button>
             </DialogFooter>
           </DialogContent>
