@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { useSignupForm } from "./signup-steps/useSignupForm";
 import StepProgress from "./signup-steps/StepProgress";
@@ -9,6 +9,9 @@ import Step1AccountInfo from "./signup-steps/Step1AccountInfo";
 import Step2Academic from "./signup-steps/Step2Academic";
 import Step4Optional from "./signup-steps/Step4Optional";
 import Step5Consents from "./signup-steps/Step5Consents";
+import GuestHistoryPreviewDialog, {
+  type GuestHistoryRecord,
+} from "./signup-steps/GuestHistoryPreviewDialog";
 import { runSignupFlow } from "./signup-steps/runSignupFlow";
 import { buildFreshConsents, type UserConsents } from "@/lib/legal";
 import type { EnrollmentStatus } from "@/types";
@@ -39,6 +42,45 @@ export default function SignupMultiStep({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // 잠재회원 Phase B — 회원가입 전 비회원 활동 이력 사전 안내 팝업
+  const [guestHistoryOpen, setGuestHistoryOpen] = useState(false);
+  const [guestHistory, setGuestHistory] = useState<{
+    count: number;
+    records: GuestHistoryRecord[];
+  }>({ count: 0, records: [] });
+  // 같은 학번/이메일 조합으로 이미 조회한 키 — 스텝 왕복 시 중복 조회/팝업 방지
+  const checkedGuestKeyRef = useRef<string | null>(null);
+
+  /** Step 1 통과 직후 비회원 활동 이력을 1회 조회하고, 있으면 안내 팝업을 띄운다. */
+  async function checkGuestHistory() {
+    const data = form.getValues();
+    const studentId = (data.username || "").trim();
+    const email = (data.email || "").trim().toLowerCase();
+    if (!/^\d{10}$/.test(studentId) && !email) return;
+
+    const key = `${studentId}|${email}`;
+    if (checkedGuestKeyRef.current === key) return;
+    checkedGuestKeyRef.current = key;
+
+    try {
+      const params = new URLSearchParams();
+      if (/^\d{10}$/.test(studentId)) params.set("studentId", studentId);
+      if (email) params.set("email", email);
+      const res = await fetch(`/api/auth/guest-history-preview?${params}`);
+      if (!res.ok) return;
+      const json = (await res.json()) as {
+        count: number;
+        records: GuestHistoryRecord[];
+      };
+      if (json.count > 0) {
+        setGuestHistory({ count: json.count, records: json.records });
+        setGuestHistoryOpen(true);
+      }
+    } catch {
+      // 사전 안내는 정보 제공용 — 실패해도 가입 흐름을 막지 않는다.
+    }
+  }
+
   async function handleNext() {
     if (step === 4) return;
     const ok = await validateStep(step as 1 | 2 | 3, enrollmentStatus);
@@ -46,6 +88,7 @@ export default function SignupMultiStep({
       toast.error("입력값을 확인해 주세요.");
       return;
     }
+    if (step === 1) void checkGuestHistory();
     setStep((s) => Math.min(4, s + 1) as StepNum);
   }
 
@@ -116,6 +159,14 @@ export default function SignupMultiStep({
         onSubmit={handleSubmit}
         canProceed={canProceed}
         isSubmitting={isSubmitting}
+      />
+
+      <GuestHistoryPreviewDialog
+        open={guestHistoryOpen}
+        onOpenChange={setGuestHistoryOpen}
+        name={form.getValues("name") || ""}
+        count={guestHistory.count}
+        records={guestHistory.records}
       />
     </form>
   );
