@@ -3176,9 +3176,9 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
           </DialogContent>
         </Dialog>
 
-        {/* 비회원 신청 후 회원가입 유도 */}
+        {/* 비회원 신청 후 회원가입 유도 — 모바일에서 내용 크기에 맞춰 중앙 정렬(전체 높이 점유 방지) */}
         <Dialog open={signupCtaOpen} onOpenChange={setSignupCtaOpen}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="top-1/2 bottom-auto my-0 max-h-[calc(100vh-2rem)] -translate-y-1/2 sm:max-w-md">
             <DialogHeader><DialogTitle>신청이 완료되었습니다 🎉</DialogTitle></DialogHeader>
             <div className="space-y-3 text-sm text-slate-700">
               <p>운영진 승인 후 참가 확정 메일을 <strong>{applyEmail}</strong>로 보내드립니다.</p>

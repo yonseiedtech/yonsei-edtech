@@ -16,6 +16,7 @@ import {
   BookOpen, FlaskConical, FolderKanban, Globe, Award, NotebookPen,
   Settings, MessageCircle, ScrollText, ChevronDown, ChevronRight,
   ShieldCheck, Megaphone, CalendarDays, MessageSquareQuote, Images, ClipboardCheck, Workflow, LayoutGrid,
+  UserPlus,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -147,6 +148,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
       label: "회원",
       items: [
         { href: "/console/members", label: "회원관리", icon: Users, badge: pendingCount, adminOnly: true },
+        { href: "/console/potential-members", label: "잠재회원", icon: UserPlus },
         { href: "/console/directory", label: "연락망", icon: BookUser },
         { href: "/console/members/audit", label: "회원 검증", icon: ShieldCheck },
         { href: "/console/members/migrate-teacher-affiliation", label: "교사 affiliation 분리", icon: GraduationCap, adminOnly: true },
