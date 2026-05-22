@@ -9,6 +9,7 @@ import { usePosts } from "@/features/board/useBoard";
 import { useSeminars, useToggleAttendance } from "@/features/seminar/useSeminar";
 import { useQuery } from "@tanstack/react-query";
 import { certificatesApi, attendeesApi, activitiesApi, profilesApi } from "@/lib/bkend";
+import { auth } from "@/lib/firebase";
 import AttendanceCertificate from "@/features/seminar/AttendanceCertificate";
 import type { Certificate, Activity, User, Post, InterviewResponse } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -89,21 +90,44 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
     },
     enabled: !!user,
   });
+
+  // data-split: 신청 내역은 비공개 컬렉션 → /api/me/applications 로 조회.
+  // 본인(isSelf) 일 때만 의미 있음 — 타인의 신청은 조회 불가(privacy).
+  const { data: myApplications = [] } = useQuery({
+    queryKey: ["me-applications", userId],
+    enabled: !!user && isSelf,
+    queryFn: async (): Promise<
+      { activityId: string; status: string; participantType?: string; appliedAt: string; name: string }[]
+    > => {
+      const idToken = await auth.currentUser?.getIdToken();
+      if (!idToken) return [];
+      const res = await fetch("/api/me/applications", {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      if (!res.ok) return [];
+      const json = (await res.json()) as {
+        applications: { activityId: string; status: string; participantType?: string; appliedAt: string; name: string }[];
+      };
+      return json.applications ?? [];
+    },
+  });
+  const applicationByActivity = new Map(myApplications.map((ap) => [ap.activityId, ap]));
+
   const myActivities = allActivities.filter((a) => {
     if (!user) return false;
     const inMembers = a.members?.includes(user.id) || a.members?.includes(user.name);
     const inParticipants = a.participants?.includes(user.id) || a.participants?.includes(user.name);
     const isLeader = a.leader === user.id || a.leader === user.name;
     // 대외학술대회는 운영진 승인 절차 없이 신청만으로 참여로 간주(pending 포함, rejected만 제외)
-    const isApplicant = a.applicants?.some((ap) =>
-      ap.userId === user.id &&
-      (a.type === "external" ? ap.status !== "rejected" : ap.status === "approved"),
-    );
+    const myApp = applicationByActivity.get(a.id);
+    const isApplicant = !!myApp &&
+      (a.type === "external" ? myApp.status !== "rejected" : myApp.status === "approved");
     return inMembers || inParticipants || isLeader || isApplicant;
   });
-  const myPendingApplications = allActivities.filter((a) =>
-    a.applicants?.some((ap) => ap.userId === userId && ap.status !== "approved"),
-  );
+  const myPendingApplications = allActivities.filter((a) => {
+    const myApp = applicationByActivity.get(a.id);
+    return !!myApp && myApp.status !== "approved";
+  });
 
   const { data: allCertificates = [] } = useQuery({
     queryKey: ["certificates", "my", userId],
@@ -318,7 +342,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                     <ul className="space-y-2">
                       {myPendingApplications.map((a) => {
                         const meta = ACTIVITY_META[a.type] ?? ACTIVITY_META.project;
-                        const mine = a.applicants?.find((ap) => ap.userId === userId);
+                        const mine = applicationByActivity.get(a.id);
                         const statusLabel = mine?.status === "rejected" ? "반려" : "승인 대기";
                         const statusColor = mine?.status === "rejected" ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700";
                         return (

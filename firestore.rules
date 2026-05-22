@@ -224,6 +224,15 @@ service cloud.firestore {
         || isGuestApplyUpdate();
     }
 
+    // ─── Activity Applicants (data-split: 신청자 PII 비공개 분리) ───
+    // 신청자 개인정보(이름·학번·이메일·전화·답변)는 activities 문서가 아닌
+    // 이 비공개 컬렉션(doc id = activityId)에 저장한다. 운영진(staff+)만 read/write.
+    // 비회원/회원 신청 제출·조회는 모두 Admin SDK 서버 라우트(/api/activities/[id]/*)를 통한다.
+    match /activity_applicants/{activityId} {
+      allow read: if isAuthenticated() && isStaffOrAbove();
+      allow write: if isAuthenticated() && isStaffOrAbove();
+    }
+
     // ─── Fee Settings (학회비 설정) ───
     match /fee_settings/{docId} {
       allow read: if isAuthenticated();

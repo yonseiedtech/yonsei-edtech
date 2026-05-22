@@ -19,7 +19,7 @@ import {
   Users,
   AlertCircle,
 } from "lucide-react";
-import { activitiesApi } from "@/lib/bkend";
+import { activitiesApi, activityApplicantsApi } from "@/lib/bkend";
 import type { Activity, ActivityType } from "@/types";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import EmptyState from "@/components/ui/empty-state";
@@ -54,18 +54,34 @@ export default function ApplicationsConsole() {
     retry: false,
   });
 
-  const list = activities ?? [];
+  const list = useMemo(() => activities ?? [], [activities]);
+
+  // data-split: applicants 는 activity_applicants 비공개 컬렉션에서 활동별로 조회.
+  const { data: applicantsByActivity = {}, isLoading: isLoadingApplicants } = useQuery({
+    queryKey: ["console", "applications-applicants", list.map((a) => a.id).join(",")],
+    enabled: list.length > 0,
+    retry: false,
+    queryFn: async () => {
+      const map: Record<string, { status?: string }[]> = {};
+      await Promise.all(
+        list.map(async (a) => {
+          map[a.id] = await activityApplicantsApi.get(a.id);
+        }),
+      );
+      return map;
+    },
+  });
 
   const pendingByActivity: PendingActivity[] = useMemo(() => {
     return list
       .map((a) => {
-        const applicants = (a.applicants ?? []) as { status?: string }[];
+        const applicants = (applicantsByActivity[a.id] ?? []) as { status?: string }[];
         const pending = applicants.filter((x) => x.status === "pending").length;
         return { activity: a, pendingCount: pending, totalApplicants: applicants.length };
       })
       .filter((x) => x.pendingCount > 0)
       .sort((a, b) => b.pendingCount - a.pendingCount);
-  }, [list]);
+  }, [list, applicantsByActivity]);
 
   const stats = useMemo(() => {
     const total = pendingByActivity.reduce((acc, x) => acc + x.pendingCount, 0);
@@ -115,7 +131,7 @@ export default function ApplicationsConsole() {
         <h2 className="mb-3 text-sm font-bold">
           처리 대기 중인 활동 ({pendingByActivity.length}건)
         </h2>
-        {isLoading ? (
+        {isLoading || isLoadingApplicants ? (
           <div className="py-10 text-center text-xs text-muted-foreground">불러오는 중…</div>
         ) : pendingByActivity.length === 0 ? (
           <EmptyState

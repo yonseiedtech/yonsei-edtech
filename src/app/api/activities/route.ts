@@ -70,10 +70,13 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const db = getAdminDb();
     const now = new Date().toISOString();
+    // data-split: applicants 는 activities 문서에 더 이상 저장하지 않는다.
+    // 신청자 PII 는 activity_applicants/{id} 비공개 컬렉션에서 관리.
+    const { applicants: _ignoredApplicants, ...activityBody } = body as Record<string, unknown>;
+    void _ignoredApplicants;
     const ref = await db.collection("activities").add({
-      ...body,
+      ...activityBody,
       participants: body.participants ?? [],
-      applicants: body.applicants ?? [],
       createdAt: now,
       updatedAt: now,
     });
@@ -119,7 +122,10 @@ export async function PATCH(req: NextRequest) {
     if (!authResult || !["sysadmin", "admin", "staff", "president"].includes(authResult.role)) {
       return Response.json({ error: "권한이 부족합니다." }, { status: 403 });
     }
-    await db.collection("activities").doc(id).update({ ...data, updatedAt: new Date().toISOString() });
+    // data-split: applicants 는 activities 문서에 저장하지 않으므로 무시.
+    const { applicants: _ignored, ...updateData } = data as Record<string, unknown>;
+    void _ignored;
+    await db.collection("activities").doc(id).update({ ...updateData, updatedAt: new Date().toISOString() });
     return Response.json({ success: true });
   } catch (err) {
     console.error("[activities PATCH]", err);

@@ -73,6 +73,36 @@ export interface FormField {
 
 export type RecruitmentStatus = "recruiting" | "closed" | "in_progress" | "completed";
 
+/**
+ * 활동 신청자 항목 — 개인정보(PII)를 포함하므로 data-split 리팩토링 후
+ * activities 문서가 아닌 비공개 컬렉션 `activity_applicants/{activityId}` 에 저장된다.
+ */
+export interface ApplicantEntry {
+  userId?: string;
+  guestKey?: string;
+  isGuest?: boolean;
+  email?: string;
+  phone?: string;
+  name: string;
+  studentId?: string;
+  answers?: Record<string, string | string[] | { url: string; name: string; size: number; type: string }[]>;
+  appliedAt: string;
+  status: "pending" | "approved" | "rejected";
+  participantType?: ExternalParticipantType;
+  speakerSubmissionType?: SpeakerSubmissionType;
+  speakerPaperTitle?: string;
+}
+
+/**
+ * activities 문서에 저장되는 비-PII 공개 발표자 투영.
+ * 학번·이메일·전화·답변·상태 등 민감정보는 절대 포함하지 않는다.
+ */
+export interface PublicSpeaker {
+  name: string;
+  submissionType?: SpeakerSubmissionType;
+  paperTitle?: string;
+}
+
 export interface Activity { [key: string]: unknown;
   id: string;
   type: ActivityType;
@@ -89,7 +119,17 @@ export interface Activity { [key: string]: unknown;
   leaderId?: string;
   members?: string[];
   participants?: string[];
-  applicants?: { userId?: string; guestKey?: string; isGuest?: boolean; email?: string; phone?: string; name: string; studentId?: string; answers?: Record<string, string | string[] | { url: string; name: string; size: number; type: string }[]>; appliedAt: string; status: "pending" | "approved" | "rejected"; participantType?: ExternalParticipantType; speakerSubmissionType?: SpeakerSubmissionType; speakerPaperTitle?: string }[];
+  /**
+   * @deprecated data-split 리팩토링 후 신청자 PII 는 비공개 컬렉션
+   * `activity_applicants/{activityId}` 로 분리되었다. activities 문서에는 더 이상 쓰지 않으며
+   * 마이그레이션 후 제거된다. 하위호환(dual-read fallback)을 위해 타입만 유지.
+   */
+  applicants?: ApplicantEntry[];
+  /**
+   * 비-PII 공개 발표자 투영 — 발표자(participantType==="speaker") 의 이름·발표유형·제목만.
+   * 누구나(비회원 포함) 안전하게 조회 가능. activity_applicants 갱신 시 자동 재계산된다.
+   */
+  publicSpeakers?: PublicSpeaker[];
   applicationQuestions?: string[];
   /**
    * 공통 신청폼 — 모든 참석유형에 표시. (Sprint 70 이전부터 존재)

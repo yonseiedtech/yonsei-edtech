@@ -4,7 +4,8 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { activitiesApi } from "@/lib/bkend";
+import { activitiesApi, activityApplicantsApi } from "@/lib/bkend";
+import { auth } from "@/lib/firebase";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,7 @@ import MyActivitySessionsTab from "@/features/conference/MyActivitySessionsTab";
 import AttendeeReviewsSection from "@/features/conference/AttendeeReviewsSection";
 import ActivityInfoEditor from "./ActivityInfoEditor";
 import { todayYmdLocal } from "@/lib/dday";
-import type { Activity, ActivityType, ActivityProgress, ActivityProgressMode, FormField, EnrollmentStatus, ExternalParticipantType, SpeakerSubmissionType, StudySessionReflection, StudyAssignment } from "@/types";
+import type { Activity, ActivityType, ActivityProgress, ActivityProgressMode, FormField, EnrollmentStatus, ExternalParticipantType, SpeakerSubmissionType, StudySessionReflection, StudyAssignment, ApplicantEntry } from "@/types";
 import { ENROLLMENT_STATUS_LABELS, ACTIVITY_PROGRESS_MODE_LABELS, EXTERNAL_PARTICIPANT_TYPE_LABELS, EXTERNAL_PARTICIPANT_TYPE_COLORS, SPEAKER_SUBMISSION_TYPE_LABELS, SPEAKER_SUBMISSION_TYPE_COLORS } from "@/types";
 import {
   activityProgressApi,
@@ -62,6 +63,19 @@ const RECRUIT_COLORS: Record<string, string> = { recruiting: "bg-green-50 text-g
 
 type Tab = "overview" | "progress" | "staff" | "presenters" | "volunteers" | "participants" | "applicants" | "form-settings" | "report" | "settings" | "my-sessions" | "archive" | "study-report";
 
+/**
+ * 비회원 신청현황 조회(application-lookup) 응답 — 서버가 비-PII 화이트리스트로 투영.
+ * answers·email·phone·studentId·guestKey·userId 는 포함되지 않는다.
+ */
+interface PublicLookupResult {
+  name: string;
+  status: ApplicantEntry["status"];
+  participantType?: ApplicantEntry["participantType"];
+  appliedAt: string;
+  speakerSubmissionType?: ApplicantEntry["speakerSubmissionType"];
+  speakerPaperTitle?: string;
+}
+
 /** 필수 폼 필드 미입력 여부 — schedule/datetime_slots 의 빈 JSON 배열([])도 미입력으로 간주 */
 function isAnswerEmpty(field: FormField, v: unknown): boolean {
   if (field.type === "section_break") return false; // 답변 대상 아님
@@ -79,30 +93,6 @@ function isAnswerEmpty(field: FormField, v: unknown): boolean {
   }
   if (Array.isArray(v)) return v.length === 0; // checkbox / file / image
   return false;
-}
-
-/** 신청 답변을 사람이 읽을 수 있는 문자열로 정규화 (schedule/datetime_slots 마커·슬롯 처리) */
-function formatApplicantAnswer(field: FormField, raw: unknown): string {
-  if (raw === undefined || raw === null || raw === "") return "";
-  if (Array.isArray(raw)) {
-    if (raw.length > 0 && typeof raw[0] === "object") {
-      return (raw as { name: string }[]).map((f) => f.name).join(", ");
-    }
-    return (raw as string[]).join(", ");
-  }
-  if ((field.type === "schedule" || field.type === "datetime_slots") && typeof raw === "string") {
-    if (raw === "__ALL__") return "전체 시간 가능";
-    if (raw === "__RESTRICTED__") return "참여 제한";
-    try {
-      const slots = JSON.parse(raw) as { date: string; start: string; end: string }[];
-      return slots.length === 0
-        ? "(선택 없음)"
-        : slots.map((s) => `${s.date} ${s.start}-${s.end}`).join(", ");
-    } catch {
-      return String(raw);
-    }
-  }
-  return String(raw);
 }
 
 interface Props {
@@ -133,8 +123,9 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const [lookupDialog, setLookupDialog] = useState(false);
   const [lookupName, setLookupName] = useState("");
   const [lookupStudentId, setLookupStudentId] = useState("");
+  // 신청현황 조회 결과 — 서버가 비-PII 화이트리스트로 투영해 반환 (answers/email 등 미포함)
   const [lookupResult, setLookupResult] = useState<
-    NonNullable<Activity["applicants"]>[number] | "notfound" | null
+    PublicLookupResult | "notfound" | "loading" | null
   >(null);
   const [applicantsTypeFilter, setApplicantsTypeFilter] = useState<"all" | ExternalParticipantType>("all");
   const [signupCtaOpen, setSignupCtaOpen] = useState(false);
@@ -255,7 +246,34 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
 
   const rawParticipants = (activity?.participants as string[] | undefined) ?? [];
   const leaderId = (activity?.leaderId as string | undefined) ?? undefined;
-  const applicants = (activity?.applicants as Activity["applicants"]) ?? [];
+
+  // data-split: 신청자 PII 는 activity_applicants 비공개 컬렉션에서 조회.
+  // staff 는 전체 목록을, 비-staff 회원은 본인 신청 1건만 조회한다.
+  const { data: staffApplicants = [] } = useQuery({
+    queryKey: ["activity-applicants", activityId],
+    enabled: isStaff && !!activityId,
+    queryFn: () => activityApplicantsApi.get(activityId),
+  });
+  const { data: myApplication = null } = useQuery({
+    queryKey: ["my-application", activityId],
+    enabled: !isStaff && !!user && !!activityId,
+    queryFn: async (): Promise<ApplicantEntry | null> => {
+      const idToken = await auth.currentUser?.getIdToken();
+      if (!idToken) return null;
+      const res = await fetch(`/api/activities/${activityId}/my-application`, {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      if (!res.ok) return null;
+      const json = (await res.json()) as { application: ApplicantEntry | null };
+      return json.application;
+    },
+  });
+  // staff 는 전체 applicants, 비-staff 는 본인 항목만(목록 길이는 신뢰하지 않음)
+  const applicants: ApplicantEntry[] = isStaff
+    ? staffApplicants
+    : myApplication
+      ? [myApplication]
+      : [];
   // Sprint 67-K/V: 학번 연동된 applicant(isGuest=false, userId 보유)를 참여자에도 자동 합산.
   // applicant-link-by-studentid 도구가 participants 에 push 하지만, 도구 fix 이전 데이터는 누락 가능 → 표시 시 보강.
   const linkedFromApplicants = (applicants as Array<{ userId?: string; isGuest?: boolean }>)
@@ -278,7 +296,16 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const displayName = (pid: string): string =>
     memberMap.get(pid)?.name ?? guestMap.get(pid)?.name ?? "(이름 미확인)";
   const isJoined = user ? participants.includes(user.id) : false;
-  const hasApplied = user ? applicants.some((a) => a.userId === user?.id || (a.isGuest && a.email && user?.email && a.email.toLowerCase() === user.email.toLowerCase())) : false;
+  // staff 는 전체 목록으로, 비-staff 는 본인 신청 1건(my-application)으로 판정
+  const hasApplied = user
+    ? isStaff
+      ? applicants.some(
+          (a) =>
+            a.userId === user.id ||
+            (a.isGuest && a.email && user.email && a.email.toLowerCase() === user.email.toLowerCase()),
+        )
+      : !!myApplication
+    : false;
   const recruitmentStatus = activity?.recruitmentStatus ?? "recruiting";
 
   // 신청 다이얼로그가 열릴 때 비활성화된 참석 유형이 선택돼 있으면 첫 번째 활성 유형으로 보정
@@ -309,23 +336,15 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             `필수 항목을 입력해주세요 — ${missingRequired.map((f) => f.label).join(", ")}`,
           );
         }
-        // 수정 모드 — 기존 applicant 항목을 교체 (트랜잭션으로 최신 배열에 반영)
-        if (editingApplicantKey) {
-          await activitiesApi.mutateRoster(activityId, ({ applicants: cur, participants: curP }) => {
+        // 수정 모드 (운영진) — activity_applicants 트랜잭션으로 기존 항목 교체
+        if (editingApplicantKey && isStaff) {
+          await activityApplicantsApi.mutate(activityId, ({ applicants: cur, participants: curP }) => {
             const idx = cur.findIndex(
               (a) => (a.userId ?? a.guestKey ?? `${a.name}-${a.appliedAt}`) === editingApplicantKey,
             );
             if (idx < 0) throw new Error("수정할 신청을 찾을 수 없습니다.");
             const existing = cur[idx];
-            const isSelfEdit = !!user && existing.userId === user.id;
-            const wasApproved = existing.status === "approved";
-            // 본인이 승인된 신청을 수정하면 대기중으로 되돌려 재검토 (운영진 수정은 상태 유지)
-            const nextStatus = isSelfEdit && wasApproved ? "pending" : existing.status;
-            const nextParticipants =
-              isSelfEdit && wasApproved && existing.userId
-                ? curP.filter((p) => p !== existing.userId)
-                : curP;
-            const updatedEntry = {
+            const updatedEntry: ApplicantEntry = {
               ...existing,
               name: applyName.trim() || existing.name,
               studentId: applyStudentId,
@@ -333,40 +352,68 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               phone: applyPhone,
               answers: Object.keys(applyAnswers).length > 0 ? applyAnswers : undefined,
               participantType: applyParticipantType,
-              status: nextStatus,
               speakerSubmissionType: isSpeaker ? applySpeakerSubmissionType : undefined,
               speakerPaperTitle: isSpeaker ? applySpeakerPaperTitle.trim() : undefined,
             };
             return {
               applicants: cur.map((a, i) => (i === idx ? updatedEntry : a)),
-              participants: nextParticipants,
+              participants: curP,
             };
           });
           return;
         }
-        const speakerExtras = isSpeaker
-          ? { speakerSubmissionType: applySpeakerSubmissionType, speakerPaperTitle: applySpeakerPaperTitle.trim() }
-          : {};
-        if (user) {
-          const newApplicant = { userId: user.id, name: applyName || user.name, studentId: applyStudentId, email: applyEmail || user.email, phone: applyPhone, answers: Object.keys(applyAnswers).length > 0 ? applyAnswers : undefined, appliedAt: new Date().toISOString(), status: "pending" as const, participantType: applyParticipantType, ...speakerExtras };
-          await activitiesApi.mutateRoster(activityId, ({ applicants: cur }) => ({ applicants: [...cur, newApplicant] }));
-        } else {
-          if (!applyName.trim() || !applyEmail.trim() || !applyStudentId.trim()) {
-            throw new Error("비회원 신청은 이름·학번·이메일이 모두 필요합니다.");
-          }
-          const guestKey = `guest_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-          const newApplicant = { guestKey, isGuest: true, name: applyName.trim(), studentId: applyStudentId, email: applyEmail.trim().toLowerCase(), phone: applyPhone, answers: Object.keys(applyAnswers).length > 0 ? applyAnswers : undefined, appliedAt: new Date().toISOString(), status: "pending" as const, participantType: applyParticipantType, ...speakerExtras };
-          await activitiesApi.mutateRoster(activityId, ({ applicants: cur }) => ({ applicants: [...cur, newApplicant] }));
+        // 신규 신청 + 회원 본인 수정 — apply 라우트 (Admin SDK, editKey 모드 포함)
+        if (!user && (!applyName.trim() || !applyEmail.trim() || !applyStudentId.trim())) {
+          throw new Error("비회원 신청은 이름·학번·이메일이 모두 필요합니다.");
+        }
+        const idToken = user ? await auth.currentUser?.getIdToken() : undefined;
+        const res = await fetch(`/api/activities/${activityId}/apply`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+          },
+          body: JSON.stringify({
+            name: applyName.trim() || user?.name,
+            studentId: applyStudentId,
+            email: applyEmail.trim() || user?.email,
+            phone: applyPhone,
+            answers: Object.keys(applyAnswers).length > 0 ? applyAnswers : undefined,
+            participantType: applyParticipantType,
+            speakerSubmissionType: isSpeaker ? applySpeakerSubmissionType : undefined,
+            speakerPaperTitle: isSpeaker ? applySpeakerPaperTitle.trim() : undefined,
+            editKey: editingApplicantKey ?? undefined,
+          }),
+        });
+        if (!res.ok) {
+          const json = (await res.json().catch(() => ({}))) as { error?: string };
+          throw new Error(json.error || "신청에 실패했습니다.");
         }
       } else {
+        // study/project "참여 신청" — 일반 회원이 도달하는 경로.
+        // activity_applicants write 는 staff 전용(firestore.rules)이라 클라이언트
+        // 트랜잭션(mutateRoster)은 PERMISSION_DENIED 로 실패한다 → apply 라우트로 우회.
         if (!user) return;
-        await activitiesApi.mutateRoster(activityId, ({ participants: curP }) =>
-          curP.includes(user.id) ? {} : { participants: [...curP, user.id] },
-        );
+        const idToken = await auth.currentUser?.getIdToken();
+        if (!idToken) throw new Error("로그인이 필요합니다.");
+        const res = await fetch(`/api/activities/${activityId}/apply`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({}),
+        });
+        if (!res.ok) {
+          const json = (await res.json().catch(() => ({}))) as { error?: string };
+          throw new Error(json.error || "신청에 실패했습니다.");
+        }
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+      queryClient.invalidateQueries({ queryKey: ["activity-applicants", activityId] });
+      queryClient.invalidateQueries({ queryKey: ["my-application", activityId] });
       const wasEdit = !!editingApplicantKey;
       toast.success(
         wasEdit
@@ -383,7 +430,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   });
 
   /** 기존 신청 항목을 신청 다이얼로그(수정 모드)로 연다 — 신청자 본인/운영진 공용 */
-  function openEditApplication(a: NonNullable<Activity["applicants"]>[number]) {
+  function openEditApplication(a: ApplicantEntry) {
     setEditingApplicantKey(a.userId ?? a.guestKey ?? `${a.name}-${a.appliedAt}`);
     setApplyName(a.name ?? "");
     setApplyStudentId(a.studentId ?? "");
@@ -539,20 +586,20 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const updateParticipantStatusMutation = useMutation({
     mutationFn: async ({ pid, status }: { pid: string; status: "approved" | "rejected" | "pending" }) => {
       const isExternalReject = type === "external" && status === "rejected";
-      const updated = isExternalReject
-        ? applicants.filter((a) => a.userId !== pid)
-        : applicants.map((a) => (a.userId === pid ? { ...a, status } : a));
-      const newParticipants = status === "rejected"
-        ? participants.filter((p) => p !== pid)
-        : participants;
-      await activitiesApi.update(activityId, {
-        applicants: updated,
-        participants: newParticipants,
+      await activityApplicantsApi.mutate(activityId, ({ applicants: cur, participants: curP }) => {
+        const updated = isExternalReject
+          ? cur.filter((a) => a.userId !== pid)
+          : cur.map((a) => (a.userId === pid ? { ...a, status } : a));
+        const newParticipants = status === "rejected"
+          ? curP.filter((p) => p !== pid)
+          : curP;
+        return { applicants: updated, participants: newParticipants };
       });
       return { isExternalReject };
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+      queryClient.invalidateQueries({ queryKey: ["activity-applicants", activityId] });
       toast.success(result?.isExternalReject ? "신청이 취소되었습니다." : "상태가 변경되었습니다.");
     },
   });
@@ -571,6 +618,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+      queryClient.invalidateQueries({ queryKey: ["activity-applicants", activityId] });
       toast.success("이력이 삭제되었습니다.");
     },
   });
@@ -598,6 +646,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+      queryClient.invalidateQueries({ queryKey: ["activity-applicants", activityId] });
       toast.success(result?.isExternalReject ? "신청이 취소되었습니다." : "처리되었습니다.");
     },
   });
@@ -635,6 +684,10 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
 
   const speakerApplicants = applicants.filter((a) => a.participantType === "speaker");
   const volunteerApplicants = applicants.filter((a) => a.participantType === "volunteer");
+  // data-split: 비-staff 는 전체 신청자 목록 대신 비-PII 공개 발표자 투영을 사용.
+  const publicSpeakers = (activity?.publicSpeakers as Activity["publicSpeakers"]) ?? [];
+  // 발표자 탭 카운트 — staff 는 실제 speaker applicants, 비-staff 는 publicSpeakers
+  const presentersCount = isStaff ? speakerApplicants.length : publicSpeakers.length;
 
   // Sprint 4 — 자료 아카이브 노출 조건: study/project 이고 자료(materials 또는 preReadMaterials)가 1개 이상 존재
   const hasArchive =
@@ -653,7 +706,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
     // Sprint 4 — 자료 아카이브 (study/project 전용)
     { value: "archive", label: "자료 아카이브", show: !!user && hasArchive },
     { value: "staff", label: `운영진 (${staffPids.length})`, show: !!user },
-    { value: "presenters", label: `발표자 (${speakerApplicants.length})`, show: type === "external" },
+    { value: "presenters", label: `발표자 (${presentersCount})`, show: type === "external" },
     { value: "volunteers", label: `자원봉사자 (${volunteerApplicants.length})`, show: type === "external" && isStaff },
     { value: "participants", label: `참여자 (${regularPids.length})`, show: !!user },
     // Sprint 67: 신청현황은 운영진+ 만 노출 (요청 — 일반 신청자 미노출)
@@ -1530,7 +1583,10 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   {canManageParticipants && (
                     <td className="px-3 py-2 align-top">
                       <div className="flex items-center justify-end gap-2">
-                        {applicant && (
+                        {/* 신청 상태 변경은 activity_applicants 클라이언트 트랜잭션을 쓰므로
+                            staff 전용 (firestore.rules 상 비-staff 는 write 불가).
+                            비-staff 모임장은 메모·제외만 가능. */}
+                        {applicant && isStaff && (
                           <select
                             value={status ?? "pending"}
                             onChange={(e) => updateParticipantStatusMutation.mutate({
@@ -2035,7 +2091,27 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
           })()}
 
           {activeTab === "presenters" && (() => {
-            const list = speakerApplicants;
+            // data-split: staff 는 실제 speaker applicants(PII 포함), 비-staff 는 publicSpeakers(비-PII).
+            type PresenterRow = {
+              name: string;
+              studentId?: string;
+              speakerSubmissionType?: SpeakerSubmissionType;
+              speakerPaperTitle?: string;
+              status?: "approved" | "rejected" | "pending";
+            };
+            const list: PresenterRow[] = isStaff
+              ? speakerApplicants.map((a) => ({
+                  name: a.name,
+                  studentId: a.studentId,
+                  speakerSubmissionType: a.speakerSubmissionType,
+                  speakerPaperTitle: a.speakerPaperTitle,
+                  status: a.status,
+                }))
+              : publicSpeakers.map((s) => ({
+                  name: s.name,
+                  speakerSubmissionType: s.submissionType,
+                  speakerPaperTitle: s.paperTitle,
+                }));
             const counts = {
               all: list.length,
               paper: list.filter((a) => (a.speakerSubmissionType ?? "paper") === "paper").length,
@@ -2084,10 +2160,10 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                           </tr>
                         </thead>
                         <tbody className="divide-y">
-                          {sorted.map((a) => {
+                          {sorted.map((a, idx) => {
                             const sub = (a.speakerSubmissionType ?? "paper") as SpeakerSubmissionType;
                             return (
-                              <tr key={`${a.userId ?? a.guestKey ?? a.email ?? a.name}-${a.appliedAt}`} className="align-top hover:bg-muted/20">
+                              <tr key={`presenter-${a.name}-${sub}-${idx}`} className="align-top hover:bg-muted/20">
                                 <td className="px-3 py-2.5">
                                   <Badge className={`${SPEAKER_SUBMISSION_TYPE_COLORS[sub]} text-xs`}>
                                     {SPEAKER_SUBMISSION_TYPE_LABELS[sub]}
@@ -2924,7 +3000,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 입력하신 이름·학번과 일치하는 신청 내역을 찾을 수 없습니다. 입력값을 다시 확인해 주세요.
               </div>
             )}
-            {lookupResult && lookupResult !== "notfound" && (() => {
+            {lookupResult && lookupResult !== "notfound" && lookupResult !== "loading" && (() => {
               const r = lookupResult;
               const statusLabel =
                 r.status === "approved" ? "승인 완료"
@@ -2935,10 +3011,6 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 : r.status === "rejected" ? "bg-rose-50 text-rose-700"
                 : "bg-amber-50 text-amber-700";
               const ptype = (r.participantType ?? "attendee") as ExternalParticipantType;
-              const resultFields: FormField[] = [
-                ...applicationForm,
-                ...(applicationFormByType[ptype] ?? []),
-              ];
               return (
                 <div className="space-y-3 rounded-xl border bg-muted/20 p-3.5">
                   <div className="flex items-center justify-between gap-2">
@@ -2963,24 +3035,6 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                       </div>
                     )}
                   </div>
-                  {(() => {
-                    const answered = resultFields
-                      .map((f) => ({ f, raw: r.answers?.[f.id] ?? r.answers?.[f.label] }))
-                      .filter((x) => x.raw !== undefined && x.raw !== "");
-                    if (answered.length === 0) return null;
-                    return (
-                      <div className="space-y-1.5 border-t pt-2">
-                        {answered.map(({ f, raw }) => (
-                          <div key={f.id} className="text-xs">
-                            <span className="text-muted-foreground">{f.label}</span>
-                            <p className="whitespace-pre-wrap font-medium">
-                              {formatApplicantAnswer(f, raw)}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })()}
                   <p className="text-[11px] text-muted-foreground">
                     신청 내용을 수정하시려면 운영진에게 문의해 주세요.
                   </p>
@@ -2999,17 +3053,33 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               <Button
                 size="lg"
                 className="h-12 flex-1 text-base font-semibold sm:h-9 sm:flex-none sm:text-sm"
-                disabled={!lookupName.trim() || !lookupStudentId.trim()}
-                onClick={() => {
+                disabled={!lookupName.trim() || !lookupStudentId.trim() || lookupResult === "loading"}
+                onClick={async () => {
                   const name = lookupName.trim();
                   const sid = lookupStudentId.trim();
-                  const found = applicants.find(
-                    (a) => (a.name ?? "").trim() === name && (a.studentId ?? "").trim() === sid,
-                  );
-                  setLookupResult(found ?? "notfound");
+                  setLookupResult("loading");
+                  try {
+                    const res = await fetch(
+                      `/api/activities/${activityId}/application-lookup`,
+                      {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ name, studentId: sid }),
+                      },
+                    );
+                    if (!res.ok) {
+                      setLookupResult("notfound");
+                      return;
+                    }
+                    const json = (await res.json()) as { found: PublicLookupResult | null };
+                    setLookupResult(json.found ?? "notfound");
+                  } catch {
+                    setLookupResult("notfound");
+                  }
                 }}
               >
-                <Search size={14} className="mr-1" />조회
+                <Search size={14} className="mr-1" />
+                {lookupResult === "loading" ? "조회 중…" : "조회"}
               </Button>
             </DialogFooter>
           </DialogContent>

@@ -29,15 +29,13 @@ const SUB_TABS: { key: SubTab; label: string; icon: typeof BookOpen }[] = [
 const PAGE_SIZE = 30;
 
 function isMember(a: Activity, owner: User): boolean {
+  // data-split: 신청자 PII 는 비공개 컬렉션으로 분리되어 프로필에서 직접 조회하지 않는다.
+  // 참여 판정은 participants/members/leader 기준으로 degrade. (승인된 신청자는
+  // activity_applicants.mutate 시 participants 에도 자동 합산되므로 누락 최소)
   const inMembers = a.members?.includes(owner.id) || a.members?.includes(owner.name);
   const inParticipants = a.participants?.includes(owner.id) || a.participants?.includes(owner.name);
   const isLeader = a.leader === owner.id || a.leader === owner.name || a.leaderId === owner.id;
-  // 대외학술대회는 신청만으로 참여로 간주(rejected 제외) — 별도 승인 절차 없음
-  const isApplicant = a.applicants?.some((ap) =>
-    ap.userId === owner.id &&
-    (a.type === "external" ? ap.status !== "rejected" : ap.status === "approved"),
-  );
-  return !!(inMembers || inParticipants || isLeader || isApplicant);
+  return !!(inMembers || inParticipants || isLeader);
 }
 
 interface RoleInfo {
@@ -56,14 +54,13 @@ function roleOf(a: Activity, owner: User): RoleInfo | null {
   if (role && role.trim()) {
     return { label: role, kind: "role" };
   }
-  // 3) 대외활동 신청 시 선택한 참석 유형 — 미지정 시 일반 참석으로 폴백
+  // 3) 대외활동 참석 유형 — data-split 후 신청자 PII(participantType)를 직접 조회하지 않는다.
+  //    공개 발표자 투영(publicSpeakers)에 이름이 있으면 speaker, 아니면 일반 참석으로 degrade.
   if (a.type === "external") {
-    const ap = a.applicants?.find(
-      (x) =>
-        (x.userId === owner.id || x.email?.toLowerCase() === owner.email?.toLowerCase()) &&
-        x.status !== "rejected",
+    const isPublicSpeaker = (a.publicSpeakers ?? []).some(
+      (s) => s.name && owner.name && s.name.trim() === owner.name.trim(),
     );
-    const t = (ap?.participantType as ExternalParticipantType | undefined) ?? "attendee";
+    const t: ExternalParticipantType = isPublicSpeaker ? "speaker" : "attendee";
     return { label: EXTERNAL_PARTICIPANT_TYPE_LABELS[t], kind: "external", type: t };
   }
   return null;

@@ -2,8 +2,9 @@
  * 게스트 레코드(참석자·참가신청자·수료증) → 로그인 회원 자동 연결.
  * bkend API 기반. 로그인 직후·수동 재동기화·임의 linker 실행 모두 지원.
  */
-import { attendeesApi, activitiesApi, certificatesApi } from "@/lib/bkend";
-import type { Activity, Certificate } from "@/types";
+import { attendeesApi, certificatesApi } from "@/lib/bkend";
+import { auth } from "@/lib/firebase";
+import type { Certificate } from "@/types";
 
 export interface LinkerInput {
   userId: string;
@@ -50,41 +51,40 @@ export async function linkGuestAttendees({
   return { linked };
 }
 
-/** 게스트 참가 신청(activities.applicants[]) → userId 채우기 (학번 우선, 이메일 보조) */
-export async function linkGuestApplicants({
-  userId,
-  userName,
-  studentId,
-  email,
-}: LinkerInput): Promise<LinkerResult> {
-  if (!studentId && !email) return { linked: 0 };
-  let linked = 0;
+/**
+ * 게스트 참가 신청(activity_applicants) → userId 채우기 (학번 우선, 이메일 보조).
+ * data-split 리팩토링 후: 서버 라우트 /api/auth/link-guest-applicants 로 위임 (Admin SDK).
+ * 매칭 키(학번·이메일)는 서버가 인증 사용자의 프로필에서 직접 읽으므로 body 전송 불필요.
+ * 시그니처 유지 — 호출처(runSignupFlow) 영향 없음.
+ */
+export async function linkGuestApplicants(
+  _input: LinkerInput,
+): Promise<LinkerResult> {
+  void _input;
   try {
-    const lowerEmail = email?.toLowerCase();
-    const res = await activitiesApi.list();
-    const activities = (res.data ?? []) as Activity[];
-    for (const a of activities) {
-      const apps = a.applicants ?? [];
-      const matches = (x: NonNullable<Activity["applicants"]>[number]) => {
-        if (!x.isGuest) return false;
-        if (studentId && x.studentId && x.studentId === studentId) return true;
-        if (lowerEmail && x.email?.toLowerCase() === lowerEmail) return true;
-        return false;
-      };
-      const hasMatch = apps.some(matches);
-      if (!hasMatch) continue;
-      // 트랜잭션으로 최신 applicants 에 반영 — 전체 배열 덮어쓰기로 인한 신청자 누락 방지
-      await activitiesApi.mutateRoster(a.id, ({ applicants }) => ({
-        applicants: applicants.map((x) =>
-          matches(x) ? { ...x, userId, name: x.name || userName || "", isGuest: false } : x,
-        ),
-      }));
-      linked += 1;
+    const idToken = await auth.currentUser?.getIdToken();
+    if (!idToken) {
+      console.warn("[guestLinker] applicants linking skipped — no auth token");
+      return { linked: 0 };
     }
+    const res = await fetch("/api/auth/link-guest-applicants", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({}),
+    });
+    if (!res.ok) {
+      console.warn("[guestLinker] applicants linking failed:", res.status);
+      return { linked: 0 };
+    }
+    const json = (await res.json()) as { linked?: number };
+    return { linked: json.linked ?? 0 };
   } catch {
     console.warn("[guestLinker] applicants linking failed");
+    return { linked: 0 };
   }
-  return { linked };
 }
 
 /** 게스트 수료증 → recipientUserId 채우기 (학번 우선, 이메일 보조) */

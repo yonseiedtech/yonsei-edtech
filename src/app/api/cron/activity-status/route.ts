@@ -153,13 +153,29 @@ async function autoIssueActivityCertificates(
     }
   } else {
     // 신청 기반 — applicants 중 status === approved
-    const applicants: Array<{
+    // data-split: 신청자 PII 는 activity_applicants/{id} 비공개 문서에서 읽는다.
+    // 없으면 activities.applicants 임베드 필드로 fallback (마이그레이션 전 안전성).
+    let applicants: Array<{
       userId?: string;
       name?: string;
       email?: string;
       studentId?: string;
       status?: string;
-    }> = activity.applicants ?? [];
+    }> = [];
+    try {
+      const splitSnap = await db
+        .collection("activity_applicants")
+        .doc(activityId)
+        .get();
+      if (splitSnap.exists) {
+        applicants = (splitSnap.data()?.applicants as typeof applicants) ?? [];
+      } else {
+        applicants = (activity.applicants as typeof applicants) ?? [];
+      }
+    } catch (e) {
+      console.warn("[activity-cert] activity_applicants fetch error:", activityId, e);
+      applicants = (activity.applicants as typeof applicants) ?? [];
+    }
     for (const a of applicants) {
       if (a.status !== "approved" || !a.name) continue;
       recipients.push({

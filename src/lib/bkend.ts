@@ -41,6 +41,7 @@ import type {
   Lab, LabReaction, LabComment, ResearchPaper, ResearchReport, ResearchProposal, WritingPaper, WritingPaperHistory,
   InterviewResponseReaction, InterviewResponseComment,
   ProfileLike, ProfileView, StudySession,
+  ApplicantEntry, PublicSpeaker,
   ActivityParticipation, Award, ExternalActivity, ContentCreation,
   AlumniThesis, ThesisReference, ThesisClaim,
   CourseOffering, CourseEnrollment, ClassSession, ClassSessionMode, CourseSessionNote, CourseTodo, SemesterTerm, ComprehensiveExamRecord, CourseReview,
@@ -500,27 +501,104 @@ export const activitiesApi = {
    * applicants/participants 를 Firestore 트랜잭션으로 원자적 수정.
    * mutator 는 항상 최신 값을 받으므로 동시 신청·stale 캐시로 인한
    * lost update(신청자 누락)를 방지한다.
+   *
+   * data-split 리팩토링 후: 내부적으로 `activityApplicantsApi.mutate` 로 위임한다.
+   * applicants 는 비공개 컬렉션 `activity_applicants/{id}` 에 저장되고,
+   * participants 와 publicSpeakers 만 activities 문서에 반영된다.
+   * (시그니처 유지 — 기존 호출처 영향 최소화)
    */
   mutateRoster: async (
     id: string,
     mutator: (current: {
-      applicants: NonNullable<Activity["applicants"]>;
+      applicants: ApplicantEntry[];
       participants: string[];
     }) => { applicants?: unknown[]; participants?: string[] },
   ): Promise<void> => {
-    const ref = doc(db, "activities", id);
-    await runTransaction(db, async (tx) => {
-      const snap = await tx.get(ref);
-      if (!snap.exists()) throw new Error("활동을 찾을 수 없습니다.");
-      const data = snap.data();
-      const patch = mutator({
-        applicants: (data.applicants as NonNullable<Activity["applicants"]>) ?? [],
-        participants: (data.participants as string[]) ?? [],
-      });
-      tx.update(ref, { ...stripUndefinedDeep(patch), updatedAt: serverTimestamp() });
-    });
+    await activityApplicantsApi.mutate(id, mutator);
   },
   delete: (id: string) => dataApi.delete("activities", id),
+};
+
+/** 발표자(speaker) applicants → activities 문서용 비-PII 공개 투영 계산 */
+export function computePublicSpeakers(applicants: ApplicantEntry[]): PublicSpeaker[] {
+  return applicants
+    .filter((a) => a.participantType === "speaker")
+    .map((a) => ({
+      name: a.name,
+      submissionType: a.speakerSubmissionType,
+      paperTitle: a.speakerPaperTitle,
+    }));
+}
+
+// ── 활동 신청자 (data-split: activity_applicants 비공개 컬렉션) ──
+// 신청자 PII 는 activities 문서가 아닌 activity_applicants/{activityId} 에 분리 저장한다.
+// staff 권한 클라이언트에서만 호출됨 (firestore.rules 상 staff 만 write 가능).
+export const activityApplicantsApi = {
+  /**
+   * 신청자 목록 조회. activity_applicants/{id} 가 없으면(마이그레이션 전)
+   * activities/{id}.applicants 필드로 fallback.
+   */
+  get: async (activityId: string): Promise<ApplicantEntry[]> => {
+    const splitSnap = await getDoc(doc(db, "activity_applicants", activityId));
+    if (splitSnap.exists()) {
+      return ((splitSnap.data().applicants as ApplicantEntry[]) ?? []);
+    }
+    // dual-read fallback — 마이그레이션 전 안전성
+    const actSnap = await getDoc(doc(db, "activities", activityId));
+    if (!actSnap.exists()) return [];
+    return ((actSnap.data().applicants as ApplicantEntry[]) ?? []);
+  },
+  /**
+   * applicants/participants 를 Firestore 트랜잭션으로 원자적 수정.
+   *  1. activity_applicants/{id} 읽기. 없으면 activities/{id}.applicants 로 seed.
+   *  2. activities/{id} 읽기 (participants 용).
+   *  3. mutator 호출 → { applicants?, participants? }.
+   *  4. tx.set(activity_applicants/{id}, { applicants 최종, updatedAt }).
+   *  5. tx.update(activities/{id}, { participants?, publicSpeakers, updatedAt }).
+   */
+  mutate: async (
+    activityId: string,
+    mutator: (current: {
+      applicants: ApplicantEntry[];
+      participants: string[];
+    }) => { applicants?: unknown[]; participants?: string[] },
+  ): Promise<void> => {
+    const splitRef = doc(db, "activity_applicants", activityId);
+    const actRef = doc(db, "activities", activityId);
+    await runTransaction(db, async (tx) => {
+      const splitSnap = await tx.get(splitRef);
+      const actSnap = await tx.get(actRef);
+      if (!actSnap.exists()) throw new Error("활동을 찾을 수 없습니다.");
+      const actData = actSnap.data();
+      // seed: split doc 이 없으면 activities.applicants 로 초기화
+      const currentApplicants: ApplicantEntry[] = splitSnap.exists()
+        ? ((splitSnap.data().applicants as ApplicantEntry[]) ?? [])
+        : ((actData.applicants as ApplicantEntry[]) ?? []);
+      const currentParticipants = (actData.participants as string[]) ?? [];
+
+      const patch = mutator({
+        applicants: currentApplicants,
+        participants: currentParticipants,
+      });
+
+      const finalApplicants = (patch.applicants as ApplicantEntry[] | undefined) ?? currentApplicants;
+      const finalParticipants = patch.participants;
+
+      tx.set(splitRef, stripUndefinedDeep({
+        applicants: finalApplicants,
+        updatedAt: serverTimestamp(),
+      }));
+
+      const actUpdate: Record<string, unknown> = {
+        publicSpeakers: computePublicSpeakers(finalApplicants),
+        updatedAt: serverTimestamp(),
+      };
+      if (finalParticipants !== undefined) {
+        actUpdate.participants = finalParticipants;
+      }
+      tx.update(actRef, stripUndefinedDeep(actUpdate));
+    });
+  },
 };
 
 // ── 대외학술대회 시간표 (v3) ──

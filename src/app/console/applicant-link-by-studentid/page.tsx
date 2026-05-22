@@ -14,16 +14,26 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Loader2, GraduationCap, Check, AlertTriangle } from "lucide-react";
 import AuthGuard from "@/features/auth/AuthGuard";
-import { activitiesApi, profilesApi } from "@/lib/bkend";
+import { activitiesApi, activityApplicantsApi, profilesApi } from "@/lib/bkend";
 import { Button } from "@/components/ui/button";
 import EmptyState from "@/components/ui/empty-state";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
-import type { Activity, User } from "@/types";
+import type { Activity, ApplicantEntry, User } from "@/types";
+
+/**
+ * applicant 항목의 안정 식별 키 — userId/guestKey 우선, 없으면 name+studentId+appliedAt.
+ * 배열 인덱스(stale 캐시 기준)로 매칭하면 동시 신청 등으로 엉뚱한 항목을 덮어쓸 수 있어
+ * 트랜잭션 내 fresh applicants 에서 키로 대상을 찾는다.
+ */
+function applicantKey(a: ApplicantEntry): string {
+  return a.userId ?? a.guestKey ?? `${a.name}-${a.studentId ?? ""}-${a.appliedAt}`;
+}
 
 interface ProposedLink {
   activityId: string;
   activityTitle: string;
-  applicantIndex: number;
+  /** 대상 applicant 의 안정 키 (배열 인덱스 대신 사용) */
+  applicantKey: string;
   applicantName: string;
   studentId: string;
   matchedUserId: string;
@@ -46,6 +56,22 @@ function MigrationPageContent() {
   const activities = (actsRes?.data ?? []) as Activity[];
   const users = (usersRes?.data ?? []) as User[];
 
+  // data-split: applicants 는 activity_applicants 비공개 컬렉션에서 활동별로 조회.
+  const { data: applicantsByActivity = {}, isLoading: isLoadingApplicants } = useQuery({
+    queryKey: ["console-link-applicants", activities.map((a) => a.id).join(",")],
+    enabled: activities.length > 0,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const map: Record<string, NonNullable<Activity["applicants"]>> = {};
+      await Promise.all(
+        activities.map(async (act) => {
+          map[act.id] = await activityApplicantsApi.get(act.id);
+        }),
+      );
+      return map;
+    },
+  });
+
   // 학번 → 승인 회원 매핑 (학번이 없거나 미승인은 제외)
   const memberByStudentId = new Map<string, User>();
   for (const u of users) {
@@ -58,9 +84,8 @@ function MigrationPageContent() {
   // 후보 추출 — 모든 활동의 applicants 중 isGuest && studentId && 매칭 회원 존재
   const proposed: ProposedLink[] = [];
   for (const act of activities) {
-    const applicants = act.applicants ?? [];
-    for (let i = 0; i < applicants.length; i++) {
-      const a = applicants[i];
+    const applicants = applicantsByActivity[act.id] ?? [];
+    for (const a of applicants) {
       if (!a.isGuest) continue;
       const sid = (a.studentId ?? "").trim();
       if (!sid) continue;
@@ -70,7 +95,7 @@ function MigrationPageContent() {
       proposed.push({
         activityId: act.id,
         activityTitle: act.title,
-        applicantIndex: i,
+        applicantKey: applicantKey(a),
         applicantName: a.name,
         studentId: sid,
         matchedUserId: matched.id,
@@ -104,23 +129,21 @@ function MigrationPageContent() {
       try {
         const act = activities.find((a) => a.id === activityId);
         if (!act) continue;
-        const applicants = [...(act.applicants ?? [])];
-        const existingParticipants: string[] = [...((act.participants as string[] | undefined) ?? [])];
-        const newParticipants = [...existingParticipants];
-        for (const link of links) {
-          const a = applicants[link.applicantIndex];
-          if (!a) continue;
-          applicants[link.applicantIndex] = {
-            ...a,
-            userId: link.matchedUserId,
-            isGuest: false,
-          };
-          // 연동된 회원을 participants 배열에도 추가 (미포함 시에만)
-          if (!newParticipants.includes(link.matchedUserId)) {
-            newParticipants.push(link.matchedUserId);
-          }
-        }
-        await activitiesApi.update(activityId, { applicants, participants: newParticipants });
+        // data-split: 트랜잭션으로 activity_applicants + participants 원자적 갱신.
+        // MEDIUM-2: 배열 인덱스(stale)가 아니라 키 기반으로 fresh applicants 에서 대상 탐색.
+        await activityApplicantsApi.mutate(activityId, ({ applicants, participants }) => {
+          const nextParticipants = [...participants];
+          const linkByKey = new Map(links.map((l) => [l.applicantKey, l]));
+          const nextApplicants = applicants.map((a) => {
+            const link = linkByKey.get(applicantKey(a));
+            if (!link) return a;
+            if (!nextParticipants.includes(link.matchedUserId)) {
+              nextParticipants.push(link.matchedUserId);
+            }
+            return { ...a, userId: link.matchedUserId, isGuest: false };
+          });
+          return { applicants: nextApplicants, participants: nextParticipants };
+        });
         okCount += links.length;
       } catch (e) {
         errs.push(`${activityId}: ${(e as Error).message}`);
@@ -131,6 +154,7 @@ function MigrationPageContent() {
     setDone(true);
     setErrors(errs);
     await qc.invalidateQueries({ queryKey: ["console-link-actsx"] });
+    await qc.invalidateQueries({ queryKey: ["console-link-applicants"] });
     if (errs.length === 0) {
       toast.success(`${okCount}건 연동 완료`);
     } else {
@@ -151,7 +175,7 @@ function MigrationPageContent() {
     const errs: string[] = [];
     for (const act of activities) {
       try {
-        const apps = (act.applicants ?? []) as Array<{ userId?: string; isGuest?: boolean }>;
+        const apps = applicantsByActivity[act.id] ?? [];
         const linkedIds = apps
           .map((a) => (a && a.isGuest === false && a.userId ? a.userId : undefined))
           .filter((v): v is string => !!v);
@@ -159,8 +183,9 @@ function MigrationPageContent() {
         const existing: string[] = [...((act.participants as string[] | undefined) ?? [])];
         const missing = linkedIds.filter((id) => !existing.includes(id));
         if (missing.length === 0) continue;
-        const next = [...existing, ...missing];
-        await activitiesApi.update(act.id, { participants: next });
+        await activitiesApi.update(act.id, {
+          participants: [...existing, ...missing],
+        });
         updatedActs += 1;
         addedCount += missing.length;
       } catch (e) {
@@ -177,7 +202,7 @@ function MigrationPageContent() {
     }
   }
 
-  if (isLoadingActs || isLoadingUsers) {
+  if (isLoadingActs || isLoadingUsers || isLoadingApplicants) {
     return (
       <div className="flex items-center justify-center py-20 text-sm text-muted-foreground">
         <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 데이터 불러오는 중…
@@ -270,7 +295,7 @@ function MigrationPageContent() {
               </thead>
               <tbody>
                 {proposed.map((p, i) => (
-                  <tr key={`${p.activityId}-${p.applicantIndex}-${i}`} className="border-t">
+                  <tr key={`${p.activityId}-${p.applicantKey}-${i}`} className="border-t">
                     <td className="px-3 py-2">{p.activityTitle}</td>
                     <td className="px-3 py-2">{p.applicantName}</td>
                     <td className="px-3 py-2 font-mono text-xs">{p.studentId}</td>
