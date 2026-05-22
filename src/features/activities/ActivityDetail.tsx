@@ -654,7 +654,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
     { value: "archive", label: "자료 아카이브", show: !!user && hasArchive },
     { value: "staff", label: `운영진 (${staffPids.length})`, show: !!user },
     { value: "presenters", label: `발표자 (${speakerApplicants.length})`, show: type === "external" },
-    { value: "volunteers", label: `자원봉사자 (${volunteerApplicants.length})`, show: type === "external" },
+    { value: "volunteers", label: `자원봉사자 (${volunteerApplicants.length})`, show: type === "external" && isStaff },
     { value: "participants", label: `참여자 (${regularPids.length})`, show: !!user },
     // Sprint 67: 신청현황은 운영진+ 만 노출 (요청 — 일반 신청자 미노출)
     { value: "applicants", label: `신청현황 (${applicants.length})`, show: !!user && registrationMethod === "open" && isStaff },
@@ -2062,9 +2062,11 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                     <Badge className={SPEAKER_SUBMISSION_TYPE_COLORS.paper}>{SPEAKER_SUBMISSION_TYPE_LABELS.paper} {counts.paper}</Badge>
                     <Badge className={SPEAKER_SUBMISSION_TYPE_COLORS.poster}>{SPEAKER_SUBMISSION_TYPE_LABELS.poster} {counts.poster}</Badge>
                     <Badge className={SPEAKER_SUBMISSION_TYPE_COLORS.media}>{SPEAKER_SUBMISSION_TYPE_LABELS.media} {counts.media}</Badge>
-                    <span className="ml-auto text-muted-foreground">
-                      승인 {counts.approved} · 대기 {counts.pending} · 반려 {counts.rejected}
-                    </span>
+                    {isStaff && (
+                      <span className="ml-auto text-muted-foreground">
+                        승인 {counts.approved} · 대기 {counts.pending} · 반려 {counts.rejected}
+                      </span>
+                    )}
                   </div>
                   {sorted.length === 0 ? (
                     <p className="rounded-md border border-dashed bg-muted/30 p-8 text-center text-sm text-muted-foreground">
@@ -2078,7 +2080,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                             <th className="w-[110px] px-3 py-2 text-left font-medium">발표 구분</th>
                             <th className="w-[180px] px-3 py-2 text-left font-medium">발표자</th>
                             <th className="px-3 py-2 text-left font-medium">논문 제목</th>
-                            <th className="w-[88px] px-3 py-2 text-left font-medium">상태</th>
+                            {isStaff && <th className="w-[88px] px-3 py-2 text-left font-medium">상태</th>}
                           </tr>
                         </thead>
                         <tbody className="divide-y">
@@ -2106,18 +2108,20 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                                     <span className="text-muted-foreground">미제출</span>
                                   )}
                                 </td>
-                                <td className="px-3 py-2.5">
-                                  <Badge
-                                    className={cn(
-                                      "text-[11px]",
-                                      a.status === "approved" && "bg-green-50 text-green-700",
-                                      a.status === "pending" && "bg-amber-50 text-amber-700",
-                                      a.status === "rejected" && "bg-red-50 text-red-700",
-                                    )}
-                                  >
-                                    {a.status === "approved" ? "승인" : a.status === "pending" ? "대기" : "반려"}
-                                  </Badge>
-                                </td>
+                                {isStaff && (
+                                  <td className="px-3 py-2.5">
+                                    <Badge
+                                      className={cn(
+                                        "text-[11px]",
+                                        a.status === "approved" && "bg-green-50 text-green-700",
+                                        a.status === "pending" && "bg-amber-50 text-amber-700",
+                                        a.status === "rejected" && "bg-red-50 text-red-700",
+                                      )}
+                                    >
+                                      {a.status === "approved" ? "승인" : a.status === "pending" ? "대기" : "반려"}
+                                    </Badge>
+                                  </td>
+                                )}
                               </tr>
                             );
                           })}

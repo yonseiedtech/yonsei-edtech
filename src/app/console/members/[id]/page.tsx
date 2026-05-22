@@ -162,26 +162,31 @@ function AdminMemberDetail({ id }: { id: string }) {
 
   async function handleResetPassword() {
     if (!member?.email) { toast.error("이메일이 없는 회원입니다."); return; }
+    if (!member?.username) { toast.error("아이디(학번)가 없는 회원입니다."); return; }
+    if (!confirm(
+      `${member.name}님의 비밀번호를 아이디(학번: ${member.username})로 초기화하시겠습니까?\n` +
+      `초기화 후 회원 본인에게 직접 안내해 주세요.`,
+    )) return;
     setResettingPassword(true);
     try {
       const token = await auth.currentUser?.getIdToken();
       if (!token) throw new Error("인증 필요");
-      const res = await fetch("/api/email/password-reset", {
+      const res = await fetch("/api/admin/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ email: member.email, name: member.name }),
+        body: JSON.stringify({ email: member.email, username: member.username }),
       });
       if (res.ok) {
         logAudit({
           action: "비밀번호 초기화",
           category: "member",
-          detail: `${member.name}(${member.email}) 재설정 이메일 발송`,
+          detail: `${member.name}(@${member.username}) 비밀번호를 아이디(학번)로 초기화`,
           targetId: member.id,
           targetName: member.name,
           userId: currentUser?.id ?? "",
           userName: currentUser?.name ?? "",
         });
-        toast.success(`${member.email}로 비밀번호 재설정 이메일을 발송했습니다.`);
+        toast.success(`${member.name}님의 비밀번호를 아이디(학번)로 초기화했습니다.`);
       } else {
         const data = await res.json();
         toast.error(data.error || "비밀번호 초기화에 실패했습니다.");
@@ -318,11 +323,11 @@ function AdminMemberDetail({ id }: { id: string }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">비밀번호 초기화</p>
-                <p className="text-xs text-muted-foreground">{member.email}로 재설정 이메일 발송</p>
+                <p className="text-xs text-muted-foreground">아이디(학번)로 임시 비밀번호를 초기화합니다</p>
               </div>
               <Button size="sm" variant="outline" onClick={handleResetPassword} disabled={resettingPassword}>
                 <KeyRound size={14} className="mr-1" />
-                {resettingPassword ? "발송 중..." : "초기화"}
+                {resettingPassword ? "초기화 중..." : "초기화"}
               </Button>
             </div>
           </div>

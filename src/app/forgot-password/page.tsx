@@ -40,6 +40,9 @@ export default function ForgotPasswordPage() {
   const [birthDate, setBirthDate] = useState("");
   const [securityQuestion, setSecurityQuestion] = useState("");
   const [answer, setAnswer] = useState("");
+  // 생년월일 입력 범위 — 미래 날짜 및 6자리 연도 입력 방지 (연도 4자리 고정)
+  const minBirthDate = "1900-01-01";
+  const maxBirthDate = new Date().toISOString().slice(0, 10);
 
   async function handleVerify(e: React.FormEvent) {
     e.preventDefault();
@@ -178,6 +181,8 @@ export default function ForgotPasswordPage() {
                     type="date"
                     value={birthDate}
                     onChange={(e) => setBirthDate(e.target.value)}
+                    min={minBirthDate}
+                    max={maxBirthDate}
                     required
                   />
                 </div>
