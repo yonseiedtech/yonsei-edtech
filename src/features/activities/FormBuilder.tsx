@@ -59,6 +59,12 @@ export default function FormBuilder({ value, onChange }: Props) {
   // controlled <Input> 값이 캐시 churn 으로 재설정되면 조합 버퍼가 깨진다.
   // 로컬 state 로 입력을 격리하면 IME 가 안전하다. (ActivityInfoEditor 와 동일 패턴)
   const [fields, setFields] = useState<FormField[]>(value);
+  // 항상 "현재 의도된 최신 fields" 를 가리키는 ref.
+  // 뮤테이터(duplicate/update/move/remove 등)는 render closure 의 `fields` 대신
+  // 이 ref 를 읽는다. 직전 이벤트의 변경(예: 시간 입력 수정)이 아직 리렌더에
+  // 반영되기 전 곧바로 다음 이벤트(예: 복제 클릭)가 같은 task 에서 처리되어도,
+  // closure 스냅샷이 stale 하지 않도록 보장한다.
+  const workingRef = useRef<FormField[]>(value);
   const lastEmitted = useRef<FormField[]>(value);
   const dirty = useRef(false);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -70,6 +76,7 @@ export default function FormBuilder({ value, onChange }: Props) {
     if (dirty.current) return;
     if (value !== lastEmitted.current) {
       setFields(value);
+      workingRef.current = value;
       lastEmitted.current = value;
     }
   }, [value]);
@@ -88,6 +95,7 @@ export default function FormBuilder({ value, onChange }: Props) {
 
   // 로컬 state 즉시 갱신 + 부모로의 전파는 디바운스
   const commit = useCallback((next: FormField[]) => {
+    workingRef.current = next;
     setFields(next);
     lastEmitted.current = next;
     dirty.current = true;
@@ -123,28 +131,29 @@ export default function FormBuilder({ value, onChange }: Props) {
       options: HAS_OPTIONS.includes(newType) ? ["옵션 1"] : undefined,
       ...defaultsFor(newType),
     };
-    commit([...fields, f]);
+    commit([...workingRef.current, f]);
   }
   function update(i: number, patch: Partial<FormField>) {
-    commit(fields.map((f, idx) => idx === i ? { ...f, ...patch } : f));
+    commit(workingRef.current.map((f, idx) => idx === i ? { ...f, ...patch } : f));
   }
   function changeType(i: number, t: FormFieldType) {
-    const f = fields[i]; if (!f) return;
+    const f = workingRef.current[i]; if (!f) return;
     update(i, {
       type: t,
       options: HAS_OPTIONS.includes(t) ? (f.options ?? ["옵션 1"]) : undefined,
       ...defaultsFor(t),
     });
   }
-  function remove(i: number) { commit(fields.filter((_, idx) => idx !== i)); }
+  function remove(i: number) { commit(workingRef.current.filter((_, idx) => idx !== i)); }
   function move(i: number, dir: -1 | 1) {
-    const next = [...fields]; const j = i + dir;
+    const next = [...workingRef.current]; const j = i + dir;
     if (j < 0 || j >= next.length) return;
     [next[i], next[j]] = [next[j], next[i]]; commit(next);
   }
   function duplicate(i: number) {
-    const f = fields[i]; if (!f) return;
-    commit([...fields.slice(0, i + 1), { ...f, id: uid() }, ...fields.slice(i + 1)]);
+    const cur = workingRef.current;
+    const f = cur[i]; if (!f) return;
+    commit([...cur.slice(0, i + 1), { ...f, id: uid() }, ...cur.slice(i + 1)]);
   }
 
   return (
