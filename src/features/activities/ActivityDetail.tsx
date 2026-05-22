@@ -1774,6 +1774,105 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   })}
                 </div>
               )}
+              {isStaff && filtered.length > 0 && (
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-muted-foreground">총 {filtered.length}명</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1.5 text-xs"
+                    onClick={() => {
+                      // 신청현황 CSV — 이름·학번·이메일·핸드폰번호 + 폼 질문별 답변 컬럼 (가로형 1인 1행)
+                      const questionFields: FormField[] = [];
+                      const seenFieldIds = new Set<string>();
+                      for (const f of [
+                        ...applicationForm,
+                        ...(Object.values(applicationFormByType).flat() as FormField[]),
+                      ]) {
+                        if (f.type === "section_break") continue;
+                        if (seenFieldIds.has(f.id)) continue;
+                        seenFieldIds.add(f.id);
+                        questionFields.push(f);
+                      }
+                      const STATUS_LABEL: Record<string, string> = {
+                        pending: "대기",
+                        approved: "승인",
+                        rejected: "거절",
+                      };
+                      const csvCell = (v: string) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+                      const fmtAnswer = (field: FormField, rawValue: unknown): string => {
+                        if (rawValue === undefined || rawValue === null || rawValue === "") return "";
+                        if (Array.isArray(rawValue)) {
+                          if (rawValue.length > 0 && typeof rawValue[0] === "object") {
+                            return (rawValue as { name: string }[]).map((f) => f.name).join(" / ");
+                          }
+                          return (rawValue as string[]).join(", ");
+                        }
+                        if (
+                          (field.type === "schedule" || field.type === "datetime_slots") &&
+                          typeof rawValue === "string"
+                        ) {
+                          if (rawValue === "__ALL__") return "전체 시간 가능";
+                          if (rawValue === "__RESTRICTED__") return "참여 제한";
+                          try {
+                            const slots = JSON.parse(rawValue) as { date: string; start: string; end: string }[];
+                            return slots.length === 0
+                              ? ""
+                              : slots.map((s) => `${s.date} ${s.start}-${s.end}`).join(" / ");
+                          } catch {
+                            return String(rawValue);
+                          }
+                        }
+                        return String(rawValue);
+                      };
+                      const headerCols = [
+                        "이름",
+                        "학번",
+                        "이메일",
+                        "핸드폰번호",
+                        ...(type === "external" ? ["참석유형"] : []),
+                        "상태",
+                        "신청일",
+                        ...questionFields.map((f) => f.label),
+                      ];
+                      const dataRows = filtered.map((a) => {
+                        const cells = [
+                          a.name,
+                          a.studentId ?? "",
+                          a.email ?? "",
+                          a.phone ?? "",
+                          ...(type === "external"
+                            ? [
+                                EXTERNAL_PARTICIPANT_TYPE_LABELS[
+                                  (a.participantType ?? "attendee") as ExternalParticipantType
+                                ],
+                              ]
+                            : []),
+                          STATUS_LABEL[a.status] ?? a.status ?? "대기",
+                          a.appliedAt ? new Date(a.appliedAt).toLocaleString("ko-KR") : "",
+                          ...questionFields.map((f) =>
+                            fmtAnswer(f, a.answers?.[f.id] ?? a.answers?.[f.label]),
+                          ),
+                        ];
+                        return cells.map(csvCell).join(",");
+                      });
+                      const csv =
+                        "﻿" + [headerCols.map(csvCell).join(","), ...dataRows].join("\r\n");
+                      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+                      const url = URL.createObjectURL(blob);
+                      const el = document.createElement("a");
+                      const today = new Date().toISOString().slice(0, 10);
+                      el.href = url;
+                      el.download = `${activity?.title ?? "활동"}_신청현황_${today}.csv`;
+                      el.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                  >
+                    <Download size={13} />
+                    CSV 내보내기
+                  </Button>
+                </div>
+              )}
               <div className="rounded-2xl border bg-card">
               {filtered.length === 0 ? (
                 <p className="p-6 text-center text-sm text-muted-foreground">
