@@ -9,7 +9,7 @@
  * 분석 근거: docs/03-analysis/dashboard-uiux-synthesis.md §3 ★K, dashboard-persona-redesign.plan.md §2 F1
  */
 
-import type { UserRole } from "@/types";
+import type { User, UserRole } from "@/types";
 
 export type DashboardWidgetKey =
   /** 학사일정 진행바 (학기 진행도) */
@@ -42,4 +42,48 @@ export function canShowWidget(role: UserRole, key: DashboardWidgetKey): boolean 
     return false;
   }
   return true;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Persona helpers (Phase C — 퍼소나별 분기)
+// 기존 isStaff / STUDENT_ONLY_WIDGETS / NON_STUDENT_ROLES 는 그대로 유지하고,
+// 4종 퍼소나(undergrad / grad / alumni / staff / guest) 분류 헬퍼만 신규 추가.
+// 현재 yonsei-edtech 회원은 모두 대학원생이므로 학부생(undergrad)은 게스트 라우트 한정.
+// ─────────────────────────────────────────────────────────────
+
+export type UserPersona = "undergrad" | "grad" | "alumni" | "staff" | "guest";
+
+/** staff 이상 역할 (운영진/회장/admin/sysadmin) */
+const STAFF_ROLES: ReadonlySet<UserRole> = new Set([
+  "staff",
+  "president",
+  "admin",
+  "sysadmin",
+]);
+
+/**
+ * 사용자 퍼소나 판별.
+ *
+ * 우선순위:
+ *  1. user 없음 → "guest"
+ *  2. staff 이상 → "staff" (학생/졸업생이어도 운영진 권한이 우선)
+ *  3. role === "alumni" OR enrollmentStatus === "graduated" → "alumni"
+ *  4. advisor / 기타 → "grad" (대학원생 기본값)
+ *
+ * NOTE: 현재 학회는 교육대학원 회원만 대상. 학부생 케이스가 생기면 별도 필드로 분기.
+ */
+export function getUserPersona(user: User | null | undefined): UserPersona {
+  if (!user) return "guest";
+  if (STAFF_ROLES.has(user.role)) return "staff";
+  if (user.role === "alumni") return "alumni";
+  if (user.enrollmentStatus === "graduated") return "alumni";
+  return "grad";
+}
+
+/**
+ * 졸업생 여부 — Alumni 전용 콘텐츠 가드용 헬퍼.
+ * staff 이상은 alumni 신분이어도 운영진 위젯이 우선이므로 false 반환.
+ */
+export function isAlumni(user: User | null | undefined): boolean {
+  return getUserPersona(user) === "alumni";
 }

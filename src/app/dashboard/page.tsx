@@ -29,10 +29,12 @@ import ComprehensiveExamCountdown from "@/features/dashboard/ComprehensiveExamCo
 import PageHeader from "@/components/ui/page-header";
 import TermBriefHero from "@/components/dashboard/TermBriefHero";
 import NewMemberWelcomeBanner from "@/features/dashboard/NewMemberWelcomeBanner";
+import NewMemberChecklistWidget from "@/features/dashboard/NewMemberChecklistWidget";
+import AlumniHomeWidgets from "@/features/dashboard/AlumniHomeWidgets";
 import AIForumLiveWidget from "@/features/dashboard/AIForumLiveWidget";
 import SpacedRepetitionWidget from "@/features/dashboard/SpacedRepetitionWidget";
 import DailyReflectionPrompt from "@/features/dashboard/DailyReflectionPrompt";
-import { canShowWidget } from "@/features/dashboard/widget-visibility";
+import { canShowWidget, isAlumni } from "@/features/dashboard/widget-visibility";
 import {
   LayoutDashboard,
   FileText,
@@ -164,6 +166,11 @@ function DashboardContent() {
         {/* 신규 회원 온보딩 배너 — PageHeader 바로 아래, TermBriefHero 위 */}
         <NewMemberWelcomeBanner />
 
+        {/* 신규 회원 6단계 체크리스트 (Phase C) — 가입 30일 이내 또는 완성도 < 60% 일 때만 노출 */}
+        <div className="mb-6">
+          <NewMemberChecklistWidget />
+        </div>
+
         {/* 학기 진행 Hero (학사일정 통합) */}
         <TermBriefHero
           user={user}
@@ -181,6 +188,16 @@ function DashboardContent() {
         <TodaySummaryCard />
         <NextActionBanner />
       </div>
+
+      {/* ── 섹션 2.5: 졸업생 전용 콘텐츠 (Phase C) ──
+       *  학사 위젯이 모두 숨겨지는 alumni 에게 의미 있는 콘텐츠 노출.
+       *  isAlumni(user) === false 일 때는 null 반환되므로 일반 회원에게 영향 없음.
+       */}
+      {isAlumni(user) && (
+        <section className="mx-auto mt-6 max-w-6xl px-4">
+          <AlumniHomeWidgets />
+        </section>
+      )}
 
       {/* ── 섹션 3: 학사 컨텍스트 위젯 (재학생 전용) ── */}
       <section className="mx-auto mt-6 max-w-6xl px-4">
