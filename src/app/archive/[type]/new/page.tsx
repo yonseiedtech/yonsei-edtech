@@ -1,55 +1,24 @@
-"use client";
+// Phase 3.5 — 편집 경로 통일: 공개 /archive/{type}/new 는 콘솔 경로로 redirect.
+// 기존 북마크·외부 링크 호환 유지 목적.
+import { redirect, notFound } from "next/navigation";
 
-import { notFound, useParams, useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { useAuthStore } from "@/features/auth/auth-store";
-import { isAtLeast } from "@/lib/permissions";
-import ArchiveItemForm from "@/components/archive/ArchiveItemForm";
-import type { ArchiveItemType } from "@/types";
+type Params = { type: string };
 
-export default function ArchiveNewPage() {
-  const params = useParams<{ type: string }>();
-  const router = useRouter();
-  const type = params?.type as ArchiveItemType;
-  const { user } = useAuthStore();
-  const canManage = isAtLeast(user, "staff");
+const VALID_TYPES = ["concept", "variable", "measurement"] as const;
+type ValidType = (typeof VALID_TYPES)[number];
 
-  if (type !== "concept" && type !== "variable" && type !== "measurement") {
+function isValidType(t: string): t is ValidType {
+  return (VALID_TYPES as readonly string[]).includes(t);
+}
+
+export default async function ArchiveNewRedirectPage({
+  params,
+}: {
+  params: Promise<Params>;
+}) {
+  const { type } = await params;
+  if (!isValidType(type)) {
     notFound();
   }
-
-  useEffect(() => {
-    if (!user) return; // 인증 상태 로드 대기
-    if (!canManage) {
-      router.replace(`/archive/${type}`);
-    }
-  }, [user, canManage, router, type]);
-
-  if (!user) {
-    return (
-      <div className="container mx-auto max-w-3xl py-12 text-center text-sm text-muted-foreground">
-        로그인 정보를 확인 중입니다…
-      </div>
-    );
-  }
-
-  if (!canManage) {
-    return (
-      <div className="container mx-auto max-w-3xl py-12 text-center text-sm text-muted-foreground">
-        새 항목 추가는 운영진(staff 이상)만 가능합니다.
-      </div>
-    );
-  }
-
-  return (
-    <div className="container mx-auto max-w-3xl py-8">
-      <ArchiveItemForm
-        type={type}
-        initial={null}
-        initialThesisIds={[]}
-        userId={user.id}
-        canDelete={false}
-      />
-    </div>
-  );
+  redirect(`/console/archive/${type}s/new`);
 }

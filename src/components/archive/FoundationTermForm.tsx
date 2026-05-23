@@ -15,6 +15,7 @@ import {
   researchMethodsApi,
   statisticalMethodsApi,
 } from "@/lib/bkend";
+import { useAuthStore } from "@/features/auth/auth-store";
 import {
   FOUNDATION_TERM_CATEGORY_LABELS,
   type FoundationTerm,
@@ -53,6 +54,7 @@ function newId(): string {
 export default function FoundationTermForm({ initial, userId }: Props) {
   const router = useRouter();
   const isEdit = !!initial;
+  const { user: authUser } = useAuthStore();
 
   const [termName, setTermName] = useState(initial?.term ?? "");
   const [abbreviation, setAbbreviation] = useState(initial?.abbreviation ?? "");
@@ -272,6 +274,16 @@ export default function FoundationTermForm({ initial, userId }: Props) {
           url: r.url?.trim() || undefined,
         }));
 
+      // Phase 3.5 — 운영 메타 자동 주입.
+      const becamePublished = published && !initial?.published;
+      const reviewMeta = becamePublished
+        ? {
+            reviewedBy: authUser?.name ?? undefined,
+            reviewedByUid: authUser?.id ?? userId ?? undefined,
+            reviewedAt: new Date().toISOString(),
+          }
+        : {};
+
       const payload = {
         term: termName.trim(),
         abbreviation: abbreviation.trim() || undefined,
@@ -294,6 +306,9 @@ export default function FoundationTermForm({ initial, userId }: Props) {
             : undefined,
         published,
         curatedBy: userId,
+        updatedBy: authUser?.name ?? undefined,
+        updatedByUid: authUser?.id ?? userId ?? undefined,
+        ...reviewMeta,
       };
 
       if (isEdit && initial) {

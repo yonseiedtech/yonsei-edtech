@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { writingTipsApi } from "@/lib/bkend";
+import { useAuthStore } from "@/features/auth/auth-store";
 import {
   WRITING_TIP_CATEGORY_LABELS,
   type WritingTip,
@@ -42,6 +43,7 @@ function newId(): string {
 export default function WritingTipForm({ initial, userId }: Props) {
   const router = useRouter();
   const isEdit = !!initial;
+  const { user: authUser } = useAuthStore();
 
   const [title, setTitle] = useState(initial?.title ?? "");
   const [category, setCategory] = useState<WritingTipCategory>(
@@ -123,6 +125,16 @@ export default function WritingTipForm({ initial, userId }: Props) {
         .map((s) => s.trim())
         .filter(Boolean);
 
+      // Phase 3.5 — 운영 메타 자동 주입.
+      const becamePublished = published && !initial?.published;
+      const reviewMeta = becamePublished
+        ? {
+            reviewedBy: authUser?.name ?? undefined,
+            reviewedByUid: authUser?.id ?? userId ?? undefined,
+            reviewedAt: new Date().toISOString(),
+          }
+        : {};
+
       const payload = {
         title: title.trim(),
         category,
@@ -135,6 +147,9 @@ export default function WritingTipForm({ initial, userId }: Props) {
         references: cleanReferences.length > 0 ? cleanReferences : undefined,
         published,
         curatedBy: userId,
+        updatedBy: authUser?.name ?? undefined,
+        updatedByUid: authUser?.id ?? userId ?? undefined,
+        ...reviewMeta,
       };
 
       if (isEdit && initial) {

@@ -26,6 +26,8 @@ import {
 } from "@/lib/bkend";
 
 export interface SeedConcept {
+  /** Phase 5 — 시드 멱등성 키. 사용자가 이름 수정해도 동일 항목 인식. */
+  seedKey: string;
   name: string;
   description: string;
   altNames?: string[];
@@ -34,6 +36,8 @@ export interface SeedConcept {
 }
 
 export interface SeedVariable {
+  /** Phase 5 — 시드 멱등성 키. */
+  seedKey: string;
   name: string;
   description: string;
   type?: ArchiveVariable["type"];
@@ -43,6 +47,8 @@ export interface SeedVariable {
 }
 
 export interface SeedMeasurement {
+  /** Phase 5 — 시드 멱등성 키. */
+  seedKey: string;
   name: string;
   description: string;
   originalName?: string;
@@ -59,8 +65,10 @@ export interface SeedMeasurement {
 }
 
 // ─── 개념 (Concepts) ─────────────────────────────────────────
+// seedKey 형식: `concept:{kebab-slug}` — 사용자가 이름 수정해도 동일 항목 인식.
 export const SEED_CONCEPTS: SeedConcept[] = [
   {
+    seedKey: "concept:self-efficacy",
     name: "자기효능감",
     altNames: ["Self-efficacy", "자기효능감 신념"],
     description:
@@ -73,6 +81,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     ],
   },
   {
+    seedKey: "concept:learning-motivation",
     name: "학습동기",
     altNames: ["Learning Motivation", "학업동기"],
     description:
@@ -86,6 +95,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     ],
   },
   {
+    seedKey: "concept:cognitive-load",
     name: "인지부하",
     altNames: ["Cognitive Load", "정신적 부하"],
     description:
@@ -98,6 +108,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     ],
   },
   {
+    seedKey: "concept:metacognition",
     name: "메타인지",
     altNames: ["Metacognition", "초인지"],
     description:
@@ -109,6 +120,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     ],
   },
   {
+    seedKey: "concept:self-regulated-learning",
     name: "자기조절학습",
     altNames: ["Self-Regulated Learning", "SRL"],
     description:
@@ -122,6 +134,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     ],
   },
   {
+    seedKey: "concept:learning-flow",
     name: "학습몰입",
     altNames: ["Learning Flow", "Engagement"],
     description:
@@ -135,6 +148,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     ],
   },
   {
+    seedKey: "concept:technology-acceptance",
     name: "테크놀로지 수용",
     altNames: ["Technology Acceptance", "TAM"],
     description:
@@ -148,6 +162,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     ],
   },
   {
+    seedKey: "concept:collaborative-learning",
     name: "협력학습",
     altNames: ["Collaborative Learning", "Cooperative Learning"],
     description:
@@ -161,6 +176,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
   },
   // ─── 2026 보강: 교육공학 분야 핵심 개념 16개 추가 ───
   {
+    seedKey: "concept:educational-technology",
     name: "교육공학",
     altNames: ["Educational Technology", "Instructional Technology", "EdTech"],
     description:
@@ -173,6 +189,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     ],
   },
   {
+    seedKey: "concept:instructional-design",
     name: "교수설계",
     altNames: ["Instructional Design", "ID", "교수체제설계", "ISD"],
     description:
@@ -185,6 +202,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     ],
   },
   {
+    seedKey: "concept:addie-model",
     name: "ADDIE 모델",
     altNames: ["ADDIE Model"],
     description:
@@ -196,6 +214,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     ],
   },
   {
+    seedKey: "concept:tpack",
     name: "TPACK",
     altNames: ["Technological Pedagogical Content Knowledge", "TPCK"],
     description:
@@ -207,6 +226,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     ],
   },
   {
+    seedKey: "concept:samr-model",
     name: "SAMR 모델",
     altNames: ["SAMR Model"],
     description:
@@ -218,6 +238,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     ],
   },
   {
+    seedKey: "concept:learning-analytics",
     name: "학습분석",
     altNames: ["Learning Analytics", "LA"],
     description:
@@ -229,6 +250,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     ],
   },
   {
+    seedKey: "concept:digital-literacy",
     name: "디지털 리터러시",
     altNames: ["Digital Literacy", "디지털 문해력", "Digital Competence"],
     description:
@@ -240,6 +262,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     ],
   },
   {
+    seedKey: "concept:flipped-learning",
     name: "플립러닝",
     altNames: ["Flipped Learning", "Flipped Classroom", "거꾸로 학습"],
     description:
@@ -252,6 +275,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     ],
   },
   {
+    seedKey: "concept:gamification",
     name: "게이미피케이션",
     altNames: ["Gamification", "교육 게이미피케이션"],
     description:
@@ -263,6 +287,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     ],
   },
   {
+    seedKey: "concept:microlearning",
     name: "마이크로러닝",
     altNames: ["Microlearning", "마이크로 콘텐츠"],
     description:
@@ -274,6 +299,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     ],
   },
   {
+    seedKey: "concept:computational-thinking",
     name: "컴퓨팅 사고력",
     altNames: ["Computational Thinking", "CT"],
     description:
@@ -285,6 +311,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     ],
   },
   {
+    seedKey: "concept:adaptive-learning",
     name: "적응학습",
     altNames: ["Adaptive Learning", "맞춤형 학습", "Adaptive Instruction"],
     description:
@@ -296,6 +323,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     ],
   },
   {
+    seedKey: "concept:ctml",
     name: "멀티미디어 학습 인지이론",
     altNames: ["Cognitive Theory of Multimedia Learning", "CTML"],
     description:
@@ -308,6 +336,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     ],
   },
   {
+    seedKey: "concept:community-of-practice",
     name: "학습공동체",
     altNames: ["Community of Practice", "CoP", "전문학습공동체", "PLC"],
     description:
@@ -319,6 +348,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     ],
   },
   {
+    seedKey: "concept:social-presence",
     name: "사회적 실재감",
     altNames: ["Social Presence", "Community of Inquiry CoI"],
     description:
@@ -330,6 +360,7 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     ],
   },
   {
+    seedKey: "concept:learning-experience-design",
     name: "학습경험 디자인",
     altNames: ["Learning Experience Design", "LX Design", "LXD"],
     description:
@@ -344,8 +375,10 @@ export const SEED_CONCEPTS: SeedConcept[] = [
 ];
 
 // ─── 변인 (Variables) ─────────────────────────────────────────
+// seedKey 형식: `variable:{kebab-slug}` — 사용자가 이름 수정해도 동일 항목 인식.
 export const SEED_VARIABLES: SeedVariable[] = [
   {
+    seedKey: "variable:academic-self-efficacy",
     name: "학업적 자기효능감",
     altNames: ["Academic Self-Efficacy"],
     description:
@@ -358,6 +391,7 @@ export const SEED_VARIABLES: SeedVariable[] = [
     ],
   },
   {
+    seedKey: "variable:intrinsic-motivation",
     name: "내재적 동기",
     altNames: ["Intrinsic Motivation"],
     description:
@@ -370,6 +404,7 @@ export const SEED_VARIABLES: SeedVariable[] = [
     ],
   },
   {
+    seedKey: "variable:learning-flow",
     name: "학습몰입",
     altNames: ["Learning Engagement", "Flow"],
     description:
@@ -382,6 +417,7 @@ export const SEED_VARIABLES: SeedVariable[] = [
     ],
   },
   {
+    seedKey: "variable:academic-achievement",
     name: "학업성취도",
     altNames: ["Academic Achievement"],
     description:
@@ -391,6 +427,7 @@ export const SEED_VARIABLES: SeedVariable[] = [
     references: [],
   },
   {
+    seedKey: "variable:learning-satisfaction",
     name: "학습 만족도",
     altNames: ["Learning Satisfaction"],
     description:
@@ -402,6 +439,7 @@ export const SEED_VARIABLES: SeedVariable[] = [
     ],
   },
   {
+    seedKey: "variable:srl-strategies",
     name: "자기조절 학습전략",
     altNames: ["Self-Regulated Learning Strategies"],
     description:
@@ -414,6 +452,7 @@ export const SEED_VARIABLES: SeedVariable[] = [
     ],
   },
   {
+    seedKey: "variable:extraneous-cognitive-load",
     name: "외재적 인지부하",
     altNames: ["Extraneous Cognitive Load", "ECL"],
     description:
@@ -425,6 +464,7 @@ export const SEED_VARIABLES: SeedVariable[] = [
     ],
   },
   {
+    seedKey: "variable:continuance-intention",
     name: "학습 지속의도",
     altNames: ["Continuance Intention", "Continued Use Intention"],
     description:
@@ -438,8 +478,10 @@ export const SEED_VARIABLES: SeedVariable[] = [
 ];
 
 // ─── 측정도구 (Measurement Tools) ─────────────────────────────
+// seedKey 형식: `measurement:{kebab-slug}` — 사용자가 이름 수정해도 동일 항목 인식.
 export const SEED_MEASUREMENTS: SeedMeasurement[] = [
   {
+    seedKey: "measurement:academic-self-efficacy-kim-2007",
     name: "학업적 자기효능감 척도 (김아영, 2007)",
     altNames: ["Academic Self-Efficacy Scale"],
     description:
@@ -463,6 +505,7 @@ export const SEED_MEASUREMENTS: SeedMeasurement[] = [
     ],
   },
   {
+    seedKey: "measurement:mslq",
     name: "MSLQ (학습동기·전략 검사)",
     altNames: ["Motivated Strategies for Learning Questionnaire"],
     description:
@@ -484,6 +527,7 @@ export const SEED_MEASUREMENTS: SeedMeasurement[] = [
     ],
   },
   {
+    seedKey: "measurement:k-molt",
     name: "K-MOLT 학습몰입 척도 (석임복, 2007)",
     altNames: ["Korean Measure of Learning Flow", "K-MOLT"],
     description:
@@ -506,6 +550,7 @@ export const SEED_MEASUREMENTS: SeedMeasurement[] = [
     ],
   },
   {
+    seedKey: "measurement:srl-yang-2002",
     name: "자기조절학습 검사 (양명희, 2002)",
     altNames: ["Self-Regulated Learning Test (Korean)"],
     description:
@@ -527,6 +572,7 @@ export const SEED_MEASUREMENTS: SeedMeasurement[] = [
     ],
   },
   {
+    seedKey: "measurement:cognitive-load-leppink-2013",
     name: "Cognitive Load Scale (Leppink et al., 2013)",
     altNames: ["3-Type Cognitive Load Scale"],
     description:
@@ -548,6 +594,7 @@ export const SEED_MEASUREMENTS: SeedMeasurement[] = [
     ],
   },
   {
+    seedKey: "measurement:tam-davis-1989",
     name: "TAM 척도 (Davis, 1989)",
     altNames: ["Technology Acceptance Model Scale"],
     description:
@@ -568,6 +615,7 @@ export const SEED_MEASUREMENTS: SeedMeasurement[] = [
     ],
   },
   {
+    seedKey: "measurement:imi",
     name: "IMI (내재적 동기 검사)",
     altNames: ["Intrinsic Motivation Inventory"],
     description:

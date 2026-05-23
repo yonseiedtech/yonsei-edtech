@@ -1,3 +1,5 @@
+import type { ArchiveOperationalMeta } from "./edutech-archive";
+
 // ── 교육공학 아카이브 — 학술 글쓰기 가이드 (Phase 1) ──
 // 번역투·주술호응·시제/태·맞춤법·학술관례 등 학술 한국어 글쓰기에서
 // 자주 발생하는 문제 패턴과 권장 표현을 정리한 가이드.
@@ -39,7 +41,7 @@ export interface WritingTipReference {
   url?: string;
 }
 
-export interface WritingTip {
+export interface WritingTip extends ArchiveOperationalMeta {
   id: string;
   title: string;
   category: WritingTipCategory;
@@ -57,6 +59,8 @@ export interface WritingTip {
   references?: WritingTipReference[];
   published: boolean;
   curatedBy?: string;
+  /** Phase 5 — 시드 멱등성 키. `writing-tip:{slug}` 형식. */
+  seedKey?: string;
   createdBy: string;
   createdAt: string;
   updatedAt?: string;

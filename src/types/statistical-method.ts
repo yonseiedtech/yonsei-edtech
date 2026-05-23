@@ -1,3 +1,5 @@
+import type { ArchiveOperationalMeta } from "./edutech-archive";
+
 // ── 교육공학 아카이브 — 통계방법 가이드 (Phase 1.5) ──
 // 연구방법(research-methods)과 양방향 연계되는 1급 엔티티.
 // ANOVA/회귀/요인분석/SEM 등 통계기법을 가정·절차·구문·비교 프로파일과 함께 관리.
@@ -142,7 +144,7 @@ export interface StatisticalReference {
   url?: string;
 }
 
-export interface StatisticalMethod {
+export interface StatisticalMethod extends ArchiveOperationalMeta {
   id: string;
   name: string;
   category: StatisticalMethodCategory;
@@ -173,6 +175,8 @@ export interface StatisticalMethod {
   /** 운영진 검수 후 공개 게이트 */
   published: boolean;
   curatedBy?: string;
+  /** Phase 5 — 시드 멱등성 키. `statistical-method:{slug}` 형식. */
+  seedKey?: string;
   createdBy: string;
   createdAt: string;
   updatedAt?: string;

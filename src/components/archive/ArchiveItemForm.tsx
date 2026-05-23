@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import ThesisLinker from "@/components/archive/ThesisLinker";
+import { useAuthStore } from "@/features/auth/auth-store";
 import {
   archiveConceptsApi,
   archiveVariablesApi,
@@ -67,6 +68,7 @@ export default function ArchiveItemForm({
 }: Props) {
   const router = useRouter();
   const isEdit = !!initial;
+  const { user: authUser } = useAuthStore();
 
   // 공통
   const [name, setName] = useState(initial?.name ?? "");
@@ -157,12 +159,18 @@ export default function ArchiveItemForm({
     }
     setSaving(true);
     try {
+      // Phase 3.5 — 운영 메타 자동 주입 (updatedBy/updatedByUid). authUser 우선, fallback userId.
+      const opMeta: Record<string, string | undefined> = {
+        updatedBy: authUser?.name ?? undefined,
+        updatedByUid: authUser?.id ?? userId ?? undefined,
+      };
       const base = {
         name: name.trim(),
         description: description.trim() || undefined,
         altNames: csvParse(altNames),
         tags: csvParse(tags),
         references: lineParse(references),
+        ...opMeta,
         ...(userId && !isEdit ? { createdBy: userId } : {}),
       };
 

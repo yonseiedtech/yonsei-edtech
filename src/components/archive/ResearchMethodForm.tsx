@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { researchMethodsApi, alumniThesesApi, statisticalMethodsApi } from "@/lib/bkend";
+import { useAuthStore } from "@/features/auth/auth-store";
 import {
   RESEARCH_METHOD_KIND_LABELS,
   RESEARCH_METHOD_TOOL_LABELS,
@@ -52,6 +53,7 @@ function lineParse(s: string): string[] | undefined {
 export default function ResearchMethodForm({ initial, userId }: Props) {
   const router = useRouter();
   const isEdit = !!initial;
+  const { user: authUser } = useAuthStore();
 
   const [name, setName] = useState(initial?.name ?? "");
   const [kind, setKind] = useState<ResearchMethodKind>(initial?.kind ?? "quantitative");
@@ -261,6 +263,17 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
           url: r.url?.trim() || undefined,
         }));
 
+      // Phase 3.5 — 운영 메타 자동 주입.
+      // published 가 false→true 로 새로 전환되는 순간에만 reviewedBy/Uid/At 기록.
+      const becamePublished = published && !initial?.published;
+      const reviewMeta = becamePublished
+        ? {
+            reviewedBy: authUser?.name ?? undefined,
+            reviewedByUid: authUser?.id ?? userId ?? undefined,
+            reviewedAt: new Date().toISOString(),
+          }
+        : {};
+
       const payload = {
         name: name.trim(),
         kind,
@@ -279,6 +292,9 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
           statisticalMethodIds.length > 0 ? statisticalMethodIds : undefined,
         published,
         curatedBy: userId,
+        updatedBy: authUser?.name ?? undefined,
+        updatedByUid: authUser?.id ?? userId ?? undefined,
+        ...reviewMeta,
       };
 
       let savedId = initial?.id ?? "";

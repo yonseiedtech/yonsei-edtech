@@ -14,6 +14,7 @@ import {
   researchMethodsApi,
   alumniThesesApi,
 } from "@/lib/bkend";
+import { useAuthStore } from "@/features/auth/auth-store";
 import {
   STATISTICAL_METHOD_CATEGORY_LABELS,
   RESEARCH_METHOD_KIND_LABELS,
@@ -68,6 +69,7 @@ function lineParse(s: string): string[] | undefined {
 export default function StatisticalMethodForm({ initial, userId }: Props) {
   const router = useRouter();
   const isEdit = !!initial;
+  const { user: authUser } = useAuthStore();
 
   const [name, setName] = useState(initial?.name ?? "");
   const [category, setCategory] = useState<StatisticalMethodCategory>(
@@ -328,6 +330,16 @@ export default function StatisticalMethodForm({ initial, userId }: Props) {
         (v) => v !== undefined && (Array.isArray(v) ? v.length > 0 : true),
       );
 
+      // Phase 3.5 — 운영 메타 자동 주입.
+      const becamePublished = published && !initial?.published;
+      const reviewMeta = becamePublished
+        ? {
+            reviewedBy: authUser?.name ?? undefined,
+            reviewedByUid: authUser?.id ?? userId ?? undefined,
+            reviewedAt: new Date().toISOString(),
+          }
+        : {};
+
       const payload = {
         name: name.trim(),
         category,
@@ -349,6 +361,9 @@ export default function StatisticalMethodForm({ initial, userId }: Props) {
         alumniThesisIds: alumniThesisIds.length > 0 ? alumniThesisIds : undefined,
         published,
         curatedBy: userId,
+        updatedBy: authUser?.name ?? undefined,
+        updatedByUid: authUser?.id ?? userId ?? undefined,
+        ...reviewMeta,
       };
 
       if (isEdit && initial) {

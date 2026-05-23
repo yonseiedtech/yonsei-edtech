@@ -27,7 +27,21 @@ export const VARIABLE_TYPE_LABELS: Record<VariableType, string> = {
   other: "기타",
 };
 
-export interface ArchiveConcept {
+/**
+ * Phase 3.5 — 운영 메타 필드 (8개 archive_* 컬렉션 공통).
+ * 모든 필드 optional. 기존 항목 마이그레이션 불필요.
+ *  - updatedBy/updatedByUid: 마지막 수정자 (form 저장 시 자동 주입)
+ *  - reviewedBy/reviewedByUid/reviewedAt: published=true 로 토글되는 순간 자동 기록
+ */
+export interface ArchiveOperationalMeta {
+  updatedBy?: string;
+  updatedByUid?: string;
+  reviewedBy?: string;
+  reviewedByUid?: string;
+  reviewedAt?: string;
+}
+
+export interface ArchiveConcept extends ArchiveOperationalMeta {
   id: string;
   name: string;
   description?: string;
@@ -37,12 +51,18 @@ export interface ArchiveConcept {
   /** 연결된 변인 ID */
   variableIds?: string[];
   references?: string[];
+  /**
+   * Phase 5 — 시드 멱등성 키. `concept:{slug}` 형식.
+   * 이 값이 있으면 시드 함수는 이름 대신 seedKey 로 upsert (이름 수정해도 동일 항목 인식).
+   * 사용자 직접 생성 항목은 undefined.
+   */
+  seedKey?: string;
   createdBy?: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface ArchiveVariable {
+export interface ArchiveVariable extends ArchiveOperationalMeta {
   id: string;
   name: string;
   description?: string;
@@ -54,12 +74,14 @@ export interface ArchiveVariable {
   /** 이 변인을 측정할 수 있는 측정도구 ID들 */
   measurementIds?: string[];
   references?: string[];
+  /** Phase 5 — 시드 멱등성 키. `variable:{slug}` 형식. */
+  seedKey?: string;
   createdBy?: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface ArchiveMeasurementTool {
+export interface ArchiveMeasurementTool extends ArchiveOperationalMeta {
   id: string;
   name: string;
   description?: string;
@@ -83,6 +105,8 @@ export interface ArchiveMeasurementTool {
   references?: string[];
   /** 외부 자료 URL (PDF·논문 링크) */
   resourceUrl?: string;
+  /** Phase 5 — 시드 멱등성 키. `measurement:{slug}` 형식. */
+  seedKey?: string;
   createdBy?: string;
   createdAt: string;
   updatedAt: string;

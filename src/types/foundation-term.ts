@@ -1,3 +1,5 @@
+import type { ArchiveOperationalMeta } from "./edutech-archive";
+
 // ── 교육공학 아카이브 — 기초 용어 가이드 (Phase 1) ──
 // 변인·연구설계·교수설계·체제이론·측정·학습이론 기초 용어를 정리한 가이드.
 // 운영진 검수(published) 게이트 적용 — firestore.rules 의 archive_foundation_terms 와 양쪽 게이트.
@@ -52,7 +54,7 @@ export interface FoundationTermReference {
   url?: string;
 }
 
-export interface FoundationTerm {
+export interface FoundationTerm extends ArchiveOperationalMeta {
   id: string;
   term: string; // 한국어 용어 (예: "독립변인")
   abbreviation?: string; // 약어 (예: "IV", "ISD")
@@ -72,6 +74,8 @@ export interface FoundationTerm {
   references?: FoundationTermReference[];
   published: boolean;
   curatedBy?: string;
+  /** Phase 5 — 시드 멱등성 키. `foundation-term:{slug}` 형식. */
+  seedKey?: string;
   createdBy: string;
   createdAt: string;
   updatedAt?: string;

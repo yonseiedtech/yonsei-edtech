@@ -1,3 +1,5 @@
+import type { ArchiveOperationalMeta } from "./edutech-archive";
+
 // ── 교육공학 아카이브 — 연구방법 가이드 (Phase 1) ──
 // 양적/질적/혼합 연구방법론을 정리한 가이드. 운영진 검수(published) 게이트 적용.
 // Phase 2~3에서 Finder(진단 위저드)·도구 가이드(SPSS/AMOS/R) 연결 예정.
@@ -53,7 +55,7 @@ export interface ResearchMethodReference {
   url?: string;
 }
 
-export interface ResearchMethod {
+export interface ResearchMethod extends ArchiveOperationalMeta {
   id: string;
   name: string;
   kind: ResearchMethodKind;
@@ -79,6 +81,8 @@ export interface ResearchMethod {
   /** 운영진 검수 후 공개 게이트 */
   published: boolean;
   curatedBy?: string;
+  /** Phase 5 — 시드 멱등성 키. `research-method:{slug}` 형식. */
+  seedKey?: string;
   createdBy: string;
   createdAt: string;
   updatedAt?: string;
