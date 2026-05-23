@@ -11,6 +11,7 @@
 import type {
   ChecklistCompletionType,
   ChecklistIcon,
+  ChecklistPriority,
   OnboardingChecklistItem,
 } from "@/types";
 import { onboardingChecklistApi } from "@/lib/bkend";
@@ -21,6 +22,7 @@ export interface SeedChecklistItem {
   icon: ChecklistIcon;
   completionType: ChecklistCompletionType;
   enabled: boolean;
+  priority?: ChecklistPriority;
 }
 
 /** 기존 widget 하드코딩 5항목과 1:1 매칭. */
@@ -98,6 +100,7 @@ export async function importOnboardingChecklistSeed(
       icon: seed.icon,
       completionType: seed.completionType,
       enabled: seed.enabled,
+      priority: seed.priority ?? "medium",
       createdBy,
     };
     await onboardingChecklistApi.create(payload as Record<string, unknown>);

@@ -8,7 +8,8 @@
 export type OnboardingBadgeId =
   | "first-step"     // 1개 완료
   | "halfway"        // 항목의 60% 이상 완료
-  | "complete";      // 전체 완료
+  | "complete"       // 전체 완료
+  | "speed-adapter"; // 가입 7일 이내 전체 완료 (속도 도전)
 
 export interface OnboardingBadgeMeta {
   id: OnboardingBadgeId;
@@ -42,11 +43,19 @@ export const ONBOARDING_BADGE_META: Record<OnboardingBadgeId, OnboardingBadgeMet
     description: "시작하기 체크리스트 전체 완료",
     points: 20,
   },
+  "speed-adapter": {
+    id: "speed-adapter",
+    label: "신속 적응",
+    icon: "⚡",
+    description: "가입 7일 이내 시작하기 체크리스트 전체 완료",
+    points: 30,
+  },
 };
 
-/** UI/순서 고정용 — first-step → halfway → complete */
+/** UI/순서 고정용 — first-step → halfway → complete → speed-adapter */
 export const ONBOARDING_BADGE_ORDER: OnboardingBadgeId[] = [
   "first-step",
   "halfway",
   "complete",
+  "speed-adapter",
 ];

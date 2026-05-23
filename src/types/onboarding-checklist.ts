@@ -73,6 +73,17 @@ export const CHECKLIST_ICONS: ChecklistIcon[] = [
   "Sparkles",
 ];
 
+/** 항목 우선순위. 위젯에서 정렬·강조 표시에 사용. 기본값 medium. */
+export type ChecklistPriority = "high" | "medium" | "low";
+
+export const CHECKLIST_PRIORITIES: ChecklistPriority[] = ["high", "medium", "low"];
+
+export const CHECKLIST_PRIORITY_LABELS: Record<ChecklistPriority, string> = {
+  high: "높음",
+  medium: "보통",
+  low: "낮음",
+};
+
 export interface OnboardingChecklistItem {
   id: string;
   /** 정렬용 (0 ~ N). 콘솔에서 ↑↓ 버튼으로 swap. */
@@ -87,6 +98,8 @@ export interface OnboardingChecklistItem {
   completionType: ChecklistCompletionType;
   /** false 면 위젯에 미노출. */
   enabled: boolean;
+  /** 항목 우선순위. 미완료 항목 정렬·강조에 사용. 기본 medium. */
+  priority?: ChecklistPriority;
   createdBy?: string;
   createdAt?: string;
   updatedBy?: string;

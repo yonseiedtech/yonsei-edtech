@@ -35,6 +35,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import {
+  AlertCircle,
   CheckCircle2,
   Circle,
   Sparkles,
@@ -67,6 +68,7 @@ import type {
   ActivityParticipation,
   ChecklistCompletionType,
   ChecklistIcon,
+  ChecklistPriority,
   OnboardingChecklistItem,
   ResearchReport,
   CourseReview,
@@ -79,7 +81,13 @@ import WidgetCard from "@/components/ui/widget-card";
 import { cn } from "@/lib/utils";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 const COMPLETION_THRESHOLD = 0.6; // 60%
+const PRIORITY_RANK: Record<ChecklistPriority, number> = {
+  high: 0,
+  medium: 1,
+  low: 2,
+};
 const ACTIVITY_VISIT_KEY = "yedu_onboarding_visited_activities";
 const ARCHIVE_VISIT_KEY = "yedu_onboarding_visited_archive";
 const RESEARCH_VISIT_KEY = "yedu_onboarding_visited_research";
@@ -106,6 +114,10 @@ interface ResolvedItem {
   href: string;
   icon: LucideIcon;
   completed: boolean;
+  /** P2: 항목별 우선순위. 미완료 항목 정렬·강조에 사용. 기본 medium. */
+  priority: ChecklistPriority;
+  /** P2: 정렬 안정성을 위한 원본 order. */
+  order: number;
 }
 
 function parseTimestamp(value: unknown): number | null {
@@ -300,14 +312,26 @@ export default function NewMemberChecklistWidget() {
 
   const items: ResolvedItem[] = useMemo(() => {
     if (!user) return [];
-    return configItems.map((c) => ({
+    const mapped: ResolvedItem[] = configItems.map((c) => ({
       id: c.id,
       completionType: c.completionType,
       label: c.label,
       href: c.href,
       icon: ICON_MAP[c.icon] ?? Sparkles,
       completed: evalCompletion(c.completionType),
+      priority: c.priority ?? "medium",
+      order: c.order,
     }));
+    // 미완료: priority high → medium → low, 그 안에서 order asc
+    // 완료: 항상 미완료 뒤로, 그 안에서 order asc
+    return mapped.sort((a, b) => {
+      if (a.completed !== b.completed) return a.completed ? 1 : -1;
+      if (!a.completed) {
+        const pr = PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
+        if (pr !== 0) return pr;
+      }
+      return a.order - b.order;
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     user,
@@ -408,12 +432,21 @@ export default function NewMemberChecklistWidget() {
         if (ratio >= COMPLETION_THRESHOLD && !existingBadges.includes("halfway")) {
           newBadges.push("halfway");
         }
-        if (
-          currentCount === items.length &&
-          items.length > 0 &&
-          !existingBadges.includes("complete")
-        ) {
+        const allComplete = currentCount === items.length && items.length > 0;
+        if (allComplete && !existingBadges.includes("complete")) {
           newBadges.push("complete");
+        }
+        // P2: 가입 7일 이내 전체 완료 시 "신속 적응" 배지 (+30점)
+        if (allComplete && !existingBadges.includes("speed-adapter")) {
+          const createdAtMs = parseTimestamp(
+            (user as { createdAt?: unknown } | null | undefined)?.createdAt,
+          );
+          if (
+            createdAtMs != null &&
+            Date.now() - createdAtMs <= SEVEN_DAYS_MS
+          ) {
+            newBadges.push("speed-adapter");
+          }
         }
 
         const targetUserId = userId;
@@ -450,6 +483,8 @@ export default function NewMemberChecklistWidget() {
                   ? "🌱 첫걸음 배지 획득!"
                   : badgeId === "halfway"
                   ? "🚀 절반 통과 배지 획득!"
+                  : badgeId === "speed-adapter"
+                  ? `⚡ 신속 적응 배지 획득! +${meta.points}점`
                   : "🎓 시작하기 마스터 배지 획득!";
               toast.info(label, {
                 description: meta.description,
@@ -591,12 +626,44 @@ export default function NewMemberChecklistWidget() {
               ) : (
                 <Link
                   href={it.href}
-                  className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors hover:bg-muted/40"
-                  aria-label={`${it.label} 시작하기`}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors hover:bg-muted/40",
+                    it.priority === "high" &&
+                      "border-l-2 border-rose-400 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-950/50",
+                    it.priority === "low" && "text-muted-foreground",
+                  )}
+                  aria-label={`${it.label} 시작하기${it.priority === "high" ? " (우선)" : ""}`}
                 >
-                  <StatusIcon size={16} className="shrink-0 text-muted-foreground" aria-hidden="true" />
-                  <Icon size={14} className="shrink-0 text-primary" aria-hidden="true" />
-                  <span className="truncate font-medium">{it.label}</span>
+                  {it.priority === "high" ? (
+                    <AlertCircle
+                      size={16}
+                      className="shrink-0 text-rose-500"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <StatusIcon
+                      size={16}
+                      className="shrink-0 text-muted-foreground"
+                      aria-hidden="true"
+                    />
+                  )}
+                  <Icon
+                    size={14}
+                    className={cn(
+                      "shrink-0",
+                      it.priority === "high" ? "text-rose-600" : "text-primary",
+                      it.priority === "low" && "text-muted-foreground",
+                    )}
+                    aria-hidden="true"
+                  />
+                  <span
+                    className={cn(
+                      "truncate font-medium",
+                      it.priority === "high" && "text-rose-900 dark:text-rose-100",
+                    )}
+                  >
+                    {it.label}
+                  </span>
                 </Link>
               )}
             </li>

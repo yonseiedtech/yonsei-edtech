@@ -52,8 +52,11 @@ import { useAuthStore } from "@/features/auth/auth-store";
 import {
   CHECKLIST_COMPLETION_LABELS,
   CHECKLIST_ICONS,
+  CHECKLIST_PRIORITIES,
+  CHECKLIST_PRIORITY_LABELS,
   type ChecklistCompletionType,
   type ChecklistIcon,
+  type ChecklistPriority,
   type OnboardingChecklistItem,
   type SeminarAttendee,
   type ArchiveFavorite,
@@ -80,6 +83,7 @@ interface FormState {
   icon: ChecklistIcon;
   completionType: ChecklistCompletionType;
   enabled: boolean;
+  priority: ChecklistPriority;
 }
 
 function blankForm(): FormState {
@@ -89,6 +93,7 @@ function blankForm(): FormState {
     icon: "Sparkles",
     completionType: "profile.bio",
     enabled: true,
+    priority: "medium",
   };
 }
 
@@ -254,6 +259,7 @@ export default function OnboardingChecklistConsolePage() {
                     <th className="px-3 py-2 text-left font-medium">라벨 / 링크</th>
                     <th className="px-3 py-2 text-left font-medium">아이콘</th>
                     <th className="px-3 py-2 text-left font-medium">완료조건</th>
+                    <th className="px-3 py-2 text-left font-medium">우선순위</th>
                     <th className="px-3 py-2 text-center font-medium">노출</th>
                     <th className="px-3 py-2 text-right font-medium">액션</th>
                   </tr>
@@ -301,6 +307,9 @@ export default function OnboardingChecklistConsolePage() {
                         {CHECKLIST_COMPLETION_LABELS[it.completionType] ?? it.completionType}
                         <br />
                         <code className="text-[10px]">{it.completionType}</code>
+                      </td>
+                      <td className="px-3 py-2.5 text-xs">
+                        <PriorityBadge priority={it.priority ?? "medium"} />
                       </td>
                       <td className="px-3 py-2.5 text-center">
                         <button
@@ -801,6 +810,7 @@ function EditDialog({
           icon: item.icon,
           completionType: item.completionType,
           enabled: item.enabled,
+          priority: item.priority ?? "medium",
         }
       : blankForm(),
   );
@@ -824,6 +834,7 @@ function EditDialog({
           icon: form.icon,
           completionType: form.completionType,
           enabled: form.enabled,
+          priority: form.priority,
           updatedBy: user?.id,
         });
       } else {
@@ -838,6 +849,7 @@ function EditDialog({
           icon: form.icon,
           completionType: form.completionType,
           enabled: form.enabled,
+          priority: form.priority,
           createdBy: user?.id,
         });
       }
@@ -908,6 +920,24 @@ function EditDialog({
               위젯이 사용자별 데이터를 평가해 완료 여부를 판정합니다.
             </p>
           </Field>
+          <Field label="우선순위 (priority)">
+            <select
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              value={form.priority}
+              onChange={(e) =>
+                setForm({ ...form, priority: e.target.value as ChecklistPriority })
+              }
+            >
+              {CHECKLIST_PRIORITIES.map((p) => (
+                <option key={p} value={p}>
+                  {CHECKLIST_PRIORITY_LABELS[p]} ({p})
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              high 항목은 위젯 상단에 강조 표시(분홍 배경+벨 아이콘)되며, 미완료 시 우선 노출됩니다.
+            </p>
+          </Field>
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -938,5 +968,19 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <label className="text-xs font-medium text-muted-foreground">{label}</label>
       {children}
     </div>
+  );
+}
+
+function PriorityBadge({ priority }: { priority: ChecklistPriority }) {
+  const cls =
+    priority === "high"
+      ? "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-200"
+      : priority === "low"
+        ? "bg-muted text-muted-foreground"
+        : "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-200";
+  return (
+    <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium ${cls}`}>
+      {CHECKLIST_PRIORITY_LABELS[priority]}
+    </span>
   );
 }
