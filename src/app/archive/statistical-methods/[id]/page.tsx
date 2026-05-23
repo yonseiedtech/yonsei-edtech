@@ -51,6 +51,7 @@ import {
 } from "@/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import ArchiveStickyToc, { type ArchiveTocSection } from "@/components/archive/ArchiveStickyToc";
 
 interface ComparisonRow {
   key: string;
@@ -353,9 +354,29 @@ export default function StatisticalMethodDetailPage() {
   const comparisonMethods: StatisticalMethod[] = [method, ...alternatives];
   const showComparison = alternatives.length > 0 && !!method.comparisonProfile;
 
+  // ToC 섹션 — 실제 본문에 렌더되는 섹션만 포함
+  const tocSections: ArchiveTocSection[] = [
+    { id: "overview", label: "개요" },
+    { id: "summary", label: "요약" },
+    ...(method.accessibleSummary && method.accessibleSummary.trim() !== ""
+      ? [{ id: "accessibleSummary", label: "쉽게 이해하기" }]
+      : []),
+    ...(method.whenToUse ? [{ id: "when-to-use", label: "언제 사용" }] : []),
+    ...(method.interpretationKeys && method.interpretationKeys.length > 0
+      ? [{ id: "examples", label: "결과 해석 포인트" }]
+      : []),
+    ...(alternatives.length > 0
+      ? [{ id: "alternative-methods", label: "대안 방법" }]
+      : []),
+    ...(showComparison ? [{ id: "comparison", label: "비교표" }] : []),
+    ...(method.references && method.references.length > 0
+      ? [{ id: "references", label: "참고 자료" }]
+      : []),
+  ];
+
   return (
     <div className="py-10">
-      <div className="mx-auto max-w-4xl px-4">
+      <div className="mx-auto max-w-6xl px-4">
         <Link
           href="/archive/statistical-methods"
           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
@@ -363,8 +384,11 @@ export default function StatisticalMethodDetailPage() {
           <ArrowLeft className="h-3 w-3" /> 통계방법 가이드 목록
         </Link>
 
-        <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
+        <div className="lg:grid lg:grid-cols-[1fr_200px] lg:gap-6">
+          <div className="min-w-0 lg:max-w-4xl">
+
+        <div id="overview" className="mt-3 flex flex-wrap items-start justify-between gap-3 scroll-mt-24">
+          <div id="summary" className="min-w-0 flex-1 scroll-mt-24">
             <PageHeader
               icon={BarChart3}
               title={method.name}
@@ -478,7 +502,7 @@ export default function StatisticalMethodDetailPage() {
 
         {/* 쉽게 이해하기 (일상 비유) */}
         {method.accessibleSummary && method.accessibleSummary.trim() !== "" && (
-          <section className="mt-8">
+          <section id="accessibleSummary" className="mt-8 scroll-mt-24">
             <div
               className="rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50 to-emerald-50 p-4 dark:border-sky-900 dark:from-sky-950/30 dark:to-emerald-950/30"
               aria-label="쉽게 이해하기"
@@ -506,7 +530,7 @@ export default function StatisticalMethodDetailPage() {
               </div>
             )}
             {method.whenToUse && (
-              <Card className="rounded-xl border-l-4 border-l-blue-400">
+              <Card id="when-to-use" className="rounded-xl border-l-4 border-l-blue-400 scroll-mt-24">
                 <CardContent className="py-4">
                   <h3 className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-blue-800 dark:text-blue-300">
                     <Lightbulb className="h-4 w-4" aria-hidden />
@@ -639,7 +663,7 @@ export default function StatisticalMethodDetailPage() {
 
         {/* 결과 해석 핵심 포인트 */}
         {method.interpretationKeys && method.interpretationKeys.length > 0 && (
-          <section className="mt-8">
+          <section id="examples" className="mt-8 scroll-mt-24">
             <h2 className="mb-2 text-sm font-semibold text-muted-foreground">
               결과 해석 핵심 포인트
             </h2>
@@ -653,7 +677,7 @@ export default function StatisticalMethodDetailPage() {
 
         {/* 동일한 데이터로 시도해볼 수 있는 다른 통계방법 */}
         {alternatives.length > 0 && (
-          <section className="mt-10">
+          <section id="alternative-methods" className="mt-10 scroll-mt-24">
             <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
               <Sparkles className="h-4 w-4" aria-hidden />
               동일한 데이터로 시도해볼 수 있는 다른 통계방법
@@ -710,7 +734,7 @@ export default function StatisticalMethodDetailPage() {
 
         {/* 비교표 — 현재 method + alternatives 의 comparisonProfile */}
         {showComparison && (
-          <section className="mt-10">
+          <section id="comparison" className="mt-10 scroll-mt-24">
             <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
               <GitCompare className="h-4 w-4" aria-hidden />
               비교표 — 동일 데이터에서의 트레이드오프
@@ -903,7 +927,7 @@ export default function StatisticalMethodDetailPage() {
 
         {/* 참고 자료 */}
         {method.references && method.references.length > 0 && (
-          <section className="mt-10">
+          <section id="references" className="mt-10 scroll-mt-24">
             <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
               <BookOpen className="h-4 w-4" aria-hidden />
               참고 자료
@@ -938,6 +962,10 @@ export default function StatisticalMethodDetailPage() {
         <div className="mt-10 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <p>본 가이드는 참고용입니다. 최종 연구설계는 지도교수와 상의하시기 바랍니다.</p>
+        </div>
+
+          </div>
+          <ArchiveStickyToc sections={tocSections} />
         </div>
       </div>
     </div>

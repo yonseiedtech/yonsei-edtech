@@ -41,6 +41,7 @@ import {
 } from "@/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import ArchiveStickyToc, { type ArchiveTocSection } from "@/components/archive/ArchiveStickyToc";
 
 export default function FoundationTermDetailPage() {
   const params = useParams<{ id: string }>();
@@ -245,9 +246,34 @@ export default function FoundationTermDetailPage() {
     );
   }
 
+  // ToC 섹션 — 본문에 실제 렌더되는 항목만 포함
+  const hasRelatedChips =
+    relatedTerms.length > 0 ||
+    relatedConcepts.length > 0 ||
+    relatedResearchMethods.length > 0 ||
+    relatedStatisticalMethods.length > 0;
+
+  const tocSections: ArchiveTocSection[] = [
+    { id: "overview", label: "개요" },
+    ...(term.accessibleSummary && term.accessibleSummary.trim() !== ""
+      ? [{ id: "accessibleSummary", label: "쉽게 이해하기" }]
+      : []),
+    ...(term.definition ? [{ id: "definition", label: "정의" }] : []),
+    ...(term.examples && term.examples.length > 0
+      ? [{ id: "research-sentences", label: "연구 문장 예시" }]
+      : []),
+    ...(term.confusedWith && term.confusedWith.length > 0
+      ? [{ id: "confused-with", label: "비슷한 용어" }]
+      : []),
+    ...(hasRelatedChips ? [{ id: "examples", label: "관련 항목" }] : []),
+    ...(term.references && term.references.length > 0
+      ? [{ id: "references", label: "참고 자료" }]
+      : []),
+  ];
+
   return (
     <div className="py-10">
-      <div className="mx-auto max-w-4xl px-4">
+      <div className="mx-auto max-w-6xl px-4">
         <Link
           href="/archive/foundation-terms"
           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
@@ -255,7 +281,10 @@ export default function FoundationTermDetailPage() {
           <ArrowLeft className="h-3 w-3" /> 기초 용어 가이드 목록
         </Link>
 
-        <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
+        <div className="lg:grid lg:grid-cols-[1fr_200px] lg:gap-6">
+          <div className="min-w-0 lg:max-w-4xl">
+
+        <div id="overview" className="mt-3 flex flex-wrap items-start justify-between gap-3 scroll-mt-24">
           <div className="min-w-0 flex-1">
             <PageHeader
               icon={BookOpen}
@@ -333,7 +362,7 @@ export default function FoundationTermDetailPage() {
 
         {/* 쉽게 이해하기 (일상 비유) */}
         {term.accessibleSummary && term.accessibleSummary.trim() !== "" && (
-          <section className="mt-8">
+          <section id="accessibleSummary" className="mt-8 scroll-mt-24">
             <div
               className="rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50 to-emerald-50 p-4 dark:border-sky-900 dark:from-sky-950/30 dark:to-emerald-950/30"
               aria-label="쉽게 이해하기"
@@ -351,7 +380,7 @@ export default function FoundationTermDetailPage() {
 
         {/* 정의 */}
         {term.definition && (
-          <section className="mt-8">
+          <section id="definition" className="mt-8 scroll-mt-24">
             <h2 className="mb-2 text-sm font-semibold text-muted-foreground">정의</h2>
             <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
               {term.definition}
@@ -374,7 +403,7 @@ export default function FoundationTermDetailPage() {
 
         {/* 연구 문장 예시 — "📝 연구에서는 이렇게 쓰입니다" */}
         {term.examples && term.examples.length > 0 && (
-          <section className="mt-8">
+          <section id="research-sentences" className="mt-8 scroll-mt-24">
             <div
               className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-slate-50 p-4 dark:border-blue-900 dark:from-blue-950/30 dark:to-slate-900/40"
               aria-label="연구에서는 이렇게 쓰입니다"
@@ -399,7 +428,7 @@ export default function FoundationTermDetailPage() {
 
         {/* "비슷하지만 다른" 용어 페어 */}
         {term.confusedWith && term.confusedWith.length > 0 && (
-          <section className="mt-10">
+          <section id="confused-with" className="mt-10 scroll-mt-24">
             <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-rose-800 dark:text-rose-200">
               <Split className="h-4 w-4" aria-hidden />
               비슷하지만 다른 용어
@@ -439,6 +468,8 @@ export default function FoundationTermDetailPage() {
             </div>
           </section>
         )}
+
+        {hasRelatedChips && <div id="examples" className="scroll-mt-24" aria-hidden />}
 
         {/* 관련 용어 */}
         {relatedTerms.length > 0 && (
@@ -546,7 +577,7 @@ export default function FoundationTermDetailPage() {
 
         {/* 참고 자료 */}
         {term.references && term.references.length > 0 && (
-          <section className="mt-10">
+          <section id="references" className="mt-10 scroll-mt-24">
             <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
               <BookOpen className="h-4 w-4" aria-hidden />
               참고 자료
@@ -584,6 +615,10 @@ export default function FoundationTermDetailPage() {
             본 가이드는 참고용입니다. 최종 학술 정의·연구설계는 지도교수와 상의하시기
             바랍니다.
           </p>
+        </div>
+
+          </div>
+          <ArchiveStickyToc sections={tocSections} />
         </div>
       </div>
     </div>

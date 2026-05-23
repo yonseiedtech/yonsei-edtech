@@ -49,6 +49,7 @@ import {
 } from "@/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import ArchiveStickyToc, { type ArchiveTocSection } from "@/components/archive/ArchiveStickyToc";
 
 export default function ResearchMethodDetailPage() {
   const params = useParams<{ id: string }>();
@@ -231,9 +232,30 @@ export default function ResearchMethodDetailPage() {
     );
   }
 
+  // 본문에 존재할 가능성이 있는 섹션만 ToC 에 포함 — 빈 섹션은 ToC 에 노출하지 않는다.
+  const tocSections: ArchiveTocSection[] = [
+    { id: "overview", label: "개요" },
+    { id: "summary", label: "요약" },
+    ...(method.accessibleSummary && method.accessibleSummary.trim() !== ""
+      ? [{ id: "accessibleSummary", label: "쉽게 이해하기" }]
+      : []),
+    ...(method.procedures && method.procedures.length > 0
+      ? [{ id: "procedure", label: "연구 절차" }]
+      : []),
+    ...(method.statisticalMethodIds && method.statisticalMethodIds.length > 0
+      ? [{ id: "related-statistical-methods", label: "관련 통계기법" }]
+      : []),
+    ...(method.educationalTechExamples && method.educationalTechExamples.length > 0
+      ? [{ id: "examples", label: "활용 예" }]
+      : []),
+    ...(method.references && method.references.length > 0
+      ? [{ id: "references", label: "참고 자료" }]
+      : []),
+  ];
+
   return (
     <div className="py-10">
-      <div className="mx-auto max-w-4xl px-4">
+      <div className="mx-auto max-w-6xl px-4">
         <Link
           href="/archive/research-methods"
           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
@@ -241,8 +263,11 @@ export default function ResearchMethodDetailPage() {
           <ArrowLeft className="h-3 w-3" /> 연구방법 가이드 목록
         </Link>
 
-        <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
+        <div className="lg:grid lg:grid-cols-[1fr_200px] lg:gap-6">
+          <div className="min-w-0 lg:max-w-4xl">
+
+        <div id="overview" className="mt-3 flex flex-wrap items-start justify-between gap-3 scroll-mt-24">
+          <div id="summary" className="min-w-0 flex-1 scroll-mt-24">
             <PageHeader
               icon={GraduationCap}
               title={method.name}
@@ -306,7 +331,7 @@ export default function ResearchMethodDetailPage() {
 
         {/* 쉽게 이해하기 (일상 비유) */}
         {method.accessibleSummary && method.accessibleSummary.trim() !== "" && (
-          <section className="mt-8">
+          <section id="accessibleSummary" className="mt-8 scroll-mt-24">
             <div
               className="rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50 to-emerald-50 p-4 dark:border-sky-900 dark:from-sky-950/30 dark:to-emerald-950/30"
               aria-label="쉽게 이해하기"
@@ -334,7 +359,7 @@ export default function ResearchMethodDetailPage() {
 
         {/* 교육공학 활용 예 */}
         {method.educationalTechExamples && method.educationalTechExamples.length > 0 && (
-          <section className="mt-8">
+          <section id="examples" className="mt-8 scroll-mt-24">
             <h2 className="mb-2 text-sm font-semibold text-muted-foreground">교육공학에서의 활용 예</h2>
             <ul className="list-disc space-y-1 pl-5 text-sm text-foreground/85">
               {method.educationalTechExamples.map((ex, i) => (
@@ -346,7 +371,7 @@ export default function ResearchMethodDetailPage() {
 
         {/* 절차 */}
         {method.procedures && method.procedures.length > 0 && (
-          <section className="mt-8">
+          <section id="procedure" className="mt-8 scroll-mt-24">
             <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
               <ListOrdered className="h-4 w-4" aria-hidden />
               연구 절차
@@ -488,7 +513,7 @@ export default function ResearchMethodDetailPage() {
 
         {/* 참고 자료 */}
         {method.references && method.references.length > 0 && (
-          <section className="mt-8">
+          <section id="references" className="mt-8 scroll-mt-24">
             <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
               <BookOpen className="h-4 w-4" aria-hidden />
               참고 자료
@@ -521,7 +546,7 @@ export default function ResearchMethodDetailPage() {
 
         {/* 자주 쓰는 통계기법 (양방향 연계) */}
         {statisticalMethods.length > 0 && (
-          <section className="mt-10">
+          <section id="related-statistical-methods" className="mt-10 scroll-mt-24">
             <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
               <BarChart3 className="h-4 w-4" aria-hidden />
               이 방법에서 자주 쓰는 통계기법
@@ -619,6 +644,10 @@ export default function ResearchMethodDetailPage() {
           <p>
             본 가이드는 참고용입니다. 최종 연구설계는 지도교수와 상의하시기 바랍니다.
           </p>
+        </div>
+
+          </div>
+          <ArchiveStickyToc sections={tocSections} />
         </div>
       </div>
     </div>

@@ -30,6 +30,7 @@ import {
 } from "@/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import ArchiveStickyToc, { type ArchiveTocSection } from "@/components/archive/ArchiveStickyToc";
 
 export default function ArchiveDetailPage() {
   const params = useParams<{ type: string; id: string }>();
@@ -249,8 +250,32 @@ export default function ArchiveDetailPage() {
   const altNames = (item as { altNames?: string[] }).altNames ?? [];
   const references = (item as { references?: string[] }).references ?? [];
 
+  // 목차 섹션 — type 별 차이 반영. id 는 본문 섹션과 일치해야 함.
+  // 본문 카드가 통합형이라 일부 sub-id 는 본문 카드 내부의 anchor span 으로 부여한다.
+  const tocSections: ArchiveTocSection[] = (() => {
+    const base: ArchiveTocSection[] = [{ id: "overview", label: "개요" }];
+    if (type === "concept") {
+      base.push({ id: "definition", label: "정의" });
+      base.push({ id: "related-variables", label: "연결된 변인·측정도구" });
+    } else if (type === "variable") {
+      base.push({ id: "definition", label: "정의" });
+      base.push({ id: "related-concepts", label: "연결된 개념·측정도구" });
+    } else {
+      base.push({ id: "items", label: "문항 예시" });
+      if ((item as ArchiveMeasurementTool).scaleType) base.push({ id: "scale", label: "척도" });
+      if ((item as ArchiveMeasurementTool).reliability)
+        base.push({ id: "reliability", label: "신뢰도" });
+      if ((item as ArchiveMeasurementTool).validity)
+        base.push({ id: "validity", label: "타당도" });
+      base.push({ id: "measurements", label: "연결된 변인·개념" });
+    }
+    base.push({ id: "related-theses", label: "관련 졸업생 논문" });
+    if (references.length > 0) base.push({ id: "references", label: "참고문헌" });
+    return base;
+  })();
+
   return (
-    <div className="container mx-auto max-w-4xl py-8">
+    <div className="container mx-auto max-w-5xl py-8">
       {/* Back */}
       <Link href="/archive">
         <Button variant="ghost" size="sm" className="mb-3">
@@ -259,8 +284,11 @@ export default function ArchiveDetailPage() {
         </Button>
       </Link>
 
+      <div className="lg:grid lg:grid-cols-[1fr_200px] lg:gap-6">
+        <div className="min-w-0 lg:max-w-4xl">
+
       {/* Header */}
-      <Card className="border-l-4" style={{
+      <Card id="overview" className="border-l-4 scroll-mt-24" style={{
         borderLeftColor:
           type === "concept" ? "rgb(167 139 250)" :
           type === "variable" ? "rgb(96 165 250)" : "rgb(52 211 153)",
@@ -303,9 +331,12 @@ export default function ArchiveDetailPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {item.description && (
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
-              {item.description}
-            </p>
+            <>
+              <span id="definition" className="block scroll-mt-24" aria-hidden />
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                {item.description}
+              </p>
+            </>
           )}
 
           {/* type별 메타 */}
@@ -339,19 +370,19 @@ export default function ArchiveDetailPage() {
                 </div>
               )}
               {(item as ArchiveMeasurementTool).scaleType && (
-                <div>
+                <div id="scale" className="scroll-mt-24">
                   <span className="text-muted-foreground">척도: </span>
                   {(item as ArchiveMeasurementTool).scaleType}
                 </div>
               )}
               {(item as ArchiveMeasurementTool).reliability && (
-                <div className="col-span-2">
+                <div id="reliability" className="col-span-2 scroll-mt-24">
                   <span className="text-muted-foreground">신뢰도: </span>
                   {(item as ArchiveMeasurementTool).reliability}
                 </div>
               )}
               {(item as ArchiveMeasurementTool).validity && (
-                <div className="col-span-2">
+                <div id="validity" className="col-span-2 scroll-mt-24">
                   <span className="text-muted-foreground">타당도: </span>
                   {(item as ArchiveMeasurementTool).validity}
                 </div>
@@ -360,7 +391,7 @@ export default function ArchiveDetailPage() {
           )}
 
           {type === "measurement" && ((item as ArchiveMeasurementTool).sampleItems?.length ?? 0) > 0 && (
-            <div>
+            <div id="items" className="scroll-mt-24">
               <p className="font-medium text-sm mb-1">문항 예시</p>
               <ul className="list-disc list-inside text-sm text-muted-foreground space-y-0.5">
                 {(item as ArchiveMeasurementTool).sampleItems!.map((s, i) => (
@@ -394,7 +425,7 @@ export default function ArchiveDetailPage() {
           )}
 
           {references.length > 0 && (
-            <div>
+            <div id="references" className="scroll-mt-24">
               <p className="font-medium text-sm mb-1 flex items-center gap-1">
                 <BookText className="h-3.5 w-3.5" />
                 참고문헌
@@ -410,7 +441,16 @@ export default function ArchiveDetailPage() {
       </Card>
 
       {/* 연결 트리 */}
-      <Card className="mt-6">
+      <Card
+        id={
+          type === "concept"
+            ? "related-variables"
+            : type === "variable"
+            ? "related-concepts"
+            : "measurements"
+        }
+        className="mt-6 scroll-mt-24"
+      >
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
             <Network className="h-4 w-4 text-muted-foreground" />
@@ -454,7 +494,7 @@ export default function ArchiveDetailPage() {
       </Card>
 
       {/* 관련 졸업생 논문 */}
-      <Card className="mt-6">
+      <Card id="related-theses" className="mt-6 scroll-mt-24">
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
             <GraduationCap className="h-4 w-4 text-muted-foreground" />
@@ -530,6 +570,10 @@ export default function ArchiveDetailPage() {
           )}
         </CardContent>
       </Card>
+
+        </div>
+        <ArchiveStickyToc sections={tocSections} />
+      </div>
 
     </div>
   );

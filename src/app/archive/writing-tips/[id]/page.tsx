@@ -33,6 +33,7 @@ import {
 } from "@/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import ArchiveStickyToc, { type ArchiveTocSection } from "@/components/archive/ArchiveStickyToc";
 
 export default function WritingTipDetailPage() {
   const params = useParams<{ id: string }>();
@@ -167,9 +168,26 @@ export default function WritingTipDetailPage() {
     );
   }
 
+  // ToC 섹션 — 본문 실제 렌더 항목만 포함
+  const hasRelatedTips =
+    (tip.tags && tip.tags.length > 0) ||
+    (tip.additionalExamples && tip.additionalExamples.length > 0);
+
+  const tocSections: ArchiveTocSection[] = [
+    { id: "overview", label: "개요" },
+    { id: "wrong-correct-examples", label: "❌↔✅ 대비" },
+    ...(tip.accessibleSummary && tip.accessibleSummary.trim() !== ""
+      ? [{ id: "summary", label: "쉽게 이해하기" }]
+      : []),
+    ...(hasRelatedTips ? [{ id: "related-tips", label: "태그·추가 예시" }] : []),
+    ...(tip.references && tip.references.length > 0
+      ? [{ id: "references", label: "참고 자료" }]
+      : []),
+  ];
+
   return (
     <div className="py-10">
-      <div className="mx-auto max-w-4xl px-4">
+      <div className="mx-auto max-w-6xl px-4">
         <Link
           href="/archive/writing-tips"
           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
@@ -177,7 +195,10 @@ export default function WritingTipDetailPage() {
           <ArrowLeft className="h-3 w-3" /> 학술 글쓰기 가이드 목록
         </Link>
 
-        <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
+        <div className="lg:grid lg:grid-cols-[1fr_200px] lg:gap-6">
+          <div className="min-w-0 lg:max-w-4xl">
+
+        <div id="overview" className="mt-3 flex flex-wrap items-start justify-between gap-3 scroll-mt-24">
           <div className="min-w-0 flex-1">
             <PageHeader icon={PenLine} title={tip.title} />
             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -240,7 +261,7 @@ export default function WritingTipDetailPage() {
         </div>
 
         {/* ❌ 잘못된 예 ↔ ✅ 권장 예 대비 카드 */}
-        <section className="mt-8 grid grid-cols-1 gap-3 md:grid-cols-2">
+        <section id="wrong-correct-examples" className="mt-8 grid grid-cols-1 gap-3 md:grid-cols-2 scroll-mt-24">
           <article className="rounded-xl border border-rose-200 bg-rose-50/60 p-4 dark:border-rose-900 dark:bg-rose-950/30">
             <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-rose-800 dark:text-rose-200">
               <XCircle className="h-4 w-4" aria-hidden />
@@ -263,7 +284,7 @@ export default function WritingTipDetailPage() {
 
         {/* 💡 쉽게 이해하기 (한 줄 비유·요점) */}
         {tip.accessibleSummary && tip.accessibleSummary.trim() !== "" && (
-          <section className="mt-6">
+          <section id="summary" className="mt-6 scroll-mt-24">
             <div
               className="rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50 to-emerald-50 p-4 dark:border-sky-900 dark:from-sky-950/30 dark:to-emerald-950/30"
               aria-label="쉽게 이해하기"
@@ -291,6 +312,8 @@ export default function WritingTipDetailPage() {
             </p>
           </section>
         )}
+
+        {hasRelatedTips && <div id="related-tips" className="scroll-mt-24" aria-hidden />}
 
         {/* 태그 */}
         {tip.tags && tip.tags.length > 0 && (
@@ -328,7 +351,7 @@ export default function WritingTipDetailPage() {
 
         {/* 참고 자료 */}
         {tip.references && tip.references.length > 0 && (
-          <section className="mt-10">
+          <section id="references" className="mt-10 scroll-mt-24">
             <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
               <BookOpen className="h-4 w-4" aria-hidden />
               참고 자료
@@ -366,6 +389,10 @@ export default function WritingTipDetailPage() {
             본 가이드는 참고용입니다. 최종 표기·문체·인용 형식은 지도교수와 해당 학술지
             지침을 우선 상의·확인하시기 바랍니다.
           </p>
+        </div>
+
+          </div>
+          <ArchiveStickyToc sections={tocSections} />
         </div>
       </div>
     </div>

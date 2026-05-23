@@ -12,6 +12,15 @@ import { BookText, ArrowLeft } from "lucide-react";
 import PageHeader from "@/components/ui/page-header";
 import { Separator } from "@/components/ui/separator";
 import InlineNotification from "@/components/ui/inline-notification";
+import ArchiveStickyToc, { type ArchiveTocSection } from "@/components/archive/ArchiveStickyToc";
+
+const APA_TOC_SECTIONS: ArchiveTocSection[] = [
+  { id: "basic-structure", label: "1. 기본 구조" },
+  { id: "in-text-citation", label: "2. 본문 내 인용" },
+  { id: "reference-list", label: "3. 자료 유형별 형식" },
+  { id: "korean-notes", label: "4. 국문 유의점" },
+  { id: "apa6-to-7", label: "5. APA 6→7 변경점" },
+];
 
 /** 자료 유형별 형식 + 예시 블록 */
 function RefBlock({ label, format, example }: { label: string; format: string; example: string }) {
@@ -40,7 +49,7 @@ function SectionTitle({ no, children }: { no: number; children: React.ReactNode 
 export default function ApaStylePage() {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-      <div className="mx-auto max-w-3xl px-4">
+      <div className="mx-auto max-w-5xl px-4">
         <Link
           href="/archive"
           className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -48,6 +57,9 @@ export default function ApaStylePage() {
           <ArrowLeft size={16} />
           교육공학 아카이브로
         </Link>
+
+        <div className="lg:grid lg:grid-cols-[1fr_200px] lg:gap-6">
+          <div className="min-w-0 lg:max-w-3xl">
 
         <PageHeader
           icon={BookText}
@@ -74,7 +86,7 @@ export default function ApaStylePage() {
         </div>
 
         {/* ── 1. 기본 구조 ── */}
-        <section className="mt-8 space-y-3">
+        <section id="basic-structure" className="mt-8 space-y-3 scroll-mt-24">
           <SectionTitle no={1}>기본 구조 — 4가지 핵심 요소</SectionTitle>
           <p className="text-sm leading-relaxed text-muted-foreground">
             APA 참고문헌 항목은 <strong className="text-foreground">저자 · 날짜 · 제목 · 출처</strong>{" "}
@@ -89,7 +101,7 @@ export default function ApaStylePage() {
         </section>
 
         {/* ── 2. 본문 내 인용 ── */}
-        <section className="mt-8 space-y-3">
+        <section id="in-text-citation" className="mt-8 space-y-3 scroll-mt-24">
           <SectionTitle no={2}>본문 내 인용 (In-text Citation)</SectionTitle>
           <p className="text-sm leading-relaxed text-muted-foreground">
             괄호식과 서술식 두 가지가 있습니다. 직접 인용 시에는 쪽수를 함께 표기합니다.
@@ -119,7 +131,7 @@ export default function ApaStylePage() {
         </section>
 
         {/* ── 3. 참고문헌 목록 — 자료 유형별 ── */}
-        <section className="mt-8 space-y-3">
+        <section id="reference-list" className="mt-8 space-y-3 scroll-mt-24">
           <SectionTitle no={3}>참고문헌 목록 — 자료 유형별 형식</SectionTitle>
           <p className="text-sm leading-relaxed text-muted-foreground">
             저자명은 국문은 성명 전체, 영문은 성 + 이름 이니셜로 적습니다. 학술지명·책 제목은
@@ -170,7 +182,7 @@ export default function ApaStylePage() {
         </section>
 
         {/* ── 4. 국문 자료 유의점 ── */}
-        <section className="mt-8 space-y-3">
+        <section id="korean-notes" className="mt-8 space-y-3 scroll-mt-24">
           <SectionTitle no={4}>국문 자료 작성 시 유의점</SectionTitle>
           <ul className="space-y-1.5 rounded-xl border bg-card p-4 text-sm leading-relaxed text-muted-foreground">
             <li>• 국문 저자는 <strong className="text-foreground">성명 전체</strong>를 적고, 영문 저자는 성 + 이름 이니셜로 적습니다.</li>
@@ -182,7 +194,7 @@ export default function ApaStylePage() {
         </section>
 
         {/* ── 5. APA 6 → 7 변경점 ── */}
-        <section className="mt-8 space-y-3">
+        <section id="apa6-to-7" className="mt-8 space-y-3 scroll-mt-24">
           <SectionTitle no={5}>APA 6판 → 7판 주요 변경점</SectionTitle>
           <ul className="space-y-1.5 rounded-xl border bg-card p-4 text-sm leading-relaxed text-muted-foreground">
             <li>• <strong className="text-foreground">출판사 소재지(출판지) 생략</strong> — 단행본에 도시명을 적지 않습니다.</li>
@@ -199,6 +211,10 @@ export default function ApaStylePage() {
           세부 규정·예외 사항은 <em>APA Publication Manual (7th ed.)</em> 및 소속 대학원 논문 작성
           지침을 반드시 확인하시기 바랍니다.
         </p>
+
+          </div>
+          <ArchiveStickyToc sections={APA_TOC_SECTIONS} />
+        </div>
       </div>
     </div>
   );
