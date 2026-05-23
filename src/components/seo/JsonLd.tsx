@@ -203,3 +203,100 @@ export function PostArticleJsonLd({ post }: { post: PostArticleLdInput }) {
     />
   );
 }
+
+interface AlumniThesisLdInput {
+  id: string;
+  title?: string;
+  titleKo?: string;
+  abstract?: string;
+  authorName?: string;
+  year?: number;
+  degreeType?: string;
+  keywords?: string[];
+  advisor?: string;
+}
+
+export function AlumniThesisJsonLd({ thesis }: { thesis: AlumniThesisLdInput }) {
+  const title = thesis.titleKo ?? thesis.title ?? "학위논문";
+  const jsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "ScholarlyArticle",
+    headline: title,
+    name: title,
+    ...(thesis.abstract ? { description: thesis.abstract.slice(0, 500) } : {}),
+    ...(thesis.authorName
+      ? { author: { "@type": "Person", name: thesis.authorName } }
+      : {}),
+    ...(thesis.year ? { datePublished: `${thesis.year}` } : {}),
+    ...(thesis.degreeType ? { genre: `${thesis.degreeType} 학위논문` } : {}),
+    ...(thesis.keywords?.length ? { keywords: thesis.keywords.join(", ") } : {}),
+    ...(thesis.advisor
+      ? {
+          contributor: {
+            "@type": "Person",
+            name: thesis.advisor,
+            roleName: "지도교수",
+          },
+        }
+      : {}),
+    publisher: {
+      "@type": "EducationalOrganization",
+      name: "연세대학교 교육대학원 교육공학전공",
+      url: "https://gse.yonsei.ac.kr",
+    },
+    inLanguage: "ko",
+    url: `https://yonsei-edtech.vercel.app/alumni/thesis/${thesis.id}`,
+    isPartOf: {
+      "@type": "Collection",
+      name: "연세교육공학회 졸업생 학위논문 아카이브",
+      url: "https://yonsei-edtech.vercel.app/alumni/thesis",
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
+
+interface ArchiveConceptLdInput {
+  id: string;
+  type: "concept" | "variable" | "measurement";
+  name: string;
+  description?: string;
+  keywords?: string[];
+  references?: string[];
+}
+
+const ARCHIVE_TYPE_LABELS: Record<ArchiveConceptLdInput["type"], string> = {
+  concept: "교육공학 핵심 개념",
+  variable: "연구 변인",
+  measurement: "측정 도구",
+};
+
+export function ArchiveItemJsonLd({ item }: { item: ArchiveConceptLdInput }) {
+  const jsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "DefinedTerm",
+    name: item.name,
+    ...(item.description
+      ? { description: item.description.replace(/<[^>]+>/g, "").slice(0, 500) }
+      : {}),
+    ...(item.keywords?.length ? { keywords: item.keywords.join(", ") } : {}),
+    inDefinedTermSet: {
+      "@type": "DefinedTermSet",
+      name: `연세교육공학회 아카이브 — ${ARCHIVE_TYPE_LABELS[item.type]}`,
+      url: `https://yonsei-edtech.vercel.app/archive/${item.type}`,
+    },
+    url: `https://yonsei-edtech.vercel.app/archive/${item.type}/${item.id}`,
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}

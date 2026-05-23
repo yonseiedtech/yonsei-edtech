@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { alumniThesesApi } from "@/lib/bkend";
+import { AlumniThesisJsonLd } from "@/components/seo/JsonLd";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -7,7 +8,7 @@ interface Props {
 }
 
 /**
- * 졸업생 학위논문 상세 동적 OG metadata (Sprint 67-AR — SEO 보강)
+ * 졸업생 학위논문 상세 동적 OG metadata + ScholarlyArticle JSON-LD
  */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
@@ -48,6 +49,33 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default function AlumniThesisLayout({ children }: Props) {
-  return <>{children}</>;
+type ThesisLd = {
+  id: string;
+  title?: string;
+  titleKo?: string;
+  abstract?: string;
+  authorName?: string;
+  year?: number;
+  degreeType?: string;
+  keywords?: string[];
+  advisor?: string;
+};
+
+export default async function AlumniThesisDetailLayout({ params, children }: Props) {
+  const { id } = await params;
+  let thesisLd: ThesisLd | null = null;
+
+  try {
+    const data = (await alumniThesesApi.get(id)) as unknown as Record<string, unknown> | null;
+    thesisLd = data ? ({ ...data, id } as ThesisLd) : null;
+  } catch {
+    // Firestore unavailable — skip JSON-LD
+  }
+
+  return (
+    <>
+      {thesisLd && <AlumniThesisJsonLd thesis={thesisLd} />}
+      {children}
+    </>
+  );
 }
