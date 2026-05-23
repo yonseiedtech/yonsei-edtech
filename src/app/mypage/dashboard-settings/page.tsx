@@ -1,10 +1,11 @@
 "use client";
 /**
- * /mypage/dashboard-settings — 대시보드 위젯 표시 설정 (D-1 가시성 + D-2 순서 변경 + D-3 알림 끄기).
+ * /mypage/dashboard-settings — 대시보드 위젯 표시 설정 (D-1 가시성 + D-2 순서 변경 + D-3 알림 끄기 + D-4 프리셋).
  *
  * - 14개 위젯의 노출 여부를 체크박스로 개별 토글 (D-1).
  * - 드래그 핸들(⋮⋮) 또는 ↑↓ 화살표 버튼으로 순서 변경 (D-2).
  * - 알림 가능한 위젯에 Bell/BellOff 토글로 알림 끄기 (D-3).
+ * - 프리셋 5종 빠른 전환 (D-4).
  * - 변경 즉시 localStorage 에 저장 (saveLayout).
  * - 로그인 필수 (AuthGuard).
  *
@@ -12,6 +13,7 @@
  * dashboard/page.tsx 실제 렌더 순서 반영은 D-2b 에서 수행.
  */
 
+import { useState } from "react";
 import {
   LayoutDashboard,
   RefreshCw,
@@ -28,6 +30,22 @@ import PageHeader from "@/components/ui/page-header";
 import PageContainer from "@/components/ui/page-container";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import {
+  DASHBOARD_PRESETS_META,
+  buildPresetLayout,
+  type DashboardPresetId,
+} from "@/lib/dashboard-presets";
 import {
   DndContext,
   PointerSensor,
@@ -67,6 +85,65 @@ import {
 // ── 상수 ─────────────────────────────────────────────────────────────────────
 
 const LS_KEY_PREFIX = "yedu_dashboard_layout";
+
+// ── D-4 프리셋 선택 카드 ──────────────────────────────────────────────────────
+
+const PRESET_ORDER: DashboardPresetId[] = [
+  "default",
+  "student",
+  "staff",
+  "research",
+  "minimal",
+];
+
+interface PresetCardProps {
+  id: DashboardPresetId;
+  onConfirm: (id: DashboardPresetId) => void;
+}
+
+function PresetCard({ id, onConfirm }: PresetCardProps) {
+  const [open, setOpen] = useState(false);
+  const meta = DASHBOARD_PRESETS_META[id];
+
+  return (
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger
+        className="flex flex-col items-center gap-1.5 rounded-xl border bg-card p-4 text-center transition-colors hover:bg-accent/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label={`${meta.label} 프리셋 적용`}
+      >
+        <span className="text-2xl leading-none" aria-hidden>
+          {meta.icon}
+        </span>
+        <span className="text-sm font-medium">{meta.label}</span>
+        <span className="text-xs text-muted-foreground">{meta.description}</span>
+      </AlertDialogTrigger>
+
+      <AlertDialogContent size="sm">
+        <AlertDialogHeader>
+          <AlertDialogTitle>프리셋 적용</AlertDialogTitle>
+          <AlertDialogDescription>
+            현재 설정을{" "}
+            <span className="font-medium text-foreground">
+              {meta.icon} {meta.label}
+            </span>
+            으로 덮어쓸까요?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>취소</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => {
+              setOpen(false);
+              onConfirm(id);
+            }}
+          >
+            적용
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
 
 // ── 내부 헬퍼 ────────────────────────────────────────────────────────────────
 
@@ -227,11 +304,6 @@ function DashboardSettingsContent() {
   const { user } = useAuthStore();
   const layout = useDashboardLayout(user?.id);
 
-  if (!user) return null;
-
-  const visibility = getCurrentVisibility(layout);
-  const sorted = getSortedWidgets(layout);
-
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, {
@@ -241,6 +313,11 @@ function DashboardSettingsContent() {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
   );
+
+  if (!user) return null;
+
+  const visibility = getCurrentVisibility(layout);
+  const sorted = getSortedWidgets(layout);
 
   async function handleToggle(key: DashboardWidgetKey, checked: boolean) {
     const next = { ...visibility, [key]: checked };
@@ -284,6 +361,14 @@ function DashboardSettingsContent() {
     saveLayout(user!.id, buildLayoutFromVisibility(all, sorted));
     const { toast } = await import("sonner");
     toast.success("모든 위젯을 켰습니다.");
+  }
+
+  async function handleApplyPreset(id: DashboardPresetId) {
+    const layout = buildPresetLayout(id);
+    saveLayout(user!.id, layout);
+    const { toast } = await import("sonner");
+    const meta = DASHBOARD_PRESETS_META[id];
+    toast.success(`${meta.label} 프리셋 적용됨`);
   }
 
   async function handleReset() {
@@ -338,6 +423,16 @@ function DashboardSettingsContent() {
           </div>
         }
       />
+
+      {/* D-4 프리셋 섹션 */}
+      <section className="mt-6">
+        <h2 className="mb-3 text-sm font-semibold">빠른 프리셋</h2>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+          {PRESET_ORDER.map((id) => (
+            <PresetCard key={id} id={id} onConfirm={handleApplyPreset} />
+          ))}
+        </div>
+      </section>
 
       {/* D-2b 안내 배너 */}
       <p className="mt-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-xs text-blue-700">
