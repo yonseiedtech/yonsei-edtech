@@ -10,7 +10,10 @@ import type { Seminar, SeminarSession, SeminarAttendee, User } from "@/types";
 
 // ── List ──
 
-export function useSeminars(status?: Seminar["status"]) {
+export function useSeminars(
+  status?: Seminar["status"],
+  options?: { staleTime?: number },
+) {
   const { data, isLoading, error } = useQuery({
     queryKey: ["seminars", status],
     queryFn: async () => {
@@ -21,6 +24,7 @@ export function useSeminars(status?: Seminar["status"]) {
       return all.filter((s) => getComputedStatus(s) === status);
     },
     retry: false,
+    staleTime: options?.staleTime,
   });
 
   return { seminars: data ?? [], isLoading, error };
