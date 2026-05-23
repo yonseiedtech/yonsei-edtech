@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
+import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
 
 /**
  * 주간 다이제스트 이메일 cron — Sprint 54
@@ -170,14 +171,16 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
     return { sent: 0, recipients: 0 };
   }
 
-  // 회원 이메일 수집
+  // 회원 이메일 + userId 수집
   const usersSnap = await db.collection("users").where("approved", "==", true).get();
   const emails: string[] = [];
+  const userIds: string[] = [];
   for (const u of usersSnap.docs) {
     const d = u.data() as { email?: string; contactEmail?: string; notificationPrefs?: { weeklyDigest?: boolean } };
     if (d.notificationPrefs?.weeklyDigest === false) continue;
     const email = d.email || d.contactEmail;
     if (email) emails.push(email);
+    userIds.push(u.id);
   }
   if (emails.length === 0) return { sent: 0, recipients: 0 };
 
@@ -208,6 +211,15 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
     recipientCount: sent,
     sentAt: new Date().toISOString(),
     sentBy: "system",
+  });
+
+  // 인앱 알림 동시 적재 (이메일 발송 성공 여부와 무관하게 수행)
+  await fanOutNotificationAdmin(userIds, {
+    type: "weekly_digest",
+    title: `주간 다이제스트 (${weekKey})`,
+    body: "이번 주 학회 활동을 확인하세요.",
+    relatedLink: "/dashboard",
+    metadata: { sourceId: `weekly_digest_${weekKey}` },
   });
 
   return { sent, recipients: emails.length };

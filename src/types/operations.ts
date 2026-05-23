@@ -62,7 +62,10 @@ export type NotificationType =
   | "seminar_new"        // 새 세미나 등록
   | "seminar_reminder"   // 세미나 리마인더
   | "waitlist_promoted"  // 대기열 → 참가 승격
-  | "newsletter";        // 뉴스레터 발행
+  | "newsletter"         // 뉴스레터 발행
+  | "class_reminder"     // 수업 당일 알림 (cron)
+  | "activity_reminder"  // 학술활동 관련 알림 (cron)
+  | "weekly_digest";     // 주간 다이제스트 (cron)
 
 export interface AppNotification {
   id: string;

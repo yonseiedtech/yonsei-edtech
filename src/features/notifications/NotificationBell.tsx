@@ -17,6 +17,9 @@ const TYPE_ICONS: Record<AppNotification["type"], string> = {
   seminar_reminder: "⏰",
   waitlist_promoted: "🎟️",
   newsletter: "📰",
+  class_reminder: "🎓",
+  activity_reminder: "📚",
+  weekly_digest: "🗒️",
 };
 
 function timeAgo(dateStr: string): string {

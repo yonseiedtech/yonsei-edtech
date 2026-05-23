@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { sendPushToUsers, filterRecipientsByPreference } from "@/lib/push-admin";
+import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
 
 /**
  * 오늘 수업 안내 푸시 — Sprint 53 (Vercel Hobby 호환 daily 버전)
@@ -169,6 +170,15 @@ export async function GET(req: NextRequest) {
         offeringId: doc.id,
         courseName,
         recipientCount: result.successful,
+      });
+
+      // 인앱 알림 동시 적재 (push 실패와 무관하게 수행)
+      await fanOutNotificationAdmin(userIds, {
+        type: "class_reminder",
+        title: `오늘 ${startHH}:${startMM} ${courseName}`,
+        body: `오늘 (${dayChar}) 수업이 있어요. 자료 미리 확인하세요.`,
+        relatedLink: `/courses/${doc.id}/schedule`,
+        metadata: { sourceId: `class_reminder_${doc.id}_${today}`, courseOfferingId: doc.id },
       });
 
       await dupRef.set({

@@ -32,6 +32,9 @@ const TYPE_ICONS: Record<NotificationType, string> = {
   seminar_reminder: "⏰",
   waitlist_promoted: "🎟️",
   newsletter: "📰",
+  class_reminder: "🔔",
+  activity_reminder: "📌",
+  weekly_digest: "📊",
 };
 
 const TYPE_LABELS: Record<NotificationType, string> = {
@@ -44,6 +47,9 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   seminar_reminder: "세미나 알림",
   waitlist_promoted: "대기열",
   newsletter: "학회보",
+  class_reminder: "수업 알림",
+  activity_reminder: "활동 알림",
+  weekly_digest: "주간 다이제스트",
 };
 
 // 필터 탭 정의
