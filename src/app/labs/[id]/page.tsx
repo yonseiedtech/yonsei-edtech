@@ -12,7 +12,8 @@ import { useAuthStore } from "@/features/auth/auth-store";
 import { canManageLabs, canPromoteLab } from "@/lib/permissions";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { LAB_EMOJIS, type LabEmoji, type LabStatus } from "@/types";
-import { ExternalLink, Trash2, ArrowLeft, FlaskConical } from "lucide-react";
+import { ExternalLink, Trash2, FlaskConical } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
@@ -94,9 +95,7 @@ function LabDetailContent({ id }: { id: string }) {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-16">
-      <Link href="/labs" className="mb-4 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-        <ArrowLeft size={12} /> 목록으로
-      </Link>
+      <BackButton href="/labs" label="목록으로" className="mb-4" />
 
       <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>

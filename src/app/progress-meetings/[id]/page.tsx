@@ -1,10 +1,8 @@
 "use client";
 
 import { use, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowLeft,
   Play,
   Pause,
   SkipForward,
@@ -18,6 +16,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -260,9 +259,7 @@ export default function ProgressMeetingPage({ params }: PageProps) {
   return (
     <div className="py-10">
       <div className="mx-auto max-w-3xl px-4">
-        <Link href={backHref} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft size={14} /> 활동으로 돌아가기
-        </Link>
+        <BackButton href={backHref} label="활동으로 돌아가기" className="mb-4" />
 
         {/* 헤더 */}
         <div className="rounded-2xl border bg-card p-6">

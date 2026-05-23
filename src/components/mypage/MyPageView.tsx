@@ -874,6 +874,7 @@ function NotificationSettingsCard({ user }: { user: User }) {
     pushSeminarReminder?: boolean;
     pushSeminarReview?: boolean;
     pushClassReminder?: boolean;
+    pushExternalRecruitment?: boolean;
   };
   const prefs = (user as User & { notificationPrefs?: PrefShape }).notificationPrefs;
   const [digest, setDigest] = useState<boolean>(prefs?.weeklyDigest !== false);
@@ -885,6 +886,7 @@ function NotificationSettingsCard({ user }: { user: User }) {
   const [pushSeminarReminder, setPushSeminarReminder] = useState<boolean>(prefs?.pushSeminarReminder !== false);
   const [pushSeminarReview, setPushSeminarReview] = useState<boolean>(prefs?.pushSeminarReview !== false);
   const [pushClassReminder, setPushClassReminder] = useState<boolean>(prefs?.pushClassReminder !== false);
+  const [pushExternalRecruitment, setPushExternalRecruitment] = useState<boolean>(prefs?.pushExternalRecruitment !== false);
   const [busyKey, setBusyKey] = useState<string | null>(null);
 
   async function updatePref(
@@ -1052,6 +1054,16 @@ function NotificationSettingsCard({ user }: { user: User }) {
               void updatePref("pushClassReminder", !pushClassReminder, setPushClassReminder, "수업 일일 안내를")
             }
             ariaLabel="수업 일일 안내 push 알림 토글"
+          />
+          <ToggleRow
+            title="대외 학술대회 모집 D-1"
+            description="내일 모집이 시작·마감되는 대외 학술대회 안내."
+            enabled={pushExternalRecruitment}
+            busy={busyKey === "pushExternalRecruitment"}
+            onToggle={() =>
+              void updatePref("pushExternalRecruitment", !pushExternalRecruitment, setPushExternalRecruitment, "대외 학술대회 모집 D-1 알림을")
+            }
+            ariaLabel="대외 학술대회 모집 D-1 push 알림 토글"
           />
         </div>
       </div>

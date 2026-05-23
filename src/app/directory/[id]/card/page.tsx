@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { addDoc, collection, getDocs, query, serverTimestamp, where } from "firebase/firestore";
-import { ArrowLeft, Download, UserPlus } from "lucide-react";
+import { Download, UserPlus } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
 import { useAuthStore } from "@/features/auth/auth-store";
 import BusinessCard from "@/features/card/BusinessCard";
 import { Button } from "@/components/ui/button";
@@ -85,10 +86,7 @@ function ReceivedCardInner() {
     <div className="min-h-screen bg-slate-50 py-10">
       <div className="mx-auto max-w-md px-4">
         <div className="mb-4 flex items-center gap-2">
-          <Link href={`/directory/${owner.id}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft size={16} />
-            프로필로
-          </Link>
+          <BackButton href={`/directory/${owner.id}`} label="프로필로" />
         </div>
 
         <h1 className="text-2xl font-bold">{owner.name}님의 명함</h1>

@@ -8,8 +8,9 @@
  */
 
 import Link from "next/link";
+import BackButton from "@/components/ui/back-button";
+import PageContainer from "@/components/ui/page-container";
 import {
-  ArrowLeft,
   BookOpen,
   Calendar,
   CheckCircle2,
@@ -75,14 +76,8 @@ const SECTIONS: Section[] = [
 
 export default function CurrentStudentGuidePage() {
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10">
-      <Link
-        href="/steppingstone"
-        className="mb-6 inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={14} />
-        인지디딤판으로
-      </Link>
+    <PageContainer width="narrow">
+      <BackButton href="/steppingstone" label="인지디딤판으로" className="mb-6" />
 
       <header className="mb-8 flex items-start gap-4">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
@@ -147,6 +142,6 @@ export default function CurrentStudentGuidePage() {
         </Link>
         에 알려주시면 더 좋은 가이드로 보완합니다.
       </p>
-    </div>
+    </PageContainer>
   );
 }

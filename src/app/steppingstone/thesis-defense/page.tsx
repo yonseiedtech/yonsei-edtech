@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, MessageSquareQuote, LogIn } from "lucide-react";
+import { MessageSquareQuote, LogIn } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/features/auth/auth-store";
 import DefensePracticeListView from "@/features/defense/DefensePracticeListView";
@@ -11,12 +12,7 @@ export default function PublicThesisDefensePage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
-      <Link
-        href="/steppingstone"
-        className="mb-6 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
-      >
-        <ArrowLeft size={14} /> 인지디딤판
-      </Link>
+      <BackButton href="/steppingstone" label="인지디딤판" className="mb-6" />
 
       <header className="mb-8 flex items-start gap-4">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300">

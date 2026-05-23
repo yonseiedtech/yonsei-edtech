@@ -8,8 +8,9 @@
  */
 
 import Link from "next/link";
+import BackButton from "@/components/ui/back-button";
+import PageContainer from "@/components/ui/page-container";
 import {
-  ArrowLeft,
   ArrowRight,
   Calendar,
   CheckCircle2,
@@ -73,14 +74,8 @@ const PRESENTATION_STEPS = [
 
 export default function ConferenceGuidePage() {
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10">
-      <Link
-        href="/steppingstone"
-        className="mb-6 inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={14} />
-        인지디딤판으로
-      </Link>
+    <PageContainer width="narrow">
+      <BackButton href="/steppingstone" label="인지디딤판으로" className="mb-6" />
 
       <header className="mb-8 flex items-start gap-4">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300">
@@ -215,6 +210,6 @@ export default function ConferenceGuidePage() {
         </Link>
         으로 알려주세요.
       </p>
-    </div>
+    </PageContainer>
   );
 }

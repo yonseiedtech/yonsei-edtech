@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import PageContainer from "@/components/ui/page-container";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/back-button";
 import {
-  ArrowLeft,
   GraduationCap,
   CheckCircle2,
   Circle,
@@ -283,14 +284,8 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12">
-      <Link
-        href="/steppingstone"
-        className="mb-4 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={12} />
-        인지디딤판
-      </Link>
+    <PageContainer width="narrow">
+      <BackButton href="/steppingstone" label="인지디딤판" className="mb-4" />
 
       <header className="mb-8 flex items-start gap-4">
         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
@@ -406,6 +401,6 @@ export default function OnboardingPage() {
           ))}
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 }

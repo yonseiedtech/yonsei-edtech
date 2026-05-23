@@ -26,7 +26,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { formatDate } from "@/lib/utils";
-import { ArrowLeft, Trash2, Edit, LogIn } from "lucide-react";
+import { Trash2, Edit, LogIn } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
 import { toast } from "sonner";
 import ShareButton from "@/components/ShareButton";
 import { PostArticleJsonLd } from "@/components/seo/JsonLd";
@@ -179,26 +180,21 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
     <div className="py-16">
       <PostArticleJsonLd post={post} />
       <div className="mx-auto max-w-6xl px-4">
-        <button
-          onClick={() => {
-            const routes: Record<string, string> = {
-              notice: "/notices",
-              free: "/board/free",
-              promotion: "/board/promotion",
-              seminar: "/board/seminar",
-              resources: "/board/resources",
-              staff: "/board/staff",
-              interview: "/board/interview",
-              paper_review: "/board/paper-review",
-              press: "/newsletter",
-            };
-            router.push(routes[post.category] ?? "/board");
-          }}
-          className="mb-6 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft size={16} />
-          목록으로
-        </button>
+        <BackButton
+          href={({
+            notice: "/notices",
+            free: "/board/free",
+            promotion: "/board/promotion",
+            seminar: "/board/seminar",
+            resources: "/board/resources",
+            staff: "/board/staff",
+            interview: "/board/interview",
+            paper_review: "/board/paper-review",
+            press: "/newsletter",
+          } as Record<string, string>)[post.category] ?? "/board"}
+          label="목록으로"
+          className="mb-6"
+        />
 
         <article className="rounded-2xl border bg-card p-8">
           <div className="flex items-center gap-2">
