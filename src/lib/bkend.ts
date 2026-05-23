@@ -2422,3 +2422,40 @@ export const studySessionNotesApi = {
     ),
   delete: (id: string) => dataApi.delete("study_session_notes", id),
 };
+
+// ────────────────────────────────────────────────────────────
+// streakEventsApi — 학습 잔디 외부 가산점 이벤트 (P1)
+//
+// doc id = `${userId}__${type}__${refId}` (deterministic) → setDoc(merge:true)
+// 으로 같은 (userId,type,refId) 재호출 시 중복 가산 X.
+// LearningStreak 합산 로직이 streak_events 컬렉션을 읽어 YMD 별 점수에 가산.
+// ────────────────────────────────────────────────────────────
+export const streakEventsApi = {
+  makeId: (userId: string, type: StreakEventType, refId: string) =>
+    `${userId}__${type}__${refId}`,
+  listByUser: (userId: string) =>
+    dataApi.list<StreakEvent>("streak_events", {
+      "filter[userId]": userId,
+      limit: 1000,
+    }),
+  /** 멱등 add — 같은 (userId,type,refId) 재호출 시 한 번만 가산. */
+  add: async (params: {
+    userId: string;
+    type: StreakEventType;
+    refId: string;
+    points: number;
+  }): Promise<StreakEvent> => {
+    const { userId, type, refId, points } = params;
+    const id = `${userId}__${type}__${refId}`;
+    const now = new Date();
+    const ymd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    return dataApi.upsert<StreakEvent>("streak_events", id, {
+      userId,
+      type,
+      refId,
+      points,
+      ymd,
+      occurredAt: now.toISOString(),
+    });
+  },
+};

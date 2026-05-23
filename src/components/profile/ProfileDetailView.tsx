@@ -17,6 +17,7 @@ import type { User } from "@/types";
 import { Lock } from "lucide-react";
 import Image from "next/image";
 import ProfileHeader from "./ProfileHeader";
+import ProfileOnboardingBadges from "./ProfileOnboardingBadges";
 import ProfileBio from "./ProfileBio";
 import ProfileContactInfo from "./ProfileContactInfo";
 import ProfileResearchInterests from "./ProfileResearchInterests";
@@ -137,6 +138,11 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
           <h1 className="text-lg font-bold text-foreground">개인 프로필</h1>
         </div>
         <ProfileHeader owner={owner} isOwner={isOwner} viewer={viewer} />
+
+        {/* P1: 시작하기 체크리스트 마일스톤 배지 (본인+운영진 항상, 일반 회원은 본인 페이지에서만 노출) */}
+        {(isOwner || isStaff) && (
+          <ProfileOnboardingBadges badges={owner.onboardingBadges} />
+        )}
 
         {isOwner && <OwnerVisibilitySection owner={owner} />}
 

@@ -58,6 +58,7 @@ const CardSection = dynamic(
 );
 import EmptyState from "@/components/ui/empty-state";
 import LearningStreak from "@/features/mypage/LearningStreak";
+import ProfileOnboardingBadges from "@/components/profile/ProfileOnboardingBadges";
 import ARCSPanel from "@/features/mypage/ARCSPanel";
 import ConnectivismPanel from "@/features/mypage/ConnectivismPanel";
 import { useAuth } from "@/features/auth/useAuth";
@@ -309,6 +310,14 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
         <div className="mt-6">
           {activeTab === "overview" && (
             <div className="space-y-4">
+              {/* P1: 시작하기 체크리스트 마일스톤 배지 (본인) */}
+              {user.onboardingBadges && user.onboardingBadges.length > 0 && (
+                <div className="rounded-2xl border bg-card p-4 shadow-sm">
+                  <h3 className="mb-2 text-sm font-semibold">시작하기 마일스톤</h3>
+                  <ProfileOnboardingBadges badges={user.onboardingBadges} />
+                </div>
+              )}
+
               {/* Sprint 56: 학습 잔디 — 365일 활동 그리드 + streak + 마일스톤 */}
               <LearningStreak />
 

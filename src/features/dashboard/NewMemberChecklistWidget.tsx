@@ -56,8 +56,10 @@ import {
   archiveFavoritesApi,
   activityParticipationsApi,
   onboardingChecklistApi,
+  profilesApi,
   researchReportsApi,
   courseReviewsApi,
+  streakEventsApi,
 } from "@/lib/bkend";
 import type {
   SeminarAttendee,
@@ -69,6 +71,10 @@ import type {
   ResearchReport,
   CourseReview,
 } from "@/types";
+import {
+  ONBOARDING_BADGE_META,
+  type OnboardingBadgeId,
+} from "@/types/onboarding-badge";
 import WidgetCard from "@/components/ui/widget-card";
 import { cn } from "@/lib/utils";
 
@@ -94,6 +100,8 @@ const ICON_MAP: Record<ChecklistIcon, LucideIcon> = {
 
 interface ResolvedItem {
   id: string;
+  /** P1: 학습 잔디 가산점·배지 멱등성을 위한 안정적 식별자 (firestore 문서 rename 무관). */
+  completionType: ChecklistCompletionType;
   label: string;
   href: string;
   icon: LucideIcon;
@@ -294,6 +302,7 @@ export default function NewMemberChecklistWidget() {
     if (!user) return [];
     return configItems.map((c) => ({
       id: c.id,
+      completionType: c.completionType,
       label: c.label,
       href: c.href,
       icon: ICON_MAP[c.icon] ?? Sparkles,
@@ -343,6 +352,7 @@ export default function NewMemberChecklistWidget() {
   }, []);
 
   // 신규 완료 항목 감지 + 축하 효과 (3-layer: 반짝임 + 컨페티 + 토스트)
+  // P1 후속: 학습 잔디 가산점(+5/항목) + 마일스톤 배지 부여(first-step/halfway/complete) — 멱등.
   useEffect(() => {
     if (items.length === 0) return;
     const current = new Set(items.filter((it) => it.completed).map((it) => it.id));
@@ -378,6 +388,88 @@ export default function NewMemberChecklistWidget() {
           duration: 4000,
         });
       });
+
+      // ── P1 후속: 학습 잔디 가산점 + 마일스톤 배지 부여 (멱등) ──
+      // 부수효과는 fire-and-forget. 실패해도 UI 흐름 차단 X.
+      if (userId) {
+        const currentCount = current.size;
+        const newlyCompletedTypes = newlyCompleted
+          .map((id) => items.find((it) => it.id === id)?.completionType)
+          .filter((t): t is ChecklistCompletionType => Boolean(t));
+        const existingBadges: OnboardingBadgeId[] = Array.isArray(user?.onboardingBadges)
+          ? (user!.onboardingBadges as OnboardingBadgeId[])
+          : [];
+        const ratio = items.length > 0 ? currentCount / items.length : 0;
+
+        const newBadges: OnboardingBadgeId[] = [];
+        if (currentCount >= 1 && !existingBadges.includes("first-step")) {
+          newBadges.push("first-step");
+        }
+        if (ratio >= COMPLETION_THRESHOLD && !existingBadges.includes("halfway")) {
+          newBadges.push("halfway");
+        }
+        if (
+          currentCount === items.length &&
+          items.length > 0 &&
+          !existingBadges.includes("complete")
+        ) {
+          newBadges.push("complete");
+        }
+
+        const targetUserId = userId;
+        void (async () => {
+          // 1) 항목별 +5 잔디 가산
+          for (const completionType of newlyCompletedTypes) {
+            try {
+              await streakEventsApi.add({
+                userId: targetUserId,
+                type: "onboarding-checklist",
+                refId: completionType,
+                points: 5,
+              });
+            } catch (err) {
+              console.error("[NewMemberChecklistWidget] streak add failed", err);
+            }
+          }
+
+          // 2) 배지 부여 + 배지 가산점 (각각 멱등)
+          if (newBadges.length > 0) {
+            const mergedBadges = Array.from(new Set([...existingBadges, ...newBadges]));
+            try {
+              await profilesApi.update(targetUserId, {
+                onboardingBadges: mergedBadges,
+              });
+            } catch (err) {
+              console.error("[NewMemberChecklistWidget] badge update failed", err);
+            }
+            // 배지 토스트 + 배지 가산점
+            for (const badgeId of newBadges) {
+              const meta = ONBOARDING_BADGE_META[badgeId];
+              const label =
+                badgeId === "first-step"
+                  ? "🌱 첫걸음 배지 획득!"
+                  : badgeId === "halfway"
+                  ? "🚀 절반 통과 배지 획득!"
+                  : "🎓 시작하기 마스터 배지 획득!";
+              toast.info(label, {
+                description: meta.description,
+                duration: 5000,
+              });
+              try {
+                await streakEventsApi.add({
+                  userId: targetUserId,
+                  type: "onboarding-badge",
+                  refId: badgeId,
+                  points: meta.points,
+                });
+              } catch (err) {
+                console.error("[NewMemberChecklistWidget] badge streak add failed", err);
+              }
+            }
+          }
+        })();
+      }
+
       // Boss 축하 — 전체 완료 첫 순간 + localStorage 1회 가드
       if (current.size === items.length && bossKey) {
         try {
@@ -399,7 +491,7 @@ export default function NewMemberChecklistWidget() {
       return () => window.clearTimeout(t);
     }
     prevCompletedRef.current = current;
-  }, [items, bossKey, fireConfetti]);
+  }, [items, bossKey, fireConfetti, userId, user]);
 
   const shouldShow = useMemo(() => {
     if (!user || dismissed) return false;
