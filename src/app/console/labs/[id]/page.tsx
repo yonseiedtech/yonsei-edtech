@@ -12,7 +12,8 @@ import {
 import { useAuthStore } from "@/features/auth/auth-store";
 import { canManageLabs, canPromoteLab } from "@/lib/permissions";
 import { LAB_EMOJIS, type LabEmoji, type LabStatus } from "@/types";
-import { ExternalLink, Trash2, ArrowLeft, FlaskConical } from "lucide-react";
+import { ExternalLink, Trash2, FlaskConical } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
 import { cn } from "@/lib/utils";
 
 const STATUS_LABEL: Record<LabStatus, string> = {
@@ -94,9 +95,7 @@ export default function LabDetailPage({ params }: { params: Promise<{ id: string
 
   return (
     <div className="max-w-4xl">
-      <Link href="/console/labs" className="mb-4 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-        <ArrowLeft size={12} /> 목록으로
-      </Link>
+      <BackButton href="/console/labs" label="목록으로" variant="default" className="mb-4" />
 
       <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>

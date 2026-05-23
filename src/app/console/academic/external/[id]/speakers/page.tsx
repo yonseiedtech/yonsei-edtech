@@ -15,7 +15,6 @@ import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteField } from "firebase/firestore";
 import {
-  ArrowLeft,
   Mic,
   Users,
   UserPlus,
@@ -44,6 +43,7 @@ import {
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import EmptyState from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/back-button";
 import {
   SUBMISSION_TYPE_ORDER,
   applicantKey,
@@ -334,12 +334,11 @@ export default function ExternalActivitySpeakersConsole({
       />
 
       <div className="flex items-center justify-between">
-        <Link
+        <BackButton
           href={`/console/academic/external/${activityId}`}
-          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft size={12} /> 활동 상세로
-        </Link>
+          label="활동 상세로"
+          variant="default"
+        />
         <button
           type="button"
           onClick={() => window.print()}

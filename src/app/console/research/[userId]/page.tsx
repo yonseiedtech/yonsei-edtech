@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import {
-  ArrowLeft,
   FlaskConical,
   BookOpen,
   Clock,
@@ -13,6 +12,7 @@ import {
   ExternalLink,
   Calendar,
 } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import ResearchReportEditor from "@/features/research/ResearchReportEditor";
 import { Badge } from "@/components/ui/badge";
@@ -269,12 +269,11 @@ export default function ConsoleResearchUserDetailPage() {
 
 function BackLink() {
   return (
-    <Link
+    <BackButton
       href="/console/research"
-      className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-    >
-      <ArrowLeft size={12} /> 연구활동 목록으로
-    </Link>
+      label="연구활동 목록으로"
+      variant="default"
+    />
   );
 }
 
