@@ -1,8 +1,8 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, Loader2, CalendarDays } from "lucide-react";
+import { Loader2, CalendarDays } from "lucide-react";
+import { BackButton } from "@/components/ui/back-button";
 import { useAuth } from "@/features/auth/useAuth";
 import { activitiesApi, conferenceProgramsApi } from "@/lib/bkend";
 import ConferenceProgramEditor from "@/features/conference/ConferenceProgramEditor";
@@ -70,12 +70,11 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
   return (
     <div className="space-y-6">
-      <Link
+      <BackButton
         href={`/activities/external/${id}`}
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" /> 활동 상세로 돌아가기
-      </Link>
+        label="활동 상세로 돌아가기"
+        variant="default"
+      />
       <ConsolePageHeader
         icon={CalendarDays}
         title="학술대회 프로그램 편집"

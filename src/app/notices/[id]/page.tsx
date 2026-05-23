@@ -2,13 +2,12 @@
 
 import { use } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { usePost } from "@/features/board/useBoard";
 import { CATEGORY_LABELS } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
-import { ArrowLeft } from "lucide-react";
+import { BackButton } from "@/components/ui/back-button";
 
 export default function NoticeDetailPage({
   params,
@@ -16,7 +15,6 @@ export default function NoticeDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const router = useRouter();
   const { post } = usePost(id);
 
   if (!post) {
@@ -37,13 +35,9 @@ export default function NoticeDetailPage({
   return (
     <div className="py-16">
       <div className="mx-auto max-w-6xl px-4">
-        <button
-          onClick={() => router.push("/notices")}
-          className="mb-6 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft size={16} />
-          목록으로
-        </button>
+        <div className="mb-6">
+          <BackButton href="/notices" label="목록으로" variant="default" />
+        </div>
 
         <article className="rounded-2xl border bg-card p-8">
           <div className="flex items-center gap-2">

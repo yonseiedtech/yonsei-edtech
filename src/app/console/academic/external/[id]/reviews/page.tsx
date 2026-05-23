@@ -16,7 +16,6 @@ import { use, useMemo } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowLeft,
   Star,
   MessageSquareQuote,
   Award,
@@ -27,6 +26,7 @@ import { activitiesApi, attendeeReviewsApi } from "@/lib/bkend";
 import { WILL_ATTEND_AGAIN_LABELS, type ConferenceAttendeeReview, type Activity } from "@/types";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import EmptyState from "@/components/ui/empty-state";
+import { BackButton } from "@/components/ui/back-button";
 
 export default function ExternalActivityReviewsConsole({
   params,
@@ -75,12 +75,11 @@ export default function ExternalActivityReviewsConsole({
       />
 
       <div className="flex items-center justify-between">
-        <Link
+        <BackButton
           href={`/console/academic/external/${activityId}`}
-          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft size={12} /> 활동 상세로
-        </Link>
+          label="활동 상세로"
+          variant="default"
+        />
         <Link
           href={`/activities/external/${activityId}/review`}
           className="inline-flex items-center gap-1 text-xs text-primary hover:underline"

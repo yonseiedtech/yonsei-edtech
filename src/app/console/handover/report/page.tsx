@@ -2,14 +2,13 @@
 
 import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { dataApi } from "@/lib/bkend";
 import { useOrgChart } from "@/features/admin/settings/useOrgChart";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { BackButton } from "@/components/ui/back-button";
 import {
-  ArrowLeft,
   Printer,
   FileText,
   Users,
@@ -103,12 +102,7 @@ function ReportInner() {
       {/* 화면 전용 컨트롤 (인쇄 시 숨김) */}
       <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
         <div className="flex items-center gap-2">
-          <Link href="/console/handover">
-            <Button variant="outline" size="sm">
-              <ArrowLeft size={14} className="mr-1" />
-              업무노트로
-            </Button>
-          </Link>
+          <BackButton href="/console/handover" label="업무노트로" variant="default" />
           <select
             value={term}
             onChange={(e) => setTermAndUrl(e.target.value)}

@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  ArrowLeft,
   Calendar,
   ExternalLink,
   GraduationCap,
@@ -23,6 +22,7 @@ import {
   Bookmark,
   BookmarkCheck,
 } from "lucide-react";
+import { BackButton } from "@/components/ui/back-button";
 import {
   alumniThesesApi,
   profilesApi,
@@ -117,7 +117,6 @@ function toDraft(t: AlumniThesis): EditDraft {
 
 export default function AlumniThesisDetailPage() {
   const params = useParams<{ id: string }>();
-  const router = useRouter();
   const { user: viewer, initialized } = useAuthStore();
   const canEdit = isAtLeast(viewer, "staff");
   const [thesis, setThesis] = useState<AlumniThesis | null>(null);
@@ -419,9 +418,9 @@ export default function AlumniThesisDetailPage() {
       <div className="py-16">
         <div className="mx-auto max-w-3xl px-4">
           <p className="text-sm text-destructive" role="alert">⚠ {error ?? "논문을 찾을 수 없습니다."}</p>
-          <Button variant="outline" size="sm" className="mt-4" onClick={() => router.back()}>
-            <ArrowLeft size={14} className="mr-1" /> 뒤로
-          </Button>
+          <div className="mt-4">
+            <BackButton variant="default" fallbackHref="/alumni/thesis" />
+          </div>
         </div>
       </div>
     );
@@ -430,12 +429,7 @@ export default function AlumniThesisDetailPage() {
   return (
     <div className="py-12">
       <div className="mx-auto max-w-4xl px-4">
-        <Link
-          href="/alumni/thesis"
-          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
-        >
-          <ArrowLeft size={12} /> 학위논문 목록
-        </Link>
+        <BackButton href="/alumni/thesis" label="학위논문 목록" variant="default" />
 
         <div className="mt-4 rounded-2xl border bg-card p-6 sm:p-8">
           <div className="flex items-start gap-3">

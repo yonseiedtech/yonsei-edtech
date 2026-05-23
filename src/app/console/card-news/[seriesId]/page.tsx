@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Calendar, Layers, Pencil } from "lucide-react";
+import { Calendar, Layers, Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { BackButton } from "@/components/ui/back-button";
 import CardSlider from "@/features/card-news/CardSlider";
 import { loadSeries } from "@/features/card-news/loader";
 
@@ -35,13 +36,9 @@ export default async function CardNewsDetailPage({ params }: PageProps) {
   return (
     <div className="space-y-6">
       <div>
-        <Link
-          href="/console/card-news"
-          className="mb-3 -ml-2 inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          카드뉴스 목록
-        </Link>
+        <div className="mb-3">
+          <BackButton href="/console/card-news" label="카드뉴스 목록" variant="default" />
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           {series.category && (
             <Badge variant="secondary" className="text-xs">
