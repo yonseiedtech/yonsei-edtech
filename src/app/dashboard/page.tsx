@@ -35,6 +35,8 @@ import AIForumLiveWidget from "@/features/dashboard/AIForumLiveWidget";
 import SpacedRepetitionWidget from "@/features/dashboard/SpacedRepetitionWidget";
 import DailyReflectionPrompt from "@/features/dashboard/DailyReflectionPrompt";
 import { canShowWidget, isAlumni } from "@/features/dashboard/widget-visibility";
+import { useDashboardLayout, isWidgetVisible } from "@/lib/dashboard-layout";
+import { DASHBOARD_WIDGET_KEYS } from "@/types/dashboard-layout";
 import {
   LayoutDashboard,
   FileText,
@@ -96,6 +98,9 @@ function DashboardContent() {
   // staff 전용 데이터 — 일반 회원은 쿼리 자체를 실행하지 않음
   const { pendingMembers } = usePendingMembers({ enabled: isStaff });
   const { inquiries } = useInquiries({ enabled: isStaff });
+
+  // D-1b: 사용자 위젯 가시성 레이아웃 (localStorage 기반, AND 게이트)
+  const layout = useDashboardLayout(user?.id);
 
   if (!user) return null;
 
@@ -183,10 +188,10 @@ function DashboardContent() {
       {/* ── 섹션 2: 다음 액션 배너 + 모바일 오늘 요약 카드 + 운영진 우선순위 패널 ── */}
       <div className="mx-auto mt-4 max-w-6xl px-4 space-y-3">
         {/* Codex Phase B: 운영진 홈 모드 — 상단 우선순위 패널 (isStaff 분기) */}
-        {isStaff && <StaffPriorityPanel />}
+        {isStaff && isWidgetVisible(layout, "staffAlerts") && <StaffPriorityPanel />}
         {/* Codex Phase B: 모바일 상단 "오늘 요약" 통합 카드 (sm:hidden — 데스크톱에서는 자체 숨김) */}
         <TodaySummaryCard />
-        <NextActionBanner />
+        {isWidgetVisible(layout, "nextActionBanner") && <NextActionBanner />}
       </div>
 
       {/* ── 섹션 2.5: 졸업생 전용 콘텐츠 (Phase C) ──
@@ -202,12 +207,12 @@ function DashboardContent() {
       {/* ── 섹션 3: 학사 컨텍스트 위젯 (재학생 전용) ── */}
       <section className="mx-auto mt-6 max-w-6xl px-4">
         {/* 오늘의 수업 — 일일 타임라인 */}
-        {canShowWidget(user.role, "dailyClassTimeline") && (
+        {canShowWidget(user.role, "dailyClassTimeline") && isWidgetVisible(layout, "dailyTimeline") && (
           <DailyClassTimelineWidget />
         )}
 
         {/* 나의 할 일 — 수업/연구활동/학술활동/운영진 통합 */}
-        {canShowWidget(user.role, "myTodos") && (
+        {canShowWidget(user.role, "myTodos") && isWidgetVisible(layout, "myTodos") && (
           <div className="mt-6">
             <MyTodosWidget />
           </div>
@@ -215,119 +220,131 @@ function DashboardContent() {
       </section>
 
       {/* ── 섹션 4: 일정·공지 — 2열 그리드 (Phase A: 액션 정보 우선, StatCards 와 위치 교환) ── */}
-      <section className="mx-auto mt-8 max-w-6xl px-4">
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* 최근 공지 */}
-          <div className="rounded-2xl border bg-card p-6 shadow-sm">
-            <div className="flex items-center gap-2">
-              <Megaphone size={18} className="text-primary" />
-              <h2 className="font-bold">최근 공지</h2>
-            </div>
-            {notices.length === 0 ? (
-              <p className="mt-4 text-sm text-muted-foreground">
-                공지사항이 없습니다.
-              </p>
-            ) : (
-              <div className="mt-4 space-y-1">
-                {notices.map((n) => (
-                  <Link
-                    key={n.id}
-                    href={`/board/${n.id}`}
-                    className="flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted/50"
-                  >
-                    <span className="truncate font-medium">{n.title}</span>
-                    <span className="ml-3 shrink-0 text-xs text-muted-foreground">
-                      {formatDate(n.createdAt)}
-                    </span>
-                  </Link>
-                ))}
+      {(isWidgetVisible(layout, "notices") || isWidgetVisible(layout, "miniCalendar")) && (
+        <section className="mx-auto mt-8 max-w-6xl px-4">
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* 최근 공지 */}
+            {isWidgetVisible(layout, "notices") && (
+              <div className="rounded-2xl border bg-card p-6 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <Megaphone size={18} className="text-primary" />
+                  <h2 className="font-bold">최근 공지</h2>
+                </div>
+                {notices.length === 0 ? (
+                  <p className="mt-4 text-sm text-muted-foreground">
+                    공지사항이 없습니다.
+                  </p>
+                ) : (
+                  <div className="mt-4 space-y-1">
+                    {notices.map((n) => (
+                      <Link
+                        key={n.id}
+                        href={`/board/${n.id}`}
+                        className="flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted/50"
+                      >
+                        <span className="truncate font-medium">{n.title}</span>
+                        <span className="ml-3 shrink-0 text-xs text-muted-foreground">
+                          {formatDate(n.createdAt)}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 세미나 일정 캘린더 */}
+            {isWidgetVisible(layout, "miniCalendar") && (
+              <div className="rounded-2xl border bg-card p-6 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <Calendar size={18} className="text-primary" />
+                  <h2 className="font-bold">세미나 일정</h2>
+                </div>
+                <div className="mt-4">
+                  <MiniCalendar seminars={seminars} />
+                </div>
               </div>
             )}
           </div>
-
-          {/* 세미나 일정 캘린더 */}
-          <div className="rounded-2xl border bg-card p-6 shadow-sm">
-            <div className="flex items-center gap-2">
-              <Calendar size={18} className="text-primary" />
-              <h2 className="font-bold">세미나 일정</h2>
-            </div>
-            <div className="mt-4">
-              <MiniCalendar seminars={seminars} />
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── 섹션 5: 핵심 지표 — 통계 카드 그리드 (Phase A: Notices 아래로 이동) ── */}
-      <section className="mx-auto mt-6 max-w-6xl px-4">
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <StatCard
-            icon={FileText}
-            label="내 글"
-            value={myPosts.length}
-            color="bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
-            href="/board"
-          />
-          <StatCard
-            icon={Calendar}
-            label="신청 세미나"
-            value={mySeminars.length}
-            color="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-            href="/seminars"
-          />
-          {isStaff ? (
-            <>
-              <StatCard
-                icon={Shield}
-                label="승인 대기"
-                value={pendingCount}
-                color="bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
-                href="/console/members"
-              />
-              <StatCard
-                icon={HelpCircle}
-                label="미답변 문의"
-                value={unansweredCount}
-                color="bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
-                href="/console/inquiries"
-              />
-            </>
-          ) : (
-            <>
-              <StatCard
-                icon={Clock}
-                label="예정 세미나"
-                value={upcomingSeminars.length}
-                color="bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400"
-                href="/seminars"
-              />
-              <StatCard
-                icon={Newspaper}
-                label="최신 학회보"
-                value={
-                  latestNewsletter
-                    ? `제${latestNewsletter.issueNumber}호`
-                    : "-"
-                }
-                color="bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
-                href="/newsletter"
-              />
-            </>
-          )}
-        </div>
-      </section>
+      {isWidgetVisible(layout, "statCards") && (
+        <section className="mx-auto mt-6 max-w-6xl px-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <StatCard
+              icon={FileText}
+              label="내 글"
+              value={myPosts.length}
+              color="bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
+              href="/board"
+            />
+            <StatCard
+              icon={Calendar}
+              label="신청 세미나"
+              value={mySeminars.length}
+              color="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+              href="/seminars"
+            />
+            {isStaff ? (
+              <>
+                <StatCard
+                  icon={Shield}
+                  label="승인 대기"
+                  value={pendingCount}
+                  color="bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
+                  href="/console/members"
+                />
+                <StatCard
+                  icon={HelpCircle}
+                  label="미답변 문의"
+                  value={unansweredCount}
+                  color="bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
+                  href="/console/inquiries"
+                />
+              </>
+            ) : (
+              <>
+                <StatCard
+                  icon={Clock}
+                  label="예정 세미나"
+                  value={upcomingSeminars.length}
+                  color="bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400"
+                  href="/seminars"
+                />
+                <StatCard
+                  icon={Newspaper}
+                  label="최신 학회보"
+                  value={
+                    latestNewsletter
+                      ? `제${latestNewsletter.issueNumber}호`
+                      : "-"
+                  }
+                  color="bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
+                  href="/newsletter"
+                />
+              </>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* ── 섹션 6: 학술 포트폴리오 위젯 (재학생 전용) ── */}
       {(canShowWidget(user.role, "myAcademicActivities") ||
-        canShowWidget(user.role, "comprehensiveExam")) && (
+        canShowWidget(user.role, "comprehensiveExam")) &&
+        (isWidgetVisible(layout, "myAcademicActivities") ||
+          isWidgetVisible(layout, "comprehensiveExam")) && (
         <section className="mx-auto mt-6 max-w-6xl px-4">
           <div className="grid gap-6 md:grid-cols-2">
-            {canShowWidget(user.role, "myAcademicActivities") && (
-              <MyAcademicActivitiesWidget />
-            )}
-            {canShowWidget(user.role, "comprehensiveExam") && (
-              <ComprehensiveExamCountdown />
-            )}
+            {canShowWidget(user.role, "myAcademicActivities") &&
+              isWidgetVisible(layout, "myAcademicActivities") && (
+                <MyAcademicActivitiesWidget />
+              )}
+            {canShowWidget(user.role, "comprehensiveExam") &&
+              isWidgetVisible(layout, "comprehensiveExam") && (
+                <ComprehensiveExamCountdown />
+              )}
           </div>
         </section>
       )}
@@ -339,16 +356,23 @@ function DashboardContent() {
        * - AIForumLiveWidget + SpacedRepetitionWidget: 대등한 2열 (둘 다 콘텐츠 발견용)
        * 세 위젯 모두 "학습 보조" 그룹으로 mt-8 으로 상위 섹션과 시각 분리
        */}
-      <section className="mx-auto mt-8 max-w-6xl px-4 space-y-6">
-        {/* 오늘의 5분 회고 — full-width CTA */}
-        <DailyReflectionPrompt />
+      {(isWidgetVisible(layout, "dailyReflection") ||
+        isWidgetVisible(layout, "aiForumLive") ||
+        isWidgetVisible(layout, "spacedRepetition")) && (
+        <section className="mx-auto mt-8 max-w-6xl px-4 space-y-6">
+          {/* 오늘의 5분 회고 — full-width CTA */}
+          {isWidgetVisible(layout, "dailyReflection") && <DailyReflectionPrompt />}
 
-        {/* AI 포럼 라이브 + Spaced Repetition — 2열 */}
-        <div className="grid gap-6 md:grid-cols-2">
-          <AIForumLiveWidget />
-          <SpacedRepetitionWidget />
-        </div>
-      </section>
+          {/* AI 포럼 라이브 + Spaced Repetition — 2열 */}
+          {(isWidgetVisible(layout, "aiForumLive") ||
+            isWidgetVisible(layout, "spacedRepetition")) && (
+            <div className="grid gap-6 md:grid-cols-2">
+              {isWidgetVisible(layout, "aiForumLive") && <AIForumLiveWidget />}
+              {isWidgetVisible(layout, "spacedRepetition") && <SpacedRepetitionWidget />}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* ── 섹션 8: 소셜·활동 피드 ── */}
       {/*
@@ -358,10 +382,10 @@ function DashboardContent() {
        */}
       <section className="mx-auto mt-8 max-w-6xl px-4 space-y-6">
         {/* 동료의 최근 활동 */}
-        <PeerActivityFeed />
+        {isWidgetVisible(layout, "peerActivityFeed") && <PeerActivityFeed />}
 
         {/* 내 신청 세미나 */}
-        {mySeminars.length > 0 && (
+        {isWidgetVisible(layout, "seminars") && mySeminars.length > 0 && (
           <div className="rounded-2xl border bg-card p-6 shadow-sm">
             <div className="flex items-center gap-2">
               <BookOpen size={18} className="text-primary" />
@@ -415,6 +439,29 @@ function DashboardContent() {
        *  - 일반 사용자(isStaff===false): 영향 없음 — 어차피 렌더되지 않았던 영역
        *  - 운영진: 상단 StaffPriorityPanel 이 같은 데이터(승인 대기 + 미답변 문의)를 더 풍부하게(운영진 todo 포함) 노출.
        *  - StaffPriorityPanel 자체가 totalPriorityCount===0 일 때 null 반환하므로, 처리할 항목이 없는 운영진도 시각적 노이즈 없음. */}
+
+      {/* ── D-1b: 모든 위젯 숨김 안내 ── */}
+      {layout !== null &&
+        DASHBOARD_WIDGET_KEYS.every((k) => !isWidgetVisible(layout, k)) && (
+          <section className="mx-auto mt-12 max-w-6xl px-4">
+            <div className="rounded-2xl border border-dashed bg-card p-10 text-center">
+              <LayoutDashboard size={32} className="mx-auto mb-4 text-muted-foreground/50" />
+              <p className="text-base font-semibold text-foreground">
+                표시할 위젯이 없습니다.
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                마이페이지 → 대시보드 설정에서 위젯을 켜세요.
+              </p>
+              <Link
+                href="/mypage/dashboard-settings"
+                className="mt-4 inline-flex items-center gap-1.5 rounded-lg border bg-card px-4 py-2 text-sm font-medium hover:bg-muted"
+              >
+                <LayoutDashboard size={15} />
+                대시보드 설정 열기
+              </Link>
+            </div>
+          </section>
+        )}
     </div>
   );
 }

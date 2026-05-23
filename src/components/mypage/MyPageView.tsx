@@ -44,6 +44,7 @@ import {
   Sparkles,
   Bell,
   Settings,
+  LayoutDashboard,
 } from "lucide-react";
 
 // react-easy-crop(39KB gzipped) — 명함 탭 클릭 시에만 chunk 로드
@@ -726,6 +727,16 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                   <Link href="/mypage/portfolio" className="rounded-2xl border bg-card p-4 hover:border-primary/40 hover:shadow-sm">
                     <p className="text-sm font-semibold">학술 포트폴리오</p>
                     <p className="mt-1 text-xs text-muted-foreground">수상·대외활동·콘텐츠 등록</p>
+                  </Link>
+                  <Link
+                    href="/mypage/dashboard-settings"
+                    className="rounded-2xl border bg-card p-4 hover:border-primary/40 hover:shadow-sm"
+                  >
+                    <div className="flex items-center gap-2">
+                      <LayoutDashboard size={16} className="text-primary" />
+                      <p className="text-sm font-semibold">대시보드 설정</p>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">표시할 위젯을 선택합니다.</p>
                   </Link>
                 </div>
               )}
