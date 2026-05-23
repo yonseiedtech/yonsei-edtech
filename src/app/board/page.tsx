@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import PageHeader from "@/components/ui/page-header";
 import EmptyState from "@/components/ui/empty-state";
+import PageContainer from "@/components/ui/page-container";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isStaffOrAbove } from "@/lib/permissions";
 import type { LucideIcon } from "lucide-react";
@@ -128,8 +129,8 @@ export default function BoardHubPage() {
   );
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-      <div className="mx-auto max-w-6xl px-4">
+    <PageContainer width="wide">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
         {/* ── 페이지 헤더 ── */}
         <PageHeader
           icon={MessageSquare}
@@ -233,6 +234,6 @@ export default function BoardHubPage() {
           으로 알려주세요.
         </p>
       </div>
-    </div>
+    </PageContainer>
   );
 }
