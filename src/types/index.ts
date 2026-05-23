@@ -63,3 +63,9 @@ export * from "./ai-forum";
 
 // 시작하기 체크리스트 (운영진 콘솔 편집)
 export * from "./onboarding-checklist";
+
+// P1: 시작하기 체크리스트 마일스톤 배지
+export * from "./onboarding-badge";
+
+// P1: 학습 잔디 외부 가산점 이벤트 (체크리스트·배지)
+export * from "./streak-event";

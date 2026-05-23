@@ -71,6 +71,8 @@ import type {
   StudyAssignmentSubmission,
   StudySessionNote,
   OnboardingChecklistItem,
+  StreakEvent,
+  StreakEventType,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──

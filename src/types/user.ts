@@ -331,6 +331,11 @@ export interface User { [key: string]: unknown;
   undergraduateMajor2IsEducation?: boolean;
   /** 마지막 로그인 시각 (ISO) */
   lastLoginAt?: string;
+  /**
+   * P1: 시작하기 체크리스트 마일스톤 배지 (first-step / halfway / complete).
+   * NewMemberChecklistWidget 가 완료 항목 수에 따라 누적 부여. 멱등 — 이미 포함 시 X.
+   */
+  onboardingBadges?: import("./onboarding-badge").OnboardingBadgeId[];
   createdAt: string;
   updatedAt: string;
 }
