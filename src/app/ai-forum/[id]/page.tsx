@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft, BookOpen, Bot, CheckCircle2, ExternalLink, MessageSquare, Quote } from "lucide-react";
+import { AlertTriangle, BookOpen, Bot, CheckCircle2, ExternalLink, MessageSquare, Quote } from "lucide-react";
+import { BackButton } from "@/components/ui/back-button";
 import {
   getDemoMessagesByForumId,
   getDemoTopicById,
@@ -90,13 +91,7 @@ export default async function AIForumDetailPage({ params }: Props) {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <Link
-        href="/ai-forum"
-        className="mb-6 inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={14} />
-        AI 포럼 목록
-      </Link>
+      <BackButton href="/ai-forum" label="AI 포럼 목록" className="mb-6" />
 
       <header className="mb-8">
         <div className="flex flex-wrap items-center gap-2">
