@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/dialog";
 import PageHeader from "@/components/ui/page-header";
 import EmptyState from "@/components/ui/empty-state";
-import PageContainer from "@/components/layout/PageContainer";
+import PageContainer from "@/components/ui/page-container";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import {
@@ -125,7 +125,7 @@ export default function CoursesPage() {
   return (
     <Suspense
       fallback={
-        <PageContainer variant="wide" py="md" aria-busy={true} aria-label="강의 목록 불러오는 중">
+        <PageContainer width="wide">
           <div className="animate-in fade-in duration-300 space-y-4">
             <div className="flex items-center gap-3">
               <Skeleton className="h-12 w-12 rounded-xl" />
@@ -312,7 +312,7 @@ function CoursesPageInner() {
   }
 
   return (
-    <PageContainer variant="wide" py="md">
+    <PageContainer width="wide">
       <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
         {/* ── 페이지 헤더 ── */}
         <PageHeader

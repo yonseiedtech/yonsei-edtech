@@ -46,7 +46,7 @@ import RegistrationSection from "@/features/seminar/detail/RegistrationSection";
 import AttendanceCertificate from "@/features/seminar/AttendanceCertificate";
 import ShareButton from "@/components/ShareButton";
 import { SeminarEventJsonLd } from "@/components/seo/JsonLd";
-import PageContainer from "@/components/layout/PageContainer";
+import PageContainer from "@/components/ui/page-container";
 import StaffTools from "@/features/seminar/detail/StaffTools";
 import EditDialogs from "@/features/seminar/detail/EditDialogs";
 import type { EditSection, InfoFormData, SpeakersFormData } from "@/features/seminar/detail/EditDialogs";
@@ -457,7 +457,7 @@ function SeminarDetail({ id }: { id: string }) {
   return (
     <>
       <SeminarEventJsonLd seminar={seminar} />
-      <PageContainer variant="wide" py="md">
+      <PageContainer width="wide">
         <div className="mb-4 flex items-center justify-between sm:mb-6">
           <Link
             href="/seminars"

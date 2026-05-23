@@ -10,7 +10,7 @@ import { usePosts } from "@/features/board/useBoard";
 import { formatDate } from "@/lib/utils";
 import { usePageHeader } from "@/features/site-settings/useSiteContent";
 import PageHeader from "@/components/ui/page-header";
-import PageContainer from "@/components/layout/PageContainer";
+import PageContainer from "@/components/ui/page-container";
 import { Separator } from "@/components/ui/separator";
 import EmptyState from "@/components/ui/empty-state";
 
@@ -95,7 +95,7 @@ export default function ActivitiesPage() {
   }, [seminars, posts]);
 
   return (
-    <PageContainer variant="wide" py="md">
+    <PageContainer width="wide">
       <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
         <div className="mx-auto max-w-6xl px-4">
         {/* 페이지 헤더 */}

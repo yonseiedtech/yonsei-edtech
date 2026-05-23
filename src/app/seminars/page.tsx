@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import PageHeader from "@/components/ui/page-header";
-import PageContainer from "@/components/layout/PageContainer";
+import PageContainer from "@/components/ui/page-container";
 import { Plus, Calendar, Search, AlertCircle, List, LayoutGrid, X } from "lucide-react";
 import { usePageHeader } from "@/features/site-settings/useSiteContent";
 import EmptyState from "@/components/ui/empty-state";
@@ -104,7 +104,7 @@ export default function SeminarsPage() {
   ) : null;
 
   return (
-    <PageContainer variant="wide" py="md">
+    <PageContainer width="wide">
       <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
         {/* ── 페이지 헤더 ── */}
         <PageHeader

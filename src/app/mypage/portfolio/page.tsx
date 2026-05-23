@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/ui/page-header";
-import PageContainer from "@/components/layout/PageContainer";
+import PageContainer from "@/components/ui/page-container";
 import {
   Award as AwardIcon,
   Globe,
@@ -235,7 +235,7 @@ function PortfolioContent() {
   if (!viewer) return null;
 
   return (
-    <PageContainer variant="default" py="md">
+    <PageContainer width="default">
       <Link
         href="/mypage"
         className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
