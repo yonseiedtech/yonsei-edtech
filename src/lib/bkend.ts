@@ -70,6 +70,7 @@ import type {
   StudyAssignment,
   StudyAssignmentSubmission,
   StudySessionNote,
+  OnboardingChecklistItem,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -1966,6 +1967,32 @@ export const popupsApi = {
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<SitePopup>("site_popups", id, data),
   delete: (id: string) => dataApi.delete("site_popups", id),
+};
+
+// ── Onboarding Checklist (시작하기 체크리스트 — 운영진 콘솔 편집) ──
+// 대시보드 NewMemberChecklistWidget 가 listEnabled() 로 fetch.
+// 모든 사용자(비로그인 포함) read 허용, write 는 firestore.rules 에서 staff+ 게이트.
+export const onboardingChecklistApi = {
+  /** 전체 목록 (콘솔용) — order asc */
+  list: () =>
+    dataApi.list<OnboardingChecklistItem>("onboarding_checklist", {
+      sort: "order:asc",
+      limit: 200,
+    }),
+  /** 위젯 노출용 — enabled=true 만, order asc */
+  listEnabled: () =>
+    dataApi.list<OnboardingChecklistItem>("onboarding_checklist", {
+      "filter[enabled]": "true",
+      sort: "order:asc",
+      limit: 200,
+    }),
+  get: (id: string) =>
+    dataApi.get<OnboardingChecklistItem>("onboarding_checklist", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<OnboardingChecklistItem>("onboarding_checklist", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<OnboardingChecklistItem>("onboarding_checklist", id, data),
+  delete: (id: string) => dataApi.delete("onboarding_checklist", id),
 };
 
 // ── Grad Life Positions (대학원 생활 활동 이력 — 전공대표·조교·학회 운영진) ──

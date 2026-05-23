@@ -1,20 +1,31 @@
 "use client";
 
 /**
- * NewMemberChecklistWidget — Phase C 신규 회원 6단계 체크리스트.
+ * NewMemberChecklistWidget — 신규 회원 시작하기 체크리스트.
+ *
+ * 항목은 운영진이 /console/onboarding-checklist 에서 편집하는
+ * Firestore onboarding_checklist 컬렉션에서 fetch (enabled=true, order asc).
+ * 항목이 0개이면 위젯 자체를 숨김.
  *
  * 노출 조건 (OR):
  *  - 가입 후 30일 이내 (user.createdAt 기준)
- *  - 프로필 완성도 < 60% (6단계 중 4개 미만 완료)
+ *  - 프로필 완성도 < 60%
+ *  - 모든 항목 완료 시 자동 숨김
  *
- * 5개 체크 항목 (프로필 사진 제거 — 2026-05-23 사용자 요청):
- *  1) 자기소개 작성       (user.bio)
- *  2) 관심 분야 선택      (researchInterests OR interestKeywords 1개 이상)
- *  3) 학술활동 둘러보기   (localStorage 방문 기록)
- *  4) 세미나 1회 출석     (attendeesApi.listByUser, checkedIn=true 1건+)
- *  5) 아카이브 즐겨찾기 1편 (archiveFavoritesApi.listByUser 1건+)
+ * 항목별 completionType 평가:
+ *  - profile.bio                 → user.bio 존재
+ *  - profile.researchInterests   → researchInterests/interestKeywords 1개+
+ *  - profile.image               → user.photoURL 존재
+ *  - visited.activities          → localStorage(visited_activities) OR participations 1건+
+ *  - visited.archive             → localStorage(visited_archive)
+ *  - visited.research            → localStorage(visited_research)
+ *  - attended.seminar            → seminar_attendees checkedIn=true 1건+
+ *  - favorited.archive           → archive_favorites 1건+
+ *  - participated.activity       → activity_participations 1건+
+ *  - submitted.research          → research_reports 1건+
+ *  - wrote.lectureReview         → course_reviews 1건+
  *
- * UI: 가로 progress bar (N/5) + 미완료 항목 클릭 시 해당 페이지로 이동.
+ * UI: 가로 progress bar (N/total) + 미완료 항목 클릭 시 해당 페이지로 이동.
  * 데이터 fetching: React Query staleTime 5분.
  */
 
@@ -30,23 +41,59 @@ import {
   Users as UsersIcon,
   CalendarCheck,
   Star,
+  Camera,
+  BookOpen,
+  FileText,
+  GraduationCap,
   X,
+  type LucideIcon,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { attendeesApi, archiveFavoritesApi, activityParticipationsApi } from "@/lib/bkend";
-import type { SeminarAttendee, ArchiveFavorite, ActivityParticipation } from "@/types";
+import {
+  attendeesApi,
+  archiveFavoritesApi,
+  activityParticipationsApi,
+  onboardingChecklistApi,
+  researchReportsApi,
+  courseReviewsApi,
+} from "@/lib/bkend";
+import type {
+  SeminarAttendee,
+  ArchiveFavorite,
+  ActivityParticipation,
+  ChecklistCompletionType,
+  ChecklistIcon,
+  OnboardingChecklistItem,
+  ResearchReport,
+  CourseReview,
+} from "@/types";
 import WidgetCard from "@/components/ui/widget-card";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 const COMPLETION_THRESHOLD = 0.6; // 60%
 const ACTIVITY_VISIT_KEY = "yedu_onboarding_visited_activities";
+const ARCHIVE_VISIT_KEY = "yedu_onboarding_visited_archive";
+const RESEARCH_VISIT_KEY = "yedu_onboarding_visited_research";
 const DISMISS_KEY_PREFIX = "yedu_new_member_checklist_dismissed";
 
-interface ChecklistItem {
-  key: string;
+const ICON_MAP: Record<ChecklistIcon, LucideIcon> = {
+  PenSquare,
+  Heart,
+  Users: UsersIcon,
+  CalendarCheck,
+  Star,
+  Camera,
+  BookOpen,
+  FileText,
+  GraduationCap,
+  Sparkles,
+};
+
+interface ResolvedItem {
+  id: string;
   label: string;
   href: string;
-  icon: typeof Star;
+  icon: LucideIcon;
   completed: boolean;
 }
 
@@ -95,47 +142,87 @@ function useLocalBoolean(key: string): boolean {
 export default function NewMemberChecklistWidget() {
   const { user } = useAuthStore();
   const userId = user?.id;
-  // useSyncExternalStore 로 localStorage 를 외부 스토어로 구독 — set-state-in-effect 회피.
+  // 방문 기록 localStorage 키 3종 구독
   const activityVisited = useLocalBoolean(ACTIVITY_VISIT_KEY);
+  const archiveVisited = useLocalBoolean(ARCHIVE_VISIT_KEY);
+  const researchVisited = useLocalBoolean(RESEARCH_VISIT_KEY);
   const dismissedKey = userId ? `${DISMISS_KEY_PREFIX}.${userId}` : `${DISMISS_KEY_PREFIX}.__none__`;
   const dismissedStored = useLocalBoolean(dismissedKey);
-  // 클릭 시 즉시 닫히도록 in-memory override 도 유지.
   const [dismissedOverride, setDismissedOverride] = useState<boolean>(false);
   const dismissed = dismissedStored || dismissedOverride;
-  // 가입 30일 이내 판정용 — lazy initializer 로 마운트 시점 1회 캡처.
-  // 렌더 중 Date.now() 호출이 아니므로 react-hooks/purity 규칙을 위반하지 않는다.
   const [nowMs] = useState<number>(() => (typeof window === "undefined" ? 0 : Date.now()));
 
-  // 세미나 출석 이력 1건 이상 여부
+  // 콘솔에서 편집된 체크리스트 항목 (enabled=true, order asc)
+  const { data: checklistRes } = useQuery({
+    queryKey: ["onboarding-checklist", "enabled"],
+    queryFn: () => onboardingChecklistApi.listEnabled(),
+    staleTime: 5 * 60_000,
+  });
+  const configItems = useMemo(
+    () => (checklistRes?.data ?? []) as OnboardingChecklistItem[],
+    [checklistRes],
+  );
+
+  // 완료조건별 fetch 필요 여부 계산 — 불필요한 쿼리는 enabled=false 로 차단
+  const needs = useMemo(() => {
+    const set = new Set(configItems.map((it) => it.completionType));
+    return {
+      seminar: set.has("attended.seminar"),
+      favorite: set.has("favorited.archive"),
+      participation:
+        set.has("participated.activity") || set.has("visited.activities"),
+      researchReport: set.has("submitted.research"),
+      lectureReview: set.has("wrote.lectureReview"),
+    };
+  }, [configItems]);
+
   const { data: attendeesRes } = useQuery({
     queryKey: ["onboarding-checklist", "seminar-attendees", userId],
     queryFn: async () => {
       if (!userId) return { data: [] as SeminarAttendee[], total: 0 };
       return attendeesApi.listByUser(userId);
     },
-    enabled: !!userId,
+    enabled: !!userId && needs.seminar,
     staleTime: 5 * 60_000,
   });
 
-  // 아카이브 즐겨찾기 1건 이상 여부
   const { data: favoritesRes } = useQuery({
     queryKey: ["onboarding-checklist", "archive-favorites", userId],
     queryFn: async () => {
       if (!userId) return { data: [] as ArchiveFavorite[], total: 0 };
       return archiveFavoritesApi.listByUser(userId);
     },
-    enabled: !!userId,
+    enabled: !!userId && needs.favorite,
     staleTime: 5 * 60_000,
   });
 
-  // 학술활동 참여 1건 이상 여부 (참여 안 했어도 둘러보기 localStorage 로도 인정)
   const { data: participationsRes } = useQuery({
     queryKey: ["onboarding-checklist", "activity-participations", userId],
     queryFn: async () => {
       if (!userId) return { data: [] as ActivityParticipation[], total: 0 };
       return activityParticipationsApi.listByUser(userId);
     },
-    enabled: !!userId,
+    enabled: !!userId && needs.participation,
+    staleTime: 5 * 60_000,
+  });
+
+  const { data: researchReportRes } = useQuery({
+    queryKey: ["onboarding-checklist", "research-reports", userId],
+    queryFn: async () => {
+      if (!userId) return { data: [] as ResearchReport[], total: 0 };
+      return researchReportsApi.listByUser(userId);
+    },
+    enabled: !!userId && needs.researchReport,
+    staleTime: 5 * 60_000,
+  });
+
+  const { data: lectureReviewRes } = useQuery({
+    queryKey: ["onboarding-checklist", "lecture-reviews", userId],
+    queryFn: async () => {
+      if (!userId) return { data: [] as CourseReview[], total: 0 };
+      return courseReviewsApi.listByAuthor(userId);
+    },
+    enabled: !!userId && needs.lectureReview,
     staleTime: 5 * 60_000,
   });
 
@@ -149,40 +236,89 @@ export default function NewMemberChecklistWidget() {
     return list.length > 0;
   }, [favoritesRes]);
 
-  const hasActivityEngagement = useMemo(() => {
+  const hasParticipation = useMemo(() => {
     const list = (participationsRes?.data ?? []) as ActivityParticipation[];
-    if (list.length > 0) return true;
-    return activityVisited;
-  }, [participationsRes, activityVisited]);
+    return list.length > 0;
+  }, [participationsRes]);
 
-  const items: ChecklistItem[] = useMemo(() => {
+  const hasResearchReport = useMemo(() => {
+    const list = (researchReportRes?.data ?? []) as ResearchReport[];
+    return list.length > 0;
+  }, [researchReportRes]);
+
+  const hasLectureReview = useMemo(() => {
+    const list = (lectureReviewRes?.data ?? []) as CourseReview[];
+    return list.length > 0;
+  }, [lectureReviewRes]);
+
+  /** completionType 별 평가 — switch case. */
+  function evalCompletion(type: ChecklistCompletionType): boolean {
+    if (!user) return false;
+    switch (type) {
+      case "profile.bio":
+        return Boolean(user.bio && user.bio.trim().length > 0);
+      case "profile.researchInterests": {
+        const interests = Array.isArray(user.researchInterests) ? user.researchInterests : [];
+        const kw = Array.isArray(user.interestKeywords) ? user.interestKeywords : [];
+        return interests.length >= 1 || kw.length >= 1;
+      }
+      case "profile.image": {
+        const photo = (user as { photoURL?: string | null }).photoURL;
+        return Boolean(photo && photo.trim().length > 0);
+      }
+      case "visited.activities":
+        return activityVisited || hasParticipation;
+      case "visited.archive":
+        return archiveVisited;
+      case "visited.research":
+        return researchVisited;
+      case "attended.seminar":
+        return hasAttendedSeminar;
+      case "favorited.archive":
+        return hasFavoriteArchive;
+      case "participated.activity":
+        return hasParticipation;
+      case "submitted.research":
+        return hasResearchReport;
+      case "wrote.lectureReview":
+        return hasLectureReview;
+      default:
+        return false;
+    }
+  }
+
+  const items: ResolvedItem[] = useMemo(() => {
     if (!user) return [];
-    const hasBio = Boolean(user.bio && user.bio.trim().length > 0);
-    const interests = Array.isArray(user.researchInterests) ? user.researchInterests : [];
-    const interestKw = Array.isArray(user.interestKeywords) ? user.interestKeywords : [];
-    const hasInterests = interests.length >= 1 || interestKw.length >= 1;
-
-    return [
-      { key: "bio", label: "자기소개 작성", href: "/mypage/edit", icon: PenSquare, completed: hasBio },
-      { key: "interests", label: "관심 분야 선택", href: "/mypage/edit", icon: Heart, completed: hasInterests },
-      { key: "activities", label: "학술활동 둘러보기", href: "/activities", icon: UsersIcon, completed: hasActivityEngagement },
-      { key: "seminar", label: "세미나 1회 출석", href: "/seminars", icon: CalendarCheck, completed: hasAttendedSeminar },
-      { key: "favorite", label: "아카이브 즐겨찾기 1편", href: "/archive", icon: Star, completed: hasFavoriteArchive },
-    ];
-  }, [user, hasActivityEngagement, hasAttendedSeminar, hasFavoriteArchive]);
+    return configItems.map((c) => ({
+      id: c.id,
+      label: c.label,
+      href: c.href,
+      icon: ICON_MAP[c.icon] ?? Sparkles,
+      completed: evalCompletion(c.completionType),
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    user,
+    configItems,
+    activityVisited,
+    archiveVisited,
+    researchVisited,
+    hasAttendedSeminar,
+    hasFavoriteArchive,
+    hasParticipation,
+    hasResearchReport,
+    hasLectureReview,
+  ]);
 
   const completedCount = items.filter((it) => it.completed).length;
   const total = items.length;
   const progress = total > 0 ? completedCount / total : 0;
 
-  // 노출 조건: 가입 30일 이내 OR 완료율 < 60%
   const shouldShow = useMemo(() => {
     if (!user || dismissed) return false;
     if (items.length === 0) return false;
-    // 모든 항목 완료 시 자동 숨김
     if (completedCount >= total) return false;
     const createdAtMs = parseTimestamp((user as { createdAt?: unknown }).createdAt);
-    // nowMs === 0 (마운트 전) 이면 진척률 조건만으로 판정
     const within30Days =
       createdAtMs != null && nowMs > 0 && nowMs - createdAtMs <= THIRTY_DAYS_MS;
     const lowCompletion = progress < COMPLETION_THRESHOLD;
@@ -242,7 +378,7 @@ export default function NewMemberChecklistWidget() {
           const Icon = it.icon;
           const StatusIcon = it.completed ? CheckCircle2 : Circle;
           return (
-            <li key={it.key}>
+            <li key={it.id}>
               {it.completed ? (
                 <div
                   className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted-foreground"

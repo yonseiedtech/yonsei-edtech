@@ -17,7 +17,7 @@ import {
   BarChart3 as BarChart3Icon, PenLine,
   Settings, MessageCircle, ScrollText, ChevronDown, ChevronRight,
   ShieldCheck, Megaphone, CalendarDays, MessageSquareQuote, Images, ClipboardCheck, Workflow, LayoutGrid,
-  UserPlus,
+  UserPlus, ListChecks,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -195,6 +195,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
         { href: "/console/settings", label: "사이트 설정", icon: Settings },
         { href: "/console/academic-calendar", label: "학사일정", icon: CalendarDays },
         { href: "/console/popups", label: "팝업 공지", icon: Megaphone },
+        { href: "/console/onboarding-checklist", label: "신규 회원 체크리스트", icon: ListChecks },
         { href: "/console/ai", label: "챗봇 설정", icon: MessageCircle },
         { href: "/console/agents", label: "AI 에이전트 관리", icon: ShieldCheck },
         { href: "/console/agent-workflows", label: "에이전트 워크플로우", icon: Workflow },

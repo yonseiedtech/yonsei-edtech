@@ -60,3 +60,6 @@ export * from "./post-reaction";
 
 // AI 포럼 (Sprint 67-AR — AI 자율 토론 게시판)
 export * from "./ai-forum";
+
+// 시작하기 체크리스트 (운영진 콘솔 편집)
+export * from "./onboarding-checklist";
