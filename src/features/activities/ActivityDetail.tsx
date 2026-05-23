@@ -22,7 +22,7 @@ import {
   Plus, Trash2, ListChecks, Timer, UserCog,
   ChevronDown, ChevronUp, ChevronRight,
   Upload, Paperclip, FileText, Download, CalendarPlus,
-  MessageSquare, MessageSquareQuote, HeartHandshake, BarChart3, Search,
+  MessageSquare, MessageSquareQuote, HeartHandshake, BarChart3, Search, Presentation,
 } from "lucide-react";
 import InlineMeetingTimer from "./InlineMeetingTimer";
 import ActivityConnectedTodos from "./ActivityConnectedTodos";
@@ -821,6 +821,12 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                           className="inline-flex items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50/50 px-3 py-1.5 text-xs font-medium text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200"
                         >
                           <HeartHandshake size={14} /> 봉사자 운영
+                        </Link>
+                        <Link
+                          href={`/console/academic/external/${activityId}/speakers`}
+                          className="inline-flex items-center gap-1.5 rounded-md border border-violet-300 bg-violet-50/50 px-3 py-1.5 text-xs font-medium text-violet-800 hover:bg-violet-100 dark:border-violet-800 dark:bg-violet-950/30 dark:text-violet-200"
+                        >
+                          <Presentation size={14} /> 발표자 운영
                         </Link>
                         <Link
                           href={`/console/academic/external/${activityId}/session-analytics`}

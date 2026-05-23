@@ -839,6 +839,13 @@ service cloud.firestore {
       allow create, update, delete: if isAuthenticated() && isStaffOrAbove();
     }
 
+    // ─── 학술대회 발표자 운영 — Phase 1 ───
+    // 운영진(staff+) read/write. volunteer_assignments 규칙 미러.
+    match /speaker_assignments/{docId} {
+      allow read: if isAuthenticated() && isStaffOrAbove();
+      allow write: if isAuthenticated() && isStaffOrAbove();
+    }
+
     // QA-H1: 아쉬운 점 (regrets) 별도 collection — 본인 + 운영진만 read.
     // 일반 conference_attendee_reviews 와 같은 ID ({userId}_{activityId}) 로 매칭.
     match /conference_attendee_review_regrets/{docId} {

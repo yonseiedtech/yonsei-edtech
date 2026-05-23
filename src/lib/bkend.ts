@@ -26,6 +26,7 @@ import {
   limit as firestoreLimit,
   serverTimestamp,
   Timestamp,
+  FieldValue,
   arrayUnion,
   arrayRemove,
   increment,
@@ -60,6 +61,8 @@ import type {
   ConferenceAttendeeReviewRegrets,
   VolunteerAssignment,
   VolunteerDuty,
+  SpeakerAssignment,
+  SpeakerPrepTask,
   PostReaction,
   PostReactionType,
   StudySessionReflection,
@@ -199,12 +202,20 @@ export const authApi = {
 
 type QueryParams = Record<string, string | number | undefined>;
 
-/** Recursively strip `undefined` values — Firestore rejects undefined at any nesting level. */
+/** Recursively strip `undefined` values — Firestore rejects undefined at any nesting level.
+ *  FieldValue 인스턴스(deleteField/serverTimestamp/arrayUnion/arrayRemove/increment 등)는
+ *  Firestore sentinel 이므로 절대 분해하지 않고 그대로 통과시킨다. */
 function stripUndefinedDeep<T>(value: T): T {
   if (Array.isArray(value)) {
     return value.map((v) => stripUndefinedDeep(v)) as unknown as T;
   }
-  if (value && typeof value === "object" && !(value instanceof Date) && !(value instanceof Timestamp)) {
+  if (
+    value &&
+    typeof value === "object" &&
+    !(value instanceof Date) &&
+    !(value instanceof Timestamp) &&
+    !(value instanceof FieldValue)
+  ) {
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
       if (v === undefined) continue;
@@ -926,6 +937,69 @@ export const volunteerAssignmentsApi = {
     });
   },
   delete: (id: string) => dataApi.delete("volunteer_assignments", id),
+};
+
+// ── 학술대회 발표자 운영 — Phase 1 ──
+// volunteerAssignmentsApi 와 동일 시그니처. prepTasks 변이는 mutateTasks 트랜잭션 사용.
+export const speakerAssignmentsApi = {
+  listByActivity: (activityId: string) =>
+    // 복합 인덱스 회피: filter[activityId] 만
+    dataApi.list<SpeakerAssignment>("speaker_assignments", {
+      "filter[activityId]": activityId,
+      limit: 500,
+    }),
+  listByUser: (userId: string) =>
+    dataApi.list<SpeakerAssignment>("speaker_assignments", {
+      "filter[userId]": userId,
+      limit: 500,
+    }),
+  get: (id: string) =>
+    dataApi.get<SpeakerAssignment>("speaker_assignments", id),
+  upsert: async (
+    id: string,
+    data: Record<string, unknown>,
+  ): Promise<SpeakerAssignment> => {
+    const ref = doc(db, "speaker_assignments", id);
+    const cleaned = stripUndefinedDeep(data);
+    const existing = await getDoc(ref);
+    const isNew = !existing.exists();
+    await setDoc(
+      ref,
+      {
+        ...cleaned,
+        ...(isNew ? { createdAt: serverTimestamp() } : {}),
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true },
+    );
+    const snap = await getDoc(ref);
+    return serializeDoc(snap) as unknown as SpeakerAssignment;
+  },
+  /**
+   * prepTasks 배열을 Firestore 트랜잭션으로 원자적 수정.
+   * mutator 는 항상 최신 prepTasks 를 받으므로, prop 으로 받은 stale tasks 를
+   * 통째로 덮어쓸 때 발생하는 lost update(동시 편집 시 임무 유실)를 방지한다.
+   */
+  mutateTasks: async (
+    id: string,
+    mutator: (current: SpeakerPrepTask[]) => SpeakerPrepTask[],
+  ): Promise<void> => {
+    const ref = doc(db, "speaker_assignments", id);
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists()) throw new Error("배정을 찾을 수 없습니다.");
+      const current = (snap.data().prepTasks as SpeakerPrepTask[]) ?? [];
+      const next = mutator(current);
+      tx.update(
+        ref,
+        stripUndefinedDeep({
+          prepTasks: next,
+          updatedAt: serverTimestamp(),
+        }),
+      );
+    });
+  },
+  delete: (id: string) => dataApi.delete("speaker_assignments", id),
 };
 
 // ── 게시글 공감 reaction (Sprint 67-AO) ──
