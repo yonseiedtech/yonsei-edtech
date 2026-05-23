@@ -73,6 +73,7 @@ import type {
   OnboardingChecklistItem,
   StreakEvent,
   StreakEventType,
+  UserFeedback,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -2458,4 +2459,25 @@ export const streakEventsApi = {
       occurredAt: now.toISOString(),
     });
   },
+};
+
+// ─────────────────────────────────────────────────────────────
+// userFeedbackApi — 사용자 피드백 수집
+// write: 인증 사용자 (본인 userId) — 비로그인 anonymous 포함
+// list: 운영진(staff+) 전용
+// ─────────────────────────────────────────────────────────────
+export const userFeedbackApi = {
+  create: (data: Omit<UserFeedback, "id">) =>
+    dataApi.create<UserFeedback>("user_feedback", data as unknown as Record<string, unknown>),
+  list: () =>
+    dataApi.list<UserFeedback>("user_feedback", {
+      sort: "createdAt:desc",
+      limit: 500,
+    }),
+  update: (id: string, data: Partial<UserFeedback>) =>
+    dataApi.update<UserFeedback>(
+      "user_feedback",
+      id,
+      data as unknown as Record<string, unknown>,
+    ),
 };

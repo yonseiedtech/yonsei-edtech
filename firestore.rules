@@ -1097,5 +1097,19 @@ service cloud.firestore {
       allow delete: if isAuthenticated()
         && (resource.data.userId == request.auth.uid || isStaffOrAbove());
     }
+
+    // ─── User Feedback ───
+    // write: 인증 사용자 — 본인 userId 로 제출 (익명은 userId 필드 없이 create)
+    // read/list: 운영진(staff+) 전용
+    match /user_feedback/{docId} {
+      allow create: if isAuthenticated()
+        && (
+          !("userId" in request.resource.data)
+          || request.resource.data.userId == request.auth.uid
+        );
+      allow read, list: if isAuthenticated() && isStaffOrAbove();
+      allow update: if isAuthenticated() && isStaffOrAbove();
+      allow delete: if isAuthenticated() && isAdmin();
+    }
   }
 }

@@ -11,6 +11,7 @@ import {
   ArrowRight,
   Sparkles,
   ChevronRight,
+  MessageSquare,
 } from "lucide-react";
 import PageContainer from "@/components/ui/page-container";
 import { Badge } from "@/components/ui/badge";
@@ -216,8 +217,32 @@ export default function WhatsNewPage() {
         })}
       </div>
 
+      {/* 피드백 CTA */}
+      <div className="mt-10 rounded-2xl border bg-gradient-to-br from-slate-50 to-slate-100/60 p-6">
+        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-200/80 text-slate-600">
+              <MessageSquare size={18} />
+            </div>
+            <div>
+              <p className="font-semibold text-slate-800">이 기능에 대한 의견이 있으신가요?</p>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                버그 제보, UI 개선 제안, 새 기능 요청을 자유롭게 남겨주세요.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/feedback"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border bg-white/80 px-4 py-2 text-sm font-medium text-foreground shadow-xs transition hover:bg-white hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <MessageSquare size={14} />
+            피드백 남기기
+          </Link>
+        </div>
+      </div>
+
       {/* 하단 — 대시보드로 돌아가기 */}
-      <div className="mt-10 flex justify-center">
+      <div className="mt-6 flex justify-center">
         <Link
           href="/dashboard"
           className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
