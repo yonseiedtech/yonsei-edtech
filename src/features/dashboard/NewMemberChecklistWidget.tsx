@@ -7,15 +7,14 @@
  *  - 가입 후 30일 이내 (user.createdAt 기준)
  *  - 프로필 완성도 < 60% (6단계 중 4개 미만 완료)
  *
- * 6개 체크 항목:
- *  1) 프로필 사진 등록     (user.profileImage)
- *  2) 자기소개 작성       (user.bio)
- *  3) 관심 분야 선택      (researchInterests OR interestKeywords 1개 이상)
- *  4) 학술활동 둘러보기   (localStorage 방문 기록)
- *  5) 세미나 1회 출석     (attendeesApi.listByUser, checkedIn=true 1건+)
- *  6) 아카이브 즐겨찾기 1편 (archiveFavoritesApi.listByUser 1건+)
+ * 5개 체크 항목 (프로필 사진 제거 — 2026-05-23 사용자 요청):
+ *  1) 자기소개 작성       (user.bio)
+ *  2) 관심 분야 선택      (researchInterests OR interestKeywords 1개 이상)
+ *  3) 학술활동 둘러보기   (localStorage 방문 기록)
+ *  4) 세미나 1회 출석     (attendeesApi.listByUser, checkedIn=true 1건+)
+ *  5) 아카이브 즐겨찾기 1편 (archiveFavoritesApi.listByUser 1건+)
  *
- * UI: 가로 progress bar (N/6) + 미완료 항목 클릭 시 해당 페이지로 이동.
+ * UI: 가로 progress bar (N/5) + 미완료 항목 클릭 시 해당 페이지로 이동.
  * 데이터 fetching: React Query staleTime 5분.
  */
 
@@ -26,7 +25,6 @@ import {
   CheckCircle2,
   Circle,
   Sparkles,
-  Camera,
   PenSquare,
   Heart,
   Users as UsersIcon,
@@ -48,7 +46,7 @@ interface ChecklistItem {
   key: string;
   label: string;
   href: string;
-  icon: typeof Camera;
+  icon: typeof Star;
   completed: boolean;
 }
 
@@ -159,14 +157,12 @@ export default function NewMemberChecklistWidget() {
 
   const items: ChecklistItem[] = useMemo(() => {
     if (!user) return [];
-    const hasProfileImage = Boolean(user.profileImage && user.profileImage.trim().length > 0);
     const hasBio = Boolean(user.bio && user.bio.trim().length > 0);
     const interests = Array.isArray(user.researchInterests) ? user.researchInterests : [];
     const interestKw = Array.isArray(user.interestKeywords) ? user.interestKeywords : [];
     const hasInterests = interests.length >= 1 || interestKw.length >= 1;
 
     return [
-      { key: "photo", label: "프로필 사진 등록", href: "/mypage/edit", icon: Camera, completed: hasProfileImage },
       { key: "bio", label: "자기소개 작성", href: "/mypage/edit", icon: PenSquare, completed: hasBio },
       { key: "interests", label: "관심 분야 선택", href: "/mypage/edit", icon: Heart, completed: hasInterests },
       { key: "activities", label: "학술활동 둘러보기", href: "/activities", icon: UsersIcon, completed: hasActivityEngagement },
