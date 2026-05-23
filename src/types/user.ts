@@ -121,6 +121,7 @@ export interface SocialLink {
 }
 
 import type { UserConsents } from "@/lib/legal";
+import type { DashboardLayout } from "@/types/dashboard-layout";
 
 /** Sprint 54·55: 알림 수신 + 피드 노출 설정 (default: 모두 true 로 처리) */
 export interface NotificationPrefs {
@@ -336,6 +337,8 @@ export interface User { [key: string]: unknown;
    * NewMemberChecklistWidget 가 완료 항목 수에 따라 누적 부여. 멱등 — 이미 포함 시 X.
    */
   onboardingBadges?: import("./onboarding-badge").OnboardingBadgeId[];
+  /** D-5: 대시보드 위젯 레이아웃 — Firestore 영구화 (기기간 sync). */
+  dashboardLayout?: DashboardLayout;
   createdAt: string;
   updatedAt: string;
 }

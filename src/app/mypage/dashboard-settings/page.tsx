@@ -13,7 +13,7 @@
  * dashboard/page.tsx 실제 렌더 순서 반영은 D-2b 에서 수행.
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   RefreshCw,
@@ -75,6 +75,8 @@ import {
 } from "@/types/dashboard-layout";
 import {
   saveLayout,
+  saveLayoutWithSync,
+  syncLayoutFromFirestore,
   useDashboardLayout,
   getSortedWidgets,
   reorderWidget,
@@ -304,6 +306,15 @@ function DashboardSettingsContent() {
   const { user } = useAuthStore();
   const layout = useDashboardLayout(user?.id);
 
+  // D-5: 마운트 시 Firestore → localStorage 동기화 (최신 우선)
+  useEffect(() => {
+    if (user?.id) {
+      syncLayoutFromFirestore(user.id).catch(() => {
+        // silent — sync 실패가 UI 를 막지 않음
+      });
+    }
+  }, [user?.id]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, {
@@ -321,14 +332,14 @@ function DashboardSettingsContent() {
 
   async function handleToggle(key: DashboardWidgetKey, checked: boolean) {
     const next = { ...visibility, [key]: checked };
-    saveLayout(user!.id, buildLayoutFromVisibility(next, sorted));
+    await saveLayoutWithSync(user!.id, buildLayoutFromVisibility(next, sorted));
     const { toast } = await import("sonner");
     toast.success("저장됨");
   }
 
   async function handleMove(key: DashboardWidgetKey, direction: "up" | "down") {
     const next = reorderWidget(layout, key, direction);
-    saveLayout(user!.id, next);
+    await saveLayoutWithSync(user!.id, next);
     const { toast } = await import("sonner");
     toast.success(direction === "up" ? "위로 이동" : "아래로 이동");
   }
@@ -342,14 +353,14 @@ function DashboardSettingsContent() {
     if (oldIdx === -1 || newIdx === -1) return;
 
     const reordered = arrayMove(sorted, oldIdx, newIdx);
-    saveLayout(user!.id, buildLayoutFromSortedConfigs(reordered, visibility));
+    await saveLayoutWithSync(user!.id, buildLayoutFromSortedConfigs(reordered, visibility));
     const { toast } = await import("sonner");
     toast.success("순서가 변경됐습니다.");
   }
 
   async function handleMuteToggle(key: DashboardWidgetKey, muted: boolean) {
     const next = setWidgetMuted(layout, key, muted);
-    saveLayout(user!.id, next);
+    await saveLayoutWithSync(user!.id, next);
     const { toast } = await import("sonner");
     toast.info(muted ? "알림 끔" : "알림 켬");
   }
@@ -358,14 +369,14 @@ function DashboardSettingsContent() {
     const all = Object.fromEntries(
       DASHBOARD_WIDGET_KEYS.map((k) => [k, true]),
     ) as Record<DashboardWidgetKey, boolean>;
-    saveLayout(user!.id, buildLayoutFromVisibility(all, sorted));
+    await saveLayoutWithSync(user!.id, buildLayoutFromVisibility(all, sorted));
     const { toast } = await import("sonner");
     toast.success("모든 위젯을 켰습니다.");
   }
 
   async function handleApplyPreset(id: DashboardPresetId) {
-    const layout = buildPresetLayout(id);
-    saveLayout(user!.id, layout);
+    const presetLayout = buildPresetLayout(id);
+    await saveLayoutWithSync(user!.id, presetLayout);
     const { toast } = await import("sonner");
     const meta = DASHBOARD_PRESETS_META[id];
     toast.success(`${meta.label} 프리셋 적용됨`);

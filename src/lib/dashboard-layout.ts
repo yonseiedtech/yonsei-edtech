@@ -7,6 +7,11 @@
  * - getSortedWidgets: order asc 정렬된 위젯 목록 반환 (D-2).
  * - reorderWidget: 위아래 화살표 이동 시 order 재계산 (D-2).
  * - useDashboardLayout: useSyncExternalStore 로 반응형 구독 (SSR 안전).
+ *
+ * D-5 추가:
+ * - loadLayoutFromFirestore: Firestore 에서 layout 읽기.
+ * - saveLayoutWithSync: localStorage + Firestore 양쪽 저장.
+ * - syncLayoutFromFirestore: 로그인 후 Firestore → localStorage 동기화 (최신 우선).
  */
 import { useCallback, useSyncExternalStore } from "react";
 import type {
@@ -23,6 +28,7 @@ import {
 
 const KEY_PREFIX = "yedu_dashboard_layout";
 
+/** localStorage 에서 layout 읽기 (내부·외부 공용). */
 function readLayout(userId: string): DashboardLayout | null {
   if (typeof window === "undefined") return null;
   try {
@@ -32,6 +38,11 @@ function readLayout(userId: string): DashboardLayout | null {
   } catch {
     return null;
   }
+}
+
+/** D-5: localStorage layout 읽기 — syncLayoutFromFirestore 비교에 사용. */
+export function readLayoutInternal(userId: string): DashboardLayout | null {
+  return readLayout(userId);
 }
 
 export function saveLayout(userId: string, layout: DashboardLayout): void {
@@ -170,6 +181,57 @@ export function useIsWidgetMuted(
 ): boolean {
   const layout = useDashboardLayout(userId);
   return isWidgetMuted(layout, key);
+}
+
+// ── D-5 Firestore 동기화 헬퍼 ────────────────────────────────────────────────
+
+/**
+ * D-5: Firestore 에서 dashboardLayout 읽기.
+ * 실패 시 null 반환 (silent) — UI 차단하지 않음.
+ */
+export async function loadLayoutFromFirestore(
+  uid: string,
+): Promise<DashboardLayout | null> {
+  try {
+    const { profilesApi } = await import("@/lib/bkend");
+    const profile = await profilesApi.get(uid);
+    return (profile as { dashboardLayout?: DashboardLayout })?.dashboardLayout ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * D-5: localStorage 즉시 저장 + Firestore 비동기 백업.
+ * Firestore 실패 시 console.error 로그만 남기고 UI 는 계속 동작.
+ */
+export async function saveLayoutWithSync(
+  uid: string,
+  layout: DashboardLayout,
+): Promise<void> {
+  // 1) localStorage 즉시 저장 — UI 반응성 보장
+  saveLayout(uid, layout);
+  // 2) Firestore 비동기 백업 — 실패 silent
+  try {
+    const { profilesApi } = await import("@/lib/bkend");
+    await profilesApi.update(uid, { dashboardLayout: layout });
+  } catch (err) {
+    console.error("[dashboard-layout] firestore sync failed", err);
+  }
+}
+
+/**
+ * D-5: 로그인 후 Firestore → localStorage 동기화 (마스터).
+ * Firestore 의 updatedAt 이 localStorage 보다 최신이면 localStorage 를 덮어씀.
+ * 충돌 해결: latest wins (updatedAt 비교). 한쪽만 있으면 그쪽 사용.
+ */
+export async function syncLayoutFromFirestore(uid: string): Promise<void> {
+  const remote = await loadLayoutFromFirestore(uid);
+  if (!remote) return;
+  const local = readLayoutInternal(uid);
+  if (!local || remote.updatedAt > (local.updatedAt ?? "")) {
+    saveLayout(uid, remote);
+  }
 }
 
 /**
