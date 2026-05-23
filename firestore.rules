@@ -929,6 +929,15 @@ service cloud.firestore {
       allow create, update, delete: if isAuthenticated() && isStaffOrAbove();
     }
 
+    // ─── 교육공학 아카이브 — 기초 용어 가이드 (Phase 1) ───
+    // 변인·연구설계·교수설계·체제이론·측정·학습이론 기초 용어 (~20).
+    // "비슷하지만 다른" 용어 페어를 명시. 공개 게이트 동일 패턴.
+    match /archive_foundation_terms/{docId} {
+      allow read: if resource.data.published == true
+                  || (isAuthenticated() && isStaffOrAbove());
+      allow create, update, delete: if isAuthenticated() && isStaffOrAbove();
+    }
+
     // ─── Archive Favorites (관심 저장) ───
     // 본인만 자신의 즐겨찾기 read/write. ID는 {userId}_{itemType}_{itemId} 형식.
     match /archive_favorites/{docId} {

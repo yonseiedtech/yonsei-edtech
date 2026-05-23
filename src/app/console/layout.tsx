@@ -145,6 +145,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
         { href: "/console/research", label: "연구활동", icon: FlaskConical },
         { href: "/console/archive/research-methods", label: "연구방법 가이드", icon: FlaskConical },
         { href: "/console/archive/statistical-methods", label: "통계방법 가이드", icon: BarChart3Icon },
+        { href: "/console/archive/foundation-terms", label: "기초 용어 가이드", icon: BookOpen },
       ],
     },
     {

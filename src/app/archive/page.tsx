@@ -324,6 +324,31 @@ export default function ArchiveLandingPage() {
           </article>
         </Link>
 
+        {/* ── 기초 용어 가이드 (Phase 1) ── */}
+        <Link
+          href="/archive/foundation-terms"
+          className="group mt-6 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+          aria-label="교육공학 기초 용어 가이드 보기"
+        >
+          <article className="rounded-2xl border-l-4 border-l-slate-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+            <div className="flex items-center gap-4 p-5">
+              <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+                <BookText className="h-5 w-5" aria-hidden />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-lg font-semibold tracking-tight">교육공학 기초 용어 가이드</h2>
+                <p className="text-sm text-muted-foreground">
+                  변인·연구설계·교수설계·체제이론·측정·학습이론 기초 용어와 &ldquo;비슷하지만 다른&rdquo; 용어 페어를 정리합니다.
+                </p>
+              </div>
+              <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">
+                보기
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+              </div>
+            </div>
+          </article>
+        </Link>
+
         {/* ── APA 7판 참고문헌 가이드 ── */}
         <Link
           href="/archive/apa-style"

@@ -2098,6 +2098,40 @@ export const statisticalMethodsApi = {
   delete: (id: string) => dataApi.delete("archive_statistical_methods", id),
 };
 
+// ── 교육공학 아카이브 — 기초 용어 가이드 (Phase 1) ──
+// 변인·연구설계·교수설계·체제이론·측정·학습이론 기초 용어. "비슷하지만 다른" 페어 명시.
+// 공개 페이지는 published=true 만 노출. 운영진(staff+) 은 draft 포함 전체 조회.
+// firestore.rules 의 archive_foundation_terms 와 양쪽에서 검수 게이트 적용.
+import type {
+  FoundationTerm,
+  FoundationTermCategory,
+} from "@/types/foundation-term";
+
+export const foundationTermsApi = {
+  list: () =>
+    dataApi.list<FoundationTerm>("archive_foundation_terms", { limit: 200 }),
+  listPublished: () =>
+    dataApi.list<FoundationTerm>("archive_foundation_terms", {
+      "filter[published]": "true",
+      limit: 200,
+    }),
+  listByCategory: (category: FoundationTermCategory) =>
+    dataApi.list<FoundationTerm>("archive_foundation_terms", {
+      "filter[category]": category,
+      "filter[published]": "true",
+      limit: 200,
+    }),
+  get: (id: string) =>
+    dataApi.get<FoundationTerm>("archive_foundation_terms", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<FoundationTerm>("archive_foundation_terms", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<FoundationTerm>("archive_foundation_terms", id, data),
+  upsert: (id: string, data: Record<string, unknown>) =>
+    dataApi.upsert<FoundationTerm>("archive_foundation_terms", id, data),
+  delete: (id: string) => dataApi.delete("archive_foundation_terms", id),
+};
+
 // ─── 학기별 로드맵 (Sprint 67-AR — 운영진 콘텐츠 관리) ───
 // 회원 read-only (published=true 만), 운영진(staff 이상)이 CRUD.
 import type { RoadmapStage } from "@/types/steppingstone";
