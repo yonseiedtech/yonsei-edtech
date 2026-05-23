@@ -43,7 +43,19 @@ const UserActivityLogView = dynamic(() => import("@/features/insights/UserActivi
   ),
 });
 
-type SubTab = "dashboard" | "report" | "members" | "activity";
+const OperationalKpiSection = dynamic(
+  () => import("@/features/insights/OperationalKpiSection"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 size={24} className="animate-spin text-muted-foreground" />
+      </div>
+    ),
+  },
+);
+
+type SubTab = "dashboard" | "report" | "members" | "activity" | "opkpi";
 
 function InsightsInner() {
   const searchParams = useSearchParams();
@@ -69,12 +81,16 @@ function InsightsInner() {
 
       <Tabs value={active} onValueChange={handleChange}>
         <TabsList>
+          <TabsTrigger value="opkpi">운영 KPI</TabsTrigger>
           <TabsTrigger value="dashboard">실시간 대시보드</TabsTrigger>
           <TabsTrigger value="report">학기 보고서</TabsTrigger>
           <TabsTrigger value="members">회원 보고서</TabsTrigger>
           <TabsTrigger value="activity">활동 로그</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="opkpi" className="mt-4">
+          <OperationalKpiSection />
+        </TabsContent>
         <TabsContent value="dashboard" className="mt-4">
           <AnalyticsView />
         </TabsContent>
