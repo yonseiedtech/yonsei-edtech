@@ -20,6 +20,8 @@ import DailyClassTimelineWidget from "@/features/dashboard/DailyClassTimelineWid
 import MyTodosWidget from "@/features/dashboard/MyTodosWidget";
 import TodayTodosPopup from "@/features/dashboard/TodayTodosPopup";
 import NextActionBanner from "@/features/dashboard/NextActionBanner";
+import TodaySummaryCard from "@/features/dashboard/TodaySummaryCard";
+import StaffPriorityPanel from "@/features/dashboard/StaffPriorityPanel";
 import PushPermissionPrompt from "@/features/dashboard/PushPermissionPrompt";
 import PeerActivityFeed from "@/features/dashboard/PeerActivityFeed";
 import MyAcademicActivitiesWidget from "@/features/dashboard/MyAcademicActivitiesWidget";
@@ -171,8 +173,12 @@ function DashboardContent() {
         />
       </section>
 
-      {/* ── 섹션 2: 다음 액션 배너 (헤더와 본문 위젯 사이 브릿지) ── */}
-      <div className="mx-auto mt-4 max-w-6xl px-4">
+      {/* ── 섹션 2: 다음 액션 배너 + 모바일 오늘 요약 카드 + 운영진 우선순위 패널 ── */}
+      <div className="mx-auto mt-4 max-w-6xl px-4 space-y-3">
+        {/* Codex Phase B: 운영진 홈 모드 — 상단 우선순위 패널 (isStaff 분기) */}
+        {isStaff && <StaffPriorityPanel />}
+        {/* Codex Phase B: 모바일 상단 "오늘 요약" 통합 카드 (sm:hidden — 데스크톱에서는 자체 숨김) */}
+        <TodaySummaryCard />
         <NextActionBanner />
       </div>
 
@@ -388,44 +394,10 @@ function DashboardContent() {
       </section>
 
       {/* ── 섹션 9: 운영진 전용 관리 알림 ── */}
-      {isStaff && (pendingCount > 0 || unansweredCount > 0) && (
-        <section className="mx-auto mt-6 max-w-6xl px-4 pb-8">
-          <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-6 dark:border-amber-800 dark:bg-amber-950/20">
-            <div className="flex items-center gap-2">
-              <Shield size={18} className="text-amber-600 dark:text-amber-400" />
-              <h2 className="font-bold text-amber-800 dark:text-amber-200">관리 알림</h2>
-            </div>
-            <div className="mt-4 space-y-2">
-              {pendingCount > 0 && (
-                <Link
-                  href="/console/members"
-                  className="flex items-center justify-between rounded-xl bg-card px-4 py-3 transition-colors hover:bg-amber-50 dark:hover:bg-amber-950/30"
-                >
-                  <span className="text-sm font-medium">
-                    승인 대기 회원 {pendingCount}명
-                  </span>
-                  <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300">
-                    처리 필요
-                  </Badge>
-                </Link>
-              )}
-              {unansweredCount > 0 && (
-                <Link
-                  href="/console/inquiries"
-                  className="flex items-center justify-between rounded-xl bg-card px-4 py-3 transition-colors hover:bg-amber-50 dark:hover:bg-amber-950/30"
-                >
-                  <span className="text-sm font-medium">
-                    미답변 문의 {unansweredCount}건
-                  </span>
-                  <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300">
-                    답변 필요
-                  </Badge>
-                </Link>
-              )}
-            </div>
-          </div>
-        </section>
-      )}
+      {/* Codex Phase B (중복 제거): 기존 하단 "관리 알림" 섹션은 상단 `StaffPriorityPanel` 로 통합됨.
+       *  - 일반 사용자(isStaff===false): 영향 없음 — 어차피 렌더되지 않았던 영역
+       *  - 운영진: 상단 StaffPriorityPanel 이 같은 데이터(승인 대기 + 미답변 문의)를 더 풍부하게(운영진 todo 포함) 노출.
+       *  - StaffPriorityPanel 자체가 totalPriorityCount===0 일 때 null 반환하므로, 처리할 항목이 없는 운영진도 시각적 노이즈 없음. */}
     </div>
   );
 }

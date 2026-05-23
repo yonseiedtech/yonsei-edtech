@@ -1,19 +1,16 @@
 "use client";
 
+/**
+ * DailyClassTimelineWidget — 대시보드 메인 타임라인 위젯.
+ *
+ * Phase B 단순 분할: DailyGrid / WeeklyGrid / 공통 타입·상수는
+ * `src/features/dashboard/timeline/` 디렉토리로 추출.
+ */
+
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarClock, ChevronLeft, ChevronRight, ExternalLink, Settings, NotebookPen, ListChecks, BookOpen, Users, RotateCcw } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { CalendarClock, ChevronLeft, ChevronRight, Settings, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
@@ -28,168 +25,49 @@ import {
 } from "@/lib/bkend";
 import {
   CLASS_SESSION_MODE_LABELS,
-  COURSE_TODO_TYPE_LABELS,
-  COURSE_TODO_TYPE_COLORS,
   ACTIVITY_PROGRESS_MODE_LABELS,
   type ClassSession,
   type ClassSessionMode,
   type CourseOffering,
   type CourseTodo,
-  type CourseTodoType,
   type Activity,
-  type ActivityType,
   type ActivityProgress,
   type ActivityProgressMode,
 } from "@/types";
 import { inferCurrentSemester } from "@/lib/semester";
-import {
-  parseSchedule,
-  fmtTimeRange,
-  type ParsedSchedule,
-} from "@/lib/courseSchedule";
+import { parseSchedule, fmtTimeRange } from "@/lib/courseSchedule";
 import { cn } from "@/lib/utils";
-
-const DAY_CHARS = ["일", "월", "화", "수", "목", "금", "토"] as const;
-// 주간 그리드는 월~일 7일 (학술활동/스터디가 주말에도 일반 수업처럼 인라인 표시되도록)
-const WEEK_DAY_INDICES = [1, 2, 3, 4, 5, 6, 0] as const;
-
-const DEFAULT_HOUR_START = 17;
-const DEFAULT_HOUR_END = 24; // 24 = 자정 (00:00)
-const ROW_HEIGHT_PX = 64;
-
-const VIEW_STORAGE_KEY = "dashboard.classTimeline.view";
-const HOUR_RANGE_STORAGE_KEY = "dashboard.classTimeline.hourRange";
-type ViewMode = "daily" | "weekly";
-
-function formatHour(h: number): string {
-  if (h === 24) return "00:00";
-  return `${String(h).padStart(2, "0")}:00`;
-}
-
-const MODE_BORDER: Record<ClassSessionMode, string> = {
-  in_person: "border-l-emerald-400 bg-emerald-50/40",
-  zoom: "border-l-blue-400 bg-blue-50/40",
-  assignment: "border-l-amber-400 bg-amber-50/40",
-  cancelled: "border-l-rose-400 bg-rose-50/40",
-  field: "border-l-purple-400 bg-purple-50/40",
-  exam: "border-l-rose-500 bg-rose-50/60",
-};
-
-const MODE_BADGE: Record<ClassSessionMode, string> = {
-  in_person: "bg-emerald-100 text-emerald-700",
-  zoom: "bg-blue-100 text-blue-700",
-  assignment: "bg-amber-100 text-amber-700",
-  cancelled: "bg-rose-100 text-rose-700",
-  field: "bg-purple-100 text-purple-700",
-  exam: "bg-rose-100 text-rose-700",
-};
-
-function ymd(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${dd}`;
-}
-
-/** YYYY-MM-DD + n일 */
-function addDaysYmd(dateStr: string, days: number): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
-  if (!m) return dateStr;
-  const [, y, mo, d] = m;
-  const dt = new Date(Number(y), Number(mo) - 1, Number(d));
-  dt.setDate(dt.getDate() + days);
-  return ymd(dt);
-}
-
-function semesterToTerm(semester: "first" | "second"): "spring" | "fall" {
-  return semester === "first" ? "spring" : "fall";
-}
-
-function pickLatestSession(sessions: ClassSession[]): ClassSession | null {
-  if (sessions.length === 0) return null;
-  return sessions.reduce((a, b) =>
-    new Date(b.updatedAt ?? b.createdAt).getTime() >
-    new Date(a.updatedAt ?? a.createdAt).getTime()
-      ? b
-      : a,
-  );
-}
-
-interface PlacedClass {
-  offering: CourseOffering;
-  parsed: ParsedSchedule;
-  session: ClassSession | null;
-  mode: ClassSessionMode;
-  topPx: number;
-  heightPx: number;
-}
-
-const ACTIVITY_TYPE_PATH: Record<ActivityType, string> = {
-  study: "studies",
-  project: "projects",
-  external: "external",
-};
-
-const ACTIVITY_TYPE_LABEL: Record<ActivityType, string> = {
-  study: "스터디",
-  project: "프로젝트",
-  external: "대외활동",
-};
-
-const ACTIVITY_MODE_BORDER: Record<ActivityProgressMode, string> = {
-  in_person: "border-l-violet-400 bg-violet-50/50",
-  zoom: "border-l-indigo-400 bg-indigo-50/50",
-};
-
-const ACTIVITY_MODE_BADGE: Record<ActivityProgressMode, string> = {
-  in_person: "bg-violet-100 text-violet-700",
-  zoom: "bg-indigo-100 text-indigo-700",
-};
-
-interface PlacedActivity {
-  activity: Activity;
-  progress: ActivityProgress;
-  startMin: number;
-  endMin: number;
-  topPx: number;
-  heightPx: number;
-  isLeader: boolean;
-  mode: ActivityProgressMode;
-}
-
-function parseHHMM(s?: string): number | null {
-  if (!s) return null;
-  const m = /^(\d{1,2}):(\d{2})$/.exec(s.trim());
-  if (!m) return null;
-  const h = Number(m[1]);
-  const mm = Number(m[2]);
-  if (Number.isNaN(h) || Number.isNaN(mm)) return null;
-  return h * 60 + mm;
-}
-
-interface QuickMemoDraft {
-  courseOfferingId: string;
-  courseName: string;
-  date: string;
-  content: string;
-}
-
-interface QuickTodoDraft {
-  courseOfferingId: string;
-  courseName: string;
-  sessionDate: string;
-  type: CourseTodoType;
-  content: string;
-  dueDate: string;
-}
-
-const TODO_TYPE_OPTIONS: CourseTodoType[] = [
-  "assignment",
-  "paper_reading",
-  "paper_writing",
-  "presentation_prep",
-  "other",
-];
+import { DailyGrid } from "./timeline/DailyGrid";
+import { WeeklyGrid } from "./timeline/WeeklyGrid";
+import {
+  HourRangeSettingsDialog,
+  QuickMemoDialog,
+  QuickTodoDialog,
+  type QuickMemoDraft,
+  type QuickTodoDraft,
+} from "./timeline/TimelineDialogs";
+import { FinishedClassPrompts } from "./timeline/FinishedClassPrompts";
+import {
+  ACTIVITY_MODE_BORDER,
+  DAY_CHARS,
+  DEFAULT_HOUR_END,
+  DEFAULT_HOUR_START,
+  HOUR_RANGE_STORAGE_KEY,
+  MODE_BORDER,
+  // MODE_BADGE 는 FinishedClassPrompts.tsx 로 이관
+  ROW_HEIGHT_PX,
+  VIEW_STORAGE_KEY,
+  WEEK_DAY_INDICES,
+  addDaysYmd,
+  formatHour,
+  parseHHMM,
+  pickLatestSession,
+  semesterToTerm,
+  ymd,
+  type PlacedActivity,
+  type PlacedClass,
+  type ViewMode,
+} from "./timeline/types";
 
 export default function DailyClassTimelineWidget() {
   const { user } = useAuthStore();
@@ -941,6 +819,13 @@ export default function DailyClassTimelineWidget() {
       ? `${dateLabel} · ${semesterLabel} · ${hourRangeLabel}`
       : `${weekDates[0]?.getMonth() + 1}/${weekDates[0]?.getDate()} ~ ${weekDates[6]?.getMonth() + 1}/${weekDates[6]?.getDate()} · ${semesterLabel}`;
 
+  // 분할 전부터 dead code 였던 항목들(주간 할 일 영역은 MyTodosWidget 로 이관됨) — 위젯 외부 데이터 인터페이스 보존 목적으로
+  // 데이터 useQuery / 헬퍼는 유지하되, 미사용 식별자 경고는 명시적으로 무력화.
+  void relevantTodos;
+  void incompleteCount;
+  void courseNameById;
+  void toggleWeekTodo;
+
   return (
     <div className="rounded-2xl border bg-card p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1134,115 +1019,37 @@ export default function DailyClassTimelineWidget() {
       {/* 수업 할 일 영역은 대시보드의 "나의 할 일" 위젯으로 통합됨 (MyTodosWidget) */}
 
       {/* 수업 종료 후 메모·할 일 프롬프트 (오늘 뷰에서만) */}
-      {viewMode === "daily" && isViewingToday && finishedToday.length > 0 && (
-        <div className="mt-4 space-y-2">
-          {finishedToday.map(({ offering, parsed }) => {
-            if (dismissedToday[offering.id]) return null;
-            const nextWeekday =
-              parsed.weekdays.length > 0
-                ? DAY_CHARS[parsed.weekdays[0]]
-                : DAY_CHARS[currentTime.getDay()];
-            const nextSession = nextWeekSessionByCourse.get(offering.id);
-            const nextMode: ClassSessionMode = nextSession?.mode ?? "in_person";
-            const isSavingThis = savingNextMode?.startsWith(`${offering.id}__`);
-            return (
-              <div
-                key={offering.id}
-                className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-3"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex-1 text-[13px]">
-                    <p className="font-medium text-emerald-900">
-                      오늘도 <b>{offering.courseName}</b> 수업 들으시느라 고생하셨습니다.
-                    </p>
-                    <p className="text-[11px] text-emerald-800/70">
-                      오늘 수업에 대한 메모 또는 할 일을 남겨둘까요?
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        setMemoDraft({
-                          courseOfferingId: offering.id,
-                          courseName: offering.courseName,
-                          date: actualToday,
-                          content: "",
-                        })
-                      }
-                    >
-                      <NotebookPen size={12} className="mr-1" /> 메모
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        setTodoDraft({
-                          courseOfferingId: offering.id,
-                          courseName: offering.courseName,
-                          sessionDate: actualToday,
-                          type: "assignment",
-                          content: "",
-                          dueDate: addDaysYmd(actualToday, 6),
-                        })
-                      }
-                    >
-                      <ListChecks size={12} className="mr-1" /> 할 일
-                    </Button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setDismissedToday((p) => ({ ...p, [offering.id]: true }))
-                      }
-                      className="rounded-md px-2 text-[11px] text-muted-foreground hover:text-foreground"
-                    >
-                      닫기
-                    </button>
-                  </div>
-                </div>
-
-                {/* 다음주 수업 형태 편집 */}
-                <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-emerald-200/60 pt-2">
-                  <span className="text-[11px] font-medium text-emerald-900">
-                    다음주 {nextWeekday}요일 ({nextWeekDate}) 수업 형태:
-                  </span>
-                  {(["in_person", "zoom", "assignment", "cancelled", "exam"] as ClassSessionMode[]).map(
-                    (m) => {
-                      const active = nextMode === m;
-                      const saving = savingNextMode === `${offering.id}__${m}`;
-                      return (
-                        <button
-                          key={m}
-                          type="button"
-                          disabled={!!isSavingThis}
-                          onClick={() => setNextWeekMode(offering.id, m)}
-                          className={cn(
-                            "rounded-full border px-2.5 py-0.5 text-[10px] transition-colors",
-                            active
-                              ? cn(
-                                  MODE_BADGE[m],
-                                  "border-current/30 ring-1 ring-current/30 font-medium",
-                                )
-                              : "border-emerald-200 bg-card text-emerald-700/70 hover:border-emerald-300 hover:bg-emerald-50",
-                            isSavingThis && !saving && "opacity-50",
-                          )}
-                        >
-                          {saving ? "저장중…" : CLASS_SESSION_MODE_LABELS[m]}
-                        </button>
-                      );
-                    },
-                  )}
-                  {!nextSession && (
-                    <span className="text-[10px] text-emerald-700/60">
-                      (기본: 대면 — 변경하려면 클릭)
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+      {viewMode === "daily" && isViewingToday && (
+        <FinishedClassPrompts
+          finishedToday={finishedToday}
+          dismissedToday={dismissedToday}
+          currentTime={currentTime}
+          nextWeekDate={nextWeekDate}
+          nextWeekSessionByCourse={nextWeekSessionByCourse}
+          savingNextMode={savingNextMode}
+          onMemo={(offering) =>
+            setMemoDraft({
+              courseOfferingId: offering.id,
+              courseName: offering.courseName,
+              date: actualToday,
+              content: "",
+            })
+          }
+          onTodo={(offering) =>
+            setTodoDraft({
+              courseOfferingId: offering.id,
+              courseName: offering.courseName,
+              sessionDate: actualToday,
+              type: "assignment",
+              content: "",
+              dueDate: addDaysYmd(actualToday, 6),
+            })
+          }
+          onDismiss={(offeringId) =>
+            setDismissedToday((p) => ({ ...p, [offeringId]: true }))
+          }
+          onSetNextMode={setNextWeekMode}
+        />
       )}
 
       {/* 하단: 설정 + 내 수강기록 */}
@@ -1264,583 +1071,28 @@ export default function DailyClassTimelineWidget() {
         </Link>
       </div>
 
-      {/* 시간대 설정 Dialog */}
-      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>일간 타임라인 시간대 설정</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <p className="text-xs text-muted-foreground">
-              일간 뷰에서 표시할 시간대를 선택하세요. 설정은 이 브라우저에만 저장됩니다.
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="flex flex-col gap-1 text-xs">
-                <span className="font-medium text-muted-foreground">시작 시간</span>
-                <select
-                  value={hourStart}
-                  onChange={(e) => {
-                    const s = Number(e.target.value);
-                    const newEnd = hourEnd <= s ? Math.min(24, s + 1) : hourEnd;
-                    saveHourRange(s, newEnd);
-                  }}
-                  className="rounded border px-2 py-1.5 text-sm"
-                >
-                  {Array.from({ length: 24 }, (_, i) => i).map((h) => (
-                    <option key={h} value={h}>{formatHour(h)}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex flex-col gap-1 text-xs">
-                <span className="font-medium text-muted-foreground">종료 시간</span>
-                <select
-                  value={hourEnd}
-                  onChange={(e) => saveHourRange(hourStart, Number(e.target.value))}
-                  className="rounded border px-2 py-1.5 text-sm"
-                >
-                  {Array.from({ length: 24 - hourStart }, (_, i) => hourStart + 1 + i).map((h) => (
-                    <option key={h} value={h}>{formatHour(h)}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <button
-              type="button"
-              onClick={() => saveHourRange(DEFAULT_HOUR_START, DEFAULT_HOUR_END)}
-              className="text-[11px] text-muted-foreground underline hover:text-foreground"
-            >
-              기본값(17:00~00:00)으로 되돌리기
-            </button>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setSettingsOpen(false)}>
-              닫기
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* 빠른 메모 Dialog */}
-      <Dialog open={!!memoDraft} onOpenChange={(o) => !o && setMemoDraft(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{memoDraft?.courseName} — 수업 메모</DialogTitle>
-          </DialogHeader>
-          {memoDraft && (
-            <div className="space-y-3">
-              <p className="text-xs text-muted-foreground">
-                {memoDraft.date} 수업에 대한 개인 메모입니다.
-              </p>
-              <textarea
-                value={memoDraft.content}
-                onChange={(e) =>
-                  setMemoDraft({ ...memoDraft, content: e.target.value })
-                }
-                rows={6}
-                autoFocus
-                className="w-full rounded-md border bg-card px-3 py-2 text-sm"
-                placeholder="오늘 수업에서 배운 내용, 느낀 점, 질문 등을 자유롭게 기록하세요."
-              />
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setMemoDraft(null)}>
-              취소
-            </Button>
-            <Button onClick={saveQuickMemo} disabled={savingMemo}>
-              {savingMemo ? "저장 중..." : "저장"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* 빠른 할 일 Dialog */}
-      <Dialog open={!!todoDraft} onOpenChange={(o) => !o && setTodoDraft(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{todoDraft?.courseName} — 할 일 추가</DialogTitle>
-          </DialogHeader>
-          {todoDraft && (
-            <div className="space-y-3">
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="text-xs font-medium text-muted-foreground">유형</span>
-                <div className="flex flex-wrap gap-1">
-                  {TODO_TYPE_OPTIONS.map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setTodoDraft({ ...todoDraft, type: t })}
-                      className={`rounded-md px-2 py-1 text-[11px] ${
-                        todoDraft.type === t
-                          ? COURSE_TODO_TYPE_COLORS[t] + " ring-1 ring-offset-1 ring-primary/40"
-                          : "bg-muted text-muted-foreground hover:bg-muted/80"
-                      }`}
-                    >
-                      {COURSE_TODO_TYPE_LABELS[t]}
-                    </button>
-                  ))}
-                </div>
-              </label>
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="text-xs font-medium text-muted-foreground">내용</span>
-                <Input
-                  value={todoDraft.content}
-                  onChange={(e) =>
-                    setTodoDraft({ ...todoDraft, content: e.target.value })
-                  }
-                  autoFocus
-                  placeholder="예) Dewey 챕터 2 읽기"
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="text-xs font-medium text-muted-foreground">기한 (선택)</span>
-                <Input
-                  type="date"
-                  value={todoDraft.dueDate}
-                  onChange={(e) =>
-                    setTodoDraft({ ...todoDraft, dueDate: e.target.value })
-                  }
-                />
-              </label>
-              <p className="text-[10px] text-muted-foreground">
-                이 할 일은 {todoDraft.sessionDate} 수업({todoDraft.courseName})에 연결됩니다.
-              </p>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setTodoDraft(null)}>
-              취소
-            </Button>
-            <Button onClick={saveQuickTodo} disabled={savingTodo}>
-              {savingTodo ? "저장 중..." : "저장"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Dialog 3종 — TimelineDialogs.tsx 로 분할 */}
+      <HourRangeSettingsDialog
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        hourStart={hourStart}
+        hourEnd={hourEnd}
+        onSave={saveHourRange}
+      />
+      <QuickMemoDialog
+        draft={memoDraft}
+        onChange={setMemoDraft}
+        onClose={() => setMemoDraft(null)}
+        onSave={saveQuickMemo}
+        saving={savingMemo}
+      />
+      <QuickTodoDialog
+        draft={todoDraft}
+        onChange={setTodoDraft}
+        onClose={() => setTodoDraft(null)}
+        onSave={saveQuickTodo}
+        saving={savingTodo}
+      />
     </div>
-  );
-}
-
-/* ───────────── Daily ───────────── */
-
-function DailyGrid({
-  placed,
-  placedActivities,
-  undated,
-  hourRows,
-  totalHeight,
-  nowPx,
-  nowLabel,
-}: {
-  placed: PlacedClass[];
-  placedActivities: PlacedActivity[];
-  undated: { offering: CourseOffering; parsed: ParsedSchedule }[];
-  hourRows: number[];
-  totalHeight: number;
-  nowPx: number | null;
-  nowLabel: string;
-}) {
-  return (
-    <>
-      <div className="mt-4 grid gap-0" style={{ gridTemplateColumns: "44px 1fr" }}>
-        {/* 시간 라벨 */}
-        <div className="relative" style={{ height: totalHeight }}>
-          {hourRows.map((h, i) => (
-            <div
-              key={h}
-              className="absolute right-2 -translate-y-2 text-[11px] font-medium text-muted-foreground"
-              style={{ top: i * ROW_HEIGHT_PX }}
-            >
-              {h === 24 ? "00:00" : `${h}:00`}
-            </div>
-          ))}
-        </div>
-
-        {/* 카드 영역 */}
-        <div
-          className="relative border-l border-muted"
-          style={{ height: totalHeight }}
-        >
-          {hourRows.slice(1).map((h, i) => (
-            <div
-              key={h}
-              className="absolute left-0 right-0 border-t border-dashed border-muted/60"
-              style={{ top: (i + 1) * ROW_HEIGHT_PX }}
-            />
-          ))}
-          {nowPx !== null && (
-            <div
-              className="absolute left-0 right-0 z-10 border-t-2 border-primary/60"
-              style={{ top: nowPx }}
-            >
-              <span className="absolute -top-2 -left-1 h-2 w-2 rounded-full bg-primary" />
-              <span className="absolute -top-2.5 left-2 rounded bg-primary px-1 py-0.5 text-[9px] font-medium tabular-nums text-white">
-                {nowLabel}
-              </span>
-            </div>
-          )}
-          {placed.map(
-            ({ offering: c, parsed, session, mode, topPx, heightPx }) => {
-              const compact = heightPx < 80;
-              const timeLabel = fmtTimeRange(parsed) || c.schedule || "";
-              const isCancelled = mode === "cancelled";
-              return (
-                <Link
-                  key={c.id}
-                  href={`/courses/${c.id}/schedule`}
-                  aria-label={`${c.courseName} 강의 스케줄로 이동`}
-                  className={cn(
-                    "absolute left-3 right-3 block overflow-hidden rounded-2xl border border-l-4 bg-card p-3 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer",
-                    MODE_BORDER[mode],
-                    isCancelled && "opacity-70",
-                  )}
-                  style={{ top: topPx, height: Math.max(heightPx, 64) }}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <p
-                          className={cn(
-                            "truncate text-sm font-semibold",
-                            isCancelled && "line-through text-muted-foreground",
-                          )}
-                        >
-                          {c.courseName}
-                        </p>
-                        <span
-                          className={cn(
-                            "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-                            MODE_BADGE[mode],
-                          )}
-                        >
-                          {CLASS_SESSION_MODE_LABELS[mode]}
-                        </span>
-                      </div>
-                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                        {timeLabel}
-                        {c.professor && ` · ${c.professor}`}
-                        {c.classroom && ` · ${c.classroom}`}
-                      </p>
-                      {!compact && session?.notes && (
-                        <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">
-                          📝 {session.notes}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                      {session?.link && !isCancelled && (
-                        <a
-                          href={session.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="flex items-center gap-1 rounded-md border bg-card px-2 py-1 text-[11px] font-medium text-primary hover:bg-primary/5"
-                        >
-                          입장 <ExternalLink size={11} />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              );
-            },
-          )}
-          {placedActivities.map(({ activity, progress, topPx, heightPx, isLeader, mode }) => {
-            const compact = heightPx < 80;
-            const typePath = ACTIVITY_TYPE_PATH[activity.type];
-            const timeLabel =
-              progress.startTime && progress.endTime
-                ? `${progress.startTime}~${progress.endTime}`
-                : progress.startTime || "";
-            return (
-              <Link
-                key={progress.id}
-                href={`/activities/${typePath}/${activity.id}`}
-                aria-label={`${activity.title} ${progress.week}주차 활동으로 이동`}
-                className={cn(
-                  "absolute left-3 right-3 block overflow-hidden rounded-2xl border border-l-4 bg-card p-3 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/40 cursor-pointer",
-                  ACTIVITY_MODE_BORDER[mode],
-                )}
-                style={{ top: topPx, height: Math.max(heightPx, 64) }}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="shrink-0 rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700">
-                        {ACTIVITY_TYPE_LABEL[activity.type]} · {progress.week}주차
-                      </span>
-                      <p className="truncate text-sm font-semibold">
-                        {activity.title}
-                      </p>
-                      <span
-                        className={cn(
-                          "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-                          ACTIVITY_MODE_BADGE[mode],
-                        )}
-                      >
-                        {ACTIVITY_PROGRESS_MODE_LABELS[mode]}
-                      </span>
-                      {isLeader && (
-                        <span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
-                          운영진
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                      {timeLabel}
-                      {progress.title && ` · ${progress.title}`}
-                    </p>
-                    {!compact && progress.description && (
-                      <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">
-                        {progress.description}
-                      </p>
-                    )}
-                  </div>
-                  <Users size={14} className="shrink-0 text-violet-600" />
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-
-      {undated.length > 0 && (
-        <div className="mt-4 rounded-lg border border-dashed bg-muted/30 p-3 text-xs">
-          <p className="font-medium text-muted-foreground">
-            시간 미정 ({undated.length}개)
-          </p>
-          <ul className="mt-1.5 space-y-1">
-            {undated.map(({ offering }) => (
-              <li
-                key={offering.id}
-                className="flex items-center justify-between gap-2"
-              >
-                <span className="truncate">
-                  {offering.courseName}
-                  {offering.professor && (
-                    <span className="ml-1 text-muted-foreground">
-                      · {offering.professor}
-                    </span>
-                  )}
-                  {offering.schedule && (
-                    <span className="ml-1 text-muted-foreground">
-                      ({offering.schedule})
-                    </span>
-                  )}
-                </span>
-                <Link
-                  href={`/courses/${offering.id}/schedule`}
-                  className="shrink-0 text-primary hover:underline"
-                >
-                  스케줄 →
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-    </>
-  );
-}
-
-/* ───────────── Weekly ───────────── */
-
-function WeeklyGrid({
-  placedWeekly,
-  placedWeeklyActivities,
-  hourRows,
-  totalHeight,
-  actualToday,
-  nowPx,
-  nowLabel,
-  onResetSession,
-}: {
-  placedWeekly: Array<{ date: Date; dayIndex: number; items: PlacedClass[] }>;
-  placedWeeklyActivities: Map<string, PlacedActivity[]>;
-  hourRows: number[];
-  totalHeight: number;
-  actualToday: string;
-  nowPx: number | null;
-  nowLabel: string;
-  onResetSession?: (sessionId: string, label: string) => void;
-}) {
-  const hasAny =
-    placedWeekly.some((d) => d.items.length > 0) ||
-    Array.from(placedWeeklyActivities.values()).some((arr) => arr.length > 0);
-  return (
-    <>
-      <div className="mt-4 overflow-x-auto">
-        <div
-          className="grid min-w-[640px] gap-0"
-          style={{ gridTemplateColumns: `44px repeat(${placedWeekly.length}, 1fr)` }}
-        >
-          {/* 헤더 행 */}
-          <div />
-          {placedWeekly.map(({ date, dayIndex }) => {
-            const isToday = ymd(date) === actualToday;
-            return (
-              <div
-                key={ymd(date)}
-                className={cn(
-                  "border-l border-muted px-2 pb-2 text-center text-[11px]",
-                  isToday ? "font-bold text-primary" : "text-muted-foreground",
-                )}
-              >
-                <div>{DAY_CHARS[dayIndex]}</div>
-                <div className="text-[10px]">
-                  {date.getMonth() + 1}/{date.getDate()}
-                </div>
-              </div>
-            );
-          })}
-
-          {/* 시간 라벨 컬럼 */}
-          <div className="relative" style={{ height: totalHeight }}>
-            {hourRows.map((h, i) => (
-              <div
-                key={h}
-                className="absolute right-2 -translate-y-2 text-[11px] font-medium text-muted-foreground"
-                style={{ top: i * ROW_HEIGHT_PX }}
-              >
-                {h}:00
-              </div>
-            ))}
-          </div>
-
-          {/* 요일 컬럼들 */}
-          {placedWeekly.map(({ date, items }) => {
-            const isToday = ymd(date) === actualToday;
-            const dayActivities = placedWeeklyActivities.get(ymd(date)) ?? [];
-            return (
-              <div
-                key={ymd(date)}
-                className={cn(
-                  "relative border-l border-muted",
-                  isToday && "bg-primary/[0.02]",
-                )}
-                style={{ height: totalHeight }}
-              >
-                {/* 시간 가이드 라인 */}
-                {hourRows.slice(1).map((h, i) => (
-                  <div
-                    key={h}
-                    className="absolute left-0 right-0 border-t border-dashed border-muted/60"
-                    style={{ top: (i + 1) * ROW_HEIGHT_PX }}
-                  />
-                ))}
-                {/* 오늘 컬럼에만 NOW 라인 */}
-                {isToday && nowPx !== null && (
-                  <div
-                    className="absolute left-0 right-0 z-10 border-t-2 border-primary/60"
-                    style={{ top: nowPx }}
-                  >
-                    <span className="absolute -top-2 -left-1 h-2 w-2 rounded-full bg-primary" />
-                    <span className="absolute -top-2.5 left-2 rounded bg-primary px-1 py-0.5 text-[9px] font-medium tabular-nums text-white">
-                      {nowLabel}
-                    </span>
-                  </div>
-                )}
-                {/* 카드들 */}
-                {items.map(({ offering: c, parsed, session, mode, topPx, heightPx }) => {
-                  const isCancelled = mode === "cancelled";
-                  const timeLabel = fmtTimeRange(parsed);
-                  // 변경 기록이 있고 기본(in_person)이 아닐 때 — 1클릭 복원 버튼 노출
-                  const hasOverride = session && session.mode !== "in_person";
-                  return (
-                    <div
-                      key={c.id}
-                      className="absolute left-1 right-1"
-                      style={{ top: topPx, height: Math.max(heightPx, 40) }}
-                    >
-                      <Link
-                        href={`/courses/${c.id}/schedule`}
-                        className={cn(
-                          "block h-full overflow-hidden rounded-md border border-l-4 bg-card p-1.5 text-[10px] shadow-sm transition-shadow hover:shadow",
-                          MODE_BORDER[mode],
-                          isCancelled && "opacity-60",
-                        )}
-                      >
-                        <p
-                          className={cn(
-                            "truncate text-[11px] font-semibold leading-tight",
-                            isCancelled && "line-through text-muted-foreground",
-                          )}
-                        >
-                          {c.courseName}
-                        </p>
-                        <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
-                          {timeLabel}
-                        </p>
-                        {c.classroom && (
-                          <p className="truncate text-[10px] text-muted-foreground">
-                            {c.classroom}
-                          </p>
-                        )}
-                      </Link>
-                      {hasOverride && session && onResetSession && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            onResetSession(
-                              session.id,
-                              `${c.courseName} ${session.date}`,
-                            );
-                          }}
-                          aria-label="변경 기록 삭제 (대면으로 복원)"
-                          title="변경 기록 삭제 — 기본 대면으로 복원"
-                          className="absolute right-0.5 top-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full border border-amber-300 bg-card/95 text-amber-700 shadow-sm hover:bg-amber-50"
-                        >
-                          <RotateCcw size={10} />
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-                {/* 학술활동 진행현황 카드 */}
-                {dayActivities.map(({ activity, progress, topPx, heightPx, isLeader, mode }) => {
-                  const typePath = ACTIVITY_TYPE_PATH[activity.type];
-                  return (
-                    <Link
-                      key={progress.id}
-                      href={`/activities/${typePath}/${activity.id}`}
-                      className={cn(
-                        "absolute left-1 right-1 overflow-hidden rounded-md border border-l-4 bg-card p-1.5 text-[10px] shadow-sm transition-shadow hover:shadow",
-                        ACTIVITY_MODE_BORDER[mode],
-                      )}
-                      style={{ top: topPx, height: Math.max(heightPx, 40) }}
-                    >
-                      <div className="flex items-center gap-1">
-                        <span className="shrink-0 rounded bg-violet-100 px-1 py-0 text-[9px] font-medium text-violet-700">
-                          {ACTIVITY_TYPE_LABEL[activity.type][0]}{progress.week}
-                        </span>
-                        {isLeader && (
-                          <span className="shrink-0 rounded bg-amber-100 px-1 py-0 text-[9px] font-medium text-amber-700">
-                            운영
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-0.5 truncate text-[11px] font-semibold leading-tight">
-                        {activity.title}
-                      </p>
-                      <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
-                        {progress.startTime}~{progress.endTime}
-                      </p>
-                    </Link>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-      {!hasAny && (
-        <p className="mt-4 text-sm text-muted-foreground">
-          이번 주(월~일)에 해당하는 수강과목·학술활동 일정이 없습니다.
-        </p>
-      )}
-    </>
   );
 }
