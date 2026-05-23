@@ -14,6 +14,7 @@ import {
   LayoutDashboard, ClipboardList, MessageSquare, FileText, Newspaper,
   BarChart3, GraduationCap, Wallet, Users, BookUser,
   BookOpen, FlaskConical, FolderKanban, Globe, Award, NotebookPen,
+  BarChart3 as BarChart3Icon,
   Settings, MessageCircle, ScrollText, ChevronDown, ChevronRight,
   ShieldCheck, Megaphone, CalendarDays, MessageSquareQuote, Images, ClipboardCheck, Workflow, LayoutGrid,
   UserPlus,
@@ -143,6 +144,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
       items: [
         { href: "/console/research", label: "연구활동", icon: FlaskConical },
         { href: "/console/archive/research-methods", label: "연구방법 가이드", icon: FlaskConical },
+        { href: "/console/archive/statistical-methods", label: "통계방법 가이드", icon: BarChart3Icon },
       ],
     },
     {

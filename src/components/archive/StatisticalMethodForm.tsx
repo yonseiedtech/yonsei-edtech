@@ -9,30 +9,42 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { researchMethodsApi, alumniThesesApi, statisticalMethodsApi } from "@/lib/bkend";
 import {
-  RESEARCH_METHOD_KIND_LABELS,
-  RESEARCH_METHOD_TOOL_LABELS,
+  statisticalMethodsApi,
+  researchMethodsApi,
+  alumniThesesApi,
+} from "@/lib/bkend";
+import {
   STATISTICAL_METHOD_CATEGORY_LABELS,
-  type ResearchMethod,
-  type ResearchMethodKind,
-  type ResearchMethodAssumption,
-  type ResearchMethodProcedureStep,
-  type ResearchMethodReference,
-  type ResearchMethodToolGuide,
-  type AlumniThesis,
+  RESEARCH_METHOD_KIND_LABELS,
   type StatisticalMethod,
+  type StatisticalMethodCategory,
+  type StatisticalAssumption,
+  type StatisticalProcedureStep,
+  type StatisticalReference,
+  type StatisticalMethodAlternative,
+  type ComparisonProfile,
+  type ResearchMethod,
+  type AlumniThesis,
 } from "@/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 interface Props {
-  initial: ResearchMethod | null;
+  initial: StatisticalMethod | null;
   userId: string;
 }
 
-const KIND_OPTIONS: ResearchMethodKind[] = ["quantitative", "qualitative", "mixed"];
-const TOOL_OPTIONS: ResearchMethodToolGuide[] = ["spss", "amos", "r"];
+const CATEGORY_OPTIONS: StatisticalMethodCategory[] = [
+  "anova_family",
+  "regression",
+  "factor",
+  "sem",
+  "nonparametric",
+  "mediation_moderation",
+  "multilevel",
+  "other",
+];
 
 function newId(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -49,71 +61,77 @@ function lineParse(s: string): string[] | undefined {
   return arr.length > 0 ? arr : undefined;
 }
 
-export default function ResearchMethodForm({ initial, userId }: Props) {
+export default function StatisticalMethodForm({ initial, userId }: Props) {
   const router = useRouter();
   const isEdit = !!initial;
 
   const [name, setName] = useState(initial?.name ?? "");
-  const [kind, setKind] = useState<ResearchMethodKind>(initial?.kind ?? "quantitative");
+  const [category, setCategory] = useState<StatisticalMethodCategory>(
+    initial?.category ?? "anova_family",
+  );
   const [summary, setSummary] = useState(initial?.summary ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
-  const [educationalTechExamples, setEducationalTechExamples] = useState(
-    (initial?.educationalTechExamples ?? []).join("\n"),
+  const [whenToUse, setWhenToUse] = useState(initial?.whenToUse ?? "");
+  const [spssCommand, setSpssCommand] = useState(initial?.spssCommand ?? "");
+  const [amosCommand, setAmosCommand] = useState(initial?.amosCommand ?? "");
+  const [rCommand, setRCommand] = useState(initial?.rCommand ?? "");
+  const [interpretationKeys, setInterpretationKeys] = useState(
+    (initial?.interpretationKeys ?? []).join("\n"),
   );
-  const [strengths, setStrengths] = useState((initial?.strengths ?? []).join("\n"));
-  const [limitations, setLimitations] = useState((initial?.limitations ?? []).join("\n"));
-  const [procedures, setProcedures] = useState<ResearchMethodProcedureStep[]>(
-    initial?.procedures ?? [],
+  const [procedure, setProcedure] = useState<StatisticalProcedureStep[]>(
+    initial?.procedure ?? [],
   );
-  const [assumptions, setAssumptions] = useState<ResearchMethodAssumption[]>(
+  const [assumptions, setAssumptions] = useState<StatisticalAssumption[]>(
     initial?.assumptions ?? [],
   );
-  const [references, setReferences] = useState<ResearchMethodReference[]>(
+  const [references, setReferences] = useState<StatisticalReference[]>(
     initial?.references ?? [],
   );
-  const [relatedToolGuides, setRelatedToolGuides] = useState<ResearchMethodToolGuide[]>(
-    initial?.relatedToolGuides ?? [],
+  const [comparisonProfile, setComparisonProfile] = useState<ComparisonProfile>(
+    initial?.comparisonProfile ?? {},
+  );
+  const [keyAssumptionsText, setKeyAssumptionsText] = useState(
+    (initial?.comparisonProfile?.keyAssumptions ?? []).join("\n"),
+  );
+  const [alternativeMethods, setAlternativeMethods] = useState<StatisticalMethodAlternative[]>(
+    initial?.alternativeMethods ?? [],
+  );
+  const [relatedResearchMethodIds, setRelatedResearchMethodIds] = useState<string[]>(
+    initial?.relatedResearchMethodIds ?? [],
   );
   const [alumniThesisIds, setAlumniThesisIds] = useState<string[]>(
     initial?.alumniThesisIds ?? [],
   );
-  const [statisticalMethodIds, setStatisticalMethodIds] = useState<string[]>(
-    initial?.statisticalMethodIds ?? [],
-  );
   const [published, setPublished] = useState<boolean>(initial?.published ?? false);
 
-  // 졸업생 학위논문 picker
+  // 픽커용 데이터 로드
+  const [allStatisticals, setAllStatisticals] = useState<StatisticalMethod[]>([]);
+  const [researchMethods, setResearchMethods] = useState<ResearchMethod[]>([]);
   const [theses, setTheses] = useState<AlumniThesis[]>([]);
   const [thesisQuery, setThesisQuery] = useState("");
-  const [loadingTheses, setLoadingTheses] = useState(false);
-
-  // 통계방법 picker
-  const [statisticalMethods, setStatisticalMethods] = useState<StatisticalMethod[]>([]);
-  const [statQuery, setStatQuery] = useState("");
-  const [loadingStat, setLoadingStat] = useState(false);
-
+  const [researchQuery, setResearchQuery] = useState("");
+  const [altQuery, setAltQuery] = useState("");
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    setLoadingTheses(true);
-    setLoadingStat(true);
+    setLoading(true);
     (async () => {
       try {
-        const [tRes, sRes] = await Promise.all([
-          alumniThesesApi.list(),
+        const [s, r, t] = await Promise.all([
           statisticalMethodsApi.list(),
+          researchMethodsApi.list(),
+          alumniThesesApi.list(),
         ]);
         if (cancelled) return;
-        setTheses(tRes.data);
-        setStatisticalMethods(sRes.data);
+        setAllStatisticals(s.data);
+        setResearchMethods(r.data);
+        setTheses(t.data);
       } catch (err) {
-        console.error("[ResearchMethodForm] picker data load failed", err);
+        console.error("[StatisticalMethodForm] picker data load failed", err);
       } finally {
-        if (!cancelled) {
-          setLoadingTheses(false);
-          setLoadingStat(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     })();
     return () => {
@@ -125,10 +143,13 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
     () => new Set(alumniThesisIds),
     [alumniThesisIds],
   );
-
-  const selectedStatSet = useMemo(
-    () => new Set(statisticalMethodIds),
-    [statisticalMethodIds],
+  const selectedResearchSet = useMemo(
+    () => new Set(relatedResearchMethodIds),
+    [relatedResearchMethodIds],
+  );
+  const selectedAlternativeSet = useMemo(
+    () => new Set(alternativeMethods.map((a) => a.methodId)),
+    [alternativeMethods],
   );
 
   const filteredTheses = useMemo(() => {
@@ -145,43 +166,62 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
       .slice(0, 30);
   }, [theses, thesisQuery]);
 
-  const filteredStat = useMemo(() => {
-    const q = statQuery.trim().toLowerCase();
-    if (!q) return statisticalMethods.slice(0, 50);
-    return statisticalMethods
+  const filteredResearchMethods = useMemo(() => {
+    const q = researchQuery.trim().toLowerCase();
+    if (!q) return researchMethods.slice(0, 50);
+    return researchMethods
+      .filter((m) => {
+        const hay = [m.name, m.summary].filter(Boolean).join(" ").toLowerCase();
+        return hay.includes(q);
+      })
+      .slice(0, 50);
+  }, [researchMethods, researchQuery]);
+
+  const filteredAltCandidates = useMemo(() => {
+    // 자기 자신 제외
+    const candidates = allStatisticals.filter((s) => s.id !== initial?.id);
+    const q = altQuery.trim().toLowerCase();
+    if (!q) return candidates.slice(0, 50);
+    return candidates
       .filter((s) => {
         const hay = [s.name, s.summary].filter(Boolean).join(" ").toLowerCase();
         return hay.includes(q);
       })
       .slice(0, 50);
-  }, [statisticalMethods, statQuery]);
+  }, [allStatisticals, altQuery, initial?.id]);
 
   function toggleThesis(id: string) {
     setAlumniThesisIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   }
-
-  function toggleStat(id: string) {
-    setStatisticalMethodIds((prev) =>
+  function toggleResearch(id: string) {
+    setRelatedResearchMethodIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   }
-
-  function toggleTool(t: ResearchMethodToolGuide) {
-    setRelatedToolGuides((prev) =>
-      prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t],
+  function toggleAlternative(methodId: string) {
+    setAlternativeMethods((prev) => {
+      if (prev.some((a) => a.methodId === methodId)) {
+        return prev.filter((a) => a.methodId !== methodId);
+      }
+      return [...prev, { methodId, reason: "" }];
+    });
+  }
+  function updateAlternativeReason(methodId: string, reason: string) {
+    setAlternativeMethods((prev) =>
+      prev.map((a) => (a.methodId === methodId ? { ...a, reason } : a)),
     );
   }
 
   function addProcedure() {
-    setProcedures((prev) => [...prev, { id: newId(), step: "", detail: "" }]);
+    setProcedure((prev) => [...prev, { id: newId(), step: "", detail: "" }]);
   }
-  function updateProcedure(id: string, patch: Partial<ResearchMethodProcedureStep>) {
-    setProcedures((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+  function updateProcedure(id: string, patch: Partial<StatisticalProcedureStep>) {
+    setProcedure((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
   }
   function moveProcedure(id: string, dir: -1 | 1) {
-    setProcedures((prev) => {
+    setProcedure((prev) => {
       const idx = prev.findIndex((p) => p.id === id);
       if (idx === -1) return prev;
       const next = idx + dir;
@@ -193,7 +233,7 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
     });
   }
   function removeProcedure(id: string) {
-    setProcedures((prev) => prev.filter((p) => p.id !== id));
+    setProcedure((prev) => prev.filter((p) => p.id !== id));
   }
 
   function addAssumption() {
@@ -202,7 +242,7 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
       { id: newId(), name: "", description: "" },
     ]);
   }
-  function updateAssumption(id: string, patch: Partial<ResearchMethodAssumption>) {
+  function updateAssumption(id: string, patch: Partial<StatisticalAssumption>) {
     setAssumptions((prev) =>
       prev.map((a) => (a.id === id ? { ...a, ...patch } : a)),
     );
@@ -214,7 +254,7 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
   function addReference() {
     setReferences((prev) => [...prev, { id: newId(), title: "" }]);
   }
-  function updateReference(id: string, patch: Partial<ResearchMethodReference>) {
+  function updateReference(id: string, patch: Partial<StatisticalReference>) {
     setReferences((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   }
   function removeReference(id: string) {
@@ -232,7 +272,7 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
     }
     setSaving(true);
     try {
-      const cleanProcedures = procedures
+      const cleanProcedure = procedure
         .filter((p) => p.step.trim())
         .map((p) => ({
           id: p.id,
@@ -259,45 +299,59 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
           year: r.year || undefined,
           url: r.url?.trim() || undefined,
         }));
+      const cleanAlternatives = alternativeMethods
+        .filter((a) => a.methodId)
+        .map((a) => ({ methodId: a.methodId, reason: a.reason.trim() }));
+
+      const keyAssumptionsArr = lineParse(keyAssumptionsText);
+      const cleanComparisonProfile: ComparisonProfile = {
+        focus: comparisonProfile.focus?.trim() || undefined,
+        dependentVariable: comparisonProfile.dependentVariable?.trim() || undefined,
+        independentVariable: comparisonProfile.independentVariable?.trim() || undefined,
+        minSampleSize: comparisonProfile.minSampleSize?.trim() || undefined,
+        keyAssumptions: keyAssumptionsArr,
+        strengthOneliner: comparisonProfile.strengthOneliner?.trim() || undefined,
+        limitationOneliner: comparisonProfile.limitationOneliner?.trim() || undefined,
+      };
+      const hasComparison = Object.values(cleanComparisonProfile).some(
+        (v) => v !== undefined && (Array.isArray(v) ? v.length > 0 : true),
+      );
 
       const payload = {
         name: name.trim(),
-        kind,
+        category,
         summary: summary.trim(),
         description: description.trim() || undefined,
-        educationalTechExamples: lineParse(educationalTechExamples),
-        strengths: lineParse(strengths),
-        limitations: lineParse(limitations),
-        procedures: cleanProcedures.length > 0 ? cleanProcedures : undefined,
+        whenToUse: whenToUse.trim() || undefined,
+        spssCommand: spssCommand.trim() || undefined,
+        amosCommand: amosCommand.trim() || undefined,
+        rCommand: rCommand.trim() || undefined,
+        interpretationKeys: lineParse(interpretationKeys),
+        procedure: cleanProcedure.length > 0 ? cleanProcedure : undefined,
         assumptions: cleanAssumptions.length > 0 ? cleanAssumptions : undefined,
         references: cleanReferences.length > 0 ? cleanReferences : undefined,
-        relatedToolGuides: relatedToolGuides.length > 0 ? relatedToolGuides : undefined,
+        comparisonProfile: hasComparison ? cleanComparisonProfile : undefined,
+        alternativeMethods: cleanAlternatives.length > 0 ? cleanAlternatives : undefined,
+        relatedResearchMethodIds:
+          relatedResearchMethodIds.length > 0 ? relatedResearchMethodIds : undefined,
         alumniThesisIds: alumniThesisIds.length > 0 ? alumniThesisIds : undefined,
-        statisticalMethodIds:
-          statisticalMethodIds.length > 0 ? statisticalMethodIds : undefined,
         published,
         curatedBy: userId,
       };
 
-      let savedId = initial?.id ?? "";
       if (isEdit && initial) {
-        await researchMethodsApi.update(initial.id, payload);
+        await statisticalMethodsApi.update(initial.id, payload);
       } else {
-        const created = await researchMethodsApi.create({
+        await statisticalMethodsApi.create({
           ...payload,
           createdBy: userId,
         });
-        savedId = created.id;
       }
 
       toast.success("저장 완료");
-      router.push(`/console/archive/research-methods`);
-      // 새로 만든 경우, 운영자가 바로 상세 진입하려면 detail 로 보내는 옵션도 가능
-      if (!isEdit && savedId) {
-        // 약간의 지연 후 detail 도 이동 시도 — 운영진 흐름 단순화 위해 목록 우선
-      }
+      router.push(`/console/archive/statistical-methods`);
     } catch (err) {
-      console.error("[ResearchMethodForm] save failed", err);
+      console.error("[StatisticalMethodForm] save failed", err);
       toast.error(err instanceof Error ? err.message : "저장 실패");
     } finally {
       setSaving(false);
@@ -307,10 +361,10 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <Link href="/console/archive/research-methods">
+        <Link href="/console/archive/statistical-methods">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="mr-1 h-4 w-4" />
-            연구방법 목록
+            통계방법 목록
           </Button>
         </Link>
         <Button onClick={handleSave} disabled={saving} size="sm">
@@ -320,30 +374,30 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
       </div>
 
       <h1 className="text-2xl font-bold">
-        {isEdit ? "연구방법 편집" : "새 연구방법"}
+        {isEdit ? "통계방법 편집" : "새 통계방법"}
       </h1>
 
       <Card>
         <CardContent className="space-y-4 py-5">
           <Field label="이름 *">
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="예: 설문조사연구" />
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="예: ANCOVA (공분산분석)" />
           </Field>
-          <Field label="유형 *">
+          <Field label="카테고리 *">
             <div className="flex flex-wrap gap-1.5">
-              {KIND_OPTIONS.map((k) => (
+              {CATEGORY_OPTIONS.map((c) => (
                 <button
-                  key={k}
+                  key={c}
                   type="button"
-                  onClick={() => setKind(k)}
-                  aria-pressed={kind === k}
+                  onClick={() => setCategory(c)}
+                  aria-pressed={category === c}
                   className={cn(
                     "rounded-md border px-3 py-1.5 text-sm transition-colors",
-                    kind === k
+                    category === c
                       ? "border-primary bg-primary text-primary-foreground"
                       : "bg-background hover:bg-muted",
                   )}
                 >
-                  {RESEARCH_METHOD_KIND_LABELS[k]}
+                  {STATISTICAL_METHOD_CATEGORY_LABELS[c]}
                 </button>
               ))}
             </div>
@@ -364,26 +418,12 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
               placeholder="긴 본문 (마크다운/일반 텍스트)"
             />
           </Field>
-          <Field label="교육공학 활용 예 (줄바꿈으로 구분)">
+          <Field label="언제 사용하는가 (whenToUse)">
             <Textarea
               rows={3}
-              value={educationalTechExamples}
-              onChange={(e) => setEducationalTechExamples(e.target.value)}
-              placeholder="예: 학습몰입에 미치는 영향 검증"
-            />
-          </Field>
-          <Field label="강점 (줄바꿈으로 구분)">
-            <Textarea
-              rows={3}
-              value={strengths}
-              onChange={(e) => setStrengths(e.target.value)}
-            />
-          </Field>
-          <Field label="한계/약점 (줄바꿈으로 구분)">
-            <Textarea
-              rows={3}
-              value={limitations}
-              onChange={(e) => setLimitations(e.target.value)}
+              value={whenToUse}
+              onChange={(e) => setWhenToUse(e.target.value)}
+              placeholder="예: 공변량을 통제한 상태에서 집단 간 평균 차이를 검정하고 싶을 때"
             />
           </Field>
         </CardContent>
@@ -393,19 +433,19 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
       <Card>
         <CardContent className="space-y-3 py-5">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold">연구 절차</h2>
+            <h2 className="text-sm font-semibold">분석 절차</h2>
             <Button type="button" variant="outline" size="sm" onClick={addProcedure}>
               <Plus className="mr-1 h-3.5 w-3.5" />
               단계 추가
             </Button>
           </div>
-          {procedures.length === 0 ? (
+          {procedure.length === 0 ? (
             <p className="text-xs text-muted-foreground">
               아직 단계가 없습니다. &quot;단계 추가&quot;를 눌러 절차를 입력하세요.
             </p>
           ) : (
             <div className="space-y-2">
-              {procedures.map((p, i) => (
+              {procedure.map((p, i) => (
                 <div key={p.id} className="rounded-lg border p-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-semibold text-muted-foreground">
@@ -423,7 +463,7 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
                       <button
                         type="button"
                         onClick={() => moveProcedure(p.id, 1)}
-                        disabled={i === procedures.length - 1}
+                        disabled={i === procedure.length - 1}
                         className="rounded border px-2 py-0.5 text-xs disabled:opacity-40"
                       >
                         ↓
@@ -471,7 +511,7 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
           </div>
           {assumptions.length === 0 ? (
             <p className="text-xs text-muted-foreground">
-              가정 항목이 없습니다. 양적 연구의 정규성·등분산성 등 검정 가정을 입력하세요.
+              가정 항목이 없습니다. 정규성·등분산성·구형성 등 검정 가정을 입력하세요.
             </p>
           ) : (
             <div className="space-y-2">
@@ -536,6 +576,312 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
               ))}
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* 도구 구문 + 해석 포인트 */}
+      <Card>
+        <CardContent className="space-y-3 py-5">
+          <h2 className="text-sm font-semibold">도구 구문 · 결과 해석</h2>
+          <Field label="SPSS 구문">
+            <Textarea
+              rows={3}
+              value={spssCommand}
+              onChange={(e) => setSpssCommand(e.target.value)}
+              placeholder="UNIANOVA Y BY GROUP WITH COVARIATE..."
+            />
+          </Field>
+          <Field label="AMOS 구문">
+            <Textarea
+              rows={3}
+              value={amosCommand}
+              onChange={(e) => setAmosCommand(e.target.value)}
+              placeholder="AMOS path 명세 (선택)"
+            />
+          </Field>
+          <Field label="R 구문">
+            <Textarea
+              rows={3}
+              value={rCommand}
+              onChange={(e) => setRCommand(e.target.value)}
+              placeholder="aov(y ~ group + covariate, data=...)"
+            />
+          </Field>
+          <Field label="해석 핵심 포인트 (줄바꿈으로 구분)">
+            <Textarea
+              rows={4}
+              value={interpretationKeys}
+              onChange={(e) => setInterpretationKeys(e.target.value)}
+              placeholder="예: F값·p값 확인&#10;효과크기 (η²) 보고&#10;사후검정 결과 해석"
+            />
+          </Field>
+        </CardContent>
+      </Card>
+
+      {/* 비교 프로파일 */}
+      <Card>
+        <CardContent className="space-y-3 py-5">
+          <h2 className="text-sm font-semibold">비교 프로파일</h2>
+          <p className="text-[11px] text-muted-foreground">
+            상세 페이지의 &quot;대안 통계방법 비교표&quot;에서 행으로 사용됩니다.
+          </p>
+          <Field label="분석 초점 (focus)">
+            <Input
+              value={comparisonProfile.focus ?? ""}
+              onChange={(e) =>
+                setComparisonProfile({ ...comparisonProfile, focus: e.target.value })
+              }
+              placeholder="예: 공변량 통제 후 집단 평균 차이"
+            />
+          </Field>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <Field label="종속변수">
+              <Input
+                value={comparisonProfile.dependentVariable ?? ""}
+                onChange={(e) =>
+                  setComparisonProfile({
+                    ...comparisonProfile,
+                    dependentVariable: e.target.value,
+                  })
+                }
+                placeholder="예: 연속형 1개"
+              />
+            </Field>
+            <Field label="독립변수">
+              <Input
+                value={comparisonProfile.independentVariable ?? ""}
+                onChange={(e) =>
+                  setComparisonProfile({
+                    ...comparisonProfile,
+                    independentVariable: e.target.value,
+                  })
+                }
+                placeholder="예: 범주형 1~K개"
+              />
+            </Field>
+          </div>
+          <Field label="최소 표본 크기">
+            <Input
+              value={comparisonProfile.minSampleSize ?? ""}
+              onChange={(e) =>
+                setComparisonProfile({
+                  ...comparisonProfile,
+                  minSampleSize: e.target.value,
+                })
+              }
+              placeholder="예: 셀당 20명 이상 권장"
+            />
+          </Field>
+          <Field label="핵심 가정 (줄바꿈으로 구분)">
+            <Textarea
+              rows={3}
+              value={keyAssumptionsText}
+              onChange={(e) => setKeyAssumptionsText(e.target.value)}
+              placeholder="예: 정규성&#10;등분산성&#10;공변량과 종속변수 선형성"
+            />
+          </Field>
+          <Field label="강점 (한 줄)">
+            <Input
+              value={comparisonProfile.strengthOneliner ?? ""}
+              onChange={(e) =>
+                setComparisonProfile({
+                  ...comparisonProfile,
+                  strengthOneliner: e.target.value,
+                })
+              }
+            />
+          </Field>
+          <Field label="한계 (한 줄)">
+            <Input
+              value={comparisonProfile.limitationOneliner ?? ""}
+              onChange={(e) =>
+                setComparisonProfile({
+                  ...comparisonProfile,
+                  limitationOneliner: e.target.value,
+                })
+              }
+            />
+          </Field>
+        </CardContent>
+      </Card>
+
+      {/* 대안 통계방법 */}
+      <Card>
+        <CardContent className="space-y-3 py-5">
+          <h2 className="text-sm font-semibold">대안 통계방법 (동일 데이터)</h2>
+          <p className="text-[11px] text-muted-foreground">
+            동일 데이터로 시도해볼 수 있는 다른 통계방법을 선택하고 추천 사유를 입력하세요. 상세 페이지에서 비교표로 함께 노출됩니다.
+          </p>
+
+          {alternativeMethods.length > 0 && (
+            <div className="rounded-md border bg-muted/30 p-2 space-y-2">
+              <p className="text-[11px] font-medium text-muted-foreground">
+                선택됨 ({alternativeMethods.length})
+              </p>
+              {alternativeMethods.map((a) => {
+                const m = allStatisticals.find((x) => x.id === a.methodId);
+                return (
+                  <div key={a.methodId} className="rounded-md border bg-background p-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-medium">
+                        {m ? m.name : a.methodId.slice(0, 8) + "…"}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleAlternative(a.methodId)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                    <Input
+                      className="mt-1 text-xs"
+                      placeholder="추천 사유 (예: 공변량을 통제하고 싶을 때)"
+                      value={a.reason}
+                      onChange={(e) => updateAlternativeReason(a.methodId, e.target.value)}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <Input
+            placeholder="이름·요약으로 검색"
+            value={altQuery}
+            onChange={(e) => setAltQuery(e.target.value)}
+          />
+          <div className="max-h-64 overflow-y-auto rounded-md border">
+            {loading ? (
+              <p className="px-3 py-4 text-xs text-muted-foreground">불러오는 중...</p>
+            ) : filteredAltCandidates.length === 0 ? (
+              <p className="px-3 py-4 text-xs text-muted-foreground">
+                {altQuery ? "검색 결과 없음" : "선택할 통계방법이 없습니다."}
+              </p>
+            ) : (
+              <ul className="divide-y">
+                {filteredAltCandidates.map((s) => {
+                  const active = selectedAlternativeSet.has(s.id);
+                  return (
+                    <li key={s.id}>
+                      <button
+                        type="button"
+                        onClick={() => toggleAlternative(s.id)}
+                        className={cn(
+                          "flex w-full items-start gap-2 px-3 py-2 text-left text-xs transition-colors hover:bg-muted/50",
+                          active && "bg-primary/5",
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px]",
+                            active
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-muted-foreground/40",
+                          )}
+                          aria-hidden
+                        >
+                          {active ? "✓" : ""}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block font-medium leading-snug">{s.name}</span>
+                          <span className="block text-muted-foreground">
+                            {STATISTICAL_METHOD_CATEGORY_LABELS[s.category]}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 관련 연구방법 */}
+      <Card>
+        <CardContent className="space-y-3 py-5">
+          <h2 className="text-sm font-semibold">관련 연구방법 (양방향 연계)</h2>
+          <p className="text-[11px] text-muted-foreground">
+            이 통계방법이 자주 사용되는 연구방법을 선택하세요.
+          </p>
+
+          {relatedResearchMethodIds.length > 0 && (
+            <div className="rounded-md border bg-muted/30 p-2">
+              <p className="mb-1 text-[11px] font-medium text-muted-foreground">
+                선택됨 ({relatedResearchMethodIds.length})
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {relatedResearchMethodIds.map((id) => {
+                  const r = researchMethods.find((x) => x.id === id);
+                  return (
+                    <Badge
+                      key={id}
+                      variant="outline"
+                      className="cursor-pointer text-[10px] hover:bg-rose-50 hover:text-rose-700"
+                      onClick={() => toggleResearch(id)}
+                    >
+                      {r ? r.name : id.slice(0, 6) + "…"} ×
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <Input
+            placeholder="이름·요약으로 검색"
+            value={researchQuery}
+            onChange={(e) => setResearchQuery(e.target.value)}
+          />
+          <div className="max-h-56 overflow-y-auto rounded-md border">
+            {loading ? (
+              <p className="px-3 py-4 text-xs text-muted-foreground">불러오는 중...</p>
+            ) : filteredResearchMethods.length === 0 ? (
+              <p className="px-3 py-4 text-xs text-muted-foreground">
+                {researchQuery ? "검색 결과 없음" : "연구방법이 없습니다."}
+              </p>
+            ) : (
+              <ul className="divide-y">
+                {filteredResearchMethods.map((r) => {
+                  const active = selectedResearchSet.has(r.id);
+                  return (
+                    <li key={r.id}>
+                      <button
+                        type="button"
+                        onClick={() => toggleResearch(r.id)}
+                        className={cn(
+                          "flex w-full items-start gap-2 px-3 py-2 text-left text-xs transition-colors hover:bg-muted/50",
+                          active && "bg-primary/5",
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px]",
+                            active
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-muted-foreground/40",
+                          )}
+                          aria-hidden
+                        >
+                          {active ? "✓" : ""}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block font-medium leading-snug">{r.name}</span>
+                          <span className="block text-muted-foreground">
+                            {RESEARCH_METHOD_KIND_LABELS[r.kind]}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -604,126 +950,12 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
         </CardContent>
       </Card>
 
-      {/* 관련 도구 가이드 (Phase 3 placeholder) */}
-      <Card>
-        <CardContent className="space-y-3 py-5">
-          <h2 className="text-sm font-semibold">관련 도구 가이드 (Phase 3)</h2>
-          <div className="flex flex-wrap gap-1.5">
-            {TOOL_OPTIONS.map((t) => {
-              const active = relatedToolGuides.includes(t);
-              return (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => toggleTool(t)}
-                  aria-pressed={active}
-                  className={cn(
-                    "rounded-md border px-3 py-1.5 text-sm transition-colors",
-                    active
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "bg-background hover:bg-muted",
-                  )}
-                >
-                  {RESEARCH_METHOD_TOOL_LABELS[t]}
-                </button>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 관련 통계방법 (양방향) */}
-      <Card>
-        <CardContent className="space-y-3 py-5">
-          <h2 className="text-sm font-semibold">관련 통계방법 (양방향 연계)</h2>
-          <p className="text-[11px] text-muted-foreground">
-            이 연구방법에서 자주 사용되는 통계기법을 선택하세요. 상세 페이지에서
-            <strong> 이 방법에서 자주 쓰는 통계기법</strong>으로 노출됩니다.
-          </p>
-
-          {statisticalMethodIds.length > 0 && (
-            <div className="rounded-md border bg-muted/30 p-2">
-              <p className="mb-1 text-[11px] font-medium text-muted-foreground">
-                선택됨 ({statisticalMethodIds.length})
-              </p>
-              <div className="flex flex-wrap gap-1">
-                {statisticalMethodIds.map((id) => {
-                  const s = statisticalMethods.find((x) => x.id === id);
-                  return (
-                    <Badge
-                      key={id}
-                      variant="outline"
-                      className="cursor-pointer text-[10px] hover:bg-rose-50 hover:text-rose-700"
-                      onClick={() => toggleStat(id)}
-                    >
-                      {s ? s.name : id.slice(0, 6) + "…"} ×
-                    </Badge>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          <Input
-            placeholder="이름·요약으로 검색"
-            value={statQuery}
-            onChange={(e) => setStatQuery(e.target.value)}
-          />
-          <div className="max-h-56 overflow-y-auto rounded-md border">
-            {loadingStat ? (
-              <p className="px-3 py-4 text-xs text-muted-foreground">불러오는 중...</p>
-            ) : filteredStat.length === 0 ? (
-              <p className="px-3 py-4 text-xs text-muted-foreground">
-                {statQuery ? "검색 결과 없음" : "등록된 통계방법이 없습니다."}
-              </p>
-            ) : (
-              <ul className="divide-y">
-                {filteredStat.map((s) => {
-                  const active = selectedStatSet.has(s.id);
-                  return (
-                    <li key={s.id}>
-                      <button
-                        type="button"
-                        onClick={() => toggleStat(s.id)}
-                        className={cn(
-                          "flex w-full items-start gap-2 px-3 py-2 text-left text-xs transition-colors hover:bg-muted/50",
-                          active && "bg-primary/5",
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            "mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px]",
-                            active
-                              ? "border-primary bg-primary text-primary-foreground"
-                              : "border-muted-foreground/40",
-                          )}
-                          aria-hidden
-                        >
-                          {active ? "✓" : ""}
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block font-medium leading-snug">{s.name}</span>
-                          <span className="block text-muted-foreground">
-                            {STATISTICAL_METHOD_CATEGORY_LABELS[s.category]}
-                          </span>
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* 졸업생 학위논문 매핑 */}
       <Card>
         <CardContent className="space-y-3 py-5">
           <h2 className="text-sm font-semibold">관련 졸업생 학위논문 (큐레이트)</h2>
           <p className="text-[11px] text-muted-foreground">
-            이 연구방법을 사용한 학회 졸업생 논문을 선택하세요. 양방향 동기화 의무는 없으며,
-            졸업생 논문 편집 화면에서도 동일하게 매핑할 수 있습니다.
+            이 통계방법을 사용한 학회 졸업생 논문을 선택하세요.
           </p>
 
           {alumniThesisIds.length > 0 && (
@@ -755,7 +987,7 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
             onChange={(e) => setThesisQuery(e.target.value)}
           />
           <div className="max-h-72 overflow-y-auto rounded-md border">
-            {loadingTheses ? (
+            {loading ? (
               <p className="px-3 py-4 text-xs text-muted-foreground">불러오는 중...</p>
             ) : filteredTheses.length === 0 ? (
               <p className="px-3 py-4 text-xs text-muted-foreground">

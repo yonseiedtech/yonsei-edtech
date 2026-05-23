@@ -16,6 +16,7 @@ import {
   Pencil,
   Eye,
   EyeOff,
+  BarChart3,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,13 +25,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/ui/page-header";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
-import { researchMethodsApi, alumniThesesApi } from "@/lib/bkend";
+import { researchMethodsApi, alumniThesesApi, statisticalMethodsApi } from "@/lib/bkend";
 import {
   RESEARCH_METHOD_KIND_COLORS,
   RESEARCH_METHOD_KIND_LABELS,
   RESEARCH_METHOD_TOOL_LABELS,
+  STATISTICAL_METHOD_CATEGORY_COLORS,
+  STATISTICAL_METHOD_CATEGORY_LABELS,
   type ResearchMethod,
   type AlumniThesis,
+  type StatisticalMethod,
 } from "@/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -43,6 +47,7 @@ export default function ResearchMethodDetailPage() {
 
   const [method, setMethod] = useState<ResearchMethod | null>(null);
   const [theses, setTheses] = useState<AlumniThesis[]>([]);
+  const [statisticalMethods, setStatisticalMethods] = useState<StatisticalMethod[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -71,6 +76,21 @@ export default function ResearchMethodDetailPage() {
             if (r.status === "fulfilled") ok.push(r.value);
           }
           setTheses(ok);
+        }
+        const statIds = m.statisticalMethodIds ?? [];
+        if (statIds.length > 0) {
+          const sResults = await Promise.allSettled(
+            statIds.map((id) => statisticalMethodsApi.get(id)),
+          );
+          if (cancelled) return;
+          const sOk: StatisticalMethod[] = [];
+          for (const r of sResults) {
+            // 검수 게이트 3중 적용 — 비-staff 에게 draft 통계방법 노출 차단
+            if (r.status === "fulfilled" && (canManage || r.value.published)) {
+              sOk.push(r.value);
+            }
+          }
+          setStatisticalMethods(sOk);
         }
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "불러오기 실패");
@@ -375,6 +395,53 @@ export default function ResearchMethodDetailPage() {
                 </li>
               ))}
             </ul>
+          </section>
+        )}
+
+        {/* 자주 쓰는 통계기법 (양방향 연계) */}
+        {statisticalMethods.length > 0 && (
+          <section className="mt-10">
+            <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+              <BarChart3 className="h-4 w-4" aria-hidden />
+              이 방법에서 자주 쓰는 통계기법
+            </h2>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              {statisticalMethods.map((s) => (
+                <Link
+                  key={s.id}
+                  href={`/archive/statistical-methods/${s.id}`}
+                  className="group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 rounded-xl"
+                >
+                  <article className="h-full rounded-xl border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="text-sm font-medium leading-snug group-hover:text-primary">
+                        {s.name}
+                      </h3>
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "shrink-0 text-[10px]",
+                          STATISTICAL_METHOD_CATEGORY_COLORS[s.category],
+                        )}
+                      >
+                        {STATISTICAL_METHOD_CATEGORY_LABELS[s.category]}
+                      </Badge>
+                    </div>
+                    <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2">
+                      {s.summary}
+                    </p>
+                    {!s.published && canManage && (
+                      <Badge
+                        variant="outline"
+                        className="mt-2 bg-rose-50 text-rose-700 border-rose-200 text-[10px]"
+                      >
+                        draft
+                      </Badge>
+                    )}
+                  </article>
+                </Link>
+              ))}
+            </div>
           </section>
         )}
 

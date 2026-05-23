@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Library, Plus, Pencil, Trash2, Search, Sparkles, Loader2, RefreshCw, FlaskConical } from "lucide-react";
+import { Library, Plus, Pencil, Trash2, Search, Sparkles, Loader2, RefreshCw, FlaskConical, BarChart3 } from "lucide-react";
 import { importArchiveSeed, refreshArchiveSeedReferences } from "@/lib/archive-seed";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -180,6 +180,12 @@ export default function ConsoleArchivePage() {
               <Button variant="outline" size="sm" title="교육공학 연구방법 가이드 관리로 이동">
                 <FlaskConical className="mr-1 h-4 w-4" />
                 연구방법 가이드
+              </Button>
+            </Link>
+            <Link href="/console/archive/statistical-methods">
+              <Button variant="outline" size="sm" title="교육공학 통계방법 가이드 관리로 이동">
+                <BarChart3 className="mr-1 h-4 w-4" />
+                통계방법 가이드
               </Button>
             </Link>
             <Button

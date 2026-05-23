@@ -30,6 +30,7 @@ import {
   archiveVariablesApi,
   archiveMeasurementsApi,
   researchMethodsApi,
+  statisticalMethodsApi,
 } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
@@ -43,11 +44,14 @@ import type {
   ArchiveVariable,
   ArchiveMeasurementTool,
   ResearchMethod,
+  StatisticalMethod,
 } from "@/types";
 import {
   ARCHIVE_ITEM_TYPE_COLORS,
   RESEARCH_METHOD_KIND_COLORS,
   RESEARCH_METHOD_KIND_LABELS,
+  STATISTICAL_METHOD_CATEGORY_COLORS,
+  STATISTICAL_METHOD_CATEGORY_LABELS,
 } from "@/types";
 
 function jaccardWithMatches(a: string[], b: string[]): { score: number; matches: string[] } {
@@ -88,6 +92,7 @@ interface EditDraft {
   variableIds: string[];
   measurementIds: string[];
   researchMethods: string[];
+  statisticalMethods: string[];
   abstract: string;
   dcollectionUrl: string;
 }
@@ -104,6 +109,7 @@ function toDraft(t: AlumniThesis): EditDraft {
     variableIds: t.variableIds ?? [],
     measurementIds: t.measurementIds ?? [],
     researchMethods: t.researchMethods ?? [],
+    statisticalMethods: t.statisticalMethods ?? [],
     abstract: t.abstract ?? "",
     dcollectionUrl: t.dcollectionUrl ?? "",
   };
@@ -131,6 +137,7 @@ export default function AlumniThesisDetailPage() {
   const [variables, setVariables] = useState<ArchiveVariable[]>([]);
   const [measurements, setMeasurements] = useState<ArchiveMeasurementTool[]>([]);
   const [methods, setMethods] = useState<ResearchMethod[]>([]);
+  const [statMethods, setStatMethods] = useState<StatisticalMethod[]>([]);
 
   const inReadingList = !!viewer?.thesisReadingList?.includes(thesis?.id ?? "");
 
@@ -139,23 +146,27 @@ export default function AlumniThesisDetailPage() {
       !!thesis?.conceptIds?.length ||
       !!thesis?.variableIds?.length ||
       !!thesis?.measurementIds?.length ||
-      !!thesis?.researchMethods?.length;
+      !!thesis?.researchMethods?.length ||
+      !!thesis?.statisticalMethods?.length;
     if (!canEdit && !hasLinks) return;
     let cancelled = false;
     (async () => {
       try {
-        const [c, v, m, rm] = await Promise.all([
+        const [c, v, m, rm, sm] = await Promise.all([
           archiveConceptsApi.list(),
           archiveVariablesApi.list(),
           archiveMeasurementsApi.list(),
           // staff+ 는 draft 포함, 일반 회원은 published 만 (rules 와 정합)
           canEdit ? researchMethodsApi.list() : researchMethodsApi.listPublished(),
+          canEdit ? statisticalMethodsApi.list() : statisticalMethodsApi.listPublished(),
         ]);
         if (cancelled) return;
         setConcepts(c.data);
         setVariables(v.data);
         setMeasurements(m.data);
         setMethods(rm.data);
+        // 클라이언트 단 한 번 더 검수 게이트 — 비-staff 에게 draft 노출 차단
+        setStatMethods(canEdit ? sm.data : sm.data.filter((x) => x.published));
       } catch (err) {
         console.error("[alumni-thesis] archive load failed", err);
       }
@@ -163,7 +174,14 @@ export default function AlumniThesisDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [canEdit, thesis?.conceptIds, thesis?.variableIds, thesis?.measurementIds, thesis?.researchMethods]);
+  }, [
+    canEdit,
+    thesis?.conceptIds,
+    thesis?.variableIds,
+    thesis?.measurementIds,
+    thesis?.researchMethods,
+    thesis?.statisticalMethods,
+  ]);
 
   useEffect(() => {
     if (!params?.id) return;
@@ -319,6 +337,8 @@ export default function AlumniThesisDetailPage() {
         variableIds: draft.variableIds.length > 0 ? draft.variableIds : null,
         measurementIds: draft.measurementIds.length > 0 ? draft.measurementIds : null,
         researchMethods: draft.researchMethods.length > 0 ? draft.researchMethods : null,
+        statisticalMethods:
+          draft.statisticalMethods.length > 0 ? draft.statisticalMethods : null,
         abstract: draft.abstract.trim() || null,
         dcollectionUrl: draft.dcollectionUrl.trim() || null,
       };
@@ -608,6 +628,40 @@ export default function AlumniThesisDetailPage() {
             </div>
           )}
 
+          {thesis.statisticalMethods && thesis.statisticalMethods.length > 0 && (
+            <div className="mt-5">
+              <h2 className="text-xs font-semibold text-muted-foreground">통계방법</h2>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {thesis.statisticalMethods.map((id) => {
+                  const sm = statMethods.find((x) => x.id === id);
+                  if (!sm) {
+                    return (
+                      <Badge key={id} variant="outline" className="text-xs opacity-60">
+                        ({id.slice(0, 6)}…)
+                      </Badge>
+                    );
+                  }
+                  return (
+                    <Link key={id} href={`/archive/statistical-methods/${id}`}>
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "cursor-pointer text-xs",
+                          STATISTICAL_METHOD_CATEGORY_COLORS[sm.category],
+                        )}
+                      >
+                        {sm.name}
+                        <span className="ml-1 opacity-70">
+                          · {STATISTICAL_METHOD_CATEGORY_LABELS[sm.category]}
+                        </span>
+                      </Badge>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {thesis.abstract && (
             <div className="mt-6">
               <h2 className="text-sm font-semibold">초록</h2>
@@ -788,6 +842,22 @@ export default function AlumniThesisDetailPage() {
                     selected={draft.researchMethods}
                     onChange={(ids) => setDraft({ ...draft, researchMethods: ids })}
                     emptyHint="아카이브 연구방법이 없습니다. /console/archive/research-methods에서 추가하세요."
+                  />
+                </Field>
+              </div>
+
+              <div className="mt-3">
+                <Field label="통계방법 (교육공학 아카이브)">
+                  <ArchivePickerField
+                    type="concept"
+                    items={statMethods.map((m) => ({
+                      id: m.id,
+                      name: m.name,
+                      meta: STATISTICAL_METHOD_CATEGORY_LABELS[m.category],
+                    }))}
+                    selected={draft.statisticalMethods}
+                    onChange={(ids) => setDraft({ ...draft, statisticalMethods: ids })}
+                    emptyHint="아카이브 통계방법이 없습니다. /console/archive/statistical-methods에서 추가하세요."
                   />
                 </Field>
               </div>
