@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Library, Plus, Pencil, Trash2, Search, Sparkles, Loader2, RefreshCw, FlaskConical, BarChart3, BookOpen, PenLine } from "lucide-react";
+import { Library, Plus, Pencil, Trash2, Search, Sparkles, Loader2, RefreshCw, FlaskConical, BarChart3, BookOpen, PenLine, AlertTriangle, ClipboardCheck, ArrowRight } from "lucide-react";
 import { importArchiveSeed, refreshArchiveSeedReferences } from "@/lib/archive-seed";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,6 +25,10 @@ import {
   archiveConceptsApi,
   archiveVariablesApi,
   archiveMeasurementsApi,
+  researchMethodsApi,
+  statisticalMethodsApi,
+  foundationTermsApi,
+  writingTipsApi,
 } from "@/lib/bkend";
 import {
   ARCHIVE_ITEM_TYPE_LABELS,
@@ -36,6 +40,41 @@ import {
   type VariableType,
 } from "@/types";
 import { toast } from "sonner";
+
+// Phase 3 — 검수 대기 큐: 4개 검수형 컬렉션의 published=false 카운트를 한 곳에서 모니터링.
+// archive_concepts/variables/measurements 는 검수 게이트가 없으므로 큐에 포함하지 않음.
+const REVIEW_QUEUE_COLLECTIONS = [
+  {
+    key: "research-methods" as const,
+    label: "연구방법 가이드",
+    collection: "archive_research_methods",
+    href: "/console/archive/research-methods",
+    icon: FlaskConical,
+  },
+  {
+    key: "statistical-methods" as const,
+    label: "통계방법 가이드",
+    collection: "archive_statistical_methods",
+    href: "/console/archive/statistical-methods",
+    icon: BarChart3,
+  },
+  {
+    key: "foundation-terms" as const,
+    label: "기초 용어",
+    collection: "archive_foundation_terms",
+    href: "/console/archive/foundation-terms",
+    icon: BookOpen,
+  },
+  {
+    key: "writing-tips" as const,
+    label: "학술 글쓰기",
+    collection: "archive_writing_tips",
+    href: "/console/archive/writing-tips",
+    icon: PenLine,
+  },
+];
+
+type ReviewQueueCounts = Record<(typeof REVIEW_QUEUE_COLLECTIONS)[number]["key"], number>;
 
 type AnyItem = ArchiveConcept | ArchiveVariable | ArchiveMeasurementTool;
 
@@ -50,11 +89,18 @@ export default function ConsoleArchivePage() {
   const [editing, setEditing] = useState<{ type: ArchiveItemType; item?: AnyItem } | null>(null);
   const [seeding, setSeeding] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [seedAcknowledged, setSeedAcknowledged] = useState(false);
+  const [reviewQueue, setReviewQueue] = useState<ReviewQueueCounts | null>(null);
+  const [queueLoading, setQueueLoading] = useState(true);
 
   const allowed = isAtLeast(user, "staff");
 
   const handleSeed = async () => {
     if (!user) return;
+    if (!seedAcknowledged) {
+      toast.error("학술 신뢰도 안내 확인이 필요합니다");
+      return;
+    }
     if (
       !confirm(
         "교육공학 분야 핵심 시드(개념 24 · 변인 8 · 측정도구 7)를 불러오시겠습니까?\n2026-05 추가 16개 개념(교육공학·ID·ADDIE·TPACK·SAMR·학습분석·LXD 등) 포함. 동일 이름의 항목은 건너뜁니다.",
@@ -69,6 +115,10 @@ export default function ConsoleArchivePage() {
           `변인 +${r.variables.created}/스킵 ${r.variables.skipped}, ` +
           `측정도구 +${r.measurements.created}/스킵 ${r.measurements.skipped}, ` +
           `연결 개념↔변인 ${r.links?.conceptToVariable ?? 0}건, 변인↔측정도구 ${r.links?.variableToMeasurement ?? 0}건`,
+      );
+      toast.warning(
+        "시드 데이터는 LLM 자동 작성 가능성이 있어 RISS·국립중앙도서관 등에서 검증 후 published 토글을 권장합니다. references 필드는 hallucination 위험이 있습니다.",
+        { duration: 8000 },
       );
       load();
     } catch (err) {
@@ -86,6 +136,10 @@ export default function ConsoleArchivePage() {
    */
   const handleRefresh = async () => {
     if (!user) return;
+    if (!seedAcknowledged) {
+      toast.error("학술 신뢰도 안내 확인이 필요합니다");
+      return;
+    }
     if (
       !confirm(
         "현재 archive-seed.ts 의 references/description/altNames/tags 를 기존 DB 항목에 일괄 적용합니다.\n" +
@@ -102,6 +156,10 @@ export default function ConsoleArchivePage() {
         `References 갱신 완료 — 개념 +${r.concepts.updated}/스킵 ${r.concepts.skipped}/없음 ${r.concepts.notFound}, ` +
           `변인 +${r.variables.updated}/스킵 ${r.variables.skipped}/없음 ${r.variables.notFound}, ` +
           `측정도구 +${r.measurements.updated}/스킵 ${r.measurements.skipped}/없음 ${r.measurements.notFound}`,
+      );
+      toast.warning(
+        "갱신된 references 도 LLM 출처 가능성이 있어 RISS·국립중앙도서관 등에서 직접 검증을 권장합니다.",
+        { duration: 8000 },
       );
       load();
     } catch (err) {
@@ -131,8 +189,36 @@ export default function ConsoleArchivePage() {
     }
   };
 
+  // Phase 3 — 검수형 4개 컬렉션의 draft(published=false) 카운트 집계.
+  // listPublished 가 아닌 list() 사용 — staff+ 는 draft 포함 전체 조회 가능 (firestore.rules).
+  const loadReviewQueue = async () => {
+    setQueueLoading(true);
+    try {
+      const [rm, sm, ft, wt] = await Promise.all([
+        researchMethodsApi.list(),
+        statisticalMethodsApi.list(),
+        foundationTermsApi.list(),
+        writingTipsApi.list(),
+      ]);
+      setReviewQueue({
+        "research-methods": rm.data.filter((x) => !x.published).length,
+        "statistical-methods": sm.data.filter((x) => !x.published).length,
+        "foundation-terms": ft.data.filter((x) => !x.published).length,
+        "writing-tips": wt.data.filter((x) => !x.published).length,
+      });
+    } catch (err) {
+      console.error("[console-archive] review queue load failed", err);
+      toast.error("검수 대기 큐 로드 실패");
+    } finally {
+      setQueueLoading(false);
+    }
+  };
+
   useEffect(() => {
-    if (allowed) load();
+    if (allowed) {
+      load();
+      loadReviewQueue();
+    }
   }, [allowed]);
 
   const handleDelete = async (type: ArchiveItemType, item: AnyItem) => {
@@ -204,8 +290,12 @@ export default function ConsoleArchivePage() {
               variant="outline"
               size="sm"
               onClick={handleSeed}
-              disabled={seeding || refreshing}
-              title="KCI 등재 논문 기준 대표 개념·변인·측정도구를 일괄 적재"
+              disabled={seeding || refreshing || !seedAcknowledged}
+              title={
+                seedAcknowledged
+                  ? "KCI 등재 논문 기준 대표 개념·변인·측정도구를 일괄 적재"
+                  : "아래 학술 신뢰도 안내 확인 체크박스를 먼저 선택해 주세요"
+              }
             >
               {seeding ? (
                 <Loader2 className="mr-1 h-4 w-4 animate-spin" />
@@ -218,8 +308,12 @@ export default function ConsoleArchivePage() {
               variant="outline"
               size="sm"
               onClick={handleRefresh}
-              disabled={seeding || refreshing}
-              title="시드 데이터의 references/description/altNames 를 기존 DB 항목에 일괄 적용 (연결관계 보존)"
+              disabled={seeding || refreshing || !seedAcknowledged}
+              title={
+                seedAcknowledged
+                  ? "시드 데이터의 references/description/altNames 를 기존 DB 항목에 일괄 적용 (연결관계 보존)"
+                  : "아래 학술 신뢰도 안내 확인 체크박스를 먼저 선택해 주세요"
+              }
             >
               {refreshing ? (
                 <Loader2 className="mr-1 h-4 w-4 animate-spin" />
@@ -249,6 +343,39 @@ export default function ConsoleArchivePage() {
         <p className="mt-1">
           <strong>연구방법·통계방법·기초 용어·학술 글쓰기</strong>는 검수(<code className="rounded bg-blue-100 px-1 py-0.5 text-[10px] dark:bg-blue-900/50">published</code>) 후 공개됩니다.
         </p>
+      </div>
+
+      {/* Phase 3 — 검수 대기 통합 큐 (4개 검수형 컬렉션의 published=false 카운트) */}
+      <ReviewQueueSection
+        counts={reviewQueue}
+        loading={queueLoading}
+        onRefresh={loadReviewQueue}
+      />
+
+      {/* Phase 3 — 시드 데이터 학술 신뢰도 경고 + 확인 체크박스 */}
+      <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-xs leading-relaxed text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+        <div className="flex items-start gap-2">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          <div className="flex-1 space-y-1">
+            <p className="font-semibold">시드 데이터 학술 신뢰도 안내</p>
+            <p>
+              시드 데이터는 LLM 자동 작성 가능성이 있어 RISS·국립중앙도서관 등에서 검증 후 published 토글을 권장합니다.
+            </p>
+            <p>
+              특히 <code className="rounded bg-amber-100 px-1 py-0.5 text-[10px] dark:bg-amber-900/50">references</code> 필드는 hallucination 위험이 있으므로 운영진 직접 작성/검증이 필요합니다.
+            </p>
+          </div>
+        </div>
+        <label className="mt-3 flex items-center gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={seedAcknowledged}
+            onChange={(e) => setSeedAcknowledged(e.target.checked)}
+            className="h-4 w-4 rounded border-amber-400"
+            aria-label="시드 데이터 학술 신뢰도 안내 확인"
+          />
+          <span className="text-xs font-medium">위 안내를 확인했습니다 (시드/메타데이터 갱신 실행 활성화)</span>
+        </label>
       </div>
 
       <div className="mt-4 relative">
@@ -671,6 +798,104 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     <div className="space-y-1">
       <label className="text-xs font-medium text-muted-foreground">{label}</label>
       {children}
+    </div>
+  );
+}
+
+function ReviewQueueSection({
+  counts,
+  loading,
+  onRefresh,
+}: {
+  counts: ReviewQueueCounts | null;
+  loading: boolean;
+  onRefresh: () => void;
+}) {
+  const total = counts
+    ? REVIEW_QUEUE_COLLECTIONS.reduce((sum, c) => sum + (counts[c.key] ?? 0), 0)
+    : 0;
+  return (
+    <div className="mt-4 rounded-lg border bg-card p-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <ClipboardCheck className="h-4 w-4 text-muted-foreground" aria-hidden />
+          <h2 className="text-sm font-semibold">검수 대기 큐</h2>
+          {!loading && counts && (
+            <Badge variant="outline" className="text-[10px]">
+              전체 draft {total}건
+            </Badge>
+          )}
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onRefresh}
+          disabled={loading}
+          title="검수 대기 카운트 새로고침"
+        >
+          {loading ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <RefreshCw className="h-3.5 w-3.5" />
+          )}
+        </Button>
+      </div>
+      <p className="mt-1 text-[11px] text-muted-foreground">
+        검수형 4개 컬렉션의 <code className="rounded bg-muted px-1 py-0.5 text-[10px]">published=false</code> 항목을 한 곳에서 모니터링합니다.
+      </p>
+      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {REVIEW_QUEUE_COLLECTIONS.map((c) => {
+          const draftCount = counts?.[c.key] ?? 0;
+          const isEmpty = !loading && draftCount === 0;
+          const Icon = c.icon;
+          return (
+            <div
+              key={c.key}
+              className={`flex items-center justify-between gap-3 rounded-md border px-3 py-2 ${
+                isEmpty ? "bg-muted/30 text-muted-foreground" : "bg-background"
+              }`}
+            >
+              <div className="flex min-w-0 items-center gap-2">
+                <Icon className={`h-4 w-4 shrink-0 ${isEmpty ? "" : "text-foreground"}`} aria-hidden />
+                <div className="min-w-0">
+                  <p className={`truncate text-sm font-medium ${isEmpty ? "" : "text-foreground"}`}>
+                    {c.label}
+                  </p>
+                  <p className="truncate text-[10px] text-muted-foreground">
+                    <code>{c.collection}</code>
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {loading ? (
+                  <Skeleton className="h-5 w-12" />
+                ) : (
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] ${
+                      isEmpty
+                        ? ""
+                        : "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200"
+                    }`}
+                  >
+                    draft {draftCount}
+                  </Badge>
+                )}
+                <Link
+                  href={c.href}
+                  className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] transition-colors hover:bg-muted ${
+                    isEmpty ? "" : "border-foreground/20"
+                  }`}
+                  title={`${c.label} 검수 화면으로 이동`}
+                >
+                  검수
+                  <ArrowRight className="h-3 w-3" aria-hidden />
+                </Link>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
