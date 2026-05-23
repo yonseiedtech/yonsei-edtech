@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/dialog";
 import PageHeader from "@/components/ui/page-header";
 import EmptyState from "@/components/ui/empty-state";
+import PageContainer from "@/components/layout/PageContainer";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import {
@@ -124,12 +125,8 @@ export default function CoursesPage() {
   return (
     <Suspense
       fallback={
-        <div
-          className="animate-in fade-in duration-300 py-8 sm:py-14"
-          aria-busy="true"
-          aria-label="강의 목록 불러오는 중"
-        >
-          <div className="mx-auto max-w-6xl space-y-4 px-4">
+        <PageContainer variant="wide" py="md" aria-busy={true} aria-label="강의 목록 불러오는 중">
+          <div className="animate-in fade-in duration-300 space-y-4">
             <div className="flex items-center gap-3">
               <Skeleton className="h-12 w-12 rounded-xl" />
               <div className="space-y-2">
@@ -144,7 +141,7 @@ export default function CoursesPage() {
               ))}
             </div>
           </div>
-        </div>
+        </PageContainer>
       }
     >
       <CoursesPageInner />
@@ -315,8 +312,8 @@ function CoursesPageInner() {
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-      <div className="mx-auto max-w-6xl px-4">
+    <PageContainer variant="wide" py="md">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
         {/* ── 페이지 헤더 ── */}
         <PageHeader
           icon={GraduationCap}
@@ -471,7 +468,7 @@ function CoursesPageInner() {
           ※ 본 정보는 학과 공식 시간표가 아닌 참고용입니다. 정확한 개설 여부는 학과 공지를 확인해 주세요.
         </p>
       </div>
-    </div>
+    </PageContainer>
   );
 }
 

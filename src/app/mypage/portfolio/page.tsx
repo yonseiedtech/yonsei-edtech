@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/ui/page-header";
+import PageContainer from "@/components/layout/PageContainer";
 import {
   Award as AwardIcon,
   Globe,
@@ -234,14 +235,13 @@ function PortfolioContent() {
   if (!viewer) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10">
-      <div className="mx-auto max-w-3xl px-4">
-        <Link
-          href="/mypage"
-          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
-        >
-          <ArrowLeft size={12} /> 마이페이지
-        </Link>
+    <PageContainer variant="default" py="md">
+      <Link
+        href="/mypage"
+        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
+      >
+        <ArrowLeft size={12} /> 마이페이지
+      </Link>
 
         <div className="mt-3">
           <PageHeader
@@ -519,8 +519,7 @@ function PortfolioContent() {
             )}
           </div>
         )}
-      </div>
-    </div>
+    </PageContainer>
   );
 }
 
