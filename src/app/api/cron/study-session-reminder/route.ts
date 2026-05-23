@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { sendPushToUsers, filterRecipientsByPreference } from "@/lib/push-admin";
+import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
 
 /**
  * 스터디/프로젝트 회차 D-1 알림 — Study Enhancement (Sprint 6)
@@ -118,6 +119,15 @@ export async function GET(req: NextRequest) {
         activityId: p.activityId,
         title: p.title ?? "",
         recipientCount: result.successful,
+      });
+
+      // 인앱 알림 동시 적재 (push 실패와 무관하게 수행)
+      await fanOutNotificationAdmin(userIds, {
+        type: "activity_reminder",
+        title,
+        body,
+        relatedLink: `/activities/${act.type === "study" ? "studies" : "projects"}/${p.activityId}?tab=progress`,
+        metadata: { sourceId: `study_session_reminder_${doc.id}`, activityProgressId: doc.id, activityId: p.activityId },
       });
 
       await dupRef.set({

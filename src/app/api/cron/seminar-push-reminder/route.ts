@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { sendPushToUsers, filterRecipientsByPreference } from "@/lib/push-admin";
+import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
 
 /**
  * 세미나 D-1 push 알림 — Seminar Push (Sprint 6 extension)
@@ -107,6 +108,15 @@ export async function GET(req: NextRequest) {
         seminarId: doc.id,
         title: s.title ?? "",
         recipientCount: result.successful,
+      });
+
+      // 인앱 알림 동시 적재 (push 실패와 무관하게 수행)
+      await fanOutNotificationAdmin(userIds, {
+        type: "seminar_reminder",
+        title: `내일 세미나 안내 — ${s.title ?? "세미나"}`,
+        body: `${startTime ? `${startTime} 시작` : "내일 진행"}${locationTag}`,
+        relatedLink: `/seminars/${doc.id}`,
+        metadata: { sourceId: `seminar_push_reminder_${doc.id}`, seminarId: doc.id },
       });
 
       await dupRef.set({

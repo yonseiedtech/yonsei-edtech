@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { sendPushToUsers, filterRecipientsByPreference } from "@/lib/push-admin";
+import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
 
 /**
  * 세미나 D+1 후기 push 알림 — Seminar Push Review Request
@@ -111,6 +112,15 @@ export async function GET(req: NextRequest) {
         title: s.title ?? "",
         pendingCount: pendingUserIds.length,
         recipientCount: result.successful,
+      });
+
+      // 인앱 알림 동시 적재 (push 실패와 무관하게 수행)
+      await fanOutNotificationAdmin(allowedUserIds, {
+        type: "seminar_review_request",
+        title: "세미나 후기를 남겨주세요",
+        body: `${s.title ?? "세미나"} — 어제 참석한 세미나 후기 부탁드립니다.`,
+        relatedLink: `/seminars/${doc.id}/review`,
+        metadata: { sourceId: `seminar_push_review_${doc.id}`, seminarId: doc.id },
       });
 
       // dedup 기록 (보낸 사용자 단위) — 옵트아웃된 사용자는 기록 안 함

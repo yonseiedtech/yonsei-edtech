@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { sendPushToUsers, filterRecipientsByPreference } from "@/lib/push-admin";
+import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
 
 /**
  * 스터디/프로젝트 과제 마감 D-1 알림 (미제출자) — Study Enhancement (Sprint 6)
@@ -118,6 +119,15 @@ export async function GET(req: NextRequest) {
         title: a.title ?? "",
         pendingCount: pendingUserIds.length,
         recipientCount: result.successful,
+      });
+
+      // 인앱 알림 동시 적재 (push 실패와 무관하게 수행)
+      await fanOutNotificationAdmin(allowedUserIds, {
+        type: "activity_reminder",
+        title: `${a.required ? "[필수] " : ""}과제 마감 임박 — ${dueLabel}`,
+        body: `${act.title ?? "활동"} — ${a.title ?? "과제"} 가 곧 마감됩니다.`,
+        relatedLink: `/activities/${act.type === "study" ? "studies" : "projects"}/${a.activityId}?tab=progress`,
+        metadata: { sourceId: `study_assignment_reminder_${doc.id}`, assignmentId: doc.id, activityId: a.activityId },
       });
 
       // 발송 완료된 사용자들에 대해 push_log 기록 (개별) — 옵트아웃된 사용자는 dedup 로그 안 남김 (다음 cron 에서 prefs 재변경 시 다시 시도 가능)

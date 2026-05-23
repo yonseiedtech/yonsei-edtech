@@ -54,18 +54,19 @@ export interface WaitlistEntry {
 
 // ── 알림 ──
 export type NotificationType =
-  | "member_approved"    // 회원 가입 승인
-  | "member_rejected"    // 회원 가입 거절
-  | "comment"            // 내 글에 댓글
-  | "notice"             // 새 공지사항
-  | "certificate"        // 수료증/감사장 발급
-  | "seminar_new"        // 새 세미나 등록
-  | "seminar_reminder"   // 세미나 리마인더
-  | "waitlist_promoted"  // 대기열 → 참가 승격
-  | "newsletter"         // 뉴스레터 발행
-  | "class_reminder"     // 수업 당일 알림 (cron)
-  | "activity_reminder"  // 학술활동 관련 알림 (cron)
-  | "weekly_digest";     // 주간 다이제스트 (cron)
+  | "member_approved"       // 회원 가입 승인
+  | "member_rejected"       // 회원 가입 거절
+  | "comment"               // 내 글에 댓글
+  | "notice"                // 새 공지사항
+  | "certificate"           // 수료증/감사장 발급
+  | "seminar_new"           // 새 세미나 등록
+  | "seminar_reminder"      // 세미나 사전 리마인더
+  | "seminar_review_request" // 세미나 후기 작성 요청 (D+1 cron)
+  | "waitlist_promoted"     // 대기열 → 참가 승격
+  | "newsletter"            // 뉴스레터 발행
+  | "class_reminder"        // 수업 당일 알림 (cron)
+  | "activity_reminder"     // 학술활동 관련 알림 (cron)
+  | "weekly_digest";        // 주간 다이제스트 (cron)
 
 export interface AppNotification {
   id: string;
