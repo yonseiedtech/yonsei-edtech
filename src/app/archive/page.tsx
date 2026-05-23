@@ -12,6 +12,7 @@ import {
   Network,
   Anchor,
   BookText,
+  FlaskConical,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -271,6 +272,31 @@ export default function ArchiveLandingPage() {
             );
           })}
         </div>
+
+        {/* ── 연구방법 가이드 (Phase 1) ── */}
+        <Link
+          href="/archive/research-methods"
+          className="group mt-6 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+          aria-label="교육공학 연구방법 가이드 보기"
+        >
+          <article className="rounded-2xl border-l-4 border-l-sky-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+            <div className="flex items-center gap-4 p-5">
+              <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300">
+                <FlaskConical className="h-5 w-5" aria-hidden />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-lg font-semibold tracking-tight">교육공학 연구방법 가이드</h2>
+                <p className="text-sm text-muted-foreground">
+                  양적·질적·혼합 연구방법론 — 절차·기본 가정·강점·약점과 함께 같은 방법을 사용한 졸업생 학위논문을 연결합니다.
+                </p>
+              </div>
+              <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">
+                보기
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+              </div>
+            </div>
+          </article>
+        </Link>
 
         {/* ── APA 7판 참고문헌 가이드 ── */}
         <Link

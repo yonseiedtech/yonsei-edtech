@@ -53,6 +53,7 @@ import type {
   GradLifePosition,
   ConferenceProgram, UserSessionPlan,
   ArchiveConcept, ArchiveVariable, ArchiveMeasurementTool, ArchiveFavorite, ArchiveItemType,
+  ResearchMethod, ResearchMethodKind,
   ReceivedBusinessCard,
   ConferenceWorkbookTask,
   ConferenceWorkbookSubmission,
@@ -2034,6 +2035,34 @@ export const archiveFavoritesApi = {
   /** 즐겨찾기 단축 ID — 사용자×아이템 단일성 보장 */
   makeId: (userId: string, itemType: ArchiveItemType, itemId: string) =>
     `${userId}_${itemType}_${itemId}`,
+};
+
+// ── 교육공학 아카이브 — 연구방법 가이드 (Phase 1) ──
+// 공개 페이지는 published=true 만 노출. 운영진(staff+) 은 draft 포함 전체 조회.
+// firestore.rules 의 archive_research_methods 와 양쪽에서 검수 게이트 적용.
+export const researchMethodsApi = {
+  list: () =>
+    dataApi.list<ResearchMethod>("archive_research_methods", { limit: 200 }),
+  listPublished: () =>
+    dataApi.list<ResearchMethod>("archive_research_methods", {
+      "filter[published]": "true",
+      limit: 200,
+    }),
+  listByKind: (kind: ResearchMethodKind) =>
+    dataApi.list<ResearchMethod>("archive_research_methods", {
+      "filter[kind]": kind,
+      "filter[published]": "true",
+      limit: 200,
+    }),
+  get: (id: string) =>
+    dataApi.get<ResearchMethod>("archive_research_methods", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<ResearchMethod>("archive_research_methods", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<ResearchMethod>("archive_research_methods", id, data),
+  upsert: (id: string, data: Record<string, unknown>) =>
+    dataApi.upsert<ResearchMethod>("archive_research_methods", id, data),
+  delete: (id: string) => dataApi.delete("archive_research_methods", id),
 };
 
 // ─── 학기별 로드맵 (Sprint 67-AR — 운영진 콘텐츠 관리) ───

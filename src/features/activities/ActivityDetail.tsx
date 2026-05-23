@@ -1892,90 +1892,98 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                     size="sm"
                     className="h-8 gap-1.5 text-xs"
                     onClick={() => {
-                      // 신청현황 CSV — 이름·학번·이메일·핸드폰번호 + 폼 질문별 답변 컬럼 (가로형 1인 1행)
-                      const questionFields: FormField[] = [];
-                      const seenFieldIds = new Set<string>();
-                      for (const f of [
-                        ...applicationForm,
-                        ...(Object.values(applicationFormByType).flat() as FormField[]),
-                      ]) {
-                        if (f.type === "section_break") continue;
-                        if (seenFieldIds.has(f.id)) continue;
-                        seenFieldIds.add(f.id);
-                        questionFields.push(f);
-                      }
-                      const STATUS_LABEL: Record<string, string> = {
-                        pending: "대기",
-                        approved: "승인",
-                        rejected: "거절",
-                      };
-                      const csvCell = (v: string) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-                      const fmtAnswer = (field: FormField, rawValue: unknown): string => {
-                        if (rawValue === undefined || rawValue === null || rawValue === "") return "";
-                        if (Array.isArray(rawValue)) {
-                          if (rawValue.length > 0 && typeof rawValue[0] === "object") {
-                            return (rawValue as { name: string }[]).map((f) => f.name).join(" / ");
-                          }
-                          return (rawValue as string[]).join(", ");
+                      try {
+                        // 신청현황 CSV — 이름·학번·이메일·핸드폰번호 + 폼 질문별 답변 컬럼 (가로형 1인 1행)
+                        const questionFields: FormField[] = [];
+                        const seenFieldIds = new Set<string>();
+                        for (const f of [
+                          ...applicationForm,
+                          ...(Object.values(applicationFormByType).flat() as FormField[]),
+                        ]) {
+                          if (f.type === "section_break") continue;
+                          if (seenFieldIds.has(f.id)) continue;
+                          seenFieldIds.add(f.id);
+                          questionFields.push(f);
                         }
-                        if (
-                          (field.type === "schedule" || field.type === "datetime_slots") &&
-                          typeof rawValue === "string"
-                        ) {
-                          if (rawValue === "__ALL__") return "전체 시간 가능";
-                          if (rawValue === "__RESTRICTED__") return "참여 제한";
-                          try {
-                            const slots = JSON.parse(rawValue) as { date: string; start: string; end: string }[];
-                            return slots.length === 0
-                              ? ""
-                              : slots.map((s) => `${s.date} ${s.start}-${s.end}`).join(" / ");
-                          } catch {
-                            return String(rawValue);
+                        const STATUS_LABEL: Record<string, string> = {
+                          pending: "대기",
+                          approved: "승인",
+                          rejected: "거절",
+                        };
+                        const csvCell = (v: string) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+                        const fmtAnswer = (field: FormField, rawValue: unknown): string => {
+                          if (rawValue === undefined || rawValue === null || rawValue === "") return "";
+                          if (Array.isArray(rawValue)) {
+                            if (rawValue.length > 0 && typeof rawValue[0] === "object") {
+                              return (rawValue as { name: string }[]).map((f) => f.name).join(" / ");
+                            }
+                            return (rawValue as string[]).join(", ");
                           }
-                        }
-                        return String(rawValue);
-                      };
-                      const headerCols = [
-                        "이름",
-                        "학번",
-                        "이메일",
-                        "핸드폰번호",
-                        ...(type === "external" ? ["참석유형"] : []),
-                        "상태",
-                        "신청일",
-                        ...questionFields.map((f) => f.label),
-                      ];
-                      const dataRows = filtered.map((a) => {
-                        const cells = [
-                          a.name,
-                          a.studentId ?? "",
-                          a.email ?? "",
-                          a.phone ?? "",
-                          ...(type === "external"
-                            ? [
-                                EXTERNAL_PARTICIPANT_TYPE_LABELS[
-                                  (a.participantType ?? "attendee") as ExternalParticipantType
-                                ],
-                              ]
-                            : []),
-                          STATUS_LABEL[a.status] ?? a.status ?? "대기",
-                          a.appliedAt ? new Date(a.appliedAt).toLocaleString("ko-KR") : "",
-                          ...questionFields.map((f) =>
-                            fmtAnswer(f, a.answers?.[f.id] ?? a.answers?.[f.label]),
-                          ),
+                          if (
+                            (field.type === "schedule" || field.type === "datetime_slots") &&
+                            typeof rawValue === "string"
+                          ) {
+                            if (rawValue === "__ALL__") return "전체 시간 가능";
+                            if (rawValue === "__RESTRICTED__") return "참여 제한";
+                            try {
+                              const slots = JSON.parse(rawValue) as { date: string; start: string; end: string }[];
+                              return slots.length === 0
+                                ? ""
+                                : slots.map((s) => `${s.date} ${s.start}-${s.end}`).join(" / ");
+                            } catch {
+                              return String(rawValue);
+                            }
+                          }
+                          return String(rawValue);
+                        };
+                        const headerCols = [
+                          "이름",
+                          "학번",
+                          "이메일",
+                          "핸드폰번호",
+                          ...(type === "external" ? ["참석유형"] : []),
+                          "상태",
+                          "신청일",
+                          ...questionFields.map((f) => f.label),
                         ];
-                        return cells.map(csvCell).join(",");
-                      });
-                      const csv =
-                        "﻿" + [headerCols.map(csvCell).join(","), ...dataRows].join("\r\n");
-                      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-                      const url = URL.createObjectURL(blob);
-                      const el = document.createElement("a");
-                      const today = new Date().toISOString().slice(0, 10);
-                      el.href = url;
-                      el.download = `${activity?.title ?? "활동"}_신청현황_${today}.csv`;
-                      el.click();
-                      URL.revokeObjectURL(url);
+                        const dataRows = filtered.map((a) => {
+                          const cells = [
+                            a.name,
+                            a.studentId ?? "",
+                            a.email ?? "",
+                            a.phone ?? "",
+                            ...(type === "external"
+                              ? [
+                                  EXTERNAL_PARTICIPANT_TYPE_LABELS[
+                                    (a.participantType ?? "attendee") as ExternalParticipantType
+                                  ],
+                                ]
+                              : []),
+                            STATUS_LABEL[a.status] ?? a.status ?? "대기",
+                            a.appliedAt ? new Date(a.appliedAt).toLocaleString("ko-KR") : "",
+                            ...questionFields.map((f) =>
+                              fmtAnswer(f, a.answers?.[f.id] ?? a.answers?.[f.label]),
+                            ),
+                          ];
+                          return cells.map(csvCell).join(",");
+                        });
+                        const csv =
+                          "﻿" + [headerCols.map(csvCell).join(","), ...dataRows].join("\r\n");
+                        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+                        const url = URL.createObjectURL(blob);
+                        const el = document.createElement("a");
+                        const today = new Date().toISOString().slice(0, 10);
+                        el.href = url;
+                        el.download = `${activity?.title ?? "활동"}_신청현황_${today}.csv`;
+                        // 일부 브라우저는 DOM에 붙지 않은 <a>.click() 을 무시함 — 명시적 append/remove
+                        document.body.appendChild(el);
+                        el.click();
+                        el.remove();
+                        URL.revokeObjectURL(url);
+                      } catch (err) {
+                        console.error("[csv-export]", err);
+                        toast.error(`CSV 내보내기 실패: ${err instanceof Error ? err.message : "알 수 없는 오류"}`);
+                      }
                     }}
                   >
                     <Download size={13} />
@@ -2729,16 +2737,25 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
 
               {/* 참여자 목록 CSV 내보내기 */}
               <Button variant="outline" size="sm" onClick={() => {
-                const bom = "\uFEFF";
-                const header = type === "external" ? "이름,학번,참석유형,발표유형,논문제목,상태,신청일\n" : "이름,학번,상태,신청일\n";
-                const rows = applicants.map((a) => type === "external"
-                  ? `"${a.name}","${a.studentId ?? ""}","${EXTERNAL_PARTICIPANT_TYPE_LABELS[(a.participantType ?? "attendee") as ExternalParticipantType]}","${a.speakerSubmissionType ? SPEAKER_SUBMISSION_TYPE_LABELS[a.speakerSubmissionType as SpeakerSubmissionType] : ""}","${(a.speakerPaperTitle ?? "").replace(/"/g, '""')}","${a.status}","${a.appliedAt}"`
-                  : `"${a.name}","${a.studentId ?? ""}","${a.status}","${a.appliedAt}"`).join("\n");
-                const blob = new Blob([bom + header + rows], { type: "text/csv" });
-                const url = URL.createObjectURL(blob);
-                const el = document.createElement("a");
-                el.href = url; el.download = `${activity?.title ?? "activity"}_리포트.csv`; el.click();
-                URL.revokeObjectURL(url);
+                try {
+                  const bom = "\uFEFF";
+                  const header = type === "external" ? "이름,학번,참석유형,발표유형,논문제목,상태,신청일\n" : "이름,학번,상태,신청일\n";
+                  const rows = applicants.map((a) => type === "external"
+                    ? `"${a.name}","${a.studentId ?? ""}","${EXTERNAL_PARTICIPANT_TYPE_LABELS[(a.participantType ?? "attendee") as ExternalParticipantType]}","${a.speakerSubmissionType ? SPEAKER_SUBMISSION_TYPE_LABELS[a.speakerSubmissionType as SpeakerSubmissionType] : ""}","${(a.speakerPaperTitle ?? "").replace(/"/g, '""')}","${a.status}","${a.appliedAt}"`
+                    : `"${a.name}","${a.studentId ?? ""}","${a.status}","${a.appliedAt}"`).join("\n");
+                  const blob = new Blob([bom + header + rows], { type: "text/csv" });
+                  const url = URL.createObjectURL(blob);
+                  const el = document.createElement("a");
+                  el.href = url;
+                  el.download = `${activity?.title ?? "activity"}_리포트.csv`;
+                  document.body.appendChild(el);
+                  el.click();
+                  el.remove();
+                  URL.revokeObjectURL(url);
+                } catch (err) {
+                  console.error("[csv-export]", err);
+                  toast.error(`CSV 내보내기 실패: ${err instanceof Error ? err.message : "알 수 없는 오류"}`);
+                }
               }}>
                 CSV 내보내기
               </Button>

@@ -29,6 +29,7 @@ import {
   archiveConceptsApi,
   archiveVariablesApi,
   archiveMeasurementsApi,
+  researchMethodsApi,
 } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
@@ -41,8 +42,13 @@ import type {
   ArchiveConcept,
   ArchiveVariable,
   ArchiveMeasurementTool,
+  ResearchMethod,
 } from "@/types";
-import { ARCHIVE_ITEM_TYPE_COLORS } from "@/types";
+import {
+  ARCHIVE_ITEM_TYPE_COLORS,
+  RESEARCH_METHOD_KIND_COLORS,
+  RESEARCH_METHOD_KIND_LABELS,
+} from "@/types";
 
 function jaccardWithMatches(a: string[], b: string[]): { score: number; matches: string[] } {
   const A = new Map<string, string>();
@@ -81,6 +87,7 @@ interface EditDraft {
   conceptIds: string[];
   variableIds: string[];
   measurementIds: string[];
+  researchMethods: string[];
   abstract: string;
   dcollectionUrl: string;
 }
@@ -96,6 +103,7 @@ function toDraft(t: AlumniThesis): EditDraft {
     conceptIds: t.conceptIds ?? [],
     variableIds: t.variableIds ?? [],
     measurementIds: t.measurementIds ?? [],
+    researchMethods: t.researchMethods ?? [],
     abstract: t.abstract ?? "",
     dcollectionUrl: t.dcollectionUrl ?? "",
   };
@@ -122,6 +130,7 @@ export default function AlumniThesisDetailPage() {
   const [concepts, setConcepts] = useState<ArchiveConcept[]>([]);
   const [variables, setVariables] = useState<ArchiveVariable[]>([]);
   const [measurements, setMeasurements] = useState<ArchiveMeasurementTool[]>([]);
+  const [methods, setMethods] = useState<ResearchMethod[]>([]);
 
   const inReadingList = !!viewer?.thesisReadingList?.includes(thesis?.id ?? "");
 
@@ -129,20 +138,24 @@ export default function AlumniThesisDetailPage() {
     const hasLinks =
       !!thesis?.conceptIds?.length ||
       !!thesis?.variableIds?.length ||
-      !!thesis?.measurementIds?.length;
+      !!thesis?.measurementIds?.length ||
+      !!thesis?.researchMethods?.length;
     if (!canEdit && !hasLinks) return;
     let cancelled = false;
     (async () => {
       try {
-        const [c, v, m] = await Promise.all([
+        const [c, v, m, rm] = await Promise.all([
           archiveConceptsApi.list(),
           archiveVariablesApi.list(),
           archiveMeasurementsApi.list(),
+          // staff+ 는 draft 포함, 일반 회원은 published 만 (rules 와 정합)
+          canEdit ? researchMethodsApi.list() : researchMethodsApi.listPublished(),
         ]);
         if (cancelled) return;
         setConcepts(c.data);
         setVariables(v.data);
         setMeasurements(m.data);
+        setMethods(rm.data);
       } catch (err) {
         console.error("[alumni-thesis] archive load failed", err);
       }
@@ -150,7 +163,7 @@ export default function AlumniThesisDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [canEdit, thesis?.conceptIds, thesis?.variableIds, thesis?.measurementIds]);
+  }, [canEdit, thesis?.conceptIds, thesis?.variableIds, thesis?.measurementIds, thesis?.researchMethods]);
 
   useEffect(() => {
     if (!params?.id) return;
@@ -305,6 +318,7 @@ export default function AlumniThesisDetailPage() {
         conceptIds: draft.conceptIds.length > 0 ? draft.conceptIds : null,
         variableIds: draft.variableIds.length > 0 ? draft.variableIds : null,
         measurementIds: draft.measurementIds.length > 0 ? draft.measurementIds : null,
+        researchMethods: draft.researchMethods.length > 0 ? draft.researchMethods : null,
         abstract: draft.abstract.trim() || null,
         dcollectionUrl: draft.dcollectionUrl.trim() || null,
       };
@@ -563,6 +577,37 @@ export default function AlumniThesisDetailPage() {
             </div>
           )}
 
+          {thesis.researchMethods && thesis.researchMethods.length > 0 && (
+            <div className="mt-5">
+              <h2 className="text-xs font-semibold text-muted-foreground">연구방법</h2>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {thesis.researchMethods.map((id) => {
+                  const rm = methods.find((x) => x.id === id);
+                  if (!rm) {
+                    return (
+                      <Badge key={id} variant="outline" className="text-xs opacity-60">
+                        ({id.slice(0, 6)}…)
+                      </Badge>
+                    );
+                  }
+                  return (
+                    <Link key={id} href={`/archive/research-methods/${id}`}>
+                      <Badge
+                        variant="outline"
+                        className={cn("cursor-pointer text-xs", RESEARCH_METHOD_KIND_COLORS[rm.kind])}
+                      >
+                        {rm.name}
+                        <span className="ml-1 opacity-70">
+                          · {RESEARCH_METHOD_KIND_LABELS[rm.kind]}
+                        </span>
+                      </Badge>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {thesis.abstract && (
             <div className="mt-6">
               <h2 className="text-sm font-semibold">초록</h2>
@@ -727,6 +772,22 @@ export default function AlumniThesisDetailPage() {
                     selected={draft.measurementIds}
                     onChange={(ids) => setDraft({ ...draft, measurementIds: ids })}
                     emptyHint="아카이브 측정도구가 없습니다. /console/archive에서 추가하세요."
+                  />
+                </Field>
+              </div>
+
+              <div className="mt-3">
+                <Field label="연구방법 (교육공학 아카이브)">
+                  <ArchivePickerField
+                    type="concept"
+                    items={methods.map((m) => ({
+                      id: m.id,
+                      name: m.name,
+                      meta: RESEARCH_METHOD_KIND_LABELS[m.kind],
+                    }))}
+                    selected={draft.researchMethods}
+                    onChange={(ids) => setDraft({ ...draft, researchMethods: ids })}
+                    emptyHint="아카이브 연구방법이 없습니다. /console/archive/research-methods에서 추가하세요."
                   />
                 </Field>
               </div>

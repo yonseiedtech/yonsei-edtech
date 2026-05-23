@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Library, Plus, Pencil, Trash2, Search, Sparkles, Loader2, RefreshCw } from "lucide-react";
+import Link from "next/link";
+import { Library, Plus, Pencil, Trash2, Search, Sparkles, Loader2, RefreshCw, FlaskConical } from "lucide-react";
 import { importArchiveSeed, refreshArchiveSeedReferences } from "@/lib/archive-seed";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -175,6 +176,12 @@ export default function ConsoleArchivePage() {
         description="개념·변인·측정도구 CRUD"
         actions={
           <div className="flex flex-wrap gap-2">
+            <Link href="/console/archive/research-methods">
+              <Button variant="outline" size="sm" title="교육공학 연구방법 가이드 관리로 이동">
+                <FlaskConical className="mr-1 h-4 w-4" />
+                연구방법 가이드
+              </Button>
+            </Link>
             <Button
               variant="outline"
               size="sm"

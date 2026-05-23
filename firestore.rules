@@ -913,6 +913,14 @@ service cloud.firestore {
       allow create, update, delete: if isAuthenticated() && isStaffOrAbove();
     }
 
+    // ─── 교육공학 아카이브 — 연구방법 가이드 (Phase 1) ───
+    // published=true 인 항목은 공개 read, draft 와 운영 액션은 staff+ 만.
+    match /archive_research_methods/{docId} {
+      allow read: if resource.data.published == true
+                  || (isAuthenticated() && isStaffOrAbove());
+      allow create, update, delete: if isAuthenticated() && isStaffOrAbove();
+    }
+
     // ─── Archive Favorites (관심 저장) ───
     // 본인만 자신의 즐겨찾기 read/write. ID는 {userId}_{itemType}_{itemId} 형식.
     match /archive_favorites/{docId} {

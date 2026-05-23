@@ -142,6 +142,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
       label: "연구",
       items: [
         { href: "/console/research", label: "연구활동", icon: FlaskConical },
+        { href: "/console/archive/research-methods", label: "연구방법 가이드", icon: FlaskConical },
       ],
     },
     {

@@ -11,6 +11,7 @@ export * from "./popup";
 export * from "./defense";
 export * from "./grad-life";
 export * from "./edutech-archive";
+export * from "./research-method";
 
 // Phase 2 — 사용자 / 게시판
 export * from "./user";
