@@ -30,6 +30,17 @@ import {
   type WritingTipCategory,
 } from "@/types";
 import { cn } from "@/lib/utils";
+import ArchiveSearchBar from "@/components/archive/ArchiveSearchBar";
+import { matchesArchiveSearch } from "@/lib/archive-search";
+
+const WRITING_TIP_SEARCH_FIELDS: (keyof WritingTip)[] = [
+  "title",
+  "wrongExample",
+  "correctExample",
+  "explanation",
+  "accessibleSummary",
+  "tags",
+];
 
 type CategoryFilter = "all" | WritingTipCategory;
 
@@ -98,6 +109,7 @@ export default function WritingTipsLandingPage() {
   const [tips, setTips] = useState<WritingTip[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<CategoryFilter>("all");
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -121,6 +133,19 @@ export default function WritingTipsLandingPage() {
     };
   }, [canManage]);
 
+  const visibleTips = useMemo(
+    () => tips.filter((t) => canManage || t.published),
+    [tips, canManage],
+  );
+
+  const filteredTips = useMemo(
+    () =>
+      visibleTips.filter((t) =>
+        matchesArchiveSearch(t, query, WRITING_TIP_SEARCH_FIELDS),
+      ),
+    [visibleTips, query],
+  );
+
   const grouped = useMemo(() => {
     const byCategory: Record<WritingTipCategory, WritingTip[]> = {
       translationese: [],
@@ -129,18 +154,17 @@ export default function WritingTipsLandingPage() {
       "spelling-spacing": [],
       "academic-convention": [],
     };
-    for (const t of tips) {
-      // 검수 게이트 3중 — 클라이언트 단에서도 비-staff 에게 draft 노출 차단
-      if (!canManage && !t.published) continue;
+    for (const t of filteredTips) {
       byCategory[t.category]?.push(t);
     }
     (Object.keys(byCategory) as WritingTipCategory[]).forEach((k) => {
       byCategory[k].sort((a, b) => a.title.localeCompare(b.title, "ko"));
     });
     return byCategory;
-  }, [tips, canManage]);
+  }, [filteredTips]);
 
   const counts = useMemo(() => {
+    // 탭별 카운트는 검색 결과 기준으로 갱신 (검색어가 비어 있으면 전체)
     const c: Record<CategoryFilter, number> = {
       all: 0,
       translationese: 0,
@@ -149,13 +173,12 @@ export default function WritingTipsLandingPage() {
       "spelling-spacing": 0,
       "academic-convention": 0,
     };
-    for (const t of tips) {
-      if (!canManage && !t.published) continue;
+    for (const t of filteredTips) {
       c.all += 1;
       c[t.category] += 1;
     }
     return c;
-  }, [tips, canManage]);
+  }, [filteredTips]);
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
@@ -186,6 +209,24 @@ export default function WritingTipsLandingPage() {
             }
           />
         </div>
+
+        <div className="mt-6">
+          <ArchiveSearchBar
+            value={query}
+            onChange={setQuery}
+            placeholder="제목·예시·설명·태그(피동·시제·인용)로 검색"
+            resultCount={filteredTips.length}
+            totalCount={visibleTips.length}
+          />
+        </div>
+
+        {!loading && query.trim() && filteredTips.length === 0 && (
+          <Card className="mt-6 rounded-2xl border-dashed">
+            <CardContent className="py-10 text-center text-sm text-muted-foreground">
+              &ldquo;{query.trim()}&rdquo; 검색 결과가 없습니다.
+            </CardContent>
+          </Card>
+        )}
 
         <Tabs
           value={tab}

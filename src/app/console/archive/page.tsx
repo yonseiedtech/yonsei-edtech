@@ -173,7 +173,7 @@ export default function ConsoleArchivePage() {
       <ConsolePageHeader
         icon={Library}
         title="교육공학 아카이브 관리"
-        description="개념·변인·측정도구 CRUD"
+        description="개념·변인·측정도구 CRUD (컬렉션명: archive_concepts · archive_variables · archive_measurements)"
         actions={
           <div className="flex flex-wrap gap-2">
             <Link href="/console/archive/research-methods">
@@ -235,7 +235,23 @@ export default function ConsoleArchivePage() {
         }
       />
 
-      <div className="mt-6 relative">
+      {/* Phase 0 공개 정책 안내 — 검수형 vs 상시 공개 구분 명시 */}
+      <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs leading-relaxed text-blue-900 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200">
+        <p>
+          <strong>개념·변인·측정도구</strong>는 등록 즉시 공개됩니다. (
+          <code className="rounded bg-blue-100 px-1 py-0.5 text-[10px] dark:bg-blue-900/50">archive_concepts</code>{" "}
+          ·{" "}
+          <code className="rounded bg-blue-100 px-1 py-0.5 text-[10px] dark:bg-blue-900/50">archive_variables</code>{" "}
+          ·{" "}
+          <code className="rounded bg-blue-100 px-1 py-0.5 text-[10px] dark:bg-blue-900/50">archive_measurements</code>
+          {" "}— published 게이트 없음)
+        </p>
+        <p className="mt-1">
+          <strong>연구방법·통계방법·기초 용어·학술 글쓰기</strong>는 검수(<code className="rounded bg-blue-100 px-1 py-0.5 text-[10px] dark:bg-blue-900/50">published</code>) 후 공개됩니다.
+        </p>
+      </div>
+
+      <div className="mt-4 relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="이름으로 검색"
@@ -249,8 +265,17 @@ export default function ConsoleArchivePage() {
         <TabsList>
           <TabsTrigger value="concept">개념 ({concepts.length})</TabsTrigger>
           <TabsTrigger value="variable">변인 ({variables.length})</TabsTrigger>
-          <TabsTrigger value="measurement">측정도구 ({measurements.length})</TabsTrigger>
+          <TabsTrigger value="measurement">
+            측정도구 ({measurements.length})
+          </TabsTrigger>
         </TabsList>
+        {tab === "measurement" && (
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            힌트: 컬렉션명은{" "}
+            <code className="rounded bg-muted px-1 py-0.5 text-[10px]">archive_measurements</code>
+            {" "}입니다 (라벨은 &ldquo;측정도구&rdquo;).
+          </p>
+        )}
 
         {(["concept", "variable", "measurement"] as ArchiveItemType[]).map((t) => (
           <TabsContent key={t} value={t}>

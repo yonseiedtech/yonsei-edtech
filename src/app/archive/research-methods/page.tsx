@@ -27,6 +27,16 @@ import {
   type ResearchMethodKind,
 } from "@/types";
 import { cn } from "@/lib/utils";
+import ArchiveSearchBar from "@/components/archive/ArchiveSearchBar";
+import { matchesArchiveSearch } from "@/lib/archive-search";
+
+const RESEARCH_METHOD_SEARCH_FIELDS: (keyof ResearchMethod)[] = [
+  "name",
+  "summary",
+  "accessibleSummary",
+  "description",
+  "educationalTechExamples",
+];
 
 interface KindGuide {
   kind: ResearchMethodKind;
@@ -74,6 +84,7 @@ export default function ResearchMethodsLandingPage() {
 
   const [methods, setMethods] = useState<ResearchMethod[]>([]);
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -97,15 +108,26 @@ export default function ResearchMethodsLandingPage() {
     };
   }, [canManage]);
 
+  const visibleMethods = useMemo(
+    () => methods.filter((m) => canManage || m.published),
+    [methods, canManage],
+  );
+
+  const filteredMethods = useMemo(
+    () =>
+      visibleMethods.filter((m) =>
+        matchesArchiveSearch(m, query, RESEARCH_METHOD_SEARCH_FIELDS),
+      ),
+    [visibleMethods, query],
+  );
+
   const grouped = useMemo(() => {
     const byKind: Record<ResearchMethodKind, ResearchMethod[]> = {
       quantitative: [],
       qualitative: [],
       mixed: [],
     };
-    for (const m of methods) {
-      // 클라이언트 단에서도 한번 더 검수 게이트 — 비-staff 에게 draft 노출 차단
-      if (!canManage && !m.published) continue;
+    for (const m of filteredMethods) {
       byKind[m.kind]?.push(m);
     }
     // 이름 가나다 정렬
@@ -113,7 +135,7 @@ export default function ResearchMethodsLandingPage() {
       byKind[k].sort((a, b) => a.name.localeCompare(b.name, "ko"));
     });
     return byKind;
-  }, [methods, canManage]);
+  }, [filteredMethods]);
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
@@ -144,6 +166,24 @@ export default function ResearchMethodsLandingPage() {
             }
           />
         </div>
+
+        <div className="mt-6">
+          <ArchiveSearchBar
+            value={query}
+            onChange={setQuery}
+            placeholder="연구방법 이름·요약·교육공학 예시로 검색"
+            resultCount={filteredMethods.length}
+            totalCount={visibleMethods.length}
+          />
+        </div>
+
+        {!loading && query.trim() && filteredMethods.length === 0 && (
+          <Card className="mt-6 rounded-2xl border-dashed">
+            <CardContent className="py-10 text-center text-sm text-muted-foreground">
+              &ldquo;{query.trim()}&rdquo; 검색 결과가 없습니다.
+            </CardContent>
+          </Card>
+        )}
 
         {KIND_GUIDES.map((guide) => {
           const list = grouped[guide.kind];

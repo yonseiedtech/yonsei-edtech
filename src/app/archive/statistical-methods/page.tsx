@@ -24,6 +24,16 @@ import {
   type StatisticalMethodCategory,
 } from "@/types";
 import { cn } from "@/lib/utils";
+import ArchiveSearchBar from "@/components/archive/ArchiveSearchBar";
+import { matchesArchiveSearch } from "@/lib/archive-search";
+
+const STATISTICAL_METHOD_SEARCH_FIELDS: (keyof StatisticalMethod)[] = [
+  "name",
+  "summary",
+  "accessibleSummary",
+  "whenToUse",
+  "description",
+];
 
 interface CategoryGuide {
   category: StatisticalMethodCategory;
@@ -107,6 +117,7 @@ export default function StatisticalMethodsLandingPage() {
 
   const [methods, setMethods] = useState<StatisticalMethod[]>([]);
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -130,6 +141,19 @@ export default function StatisticalMethodsLandingPage() {
     };
   }, [canManage]);
 
+  const visibleMethods = useMemo(
+    () => methods.filter((m) => canManage || m.published),
+    [methods, canManage],
+  );
+
+  const filteredMethods = useMemo(
+    () =>
+      visibleMethods.filter((m) =>
+        matchesArchiveSearch(m, query, STATISTICAL_METHOD_SEARCH_FIELDS),
+      ),
+    [visibleMethods, query],
+  );
+
   const grouped = useMemo(() => {
     const byCategory: Record<StatisticalMethodCategory, StatisticalMethod[]> = {
       anova_family: [],
@@ -141,16 +165,14 @@ export default function StatisticalMethodsLandingPage() {
       multilevel: [],
       other: [],
     };
-    for (const m of methods) {
-      // 클라이언트 단에서도 한번 더 검수 게이트 — 비-staff 에게 draft 노출 차단
-      if (!canManage && !m.published) continue;
+    for (const m of filteredMethods) {
       byCategory[m.category]?.push(m);
     }
     (Object.keys(byCategory) as StatisticalMethodCategory[]).forEach((k) => {
       byCategory[k].sort((a, b) => a.name.localeCompare(b.name, "ko"));
     });
     return byCategory;
-  }, [methods, canManage]);
+  }, [filteredMethods]);
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
@@ -181,6 +203,24 @@ export default function StatisticalMethodsLandingPage() {
             }
           />
         </div>
+
+        <div className="mt-6">
+          <ArchiveSearchBar
+            value={query}
+            onChange={setQuery}
+            placeholder="통계방법 이름·요약·언제 사용하는가로 검색"
+            resultCount={filteredMethods.length}
+            totalCount={visibleMethods.length}
+          />
+        </div>
+
+        {!loading && query.trim() && filteredMethods.length === 0 && (
+          <Card className="mt-6 rounded-2xl border-dashed">
+            <CardContent className="py-10 text-center text-sm text-muted-foreground">
+              &ldquo;{query.trim()}&rdquo; 검색 결과가 없습니다.
+            </CardContent>
+          </Card>
+        )}
 
         {CATEGORY_GUIDES.map((guide) => {
           const list = grouped[guide.category];

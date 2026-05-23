@@ -24,6 +24,17 @@ import {
   type FoundationTermCategory,
 } from "@/types";
 import { cn } from "@/lib/utils";
+import ArchiveSearchBar from "@/components/archive/ArchiveSearchBar";
+import { matchesArchiveSearch } from "@/lib/archive-search";
+
+const FOUNDATION_TERM_SEARCH_FIELDS: (keyof FoundationTerm)[] = [
+  "term",
+  "englishName",
+  "abbreviation",
+  "summary",
+  "accessibleSummary",
+  "definition",
+];
 
 interface CategoryGuide {
   category: FoundationTermCategory;
@@ -91,6 +102,7 @@ export default function FoundationTermsLandingPage() {
 
   const [terms, setTerms] = useState<FoundationTerm[]>([]);
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -114,6 +126,19 @@ export default function FoundationTermsLandingPage() {
     };
   }, [canManage]);
 
+  const visibleTerms = useMemo(
+    () => terms.filter((t) => canManage || t.published),
+    [terms, canManage],
+  );
+
+  const filteredTerms = useMemo(
+    () =>
+      visibleTerms.filter((t) =>
+        matchesArchiveSearch(t, query, FOUNDATION_TERM_SEARCH_FIELDS),
+      ),
+    [visibleTerms, query],
+  );
+
   const grouped = useMemo(() => {
     const byCategory: Record<FoundationTermCategory, FoundationTerm[]> = {
       variables: [],
@@ -123,16 +148,14 @@ export default function FoundationTermsLandingPage() {
       measurement: [],
       "learning-theory": [],
     };
-    for (const t of terms) {
-      // 클라이언트 단에서도 검수 게이트 — 비-staff 에게 draft 노출 차단
-      if (!canManage && !t.published) continue;
+    for (const t of filteredTerms) {
       byCategory[t.category]?.push(t);
     }
     (Object.keys(byCategory) as FoundationTermCategory[]).forEach((k) => {
       byCategory[k].sort((a, b) => a.term.localeCompare(b.term, "ko"));
     });
     return byCategory;
-  }, [terms, canManage]);
+  }, [filteredTerms]);
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
@@ -164,6 +187,24 @@ export default function FoundationTermsLandingPage() {
             }
           />
         </div>
+
+        <div className="mt-6">
+          <ArchiveSearchBar
+            value={query}
+            onChange={setQuery}
+            placeholder="용어·영문·약어·정의로 검색"
+            resultCount={filteredTerms.length}
+            totalCount={visibleTerms.length}
+          />
+        </div>
+
+        {!loading && query.trim() && filteredTerms.length === 0 && (
+          <Card className="mt-6 rounded-2xl border-dashed">
+            <CardContent className="py-10 text-center text-sm text-muted-foreground">
+              &ldquo;{query.trim()}&rdquo; 검색 결과가 없습니다.
+            </CardContent>
+          </Card>
+        )}
 
         {CATEGORY_GUIDES.map((guide) => {
           const list = grouped[guide.category];

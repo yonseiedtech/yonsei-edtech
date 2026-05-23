@@ -1,4 +1,7 @@
 // ── 교육공학 아카이브 (Concept → Variable → MeasurementTool) ──
+// 컬렉션명 표준: archive_measurements (측정도구). URL은 /archive/measurement, 라벨은 "측정도구".
+// 상시 공개 정책 (published 없음): archive_concepts, archive_variables, archive_measurements.
+// 자세한 매트릭스·정책은 docs/archive-collection-naming.md 참고.
 export type ArchiveItemType = "concept" | "variable" | "measurement";
 
 export const ARCHIVE_ITEM_TYPE_LABELS: Record<ArchiveItemType, string> = {
