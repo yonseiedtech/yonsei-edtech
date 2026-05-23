@@ -1,9 +1,10 @@
 "use client";
 /**
- * /mypage/dashboard-settings — 대시보드 위젯 표시 설정 (D-1 가시성 + D-2 순서 변경).
+ * /mypage/dashboard-settings — 대시보드 위젯 표시 설정 (D-1 가시성 + D-2 순서 변경 + D-3 알림 끄기).
  *
  * - 14개 위젯의 노출 여부를 체크박스로 개별 토글 (D-1).
  * - 드래그 핸들(⋮⋮) 또는 ↑↓ 화살표 버튼으로 순서 변경 (D-2).
+ * - 알림 가능한 위젯에 Bell/BellOff 토글로 알림 끄기 (D-3).
  * - 변경 즉시 localStorage 에 저장 (saveLayout).
  * - 로그인 필수 (AuthGuard).
  *
@@ -18,11 +19,13 @@ import {
   GripVertical,
   ChevronUp,
   ChevronDown,
+  Bell,
+  BellOff,
 } from "lucide-react";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { useAuthStore } from "@/features/auth/auth-store";
 import PageHeader from "@/components/ui/page-header";
-import PageContainer from "@/components/layout/PageContainer";
+import PageContainer from "@/components/ui/page-container";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,6 +50,7 @@ import {
   DASHBOARD_WIDGET_KEYS,
   DASHBOARD_WIDGET_META,
   DEFAULT_DASHBOARD_LAYOUT,
+  isNotifiableWidget,
   type DashboardLayout,
   type DashboardWidgetConfig,
   type DashboardWidgetKey,
@@ -56,6 +60,8 @@ import {
   useDashboardLayout,
   getSortedWidgets,
   reorderWidget,
+  isWidgetMuted,
+  setWidgetMuted,
 } from "@/lib/dashboard-layout";
 
 // ── 상수 ─────────────────────────────────────────────────────────────────────
@@ -75,6 +81,7 @@ function buildLayoutFromSortedConfigs(
       key: cfg.key,
       visible: visibilityMap[cfg.key] ?? true,
       order: idx,
+      mutedNotifications: cfg.mutedNotifications,
     })),
   };
 }
@@ -90,6 +97,7 @@ function buildLayoutFromVisibility(
       key: cfg.key,
       visible: visibilityMap[cfg.key] ?? true,
       order: idx,
+      mutedNotifications: cfg.mutedNotifications,
     })),
   };
 }
@@ -114,8 +122,10 @@ interface SortableWidgetCardProps {
   isFirst: boolean;
   isLast: boolean;
   isVisible: boolean;
+  isMuted: boolean;
   onToggle: (key: DashboardWidgetKey, checked: boolean) => void;
   onMove: (key: DashboardWidgetKey, direction: "up" | "down") => void;
+  onMuteToggle: (key: DashboardWidgetKey, muted: boolean) => void;
 }
 
 function SortableWidgetCard({
@@ -123,8 +133,10 @@ function SortableWidgetCard({
   isFirst,
   isLast,
   isVisible,
+  isMuted,
   onToggle,
   onMove,
+  onMuteToggle,
 }: SortableWidgetCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: cfg.key });
@@ -137,6 +149,7 @@ function SortableWidgetCard({
   };
 
   const meta = DASHBOARD_WIDGET_META[cfg.key];
+  const notifiable = isNotifiableWidget(cfg.key);
 
   return (
     <div
@@ -169,6 +182,19 @@ function SortableWidgetCard({
           </p>
         </div>
       </label>
+
+      {/* 알림 끄기 토글 (notifiable 위젯만) */}
+      {notifiable && (
+        <button
+          type="button"
+          onClick={() => onMuteToggle(cfg.key, !isMuted)}
+          className="mt-0.5 shrink-0 rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label={isMuted ? `${meta.label} 알림 켜기` : `${meta.label} 알림 끄기`}
+          title={isMuted ? "알림 켜기" : "알림 끄기"}
+        >
+          {isMuted ? <BellOff size={15} /> : <Bell size={15} />}
+        </button>
+      )}
 
       {/* 화살표 버튼 (모바일 친화 / 키보드 접근성) */}
       <div className="flex shrink-0 flex-col gap-0.5">
@@ -244,6 +270,13 @@ function DashboardSettingsContent() {
     toast.success("순서가 변경됐습니다.");
   }
 
+  async function handleMuteToggle(key: DashboardWidgetKey, muted: boolean) {
+    const next = setWidgetMuted(layout, key, muted);
+    saveLayout(user!.id, next);
+    const { toast } = await import("sonner");
+    toast.info(muted ? "알림 끔" : "알림 켬");
+  }
+
   async function handleEnableAll() {
     const all = Object.fromEntries(
       DASHBOARD_WIDGET_KEYS.map((k) => [k, true]),
@@ -273,6 +306,8 @@ function DashboardSettingsContent() {
       widgets: DEFAULT_DASHBOARD_LAYOUT.widgets.map((w) => ({
         ...w,
         visible: visibility[w.key] ?? true,
+        mutedNotifications: layout?.widgets.find((lw) => lw.key === w.key)
+          ?.mutedNotifications,
       })),
     };
     saveLayout(user!.id, next);
@@ -281,7 +316,7 @@ function DashboardSettingsContent() {
   }
 
   return (
-    <PageContainer variant="default" py="md">
+    <PageContainer width="default">
       <PageHeader
         icon={LayoutDashboard}
         title="대시보드 설정"
@@ -307,7 +342,17 @@ function DashboardSettingsContent() {
       {/* D-2b 안내 배너 */}
       <p className="mt-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-xs text-blue-700">
         위젯 순서 설정이 저장됩니다.{" "}
-        <span className="font-medium">대시보드 화면 반영은 다음 업데이트(D-2b)에서 활성화 예정</span>입니다.
+        <span className="font-medium">
+          대시보드 화면 반영은 다음 업데이트(D-2b)에서 활성화 예정
+        </span>
+        입니다.
+      </p>
+
+      {/* D-3 알림 끄기 안내 배너 */}
+      <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-700">
+        <Bell size={12} className="mr-1 inline-block" />
+        <span className="font-medium">알림 끄기</span> 옵션은 알림을 가진 위젯에만 표시됩니다.
+        실제 위젯 내부 적용은 다음 업데이트(D-3b)에서 점진 적용됩니다.
       </p>
 
       <DndContext
@@ -327,8 +372,10 @@ function DashboardSettingsContent() {
                 isFirst={idx === 0}
                 isLast={idx === sorted.length - 1}
                 isVisible={visibility[cfg.key]}
+                isMuted={isWidgetMuted(layout, cfg.key)}
                 onToggle={handleToggle}
                 onMove={handleMove}
+                onMuteToggle={handleMuteToggle}
               />
             ))}
           </div>

@@ -19,6 +19,8 @@ import {
   DASHBOARD_WIDGET_KEYS,
 } from "@/types/dashboard-layout";
 
+// ── D-3 알림 무음 헬퍼 ───────────────────────────────────────────────────────
+
 const KEY_PREFIX = "yedu_dashboard_layout";
 
 function readLayout(userId: string): DashboardLayout | null {
@@ -106,6 +108,51 @@ export function reorderWidget(
     order: orderMap.has(w.key) ? (orderMap.get(w.key) as number) : w.order ?? DASHBOARD_WIDGET_KEYS.indexOf(w.key),
   }));
 
+  return {
+    schemaVersion: 1,
+    updatedAt: new Date().toISOString(),
+    widgets,
+  };
+}
+
+/**
+ * D-3: 특정 위젯의 알림 무음 여부 반환.
+ * layout 이 없거나 cfg 가 없으면 false (알림 켜짐).
+ */
+export function isWidgetMuted(
+  layout: DashboardLayout | null,
+  key: DashboardWidgetKey,
+): boolean {
+  if (!layout) return false;
+  const cfg = layout.widgets.find((w) => w.key === key);
+  return cfg?.mutedNotifications === true;
+}
+
+/**
+ * D-3: 특정 위젯의 mutedNotifications 를 설정한 새 DashboardLayout 반환.
+ * layout 이 null 이면 DEFAULT_DASHBOARD_LAYOUT 을 기반으로 생성.
+ */
+export function setWidgetMuted(
+  layout: DashboardLayout | null,
+  key: DashboardWidgetKey,
+  muted: boolean,
+): DashboardLayout {
+  const base = layout ?? DEFAULT_DASHBOARD_LAYOUT;
+  // 해당 key 가 base.widgets 에 없으면 추가
+  const exists = base.widgets.some((w) => w.key === key);
+  const widgets: DashboardWidgetConfig[] = exists
+    ? base.widgets.map((w) =>
+        w.key === key ? { ...w, mutedNotifications: muted } : { ...w },
+      )
+    : [
+        ...base.widgets.map((w) => ({ ...w })),
+        {
+          key,
+          visible: true,
+          order: base.widgets.length,
+          mutedNotifications: muted,
+        },
+      ];
   return {
     schemaVersion: 1,
     updatedAt: new Date().toISOString(),

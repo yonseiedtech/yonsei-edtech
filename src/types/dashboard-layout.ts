@@ -33,6 +33,8 @@ export interface DashboardWidgetConfig {
   visible: boolean;
   /** 0-based 사용자 정의 순서 (D-2). 낮을수록 위에 표시. */
   order: number;
+  /** 위젯별 토스트/알림 무음 여부 (D-3). true = 알림 끔. */
+  mutedNotifications?: boolean;
 }
 
 export interface DashboardLayout {
@@ -131,3 +133,20 @@ export const DEFAULT_DASHBOARD_LAYOUT: DashboardLayout = {
     order: idx,
   })),
 };
+
+/**
+ * D-3: 알림(토스트·폴링·배너)을 가진 위젯만 열거.
+ * 이 목록에 있는 위젯만 설정 페이지에서 "알림 끄기" 토글이 노출됨.
+ */
+export const DASHBOARD_NOTIFIABLE_WIDGETS: DashboardWidgetKey[] = [
+  "peerActivityFeed",   // 피드 새 글 알림
+  "aiForumLive",        // 새 글 폴링·알림
+  "seminars",           // 예정 알림
+  "nextActionBanner",   // 액션 알림
+  "staffAlerts",        // 운영 알림
+];
+
+/** D-3: 해당 위젯이 알림 설정 대상인지 확인 */
+export function isNotifiableWidget(key: DashboardWidgetKey): boolean {
+  return DASHBOARD_NOTIFIABLE_WIDGETS.includes(key);
+}
