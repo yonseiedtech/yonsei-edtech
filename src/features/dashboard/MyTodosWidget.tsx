@@ -353,15 +353,17 @@ export default function MyTodosWidget() {
   }, [proposals, reports]);
 
   // ── 3) 학술활동 ──
-  const { data: allActivities = [] } = useQuery({
-    queryKey: ["my-activities-todos"],
-    queryFn: async () => {
-      const res = await activitiesApi.list();
-      return res.data as ActivityFlat[];
-    },
+  // queryKey ["activities", "all"] 로 4개 위젯 캐시 통합 (Phase A queryKey 정리)
+  const { data: allActivitiesRes } = useQuery({
+    queryKey: ["activities", "all"],
+    queryFn: async () => activitiesApi.list(),
     enabled: !!user,
     staleTime: 60_000,
   });
+  const allActivities = useMemo(
+    () => ((allActivitiesRes?.data ?? []) as ActivityFlat[]),
+    [allActivitiesRes],
+  );
 
   const myActivitiesAll = useMemo(() => {
     if (!user) return [] as ActivityFlat[];
@@ -464,8 +466,10 @@ export default function MyTodosWidget() {
   // 수업 picker 옵션 — 본인 수강 과목 (이번 학기)
   const { year: curYear, semester: curSem } = inferCurrentSemester(new Date());
   const curTerm = curSem === "first" ? "spring" : "fall";
+  // queryKey ["my-enrollments", userId] 로 캐시 공유 (DailyClassTimeline·NextActionBanner 와 동일)
+  // picker 가 열려야 fetch — enabled 게이트는 유지, 다만 캐시 키는 공통화
   const { data: enrollmentsRes } = useQuery({
-    queryKey: ["my-enrollments-for-todo", userId],
+    queryKey: ["my-enrollments", userId],
     queryFn: async () => {
       if (!userId) return { data: [], total: 0 };
       return await courseEnrollmentsApi.listByUser(userId);

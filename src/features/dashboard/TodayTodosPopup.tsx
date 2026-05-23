@@ -112,15 +112,17 @@ export default function TodayTodosPopup() {
   const courseTodos = (courseTodosRes?.data ?? []) as CourseTodo[];
 
   // 학술활동
-  const { data: allActivities = [] } = useQuery({
-    queryKey: ["my-activities-todos"],
-    queryFn: async () => {
-      const res = await activitiesApi.list();
-      return res.data as ActivityFlat[];
-    },
+  // queryKey ["activities", "all"] 로 4개 위젯 캐시 통합 (Phase A queryKey 정리)
+  const { data: allActivitiesRes } = useQuery({
+    queryKey: ["activities", "all"],
+    queryFn: async () => activitiesApi.list(),
     enabled: !!user,
     staleTime: 60_000,
   });
+  const allActivities = useMemo(
+    () => ((allActivitiesRes?.data ?? []) as ActivityFlat[]),
+    [allActivitiesRes],
+  );
 
   // 오늘이 마감인 수업 할 일 (미완료)
   const todayCourseTodos = useMemo(

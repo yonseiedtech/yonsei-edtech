@@ -191,8 +191,52 @@ function DashboardContent() {
         )}
       </section>
 
-      {/* ── 섹션 4: 핵심 지표 — 통계 카드 그리드 ── */}
+      {/* ── 섹션 4: 일정·공지 — 2열 그리드 (Phase A: 액션 정보 우선, StatCards 와 위치 교환) ── */}
       <section className="mx-auto mt-8 max-w-6xl px-4">
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* 최근 공지 */}
+          <div className="rounded-2xl border bg-card p-6 shadow-sm">
+            <div className="flex items-center gap-2">
+              <Megaphone size={18} className="text-primary" />
+              <h2 className="font-bold">최근 공지</h2>
+            </div>
+            {notices.length === 0 ? (
+              <p className="mt-4 text-sm text-muted-foreground">
+                공지사항이 없습니다.
+              </p>
+            ) : (
+              <div className="mt-4 space-y-1">
+                {notices.map((n) => (
+                  <Link
+                    key={n.id}
+                    href={`/board/${n.id}`}
+                    className="flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted/50"
+                  >
+                    <span className="truncate font-medium">{n.title}</span>
+                    <span className="ml-3 shrink-0 text-xs text-muted-foreground">
+                      {formatDate(n.createdAt)}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 세미나 일정 캘린더 */}
+          <div className="rounded-2xl border bg-card p-6 shadow-sm">
+            <div className="flex items-center gap-2">
+              <Calendar size={18} className="text-primary" />
+              <h2 className="font-bold">세미나 일정</h2>
+            </div>
+            <div className="mt-4">
+              <MiniCalendar seminars={seminars} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 섹션 5: 핵심 지표 — 통계 카드 그리드 (Phase A: Notices 아래로 이동) ── */}
+      <section className="mx-auto mt-6 max-w-6xl px-4">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <StatCard
             icon={FileText}
@@ -247,50 +291,6 @@ function DashboardContent() {
               />
             </>
           )}
-        </div>
-      </section>
-
-      {/* ── 섹션 5: 일정·공지 — 2열 그리드 ── */}
-      <section className="mx-auto mt-6 max-w-6xl px-4">
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* 최근 공지 */}
-          <div className="rounded-2xl border bg-card p-6 shadow-sm">
-            <div className="flex items-center gap-2">
-              <Megaphone size={18} className="text-primary" />
-              <h2 className="font-bold">최근 공지</h2>
-            </div>
-            {notices.length === 0 ? (
-              <p className="mt-4 text-sm text-muted-foreground">
-                공지사항이 없습니다.
-              </p>
-            ) : (
-              <div className="mt-4 space-y-1">
-                {notices.map((n) => (
-                  <Link
-                    key={n.id}
-                    href={`/board/${n.id}`}
-                    className="flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted/50"
-                  >
-                    <span className="truncate font-medium">{n.title}</span>
-                    <span className="ml-3 shrink-0 text-xs text-muted-foreground">
-                      {formatDate(n.createdAt)}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* 세미나 일정 캘린더 */}
-          <div className="rounded-2xl border bg-card p-6 shadow-sm">
-            <div className="flex items-center gap-2">
-              <Calendar size={18} className="text-primary" />
-              <h2 className="font-bold">세미나 일정</h2>
-            </div>
-            <div className="mt-4">
-              <MiniCalendar seminars={seminars} />
-            </div>
-          </div>
         </div>
       </section>
 

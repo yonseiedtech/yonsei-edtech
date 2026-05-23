@@ -380,7 +380,7 @@ export default function DailyClassTimelineWidget() {
       return await courseEnrollmentsApi.listByUser(userId);
     },
     enabled: !!userId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 5 * 60_000,
   });
 
   const courseIds = useMemo(() => {
@@ -392,7 +392,7 @@ export default function DailyClassTimelineWidget() {
   const { data: offeringsRes, isLoading: loadingOfferings } = useQuery({
     queryKey: ["course-offerings", year, term],
     queryFn: () => courseOfferingsApi.listBySemester(year, term),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 5 * 60_000,
   });
 
   const myOfferings: CourseOffering[] = useMemo(() => {
@@ -453,7 +453,7 @@ export default function DailyClassTimelineWidget() {
         ),
       };
     },
-    staleTime: 1000 * 60,
+    staleTime: 60_000,
     enabled: viewMode === "daily" && todayOfferings.length > 0,
   });
 
@@ -475,7 +475,7 @@ export default function DailyClassTimelineWidget() {
         ),
       };
     },
-    staleTime: 1000 * 60,
+    staleTime: 60_000,
     enabled: viewMode === "weekly" && parsedOfferings.length > 0,
   });
 
@@ -487,7 +487,7 @@ export default function DailyClassTimelineWidget() {
       return await courseTodosApi.listByUser(userId);
     },
     enabled: !!userId,
-    staleTime: 1000 * 60,
+    staleTime: 60_000,
   });
 
   // 이번 주(월~일) 범위 계산: weekDates는 월~금만이므로 일요일까지 확장
@@ -599,15 +599,16 @@ export default function DailyClassTimelineWidget() {
   }, [weeklySessionsRes]);
 
   // ── Sprint 41a: 학술활동(스터디/프로젝트/대외) 진행현황을 타임라인에 통합 ──
+  // queryKey ["activities", "all"] 로 4개 위젯 캐시 통합 (Phase A queryKey 정리)
   const { data: allActivitiesRes } = useQuery({
-    queryKey: ["my-activities-timeline", userId],
+    queryKey: ["activities", "all"],
     queryFn: async () => {
       // type 필터 없이 한 번에 가져온 뒤 클라이언트에서 study/project/external 필터
       const res = await activitiesApi.list();
       return res;
     },
     enabled: !!userId,
-    staleTime: 1000 * 60 * 2,
+    staleTime: 60_000,
   });
 
   // 내가 참여중인 활동만 (운영진=leaderId 일치 OR participants OR members 포함)
@@ -647,7 +648,7 @@ export default function DailyClassTimelineWidget() {
       return map;
     },
     enabled: myActivityIds.length > 0,
-    staleTime: 1000 * 60 * 2,
+    staleTime: 2 * 60_000,
   });
 
   const activityById = useMemo(() => {

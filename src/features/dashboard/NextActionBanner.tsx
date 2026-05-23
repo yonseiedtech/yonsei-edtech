@@ -172,6 +172,7 @@ export default function NextActionBanner() {
   const courseTodos = (courseTodosRes?.data ?? []) as CourseTodo[];
 
   // ── 데이터: 내 수강 + 학기 강의 ──
+  // queryKey ["my-enrollments", userId] 로 다른 위젯과 캐시 공유
   const sem = inferCurrentSemester();
   const term = sem.semester === "first" ? "spring" : "fall";
   const { data: enrollmentsRes } = useQuery({
@@ -196,23 +197,28 @@ export default function NextActionBanner() {
     queryFn: () => courseOfferingsApi.listBySemester(sem.year, term),
     staleTime: 5 * 60_000,
   });
+  // useSeminars 와 동일 캐시 키(["seminars", undefined], limit 200) 공유로 중복 호출 제거
   const myOfferings: CourseOffering[] = useMemo(
     () => ((offeringsRes?.data ?? []) as CourseOffering[]).filter((o) => myCourseIds.includes(o.id)),
     [offeringsRes, myCourseIds],
   );
 
   // ── 데이터: 세미나 (전체 → 내 attendeeIds 필터) ──
-  const { data: seminarsRes } = useQuery({
-    queryKey: ["seminars", "next-action-banner"],
-    queryFn: async () => await seminarsApi.list({ limit: 50 }),
+  // useSeminars 와 동일 queryKey ["seminars", undefined] 공유 (limit 200)
+  const { data: seminarsAll } = useQuery({
+    queryKey: ["seminars", undefined],
+    queryFn: async () => {
+      const res = await seminarsApi.list({ limit: 200 });
+      return res.data as unknown as Seminar[];
+    },
     staleTime: 5 * 60_000,
   });
   const mySeminars = useMemo(
     () =>
-      ((seminarsRes?.data ?? []) as Seminar[]).filter(
+      ((seminarsAll ?? []) as Seminar[]).filter(
         (s) => userId && Array.isArray(s.attendeeIds) && s.attendeeIds.includes(userId),
       ),
-    [seminarsRes, userId],
+    [seminarsAll, userId],
   );
 
   // ── 후보 계산 ──

@@ -38,15 +38,17 @@ function isUserInvolved(a: ActivityFlat, userId: string): boolean {
 export default function MyAcademicActivitiesWidget() {
   const { user } = useAuthStore();
 
-  const { data: all = [], isLoading } = useQuery({
-    queryKey: ["dashboard-my-activities"],
-    queryFn: async () => {
-      const res = await activitiesApi.list();
-      return res.data as ActivityFlat[];
-    },
+  // queryKey ["activities", "all"] 로 4개 위젯 캐시 통합 (Phase A queryKey 정리)
+  const { data: allRes, isLoading } = useQuery({
+    queryKey: ["activities", "all"],
+    queryFn: async () => activitiesApi.list(),
     staleTime: 60_000,
     enabled: !!user,
   });
+  const all = useMemo(
+    () => ((allRes?.data ?? []) as ActivityFlat[]),
+    [allRes],
+  );
 
   const myActive = useMemo(() => {
     if (!user) return [] as ActivityFlat[];

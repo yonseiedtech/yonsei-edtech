@@ -137,22 +137,26 @@ export default function PeerActivityFeed() {
   }, [rawItems]);
 
   const { data: authorMap = {} } = useQuery({
-    queryKey: ["peer-feed", "authors", authorIds.sort().join(",")],
+    queryKey: ["peer-feed", "authors", authorIds.slice().sort().join(",")],
     queryFn: async () => {
       const map: Record<string, { feedOptIn: boolean; name?: string }> = {};
-      await Promise.all(
-        authorIds.map(async (uid) => {
-          try {
-            const u = (await profilesApi.get(uid)) as unknown as User;
-            const optIn = (u as User & {
-              notificationPrefs?: { feedOptIn?: boolean };
-            }).notificationPrefs?.feedOptIn;
-            map[uid] = { feedOptIn: optIn !== false, name: u?.name };
-          } catch {
-            map[uid] = { feedOptIn: true };
-          }
-        }),
-      );
+      // N+1 회피: profilesApi.listByIds 로 30개 단위 batch 조회
+      try {
+        const users = (await profilesApi.listByIds(authorIds)) as unknown as User[];
+        for (const u of users) {
+          if (!u?.id) continue;
+          const optIn = (u as User & {
+            notificationPrefs?: { feedOptIn?: boolean };
+          }).notificationPrefs?.feedOptIn;
+          map[u.id] = { feedOptIn: optIn !== false, name: u.name };
+        }
+      } catch {
+        // 전체 실패 시: 모든 작성자는 기본 노출(=feedOptIn true) 처리
+      }
+      // batch 결과에 빠진 ID 는 기본값(노출)으로 채워 둠
+      for (const uid of authorIds) {
+        if (!map[uid]) map[uid] = { feedOptIn: true };
+      }
       return map;
     },
     enabled: authorIds.length > 0,
