@@ -2132,6 +2132,38 @@ export const foundationTermsApi = {
   delete: (id: string) => dataApi.delete("archive_foundation_terms", id),
 };
 
+// ── 교육공학 아카이브 — 학술 글쓰기 가이드 (Phase 1) ──
+// 번역투·주술호응·시제/태·맞춤법·학술관례. 공개 게이트는 foundation-terms 와 동일 패턴.
+// firestore.rules 의 archive_writing_tips 와 양쪽에서 검수 게이트 적용.
+import type {
+  WritingTip,
+  WritingTipCategory,
+} from "@/types/writing-tip";
+
+export const writingTipsApi = {
+  list: () =>
+    dataApi.list<WritingTip>("archive_writing_tips", { limit: 200 }),
+  listPublished: () =>
+    dataApi.list<WritingTip>("archive_writing_tips", {
+      "filter[published]": "true",
+      limit: 200,
+    }),
+  listByCategory: (category: WritingTipCategory) =>
+    dataApi.list<WritingTip>("archive_writing_tips", {
+      "filter[category]": category,
+      "filter[published]": "true",
+      limit: 200,
+    }),
+  get: (id: string) => dataApi.get<WritingTip>("archive_writing_tips", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<WritingTip>("archive_writing_tips", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<WritingTip>("archive_writing_tips", id, data),
+  upsert: (id: string, data: Record<string, unknown>) =>
+    dataApi.upsert<WritingTip>("archive_writing_tips", id, data),
+  delete: (id: string) => dataApi.delete("archive_writing_tips", id),
+};
+
 // ─── 학기별 로드맵 (Sprint 67-AR — 운영진 콘텐츠 관리) ───
 // 회원 read-only (published=true 만), 운영진(staff 이상)이 CRUD.
 import type { RoadmapStage } from "@/types/steppingstone";

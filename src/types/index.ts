@@ -14,6 +14,7 @@ export * from "./edutech-archive";
 export * from "./research-method";
 export * from "./statistical-method";
 export * from "./foundation-term";
+export * from "./writing-tip";
 
 // Phase 2 — 사용자 / 게시판
 export * from "./user";

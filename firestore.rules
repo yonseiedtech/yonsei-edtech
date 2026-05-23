@@ -938,6 +938,14 @@ service cloud.firestore {
       allow create, update, delete: if isAuthenticated() && isStaffOrAbove();
     }
 
+    // ─── 교육공학 아카이브 — 학술 글쓰기 가이드 (Phase 1) ───
+    // 번역투·주술호응·시제/태·맞춤법·학술관례. 공개 게이트 동일 패턴.
+    match /archive_writing_tips/{docId} {
+      allow read: if resource.data.published == true
+                  || (isAuthenticated() && isStaffOrAbove());
+      allow create, update, delete: if isAuthenticated() && isStaffOrAbove();
+    }
+
     // ─── Archive Favorites (관심 저장) ───
     // 본인만 자신의 즐겨찾기 read/write. ID는 {userId}_{itemType}_{itemId} 형식.
     match /archive_favorites/{docId} {

@@ -15,6 +15,7 @@ import {
   Sparkles,
   Split,
   Link2,
+  PenLine,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -295,17 +296,28 @@ export default function FoundationTermDetailPage() {
           </section>
         )}
 
-        {/* 사용 예시 */}
+        {/* 연구 문장 예시 — "📝 연구에서는 이렇게 쓰입니다" */}
         {term.examples && term.examples.length > 0 && (
           <section className="mt-8">
-            <h2 className="mb-2 text-sm font-semibold text-muted-foreground">
-              사용 예시
-            </h2>
-            <ul className="list-disc space-y-1 pl-5 text-sm text-foreground/85">
-              {term.examples.map((ex) => (
-                <li key={ex.id}>{ex.text}</li>
-              ))}
-            </ul>
+            <div
+              className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-slate-50 p-4 dark:border-blue-900 dark:from-blue-950/30 dark:to-slate-900/40"
+              aria-label="연구에서는 이렇게 쓰입니다"
+            >
+              <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-blue-900 dark:text-blue-200">
+                <PenLine className="h-4 w-4" aria-hidden />
+                📝 연구에서는 이렇게 쓰입니다
+              </h3>
+              <ul className="space-y-2">
+                {term.examples.map((ex) => (
+                  <li
+                    key={ex.id}
+                    className="rounded-md border-l-4 border-blue-300 bg-white/70 px-3 py-2 font-serif text-sm italic leading-relaxed text-slate-700 dark:border-blue-700 dark:bg-slate-900/40 dark:text-slate-200"
+                  >
+                    “{ex.text}”
+                  </li>
+                ))}
+              </ul>
+            </div>
           </section>
         )}
 

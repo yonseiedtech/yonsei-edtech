@@ -10,7 +10,6 @@
 import Link from "next/link";
 import { BookText, ArrowLeft } from "lucide-react";
 import PageHeader from "@/components/ui/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import InlineNotification from "@/components/ui/inline-notification";
 

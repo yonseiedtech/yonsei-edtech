@@ -14,6 +14,7 @@ import {
   BookText,
   FlaskConical,
   BarChart3,
+  PenLine,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -213,8 +214,72 @@ export default function ArchiveLandingPage() {
           </CardContent>
         </Card>
 
+        {/* ─────────────────────────────────────────────────────── */}
+        {/* 📘 그룹 1 — 용어집 · 입문 가이드 */}
+        {/* ─────────────────────────────────────────────────────── */}
+        <section
+          aria-labelledby="archive-group-foundation"
+          className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/60 p-5 dark:border-slate-800 dark:bg-slate-900/30"
+        >
+          <div className="mb-4 flex flex-wrap items-baseline gap-2">
+            <h2
+              id="archive-group-foundation"
+              className="text-base font-semibold tracking-tight text-slate-800 dark:text-slate-100"
+            >
+              📘 용어집 · 입문 가이드
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              교육공학 학습자가 가장 먼저 펼쳐 보는 사전·입문 자료
+            </p>
+          </div>
+
+          {/* 기초 용어 가이드 (Phase 1) */}
+          <Link
+            href="/archive/foundation-terms"
+            className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+            aria-label="교육공학 기초 용어 가이드 보기"
+          >
+            <article className="rounded-2xl border-l-4 border-l-slate-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+              <div className="flex items-center gap-4 p-5">
+                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+                  <BookText className="h-5 w-5" aria-hidden />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-lg font-semibold tracking-tight">교육공학 기초 용어 가이드</h3>
+                  <p className="text-sm text-muted-foreground">
+                    변인·연구설계·교수설계·체제이론·측정·학습이론 기초 용어와 &ldquo;비슷하지만 다른&rdquo; 용어 페어를 정리합니다.
+                  </p>
+                </div>
+                <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">
+                  보기
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+                </div>
+              </div>
+            </article>
+          </Link>
+        </section>
+
+        {/* ─────────────────────────────────────────────────────── */}
+        {/* 📚 그룹 2 — 이론 · 연구 자료 */}
+        {/* ─────────────────────────────────────────────────────── */}
+        <section
+          aria-labelledby="archive-group-theory"
+          className="mt-8"
+        >
+          <div className="mb-4 flex flex-wrap items-baseline gap-2 border-b pb-2">
+            <h2
+              id="archive-group-theory"
+              className="text-base font-semibold tracking-tight"
+            >
+              📚 이론 · 연구 자료
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              개념·변인·측정도구 라이브러리와 연구·통계·글쓰기 가이드
+            </p>
+          </div>
+
         {/* ── 3개 가이드 카드 ── */}
-        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="mt-2 grid grid-cols-1 gap-4 md:grid-cols-3">
           {TYPE_GUIDES.map((g) => {
             const Icon = g.icon;
             return (
@@ -324,21 +389,21 @@ export default function ArchiveLandingPage() {
           </article>
         </Link>
 
-        {/* ── 기초 용어 가이드 (Phase 1) ── */}
+        {/* ── 학술 글쓰기 가이드 (Phase 1) ── */}
         <Link
-          href="/archive/foundation-terms"
+          href="/archive/writing-tips"
           className="group mt-6 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
-          aria-label="교육공학 기초 용어 가이드 보기"
+          aria-label="학술 글쓰기 가이드 보기"
         >
-          <article className="rounded-2xl border-l-4 border-l-slate-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+          <article className="rounded-2xl border-l-4 border-l-rose-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
             <div className="flex items-center gap-4 p-5">
-              <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
-                <BookText className="h-5 w-5" aria-hidden />
+              <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300">
+                <PenLine className="h-5 w-5" aria-hidden />
               </div>
               <div className="min-w-0 flex-1">
-                <h2 className="text-lg font-semibold tracking-tight">교육공학 기초 용어 가이드</h2>
+                <h2 className="text-lg font-semibold tracking-tight">학술 글쓰기 가이드</h2>
                 <p className="text-sm text-muted-foreground">
-                  변인·연구설계·교수설계·체제이론·측정·학습이론 기초 용어와 &ldquo;비슷하지만 다른&rdquo; 용어 페어를 정리합니다.
+                  번역투·주술호응·시제·맞춤법·학술 관례 — ❌ 잘못된 예와 ✅ 권장 예를 짝지어 정리합니다.
                 </p>
               </div>
               <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">
@@ -374,6 +439,7 @@ export default function ArchiveLandingPage() {
           </article>
         </Link>
 
+        </section>
         {/* ── 사용 가이드 ── */}
         <Card className="mt-6 rounded-2xl shadow-sm">
           <CardHeader className="pb-2">
