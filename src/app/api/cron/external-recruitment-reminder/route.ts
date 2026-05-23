@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { sendPushToUsers, filterRecipientsByPreference } from "@/lib/push-admin";
+import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
 
 /**
  * 대외 학술대회 모집 시작/마감 D-1 push 알림 — 매일 09:00 KST (UTC 00:00) 실행.
@@ -154,6 +155,14 @@ export async function GET(req: NextRequest) {
               kind: "start",
               recipientCount: successful,
             });
+
+            // 인앱 알림 동시 적재 (push_logs 와 독립적으로 수행)
+            await fanOutNotificationAdmin(userIds, {
+              type: "notice",
+              title: `대외 학술대회 모집 시작 D-1 — ${data.title ?? "활동"}`,
+              body: "내일부터 모집이 시작됩니다. 신청을 준비하세요.",
+              relatedLink: `/activities/external/${doc.id}`,
+            });
           }
 
           await dupRef.set({
@@ -200,6 +209,14 @@ export async function GET(req: NextRequest) {
               title: data.title ?? "",
               kind: "end",
               recipientCount: successful,
+            });
+
+            // 인앱 알림 동시 적재
+            await fanOutNotificationAdmin(userIds, {
+              type: "notice",
+              title: `대외 학술대회 모집 마감 D-1 — ${data.title ?? "활동"}`,
+              body: "내일 모집이 마감됩니다. 아직 신청하지 않으셨다면 서두르세요.",
+              relatedLink: `/activities/external/${doc.id}`,
             });
           }
 
