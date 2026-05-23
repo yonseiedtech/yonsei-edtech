@@ -28,6 +28,7 @@ import {
   Loader2,
   BarChart3,
   Users as UsersIcon,
+  Download,
 } from "lucide-react";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { Button } from "@/components/ui/button";
@@ -395,6 +396,25 @@ function ChecklistStatsTab() {
   const [sort, setSort] = useState<StatsSort>("completion_asc");
   const [visibleCount, setVisibleCount] = useState(ROW_PAGE_SIZE);
 
+  function handleDownloadCsv(
+    allUsers: User[],
+    items: OnboardingChecklistItem[],
+    ctx: OnboardingEvalContext,
+  ) {
+    const csv = buildChecklistStatsCsv(allUsers, items, ctx);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const today = new Date().toISOString().slice(0, 10);
+    a.download = `onboarding-checklist-stats-${today}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("CSV 다운로드 완료");
+  }
+
   // 6개 fetch 병렬 — staleTime 5분, 운영진(staff+) 만 진입하므로 권한 통과 가정
   const queries = useQueries({
     queries: [
@@ -603,6 +623,20 @@ function ChecklistStatsTab() {
 
   return (
     <div className="space-y-6">
+      {/* CSV 다운로드 버튼 */}
+      <div className="flex justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleDownloadCsv(users, enabledItems, ctx)}
+          disabled={isLoading || stats.rows.length === 0}
+          title={stats.rows.length === 0 ? "다운로드할 데이터 없음" : "CSV 파일로 내보내기"}
+        >
+          <Download className="mr-1.5 h-4 w-4" />
+          CSV 내보내기
+        </Button>
+      </div>
+
       {/* 상단 4 통계 카드 */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard
@@ -784,6 +818,60 @@ function formatYmd(iso?: string): string {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+
+function formatDateOrEmpty(iso?: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function escapeCsvField(v: string): string {
+  if (v.includes(",") || v.includes('"') || v.includes("\n")) {
+    return `"${v.replace(/"/g, '""')}"`;
+  }
+  return v;
+}
+
+function buildChecklistStatsCsv(
+  users: User[],
+  items: OnboardingChecklistItem[],
+  ctx: OnboardingEvalContext,
+): string {
+  const headers = [
+    "이름",
+    "학번",
+    "역할",
+    "가입일",
+    "완료율(%)",
+    "완료 항목 수/전체",
+    ...items.map((it) => it.label),
+  ];
+
+  const rows = users.map((u) => {
+    const completions = items.map((it) =>
+      evalCompletionForUser(u, it.completionType, ctx),
+    );
+    const completedCount = completions.filter(Boolean).length;
+    const total = items.length;
+    const pct = total > 0 ? Math.round((completedCount / total) * 100) : 0;
+    return [
+      escapeCsvField(u.name ?? ""),
+      escapeCsvField(u.studentId ?? ""),
+      escapeCsvField(u.role ?? ""),
+      escapeCsvField(formatDateOrEmpty(u.createdAt)),
+      String(pct),
+      `${completedCount}/${total}`,
+      ...completions.map((c) => (c ? "Y" : "N")),
+    ];
+  });
+
+  // BOM + CSV (엑셀 한글 호환)
+  return "﻿" + [headers, ...rows].map((row) => row.join(",")).join("\n");
 }
 
 // ────────────────────────────────────────────────────────────
