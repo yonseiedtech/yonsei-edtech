@@ -59,6 +59,7 @@ import type {
   ConferenceAttendeeReview,
   ConferenceAttendeeReviewRegrets,
   VolunteerAssignment,
+  VolunteerDuty,
   PostReaction,
   PostReactionType,
   StudySessionReflection,
@@ -899,6 +900,30 @@ export const volunteerAssignmentsApi = {
     );
     const snap = await getDoc(ref);
     return serializeDoc(snap) as unknown as VolunteerAssignment;
+  },
+  /**
+   * duties 배열을 Firestore 트랜잭션으로 원자적 수정.
+   * mutator 는 항상 최신 duties 를 받으므로, prop 으로 받은 stale duties 를
+   * 통째로 덮어쓸 때 발생하는 lost update(동시 편집 시 임무 유실)를 방지한다.
+   */
+  mutateDuties: async (
+    id: string,
+    mutator: (current: VolunteerDuty[]) => VolunteerDuty[],
+  ): Promise<void> => {
+    const ref = doc(db, "volunteer_assignments", id);
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists()) throw new Error("배정을 찾을 수 없습니다.");
+      const current = (snap.data().duties as VolunteerDuty[]) ?? [];
+      const next = mutator(current);
+      tx.update(
+        ref,
+        stripUndefinedDeep({
+          duties: next,
+          updatedAt: serverTimestamp(),
+        }),
+      );
+    });
   },
   delete: (id: string) => dataApi.delete("volunteer_assignments", id),
 };

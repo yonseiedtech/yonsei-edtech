@@ -1,54 +1,59 @@
 "use client";
 
 /**
- * 운영 콘솔 — 대외 학술대회 자원봉사자 운영 (Sprint 70).
+ * 운영 콘솔 — 대외 학술대회 자원봉사자 운영 (Sprint 70 → 운영 도구 고도화).
  *
- * 사용자 서비스(/activities/external/[id]/my-volunteer)에서 본인이 배정된 역할만
- * 확인할 수 있었음. 운영진이 전체 봉사자 명부·역할·시간대를 한곳에서 보고 조정·
- * 본부석에서 비상 연락할 수 있는 모니터링 페이지를 신설.
+ * 모니터링 전용 페이지였던 것을 운영 도구로 확장:
+ *  1. 자원봉사 신청자 ↔ 배정 통합 (미배정 신청자에 역할 배정)
+ *  2. 시간대별 가능 인원 시간표 (schedule 답변 집계)
+ *  3. 인원별 체크리스트(임무) 배분 (개별·역할별 일괄)
+ *  4. 배정 인라인 편집 (역할·시프트·비상연락처·메모·삭제)
  *
- * 매칭 분석 GAP #4: 운영 콘솔에 봉사자 배정 관리 페이지 부재.
+ * 기존 통계·역할별 분포·인쇄 기능은 유지.
  */
 
-import { use, useMemo } from "react";
+import { use, useMemo, useState } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   HeartHandshake,
-  Phone,
-  MapPin,
-  Clock,
   ClipboardList,
   Users,
+  UserPlus,
+  ListChecks,
+  CheckCircle2,
 } from "lucide-react";
-import { activitiesApi, volunteerAssignmentsApi } from "@/lib/bkend";
+import { toast } from "sonner";
+import {
+  activitiesApi,
+  volunteerAssignmentsApi,
+  activityApplicantsApi,
+} from "@/lib/bkend";
+import { useAuthStore } from "@/features/auth/auth-store";
 import {
   VOLUNTEER_ROLE_LABELS,
   type VolunteerAssignment,
+  type VolunteerDuty,
   type VolunteerRoleKey,
   type Activity,
+  type ApplicantEntry,
 } from "@/types";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import EmptyState from "@/components/ui/empty-state";
-
-const ROLE_ORDER: VolunteerRoleKey[] = [
-  "track_runner",
-  "registration",
-  "guide",
-  "media",
-  "poster_manager",
-  "other",
-];
-
-const ROLE_COLORS: Record<VolunteerRoleKey, string> = {
-  track_runner: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-200 dark:border-blue-800",
-  registration: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-200 dark:border-emerald-800",
-  guide: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/30 dark:text-purple-200 dark:border-purple-800",
-  media: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/30 dark:text-rose-200 dark:border-rose-800",
-  poster_manager: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-200 dark:border-amber-800",
-  other: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700",
-};
+import { Button } from "@/components/ui/button";
+import {
+  ROLE_ORDER,
+  ROLE_COLORS,
+  applicantKey,
+  findAssignmentForApplicant,
+  buildAssignmentId,
+  dutyId,
+} from "./volunteer-utils";
+import AssignmentDialog, { type AssignmentDraft } from "./AssignmentDialog";
+import BulkDutyDialog from "./BulkDutyDialog";
+import AvailabilityTimeGrid from "./AvailabilityTimeGrid";
+import VolunteerCard from "./VolunteerCard";
 
 export default function ExternalActivityVolunteersConsole({
   params,
@@ -56,6 +61,8 @@ export default function ExternalActivityVolunteersConsole({
   params: Promise<{ id: string }>;
 }) {
   const { id: activityId } = use(params);
+  const queryClient = useQueryClient();
+  const viewer = useAuthStore((s) => s.user);
 
   const { data: activity } = useQuery({
     queryKey: ["activity", activityId],
@@ -68,8 +75,181 @@ export default function ExternalActivityVolunteersConsole({
     queryFn: () => volunteerAssignmentsApi.listByActivity(activityId),
     retry: false,
   });
-  const volunteers = (vRes?.data ?? []) as VolunteerAssignment[];
+  const volunteers = useMemo(
+    () => (vRes?.data ?? []) as VolunteerAssignment[],
+    [vRes],
+  );
 
+  const { data: applicants = [] } = useQuery({
+    queryKey: ["console", "volunteer-applicants", activityId],
+    queryFn: () => activityApplicantsApi.get(activityId),
+    retry: false,
+  });
+  // 반려(rejected) 신청자는 배정 대상에서 제외 — pending·approved 만 노출.
+  const volunteerApplicants = useMemo(
+    () =>
+      applicants.filter(
+        (a) => a.participantType === "volunteer" && a.status !== "rejected",
+      ),
+    [applicants],
+  );
+
+  // ── 다이얼로그 상태 ──
+  const [assignTarget, setAssignTarget] = useState<{
+    applicant?: ApplicantEntry;
+    existing?: VolunteerAssignment;
+  } | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
+
+  // ── mutation: 배정 생성/수정 ──
+  const upsertMutation = useMutation({
+    mutationFn: (input: { id: string; data: Record<string, unknown> }) =>
+      volunteerAssignmentsApi.upsert(input.id, input.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["console", "volunteers", activityId] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => volunteerAssignmentsApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["console", "volunteers", activityId] });
+    },
+  });
+
+  // ── 신청자 → 배정 생성 / 기존 배정 편집 ──
+  function handleAssignmentSubmit(draft: AssignmentDraft) {
+    if (!assignTarget) return;
+    const { applicant, existing } = assignTarget;
+
+    if (existing) {
+      // 편집
+      upsertMutation.mutate(
+        {
+          id: existing.id,
+          data: {
+            role: draft.role,
+            customRoleName: draft.customRoleName,
+            shifts: draft.shifts,
+            emergencyContact: draft.emergencyContact,
+            notes: draft.notes,
+          },
+        },
+        {
+          onSuccess: () => {
+            toast.success("배정을 수정했습니다.");
+            setAssignTarget(null);
+          },
+          onError: (e) =>
+            toast.error(`수정 실패: ${e instanceof Error ? e.message : "오류"}`),
+        },
+      );
+      return;
+    }
+
+    if (!applicant) return;
+    // 신규 배정 — 신청자 PII + 매칭 키(studentId·guestKey)를 비정규화 복사.
+    // userStudentId·guestKey 는 findAssignmentForApplicant 의 정확 매칭에 쓰인다.
+    const newId = buildAssignmentId(applicant, activityId);
+    upsertMutation.mutate(
+      {
+        id: newId,
+        data: {
+          id: newId,
+          userId: applicant.userId ?? "",
+          userName: applicant.name,
+          userStudentId: applicant.studentId,
+          guestKey: applicant.guestKey,
+          userPhone: applicant.phone,
+          activityId,
+          activityTitle: activity?.title,
+          activityDate: activity?.date,
+          role: draft.role,
+          customRoleName: draft.customRoleName,
+          shifts: draft.shifts,
+          duties: [] as VolunteerDuty[],
+          emergencyContact: draft.emergencyContact,
+          notes: draft.notes,
+          createdBy: viewer?.id ?? "system",
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success(`${applicant.name} 님을 배정했습니다.`);
+          setAssignTarget(null);
+        },
+        onError: (e) =>
+          toast.error(`배정 실패: ${e instanceof Error ? e.message : "오류"}`),
+      },
+    );
+  }
+
+  // ── duties 원자적 변경 (lost-update 방지 트랜잭션) ──
+  const dutiesMutation = useMutation({
+    mutationFn: (input: {
+      id: string;
+      mutator: (current: VolunteerDuty[]) => VolunteerDuty[];
+    }) => volunteerAssignmentsApi.mutateDuties(input.id, input.mutator),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["console", "volunteers", activityId] });
+    },
+    onError: (e) =>
+      toast.error(`임무 저장 실패: ${e instanceof Error ? e.message : "오류"}`),
+  });
+
+  function handleMutateDuties(
+    v: VolunteerAssignment,
+    mutator: (current: VolunteerDuty[]) => VolunteerDuty[],
+  ) {
+    dutiesMutation.mutate({ id: v.id, mutator });
+  }
+
+  // ── 배정 삭제 ──
+  function handleDelete(v: VolunteerAssignment) {
+    if (!window.confirm(`${v.userName ?? "이 봉사자"} 님의 배정을 삭제할까요?`)) return;
+    deleteMutation.mutate(v.id, {
+      onSuccess: () => toast.success("배정을 삭제했습니다."),
+      onError: (e) =>
+        toast.error(`삭제 실패: ${e instanceof Error ? e.message : "오류"}`),
+    });
+  }
+
+  // ── 역할별 공통 임무 일괄 배분 ──
+  // 대상 assignment 마다 mutateDuties 트랜잭션 1회 (lost-update 방지).
+  // Promise.allSettled 로 부분 실패를 집계해 "N명 성공 / M명 실패" 안내.
+  const bulkMutation = useMutation({
+    mutationFn: async (input: { role: VolunteerRoleKey; dutyText: string }) => {
+      const targets = volunteers.filter((v) => v.role === input.role);
+      const results = await Promise.allSettled(
+        targets.map((v) =>
+          volunteerAssignmentsApi.mutateDuties(v.id, (current) => [
+            ...current,
+            { id: dutyId(), text: input.dutyText, checked: false },
+          ]),
+        ),
+      );
+      const succeeded = results.filter((r) => r.status === "fulfilled").length;
+      const failed = results.length - succeeded;
+      return { succeeded, failed };
+    },
+    onSuccess: ({ succeeded, failed }) => {
+      queryClient.invalidateQueries({ queryKey: ["console", "volunteers", activityId] });
+      if (failed === 0) {
+        toast.success(`${succeeded}명에게 임무를 추가했습니다.`);
+      } else if (succeeded === 0) {
+        toast.error(`일괄 배분 실패: ${failed}명 모두 추가하지 못했습니다.`);
+      } else {
+        toast.warning(
+          `${succeeded}명 성공 / ${failed}명 실패 — 실패한 인원에 다시 시도하세요.`,
+        );
+      }
+      setBulkOpen(false);
+    },
+    onError: (e) =>
+      toast.error(`일괄 배분 실패: ${e instanceof Error ? e.message : "오류"}`),
+  });
+
+  // ── 파생 데이터 ──
   const grouped = useMemo(() => {
     const m = new Map<VolunteerRoleKey, VolunteerAssignment[]>();
     for (const k of ROLE_ORDER) m.set(k, []);
@@ -77,7 +257,6 @@ export default function ExternalActivityVolunteersConsole({
       const k = (m.has(v.role) ? v.role : "other") as VolunteerRoleKey;
       m.get(k)!.push(v);
     }
-    // 시간대 시작순 정렬 (없으면 끝으로)
     for (const arr of m.values()) {
       arr.sort((a, b) => {
         const sa = a.shifts?.[0]?.startTime ?? "99:99";
@@ -88,29 +267,65 @@ export default function ExternalActivityVolunteersConsole({
     return m;
   }, [volunteers]);
 
+  const roleCounts = useMemo(() => {
+    const out = {} as Record<VolunteerRoleKey, number>;
+    for (const k of ROLE_ORDER) out[k] = grouped.get(k)?.length ?? 0;
+    return out;
+  }, [grouped]);
+
   const stats = useMemo(() => {
     const roleDist = ROLE_ORDER.map((k) => ({
       key: k,
       label: VOLUNTEER_ROLE_LABELS[k],
       count: grouped.get(k)?.length ?? 0,
     }));
-    const dutyDone = volunteers.reduce((acc, v) => {
-      const total = v.duties?.length ?? 0;
-      const done = v.duties?.filter((d) => d.checked).length ?? 0;
-      return { total: acc.total + total, done: acc.done + done };
-    }, { total: 0, done: 0 });
-    const completionRate = dutyDone.total > 0
-      ? Math.round((dutyDone.done / dutyDone.total) * 100)
-      : null;
+    const dutyDone = volunteers.reduce(
+      (acc, v) => {
+        const total = v.duties?.length ?? 0;
+        const done = v.duties?.filter((d) => d.checked).length ?? 0;
+        return { total: acc.total + total, done: acc.done + done };
+      },
+      { total: 0, done: 0 },
+    );
+    const completionRate =
+      dutyDone.total > 0 ? Math.round((dutyDone.done / dutyDone.total) * 100) : null;
     return { total: volunteers.length, roleDist, dutyDone, completionRate };
   }, [volunteers, grouped]);
+
+  // 신청자 분류 (배정 완료 / 미배정)
+  const applicantStatus = useMemo(
+    () =>
+      volunteerApplicants.map((a) => ({
+        applicant: a,
+        assignment: findAssignmentForApplicant(a, volunteers),
+      })),
+    [volunteerApplicants, volunteers],
+  );
+  const unassignedCount = applicantStatus.filter((x) => !x.assignment).length;
+
+  const busy =
+    upsertMutation.isPending ||
+    deleteMutation.isPending ||
+    dutiesMutation.isPending;
 
   return (
     <div className="space-y-6">
       <ConsolePageHeader
         icon={HeartHandshake}
         title={`자원봉사자 운영 — ${activity?.title ?? "대외 학술대회"}`}
-        description="배정된 봉사자 명부·역할·시간대·임무 진행률을 한곳에서 관리합니다. 본부석 모니터링·비상 연락처 조회용."
+        description="신청자 배정·시간대별 가능 인원·임무 체크리스트를 한곳에서 관리합니다."
+        actions={
+          volunteers.length > 0 ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => setBulkOpen(true)}
+            >
+              <ListChecks size={14} /> 역할별 임무 일괄 배분
+            </Button>
+          ) : undefined
+        }
       />
 
       <div className="flex items-center justify-between">
@@ -133,6 +348,16 @@ export default function ExternalActivityVolunteersConsole({
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard icon={Users} label="총 봉사자" value={String(stats.total)} color="text-primary bg-primary/10" />
         <StatCard
+          icon={UserPlus}
+          label="미배정 신청자"
+          value={String(unassignedCount)}
+          color={
+            unassignedCount > 0
+              ? "text-rose-600 bg-rose-50 dark:bg-rose-950/30"
+              : "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30"
+          }
+        />
+        <StatCard
           icon={ClipboardList}
           label="임무 체크 진행률"
           value={stats.completionRate != null ? `${stats.completionRate}%` : "—"}
@@ -144,13 +369,69 @@ export default function ExternalActivityVolunteersConsole({
           value={`${stats.dutyDone.done} / ${stats.dutyDone.total}`}
           color="text-blue-600 bg-blue-50 dark:bg-blue-950/30"
         />
-        <StatCard
-          icon={HeartHandshake}
-          label="역할 종류"
-          value={String(stats.roleDist.filter((r) => r.count > 0).length)}
-          color="text-amber-600 bg-amber-50 dark:bg-amber-950/30"
-        />
       </div>
+
+      {/* 1. 자원봉사 신청자 ↔ 배정 통합 */}
+      <div className="rounded-2xl border bg-card p-5">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-sm font-bold">자원봉사 신청자</h2>
+          <span className="text-[11px] text-muted-foreground">
+            총 {volunteerApplicants.length}명 · 미배정 {unassignedCount}명
+          </span>
+        </div>
+        {volunteerApplicants.length === 0 ? (
+          <EmptyState
+            icon={UserPlus}
+            title="자원봉사 신청자가 없습니다"
+            description="활동 신청폼에서 참석유형 '자원봉사자'로 신청한 인원이 여기 표시됩니다."
+            compact
+          />
+        ) : (
+          <ul className="space-y-2">
+            {applicantStatus.map(({ applicant, assignment }, idx) => (
+              <li
+                key={applicantKey(applicant, idx)}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-background p-3"
+              >
+                <div className="min-w-0">
+                  <p className="flex items-center gap-1.5 text-sm font-medium">
+                    {applicant.name || "익명"}
+                    {!applicant.userId && (
+                      <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                        비회원
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {applicant.studentId && <span>{applicant.studentId} · </span>}
+                    {applicant.phone || applicant.email || "연락처 없음"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {assignment ? (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300">
+                      <CheckCircle2 size={11} />
+                      배정됨 · {VOLUNTEER_ROLE_LABELS[assignment.role]}
+                    </span>
+                  ) : (
+                    <Button
+                      type="button"
+                      size="xs"
+                      onClick={() => setAssignTarget({ applicant })}
+                      disabled={busy}
+                    >
+                      <UserPlus size={12} /> 역할 배정
+                    </Button>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* 2. 시간대별 가능 인원 시간표 */}
+      <AvailabilityTimeGrid activity={activity} applicants={volunteerApplicants} />
 
       {/* 역할별 분포 (요약 막대) */}
       <div className="rounded-2xl border bg-card p-5">
@@ -171,7 +452,7 @@ export default function ExternalActivityVolunteersConsole({
         </div>
       </div>
 
-      {/* 역할별 봉사자 목록 */}
+      {/* 3·4. 역할별 봉사자 목록 — 임무 관리 + 인라인 편집 */}
       {isLoading ? (
         <div className="rounded-2xl border bg-card p-10 text-center text-xs text-muted-foreground">
           불러오는 중…
@@ -181,7 +462,7 @@ export default function ExternalActivityVolunteersConsole({
           <EmptyState
             icon={HeartHandshake}
             title="아직 배정된 봉사자가 없습니다"
-            description="활동 상세 페이지에서 봉사자를 배정하면 본 목록에 표시됩니다."
+            description="위 신청자 목록에서 '역할 배정'을 눌러 봉사자를 배정하세요."
           />
         </div>
       ) : (
@@ -191,100 +472,52 @@ export default function ExternalActivityVolunteersConsole({
           return (
             <div key={roleKey} className="rounded-2xl border bg-card p-5">
               <div className="mb-3 flex items-center gap-2">
-                <span className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${ROLE_COLORS[roleKey]}`}>
+                <span
+                  className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${ROLE_COLORS[roleKey]}`}
+                >
                   {VOLUNTEER_ROLE_LABELS[roleKey]}
                 </span>
                 <span className="text-xs text-muted-foreground">{list.length}명</span>
               </div>
               <ul className="space-y-3">
                 {list.map((v) => (
-                  <li key={v.id} className="rounded-2xl border bg-background p-4">
-                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-semibold">
-                          {v.userName ?? "(이름 미상)"}
-                          {v.customRoleName && (
-                            <span className="ml-2 text-[10px] font-normal text-muted-foreground">
-                              · {v.customRoleName}
-                            </span>
-                          )}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground">
-                          {v.userAffiliation ?? ""}
-                          {v.userPhone && (
-                            <a
-                              href={`tel:${v.userPhone}`}
-                              className="ml-2 inline-flex items-center gap-0.5 text-primary hover:underline"
-                            >
-                              <Phone size={10} /> {v.userPhone}
-                            </a>
-                          )}
-                        </p>
-                      </div>
-                      {v.duties?.length > 0 && (
-                        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
-                          임무 {v.duties.filter((d) => d.checked).length}/{v.duties.length}
-                        </span>
-                      )}
-                    </div>
-
-                    {v.shifts?.length > 0 && (
-                      <div className="mb-2 space-y-1">
-                        {v.shifts.map((s, i) => (
-                          <div key={i} className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                            <span className="inline-flex items-center gap-0.5">
-                              <Clock size={10} /> {s.startTime}~{s.endTime}
-                            </span>
-                            {s.trackName && (
-                              <span className="rounded bg-primary/10 px-1.5 py-0.5 text-primary">
-                                {s.trackName}
-                              </span>
-                            )}
-                            {s.location && (
-                              <span className="inline-flex items-center gap-0.5">
-                                <MapPin size={10} /> {s.location}
-                              </span>
-                            )}
-                            {s.note && <span className="text-muted-foreground/70">· {s.note}</span>}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {v.duties?.length > 0 && (
-                      <ul className="mt-2 space-y-0.5">
-                        {v.duties.map((d) => (
-                          <li
-                            key={d.id}
-                            className={`text-[11px] ${d.checked ? "text-muted-foreground line-through" : "text-foreground"}`}
-                          >
-                            {d.checked ? "✓" : "○"} {d.text}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-
-                    {(v.emergencyContact || v.notes) && (
-                      <div className="mt-2 rounded-lg bg-muted/30 p-2 text-[11px] leading-relaxed">
-                        {v.emergencyContact && (
-                          <p>
-                            <strong>비상 연락:</strong> {v.emergencyContact}
-                          </p>
-                        )}
-                        {v.notes && (
-                          <p>
-                            <strong>메모:</strong> {v.notes}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </li>
+                  <VolunteerCard
+                    key={v.id}
+                    assignment={v}
+                    busy={busy}
+                    onMutateDuties={(mutator) => handleMutateDuties(v, mutator)}
+                    onEdit={() => setAssignTarget({ existing: v })}
+                    onDelete={() => handleDelete(v)}
+                  />
                 ))}
               </ul>
             </div>
           );
         })
       )}
+
+      {/* 다이얼로그 */}
+      {assignTarget && (
+        <AssignmentDialog
+          open
+          onOpenChange={(o) => !o && setAssignTarget(null)}
+          targetName={
+            assignTarget.existing?.userName ??
+            assignTarget.applicant?.name ??
+            "봉사자"
+          }
+          existing={assignTarget.existing}
+          saving={upsertMutation.isPending}
+          onSubmit={handleAssignmentSubmit}
+        />
+      )}
+      <BulkDutyDialog
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        roleCounts={roleCounts}
+        saving={bulkMutation.isPending}
+        onSubmit={(role, dutyText) => bulkMutation.mutate({ role, dutyText })}
+      />
     </div>
   );
 }

@@ -40,6 +40,10 @@ export interface VolunteerAssignment {
   id: string;
   userId: string;
   userName?: string;
+  /** 비정규화: 신청자(activity_applicants) 의 학번 — 신청자↔배정 정확 매칭 키 */
+  userStudentId?: string;
+  /** 비정규화: 신청자(activity_applicants) 의 guestKey — 비회원 신청자 정확 매칭 키 */
+  guestKey?: string;
   /** 비정규화: 명함·연락 표시용 */
   userAffiliation?: string;
   userPhone?: string;
