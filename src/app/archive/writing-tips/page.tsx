@@ -273,7 +273,7 @@ export default function WritingTipsLandingPage() {
                     </div>
 
                     {loading ? (
-                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                      <div className="grid grid-cols-1 gap-3">
                         {Array.from({ length: 2 }).map((_, i) => (
                           <Skeleton key={i} className="h-28 w-full rounded-2xl" />
                         ))}
@@ -287,7 +287,7 @@ export default function WritingTipsLandingPage() {
                         </CardContent>
                       </Card>
                     ) : (
-                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                      <div className="grid grid-cols-1 gap-3">
                         {list.map((t) => (
                           <Link
                             key={t.id}

@@ -29,9 +29,11 @@
  * 데이터 fetching: React Query staleTime 5분.
  */
 
-import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+import confetti from "canvas-confetti";
 import {
   CheckCircle2,
   Circle,
@@ -68,6 +70,7 @@ import type {
   CourseReview,
 } from "@/types";
 import WidgetCard from "@/components/ui/widget-card";
+import { cn } from "@/lib/utils";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 const COMPLETION_THRESHOLD = 0.6; // 60%
@@ -314,6 +317,90 @@ export default function NewMemberChecklistWidget() {
   const total = items.length;
   const progress = total > 0 ? completedCount / total : 0;
 
+  // ── 축하 애니메이션 — 신규 완료 항목 감지 ──
+  // 이전 마운트의 completed key set 을 ref 로 보관 (첫 마운트는 축하 X)
+  const prevCompletedRef = useRef<Set<string> | null>(null);
+  // 방금 완료되어 반짝임 효과를 표시할 항목 id 집합
+  const [justCompletedIds, setJustCompletedIds] = useState<Set<string>>(new Set());
+  // 전체 완료(Boss 축하) 가드 — userId 별 localStorage 1회만
+  const bossKey = userId ? `yedu_checklist_boss_celebrated.${userId}` : null;
+
+  const fireConfetti = useCallback((origin?: { x?: number; y?: number }) => {
+    if (typeof window === "undefined") return;
+    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) return;
+    try {
+      confetti({
+        particleCount: 50,
+        spread: 70,
+        startVelocity: 30,
+        origin: { x: origin?.x ?? 0.5, y: origin?.y ?? 0.6 },
+        ticks: 120,
+      });
+    } catch {
+      // ignore confetti failures (e.g. server)
+    }
+  }, []);
+
+  // 신규 완료 항목 감지 + 축하 효과 (3-layer: 반짝임 + 컨페티 + 토스트)
+  useEffect(() => {
+    if (items.length === 0) return;
+    const current = new Set(items.filter((it) => it.completed).map((it) => it.id));
+    const prev = prevCompletedRef.current;
+    // 첫 마운트: 비교 없이 baseline 만 기록
+    if (prev === null) {
+      prevCompletedRef.current = current;
+      return;
+    }
+    const newlyCompleted = [...current].filter((id) => !prev.has(id));
+    if (newlyCompleted.length > 0) {
+      // 인라인 반짝임 표시
+      setJustCompletedIds((s) => {
+        const next = new Set(s);
+        newlyCompleted.forEach((id) => next.add(id));
+        return next;
+      });
+      // 1.5초 후 자동 제거
+      const t = window.setTimeout(() => {
+        setJustCompletedIds((s) => {
+          const next = new Set(s);
+          newlyCompleted.forEach((id) => next.delete(id));
+          return next;
+        });
+      }, 1500);
+      // 컨페티 + 토스트 (각 항목별 토스트, 컨페티는 1회)
+      fireConfetti();
+      newlyCompleted.forEach((id) => {
+        const item = items.find((it) => it.id === id);
+        if (!item) return;
+        toast.success(`🎉 ${item.label} 완료!`, {
+          description: "프로필 완성도가 한 단계 올라갔어요.",
+          duration: 4000,
+        });
+      });
+      // Boss 축하 — 전체 완료 첫 순간 + localStorage 1회 가드
+      if (current.size === items.length && bossKey) {
+        try {
+          if (window.localStorage.getItem(bossKey) !== "1") {
+            window.localStorage.setItem(bossKey, "1");
+            // 좌·우 발사 2회
+            setTimeout(() => fireConfetti({ x: 0.2, y: 0.6 }), 200);
+            setTimeout(() => fireConfetti({ x: 0.8, y: 0.6 }), 400);
+            toast.success("🎓 시작하기 체크리스트 완성!", {
+              description: "프로필 완성도 100% 달성. 마이페이지에서 확인하세요.",
+              duration: 6000,
+            });
+          }
+        } catch {
+          // ignore
+        }
+      }
+      prevCompletedRef.current = current;
+      return () => window.clearTimeout(t);
+    }
+    prevCompletedRef.current = current;
+  }, [items, bossKey, fireConfetti]);
+
   const shouldShow = useMemo(() => {
     if (!user || dismissed) return false;
     if (items.length === 0) return false;
@@ -377,20 +464,37 @@ export default function NewMemberChecklistWidget() {
         {items.map((it) => {
           const Icon = it.icon;
           const StatusIcon = it.completed ? CheckCircle2 : Circle;
+          const justCompleted = justCompletedIds.has(it.id);
           return (
             <li key={it.id}>
               {it.completed ? (
                 <div
-                  className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted-foreground"
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted-foreground transition-all",
+                    justCompleted &&
+                      "animate-pulse bg-emerald-50 text-emerald-700 ring-2 ring-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-200 dark:ring-emerald-700/50",
+                  )}
                   aria-label={`${it.label} 완료`}
                 >
                   <StatusIcon
                     size={16}
-                    className="shrink-0 text-emerald-600"
+                    className={cn(
+                      "shrink-0 text-emerald-600 transition-transform",
+                      justCompleted && "scale-125",
+                    )}
                     aria-hidden="true"
                   />
                   <Icon size={14} className="shrink-0 text-muted-foreground" aria-hidden="true" />
-                  <span className="truncate line-through">{it.label}</span>
+                  <span className={cn("truncate", !justCompleted && "line-through")}>
+                    {it.label}
+                  </span>
+                  {justCompleted && (
+                    <Sparkles
+                      size={14}
+                      className="shrink-0 text-emerald-500 animate-spin"
+                      aria-hidden="true"
+                    />
+                  )}
                 </div>
               ) : (
                 <Link
