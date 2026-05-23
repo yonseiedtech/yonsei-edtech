@@ -17,6 +17,7 @@ import {
   Eye,
   EyeOff,
   BarChart3,
+  Lightbulb,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -200,6 +201,24 @@ export default function ResearchMethodDetailPage() {
             </div>
           )}
         </div>
+
+        {/* 쉽게 이해하기 (일상 비유) */}
+        {method.accessibleSummary && method.accessibleSummary.trim() !== "" && (
+          <section className="mt-8">
+            <div
+              className="rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50 to-emerald-50 p-4 dark:border-sky-900 dark:from-sky-950/30 dark:to-emerald-950/30"
+              aria-label="쉽게 이해하기"
+            >
+              <h3 className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-sky-900 dark:text-sky-200">
+                <Lightbulb className="h-4 w-4" aria-hidden />
+                쉽게 이해하기
+              </h3>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/85">
+                {method.accessibleSummary}
+              </p>
+            </div>
+          </section>
+        )}
 
         {/* 상세 설명 */}
         {method.description && (

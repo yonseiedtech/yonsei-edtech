@@ -31,6 +31,10 @@ import {
   RESEARCH_METHOD_KIND_LABELS,
   STATISTICAL_METHOD_CATEGORY_COLORS,
   STATISTICAL_METHOD_CATEGORY_LABELS,
+  GROUP_COUNT_LABELS,
+  DV_COUNT_LABELS,
+  IV_COUNT_LABELS,
+  DESIGN_TYPE_LABELS,
   type ResearchMethod,
   type AlumniThesis,
   type StatisticalMethod,
@@ -45,6 +49,38 @@ interface ComparisonRow {
 }
 
 const COMPARISON_ROWS: ComparisonRow[] = [
+  {
+    key: "groupCount",
+    label: "집단 수",
+    render: (m) => {
+      const v = m.comparisonProfile?.groupCount;
+      return v ? GROUP_COUNT_LABELS[v] : "—";
+    },
+  },
+  {
+    key: "dependentVariableCount",
+    label: "종속변수 수",
+    render: (m) => {
+      const v = m.comparisonProfile?.dependentVariableCount;
+      return v ? DV_COUNT_LABELS[v] : "—";
+    },
+  },
+  {
+    key: "independentVariableCount",
+    label: "독립변수 수",
+    render: (m) => {
+      const v = m.comparisonProfile?.independentVariableCount;
+      return v ? IV_COUNT_LABELS[v] : "—";
+    },
+  },
+  {
+    key: "designType",
+    label: "설계 유형",
+    render: (m) => {
+      const v = m.comparisonProfile?.designType;
+      return v ? DESIGN_TYPE_LABELS[v] : "—";
+    },
+  },
   {
     key: "focus",
     label: "분석 초점",
@@ -264,6 +300,53 @@ export default function StatisticalMethodDetailPage() {
                 </Badge>
               )}
             </div>
+
+            {/* 의사결정 분기 기준 배지 stack */}
+            {method.comparisonProfile &&
+              (method.comparisonProfile.groupCount ||
+                method.comparisonProfile.dependentVariableCount ||
+                method.comparisonProfile.independentVariableCount ||
+                method.comparisonProfile.designType) && (
+                <div
+                  className="mt-2 flex flex-wrap items-center gap-1.5"
+                  aria-label="의사결정 분기 기준"
+                >
+                  {method.comparisonProfile.groupCount && (
+                    <Badge
+                      variant="outline"
+                      className="bg-slate-50 text-slate-700 border-slate-200 text-[11px]"
+                    >
+                      {GROUP_COUNT_LABELS[method.comparisonProfile.groupCount]}
+                    </Badge>
+                  )}
+                  {method.comparisonProfile.dependentVariableCount && (
+                    <Badge
+                      variant="outline"
+                      className="bg-slate-50 text-slate-700 border-slate-200 text-[11px]"
+                    >
+                      종속변수{" "}
+                      {DV_COUNT_LABELS[method.comparisonProfile.dependentVariableCount]}
+                    </Badge>
+                  )}
+                  {method.comparisonProfile.independentVariableCount && (
+                    <Badge
+                      variant="outline"
+                      className="bg-slate-50 text-slate-700 border-slate-200 text-[11px]"
+                    >
+                      독립변수{" "}
+                      {IV_COUNT_LABELS[method.comparisonProfile.independentVariableCount]}
+                    </Badge>
+                  )}
+                  {method.comparisonProfile.designType && (
+                    <Badge
+                      variant="outline"
+                      className="bg-slate-50 text-slate-700 border-slate-200 text-[11px]"
+                    >
+                      {DESIGN_TYPE_LABELS[method.comparisonProfile.designType]}
+                    </Badge>
+                  )}
+                </div>
+              )}
           </div>
           {canManage && (
             <div className="flex flex-wrap items-center gap-2">
@@ -289,6 +372,24 @@ export default function StatisticalMethodDetailPage() {
             </div>
           )}
         </div>
+
+        {/* 쉽게 이해하기 (일상 비유) */}
+        {method.accessibleSummary && method.accessibleSummary.trim() !== "" && (
+          <section className="mt-8">
+            <div
+              className="rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50 to-emerald-50 p-4 dark:border-sky-900 dark:from-sky-950/30 dark:to-emerald-950/30"
+              aria-label="쉽게 이해하기"
+            >
+              <h3 className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-sky-900 dark:text-sky-200">
+                <Lightbulb className="h-4 w-4" aria-hidden />
+                쉽게 이해하기
+              </h3>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/85">
+                {method.accessibleSummary}
+              </p>
+            </div>
+          </section>
+        )}
 
         {/* 기본 정보 — description / whenToUse */}
         {(method.description || method.whenToUse) && (

@@ -59,6 +59,8 @@ export interface ResearchMethod {
   kind: ResearchMethodKind;
   /** 한 줄 요약 (객관적 정의 1~2문장) */
   summary: string;
+  /** "쉽게 이해하기" — 통계·수학에 어려움을 느끼는 학습자를 위한 일상 비유 설명. 학술적 책임 회피를 위해 단순화된 비유 수준만 작성. */
+  accessibleSummary?: string;
   /** 상세 설명 (긴 텍스트/마크다운) */
   description?: string;
   /** 교육공학 활용 예 */

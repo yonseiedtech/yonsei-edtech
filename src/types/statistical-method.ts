@@ -51,7 +51,59 @@ export interface ComparisonProfile {
   strengthOneliner?: string;
   /** 한 줄 한계 */
   limitationOneliner?: string;
+  /** 의사결정 분기 — 집단 수 */
+  groupCount?: "single" | "two" | "three_or_more" | "varies";
+  /** 의사결정 분기 — 종속변수 개수 */
+  dependentVariableCount?: "one" | "two_or_more" | "varies";
+  /** 의사결정 분기 — 독립변수 개수 */
+  independentVariableCount?: "one" | "two_or_more" | "varies";
+  /** 의사결정 분기 — 설계 유형 */
+  designType?:
+    | "between_subjects"
+    | "within_subjects"
+    | "mixed"
+    | "single_sample"
+    | "varies";
 }
+
+export const GROUP_COUNT_LABELS: Record<
+  NonNullable<ComparisonProfile["groupCount"]>,
+  string
+> = {
+  single: "1집단",
+  two: "2집단",
+  three_or_more: "3집단 이상",
+  varies: "유연/상황별",
+};
+
+export const DV_COUNT_LABELS: Record<
+  NonNullable<ComparisonProfile["dependentVariableCount"]>,
+  string
+> = {
+  one: "1개",
+  two_or_more: "2개 이상",
+  varies: "유연",
+};
+
+export const IV_COUNT_LABELS: Record<
+  NonNullable<ComparisonProfile["independentVariableCount"]>,
+  string
+> = {
+  one: "1개",
+  two_or_more: "2개 이상",
+  varies: "유연",
+};
+
+export const DESIGN_TYPE_LABELS: Record<
+  NonNullable<ComparisonProfile["designType"]>,
+  string
+> = {
+  between_subjects: "피험자간",
+  within_subjects: "피험자내",
+  mixed: "혼합 (간+내)",
+  single_sample: "단일표본",
+  varies: "유연/상황별",
+};
 
 /** 동일 데이터로 시도해볼 수 있는 다른 통계방법 추천 */
 export interface StatisticalMethodAlternative {
@@ -96,6 +148,8 @@ export interface StatisticalMethod {
   category: StatisticalMethodCategory;
   /** 객관적 정의 1~2문장 */
   summary: string;
+  /** "쉽게 이해하기" — 통계·수학에 어려움을 느끼는 학습자를 위한 일상 비유 설명. 학술적 책임 회피를 위해 단순화된 비유 수준만 작성. */
+  accessibleSummary?: string;
   /** 상세 설명 (마크다운/긴 텍스트) */
   description?: string;
   /** 언제 사용하는가 */

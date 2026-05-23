@@ -56,6 +56,7 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
   const [name, setName] = useState(initial?.name ?? "");
   const [kind, setKind] = useState<ResearchMethodKind>(initial?.kind ?? "quantitative");
   const [summary, setSummary] = useState(initial?.summary ?? "");
+  const [accessibleSummary, setAccessibleSummary] = useState(initial?.accessibleSummary ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [educationalTechExamples, setEducationalTechExamples] = useState(
     (initial?.educationalTechExamples ?? []).join("\n"),
@@ -264,6 +265,7 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
         name: name.trim(),
         kind,
         summary: summary.trim(),
+        accessibleSummary: accessibleSummary.trim() || undefined,
         description: description.trim() || undefined,
         educationalTechExamples: lineParse(educationalTechExamples),
         strengths: lineParse(strengths),
@@ -355,6 +357,17 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
               onChange={(e) => setSummary(e.target.value)}
               placeholder="객관적인 짧은 정의 1~2문장"
             />
+          </Field>
+          <Field label="쉽게 이해하기 (일상 비유)">
+            <Textarea
+              rows={5}
+              value={accessibleSummary}
+              onChange={(e) => setAccessibleSummary(e.target.value)}
+              placeholder="통계·수학에 어려움을 느끼는 분들을 위한 일상 비유 설명. 예: 'XX 처럼 …'"
+            />
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              학술적 정의가 아닌 단순화된 일상 비유 수준으로 작성하세요. 강한 정의·주장은 피해 주세요.
+            </p>
           </Field>
           <Field label="상세 설명">
             <Textarea

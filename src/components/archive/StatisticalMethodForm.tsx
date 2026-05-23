@@ -17,6 +17,10 @@ import {
 import {
   STATISTICAL_METHOD_CATEGORY_LABELS,
   RESEARCH_METHOD_KIND_LABELS,
+  GROUP_COUNT_LABELS,
+  DV_COUNT_LABELS,
+  IV_COUNT_LABELS,
+  DESIGN_TYPE_LABELS,
   type StatisticalMethod,
   type StatisticalMethodCategory,
   type StatisticalAssumption,
@@ -70,6 +74,9 @@ export default function StatisticalMethodForm({ initial, userId }: Props) {
     initial?.category ?? "anova_family",
   );
   const [summary, setSummary] = useState(initial?.summary ?? "");
+  const [accessibleSummary, setAccessibleSummary] = useState(
+    initial?.accessibleSummary ?? "",
+  );
   const [description, setDescription] = useState(initial?.description ?? "");
   const [whenToUse, setWhenToUse] = useState(initial?.whenToUse ?? "");
   const [spssCommand, setSpssCommand] = useState(initial?.spssCommand ?? "");
@@ -312,6 +319,10 @@ export default function StatisticalMethodForm({ initial, userId }: Props) {
         keyAssumptions: keyAssumptionsArr,
         strengthOneliner: comparisonProfile.strengthOneliner?.trim() || undefined,
         limitationOneliner: comparisonProfile.limitationOneliner?.trim() || undefined,
+        groupCount: comparisonProfile.groupCount,
+        dependentVariableCount: comparisonProfile.dependentVariableCount,
+        independentVariableCount: comparisonProfile.independentVariableCount,
+        designType: comparisonProfile.designType,
       };
       const hasComparison = Object.values(cleanComparisonProfile).some(
         (v) => v !== undefined && (Array.isArray(v) ? v.length > 0 : true),
@@ -321,6 +332,7 @@ export default function StatisticalMethodForm({ initial, userId }: Props) {
         name: name.trim(),
         category,
         summary: summary.trim(),
+        accessibleSummary: accessibleSummary.trim() || undefined,
         description: description.trim() || undefined,
         whenToUse: whenToUse.trim() || undefined,
         spssCommand: spssCommand.trim() || undefined,
@@ -409,6 +421,17 @@ export default function StatisticalMethodForm({ initial, userId }: Props) {
               onChange={(e) => setSummary(e.target.value)}
               placeholder="객관적인 짧은 정의 1~2문장"
             />
+          </Field>
+          <Field label="쉽게 이해하기 (일상 비유)">
+            <Textarea
+              rows={5}
+              value={accessibleSummary}
+              onChange={(e) => setAccessibleSummary(e.target.value)}
+              placeholder="통계·수학에 어려움을 느끼는 분들을 위한 일상 비유 설명. 예: 'XX 처럼 …'"
+            />
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              학술적 정의가 아닌 단순화된 일상 비유 수준으로 작성하세요. 강한 정의·주장은 피해 주세요.
+            </p>
           </Field>
           <Field label="상세 설명">
             <Textarea
@@ -625,6 +648,116 @@ export default function StatisticalMethodForm({ initial, userId }: Props) {
           <p className="text-[11px] text-muted-foreground">
             상세 페이지의 &quot;대안 통계방법 비교표&quot;에서 행으로 사용됩니다.
           </p>
+
+          {/* 의사결정 분기 기준 */}
+          <div className="rounded-md border bg-muted/30 p-3 space-y-3">
+            <p className="text-[11px] font-medium text-muted-foreground">
+              의사결정 분기 기준 (집단 수 · 종속/독립변수 수 · 설계 유형)
+            </p>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <Field label="집단 수">
+                <select
+                  className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                  value={comparisonProfile.groupCount ?? ""}
+                  onChange={(e) =>
+                    setComparisonProfile({
+                      ...comparisonProfile,
+                      groupCount: (e.target.value || undefined) as
+                        | ComparisonProfile["groupCount"],
+                    })
+                  }
+                >
+                  <option value="">— 선택 안 함 —</option>
+                  {(
+                    Object.entries(GROUP_COUNT_LABELS) as [
+                      NonNullable<ComparisonProfile["groupCount"]>,
+                      string,
+                    ][]
+                  ).map(([k, label]) => (
+                    <option key={k} value={k}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="종속변수 수">
+                <select
+                  className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                  value={comparisonProfile.dependentVariableCount ?? ""}
+                  onChange={(e) =>
+                    setComparisonProfile({
+                      ...comparisonProfile,
+                      dependentVariableCount: (e.target.value || undefined) as
+                        | ComparisonProfile["dependentVariableCount"],
+                    })
+                  }
+                >
+                  <option value="">— 선택 안 함 —</option>
+                  {(
+                    Object.entries(DV_COUNT_LABELS) as [
+                      NonNullable<ComparisonProfile["dependentVariableCount"]>,
+                      string,
+                    ][]
+                  ).map(([k, label]) => (
+                    <option key={k} value={k}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="독립변수 수">
+                <select
+                  className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                  value={comparisonProfile.independentVariableCount ?? ""}
+                  onChange={(e) =>
+                    setComparisonProfile({
+                      ...comparisonProfile,
+                      independentVariableCount: (e.target.value || undefined) as
+                        | ComparisonProfile["independentVariableCount"],
+                    })
+                  }
+                >
+                  <option value="">— 선택 안 함 —</option>
+                  {(
+                    Object.entries(IV_COUNT_LABELS) as [
+                      NonNullable<ComparisonProfile["independentVariableCount"]>,
+                      string,
+                    ][]
+                  ).map(([k, label]) => (
+                    <option key={k} value={k}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="설계 유형">
+                <select
+                  className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                  value={comparisonProfile.designType ?? ""}
+                  onChange={(e) =>
+                    setComparisonProfile({
+                      ...comparisonProfile,
+                      designType: (e.target.value || undefined) as
+                        | ComparisonProfile["designType"],
+                    })
+                  }
+                >
+                  <option value="">— 선택 안 함 —</option>
+                  {(
+                    Object.entries(DESIGN_TYPE_LABELS) as [
+                      NonNullable<ComparisonProfile["designType"]>,
+                      string,
+                    ][]
+                  ).map(([k, label]) => (
+                    <option key={k} value={k}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+          </div>
+
           <Field label="분석 초점 (focus)">
             <Input
               value={comparisonProfile.focus ?? ""}
