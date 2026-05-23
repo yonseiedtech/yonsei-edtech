@@ -758,6 +758,41 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 모집 {recruitmentPeriodLabel}
               </span>
             )}
+            {/* D-day 배지 — 모집 마감까지 / 모집 시작까지 */}
+            {recruitmentComputed.auto && (() => {
+              if (recruitmentComputed.notStarted && activity.recruitmentStartAt) {
+                const msUntilStart = new Date(activity.recruitmentStartAt as string).getTime() - Date.now();
+                const days = Math.ceil(msUntilStart / (1000 * 60 * 60 * 24));
+                if (days > 0) {
+                  return (
+                    <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+                      모집까지 D-{days}
+                    </span>
+                  );
+                }
+              }
+              if (recruitmentStatus === "recruiting" && recruitmentComputed.msUntilEnd !== null) {
+                const days = Math.ceil(recruitmentComputed.msUntilEnd / (1000 * 60 * 60 * 24));
+                if (days <= 0) {
+                  return (
+                    <span className="rounded-full bg-rose-500 px-2.5 py-0.5 text-[10px] font-bold text-white">
+                      마감 D-DAY
+                    </span>
+                  );
+                }
+                return (
+                  <span className={cn(
+                    "rounded-full px-2.5 py-0.5 text-[10px] font-bold",
+                    days <= 3
+                      ? "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
+                      : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
+                  )}>
+                    마감 D-{days}
+                  </span>
+                );
+              }
+              return null;
+            })()}
           </div>
           <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight sm:mt-4 sm:text-3xl">{activity.title}</h1>
           <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground sm:mt-5">

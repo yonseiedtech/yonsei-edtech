@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import Link from "next/link";
 import PageHeader from "@/components/ui/page-header";
-import { Calendar, MapPin, Users, User, Plus, Pencil, Trash2, Loader2, UserPlus, Check, Megaphone, CalendarClock, ImageIcon, LayoutGrid, List } from "lucide-react";
+import { Calendar, MapPin, Users, User, Plus, Pencil, Trash2, Loader2, UserPlus, Check, Megaphone, CalendarClock, ImageIcon, LayoutGrid, List, CalendarX2, CalendarCheck2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { postsApi } from "@/lib/bkend";
 import { uploadImageSmart } from "@/lib/storage";
@@ -38,6 +38,7 @@ import { cn } from "@/lib/utils";
 import type { Activity, ActivityType, ExternalParticipantType } from "@/types";
 import { EXTERNAL_PARTICIPANT_TYPE_LABELS, EXTERNAL_PARTICIPANT_TYPE_COLORS } from "@/types";
 import { formatSemester } from "@/lib/semester";
+import { computeRecruitmentStatus } from "@/lib/recruitment-status";
 
 async function apiFetch(url: string, options?: RequestInit) {
   const token = await auth.currentUser?.getIdToken();
@@ -263,6 +264,38 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
     const href = `/activities/external/${a.id}`;
     const poster = a.imageUrl as string | undefined;
 
+    // 모집 상태 자동 계산
+    const recruitComputed = computeRecruitmentStatus(a);
+    const recruitStatus = recruitComputed.status;
+    const RECRUIT_CARD_LABELS: Record<string, string> = {
+      recruiting: "모집중",
+      closed: recruitComputed.notStarted ? "모집 예정" : "모집마감",
+      in_progress: "진행중",
+      completed: "완료",
+    };
+    const RECRUIT_CARD_COLORS: Record<string, string> = {
+      recruiting: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+      closed: recruitComputed.notStarted
+        ? "bg-blue-50 text-blue-700 border border-blue-200"
+        : "bg-rose-50 text-rose-700 border border-rose-200",
+      in_progress: "bg-amber-50 text-amber-700 border border-amber-200",
+      completed: "bg-muted text-muted-foreground border border-border",
+    };
+    // 모집 D-day 라벨
+    const recruitDday = (() => {
+      if (recruitComputed.auto && recruitComputed.notStarted && a.recruitmentStartAt) {
+        const ms = new Date(a.recruitmentStartAt as string).getTime() - Date.now();
+        const days = Math.ceil(ms / (1000 * 60 * 60 * 24));
+        if (days > 0) return { label: `모집까지 D-${days}`, color: "bg-blue-500 text-white" };
+      }
+      if (recruitComputed.auto && recruitStatus === "recruiting" && recruitComputed.msUntilEnd !== null) {
+        const days = Math.ceil(recruitComputed.msUntilEnd / (1000 * 60 * 60 * 24));
+        if (days <= 0) return { label: "마감 D-DAY", color: "bg-rose-500 text-white" };
+        if (days <= 7) return { label: `마감 D-${days}`, color: days <= 3 ? "bg-amber-500 text-white" : "bg-emerald-500 text-white" };
+      }
+      return null;
+    })();
+
     return (
       <article className="group flex flex-col overflow-hidden rounded-2xl border bg-card shadow-sm transition-shadow hover:shadow-md">
         <Link
@@ -305,6 +338,20 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
           {a.description && (
             <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">{a.description}</p>
           )}
+
+          {/* 모집 상태 배지 + D-day */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            {recruitStatus && (
+              <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", RECRUIT_CARD_COLORS[recruitStatus])}>
+                {RECRUIT_CARD_LABELS[recruitStatus] ?? recruitStatus}
+              </span>
+            )}
+            {recruitDday && (
+              <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-bold", recruitDday.color)}>
+                {recruitDday.label}
+              </span>
+            )}
+          </div>
 
           {/* 메타 정보 */}
           <div className="mt-auto flex flex-col gap-1 pt-2 text-[11px] text-muted-foreground">
