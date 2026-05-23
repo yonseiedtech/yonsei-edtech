@@ -37,8 +37,28 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import ProfileOnboardingBadges from "@/components/profile/ProfileOnboardingBadges";
+import { ONBOARDING_BADGE_ORDER, type OnboardingBadgeId } from "@/types/onboarding-badge";
 
 const ASSIGNABLE_ROLES: UserRole[] = ["member", "alumni", "advisor", "staff", "president", "admin", "sysadmin"];
+
+// ── 온보딩 배지 → 진척률 추정 ──
+// complete / speed-adapter 보유 → 전체 완료, halfway → 60%+, first-step → 시작, 없음 → 0
+function onboardingProgress(badges?: OnboardingBadgeId[]): { label: string; pct: number } {
+  if (!badges || badges.length === 0) return { label: "미시작", pct: 0 };
+  const owned = new Set(badges);
+  if (owned.has("complete") || owned.has("speed-adapter")) return { label: "완료", pct: 100 };
+  if (owned.has("halfway")) return { label: "60%+", pct: 60 };
+  if (owned.has("first-step")) return { label: "시작", pct: 20 };
+  return { label: "미시작", pct: 0 };
+}
+
+type OnboardingFilter = "all" | "none" | "complete";
+const ONBOARDING_FILTER_LABELS: Record<OnboardingFilter, string> = {
+  all: "전체 (온보딩)",
+  none: "미시작",
+  complete: "완료",
+};
 
 const DAY_KO = ["일", "월", "화", "수", "목", "금", "토"];
 function formatLastLogin(iso?: string): string {
@@ -118,6 +138,7 @@ export default function AdminMemberTab() {
   const [activeTab, setActiveTab] = useState<MemberTab>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<UserRole | "all">("all");
+  const [onboardingFilter, setOnboardingFilter] = useState<OnboardingFilter>("all");
 
   // API 데이터
   const { members: allMembers, isLoading: allLoading } = useAllMembers();
@@ -327,11 +348,17 @@ export default function AdminMemberTab() {
   const displayMembers = useMemo(() => {
     const source = activeTab === "all" ? allMembers : members;
     const q = searchQuery.toLowerCase();
-    const filtered = !searchQuery
+    let filtered = !searchQuery
       ? source
       : source.filter(
           (m) => m.name.toLowerCase().includes(q) || m.username.toLowerCase().includes(q),
         );
+    // 온보딩 필터
+    if (onboardingFilter === "none") {
+      filtered = filtered.filter((m) => onboardingProgress(m.onboardingBadges).pct === 0);
+    } else if (onboardingFilter === "complete") {
+      filtered = filtered.filter((m) => onboardingProgress(m.onboardingBadges).pct === 100);
+    }
     if (!sortKey) return filtered;
     const sorted = [...filtered].sort((a, b) => {
       const av = getSortValue(a, sortKey);
@@ -341,7 +368,7 @@ export default function AdminMemberTab() {
     });
     return sortDir === "desc" ? sorted.reverse() : sorted;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, allMembers, members, searchQuery, sortKey, sortDir]);
+  }, [activeTab, allMembers, members, searchQuery, sortKey, sortDir, onboardingFilter]);
 
   function handleRoleChange(userId: string, newRole: UserRole) {
     const target = allMembers.find((m) => m.id === userId);
@@ -410,27 +437,45 @@ export default function AdminMemberTab() {
               ))}
             </select>
           )}
+          <select
+            value={onboardingFilter}
+            onChange={(e) => setOnboardingFilter(e.target.value as OnboardingFilter)}
+            className="rounded-md border px-3 py-1.5 text-sm"
+          >
+            {(Object.keys(ONBOARDING_FILTER_LABELS) as OnboardingFilter[]).map((k) => (
+              <option key={k} value={k}>{ONBOARDING_FILTER_LABELS[k]}</option>
+            ))}
+          </select>
         </div>
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={() => {
             const source = activeTab === "all" ? allMembers : displayMembers;
             exportCSV("회원목록",
-              ["이름", "아이디", "이메일", "학번", "역할", "기수", "신분유형", "누적학기", "현재 신분 유형", "연락처", "분야", "관심 연구분야", "상태"],
-              source.map((m) => [
-                m.name,
-                m.username,
-                m.email,
-                m.studentId,
-                m.role,
-                m.generation,
-                m.enrollmentStatus ? ENROLLMENT_STATUS_LABELS[m.enrollmentStatus] : "",
-                m.accumulatedSemesters ?? "",
-                currentStatusLabel(m),
-                m.phone,
-                m.field,
-                (m.researchInterests ?? []).join(", "),
-                m.approved ? "승인" : m.rejected ? "거절" : "대기",
-              ]),
+              ["이름", "아이디", "이메일", "학번", "역할", "기수", "신분유형", "누적학기", "현재 신분 유형", "연락처", "분야", "관심 연구분야", "상태", "온보딩 진척", "마일스톤 배지"],
+              source.map((m) => {
+                const prog = onboardingProgress(m.onboardingBadges);
+                const badgeLabels = (m.onboardingBadges ?? [])
+                  .filter((b): b is OnboardingBadgeId => ONBOARDING_BADGE_ORDER.includes(b as OnboardingBadgeId))
+                  .map((b) => b)
+                  .join(", ");
+                return [
+                  m.name,
+                  m.username,
+                  m.email,
+                  m.studentId,
+                  m.role,
+                  m.generation,
+                  m.enrollmentStatus ? ENROLLMENT_STATUS_LABELS[m.enrollmentStatus] : "",
+                  m.accumulatedSemesters ?? "",
+                  currentStatusLabel(m),
+                  m.phone,
+                  m.field,
+                  (m.researchInterests ?? []).join(", "),
+                  m.approved ? "승인" : m.rejected ? "거절" : "대기",
+                  prog.label,
+                  badgeLabels,
+                ];
+              }),
             );
           }}>
             <Download size={14} className="mr-1" /> CSV 내보내기
@@ -496,6 +541,11 @@ export default function AdminMemberTab() {
               {m.phone && <span>{m.phone}</span>}
               {m.lastLoginAt && <span>접속: {formatLastLogin(m.lastLoginAt)}</span>}
             </div>
+            {m.onboardingBadges && m.onboardingBadges.length > 0 && (
+              <div className="mt-1.5">
+                <ProfileOnboardingBadges badges={m.onboardingBadges} />
+              </div>
+            )}
           </div>
           {canApprove && (
             <div className="flex shrink-0 items-center gap-1">
@@ -569,6 +619,7 @@ export default function AdminMemberTab() {
                 <SortableTh sortKey="phone" label="연락처" current={sortKey} dir={sortDir} onClick={toggleSort} />
                 <SortableTh sortKey="role" label="역할" current={sortKey} dir={sortDir} onClick={toggleSort} />
                 <SortableTh sortKey="lastLoginAt" label="최근 접속" current={sortKey} dir={sortDir} onClick={toggleSort} />
+                <th scope="col" className="px-4 py-3 text-left font-medium">온보딩</th>
                 {canApprove && <th className="px-4 py-3 text-left font-medium">관리</th>}
               </tr>
             </thead>
@@ -592,6 +643,18 @@ export default function AdminMemberTab() {
                   <td className="px-4 py-3 text-muted-foreground">{formatPhone(m.phone)}</td>
                   <td className="px-4 py-3"><RoleCell member={m} /></td>
                   <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{formatLastLogin(m.lastLoginAt)}</td>
+                  <td className="px-4 py-3">
+                    {m.onboardingBadges && m.onboardingBadges.length > 0 ? (
+                      <div className="flex flex-col gap-1">
+                        <ProfileOnboardingBadges badges={m.onboardingBadges} />
+                        <span className="text-[10px] text-muted-foreground">
+                          {onboardingProgress(m.onboardingBadges).label}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground">미시작</span>
+                    )}
+                  </td>
                   {canApprove && (
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
