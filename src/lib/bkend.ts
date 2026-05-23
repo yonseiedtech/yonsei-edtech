@@ -2065,6 +2065,39 @@ export const researchMethodsApi = {
   delete: (id: string) => dataApi.delete("archive_research_methods", id),
 };
 
+// ── 교육공학 아카이브 — 통계방법 가이드 (Phase 1.5) ──
+// 공개 페이지는 published=true 만 노출. 운영진(staff+) 은 draft 포함 전체 조회.
+// firestore.rules 의 archive_statistical_methods 와 양쪽에서 검수 게이트 적용.
+import type {
+  StatisticalMethod,
+  StatisticalMethodCategory,
+} from "@/types/statistical-method";
+
+export const statisticalMethodsApi = {
+  list: () =>
+    dataApi.list<StatisticalMethod>("archive_statistical_methods", { limit: 200 }),
+  listPublished: () =>
+    dataApi.list<StatisticalMethod>("archive_statistical_methods", {
+      "filter[published]": "true",
+      limit: 200,
+    }),
+  listByCategory: (category: StatisticalMethodCategory) =>
+    dataApi.list<StatisticalMethod>("archive_statistical_methods", {
+      "filter[category]": category,
+      "filter[published]": "true",
+      limit: 200,
+    }),
+  get: (id: string) =>
+    dataApi.get<StatisticalMethod>("archive_statistical_methods", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<StatisticalMethod>("archive_statistical_methods", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<StatisticalMethod>("archive_statistical_methods", id, data),
+  upsert: (id: string, data: Record<string, unknown>) =>
+    dataApi.upsert<StatisticalMethod>("archive_statistical_methods", id, data),
+  delete: (id: string) => dataApi.delete("archive_statistical_methods", id),
+};
+
 // ─── 학기별 로드맵 (Sprint 67-AR — 운영진 콘텐츠 관리) ───
 // 회원 read-only (published=true 만), 운영진(staff 이상)이 CRUD.
 import type { RoadmapStage } from "@/types/steppingstone";

@@ -49,6 +49,7 @@ import {
 import { uploadToStorage } from "@/lib/storage";
 import type { UploadedFile } from "@/lib/storage";
 import { formatSemester } from "@/lib/semester";
+import { computeRecruitmentStatus, formatRecruitmentPeriod } from "@/lib/recruitment-status";
 import FormBuilder from "./FormBuilder";
 import FormBuilderByType from "./FormBuilderByType";
 import FormRenderer from "./FormRenderer";
@@ -307,7 +308,20 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
         )
       : !!myApplication
     : false;
-  const recruitmentStatus = activity?.recruitmentStatus ?? "recruiting";
+  // 자동 모집 상태 계산 — recruitmentStartAt/End 또는 override 기반.
+  // 미설정 시 기존 recruitmentStatus 값 그대로 사용 (하위호환).
+  const recruitmentComputed = useMemo(
+    () =>
+      activity
+        ? computeRecruitmentStatus(activity)
+        : { status: "recruiting" as const, auto: false, notStarted: false, msUntilEnd: null },
+    [activity],
+  );
+  const recruitmentStatus = recruitmentComputed.status;
+  const recruitmentPeriodLabel = formatRecruitmentPeriod(
+    activity?.recruitmentStartAt as string | undefined,
+    activity?.recruitmentEndAt as string | undefined,
+  );
 
   // 신청 다이얼로그가 열릴 때 비활성화된 참석 유형이 선택돼 있으면 첫 번째 활성 유형으로 보정
   useEffect(() => {
@@ -730,8 +744,19 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
         <div className="rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary" className={cn("text-xs", STATUS_COLORS[activity.status])}>{STATUS_LABELS[activity.status]}</Badge>
-            {activity.recruitmentStatus && !(type === "study" && (activity.recruitmentStatus === "in_progress" || activity.recruitmentStatus === "completed")) && (
-              <Badge variant="secondary" className={cn("text-xs", RECRUIT_COLORS[activity.recruitmentStatus])}>{type === "study" ? (RECRUIT_LABELS_STUDY[activity.recruitmentStatus] ?? RECRUIT_LABELS[activity.recruitmentStatus]) : RECRUIT_LABELS[activity.recruitmentStatus]}</Badge>
+            {recruitmentStatus && !(type === "study" && (recruitmentStatus === "in_progress" || recruitmentStatus === "completed")) && (
+              <Badge variant="secondary" className={cn("text-xs", RECRUIT_COLORS[recruitmentStatus])}>
+                {recruitmentComputed.notStarted
+                  ? "모집 예정"
+                  : type === "study"
+                    ? (RECRUIT_LABELS_STUDY[recruitmentStatus] ?? RECRUIT_LABELS[recruitmentStatus])
+                    : RECRUIT_LABELS[recruitmentStatus]}
+              </Badge>
+            )}
+            {recruitmentComputed.auto && recruitmentPeriodLabel && (
+              <span className="text-[10px] text-muted-foreground">
+                모집 {recruitmentPeriodLabel}
+              </span>
             )}
           </div>
           <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight sm:mt-4 sm:text-3xl">{activity.title}</h1>
@@ -842,9 +867,35 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             </div>
           )}
 
+          {/* 모집 자동 안내 — 미개시/마감 임박/마감됨 (자동 계산 모드일 때만) */}
+          {recruitmentComputed.auto && (recruitmentComputed.notStarted || (recruitmentStatus === "closed" && (activity.recruitmentStartAt || activity.recruitmentEndAt))) && (
+            <div className="mt-6 border-t border-slate-100 pt-5 sm:mt-7 sm:pt-6">
+              {recruitmentComputed.notStarted ? (
+                <div className="rounded-lg border border-blue-200 bg-blue-50/60 p-3 text-xs text-blue-800 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200">
+                  <div className="font-medium">모집 예정</div>
+                  <div className="mt-1 text-[11px] opacity-90">
+                    {recruitmentPeriodLabel ? `${recruitmentPeriodLabel} 모집이 시작됩니다.` : "곧 모집이 시작됩니다."}
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-red-200 bg-red-50/60 p-3 text-xs text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
+                  <div className="font-medium">모집이 마감되었습니다</div>
+                  {recruitmentPeriodLabel && (
+                    <div className="mt-1 text-[11px] opacity-90">모집 기간 {recruitmentPeriodLabel}</div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* 참여 버튼 — 헤더와 시각적으로 분리 */}
           {(((!isJoined && !hasApplied && recruitmentStatus === "recruiting" && registrationMethod === "open") || isJoined || (hasApplied && !isJoined))) && (
             <div className="mt-6 border-t border-slate-100 pt-5 sm:mt-7 sm:pt-6">
+              {recruitmentComputed.auto && recruitmentStatus === "recruiting" && recruitmentComputed.msUntilEnd !== null && recruitmentComputed.msUntilEnd <= 1000 * 60 * 60 * 24 * 3 && (
+                <div className="mb-3 rounded-md border border-amber-200 bg-amber-50/60 p-2 text-[11px] text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                  마감까지 약 {Math.max(1, Math.ceil(recruitmentComputed.msUntilEnd / (1000 * 60 * 60)))}시간 남았습니다.
+                </div>
+              )}
               {!isJoined && !hasApplied && recruitmentStatus === "recruiting" && registrationMethod === "open" && (
                 type === "external" ? (
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center">

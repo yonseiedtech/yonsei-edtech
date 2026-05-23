@@ -113,6 +113,25 @@ export interface Activity { [key: string]: unknown;
   endDate?: string;
   status: "upcoming" | "ongoing" | "completed";
   recruitmentStatus?: RecruitmentStatus;
+  /**
+   * 모집 시작 일시 (ISO 8601, 로컬 KST 기준 datetime-local 값 그대로 저장).
+   * 설정 시 현재 시각이 이 시각 이후일 때만 "recruiting" 으로 계산된다.
+   * 미설정 시 시작일(date) 이전까지 모집 가능으로 간주.
+   * recruitmentStatusOverride === true 면 무시되고 recruitmentStatus 가 수동 우선한다.
+   */
+  recruitmentStartAt?: string;
+  /**
+   * 모집 종료 일시 (ISO 8601, 로컬 KST 기준 datetime-local 값 그대로 저장).
+   * 설정 시 현재 시각이 이 시각을 넘으면 "closed" 로 자동 전환된다.
+   * recruitmentStatusOverride === true 면 무시된다.
+   */
+  recruitmentEndAt?: string;
+  /**
+   * true 면 운영자가 recruitmentStatus 를 수동으로 고정한 상태.
+   * false/undefined 면 recruitmentStartAt/recruitmentEndAt 기반으로 자동 계산된다.
+   * cron 자동 전환 + UI 자동 계산은 이 플래그를 존중한다.
+   */
+  recruitmentStatusOverride?: boolean;
   maxParticipants?: number;
   leader?: string;
   /** PR7: 모임장(스터디) 회원 ID — leader 문자열과 별도로 보관 (자동완성 선택값) */

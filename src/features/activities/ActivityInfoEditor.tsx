@@ -26,6 +26,22 @@ const ALL_PARTICIPANT_TYPES: ExternalParticipantType[] = [
   "attendee",
 ];
 
+/** ISO 8601 / datetime-local 입력값 정규화. 둘 다 안전하게 datetime-local input 으로 변환. */
+function toLocalInput(value: string | undefined): string {
+  if (!value) return "";
+  // 이미 "YYYY-MM-DDTHH:MM" 형태면 그대로 사용 (Z·offset·초 제거)
+  const m = value.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})/);
+  if (m) return m[1];
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  const y = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${y}-${mo}-${day}T${hh}:${mm}`;
+}
+
 interface Props {
   activity: Activity;
   isExternal: boolean;
@@ -72,6 +88,16 @@ export default function ActivityInfoEditor({
       | "completed"
       | undefined) ?? "recruiting",
   );
+  // 모집 기간(datetime-local) + 수동 override 플래그
+  const [recruitmentStartAt, setRecruitmentStartAt] = useState<string>(
+    toLocalInput(activity.recruitmentStartAt as string | undefined),
+  );
+  const [recruitmentEndAt, setRecruitmentEndAt] = useState<string>(
+    toLocalInput(activity.recruitmentEndAt as string | undefined),
+  );
+  const [recruitmentStatusOverride, setRecruitmentStatusOverride] = useState<boolean>(
+    activity.recruitmentStatusOverride === true,
+  );
   const [registrationMethod, setRegistrationMethod] = useState<"open" | "manual">(
     (activity.registrationMethod as "open" | "manual" | undefined) ?? "manual",
   );
@@ -109,6 +135,9 @@ export default function ActivityInfoEditor({
         | "completed"
         | undefined) ?? "recruiting",
     );
+    setRecruitmentStartAt(toLocalInput(activity.recruitmentStartAt as string | undefined));
+    setRecruitmentEndAt(toLocalInput(activity.recruitmentEndAt as string | undefined));
+    setRecruitmentStatusOverride(activity.recruitmentStatusOverride === true);
     setRegistrationMethod(
       (activity.registrationMethod as "open" | "manual" | undefined) ?? "manual",
     );
@@ -156,6 +185,16 @@ export default function ActivityInfoEditor({
         setSaving(false);
         return;
       }
+      // 모집 기간 검증 — 둘 다 있으면 start <= end
+      if (recruitmentStartAt && recruitmentEndAt) {
+        const s = new Date(recruitmentStartAt).getTime();
+        const e = new Date(recruitmentEndAt).getTime();
+        if (Number.isFinite(s) && Number.isFinite(e) && s > e) {
+          toast.error("모집 종료 일시는 시작 일시 이후여야 합니다.");
+          setSaving(false);
+          return;
+        }
+      }
       await activitiesApi.update(activity.id, {
         title: title.trim(),
         description: description.trim() || undefined,
@@ -170,6 +209,9 @@ export default function ActivityInfoEditor({
         maxParticipants: parsedMax,
         status,
         recruitmentStatus,
+        recruitmentStartAt: recruitmentStartAt || undefined,
+        recruitmentEndAt: recruitmentEndAt || undefined,
+        recruitmentStatusOverride: recruitmentStatusOverride ? true : undefined,
         registrationMethod,
         leader: leader.trim() || undefined,
         imageUrl: imageUrl.trim() || undefined,
@@ -333,6 +375,51 @@ export default function ActivityInfoEditor({
         />
       </div>
 
+      {/* 모집 기간 — 자동 상태 전환 */}
+      <div className="rounded-lg border bg-muted/10 p-3 space-y-3">
+        <div className="text-xs font-medium flex items-center justify-between gap-2">
+          <span>모집 기간 (자동 상태 전환)</span>
+          <label className="inline-flex items-center gap-1.5 text-[10px] font-normal text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={recruitmentStatusOverride}
+              onChange={(e) => setRecruitmentStatusOverride(e.target.checked)}
+              className="h-3.5 w-3.5"
+            />
+            수동 고정 (아래 모집 상태값 우선)
+          </label>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="mb-1 block text-[11px] font-medium text-muted-foreground">
+              모집 시작 일시
+            </label>
+            <Input
+              type="datetime-local"
+              value={recruitmentStartAt}
+              onChange={(e) => setRecruitmentStartAt(e.target.value)}
+              disabled={recruitmentStatusOverride}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-[11px] font-medium text-muted-foreground">
+              모집 종료 일시
+            </label>
+            <Input
+              type="datetime-local"
+              value={recruitmentEndAt}
+              onChange={(e) => setRecruitmentEndAt(e.target.value)}
+              disabled={recruitmentStatusOverride}
+            />
+          </div>
+        </div>
+        <p className="text-[10px] leading-relaxed text-muted-foreground">
+          모집 기간을 설정하면 현재 시각 기준으로 모집 상태가 자동 전환됩니다.
+          (시작 전: 모집 예정 / 기간 중: 모집 중 / 종료 후: 모집 마감)
+          수동 고정 시 아래의 모집 상태 값이 우선 적용됩니다.
+        </p>
+      </div>
+
       {/* Phase 6 — 잔여 modal 필드: 상태·모집상태·신청방법·리더·이미지·학기 */}
       <div className="grid gap-3 sm:grid-cols-3">
         <div>
@@ -348,7 +435,12 @@ export default function ActivityInfoEditor({
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium">모집 상태</label>
+          <label className="mb-1 block text-xs font-medium">
+            모집 상태
+            {!recruitmentStatusOverride && (recruitmentStartAt || recruitmentEndAt) && (
+              <span className="ml-1 text-[10px] font-normal text-muted-foreground">(자동 계산)</span>
+            )}
+          </label>
           <select
             value={recruitmentStatus}
             onChange={(e) =>

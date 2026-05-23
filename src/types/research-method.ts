@@ -72,6 +72,8 @@ export interface ResearchMethod {
   references?: ResearchMethodReference[];
   /** 운영자가 큐레이트한 졸업생 학위논문 ID 목록 (alumni_theses) */
   alumniThesisIds?: string[];
+  /** Phase 1.5 — 자주 사용되는 통계방법 ID (archive_statistical_methods) 양방향 연계 */
+  statisticalMethodIds?: string[];
   /** 운영진 검수 후 공개 게이트 */
   published: boolean;
   curatedBy?: string;

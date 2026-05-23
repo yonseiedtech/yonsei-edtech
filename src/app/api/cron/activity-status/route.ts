@@ -32,6 +32,8 @@ export async function GET(req: NextRequest) {
     let updated = 0;
     let certIssued = 0;
 
+    const nowMs = now.getTime();
+
     for (const docSnap of snapshot.docs) {
       const activity = docSnap.data();
       const startDate = activity.date;
@@ -39,6 +41,13 @@ export async function GET(req: NextRequest) {
       const recruitmentStatus = activity.recruitmentStatus;
       const participants = activity.participants ?? [];
       const maxParticipants = activity.maxParticipants;
+      const override = activity.recruitmentStatusOverride === true;
+      const recStartMs = activity.recruitmentStartAt
+        ? new Date(activity.recruitmentStartAt).getTime()
+        : null;
+      const recEndMs = activity.recruitmentEndAt
+        ? new Date(activity.recruitmentEndAt).getTime()
+        : null;
 
       const updates: Record<string, unknown> = {};
 
@@ -50,16 +59,35 @@ export async function GET(req: NextRequest) {
         updates.status = "completed";
       }
 
-      // 모집 상태 자동 전환
-      if (recruitmentStatus === "recruiting") {
-        if (startDate && startDate <= today) {
+      // 모집 상태 자동 전환 (override 면 skip — 운영자 수동 우선)
+      if (!override && recruitmentStatus === "recruiting") {
+        // 모집 종료 시각 경과
+        if (recEndMs !== null && !Number.isNaN(recEndMs) && nowMs > recEndMs) {
+          updates.recruitmentStatus = "closed";
+        } else if (startDate && startDate <= today) {
+          // 활동 시작일 도래 (기존 로직)
           updates.recruitmentStatus = "closed";
         } else if (maxParticipants && participants.length >= maxParticipants) {
           updates.recruitmentStatus = "closed";
         }
       }
 
-      // 활동 완료 시 모집도 완료
+      // closed 상태에서 모집 시작 시각이 도래했고 종료 시각이 미도래면 다시 recruiting 으로
+      // (운영자가 미리 일정만 잡아둔 케이스 — override 가 아니어야 함)
+      if (
+        !override &&
+        recruitmentStatus === "closed" &&
+        recStartMs !== null &&
+        !Number.isNaN(recStartMs) &&
+        nowMs >= recStartMs &&
+        (recEndMs === null || Number.isNaN(recEndMs) || nowMs <= recEndMs) &&
+        (!startDate || startDate > today) &&
+        (!maxParticipants || participants.length < maxParticipants)
+      ) {
+        updates.recruitmentStatus = "recruiting";
+      }
+
+      // 활동 완료 시 모집도 완료 (override 무관 — 활동 자체가 끝났으면 모집도 종료)
       if (updates.status === "completed" && recruitmentStatus !== "completed") {
         updates.recruitmentStatus = "completed";
       }

@@ -1,0 +1,125 @@
+// ── 교육공학 아카이브 — 통계방법 가이드 (Phase 1.5) ──
+// 연구방법(research-methods)과 양방향 연계되는 1급 엔티티.
+// ANOVA/회귀/요인분석/SEM 등 통계기법을 가정·절차·구문·비교 프로파일과 함께 관리.
+// 운영진 검수(published) 게이트 — firestore.rules 의 archive_statistical_methods 와 양쪽 게이트.
+
+export type StatisticalMethodCategory =
+  | "anova_family"
+  | "regression"
+  | "factor"
+  | "sem"
+  | "nonparametric"
+  | "mediation_moderation"
+  | "multilevel"
+  | "other";
+
+export const STATISTICAL_METHOD_CATEGORY_LABELS: Record<StatisticalMethodCategory, string> = {
+  anova_family: "ANOVA 계열",
+  regression: "회귀분석",
+  factor: "요인분석",
+  sem: "구조방정식(SEM)",
+  nonparametric: "비모수",
+  mediation_moderation: "매개·조절",
+  multilevel: "다층모형",
+  other: "기타",
+};
+
+export const STATISTICAL_METHOD_CATEGORY_COLORS: Record<StatisticalMethodCategory, string> = {
+  anova_family: "bg-blue-50 text-blue-800 border border-blue-200",
+  regression: "bg-violet-50 text-violet-800 border border-violet-200",
+  factor: "bg-emerald-50 text-emerald-800 border border-emerald-200",
+  sem: "bg-indigo-50 text-indigo-800 border border-indigo-200",
+  nonparametric: "bg-amber-50 text-amber-800 border border-amber-200",
+  mediation_moderation: "bg-rose-50 text-rose-800 border border-rose-200",
+  multilevel: "bg-cyan-50 text-cyan-800 border border-cyan-200",
+  other: "bg-slate-50 text-slate-800 border border-slate-200",
+};
+
+/** 비교 프로파일 — 동일 데이터 대안 통계방법 비교표에서 행으로 사용 */
+export interface ComparisonProfile {
+  /** 분석 초점 (예: "공변량 통제 후 집단 평균 차이") */
+  focus?: string;
+  /** 종속변수 형태 (예: "연속형 1개") */
+  dependentVariable?: string;
+  /** 독립변수 형태 (예: "범주형 1~K개") */
+  independentVariable?: string;
+  /** 최소 표본 크기 권장 (예: "셀당 20명 이상 권장") */
+  minSampleSize?: string;
+  /** 핵심 가정 라벨 목록 */
+  keyAssumptions?: string[];
+  /** 한 줄 강점 */
+  strengthOneliner?: string;
+  /** 한 줄 한계 */
+  limitationOneliner?: string;
+}
+
+/** 동일 데이터로 시도해볼 수 있는 다른 통계방법 추천 */
+export interface StatisticalMethodAlternative {
+  /** archive_statistical_methods id */
+  methodId: string;
+  /** 추천 사유 (예: "공변량을 통제하고 싶을 때") */
+  reason: string;
+}
+
+/** 사용 전 기본 가정 */
+export interface StatisticalAssumption {
+  id: string;
+  name: string;
+  description: string;
+  /** 검정 방법 (예: Shapiro-Wilk, Levene) */
+  howToCheck?: string;
+  spssCommand?: string;
+  rCommand?: string;
+  /** 임계치/판정 기준 */
+  threshold?: string;
+}
+
+/** 분석 절차 단계 */
+export interface StatisticalProcedureStep {
+  id: string;
+  step: string;
+  detail?: string;
+}
+
+/** 참고 자료 */
+export interface StatisticalReference {
+  id: string;
+  title: string;
+  author?: string;
+  year?: number;
+  url?: string;
+}
+
+export interface StatisticalMethod {
+  id: string;
+  name: string;
+  category: StatisticalMethodCategory;
+  /** 객관적 정의 1~2문장 */
+  summary: string;
+  /** 상세 설명 (마크다운/긴 텍스트) */
+  description?: string;
+  /** 언제 사용하는가 */
+  whenToUse?: string;
+  assumptions?: StatisticalAssumption[];
+  procedure?: StatisticalProcedureStep[];
+  spssCommand?: string;
+  amosCommand?: string;
+  rCommand?: string;
+  /** 결과 해석 핵심 포인트 */
+  interpretationKeys?: string[];
+  /** 비교표용 프로파일 (대안 비교 시 행 = 차원·열 = 방법) */
+  comparisonProfile?: ComparisonProfile;
+  /** 동일 데이터로 가능한 대안 통계방법 */
+  alternativeMethods?: StatisticalMethodAlternative[];
+  /** 양방향 연계: 관련 연구방법 ID (archive_research_methods) */
+  relatedResearchMethodIds?: string[];
+  /** 운영자가 큐레이트한 졸업생 학위논문 ID */
+  alumniThesisIds?: string[];
+  references?: StatisticalReference[];
+  /** 운영진 검수 후 공개 게이트 */
+  published: boolean;
+  curatedBy?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt?: string;
+}

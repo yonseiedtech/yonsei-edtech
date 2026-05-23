@@ -44,6 +44,8 @@ export interface AlumniThesis {
   measurementIds?: string[];
   /** 교육공학 아카이브 연구방법 ID (archive_research_methods) — 운영자 큐레이트 */
   researchMethods?: string[];
+  /** 교육공학 아카이브 통계방법 ID (archive_statistical_methods) — Phase 1.5 */
+  statisticalMethods?: string[];
   abstract?: string;
   toc?: string;
   dcollectionUrl?: string;

@@ -12,6 +12,7 @@ export * from "./defense";
 export * from "./grad-life";
 export * from "./edutech-archive";
 export * from "./research-method";
+export * from "./statistical-method";
 
 // Phase 2 — 사용자 / 게시판
 export * from "./user";
