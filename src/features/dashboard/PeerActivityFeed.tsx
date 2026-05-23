@@ -23,6 +23,7 @@ import {
   profilesApi,
 } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { useIsWidgetMuted } from "@/lib/dashboard-layout";
 import type { Post, CourseReview, User } from "@/types";
 import WidgetCard from "@/components/ui/widget-card";
 import EmptyState from "@/components/ui/empty-state";
@@ -77,18 +78,19 @@ const VISIBLE_POST_CATEGORIES = new Set(["free", "interview", "promotion", "pres
 export default function PeerActivityFeed() {
   const { user } = useAuthStore();
   const myId = user?.id;
+  const muted = useIsWidgetMuted(user?.id, "peerActivityFeed");
 
   const { data: postsRes } = useQuery({
     queryKey: ["peer-feed", "posts"],
     queryFn: () => postsApi.list({ limit: 30 }),
-    staleTime: 5 * 60_000,
-    enabled: !!user,
+    staleTime: muted ? 15 * 60_000 : 5 * 60_000,
+    enabled: !!user && !muted,
   });
   const { data: courseRevRes } = useQuery({
     queryKey: ["peer-feed", "course-reviews"],
     queryFn: () => courseReviewsApi.list({ limit: 30 }),
-    staleTime: 5 * 60_000,
-    enabled: !!user,
+    staleTime: muted ? 15 * 60_000 : 5 * 60_000,
+    enabled: !!user && !muted,
   });
 
   // 후보 raw 이벤트 (작성자별 필터링은 author 로드 후)

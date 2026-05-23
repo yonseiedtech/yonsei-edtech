@@ -161,6 +161,18 @@ export function setWidgetMuted(
 }
 
 /**
+ * D-3b: 특정 위젯의 알림 무음 여부를 반응형으로 반환하는 훅.
+ * useDashboardLayout 위에서 isWidgetMuted 결과를 구독한다.
+ */
+export function useIsWidgetMuted(
+  userId: string | undefined,
+  key: DashboardWidgetKey,
+): boolean {
+  const layout = useDashboardLayout(userId);
+  return isWidgetMuted(layout, key);
+}
+
+/**
  * useSyncExternalStore 로 layout 구독 — 탭 간 동기화 + SSR 안전.
  *
  * 서버 스냅샷은 null(기본값 = 모두 표시)로 반환하므로 hydration 불일치 없음.

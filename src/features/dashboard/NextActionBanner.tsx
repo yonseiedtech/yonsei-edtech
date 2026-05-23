@@ -23,6 +23,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { useIsWidgetMuted } from "@/lib/dashboard-layout";
 import {
   courseEnrollmentsApi,
   courseOfferingsApi,
@@ -115,14 +116,16 @@ const KIND_META: Record<NextActionKind, { label: string; iconClass: string; Icon
 export default function NextActionBanner() {
   const { user } = useAuthStore();
   const userId = user?.id;
+  const muted = useIsWidgetMuted(userId, "nextActionBanner");
   const [now, setNow] = useState<Date>(() => new Date());
   const [hidden, setHidden] = useState<boolean>(false);
 
-  // 30초마다 now 갱신 (카운트다운 자연 표시)
+  // muted 시 5분, 기본 30초마다 now 갱신 (카운트다운 자연 표시)
   useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 30_000);
+    const interval = muted ? 5 * 60_000 : 30_000;
+    const id = setInterval(() => setNow(new Date()), interval);
     return () => clearInterval(id);
-  }, []);
+  }, [muted]);
 
   // 사용자별 "오늘 그만 보기" 상태 복원
   useEffect(() => {

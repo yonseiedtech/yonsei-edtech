@@ -11,6 +11,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Bot, Sparkles } from "lucide-react";
 import { aiForumsApi } from "@/lib/bkend";
+import { useAuthStore } from "@/features/auth/auth-store";
+import { useIsWidgetMuted } from "@/lib/dashboard-layout";
 import {
   AI_PERSONAS,
   type AIForumTopic,
@@ -31,10 +33,13 @@ const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
 };
 
 export default function AIForumLiveWidget() {
+  const { user } = useAuthStore();
+  const muted = useIsWidgetMuted(user?.id, "aiForumLive");
   const [topics, setTopics] = useState<AIForumTopic[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!muted);
 
   useEffect(() => {
+    if (muted) return;
     aiForumsApi
       .list()
       .then((res) => {
@@ -66,7 +71,7 @@ export default function AIForumLiveWidget() {
         setTopics(demoInProgress);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [muted]);
 
   if (loading) {
     return (
