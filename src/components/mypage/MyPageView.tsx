@@ -850,6 +850,25 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                 )}
               </div>
 
+              {/* 알림센터 안내 카드 */}
+              {!readOnly && (
+                <Link
+                  href="/mypage/notifications"
+                  className="flex items-center justify-between rounded-2xl border bg-card px-5 py-4 transition hover:border-primary/40 hover:shadow-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <Bell size={20} />
+                    </div>
+                    <div>
+                      <p className="font-semibold">알림센터</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">수신한 모든 알림 목록 (준비 중)</p>
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="shrink-0 text-muted-foreground" />
+                </Link>
+              )}
+
               {/* 알림 / 피드 설정 */}
               {!readOnly && <NotificationSettingsCard user={user} />}
 

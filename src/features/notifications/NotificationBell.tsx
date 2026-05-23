@@ -88,7 +88,7 @@ export default function NotificationBell() {
           </div>
 
           {/* List */}
-          <div className="max-h-80 overflow-y-auto">
+          <div className="max-h-72 overflow-y-auto">
             {notifications.length === 0 ? (
               <p className="py-8 text-center text-sm text-muted-foreground">알림이 없습니다.</p>
             ) : (
@@ -134,6 +134,16 @@ export default function NotificationBell() {
                 );
               })
             )}
+          </div>
+          {/* Footer — 전체 보기 링크 */}
+          <div className="border-t">
+            <Link
+              href="/mypage/notifications"
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2.5 text-center text-xs font-medium text-primary transition-colors hover:bg-muted"
+            >
+              알림 전체 보기
+            </Link>
           </div>
         </div>
       )}
