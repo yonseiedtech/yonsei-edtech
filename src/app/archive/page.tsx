@@ -237,6 +237,38 @@ export default function ArchiveLandingPage() {
           </CardContent>
         </Card>
 
+        {/* ── 🕸️ 관계 그래프 진입점 ── */}
+        <Link
+          href="/archive/graph"
+          className="group mt-6 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+          aria-label="아카이브 관계 그래프 보기"
+        >
+          <article className="overflow-hidden rounded-2xl border bg-gradient-to-br from-indigo-50 via-blue-50 to-emerald-50 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md dark:from-indigo-950/40 dark:via-blue-950/40 dark:to-emerald-950/40">
+            <div className="flex items-center gap-4 p-5">
+              <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/70 text-indigo-700 shadow-sm dark:bg-slate-900/60 dark:text-indigo-300">
+                <Network className="h-6 w-6" aria-hidden />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold tracking-tight">
+                    🕸️ 교육공학 아카이브 관계 그래프
+                  </h2>
+                  <Badge variant="outline" className="text-[10px] font-medium border-indigo-300 bg-white/60 text-indigo-700 dark:bg-slate-900/50 dark:text-indigo-300">
+                    NEW
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  개념·변인·측정도구·연구방법·통계방법·기초 용어의 연결고리를 한눈에 탐색합니다. 노드를 드래그·hover·클릭으로 직접 따라가 보세요.
+                </p>
+              </div>
+              <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">
+                보기
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+              </div>
+            </div>
+          </article>
+        </Link>
+
         {/* ─────────────────────────────────────────────────────── */}
         {/* 📘 그룹 1 — 용어집 · 입문 가이드 */}
         {/* ─────────────────────────────────────────────────────── */}
