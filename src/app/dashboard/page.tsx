@@ -39,6 +39,7 @@ import { canShowWidget, isAlumni } from "@/features/dashboard/widget-visibility"
 import {
   useDashboardLayout,
   isWidgetVisible,
+  isWidgetMuted,
   getSortedWidgets,
 } from "@/lib/dashboard-layout";
 import {
@@ -100,15 +101,22 @@ function StatCard({
 function DashboardContent() {
   const { user } = useAuthStore();
   const isStaff = isAtLeast(user, "staff");
+
+  // D-1b: 사용자 위젯 가시성 레이아웃 (localStorage 기반, AND 게이트)
+  // D-3c: layout 을 usePosts/useSeminars 보다 먼저 읽어야 staleTime 분기 가능
+  const layout = useDashboardLayout(user?.id);
+  // D-3c: seminars / staffAlerts mute 가드
+  const seminarsMuted = isWidgetMuted(layout, "seminars");
+  const staffAlertsMuted = isWidgetMuted(layout, "staffAlerts");
+
   const { posts } = usePosts();
-  const { seminars } = useSeminars();
+  const { seminars } = useSeminars(undefined, {
+    staleTime: seminarsMuted ? 180_000 : 60_000,
+  });
   const { issues } = useNewsletters();
   // staff 전용 데이터 — 일반 회원은 쿼리 자체를 실행하지 않음
   const { pendingMembers } = usePendingMembers({ enabled: isStaff });
   const { inquiries } = useInquiries({ enabled: isStaff });
-
-  // D-1b: 사용자 위젯 가시성 레이아웃 (localStorage 기반, AND 게이트)
-  const layout = useDashboardLayout(user?.id);
 
   if (!user) return null;
 
@@ -352,7 +360,9 @@ function DashboardContent() {
       {/* ── 섹션 2: 모바일 오늘 요약 카드 + 운영진 우선순위 패널 (개인화 비대상) ── */}
       <div className="mx-auto mt-4 max-w-6xl px-4 space-y-3">
         {/* Codex Phase B: 운영진 홈 모드 — 상단 우선순위 패널 (isStaff 분기, 사용자 토글 적용) */}
-        {isStaff && isWidgetVisible(layout, "staffAlerts") && <StaffPriorityPanel />}
+        {isStaff && isWidgetVisible(layout, "staffAlerts") && (
+          <StaffPriorityPanel muted={staffAlertsMuted} />
+        )}
         {/* Codex Phase B: 모바일 상단 "오늘 요약" 통합 카드 (sm:hidden — 데스크톱에서는 자체 숨김) */}
         <TodaySummaryCard />
       </div>

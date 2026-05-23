@@ -35,7 +35,12 @@ interface AdminTodoLite {
   dueDate?: string;
 }
 
-export default function StaffPriorityPanel() {
+interface StaffPriorityPanelProps {
+  /** D-3c: staffAlerts 위젯 알림 무음 여부. true 면 폴링 staleTime 연장. */
+  muted?: boolean;
+}
+
+export default function StaffPriorityPanel({ muted = false }: StaffPriorityPanelProps) {
   // 승인 대기 회원
   const { pendingMembers } = usePendingMembers({ enabled: true });
   const pendingCount = pendingMembers.length;
@@ -45,10 +50,11 @@ export default function StaffPriorityPanel() {
   const unansweredCount = inquiries.filter((q) => q.status === "pending").length;
 
   // 운영진 todo 핵심 3건 (status === "todo", priority high 우선)
+  // D-3c: muted 시 staleTime 연장 (180s), 토스트 알림은 이 컴포넌트에 없으므로 staleTime만 조정
   const { data: adminTodosRes } = useQuery({
     queryKey: ["admin-todos"],
     queryFn: () => todosApi.list(),
-    staleTime: 60_000,
+    staleTime: muted ? 180_000 : 60_000,
   });
   const adminTodos = ((adminTodosRes?.data ?? []) as AdminTodoLite[])
     .filter((t) => (t.status ?? "todo") === "todo")
