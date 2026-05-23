@@ -46,6 +46,7 @@ import RegistrationSection from "@/features/seminar/detail/RegistrationSection";
 import AttendanceCertificate from "@/features/seminar/AttendanceCertificate";
 import ShareButton from "@/components/ShareButton";
 import { SeminarEventJsonLd } from "@/components/seo/JsonLd";
+import PageContainer from "@/components/layout/PageContainer";
 import StaffTools from "@/features/seminar/detail/StaffTools";
 import EditDialogs from "@/features/seminar/detail/EditDialogs";
 import type { EditSection, InfoFormData, SpeakersFormData } from "@/features/seminar/detail/EditDialogs";
@@ -454,9 +455,9 @@ function SeminarDetail({ id }: { id: string }) {
   }
 
   return (
-    <div className="py-8 sm:py-16">
+    <>
       <SeminarEventJsonLd seminar={seminar} />
-      <div className="mx-auto max-w-3xl px-4">
+      <PageContainer variant="wide" py="md">
         <div className="mb-4 flex items-center justify-between sm:mb-6">
           <Link
             href="/seminars"
@@ -671,8 +672,8 @@ function SeminarDetail({ id }: { id: string }) {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
-    </div>
+      </PageContainer>
+    </>
   );
 }
 

@@ -10,6 +10,7 @@ import { usePosts } from "@/features/board/useBoard";
 import { formatDate } from "@/lib/utils";
 import { usePageHeader } from "@/features/site-settings/useSiteContent";
 import PageHeader from "@/components/ui/page-header";
+import PageContainer from "@/components/layout/PageContainer";
 import { Separator } from "@/components/ui/separator";
 import EmptyState from "@/components/ui/empty-state";
 
@@ -94,8 +95,9 @@ export default function ActivitiesPage() {
   }, [seminars, posts]);
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-      <div className="mx-auto max-w-6xl px-4">
+    <PageContainer variant="wide" py="md">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div className="mx-auto max-w-6xl px-4">
         {/* 페이지 헤더 */}
         <PageHeader
           icon={BookOpen}
@@ -172,6 +174,7 @@ export default function ActivitiesPage() {
           )}
         </div>
       </section>
-    </div>
+      </div>
+    </PageContainer>
   );
 }
