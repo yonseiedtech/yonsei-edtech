@@ -45,6 +45,7 @@ import {
   Bell,
   Settings,
   LayoutDashboard,
+  X,
 } from "lucide-react";
 
 // react-easy-crop(39KB gzipped) — 명함 탭 클릭 시에만 chunk 로드
@@ -99,6 +100,9 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
+  const [whatsNewDismissed, setWhatsNewDismissed] = useState(
+    () => typeof window !== "undefined" && localStorage.getItem("yonsei_whats_new_dismissed_v1") === "true",
+  );
 
   // Legacy URL 자동 리다이렉트 + 탭 동기화
   useEffect(() => {
@@ -311,6 +315,41 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
         <div className="mt-6">
           {activeTab === "overview" && (
             <div className="space-y-4">
+              {/* 신규 기능 안내 배너 — localStorage dismiss 후 사라짐 */}
+              {!whatsNewDismissed && (
+                <div className="relative rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 p-4">
+                  <button
+                    type="button"
+                    aria-label="닫기"
+                    onClick={() => {
+                      localStorage.setItem("yonsei_whats_new_dismissed_v1", "true");
+                      setWhatsNewDismissed(true);
+                    }}
+                    className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <X size={14} />
+                  </button>
+                  <div className="flex items-start gap-3 pr-6">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                      <Sparkles size={18} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold">새로운 기능이 추가되었어요!</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        대시보드 개인화·체크리스트·알림센터·아카이브 강화 등 업데이트 내용을 확인하세요.
+                      </p>
+                      <Link
+                        href="/whats-new"
+                        className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      >
+                        신규 기능 보기
+                        <ArrowRight size={12} />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* P1: 시작하기 체크리스트 마일스톤 배지 (본인) */}
               {user.onboardingBadges && user.onboardingBadges.length > 0 && (
                 <div className="rounded-2xl border bg-card p-4 shadow-sm">

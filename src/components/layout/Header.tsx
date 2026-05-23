@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
-import { Menu, X, User, Shield, ChevronDown, BookUser, LayoutDashboard, LogOut, Settings, Users, FlaskConical } from "lucide-react";
+import { Menu, X, User, Shield, ChevronDown, BookUser, LayoutDashboard, LogOut, Settings, Users, FlaskConical, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -308,6 +308,7 @@ function UserDropdown() {
   const menuItems = [
     { href: "/dashboard", label: "대시보드", icon: LayoutDashboard },
     { href: "/mypage", label: "마이페이지", icon: User },
+    { href: "/whats-new", label: "새 기능 보기", icon: Sparkles },
     { href: "/labs", label: "실험실", icon: FlaskConical },
     ...(showAdmin
       ? [
