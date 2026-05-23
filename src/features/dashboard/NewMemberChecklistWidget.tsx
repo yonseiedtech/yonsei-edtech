@@ -31,6 +31,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
@@ -77,6 +78,7 @@ import {
   ONBOARDING_BADGE_META,
   type OnboardingBadgeId,
 } from "@/types/onboarding-badge";
+import { NEXT_CTA_MAP } from "@/lib/onboarding-next-cta";
 import WidgetCard from "@/components/ui/widget-card";
 import { cn } from "@/lib/utils";
 
@@ -165,6 +167,7 @@ function useLocalBoolean(key: string): boolean {
 export default function NewMemberChecklistWidget() {
   const { user } = useAuthStore();
   const userId = user?.id;
+  const router = useRouter();
   // 방문 기록 localStorage 키 3종 구독
   const activityVisited = useLocalBoolean(ACTIVITY_VISIT_KEY);
   const archiveVisited = useLocalBoolean(ARCHIVE_VISIT_KEY);
@@ -407,10 +410,22 @@ export default function NewMemberChecklistWidget() {
       newlyCompleted.forEach((id) => {
         const item = items.find((it) => it.id === id);
         if (!item) return;
-        toast.success(`🎉 ${item.label} 완료!`, {
-          description: "프로필 완성도가 한 단계 올라갔어요.",
-          duration: 4000,
-        });
+        const nextCta = NEXT_CTA_MAP[item.completionType];
+        if (nextCta) {
+          toast.success(`🎉 ${item.label} 완료!`, {
+            description: nextCta.message,
+            action: {
+              label: nextCta.label,
+              onClick: () => router.push(nextCta.href),
+            },
+            duration: 6000,
+          });
+        } else {
+          toast.success(`🎉 ${item.label} 완료!`, {
+            description: "프로필 완성도가 한 단계 올라갔어요.",
+            duration: 4000,
+          });
+        }
       });
 
       // ── P1 후속: 학습 잔디 가산점 + 마일스톤 배지 부여 (멱등) ──
@@ -526,7 +541,7 @@ export default function NewMemberChecklistWidget() {
       return () => window.clearTimeout(t);
     }
     prevCompletedRef.current = current;
-  }, [items, bossKey, fireConfetti, userId, user]);
+  }, [items, bossKey, fireConfetti, userId, user, router]);
 
   const shouldShow = useMemo(() => {
     if (!user || dismissed) return false;
