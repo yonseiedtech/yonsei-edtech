@@ -1,13 +1,23 @@
 "use client";
 /**
- * Dashboard Phase D-1 — localStorage 기반 위젯 레이아웃 헬퍼.
+ * Dashboard Phase D-1/D-2 — localStorage 기반 위젯 레이아웃 헬퍼.
  *
  * - saveLayout: localStorage 에 저장 + storage 이벤트 발행 (탭 간 동기화).
  * - isWidgetVisible: layout 이 없으면 기본 true (모두 표시).
+ * - getSortedWidgets: order asc 정렬된 위젯 목록 반환 (D-2).
+ * - reorderWidget: 위아래 화살표 이동 시 order 재계산 (D-2).
  * - useDashboardLayout: useSyncExternalStore 로 반응형 구독 (SSR 안전).
  */
 import { useCallback, useSyncExternalStore } from "react";
-import type { DashboardLayout, DashboardWidgetKey } from "@/types/dashboard-layout";
+import type {
+  DashboardLayout,
+  DashboardWidgetConfig,
+  DashboardWidgetKey,
+} from "@/types/dashboard-layout";
+import {
+  DEFAULT_DASHBOARD_LAYOUT,
+  DASHBOARD_WIDGET_KEYS,
+} from "@/types/dashboard-layout";
 
 const KEY_PREFIX = "yedu_dashboard_layout";
 
@@ -44,6 +54,63 @@ export function isWidgetVisible(
   if (!layout) return true;
   const cfg = layout.widgets.find((w) => w.key === key);
   return cfg ? cfg.visible : true;
+}
+
+/**
+ * D-2: order asc 정렬된 위젯 목록 반환.
+ * layout 이 없으면 DEFAULT_DASHBOARD_LAYOUT 위젯 반환.
+ * layout 에 order 필드가 없는 구버전 항목은 DASHBOARD_WIDGET_KEYS 인덱스로 폴백.
+ */
+export function getSortedWidgets(
+  layout: DashboardLayout | null,
+): DashboardWidgetConfig[] {
+  const source = layout ? layout.widgets : DEFAULT_DASHBOARD_LAYOUT.widgets;
+  return [...source]
+    .map((w) => ({
+      ...w,
+      order: w.order ?? DASHBOARD_WIDGET_KEYS.indexOf(w.key),
+    }))
+    .sort((a, b) => a.order - b.order);
+}
+
+/**
+ * D-2: 특정 위젯을 "up" 또는 "down" 방향으로 한 칸 이동.
+ * order 값을 swap 하여 새 DashboardLayout 반환.
+ * 이미 첫/끝 위치라면 원본 그대로 반환.
+ */
+export function reorderWidget(
+  layout: DashboardLayout | null,
+  key: DashboardWidgetKey,
+  direction: "up" | "down",
+): DashboardLayout {
+  const sorted = getSortedWidgets(layout);
+  const currentIdx = sorted.findIndex((w) => w.key === key);
+  if (currentIdx === -1) return layout ?? { ...DEFAULT_DASHBOARD_LAYOUT };
+
+  const swapIdx = direction === "up" ? currentIdx - 1 : currentIdx + 1;
+  if (swapIdx < 0 || swapIdx >= sorted.length) {
+    return layout ?? { ...DEFAULT_DASHBOARD_LAYOUT };
+  }
+
+  // swap order values
+  const newSorted = sorted.map((w) => ({ ...w }));
+  const tempOrder = newSorted[currentIdx].order;
+  newSorted[currentIdx].order = newSorted[swapIdx].order;
+  newSorted[swapIdx].order = tempOrder;
+
+  // rebuild widgets array preserving non-sorted keys
+  const base = layout ?? DEFAULT_DASHBOARD_LAYOUT;
+  const orderMap = new Map(newSorted.map((w) => [w.key, w.order]));
+  const widgets: DashboardWidgetConfig[] = base.widgets.map((w) => ({
+    ...w,
+    order: orderMap.has(w.key) ? (orderMap.get(w.key) as number) : w.order ?? DASHBOARD_WIDGET_KEYS.indexOf(w.key),
+  }));
+
+  return {
+    schemaVersion: 1,
+    updatedAt: new Date().toISOString(),
+    widgets,
+  };
 }
 
 /**

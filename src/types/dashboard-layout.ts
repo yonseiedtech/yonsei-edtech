@@ -1,12 +1,15 @@
 /**
- * Dashboard Phase D-1 — 위젯 가시성 토글 데이터 모델 (Tier 1: localStorage).
+ * Dashboard Phase D-1/D-2 — 위젯 가시성 토글 + 순서 변경 데이터 모델 (Tier 1: localStorage).
  *
- * 사용자가 14개 대시보드 위젯의 노출 여부를 개별 토글로 제어.
+ * 사용자가 14개 대시보드 위젯의 노출 여부와 표시 순서를 제어.
  * 저장 위치: localStorage (Tier 1) — 추후 Firestore 동기화 시 schemaVersion 으로 마이그레이션.
  *
  * 참고: `src/features/dashboard/widget-visibility.ts` 의 `DashboardWidgetKey` 는
  *       역할 기반(STUDENT_ONLY) 5개 키로 별개 정책. 본 파일의 14개는 사용자 토글용 슈퍼셋이며,
  *       두 정책은 AND 게이트로 결합된다 (역할 가시성 통과 + 사용자 토글 ON).
+ *
+ * D-2 변경: DashboardWidgetConfig 에 `order` 필드 추가 + DEFAULT_DASHBOARD_LAYOUT 헬퍼.
+ *   실제 dashboard/page.tsx 렌더 순서 반영은 D-2b 에서 수행 (옵션 B).
  */
 
 export type DashboardWidgetKey =
@@ -28,6 +31,8 @@ export type DashboardWidgetKey =
 export interface DashboardWidgetConfig {
   key: DashboardWidgetKey;
   visible: boolean;
+  /** 0-based 사용자 정의 순서 (D-2). 낮을수록 위에 표시. */
+  order: number;
 }
 
 export interface DashboardLayout {
@@ -98,7 +103,7 @@ export const DASHBOARD_WIDGET_META: Record<
   },
 };
 
-/** 모든 위젯 키 (UI 렌더 순서대로) */
+/** 모든 위젯 키 (기본 렌더 순서대로) */
 export const DASHBOARD_WIDGET_KEYS: DashboardWidgetKey[] = [
   "nextActionBanner",
   "dailyTimeline",
@@ -115,3 +120,14 @@ export const DASHBOARD_WIDGET_KEYS: DashboardWidgetKey[] = [
   "seminars",
   "staffAlerts",
 ];
+
+/** 모든 위젯 visible=true, order=인덱스인 기본 레이아웃 */
+export const DEFAULT_DASHBOARD_LAYOUT: DashboardLayout = {
+  schemaVersion: 1,
+  updatedAt: "",
+  widgets: DASHBOARD_WIDGET_KEYS.map((key, idx) => ({
+    key,
+    visible: true,
+    order: idx,
+  })),
+};
