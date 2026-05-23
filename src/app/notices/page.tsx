@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/ui/page-header";
 import EmptyState from "@/components/ui/empty-state";
+import PageContainer from "@/components/ui/page-container";
 import {
   Bell,
   Search,
@@ -43,8 +44,8 @@ export default function NoticesPage() {
   ) : null;
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-      <div className="mx-auto max-w-4xl px-4">
+    <PageContainer width="narrow">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
         {/* ── 페이지 헤더 ── */}
         <PageHeader
           icon={Bell}
@@ -168,7 +169,7 @@ export default function NoticesPage() {
           </nav>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 }
 

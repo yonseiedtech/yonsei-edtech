@@ -42,6 +42,7 @@ import { usePageHeader } from "@/features/site-settings/useSiteContent";
 import PageHeader from "@/components/ui/page-header";
 import EmptyState from "@/components/ui/empty-state";
 import InlineNotification from "@/components/ui/inline-notification";
+import PageContainer from "@/components/ui/page-container";
 
 // ─── 상수 ──────────────────────────────────────────────────────────────────
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
@@ -504,8 +505,8 @@ export default function CalendarPage() {
   }, [selectedDate]);
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-      <div className="mx-auto max-w-4xl px-4">
+    <PageContainer width="narrow">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
 
         {/* ── 페이지 헤더 ── */}
         <PageHeader
@@ -947,7 +948,7 @@ export default function CalendarPage() {
           </div>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }
 

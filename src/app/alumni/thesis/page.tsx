@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import PageHeader from "@/components/ui/page-header";
 import EmptyState from "@/components/ui/empty-state";
 import InlineNotification from "@/components/ui/inline-notification";
+import PageContainer from "@/components/ui/page-container";
 import {
   GraduationCap,
   Search,
@@ -88,8 +89,8 @@ export default function AlumniThesisListPage() {
   /* ── 비로그인 게이트 ── */
   if (initialized && !user) {
     return (
-      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-        <div className="mx-auto max-w-2xl px-4">
+      <PageContainer width="narrow">
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
           <div className="rounded-2xl border bg-card p-10 text-center shadow-sm">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <Lock size={26} />
@@ -123,7 +124,7 @@ export default function AlumniThesisListPage() {
             </p>
           </div>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
@@ -201,8 +202,8 @@ export default function AlumniThesisListPage() {
     search.trim() !== "" || yearFilter !== "all" || advisorFilter !== "all";
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-      <div className="mx-auto max-w-4xl px-4">
+    <PageContainer width="narrow">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
 
         {/* ── 페이지 헤더 ── */}
         <PageHeader
@@ -517,6 +518,6 @@ export default function AlumniThesisListPage() {
           </>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 }

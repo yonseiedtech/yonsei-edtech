@@ -20,6 +20,7 @@ import ResearchTypeChart from "@/features/research-analytics/ResearchTypeChart";
 import SubjectDistribution from "@/features/research-analytics/SubjectDistribution";
 import { STOPWORDS, normalizeKeyword, yearFrom } from "@/features/research-analytics/shared";
 import { usePageHeader } from "@/features/site-settings/useSiteContent";
+import PageContainer from "@/components/ui/page-container";
 
 interface EraSummary {
   label: string;
@@ -129,8 +130,8 @@ export default function ResearchAnalyticsPage() {
   }, [theses]);
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-      <div className="mx-auto max-w-6xl px-4">
+    <PageContainer width="default">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
 
         {/* ── 페이지 헤더 ── */}
         <PageHeader
@@ -346,7 +347,7 @@ export default function ResearchAnalyticsPage() {
           </>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 }
 
