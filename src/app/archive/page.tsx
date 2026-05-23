@@ -29,11 +29,13 @@ import {
   archiveVariablesApi,
   archiveMeasurementsApi,
   archiveFavoritesApi,
+  favoriteHref,
 } from "@/lib/bkend";
 import {
   ARCHIVE_ITEM_TYPE_COLORS,
   ARCHIVE_ITEM_TYPE_LABELS,
   type ArchiveFavorite,
+  type ArchiveFavoriteItemType,
   type ArchiveItemType,
 } from "@/types";
 import { cn } from "@/lib/utils";
@@ -50,6 +52,27 @@ interface TypeGuide {
   iconBg: string;
   iconText: string;
 }
+
+/**
+ * 즐겨찾기 칩에 표시할 라벨 — 7개 동적 아카이브 타입 모두 지원.
+ * 기존 3종(concept/variable/measurement) 은 ARCHIVE_ITEM_TYPE_LABELS 를 그대로 재사용.
+ */
+const FAVORITE_TYPE_LABELS: Record<ArchiveFavoriteItemType, string> = {
+  ...ARCHIVE_ITEM_TYPE_LABELS,
+  "research-method": "연구방법",
+  "statistical-method": "통계방법",
+  "foundation-term": "기초 용어",
+  "writing-tip": "글쓰기",
+};
+
+/** 즐겨찾기 칩 색상 — 기존 3종 + 신규 4종 (각 컬렉션 상세 페이지 헤더 색과 톤 일치) */
+const FAVORITE_TYPE_COLORS: Record<ArchiveFavoriteItemType, string> = {
+  ...ARCHIVE_ITEM_TYPE_COLORS,
+  "research-method": "bg-sky-50 text-sky-800 border border-sky-200",
+  "statistical-method": "bg-indigo-50 text-indigo-800 border border-indigo-200",
+  "foundation-term": "bg-slate-50 text-slate-800 border border-slate-200",
+  "writing-tip": "bg-rose-50 text-rose-800 border border-rose-200",
+};
 
 const TYPE_GUIDES: TypeGuide[] = [
   {
@@ -486,15 +509,15 @@ export default function ArchiveLandingPage() {
             <CardContent>
               <div className="flex flex-wrap gap-1.5">
                 {favorites.map((f) => (
-                  <Link key={f.id} href={`/archive/${f.itemType}/${f.itemId}`}>
+                  <Link key={f.id} href={favoriteHref(f)}>
                     <Badge
                       variant="outline"
                       className={cn(
                         "cursor-pointer transition-shadow hover:shadow-sm",
-                        ARCHIVE_ITEM_TYPE_COLORS[f.itemType],
+                        FAVORITE_TYPE_COLORS[f.itemType],
                       )}
                     >
-                      [{ARCHIVE_ITEM_TYPE_LABELS[f.itemType]}] {f.itemName ?? f.itemId}
+                      [{FAVORITE_TYPE_LABELS[f.itemType]}] {f.itemName ?? f.itemId}
                     </Badge>
                   </Link>
                 ))}

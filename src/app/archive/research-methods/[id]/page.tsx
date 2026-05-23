@@ -18,6 +18,7 @@ import {
   EyeOff,
   BarChart3,
   Lightbulb,
+  Star,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/ui/page-header";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
-import { researchMethodsApi, alumniThesesApi, statisticalMethodsApi } from "@/lib/bkend";
+import {
+  researchMethodsApi,
+  alumniThesesApi,
+  statisticalMethodsApi,
+  archiveFavoritesApi,
+} from "@/lib/bkend";
+import {
+  findStatMethodsLinkingToResearch,
+  mergeById,
+} from "@/lib/archive-reverse-link";
 import {
   RESEARCH_METHOD_KIND_COLORS,
   RESEARCH_METHOD_KIND_LABELS,
@@ -51,6 +61,8 @@ export default function ResearchMethodDetailPage() {
   const [statisticalMethods, setStatisticalMethods] = useState<StatisticalMethod[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFav, setIsFav] = useState(false);
+  const [favPending, setFavPending] = useState(false);
 
   useEffect(() => {
     if (!params?.id) return;
@@ -78,21 +90,39 @@ export default function ResearchMethodDetailPage() {
           }
           setTheses(ok);
         }
+        // 양방향 read-time 병합:
+        // (1) forward — 본 연구방법의 statisticalMethodIds 가 직접 가리키는 통계방법
+        // (2) reverse — archive_statistical_methods.relatedResearchMethodIds 가 본 method.id 를 포함하는 항목
+        // 검수 게이트는 forward·reverse 모두 동일 (canManage 면 draft 도, 아니면 published 만)
         const statIds = m.statisticalMethodIds ?? [];
-        if (statIds.length > 0) {
-          const sResults = await Promise.allSettled(
-            statIds.map((id) => statisticalMethodsApi.get(id)),
-          );
-          if (cancelled) return;
-          const sOk: StatisticalMethod[] = [];
-          for (const r of sResults) {
-            // 검수 게이트 3중 적용 — 비-staff 에게 draft 통계방법 노출 차단
-            if (r.status === "fulfilled" && (canManage || r.value.published)) {
-              sOk.push(r.value);
-            }
+        const forwardResults =
+          statIds.length > 0
+            ? await Promise.allSettled(
+                statIds.map((id) => statisticalMethodsApi.get(id)),
+              )
+            : [];
+        if (cancelled) return;
+        const forward: StatisticalMethod[] = [];
+        for (const r of forwardResults) {
+          if (r.status === "fulfilled" && (canManage || r.value.published)) {
+            forward.push(r.value);
           }
-          setStatisticalMethods(sOk);
         }
+
+        // reverse 조회 — 운영진은 전체 list(), 그 외는 listPublished()
+        let reverse: StatisticalMethod[] = [];
+        try {
+          const allStats = canManage
+            ? await statisticalMethodsApi.list()
+            : await statisticalMethodsApi.listPublished();
+          if (cancelled) return;
+          reverse = findStatMethodsLinkingToResearch(allStats.data, m.id);
+        } catch (err) {
+          console.error("[research-method-detail] reverse stat load failed", err);
+        }
+
+        const merged = mergeById(forward, reverse);
+        if (merged.length > 0) setStatisticalMethods(merged);
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "불러오기 실패");
       } finally {
@@ -114,6 +144,61 @@ export default function ResearchMethodDetailPage() {
     } catch (err) {
       console.error("[research-method-detail] toggle publish failed", err);
       toast.error("공개 상태 변경 실패");
+    }
+  }
+
+  // 즐겨찾기 상태 로드
+  useEffect(() => {
+    if (!user || !params?.id) {
+      setIsFav(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await archiveFavoritesApi.listByUser(user.id);
+        if (cancelled) return;
+        setIsFav(
+          res.data.some(
+            (f) => f.itemType === "research-method" && f.itemId === params.id,
+          ),
+        );
+      } catch (err) {
+        console.error("[research-method-detail] favorites check failed", err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, params?.id]);
+
+  async function handleToggleFav() {
+    if (!user || !method) {
+      toast.error("로그인이 필요합니다");
+      return;
+    }
+    setFavPending(true);
+    const favId = archiveFavoritesApi.makeId(user.id, "research-method", method.id);
+    try {
+      if (isFav) {
+        await archiveFavoritesApi.delete(favId);
+        setIsFav(false);
+        toast.success("관심 해제");
+      } else {
+        await archiveFavoritesApi.upsert(favId, {
+          userId: user.id,
+          itemType: "research-method",
+          itemId: method.id,
+          itemName: method.name,
+        });
+        setIsFav(true);
+        toast.success("관심 저장");
+      }
+    } catch (err) {
+      console.error("[research-method-detail] favorite toggle failed", err);
+      toast.error("관심 저장 실패");
+    } finally {
+      setFavPending(false);
     }
   }
 
@@ -177,29 +262,46 @@ export default function ResearchMethodDetailPage() {
               )}
             </div>
           </div>
-          {canManage && (
-            <div className="flex flex-wrap items-center gap-2">
-              <Button variant="outline" size="sm" onClick={togglePublish}>
-                {method.published ? (
-                  <>
-                    <EyeOff className="mr-1 h-4 w-4" />
-                    비공개로 전환
-                  </>
-                ) : (
-                  <>
-                    <Eye className="mr-1 h-4 w-4" />
-                    공개로 전환
-                  </>
+          <div className="flex flex-wrap items-center gap-2">
+            {user && (
+              <Button
+                variant={isFav ? "default" : "outline"}
+                size="sm"
+                onClick={handleToggleFav}
+                disabled={favPending}
+                className={cn(
+                  isFav && "bg-amber-500 hover:bg-amber-600 border-amber-500",
                 )}
+                aria-pressed={isFav}
+              >
+                <Star className={cn("mr-1 h-4 w-4", isFav && "fill-current")} />
+                {isFav ? "관심 저장됨" : "관심 저장"}
               </Button>
-              <Link href={`/console/archive/research-methods/${method.id}/edit`}>
-                <Button size="sm">
-                  <Pencil className="mr-1 h-4 w-4" />
-                  편집
+            )}
+            {canManage && (
+              <>
+                <Button variant="outline" size="sm" onClick={togglePublish}>
+                  {method.published ? (
+                    <>
+                      <EyeOff className="mr-1 h-4 w-4" />
+                      비공개로 전환
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="mr-1 h-4 w-4" />
+                      공개로 전환
+                    </>
+                  )}
                 </Button>
-              </Link>
-            </div>
-          )}
+                <Link href={`/console/archive/research-methods/${method.id}/edit`}>
+                  <Button size="sm">
+                    <Pencil className="mr-1 h-4 w-4" />
+                    편집
+                  </Button>
+                </Link>
+              </>
+            )}
+          </div>
         </div>
 
         {/* 쉽게 이해하기 (일상 비유) */}

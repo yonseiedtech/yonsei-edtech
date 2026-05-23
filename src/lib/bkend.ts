@@ -52,7 +52,7 @@ import type {
   DefensePracticeSet, DefenseQuestionTemplate,
   GradLifePosition,
   ConferenceProgram, UserSessionPlan,
-  ArchiveConcept, ArchiveVariable, ArchiveMeasurementTool, ArchiveFavorite, ArchiveItemType,
+  ArchiveConcept, ArchiveVariable, ArchiveMeasurementTool, ArchiveFavorite, ArchiveFavoriteItemType,
   ResearchMethod, ResearchMethodKind,
   ReceivedBusinessCard,
   ConferenceWorkbookTask,
@@ -2032,10 +2032,35 @@ export const archiveFavoritesApi = {
   upsert: (id: string, data: Record<string, unknown>) =>
     dataApi.upsert<ArchiveFavorite>("archive_favorites", id, data),
   delete: (id: string) => dataApi.delete("archive_favorites", id),
-  /** 즐겨찾기 단축 ID — 사용자×아이템 단일성 보장 */
-  makeId: (userId: string, itemType: ArchiveItemType, itemId: string) =>
+  /** 즐겨찾기 단축 ID — 사용자×아이템 단일성 보장 (7개 동적 아카이브 타입 모두 지원) */
+  makeId: (userId: string, itemType: ArchiveFavoriteItemType, itemId: string) =>
     `${userId}_${itemType}_${itemId}`,
 };
+
+/**
+ * 즐겨찾기 항목의 상세 페이지 경로 매핑 헬퍼.
+ * itemType 별 라우트 규약을 한곳에 모아 /archive 랜딩의 관심 저장 목록 라우팅을 일관되게 한다.
+ *
+ * - concept/variable/measurement → /archive/{type}/{id} (기존 [type]/[id] 라우트)
+ * - research-method/statistical-method/foundation-term/writing-tip → /archive/{plural-kebab}/{id}
+ */
+export function favoriteHref(f: ArchiveFavorite): string {
+  switch (f.itemType) {
+    case "research-method":
+      return `/archive/research-methods/${f.itemId}`;
+    case "statistical-method":
+      return `/archive/statistical-methods/${f.itemId}`;
+    case "foundation-term":
+      return `/archive/foundation-terms/${f.itemId}`;
+    case "writing-tip":
+      return `/archive/writing-tips/${f.itemId}`;
+    case "concept":
+    case "variable":
+    case "measurement":
+    default:
+      return `/archive/${f.itemType}/${f.itemId}`;
+  }
+}
 
 // ── 교육공학 아카이브 — 연구방법 가이드 (Phase 1) ──
 // 공개 페이지는 published=true 만 노출. 운영진(staff+) 은 draft 포함 전체 조회.

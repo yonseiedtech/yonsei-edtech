@@ -58,5 +58,28 @@
   - `src/lib/bkend.ts`, `firestore.rules`, `firestore.indexes.json`, `src/lib/archive-seed.ts`, `src/app/api/cron/archive-seed-sync/route.ts`, 본 문서를 **동시 갱신**한다.
   - 기존 데이터는 백필 스크립트(`scripts/migrate-archive-*.ts`) 작성 후 prod 적용 — 본 작업은 별도 PR.
 
-## 4. 변경 이력
+## 4. 졸업생 학위논문(`alumni_theses`) ↔ 아카이브 동기화 정책
+
+> Phase 2 작업 범위에서는 단방향 chip 만 유지한다. 양방향 자동 동기화는 추후 Phase 3 검수 큐와 함께 보강 예정.
+
+### 현재 상태 (2026-05-23 기준)
+- `archive_concepts` / `archive_variables` / `archive_measurements` ↔ `alumni_theses`
+  - `ArchiveItemForm` 이 저장 시 양쪽(`conceptIds`/`variableIds`/`measurementIds`) 모두 동기화.
+- `archive_research_methods` / `archive_statistical_methods` ↔ `alumni_theses`
+  - 아카이브 문서 안의 `alumniThesisIds` 배열로 단방향 매핑.
+  - `alumni_theses` 의 `researchMethodIds`/`statisticalMethodIds` 와의 양방향 자동 동기화는 **미구현**.
+  - 운영자가 양쪽을 모두 관리해야 일관성이 유지된다 (수동 큐레이션 정책).
+- `archive_foundation_terms` 의 `relatedConceptIds` / `relatedResearchMethodIds` / `relatedStatisticalMethodIds`
+  - 단방향 chip. 상대 컬렉션은 갱신되지 않는다.
+
+### 정책 결정 (Phase 2)
+- **단방향 chip 은 운영자 수동 큐레이션 정책으로 유지**한다.
+- 양방향 자동 동기화는 검수 큐(Phase 3)와 함께 일괄 정리한다 (`updatedBy`·`reviewedAt` 메타 추가 시점).
+- 연구방법 ↔ 통계방법은 **read-time 역방향 병합** 으로 우선 해결 (저장은 단방향, 표시는 양방향).
+  - 헬퍼: `src/lib/archive-reverse-link.ts` — `findStatMethodsLinkingToResearch`, `findResearchMethodsLinkingToStat`, `mergeById`.
+  - 적용 위치: `src/app/archive/research-methods/[id]/page.tsx`, `src/app/archive/statistical-methods/[id]/page.tsx`.
+  - 검수 게이트는 forward·reverse 모두 동일하게 적용한다 (`canManage` 면 draft 도, 아니면 published 만).
+
+## 5. 변경 이력
 - 2026-05-23 — 최초 작성. `archive_measurements` 표준명 유지 결정, 3개 컬렉션 상시 공개 정책 명문화. (Phase 0)
+- 2026-05-23 — Phase 2: 졸업생 학위논문 ↔ 아카이브 단방향 chip 정책 명문화. 연구방법 ↔ 통계방법 read-time 역방향 병합 도입 (`archive-reverse-link.ts`).

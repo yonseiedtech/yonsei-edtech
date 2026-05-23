@@ -16,6 +16,7 @@ import {
   Split,
   Link2,
   PenLine,
+  Star,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ import {
   archiveConceptsApi,
   researchMethodsApi,
   statisticalMethodsApi,
+  archiveFavoritesApi,
 } from "@/lib/bkend";
 import {
   FOUNDATION_TERM_CATEGORY_COLORS,
@@ -57,6 +59,8 @@ export default function FoundationTermDetailPage() {
   >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFav, setIsFav] = useState(false);
+  const [favPending, setFavPending] = useState(false);
 
   useEffect(() => {
     if (!params?.id) return;
@@ -157,6 +161,61 @@ export default function FoundationTermDetailPage() {
     }
   }
 
+  // 즐겨찾기 상태 로드
+  useEffect(() => {
+    if (!user || !params?.id) {
+      setIsFav(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await archiveFavoritesApi.listByUser(user.id);
+        if (cancelled) return;
+        setIsFav(
+          res.data.some(
+            (f) => f.itemType === "foundation-term" && f.itemId === params.id,
+          ),
+        );
+      } catch (err) {
+        console.error("[foundation-term-detail] favorites check failed", err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, params?.id]);
+
+  async function handleToggleFav() {
+    if (!user || !term) {
+      toast.error("로그인이 필요합니다");
+      return;
+    }
+    setFavPending(true);
+    const favId = archiveFavoritesApi.makeId(user.id, "foundation-term", term.id);
+    try {
+      if (isFav) {
+        await archiveFavoritesApi.delete(favId);
+        setIsFav(false);
+        toast.success("관심 해제");
+      } else {
+        await archiveFavoritesApi.upsert(favId, {
+          userId: user.id,
+          itemType: "foundation-term",
+          itemId: term.id,
+          itemName: term.term,
+        });
+        setIsFav(true);
+        toast.success("관심 저장");
+      }
+    } catch (err) {
+      console.error("[foundation-term-detail] favorite toggle failed", err);
+      toast.error("관심 저장 실패");
+    } finally {
+      setFavPending(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-12">
@@ -230,29 +289,46 @@ export default function FoundationTermDetailPage() {
               )}
             </div>
           </div>
-          {canManage && (
-            <div className="flex flex-wrap items-center gap-2">
-              <Button variant="outline" size="sm" onClick={togglePublish}>
-                {term.published ? (
-                  <>
-                    <EyeOff className="mr-1 h-4 w-4" />
-                    비공개로 전환
-                  </>
-                ) : (
-                  <>
-                    <Eye className="mr-1 h-4 w-4" />
-                    공개로 전환
-                  </>
+          <div className="flex flex-wrap items-center gap-2">
+            {user && (
+              <Button
+                variant={isFav ? "default" : "outline"}
+                size="sm"
+                onClick={handleToggleFav}
+                disabled={favPending}
+                className={cn(
+                  isFav && "bg-amber-500 hover:bg-amber-600 border-amber-500",
                 )}
+                aria-pressed={isFav}
+              >
+                <Star className={cn("mr-1 h-4 w-4", isFav && "fill-current")} />
+                {isFav ? "관심 저장됨" : "관심 저장"}
               </Button>
-              <Link href={`/console/archive/foundation-terms/${term.id}/edit`}>
-                <Button size="sm">
-                  <Pencil className="mr-1 h-4 w-4" />
-                  편집
+            )}
+            {canManage && (
+              <>
+                <Button variant="outline" size="sm" onClick={togglePublish}>
+                  {term.published ? (
+                    <>
+                      <EyeOff className="mr-1 h-4 w-4" />
+                      비공개로 전환
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="mr-1 h-4 w-4" />
+                      공개로 전환
+                    </>
+                  )}
                 </Button>
-              </Link>
-            </div>
-          )}
+                <Link href={`/console/archive/foundation-terms/${term.id}/edit`}>
+                  <Button size="sm">
+                    <Pencil className="mr-1 h-4 w-4" />
+                    편집
+                  </Button>
+                </Link>
+              </>
+            )}
+          </div>
         </div>
 
         {/* 쉽게 이해하기 (일상 비유) */}

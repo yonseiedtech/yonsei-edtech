@@ -88,10 +88,24 @@ export interface ArchiveMeasurementTool {
   updatedAt: string;
 }
 
+/**
+ * 즐겨찾기 가능한 아카이브 타입 — 7개 동적 컬렉션 모두 지원.
+ * 기존 3종(concept/variable/measurement)에 4종 추가 (research-method/statistical-method/foundation-term/writing-tip).
+ * 정적 페이지(/archive/apa-style)는 즐겨찾기 대상에서 제외.
+ *
+ * 하위호환: ArchiveItemType (3종) 은 ArchiveFavoriteItemType 의 부분집합이라 기존 즐겨찾기 문서는 그대로 작동.
+ */
+export type ArchiveFavoriteItemType =
+  | ArchiveItemType
+  | "research-method"
+  | "statistical-method"
+  | "foundation-term"
+  | "writing-tip";
+
 export interface ArchiveFavorite {
   id: string;        // {userId}_{itemType}_{itemId}
   userId: string;
-  itemType: ArchiveItemType;
+  itemType: ArchiveFavoriteItemType;
   itemId: string;
   /** denorm: 즐겨찾기 목록 표시용 */
   itemName?: string;

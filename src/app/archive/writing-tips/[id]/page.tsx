@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   Info,
   Tag,
+  Star,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/ui/page-header";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
-import { writingTipsApi } from "@/lib/bkend";
+import { writingTipsApi, archiveFavoritesApi } from "@/lib/bkend";
 import {
   WRITING_TIP_CATEGORY_COLORS,
   WRITING_TIP_CATEGORY_LABELS,
@@ -42,6 +43,8 @@ export default function WritingTipDetailPage() {
   const [tip, setTip] = useState<WritingTip | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFav, setIsFav] = useState(false);
+  const [favPending, setFavPending] = useState(false);
 
   useEffect(() => {
     if (!params?.id) return;
@@ -77,6 +80,61 @@ export default function WritingTipDetailPage() {
     } catch (err) {
       console.error("[writing-tip-detail] toggle publish failed", err);
       toast.error("공개 상태 변경 실패");
+    }
+  }
+
+  // 즐겨찾기 상태 로드
+  useEffect(() => {
+    if (!user || !params?.id) {
+      setIsFav(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await archiveFavoritesApi.listByUser(user.id);
+        if (cancelled) return;
+        setIsFav(
+          res.data.some(
+            (f) => f.itemType === "writing-tip" && f.itemId === params.id,
+          ),
+        );
+      } catch (err) {
+        console.error("[writing-tip-detail] favorites check failed", err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, params?.id]);
+
+  async function handleToggleFav() {
+    if (!user || !tip) {
+      toast.error("로그인이 필요합니다");
+      return;
+    }
+    setFavPending(true);
+    const favId = archiveFavoritesApi.makeId(user.id, "writing-tip", tip.id);
+    try {
+      if (isFav) {
+        await archiveFavoritesApi.delete(favId);
+        setIsFav(false);
+        toast.success("관심 해제");
+      } else {
+        await archiveFavoritesApi.upsert(favId, {
+          userId: user.id,
+          itemType: "writing-tip",
+          itemId: tip.id,
+          itemName: tip.title,
+        });
+        setIsFav(true);
+        toast.success("관심 저장");
+      }
+    } catch (err) {
+      console.error("[writing-tip-detail] favorite toggle failed", err);
+      toast.error("관심 저장 실패");
+    } finally {
+      setFavPending(false);
     }
   }
 
@@ -139,29 +197,46 @@ export default function WritingTipDetailPage() {
               )}
             </div>
           </div>
-          {canManage && (
-            <div className="flex flex-wrap items-center gap-2">
-              <Button variant="outline" size="sm" onClick={togglePublish}>
-                {tip.published ? (
-                  <>
-                    <EyeOff className="mr-1 h-4 w-4" />
-                    비공개로 전환
-                  </>
-                ) : (
-                  <>
-                    <Eye className="mr-1 h-4 w-4" />
-                    공개로 전환
-                  </>
+          <div className="flex flex-wrap items-center gap-2">
+            {user && (
+              <Button
+                variant={isFav ? "default" : "outline"}
+                size="sm"
+                onClick={handleToggleFav}
+                disabled={favPending}
+                className={cn(
+                  isFav && "bg-amber-500 hover:bg-amber-600 border-amber-500",
                 )}
+                aria-pressed={isFav}
+              >
+                <Star className={cn("mr-1 h-4 w-4", isFav && "fill-current")} />
+                {isFav ? "관심 저장됨" : "관심 저장"}
               </Button>
-              <Link href={`/console/archive/writing-tips/${tip.id}/edit`}>
-                <Button size="sm">
-                  <Pencil className="mr-1 h-4 w-4" />
-                  편집
+            )}
+            {canManage && (
+              <>
+                <Button variant="outline" size="sm" onClick={togglePublish}>
+                  {tip.published ? (
+                    <>
+                      <EyeOff className="mr-1 h-4 w-4" />
+                      비공개로 전환
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="mr-1 h-4 w-4" />
+                      공개로 전환
+                    </>
+                  )}
                 </Button>
-              </Link>
-            </div>
-          )}
+                <Link href={`/console/archive/writing-tips/${tip.id}/edit`}>
+                  <Button size="sm">
+                    <Pencil className="mr-1 h-4 w-4" />
+                    편집
+                  </Button>
+                </Link>
+              </>
+            )}
+          </div>
         </div>
 
         {/* ❌ 잘못된 예 ↔ ✅ 권장 예 대비 카드 */}
