@@ -74,6 +74,7 @@ import type {
   StreakEvent,
   StreakEventType,
   UserFeedback,
+  UserNote,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -2480,4 +2481,26 @@ export const userFeedbackApi = {
       id,
       data as unknown as Record<string, unknown>,
     ),
+};
+
+// ─────────────────────────────────────────────────────────────
+// userNotesApi — 사용자 개인 메모 (본인 전용)
+// 정렬: pinned desc → updatedAt desc (복합 index 불필요 — 클라이언트 정렬)
+// ─────────────────────────────────────────────────────────────
+export const userNotesApi = {
+  listByUser: (userId: string) =>
+    dataApi.list<UserNote>("user_notes", {
+      "filter[userId]": userId,
+      limit: 500,
+    }),
+  get: (id: string) => dataApi.get<UserNote>("user_notes", id),
+  create: (data: Omit<UserNote, "id" | "createdAt" | "updatedAt">) =>
+    dataApi.create<UserNote>("user_notes", data as unknown as Record<string, unknown>),
+  update: (id: string, data: Partial<Omit<UserNote, "id" | "userId" | "createdAt">>) =>
+    dataApi.update<UserNote>(
+      "user_notes",
+      id,
+      data as unknown as Record<string, unknown>,
+    ),
+  delete: (id: string) => dataApi.delete("user_notes", id),
 };

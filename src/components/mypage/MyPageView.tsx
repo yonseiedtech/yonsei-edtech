@@ -46,6 +46,7 @@ import {
   LayoutDashboard,
   X,
   CalendarDays,
+  NotebookPen,
 } from "lucide-react";
 
 // react-easy-crop(39KB gzipped) — 명함 탭 클릭 시에만 chunk 로드
@@ -791,6 +792,16 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                       <p className="text-sm font-semibold">캘린더 Sync</p>
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">Google · Apple 캘린더에 일정 구독</p>
+                  </Link>
+                  <Link
+                    href="/mypage/notes"
+                    className="rounded-2xl border bg-card p-4 hover:border-primary/40 hover:shadow-sm"
+                  >
+                    <div className="flex items-center gap-2">
+                      <NotebookPen size={16} className="text-primary" />
+                      <p className="text-sm font-semibold">내 메모</p>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">학습 노트·연구 메모·아이디어 관리</p>
                   </Link>
                 </div>
               )}

@@ -72,3 +72,6 @@ export * from "./streak-event";
 
 // 사용자 피드백
 export * from "./feedback";
+
+// 사용자 개인 메모
+export * from "./user-note";
