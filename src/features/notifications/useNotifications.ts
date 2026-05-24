@@ -62,11 +62,15 @@ export function useNotifications() {
     refetchInterval: 30_000, // 30초 폴링
   });
 
-  const rawData = (data?.data ?? []) as unknown;
-  const notifications: AppNotification[] = Array.isArray(rawData)
-    ? (rawData as AppNotification[])
-    : [];
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  // useMemo 안정화 — 매 렌더 새 array reference 로 useEffect 무한 발화 회피
+  const notifications: AppNotification[] = useMemo(() => {
+    const rawData = (data?.data ?? []) as unknown;
+    return Array.isArray(rawData) ? (rawData as AppNotification[]) : [];
+  }, [data]);
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => n && !n.read).length,
+    [notifications],
+  );
 
   // 첫 마운트 baseline 추적 — 신규 알림만 toast 표시
   const prevNotificationIdsRef = useRef<Set<string>>(new Set());
@@ -74,9 +78,11 @@ export function useNotifications() {
   const baselineSetRef = useRef(false);
 
   useEffect(() => {
+    // 비로그인 또는 데이터 미로딩 시 skip
+    if (!userId) return;
     if (notifications.length === 0 && !baselineSetRef.current) return;
 
-    const currentIds = new Set(notifications.map((n) => n.id));
+    const currentIds = new Set(notifications.filter((n) => n && n.id).map((n) => n.id));
 
     // 첫 마운트: baseline 만 기록하고 toast 없이 종료
     if (!baselineSetRef.current) {
@@ -135,7 +141,9 @@ export function useNotifications() {
         duration: 4000,
       });
     }
-  }, [notifications, layout, router, user?.notificationPrefs?.toastEnabled]);
+    // router 는 deps 에서 제거 (Next.js useRouter 반환 객체는 stable, 매 렌더 새 reference 아님)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notifications, layout, userId, user?.notificationPrefs?.toastEnabled]);
 
   return { notifications, unreadCount, isLoading };
 }
