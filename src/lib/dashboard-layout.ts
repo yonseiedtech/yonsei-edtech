@@ -28,16 +28,36 @@ import {
 
 const KEY_PREFIX = "yedu_dashboard_layout";
 
-/** localStorage 에서 layout 읽기 (내부·외부 공용). */
+/**
+ * snapshot 캐시 — userId 별 raw string 동일하면 parsed 동일 reference 반환.
+ * useSyncExternalStore 가 reference 비교로 변경 감지하므로,
+ * 같은 raw string 에서 매번 새 JSON.parse 객체를 만들면 무한 루프 유발.
+ */
+const SNAPSHOT_CACHE = new Map<string, { raw: string | null; parsed: DashboardLayout | null }>();
+
+/** localStorage 에서 layout 읽기 (내부·외부 공용) — reference 안정화. */
 function readLayout(userId: string): DashboardLayout | null {
   if (typeof window === "undefined") return null;
+  let raw: string | null = null;
   try {
-    const raw = window.localStorage.getItem(`${KEY_PREFIX}.${userId}`);
-    if (!raw) return null;
-    return JSON.parse(raw) as DashboardLayout;
+    raw = window.localStorage.getItem(`${KEY_PREFIX}.${userId}`);
   } catch {
     return null;
   }
+  const cached = SNAPSHOT_CACHE.get(userId);
+  if (cached && cached.raw === raw) {
+    return cached.parsed;
+  }
+  let parsed: DashboardLayout | null = null;
+  if (raw) {
+    try {
+      parsed = JSON.parse(raw) as DashboardLayout;
+    } catch {
+      parsed = null;
+    }
+  }
+  SNAPSHOT_CACHE.set(userId, { raw, parsed });
+  return parsed;
 }
 
 /** D-5: localStorage layout 읽기 — syncLayoutFromFirestore 비교에 사용. */
