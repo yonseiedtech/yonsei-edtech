@@ -954,7 +954,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
   );
 }
 
-/** Sprint 54·55·67 + Notif-Pref: 알림 + 피드 노출 + 네트워크 노출 + Push 5종 설정 카드 */
+/** Sprint 54·55·67 + Notif-Pref + Leaderboard: 알림 + 피드 노출 + 네트워크 노출 + Push 5종 + 순위 노출 설정 카드 */
 function NotificationSettingsCard({ user }: { user: User }) {
   type PrefShape = {
     weeklyDigest?: boolean;
@@ -971,6 +971,7 @@ function NotificationSettingsCard({ user }: { user: User }) {
   const [digest, setDigest] = useState<boolean>(prefs?.weeklyDigest !== false);
   const [feed, setFeed] = useState<boolean>(prefs?.feedOptIn !== false);
   const [network, setNetwork] = useState<boolean>(prefs?.networkOptIn !== false);
+  const [leaderboard, setLeaderboard] = useState<boolean>(user.showInLeaderboard !== false);
   // Notif-Pref: push 5종 (default true, undefined 도 true 로 해석)
   const [pushStudySession, setPushStudySession] = useState<boolean>(prefs?.pushStudySession !== false);
   const [pushStudyAssignment, setPushStudyAssignment] = useState<boolean>(prefs?.pushStudyAssignment !== false);
@@ -979,6 +980,22 @@ function NotificationSettingsCard({ user }: { user: User }) {
   const [pushClassReminder, setPushClassReminder] = useState<boolean>(prefs?.pushClassReminder !== false);
   const [pushExternalRecruitment, setPushExternalRecruitment] = useState<boolean>(prefs?.pushExternalRecruitment !== false);
   const [busyKey, setBusyKey] = useState<string | null>(null);
+
+  async function updateLeaderboardPref(next: boolean) {
+    setBusyKey("leaderboard");
+    setLeaderboard(next);
+    try {
+      await profilesApi.update(user.id, { showInLeaderboard: next });
+      const { toast } = await import("sonner");
+      toast.success(next ? "학습 잔디 순위에 표시됩니다." : "학습 잔디 순위에서 숨겨집니다.");
+    } catch (e) {
+      setLeaderboard(!next);
+      const { toast } = await import("sonner");
+      toast.error(`설정 변경 실패: ${(e as Error).message}`);
+    } finally {
+      setBusyKey(null);
+    }
+  }
 
   async function updatePref(
     key: keyof PrefShape,
@@ -1086,6 +1103,14 @@ function NotificationSettingsCard({ user }: { user: User }) {
             void updatePref("networkOptIn", !network, setNetwork, "전공 네트워킹 Map 노출을")
           }
           ariaLabel="전공 네트워킹 Map 노출 토글"
+        />
+        <ToggleRow
+          title="학습 잔디 순위(leaderboard) 노출"
+          description="켜면 /leaderboard 에 내 이름과 점수가 표시됩니다. 끄면 순위는 유지되지만 이름이 익명 처리됩니다."
+          enabled={leaderboard}
+          busy={busyKey === "leaderboard"}
+          onToggle={() => void updateLeaderboardPref(!leaderboard)}
+          ariaLabel="학습 잔디 순위 노출 토글"
         />
       </div>
 

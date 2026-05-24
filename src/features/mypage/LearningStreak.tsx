@@ -21,6 +21,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Flame, Trophy, Sprout, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
@@ -468,6 +469,14 @@ export default function LearningStreak() {
               <strong className="text-foreground">{stats.weekStreak}</strong>주 streak
             </span>
           )}
+          <Link
+            href="/leaderboard"
+            className="inline-flex items-center gap-1 rounded-full border border-amber-300/60 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 transition-colors hover:bg-amber-100"
+            title="학습 잔디 순위 보기"
+          >
+            <Trophy size={11} aria-hidden="true" />
+            순위 보기
+          </Link>
         </span>
       </div>
 

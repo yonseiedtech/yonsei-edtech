@@ -1098,6 +1098,18 @@ service cloud.firestore {
         && (resource.data.userId == request.auth.uid || isStaffOrAbove());
     }
 
+    // ─── Streak Events (학습 잔디 외부 가산점 이벤트) ───
+    // Leaderboard 집계용: 모든 인증 사용자가 list 가능(옵트아웃 익명화는 클라이언트 처리).
+    // write: 본인(userId 일치) 또는 운영진. delete 는 운영진만.
+    match /streak_events/{docId} {
+      allow read, list: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
+      allow delete: if isAuthenticated() && isStaffOrAbove();
+    }
+
     // ─── User Feedback ───
     // write: 인증 사용자 — 본인 userId 로 제출 (익명은 userId 필드 없이 create)
     // read/list: 운영진(staff+) 전용

@@ -351,6 +351,12 @@ export interface User { [key: string]: unknown;
    * /api/calendar/me.ics?token=... 에서 검증. 마이페이지에서 재발급 가능.
    */
   calendarToken?: string;
+  /**
+   * 학습 잔디 leaderboard 노출 여부.
+   * 기본값(undefined/true): leaderboard 에 실명+점수 노출.
+   * false 로 명시될 때만 옵트아웃 — 익명 처리(순위는 유지, 이름 숨김).
+   */
+  showInLeaderboard?: boolean;
   createdAt: string;
   updatedAt: string;
 }
