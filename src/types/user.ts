@@ -346,6 +346,11 @@ export interface User { [key: string]: unknown;
   onboardingBadges?: import("./onboarding-badge").OnboardingBadgeId[];
   /** D-5: 대시보드 위젯 레이아웃 — Firestore 영구화 (기기간 sync). */
   dashboardLayout?: DashboardLayout;
+  /**
+   * 개인 캘린더 ical 피드 인증 토큰 (UUID).
+   * /api/calendar/me.ics?token=... 에서 검증. 마이페이지에서 재발급 가능.
+   */
+  calendarToken?: string;
   createdAt: string;
   updatedAt: string;
 }
