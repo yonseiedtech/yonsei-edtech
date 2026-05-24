@@ -20,6 +20,7 @@ import type { Certificate, Activity, User, SeminarReview } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import PageHeader from "@/components/ui/page-header";
+import PageContainer from "@/components/ui/page-container";
 import { cn } from "@/lib/utils";
 import {
   User as UserIcon,
@@ -228,8 +229,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
   if (!user) return null;
 
   return (
-    <div className="py-16">
-      <div className="mx-auto max-w-2xl px-4">
+    <PageContainer width="default">
         {/* 헤더 */}
         <PageHeader
           icon={UserIcon}
@@ -922,8 +922,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </PageContainer>
   );
 }
 
