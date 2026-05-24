@@ -121,7 +121,7 @@ export interface SocialLink {
 }
 
 import type { UserConsents } from "@/lib/legal";
-import type { DashboardLayout } from "@/types/dashboard-layout";
+import type { DashboardLayout } from "./dashboard-layout";
 
 /** Sprint 54·55: 알림 수신 + 피드 노출 설정 (default: 모두 true 로 처리) */
 export interface NotificationPrefs {
@@ -148,6 +148,8 @@ export interface NotificationPrefs {
   pushClassReminder?: boolean;
   /** 대외 학술대회 모집 시작/마감 D-1 push (kind=external_recruitment) */
   pushExternalRecruitment?: boolean;
+  /** 신규 알림 도착 시 화면 내 toast 표시 여부 — false 로 명시될 때만 옵트아웃 (기본 true) */
+  toastEnabled?: boolean;
 }
 
 /** kind → notificationPrefs 필드 매핑 — 서버 cron / 클라이언트 UI 공용 */
