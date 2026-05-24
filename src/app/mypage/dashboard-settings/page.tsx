@@ -435,6 +435,15 @@ function DashboardSettingsContent() {
         }
       />
 
+      {/* D-2c 인라인 편집 안내 — /dashboard 우상단 ✏️ 편집 버튼으로 직접 조정 가능 */}
+      <p className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-xs text-emerald-700">
+        💡 대시보드 화면에서 직접 편집할 수 있습니다.{" "}
+        <a href="/dashboard" className="font-medium underline underline-offset-2">
+          /dashboard
+        </a>{" "}
+        에서 우상단 <span className="font-medium">✏️ 편집</span> 버튼을 눌러 드래그·표시 토글을 바로 적용하세요.
+      </p>
+
       {/* D-4 프리셋 섹션 */}
       <section className="mt-6">
         <h2 className="mb-3 text-sm font-semibold">빠른 프리셋</h2>
@@ -445,13 +454,10 @@ function DashboardSettingsContent() {
         </div>
       </section>
 
-      {/* D-2b 안내 배너 */}
+      {/* D-2b 안내 배너 — 순서 변경은 /dashboard 에 즉시 반영됨 */}
       <p className="mt-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-xs text-blue-700">
-        위젯 순서 설정이 저장됩니다.{" "}
-        <span className="font-medium">
-          대시보드 화면 반영은 다음 업데이트(D-2b)에서 활성화 예정
-        </span>
-        입니다.
+        위젯 순서·표시 설정은 저장 즉시{" "}
+        <span className="font-medium">/dashboard 화면에 반영</span>됩니다.
       </p>
 
       {/* D-3 알림 끄기 안내 배너 */}

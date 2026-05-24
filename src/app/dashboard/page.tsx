@@ -1,7 +1,23 @@
 "use client";
 
-import { Fragment, type ReactNode } from "react";
+import { Fragment, useState, type ReactNode } from "react";
 import Link from "next/link";
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  TouchSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { usePosts } from "@/features/board/useBoard";
@@ -36,11 +52,13 @@ import AIForumLiveWidget from "@/features/dashboard/AIForumLiveWidget";
 import SpacedRepetitionWidget from "@/features/dashboard/SpacedRepetitionWidget";
 import DailyReflectionPrompt from "@/features/dashboard/DailyReflectionPrompt";
 import { canShowWidget, isAlumni } from "@/features/dashboard/widget-visibility";
+import DraggableWidget from "@/features/dashboard/editing/DraggableWidget";
 import {
   useDashboardLayout,
   isWidgetVisible,
   isWidgetMuted,
   getSortedWidgets,
+  saveLayoutWithSync,
 } from "@/lib/dashboard-layout";
 import {
   DASHBOARD_WIDGET_KEYS,
@@ -58,6 +76,8 @@ import {
   Megaphone,
   MessageSquare,
   HelpCircle,
+  Pencil,
+  Check,
 } from "lucide-react";
 
 /**
@@ -101,6 +121,18 @@ function StatCard({
 function DashboardContent() {
   const { user } = useAuthStore();
   const isStaff = isAtLeast(user, "staff");
+
+  // D-2c: 인라인 편집 모드 (드래그·토글 즉시 저장)
+  const [editMode, setEditMode] = useState(false);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 5 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
 
   // D-1b: 사용자 위젯 가시성 레이아웃 (localStorage 기반, AND 게이트)
   // D-3c: layout 을 usePosts/useSeminars 보다 먼저 읽어야 staleTime 분기 가능
@@ -296,6 +328,46 @@ function DashboardContent() {
 
   const sortedWidgets = getSortedWidgets(layout);
 
+  // D-2c: 드래그 종료 시 order 재계산 + 즉시 저장 (localStorage + Firestore sync)
+  function handleDragEnd(event: DragEndEvent) {
+    if (!user) return;
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIdx = sortedWidgets.findIndex((w) => w.key === active.id);
+    const newIdx = sortedWidgets.findIndex((w) => w.key === over.id);
+    if (oldIdx === -1 || newIdx === -1) return;
+    const reordered = arrayMove(sortedWidgets, oldIdx, newIdx);
+    void saveLayoutWithSync(user.id, {
+      schemaVersion: 1,
+      updatedAt: new Date().toISOString(),
+      widgets: reordered.map((cfg, idx) => ({ ...cfg, order: idx })),
+    });
+  }
+
+  // D-2c: 위젯 visible 토글 시 즉시 저장
+  function handleVisibilityToggle(key: DashboardWidgetKey, visible: boolean) {
+    if (!user) return;
+    void saveLayoutWithSync(user.id, {
+      schemaVersion: 1,
+      updatedAt: new Date().toISOString(),
+      widgets: sortedWidgets.map((cfg, idx) => ({
+        ...cfg,
+        visible: cfg.key === key ? visible : cfg.visible,
+        order: idx,
+      })),
+    });
+  }
+
+  // D-2c: 편집 모드 진입 시 안내 토스트 (1회)
+  async function handleToggleEditMode() {
+    const next = !editMode;
+    setEditMode(next);
+    if (next) {
+      const { toast } = await import("sonner");
+      toast.info("드래그로 순서 변경, 토글로 숨김. 자동 저장됩니다.");
+    }
+  }
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
       {/* ── 플로팅 레이어: 팝업·배너·알림 (레이아웃 흐름 밖) ── */}
@@ -315,6 +387,26 @@ function DashboardContent() {
           description="오늘의 학회 활동 현황을 확인하세요."
           actions={
             <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant={editMode ? "default" : "ghost"}
+                size="sm"
+                className="shrink-0"
+                onClick={handleToggleEditMode}
+                aria-pressed={editMode}
+                title={editMode ? "편집 완료" : "대시보드 편집"}
+              >
+                {editMode ? (
+                  <>
+                    <Check size={14} className="mr-1.5" />
+                    완료
+                  </>
+                ) : (
+                  <>
+                    <Pencil size={14} className="mr-1.5" />
+                    편집
+                  </>
+                )}
+              </Button>
               <Link href="/board/write">
                 <Button variant="outline" size="sm" className="shrink-0">
                   <PenSquare size={14} className="mr-1.5" />
@@ -377,16 +469,50 @@ function DashboardContent() {
         </section>
       )}
 
-      {/* ── D-2b: 12개 핵심 위젯 — 사용자 정의 순서대로 렌더 (옵션 P2) ──
+      {/* ── D-2b/D-2c: 12개 핵심 위젯 — 사용자 정의 순서대로 렌더 ──
        *  widgetMap 의 각 항목은 자체 wrapper(section/spacing)를 포함.
        *  staffAlerts 는 상단 별도 영역, seminars(내 신청 세미나)는 데이터 의존성 때문에 하단 유지.
+       *
+       *  D-2c 인라인 편집 모드:
+       *   - editMode=ON 일 때만 DndContext + SortableContext 활성.
+       *   - 편집 모드에서는 숨겨진 위젯도 흐리게 렌더하여 토글로 복구 가능.
+       *   - 편집 모드 OFF 면 기존 동작 (가시성 필터 + Fragment) 그대로.
        */}
-      {sortedWidgets.map((cfg) => {
-        if (!isWidgetVisible(layout, cfg.key)) return null;
-        const node = widgetMap[cfg.key];
-        if (!node) return null;
-        return <Fragment key={cfg.key}>{node}</Fragment>;
-      })}
+      {editMode ? (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={sortedWidgets.map((w) => w.key)}
+            strategy={verticalListSortingStrategy}
+          >
+            {sortedWidgets.map((cfg) => {
+              const node = widgetMap[cfg.key];
+              if (!node) return null;
+              return (
+                <DraggableWidget
+                  key={cfg.key}
+                  widgetKey={cfg.key}
+                  editMode
+                  visible={isWidgetVisible(layout, cfg.key)}
+                  onToggle={(v) => handleVisibilityToggle(cfg.key, v)}
+                >
+                  {node}
+                </DraggableWidget>
+              );
+            })}
+          </SortableContext>
+        </DndContext>
+      ) : (
+        sortedWidgets.map((cfg) => {
+          if (!isWidgetVisible(layout, cfg.key)) return null;
+          const node = widgetMap[cfg.key];
+          if (!node) return null;
+          return <Fragment key={cfg.key}>{node}</Fragment>;
+        })
+      )}
 
       {/* ── 섹션 8: 소셜·활동 피드 (seminars + ActivityFeed 는 데이터 의존성으로 인라인 유지) ── */}
       <section className="mx-auto mt-8 max-w-6xl px-4 space-y-6">
