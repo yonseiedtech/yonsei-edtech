@@ -148,8 +148,10 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
   });
   const user = isSelf ? authUser : fetchedUser;
 
-  const myPosts = posts.filter((p) => p.authorId === userId);
-  const mySeminars = seminars.filter((s) => s.attendeeIds.includes(userId));
+  const myPosts = Array.isArray(posts) ? posts.filter((p) => p.authorId === userId) : [];
+  const mySeminars = Array.isArray(seminars)
+    ? seminars.filter((s) => Array.isArray(s.attendeeIds) && s.attendeeIds.includes(userId))
+    : [];
   const { responses: myInterviewResponses } = useMyInterviewResponses(userId);
 
   const { data: allActivities = [] } = useQuery({
@@ -221,7 +223,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
 
   // 연구활동 카드용 카운트 (임시저장 제외)
   const { papers: myPapers } = useResearchPapers(user?.id);
-  const publishedPaperCount = myPapers.filter((p) => !p.isDraft).length;
+  const publishedPaperCount = Array.isArray(myPapers) ? myPapers.filter((p) => !p.isDraft).length : 0;
 
   if (!user) return null;
 

@@ -18,7 +18,8 @@ export function useNotifications() {
     refetchInterval: 30_000, // 30초 폴링
   });
 
-  const notifications = (data?.data ?? []) as unknown as AppNotification[];
+  const rawData = (data?.data ?? []) as unknown;
+  const notifications: AppNotification[] = Array.isArray(rawData) ? (rawData as AppNotification[]) : [];
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return { notifications, unreadCount, isLoading };
