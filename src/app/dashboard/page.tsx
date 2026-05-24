@@ -53,6 +53,7 @@ import SpacedRepetitionWidget from "@/features/dashboard/SpacedRepetitionWidget"
 import DailyReflectionPrompt from "@/features/dashboard/DailyReflectionPrompt";
 import { canShowWidget, isAlumni } from "@/features/dashboard/widget-visibility";
 import DraggableWidget from "@/features/dashboard/editing/DraggableWidget";
+import EditModePresetBar from "@/features/dashboard/editing/EditModePresetBar";
 import {
   useDashboardLayout,
   isWidgetVisible,
@@ -77,7 +78,6 @@ import {
   MessageSquare,
   HelpCircle,
   Pencil,
-  Check,
 } from "lucide-react";
 
 /**
@@ -364,8 +364,22 @@ function DashboardContent() {
     setEditMode(next);
     if (next) {
       const { toast } = await import("sonner");
-      toast.info("드래그로 순서 변경, 토글로 숨김. 자동 저장됩니다.");
+      // 모바일 환경 감지: pointer 가 coarse 이면 터치 디바이스
+      const isTouch =
+        typeof window !== "undefined" &&
+        window.matchMedia("(pointer: coarse)").matches;
+      if (isTouch) {
+        toast.info("터치 길게 눌러 드래그, 토글로 숨김. 자동 저장됩니다.");
+      } else {
+        toast.info("드래그로 순서 변경, 토글로 숨김. 자동 저장됩니다.");
+      }
     }
+  }
+
+  // EditModePresetBar 의 "완료" 버튼 콜백
+  function handleEditComplete() {
+    setEditMode(false);
+    // 토스트는 EditModePresetBar 내부에서 발행
   }
 
   return (
@@ -387,26 +401,20 @@ function DashboardContent() {
           description="오늘의 학회 활동 현황을 확인하세요."
           actions={
             <div className="flex flex-wrap items-center gap-2">
-              <Button
-                variant={editMode ? "default" : "ghost"}
-                size="sm"
-                className="shrink-0"
-                onClick={handleToggleEditMode}
-                aria-pressed={editMode}
-                title={editMode ? "편집 완료" : "대시보드 편집"}
-              >
-                {editMode ? (
-                  <>
-                    <Check size={14} className="mr-1.5" />
-                    완료
-                  </>
-                ) : (
-                  <>
-                    <Pencil size={14} className="mr-1.5" />
-                    편집
-                  </>
-                )}
-              </Button>
+              {/* 편집 모드 ON 일 때는 EditModePresetBar 의 완료 버튼으로 대체 */}
+              {!editMode && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="shrink-0"
+                  onClick={handleToggleEditMode}
+                  aria-pressed={false}
+                  title="대시보드 편집"
+                >
+                  <Pencil size={14} className="mr-1.5" />
+                  편집
+                </Button>
+              )}
               <Link href="/board/write">
                 <Button variant="outline" size="sm" className="shrink-0">
                   <PenSquare size={14} className="mr-1.5" />
@@ -479,6 +487,9 @@ function DashboardContent() {
        *   - 편집 모드 OFF 면 기존 동작 (가시성 필터 + Fragment) 그대로.
        */}
       {editMode ? (
+        <>
+          {/* 편집 모드 프리셋 바 — DndContext 밖에서 sticky 배치 */}
+          <EditModePresetBar userId={user.id} onComplete={handleEditComplete} />
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -505,6 +516,7 @@ function DashboardContent() {
             })}
           </SortableContext>
         </DndContext>
+        </>
       ) : (
         sortedWidgets.map((cfg) => {
           if (!isWidgetVisible(layout, cfg.key)) return null;

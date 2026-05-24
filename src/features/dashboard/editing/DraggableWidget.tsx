@@ -61,24 +61,38 @@ export default function DraggableWidget({
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.4 : 1,
     zIndex: isDragging ? 20 : undefined,
+    // 드래그 중 scale 효과 (transform 에 추가)
+    ...(isDragging && {
+      transform: `${CSS.Transform.toString(transform) ?? ""} scale(1.02)`,
+      boxShadow: "0 8px 32px 0 rgba(0,0,0,0.18)",
+    }),
   };
 
   return (
     <div ref={setNodeRef} style={style} className="relative">
-      {/* 외곽선 오버레이 — children 의 px-4 영역 안쪽으로 들여서 표시.
+      {/* 외곽선 오버레이 — 편집 모드 명시적 강조 (solid primary/60).
        *   pointer-events-none 으로 본문 인터랙션 방해 안 함.
        */}
-      <div className="pointer-events-none absolute inset-x-4 inset-y-2 z-[1] rounded-2xl border-2 border-dashed border-primary/40 bg-primary/[0.02]" />
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-x-4 inset-y-2 z-[1] rounded-2xl border-2 transition-colors",
+          isDragging
+            ? "border-primary bg-primary/[0.04]"
+            : "border-dashed border-primary/50 bg-primary/[0.02]",
+        )}
+      />
 
       {/* 좌상단: 드래그 핸들 + 라벨 */}
       <div className="absolute left-8 top-0 z-10 flex items-center gap-2">
         <div className="flex items-center gap-2 rounded-md border bg-card px-2 py-1 shadow-sm">
+          {/* 모바일 터치 영역 확보: min-w/h 44px */}
           <button
             type="button"
-            className="cursor-grab touch-none text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
+            className="flex min-h-[44px] min-w-[44px] cursor-grab touch-none items-center justify-center text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing sm:min-h-0 sm:min-w-0"
             aria-label={`${meta.label} 드래그하여 순서 변경`}
+            title="길게 눌러 드래그"
             {...attributes}
             {...listeners}
           >
@@ -88,8 +102,12 @@ export default function DraggableWidget({
         </div>
       </div>
 
-      {/* 우상단: visible 토글 (Switch 역할) */}
-      <div className="absolute right-8 top-0 z-10">
+      {/* 우상단: visible 토글 (Switch 역할) + 라벨 */}
+      <div className="absolute right-8 top-0 z-10 flex items-center gap-1.5">
+        <span className="text-[10px] font-medium text-muted-foreground">
+          {visible ? "표시" : "숨김"}
+        </span>
+        {/* 모바일 터치 영역 확보: min-w/h 44px */}
         <button
           type="button"
           role="switch"
@@ -97,18 +115,22 @@ export default function DraggableWidget({
           aria-label={`${meta.label} ${visible ? "숨기기" : "표시"}`}
           onClick={() => onToggle(!visible)}
           className={cn(
-            "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            visible
-              ? "bg-primary border-primary"
-              : "bg-muted border-input",
+            "relative inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-h-0 sm:min-w-0",
           )}
         >
           <span
             className={cn(
-              "inline-block h-3.5 w-3.5 transform rounded-full bg-card shadow transition-transform",
-              visible ? "translate-x-[18px]" : "translate-x-[2px]",
+              "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border shadow-sm transition-colors",
+              visible ? "bg-primary border-primary" : "bg-muted border-input",
             )}
-          />
+          >
+            <span
+              className={cn(
+                "inline-block h-3.5 w-3.5 transform rounded-full bg-card shadow transition-transform",
+                visible ? "translate-x-[18px]" : "translate-x-[2px]",
+              )}
+            />
+          </span>
         </button>
       </div>
 
