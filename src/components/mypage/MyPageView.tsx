@@ -47,6 +47,7 @@ import {
   X,
   CalendarDays,
   NotebookPen,
+  PackageOpen,
 } from "lucide-react";
 
 // react-easy-crop(39KB gzipped) — 명함 탭 클릭 시에만 chunk 로드
@@ -947,6 +948,25 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                     <div>
                       <p className="font-semibold">캘린더 Sync</p>
                       <p className="mt-0.5 text-xs text-muted-foreground">Google · Apple 캘린더에 학회 일정 구독</p>
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="shrink-0 text-muted-foreground" />
+                </Link>
+              )}
+
+              {/* 내 데이터 다운로드 */}
+              {!readOnly && (
+                <Link
+                  href="/mypage/data-export"
+                  className="flex items-center justify-between rounded-2xl border bg-card px-5 py-4 transition hover:border-primary/40 hover:shadow-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <PackageOpen size={20} />
+                    </div>
+                    <div>
+                      <p className="font-semibold">내 데이터 다운로드</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">활동·연구·수료증 등 본인 데이터를 JSON으로 저장</p>
                     </div>
                   </div>
                   <ChevronRight size={16} className="shrink-0 text-muted-foreground" />
