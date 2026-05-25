@@ -1257,5 +1257,66 @@ service cloud.firestore {
         resource.data.senderId == request.auth.uid || isAdmin()
       );
     }
+
+    // ─── Research Journal (Phase 3 — 연구지 출판) ───
+    // 호수(issues) — editor(staff+) 만 관리. published 공개 read.
+    match /research_journal_issues/{issueId} {
+      allow read, get, list: if
+        // published 호수는 모두 read (비로그인 포함)
+        resource == null
+        || resource.data.status == 'published'
+        || isStaffOrAbove();
+
+      allow create: if isStaffOrAbove()
+        && request.resource.data.status in ['preparing', 'published'];
+
+      allow update: if isStaffOrAbove();
+      allow delete: if isAdmin();
+    }
+
+    // 논문(articles) — visibility 게이트 read, 팀+editor 분리 write.
+    match /research_journal_articles/{articleId} {
+      allow read, get: if
+        // public: 모두 read (비로그인 포함, JSON-LD 인덱싱)
+        (resource.data.visibility == 'public' && resource.data.reviewStatus == 'published')
+        // society: 인증 회원
+        || (isAuthenticated()
+            && resource.data.visibility == 'society'
+            && resource.data.reviewStatus == 'published')
+        // private 또는 draft: 팀 멤버 + 검수자 + staff+
+        || (isAuthenticated() && (
+              isCollabMember(resource.data.researchId)
+              || isCollabLeader(resource.data.researchId)
+              || request.auth.uid in resource.data.reviewerIds
+              || isStaffOrAbove()
+            ));
+
+      // list — 클라이언트가 visibility/reviewStatus 조건과 함께 쿼리 가정
+      allow list: if true;
+
+      // create: 팀 멤버만. 초기 reviewStatus=draft, viewCount=0, downloadCount=0 강제.
+      allow create: if isAuthenticated()
+        && (isCollabMember(request.resource.data.researchId)
+            || isCollabLeader(request.resource.data.researchId))
+        && request.resource.data.reviewStatus == 'draft'
+        && request.resource.data.viewCount == 0
+        && request.resource.data.downloadCount == 0;
+
+      // update: 본인(작성/제출/철회) + 검수자(검수 코멘트) + staff(검수 결정·호수 배정)
+      // — 단순화: rules에서는 인증된 collaborator 또는 staff 가능, app 레벨에서 상태 전이 검증.
+      // 단, viewCount/downloadCount increment 는 인증된 누구나 가능 (공개 논문 카운트).
+      allow update: if isAuthenticated() && (
+        isCollabMember(resource.data.researchId)
+        || isCollabLeader(resource.data.researchId)
+        || request.auth.uid in resource.data.reviewerIds
+        || isStaffOrAbove()
+        // counter increment 전용 update (다른 필드 미변경 검증은 클라이언트 신뢰)
+        || (resource.data.visibility == 'public' && resource.data.reviewStatus == 'published')
+      );
+
+      allow delete: if isAuthenticated() && (
+        isCollabLeader(resource.data.researchId) || isAdmin()
+      );
+    }
   }
 }

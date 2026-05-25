@@ -78,3 +78,6 @@ export * from "./user-note";
 
 // 공동 연구 + 연구지 발간 (collaborative-research Phase 1 MVP)
 export * from "./collaborative-research";
+
+// 연구지(Research Journal) 출판 트랙 — collaborative-research Phase 3
+export * from "./research-journal";

@@ -83,6 +83,17 @@ import type {
   CreateCollabInviteInput,
   CollabMemberRole,
   CreditRole,
+  ResearchJournalIssue,
+  ResearchJournalArticle,
+  CreateJournalIssueInput,
+  UpdateJournalIssueInput,
+  UpdateArticleMetaInput,
+  ArticleAuthorSnapshot,
+  ArticleVisibility,
+  ArticleReviewStatus,
+  PublicationType,
+  ReviewComment,
+  AuthorConsent,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -2807,4 +2818,342 @@ export const collabInvitesApi = {
     }),
 
   remove: (id: string) => dataApi.delete(COLLAB_INVITES_COL, id),
+};
+
+// ────────────────────────────────────────────────────────────
+// Research Journal API (Phase 3 — 출판 트랙)
+//
+// research_journal_issues : 호수 (정식 트랙 한정)
+// research_journal_articles : 발간 논문 (워킹 + 정식 통합)
+// 설계: docs/02-design/features/collaborative-research.design.md 4장
+// ────────────────────────────────────────────────────────────
+
+const JOURNAL_ISSUES_COL = "research_journal_issues";
+const JOURNAL_ARTICLES_COL = "research_journal_articles";
+
+export const journalIssuesApi = {
+  /** 발간된 호수 (공개 — 비로그인 포함) */
+  listPublished: async (): Promise<ResearchJournalIssue[]> => {
+    const q = query(
+      collection(db, JOURNAL_ISSUES_COL),
+      where("status", "==", "published"),
+      orderBy("publishedAt", "desc"),
+      firestoreLimit(50),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => serializeDoc(d) as unknown as ResearchJournalIssue);
+  },
+
+  /** 운영진 콘솔 — 모든 상태 */
+  listAll: async (): Promise<ResearchJournalIssue[]> => {
+    const q = query(
+      collection(db, JOURNAL_ISSUES_COL),
+      orderBy("year", "desc"),
+      orderBy("volume", "desc"),
+      orderBy("number", "desc"),
+      firestoreLimit(100),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => serializeDoc(d) as unknown as ResearchJournalIssue);
+  },
+
+  get: (id: string) => dataApi.get<ResearchJournalIssue>(JOURNAL_ISSUES_COL, id),
+
+  create: (input: CreateJournalIssueInput) =>
+    dataApi.create<ResearchJournalIssue>(JOURNAL_ISSUES_COL, input as unknown as Record<string, unknown>),
+
+  update: (id: string, patch: UpdateJournalIssueInput) =>
+    dataApi.update<ResearchJournalIssue>(
+      JOURNAL_ISSUES_COL,
+      id,
+      patch as unknown as Record<string, unknown>,
+    ),
+
+  /** 호수 발간 — status='published' + publishedAt 갱신 */
+  publish: (id: string) =>
+    dataApi.update<ResearchJournalIssue>(JOURNAL_ISSUES_COL, id, {
+      status: "published",
+      publishedAt: new Date().toISOString(),
+    }),
+
+  remove: (id: string) => dataApi.delete(JOURNAL_ISSUES_COL, id),
+};
+
+export const journalArticlesApi = {
+  /** 공개 발간 논문 목록 — 비로그인 가능 */
+  listPublic: async (): Promise<ResearchJournalArticle[]> => {
+    const q = query(
+      collection(db, JOURNAL_ARTICLES_COL),
+      where("visibility", "==", "public"),
+      orderBy("publishedAt", "desc"),
+      firestoreLimit(100),
+    );
+    const snap = await getDocs(q);
+    // reviewStatus=='published' 클라이언트 필터
+    return snap.docs
+      .map((d) => serializeDoc(d) as unknown as ResearchJournalArticle)
+      .filter((a) => a.reviewStatus === "published");
+  },
+
+  /** 학회원 가시 (society + public) — 인증 필요 */
+  listSociety: async (): Promise<ResearchJournalArticle[]> => {
+    const [pubSnap, socSnap] = await Promise.all([
+      getDocs(query(
+        collection(db, JOURNAL_ARTICLES_COL),
+        where("visibility", "==", "public"),
+        orderBy("publishedAt", "desc"),
+        firestoreLimit(100),
+      )),
+      getDocs(query(
+        collection(db, JOURNAL_ARTICLES_COL),
+        where("visibility", "==", "society"),
+        orderBy("publishedAt", "desc"),
+        firestoreLimit(100),
+      )),
+    ]);
+    const all = [
+      ...pubSnap.docs.map((d) => serializeDoc(d) as unknown as ResearchJournalArticle),
+      ...socSnap.docs.map((d) => serializeDoc(d) as unknown as ResearchJournalArticle),
+    ].filter((a) => a.reviewStatus === "published");
+    // dedup
+    const map = new Map<string, ResearchJournalArticle>();
+    all.forEach((a) => map.set(a.id, a));
+    return [...map.values()].sort(
+      (a, b) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? ""),
+    );
+  },
+
+  /** 특정 연구의 모든 article (팀 작업 공간용) */
+  listByResearch: async (researchId: string): Promise<ResearchJournalArticle[]> => {
+    const q = query(
+      collection(db, JOURNAL_ARTICLES_COL),
+      where("researchId", "==", researchId),
+      orderBy("updatedAt", "desc"),
+      firestoreLimit(50),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => serializeDoc(d) as unknown as ResearchJournalArticle);
+  },
+
+  /** 운영진 검수 큐 — under_review + submitted */
+  listForReview: async (): Promise<ResearchJournalArticle[]> => {
+    const [sub, rev] = await Promise.all([
+      getDocs(query(
+        collection(db, JOURNAL_ARTICLES_COL),
+        where("reviewStatus", "==", "submitted"),
+        orderBy("updatedAt", "desc"),
+        firestoreLimit(50),
+      )),
+      getDocs(query(
+        collection(db, JOURNAL_ARTICLES_COL),
+        where("reviewStatus", "==", "under_review"),
+        orderBy("updatedAt", "desc"),
+        firestoreLimit(50),
+      )),
+    ]);
+    return [
+      ...sub.docs.map((d) => serializeDoc(d) as unknown as ResearchJournalArticle),
+      ...rev.docs.map((d) => serializeDoc(d) as unknown as ResearchJournalArticle),
+    ];
+  },
+
+  /** 특정 호수의 발간 논문 */
+  listByIssue: async (issueId: string): Promise<ResearchJournalArticle[]> => {
+    const q = query(
+      collection(db, JOURNAL_ARTICLES_COL),
+      where("issueId", "==", issueId),
+      orderBy("pageStart", "asc"),
+      firestoreLimit(50),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => serializeDoc(d) as unknown as ResearchJournalArticle);
+  },
+
+  get: (id: string) => dataApi.get<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id),
+
+  /** 신규 article — researchId + publicationType 만 받고 나머지는 default 채움 */
+  create: async (input: {
+    researchId: string;
+    publicationType: PublicationType;
+    titleKo?: string;
+  }): Promise<ResearchJournalArticle> => {
+    const payload: Record<string, unknown> = {
+      researchId: input.researchId,
+      publicationType: input.publicationType,
+      titleKo: input.titleKo ?? "(제목 미입력)",
+      abstractKo: "",
+      keywordsKo: [],
+      authors: [],
+      content: "",
+      contentStructure: input.publicationType === "journal" ? "imrad" : "free",
+      citations: [],
+      reviewStatus: "draft" as ArticleReviewStatus,
+      reviewerIds: [],
+      visibility: "private" as ArticleVisibility,
+      viewCount: 0,
+      downloadCount: 0,
+    };
+    return dataApi.create<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, payload);
+  },
+
+  updateMeta: (id: string, patch: UpdateArticleMetaInput) =>
+    dataApi.update<ResearchJournalArticle>(
+      JOURNAL_ARTICLES_COL,
+      id,
+      patch as unknown as Record<string, unknown>,
+    ),
+
+  updateAuthors: (id: string, authors: ArticleAuthorSnapshot[]) =>
+    dataApi.update<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id, {
+      authors,
+    } as unknown as Record<string, unknown>),
+
+  // ── 저자 동의 게이트 ──
+
+  /** 동의 요청 발송 — 모든 author 에 대해 pending 상태 생성. */
+  requestConsent: (id: string, authors: ArticleAuthorSnapshot[]) => {
+    const consents: Record<string, AuthorConsent> = {};
+    for (const a of authors) {
+      consents[a.userId] = { userId: a.userId, status: "pending" };
+    }
+    return dataApi.update<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id, {
+      consentRequestedAt: new Date().toISOString(),
+      authorConsents: consents,
+    });
+  },
+
+  /** 단일 저자 응답 — 본인이 자기 동의 기록 */
+  recordConsent: async (
+    id: string,
+    userId: string,
+    agreed: boolean,
+    rejectionNote?: string,
+  ): Promise<void> => {
+    const article = await journalArticlesApi.get(id);
+    const consents = { ...(article.authorConsents ?? {}) };
+    consents[userId] = {
+      userId,
+      status: agreed ? "agreed" : "rejected",
+      agreedAt: agreed ? new Date().toISOString() : undefined,
+      rejectionNote: rejectionNote || undefined,
+    };
+    await dataApi.update<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id, {
+      authorConsents: consents,
+    } as unknown as Record<string, unknown>);
+  },
+
+  // ── 검수 워크플로우 상태 전이 ──
+
+  /** draft → submitted (저자 100% 동의 필요. 호출자가 사전 검증) */
+  submit: (id: string) =>
+    dataApi.update<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id, {
+      reviewStatus: "submitted",
+    }),
+
+  /** submitted → under_review (운영진이 본인을 reviewer 로 잡고 검수 시작) */
+  startReview: async (id: string, reviewerId: string): Promise<void> => {
+    const article = await journalArticlesApi.get(id);
+    const reviewerIds = Array.from(new Set([...(article.reviewerIds ?? []), reviewerId]));
+    await dataApi.update<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id, {
+      reviewStatus: "under_review",
+      reviewerIds,
+    } as unknown as Record<string, unknown>);
+  },
+
+  /** 검수 코멘트 추가 (운영진 또는 collaborator 가 추가) */
+  addReviewComment: async (
+    id: string,
+    comment: Omit<ReviewComment, "id" | "createdAt">,
+  ): Promise<void> => {
+    const article = await journalArticlesApi.get(id);
+    const newComment: ReviewComment = {
+      ...comment,
+      id:
+        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+      createdAt: new Date().toISOString(),
+    };
+    const next = [...(article.reviewComments ?? []), newComment];
+    await dataApi.update<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id, {
+      reviewComments: next,
+    } as unknown as Record<string, unknown>);
+  },
+
+  /** under_review → revision_requested (수정 요청) */
+  requestRevision: (id: string) =>
+    dataApi.update<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id, {
+      reviewStatus: "revision_requested",
+    }),
+
+  /** under_review → accepted (운영진 승인 — 호수 배정 전 단계) */
+  accept: (id: string) =>
+    dataApi.update<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id, {
+      reviewStatus: "accepted",
+    }),
+
+  /** accepted → published (편집장이 호수·페이지·visibility 지정 후 발간)
+   *  워킹 페이퍼: leader 가 자율 호출, issueId 없이 published.
+   *  발간 시 모든 저자에게 +10 streak (멱등). 실패해도 발간 자체는 유지. */
+  publish: async (
+    id: string,
+    options: {
+      visibility: ArticleVisibility;
+      issueId?: string;
+      pageStart?: number;
+      pageEnd?: number;
+    },
+  ): Promise<ResearchJournalArticle> => {
+    const updated = await dataApi.update<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id, {
+      reviewStatus: "published",
+      publishedAt: new Date().toISOString(),
+      visibility: options.visibility,
+      issueId: options.issueId,
+      pageStart: options.pageStart,
+      pageEnd: options.pageEnd,
+    } as unknown as Record<string, unknown>);
+
+    // 저자별 +10 streak (멱등 doc id)
+    try {
+      const now = new Date();
+      const ymd = now.toISOString().slice(0, 10);
+      for (const author of updated.authors ?? []) {
+        const streakId = `${author.userId}__research-journal-publish__${id}`;
+        await dataApi.upsert<StreakEvent>("streak_events", streakId, {
+          userId: author.userId,
+          type: "research-journal-publish",
+          refId: id,
+          points: 10,
+          ymd,
+          occurredAt: now.toISOString(),
+        });
+      }
+    } catch (err) {
+      console.warn("[journalArticlesApi.publish] streak event failed (non-fatal)", err);
+    }
+
+    return updated;
+  },
+
+  /** 발간 후 철회 */
+  withdraw: (id: string, reason: string) =>
+    dataApi.update<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id, {
+      reviewStatus: "withdrawn",
+      withdrawnAt: new Date().toISOString(),
+      withdrawnReason: reason,
+    } as unknown as Record<string, unknown>),
+
+  /** 열람 카운트 +1 — Firestore increment sentinel */
+  incrementView: (id: string) =>
+    dataApi.patch<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id, {
+      viewCount: increment(1),
+    }),
+
+  /** 다운로드 카운트 +1 */
+  incrementDownload: (id: string) =>
+    dataApi.patch<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id, {
+      downloadCount: increment(1),
+    }),
+
+  remove: (id: string) => dataApi.delete(JOURNAL_ARTICLES_COL, id),
 };
