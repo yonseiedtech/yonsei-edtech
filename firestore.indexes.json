@@ -155,6 +155,54 @@
       ]
     },
     {
+      "collectionGroup": "collaborative_research_chapters",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "researchId", "order": "ASCENDING" },
+        { "fieldPath": "order", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "collaborative_research_comments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "chapterId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "collaborative_research_comments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "mentionedUserIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "collaborative_research_meetings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "researchId", "order": "ASCENDING" },
+        { "fieldPath": "scheduledAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "collaborative_research_milestones",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "researchId", "order": "ASCENDING" },
+        { "fieldPath": "targetDate", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "collaborative_research_milestones",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "assigneeIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "research_journal_issues",
       "queryScope": "COLLECTION",
       "fields": [

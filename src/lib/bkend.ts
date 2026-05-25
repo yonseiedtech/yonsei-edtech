@@ -94,6 +94,17 @@ import type {
   PublicationType,
   ReviewComment,
   AuthorConsent,
+  CollabResearchChapter,
+  CollabResearchComment,
+  CollabResearchMeeting,
+  CollabResearchMilestone,
+  CreateChapterInput,
+  UpdateChapterInput,
+  CreateCommentInput,
+  CreateMeetingInput,
+  UpdateMeetingInput,
+  CreateMilestoneInput,
+  UpdateMilestoneInput,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -2818,6 +2829,172 @@ export const collabInvitesApi = {
     }),
 
   remove: (id: string) => dataApi.delete(COLLAB_INVITES_COL, id),
+};
+
+// ────────────────────────────────────────────────────────────
+// Collaborative Research Phase 2 API
+//   chapters / comments / meetings / milestones
+// ────────────────────────────────────────────────────────────
+
+const COLLAB_CHAPTERS_COL = "collaborative_research_chapters";
+const COLLAB_COMMENTS_COL = "collaborative_research_comments";
+const COLLAB_MEETINGS_COL = "collaborative_research_meetings";
+const COLLAB_MILESTONES_COL = "collaborative_research_milestones";
+
+export const collabChaptersApi = {
+  listByResearch: async (researchId: string): Promise<CollabResearchChapter[]> => {
+    const q = query(
+      collection(db, COLLAB_CHAPTERS_COL),
+      where("researchId", "==", researchId),
+      orderBy("order", "asc"),
+      firestoreLimit(100),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => serializeDoc(d) as unknown as CollabResearchChapter);
+  },
+
+  get: (id: string) => dataApi.get<CollabResearchChapter>(COLLAB_CHAPTERS_COL, id),
+
+  create: async (input: CreateChapterInput): Promise<CollabResearchChapter> => {
+    const payload: Record<string, unknown> = {
+      ...input,
+      version: 1,
+      lastEditedBy: "",
+      lastEditedAt: new Date().toISOString(),
+    };
+    return dataApi.create<CollabResearchChapter>(COLLAB_CHAPTERS_COL, payload);
+  },
+
+  /** optimistic locking — expectedVersion 불일치 시 throw */
+  update: async (
+    id: string,
+    patch: UpdateChapterInput,
+  ): Promise<CollabResearchChapter> => {
+    const current = await collabChaptersApi.get(id);
+    if (current.version !== patch.expectedVersion) {
+      throw new Error(
+        `버전 충돌 — 다른 멤버가 먼저 저장했습니다 (현재 v${current.version}, 내 시점 v${patch.expectedVersion}). 새로고침 후 변경사항 병합 후 다시 저장하세요.`,
+      );
+    }
+    const { expectedVersion: _v, ...rest } = patch;
+    void _v;
+    const next: Record<string, unknown> = {
+      ...rest,
+      version: current.version + 1,
+      lastEditedAt: new Date().toISOString(),
+    };
+    if (typeof rest.content === "string") {
+      next.charCount = rest.content.length;
+    }
+    return dataApi.update<CollabResearchChapter>(COLLAB_CHAPTERS_COL, id, next);
+  },
+
+  remove: (id: string) => dataApi.delete(COLLAB_CHAPTERS_COL, id),
+};
+
+export const collabCommentsApi = {
+  listByChapter: async (chapterId: string): Promise<CollabResearchComment[]> => {
+    const q = query(
+      collection(db, COLLAB_COMMENTS_COL),
+      where("chapterId", "==", chapterId),
+      orderBy("createdAt", "desc"),
+      firestoreLimit(100),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => serializeDoc(d) as unknown as CollabResearchComment);
+  },
+
+  listMentioningMe: async (userId: string): Promise<CollabResearchComment[]> => {
+    const q = query(
+      collection(db, COLLAB_COMMENTS_COL),
+      where("mentionedUserIds", "array-contains", userId),
+      orderBy("createdAt", "desc"),
+      firestoreLimit(50),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => serializeDoc(d) as unknown as CollabResearchComment);
+  },
+
+  get: (id: string) => dataApi.get<CollabResearchComment>(COLLAB_COMMENTS_COL, id),
+
+  create: (input: CreateCommentInput) =>
+    dataApi.create<CollabResearchComment>(COLLAB_COMMENTS_COL, input as unknown as Record<string, unknown>),
+
+  updateBody: (id: string, body: string) =>
+    dataApi.update<CollabResearchComment>(COLLAB_COMMENTS_COL, id, { body }),
+
+  toggleResolve: (id: string, resolverId: string | null) =>
+    dataApi.update<CollabResearchComment>(COLLAB_COMMENTS_COL, id, {
+      resolvedAt: resolverId ? new Date().toISOString() : null,
+      resolvedBy: resolverId ?? null,
+    } as unknown as Record<string, unknown>),
+
+  remove: (id: string) => dataApi.delete(COLLAB_COMMENTS_COL, id),
+};
+
+export const collabMeetingsApi = {
+  listByResearch: async (researchId: string): Promise<CollabResearchMeeting[]> => {
+    const q = query(
+      collection(db, COLLAB_MEETINGS_COL),
+      where("researchId", "==", researchId),
+      orderBy("scheduledAt", "desc"),
+      firestoreLimit(50),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => serializeDoc(d) as unknown as CollabResearchMeeting);
+  },
+
+  get: (id: string) => dataApi.get<CollabResearchMeeting>(COLLAB_MEETINGS_COL, id),
+
+  create: (input: CreateMeetingInput) =>
+    dataApi.create<CollabResearchMeeting>(COLLAB_MEETINGS_COL, input as unknown as Record<string, unknown>),
+
+  update: (id: string, patch: UpdateMeetingInput) =>
+    dataApi.update<CollabResearchMeeting>(COLLAB_MEETINGS_COL, id, patch as unknown as Record<string, unknown>),
+
+  remove: (id: string) => dataApi.delete(COLLAB_MEETINGS_COL, id),
+};
+
+export const collabMilestonesApi = {
+  listByResearch: async (researchId: string): Promise<CollabResearchMilestone[]> => {
+    const q = query(
+      collection(db, COLLAB_MILESTONES_COL),
+      where("researchId", "==", researchId),
+      orderBy("targetDate", "asc"),
+      firestoreLimit(100),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => serializeDoc(d) as unknown as CollabResearchMilestone);
+  },
+
+  listByAssignee: async (userId: string): Promise<CollabResearchMilestone[]> => {
+    const q = query(
+      collection(db, COLLAB_MILESTONES_COL),
+      where("assigneeIds", "array-contains", userId),
+      where("status", "in", ["planned", "in_progress", "overdue"]),
+      firestoreLimit(50),
+    );
+    const snap = await getDocs(q);
+    const data = snap.docs.map((d) => serializeDoc(d) as unknown as CollabResearchMilestone);
+    return data.sort((a, b) => (a.targetDate ?? "").localeCompare(b.targetDate ?? ""));
+  },
+
+  get: (id: string) => dataApi.get<CollabResearchMilestone>(COLLAB_MILESTONES_COL, id),
+
+  create: (input: CreateMilestoneInput) =>
+    dataApi.create<CollabResearchMilestone>(COLLAB_MILESTONES_COL, input as unknown as Record<string, unknown>),
+
+  update: (id: string, patch: UpdateMilestoneInput) =>
+    dataApi.update<CollabResearchMilestone>(COLLAB_MILESTONES_COL, id, patch as unknown as Record<string, unknown>),
+
+  /** done 상태로 전이 — completedAt 자동 채움 */
+  complete: (id: string) =>
+    dataApi.update<CollabResearchMilestone>(COLLAB_MILESTONES_COL, id, {
+      status: "done",
+      completedAt: new Date().toISOString(),
+    } as unknown as Record<string, unknown>),
+
+  remove: (id: string) => dataApi.delete(COLLAB_MILESTONES_COL, id),
 };
 
 // ────────────────────────────────────────────────────────────

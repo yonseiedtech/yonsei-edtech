@@ -15,6 +15,9 @@ export type StreakEventType =
   | "onboarding-checklist"          // 체크리스트 1항목 완료 (+5)
   | "onboarding-badge"              // 마일스톤 배지 부여 (+5/+10/+20)
   | "collab-research-join"          // 공동 연구팀 참여 (+3, Phase 1)
+  | "collab-chapter-edit"           // 챕터 편집 1일 (+2, Phase 2 day-bucketed)
+  | "collab-meeting"                // 회의 기록 (+3, Phase 2)
+  | "collab-milestone"              // 마일스톤 완료 (+5, Phase 2)
   | "research-journal-publish";     // 연구지 출판 (+10, Phase 3)
 
 export interface StreakEvent {

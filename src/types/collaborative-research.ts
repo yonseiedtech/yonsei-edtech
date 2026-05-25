@@ -298,3 +298,178 @@ export interface CreateCollabInviteInput {
   proposedRole: CollabMemberRole;
   message?: string;
 }
+
+// ────────────────────────────────────────────────────────────
+// Phase 2 — 공동 작성 + 논의 + 회의 + 마일스톤
+// ────────────────────────────────────────────────────────────
+
+/** 챕터 작성 상태 */
+export type ChapterStatus = "empty" | "draft" | "review" | "approved";
+
+/** 챕터 표준 키 (선택) — IMRaD + 자유 키. chapterKey 는 string 허용. */
+export const STANDARD_CHAPTER_KEYS = [
+  "intro",
+  "literature",
+  "method",
+  "results",
+  "discussion",
+  "conclusion",
+  "references",
+  "appendix",
+] as const;
+
+export const STANDARD_CHAPTER_LABELS: Record<string, string> = {
+  intro: "서론",
+  literature: "이론적 배경",
+  method: "방법",
+  results: "결과",
+  discussion: "논의",
+  conclusion: "결론",
+  references: "참고문헌",
+  appendix: "부록",
+};
+
+export interface CollabResearchChapter {
+  id: string;
+  researchId: string;
+  /** 'intro'|'method'|'results'|... 또는 자유 키 */
+  chapterKey: string;
+  /** 표시 순서 */
+  order: number;
+  title: string;
+  /** markdown */
+  content: string;
+  /** 작성 담당자 user.id 배열 (다중 가능) */
+  assignedUserIds: string[];
+  lastEditedBy: string;
+  lastEditedAt: string;
+  /** denorm 진도 시각화 */
+  charCount: number;
+  status: ChapterStatus;
+  /** optimistic locking — 동시 저장 시 충돌 안내 */
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CollabResearchComment {
+  id: string;
+  researchId: string;
+  /** 챕터 단위 댓글 (null 가능 — 연구 전체 댓글) */
+  chapterId?: string;
+  /** 블록·라인 anchor (markdown 라인 ID 등). 선택. */
+  anchor?: string;
+  authorId: string;
+  /** markdown */
+  body: string;
+  /** @멘션 — 알림 발송 + 인박스 노출 */
+  mentionedUserIds: string[];
+  /** 스레드 답글 */
+  parentCommentId?: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MeetingDecision {
+  id: string;
+  text: string;
+  rationale?: string;
+}
+
+export interface MeetingActionItem {
+  id: string;
+  text: string;
+  assigneeId: string;
+  dueDate?: string;
+  status: "open" | "done";
+}
+
+export interface CollabResearchMeeting {
+  id: string;
+  researchId: string;
+  /** ISO datetime */
+  scheduledAt: string;
+  durationMinutes?: number;
+  title: string;
+  /** markdown */
+  agenda?: string;
+  notes?: string;
+  decisions?: MeetingDecision[];
+  actionItems?: MeetingActionItem[];
+  attendeeIds: string[];
+  recordedBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** 마일스톤 타입 — checkpoints(스케줄 라벨)와 달리 assignee·상태·첨부 보유 */
+export type MilestoneType =
+  | "irb"
+  | "data_collection"
+  | "analysis"
+  | "draft"
+  | "review"
+  | "submission"
+  | "other";
+
+export type MilestoneStatus = "planned" | "in_progress" | "done" | "overdue" | "cancelled";
+
+export interface CollabResearchMilestone {
+  id: string;
+  researchId: string;
+  title: string;
+  type: MilestoneType;
+  /** YYYY-MM-DD */
+  targetDate: string;
+  completedAt?: string;
+  assigneeIds: string[];
+  attachmentUrls?: string[];
+  status: MilestoneStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ── 입력 DTO ──
+
+export type CreateChapterInput = Omit<
+  CollabResearchChapter,
+  "id" | "createdAt" | "updatedAt" | "version" | "lastEditedBy" | "lastEditedAt"
+>;
+
+export type UpdateChapterInput = Partial<
+  Pick<CollabResearchChapter, "title" | "content" | "assignedUserIds" | "status" | "order">
+> & {
+  /** optimistic lock — 호출자가 현재 version 전달 */
+  expectedVersion: number;
+  lastEditedBy: string;
+};
+
+export type CreateCommentInput = Omit<
+  CollabResearchComment,
+  "id" | "createdAt" | "updatedAt" | "resolvedAt" | "resolvedBy"
+>;
+
+export type CreateMeetingInput = Omit<
+  CollabResearchMeeting,
+  "id" | "createdAt" | "updatedAt"
+>;
+
+export type UpdateMeetingInput = Partial<
+  Pick<
+    CollabResearchMeeting,
+    "scheduledAt" | "durationMinutes" | "title" | "agenda" | "notes" | "decisions" | "actionItems" | "attendeeIds"
+  >
+>;
+
+export type CreateMilestoneInput = Omit<
+  CollabResearchMilestone,
+  "id" | "createdAt" | "updatedAt" | "completedAt"
+>;
+
+export type UpdateMilestoneInput = Partial<
+  Pick<CollabResearchMilestone, "title" | "type" | "targetDate" | "assigneeIds" | "attachmentUrls" | "status">
+> & {
+  completedAt?: string;
+};
