@@ -998,6 +998,8 @@ function NotificationSettingsCard({ user }: { user: User }) {
     pushClassReminder?: boolean;
     pushExternalRecruitment?: boolean;
     pushCollabInvite?: boolean;
+    pushCollabMention?: boolean;
+    pushCollabMilestone?: boolean;
     pushCollabReview?: boolean;
     pushJournalIssue?: boolean;
   };
@@ -1014,6 +1016,8 @@ function NotificationSettingsCard({ user }: { user: User }) {
   const [pushClassReminder, setPushClassReminder] = useState<boolean>(prefs?.pushClassReminder !== false);
   const [pushExternalRecruitment, setPushExternalRecruitment] = useState<boolean>(prefs?.pushExternalRecruitment !== false);
   const [pushCollabInvite, setPushCollabInvite] = useState<boolean>(prefs?.pushCollabInvite !== false);
+  const [pushCollabMention, setPushCollabMention] = useState<boolean>(prefs?.pushCollabMention !== false);
+  const [pushCollabMilestone, setPushCollabMilestone] = useState<boolean>(prefs?.pushCollabMilestone !== false);
   const [pushCollabReview, setPushCollabReview] = useState<boolean>(prefs?.pushCollabReview !== false);
   const [pushJournalIssue, setPushJournalIssue] = useState<boolean>(prefs?.pushJournalIssue !== false);
   const [busyKey, setBusyKey] = useState<string | null>(null);
@@ -1227,6 +1231,26 @@ function NotificationSettingsCard({ user }: { user: User }) {
               void updatePref("pushCollabInvite", !pushCollabInvite, setPushCollabInvite, "공동 연구 초대 알림을")
             }
             ariaLabel="공동 연구 초대 push 알림 토글"
+          />
+          <ToggleRow
+            title="공동 연구 댓글 멘션"
+            description="공동 연구 챕터 댓글에서 @멘션 받을 때 안내."
+            enabled={pushCollabMention}
+            busy={busyKey === "pushCollabMention"}
+            onToggle={() =>
+              void updatePref("pushCollabMention", !pushCollabMention, setPushCollabMention, "공동 연구 댓글 멘션 알림을")
+            }
+            ariaLabel="공동 연구 댓글 멘션 push 알림 토글"
+          />
+          <ToggleRow
+            title="공동 연구 마일스톤 D-1"
+            description="내가 담당한 마일스톤의 목표일 하루 전 안내."
+            enabled={pushCollabMilestone}
+            busy={busyKey === "pushCollabMilestone"}
+            onToggle={() =>
+              void updatePref("pushCollabMilestone", !pushCollabMilestone, setPushCollabMilestone, "공동 연구 마일스톤 D-1 알림을")
+            }
+            ariaLabel="공동 연구 마일스톤 D-1 push 알림 토글"
           />
           <ToggleRow
             title="연구지 검수 알림"

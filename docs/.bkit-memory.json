@@ -220,8 +220,8 @@
       "iterationCount": 0,
       "startedAt": "2026-05-25T00:00:00Z",
       "lastDeployedAt": "2026-05-25T00:00:00Z",
-      "lastCommits": ["1532b1ee", "6e98359a", "cfb55da2", "1d72ff37", "<phase3>"],
-      "notes": "Phase 1 + UX 개선 + Phase 3 (연구지 출판) 자율 PM 진행. Phase 3 추가: 신규 컬렉션 2개(research_journal_issues + research_journal_articles) + rules 게이트(visibility 3단계 + 검수 워크플로우) + indexes 5개 + bkend API 2그룹(journalIssues + journalArticles, accept/publish/withdraw/저자동의/검수전이/조회카운트) + React Query hooks 20개 + lib 4개(article-status·apa7·json-ld·consent-gate) + 컴포넌트 7개(StatusBadge·AuthorsEditor·ConsentPanel·ReviewCommentSection·ContentEditor·ArticleView·) + 라우트 5개(/collab/[id]/publish·/publish/[articleId]·/journal·/journal/issues/[id]·/journal/articles/[id]·/console/research/journal) + 메인 nav '연구지(Journal)' 추가 + CollabResearchHeader 'publish' 탭 추가 + NotificationPrefs 2종(pushCollabReview·pushJournalIssue) + streak 'research-journal-publish' +10. 핵심 기능: CRediT 14역할 저자·교신/제1저자 다중·APA7 자동 인용·JSON-LD ScholarlyArticle(SEO)·저자 100% 동의 게이트·블로킹/메이저/마이너/칭찬 4단계 검수 코멘트·발간 후 본문 잠금·viewCount/downloadCount denorm increment. Build 3회 fix (titleAccess→aria-label, Button asChild 제거). Next: sync:master 자동 deploy"
+      "lastCommits": ["9f714593", "<phase3-ui>", "5933d5b1", "<phase2-infra>", "<phase2-ui>", "<phase4>"],
+      "notes": "Phase 1 + UX 개선 + Phase 3 (출판) + Phase 2 (공동작성·미팅·마일스톤) + Phase 4 (기여도) 모두 완료. 총 4개 Phase 자율 PM 진행. Phase 2 추가: 신규 컬렉션 4개(chapters/comments/meetings/milestones) + rules + indexes 6개 + bkend API 4그룹 + hooks(useCollabPhase2) + 컴포넌트 3개(ChaptersBoard with version-aware autosave + ChapterCommentSection · MeetingsBoard · MilestonesBoard) + 라우트 3개. Phase 4: ContributionsMatrix(활동량 매트릭스 + CRediT 분포) + /collab/[id]/contributions. CollabResearchHeader 탭 9개로 확장(대시보드/멤버/메타/챕터/회의/마일스톤/연구지출판/기여도/설정). NotificationPrefs 5종 추가(invite/mention/milestone/review/journal). Streak 4종(+3/+2/+3/+5/+10). 핵심 기능: optimistic locking 챕터 버전 충돌 안내·@username 멘션 인박스·실험집단/통제집단·CRediT 매트릭스·점수 누적 leaderboard 가능. 완전한 collaborative research suite — Phase 1~4 LIVE."
     }
   }
 }

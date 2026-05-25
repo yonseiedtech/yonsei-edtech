@@ -150,6 +150,10 @@ export interface NotificationPrefs {
   pushExternalRecruitment?: boolean;
   /** 공동 연구 초대 도착 push (kind=collab_invite) — collaborative-research Phase 1 */
   pushCollabInvite?: boolean;
+  /** 댓글 @멘션 push (kind=collab_mention) — collaborative-research Phase 2 */
+  pushCollabMention?: boolean;
+  /** 마일스톤 D-1 push (kind=collab_milestone) — collaborative-research Phase 2 */
+  pushCollabMilestone?: boolean;
   /** 검수 요청/응답 push (kind=collab_review) — collaborative-research Phase 3 */
   pushCollabReview?: boolean;
   /** 신규 연구지 호수 발간 push (kind=journal_issue) — collaborative-research Phase 3 */
@@ -167,6 +171,8 @@ export const PUSH_PREF_FIELD: Record<string, keyof NotificationPrefs> = {
   class_reminder_daily: "pushClassReminder",
   external_recruitment: "pushExternalRecruitment",
   collab_invite: "pushCollabInvite",
+  collab_mention: "pushCollabMention",
+  collab_milestone: "pushCollabMilestone",
   collab_review: "pushCollabReview",
   journal_issue: "pushJournalIssue",
 };
@@ -180,6 +186,8 @@ export const PUSH_PREF_LABELS: Record<
   | "pushClassReminder"
   | "pushExternalRecruitment"
   | "pushCollabInvite"
+  | "pushCollabMention"
+  | "pushCollabMilestone"
   | "pushCollabReview"
   | "pushJournalIssue",
   { label: string; description: string }
@@ -191,6 +199,8 @@ export const PUSH_PREF_LABELS: Record<
   pushClassReminder: { label: "수업 일일 안내", description: "오늘 진행될 수업 안내" },
   pushExternalRecruitment: { label: "대외 학술대회 모집 D-1", description: "내일 모집이 시작·마감되는 대외 학술대회 알림" },
   pushCollabInvite: { label: "공동 연구 초대", description: "다른 회원이 나를 공동 연구팀에 초대할 때 알림" },
+  pushCollabMention: { label: "공동 연구 댓글 멘션", description: "공동 연구 챕터 댓글에서 @멘션 받을 때 알림" },
+  pushCollabMilestone: { label: "공동 연구 마일스톤 D-1", description: "내가 담당한 마일스톤의 목표일 하루 전 알림" },
   pushCollabReview: { label: "연구지 검수", description: "내 논문의 검수 요청·응답·수정 요청 알림" },
   pushJournalIssue: { label: "연구지 신규 호수", description: "연세 교육공학 연구의 신규 호수 발간 안내" },
 };
