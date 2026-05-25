@@ -75,6 +75,14 @@ import type {
   StreakEventType,
   UserFeedback,
   UserNote,
+  CollaborativeResearch,
+  CollabResearchMember,
+  CollabResearchInvite,
+  CreateCollabResearchInput,
+  UpdateCollabResearchInput,
+  CreateCollabInviteInput,
+  CollabMemberRole,
+  CreditRole,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -2503,4 +2511,300 @@ export const userNotesApi = {
       data as unknown as Record<string, unknown>,
     ),
   delete: (id: string) => dataApi.delete("user_notes", id),
+};
+
+// ────────────────────────────────────────────────────────────
+// Collaborative Research API (Phase 1 MVP)
+//
+// 설계: docs/02-design/features/collaborative-research.design.md
+// dataApi.list 가 단일 equality 필터만 지원하므로 array-contains·복합 정렬은
+// firestore SDK 직접 호출. activitiesApi 의 클라이언트 정렬 패턴 동참.
+// ────────────────────────────────────────────────────────────
+
+const COLLAB_RESEARCH_COL = "collaborative_research";
+const COLLAB_MEMBERS_COL = "collaborative_research_members";
+const COLLAB_INVITES_COL = "collaborative_research_invites";
+
+function collabMemberId(researchId: string, userId: string): string {
+  return `${researchId}_${userId}`;
+}
+
+export const collabResearchApi = {
+  /** 내가 참여 중인 공동 연구 목록 (array-contains 직접 쿼리) */
+  listByUser: async (userId: string): Promise<CollaborativeResearch[]> => {
+    const q = query(
+      collection(db, COLLAB_RESEARCH_COL),
+      where("collaboratorIds", "array-contains", userId),
+      orderBy("updatedAt", "desc"),
+      firestoreLimit(100),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => (serializeDoc(d) as unknown as CollaborativeResearch));
+  },
+
+  /** society type 발주 전체 목록 (운영진용) */
+  listForSociety: async (): Promise<CollaborativeResearch[]> => {
+    const q = query(
+      collection(db, COLLAB_RESEARCH_COL),
+      where("collaborationType", "==", "society"),
+      orderBy("updatedAt", "desc"),
+      firestoreLimit(200),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => (serializeDoc(d) as unknown as CollaborativeResearch));
+  },
+
+  get: (id: string) => dataApi.get<CollaborativeResearch>(COLLAB_RESEARCH_COL, id),
+
+  /** 신규 팀 생성 + leader 를 members 컬렉션에 자동 등록 */
+  create: async (input: CreateCollabResearchInput): Promise<CollaborativeResearch> => {
+    const docData: Record<string, unknown> = {
+      ...input,
+      collaboratorCount: 1,
+      collaboratorIds: [input.leaderId],
+      workingPaperCount: 0,
+    };
+    const created = await dataApi.create<CollaborativeResearch>(COLLAB_RESEARCH_COL, docData);
+
+    // leader 본인을 members 컬렉션에 자동 등록 (id = researchId_userId 강제)
+    await collabMembersApi.upsertSelf({
+      researchId: created.id,
+      userId: input.leaderId,
+      role: "principal",
+      creditRoles: ["conceptualization", "project_administration"],
+      invitedBy: input.leaderId,
+    });
+
+    return created;
+  },
+
+  update: (id: string, patch: UpdateCollabResearchInput) =>
+    dataApi.update<CollaborativeResearch>(
+      COLLAB_RESEARCH_COL,
+      id,
+      patch as unknown as Record<string, unknown>,
+    ),
+
+  /** denorm 동기화: members 컬렉션의 active userId 들과 collaboratorIds/Count 정합 보정.
+   *  leader 만 호출 — Phase 1 한정 client-side reconcile. Phase 4 에서 Cloud Function 이관.
+   */
+  reconcileCollaborators: async (researchId: string): Promise<void> => {
+    const [research, members] = await Promise.all([
+      collabResearchApi.get(researchId),
+      collabMembersApi.listByResearch(researchId),
+    ]);
+    if (!research) return;
+    const activeIds = members
+      .filter((m) => m.status === "active")
+      .map((m) => m.userId);
+    // leader 가 항상 포함되도록 보장
+    const merged = Array.from(new Set([research.leaderId, ...activeIds]));
+    const sorted = [...merged].sort();
+    const cur = [...research.collaboratorIds].sort();
+    if (sorted.length === research.collaboratorCount && JSON.stringify(sorted) === JSON.stringify(cur)) {
+      return; // already synced
+    }
+    await dataApi.patch<CollaborativeResearch>(COLLAB_RESEARCH_COL, researchId, {
+      collaboratorIds: merged,
+      collaboratorCount: merged.length,
+      updatedAt: serverTimestamp(),
+    });
+  },
+
+  remove: (id: string) => dataApi.delete(COLLAB_RESEARCH_COL, id),
+};
+
+export const collabMembersApi = {
+  /** 특정 연구의 active 멤버 전체 */
+  listByResearch: async (researchId: string): Promise<CollabResearchMember[]> => {
+    const q = query(
+      collection(db, COLLAB_MEMBERS_COL),
+      where("researchId", "==", researchId),
+      where("status", "==", "active"),
+      firestoreLimit(50),
+    );
+    const snap = await getDocs(q);
+    const data = snap.docs.map((d) => (serializeDoc(d) as unknown as CollabResearchMember));
+    // 가입 순서 클라이언트 정렬 (joinedAt asc)
+    return data.sort((a, b) => (a.joinedAt ?? "").localeCompare(b.joinedAt ?? ""));
+  },
+
+  /** 내가 멤버인 모든 연구의 멤버 row (참여 연구 목록 보조 — Phase 1 에서는 listByUser 가 array-contains 로 직접 가져옴) */
+  listByUser: async (userId: string): Promise<CollabResearchMember[]> => {
+    const q = query(
+      collection(db, COLLAB_MEMBERS_COL),
+      where("userId", "==", userId),
+      where("status", "==", "active"),
+      firestoreLimit(100),
+    );
+    const snap = await getDocs(q);
+    const data = snap.docs.map((d) => (serializeDoc(d) as unknown as CollabResearchMember));
+    return data.sort((a, b) => (b.joinedAt ?? "").localeCompare(a.joinedAt ?? ""));
+  },
+
+  get: (id: string) => dataApi.get<CollabResearchMember>(COLLAB_MEMBERS_COL, id),
+
+  /** memberId 패턴 강제: {researchId}_{userId}. setDoc upsert 사용. */
+  upsertSelf: async (input: {
+    researchId: string;
+    userId: string;
+    role: CollabMemberRole;
+    creditRoles: CreditRole[];
+    invitedBy: string;
+    affiliation?: string;
+    orcidId?: string;
+  }): Promise<CollabResearchMember> => {
+    const id = collabMemberId(input.researchId, input.userId);
+    const payload: Record<string, unknown> = {
+      researchId: input.researchId,
+      userId: input.userId,
+      role: input.role,
+      creditRoles: input.creditRoles,
+      invitedBy: input.invitedBy,
+      status: "active",
+      joinedAt: new Date().toISOString(),
+    };
+    if (input.affiliation) payload.affiliation = input.affiliation;
+    if (input.orcidId) payload.orcidId = input.orcidId;
+    return dataApi.upsert<CollabResearchMember>(COLLAB_MEMBERS_COL, id, payload);
+  },
+
+  updateRole: (memberId: string, role: CollabMemberRole) =>
+    dataApi.update<CollabResearchMember>(COLLAB_MEMBERS_COL, memberId, { role }),
+
+  updateCreditRoles: (memberId: string, creditRoles: CreditRole[]) =>
+    dataApi.update<CollabResearchMember>(COLLAB_MEMBERS_COL, memberId, { creditRoles }),
+
+  updateSelfMeta: (
+    memberId: string,
+    patch: { affiliation?: string; orcidId?: string },
+  ) =>
+    dataApi.update<CollabResearchMember>(
+      COLLAB_MEMBERS_COL,
+      memberId,
+      patch as unknown as Record<string, unknown>,
+    ),
+
+  /** 자진 탈퇴 */
+  leave: (memberId: string) =>
+    dataApi.update<CollabResearchMember>(COLLAB_MEMBERS_COL, memberId, {
+      status: "left",
+      leftAt: new Date().toISOString(),
+    }),
+
+  /** leader 강제 제거 (또는 admin) */
+  remove: (memberId: string) => dataApi.delete(COLLAB_MEMBERS_COL, memberId),
+};
+
+const INVITE_TTL_DAYS = 14;
+
+export const collabInvitesApi = {
+  /** 받은 초대함 (pending) */
+  listInbox: async (recipientId: string): Promise<CollabResearchInvite[]> => {
+    const q = query(
+      collection(db, COLLAB_INVITES_COL),
+      where("recipientId", "==", recipientId),
+      where("status", "==", "pending"),
+      firestoreLimit(50),
+    );
+    const snap = await getDocs(q);
+    const data = snap.docs.map((d) => (serializeDoc(d) as unknown as CollabResearchInvite));
+    return data.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+  },
+
+  /** 특정 연구의 발송 초대 전체 (leader 가 보낸 것) */
+  listSent: async (researchId: string): Promise<CollabResearchInvite[]> => {
+    const q = query(
+      collection(db, COLLAB_INVITES_COL),
+      where("researchId", "==", researchId),
+      orderBy("createdAt", "desc"),
+      firestoreLimit(100),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => (serializeDoc(d) as unknown as CollabResearchInvite));
+  },
+
+  get: (id: string) => dataApi.get<CollabResearchInvite>(COLLAB_INVITES_COL, id),
+
+  /** 신규 초대 (status=pending 강제, expiresAt 자동 14일) */
+  create: async (
+    input: CreateCollabInviteInput & {
+      senderId: string;
+      senderName: string;
+      researchTitle: string;
+      recipientEmail?: string;
+    },
+  ): Promise<CollabResearchInvite> => {
+    const expires = new Date(Date.now() + INVITE_TTL_DAYS * 24 * 60 * 60 * 1000).toISOString();
+    const payload: Record<string, unknown> = {
+      researchId: input.researchId,
+      researchTitle: input.researchTitle,
+      senderId: input.senderId,
+      senderName: input.senderName,
+      recipientId: input.recipientId,
+      proposedRole: input.proposedRole,
+      status: "pending",
+      expiresAt: expires,
+    };
+    if (input.message) payload.message = input.message;
+    if (input.recipientEmail) payload.recipientEmail = input.recipientEmail;
+    return dataApi.create<CollabResearchInvite>(COLLAB_INVITES_COL, payload);
+  },
+
+  /** 수락: invite update + members upsert + streak event. denorm 동기화는 leader 의 reconcile 진입 시. */
+  accept: async (
+    inviteId: string,
+    recipientId: string,
+  ): Promise<void> => {
+    const invite = await collabInvitesApi.get(inviteId);
+    if (!invite) throw new Error("초대를 찾을 수 없습니다.");
+    if (invite.status !== "pending") throw new Error("이미 응답한 초대입니다.");
+
+    // 1) 초대 응답
+    await dataApi.update<CollabResearchInvite>(COLLAB_INVITES_COL, inviteId, {
+      status: "accepted",
+      respondedAt: new Date().toISOString(),
+    });
+
+    // 2) members 등록 (invitedBy = sender → rules: invitedBy != self 통과)
+    await collabMembersApi.upsertSelf({
+      researchId: invite.researchId,
+      userId: recipientId,
+      role: invite.proposedRole,
+      creditRoles: [],
+      invitedBy: invite.senderId,
+    });
+
+    // 3) Streak event (+3) — 멱등 doc id 로 중복 가산 방지. 실패해도 수락은 유지.
+    try {
+      const now = new Date();
+      const ymd = now.toISOString().slice(0, 10);
+      const refId = invite.researchId;
+      const streakId = `${recipientId}__collab-research-join__${refId}`;
+      await dataApi.upsert<StreakEvent>("streak_events", streakId, {
+        userId: recipientId,
+        type: "collab-research-join",
+        refId,
+        points: 3,
+        ymd,
+        occurredAt: now.toISOString(),
+      });
+    } catch (err) {
+      console.warn("[collabInvitesApi.accept] streak event failed (non-fatal)", err);
+    }
+  },
+
+  reject: (inviteId: string) =>
+    dataApi.update<CollabResearchInvite>(COLLAB_INVITES_COL, inviteId, {
+      status: "rejected",
+      respondedAt: new Date().toISOString(),
+    }),
+
+  cancel: (inviteId: string) =>
+    dataApi.update<CollabResearchInvite>(COLLAB_INVITES_COL, inviteId, {
+      status: "cancelled",
+      respondedAt: new Date().toISOString(),
+    }),
+
+  remove: (id: string) => dataApi.delete(COLLAB_INVITES_COL, id),
 };

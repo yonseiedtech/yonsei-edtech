@@ -32,6 +32,29 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/activities/$(activityId)).data.leaderId == request.auth.uid;
     }
 
+    // ─── Collaborative Research Helpers ───
+    // (collaborative-research Phase 1 MVP)
+    function getCollabResearch(researchId) {
+      return get(/databases/$(database)/documents/collaborative_research/$(researchId)).data;
+    }
+    function isCollabLeader(researchId) {
+      return isAuthenticated()
+        && exists(/databases/$(database)/documents/collaborative_research/$(researchId))
+        && getCollabResearch(researchId).leaderId == request.auth.uid;
+    }
+    function isCollabMember(researchId) {
+      let memberId = researchId + '_' + request.auth.uid;
+      return isAuthenticated()
+        && exists(/databases/$(database)/documents/collaborative_research_members/$(memberId))
+        && get(/databases/$(database)/documents/collaborative_research_members/$(memberId)).data.status == 'active';
+    }
+    // society type 발주: 운영진(staff+) 자동 read 권한 (감리 목적)
+    function isSocietyReadableByStaff(researchId) {
+      return isStaffOrAbove()
+        && exists(/databases/$(database)/documents/collaborative_research/$(researchId))
+        && getCollabResearch(researchId).collaborationType == 'society';
+    }
+
     // ─── Users ───
     match /users/{userId} {
       // Public profile (QR scan) — single-doc get is open; list still requires auth
@@ -1136,6 +1159,103 @@ service cloud.firestore {
         && request.resource.data.userId == request.auth.uid;
       allow delete: if isAuthenticated()
         && resource.data.userId == request.auth.uid;
+    }
+
+    // ─── Collaborative Research (Phase 1 MVP) ───
+    // collaborative_research / _members / _invites 3개 컬렉션.
+    // 자세한 설계는 docs/02-design/features/collaborative-research.design.md 4장 참고.
+    match /collaborative_research/{researchId} {
+      allow read, get: if isAuthenticated() && (
+        isCollabLeader(researchId)
+        || isCollabMember(researchId)
+        || isSocietyReadableByStaff(researchId)
+      );
+      // list 는 본인 참여 연구 array-contains 쿼리 — array-contains 필터 강제 가능하면 더 안전,
+      // 클라이언트가 항상 collaboratorIds array-contains uid 로 쿼리한다고 가정 후 인증만 검증.
+      allow list: if isAuthenticated();
+
+      // 생성: leaderId == 본인, collaboratorIds 초기 [본인] 1명, 카운트 강제, workspaceVisibility 고정.
+      allow create: if isAuthenticated()
+        && request.resource.data.leaderId == request.auth.uid
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.collaboratorCount == 1
+        && request.resource.data.collaboratorIds.size() == 1
+        && request.resource.data.collaboratorIds[0] == request.auth.uid
+        && request.resource.data.workingPaperCount == 0
+        && request.resource.data.workspaceVisibility == 'members_only';
+
+      // 수정: leader 만. leaderId·createdBy 는 절대 변경 불가 (이양은 Phase 4 별도 트랜잭션).
+      allow update: if isCollabLeader(researchId)
+        && request.resource.data.leaderId == resource.data.leaderId
+        && request.resource.data.createdBy == resource.data.createdBy;
+
+      // 삭제: leader 또는 admin.
+      allow delete: if isCollabLeader(researchId) || isAdmin();
+    }
+
+    match /collaborative_research_members/{memberId} {
+      // 본인 또는 같은 팀 멤버 또는 society 발주 staff
+      allow read, get: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid
+        || isCollabMember(resource.data.researchId)
+        || isCollabLeader(resource.data.researchId)
+        || isSocietyReadableByStaff(resource.data.researchId)
+      );
+      // list: 인증된 사용자만 허용 (실제 결과는 위 read 규칙으로 필터됨)
+      allow list: if isAuthenticated();
+
+      // 멤버 추가: leader 가 다른 사람을 등록하거나, 본인이 invite 수락으로 본인을 등록 (invitedBy != self).
+      allow create: if isAuthenticated() && (
+        (isCollabLeader(request.resource.data.researchId)
+          && request.resource.data.userId != request.auth.uid)
+        || (request.resource.data.userId == request.auth.uid
+          && request.resource.data.invitedBy != request.auth.uid)
+      );
+
+      // 본인은 affiliation/orcidId/creditRoles 만 수정. leader 는 role/status 포함 모두 수정.
+      // researchId·userId 는 불변.
+      allow update: if isAuthenticated() && (
+        (resource.data.userId == request.auth.uid
+          && request.resource.data.researchId == resource.data.researchId
+          && request.resource.data.userId == resource.data.userId)
+        || isCollabLeader(resource.data.researchId)
+      );
+
+      // 본인 자진 탈퇴(=leave) 또는 leader 강제 제거 또는 admin.
+      allow delete: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid
+        || isCollabLeader(resource.data.researchId)
+        || isAdmin()
+      );
+    }
+
+    match /collaborative_research_invites/{inviteId} {
+      allow read, get: if isAuthenticated() && (
+        resource.data.senderId == request.auth.uid
+        || resource.data.recipientId == request.auth.uid
+        || isStaffOrAbove()
+      );
+      // list: 인증된 사용자 (filter[recipientId]=me 또는 filter[senderId]=me 강제)
+      allow list: if isAuthenticated();
+
+      // 초대 생성: senderId == 본인 + 본인이 해당 연구 leader. status=pending 강제.
+      allow create: if isAuthenticated()
+        && request.resource.data.senderId == request.auth.uid
+        && isCollabLeader(request.resource.data.researchId)
+        && request.resource.data.status == 'pending';
+
+      // 응답: recipient 가 status 를 accepted/rejected. 또는 sender 가 cancelled.
+      // (Phase 2 cron 이 만료된 것을 expired 로 전환할 권한은 별도 service account 사용 가정)
+      allow update: if isAuthenticated() && (
+        (resource.data.recipientId == request.auth.uid
+          && request.resource.data.status in ['accepted', 'rejected'])
+        || (resource.data.senderId == request.auth.uid
+          && request.resource.data.status == 'cancelled')
+      );
+
+      allow delete: if isAuthenticated() && (
+        resource.data.senderId == request.auth.uid || isAdmin()
+      );
     }
   }
 }
