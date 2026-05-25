@@ -13,7 +13,8 @@
 /** 가산점 이벤트 종류. 새 타입은 LearningStreak.tsx 합산 로직과 함께 추가. */
 export type StreakEventType =
   | "onboarding-checklist"  // 체크리스트 1항목 완료 (+5)
-  | "onboarding-badge";     // 마일스톤 배지 부여 (+5/+10/+20)
+  | "onboarding-badge"      // 마일스톤 배지 부여 (+5/+10/+20)
+  | "collab-research-join"; // 공동 연구팀 참여 (+3, collaborative-research Phase 1)
 
 export interface StreakEvent {
   /** `${userId}__${type}__${refId}` */
