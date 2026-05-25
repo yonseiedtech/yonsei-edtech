@@ -132,6 +132,18 @@ export interface IRBStatusInfo {
 
 // ── 메인 도큐먼트 ─────────────────────────────────────────
 
+/** 일정 마일스톤 — 킥오프·중간점검·최종발표 등 */
+export interface ScheduleMilestone {
+  /** 클라이언트 생성 UUID */
+  id: string;
+  /** YYYY-MM-DD */
+  date: string;
+  /** 예: "킥오프 미팅", "1차 점검", "분석 완료", "초고 완성" */
+  label: string;
+  /** 선택: 상세 메모 */
+  note?: string;
+}
+
 export interface CollaborativeResearch {
   id: string;
   title: string;
@@ -144,9 +156,15 @@ export interface CollaborativeResearch {
   researchTopic: string;
   researchPurpose: string;
   researchQuestions?: string[];
+  /** 연구 대상 (예: "대학원생", "초등 5학년", "고등학교 교사 30명") — 다중 항목 */
+  audience?: string[];
   hypotheses?: Hypothesis[];
   variables?: ResearchVariables;
   methodology?: MethodologyMeta;
+  /** 실험집단 구성 계획 (실험연구·준실험연구 전용) */
+  experimentalGroupPlan?: string;
+  /** 통제집단 구성 계획 (실험연구·준실험연구 전용) */
+  controlGroupPlan?: string;
   irbStatus?: IRBStatusInfo;
   expectedOutcome?: string;
 
@@ -161,6 +179,10 @@ export interface CollaborativeResearch {
   startDate: string;
   targetEndDate?: string;
   actualEndDate?: string;
+  /** 킥오프 미팅 일정 */
+  kickoffDate?: string;
+  /** 중간 점검일 마일스톤 다수 */
+  checkpoints?: ScheduleMilestone[];
 
   // 분류
   tags: string[];
@@ -252,13 +274,18 @@ export type UpdateCollabResearchInput = Partial<
     | "researchTopic"
     | "researchPurpose"
     | "researchQuestions"
+    | "audience"
     | "hypotheses"
     | "variables"
     | "methodology"
+    | "experimentalGroupPlan"
+    | "controlGroupPlan"
     | "irbStatus"
     | "expectedOutcome"
     | "targetEndDate"
     | "actualEndDate"
+    | "kickoffDate"
+    | "checkpoints"
     | "tags"
     | "conceptIds"
     | "methodIds"
