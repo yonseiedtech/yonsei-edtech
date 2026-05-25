@@ -75,3 +75,6 @@ export * from "./feedback";
 
 // 사용자 개인 메모
 export * from "./user-note";
+
+// 공동 연구 + 연구지 발간 (collaborative-research Phase 1 MVP)
+export * from "./collaborative-research";
