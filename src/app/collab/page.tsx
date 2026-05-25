@@ -32,7 +32,7 @@ function CollabResearchListContent() {
     <PageContainer>
       <PageHeader
         title="공동 연구"
-        description="동료·자문교수와 함께 진행하는 공동 연구를 관리하고, 결과를 연구지에 발간하세요."
+        description="동료와 함께 진행하는 공동 연구를 관리하고, 결과를 연구지에 발간하세요."
         actions={
           <Link href="/collab/new">
             <Button>
