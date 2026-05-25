@@ -18,7 +18,7 @@ import type {
 
 export const COLLABORATION_TYPE_LABELS: Record<CollaborationType, string> = {
   peer: "동료 자율",
-  society: "학회 발주",
+  society: "학회 배정",
 };
 
 export const COLLAB_STATUS_LABELS: Record<CollaborativeResearchStatus, string> = {

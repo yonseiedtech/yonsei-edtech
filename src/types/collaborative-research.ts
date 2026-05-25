@@ -10,7 +10,7 @@
 
 // ── 상태 enum ─────────────────────────────────────────────
 
-/** 협업 형태: 동료 자율 vs 학회 발주 */
+/** 협업 형태: 동료 자율 vs 학회 배정 */
 export type CollaborationType = "peer" | "society";
 
 export type CollaborativeResearchStatus =

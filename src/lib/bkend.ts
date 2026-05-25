@@ -2542,7 +2542,7 @@ export const collabResearchApi = {
     return snap.docs.map((d) => (serializeDoc(d) as unknown as CollaborativeResearch));
   },
 
-  /** society type 발주 전체 목록 (운영진용) */
+  /** society type 배정 전체 목록 (운영진용) */
   listForSociety: async (): Promise<CollaborativeResearch[]> => {
     const q = query(
       collection(db, COLLAB_RESEARCH_COL),
