@@ -141,6 +141,7 @@ const PUBLIC_NAV: NavGroup[] = [
       { href: "/archive", label: "교육공학 아카이브" },
       { href: "/mypage/research", label: "내 연구활동" },
       { href: "/collab", label: "공동 연구" },
+      { href: "/journal", label: "연구지 (Journal)" },
     ],
   },
   {

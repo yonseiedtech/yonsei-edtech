@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Users, Pencil, Settings, LayoutDashboard } from "lucide-react";
+import { Users, Pencil, Settings, LayoutDashboard, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import CollabResearchStatusBadge from "./CollabResearchStatusBadge";
@@ -14,7 +14,7 @@ interface Props {
   research: CollaborativeResearch;
   myRole?: CollabMemberRole;
   isLeader: boolean;
-  activeTab: "dashboard" | "members" | "meta" | "settings";
+  activeTab: "dashboard" | "members" | "meta" | "publish" | "settings";
 }
 
 const TABS: Array<{
@@ -27,6 +27,7 @@ const TABS: Array<{
   { key: "dashboard", label: "대시보드", icon: LayoutDashboard, href: (id) => `/collab/${id}` },
   { key: "members", label: "멤버", icon: Users, href: (id) => `/collab/${id}/members` },
   { key: "meta", label: "메타", icon: Pencil, href: (id) => `/collab/${id}/meta` },
+  { key: "publish", label: "연구지 출판", icon: BookOpen, href: (id) => `/collab/${id}/publish` },
   { key: "settings", label: "설정", icon: Settings, href: (id) => `/collab/${id}/settings`, leaderOnly: true },
 ];
 
