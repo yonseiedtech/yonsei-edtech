@@ -1,7 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { Users, Pencil, Settings, LayoutDashboard, BookOpen } from "lucide-react";
+import {
+  Users,
+  Pencil,
+  Settings,
+  LayoutDashboard,
+  BookOpen,
+  FileText,
+  Calendar,
+  Target,
+  BarChart3,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import CollabResearchStatusBadge from "./CollabResearchStatusBadge";
@@ -14,7 +24,16 @@ interface Props {
   research: CollaborativeResearch;
   myRole?: CollabMemberRole;
   isLeader: boolean;
-  activeTab: "dashboard" | "members" | "meta" | "publish" | "settings";
+  activeTab:
+    | "dashboard"
+    | "members"
+    | "meta"
+    | "chapters"
+    | "meetings"
+    | "milestones"
+    | "publish"
+    | "contributions"
+    | "settings";
 }
 
 const TABS: Array<{
@@ -27,7 +46,11 @@ const TABS: Array<{
   { key: "dashboard", label: "대시보드", icon: LayoutDashboard, href: (id) => `/collab/${id}` },
   { key: "members", label: "멤버", icon: Users, href: (id) => `/collab/${id}/members` },
   { key: "meta", label: "메타", icon: Pencil, href: (id) => `/collab/${id}/meta` },
+  { key: "chapters", label: "챕터", icon: FileText, href: (id) => `/collab/${id}/chapters` },
+  { key: "meetings", label: "회의", icon: Calendar, href: (id) => `/collab/${id}/meetings` },
+  { key: "milestones", label: "마일스톤", icon: Target, href: (id) => `/collab/${id}/milestones` },
   { key: "publish", label: "연구지 출판", icon: BookOpen, href: (id) => `/collab/${id}/publish` },
+  { key: "contributions", label: "기여도", icon: BarChart3, href: (id) => `/collab/${id}/contributions` },
   { key: "settings", label: "설정", icon: Settings, href: (id) => `/collab/${id}/settings`, leaderOnly: true },
 ];
 
