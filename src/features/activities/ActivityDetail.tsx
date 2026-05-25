@@ -38,6 +38,15 @@ import ActivityInfoEditor from "./ActivityInfoEditor";
 import { todayYmdLocal } from "@/lib/dday";
 import type { Activity, ActivityType, ActivityProgress, ActivityProgressMode, FormField, EnrollmentStatus, ExternalParticipantType, SpeakerSubmissionType, StudySessionReflection, StudyAssignment, ApplicantEntry } from "@/types";
 import { ENROLLMENT_STATUS_LABELS, ACTIVITY_PROGRESS_MODE_LABELS, EXTERNAL_PARTICIPANT_TYPE_LABELS, EXTERNAL_PARTICIPANT_TYPE_COLORS, SPEAKER_SUBMISSION_TYPE_LABELS, SPEAKER_SUBMISSION_TYPE_COLORS } from "@/types";
+
+/** 신청 시점 표시 — yyyy.mm.dd. hh:mm:ss (24h, 한국 시간) */
+function formatAppliedAt(iso?: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "—";
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}. ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
 import {
   activityProgressApi,
   attendeeReviewsApi,
@@ -2071,7 +2080,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                                 ]
                               : []),
                             STATUS_LABEL[a.status] ?? a.status ?? "대기",
-                            a.appliedAt ? new Date(a.appliedAt).toLocaleString("ko-KR") : "",
+                            formatAppliedAt(a.appliedAt),
                             ...questionFields.map((f) =>
                               fmtAnswer(f, a.answers?.[f.id] ?? a.answers?.[f.label]),
                             ),
@@ -2133,7 +2142,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                         {a.studentId && <span className="ml-2 text-xs text-muted-foreground">{a.studentId}</span>}
                         {a.email && isStaff && <span className="ml-2 text-xs text-muted-foreground">{a.email}</span>}
                         <span className="ml-2 text-xs text-muted-foreground">
-                          {new Date(a.appliedAt).toLocaleDateString("ko-KR")}
+                          {formatAppliedAt(a.appliedAt)}
                         </span>
                         {isSpeaker && a.speakerPaperTitle && (
                           <p className="mt-1 truncate text-xs text-slate-600">
@@ -2420,7 +2429,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                               </td>
                               <td className="px-3 py-2.5">
                                 <span className="text-xs text-muted-foreground">
-                                  {a.appliedAt ? new Date(a.appliedAt).toLocaleDateString("ko-KR") : "—"}
+                                  {formatAppliedAt(a.appliedAt)}
                                 </span>
                               </td>
                               <td className="px-3 py-2.5">
@@ -2852,8 +2861,8 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   const bom = "\uFEFF";
                   const header = type === "external" ? "이름,학번,참석유형,발표유형,논문제목,상태,신청일\n" : "이름,학번,상태,신청일\n";
                   const rows = applicants.map((a) => type === "external"
-                    ? `"${a.name}","${a.studentId ?? ""}","${EXTERNAL_PARTICIPANT_TYPE_LABELS[(a.participantType ?? "attendee") as ExternalParticipantType]}","${a.speakerSubmissionType ? SPEAKER_SUBMISSION_TYPE_LABELS[a.speakerSubmissionType as SpeakerSubmissionType] : ""}","${(a.speakerPaperTitle ?? "").replace(/"/g, '""')}","${a.status}","${a.appliedAt}"`
-                    : `"${a.name}","${a.studentId ?? ""}","${a.status}","${a.appliedAt}"`).join("\n");
+                    ? `"${a.name}","${a.studentId ?? ""}","${EXTERNAL_PARTICIPANT_TYPE_LABELS[(a.participantType ?? "attendee") as ExternalParticipantType]}","${a.speakerSubmissionType ? SPEAKER_SUBMISSION_TYPE_LABELS[a.speakerSubmissionType as SpeakerSubmissionType] : ""}","${(a.speakerPaperTitle ?? "").replace(/"/g, '""')}","${a.status}","${formatAppliedAt(a.appliedAt)}"`
+                    : `"${a.name}","${a.studentId ?? ""}","${a.status}","${formatAppliedAt(a.appliedAt)}"`).join("\n");
                   const blob = new Blob([bom + header + rows], { type: "text/csv" });
                   const url = URL.createObjectURL(blob);
                   const el = document.createElement("a");
