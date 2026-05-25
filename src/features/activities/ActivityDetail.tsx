@@ -1999,26 +1999,51 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                         const csvCell = (v: string) => `"${String(v ?? "").replace(/"/g, '""')}"`;
                         const fmtAnswer = (field: FormField, rawValue: unknown): string => {
                           if (rawValue === undefined || rawValue === null || rawValue === "") return "";
+
+                          // schedule / datetime_slots — 다른 분기보다 먼저 처리해야
+                          // 객체 배열 저장 케이스(레거시/직접 저장)에서 누락되지 않음.
+                          if (field.type === "schedule" || field.type === "datetime_slots") {
+                            if (rawValue === "__ALL__") return "전체 시간 가능";
+                            if (rawValue === "__RESTRICTED__") return "참여 제한";
+
+                            type Slot = { date?: string; start?: string; end?: string };
+                            let slots: Slot[] = [];
+
+                            if (typeof rawValue === "string") {
+                              try {
+                                const parsed = JSON.parse(rawValue);
+                                if (Array.isArray(parsed)) slots = parsed as Slot[];
+                                else return String(rawValue);
+                              } catch {
+                                return String(rawValue);
+                              }
+                            } else if (Array.isArray(rawValue)) {
+                              slots = rawValue as Slot[];
+                            } else {
+                              return String(rawValue);
+                            }
+
+                            if (slots.length === 0) return "(선택된 시간 없음)";
+
+                            return slots
+                              .map((s) => {
+                                const date = s.date ?? "";
+                                const start = s.start ?? "";
+                                const end = s.end ?? "";
+                                if (!date && !start && !end) return "";
+                                if (start && end) return `${date} ${start}-${end}`.trim();
+                                return date.trim();
+                              })
+                              .filter(Boolean)
+                              .join(" / ");
+                          }
+
                           if (Array.isArray(rawValue)) {
-                            if (rawValue.length > 0 && typeof rawValue[0] === "object") {
+                            if (rawValue.length === 0) return "";
+                            if (typeof rawValue[0] === "object") {
                               return (rawValue as { name: string }[]).map((f) => f.name).join(" / ");
                             }
                             return (rawValue as string[]).join(", ");
-                          }
-                          if (
-                            (field.type === "schedule" || field.type === "datetime_slots") &&
-                            typeof rawValue === "string"
-                          ) {
-                            if (rawValue === "__ALL__") return "전체 시간 가능";
-                            if (rawValue === "__RESTRICTED__") return "참여 제한";
-                            try {
-                              const slots = JSON.parse(rawValue) as { date: string; start: string; end: string }[];
-                              return slots.length === 0
-                                ? ""
-                                : slots.map((s) => `${s.date} ${s.start}-${s.end}`).join(" / ");
-                            } catch {
-                              return String(rawValue);
-                            }
                           }
                           return String(rawValue);
                         };
