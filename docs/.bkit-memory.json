@@ -215,11 +215,13 @@
       "notes": "/members 단일 4탭 → 두 컨텍스트 페이지로 분리. /about/leadership(주임교수+운영진) + /members(재학생+졸업생). Legacy URL 자동 redirect. chore-scale (Plan 없이 Report 만)."
     },
     "collaborative-research": {
-      "phase": "design",
+      "phase": "do",
       "matchRate": null,
       "iterationCount": 0,
       "startedAt": "2026-05-25T00:00:00Z",
-      "notes": "Plan Plus + Design 완료. 공동 연구(collaborative_research_*) + 연구지(research_journal_*). 4 Sprint(A 팀+초대+메타 / B 공동작성+논의 / C 워킹+정식 출판 / D 기여도·통계). Phase 1 Design 구체화: 신규 컬렉션 3개(research/_members/_invites) + rules 헬퍼 4개 + indexes 6개 + bkend API 3그룹 + React Query hooks 5개 + 페이지 7개 + 컴포넌트 11개 + reconcile 함수. PR #1~#6 분할 체크리스트 약 8h 추정. Plan 791L + Design 작성 완료. Next: /pdca do collaborative-research (Phase 1 Sprint A)"
+      "lastDeployedAt": "2026-05-25T00:00:00Z",
+      "lastCommits": ["1532b1ee", "6e98359a", "cfb55da2", "1d72ff37", "<phase3>"],
+      "notes": "Phase 1 + UX 개선 + Phase 3 (연구지 출판) 자율 PM 진행. Phase 3 추가: 신규 컬렉션 2개(research_journal_issues + research_journal_articles) + rules 게이트(visibility 3단계 + 검수 워크플로우) + indexes 5개 + bkend API 2그룹(journalIssues + journalArticles, accept/publish/withdraw/저자동의/검수전이/조회카운트) + React Query hooks 20개 + lib 4개(article-status·apa7·json-ld·consent-gate) + 컴포넌트 7개(StatusBadge·AuthorsEditor·ConsentPanel·ReviewCommentSection·ContentEditor·ArticleView·) + 라우트 5개(/collab/[id]/publish·/publish/[articleId]·/journal·/journal/issues/[id]·/journal/articles/[id]·/console/research/journal) + 메인 nav '연구지(Journal)' 추가 + CollabResearchHeader 'publish' 탭 추가 + NotificationPrefs 2종(pushCollabReview·pushJournalIssue) + streak 'research-journal-publish' +10. 핵심 기능: CRediT 14역할 저자·교신/제1저자 다중·APA7 자동 인용·JSON-LD ScholarlyArticle(SEO)·저자 100% 동의 게이트·블로킹/메이저/마이너/칭찬 4단계 검수 코멘트·발간 후 본문 잠금·viewCount/downloadCount denorm increment. Build 3회 fix (titleAccess→aria-label, Button asChild 제거). Next: sync:master 자동 deploy"
     }
   }
 }

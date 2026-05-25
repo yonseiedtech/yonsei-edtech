@@ -998,6 +998,8 @@ function NotificationSettingsCard({ user }: { user: User }) {
     pushClassReminder?: boolean;
     pushExternalRecruitment?: boolean;
     pushCollabInvite?: boolean;
+    pushCollabReview?: boolean;
+    pushJournalIssue?: boolean;
   };
   const prefs = (user as User & { notificationPrefs?: PrefShape }).notificationPrefs;
   const [digest, setDigest] = useState<boolean>(prefs?.weeklyDigest !== false);
@@ -1012,6 +1014,8 @@ function NotificationSettingsCard({ user }: { user: User }) {
   const [pushClassReminder, setPushClassReminder] = useState<boolean>(prefs?.pushClassReminder !== false);
   const [pushExternalRecruitment, setPushExternalRecruitment] = useState<boolean>(prefs?.pushExternalRecruitment !== false);
   const [pushCollabInvite, setPushCollabInvite] = useState<boolean>(prefs?.pushCollabInvite !== false);
+  const [pushCollabReview, setPushCollabReview] = useState<boolean>(prefs?.pushCollabReview !== false);
+  const [pushJournalIssue, setPushJournalIssue] = useState<boolean>(prefs?.pushJournalIssue !== false);
   const [busyKey, setBusyKey] = useState<string | null>(null);
 
   async function updateLeaderboardPref(next: boolean) {
@@ -1223,6 +1227,26 @@ function NotificationSettingsCard({ user }: { user: User }) {
               void updatePref("pushCollabInvite", !pushCollabInvite, setPushCollabInvite, "공동 연구 초대 알림을")
             }
             ariaLabel="공동 연구 초대 push 알림 토글"
+          />
+          <ToggleRow
+            title="연구지 검수 알림"
+            description="내 논문의 검수 요청·응답·수정 요청 안내."
+            enabled={pushCollabReview}
+            busy={busyKey === "pushCollabReview"}
+            onToggle={() =>
+              void updatePref("pushCollabReview", !pushCollabReview, setPushCollabReview, "연구지 검수 알림을")
+            }
+            ariaLabel="연구지 검수 push 알림 토글"
+          />
+          <ToggleRow
+            title="연구지 신규 호수 발간"
+            description="연세 교육공학 연구의 신규 호수가 발간될 때 안내."
+            enabled={pushJournalIssue}
+            busy={busyKey === "pushJournalIssue"}
+            onToggle={() =>
+              void updatePref("pushJournalIssue", !pushJournalIssue, setPushJournalIssue, "연구지 신규 호수 발간 알림을")
+            }
+            ariaLabel="연구지 신규 호수 발간 push 알림 토글"
           />
         </div>
       </div>
