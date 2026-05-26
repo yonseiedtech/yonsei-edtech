@@ -39,11 +39,13 @@ def capture():
         for fname, path, desc in PAGES:
             url = f"{BASE}{path}"
             out = os.path.join(OUT_DIR, fname)
-            print(f"capturing: {url} → {fname}")
+            print(f"capturing: {url} -> {fname}")
             try:
-                page.goto(url, wait_until="networkidle", timeout=30000)
-                page.wait_for_timeout(2000)  # font·image load wait
-                page.screenshot(path=out, full_page=False)  # 첫 화면만
+                # networkidle 은 yonsei-edtech 의 polling/Firebase 활성 연결 때문에 도달 불가.
+                # domcontentloaded 후 hydrate 시간만 충분히 대기.
+                page.goto(url, wait_until="domcontentloaded", timeout=30000)
+                page.wait_for_timeout(5000)  # hydrate + font + image load
+                page.screenshot(path=out, full_page=False)
                 print(f"  saved: {out} ({desc})")
             except Exception as e:
                 print(f"  ERROR: {e}")
