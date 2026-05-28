@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { activityParticipationsApi } from "@/lib/bkend";
 import { ACTIVITY_OUTPUT_TYPE_LABELS } from "@/types";
 import type { ActivityOutput, ActivityParticipation, User } from "@/types";
+import { safeYmd } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Layers, ExternalLink } from "lucide-react";
 
@@ -73,7 +74,7 @@ export default function ProfileOutputs({ owner }: Props) {
             )}
             {o.createdAt && (
               <p className="mt-0.5 text-[10px] text-muted-foreground">
-                {o.createdAt.slice(0, 10)}
+                {safeYmd(o.createdAt)}
               </p>
             )}
           </li>

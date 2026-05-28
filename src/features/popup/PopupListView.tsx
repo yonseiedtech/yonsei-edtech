@@ -6,7 +6,7 @@ import { Megaphone, Plus, Edit3, Trash2, Eye, EyeOff } from "lucide-react";
 import { popupsApi } from "@/lib/bkend";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, safeYmd } from "@/lib/utils";
 import { POPUP_AUDIENCE_LABELS, POPUP_POSITION_LABELS, type SitePopup } from "@/types";
 import { toast } from "sonner";
 import PopupEditor from "./PopupEditor";
@@ -118,7 +118,7 @@ export default function PopupListView() {
                       </div>
                     </td>
                     <td className="px-3 py-2.5 text-xs text-muted-foreground">
-                      {p.startsAt.slice(0, 10)} ~ {p.endsAt.slice(0, 10)}
+                      {safeYmd(p.startsAt)} ~ {safeYmd(p.endsAt)}
                     </td>
                     <td className="px-3 py-2.5 text-xs text-muted-foreground">
                       {POPUP_AUDIENCE_LABELS[p.audience]}

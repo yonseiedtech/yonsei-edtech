@@ -12,7 +12,7 @@ import {
 } from "@/lib/bkend";
 import { getComputedStatus } from "@/lib/seminar-utils";
 import type { Seminar, Activity, CourseOffering, ClassSession } from "@/types";
-import { cn } from "@/lib/utils";
+import { cn, safeYmd } from "@/lib/utils";
 import {
   ChevronLeft,
   ChevronRight,
@@ -385,7 +385,7 @@ export default function CalendarPage() {
       result.push({
         id: s.id,
         title: s.title,
-        date: s.date.slice(0, 10),
+        date: safeYmd(s.date),
         time: s.time,
         location: s.location,
         type: "seminar",
@@ -404,8 +404,8 @@ export default function CalendarPage() {
       result.push({
         id: a.id,
         title: a.title,
-        date: a.date.slice(0, 10),
-        endDate: a.endDate?.slice(0, 10),
+        date: safeYmd(a.date),
+        endDate: a.endDate ? safeYmd(a.endDate) : undefined,
         location: a.location,
         type: a.type as CalendarEvent["type"],
         status: a.status,

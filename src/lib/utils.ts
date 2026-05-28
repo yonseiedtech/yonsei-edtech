@@ -5,6 +5,37 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * ISO 문자열·Date·Firestore Timestamp 등 어떤 형태의 날짜 값에서도
+ * 안전하게 YYYY-MM-DD(앞 10자)를 추출한다.
+ *
+ * 배경: `value.slice(0, 10)` 직접 호출은 value 가 string 이 아니면
+ * "x.slice is not a function" 런타임 크래시를 일으킨다. 데이터 원천에서
+ * 간헐적으로 Timestamp 객체·{seconds} 형태가 도달할 수 있어 이 헬퍼로 방어한다.
+ */
+export function safeYmd(v: unknown): string {
+  if (typeof v === "string") return v.slice(0, 10);
+  if (v instanceof Date) {
+    return isNaN(v.getTime()) ? "" : v.toISOString().slice(0, 10);
+  }
+  if (v && typeof v === "object") {
+    const obj = v as { toDate?: () => Date; seconds?: number };
+    if (typeof obj.toDate === "function") {
+      try {
+        const d = obj.toDate();
+        if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+      } catch { /* fallthrough */ }
+    }
+    if (typeof obj.seconds === "number") {
+      try {
+        const d = new Date(obj.seconds * 1000);
+        if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+      } catch { /* fallthrough */ }
+    }
+  }
+  return "";
+}
+
 export function formatDate(date: string | Date): string {
   const d = new Date(date);
   if (isNaN(d.getTime())) return "-";

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { Seminar } from "@/types";
-import { cn } from "@/lib/utils";
+import { cn, safeYmd } from "@/lib/utils";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -33,7 +33,7 @@ export default function MiniCalendar({ seminars }: MiniCalendarProps) {
     // 세미나 날짜 set
     const seminarDates = new Map<string, Seminar[]>();
     for (const s of seminars) {
-      const d = s.date?.slice(0, 10);
+      const d = safeYmd(s.date);
       if (!d) continue;
       const [sy, sm] = d.split("-").map(Number);
       if (sy === year && sm === month + 1) {
