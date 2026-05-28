@@ -453,6 +453,21 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
     onError: (e: Error) => { toast.error(e.message || "신청에 실패했습니다."); },
   });
 
+  // 운영진 전용: 모집 상태를 '모집중'으로 즉시 전환 (신청 버튼 숨김 문제 해결용)
+  const setRecruitingMutation = useMutation({
+    mutationFn: async () => {
+      await activitiesApi.update(activityId, {
+        recruitmentStatus: "recruiting",
+        recruitmentStatusOverride: true,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+      toast.success("모집 상태를 '모집중'으로 변경했습니다. 이제 참가 신청 버튼이 표시됩니다.");
+    },
+    onError: (e: Error) => { toast.error(e.message || "모집 상태 변경에 실패했습니다."); },
+  });
+
   /** 기존 신청 항목을 신청 다이얼로그(수정 모드)로 연다 — 신청자 본인/운영진 공용 */
   function openEditApplication(a: ApplicantEntry) {
     setEditingApplicantKey(a.userId ?? a.guestKey ?? `${a.name}-${a.appliedAt}`);
@@ -929,6 +944,35 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   )}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* 운영진 전용 안내 — registrationMethod=open 이지만 모집 상태가 recruiting 이 아니어서
+              회원에게 신청 버튼이 숨겨진 경우. 자동 계산 모드(recruitmentStartAt/End 설정)가 아닐 때만. */}
+          {isStaff && registrationMethod === "open" && recruitmentStatus !== "recruiting"
+            && !recruitmentComputed.auto && (
+            <div className="mt-6 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
+              <div className="flex items-start gap-2 text-sm text-amber-900 dark:text-amber-200">
+                <Clock size={16} className="mt-0.5 shrink-0" />
+                <div className="flex-1">
+                  <p className="font-medium">
+                    현재 모집 상태가 &lsquo;{RECRUIT_LABELS[recruitmentStatus] ?? recruitmentStatus}&rsquo;(으)로 설정되어 회원에게 <strong>참가 신청 버튼이 표시되지 않습니다.</strong>
+                  </p>
+                  <p className="mt-1 text-xs opacity-90">
+                    회원이 신청하려면 모집 상태를 &lsquo;모집중&rsquo;으로 변경해야 합니다.
+                    모집 기간(시작·종료일시)을 설정하면 자동으로 모집중이 유지되며, 아래 버튼으로 즉시 전환할 수도 있습니다.
+                  </p>
+                  <Button
+                    size="sm"
+                    className="mt-3"
+                    onClick={() => setRecruitingMutation.mutate()}
+                    disabled={setRecruitingMutation.isPending}
+                  >
+                    <UserPlus size={14} className="mr-1.5" />
+                    모집중으로 변경
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
 
