@@ -3399,7 +3399,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
           <DialogContent className="top-1/2 bottom-auto my-0 max-h-[calc(100vh-2rem)] -translate-y-1/2 sm:max-w-md">
             <DialogHeader><DialogTitle>신청이 완료되었습니다 🎉</DialogTitle></DialogHeader>
             <div className="space-y-3 text-sm text-slate-700">
-              <p>운영진 승인 후 참가 확정 메일을 <strong>{applyEmail}</strong>로 보내드립니다.</p>
+              <p>신청이 접수되었습니다. 운영진 승인 후 참가가 확정되며, 신청 상태는 활동 페이지의 <strong>&lsquo;신청현황 조회&rsquo;</strong>에서 이름·학번으로 확인할 수 있습니다.</p>
               <div className="rounded-lg border bg-primary/5 p-3">
                 <p className="font-medium text-primary">회원가입하면 이런 점이 좋아요</p>
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-slate-600">
