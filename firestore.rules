@@ -1165,6 +1165,8 @@ service cloud.firestore {
       allow update, delete: if isAuthenticated()
         && (resource.data.ownerId == request.auth.uid || isStaffOrAbove());
     }
+    // NOTE: likeCount/answerCount 는 increment() 클라이언트 갱신이라 rules 에서 정확한 +1/-1 을
+    // 강제할 수 없음(동시성·resolved 값). 카운트 위·변조는 운영진 모더레이션으로 대응(설계 §3 트레이드오프).
     match /comm_questions/{qId} {
       allow read, list: if true;
       allow create: if commBoardWritable(request.resource.data.boardId)
@@ -1204,7 +1206,8 @@ service cloud.firestore {
     match /comm_likes/{likeId} {
       allow read, list: if true;
       allow create: if isAuthenticated()
-        && request.resource.data.userId == request.auth.uid;
+        && request.resource.data.userId == request.auth.uid
+        && likeId == request.resource.data.userId + '__' + request.resource.data.targetType + '__' + request.resource.data.targetId;
       allow delete: if isAuthenticated()
         && resource.data.userId == request.auth.uid;
     }

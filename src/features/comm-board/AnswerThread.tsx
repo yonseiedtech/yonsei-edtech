@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Loader2, Send, ThumbsUp, Trash2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { commAnswersApi, commLikesApi, commQuestionsApi } from "@/lib/bkend";
 import type { CommAnswer, CommBoard, CommQuestion, User } from "@/types";
@@ -33,10 +34,10 @@ export default function AnswerThread({
   const { data: answers = [], isLoading } = useQuery({
     queryKey: ["comm-answers", question.id],
     queryFn: async () => {
-      const res = await commAnswersApi.listByBoard(board.id);
-      return (res.data as CommAnswer[])
-        .filter((a) => a.questionId === question.id)
-        .sort((a, b) => (a.createdAt ?? "").localeCompare(b.createdAt ?? ""));
+      const res = await commAnswersApi.listByQuestion(question.id);
+      return (res.data as CommAnswer[]).sort((a, b) =>
+        (a.createdAt ?? "").localeCompare(b.createdAt ?? ""),
+      );
     },
   });
 
@@ -111,7 +112,7 @@ export default function AnswerThread({
   return (
     <div className="mt-2 space-y-2 border-l-2 border-muted pl-3">
       {isLoading ? (
-        <p className="text-[11px] text-muted-foreground">답변 불러오는 중…</p>
+        <Skeleton className="h-10 w-full" />
       ) : (
         answers.map((a) => {
           const accepted = question.resolvedAnswerId === a.id;

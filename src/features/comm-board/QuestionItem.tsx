@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { commLikesApi, commQuestionsApi } from "@/lib/bkend";
 import type { CommBoard, CommQuestion, User } from "@/types";
 import { canDeletePost } from "./comm-helpers";
+import { isStaffOrAbove } from "@/lib/permissions";
 import AnswerThread from "./AnswerThread";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -26,7 +27,7 @@ export default function QuestionItem({ board, question, user, likedSet, onChange
   const name = question.anonymous ? "익명" : question.authorName ?? question.guestName ?? "게스트";
   // 채택 권한: 질문 작성자(로그인 본인) 또는 보드 소유자 또는 운영진
   const canAccept =
-    !!user && (question.authorId === user.id || user.id === board.ownerId || user.role === "staff" || user.role === "president" || user.role === "admin" || user.role === "sysadmin");
+    !!user && (question.authorId === user.id || user.id === board.ownerId || isStaffOrAbove(user));
 
   async function handleLike() {
     if (!user) {

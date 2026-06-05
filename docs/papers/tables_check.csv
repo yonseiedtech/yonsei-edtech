@@ -1,0 +1,68 @@
+type,theory_or_domain,raw_metric,computed_value,body_reference_line_v3,table_reference,consistency_note
+row,Self-Efficacy + Gamification,row_mean,2.44,§4.2 Table 1 row 1; §4.2 body line 257; §5.1 cluster narrative,Table 1,OK — body cites 2.44 explicitly
+row,Self-Efficacy + Gamification,핵심셀수,0,§4.2 Table 1 row 1; §4.2 body line 257,Table 1,OK
+row,Self-Efficacy + Gamification,매핑도메인수,8,§4.2 Table 1 row 1; §4.2 body line 257; §5.1 cluster narrative,Table 1,OK
+row,SDT,row_mean,2.00,§4.2 Table 1 row 2,Table 1,OK
+row,SDT,핵심셀수,1,§4.2 Table 1 row 2,Table 1,OK
+row,SDT,매핑도메인수,7,§4.2 Table 1 row 2,Table 1,OK
+row,CoP,row_mean,2.00,§4.2 Table 1 row 3,Table 1,OK
+row,CoP,핵심셀수,1,§4.2 Table 1 row 3,Table 1,OK
+row,CoP,매핑도메인수,8,§4.2 Table 1 row 3,Table 1,OK
+row,Open Science + Procedural J.,row_mean,1.78,§4.2 Table 1 row 4,Table 1,OK
+row,Open Science + Procedural J.,핵심셀수,2,§4.2 Table 1 row 4; §4.2 body line 257 (응집),Table 1,OK
+row,Open Science + Procedural J.,매핑도메인수,5,§4.2 Table 1 row 4,Table 1,OK
+row,SRL,row_mean,1.67,§4.2 Table 1 row 5,Table 1,OK
+row,SRL,핵심셀수,1,§4.2 Table 1 row 5,Table 1,OK
+row,SRL,매핑도메인수,5,§4.2 Table 1 row 5,Table 1,OK
+row,Formative Assessment,row_mean,1.44,§4.2 Table 1 row 6 (v4 reordered),Table 1,OK — v4에서 row_mean 내림차순 재정렬로 FA를 Cog.App. 위로 이동
+row,Formative Assessment,핵심셀수,1,§4.2 Table 1 row 6,Table 1,OK
+row,Formative Assessment,매핑도메인수,5,§4.2 Table 1 row 6,Table 1,OK
+row,Cognitive Apprenticeship,row_mean,1.33,§4.2 Table 1 row 7 (v4 reordered),Table 1,OK — v4에서 row_mean 내림차순 재정렬
+row,Cognitive Apprenticeship,핵심셀수,1,§4.2 Table 1 row 7,Table 1,OK
+row,Cognitive Apprenticeship,매핑도메인수,4,§4.2 Table 1 row 7,Table 1,OK
+row,CLT,row_mean,1.11,§4.2 Table 1 row 8,Table 1,OK
+row,CLT,핵심셀수,1,§4.2 Table 1 row 8,Table 1,OK
+row,CLT,매핑도메인수,4,§4.2 Table 1 row 8,Table 1,OK
+row,Distributed Cognition,row_mean,1.00,§4.2 Table 1 row 9,Table 1,OK
+row,Distributed Cognition,핵심셀수,1,§4.2 Table 1 row 9,Table 1,OK
+row,Distributed Cognition,매핑도메인수,3,§4.2 Table 1 row 9,Table 1,OK
+row,CTML,row_mean,0.78,§4.2 Table 1 row 10,Table 1,OK
+row,CTML,핵심셀수,0,§4.2 Table 1 row 10,Table 1,OK
+row,CTML,매핑도메인수,4,§4.2 Table 1 row 10,Table 1,OK
+col,게임화,col_mean,2.40,§4.2 Table 2 row 1,Table 2,OK
+col,게임화,매핑이론수,5,§4.2 Table 2 row 1,Table 2,OK
+col,CoP 계보,col_mean,2.20,§4.2 Table 2 row 2,Table 2,OK
+col,CoP 계보,매핑이론수,5,§4.2 Table 2 row 2,Table 2,OK
+col,분석 매트릭스,col_mean,1.90,§4.2 Table 2 row 3,Table 2,OK
+col,분석 매트릭스,매핑이론수,7,§4.2 Table 2 row 3,Table 2,OK
+col,공동 작성,col_mean,1.90,§4.2 Table 2 row 4; §4.2 body line 273 (가장 넓은 이론 적용 진술),Table 2,OK — body explicitly cites 8 mapped theories matching Table 2
+col,공동 작성,매핑이론수,8,§4.2 Table 2 row 4; §4.2 body line 273,Table 2,OK
+col,학습 잔디,col_mean,1.40,§4.2 Table 2 row 5,Table 2,OK
+col,학습 잔디,매핑이론수,5,§4.2 Table 2 row 5,Table 2,OK
+col,출판 마법사,col_mean,1.40,§4.2 Table 2 row 6,Table 2,OK
+col,출판 마법사,매핑이론수,6,§4.2 Table 2 row 6,Table 2,OK
+col,검수 게이트,col_mean,1.20,§4.2 Table 2 row 7,Table 2,OK
+col,검수 게이트,매핑이론수,5,§4.2 Table 2 row 7,Table 2,OK
+col,저자 동의,col_mean,1.20,§4.2 Table 2 row 8,Table 2,OK
+col,저자 동의,매핑이론수,5,§4.2 Table 2 row 8,Table 2,OK
+col,데이터 공유,col_mean,0.60,§4.2 Table 2 row 9; §4.2 body line 273 (가장 적은 3개 진술),Table 2,OK — body cites 3 mapped theories matching Table 2
+col,데이터 공유,매핑이론수,3,§4.2 Table 2 row 9; §4.2 body line 273,Table 2,OK
+cluster,동기 군집,members,SDT/Self-Eff+Gam/SRL,§4.2 body line 275 cluster narrative,§4.2 cluster paragraph,OK — members consistent with Table 1
+cluster,동기 군집,도메인 분포,5-8,§4.2 body line 275; §4.2 Table 1 (SDT=7/Self-Eff+Gam=8/SRL=5),§4.2 cluster paragraph,OK — v4에서 narrative와 §6.1 명제 1 모두 5-8로 정정. SRL 포함 정확 범위.
+cluster,인지 군집,members,CLT/CTML/Dist.Cog.,§4.2 body line 275 cluster narrative,§4.2 cluster paragraph,OK
+cluster,인지 군집,도메인 분포,3-4,§4.2 body line 275; Table 1 (CLT=4/CTML=4/Dist.Cog=3),§4.2 cluster paragraph,OK — range 3-4 matches Table 1 exactly
+cluster,사회 군집,members,CoP/Cog.App./FA,§4.2 body line 275 cluster narrative,§4.2 cluster paragraph,OK
+cluster,사회 군집,도메인 분포,4-8,§4.2 body line 275; Table 1 (CoP=8/Cog.App.=4/FA=5),§4.2 cluster paragraph,OK — range 4-8 matches Table 1 exactly
+conclusion_claim,§6.1 명제 1,동기 군집 행 평균 범위,1.67-2.44,§6.1 body claim,§4.2 Table 1,OK — SRL=1.67 / SDT=2.00 / Self-Eff+Gam=2.44 → range 1.67-2.44 matches
+conclusion_claim,§6.1 명제 1,인지 군집 행 평균 범위,0.78-1.11,§6.1 body claim,§4.2 Table 1,OK — CTML=0.78 / Dist.Cog=1.00 / CLT=1.11 → range 0.78-1.11 matches
+conclusion_claim,§6.1 명제 1,동기 군집 도메인 분포,5-8,§6.1 body claim,§4.2 Table 1,OK — v4에서 5-8로 정정
+conclusion_claim,§6.1 명제 1,인지 군집 도메인 분포,3-4,§6.1 body claim,§4.2 Table 1,OK
+conclusion_claim,§6.2 명제 2,보완 사례 수,3,§6.2 body claim; §4.3.4/§4.3.5/§4.3.6 in §4.3,§4.3,OK
+conclusion_claim,§6.2 명제 2,긴장 사례 수,2,§6.2 body claim implicit; §4.3.2/§4.3.3,§4.3,OK
+conclusion_claim,§6.2 명제 2,시너지 사례 수,1,§6.2 body claim implicit; §4.3.1,§4.3,OK
+limitation_pair,L1,단일 사례 일반화,F1=CoP × 졸업생 DB,§5.5 L1-F1 pair,§5.5,OK — F1 addresses other-society comparison
+limitation_pair,L2,Insider perspective,F2=Open Science × 저자 동의,§5.5 L2-F2 pair,§5.5,POTENTIAL LOOSE PAIRING — F2 measures consent gate effects on procedural justice perception by non-operator members; this indirectly addresses operator bias but a tighter pair would be a non-operator-led replication study. Flag for v4 refinement.
+limitation_pair,L3,측정 지표 미실증,F3=SRL × 학습 잔디 (MSLQ),§5.5 L3-F3 pair,§5.5,OK
+limitation_pair,L4,시스템 진화 시 변동,F4=CLT × 출판 마법사 (NASA-TLX),§5.5 L4-F4 pair,§5.5,POTENTIAL LOOSE PAIRING — F4 measures wizard segmentation effects on cognitive load; addresses L4 only if the wizard's stage count is the variable that changes over time. Tighter pair would be longitudinal matrix re-evaluation at Phase 2-4. Flag for v4.
+limitation_pair,L5,자기보고식 측정 의존,F5=Distributed Cognition × 공동 작성 (행동 데이터),§5.5 L5-F5 pair,§5.5,OK — F5 explicitly uses log/behavioral data
+limitation_pair,L6,양적 단일 설계 한계,F6=Cognitive Apprenticeship × 검수 (질적+텍스트 변화 혼합),§5.5 L6-F6 pair,§5.5,POTENTIAL CHALLENGE — Critic agent flagged: this paper IS framework synthesis (not quantitative), so L6 phrasing "양적 단일 설계" may not apply to this matrix paper. Reframe L6 as "framework-synthesis 단독 한계" or similar.

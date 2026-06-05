@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MessageCircleQuestion, Plus, Lock, ChevronRight } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { commBoardsApi } from "@/lib/bkend";
 import type { CommBoard, CommContextType, User } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -59,7 +60,7 @@ export default function CommBoardSection({
       </div>
 
       {isLoading ? (
-        <p className="text-[11px] text-muted-foreground">불러오는 중…</p>
+        <div className="space-y-1.5"><Skeleton className="h-9 w-full" /><Skeleton className="h-9 w-full" /></div>
       ) : boards.length === 0 ? (
         <p className="rounded border border-dashed bg-muted/20 px-2 py-3 text-center text-[11px] text-muted-foreground">
           아직 소통 보드가 없습니다.{user ? " '보드 만들기'로 질문/답변 보드를 열어보세요." : ""}

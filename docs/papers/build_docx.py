@@ -26,9 +26,31 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
+import sys
+
 HERE = os.path.dirname(os.path.abspath(__file__))
-SRC = os.path.join(HERE, "theory-implementation-matrix.draft.md")
-DST = os.path.join(HERE, "theory-implementation-matrix.draft.docx")
+
+
+def _resolve_paths():
+    """CLI 인자로 source/dest 지정 가능. 기본은 final.v3."""
+    if len(sys.argv) >= 2:
+        src = sys.argv[1]
+        if not os.path.isabs(src):
+            src = os.path.join(HERE, src)
+    else:
+        src = os.path.join(HERE, "theory-implementation-matrix.final.v3.md")
+    if len(sys.argv) >= 3:
+        dst = sys.argv[2]
+        if not os.path.isabs(dst):
+            dst = os.path.join(HERE, dst)
+    else:
+        # src의 .md 확장자를 .docx로 교체
+        base, _ = os.path.splitext(src)
+        dst = base + ".docx"
+    return src, dst
+
+
+SRC, DST = _resolve_paths()
 
 
 def set_default_font(doc, font_name="Malgun Gothic", size=11):

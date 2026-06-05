@@ -3373,7 +3373,17 @@ export const commQuestionsApi = {
     }),
   update: (id: string, data: Partial<CommQuestion>) =>
     dataApi.update<CommQuestion>("comm_questions", id, data as unknown as Record<string, unknown>),
-  delete: (id: string) => dataApi.delete("comm_questions", id),
+  delete: async (id: string): Promise<void> => {
+    // cascade: 자식 답변 함께 삭제 (UI confirm "답변도 함께 사라집니다" 와 일치)
+    const res = await dataApi.list<CommAnswer>("comm_answers", {
+      "filter[questionId]": id,
+      limit: 500,
+    });
+    await Promise.all(
+      (res.data as CommAnswer[]).map((a) => dataApi.delete("comm_answers", a.id)),
+    );
+    await dataApi.delete("comm_questions", id);
+  },
   /** 채택/해제 — 질문 문서만 갱신(답변엔 쓰지 않음, UI 가 resolvedAnswerId 로 판단) */
   setResolved: (id: string, resolved: boolean, resolvedAnswerId: string | null) =>
     dataApi.update<CommQuestion>("comm_questions", id, {
@@ -3385,6 +3395,8 @@ export const commQuestionsApi = {
 export const commAnswersApi = {
   listByBoard: (boardId: string) =>
     dataApi.list<CommAnswer>("comm_answers", { "filter[boardId]": boardId, limit: 2000 }),
+  listByQuestion: (questionId: string) =>
+    dataApi.list<CommAnswer>("comm_answers", { "filter[questionId]": questionId, limit: 500 }),
   create: async (data: Record<string, unknown>): Promise<CommAnswer> => {
     const created = await dataApi.create<CommAnswer>("comm_answers", { ...data, likeCount: 0 });
     // denorm: 질문 answerCount +1 (likeCount/answerCount/updatedAt 만 바꾸므로 rules 허용)

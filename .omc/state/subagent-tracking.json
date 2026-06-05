@@ -963,10 +963,87 @@
       "status": "completed",
       "completed_at": "2026-04-28T11:55:37.710Z",
       "duration_ms": 30251
+    },
+    {
+      "agent_id": "a7a5dc5851c2f739c",
+      "agent_type": "oh-my-claudecode:planner",
+      "started_at": "2026-04-29T09:32:17.658Z",
+      "parent_mode": "none",
+      "status": "running"
+    },
+    {
+      "agent_id": "ac0995ca8a8702cc7",
+      "agent_type": "oh-my-claudecode:architect",
+      "started_at": "2026-04-29T09:32:27.025Z",
+      "parent_mode": "none",
+      "status": "running"
+    },
+    {
+      "agent_id": "adb51504b540f13ad",
+      "agent_type": "Explore",
+      "started_at": "2026-04-29T09:43:22.463Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-29T09:57:35.778Z",
+      "duration_ms": 853315
+    },
+    {
+      "agent_id": "ae3413371c819fe25",
+      "agent_type": "Explore",
+      "started_at": "2026-04-29T09:43:35.268Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-29T09:56:12.505Z",
+      "duration_ms": 757237
+    },
+    {
+      "agent_id": "a1def3087130ce3e2",
+      "agent_type": "Explore",
+      "started_at": "2026-04-29T09:44:00.555Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-29T10:01:29.901Z",
+      "duration_ms": 1049346
+    },
+    {
+      "agent_id": "a96eb7d1170e97aea",
+      "agent_type": "Explore",
+      "started_at": "2026-04-29T09:44:06.289Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-29T09:58:25.505Z",
+      "duration_ms": 859216
+    },
+    {
+      "agent_id": "ad88c70e34587a5eb",
+      "agent_type": "Explore",
+      "started_at": "2026-04-29T09:44:12.903Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-29T09:58:06.479Z",
+      "duration_ms": 833576
+    },
+    {
+      "agent_id": "a76ecdc496cb7e924",
+      "agent_type": "Plan",
+      "started_at": "2026-04-29T10:02:34.029Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-29T10:06:17.271Z",
+      "duration_ms": 223242
+    },
+    {
+      "agent_id": "aabb078427bc71f61",
+      "agent_type": "Plan",
+      "started_at": "2026-04-29T10:03:14.339Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-29T10:08:36.695Z",
+      "duration_ms": 322356
     }
   ],
-  "total_spawned": 108,
-  "total_completed": 104,
+  "total_spawned": 117,
+  "total_completed": 111,
   "total_failed": 0,
-  "last_updated": "2026-04-28T22:46:20.751Z"
+  "last_updated": "2026-05-01T14:02:51.117Z"
 }

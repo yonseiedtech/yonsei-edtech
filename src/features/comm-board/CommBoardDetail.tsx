@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Lock, Monitor, Pencil, Trash2, Unlock } from "lucide-react";
@@ -14,6 +14,7 @@ import QuestionItem from "./QuestionItem";
 import CommBoardDialog from "./CommBoardDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Props {
   boardId: string;
@@ -30,6 +31,10 @@ export default function CommBoardDetail({ boardId, user }: Props) {
     queryFn: () => commBoardsApi.get(boardId),
     retry: false,
   });
+
+  useEffect(() => {
+    if (board?.defaultSort) setSort(board.defaultSort);
+  }, [board?.defaultSort]);
 
   const { data: questions = [] } = useQuery({
     queryKey: ["comm-questions", boardId],
@@ -75,7 +80,7 @@ export default function CommBoardDetail({ boardId, user }: Props) {
   }
 
   if (isLoading) {
-    return <p className="p-6 text-sm text-muted-foreground">불러오는 중…</p>;
+    return (<div className="mx-auto max-w-2xl space-y-3 p-4"><Skeleton className="h-24 w-full" /><Skeleton className="h-20 w-full" /></div>);
   }
   if (isError || !board) {
     return (
