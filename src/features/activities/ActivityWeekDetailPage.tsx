@@ -39,6 +39,8 @@ import StudySessionPreClassCard from "./StudySessionPreClassCard";
 import StudySessionReflectionCard from "./StudySessionReflectionCard";
 import StudySessionAssignmentsCard from "./StudySessionAssignmentsCard";
 import StudySessionNotesCard from "./StudySessionNotesCard";
+import CommBoardSection from "@/features/comm-board/CommBoardSection";
+import type { CommContextType } from "@/types";
 
 const STATUS_LABELS: Record<ActivityProgress["status"], string> = {
   planned: "예정",
@@ -668,6 +670,14 @@ export default function ActivityWeekDetailPage({
           </CardContent>
         </Card>
       )}
+
+      <CommBoardSection
+        contextType={type as CommContextType}
+        contextId={activityId}
+        activityProgressId={week.id}
+        week={week.week}
+        user={user}
+      />
 
       {/* 회차 삭제 (canEdit) — 회차 자체 삭제. 자료/회고/과제는 ref 삭제 안되므로 별도 정리 필요. */}
       {canEdit && (

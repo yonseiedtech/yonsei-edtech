@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSeminar, useUpdateSeminar, useToggleAttendance, useAttendee, useCheckinStats, useWaitlist, useJoinWaitlist, useCancelWaitlist } from "@/features/seminar/useSeminar";
 import { registrationsApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
+import CommBoardSection from "@/features/comm-board/CommBoardSection";
 import { isAtLeast } from "@/lib/permissions";
 import { streamAI } from "@/lib/ai-client";
 import { Button } from "@/components/ui/button";
@@ -577,6 +578,7 @@ function SeminarDetail({ id }: { id: string }) {
             세미나 후기
           </h2>
           <ReviewsSection seminarId={id} isStaff={isStaff} speakerInfo={{ name: seminar.speaker, affiliation: seminar.speakerAffiliation, position: seminar.speakerPosition }} />
+          <CommBoardSection contextType="seminar" contextId={id} user={user} />
           <div className="mt-4 text-center">
             <Link href={`/seminars/${id}/review`}>
               <Button variant="outline" size="sm" className="gap-1">
