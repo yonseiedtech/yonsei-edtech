@@ -1,0 +1,70 @@
+// 소통 보드(Q&A) 타입 — 스터디 회차·세미나 공용
+export type CommContextType = "study" | "project" | "external" | "seminar";
+export type CommBoardStatus = "open" | "closed";
+export type CommSortMode = "recent" | "popular";
+export type CommLikeTarget = "question" | "answer";
+
+export interface CommBoard {
+  id: string;
+  contextType: CommContextType;
+  contextId: string;
+  /** 회차 기반 활동의 특정 회차 progress id (세미나는 없음) */
+  activityProgressId?: string;
+  week?: number;
+  title: string;
+  description?: string;
+  ownerId: string;
+  ownerName: string;
+  /** 비로그인 질문/답변 허용 */
+  allowGuest: boolean;
+  /** 익명 옵션 노출 */
+  allowAnonymous: boolean;
+  status: CommBoardStatus;
+  defaultSort: CommSortMode;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CommQuestion {
+  id: string;
+  boardId: string;
+  contextId: string;
+  authorId?: string;
+  authorName?: string;
+  guestName?: string;
+  anonymous: boolean;
+  body: string;
+  resolved: boolean;
+  /** 채택된 답변 id (UI 에서 답변의 채택 여부를 이 값으로 판단) */
+  resolvedAnswerId?: string;
+  likeCount: number;
+  answerCount: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CommAnswer {
+  id: string;
+  questionId: string;
+  boardId: string;
+  authorId?: string;
+  authorName?: string;
+  guestName?: string;
+  anonymous: boolean;
+  body: string;
+  likeCount: number;
+  createdAt?: string;
+}
+
+export interface CommLike {
+  id: string;
+  userId: string;
+  targetType: CommLikeTarget;
+  targetId: string;
+  createdAt?: string;
+}
+
+export const COMM_SORT_LABELS: Record<CommSortMode, string> = {
+  recent: "최신순",
+  popular: "인기순",
+};

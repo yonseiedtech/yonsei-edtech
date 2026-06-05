@@ -81,3 +81,6 @@ export * from "./collaborative-research";
 
 // 연구지(Research Journal) 출판 트랙 — collaborative-research Phase 3
 export * from "./research-journal";
+
+// 소통 보드 (Q&A Communication Board) — 스터디 회차·세미나 공용
+export * from "./comm-board";
