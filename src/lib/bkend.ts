@@ -105,6 +105,12 @@ import type {
   UpdateMeetingInput,
   CreateMilestoneInput,
   UpdateMilestoneInput,
+  CommBoard,
+  CommQuestion,
+  CommAnswer,
+  CommLike,
+  CommContextType,
+  CommLikeTarget,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -3333,4 +3339,94 @@ export const journalArticlesApi = {
     }),
 
   remove: (id: string) => dataApi.delete(JOURNAL_ARTICLES_COL, id),
+};
+
+// ─────────────────────────────────────────────────────────────
+// 소통 보드 (Q&A Communication Board) — 스터디 회차·세미나 공용
+// 보드 read 공개, 질문/답변은 firestore.rules 에서 allowGuest+status 게이트.
+// 좋아요/답변 카운트는 increment() 로 경쟁 방지(denorm).
+// ─────────────────────────────────────────────────────────────
+export const commBoardsApi = {
+  listByContext: (contextType: CommContextType, contextId: string, activityProgressId?: string) =>
+    dataApi.list<CommBoard>("comm_boards", {
+      "filter[contextType]": contextType,
+      "filter[contextId]": contextId,
+      ...(activityProgressId ? { "filter[activityProgressId]": activityProgressId } : {}),
+      limit: 100,
+    }),
+  get: (id: string) => dataApi.get<CommBoard>("comm_boards", id),
+  create: (data: Record<string, unknown>) => dataApi.create<CommBoard>("comm_boards", data),
+  update: (id: string, data: Partial<CommBoard>) =>
+    dataApi.update<CommBoard>("comm_boards", id, data as unknown as Record<string, unknown>),
+  delete: (id: string) => dataApi.delete("comm_boards", id),
+};
+
+export const commQuestionsApi = {
+  listByBoard: (boardId: string) =>
+    dataApi.list<CommQuestion>("comm_questions", { "filter[boardId]": boardId, limit: 500 }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<CommQuestion>("comm_questions", {
+      ...data,
+      resolved: false,
+      likeCount: 0,
+      answerCount: 0,
+    }),
+  update: (id: string, data: Partial<CommQuestion>) =>
+    dataApi.update<CommQuestion>("comm_questions", id, data as unknown as Record<string, unknown>),
+  delete: (id: string) => dataApi.delete("comm_questions", id),
+  /** 채택/해제 — 질문 문서만 갱신(답변엔 쓰지 않음, UI 가 resolvedAnswerId 로 판단) */
+  setResolved: (id: string, resolved: boolean, resolvedAnswerId: string | null) =>
+    dataApi.update<CommQuestion>("comm_questions", id, {
+      resolved,
+      resolvedAnswerId: resolvedAnswerId ?? null,
+    } as unknown as Record<string, unknown>),
+};
+
+export const commAnswersApi = {
+  listByBoard: (boardId: string) =>
+    dataApi.list<CommAnswer>("comm_answers", { "filter[boardId]": boardId, limit: 2000 }),
+  create: async (data: Record<string, unknown>): Promise<CommAnswer> => {
+    const created = await dataApi.create<CommAnswer>("comm_answers", { ...data, likeCount: 0 });
+    // denorm: 질문 answerCount +1 (likeCount/answerCount/updatedAt 만 바꾸므로 rules 허용)
+    await updateDoc(doc(db, "comm_questions", String(data.questionId)), {
+      answerCount: increment(1),
+    });
+    return created;
+  },
+  delete: async (answer: Pick<CommAnswer, "id" | "questionId">): Promise<void> => {
+    await dataApi.delete("comm_answers", answer.id);
+    await updateDoc(doc(db, "comm_questions", answer.questionId), {
+      answerCount: increment(-1),
+    });
+  },
+};
+
+export const commLikesApi = {
+  /** 로그인 사용자가 보드 내에서 누른 좋아요 집합("type__id") — UI liked 상태용 */
+  listMineSet: async (userId: string): Promise<Set<string>> => {
+    const res = await dataApi.list<CommLike>("comm_likes", {
+      "filter[userId]": userId,
+      limit: 2000,
+    });
+    return new Set(res.data.map((l) => `${l.targetType}__${l.targetId}`));
+  },
+  /** 토글 — 켜지면 true 반환. 대상 likeCount increment. (로그인 전용) */
+  toggle: async (
+    userId: string,
+    targetType: CommLikeTarget,
+    targetId: string,
+  ): Promise<boolean> => {
+    const id = `${userId}__${targetType}__${targetId}`;
+    const ref = doc(db, "comm_likes", id);
+    const snap = await getDoc(ref);
+    const targetCol = targetType === "question" ? "comm_questions" : "comm_answers";
+    if (snap.exists()) {
+      await deleteDoc(ref);
+      await updateDoc(doc(db, targetCol, targetId), { likeCount: increment(-1) });
+      return false;
+    }
+    await setDoc(ref, { userId, targetType, targetId, createdAt: serverTimestamp() });
+    await updateDoc(doc(db, targetCol, targetId), { likeCount: increment(1) });
+    return true;
+  },
 };
