@@ -1029,6 +1029,14 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    // ─── Yonsei Agent Workflow Runs (Sprint 70 — 멀티스텝 워크플로우) ───
+    // agent_jobs 와 동일 정책: 본인 run 만 read/list, 쓰기는 서버(Admin SDK) 전용.
+    match /agent_workflow_runs/{docId} {
+      allow read, list: if isAuthenticated()
+        && (resource == null || resource.data.userId == request.auth.uid);
+      allow create, update, delete: if false;
+    }
+
     // ─── Roadmap Stages (Sprint 67-AR — 학기별 로드맵 CMS) ───
     // 회원 read-only. 운영진(staff 이상)이 CRUD.
     match /roadmap_stages/{stageId} {

@@ -47,10 +47,11 @@ function renderPostContent(text: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
   return escaped
-    .replace(
-      /!\[([^\]]*)\]\(([^)]+)\)/g,
-      '<img src="$2" alt="$1" class="my-3 max-w-full rounded-lg" style="max-height:600px" />',
-    )
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt: string, src: string) => {
+      // http(s) 또는 사이트 내부 경로만 허용 — javascript:/data: 등 차단
+      if (!/^(https?:\/\/|\/(?!\/))/i.test(src.trim())) return match;
+      return `<img src="${src.trim()}" alt="${alt}" class="my-3 max-w-full rounded-lg" style="max-height:600px" />`;
+    })
     .replace(/\n/g, "<br />");
 }
 

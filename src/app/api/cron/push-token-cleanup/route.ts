@@ -36,6 +36,17 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // 운영 가시성: /console/cron-logs 에서 실행 이력 확인 가능하도록 push_logs 에 기록
+    const runDate = new Date().toISOString().slice(0, 10);
+    await db.collection("push_logs").doc(`push_token_cleanup_${runDate}`).set({
+      kind: "push_token_cleanup",
+      date: runDate,
+      cutoffIso,
+      deleted,
+      kept,
+      sentAt: new Date().toISOString(),
+    });
+
     return Response.json({ ok: true, cutoffIso, deleted, kept });
   } catch (err) {
     console.error("[cron/push-token-cleanup]", err);

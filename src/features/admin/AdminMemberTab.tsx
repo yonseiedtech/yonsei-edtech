@@ -189,11 +189,11 @@ export default function AdminMemberTab() {
     [truePending, allMembers],
   );
 
-  // 자동 승인 토글 (localStorage 영속)
+  // 자동 승인 토글 (localStorage 영속, 기본값 ON — 명시적으로 꺼야 수동 모드)
   const [autoApprove, setAutoApprove] = useState(false);
   useEffect(() => {
     if (typeof window === "undefined") return;
-    setAutoApprove(localStorage.getItem("autoApproveEnabled") === "true");
+    setAutoApprove(localStorage.getItem("autoApproveEnabled") !== "false");
   }, []);
   function toggleAutoApprove(next: boolean) {
     setAutoApprove(next);

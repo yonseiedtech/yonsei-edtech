@@ -928,7 +928,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                     </div>
                     <div>
                       <p className="font-semibold">알림센터</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">수신한 모든 알림 목록 (준비 중)</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">수신한 모든 알림 목록</p>
                     </div>
                   </div>
                   <ChevronRight size={16} className="shrink-0 text-muted-foreground" />

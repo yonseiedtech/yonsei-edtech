@@ -362,8 +362,8 @@ function DashboardContent() {
   async function handleToggleEditMode() {
     const next = !editMode;
     setEditMode(next);
+    const { toast } = await import("sonner");
     if (next) {
-      const { toast } = await import("sonner");
       // 모바일 환경 감지: pointer 가 coarse 이면 터치 디바이스
       const isTouch =
         typeof window !== "undefined" &&
@@ -373,6 +373,8 @@ function DashboardContent() {
       } else {
         toast.info("드래그로 순서 변경, 토글로 숨김. 자동 저장됩니다.");
       }
+    } else {
+      toast.success("대시보드 설정이 저장되었습니다");
     }
   }
 

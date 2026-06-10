@@ -41,6 +41,13 @@ interface ActivityLite {
   date?: string;
 }
 
+interface QuestionLite {
+  id: string;
+  boardId: string;
+  body: string;
+  createdAt: string;
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
@@ -116,7 +123,29 @@ async function loadUpcomingActivities(db: FirebaseFirestore.Firestore, todayYmd:
     .slice(0, 3);
 }
 
-function buildHtml({ seminars, posts, activities }: { seminars: SeminarLite[]; posts: PostLite[]; activities: ActivityLite[] }): string {
+/** 최근 14일 내 작성된 미답변(답변 0건·미해결) 소통 보드 질문 — Sprint UX-1 */
+async function loadUnansweredQuestions(db: FirebaseFirestore.Firestore): Promise<QuestionLite[]> {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 14);
+  const cutoffIso = cutoff.toISOString();
+  const snap = await db.collection("comm_questions").where("createdAt", ">=", cutoffIso).limit(50).get();
+  return snap.docs
+    .map((d) => {
+      const data = d.data() as { boardId?: string; body?: string; createdAt?: string; answerCount?: number; resolved?: boolean };
+      return {
+        id: d.id,
+        boardId: data.boardId ?? "",
+        body: data.body ?? "",
+        createdAt: data.createdAt ?? "",
+        _open: (data.answerCount ?? 0) === 0 && data.resolved !== true,
+      };
+    })
+    .filter((q) => q._open && q.boardId)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, 3);
+}
+
+function buildHtml({ seminars, posts, activities, questions }: { seminars: SeminarLite[]; posts: PostLite[]; activities: ActivityLite[]; questions: QuestionLite[] }): string {
   const base = "https://yonsei-edtech.vercel.app";
   const seminarHtml = seminars.length === 0
     ? "<li style=\"color:#888\">예정된 세미나가 없습니다.</li>"
@@ -142,7 +171,10 @@ function buildHtml({ seminars, posts, activities }: { seminars: SeminarLite[]; p
 
       <h3 style="color: #003876; border-left: 4px solid #003876; padding-left: 8px; margin: 24px 0 8px;">🎯 다가오는 활동</h3>
       <ul style="line-height: 1.9; padding-left: 20px;">${actHtml}</ul>
-
+${questions.length > 0 ? `
+      <h3 style="color: #003876; border-left: 4px solid #003876; padding-left: 8px; margin: 24px 0 8px;">💬 답을 기다리는 질문</h3>
+      <ul style="line-height: 1.9; padding-left: 20px;">${questions.map((q) => `<li><a href="${base}/boards/${q.boardId}" style="color:#003876;text-decoration:none">${escapeHtml(q.body.length > 60 ? `${q.body.slice(0, 60)}…` : q.body)}</a></li>`).join("")}</ul>
+` : ""}
       <p style="margin-top: 32px;"><a href="${base}/dashboard" style="display: inline-block; padding: 10px 20px; background: #003876; color: white; text-decoration: none; border-radius: 6px;">대시보드 가기</a></p>
 
       <hr style="border: none; border-top: 1px solid #eee; margin: 32px 0 16px;" />
@@ -160,14 +192,15 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
   if (!key) return { sent: 0, recipients: 0 };
 
   const todayYmd = todayYmdKst();
-  const [seminars, posts, activities] = await Promise.all([
+  const [seminars, posts, activities, questions] = await Promise.all([
     loadUpcomingSeminars(db, todayYmd),
     loadPopularPosts(db),
     loadUpcomingActivities(db, todayYmd),
+    loadUnansweredQuestions(db),
   ]);
 
   // 콘텐츠 0건이면 발송 스킵 (무의미한 메일 방지)
-  if (seminars.length === 0 && posts.length === 0 && activities.length === 0) {
+  if (seminars.length === 0 && posts.length === 0 && activities.length === 0 && questions.length === 0) {
     return { sent: 0, recipients: 0 };
   }
 
@@ -186,7 +219,7 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
 
   const resend = new Resend(key);
   const subject = `[연세교육공학회] 주간 다이제스트 (${weekKey})`;
-  const html = buildHtml({ seminars, posts, activities });
+  const html = buildHtml({ seminars, posts, activities, questions });
 
   let sent = 0;
   for (let i = 0; i < emails.length; i += 50) {
