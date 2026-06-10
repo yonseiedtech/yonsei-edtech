@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -68,6 +68,52 @@ export default function PostForm({ mode = "create", initialData, initialCategory
 
   // 역할별 카테고리 필터 (post-permissions 기반)
   const availableCategories = ACTIVE_POST_CATEGORIES.filter((cat) => canWritePost(cat, user?.role));
+
+  // Sprint UX-7: 작성 중 글 localStorage 임시 저장 — 제출 실패·이탈 시 데이터 유실 방지 (create 모드 한정)
+  const DRAFT_KEY = "yedu_post_draft_v1";
+  const draftRestoredRef = useRef(false);
+  useEffect(() => {
+    if (mode !== "create" || initialContent || draftRestoredRef.current) return;
+    draftRestoredRef.current = true;
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const draft = JSON.parse(raw) as { title?: string; content?: string; category?: PostCategory };
+      if (!draft.title?.trim() && !draft.content?.trim()) return;
+      if (draft.title) setValue("title", draft.title);
+      if (draft.content) setValue("content", draft.content);
+      if (draft.category && availableCategories.includes(draft.category) && !lockCategory) {
+        setCategory(draft.category);
+      }
+      toast.info("임시 저장된 글을 불러왔습니다.", {
+        action: {
+          label: "새로 쓰기",
+          onClick: () => {
+            try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+            setValue("title", "");
+            setValue("content", "");
+          },
+        },
+      });
+    } catch { /* 손상된 draft 는 무시 */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (mode !== "create") return;
+    const t = setTimeout(() => {
+      try {
+        if (!watchTitle?.trim() && !watchContent?.trim()) {
+          localStorage.removeItem(DRAFT_KEY);
+          return;
+        }
+        localStorage.setItem(
+          DRAFT_KEY,
+          JSON.stringify({ title: watchTitle ?? "", content: watchContent ?? "", category, savedAt: new Date().toISOString() }),
+        );
+      } catch { /* storage quota 등 무시 */ }
+    }, 800);
+    return () => clearTimeout(t);
+  }, [mode, watchTitle, watchContent, category]);
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
@@ -137,6 +183,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
         }
       } else {
         const created = await createPost({ ...data, category, imageUrls, poll: poll ?? undefined, ...extra, ...paperPayload }) as unknown as { id: string };
+        try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
         toast.success("게시글이 등록되었습니다.");
         if (created?.id) {
           router.push(`/board/${created.id}`);

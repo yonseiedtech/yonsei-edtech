@@ -6,6 +6,7 @@ import { Check, Loader2, Send, ThumbsUp, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { commAnswersApi, commLikesApi, commQuestionsApi } from "@/lib/bkend";
+import { notifyCommAnswer, notifyCommAnswerAccepted } from "@/features/notifications/notify";
 import type { CommAnswer, CommBoard, CommQuestion, User } from "@/types";
 import { canDeletePost } from "./comm-helpers";
 import { Button } from "@/components/ui/button";
@@ -61,6 +62,16 @@ export default function AnswerThread({
         body: body.trim(),
       });
       setBody("");
+      // Sprint UX-6: 질문 작성자(회원)에게 인앱 알림 — 본인 답변은 제외 (실패해도 비차단)
+      if (question.authorId && question.authorId !== user?.id) {
+        const answererName = user?.name ?? (guestName.trim() || "게스트");
+        void notifyCommAnswer(
+          question.authorId,
+          answererName,
+          board.id,
+          question.body.length > 30 ? `${question.body.slice(0, 30)}…` : question.body,
+        );
+      }
       await queryClient.invalidateQueries({ queryKey: ["comm-answers", question.id] });
       onChanged();
       toast.success("답변이 등록되었습니다.");
@@ -90,6 +101,14 @@ export default function AnswerThread({
     try {
       const newAccepted = question.resolvedAnswerId === a.id ? null : a.id;
       await commQuestionsApi.setResolved(question.id, newAccepted !== null, newAccepted);
+      // Sprint UX-6: 채택 시 답변 작성자(회원)에게 인앱 알림 — 본인 채택은 제외
+      if (newAccepted && a.authorId && a.authorId !== user?.id) {
+        void notifyCommAnswerAccepted(
+          a.authorId,
+          board.id,
+          question.body.length > 30 ? `${question.body.slice(0, 30)}…` : question.body,
+        );
+      }
       onChanged();
       toast.success(newAccepted ? "답변을 채택했습니다." : "채택을 해제했습니다.");
     } catch {

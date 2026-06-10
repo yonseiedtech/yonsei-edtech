@@ -91,6 +91,37 @@ export function notifyComment(
   );
 }
 
+/** 소통 보드: 내 질문에 새 답변 (Sprint UX-6) */
+export function notifyCommAnswer(
+  questionAuthorId: string,
+  answererName: string,
+  boardId: string,
+  questionExcerpt: string,
+) {
+  return create(
+    questionAuthorId,
+    "comment",
+    "내 질문에 새 답변이 달렸습니다",
+    `${answererName}님이 "${questionExcerpt}" 질문에 답변을 남겼습니다.`,
+    `/boards/${boardId}`,
+  );
+}
+
+/** 소통 보드: 내 답변 채택 (Sprint UX-6) */
+export function notifyCommAnswerAccepted(
+  answerAuthorId: string,
+  boardId: string,
+  questionExcerpt: string,
+) {
+  return create(
+    answerAuthorId,
+    "comment",
+    "내 답변이 채택되었습니다 🎉",
+    `"${questionExcerpt}" 질문에 남긴 답변이 채택되었습니다.`,
+    `/boards/${boardId}`,
+  );
+}
+
 export function notifyNewNotice(
   postTitle: string,
   postId: string,
