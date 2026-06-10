@@ -4,8 +4,12 @@ import Link from "next/link";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { useInquiries } from "@/features/inquiry/useInquiry";
 import { usePosts } from "@/features/board/useBoard";
-import { profilesApi } from "@/lib/bkend";
+import { profilesApi, seminarsApi } from "@/lib/bkend";
 import { useQuery } from "@tanstack/react-query";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { getComputedStatus } from "@/lib/seminar-utils";
+import type { Seminar } from "@/types";
 import { Users, Clock, FileText, HelpCircle, LayoutDashboard, Bot, Map, FileUp, Loader2, Globe, ClipboardCheck, MessageSquareQuote, HeartHandshake, BarChart3, ListChecks } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -122,6 +126,40 @@ export default function ConsoleDashboardPage() {
     retry: false,
   });
 
+  // Sprint UX-2: "오늘 처리할 일" 가시성 — 학술활동 pending 신청 총합 (1쿼리)
+  const { data: pendingAppsCount = 0 } = useQuery({
+    queryKey: ["console", "pending-applications-count"],
+    queryFn: async () => {
+      const snap = await getDocs(collection(db, "activity_applicants"));
+      let count = 0;
+      snap.forEach((d) => {
+        const list = (d.data().applicants as { status?: string }[] | undefined) ?? [];
+        count += list.filter((x) => x.status === "pending").length;
+      });
+      return count;
+    },
+    retry: false,
+  });
+
+  // Sprint UX-2: 예정 세미나의 기한 경과 미완료 타임라인 항목 총합 (academic-admin Dashboard 와 동일 기준)
+  const { data: overdueTimelineCount = 0 } = useQuery({
+    queryKey: ["console", "overdue-timeline-count"],
+    queryFn: async () => {
+      const res = await seminarsApi.list({ limit: 100 });
+      const seminars = res.data as unknown as Seminar[];
+      const now = new Date();
+      let count = 0;
+      for (const s of seminars) {
+        if (getComputedStatus(s) !== "upcoming") continue;
+        const timeline = s.timeline ?? [];
+        const diffDays = Math.round((new Date(s.date).getTime() - now.getTime()) / 86400000);
+        count += timeline.filter((t) => !t.done && t.dDay <= 0 && diffDays <= Math.abs(t.dDay)).length;
+      }
+      return count;
+    },
+    retry: false,
+  });
+
   return (
     <div className="space-y-6">
       <ConsolePageHeader
@@ -144,6 +182,22 @@ export default function ConsoleDashboardPage() {
           title={`미답변 문의 ${unansweredCount}건`}
           description="답변 대기 중인 회원 문의가 있습니다. 24시간 내 응답이 학회 운영 표준입니다."
           action={{ label: "문의 답변하기", href: "/console/inquiries" }}
+        />
+      )}
+      {pendingAppsCount > 0 && (
+        <ActionableBanner
+          kind="warning"
+          title={`학술활동 신청 처리 대기 ${pendingAppsCount}건`}
+          description="프로젝트·스터디·대외 학술대회에 승인 대기 중인 신청이 있습니다."
+          action={{ label: "신청 승인 대시보드", href: "/console/academic/applications" }}
+        />
+      )}
+      {overdueTimelineCount > 0 && (
+        <ActionableBanner
+          kind="warning"
+          title={`세미나 준비 기한 경과 ${overdueTimelineCount}건`}
+          description="예정 세미나의 타임라인 준비 항목이 목표일을 지났습니다."
+          action={{ label: "학술 대시보드 확인", href: "/console/academic/manage" }}
         />
       )}
 

@@ -690,6 +690,43 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
     },
   });
 
+  // Sprint UX-3: pending 신청 다중 선택 일괄 승인/거절 (운영진)
+  const [selectedApplicantKeys, setSelectedApplicantKeys] = useState<string[]>([]);
+  const bulkApplicantMutation = useMutation({
+    mutationFn: async ({ keys, status }: { keys: string[]; status: "approved" | "rejected" }) => {
+      if (!activity || keys.length === 0) return;
+      const keySet = new Set(keys);
+      const isExternalReject = type === "external" && status === "rejected";
+      await activitiesApi.mutateRoster(activityId, ({ applicants: cur, participants: curP }) => {
+        const targets = cur.filter((a) => keySet.has((a.userId ?? a.guestKey) as string));
+        const updated = isExternalReject
+          ? cur.filter((a) => !keySet.has((a.userId ?? a.guestKey) as string))
+          : cur.map((a) => (keySet.has((a.userId ?? a.guestKey) as string) ? { ...a, status } : a));
+        let newParticipants = curP;
+        if (status === "approved") {
+          const toAdd = targets
+            .map((t) => t.userId)
+            .filter((id): id is string => !!id && !curP.includes(id));
+          if (toAdd.length > 0) newParticipants = [...curP, ...toAdd];
+        } else if (isExternalReject) {
+          const removeIds = new Set(targets.map((t) => t.userId).filter(Boolean));
+          newParticipants = curP.filter((p) => !removeIds.has(p));
+        }
+        return { applicants: updated, participants: newParticipants };
+      });
+      return { count: keys.length, isExternalReject, status };
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
+      queryClient.invalidateQueries({ queryKey: ["activity-applicants", activityId] });
+      setSelectedApplicantKeys([]);
+      if (result) {
+        const action = result.status === "approved" ? "승인" : result.isExternalReject ? "신청 취소" : "거절";
+        toast.success(`${result.count}명 ${action} 처리되었습니다.`);
+      }
+    },
+  });
+
   if (!activity) {
     return <div className="py-16 text-center text-muted-foreground">활동을 찾을 수 없습니다.</div>;
   }
@@ -2156,6 +2193,57 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 </div>
               )}
               <div className="rounded-2xl border bg-card">
+              {/* Sprint UX-3: pending 일괄 선택 액션 바 */}
+              {isStaff && (() => {
+                const selectableKeys = filtered
+                  .filter((a) => (a.status ?? "pending") !== "approved" && a.status !== "rejected" && (a.userId ?? a.guestKey))
+                  .map((a) => (a.userId ?? a.guestKey) as string);
+                if (selectableKeys.length === 0) return null;
+                const allSelected = selectableKeys.every((k) => selectedApplicantKeys.includes(k));
+                return (
+                  <div className="flex flex-wrap items-center gap-2 border-b bg-muted/40 px-4 py-2.5">
+                    <label className="flex cursor-pointer items-center gap-2 text-xs font-medium">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 accent-primary"
+                        checked={allSelected}
+                        onChange={() =>
+                          setSelectedApplicantKeys(allSelected ? [] : selectableKeys)
+                        }
+                      />
+                      대기 전체 선택 ({selectableKeys.length}명)
+                    </label>
+                    {selectedApplicantKeys.length > 0 && (
+                      <div className="ml-auto flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          className="h-7 gap-1 text-xs"
+                          disabled={bulkApplicantMutation.isPending}
+                          onClick={() => {
+                            if (!confirm(`선택한 ${selectedApplicantKeys.length}명을 일괄 승인하시겠습니까?`)) return;
+                            bulkApplicantMutation.mutate({ keys: selectedApplicantKeys, status: "approved" });
+                          }}
+                        >
+                          <CheckCircle size={12} />선택 {selectedApplicantKeys.length}명 승인
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 gap-1 text-xs text-destructive"
+                          disabled={bulkApplicantMutation.isPending}
+                          onClick={() => {
+                            const action = type === "external" ? "신청 취소" : "거절";
+                            if (!confirm(`선택한 ${selectedApplicantKeys.length}명을 일괄 ${action} 처리하시겠습니까?`)) return;
+                            bulkApplicantMutation.mutate({ keys: selectedApplicantKeys, status: "rejected" });
+                          }}
+                        >
+                          <XCircle size={12} />선택 {type === "external" ? "취소" : "거절"}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
               {filtered.length === 0 ? (
                 <p className="p-6 text-center text-sm text-muted-foreground">
                   {applicants.length === 0 ? "신청 내역이 없습니다." : "해당 유형의 신청자가 없습니다."}
@@ -2168,9 +2256,25 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                     // status 필드가 없는 옛 신청 데이터는 "pending" 으로 간주 (승인 컨트롤이 누락되는 버그 방지)
                     const effectiveStatus: "approved" | "rejected" | "pending" =
                       a.status === "approved" || a.status === "rejected" ? a.status : "pending";
+                    const selectableKey = a.userId ?? a.guestKey;
                     return (
                     <div key={key} className="flex flex-col gap-1.5 px-4 py-3 text-sm sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0 flex-1">
+                        {isStaff && effectiveStatus === "pending" && selectableKey && (
+                          <input
+                            type="checkbox"
+                            className="mr-2 h-4 w-4 translate-y-0.5 accent-primary"
+                            aria-label={`${a.name} 선택`}
+                            checked={selectedApplicantKeys.includes(selectableKey)}
+                            onChange={(e) =>
+                              setSelectedApplicantKeys((prev) =>
+                                e.target.checked
+                                  ? [...prev, selectableKey]
+                                  : prev.filter((k) => k !== selectableKey),
+                              )
+                            }
+                          />
+                        )}
                         <span className="font-medium">{a.name}</span>
                         {type === "external" && (
                           <Badge variant="secondary" className={cn("ml-2 text-[10px]", EXTERNAL_PARTICIPANT_TYPE_COLORS[(a.participantType ?? "attendee") as ExternalParticipantType])}>
