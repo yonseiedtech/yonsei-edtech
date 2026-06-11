@@ -21,6 +21,7 @@ import type {
 } from "@/types/dashboard-layout";
 import {
   DEFAULT_DASHBOARD_LAYOUT,
+  DEFAULT_VISIBLE_WIDGETS,
   DASHBOARD_WIDGET_KEYS,
 } from "@/types/dashboard-layout";
 
@@ -84,7 +85,9 @@ export function isWidgetVisible(
   layout: DashboardLayout | null,
   key: DashboardWidgetKey,
 ): boolean {
-  if (!layout) return true;
+  // 체감 스프린트: 저장 레이아웃 없는 사용자는 핵심 위젯 기본 세트만 노출.
+  // 직접 저장한 레이아웃이 있으면 그대로 존중 (구버전 레이아웃의 미지 키는 기존처럼 표시).
+  if (!layout) return DEFAULT_VISIBLE_WIDGETS.has(key);
   const cfg = layout.widgets.find((w) => w.key === key);
   return cfg ? cfg.visible : true;
 }

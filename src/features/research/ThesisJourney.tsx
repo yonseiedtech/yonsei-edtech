@@ -48,7 +48,8 @@ interface JourneyStage {
   tips: string[];
 }
 
-const STAGES: JourneyStage[] = [
+/** 대시보드 인사 헤더 등 외부에서 단계 메타 재사용 (체감 스프린트) */
+export const JOURNEY_STAGES: JourneyStage[] = [
   {
     stage: 1,
     semesterLabel: "1학기",
@@ -174,7 +175,7 @@ export default function ThesisJourney({ user, editable = true }: Props) {
     setSaving(true);
     try {
       await profilesApi.update(user.id, { thesisJourneyStage: next });
-      toast.success(`내 논문 단계가 "${STAGES[next - 1].title}"(으)로 설정되었습니다.`);
+      toast.success(`내 논문 단계가 "${JOURNEY_STAGES[next - 1].title}"(으)로 설정되었습니다.`);
     } catch {
       toast.error("단계 저장에 실패했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
@@ -182,7 +183,7 @@ export default function ThesisJourney({ user, editable = true }: Props) {
     }
   }
 
-  const stage = STAGES[viewStage - 1];
+  const stage = JOURNEY_STAGES[viewStage - 1];
   const StageIcon = stage.icon;
   const isCurrentView = viewStage === currentStage;
 
@@ -233,7 +234,7 @@ export default function ThesisJourney({ user, editable = true }: Props) {
       {/* ── 단계 수정 모드 ── */}
       {editing && (
         <div className="mt-3 flex flex-wrap gap-1.5 rounded-xl border bg-muted/40 p-2.5">
-          {STAGES.map((s) => (
+          {JOURNEY_STAGES.map((s) => (
             <button
               key={s.stage}
               type="button"
@@ -254,7 +255,7 @@ export default function ThesisJourney({ user, editable = true }: Props) {
 
       {/* ── 스테퍼 ── */}
       <ol className="mt-4 flex items-center gap-0 overflow-x-auto pb-1" aria-label="논문 여정 5단계">
-        {STAGES.map((s, idx) => {
+        {JOURNEY_STAGES.map((s, idx) => {
           const done = s.stage < currentStage;
           const active = s.stage === currentStage;
           const viewing = s.stage === viewStage;
@@ -293,7 +294,7 @@ export default function ThesisJourney({ user, editable = true }: Props) {
                   {s.title}
                 </span>
               </button>
-              {idx < STAGES.length - 1 && (
+              {idx < JOURNEY_STAGES.length - 1 && (
                 <span
                   aria-hidden
                   className={cn(

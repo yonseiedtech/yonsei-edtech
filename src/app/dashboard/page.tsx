@@ -54,6 +54,7 @@ import DailyReflectionPrompt from "@/features/dashboard/DailyReflectionPrompt";
 import { canShowWidget, isAlumni } from "@/features/dashboard/widget-visibility";
 import DraggableWidget from "@/features/dashboard/editing/DraggableWidget";
 import EditModePresetBar from "@/features/dashboard/editing/EditModePresetBar";
+import JourneyGreetingHeader from "@/features/dashboard/JourneyGreetingHeader";
 import {
   useDashboardLayout,
   isWidgetVisible,
@@ -177,6 +178,23 @@ function DashboardContent() {
     return () => {
       cancelled = true;
     };
+  }, [user, layout]);
+
+  // 체감 스프린트: 기본 위젯 다이어트(14→8) 1회 안내 — 저장 레이아웃 없는 기존 사용자 한정
+  useEffect(() => {
+    if (!user || layout) return;
+    const noticeKey = "yedu_dashboard_diet_notice_v1";
+    try {
+      if (window.localStorage.getItem(noticeKey) === "1") return;
+      // 신규회원 미니멀 프리셋이 적용된 경우는 해당 안내가 이미 나갔으므로 생략
+      if (window.localStorage.getItem(`yedu_minimal_preset_applied.${user.id}`) === "1") return;
+      window.localStorage.setItem(noticeKey, "1");
+    } catch {
+      return;
+    }
+    void import("sonner").then(({ toast }) =>
+      toast.info("대시보드가 핵심 위젯 중심으로 정리되었습니다. 우측 상단 '편집'에서 언제든 위젯을 추가할 수 있어요."),
+    );
   }, [user, layout]);
 
   // D-3c: seminars / staffAlerts mute 가드
@@ -483,6 +501,11 @@ function DashboardContent() {
             </div>
           }
         />
+
+        {/* 체감 스프린트: 여정 인사 헤더 — 리브랜딩 시그니처를 매일 보는 곳에 */}
+        <div className="mb-4">
+          <JourneyGreetingHeader user={user} />
+        </div>
 
         {/* 신규 회원 온보딩 배너 — PageHeader 바로 아래, TermBriefHero 위 */}
         <NewMemberWelcomeBanner />

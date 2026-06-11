@@ -123,13 +123,30 @@ export const DASHBOARD_WIDGET_KEYS: DashboardWidgetKey[] = [
   "staffAlerts",
 ];
 
-/** 모든 위젯 visible=true, order=인덱스인 기본 레이아웃 */
+/**
+ * 체감 스프린트 (2026-06-11): 기본 노출 위젯 다이어트 14 → 8.
+ * "매일 봐야 할 것"(액션·일정·할 일·공지·세미나·활동) 중심으로 기본 ON,
+ * 통계·회고·포럼·복습·피드·종합시험은 기본 OFF — 편집 모드에서 언제든 켤 수 있음.
+ * 저장된 사용자 레이아웃에는 영향 없음 (기본값만 변경).
+ */
+export const DEFAULT_VISIBLE_WIDGETS: Set<DashboardWidgetKey> = new Set([
+  "nextActionBanner",
+  "dailyTimeline",
+  "myTodos",
+  "notices",
+  "miniCalendar",
+  "myAcademicActivities",
+  "seminars",
+  "staffAlerts", // 역할 게이트로 운영진에게만 표시됨
+]);
+
+/** 핵심 위젯만 visible=true, order=인덱스인 기본 레이아웃 */
 export const DEFAULT_DASHBOARD_LAYOUT: DashboardLayout = {
   schemaVersion: 1,
   updatedAt: "",
   widgets: DASHBOARD_WIDGET_KEYS.map((key, idx) => ({
     key,
-    visible: true,
+    visible: DEFAULT_VISIBLE_WIDGETS.has(key),
     order: idx,
   })),
 };
