@@ -247,6 +247,14 @@ export default function SeminarsPage() {
               actionLabel="다시 시도"
               onAction={() => window.location.reload()}
             />
+          ) : sorted.length === 0 && search.trim() ? (
+            <EmptyState
+              icon={AlertCircle}
+              title="검색 결과가 없습니다"
+              description={`"${search.trim()}" 에 해당하는 세미나를 찾지 못했습니다. 검색어를 바꾸거나 전체 목록을 확인해보세요.`}
+              actionLabel="검색어 지우기"
+              onAction={() => setSearch("")}
+            />
           ) : (
             <SeminarList seminars={sorted} viewMode={viewMode} />
           )}

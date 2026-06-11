@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import {
   DndContext,
@@ -60,7 +60,9 @@ import {
   isWidgetMuted,
   getSortedWidgets,
   saveLayoutWithSync,
+  loadLayoutFromFirestore,
 } from "@/lib/dashboard-layout";
+import { buildPresetLayout } from "@/lib/dashboard-presets";
 import {
   DASHBOARD_WIDGET_KEYS,
   type DashboardWidgetKey,
@@ -137,6 +139,46 @@ function DashboardContent() {
   // D-1b: 사용자 위젯 가시성 레이아웃 (localStorage 기반, AND 게이트)
   // D-3c: layout 을 usePosts/useSeminars 보다 먼저 읽어야 staleTime 분기 가능
   const layout = useDashboardLayout(user?.id);
+
+  // Sprint UX-4a: 신규 회원(가입 30일 이내)이 저장된 레이아웃 없이 첫 방문하면
+  // 미니멀 프리셋(핵심 3위젯)을 1회 자동 적용 — 위젯 14개 과밀 첫인상 방지.
+  useEffect(() => {
+    if (!user || layout) return;
+    const appliedKey = `yedu_minimal_preset_applied.${user.id}`;
+    try {
+      if (window.localStorage.getItem(appliedKey) === "1") return;
+    } catch {
+      return;
+    }
+    const createdRaw = (user as { createdAt?: unknown }).createdAt;
+    let createdMs: number | null = null;
+    if (typeof createdRaw === "string" || typeof createdRaw === "number") {
+      const t = new Date(createdRaw).getTime();
+      createdMs = Number.isFinite(t) ? t : null;
+    } else if (createdRaw && typeof createdRaw === "object" && "seconds" in (createdRaw as Record<string, unknown>)) {
+      const s = (createdRaw as { seconds?: number }).seconds;
+      if (typeof s === "number") createdMs = s * 1000;
+    }
+    if (createdMs == null || Date.now() - createdMs > 30 * 24 * 60 * 60 * 1000) return;
+    let cancelled = false;
+    void (async () => {
+      // Firestore 에 다른 기기에서 저장한 레이아웃이 있으면 존중
+      const remote = await loadLayoutFromFirestore(user.id);
+      if (cancelled || remote) return;
+      void saveLayoutWithSync(user.id, buildPresetLayout("minimal"));
+      try {
+        window.localStorage.setItem(appliedKey, "1");
+      } catch {
+        // ignore
+      }
+      const { toast } = await import("sonner");
+      toast.info("신규 회원을 위한 미니멀 대시보드가 적용되었습니다. 우측 상단 '편집'에서 위젯을 추가할 수 있어요.");
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, layout]);
+
   // D-3c: seminars / staffAlerts mute 가드
   const seminarsMuted = isWidgetMuted(layout, "seminars");
   const staffAlertsMuted = isWidgetMuted(layout, "staffAlerts");
