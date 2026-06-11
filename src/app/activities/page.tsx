@@ -104,6 +104,13 @@ export default function ActivitiesPage() {
           title={header.title}
           description={header.description}
         />
+        {/* 진도 미팅 목록 진입 (고아 페이지 해소 — 2026-06-11) */}
+        <Link
+          href="/progress-meetings"
+          className="mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+        >
+          ⏱️ 진도 미팅 목록 — 진행 중인 회의 다시 입장하기
+        </Link>
         <Separator className="mt-6" />
       </div>
 

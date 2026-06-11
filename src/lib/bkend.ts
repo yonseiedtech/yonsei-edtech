@@ -1207,6 +1207,9 @@ export const progressMeetingsApi = {
     return res.data[0] ?? null;
   },
   get: (id: string) => dataApi.get<ProgressMeeting>("progress_meetings", id),
+  /** 목록 페이지(/progress-meetings)용 — 정렬은 클라이언트에서 (인덱스 회피) */
+  listRecent: (limit: number = 300) =>
+    dataApi.list<ProgressMeeting>("progress_meetings", { limit }),
   create: (data: Record<string, unknown>) => dataApi.create<ProgressMeeting>("progress_meetings", data),
   update: (id: string, data: Record<string, unknown>) => dataApi.update<ProgressMeeting>("progress_meetings", id, data),
   delete: (id: string) => dataApi.delete("progress_meetings", id),
