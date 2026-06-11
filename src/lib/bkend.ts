@@ -39,7 +39,7 @@ import type {
   SeminarReview, Inquiry, Activity, AppNotification, WaitlistEntry,
   Poll, PollResponse, PhotoAlbum, Photo, AdminTodo, AuditLog, UserActivityLog,
   ActivityProgress, ActivityMaterial, EmailLog, ProgressMeeting,
-  Lab, LabReaction, LabComment, ResearchPaper, ResearchReport, ResearchProposal, WritingPaper, WritingPaperHistory,
+  Lab, LabReaction, LabComment, ResearchPaper, ResearchReport, ResearchProposal, WritingPaper, WritingPaperHistory, AdvisorFeedbackNote,
   InterviewResponseReaction, InterviewResponseComment,
   ProfileLike, ProfileView, StudySession,
   ApplicantEntry, PublicSpeaker,
@@ -1319,6 +1319,21 @@ export const writingPapersApi = {
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<WritingPaper>("writing_papers", id, data),
   delete: (id: string) => dataApi.delete("writing_papers", id),
+};
+
+// ── 지도 노트 (교수 피드백 기록·반영 추적) — 본인 전용 ──
+export const advisorFeedbackApi = {
+  /** 복합 인덱스 회피: filter[userId]만 사용, 정렬은 클라이언트에서 */
+  listByUser: (userId: string) =>
+    dataApi.list<AdvisorFeedbackNote>("advisor_feedback_notes", {
+      "filter[userId]": userId,
+      limit: 500,
+    }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<AdvisorFeedbackNote>("advisor_feedback_notes", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<AdvisorFeedbackNote>("advisor_feedback_notes", id, data),
+  delete: (id: string) => dataApi.delete("advisor_feedback_notes", id),
 };
 
 export const writingPaperHistoryApi = {

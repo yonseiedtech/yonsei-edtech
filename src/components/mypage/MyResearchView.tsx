@@ -28,11 +28,12 @@ import type { User, StudySession } from "@/types";
 import {
   BookOpen, FileText, BookOpenCheck, FileBarChart2,
   X, CalendarRange, Printer, FileEdit, ClipboardList,
-  Clock, Plus, Pencil, Trash2,
+  Clock, Plus, Pencil, Trash2, GraduationCap,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import ThesisJourney from "@/features/research/ThesisJourney";
+import AdvisorFeedbackLog from "@/features/research/AdvisorFeedbackLog";
 import { formatPeriodLabel } from "@/lib/research-period";
 import {
   currentSemesterRange,
@@ -49,12 +50,12 @@ interface Props {
   readOnly?: boolean;
 }
 
-type ResearchTab = "writing" | "reading" | "report" | "timer";
+type ResearchTab = "writing" | "reading" | "report" | "timer" | "feedback";
 type WritingSubTab = "report" | "proposal" | "thesis";
 type WritingPeriodMode = "semester" | "1year" | "yearly" | "custom";
 
 function isResearchTab(v: string | null): v is ResearchTab {
-  return v === "writing" || v === "reading" || v === "report" || v === "timer";
+  return v === "writing" || v === "reading" || v === "report" || v === "timer" || v === "feedback";
 }
 
 function isWritingSubTab(v: string | null): v is WritingSubTab {
@@ -348,6 +349,9 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
             <TabsTrigger value="timer" className="flex-none">
               <Clock size={14} />연구 타이머
             </TabsTrigger>
+            <TabsTrigger value="feedback" className="flex-none">
+              <GraduationCap size={14} />지도 노트
+            </TabsTrigger>
           </TabsList>
 
           {/* ── 내 논문 작성 ── */}
@@ -566,6 +570,17 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
             ) : (
               <p className="text-sm text-muted-foreground py-12 text-center">
                 연구 타이머는 본인만 확인할 수 있습니다.
+              </p>
+            )}
+          </TabsContent>
+
+          {/* ── 지도 노트 (교수 피드백 기록·반영 추적) — 본인 전용 ── */}
+          <TabsContent value="feedback" className="mt-5">
+            {isSelf ? (
+              <AdvisorFeedbackLog userId={userId} readOnly={readOnly} />
+            ) : (
+              <p className="text-sm text-muted-foreground py-12 text-center">
+                지도 노트는 본인만 확인할 수 있습니다.
               </p>
             )}
           </TabsContent>

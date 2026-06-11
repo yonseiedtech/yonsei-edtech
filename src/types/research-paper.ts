@@ -66,6 +66,56 @@ export interface ResearchPaper {
   updatedAt: string;
 }
 
+// ── 지도 노트 (교수 피드백 기록·반영 추적, 2026-06-11) ──
+
+/** 피드백 출처 — 지도교수 / 심사위원(부심) / 동료·세미나 / 스스로 메모 */
+export type FeedbackSource = "advisor" | "committee" | "peer" | "self";
+
+export const FEEDBACK_SOURCE_LABELS: Record<FeedbackSource, string> = {
+  advisor: "지도교수",
+  committee: "심사위원",
+  peer: "동료/세미나",
+  self: "셀프 메모",
+};
+
+/** 피드백 관련 장 — 논문 5장 + 전반 */
+export type FeedbackChapter = WritingPaperChapterKey | "general";
+
+export const FEEDBACK_CHAPTER_LABELS: Record<FeedbackChapter, string> = {
+  general: "전반",
+  intro: "서론",
+  background: "이론적 배경",
+  method: "연구 방법",
+  results: "연구 결과",
+  conclusion: "결론",
+};
+
+export interface FeedbackActionItem {
+  text: string;
+  done: boolean;
+}
+
+/** 지도 노트 1건 — Firestore `advisor_feedback_notes` (본인 전용) */
+export interface AdvisorFeedbackNote {
+  id: string;
+  userId: string;
+  /** 지도받은 날짜 (YYYY-MM-DD) */
+  meetingDate: string;
+  source: FeedbackSource;
+  chapter: FeedbackChapter;
+  /** 지도 내용 메모 */
+  content: string;
+  /** 반영을 위한 할 일 분해 (선택) */
+  actionItems?: FeedbackActionItem[];
+  /** pending=미반영, applied=반영 완료 */
+  status: "pending" | "applied";
+  /** 어떻게 반영했는지 기록 (반영 완료 시) */
+  resolutionNote?: string;
+  resolvedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ── 내 논문 작성 (단일 문서 MVP) ──
 export type WritingPaperChapterKey =
   | "intro"        // 서론
