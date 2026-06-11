@@ -6,7 +6,7 @@ import { useLabs } from "@/features/labs/useLabs";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { canManageLabs } from "@/lib/permissions";
 import AuthGuard from "@/features/auth/AuthGuard";
-import { FlaskConical, ExternalLink, MessageSquare, AlertCircle } from "lucide-react";
+import { FlaskConical, ExternalLink, MessageSquare, AlertCircle, MessageCircleQuestion, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -230,6 +230,26 @@ function LabsContent() {
         />
 
         <Separator className="mt-6" />
+
+        {/* ── 내장 실험: 발표 Q&A 보드 (코드 제공 기능 — labs 컬렉션과 별개 고정 카드) ── */}
+        <Link
+          href="/labs/qa-wall"
+          className="mt-5 flex items-center gap-3 rounded-2xl border-2 border-primary/20 bg-gradient-to-r from-primary/5 to-transparent p-4 transition-shadow hover:shadow-md"
+        >
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+            <MessageCircleQuestion size={22} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="flex items-center gap-2 text-sm font-bold">
+              발표 Q&A 보드
+              <Badge variant="secondary" className="text-[10px]">NEW</Badge>
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              수업 발표마다 보드를 열고 링크로 공유 — 로그인 없이 실시간 질의응답 (Padlet 스타일)
+            </p>
+          </div>
+          <ChevronRight size={16} className="shrink-0 text-muted-foreground" />
+        </Link>
 
         {/* ── 필터 ── */}
         <div className="mt-5 flex flex-wrap items-center gap-2">

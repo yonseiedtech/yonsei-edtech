@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Lock, Monitor, Pencil, Trash2, Unlock } from "lucide-react";
+import { ArrowLeft, Link as LinkIcon, Lock, Monitor, Pencil, Trash2, Unlock } from "lucide-react";
 import { toast } from "sonner";
 import { commBoardsApi, commQuestionsApi, commLikesApi } from "@/lib/bkend";
 import type { CommBoard, CommQuestion, CommSortMode, User } from "@/types";
@@ -112,12 +112,27 @@ export default function CommBoardDetail({ boardId, user }: Props) {
               {board.allowGuest && <Badge variant="outline" className="text-[9px]">게스트 허용</Badge>}
             </div>
           </div>
-          <Link
-            href={`/boards/${board.id}/present`}
-            className="flex shrink-0 items-center gap-1 rounded border px-2 py-1 text-xs hover:bg-accent"
-          >
-            <Monitor size={13} /> 발표 보기
-          </Link>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                const url = `${window.location.origin}/boards/${board.id}`;
+                void navigator.clipboard
+                  .writeText(url)
+                  .then(() => toast.success("공유 링크가 복사되었습니다. 수업 채팅방 등에 붙여넣어 공유하세요."))
+                  .catch(() => toast.error("복사에 실패했습니다. 주소창의 URL을 직접 복사해주세요."));
+              }}
+              className="flex items-center gap-1 rounded border px-2 py-1 text-xs hover:bg-accent"
+            >
+              <LinkIcon size={13} /> 링크 복사
+            </button>
+            <Link
+              href={`/boards/${board.id}/present`}
+              className="flex items-center gap-1 rounded border px-2 py-1 text-xs hover:bg-accent"
+            >
+              <Monitor size={13} /> 발표 보기
+            </Link>
+          </div>
         </div>
 
         {manage && (
