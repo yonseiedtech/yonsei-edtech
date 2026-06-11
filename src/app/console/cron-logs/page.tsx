@@ -112,7 +112,7 @@ export default function CronLogsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4 px-4 py-6">
+    <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="flex items-center gap-2 text-lg font-bold">
           <ScrollText size={18} className="text-primary" />
