@@ -205,6 +205,9 @@ interface FormState {
 
 const CHAPTER_KEYS: WritingPaperChapterKey[] = ["intro", "background", "method", "results", "conclusion"];
 
+/** 복원 직전 자동 저장되는 버전 라벨 prefix — 일괄 정리 매칭에 사용 */
+const AUTO_BACKUP_PREFIX = "복원 전 자동 백업";
+
 function buildEmptyForm(approach: ResearchApproachType): FormState {
   const sections = {} as SectionsState;
   for (const k of CHAPTER_KEYS) sections[k] = buildTemplateSections(templateHeadings(k, approach));
@@ -646,7 +649,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       const t = new Date();
       // QA P1: 백업 실패를 무시하고 복원하면 '복원 전 자동 백업' 약속이 깨져 현재 내용 유실 가능 → 중단
       const backedUp = await createVersion(
-        `복원 전 자동 백업 (${t.getHours().toString().padStart(2, "0")}:${t.getMinutes().toString().padStart(2, "0")})`,
+        `${AUTO_BACKUP_PREFIX} (${t.getHours().toString().padStart(2, "0")}:${t.getMinutes().toString().padStart(2, "0")})`,
         true,
       );
       if (!backedUp) {
@@ -677,6 +680,28 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       toast.success("버전이 삭제되었습니다.");
     } catch {
       toast.error("삭제에 실패했습니다.");
+    }
+  }
+
+  async function handleCleanupAutoBackups() {
+    const targets = versions.filter((v) => v.label.startsWith(AUTO_BACKUP_PREFIX));
+    if (targets.length === 0) return;
+    if (!confirm(`복원 전 자동 백업 ${targets.length}개를 모두 삭제하시겠습니까? 되돌릴 수 없습니다.`)) return;
+    setVersionBusy(true);
+    let failed = 0;
+    try {
+      for (const v of targets) {
+        try {
+          await writingPaperVersionsApi.delete(v.id);
+        } catch {
+          failed += 1;
+        }
+      }
+      void queryClient.invalidateQueries({ queryKey: ["writing_paper_versions", user.id] });
+      if (failed === 0) toast.success(`자동 백업 ${targets.length}개를 정리했습니다.`);
+      else toast.warning(`${targets.length - failed}개 정리, ${failed}개는 실패했습니다.`);
+    } finally {
+      setVersionBusy(false);
     }
   }
 
@@ -927,6 +952,17 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                   버전 저장
                 </Button>
               </div>
+            )}
+            {!readOnly && versions.filter((v) => v.label.startsWith(AUTO_BACKUP_PREFIX)).length >= 2 && (
+              <button
+                type="button"
+                onClick={handleCleanupAutoBackups}
+                disabled={versionBusy}
+                className="mt-2 inline-flex items-center gap-1 rounded-md border border-dashed px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:border-destructive/40 hover:text-destructive disabled:opacity-50"
+              >
+                <Trash2 size={11} />
+                자동 백업 {versions.filter((v) => v.label.startsWith(AUTO_BACKUP_PREFIX)).length}개 정리
+              </button>
             )}
             {versions.length === 0 ? (
               <p className="mt-3 text-xs text-muted-foreground">
