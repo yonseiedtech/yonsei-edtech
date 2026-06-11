@@ -34,6 +34,16 @@
 |---|---|---|
 | 15 | 3b8b1242 | **전역 검색 Ctrl/Cmd+K** — 아카이브 3종·세미나·학술활동·졸업생 논문 + 바로가기 8종 통합. cmdk 의존성 없이 Dialog+Input 자체 구현, 열릴 때 1회 병렬 로드(5분 캐시), 그룹당 5개, ↑↓/Enter/Esc 키보드 네비+활성 스크롤 추적, 헤더 데스크톱·모바일 양쪽 |
 
+## 배포 4차 준비 — 사이클 16~17
+
+| # | 커밋 | 내용 |
+|---|---|---|
+| 16 | 589978c0 | 전역 검색에 공지 소스 추가 — `postsApi.list(category=notice, sort:"")` (public read 한정, useBoard 인덱스 회피 패턴) |
+| 17 | (이번) | 검색 발견성 — 데스크톱 헤더를 아이콘 → "검색 Ctrl K" pill 로 확장 (모바일은 아이콘 유지) |
+
+## 잠재 이슈 (검증 필요 — 추측)
+- `PeerActivityFeed`·`ActivityCards`·게시판 "전체" 탭이 카테고리 무필터 `postsApi.list()`를 사용하는데, posts rules 의 read 가 `postCategoryReadable(resource.data.category)` 조건부라 Firestore 정적 평가상 무필터 list 가 거부될 수 있음. 운영에서 전체 탭이 정상 동작 중인지 확인 필요 — 깨져 있다면 공개 카테고리 in 쿼리(또는 카테고리별 병렬 fetch)로 전환.
+
 ## 상태
 - 테스트: 581 → **598** (PBKDF2 16 + 패스스루 1)
 - 보안 백로그 해결: PBKDF2 마이그레이션(코드 L8 TODO 이행), resolve-email은 기방어 확인 완료

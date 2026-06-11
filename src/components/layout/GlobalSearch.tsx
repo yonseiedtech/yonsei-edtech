@@ -230,14 +230,27 @@ export default function GlobalSearch() {
 
   return (
     <>
+      {/* 모바일: 아이콘 / 데스크톱: pill + 단축키 뱃지 (발견성) */}
       <button
         type="button"
         onClick={() => setOpen(true)}
         aria-label="전역 검색 (Ctrl+K)"
         title="검색 (Ctrl+K)"
-        className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-9 md:w-9"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hidden"
       >
         <Search size={18} />
+      </button>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="전역 검색 (Ctrl+K)"
+        className="hidden h-9 items-center gap-2 rounded-full border bg-muted/40 px-3 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:inline-flex"
+      >
+        <Search size={14} />
+        검색
+        <kbd className="rounded border bg-background px-1.5 py-0.5 font-mono text-[10px] leading-none">
+          Ctrl K
+        </kbd>
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
