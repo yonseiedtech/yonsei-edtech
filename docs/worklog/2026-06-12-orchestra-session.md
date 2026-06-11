@@ -56,6 +56,15 @@
 - 코드: `PUBLIC_POST_CATEGORIES`(rules 와 동기화 주석) + `postsApi.listReadable`(공개 enum in + orderBy + limit) — 피드·홈카드 전환, useBoard 전체 탭은 권한별(includeResources=로그인, includeStaff=staff+) + 캐시 키에 권한 포함
 - 교훈: **클라이언트 공개 API key 로 비인증 REST runQuery 프로브 = rules 동작 실증 진단법** (코드 추측 → 확정 전환). 카테고리 enum 추가 시 rules postCategoryReadable/Writable 동기화 필수
 
+## 배포 7차 — 사이클 20 (574d883b..a17759d4, ✓ Ready) — 사용자 복귀 후 지시
+
+**온보딩 분석 방법 선택 × 결과 장 가정 검정 자동 가이드** (의도 확인 후 구현: 가이드 자동 표시 + 섹션 삽입 버튼 + 아카이브 딥링크):
+- `WritingResearchProfile.methods: StatMethodType[]` 8종 (t검정·ANOVA·ANCOVA·회귀·상관·χ²·SEM·요인분석)
+- 온보딩 다이얼로그에 "주요 분석 방법" 복수 선택 칩 — 질적 선택 시 숨김(빈 배열 저장), 기존 작성자는 "연구 방향" 재진입으로 추가(프리필)
+- 결과 장에서 방법별 가정 검정 체크리스트 패널 자동 표시 (예: ANCOVA → 회귀계수 동질성·공변량-처치 독립성까지)
+- "+ 보고 골격 섹션에 삽입" — '기술통계 및 가정 검정' 섹션 탐색/생성 후 `___` 빈칸 골격 단락 추가, prefix 중복 가드
+- 방법별 아카이브 개념 딥링크 (ANCOVA·CLT·χ²·SEM·요인분석·상관회귀 — 시드 실존명, 4계층 연결 유지)
+
 ## 상태
 - 테스트: 581 → **598** (PBKDF2 16 + 패스스루 1)
 - 보안 백로그 해결: PBKDF2 마이그레이션(코드 L8 TODO 이행), resolve-email은 기방어 확인 완료
