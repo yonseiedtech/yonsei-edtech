@@ -634,6 +634,143 @@ export const SEED_VARIABLES: SeedVariable[] = [
       "Bhattacherjee, A. (2001). Understanding information systems continuance: An expectation-confirmation model. MIS Quarterly, 25(3), 351-370.",
     ],
   },
+
+  // ─── 2026-06 보강: 교육공학 석사 논문 빈출 변인 11개 추가 ───
+  // 영문 정전(canonical) 1차 출처만 인용 — 한국어 KCI 인용 할루시네이션 리스크 회피.
+  {
+    seedKey: "variable:task-value",
+    name: "과제가치",
+    altNames: ["Task Value", "과제 가치 지각"],
+    description:
+      "학습 과제가 자신에게 얼마나 중요하고 유용하며 흥미로운지에 대한 학습자의 지각. 기대-가치 이론(expectancy-value theory)의 핵심 구인으로 내재적 흥미가치·달성가치·효용가치·비용의 하위 차원으로 구분된다. MSLQ 동기 영역의 하위 척도로 측정되는 경우가 많으며, 학습 지속·과목 선택·성취를 예측한다.",
+    type: "affective",
+    tags: ["동기", "기대가치이론"],
+    references: [
+      "Wigfield, A., & Eccles, J. S. (2000). Expectancy-value theory of achievement motivation. Contemporary Educational Psychology, 25(1), 68-81.",
+    ],
+  },
+  {
+    seedKey: "variable:achievement-goal-orientation",
+    name: "성취목표지향성",
+    altNames: ["Achievement Goal Orientation", "목표지향성"],
+    description:
+      "학습자가 성취 상황에서 추구하는 목표의 질적 유형. Elliot & McGregor(2001)의 2×2 프레임워크가 표준으로, 숙달접근·숙달회피·수행접근·수행회피의 4유형으로 구분된다. 학습전략 사용·시험불안·내재적 동기와의 차별적 관계가 반복 검증되어 교육공학 실험 연구의 공변량·조절변인으로 자주 투입된다.",
+    type: "affective",
+    tags: ["동기", "목표", "2x2 프레임워크"],
+    references: [
+      "Elliot, A. J., & McGregor, H. A. (2001). A 2 × 2 achievement goal framework. Journal of Personality and Social Psychology, 80(3), 501-519.",
+    ],
+  },
+  {
+    seedKey: "variable:teaching-presence",
+    name: "교수실재감",
+    altNames: ["Teaching Presence", "교수적 실재감"],
+    description:
+      "온라인 학습 환경에서 의미 있는 학습 성과를 위해 인지적·사회적 과정을 설계·촉진·직접 지도하는 교수자 활동에 대한 학습자의 지각. CoI(탐구공동체) 모델의 3실재감 중 하나로, 설계와 조직·담화 촉진·직접 교수의 3개 하위 범주로 측정된다. 원격수업 만족도·학습성과 연구의 핵심 예측 변인.",
+    type: "environmental",
+    tags: ["CoI", "온라인학습", "실재감"],
+    references: [
+      "Anderson, T., Rourke, L., Garrison, D. R., & Archer, W. (2001). Assessing teaching presence in a computer conferencing context. Journal of Asynchronous Learning Networks, 5(2), 1-17.",
+    ],
+  },
+  {
+    seedKey: "variable:social-presence",
+    name: "사회적 실재감",
+    altNames: ["Social Presence"],
+    description:
+      "온라인 환경에서 학습자가 자신을 '실제 사람'으로 드러내고 타인을 실재하는 존재로 지각하는 정도. 정서적 표현·개방적 의사소통·집단 응집성의 하위 범주로 측정된다(CoI 모델). 원격·블렌디드 학습의 만족도와 지속의도를 매개하는 대표 변인.",
+    type: "affective",
+    tags: ["CoI", "온라인학습", "실재감"],
+    references: [
+      "Short, J., Williams, E., & Christie, B. (1976). The social psychology of telecommunications. Wiley.",
+      "Garrison, D. R., Anderson, T., & Archer, W. (2000). Critical inquiry in a text-based environment: Computer conferencing in higher education. The Internet and Higher Education, 2(2-3), 87-105.",
+    ],
+  },
+  {
+    seedKey: "variable:cognitive-presence",
+    name: "인지적 실재감",
+    altNames: ["Cognitive Presence"],
+    description:
+      "지속적 성찰과 담화를 통해 학습자가 의미를 구성하고 확인해 가는 정도. 촉발 사건(triggering event)→탐색(exploration)→통합(integration)→해결(resolution)의 실천적 탐구(practical inquiry) 4단계로 조작화된다. CoI 모델 3실재감 중 학습의 인지적 깊이를 직접 반영하는 변인.",
+    type: "cognitive",
+    tags: ["CoI", "온라인학습", "실재감"],
+    references: [
+      "Garrison, D. R., Anderson, T., & Archer, W. (2001). Critical thinking, cognitive presence, and computer conferencing in distance education. American Journal of Distance Education, 15(1), 7-23.",
+    ],
+  },
+  {
+    seedKey: "variable:learner-interaction",
+    name: "상호작용",
+    altNames: ["Interaction", "학습자 상호작용"],
+    description:
+      "원격·온라인 학습에서 일어나는 의사소통적 교류. Moore(1989)의 고전적 구분에 따라 학습자-내용, 학습자-교수자, 학습자-학습자 상호작용의 3유형으로 측정된다. 이러닝 설계 품질·실재감·만족도 연구에서 독립 또는 매개 변인으로 광범위하게 사용된다.",
+    type: "behavioral",
+    tags: ["원격교육", "이러닝", "Moore"],
+    references: [
+      "Moore, M. G. (1989). Editorial: Three types of interaction. American Journal of Distance Education, 3(2), 1-7.",
+    ],
+  },
+  {
+    seedKey: "variable:learner-engagement",
+    name: "학습참여",
+    altNames: ["Learner Engagement", "Student Engagement", "학업열의"],
+    description:
+      "학습 활동에 대한 행동적(참여·노력)·정서적(흥미·소속감)·인지적(전략·자기조절) 투입의 총체. 몰입(flow)이 순간적 최적 경험이라면 참여(engagement)는 비교적 지속적인 상태로 구분된다. 학업열의(academic engagement) 전통에서는 활력·헌신·몰두의 3요인(UWES-S)으로 측정된다.",
+    type: "behavioral",
+    tags: ["참여", "열의", "다차원"],
+    references: [
+      "Fredricks, J. A., Blumenfeld, P. C., & Paris, A. H. (2004). School engagement: Potential of the concept, state of the evidence. Review of Educational Research, 74(1), 59-109.",
+    ],
+  },
+  {
+    seedKey: "variable:mental-effort",
+    name: "정신적 노력",
+    altNames: ["Mental Effort", "주관적 인지부하"],
+    description:
+      "과제 수행 중 학습자가 투입했다고 지각하는 인지적 자원의 양. Paas(1992)의 단일 문항 9점 척도가 인지부하 연구의 고전적 조작화이며, 수행 점수와 결합해 교수 효율성(instructional efficiency) 지표를 산출하는 데 쓰인다. 전체 작업부하는 NASA-TLX 로 다차원 측정한다.",
+    type: "cognitive",
+    tags: ["인지부하", "주관적 측정"],
+    references: [
+      "Paas, F. G. W. C. (1992). Training strategies for attaining transfer of problem-solving skill in statistics: A cognitive-load approach. Journal of Educational Psychology, 84(4), 429-434.",
+    ],
+  },
+  {
+    seedKey: "variable:learning-transfer",
+    name: "학습전이",
+    altNames: ["Learning Transfer", "Transfer of Training", "교육훈련전이"],
+    description:
+      "교육·훈련에서 학습한 지식과 기술을 실제 직무·새로운 맥락에 일반화하여 적용하고 유지하는 정도. Baldwin & Ford(1988)의 전이 모형(학습자 특성·훈련 설계·작업 환경)이 표준 프레임이며, HRD·기업교육 프로그램 효과성 연구의 핵심 종속 변인.",
+    type: "behavioral",
+    tags: ["HRD", "기업교육", "전이"],
+    references: [
+      "Baldwin, T. T., & Ford, J. K. (1988). Transfer of training: A review and directions for future research. Personnel Psychology, 41(1), 63-105.",
+    ],
+  },
+  {
+    seedKey: "variable:digital-literacy",
+    name: "디지털 리터러시",
+    altNames: ["Digital Literacy", "디지털 문해력"],
+    description:
+      "디지털 도구와 정보를 비판적으로 탐색·평가·활용·창출할 수 있는 역량을 변인으로 조작화한 것. Ng(2012)는 기술적(technical)·인지적(cognitive)·사회정서적(social-emotional) 차원의 교차 모형을 제안했다. 에듀테크 수용·온라인 학습 성과 연구에서 선행 변인이나 조절 변인으로 투입된다.",
+    type: "cognitive",
+    tags: ["역량", "에듀테크"],
+    references: [
+      "Ng, W. (2012). Can we teach digital natives digital literacy? Computers & Education, 59(3), 1065-1078.",
+    ],
+  },
+  {
+    seedKey: "variable:technostress",
+    name: "테크노스트레스",
+    altNames: ["Technostress"],
+    description:
+      "정보통신기술 사용 요구에 적응하는 과정에서 경험하는 스트레스. Ragu-Nathan et al.(2008)은 과부하(techno-overload)·침습(invasion)·복잡성(complexity)·불안정(insecurity)·불확실성(uncertainty)의 5개 유발요인으로 구조화했다. 교사의 에듀테크 수용·원격수업 피로 연구에서 부적 선행 변인으로 사용된다.",
+    type: "affective",
+    tags: ["에듀테크", "스트레스", "교사"],
+    references: [
+      "Ragu-Nathan, T. S., Tarafdar, M., Ragu-Nathan, B. S., & Tu, Q. (2008). The consequences of technostress for end users in organizations: Conceptual development and empirical validation. Information Systems Research, 19(4), 417-433.",
+      "Brod, C. (1984). Technostress: The human cost of the computer revolution. Addison-Wesley.",
+    ],
+  },
 ];
 
 // ─── 측정도구 (Measurement Tools) ─────────────────────────────
@@ -796,6 +933,174 @@ export const SEED_MEASUREMENTS: SeedMeasurement[] = [
       "Ryan, R. M. (1982). Control and information in the intrapersonal sphere: An extension of cognitive evaluation theory. Journal of Personality and Social Psychology, 43(3), 450-461.",
     ],
   },
+
+  // ─── 2026-06 보강: 정전(canonical) 측정도구 10개 추가 ───
+  // 원전 서지·신뢰도는 2026-06 웹 검증 완료. 확인 불가한 수치(문항수·α)는 필드 생략.
+  {
+    seedKey: "measurement:imms-keller-2010",
+    name: "IMMS 학습동기 검사 (Keller, 2010)",
+    altNames: ["Instructional Materials Motivation Survey"],
+    description:
+      "Keller 의 ARCS 모형에 기반해 특정 교수자료에 대한 학습자의 동기 반응을 측정하는 상황 특수적 도구. 주의집중(12)·관련성(9)·자신감(9)·만족감(6)의 4개 하위 척도 36문항. 이러닝·멀티미디어 콘텐츠의 동기 설계 효과 검증에서 표준 도구로 사용된다.",
+    originalName: "Instructional Materials Motivation Survey (IMMS)",
+    author: "Keller, J. M. (2010)",
+    itemCount: 36,
+    scaleType: "5점 Likert",
+    reliability: "Cronbach α = .96 (전체) / 주의 .89, 관련성 .81, 자신감 .90, 만족감 .92 (Keller, 2010)",
+    validity: "ARCS 4요인 구조 — 다수 후속 타당화 연구(Loorbach et al., 2015 등)",
+    tags: ["동기", "ARCS", "교수자료"],
+    references: [
+      "Keller, J. M. (2010). Motivational design for learning and performance: The ARCS model approach. Springer.",
+      "Loorbach, N., Peters, O., Karreman, J., & Steehouder, M. (2015). Validation of the Instructional Materials Motivation Survey (IMMS) in a self-directed instructional setting. British Journal of Educational Technology, 46(1), 204-218.",
+    ],
+  },
+  {
+    seedKey: "measurement:flow-state-scale",
+    name: "Flow State Scale (Jackson & Marsh, 1996)",
+    altNames: ["FSS", "몰입상태척도"],
+    description:
+      "Csikszentmihalyi 몰입 이론의 9차원(도전-기술 균형, 행위-의식 통합, 명확한 목표, 모호하지 않은 피드백, 과제 집중, 통제감, 자의식 상실, 시간 변형, 자기목적적 경험)을 각 4문항씩 측정하는 36문항 도구. 스포츠 맥락에서 개발되었으나 학습·게임·이러닝 몰입 연구로 광범위하게 확장되었다.",
+    originalName: "Flow State Scale (FSS)",
+    author: "Jackson, S. A., & Marsh, H. W. (1996)",
+    itemCount: 36,
+    scaleType: "5점 Likert",
+    validity: "확인적 요인분석으로 9개 1차 요인 + 1개 상위요인 구조 지지 (원전)",
+    tags: ["몰입", "다차원", "flow"],
+    references: [
+      "Jackson, S. A., & Marsh, H. W. (1996). Development and validation of a scale to measure optimal experience: The Flow State Scale. Journal of Sport and Exercise Psychology, 18(1), 17-35.",
+    ],
+  },
+  {
+    seedKey: "measurement:nasa-tlx",
+    name: "NASA-TLX (Hart & Staveland, 1988)",
+    altNames: ["NASA Task Load Index", "작업부하지수"],
+    description:
+      "과제 수행의 주관적 작업부하(workload)를 정신적 요구·신체적 요구·시간적 요구·수행·노력·좌절의 6개 차원으로 측정하는 다차원 평정 도구. 각 차원을 0~100 시각 아날로그형 척도로 평정하고, 쌍대비교 가중치를 결합해 종합 점수를 산출한다(가중 생략 Raw TLX 변형도 통용). 인지부하·UX·시뮬레이션 학습 연구의 범용 도구.",
+    originalName: "NASA Task Load Index (NASA-TLX)",
+    author: "Hart, S. G., & Staveland, L. E. (1988)",
+    itemCount: 6,
+    scaleType: "차원별 0~100 평정 (+ 쌍대비교 가중)",
+    validity: "16개 실험·다양한 과제 유형에 걸친 경험적 개발 (원전)",
+    sampleItems: [
+      "이 과제는 정신적으로 얼마나 부담스러웠습니까? (정신적 요구)",
+      "과제를 수행하기 위해 얼마나 열심히 노력해야 했습니까? (노력)",
+    ],
+    tags: ["인지부하", "작업부하", "다차원"],
+    references: [
+      "Hart, S. G., & Staveland, L. E. (1988). Development of NASA-TLX (Task Load Index): Results of empirical and theoretical research. In P. A. Hancock & N. Meshkati (Eds.), Human mental workload (pp. 139-183). North-Holland.",
+    ],
+  },
+  {
+    seedKey: "measurement:paas-mental-effort",
+    name: "Paas 정신적 노력 척도 (Paas, 1992)",
+    altNames: ["Mental Effort Rating Scale", "주관적 인지부하 척도"],
+    description:
+      "학습·과제 수행에 투입한 정신적 노력을 '매우 매우 낮음'부터 '매우 매우 높음'까지 9점 단일 문항으로 평정하는 인지부하 연구의 고전적 도구. 간편성 덕분에 과제 직후 반복 측정이 가능하며, 수행 점수와 결합한 교수 효율성(instructional efficiency) 지표 산출에 사용된다.",
+    originalName: "9-point Mental Effort Rating Scale",
+    author: "Paas, F. G. W. C. (1992)",
+    itemCount: 1,
+    scaleType: "9점 평정 (단일 문항)",
+    sampleItems: [
+      "방금 과제를 수행하는 데 투입한 정신적 노력의 정도를 평정하시오 (1=매우 매우 낮음 ~ 9=매우 매우 높음).",
+    ],
+    tags: ["인지부하", "단일문항"],
+    references: [
+      "Paas, F. G. W. C. (1992). Training strategies for attaining transfer of problem-solving skill in statistics: A cognitive-load approach. Journal of Educational Psychology, 84(4), 429-434.",
+    ],
+  },
+  {
+    seedKey: "measurement:coi-survey",
+    name: "CoI 설문 (Arbaugh et al., 2008)",
+    altNames: ["Community of Inquiry Survey", "탐구공동체 설문"],
+    description:
+      "Garrison 등의 탐구공동체(CoI) 모델 3실재감을 측정하는 표준 도구. 교수실재감 13문항·사회적 실재감 9문항·인지적 실재감 12문항의 총 34문항으로 구성되며, 다기관 표본(미국·캐나다 4개 대학원)에서 타당화되었다. 온라인·블렌디드 학습 연구의 사실상 표준 척도.",
+    originalName: "Community of Inquiry (CoI) Survey Instrument",
+    author: "Arbaugh, Cleveland-Innes, Diaz, Garrison, Ice, Richardson, & Swan (2008)",
+    itemCount: 34,
+    scaleType: "5점 Likert (0~4)",
+    reliability: "Cronbach α = .94 (교수실재감) / .91 (사회적 실재감) / .95 (인지적 실재감)",
+    validity: "다기관 표본 요인분석으로 3요인 구조 지지 (원전)",
+    tags: ["CoI", "실재감", "온라인학습"],
+    references: [
+      "Arbaugh, J. B., Cleveland-Innes, M., Diaz, S. R., Garrison, D. R., Ice, P., Richardson, J. C., & Swan, K. P. (2008). Developing a community of inquiry instrument: Testing a measure of the Community of Inquiry framework using a multi-institutional sample. The Internet and Higher Education, 11(3-4), 133-136.",
+    ],
+  },
+  {
+    seedKey: "measurement:uwes-s",
+    name: "UWES-S 학업열의 척도 (Schaufeli et al., 2002)",
+    altNames: ["Utrecht Work Engagement Scale-Student", "학업참여 척도"],
+    description:
+      "직무열의 척도(UWES)를 학생용으로 번안한 학업열의(academic engagement) 측정 도구. 활력(vigor)·헌신(dedication)·몰두(absorption)의 3요인 17문항으로, 스페인·포르투갈·네덜란드 대학생 표본의 국가 간 비교 연구에서 타당화되었다. 9문항 단축형(UWES-9S)도 널리 사용된다.",
+    originalName: "Utrecht Work Engagement Scale - Student (UWES-S)",
+    author: "Schaufeli, Martínez, Marques Pinto, Salanova, & Bakker (2002)",
+    itemCount: 17,
+    scaleType: "7점 빈도 척도 (0=전혀 없음 ~ 6=항상)",
+    validity: "3개국 표본 확인적 요인분석으로 3요인 구조 지지 (원전)",
+    tags: ["학업열의", "참여", "다차원"],
+    references: [
+      "Schaufeli, W. B., Martínez, I. M., Marques Pinto, A., Salanova, M., & Bakker, A. B. (2002). Burnout and engagement in university students: A cross-national study. Journal of Cross-Cultural Psychology, 33(5), 464-481.",
+    ],
+  },
+  {
+    seedKey: "measurement:agq",
+    name: "AGQ 성취목표 설문 (Elliot & McGregor, 2001)",
+    altNames: ["Achievement Goal Questionnaire", "2x2 성취목표 척도"],
+    description:
+      "성취목표를 숙달접근·숙달회피·수행접근·수행회피의 2×2 프레임워크로 측정하는 12문항 도구(목표 유형별 3문항). 요인분석으로 4구인의 독립성이 지지되었으며, 이후 문항 표현을 목표 정의에 정밀화한 개정판 AGQ-R(Elliot & Murayama, 2008)이 발표되었다.",
+    originalName: "Achievement Goal Questionnaire (AGQ)",
+    author: "Elliot, A. J., & McGregor, H. A. (2001)",
+    itemCount: 12,
+    scaleType: "7점 Likert",
+    validity: "요인분석으로 2×2 4구인 구조 지지 (원전)",
+    tags: ["동기", "목표지향성"],
+    references: [
+      "Elliot, A. J., & McGregor, H. A. (2001). A 2 × 2 achievement goal framework. Journal of Personality and Social Psychology, 80(3), 501-519.",
+      "Elliot, A. J., & Murayama, K. (2008). On the measurement of achievement goals: Critique, illustration, and application. Journal of Educational Psychology, 100(3), 613-628.",
+    ],
+  },
+  {
+    seedKey: "measurement:ltsi",
+    name: "LTSI 학습전이체계 검사 (Holton, Bates, & Ruona, 2000)",
+    altNames: ["Learning Transfer System Inventory"],
+    description:
+      "교육훈련의 전이를 촉진·저해하는 전이 체계 요인을 측정하는 자기보고 검사. 1,616명 훈련 참가자 표본의 탐색적 요인분석으로 16개 요인 구조(전이 동기·전이 설계·상사 지원·동료 지원·결과 기대 등)가 도출되었고, 2차 요인분석에서 풍토·직무효용·보상의 상위 3요인이 확인되었다. HRD 전이 연구의 표준 진단 도구.",
+    originalName: "Learning Transfer System Inventory (LTSI)",
+    author: "Holton, E. F. III, Bates, R. A., & Ruona, W. E. A. (2000)",
+    scaleType: "5점 Likert",
+    validity: "EFA 16요인 + 2차 요인분석 상위 3요인 구조 (원전, N=1,616)",
+    tags: ["HRD", "학습전이", "다차원"],
+    references: [
+      "Holton, E. F. III, Bates, R. A., & Ruona, W. E. A. (2000). Development of a generalized learning transfer system inventory. Human Resource Development Quarterly, 11(4), 333-360.",
+    ],
+  },
+  {
+    seedKey: "measurement:technostress-creators",
+    name: "테크노스트레스 유발요인 척도 (Ragu-Nathan et al., 2008)",
+    altNames: ["Technostress Creators Scale"],
+    description:
+      "조직 구성원의 테크노스트레스 유발요인을 과부하(techno-overload)·침습(techno-invasion)·복잡성(techno-complexity)·불안정(techno-insecurity)·불확실성(techno-uncertainty)의 5개 하위 요인으로 측정하는 도구. 직무만족·조직몰입과의 구조 모형으로 타당화되었으며, 교사·학습자 대상 에듀테크 스트레스 연구로 번안 확장되었다.",
+    originalName: "Technostress Creators Scale",
+    author: "Ragu-Nathan, T. S., Tarafdar, M., Ragu-Nathan, B. S., & Tu, Q. (2008)",
+    validity: "구조방정식모형으로 5요인 구조 및 법칙적 타당도 검증 (원전)",
+    tags: ["에듀테크", "스트레스", "다차원"],
+    references: [
+      "Ragu-Nathan, T. S., Tarafdar, M., Ragu-Nathan, B. S., & Tu, Q. (2008). The consequences of technostress for end users in organizations: Conceptual development and empirical validation. Information Systems Research, 19(4), 417-433.",
+    ],
+  },
+  {
+    seedKey: "measurement:digital-literacy-ng-2012",
+    name: "디지털 리터러시 척도 (Ng, 2012)",
+    altNames: ["Digital Literacy Questionnaire"],
+    description:
+      "대학생의 디지털 리터러시 자기지각을 기술적·인지적·사회정서적 차원 모형에 기반해 측정하는 설문. '디지털 네이티브' 담론을 실증 검토한 원전 연구에서 사용되었으며, 이후 다수 국가에서 번안·타당화되어 에듀테크 수용·온라인 학습 연구의 선행 변인 측정에 활용된다.",
+    originalName: "Digital Literacy Questionnaire",
+    author: "Ng, W. (2012)",
+    scaleType: "Likert 자기보고",
+    tags: ["디지털 리터러시", "역량"],
+    references: [
+      "Ng, W. (2012). Can we teach digital natives digital literacy? Computers & Education, 59(3), 1065-1078.",
+    ],
+  },
 ];
 
 // ─── 연결관계 매핑 (Linking) ──────────────────────────────────
@@ -804,36 +1109,68 @@ export const SEED_MEASUREMENTS: SeedMeasurement[] = [
 export const SEED_CONCEPT_VARIABLE_LINKS: Record<string, string[]> = {
   // 기존 8개
   "자기효능감": ["학업적 자기효능감"],
-  "학습동기": ["내재적 동기"],
-  "인지부하": ["외재적 인지부하"],
+  "학습동기": ["내재적 동기", "과제가치", "성취목표지향성"],
+  "인지부하": ["외재적 인지부하", "정신적 노력"],
   "메타인지": ["자기조절 학습전략"],
   "자기조절학습": ["자기조절 학습전략"],
-  "학습몰입": ["학습몰입"],
-  "테크놀로지 수용": ["학습 지속의도"],
-  "협력학습": ["학업성취도", "학습 만족도"],
+  "학습몰입": ["학습몰입", "학습참여"],
+  "테크놀로지 수용": ["학습 지속의도", "테크노스트레스"],
+  "협력학습": ["학업성취도", "학습 만족도", "상호작용"],
   // 신규 16개 중 변인과 연결되는 것 (메타 개념은 변인 매핑 없음)
   "학습분석": ["학업성취도", "학습 지속의도"],
-  "플립러닝": ["학업성취도", "학습 만족도", "학습몰입"],
-  "게이미피케이션": ["내재적 동기", "학습몰입", "학습 지속의도"],
+  "플립러닝": ["학업성취도", "학습 만족도", "학습몰입", "학습참여"],
+  "게이미피케이션": ["내재적 동기", "학습몰입", "학습 지속의도", "학습참여"],
   "마이크로러닝": ["학습 지속의도"],
   "적응학습": ["학업성취도", "학습 지속의도"],
-  "멀티미디어 학습 인지이론": ["외재적 인지부하", "학습 만족도"],
+  "멀티미디어 학습 인지이론": ["외재적 인지부하", "학습 만족도", "정신적 노력"],
   "학습공동체": ["학습 만족도", "학업적 자기효능감"],
-  "사회적 실재감": ["학습 만족도", "학습 지속의도"],
+  "사회적 실재감": [
+    "학습 만족도",
+    "학습 지속의도",
+    "사회적 실재감",
+    "교수실재감",
+    "인지적 실재감",
+    "상호작용",
+  ],
   "학습경험 디자인": ["학습 만족도", "학습몰입"],
+  // 2026-06 보강 — 신규 변인 연결
+  "교수설계": ["학습전이"],
+  "디지털 리터러시": ["디지털 리터러시", "테크노스트레스"],
 };
 
 // 변인 이름 → 관련 측정도구 이름들. 시드 적용 시 자동으로 measurementIds 채움 + 측정도구에 역참조 variableIds.
 export const SEED_VARIABLE_MEASUREMENT_LINKS: Record<string, string[]> = {
   "학업적 자기효능감": ["학업적 자기효능감 척도 (김아영, 2007)"],
-  "내재적 동기": ["IMI (내재적 동기 검사)", "MSLQ (학습동기·전략 검사)"],
-  "학습몰입": ["K-MOLT 학습몰입 척도 (석임복, 2007)"],
+  "내재적 동기": [
+    "IMI (내재적 동기 검사)",
+    "MSLQ (학습동기·전략 검사)",
+    "IMMS 학습동기 검사 (Keller, 2010)",
+  ],
+  "학습몰입": [
+    "K-MOLT 학습몰입 척도 (석임복, 2007)",
+    "Flow State Scale (Jackson & Marsh, 1996)",
+  ],
   "자기조절 학습전략": [
     "MSLQ (학습동기·전략 검사)",
     "자기조절학습 검사 (양명희, 2002)",
   ],
   "외재적 인지부하": ["Cognitive Load Scale (Leppink et al., 2013)"],
   "학습 지속의도": ["TAM 척도 (Davis, 1989)"],
+  // 2026-06 보강 — 신규 변인·측정도구 연결
+  "학습 만족도": ["IMMS 학습동기 검사 (Keller, 2010)"],
+  "과제가치": ["MSLQ (학습동기·전략 검사)"],
+  "성취목표지향성": ["AGQ 성취목표 설문 (Elliot & McGregor, 2001)"],
+  "교수실재감": ["CoI 설문 (Arbaugh et al., 2008)"],
+  "사회적 실재감": ["CoI 설문 (Arbaugh et al., 2008)"],
+  "인지적 실재감": ["CoI 설문 (Arbaugh et al., 2008)"],
+  "학습참여": ["UWES-S 학업열의 척도 (Schaufeli et al., 2002)"],
+  "정신적 노력": [
+    "Paas 정신적 노력 척도 (Paas, 1992)",
+    "NASA-TLX (Hart & Staveland, 1988)",
+  ],
+  "학습전이": ["LTSI 학습전이체계 검사 (Holton, Bates, & Ruona, 2000)"],
+  "테크노스트레스": ["테크노스트레스 유발요인 척도 (Ragu-Nathan et al., 2008)"],
+  "디지털 리터러시": ["디지털 리터러시 척도 (Ng, 2012)"],
 };
 
 // ─── Import 함수 ──────────────────────────────────────────────
