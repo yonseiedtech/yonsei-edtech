@@ -82,7 +82,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
       if (!draft.title?.trim() && !draft.content?.trim()) return;
       if (draft.title) setValue("title", draft.title);
       if (draft.content) setValue("content", draft.content);
-      if (draft.category && availableCategories.includes(draft.category) && !lockCategory) {
+      if (draft.category && (availableCategories as PostCategory[]).includes(draft.category) && !lockCategory) {
         setCategory(draft.category);
       }
       toast.info("임시 저장된 글을 불러왔습니다.", {
