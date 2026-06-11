@@ -33,7 +33,7 @@ import {
   Save, FileText, CheckCircle2, ChevronLeft, ChevronRight,
   BookOpen, FlaskConical, Microscope, BarChart3, Flag,
   Play, Timer, Lightbulb, Plus, Trash2, History,
-  Diff, RotateCcw,
+  Diff, RotateCcw, ArrowUp, ArrowDown,
   Loader2, Compass, GraduationCap,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -456,6 +456,25 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           if (s.id !== sectionId) return s;
           const remain = s.paragraphs.filter((p) => p.id !== paraId);
           return { ...s, paragraphs: remain.length > 0 ? remain : [emptyParagraph()] };
+        }),
+      },
+    }));
+    markDirty();
+  }
+
+  function moveParagraph(k: WritingPaperChapterKey, sectionId: string, paraId: string, dir: -1 | 1) {
+    setForm((prev) => ({
+      ...prev,
+      sections: {
+        ...prev.sections,
+        [k]: prev.sections[k].map((s) => {
+          if (s.id !== sectionId) return s;
+          const idx = s.paragraphs.findIndex((p) => p.id === paraId);
+          const to = idx + dir;
+          if (idx < 0 || to < 0 || to >= s.paragraphs.length) return s;
+          const arr = [...s.paragraphs];
+          [arr[idx], arr[to]] = [arr[to], arr[idx]];
+          return { ...s, paragraphs: arr };
         }),
       },
     }));
@@ -1073,14 +1092,34 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                       disabled={readOnly || !paper}
                     />
                     {!readOnly && (
-                      <button
-                        type="button"
-                        onClick={() => removeParagraph(step, sec.id, p.id)}
-                        aria-label="단락 삭제"
-                        className="absolute right-2 top-2 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive sm:text-muted-foreground/0 sm:group-focus-within:text-muted-foreground sm:group-hover:text-muted-foreground"
-                      >
-                        <Trash2 size={12} />
-                      </button>
+                      <div className="absolute right-2 top-2 flex items-center gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() => moveParagraph(step, sec.id, p.id, -1)}
+                          disabled={pi === 0}
+                          aria-label="단락 위로 이동"
+                          className="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-primary disabled:pointer-events-none disabled:opacity-25 sm:text-muted-foreground/0 sm:group-focus-within:text-muted-foreground sm:group-hover:text-muted-foreground"
+                        >
+                          <ArrowUp size={12} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveParagraph(step, sec.id, p.id, 1)}
+                          disabled={pi === sec.paragraphs.length - 1}
+                          aria-label="단락 아래로 이동"
+                          className="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-primary disabled:pointer-events-none disabled:opacity-25 sm:text-muted-foreground/0 sm:group-focus-within:text-muted-foreground sm:group-hover:text-muted-foreground"
+                        >
+                          <ArrowDown size={12} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeParagraph(step, sec.id, p.id)}
+                          aria-label="단락 삭제"
+                          className="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive sm:text-muted-foreground/0 sm:group-focus-within:text-muted-foreground sm:group-hover:text-muted-foreground"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
                     )}
                   </div>
                 ))}
