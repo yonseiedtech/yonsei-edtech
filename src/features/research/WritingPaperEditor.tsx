@@ -1,17 +1,56 @@
 "use client";
 
+/**
+ * 학위논문 에디터 v2 (2026-06-11 — 구조화 작성 도구로 격상)
+ *
+ * v1(챕터당 textarea 1개) → v2 변경점:
+ *  1. 연구 방향 프로파일: 첫 작성 시 양적/질적/혼합 × 설계 유형 선택 다이얼로그.
+ *     → 연구방법·결과 장의 섹션 템플릿과 "심사위원의 눈" 가이드가 유형별 분기.
+ *  2. 섹션·단락 구조화: 챕터 = 섹션(소제목) 배열, 섹션 = 단락 배열.
+ *     소제목 수정·섹션 추가/삭제·단락 추가/삭제/수정. 기존 평문은 자동 이전(빈 줄 분리).
+ *  3. 버전 스냅샷: writing_paper_history(자동 통계 로그)와 구분되는 명시적
+ *     라벨 저장·복원·삭제 (writing_paper_versions, 복원 전 자동 백업).
+ *
+ * 호환: 저장 시 sections 를 평문으로 직렬화해 chapters 에도 기록
+ *       (콘솔 어드민·작성 이력 charCount·인쇄 뷰 등 기존 소비처 무수정 동작).
+ */
+
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Save, FileText, CheckCircle2, ChevronLeft, ChevronRight,
   BookOpen, FlaskConical, Microscope, BarChart3, Flag,
-  Play, Timer, Lightbulb,
+  Play, Timer, Lightbulb, Plus, Trash2, History, RotateCcw,
+  Loader2, Compass,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import type { User, WritingPaper, WritingPaperChapterKey } from "@/types";
+import type {
+  User,
+  WritingPaper,
+  WritingPaperChapterKey,
+  WritingSection,
+  WritingResearchProfile,
+  ResearchApproachType,
+  ResearchDesignType,
+  WritingPaperVersion,
+} from "@/types";
+import {
+  RESEARCH_APPROACH_LABELS,
+  RESEARCH_DESIGN_LABELS,
+} from "@/types";
+import { writingPaperVersionsApi } from "@/lib/bkend";
 import { useStudyTimerStore } from "./study-timer/study-timer-store";
 import { useCreateSession, useStudySessionsByWritingPaper } from "./study-timer/useStudySessions";
 import {
@@ -36,20 +75,34 @@ const STEPS = [
 
 type StepKey = (typeof STEPS)[number]["key"];
 
-const CHAPTER_PLACEHOLDER: Record<WritingPaperChapterKey, string> = {
-  intro: "연구 배경 · 문제 제기 · 연구 목적 · 연구 문제",
-  background: "핵심 이론 · 선행 연구 · 개념 정의",
-  method: "연구 설계 · 참여자 · 도구 · 절차 · 분석 방법",
-  results: "주요 결과 · 표/그림 설명 · 통계 결과",
-  conclusion: "결론 요약 · 시사점 · 한계 및 후속연구",
-};
+/** 챕터·연구 접근별 추천 섹션 템플릿 */
+function templateHeadings(
+  chapter: WritingPaperChapterKey,
+  approach: ResearchApproachType,
+): string[] {
+  const qual = approach === "qualitative";
+  switch (chapter) {
+    case "intro":
+      return ["연구의 필요성", "연구 목적 및 연구 문제"];
+    case "background":
+      return qual
+        ? ["핵심 개념과 이론", "선행연구 고찰"]
+        : ["핵심 개념과 이론", "선행연구 고찰", "연구모형 및 가설"];
+    case "method":
+      return qual
+        ? ["연구 설계", "연구 참여자", "자료 수집", "자료 분석", "신뢰성·타당성 확보"]
+        : ["연구 설계", "연구 대상", "측정 도구", "연구 절차", "자료 분석"];
+    case "results":
+      return qual
+        ? ["주제(테마)별 결과"]
+        : ["기술통계 및 가정 검정", "연구문제별 결과"];
+    case "conclusion":
+      return ["요약 및 논의", "시사점", "연구의 한계 및 후속연구 제언"];
+  }
+}
 
-/**
- * 챕터별 심사 방어 가이드 (2026-06-11) — 연구방법론 강의 커리큘럼
- * (타당도·인과·설계 위계·통계 선택·작성 원칙)을 챕터 맥락으로 일반화.
- * "지금 쓰는 장에서 심사위원이 무엇을 보는가" 관점의 체크 포인트.
- */
-const CHAPTER_GUIDES: Record<WritingPaperChapterKey, string[]> = {
+/** 챕터별 심사 방어 가이드 — 연구 접근에 따라 method/results 분기 */
+const CHAPTER_GUIDES_BASE: Record<WritingPaperChapterKey, string[]> = {
   intro: [
     "연구 필요성에 해당 분야 메타분석 결과를 인용하면 근거가 한층 강해집니다.",
     "연구 문제는 '개념'이 아니라 '변인' 수준으로 — 무엇을 어떻게 측정할지 보이게 진술하세요.",
@@ -81,38 +134,137 @@ const CHAPTER_GUIDES: Record<WritingPaperChapterKey, string[]> = {
   ],
 };
 
-interface FormState {
-  title: string;
-  chapters: Record<WritingPaperChapterKey, string>;
-}
-
-const EMPTY: FormState = {
-  title: "",
-  chapters: {
-    intro: "",
-    background: "",
-    method: "",
-    results: "",
-    conclusion: "",
-  },
+const QUALITATIVE_GUIDE_OVERRIDES: Partial<Record<WritingPaperChapterKey, string[]>> = {
+  method: [
+    "연구 참여자 선정 기준과 연구 맥락(현장)을 구체적으로 기술하세요 — 질적 연구의 일반화는 '맥락의 풍부한 기술'에서 나옵니다.",
+    "자료 수집·분석 절차의 감사 추적(audit trail)을 남기고, 코딩→범주→주제 도출 과정을 투명하게 보여주세요.",
+    "신뢰성 확보 전략(삼각검증·동료 검토·참여자 확인 member check)을 명시합니다.",
+    "연구자의 위치와 성찰성(reflexivity)을 기술하면 심사 방어가 강해집니다.",
+  ],
+  results: [
+    "주제(테마)별로 결과를 조직하고, 각 주장은 참여자 인용(원자료)으로 뒷받침하세요.",
+    "인용문은 맥락(참여자·상황)을 함께 제시하고, 연구자 해석과 원자료를 구분합니다.",
+    "소수 사례·반례(negative case)도 보고하면 분석의 신뢰성이 높아집니다.",
+  ],
 };
 
-function fromPaper(p: WritingPaper | undefined): FormState {
-  if (!p) return EMPTY;
-  return {
-    title: p.title ?? "",
-    chapters: {
-      intro: p.chapters?.intro ?? "",
-      background: p.chapters?.background ?? "",
-      method: p.chapters?.method ?? "",
-      results: p.chapters?.results ?? "",
-      conclusion: p.chapters?.conclusion ?? "",
+function getChapterGuides(
+  chapter: WritingPaperChapterKey,
+  approach: ResearchApproachType | undefined,
+): string[] {
+  if (approach === "qualitative" && QUALITATIVE_GUIDE_OVERRIDES[chapter]) {
+    return QUALITATIVE_GUIDE_OVERRIDES[chapter]!;
+  }
+  return CHAPTER_GUIDES_BASE[chapter];
+}
+
+// ── 구조 헬퍼 ──
+
+function uid(): string {
+  try {
+    return crypto.randomUUID();
+  } catch {
+    return `id_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
+  }
+}
+
+function emptyParagraph() {
+  return { id: uid(), text: "" };
+}
+
+function buildTemplateSections(headings: string[]): WritingSection[] {
+  return headings.map((heading) => ({ id: uid(), heading, paragraphs: [emptyParagraph()] }));
+}
+
+/** v1 평문 → 섹션 1개(빈 줄 기준 단락 분리)로 이전 */
+function migratePlainText(text: string): WritingSection[] {
+  const paragraphs = text
+    .split(/\n{2,}/)
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .map((t) => ({ id: uid(), text: t }));
+  return [
+    {
+      id: uid(),
+      heading: "본문",
+      paragraphs: paragraphs.length > 0 ? paragraphs : [emptyParagraph()],
     },
-  };
+  ];
+}
+
+type SectionsState = Record<WritingPaperChapterKey, WritingSection[]>;
+
+interface FormState {
+  title: string;
+  sections: SectionsState;
+}
+
+const CHAPTER_KEYS: WritingPaperChapterKey[] = ["intro", "background", "method", "results", "conclusion"];
+
+function buildEmptyForm(approach: ResearchApproachType): FormState {
+  const sections = {} as SectionsState;
+  for (const k of CHAPTER_KEYS) sections[k] = buildTemplateSections(templateHeadings(k, approach));
+  return { title: "", sections };
+}
+
+function normalizeSections(list: WritingSection[]): WritingSection[] {
+  return list.map((s) => ({
+    id: s.id || uid(),
+    heading: s.heading ?? "",
+    paragraphs:
+      s.paragraphs && s.paragraphs.length > 0
+        ? s.paragraphs.map((p) => ({ id: p.id || uid(), text: p.text ?? "" }))
+        : [emptyParagraph()],
+  }));
+}
+
+function fromPaper(p: WritingPaper | undefined, approach: ResearchApproachType): FormState {
+  if (!p) return buildEmptyForm(approach);
+  const sections = {} as SectionsState;
+  for (const k of CHAPTER_KEYS) {
+    const structured = p.sections?.[k];
+    if (structured && structured.length > 0) {
+      sections[k] = normalizeSections(structured);
+    } else if (p.chapters?.[k]?.trim()) {
+      sections[k] = migratePlainText(p.chapters[k]!);
+    } else {
+      sections[k] = buildTemplateSections(templateHeadings(k, approach));
+    }
+  }
+  return { title: p.title ?? "", sections };
+}
+
+/** 콘솔·이력 등 기존 소비처 호환용 평문 직렬화 */
+function serializeChapter(list: WritingSection[]): string {
+  return list
+    .map((s) => {
+      const body = s.paragraphs.map((pp) => pp.text.trim()).filter(Boolean).join("\n\n");
+      if (!body) return "";
+      return s.heading.trim() ? `[${s.heading.trim()}]\n${body}` : body;
+    })
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+function serializeAll(sections: SectionsState): Record<WritingPaperChapterKey, string> {
+  const out = {} as Record<WritingPaperChapterKey, string>;
+  for (const k of CHAPTER_KEYS) out[k] = serializeChapter(sections[k]);
+  return out;
 }
 
 function totalChars(form: FormState): number {
-  return Object.values(form.chapters).reduce((sum, v) => sum + v.length, 0);
+  return CHAPTER_KEYS.reduce(
+    (sum, k) => sum + form.sections[k].reduce((s, sec) => s + sec.paragraphs.reduce((a, p) => a + p.text.length, 0), 0),
+    0,
+  );
+}
+
+function chapterChars(form: FormState, k: WritingPaperChapterKey): number {
+  return form.sections[k].reduce((s, sec) => s + sec.paragraphs.reduce((a, p) => a + p.text.length, 0), 0);
+}
+
+function chapterIsEmpty(list: WritingSection[]): boolean {
+  return list.every((sec) => sec.paragraphs.every((p) => !p.text.trim()));
 }
 
 export default function WritingPaperEditor({ user, readOnly = false }: Props) {
@@ -120,12 +272,52 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   const ensure = useEnsureWritingPaper();
   const update = useUpdateWritingPaper();
   const logActivity = useLogWritingActivity();
+  const queryClient = useQueryClient();
 
   const { active: timerActive, start: startTimer } = useStudyTimerStore();
   const { mutateAsync: createSession } = useCreateSession();
   const writingSessions = useStudySessionsByWritingPaper(paper?.id);
   const writingTotalMin = writingSessions.reduce((s, x) => s + (x.durationMinutes || 0), 0);
   const isTimerActive = timerActive?.writingPaperId === paper?.id;
+
+  const profile: WritingResearchProfile | undefined = paper?.researchProfile;
+  const approach: ResearchApproachType = profile?.approach ?? "quantitative";
+
+  const [form, setForm] = useState<FormState>(() => buildEmptyForm("quantitative"));
+  const [hydrated, setHydrated] = useState(false);
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [step, setStep] = useState<StepKey>("intro");
+  const [guideOpen, setGuideOpen] = useState(false);
+  const ensureTriggeredRef = useRef(false);
+
+  // 연구 방향 다이얼로그
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileDismissed, setProfileDismissed] = useState(false);
+  const [selApproach, setSelApproach] = useState<ResearchApproachType>("quantitative");
+  const [selDesign, setSelDesign] = useState<ResearchDesignType>("quasi_experimental");
+  const [profileSaving, setProfileSaving] = useState(false);
+
+  // 버전 패널
+  const [versionsOpen, setVersionsOpen] = useState(false);
+  const [versionLabel, setVersionLabel] = useState("");
+  const [versionBusy, setVersionBusy] = useState(false);
+  const { data: allVersions = [] } = useQuery({
+    queryKey: ["writing_paper_versions", user.id],
+    queryFn: async () => {
+      const res = await writingPaperVersionsApi.listByUser(user.id);
+      return res.data as WritingPaperVersion[];
+    },
+    enabled: !!user.id,
+  });
+  const versions = useMemo(
+    () =>
+      allVersions
+        .filter((v) => !paper || v.paperId === paper.id)
+        .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? "")),
+    [allVersions, paper],
+  );
 
   async function handleStartWritingTimer() {
     if (timerActive) { toast.error("이미 진행 중인 세션이 있습니다"); return; }
@@ -146,16 +338,6 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     } catch { toast.error("타이머 시작에 실패했습니다"); }
   }
 
-  const [form, setForm] = useState<FormState>(EMPTY);
-  const [hydrated, setHydrated] = useState(false);
-  const [savedAt, setSavedAt] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [dirty, setDirty] = useState(false);
-  const [step, setStep] = useState<StepKey>("intro");
-  // 챕터별 심사 방어 가이드 접힘 토글 (작성 공간 과밀 방지 — 기본 접힘)
-  const [guideOpen, setGuideOpen] = useState(false);
-  const ensureTriggeredRef = useRef(false);
-
   useEffect(() => {
     if (readOnly || isLoading || paper || ensureTriggeredRef.current) return;
     ensureTriggeredRef.current = true;
@@ -164,21 +346,113 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
 
   useEffect(() => {
     if (paper && !hydrated) {
-      setForm(fromPaper(paper));
+      setForm(fromPaper(paper, paper.researchProfile?.approach ?? "quantitative"));
       setSavedAt(paper.lastSavedAt ?? paper.updatedAt ?? null);
       setHydrated(true);
     }
   }, [paper, hydrated]);
 
-  function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }));
+  // 첫 작성자 온보딩: 프로파일 미설정 + 본문 거의 없음 → 연구 방향 선택 유도
+  useEffect(() => {
+    if (!hydrated || readOnly || !paper || profileDismissed || profileOpen) return;
+    if (paper.researchProfile) return;
+    if (totalChars(form) >= 50) return;
+    setProfileOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, paper, readOnly]);
+
+  function markDirty() {
     setDirty(true);
   }
 
-  function setChapter(key: WritingPaperChapterKey, value: string) {
-    setForm((prev) => ({ ...prev, chapters: { ...prev.chapters, [key]: value } }));
-    setDirty(true);
+  // ── 섹션·단락 조작 ──
+
+  function updateSection(k: WritingPaperChapterKey, sectionId: string, patch: Partial<WritingSection>) {
+    setForm((prev) => ({
+      ...prev,
+      sections: {
+        ...prev.sections,
+        [k]: prev.sections[k].map((s) => (s.id === sectionId ? { ...s, ...patch } : s)),
+      },
+    }));
+    markDirty();
   }
+
+  function updateParagraph(k: WritingPaperChapterKey, sectionId: string, paraId: string, text: string) {
+    setForm((prev) => ({
+      ...prev,
+      sections: {
+        ...prev.sections,
+        [k]: prev.sections[k].map((s) =>
+          s.id === sectionId
+            ? { ...s, paragraphs: s.paragraphs.map((p) => (p.id === paraId ? { ...p, text } : p)) }
+            : s,
+        ),
+      },
+    }));
+    markDirty();
+  }
+
+  function addParagraph(k: WritingPaperChapterKey, sectionId: string) {
+    setForm((prev) => ({
+      ...prev,
+      sections: {
+        ...prev.sections,
+        [k]: prev.sections[k].map((s) =>
+          s.id === sectionId ? { ...s, paragraphs: [...s.paragraphs, emptyParagraph()] } : s,
+        ),
+      },
+    }));
+    markDirty();
+  }
+
+  function removeParagraph(k: WritingPaperChapterKey, sectionId: string, paraId: string) {
+    const sec = form.sections[k].find((s) => s.id === sectionId);
+    const para = sec?.paragraphs.find((p) => p.id === paraId);
+    if (para?.text.trim() && !confirm("이 단락을 삭제하시겠습니까?")) return;
+    setForm((prev) => ({
+      ...prev,
+      sections: {
+        ...prev.sections,
+        [k]: prev.sections[k].map((s) => {
+          if (s.id !== sectionId) return s;
+          const remain = s.paragraphs.filter((p) => p.id !== paraId);
+          return { ...s, paragraphs: remain.length > 0 ? remain : [emptyParagraph()] };
+        }),
+      },
+    }));
+    markDirty();
+  }
+
+  function addSection(k: WritingPaperChapterKey, heading = "새 섹션") {
+    setForm((prev) => ({
+      ...prev,
+      sections: {
+        ...prev.sections,
+        [k]: [...prev.sections[k], { id: uid(), heading, paragraphs: [emptyParagraph()] }],
+      },
+    }));
+    markDirty();
+  }
+
+  function removeSection(k: WritingPaperChapterKey, sectionId: string) {
+    const sec = form.sections[k].find((s) => s.id === sectionId);
+    const hasContent = sec?.paragraphs.some((p) => p.text.trim());
+    if (hasContent && !confirm(`"${sec?.heading}" 섹션과 단락을 모두 삭제하시겠습니까?`)) return;
+    setForm((prev) => {
+      const remain = prev.sections[k].filter((s) => s.id !== sectionId);
+      return {
+        ...prev,
+        sections: {
+          ...prev.sections,
+          [k]: remain.length > 0 ? remain : buildTemplateSections(templateHeadings(k, approach)),
+        },
+      };
+    });
+    markDirty();
+  }
+
+  // ── 저장 ──
 
   async function handleSave(showToast = true) {
     if (!paper || readOnly) return;
@@ -189,7 +463,8 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         id: paper.id,
         data: {
           title: form.title,
-          chapters: form.chapters,
+          sections: form.sections,
+          chapters: serializeAll(form.sections),
           lastSavedAt: now,
         },
       });
@@ -215,10 +490,120 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     toast.success("임시 저장되었습니다.");
   }
 
+  // ── 연구 방향 프로파일 ──
+
+  async function handleProfileSave() {
+    if (!paper) return;
+    setProfileSaving(true);
+    try {
+      const newProfile: WritingResearchProfile = { approach: selApproach, design: selDesign };
+      await update.mutateAsync({ id: paper.id, data: { researchProfile: newProfile } });
+      // 작성 내용이 없는 챕터만 새 접근의 템플릿으로 재구성 (작성분 보존)
+      setForm((prev) => {
+        const next = { ...prev.sections } as SectionsState;
+        for (const k of CHAPTER_KEYS) {
+          if (chapterIsEmpty(next[k])) next[k] = buildTemplateSections(templateHeadings(k, selApproach));
+        }
+        return { ...prev, sections: next };
+      });
+      setProfileOpen(false);
+      toast.success(
+        `연구 방향이 설정되었습니다 — ${RESEARCH_APPROACH_LABELS[selApproach]} · ${RESEARCH_DESIGN_LABELS[selDesign]}`,
+      );
+    } catch {
+      toast.error("저장에 실패했습니다.");
+    } finally {
+      setProfileSaving(false);
+    }
+  }
+
+  function openProfileDialog() {
+    setSelApproach(profile?.approach ?? "quantitative");
+    setSelDesign(profile?.design ?? "quasi_experimental");
+    setProfileOpen(true);
+  }
+
+  // ── 버전 스냅샷 ──
+
+  async function createVersion(label: string, silent = false): Promise<boolean> {
+    if (!paper) return false;
+    try {
+      const payload: Record<string, unknown> = {
+        userId: user.id,
+        paperId: paper.id,
+        label,
+        sections: form.sections,
+        chapters: serializeAll(form.sections),
+        charCount: totalChars(form),
+        createdAt: new Date().toISOString(),
+      };
+      if (form.title.trim()) payload.title = form.title.trim();
+      if (profile) payload.researchProfile = profile;
+      await writingPaperVersionsApi.create(payload);
+      void queryClient.invalidateQueries({ queryKey: ["writing_paper_versions", user.id] });
+      if (!silent) toast.success(`버전 "${label}" 이 저장되었습니다.`);
+      return true;
+    } catch {
+      if (!silent) toast.error("버전 저장에 실패했습니다.");
+      return false;
+    }
+  }
+
+  async function handleSaveVersion() {
+    const label = versionLabel.trim() || `v${versions.length + 1} (${new Date().toLocaleDateString("ko-KR")})`;
+    setVersionBusy(true);
+    const ok = await createVersion(label);
+    if (ok) setVersionLabel("");
+    setVersionBusy(false);
+  }
+
+  async function handleRestoreVersion(v: WritingPaperVersion) {
+    if (!confirm(`"${v.label}" 버전으로 복원하시겠습니까?\n현재 내용은 '복원 전 자동 백업' 버전으로 보관됩니다.`)) return;
+    setVersionBusy(true);
+    try {
+      const t = new Date();
+      await createVersion(
+        `복원 전 자동 백업 (${t.getHours().toString().padStart(2, "0")}:${t.getMinutes().toString().padStart(2, "0")})`,
+        true,
+      );
+      const restoredApproach = v.researchProfile?.approach ?? approach;
+      const sections = {} as SectionsState;
+      for (const k of CHAPTER_KEYS) {
+        const structured = v.sections?.[k];
+        if (structured && structured.length > 0) sections[k] = normalizeSections(structured);
+        else if (v.chapters?.[k]?.trim()) sections[k] = migratePlainText(v.chapters[k]!);
+        else sections[k] = buildTemplateSections(templateHeadings(k, restoredApproach));
+      }
+      setForm({ title: v.title ?? "", sections });
+      setDirty(true);
+      toast.success(`"${v.label}" 버전을 불러왔습니다 — 저장 버튼을 눌러 확정하세요.`);
+    } finally {
+      setVersionBusy(false);
+    }
+  }
+
+  async function handleDeleteVersion(v: WritingPaperVersion) {
+    if (!confirm(`"${v.label}" 버전을 삭제하시겠습니까? 되돌릴 수 없습니다.`)) return;
+    try {
+      await writingPaperVersionsApi.delete(v.id);
+      void queryClient.invalidateQueries({ queryKey: ["writing_paper_versions", user.id] });
+      toast.success("버전이 삭제되었습니다.");
+    } catch {
+      toast.error("삭제에 실패했습니다.");
+    }
+  }
+
+  // ── 렌더 ──
+
   const stepIdx = STEPS.findIndex((s) => s.key === step);
   const canPrev = stepIdx > 0;
   const canNext = stepIdx < STEPS.length - 1;
   const total = useMemo(() => totalChars(form), [form]);
+  const guides = getChapterGuides(step, profile?.approach);
+  const currentSections = form.sections[step];
+  const unusedTemplates = templateHeadings(step, approach).filter(
+    (h) => !currentSections.some((s) => s.heading.trim() === h),
+  );
 
   if (isLoading || (!paper && !readOnly)) {
     return (
@@ -238,7 +623,90 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* 헤더 */}
+      {/* ── 연구 방향 선택 다이얼로그 ── */}
+      <Dialog
+        open={profileOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setProfileOpen(false);
+            setProfileDismissed(true);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Compass size={17} className="text-primary" />
+              내 논문의 연구 방향
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground">
+            선택에 따라 연구방법·연구결과 장의 추천 섹션과 작성 가이드가 맞춤 구성됩니다.
+            나중에 언제든 변경할 수 있습니다.
+          </p>
+          <div>
+            <p className="mb-1.5 text-xs font-semibold">연구 접근</p>
+            <div className="flex flex-wrap gap-1.5">
+              {(Object.keys(RESEARCH_APPROACH_LABELS) as ResearchApproachType[]).map((a) => (
+                <button
+                  key={a}
+                  type="button"
+                  onClick={() => setSelApproach(a)}
+                  className={cn(
+                    "rounded-lg border px-3 py-2 text-xs font-medium transition-colors",
+                    selApproach === a
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "bg-card hover:bg-muted",
+                  )}
+                >
+                  {RESEARCH_APPROACH_LABELS[a]}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="mb-1.5 text-xs font-semibold">연구 설계</p>
+            <div className="flex flex-wrap gap-1.5">
+              {(Object.keys(RESEARCH_DESIGN_LABELS) as ResearchDesignType[]).map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setSelDesign(d)}
+                  className={cn(
+                    "rounded-lg border px-3 py-2 text-xs font-medium transition-colors",
+                    selDesign === d
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "bg-card hover:bg-muted",
+                  )}
+                >
+                  {RESEARCH_DESIGN_LABELS[d]}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              예: 현장에서 기존 학급 단위로 비교하면 준실험, 설문·상관 연구는 비실험입니다.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setProfileOpen(false);
+                setProfileDismissed(true);
+              }}
+            >
+              나중에
+            </Button>
+            <Button size="sm" onClick={handleProfileSave} disabled={profileSaving}>
+              {profileSaving && <Loader2 size={13} className="mr-1 animate-spin" />}
+              설정 완료
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── 헤더 ── */}
       <section className="rounded-2xl border bg-card p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -275,7 +743,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           {!readOnly && (
             <div className="flex shrink-0 items-center gap-2">
               {savedAt && !saving && (
-                <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                <span className="hidden items-center gap-1 text-[11px] text-muted-foreground sm:flex">
                   <CheckCircle2 size={12} className="text-emerald-500" />
                   {(() => {
                     const diff = Date.now() - new Date(savedAt).getTime();
@@ -297,19 +765,131 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           )}
         </div>
 
+        {/* 연구 방향 프로파일 칩 */}
+        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          {profile ? (
+            <>
+              <Badge variant="secondary" className="text-[11px]">
+                {RESEARCH_APPROACH_LABELS[profile.approach]}
+              </Badge>
+              <Badge variant="outline" className="text-[11px]">
+                {RESEARCH_DESIGN_LABELS[profile.design]}
+              </Badge>
+            </>
+          ) : (
+            <Badge variant="outline" className="text-[11px] text-muted-foreground">연구 방향 미설정</Badge>
+          )}
+          {!readOnly && (
+            <button
+              type="button"
+              onClick={openProfileDialog}
+              className="text-[11px] text-primary hover:underline"
+            >
+              {profile ? "변경" : "설정하기"}
+            </button>
+          )}
+        </div>
+
         <div className="mt-4">
           <label className="text-xs font-semibold text-muted-foreground">제목</label>
           <Input
             className="mt-1"
             value={form.title}
-            placeholder="예: AI 기반 자기조절학습이 학업성취에 미치는 영향"
-            onChange={(e) => setField("title", e.target.value)}
+            placeholder="논문 제목 (가제)"
+            onChange={(e) => {
+              setForm((prev) => ({ ...prev, title: e.target.value }));
+              markDirty();
+            }}
             disabled={readOnly || !paper}
           />
         </div>
       </section>
 
-      {/* 스텝 탭 */}
+      {/* ── 버전 스냅샷 패널 ── */}
+      <section className="rounded-2xl border bg-card">
+        <button
+          type="button"
+          onClick={() => setVersionsOpen((v) => !v)}
+          aria-expanded={versionsOpen}
+          className="flex w-full items-center justify-between px-5 py-3.5 text-left"
+        >
+          <span className="flex items-center gap-2 text-sm font-semibold">
+            <History size={15} className="text-primary" />
+            버전 관리
+            {versions.length > 0 && (
+              <Badge variant="secondary" className="text-[10px]">{versions.length}</Badge>
+            )}
+            <span className="text-[11px] font-normal text-muted-foreground">
+              피드백 반영 전·심사 제출본 등 시점을 저장하고 복원
+            </span>
+          </span>
+          <ChevronRight
+            size={15}
+            className={cn("shrink-0 text-muted-foreground transition-transform", versionsOpen && "rotate-90")}
+          />
+        </button>
+        {versionsOpen && (
+          <div className="border-t px-5 py-4">
+            {!readOnly && (
+              <div className="flex gap-2">
+                <Input
+                  className="h-8 text-xs"
+                  placeholder='버전 라벨 — 예: "지도교수 1차 피드백 반영 전"'
+                  value={versionLabel}
+                  onChange={(e) => setVersionLabel(e.target.value)}
+                />
+                <Button size="sm" className="h-8 shrink-0 gap-1 text-xs" onClick={handleSaveVersion} disabled={versionBusy}>
+                  {versionBusy ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                  버전 저장
+                </Button>
+              </div>
+            )}
+            {versions.length === 0 ? (
+              <p className="mt-3 text-xs text-muted-foreground">
+                저장된 버전이 없습니다. 큰 수정 전에 버전을 남겨두면 언제든 되돌릴 수 있어요.
+              </p>
+            ) : (
+              <ul className="mt-3 divide-y">
+                {versions.map((v) => (
+                  <li key={v.id} className="flex items-center gap-2 py-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-medium">{v.label}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {new Date(v.createdAt).toLocaleString("ko-KR", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        {" · "}{v.charCount.toLocaleString()}자
+                      </p>
+                    </div>
+                    {!readOnly && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 gap-1 text-[11px]"
+                          onClick={() => handleRestoreVersion(v)}
+                          disabled={versionBusy}
+                        >
+                          <RotateCcw size={11} />복원
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-destructive"
+                          aria-label="버전 삭제"
+                          onClick={() => handleDeleteVersion(v)}
+                        >
+                          <Trash2 size={12} />
+                        </Button>
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* ── 스텝 탭 ── */}
       <div className="flex items-center gap-1 rounded-2xl border bg-card p-1.5">
         {STEPS.map((s, i) => {
           const active = step === s.key;
@@ -333,27 +913,110 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         })}
       </div>
 
-      {/* 스텝 내용 */}
+      {/* ── 스텝 내용: 섹션 · 단락 ── */}
       <section className="rounded-2xl border bg-card p-5">
         <div className="flex items-center justify-between">
           <h4 className="text-sm font-semibold">
             {stepIdx + 1}. {STEPS[stepIdx].label}
           </h4>
           <span className="text-[11px] text-muted-foreground">
-            {(form.chapters[step] ?? "").length.toLocaleString()}자
+            {chapterChars(form, step).toLocaleString()}자
           </span>
         </div>
-        <Textarea
-          className="mt-3 font-sans text-sm leading-relaxed"
-          rows={14}
-          value={form.chapters[step] ?? ""}
-          placeholder={CHAPTER_PLACEHOLDER[step]}
-          onChange={(e) => setChapter(step, e.target.value)}
-          disabled={readOnly || !paper}
-        />
 
-        {/* 챕터별 심사 방어 가이드 — 연구방법론 강의 일반화 (기본 접힘) */}
-        <div className="mt-3 rounded-xl border border-amber-200/70 bg-amber-50/40 dark:border-amber-800/50 dark:bg-amber-950/10">
+        <div className="mt-3 space-y-4">
+          {currentSections.map((sec, si) => (
+            <div key={sec.id} className="rounded-xl border bg-background/50 p-3.5">
+              {/* 섹션 헤더 */}
+              <div className="flex items-center gap-2">
+                <span className="shrink-0 text-[11px] font-bold text-primary">{si + 1}.</span>
+                <Input
+                  className="h-8 flex-1 border-transparent bg-transparent px-1 text-sm font-semibold shadow-none focus-visible:border-input"
+                  value={sec.heading}
+                  placeholder="섹션 제목 (예: 연구의 필요성)"
+                  onChange={(e) => updateSection(step, sec.id, { heading: e.target.value })}
+                  disabled={readOnly}
+                />
+                {!readOnly && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 shrink-0 p-0 text-muted-foreground hover:text-destructive"
+                    aria-label="섹션 삭제"
+                    onClick={() => removeSection(step, sec.id)}
+                  >
+                    <Trash2 size={13} />
+                  </Button>
+                )}
+              </div>
+
+              {/* 단락들 */}
+              <div className="mt-2 space-y-2">
+                {sec.paragraphs.map((p, pi) => (
+                  <div key={p.id} className="group relative">
+                    <Textarea
+                      className="min-h-[72px] font-sans text-sm leading-relaxed"
+                      rows={3}
+                      value={p.text}
+                      placeholder={`단락 ${pi + 1}`}
+                      onChange={(e) => updateParagraph(step, sec.id, p.id, e.target.value)}
+                      disabled={readOnly || !paper}
+                    />
+                    {!readOnly && (
+                      <button
+                        type="button"
+                        onClick={() => removeParagraph(step, sec.id, p.id)}
+                        aria-label="단락 삭제"
+                        className="absolute right-2 top-2 rounded p-1 text-muted-foreground/0 transition-colors hover:bg-muted hover:text-destructive group-focus-within:text-muted-foreground group-hover:text-muted-foreground"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={() => addParagraph(step, sec.id)}
+                  className="mt-2 inline-flex items-center gap-1 rounded-md border border-dashed px-2.5 py-1 text-[11px] text-muted-foreground hover:border-primary/40 hover:text-primary"
+                >
+                  <Plus size={11} />
+                  단락 추가
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* 섹션 추가 */}
+        {!readOnly && (
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => addSection(step)}
+              className="inline-flex items-center gap-1 rounded-lg border border-dashed px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary/40 hover:text-primary"
+            >
+              <Plus size={12} />
+              섹션 추가
+            </button>
+            {unusedTemplates.map((h) => (
+              <button
+                key={h}
+                type="button"
+                onClick={() => addSection(step, h)}
+                className="rounded-full border bg-muted/40 px-2.5 py-1 text-[11px] text-muted-foreground hover:border-primary/40 hover:text-primary"
+                title="추천 섹션 추가"
+              >
+                + {h}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* 챕터별 심사 방어 가이드 — 연구 접근별 분기 (기본 접힘) */}
+        <div className="mt-4 rounded-xl border border-amber-200/70 bg-amber-50/40 dark:border-amber-800/50 dark:bg-amber-950/10">
           <button
             type="button"
             onClick={() => setGuideOpen((v) => !v)}
@@ -362,7 +1025,10 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           >
             <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-800 dark:text-amber-200">
               <Lightbulb size={13} />
-              심사위원의 눈 — {STEPS[stepIdx].label} 체크 {CHAPTER_GUIDES[step].length}가지
+              심사위원의 눈 — {STEPS[stepIdx].label} 체크 {guides.length}가지
+              {profile?.approach === "qualitative" && (step === "method" || step === "results") && (
+                <span className="font-normal text-amber-700/80 dark:text-amber-300/80">(질적 연구 기준)</span>
+              )}
             </span>
             <ChevronRight
               size={14}
@@ -374,7 +1040,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           </button>
           {guideOpen && (
             <ul className="space-y-1.5 border-t border-amber-200/60 px-3.5 py-3 dark:border-amber-800/40">
-              {CHAPTER_GUIDES[step].map((tip, i) => (
+              {guides.map((tip, i) => (
                 <li key={i} className="flex gap-1.5 text-xs leading-relaxed text-amber-900/90 dark:text-amber-100/90">
                   <span className="mt-0.5 shrink-0">·</span>
                   {tip}
@@ -385,7 +1051,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         </div>
       </section>
 
-      {/* 이전 / 다음 네비게이션 */}
+      {/* ── 이전 / 다음 네비게이션 ── */}
       <div className="flex items-center justify-between rounded-2xl border bg-card p-3">
         <Button
           variant="outline"

@@ -39,7 +39,7 @@ import type {
   SeminarReview, Inquiry, Activity, AppNotification, WaitlistEntry,
   Poll, PollResponse, PhotoAlbum, Photo, AdminTodo, AuditLog, UserActivityLog,
   ActivityProgress, ActivityMaterial, EmailLog, ProgressMeeting,
-  Lab, LabReaction, LabComment, ResearchPaper, ResearchReport, ResearchProposal, WritingPaper, WritingPaperHistory, AdvisorFeedbackNote,
+  Lab, LabReaction, LabComment, ResearchPaper, ResearchReport, ResearchProposal, WritingPaper, WritingPaperHistory, WritingPaperVersion, AdvisorFeedbackNote,
   InterviewResponseReaction, InterviewResponseComment,
   ProfileLike, ProfileView, StudySession,
   ApplicantEntry, PublicSpeaker,
@@ -1319,6 +1319,19 @@ export const writingPapersApi = {
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<WritingPaper>("writing_papers", id, data),
   delete: (id: string) => dataApi.delete("writing_papers", id),
+};
+
+// ── 논문 버전 스냅샷 (명시적 저장·복원) — writing_paper_history(자동 로그)와 구분 ──
+export const writingPaperVersionsApi = {
+  /** 복합 인덱스 회피: filter[userId]만 사용, paperId 필터·정렬은 클라이언트에서 */
+  listByUser: (userId: string) =>
+    dataApi.list<WritingPaperVersion>("writing_paper_versions", {
+      "filter[userId]": userId,
+      limit: 100,
+    }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<WritingPaperVersion>("writing_paper_versions", data),
+  delete: (id: string) => dataApi.delete("writing_paper_versions", id),
 };
 
 // ── 지도 노트 (교수 피드백 기록·반영 추적) — 본인 전용 ──

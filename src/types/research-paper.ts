@@ -124,16 +124,83 @@ export type WritingPaperChapterKey =
   | "results"      // 연구 결과
   | "conclusion";  // 결론
 
+// ── 연구 방향 프로파일 (2026-06-11 — 에디터 맞춤화) ──
+export type ResearchApproachType = "quantitative" | "qualitative" | "mixed";
+export type ResearchDesignType =
+  | "experimental"        // 실험 (무선할당)
+  | "quasi_experimental"  // 준실험 (비동등 집단)
+  | "non_experimental"    // 비실험 (조사·상관·기술)
+  | "qualitative_design"  // 질적 설계 (사례·현상학·근거이론 등)
+  | "undecided";
+
+export const RESEARCH_APPROACH_LABELS: Record<ResearchApproachType, string> = {
+  quantitative: "양적 연구",
+  qualitative: "질적 연구",
+  mixed: "혼합 연구",
+};
+
+export const RESEARCH_DESIGN_LABELS: Record<ResearchDesignType, string> = {
+  experimental: "실험 설계",
+  quasi_experimental: "준실험 설계",
+  non_experimental: "비실험 (조사·상관)",
+  qualitative_design: "질적 설계",
+  undecided: "미정",
+};
+
+export interface WritingResearchProfile {
+  approach: ResearchApproachType;
+  design: ResearchDesignType;
+}
+
+// ── 구조화 본문: 챕터 → 섹션(소제목) → 단락 (2026-06-11) ──
+export interface WritingParagraph {
+  id: string;
+  text: string;
+}
+
+export interface WritingSection {
+  id: string;
+  /** 소제목 — 예: "연구의 필요성", "연구 목적 및 연구 문제" */
+  heading: string;
+  paragraphs: WritingParagraph[];
+}
+
 export interface WritingPaper {
   id: string;
   userId: string;
   title?: string;
-  /** 5장 본문 */
+  /**
+   * 5장 본문 (평문) — 구조화 모드 도입 후에는 sections 의 직렬화본.
+   * 콘솔 어드민·작성 이력 charCount 등 기존 소비처 호환용으로 항상 함께 저장.
+   */
   chapters?: Partial<Record<WritingPaperChapterKey, string>>;
+  /** 구조화 본문 (v2) — 있으면 에디터는 이 구조를 사용 */
+  sections?: Partial<Record<WritingPaperChapterKey, WritingSection[]>>;
+  /** 연구 방향 프로파일 — 섹션 템플릿·작성 가이드 맞춤화 */
+  researchProfile?: WritingResearchProfile;
   /** UI 표시용 마지막 자동 저장 시각 (ISO) */
   lastSavedAt?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+/**
+ * 명시적 버전 스냅샷 — Firestore `writing_paper_versions` (본인 전용).
+ * writing_paper_history(자동 쓰로틀 통계 로그)와 달리 사용자가 의도적으로
+ * 라벨을 붙여 저장하고, 복원할 수 있는 전체 본문 스냅샷.
+ */
+export interface WritingPaperVersion {
+  id: string;
+  userId: string;
+  paperId: string;
+  /** 사용자 지정 라벨 — 예: "지도교수 1차 피드백 반영 전" */
+  label: string;
+  title?: string;
+  chapters?: Partial<Record<WritingPaperChapterKey, string>>;
+  sections?: Partial<Record<WritingPaperChapterKey, WritingSection[]>>;
+  researchProfile?: WritingResearchProfile;
+  charCount: number;
+  createdAt: string;
 }
 
 /** 내 논문 작성 활동 이력 — 자동 저장 시점마다(쓰로틀) 1건 적재 */

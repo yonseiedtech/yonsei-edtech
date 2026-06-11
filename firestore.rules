@@ -428,6 +428,17 @@ service cloud.firestore {
         && resource.data.userId == request.auth.uid;
     }
 
+    // ─── 논문 버전 스냅샷 (2026-06-11) ───
+    // writing_papers 와 동일 정책: 본인 + staff read, 쓰기는 본인만.
+    match /writing_paper_versions/{docId} {
+      allow read: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+    }
+
     // ─── 지도 노트 (교수 피드백 기록·반영 추적, 2026-06-11) ───
     // 민감한 지도 내용이므로 운영진 포함 누구도 타인 노트 접근 불가 — 본인 전용.
     match /advisor_feedback_notes/{docId} {
