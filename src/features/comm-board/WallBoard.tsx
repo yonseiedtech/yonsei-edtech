@@ -24,6 +24,7 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  Download,
   Link as LinkIcon,
   List,
   Lock,
@@ -321,6 +322,42 @@ export default function WallBoard({ boardId, variant }: Props) {
       .catch(() => toast.error("복사에 실패했습니다."));
   }
 
+  /** 수업 종료 후 정리본 — 발표자 그룹별 질문·답변을 마크다운으로 (추가 쿼리 없음) */
+  function handleExportDigest() {
+    if (!board) return;
+    const lines: string[] = [];
+    lines.push(`# ${board.title} — Q&A 정리본`);
+    if (board.description) lines.push(`> ${board.description}`);
+    lines.push(`생성: ${new Date().toLocaleString("ko-KR")} · 질문 ${questions.length}개`);
+    for (const g of groups) {
+      if (g.items.length === 0) continue;
+      lines.push(`\n## ${g.label ? (g.key === COMMON_KEY ? "💬 공통 질문" : `🎤 ${g.label}`) : "질문"} (${g.items.length})`);
+      g.items.forEach((q, i) => {
+        lines.push(`\n### Q${i + 1}. ${q.body.replace(/\s*\n+\s*/g, " ")}${q.resolved ? " ✅해결" : ""}`);
+        lines.push(`- 작성: ${authorLabel(q)} · 👍 ${q.likeCount}`);
+        for (const a of answersByQuestion.get(q.id) ?? []) {
+          const name = a.anonymous ? "익명" : a.authorName ?? a.guestName ?? "게스트";
+          const accepted = q.resolvedAnswerId === a.id ? " ✅채택" : "";
+          lines.push(`  - 💬 ${name}: ${a.body.replace(/\s*\n+\s*/g, " ")}${accepted}`);
+        }
+      });
+    }
+    const md = lines.join("\n");
+    void navigator.clipboard
+      .writeText(md)
+      .then(() => toast.success("정리본이 클립보드에 복사되고 파일로 저장됩니다."))
+      .catch(() => { /* 다운로드는 계속 */ });
+    const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const el = document.createElement("a");
+    el.href = url;
+    el.download = `${board.title.replace(/[\\/:*?"<>|]/g, "_")}_QA정리본.md`;
+    document.body.appendChild(el);
+    el.click();
+    el.remove();
+    URL.revokeObjectURL(url);
+  }
+
   if (boardLoading || !board) {
     return (
       <div className="mx-auto max-w-5xl space-y-4 p-4">
@@ -378,6 +415,14 @@ export default function WallBoard({ boardId, variant }: Props) {
                 <button type="button" onClick={copyLink} className="flex items-center gap-1 rounded border px-2 py-0.5 text-[11px] hover:bg-accent">
                   <LinkIcon size={11} /> 링크 복사
                 </button>
+                <button
+                  type="button"
+                  onClick={handleExportDigest}
+                  title="질문·답변 마크다운 정리본 (클립보드+파일)"
+                  className="flex items-center gap-1 rounded border px-2 py-0.5 text-[11px] hover:bg-accent"
+                >
+                  <Download size={11} /> 정리본
+                </button>
                 <Link href={`/boards/${boardId}`} className="flex items-center gap-1 rounded border px-2 py-0.5 text-[11px] hover:bg-accent">
                   <List size={11} /> 스레드
                 </Link>
@@ -423,6 +468,15 @@ export default function WallBoard({ boardId, variant }: Props) {
                 <button type="button" onClick={copyLink} className="flex items-center gap-1 rounded-lg border px-2 py-1.5 text-[11px] hover:bg-accent">
                   <LinkIcon size={12} />
                   <span className="hidden sm:inline">링크 복사</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportDigest}
+                  title="질문·답변 마크다운 정리본 (클립보드+파일)"
+                  className="flex items-center gap-1 rounded-lg border px-2 py-1.5 text-[11px] hover:bg-accent"
+                >
+                  <Download size={12} />
+                  <span className="hidden sm:inline">정리본</span>
                 </button>
                 <Link href={`/boards/${boardId}/present`} className="flex items-center gap-1 rounded-lg border px-2 py-1.5 text-[11px] hover:bg-accent">
                   <QrCode size={12} />
