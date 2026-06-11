@@ -24,7 +24,7 @@ import { SEMINAR_STATUS_LABELS } from "@/types";
 import { getComputedStatus } from "@/lib/seminar-utils";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Pencil, BookOpen, Image as ImageIcon, Video, AlertTriangle, Trash2, Copy, Send, CalendarDays, Users, TrendingUp, FileEdit, Plus, UserPlus } from "lucide-react";
+import { Pencil, BookOpen, Image as ImageIcon, Video, AlertTriangle, Trash2, Copy, Send, CalendarDays, Users, TrendingUp, FileEdit, Plus, UserPlus, Gauge } from "lucide-react";
 import { useCreateSeminar } from "@/features/seminar/useSeminar";
 import { createTimeline } from "@/features/seminar-admin/timeline-template";
 import { useSeminarAdminContext } from "@/features/seminar-admin/seminar-admin-store";
@@ -379,6 +379,9 @@ export default function AdminSeminarTab() {
               <span className="text-xs text-muted-foreground">-</span>
             )}
             <Badge variant="secondary" className={STATUS_COLORS[computed]}>{SEMINAR_STATUS_LABELS[computed]}</Badge>
+            <Link href={`/console/academic/seminars/${s.id}`} onClick={() => setActiveSeminarId(s.id)}>
+              <Button variant="default" size="sm" className="gap-1 text-xs"><Gauge size={14} />운영</Button>
+            </Link>
             <Link href={`/seminars/${s.id}`}>
               <Button variant="outline" size="sm" className="gap-1 text-xs"><BookOpen size={14} />입장</Button>
             </Link>
@@ -421,6 +424,9 @@ export default function AdminSeminarTab() {
               )}
               <div className="mt-2 flex items-center gap-2">
                 <Badge variant="secondary" className={cn("text-xs", STATUS_COLORS[computed])}>{SEMINAR_STATUS_LABELS[computed]}</Badge>
+                <Link href={`/console/academic/seminars/${s.id}`} onClick={() => setActiveSeminarId(s.id)}>
+                  <Button variant="default" size="sm" className="h-7 gap-1 text-xs"><Gauge size={12} />운영</Button>
+                </Link>
                 <Link href={`/seminars/${s.id}`}>
                   <Button variant="outline" size="sm" className="h-7 gap-1 text-xs"><BookOpen size={12} />입장</Button>
                 </Link>

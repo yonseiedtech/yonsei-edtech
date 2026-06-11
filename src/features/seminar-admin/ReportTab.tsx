@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useSeminars, useAttendees } from "@/features/seminar/useSeminar";
+import { useSeminarAdminContext } from "./seminar-admin-store";
 import { exportAttendeesCSV } from "./export-csv";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -753,7 +754,10 @@ export function SeminarReport({ seminarId, seminarTitle, seminarDate }: { semina
 
 export default function ReportTab() {
   const { seminars } = useSeminars();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Sprint UX-S1: 다른 탭(신청/타임라인/수료증)과 세미나 선택 공유 — 탭 이동 시 재선택 불필요
+  const selectedId = useSeminarAdminContext((s) => s.activeSeminarId);
+  const setActiveSeminarId = useSeminarAdminContext((s) => s.setActiveSeminarId);
+  const setSelectedId = (id: string | null) => setActiveSeminarId(id);
   const seminar = seminars.find((s) => s.id === selectedId);
 
   const completedSeminars = seminars.filter((s) => s.status === "completed");
