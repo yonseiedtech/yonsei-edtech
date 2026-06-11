@@ -481,6 +481,19 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     markDirty();
   }
 
+  function moveSection(k: WritingPaperChapterKey, sectionId: string, dir: -1 | 1) {
+    setForm((prev) => {
+      const arr = prev.sections[k];
+      const idx = arr.findIndex((s) => s.id === sectionId);
+      const to = idx + dir;
+      if (idx < 0 || to < 0 || to >= arr.length) return prev;
+      const next = [...arr];
+      [next[idx], next[to]] = [next[to], next[idx]];
+      return { ...prev, sections: { ...prev.sections, [k]: next } };
+    });
+    markDirty();
+  }
+
   function addSection(k: WritingPaperChapterKey, heading = "새 섹션") {
     setForm((prev) => ({
       ...prev,
@@ -1067,15 +1080,37 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                   disabled={readOnly}
                 />
                 {!readOnly && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 shrink-0 p-0 text-muted-foreground hover:text-destructive"
-                    aria-label="섹션 삭제"
-                    onClick={() => removeSection(step, sec.id)}
-                  >
-                    <Trash2 size={13} />
-                  </Button>
+                  <div className="flex shrink-0 items-center gap-0.5">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-primary"
+                      aria-label="섹션 위로 이동"
+                      disabled={si === 0}
+                      onClick={() => moveSection(step, sec.id, -1)}
+                    >
+                      <ArrowUp size={13} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-primary"
+                      aria-label="섹션 아래로 이동"
+                      disabled={si === currentSections.length - 1}
+                      onClick={() => moveSection(step, sec.id, 1)}
+                    >
+                      <ArrowDown size={13} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                      aria-label="섹션 삭제"
+                      onClick={() => removeSection(step, sec.id)}
+                    >
+                      <Trash2 size={13} />
+                    </Button>
+                  </div>
                 )}
               </div>
 
