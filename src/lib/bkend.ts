@@ -352,7 +352,35 @@ export const dataApi = {
 
 // ── Typed API shortcuts ──
 
+/**
+ * firestore.rules postCategoryReadable 의 public 분기와 동기화.
+ * 카테고리 무필터 posts list 는 rules 정적 평가에서 거부되므로(2026-06-12 실증),
+ * 전체 조회는 반드시 listReadable(공개 enum in 쿼리)을 사용한다.
+ */
+export const PUBLIC_POST_CATEGORIES = [
+  "notice", "seminar", "free", "promotion", "press", "interview", "paper_review", "update",
+] as const;
+
 export const postsApi = {
+  /** 공개(+권한별 추가) 카테고리 한정 전체 조회 — posts(category, createdAt desc) 복합 인덱스 사용 */
+  listReadable: async (opts?: {
+    limit?: number;
+    includeResources?: boolean;
+    includeStaff?: boolean;
+  }): Promise<ListResponse<Post>> => {
+    const cats: string[] = [...PUBLIC_POST_CATEGORIES];
+    if (opts?.includeResources) cats.push("resources");
+    if (opts?.includeStaff) cats.push("staff");
+    const constraints: QueryConstraint[] = [
+      where("category", "in", cats),
+      orderBy("createdAt", "desc"),
+    ];
+    if (opts?.limit) constraints.push(firestoreLimit(opts.limit));
+    const q = query(collection(db, "posts"), ...constraints);
+    const snapshot = await getDocs(q);
+    const data = snapshot.docs.map((d) => serializeDoc(d) as unknown as Post);
+    return { data, total: data.length, page: 1, limit: opts?.limit ?? data.length };
+  },
   list: (params?: { category?: string; page?: number; limit?: number; sort?: string }) =>
     dataApi.list<Post>("posts", {
       "filter[category]": params?.category,

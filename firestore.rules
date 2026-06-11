@@ -77,14 +77,14 @@ service cloud.firestore {
     function postCategoryReadable(cat) {
       // staff/resources는 인증 필요, 그 외 public
       // paper_review (Sprint 41d): 교육공학 논문 리뷰 — public read
-      return cat in ['notice', 'seminar', 'free', 'promotion', 'press', 'interview', 'paper_review']
+      return cat in ['notice', 'seminar', 'free', 'promotion', 'press', 'interview', 'paper_review', 'update']
         || (cat == 'resources' && isAuthenticated())
         || (cat == 'staff' && isAuthenticated() && isStaffOrAbove());
     }
     function postCategoryWritable(cat) {
       // free / paper_review: 회원 누구나 작성 가능
       return (cat in ['free', 'paper_review'] && isAuthenticated())
-        || (cat in ['notice', 'seminar', 'promotion', 'resources', 'staff', 'press', 'interview']
+        || (cat in ['notice', 'seminar', 'promotion', 'resources', 'staff', 'press', 'interview', 'update']
             && isAuthenticated() && isStaffOrAbove());
     }
     // viewCount 1 증가 단일 필드 update — 비로그인 포함 누구나 허용 (조회수 집계용)

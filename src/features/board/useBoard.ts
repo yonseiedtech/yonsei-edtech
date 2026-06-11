@@ -25,13 +25,18 @@ export function usePosts(
   const effectiveCategory = category && category !== "all" ? category : undefined;
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["posts", effectiveCategory ?? "all"],
+    // 권한(로그인·staff)에 따라 보이는 카테고리가 달라 캐시 키에 포함
+    queryKey: ["posts", effectiveCategory ?? "all", !!user, canSeeStaff],
     queryFn: async () => {
-      const res = await postsApi.list({
-        limit: 200,
-        sort: "",
-        category: effectiveCategory,
-      });
+      // 전체 탭: 카테고리 무필터 list 는 rules 정적 평가에서 거부(2026-06-12 실증)
+      // → 권한별 readable 카테고리 in 쿼리로 조회
+      const res = effectiveCategory
+        ? await postsApi.list({ limit: 200, sort: "", category: effectiveCategory })
+        : await postsApi.listReadable({
+            limit: 200,
+            includeResources: !!user,
+            includeStaff: canSeeStaff,
+          });
       const arr = res.data as unknown as Post[];
       arr.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
       return arr;

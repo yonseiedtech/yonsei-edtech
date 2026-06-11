@@ -82,7 +82,7 @@ export default function PeerActivityFeed() {
 
   const { data: postsRes } = useQuery({
     queryKey: ["peer-feed", "posts"],
-    queryFn: () => postsApi.list({ limit: 30 }),
+    queryFn: () => postsApi.listReadable({ limit: 30 }), // 무필터 list 는 rules 거부 — 공개 카테고리 in 쿼리
     staleTime: muted ? 15 * 60_000 : 5 * 60_000,
     enabled: !!user && !muted,
   });

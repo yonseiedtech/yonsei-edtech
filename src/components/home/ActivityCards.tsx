@@ -38,7 +38,7 @@ export default function ActivityCards() {
       } catch { /* Firestore 미연결 시 무시 */ }
 
       try {
-        const posts = await postsApi.list({ limit: 2 });
+        const posts = await postsApi.listReadable({ limit: 2 });
         for (const p of posts.data) {
           results.push({
             category: "게시글",
