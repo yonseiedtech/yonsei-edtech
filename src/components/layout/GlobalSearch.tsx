@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   Search, Compass, Lightbulb, Variable as VariableIcon, Ruler,
-  Presentation, Users, GraduationCap, ArrowRight, Loader2,
+  Presentation, Users, GraduationCap, ArrowRight, Loader2, Megaphone,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ import {
   seminarsApi,
   activitiesApi,
   alumniThesesApi,
+  postsApi,
 } from "@/lib/bkend";
 import type {
   ArchiveConcept,
@@ -32,6 +33,7 @@ import type {
   Seminar,
   Activity,
   AlumniThesis,
+  Post,
 } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -63,7 +65,7 @@ const SHORTCUTS: SearchItem[] = [
   { key: "go:thesis", group: "바로가기", label: "졸업생 학위논문", href: "/alumni/thesis", icon: GraduationCap, haystack: "졸업생 학위논문 alumni thesis" },
 ];
 
-const GROUP_ORDER = ["바로가기", "아카이브", "세미나", "학술활동", "졸업생 논문"];
+const GROUP_ORDER = ["바로가기", "공지", "아카이브", "세미나", "학술활동", "졸업생 논문"];
 const PER_GROUP_LIMIT = 5;
 
 export default function GlobalSearch() {
@@ -98,7 +100,7 @@ export default function GlobalSearch() {
   const { data: sources, isLoading } = useQuery({
     queryKey: ["global-search-sources"],
     queryFn: async () => {
-      const [concepts, variables, measurements, seminars, activities, theses] =
+      const [concepts, variables, measurements, seminars, activities, theses, notices] =
         await Promise.all([
           archiveConceptsApi.list(),
           archiveVariablesApi.list(),
@@ -106,7 +108,12 @@ export default function GlobalSearch() {
           seminarsApi.list({ limit: 200 }),
           activitiesApi.list(),
           alumniThesesApi.list(),
+          // 공지: public read 카테고리만 — sort 비움(orderBy 비활성, 인덱스 회피) 후 클라이언트 최신순
+          postsApi.list({ category: "notice", limit: 100, sort: "" }),
         ]);
+      const noticeArr = (notices.data as unknown as Post[]).sort((a, b) =>
+        (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
+      );
       return {
         concepts: concepts.data as ArchiveConcept[],
         variables: variables.data as ArchiveVariable[],
@@ -114,6 +121,7 @@ export default function GlobalSearch() {
         seminars: seminars.data as unknown as Seminar[],
         activities: activities.data as Activity[],
         theses: theses.data as AlumniThesis[],
+        notices: noticeArr,
       };
     },
     enabled: open,
@@ -163,6 +171,13 @@ export default function GlobalSearch() {
         key: `thesis:${t.id}`, group: "졸업생 논문", label: t.title,
         sub: `${t.authorName} · ${t.awardedYearMonth}`, href: "/alumni/thesis", icon: GraduationCap,
         haystack: `${t.title} ${t.authorName}`,
+      });
+    }
+    for (const n of sources.notices) {
+      items.push({
+        key: `notice:${n.id}`, group: "공지", label: n.title,
+        sub: (n.createdAt ?? "").slice(0, 10), href: `/notices/${n.id}`, icon: Megaphone,
+        haystack: n.title,
       });
     }
     return items;
