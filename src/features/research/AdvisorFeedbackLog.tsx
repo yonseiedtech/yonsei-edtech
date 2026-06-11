@@ -30,6 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/ui/empty-state";
 import { advisorFeedbackApi } from "@/lib/bkend";
+import { todayYmdLocal } from "@/lib/dday";
 import {
   FEEDBACK_SOURCE_LABELS,
   FEEDBACK_CHAPTER_LABELS,
@@ -46,8 +47,9 @@ const SOURCE_COLORS: Record<FeedbackSource, string> = {
   self: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
 };
 
+// QA P2: toISOString()은 UTC 기준 — KST 00:00~08:59 에 전날 날짜가 찍히는 Sprint 47 회귀 방지
 function todayYmd(): string {
-  return new Date().toISOString().slice(0, 10);
+  return todayYmdLocal();
 }
 
 interface FormState {
@@ -59,13 +61,15 @@ interface FormState {
   actionsText: string;
 }
 
-const EMPTY_FORM: FormState = {
+// QA P2: 모듈 상수에 날짜를 박으면 로드 시점 1회 고정 — 자정 넘긴 세션에서 어제 날짜 오염.
+// 함수로 바꿔 폼을 열 때마다 오늘(KST) 기준으로 생성.
+const emptyForm = (): FormState => ({
   meetingDate: todayYmd(),
   source: "advisor",
   chapter: "general",
   content: "",
   actionsText: "",
-};
+});
 
 interface Props {
   userId: string;
@@ -95,7 +99,7 @@ export default function AdvisorFeedbackLog({ userId, readOnly = false }: Props) 
   const [chapterFilter, setChapterFilter] = useState<FeedbackChapter | "all">("all");
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [resolveTarget, setResolveTarget] = useState<AdvisorFeedbackNote | null>(null);
   const [resolutionNote, setResolutionNote] = useState("");
@@ -118,7 +122,7 @@ export default function AdvisorFeedbackLog({ userId, readOnly = false }: Props) 
 
   function openCreate() {
     setEditingId(null);
-    setForm(EMPTY_FORM);
+    setForm(emptyForm());
     setFormOpen(true);
   }
 

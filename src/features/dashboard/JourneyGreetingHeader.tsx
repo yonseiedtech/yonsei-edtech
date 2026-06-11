@@ -10,8 +10,10 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Gauge } from "lucide-react";
 import { JOURNEY_STAGES } from "@/features/research/ThesisJourney";
+import { useWritingPaper } from "@/features/research/useWritingPaper";
+import { computeThesisProgress } from "@/features/research/thesis-progress";
 import { getEffectiveSemesterCount } from "@/lib/interview-target";
 import type { User } from "@/types";
 
@@ -24,6 +26,13 @@ function greetingByHour(): string {
 }
 
 export default function JourneyGreetingHeader({ user }: { user: User }) {
+  // 코크핏 연동: 에디터 본문 기반 진행률 (장별 레벨 합산 %)
+  const { paper } = useWritingPaper(user.id);
+  const writingPercent = useMemo(
+    () => computeThesisProgress({ paper: paper ?? null, hasProposal: false }).percent,
+    [paper],
+  );
+
   const stage = useMemo(() => {
     const override = user.thesisJourneyStage;
     if (typeof override === "number" && override >= 1 && override <= 5) {
@@ -55,6 +64,19 @@ export default function JourneyGreetingHeader({ user }: { user: User }) {
           ) : (
             <p className="mt-1 text-base font-bold tracking-tight sm:text-lg">
               나의 논문 여정을 설정하고 학기별 다음 한 걸음을 안내받으세요.
+            </p>
+          )}
+          {/* 코크핏 연동: 논문 본문 진행률 — 작성분이 있을 때만 노출 */}
+          {writingPercent > 0 && (
+            <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <Gauge size={12} className="text-primary" />
+              논문 진행률 <span className="font-semibold tabular-nums text-foreground">{writingPercent}%</span>
+              <span className="inline-block h-1.5 w-24 overflow-hidden rounded-full bg-muted align-middle">
+                <span
+                  className="block h-full rounded-full bg-gradient-to-r from-primary to-sky-500"
+                  style={{ width: `${writingPercent}%` }}
+                />
+              </span>
             </p>
           )}
         </div>

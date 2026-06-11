@@ -24,6 +24,11 @@ interface Props {
   onChanged: () => void;
   /** 입장 게이트에서 설정한 게스트 닉네임 — 변경 시 즉시 반영 (QA P1) */
   guestNickname?: string;
+  /**
+   * 부모가 보드 단위로 일괄 구독한 답변 (QA P2: 질문당 N+1 쿼리 해소).
+   * 전달되면 내부 쿼리를 건너뛰고 이 값을 사용 — 월(WallBoard) 전용 모드.
+   */
+  preloadedAnswers?: CommAnswer[];
 }
 
 export default function AnswerThread({
@@ -34,10 +39,13 @@ export default function AnswerThread({
   canAccept,
   onChanged,
   guestNickname,
+  preloadedAnswers,
 }: Props) {
   const queryClient = useQueryClient();
-  const { data: answers = [], isLoading } = useQuery({
+  const { data: queriedAnswers = [], isLoading: queryLoading } = useQuery({
     queryKey: ["comm-answers", question.id],
+    // preloadedAnswers 모드(월 뷰)에서는 개별 쿼리를 건너뜀 — 보드 단위 onSnapshot 이 대체
+    enabled: preloadedAnswers === undefined,
     queryFn: async () => {
       const res = await commAnswersApi.listByQuestion(question.id);
       return (res.data as CommAnswer[]).sort((a, b) =>
@@ -45,6 +53,8 @@ export default function AnswerThread({
       );
     },
   });
+  const answers = preloadedAnswers ?? queriedAnswers;
+  const isLoading = preloadedAnswers === undefined && queryLoading;
 
   const [body, setBody] = useState("");
   const [guestName, setGuestName] = useState("");

@@ -48,7 +48,7 @@ import { sortQuestions, canManageBoard, canDeletePost } from "./comm-helpers";
 import { getGuestNickname, setGuestNickname } from "./guest-name";
 import QuestionComposer from "./QuestionComposer";
 import AnswerThread from "./AnswerThread";
-import type { CommBoard, CommQuestion, CommSortMode, User } from "@/types";
+import type { CommAnswer, CommBoard, CommQuestion, CommSortMode, User } from "@/types";
 
 const PALETTE = [
   "border-amber-200 bg-amber-50 dark:border-amber-800/60 dark:bg-amber-950/20",
@@ -138,6 +138,33 @@ export default function WallBoard({ boardId, variant }: Props) {
     return () => unsub();
   }, [boardId]);
 
+  // ── 답변 실시간 구독 (보드 단위 1회) ──
+  // QA P2: 질문당 AnswerThread 개별 쿼리(N+1) 해소 — 노트 50개 = 50쿼리 → 1구독.
+  // 보너스: 답변도 질문처럼 실시간 반영.
+  const [answersByQuestion, setAnswersByQuestion] = useState<Map<string, CommAnswer[]>>(new Map());
+  useEffect(() => {
+    const qy = query(collection(db, "comm_answers"), where("boardId", "==", boardId));
+    const unsub = onSnapshot(
+      qy,
+      (snap) => {
+        const map = new Map<string, CommAnswer[]>();
+        snap.docs.forEach((d) => {
+          const raw = d.data() as Omit<CommAnswer, "id"> & { createdAt?: unknown };
+          const a = { ...raw, id: d.id, createdAt: normalizeIso(raw.createdAt) } as CommAnswer;
+          const list = map.get(a.questionId) ?? [];
+          list.push(a);
+          map.set(a.questionId, list);
+        });
+        map.forEach((list) =>
+          list.sort((x, y) => (x.createdAt ?? "").localeCompare(y.createdAt ?? "")),
+        );
+        setAnswersByQuestion(map);
+      },
+      (err) => console.error("[wall-board answers]", err),
+    );
+    return () => unsub();
+  }, [boardId]);
+
   // ── 내 좋아요 집합 (회원) ──
   const { data: likedSet = new Set<string>() } = useQuery({
     queryKey: ["comm-likes-mine", user?.id ?? "guest"],
@@ -207,12 +234,15 @@ export default function WallBoard({ boardId, variant }: Props) {
   }
 
   // ── 새 노트 등장 애니메이션 ──
+  // QA P2: useMemo 안에서 ref 를 바꾸면 렌더 단계 side effect — StrictMode 이중 호출/
+  // 폐기 렌더에서 신규 노트 애니메이션이 누락됨 → useEffect + state 로 이동
   const prevIdsRef = useRef<Set<string>>(new Set());
-  const newIds = useMemo(() => {
+  const [newIds, setNewIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
     const prev = prevIdsRef.current;
     const fresh = new Set(questions.filter((q) => !prev.has(q.id)).map((q) => q.id));
     prevIdsRef.current = new Set(questions.map((q) => q.id));
-    return prev.size === 0 ? new Set<string>() : fresh;
+    if (prev.size > 0 && fresh.size > 0) setNewIds(fresh);
   }, [questions]);
 
   // ── 질문 수정/삭제/해결 ──
@@ -311,6 +341,7 @@ export default function WallBoard({ boardId, variant }: Props) {
     board,
     user,
     likedSet,
+    answersByQuestion,
     newIds,
     isPresent,
     isClosed,
@@ -580,6 +611,7 @@ interface NoteGridProps {
   board: CommBoard;
   user: User | null;
   likedSet: Set<string>;
+  answersByQuestion: Map<string, CommAnswer[]>;
   newIds: Set<string>;
   isPresent: boolean;
   isClosed: boolean;
@@ -600,6 +632,7 @@ function NoteGrid({
   board,
   user,
   likedSet,
+  answersByQuestion,
   newIds,
   isPresent,
   isClosed,
@@ -741,6 +774,7 @@ function NoteGrid({
                 question={q}
                 user={user}
                 likedSet={likedSet}
+                preloadedAnswers={answersByQuestion.get(q.id) ?? []}
                 guestNickname={guestNickname}
                 canAccept={!isClosed && !!user && (q.authorId === user.id || canManageBoard(user, board))}
                 onChanged={() => { /* onSnapshot 실시간 반영 */ }}
