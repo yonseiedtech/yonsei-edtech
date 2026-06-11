@@ -505,11 +505,6 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     }
   }
 
-  async function handleDraftSave() {
-    await handleSave(false);
-    toast.success("임시 저장되었습니다.");
-  }
-
   // ── 연구 방향 프로파일 ──
 
   async function handleProfileSave() {
@@ -773,13 +768,10 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                   })()}
                 </span>
               )}
-              <Button variant="outline" size="sm" onClick={handleDraftSave} disabled={saving || !dirty}>
-                {saving && <Save size={12} className="mr-1 animate-pulse" />}
-                임시저장
-              </Button>
-              <Button size="sm" onClick={() => handleSave()} disabled={saving}>
+              {/* 사용성 평가 반영: 임시저장/저장 이중 버튼 → 저장 1개로 통합 (savedAt 표시가 상태를 대신) */}
+              <Button size="sm" onClick={() => handleSave()} disabled={saving || (!dirty && !!savedAt)}>
                 <Save size={12} className="mr-1" />
-                저장
+                {saving ? "저장 중…" : dirty ? "저장" : "저장됨"}
               </Button>
             </div>
           )}
@@ -927,7 +919,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
             >
               <s.icon size={14} />
               <span className="hidden sm:inline">{i + 1}. {s.label}</span>
-              <span className="sm:hidden">{i + 1}</span>
+              <span className="sm:hidden">{["서론", "이론", "방법", "결과", "결론"][i]}</span>
               {(pendingByChapter.get(s.key)?.length ?? 0) > 0 && (
                 <span
                   title={`미반영 지도 ${pendingByChapter.get(s.key)!.length}건`}
@@ -998,7 +990,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                         type="button"
                         onClick={() => removeParagraph(step, sec.id, p.id)}
                         aria-label="단락 삭제"
-                        className="absolute right-2 top-2 rounded p-1 text-muted-foreground/0 transition-colors hover:bg-muted hover:text-destructive group-focus-within:text-muted-foreground group-hover:text-muted-foreground"
+                        className="absolute right-2 top-2 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive sm:text-muted-foreground/0 sm:group-focus-within:text-muted-foreground sm:group-hover:text-muted-foreground"
                       >
                         <Trash2 size={12} />
                       </button>

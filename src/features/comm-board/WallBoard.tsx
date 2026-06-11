@@ -162,6 +162,8 @@ export default function WallBoard({ boardId, variant }: Props) {
 
   // 작성 대상 발표자 (작성기 태깅)
   const [composerPresenter, setComposerPresenter] = useState<string>("");
+  // present(프로젝터) 화면에서는 작성기 기본 접힘 — 발표 열람이 주 목적
+  const [presentComposerOpen, setPresentComposerOpen] = useState(false);
 
   // ── 게스트 닉네임 입장 게이트 ──
   const [nickname, setNickname] = useState("");
@@ -388,8 +390,18 @@ export default function WallBoard({ boardId, variant }: Props) {
           </p>
         )}
 
-        {/* ── 작성기 (발표자 태깅) — present 에서도 동일하게 작성 가능 ── */}
-        {(
+        {/* ── 작성기 (발표자 태깅) — present(프로젝터)에서는 기본 접힘 (사용성 평가 반영) ── */}
+        {isPresent && !presentComposerOpen ? (
+          board.status === "open" && (
+            <button
+              type="button"
+              onClick={() => setPresentComposerOpen(true)}
+              className="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-dashed px-4 py-2 text-sm font-medium text-muted-foreground hover:border-primary/40 hover:text-primary"
+            >
+              + 질문 추가 (발표자용)
+            </button>
+          )
+        ) : (
           <div className="mt-3">
             {board.description && !isPresent && (
               <p className="mb-2 text-sm text-muted-foreground">{board.description}</p>
@@ -609,7 +621,7 @@ export default function WallBoard({ boardId, variant }: Props) {
                 <button
                   type="button"
                   onClick={() => handleLike(q)}
-                  title={user ? "좋아요" : "좋아요는 로그인 회원 전용"}
+                  aria-label="좋아요"
                   className={cn(
                     "ml-auto flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] transition-colors",
                     liked ? "font-semibold text-primary" : "text-muted-foreground hover:text-foreground",

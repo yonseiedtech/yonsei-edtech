@@ -102,7 +102,7 @@ export default function ResearchCockpit({ user, paper, writingMinutes }: Props) 
             {progress.chapters.map((c) => (
               <div key={c.key} className="min-w-0 flex-1" title={`${THESIS_CHAPTER_SHORT_LABELS[c.key]} ${c.chars.toLocaleString()}자`}>
                 <div className={cn("h-2 rounded-full", LEVEL_COLORS[c.level])} />
-                <p className="mt-0.5 truncate text-center text-[9px] text-muted-foreground">
+                <p className="mt-0.5 truncate text-center text-[11px] text-muted-foreground">
                   {THESIS_CHAPTER_SHORT_LABELS[c.key]}
                 </p>
               </div>

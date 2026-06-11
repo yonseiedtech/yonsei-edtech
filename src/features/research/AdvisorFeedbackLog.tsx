@@ -192,6 +192,18 @@ export default function AdvisorFeedbackLog({ userId, readOnly = false }: Props) 
     try {
       await advisorFeedbackApi.update(n.id, { actionItems: items, updatedAt: new Date().toISOString() });
       invalidate();
+      // 사용성 평가 반영: 모든 액션 아이템 체크 완료 시 반영 완료 처리를 바로 제안
+      if (n.status === "pending" && items.length > 0 && items.every((a) => a.done)) {
+        toast.info("모든 할 일을 체크했어요! 이 지도를 반영 완료로 표시할까요?", {
+          action: {
+            label: "반영 완료",
+            onClick: () => {
+              setResolveTarget({ ...n, actionItems: items });
+              setResolutionNote("");
+            },
+          },
+        });
+      }
     } catch {
       toast.error("체크 저장에 실패했습니다.");
     }

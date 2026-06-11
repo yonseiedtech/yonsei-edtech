@@ -223,13 +223,14 @@ export default function ThesisJourney({ user, editable = true }: Props) {
           </button>
         </div>
       </div>
-      <p className="mt-0.5 text-[11px] text-muted-foreground">
-        {typeof override === "number"
-          ? "직접 설정한 단계 기준입니다."
-          : autoStage != null
+      {/* 사용성 평가 반영: 직접 설정한 경우 안내 문구 생략 (카드 goal 과 중복 노출 방지) */}
+      {typeof override !== "number" && (
+        <p className="mt-0.5 text-[11px] text-muted-foreground">
+          {autoStage != null
             ? `입학 학기 기준 ${semCount}학기차로 추정했습니다 — 다르면 "단계 수정"으로 바꿔주세요.`
             : "학기 정보가 없어 1단계부터 시작합니다 — \"단계 수정\"으로 내 단계를 선택하세요."}
-      </p>
+        </p>
+      )}
 
       {/* ── 단계 수정 모드 ── */}
       {editing && (
@@ -264,6 +265,7 @@ export default function ThesisJourney({ user, editable = true }: Props) {
               <button
                 type="button"
                 onClick={() => setViewStage(s.stage)}
+                title="탭하면 미리보기 — 내 단계 저장은 '단계 수정' 버튼"
                 aria-current={active ? "step" : undefined}
                 className={cn(
                   "group flex min-w-0 flex-col items-center gap-1 px-1 text-center",
