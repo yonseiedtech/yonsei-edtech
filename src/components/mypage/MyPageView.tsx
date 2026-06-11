@@ -106,6 +106,8 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
   const [whatsNewDismissed, setWhatsNewDismissed] = useState(
     () => typeof window !== "undefined" && localStorage.getItem("yonsei_whats_new_dismissed_v1") === "true",
   );
+  // 체감 스프린트: 이론 인사이트 패널(ARCS·Connectivism) 기본 접힘 — 통계 중복·스크롤 깊이 축소
+  const [insightsOpen, setInsightsOpen] = useState(false);
 
   // Legacy URL 자동 리다이렉트 + 탭 동기화
   useEffect(() => {
@@ -368,23 +370,52 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
               {/* Sprint 56: 학습 잔디 — 365일 활동 그리드 + streak + 마일스톤 */}
               <LearningStreak />
 
-              {/* ARCS 동기 프로파일 — Keller (1987) 4축 시각화 */}
-              <ARCSPanel
-                inputs={{
-                  interestKeywordCount: user.interestKeywords?.length ?? 0,
-                  researchTopicCount: user.researchTopics?.length ?? 0,
-                  researchInterestCount: user.researchInterests?.length ?? 0,
-                  activityCount: myActivities.length + mySeminars.length,
-                  certificateCount: myCertificates.length,
-                  interviewCount: myInterviewResponses.filter(
-                    (r) => r.status === "submitted",
-                  ).length,
-                  postCount: myPosts.length,
-                }}
-              />
+              {/* 체감 스프린트: 이론 인사이트 패널 2종을 기본 접힘 섹션으로 통합
+                  — 학회활동 카드 chip 과 동일 카운트의 재표현이라 평시 노출 시 통계 중복·과밀 유발 */}
+              <div className="rounded-2xl border bg-card shadow-sm">
+                <button
+                  type="button"
+                  onClick={() => setInsightsOpen((v) => !v)}
+                  aria-expanded={insightsOpen}
+                  className="flex w-full items-center justify-between px-5 py-4 text-left"
+                >
+                  <span className="flex items-center gap-2 text-sm font-semibold">
+                    <Sparkles size={15} className="text-primary" />
+                    학습 동기·네트워크 인사이트
+                    <span className="text-[11px] font-normal text-muted-foreground">
+                      ARCS 동기 프로파일 · Connectivism
+                    </span>
+                  </span>
+                  <ChevronRight
+                    size={16}
+                    className={cn(
+                      "shrink-0 text-muted-foreground transition-transform",
+                      insightsOpen && "rotate-90",
+                    )}
+                  />
+                </button>
+                {insightsOpen && (
+                  <div className="space-y-4 border-t px-5 py-4">
+                    {/* ARCS 동기 프로파일 — Keller (1987) 4축 시각화 */}
+                    <ARCSPanel
+                      inputs={{
+                        interestKeywordCount: user.interestKeywords?.length ?? 0,
+                        researchTopicCount: user.researchTopics?.length ?? 0,
+                        researchInterestCount: user.researchInterests?.length ?? 0,
+                        activityCount: myActivities.length + mySeminars.length,
+                        certificateCount: myCertificates.length,
+                        interviewCount: myInterviewResponses.filter(
+                          (r) => r.status === "submitted",
+                        ).length,
+                        postCount: myPosts.length,
+                      }}
+                    />
 
-              {/* Connectivism 패널 — Siemens (2005) 네트워크 학습 이론 */}
-              <ConnectivismPanel />
+                    {/* Connectivism 패널 — Siemens (2005) 네트워크 학습 이론 */}
+                    <ConnectivismPanel />
+                  </div>
+                )}
+              </div>
 
               {/* 내 학회활동 통합 안내 카드 */}
               <Link
@@ -436,7 +467,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                       <Badge variant="secondary" className="bg-amber-200/60 text-amber-800 text-[10px]">신규</Badge>
                     </div>
                     <p className="mt-0.5 text-sm text-muted-foreground">
-                      관심 연구분야 · 논문 분석 노트를 단계별로 정리해보세요.
+                      논문 여정 · 5장 작성 · 지도 노트를 한 화면에서 관리해보세요.
                     </p>
                     <div className="mt-3 flex flex-wrap gap-1.5 text-[11px]">
                       <span className="inline-flex items-center gap-1 rounded-full bg-card px-2 py-0.5 text-muted-foreground">
