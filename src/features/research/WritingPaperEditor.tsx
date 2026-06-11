@@ -47,7 +47,7 @@ import type {
   WritingPaperVersion,
 } from "@/types";
 import {
-  RESEARCH_APPROACH_LABELS,
+  WRITING_APPROACH_LABELS,
   RESEARCH_DESIGN_LABELS,
 } from "@/types";
 import { writingPaperVersionsApi } from "@/lib/bkend";
@@ -508,7 +508,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       });
       setProfileOpen(false);
       toast.success(
-        `연구 방향이 설정되었습니다 — ${RESEARCH_APPROACH_LABELS[selApproach]} · ${RESEARCH_DESIGN_LABELS[selDesign]}`,
+        `연구 방향이 설정되었습니다 — ${WRITING_APPROACH_LABELS[selApproach]} · ${RESEARCH_DESIGN_LABELS[selDesign]}`,
       );
     } catch {
       toast.error("저장에 실패했습니다.");
@@ -647,7 +647,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           <div>
             <p className="mb-1.5 text-xs font-semibold">연구 접근</p>
             <div className="flex flex-wrap gap-1.5">
-              {(Object.keys(RESEARCH_APPROACH_LABELS) as ResearchApproachType[]).map((a) => (
+              {(Object.keys(WRITING_APPROACH_LABELS) as ResearchApproachType[]).map((a) => (
                 <button
                   key={a}
                   type="button"
@@ -659,7 +659,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                       : "bg-card hover:bg-muted",
                   )}
                 >
-                  {RESEARCH_APPROACH_LABELS[a]}
+                  {WRITING_APPROACH_LABELS[a]}
                 </button>
               ))}
             </div>
@@ -770,7 +770,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           {profile ? (
             <>
               <Badge variant="secondary" className="text-[11px]">
-                {RESEARCH_APPROACH_LABELS[profile.approach]}
+                {WRITING_APPROACH_LABELS[profile.approach]}
               </Badge>
               <Badge variant="outline" className="text-[11px]">
                 {RESEARCH_DESIGN_LABELS[profile.design]}

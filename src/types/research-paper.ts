@@ -133,7 +133,7 @@ export type ResearchDesignType =
   | "qualitative_design"  // 질적 설계 (사례·현상학·근거이론 등)
   | "undecided";
 
-export const RESEARCH_APPROACH_LABELS: Record<ResearchApproachType, string> = {
+export const WRITING_APPROACH_LABELS: Record<ResearchApproachType, string> = {
   quantitative: "양적 연구",
   qualitative: "질적 연구",
   mixed: "혼합 연구",
