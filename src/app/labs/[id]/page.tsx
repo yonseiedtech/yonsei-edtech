@@ -242,7 +242,7 @@ function LabDetailContent({ id }: { id: string }) {
           )}
         </ul>
       </section>
-    </div>
+    </PageContainer>
   );
 }
 

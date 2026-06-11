@@ -318,6 +318,6 @@ export default function NewsletterPage() {
           </>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 }
