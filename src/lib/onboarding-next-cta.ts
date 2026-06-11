@@ -52,6 +52,16 @@ export const NEXT_CTA_MAP: Record<ChecklistCompletionType, NextCta | null> = {
     href: "/mypage/research",
     label: "연구활동 보기",
   },
+  "set.thesisJourneyStage": {
+    message: "다음은 소통 보드에서 동료들과 질문을 나눠보세요.",
+    href: "/labs/qa-wall",
+    label: "발표 Q&A 보드",
+  },
+  "participated.commBoard": {
+    message: "다음은 연구보고서를 작성해보세요.",
+    href: "/mypage/research?tab=writing&sub=report",
+    label: "연구보고서 작성",
+  },
   "submitted.research": {
     message: "다음은 강의 후기를 작성해보세요.",
     href: "/courses",

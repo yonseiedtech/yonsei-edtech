@@ -62,6 +62,8 @@ import {
   researchReportsApi,
   courseReviewsApi,
   streakEventsApi,
+  commQuestionsApi,
+  commAnswersApi,
 } from "@/lib/bkend";
 import type {
   SeminarAttendee,
@@ -199,6 +201,7 @@ export default function NewMemberChecklistWidget() {
         set.has("participated.activity") || set.has("visited.activities"),
       researchReport: set.has("submitted.research"),
       lectureReview: set.has("wrote.lectureReview"),
+      commBoard: set.has("participated.commBoard"),
     };
   }, [configItems]);
 
@@ -249,6 +252,20 @@ export default function NewMemberChecklistWidget() {
       return courseReviewsApi.listByAuthor(userId);
     },
     enabled: !!userId && needs.lectureReview,
+    staleTime: 5 * 60_000,
+  });
+
+  const { data: commBoardExists } = useQuery({
+    queryKey: ["onboarding-checklist", "comm-board-exists", userId],
+    queryFn: async () => {
+      if (!userId) return false;
+      const [q, a] = await Promise.all([
+        commQuestionsApi.existsByAuthor(userId),
+        commAnswersApi.existsByAuthor(userId),
+      ]);
+      return q || a;
+    },
+    enabled: !!userId && needs.commBoard,
     staleTime: 5 * 60_000,
   });
 
@@ -308,6 +325,10 @@ export default function NewMemberChecklistWidget() {
         return hasResearchReport;
       case "wrote.lectureReview":
         return hasLectureReview;
+      case "set.thesisJourneyStage":
+        return typeof (user as { thesisJourneyStage?: number }).thesisJourneyStage === "number";
+      case "participated.commBoard":
+        return commBoardExists === true;
       default:
         return false;
     }

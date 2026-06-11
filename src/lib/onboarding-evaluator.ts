@@ -66,6 +66,11 @@ export function evalCompletionForUser(
       return (ctx.reportsByUser.get(user.id) ?? []).length > 0;
     case "wrote.lectureReview":
       return (ctx.reviewsByUser.get(user.id) ?? []).length > 0;
+    case "set.thesisJourneyStage":
+      // 논문 여정 단계를 직접 설정했는지 — 프로필 필드만으로 판정
+      return typeof (user as { thesisJourneyStage?: number }).thesisJourneyStage === "number";
+    case "participated.commBoard":
+      return false; // 회원×보드 전수 조회 비용 — 콘솔 매트릭스에서는 미집계 (visited.* 패턴)
     default:
       return false;
   }

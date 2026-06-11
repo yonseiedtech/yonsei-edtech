@@ -31,7 +31,9 @@ export type ChecklistCompletionType =
   | "favorited.archive"
   | "participated.activity"
   | "submitted.research"
-  | "wrote.lectureReview";
+  | "wrote.lectureReview"
+  | "set.thesisJourneyStage"
+  | "participated.commBoard";
 
 export const CHECKLIST_COMPLETION_LABELS: Record<ChecklistCompletionType, string> = {
   "profile.bio": "프로필 자기소개 작성",
@@ -45,6 +47,8 @@ export const CHECKLIST_COMPLETION_LABELS: Record<ChecklistCompletionType, string
   "participated.activity": "학술활동 참여 1건",
   "submitted.research": "연구보고서 작성 1건",
   "wrote.lectureReview": "강의 후기 작성 1건",
+  "set.thesisJourneyStage": "논문 여정 단계 설정",
+  "participated.commBoard": "소통 보드 질문/답변 1건",
 };
 
 /** 위젯에서 렌더 가능한 lucide 아이콘 화이트리스트. */

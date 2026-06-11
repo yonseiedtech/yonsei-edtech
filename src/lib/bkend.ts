@@ -3393,6 +3393,14 @@ export const commBoardsApi = {
 };
 
 export const commQuestionsApi = {
+  /** 온보딩 체크리스트: 본인 작성 질문 존재 확인용 (limit 1) */
+  existsByAuthor: async (authorId: string): Promise<boolean> => {
+    const res = await dataApi.list<CommQuestion>("comm_questions", {
+      "filter[authorId]": authorId,
+      limit: 1,
+    });
+    return res.data.length > 0;
+  },
   listByBoard: (boardId: string) =>
     dataApi.list<CommQuestion>("comm_questions", { "filter[boardId]": boardId, limit: 500 }),
   create: (data: Record<string, unknown>) =>
@@ -3424,6 +3432,14 @@ export const commQuestionsApi = {
 };
 
 export const commAnswersApi = {
+  /** 온보딩 체크리스트: 본인 작성 답변 존재 확인용 (limit 1) */
+  existsByAuthor: async (authorId: string): Promise<boolean> => {
+    const res = await dataApi.list<CommAnswer>("comm_answers", {
+      "filter[authorId]": authorId,
+      limit: 1,
+    });
+    return res.data.length > 0;
+  },
   listByBoard: (boardId: string) =>
     dataApi.list<CommAnswer>("comm_answers", { "filter[boardId]": boardId, limit: 2000 }),
   listByQuestion: (questionId: string) =>
