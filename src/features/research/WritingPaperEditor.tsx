@@ -28,11 +28,12 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import Link from "next/link";
 import {
   Save, FileText, CheckCircle2, ChevronLeft, ChevronRight,
   BookOpen, FlaskConical, Microscope, BarChart3, Flag,
   Play, Timer, Lightbulb, Plus, Trash2, History, RotateCcw,
-  Loader2, Compass,
+  Loader2, Compass, GraduationCap,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -50,7 +51,8 @@ import {
   WRITING_APPROACH_LABELS,
   RESEARCH_DESIGN_LABELS,
 } from "@/types";
-import { writingPaperVersionsApi } from "@/lib/bkend";
+import { advisorFeedbackApi, writingPaperVersionsApi } from "@/lib/bkend";
+import type { AdvisorFeedbackNote } from "@/types";
 import { useStudyTimerStore } from "./study-timer/study-timer-store";
 import { useCreateSession, useStudySessionsByWritingPaper } from "./study-timer/useStudySessions";
 import {
@@ -298,6 +300,24 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   const [selApproach, setSelApproach] = useState<ResearchApproachType>("quantitative");
   const [selDesign, setSelDesign] = useState<ResearchDesignType>("quasi_experimental");
   const [profileSaving, setProfileSaving] = useState(false);
+
+  // 연구 코크핏 연동: 미반영 지도 노트 (본인 전용 — readOnly 조회에서는 비활성)
+  const { data: feedbackNotes = [] } = useQuery({
+    queryKey: ["advisor-feedback", user.id],
+    enabled: !readOnly,
+    queryFn: async () =>
+      (await advisorFeedbackApi.listByUser(user.id)).data as AdvisorFeedbackNote[],
+  });
+  const pendingByChapter = useMemo(() => {
+    const map = new Map<string, AdvisorFeedbackNote[]>();
+    for (const n of feedbackNotes) {
+      if (n.status !== "pending") continue;
+      const list = map.get(n.chapter) ?? [];
+      list.push(n);
+      map.set(n.chapter, list);
+    }
+    return map;
+  }, [feedbackNotes]);
 
   // 버전 패널
   const [versionsOpen, setVersionsOpen] = useState(false);
@@ -908,6 +928,17 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
               <s.icon size={14} />
               <span className="hidden sm:inline">{i + 1}. {s.label}</span>
               <span className="sm:hidden">{i + 1}</span>
+              {(pendingByChapter.get(s.key)?.length ?? 0) > 0 && (
+                <span
+                  title={`미반영 지도 ${pendingByChapter.get(s.key)!.length}건`}
+                  className={cn(
+                    "ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold",
+                    active ? "bg-primary-foreground/20 text-primary-foreground" : "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-200",
+                  )}
+                >
+                  {pendingByChapter.get(s.key)!.length}
+                </span>
+              )}
             </button>
           );
         })}
@@ -1049,6 +1080,37 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
             </ul>
           )}
         </div>
+
+        {/* 이 장의 미반영 지도 노트 — 지도 노트 탭과 양방향 연결 (연구 코크핏) */}
+        {!readOnly && (pendingByChapter.get(step)?.length ?? 0) > 0 && (
+          <div className="mt-3 rounded-xl border border-rose-200/70 bg-rose-50/40 p-3.5 dark:border-rose-800/50 dark:bg-rose-950/10">
+            <p className="flex items-center justify-between gap-2 text-xs font-semibold text-rose-800 dark:text-rose-200">
+              <span className="flex items-center gap-1.5">
+                <GraduationCap size={13} />
+                이 장의 미반영 지도 {pendingByChapter.get(step)!.length}건
+              </span>
+              <Link
+                href="/mypage/research?tab=feedback"
+                className="font-normal text-rose-700/80 hover:underline dark:text-rose-300/80"
+              >
+                지도 노트에서 관리 →
+              </Link>
+            </p>
+            <ul className="mt-2 space-y-1.5">
+              {pendingByChapter.get(step)!.slice(0, 3).map((n) => (
+                <li key={n.id} className="flex gap-1.5 text-xs leading-relaxed text-rose-900/90 dark:text-rose-100/90">
+                  <span className="mt-0.5 shrink-0 text-[10px] tabular-nums text-rose-600/70">{n.meetingDate.slice(5)}</span>
+                  <span className="line-clamp-2">{n.content}</span>
+                </li>
+              ))}
+              {pendingByChapter.get(step)!.length > 3 && (
+                <li className="text-[11px] text-rose-700/70 dark:text-rose-300/70">
+                  외 {pendingByChapter.get(step)!.length - 3}건…
+                </li>
+              )}
+            </ul>
+          </div>
+        )}
       </section>
 
       {/* ── 이전 / 다음 네비게이션 ── */}

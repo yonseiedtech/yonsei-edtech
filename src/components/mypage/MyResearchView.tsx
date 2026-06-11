@@ -33,6 +33,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import ThesisJourney from "@/features/research/ThesisJourney";
+import ResearchCockpit from "@/features/research/ResearchCockpit";
 import AdvisorFeedbackLog from "@/features/research/AdvisorFeedbackLog";
 import { formatPeriodLabel } from "@/lib/research-period";
 import {
@@ -328,9 +329,22 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
           <WritingHeatmap history={filteredHistory} />
         </div>
 
+        {/* 연구 코크핏 — 장별 진행·미반영 지도·집필 시간·버전 합산 계기판 (본인) */}
+        {user && isSelf && (
+          <div className="mt-6 print-hide">
+            <ResearchCockpit
+              user={user}
+              paper={writingPaper ?? null}
+              writingMinutes={studySessions
+                .filter((s) => s.type === "writing")
+                .reduce((a, s) => a + (s.durationMinutes || 0), 0)}
+            />
+          </div>
+        )}
+
         {/* 논문 여정 — 학기 기반 순차 가이드 (본인 화면에서만 단계 수정 가능) */}
         {user && (
-          <div className="mt-6 print-hide">
+          <div className="mt-3 print-hide">
             <ThesisJourney user={user} editable={isSelf && !readOnly} />
           </div>
         )}
