@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Link as LinkIcon, Lock, Monitor, Pencil, Trash2, Unlock } from "lucide-react";
+import { ArrowLeft, LayoutGrid, Link as LinkIcon, Lock, Monitor, Pencil, Trash2, Unlock } from "lucide-react";
 import { toast } from "sonner";
 import { commBoardsApi, commQuestionsApi, commLikesApi } from "@/lib/bkend";
 import type { CommBoard, CommQuestion, CommSortMode, User } from "@/types";
@@ -126,6 +126,12 @@ export default function CommBoardDetail({ boardId, user }: Props) {
             >
               <LinkIcon size={13} /> 링크 복사
             </button>
+            <Link
+              href={`/boards/${board.id}/wall`}
+              className="flex items-center gap-1 rounded border px-2 py-1 text-xs hover:bg-accent"
+            >
+              <LayoutGrid size={13} /> 월 보기
+            </Link>
             <Link
               href={`/boards/${board.id}/present`}
               className="flex items-center gap-1 rounded border px-2 py-1 text-xs hover:bg-accent"

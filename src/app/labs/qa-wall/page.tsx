@@ -93,7 +93,7 @@ export default function QaWallPage() {
       setFormOpen(false);
       await queryClient.invalidateQueries({ queryKey });
       // 생성 직후 공유 링크 자동 복사
-      const url = `${window.location.origin}/boards/${created.id}`;
+      const url = `${window.location.origin}/boards/${created.id}/wall`;
       try {
         await navigator.clipboard.writeText(url);
         toast.success("보드가 생성되고 공유 링크가 복사되었습니다. 수업 채팅방에 붙여넣으세요!");
@@ -108,7 +108,7 @@ export default function QaWallPage() {
   }
 
   function copyLink(b: CommBoard) {
-    const url = `${window.location.origin}/boards/${b.id}`;
+    const url = `${window.location.origin}/boards/${b.id}/wall`;
     void navigator.clipboard
       .writeText(url)
       .then(() => toast.success("공유 링크가 복사되었습니다."))
@@ -254,7 +254,7 @@ export default function QaWallPage() {
                           발표 화면
                         </Button>
                       </Link>
-                      <Link href={`/boards/${b.id}`}>
+                      <Link href={`/boards/${b.id}/wall`}>
                         <Button size="sm" className="h-8 gap-1 text-xs">
                           <Monitor size={12} />
                           입장
