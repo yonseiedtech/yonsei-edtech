@@ -52,7 +52,9 @@ import type {
 import {
   WRITING_APPROACH_LABELS,
   RESEARCH_DESIGN_LABELS,
+  STAT_METHOD_LABELS,
 } from "@/types";
+import type { StatMethodType } from "@/types";
 import { advisorFeedbackApi, writingPapersApi, writingPaperVersionsApi } from "@/lib/bkend";
 import type { AdvisorFeedbackNote } from "@/types";
 import { useStudyTimerStore } from "./study-timer/study-timer-store";
@@ -208,6 +210,120 @@ const CHAPTER_KEYS: WritingPaperChapterKey[] = ["intro", "background", "method",
 /** 복원 직전 자동 저장되는 버전 라벨 prefix — 일괄 정리 매칭에 사용 */
 const AUTO_BACKUP_PREFIX = "복원 전 자동 백업";
 
+// ── 분석 방법별 기본 가정 검정 (2026-06-12) ──
+// 결과 장에서 자동 표시 + 보고 골격 원클릭 삽입. archiveQuery 는 archive-seed 실존 개념명.
+
+const ASSUMPTION_SECTION_HEADING = "기술통계 및 가정 검정";
+
+interface AssumptionGuide {
+  /** 보고 전 확인할 가정 체크리스트 */
+  assumptions: string[];
+  /** '가정 검정' 섹션에 삽입되는 보고 골격 단락 — ___ 를 결과값으로 채움 */
+  skeleton: string[];
+  /** 아카이브 개념 딥링크 (/archive/concept?q=) */
+  archiveQuery?: string;
+}
+
+const ASSUMPTION_GUIDES: Record<StatMethodType, AssumptionGuide> = {
+  ttest: {
+    assumptions: [
+      "종속변수 정규성 — Shapiro-Wilk 또는 왜도·첨도(|왜도|<2, |첨도|<7)로 확인",
+      "등분산성 — 독립표본이면 Levene 검정, 위반 시 Welch's t 로 보고",
+      "관측치 독립성 — 대응표본이면 차이값의 정규성을 확인",
+      "정규성이 기각돼도 집단별 n≥30이면 중심극한정리로 방어할 수 있습니다",
+    ],
+    skeleton: [
+      "분석에 앞서 종속변수의 정규성을 Shapiro-Wilk 검정으로 확인한 결과, 모든 집단에서 정규성 가정을 충족하였다(W = ___, p > .05).",
+      "Levene의 등분산성 검정 결과 분산의 동질성 가정이 충족되었다(F = ___, p > .05).",
+    ],
+    archiveQuery: "중심극한정리와 정규성",
+  },
+  anova: {
+    assumptions: [
+      "집단별 종속변수 정규성 — Shapiro-Wilk 또는 왜도·첨도",
+      "등분산성 — Levene 검정, 위반 시 Welch's ANOVA·Brown-Forsythe 대안 보고",
+      "관측치 독립성 — 표집·배치 절차에서 확보",
+      "사후검정 선택 근거 — 등분산이면 Tukey HSD, 이분산이면 Games-Howell",
+    ],
+    skeleton: [
+      "분산분석에 앞서 집단별 정규성(Shapiro-Wilk)과 등분산성(Levene)을 검토한 결과 가정이 충족되었다(정규성 모든 집단 p > .05; Levene F = ___, p > .05).",
+    ],
+    archiveQuery: "중심극한정리와 정규성",
+  },
+  ancova: {
+    assumptions: [
+      "ANOVA 기본 가정(정규성·등분산성·독립성)에 더해 아래 두 가지가 핵심입니다",
+      "회귀계수 동질성 — 집단×공변량 상호작용이 유의하지 않아야 함(p > .05, 본분석 전 선행 보고)",
+      "공변량-처치 독립성 — 공변량(사전점수)은 처치 이전에 측정되어야 함",
+      "공변량 측정 신뢰도 확인 — 신뢰도가 낮으면 통제 효과가 과소추정됩니다",
+    ],
+    skeleton: [
+      "공분산분석의 전제인 회귀계수 동질성을 검정한 결과, 집단과 공변량(사전점수)의 상호작용이 통계적으로 유의하지 않아(F = ___, p > .05) 가정을 충족하였다.",
+      "이에 사전점수를 공변량으로 투입하여 집단 간 사후점수 차이를 공분산분석으로 검증하였다.",
+    ],
+    archiveQuery: "공분산분석(ANCOVA)",
+  },
+  regression: {
+    assumptions: [
+      "선형성 — 예측변수와 종속변수의 산점도 확인",
+      "잔차 정규성 — P-P plot·히스토그램",
+      "등분산성 — 잔차 산점도에서 패턴 없음",
+      "다중공선성 — VIF < 10(보수적 기준 < 5), 공차한계 > .10",
+      "잔차 독립성 — Durbin-Watson 통계량 2 내외",
+    ],
+    skeleton: [
+      "회귀분석의 가정 검토 결과 잔차의 정규성과 등분산성이 확인되었으며, 모든 예측변수의 VIF는 ___로 다중공선성 문제가 없었고, Durbin-Watson 통계량은 ___로 잔차의 독립성이 확보되었다.",
+    ],
+    archiveQuery: "상관분석과 회귀분석",
+  },
+  correlation: {
+    assumptions: [
+      "Pearson 상관은 두 변수의 정규성과 선형 관계를 가정합니다",
+      "산점도로 선형성·이상치를 먼저 확인",
+      "정규성 위반 또는 서열 변수면 Spearman ρ 를 보고",
+    ],
+    skeleton: [
+      "상관분석에 앞서 산점도와 정규성 검토를 통해 선형성 가정을 확인하였다. 정규성을 충족하지 않은 변수는 Spearman 상관계수를 함께 보고하였다.",
+    ],
+    archiveQuery: "상관분석과 회귀분석",
+  },
+  chisquare: {
+    assumptions: [
+      "기대빈도 5 미만인 셀이 전체의 20% 이하여야 함",
+      "관측치 독립성 — 한 응답자는 한 셀에만 속해야 함",
+      "2×2 분할표는 연속성 수정(Yates) 또는 Fisher 정확검정을 함께 검토",
+    ],
+    skeleton: [
+      "카이제곱 검정의 가정 검토 결과 기대빈도가 5 미만인 셀은 전체의 ___%로 기준(20% 이하)을 충족하였다.",
+    ],
+    archiveQuery: "카이제곱 검정",
+  },
+  sem: {
+    assumptions: [
+      "다변량 정규성 — 위반 시 MLR(robust) 추정 또는 부트스트랩",
+      "표본 크기 — 통상 N≥200 또는 자유모수당 10 이상 권장",
+      "적합도 판단 기준을 사전 명시 — χ²/df ≤ 3, CFI·TLI ≥ .90, RMSEA ≤ .08, SRMR ≤ .08",
+      "측정모형 검증(CFA) 후 구조모형 순서로 보고",
+    ],
+    skeleton: [
+      "측정모형의 적합도는 χ²/df = ___, CFI = ___, TLI = ___, RMSEA = ___(90% CI ___~___), SRMR = ___로 수용 기준을 충족하였다.",
+    ],
+    archiveQuery: "구조방정식모형(SEM)",
+  },
+  factor_analysis: {
+    assumptions: [
+      "표본 적합성 — KMO ≥ .60(.80 이상 양호)",
+      "Bartlett 구형성 검정 유의(p < .05)",
+      "표본 크기 — 문항당 5~10명 권장",
+      "공통성 .40 미만 문항은 제거·수정 검토",
+    ],
+    skeleton: [
+      "요인분석의 적합성 검토 결과 KMO = ___로 기준을 충족하였고, Bartlett의 구형성 검정도 통계적으로 유의하였다(χ² = ___, p < .001).",
+    ],
+    archiveQuery: "요인분석과 구성타당도",
+  },
+};
+
 function buildEmptyForm(approach: ResearchApproachType): FormState {
   const sections = {} as SectionsState;
   for (const k of CHAPTER_KEYS) sections[k] = buildTemplateSections(templateHeadings(k, approach));
@@ -306,6 +422,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   const [profileDismissed, setProfileDismissed] = useState(false);
   const [selApproach, setSelApproach] = useState<ResearchApproachType>("quantitative");
   const [selDesign, setSelDesign] = useState<ResearchDesignType>("quasi_experimental");
+  const [selMethods, setSelMethods] = useState<StatMethodType[]>([]);
   const [profileSaving, setProfileSaving] = useState(false);
 
   // 연구 코크핏 연동: 미반영 지도 노트 (본인 전용 — readOnly 조회에서는 비활성)
@@ -581,7 +698,11 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     if (!paper) return;
     setProfileSaving(true);
     try {
-      const newProfile: WritingResearchProfile = { approach: selApproach, design: selDesign };
+      const newProfile: WritingResearchProfile = {
+        approach: selApproach,
+        design: selDesign,
+        methods: selApproach === "qualitative" ? [] : selMethods,
+      };
       await update.mutateAsync({ id: paper.id, data: { researchProfile: newProfile } });
       // 작성 내용이 없는 챕터만 새 접근의 템플릿으로 재구성 (작성분 보존)
       setForm((prev) => {
@@ -592,8 +713,12 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         return { ...prev, sections: next };
       });
       setProfileOpen(false);
+      const methodNote =
+        selApproach !== "qualitative" && selMethods.length > 0
+          ? ` · 분석 ${selMethods.length}종 (결과 장에서 가정 검정 가이드 제공)`
+          : "";
       toast.success(
-        `연구 방향이 설정되었습니다 — ${WRITING_APPROACH_LABELS[selApproach]} · ${RESEARCH_DESIGN_LABELS[selDesign]}`,
+        `연구 방향이 설정되었습니다 — ${WRITING_APPROACH_LABELS[selApproach]} · ${RESEARCH_DESIGN_LABELS[selDesign]}${methodNote}`,
       );
     } catch {
       toast.error("저장에 실패했습니다.");
@@ -605,7 +730,35 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   function openProfileDialog() {
     setSelApproach(profile?.approach ?? "quantitative");
     setSelDesign(profile?.design ?? "quasi_experimental");
+    setSelMethods(profile?.methods ?? []);
     setProfileOpen(true);
+  }
+
+  /** 선택한 분석 방법의 가정 검정 보고 골격을 결과 장 '가정 검정' 섹션에 삽입 */
+  function insertAssumptionSkeleton(m: StatMethodType) {
+    if (readOnly || !paper) return;
+    const g = ASSUMPTION_GUIDES[m];
+    const target = form.sections.results.find((sec) => sec.heading.includes("가정 검정"));
+    const existing = target ? target.paragraphs.map((p) => p.text) : [];
+    const adds = g.skeleton.filter((t) => !existing.some((e) => e.startsWith(t.slice(0, 14))));
+    if (adds.length === 0) {
+      toast.info(`${STAT_METHOD_LABELS[m]} 보고 골격은 이미 삽입되어 있습니다 — '${ASSUMPTION_SECTION_HEADING}' 섹션을 확인하세요.`);
+      return;
+    }
+    setForm((prev) => {
+      const cur = [...prev.sections.results];
+      let idx = cur.findIndex((sec) => sec.heading.includes("가정 검정"));
+      if (idx < 0) {
+        cur.unshift({ id: uid(), heading: ASSUMPTION_SECTION_HEADING, paragraphs: [] });
+        idx = 0;
+      }
+      const sec = cur[idx];
+      const kept = sec.paragraphs.filter((p) => p.text.trim());
+      cur[idx] = { ...sec, paragraphs: [...kept, ...adds.map((t) => ({ id: uid(), text: t }))] };
+      return { ...prev, sections: { ...prev.sections, results: cur } };
+    });
+    markDirty();
+    toast.success(`${STAT_METHOD_LABELS[m]} 가정 검정 보고 골격을 추가했습니다 — 빈칸(___)을 결과값으로 채우세요.`);
   }
 
   // ── 버전 스냅샷 ──
@@ -799,6 +952,38 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
               예: 현장에서 기존 학급 단위로 비교하면 준실험, 설문·상관 연구는 비실험입니다.
             </p>
           </div>
+          {selApproach !== "qualitative" && (
+            <div>
+              <p className="mb-1.5 text-xs font-semibold">
+                주요 분석 방법{" "}
+                <span className="font-normal text-muted-foreground">(복수 선택 가능)</span>
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {(Object.keys(STAT_METHOD_LABELS) as StatMethodType[]).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() =>
+                      setSelMethods((prev) =>
+                        prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m],
+                      )
+                    }
+                    className={cn(
+                      "rounded-lg border px-3 py-2 text-xs font-medium transition-colors",
+                      selMethods.includes(m)
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "bg-card hover:bg-muted",
+                    )}
+                  >
+                    {STAT_METHOD_LABELS[m]}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                선택하면 연구 결과 장에 해당 방법의 기본 가정 검정 가이드와 보고 골격이 자동으로 제공됩니다.
+              </p>
+            </div>
+          )}
           <DialogFooter>
             <Button
               variant="outline"
@@ -1269,6 +1454,59 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
             </ul>
           )}
         </div>
+
+        {/* 선택한 분석 방법의 기본 가정 검정 — 결과 장 한정 자동 표시 (2026-06-12) */}
+        {step === "results" && (profile?.methods?.length ?? 0) > 0 && (
+          <div className="mt-3 rounded-xl border border-sky-200/70 bg-sky-50/40 p-3.5 dark:border-sky-800/50 dark:bg-sky-950/10">
+            <p className="flex items-center gap-1.5 text-xs font-semibold text-sky-800 dark:text-sky-200">
+              <Microscope size={13} />
+              선택한 분석 방법의 기본 가정 검정 — 결과 보고 전 확인하세요
+            </p>
+            <div className="mt-2.5 space-y-3.5">
+              {profile!.methods!.map((m) => {
+                const g = ASSUMPTION_GUIDES[m];
+                if (!g) return null;
+                return (
+                  <div key={m} className="rounded-lg bg-card/60 p-2.5">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-xs font-bold text-sky-900 dark:text-sky-100">
+                        {STAT_METHOD_LABELS[m]}
+                      </span>
+                      {g.archiveQuery && (
+                        <Link
+                          href={`/archive/concept?q=${encodeURIComponent(g.archiveQuery)}`}
+                          className="rounded-full border border-sky-300/60 px-2 py-0.5 text-[10px] text-sky-700 transition-colors hover:bg-sky-100 dark:border-sky-700/60 dark:text-sky-300 dark:hover:bg-sky-900/40"
+                        >
+                          아카이브 개념 보기
+                        </Link>
+                      )}
+                      {!readOnly && (
+                        <button
+                          type="button"
+                          onClick={() => insertAssumptionSkeleton(m)}
+                          className="rounded-full border border-dashed border-sky-400/60 px-2 py-0.5 text-[10px] font-medium text-sky-700 transition-colors hover:bg-sky-600 hover:text-white dark:text-sky-300"
+                        >
+                          + 보고 골격 섹션에 삽입
+                        </button>
+                      )}
+                    </div>
+                    <ul className="mt-1.5 space-y-1">
+                      {g.assumptions.map((a, i) => (
+                        <li
+                          key={i}
+                          className="flex gap-1.5 text-[11px] leading-relaxed text-sky-900/85 dark:text-sky-100/85"
+                        >
+                          <span className="mt-0.5 shrink-0">·</span>
+                          {a}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* 이 장의 미반영 지도 노트 — 지도 노트 탭과 양방향 연결 (연구 코크핏) */}
         {!readOnly && (pendingByChapter.get(step)?.length ?? 0) > 0 && (

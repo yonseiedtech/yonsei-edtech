@@ -147,9 +147,33 @@ export const RESEARCH_DESIGN_LABELS: Record<ResearchDesignType, string> = {
   undecided: "미정",
 };
 
+/** 주요 통계 분석 방법 — 결과 장 가정 검정 가이드 맞춤화 (2026-06-12) */
+export type StatMethodType =
+  | "ttest"
+  | "anova"
+  | "ancova"
+  | "regression"
+  | "correlation"
+  | "chisquare"
+  | "sem"
+  | "factor_analysis";
+
+export const STAT_METHOD_LABELS: Record<StatMethodType, string> = {
+  ttest: "t검정",
+  anova: "ANOVA (분산분석)",
+  ancova: "ANCOVA (공분산분석)",
+  regression: "회귀분석",
+  correlation: "상관분석",
+  chisquare: "카이제곱(χ²)",
+  sem: "구조방정식(SEM)",
+  factor_analysis: "요인분석",
+};
+
 export interface WritingResearchProfile {
   approach: ResearchApproachType;
   design: ResearchDesignType;
+  /** 주요 분석 방법 (복수) — 양적·혼합 한정, 질적이면 빈 배열 */
+  methods?: StatMethodType[];
 }
 
 // ── 구조화 본문: 챕터 → 섹션(소제목) → 단락 (2026-06-11) ──
