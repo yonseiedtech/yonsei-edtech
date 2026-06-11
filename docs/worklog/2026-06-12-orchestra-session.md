@@ -39,10 +39,22 @@
 | # | 커밋 | 내용 |
 |---|---|---|
 | 16 | 589978c0 | 전역 검색에 공지 소스 추가 — `postsApi.list(category=notice, sort:"")` (public read 한정, useBoard 인덱스 회피 패턴) |
-| 17 | (이번) | 검색 발견성 — 데스크톱 헤더를 아이콘 → "검색 Ctrl K" pill 로 확장 (모바일은 아이콘 유지) |
+| 17 | e8e1aeb5 | 검색 발견성 — 데스크톱 헤더를 아이콘 → "검색 Ctrl K" pill 로 확장 (모바일은 아이콘 유지) |
 
-## 잠재 이슈 (검증 필요 — 추측)
-- `PeerActivityFeed`·`ActivityCards`·게시판 "전체" 탭이 카테고리 무필터 `postsApi.list()`를 사용하는데, posts rules 의 read 가 `postCategoryReadable(resource.data.category)` 조건부라 Firestore 정적 평가상 무필터 list 가 거부될 수 있음. 운영에서 전체 탭이 정상 동작 중인지 확인 필요 — 깨져 있다면 공개 카테고리 in 쿼리(또는 카테고리별 병렬 fetch)로 전환.
+## 배포 5차 — 사이클 18 (e8e1aeb5..2b2aa459, ✓ Ready)
+
+| # | 커밋 | 내용 |
+|---|---|---|
+| 18 | 2b2aa459 | 검색 최근 선택 기록 — localStorage(global-search.recent) 최대 5, 빈 쿼리 시 "최근" 선두 그룹, stale 키 자동 무시·하위 그룹 중복 제외 |
+
+## 배포 6차 — 사이클 19 게시판 rules 버그 수정 (2b2aa459..b771a8cb, ✓ Ready)
+
+잠재 이슈로 기록했던 건을 **비인증 Firestore REST runQuery 로 실증 → 확정 → 수정**:
+- 실증: 카테고리 무필터 posts list = PERMISSION_DENIED (PeerActivityFeed·홈 ActivityCards·게시판 "전체" 탭이 조용히 깨져 있었음) / category=update read = PERMISSION_DENIED (`/board/update` 깨짐 — rules enum 에 'update' 누락, Sprint 67-AL 카테고리 추가 시 rules 미동기화)
+- rules: postCategoryReadable/Writable enum 에 'update' 추가 → **배포 후 REST 재검증으로 read 복구 확인**
+- indexes: posts(category asc, createdAt desc) 복합 인덱스 추가 → 빌드 완료 후 in+orderBy 쿼리 통과 확인
+- 코드: `PUBLIC_POST_CATEGORIES`(rules 와 동기화 주석) + `postsApi.listReadable`(공개 enum in + orderBy + limit) — 피드·홈카드 전환, useBoard 전체 탭은 권한별(includeResources=로그인, includeStaff=staff+) + 캐시 키에 권한 포함
+- 교훈: **클라이언트 공개 API key 로 비인증 REST runQuery 프로브 = rules 동작 실증 진단법** (코드 추측 → 확정 전환). 카테고리 enum 추가 시 rules postCategoryReadable/Writable 동기화 필수
 
 ## 상태
 - 테스트: 581 → **598** (PBKDF2 16 + 패스스루 1)
