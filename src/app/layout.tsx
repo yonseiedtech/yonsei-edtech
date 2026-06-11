@@ -53,7 +53,7 @@ const gowunBatang = Gowun_Batang({
 const SITE_URL = "https://yonsei-edtech.vercel.app";
 const SITE_NAME = "연세교육공학회";
 const SITE_DESCRIPTION =
-  "연세대학교 교육대학원 교육공학전공 학술 커뮤니티 연세교육공학회. 에듀테크, 교수설계, 학습과학 분야의 세미나, 프로젝트, 스터디를 통해 교육의 미래를 함께 설계합니다.";
+  "연세대학교 교육대학원 교육공학전공 학술 커뮤니티 연세교육공학회. 입학부터 학위논문까지 학기별 연구 여정을 함께하는 대학원생 연구 성장 플랫폼 — 세미나, 프로젝트, 스터디, 논문 작성 지원을 제공합니다.";
 const SITE_TITLE_DEFAULT =
   "연세교육공학회 - 연세대학교 교육대학원 교육공학전공 학술 커뮤니티";
 

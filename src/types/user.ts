@@ -382,6 +382,11 @@ export interface User { [key: string]: unknown;
    * false 로 명시될 때만 옵트아웃 — 익명 처리(순위는 유지, 이름 숨김).
    */
   showInLeaderboard?: boolean;
+  /**
+   * 논문 여정 단계 수동 오버라이드 (1~5).
+   * 미설정 시 getEffectiveSemesterCount() 기반 자동 추정 (휴학·수료생 대응).
+   */
+  thesisJourneyStage?: number;
   createdAt: string;
   updatedAt: string;
 }

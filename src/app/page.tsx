@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import HeroSection from "@/components/home/HeroSection";
+import ResearchJourneySection from "@/components/home/ResearchJourneySection";
 import TrustIndicators from "@/components/home/TrustIndicators";
 import AboutPreview from "@/components/home/AboutPreview";
 import NoticePreview from "@/components/home/NoticePreview";
@@ -23,6 +24,7 @@ export default function HomePage() {
       <HomeRedirectGate />
       <InteractiveHome>
         <HeroSection />
+        <ResearchJourneySection />
         <TrustIndicators />
         <AboutPreview />
         <NoticePreview />

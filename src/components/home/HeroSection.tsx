@@ -144,8 +144,8 @@ export default function HeroSection() {
             </h1>
 
             <p className="mt-5 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg">
-              에듀테크·교수설계·학습과학 분야의 최신 트렌드를 연구하고
-              공유합니다. 매 학기 세미나·프로젝트·학술대회로 함께 성장해요.
+              에듀테크·교수설계·학습과학을 연구하는 대학원생의 성장 동반자.
+              입학부터 학위논문까지, 학기마다 다음 한 걸음을 함께 설계합니다.
             </p>
 
             {/* Apple 패턴: 2단 CTA — 주(가입) + 보조(학회 소개 텍스트 링크) */}

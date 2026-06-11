@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import ThesisJourney from "@/features/research/ThesisJourney";
 import { formatPeriodLabel } from "@/lib/research-period";
 import {
   currentSemesterRange,
@@ -325,6 +326,13 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
 
           <WritingHeatmap history={filteredHistory} />
         </div>
+
+        {/* 논문 여정 — 학기 기반 순차 가이드 (본인 화면에서만 단계 수정 가능) */}
+        {user && (
+          <div className="mt-6 print-hide">
+            <ThesisJourney user={user} editable={isSelf && !readOnly} />
+          </div>
+        )}
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="mt-6 print-hide">
           <TabsList variant="line" className="w-full justify-start gap-2 border-b">
