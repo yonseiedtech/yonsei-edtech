@@ -19,6 +19,8 @@ export interface CommBoard {
   allowGuest: boolean;
   /** 익명 옵션 노출 */
   allowAnonymous: boolean;
+  /** 발표자 목록 (수업 발표 보드) — 질문을 발표자별로 그룹핑/태깅 (2026-06-11) */
+  presenters?: string[];
   status: CommBoardStatus;
   defaultSort: CommSortMode;
   createdAt?: string;
@@ -34,6 +36,8 @@ export interface CommQuestion {
   guestName?: string;
   anonymous: boolean;
   body: string;
+  /** 어느 발표자에 대한 질문인지 (board.presenters 중 하나, 없으면 공통) */
+  presenter?: string;
   resolved: boolean;
   /** 채택된 답변 id (UI 에서 답변의 채택 여부를 이 값으로 판단) */
   resolvedAnswerId?: string;

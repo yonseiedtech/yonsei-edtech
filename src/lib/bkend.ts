@@ -3425,6 +3425,9 @@ export const commAnswersApi = {
     dataApi.list<CommAnswer>("comm_answers", { "filter[boardId]": boardId, limit: 2000 }),
   listByQuestion: (questionId: string) =>
     dataApi.list<CommAnswer>("comm_answers", { "filter[questionId]": questionId, limit: 500 }),
+  /** 답변 본문 수정 — rules 상 회원 작성자/보드 소유자/운영진만 가능 */
+  update: (id: string, data: Partial<CommAnswer>) =>
+    dataApi.update<CommAnswer>("comm_answers", id, data as unknown as Record<string, unknown>),
   create: async (data: Record<string, unknown>): Promise<CommAnswer> => {
     const created = await dataApi.create<CommAnswer>("comm_answers", { ...data, likeCount: 0 });
     // denorm: 질문 answerCount +1 (likeCount/answerCount/updatedAt 만 바꾸므로 rules 허용)

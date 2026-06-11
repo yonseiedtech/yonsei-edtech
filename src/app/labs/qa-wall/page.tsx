@@ -65,6 +65,7 @@ export default function QaWallPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [presentersText, setPresentersText] = useState("");
   const [creating, setCreating] = useState(false);
 
   async function handleCreate() {
@@ -75,11 +76,17 @@ export default function QaWallPage() {
     }
     setCreating(true);
     try {
+      // 발표자: 줄바꿈 또는 쉼표 구분 → 질문이 발표자별로 그룹핑됨
+      const presenters = presentersText
+        .split(/[\n,]/)
+        .map((p) => p.trim())
+        .filter(Boolean);
       const created = (await commBoardsApi.create({
         contextType: CONTEXT_TYPE,
         contextId: CONTEXT_ID,
         title: title.trim(),
         description: description.trim() || undefined,
+        presenters: presenters.length > 0 ? presenters : undefined,
         ownerId: user.id,
         ownerName: user.name,
         // 수업용 기본값: 비로그인·익명 참여 허용
@@ -90,6 +97,7 @@ export default function QaWallPage() {
       })) as CommBoard;
       setTitle("");
       setDescription("");
+      setPresentersText("");
       setFormOpen(false);
       await queryClient.invalidateQueries({ queryKey });
       // 생성 직후 공유 링크 자동 복사
@@ -173,6 +181,20 @@ export default function QaWallPage() {
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="예: 발표 들으며 궁금한 점을 자유롭게 남겨주세요. 익명 가능!"
                     />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                      발표자 (선택 — 한 줄에 한 명 또는 쉼표 구분)
+                    </label>
+                    <Textarea
+                      rows={3}
+                      value={presentersText}
+                      onChange={(e) => setPresentersText(e.target.value)}
+                      placeholder={"김연세\n이공학\n박교육"}
+                    />
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      발표자를 등록하면 보드가 발표자별 섹션으로 그룹핑되고, 질문 작성 시 발표자를 선택할 수 있습니다.
+                    </p>
                   </div>
                   <p className="text-[11px] text-muted-foreground">
                     수업용 기본 설정: 게스트(비로그인) 참여 허용 · 익명 작성 허용 — 생성 후 보드에서 변경할 수 있습니다.

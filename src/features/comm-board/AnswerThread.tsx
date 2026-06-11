@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Loader2, Send, ThumbsUp, Trash2 } from "lucide-react";
+import { Check, Loader2, Pencil, Send, ThumbsUp, Trash2, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { commAnswersApi, commLikesApi, commQuestionsApi } from "@/lib/bkend";
 import { notifyCommAnswer, notifyCommAnswerAccepted } from "@/features/notifications/notify";
 import type { CommAnswer, CommBoard, CommQuestion, User } from "@/types";
 import { canDeletePost } from "./comm-helpers";
+import { getGuestNickname, setGuestNickname } from "./guest-name";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -44,7 +45,14 @@ export default function AnswerThread({
 
   const [body, setBody] = useState("");
   const [guestName, setGuestName] = useState("");
+  // 게스트 닉네임: 입장 시 설정한 값(localStorage)을 기본값으로 공유
+  useEffect(() => {
+    if (!user) setGuestName(getGuestNickname());
+  }, [user]);
   const [saving, setSaving] = useState(false);
+  // 답변 인라인 수정 (회원 작성자/보드 소유자/운영진)
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
   const isGuest = !user;
   const disabled = board.status === "closed" || (isGuest && !board.allowGuest);
 
@@ -61,6 +69,8 @@ export default function AnswerThread({
         anonymous: false,
         body: body.trim(),
       });
+      // 게스트가 이름을 적었으면 닉네임으로 기억
+      if (isGuest && guestName.trim()) setGuestNickname(guestName);
       setBody("");
       // Sprint UX-6: 질문 작성자(회원)에게 인앱 알림 — 본인 답변은 제외 (실패해도 비차단)
       if (question.authorId && question.authorId !== user?.id) {
@@ -113,6 +123,22 @@ export default function AnswerThread({
       toast.success(newAccepted ? "답변을 채택했습니다." : "채택을 해제했습니다.");
     } catch {
       toast.error("채택 처리 실패");
+    }
+  }
+
+  async function handleEditSave(a: CommAnswer) {
+    if (!editText.trim()) {
+      toast.error("내용을 입력하세요.");
+      return;
+    }
+    try {
+      await commAnswersApi.update(a.id, { body: editText.trim() });
+      setEditingId(null);
+      await queryClient.invalidateQueries({ queryKey: ["comm-answers", question.id] });
+      onChanged();
+      toast.success("답변이 수정되었습니다.");
+    } catch {
+      toast.error("수정 실패 — 권한을 확인하세요.");
     }
   }
 
@@ -179,17 +205,57 @@ export default function AnswerThread({
                     </button>
                   )}
                   {canDeletePost(user, a, board) && (
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(a)}
-                      className="rounded p-0.5 text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 size={11} />
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        title="답변 수정"
+                        onClick={() => {
+                          setEditingId(a.id);
+                          setEditText(a.body);
+                        }}
+                        className="rounded p-0.5 text-muted-foreground hover:text-foreground"
+                      >
+                        <Pencil size={11} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(a)}
+                        className="rounded p-0.5 text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 size={11} />
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
-              <p className="mt-1 whitespace-pre-wrap">{a.body}</p>
+              {editingId === a.id ? (
+                <div className="mt-1.5 space-y-1.5">
+                  <textarea
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    rows={2}
+                    className="w-full rounded-md border bg-background px-2 py-1 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                  />
+                  <div className="flex justify-end gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setEditingId(null)}
+                      className="flex items-center gap-0.5 rounded border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-muted"
+                    >
+                      <X size={10} /> 취소
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleEditSave(a)}
+                      className="flex items-center gap-0.5 rounded bg-primary px-1.5 py-0.5 text-[10px] text-primary-foreground hover:bg-primary/90"
+                    >
+                      <Check size={10} /> 저장
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-1 whitespace-pre-wrap">{a.body}</p>
+              )}
             </div>
           );
         })

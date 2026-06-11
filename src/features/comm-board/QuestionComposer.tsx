@@ -1,23 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { commQuestionsApi } from "@/lib/bkend";
 import type { CommBoard, User } from "@/types";
 import { Button } from "@/components/ui/button";
+import { getGuestNickname, setGuestNickname } from "./guest-name";
 
 interface Props {
   board: CommBoard;
   user: User | null;
   onCreated: () => void;
+  /** 수업 발표 보드 — 질문을 태깅할 발표자 (board.presenters 중 하나, undefined=공통) */
+  presenter?: string;
 }
 
 /** 질문/답변 공용으로 쓰는 게스트 이름·익명 로직을 포함한 질문 작성기 */
-export default function QuestionComposer({ board, user, onCreated }: Props) {
+export default function QuestionComposer({ board, user, onCreated, presenter }: Props) {
   const [body, setBody] = useState("");
   const [anonymous, setAnonymous] = useState(false);
+  // 게스트 닉네임: 입장 시 설정한 값(localStorage)을 기본값으로 공유
   const [guestName, setGuestName] = useState("");
+  useEffect(() => {
+    if (!user) setGuestName(getGuestNickname());
+  }, [user]);
   const [saving, setSaving] = useState(false);
 
   const isGuest = !user;
@@ -37,8 +44,11 @@ export default function QuestionComposer({ board, user, onCreated }: Props) {
         authorName: user && !anonymous ? user.name : undefined,
         guestName: isGuest && guestName.trim() ? guestName.trim() : undefined,
         anonymous: board.allowAnonymous ? anonymous : false,
+        presenter: presenter || undefined,
         body: body.trim(),
       });
+      // 게스트가 이름을 적었으면 닉네임으로 기억 (다음 작성·답글 기본값)
+      if (isGuest && guestName.trim()) setGuestNickname(guestName);
       setBody("");
       setAnonymous(false);
       onCreated();
@@ -61,6 +71,9 @@ export default function QuestionComposer({ board, user, onCreated }: Props) {
 
   return (
     <div className="space-y-2 rounded-md border border-primary/30 bg-primary/5 p-3">
+      {presenter && (
+        <p className="text-[11px] font-medium text-primary">→ {presenter} 발표자에게 질문</p>
+      )}
       {isGuest && (
         <input
           value={guestName}
