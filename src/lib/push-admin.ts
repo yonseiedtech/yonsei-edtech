@@ -61,6 +61,7 @@ const PUSH_PREF_FIELD_BY_KIND: Record<string, string> = {
   seminar_push_review_request: "pushSeminarReview",
   class_reminder_daily: "pushClassReminder",
   external_recruitment: "pushExternalRecruitment",
+  comm_board_answer: "pushCommBoard",
 };
 
 export async function filterRecipientsByPreference(

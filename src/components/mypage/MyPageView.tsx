@@ -1033,6 +1033,7 @@ function NotificationSettingsCard({ user }: { user: User }) {
     pushCollabMilestone?: boolean;
     pushCollabReview?: boolean;
     pushJournalIssue?: boolean;
+    pushCommBoard?: boolean;
   };
   const prefs = (user as User & { notificationPrefs?: PrefShape }).notificationPrefs;
   const [digest, setDigest] = useState<boolean>(prefs?.weeklyDigest !== false);
@@ -1051,6 +1052,7 @@ function NotificationSettingsCard({ user }: { user: User }) {
   const [pushCollabMilestone, setPushCollabMilestone] = useState<boolean>(prefs?.pushCollabMilestone !== false);
   const [pushCollabReview, setPushCollabReview] = useState<boolean>(prefs?.pushCollabReview !== false);
   const [pushJournalIssue, setPushJournalIssue] = useState<boolean>(prefs?.pushJournalIssue !== false);
+  const [pushCommBoard, setPushCommBoard] = useState<boolean>(prefs?.pushCommBoard !== false);
   const [busyKey, setBusyKey] = useState<string | null>(null);
 
   async function updateLeaderboardPref(next: boolean) {
@@ -1252,6 +1254,16 @@ function NotificationSettingsCard({ user }: { user: User }) {
               void updatePref("pushExternalRecruitment", !pushExternalRecruitment, setPushExternalRecruitment, "대외 학술대회 모집 D-1 알림을")
             }
             ariaLabel="대외 학술대회 모집 D-1 push 알림 토글"
+          />
+          <ToggleRow
+            title="소통 보드 새 답변"
+            description="내가 올린 질문에 새 답변이 달릴 때 안내."
+            enabled={pushCommBoard}
+            busy={busyKey === "pushCommBoard"}
+            onToggle={() =>
+              void updatePref("pushCommBoard", !pushCommBoard, setPushCommBoard, "소통 보드 새 답변 알림을")
+            }
+            ariaLabel="소통 보드 새 답변 push 알림 토글"
           />
           <ToggleRow
             title="공동 연구 초대"

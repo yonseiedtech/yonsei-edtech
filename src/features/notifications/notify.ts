@@ -91,21 +91,8 @@ export function notifyComment(
   );
 }
 
-/** 소통 보드: 내 질문에 새 답변 (Sprint UX-6) */
-export function notifyCommAnswer(
-  questionAuthorId: string,
-  answererName: string,
-  boardId: string,
-  questionExcerpt: string,
-) {
-  return create(
-    questionAuthorId,
-    "comment",
-    "내 질문에 새 답변이 달렸습니다",
-    `${answererName}님이 "${questionExcerpt}" 질문에 답변을 남겼습니다.`,
-    `/boards/${boardId}`,
-  );
-}
+// 소통 보드 새 답변 알림은 서버 경로(/api/comm/notify-answer)로 이전 —
+// 게스트 답변도 도달 + push 채널 포함 (오케스트라 사이클 4)
 
 /** 소통 보드: 내 답변 채택 (Sprint UX-6) */
 export function notifyCommAnswerAccepted(

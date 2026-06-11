@@ -6,7 +6,8 @@ import { Check, Loader2, Pencil, Send, ThumbsUp, Trash2, X } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { commAnswersApi, commLikesApi, commQuestionsApi } from "@/lib/bkend";
-import { notifyCommAnswer, notifyCommAnswerAccepted } from "@/features/notifications/notify";
+import { notifyCommAnswerAccepted } from "@/features/notifications/notify";
+import { auth as firebaseAuth } from "@/lib/firebase";
 import type { CommAnswer, CommBoard, CommQuestion, User } from "@/types";
 import { canDeletePost } from "./comm-helpers";
 import { getGuestNickname, setGuestNickname } from "./guest-name";
@@ -85,15 +86,24 @@ export default function AnswerThread({
       // 게스트가 이름을 적었으면 닉네임으로 기억
       if (isGuest && guestName.trim()) setGuestNickname(guestName);
       setBody("");
-      // Sprint UX-6: 질문 작성자(회원)에게 인앱 알림 — 본인 답변은 제외 (실패해도 비차단)
+      // 사이클 4: 질문 작성자 알림을 서버 경로로 — 게스트 답변도 인앱+push 도달 (실패 비차단)
       if (question.authorId && question.authorId !== user?.id) {
         const answererName = user?.name ?? (guestName.trim() || "게스트");
-        void notifyCommAnswer(
-          question.authorId,
-          answererName,
-          board.id,
-          question.body.length > 30 ? `${question.body.slice(0, 30)}…` : question.body,
-        );
+        void (async () => {
+          try {
+            const token = user ? await firebaseAuth.currentUser?.getIdToken() : undefined;
+            await fetch("/api/comm/notify-answer", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              },
+              body: JSON.stringify({ questionId: question.id, answererName }),
+            });
+          } catch {
+            // 알림 실패는 답변 등록을 막지 않음
+          }
+        })();
       }
       await queryClient.invalidateQueries({ queryKey: ["comm-answers", question.id] });
       onChanged();

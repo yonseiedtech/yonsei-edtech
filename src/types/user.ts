@@ -158,6 +158,8 @@ export interface NotificationPrefs {
   pushCollabReview?: boolean;
   /** 신규 연구지 호수 발간 push (kind=journal_issue) — collaborative-research Phase 3 */
   pushJournalIssue?: boolean;
+  /** 소통 보드 내 질문에 새 답변 push (kind=comm_board_answer) — 오케스트라 사이클 4 */
+  pushCommBoard?: boolean;
   /** 신규 알림 도착 시 화면 내 toast 표시 여부 — false 로 명시될 때만 옵트아웃 (기본 true) */
   toastEnabled?: boolean;
 }
@@ -175,6 +177,7 @@ export const PUSH_PREF_FIELD: Record<string, keyof NotificationPrefs> = {
   collab_milestone: "pushCollabMilestone",
   collab_review: "pushCollabReview",
   journal_issue: "pushJournalIssue",
+  comm_board_answer: "pushCommBoard",
 };
 
 /** UI 라벨 — MyPage 알림 설정 섹션에서 사용 */
@@ -189,7 +192,8 @@ export const PUSH_PREF_LABELS: Record<
   | "pushCollabMention"
   | "pushCollabMilestone"
   | "pushCollabReview"
-  | "pushJournalIssue",
+  | "pushJournalIssue"
+  | "pushCommBoard",
   { label: string; description: string }
 > = {
   pushStudySession: { label: "스터디 회차 D-1", description: "내일 진행될 스터디/프로젝트 회차 알림" },
@@ -203,6 +207,7 @@ export const PUSH_PREF_LABELS: Record<
   pushCollabMilestone: { label: "공동 연구 마일스톤 D-1", description: "내가 담당한 마일스톤의 목표일 하루 전 알림" },
   pushCollabReview: { label: "연구지 검수", description: "내 논문의 검수 요청·응답·수정 요청 알림" },
   pushJournalIssue: { label: "연구지 신규 호수", description: "연세 교육공학 연구의 신규 호수 발간 안내" },
+  pushCommBoard: { label: "소통 보드 새 답변", description: "내가 올린 질문에 새 답변이 달릴 때 알림" },
 };
 
 /**
