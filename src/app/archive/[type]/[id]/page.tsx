@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Star, ExternalLink, BookText, Network, Tag, Pencil, GraduationCap, BookmarkPlus, BookmarkCheck } from "lucide-react";
+import { ArrowLeft, Star, ExternalLink, BookText, Network, Tag, Pencil, GraduationCap, BookmarkPlus, BookmarkCheck, Compass } from "lucide-react";
+import { JOURNEY_STAGES } from "@/features/research/ThesisJourney";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -253,6 +254,11 @@ export default function ArchiveDetailPage() {
 
   const tags = (item as { tags?: string[] }).tags ?? [];
   const altNames = (item as { altNames?: string[] }).altNames ?? [];
+  // 이 항목을 추천 개념으로 포함하는 논문 여정 단계 (개념 한정)
+  const journeyStagesForItem =
+    type === "concept" && item.name
+      ? JOURNEY_STAGES.filter((st) => st.archiveTopics?.includes(item.name))
+      : [];
   const references = (item as { references?: string[] }).references ?? [];
 
   // 목차 섹션 — type 별 차이 반영. id 는 본문 섹션과 일치해야 함.
@@ -309,6 +315,21 @@ export default function ArchiveDetailPage() {
                 <p className="mt-1 text-sm text-muted-foreground italic">
                   {altNames.join(" · ")}
                 </p>
+              )}
+              {/* 논문 여정 역링크 — 이 개념을 추천하는 여정 단계 */}
+              {type === "concept" && journeyStagesForItem.length > 0 && (
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  {journeyStagesForItem.map((st) => (
+                    <Link
+                      key={st.stage}
+                      href="/mypage/research"
+                      className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/5 px-2 py-0.5 text-[11px] text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                    >
+                      <Compass size={11} />
+                      논문 여정 {st.semesterLabel} · {st.title} 추천 개념
+                    </Link>
+                  ))}
+                </div>
               )}
             </div>
             <div className="flex items-center gap-2">
