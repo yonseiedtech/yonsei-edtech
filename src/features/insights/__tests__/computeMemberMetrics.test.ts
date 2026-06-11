@@ -146,4 +146,15 @@ describe("computeMemberMetrics — 출력 구조", () => {
     const sum = Math.round(engagement + content + research + staff + review);
     expect(result.loyaltyScore).toBe(sum);
   });
+
+  it("thesisJourneyStage 패스스루 — 설정값 유지, 미설정 undefined", () => {
+    const withStage = computeMemberMetrics({
+      member: mkMember({ thesisJourneyStage: 3 }),
+      nowMs: NOW_MS,
+    });
+    expect(withStage.thesisJourneyStage).toBe(3);
+
+    const without = computeMemberMetrics({ member: mkMember(), nowMs: NOW_MS });
+    expect(without.thesisJourneyStage).toBeUndefined();
+  });
 });
