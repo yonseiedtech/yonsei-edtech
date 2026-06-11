@@ -2,7 +2,7 @@ import { toast } from "sonner";
 import { authApi, profilesApi, saveTokens } from "@/lib/bkend";
 import { runAllGuestLinkers } from "@/lib/guestLinker";
 import { auth } from "@/lib/firebase";
-import { sha256Hex } from "@/lib/hash";
+import { pbkdf2AnswerHash } from "@/lib/hash";
 import { calcGeneration } from "@/lib/generation";
 import type { EnrollmentStatus } from "@/types";
 import type { UserConsents } from "@/lib/legal";
@@ -46,7 +46,7 @@ export async function runSignupFlow(
     }
   }
 
-  const securityAnswerHash = await sha256Hex(
+  const securityAnswerHash = await pbkdf2AnswerHash(
     data.securityAnswer.trim().toLowerCase(),
   );
 

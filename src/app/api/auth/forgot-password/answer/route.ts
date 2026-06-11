@@ -1,11 +1,10 @@
 import { NextRequest } from "next/server";
-import { createHash } from "crypto";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
+import { verifySecurityAnswer } from "@/lib/security-answer";
 import { forgotPasswordAnswerSchema } from "@/lib/api-validators";
 
-// Sprint 69: brute-force 비용 상승을 위한 rate-limit 대폭 강화
-// 30분 5회. securityAnswerHash 가 sha256(salt 미적용) 인 동안 leak 시 피해 최소화.
-// TODO: 별도 sprint 에서 PBKDF2/scrypt + per-user salt 마이그레이션.
+// Sprint 69: brute-force 비용 상승을 위한 rate-limit 대폭 강화 (30분 5회).
+// 해시는 PBKDF2-SHA256 + per-user salt — 레거시 무염 SHA-256 은 검증 성공 시 자동 업그레이드.
 const bucket = new Map<string, { count: number; resetAt: number }>();
 const LIMIT = 5;
 const WINDOW_MS = 30 * 60_000;
@@ -20,10 +19,6 @@ function rateLimit(key: string): boolean {
   entry.count += 1;
   if (entry.count > LIMIT) return false;
   return true;
-}
-
-function sha256Hex(text: string): string {
-  return createHash("sha256").update(text).digest("hex");
 }
 
 export async function POST(req: NextRequest) {
@@ -79,9 +74,15 @@ export async function POST(req: NextRequest) {
       return Response.json({ ok: false }, { status: 401 });
     }
 
-    const provided = sha256Hex(answer.trim().toLowerCase());
-    if (provided !== expected) {
+    const result = verifySecurityAnswer(answer.trim().toLowerCase(), expected);
+    if (!result.ok) {
       return Response.json({ ok: false }, { status: 401 });
+    }
+    if (result.upgradedHash) {
+      // 레거시 SHA-256 → PBKDF2 자동 마이그레이션 (실패해도 본 흐름 비차단)
+      snap.docs[0].ref
+        .update({ securityAnswerHash: result.upgradedHash })
+        .catch((e) => console.warn("[forgot-password/answer] hash upgrade skip:", e));
     }
 
     // 재설정 링크 생성 + 이메일 발송

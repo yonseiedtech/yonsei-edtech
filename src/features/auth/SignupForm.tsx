@@ -12,7 +12,7 @@ import { runAllGuestLinkers } from "@/lib/guestLinker";
 import { auth } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import type { UserConsents } from "@/lib/legal";
-import { sha256Hex } from "@/lib/hash";
+import { pbkdf2AnswerHash } from "@/lib/hash";
 
 import type { EnrollmentStatus, OccupationType } from "@/types";
 import { ENROLLMENT_STATUS_LABELS, OCCUPATION_LABELS } from "@/types";
@@ -232,7 +232,7 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
 
     setLoading(true);
     try {
-      const securityAnswerHash = await sha256Hex(data.securityAnswer.trim().toLowerCase());
+      const securityAnswerHash = await pbkdf2AnswerHash(data.securityAnswer.trim().toLowerCase());
 
       try {
         const tokens = await authApi.signup({
