@@ -133,32 +133,54 @@ const PUBLIC_NAV: NavGroup[] = [
     ],
   },
   {
+    // 체감 스프린트: 정체성(연구 성장 동반자) 반영 — "나의 연구"를 첫 섹션으로 승격
     label: "연구 활동",
     visibility: "both",
-    items: [
-      { href: "/research", label: "연세교육공학 연구 분석" },
-      { href: "/alumni/thesis", label: "졸업생 학위논문" },
-      { href: "/archive", label: "교육공학 아카이브" },
-      { href: "/mypage/research", label: "내 연구활동" },
-      { href: "/collab", label: "공동 연구" },
-      { href: "/journal", label: "연구지 (Journal)" },
+    sections: [
+      {
+        sectionLabel: "📖 나의 연구",
+        links: [
+          { href: "/mypage/research", label: "내 연구활동 · 논문 여정" },
+          { href: "/collab", label: "공동 연구" },
+        ],
+      },
+      {
+        sectionLabel: "탐색·아카이브",
+        links: [
+          { href: "/research", label: "연세교육공학 연구 분석" },
+          { href: "/alumni/thesis", label: "졸업생 학위논문" },
+          { href: "/archive", label: "교육공학 아카이브" },
+          { href: "/journal", label: "연구지 (Journal)" },
+        ],
+      },
     ],
   },
   {
+    // 체감 스프린트: 11개 평면 나열 → 게시판/콘텐츠 2섹션 구조화
     label: "커뮤니티",
     visibility: "auth",
-    items: [
-      { href: "/notices", label: "공지사항" },
-      { href: "/board/free", label: "자유게시판" },
-      { href: "/board/interview", label: "인터뷰 게시판" },
-      { href: "/board/paper-review", label: "교육공학 논문 리뷰" },
-      { href: "/board/promotion", label: "홍보게시판" },
-      { href: "/board/resources", label: "자료실" },
-      { href: "/board/update", label: "업데이트 게시판" },
-      { href: "/ai-forum", label: "AI 포럼 (실험)" },
-      { href: "/gallery", label: "포토갤러리" },
-      { href: "/newsletter", label: "학회보" },
-      { href: "/card-news", label: "카드뉴스" },
+    sections: [
+      {
+        sectionLabel: "게시판",
+        links: [
+          { href: "/notices", label: "공지사항" },
+          { href: "/board/free", label: "자유게시판" },
+          { href: "/board/interview", label: "인터뷰 게시판" },
+          { href: "/board/paper-review", label: "교육공학 논문 리뷰" },
+          { href: "/board/promotion", label: "홍보게시판" },
+          { href: "/board/resources", label: "자료실" },
+          { href: "/board/update", label: "업데이트 게시판" },
+        ],
+      },
+      {
+        sectionLabel: "콘텐츠",
+        links: [
+          { href: "/newsletter", label: "학회보" },
+          { href: "/card-news", label: "카드뉴스" },
+          { href: "/gallery", label: "포토갤러리" },
+          { href: "/ai-forum", label: "AI 포럼 (실험)" },
+        ],
+      },
     ],
   },
 ];
