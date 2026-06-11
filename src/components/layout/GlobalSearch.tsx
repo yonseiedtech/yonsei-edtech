@@ -68,6 +68,28 @@ const SHORTCUTS: SearchItem[] = [
 const GROUP_ORDER = ["바로가기", "공지", "아카이브", "세미나", "학술활동", "졸업생 논문"];
 const PER_GROUP_LIMIT = 5;
 
+const RECENT_KEY = "global-search.recent";
+const RECENT_LIMIT = 5;
+
+function loadRecentKeys(): string[] {
+  try {
+    const raw = window.localStorage.getItem(RECENT_KEY);
+    const arr = raw ? (JSON.parse(raw) as unknown) : [];
+    return Array.isArray(arr) ? arr.filter((x): x is string => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecentKey(key: string) {
+  try {
+    const next = [key, ...loadRecentKeys().filter((k) => k !== key)].slice(0, RECENT_LIMIT);
+    window.localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+  } catch {
+    /* localStorage 불가 환경 무시 */
+  }
+}
+
 export default function GlobalSearch() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -88,10 +110,13 @@ export default function GlobalSearch() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  const [recentKeys, setRecentKeys] = useState<string[]>([]);
+
   useEffect(() => {
     if (open) {
       setQuery("");
       setActiveIdx(0);
+      setRecentKeys(loadRecentKeys());
       // Dialog 마운트 직후 포커스
       setTimeout(() => inputRef.current?.focus(), 50);
     }
@@ -185,18 +210,30 @@ export default function GlobalSearch() {
 
   const results: SearchItem[] = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const out: SearchItem[] = [];
+    const usedKeys = new Set<string>();
+    // 빈 쿼리: 최근 선택을 선두 그룹으로 (stale 키는 매칭 실패로 자동 무시)
+    if (!q && recentKeys.length > 0) {
+      const byKey = new Map(allItems.map((i) => [i.key, i] as const));
+      for (const k of recentKeys) {
+        const item = byKey.get(k);
+        if (!item) continue;
+        out.push({ ...item, group: "최근" });
+        usedKeys.add(k);
+      }
+    }
     const byGroup = new Map<string, SearchItem[]>();
     for (const item of allItems) {
+      if (usedKeys.has(item.key)) continue;
       if (q && !item.haystack.toLowerCase().includes(q)) continue;
       const list = byGroup.get(item.group) ?? [];
       if (list.length >= PER_GROUP_LIMIT) continue;
       list.push(item);
       byGroup.set(item.group, list);
     }
-    const out: SearchItem[] = [];
     for (const g of GROUP_ORDER) out.push(...(byGroup.get(g) ?? []));
     return out;
-  }, [allItems, query]);
+  }, [allItems, query, recentKeys]);
 
   // 결과 변경 시 활성 인덱스 보정
   useEffect(() => {
@@ -204,6 +241,8 @@ export default function GlobalSearch() {
   }, [results.length]);
 
   function go(item: SearchItem) {
+    // "최근" 그룹에서 선택해도 원본 key 그대로 저장 (group 은 표시용 복제)
+    saveRecentKey(item.key);
     setOpen(false);
     router.push(item.href);
   }
