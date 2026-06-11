@@ -13,6 +13,7 @@ import { profilesApi } from "@/lib/bkend";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { useAuthStore } from "@/features/auth/auth-store";
 import PageHeader from "@/components/ui/page-header";
+import PageContainer from "@/components/ui/page-container";
 import { Separator } from "@/components/ui/separator";
 import SkeletonWidget from "@/components/ui/skeleton-widget";
 import { buildNetwork } from "@/features/network/build-network";
@@ -83,8 +84,8 @@ function NetworkPageContent() {
   if (!user) return null;
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-      <section className="mx-auto max-w-7xl px-4">
+    <PageContainer width="wide">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
         {/* ── 페이지 헤더 ── */}
         <PageHeader
           icon={NetworkIcon}
@@ -244,8 +245,8 @@ function NetworkPageContent() {
           edges={graph?.edges}
           currentUserId={currentUserId}
         />
-      </section>
-    </div>
+      </div>
+    </PageContainer>
   );
 }
 

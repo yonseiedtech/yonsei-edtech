@@ -15,6 +15,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import PageContainer from "@/components/ui/page-container";
 import {
   ArrowLeft,
   Calendar,
@@ -205,7 +206,7 @@ export default function SessionNotePage() {
   }
 
   return (
-    <div className="container mx-auto max-w-4xl space-y-5 py-6">
+    <PageContainer width="narrow">
       <div className="flex items-start gap-3 border-b pb-3">
         <div className="rounded-md bg-primary/10 p-2 text-primary">
           <NotebookPen className="h-5 w-5" />
@@ -542,6 +543,6 @@ export default function SessionNotePage() {
           저장
         </Button>
       </div>
-    </div>
+    </PageContainer>
   );
 }

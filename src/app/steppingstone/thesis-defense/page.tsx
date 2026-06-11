@@ -6,12 +6,13 @@ import BackButton from "@/components/ui/back-button";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/features/auth/auth-store";
 import DefensePracticeListView from "@/features/defense/DefensePracticeListView";
+import PageContainer from "@/components/ui/page-container";
 
 export default function PublicThesisDefensePage() {
   const { user, isLoading } = useAuthStore();
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
+    <PageContainer width="default">
       <BackButton href="/steppingstone" label="인지디딤판" className="mb-6" />
 
       <header className="mb-8 flex items-start gap-4">
@@ -52,6 +53,6 @@ export default function PublicThesisDefensePage() {
           runnerHrefPrefix="/steppingstone/thesis-defense"
         />
       )}
-    </div>
+    </PageContainer>
   );
 }

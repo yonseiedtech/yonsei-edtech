@@ -7,6 +7,7 @@ import { useGreeting, type GreetingPerson } from "@/features/greeting/useGreetin
 import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/ui/page-header";
 import { Separator } from "@/components/ui/separator";
+import PageContainer from "@/components/ui/page-container";
 
 function GreetingCard({ person, accent }: { person: GreetingPerson; accent: "advisor" | "president" }) {
   if (!person.name && !person.content) return null;
@@ -55,13 +56,14 @@ export default function GreetingPage() {
 
   if (isLoading) {
     return (
-      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-        <section className="mx-auto max-w-6xl px-4">
+      <PageContainer width="default">
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <section>
           <Skeleton className="h-8 w-40" />
           <Skeleton className="mt-3 h-4 w-72" />
           <Skeleton className="mt-6 h-px w-full" />
         </section>
-        <section className="mx-auto mt-10 max-w-6xl space-y-8 px-4" aria-busy="true" aria-label="인사말 불러오는 중">
+        <section className="mt-10 space-y-8" aria-busy="true" aria-label="인사말 불러오는 중">
           {Array.from({ length: 2 }).map((_, i) => (
             <div key={i} className="flex flex-col items-center gap-6 rounded-2xl border bg-card p-5 shadow-sm sm:gap-10 sm:p-8 md:flex-row md:items-start md:p-12">
               <Skeleton className="h-56 w-44 shrink-0 rounded-xl md:h-64 md:w-52" />
@@ -77,13 +79,15 @@ export default function GreetingPage() {
             </div>
           ))}
         </section>
-      </div>
+        </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-      <section className="mx-auto max-w-6xl px-4">
+    <PageContainer width="default">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <section>
         <PageHeader
           icon={MessageSquareQuote}
           title="인사말"
@@ -96,10 +100,11 @@ export default function GreetingPage() {
         <Separator className="mt-6" />
       </section>
 
-      <section className="mx-auto mt-10 max-w-6xl space-y-8 px-4">
+      <section className="mt-10 space-y-8">
         {showAdvisor && <GreetingCard person={advisor} accent="advisor" />}
         <GreetingCard person={president} accent="president" />
       </section>
-    </div>
+      </div>
+    </PageContainer>
   );
 }

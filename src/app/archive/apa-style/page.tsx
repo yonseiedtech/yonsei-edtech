@@ -13,6 +13,7 @@ import PageHeader from "@/components/ui/page-header";
 import { Separator } from "@/components/ui/separator";
 import InlineNotification from "@/components/ui/inline-notification";
 import ArchiveStickyToc, { type ArchiveTocSection } from "@/components/archive/ArchiveStickyToc";
+import PageContainer from "@/components/ui/page-container";
 
 const APA_TOC_SECTIONS: ArchiveTocSection[] = [
   { id: "basic-structure", label: "1. 기본 구조" },
@@ -48,8 +49,8 @@ function SectionTitle({ no, children }: { no: number; children: React.ReactNode 
 
 export default function ApaStylePage() {
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-      <div className="mx-auto max-w-5xl px-4">
+    <PageContainer width="default">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
         <Link
           href="/archive"
           className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -216,6 +217,6 @@ export default function ApaStylePage() {
           <ArchiveStickyToc sections={APA_TOC_SECTIONS} />
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

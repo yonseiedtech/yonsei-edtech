@@ -9,6 +9,7 @@ import { profilesApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { Skeleton } from "@/components/ui/skeleton";
+import PageContainer from "@/components/ui/page-container";
 import type { User } from "@/types";
 
 const SITE_ORIGIN =
@@ -81,7 +82,7 @@ function CalendarSyncContent() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
+    <PageContainer width="narrow">
       {/* 헤더 */}
       <div className="mb-6 flex items-center gap-3">
         <Link
@@ -267,7 +268,7 @@ function CalendarSyncContent() {
           </div>
         </section>
       </div>
-    </div>
+    </PageContainer>
   );
 }
 

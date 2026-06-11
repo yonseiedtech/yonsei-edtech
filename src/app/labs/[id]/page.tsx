@@ -14,6 +14,7 @@ import AuthGuard from "@/features/auth/AuthGuard";
 import { LAB_EMOJIS, type LabEmoji, type LabStatus } from "@/types";
 import { ExternalLink, Trash2, FlaskConical } from "lucide-react";
 import BackButton from "@/components/ui/back-button";
+import PageContainer from "@/components/ui/page-container";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
@@ -94,7 +95,7 @@ function LabDetailContent({ id }: { id: string }) {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-16">
+    <PageContainer width="narrow">
       <BackButton href="/labs" label="목록으로" className="mb-4" />
 
       <header className="mb-5 flex flex-wrap items-start justify-between gap-3">

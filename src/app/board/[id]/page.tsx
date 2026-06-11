@@ -29,6 +29,7 @@ import { formatDate } from "@/lib/utils";
 import { Trash2, Edit, LogIn } from "lucide-react";
 import BackButton from "@/components/ui/back-button";
 import { toast } from "sonner";
+import PageContainer from "@/components/ui/page-container";
 import ShareButton from "@/components/ShareButton";
 import { PostArticleJsonLd } from "@/components/seo/JsonLd";
 import InterviewPlayer from "@/features/board/InterviewPlayer";
@@ -113,21 +114,19 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
 
   if (isLoading) {
     return (
-      <div className="py-16">
-        <div className="mx-auto max-w-6xl px-4">
-          <Skeleton className="mb-6 h-5 w-20" />
-          <div className="rounded-2xl border bg-card p-8">
-            <Skeleton className="h-6 w-24" />
-            <Skeleton className="mt-3 h-8 w-3/4" />
-            <Skeleton className="mt-3 h-4 w-48" />
-            <div className="mt-6 space-y-2">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-2/3" />
-            </div>
+      <PageContainer width="default">
+        <Skeleton className="mb-6 h-5 w-20" />
+        <div className="rounded-2xl border bg-card p-8">
+          <Skeleton className="h-6 w-24" />
+          <Skeleton className="mt-3 h-8 w-3/4" />
+          <Skeleton className="mt-3 h-4 w-48" />
+          <div className="mt-6 space-y-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-2/3" />
           </div>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
@@ -178,9 +177,8 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
   }
 
   return (
-    <div className="py-16">
+    <PageContainer width="default">
       <PostArticleJsonLd post={post} />
-      <div className="mx-auto max-w-6xl px-4">
         <BackButton
           href={({
             notice: "/notices",
@@ -417,8 +415,7 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
-    </div>
+    </PageContainer>
   );
 }
 

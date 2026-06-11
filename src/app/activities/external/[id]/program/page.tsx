@@ -10,6 +10,7 @@ import { activitiesApi } from "@/lib/bkend";
 import ConferenceProgramView from "@/features/conference/ConferenceProgramView";
 import { Button } from "@/components/ui/button";
 import type { Activity } from "@/types";
+import PageContainer from "@/components/ui/page-container";
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -53,7 +54,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4 px-4 py-6">
+    <PageContainer width="default">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Link
           href={`/activities/external/${id}`}
@@ -75,6 +76,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         activityTitle={activity?.title ?? ""}
         user={user ? { id: user.id, name: user.name } : null}
       />
-    </div>
+    </PageContainer>
   );
 }

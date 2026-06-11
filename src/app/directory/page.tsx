@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/ui/page-header";
+import PageContainer from "@/components/ui/page-container";
 import EmptyState from "@/components/ui/empty-state";
 import { Shield, Lock, Mail, Download, Search, ArrowUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";

@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/ui/page-header";
+import PageContainer from "@/components/ui/page-container";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import {
@@ -250,7 +251,7 @@ export default function ArchiveTypeListPage() {
   const Icon = meta.icon;
 
   return (
-    <div className="container mx-auto max-w-5xl py-8">
+    <PageContainer width="default">
       <Link href="/archive">
         <Button variant="ghost" size="sm" className="mb-3">
           <ArrowLeft className="mr-1 h-4 w-4" />
@@ -410,7 +411,7 @@ export default function ArchiveTypeListPage() {
           ))
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 }
 

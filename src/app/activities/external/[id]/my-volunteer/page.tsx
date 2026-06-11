@@ -10,6 +10,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import PageContainer from "@/components/ui/page-container";
 import {
   ArrowLeft,
   Calendar,
@@ -103,17 +104,19 @@ export default function MyVolunteerPage() {
 
   if (!assignment) {
     return (
-      <div className="container mx-auto max-w-2xl space-y-4 py-6">
-        <Header activity={activity} />
-        <EmptyState
-          icon={HandHeart}
-          title="아직 봉사 역할이 배정되지 않았습니다"
-          description="운영진이 역할·시간을 부여하면 이 페이지에 표시됩니다. 잠시 기다려 주세요."
-          actions={[
-            { label: "활동으로 돌아가기", href: `/activities/external/${activityId}` },
-          ]}
-        />
-      </div>
+      <PageContainer width="narrow">
+        <div className="space-y-4">
+          <Header activity={activity} />
+          <EmptyState
+            icon={HandHeart}
+            title="아직 봉사 역할이 배정되지 않았습니다"
+            description="운영진이 역할·시간을 부여하면 이 페이지에 표시됩니다. 잠시 기다려 주세요."
+            actions={[
+              { label: "활동으로 돌아가기", href: `/activities/external/${activityId}` },
+            ]}
+          />
+        </div>
+      </PageContainer>
     );
   }
 
@@ -123,7 +126,8 @@ export default function MyVolunteerPage() {
       : VOLUNTEER_ROLE_LABELS[assignment.role];
 
   return (
-    <div className="container mx-auto max-w-2xl space-y-4 py-6">
+    <PageContainer width="narrow">
+      <div className="space-y-4">
       <Header activity={activity} />
 
       {/* 메인 역할 카드 */}
@@ -242,7 +246,8 @@ export default function MyVolunteerPage() {
       <p className="rounded-md bg-muted/40 px-3 py-2 text-[11px] text-muted-foreground">
         💡 다음 단계: 세션 시작·종료·혼잡도 입력 및 특이사항 보고 기능이 곧 추가될 예정입니다.
       </p>
-    </div>
+      </div>
+    </PageContainer>
   );
 }
 

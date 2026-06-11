@@ -12,6 +12,7 @@ import {
   Lock,
   Zap,
 } from "lucide-react";
+import PageContainer from "@/components/ui/page-container";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -275,7 +276,7 @@ export default function AgentsPage() {
   /* 비로그인 */
   if (!user) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-16">
+      <PageContainer width="narrow">
         <EmptyState
           icon={Bot}
           title="에이전트 워크플로우"
@@ -283,7 +284,7 @@ export default function AgentsPage() {
           actionLabel="로그인"
           actionHref="/login"
         />
-      </div>
+      </PageContainer>
     );
   }
 
@@ -293,14 +294,14 @@ export default function AgentsPage() {
   /* 관리자 미만 접근 차단 */
   if (userRoleLevel < ADMIN_LEVEL) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-16">
+      <PageContainer width="narrow">
         <EmptyState
           icon={Lock}
           title="관리자 전용 영역"
           description="에이전트 워크플로우는 학회 운영 자동화 도구로, 관리자(admin) 이상만 사용할 수 있습니다."
           actions={[{ label: "홈으로", href: "/", variant: "outline" }]}
         />
-      </div>
+      </PageContainer>
     );
   }
 
@@ -324,7 +325,7 @@ export default function AgentsPage() {
   const failedJobs = jobs.filter((j) => j.status === "failed");
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <PageContainer width="default">
       {/* 헤더 */}
       <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 mb-8">
         <ConsolePageHeader
@@ -491,6 +492,6 @@ export default function AgentsPage() {
         open={!!activeAgent}
         onClose={() => setActiveAgent(null)}
       />
-    </div>
+    </PageContainer>
   );
 }

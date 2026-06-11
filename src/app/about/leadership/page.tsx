@@ -20,6 +20,7 @@ import { Mail, Globe, BookOpen, Users, Search } from "lucide-react";
 import PageHeader from "@/components/ui/page-header";
 import { Separator } from "@/components/ui/separator";
 import EmptyState from "@/components/ui/empty-state";
+import PageContainer from "@/components/ui/page-container";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import type { User } from "@/types";
@@ -208,8 +209,9 @@ function LeadershipContent() {
   }, [filteredByTab, generationFilter, search]);
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-      <section className="mx-auto max-w-6xl px-4">
+    <PageContainer width="default">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <section>
         <PageHeader
           icon={Users}
           title="주요 구성원"
@@ -217,7 +219,7 @@ function LeadershipContent() {
         />
         <Separator className="mt-6" />
       </section>
-      <section className="mx-auto mt-8 max-w-6xl px-4">
+      <section className="mt-8">
         <nav
           className="flex gap-1 overflow-x-auto border-b"
           aria-label="주요 구성원 분류"
@@ -322,7 +324,8 @@ function LeadershipContent() {
           )}
         </div>
       </section>
-    </div>
+      </div>
+    </PageContainer>
   );
 }
 
@@ -330,17 +333,19 @@ export default function LeadershipPage() {
   return (
     <Suspense
       fallback={
-        <div className="py-8 sm:py-14" aria-busy="true" aria-label="구성원 정보 불러오는 중">
-          <div className="mx-auto max-w-5xl space-y-3 px-4">
-            <Skeleton className="h-8 w-1/3" />
-            <Skeleton className="h-4 w-1/2" />
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-28 w-full rounded-xl" />
-              ))}
+        <PageContainer width="default">
+          <div aria-busy="true" aria-label="구성원 정보 불러오는 중">
+            <div className="space-y-3">
+              <Skeleton className="h-8 w-1/3" />
+              <Skeleton className="h-4 w-1/2" />
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton key={i} className="h-28 w-full rounded-xl" />
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        </PageContainer>
       }
     >
       <LeadershipContent />

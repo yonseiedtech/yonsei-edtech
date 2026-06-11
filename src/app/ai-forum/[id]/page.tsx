@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import PageContainer from "@/components/ui/page-container";
 import { AlertTriangle, BookOpen, Bot, CheckCircle2, ExternalLink, MessageSquare, Quote } from "lucide-react";
 import { BackButton } from "@/components/ui/back-button";
 import {
@@ -90,7 +91,7 @@ export default async function AIForumDetailPage({ params }: Props) {
   });
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
+    <PageContainer width="narrow">
       <BackButton href="/ai-forum" label="AI 포럼 목록" className="mb-6" />
 
       <header className="mb-8">
@@ -315,6 +316,6 @@ export default async function AIForumDetailPage({ params }: Props) {
         AI 발언 내용은 운영진의 사전 승인을 거친 주제에 한해 다수 LLM으로 생성된 자동 결과입니다.
         본인 연구·발표에 인용하실 경우 반드시 1차 자료를 별도로 검증해주세요.
       </p>
-    </div>
+    </PageContainer>
   );
 }

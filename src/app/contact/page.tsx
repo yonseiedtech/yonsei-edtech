@@ -8,6 +8,7 @@ import ActionableBanner from "@/components/ui/actionable-banner";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useContactInfo } from "@/features/site-settings/useSiteContent";
+import PageContainer from "@/components/ui/page-container";
 
 /* ─────────────────────────────────────────────────────────
    연락처 정보 항목 타입
@@ -61,8 +62,8 @@ export default function ContactPage() {
   const { value: info, isLoading } = useContactInfo();
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-      <div className="mx-auto max-w-5xl px-4">
+    <PageContainer width="default">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
 
         {/* ── 페이지 헤더 ── */}
         <PageHeader
@@ -151,8 +152,7 @@ export default function ContactPage() {
             <ContactForm />
           </main>
         </div>
-
       </div>
-    </div>
+    </PageContainer>
   );
 }

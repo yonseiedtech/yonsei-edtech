@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Calendar } from "lucide-react";
 import { loadSeries } from "@/features/card-news/loader";
 import { CardArtFit } from "@/features/card-news/CardArtFit";
+import PageContainer from "@/components/ui/page-container";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,7 @@ export default async function CardNewsDetailPage({
   if (!series) notFound();
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10 sm:py-14">
+    <PageContainer width="narrow">
       <Link
         href="/card-news"
         className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
@@ -76,6 +77,6 @@ export default async function CardNewsDetailPage({
       <p className="mt-10 rounded-lg border border-dashed bg-muted/10 p-3 text-[11px] leading-relaxed text-muted-foreground">
         본 카드뉴스는 연세교육공학회 운영진이 제작한 학회 공식 콘텐츠입니다. 외부 공유 시 출처를 명시해 주세요.
       </p>
-    </main>
+    </PageContainer>
   );
 }

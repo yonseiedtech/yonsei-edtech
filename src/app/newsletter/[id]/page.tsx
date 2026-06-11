@@ -15,6 +15,7 @@ import { ArrowLeft, BookOpen, Download, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import PageContainer from "@/components/ui/page-container";
 
 async function downloadIssuePdf(issue: NewsletterIssue) {
   // SSR 안전: react-pdf와 PDF 컴포넌트는 클라이언트에서만 dynamic import
@@ -45,40 +46,40 @@ export default function NewsletterDetailPage({
 
   if (isLoading) {
     return (
-      <div className="py-16">
-        <div className="mx-auto max-w-5xl px-4" aria-busy="true" aria-label="학회보 불러오는 중">
-          <div className="mb-6 flex items-center justify-between">
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-7 w-28 rounded-lg" />
-          </div>
-          <div className="rounded-2xl border bg-card p-8 shadow-sm">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="mt-3 h-8 w-2/3" />
-            <Skeleton className="mt-2 h-4 w-1/2" />
-            <div className="mt-8 space-y-3">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-11/12" />
-              <Skeleton className="h-4 w-10/12" />
-              <Skeleton className="h-4 w-9/12" />
-            </div>
+      <PageContainer width="default" aria-busy="true" aria-label="학회보 불러오는 중">
+        <div className="mb-6 flex items-center justify-between">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-7 w-28 rounded-lg" />
+        </div>
+        <div className="rounded-2xl border bg-card p-8 shadow-sm">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="mt-3 h-8 w-2/3" />
+          <Skeleton className="mt-2 h-4 w-1/2" />
+          <div className="mt-8 space-y-3">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-11/12" />
+            <Skeleton className="h-4 w-10/12" />
+            <Skeleton className="h-4 w-9/12" />
           </div>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
   if (!issue) {
     return (
-      <div className="py-16 text-center">
-        <p className="text-muted-foreground">학회보를 찾을 수 없습니다.</p>
-        <Link
-          href="/newsletter"
-          className="mt-4 inline-flex items-center gap-1 text-sm text-primary hover:underline"
-        >
-          <ArrowLeft size={16} />
-          목록으로 돌아가기
-        </Link>
-      </div>
+      <PageContainer width="default">
+        <div className="text-center">
+          <p className="text-muted-foreground">학회보를 찾을 수 없습니다.</p>
+          <Link
+            href="/newsletter"
+            className="mt-4 inline-flex items-center gap-1 text-sm text-primary hover:underline"
+          >
+            <ArrowLeft size={16} />
+            목록으로 돌아가기
+          </Link>
+        </div>
+      </PageContainer>
     );
   }
 

@@ -15,6 +15,7 @@ import { useMembers } from "@/features/member/useMembers";
 import { Users, Search, X } from "lucide-react";
 import PageHeader from "@/components/ui/page-header";
 import EmptyState from "@/components/ui/empty-state";
+import PageContainer from "@/components/ui/page-container";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
@@ -135,8 +136,8 @@ function MembersContent() {
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-      <div className="mx-auto max-w-6xl px-4">
+    <PageContainer width="default">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
         {/* ── 페이지 헤더 ── */}
         <PageHeader
           icon={Users}
@@ -279,7 +280,7 @@ function MembersContent() {
           )}
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }
 
@@ -313,21 +314,19 @@ export default function MembersPage() {
   return (
     <Suspense
       fallback={
-        <div className="py-8 sm:py-14" aria-busy="true" aria-label="회원 정보 불러오는 중">
-          <div className="mx-auto max-w-6xl px-4">
-            <div className="flex items-center gap-3">
-              <Skeleton className="h-12 w-12 rounded-xl" />
-              <div className="space-y-2">
-                <Skeleton className="h-8 w-40" />
-                <Skeleton className="h-4 w-64" />
-              </div>
-            </div>
-            <Skeleton className="mt-6 h-px w-full" />
-            <div className="mt-6">
-              <MemberGridSkeleton />
+        <PageContainer width="default" aria-busy="true" aria-label="회원 정보 불러오는 중">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-12 w-12 rounded-xl" />
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-40" />
+              <Skeleton className="h-4 w-64" />
             </div>
           </div>
-        </div>
+          <Skeleton className="mt-6 h-px w-full" />
+          <div className="mt-6">
+            <MemberGridSkeleton />
+          </div>
+        </PageContainer>
       }
     >
       <MembersContent />

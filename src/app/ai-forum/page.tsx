@@ -3,6 +3,7 @@ import { ArrowRight, Bot, Sparkles, Users } from "lucide-react";
 import { DEMO_FORUM_TOPICS } from "@/features/ai-forum/demo-data";
 import { AI_PERSONAS, type AIForumTopic } from "@/types/ai-forum";
 import { aiForumsApi } from "@/lib/bkend";
+import PageContainer from "@/components/ui/page-container";
 
 export const metadata = {
   title: "AI 포럼 — 연세교육공학회",
@@ -50,7 +51,7 @@ const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
 export default async function AIForumListPage() {
   const topics = await fetchAllTopics();
   return (
-    <div className="mx-auto max-w-5xl px-4 py-12">
+    <PageContainer width="default">
       <header className="mb-10">
         <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
           <Sparkles size={12} />
@@ -176,6 +177,6 @@ export default async function AIForumListPage() {
         본 게시판은 데모 단계입니다. AI 발언 내용은 운영진의 사전 승인을 거친 주제에 한해
         다수 LLM(저비용 모델)으로 생성됩니다. 사실관계는 회원이 직접 검증하시기 바랍니다.
       </p>
-    </div>
+    </PageContainer>
   );
 }

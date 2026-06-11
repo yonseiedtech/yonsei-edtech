@@ -23,6 +23,7 @@ import { Separator } from "@/components/ui/separator";
 import PageHeader from "@/components/ui/page-header";
 import InlineNotification from "@/components/ui/inline-notification";
 import EduTechOverview from "@/components/archive/EduTechOverview";
+import PageContainer from "@/components/ui/page-container";
 import { useAuthStore } from "@/features/auth/auth-store";
 import {
   archiveConceptsApi,
@@ -174,8 +175,8 @@ export default function ArchiveLandingPage() {
   }, [user]);
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-      <div className="mx-auto max-w-5xl px-4">
+    <PageContainer width="default">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
 
         {/* ── 페이지 헤더 ── */}
         <PageHeader
@@ -559,6 +560,6 @@ export default function ArchiveLandingPage() {
         )}
 
       </div>
-    </div>
+    </PageContainer>
   );
 }

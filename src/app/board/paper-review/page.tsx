@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { BookOpenCheck, ArrowRight, BookMarked } from "lucide-react";
 import CategoryBoardPage from "@/features/board/CategoryBoardPage";
+import PageContainer from "@/components/ui/page-container";
 
 export default function PaperReviewBoardPage() {
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <PageContainer width="narrow">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
       {/* ── 논문 읽기 연동 안내 배너 ── */}
-      <div className="mx-auto max-w-4xl px-4 pt-8">
+      <div>
         <Link
           href="/mypage/research"
           aria-label="마이페이지 논문 읽기로 이동"
@@ -51,6 +53,7 @@ export default function PaperReviewBoardPage() {
           />
         }
       />
-    </div>
+      </div>
+    </PageContainer>
   );
 }

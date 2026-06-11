@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { activitiesApi } from "@/lib/bkend";
 import ConferenceRoundupView from "@/features/conference/ConferenceRoundupView";
 import type { Activity } from "@/types";
+import PageContainer from "@/components/ui/page-container";
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -47,8 +48,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4 px-4 py-6">
+    <PageContainer width="default">
       <ConferenceRoundupView activityId={id} activityTitle={activity?.title ?? ""} />
-    </div>
+    </PageContainer>
   );
 }

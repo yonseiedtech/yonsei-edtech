@@ -38,6 +38,7 @@ import {
   type CourseTodoType,
 } from "@/types";
 import PageHeader from "@/components/ui/page-header";
+import PageContainer from "@/components/ui/page-container";
 import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
@@ -645,7 +646,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
 
   if (loadingCourse) {
     return (
-      <div className="py-16" aria-busy="true" aria-label="과목 정보 불러오는 중">
+      <PageContainer width="narrow" aria-busy="true" aria-label="과목 정보 불러오는 중">
         <section className="mx-auto max-w-4xl px-4">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="mt-4 h-9 w-2/3" />
@@ -656,7 +657,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
             <Skeleton key={i} className="h-20 w-full rounded-xl" />
           ))}
         </section>
-      </div>
+      </PageContainer>
     );
   }
   if (!course) {
@@ -712,7 +713,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
   );
 
   return (
-    <div className="py-16">
+    <PageContainer width="narrow">
       <section className="mx-auto max-w-4xl px-4">
         <Link
           href="/courses"
@@ -1616,7 +1617,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
           actorUserId={user.id}
         />
       )}
-    </div>
+    </PageContainer>
   );
 }
 

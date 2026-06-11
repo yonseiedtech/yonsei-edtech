@@ -26,6 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import ArchiveSearchBar from "@/components/archive/ArchiveSearchBar";
 import { matchesArchiveSearch } from "@/lib/archive-search";
+import PageContainer from "@/components/ui/page-container";
 
 const FOUNDATION_TERM_SEARCH_FIELDS: (keyof FoundationTerm)[] = [
   "term",
@@ -158,8 +159,8 @@ export default function FoundationTermsLandingPage() {
   }, [filteredTerms]);
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-      <div className="mx-auto max-w-5xl px-4">
+    <PageContainer width="default">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
         <Link href="/archive">
           <Button variant="ghost" size="sm" className="mb-3">
             <ArrowLeft className="mr-1 h-4 w-4" />
@@ -327,6 +328,6 @@ export default function FoundationTermsLandingPage() {
           </p>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

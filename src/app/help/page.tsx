@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import PageHeader from "@/components/ui/page-header";
+import PageContainer from "@/components/ui/page-container";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import EmptyState from "@/components/ui/empty-state";
@@ -194,7 +195,8 @@ export default function HelpPage() {
   }, [filtered]);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 sm:py-14 animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <PageContainer width="narrow">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
       <PageHeader
         icon={HelpCircle}
         title="도움말"
@@ -348,5 +350,6 @@ export default function HelpPage() {
         </Link>
       </section>
     </div>
+    </PageContainer>
   );
 }

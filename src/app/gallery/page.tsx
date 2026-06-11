@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import PageHeader from "@/components/ui/page-header";
 import EmptyState from "@/components/ui/empty-state";
+import PageContainer from "@/components/ui/page-container";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
@@ -89,8 +90,8 @@ export default function GalleryPage() {
   ) : null;
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-      <div className="mx-auto max-w-6xl px-4">
+    <PageContainer width="default">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
         {/* ── 페이지 헤더 ── */}
         <PageHeader
           icon={Camera}
@@ -184,7 +185,7 @@ export default function GalleryPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageContainer>
   );
 }
 
@@ -396,8 +397,8 @@ function AlbumDetail({
   ) : null;
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-      <div className="mx-auto max-w-6xl px-4">
+    <PageContainer width="default">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
         {/* ── 뒤로가기 ── */}
         <button
           onClick={onBack}
@@ -468,7 +469,7 @@ function AlbumDetail({
           onChange={setLightboxIndex}
         />
       )}
-    </div>
+    </PageContainer>
   );
 }
 

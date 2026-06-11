@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import PageHeader from "@/components/ui/page-header";
 import EmptyState from "@/components/ui/empty-state";
+import PageContainer from "@/components/ui/page-container";
 import type { LabStatus, LabKind } from "@/types";
 
 // ── 상태 메타 ────────────────────────────────────────────────────────────────
@@ -218,8 +219,8 @@ function LabsContent() {
   ) : null;
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-      <div className="mx-auto max-w-6xl px-4">
+    <PageContainer width="default">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
 
         {/* ── 페이지 헤더 ── */}
         <PageHeader
@@ -352,7 +353,7 @@ function LabsContent() {
           )}
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }
 

@@ -3,6 +3,7 @@
 import { use, useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import PageContainer from "@/components/ui/page-container";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -503,8 +504,7 @@ function WorkbookPage({ activityId }: { activityId: string }) {
   const isLoading = tasksLoading || subsLoading;
 
   return (
-    <div className="py-16">
-      <div className="mx-auto max-w-3xl px-4">
+    <PageContainer width="narrow">
         <Link
           href={`/activities/external/${activityId}`}
           className="mb-6 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -572,8 +572,7 @@ function WorkbookPage({ activityId }: { activityId: string }) {
             onSaved={invalidateReview}
           />
         )}
-      </div>
-    </div>
+    </PageContainer>
   );
 }
 

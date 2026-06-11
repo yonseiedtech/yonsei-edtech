@@ -52,6 +52,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import ArchiveStickyToc, { type ArchiveTocSection } from "@/components/archive/ArchiveStickyToc";
+import PageContainer from "@/components/ui/page-container";
 
 interface ComparisonRow {
   key: string;
@@ -375,8 +376,8 @@ export default function StatisticalMethodDetailPage() {
   ];
 
   return (
-    <div className="py-10">
-      <div className="mx-auto max-w-6xl px-4">
+    <PageContainer width="default">
+      <div>
         <Link
           href="/archive/statistical-methods"
           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
@@ -968,6 +969,6 @@ export default function StatisticalMethodDetailPage() {
           <ArchiveStickyToc sections={tocSections} />
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

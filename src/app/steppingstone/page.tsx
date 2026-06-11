@@ -8,6 +8,7 @@ import { GraduationCap, BookOpen, ScrollText, Award, ArrowRight, Compass } from 
 import { guideTracksApi } from "@/lib/bkend";
 import { GUIDE_TRACK_LABELS, type GuideTrack, type GuideTrackKey } from "@/types";
 import SemesterRoadmap from "@/features/steppingstone/SemesterRoadmap";
+import PageContainer from "@/components/ui/page-container";
 
 interface StaticTrack {
   key: GuideTrackKey;
@@ -69,7 +70,7 @@ export default function SteppingstoneHubPage() {
   const publishedKeys = new Set(tracks.map((t) => t.key));
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 sm:py-16">
+    <PageContainer width="default">
       <header className="mb-12 sm:mb-14">
         <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
           <span className="relative flex h-2 w-2">
@@ -172,6 +173,6 @@ export default function SteppingstoneHubPage() {
         </Link>
         으로 알려주세요. 운영진이 확인 후 즉시 반영합니다.
       </p>
-    </div>
+    </PageContainer>
   );
 }

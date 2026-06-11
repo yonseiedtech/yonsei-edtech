@@ -19,6 +19,7 @@ import {
 import { auth } from "@/lib/firebase";
 import { useAuthStore } from "@/features/auth/auth-store";
 import AuthGuard from "@/features/auth/AuthGuard";
+import PageContainer from "@/components/ui/page-container";
 
 const DATA_CATEGORIES = [
   { icon: User, label: "프로필", description: "이름·이메일·학번·역할·연구 관심사 등" },
@@ -71,7 +72,7 @@ function DataExportContent() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
+    <PageContainer width="narrow">
       {/* 헤더 */}
       <div className="mb-6 flex items-center gap-3">
         <Link
@@ -165,7 +166,7 @@ function DataExportContent() {
           </p>
         </section>
       </div>
-    </div>
+    </PageContainer>
   );
 }
 

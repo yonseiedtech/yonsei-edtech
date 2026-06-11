@@ -15,6 +15,7 @@ import {
 import PageHeader from "@/components/ui/page-header";
 import InlineNotification from "@/components/ui/inline-notification";
 import { Separator } from "@/components/ui/separator";
+import PageContainer from "@/components/ui/page-container";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAbout } from "@/features/site-settings/useSiteContent";
 import { cn } from "@/lib/utils";
@@ -101,8 +102,8 @@ export default function AboutPage() {
   const { value: about, isLoading } = useAbout();
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-      <div className="mx-auto max-w-5xl px-4">
+    <PageContainer width="default">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
 
         {/* ── 페이지 헤더 ── */}
         <PageHeader
@@ -207,6 +208,6 @@ export default function AboutPage() {
         </section>
 
       </div>
-    </div>
+    </PageContainer>
   );
 }

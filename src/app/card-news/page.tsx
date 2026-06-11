@@ -3,6 +3,7 @@ import { Images, Calendar } from "lucide-react";
 import { loadAllSeries } from "@/features/card-news/loader";
 import PageHeader from "@/components/ui/page-header";
 import EmptyState from "@/components/ui/empty-state";
+import PageContainer from "@/components/ui/page-container";
 
 export const metadata = {
   title: "카드뉴스 — 연세교육공학회",
@@ -16,7 +17,7 @@ export default async function CardNewsIndexPage() {
   const series = await loadAllSeries();
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-12 sm:py-16">
+    <PageContainer width="default">
       <PageHeader
         icon={Images}
         title="카드뉴스"
@@ -88,6 +89,6 @@ export default async function CardNewsIndexPage() {
           })}
         </ul>
       )}
-    </main>
+    </PageContainer>
   );
 }

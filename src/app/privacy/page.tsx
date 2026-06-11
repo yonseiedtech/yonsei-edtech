@@ -4,6 +4,7 @@ import { Shield } from "lucide-react";
 import PageHeader from "@/components/ui/page-header";
 import InlineNotification from "@/components/ui/inline-notification";
 import { Separator } from "@/components/ui/separator";
+import PageContainer from "@/components/ui/page-container";
 
 export const PRIVACY_VERSION = CURRENT_TERMS.privacy;
 
@@ -27,7 +28,7 @@ const TOC_ITEMS = [
 
 export default function PrivacyPage() {
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 sm:py-14">
+    <PageContainer width="default">
       {/* Page Header */}
       <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
         <PageHeader
@@ -294,6 +295,6 @@ export default function PrivacyPage() {
           </div>
         </main>
       </div>
-    </div>
+    </PageContainer>
   );
 }

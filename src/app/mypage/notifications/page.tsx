@@ -22,6 +22,7 @@ import { useAuthStore } from "@/features/auth/auth-store";
 import { isAdminOrSysadmin } from "@/lib/permissions";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { Skeleton } from "@/components/ui/skeleton";
+import PageContainer from "@/components/ui/page-container";
 import type { AppNotification, NotificationType } from "@/types";
 
 // ── 타입별 아이콘 매핑 ──
@@ -304,7 +305,7 @@ function NotificationsContent() {
   }, [hasMore]);
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
+    <PageContainer width="narrow">
       {/* 헤더 */}
       <div className="mb-5 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -529,7 +530,7 @@ function NotificationsContent() {
         </Link>
         에서 변경할 수 있습니다.
       </p>
-    </div>
+    </PageContainer>
   );
 }
 

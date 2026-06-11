@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import PageContainer from "@/components/ui/page-container";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -204,7 +205,7 @@ function SeminarHostInner({ seminarId }: { seminarId: string }) {
 
   if (seminarLoading) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-10" aria-busy="true" aria-label="세미나 호스트 대시보드 불러오는 중">
+      <PageContainer width="default" aria-busy="true" aria-label="세미나 호스트 대시보드 불러오는 중">
         <Skeleton className="h-4 w-24" />
         <Skeleton className="mt-4 h-8 w-2/3" />
         <Skeleton className="mt-2 h-4 w-1/2" />
@@ -218,24 +219,24 @@ function SeminarHostInner({ seminarId }: { seminarId: string }) {
             <Skeleton key={i} className="h-16 w-full rounded-xl" />
           ))}
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
   if (!seminar) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-16 text-center">
+      <PageContainer width="narrow" className="py-16 text-center">
         <p className="text-sm text-muted-foreground">세미나를 찾을 수 없습니다.</p>
         <Button variant="outline" onClick={() => router.back()} className="mt-4">
           돌아가기
         </Button>
-      </div>
+      </PageContainer>
     );
   }
 
   if (!allowed) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-16 text-center">
+      <PageContainer width="narrow" className="py-16 text-center">
         <Lock size={32} className="mx-auto text-muted-foreground" />
         <h1 className="mt-4 text-lg font-semibold">접근 권한이 없습니다</h1>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -247,12 +248,12 @@ function SeminarHostInner({ seminarId }: { seminarId: string }) {
         >
           세미나 페이지로
         </Link>
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
+    <PageContainer width="default">
       <Link
         href={`/seminars/${seminarId}`}
         className="mb-4 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
@@ -512,7 +513,7 @@ function SeminarHostInner({ seminarId }: { seminarId: string }) {
           )}
         </section>
       )}
-    </div>
+    </PageContainer>
   );
 }
 

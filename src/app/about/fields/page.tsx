@@ -5,6 +5,7 @@ import { useFields } from "@/features/site-settings/useSiteContent";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/ui/page-header";
 import { Separator } from "@/components/ui/separator";
+import PageContainer from "@/components/ui/page-container";
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Monitor, GraduationCap, Brain, Lightbulb, BarChart3, Users,
@@ -14,8 +15,9 @@ export default function FieldsPage() {
   const { value: fields, isLoading } = useFields();
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-      <section className="mx-auto max-w-6xl px-4">
+    <PageContainer width="default">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <section>
         <PageHeader
           icon={Compass}
           title="활동 분야"
@@ -24,7 +26,7 @@ export default function FieldsPage() {
         <Separator className="mt-6" />
       </section>
 
-      <section className="mx-auto mt-10 max-w-6xl px-4">
+      <section className="mt-10">
         {isLoading ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3" aria-busy="true" aria-label="활동 분야 불러오는 중">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -57,6 +59,7 @@ export default function FieldsPage() {
           </div>
         )}
       </section>
-    </div>
+      </div>
+    </PageContainer>
   );
 }

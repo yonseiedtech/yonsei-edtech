@@ -35,6 +35,7 @@ import { select } from "d3-selection";
 import { drag } from "d3-drag";
 import { zoom, zoomIdentity, type ZoomBehavior } from "d3-zoom";
 import PageHeader from "@/components/ui/page-header";
+import PageContainer from "@/components/ui/page-container";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -525,8 +526,8 @@ export default function ArchiveGraphPage() {
   const isEmpty = !loading && graph.nodes.length === 0;
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-12">
-      <div className="mx-auto max-w-7xl px-4">
+    <PageContainer width="wide">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
         <Link href="/archive">
           <Button variant="ghost" size="sm" className="mb-3">
             <ArrowLeft className="mr-1 h-4 w-4" />
@@ -778,6 +779,6 @@ export default function ArchiveGraphPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageContainer>
   );
 }

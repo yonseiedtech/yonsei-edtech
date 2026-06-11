@@ -20,6 +20,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import PageContainer from "@/components/ui/page-container";
 import {
   ArrowLeft,
   Award,
@@ -246,7 +247,7 @@ export default function AttendeeReviewPage() {
 
   return (
     <>
-      <div className="container mx-auto max-w-3xl space-y-5 py-6">
+      <PageContainer width="narrow">
         <div className="flex items-start gap-3 border-b pb-3">
           <div className="rounded-md bg-primary/10 p-2 text-primary">
             <MessageSquare className="h-5 w-5" />
@@ -447,7 +448,7 @@ export default function AttendeeReviewPage() {
             후기 저장하고 학술활동에 추가
           </Button>
         </div>
-      </div>
+      </PageContainer>
 
       {/* Sprint 67-Z: 저장 완료 성취 애니메이션 */}
       {showSuccess && (

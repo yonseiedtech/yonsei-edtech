@@ -31,6 +31,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import ArchiveStickyToc, { type ArchiveTocSection } from "@/components/archive/ArchiveStickyToc";
+import PageContainer from "@/components/ui/page-container";
 
 export default function ArchiveDetailPage() {
   const params = useParams<{ type: string; id: string }>();
@@ -224,25 +225,29 @@ export default function ArchiveDetailPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto max-w-4xl py-8 space-y-4">
-        <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-48 w-full" />
-        <Skeleton className="h-32 w-full" />
-      </div>
+      <PageContainer width="default">
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+      </PageContainer>
     );
   }
 
   if (!item) {
     return (
-      <div className="container mx-auto max-w-4xl py-12 text-center">
-        <p className="text-muted-foreground">항목을 찾을 수 없습니다.</p>
-        <Link href="/archive">
-          <Button variant="outline" className="mt-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            아카이브로 돌아가기
-          </Button>
-        </Link>
-      </div>
+      <PageContainer width="default">
+        <div className="py-4 text-center">
+          <p className="text-muted-foreground">항목을 찾을 수 없습니다.</p>
+          <Link href="/archive">
+            <Button variant="outline" className="mt-4">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              아카이브로 돌아가기
+            </Button>
+          </Link>
+        </div>
+      </PageContainer>
     );
   }
 
@@ -275,7 +280,7 @@ export default function ArchiveDetailPage() {
   })();
 
   return (
-    <div className="container mx-auto max-w-5xl py-8">
+    <PageContainer width="default">
       {/* Back */}
       <Link href="/archive">
         <Button variant="ghost" size="sm" className="mb-3">
@@ -575,7 +580,7 @@ export default function ArchiveDetailPage() {
         <ArchiveStickyToc sections={tocSections} />
       </div>
 
-    </div>
+    </PageContainer>
   );
 }
 

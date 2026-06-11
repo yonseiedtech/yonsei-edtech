@@ -34,6 +34,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import ArchiveStickyToc, { type ArchiveTocSection } from "@/components/archive/ArchiveStickyToc";
+import PageContainer from "@/components/ui/page-container";
 
 export default function WritingTipDetailPage() {
   const params = useParams<{ id: string }>();
@@ -186,8 +187,8 @@ export default function WritingTipDetailPage() {
   ];
 
   return (
-    <div className="py-10">
-      <div className="mx-auto max-w-6xl px-4">
+    <PageContainer width="default">
+      <div>
         <Link
           href="/archive/writing-tips"
           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
@@ -395,6 +396,6 @@ export default function WritingTipDetailPage() {
           <ArchiveStickyToc sections={tocSections} />
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

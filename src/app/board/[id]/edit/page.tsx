@@ -8,6 +8,7 @@ import { usePost } from "@/features/board/useBoard";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isStaffOrAbove } from "@/lib/permissions";
 import { toast } from "sonner";
+import PageContainer from "@/components/ui/page-container";
 
 function EditContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -39,15 +40,13 @@ function EditContent({ params }: { params: Promise<{ id: string }> }) {
   }
 
   return (
-    <div className="py-16">
-      <div className="mx-auto max-w-6xl px-4">
-        <PostForm
-          mode="edit"
-          initialData={post}
-          onSubmitSuccess={() => router.push(`/board/${id}`)}
-        />
-      </div>
-    </div>
+    <PageContainer width="default">
+      <PostForm
+        mode="edit"
+        initialData={post}
+        onSubmitSuccess={() => router.push(`/board/${id}`)}
+      />
+    </PageContainer>
   );
 }
 

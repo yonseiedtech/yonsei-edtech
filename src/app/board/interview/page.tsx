@@ -13,6 +13,7 @@ import PostList from "@/features/board/PostList";
 import { usePosts } from "@/features/board/useBoard";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
+import PageContainer from "@/components/ui/page-container";
 
 export default function InterviewBoardPage() {
   const [search, setSearch] = useState("");
@@ -32,8 +33,8 @@ export default function InterviewBoardPage() {
   ) : null;
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
-      <div className="mx-auto max-w-4xl px-4">
+    <PageContainer width="narrow">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
 
         {/* ── 페이지 헤더 ── */}
         <PageHeader
@@ -203,7 +204,7 @@ export default function InterviewBoardPage() {
           </nav>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 }
 

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import PageContainer from "@/components/ui/page-container";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -356,9 +357,8 @@ export default function AlumniThesisDetailPage() {
 
   if (initialized && !viewer) {
     return (
-      <div className="py-16">
-        <div className="mx-auto max-w-2xl px-4">
-          <div className="rounded-2xl border bg-card p-10 text-center shadow-sm">
+      <PageContainer width="narrow">
+        <div className="rounded-2xl border bg-card p-10 text-center shadow-sm">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <Lock size={26} />
             </div>
@@ -387,48 +387,46 @@ export default function AlumniThesisDetailPage() {
                 연구 분석 페이지로
               </Link>
             </div>
-          </div>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-16" aria-busy="true" aria-label="졸업 논문 불러오는 중">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="mt-4 h-8 w-3/4" />
-        <Skeleton className="mt-2 h-4 w-1/2" />
-        <div className="mt-8 space-y-3">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-11/12" />
-          <Skeleton className="h-4 w-10/12" />
-          <Skeleton className="h-4 w-9/12" />
+      <PageContainer width="narrow">
+        <div aria-busy="true" aria-label="졸업 논문 불러오는 중">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="mt-4 h-8 w-3/4" />
+          <Skeleton className="mt-2 h-4 w-1/2" />
+          <div className="mt-8 space-y-3">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-11/12" />
+            <Skeleton className="h-4 w-10/12" />
+            <Skeleton className="h-4 w-9/12" />
+          </div>
+          <div className="mt-10 grid gap-4 md:grid-cols-2">
+            <Skeleton className="h-32 w-full rounded-xl" />
+            <Skeleton className="h-32 w-full rounded-xl" />
+          </div>
         </div>
-        <div className="mt-10 grid gap-4 md:grid-cols-2">
-          <Skeleton className="h-32 w-full rounded-xl" />
-          <Skeleton className="h-32 w-full rounded-xl" />
-        </div>
-      </div>
+      </PageContainer>
     );
   }
 
   if (error || !thesis) {
     return (
-      <div className="py-16">
-        <div className="mx-auto max-w-3xl px-4">
-          <p className="text-sm text-destructive" role="alert">⚠ {error ?? "논문을 찾을 수 없습니다."}</p>
-          <div className="mt-4">
-            <BackButton variant="default" fallbackHref="/alumni/thesis" />
-          </div>
+      <PageContainer width="narrow">
+        <p className="text-sm text-destructive" role="alert">⚠ {error ?? "논문을 찾을 수 없습니다."}</p>
+        <div className="mt-4">
+          <BackButton variant="default" fallbackHref="/alumni/thesis" />
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="py-12">
-      <div className="mx-auto max-w-4xl px-4">
+    <PageContainer width="narrow">
         <BackButton href="/alumni/thesis" label="학위논문 목록" variant="default" />
 
         <div className="mt-4 rounded-2xl border bg-card p-6 sm:p-8">
@@ -933,8 +931,7 @@ export default function AlumniThesisDetailPage() {
             </Tabs>
           </div>
         )}
-      </div>
-    </div>
+    </PageContainer>
   );
 }
 

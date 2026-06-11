@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { BookOpen, ArrowRight, Presentation } from "lucide-react";
 import CategoryBoardPage from "@/features/board/CategoryBoardPage";
+import PageContainer from "@/components/ui/page-container";
 
 export default function SeminarBoardPage() {
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <PageContainer width="narrow">
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
       {/* ── 세미나 공간 연동 안내 배너 ── */}
-      <div className="mx-auto max-w-4xl px-4 pt-8">
+      <div>
         <Link
           href="/seminars"
           aria-label="세미나 공간으로 이동"
@@ -51,6 +53,7 @@ export default function SeminarBoardPage() {
           />
         }
       />
-    </div>
+      </div>
+    </PageContainer>
   );
 }

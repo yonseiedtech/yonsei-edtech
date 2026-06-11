@@ -16,6 +16,7 @@ import {
 import { ArrowLeft, Star, CheckCircle, Loader2, AlertCircle, ShieldCheck, Pencil, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import PageContainer from "@/components/ui/page-container";
 
 type Step = "verify" | "write" | "done";
 
@@ -198,15 +199,14 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
   }
 
   return (
-    <div className="py-16">
-      <div className="mx-auto max-w-md px-4">
-        <Link
-          href={`/seminars/${seminarId}`}
-          className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft size={16} />
-          세미나로 돌아가기
-        </Link>
+    <PageContainer width="narrow">
+      <Link
+        href={`/seminars/${seminarId}`}
+        className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft size={16} />
+        세미나로 돌아가기
+      </Link>
 
         {/* 헤더 */}
         <div className="mb-6 text-center">
@@ -444,8 +444,7 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
-    </div>
+      </PageContainer>
   );
 }
 
