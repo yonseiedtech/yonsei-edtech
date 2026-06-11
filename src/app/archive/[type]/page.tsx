@@ -90,6 +90,11 @@ export default function ArchiveTypeListPage() {
   const [favorites, setFavorites] = useState<ArchiveFavorite[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  // 여정 등 외부 딥링크의 ?q= 초기 검색어 (useSearchParams 의 Suspense 경계 요구 회피)
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q) setQuery(q);
+  }, []);
 
   const canManage = isAtLeast(user, "staff");
 

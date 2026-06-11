@@ -47,6 +47,8 @@ interface JourneyStage {
   goal: string;
   tools: JourneyTool[];
   tips: string[];
+  /** 이 단계에서 먼저 볼 아카이브 개념 (archive-seed 실존 name — /archive/concept?q= 딥링크) */
+  archiveTopics?: string[];
 }
 
 /** 대시보드 인사 헤더 등 외부에서 단계 메타 재사용 (체감 스프린트) */
@@ -68,6 +70,7 @@ export const JOURNEY_STAGES: JourneyStage[] = [
       "읽은 논문은 그때그때 분석 노트로 남겨야 2학기에 선행연구 정리가 빨라집니다.",
       "관심 개념은 아카이브에서 '개념→변인→측정도구' 연결을 확인해 두세요.",
     ],
+    archiveTopics: ["교육공학", "교수설계", "학습경험 디자인", "TPACK"],
   },
   {
     stage: 2,
@@ -85,6 +88,7 @@ export const JOURNEY_STAGES: JourneyStage[] = [
       "해당 분야 메타분석을 인용하면 연구 필요성과 기대 효과크기의 근거가 강해집니다.",
       "연구보고서 인터뷰 모드(분석·처방·실행연구 등 5트랙)로 한 사이클을 미리 경험해 보세요.",
     ],
+    archiveTopics: ["학습동기", "자기효능감", "메타분석", "상관분석과 회귀분석"],
   },
   {
     stage: 3,
@@ -102,6 +106,7 @@ export const JOURNEY_STAGES: JourneyStage[] = [
       "인과 주장은 통계가 아니라 설계로 확보됩니다: ①시간 선행 ②관련성 ③경쟁 가설 배제, 3요건을 계획서에서 미리 논증하세요.",
       "집단 간 사전 점수가 다를 수 있다면 ANCOVA(공변량 통제)를 분석 계획에 명시해 두세요.",
     ],
+    archiveTopics: ["준실험설계", "인과관계 추론", "내적 타당도", "공분산분석(ANCOVA)"],
   },
   {
     stage: 4,
@@ -120,6 +125,7 @@ export const JOURNEY_STAGES: JourneyStage[] = [
       "정규성 검정이 기각돼도 표본이 충분하면(n≥30) 중심극한정리로 모수 검정을 방어할 수 있습니다.",
       "탈락·결측은 '예방했다'가 아니라 실제 수치로 보고하는 것이 정석입니다.",
     ],
+    archiveTopics: ["카이제곱 검정", "중심극한정리와 정규성", "요인분석과 구성타당도", "구조방정식모형(SEM)"],
   },
   {
     stage: 5,
@@ -137,6 +143,7 @@ export const JOURNEY_STAGES: JourneyStage[] = [
       "'차이가 있다(비교)'와 '효과를 미친다(인과)'의 표현 수위를 점검하세요 — 인과 주장은 설계 근거와 함께만.",
       "작성 5원칙 최종 점검: '매우·크게' 같은 모호 표현은 수치로, 동일 개념은 한 용어로 통일, 방법·결과는 과거 시제.",
     ],
+    archiveTopics: ["연구보고서 작성 5원칙", "외적 타당도", "내적 타당도"],
   },
 ];
 
@@ -353,6 +360,22 @@ export default function ThesisJourney({ user, editable = true }: Props) {
               </Link>
             ))}
           </div>
+
+          {/* 추천 아카이브 개념 — 단계별 먼저 볼 이론·방법론 */}
+          {stage.archiveTopics && stage.archiveTopics.length > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] font-semibold text-muted-foreground">이 단계 추천 개념</span>
+              {stage.archiveTopics.map((name) => (
+                <Link
+                  key={name}
+                  href={`/archive/concept?q=${encodeURIComponent(name)}`}
+                  className="inline-flex items-center rounded-full border border-dashed border-primary/40 bg-primary/5 px-2 py-0.5 text-[11px] text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                >
+                  {name}
+                </Link>
+              ))}
+            </div>
+          )}
 
           {/* 방법론 팁 */}
           <div className="mt-3 rounded-lg bg-muted/40 p-3">
