@@ -32,11 +32,13 @@ import Link from "next/link";
 import {
   Save, FileText, CheckCircle2, ChevronLeft, ChevronRight,
   BookOpen, FlaskConical, Microscope, BarChart3, Flag,
-  Play, Timer, Lightbulb, Plus, Trash2, History, RotateCcw,
+  Play, Timer, Lightbulb, Plus, Trash2, History,
+  Diff, RotateCcw,
   Loader2, Compass, GraduationCap,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { chapterCharCount } from "./thesis-progress";
 import type {
   User,
   WritingPaper,
@@ -325,6 +327,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   const [versionsOpen, setVersionsOpen] = useState(false);
   const [versionLabel, setVersionLabel] = useState("");
   const [versionBusy, setVersionBusy] = useState(false);
+  const [compareId, setCompareId] = useState<string | null>(null);
   const { data: allVersions = [] } = useQuery({
     queryKey: ["writing_paper_versions", user.id],
     queryFn: async () => {
@@ -899,39 +902,86 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
               </p>
             ) : (
               <ul className="mt-3 divide-y">
-                {versions.map((v) => (
-                  <li key={v.id} className="flex items-center gap-2 py-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-medium">{v.label}</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {new Date(v.createdAt).toLocaleString("ko-KR", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-                        {" · "}{v.charCount.toLocaleString()}자
-                      </p>
-                    </div>
-                    {!readOnly && (
-                      <>
+                {versions.map((v) => {
+                  const comparing = compareId === v.id;
+                  return (
+                    <li key={v.id} className="py-2">
+                      <div className="flex items-center gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-xs font-medium">{v.label}</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {new Date(v.createdAt).toLocaleString("ko-KR", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                            {" · "}{v.charCount.toLocaleString()}자
+                          </p>
+                        </div>
                         <Button
-                          variant="outline"
+                          variant={comparing ? "secondary" : "ghost"}
                           size="sm"
                           className="h-7 gap-1 text-[11px]"
-                          onClick={() => handleRestoreVersion(v)}
-                          disabled={versionBusy}
+                          aria-expanded={comparing}
+                          onClick={() => setCompareId(comparing ? null : v.id)}
                         >
-                          <RotateCcw size={11} />복원
+                          <Diff size={11} />비교
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0 text-destructive"
-                          aria-label="버전 삭제"
-                          onClick={() => handleDeleteVersion(v)}
-                        >
-                          <Trash2 size={12} />
-                        </Button>
-                      </>
-                    )}
-                  </li>
-                ))}
+                        {!readOnly && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 gap-1 text-[11px]"
+                              onClick={() => handleRestoreVersion(v)}
+                              disabled={versionBusy}
+                            >
+                              <RotateCcw size={11} />복원
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-destructive"
+                              aria-label="버전 삭제"
+                              onClick={() => handleDeleteVersion(v)}
+                            >
+                              <Trash2 size={12} />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                      {comparing && (
+                        <div className="mt-2 rounded-lg bg-muted/50 px-3 py-2">
+                          <p className="mb-1.5 text-[10px] font-medium text-muted-foreground">
+                            이 버전 → 현재 편집본 장별 글자수
+                          </p>
+                          <ul className="grid grid-cols-1 gap-y-1 sm:grid-cols-2 sm:gap-x-6">
+                            {STEPS.map((st) => {
+                              const before = chapterCharCount(v, st.key);
+                              const after = chapterCharCount({ sections: form.sections }, st.key);
+                              const delta = after - before;
+                              return (
+                                <li key={st.key} className="flex items-center justify-between gap-2 text-[11px]">
+                                  <span className="text-muted-foreground">{st.label}</span>
+                                  <span className="tabular-nums">
+                                    {before.toLocaleString()} → {after.toLocaleString()}
+                                    <span
+                                      className={cn(
+                                        "ml-1",
+                                        delta > 0 ? "text-emerald-600" : delta < 0 ? "text-rose-500" : "text-muted-foreground",
+                                      )}
+                                    >
+                                      ({delta > 0 ? "+" : ""}{delta.toLocaleString()})
+                                    </span>
+                                  </span>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                          <p className="mt-1.5 text-[10px] text-muted-foreground">
+                            글자수가 줄어드는 장은 복원 시 현재 작성분이 덮어쓰여요 — 복원 전 자동 백업이 함께 저장됩니다.
+                          </p>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
