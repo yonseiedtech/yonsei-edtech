@@ -22,6 +22,8 @@ interface Props {
   /** 질문 작성자(로그인)인지 — 채택 권한 판단 */
   canAccept: boolean;
   onChanged: () => void;
+  /** 입장 게이트에서 설정한 게스트 닉네임 — 변경 시 즉시 반영 (QA P1) */
+  guestNickname?: string;
 }
 
 export default function AnswerThread({
@@ -31,6 +33,7 @@ export default function AnswerThread({
   likedSet,
   canAccept,
   onChanged,
+  guestNickname,
 }: Props) {
   const queryClient = useQueryClient();
   const { data: answers = [], isLoading } = useQuery({
@@ -45,10 +48,10 @@ export default function AnswerThread({
 
   const [body, setBody] = useState("");
   const [guestName, setGuestName] = useState("");
-  // 게스트 닉네임: 입장 시 설정한 값(localStorage)을 기본값으로 공유
+  // 게스트 닉네임: 입장 게이트 prop 우선, 없으면 localStorage — 게이트 설정/변경 즉시 반영
   useEffect(() => {
-    if (!user) setGuestName(getGuestNickname());
-  }, [user]);
+    if (!user) setGuestName(guestNickname || getGuestNickname());
+  }, [user, guestNickname]);
   const [saving, setSaving] = useState(false);
   // 답변 인라인 수정 (회원 작성자/보드 소유자/운영진)
   const [editingId, setEditingId] = useState<string | null>(null);

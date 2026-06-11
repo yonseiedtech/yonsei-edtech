@@ -51,7 +51,7 @@ import {
   WRITING_APPROACH_LABELS,
   RESEARCH_DESIGN_LABELS,
 } from "@/types";
-import { advisorFeedbackApi, writingPaperVersionsApi } from "@/lib/bkend";
+import { advisorFeedbackApi, writingPapersApi, writingPaperVersionsApi } from "@/lib/bkend";
 import type { AdvisorFeedbackNote } from "@/types";
 import { useStudyTimerStore } from "./study-timer/study-timer-store";
 import { useCreateSession, useStudySessionsByWritingPaper } from "./study-timer/useStudySessions";
@@ -290,6 +290,8 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
+  /** 저장 경합 감지: hydrate/저장 시점의 서버 lastSavedAt — 저장 전 비교해 stale 덮어쓰기 차단 */
+  const baseSavedAtRef = useRef<string | null>(null);
   const [step, setStep] = useState<StepKey>("intro");
   const [guideOpen, setGuideOpen] = useState(false);
   const ensureTriggeredRef = useRef(false);
@@ -368,9 +370,22 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     if (paper && !hydrated) {
       setForm(fromPaper(paper, paper.researchProfile?.approach ?? "quantitative"));
       setSavedAt(paper.lastSavedAt ?? paper.updatedAt ?? null);
+      // QA P1: 다중 탭/기기 저장 경합 감지 기준점 (서버 lastSavedAt 스냅샷)
+      baseSavedAtRef.current = paper.lastSavedAt ?? null;
       setHydrated(true);
     }
   }, [paper, hydrated]);
+
+  // QA P1: 미저장 본문이 있을 때 새로고침·창 닫기 무경고 소실 방지
+  useEffect(() => {
+    if (!dirty || readOnly) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [dirty, readOnly]);
 
   // 첫 작성자 온보딩: 프로파일 미설정 + 본문 거의 없음 → 연구 방향 선택 유도
   useEffect(() => {
@@ -479,6 +494,22 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     setSaving(true);
     const now = new Date().toISOString();
     try {
+      // QA P1: last-write-wins 경합 가드 — 다른 탭/기기에서 저장된 흔적이 있으면 확인 후 진행
+      try {
+        const fresh = await writingPapersApi.get(paper.id);
+        const serverSavedAt = (fresh as WritingPaper | null)?.lastSavedAt ?? null;
+        if (serverSavedAt && serverSavedAt !== baseSavedAtRef.current) {
+          const ok = confirm(
+            "다른 탭/기기에서 이 논문이 저장된 흔적이 있습니다.\n계속 저장하면 그 내용을 덮어씁니다. 진행할까요?\n(취소 후 새로고침하면 최신 내용을 불러옵니다)",
+          );
+          if (!ok) {
+            setSaving(false);
+            return;
+          }
+        }
+      } catch {
+        // 충돌 확인 실패는 저장을 막지 않음 (오프라인 등)
+      }
       await update.mutateAsync({
         id: paper.id,
         data: {
@@ -489,6 +520,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         },
       });
       setSavedAt(now);
+      baseSavedAtRef.current = now;
       setDirty(false);
       logActivity.mutate({
         userId: user.id,
@@ -577,10 +609,15 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     setVersionBusy(true);
     try {
       const t = new Date();
-      await createVersion(
+      // QA P1: 백업 실패를 무시하고 복원하면 '복원 전 자동 백업' 약속이 깨져 현재 내용 유실 가능 → 중단
+      const backedUp = await createVersion(
         `복원 전 자동 백업 (${t.getHours().toString().padStart(2, "0")}:${t.getMinutes().toString().padStart(2, "0")})`,
         true,
       );
+      if (!backedUp) {
+        toast.error("복원 전 자동 백업에 실패해 복원을 중단했습니다. 잠시 후 다시 시도해주세요.");
+        return;
+      }
       const restoredApproach = v.researchProfile?.approach ?? approach;
       const sections = {} as SectionsState;
       for (const k of CHAPTER_KEYS) {

@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { profilesApi } from "@/lib/bkend";
+import { useAuthStore } from "@/features/auth/auth-store";
 import { getEffectiveSemesterCount } from "@/lib/interview-target";
 import type { User } from "@/types";
 
@@ -168,13 +169,20 @@ export default function ThesisJourney({ user, editable = true }: Props) {
   const isOverSemester = semCount != null && semCount > 5;
 
   async function handleStageChange(next: number) {
-    setCurrentStage(next);
-    setViewStage(next);
     setEditing(false);
-    if (!editable) return;
+    if (!editable) {
+      setCurrentStage(next);
+      setViewStage(next);
+      return;
+    }
+    // QA P1: 낙관적 선반영을 저장 성공 이후로 — 실패 시 옛 단계 유지(롤백 불필요).
+    // 성공 시 auth 스토어도 갱신해 같은 화면의 코크핏·대시보드 헤더가 즉시 새 단계를 반영.
     setSaving(true);
     try {
       await profilesApi.update(user.id, { thesisJourneyStage: next });
+      setCurrentStage(next);
+      setViewStage(next);
+      useAuthStore.getState().setUser({ ...user, thesisJourneyStage: next });
       toast.success(`내 논문 단계가 "${JOURNEY_STAGES[next - 1].title}"(으)로 설정되었습니다.`);
     } catch {
       toast.error("단계 저장에 실패했습니다. 잠시 후 다시 시도해주세요.");

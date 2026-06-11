@@ -14,17 +14,19 @@ interface Props {
   onCreated: () => void;
   /** 수업 발표 보드 — 질문을 태깅할 발표자 (board.presenters 중 하나, undefined=공통) */
   presenter?: string;
+  /** 입장 게이트에서 설정한 게스트 닉네임 — 변경 시 즉시 반영 (QA P1) */
+  guestNickname?: string;
 }
 
 /** 질문/답변 공용으로 쓰는 게스트 이름·익명 로직을 포함한 질문 작성기 */
-export default function QuestionComposer({ board, user, onCreated, presenter }: Props) {
+export default function QuestionComposer({ board, user, onCreated, presenter, guestNickname }: Props) {
   const [body, setBody] = useState("");
   const [anonymous, setAnonymous] = useState(false);
-  // 게스트 닉네임: 입장 시 설정한 값(localStorage)을 기본값으로 공유
+  // 게스트 닉네임: 입장 게이트 prop 우선, 없으면 localStorage — 게이트 설정/변경 즉시 반영
   const [guestName, setGuestName] = useState("");
   useEffect(() => {
-    if (!user) setGuestName(getGuestNickname());
-  }, [user]);
+    if (!user) setGuestName(guestNickname || getGuestNickname());
+  }, [user, guestNickname]);
   const [saving, setSaving] = useState(false);
 
   const isGuest = !user;

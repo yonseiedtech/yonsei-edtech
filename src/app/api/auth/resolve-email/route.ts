@@ -33,9 +33,11 @@ export async function GET(req: NextRequest) {
     }
     const data = snap.docs[0].data() as { email?: string };
     const email = data.email ?? null;
+    // 2026-06-11 보안: raw email 반환 제거 — enumeration 시 회원 이메일 수집 표면 차단.
+    // 현재 클라이언트 호출부 없음(grep 전수 확인). 향후 사용 시에도 마스킹만 노출하고
+    // 실제 메일 발송은 서버 사이드에서 수행할 것.
     return Response.json({
-      email,
-      // 클라이언트 화면에는 마스킹 버전만 표시. 실제 발송은 server-side로 진행
+      email: null,
       emailMasked: email ? maskEmail(email) : null,
     });
   } catch (err) {

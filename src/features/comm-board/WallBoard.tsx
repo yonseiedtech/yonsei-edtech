@@ -17,7 +17,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { collection, onSnapshot, query, where, Timestamp } from "firebase/firestore";
 import { QRCodeSVG } from "qrcode.react";
 import {
   ArrowLeft,
@@ -48,7 +48,7 @@ import { sortQuestions, canManageBoard, canDeletePost } from "./comm-helpers";
 import { getGuestNickname, setGuestNickname } from "./guest-name";
 import QuestionComposer from "./QuestionComposer";
 import AnswerThread from "./AnswerThread";
-import type { CommBoard, CommQuestion, CommSortMode } from "@/types";
+import type { CommBoard, CommQuestion, CommSortMode, User } from "@/types";
 
 const PALETTE = [
   "border-amber-200 bg-amber-50 dark:border-amber-800/60 dark:bg-amber-950/20",
@@ -81,6 +81,16 @@ function authorLabel(q: CommQuestion): string {
   return q.authorName ?? q.guestName ?? "게스트";
 }
 
+/**
+ * QA P1: onSnapshot 원시 데이터의 createdAt/updatedAt 이 Firestore Timestamp 객체로
+ * 들어오면 sortQuestions(localeCompare)·timeAgo 에서 크래시 — ISO 문자열로 정규화.
+ */
+function normalizeIso(v: unknown): string | undefined {
+  if (typeof v === "string") return v;
+  if (v instanceof Timestamp) return v.toDate().toISOString();
+  return undefined;
+}
+
 const COMMON_KEY = "__common__";
 
 interface Props {
@@ -107,7 +117,17 @@ export default function WallBoard({ boardId, variant }: Props) {
     const unsub = onSnapshot(
       qy,
       (snap) => {
-        setQuestions(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<CommQuestion, "id">) })));
+        setQuestions(
+          snap.docs.map((d) => {
+            const raw = d.data() as Omit<CommQuestion, "id"> & { createdAt?: unknown; updatedAt?: unknown };
+            return {
+              ...raw,
+              id: d.id,
+              createdAt: normalizeIso(raw.createdAt),
+              updatedAt: normalizeIso(raw.updatedAt),
+            } as CommQuestion;
+          }),
+        );
         setQLoading(false);
       },
       (err) => {
@@ -199,17 +219,35 @@ export default function WallBoard({ boardId, variant }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
 
+  // QA P2: closed 보드 = 읽기 전용 (UI 게이트 — rules 에도 동일 게이트 적용됨)
+  const isClosed = board?.status === "closed";
+  // QA P2: 좋아요 더블클릭 경합 — 대상별 in-flight 가드
+  const likeBusyRef = useRef<Set<string>>(new Set());
+
   async function handleLike(q: CommQuestion) {
     if (!user) {
       toast.error("좋아요는 로그인 회원만 가능합니다. 질문·답글은 그대로 참여하실 수 있어요!");
       return;
     }
+    if (isClosed) {
+      toast.error("닫힌 보드입니다 (읽기 전용).");
+      return;
+    }
+    if (likeBusyRef.current.has(q.id)) return;
+    likeBusyRef.current.add(q.id);
     try {
       await commLikesApi.toggle(user.id, "question", q.id);
       await queryClient.invalidateQueries({ queryKey: ["comm-likes-mine", user.id] });
     } catch {
       toast.error("좋아요 처리에 실패했습니다.");
+    } finally {
+      likeBusyRef.current.delete(q.id);
     }
+  }
+
+  function handleEditStart(q: CommQuestion) {
+    setEditingId(q.id);
+    setEditText(q.body);
   }
 
   async function handleQuestionEditSave(q: CommQuestion) {
@@ -267,6 +305,26 @@ export default function WallBoard({ boardId, variant }: Props) {
   }
 
   const boardUrl = typeof window !== "undefined" ? `${window.location.origin}/boards/${boardId}/wall` : "";
+
+  // NoteGrid(모듈 스코프) 공유 props — board 는 위 가드로 non-null 확정
+  const noteGridShared = {
+    board,
+    user,
+    likedSet,
+    newIds,
+    isPresent,
+    isClosed,
+    editingId,
+    editText,
+    guestNickname: nickname,
+    onEditStart: handleEditStart,
+    onEditCancel: () => setEditingId(null),
+    onEditTextChange: setEditText,
+    onEditSave: handleQuestionEditSave,
+    onDelete: handleQuestionDelete,
+    onToggleResolved: handleToggleResolved,
+    onLike: handleLike,
+  };
 
   return (
     <div className={cn("min-h-screen bg-gradient-to-b from-primary/[0.04] to-background", isPresent && "from-primary/[0.06]")}>
@@ -437,6 +495,7 @@ export default function WallBoard({ boardId, variant }: Props) {
             <QuestionComposer
               board={board}
               user={user}
+              guestNickname={nickname}
               presenter={composerPresenter || undefined}
               onCreated={() => { /* onSnapshot 실시간 반영 */ }}
             />
@@ -462,7 +521,7 @@ export default function WallBoard({ boardId, variant }: Props) {
             groups.map((g) => {
               // 발표자 그룹이 없으면(단일 그룹) 헤더 없이 그리드만
               if (!g.label) {
-                return <NoteGrid key={g.key} items={g.items} />;
+                return <NoteGrid key={g.key} items={g.items} {...noteGridShared} />;
               }
               if (g.key === COMMON_KEY && g.items.length === 0) return null;
               const isCollapsed = collapsed.has(g.key);
@@ -490,7 +549,7 @@ export default function WallBoard({ boardId, variant }: Props) {
                           아직 {g.label} 발표자에 대한 질문이 없습니다.
                         </p>
                       ) : (
-                        <NoteGrid items={g.items} />
+                        <NoteGrid items={g.items} {...noteGridShared} />
                       )}
                     </div>
                   )}
@@ -512,146 +571,184 @@ export default function WallBoard({ boardId, variant }: Props) {
     </div>
   );
 
-  // ── 노트 그리드 (마소너리) — 클로저로 상태 공유 ──
-  function NoteGrid({ items }: { items: CommQuestion[] }) {
-    return (
-      <div className="columns-1 gap-3 space-y-3 sm:columns-2 lg:columns-3">
-        {items.map((q) => {
-          const liked = likedSet.has(`question__${q.id}`);
-          const canEdit = canDeletePost(user, q, board!);
-          const canResolve = !!user && (q.authorId === user.id || canManageBoard(user, board!));
-          const isEditing = editingId === q.id;
-          return (
-            <div
-              key={q.id}
-              className={cn(
-                "break-inside-avoid rounded-2xl border-2 p-3.5 shadow-sm transition-shadow hover:shadow-md",
-                paletteOf(q.id),
-                newIds.has(q.id) && "animate-in zoom-in-95 fade-in duration-500",
-              )}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className={cn("font-semibold text-foreground/70", isPresent ? "text-xs" : "text-[11px]")}>
-                  {authorLabel(q)}
-                  {q.presenter && (
-                    <Badge variant="outline" className="ml-1.5 text-[9px]">🎤 {q.presenter}</Badge>
-                  )}
-                </span>
-                <span className="flex shrink-0 items-center gap-1">
-                  <span className="text-[10px] text-muted-foreground">{timeAgo(q.createdAt)}</span>
-                  {canEdit && !isEditing && (
-                    <>
-                      <button
-                        type="button"
-                        title="질문 수정"
-                        onClick={() => {
-                          setEditingId(q.id);
-                          setEditText(q.body);
-                        }}
-                        className="rounded p-0.5 text-muted-foreground hover:text-foreground"
-                      >
-                        <Pencil size={11} />
-                      </button>
-                      <button
-                        type="button"
-                        title="질문 삭제"
-                        onClick={() => handleQuestionDelete(q)}
-                        className="rounded p-0.5 text-muted-foreground hover:text-destructive"
-                      >
-                        <Trash2 size={11} />
-                      </button>
-                    </>
-                  )}
-                </span>
-              </div>
+}
 
-              {isEditing ? (
-                <div className="mt-1.5 space-y-1.5">
-                  <textarea
-                    value={editText}
-                    onChange={(e) => setEditText(e.target.value)}
-                    rows={3}
-                    className="w-full rounded-md border bg-background px-2 py-1.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-                  />
-                  <div className="flex justify-end gap-1">
+// ── 노트 그리드 (마소너리) — QA P1: 컴포넌트 내부 정의 시 매 렌더 remount 되어
+// 답변 드래프트 소실·수정 textarea 포커스 이탈 발생 → 모듈 스코프로 추출해 element type 안정화.
+interface NoteGridProps {
+  items: CommQuestion[];
+  board: CommBoard;
+  user: User | null;
+  likedSet: Set<string>;
+  newIds: Set<string>;
+  isPresent: boolean;
+  isClosed: boolean;
+  editingId: string | null;
+  editText: string;
+  guestNickname: string;
+  onEditStart: (q: CommQuestion) => void;
+  onEditCancel: () => void;
+  onEditTextChange: (t: string) => void;
+  onEditSave: (q: CommQuestion) => void;
+  onDelete: (q: CommQuestion) => void;
+  onToggleResolved: (q: CommQuestion) => void;
+  onLike: (q: CommQuestion) => void;
+}
+
+function NoteGrid({
+  items,
+  board,
+  user,
+  likedSet,
+  newIds,
+  isPresent,
+  isClosed,
+  editingId,
+  editText,
+  guestNickname,
+  onEditStart,
+  onEditCancel,
+  onEditTextChange,
+  onEditSave,
+  onDelete,
+  onToggleResolved,
+  onLike,
+}: NoteGridProps) {
+  return (
+    <div className="columns-1 gap-3 space-y-3 sm:columns-2 lg:columns-3">
+      {items.map((q) => {
+        const liked = likedSet.has(`question__${q.id}`);
+        const canEdit = !isClosed && canDeletePost(user, q, board);
+        const canResolve = !isClosed && !!user && (q.authorId === user.id || canManageBoard(user, board));
+        const isEditing = editingId === q.id;
+        return (
+          <div
+            key={q.id}
+            className={cn(
+              "break-inside-avoid rounded-2xl border-2 p-3.5 shadow-sm transition-shadow hover:shadow-md",
+              paletteOf(q.id),
+              newIds.has(q.id) && "animate-in zoom-in-95 fade-in duration-500",
+            )}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className={cn("font-semibold text-foreground/70", isPresent ? "text-xs" : "text-[11px]")}>
+                {authorLabel(q)}
+                {q.presenter && (
+                  <Badge variant="outline" className="ml-1.5 text-[9px]">🎤 {q.presenter}</Badge>
+                )}
+              </span>
+              <span className="flex shrink-0 items-center gap-1">
+                <span className="text-[10px] text-muted-foreground">{timeAgo(q.createdAt)}</span>
+                {canEdit && !isEditing && (
+                  <>
                     <button
                       type="button"
-                      onClick={() => setEditingId(null)}
-                      className="flex items-center gap-0.5 rounded border px-2 py-1 text-[10px] text-muted-foreground hover:bg-muted"
+                      title="질문 수정"
+                      onClick={() => onEditStart(q)}
+                      className="rounded p-0.5 text-muted-foreground hover:text-foreground"
                     >
-                      <X size={10} /> 취소
+                      <Pencil size={11} />
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleQuestionEditSave(q)}
-                      className="flex items-center gap-0.5 rounded bg-primary px-2 py-1 text-[10px] text-primary-foreground hover:bg-primary/90"
+                      title="질문 삭제"
+                      onClick={() => onDelete(q)}
+                      className="rounded p-0.5 text-muted-foreground hover:text-destructive"
                     >
-                      <Check size={10} /> 저장
+                      <Trash2 size={11} />
                     </button>
-                  </div>
-                </div>
-              ) : (
-                <p className={cn("mt-1.5 whitespace-pre-wrap leading-relaxed", isPresent ? "text-base" : "text-sm")}>
-                  {q.body}
-                </p>
-              )}
+                  </>
+                )}
+              </span>
+            </div>
 
-              <div className="mt-2.5 flex items-center gap-2 border-t border-foreground/5 pt-2">
-                {q.resolved ? (
+            {isEditing ? (
+              <div className="mt-1.5 space-y-1.5">
+                <textarea
+                  value={editText}
+                  onChange={(e) => onEditTextChange(e.target.value)}
+                  rows={3}
+                  className="w-full rounded-md border bg-background px-2 py-1.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                />
+                <div className="flex justify-end gap-1">
                   <button
                     type="button"
-                    disabled={!canResolve}
-                    onClick={() => canResolve && handleToggleResolved(q)}
-                    title={canResolve ? "해결 표시 해제" : undefined}
-                    className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"
+                    onClick={onEditCancel}
+                    className="flex items-center gap-0.5 rounded border px-2 py-1 text-[10px] text-muted-foreground hover:bg-muted"
                   >
-                    <CheckCircle2 size={10} /> 해결됨
+                    <X size={10} /> 취소
                   </button>
-                ) : (
-                  canResolve && (
-                    <button
-                      type="button"
-                      onClick={() => handleToggleResolved(q)}
-                      className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] text-muted-foreground hover:border-emerald-400 hover:text-emerald-600"
-                    >
-                      <CheckCircle2 size={10} /> 해결로 표시
-                    </button>
-                  )
-                )}
+                  <button
+                    type="button"
+                    onClick={() => onEditSave(q)}
+                    className="flex items-center gap-0.5 rounded bg-primary px-2 py-1 text-[10px] text-primary-foreground hover:bg-primary/90"
+                  >
+                    <Check size={10} /> 저장
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className={cn("mt-1.5 whitespace-pre-wrap leading-relaxed", isPresent ? "text-base" : "text-sm")}>
+                {q.body}
+              </p>
+            )}
+
+            <div className="mt-2.5 flex items-center gap-2 border-t border-foreground/5 pt-2">
+              {q.resolved ? (
                 <button
                   type="button"
-                  onClick={() => handleLike(q)}
-                  aria-label="좋아요"
-                  className={cn(
-                    "ml-auto flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] transition-colors",
-                    liked ? "font-semibold text-primary" : "text-muted-foreground hover:text-foreground",
-                    !user && "opacity-60",
-                  )}
+                  disabled={!canResolve}
+                  onClick={() => canResolve && onToggleResolved(q)}
+                  title={canResolve ? "해결 표시 해제" : undefined}
+                  className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"
                 >
-                  <ThumbsUp size={12} />
-                  {q.likeCount}
+                  <CheckCircle2 size={10} /> 해결됨
                 </button>
-                <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                  <MessageCircle size={12} />
-                  {q.answerCount}
-                </span>
-              </div>
-
-              {/* 답변 — 항상 펼침 (작성·수정·삭제 가능, 게스트 지원) */}
-              <div className="mt-1">
-                <AnswerThread
-                  board={board!}
-                  question={q}
-                  user={user}
-                  likedSet={likedSet}
-                  canAccept={!!user && (q.authorId === user.id || canManageBoard(user, board!))}
-                  onChanged={() => { /* onSnapshot 실시간 반영 */ }}
-                />
-              </div>
+              ) : (
+                canResolve && (
+                  <button
+                    type="button"
+                    onClick={() => onToggleResolved(q)}
+                    className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] text-muted-foreground hover:border-emerald-400 hover:text-emerald-600"
+                  >
+                    <CheckCircle2 size={10} /> 해결로 표시
+                  </button>
+                )
+              )}
+              <button
+                type="button"
+                onClick={() => onLike(q)}
+                aria-label="좋아요"
+                className={cn(
+                  "ml-auto flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] transition-colors",
+                  liked ? "font-semibold text-primary" : "text-muted-foreground hover:text-foreground",
+                  (!user || isClosed) && "opacity-60",
+                )}
+              >
+                <ThumbsUp size={12} />
+                {q.likeCount}
+              </button>
+              <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                <MessageCircle size={12} />
+                {q.answerCount}
+              </span>
             </div>
-          );
-        })}
-      </div>
-    );
-  }
+
+            {/* 답변 — 항상 펼침 (작성·수정·삭제 가능, 게스트 지원) */}
+            <div className="mt-1">
+              <AnswerThread
+                board={board}
+                question={q}
+                user={user}
+                likedSet={likedSet}
+                guestNickname={guestNickname}
+                canAccept={!isClosed && !!user && (q.authorId === user.id || canManageBoard(user, board))}
+                onChanged={() => { /* onSnapshot 실시간 반영 */ }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }

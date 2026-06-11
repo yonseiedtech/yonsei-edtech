@@ -74,15 +74,22 @@ interface Props {
 
 export default function AdvisorFeedbackLog({ userId, readOnly = false }: Props) {
   const queryClient = useQueryClient();
-  const { data: notes = [], isLoading } = useQuery({
+  // QA P2: 같은 queryKey 를 쓰는 코크핏·에디터 옵저버와 queryFn 형태 통일(raw 반환)
+  // — 정렬은 컴포넌트에서 수행해, 어느 옵저버의 refetch 가 캐시를 채워도 정렬 유지
+  const { data: rawNotes = [], isLoading } = useQuery({
     queryKey: ["advisor-feedback", userId],
-    queryFn: async () => {
-      const res = await advisorFeedbackApi.listByUser(userId);
-      return (res.data as AdvisorFeedbackNote[]).sort((a, b) =>
-        b.meetingDate.localeCompare(a.meetingDate) || (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
-      );
-    },
+    queryFn: async () =>
+      (await advisorFeedbackApi.listByUser(userId)).data as AdvisorFeedbackNote[],
   });
+  const notes = useMemo(
+    () =>
+      [...rawNotes].sort(
+        (a, b) =>
+          b.meetingDate.localeCompare(a.meetingDate) ||
+          (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
+      ),
+    [rawNotes],
+  );
 
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "applied">("all");
   const [chapterFilter, setChapterFilter] = useState<FeedbackChapter | "all">("all");
@@ -187,11 +194,19 @@ export default function AdvisorFeedbackLog({ userId, readOnly = false }: Props) 
 
   async function toggleActionItem(n: AdvisorFeedbackNote, idx: number) {
     if (readOnly) return;
-    const items = [...(n.actionItems ?? [])];
+    // QA P1: 연속 체크 경합(lost update) — 렌더 스냅샷 대신 캐시 최신본에서 파생하고
+    // 낙관적으로 캐시를 먼저 갱신해 다음 클릭이 항상 최신 배열을 기준으로 동작하게 함
+    const key = ["advisor-feedback", userId];
+    const cachedList = queryClient.getQueryData<AdvisorFeedbackNote[]>(key);
+    const base = cachedList?.find((x) => x.id === n.id) ?? n;
+    const items = [...(base.actionItems ?? [])];
+    if (!items[idx]) return;
     items[idx] = { ...items[idx], done: !items[idx].done };
+    queryClient.setQueryData<AdvisorFeedbackNote[]>(key, (old) =>
+      old?.map((x) => (x.id === n.id ? { ...x, actionItems: items } : x)),
+    );
     try {
       await advisorFeedbackApi.update(n.id, { actionItems: items, updatedAt: new Date().toISOString() });
-      invalidate();
       // 사용성 평가 반영: 모든 액션 아이템 체크 완료 시 반영 완료 처리를 바로 제안
       if (n.status === "pending" && items.length > 0 && items.every((a) => a.done)) {
         toast.info("모든 할 일을 체크했어요! 이 지도를 반영 완료로 표시할까요?", {
@@ -205,6 +220,8 @@ export default function AdvisorFeedbackLog({ userId, readOnly = false }: Props) 
         });
       }
     } catch {
+      // 낙관적 캐시 롤백 — 서버 기준으로 재동기화
+      invalidate();
       toast.error("체크 저장에 실패했습니다.");
     }
   }

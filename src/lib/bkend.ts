@@ -3433,17 +3433,26 @@ export const commAnswersApi = {
     dataApi.update<CommAnswer>("comm_answers", id, data as unknown as Record<string, unknown>),
   create: async (data: Record<string, unknown>): Promise<CommAnswer> => {
     const created = await dataApi.create<CommAnswer>("comm_answers", { ...data, likeCount: 0 });
-    // denorm: 질문 answerCount +1 (likeCount/answerCount/updatedAt 만 바꾸므로 rules 허용)
-    await updateDoc(doc(db, "comm_questions", String(data.questionId)), {
-      answerCount: increment(1),
-    });
+    // denorm: 질문 answerCount +1 — best-effort 비차단 (QA P1):
+    // 카운트 갱신이 rules 에 거부되더라도 답변 저장 자체는 성공으로 처리
+    try {
+      await updateDoc(doc(db, "comm_questions", String(data.questionId)), {
+        answerCount: increment(1),
+      });
+    } catch (err) {
+      console.warn("[commAnswers.create] answerCount increment failed (non-fatal)", err);
+    }
     return created;
   },
   delete: async (answer: Pick<CommAnswer, "id" | "questionId">): Promise<void> => {
     await dataApi.delete("comm_answers", answer.id);
-    await updateDoc(doc(db, "comm_questions", answer.questionId), {
-      answerCount: increment(-1),
-    });
+    try {
+      await updateDoc(doc(db, "comm_questions", answer.questionId), {
+        answerCount: increment(-1),
+      });
+    } catch (err) {
+      console.warn("[commAnswers.delete] answerCount decrement failed (non-fatal)", err);
+    }
   },
 };
 
@@ -3456,7 +3465,11 @@ export const commLikesApi = {
     });
     return new Set(res.data.map((l) => `${l.targetType}__${l.targetId}`));
   },
-  /** 토글 — 켜지면 true 반환. 대상 likeCount increment. (로그인 전용) */
+  /**
+   * 토글 — 켜지면 true 반환. 대상 likeCount increment. (로그인 전용)
+   * QA P2: read-check-write 비원자 경합으로 더블클릭 시 카운트 드리프트(±2) 발생
+   * → runTransaction 으로 like 존재 확인과 카운트 증감을 원자화.
+   */
   toggle: async (
     userId: string,
     targetType: CommLikeTarget,
@@ -3464,15 +3477,18 @@ export const commLikesApi = {
   ): Promise<boolean> => {
     const id = `${userId}__${targetType}__${targetId}`;
     const ref = doc(db, "comm_likes", id);
-    const snap = await getDoc(ref);
     const targetCol = targetType === "question" ? "comm_questions" : "comm_answers";
-    if (snap.exists()) {
-      await deleteDoc(ref);
-      await updateDoc(doc(db, targetCol, targetId), { likeCount: increment(-1) });
-      return false;
-    }
-    await setDoc(ref, { userId, targetType, targetId, createdAt: serverTimestamp() });
-    await updateDoc(doc(db, targetCol, targetId), { likeCount: increment(1) });
-    return true;
+    const targetRef = doc(db, targetCol, targetId);
+    return runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref);
+      if (snap.exists()) {
+        tx.delete(ref);
+        tx.update(targetRef, { likeCount: increment(-1) });
+        return false;
+      }
+      tx.set(ref, { userId, targetType, targetId, createdAt: serverTimestamp() });
+      tx.update(targetRef, { likeCount: increment(1) });
+      return true;
+    });
   },
 };
