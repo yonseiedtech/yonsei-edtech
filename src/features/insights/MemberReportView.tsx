@@ -29,6 +29,7 @@ import {
 } from "./computeMemberMetrics";
 import { useMemberMetrics, type MemberMomentum } from "./useMemberMetrics";
 import LoyaltyTrendSection from "./LoyaltyTrendSection";
+import { JOURNEY_STAGES } from "@/features/research/ThesisJourney";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -112,6 +113,23 @@ export default function MemberReportView() {
       const count = counts.get(seg) ?? 0;
       return { seg, count, pct: Math.round((count / total) * 100) };
     });
+  }, [rows]);
+
+  // 논문 여정 단계 분포 (member/alumni 만 — 운영 계정 제외 의미 없음이라 전체 rows 기준 유지)
+  const journeyDist = useMemo(() => {
+    const counts = new Array(JOURNEY_STAGES.length + 1).fill(0) as number[]; // [0]=미설정
+    for (const r of rows) {
+      const st = r.thesisJourneyStage;
+      if (typeof st === "number" && st >= 1 && st <= JOURNEY_STAGES.length) counts[st] += 1;
+      else counts[0] += 1;
+    }
+    const total = rows.length || 1;
+    return counts.map((count, i) => ({
+      stage: i,
+      label: i === 0 ? "미설정" : `${JOURNEY_STAGES[i - 1].semesterLabel} ${JOURNEY_STAGES[i - 1].title}`,
+      count,
+      pct: Math.round((count / total) * 100),
+    }));
   }, [rows]);
 
   const generationStats = useMemo(() => {
@@ -251,6 +269,33 @@ export default function MemberReportView() {
               <span className="tabular-nums text-muted-foreground">
                 {count}명 · {pct}%
               </span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 논문 여정 단계 분포 */}
+      <section className="rounded-2xl border bg-card p-5">
+        <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
+          <BarChart3 size={16} className="text-muted-foreground" />
+          논문 여정 단계 분포
+          <span className="text-[11px] font-normal text-muted-foreground">
+            단계별 세미나·스터디 기획의 근거로 활용하세요
+          </span>
+        </div>
+        <div className="space-y-1.5">
+          {journeyDist.map(({ stage, label, count, pct }) => (
+            <div key={stage} className="flex items-center gap-3 text-xs">
+              <span className="w-28 shrink-0 truncate font-medium">{label}</span>
+              <span className="w-14 shrink-0 text-right tabular-nums text-muted-foreground">
+                {count}명 · {pct}%
+              </span>
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                <div
+                  className={cn("h-full rounded-full", stage === 0 ? "bg-slate-300 dark:bg-slate-600" : "bg-gradient-to-r from-primary to-sky-500")}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
             </div>
           ))}
         </div>

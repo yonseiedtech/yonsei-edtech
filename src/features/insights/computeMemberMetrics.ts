@@ -87,6 +87,8 @@ export interface MemberMetricsRow {
   segment: "champion" | "active" | "at_risk" | "dormant" | "new";
   /** 운영진 저활동 경보 */
   staffLowActivity: boolean;
+  /** 논문 여정 단계 (1~5, 미설정 undefined) — 인사이트 분포용 */
+  thesisJourneyStage?: number;
 }
 
 function daysSince(iso?: string, nowMs = Date.now()): number {
@@ -216,6 +218,7 @@ export function computeMemberMetrics(input: MemberMetricsInput): MemberMetricsRo
     },
     segment,
     staffLowActivity,
+    thesisJourneyStage: member.thesisJourneyStage,
   };
 }
 
