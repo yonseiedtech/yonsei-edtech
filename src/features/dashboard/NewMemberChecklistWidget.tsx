@@ -326,7 +326,7 @@ export default function NewMemberChecklistWidget() {
       case "wrote.lectureReview":
         return hasLectureReview;
       case "set.thesisJourneyStage":
-        return typeof (user as { thesisJourneyStage?: number }).thesisJourneyStage === "number";
+        return typeof user.thesisJourneyStage === "number";
       case "participated.commBoard":
         return commBoardExists === true;
       default:

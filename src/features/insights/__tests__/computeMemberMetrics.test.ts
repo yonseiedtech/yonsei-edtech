@@ -148,13 +148,14 @@ describe("computeMemberMetrics — 출력 구조", () => {
   });
 
   it("thesisJourneyStage 패스스루 — 설정값 유지, 미설정 undefined", () => {
+    const base = { attendanceCount: 0, activityCount: 0, gradLifeOngoingCount: 0, nowMs: NOW_MS };
     const withStage = computeMemberMetrics({
       member: mkMember({ thesisJourneyStage: 3 }),
-      nowMs: NOW_MS,
+      ...base,
     });
     expect(withStage.thesisJourneyStage).toBe(3);
 
-    const without = computeMemberMetrics({ member: mkMember(), nowMs: NOW_MS });
+    const without = computeMemberMetrics({ member: mkMember(), ...base });
     expect(without.thesisJourneyStage).toBeUndefined();
   });
 });
