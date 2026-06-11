@@ -10,12 +10,15 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
-import { ArrowRight, Gauge } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowRight, Gauge, MessageSquareWarning } from "lucide-react";
 import { JOURNEY_STAGES } from "@/features/research/ThesisJourney";
 import { useWritingPaper } from "@/features/research/useWritingPaper";
 import { computeThesisProgress } from "@/features/research/thesis-progress";
 import { getEffectiveSemesterCount } from "@/lib/interview-target";
+import { advisorFeedbackApi } from "@/lib/bkend";
 import type { User } from "@/types";
+import type { AdvisorFeedbackNote } from "@/types";
 
 function greetingByHour(): string {
   const h = new Date().getHours();
@@ -31,6 +34,19 @@ export default function JourneyGreetingHeader({ user }: { user: User }) {
   const writingPercent = useMemo(
     () => computeThesisProgress({ paper: paper ?? null, hasProposal: false }).percent,
     [paper],
+  );
+
+  // 지도노트 연동: 미반영(pending) 지도 수 — 에디터와 동일 캐시 키 공유
+  const { data: feedbackNotes = [] } = useQuery({
+    queryKey: ["advisor-feedback", user.id],
+    queryFn: async () =>
+      (await advisorFeedbackApi.listByUser(user.id)).data as AdvisorFeedbackNote[],
+    enabled: !!user.id,
+    staleTime: 5 * 60_000,
+  });
+  const pendingAdvisor = useMemo(
+    () => feedbackNotes.filter((n) => n.status === "pending").length,
+    [feedbackNotes],
   );
 
   const stage = useMemo(() => {
@@ -67,16 +83,29 @@ export default function JourneyGreetingHeader({ user }: { user: User }) {
             </p>
           )}
           {/* 코크핏 연동: 논문 본문 진행률 — 작성분이 있을 때만 노출 */}
-          {writingPercent > 0 && (
-            <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              <Gauge size={12} className="text-primary" />
-              논문 진행률 <span className="font-semibold tabular-nums text-foreground">{writingPercent}%</span>
-              <span className="inline-block h-1.5 w-24 overflow-hidden rounded-full bg-muted align-middle">
-                <span
-                  className="block h-full rounded-full bg-gradient-to-r from-primary to-sky-500"
-                  style={{ width: `${writingPercent}%` }}
-                />
-              </span>
+          {(writingPercent > 0 || pendingAdvisor > 0) && (
+            <p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+              {writingPercent > 0 && (
+                <>
+                  <Gauge size={12} className="text-primary" />
+                  논문 진행률 <span className="font-semibold tabular-nums text-foreground">{writingPercent}%</span>
+                  <span className="inline-block h-1.5 w-24 overflow-hidden rounded-full bg-muted align-middle">
+                    <span
+                      className="block h-full rounded-full bg-gradient-to-r from-primary to-sky-500"
+                      style={{ width: `${writingPercent}%` }}
+                    />
+                  </span>
+                </>
+              )}
+              {pendingAdvisor > 0 && (
+                <Link
+                  href="/mypage/research?tab=feedback"
+                  className="inline-flex items-center gap-1 rounded-full border border-amber-300/60 bg-amber-50 px-2 py-0.5 font-medium text-amber-700 transition-colors hover:bg-amber-100 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-400"
+                >
+                  <MessageSquareWarning size={11} />
+                  미반영 지도 {pendingAdvisor}건
+                </Link>
+              )}
             </p>
           )}
         </div>
