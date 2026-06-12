@@ -87,6 +87,14 @@
 
 **부심 자료 반영 최종 현황**: 2·3주차→서론 섹션 가이드 / 4~7주차→연구 방법 섹션 가이드 / 8주차→이론적 배경 장+섹션 가이드 / 9~15주차→방법·결과·결론 장 가이드+섹션 가이드+아카이브 13종+가정 검정 패널. 1주차(수업 소개)는 반영 대상 아님. **전 주차 일반화 완료** — 섹션 가이드 총 14종.
 
+## 사이클 27 — 콘솔 체크리스트 신규 항목 2종 데이터 추가 (운영 액션, 배포 불필요)
+
+- scripts/add-onboarding-items-cycle27.mjs (admin SDK·멱등) 실행 — **onboarding_checklist 컬렉션이 기존 0건**(그동안 위젯이 빈 상태로 숨겨져 있었음)이었고, 신규 2건 추가로 위젯이 처음 활성화됨:
+  [0] 논문 여정 단계 설정 (set.thesisJourneyStage, GraduationCap, /mypage/research)
+  [1] 소통 보드 질문/답변 1건 (participated.commBoard, Users, /activities)
+- 검증: rules read=true 확인 + 비인증 REST runQuery 로 2건 LIVE 확인
+- 위젯 노출 조건: 가입 30일 이내 또는 완료율 임계치 미만 + 미완료 존재 (전부 완료 시 자동 숨김)
+
 ## 상태
 - 테스트: 581 → **598** (PBKDF2 16 + 패스스루 1)
 - 보안 백로그 해결: PBKDF2 마이그레이션(코드 L8 TODO 이행), resolve-email은 기방어 확인 완료
