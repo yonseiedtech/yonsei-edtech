@@ -242,7 +242,8 @@ export const authApi = {
 
 // ── Data API (generic CRUD) ──
 
-type QueryParams = Record<string, string | number | undefined>;
+// boolean: parseFilters 가 원본 타입 보존으로 1급 처리 (filter[published]=true 등)
+type QueryParams = Record<string, string | number | boolean | undefined>;
 
 /** Recursively strip `undefined` values — Firestore rejects undefined at any nesting level.
  *  FieldValue 인스턴스(deleteField/serverTimestamp/arrayUnion/arrayRemove/increment 등)는
