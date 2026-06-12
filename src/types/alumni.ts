@@ -19,6 +19,18 @@ export type ThesisSeedSource =
   | "self_claim";
 
 /** 졸업생 학위논문(또는 연구보고서) 메타데이터 — 회원 미매핑 상태로도 적재 가능 */
+/** 사이클 43 — 제목·초록 휴리스틱 자동 추출 분석 프로필 (수동 보정 가능) */
+export interface ThesisAnalysisProfile {
+  subjects?: string[];
+  independent?: string[];
+  dependent?: string[];
+  statMethods?: string[];
+  researchMethods?: string[];
+  extractedFrom?: string;
+  extractedAt?: string;
+  extractedBy?: string;
+}
+
 export interface AlumniThesis {
   id: string;
   graduationType: GraduationType;
@@ -38,6 +50,12 @@ export interface AlumniThesis {
   keywordsRaw?: string;
   /** 교육공학 아카이브 개념 ID (archive_concepts) */
   conceptIds?: string[];
+  /** 자동 추출 분석 프로필 */
+  analysis?: ThesisAnalysisProfile;
+  /** 통계방법 가이드 연결 (archive_statistical_methods id) */
+  statMethodIds?: string[];
+  /** 연구방법 가이드 연결 (archive_research_methods id) */
+  researchMethodIds?: string[];
   /** 교육공학 아카이브 변인 ID (archive_variables) */
   variableIds?: string[];
   /** 교육공학 아카이브 측정도구 ID (archive_measurements) */
