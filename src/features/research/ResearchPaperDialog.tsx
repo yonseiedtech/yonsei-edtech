@@ -12,8 +12,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Star, ChevronLeft, ChevronRight, Save, Check } from "lucide-react";
+import { Star, ChevronLeft, ChevronRight, Save, Check, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { fetchCrossrefByDoi } from "@/lib/crossref";
 import type {
   ResearchPaper,
   PaperType,
@@ -158,6 +159,33 @@ export default function ResearchPaperDialog({
       setDirty(false);
     }
   }, [open, initial]);
+
+  const [doiFetching, setDoiFetching] = useState(false);
+
+  /** 48b: DOI → Crossref 서지정보 자동 채움 (빈 칸만 — 사용자가 쓴 값은 보존) */
+  async function fetchDoiMeta() {
+    if (!form.doi.trim() || doiFetching) return;
+    setDoiFetching(true);
+    const meta = await fetchCrossrefByDoi(form.doi);
+    setDoiFetching(false);
+    if (!meta) {
+      toast.error("DOI 정보를 찾지 못했습니다 — 형식(10.xxxx/…)을 확인해주세요.");
+      return;
+    }
+    setForm((prev) => ({
+      ...prev,
+      title: prev.title.trim() ? prev.title : meta.title ?? prev.title,
+      authors: prev.authors.trim() ? prev.authors : meta.authors ?? prev.authors,
+      year: prev.year.trim() ? prev.year : meta.year ? String(meta.year) : prev.year,
+      venue: prev.venue.trim() ? prev.venue : meta.venue ?? prev.venue,
+      volume: prev.volume.trim() ? prev.volume : meta.volume ?? prev.volume,
+      issue: prev.issue.trim() ? prev.issue : meta.issue ?? prev.issue,
+      pages: prev.pages.trim() ? prev.pages : meta.pages ?? prev.pages,
+      url: prev.url.trim() ? prev.url : meta.url ?? prev.url,
+    }));
+    setDirty(true);
+    toast.success("Crossref 에서 서지정보를 가져왔습니다 — 빈 칸만 채웠어요.");
+  }
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -478,11 +506,25 @@ export default function ResearchPaperDialog({
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="mb-1 block text-xs font-medium">DOI</label>
-                  <Input
-                    value={form.doi}
-                    onChange={(e) => update("doi", e.target.value)}
-                    placeholder="10.xxxx/yyyy"
-                  />
+                  <div className="flex gap-1.5">
+                    <Input
+                      value={form.doi}
+                      onChange={(e) => update("doi", e.target.value)}
+                      placeholder="10.xxxx/yyyy"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-9 shrink-0 px-2 text-xs"
+                      disabled={!form.doi.trim() || doiFetching}
+                      onClick={() => void fetchDoiMeta()}
+                      title="DOI 로 제목·저자·연도·저널 자동 채움 (Crossref)"
+                    >
+                      {doiFetching ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+                      <span className="ml-1">자동 채움</span>
+                    </Button>
+                  </div>
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-medium">URL</label>

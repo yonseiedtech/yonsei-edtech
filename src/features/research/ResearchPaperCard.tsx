@@ -1,9 +1,10 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Star, Clock, BookOpen, Pencil, Trash2, ExternalLink, GraduationCap, FileText, CheckCircle2, Play, Timer, Square } from "lucide-react";
+import { Star, Clock, BookOpen, Pencil, Trash2, ExternalLink, GraduationCap, FileText, CheckCircle2, Play, Timer, Square, Quote } from "lucide-react";
 import type { ResearchPaper, PaperReadStatus } from "@/types";
 import { cn } from "@/lib/utils";
+import { formatApa7 } from "@/lib/apa7";
 import { useStudyTimerStore } from "./study-timer/study-timer-store";
 import { useCreateSession, usePaperTotalMinutes } from "./study-timer/useStudySessions";
 import { toast } from "sonner";
@@ -130,6 +131,17 @@ export default function ResearchPaperCard({ paper, onEdit, onDelete, onQuickUpda
           )}
         </div>
         <div className="flex items-center gap-0.5 opacity-0 transition group-hover:opacity-100">
+          <button
+            type="button"
+            onClick={() => {
+              void navigator.clipboard.writeText(formatApa7(paper));
+              toast.success("APA 인용을 복사했습니다.");
+            }}
+            className="rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+            title="APA 인용 복사"
+          >
+            <Quote size={14} />
+          </button>
           <button
             type="button"
             onClick={onEdit}

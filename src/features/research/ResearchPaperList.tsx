@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import EmptyState from "@/components/ui/empty-state";
-import { Plus, Upload, BookOpen, Search, X, Save, FileEdit, Trash2, Pencil } from "lucide-react";
+import { Plus, Upload, BookOpen, Search, X, Save, FileEdit, Trash2, Pencil, Quote } from "lucide-react";
 import { toast } from "sonner";
 import type { ResearchPaper, User, RecentPaper, AlumniThesis } from "@/types";
 import { todayYmdLocal } from "@/lib/dday";
@@ -28,6 +28,7 @@ import {
 import ResearchPaperCard from "./ResearchPaperCard";
 import ResearchPaperDialog from "./ResearchPaperDialog";
 import RisImporter from "./RisImporter";
+import { formatApa7 } from "@/lib/apa7";
 import TagInput from "./TagInput";
 import { profilesApi, dataApi, alumniThesesApi } from "@/lib/bkend";
 import Link from "next/link";
@@ -351,6 +352,23 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
           </div>
           {!readOnly && (
             <div className="flex items-center gap-2">
+              {filtered.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const lines = [...filtered]
+                      .sort((a, b) => (a.authors ?? a.title).localeCompare(b.authors ?? b.title, "ko"))
+                      .map((pp) => formatApa7(pp));
+                    void navigator.clipboard.writeText(lines.join("\n"));
+                    toast.success(`현재 목록 ${lines.length}건을 APA 참고문헌으로 복사했습니다.`);
+                  }}
+                  title="현재 검색·필터 결과를 APA7 참고문헌 목록으로 복사"
+                >
+                  <Quote size={14} className="mr-1" />
+                  APA 내보내기
+                </Button>
+              )}
               <Button variant="outline" size="sm" onClick={() => setRisOpen(true)}>
                 <Upload size={14} className="mr-1" />
                 RIS 임포트
