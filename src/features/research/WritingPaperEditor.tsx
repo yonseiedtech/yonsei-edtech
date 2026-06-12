@@ -343,6 +343,20 @@ const ASSUMPTION_GUIDES: Record<StatMethodType, AssumptionGuide> = {
   },
 };
 
+// ── 분석 방법별 '자료 분석' 기술 골격 — 연구 방법 장용 (2026-06-12) ──
+const ANALYSIS_SECTION_HEADING = "자료 분석";
+
+const ANALYSIS_SKELETONS: Record<StatMethodType, string> = {
+  ttest: "집단 간 ___의 차이를 검증하기 위해 독립표본 t검정을 실시하였다.",
+  anova: "세 집단 이상의 ___ 차이를 검증하기 위해 일원분산분석(ANOVA)을 실시하였으며, 사후검정은 ___을 사용하였다.",
+  ancova: "집단 간 사전점수 차이를 통제하기 위해 사전점수를 공변량으로 한 공분산분석(ANCOVA)을 실시하였다.",
+  regression: "___이 ___에 미치는 영향을 검증하기 위해 회귀분석을 실시하였다.",
+  correlation: "주요 변인 간 관계를 파악하기 위해 Pearson 상관분석을 실시하였다.",
+  chisquare: "범주형 배경변수의 집단 간 동질성을 검증하기 위해 카이제곱(χ²) 검정을 실시하였다.",
+  sem: "변인 간 구조적 관계와 매개효과를 검증하기 위해 구조방정식모형(SEM) 분석을 실시하였다.",
+  factor_analysis: "측정도구의 구성타당도를 확인하기 위해 요인분석을 실시하였다.",
+};
+
 // ── 섹션(소제목)별 작성 가이드 — 부심 강의 2·3주차 일반화 (2026-06-12) ──
 // 헤딩 부분 매칭이라 사용자가 소제목을 일부 수정해도 동작한다.
 const SECTION_GUIDES: { keywords: string[]; tips: string[] }[] = [
@@ -387,6 +401,82 @@ const SECTION_GUIDES: { keywords: string[]; tips: string[] }[] = [
     tips: [
       "가설은 변인 간 관계에 대한 잠정적 결론입니다 — 이론·선행연구에 근거해 관계의 방향까지 진술하세요.",
       "변인 간 관계의 선행연구 근거가 연구모형·가설로 자연스럽게 이어지는지 점검하세요 — 근거 없는 경로는 심사에서 지적됩니다.",
+    ],
+  },
+  // ── 연구 방법 장 — 부심 강의 4~7주차 일반화 (2026-06-12) ──
+  {
+    keywords: ["연구 대상", "연구대상", "연구 참여자"],
+    tips: [
+      "모집단 → 표집 방법 → 최종 표본 순으로 기술하고, 표집 방법(무선·층화·군집·편의·목적 등)을 명명하세요 — 편의 표집이라면 일반화 한계와 연결됩니다.",
+      "표본 수의 절대 법칙은 없지만 분석 방법별 권장선을 근거로 제시하세요 — 예: t검정은 셀당 최소 5~7명, 10명 미만은 문제가 됩니다.",
+      "범주형 배경변수(성별·학년·소속 등)의 집단 간 동질성은 카이제곱(χ²)으로 검증하면 선발 위협 방어가 강해집니다.",
+      "탈락·결측은 '예방했다'가 아니라 실제 수치로 보고하는 것이 정석입니다.",
+    ],
+  },
+  {
+    keywords: ["측정 도구", "측정도구", "연구 도구", "검사 도구"],
+    tips: [
+      "도구마다 출처(원개발자·번안자)를 밝히고 '조작적 정의 → 문항 구성(하위요인·문항 수·척도) → 신뢰도 → 타당도' 순으로 기술하세요.",
+      "신뢰도는 Cronbach's α(내적 일관성)가 보편적입니다 — 선행연구의 α와 본 연구 표본의 α를 함께 보고하면 방어가 강해집니다.",
+      "신뢰도는 타당도의 필요조건일 뿐입니다(항상 5kg 적게 재는 체중계는 일관되지만 정확하지 않음) — 타당도 확보 방법을 별도로 명시하세요: 전문가 내용 타당도 / 기존 준거와의 상관(공인) / 요인분석(구인).",
+      "리커트 척도는 경험적으로 4점 이상이면 등간으로 간주해 모수 통계에 활용합니다 — 단계 수·중립 범주 포함 여부는 응답 대상의 특성을 근거로 선택했음을 밝히세요.",
+      "채점자가 개입하는 도구(루브릭·관찰지 등)는 관찰자 간 신뢰도를 함께 보고하세요.",
+      "본 검사 전 파일럿 테스트로 문항을 점검·개선했다면 그 과정을 적으세요 — 도구의 엄격성을 보여주는 근거가 됩니다.",
+    ],
+  },
+  {
+    keywords: ["연구 절차", "연구절차", "실험 절차"],
+    tips: [
+      "처치 기간의 충분성을 점검하세요 — 1~2시간의 짧은 처치로는 근본적 변화를 관찰하기 어렵습니다. 인지·태도 변화를 다루면 최소 5차시 내외가 권장됩니다.",
+      "사전검사 → 처치 → 사후검사의 시점과 간격을 명시하고, 두 집단이 처치 외 조건에서 동일했음을 보여주세요.",
+    ],
+  },
+  {
+    keywords: ["자료 분석", "분석 방법", "자료분석"],
+    tips: [
+      "분석 방법마다 선택 이유를 명시하세요 — 사전 점수 차이 통제=ANCOVA, 범주형 동질성=카이제곱(χ²), 2집단 비교=t검정.",
+      "마지막에 유의수준을 명시하세요 — 예: '모든 통계 분석은 유의수준 .05에서 검증하였다.'",
+      "사용한 통계 프로그램(SPSS·R 등)과 버전을 밝히는 것이 관례입니다.",
+    ],
+  },
+  // ── 결과·결론 장 — 부심 강의 9·11·12·13·15주차 일반화 (2026-06-12) ──
+  {
+    keywords: ["기술통계"],
+    tips: [
+      "집단별 기술통계(사례 수·평균·표준편차)를 먼저 표로 제시한 뒤 가정 검정을 보고하세요 — 독자가 분포를 먼저 봐야 검정 결과를 해석할 수 있습니다.",
+      "결과 기술은 과거시제로, p값과 함께 효과크기(Cohen's d, η²)를 보고하세요.",
+    ],
+  },
+  {
+    keywords: ["연구문제별", "연구 문제별", "가설 검증"],
+    tips: [
+      "서론의 연구 문제 순서 그대로 결과를 제시하세요 — 문제마다 '분석 결과 → 통계치(p·효과크기) → 한 줄 해석'의 리듬을 유지합니다.",
+      "결과 장에서는 '차이가 있었다(비교)'로 기술하세요 — '효과를 미쳤다(인과)'는 설계 근거와 함께 논의에서 다룹니다.",
+      "표·그림 번호와 본문 참조가 일치하는지, '매우·크게' 같은 모호 표현 대신 수치를 썼는지 점검하세요.",
+    ],
+  },
+  {
+    keywords: ["요약 및 논의", "논의"],
+    tips: [
+      "결과 ≠ 결론 — 결과 요약을 넘어, 선행연구와의 일치·불일치를 해석하고 그 이유를 논하세요.",
+      "'차이가 있다(비교)'와 '효과를 미친다(인과)'의 표현 수위를 점검하세요 — 인과 주장은 설계(통제집단·시간 선행·경쟁가설 배제) 근거와 함께만.",
+      "의견에는 근거를 붙이세요(객관성 원칙) — 해석마다 어떤 결과·선행연구에 기댄 것인지 드러나야 합니다.",
+    ],
+  },
+  {
+    keywords: ["시사점", "제언", "후속연구", "후속 연구"],
+    tips: [
+      "이론적 시사점과 실천적(현장) 시사점을 구분해 제시하면 기여가 분명해집니다.",
+      "후속연구 제언은 한계와 짝을 이뤄야 합니다 — 본 연구가 못 한 것을 다음 연구가 어떻게 풀 수 있는지로 연결하세요.",
+      "매개 기제 검증을 제언한다면 구조방정식(SEM) 기반으로 제안하면 설득력이 높습니다.",
+    ],
+  },
+  {
+    keywords: ["연구의 한계", "한계"],
+    tips: [
+      "한계 절은 '내적/외적 타당도 위협' 프레임으로 구조화하세요 — 성숙·호손효과·통계적 회귀·검사 경험 같은 요인을 명시적으로 호명하고 어떻게 통제·논의했는지 적습니다.",
+      "한계는 변명이 아니라 방어입니다 — '무엇을 통제했고, 무엇이 남았으며, 후속연구가 어떻게 보완할 수 있는지'의 구조로 쓰세요.",
+      "표본의 특수성(특정 학교·집단)이 있다면 일반화 한계(선발×실험 상호작용)로 명시하세요.",
     ],
   },
 ];
@@ -835,6 +925,33 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     });
     markDirty();
     toast.success(`${STAT_METHOD_LABELS[m]} 가정 검정 보고 골격을 추가했습니다 — 빈칸(___)을 결과값으로 채우세요.`);
+  }
+
+  /** 선택한 분석 방법의 기술 골격을 연구 방법 장 '자료 분석' 섹션에 삽입 */
+  function insertAnalysisSkeleton(m: StatMethodType) {
+    if (readOnly || !paper) return;
+    const text = ANALYSIS_SKELETONS[m];
+    const matches = (h: string) => h.includes("자료 분석") || h.includes("자료분석") || h.includes("분석 방법");
+    const target = form.sections.method.find((sec) => matches(sec.heading));
+    const existing = target ? target.paragraphs.map((par) => par.text) : [];
+    if (existing.some((e) => e.startsWith(text.slice(0, 12)))) {
+      toast.info(`${STAT_METHOD_LABELS[m]} 기술 문장은 이미 삽입되어 있습니다 — '${ANALYSIS_SECTION_HEADING}' 섹션을 확인하세요.`);
+      return;
+    }
+    setForm((prev) => {
+      const cur = [...prev.sections.method];
+      let idx = cur.findIndex((sec) => matches(sec.heading));
+      if (idx < 0) {
+        cur.push({ id: uid(), heading: ANALYSIS_SECTION_HEADING, paragraphs: [] });
+        idx = cur.length - 1;
+      }
+      const sec = cur[idx];
+      const kept = sec.paragraphs.filter((par) => par.text.trim());
+      cur[idx] = { ...sec, paragraphs: [...kept, { id: uid(), text }] };
+      return { ...prev, sections: { ...prev.sections, method: cur } };
+    });
+    markDirty();
+    toast.success(`${STAT_METHOD_LABELS[m]} 기술 문장을 '${ANALYSIS_SECTION_HEADING}' 섹션에 추가했습니다 — 빈칸(___)을 변인명으로 채우세요.`);
   }
 
   // ── 버전 스냅샷 ──
@@ -1664,6 +1781,37 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
             </ul>
           )}
         </div>
+
+        {/* 선택한 분석 방법 기술 — 연구 방법 장 한정 자동 표시 (2026-06-12) */}
+        {step === "method" && (profile?.methods?.length ?? 0) > 0 && (
+          <div className="mt-3 rounded-xl border border-sky-200/70 bg-sky-50/40 p-3.5 dark:border-sky-800/50 dark:bg-sky-950/10">
+            <p className="flex items-center gap-1.5 text-xs font-semibold text-sky-800 dark:text-sky-200">
+              <Microscope size={13} />
+              선택한 분석 방법 기술 — &lsquo;자료 분석&rsquo; 섹션에 골격을 삽입할 수 있어요
+            </p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {profile!.methods!.map((m) => (
+                <div key={m} className="flex items-center gap-1 rounded-lg bg-card/60 px-2 py-1.5">
+                  <span className="text-[11px] font-semibold text-sky-900 dark:text-sky-100">
+                    {STAT_METHOD_LABELS[m]}
+                  </span>
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      onClick={() => insertAnalysisSkeleton(m)}
+                      className="rounded-full border border-dashed border-sky-400/60 px-2 py-0.5 text-[10px] font-medium text-sky-700 transition-colors hover:bg-sky-600 hover:text-white dark:text-sky-300"
+                    >
+                      + 기술 문장 삽입
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <p className="mt-2 text-[10px] text-muted-foreground">
+              각 방법의 선택 이유(예: 사전 차이 통제=ANCOVA)를 함께 적고, 마지막은 &lsquo;모든 통계 분석은 유의수준 .05에서 검증하였다&rsquo;로 마무리하세요.
+            </p>
+          </div>
+        )}
 
         {/* 선택한 분석 방법의 기본 가정 검정 — 결과 장 한정 자동 표시 (2026-06-12) */}
         {step === "results" && (profile?.methods?.length ?? 0) > 0 && (
