@@ -178,8 +178,23 @@ function emptyParagraph() {
   return { id: uid(), text: "" };
 }
 
+/** 장 도입 요약 단락의 고정 헤딩 — UI 에서 번호 없는 전용 카드로 렌더 (2026-06-12) */
+const CHAPTER_OVERVIEW_HEADING = "장 요약";
+
+function isOverviewSection(sec: WritingSection): boolean {
+  return sec.heading.trim() === CHAPTER_OVERVIEW_HEADING;
+}
+
+/** 섹션 배열 맨 앞에 장 요약 섹션 보장 (idempotent) — 빈 단락이라 직렬화·글자수에 무영향 */
+function withOverview(list: WritingSection[]): WritingSection[] {
+  if (list.some(isOverviewSection)) return list;
+  return [{ id: uid(), heading: CHAPTER_OVERVIEW_HEADING, paragraphs: [emptyParagraph()] }, ...list];
+}
+
 function buildTemplateSections(headings: string[]): WritingSection[] {
-  return headings.map((heading) => ({ id: uid(), heading, paragraphs: [emptyParagraph()] }));
+  return withOverview(
+    headings.map((heading) => ({ id: uid(), heading, paragraphs: [emptyParagraph()] })),
+  );
 }
 
 /** v1 평문 → 섹션 1개(빈 줄 기준 단락 분리)로 이전 */
@@ -347,9 +362,9 @@ function fromPaper(p: WritingPaper | undefined, approach: ResearchApproachType):
   for (const k of CHAPTER_KEYS) {
     const structured = p.sections?.[k];
     if (structured && structured.length > 0) {
-      sections[k] = normalizeSections(structured);
+      sections[k] = withOverview(normalizeSections(structured));
     } else if (p.chapters?.[k]?.trim()) {
-      sections[k] = migratePlainText(p.chapters[k]!);
+      sections[k] = withOverview(migratePlainText(p.chapters[k]!));
     } else {
       sections[k] = buildTemplateSections(templateHeadings(k, approach));
     }
@@ -607,6 +622,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       const idx = arr.findIndex((s) => s.id === sectionId);
       const to = idx + dir;
       if (idx < 0 || to < 0 || to >= arr.length) return prev;
+      if (isOverviewSection(arr[to])) return prev; // 장 요약 위로는 이동 불가
       const next = [...arr];
       [next[idx], next[to]] = [next[to], next[idx]];
       return { ...prev, sections: { ...prev.sections, [k]: next } };
@@ -813,8 +829,8 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       const sections = {} as SectionsState;
       for (const k of CHAPTER_KEYS) {
         const structured = v.sections?.[k];
-        if (structured && structured.length > 0) sections[k] = normalizeSections(structured);
-        else if (v.chapters?.[k]?.trim()) sections[k] = migratePlainText(v.chapters[k]!);
+        if (structured && structured.length > 0) sections[k] = withOverview(normalizeSections(structured));
+        else if (v.chapters?.[k]?.trim()) sections[k] = withOverview(migratePlainText(v.chapters[k]!));
         else sections[k] = buildTemplateSections(templateHeadings(k, restoredApproach));
       }
       setForm({ title: v.title ?? "", sections });
@@ -871,6 +887,11 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         const paras = sec.paragraphs.map((par) => par.text.trim()).filter(Boolean);
         if (paras.length === 0) continue;
         hasBody = true;
+        if (isOverviewSection(sec)) {
+          // 장 요약은 번호·헤딩 없이 장 제목 바로 아래 도입 단락으로
+          for (const t of paras) chapterLines.push(t, "");
+          continue;
+        }
         secNo += 1;
         chapterLines.push(`${secNo}. ${sec.heading.trim() || "본문"}`, "");
         for (const t of paras) chapterLines.push(t, "");
@@ -909,6 +930,8 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   const total = useMemo(() => totalChars(form), [form]);
   const guides = getChapterGuides(step, profile?.approach);
   const currentSections = form.sections[step];
+  const overviewSection = currentSections.find(isOverviewSection);
+  const bodySections = currentSections.filter((sec) => !isOverviewSection(sec));
   const unusedTemplates = templateHeadings(step, approach).filter(
     (h) => !currentSections.some((s) => s.heading.trim() === h),
   );
@@ -1336,8 +1359,54 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           </span>
         </div>
 
+        {/* 장 요약 — 세부 절 앞 도입 단락 (항상 표시) */}
+        {overviewSection && (
+          <div className="mt-3 rounded-xl border border-dashed border-primary/35 bg-primary/[0.03] p-3.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-bold text-primary">{CHAPTER_OVERVIEW_HEADING}</span>
+              <span className="text-[10px] text-muted-foreground">
+                이 장에서 무엇을 다루는지 한두 단락으로 개관하세요 — 세부 절 앞에 배치됩니다
+              </span>
+            </div>
+            <div className="mt-2 space-y-2">
+              {overviewSection.paragraphs.map((p, pi) => (
+                <div key={p.id} className="group relative">
+                  <Textarea
+                    className="min-h-[64px] font-sans text-sm leading-relaxed"
+                    rows={2}
+                    value={p.text}
+                    placeholder={`예: 본 장에서는 …을 검토한다. 먼저 …을 살펴보고, 이어서 …을 논의한다.`}
+                    onChange={(e) => updateParagraph(step, overviewSection.id, p.id, e.target.value)}
+                    disabled={readOnly || !paper}
+                  />
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      onClick={() => removeParagraph(step, overviewSection.id, p.id)}
+                      aria-label="요약 단락 삭제"
+                      className="absolute right-2 top-2 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive sm:text-muted-foreground/0 sm:group-focus-within:text-muted-foreground sm:group-hover:text-muted-foreground"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={() => addParagraph(step, overviewSection.id)}
+                className="mt-2 inline-flex items-center gap-1 rounded-md border border-dashed px-2.5 py-1 text-[11px] text-muted-foreground hover:border-primary/40 hover:text-primary"
+              >
+                <Plus size={11} />
+                요약 단락 추가
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="mt-3 space-y-4">
-          {currentSections.map((sec, si) => (
+          {bodySections.map((sec, si) => (
             <div key={sec.id} className="rounded-xl border bg-background/50 p-3.5">
               {/* 섹션 헤더 */}
               <div className="flex items-center gap-2">
@@ -1366,7 +1435,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                       size="sm"
                       className="h-7 w-7 p-0 text-muted-foreground hover:text-primary"
                       aria-label="섹션 아래로 이동"
-                      disabled={si === currentSections.length - 1}
+                      disabled={si === bodySections.length - 1}
                       onClick={() => moveSection(step, sec.id, 1)}
                     >
                       <ArrowDown size={13} />
