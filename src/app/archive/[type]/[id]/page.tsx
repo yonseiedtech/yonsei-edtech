@@ -260,6 +260,11 @@ export default function ArchiveDetailPage() {
       ? JOURNEY_STAGES.filter((st) => st.archiveTopics?.some((t) => t.label === item.name))
       : [];
   const references = (item as { references?: string[] }).references ?? [];
+  // 이론 개념의 대표 학자·원전 — 시드 시 URL 전수 검증됨 (사이클 47)
+  const keyScholars = (item as { keyScholars?: string[] }).keyScholars ?? [];
+  const seminalWorks =
+    (item as { seminalWorks?: { citation: string; url: string | null; openAccess: boolean }[] })
+      .seminalWorks ?? [];
 
   // 목차 섹션 — type 별 차이 반영. id 는 본문 섹션과 일치해야 함.
   // 본문 카드가 통합형이라 일부 sub-id 는 본문 카드 내부의 anchor span 으로 부여한다.
@@ -281,6 +286,8 @@ export default function ArchiveDetailPage() {
       base.push({ id: "measurements", label: "연결된 변인·개념" });
     }
     base.push({ id: "related-theses", label: "관련 졸업생 논문" });
+    if (keyScholars.length > 0 || seminalWorks.length > 0)
+      base.push({ id: "seminal-works", label: "대표 학자·원전" });
     if (references.length > 0) base.push({ id: "references", label: "참고문헌" });
     return base;
   })();
@@ -448,6 +455,52 @@ export default function ArchiveDetailPage() {
               <ExternalLink className="h-3.5 w-3.5" />
               외부 자료
             </a>
+          )}
+
+          {(keyScholars.length > 0 || seminalWorks.length > 0) && (
+            <div id="seminal-works" className="scroll-mt-24">
+              <p className="font-medium text-sm mb-1.5 flex items-center gap-1">
+                <GraduationCap className="h-3.5 w-3.5" />
+                대표 학자·원전
+              </p>
+              {keyScholars.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-1.5">
+                  {keyScholars.map((sch) => (
+                    <span
+                      key={sch}
+                      className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700 dark:border-indigo-400/30 dark:bg-indigo-950/30 dark:text-indigo-300"
+                    >
+                      {sch}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {seminalWorks.length > 0 && (
+                <ul className="space-y-1.5 text-xs text-muted-foreground">
+                  {seminalWorks.map((w, i) => (
+                    <li key={i} className="flex flex-wrap items-baseline gap-x-1.5">
+                      <span>{w.citation}</span>
+                      {w.url && (
+                        <a
+                          href={w.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-0.5 whitespace-nowrap text-blue-600 hover:underline"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          {w.openAccess ? "원문 보기" : "출판사 링크"}
+                        </a>
+                      )}
+                      {w.openAccess && (
+                        <span className="inline-flex items-center rounded bg-emerald-100 px-1 py-px text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                          무료 공개
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           )}
 
           {references.length > 0 && (

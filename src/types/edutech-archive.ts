@@ -51,6 +51,10 @@ export interface ArchiveConcept extends ArchiveOperationalMeta {
   /** 연결된 변인 ID */
   variableIds?: string[];
   references?: string[];
+  /** 이론 개념의 대표 학자 (예: ["John Sweller"]) — URL 사전 검증 시드 (사이클 47) */
+  keyScholars?: string[];
+  /** 원전(seminal work) — url 은 OA 직링크 또는 doi.org, 단행본은 null */
+  seminalWorks?: { citation: string; url: string | null; openAccess: boolean }[];
   /**
    * Phase 5 — 시드 멱등성 키. `concept:{slug}` 형식.
    * 이 값이 있으면 시드 함수는 이름 대신 seedKey 로 upsert (이름 수정해도 동일 항목 인식).
