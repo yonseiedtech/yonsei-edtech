@@ -61,8 +61,8 @@ import {
   STAT_METHOD_LABELS,
 } from "@/types";
 import type { StatMethodType } from "@/types";
-import { advisorFeedbackApi, writingPapersApi, writingPaperVersionsApi } from "@/lib/bkend";
-import type { AdvisorFeedbackNote } from "@/types";
+import { advisorFeedbackApi, writingPapersApi, writingPaperVersionsApi, researchProposalsApi } from "@/lib/bkend";
+import type { AdvisorFeedbackNote, ResearchProposal } from "@/types";
 import { useStudyTimerStore } from "./study-timer/study-timer-store";
 import { useCreateSession, useStudySessionsByWritingPaper } from "./study-timer/useStudySessions";
 import {
@@ -691,6 +691,14 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     queryFn: async () =>
       (await advisorFeedbackApi.listByUser(user.id)).data as AdvisorFeedbackNote[],
   });
+  // P2: 연구계획서 — 빈 서론/방법 장 시딩용 (코크핏과 동일 캐시 키)
+  const { data: proposals = [] } = useQuery({
+    queryKey: ["research-proposals", user.id],
+    queryFn: async () => (await researchProposalsApi.listByUser(user.id)).data as ResearchProposal[],
+    enabled: !readOnly && !!user.id,
+    staleTime: 5 * 60_000,
+  });
+
   const pendingByChapter = useMemo(() => {
     const map = new Map<string, AdvisorFeedbackNote[]>();
     for (const n of feedbackNotes) {
@@ -1138,6 +1146,45 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     markDirty();
     if (step !== "results") setStep("results");
     toast.success("분석 결과를 '기술통계 및 가정 검정' 섹션에 삽입했습니다 — 표 번호를 채우고 저장하세요.");
+  }
+
+  /** P2: 연구계획서의 목적·범위·방법을 빈 서론/방법 장의 초안 단락으로 시딩 */
+  async function seedFromProposal() {
+    if (readOnly || !paper || proposals.length === 0) return;
+    const prop = proposals[0];
+    const introEmpty = chapterIsEmpty(form.sections.intro);
+    const methodEmpty = chapterIsEmpty(form.sections.method);
+    if (!introEmpty && !methodEmpty) {
+      toast.info("서론·연구 방법 장에 이미 작성분이 있어 시딩을 건너뜁니다.");
+      return;
+    }
+    setForm((prev) => {
+      const next = { ...prev.sections } as SectionsState;
+      if (introEmpty) {
+        const secs = [...next.intro];
+        let idx = secs.findIndex((sec) => sec.heading.includes("연구 목적"));
+        if (idx < 0) idx = secs.length - 1;
+        const adds: { id: string; text: string }[] = [];
+        if (prop.purpose?.trim()) adds.push({ id: uid(), text: prop.purpose.trim() });
+        if (prop.scope?.trim()) adds.push({ id: uid(), text: `본 연구의 범위는 다음과 같다. ${prop.scope.trim()}` });
+        if (adds.length > 0) {
+          const kept = secs[idx].paragraphs.filter((par) => par.text.trim());
+          secs[idx] = { ...secs[idx], paragraphs: [...kept, ...adds] };
+          next.intro = secs;
+        }
+      }
+      if (methodEmpty && prop.method?.trim()) {
+        const secs = [...next.method];
+        const ovIdx = secs.findIndex((sec) => isOverviewSection(sec));
+        const idx = ovIdx >= 0 ? ovIdx : 0;
+        const kept = secs[idx].paragraphs.filter((par) => par.text.trim());
+        secs[idx] = { ...secs[idx], paragraphs: [...kept, { id: uid(), text: prop.method.trim() }] };
+        next.method = secs;
+      }
+      return { ...prev, sections: next };
+    });
+    markDirty();
+    toast.success("연구계획서 내용을 초안으로 가져왔습니다 — 본문 수준으로 다듬어 저장하세요.");
   }
 
   /**
@@ -1747,6 +1794,20 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           />
         </div>
       </section>
+
+      {/* P2: 계획서 → 본문 시딩 배너 (빈 서론/방법 장 + 계획서 보유 시) */}
+      {!readOnly && paper && proposals.length > 0 &&
+        (chapterIsEmpty(form.sections.intro) || chapterIsEmpty(form.sections.method)) && (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 px-4 py-3">
+            <p className="text-xs text-foreground/85">
+              작성하신 <span className="font-semibold">연구계획서</span>가 있어요 — 목적·범위·방법을 서론과 연구 방법 장의
+              초안으로 가져올 수 있습니다. <span className="text-muted-foreground">(관례상 계획서 1~3장이 학위논문 1~3장의 모태)</span>
+            </p>
+            <Button size="sm" variant="outline" className="h-7 shrink-0 text-xs" onClick={() => void seedFromProposal()}>
+              계획서에서 가져오기
+            </Button>
+          </div>
+        )}
 
       {/* ── 버전 스냅샷 패널 ── */}
       <section className="rounded-2xl border bg-card">

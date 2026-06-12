@@ -27,9 +27,12 @@ import {
   Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { useWritingPaper } from "./useWritingPaper";
+import { computeThesisProgress } from "./thesis-progress";
 import { Badge } from "@/components/ui/badge";
-import { profilesApi } from "@/lib/bkend";
+import { profilesApi, researchPapersApi, researchReportsApi, researchProposalsApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { getEffectiveSemesterCount } from "@/lib/interview-target";
 import type { User } from "@/types";
@@ -222,6 +225,53 @@ export default function ThesisJourney({ user, editable = true }: Props) {
     }
   }
 
+  // P4: 단계별 산출물 현황 — 기존 캐시 키 재사용 (본인 화면 한정)
+  const { data: myPapers = [] } = useQuery({
+    queryKey: ["research-papers", user.id],
+    queryFn: async () => (await researchPapersApi.list(user.id)).data,
+    enabled: editable && !!user.id,
+    staleTime: 5 * 60_000,
+  });
+  const { data: myReports = [] } = useQuery({
+    queryKey: ["research-reports", user.id],
+    queryFn: async () => (await researchReportsApi.listByUser(user.id)).data,
+    enabled: editable && !!user.id,
+    staleTime: 5 * 60_000,
+  });
+  const { data: myProposals = [] } = useQuery({
+    queryKey: ["research-proposals", user.id],
+    queryFn: async () => (await researchProposalsApi.listByUser(user.id)).data,
+    enabled: editable && !!user.id,
+    staleTime: 5 * 60_000,
+  });
+  const { paper: myPaper } = useWritingPaper(editable ? user.id : "");
+  const writingPercent = useMemo(
+    () => computeThesisProgress({ paper: myPaper ?? null, hasProposal: myProposals.length > 0 }).percent,
+    [myPaper, myProposals.length],
+  );
+  const completedReads = useMemo(
+    () => (myPapers as { readStatus?: string; isDraft?: boolean }[]).filter((pp) => !pp.isDraft && pp.readStatus === "completed").length,
+    [myPapers],
+  );
+
+  /** 단계별 산출물 칩 텍스트 — 없으면 null */
+  function outputChip(stageNo: number): string | null {
+    if (!editable) return null;
+    switch (stageNo) {
+      case 1:
+        return completedReads > 0 ? `완독 ${completedReads}편` : null;
+      case 2:
+        return myReports.length > 0 ? `연구보고서 ${myReports.length}건` : null;
+      case 3:
+        return myProposals.length > 0 ? `계획서 ${myProposals.length}건` : null;
+      case 4:
+      case 5:
+        return writingPercent > 0 ? `본문 ${writingPercent}%` : null;
+      default:
+        return null;
+    }
+  }
+
   const stage = JOURNEY_STAGES[viewStage - 1];
   const StageIcon = stage.icon;
   const isCurrentView = viewStage === currentStage;
@@ -368,6 +418,13 @@ export default function ThesisJourney({ user, editable = true }: Props) {
                 )}
               </div>
               <p className="mt-1 text-xs text-muted-foreground">{stage.goal}</p>
+              {outputChip(stage.stage) && (
+                <p className="mt-1">
+                  <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
+                    내 산출물 · {outputChip(stage.stage)}
+                  </span>
+                </p>
+              )}
             </div>
           </div>
 
