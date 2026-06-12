@@ -37,12 +37,17 @@ async function syncCollection<T extends { name: string }>(
   const createdNames: string[] = [];
   for (const item of toCreate) {
     const now = NOW_ISO();
-    await db.collection(collectionName).add({
-      ...buildPayload(item),
-      createdAt: now,
-      updatedAt: now,
-      createdBy: "system:cron-seed-sync",
-    });
+    // Firestore 는 undefined 값을 거부 — 옵셔널 필드(resourceUrl 등)가 빈 시드에서
+    // add 가 throw 되어 측정도구 sync 가 통째로 실패하던 버그 수정 (2026-06-13 실증)
+    const payload = Object.fromEntries(
+      Object.entries({
+        ...buildPayload(item),
+        createdAt: now,
+        updatedAt: now,
+        createdBy: "system:cron-seed-sync",
+      }).filter(([, v]) => v !== undefined),
+    );
+    await db.collection(collectionName).add(payload);
     createdNames.push(item.name);
   }
   return {
