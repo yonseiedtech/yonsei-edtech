@@ -33,7 +33,7 @@ import {
   Save, FileText, CheckCircle2, ChevronLeft, ChevronRight,
   BookOpen, FlaskConical, Microscope, BarChart3, Flag,
   Play, Timer, Lightbulb, Plus, Trash2, History,
-  Diff, RotateCcw, ArrowUp, ArrowDown, Download, ClipboardCheck, Quote, Copy,
+  Diff, RotateCcw, ArrowUp, ArrowDown, Download, ClipboardCheck, Quote, Copy, Calculator,
   Loader2, Compass, GraduationCap,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -42,6 +42,7 @@ import { chapterCharCount } from "./thesis-progress";
 import { lintThesis, questionCoverage, LINT_CHAPTER_LABELS, type LintIssue, type QuestionCoverage } from "./writing-lint";
 import { phrasesForChapter } from "./phrase-bank";
 import MethodHelper, { STAT_METHOD_DESCRIPTIONS, type DesignRef } from "./MethodHelper";
+import DataAnalyzer from "./DataAnalyzer";
 import type {
   User,
   WritingPaper,
@@ -670,6 +671,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   const [lintIssues, setLintIssues] = useState<LintIssue[] | null>(null);
   const [lintCoverage, setLintCoverage] = useState<QuestionCoverage[]>([]);
   const [phrasesOpen, setPhrasesOpen] = useState(false);
+  const [analyzerOpen, setAnalyzerOpen] = useState(false);
   const ensureTriggeredRef = useRef(false);
 
   // 연구 방향 다이얼로그
@@ -1107,6 +1109,32 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     toast.success(`${STAT_METHOD_LABELS[m]} 결과 표 골격을 추가했습니다 — 표 번호와 수치를 채우세요.`);
   }
 
+  /** 데이터 분석기 결과(표·보고 문장)를 결과 장 '가정 검정' 섹션에 삽입 */
+  function insertAnalysisResultText(text: string) {
+    if (readOnly || !paper || !text.trim()) return;
+    const target = form.sections.results.find((sec) => sec.heading.includes("가정 검정"));
+    const existing = target ? target.paragraphs.map((par) => par.text) : [];
+    if (existing.includes(text)) {
+      toast.info("동일한 분석 결과가 이미 삽입되어 있습니다.");
+      return;
+    }
+    setForm((prev) => {
+      const cur = [...prev.sections.results];
+      let idx = cur.findIndex((sec) => sec.heading.includes("가정 검정"));
+      if (idx < 0) {
+        cur.unshift({ id: uid(), heading: ASSUMPTION_SECTION_HEADING, paragraphs: [] });
+        idx = 0;
+      }
+      const sec = cur[idx];
+      const kept = sec.paragraphs.filter((par) => par.text.trim());
+      cur[idx] = { ...sec, paragraphs: [...kept, { id: uid(), text }] };
+      return { ...prev, sections: { ...prev.sections, results: cur } };
+    });
+    markDirty();
+    if (step !== "results") setStep("results");
+    toast.success("분석 결과를 '기술통계 및 가정 검정' 섹션에 삽입했습니다 — 표 번호를 채우고 저장하세요.");
+  }
+
   /**
    * 선택한 분석 방법들의 골격(자료 분석 문장 + 가정 검정 보고)을
    * 방법·결과 장에 자동 배치 — 가정을 놓치지 않도록 섹션을 미리 생성한다.
@@ -1495,6 +1523,14 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         </DialogContent>
       </Dialog>
 
+      {/* ── 데이터 분석기 ── */}
+      <DataAnalyzer
+        open={analyzerOpen}
+        onOpenChange={setAnalyzerOpen}
+        onInsertText={insertAnalysisResultText}
+        readOnly={readOnly}
+      />
+
       {/* ── 자가 점검 결과 다이얼로그 ── */}
       <Dialog open={lintOpen} onOpenChange={setLintOpen}>
         <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-2xl">
@@ -1638,6 +1674,10 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                 })()}
               </span>
             )}
+            <Button variant="outline" size="sm" onClick={() => setAnalyzerOpen(true)} title="엑셀 데이터를 붙여넣으면 t검정·ANOVA·ANCOVA 등을 분석해 표를 생성합니다 (브라우저 내 계산)">
+              <Calculator size={12} className="mr-1" />
+              데이터 분석
+            </Button>
             <Button variant="outline" size="sm" onClick={runLint} title="부심 작성 원칙 기반 자가 점검 (정확성·객관성·일관성·시제·인과 수위)">
               <ClipboardCheck size={12} className="mr-1" />
               자가 점검
