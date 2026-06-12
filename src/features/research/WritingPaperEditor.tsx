@@ -339,6 +339,60 @@ const ASSUMPTION_GUIDES: Record<StatMethodType, AssumptionGuide> = {
   },
 };
 
+// ── 섹션(소제목)별 작성 가이드 — 부심 강의 2·3주차 일반화 (2026-06-12) ──
+// 헤딩 부분 매칭이라 사용자가 소제목을 일부 수정해도 동작한다.
+const SECTION_GUIDES: { keywords: string[]; tips: string[] }[] = [
+  {
+    keywords: ["연구의 필요성", "연구 필요성"],
+    tips: [
+      "'왜 이 연구인가'는 선행연구의 부족한 점을 비판적으로 짚을 때 설득력이 생깁니다 — 요약 나열이 아니라 한계를 명시하고, 내 연구가 그 공백을 어떻게 채우는지로 마무리하세요.",
+      "필요성 논증의 3축을 점검하세요: 참신성(새로운 문제·방법·자료) · 중요성(이론적 의의 + 실용적 가치) · 해결 가능성(내 역량과 환경에서 가능한 범위).",
+      "근거 없이 변인을 등장시키면 연구의 중요성을 설명할 수 없고 결과 논의도 막힙니다 — 모든 핵심 변인은 선행연구·이론 근거와 함께 도입하세요.",
+      "해당 분야 메타분석이 있다면 인용하세요 — 필요성과 기대 효과크기의 근거가 한층 강해집니다.",
+    ],
+  },
+  {
+    keywords: ["연구 목적", "연구 문제", "연구목적", "연구문제"],
+    tips: [
+      "위계를 지키세요: 연구 주제(포괄) → 연구 목적('…에 차이가 있는지 살펴보고자 한다' 수준의 구체) → 연구 문제(매우 구체).",
+      "연구 문제는 서술문보다 의문문이 연구자의 생각을 더 분명히 보여줍니다 — 여러 개라면 복합 서술문 대신 각각 별개의 의문문으로 진술하세요.",
+      "잘 진술된 연구 문제의 시금석: 서술문으로 바꿨을 때 그대로 연구 가설이 되는가? (예: '…에 따라 차이가 있을 것인가?' → '…에 따라 차이가 있다')",
+      "연구 문제에는 독립변인(원인)과 종속변인(결과)이 측정 가능한 수준으로 드러나야 합니다.",
+      "'본 연구의 목적은 ~'으로 시작했다면 '~하는 데 있다'로 받아 주술 호응을 맞추세요.",
+    ],
+  },
+  {
+    keywords: ["핵심 개념", "개념과 이론", "이론적 고찰"],
+    tips: [
+      "구인(構因)마다 '개념 정의 → 측정 방법 → 선행연구 결과' 순으로 조직하면 읽기 쉽습니다.",
+      "2차 자료(교과서·개론서)보다 1차 자료(학술지·학위논문)를 인용하세요 — 권위 있는 학술지 인용이 신뢰를 만듭니다.",
+      "이론·정의는 현재시제(~이다), 특정 연구의 결과는 과거시제(~하였다)로 구분합니다.",
+    ],
+  },
+  {
+    keywords: ["선행연구", "선행 연구"],
+    tips: [
+      "선행연구 고찰은 요약 나열이 아니라 종합입니다 — 무엇이 밝혀졌고, 무엇이 엇갈리며, 무엇이 비어 있는지의 흐름으로 재구성하세요.",
+      "문헌 고찰의 목적 5가지를 점검하세요: 현황 파악 · 연구 문제 정교화 · 해결 방안 탐색 · 이론적 기초 수립 · 기존 연구의 한계 파악.",
+      "내 연구와 유사한 설계의 연구를 충분히 확보하세요 — 그 연구들의 방식·논리·한계가 내 연구 정당화의 재료가 됩니다.",
+    ],
+  },
+  {
+    keywords: ["연구모형", "가설"],
+    tips: [
+      "가설은 변인 간 관계에 대한 잠정적 결론입니다 — 이론·선행연구에 근거해 관계의 방향까지 진술하세요.",
+      "변인 간 관계의 선행연구 근거가 연구모형·가설로 자연스럽게 이어지는지 점검하세요 — 근거 없는 경로는 심사에서 지적됩니다.",
+    ],
+  },
+];
+
+function getSectionGuides(heading: string): string[] | null {
+  const h = heading.trim();
+  if (!h) return null;
+  const found = SECTION_GUIDES.find((g) => g.keywords.some((k) => h.includes(k)));
+  return found ? found.tips : null;
+}
+
 function buildEmptyForm(approach: ResearchApproachType): FormState {
   const sections = {} as SectionsState;
   for (const k of CHAPTER_KEYS) sections[k] = buildTemplateSections(templateHeadings(k, approach));
@@ -430,6 +484,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   const baseSavedAtRef = useRef<string | null>(null);
   const [step, setStep] = useState<StepKey>("intro");
   const [guideOpen, setGuideOpen] = useState(false);
+  const [sectionGuideOpen, setSectionGuideOpen] = useState<string | null>(null);
   const ensureTriggeredRef = useRef(false);
 
   // 연구 방향 다이얼로그
@@ -1418,6 +1473,23 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                   onChange={(e) => updateSection(step, sec.id, { heading: e.target.value })}
                   disabled={readOnly}
                 />
+                {getSectionGuides(sec.heading) && (
+                  <button
+                    type="button"
+                    onClick={() => setSectionGuideOpen((cur) => (cur === sec.id ? null : sec.id))}
+                    aria-expanded={sectionGuideOpen === sec.id}
+                    aria-label="이 섹션 작성 가이드"
+                    title="이 섹션 작성 가이드"
+                    className={cn(
+                      "shrink-0 rounded-md p-1.5 transition-colors",
+                      sectionGuideOpen === sec.id
+                        ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+                        : "text-amber-500/80 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-950/30",
+                    )}
+                  >
+                    <Lightbulb size={14} />
+                  </button>
+                )}
                 {!readOnly && (
                   <div className="flex shrink-0 items-center gap-0.5">
                     <Button
@@ -1452,6 +1524,21 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                   </div>
                 )}
               </div>
+
+              {/* 섹션 작성 가이드 — 부심 강의 2·3주차 일반화 */}
+              {sectionGuideOpen === sec.id && getSectionGuides(sec.heading) && (
+                <ul className="mt-2 space-y-1.5 rounded-lg border border-amber-200/60 bg-amber-50/50 px-3 py-2.5 dark:border-amber-800/40 dark:bg-amber-950/15">
+                  {getSectionGuides(sec.heading)!.map((tip, ti) => (
+                    <li
+                      key={ti}
+                      className="flex gap-1.5 text-[11px] leading-relaxed text-amber-900/90 dark:text-amber-100/90"
+                    >
+                      <span className="mt-0.5 shrink-0">·</span>
+                      {tip}
+                    </li>
+                  ))}
+                </ul>
+              )}
 
               {/* 단락들 */}
               <div className="mt-2 space-y-2">
