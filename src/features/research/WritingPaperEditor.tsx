@@ -33,12 +33,14 @@ import {
   Save, FileText, CheckCircle2, ChevronLeft, ChevronRight,
   BookOpen, FlaskConical, Microscope, BarChart3, Flag,
   Play, Timer, Lightbulb, Plus, Trash2, History,
-  Diff, RotateCcw, ArrowUp, ArrowDown, Download,
+  Diff, RotateCcw, ArrowUp, ArrowDown, Download, ClipboardCheck, Quote, Copy,
   Loader2, Compass, GraduationCap,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { chapterCharCount } from "./thesis-progress";
+import { lintThesis, extractResearchQuestions, LINT_CHAPTER_LABELS, type LintIssue } from "./writing-lint";
+import { phrasesForChapter } from "./phrase-bank";
 import type {
   User,
   WritingPaper,
@@ -580,6 +582,10 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   const [step, setStep] = useState<StepKey>("intro");
   const [guideOpen, setGuideOpen] = useState(false);
   const [sectionGuideOpen, setSectionGuideOpen] = useState<string | null>(null);
+  const [lintOpen, setLintOpen] = useState(false);
+  const [lintIssues, setLintIssues] = useState<LintIssue[] | null>(null);
+  const [lintQuestions, setLintQuestions] = useState<string[]>([]);
+  const [phrasesOpen, setPhrasesOpen] = useState(false);
   const ensureTriggeredRef = useRef(false);
 
   // 연구 방향 다이얼로그
@@ -1051,6 +1057,13 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     }
   }
 
+  /** 자가 점검 — 부심 작성 원칙 기반 규칙 검사 (writing-lint 순수 엔진) */
+  function runLint() {
+    setLintIssues(lintThesis(form.sections));
+    setLintQuestions(extractResearchQuestions(form.sections));
+    setLintOpen(true);
+  }
+
   /** 작성 본문을 평문 .txt 로 내보내기 — 장(Ⅰ~Ⅴ)·섹션 번호·단락 빈 줄 구분 */
   function handleExportText() {
     const roman = ["Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ"];
@@ -1246,6 +1259,93 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         </DialogContent>
       </Dialog>
 
+      {/* ── 자가 점검 결과 다이얼로그 ── */}
+      <Dialog open={lintOpen} onOpenChange={setLintOpen}>
+        <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ClipboardCheck size={17} className="text-primary" />
+              글쓰기 자가 점검
+              {lintIssues && (
+                <span className="text-xs font-normal text-muted-foreground">
+                  지적 {lintIssues.filter((i) => i.severity === "warn").length} · 제안{" "}
+                  {lintIssues.filter((i) => i.severity === "info").length}
+                </span>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-[11px] text-muted-foreground">
+            작성 원칙(정확성·객관성·일관성·가독성)과 시제·인과 수위·효과크기를 규칙 기반으로 검사합니다.
+            모든 항목은 제안이며 최종 판단은 작성자의 몫입니다.
+          </p>
+          {lintIssues && lintIssues.length === 0 && (
+            <p className="rounded-lg bg-emerald-50 px-3 py-4 text-center text-sm text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
+              ✓ 규칙 검사를 모두 통과했습니다.
+            </p>
+          )}
+          {lintIssues && lintIssues.length > 0 && (
+            <div className="space-y-3">
+              {(["intro", "background", "method", "results", "conclusion"] as const).map((ch) => {
+                const chIssues = lintIssues.filter((i) => i.chapter === ch);
+                if (chIssues.length === 0) return null;
+                return (
+                  <div key={ch}>
+                    <div className="mb-1 flex items-center justify-between">
+                      <p className="text-xs font-bold">{LINT_CHAPTER_LABELS[ch]} ({chIssues.length})</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStep(ch);
+                          setLintOpen(false);
+                        }}
+                        className="text-[11px] text-primary hover:underline"
+                      >
+                        이 장으로 이동 →
+                      </button>
+                    </div>
+                    <ul className="space-y-1.5">
+                      {chIssues.map((issue, ii) => (
+                        <li
+                          key={ii}
+                          className={cn(
+                            "rounded-lg border px-2.5 py-2 text-[11px] leading-relaxed",
+                            issue.severity === "warn"
+                              ? "border-amber-200/70 bg-amber-50/50 text-amber-900 dark:border-amber-800/40 dark:bg-amber-950/15 dark:text-amber-100"
+                              : "border-sky-200/70 bg-sky-50/40 text-sky-900 dark:border-sky-800/40 dark:bg-sky-950/15 dark:text-sky-100",
+                          )}
+                        >
+                          {issue.sectionHeading && (
+                            <span className="mr-1 font-semibold">[{issue.sectionHeading}]</span>
+                          )}
+                          {issue.message}
+                          {issue.excerpt && (
+                            <span className="mt-0.5 block text-[10px] opacity-70">{issue.excerpt}</span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {lintQuestions.length > 0 && (
+            <div className="rounded-lg border border-dashed px-3 py-2.5">
+              <p className="text-[11px] font-semibold">
+                서론에서 추출한 연구 문제 {lintQuestions.length}개 — 결과 장에서 문제별로 응답했는지 대조하세요
+              </p>
+              <ul className="mt-1 space-y-0.5">
+                {lintQuestions.map((q, qi) => (
+                  <li key={qi} className="text-[11px] text-muted-foreground">
+                    · {q}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* ── 헤더 ── */}
       <section className="rounded-2xl border bg-card p-5">
         <div className="flex items-start justify-between gap-3">
@@ -1292,6 +1392,10 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                 })()}
               </span>
             )}
+            <Button variant="outline" size="sm" onClick={runLint} title="부심 작성 원칙 기반 자가 점검 (정확성·객관성·일관성·시제·인과 수위)">
+              <ClipboardCheck size={12} className="mr-1" />
+              자가 점검
+            </Button>
             <Button variant="outline" size="sm" onClick={handleExportText} title="작성 본문을 텍스트 파일로 다운로드">
               <Download size={12} className="mr-1" />
               내보내기
@@ -1779,6 +1883,59 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                 </li>
               ))}
             </ul>
+          )}
+        </div>
+
+        {/* 학술 문형 은행 — 장별 정형 문형, 클릭=클립보드 복사 (2026-06-12) */}
+        <div className="mt-3 rounded-xl border border-violet-200/70 bg-violet-50/30 dark:border-violet-800/50 dark:bg-violet-950/10">
+          <button
+            type="button"
+            onClick={() => setPhrasesOpen((v) => !v)}
+            aria-expanded={phrasesOpen}
+            className="flex w-full items-center justify-between px-3.5 py-2.5 text-left"
+          >
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-violet-800 dark:text-violet-200">
+              <Quote size={13} />
+              학술 문형 — {STEPS[stepIdx].label}에서 자주 쓰는 표현
+              <span className="font-normal text-violet-700/70 dark:text-violet-300/70">(클릭하면 복사돼요)</span>
+            </span>
+            <ChevronRight
+              size={14}
+              className={cn(
+                "shrink-0 text-violet-700/70 transition-transform dark:text-violet-300/70",
+                phrasesOpen && "rotate-90",
+              )}
+            />
+          </button>
+          {phrasesOpen && (
+            <div className="space-y-2.5 border-t border-violet-200/60 px-3.5 py-3 dark:border-violet-800/40">
+              {phrasesForChapter(step).map((group) => (
+                <div key={group.label}>
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-violet-700/80 dark:text-violet-300/80">
+                    {group.label}
+                  </p>
+                  <ul className="space-y-1">
+                    {group.phrases.map((phrase) => (
+                      <li key={phrase}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void navigator.clipboard.writeText(phrase).then(
+                              () => toast.success("문형이 복사되었습니다 — 원하는 단락에 붙여넣고 빈칸(___)을 채우세요."),
+                              () => toast.error("복사에 실패했습니다."),
+                            );
+                          }}
+                          className="group flex w-full items-start gap-1.5 rounded-md px-2 py-1 text-left text-[11px] leading-relaxed text-violet-900/90 transition-colors hover:bg-violet-100/60 dark:text-violet-100/90 dark:hover:bg-violet-900/30"
+                        >
+                          <Copy size={10} className="mt-0.5 shrink-0 opacity-40 group-hover:opacity-100" />
+                          {phrase}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
           )}
         </div>
 
