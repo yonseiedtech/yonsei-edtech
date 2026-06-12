@@ -41,7 +41,7 @@ import { cn } from "@/lib/utils";
 import { chapterCharCount } from "./thesis-progress";
 import { lintThesis, questionCoverage, LINT_CHAPTER_LABELS, type LintIssue, type QuestionCoverage } from "./writing-lint";
 import { phrasesForChapter } from "./phrase-bank";
-import MethodHelper, { type DesignRef } from "./MethodHelper";
+import MethodHelper, { STAT_METHOD_DESCRIPTIONS, type DesignRef } from "./MethodHelper";
 import type {
   User,
   WritingPaper,
@@ -83,6 +83,30 @@ const STEPS = [
 ];
 
 type StepKey = (typeof STEPS)[number]["key"];
+
+// ── 연구 방향 선택 설명 — 온보딩 다이얼로그 하단 안내 (2026-06-12, 사이클 32. 부심 2·10·11주차) ──
+
+const APPROACH_DESCRIPTIONS: Record<ResearchApproachType, string> = {
+  quantitative:
+    "이론에서 가설을 세워 통계로 검증하는 연역적 접근입니다 — 다수 표본을 표집해 결과의 일반화를 목적으로 합니다.",
+  qualitative:
+    "참여·관찰·심층 면담으로 현상의 의미를 이해·해석하는 귀납적 접근입니다 — 소수 참여자를 깊게 다루며, 연구자 자신이 중요한 연구 도구가 됩니다.",
+  mixed:
+    "양적·질적 자료를 함께 수집해 수치 검증과 맥락 이해를 통합합니다 — 두 자료의 우선순위와 통합 방식을 설계 단계에서 정해야 합니다.",
+};
+
+const DESIGN_DESCRIPTIONS: Record<ResearchDesignType, string> = {
+  experimental:
+    "처치를 조작하고 참여자를 무선할당해 집단을 구성합니다 — 인과 추론력이 가장 강하지만, 학교·현장에서는 무선할당이 어려운 경우가 많습니다.",
+  quasi_experimental:
+    "기존 학급·집단 단위로 실험·통제집단을 구성합니다(비동등 통제집단 사전-사후) — 교육학 현장 연구에서 가장 강력하고 일반적인 설계이며, 집단 간 사전 차이는 ANCOVA로 통제합니다.",
+  non_experimental:
+    "변인을 조작하지 않고 설문·검사로 변인 간 관계를 파악합니다 — 인과관계를 주장할 수 없으므로 '관련이 있다' 수위로 기술합니다.",
+  qualitative_design:
+    "사례연구·현상학·근거이론 등으로 현상의 의미를 심층 탐구합니다 — 맥락의 풍부한 기술과 신뢰성 전략(삼각검증·참여자 확인)으로 일반화 한계를 방어합니다.",
+  undecided:
+    "아직 정하지 않아도 괜찮습니다 — 설계가 정해지면 언제든 다시 선택하세요. 연구 방법 장의 '연구 방법·분석 도우미'에서 설계 9종을 비교해볼 수 있습니다.",
+};
 
 /** 챕터·연구 접근별 추천 섹션 템플릿 */
 function templateHeadings(
@@ -1428,6 +1452,30 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
               </p>
             </div>
           )}
+          {/* 선택 항목 구체 설명 — 사이클 32 */}
+          <div className="space-y-1.5 rounded-lg bg-muted/50 px-3 py-2.5">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              선택한 방향 안내
+            </p>
+            <p className="text-[11px] leading-relaxed">
+              <span className="font-semibold text-primary">{WRITING_APPROACH_LABELS[selApproach]}</span>
+              <span className="text-foreground/80"> — {APPROACH_DESCRIPTIONS[selApproach]}</span>
+            </p>
+            <p className="text-[11px] leading-relaxed">
+              <span className="font-semibold text-primary">{RESEARCH_DESIGN_LABELS[selDesign]}</span>
+              <span className="text-foreground/80"> — {DESIGN_DESCRIPTIONS[selDesign]}</span>
+            </p>
+            {selApproach !== "qualitative" && selMethods.length > 0 && (
+              <ul className="space-y-1">
+                {selMethods.map((m) => (
+                  <li key={m} className="text-[11px] leading-relaxed">
+                    <span className="font-semibold text-primary">{STAT_METHOD_LABELS[m]}</span>
+                    <span className="text-foreground/80"> — {STAT_METHOD_DESCRIPTIONS[m].definition} {STAT_METHOD_DESCRIPTIONS[m].whenToUse}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           <DialogFooter>
             <Button
               variant="outline"

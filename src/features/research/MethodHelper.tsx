@@ -109,7 +109,7 @@ const DESIGN_REFS: DesignRef[] = [
 
 // ── 통계 분석 설명 (가정·골격은 에디터의 기존 자산을 props 로 전달받음) ──
 
-const STAT_METHOD_DESCRIPTIONS: Record<StatMethodType, { definition: string; whenToUse: string }> = {
+export const STAT_METHOD_DESCRIPTIONS: Record<StatMethodType, { definition: string; whenToUse: string }> = {
   ttest: {
     definition: "두 집단의 평균 차이를 검증합니다 (독립표본/대응표본).",
     whenToUse: "실험-통제 두 집단 비교, 사전-사후 비교 — 셀당 최소 5~7명 이상이 권장됩니다.",
