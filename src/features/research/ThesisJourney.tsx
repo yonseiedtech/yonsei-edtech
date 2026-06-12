@@ -76,6 +76,8 @@ export const JOURNEY_STAGES: JourneyStage[] = [
     archiveTopics: [
       { label: "교육공학", href: "/archive/concept?q=%EA%B5%90%EC%9C%A1%EA%B3%B5%ED%95%99" },
       { label: "교수설계", href: "/archive/concept?q=%EA%B5%90%EC%88%98%EC%84%A4%EA%B3%84" },
+      { label: "구성주의", href: "/archive/concept?q=%EA%B5%AC%EC%84%B1%EC%A3%BC%EC%9D%98" },
+      { label: "사회적 구성주의", href: "/archive/concept?q=%EC%82%AC%ED%9A%8C%EC%A0%81%20%EA%B5%AC%EC%84%B1%EC%A3%BC%EC%9D%98" },
       { label: "이러닝", href: "/archive/concept?q=%EC%9D%B4%EB%9F%AC%EB%8B%9D" },
       { label: "교육에서의 인공지능", href: "/archive/concept?q=%EA%B5%90%EC%9C%A1%EC%97%90%EC%84%9C%EC%9D%98%20%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5" },
     ],

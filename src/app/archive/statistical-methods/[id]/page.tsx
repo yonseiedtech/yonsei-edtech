@@ -26,6 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/ui/page-header";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
+import StatModelDiagram, { hasStatDiagram } from "@/features/archive/StatModelDiagram";
 import {
   researchMethodsApi,
   alumniThesesApi,
@@ -362,6 +363,7 @@ export default function StatisticalMethodDetailPage() {
     ...(method.accessibleSummary && method.accessibleSummary.trim() !== ""
       ? [{ id: "accessibleSummary", label: "쉽게 이해하기" }]
       : []),
+    ...(hasStatDiagram(method.name) ? [{ id: "research-model", label: "연구모형" }] : []),
     ...(method.whenToUse ? [{ id: "when-to-use", label: "언제 사용" }] : []),
     ...(method.interpretationKeys && method.interpretationKeys.length > 0
       ? [{ id: "examples", label: "결과 해석 포인트" }]
@@ -519,8 +521,8 @@ export default function StatisticalMethodDetailPage() {
           </section>
         )}
 
-        {/* 기본 정보 — description / whenToUse */}
-        {(method.description || method.whenToUse) && (
+        {/* 기본 정보 — description / 연구모형 / whenToUse */}
+        {(method.description || method.whenToUse || hasStatDiagram(method.name)) && (
           <section className="mt-8 space-y-4">
             {method.description && (
               <div>
@@ -529,6 +531,18 @@ export default function StatisticalMethodDetailPage() {
                   {method.description}
                 </p>
               </div>
+            )}
+            {/* 연구모형 다이어그램 — 변인 관계로 "무엇을 보는 분석인지" 시각화 (사이클 55) */}
+            {hasStatDiagram(method.name) && (
+              <Card id="research-model" className="rounded-xl scroll-mt-24">
+                <CardContent className="py-4">
+                  <p className="mb-3 flex items-center gap-1.5 text-sm font-semibold">
+                    <GitCompare size={15} className="text-primary" />
+                    연구모형으로 보기
+                  </p>
+                  <StatModelDiagram methodName={method.name} />
+                </CardContent>
+              </Card>
             )}
             {method.whenToUse && (
               <Card id="when-to-use" className="rounded-xl border-l-4 border-l-blue-400 scroll-mt-24">
