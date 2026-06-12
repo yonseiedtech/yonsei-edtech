@@ -257,7 +257,7 @@ export default function ArchiveDetailPage() {
   // 이 항목을 추천 개념으로 포함하는 논문 여정 단계 (개념 한정)
   const journeyStagesForItem =
     type === "concept" && item.name
-      ? JOURNEY_STAGES.filter((st) => st.archiveTopics?.includes(item.name))
+      ? JOURNEY_STAGES.filter((st) => st.archiveTopics?.some((t) => t.label === item.name))
       : [];
   const references = (item as { references?: string[] }).references ?? [];
 

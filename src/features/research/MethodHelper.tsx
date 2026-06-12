@@ -25,7 +25,7 @@ export interface DesignRef {
   definition: string;
   whenToUse: string;
   caution?: string;
-  archiveQuery?: string;
+  archiveHref?: string;
   /** '연구 설계' 섹션 기술 골격 */
   skeleton?: string;
 }
@@ -37,7 +37,7 @@ const DESIGN_REFS: DesignRef[] = [
     definition: "연구자가 처치를 조작하고 참여자를 무선할당해 집단을 구성하는 설계입니다.",
     whenToUse: "무선할당이 가능하고 인과 추론이 목적일 때 — 인과 추론력이 가장 강합니다.",
     caution: "학교·군 등 현장에서는 무선할당이 현실적으로 어려워 준실험으로 대체되는 경우가 많습니다.",
-    archiveQuery: "내적 타당도",
+    archiveHref: "/archive/research-methods?q=%EB%82%B4%EC%A0%81%20%ED%83%80%EB%8B%B9%EB%8F%84",
     skeleton: "본 연구는 참여자를 실험집단과 통제집단에 무선할당한 진실험설계를 적용하였다.",
   },
   {
@@ -46,7 +46,7 @@ const DESIGN_REFS: DesignRef[] = [
     definition: "기존 집단(학급·부대 등)을 그대로 활용해 실험·통제집단을 구성하는 설계입니다 (O1-X-O2 / O3-O4).",
     whenToUse: "현장에서 무선할당이 불가능할 때 — 교육학에서 가장 강력하고 일반적인 설계입니다(이질 통제집단 사전-사후).",
     caution: "집단 간 사전 차이(선발 위협)는 ANCOVA로 통계적으로 통제하고, 성숙·호손효과 등 경쟁가설을 한계에서 논의하세요.",
-    archiveQuery: "준실험설계",
+    archiveHref: "/archive/research-methods?q=%EC%A4%80%EC%8B%A4%ED%97%98",
     skeleton: "본 연구는 기존 학급 단위로 실험집단과 통제집단을 구성한 비동등 통제집단 사전-사후 설계를 적용하였다.",
   },
   {
@@ -55,7 +55,7 @@ const DESIGN_REFS: DesignRef[] = [
     definition: "변인을 조작하지 않고 설문·검사로 변인 간 관계를 파악하는 설계입니다.",
     whenToUse: "처치가 불가능하거나 변인 간 관계·예측이 목적일 때 적합합니다.",
     caution: "집단 비교든 상관이든 인과관계를 주장할 수 없습니다 — '관련이 있다' 수위로 기술하세요.",
-    archiveQuery: "상관분석과 회귀분석",
+    archiveHref: "/archive/statistical-methods?q=%ED%9A%8C%EA%B7%80",
     skeleton: "본 연구는 ___을 대상으로 설문조사를 실시하여 변인 간 관계를 분석하는 조사연구로 설계되었다.",
   },
   {
@@ -95,7 +95,7 @@ const DESIGN_REFS: DesignRef[] = [
     definition: "교육 프로그램·모형의 설계→개발→평가를 수행하는 연구입니다 — Type 1(특정 프로그램 개발·활용) / Type 2(모형 일반화·검증).",
     whenToUse: "'OOO 프로그램 개발' 형태의 연구 — 산출물과 그 효과·타당화가 목적일 때.",
     caution: "Type 1은 구체적 결론(개선점·활용 조건)을, Type 2는 모형의 타당도·효과성 증거를 결론으로 제시합니다.",
-    archiveQuery: "교수설계",
+    archiveHref: "/archive/concept?q=%EA%B5%90%EC%88%98%EC%84%A4%EA%B3%84",
     skeleton: "본 연구는 ___ 프로그램을 설계·개발하고 그 효과를 검증하는 개발연구(Type 1)로 수행되었다.",
   },
   {
@@ -256,9 +256,9 @@ export default function MethodHelper({
                       + 연구 설계 섹션에 기술 골격 삽입
                     </button>
                   )}
-                  {design.archiveQuery && (
+                  {design.archiveHref && (
                     <Link
-                      href={`/archive/concept?q=${encodeURIComponent(design.archiveQuery)}`}
+                      href={design.archiveHref}
                       className="rounded-full border border-teal-300/60 px-2 py-0.5 text-[10px] text-teal-700 transition-colors hover:bg-teal-100 dark:border-teal-700/60 dark:text-teal-300 dark:hover:bg-teal-900/40"
                     >
                       아카이브 개념 보기
@@ -338,7 +338,7 @@ export default function MethodHelper({
                   )}
                   {archiveByMethod[activeStat] && (
                     <Link
-                      href={`/archive/concept?q=${encodeURIComponent(archiveByMethod[activeStat]!)}`}
+                      href={archiveByMethod[activeStat]!}
                       className="rounded-full border border-teal-300/60 px-2 py-0.5 text-[10px] text-teal-700 transition-colors hover:bg-teal-100 dark:border-teal-700/60 dark:text-teal-300 dark:hover:bg-teal-900/40"
                     >
                       아카이브 개념 보기

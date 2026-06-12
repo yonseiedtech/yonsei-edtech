@@ -119,6 +119,11 @@ export default function StatisticalMethodsLandingPage() {
   const [methods, setMethods] = useState<StatisticalMethod[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  // 여정·에디터 딥링크의 ?q= 초기 검색어 (Suspense 요구 회피 — window 1회 읽기)
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q) setQuery(q);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;

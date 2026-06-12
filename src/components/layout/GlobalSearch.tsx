@@ -25,6 +25,7 @@ import {
   activitiesApi,
   alumniThesesApi,
   postsApi,
+  dataApi,
 } from "@/lib/bkend";
 import type {
   ArchiveConcept,
@@ -125,7 +126,7 @@ export default function GlobalSearch() {
   const { data: sources, isLoading } = useQuery({
     queryKey: ["global-search-sources"],
     queryFn: async () => {
-      const [concepts, variables, measurements, seminars, activities, theses, notices] =
+      const [concepts, variables, measurements, seminars, activities, theses, notices, statMethods, resMethods] =
         await Promise.all([
           archiveConceptsApi.list(),
           archiveVariablesApi.list(),
@@ -135,6 +136,9 @@ export default function GlobalSearch() {
           alumniThesesApi.list(),
           // 공지: public read 카테고리만 — sort 비움(orderBy 비활성, 인덱스 회피) 후 클라이언트 최신순
           postsApi.list({ category: "notice", limit: 100, sort: "" }),
+          // rules 가 published 조건부 read — 무필터 list 는 거부되므로 filter 필수 (posts 교훈)
+          dataApi.list<{ id: string; name?: string; summary?: string }>("archive_statistical_methods", { "filter[published]": true, limit: 100 }),
+          dataApi.list<{ id: string; name?: string; summary?: string }>("archive_research_methods", { "filter[published]": true, limit: 100 }),
         ]);
       const noticeArr = (notices.data as unknown as Post[]).sort((a, b) =>
         (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
@@ -147,6 +151,8 @@ export default function GlobalSearch() {
         activities: activities.data as Activity[],
         theses: theses.data as AlumniThesis[],
         notices: noticeArr,
+        statMethods: statMethods.data,
+        resMethods: resMethods.data,
       };
     },
     enabled: open,
@@ -168,6 +174,20 @@ export default function GlobalSearch() {
         key: `variable:${v.id}`, group: "아카이브", label: v.name,
         sub: "변인", href: `/archive/variable/${v.id}`, icon: VariableIcon,
         haystack: `${v.name} ${(v.altNames ?? []).join(" ")}`,
+      });
+    }
+    for (const g of sources.statMethods) {
+      items.push({
+        key: `stat:${g.id}`, group: "아카이브", label: g.name ?? "",
+        sub: "통계 가이드", href: `/archive/statistical-methods/${g.id}`, icon: Ruler,
+        haystack: `${g.name ?? ""} ${g.summary ?? ""}`,
+      });
+    }
+    for (const g of sources.resMethods) {
+      items.push({
+        key: `resm:${g.id}`, group: "아카이브", label: g.name ?? "",
+        sub: "연구방법 가이드", href: `/archive/research-methods/${g.id}`, icon: Lightbulb,
+        haystack: `${g.name ?? ""} ${g.summary ?? ""}`,
       });
     }
     for (const m of sources.measurements) {

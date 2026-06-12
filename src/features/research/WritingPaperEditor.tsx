@@ -269,8 +269,8 @@ interface AssumptionGuide {
   assumptions: string[];
   /** '가정 검정' 섹션에 삽입되는 보고 골격 단락 — ___ 를 결과값으로 채움 */
   skeleton: string[];
-  /** 아카이브 개념 딥링크 (/archive/concept?q=) */
-  archiveQuery?: string;
+  /** 아카이브 가이드 딥링크 (전체 경로) */
+  archiveHref?: string;
 }
 
 const ASSUMPTION_GUIDES: Record<StatMethodType, AssumptionGuide> = {
@@ -285,7 +285,7 @@ const ASSUMPTION_GUIDES: Record<StatMethodType, AssumptionGuide> = {
       "분석에 앞서 종속변수의 정규성을 Shapiro-Wilk 검정으로 확인한 결과, 모든 집단에서 정규성 가정을 충족하였다(W = ___, p > .05).",
       "Levene의 등분산성 검정 결과 분산의 동질성 가정이 충족되었다(F = ___, p > .05).",
     ],
-    archiveQuery: "중심극한정리와 정규성",
+    archiveHref: "/archive/statistical-methods?q=%EC%A4%91%EC%8B%AC%EA%B7%B9%ED%95%9C",
   },
   anova: {
     assumptions: [
@@ -297,7 +297,7 @@ const ASSUMPTION_GUIDES: Record<StatMethodType, AssumptionGuide> = {
     skeleton: [
       "분산분석에 앞서 집단별 정규성(Shapiro-Wilk)과 등분산성(Levene)을 검토한 결과 가정이 충족되었다(정규성 모든 집단 p > .05; Levene F = ___, p > .05).",
     ],
-    archiveQuery: "중심극한정리와 정규성",
+    archiveHref: "/archive/statistical-methods?q=%EC%A4%91%EC%8B%AC%EA%B7%B9%ED%95%9C",
   },
   ancova: {
     assumptions: [
@@ -310,7 +310,7 @@ const ASSUMPTION_GUIDES: Record<StatMethodType, AssumptionGuide> = {
       "공분산분석의 전제인 회귀계수 동질성을 검정한 결과, 집단과 공변량(사전점수)의 상호작용이 통계적으로 유의하지 않아(F = ___, p > .05) 가정을 충족하였다.",
       "이에 사전점수를 공변량으로 투입하여 집단 간 사후점수 차이를 공분산분석으로 검증하였다.",
     ],
-    archiveQuery: "공분산분석(ANCOVA)",
+    archiveHref: "/archive/statistical-methods?q=ANCOVA",
   },
   regression: {
     assumptions: [
@@ -323,7 +323,7 @@ const ASSUMPTION_GUIDES: Record<StatMethodType, AssumptionGuide> = {
     skeleton: [
       "회귀분석의 가정 검토 결과 잔차의 정규성과 등분산성이 확인되었으며, 모든 예측변수의 VIF는 ___로 다중공선성 문제가 없었고, Durbin-Watson 통계량은 ___로 잔차의 독립성이 확보되었다.",
     ],
-    archiveQuery: "상관분석과 회귀분석",
+    archiveHref: "/archive/statistical-methods?q=%ED%9A%8C%EA%B7%80",
   },
   correlation: {
     assumptions: [
@@ -334,7 +334,7 @@ const ASSUMPTION_GUIDES: Record<StatMethodType, AssumptionGuide> = {
     skeleton: [
       "상관분석에 앞서 산점도와 정규성 검토를 통해 선형성 가정을 확인하였다. 정규성을 충족하지 않은 변수는 Spearman 상관계수를 함께 보고하였다.",
     ],
-    archiveQuery: "상관분석과 회귀분석",
+    archiveHref: "/archive/statistical-methods?q=%ED%9A%8C%EA%B7%80",
   },
   chisquare: {
     assumptions: [
@@ -345,7 +345,7 @@ const ASSUMPTION_GUIDES: Record<StatMethodType, AssumptionGuide> = {
     skeleton: [
       "카이제곱 검정의 가정 검토 결과 기대빈도가 5 미만인 셀은 전체의 ___%로 기준(20% 이하)을 충족하였다.",
     ],
-    archiveQuery: "카이제곱 검정",
+    archiveHref: "/archive/statistical-methods?q=%EC%B9%B4%EC%9D%B4%EC%A0%9C%EA%B3%B1",
   },
   sem: {
     assumptions: [
@@ -357,7 +357,7 @@ const ASSUMPTION_GUIDES: Record<StatMethodType, AssumptionGuide> = {
     skeleton: [
       "측정모형의 적합도는 χ²/df = ___, CFI = ___, TLI = ___, RMSEA = ___(90% CI ___~___), SRMR = ___로 수용 기준을 충족하였다.",
     ],
-    archiveQuery: "구조방정식모형(SEM)",
+    archiveHref: "/archive/statistical-methods?q=%EA%B5%AC%EC%A1%B0%EB%B0%A9%EC%A0%95%EC%8B%9D",
   },
   factor_analysis: {
     assumptions: [
@@ -369,7 +369,7 @@ const ASSUMPTION_GUIDES: Record<StatMethodType, AssumptionGuide> = {
     skeleton: [
       "요인분석의 적합성 검토 결과 KMO = ___로 기준을 충족하였고, Bartlett의 구형성 검정도 통계적으로 유의하였다(χ² = ___, p < .001).",
     ],
-    archiveQuery: "요인분석과 구성타당도",
+    archiveHref: "/archive/statistical-methods?q=%EC%9A%94%EC%9D%B8%EB%B6%84%EC%84%9D",
   },
 };
 
@@ -443,7 +443,7 @@ const ASSUMPTIONS_BY_METHOD = Object.fromEntries(
   (Object.keys(ASSUMPTION_GUIDES) as StatMethodType[]).map((k) => [k, ASSUMPTION_GUIDES[k].assumptions]),
 ) as Record<StatMethodType, string[]>;
 const ARCHIVE_BY_METHOD = Object.fromEntries(
-  (Object.keys(ASSUMPTION_GUIDES) as StatMethodType[]).map((k) => [k, ASSUMPTION_GUIDES[k].archiveQuery]),
+  (Object.keys(ASSUMPTION_GUIDES) as StatMethodType[]).map((k) => [k, ASSUMPTION_GUIDES[k].archiveHref]),
 ) as Partial<Record<StatMethodType, string>>;
 
 // ── 섹션(소제목)별 작성 가이드 — 부심 강의 2·3주차 일반화 (2026-06-12) ──
@@ -2314,9 +2314,9 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                       <span className="text-xs font-bold text-sky-900 dark:text-sky-100">
                         {STAT_METHOD_LABELS[m]}
                       </span>
-                      {g.archiveQuery && (
+                      {g.archiveHref && (
                         <Link
-                          href={`/archive/concept?q=${encodeURIComponent(g.archiveQuery)}`}
+                          href={g.archiveHref}
                           className="rounded-full border border-sky-300/60 px-2 py-0.5 text-[10px] text-sky-700 transition-colors hover:bg-sky-100 dark:border-sky-700/60 dark:text-sky-300 dark:hover:bg-sky-900/40"
                         >
                           아카이브 개념 보기
