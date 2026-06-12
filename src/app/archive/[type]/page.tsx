@@ -35,6 +35,7 @@ import {
   VARIABLE_TYPE_LABELS,
   type ArchiveConcept,
   type ArchiveVariable,
+  type VariableType,
   type ArchiveMeasurementTool,
   type ArchiveItemType,
   type ArchiveFavorite,
@@ -156,6 +157,8 @@ export default function ArchiveTypeListPage() {
   // Archive-UX: 태그 chip 필터 (다중 AND), 즐겨찾기만, 정렬
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
+  // 사이클 60: 변인 한정 — 구인 영역(인지·정의·행동…) 필터 ("사람의 무엇을 보는가")
+  const [domainFilter, setDomainFilter] = useState<VariableType | "all">("all");
   const [sortMode, setSortMode] = useState<"name" | "recent" | "alt">("name");
 
   /** 전체 항목에서 unique 태그 + 빈도 추출 */
@@ -185,6 +188,9 @@ export default function ArchiveTypeListPage() {
     let pool = items;
     if (favoritesOnly) {
       pool = pool.filter((it) => favIdSet.has(it.id));
+    }
+    if (type === "variable" && domainFilter !== "all") {
+      pool = pool.filter((it) => (it as ArchiveVariable).type === domainFilter);
     }
     if (selectedTags.length > 0) {
       pool = pool.filter((it) => {
@@ -222,7 +228,7 @@ export default function ArchiveTypeListPage() {
       );
     }
     return sorted;
-  }, [items, query, selectedTags, favoritesOnly, favIdSet, sortMode]);
+  }, [items, query, selectedTags, favoritesOnly, favIdSet, sortMode, domainFilter]);
 
   const handleToggleFav = async (item: ArchiveItem) => {
     if (!user) {
@@ -333,6 +339,41 @@ export default function ArchiveTypeListPage() {
           )}
         </div>
       </div>
+
+      {/* 사이클 60: 변인 구인 영역 필터 — "이 연구에서 사람의 무엇을 보고자 하는가" */}
+      {type === "variable" && (
+        <div className="mt-3 rounded-lg border bg-card p-3">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="mr-1 text-[11px] font-semibold text-muted-foreground">
+              사람의 무엇을 보나요?
+            </span>
+            {(["all", "cognitive", "affective", "behavioral", "environmental", "demographic"] as const).map((d) => {
+              const selected = domainFilter === d;
+              const label = d === "all" ? "전체" : VARIABLE_TYPE_LABELS[d];
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setDomainFilter(d)}
+                  aria-pressed={selected}
+                  className={cn(
+                    "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+                    selected
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-background text-muted-foreground hover:border-primary/40",
+                  )}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-1.5 text-[10px] text-muted-foreground">
+            인지적(지식·사고) · 정의적(마음가짐) · 행동적(실제 행동) — 처치가 겨냥한 영역과 측정 변인의 영역이
+            일치하는지가 변인 선정의 첫 점검입니다.
+          </p>
+        </div>
+      )}
 
       {/* Archive-UX: 태그 chip 다중 선택 필터 */}
       {allTags.length > 0 && (
