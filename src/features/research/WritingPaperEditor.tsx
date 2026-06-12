@@ -39,7 +39,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { chapterCharCount } from "./thesis-progress";
-import { lintThesis, extractResearchQuestions, LINT_CHAPTER_LABELS, type LintIssue } from "./writing-lint";
+import { lintThesis, questionCoverage, LINT_CHAPTER_LABELS, type LintIssue, type QuestionCoverage } from "./writing-lint";
 import { phrasesForChapter } from "./phrase-bank";
 import type {
   User,
@@ -584,7 +584,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   const [sectionGuideOpen, setSectionGuideOpen] = useState<string | null>(null);
   const [lintOpen, setLintOpen] = useState(false);
   const [lintIssues, setLintIssues] = useState<LintIssue[] | null>(null);
-  const [lintQuestions, setLintQuestions] = useState<string[]>([]);
+  const [lintCoverage, setLintCoverage] = useState<QuestionCoverage[]>([]);
   const [phrasesOpen, setPhrasesOpen] = useState(false);
   const ensureTriggeredRef = useRef(false);
 
@@ -1060,7 +1060,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   /** 자가 점검 — 부심 작성 원칙 기반 규칙 검사 (writing-lint 순수 엔진) */
   function runLint() {
     setLintIssues(lintThesis(form.sections));
-    setLintQuestions(extractResearchQuestions(form.sections));
+    setLintCoverage(questionCoverage(form.sections));
     setLintOpen(true);
   }
 
@@ -1329,15 +1329,25 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
               })}
             </div>
           )}
-          {lintQuestions.length > 0 && (
+          {lintCoverage.length > 0 && (
             <div className="rounded-lg border border-dashed px-3 py-2.5">
               <p className="text-[11px] font-semibold">
-                서론에서 추출한 연구 문제 {lintQuestions.length}개 — 결과 장에서 문제별로 응답했는지 대조하세요
+                연구 문제 ↔ 결과 장 대조 ({lintCoverage.length}개) — 키워드 겹침 기반 후보 판정이니 직접 확인하세요
               </p>
-              <ul className="mt-1 space-y-0.5">
-                {lintQuestions.map((q, qi) => (
-                  <li key={qi} className="text-[11px] text-muted-foreground">
-                    · {q}
+              <ul className="mt-1.5 space-y-1">
+                {lintCoverage.map((qc, qi) => (
+                  <li key={qi} className="flex items-start gap-1.5 text-[11px]">
+                    <span
+                      className={cn(
+                        "mt-0.5 shrink-0 rounded px-1 py-0.5 text-[9px] font-bold leading-none",
+                        qc.covered
+                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                          : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+                      )}
+                    >
+                      {qc.covered ? "결과 장에서 다룸 후보" : "결과 장에서 핵심어 미발견"}
+                    </span>
+                    <span className="text-muted-foreground">{qc.question}</span>
                   </li>
                 ))}
               </ul>

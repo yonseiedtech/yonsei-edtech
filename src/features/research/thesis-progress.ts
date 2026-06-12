@@ -125,3 +125,39 @@ export function formatMinutes(min: number): string {
   const m = Math.round(min % 60);
   return m > 0 ? `${h}시간 ${m}분` : `${h}시간`;
 }
+
+// ── 장별 분량 균형 (2026-06-12, 사이클 30-D) ──
+// 권장 비중은 양적 학위논문의 일반 관행 범위 — 절대 규칙이 아닌 참고선.
+
+export type BalanceStatus = "low" | "ok" | "high";
+
+export interface ChapterBalance {
+  key: WritingPaperChapterKey;
+  pct: number;
+  status: BalanceStatus;
+  recommended: [number, number];
+}
+
+const RECOMMENDED_SHARE: Record<WritingPaperChapterKey, [number, number]> = {
+  intro: [8, 15],
+  background: [25, 40],
+  method: [15, 25],
+  results: [15, 30],
+  conclusion: [10, 20],
+};
+
+/** 분량 균형 진단이 의미를 갖는 최소 총 글자수 — 미만이면 표시하지 않는다 */
+export const BALANCE_MIN_CHARS = 3000;
+
+export function chapterBalance(
+  chapters: { key: WritingPaperChapterKey; chars: number }[],
+  totalChars: number,
+): ChapterBalance[] {
+  if (totalChars <= 0) return [];
+  return chapters.map((c) => {
+    const pct = Math.round((c.chars / totalChars) * 100);
+    const [lo, hi] = RECOMMENDED_SHARE[c.key];
+    const status: BalanceStatus = pct < lo ? "low" : pct > hi ? "high" : "ok";
+    return { key: c.key, pct, status, recommended: [lo, hi] };
+  });
+}

@@ -4,6 +4,7 @@ import {
   chapterCharCount,
   levelOf,
   formatMinutes,
+  chapterBalance,
 } from "../thesis-progress";
 import type { WritingPaper } from "@/types";
 
@@ -128,5 +129,27 @@ describe("formatMinutes", () => {
     expect(formatMinutes(45)).toBe("45분");
     expect(formatMinutes(95)).toBe("1시간 35분");
     expect(formatMinutes(120)).toBe("2시간");
+  });
+});
+
+describe("chapterBalance — 장별 분량 균형", () => {
+  it("권장 범위 내/외 status 판정", () => {
+    const chapters = [
+      { key: "intro" as const, chars: 1000 },        // 10% → ok (8~15)
+      { key: "background" as const, chars: 5000 },   // 50% → high (25~40)
+      { key: "method" as const, chars: 2000 },       // 20% → ok (15~25)
+      { key: "results" as const, chars: 1500 },      // 15% → ok (15~30)
+      { key: "conclusion" as const, chars: 500 },    // 5% → low (10~20)
+    ];
+    const out = chapterBalance(chapters, 10000);
+    const byKey = Object.fromEntries(out.map((b) => [b.key, b]));
+    expect(byKey.intro.status).toBe("ok");
+    expect(byKey.background.status).toBe("high");
+    expect(byKey.conclusion.status).toBe("low");
+    expect(byKey.background.pct).toBe(50);
+  });
+
+  it("총 0자 — 빈 배열", () => {
+    expect(chapterBalance([], 0)).toHaveLength(0);
   });
 });

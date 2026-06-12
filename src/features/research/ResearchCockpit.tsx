@@ -22,6 +22,8 @@ import {
   computeThesisProgress,
   formatMinutes,
   THESIS_CHAPTER_SHORT_LABELS,
+  chapterBalance,
+  BALANCE_MIN_CHARS,
 } from "./thesis-progress";
 import { JOURNEY_STAGES } from "./ThesisJourney";
 import type {
@@ -76,6 +78,32 @@ export default function ResearchCockpit({ user, paper, writingMinutes }: Props) 
     });
   }, [paper, proposals.length, feedbackNotes, writingMinutes]);
 
+  // 장별 분량 균형 — 총 3,000자 이상일 때만 (일반 관행 참고선)
+  const balance = useMemo(
+    () =>
+      progress.totalChars >= BALANCE_MIN_CHARS
+        ? chapterBalance(progress.chapters, progress.totalChars)
+        : [],
+    [progress],
+  );
+  const balanceByKey = useMemo(
+    () => Object.fromEntries(balance.map((b) => [b.key, b])),
+    [balance],
+  );
+  // 가장 이탈이 큰 1건만 힌트로
+  const worstBalance = useMemo(() => {
+    let worst: (typeof balance)[number] | null = null;
+    let worstGap = 0;
+    for (const b of balance) {
+      const gap = b.status === "low" ? b.recommended[0] - b.pct : b.status === "high" ? b.pct - b.recommended[1] : 0;
+      if (gap > worstGap) {
+        worstGap = gap;
+        worst = b;
+      }
+    }
+    return worst;
+  }, [balance]);
+
   // 현재 설정된 여정 단계 (오버라이드 우선 — ThesisJourney 와 동일 규칙의 단순화)
   const currentStage =
     typeof user.thesisJourneyStage === "number" &&
@@ -99,14 +127,32 @@ export default function ResearchCockpit({ user, paper, writingMinutes }: Props) 
             <span className="text-sm font-bold tabular-nums">{progress.percent}%</span>
           </div>
           <div className="flex min-w-0 flex-1 items-center gap-1">
-            {progress.chapters.map((c) => (
-              <div key={c.key} className="min-w-0 flex-1" title={`${THESIS_CHAPTER_SHORT_LABELS[c.key]} ${c.chars.toLocaleString()}자`}>
-                <div className={cn("h-2 rounded-full", LEVEL_COLORS[c.level])} />
-                <p className="mt-0.5 truncate text-center text-[11px] text-muted-foreground">
-                  {THESIS_CHAPTER_SHORT_LABELS[c.key]}
-                </p>
-              </div>
-            ))}
+            {progress.chapters.map((c) => {
+              const b = balanceByKey[c.key];
+              return (
+                <div
+                  key={c.key}
+                  className="min-w-0 flex-1"
+                  title={`${THESIS_CHAPTER_SHORT_LABELS[c.key]} ${c.chars.toLocaleString()}자${
+                    b ? ` · 비중 ${b.pct}% (권장 ${b.recommended[0]}~${b.recommended[1]}%)` : ""
+                  }`}
+                >
+                  <div className={cn("h-2 rounded-full", LEVEL_COLORS[c.level])} />
+                  <p
+                    className={cn(
+                      "mt-0.5 truncate text-center text-[11px]",
+                      b && b.status !== "ok"
+                        ? "font-semibold text-amber-600 dark:text-amber-400"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {THESIS_CHAPTER_SHORT_LABELS[c.key]}
+                    {b && b.status === "high" && "▲"}
+                    {b && b.status === "low" && "▽"}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -137,6 +183,15 @@ export default function ResearchCockpit({ user, paper, writingMinutes }: Props) 
           </Link>
         </div>
       </div>
+
+      {/* 분량 균형 힌트 — 가장 이탈이 큰 1건 (일반 관행 참고선) */}
+      {worstBalance && (
+        <p className="mt-2.5 rounded-lg bg-amber-50/60 px-3 py-1.5 text-[11px] text-amber-800 dark:bg-amber-950/20 dark:text-amber-300">
+          {THESIS_CHAPTER_SHORT_LABELS[worstBalance.key]} 비중 {worstBalance.pct}% — 일반적 권장 범위(
+          {worstBalance.recommended[0]}~{worstBalance.recommended[1]}%)를{" "}
+          {worstBalance.status === "high" ? "웃돕니다" : "밑돕니다"}. 절대 규칙은 아니니 참고만 하세요.
+        </p>
+      )}
 
       {/* 활동 기반 단계 신호 — 설정 단계보다 앞서 있으면 갱신 제안 */}
       {showStageHint && (

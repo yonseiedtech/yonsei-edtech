@@ -285,3 +285,43 @@ export function extractResearchQuestions(sections: LintSections): string[] {
   }
   return out;
 }
+
+// ── 연구 문제 ↔ 결과 장 커버리지 (2026-06-12, 사이클 30-C) ──
+// 키워드 겹침 휴리스틱 — "다룸 후보/미발견" 정보 제공이며 판정이 아니다.
+
+/** 의문문 상투어 — 변인명 등 실질 토큰만 비교하기 위한 불용어 */
+const QUESTION_STOPWORDS = new Set([
+  "차이", "효과", "영향", "관계", "어떠한", "어떠", "있는", "있을", "미치는", "따라", "간에",
+  "연구", "문제", "첫째", "둘째", "셋째", "넷째", "그리고", "또한", "이는", "대한", "위한",
+]);
+
+export interface QuestionCoverage {
+  question: string;
+  /** 결과 장에서 핵심 토큰이 충분히 발견됐는지 (후보 판정) */
+  covered: boolean;
+  /** 결과 장에서 발견된 핵심 토큰 */
+  matched: string[];
+}
+
+export function questionCoverage(sections: LintSections): QuestionCoverage[] {
+  const questions = extractResearchQuestions(sections);
+  if (questions.length === 0) return [];
+  const resultsText = (sections.results ?? [])
+    .flatMap((sec) => sec.paragraphs ?? [])
+    .map((par) => par.text ?? "")
+    .join("\n");
+
+  return questions.map((q) => {
+    const tokens = [
+      ...new Set(
+        q
+          .split(/\s+/)
+          .map((w) => stripParticle(w.replace(/[^가-힣]/g, "")))
+          .filter((w) => w.length >= 2 && !QUESTION_STOPWORDS.has(w)),
+      ),
+    ];
+    const matched = tokens.filter((t) => resultsText.includes(t));
+    const covered = tokens.length > 0 && matched.length >= Math.min(2, tokens.length);
+    return { question: q, covered, matched };
+  });
+}

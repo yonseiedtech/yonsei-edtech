@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { lintThesis, extractResearchQuestions, type LintSections } from "../writing-lint";
+import { lintThesis, extractResearchQuestions, questionCoverage, type LintSections } from "../writing-lint";
 import type { WritingSection } from "@/types";
 
 let seq = 0;
@@ -128,5 +128,31 @@ describe("extractResearchQuestions", () => {
     } satisfies LintSections);
     expect(qs).toHaveLength(2);
     expect(qs[0]).toContain("차이가 있는가?");
+  });
+});
+
+describe("questionCoverage — 연구 문제 ↔ 결과 장 대조", () => {
+  it("핵심 토큰이 결과 장에 있으면 covered, 없으면 미발견", () => {
+    const out = questionCoverage({
+      intro: [
+        sec(
+          "연구 목적 및 연구 문제",
+          "첫째, 자기조절학습 프로그램 참여에 따라 학업적 자기효능감에 차이가 있는가? 둘째, 학습몰입 수준은 계급에 따라 다른가?",
+        ),
+      ],
+      results: [
+        sec(
+          "연구문제별 결과",
+          "자기조절학습 프로그램에 참여한 집단의 학업적 자기효능감 점수가 유의하게 높았다.",
+        ),
+      ],
+    });
+    expect(out).toHaveLength(2);
+    expect(out[0].covered).toBe(true);
+    expect(out[1].covered).toBe(false);
+  });
+
+  it("의문문이 없으면 빈 배열", () => {
+    expect(questionCoverage({ intro: [sec("연구의 필요성", "필요성 서술.")] })).toHaveLength(0);
   });
 });
