@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import PageContainer from "@/components/ui/page-container";
+import ThesisAnalysisCard from "@/features/alumni/ThesisAnalysisCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -654,78 +655,8 @@ export default function AlumniThesisDetailPage() {
             </div>
           )}
 
-          {/* 연구 분석 프로필 — 사이클 43 자동 추출 (참고용) */}
-          {thesis.analysis &&
-            ((thesis.analysis.subjects?.length ?? 0) > 0 ||
-              (thesis.analysis.independent?.length ?? 0) > 0 ||
-              (thesis.analysis.dependent?.length ?? 0) > 0 ||
-              (thesis.analysis.statMethods?.length ?? 0) > 0 ||
-              (thesis.analysis.researchMethods?.length ?? 0) > 0) && (
-              <div className="mt-6 rounded-xl border bg-muted/30 p-4">
-                <h2 className="text-sm font-semibold">
-                  연구 분석 프로필{" "}
-                  <span className="text-[10px] font-normal text-muted-foreground">
-                    제목·초록 자동 추출 — 참고용
-                  </span>
-                </h2>
-                <dl className="mt-2.5 space-y-2 text-sm">
-                  {(thesis.analysis.subjects?.length ?? 0) > 0 && (
-                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                      <dt className="w-16 shrink-0 text-xs font-semibold text-muted-foreground">연구대상</dt>
-                      <dd className="flex flex-wrap gap-1">
-                        {thesis.analysis.subjects!.map((sv) => (
-                          <span key={sv} className="rounded-full bg-card px-2 py-0.5 text-xs">{sv}</span>
-                        ))}
-                      </dd>
-                    </div>
-                  )}
-                  {(thesis.analysis.independent?.length ?? 0) > 0 && (
-                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                      <dt className="w-16 shrink-0 text-xs font-semibold text-muted-foreground">독립변인</dt>
-                      <dd className="text-xs text-foreground/85">{thesis.analysis.independent!.join(" · ")}</dd>
-                    </div>
-                  )}
-                  {(thesis.analysis.dependent?.length ?? 0) > 0 && (
-                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                      <dt className="w-16 shrink-0 text-xs font-semibold text-muted-foreground">종속변인</dt>
-                      <dd className="text-xs text-foreground/85">{thesis.analysis.dependent!.join(" · ")}</dd>
-                    </div>
-                  )}
-                  {(thesis.analysis.statMethods?.length ?? 0) > 0 && (
-                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                      <dt className="w-16 shrink-0 text-xs font-semibold text-muted-foreground">통계방법</dt>
-                      <dd className="flex flex-wrap gap-1">
-                        {thesis.analysis.statMethods!.map((sv) => (
-                          <Link
-                            key={sv}
-                            href={`/archive/statistical-methods?q=${encodeURIComponent(sv.split(" ")[0])}`}
-                            className="rounded-full border border-primary/30 bg-primary/5 px-2 py-0.5 text-xs text-primary hover:bg-primary hover:text-primary-foreground"
-                          >
-                            {sv}
-                          </Link>
-                        ))}
-                      </dd>
-                    </div>
-                  )}
-                  {(thesis.analysis.researchMethods?.length ?? 0) > 0 && (
-                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                      <dt className="w-16 shrink-0 text-xs font-semibold text-muted-foreground">연구방법</dt>
-                      <dd className="flex flex-wrap gap-1">
-                        {thesis.analysis.researchMethods!.map((sv) => (
-                          <Link
-                            key={sv}
-                            href={`/archive/research-methods?q=${encodeURIComponent(sv)}`}
-                            className="rounded-full border border-primary/30 bg-primary/5 px-2 py-0.5 text-xs text-primary hover:bg-primary hover:text-primary-foreground"
-                          >
-                            {sv}
-                          </Link>
-                        ))}
-                      </dd>
-                    </div>
-                  )}
-                </dl>
-              </div>
-            )}
+          {/* 연구 분석 프로필 — 자동 추출 + 운영진 인라인 검수 (사이클 52) */}
+          <ThesisAnalysisCard thesis={thesis} canEdit={canEdit} onSaved={setThesis} />
 
           {thesis.abstract && (
             <div className="mt-6">

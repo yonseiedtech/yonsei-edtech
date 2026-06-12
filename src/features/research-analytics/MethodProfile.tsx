@@ -30,23 +30,64 @@ const GUIDE_PATH: Record<Mode, string> = {
 
 const BAR_COLORS = ["#1e3a8a", "#0f766e", "#7c3aed", "#b45309", "#be185d", "#15803d", "#0369a1", "#9333ea", "#c2410c", "#047857"];
 
+function countMethods(theses: AlumniThesis[], kind: Mode): [string, number][] {
+  const counter = new Map<string, number>();
+  for (const t of theses) {
+    const a = t.analysis;
+    if (!a) continue;
+    const names = kind === "stat" ? a.statMethods ?? [] : a.researchMethods ?? [];
+    for (const n of names) counter.set(n, (counter.get(n) ?? 0) + 1);
+  }
+  return [...counter.entries()].sort((x, y) => y[1] - x[1]);
+}
+
+/**
+ * 상단 노출용 컴팩트 스트립 — 통계·연구방법 Top 5 를 모든 탭 위에서 한눈에 (모바일 1열).
+ * 칩 클릭 시 해당 아카이브 가이드 검색으로 이동.
+ */
+export function MethodTopStrip({ theses }: { theses: AlumniThesis[] }) {
+  const statTop = useMemo(() => countMethods(theses, "stat").slice(0, 5), [theses]);
+  const methodTop = useMemo(() => countMethods(theses, "method").slice(0, 5), [theses]);
+  if (statTop.length === 0 && methodTop.length === 0) return null;
+
+  const renderChips = (rows: [string, number][], kind: Mode) => (
+    <div className="flex flex-wrap gap-1.5">
+      {rows.map(([name, count], i) => (
+        <Link
+          key={name}
+          href={`${GUIDE_PATH[kind]}?q=${encodeURIComponent(name)}`}
+          className="inline-flex items-center gap-1 rounded-full border bg-card px-2.5 py-1 text-xs transition-colors hover:border-primary/40 hover:text-primary"
+          title={`${name} 가이드 보기`}
+        >
+          <span className="font-semibold tabular-nums text-muted-foreground">{i + 1}</span>
+          <span className="max-w-[150px] truncate sm:max-w-none">{name}</span>
+          <span className="tabular-nums text-[10px] text-muted-foreground">{count}편</span>
+        </Link>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="mt-6 grid gap-4 rounded-2xl border bg-card p-4 shadow-sm sm:grid-cols-2 sm:p-5">
+      <div>
+        <p className="mb-2 text-xs font-semibold text-muted-foreground">통계 분석 방법 Top 5</p>
+        {statTop.length > 0 ? renderChips(statTop, "stat") : <p className="text-xs text-muted-foreground">데이터 없음</p>}
+      </div>
+      <div>
+        <p className="mb-2 text-xs font-semibold text-muted-foreground">연구방법 설계 Top 5</p>
+        {methodTop.length > 0 ? renderChips(methodTop, "method") : <p className="text-xs text-muted-foreground">데이터 없음</p>}
+      </div>
+    </div>
+  );
+}
+
 export default function MethodProfile({ theses }: { theses: AlumniThesis[] }) {
   const [mode, setMode] = useState<Mode>("stat");
 
   const { rows, analyzedCount } = useMemo(() => {
-    const counter = new Map<string, number>();
-    let analyzed = 0;
-    for (const t of theses) {
-      const a = t.analysis;
-      if (!a) continue;
-      analyzed += 1;
-      const names = mode === "stat" ? a.statMethods ?? [] : a.researchMethods ?? [];
-      for (const n of names) counter.set(n, (counter.get(n) ?? 0) + 1);
-    }
-    const rows = [...counter.entries()]
-      .sort((x, y) => y[1] - x[1])
-      .slice(0, 10);
-    return { rows, analyzedCount: analyzed };
+    const all = countMethods(theses, mode);
+    const analyzed = theses.filter((t) => t.analysis).length;
+    return { rows: all.slice(0, 10), analyzedCount: analyzed };
   }, [theses, mode]);
 
   const max = rows[0]?.[1] ?? 1;

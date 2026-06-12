@@ -18,7 +18,7 @@ import KeywordCloud from "@/features/research-analytics/KeywordCloud";
 import TitleNgramTrend from "@/features/research-analytics/TitleNgramTrend";
 import ResearchTypeChart from "@/features/research-analytics/ResearchTypeChart";
 import SubjectDistribution from "@/features/research-analytics/SubjectDistribution";
-import MethodProfile from "@/features/research-analytics/MethodProfile";
+import MethodProfile, { MethodTopStrip } from "@/features/research-analytics/MethodProfile";
 import { STOPWORDS, normalizeKeyword, yearFrom } from "@/features/research-analytics/shared";
 import { usePageHeader } from "@/features/site-settings/useSiteContent";
 import PageContainer from "@/components/ui/page-container";
@@ -172,6 +172,9 @@ export default function ResearchAnalyticsPage() {
           </div>
         ) : (
           <>
+            {/* 연구 설계 Top 5 — 모든 탭 공통 상단 노출 (모바일 1열) */}
+            <MethodTopStrip theses={theses} />
+
             <Tabs defaultValue="keyword" className="mt-8">
               <TabsList variant="line" className="flex-wrap justify-start gap-1 border-b bg-transparent p-0">
                 <TabsTrigger

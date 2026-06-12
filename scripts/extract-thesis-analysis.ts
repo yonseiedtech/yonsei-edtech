@@ -32,20 +32,37 @@ const SUBJECT_RULES: { label: string; re: RegExp }[] = [
 ];
 
 // ── 통계방법 사전 (가이드 이름과 매칭 가능한 표준명으로) ──
+// 사이클 53: 부분 문자열 오탐 수정 — 배열 순서가 우선순위. 구체적 방법(MANCOVA·CFA·로지스틱)을
+// 먼저 매칭하고 그 문자열을 소비(마스킹)한 뒤 일반 방법(ANOVA·EFA·다중회귀)을 검사한다.
+// 예: "공분산분석"만 쓴 논문이 "분산분석"(ANOVA)으로도 추출되던 문제 해소.
+// alternation 은 최장 패턴 우선으로 나열해 소비 시 잔여 부분 문자열이 남지 않게 한다.
 const STAT_RULES: { label: string; re: RegExp }[] = [
+  { label: "MANCOVA (다변량공분산분석)", re: /다변량\s*공분산\s*분석|다변량\s*공분산|MANCOVA/i },
+  { label: "MANOVA (다변량분산분석)", re: /다변량\s*분산\s*분석|다변량\s*분산|MANOVA/i },
+  { label: "ANCOVA (공분산분석)", re: /공분산\s*분석|공분산|ANCOVA/i },
+  { label: "ANOVA (일원분산분석)", re: /분산\s*분석|ANOVA|일원배치/i },
+  { label: "확인적 요인분석(CFA)", re: /확인적\s*요인\s*분석|확인적\s*요인|CFA/i },
+  { label: "탐색적 요인분석(EFA)", re: /탐색적\s*요인\s*분석|탐색적\s*요인|요인분석|EFA(?![A-Za-z])/ },
+  { label: "로지스틱회귀분석", re: /로지스틱\s*회귀\s*분석|로지스틱\s*회귀|로지스틱/ },
+  { label: "다중회귀분석", re: /다중\s*회귀|중다\s*회귀|위계적\s*회귀|회귀분석/ },
+  { label: "구조방정식모형(SEM)", re: /구조방정식|경로분석|SEM(?![a-z])/i },
   { label: "t-test (독립/대응표본)", re: /t[-‐]?검정|t[-‐]?test|독립표본|대응표본/i },
-  { label: "ANOVA (일원분산분석)", re: /분산분석|ANOVA(?!.*공)|일원배치/i },
-  { label: "ANCOVA (공분산분석)", re: /공분산|ANCOVA/i },
-  { label: "MANOVA (다변량분산분석)", re: /다변량\s*분산|MANOVA/i },
-  { label: "MANCOVA (다변량공분산분석)", re: /다변량\s*공분산|MANCOVA/i },
-  { label: "다중회귀분석", re: /다중\s*회귀|중다\s*회귀|회귀분석|위계적\s*회귀/ },
-  { label: "로지스틱회귀분석", re: /로지스틱/ },
   { label: "상관분석", re: /상관분석|상관관계\s*분석/ },
   { label: "카이제곱 검정 (χ²)", re: /카이제곱|교차분석|χ²|x²검정/i },
-  { label: "구조방정식모형(SEM)", re: /구조방정식|경로분석|SEM(?![a-z])/i },
-  { label: "탐색적 요인분석(EFA)", re: /탐색적\s*요인|요인분석/ },
-  { label: "확인적 요인분석(CFA)", re: /확인적\s*요인|CFA/i },
 ];
+
+/** 우선순위 매칭 + 소비(마스킹) — 구체적 방법에 쓰인 문자열은 일반 방법 검사에서 제외 */
+function extractStatMethods(hay: string): string[] {
+  let rest = hay;
+  const found: string[] = [];
+  for (const r of STAT_RULES) {
+    if (r.re.test(rest)) {
+      found.push(r.label);
+      rest = rest.replace(new RegExp(r.re.source, r.re.flags.replace("g", "") + "g"), " ");
+    }
+  }
+  return found;
+}
 
 // ── 연구방법 사전 ──
 const METHOD_RULES: { label: string; re: RegExp }[] = [
@@ -111,15 +128,26 @@ async function main() {
   const stats = { withAbstract: 0, subjects: 0, vars: 0, stat: 0, method: 0 };
   const rows: { id: string; title: string; analysis: Record<string, unknown> }[] = [];
 
+  let manualSkipped = 0;
   for (const d of snap.docs) {
-    const x = d.data() as { title?: string; abstract?: string; keywords?: string[] };
+    const x = d.data() as {
+      title?: string;
+      abstract?: string;
+      keywords?: string[];
+      analysis?: { extractedBy?: string };
+    };
+    // 운영진이 수동 검수한 분석은 재추출로 덮어쓰지 않는다 (사이클 52 검수 루프 보호)
+    if (x.analysis?.extractedBy?.startsWith("manual:")) {
+      manualSkipped += 1;
+      continue;
+    }
     const title = String(x.title ?? "");
     const abstract = String(x.abstract ?? "");
     const hay = `${title}\n${abstract}\n${(x.keywords ?? []).join(" ")}`;
     if (abstract.trim().length > 30) stats.withAbstract += 1;
 
     const subjects = SUBJECT_RULES.filter((r) => r.re.test(hay)).map((r) => r.label);
-    const statMethods = STAT_RULES.filter((r) => r.re.test(hay)).map((r) => r.label);
+    const statMethods = extractStatMethods(hay);
     const researchMethods = METHOD_RULES.filter((r) => r.re.test(hay)).map((r) => r.label);
     const { independent, dependent } = extractVarsFromTitle(title);
 
@@ -136,12 +164,12 @@ async function main() {
       researchMethods,
       extractedFrom: abstract.trim().length > 30 ? "title+abstract" : "title",
       extractedAt: new Date().toISOString(),
-      extractedBy: "system:orchestra-cycle43",
+      extractedBy: "system:orchestra-cycle53",
     };
     rows.push({ id: d.id, title, analysis });
   }
 
-  console.log(`=== 추출 요약 (총 ${snap.size}편 · 초록 ${stats.withAbstract}편) ===`);
+  console.log(`=== 추출 요약 (총 ${snap.size}편 · 초록 ${stats.withAbstract}편 · 검수 보호 ${manualSkipped}편) ===`);
   console.log(`연구대상 추출 ${stats.subjects} · 변인 추출 ${stats.vars} · 통계방법 ${stats.stat} · 연구방법 ${stats.method}`);
 
   const sample = FULL ? rows : rows.slice(0, 20);
