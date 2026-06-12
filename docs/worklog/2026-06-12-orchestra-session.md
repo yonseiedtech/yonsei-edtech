@@ -1,24 +1,24 @@
 
-## 배포 23차 — 사이클 46 파이프라인 P2+P4 (✓ Ready, 85ac4337)
+## 배포 27차 — 사이클 50+51 (✓ Ready, 33980966)
 
-- P2: WritingPaperEditor에 "계획서에서 가져오기" 배너 — 빈 서론/방법 장 + 연구계획서 보유 시 노출. purpose·scope→서론 '연구 목적' 섹션 단락, method→방법 장 요약 단락. 작성분 있으면 시딩 차단(데이터 보호), 코크핏과 동일 캐시 키 재사용
-- P4: ThesisJourney 단계 카드에 "내 산출물" 칩 — 1단계 완독 N편 · 2단계 연구보고서 N건 · 3단계 계획서 N건 · 4/5단계 본문 N%(computeThesisProgress). editable(본인) 한정 쿼리
-- 게이트: BE=$? 변수 캡처 패턴 첫 적용 (조건 분기 정확화)
+- whats-new 신규 4항목(여정 시딩·DOI/APA·학자 원전·설계 프로파일) + dismissed v2 재노출 + GlobalSearch 논문 상세 딥링크·keywords haystack
 
-## 배포 24차 — 사이클 47 이론 개념 학자·원전 (✓ Ready, 004f902d)
+## 배포 28차 — 사이클 52+53 통계 오탐 수정 (push 68e98c71, vercel ECOMPROMISED 재배포)
 
-- 26개 이론 개념에 keyScholars + seminalWorks 시드 (scripts/seed-concept-scholars.ts, 멱등 — 기존 보유 개념 보존)
-- **URL 전수 검증**: DOI 19건 Crossref API 제목 일치 + OA 3건(CMU Wing PDF·punyamishra TPACK PDF·hippasus SAMR) HTTP 200. 검증 실패(Athabasca 404·EDUCAUSE 403·openu 403)는 수록 제외 — 비OA는 doi.org 링크, 단행본은 서지만
-- 상세 페이지: 학자 칩(indigo) + 원전 목록("무료 공개" 배지 / "출판사 링크") + TOC "대표 학자·원전"
-- 매핑 제외 4종(이론 아님): 학습경험 디자인(기존 refs 보유)·인적자원개발·교육에서의 인공지능·이러닝
+- 사용자 지적: "사용하지 않은 통계 방법이 보여지는 경우" → 진단 134편: 오탐 5편 확정 (부분 문자열 — 공분산분석⊃분산분석, 다변량분산분석⊃분산분석)
+- 추출 마스킹 방식 전환(STAT_RULES 우선순위 배열 + 매칭 문자열 소비), 초록 원문 대조 검증, 재추출 + rebuild-thesis-method-links.ts (ANCOVA 2→0·ANOVA 10→6)
+- ThesisAnalysisCard — 운영진(staff+) 인라인 검수 UI, "운영진 검수됨" 배지, manual: 재추출 보호
+- 사용자 요청: /research MethodTopStrip — 통계·연구방법 Top 5 탭 위 공통 노출 (모바일 1열)
+- 운영 이슈: npx tsx(시드)와 npx vercel(배포) 병렬 실행 → npm 캐시 ECOMPROMISED. npm 11.6.x libnpmexec with-lock 타이머 버그 — vercel 글로벌 설치로 우회
 
-## 배포 25차 — 사이클 48 논문 읽기 고도화 (✓ Ready, 804637bb)
+## 사이클 54 — 수업자료 폴더 반영 (Firestore 시드, 코드 무변경)
 
-- 분석: 진입점·컴포넌트 17종·타입·API 인벤토리 → 갭 2종 확정 (읽기 통계는 ResearchDashboard 기보유로 기각)
-- 48a: ResearchPaperCard hover "APA 인용 복사"(기존 lib/apa7 노출) + ResearchPaperList "APA 내보내기"(현재 필터 결과를 저자 가나다순 참고문헌 일괄 복사)
-- 48b: 등록 다이얼로그 DOI "자동 채움" — Crossref API로 제목·저자(APA 이니셜·21명 규칙)·연도·저널·권호·페이지 빈 칸만 채움. src/lib/crossref.ts + 테스트 8건 (637→645)
-
-## 배포 26차 — 사이클 49 연구 설계 프로파일 (이번 게이트)
+- 자료: 교육공학 세미나 주차별 슬라이드(2~14주) + 고전 원전 PDF + 연구방법 자료 (바탕화면\새 폴더)
+- 저작권 원칙: 슬라이드·강의자 문장 복사 0 — 전부 재서술, 학자 원전은 서지만, DOI 6건 Crossref 제목 일치 검증
+- seed-learning-theories.ts: 신규 개념 8종(행동주의·인지주의·구성주의·사회적 구성주의·구성주의적 구축주의·활동이론·상황학습·스캐폴딩) + 교육에서의 인공지능 보강(Ouyang & Jiao 2021) + 설계기반연구(DBR) 가이드
+- seed-writing-cvi.ts: 작성 팁 2종(APA 참고문헌 기본형·서론 문제→갭→기여) + 내용타당도지수(CVI) 통계 가이드 + 메타인지 전략 단락(자기질문·KWL·PQ4R·IDEAL)
+- 제외: 경북대 기관 보고서(내부 자료), 질적자료분석 hwp(파싱 한계 — 근거 부족 시 미반영 원칙)
+)
 
 - /research 제목 탭에 MethodProfile 위젯 — 사이클 43 구조화 데이터(thesis.analysis) 첫 집계 시각화. 통계 분석 방법 Top 10 / 연구방법 설계 토글, 막대 클릭 시 아카이브 가이드 ?q= 딥링크 (선배 경향→학습 루프)
 - 기존 위젯(제목 사전 기반)과 차별점: 초록까지 본 추출이라 방법론 집계 정확
