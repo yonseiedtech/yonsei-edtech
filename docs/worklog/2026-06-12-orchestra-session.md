@@ -1,24 +1,28 @@
-# 2026-06-12 오케스트라 자율 세션 — 사이클 5~15
 
-> 운영 모드: 사용자 부재 중 오케스트라 AI 자율 진행 (기존 기능 고도화 + 신규 기능).
-> 게이트: 매 사이클 `npx tsc --noEmit` → 전체 vitest → CI worktree(`C:\work\yonsei-edtech-ci`) `BUILD_EXIT=0` → 묶음 push 1회 + `npm run deploy:vercel` 1회.
+## 배포 23차 — 사이클 46 파이프라인 P2+P4 (✓ Ready, 85ac4337)
 
-## 배포 1차 — 사이클 5~11 + 리뷰 반영 (7e1df8b2..18f99655, ✓ Ready)
+- P2: WritingPaperEditor에 "계획서에서 가져오기" 배너 — 빈 서론/방법 장 + 연구계획서 보유 시 노출. purpose·scope→서론 '연구 목적' 섹션 단락, method→방법 장 요약 단락. 작성분 있으면 시딩 차단(데이터 보호), 코크핏과 동일 캐시 키 재사용
+- P4: ThesisJourney 단계 카드에 "내 산출물" 칩 — 1단계 완독 N편 · 2단계 연구보고서 N건 · 3단계 계획서 N건 · 4/5단계 본문 N%(computeThesisProgress). editable(본인) 한정 쿼리
+- 게이트: BE=$? 변수 캡처 패턴 첫 적용 (조건 분기 정확화)
 
-| # | 커밋 | 내용 |
-|---|---|---|
-| 5 | 2d393120 | 온보딩 체크리스트 신기능 판정 2종 — `set.thesisJourneyStage` / `participated.commBoard` (commQuestions/commAnswers `existsByAuthor` limit 1 게이트). 콘솔 select는 라벨 레코드 기반 자동 노출. **운영진이 콘솔에서 항목 추가해야 위젯 표시** |
-| 6 | 221d8faf | 보안질문 PBKDF2-SHA256+per-user salt 마이그레이션 — `pbkdf2$310000$salt$hash`, 레거시 무염 SHA-256은 검증 성공 시 자동 업그레이드(fire-and-forget). timingSafeEqual, 변조 포맷 거부. Web Crypto(가입)↔Node(검증) 호환 테스트 16건. `src/lib/security-answer.ts` 신규 |
-| 7 | fd26d8b7 | 에디터 버전 비교 — 복원 전 현재 편집본 대비 장별 글자수 before→after(+delta 색상). 줄어드는 장 경고 문구 |
-| 8 | d24ef8a4 | 논문 여정 단계별 추천 아카이브 개념 칩(`JOURNEY_STAGES.archiveTopics`, 시드 실존 개념명) → `/archive/concept?q=` 자동 검색 진입. `[type]` 페이지 `?q=` 초기 검색어 지원 |
-| 9 | 181756cc | 대시보드 여정 인사 헤더에 미반영 지도(amber) 칩 → `/mypage/research?tab=feedback` (딥링크 동작 검증 완료) |
-| 10 | e03cc88c | 에디터 단락 순서 이동 ↑↓ (`moveParagraph` 불변 스왑, 경계 disabled) |
-| 11 | d23dd340·7c54edb6 | 콘솔 인사이트(회원 보고서) 논문 여정 단계 분포 — `MemberMetricsRow.thesisJourneyStage` 패스스루 + 미설정 포함 6행 막대 + 테스트 |
-| R | 18f99655 | 리뷰 반영 — 불필요 `as` 캐스트 2곳 제거, 테스트 필수 입력 보강(tsc 전수 통과) |
+## 배포 24차 — 사이클 47 이론 개념 학자·원전 (✓ Ready, 004f902d)
 
-### 배포 전 검증 패스
-- opus code-reviewer 에이전트 2회 모두 transcript 0바이트 유실(기존 stall 패턴) → **중점 8항목 직접 검증으로 대체**:
-  PBKDF2 다운그레이드 불가(포맷 분기·신규 가입 항상 pbkdf2) · timingSafeEqual 길이 보장 · `existsByAuthor`는 comm rules `read, list: if true`로 통과 · 단일 where+limit은 자동 인덱스 충분 · moveParagraph 불변성 · compareId 자연 소멸 · queryKey 공유는 의도적(에디터와 동일 데이터) · 업그레이드 update는 admin SDK 비차단.
+- 26개 이론 개념에 keyScholars + seminalWorks 시드 (scripts/seed-concept-scholars.ts, 멱등 — 기존 보유 개념 보존)
+- **URL 전수 검증**: DOI 19건 Crossref API 제목 일치 + OA 3건(CMU Wing PDF·punyamishra TPACK PDF·hippasus SAMR) HTTP 200. 검증 실패(Athabasca 404·EDUCAUSE 403·openu 403)는 수록 제외 — 비OA는 doi.org 링크, 단행본은 서지만
+- 상세 페이지: 학자 칩(indigo) + 원전 목록("무료 공개" 배지 / "출판사 링크") + TOC "대표 학자·원전"
+- 매핑 제외 4종(이론 아님): 학습경험 디자인(기존 refs 보유)·인적자원개발·교육에서의 인공지능·이러닝
+
+## 배포 25차 — 사이클 48 논문 읽기 고도화 (✓ Ready, 804637bb)
+
+- 분석: 진입점·컴포넌트 17종·타입·API 인벤토리 → 갭 2종 확정 (읽기 통계는 ResearchDashboard 기보유로 기각)
+- 48a: ResearchPaperCard hover "APA 인용 복사"(기존 lib/apa7 노출) + ResearchPaperList "APA 내보내기"(현재 필터 결과를 저자 가나다순 참고문헌 일괄 복사)
+- 48b: 등록 다이얼로그 DOI "자동 채움" — Crossref API로 제목·저자(APA 이니셜·21명 규칙)·연도·저널·권호·페이지 빈 칸만 채움. src/lib/crossref.ts + 테스트 8건 (637→645)
+
+## 배포 26차 — 사이클 49 연구 설계 프로파일 (이번 게이트)
+
+- /research 제목 탭에 MethodProfile 위젯 — 사이클 43 구조화 데이터(thesis.analysis) 첫 집계 시각화. 통계 분석 방법 Top 10 / 연구방법 설계 토글, 막대 클릭 시 아카이브 가이드 ?q= 딥링크 (선배 경향→학습 루프)
+- 기존 위젯(제목 사전 기반)과 차별점: 초록까지 본 추출이라 방법론 집계 정확
+mpareId 자연 소멸 · queryKey 공유는 의도적(에디터와 동일 데이터) · 업그레이드 update는 admin SDK 비차단.
 
 ## 배포 2차 — 사이클 12~14 (18f99655..e49c7076, ✓ Ready)
 

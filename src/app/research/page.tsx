@@ -18,6 +18,7 @@ import KeywordCloud from "@/features/research-analytics/KeywordCloud";
 import TitleNgramTrend from "@/features/research-analytics/TitleNgramTrend";
 import ResearchTypeChart from "@/features/research-analytics/ResearchTypeChart";
 import SubjectDistribution from "@/features/research-analytics/SubjectDistribution";
+import MethodProfile from "@/features/research-analytics/MethodProfile";
 import { STOPWORDS, normalizeKeyword, yearFrom } from "@/features/research-analytics/shared";
 import { usePageHeader } from "@/features/site-settings/useSiteContent";
 import PageContainer from "@/components/ui/page-container";
@@ -285,6 +286,17 @@ export default function ResearchAnalyticsPage() {
                   />
                   <div className="mt-4 rounded-2xl border bg-card p-5 shadow-sm">
                     <SubjectDistribution theses={theses} />
+                  </div>
+                </section>
+
+                <section className="mt-8">
+                  <SectionHeader
+                    icon={<BarChart3 size={16} />}
+                    title="연구 설계 프로파일"
+                    desc="제목과 초록에서 자동 추출한 통계 분석 방법·연구방법 설계의 빈도입니다. 항목을 클릭하면 해당 방법의 아카이브 가이드(언제 쓰는지·가정·절차)로 이동해 선배들의 선택을 학습으로 연결할 수 있습니다."
+                  />
+                  <div className="mt-4 rounded-2xl border bg-card p-5 shadow-sm">
+                    <MethodProfile theses={theses} />
                   </div>
                 </section>
               </TabsContent>
