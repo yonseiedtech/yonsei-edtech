@@ -41,6 +41,7 @@ import { cn } from "@/lib/utils";
 import { chapterCharCount } from "./thesis-progress";
 import { lintThesis, questionCoverage, LINT_CHAPTER_LABELS, type LintIssue, type QuestionCoverage } from "./writing-lint";
 import { phrasesForChapter } from "./phrase-bank";
+import MethodHelper, { type DesignRef } from "./MethodHelper";
 import type {
   User,
   WritingPaper,
@@ -358,6 +359,65 @@ const ANALYSIS_SKELETONS: Record<StatMethodType, string> = {
   sem: "변인 간 구조적 관계와 매개효과를 검증하기 위해 구조방정식모형(SEM) 분석을 실시하였다.",
   factor_analysis: "측정도구의 구성타당도를 확인하기 위해 요인분석을 실시하였다.",
 };
+
+// ── 분석 방법별 결과 표 골격 — 가정·결과 보고용 텍스트 표 (2026-06-12, 사이클 31) ──
+// 표 제목 첫 부분(slice 20)이 방법별로 달라 중복 삽입 가드 키로 사용한다.
+
+const ANALYSIS_TABLE_TEMPLATES: Record<StatMethodType, string> = {
+  ttest: `<표 Ⅳ-_> 집단별 기술통계 및 t검정 결과
+구분 | 집단 | N | M | SD | t | p | Cohen's d
+사전 | 실험 | ___ | ___ | ___ | ___ | ___ |
+     | 통제 | ___ | ___ | ___ |     |     |
+사후 | 실험 | ___ | ___ | ___ | ___ | ___ | ___
+     | 통제 | ___ | ___ | ___ |     |     |`,
+  anova: `<표 Ⅳ-_> 분산분석(ANOVA) 결과
+변량원 | SS | df | MS | F | p | η²
+집단 간 | ___ | ___ | ___ | ___ | ___ | ___
+집단 내 | ___ | ___ | ___ |     |     |
+전체   | ___ | ___ |     |     |     |`,
+  ancova: `<표 Ⅳ-_> 공분산분석(ANCOVA) 결과 (공변량: 사전점수)
+변량원        | SS | df | MS | F | p | η²
+공변량(사전)  | ___ | ___ | ___ | ___ | ___ | ___
+집단          | ___ | ___ | ___ | ___ | ___ | ___
+오차          | ___ | ___ | ___ |     |     |
+
+<표 Ⅳ-_> 집단별 사후점수 조정평균
+집단 | N | M | SD | 조정 M | SE
+실험 | ___ | ___ | ___ | ___ | ___
+통제 | ___ | ___ | ___ | ___ | ___`,
+  regression: `<표 Ⅳ-_> 회귀분석 결과
+변인   | B | SE | β | t | p | VIF
+(상수) | ___ | ___ |   | ___ | ___ |
+___    | ___ | ___ | ___ | ___ | ___ | ___
+R² = ___, F = ___ (p = ___), Durbin-Watson = ___`,
+  correlation: `<표 Ⅳ-_> 주요 변인 간 상관계수
+변인    | 1 | 2 | 3
+1. ___  | 1 |   |
+2. ___  | ___ | 1 |
+3. ___  | ___ | ___ | 1
+*p < .05, **p < .01`,
+  chisquare: `<표 Ⅳ-_> 집단별 ___ 분포 및 동질성 검정 (χ²)
+구분 | 실험집단 n(%) | 통제집단 n(%) | χ² | p
+___  | ___ (___)     | ___ (___)     | ___ | ___
+___  | ___ (___)     | ___ (___)     |     |`,
+  sem: `<표 Ⅳ-_> 측정모형 적합도 지수
+χ² | df | χ²/df | CFI | TLI | RMSEA (90% CI) | SRMR
+___ | ___ | ___ | ___ | ___ | ___ (___~___) | ___`,
+  factor_analysis: `<표 Ⅳ-_> 탐색적 요인분석 결과
+문항        | 요인1 | 요인2 | 공통성
+___         | ___   | ___   | ___
+고유값      | ___   | ___   |
+설명변량(%) | ___   | ___   |
+KMO = ___, Bartlett χ² = ___ (p < .001)`,
+};
+
+/** MethodHelper 전달용 파생 맵 — 모듈 스코프에서 1회 계산 */
+const ASSUMPTIONS_BY_METHOD = Object.fromEntries(
+  (Object.keys(ASSUMPTION_GUIDES) as StatMethodType[]).map((k) => [k, ASSUMPTION_GUIDES[k].assumptions]),
+) as Record<StatMethodType, string[]>;
+const ARCHIVE_BY_METHOD = Object.fromEntries(
+  (Object.keys(ASSUMPTION_GUIDES) as StatMethodType[]).map((k) => [k, ASSUMPTION_GUIDES[k].archiveQuery]),
+) as Partial<Record<StatMethodType, string>>;
 
 // ── 섹션(소제목)별 작성 가이드 — 부심 강의 2·3주차 일반화 (2026-06-12) ──
 // 헤딩 부분 매칭이라 사용자가 소제목을 일부 수정해도 동작한다.
@@ -892,6 +952,12 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       toast.success(
         `연구 방향이 설정되었습니다 — ${WRITING_APPROACH_LABELS[selApproach]} · ${RESEARCH_DESIGN_LABELS[selDesign]}${methodNote}`,
       );
+      // 가정을 놓치지 않도록 — 새로 선택된 방법의 골격을 방법·결과 장에 자동 배치
+      if (selApproach !== "qualitative") {
+        const prevMethods = profile?.methods ?? [];
+        const newOnes = selMethods.filter((m) => !prevMethods.includes(m));
+        if (newOnes.length > 0) seedScaffoldsForMethods(newOnes);
+      }
     } catch {
       toast.error("저장에 실패했습니다.");
     } finally {
@@ -958,6 +1024,128 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     });
     markDirty();
     toast.success(`${STAT_METHOD_LABELS[m]} 기술 문장을 '${ANALYSIS_SECTION_HEADING}' 섹션에 추가했습니다 — 빈칸(___)을 변인명으로 채우세요.`);
+  }
+
+  /** 선택한 연구 설계의 기술 골격을 연구 방법 장 '연구 설계' 섹션에 삽입 */
+  function insertDesignSkeleton(ref: DesignRef) {
+    if (readOnly || !paper || !ref.skeleton) return;
+    const text = ref.skeleton;
+    const matches = (h: string) => h.includes("연구 설계") || h.includes("연구설계");
+    const target = form.sections.method.find((sec) => matches(sec.heading));
+    const existing = target ? target.paragraphs.map((par) => par.text) : [];
+    if (existing.some((e) => e.startsWith(text.slice(0, 12)))) {
+      toast.info("이 설계의 기술 골격은 이미 삽입되어 있습니다 — '연구 설계' 섹션을 확인하세요.");
+      return;
+    }
+    setForm((prev) => {
+      const cur = [...prev.sections.method];
+      let idx = cur.findIndex((sec) => matches(sec.heading));
+      if (idx < 0) {
+        // 연구 설계는 방법 장의 첫 절이 관례 — 장 요약 바로 뒤에 배치
+        const overviewIdx = cur.findIndex((sec) => isOverviewSection(sec));
+        const insertAt = overviewIdx >= 0 ? overviewIdx + 1 : 0;
+        cur.splice(insertAt, 0, { id: uid(), heading: "연구 설계", paragraphs: [] });
+        idx = insertAt;
+      }
+      const sec = cur[idx];
+      const kept = sec.paragraphs.filter((par) => par.text.trim());
+      cur[idx] = { ...sec, paragraphs: [...kept, { id: uid(), text }] };
+      return { ...prev, sections: { ...prev.sections, method: cur } };
+    });
+    markDirty();
+    toast.success(`${ref.label} 기술 골격을 '연구 설계' 섹션에 추가했습니다 — 빈칸(___)을 채우세요.`);
+  }
+
+  /** 분석 방법의 결과 표 골격을 결과 장 '가정 검정' 섹션에 삽입 */
+  function insertResultTable(m: StatMethodType) {
+    if (readOnly || !paper) return;
+    const table = ANALYSIS_TABLE_TEMPLATES[m];
+    const guard = table.slice(0, 20);
+    const target = form.sections.results.find((sec) => sec.heading.includes("가정 검정"));
+    const existing = target ? target.paragraphs.map((par) => par.text) : [];
+    if (existing.some((e) => e.startsWith(guard))) {
+      toast.info(`${STAT_METHOD_LABELS[m]} 표 골격은 이미 삽입되어 있습니다.`);
+      return;
+    }
+    setForm((prev) => {
+      const cur = [...prev.sections.results];
+      let idx = cur.findIndex((sec) => sec.heading.includes("가정 검정"));
+      if (idx < 0) {
+        cur.unshift({ id: uid(), heading: ASSUMPTION_SECTION_HEADING, paragraphs: [] });
+        idx = 0;
+      }
+      const sec = cur[idx];
+      const kept = sec.paragraphs.filter((par) => par.text.trim());
+      cur[idx] = { ...sec, paragraphs: [...kept, { id: uid(), text: table }] };
+      return { ...prev, sections: { ...prev.sections, results: cur } };
+    });
+    markDirty();
+    toast.success(`${STAT_METHOD_LABELS[m]} 결과 표 골격을 추가했습니다 — 표 번호와 수치를 채우세요.`);
+  }
+
+  /**
+   * 선택한 분석 방법들의 골격(자료 분석 문장 + 가정 검정 보고)을
+   * 방법·결과 장에 자동 배치 — 가정을 놓치지 않도록 섹션을 미리 생성한다.
+   */
+  function seedScaffoldsForMethods(ms: StatMethodType[], opts?: { silent?: boolean }) {
+    if (readOnly || !paper || ms.length === 0) return;
+    const matchesAnalysis = (h: string) => h.includes("자료 분석") || h.includes("자료분석") || h.includes("분석 방법");
+    const aExisting =
+      form.sections.method.find((sec) => matchesAnalysis(sec.heading))?.paragraphs.map((par) => par.text) ?? [];
+    const rExisting =
+      form.sections.results.find((sec) => sec.heading.includes("가정 검정"))?.paragraphs.map((par) => par.text) ?? [];
+    const aAdds: string[] = [];
+    const rAdds: string[] = [];
+    for (const m of ms) {
+      const at = ANALYSIS_SKELETONS[m];
+      if (!aExisting.some((e) => e.startsWith(at.slice(0, 12))) && !aAdds.includes(at)) aAdds.push(at);
+      for (const t of ASSUMPTION_GUIDES[m].skeleton) {
+        if (!rExisting.some((e) => e.startsWith(t.slice(0, 14))) && !rAdds.includes(t)) rAdds.push(t);
+      }
+    }
+    if (aAdds.length === 0 && rAdds.length === 0) return;
+    setForm((prev) => {
+      const methodSecs = [...prev.sections.method];
+      const resultSecs = [...prev.sections.results];
+      if (aAdds.length > 0) {
+        let ai = methodSecs.findIndex((sec) => matchesAnalysis(sec.heading));
+        if (ai < 0) {
+          methodSecs.push({ id: uid(), heading: ANALYSIS_SECTION_HEADING, paragraphs: [] });
+          ai = methodSecs.length - 1;
+        }
+        const kept = methodSecs[ai].paragraphs.filter((par) => par.text.trim());
+        methodSecs[ai] = { ...methodSecs[ai], paragraphs: [...kept, ...aAdds.map((t) => ({ id: uid(), text: t }))] };
+      }
+      if (rAdds.length > 0) {
+        let ri = resultSecs.findIndex((sec) => sec.heading.includes("가정 검정"));
+        if (ri < 0) {
+          resultSecs.unshift({ id: uid(), heading: ASSUMPTION_SECTION_HEADING, paragraphs: [] });
+          ri = 0;
+        }
+        const kept = resultSecs[ri].paragraphs.filter((par) => par.text.trim());
+        resultSecs[ri] = { ...resultSecs[ri], paragraphs: [...kept, ...rAdds.map((t) => ({ id: uid(), text: t }))] };
+      }
+      return { ...prev, sections: { ...prev.sections, method: methodSecs, results: resultSecs } };
+    });
+    markDirty();
+    if (!opts?.silent) {
+      toast.success("선택한 분석 방법의 자료 분석 문장과 가정 검정 보고 골격을 자동 배치했습니다 — 빈칸(___)을 채우고 저장하세요.");
+    }
+  }
+
+  /** 도우미에서 분석 방법을 내 연구 방향에 추가 + 골격 자동 배치 */
+  async function addMethodToProfile(m: StatMethodType) {
+    if (!paper || !profile) return;
+    const next = [...(profile.methods ?? [])];
+    if (next.includes(m)) return;
+    next.push(m);
+    try {
+      await update.mutateAsync({ id: paper.id, data: { researchProfile: { ...profile, methods: next } } });
+      toast.success(`${STAT_METHOD_LABELS[m]} 을(를) 내 연구 방향에 추가했습니다 — 결과 장에서 가정 검정 가이드가 표시됩니다.`);
+      seedScaffoldsForMethods([m], { silent: true });
+    } catch {
+      toast.error("연구 방향 갱신에 실패했습니다.");
+    }
   }
 
   // ── 버전 스냅샷 ──
@@ -1980,6 +2168,21 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           </div>
         )}
 
+        {/* 연구 방법·분석 도우미 — 설계 9종·통계 8종 레퍼런스 (사이클 31) */}
+        {step === "method" && (
+          <MethodHelper
+            selectedMethods={profile?.methods ?? []}
+            assumptionsByMethod={ASSUMPTIONS_BY_METHOD}
+            archiveByMethod={ARCHIVE_BY_METHOD}
+            readOnly={readOnly}
+            hasProfile={!!profile}
+            onInsertAnalysis={insertAnalysisSkeleton}
+            onInsertDesign={insertDesignSkeleton}
+            onAddMethod={(m) => void addMethodToProfile(m)}
+            onOpenProfile={openProfileDialog}
+          />
+        )}
+
         {/* 선택한 분석 방법의 기본 가정 검정 — 결과 장 한정 자동 표시 (2026-06-12) */}
         {step === "results" && (profile?.methods?.length ?? 0) > 0 && (
           <div className="mt-3 rounded-xl border border-sky-200/70 bg-sky-50/40 p-3.5 dark:border-sky-800/50 dark:bg-sky-950/10">
@@ -2012,6 +2215,15 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                           className="rounded-full border border-dashed border-sky-400/60 px-2 py-0.5 text-[10px] font-medium text-sky-700 transition-colors hover:bg-sky-600 hover:text-white dark:text-sky-300"
                         >
                           + 보고 골격 섹션에 삽입
+                        </button>
+                      )}
+                      {!readOnly && (
+                        <button
+                          type="button"
+                          onClick={() => insertResultTable(m)}
+                          className="rounded-full border border-dashed border-sky-400/60 px-2 py-0.5 text-[10px] font-medium text-sky-700 transition-colors hover:bg-sky-600 hover:text-white dark:text-sky-300"
+                        >
+                          + 결과 표 골격 삽입
                         </button>
                       )}
                     </div>
