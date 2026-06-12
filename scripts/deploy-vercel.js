@@ -83,8 +83,19 @@ console.log(`▲ yonsei-edtech 배포 시작 (token source: ${TOKEN_SOURCE})`);
 console.log(`   계정 분리: 다른 Vercel 로그인 무시, VERCEL_TOKEN_YONSEI 사용`);
 console.log("");
 
+// 글로벌 vercel CLI 우선 — npm 11.6.x 의 npx 캐시 lock 버그(ECOMPROMISED → 반설치 캐시 잔존)를
+// 회피한다. 글로벌 미설치 환경에서만 npx 로 폴백. (사전 설치: npm i -g vercel)
+function vercelCommand() {
+  try {
+    execSync("vercel --version", { stdio: "ignore" });
+    return "vercel";
+  } catch {
+    return "npx vercel";
+  }
+}
+
 try {
-  execSync(`npx vercel --prod --token=${TOKEN}`, {
+  execSync(`${vercelCommand()} --prod --token=${TOKEN}`, {
     stdio: "inherit",
     env: {
       ...process.env,
