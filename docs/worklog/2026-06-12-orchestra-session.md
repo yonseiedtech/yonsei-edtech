@@ -122,6 +122,11 @@
   · 운영 스크립트 4종 커밋(audit/apply-measurements/link-theses/apply-links — 전부 멱등·드라이런 우선)
 - 다음: 사이클 38 피드백 루프(에디터 텔레메트리 — user_activity_logs 가상 경로 ui:editor/*, rules 무변경 확인됨) → 데이터 근거 레이어링
 
+## 배포 17차 — 사이클 38~39 피드백 루프 (03a22806..bad6ab69, ✓ Ready)
+
+- **사이클 38 (수집)**: editor-telemetry — 에디터 보조 기능 12종(가이드·섹션 가이드·문형·읽기 서랍·방법 도우미·분석기 열람 + 자가 점검·내보내기·버전 비교·가정/분석/표 삽입)을 user_activity_logs 가상 경로 ui:editor/* 로 적재. rules 무변경(본인 create·admin read), 세션당 1회·fire-and-forget
+- **사이클 39 (관찰)**: 어드민 활동 로그에 '에디터 기능' 필터 + 기능별 사용자 수·횟수 집계 막대 — 레이어링(패널 점진 노출) 결정의 근거 데이터 관찰면
+
 ## 상태
 - 테스트: 581 → **598** (PBKDF2 16 + 패스스루 1)
 - 보안 백로그 해결: PBKDF2 마이그레이션(코드 L8 TODO 이행), resolve-email은 기방어 확인 완료
