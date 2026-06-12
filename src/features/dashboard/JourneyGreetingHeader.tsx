@@ -17,6 +17,7 @@ import { useWritingPaper } from "@/features/research/useWritingPaper";
 import { computeThesisProgress } from "@/features/research/thesis-progress";
 import { getEffectiveSemesterCount } from "@/lib/interview-target";
 import { advisorFeedbackApi } from "@/lib/bkend";
+import TodaySummaryCard from "./TodaySummaryCard";
 import type { User } from "@/types";
 import type { AdvisorFeedbackNote } from "@/types";
 
@@ -117,6 +118,8 @@ export default function JourneyGreetingHeader({ user }: { user: User }) {
           <ArrowRight size={13} />
         </Link>
       </div>
+      {/* 모바일 한정 — 오늘 요약을 여정 헤더 한 카드로 통합 (사이클 45, ③a-2 결정) */}
+      <TodaySummaryCard variant="inline" />
     </section>
   );
 }

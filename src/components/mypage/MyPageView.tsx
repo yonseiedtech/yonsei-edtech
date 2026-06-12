@@ -62,7 +62,6 @@ const CardSection = dynamic(
 );
 import EmptyState from "@/components/ui/empty-state";
 import LearningStreak from "@/features/mypage/LearningStreak";
-import PushPermissionPrompt from "@/components/notifications/PushPermissionPrompt";
 import ProfileOnboardingBadges from "@/components/profile/ProfileOnboardingBadges";
 import ARCSPanel from "@/features/mypage/ARCSPanel";
 import ConnectivismPanel from "@/features/mypage/ConnectivismPanel";
@@ -322,7 +321,6 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
           {activeTab === "overview" && (
             <div className="space-y-4">
               {/* Push 권한 안내 — 미결정 상태이고 dismiss 안 한 경우만 노출 */}
-              {isSelf && !readOnly && <PushPermissionPrompt />}
 
               {/* 신규 기능 안내 배너 — localStorage dismiss 후 사라짐 */}
               {!whatsNewDismissed && (

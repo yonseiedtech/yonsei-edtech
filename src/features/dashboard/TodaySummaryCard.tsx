@@ -66,7 +66,7 @@ interface TodayTodo {
   content: string;
 }
 
-export default function TodaySummaryCard() {
+export default function TodaySummaryCard({ variant = "card" }: { variant?: "card" | "inline" } = {}) {
   const { user } = useAuthStore();
   const userId = user?.id;
 
@@ -199,10 +199,10 @@ export default function TodaySummaryCard() {
 
   return (
     <section
-      className="sm:hidden"
+      className={variant === "inline" ? "mt-3 border-t pt-3 sm:hidden" : "sm:hidden"}
       aria-label="오늘 요약"
     >
-      <div className="rounded-2xl border bg-card p-3 shadow-sm">
+      <div className={variant === "inline" ? "" : "rounded-2xl border bg-card p-3 shadow-sm"}>
         <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
           <CalendarClock size={12} className="text-primary" />
           오늘 요약

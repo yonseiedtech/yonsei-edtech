@@ -37,7 +37,6 @@ import DailyClassTimelineWidget from "@/features/dashboard/DailyClassTimelineWid
 import MyTodosWidget from "@/features/dashboard/MyTodosWidget";
 import TodayTodosPopup from "@/features/dashboard/TodayTodosPopup";
 import NextActionBanner from "@/features/dashboard/NextActionBanner";
-import TodaySummaryCard from "@/features/dashboard/TodaySummaryCard";
 import StaffPriorityPanel from "@/features/dashboard/StaffPriorityPanel";
 import PushPermissionPrompt from "@/features/dashboard/PushPermissionPrompt";
 import PeerActivityFeed from "@/features/dashboard/PeerActivityFeed";
@@ -530,9 +529,22 @@ function DashboardContent() {
         {isStaff && isWidgetVisible(layout, "staffAlerts") && (
           <StaffPriorityPanel muted={staffAlertsMuted} />
         )}
-        {/* Codex Phase B: 모바일 상단 "오늘 요약" 통합 카드 (sm:hidden — 데스크톱에서는 자체 숨김) */}
-        <TodaySummaryCard />
       </div>
+
+      {/* 숨겨진 위젯 재활성 안내 (사이클 45, ③a-3 결정 — 기본 숨김 위젯의 발견성) */}
+      {!editMode && (
+        <p className="mx-auto mt-3 max-w-6xl px-4 text-[11px] text-muted-foreground">
+          AI 포럼 라이브·복습 카드·데일리 회고 등 일부 위젯은 기본 숨김이에요 —{" "}
+          <button
+            type="button"
+            onClick={handleToggleEditMode}
+            className="font-medium text-primary underline-offset-2 hover:underline"
+          >
+            위젯 편집
+          </button>
+          에서 켤 수 있습니다.
+        </p>
+      )}
 
       {/* ── 섹션 2.5: 졸업생 전용 콘텐츠 (Phase C) ──
        *  학사 위젯이 모두 숨겨지는 alumni 에게 의미 있는 콘텐츠 노출.

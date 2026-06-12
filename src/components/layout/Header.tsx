@@ -116,7 +116,6 @@ const PUBLIC_NAV: NavGroup[] = [
         links: [
           { href: "/members?tab=student", label: "재학생 회원" },
           { href: "/members?tab=alumni", label: "졸업생 회원" },
-          { href: "/network", label: "전공 네트워킹 Map" },
         ],
       },
     ],
@@ -151,8 +150,7 @@ const PUBLIC_NAV: NavGroup[] = [
           { href: "/research", label: "연세교육공학 연구 분석" },
           { href: "/alumni/thesis", label: "졸업생 학위논문" },
           { href: "/archive", label: "교육공학 아카이브" },
-          { href: "/journal", label: "연구지 (Journal)" },
-        ],
+            ],
       },
     ],
   },
@@ -176,12 +174,21 @@ const PUBLIC_NAV: NavGroup[] = [
       {
         sectionLabel: "콘텐츠",
         links: [
-          { href: "/newsletter", label: "학회보" },
-          { href: "/card-news", label: "카드뉴스" },
-          { href: "/gallery", label: "포토갤러리" },
           { href: "/ai-forum", label: "AI 포럼 (실험)" },
         ],
       },
+    ],
+  },
+  {
+    label: "더보기",
+    visibility: "both",
+    // 저방문 메뉴 강등 (사이클 45, ③b 결정 — 40일 방문 데이터 근거. 페이지는 전부 유지)
+    items: [
+      { href: "/newsletter", label: "학회보" },
+      { href: "/card-news", label: "카드뉴스" },
+      { href: "/gallery", label: "포토갤러리" },
+      { href: "/journal", label: "연구지 (Journal)" },
+      { href: "/network", label: "전공 네트워킹 Map" },
     ],
   },
 ];
