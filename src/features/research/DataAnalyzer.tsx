@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { parseClipboard, type ParsedData } from "./data-parse";
 import {
   descriptives,
   independentT,
@@ -48,39 +49,6 @@ const KIND_LABELS: Record<AnalysisKind, string> = {
   chisq: "카이제곱(χ²)",
   alpha: "신뢰도 (Cronbach's α)",
 };
-
-interface ParsedData {
-  headers: string[];
-  /** 열 단위 원자료 (문자열) */
-  columns: string[][];
-  /** 열별 숫자 변환 (실패 NaN) */
-  numeric: number[][];
-  /** 열별 타입 추론 */
-  isNumeric: boolean[];
-  rowCount: number;
-}
-
-function parseClipboard(text: string): ParsedData | null {
-  const lines = text
-    .split(/\r?\n/)
-    .map((l) => l.trimEnd())
-    .filter((l) => l.trim().length > 0);
-  if (lines.length < 2) return null;
-  const delim = lines[0].includes("\t") ? "\t" : ",";
-  const rows = lines.map((l) => l.split(delim).map((c) => c.trim()));
-  const headers = rows[0].map((h, i) => h || `변수${i + 1}`);
-  const body = rows.slice(1).filter((r) => r.some((c) => c.length > 0));
-  if (body.length < 2) return null;
-  const colCount = headers.length;
-  const columns: string[][] = Array.from({ length: colCount }, (_, j) =>
-    body.map((r) => r[j] ?? ""),
-  );
-  const numeric = columns.map((col) => col.map((v) => (v === "" ? NaN : Number(v))));
-  const isNumeric = numeric.map(
-    (col) => col.filter((v) => !Number.isNaN(v)).length >= col.length * 0.8,
-  );
-  return { headers, columns, numeric, isNumeric, rowCount: body.length };
-}
 
 const fmt = (x: number, d = 2) => (Number.isFinite(x) ? x.toFixed(d) : "—");
 const fmtP = (p: number) => (!Number.isFinite(p) ? "—" : p < 0.001 ? "< .001" : `= ${p.toFixed(3).replace(/^0/, "")}`);
