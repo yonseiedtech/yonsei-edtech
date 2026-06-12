@@ -44,6 +44,7 @@ import { phrasesForChapter } from "./phrase-bank";
 import MethodHelper, { STAT_METHOD_DESCRIPTIONS, type DesignRef } from "./MethodHelper";
 import DataAnalyzer from "./DataAnalyzer";
 import ReadingDrawer from "./ReadingDrawer";
+import { logEditorEvent } from "./editor-telemetry";
 import type {
   User,
   WritingPaper,
@@ -1023,6 +1024,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       return { ...prev, sections: { ...prev.sections, results: cur } };
     });
     markDirty();
+    logEditorEvent(user.id, "assumption_insert");
     toast.success(`${STAT_METHOD_LABELS[m]} 가정 검정 보고 골격을 추가했습니다 — 빈칸(___)을 결과값으로 채우세요.`);
   }
 
@@ -1050,6 +1052,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       return { ...prev, sections: { ...prev.sections, method: cur } };
     });
     markDirty();
+    logEditorEvent(user.id, "analysis_insert");
     toast.success(`${STAT_METHOD_LABELS[m]} 기술 문장을 '${ANALYSIS_SECTION_HEADING}' 섹션에 추가했습니다 — 빈칸(___)을 변인명으로 채우세요.`);
   }
 
@@ -1107,6 +1110,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       return { ...prev, sections: { ...prev.sections, results: cur } };
     });
     markDirty();
+    logEditorEvent(user.id, "table_insert");
     toast.success(`${STAT_METHOD_LABELS[m]} 결과 표 골격을 추가했습니다 — 표 번호와 수치를 채우세요.`);
   }
 
@@ -1300,6 +1304,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
 
   /** 자가 점검 — 부심 작성 원칙 기반 규칙 검사 (writing-lint 순수 엔진) */
   function runLint() {
+    logEditorEvent(user.id, "lint_run");
     setLintIssues(lintThesis(form.sections));
     setLintCoverage(questionCoverage(form.sections));
     setLintOpen(true);
@@ -1307,6 +1312,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
 
   /** 작성 본문을 평문 .txt 로 내보내기 — 장(Ⅰ~Ⅴ)·섹션 번호·단락 빈 줄 구분 */
   function handleExportText() {
+    logEditorEvent(user.id, "export_txt");
     const roman = ["Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ"];
     const title = form.title.trim() || "학위논문 초안";
     const lines: string[] = [title, ""];
@@ -1675,7 +1681,10 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                 })()}
               </span>
             )}
-            <Button variant="outline" size="sm" onClick={() => setAnalyzerOpen(true)} title="엑셀 데이터를 붙여넣으면 t검정·ANOVA·ANCOVA 등을 분석해 표를 생성합니다 (브라우저 내 계산)">
+            <Button variant="outline" size="sm" onClick={() => {
+                logEditorEvent(user.id, "analyzer_open");
+                setAnalyzerOpen(true);
+              }} title="엑셀 데이터를 붙여넣으면 t검정·ANOVA·ANCOVA 등을 분석해 표를 생성합니다 (브라우저 내 계산)">
               <Calculator size={12} className="mr-1" />
               데이터 분석
             </Button>
@@ -1812,7 +1821,10 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                           size="sm"
                           className="h-7 gap-1 text-[11px]"
                           aria-expanded={comparing}
-                          onClick={() => setCompareId(comparing ? null : v.id)}
+                          onClick={() => {
+                            if (!comparing) logEditorEvent(user.id, "version_compare");
+                            setCompareId(comparing ? null : v.id);
+                          }}
                         >
                           <Diff size={11} />비교
                         </Button>
@@ -1989,7 +2001,10 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                 {getSectionGuides(sec.heading) && (
                   <button
                     type="button"
-                    onClick={() => setSectionGuideOpen((cur) => (cur === sec.id ? null : sec.id))}
+                    onClick={() => {
+                      if (sectionGuideOpen !== sec.id) logEditorEvent(user.id, "section_guide_open");
+                      setSectionGuideOpen((cur) => (cur === sec.id ? null : sec.id));
+                    }}
                     aria-expanded={sectionGuideOpen === sec.id}
                     aria-label="이 섹션 작성 가이드"
                     title="이 섹션 작성 가이드"
@@ -2142,7 +2157,10 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         <div className="mt-4 rounded-xl border border-amber-200/70 bg-amber-50/40 dark:border-amber-800/50 dark:bg-amber-950/10">
           <button
             type="button"
-            onClick={() => setGuideOpen((v) => !v)}
+            onClick={() => {
+              if (!guideOpen) logEditorEvent(user.id, "guide_open");
+              setGuideOpen((v) => !v);
+            }}
             aria-expanded={guideOpen}
             className="flex w-full items-center justify-between px-3.5 py-2.5 text-left"
           >
@@ -2180,7 +2198,10 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         <div className="mt-3 rounded-xl border border-violet-200/70 bg-violet-50/30 dark:border-violet-800/50 dark:bg-violet-950/10">
           <button
             type="button"
-            onClick={() => setPhrasesOpen((v) => !v)}
+            onClick={() => {
+              if (!phrasesOpen) logEditorEvent(user.id, "phrases_open");
+              setPhrasesOpen((v) => !v);
+            }}
             aria-expanded={phrasesOpen}
             className="flex w-full items-center justify-between px-3.5 py-2.5 text-left"
           >
@@ -2263,6 +2284,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         {/* 연구 방법·분석 도우미 — 설계 9종·통계 8종 레퍼런스 (사이클 31) */}
         {step === "method" && (
           <MethodHelper
+            userId={user.id}
             selectedMethods={profile?.methods ?? []}
             assumptionsByMethod={ASSUMPTIONS_BY_METHOD}
             archiveByMethod={ARCHIVE_BY_METHOD}

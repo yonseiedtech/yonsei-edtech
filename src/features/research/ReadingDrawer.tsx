@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { researchPapersApi } from "@/lib/bkend";
+import { logEditorEvent } from "./editor-telemetry";
 import type { ResearchPaper, WritingPaperChapterKey } from "@/types";
 
 interface Props {
@@ -104,7 +105,10 @@ export default function ReadingDrawer({ userId, chapter }: Props) {
     <div className="mt-3 rounded-xl border border-emerald-200/70 bg-emerald-50/30 dark:border-emerald-800/50 dark:bg-emerald-950/10">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          if (!open) logEditorEvent(userId, "reading_drawer_open");
+          setOpen((v) => !v);
+        }}
         aria-expanded={open}
         className="flex w-full items-center justify-between px-3.5 py-2.5 text-left"
       >

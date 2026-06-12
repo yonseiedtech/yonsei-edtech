@@ -14,6 +14,7 @@ import Link from "next/link";
 import { Compass, FlaskConical, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { STAT_METHOD_LABELS } from "@/types";
+import { logEditorEvent } from "./editor-telemetry";
 import type { StatMethodType } from "@/types";
 
 // ── 연구 설계 레퍼런스 ──
@@ -145,6 +146,7 @@ export const STAT_METHOD_DESCRIPTIONS: Record<StatMethodType, { definition: stri
 };
 
 interface Props {
+  userId?: string;
   selectedMethods: StatMethodType[];
   /** 분석 방법별 가정 체크리스트 — 에디터의 ASSUMPTION_GUIDES.assumptions */
   assumptionsByMethod: Record<StatMethodType, string[]>;
@@ -159,6 +161,7 @@ interface Props {
 }
 
 export default function MethodHelper({
+  userId,
   selectedMethods,
   assumptionsByMethod,
   archiveByMethod,
@@ -180,7 +183,10 @@ export default function MethodHelper({
     <div className="mt-3 rounded-xl border border-teal-200/70 bg-teal-50/30 dark:border-teal-800/50 dark:bg-teal-950/10">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          if (!open) logEditorEvent(userId, "method_helper_open");
+          setOpen((v) => !v);
+        }}
         aria-expanded={open}
         className="flex w-full items-center justify-between px-3.5 py-2.5 text-left"
       >
