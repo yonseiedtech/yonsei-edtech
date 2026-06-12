@@ -33,7 +33,7 @@ import {
   Save, FileText, CheckCircle2, ChevronLeft, ChevronRight,
   BookOpen, FlaskConical, Microscope, BarChart3, Flag,
   Play, Timer, Lightbulb, Plus, Trash2, History,
-  Diff, RotateCcw, ArrowUp, ArrowDown,
+  Diff, RotateCcw, ArrowUp, ArrowDown, Download,
   Loader2, Compass, GraduationCap,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -858,6 +858,49 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     }
   }
 
+  /** 작성 본문을 평문 .txt 로 내보내기 — 장(Ⅰ~Ⅴ)·섹션 번호·단락 빈 줄 구분 */
+  function handleExportText() {
+    const roman = ["Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ"];
+    const title = form.title.trim() || "학위논문 초안";
+    const lines: string[] = [title, ""];
+    let hasBody = false;
+    STEPS.forEach((st, i) => {
+      const chapterLines: string[] = [];
+      let secNo = 0;
+      for (const sec of form.sections[st.key]) {
+        const paras = sec.paragraphs.map((par) => par.text.trim()).filter(Boolean);
+        if (paras.length === 0) continue;
+        hasBody = true;
+        secNo += 1;
+        chapterLines.push(`${secNo}. ${sec.heading.trim() || "본문"}`, "");
+        for (const t of paras) chapterLines.push(t, "");
+      }
+      if (chapterLines.length > 0) {
+        lines.push(`${roman[i]}. ${st.label}`, "");
+        lines.push(...chapterLines);
+      }
+    });
+    if (!hasBody) {
+      toast.info("내보낼 작성 내용이 없습니다 — 본문을 작성한 뒤 다시 시도하세요.");
+      return;
+    }
+    lines.push(
+      "—",
+      `총 ${totalChars(form).toLocaleString()}자 · ${new Date().toLocaleDateString("ko-KR")} 내보냄 · 연세교육공학회 논문 에디터`,
+    );
+    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const ymd = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `${title.replace(/[\/:*?"<>|]/g, "_")}_${ymd}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast.success("텍스트 파일(.txt)로 내보냈습니다.");
+  }
+
   // ── 렌더 ──
 
   const stepIdx = STEPS.findIndex((s) => s.key === step);
@@ -1037,26 +1080,32 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
               </span>
             )}
           </div>
-          {!readOnly && (
-            <div className="flex shrink-0 items-center gap-2">
-              {savedAt && !saving && (
-                <span className="hidden items-center gap-1 text-[11px] text-muted-foreground sm:flex">
-                  <CheckCircle2 size={12} className="text-emerald-500" />
-                  {(() => {
-                    const diff = Date.now() - new Date(savedAt).getTime();
-                    if (diff < 60_000) return "방금 저장됨";
-                    const t = new Date(savedAt);
-                    return `${t.getHours().toString().padStart(2, "0")}:${t.getMinutes().toString().padStart(2, "0")} 저장됨`;
-                  })()}
-                </span>
-              )}
-              {/* 사용성 평가 반영: 임시저장/저장 이중 버튼 → 저장 1개로 통합 (savedAt 표시가 상태를 대신) */}
-              <Button size="sm" onClick={() => handleSave()} disabled={saving || (!dirty && !!savedAt)}>
-                <Save size={12} className="mr-1" />
-                {saving ? "저장 중…" : dirty ? "저장" : "저장됨"}
-              </Button>
-            </div>
-          )}
+          <div className="flex shrink-0 items-center gap-2">
+            {!readOnly && savedAt && !saving && (
+              <span className="hidden items-center gap-1 text-[11px] text-muted-foreground sm:flex">
+                <CheckCircle2 size={12} className="text-emerald-500" />
+                {(() => {
+                  const diff = Date.now() - new Date(savedAt).getTime();
+                  if (diff < 60_000) return "방금 저장됨";
+                  const t = new Date(savedAt);
+                  return `${t.getHours().toString().padStart(2, "0")}:${t.getMinutes().toString().padStart(2, "0")} 저장됨`;
+                })()}
+              </span>
+            )}
+            <Button variant="outline" size="sm" onClick={handleExportText} title="작성 본문을 텍스트 파일로 다운로드">
+              <Download size={12} className="mr-1" />
+              내보내기
+            </Button>
+            {!readOnly && (
+              <>
+                {/* 사용성 평가 반영: 임시저장/저장 이중 버튼 → 저장 1개로 통합 (savedAt 표시가 상태를 대신) */}
+                <Button size="sm" onClick={() => handleSave()} disabled={saving || (!dirty && !!savedAt)}>
+                  <Save size={12} className="mr-1" />
+                  {saving ? "저장 중…" : dirty ? "저장" : "저장됨"}
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         {/* 연구 방향 프로파일 칩 */}
