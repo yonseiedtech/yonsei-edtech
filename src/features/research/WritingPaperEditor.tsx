@@ -43,6 +43,7 @@ import { lintThesis, questionCoverage, LINT_CHAPTER_LABELS, type LintIssue, type
 import { phrasesForChapter } from "./phrase-bank";
 import MethodHelper, { STAT_METHOD_DESCRIPTIONS, type DesignRef } from "./MethodHelper";
 import DataAnalyzer from "./DataAnalyzer";
+import ReadingDrawer from "./ReadingDrawer";
 import type {
   User,
   WritingPaper,
@@ -2171,6 +2172,9 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
             </ul>
           )}
         </div>
+
+        {/* 읽기 서랍 — 내 읽기 노트를 인용으로 (파이프라인 P1, 2026-06-13) */}
+        <ReadingDrawer userId={user.id} chapter={step} />
 
         {/* 학술 문형 은행 — 장별 정형 문형, 클릭=클립보드 복사 (2026-06-12) */}
         <div className="mt-3 rounded-xl border border-violet-200/70 bg-violet-50/30 dark:border-violet-800/50 dark:bg-violet-950/10">
