@@ -27,6 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/ui/page-header";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
+import ResearchDesignDiagram, { hasDesignDiagram } from "@/features/archive/ResearchDesignDiagram";
 import {
   researchMethodsApi,
   alumniThesesApi,
@@ -240,6 +241,7 @@ export default function ResearchMethodDetailPage() {
     ...(method.accessibleSummary && method.accessibleSummary.trim() !== ""
       ? [{ id: "accessibleSummary", label: "쉽게 이해하기" }]
       : []),
+    ...(hasDesignDiagram(method.name) ? [{ id: "design-model", label: "설계 모형" }] : []),
     ...(method.procedures && method.procedures.length > 0
       ? [{ id: "procedure", label: "연구 절차" }]
       : []),
@@ -355,6 +357,16 @@ export default function ResearchMethodDetailPage() {
             <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
               {method.description}
             </p>
+          </section>
+        )}
+
+        {/* 설계 모형 다이어그램 — O-X 표기·절차 순환 시각화 (사이클 56) */}
+        {hasDesignDiagram(method.name) && (
+          <section id="design-model" className="mt-8 scroll-mt-24">
+            <h2 className="mb-3 text-sm font-semibold text-muted-foreground">설계 모형으로 보기</h2>
+            <div className="rounded-xl border bg-card p-4">
+              <ResearchDesignDiagram methodName={method.name} />
+            </div>
           </section>
         )}
 

@@ -1,19 +1,16 @@
 
-## 배포 27차 — 사이클 50+51 (✓ Ready, 33980966)
+## 배포 29차 — 사이클 55 연구모형 다이어그램 (✓ Ready, 4e413289)
 
-- whats-new 신규 4항목(여정 시딩·DOI/APA·학자 원전·설계 프로파일) + dismissed v2 재노출 + GlobalSearch 논문 상세 딥링크·keywords haystack
+- 사용자 요청: "ANCOVA 같은 통계 가이드에 순서도처럼 연구모형 — 독립·종속변인 관계에서 무엇을 보고자 하는지"
+- StatModelDiagram(src/features/archive/) — 12종 변인 관계 SVG(t-test·ANOVA·ANCOVA·MANOVA·MANCOVA·다중회귀·로지스틱·상관·카이제곱·SEM·EFA·CFA), 색 약속(독립 파랑·종속 초록·공변인 회색점선·잠재 보라·문항 주황)+범례+캡션, CLT/CVI 미해당 자동 미노출
+- 통계 상세 "연구모형으로 보기" 카드 + TOC research-model + ThesisJourney 1단계 구성주의·사회적 구성주의 칩
+- 배포 인프라: vercel 글로벌 설치 + deploy-vercel.js vercelCommand() 글로벌 우선 — npm 11.6.x npx ECOMPROMISED 영구 회피 (28차 4번째 시도로 성공)
 
-## 배포 28차 — 사이클 52+53 통계 오탐 수정 (push 68e98c71, vercel ECOMPROMISED 재배포)
+## 배포 30차 — 사이클 56 연구방법 설계 모형 (이번 게이트)
 
-- 사용자 지적: "사용하지 않은 통계 방법이 보여지는 경우" → 진단 134편: 오탐 5편 확정 (부분 문자열 — 공분산분석⊃분산분석, 다변량분산분석⊃분산분석)
-- 추출 마스킹 방식 전환(STAT_RULES 우선순위 배열 + 매칭 문자열 소비), 초록 원문 대조 검증, 재추출 + rebuild-thesis-method-links.ts (ANCOVA 2→0·ANOVA 10→6)
-- ThesisAnalysisCard — 운영진(staff+) 인라인 검수 UI, "운영진 검수됨" 배지, manual: 재추출 보호
-- 사용자 요청: /research MethodTopStrip — 통계·연구방법 Top 5 탭 위 공통 노출 (모바일 1열)
-- 운영 이슈: npx tsx(시드)와 npx vercel(배포) 병렬 실행 → npm 캐시 ECOMPROMISED. npm 11.6.x libnpmexec with-lock 타이머 버그 — vercel 글로벌 설치로 우회
-
-## 사이클 54 — 수업자료 폴더 반영 (Firestore 시드, 코드 무변경)
-
-- 자료: 교육공학 세미나 주차별 슬라이드(2~14주) + 고전 원전 PDF + 연구방법 자료 (바탕화면\새 폴더)
+- ResearchDesignDiagram — 두 레이아웃: O-X 표기 그리드(실험 R·준실험 NR — 배정/사전/처치/사후 + 범례) · 절차 흐름(델파이 5스텝·설문조사 4스텝) + 순환 화살표(DBR·액션리서치 cyclic)
+- 연구방법 상세 "설계 모형으로 보기" 섹션 + TOC design-model — 6종(실험·준실험·델파이·DBR·액션리서치·설문조사)
+자료 (바탕화면\새 폴더)
 - 저작권 원칙: 슬라이드·강의자 문장 복사 0 — 전부 재서술, 학자 원전은 서지만, DOI 6건 Crossref 제목 일치 검증
 - seed-learning-theories.ts: 신규 개념 8종(행동주의·인지주의·구성주의·사회적 구성주의·구성주의적 구축주의·활동이론·상황학습·스캐폴딩) + 교육에서의 인공지능 보강(Ouyang & Jiao 2021) + 설계기반연구(DBR) 가이드
 - seed-writing-cvi.ts: 작성 팁 2종(APA 참고문헌 기본형·서론 문제→갭→기여) + 내용타당도지수(CVI) 통계 가이드 + 메타인지 전략 단락(자기질문·KWL·PQ4R·IDEAL)
