@@ -214,8 +214,8 @@ export default function GlobalSearch() {
     for (const t of sources.theses) {
       items.push({
         key: `thesis:${t.id}`, group: "졸업생 논문", label: t.title,
-        sub: `${t.authorName} · ${t.awardedYearMonth}`, href: "/alumni/thesis", icon: GraduationCap,
-        haystack: `${t.title} ${t.authorName}`,
+        sub: `${t.authorName} · ${t.awardedYearMonth}`, href: `/alumni/thesis/${t.id}`, icon: GraduationCap,
+        haystack: `${t.title} ${t.authorName} ${(t.keywords ?? []).join(" ")}`,
       });
     }
     for (const n of sources.notices) {

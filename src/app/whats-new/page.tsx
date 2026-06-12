@@ -12,12 +12,16 @@ import {
   Sparkles,
   ChevronRight,
   MessageSquare,
+  Compass,
+  GraduationCap,
+  Quote,
+  BarChart3,
 } from "lucide-react";
 import PageContainer from "@/components/ui/page-container";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-const WHATS_NEW_KEY = "yonsei_whats_new_dismissed_v1";
+const WHATS_NEW_KEY = "yonsei_whats_new_dismissed_v2";
 
 interface Feature {
   id: string;
@@ -35,6 +39,82 @@ interface Feature {
 }
 
 const FEATURES: Feature[] = [
+  {
+    id: "thesis-journey-suite",
+    icon: Compass,
+    badge: "NEW · 논문 여정",
+    badgeVariant: "default",
+    title: "논문 여정 — 계획서가 본문의 초안이 됩니다",
+    description:
+      "나의 논문 여정에서 단계별 산출물(완독·보고서·계획서·본문 진행률)을 한눈에 확인하고, 논문 에디터에서는 연구계획서의 목적·범위·방법을 서론과 연구 방법 장의 초안으로 한 번에 가져올 수 있습니다.",
+    highlights: [
+      "여정 단계 카드에 '내 산출물' 칩 — 완독 N편·계획서·본문 %",
+      "에디터 '계획서에서 가져오기' — 빈 장에만 안전하게 시딩",
+      "대시보드 여정 헤더에서 진행률·미반영 지도 바로 확인",
+    ],
+    cta: "나의 논문 여정 열기",
+    ctaHref: "/mypage/research",
+    color: "from-sky-50 to-sky-100/60",
+    iconBg: "bg-sky-100/80",
+    iconColor: "text-sky-700",
+  },
+  {
+    id: "reading-apa-doi",
+    icon: Quote,
+    badge: "NEW · 논문 읽기",
+    badgeVariant: "default",
+    title: "DOI 자동 채움 · APA 인용 복사",
+    description:
+      "논문 등록 시 DOI만 입력하면 제목·저자·연도·저널 정보가 자동으로 채워지고, 분석 노트 카드에서 APA 7 인용을 바로 복사하거나 현재 목록 전체를 참고문헌으로 내보낼 수 있습니다.",
+    highlights: [
+      "DOI '자동 채움' — Crossref 서지정보, 빈 칸만 채움",
+      "카드 hover 'APA 인용 복사' 원클릭",
+      "'APA 내보내기' — 필터 결과를 가나다순 참고문헌으로",
+    ],
+    cta: "논문 읽기 노트 열기",
+    ctaHref: "/mypage/research",
+    color: "from-emerald-50 to-emerald-100/60",
+    iconBg: "bg-emerald-100/80",
+    iconColor: "text-emerald-700",
+  },
+  {
+    id: "scholar-seminal-works",
+    icon: GraduationCap,
+    badge: "NEW · 아카이브",
+    badgeVariant: "default",
+    title: "이론 개념마다 대표 학자와 원전 링크",
+    description:
+      "인지부하·자기효능감·TPACK 등 26개 이론 개념에 대표 학자와 원전(seminal work)을 연결했습니다. 모든 링크는 검증을 거쳤으며, 무료 공개 원문은 배지로 표시됩니다.",
+    highlights: [
+      "대표 학자 칩 + 원전 서지·링크 (DOI/무료 공개 구분)",
+      "Sweller 1988 · Bandura 1977 · Wing 2006 등 고전 원문 연결",
+      "개념 → 변인 → 측정도구 → 졸업생 논문으로 이어지는 학습 동선",
+    ],
+    cta: "아카이브 개념 보기",
+    ctaHref: "/archive/concept",
+    color: "from-indigo-50 to-indigo-100/60",
+    iconBg: "bg-indigo-100/80",
+    iconColor: "text-indigo-700",
+  },
+  {
+    id: "research-design-profile",
+    icon: BarChart3,
+    badge: "NEW · 연구 분석",
+    badgeVariant: "default",
+    title: "졸업생 논문 연구 설계 프로파일",
+    description:
+      "졸업생 학위논문의 제목·초록에서 연구대상·변인·통계방법·연구방법을 자동 추출해 구조화했습니다. 선배들이 어떤 설계와 통계로 연구했는지 경향을 보고, 클릭 한 번으로 해당 방법의 가이드로 이동하세요.",
+    highlights: [
+      "논문 상세 '연구 분석 프로필' — 대상·독립/종속 변인·방법 칩",
+      "/research 통계방법 Top 10 · 연구방법 분포 차트",
+      "막대 클릭 → 아카이브 가이드(가정·절차·보고 문장)로 연결",
+    ],
+    cta: "연구 동향 분석 열기",
+    ctaHref: "/research",
+    color: "from-violet-50 to-violet-100/60",
+    iconBg: "bg-violet-100/80",
+    iconColor: "text-violet-700",
+  },
   {
     id: "dashboard-phase-d",
     icon: LayoutDashboard,
