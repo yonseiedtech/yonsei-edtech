@@ -161,7 +161,8 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
     queryKey: ["activities", "all"],
     queryFn: async () => {
       const res = await activitiesApi.list();
-      return res.data as unknown as Activity[];
+      // 사이클 99: 런타임 비배열 방어 (eb.filter is not a function 크래시 원인)
+      return Array.isArray(res.data) ? (res.data as unknown as Activity[]) : [];
     },
     enabled: !!user,
   });

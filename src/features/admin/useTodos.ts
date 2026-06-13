@@ -14,7 +14,9 @@ export function useTodos() {
     retry: false,
   });
 
-  return { todos: data ?? [], isLoading };
+  // 사이클 99: dataApi.list 가 배열을 보장하지만, 런타임에 비배열이 들어오는 케이스 방어
+  // (eb.filter/D.filter is not a function 크래시 — 마이페이지·콘솔 흰화면 원인)
+  return { todos: Array.isArray(data) ? data : [], isLoading };
 }
 
 export function useCreateTodo() {
