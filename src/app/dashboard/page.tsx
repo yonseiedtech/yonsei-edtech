@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   DndContext,
   PointerSensor,
@@ -464,7 +465,15 @@ function DashboardContent() {
          * PageHeader 인사 다음에 이어지는 것이 자연스러운 플로우.
          */}
         <PageHeader
-          icon={LayoutDashboard}
+          icon={
+            <Image
+              src="/yonsei-emblem.svg"
+              alt="연세대학교"
+              width={48}
+              height={48}
+              className="h-12 w-12 object-contain"
+            />
+          }
           title={`안녕하세요, ${user.name}님`}
           description="오늘의 학회 활동 현황을 확인하세요."
           actions={
@@ -519,8 +528,9 @@ function DashboardContent() {
         {/* 신규 회원 온보딩 배너 — PageHeader 바로 아래, TermBriefHero 위 */}
         <NewMemberWelcomeBanner />
 
-        {/* 신규 회원 6단계 체크리스트 (Phase C) — 가입 30일 이내 또는 완성도 < 60% 일 때만 노출 */}
-        <div className="mb-6">
+        {/* 신규 회원 6단계 체크리스트 (Phase C) — 가입 30일 이내 또는 완성도 < 60% 일 때만 노출.
+            empty:hidden — 기존 회원에게 위젯이 null 렌더될 때 빈 div 의 유령 여백(mb-6) 제거 (사이클 84) */}
+        <div className="mb-6 empty:hidden">
           <NewMemberChecklistWidget />
         </div>
 
