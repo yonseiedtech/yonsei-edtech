@@ -259,6 +259,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
       label: "활동",
       items: [
         { href: "/console/academic/seminars", label: "세미나", icon: BookOpen },
+        { href: "/console/networking", label: "모임·네트워킹", icon: Users },
         { href: "/console/academic/projects", label: "프로젝트", icon: FolderKanban },
         { href: "/console/academic/studies", label: "스터디", icon: NotebookPen },
         { href: "/console/academic/external", label: "대외 학술대회", icon: Globe },
