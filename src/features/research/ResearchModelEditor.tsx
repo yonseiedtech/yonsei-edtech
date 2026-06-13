@@ -462,9 +462,10 @@ function ResearchModelEditorInner({
       {/* ── 본문: 캔버스 + 편집 패널 ── */}
       <div className="flex flex-col gap-3 lg:flex-row">
         {/* 캔버스 */}
+        {/* 사이클 100: A4 가로 비율(297:210) 보드 — 논문 삽입용. 과도한 축소 방지(minZoom 상향) */}
         <div
           ref={flowWrapperRef}
-          className="h-[60vh] min-h-[420px] flex-1 overflow-hidden rounded-lg border border-border bg-muted/20"
+          className="aspect-[297/210] max-h-[80vh] w-full max-w-[1100px] flex-1 overflow-hidden rounded-lg border border-border bg-white dark:bg-muted/20"
         >
           <ReactFlow
             nodes={nodes}
@@ -479,8 +480,8 @@ function ResearchModelEditorInner({
             elementsSelectable
             deleteKeyCode={null}
             fitView
-            fitViewOptions={{ padding: 0.25 }}
-            minZoom={0.3}
+            fitViewOptions={{ padding: 0.15 }}
+            minZoom={0.55}
             maxZoom={2}
             proOptions={{ hideAttribution: true }}
           >
