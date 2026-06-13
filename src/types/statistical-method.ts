@@ -173,6 +173,8 @@ export interface StatisticalMethod extends ArchiveOperationalMeta {
   relatedResearchMethodIds?: string[];
   /** 운영자가 큐레이트한 졸업생 학위논문 ID */
   alumniThesisIds?: string[];
+  /** 통계 SW 실습 절차 (사이클 65 — jamovi 등 무료 도구의 메뉴 경로·옵션 단계) */
+  toolGuides?: { tool: string; steps: string[]; note?: string }[];
   references?: StatisticalReference[];
   /** 운영진 검수 후 공개 게이트 */
   published: boolean;
