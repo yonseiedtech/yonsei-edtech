@@ -51,8 +51,30 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
           const merged = mergeToUser(firebaseUser, profile);
           setUser(merged);
           // 백그라운드: 마지막 접속 시각 갱신 (임퍼소네이션 세션은 제외)
+          // 사이클 89: 하루 1회 throttle(매 새로고침 write 낭비 방지) + 실패 진단 로그.
+          //   누락 원인 — 레거시 CSV 임포트 회원(doc id ≠ Firebase uid)은 firestore.rules
+          //   isOwner 체크에서 거부됨. 기존 silent catch 였던 것을 console.warn 으로 노출해
+          //   누락 빈도·대상을 파악할 수 있게 한다(근본 정합성 수정은 별도 마이그레이션).
           if (merged?.id && !isImpersonating) {
-            profilesApi.update(merged.id, { lastLoginAt: new Date().toISOString() }).catch(() => {});
+            try {
+              const k = `last-login-ymd-${merged.id}`;
+              const today = new Date().toISOString().slice(0, 10);
+              if (localStorage.getItem(k) !== today) {
+                localStorage.setItem(k, today);
+                profilesApi
+                  .update(merged.id, { lastLoginAt: new Date().toISOString() })
+                  .catch((e) =>
+                    console.warn(
+                      "[auth] lastLoginAt 갱신 실패 (레거시 doc id≠uid 또는 권한 거부):",
+                      merged.id,
+                      e,
+                    ),
+                  );
+              }
+            } catch {
+              // localStorage 접근 불가(시크릿 모드 등) — throttle 없이 기존 동작 폴백
+              profilesApi.update(merged.id, { lastLoginAt: new Date().toISOString() }).catch(() => {});
+            }
           }
           // 백그라운드: 게스트 레코드 자동 연결 (임퍼소네이션 세션은 제외)
           if (merged?.id && !isImpersonating) {
