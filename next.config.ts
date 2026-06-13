@@ -1,10 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // 사이클 87 진단(임시): 프로덕션 브라우저 소스맵 — 마이페이지/콘솔 "eb.filter is not a function"
-  // stack 을 minified 가 아닌 원본 파일·줄로 노출해 원인 추적. Vercel 빌드에만 적용(CI 검증 빌드는 빠르게 유지).
-  // 원인 확정 후 제거한다.
-  productionBrowserSourceMaps: process.env.VERCEL === "1",
+  // 사이클 87/91 진단(임시): 프로덕션 브라우저 소스맵 — 마이페이지/콘솔 "eb.filter is not a function"
+  // stack 을 minified 가 아닌 원본 파일·줄로 노출해 원인 추적. VERCEL 환경변수 조건이 빌드에
+  // 적용되지 않아(.map 404) 무조건 true 로 강제. 원인 확정 후 제거한다.
+  productionBrowserSourceMaps: true,
 
   // 이미지 최적화
   images: {
