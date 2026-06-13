@@ -255,7 +255,7 @@ function DashboardContent() {
     ) : null,
     notices: (
       <section className="mx-auto mt-8 max-w-6xl px-4">
-        <div className="rounded-2xl border bg-card p-6 shadow-sm">
+        <div className="rounded-2xl border bg-card p-4 shadow-sm sm:p-6">
           <div className="flex items-center gap-2">
             <Megaphone size={18} className="text-primary" />
             <h2 className="font-bold">최근 공지</h2>
@@ -290,7 +290,7 @@ function DashboardContent() {
     ),
     miniCalendar: (
       <section className="mx-auto mt-6 max-w-6xl px-4">
-        <div className="rounded-2xl border bg-card p-6 shadow-sm">
+        <div className="rounded-2xl border bg-card p-4 shadow-sm sm:p-6">
           <div className="flex items-center gap-2">
             <Calendar size={18} className="text-primary" />
             <h2 className="font-bold">세미나 일정</h2>
@@ -619,7 +619,7 @@ function DashboardContent() {
       <section className="mx-auto mt-8 max-w-6xl px-4 space-y-6">
         {/* 내 신청 세미나 */}
         {isWidgetVisible(layout, "seminars") && mySeminars.length > 0 && (
-          <div className="rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="rounded-2xl border bg-card p-4 shadow-sm sm:p-6">
             <div className="flex items-center gap-2">
               <BookOpen size={18} className="text-primary" />
               <h2 className="font-bold">내 신청 세미나</h2>
@@ -656,7 +656,7 @@ function DashboardContent() {
         )}
 
         {/* 활동 피드 (개인 타임라인) — 사용자 토글 비대상 (개인화 비대상 위젯) */}
-        <div className="rounded-2xl border bg-card p-6 shadow-sm">
+        <div className="rounded-2xl border bg-card p-4 shadow-sm sm:p-6">
           <div className="flex items-center gap-2">
             <MessageSquare size={18} className="text-primary" />
             <h2 className="font-bold">최근 활동</h2>

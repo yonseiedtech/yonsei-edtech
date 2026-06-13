@@ -827,7 +827,7 @@ export default function DailyClassTimelineWidget() {
   void toggleWeekTodo;
 
   return (
-    <div className="rounded-2xl border bg-card p-6">
+    <div className="rounded-2xl border bg-card p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <CalendarClock size={18} className="text-primary" />
