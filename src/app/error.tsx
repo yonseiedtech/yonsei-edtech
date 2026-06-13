@@ -69,7 +69,8 @@ export default function Error({
                 </code>
               </p>
             )}
-            {error?.stack && process.env.NODE_ENV !== "production" && (
+            {/* 사이클 87 진단: 프로덕션에서도 stack 노출 (소스맵 활성화와 함께 — 마이페이지/콘솔 eb.filter 원인 추적) */}
+            {error?.stack && (
               <pre className="max-h-48 overflow-auto rounded bg-background p-2 text-[10px] leading-relaxed">
                 {error.stack}
               </pre>
