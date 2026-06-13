@@ -12,6 +12,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Users, FlaskConical, GraduationCap, ArrowRight, CalendarDays, BookOpen, Gauge } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatDday } from "@/lib/dday";
 import { useAuthStore } from "@/features/auth/auth-store";
 import {
   networkingEventsApi,
@@ -33,6 +34,8 @@ interface AreaStat {
   primary: { value: string; caption: string };
   secondary?: { value: string; caption: string };
   cta: string;
+  /** 임박 행사 D-day 배지 (≤7일 이내 가장 가까운 행사) */
+  badge?: { label: string; name: string };
 }
 
 export default function DashboardCommandCenter() {
@@ -74,6 +77,25 @@ export default function DashboardCommandCenter() {
     const readCount = (papers as { isDraft?: boolean; readStatus?: string }[]).filter((p) => !p.isDraft && p.readStatus === "completed").length;
     const upcomingSeminars = seminars.filter((s) => (s.date ?? "") >= nowIso.slice(0, 10)).length;
 
+    // 임박 행사 D-day 배지 (≤7일) — 각 영역의 가장 가까운 미래 행사 (여정 문서 Medium·상황 D)
+    const today = nowIso.slice(0, 10);
+    const nextEvent = events
+      .filter((e) => (e.startAt ?? "") >= nowIso && e.status !== "cancelled")
+      .sort((a, b) => (a.startAt ?? "").localeCompare(b.startAt ?? ""))[0];
+    const eventDday = nextEvent?.startAt ? formatDday(nextEvent.startAt.slice(0, 10)) : null;
+    const eventBadge =
+      nextEvent && eventDday && eventDday.diffDays >= 0 && eventDday.diffDays <= 7
+        ? { label: eventDday.kind === "today" ? "D-day" : eventDday.label, name: nextEvent.title }
+        : undefined;
+    const nextSeminar = seminars
+      .filter((s) => (s.date ?? "") >= today)
+      .sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""))[0];
+    const seminarDday = nextSeminar?.date ? formatDday(nextSeminar.date) : null;
+    const seminarBadge =
+      nextSeminar && seminarDday && seminarDday.diffDays >= 0 && seminarDday.diffDays <= 7
+        ? { label: seminarDday.kind === "today" ? "D-day" : seminarDday.label, name: nextSeminar.title }
+        : undefined;
+
     return [
       {
         icon: Users,
@@ -86,6 +108,7 @@ export default function DashboardCommandCenter() {
         secondary: { value: `${activePos}`, caption: "내 활동" },
         // 빈 상태(예정 모임·내 활동 모두 0): 시작 유도 문구로 분기 (여정 문서 High ①)
         cta: upcomingEvents === 0 && activePos === 0 ? "모임 둘러보기" : "모임·네트워킹",
+        badge: eventBadge,
       },
       {
         icon: FlaskConical,
@@ -109,6 +132,7 @@ export default function DashboardCommandCenter() {
         primary: { value: `${upcomingSeminars}`, caption: "예정 세미나" },
         // 예정 세미나 없음: 둘러보기 유도 (여정 문서 High ①)
         cta: upcomingSeminars === 0 ? "세미나 둘러보기" : "세미나·활동",
+        badge: seminarBadge,
       },
     ];
   }, [events, positions, paper, papers, seminars, nowIso]);
@@ -135,6 +159,19 @@ export default function DashboardCommandCenter() {
               />
             </div>
             <h3 className="mt-3 text-sm font-bold tracking-tight">{s.label}</h3>
+            {s.badge && (
+              <p
+                className={cn(
+                  "mt-1 inline-flex max-w-full items-center gap-1 rounded-full bg-background/70 px-2 py-0.5 text-[10px] font-bold",
+                  s.accentText,
+                )}
+              >
+                <CalendarDays size={10} className="shrink-0" />
+                <span className="truncate">
+                  {s.badge.label} · {s.badge.name}
+                </span>
+              </p>
+            )}
             <div className="mt-2 flex items-end gap-4">
               <div>
                 <p
