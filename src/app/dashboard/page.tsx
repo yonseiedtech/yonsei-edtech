@@ -454,13 +454,14 @@ function DashboardContent() {
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-8 sm:py-14">
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 py-6 sm:py-10">
       {/* ── 플로팅 레이어: 팝업·배너·알림 (레이아웃 흐름 밖) ── */}
       <TodayTodosPopup />
       <PushPermissionPrompt />
 
       {/* ── 섹션 1: 헤더 영역 ── */}
-      <section className="mx-auto max-w-6xl px-4 mt-6 sm:mt-8">
+      {/* 사이클 86: 상단 이중 마진(py + mt) 제거 — 최상위 py 가 상단 여백 담당, 섹션 mt 제거로 과다 여백 해소 */}
+      <section className="mx-auto max-w-6xl px-4">
         {/*
          * NewMemberWelcomeBanner — DESIGN.md §9 회원용 페이지 패턴:
          * PageHeader 아래에 배치. 신규 회원에게만 노출되므로
@@ -522,13 +523,14 @@ function DashboardContent() {
         />
 
         {/* 체감 스프린트: 여정 인사 헤더 — 리브랜딩 시그니처를 매일 보는 곳에 */}
-        <div className="mb-4">
+        {/* 사이클 86: PageHeader 와 간격 부여(mt-6) — 인사 헤더가 PageHeader 에 붙던 문제 해소 */}
+        <div className="mt-6 mb-5">
           <JourneyGreetingHeader user={user} />
         </div>
 
         {/* 사이클 85: 내 프로필 요약 — 학적 정보(입학·누적학기·기수·재학상태) + 완성도 + 최근 활동.
             주기적 프로필 업데이트 유도 (사용자 요청). 인사는 JourneyGreetingHeader 가 담당. */}
-        <div className="mb-4">
+        <div className="mb-5">
           <ProfileSummaryCard user={user} />
         </div>
 
