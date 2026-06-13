@@ -188,6 +188,27 @@ service cloud.firestore {
       allow update, delete: if isAuthenticated() && isStaffOrAbove();
     }
 
+    // ─── 모임·네트워킹 (사이클 73) ───
+    // 행사: 공개 read(회원·게스트 모두 봄), staff+ 만 등록/수정.
+    match /networking_events/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAuthenticated() && isStaffOrAbove();
+    }
+    // 참석 신청: 게스트(비회원) 신청 허용(public create), 로그인 회원은 명단 read,
+    //           본인(userId) 또는 staff 만 수정/삭제.
+    match /networking_rsvps/{docId} {
+      allow read: if isAuthenticated();
+      allow create: if true; // 회원 + 게스트 신청
+      allow update, delete: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
+    }
+    // 회비 납부: 본인 또는 staff 만 read(민감), 납부 확인 write 는 staff 전용.
+    match /networking_dues/{docId} {
+      allow read: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
+      allow create, update, delete: if isAuthenticated() && isStaffOrAbove();
+    }
+
     // ─── Certificates ───
     match /certificates/{docId} {
       // 본인(recipientUserId) 또는 staff 이상만 read. 공개 조회는 차단.

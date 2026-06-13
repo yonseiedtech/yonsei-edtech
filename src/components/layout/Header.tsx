@@ -127,6 +127,7 @@ const PUBLIC_NAV: NavGroup[] = [
       { href: "/activities", label: "활동 소개" },
       { href: "/calendar", label: "학술 캘린더" },
       { href: "/seminars", label: "세미나" },
+      { href: "/gatherings", label: "모임·네트워킹" },
       { href: "/activities/projects", label: "프로젝트" },
       { href: "/activities/studies", label: "스터디" },
       { href: "/activities/external", label: "대외 학술대회" },

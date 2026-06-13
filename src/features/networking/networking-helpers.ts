@@ -1,0 +1,74 @@
+// 모임·네트워킹 공통 헬퍼 (사이클 73)
+import type {
+  NetworkingEvent,
+  NetworkingRsvp,
+  NetworkingDue,
+  NetworkingSettlement,
+  NetworkingEventType,
+} from "@/types";
+
+/** 행사 유형별 배지 색상 (Tailwind) */
+export const EVENT_TYPE_COLORS: Record<NetworkingEventType, string> = {
+  opening: "bg-blue-50 text-blue-700 border-blue-200",
+  closing: "bg-violet-50 text-violet-700 border-violet-200",
+  regular: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  casual: "bg-amber-50 text-amber-700 border-amber-200",
+  mt: "bg-rose-50 text-rose-700 border-rose-200",
+  other: "bg-slate-50 text-slate-700 border-slate-200",
+};
+
+/** 행사가 지났는지 (종료일 또는 시작일 기준) */
+export function isPastEvent(ev: NetworkingEvent, nowIso: string): boolean {
+  const ref = ev.endAt || ev.startAt;
+  return ref < nowIso;
+}
+
+/** 신청 마감 지났는지 */
+export function isRsvpClosed(ev: NetworkingEvent, nowIso: string): boolean {
+  if (ev.status === "closed" || ev.status === "cancelled" || ev.status === "done") return true;
+  if (ev.rsvpDeadline) return ev.rsvpDeadline < nowIso;
+  return ev.startAt < nowIso;
+}
+
+/** 정산 요약 — 참석자·회비 집계 (운영진 화면) */
+export function computeSettlement(
+  ev: NetworkingEvent,
+  rsvps: NetworkingRsvp[],
+  dues: NetworkingDue[],
+): NetworkingSettlement {
+  const attending = rsvps.filter((r) => r.status === "attending");
+  const guestCount = attending.filter((r) => r.isGuest).length;
+  const totalCompanions = attending.reduce((sum, r) => sum + (r.companions ?? 0), 0);
+  const headcount = attending.length + totalCompanions;
+  const paidAmount = dues
+    .filter((d) => d.status === "paid")
+    .reduce((sum, d) => sum + (d.amount ?? 0), 0);
+  const unpaidAmount = dues
+    .filter((d) => d.status === "unpaid")
+    .reduce((sum, d) => sum + (d.amount ?? 0), 0);
+  const exemptCount = dues.filter((d) => d.status === "exempt").length;
+  return {
+    attendingCount: attending.length,
+    guestCount,
+    totalCompanions,
+    expectedRevenue: headcount * (ev.feeAmount ?? 0),
+    paidAmount,
+    unpaidAmount,
+    exemptCount,
+  };
+}
+
+/** ISO → "M월 D일(요일) HH:mm" (KST 가정, 클라이언트 로컬) */
+export function formatEventDate(iso: string): string {
+  const d = new Date(iso);
+  const days = ["일", "월", "화", "수", "목", "금", "토"];
+  const mm = d.getMonth() + 1;
+  const dd = d.getDate();
+  const hh = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+  return `${mm}월 ${dd}일(${days[d.getDay()]}) ${hh}:${min}`;
+}
+
+export function formatWon(amount: number): string {
+  return amount === 0 ? "무료" : `${amount.toLocaleString()}원`;
+}

@@ -111,6 +111,9 @@ import type {
   CommLike,
   CommContextType,
   CommLikeTarget,
+  NetworkingEvent,
+  NetworkingRsvp,
+  NetworkingDue,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -478,6 +481,48 @@ export const attendeesApi = {
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<SeminarAttendee>("seminar_attendees", id, data),
   remove: (id: string) => dataApi.delete("seminar_attendees", id),
+};
+
+// ── 모임·네트워킹 (사이클 73) — firestore.rules networking_* 와 양쪽 게이트 ──
+export const networkingEventsApi = {
+  list: () => dataApi.list<NetworkingEvent>("networking_events", { limit: 200 }),
+  listPublished: () =>
+    dataApi.list<NetworkingEvent>("networking_events", { "filter[published]": true, limit: 200 }),
+  get: (id: string) => dataApi.get<NetworkingEvent>("networking_events", id),
+  create: (data: Omit<NetworkingEvent, "id">) =>
+    dataApi.create<NetworkingEvent>("networking_events", data as unknown as Record<string, unknown>),
+  update: (id: string, data: Partial<NetworkingEvent>) =>
+    dataApi.update<NetworkingEvent>("networking_events", id, data as unknown as Record<string, unknown>),
+  remove: (id: string) => dataApi.delete("networking_events", id),
+};
+
+export const networkingRsvpsApi = {
+  listByEvent: (eventId: string) =>
+    dataApi.list<NetworkingRsvp>("networking_rsvps", { "filter[eventId]": eventId, limit: 500 }),
+  listByUser: (userId: string) =>
+    dataApi.list<NetworkingRsvp>("networking_rsvps", { "filter[userId]": userId, limit: 200 }),
+  check: (eventId: string, userId: string) =>
+    dataApi.list<NetworkingRsvp>("networking_rsvps", {
+      "filter[eventId]": eventId,
+      "filter[userId]": userId,
+    }),
+  create: (data: Omit<NetworkingRsvp, "id">) =>
+    dataApi.create<NetworkingRsvp>("networking_rsvps", data as unknown as Record<string, unknown>),
+  update: (id: string, data: Partial<NetworkingRsvp>) =>
+    dataApi.update<NetworkingRsvp>("networking_rsvps", id, data as unknown as Record<string, unknown>),
+  remove: (id: string) => dataApi.delete("networking_rsvps", id),
+};
+
+export const networkingDuesApi = {
+  listByEvent: (eventId: string) =>
+    dataApi.list<NetworkingDue>("networking_dues", { "filter[eventId]": eventId, limit: 500 }),
+  listByUser: (userId: string) =>
+    dataApi.list<NetworkingDue>("networking_dues", { "filter[userId]": userId, limit: 200 }),
+  create: (data: Omit<NetworkingDue, "id">) =>
+    dataApi.create<NetworkingDue>("networking_dues", data as unknown as Record<string, unknown>),
+  update: (id: string, data: Partial<NetworkingDue>) =>
+    dataApi.update<NetworkingDue>("networking_dues", id, data as unknown as Record<string, unknown>),
+  remove: (id: string) => dataApi.delete("networking_dues", id),
 };
 
 export const siteSettingsApi = {
