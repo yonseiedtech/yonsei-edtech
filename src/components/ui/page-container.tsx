@@ -13,7 +13,8 @@ import { cn } from "@/lib/utils";
  * - default (max-w-6xl): 콘텐츠 중심 — 학회 소개·디딤판·활동·마이페이지
  * - wide (max-w-7xl): 그리드·매거진 — 뉴스레터 매거진 등
  *
- * 표준 패딩: px-4 py-8 sm:py-14 (운영 콘솔 py-16 보다 약간 작게, 사용자 서비스는 여유).
+ * 표준 패딩: px-4 py-6 sm:py-10 (사이클 90 — 대시보드·콘솔과 상단 여백 통일. 기존 py-8 sm:py-14 는
+ * 대시보드(py-6 sm:py-10)·콘솔(py-16)과 제각각이라 통일감이 떨어진다는 피드백 반영해 축소 통일).
  */
 
 type ContainerWidth = "narrow" | "default" | "wide";
@@ -37,7 +38,7 @@ export default function PageContainer({
   children,
 }: PageContainerProps) {
   return (
-    <div className={cn("mx-auto px-4 py-8 sm:py-14", WIDTH_MAP[width], className)}>
+    <div className={cn("mx-auto px-4 py-6 sm:py-10", WIDTH_MAP[width], className)}>
       {children}
     </div>
   );
