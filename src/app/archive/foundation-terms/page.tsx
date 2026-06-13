@@ -199,6 +199,26 @@ export default function FoundationTermsLandingPage() {
           />
         </div>
 
+        {/* 카테고리 점프 네비 — 용어 45종+ 세로 나열 보완 (사이클 64) */}
+        {!loading && (
+          <nav aria-label="카테고리 바로가기" className="mt-3 flex flex-wrap gap-1.5">
+            {CATEGORY_GUIDES.map((guide) => {
+              const count = grouped[guide.category].length;
+              if (count === 0) return null;
+              return (
+                <a
+                  key={guide.category}
+                  href={`#${guide.category}`}
+                  className="inline-flex items-center gap-1 rounded-full border bg-card px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                >
+                  {guide.title}
+                  <span className="tabular-nums">({count})</span>
+                </a>
+              );
+            })}
+          </nav>
+        )}
+
         {!loading && query.trim() && filteredTerms.length === 0 && (
           <Card className="mt-6 rounded-2xl border-dashed">
             <CardContent className="py-10 text-center text-sm text-muted-foreground">
@@ -210,7 +230,7 @@ export default function FoundationTermsLandingPage() {
         {CATEGORY_GUIDES.map((guide) => {
           const list = grouped[guide.category];
           return (
-            <section key={guide.category} className="mt-8">
+            <section key={guide.category} id={guide.category} className="mt-8 scroll-mt-24">
               <div className="mb-3 flex items-center gap-3">
                 <span
                   className={cn(
