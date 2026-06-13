@@ -31,6 +31,30 @@ export const FOUNDATION_TERM_CATEGORY_COLORS: Record<FoundationTermCategory, str
   "learning-theory": "bg-rose-50 text-rose-800 border border-rose-200",
 };
 
+// ── 하위 카테고리 (사이클 69) ──
+// 측정·평가처럼 항목이 몰린 카테고리를 카드 안에서 2차 그룹핑한다.
+// 최상위 카테고리는 그대로 두고, subCategory 가 있는 항목만 하위 그룹 헤더로 묶인다.
+export type FoundationTermSubCategory =
+  | "scale" // 측정 척도·변수 유형
+  | "reliability-validity" // 신뢰도·타당도
+  | "sampling" // 표집·모집단
+  | "statistics"; // 통계 검정·결과 해석
+
+export const FOUNDATION_TERM_SUBCATEGORY_LABELS: Record<FoundationTermSubCategory, string> = {
+  scale: "측정 척도·변수 유형",
+  "reliability-validity": "신뢰도·타당도",
+  sampling: "표집·모집단",
+  statistics: "통계 검정·결과 해석",
+};
+
+/** 하위 그룹 렌더 순서 (학습 흐름: 무엇으로 재나 → 잘 쟀나 → 누구를 → 어떻게 분석하나) */
+export const FOUNDATION_TERM_SUBCATEGORY_ORDER: FoundationTermSubCategory[] = [
+  "scale",
+  "reliability-validity",
+  "sampling",
+  "statistics",
+];
+
 export interface FoundationTermExample {
   id: string;
   text: string;
@@ -60,6 +84,8 @@ export interface FoundationTerm extends ArchiveOperationalMeta {
   abbreviation?: string; // 약어 (예: "IV", "ISD")
   englishName?: string; // 영문 (예: "Independent Variable")
   category: FoundationTermCategory;
+  /** 하위 그룹 (선택) — 측정·평가 등 항목 과밀 카테고리의 2차 분류 (사이클 69) */
+  subCategory?: FoundationTermSubCategory;
   summary: string; // 한 줄 요약
   accessibleSummary?: string; // "쉽게 이해하기" 비유
   definition?: string; // 상세 정의 (마크다운)

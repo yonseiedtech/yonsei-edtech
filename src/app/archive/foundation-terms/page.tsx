@@ -20,6 +20,8 @@ import { foundationTermsApi } from "@/lib/bkend";
 import {
   FOUNDATION_TERM_CATEGORY_COLORS,
   FOUNDATION_TERM_CATEGORY_LABELS,
+  FOUNDATION_TERM_SUBCATEGORY_LABELS,
+  FOUNDATION_TERM_SUBCATEGORY_ORDER,
   type FoundationTerm,
   type FoundationTermCategory,
 } from "@/types";
@@ -97,6 +99,28 @@ const CATEGORY_GUIDES: CategoryGuide[] = [
     iconText: "text-rose-700 dark:text-rose-300",
   },
 ];
+
+/**
+ * 카테고리 안 2차 그룹핑 (사이클 69) — subCategory 가 있으면 정의 순서대로 하위 그룹 분할,
+ * 없으면 단일 평면 그룹(기존 동작). 측정·평가처럼 과밀 카테고리만 하위 헤더로 나뉜다.
+ */
+function groupBySubCategory(
+  list: FoundationTerm[],
+): { key: string; label: string | null; items: FoundationTerm[] }[] {
+  if (!list.some((t) => t.subCategory)) {
+    return [{ key: "_flat", label: null, items: list }];
+  }
+  const groups: { key: string; label: string | null; items: FoundationTerm[] }[] = [];
+  for (const sub of FOUNDATION_TERM_SUBCATEGORY_ORDER) {
+    const items = list.filter((t) => t.subCategory === sub);
+    if (items.length > 0) {
+      groups.push({ key: sub, label: FOUNDATION_TERM_SUBCATEGORY_LABELS[sub], items });
+    }
+  }
+  const rest = list.filter((t) => !t.subCategory);
+  if (rest.length > 0) groups.push({ key: "_rest", label: "기타", items: rest });
+  return groups;
+}
 
 export default function FoundationTermsLandingPage() {
   const { user } = useAuthStore();
@@ -266,13 +290,26 @@ export default function FoundationTermsLandingPage() {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  {list.map((t) => (
-                    <Link
-                      key={t.id}
-                      href={`/archive/foundation-terms/${t.id}`}
-                      className="group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 rounded-2xl"
-                    >
+                <div className="space-y-5">
+                  {groupBySubCategory(list).map((sub) => (
+                    <div key={sub.key}>
+                      {sub.label && (
+                        <div className="mb-2 flex items-center gap-1.5 border-b pb-1.5">
+                          <span className="text-sm font-semibold text-foreground/80">
+                            {sub.label}
+                          </span>
+                          <span className="text-xs font-normal text-muted-foreground">
+                            ({sub.items.length})
+                          </span>
+                        </div>
+                      )}
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                        {sub.items.map((t) => (
+                          <Link
+                            key={t.id}
+                            href={`/archive/foundation-terms/${t.id}`}
+                            className="group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 rounded-2xl"
+                          >
                       <article
                         className={cn(
                           "h-full rounded-2xl border-l-4 bg-card p-5 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md",
@@ -342,7 +379,10 @@ export default function FoundationTermsLandingPage() {
                           />
                         </div>
                       </article>
-                    </Link>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
