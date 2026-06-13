@@ -202,6 +202,10 @@ export interface WritingPaper {
   sections?: Partial<Record<WritingPaperChapterKey, WritingSection[]>>;
   /** 연구 방향 프로파일 — 섹션 템플릿·작성 가이드 맞춤화 */
   researchProfile?: WritingResearchProfile;
+  /** 초록 본문 (사이클 70 — 5장 본문과 별개 요약 아티팩트) */
+  abstract?: string;
+  /** 초록 키워드 (3~5개 권장) */
+  abstractKeywords?: string[];
   /** UI 표시용 마지막 자동 저장 시각 (ISO) */
   lastSavedAt?: string;
   createdAt: string;

@@ -44,6 +44,7 @@ import { phrasesForChapter } from "./phrase-bank";
 import MethodHelper, { STAT_METHOD_DESCRIPTIONS, type DesignRef } from "./MethodHelper";
 import DataAnalyzer from "./DataAnalyzer";
 import ReadingDrawer from "./ReadingDrawer";
+import AbstractPanel from "./AbstractPanel";
 import { logEditorEvent } from "./editor-telemetry";
 import type {
   User,
@@ -252,6 +253,8 @@ type SectionsState = Record<WritingPaperChapterKey, WritingSection[]>;
 interface FormState {
   title: string;
   sections: SectionsState;
+  abstract: string;
+  abstractKeywords: string[];
 }
 
 const CHAPTER_KEYS: WritingPaperChapterKey[] = ["intro", "background", "method", "results", "conclusion"];
@@ -580,7 +583,7 @@ function getSectionGuides(heading: string): string[] | null {
 function buildEmptyForm(approach: ResearchApproachType): FormState {
   const sections = {} as SectionsState;
   for (const k of CHAPTER_KEYS) sections[k] = buildTemplateSections(templateHeadings(k, approach));
-  return { title: "", sections };
+  return { title: "", sections, abstract: "", abstractKeywords: [] };
 }
 
 function normalizeSections(list: WritingSection[]): WritingSection[] {
@@ -607,7 +610,12 @@ function fromPaper(p: WritingPaper | undefined, approach: ResearchApproachType):
       sections[k] = buildTemplateSections(templateHeadings(k, approach));
     }
   }
-  return { title: p.title ?? "", sections };
+  return {
+    title: p.title ?? "",
+    sections,
+    abstract: p.abstract ?? "",
+    abstractKeywords: p.abstractKeywords ?? [],
+  };
 }
 
 /** 콘솔·이력 등 기존 소비처 호환용 평문 직렬화 */
@@ -667,6 +675,8 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   /** 저장 경합 감지: hydrate/저장 시점의 서버 lastSavedAt — 저장 전 비교해 stale 덮어쓰기 차단 */
   const baseSavedAtRef = useRef<string | null>(null);
   const [step, setStep] = useState<StepKey>("intro");
+  // 사이클 70: 초록 탭 — 5장 챕터(step)와 병렬 모드. step 타입은 그대로 두어 챕터 로직 무영향.
+  const [onAbstract, setOnAbstract] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [sectionGuideOpen, setSectionGuideOpen] = useState<string | null>(null);
   const [lintOpen, setLintOpen] = useState(false);
@@ -939,6 +949,8 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           title: form.title,
           sections: form.sections,
           chapters: serializeAll(form.sections),
+          abstract: form.abstract,
+          abstractKeywords: form.abstractKeywords,
           lastSavedAt: now,
         },
       });
@@ -1308,9 +1320,10 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         else if (v.chapters?.[k]?.trim()) sections[k] = withOverview(migratePlainText(v.chapters[k]!));
         else sections[k] = buildTemplateSections(templateHeadings(k, restoredApproach));
       }
-      setForm({ title: v.title ?? "", sections });
+      // 본문(5장)만 복원 — 초록은 별개 아티팩트라 현재 값을 보존 (버전 스냅샷은 초록 미포함)
+      setForm((prev) => ({ ...prev, title: v.title ?? "", sections }));
       setDirty(true);
-      toast.success(`"${v.label}" 버전을 불러왔습니다 — 저장 버튼을 눌러 확정하세요.`);
+      toast.success(`"${v.label}" 버전의 본문을 불러왔습니다 — 초록은 유지됩니다. 저장 버튼을 눌러 확정하세요.`);
     } finally {
       setVersionBusy(false);
     }
@@ -1957,12 +1970,15 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       {/* ── 스텝 탭 ── */}
       <div className="flex items-center gap-1 rounded-2xl border bg-card p-1.5">
         {STEPS.map((s, i) => {
-          const active = step === s.key;
+          const active = !onAbstract && step === s.key;
           return (
             <button
               key={s.key}
               type="button"
-              onClick={() => setStep(s.key)}
+              onClick={() => {
+                setStep(s.key);
+                setOnAbstract(false);
+              }}
               className={cn(
                 "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
                 active
@@ -1987,7 +2003,37 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
             </button>
           );
         })}
+        <button
+          type="button"
+          onClick={() => setOnAbstract(true)}
+          className={cn(
+            "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
+            onAbstract
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          )}
+        >
+          <FileText size={14} />
+          <span>초록</span>
+        </button>
       </div>
+
+      {onAbstract ? (
+        <AbstractPanel
+          value={form.abstract}
+          keywords={form.abstractKeywords}
+          readOnly={readOnly}
+          onChange={(next) => {
+            setForm((prev) => ({ ...prev, abstract: next }));
+            markDirty();
+          }}
+          onKeywordsChange={(next) => {
+            setForm((prev) => ({ ...prev, abstractKeywords: next }));
+            markDirty();
+          }}
+        />
+      ) : (
+      <>
 
       {/* ── 스텝 내용: 섹션 · 단락 ── */}
       <section className="rounded-2xl border bg-card p-5">
@@ -2476,6 +2522,8 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           <ChevronRight size={14} className="ml-1" />
         </Button>
       </div>
+      </>
+      )}
     </div>
   );
 }
