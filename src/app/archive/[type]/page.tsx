@@ -42,6 +42,7 @@ import {
 } from "@/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { leadSentence } from "@/lib/archive-text";
 
 type ArchiveItem = ArchiveConcept | ArchiveVariable | ArchiveMeasurementTool;
 
@@ -537,11 +538,19 @@ function ArchiveCard({
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        {item.description && (
-          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-            {item.description}
-          </p>
-        )}
+        {item.description && (() => {
+          const { lead, truncated } = leadSentence(item.description);
+          return (
+            <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
+              {lead}
+              {truncated && (
+                <span className="ml-1 whitespace-nowrap font-medium text-primary">
+                  … 더보기
+                </span>
+              )}
+            </p>
+          );
+        })()}
         {tags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1">
             {tags.slice(0, 4).map((t) => (

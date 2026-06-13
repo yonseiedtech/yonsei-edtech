@@ -26,6 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import ArchiveSearchBar from "@/components/archive/ArchiveSearchBar";
 import { matchesArchiveSearch } from "@/lib/archive-search";
+import { leadSentence } from "@/lib/archive-text";
 import PageContainer from "@/components/ui/page-container";
 
 const FOUNDATION_TERM_SEARCH_FIELDS: (keyof FoundationTerm)[] = [
@@ -96,19 +97,6 @@ const CATEGORY_GUIDES: CategoryGuide[] = [
     iconText: "text-rose-700 dark:text-rose-300",
   },
 ];
-
-/**
- * 두괄식 카드 노출 — 긴 요약은 첫 문장(핵심 정의)만 카드에 보이고, 전체는 상세에서 (사이클 67).
- * 문장 경계: "숫자가 아닌 글자 뒤의 마침표 + 공백" — 소수점(.05·2.31)과 약어는 끊지 않는다.
- */
-function leadSentence(text: string): { lead: string; truncated: boolean } {
-  const trimmed = (text ?? "").trim();
-  const m = trimmed.match(/^[\s\S]*?[^\d]\.(?=\s)/);
-  if (m && m[0].trim().length < trimmed.length) {
-    return { lead: m[0].trim(), truncated: true };
-  }
-  return { lead: trimmed, truncated: false };
-}
 
 export default function FoundationTermsLandingPage() {
   const { user } = useAuthStore();
