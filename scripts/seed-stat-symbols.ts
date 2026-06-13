@@ -19,7 +19,7 @@ const TERMS = [
   {
     term: "p값 (유의확률)",
     englishName: "p-value",
-    category: "measurement-scale",
+    category: "measurement",
     summary:
       "귀무가설(효과 없음)이 참이라고 가정했을 때, 지금 관찰된 것만큼 또는 그보다 극단적인 결과가 나올 확률이다. 관례적으로 p < .05면 '통계적으로 유의하다'고 판정하지만 이는 절단 규칙일 뿐이다. 세 가지 흔한 오해를 경계해야 한다: ① p는 효과의 크기가 아니다 — 표본이 크면 미미한 차이도 p < .001이 된다 (크기는 효과크기로 보고) ② p는 귀무가설이 참일 확률이 아니다 ③ p > .05가 '효과 없음의 증명'이 아니다. APA 보고 관례는 정확값 보고(p = .023)이며, SPSS가 .000으로 출력해도 p < .001로 쓴다.",
     accessibleSummary:
@@ -32,7 +32,7 @@ const TERMS = [
   {
     term: "검정통계량 (t·F·χ²)",
     englishName: "Test Statistic",
-    category: "measurement-scale",
+    category: "measurement",
     summary:
       "관찰된 데이터가 귀무가설로부터 얼마나 떨어져 있는지를 표준화한 거리로, 이 값에서 p값이 계산된다. 분석마다 짝이 정해져 있다: t는 두 평균 차이(t-test)나 개별 회귀계수 검정에서, F는 셋 이상 집단 분산 비교(ANOVA 계열)나 회귀모형 전체 검정에서, χ²는 범주형 교차분석이나 모형 적합도에서 쓰인다. 항상 자유도와 함께 보고한다 — t(58) = 2.31, F(2, 87) = 5.41, χ²(4) = 12.3 처럼. 값이 클수록(절대값 기준) 귀무가설에서 멀다는 뜻이고, 같은 값이라도 자유도에 따라 p가 달라진다.",
     accessibleSummary:
@@ -44,7 +44,7 @@ const TERMS = [
   {
     term: "자유도 (df)",
     englishName: "Degrees of Freedom",
-    category: "measurement-scale",
+    category: "measurement",
     summary:
       "통계량을 계산할 때 자유롭게 변할 수 있는 정보의 개수로, 검정통계량의 분포 모양을 결정한다. 결과표 읽기에 실용적인 규칙: 독립표본 t-test의 df = 전체 사례 수 − 2 (t(58)이면 60명 내외), 일원분산분석 F(집단−1, 사례−집단) — F(2, 87)이면 3개 집단·90명, 카이제곱 χ²의 df = (행−1)×(열−1). 거꾸로 자유도에서 연구의 표본 규모를 역산할 수 있어, 논문을 비판적으로 읽을 때 유용하다.",
     accessibleSummary:
@@ -56,7 +56,7 @@ const TERMS = [
   {
     term: "부분에타제곱 (partial η²)",
     englishName: "Partial Eta Squared",
-    category: "measurement-scale",
+    category: "measurement",
     summary:
       "ANOVA 계열(ANOVA·ANCOVA·MANOVA)에서 쓰는 효과크기로, 다른 효과를 제거한 뒤 해당 요인이 설명하는 분산의 비율이다. Cohen의 관례 기준은 .01(작음)·.06(중간)·.14(큼)이다. SPSS의 '효과크기 표시' 옵션이 출력하는 것이 partial η²이므로, 논문에 η²로 잘못 표기하지 않도록 주의한다(요인이 하나뿐인 일원분산분석에서는 둘이 같다). p값과 반드시 함께 보고해 '유의하고 또한 중간 크기 효과'처럼 두 정보를 모두 제시하는 것이 관례다 — 효과크기 항목과 연계해 읽으면 좋다.",
     accessibleSummary:
@@ -68,7 +68,7 @@ const TERMS = [
   {
     term: "Cohen's d",
     englishName: "Cohen's d",
-    category: "measurement-scale",
+    category: "measurement",
     summary:
       "두 집단 평균 차이를 표준편차 단위로 표준화한 효과크기로, t-test와 짝을 이룬다. d = (M₁ − M₂) / 통합 표준편차이며, Cohen의 관례 기준은 0.2(작음)·0.5(중간)·0.8(큼)이다. '두 집단이 표준편차의 몇 배만큼 떨어져 있는가'로 읽으면 직관적이다 — d = 0.5면 평균이 반 표준편차 차이. 측정 단위가 달라도 비교 가능해 메타분석의 기본 통화로 쓰이고, 검정력 분석(G*Power)에서 필요 표본을 계산할 때의 입력값이기도 하다.",
     accessibleSummary:
@@ -80,7 +80,7 @@ const TERMS = [
   {
     term: "신뢰구간 (CI)",
     englishName: "Confidence Interval",
-    category: "measurement-scale",
+    category: "measurement",
     summary:
       "모수(참값)가 있을 법한 범위를 데이터로부터 추정한 구간이다. 95% CI의 정확한 의미는 '같은 방식으로 반복 표집하면 구간들의 95%가 참값을 포함한다'이다. 해석 규칙: 평균 차이의 95% CI가 0을 포함하지 않으면 p < .05와 동치이고, 오즈비·상대위험의 CI는 1 포함 여부로 본다. 점 추정치 하나(p값)보다 효과의 크기와 불확실성을 동시에 보여주므로, 최근 학술지들은 효과크기와 CI 보고를 p값보다 우선 권장한다.",
     accessibleSummary:

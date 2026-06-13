@@ -20,7 +20,7 @@ const TERMS = [
   {
     term: "명목척도",
     englishName: "Nominal Scale",
-    category: "measurement-scale",
+    category: "measurement",
     summary:
       "대상을 서로 다른 범주로 구분만 하는 가장 낮은 수준의 측정이다(Stevens, 1946). 숫자를 부여해도(1=남, 2=여) 그 숫자에 크기·순서 의미가 없어 같다/다르다(=, ≠)만 판단할 수 있다. 허용 통계량은 빈도와 최빈값이며, 분석은 카이제곱 검정·로지스틱 회귀(결과변수)처럼 범주를 다루는 기법에 한정된다. 성별·전공·학교급·실험/통제집단 구분이 대표적이다. 명목 변수의 평균을 구하는 것(예: 성별 평균 1.4)은 무의미하므로 코딩 숫자를 산술에 사용하지 않도록 주의한다.",
     accessibleSummary:
@@ -33,7 +33,7 @@ const TERMS = [
   {
     term: "서열척도",
     englishName: "Ordinal Scale",
-    category: "measurement-scale",
+    category: "measurement",
     summary:
       "범주 구분에 더해 순서(크다/작다) 정보를 갖지만, 순위 간 간격이 동일하다고 보장하지 못하는 측정이다(Stevens, 1946). 석차 1등과 2등의 실력 차이가 2등과 3등의 차이와 같다고 말할 수 없다. 허용 통계량은 중앙값·백분위이고, 분석은 Spearman 순위상관, Mann-Whitney U, Kruskal-Wallis 같은 비모수 기법이 원칙이다. 석차, 수상 등급(금·은·동), 만족도(상·중·하)가 대표적이다. 리커트형 단일 문항은 엄밀히 서열척도이며, 여러 문항의 합산 점수를 등간으로 취급하는 것은 관행임을 논문 작성 시 인지해야 한다.",
     accessibleSummary:
@@ -46,7 +46,7 @@ const TERMS = [
   {
     term: "등간척도",
     englishName: "Interval Scale",
-    category: "measurement-scale",
+    category: "measurement",
     summary:
       "순서에 더해 측정값 사이의 간격이 동일한 척도다(Stevens, 1946). 덧셈·뺄셈이 의미를 갖고 평균·표준편차를 쓸 수 있어 t-검정, ANOVA, 회귀분석, Pearson 상관 등 대부분의 모수 통계가 가능해진다. 다만 절대 영점이 없어(0이 '없음'을 뜻하지 않음) 비율 해석은 불가하다 — 섭씨 20도가 10도의 '2배 더움'이 아니고, IQ 0이 지능 없음이 아니다. 표준화 점수(T점수·Z점수), 온도, 그리고 관행상 리커트 문항 합산 점수가 등간으로 취급된다. 교육 연구 종속변인의 다수가 이 수준이다.",
     accessibleSummary:
@@ -59,7 +59,7 @@ const TERMS = [
   {
     term: "비율척도",
     englishName: "Ratio Scale",
-    category: "measurement-scale",
+    category: "measurement",
     summary:
       "등간의 속성에 절대 영점(0 = 정말 없음)까지 갖춘 가장 높은 수준의 측정이다(Stevens, 1946). 곱셈·나눗셈이 의미를 가져 'A가 B의 2배'라는 비율 해석이 가능하고, 기하평균·변동계수를 포함한 모든 통계량을 쓸 수 있다. 학습시간(분), 로그인 횟수, 정답 개수, 과제 수행 시간, 발화 빈도처럼 행동 로그 기반 변수가 대부분 여기 속한다. 학습분석(LA) 연구에서 다루는 클릭스트림·체류시간 변수들이 전형적 비율척도이며, 분포가 치우친 경우가 많아 로그 변환 등의 전처리를 함께 검토한다.",
     accessibleSummary:
@@ -72,7 +72,7 @@ const TERMS = [
   {
     term: "범주형 변수와 연속형 변수",
     englishName: "Categorical vs. Continuous Variable",
-    category: "measurement-scale",
+    category: "measurement",
     summary:
       "분석 기법 선택의 1차 기준이 되는 구분이다. 범주형은 명목·서열척도(구분/순위), 연속형은 등간·비율척도(양)를 묶어 부르는 실무 분류다. 독립·종속변인의 조합이 분석을 결정한다: 독립 범주형 × 종속 연속형 → t-검정/ANOVA, 독립·종속 모두 연속형 → 상관·회귀, 모두 범주형 → 카이제곱, 독립 연속형 × 종속 범주형 → 로지스틱 회귀. 횟수처럼 정수만 갖는 이산형 변수도 값의 범위가 넓으면 연속형으로 취급하는 것이 관행이다. 변수 설계 단계에서 이 구분을 정해두면 연구계획서의 분석 방법 절을 일관되게 쓸 수 있다.",
     accessibleSummary:
@@ -85,7 +85,7 @@ const TERMS = [
   {
     term: "질적 척도와 양적 척도",
     englishName: "Qualitative vs. Quantitative Scale",
-    category: "measurement-scale",
+    category: "measurement",
     summary:
       "측정 수준 4가지를 두 묶음으로 나누는 분류다. 질적 척도(명목·서열)는 속성의 '종류와 순위'를, 양적 척도(등간·비율)는 속성의 '양'을 측정한다. 주의할 점은 '질적 척도'와 '질적 연구'는 다른 개념이라는 것이다 — 질적 척도는 양적 연구 안에서 변수의 측정 수준을 가리키는 말이고, 질적 연구는 면담·관찰 자료를 해석하는 연구 패러다임이다. 설문에서 성별(질적 척도)을 묻고 만족도 평균(양적 척도)을 구하는 연구는 여전히 양적 연구다. 논문의 측정 도구 절에서 각 변수의 척도 수준을 명시하면 분석 방법의 정당화가 쉬워진다.",
     accessibleSummary:
@@ -97,7 +97,7 @@ const TERMS = [
   {
     term: "모수 통계",
     englishName: "Parametric Statistics",
-    category: "measurement-scale",
+    category: "measurement",
     summary:
       "모집단이 특정 분포(주로 정규분포)를 따른다는 가정 위에서 평균·분산 같은 모수를 추정·검정하는 통계다. t-검정, ANOVA(ANCOVA·MANOVA 포함), 회귀분석, Pearson 상관이 대표적이다. 적용 조건은 통상 ① 종속변인이 등간척도 이상 ② 정규성(Shapiro-Wilk 등으로 확인) ③ 집단 비교 시 등분산성이다. 가정이 충족되면 같은 표본으로 비모수보다 높은 검정력을 얻는다. 표본이 충분히 크면(통상 집단당 30 이상) 중심극한정리에 의해 평균의 분포가 정규에 근사하므로 정규성 위반에 비교적 견고해진다. 논문에는 가정 검정 결과를 분석에 앞서 보고하는 것이 관례다.",
     accessibleSummary:
@@ -110,7 +110,7 @@ const TERMS = [
   {
     term: "비모수 통계",
     englishName: "Nonparametric Statistics",
-    category: "measurement-scale",
+    category: "measurement",
     summary:
       "모집단 분포에 대한 가정 없이(distribution-free) 주로 순위 정보로 검정하는 통계다. 모수 기법과의 대응이 핵심이다: 독립표본 t-검정 ↔ Mann-Whitney U, 대응표본 t-검정 ↔ Wilcoxon 부호순위, 일원분산분석 ↔ Kruskal-Wallis, Pearson 상관 ↔ Spearman 순위상관. 선택 기준은 ① 종속변인이 서열척도이거나 ② 표본이 작고(통상 집단당 30 미만) 정규성이 깨졌거나 ③ 극단치 영향이 클 때다. 교육 현장 연구처럼 한 학급 단위 소표본 실험에서 자주 쓰인다. 가정이 충족되는 상황에서는 모수 검정보다 검정력이 낮으므로 '안전하니까 무조건 비모수'는 좋은 전략이 아니다.",
     accessibleSummary:

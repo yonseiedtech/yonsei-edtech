@@ -90,7 +90,7 @@ const METHOD_GUIDES = [
 const VALIDITY_TERM = {
   term: "타당도 증거의 종류 (내용·구인·준거)",
   englishName: "Sources of Validity Evidence",
-  category: "measurement-scale",
+  category: "measurement",
   summary:
     "타당도는 '도구가 타당하다/아니다'의 속성이 아니라 점수 해석을 지지하는 증거의 축적이다(Messick, 1995; AERA·APA·NCME 기준의 관점). 전통적 3분류로 ① 내용 타당도 — 문항이 구인의 내용 영역을 대표하는가 (전문가 평정·CVI로 수집) ② 구인 타당도 — 점수가 이론적 구인 구조와 일치하는가 (EFA/CFA의 요인구조, 관련 구인과의 수렴 상관·무관 구인과의 판별 상관) ③ 준거 타당도 — 점수가 외부 준거를 예측·동시 반영하는가 (공인: 같은 시점 준거와 상관 / 예측: 미래 준거와 상관). 연구 보고에는 '어떤 증거를 어떤 절차로 수집했는지'를 명시해야 하며, 새 척도 개발이면 내용→구인→준거 순으로, 기존 척도 사용이면 본 표본에서의 신뢰도와 CFA 적합도를 재보고하는 것이 관례다.",
   accessibleSummary:
