@@ -41,6 +41,7 @@ import StaffPriorityPanel from "@/features/dashboard/StaffPriorityPanel";
 import PushPermissionPrompt from "@/features/dashboard/PushPermissionPrompt";
 import PeerActivityFeed from "@/features/dashboard/PeerActivityFeed";
 import MyAcademicActivitiesWidget from "@/features/dashboard/MyAcademicActivitiesWidget";
+import RecentPostsWidget from "@/features/dashboard/RecentPostsWidget";
 import ComprehensiveExamCountdown from "@/features/dashboard/ComprehensiveExamCountdown";
 import PageHeader from "@/components/ui/page-header";
 import TermBriefHero from "@/components/dashboard/TermBriefHero";
@@ -279,6 +280,11 @@ function DashboardContent() {
             </div>
           )}
         </div>
+      </section>
+    ),
+    recentPosts: (
+      <section className="mx-auto mt-6 max-w-6xl px-4">
+        <RecentPostsWidget />
       </section>
     ),
     miniCalendar: (

@@ -18,6 +18,7 @@ export type DashboardWidgetKey =
   | "myTodos"
   | "statCards"
   | "notices"
+  | "recentPosts"
   | "miniCalendar"
   | "myAcademicActivities"
   | "comprehensiveExam"
@@ -67,6 +68,10 @@ export const DASHBOARD_WIDGET_META: Record<
     label: "공지사항",
     description: "최근 공지사항.",
   },
+  recentPosts: {
+    label: "최근 게시판 글",
+    description: "자유·논문리뷰·인터뷰 등 커뮤니티 최근 글.",
+  },
   miniCalendar: {
     label: "미니 캘린더",
     description: "월 단위 학사 일정.",
@@ -112,6 +117,7 @@ export const DASHBOARD_WIDGET_KEYS: DashboardWidgetKey[] = [
   "myTodos",
   "statCards",
   "notices",
+  "recentPosts",
   "miniCalendar",
   "myAcademicActivities",
   "comprehensiveExam",
@@ -134,6 +140,7 @@ export const DEFAULT_VISIBLE_WIDGETS: Set<DashboardWidgetKey> = new Set([
   "dailyTimeline",
   "myTodos",
   "notices",
+  "recentPosts",
   "miniCalendar",
   "myAcademicActivities",
   "seminars",
