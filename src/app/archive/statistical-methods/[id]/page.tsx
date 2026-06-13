@@ -679,6 +679,37 @@ export default function StatisticalMethodDetailPage() {
             </section>
           ))}
 
+        {/* SPSS 실습 절차 — 메뉴 경로 (사이클 77) */}
+        {(method.toolGuides ?? [])
+          .filter((g) => g.tool === "spss")
+          .map((g) => (
+            <section key={g.tool} id="spss-guide" className="mt-8 scroll-mt-24">
+              <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                <Sparkles className="h-4 w-4" aria-hidden />
+                SPSS로 따라하기
+                <span className="rounded bg-blue-100 px-1.5 py-px text-[10px] font-medium text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+                  메뉴 경로
+                </span>
+              </h2>
+              <ol className="space-y-1.5 rounded-lg border bg-card p-4">
+                {g.steps.map((s, i) => (
+                  <li key={i} className="flex gap-2.5 text-sm">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-[11px] font-semibold text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+                      {i + 1}
+                    </span>
+                    <span className="text-foreground/85">{s}</span>
+                  </li>
+                ))}
+              </ol>
+              {g.note && (
+                <p className="mt-2 text-xs text-muted-foreground">💡 {g.note}</p>
+              )}
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                메뉴 표기는 SPSS 영문판 기준입니다. 아래 &lsquo;도구 구문&rsquo;의 명령어를 붙여넣어 실행할 수도 있습니다.
+              </p>
+            </section>
+          ))}
+
         {/* 도구 구문 — SPSS / AMOS / R */}
         {(method.spssCommand || method.amosCommand || method.rCommand) && (
           <section className="mt-8">
