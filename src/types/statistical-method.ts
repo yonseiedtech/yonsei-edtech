@@ -126,6 +126,8 @@ export interface StatisticalAssumption {
   rCommand?: string;
   /** 임계치/판정 기준 */
   threshold?: string;
+  /** 가정이 성립하지 않을 때의 표준 대처 (Welch 보정·비모수 대체·robust 추정 등) */
+  ifViolated?: string;
 }
 
 /** 분석 절차 단계 */

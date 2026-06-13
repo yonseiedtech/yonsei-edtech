@@ -586,6 +586,11 @@ export default function StatisticalMethodDetailPage() {
                             기준: {a.threshold}
                           </span>
                         )}
+                        {a.ifViolated && (
+                          <span className="mt-1.5 block rounded-md bg-amber-50 px-2 py-1 text-[11px] leading-relaxed text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+                            <span className="font-semibold">깨졌다면:</span> {a.ifViolated}
+                          </span>
+                        )}
                       </td>
                       <td className="px-3 py-2 text-muted-foreground">
                         {a.howToCheck ?? "—"}
