@@ -47,7 +47,7 @@ export default function RecentPostsWidget() {
     .slice(0, 6);
 
   return (
-    <div className="rounded-2xl border bg-card p-6 shadow-sm">
+    <div className="rounded-2xl border bg-card p-4 shadow-sm sm:p-6">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <MessagesSquare size={18} className="text-primary" />

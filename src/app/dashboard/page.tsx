@@ -55,6 +55,7 @@ import { canShowWidget, isAlumni } from "@/features/dashboard/widget-visibility"
 import DraggableWidget from "@/features/dashboard/editing/DraggableWidget";
 import EditModePresetBar from "@/features/dashboard/editing/EditModePresetBar";
 import JourneyGreetingHeader from "@/features/dashboard/JourneyGreetingHeader";
+import DashboardCommandCenter from "@/features/dashboard/DashboardCommandCenter";
 import {
   useDashboardLayout,
   isWidgetVisible,
@@ -511,6 +512,9 @@ function DashboardContent() {
         <div className="mb-4">
           <JourneyGreetingHeader user={user} />
         </div>
+
+        {/* 사이클 81: 3영역 종합 커맨드 센터 — 대학원생활·연구·학술 한눈에 (대시보드 대개편) */}
+        <DashboardCommandCenter />
 
         {/* 신규 회원 온보딩 배너 — PageHeader 바로 아래, TermBriefHero 위 */}
         <NewMemberWelcomeBanner />
