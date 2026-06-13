@@ -72,6 +72,12 @@ service cloud.firestore {
       allow create, update: if isAuthenticated() && isAdmin();
     }
 
+    // ─── Research Models (사이클 92: 연구 모형 다이어그램, doc id = userId 1인 1개) ───
+    match /research_models/{userId} {
+      allow read: if isOwner(userId) || (isAuthenticated() && isStaffOrAbove());
+      allow create, update, delete: if isOwner(userId);
+    }
+
     // ─── Posts ───
     // board-community-v2: 카테고리별 read/write 권한 재검증
     function postCategoryReadable(cat) {
