@@ -40,6 +40,44 @@ interface Feature {
 
 const FEATURES: Feature[] = [
   {
+    id: "stat-model-diagrams",
+    icon: BarChart3,
+    badge: "NEW · 통계 가이드",
+    badgeVariant: "default",
+    title: "통계방법이 그림으로 — 연구모형 다이어그램",
+    description:
+      "ANCOVA·SEM 같은 통계방법이 변인 사이의 어떤 관계를 보는지 애니메이션 다이어그램으로 보여드립니다. 집단 수 구분, 최소 표본 참고, 가정이 깨졌을 때의 대처, 무료 SW jamovi 실습 경로까지 — 분석 선택부터 실행까지 한 페이지에서 해결됩니다.",
+    highlights: [
+      "12종 변인 관계 모형 — 화살표가 그려지는 애니메이션",
+      "가정 위반 시 대처(Welch·비모수 대체 등) + 최소 표본 참고",
+      "'jamovi로 따라하기' 단계별 메뉴 경로 (무료 SW)",
+    ],
+    cta: "통계방법 가이드 열기",
+    ctaHref: "/archive/statistical-methods",
+    color: "from-cyan-50 to-cyan-100/60",
+    iconBg: "bg-cyan-100/80",
+    iconColor: "text-cyan-700",
+  },
+  {
+    id: "archive-foundation-expansion",
+    icon: GraduationCap,
+    badge: "NEW · 아카이브 확장",
+    badgeVariant: "default",
+    title: "학습이론부터 통계 기호까지 — 아카이브 대확장",
+    description:
+      "행동주의·구성주의 등 학습이론 8종(대표 학자·원전 포함), 측정 척도(명목~비율)와 모수/비모수, 결과표 기호(p·t·F·df·효과크기), 척도 개발·타당도 검증 가이드까지 — 수업과 논문에서 만나는 개념들을 한곳에 정리했습니다.",
+    highlights: [
+      "학습이론 8종 신설 — 검증된 원전 링크와 함께",
+      "측정 척도·통계 기호 기초 용어 (결과표 읽는 법)",
+      "척도 개발 8단계·프로그램 타당화 연구방법 가이드",
+    ],
+    cta: "기초 용어 사전 열기",
+    ctaHref: "/archive/foundation-terms",
+    color: "from-amber-50 to-amber-100/60",
+    iconBg: "bg-amber-100/80",
+    iconColor: "text-amber-700",
+  },
+  {
     id: "thesis-journey-suite",
     icon: Compass,
     badge: "NEW · 논문 여정",
