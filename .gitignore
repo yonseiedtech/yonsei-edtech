@@ -35,6 +35,9 @@ sprint*-build.log
 sprint*-deploy.log
 *-build.log
 *-deploy.log
+# orchestra gate-chain artifacts (deploy-vercel / CI build redirects)
+deploy-full.log
+build-out.log
 
 # env files (can opt-in for committing if needed)
 .env*
