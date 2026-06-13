@@ -97,6 +97,19 @@ const CATEGORY_GUIDES: CategoryGuide[] = [
   },
 ];
 
+/**
+ * 두괄식 카드 노출 — 긴 요약은 첫 문장(핵심 정의)만 카드에 보이고, 전체는 상세에서 (사이클 67).
+ * 문장 경계: "숫자가 아닌 글자 뒤의 마침표 + 공백" — 소수점(.05·2.31)과 약어는 끊지 않는다.
+ */
+function leadSentence(text: string): { lead: string; truncated: boolean } {
+  const trimmed = (text ?? "").trim();
+  const m = trimmed.match(/^[\s\S]*?[^\d]\.(?=\s)/);
+  if (m && m[0].trim().length < trimmed.length) {
+    return { lead: m[0].trim(), truncated: true };
+  }
+  return { lead: trimmed, truncated: false };
+}
+
 export default function FoundationTermsLandingPage() {
   const { user } = useAuthStore();
   const canManage = isAtLeast(user, "staff");
@@ -314,9 +327,19 @@ export default function FoundationTermsLandingPage() {
                             </Badge>
                           </div>
                         </div>
-                        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                          {t.summary}
-                        </p>
+                        {(() => {
+                          const { lead, truncated } = leadSentence(t.summary ?? "");
+                          return (
+                            <p className="mt-2 text-sm leading-relaxed text-muted-foreground line-clamp-3">
+                              {lead}
+                              {truncated && (
+                                <span className="ml-1 whitespace-nowrap font-medium text-primary">
+                                  … 더보기
+                                </span>
+                              )}
+                            </p>
+                          );
+                        })()}
                         {t.confusedWith && t.confusedWith.length > 0 && (
                           <p className="mt-2 inline-flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-300">
                             <AlertTriangle className="h-3 w-3" aria-hidden />
