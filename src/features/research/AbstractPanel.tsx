@@ -64,25 +64,48 @@ const ELEMENTS: { key: string; label: string; hint: string; rate: number; re: Re
   },
 ];
 
-function countSentences(text: string): number {
+function splitSentences(text: string): string[] {
   return text
     .replace(/\s+/g, " ")
     .split(/(?<=[다음됨함임략))])\.\s+|(?<=[가-힣])\.\s+(?=[가-힣A-Z])/)
     .map((s) => s.trim())
-    .filter((s) => s.length > 5).length;
+    .filter((s) => s.length > 5);
 }
+
+/** 문형 템플릿 — 졸업생 초록 분석의 표준형 기반 (빈칸 ___ 채우기) */
+const ELEMENT_TEMPLATES: { key: string; label: string; template: string }[] = [
+  { key: "background", label: "배경", template: "최근 ___이 확산되면서 ___의 중요성이 커지고 있다." },
+  { key: "purpose", label: "목적", template: "본 연구는 ___이 ___에 미치는 영향을 검증하는 것을 목적으로 한다." },
+  { key: "method", label: "방법", template: "이를 위해 ___을 대상으로 ___을 실시하고 ___으로 분석하였다." },
+  { key: "results", label: "결과", template: "그 결과, ___은 ___에 유의한 영향을 미치는 것으로 나타났다." },
+  { key: "implication", label: "시사점", template: "이러한 결과는 ___에 대한 시사점을 제공한다." },
+];
+
+// 너무 긴 문장 임계(자) · 이중피동 패턴 (사이클 72 문장 점검)
+const LONG_SENTENCE = 90;
+const DOUBLE_PASSIVE = /보여진|되어진|쓰여진|모여진|이루어진다|놓여진/g;
 
 export default function AbstractPanel({ value, keywords, readOnly, onChange, onKeywordsChange }: Props) {
   const [helpOpen, setHelpOpen] = useState(true);
   const [kwInput, setKwInput] = useState("");
 
   const chars = value.trim().length;
-  const sentenceCount = useMemo(() => (value.trim() ? countSentences(value) : 0), [value]);
+  const sentenceList = useMemo(() => (value.trim() ? splitSentences(value) : []), [value]);
+  const sentenceCount = sentenceList.length;
+  const longCount = useMemo(() => sentenceList.filter((s) => s.length > LONG_SENTENCE).length, [sentenceList]);
+  const doublePassiveCount = useMemo(() => (value.match(DOUBLE_PASSIVE) ?? []).length, [value]);
   const present = useMemo(
     () => new Set(ELEMENTS.filter((e) => e.re.test(value)).map((e) => e.key)),
     [value],
   );
   const presentCount = present.size;
+
+  /** 문형 템플릿을 현재 본문 끝에 이어 붙임 (한 단락 흐름 유지) */
+  function insertTemplate(t: string) {
+    if (readOnly) return;
+    const base = value.trimEnd();
+    onChange(base ? `${base} ${t}` : t);
+  }
 
   const charTone =
     chars === 0
@@ -111,6 +134,18 @@ export default function AbstractPanel({ value, keywords, readOnly, onChange, onK
           {chars.toLocaleString()}자 · {sentenceCount}문장
         </span>
       </div>
+
+      {/* 실시간 문장 점검 — 긴 문장·이중피동 (사이클 72) */}
+      {(longCount > 0 || doublePassiveCount > 0) && (
+        <p className="flex flex-wrap items-center gap-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[11px] text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+          {longCount > 0 && (
+            <span>⚠ 긴 문장 {longCount}개({LONG_SENTENCE}자 초과) — 한 문장 한 메시지로 끊어보세요</span>
+          )}
+          {doublePassiveCount > 0 && (
+            <span>⚠ 이중피동 {doublePassiveCount}곳(보여진다 등) — 능동으로 다듬어보세요</span>
+          )}
+        </p>
+      )}
 
       {/* 데이터 기반 도움말 — 졸업생 초록 80편 분석 */}
       <div className="rounded-xl border border-primary/30 bg-primary/[0.04]">
@@ -196,6 +231,36 @@ export default function AbstractPanel({ value, keywords, readOnly, onChange, onK
           ※ 키워드 매칭 기반 자동 감지 — 참고용입니다. 표현이 달라 감지가 안 될 수 있어요.
         </p>
       </div>
+
+      {/* 문형 템플릿 — 클릭하면 본문 끝에 빈칸 문장 삽입 (사이클 72) */}
+      {!readOnly && (
+        <div>
+          <p className="mb-1.5 text-[11px] font-semibold text-muted-foreground">
+            문형 넣기 <span className="font-normal">— 클릭하면 빈칸(___) 문장이 추가돼요</span>
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {ELEMENT_TEMPLATES.map((t) => {
+              const done = present.has(t.key);
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => insertTemplate(t.template)}
+                  title={t.template}
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-colors hover:border-primary/50 hover:text-primary",
+                    done ? "text-muted-foreground" : "text-foreground/80",
+                  )}
+                >
+                  <span className="font-semibold text-primary">+</span>
+                  {t.label}
+                  {done && <Check size={11} className="text-emerald-600" />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* 본문 */}
       <div>
