@@ -84,7 +84,8 @@ export default function DashboardCommandCenter() {
         accentText: "text-sky-700 dark:text-sky-300",
         primary: { value: `${upcomingEvents}`, caption: "다가오는 모임" },
         secondary: { value: `${activePos}`, caption: "내 활동" },
-        cta: "모임·네트워킹",
+        // 빈 상태(예정 모임·내 활동 모두 0): 시작 유도 문구로 분기 (여정 문서 High ①)
+        cta: upcomingEvents === 0 && activePos === 0 ? "모임 둘러보기" : "모임·네트워킹",
       },
       {
         icon: FlaskConical,
@@ -95,7 +96,8 @@ export default function DashboardCommandCenter() {
         accentText: "text-violet-700 dark:text-violet-300",
         primary: { value: `${writingPct}%`, caption: "논문 진행률" },
         secondary: { value: `${readCount}`, caption: "완독 논문" },
-        cta: "나의 연구",
+        // 아직 연구 시작 전(진행률·완독 0): 0% 부담을 시작 격려로 전환 (여정 문서 High ①)
+        cta: writingPct === 0 && readCount === 0 ? "첫 논문 시작하기" : "나의 연구",
       },
       {
         icon: GraduationCap,
@@ -105,7 +107,8 @@ export default function DashboardCommandCenter() {
         iconClass: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
         accentText: "text-emerald-700 dark:text-emerald-300",
         primary: { value: `${upcomingSeminars}`, caption: "예정 세미나" },
-        cta: "세미나·활동",
+        // 예정 세미나 없음: 둘러보기 유도 (여정 문서 High ①)
+        cta: upcomingSeminars === 0 ? "세미나 둘러보기" : "세미나·활동",
       },
     ];
   }, [events, positions, paper, papers, seminars, nowIso]);
@@ -134,12 +137,29 @@ export default function DashboardCommandCenter() {
             <h3 className="mt-3 text-sm font-bold tracking-tight">{s.label}</h3>
             <div className="mt-2 flex items-end gap-4">
               <div>
-                <p className={cn("text-3xl font-extrabold leading-none tabular-nums", s.accentText)}>{s.primary.value}</p>
+                <p
+                  className={cn(
+                    "text-3xl font-extrabold leading-none tabular-nums",
+                    // 빈 수치(0·0%)는 색을 옅게 — 부담 완화, 시작 CTA 와 함께 (여정 문서 High ①)
+                    s.primary.value === "0" || s.primary.value === "0%"
+                      ? "text-muted-foreground/40"
+                      : s.accentText,
+                  )}
+                >
+                  {s.primary.value}
+                </p>
                 <p className="mt-1 text-[11px] text-muted-foreground">{s.primary.caption}</p>
               </div>
               {s.secondary && (
                 <div className="border-l pl-4">
-                  <p className="text-xl font-bold leading-none tabular-nums text-foreground/70">{s.secondary.value}</p>
+                  <p
+                    className={cn(
+                      "text-xl font-bold leading-none tabular-nums",
+                      s.secondary.value === "0" ? "text-muted-foreground/40" : "text-foreground/70",
+                    )}
+                  >
+                    {s.secondary.value}
+                  </p>
                   <p className="mt-1 text-[11px] text-muted-foreground">{s.secondary.caption}</p>
                 </div>
               )}

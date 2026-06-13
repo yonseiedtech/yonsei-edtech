@@ -58,6 +58,7 @@ import EditModePresetBar from "@/features/dashboard/editing/EditModePresetBar";
 import JourneyGreetingHeader from "@/features/dashboard/JourneyGreetingHeader";
 import DashboardCommandCenter from "@/features/dashboard/DashboardCommandCenter";
 import ProfileSummaryCard from "@/features/dashboard/ProfileSummaryCard";
+import StageRecommendationPanel from "@/features/dashboard/StageRecommendationPanel";
 import {
   useDashboardLayout,
   isWidgetVisible,
@@ -533,6 +534,12 @@ function DashboardContent() {
 
         {/* 사이클 81: 3영역 종합 커맨드 센터 — 대학원생활·연구·학술 한눈에 (대시보드 대개편) */}
         <DashboardCommandCenter />
+
+        {/* 사이클 85: 이번 학기 추천 한 걸음 — 커맨드센터 아래, JOURNEY_STAGES 현재 학기 추천 행동 (여정 문서 High ②).
+            학기 미설정자는 JourneyGreetingHeader 가 유도하므로 패널 내부에서 null 렌더. */}
+        <div className="mb-6 empty:hidden">
+          <StageRecommendationPanel user={user} />
+        </div>
 
         {/* 신규 회원 온보딩 배너 — PageHeader 바로 아래, TermBriefHero 위 */}
         <NewMemberWelcomeBanner />
