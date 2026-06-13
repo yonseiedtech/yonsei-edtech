@@ -142,6 +142,17 @@ export default function AbstractPanel({ value, keywords, readOnly, onChange, onK
               💡 졸업생 초록은 방법(89%)·목적(80%)·결과(70%)는 잘 담지만 <span className="font-semibold">배경(41%)과
               시사점(34%)</span>은 자주 빠집니다. 5요소를 모두 갖춘 초록은 8%뿐 — 이 둘까지 챙기면 차별화됩니다.
             </p>
+
+            {/* 문장 단위 특징 — 졸업생 초록 1,030문장 분석 (사이클 71) */}
+            <div className="mt-1 space-y-1.5 rounded-lg border bg-background/60 p-2.5">
+              <p className="font-semibold text-foreground/85">✍️ 문장 쓰기 (1,030문장 분석)</p>
+              <ul className="ml-0.5 space-y-1 text-[11px]">
+                <li>· <span className="font-medium">한 문장 한 메시지</span> — 졸업생 초록 문장은 중앙값 76자로 긴 편이에요. 60자 내외로 끊으면 읽기 쉽습니다.</li>
+                <li>· <span className="font-medium">시제 일관</span> — 방법·결과는 과거형(분석하였다·나타났다), 배경·목적·시사점은 현재형(이다·한다). 졸업생도 과거 49%·현재 48%로 장에 따라 갈립니다.</li>
+                <li>· <span className="font-medium">결과 문장 표준형</span> — &ldquo;~로 나타났다&rdquo;, &ldquo;유의한 차이가 있었다&rdquo;가 가장 많이 쓰입니다.</li>
+                <li>· <span className="font-medium">능동 우선</span> — 이중피동(보여진다·되어진다)과 과도한 피동은 피하세요.</li>
+              </ul>
+            </div>
           </div>
         )}
       </div>
