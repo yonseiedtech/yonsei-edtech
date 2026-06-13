@@ -57,6 +57,7 @@ import DraggableWidget from "@/features/dashboard/editing/DraggableWidget";
 import EditModePresetBar from "@/features/dashboard/editing/EditModePresetBar";
 import JourneyGreetingHeader from "@/features/dashboard/JourneyGreetingHeader";
 import DashboardCommandCenter from "@/features/dashboard/DashboardCommandCenter";
+import ProfileSummaryCard from "@/features/dashboard/ProfileSummaryCard";
 import {
   useDashboardLayout,
   isWidgetVisible,
@@ -466,12 +467,14 @@ function DashboardContent() {
          */}
         <PageHeader
           icon={
+            // PageHeader 가 JSX 아이콘을 48px 칩 박스로 감싸므로, 엠블럼은 박스 안에
+            // 여백을 두는 크기(36px)로 — 사이트 전체 헤더 아이콘(48px 박스+24px 심볼)과 동일 규격 (사이클 85)
             <Image
               src="/yonsei-emblem.svg"
               alt="연세대학교"
-              width={48}
-              height={48}
-              className="h-12 w-12 object-contain"
+              width={36}
+              height={36}
+              className="h-9 w-9 object-contain"
             />
           }
           title={`안녕하세요, ${user.name}님`}
@@ -520,6 +523,12 @@ function DashboardContent() {
         {/* 체감 스프린트: 여정 인사 헤더 — 리브랜딩 시그니처를 매일 보는 곳에 */}
         <div className="mb-4">
           <JourneyGreetingHeader user={user} />
+        </div>
+
+        {/* 사이클 85: 내 프로필 요약 — 학적 정보(입학·누적학기·기수·재학상태) + 완성도 + 최근 활동.
+            주기적 프로필 업데이트 유도 (사용자 요청). 인사는 JourneyGreetingHeader 가 담당. */}
+        <div className="mb-4">
+          <ProfileSummaryCard user={user} />
         </div>
 
         {/* 사이클 81: 3영역 종합 커맨드 센터 — 대학원생활·연구·학술 한눈에 (대시보드 대개편) */}
