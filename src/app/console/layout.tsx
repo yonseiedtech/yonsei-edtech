@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import AuthGuard from "@/features/auth/AuthGuard";
-import RouteDebugBoundary from "@/components/debug/RouteDebugBoundary";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isPresidentOrAbove, isAdminOrSysadmin } from "@/lib/permissions";
 import { useInquiries } from "@/features/inquiry/useInquiry";
@@ -382,9 +381,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
 export default function ConsoleLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthGuard allowedRoles={["staff", "president", "admin", "sysadmin"]}>
-      <RouteDebugBoundary label="운영 콘솔">
-        <ConsoleShell>{children}</ConsoleShell>
-      </RouteDebugBoundary>
+      <ConsoleShell>{children}</ConsoleShell>
     </AuthGuard>
   );
 }
