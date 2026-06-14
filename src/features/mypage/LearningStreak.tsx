@@ -829,7 +829,7 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
       </p>
 
       {/* 사이클 121: 대학원생활 종합 대시보드 (full 모드 한정) */}
-      <GradActivityDashboard activityByDay={activityByDay} />
+      <GradActivityDashboard activityByDay={activityByDay} userId={userId} />
     </div>
   );
 }

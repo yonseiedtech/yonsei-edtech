@@ -9,6 +9,8 @@ import type { ResearchMethod, ResearchMethodKind } from "@/types";
 
 interface SeedEntry {
   name: string;
+  /** 운영자가 다른 이름으로 만든 동일 연구방법을 재시드 동기화로 흡수(사이클 128) */
+  altNames?: string[];
   kind: ResearchMethodKind;
   summary: string;
   accessibleSummary?: string;
@@ -231,6 +233,7 @@ const SEED_RESEARCH_METHODS: SeedEntry[] = [
   },
   {
     name: "측정도구 개발과 타당화",
+    altNames: ["척도(측정도구) 개발 연구", "척도 개발 연구", "척도 개발과 타당화"],
     kind: "mixed",
     summary:
       "특정 구성개념을 측정하는 검사·척도를 개발하고, 신뢰도와 타당도(내용·구인·준거)로 검증하는 연구 방법.",
@@ -308,7 +311,11 @@ export async function seedResearchMethods(
       detail: p.detail,
       example: p.example,
     }));
-    const found = existing.find((m) => m.name.trim() === entry.name.trim());
+    const found = existing.find(
+      (m) =>
+        m.name.trim() === entry.name.trim() ||
+        (entry.altNames?.some((a) => a.trim() === m.name.trim()) ?? false),
+    );
     if (found) {
       const needsSync =
         (procedures?.length ?? 0) > 0 &&

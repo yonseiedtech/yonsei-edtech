@@ -93,6 +93,63 @@ export interface GradActivityResult {
   areaSummary: AreaSummary[];
 }
 
+/* ──────────────────── 영역별 누적 현황 (이번 달이 아닌 전체 누적) ──────────── */
+
+/** 한 영역에 표시할 누적 지표 chip 한 개 */
+export interface CumulativeMetric {
+  emoji: string;
+  /** 짧은 라벨 — 예: "논문", "수강" */
+  label: string;
+  /** 값 — 예: "5편", "9과목". 미정/로딩이면 호출부에서 처리 */
+  value: string;
+}
+
+export type CumulativeByArea = Record<AreaKey, CumulativeMetric[]>;
+
+/** buildCumulativeSummary 입력 — 각 소스의 원시 건수/일수(본인 데이터만 사전 필터 가정) */
+export interface CumulativeInput {
+  /** 대학원생활 */
+  courseCount: number;
+  examPassedCount: number;
+  examTotalCount: number;
+  gradPositionCount: number;
+  /** 학술 */
+  seminarCount: number;
+  externalCount: number;
+  /** 연구 */
+  paperReadingCount: number;
+  writingActiveDays: number;
+}
+
+/**
+ * 영역별 누적 현황 chip 목록을 만든다(표시는 호출부에서).
+ * 0건이어도 chip 은 유지(0 표기) — "아직 없음"도 정보가 된다.
+ */
+export function buildCumulativeSummary(input: CumulativeInput): CumulativeByArea {
+  return {
+    grad: [
+      { emoji: "📚", label: "수강", value: `${input.courseCount}과목` },
+      {
+        emoji: "📋",
+        label: "종합시험",
+        value:
+          input.examPassedCount > 0
+            ? `${input.examPassedCount}/${input.examTotalCount}`
+            : `${input.examTotalCount}`,
+      },
+      { emoji: "🎓", label: "전공활동", value: `${input.gradPositionCount}` },
+    ],
+    academic: [
+      { emoji: "🎤", label: "세미나", value: `${input.seminarCount}` },
+      { emoji: "🌐", label: "대외", value: `${input.externalCount}` },
+    ],
+    research: [
+      { emoji: "📖", label: "논문", value: `${input.paperReadingCount}편` },
+      { emoji: "✍️", label: "작성", value: `${input.writingActiveDays}일` },
+    ],
+  };
+}
+
 /* ─────────────────────────────── 변환 ─────────────────────────────── */
 
 /**
