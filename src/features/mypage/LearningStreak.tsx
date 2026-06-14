@@ -34,6 +34,7 @@ import {
   paperReadingLogsApi,
 } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
+import GradActivityDashboard from "./GradActivityDashboard";
 import type {
   SeminarAttendee,
   StudySession,
@@ -826,6 +827,9 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
       <p className="mt-3 text-[11px] text-muted-foreground">
         가중치: 세미나 출석 +10 · 강의 후기 +5 · 글 작성 +5 · 타이머 30분 +3 · 댓글 +1
       </p>
+
+      {/* 사이클 121: 대학원생활 종합 대시보드 (full 모드 한정) */}
+      <GradActivityDashboard activityByDay={activityByDay} />
     </div>
   );
 }
