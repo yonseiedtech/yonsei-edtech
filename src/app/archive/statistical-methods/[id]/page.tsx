@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/ui/page-header";
+import ConceptLinkedText from "@/components/archive/ConceptLinkedText";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import StatModelDiagram, { hasStatDiagram } from "@/features/archive/StatModelDiagram";
@@ -515,7 +516,7 @@ export default function StatisticalMethodDetailPage() {
                 쉽게 이해하기
               </h3>
               <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/85">
-                {method.accessibleSummary}
+                <ConceptLinkedText text={method.accessibleSummary ?? ""} />
               </p>
             </div>
           </section>
@@ -528,7 +529,7 @@ export default function StatisticalMethodDetailPage() {
               <div>
                 <h2 className="mb-2 text-sm font-semibold text-muted-foreground">개요</h2>
                 <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
-                  {method.description}
+                  <ConceptLinkedText text={method.description ?? ""} />
                 </p>
               </div>
             )}
