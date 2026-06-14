@@ -15,6 +15,7 @@ import {
   FlaskConical,
   BarChart3,
   PenLine,
+  FileText,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -435,6 +436,31 @@ export default function ArchiveLandingPage() {
                 <h2 className="text-lg font-semibold tracking-tight">교육공학 통계방법 가이드</h2>
                 <p className="text-sm text-muted-foreground">
                   ANOVA · 회귀 · 요인분석 · SEM 등 통계기법을 가정·절차·SPSS/AMOS/R 구문·대안 비교표와 함께 정리합니다.
+                </p>
+              </div>
+              <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">
+                보기
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+              </div>
+            </div>
+          </article>
+        </Link>
+
+        {/* ── 논문 쓰기 가이드 (사이클 105) ── */}
+        <Link
+          href="/archive/paper-guide"
+          className="group mt-6 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+          aria-label="논문 쓰기 가이드 보기"
+        >
+          <article className="rounded-2xl border-l-4 border-l-indigo-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+            <div className="flex items-center gap-4 p-5">
+              <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+                <FileText className="h-5 w-5" aria-hidden />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-lg font-semibold tracking-tight">논문 쓰기 가이드</h2>
+                <p className="text-sm text-muted-foreground">
+                  서론·이론적 배경·연구방법·연구결과·결론의 장별 구성과 작성 요령, 교육공학 실험 연구 유의사항
                 </p>
               </div>
               <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">
