@@ -10,13 +10,14 @@ import PasswordChangeForm from "@/features/auth/PasswordChangeForm";
 import { usePosts } from "@/features/board/useBoard";
 import { useSeminars } from "@/features/seminar/useSeminar";
 import { useQuery } from "@tanstack/react-query";
-import { certificatesApi, activitiesApi, profilesApi, reviewsApi } from "@/lib/bkend";
+import { certificatesApi, activitiesApi, profilesApi, reviewsApi, diagnosticResultsApi } from "@/lib/bkend";
 import { auth } from "@/lib/firebase";
 import { enrichCertificates } from "@/lib/denorm-sync";
 import { todayYmdLocal } from "@/lib/dday";
 import { useResearchPapers } from "@/features/research/useResearchPapers";
 import { useMyInterviewResponses } from "@/features/board/interview-store";
 import type { Certificate, Activity, User, SeminarReview } from "@/types";
+import type { DiagnosticResult } from "@/types/diagnostic";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import PageHeader from "@/components/ui/page-header";
@@ -48,6 +49,7 @@ import {
   CalendarDays,
   NotebookPen,
   PackageOpen,
+  ClipboardCheck,
 } from "lucide-react";
 
 // react-easy-crop(39KB gzipped) — 명함 탭 클릭 시에만 chunk 로드
@@ -65,6 +67,7 @@ import LearningStreak from "@/features/mypage/LearningStreak";
 import ProfileOnboardingBadges from "@/components/profile/ProfileOnboardingBadges";
 import ARCSPanel from "@/features/mypage/ARCSPanel";
 import ConnectivismPanel from "@/features/mypage/ConnectivismPanel";
+import DiagnosticWeakConceptPath from "@/components/mypage/DiagnosticWeakConceptPath";
 import { useAuth } from "@/features/auth/useAuth";
 import { ROLE_LABELS, ENROLLMENT_STATUS_LABELS } from "@/types";
 import { formatDate } from "@/lib/utils";
@@ -228,6 +231,27 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
   // 연구활동 카드용 카운트 (임시저장 제외)
   const { papers: myPapers } = useResearchPapers(user?.id);
   const publishedPaperCount = Array.isArray(myPapers) ? myPapers.filter((p) => !p.isDraft).length : 0;
+
+  // 진단평가 — 본인 최신 + 직전 결과 (diagnostic_results 본인 read, createdAt:desc).
+  //  - latest: 준비도 요약 + 약점 개념 읽기 추천
+  //  - previous: 직전(2번째) 결과로 재진단 델타 피드백 (성장 루프). listByUser 1회 호출 재사용.
+  const { data: diagnosticData } = useQuery({
+    queryKey: ["mypage-diagnostic", userId],
+    queryFn: async (): Promise<{
+      latest: DiagnosticResult | null;
+      previous: DiagnosticResult | null;
+      count: number;
+    }> => {
+      const res = await diagnosticResultsApi.listByUser(userId);
+      const list = Array.isArray(res.data) ? res.data : [];
+      return { latest: list[0] ?? null, previous: list[1] ?? null, count: list.length };
+    },
+    enabled: !!user && isSelf,
+    staleTime: 5 * 60_000,
+  });
+  const latestDiagnostic = diagnosticData?.latest ?? null;
+  const previousDiagnostic = diagnosticData?.previous ?? null;
+  const diagnosticCount = diagnosticData?.count ?? 0;
 
   if (!user) return null;
 
@@ -477,6 +501,92 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                   <ArrowRight size={18} className="shrink-0 self-center text-amber-700" />
                 </div>
               </Link>
+
+              {/* 진단평가 — 연구 준비도 진단 → 약점 개념 읽기 추천 → 재진단 루프 (본인만) */}
+              {isSelf && !readOnly && (
+                <div className="rounded-2xl border-2 border-violet-200/60 bg-gradient-to-br from-violet-50 to-violet-100/60 p-5 dark:border-violet-800/40 dark:from-violet-950/20 dark:to-violet-900/10">
+                  {latestDiagnostic ? (
+                    <>
+                      <div className="flex items-start gap-4">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-200/40 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+                          <ClipboardCheck size={22} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="text-base font-bold">내 연구 준비도 진단</h3>
+                            <span className="text-[11px] text-muted-foreground">
+                              마지막 진단 {formatDate(latestDiagnostic.createdAt || "")}
+                              {diagnosticCount > 1 && (
+                                <span className="ml-1 text-violet-700/70 dark:text-violet-300/70">· {diagnosticCount}번째 진단</span>
+                              )}
+                            </span>
+                          </div>
+                          {previousDiagnostic && (
+                            <p className="mt-1 text-[11px] text-muted-foreground">직전 진단 대비 변화</p>
+                          )}
+                          <div className="mt-2 grid grid-cols-2 gap-3">
+                            <div className="rounded-xl border bg-card px-3 py-2.5">
+                              <p className="text-[11px] text-muted-foreground">논문 작성 준비도</p>
+                              <div className="mt-0.5 flex items-baseline gap-1.5">
+                                <p className="text-lg font-bold tabular-nums text-violet-700 dark:text-violet-300">
+                                  {latestDiagnostic.paperReadiness}
+                                  <span className="ml-0.5 text-xs font-normal text-muted-foreground">/ 100</span>
+                                </p>
+                                {previousDiagnostic && (
+                                  <ReadinessDelta delta={latestDiagnostic.paperReadiness - previousDiagnostic.paperReadiness} />
+                                )}
+                              </div>
+                            </div>
+                            <div className="rounded-xl border bg-card px-3 py-2.5">
+                              <p className="text-[11px] text-muted-foreground">연구 분석 준비도</p>
+                              <div className="mt-0.5 flex items-baseline gap-1.5">
+                                <p className="text-lg font-bold tabular-nums text-violet-700 dark:text-violet-300">
+                                  {latestDiagnostic.analysisReadiness}
+                                  <span className="ml-0.5 text-xs font-normal text-muted-foreground">/ 100</span>
+                                </p>
+                                {previousDiagnostic && (
+                                  <ReadinessDelta delta={latestDiagnostic.analysisReadiness - previousDiagnostic.analysisReadiness} />
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 약점 개념 → 추천 학습 경로 (측정도구·졸업생 논문 큐레이션). 헤더/설명은 컴포넌트 내부. */}
+                      {latestDiagnostic.weakConceptIds.length > 0 && (
+                        <DiagnosticWeakConceptPath
+                          weakConceptIds={latestDiagnostic.weakConceptIds}
+                          weakConceptNames={latestDiagnostic.weakConceptNames}
+                        />
+                      )}
+
+                      <div className="mt-4">
+                        <Link href="/diagnosis">
+                          <Button variant="outline" size="sm" className="border-violet-300 text-violet-700 hover:bg-violet-100 dark:border-violet-700 dark:text-violet-300">
+                            다시 진단하기
+                            <ArrowRight size={14} className="ml-1" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </>
+                  ) : (
+                    <Link href="/diagnosis" className="flex items-start gap-4">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-200/40 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+                        <ClipboardCheck size={22} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-base font-bold">내 연구 준비도를 진단해보세요</h3>
+                        <p className="mt-0.5 text-sm text-muted-foreground">
+                          통계방법·연구방법·핵심개념을 진단해 논문 작성·연구 분석 준비도를 확인하고 약점 개념을 아카이브로 연결합니다.
+                        </p>
+                      </div>
+                      <ArrowRight size={18} className="shrink-0 self-center text-violet-700 dark:text-violet-300" />
+                    </Link>
+                  )}
+                  {/* TODO(diagnostic): 진단 완료를 학습 잔디 활동으로 인정(가중치) — diagnostic_results 를 LearningStreak SCORES 에 합산. 가중치·중복 가산 정책 합의 후 별도 작업. */}
+                </div>
+              )}
 
               {(() => {
                 const today = todayYmdLocal();
@@ -1012,6 +1122,30 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
           )}
         </div>
     </PageContainer>
+  );
+}
+
+/** 재진단 델타 배지 — 직전 진단 대비 준비도 변화(+/-)를 작은 인라인 배지로 표시 (성장 피드백 루프) */
+function ReadinessDelta({ delta }: { delta: number }) {
+  if (delta === 0) {
+    return (
+      <span className="inline-flex items-center rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+        ─ 변화 없음
+      </span>
+    );
+  }
+  const up = delta > 0;
+  return (
+    <span
+      className={
+        up
+          ? "inline-flex items-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+          : "inline-flex items-center rounded-full bg-rose-50 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
+      }
+    >
+      {up ? "▲" : "▼"} {up ? "+" : ""}
+      {delta}
+    </span>
   );
 }
 
