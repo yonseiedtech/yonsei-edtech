@@ -29,7 +29,7 @@ export interface SeedDiagnosticQuestion {
 
 export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   // ─────────────────────────────────────────────────────────────
-  // 통계방법 (statistics) — 7문항. 출처: statistical-methods-seed.ts
+  // 통계방법 (statistics) — 10문항. 출처: statistical-methods-seed.ts
   // ─────────────────────────────────────────────────────────────
   {
     seedKey: "dx:statistics:1",
@@ -125,9 +125,44 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
     explanation:
       "MANOVA는 두 개 이상의 연속형 종속변수를 동시에 다루어 집단 간 평균 차이를 검정하는 다변량 분산분석이다. ANOVA는 종속변수가 1개일 때 사용한다.",
   },
+  {
+    seedKey: "dx:statistics:8",
+    area: "statistics",
+    question:
+      "두 집단 간 평균 차이를 검정하는 가장 기본적인 통계 기법으로, 독립표본과 대응표본 유형으로 구분되는 것은?",
+    options: ["일원분산분석(ANOVA)", "t-검정", "카이제곱 검정", "다중회귀분석"],
+    answerIndex: 1,
+    explanation:
+      "t-검정(t-test)은 두 집단(또는 두 조건)의 평균 차이를 검정하는 기본 기법으로, 서로 다른 집단을 비교하는 독립표본과 같은 대상을 반복 측정하는 대응표본으로 구분된다.",
+  },
+  {
+    seedKey: "dx:statistics:9",
+    area: "statistics",
+    question:
+      "여러 개의 독립변수로 하나의 연속형 종속변수를 예측하고 각 변수의 상대적 설명력을 추정하는 통계 기법은?",
+    options: ["다중회귀분석", "로지스틱회귀분석", "탐색적 요인분석(EFA)", "t-검정"],
+    answerIndex: 0,
+    explanation:
+      "다중회귀분석은 두 개 이상의 독립변수로 연속형 종속변수를 예측·설명하며, 표준화 계수로 각 변수의 상대적 기여도를 비교한다. 종속변수가 이분형이면 로지스틱회귀를 쓴다.",
+  },
+  {
+    seedKey: "dx:statistics:10",
+    area: "statistics",
+    question:
+      "두 개 이상의 연속형 종속변수를 동시에 다루면서 공변량의 영향까지 통제하는 분산분석 기법은?",
+    options: [
+      "MANOVA(다변량분산분석)",
+      "MANCOVA(다변량공분산분석)",
+      "ANCOVA(공분산분석)",
+      "구조방정식모형(SEM)",
+    ],
+    answerIndex: 1,
+    explanation:
+      "MANCOVA는 여러 종속변수를 동시에 분석하는 MANOVA에 공변량 통제를 더한 기법이다. ANCOVA는 종속변수가 1개, MANOVA는 공변량 통제가 없다.",
+  },
 
   // ─────────────────────────────────────────────────────────────
-  // 연구방법 (method) — 7문항. 출처: research-methods-seed.ts
+  // 연구방법 (method) — 10문항. 출처: research-methods-seed.ts
   // ─────────────────────────────────────────────────────────────
   {
     seedKey: "dx:method:1",
@@ -198,9 +233,39 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
     explanation:
       "사례연구는 소수 사례를 다양한 자료원으로 심층·맥락적으로 분석하는 질적 연구 방법이다. 설문조사·실험연구는 양적, 회귀분석은 통계기법이다.",
   },
+  {
+    seedKey: "dx:method:8",
+    area: "method",
+    question:
+      "표집된 대상에게 구조화된 설문 도구로 자료를 수집해 변인 간 관계·분포·차이를 통계적으로 분석하는 양적 연구 방법은?",
+    options: ["실험연구", "설문조사연구", "근거이론", "현상학"],
+    answerIndex: 1,
+    explanation:
+      "설문조사연구는 구조화된 설문으로 표본의 응답을 수집해 변인 간 관계·분포·차이를 통계 분석하는 대표적 양적 연구 방법이다.",
+  },
+  {
+    seedKey: "dx:method:9",
+    area: "method",
+    question:
+      "특정 집단의 문화(행동·신념·상호작용)를 연구자가 장기간 현장에 참여관찰하며 내부자 관점에서 총체적으로 기술하는 질적 연구 방법은?",
+    options: ["사례연구", "문화기술지", "메타분석", "설문조사연구"],
+    answerIndex: 1,
+    explanation:
+      "문화기술지(ethnography)는 연구자가 현장에 장기간 참여관찰하며 집단이 공유하는 문화를 내부자(emic) 관점에서 두껍게 기술하는 질적 방법이다.",
+  },
+  {
+    seedKey: "dx:method:10",
+    area: "method",
+    question:
+      "개인이 경험을 이야기 형식으로 풀어낸 내러티브를 시간 흐름·맥락에 따라 재구성하여 그 의미를 해석하는 질적 연구 방법은?",
+    options: ["내러티브 탐구", "실험연구", "준실험연구", "메타분석"],
+    answerIndex: 0,
+    explanation:
+      "내러티브 탐구는 개인의 경험 이야기를 시간성·사회적 상호작용·장소의 3차원으로 분석하고 줄거리 있는 서사로 재구성해 의미를 해석하는 질적 방법이다.",
+  },
 
   // ─────────────────────────────────────────────────────────────
-  // 교육공학 핵심개념 (concept) — 8문항. 출처: archive-seed.ts SEED_CONCEPTS
+  // 교육공학 핵심개념 (concept) — 13문항. 출처: archive-seed.ts SEED_CONCEPTS
   // conceptSeedKey 로 약점 개념 링크.
   // ─────────────────────────────────────────────────────────────
   {
@@ -289,6 +354,66 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
     answerIndex: 1,
     explanation:
       "컴퓨팅 사고력(Computational Thinking)은 Wing이 제시한 개념으로, 분해·패턴 인식·추상화·알고리즘의 4가지 핵심 요소를 포함한다.",
+  },
+  {
+    seedKey: "dx:concept:9",
+    area: "concept",
+    conceptSeedKey: "concept:learning-analytics",
+    question:
+      "학습자의 행동·맥락·산출 데이터를 수집·분석·보고하여 학습과 학습환경을 이해·최적화하는 교육공학 분야는?",
+    options: ["적응학습", "학습분석", "디지털 리터러시", "마이크로러닝"],
+    answerIndex: 1,
+    explanation:
+      "학습분석(Learning Analytics)은 학습자 데이터를 수집·측정·분석·보고해 학습과 학습환경을 최적화하는 분야로, LMS 로그 기반 위험학습자 조기 진단이 대표 활용이다.",
+  },
+  {
+    seedKey: "dx:concept:10",
+    area: "concept",
+    conceptSeedKey: "concept:ctml",
+    question:
+      "시각·청각 이중 채널, 제한된 작업기억, 능동적 처리를 가정하고 12가지 멀티미디어 설계 원리를 제시한 Mayer의 이론은?",
+    options: [
+      "인지부하이론",
+      "멀티미디어 학습 인지이론(CTML)",
+      "자기결정성이론",
+      "상황학습이론",
+    ],
+    answerIndex: 1,
+    explanation:
+      "멀티미디어 학습 인지이론(CTML)은 Mayer가 이중 채널·작업기억 한계·능동적 처리 가정 위에 정합성·신호·중복 등 12개 설계 원리를 도출한 이론이다.",
+  },
+  {
+    seedKey: "dx:concept:11",
+    area: "concept",
+    conceptSeedKey: "concept:social-presence",
+    question:
+      "온라인 학습에서 학습자가 다른 참여자를 '실제 사람'으로 지각하는 정도로, Garrison의 탐구공동체(CoI) 모델 3요소 중 하나는?",
+    options: ["사회적 실재감", "자기효능감", "인지부하", "메타인지"],
+    answerIndex: 0,
+    explanation:
+      "사회적 실재감(social presence)은 Garrison·Anderson·Archer의 탐구공동체(CoI) 모델에서 교수적 실재감·인지적 실재감과 함께 작동하는 핵심 요소다.",
+  },
+  {
+    seedKey: "dx:concept:12",
+    area: "concept",
+    conceptSeedKey: "concept:microlearning",
+    question:
+      "5~15분 분량의 짧은 단위 콘텐츠로 단일 학습 목표 하나를 즉시 학습·적용하는 모바일 친화적 학습 형식은?",
+    options: ["플립러닝", "마이크로러닝", "적응학습", "게이미피케이션"],
+    answerIndex: 1,
+    explanation:
+      "마이크로러닝(microlearning)은 5~15분의 짧은 단위로 단일 목표를 즉시 학습·적용하는 형식으로, 모바일·just-in-time 학습 흐름과 결합된다.",
+  },
+  {
+    seedKey: "dx:concept:13",
+    area: "concept",
+    conceptSeedKey: "concept:adaptive-learning",
+    question:
+      "학습자의 사전지식·수행·선호 데이터에 기반해 콘텐츠·난이도·학습 경로를 실시간으로 개인화하는 학습 시스템은?",
+    options: ["적응학습", "협력학습", "플립러닝", "게이미피케이션"],
+    answerIndex: 0,
+    explanation:
+      "적응학습(adaptive learning)은 학습자 데이터에 기반해 콘텐츠·난이도·경로·피드백을 실시간 개인화하며, 지능형 튜터링 시스템(ITS)이 기술 기반이다.",
   },
 ];
 
