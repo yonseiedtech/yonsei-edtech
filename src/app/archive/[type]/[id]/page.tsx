@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import ArchiveStickyToc, { type ArchiveTocSection } from "@/components/archive/ArchiveStickyToc";
 import PageContainer from "@/components/ui/page-container";
+import ConceptLinkedText from "@/components/archive/ConceptLinkedText";
 
 export default function ArchiveDetailPage() {
   const params = useParams<{ type: string; id: string }>();
@@ -371,7 +372,10 @@ export default function ArchiveDetailPage() {
             <>
               <span id="definition" className="block scroll-mt-24" aria-hidden />
               <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                {item.description}
+                <ConceptLinkedText
+                  text={item.description}
+                  excludeConceptId={type === "concept" ? id : undefined}
+                />
               </p>
             </>
           )}
