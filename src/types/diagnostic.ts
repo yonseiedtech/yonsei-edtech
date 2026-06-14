@@ -39,18 +39,37 @@ export const DIAGNOSTIC_AREA_ORDER: DiagnosticArea[] = [
   "concept",
 ];
 
-/** 4지선다 객관식 문항 */
+/**
+ * 문항 유형.
+ *  - "mcq"      : 4지선다 객관식 (options·answerIndex)
+ *  - "ordering" : 절차 순서 정렬 (items 를 정답 순서로 저장, 런타임 셔플 후 재배열)
+ *  - "term"     : 단어 맞추기 (prompt 정의 → answer 개념명, acceptedAnswers 동의어)
+ * 미지정 시 "mcq" 로 간주(하위호환).
+ */
+export type DiagnosticQuestionType = "mcq" | "ordering" | "term";
+
+/** 진단 문항 (3유형 통합). 유형별 채점 필드는 옵셔널이며 type 에 따라 사용한다. */
 export interface DiagnosticQuestion {
   id: string;
+  /** 문항 유형 — 미지정 시 "mcq" (하위호환) */
+  type?: DiagnosticQuestionType;
   /** 관련 아카이브 개념 ID (archive_concepts) — 약점 진단 시 링크. 통계·연구방법 문항은 미연결 가능. */
   conceptId?: string;
   area: DiagnosticArea;
-  /** 문항(질문) */
+  /** 문항(질문). term 유형은 prompt 를 사용하므로 비워도 됨. */
   question: string;
-  /** 보기 4개 */
-  options: string[];
-  /** 정답 인덱스 (0~3) */
-  answerIndex: number;
+  /** [mcq] 보기 4개 */
+  options?: string[];
+  /** [mcq] 정답 인덱스 (0~3) */
+  answerIndex?: number;
+  /** [ordering] 정답 순서로 저장된 단계 목록. 런타임에 셔플해 제시하고, 사용자가 원래 순서로 맞추면 정답. */
+  items?: string[];
+  /** [term] 개념의 정의 서술(문제 본문). question 대신 화면에 표시. */
+  prompt?: string;
+  /** [term] 정답 개념명 */
+  answer?: string;
+  /** [term] 허용되는 동의어·영문 표기 (정규화 후 매칭) */
+  acceptedAnswers?: string[];
   /** 해설 (선택) */
   explanation?: string;
   /** 운영진 검수 후 공개 게이트 */
@@ -58,6 +77,61 @@ export interface DiagnosticQuestion {
   createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+/** 문항 유형 정규화 — 미지정·잘못된 값은 "mcq" 로 폴백 */
+export function questionType(q: Pick<DiagnosticQuestion, "type">): DiagnosticQuestionType {
+  return q.type === "ordering" || q.type === "term" ? q.type : "mcq";
+}
+
+/**
+ * 사용자 응답 — 유형별로 형태가 다르다.
+ *  - mcq      : number (선택한 보기 인덱스)
+ *  - ordering : string[] (사용자가 재배열한 단계 순서)
+ *  - term     : string (입력한 텍스트)
+ */
+export type DiagnosticAnswer = number | string[] | string;
+
+/** 단어 맞추기 정규화 — trim·소문자·공백/구두점 제거(한글·영문·숫자만 남김) */
+export function normalizeTermAnswer(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFKC")
+    // 한글 자모/완성형, 영문, 숫자만 유지 — 공백·괄호·하이픈·중점 등 모두 제거
+    .replace(/[^0-9a-z가-힣ㄱ-ㆎ]/g, "");
+}
+
+/**
+ * 유형별 채점 — 정답이면 true.
+ *  - mcq      : 선택 인덱스 === answerIndex
+ *  - ordering : 재배열 순서가 정답(items)과 완전일치
+ *  - term     : 정규화 후 answer 또는 acceptedAnswers 중 하나와 일치
+ * 응답이 없거나(undefined) 형태가 맞지 않으면 false(오답 처리).
+ */
+export function gradeQuestion(
+  q: DiagnosticQuestion,
+  answer: DiagnosticAnswer | undefined,
+): boolean {
+  if (answer === undefined) return false;
+  switch (questionType(q)) {
+    case "ordering": {
+      if (!Array.isArray(answer) || !q.items) return false;
+      if (answer.length !== q.items.length) return false;
+      return q.items.every((it, i) => answer[i] === it);
+    }
+    case "term": {
+      if (typeof answer !== "string") return false;
+      const norm = normalizeTermAnswer(answer);
+      if (!norm) return false;
+      const accepted = [q.answer ?? "", ...(q.acceptedAnswers ?? [])]
+        .map(normalizeTermAnswer)
+        .filter(Boolean);
+      return accepted.includes(norm);
+    }
+    case "mcq":
+    default:
+      return typeof answer === "number" && answer === q.answerIndex;
+  }
 }
 
 /** 영역별 채점 결과 */

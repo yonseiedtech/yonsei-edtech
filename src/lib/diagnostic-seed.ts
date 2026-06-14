@@ -1,29 +1,52 @@
-// 진단평가 기본 문항 시드 (published: true 로 적재 — 검수 완료된 객관적 문항만 포함)
+// 진단평가 문제은행 시드 (published: true 로 적재 — 검수 완료된 객관적 문항만 포함)
 //
 // 대학원생이 아카이브 개념(통계방법·연구방법·교육공학 핵심개념)을 얼마나 아는지
-// 진단하는 4지선다 객관식. 영역별 6~8문항.
+// 진단하는 문제은행. 3유형 혼합:
+//  - mcq      : 4지선다 객관식 (options·answerIndex)
+//  - ordering : 절차 순서 정렬 (items 를 정답 순서로 저장, 런타임에 셔플해 제시)
+//  - term     : 단어 맞추기 (prompt 정의 → answer 개념명, acceptedAnswers 동의어)
+// 외부 LLM 없이 검증된 정의·표준 절차로 대량 생성하고, 런타임에 영역별 랜덤 출제한다.
 //
 // ⚠️ 저작권·정확성 원칙 ⚠️
 //  - 학자 원설명/척도 문항을 그대로 복제하지 않는다. 객관적 서술로 변형.
-//  - 검증 가능한 명백한 정의·구성요소·표준 프레임워크만 출제. 애매하면 제외(보수적).
-//  - 출처: src/lib/statistical-methods-seed.ts (통계), src/lib/research-methods-seed.ts (연구방법),
+//  - 검증 가능한 명백한 정의·구성요소·표준 절차만 출제. 애매하면 제외(보수적).
+//  - 출처: src/lib/statistical-methods-seed.ts (통계), src/lib/research-methods-seed.ts (연구방법 절차),
 //    src/lib/archive-seed.ts SEED_CONCEPTS (개념). 모두 영문 정전 교과서 기반 정의 활용.
+//  - ordering 의 단계 순서는 research-methods-seed.ts 의 procedures(검수된 표준 절차)와 일치.
 //
 // 개념 문항은 conceptSeedKey 로 아카이브 개념(archive_concepts.seedKey)과 연결한다.
 // 런타임에 seedKey → 실제 문서 id 를 매핑해 약점 개념을 /archive/concept/[id] 로 링크.
 
 import { diagnosticQuestionsApi } from "./bkend";
-import type { DiagnosticArea, DiagnosticQuestion } from "@/types";
+import type {
+  DiagnosticArea,
+  DiagnosticQuestion,
+  DiagnosticQuestionType,
+} from "@/types";
+import { questionType } from "@/types";
 
 export interface SeedDiagnosticQuestion {
   /** 시드 멱등성 키. `dx:{area}:{n}` 형식 — 재시드 시 동일 문항 인식. */
   seedKey: string;
+  /** 문항 유형 — 미지정 시 "mcq" (하위호환) */
+  type?: DiagnosticQuestionType;
   area: DiagnosticArea;
   /** archive_concepts.seedKey (개념 영역 문항만). 런타임에 실제 conceptId 로 변환. */
   conceptSeedKey?: string;
-  question: string;
-  options: string[];
-  answerIndex: number;
+  /** mcq·ordering 의 문제 본문. term 은 prompt 사용. */
+  question?: string;
+  /** [mcq] 보기 4개 */
+  options?: string[];
+  /** [mcq] 정답 인덱스 (0~3) */
+  answerIndex?: number;
+  /** [ordering] 정답 순서로 나열한 단계 목록 */
+  items?: string[];
+  /** [term] 개념 정의 서술 (문제 본문) */
+  prompt?: string;
+  /** [term] 정답 개념명 */
+  answer?: string;
+  /** [term] 허용 동의어·영문 표기 */
+  acceptedAnswers?: string[];
   explanation?: string;
 }
 
@@ -33,6 +56,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   // ─────────────────────────────────────────────────────────────
   {
     seedKey: "dx:statistics:1",
+    type: "mcq",
     area: "statistics",
     question:
       "세 개 이상 집단의 평균이 서로 차이가 있는지 한 번에 검정하는 데 가장 적절한 통계 기법은?",
@@ -43,6 +67,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:statistics:2",
+    type: "mcq",
     area: "statistics",
     question:
       "공변량(예: 사전점수)의 영향을 통제한 뒤 집단 간 종속변수 평균 차이를 검정하는 기법은?",
@@ -58,6 +83,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:statistics:3",
+    type: "mcq",
     area: "statistics",
     question: "종속변수가 '합격/불합격'처럼 이분형일 때 그 발생 확률을 예측하는 회귀 기법은?",
     options: ["다중회귀분석", "로지스틱회귀분석", "정준상관분석", "MANOVA"],
@@ -67,6 +93,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:statistics:4",
+    type: "mcq",
     area: "statistics",
     question:
       "여러 문항(관측변수) 사이의 상관 구조에서 숨은 잠재요인을 '자료 기반으로 탐색'하여 도구의 차원성을 확인하는 분석은?",
@@ -82,6 +109,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:statistics:5",
+    type: "mcq",
     area: "statistics",
     question:
       "'이 문항들이 사전에 가정한 요인구조에 부합하는가'를 모형 적합도 지수로 검증하는 측정모형 분석은?",
@@ -97,6 +125,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:statistics:6",
+    type: "mcq",
     area: "statistics",
     question:
       "잠재변인을 포함한 다중 인과 관계와 측정모형을 동시에 추정·평가하는 다변량 분석 기법은?",
@@ -112,6 +141,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:statistics:7",
+    type: "mcq",
     area: "statistics",
     question:
       "두 개 이상의 연속형 종속변수에 대한 집단 간 평균 차이를 동시에 검정하는 기법은?",
@@ -127,6 +157,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:statistics:8",
+    type: "mcq",
     area: "statistics",
     question:
       "두 집단 간 평균 차이를 검정하는 가장 기본적인 통계 기법으로, 독립표본과 대응표본 유형으로 구분되는 것은?",
@@ -137,6 +168,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:statistics:9",
+    type: "mcq",
     area: "statistics",
     question:
       "여러 개의 독립변수로 하나의 연속형 종속변수를 예측하고 각 변수의 상대적 설명력을 추정하는 통계 기법은?",
@@ -147,6 +179,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:statistics:10",
+    type: "mcq",
     area: "statistics",
     question:
       "두 개 이상의 연속형 종속변수를 동시에 다루면서 공변량의 영향까지 통제하는 분산분석 기법은?",
@@ -166,6 +199,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   // ─────────────────────────────────────────────────────────────
   {
     seedKey: "dx:method:1",
+    type: "mcq",
     area: "method",
     question:
       "독립변인을 인위적으로 조작하고 참가자를 무선할당하여 처치의 인과 효과를 검증하는 연구 방법은?",
@@ -176,6 +210,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:method:2",
+    type: "mcq",
     area: "method",
     question:
       "교육 현장 특성상 무선할당이 어려워 이미 편성된 학급 등 기존 집단을 활용해 처치 효과를 검증하는 연구 방법은?",
@@ -186,6 +221,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:method:3",
+    type: "mcq",
     area: "method",
     question:
       "동일 주제를 다룬 다수 선행 연구의 효과크기를 통계적으로 종합·통합하는 연구 방법은?",
@@ -196,6 +232,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:method:4",
+    type: "mcq",
     area: "method",
     question:
       "자료에서 출발해 지속적 비교와 개방·축·선택 코딩을 거쳐 새로운 실체이론을 생성하는 질적 연구 방법은?",
@@ -206,6 +243,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:method:5",
+    type: "mcq",
     area: "method",
     question:
       "교사 등 실천가가 자신의 실천 맥락에서 '계획-실행-관찰-성찰'의 순환을 통해 개선을 도모하는 참여적 연구 방법은?",
@@ -216,6 +254,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:method:6",
+    type: "mcq",
     area: "method",
     question:
       "어떤 현상을 직접 체험한 사람들의 진술에서 그 체험에 공통적으로 내재한 '본질적 의미 구조'를 드러내는 질적 연구 방법은?",
@@ -226,6 +265,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:method:7",
+    type: "mcq",
     area: "method",
     question: "다음 중 일반적으로 '질적 연구 방법'으로 분류되는 것은?",
     options: ["설문조사연구", "사례연구", "다중회귀분석", "실험연구"],
@@ -235,6 +275,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:method:8",
+    type: "mcq",
     area: "method",
     question:
       "표집된 대상에게 구조화된 설문 도구로 자료를 수집해 변인 간 관계·분포·차이를 통계적으로 분석하는 양적 연구 방법은?",
@@ -245,6 +286,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:method:9",
+    type: "mcq",
     area: "method",
     question:
       "특정 집단의 문화(행동·신념·상호작용)를 연구자가 장기간 현장에 참여관찰하며 내부자 관점에서 총체적으로 기술하는 질적 연구 방법은?",
@@ -255,6 +297,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:method:10",
+    type: "mcq",
     area: "method",
     question:
       "개인이 경험을 이야기 형식으로 풀어낸 내러티브를 시간 흐름·맥락에 따라 재구성하여 그 의미를 해석하는 질적 연구 방법은?",
@@ -270,6 +313,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   // ─────────────────────────────────────────────────────────────
   {
     seedKey: "dx:concept:1",
+    type: "mcq",
     area: "concept",
     conceptSeedKey: "concept:self-efficacy",
     question:
@@ -281,6 +325,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:concept:2",
+    type: "mcq",
     area: "concept",
     conceptSeedKey: "concept:cognitive-load",
     question:
@@ -292,6 +337,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:concept:3",
+    type: "mcq",
     area: "concept",
     conceptSeedKey: "concept:metacognition",
     question: "'인지에 대한 인지'로, 자신의 학습 과정을 점검·계획·조절하는 능력을 뜻하는 개념은?",
@@ -302,6 +348,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:concept:4",
+    type: "mcq",
     area: "concept",
     conceptSeedKey: "concept:tpack",
     question:
@@ -313,6 +360,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:concept:5",
+    type: "mcq",
     area: "concept",
     conceptSeedKey: "concept:addie-model",
     question:
@@ -324,6 +372,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:concept:6",
+    type: "mcq",
     area: "concept",
     conceptSeedKey: "concept:samr-model",
     question:
@@ -335,6 +384,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:concept:7",
+    type: "mcq",
     area: "concept",
     conceptSeedKey: "concept:flipped-learning",
     question:
@@ -346,6 +396,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:concept:8",
+    type: "mcq",
     area: "concept",
     conceptSeedKey: "concept:computational-thinking",
     question:
@@ -357,6 +408,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:concept:9",
+    type: "mcq",
     area: "concept",
     conceptSeedKey: "concept:learning-analytics",
     question:
@@ -368,6 +420,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:concept:10",
+    type: "mcq",
     area: "concept",
     conceptSeedKey: "concept:ctml",
     question:
@@ -384,6 +437,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:concept:11",
+    type: "mcq",
     area: "concept",
     conceptSeedKey: "concept:social-presence",
     question:
@@ -395,6 +449,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:concept:12",
+    type: "mcq",
     area: "concept",
     conceptSeedKey: "concept:microlearning",
     question:
@@ -406,6 +461,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
   {
     seedKey: "dx:concept:13",
+    type: "mcq",
     area: "concept",
     conceptSeedKey: "concept:adaptive-learning",
     question:
@@ -415,6 +471,350 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
     explanation:
       "적응학습(adaptive learning)은 학습자 데이터에 기반해 콘텐츠·난이도·경로·피드백을 실시간 개인화하며, 지능형 튜터링 시스템(ITS)이 기술 기반이다.",
   },
+
+  // ═════════════════════════════════════════════════════════════
+  // 절차 순서 정렬 (ordering) — items 를 정답 순서로 저장. 출처: research-methods-seed.ts procedures
+  // ═════════════════════════════════════════════════════════════
+  // ── 통계방법 ordering (3) ──
+  {
+    seedKey: "dx:statistics:ord:1",
+    type: "ordering",
+    area: "statistics",
+    question:
+      "구조방정식모형(SEM) 분석의 일반적 절차를 순서대로 배열하세요.",
+    items: [
+      "이론모형 설정",
+      "측정모형 검증(CFA)",
+      "구조모형 추정",
+      "적합도 평가",
+      "매개효과 검증·해석",
+    ],
+    explanation:
+      "SEM은 이론에 근거한 모형 설정 → 측정모형(CFA)으로 잠재변인 측정 검증 → 구조모형의 경로계수 추정 → 적합도 지수 평가 → 매개효과 검증·해석 순으로 진행한다.",
+  },
+  {
+    seedKey: "dx:statistics:ord:2",
+    type: "ordering",
+    area: "statistics",
+    question:
+      "척도(측정도구)의 요인구조를 통계적으로 검증하는 일반적 순서를 배열하세요.",
+    items: [
+      "문항 응답 자료 수집",
+      "신뢰도(Cronbach α) 확인",
+      "탐색적 요인분석(EFA)",
+      "확인적 요인분석(CFA)",
+      "준거타당도 검증",
+    ],
+    explanation:
+      "자료 수집 후 내적 일관성(신뢰도)을 확인하고, 자료 기반으로 요인을 탐색(EFA)한 뒤 가정한 요인구조를 검증(CFA)하고, 외부 준거와의 상관으로 준거타당도를 보강하는 순서가 일반적이다.",
+  },
+  {
+    seedKey: "dx:statistics:ord:3",
+    type: "ordering",
+    area: "statistics",
+    question:
+      "양적 가설 검정 연구의 통계 분석 진행 순서를 배열하세요.",
+    items: [
+      "연구가설·영가설 설정",
+      "측정·자료수집",
+      "기술통계 확인",
+      "통계 가정 점검",
+      "추론통계로 가설 검정",
+      "효과크기·결과 해석",
+    ],
+    explanation:
+      "가설 설정 → 자료수집 → 기술통계로 분포 파악 → 정규성·등분산성 등 가정 점검 → 추론통계로 가설 검정 → 효과크기와 함께 결과를 해석하는 흐름이 표준이다.",
+  },
+
+  // ── 연구방법 ordering (4) — research-methods-seed.ts procedures 와 일치 ──
+  {
+    seedKey: "dx:method:ord:1",
+    type: "ordering",
+    area: "method",
+    question:
+      "측정도구(척도) 개발과 타당화 연구의 절차를 순서대로 배열하세요.",
+    items: [
+      "구성개념 정의",
+      "문항 개발",
+      "내용타당도 검증",
+      "예비조사",
+      "본조사·신뢰도",
+      "구인타당도 검증",
+      "준거타당도·확정",
+    ],
+    explanation:
+      "측정하려는 개념을 정의하고 문항을 개발한 뒤, 전문가 내용타당도 → 예비조사로 문항 정련 → 본조사 신뢰도 → 요인분석 구인타당도 → 준거타당도 검증·최종 확정 순으로 진행한다.",
+  },
+  {
+    seedKey: "dx:method:ord:2",
+    type: "ordering",
+    area: "method",
+    question:
+      "실험연구의 일반적 수행 절차를 순서대로 배열하세요.",
+    items: [
+      "가설 설정",
+      "변인 정의·도구 확정",
+      "실험설계 선택",
+      "무선할당",
+      "처치·사후측정",
+      "통계분석·해석",
+    ],
+    explanation:
+      "이론에 근거한 가설 설정 → 변인 조작적 정의 → 내적타당도를 확보할 설계 선택 → 참가자 무선할당 → 처치 실행 후 측정 → 통계분석으로 효과 검증 순으로 진행한다.",
+  },
+  {
+    seedKey: "dx:method:ord:3",
+    type: "ordering",
+    area: "method",
+    question:
+      "근거이론(Grounded Theory)의 코딩·이론 생성 절차를 순서대로 배열하세요.",
+    items: [
+      "이론적 표집",
+      "개방코딩",
+      "축코딩",
+      "선택코딩",
+      "이론 생성(포화)",
+    ],
+    explanation:
+      "근거이론은 이론 생성을 향한 이론적 표집 → 자료를 분해하는 개방코딩 → 범주 간 관계를 잇는 축코딩 → 핵심범주 중심의 선택코딩 → 이론적 포화에서 실체이론 생성 순으로 진행한다.",
+  },
+  {
+    seedKey: "dx:method:ord:4",
+    type: "ordering",
+    area: "method",
+    question:
+      "액션리서치(실행연구)의 한 순환(cycle) 절차를 순서대로 배열하세요.",
+    items: ["문제 진단", "실행 계획", "실행", "관찰·자료수집", "성찰"],
+    explanation:
+      "액션리서치는 실천 맥락의 문제 진단 → 해결 전략 계획 → 현장 실행 → 변화 관찰·자료수집 → 비판적 성찰의 순환을 반복하며 실천을 개선한다.",
+  },
+
+  // ── 교육공학 핵심개념 ordering (3) — 표준 모델 단계 ──
+  {
+    seedKey: "dx:concept:ord:1",
+    type: "ordering",
+    area: "concept",
+    conceptSeedKey: "concept:addie-model",
+    question:
+      "교수설계 ADDIE 모델의 5단계를 순서대로 배열하세요.",
+    items: ["분석(Analysis)", "설계(Design)", "개발(Development)", "실행(Implementation)", "평가(Evaluation)"],
+    explanation:
+      "ADDIE는 Analysis(분석)→Design(설계)→Development(개발)→Implementation(실행)→Evaluation(평가)의 5단계로 구성되며, 각 단계 산출물이 다음 단계 입력이 된다.",
+  },
+  {
+    seedKey: "dx:concept:ord:2",
+    type: "ordering",
+    area: "concept",
+    conceptSeedKey: "concept:samr-model",
+    question:
+      "테크놀로지 통합 수준을 진단하는 SAMR 모델의 4단계를 낮은 수준부터 순서대로 배열하세요.",
+    items: ["대체(Substitution)", "증강(Augmentation)", "변형(Modification)", "재정의(Redefinition)"],
+    explanation:
+      "SAMR은 대체(S)→증강(A)→변형(M)→재정의(R) 순으로, 위 단계로 갈수록 테크놀로지가 수업의 본질을 변화시키는 정도가 커진다.",
+  },
+  {
+    seedKey: "dx:concept:ord:3",
+    type: "ordering",
+    area: "concept",
+    conceptSeedKey: "concept:self-regulated-learning",
+    question:
+      "Zimmerman의 자기조절학습 순환 모형 3단계를 순서대로 배열하세요.",
+    items: ["사전계획(Forethought)", "수행(Performance)", "자기성찰(Self-reflection)"],
+    explanation:
+      "Zimmerman의 자기조절학습은 사전계획(forethought)→수행(performance)→자기성찰(self-reflection)의 3단계가 순환하는 모형이다.",
+  },
+
+  // ═════════════════════════════════════════════════════════════
+  // 단어 맞추기 (term) — prompt(정의) → answer(개념명). acceptedAnswers 로 동의어·영문 허용.
+  // 출처: archive-seed.ts SEED_CONCEPTS / statistical·research-methods-seed.ts 정의
+  // ═════════════════════════════════════════════════════════════
+  // ── 통계방법 term (5) ──
+  {
+    seedKey: "dx:statistics:term:1",
+    type: "term",
+    area: "statistics",
+    prompt:
+      "두 집단의 평균 차이(독립표본) 또는 동일 표본의 두 시점 평균 차이(대응표본)를 검정하는 가장 기본적인 모수 통계 기법은? (한글 또는 영문)",
+    answer: "t-검정",
+    acceptedAnswers: ["t검정", "t-test", "t test", "티검정", "티-검정"],
+    explanation:
+      "t-검정(t-test)은 두 집단 또는 두 시점의 평균 차이를 검정하는 기본 기법이다.",
+  },
+  {
+    seedKey: "dx:statistics:term:2",
+    type: "term",
+    area: "statistics",
+    prompt:
+      "한 개의 범주형 독립변수에 따른 연속형 종속변수의 평균이 세 집단 이상에서 차이가 있는지 검정하는 분산분석 기법의 이름은? (약어 또는 한글)",
+    answer: "ANOVA",
+    acceptedAnswers: ["분산분석", "일원분산분석", "아노바", "일원배치분산분석", "oneway anova"],
+    explanation:
+      "ANOVA(분산분석)는 범주형 독립변수에 따른 집단 간 평균 차이를 검정하며, t-검정의 다집단 확장판이다.",
+  },
+  {
+    seedKey: "dx:statistics:term:3",
+    type: "term",
+    area: "statistics",
+    prompt:
+      "관측변수들의 상관 구조에서 잠재요인을 자료 기반으로 탐색하여 도구의 차원성을 확인하는 분석 기법은? (한글 또는 영문 약어)",
+    answer: "탐색적 요인분석",
+    acceptedAnswers: ["EFA", "탐색적요인분석", "exploratory factor analysis"],
+    explanation:
+      "탐색적 요인분석(EFA)은 사전에 요인구조를 가정하지 않고 관측변수의 상관에서 잠재요인을 탐색한다.",
+  },
+  {
+    seedKey: "dx:statistics:term:4",
+    type: "term",
+    area: "statistics",
+    prompt:
+      "잠재변인을 포함한 다중 인과 관계와 측정모형을 동시에 추정하고 모형 적합도를 평가하는 다변량 통계 기법은? (한글 또는 영문 약어)",
+    answer: "구조방정식모형",
+    acceptedAnswers: ["SEM", "구조방정식", "structural equation modeling", "structural equation model"],
+    explanation:
+      "구조방정식모형(SEM)은 잠재변인 간 경로와 측정모형을 동시에 추정·평가하는 다변량 기법이다.",
+  },
+  {
+    seedKey: "dx:statistics:term:5",
+    type: "term",
+    area: "statistics",
+    prompt:
+      "종속변수가 합격/불합격처럼 이분형일 때 그 발생 확률을 독립변수들로 예측하는 회귀 기법은? (한글 또는 영문)",
+    answer: "로지스틱회귀분석",
+    acceptedAnswers: ["로지스틱회귀", "logistic regression", "로지스틱 회귀분석", "로지스틱 회귀"],
+    explanation:
+      "로지스틱회귀분석은 이분형(또는 다항) 종속변수의 발생 확률을 예측하는 일반화선형모형 기반 기법이다.",
+  },
+
+  // ── 연구방법 term (5) ──
+  {
+    seedKey: "dx:method:term:1",
+    type: "term",
+    area: "method",
+    prompt:
+      "독립변인을 직접 조작하고 참가자를 처치집단·통제집단에 무선할당하여 처치의 인과 효과를 검증하는, 양적 연구의 대표적 방법을 한 단어로 쓰면? (한글 또는 영문)",
+    answer: "실험연구",
+    acceptedAnswers: ["실험", "experiment", "experimental research", "실험 연구"],
+    explanation:
+      "실험연구는 독립변인 조작과 무선할당으로 가외변인을 통제하고 처치 효과를 인과적으로 검증한다.",
+  },
+  {
+    seedKey: "dx:method:term:2",
+    type: "term",
+    area: "method",
+    prompt:
+      "동일 주제를 다룬 다수 선행 연구의 효과크기를 표준화해 통계적으로 종합·통합하는 양적 연구 방법은? (한글 또는 영문)",
+    answer: "메타분석",
+    acceptedAnswers: ["meta-analysis", "meta analysis", "메타 분석"],
+    explanation:
+      "메타분석은 여러 선행 연구의 효과크기를 통합해 전체 효과와 조절변인을 분석하는 양적 종합 방법이다.",
+  },
+  {
+    seedKey: "dx:method:term:3",
+    type: "term",
+    area: "method",
+    prompt:
+      "특정 집단이 공유하는 문화를 연구자가 장기간 현장에 참여관찰하며 내부자 관점에서 총체적으로 기술하는 질적 연구 방법은? (한글 또는 영문)",
+    answer: "문화기술지",
+    acceptedAnswers: ["ethnography", "민족지", "참여관찰연구", "에스노그라피"],
+    explanation:
+      "문화기술지(ethnography)는 장기 참여관찰로 집단이 공유하는 문화를 내부자(emic) 관점에서 두껍게 기술한다.",
+  },
+  {
+    seedKey: "dx:method:term:4",
+    type: "term",
+    area: "method",
+    prompt:
+      "어떤 현상을 직접 체험한 사람들의 진술에서 그 체험에 공통적으로 내재한 본질적 의미 구조를 드러내는 질적 연구 방법은? (한글 또는 영문)",
+    answer: "현상학",
+    acceptedAnswers: ["phenomenology", "현상학적 연구", "현상학적연구"],
+    explanation:
+      "현상학은 체험자의 심층 면담 자료에서 의미단위를 분석해 경험의 본질적 구조를 드러내는 질적 방법이다.",
+  },
+  {
+    seedKey: "dx:method:term:5",
+    type: "term",
+    area: "method",
+    prompt:
+      "교사 등 실천가가 자신의 실천 맥락에서 '계획-실행-관찰-성찰'의 순환을 통해 개선을 도모하는 참여적 연구 방법은? (한글 또는 영문)",
+    answer: "액션리서치",
+    acceptedAnswers: ["실행연구", "action research", "실천연구", "참여실행연구"],
+    explanation:
+      "액션리서치(실행연구)는 연구자 본인이 실행자가 되어 계획·실행·관찰·성찰의 순환을 반복하며 실천을 개선한다.",
+  },
+
+  // ── 교육공학 핵심개념 term (6) — conceptSeedKey 로 약점 링크 ──
+  {
+    seedKey: "dx:concept:term:1",
+    type: "term",
+    area: "concept",
+    conceptSeedKey: "concept:self-efficacy",
+    prompt:
+      "특정 과제를 수행하는 데 필요한 행동을 조직하고 실행할 수 있다는 자신의 능력에 대한 신념을 가리키는 Bandura의 핵심 구인은? (한글 또는 영문)",
+    answer: "자기효능감",
+    acceptedAnswers: ["self-efficacy", "self efficacy", "효능감"],
+    explanation:
+      "자기효능감(self-efficacy)은 Bandura의 사회인지이론 핵심 구인으로, 특정 과제 수행 능력에 대한 신념이다.",
+  },
+  {
+    seedKey: "dx:concept:term:2",
+    type: "term",
+    area: "concept",
+    conceptSeedKey: "concept:cognitive-load",
+    prompt:
+      "학습 과제 수행 중 작업기억에 부과되는 정신적 처리 요구량으로, 내재적·외재적·본유적 부하로 구분되는 개념은? (한글 또는 영문)",
+    answer: "인지부하",
+    acceptedAnswers: ["cognitive load", "정신적 부하", "인지 부하"],
+    explanation:
+      "인지부하(cognitive load)는 Sweller의 인지부하이론에서 비롯되며 내재적·외재적·본유적 부하로 구분된다.",
+  },
+  {
+    seedKey: "dx:concept:term:3",
+    type: "term",
+    area: "concept",
+    conceptSeedKey: "concept:metacognition",
+    prompt:
+      "'인지에 대한 인지'로, 자신의 학습 과정을 점검·계획·조절하는 능력을 뜻하는 Flavell의 개념은? (한글 또는 영문)",
+    answer: "메타인지",
+    acceptedAnswers: ["metacognition", "초인지", "상위인지"],
+    explanation:
+      "메타인지(metacognition)는 Flavell이 제안한 '인지에 대한 인지'로, 메타인지 지식과 조절로 구분된다.",
+  },
+  {
+    seedKey: "dx:concept:term:4",
+    type: "term",
+    area: "concept",
+    conceptSeedKey: "concept:tpack",
+    prompt:
+      "내용지식(CK)·교수지식(PK)·테크놀로지지식(TK)의 교집합에서 형성되는 교사의 통합 지식 프레임워크의 약어는?",
+    answer: "TPACK",
+    acceptedAnswers: ["TPCK", "테크놀로지 교수내용지식", "technological pedagogical content knowledge"],
+    explanation:
+      "TPACK은 Mishra & Koehler가 Shulman의 PCK를 확장한 것으로 CK·PK·TK의 통합 지식을 가리킨다.",
+  },
+  {
+    seedKey: "dx:concept:term:5",
+    type: "term",
+    area: "concept",
+    conceptSeedKey: "concept:flipped-learning",
+    prompt:
+      "개념 학습은 사전 영상·자료로 가정에서, 적용·토론·문제해결은 교실에서 진행하도록 순서를 뒤집은 혼합학습 모델은? (한글 또는 영문)",
+    answer: "플립러닝",
+    acceptedAnswers: ["flipped learning", "거꾸로 학습", "거꾸로교실", "flipped classroom", "거꾸로 교실"],
+    explanation:
+      "플립러닝(거꾸로 학습)은 교실 수업과 가정 학습의 순서를 뒤집어 교실에서 적용·상호작용에 집중하는 모델이다.",
+  },
+  {
+    seedKey: "dx:concept:term:6",
+    type: "term",
+    area: "concept",
+    conceptSeedKey: "concept:social-presence",
+    prompt:
+      "온라인 학습에서 학습자가 다른 참여자를 '실제 사람'으로 지각하는 정도로, Garrison의 탐구공동체(CoI) 모델 3요소 중 하나는? (한글 또는 영문)",
+    answer: "사회적 실재감",
+    acceptedAnswers: ["social presence", "사회적실재감", "사회적 현존감"],
+    explanation:
+      "사회적 실재감(social presence)은 탐구공동체(CoI) 모델에서 교수적·인지적 실재감과 함께 작동하는 핵심 요소다.",
+  },
 ];
 
 export interface DiagnosticSeedResult {
@@ -423,9 +823,25 @@ export interface DiagnosticSeedResult {
 }
 
 /**
- * 동일 문항(seedKey 매칭, 없으면 question 텍스트 매칭)은 스킵하고 나머지를
- * published=true 로 일괄 생성한다. 검수 완료된 객관적 문항만 시드에 포함하므로
- * 연구방법·통계방법 가이드와 달리 즉시 공개한다.
+ * 문항의 중복 판별 키 — `유형|본문` 형식. mcq·ordering 은 question, term 은 prompt 를
+ * 본문으로 사용한다. 유형을 키에 포함해 같은 줄기(stem)라도 객관식/단어맞추기가
+ * 서로 다른 문항으로 인식되도록 한다(예: 실험연구 mcq vs term 공존).
+ */
+function identityKey(q: {
+  type?: DiagnosticQuestion["type"];
+  question?: string;
+  prompt?: string;
+}): string {
+  const t = questionType(q);
+  const text = (t === "term" ? q.prompt : q.question) ?? "";
+  return `${t}|${text.trim()}`;
+}
+
+/**
+ * 동일 문항(question·prompt 텍스트 매칭)은 스킵하고 나머지를 published=true 로
+ * 일괄 생성한다. 검수 완료된 객관적 문항만 시드에 포함하므로 연구방법·통계방법
+ * 가이드와 달리 즉시 공개한다. 유형(type)·유형별 필드(items·prompt·answer 등)를
+ * 함께 적재해 mcq·ordering·term 3종을 모두 지원한다.
  *
  * 개념 문항의 conceptId 는 호출부에서 seedKey→실제 conceptId 매핑을 주입한다
  * (없으면 conceptId 미설정 — 약점 링크만 생략되고 채점·준비도는 정상 동작).
@@ -435,27 +851,35 @@ export async function seedDiagnosticQuestions(
   existing: DiagnosticQuestion[],
   conceptIdBySeedKey?: Record<string, string>,
 ): Promise<DiagnosticSeedResult> {
-  const existingQuestions = new Set(existing.map((q) => q.question.trim()));
+  const existingKeys = new Set(existing.map((q) => identityKey(q)));
   let created = 0;
   let skipped = 0;
   for (const entry of SEED_DIAGNOSTIC_QUESTIONS) {
-    if (existingQuestions.has(entry.question.trim())) {
+    if (existingKeys.has(identityKey(entry))) {
       skipped += 1;
       continue;
     }
     const conceptId = entry.conceptSeedKey
       ? conceptIdBySeedKey?.[entry.conceptSeedKey]
       : undefined;
-    await diagnosticQuestionsApi.create({
+    // undefined 필드는 보내지 않도록 정리(유형별 미사용 필드 제외).
+    const payload: Record<string, unknown> = {
+      type: questionType(entry),
       area: entry.area,
-      question: entry.question,
-      options: entry.options,
-      answerIndex: entry.answerIndex,
       explanation: entry.explanation,
       conceptId,
       published: true,
       createdBy: userId,
-    });
+    };
+    if (entry.question !== undefined) payload.question = entry.question;
+    if (entry.options !== undefined) payload.options = entry.options;
+    if (entry.answerIndex !== undefined) payload.answerIndex = entry.answerIndex;
+    if (entry.items !== undefined) payload.items = entry.items;
+    if (entry.prompt !== undefined) payload.prompt = entry.prompt;
+    if (entry.answer !== undefined) payload.answer = entry.answer;
+    if (entry.acceptedAnswers !== undefined)
+      payload.acceptedAnswers = entry.acceptedAnswers;
+    await diagnosticQuestionsApi.create(payload);
     created += 1;
   }
   return { created, skipped };

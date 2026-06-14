@@ -17,7 +17,10 @@ import { SEED_DIAGNOSTIC_QUESTIONS } from "@/lib/diagnostic-seed";
 import {
   DIAGNOSTIC_AREA_ORDER,
   computeReadiness,
+  gradeQuestion,
+  questionType,
   type AreaScore,
+  type DiagnosticAnswer,
   type DiagnosticArea,
   type DiagnosticQuestion,
 } from "@/types";
@@ -34,15 +37,25 @@ function seedToQuestion(
 ): DiagnosticQuestion & { conceptSeedKey?: string } {
   return {
     id: `seed:${entry.seedKey}`,
+    type: questionType(entry),
     area: entry.area,
-    question: entry.question,
+    question: entry.question ?? "",
     options: entry.options,
     answerIndex: entry.answerIndex,
+    items: entry.items,
+    prompt: entry.prompt,
+    answer: entry.answer,
+    acceptedAnswers: entry.acceptedAnswers,
     explanation: entry.explanation,
     conceptSeedKey: entry.conceptSeedKey,
     published: true,
   };
 }
+
+/** 영역별 랜덤 출제 문항 수 (매 진단 다른 문제·유형 혼합). 풀이 적으면 가용분만 출제. */
+const QUESTIONS_PER_AREA = 6;
+/** 전체 진단 시 영역당 출제 수(전체는 세 영역 합산). */
+const QUESTIONS_PER_AREA_ALL = 5;
 
 /** Fisher-Yates 셔플 (원본 불변) */
 function shuffle<T>(arr: T[]): T[] {
@@ -128,13 +141,17 @@ export default function DiagnosisPage() {
     return counts;
   }, [pool]);
 
-  // ── 진단 시작 ──
+  // ── 진단 시작 (문제은행에서 영역별 N개 랜덤 추출 — 매 진단 다른 문제·유형 혼합) ──
   const handleStart = (area: DiagnosticArea | "all") => {
-    const selected = area === "all" ? pool : pool.filter((q) => q.area === area);
-    // 영역 순서대로(통계→연구방법→개념), 영역 내부는 셔플
+    // 전체: 세 영역 각각 N_ALL 개 / 단일 영역: 그 영역 N 개. 풀이 적으면 가용분만.
+    const areas = area === "all" ? DIAGNOSTIC_AREA_ORDER : [area];
+    const perArea = area === "all" ? QUESTIONS_PER_AREA_ALL : QUESTIONS_PER_AREA;
     const ordered: typeof pool = [];
     for (const a of DIAGNOSTIC_AREA_ORDER) {
-      ordered.push(...shuffle(selected.filter((q) => q.area === a)));
+      if (!areas.includes(a)) continue;
+      const inArea = pool.filter((q) => q.area === a);
+      // 영역 내부를 셔플 후 앞에서 perArea 개 선택 → 영역 순서는 유지(통계→연구방법→개념)
+      ordered.push(...shuffle(inArea).slice(0, perArea));
     }
     if (ordered.length === 0) return;
     setActiveQuestions(ordered);
@@ -159,16 +176,15 @@ export default function DiagnosisPage() {
     return null;
   };
 
-  // ── 채점 ──
-  const handleComplete = async (answers: Record<string, number>) => {
+  // ── 채점 (유형별 분기 — gradeQuestion 이 mcq·ordering·term 모두 처리) ──
+  const handleComplete = async (answers: Record<string, DiagnosticAnswer>) => {
     const scores: Partial<Record<DiagnosticArea, AreaScore>> = {};
     const weakMap = new Map<string, WeakConcept>();
 
     for (const q of activeQuestions) {
       const bucket = scores[q.area] ?? { correct: 0, total: 0 };
       bucket.total += 1;
-      const picked = answers[q.id];
-      const correct = picked === q.answerIndex;
+      const correct = gradeQuestion(q, answers[q.id]);
       if (correct) {
         bucket.correct += 1;
       } else {
