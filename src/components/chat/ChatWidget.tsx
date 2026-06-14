@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect, lazy, Suspense } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useQuery } from "@tanstack/react-query";
-import { MessageCircle, Loader2, Pause, Play, Square, BookOpen, Pencil } from "lucide-react";
+import { MessageCircle, Loader2, Pause, Play, Square, Pencil } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { useStudyTimerStore } from "@/features/research/study-timer/study-timer-store";
@@ -240,16 +240,12 @@ export default function ChatWidget() {
                   transition={{ duration: 0.15 }}
                   className={cn(
                     "absolute top-1/2 -translate-y-1/2 flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-white shadow-xl",
-                    active.type === "reading" ? "bg-primary" : "bg-blue-800",
+                    "bg-blue-800",
                     pillOnLeft ? "right-full mr-2" : "left-full ml-2",
                   )}
                   style={{ maxWidth: 280 }}
                 >
-                  {active.type === "reading" ? (
-                    <BookOpen className="h-3.5 w-3.5 shrink-0" />
-                  ) : (
-                    <Pencil className="h-3.5 w-3.5 shrink-0" />
-                  )}
+                  <Pencil className="h-3.5 w-3.5 shrink-0" />
                   <span className="max-w-[120px] truncate text-xs font-medium">
                     {active.targetTitle}
                   </span>

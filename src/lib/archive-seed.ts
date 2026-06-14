@@ -625,11 +625,11 @@ export const SEED_MEASUREMENTS: SeedMeasurement[] = [
     name: "학업적 자기효능감 척도 (김아영, 2007)",
     altNames: ["Academic Self-Efficacy Scale"],
     description:
-      "한국 학습자의 학업적 자기효능감을 측정하기 위해 김아영(2007)이 개발한 KCI 등재 표준 척도. 자신감·자기조절효능감·과제난이도선호의 3개 하위 요인으로 구성되며, 학교급 전반에 걸쳐 사용된다.",
+      "한국 학습자의 학업적 자기효능감을 측정하는 KCI 표준 척도. 척도 원개발은 김아영·박인영(2001, 교육학연구 39(1))이며 김아영(2007) 저서에 수록·확산되었다. 자신감·자기조절효능감·과제난이도선호의 3개 하위 요인 28문항으로 구성되고, 중간(중립) 없는 6점 강제선택형으로 응답한다.",
     originalName: "Academic Self-Efficacy Scale (Korean version)",
-    author: "김아영 (2007)",
+    author: "김아영·박인영 (2001) / 김아영 (2007) 저서 수록",
     itemCount: 28,
-    scaleType: "5점 또는 6점 Likert",
+    scaleType: "6점 Likert (1=전혀 그렇지 않다 ~ 6=매우 그렇다, 중립 없는 짝수형)",
     reliability: "Cronbach α = .87 (전체) / 하위 요인 .76~.85",
     validity: "확인적 요인분석으로 3요인 구조 검증 (CFI > .90, RMSEA < .08)",
     sampleItems: [
@@ -939,7 +939,8 @@ export const SEED_MEASUREMENTS: SeedMeasurement[] = [
       "대학생의 디지털 리터러시 자기지각을 기술적·인지적·사회정서적 차원 모형에 기반해 측정하는 설문. '디지털 네이티브' 담론을 실증 검토한 원전 연구에서 사용되었으며, 이후 다수 국가에서 번안·타당화되어 에듀테크 수용·온라인 학습 연구의 선행 변인 측정에 활용된다.",
     originalName: "Digital Literacy Questionnaire",
     author: "Ng, W. (2012)",
-    scaleType: "Likert 자기보고",
+    itemCount: 17,
+    scaleType: "혼합형 — 진술문 5점 Likert(1=전혀 아니다 ~ 5=매우 그렇다, 17문항) + 일부 역량 자기평가 10점 척도(1~10)",
     tags: ["디지털 리터러시", "역량"],
     references: [
       "Ng, W. (2012). Can we teach digital natives digital literacy? Computers & Education, 59(3), 1065-1078.",
