@@ -59,6 +59,8 @@ import JourneyGreetingHeader from "@/features/dashboard/JourneyGreetingHeader";
 import DashboardCommandCenter from "@/features/dashboard/DashboardCommandCenter";
 import ProfileSummaryCard from "@/features/dashboard/ProfileSummaryCard";
 import ProfileSideWidget from "@/features/dashboard/ProfileSideWidget";
+import QuickLinks from "@/features/dashboard/QuickLinks";
+import LearningStreak from "@/features/mypage/LearningStreak";
 import StageRecommendationPanel from "@/features/dashboard/StageRecommendationPanel";
 import {
   useDashboardLayout,
@@ -540,6 +542,7 @@ function DashboardContent() {
             <div className="space-y-4">
               <ProfileSummaryCard user={user} />
               <ProfileSideWidget userId={user.id} />
+              <LearningStreak compact />
             </div>
           </div>
         ) : (
@@ -548,6 +551,11 @@ function DashboardContent() {
             <DashboardCommandCenter />
           </div>
         )}
+
+        {/* 사이클 113b: 빠른 바로가기 한 줄 (사용자 요청 — 별도 영역) */}
+        <div className="mb-6">
+          <QuickLinks />
+        </div>
 
         {/* 사이클 85: 이번 학기 추천 한 걸음 — 커맨드센터 아래, JOURNEY_STAGES 현재 학기 추천 행동 (여정 문서 High ②).
             학기 미설정자는 JourneyGreetingHeader 가 유도하므로 패널 내부에서 null 렌더. */}

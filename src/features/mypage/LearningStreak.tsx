@@ -283,7 +283,7 @@ const MILESTONES: Milestone[] = [
 
 const MONTH_LABELS_KR = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
 
-export default function LearningStreak() {
+export default function LearningStreak({ compact = false }: { compact?: boolean }) {
   const { user } = useAuthStore();
   const userId = user?.id;
 
@@ -456,7 +456,7 @@ export default function LearningStreak() {
   }
 
   return (
-    <div className="rounded-2xl border bg-card p-5">
+    <div className={cn("rounded-2xl border bg-card", compact ? "p-4" : "p-5")}>
       <div className="flex flex-wrap items-center gap-2">
         <Sprout size={18} className="text-emerald-600" aria-hidden="true" />
         <h2 className="font-bold">학습 잔디</h2>
@@ -469,19 +469,21 @@ export default function LearningStreak() {
               <strong className="text-foreground">{stats.weekStreak}</strong>주 streak
             </span>
           )}
-          <Link
-            href="/leaderboard"
-            className="inline-flex items-center gap-1 rounded-full border border-amber-300/60 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 transition-colors hover:bg-amber-100"
-            title="학습 잔디 순위 보기"
-          >
-            <Trophy size={11} aria-hidden="true" />
-            순위 보기
-          </Link>
+          {!compact && (
+            <Link
+              href="/leaderboard"
+              className="inline-flex items-center gap-1 rounded-full border border-amber-300/60 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 transition-colors hover:bg-amber-100"
+              title="학습 잔디 순위 보기"
+            >
+              <Trophy size={11} aria-hidden="true" />
+              순위 보기
+            </Link>
+          )}
         </span>
       </div>
 
-      {/* Sprint 64: 학기 네비게이션 */}
-      <div className="mt-3 flex items-center justify-between gap-2">
+      {/* Sprint 64: 학기 네비게이션 (compact 에선 숨김) */}
+      <div className={cn("mt-3 flex items-center justify-between gap-2", compact && "hidden")}>
         <button
           type="button"
           onClick={() => setSemester(semesterPrev(semester))}
