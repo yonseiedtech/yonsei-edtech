@@ -246,11 +246,8 @@ function DashboardContent() {
         <NextActionBanner />
       </div>
     ),
-    dailyTimeline: canShowWidget(user.role, "dailyClassTimeline") ? (
-      <section className="mx-auto mt-6 max-w-6xl px-4">
-        <DailyClassTimelineWidget />
-      </section>
-    ) : null,
+    // dailyTimeline: 사이클 104 — 상단 2단 그리드로 승격(F-패턴). 위젯맵에서 제거해 중복 방지.
+    //   DASHBOARD_WIDGET_KEYS 에 키는 남지만 widgetMap 미존재 → !node 가드로 렌더·편집UI 모두 자동 제외.
     myTodos: canShowWidget(user.role, "myTodos") ? (
       <section className="mx-auto mt-6 max-w-6xl px-4">
         <MyTodosWidget />
@@ -528,11 +525,21 @@ function DashboardContent() {
           <JourneyGreetingHeader user={user} />
         </div>
 
-        {/* 사이클 85: 내 프로필 요약 — 학적 정보(입학·누적학기·기수·재학상태) + 완성도 + 최근 활동.
-            주기적 프로필 업데이트 유도 (사용자 요청). 인사는 JourneyGreetingHeader 가 담당. */}
-        <div className="mb-5">
-          <ProfileSummaryCard user={user} />
-        </div>
+        {/* 사이클 104: F-패턴·정보 빈도 기반 상단 재편 (사용자 요청 — Mayer 멀티미디어/마케팅 시선흐름).
+            좌상단(최고 시선)에 매일 보는 '오늘의 시간표', 우측 좁은 컬럼에 프로필 요약(정체성·완성도).
+            시간표 비대상(졸업생 등)은 프로필 풀폭 폴백. */}
+        {canShowWidget(user.role, "dailyClassTimeline") ? (
+          <div className="mb-5 grid items-start gap-4 lg:grid-cols-[1fr_340px]">
+            <div className="min-w-0">
+              <DailyClassTimelineWidget />
+            </div>
+            <ProfileSummaryCard user={user} />
+          </div>
+        ) : (
+          <div className="mb-5">
+            <ProfileSummaryCard user={user} />
+          </div>
+        )}
 
         {/* 사이클 81: 3영역 종합 커맨드 센터 — 대학원생활·연구·학술 한눈에 (대시보드 대개편) */}
         <DashboardCommandCenter />

@@ -44,10 +44,9 @@ export default function TermBriefHero({ user, academicCalendarSlot }: Props) {
   else if ((user as { isAlumni?: boolean }).isAlumni) identityLabel = "졸업생";
 
   return (
-    <section className="relative mt-6 overflow-hidden rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 p-6 shadow-sm sm:p-10">
-      {/* 떠다니는 sparkle 장식 */}
-      <Sparkles className="absolute right-6 top-6 h-6 w-6 animate-pulse text-primary/40" />
-      <Sparkles className="absolute right-16 top-12 h-4 w-4 animate-pulse text-primary/30 [animation-delay:0.4s]" />
+    <section className="relative mt-6 overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 p-6 shadow-sm sm:p-8">
+      {/* sparkle 장식 — Mayer 일관성 원리: 인지부하 축소 위해 1개로 절제 */}
+      <Sparkles className="absolute right-6 top-6 h-5 w-5 text-primary/30" />
 
       <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex-1">
