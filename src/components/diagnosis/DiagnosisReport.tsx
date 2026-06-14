@@ -9,16 +9,23 @@ import {
   ArrowRight,
   Lightbulb,
   AlertTriangle,
+  Brain,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  COGNITIVE_LEVEL_COLORS,
+  COGNITIVE_LEVEL_DESCRIPTIONS,
+  COGNITIVE_LEVEL_LABELS,
+  COGNITIVE_LEVEL_ORDER,
   DIAGNOSTIC_AREA_COLORS,
   DIAGNOSTIC_AREA_LABELS,
   DIAGNOSTIC_AREA_ORDER,
   areaScorePercent,
   type AreaScore,
+  type CognitiveLevel,
+  type CognitiveScore,
   type DiagnosticArea,
 } from "@/types";
 import { cn } from "@/lib/utils";
@@ -31,6 +38,8 @@ export interface WeakConcept {
 
 interface DiagnosisReportProps {
   areaScores: Partial<Record<DiagnosticArea, AreaScore>>;
+  /** 인지수준(Bloom)별 정답률 — 태깅된 문항만 집계. 비어 있으면 카드 숨김. */
+  cognitiveScores?: Partial<Record<CognitiveLevel, CognitiveScore>>;
   paperReadiness: number;
   analysisReadiness: number;
   weakConcepts: WeakConcept[];
@@ -107,12 +116,17 @@ function ReadinessGauge({
 
 export default function DiagnosisReport({
   areaScores,
+  cognitiveScores = {},
   paperReadiness,
   analysisReadiness,
   weakConcepts,
   onRetry,
   saveState = "idle",
 }: DiagnosisReportProps) {
+  // 인지수준 집계가 1개 이상 있을 때만 인지수준 카드 노출
+  const hasCognitive = COGNITIVE_LEVEL_ORDER.some(
+    (lv) => (cognitiveScores[lv]?.total ?? 0) > 0,
+  );
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
       {/* 헤더 */}
@@ -190,6 +204,65 @@ export default function DiagnosisReport({
           })}
         </CardContent>
       </Card>
+
+      {/* 인지수준(Bloom)별 정답률 — 태깅 문항이 있을 때만 */}
+      {hasCognitive && (
+        <Card className="mt-6 rounded-2xl shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Brain className="h-4 w-4 text-primary" aria-hidden />
+              인지수준별 정답률
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 pt-2">
+            <p className="text-xs text-muted-foreground">
+              문항이 요구하는 사고 수준(기억·이해·적용·분석)별 정답률입니다. 낮은 정답률 수준은 그
+              유형의 학습이 더 필요함을 시사합니다.
+            </p>
+            {COGNITIVE_LEVEL_ORDER.map((level) => {
+              const score = cognitiveScores[level];
+              if (!score || score.total === 0) return null;
+              const pct = areaScorePercent(score);
+              return (
+                <div key={level}>
+                  <div className="mb-1 flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2">
+                      <Badge
+                        variant="outline"
+                        className={cn("text-[10px]", COGNITIVE_LEVEL_COLORS[level])}
+                      >
+                        {COGNITIVE_LEVEL_LABELS[level]}
+                      </Badge>
+                      <span className="hidden text-xs text-muted-foreground sm:inline">
+                        {COGNITIVE_LEVEL_DESCRIPTIONS[level]}
+                      </span>
+                    </span>
+                    <span className="tabular-nums text-muted-foreground">
+                      {score.correct} / {score.total}
+                      <span className="ml-2 font-semibold text-foreground">{pct}%</span>
+                    </span>
+                  </div>
+                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all duration-700",
+                        pct >= 80
+                          ? "bg-emerald-500"
+                          : pct >= 60
+                            ? "bg-sky-500"
+                            : pct >= 40
+                              ? "bg-amber-500"
+                              : "bg-rose-500",
+                      )}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
 
       {/* 약점 개념 → 아카이브 연결 */}
       {weakConcepts.length > 0 && (

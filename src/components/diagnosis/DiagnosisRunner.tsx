@@ -1,7 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, ChevronUp, ChevronDown, Type } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  ChevronUp,
+  ChevronDown,
+  Type,
+  CircleDot,
+  Link2,
+  Lightbulb,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -94,6 +104,17 @@ export default function DiagnosisRunner({
         return Array.isArray(a) && a.length === (q.items?.length ?? 0);
       case "term":
         return typeof a === "string" && a.trim().length > 0;
+      case "ox":
+        return typeof a === "boolean";
+      case "matching":
+        // 모든 왼쪽 항목에 오른쪽 선택이 채워져야(-1 없음) 완료.
+        return (
+          Array.isArray(a) &&
+          a.length === (q.leftItems?.length ?? 0) &&
+          (a as number[]).every((v) => typeof v === "number" && v >= 0)
+        );
+      case "compare":
+      case "scenario":
       case "mcq":
       default:
         return typeof a === "number";
@@ -131,6 +152,23 @@ export default function DiagnosisRunner({
     setAnswers((prev) => ({ ...prev, [current.id]: value }));
   };
 
+  // ── ox: 참/거짓 선택 ──
+  const selectBool = (value: boolean) => {
+    setAnswers((prev) => ({ ...prev, [current.id]: value }));
+  };
+
+  // ── matching: 왼쪽 leftIdx 에 오른쪽 rightIdx 연결 ──
+  const setMatch = (leftIdx: number, rightIdx: number) => {
+    const leftLen = current.leftItems?.length ?? 0;
+    const arr = Array.isArray(answers[current.id])
+      ? [...(answers[current.id] as number[])]
+      : new Array<number>(leftLen).fill(-1);
+    // 길이 보정(혹시 모를 불일치 방어)
+    while (arr.length < leftLen) arr.push(-1);
+    arr[leftIdx] = rightIdx;
+    setAnswers((prev) => ({ ...prev, [current.id]: arr }));
+  };
+
   const goNext = () => {
     if (!currentAnswered) return;
     if (isLast) {
@@ -149,12 +187,24 @@ export default function DiagnosisRunner({
   };
 
   const type = questionType(current);
-  // 화면에 표시할 문제 본문 — term 은 prompt, 그 외는 question
-  const promptText = type === "term" ? current.prompt ?? current.question : current.question;
+  // 화면에 표시할 문제 본문 — term 은 prompt, ox 는 statement, 그 외는 question
+  const promptText =
+    type === "term"
+      ? current.prompt ?? current.question
+      : type === "ox"
+        ? current.statement ?? current.question
+        : current.question;
+  // compare·scenario 는 mcq 와 동일하게 options/answerIndex 사용
+  const isChoiceType = type === "mcq" || type === "compare" || type === "scenario";
   const orderingValue = Array.isArray(answers[current.id])
     ? (answers[current.id] as string[])
     : orderingInit[current.id] ?? current.items ?? [];
   const termValue = typeof answers[current.id] === "string" ? (answers[current.id] as string) : "";
+  const boolValue =
+    typeof answers[current.id] === "boolean" ? (answers[current.id] as boolean) : undefined;
+  const matchingValue: number[] = Array.isArray(answers[current.id])
+    ? (answers[current.id] as number[])
+    : new Array<number>(current.leftItems?.length ?? 0).fill(-1);
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -204,6 +254,26 @@ export default function DiagnosisRunner({
                 <Type className="h-3 w-3" aria-hidden />
                 단어 맞추기
               </Badge>
+            ) : type === "ox" ? (
+              <Badge variant="secondary" className="gap-1 text-[10px]">
+                <CircleDot className="h-3 w-3" aria-hidden />
+                참 / 거짓
+              </Badge>
+            ) : type === "matching" ? (
+              <Badge variant="secondary" className="gap-1 text-[10px]">
+                <Link2 className="h-3 w-3" aria-hidden />
+                짝짓기
+              </Badge>
+            ) : type === "compare" ? (
+              <Badge variant="secondary" className="gap-1 text-[10px]">
+                <ArrowRight className="h-3 w-3" aria-hidden />
+                개념 구분
+              </Badge>
+            ) : type === "scenario" ? (
+              <Badge variant="secondary" className="gap-1 text-[10px]">
+                <Lightbulb className="h-3 w-3" aria-hidden />
+                상황 적용
+              </Badge>
             ) : (
               <Badge variant="secondary" className="text-[10px]">
                 객관식
@@ -215,8 +285,8 @@ export default function DiagnosisRunner({
             {promptText}
           </p>
 
-          {/* ── mcq: 보기 ── */}
-          {type === "mcq" && (
+          {/* ── mcq · compare(개념 구분) · scenario(상황 적용): 보기 선택 ── */}
+          {isChoiceType && (
             <div className="mt-5 flex flex-col gap-2.5">
               {(current.options ?? []).map((option, i) => {
                 const isSelected = answers[current.id] === i;
@@ -316,6 +386,80 @@ export default function DiagnosisRunner({
                 autoComplete="off"
                 className="text-base"
               />
+            </div>
+          )}
+
+          {/* ── ox: 참 / 거짓 ── */}
+          {type === "ox" && (
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              {[
+                { value: true, label: "참 (O)" },
+                { value: false, label: "거짓 (X)" },
+              ].map((opt) => {
+                const isSelected = boolValue === opt.value;
+                return (
+                  <button
+                    key={String(opt.value)}
+                    type="button"
+                    onClick={() => selectBool(opt.value)}
+                    aria-pressed={isSelected}
+                    className={cn(
+                      "flex items-center justify-center gap-2 rounded-xl border p-4 text-base font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1",
+                      isSelected
+                        ? "border-primary bg-primary/5 shadow-sm"
+                        : "border-border bg-card hover:border-primary/40 hover:bg-muted/40",
+                    )}
+                  >
+                    {isSelected && <Check className="h-4 w-4 text-primary" aria-hidden />}
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* ── matching: 왼쪽 개념 ↔ 오른쪽 학자/모델 짝짓기 ── */}
+          {type === "matching" && (
+            <div className="mt-5">
+              <p className="mb-3 text-xs text-muted-foreground">
+                왼쪽 개념에 알맞은 오른쪽 항목을 각각 선택하세요.
+              </p>
+              <ul className="flex flex-col gap-3">
+                {(current.leftItems ?? []).map((left, li) => (
+                  <li
+                    key={left}
+                    className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3 sm:flex-row sm:items-center sm:gap-3"
+                  >
+                    <span className="flex-1 text-sm font-medium leading-relaxed">{left}</span>
+                    <ArrowRight
+                      className="hidden h-4 w-4 shrink-0 text-muted-foreground sm:block"
+                      aria-hidden
+                    />
+                    <div className="flex flex-wrap gap-1.5">
+                      {(current.rightItems ?? []).map((right, ri) => {
+                        const isSelected = matchingValue[li] === ri;
+                        return (
+                          <button
+                            key={right}
+                            type="button"
+                            onClick={() => setMatch(li, ri)}
+                            aria-pressed={isSelected}
+                            aria-label={`${left} 에 ${right} 연결`}
+                            className={cn(
+                              "rounded-lg border px-2.5 py-1.5 text-xs transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1",
+                              isSelected
+                                ? "border-primary bg-primary/10 font-medium text-primary shadow-sm"
+                                : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:bg-muted/40",
+                            )}
+                          >
+                            {right}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </CardContent>

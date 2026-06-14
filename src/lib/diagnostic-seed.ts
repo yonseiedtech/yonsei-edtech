@@ -19,6 +19,7 @@
 
 import { diagnosticQuestionsApi } from "./bkend";
 import type {
+  CognitiveLevel,
   DiagnosticArea,
   DiagnosticQuestion,
   DiagnosticQuestionType,
@@ -31,13 +32,15 @@ export interface SeedDiagnosticQuestion {
   /** 문항 유형 — 미지정 시 "mcq" (하위호환) */
   type?: DiagnosticQuestionType;
   area: DiagnosticArea;
+  /** Bloom 인지수준 태깅 (선택) — 리포트 인지수준별 정답률 집계용. */
+  cognitiveLevel?: CognitiveLevel;
   /** archive_concepts.seedKey (개념 영역 문항만). 런타임에 실제 conceptId 로 변환. */
   conceptSeedKey?: string;
-  /** mcq·ordering 의 문제 본문. term 은 prompt 사용. */
+  /** mcq·ordering·compare·scenario 의 문제 본문. term 은 prompt, ox 는 statement 사용. */
   question?: string;
-  /** [mcq] 보기 4개 */
+  /** [mcq·compare·scenario] 보기 */
   options?: string[];
-  /** [mcq] 정답 인덱스 (0~3) */
+  /** [mcq·compare·scenario] 정답 인덱스 */
   answerIndex?: number;
   /** [ordering] 정답 순서로 나열한 단계 목록 */
   items?: string[];
@@ -47,6 +50,16 @@ export interface SeedDiagnosticQuestion {
   answer?: string;
   /** [term] 허용 동의어·영문 표기 */
   acceptedAnswers?: string[];
+  /** [ox] 참/거짓 판단 진술 */
+  statement?: string;
+  /** [ox] 진술의 참/거짓 정답 */
+  answerBool?: boolean;
+  /** [matching] 왼쪽 항목(개념·이론) */
+  leftItems?: string[];
+  /** [matching] 오른쪽 항목(학자·모델·기법) */
+  rightItems?: string[];
+  /** [matching] 정답 매핑 — 왼쪽 index → 오른쪽 index */
+  correctMap?: number[];
   explanation?: string;
 }
 
@@ -57,6 +70,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:statistics:1",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "statistics",
     question:
       "세 개 이상 집단의 평균이 서로 차이가 있는지 한 번에 검정하는 데 가장 적절한 통계 기법은?",
@@ -68,6 +82,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:statistics:2",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "statistics",
     question:
       "공변량(예: 사전점수)의 영향을 통제한 뒤 집단 간 종속변수 평균 차이를 검정하는 기법은?",
@@ -84,6 +99,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:statistics:3",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "statistics",
     question: "종속변수가 '합격/불합격'처럼 이분형일 때 그 발생 확률을 예측하는 회귀 기법은?",
     options: ["다중회귀분석", "로지스틱회귀분석", "정준상관분석", "MANOVA"],
@@ -94,6 +110,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:statistics:4",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "statistics",
     question:
       "여러 문항(관측변수) 사이의 상관 구조에서 숨은 잠재요인을 '자료 기반으로 탐색'하여 도구의 차원성을 확인하는 분석은?",
@@ -110,6 +127,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:statistics:5",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "statistics",
     question:
       "'이 문항들이 사전에 가정한 요인구조에 부합하는가'를 모형 적합도 지수로 검증하는 측정모형 분석은?",
@@ -126,6 +144,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:statistics:6",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "statistics",
     question:
       "잠재변인을 포함한 다중 인과 관계와 측정모형을 동시에 추정·평가하는 다변량 분석 기법은?",
@@ -142,6 +161,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:statistics:7",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "statistics",
     question:
       "두 개 이상의 연속형 종속변수에 대한 집단 간 평균 차이를 동시에 검정하는 기법은?",
@@ -158,6 +178,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:statistics:8",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "statistics",
     question:
       "두 집단 간 평균 차이를 검정하는 가장 기본적인 통계 기법으로, 독립표본과 대응표본 유형으로 구분되는 것은?",
@@ -169,6 +190,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:statistics:9",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "statistics",
     question:
       "여러 개의 독립변수로 하나의 연속형 종속변수를 예측하고 각 변수의 상대적 설명력을 추정하는 통계 기법은?",
@@ -180,6 +202,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:statistics:10",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "statistics",
     question:
       "두 개 이상의 연속형 종속변수를 동시에 다루면서 공변량의 영향까지 통제하는 분산분석 기법은?",
@@ -200,6 +223,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:method:1",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "method",
     question:
       "독립변인을 인위적으로 조작하고 참가자를 무선할당하여 처치의 인과 효과를 검증하는 연구 방법은?",
@@ -211,6 +235,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:method:2",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "method",
     question:
       "교육 현장 특성상 무선할당이 어려워 이미 편성된 학급 등 기존 집단을 활용해 처치 효과를 검증하는 연구 방법은?",
@@ -222,6 +247,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:method:3",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "method",
     question:
       "동일 주제를 다룬 다수 선행 연구의 효과크기를 통계적으로 종합·통합하는 연구 방법은?",
@@ -233,6 +259,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:method:4",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "method",
     question:
       "자료에서 출발해 지속적 비교와 개방·축·선택 코딩을 거쳐 새로운 실체이론을 생성하는 질적 연구 방법은?",
@@ -244,6 +271,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:method:5",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "method",
     question:
       "교사 등 실천가가 자신의 실천 맥락에서 '계획-실행-관찰-성찰'의 순환을 통해 개선을 도모하는 참여적 연구 방법은?",
@@ -255,6 +283,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:method:6",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "method",
     question:
       "어떤 현상을 직접 체험한 사람들의 진술에서 그 체험에 공통적으로 내재한 '본질적 의미 구조'를 드러내는 질적 연구 방법은?",
@@ -266,6 +295,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:method:7",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "method",
     question: "다음 중 일반적으로 '질적 연구 방법'으로 분류되는 것은?",
     options: ["설문조사연구", "사례연구", "다중회귀분석", "실험연구"],
@@ -276,6 +306,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:method:8",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "method",
     question:
       "표집된 대상에게 구조화된 설문 도구로 자료를 수집해 변인 간 관계·분포·차이를 통계적으로 분석하는 양적 연구 방법은?",
@@ -287,6 +318,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:method:9",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "method",
     question:
       "특정 집단의 문화(행동·신념·상호작용)를 연구자가 장기간 현장에 참여관찰하며 내부자 관점에서 총체적으로 기술하는 질적 연구 방법은?",
@@ -298,6 +330,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:method:10",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "method",
     question:
       "개인이 경험을 이야기 형식으로 풀어낸 내러티브를 시간 흐름·맥락에 따라 재구성하여 그 의미를 해석하는 질적 연구 방법은?",
@@ -314,6 +347,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:concept:1",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "concept",
     conceptSeedKey: "concept:self-efficacy",
     question:
@@ -326,6 +360,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:concept:2",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "concept",
     conceptSeedKey: "concept:cognitive-load",
     question:
@@ -338,6 +373,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:concept:3",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "concept",
     conceptSeedKey: "concept:metacognition",
     question: "'인지에 대한 인지'로, 자신의 학습 과정을 점검·계획·조절하는 능력을 뜻하는 개념은?",
@@ -349,6 +385,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:concept:4",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "concept",
     conceptSeedKey: "concept:tpack",
     question:
@@ -361,6 +398,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:concept:5",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "concept",
     conceptSeedKey: "concept:addie-model",
     question:
@@ -373,6 +411,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:concept:6",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "concept",
     conceptSeedKey: "concept:samr-model",
     question:
@@ -385,6 +424,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:concept:7",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "concept",
     conceptSeedKey: "concept:flipped-learning",
     question:
@@ -397,6 +437,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:concept:8",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "concept",
     conceptSeedKey: "concept:computational-thinking",
     question:
@@ -409,6 +450,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:concept:9",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "concept",
     conceptSeedKey: "concept:learning-analytics",
     question:
@@ -421,6 +463,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:concept:10",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "concept",
     conceptSeedKey: "concept:ctml",
     question:
@@ -438,6 +481,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:concept:11",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "concept",
     conceptSeedKey: "concept:social-presence",
     question:
@@ -450,6 +494,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:concept:12",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "concept",
     conceptSeedKey: "concept:microlearning",
     question:
@@ -462,6 +507,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:concept:13",
     type: "mcq",
+    cognitiveLevel: "understand",
     area: "concept",
     conceptSeedKey: "concept:adaptive-learning",
     question:
@@ -479,6 +525,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:statistics:ord:1",
     type: "ordering",
+    cognitiveLevel: "understand",
     area: "statistics",
     question:
       "구조방정식모형(SEM) 분석의 일반적 절차를 순서대로 배열하세요.",
@@ -495,6 +542,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:statistics:ord:2",
     type: "ordering",
+    cognitiveLevel: "understand",
     area: "statistics",
     question:
       "척도(측정도구)의 요인구조를 통계적으로 검증하는 일반적 순서를 배열하세요.",
@@ -511,6 +559,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:statistics:ord:3",
     type: "ordering",
+    cognitiveLevel: "understand",
     area: "statistics",
     question:
       "양적 가설 검정 연구의 통계 분석 진행 순서를 배열하세요.",
@@ -530,6 +579,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:method:ord:1",
     type: "ordering",
+    cognitiveLevel: "understand",
     area: "method",
     question:
       "측정도구(척도) 개발과 타당화 연구의 절차를 순서대로 배열하세요.",
@@ -548,6 +598,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:method:ord:2",
     type: "ordering",
+    cognitiveLevel: "understand",
     area: "method",
     question:
       "실험연구의 일반적 수행 절차를 순서대로 배열하세요.",
@@ -565,6 +616,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:method:ord:3",
     type: "ordering",
+    cognitiveLevel: "understand",
     area: "method",
     question:
       "근거이론(Grounded Theory)의 코딩·이론 생성 절차를 순서대로 배열하세요.",
@@ -581,6 +633,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:method:ord:4",
     type: "ordering",
+    cognitiveLevel: "understand",
     area: "method",
     question:
       "액션리서치(실행연구)의 한 순환(cycle) 절차를 순서대로 배열하세요.",
@@ -593,6 +646,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:concept:ord:1",
     type: "ordering",
+    cognitiveLevel: "understand",
     area: "concept",
     conceptSeedKey: "concept:addie-model",
     question:
@@ -604,6 +658,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:concept:ord:2",
     type: "ordering",
+    cognitiveLevel: "understand",
     area: "concept",
     conceptSeedKey: "concept:samr-model",
     question:
@@ -615,6 +670,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:concept:ord:3",
     type: "ordering",
+    cognitiveLevel: "understand",
     area: "concept",
     conceptSeedKey: "concept:self-regulated-learning",
     question:
@@ -632,6 +688,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:statistics:term:1",
     type: "term",
+    cognitiveLevel: "remember",
     area: "statistics",
     prompt:
       "두 집단의 평균 차이(독립표본) 또는 동일 표본의 두 시점 평균 차이(대응표본)를 검정하는 가장 기본적인 모수 통계 기법은? (한글 또는 영문)",
@@ -643,6 +700,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:statistics:term:2",
     type: "term",
+    cognitiveLevel: "remember",
     area: "statistics",
     prompt:
       "한 개의 범주형 독립변수에 따른 연속형 종속변수의 평균이 세 집단 이상에서 차이가 있는지 검정하는 분산분석 기법의 이름은? (약어 또는 한글)",
@@ -654,6 +712,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:statistics:term:3",
     type: "term",
+    cognitiveLevel: "remember",
     area: "statistics",
     prompt:
       "관측변수들의 상관 구조에서 잠재요인을 자료 기반으로 탐색하여 도구의 차원성을 확인하는 분석 기법은? (한글 또는 영문 약어)",
@@ -665,6 +724,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:statistics:term:4",
     type: "term",
+    cognitiveLevel: "remember",
     area: "statistics",
     prompt:
       "잠재변인을 포함한 다중 인과 관계와 측정모형을 동시에 추정하고 모형 적합도를 평가하는 다변량 통계 기법은? (한글 또는 영문 약어)",
@@ -676,6 +736,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:statistics:term:5",
     type: "term",
+    cognitiveLevel: "remember",
     area: "statistics",
     prompt:
       "종속변수가 합격/불합격처럼 이분형일 때 그 발생 확률을 독립변수들로 예측하는 회귀 기법은? (한글 또는 영문)",
@@ -689,6 +750,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:method:term:1",
     type: "term",
+    cognitiveLevel: "remember",
     area: "method",
     prompt:
       "독립변인을 직접 조작하고 참가자를 처치집단·통제집단에 무선할당하여 처치의 인과 효과를 검증하는, 양적 연구의 대표적 방법을 한 단어로 쓰면? (한글 또는 영문)",
@@ -700,6 +762,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:method:term:2",
     type: "term",
+    cognitiveLevel: "remember",
     area: "method",
     prompt:
       "동일 주제를 다룬 다수 선행 연구의 효과크기를 표준화해 통계적으로 종합·통합하는 양적 연구 방법은? (한글 또는 영문)",
@@ -711,6 +774,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:method:term:3",
     type: "term",
+    cognitiveLevel: "remember",
     area: "method",
     prompt:
       "특정 집단이 공유하는 문화를 연구자가 장기간 현장에 참여관찰하며 내부자 관점에서 총체적으로 기술하는 질적 연구 방법은? (한글 또는 영문)",
@@ -722,6 +786,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:method:term:4",
     type: "term",
+    cognitiveLevel: "remember",
     area: "method",
     prompt:
       "어떤 현상을 직접 체험한 사람들의 진술에서 그 체험에 공통적으로 내재한 본질적 의미 구조를 드러내는 질적 연구 방법은? (한글 또는 영문)",
@@ -733,6 +798,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:method:term:5",
     type: "term",
+    cognitiveLevel: "remember",
     area: "method",
     prompt:
       "교사 등 실천가가 자신의 실천 맥락에서 '계획-실행-관찰-성찰'의 순환을 통해 개선을 도모하는 참여적 연구 방법은? (한글 또는 영문)",
@@ -746,6 +812,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:concept:term:1",
     type: "term",
+    cognitiveLevel: "remember",
     area: "concept",
     conceptSeedKey: "concept:self-efficacy",
     prompt:
@@ -758,6 +825,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:concept:term:2",
     type: "term",
+    cognitiveLevel: "remember",
     area: "concept",
     conceptSeedKey: "concept:cognitive-load",
     prompt:
@@ -770,6 +838,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:concept:term:3",
     type: "term",
+    cognitiveLevel: "remember",
     area: "concept",
     conceptSeedKey: "concept:metacognition",
     prompt:
@@ -782,6 +851,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:concept:term:4",
     type: "term",
+    cognitiveLevel: "remember",
     area: "concept",
     conceptSeedKey: "concept:tpack",
     prompt:
@@ -794,6 +864,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:concept:term:5",
     type: "term",
+    cognitiveLevel: "remember",
     area: "concept",
     conceptSeedKey: "concept:flipped-learning",
     prompt:
@@ -806,6 +877,7 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   {
     seedKey: "dx:concept:term:6",
     type: "term",
+    cognitiveLevel: "remember",
     area: "concept",
     conceptSeedKey: "concept:social-presence",
     prompt:
@@ -814,6 +886,407 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
     acceptedAnswers: ["social presence", "사회적실재감", "사회적 현존감"],
     explanation:
       "사회적 실재감(social presence)은 탐구공동체(CoI) 모델에서 교수적·인지적 실재감과 함께 작동하는 핵심 요소다.",
+  },
+
+  // ═════════════════════════════════════════════════════════════
+  // 참 / 거짓 (ox) — statement(진술) → answerBool. 검증 가능한 명백한 진술만.
+  // 인지수준: 사실 재인·구분 위주(remember/understand).
+  // ═════════════════════════════════════════════════════════════
+  // ── 통계방법 ox (4) ──
+  {
+    seedKey: "dx:statistics:ox:1",
+    type: "ox",
+    area: "statistics",
+    cognitiveLevel: "understand",
+    statement:
+      "t-검정은 세 집단 이상의 평균을 한 번에 비교할 때 사용하는 기법이다.",
+    answerBool: false,
+    explanation:
+      "거짓. t-검정은 두 집단(또는 두 시점)의 평균 비교에 사용한다. 세 집단 이상의 평균을 한 번에 비교하려면 분산분석(ANOVA)을 사용한다.",
+  },
+  {
+    seedKey: "dx:statistics:ox:2",
+    type: "ox",
+    area: "statistics",
+    cognitiveLevel: "understand",
+    statement:
+      "ANCOVA(공분산분석)는 공변량의 영향을 통제한 뒤 집단 간 평균 차이를 검정한다.",
+    answerBool: true,
+    explanation:
+      "참. ANCOVA는 사전점수 등 공변량을 통제한 상태에서 범주형 독립변수에 따른 집단 간 평균 차이를 검정하는 기법이다.",
+  },
+  {
+    seedKey: "dx:statistics:ox:3",
+    type: "ox",
+    area: "statistics",
+    cognitiveLevel: "understand",
+    statement:
+      "탐색적 요인분석(EFA)은 사전에 가정한 요인구조의 적합도를 검증하는 분석이다.",
+    answerBool: false,
+    explanation:
+      "거짓. 사전에 가정한 요인구조의 적합도를 검증하는 것은 확인적 요인분석(CFA)이다. EFA는 요인구조를 가정하지 않고 자료 기반으로 잠재요인을 탐색한다.",
+  },
+  {
+    seedKey: "dx:statistics:ox:4",
+    type: "ox",
+    area: "statistics",
+    cognitiveLevel: "understand",
+    statement:
+      "종속변수가 이분형(예: 합격/불합격)일 때 그 발생 확률을 예측하려면 로지스틱회귀분석이 적절하다.",
+    answerBool: true,
+    explanation:
+      "참. 이분형 종속변수의 발생 확률 예측에는 로지스틱회귀분석을 사용한다. 연속형 종속변수에는 (다중)회귀분석을 쓴다.",
+  },
+
+  // ── 연구방법 ox (4) ──
+  {
+    seedKey: "dx:method:ox:1",
+    type: "ox",
+    area: "method",
+    cognitiveLevel: "understand",
+    statement:
+      "진실험(true experiment)의 핵심 요건 중 하나는 참가자의 무선할당(random assignment)이다.",
+    answerBool: true,
+    explanation:
+      "참. 진실험은 독립변인 조작과 함께 참가자를 집단에 무선할당하여 가외변인을 통제하고 인과 추론의 내적타당도를 확보한다.",
+  },
+  {
+    seedKey: "dx:method:ox:2",
+    type: "ox",
+    area: "method",
+    cognitiveLevel: "understand",
+    statement:
+      "준실험연구는 무선할당이 어려운 상황에서 이미 편성된 기존 집단을 활용하는 연구 방법이다.",
+    answerBool: true,
+    explanation:
+      "참. 준실험연구는 무선할당 없이 학급 등 비동등한 기존 집단을 처치·비교집단으로 활용하며, 흔히 사전점수를 공변인으로 통제한다.",
+  },
+  {
+    seedKey: "dx:method:ox:3",
+    type: "ox",
+    area: "method",
+    cognitiveLevel: "understand",
+    statement:
+      "메타분석은 여러 선행 연구의 효과크기를 통계적으로 종합하는 질적 연구 방법이다.",
+    answerBool: false,
+    explanation:
+      "거짓. 메타분석은 효과크기를 표준화해 통합하는 양적 종합 방법이다. 질적 연구가 아니다.",
+  },
+  {
+    seedKey: "dx:method:ox:4",
+    type: "ox",
+    area: "method",
+    cognitiveLevel: "understand",
+    statement:
+      "근거이론, 현상학, 문화기술지는 일반적으로 질적 연구 방법으로 분류된다.",
+    answerBool: true,
+    explanation:
+      "참. 근거이론·현상학·문화기술지는 대표적인 질적 연구 전통이다.",
+  },
+
+  // ── 교육공학 핵심개념 ox (4) ──
+  {
+    seedKey: "dx:concept:ox:1",
+    type: "ox",
+    area: "concept",
+    cognitiveLevel: "understand",
+    conceptSeedKey: "concept:cognitive-load",
+    statement:
+      "인지부하이론에서 인지부하는 내재적·외재적·본유적 부하의 세 가지로 구분된다.",
+    answerBool: true,
+    explanation:
+      "참. Sweller의 인지부하이론은 부하를 내재적(intrinsic)·외재적(extraneous)·본유적(germane) 부하로 구분한다.",
+  },
+  {
+    seedKey: "dx:concept:ox:2",
+    type: "ox",
+    area: "concept",
+    cognitiveLevel: "understand",
+    conceptSeedKey: "concept:tpack",
+    statement:
+      "TPACK은 내용지식(CK)·교수지식(PK)·테크놀로지지식(TK)의 통합 지식을 가리키는 프레임워크이다.",
+    answerBool: true,
+    explanation:
+      "참. TPACK은 Mishra & Koehler가 Shulman의 PCK를 확장한 것으로 CK·PK·TK의 교집합에서 형성되는 통합 지식이다.",
+  },
+  {
+    seedKey: "dx:concept:ox:3",
+    type: "ox",
+    area: "concept",
+    cognitiveLevel: "understand",
+    conceptSeedKey: "concept:samr-model",
+    statement:
+      "SAMR 모델의 네 단계는 낮은 수준부터 대체(S)-증강(A)-변형(M)-재정의(R) 순이다.",
+    answerBool: true,
+    explanation:
+      "참. SAMR은 대체(Substitution)→증강(Augmentation)→변형(Modification)→재정의(Redefinition) 순으로 테크놀로지 통합 수준이 높아진다.",
+  },
+  {
+    seedKey: "dx:concept:ox:4",
+    type: "ox",
+    area: "concept",
+    cognitiveLevel: "understand",
+    conceptSeedKey: "concept:self-efficacy",
+    statement:
+      "자기효능감은 특정 과제를 수행할 수 있다는 능력에 대한 신념으로, Bandura가 제안한 개념이다.",
+    answerBool: true,
+    explanation:
+      "참. 자기효능감(self-efficacy)은 Bandura의 사회인지이론 핵심 구인으로, 특정 과제 수행 능력에 대한 신념을 의미한다.",
+  },
+
+  // ═════════════════════════════════════════════════════════════
+  // 개념 구분 (compare) — 혼동되는 유사 개념 중 정답 선택. options·answerIndex (mcq 구조).
+  // 인지수준: 유사개념 변별(analyze) / 의미 구분(understand).
+  // ═════════════════════════════════════════════════════════════
+  // ── 통계방법 compare (4) ──
+  {
+    seedKey: "dx:statistics:cmp:1",
+    type: "compare",
+    area: "statistics",
+    cognitiveLevel: "analyze",
+    question:
+      "'사전에 요인구조를 가정하지 않고 관측변수의 상관에서 잠재요인을 자료 기반으로 탐색'하는 분석은 다음 중 무엇인가?",
+    options: ["EFA(탐색적 요인분석)", "CFA(확인적 요인분석)"],
+    answerIndex: 0,
+    explanation:
+      "EFA는 요인구조를 가정하지 않고 탐색한다. CFA는 사전에 가정된 요인구조의 적합도를 검증한다.",
+  },
+  {
+    seedKey: "dx:statistics:cmp:2",
+    type: "compare",
+    area: "statistics",
+    cognitiveLevel: "analyze",
+    question:
+      "공변량(예: 사전점수)을 통제하면서 집단 간 평균 차이를 검정하는 기법은 ANOVA와 ANCOVA 중 무엇인가?",
+    options: ["ANOVA(분산분석)", "ANCOVA(공분산분석)"],
+    answerIndex: 1,
+    explanation:
+      "ANCOVA는 공변량을 통제한 뒤 집단 간 평균 차이를 검정한다. ANOVA는 공변량 통제가 없다.",
+  },
+  {
+    seedKey: "dx:statistics:cmp:3",
+    type: "compare",
+    area: "statistics",
+    cognitiveLevel: "analyze",
+    question:
+      "종속변수가 2개 이상의 연속형 변수일 때 집단 간 평균 차이를 동시에 검정하는 기법은?",
+    options: ["ANOVA(일원분산분석)", "MANOVA(다변량분산분석)"],
+    answerIndex: 1,
+    explanation:
+      "MANOVA는 둘 이상의 연속형 종속변수를 동시에 다룬다. ANOVA는 종속변수가 1개일 때 사용한다.",
+  },
+  {
+    seedKey: "dx:statistics:cmp:4",
+    type: "compare",
+    area: "statistics",
+    cognitiveLevel: "analyze",
+    question:
+      "종속변수가 연속형일 때와 이분형일 때 각각 적절한 회귀 기법으로 올바르게 짝지어진 것은?",
+    options: [
+      "연속형→다중회귀분석 · 이분형→로지스틱회귀분석",
+      "연속형→로지스틱회귀분석 · 이분형→다중회귀분석",
+    ],
+    answerIndex: 0,
+    explanation:
+      "연속형 종속변수에는 (다중)회귀분석, 이분형 종속변수에는 로지스틱회귀분석을 사용한다.",
+  },
+
+  // ── 연구방법 compare (2) ──
+  {
+    seedKey: "dx:method:cmp:1",
+    type: "compare",
+    area: "method",
+    cognitiveLevel: "analyze",
+    question:
+      "참가자를 무선할당하는지 여부로 구분할 때, '무선할당 없이 기존 집단을 활용'하는 연구는 진실험과 준실험 중 무엇인가?",
+    options: ["진실험연구", "준실험연구"],
+    answerIndex: 1,
+    explanation:
+      "준실험연구는 무선할당 없이 기존(비동등) 집단을 활용한다. 진실험은 무선할당을 전제한다.",
+  },
+  {
+    seedKey: "dx:method:cmp:2",
+    type: "compare",
+    area: "method",
+    cognitiveLevel: "analyze",
+    question:
+      "'특정 집단이 공유하는 문화를 장기간 참여관찰로 기술'하는 방법과 '체험의 본질적 의미 구조를 드러내는' 방법으로 올바르게 짝지어진 것은?",
+    options: [
+      "문화기술지(문화 기술) · 현상학(본질적 의미)",
+      "현상학(문화 기술) · 문화기술지(본질적 의미)",
+    ],
+    answerIndex: 0,
+    explanation:
+      "문화기술지는 집단의 문화를 참여관찰로 기술하고, 현상학은 체험의 본질적 의미 구조를 드러낸다.",
+  },
+
+  // ── 교육공학 핵심개념 compare (2) ──
+  {
+    seedKey: "dx:concept:cmp:1",
+    type: "compare",
+    area: "concept",
+    cognitiveLevel: "analyze",
+    conceptSeedKey: "concept:samr-model",
+    question:
+      "'교사의 통합 지식(CK·PK·TK)'을 다루는 프레임워크와 '테크놀로지 통합 수준(S·A·M·R)'을 진단하는 프레임워크로 올바르게 짝지어진 것은?",
+    options: [
+      "TPACK(통합 지식) · SAMR(통합 수준)",
+      "SAMR(통합 지식) · TPACK(통합 수준)",
+    ],
+    answerIndex: 0,
+    explanation:
+      "TPACK은 교사 지식의 통합을, SAMR은 테크놀로지 활용 수준(대체~재정의)을 다룬다.",
+  },
+  {
+    seedKey: "dx:concept:cmp:2",
+    type: "compare",
+    area: "concept",
+    cognitiveLevel: "understand",
+    conceptSeedKey: "concept:metacognition",
+    question:
+      "'자신의 학습 과정을 점검·조절하는 인지에 대한 인지'를 가리키는 개념은 메타인지와 자기효능감 중 무엇인가?",
+    options: ["메타인지", "자기효능감"],
+    answerIndex: 0,
+    explanation:
+      "메타인지는 '인지에 대한 인지'로 학습 과정의 점검·조절을 의미한다. 자기효능감은 과제 수행 능력에 대한 신념이다.",
+  },
+
+  // ═════════════════════════════════════════════════════════════
+  // 짝짓기 (matching) — leftItems(개념) ↔ rightItems(학자/모델). correctMap: left index→right index.
+  // 학자↔개념 매칭은 archive-seed.ts references 로 검증된 것만 사용.
+  // 인지수준: 관계 분석(analyze).
+  // ═════════════════════════════════════════════════════════════
+  // ── 교육공학 핵심개념 matching (2) ──
+  {
+    seedKey: "dx:concept:mat:1",
+    type: "matching",
+    area: "concept",
+    cognitiveLevel: "analyze",
+    question: "다음 교육공학 개념을 제안한 학자와 바르게 연결하세요.",
+    leftItems: ["자기효능감", "인지부하이론", "메타인지", "TPACK"],
+    rightItems: ["Bandura", "Sweller", "Flavell", "Mishra & Koehler"],
+    correctMap: [0, 1, 2, 3],
+    explanation:
+      "자기효능감=Bandura, 인지부하이론=Sweller, 메타인지=Flavell, TPACK=Mishra & Koehler. (archive 개념 references 기준)",
+  },
+  {
+    seedKey: "dx:concept:mat:2",
+    type: "matching",
+    area: "concept",
+    cognitiveLevel: "analyze",
+    question: "다음 이론·모델을 제안한 학자와 바르게 연결하세요.",
+    leftItems: [
+      "멀티미디어 학습 인지이론(CTML)",
+      "자기조절학습 순환 모형",
+      "탐구공동체(CoI)·사회적 실재감",
+      "ARCS 동기설계 모형",
+    ],
+    rightItems: ["Mayer", "Zimmerman", "Garrison 등", "Keller"],
+    correctMap: [0, 1, 2, 3],
+    explanation:
+      "CTML=Mayer, 자기조절학습 순환 모형=Zimmerman, 탐구공동체(CoI)=Garrison·Anderson·Archer, ARCS=Keller. (archive 개념 references 기준)",
+  },
+
+  // ── 연구방법 matching (1) ──
+  {
+    seedKey: "dx:method:mat:1",
+    type: "matching",
+    area: "method",
+    cognitiveLevel: "analyze",
+    question: "다음 연구 방법을 핵심 특징과 바르게 연결하세요.",
+    leftItems: ["실험연구", "근거이론", "메타분석", "문화기술지"],
+    rightItems: [
+      "무선할당·처치 효과 검증",
+      "개방·축·선택 코딩으로 이론 생성",
+      "선행 연구 효과크기 통합",
+      "장기 참여관찰로 문화 기술",
+    ],
+    correctMap: [0, 1, 2, 3],
+    explanation:
+      "실험연구=무선할당, 근거이론=코딩 기반 이론 생성, 메타분석=효과크기 통합, 문화기술지=참여관찰 문화 기술.",
+  },
+
+  // ═════════════════════════════════════════════════════════════
+  // 상황 적용 (scenario) — 연구/분석 상황 맥락에서 적절한 방법·기법 선택. options·answerIndex.
+  // 인지수준: 실제 상황에 방법 적용(apply).
+  // ═════════════════════════════════════════════════════════════
+  // ── 통계방법 scenario (3) ──
+  {
+    seedKey: "dx:statistics:scn:1",
+    type: "scenario",
+    area: "statistics",
+    cognitiveLevel: "apply",
+    question:
+      "세 가지 교수법(A·B·C) 집단의 사후 성취도 평균을 비교하되, 집단 간 사전점수 차이를 통제하려 한다. 가장 적절한 분석은?",
+    options: [
+      "ANCOVA(공분산분석)",
+      "독립표본 t-검정",
+      "탐색적 요인분석(EFA)",
+      "카이제곱 검정",
+    ],
+    answerIndex: 0,
+    explanation:
+      "세 집단 비교 + 사전점수(공변량) 통제이므로 ANCOVA가 적절하다. t-검정은 두 집단, EFA·카이제곱은 목적이 다르다.",
+  },
+  {
+    seedKey: "dx:statistics:scn:2",
+    type: "scenario",
+    area: "statistics",
+    cognitiveLevel: "apply",
+    question:
+      "종속변수가 '중도탈락 여부(예/아니오)'이고, 이를 여러 독립변수로 예측해 발생 확률을 추정하려 한다. 가장 적절한 기법은?",
+    options: [
+      "로지스틱회귀분석",
+      "다중회귀분석",
+      "일원분산분석(ANOVA)",
+      "대응표본 t-검정",
+    ],
+    answerIndex: 0,
+    explanation:
+      "종속변수가 이분형이므로 로지스틱회귀분석이 적절하다. 다중회귀는 연속형 종속변수에 사용한다.",
+  },
+  {
+    seedKey: "dx:statistics:scn:3",
+    type: "scenario",
+    area: "statistics",
+    cognitiveLevel: "apply",
+    question:
+      "동일한 학생들에게 사전·사후 두 시점의 점수를 측정하여 평균 변화가 유의한지 검정하려 한다. 가장 적절한 기법은?",
+    options: [
+      "대응표본 t-검정",
+      "독립표본 t-검정",
+      "다변량분산분석(MANOVA)",
+      "구조방정식모형(SEM)",
+    ],
+    answerIndex: 0,
+    explanation:
+      "같은 대상의 두 시점(반복측정) 평균 비교이므로 대응표본 t-검정이 적절하다. 독립표본 t-검정은 서로 다른 두 집단 비교에 쓴다.",
+  },
+
+  // ── 연구방법 scenario (2) ──
+  {
+    seedKey: "dx:method:scn:1",
+    type: "scenario",
+    area: "method",
+    cognitiveLevel: "apply",
+    question:
+      "한 교사가 자신의 학급에서 새로운 토론 수업 전략을 '계획-실행-관찰-성찰'의 순환으로 적용하며 수업을 개선하고자 한다. 가장 적합한 연구 방법은?",
+    options: ["액션리서치(실행연구)", "메타분석", "실험연구", "문화기술지"],
+    answerIndex: 0,
+    explanation:
+      "실천가 본인이 자신의 맥락에서 계획·실행·관찰·성찰의 순환으로 개선을 도모하므로 액션리서치가 적합하다.",
+  },
+  {
+    seedKey: "dx:method:scn:2",
+    type: "scenario",
+    area: "method",
+    cognitiveLevel: "apply",
+    question:
+      "연구자가 특정 현상에 대한 기존 이론이 부족하여, 면담 자료에서 출발해 지속적 비교와 코딩으로 새로운 설명 이론을 생성하려 한다. 가장 적합한 질적 방법은?",
+    options: ["근거이론", "설문조사연구", "준실험연구", "메타분석"],
+    answerIndex: 0,
+    explanation:
+      "자료에 근거해 코딩과 지속적 비교로 이론을 생성하는 목적에는 근거이론(Grounded Theory)이 적합하다.",
   },
 ];
 
@@ -831,9 +1304,12 @@ function identityKey(q: {
   type?: DiagnosticQuestion["type"];
   question?: string;
   prompt?: string;
+  statement?: string;
 }): string {
   const t = questionType(q);
-  const text = (t === "term" ? q.prompt : q.question) ?? "";
+  // 본문 텍스트: term=prompt, ox=statement, 그 외=question
+  const text =
+    (t === "term" ? q.prompt : t === "ox" ? q.statement : q.question) ?? "";
   return `${t}|${text.trim()}`;
 }
 
@@ -871,6 +1347,7 @@ export async function seedDiagnosticQuestions(
       published: true,
       createdBy: userId,
     };
+    if (entry.cognitiveLevel !== undefined) payload.cognitiveLevel = entry.cognitiveLevel;
     if (entry.question !== undefined) payload.question = entry.question;
     if (entry.options !== undefined) payload.options = entry.options;
     if (entry.answerIndex !== undefined) payload.answerIndex = entry.answerIndex;
@@ -879,6 +1356,11 @@ export async function seedDiagnosticQuestions(
     if (entry.answer !== undefined) payload.answer = entry.answer;
     if (entry.acceptedAnswers !== undefined)
       payload.acceptedAnswers = entry.acceptedAnswers;
+    if (entry.statement !== undefined) payload.statement = entry.statement;
+    if (entry.answerBool !== undefined) payload.answerBool = entry.answerBool;
+    if (entry.leftItems !== undefined) payload.leftItems = entry.leftItems;
+    if (entry.rightItems !== undefined) payload.rightItems = entry.rightItems;
+    if (entry.correctMap !== undefined) payload.correctMap = entry.correctMap;
     await diagnosticQuestionsApi.create(payload);
     created += 1;
   }

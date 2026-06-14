@@ -40,15 +40,58 @@ export const DIAGNOSTIC_AREA_ORDER: DiagnosticArea[] = [
 ];
 
 /**
- * 문항 유형.
+ * 문항 유형. (서술형 등 자동 채점 불가 유형은 포함하지 않는다 — 모두 자동 채점)
  *  - "mcq"      : 4지선다 객관식 (options·answerIndex)
  *  - "ordering" : 절차 순서 정렬 (items 를 정답 순서로 저장, 런타임 셔플 후 재배열)
  *  - "term"     : 단어 맞추기 (prompt 정의 → answer 개념명, acceptedAnswers 동의어)
+ *  - "ox"       : 진술 참/거짓 (statement·answerBool)
+ *  - "compare"  : 유사개념 구분 — 혼동되는 개념 선지 중 정답 선택 (options·answerIndex, mcq 구조 동일)
+ *  - "matching" : 짝짓기 — 왼쪽 개념을 오른쪽 학자/모델에 연결 (leftItems·rightItems·correctMap)
+ *  - "scenario" : 적용 — 연구/분석 상황 맥락에서 적절한 방법·기법 선택 (options·answerIndex, mcq 구조 동일)
  * 미지정 시 "mcq" 로 간주(하위호환).
  */
-export type DiagnosticQuestionType = "mcq" | "ordering" | "term";
+export type DiagnosticQuestionType =
+  | "mcq"
+  | "ordering"
+  | "term"
+  | "ox"
+  | "compare"
+  | "matching"
+  | "scenario";
 
-/** 진단 문항 (3유형 통합). 유형별 채점 필드는 옵셔널이며 type 에 따라 사용한다. */
+/** 인지수준 태깅 (Bloom 개정 분류 일부) — 리포트에 인지수준별 정답률 표시. */
+export type CognitiveLevel = "remember" | "understand" | "apply" | "analyze";
+
+export const COGNITIVE_LEVEL_LABELS: Record<CognitiveLevel, string> = {
+  remember: "기억",
+  understand: "이해",
+  apply: "적용",
+  analyze: "분석",
+};
+
+export const COGNITIVE_LEVEL_DESCRIPTIONS: Record<CognitiveLevel, string> = {
+  remember: "용어·정의·사실의 재인·회상",
+  understand: "개념의 의미 파악·해석·구분",
+  apply: "실제 연구·분석 상황에 방법·기법 적용",
+  analyze: "요소 간 관계 분석·유사개념 변별",
+};
+
+export const COGNITIVE_LEVEL_COLORS: Record<CognitiveLevel, string> = {
+  remember: "bg-slate-50 text-slate-700 border border-slate-200",
+  understand: "bg-teal-50 text-teal-800 border border-teal-200",
+  apply: "bg-amber-50 text-amber-800 border border-amber-200",
+  analyze: "bg-rose-50 text-rose-800 border border-rose-200",
+};
+
+/** 인지수준 순서 (리포트 렌더 순서 — 낮은 수준부터). */
+export const COGNITIVE_LEVEL_ORDER: CognitiveLevel[] = [
+  "remember",
+  "understand",
+  "apply",
+  "analyze",
+];
+
+/** 진단 문항 (7유형 통합). 유형별 채점 필드는 옵셔널이며 type 에 따라 사용한다. */
 export interface DiagnosticQuestion {
   id: string;
   /** 문항 유형 — 미지정 시 "mcq" (하위호환) */
@@ -56,11 +99,13 @@ export interface DiagnosticQuestion {
   /** 관련 아카이브 개념 ID (archive_concepts) — 약점 진단 시 링크. 통계·연구방법 문항은 미연결 가능. */
   conceptId?: string;
   area: DiagnosticArea;
-  /** 문항(질문). term 유형은 prompt 를 사용하므로 비워도 됨. */
+  /** Bloom 인지수준 태깅 (선택). 미지정 시 리포트의 인지수준 집계에서 제외. */
+  cognitiveLevel?: CognitiveLevel;
+  /** 문항(질문). term·ox 유형은 prompt·statement 를 사용하므로 비워도 됨. */
   question: string;
-  /** [mcq] 보기 4개 */
+  /** [mcq·compare·scenario] 보기 (compare 는 혼동 개념 2~4개) */
   options?: string[];
-  /** [mcq] 정답 인덱스 (0~3) */
+  /** [mcq·compare·scenario] 정답 인덱스 */
   answerIndex?: number;
   /** [ordering] 정답 순서로 저장된 단계 목록. 런타임에 셔플해 제시하고, 사용자가 원래 순서로 맞추면 정답. */
   items?: string[];
@@ -70,6 +115,16 @@ export interface DiagnosticQuestion {
   answer?: string;
   /** [term] 허용되는 동의어·영문 표기 (정규화 후 매칭) */
   acceptedAnswers?: string[];
+  /** [ox] 참/거짓을 판단할 진술. question 대신 화면에 표시. */
+  statement?: string;
+  /** [ox] 진술의 참/거짓 정답 (true=참, false=거짓) */
+  answerBool?: boolean;
+  /** [matching] 왼쪽 항목 (개념·이론) */
+  leftItems?: string[];
+  /** [matching] 오른쪽 항목 (학자·모델·기법) */
+  rightItems?: string[];
+  /** [matching] 정답 매핑 — 왼쪽 index → 오른쪽 index */
+  correctMap?: number[];
   /** 해설 (선택) */
   explanation?: string;
   /** 운영진 검수 후 공개 게이트 */
@@ -79,18 +134,30 @@ export interface DiagnosticQuestion {
   updatedAt?: string;
 }
 
+const KNOWN_QUESTION_TYPES: readonly DiagnosticQuestionType[] = [
+  "mcq",
+  "ordering",
+  "term",
+  "ox",
+  "compare",
+  "matching",
+  "scenario",
+];
+
 /** 문항 유형 정규화 — 미지정·잘못된 값은 "mcq" 로 폴백 */
 export function questionType(q: Pick<DiagnosticQuestion, "type">): DiagnosticQuestionType {
-  return q.type === "ordering" || q.type === "term" ? q.type : "mcq";
+  return q.type && KNOWN_QUESTION_TYPES.includes(q.type) ? q.type : "mcq";
 }
 
 /**
  * 사용자 응답 — 유형별로 형태가 다르다.
- *  - mcq      : number (선택한 보기 인덱스)
- *  - ordering : string[] (사용자가 재배열한 단계 순서)
- *  - term     : string (입력한 텍스트)
+ *  - mcq·compare·scenario : number (선택한 보기 인덱스)
+ *  - ordering             : string[] (사용자가 재배열한 단계 순서)
+ *  - term                 : string (입력한 텍스트)
+ *  - ox                   : boolean (참/거짓 선택)
+ *  - matching             : number[] (왼쪽 index 순서대로 선택한 오른쪽 index. 미선택은 -1)
  */
-export type DiagnosticAnswer = number | string[] | string;
+export type DiagnosticAnswer = number | string[] | string | boolean | number[];
 
 /** 단어 맞추기 정규화 — trim·소문자·공백/구두점 제거(한글·영문·숫자만 남김) */
 export function normalizeTermAnswer(s: string): string {
@@ -103,9 +170,11 @@ export function normalizeTermAnswer(s: string): string {
 
 /**
  * 유형별 채점 — 정답이면 true.
- *  - mcq      : 선택 인덱스 === answerIndex
- *  - ordering : 재배열 순서가 정답(items)과 완전일치
- *  - term     : 정규화 후 answer 또는 acceptedAnswers 중 하나와 일치
+ *  - mcq·compare·scenario : 선택 인덱스 === answerIndex
+ *  - ordering             : 재배열 순서가 정답(items)과 완전일치
+ *  - term                 : 정규화 후 answer 또는 acceptedAnswers 중 하나와 일치
+ *  - ox                   : 선택한 boolean === answerBool
+ *  - matching             : 모든 왼쪽 항목이 correctMap 의 오른쪽 index 와 완전일치
  * 응답이 없거나(undefined) 형태가 맞지 않으면 false(오답 처리).
  */
 export function gradeQuestion(
@@ -128,17 +197,30 @@ export function gradeQuestion(
         .filter(Boolean);
       return accepted.includes(norm);
     }
+    case "ox":
+      return typeof answer === "boolean" && answer === q.answerBool;
+    case "matching": {
+      if (!Array.isArray(answer) || !q.correctMap || !q.leftItems) return false;
+      if (answer.length !== q.correctMap.length) return false;
+      // 모든 왼쪽 항목이 정답 오른쪽 index 와 일치해야 정답(부분점수 없음).
+      return q.correctMap.every((right, i) => answer[i] === right);
+    }
+    case "compare":
+    case "scenario":
     case "mcq":
     default:
       return typeof answer === "number" && answer === q.answerIndex;
   }
 }
 
-/** 영역별 채점 결과 */
+/** 영역별·인지수준별 채점 결과 (구조 동일) */
 export interface AreaScore {
   correct: number;
   total: number;
 }
+
+/** 인지수준별 채점 결과 */
+export type CognitiveScore = AreaScore;
 
 /** 진단 결과 (저장) */
 export interface DiagnosticResult {

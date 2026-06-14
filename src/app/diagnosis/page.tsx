@@ -20,6 +20,8 @@ import {
   gradeQuestion,
   questionType,
   type AreaScore,
+  type CognitiveLevel,
+  type CognitiveScore,
   type DiagnosticAnswer,
   type DiagnosticArea,
   type DiagnosticQuestion,
@@ -39,6 +41,7 @@ function seedToQuestion(
     id: `seed:${entry.seedKey}`,
     type: questionType(entry),
     area: entry.area,
+    cognitiveLevel: entry.cognitiveLevel,
     question: entry.question ?? "",
     options: entry.options,
     answerIndex: entry.answerIndex,
@@ -46,16 +49,31 @@ function seedToQuestion(
     prompt: entry.prompt,
     answer: entry.answer,
     acceptedAnswers: entry.acceptedAnswers,
+    statement: entry.statement,
+    answerBool: entry.answerBool,
+    leftItems: entry.leftItems,
+    rightItems: entry.rightItems,
+    correctMap: entry.correctMap,
     explanation: entry.explanation,
     conceptSeedKey: entry.conceptSeedKey,
     published: true,
   };
 }
 
-/** 영역별 랜덤 출제 문항 수 (매 진단 다른 문제·유형 혼합). 풀이 적으면 가용분만 출제. */
+/** 영역별 랜덤 출제 문항 수 (단일 영역 진단). 풀이 적으면 가용분만 출제. */
 const QUESTIONS_PER_AREA = 6;
-/** 전체 진단 시 영역당 출제 수(전체는 세 영역 합산). */
-const QUESTIONS_PER_AREA_ALL = 5;
+
+/** 전체 진단 1회 출제 총 문항 수(10문제 단위). 영역·유형·인지수준이 고루 섞이게 가중 추출. */
+const TOTAL_QUESTIONS_ALL = 10;
+/**
+ * 전체 진단 시 영역별 출제 수 — 합 TOTAL_QUESTIONS_ALL.
+ * 통계 4 · 연구방법 3 · 핵심개념 3 (통계방법은 유형 폭이 가장 넓어 1문항 더 배정).
+ */
+const ALL_AREA_QUOTA: Record<DiagnosticArea, number> = {
+  statistics: 4,
+  method: 3,
+  concept: 3,
+};
 
 /** Fisher-Yates 셔플 (원본 불변) */
 function shuffle<T>(arr: T[]): T[] {
@@ -65,6 +83,40 @@ function shuffle<T>(arr: T[]): T[] {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+}
+
+/**
+ * 유형 폭이 고르게 섞이도록 가중 추출 — 유형(type) 버킷별로 셔플 후 라운드로빈으로 count 개 선택.
+ * 유형 버킷을 번갈아 뽑으므로 한 유형(예: mcq)에 쏠리지 않고, 버킷 내부 셔플로 인지수준도 자연 분산된다.
+ * 풀이 count 보다 적으면 가용분만 반환.
+ */
+function pickMixed(
+  items: (DiagnosticQuestion & { conceptSeedKey?: string })[],
+  count: number,
+): (DiagnosticQuestion & { conceptSeedKey?: string })[] {
+  if (items.length <= count) return shuffle(items);
+  // 유형별 버킷(각 버킷 셔플). 버킷 순서도 셔플해 특정 유형이 항상 먼저 나오지 않도록.
+  const buckets = new Map<string, (DiagnosticQuestion & { conceptSeedKey?: string })[]>();
+  for (const q of shuffle(items)) {
+    const t = questionType(q);
+    if (!buckets.has(t)) buckets.set(t, []);
+    buckets.get(t)!.push(q);
+  }
+  const bucketList = shuffle([...buckets.values()]);
+  const picked: (DiagnosticQuestion & { conceptSeedKey?: string })[] = [];
+  let drained = false;
+  while (picked.length < count && !drained) {
+    drained = true;
+    for (const b of bucketList) {
+      if (picked.length >= count) break;
+      const next = b.shift();
+      if (next) {
+        picked.push(next);
+        drained = false;
+      }
+    }
+  }
+  return picked;
 }
 
 const EMPTY_COUNTS: Record<DiagnosticArea, number> = {
@@ -90,6 +142,9 @@ export default function DiagnosisPage() {
     (DiagnosticQuestion & { conceptSeedKey?: string })[]
   >([]);
   const [areaScores, setAreaScores] = useState<Partial<Record<DiagnosticArea, AreaScore>>>({});
+  const [cognitiveScores, setCognitiveScores] = useState<
+    Partial<Record<CognitiveLevel, CognitiveScore>>
+  >({});
   const [readiness, setReadiness] = useState({ paperReadiness: 0, analysisReadiness: 0 });
   const [weakConcepts, setWeakConcepts] = useState<WeakConcept[]>([]);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -141,17 +196,19 @@ export default function DiagnosisPage() {
     return counts;
   }, [pool]);
 
-  // ── 진단 시작 (문제은행에서 영역별 N개 랜덤 추출 — 매 진단 다른 문제·유형 혼합) ──
+  // ── 진단 시작 (문제은행에서 가중 추출 — 매 진단 다른 문제, 영역·유형·인지수준 혼합) ──
   const handleStart = (area: DiagnosticArea | "all") => {
-    // 전체: 세 영역 각각 N_ALL 개 / 단일 영역: 그 영역 N 개. 풀이 적으면 가용분만.
-    const areas = area === "all" ? DIAGNOSTIC_AREA_ORDER : [area];
-    const perArea = area === "all" ? QUESTIONS_PER_AREA_ALL : QUESTIONS_PER_AREA;
     const ordered: typeof pool = [];
-    for (const a of DIAGNOSTIC_AREA_ORDER) {
-      if (!areas.includes(a)) continue;
-      const inArea = pool.filter((q) => q.area === a);
-      // 영역 내부를 셔플 후 앞에서 perArea 개 선택 → 영역 순서는 유지(통계→연구방법→개념)
-      ordered.push(...shuffle(inArea).slice(0, perArea));
+    if (area === "all") {
+      // 전체: 영역별 정원(ALL_AREA_QUOTA, 합 10)만큼 유형 혼합 추출. 영역 순서 유지(통계→연구방법→개념).
+      for (const a of DIAGNOSTIC_AREA_ORDER) {
+        const inArea = pool.filter((q) => q.area === a);
+        ordered.push(...pickMixed(inArea, ALL_AREA_QUOTA[a]));
+      }
+    } else {
+      // 단일 영역: 그 영역에서 유형 혼합으로 N개 추출.
+      const inArea = pool.filter((q) => q.area === area);
+      ordered.push(...pickMixed(inArea, QUESTIONS_PER_AREA));
     }
     if (ordered.length === 0) return;
     setActiveQuestions(ordered);
@@ -179,6 +236,7 @@ export default function DiagnosisPage() {
   // ── 채점 (유형별 분기 — gradeQuestion 이 mcq·ordering·term 모두 처리) ──
   const handleComplete = async (answers: Record<string, DiagnosticAnswer>) => {
     const scores: Partial<Record<DiagnosticArea, AreaScore>> = {};
+    const cogScores: Partial<Record<CognitiveLevel, CognitiveScore>> = {};
     const weakMap = new Map<string, WeakConcept>();
 
     for (const q of activeQuestions) {
@@ -192,12 +250,21 @@ export default function DiagnosisPage() {
         if (wc) weakMap.set(wc.id ?? wc.name, wc);
       }
       scores[q.area] = bucket;
+
+      // 인지수준별 집계 (태깅된 문항만)
+      if (q.cognitiveLevel) {
+        const cb = cogScores[q.cognitiveLevel] ?? { correct: 0, total: 0 };
+        cb.total += 1;
+        if (correct) cb.correct += 1;
+        cogScores[q.cognitiveLevel] = cb;
+      }
     }
 
     const computed = computeReadiness(scores);
     const weak = [...weakMap.values()];
 
     setAreaScores(scores);
+    setCognitiveScores(cogScores);
     setReadiness(computed);
     setWeakConcepts(weak);
     setPhase("report");
@@ -225,6 +292,7 @@ export default function DiagnosisPage() {
   const handleRetry = () => {
     setActiveQuestions([]);
     setAreaScores({});
+    setCognitiveScores({});
     setWeakConcepts([]);
     setSaveState("idle");
     setPhase("landing");
@@ -272,6 +340,7 @@ export default function DiagnosisPage() {
           ) : (
             <DiagnosisReport
               areaScores={areaScores}
+              cognitiveScores={cognitiveScores}
               paperReadiness={readiness.paperReadiness}
               analysisReadiness={readiness.analysisReadiness}
               weakConcepts={weakConcepts}
