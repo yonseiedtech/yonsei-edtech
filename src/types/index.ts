@@ -44,6 +44,9 @@ export * from "./network";
 // 받은 명함 (Received Business Cards)
 export * from "./cards";
 
+// 회원 간 쪽지 (사이클 113)
+export * from "./messages";
+
 // 학술대회 워크북 (Sprint 67-F)
 export * from "./workbook";
 

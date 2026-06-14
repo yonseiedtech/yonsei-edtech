@@ -1,11 +1,10 @@
 
-## 배포 82c — 사이클 112c 명함 테마 인라인 style 전환 (purge 근본 해결)
+## 배포 83차 — 사이클 113 알림/할일/쪽지 3탭 + 쪽지 신규 (사용자 요청)
 
-- @source inline safelist도 THEME_CSS=0 실패 → Tailwind 동적 클래스 방식 포기, 인라인 style(hex)로 전환
-- card-themes.ts: CardThemeStyle accentFrom/To·chipBg·chipText·fieldText·swatch 모두 hex/CSS변수
-- BusinessCard: top accent linear-gradient style, 키워드칩 backgroundColor/color style, 관심분야 color style
-- CardSection 스와치 backgroundColor style. globals.css @source inline 제거
-- 인라인 style이라 Tailwind purge 완전 무관 — 6테마(연세블루·네이비·에메랄드·로즈·차콜·앰버) 항상 정상 표시
+- ProfileSideWidget 3탭(알림/할일/쪽지) 헤더+카운트 배지, 선택 탭 펼침 리스트 max-h-72 스크롤. 할일=마감 D-day로 '다가오는 일정' 겸함
+- 쪽지 신규: types/messages DirectMessage, bkend messagesApi(listReceived/listSent/create/markRead/delete), firestore.rules direct_messages(송수신 당사자+staff)
+- 쪽지함 /mypage/messages: 받은/보낸 탭 + 새 쪽지(회원 이름 검색 select) + 읽음·삭제
+ilwind purge 완전 무관 — 6테마(연세블루·네이비·에메랄드·로즈·차콜·앰버) 항상 정상 표시
 이드 폭/커맨드 열수 조정
 
 der, sm:p-10→sm:p-8, sparkles 2개(animate-pulse)→1개(정적) — Mayer 일관성 원리로 인지부하 축소

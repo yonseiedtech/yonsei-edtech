@@ -36,7 +36,7 @@ import { auth, db } from "./firebase";
 import type {
   User, Post, Comment, Seminar, SeminarSession, SeminarAttendee,
   SeminarRegistration, Certificate, PromotionContent, SeminarMaterial,
-  SeminarReview, Inquiry, Activity, AppNotification, WaitlistEntry,
+  SeminarReview, Inquiry, Activity, AppNotification, WaitlistEntry, DirectMessage,
   Poll, PollResponse, PhotoAlbum, Photo, AdminTodo, AuditLog, UserActivityLog,
   ActivityProgress, ActivityMaterial, EmailLog, ProgressMeeting,
   Lab, LabReaction, LabComment, ResearchPaper, ResearchReport, ResearchProposal, WritingPaper, WritingPaperHistory, WritingPaperVersion, AdvisorFeedbackNote,
@@ -1553,6 +1553,27 @@ export const notificationsApi = {
     );
   },
   delete: (id: string) => dataApi.delete("notifications", id),
+};
+
+// 회원 간 쪽지 (사이클 113, 사용자 요청)
+export const messagesApi = {
+  listReceived: (toId: string) =>
+    dataApi.list<DirectMessage>("direct_messages", {
+      "filter[toId]": toId,
+      sort: "createdAt:desc",
+      limit: 50,
+    }),
+  listSent: (fromId: string) =>
+    dataApi.list<DirectMessage>("direct_messages", {
+      "filter[fromId]": fromId,
+      sort: "createdAt:desc",
+      limit: 50,
+    }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<DirectMessage>("direct_messages", data),
+  markRead: (id: string) =>
+    dataApi.update<DirectMessage>("direct_messages", id, { read: true }),
+  delete: (id: string) => dataApi.delete("direct_messages", id),
 };
 
 // ── Profile Likes (PR5) ──
