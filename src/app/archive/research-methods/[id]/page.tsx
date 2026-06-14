@@ -280,9 +280,13 @@ export default function ResearchMethodDetailPage() {
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <Badge
                 variant="outline"
-                className={cn("text-xs", RESEARCH_METHOD_KIND_COLORS[method.kind])}
+                className={cn(
+                  "text-xs",
+                  RESEARCH_METHOD_KIND_COLORS[method.kind] ??
+                    "border border-slate-200 bg-slate-100 text-slate-700",
+                )}
               >
-                {RESEARCH_METHOD_KIND_LABELS[method.kind]} 연구
+                {RESEARCH_METHOD_KIND_LABELS[method.kind] ?? method.kind} 연구
               </Badge>
               {!method.published && (
                 <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200 text-xs">
@@ -391,27 +395,54 @@ export default function ResearchMethodDetailPage() {
               연구 절차
             </h2>
             <ol className="space-y-2">
-              {method.procedures.map((p, i) => (
-                <li key={p.id} className="flex gap-3 rounded-lg border bg-card p-3">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                    {i + 1}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium">{p.step}</p>
-                    {p.detail && (
-                      <p className="mt-1 text-xs text-muted-foreground whitespace-pre-wrap">
-                        {p.detail}
-                      </p>
-                    )}
-                    {p.example && (
-                      <p className="mt-1.5 rounded-md border-l-2 border-amber-300 bg-amber-50 px-2 py-1 text-[11px] leading-relaxed text-amber-900 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200">
-                        <span className="font-semibold">논문 예시 · </span>
-                        {p.example}
-                      </p>
-                    )}
-                  </div>
-                </li>
-              ))}
+              {(
+                method.procedures as Array<
+                  | { id?: string; step: string; detail?: string; example?: string }
+                  | string
+                >
+              ).map((raw, i) => {
+                // 레거시 호환(사이클 125): procedures 가 문자열 배열로 저장된 항목은
+                // "1. 단계명 — 설명" 형태를 step/detail 로 분해해 표시한다.
+                let p: { id?: string; step: string; detail?: string; example?: string };
+                if (typeof raw === "string") {
+                  const cleaned = raw.replace(/^\s*\d+[.)]\s*/, "");
+                  const dash = cleaned.search(/\s[—–-]\s/);
+                  p =
+                    dash > 0
+                      ? {
+                          id: `p-${i}`,
+                          step: cleaned.slice(0, dash).trim(),
+                          detail: cleaned.slice(dash).replace(/^\s*[—–-]\s*/, "").trim(),
+                        }
+                      : { id: `p-${i}`, step: cleaned };
+                } else {
+                  p = raw;
+                }
+                return (
+                  <li
+                    key={p.id ?? `p-${i}`}
+                    className="flex gap-3 rounded-lg border bg-card p-3"
+                  >
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                      {i + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">{p.step}</p>
+                      {p.detail && (
+                        <p className="mt-1 text-xs text-muted-foreground whitespace-pre-wrap">
+                          {p.detail}
+                        </p>
+                      )}
+                      {p.example && (
+                        <p className="mt-1.5 rounded-md border-l-2 border-amber-300 bg-amber-50 px-2 py-1 text-[11px] leading-relaxed text-amber-900 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200">
+                          <span className="font-semibold">논문 예시 · </span>
+                          {p.example}
+                        </p>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
             </ol>
           </section>
         )}

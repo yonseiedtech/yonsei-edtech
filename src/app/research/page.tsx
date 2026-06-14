@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { BarChart3, BookOpen, GraduationCap, Sparkles, ArrowRight, Type, Network, Cloud, AlertCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -172,7 +173,15 @@ export default function ResearchAnalyticsPage() {
 
         {/* ── 페이지 헤더 ── */}
         <PageHeader
-          icon={BarChart3}
+          icon={
+            <Image
+              src="/yonsei-emblem.svg"
+              alt="연세대학교 엠블럼"
+              width={28}
+              height={28}
+              className="h-7 w-7"
+            />
+          }
           title={header.title}
           description={header.description}
         />
@@ -200,19 +209,21 @@ export default function ResearchAnalyticsPage() {
           </div>
         ) : (
           <>
-            {/* ── 히어로 (리브랜딩, 사이클 121) ── */}
-            <ResearchHero
-              total={stats.total}
-              yearRange={stats.yearRange}
-              keywordCount={keywordCount}
-              topKeywords={topKeywords}
-              eras={eras.map((e) => ({
-                label: e.label,
-                range: e.range,
-                count: e.count,
-                highlight: e.highlight,
-              }))}
-            />
+            {/* ── 히어로 (리브랜딩) — PageHeader 타이틀과 세로 여백 확보(사이클 122) ── */}
+            <div className="mt-8 sm:mt-12">
+              <ResearchHero
+                total={stats.total}
+                yearRange={stats.yearRange}
+                keywordCount={keywordCount}
+                topKeywords={topKeywords}
+                eras={eras.map((e) => ({
+                  label: e.label,
+                  range: e.range,
+                  count: e.count,
+                  highlight: e.highlight,
+                }))}
+              />
+            </div>
 
             {/* ── 통합 검색 ── */}
             <div className="mt-8">

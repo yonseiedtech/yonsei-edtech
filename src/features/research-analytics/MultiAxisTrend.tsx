@@ -28,12 +28,13 @@ interface Props {
 }
 
 const AXES: AxisKey[] = ["method", "variable", "measurement", "subject"];
+// 네이비 계열 (연세 네이비 톤) — 사이클 122 사용자 요청
 const AXIS_ACCENT: Record<AxisKey, string> = {
-  method: "#2563eb",
-  variable: "#7c3aed",
-  measurement: "#0d9488",
-  subject: "#db2777",
-  keyword: "#4f46e5",
+  method: "#1e3a8a",
+  variable: "#3730a3",
+  measurement: "#1e40af",
+  subject: "#4338ca",
+  keyword: "#312e81",
 };
 
 export default function MultiAxisTrend({ theses, nameOf }: Props) {
