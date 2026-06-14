@@ -1,9 +1,10 @@
 
-## 배포 82차 — 사이클 112 명함 디자인 테마 (사용자 관심사 B 고도화)
+## 배포 82b — 사이클 112b 명함 테마 Tailwind v4 safelist (purge 수정)
 
-- types/cards.ts: CardThemeKey 6종(연세블루 default/네이비/에메랄드/로즈/차콜/앰버) + CARD_THEME_LABELS
-- card-themes.ts(신규): CARD_THEMES 색상 클래스(accent gradient/chipBg/chipText/fieldText/swatch) + resolveCardTheme 안전 매핑
-- BusinessCard: themeKey prop + user.cardTheme resolve → top accent·키워드칩·관심분야 색상 테마화. 공개명함(directory/[id]/card)도 user.cardTheme 자동 반영
+- 게이트82 THEME_CSS_FILES=0 → 동적 ${theme.x} 조합 클래스가 Tailwind v4 정적 스캔에서 purge됨(빌드 CSS에 from-indigo/emerald/rose 0개 확인)
+- globals.css @source inline 6줄로 테마 색상 클래스(indigo/emerald/rose/slate/amber 의 accent·chip·field·swatch) safelist 명시
+- 재빌드 후 THEME_CSS 재검증 — >0 이면 deploy
+ 색상 테마화. 공개명함(directory/[id]/card)도 user.cardTheme 자동 반영
 - CardSection: CardTab 테마 선택 칩(스와치+라벨, 6종) + 즉시 미리보기 + updateProfile cardTheme 저장
  필요시 사이드 폭/커맨드 열수 조정
 
