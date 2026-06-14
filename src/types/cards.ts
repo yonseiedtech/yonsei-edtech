@@ -17,3 +17,26 @@ export interface ReceivedBusinessCard {
   createdAt: string;
   updatedAt?: string;
 }
+
+// ── 명함 디자인 테마 (사이클 112, 사용자 요청) ──
+// User.cardTheme 에 저장. 색상 클래스 매핑은 features/card/card-themes.ts.
+
+export type CardThemeKey = "default" | "navy" | "emerald" | "rose" | "slate" | "amber";
+
+export const CARD_THEME_KEYS: CardThemeKey[] = [
+  "default",
+  "navy",
+  "emerald",
+  "rose",
+  "slate",
+  "amber",
+];
+
+export const CARD_THEME_LABELS: Record<CardThemeKey, string> = {
+  default: "연세 블루",
+  navy: "네이비",
+  emerald: "에메랄드",
+  rose: "로즈",
+  slate: "차콜",
+  amber: "앰버",
+};

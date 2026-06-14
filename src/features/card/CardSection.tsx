@@ -32,6 +32,8 @@ import { downloadVCard, userToContact } from "@/features/card/vcard";
 import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import type { BusinessCardExchange } from "@/types";
+import { CARD_THEME_KEYS, CARD_THEME_LABELS } from "@/types";
+import { CARD_THEMES } from "@/features/card/card-themes";
 import { toast } from "sonner";
 import { uploadToStorage } from "@/lib/storage";
 import { useUpdateProfile } from "@/features/member/useMembers";
@@ -77,6 +79,8 @@ function CardTab({
   handleSavePng,
   handlePhotoUpload,
   isUploading,
+  themeKey,
+  onThemeChange,
 }: {
   user: ReturnType<typeof useAuthStore.getState>["user"];
   qrUrl: string;
@@ -85,12 +89,43 @@ function CardTab({
   handleSavePng: () => void;
   handlePhotoUpload: (file: File) => void;
   isUploading: boolean;
+  themeKey: string;
+  onThemeChange: (key: string) => void;
 }) {
   if (!user) return null;
   return (
     <div>
       <div className="mt-2">
-        <BusinessCard ref={cardRef} user={user} qrValue={qrUrl} />
+        <BusinessCard ref={cardRef} user={user} qrValue={qrUrl} themeKey={themeKey} />
+      </div>
+
+      {/* 명함 테마 선택 (사이클 112) — 선택 즉시 미리보기 + 저장 */}
+      <div className="mt-4">
+        <p className="mb-2 text-center text-xs font-medium text-muted-foreground">
+          명함 테마
+        </p>
+        <div className="flex flex-wrap justify-center gap-2">
+          {CARD_THEME_KEYS.map((key) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => onThemeChange(key)}
+              aria-pressed={themeKey === key}
+              className={cn(
+                "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                themeKey === key
+                  ? "border-primary bg-primary/5 text-primary"
+                  : "border-border text-muted-foreground hover:bg-muted",
+              )}
+            >
+              <span
+                className={cn("h-3 w-3 rounded-full", CARD_THEMES[key].swatch)}
+                aria-hidden
+              />
+              {CARD_THEME_LABELS[key]}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* 프로필 사진 업로드 */}
@@ -236,6 +271,9 @@ export default function CardSection() {
   const { user, setUser } = useAuthStore();
   const cardRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState<CardTabKey>("card");
+  const [cardTheme, setCardTheme] = useState<string>(
+    () => (user?.cardTheme as string | undefined) ?? "default",
+  );
   const [isUploading, setIsUploading] = useState(false);
   const { updateProfile } = useUpdateProfile();
 
@@ -335,6 +373,18 @@ export default function CardSection() {
     }
   }
 
+  async function handleThemeChange(key: string) {
+    if (!user) return;
+    setCardTheme(key);
+    try {
+      await updateProfile({ id: user.id, data: { cardTheme: key } });
+      setUser({ ...user, cardTheme: key });
+      toast.success("명함 테마를 변경했습니다.");
+    } catch {
+      toast.error("테마 저장에 실패했습니다.");
+    }
+  }
+
   const CARD_TABS = [
     { key: "card" as const, label: "내 명함", icon: CreditCard },
     { key: "exchanges" as const, label: "교환 기록", icon: History },
@@ -380,6 +430,8 @@ export default function CardSection() {
             handleSavePng={handleSavePng}
             handlePhotoUpload={handlePhotoUpload}
             isUploading={isUploading}
+            themeKey={cardTheme}
+            onThemeChange={handleThemeChange}
           />
         ) : tab === "exchanges" ? (
           <ExchangesTab userId={user.id} />

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { QRCodeSVG } from "qrcode.react";
 import type { User } from "@/types";
 import { SCHOOL_LEVEL_LABELS } from "@/types";
+import { resolveCardTheme } from "@/features/card/card-themes";
 
 interface BusinessCardProps {
   user: User;
@@ -12,6 +13,8 @@ interface BusinessCardProps {
   qrValue: string;
   /** true면 '명함 교환' 태그를 숨김 (자기 카드 전용 토글) */
   hideExchangeHint?: boolean;
+  /** 미리보기용 테마 override — 없으면 user.cardTheme 사용 */
+  themeKey?: string;
 }
 
 function formatPhone(raw: string | undefined): string {
@@ -23,7 +26,8 @@ function formatPhone(raw: string | undefined): string {
 }
 
 const BusinessCard = forwardRef<HTMLDivElement, BusinessCardProps>(
-  function BusinessCard({ user, qrValue, hideExchangeHint }, ref) {
+  function BusinessCard({ user, qrValue, hideExchangeHint, themeKey }, ref) {
+    const theme = resolveCardTheme(themeKey ?? (user.cardTheme as string | undefined));
     // Sprint 67: occupation 인지 + 중복 제거 (legacy 데이터에서 affiliation == department 이거나
     // 교사 직군에서 학교명이 두 번 들어가는 케이스 방지).
     const affiliationLine = (() => {
@@ -53,7 +57,7 @@ const BusinessCard = forwardRef<HTMLDivElement, BusinessCardProps>(
         style={{ aspectRatio: "9 / 16" }}
       >
         {/* Top accent */}
-        <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-br from-primary to-primary/70" />
+        <div className={`absolute inset-x-0 top-0 h-28 bg-gradient-to-br ${theme.accent}`} />
 
         <div className="relative flex h-full flex-col px-6 pt-8 pb-6">
           {/* 학회 로고 + 엠블럼 */}
@@ -97,7 +101,7 @@ const BusinessCard = forwardRef<HTMLDivElement, BusinessCardProps>(
               <p className="truncate">{user.contactEmail ?? user.email}</p>
             ) : null}
             {user.phone ? <p>{formatPhone(user.phone)}</p> : null}
-            {user.field ? <p className="italic text-slate-500">#{user.field}</p> : null}
+            {user.field ? <p className={`italic ${theme.fieldText}`}>#{user.field}</p> : null}
           </div>
 
           {/* 관심 분야 키워드 */}
@@ -106,7 +110,7 @@ const BusinessCard = forwardRef<HTMLDivElement, BusinessCardProps>(
               {user.interestKeywords.slice(0, 6).map((kw) => (
                 <span
                   key={kw}
-                  className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary"
+                  className={`rounded-full ${theme.chipBg} px-2 py-0.5 text-[10px] font-medium ${theme.chipText}`}
                 >
                   {kw}
                 </span>
