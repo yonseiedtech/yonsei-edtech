@@ -29,6 +29,8 @@ import {
   attendeesApi,
   studySessionsApi,
   dataApi,
+  writingPaperHistoryApi,
+  userActivityLogsApi,
 } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import type {
@@ -39,6 +41,8 @@ import type {
   Comment,
   StudySessionReflection,
   StudyAssignmentSubmission,
+  WritingPaperHistory,
+  UserActivityLog,
 } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -50,9 +54,12 @@ const MILESTONE_KEY = "mypage.learningStreak.milestonesShown";
 
 const SCORES = {
   attendance: 10,
+  // 사이클 116: 연구 습관 — 논문 작성·읽기를 높은 가중으로(핵심 행동 유도)
+  paperWriting: 6, // 논문 작성/수정 1일
   courseReview: 5,
   post: 5,
   assignmentComplete: 5,
+  paperReading: 4, // 논문·아카이브 열람 1일
   reflection: 3,
   timer30: 3,
   comment: 1,
@@ -486,6 +493,19 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
     enabled: !!userId,
     staleTime: 5 * 60_000,
   });
+  // 사이클 116: 연구 습관 — 논문 작성 이력 + 아카이브/연구 열람 로그
+  const { data: writingHistoryRes } = useQuery({
+    queryKey: ["streak", "writing-paper-history", userId],
+    queryFn: () => writingPaperHistoryApi.listByUser(userId!),
+    enabled: !!userId,
+    staleTime: 5 * 60_000,
+  });
+  const { data: activityLogsRes } = useQuery({
+    queryKey: ["streak", "activity-logs", userId],
+    queryFn: () => userActivityLogsApi.listByUser(userId!, 1000),
+    enabled: !!userId,
+    staleTime: 5 * 60_000,
+  });
 
   // 사이클 115: scoresByDay(날짜→점수)를 분리 — full 그리드와 월별 모드가 공유
   const scoresByDay = useMemo(() => {
@@ -531,6 +551,21 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
       const ymd = isoToYmdLocal(s.submittedAt) ?? isoToYmdLocal(s.updatedAt);
       add(ymd, SCORES.assignmentComplete);
     }
+    // 사이클 116: 논문 작성 — writing_paper_history(자동 로그) 일별 1회 가산
+    const writingDays = new Set<string>();
+    for (const h of (writingHistoryRes?.data ?? []) as WritingPaperHistory[]) {
+      const ymd = isoToYmdLocal(h.createdAt);
+      if (ymd) writingDays.add(ymd);
+    }
+    writingDays.forEach((ymd) => add(ymd, SCORES.paperWriting));
+    // 사이클 116: 논문 읽기/연구 — 아카이브·연구 열람 로그 일별 1회 가산
+    const readingDays = new Set<string>();
+    for (const l of (activityLogsRes?.data ?? []) as UserActivityLog[]) {
+      if (l.pathGroup !== "archive" && l.pathGroup !== "research") continue;
+      const ymd = isoToYmdLocal(l.createdAt);
+      if (ymd) readingDays.add(ymd);
+    }
+    readingDays.forEach((ymd) => add(ymd, SCORES.paperReading));
 
     return scores;
   }, [
@@ -541,6 +576,8 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
     commentsRes,
     reflectionsRes,
     assignmentSubmissionsRes,
+    writingHistoryRes,
+    activityLogsRes,
   ]);
 
   const stats = useMemo<Stats>(
