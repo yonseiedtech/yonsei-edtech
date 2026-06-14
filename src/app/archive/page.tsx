@@ -24,6 +24,7 @@ import { Separator } from "@/components/ui/separator";
 import PageHeader from "@/components/ui/page-header";
 import InlineNotification from "@/components/ui/inline-notification";
 import EduTechOverview from "@/components/archive/EduTechOverview";
+import ArchiveGlobalSearch from "@/features/archive/ArchiveGlobalSearch";
 import PageContainer from "@/components/ui/page-container";
 import { useAuthStore } from "@/features/auth/auth-store";
 import {
@@ -208,6 +209,11 @@ export default function ArchiveLandingPage() {
           />
         </div>
 
+        {/* ── 아카이브 통합 검색 (사이클 118, 사용자 요청) ── */}
+        <div className="mt-4">
+          <ArchiveGlobalSearch />
+        </div>
+
         {/* ── 교육공학 정의·탐구분야 개관 ── */}
         <EduTechOverview />
 
@@ -335,7 +341,10 @@ export default function ArchiveLandingPage() {
             </p>
           </div>
 
-        {/* ── 3개 가이드 카드 ── */}
+        {/* ── 라이브러리 (개념·변인·측정도구) ── */}
+        <p className="mb-2 text-xs font-semibold text-muted-foreground">
+          📚 라이브러리 — 개념 · 변인 · 측정도구
+        </p>
         <div className="mt-2 grid grid-cols-1 gap-4 md:grid-cols-3">
           {TYPE_GUIDES.map((g) => {
             const Icon = g.icon;
@@ -396,6 +405,10 @@ export default function ArchiveLandingPage() {
           })}
         </div>
 
+        {/* ── 학습·연구 가이드 (사이클 118: 라이브러리와 시각 구분) ── */}
+        <p className="mb-2 mt-8 text-xs font-semibold text-muted-foreground">
+          📖 학습 · 연구 가이드 — 연구방법 · 통계방법 · 글쓰기 · 논문 · APA
+        </p>
         {/* ── 연구방법 가이드 (Phase 1) ── */}
         <Link
           href="/archive/research-methods"
