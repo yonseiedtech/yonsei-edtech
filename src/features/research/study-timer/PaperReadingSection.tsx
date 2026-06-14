@@ -6,7 +6,7 @@
  * 데이터: usePaperReadingLogs (paper_reading_logs).
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BookOpenCheck, Plus, Star, Clock } from "lucide-react";
 import { usePaperReadingLogs } from "../usePaperReadingLogs";
 import ReadingLogModal from "./ReadingLogModal";
@@ -25,6 +25,17 @@ function weekStartYmd(): string {
 export default function PaperReadingSection() {
   const { logs, isLoading } = usePaperReadingLogs();
   const [modalOpen, setModalOpen] = useState(false);
+  const [owlOff, setOwlOff] = useState(false);
+
+  useEffect(() => {
+    setOwlOff(localStorage.getItem("omcReadingOwlOff") === "true");
+  }, []);
+
+  function reactivateOwl() {
+    localStorage.removeItem("omcReadingOwlOff");
+    localStorage.removeItem("omcReadingOwlHideUntil");
+    setOwlOff(false);
+  }
 
   const { total, thisWeek, totalMin } = useMemo(() => {
     const ws = weekStartYmd();
@@ -53,6 +64,19 @@ export default function PaperReadingSection() {
           읽기 기록
         </button>
       </div>
+
+      {owlOff && (
+        <div className="mb-3 flex items-center justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          <span>🦉 떠다니는 읽기 타이머 부엉이가 꺼져 있어요</span>
+          <button
+            type="button"
+            onClick={reactivateOwl}
+            className="shrink-0 rounded-full bg-amber-600 px-2.5 py-1 font-medium text-white hover:bg-amber-700"
+          >
+            다시 켜기
+          </button>
+        </div>
+      )}
 
       {/* 통계 3카드 + 주간 목표 */}
       <div className="grid grid-cols-3 gap-2">

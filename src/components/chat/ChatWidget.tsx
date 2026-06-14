@@ -8,9 +8,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { useStudyTimerStore } from "@/features/research/study-timer/study-timer-store";
 import { useEndSession } from "@/features/research/study-timer/useStudySessions";
-import ReadingMascot from "@/features/research/study-timer/ReadingMascot";
-import ReadingLogModal from "@/features/research/study-timer/ReadingLogModal";
-import type { PaperReadingSource } from "@/types/paper-reading";
 import { siteSettingsApi } from "@/lib/bkend";
 import { cn } from "@/lib/utils";
 
@@ -59,12 +56,6 @@ export default function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const [pillExpanded, setPillExpanded] = useState(false);
-  const [readingDone, setReadingDone] = useState<{
-    title: string;
-    durationMin: number;
-    source: PaperReadingSource;
-    refId?: string;
-  } | null>(null);
   const dragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0, px: 0, py: 0 });
   const moved = useRef(false);
@@ -241,7 +232,7 @@ export default function ChatWidget() {
           <div className="relative flex items-center" style={{ width: BTN_SIZE, height: BTN_SIZE }}>
             {/* Mini pill: 좌측 또는 우측에 펼쳐짐 */}
             <AnimatePresence>
-              {active && pillExpanded && (
+              {active?.type === "writing" && pillExpanded && (
                 <motion.div
                   initial={{ opacity: 0, x: pillOnLeft ? 10 : -10, scale: 0.9 }}
                   animate={{ opacity: 1, x: 0, scale: 1 }}
@@ -288,14 +279,6 @@ export default function ChatWidget() {
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (active.type === "reading") {
-                        setReadingDone({
-                          title: active.targetTitle,
-                          durationMin: Math.max(1, Math.round(elapsed / 60)),
-                          source: active.readingSource ?? "external",
-                          refId: active.readingRefId ?? active.paperId,
-                        });
-                      }
                       stop();
                       toast.success(`「${active.targetTitle}」 ${fmt(elapsed)} 기록됨`);
                     }}
@@ -357,13 +340,7 @@ export default function ChatWidget() {
                   />
                 </svg>
               )}
-              {active?.type === "reading" ? (
-                <span className="relative z-10 text-white">
-                  <ReadingMascot isPaused={isPaused} size={30} />
-                </span>
-              ) : (
-                <MessageCircle className={cn("h-6 w-6 relative z-10", isPaused && "animate-pulse opacity-70")} />
-              )}
+              <MessageCircle className={cn("h-6 w-6 relative z-10", isPaused && "animate-pulse opacity-70")} />
               {/* 누적 cycle 배지 (포모도로 ●) */}
               {active && cycleCount > 0 && (
                 <span className="absolute -top-1 -right-1 z-20 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white shadow">
@@ -375,16 +352,6 @@ export default function ChatWidget() {
         </div>
       )}
 
-      {readingDone && (
-        <ReadingLogModal
-          open
-          onClose={() => setReadingDone(null)}
-          source={readingDone.source}
-          refId={readingDone.refId}
-          defaultTitle={readingDone.title}
-          durationMin={readingDone.durationMin}
-        />
-      )}
     </>
   );
 }

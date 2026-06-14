@@ -123,41 +123,9 @@ export default function ReadingMascot({
             transform: translateY(-3px) rotate(5deg);
           }
         }
-        /* 읽는 동작: 눈동자 좌우 스캔 + 책 미세 넘김 (사이클 120 폴리시) */
-        .omc-mascot.reading .omc-pupil {
-          transform-box: fill-box;
-          transform-origin: center;
-          animation: omc-read 3s ease-in-out infinite;
-        }
-        @keyframes omc-read {
-          0%,
-          100% {
-            transform: translateX(-0.7px);
-          }
-          45%,
-          55% {
-            transform: translateX(0.9px);
-          }
-        }
-        .omc-mascot.reading .omc-mascot-book {
-          transform-box: fill-box;
-          transform-origin: center top;
-          animation: omc-page 3.6s ease-in-out infinite;
-        }
-        @keyframes omc-page {
-          0%,
-          100% {
-            transform: scaleY(1);
-          }
-          50% {
-            transform: scaleY(0.95);
-          }
-        }
         @media (prefers-reduced-motion: reduce) {
           .omc-mascot-svg,
-          .omc-mascot-eyes,
-          .omc-pupil,
-          .omc-mascot-book {
+          .omc-mascot-eyes {
             animation: none !important;
           }
         }

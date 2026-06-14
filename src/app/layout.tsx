@@ -9,6 +9,7 @@ import QueryProvider from "@/lib/query-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { OrganizationJsonLd, WebsiteJsonLd } from "@/components/seo/JsonLd";
 import ChatWidget from "@/components/chat/ChatWidget";
+import FloatingReadingTimer from "@/features/research/study-timer/FloatingReadingTimer";
 import AuthProvider from "@/features/auth/AuthProvider";
 import ImpersonationBanner from "@/components/layout/ImpersonationBanner";
 import ConsentGate from "@/components/auth/ConsentGate";
@@ -166,6 +167,7 @@ export default function RootLayout({
             </div>
             <BottomNav />
             <ChatWidget />
+            <FloatingReadingTimer />
             <ConsentGate />
             <UndergradInfoPrompt />
             <SitePopupGate />
