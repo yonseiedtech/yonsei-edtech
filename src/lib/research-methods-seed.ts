@@ -12,6 +12,8 @@ interface SeedEntry {
   kind: ResearchMethodKind;
   summary: string;
   accessibleSummary?: string;
+  /** 연구절차 — 개발연구 등 단계별 step + 보조설명 */
+  procedures?: { step: string; detail?: string }[];
 }
 
 const SEED_RESEARCH_METHODS: SeedEntry[] = [
@@ -105,6 +107,57 @@ const SEED_RESEARCH_METHODS: SeedEntry[] = [
     accessibleSummary:
       "한 사람의 경험을 '이야기' 로 듣고 그 줄거리·전환점·맥락을 따라가며 의미를 풀어내는 방법. 예: 한 학습자가 들려주는 성장 스토리를 시간순으로 재구성해 학습 경험의 의미를 이해하는 연구.",
   },
+  // 혼합/개발연구 (3) — 사이클 103: 교육공학 개발연구 계열
+  {
+    name: "교육 프로그램 개발과 타당화",
+    kind: "mixed",
+    summary:
+      "교육 프로그램(수업·연수·콘텐츠)을 체계적으로 개발하고, 전문가 검토·사용성 평가·현장 적용을 통해 타당성을 입증하는 연구 방법.",
+    accessibleSummary:
+      "'좋은 교육 프로그램을 만들고, 정말 효과·타당한지 단계적으로 검증한다' 는 접근. 만들기(개발)와 검증하기(타당화)가 한 연구 안에서 순환합니다.",
+    procedures: [
+      { step: "요구분석", detail: "학습자·현장의 요구와 문제를 분석하고 선행 프로그램·문헌을 고찰합니다." },
+      { step: "설계", detail: "학습목표·내용·교수전략·매체 등 구성요소와 설계원리를 도출합니다." },
+      { step: "개발", detail: "차시·학습자료·활동을 포함한 프로그램 초안을 개발합니다." },
+      { step: "전문가 타당화", detail: "내용 전문가가 타당성을 검토(내용타당도 CVI 등)하고 수정합니다." },
+      { step: "사용성·형성평가", detail: "소수 대상 예비 적용으로 사용성·이해도·난이도를 점검합니다." },
+      { step: "현장 적용·효과 검증", detail: "실제 현장에 적용해 만족도·성취 등 효과를 검증합니다." },
+      { step: "수정·보완", detail: "결과를 반영해 최종 프로그램과 운영 지침을 확정합니다." },
+    ],
+  },
+  {
+    name: "모형 개발과 타당화",
+    kind: "mixed",
+    summary:
+      "교수설계·운영·역량 등에 대한 모형(구성요소·절차·관계)을 개발하고, 전문가 타당화와 현장 적용으로 타당성을 검증하는 연구 방법.",
+    accessibleSummary:
+      "복잡한 과정을 '구성요소와 단계로 그린 지도(모형)' 로 만들고, 그 지도가 현장에서 통하는지 전문가·적용으로 검증하는 연구입니다.",
+    procedures: [
+      { step: "문헌·사례 분석", detail: "관련 이론·기존 모형·실천 사례를 분석합니다." },
+      { step: "모형 구안", detail: "구성요소·절차·요소 간 관계를 갖춘 잠정 모형을 구안합니다." },
+      { step: "전문가 타당화", detail: "델파이·전문가 검토로 구성요소·절차의 타당성을 평가·수정합니다." },
+      { step: "사용성 평가", detail: "모형을 실제 설계·운영에 적용해 사용성·적용가능성을 점검합니다." },
+      { step: "현장 적용·효과 검증", detail: "현장 적용 결과로 모형의 효과·적합성을 확인합니다." },
+      { step: "최종 모형 확정", detail: "수정·보완해 최종 모형과 활용 지침을 제시합니다." },
+    ],
+  },
+  {
+    name: "측정도구 개발과 타당화",
+    kind: "mixed",
+    summary:
+      "특정 구성개념을 측정하는 검사·척도를 개발하고, 신뢰도와 타당도(내용·구인·준거)로 검증하는 연구 방법.",
+    accessibleSummary:
+      "'무엇을 어떻게 잴지' 를 정하고, 그 잣대(검사·설문)가 일관되고(신뢰도) 제대로 재는지(타당도) 통계로 검증해 만드는 연구입니다.",
+    procedures: [
+      { step: "구성개념 정의", detail: "측정하려는 개념을 이론적으로 정의하고 하위요인을 도출합니다." },
+      { step: "문항 개발", detail: "문항 풀(pool)을 작성하고 응답 척도를 설계합니다." },
+      { step: "내용타당도 검증", detail: "전문가가 문항-구성개념 일치도를 평가합니다(내용타당도 CVI)." },
+      { step: "예비조사", detail: "소수 대상 예비조사로 모호한 문항을 정련합니다." },
+      { step: "본조사·신뢰도", detail: "본조사 자료로 신뢰도(Cronbach α 등)를 확인합니다." },
+      { step: "구인타당도 검증", detail: "요인분석(탐색적·확인적)으로 요인구조를 검증합니다." },
+      { step: "준거타당도·확정", detail: "외부 준거와의 상관으로 타당도를 보강하고 최종 도구를 확정합니다." },
+    ],
+  },
 ];
 
 export interface ResearchMethodSeedResult {
@@ -130,6 +183,11 @@ export async function seedResearchMethods(
       kind: entry.kind,
       summary: entry.summary,
       accessibleSummary: entry.accessibleSummary,
+      procedures: entry.procedures?.map((p, i) => ({
+        id: `p${i + 1}`,
+        step: p.step,
+        detail: p.detail,
+      })),
       published: false,
       createdBy: userId,
     });
