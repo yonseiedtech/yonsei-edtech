@@ -559,6 +559,17 @@ service cloud.firestore {
         && resource.data.userId == request.auth.uid;
     }
 
+    // ─── Paper Reading Logs (사이클 120 — 논문 읽기 기록, 연구 습관) ───
+    match /paper_reading_logs/{docId} {
+      // 본인 + 운영진(통계/잔디 집계) 조회
+      allow read: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+    }
+
     // ─── Profile Likes (PR5 — 프로필 좋아요, 1인 1회 보장) ───
     match /profile_likes/{docId} {
       // 카운트/누가 눌렀는지 조회는 로그인 회원만

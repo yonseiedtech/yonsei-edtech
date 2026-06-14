@@ -15,6 +15,7 @@ import ResearchReportPrint from "@/features/research/ResearchReportPrint";
 import ResearchReportEditor from "@/features/research/ResearchReportEditor";
 import ResearchProposalEditor from "@/features/research/ResearchProposalEditor";
 import StudyTimerStats from "@/features/research/study-timer/StudyTimerStats";
+import PaperReadingSection from "@/features/research/study-timer/PaperReadingSection";
 import ManualSessionDialog from "@/features/research/study-timer/ManualSessionDialog";
 import EditSessionDialog from "@/features/research/study-timer/EditSessionDialog";
 import { useStudySessions, useDeleteSession } from "@/features/research/study-timer/useStudySessions";
@@ -497,6 +498,8 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
             {isSelf ? (
               <div className="space-y-6">
                 <StudyTimerStats />
+
+                <PaperReadingSection />
 
                 <div className="rounded-2xl border bg-card p-4">
                   <div className="flex items-center justify-between mb-3">

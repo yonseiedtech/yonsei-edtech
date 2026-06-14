@@ -1456,6 +1456,24 @@ export const studySessionsApi = {
   delete: (id: string) => dataApi.delete("study_sessions", id),
 };
 
+// ── 교육공학 아카이브 — 논문 읽기 기록 (사이클 120, 연구 습관) ──
+// 본인 rw + staff read. firestore.rules 의 paper_reading_logs 와 양쪽 게이트.
+import type { PaperReadingLog } from "@/types/paper-reading";
+
+export const paperReadingLogsApi = {
+  listByUser: (userId: string) =>
+    dataApi.list<PaperReadingLog>("paper_reading_logs", {
+      "filter[userId]": userId,
+      limit: 1000,
+    }),
+  get: (id: string) => dataApi.get<PaperReadingLog>("paper_reading_logs", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<PaperReadingLog>("paper_reading_logs", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<PaperReadingLog>("paper_reading_logs", id, data),
+  delete: (id: string) => dataApi.delete("paper_reading_logs", id),
+};
+
 export const defensePracticesApi = {
   listByUser: (userId: string) =>
     dataApi.list<DefensePracticeSet>("defense_practice_sets", {
