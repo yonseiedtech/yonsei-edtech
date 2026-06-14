@@ -66,7 +66,7 @@ export default function ConsoleResearchMethodsPage() {
     setSeeding(true);
     try {
       const r = await seedResearchMethods(user.id, methods);
-      toast.success(`시드 완료 — 추가 ${r.created}, 스킵 ${r.skipped}`);
+      toast.success(`시드 완료 — 추가 ${r.created}, 갱신 ${r.updated}, 스킵 ${r.skipped}`);
       load();
     } catch (err) {
       console.error("[console-research-methods] seed failed", err);

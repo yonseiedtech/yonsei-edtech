@@ -403,6 +403,12 @@ export default function ResearchMethodDetailPage() {
                         {p.detail}
                       </p>
                     )}
+                    {p.example && (
+                      <p className="mt-1.5 rounded-md border-l-2 border-amber-300 bg-amber-50 px-2 py-1 text-[11px] leading-relaxed text-amber-900 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200">
+                        <span className="font-semibold">논문 예시 · </span>
+                        {p.example}
+                      </p>
+                    )}
                   </div>
                 </li>
               ))}

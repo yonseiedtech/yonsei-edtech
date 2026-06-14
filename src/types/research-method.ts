@@ -44,6 +44,8 @@ export interface ResearchMethodProcedureStep {
   id: string;
   step: string;
   detail?: string;
+  /** 실제 논문에서 이 절차가 어떻게 표현·검증되는지 예시 (사이클 119) */
+  example?: string;
 }
 
 /** 참고 자료 */
