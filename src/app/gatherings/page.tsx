@@ -34,6 +34,8 @@ import {
   formatEventDate,
   formatWon,
 } from "@/features/networking/networking-helpers";
+import NetworkingProgramManager from "@/features/networking/NetworkingProgramManager";
+import NetworkingPoll from "@/features/networking/NetworkingPoll";
 
 const RSVP_OPTIONS: RsvpStatus[] = ["attending", "not_attending", "undecided"];
 
@@ -61,10 +63,14 @@ export default function GatheringsPage() {
   });
 
   const { upcoming, past } = useMemo(() => {
+    // 미확정 투표(poll, startAt 없음)는 정렬 키를 비워 항상 다가오는 모임 상단으로
+    const isUnconfirmedPoll = (e: NetworkingEvent) => e.schedulingMode === "poll" && !e.startAt;
     const sorted = [...events].sort((a, b) => a.startAt.localeCompare(b.startAt));
     return {
-      upcoming: sorted.filter((e) => !isPastEvent(e, nowIso) && e.status !== "cancelled"),
-      past: sorted.filter((e) => isPastEvent(e, nowIso)).reverse(),
+      upcoming: sorted.filter(
+        (e) => (isUnconfirmedPoll(e) || !isPastEvent(e, nowIso)) && e.status !== "cancelled",
+      ),
+      past: sorted.filter((e) => !isUnconfirmedPoll(e) && isPastEvent(e, nowIso)).reverse(),
     };
   }, [events, nowIso]);
 
@@ -169,6 +175,8 @@ function EventCard({
   const [guestName, setGuestName] = useState("");
   const [guestContact, setGuestContact] = useState("");
   const closed = isRsvpClosed(ev, nowIso);
+  // 미확정 일정 투표 — 날짜가 아직 정해지지 않아 RSVP 대신 투표 UI 노출
+  const isPollPending = ev.schedulingMode === "poll" && !ev.startAt;
 
   async function setMemberRsvp(status: RsvpStatus) {
     if (!user || busy) return;
@@ -253,7 +261,16 @@ function EventCard({
       </div>
 
       <dl className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
-        <span className="inline-flex items-center gap-1"><CalendarDays size={13} />{formatEventDate(ev.startAt)}</span>
+        {isPollPending ? (
+          <span className="inline-flex items-center gap-1 font-medium text-indigo-600 dark:text-indigo-400">
+            <CalendarDays size={13} />일정 조율 중
+            {ev.pollPeriodStart && ev.pollPeriodEnd && (
+              <span className="text-muted-foreground"> ({ev.pollPeriodStart.slice(5)}~{ev.pollPeriodEnd.slice(5)})</span>
+            )}
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1"><CalendarDays size={13} />{formatEventDate(ev.startAt)}</span>
+        )}
         {ev.location && <span className="inline-flex items-center gap-1"><MapPin size={13} />{ev.location}</span>}
         <span className="inline-flex items-center gap-1"><Wallet size={13} />회비 {formatWon(ev.feeAmount)}</span>
         {ev.rsvpDeadline && !past && (
@@ -280,8 +297,15 @@ function EventCard({
         </div>
       )}
 
+      {/* 일정 조율 투표 (미확정 poll) */}
+      {isPollPending && ev.status !== "cancelled" && (
+        <div className="mt-3.5">
+          <NetworkingPoll event={ev} canEdit={false} />
+        </div>
+      )}
+
       {/* 참석 신청 */}
-      {!past && ev.status !== "cancelled" && (
+      {!past && ev.status !== "cancelled" && !isPollPending && (
         <div className="mt-3.5 border-t pt-3">
           {isMember ? (
             <div className="flex flex-wrap items-center gap-1.5">
@@ -327,6 +351,10 @@ function EventCard({
           )}
         </div>
       )}
+      {/* 세부 프로그램 (사이클 124 단계2 — 회원 읽기) */}
+      <div className="mt-3">
+        <NetworkingProgramManager eventId={ev.id} canEdit={false} />
+      </div>
     </article>
   );
 }
