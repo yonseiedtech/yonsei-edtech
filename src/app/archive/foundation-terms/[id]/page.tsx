@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/ui/page-header";
+import ConceptLinkedText from "@/components/archive/ConceptLinkedText";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import {
@@ -373,7 +374,7 @@ export default function FoundationTermDetailPage() {
                 쉽게 이해하기
               </h3>
               <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/85">
-                {term.accessibleSummary}
+                <ConceptLinkedText text={term.accessibleSummary ?? ""} />
               </p>
             </div>
           </section>
@@ -384,7 +385,7 @@ export default function FoundationTermDetailPage() {
           <section id="definition" className="mt-8 scroll-mt-24">
             <h2 className="mb-2 text-sm font-semibold text-muted-foreground">정의</h2>
             <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
-              {term.definition}
+              <ConceptLinkedText text={term.definition ?? ""} />
             </p>
           </section>
         )}

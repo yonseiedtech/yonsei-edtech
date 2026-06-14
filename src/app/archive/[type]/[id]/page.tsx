@@ -615,10 +615,10 @@ export default function ArchiveDetailPage() {
           </CardHeader>
           <CardContent>
             <p className="mb-3 text-sm text-muted-foreground">
-              이 개념과 동일한 변인으로 측정·연구되는 개념입니다. 함께 살펴보면 개념 간 관계를 이해하는 데 도움이 됩니다.
+              이 개념과 같은 변인 또는 주제(태그)로 연결되는 개념입니다. 함께 살펴보면 개념 간 관계를 이해하는 데 도움이 됩니다.
             </p>
-            <div className="flex flex-wrap gap-1.5">
-              {relatedConcepts.map((c) => (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {relatedConcepts.slice(0, 18).map((c) => (
                 <Link key={c.id} href={`/archive/concept/${c.id}`}>
                   <Badge
                     variant="outline"
@@ -631,6 +631,11 @@ export default function ArchiveDetailPage() {
                   </Badge>
                 </Link>
               ))}
+              {relatedConcepts.length > 18 && (
+                <span className="text-xs text-muted-foreground">
+                  외 {relatedConcepts.length - 18}개
+                </span>
+              )}
             </div>
           </CardContent>
         </Card>
