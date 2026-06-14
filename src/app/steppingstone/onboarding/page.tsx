@@ -15,6 +15,7 @@ import {
   Download,
   Info,
   ArrowRight,
+  Laptop,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isStaffOrAbove } from "@/lib/permissions";
@@ -164,6 +165,47 @@ function ItemCard({ item, done, canCheck, onToggle }: ItemCardProps) {
     </div>
   );
 }
+
+// 교내 IT 서비스 · 무료 소프트웨어 (사이클 106) — 연세대 정보화처 software.do 기반.
+// 데이터 기반 가이드 항목과 별개로 항상 노출되는 정적 참고 섹션.
+const IT_SERVICES: { title: string; desc: string; url: string | null; tag: string }[] = [
+  {
+    title: "연세포털 · 연세메일",
+    desc: "수강신청·증명서·학사공지의 출발점. 입학 후 가장 먼저 계정을 활성화하세요.",
+    url: "https://portal.yonsei.ac.kr",
+    tag: "필수",
+  },
+  {
+    title: "Office 365 (교외 5대 무료)",
+    desc: "Word·Excel·PowerPoint를 개인 기기 5대까지 무료로 설치할 수 있습니다.",
+    url: "https://o365.yonsei.ac.kr",
+    tag: "문서",
+  },
+  {
+    title: "통계 패키지 SPSS · SAS · Stata",
+    desc: "교육공학 양적연구의 필수 도구. 재학생은 무료 라이선스로 내려받을 수 있어요.",
+    url: "https://helpdesk3.yonsei.ac.kr/user/rental_soft2.asp",
+    tag: "연구",
+  },
+  {
+    title: "MATLAB · 한글 · 백신(V3) 등",
+    desc: "그 밖의 캠퍼스 라이선스 소프트웨어도 같은 곳에서 다운로드할 수 있습니다.",
+    url: "https://helpdesk3.yonsei.ac.kr/user/rental_soft2.asp",
+    tag: "SW",
+  },
+  {
+    title: "eduroam 캠퍼스 와이파이",
+    desc: "교내는 물론 전 세계 대학에서 연세 계정으로 자동 연결되는 무선 인터넷입니다.",
+    url: null,
+    tag: "네트워크",
+  },
+  {
+    title: "학술정보원 · KAFE 클라우드",
+    desc: "전자저널·전자책(인터넷북)과 학교 클라우드 저장공간을 학업·연구에 활용하세요.",
+    url: "https://library.yonsei.ac.kr",
+    tag: "학술",
+  },
+];
 
 export default function OnboardingPage() {
   const { user } = useAuthStore();
@@ -401,6 +443,54 @@ export default function OnboardingPage() {
           ))}
         </div>
       )}
+
+      {/* 교내 IT 서비스 · 무료 소프트웨어 — 등록금 효용 높이기 (사용자 요청, 사이클 106) */}
+      <section className="mt-10">
+        <div className="mb-3 flex items-center gap-2">
+          <Laptop size={20} className="text-blue-600 dark:text-blue-400" />
+          <h2 className="text-lg font-bold">교내 IT 서비스 · 무료 소프트웨어</h2>
+        </div>
+        <p className="mb-4 text-sm text-muted-foreground">
+          등록금에 이미 포함된 교내 IT 자원입니다. 신입생이라면 입학 직후 챙겨 두면 학업·연구에 큰 도움이 됩니다.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {IT_SERVICES.map((s) => (
+            <div key={s.title} className="rounded-2xl border bg-card p-4">
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="text-sm font-semibold">{s.title}</h3>
+                <Badge variant="secondary" className="shrink-0 text-[9px]">
+                  {s.tag}
+                </Badge>
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                {s.desc}
+              </p>
+              {s.url && (
+                <a
+                  href={s.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                >
+                  <ExternalLink size={12} /> 바로가기
+                </a>
+              )}
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">
+          전체 안내:{" "}
+          <a
+            href="https://yis.yonsei.ac.kr/ics/service/software.do"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary underline hover:text-primary/80"
+          >
+            정보화처 소프트웨어 서비스
+          </a>{" "}
+          · 문의 software@yonsei.ac.kr
+        </p>
+      </section>
     </PageContainer>
   );
 }
