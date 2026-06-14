@@ -44,13 +44,14 @@ interface EventForm {
   rsvpDeadline: string;
   capacity: string;
   hostName: string;
+  semester: string;
   status: NetworkingEventStatus;
   published: boolean;
 }
 
 const EMPTY_FORM: EventForm = {
   type: "regular", title: "", description: "", startAt: "", location: "",
-  feeAmount: "0", rsvpDeadline: "", capacity: "", hostName: "", status: "upcoming", published: true,
+  feeAmount: "0", rsvpDeadline: "", capacity: "", hostName: "", semester: "", status: "upcoming", published: true,
 };
 
 /** ISO ↔ datetime-local 변환 */
@@ -171,6 +172,7 @@ function EventFormCard({
           startAt: isoToLocal(initial.startAt), location: initial.location ?? "",
           feeAmount: String(initial.feeAmount ?? 0), rsvpDeadline: isoToLocal(initial.rsvpDeadline),
           capacity: initial.capacity ? String(initial.capacity) : "", hostName: initial.hostName ?? "",
+          semester: initial.semester ?? "",
           status: initial.status, published: initial.published,
         }
       : EMPTY_FORM,
@@ -193,6 +195,7 @@ function EventFormCard({
         rsvpDeadline: form.rsvpDeadline ? localToIso(form.rsvpDeadline) : undefined,
         capacity: form.capacity ? Number(form.capacity) : undefined,
         hostName: form.hostName.trim() || undefined,
+        semester: form.semester.trim() || undefined,
         status: form.status, published: form.published, updatedAt: now,
       };
       if (initial) {
@@ -246,6 +249,9 @@ function EventFormCard({
         </label>
         <label className="text-xs">주최
           <Input value={form.hostName} onChange={(e) => set("hostName", e.target.value)} className="mt-1" placeholder="총무" />
+        </label>
+        <label className="text-xs">운영 학기
+          <Input value={form.semester} onChange={(e) => set("semester", e.target.value)} className="mt-1" placeholder="예: 2026-1" />
         </label>
         <label className="text-xs sm:col-span-2">설명
           <textarea value={form.description} onChange={(e) => set("description", e.target.value)} rows={2} className="mt-1 w-full rounded-lg border bg-background px-2 py-1.5 text-sm" />

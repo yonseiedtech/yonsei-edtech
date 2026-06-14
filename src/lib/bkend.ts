@@ -114,6 +114,8 @@ import type {
   NetworkingEvent,
   NetworkingRsvp,
   NetworkingDue,
+  NetworkingAvailability,
+  NetworkingEventProgram,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -523,6 +525,27 @@ export const networkingDuesApi = {
   update: (id: string, data: Partial<NetworkingDue>) =>
     dataApi.update<NetworkingDue>("networking_dues", id, data as unknown as Record<string, unknown>),
   remove: (id: string) => dataApi.delete("networking_dues", id),
+};
+
+// ── 일정 조율(poll) 응답 · 세부 프로그램 (사이클 124) ──
+export const networkingAvailabilityApi = {
+  listByEvent: (eventId: string) =>
+    dataApi.list<NetworkingAvailability>("networking_availability", { "filter[eventId]": eventId, limit: 500 }),
+  create: (data: Omit<NetworkingAvailability, "id">) =>
+    dataApi.create<NetworkingAvailability>("networking_availability", data as unknown as Record<string, unknown>),
+  update: (id: string, data: Partial<NetworkingAvailability>) =>
+    dataApi.update<NetworkingAvailability>("networking_availability", id, data as unknown as Record<string, unknown>),
+  remove: (id: string) => dataApi.delete("networking_availability", id),
+};
+
+export const networkingProgramsApi = {
+  listByEvent: (eventId: string) =>
+    dataApi.list<NetworkingEventProgram>("networking_event_programs", { "filter[eventId]": eventId, limit: 200 }),
+  create: (data: Omit<NetworkingEventProgram, "id">) =>
+    dataApi.create<NetworkingEventProgram>("networking_event_programs", data as unknown as Record<string, unknown>),
+  update: (id: string, data: Partial<NetworkingEventProgram>) =>
+    dataApi.update<NetworkingEventProgram>("networking_event_programs", id, data as unknown as Record<string, unknown>),
+  remove: (id: string) => dataApi.delete("networking_event_programs", id),
 };
 
 export const siteSettingsApi = {

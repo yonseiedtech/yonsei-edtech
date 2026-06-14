@@ -29,10 +29,21 @@ export interface NetworkingEvent {
   type: NetworkingEventType;
   title: string;
   description?: string;
-  /** 행사 시작 일시 (ISO) */
+  /** 행사 시작 일시 (ISO). 일정 투표(poll) 미확정 시 빈 문자열 */
   startAt: string;
   /** 종료 일시 (ISO, 선택) */
   endAt?: string;
+  /** 일정 결정 방식 — fixed: 일시 고정 / poll: 가능일 투표 후 확정 (기본 fixed, 하위호환) */
+  schedulingMode?: "fixed" | "poll";
+  /** poll 모드 후보 기간 (YYYY-MM-DD) */
+  pollPeriodStart?: string;
+  pollPeriodEnd?: string;
+  /** poll 모드 시간대 옵션 (예: ["18:00","19:00"]). 비우면 날짜만 */
+  pollTimeSlots?: string[];
+  /** poll 응답 마감 (ISO) */
+  pollDeadline?: string;
+  /** poll 결정 — manual: 운영진 지정 / auto: 최다 가능일 */
+  pollDecisionMode?: "manual" | "auto";
   location?: string;
   /** 회비(원). 0 이면 무료 */
   feeAmount: number;
@@ -113,3 +124,49 @@ export interface NetworkingSettlement {
   unpaidAmount: number;
   exemptCount: number;
 }
+
+// ── 일정 조율(poll) · 세부 프로그램 (사이클 124) ──
+
+/** 일정 투표 응답 — 회원이 가능한 날짜/시간을 체크 */
+export interface NetworkingAvailability {
+  id: string;
+  eventId: string;
+  userId: string;
+  userName: string;
+  /** 가능 슬롯 — 날짜만 "YYYY-MM-DD" 또는 시간대 "YYYY-MM-DD|HH:MM" */
+  availableSlots: string[];
+  note?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** 일정 투표 슬롯 집계 (실시간 히트맵·최다 가능일 추천) */
+export interface SlotTally {
+  /** "YYYY-MM-DD" 또는 "YYYY-MM-DD|HH:MM" */
+  slot: string;
+  date: string;
+  time?: string;
+  count: number;
+  names: string[];
+}
+
+/** 행사 세부 프로그램 — 행사 등록 후 시간표를 구성 */
+export interface NetworkingEventProgram {
+  id: string;
+  eventId: string;
+  /** 정렬 순서 */
+  order: number;
+  /** "HH:MM" (선택) */
+  startTime?: string;
+  endTime?: string;
+  title: string;
+  presenter?: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const NETWORKING_DECISION_LABELS: Record<"manual" | "auto", string> = {
+  manual: "운영진이 직접 지정",
+  auto: "응답 종합 후 최다 가능일",
+};
