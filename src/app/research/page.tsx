@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PageHeader from "@/components/ui/page-header";
 import EmptyState from "@/components/ui/empty-state";
-import { alumniThesesApi } from "@/lib/bkend";
+import { alumniThesesApi, archiveVariablesApi, archiveMeasurementsApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import type { AlumniThesis } from "@/types";
 import ResearchLineageMap from "@/features/research-analytics/ResearchLineageMap";
@@ -22,6 +22,10 @@ import MethodProfile, { MethodTopStrip } from "@/features/research-analytics/Met
 import { STOPWORDS, normalizeKeyword, yearFrom } from "@/features/research-analytics/shared";
 import { usePageHeader } from "@/features/site-settings/useSiteContent";
 import PageContainer from "@/components/ui/page-container";
+import ResearchHero from "@/features/research-analytics/ResearchHero";
+import ResearchSearch from "@/features/research-analytics/ResearchSearch";
+import MultiAxisTrend from "@/features/research-analytics/MultiAxisTrend";
+import type { AxisKey } from "@/features/research-analytics/multi-axis";
 
 interface EraSummary {
   label: string;
@@ -51,6 +55,8 @@ function pickEra(year: number | null): string | null {
 export default function ResearchAnalyticsPage() {
   const { user } = useAuthStore();
   const [theses, setTheses] = useState<AlumniThesis[]>([]);
+  const [varNames, setVarNames] = useState<Map<string, string>>(new Map());
+  const [measNames, setMeasNames] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,8 +64,15 @@ export default function ResearchAnalyticsPage() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await alumniThesesApi.list({ limit: 500 });
-        if (!cancelled) setTheses(res.data);
+        const [res, vRes, mRes] = await Promise.all([
+          alumniThesesApi.list({ limit: 500 }),
+          archiveVariablesApi.list().catch(() => ({ data: [] as { id: string; name: string }[] })),
+          archiveMeasurementsApi.list().catch(() => ({ data: [] as { id: string; name: string }[] })),
+        ]);
+        if (cancelled) return;
+        setTheses(res.data);
+        setVarNames(new Map((vRes.data as { id: string; name: string }[]).map((x) => [x.id, x.name])));
+        setMeasNames(new Map((mRes.data as { id: string; name: string }[]).map((x) => [x.id, x.name])));
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "불러오지 못했습니다");
       } finally {
@@ -130,6 +143,29 @@ export default function ResearchAnalyticsPage() {
     });
   }, [theses]);
 
+  const topKeywords = useMemo(() => {
+    const m = new Map<string, number>();
+    theses.forEach((t) =>
+      (t.keywords ?? []).forEach((raw) => {
+        const k = normalizeKeyword(raw);
+        if (k && k.length >= 2 && !STOPWORDS.has(k)) m.set(k, (m.get(k) ?? 0) + 1);
+      }),
+    );
+    return [...m.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 18)
+      .map(([word, count]) => ({ word, count }));
+  }, [theses]);
+
+  const nameOf = (axis: AxisKey, val: string) =>
+    axis === "variable"
+      ? varNames.get(val) ?? val
+      : axis === "measurement"
+        ? measNames.get(val) ?? val
+        : val;
+  const variableNameOf = (id: string) => varNames.get(id) ?? id;
+  const measurementNameOf = (id: string) => measNames.get(id) ?? id;
+
   return (
     <PageContainer width="default">
       <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -141,14 +177,6 @@ export default function ResearchAnalyticsPage() {
           description={header.description}
         />
 
-        <Separator className="mt-6" />
-
-        {/* ── 스탯 카드 ── */}
-        <div className="mt-6 grid grid-cols-3 gap-3">
-          <StatCard label="수집 논문" value={`${stats.total}건`} loading={loading} />
-          <StatCard label="기간" value={stats.yearRange} loading={loading} />
-          <StatCard label="고유 키워드" value={`${keywordCount}개`} loading={loading} />
-        </div>
 
         {/* ── 본문 ── */}
         {loading ? (
@@ -172,8 +200,38 @@ export default function ResearchAnalyticsPage() {
           </div>
         ) : (
           <>
+            {/* ── 히어로 (리브랜딩, 사이클 121) ── */}
+            <ResearchHero
+              total={stats.total}
+              yearRange={stats.yearRange}
+              keywordCount={keywordCount}
+              topKeywords={topKeywords}
+              eras={eras.map((e) => ({
+                label: e.label,
+                range: e.range,
+                count: e.count,
+                highlight: e.highlight,
+              }))}
+            />
+
+            {/* ── 통합 검색 ── */}
+            <div className="mt-8">
+              <ResearchSearch
+                theses={theses}
+                variableNameOf={variableNameOf}
+                measurementNameOf={measurementNameOf}
+              />
+            </div>
+
+            {/* ── 다축 트렌드 + 모음 (방법·변인·측정도구·대상) ── */}
+            <div className="mt-6">
+              <MultiAxisTrend theses={theses} nameOf={nameOf} />
+            </div>
+
             {/* 연구 설계 Top 5 — 모든 탭 공통 상단 노출 (모바일 1열) */}
-            <MethodTopStrip theses={theses} />
+            <div className="mt-6">
+              <MethodTopStrip theses={theses} />
+            </div>
 
             <Tabs defaultValue="keyword" className="mt-8">
               <TabsList variant="line" className="flex-wrap justify-start gap-1 border-b bg-transparent p-0">
