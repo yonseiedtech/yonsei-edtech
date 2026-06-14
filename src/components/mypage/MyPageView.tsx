@@ -584,7 +584,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                       <ArrowRight size={18} className="shrink-0 self-center text-violet-700 dark:text-violet-300" />
                     </Link>
                   )}
-                  {/* TODO(diagnostic): 진단 완료를 학습 잔디 활동으로 인정(가중치) — diagnostic_results 를 LearningStreak SCORES 에 합산. 가중치·중복 가산 정책 합의 후 별도 작업. */}
+                  {/* 사이클 122 완료: 진단 완료를 학습 잔디 활동으로 인정 — LearningStreak SCORES.diagnosticComplete(+5)로 createdAt 일별 1회 가산(연구활동🔬). */}
                 </div>
               )}
 

@@ -32,6 +32,7 @@ import {
   writingPaperHistoryApi,
   userActivityLogsApi,
   paperReadingLogsApi,
+  diagnosticResultsApi,
 } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import GradActivityDashboard from "./GradActivityDashboard";
@@ -47,6 +48,7 @@ import type {
   UserActivityLog,
 } from "@/types";
 import type { PaperReadingLog } from "@/types/paper-reading";
+import type { DiagnosticResult } from "@/types/diagnostic";
 import { cn } from "@/lib/utils";
 
 const WEEKS = 53;
@@ -62,6 +64,8 @@ const SCORES = {
   courseReview: 5,
   post: 5,
   assignmentComplete: 5,
+  // 사이클 122: 연구 준비도 진단 완료(능동 학습) — 게시글·과제 완료와 동급
+  diagnosticComplete: 5,
   paperReading: 4, // 논문·아카이브 열람 1일
   reflection: 3,
   timer30: 3,
@@ -563,6 +567,13 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
     enabled: !!userId,
     staleTime: 5 * 60_000,
   });
+  // 사이클 122: 연구 준비도 진단 완료 — 일별 1회 가산
+  const { data: diagnosticRes } = useQuery({
+    queryKey: ["streak", "diagnostic-results", userId],
+    queryFn: () => diagnosticResultsApi.listByUser(userId!),
+    enabled: !!userId,
+    staleTime: 5 * 60_000,
+  });
 
   // 사이클 115: scoresByDay(날짜→점수)를 분리 — full 그리드와 월별 모드가 공유
   // 사이클 117: scoresByDay(점수) + activityByDay(날짜→활동라벨별 점수) 동시 빌드 — 선택일 활동 내역용
@@ -629,6 +640,13 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
       if (r.readAt) paperReadDays.add(r.readAt);
     }
     paperReadDays.forEach((ymd) => add(ymd, SCORES.paperReading, "논문 읽기 기록"));
+    // 사이클 122: 진단평가 완료 — createdAt 기준 일별 1회 가산(같은 날 여러 번 진단해도 +5 1회)
+    const diagnosticDays = new Set<string>();
+    for (const r of (diagnosticRes?.data ?? []) as DiagnosticResult[]) {
+      const ymd = isoToYmdLocal(r.createdAt);
+      if (ymd) diagnosticDays.add(ymd);
+    }
+    diagnosticDays.forEach((ymd) => add(ymd, SCORES.diagnosticComplete, "진단평가"));
 
     return { scoresByDay: scores, activityByDay: activities };
   }, [
@@ -642,6 +660,7 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
     writingHistoryRes,
     activityLogsRes,
     paperReadingRes,
+    diagnosticRes,
   ]);
 
   const stats = useMemo<Stats>(

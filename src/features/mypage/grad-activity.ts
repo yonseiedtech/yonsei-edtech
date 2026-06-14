@@ -47,6 +47,7 @@ const ACTIVITIES: readonly ActivityDef[] = [
   { label: "논문 작성", key: "paper-writing", emoji: "✍️", area: "research" },
   { label: "논문 읽기 기록", key: "paper-reading-log", emoji: "📖", area: "research" },
   { label: "논문·아카이브 열람", key: "archive-view", emoji: "🗂️", area: "research" },
+  { label: "진단평가", key: "diagnosis", emoji: "🧭", area: "research" },
   { label: "학습 타이머", key: "study-timer", emoji: "⏱️", area: "research" },
   // 학술활동 (academic)
   { label: "세미나 출석", key: "seminar-attend", emoji: "🎤", area: "academic" },
