@@ -46,6 +46,7 @@ export default function ArchiveDetailPage() {
   const [measurements, setMeasurements] = useState<ArchiveMeasurementTool[]>([]);
   const [concepts, setConcepts] = useState<ArchiveConcept[]>([]);
   const [relatedTheses, setRelatedTheses] = useState<AlumniThesis[]>([]);
+  const [relatedConcepts, setRelatedConcepts] = useState<ArchiveConcept[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFav, setIsFav] = useState(false);
   const [readingPending, setReadingPending] = useState<string | null>(null);
@@ -77,6 +78,18 @@ export default function ArchiveDetailPage() {
               const m = await archiveMeasurementsApi.list();
               if (cancelled) return;
               setMeasurements(m.data.filter((x) => measurementIds.has(x.id)));
+            }
+            // 사이클 107: 관련 개념 — 같은 변인을 공유하는 다른 개념 (variable.conceptIds 역참조)
+            const relIds = new Set<string>();
+            linked.forEach((x) =>
+              x.conceptIds?.forEach((cid) => {
+                if (cid !== id) relIds.add(cid);
+              }),
+            );
+            if (relIds.size > 0) {
+              const allC = await archiveConceptsApi.list();
+              if (cancelled) return;
+              setRelatedConcepts(allC.data.filter((x) => relIds.has(x.id)));
             }
           }
         } else if (type === "variable") {
@@ -579,6 +592,41 @@ export default function ArchiveDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* 사이클 107: 관련 개념 — 같은 변인을 공유하는 개념 (개념 상세 한정) */}
+      {type === "concept" && relatedConcepts.length > 0 && (
+        <Card className="mt-6 scroll-mt-24">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Network className="h-4 w-4 text-muted-foreground" />
+              관련 개념
+              <span className="text-xs font-normal text-muted-foreground">
+                · 같은 변인 공유
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-3 text-sm text-muted-foreground">
+              이 개념과 동일한 변인으로 측정·연구되는 개념입니다. 함께 살펴보면 개념 간 관계를 이해하는 데 도움이 됩니다.
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {relatedConcepts.map((c) => (
+                <Link key={c.id} href={`/archive/concept/${c.id}`}>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "cursor-pointer transition-shadow hover:shadow-sm",
+                      ARCHIVE_ITEM_TYPE_COLORS.concept,
+                    )}
+                  >
+                    {c.name}
+                  </Badge>
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* 관련 졸업생 논문 */}
       <Card id="related-theses" className="mt-6 scroll-mt-24">
