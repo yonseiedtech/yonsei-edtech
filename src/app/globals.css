@@ -2,15 +2,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* 사이클 112: 명함 디자인 테마 동적 클래스 safelist — card-themes.ts 의 ${theme.x} 런타임 조합이
-   Tailwind v4 정적 스캔에서 누락(purge)되지 않도록 명시. default(primary)는 전역에서 쓰여 제외. */
-@source inline("{from-indigo-700,from-emerald-600,from-rose-500,from-slate-700,from-amber-500}");
-@source inline("{to-blue-500,to-teal-400,to-pink-400,to-slate-500,to-orange-400}");
-@source inline("{bg-indigo-100,bg-emerald-100,bg-rose-100,bg-slate-200,bg-amber-100}");
-@source inline("{text-indigo-700,text-emerald-700,text-rose-700,text-slate-700,text-amber-700}");
-@source inline("{text-indigo-500,text-emerald-600,text-rose-500,text-slate-500,text-amber-600}");
-@source inline("{bg-indigo-700,bg-emerald-600,bg-rose-500,bg-slate-700,bg-amber-500}");
-
 @custom-variant dark (&:is(.dark *));
 
 html {

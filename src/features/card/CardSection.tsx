@@ -119,7 +119,8 @@ function CardTab({
               )}
             >
               <span
-                className={cn("h-3 w-3 rounded-full", CARD_THEMES[key].swatch)}
+                className="h-3 w-3 rounded-full"
+                style={{ backgroundColor: CARD_THEMES[key].swatch }}
                 aria-hidden
               />
               {CARD_THEME_LABELS[key]}

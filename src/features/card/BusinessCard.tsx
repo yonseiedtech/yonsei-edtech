@@ -57,7 +57,10 @@ const BusinessCard = forwardRef<HTMLDivElement, BusinessCardProps>(
         style={{ aspectRatio: "9 / 16" }}
       >
         {/* Top accent */}
-        <div className={`absolute inset-x-0 top-0 h-28 bg-gradient-to-br ${theme.accent}`} />
+        <div
+          className="absolute inset-x-0 top-0 h-28"
+          style={{ backgroundImage: `linear-gradient(135deg, ${theme.accentFrom}, ${theme.accentTo})` }}
+        />
 
         <div className="relative flex h-full flex-col px-6 pt-8 pb-6">
           {/* 학회 로고 + 엠블럼 */}
@@ -101,7 +104,7 @@ const BusinessCard = forwardRef<HTMLDivElement, BusinessCardProps>(
               <p className="truncate">{user.contactEmail ?? user.email}</p>
             ) : null}
             {user.phone ? <p>{formatPhone(user.phone)}</p> : null}
-            {user.field ? <p className={`italic ${theme.fieldText}`}>#{user.field}</p> : null}
+            {user.field ? <p className="italic" style={{ color: theme.fieldText }}>#{user.field}</p> : null}
           </div>
 
           {/* 관심 분야 키워드 */}
@@ -110,7 +113,8 @@ const BusinessCard = forwardRef<HTMLDivElement, BusinessCardProps>(
               {user.interestKeywords.slice(0, 6).map((kw) => (
                 <span
                   key={kw}
-                  className={`rounded-full ${theme.chipBg} px-2 py-0.5 text-[10px] font-medium ${theme.chipText}`}
+                  className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                  style={{ backgroundColor: theme.chipBg, color: theme.chipText }}
                 >
                   {kw}
                 </span>
