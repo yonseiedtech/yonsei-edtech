@@ -16,6 +16,7 @@ import {
   BarChart3,
   PenLine,
   FileText,
+  ClipboardCheck,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -528,6 +529,36 @@ export default function ArchiveLandingPage() {
               </div>
               <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">
                 보기
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+              </div>
+            </div>
+          </article>
+        </Link>
+
+        {/* ── 진단평가 (아카이브 개념 기반 자기점검) ── */}
+        <Link
+          href="/diagnosis"
+          className="group mt-6 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+          aria-label="교육공학 진단평가 시작"
+        >
+          <article className="rounded-2xl border-l-4 border-l-teal-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+            <div className="flex items-center gap-4 p-5">
+              <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal-100 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300">
+                <ClipboardCheck className="h-5 w-5" aria-hidden />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold tracking-tight">교육공학 진단평가</h2>
+                  <Badge variant="outline" className="text-[10px] font-medium border-teal-300 bg-teal-50 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300">
+                    NEW
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  통계방법·연구방법·핵심개념을 객관식으로 진단해 논문 작성 준비도·연구 분석 준비도를 점수로 확인하고, 약점 개념을 아카이브로 연결합니다.
+                </p>
+              </div>
+              <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">
+                시작
                 <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
               </div>
             </div>

@@ -2357,6 +2357,48 @@ export const statisticalMethodsApi = {
   delete: (id: string) => dataApi.delete("archive_statistical_methods", id),
 };
 
+// ── 진단평가 (Diagnostic Assessment) — MVP ──
+// diagnostic_questions: published 공개 read · staff+ write (firestore.rules 양쪽 게이트).
+// diagnostic_results: 본인 read/write.
+import type {
+  DiagnosticQuestion,
+  DiagnosticResult,
+} from "@/types/diagnostic";
+
+export const diagnosticQuestionsApi = {
+  /** 운영진(staff+) — draft 포함 전체 */
+  list: () =>
+    dataApi.list<DiagnosticQuestion>("diagnostic_questions", { limit: 300 }),
+  /** 공개 — published 만 (퀴즈 러너에서 사용) */
+  listPublished: () =>
+    dataApi.list<DiagnosticQuestion>("diagnostic_questions", {
+      "filter[published]": "true",
+      limit: 300,
+    }),
+  get: (id: string) =>
+    dataApi.get<DiagnosticQuestion>("diagnostic_questions", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<DiagnosticQuestion>("diagnostic_questions", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<DiagnosticQuestion>("diagnostic_questions", id, data),
+  delete: (id: string) => dataApi.delete("diagnostic_questions", id),
+};
+
+export const diagnosticResultsApi = {
+  /** 본인 진단 이력 (최신순) */
+  listByUser: (userId: string) =>
+    dataApi.list<DiagnosticResult>("diagnostic_results", {
+      "filter[userId]": userId,
+      sort: "createdAt:desc",
+      limit: 50,
+    }),
+  get: (id: string) =>
+    dataApi.get<DiagnosticResult>("diagnostic_results", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<DiagnosticResult>("diagnostic_results", data),
+  delete: (id: string) => dataApi.delete("diagnostic_results", id),
+};
+
 // ── 교육공학 아카이브 — 기초 용어 가이드 (Phase 1) ──
 // 변인·연구설계·교수설계·체제이론·측정·학습이론 기초 용어. "비슷하지만 다른" 페어 명시.
 // 공개 페이지는 published=true 만 노출. 운영진(staff+) 은 draft 포함 전체 조회.
