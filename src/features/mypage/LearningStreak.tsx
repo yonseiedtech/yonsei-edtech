@@ -294,10 +294,17 @@ const MONTH_LABELS_KR = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"
  * 월별 잔디 (사이클 115, 사용자 요청) — 우측 컬럼(좁은 폭)용.
  * 1년 53주 대신 한 달치 7열 그리드 + 좌우 월 네비 + 하단 통계(활동일·평균점수·활동률).
  */
-function StreakMonthlyView({ scoresByDay }: { scoresByDay: Map<string, number> }) {
+function StreakMonthlyView({
+  scoresByDay,
+  activityByDay,
+}: {
+  scoresByDay: Map<string, number>;
+  activityByDay: Map<string, Map<string, number>>;
+}) {
   const now = useMemo(() => new Date(), []);
   const todayYmd = ymdLocal(now);
   const [cur, setCur] = useState({ y: now.getFullYear(), m: now.getMonth() });
+  const [selectedYmd, setSelectedYmd] = useState(todayYmd);
 
   const view = useMemo(() => {
     const startWd = new Date(cur.y, cur.m, 1).getDay();
@@ -377,20 +384,35 @@ function StreakMonthlyView({ scoresByDay }: { scoresByDay: Map<string, number> }
       </div>
       <div className="mt-1 grid grid-cols-7 gap-1">
         {view.cells.map((c) => (
-          <div
+          <button
             key={c.key}
+            type="button"
+            disabled={!c.inMonth}
+            onClick={() => c.inMonth && setSelectedYmd(c.ymd)}
             title={c.inMonth ? `${c.ymd} · ${c.score}점` : undefined}
             className={cn(
-              "flex aspect-square items-center justify-center rounded-[4px] text-[10px]",
+              "flex aspect-square items-center justify-center rounded-[4px] text-[10px] transition",
               c.inMonth ? intensityClass(c.score) : "bg-transparent",
               c.inMonth && c.ymd === todayYmd && "ring-1 ring-primary ring-offset-1",
+              c.inMonth && c.ymd === selectedYmd && "outline outline-2 outline-offset-1 outline-emerald-500",
             )}
           >
             <span className={cn(c.score >= 11 ? "text-white/90" : "text-foreground/55")}>
               {c.inMonth ? c.day : ""}
             </span>
-          </div>
+          </button>
         ))}
+      </div>
+
+      {/* 색 강도 범례 */}
+      <div className="mt-2 flex items-center justify-center gap-1 text-[9px] text-muted-foreground">
+        <span>적음</span>
+        {["bg-muted/40", "bg-emerald-200", "bg-emerald-400", "bg-emerald-500", "bg-emerald-700"].map(
+          (b) => (
+            <span key={b} className={cn("h-2.5 w-2.5 rounded-[2px]", b)} aria-hidden />
+          ),
+        )}
+        <span>많음</span>
       </div>
 
       <div className="mt-3 flex items-center justify-around border-t pt-2 text-center text-[11px]">
@@ -406,6 +428,32 @@ function StreakMonthlyView({ scoresByDay }: { scoresByDay: Map<string, number> }
           <p className="font-bold text-emerald-600 tabular-nums">{view.rate}%</p>
           <p className="text-muted-foreground">활동률</p>
         </div>
+      </div>
+
+      {/* 선택일 활동 내역 (기본 오늘) — 잔디가 무엇으로 채워졌는지 */}
+      <div className="mt-3 border-t pt-2">
+        <p className="mb-1 text-[11px] font-semibold text-foreground/80">
+          {selectedYmd === todayYmd ? "오늘" : selectedYmd.slice(5).replace("-", "/")} 활동
+        </p>
+        {(() => {
+          const acts = activityByDay.get(selectedYmd);
+          if (!acts || acts.size === 0) {
+            return <p className="text-[11px] text-muted-foreground/70">활동 기록이 없어요.</p>;
+          }
+          return (
+            <div className="flex flex-wrap gap-1">
+              {Array.from(acts.entries()).map(([label, score]) => (
+                <span
+                  key={label}
+                  className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300"
+                >
+                  {label}
+                  <span className="font-semibold">+{score}</span>
+                </span>
+              ))}
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
@@ -508,48 +556,48 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
   });
 
   // 사이클 115: scoresByDay(날짜→점수)를 분리 — full 그리드와 월별 모드가 공유
-  const scoresByDay = useMemo(() => {
+  // 사이클 117: scoresByDay(점수) + activityByDay(날짜→활동라벨별 점수) 동시 빌드 — 선택일 활동 내역용
+  const { scoresByDay, activityByDay } = useMemo(() => {
     const scores = new Map<string, number>();
-    function add(ymd: string | null, score: number) {
+    const activities = new Map<string, Map<string, number>>();
+    function add(ymd: string | null, score: number, label: string) {
       if (!ymd) return;
       scores.set(ymd, (scores.get(ymd) ?? 0) + score);
+      const day = activities.get(ymd) ?? new Map<string, number>();
+      day.set(label, (day.get(label) ?? 0) + score);
+      activities.set(ymd, day);
     }
 
     for (const a of (attendeesRes?.data ?? []) as SeminarAttendee[]) {
       if (!a.checkedIn) continue;
       const ymd = isoToYmdLocal(a.checkedInAt) ?? isoToYmdLocal(a.createdAt);
       if (!ymd) continue;
-      add(ymd, SCORES.attendance);
+      add(ymd, SCORES.attendance, "세미나 출석");
     }
     for (const s of (studyRes?.data ?? []) as StudySession[]) {
       if (!s.endTime) continue;
       if ((s.durationMinutes ?? 0) < 30) continue;
       const ymd = isoToYmdLocal(s.endTime) ?? isoToYmdLocal(s.startTime);
       if (!ymd) continue;
-      add(ymd, SCORES.timer30);
+      add(ymd, SCORES.timer30, "학습 타이머");
     }
     for (const p of (postsRes?.data ?? []) as Post[]) {
-      const ymd = isoToYmdLocal(p.createdAt);
-      add(ymd, SCORES.post);
+      add(isoToYmdLocal(p.createdAt), SCORES.post, "게시글 작성");
     }
     for (const r of (courseReviewsRes?.data ?? []) as CourseReview[]) {
-      const ymd = isoToYmdLocal(r.createdAt);
-      add(ymd, SCORES.courseReview);
+      add(isoToYmdLocal(r.createdAt), SCORES.courseReview, "강의 후기");
     }
     for (const c of (commentsRes?.data ?? []) as Comment[]) {
-      const ymd = isoToYmdLocal(c.createdAt);
-      add(ymd, SCORES.comment);
+      add(isoToYmdLocal(c.createdAt), SCORES.comment, "댓글");
     }
-    // Sprint 1 — 회고 작성 (createdAt 기준, updatedAt이 더 최신이면 그 날짜에도 가산은 X — 1회만)
+    // Sprint 1 — 회고 작성
     for (const r of (reflectionsRes?.data ?? []) as StudySessionReflection[]) {
-      const ymd = isoToYmdLocal(r.createdAt);
-      add(ymd, SCORES.reflection);
+      add(isoToYmdLocal(r.createdAt), SCORES.reflection, "회고 작성");
     }
-    // Sprint 2 — 과제 완료 제출 (status=completed 만, submittedAt 기준)
+    // Sprint 2 — 과제 완료 제출
     for (const s of (assignmentSubmissionsRes?.data ?? []) as StudyAssignmentSubmission[]) {
       if (s.status !== "completed") continue;
-      const ymd = isoToYmdLocal(s.submittedAt) ?? isoToYmdLocal(s.updatedAt);
-      add(ymd, SCORES.assignmentComplete);
+      add(isoToYmdLocal(s.submittedAt) ?? isoToYmdLocal(s.updatedAt), SCORES.assignmentComplete, "과제 완료");
     }
     // 사이클 116: 논문 작성 — writing_paper_history(자동 로그) 일별 1회 가산
     const writingDays = new Set<string>();
@@ -557,7 +605,7 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
       const ymd = isoToYmdLocal(h.createdAt);
       if (ymd) writingDays.add(ymd);
     }
-    writingDays.forEach((ymd) => add(ymd, SCORES.paperWriting));
+    writingDays.forEach((ymd) => add(ymd, SCORES.paperWriting, "논문 작성"));
     // 사이클 116: 논문 읽기/연구 — 아카이브·연구 열람 로그 일별 1회 가산
     const readingDays = new Set<string>();
     for (const l of (activityLogsRes?.data ?? []) as UserActivityLog[]) {
@@ -565,9 +613,9 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
       const ymd = isoToYmdLocal(l.createdAt);
       if (ymd) readingDays.add(ymd);
     }
-    readingDays.forEach((ymd) => add(ymd, SCORES.paperReading));
+    readingDays.forEach((ymd) => add(ymd, SCORES.paperReading, "논문·아카이브 열람"));
 
-    return scores;
+    return { scoresByDay: scores, activityByDay: activities };
   }, [
     attendeesRes,
     studyRes,
@@ -620,7 +668,7 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
 
   // 사이클 115: compact(대시보드 우측)는 월별 잔디 뷰로 — 좁은 폭에 맞춤
   if (compact) {
-    return <StreakMonthlyView scoresByDay={scoresByDay} />;
+    return <StreakMonthlyView scoresByDay={scoresByDay} activityByDay={activityByDay} />;
   }
 
   return (
