@@ -193,7 +193,7 @@ export default function ProfileSummaryCard({ user }: { user: User }) {
 
         {/* 프로필 수정 링크 */}
         <Link
-          href="/mypage"
+          href="/mypage?tab=settings"
           className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-background px-3 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
         >
           <PencilLine size={12} />

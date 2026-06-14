@@ -712,7 +712,11 @@ export default function ProfileEditor({ user }: Props) {
         </div>
       </div>
 
-      <div className="flex justify-end">
+      {/* 저장 바 — 폼이 길어 위쪽 항목 수정 중에도 항상 보이도록 하단 sticky 고정 (사용자 요청) */}
+      <div className="sticky bottom-0 z-10 -mx-6 -mb-6 mt-2 flex items-center justify-end gap-3 rounded-b-2xl border-t bg-card/95 px-6 py-3 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+        <span className="mr-auto hidden text-xs text-muted-foreground sm:inline">
+          변경 후 저장 버튼을 눌러 반영하세요
+        </span>
         <Button type="submit" disabled={isSaving}>
           <Save size={16} className="mr-1" />
           {isSaving ? "저장 중..." : "저장"}

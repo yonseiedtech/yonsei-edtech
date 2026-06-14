@@ -156,6 +156,10 @@ export default function ArchiveDetailPage() {
           const arr = (t[key] as string[] | undefined) ?? [];
           return arr.includes(id);
         });
+        // 최근 졸업(학위수여년월 YYYY-MM) 순으로 정렬 — 문자열 내림차순 = 최신순
+        matched.sort((a, b) =>
+          (b.awardedYearMonth || "").localeCompare(a.awardedYearMonth || ""),
+        );
         setRelatedTheses(matched);
       } catch (err) {
         console.error("[archive-detail] related theses load failed", err);
