@@ -66,31 +66,39 @@ export default function ArchiveDetailPage() {
           const c = await archiveConceptsApi.get(id);
           if (cancelled) return;
           setItem(c);
+          let linkedVars: ArchiveVariable[] = [];
           if (c.variableIds?.length) {
             const v = await archiveVariablesApi.list();
             if (cancelled) return;
-            const linked = v.data.filter((x) => c.variableIds!.includes(x.id));
-            setVariables(linked);
+            linkedVars = v.data.filter((x) => c.variableIds!.includes(x.id));
+            setVariables(linkedVars);
             // 변인의 측정도구도 함께 로드
             const measurementIds = new Set<string>();
-            linked.forEach((x) => x.measurementIds?.forEach((mid) => measurementIds.add(mid)));
+            linkedVars.forEach((x) => x.measurementIds?.forEach((mid) => measurementIds.add(mid)));
             if (measurementIds.size > 0) {
               const m = await archiveMeasurementsApi.list();
               if (cancelled) return;
               setMeasurements(m.data.filter((x) => measurementIds.has(x.id)));
             }
-            // 사이클 107: 관련 개념 — 같은 변인을 공유하는 다른 개념 (variable.conceptIds 역참조)
-            const relIds = new Set<string>();
-            linked.forEach((x) =>
-              x.conceptIds?.forEach((cid) => {
-                if (cid !== id) relIds.add(cid);
+          }
+          // 사이클 109: 관련 개념 — 같은 변인 공유(variable.conceptIds 역참조) ∪ 같은 태그(주제) 공유
+          const relIds = new Set<string>();
+          linkedVars.forEach((x) =>
+            x.conceptIds?.forEach((cid) => {
+              if (cid !== id) relIds.add(cid);
+            }),
+          );
+          const myTags = new Set((c.tags ?? []).filter(Boolean));
+          if (relIds.size > 0 || myTags.size > 0) {
+            const allC = await archiveConceptsApi.list();
+            if (cancelled) return;
+            setRelatedConcepts(
+              allC.data.filter((x) => {
+                if (x.id === id) return false;
+                if (relIds.has(x.id)) return true;
+                return (x.tags ?? []).some((t) => myTags.has(t));
               }),
             );
-            if (relIds.size > 0) {
-              const allC = await archiveConceptsApi.list();
-              if (cancelled) return;
-              setRelatedConcepts(allC.data.filter((x) => relIds.has(x.id)));
-            }
           }
         } else if (type === "variable") {
           const v = await archiveVariablesApi.get(id);
@@ -601,7 +609,7 @@ export default function ArchiveDetailPage() {
               <Network className="h-4 w-4 text-muted-foreground" />
               관련 개념
               <span className="text-xs font-normal text-muted-foreground">
-                · 같은 변인 공유
+                · 같은 변인·주제 공유
               </span>
             </CardTitle>
           </CardHeader>
