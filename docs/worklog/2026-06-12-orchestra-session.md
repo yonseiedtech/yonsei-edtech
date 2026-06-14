@@ -1,10 +1,11 @@
 
-## 배포 91차 — 사이클 121 연구분석 페이지 리브랜딩 Phase 1 (사용자 요청)
+## 배포 92차 — 사이클 121~123 리브랜딩 핫픽스 + 부엉이 읽기/쓰기 공용 + 보고서/계획서 타이머
 
-- ResearchHero(designer 협업, 신규): 다이내믹 트렌디 히어로 — 그라데이션/글래스모피즘, 카운트업 통계, 키워드 부유 태그, 시대 타임라인, 페르소나 CTA 4종, 슬로건 "교육공학의 혁신의 시작, 연세교육공학"
-- multi-axis.ts(신규): 다축 엔진 — topItems·axisTrendByEra·collectByItem·collectByYear·countByYear·searchTheses
-- ResearchSearch(신규): 제목·키워드·변인·방법·측정도구 통합 검색 → 논문 결과 카드
-- MultiAxisTrend(신규): 연구방법·변인·측정도구·연구대상 축 토글 시대 트렌드(빈도바+시대 스파크) + 항목 클릭 drill-down 논문 모음
+- 게이트91 BLOCKED 핫픽스: multi-axis/ResearchSearch의 subjects·자동추출 researchMethods를 analysis(ThesisAnalysisProfile) 경유로 수정(TS2339)
+- FloatingReadingTimer: 로그인 사용자에게 상시 표시(reading 한정 제거 — '부엉이 안 보임' 지적 반영) + 읽기/쓰기 공용(reading→읽음 기록 모달, writing→작성 시간 toast) + idle 격려·읽기 기록
+- WritingStartButton(신규): 글쓰기 타이머 공용 버튼(type writing)
+- ResearchProposalEditor·ResearchReportEditor 저장 영역에 '글쓰기 타이머' 버튼 → 부엉이가 연구계획서·연구보고서 작성 시간도 측정
+
 - page.tsx: 변인/측정도구 이름맵 fetch(Promise.all), 히어로+검색+다축 배치, 작은 스탯카드→히어로 카운트업 대체
 - 다음 Phase: 연도별 논문 모음·스토리텔링 스크롤·drill-down 키워드 연동
 정산·CSV)

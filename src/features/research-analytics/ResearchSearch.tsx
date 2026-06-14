@@ -89,7 +89,7 @@ export default function ResearchSearch({ theses, variableNameOf, measurementName
                             {v}
                           </span>
                         ))}
-                        {(t.researchMethods ?? []).slice(0, 1).map((m) => (
+                        {(t.analysis?.researchMethods ?? []).slice(0, 1).map((m) => (
                           <span key={m} className="rounded bg-blue-50 px-1 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
                             {m}
                           </span>

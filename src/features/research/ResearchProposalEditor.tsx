@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import WritingStartButton from "@/features/research/study-timer/WritingStartButton";
 import { Input } from "@/components/ui/input";
 import {
   Save, CheckCircle2, ClipboardList, Link2, X,
@@ -450,6 +451,7 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
                     })()}
                   </span>
                 )}
+                <WritingStartButton targetTitle="연구계획서 작성" />
                 <Button variant="outline" size="sm" onClick={handleDraftSave} disabled={saving || !dirty}>
                   {saving && <Save size={12} className="mr-1 animate-pulse" />}
                   임시저장

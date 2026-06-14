@@ -12,10 +12,10 @@ export type AxisKey = "method" | "variable" | "measurement" | "subject" | "keywo
 
 /** 논문에서 해당 축의 값(문자열/ID 배열)을 뽑는다 */
 export const AXIS_ACCESSORS: Record<AxisKey, (t: AlumniThesis) => string[]> = {
-  method: (t) => t.researchMethods ?? [],
+  method: (t) => t.analysis?.researchMethods ?? [],
   variable: (t) => t.variableIds ?? [],
   measurement: (t) => t.measurementIds ?? [],
-  subject: (t) => t.subjects ?? [],
+  subject: (t) => t.analysis?.subjects ?? [],
   keyword: (t) => t.keywords ?? [],
 };
 
@@ -123,8 +123,8 @@ export function searchTheses(
     const hay: string[] = [
       t.title ?? "",
       ...(t.keywords ?? []),
-      ...(t.researchMethods ?? []),
-      ...(t.subjects ?? []),
+      ...(t.analysis?.researchMethods ?? []),
+      ...(t.analysis?.subjects ?? []),
       ...(t.variableIds ?? []).map((id) => opts?.variableNameOf?.(id) ?? ""),
       ...(t.measurementIds ?? []).map((id) => opts?.measurementNameOf?.(id) ?? ""),
     ];
