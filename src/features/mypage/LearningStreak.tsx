@@ -283,6 +283,127 @@ const MILESTONES: Milestone[] = [
 
 const MONTH_LABELS_KR = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
 
+/**
+ * 월별 잔디 (사이클 115, 사용자 요청) — 우측 컬럼(좁은 폭)용.
+ * 1년 53주 대신 한 달치 7열 그리드 + 좌우 월 네비 + 하단 통계(활동일·평균점수·활동률).
+ */
+function StreakMonthlyView({ scoresByDay }: { scoresByDay: Map<string, number> }) {
+  const now = useMemo(() => new Date(), []);
+  const todayYmd = ymdLocal(now);
+  const [cur, setCur] = useState({ y: now.getFullYear(), m: now.getMonth() });
+
+  const view = useMemo(() => {
+    const startWd = new Date(cur.y, cur.m, 1).getDay();
+    const daysInMonth = new Date(cur.y, cur.m + 1, 0).getDate();
+    const cells: { key: string; ymd: string; day: number; inMonth: boolean; score: number }[] = [];
+    for (let i = 0; i < startWd; i++) {
+      cells.push({ key: `p${i}`, ymd: "", day: 0, inMonth: false, score: 0 });
+    }
+    let active = 0;
+    let total = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const ymd = ymdLocal(new Date(cur.y, cur.m, d));
+      const past = ymd <= todayYmd;
+      const score = past ? scoresByDay.get(ymd) ?? 0 : 0;
+      cells.push({ key: ymd, ymd, day: d, inMonth: true, score });
+      if (past) {
+        total += score;
+        if (score > 0) active++;
+      }
+    }
+    while (cells.length % 7 !== 0) {
+      cells.push({ key: `t${cells.length}`, ymd: "", day: 0, inMonth: false, score: 0 });
+    }
+    const isCur = cur.y === now.getFullYear() && cur.m === now.getMonth();
+    const isPast =
+      cur.y < now.getFullYear() ||
+      (cur.y === now.getFullYear() && cur.m < now.getMonth());
+    const elapsed = isCur ? now.getDate() : isPast ? daysInMonth : 0;
+    const rate = elapsed > 0 ? Math.round((active / elapsed) * 100) : 0;
+    const avg = active > 0 ? Math.round(total / active) : 0;
+    return { cells, active, avg, rate };
+  }, [cur, scoresByDay, todayYmd, now]);
+
+  function shift(delta: number) {
+    setCur((c) => {
+      const nm = c.m + delta;
+      return { y: c.y + Math.floor(nm / 12), m: ((nm % 12) + 12) % 12 };
+    });
+  }
+
+  return (
+    <div className="rounded-2xl border bg-card p-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <Sprout size={16} className="text-emerald-600" aria-hidden="true" />
+          <h2 className="text-sm font-bold">학습 잔디</h2>
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => shift(-1)}
+            className="rounded p-0.5 text-muted-foreground hover:bg-muted"
+            aria-label="이전 달"
+          >
+            <ChevronLeft size={15} />
+          </button>
+          <span className="min-w-[58px] text-center text-xs font-semibold tabular-nums">
+            {cur.y}.{String(cur.m + 1).padStart(2, "0")}
+          </span>
+          <button
+            type="button"
+            onClick={() => shift(1)}
+            className="rounded p-0.5 text-muted-foreground hover:bg-muted"
+            aria-label="다음 달"
+          >
+            <ChevronRight size={15} />
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-2 grid grid-cols-7 gap-1 text-center text-[10px] text-muted-foreground">
+        {["일", "월", "화", "수", "목", "금", "토"].map((w, i) => (
+          <div key={w} className={cn(i === 0 && "text-rose-400", i === 6 && "text-blue-400")}>
+            {w}
+          </div>
+        ))}
+      </div>
+      <div className="mt-1 grid grid-cols-7 gap-1">
+        {view.cells.map((c) => (
+          <div
+            key={c.key}
+            title={c.inMonth ? `${c.ymd} · ${c.score}점` : undefined}
+            className={cn(
+              "flex aspect-square items-center justify-center rounded-[4px] text-[10px]",
+              c.inMonth ? intensityClass(c.score) : "bg-transparent",
+              c.inMonth && c.ymd === todayYmd && "ring-1 ring-primary ring-offset-1",
+            )}
+          >
+            <span className={cn(c.score >= 11 ? "text-white/90" : "text-foreground/55")}>
+              {c.inMonth ? c.day : ""}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-3 flex items-center justify-around border-t pt-2 text-center text-[11px]">
+        <div>
+          <p className="font-bold text-foreground tabular-nums">{view.active}</p>
+          <p className="text-muted-foreground">활동일</p>
+        </div>
+        <div>
+          <p className="font-bold text-foreground tabular-nums">{view.avg}</p>
+          <p className="text-muted-foreground">평균점수</p>
+        </div>
+        <div>
+          <p className="font-bold text-emerald-600 tabular-nums">{view.rate}%</p>
+          <p className="text-muted-foreground">활동률</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function LearningStreak({ compact = false }: { compact?: boolean }) {
   const { user } = useAuthStore();
   const userId = user?.id;
@@ -366,7 +487,8 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
     staleTime: 5 * 60_000,
   });
 
-  const stats = useMemo<Stats>(() => {
+  // 사이클 115: scoresByDay(날짜→점수)를 분리 — full 그리드와 월별 모드가 공유
+  const scoresByDay = useMemo(() => {
     const scores = new Map<string, number>();
     function add(ymd: string | null, score: number) {
       if (!ymd) return;
@@ -410,7 +532,7 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
       add(ymd, SCORES.assignmentComplete);
     }
 
-    return computeStats(scores, semester);
+    return scores;
   }, [
     attendeesRes,
     studyRes,
@@ -419,8 +541,12 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
     commentsRes,
     reflectionsRes,
     assignmentSubmissionsRes,
-    semester,
   ]);
+
+  const stats = useMemo<Stats>(
+    () => computeStats(scoresByDay, semester),
+    [scoresByDay, semester],
+  );
 
   const achievedMilestones = useMemo(
     () => MILESTONES.filter((m) => m.achieved(stats)),
@@ -453,6 +579,11 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
       monthLabels.push({ col: c.weekIndex, month: m });
       lastMonth = m;
     }
+  }
+
+  // 사이클 115: compact(대시보드 우측)는 월별 잔디 뷰로 — 좁은 폭에 맞춤
+  if (compact) {
+    return <StreakMonthlyView scoresByDay={scoresByDay} />;
   }
 
   return (
