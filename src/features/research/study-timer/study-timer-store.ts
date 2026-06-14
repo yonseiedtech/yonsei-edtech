@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { StudySessionType } from "@/types";
+import type { PaperReadingSource } from "@/types/paper-reading";
 
 const LS_KEY = "studyTimer";
 
@@ -10,6 +11,9 @@ interface ActiveSession {
   writingPaperId?: string;
   targetTitle: string;
   startTime: number;
+  /** 읽기 세션 종료 시 읽음 기록 모달에 전달 (사이클 120 89c) */
+  readingSource?: PaperReadingSource;
+  readingRefId?: string;
 }
 
 type StopHandler = (session: ActiveSession) => void;

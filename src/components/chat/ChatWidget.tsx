@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { useStudyTimerStore } from "@/features/research/study-timer/study-timer-store";
 import { useEndSession } from "@/features/research/study-timer/useStudySessions";
 import ReadingMascot from "@/features/research/study-timer/ReadingMascot";
+import ReadingLogModal from "@/features/research/study-timer/ReadingLogModal";
+import type { PaperReadingSource } from "@/types/paper-reading";
 import { siteSettingsApi } from "@/lib/bkend";
 import { cn } from "@/lib/utils";
 
@@ -57,6 +59,12 @@ export default function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const [pillExpanded, setPillExpanded] = useState(false);
+  const [readingDone, setReadingDone] = useState<{
+    title: string;
+    durationMin: number;
+    source: PaperReadingSource;
+    refId?: string;
+  } | null>(null);
   const dragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0, px: 0, py: 0 });
   const moved = useRef(false);
@@ -280,6 +288,14 @@ export default function ChatWidget() {
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
+                      if (active.type === "reading") {
+                        setReadingDone({
+                          title: active.targetTitle,
+                          durationMin: Math.max(1, Math.round(elapsed / 60)),
+                          source: active.readingSource ?? "external",
+                          refId: active.readingRefId ?? active.paperId,
+                        });
+                      }
                       stop();
                       toast.success(`「${active.targetTitle}」 ${fmt(elapsed)} 기록됨`);
                     }}
@@ -357,6 +373,17 @@ export default function ChatWidget() {
             </motion.button>
           </div>
         </div>
+      )}
+
+      {readingDone && (
+        <ReadingLogModal
+          open
+          onClose={() => setReadingDone(null)}
+          source={readingDone.source}
+          refId={readingDone.refId}
+          defaultTitle={readingDone.title}
+          durationMin={readingDone.durationMin}
+        />
       )}
     </>
   );

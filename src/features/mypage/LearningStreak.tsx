@@ -31,6 +31,7 @@ import {
   dataApi,
   writingPaperHistoryApi,
   userActivityLogsApi,
+  paperReadingLogsApi,
 } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import type {
@@ -44,6 +45,7 @@ import type {
   WritingPaperHistory,
   UserActivityLog,
 } from "@/types";
+import type { PaperReadingLog } from "@/types/paper-reading";
 import { cn } from "@/lib/utils";
 
 const WEEKS = 53;
@@ -554,6 +556,12 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
     enabled: !!userId,
     staleTime: 5 * 60_000,
   });
+  const { data: paperReadingRes } = useQuery({
+    queryKey: ["streak", "paper-reading-logs", userId],
+    queryFn: () => paperReadingLogsApi.listByUser(userId!),
+    enabled: !!userId,
+    staleTime: 5 * 60_000,
+  });
 
   // 사이클 115: scoresByDay(날짜→점수)를 분리 — full 그리드와 월별 모드가 공유
   // 사이클 117: scoresByDay(점수) + activityByDay(날짜→활동라벨별 점수) 동시 빌드 — 선택일 활동 내역용
@@ -614,6 +622,12 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
       if (ymd) readingDays.add(ymd);
     }
     readingDays.forEach((ymd) => add(ymd, SCORES.paperReading, "논문·아카이브 열람"));
+    // 사이클 120: 능동 논문 읽기 기록(paper_reading_logs) 일별 1회 가산
+    const paperReadDays = new Set<string>();
+    for (const r of (paperReadingRes?.data ?? []) as PaperReadingLog[]) {
+      if (r.readAt) paperReadDays.add(r.readAt);
+    }
+    paperReadDays.forEach((ymd) => add(ymd, SCORES.paperReading, "논문 읽기 기록"));
 
     return { scoresByDay: scores, activityByDay: activities };
   }, [
@@ -626,6 +640,7 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
     assignmentSubmissionsRes,
     writingHistoryRes,
     activityLogsRes,
+    paperReadingRes,
   ]);
 
   const stats = useMemo<Stats>(

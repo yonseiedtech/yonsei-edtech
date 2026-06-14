@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import PageContainer from "@/components/ui/page-container";
 import ThesisAnalysisCard from "@/features/alumni/ThesisAnalysisCard";
+import ReadingStartButton from "@/features/research/study-timer/ReadingStartButton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -449,17 +450,19 @@ export default function AlumniThesisDetailPage() {
                 </p>
               )}
             </div>
-            {canEdit && !editing && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={startEdit}
-                className="shrink-0"
-              >
-                <Pencil size={13} className="mr-1.5" />
-                편집
-              </Button>
-            )}
+            <div className="flex shrink-0 items-center gap-2">
+              <ReadingStartButton
+                source="alumni_thesis"
+                refId={thesis.id}
+                title={thesis.title}
+              />
+              {canEdit && !editing && (
+                <Button variant="outline" size="sm" onClick={startEdit}>
+                  <Pencil size={13} className="mr-1.5" />
+                  편집
+                </Button>
+              )}
+            </div>
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
