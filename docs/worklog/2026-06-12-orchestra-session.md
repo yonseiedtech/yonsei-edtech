@@ -1,8 +1,8 @@
 
-## 배포 89c+d차 — 사이클 120 타이머·기록 연결 + 잔디 집계 + 졸업생논문 진입점
+## 배포 89e차 — 사이클 120 마스코트 폴리시 (읽는 동작)
 
-- study-timer-store: ActiveSession readingSource/readingRefId 확장 — 종료 시 출처 전달
-- ChatWidget: 읽기 세션 종료 시 ReadingLogModal 자동 표시(durationMin·source·refId 자동)
+- ReadingMascot: 읽기 세션 시 눈동자 좌우 스캔(omc-read 3s) + 책 미세 넘김(omc-page 3.6s scaleY) — '읽는 중' 생동감 강화. prefers-reduced-motion 존중(reading 애니메이션 모두 비활성)
+efId 자동)
 - LearningStreak: paper_reading_logs readAt → '논문 읽기 기록' 잔디 가산(paperReading:4)
 - ReadingStartButton(신규): 졸업생논문/리뷰게시판 공용 '읽기 시작' 진입점(reading 세션 + readingSource)
 - alumni/thesis/[id]: 헤더에 '📖 읽기 시작' 버튼(source:alumni_thesis)
