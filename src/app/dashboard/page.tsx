@@ -58,6 +58,7 @@ import EditModePresetBar from "@/features/dashboard/editing/EditModePresetBar";
 import JourneyGreetingHeader from "@/features/dashboard/JourneyGreetingHeader";
 import DashboardCommandCenter from "@/features/dashboard/DashboardCommandCenter";
 import ProfileSummaryCard from "@/features/dashboard/ProfileSummaryCard";
+import ProfileSideWidget from "@/features/dashboard/ProfileSideWidget";
 import StageRecommendationPanel from "@/features/dashboard/StageRecommendationPanel";
 import {
   useDashboardLayout,
@@ -528,21 +529,25 @@ function DashboardContent() {
         {/* 사이클 104: F-패턴·정보 빈도 기반 상단 재편 (사용자 요청 — Mayer 멀티미디어/마케팅 시선흐름).
             좌상단(최고 시선)에 매일 보는 '오늘의 시간표', 우측 좁은 컬럼에 프로필 요약(정체성·완성도).
             시간표 비대상(졸업생 등)은 프로필 풀폭 폴백. */}
+        {/* 사이클 111: 시간표·커맨드센터를 좌측 1fr 로 묶어 폭 정렬(사용자 — 시간표 폭 ≠ 커맨드 그리드),
+            우측 컬럼에 프로필 요약 + 알림·할일 미니위젯으로 하단 공백 채움(사용자 요청). */}
         {canShowWidget(user.role, "dailyClassTimeline") ? (
-          <div className="mb-5 grid items-start gap-4 lg:grid-cols-[1fr_340px]">
-            <div className="min-w-0">
+          <div className="mb-6 grid items-start gap-4 lg:grid-cols-[1fr_336px]">
+            <div className="min-w-0 space-y-5">
               <DailyClassTimelineWidget />
+              <DashboardCommandCenter />
             </div>
-            <ProfileSummaryCard user={user} />
+            <div className="space-y-4">
+              <ProfileSummaryCard user={user} />
+              <ProfileSideWidget userId={user.id} />
+            </div>
           </div>
         ) : (
-          <div className="mb-5">
+          <div className="mb-6 space-y-5">
             <ProfileSummaryCard user={user} />
+            <DashboardCommandCenter />
           </div>
         )}
-
-        {/* 사이클 81: 3영역 종합 커맨드 센터 — 대학원생활·연구·학술 한눈에 (대시보드 대개편) */}
-        <DashboardCommandCenter />
 
         {/* 사이클 85: 이번 학기 추천 한 걸음 — 커맨드센터 아래, JOURNEY_STAGES 현재 학기 추천 행동 (여정 문서 High ②).
             학기 미설정자는 JourneyGreetingHeader 가 유도하므로 패널 내부에서 null 렌더. */}
