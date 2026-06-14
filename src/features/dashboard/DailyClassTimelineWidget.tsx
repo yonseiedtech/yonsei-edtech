@@ -39,6 +39,8 @@ import { parseSchedule, fmtTimeRange } from "@/lib/courseSchedule";
 import { cn } from "@/lib/utils";
 import { DailyGrid } from "./timeline/DailyGrid";
 import { WeeklyGrid } from "./timeline/WeeklyGrid";
+import { MonthlyGrid } from "./timeline/MonthlyGrid";
+import { useSeminars } from "@/features/seminar/useSeminar";
 import {
   HourRangeSettingsDialog,
   QuickMemoDialog,
@@ -88,7 +90,7 @@ export default function DailyClassTimelineWidget() {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(VIEW_STORAGE_KEY);
-      if (saved === "daily" || saved === "weekly") {
+      if (saved === "daily" || saved === "weekly" || saved === "monthly") {
         setViewMode(saved);
         return;
       }
@@ -283,6 +285,23 @@ export default function DailyClassTimelineWidget() {
       myOfferings.map((o) => ({ offering: o, parsed: parseSchedule(o.schedule) })),
     [myOfferings],
   );
+
+  // 사이클 114: 월간 뷰 데이터 — 수업 요일(반복) + 세미나 날짜
+  const { seminars: allSeminars } = useSeminars();
+  const monthClassWeekdays = useMemo(
+    () => Array.from(new Set(parsedOfferings.flatMap((o) => o.parsed.weekdays))),
+    [parsedOfferings],
+  );
+  const seminarsByDate = useMemo(() => {
+    const map = new Map<string, string[]>();
+    (allSeminars ?? []).forEach((s) => {
+      if (!s.date) return;
+      const arr = map.get(s.date) ?? [];
+      arr.push(s.title);
+      map.set(s.date, arr);
+    });
+    return map;
+  }, [allSeminars]);
 
   // 오늘 요일 강의 (daily 모드)
   const todayOfferings = useMemo(() => {
@@ -837,8 +856,8 @@ export default function DailyClassTimelineWidget() {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {/* 날짜 네비게이션 */}
-          <div className="flex items-center gap-0.5 rounded-lg border p-0.5">
+          {/* 날짜 네비게이션 (월간에선 MonthlyGrid 자체 네비 사용 → 숨김) */}
+          <div className={cn("flex items-center gap-0.5 rounded-lg border p-0.5", viewMode === "monthly" && "hidden")}>
             <button
               type="button"
               onClick={() => navigateDate(-1)}
@@ -893,6 +912,17 @@ export default function DailyClassTimelineWidget() {
             >
               주간
             </button>
+            <button
+              onClick={() => handleSetView("monthly")}
+              className={cn(
+                "rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors",
+                viewMode === "monthly"
+                  ? "bg-primary text-white"
+                  : "text-muted-foreground hover:bg-muted",
+              )}
+            >
+              월간
+            </button>
           </div>
         </div>
       </div>
@@ -927,6 +957,16 @@ export default function DailyClassTimelineWidget() {
 
       {isLoading ? (
         <div className="mt-4 h-72 animate-pulse rounded-lg bg-muted" />
+      ) : viewMode === "monthly" ? (
+        <MonthlyGrid
+          classWeekdays={monthClassWeekdays}
+          seminarsByDate={seminarsByDate}
+          todayYmd={actualToday}
+          onPickDate={(d) => {
+            setSelectedDate(new Date(d));
+            handleSetView("daily");
+          }}
+        />
       ) : viewMode === "daily" ? (
         todayOfferings.length === 0 &&
         placedDailyActivities.length === 0 ? (

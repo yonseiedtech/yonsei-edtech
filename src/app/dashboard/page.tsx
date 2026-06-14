@@ -31,7 +31,6 @@ import { ROLE_LABELS } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
-import MiniCalendar from "@/features/dashboard/MiniCalendar";
 import ActivityFeed from "@/features/dashboard/ActivityFeed";
 import AcademicCalendarProgress from "@/features/dashboard/AcademicCalendarProgress";
 import DailyClassTimelineWidget from "@/features/dashboard/DailyClassTimelineWidget";
@@ -291,19 +290,7 @@ function DashboardContent() {
         <RecentPostsWidget />
       </section>
     ),
-    miniCalendar: (
-      <section className="mx-auto mt-6 max-w-6xl px-4">
-        <div className="rounded-2xl border bg-card p-4 shadow-sm sm:p-6">
-          <div className="flex items-center gap-2">
-            <Calendar size={18} className="text-primary" />
-            <h2 className="font-bold">세미나 일정</h2>
-          </div>
-          <div className="mt-4">
-            <MiniCalendar seminars={seminars} />
-          </div>
-        </div>
-      </section>
-    ),
+    // miniCalendar: 사이클 114 — 시간표 월간 뷰(MonthlyGrid)로 통합. 하단 세미나 캘린더 제거(중복).
     statCards: (
       <section className="mx-auto mt-6 max-w-6xl px-4">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">

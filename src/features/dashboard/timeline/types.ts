@@ -20,7 +20,7 @@ export const ROW_HEIGHT_PX = 64;
 
 export const VIEW_STORAGE_KEY = "dashboard.classTimeline.view";
 export const HOUR_RANGE_STORAGE_KEY = "dashboard.classTimeline.hourRange";
-export type ViewMode = "daily" | "weekly";
+export type ViewMode = "daily" | "weekly" | "monthly";
 
 export const MODE_BORDER: Record<ClassSessionMode, string> = {
   in_person: "border-l-emerald-400 bg-emerald-50/40",
