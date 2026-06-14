@@ -14,7 +14,7 @@
  */
 
 import { useState } from "react";
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, ExternalLink } from "lucide-react";
 
 interface DNode {
   id: string;
@@ -49,6 +49,45 @@ const KIND_STYLE: Record<DNode["kind"], { stroke: string; fill: string; text: st
   latent: { stroke: "#7c3aed", fill: "rgba(124,58,237,0.08)", text: "#7c3aed" },
   item: { stroke: "#b45309", fill: "rgba(180,83,9,0.08)", text: "#b45309" },
   category: { stroke: "#0369a1", fill: "rgba(3,105,161,0.08)", text: "#0369a1" },
+};
+
+/**
+ * 사이클 101: 노드(변인) 클릭 시 보여줄 개념 사전 (사용자 요청 — 개념을 모를 때
+ * 클릭하면 간단 설명 + 아카이브 기초 용어 페이지를 새 탭으로 열어 학습할 수 있게).
+ */
+const CONCEPT_GLOSSARY: Partial<
+  Record<DNode["kind"], { term: string; desc: string; q: string }>
+> = {
+  independent: {
+    term: "독립변인",
+    desc: "연구자가 조작하거나 구분하는 '원인' 변인입니다. 종속변인에 영향을 줄 것으로 가정합니다. (예: 교수법, 집단 구분)",
+    q: "독립변인",
+  },
+  dependent: {
+    term: "종속변인",
+    desc: "독립변인의 영향을 받아 변화를 측정하는 '결과' 변인입니다. (예: 성취도·만족도 점수)",
+    q: "종속변인",
+  },
+  covariate: {
+    term: "공변인(통제변인)",
+    desc: "종속변인에 영향을 주지만 연구 관심이 아니어서 통계적으로 통제하는 변인입니다. (예: 사전점수)",
+    q: "공변인",
+  },
+  latent: {
+    term: "잠재변인(요인)",
+    desc: "직접 관측되지 않고 여러 관측문항으로 추정하는 구성개념입니다. (예: 자기효능감)",
+    q: "잠재변인",
+  },
+  item: {
+    term: "관측문항(측정변수)",
+    desc: "잠재변인을 측정하기 위한 개별 설문 문항·지표입니다.",
+    q: "측정도구",
+  },
+  category: {
+    term: "범주형 변인",
+    desc: "값이 범주(집단)로 나뉘는 변인입니다. 명목·서열 척도가 해당합니다.",
+    q: "범주형",
+  },
 };
 
 const SPECS: Record<string, DiagramSpec> = {
@@ -229,6 +268,7 @@ export function hasStatDiagram(name: string): boolean {
 export default function StatModelDiagram({ methodName }: { methodName: string }) {
   // 재생 키 — 변경 시 SVG 가 리마운트되어 애니메이션이 처음부터 다시 실행된다
   const [playKey, setPlayKey] = useState(0);
+  const [openKind, setOpenKind] = useState<DNode["kind"] | null>(null);
   const spec = SPECS[methodName];
   if (!spec) return null;
 
@@ -352,7 +392,17 @@ export default function StatModelDiagram({ methodName }: { methodName: string })
             const r = nodeRect(n);
             const st = KIND_STYLE[n.kind];
             return (
-              <g key={n.id} className="smd-node" style={{ animationDelay: `${i * NODE_STAGGER}s` }}>
+              <g
+                key={n.id}
+                className="smd-node"
+                style={{
+                  animationDelay: `${i * NODE_STAGGER}s`,
+                  cursor: CONCEPT_GLOSSARY[n.kind] ? "pointer" : "default",
+                }}
+                onClick={() => CONCEPT_GLOSSARY[n.kind] && setOpenKind(n.kind)}
+                role={CONCEPT_GLOSSARY[n.kind] ? "button" : undefined}
+                aria-label={CONCEPT_GLOSSARY[n.kind] ? `${CONCEPT_GLOSSARY[n.kind]!.term} 설명 보기` : undefined}
+              >
                 <rect
                   x={r.x}
                   y={r.y}
@@ -450,6 +500,46 @@ export default function StatModelDiagram({ methodName }: { methodName: string })
         <span><span className="mr-1 inline-block h-2 w-2 rounded-sm border" style={{ borderColor: "#7c3aed", backgroundColor: "rgba(124,58,237,0.15)" }} />잠재 요인</span>
         <span><span className="mr-1 inline-block h-2 w-2 rounded-sm border" style={{ borderColor: "#b45309", backgroundColor: "rgba(180,83,9,0.15)" }} />관측 문항</span>
       </div>
+      <p className="mt-1.5 text-[10px] text-muted-foreground/80">
+        💡 변인 노드를 클릭하면 개념 설명과 아카이브 용어 페이지를 볼 수 있어요.
+      </p>
+
+      {/* 사이클 101: 변인 개념 설명 다이얼로그 — 클릭한 노드의 개념 + 아카이브 새 탭 링크 */}
+      {openKind && CONCEPT_GLOSSARY[openKind] && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setOpenKind(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl border bg-card p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-base font-bold">{CONCEPT_GLOSSARY[openKind]!.term}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              {CONCEPT_GLOSSARY[openKind]!.desc}
+            </p>
+            <div className="mt-4 flex items-center justify-between gap-2">
+              <a
+                href={`/archive/foundation-terms?q=${encodeURIComponent(CONCEPT_GLOSSARY[openKind]!.q)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
+              >
+                아카이브에서 자세히 <ExternalLink size={12} />
+              </a>
+              <button
+                type="button"
+                onClick={() => setOpenKind(null)}
+                className="rounded-md border px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

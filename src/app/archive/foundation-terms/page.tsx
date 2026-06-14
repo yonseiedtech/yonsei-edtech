@@ -129,6 +129,11 @@ export default function FoundationTermsLandingPage() {
   const [terms, setTerms] = useState<FoundationTerm[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  // 사이클 101: ?q= 로 진입 시 검색어 prefill (StatModelDiagram 변인 개념 툴팁의 "아카이브에서 자세히" 링크 등)
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q) setQuery(q);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
