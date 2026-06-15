@@ -54,6 +54,9 @@ function seedToQuestion(
     leftItems: entry.leftItems,
     rightItems: entry.rightItems,
     correctMap: entry.correctMap,
+    passage: entry.passage,
+    relatedMethodName: entry.relatedMethodName,
+    relatedStatMethodName: entry.relatedStatMethodName,
     explanation: entry.explanation,
     conceptSeedKey: entry.conceptSeedKey,
     published: true,
@@ -67,12 +70,15 @@ const QUESTIONS_PER_AREA = 6;
 const TOTAL_QUESTIONS_ALL = 10;
 /**
  * 전체 진단 시 영역별 출제 수 — 합 TOTAL_QUESTIONS_ALL.
- * 통계 4 · 연구방법 3 · 핵심개념 3 (통계방법은 유형 폭이 가장 넓어 1문항 더 배정).
+ * 통계 4 · 연구방법 4 · 핵심개념 2.
+ * v4: 연구설계·통계 실전 적용(scenario)·지문분석(passage)은 statistics·method 영역에 집중되어 있어
+ *     두 영역 정원을 늘려(4·4) 신규 유형이 10문제 랜덤에 더 잘 포함되도록 한다.
+ *     pickMixed 가 유형(type) 버킷을 라운드로빈으로 뽑으므로 정원이 클수록 다양한 유형이 섞인다.
  */
 const ALL_AREA_QUOTA: Record<DiagnosticArea, number> = {
   statistics: 4,
-  method: 3,
-  concept: 3,
+  method: 4,
+  concept: 2,
 };
 
 /** Fisher-Yates 셔플 (원본 불변) */

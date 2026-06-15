@@ -11,6 +11,7 @@ import {
   CircleDot,
   Link2,
   Lightbulb,
+  FileText,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -115,6 +116,7 @@ export default function DiagnosisRunner({
         );
       case "compare":
       case "scenario":
+      case "passage":
       case "mcq":
       default:
         return typeof a === "number";
@@ -194,8 +196,9 @@ export default function DiagnosisRunner({
       : type === "ox"
         ? current.statement ?? current.question
         : current.question;
-  // compare·scenario 는 mcq 와 동일하게 options/answerIndex 사용
-  const isChoiceType = type === "mcq" || type === "compare" || type === "scenario";
+  // compare·scenario·passage 는 mcq 와 동일하게 options/answerIndex 사용
+  const isChoiceType =
+    type === "mcq" || type === "compare" || type === "scenario" || type === "passage";
   const orderingValue = Array.isArray(answers[current.id])
     ? (answers[current.id] as string[])
     : orderingInit[current.id] ?? current.items ?? [];
@@ -274,12 +277,29 @@ export default function DiagnosisRunner({
                 <Lightbulb className="h-3 w-3" aria-hidden />
                 상황 적용
               </Badge>
+            ) : type === "passage" ? (
+              <Badge variant="secondary" className="gap-1 text-[10px]">
+                <FileText className="h-3 w-3" aria-hidden />
+                지문 분석
+              </Badge>
             ) : (
               <Badge variant="secondary" className="text-[10px]">
                 객관식
               </Badge>
             )}
           </div>
+
+          {/* passage(지문 분석): 가상 연구 서술을 질문 위에 본문으로 표시 */}
+          {type === "passage" && current.passage && (
+            <div className="mb-4 rounded-xl border border-border bg-muted/40 p-4">
+              <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                연구 서술 (가상)
+              </p>
+              <p className="whitespace-pre-line text-sm leading-relaxed text-foreground/90">
+                {current.passage}
+              </p>
+            </div>
+          )}
 
           <p className="text-base font-semibold leading-relaxed sm:text-lg">
             {promptText}

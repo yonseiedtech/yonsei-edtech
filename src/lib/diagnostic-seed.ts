@@ -1,11 +1,18 @@
 // 진단평가 문제은행 시드 (published: true 로 적재 — 검수 완료된 객관적 문항만 포함)
 //
 // 대학원생이 아카이브 개념(통계방법·연구방법·교육공학 핵심개념)을 얼마나 아는지
-// 진단하는 문제은행. 3유형 혼합:
+// 진단하는 문제은행. 8유형 혼합:
 //  - mcq      : 4지선다 객관식 (options·answerIndex)
 //  - ordering : 절차 순서 정렬 (items 를 정답 순서로 저장, 런타임에 셔플해 제시)
 //  - term     : 단어 맞추기 (prompt 정의 → answer 개념명, acceptedAnswers 동의어)
+//  - ox       : 참/거짓 (statement·answerBool)
+//  - compare  : 유사개념 구분 (options·answerIndex)
+//  - matching : 짝짓기 (leftItems·rightItems·correctMap)
+//  - scenario : 상황 적용 — 연구설계·통계 실전 적용(조건제시·논문서술·연구문제·절차추론) (options·answerIndex)
+//  - passage  : 지문 분석 — 가상 연구 서술을 읽고 방법·기법 식별 또는 한계·누락요소 식별 (passage·options·answerIndex)
 // 외부 LLM 없이 검증된 정의·표준 절차로 대량 생성하고, 런타임에 영역별 랜덤 출제한다.
+// scenario·passage 는 졸업생 학위논문 전형 기반 — relatedMethodName/relatedStatMethodName 으로
+// 추후 "이 방법을 쓴 졸업생 논문 보기"(/alumni/thesis) 연결용 메타를 남긴다.
 //
 // ⚠️ 저작권·정확성 원칙 ⚠️
 //  - 학자 원설명/척도 문항을 그대로 복제하지 않는다. 객관적 서술로 변형.
@@ -36,12 +43,14 @@ export interface SeedDiagnosticQuestion {
   cognitiveLevel?: CognitiveLevel;
   /** archive_concepts.seedKey (개념 영역 문항만). 런타임에 실제 conceptId 로 변환. */
   conceptSeedKey?: string;
-  /** mcq·ordering·compare·scenario 의 문제 본문. term 은 prompt, ox 는 statement 사용. */
+  /** mcq·ordering·compare·scenario·passage 의 문제(질문). term 은 prompt, ox 는 statement 사용. */
   question?: string;
-  /** [mcq·compare·scenario] 보기 */
+  /** [mcq·compare·scenario·passage] 보기 */
   options?: string[];
-  /** [mcq·compare·scenario] 정답 인덱스 */
+  /** [mcq·compare·scenario·passage] 정답 인덱스 */
   answerIndex?: number;
+  /** [passage] 지문 — 짧은 가상 연구 서술(초록/방법 문단). 실제 논문 복제 금지. */
+  passage?: string;
   /** [ordering] 정답 순서로 나열한 단계 목록 */
   items?: string[];
   /** [term] 개념 정의 서술 (문제 본문) */
@@ -60,6 +69,10 @@ export interface SeedDiagnosticQuestion {
   rightItems?: string[];
   /** [matching] 정답 매핑 — 왼쪽 index → 오른쪽 index */
   correctMap?: number[];
+  /** [scenario·passage] 졸업생 논문 연계 메타 — 연구방법 이름(archive_research_methods.name 대응). */
+  relatedMethodName?: string;
+  /** [scenario·passage] 졸업생 논문 연계 메타 — 통계기법 이름(선택). */
+  relatedStatMethodName?: string;
   explanation?: string;
 }
 
@@ -1285,8 +1298,441 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
       "연구자가 특정 현상에 대한 기존 이론이 부족하여, 면담 자료에서 출발해 지속적 비교와 코딩으로 새로운 설명 이론을 생성하려 한다. 가장 적합한 질적 방법은?",
     options: ["근거이론", "설문조사연구", "준실험연구", "메타분석"],
     answerIndex: 0,
+    relatedMethodName: "근거이론",
     explanation:
       "자료에 근거해 코딩과 지속적 비교로 이론을 생성하는 목적에는 근거이론(Grounded Theory)이 적합하다.",
+  },
+
+  // ═════════════════════════════════════════════════════════════
+  // v4 추가 — 연구설계·통계 실전 적용 scenario 대폭 강화 (전면 교육공학 연구 맥락)
+  // 형태: ⓐ조건제시형 / ⓑ논문서술형 / ⓒ연구문제 나열형 / ⓓ분석 절차·의사결정 추론
+  // 졸업생 논문 연계 메타: relatedMethodName / relatedStatMethodName (archive 가이드 name 대응)
+  // ═════════════════════════════════════════════════════════════
+
+  // ── 통계방법 scenario 추가 (statistics) — 기존 3 + 신규 9 = 12 ──
+  // ⓐ 조건제시형: 변인 수·척도·집단·설계 → 통계기법
+  {
+    seedKey: "dx:statistics:scn:4",
+    type: "scenario",
+    area: "statistics",
+    cognitiveLevel: "apply",
+    question:
+      "[조건] 독립변인 2개(수업방식: 플립러닝/전통, 사전성취수준: 상/하), 종속변인 1개(학업성취, 연속형), 집단 간 설계. 두 독립변인의 주효과와 상호작용효과를 함께 검정하려 한다. 가장 적절한 분석은?",
+    options: [
+      "이원분산분석(two-way ANOVA)",
+      "일원분산분석(one-way ANOVA)",
+      "독립표본 t-검정",
+      "단순회귀분석",
+    ],
+    answerIndex: 0,
+    relatedStatMethodName: "ANOVA (일원분산분석)",
+    explanation:
+      "범주형 독립변인 2개의 주효과와 상호작용을 하나의 연속형 종속변인에서 검정하므로 이원분산분석(two-way ANOVA)이 적절하다. 일원분산분석은 독립변인이 1개, t-검정은 두 집단 평균 비교에 쓴다.",
+  },
+  {
+    seedKey: "dx:statistics:scn:5",
+    type: "scenario",
+    area: "statistics",
+    cognitiveLevel: "apply",
+    question:
+      "[조건] LMS 학습분석 연구. 독립변인은 학습시간·접속빈도·과제제출률(모두 연속형) 3개, 종속변인은 기말 학업성취(연속형) 1개. 각 변인의 상대적 설명력을 함께 추정하려 한다. 가장 적절한 분석은?",
+    options: [
+      "다중회귀분석",
+      "로지스틱회귀분석",
+      "일원분산분석(ANOVA)",
+      "탐색적 요인분석(EFA)",
+    ],
+    answerIndex: 0,
+    relatedStatMethodName: "다중회귀분석",
+    explanation:
+      "연속형 종속변인 1개를 연속형 독립변인 여러 개로 예측하고 표준화계수로 상대적 설명력을 비교하므로 다중회귀분석이 적절하다. 종속변인이 이분형이면 로지스틱회귀를 쓴다.",
+  },
+  {
+    seedKey: "dx:statistics:scn:6",
+    type: "scenario",
+    area: "statistics",
+    cognitiveLevel: "apply",
+    question:
+      "[조건] 에듀테크 수용(TAM) 연구. '지각된 유용성'과 '지각된 용이성'이라는 잠재변인이 '이용의도'에 미치는 인과 경로를, 다항목 측정모형과 함께 동시에 추정·검증하려 한다. 가장 적절한 분석은?",
+    options: [
+      "구조방정식모형(SEM)",
+      "다중회귀분석",
+      "이원분산분석",
+      "군집분석",
+    ],
+    answerIndex: 0,
+    relatedStatMethodName: "구조방정식모형(SEM)",
+    relatedMethodName: "구조방정식모형(SEM)",
+    explanation:
+      "다항목으로 측정된 잠재변인 간 인과 경로와 측정모형을 동시에 추정·평가하므로 구조방정식모형(SEM)이 적절하다. 다중회귀는 잠재변인 측정모형을 동시에 다루지 못한다.",
+  },
+  {
+    seedKey: "dx:statistics:scn:7",
+    type: "scenario",
+    area: "statistics",
+    cognitiveLevel: "apply",
+    question:
+      "[조건] AI 디지털교과서 처치 연구. 처치·통제 두 집단의 사후 '학습몰입'과 '학업성취' 두 연속형 종속변인을 동시에 비교하려 한다(공변량 통제는 없음). 가장 적절한 분석은?",
+    options: [
+      "다변량분산분석(MANOVA)",
+      "일원분산분석(ANOVA)",
+      "대응표본 t-검정",
+      "카이제곱 검정",
+    ],
+    answerIndex: 0,
+    relatedStatMethodName: "MANOVA (다변량분산분석)",
+    explanation:
+      "두 개 이상의 연속형 종속변인을 동시에 다뤄 집단 간 차이를 검정하므로 MANOVA가 적절하다. 종속변인이 1개면 ANOVA, 공변량까지 통제하면 MANCOVA를 쓴다.",
+  },
+  {
+    seedKey: "dx:statistics:scn:8",
+    type: "scenario",
+    area: "statistics",
+    cognitiveLevel: "apply",
+    question:
+      "[조건] 새 디지털 리터러시 척도를 개발했다. 25개 문항이 사전에 가정한 4개 하위요인 구조에 부합하는지 적합도 지수(CFI·RMSEA 등)로 검증하려 한다. 가장 적절한 분석은?",
+    options: [
+      "확인적 요인분석(CFA)",
+      "탐색적 요인분석(EFA)",
+      "다중회귀분석",
+      "정준상관분석",
+    ],
+    answerIndex: 0,
+    relatedStatMethodName: "확인적 요인분석(CFA)",
+    relatedMethodName: "측정도구 개발과 타당화",
+    explanation:
+      "사전에 가정한 요인구조의 적합도를 지수로 검증하므로 확인적 요인분석(CFA)이 적절하다. 요인구조를 가정하지 않고 탐색한다면 EFA를 쓴다.",
+  },
+  {
+    seedKey: "dx:statistics:scn:9",
+    type: "scenario",
+    area: "statistics",
+    cognitiveLevel: "apply",
+    question:
+      "[조건] 블렌디드 러닝 연구. 종속변인은 '교과목 이수 여부(이수/중도포기)'이고, 이를 출석률·과제점수·자기효능감 등으로 예측해 포기 확률을 추정하려 한다. 가장 적절한 분석은?",
+    options: [
+      "로지스틱회귀분석",
+      "다중회귀분석",
+      "다변량분산분석(MANOVA)",
+      "구조방정식모형(SEM)",
+    ],
+    answerIndex: 0,
+    relatedStatMethodName: "로지스틱회귀분석",
+    explanation:
+      "종속변인이 이분형(이수/포기)이고 발생 확률을 예측하므로 로지스틱회귀분석이 적절하다. 다중회귀는 연속형 종속변인에 사용한다.",
+  },
+  // ⓒ 연구문제 나열형: 조절효과 → 상호작용항·위계적 회귀
+  {
+    seedKey: "dx:statistics:scn:10",
+    type: "scenario",
+    area: "statistics",
+    cognitiveLevel: "analyze",
+    question:
+      "[연구문제] 1) 플립러닝 참여도는 학습몰입에 영향을 주는가? 2) 그 영향이 학습자의 자기조절학습 수준에 따라 달라지는가? 2)와 같은 조절효과를 검정하기에 가장 적절한 방법은?",
+    options: [
+      "상호작용항을 투입한 위계적(조절) 회귀분석",
+      "단순상관분석",
+      "독립표본 t-검정",
+      "탐색적 요인분석(EFA)",
+    ],
+    answerIndex: 0,
+    relatedStatMethodName: "다중회귀분석",
+    explanation:
+      "조절효과는 독립변인×조절변인 상호작용항을 위계적으로 투입해 ΔR²의 유의성으로 검정한다(또는 SEM 상호작용). 단순상관·t-검정으로는 조절효과를 검정할 수 없다.",
+  },
+  {
+    seedKey: "dx:statistics:scn:11",
+    type: "scenario",
+    area: "statistics",
+    cognitiveLevel: "analyze",
+    question:
+      "[연구문제] '교사의 테크놀로지 지원(TK)이 학생 학업참여에 미치는 영향을 학습동기가 매개하는가?'를 검정하려 한다. 매개효과 검정에 가장 적절한 방법은?",
+    options: [
+      "구조방정식모형(SEM) 또는 부트스트래핑 기반 매개효과 분석",
+      "카이제곱 독립성 검정",
+      "일원분산분석(ANOVA)",
+      "Cronbach α 신뢰도 분석",
+    ],
+    answerIndex: 0,
+    relatedStatMethodName: "구조방정식모형(SEM)",
+    relatedMethodName: "구조방정식모형(SEM)",
+    explanation:
+      "매개효과는 SEM 경로모형이나 부트스트래핑으로 간접효과의 유의성을 검정한다. 카이제곱·ANOVA·신뢰도분석은 매개 검정 목적과 맞지 않는다.",
+  },
+  // ⓓ 분석 절차·의사결정 추론
+  {
+    seedKey: "dx:statistics:scn:12",
+    type: "scenario",
+    area: "statistics",
+    cognitiveLevel: "analyze",
+    question:
+      "[절차 추론] 준실험연구에서 두 학급의 사후 학업성취를 비교하려 한다. 사전검사에서 두 집단의 초기 점수가 유의하게 달랐다(비동질). 처치효과를 추정하기에 가장 적절한 분석은?",
+    options: [
+      "사전점수를 공변량으로 통제한 ANCOVA",
+      "공변량 없이 사후점수만 비교하는 독립표본 t-검정",
+      "탐색적 요인분석(EFA)",
+      "카이제곱 검정",
+    ],
+    answerIndex: 0,
+    relatedStatMethodName: "ANCOVA (공분산분석)",
+    relatedMethodName: "준실험연구",
+    explanation:
+      "집단이 비동질일 때는 사전점수를 공변량으로 통제하는 ANCOVA로 초기차를 보정한 처치효과를 추정한다. 단순 사후 t-검정은 초기차 편향을 통제하지 못한다.",
+  },
+
+  // ── 연구방법 scenario 추가 (method) — 기존 2 + 신규 9 = 11. ⓑ 방법·통계 연계 포함 ──
+  // ⓐ 조건제시형 (연구설계 식별)
+  {
+    seedKey: "dx:method:scn:3",
+    type: "scenario",
+    area: "method",
+    cognitiveLevel: "apply",
+    question:
+      "[조건] 교육공학 연구자가 플립러닝 효과를 검증하려는데, 학교 사정상 학생을 무작위 배정할 수 없어 이미 편성된 두 학급을 처치·비교집단으로 활용하고 사전점수를 통제하려 한다. 가장 적절한 연구방법은?",
+    options: ["준실험연구", "진실험연구", "문화기술지", "델파이조사"],
+    answerIndex: 0,
+    relatedMethodName: "준실험연구",
+    explanation:
+      "무선할당이 불가능해 기존(비동등) 집단을 활용하고 사전점수를 공변인으로 통제하므로 준실험연구가 적절하다. 무선할당이 가능하면 진실험이다.",
+  },
+  {
+    seedKey: "dx:method:scn:4",
+    type: "scenario",
+    area: "method",
+    cognitiveLevel: "apply",
+    question:
+      "[조건] 최근 10년간 발표된 '디지털교과서가 학업성취에 미치는 효과' 논문 40여 편의 결과가 제각각이다. 이를 효과크기로 표준화해 전체 효과와 조절변인을 통합 분석하려 한다. 가장 적절한 연구방법은?",
+    options: ["메타분석", "근거이론", "사례연구", "실험연구"],
+    answerIndex: 0,
+    relatedMethodName: "메타분석",
+    explanation:
+      "다수 선행연구의 효과크기를 표준화·통합하고 조절변인을 분석하므로 메타분석이 적절하다.",
+  },
+  {
+    seedKey: "dx:method:scn:5",
+    type: "scenario",
+    area: "method",
+    cognitiveLevel: "apply",
+    question:
+      "[조건] 연구자가 한 중학교 메이커스페이스 동아리에 6개월간 참여하며, 구성원이 공유하는 규범·상호작용·문화를 내부자 관점에서 두껍게 기술하려 한다. 가장 적절한 질적 연구방법은?",
+    options: ["문화기술지", "메타분석", "준실험연구", "측정도구 개발과 타당화"],
+    answerIndex: 0,
+    relatedMethodName: "문화기술지",
+    explanation:
+      "장기 참여관찰로 집단이 공유하는 문화를 내부자(emic) 관점에서 총체적으로 기술하므로 문화기술지가 적절하다.",
+  },
+  {
+    seedKey: "dx:method:scn:6",
+    type: "scenario",
+    area: "method",
+    cognitiveLevel: "apply",
+    question:
+      "[조건] 새로운 '온라인 학습실재감 척도'가 필요하다. 구성개념 정의 → 문항 개발 → 내용타당도 → 예비조사 → 본조사 → 요인분석 타당화의 절차로 도구를 개발·검증하려 한다. 가장 적절한 연구방법은?",
+    options: [
+      "측정도구 개발과 타당화",
+      "메타분석",
+      "실험연구",
+      "내러티브 탐구",
+    ],
+    answerIndex: 0,
+    relatedMethodName: "측정도구 개발과 타당화",
+    explanation:
+      "구성개념 정의부터 문항개발·타당도·신뢰도 검증까지의 절차는 측정도구(척도) 개발과 타당화 연구의 전형이다.",
+  },
+  // ⓑ 논문서술형 — 방법·통계 연계 (한 줄기 → 방법 / 통계 별도 식별)
+  {
+    seedKey: "dx:method:scn:7",
+    type: "scenario",
+    area: "method",
+    cognitiveLevel: "apply",
+    question:
+      "[서술] 연구자는 플립러닝 프로그램을 처치집단에 무선할당으로 적용하고, 학습몰입·학업성취의 사전-사후 변화를 통제집단과 비교해 인과효과를 검증하려 한다. 이 연구의 (a) 연구방법으로 가장 적절한 것은?",
+    options: ["진실험연구", "사례연구", "현상학", "델파이조사"],
+    answerIndex: 0,
+    relatedMethodName: "실험연구",
+    explanation:
+      "(a) 무선할당 + 독립변인 조작 + 통제집단 비교로 인과효과를 검증하므로 진실험연구가 적절하다. 같은 줄기의 (b) 통계방법은 사전점수 통제 ANCOVA 문항(dx:statistics:scn:12 유형)으로 이어진다.",
+  },
+  {
+    seedKey: "dx:method:scn:8",
+    type: "scenario",
+    area: "method",
+    cognitiveLevel: "apply",
+    question:
+      "[서술] (앞 문항 연계) 동일한 플립러닝 진실험에서, 처치·통제 두 집단의 '학업성취' 사후점수를 사전점수 차이를 보정해 비교하려 한다. (b) 통계방법으로 가장 적절한 것은?",
+    options: [
+      "공분산분석(ANCOVA)",
+      "탐색적 요인분석(EFA)",
+      "카이제곱 검정",
+      "군집분석",
+    ],
+    answerIndex: 0,
+    relatedStatMethodName: "ANCOVA (공분산분석)",
+    relatedMethodName: "실험연구",
+    explanation:
+      "(b) 두 집단의 사후 평균을 사전점수(공변량)로 보정해 비교하므로 ANCOVA가 적절하다. 종속변인·집단이 더 늘면 MANOVA/MANCOVA를 고려한다.",
+  },
+  // ⓒ 연구문제 나열형 (질적 방법 선택)
+  {
+    seedKey: "dx:method:scn:9",
+    type: "scenario",
+    area: "method",
+    cognitiveLevel: "analyze",
+    question:
+      "[연구문제] '초임 교사들은 에듀테크 도입 과정에서 어떤 경험을 하며, 그 경험에 공통적으로 내재한 본질적 의미는 무엇인가?' 이 연구문제에 가장 적합한 질적 방법은?",
+    options: ["현상학", "메타분석", "준실험연구", "구조방정식모형(SEM)"],
+    answerIndex: 0,
+    relatedMethodName: "현상학",
+    explanation:
+      "체험의 '본질적 의미 구조'를 드러내려는 연구문제에는 현상학이 적합하다. 이론 생성이 목적이면 근거이론을 고려한다.",
+  },
+  // ⓓ 절차·의사결정 추론 (실행연구 순환)
+  {
+    seedKey: "dx:method:scn:10",
+    type: "scenario",
+    area: "method",
+    cognitiveLevel: "analyze",
+    question:
+      "[절차 추론] 한 교사가 액션리서치 1차 순환에서 '무작위 호명'을 적용했더니 참여는 늘었으나 일부 학생의 불안이 커졌다. 이 성찰 결과에 따라 다음으로 가장 적절한 단계는?",
+    options: [
+      "전략을 수정해(예: 자발적 발표+보상) 2차 실행 순환을 계획·진행한다",
+      "연구를 종료하고 1차 결과만 일반화한다",
+      "무선할당을 추가해 진실험으로 전환한다",
+      "효과크기를 통합하는 메타분석을 실시한다",
+    ],
+    answerIndex: 0,
+    relatedMethodName: "액션리서치",
+    explanation:
+      "액션리서치는 성찰 결과로 계획을 수정해 다음 개선 순환(계획-실행-관찰-성찰)을 반복한다. 단일 순환 결과의 일반화나 설계 전환은 액션리서치의 취지와 맞지 않는다.",
+  },
+
+  // ═════════════════════════════════════════════════════════════
+  // v4 신규 — 지문 분석 (passage). 짧은 가상 연구 서술(초록/방법 문단)을 읽고
+  // (a) 적용 개념·방법 식별 또는 (b) 한계·누락요소 식별. 채점은 mcq 동일(options·answerIndex).
+  // ⚠️ 전부 가상 서술(실제 논문 복제 금지). 졸업생 논문 톤(자기효능감·플립러닝·ANCOVA·SEM 등).
+  // 인지수준: 대부분 apply/analyze, 한계 식별은 evaluate.
+  // ═════════════════════════════════════════════════════════════
+  // ── (a) 적용 방법·기법 식별 ──
+  {
+    seedKey: "dx:method:psg:1",
+    type: "passage",
+    area: "method",
+    cognitiveLevel: "analyze",
+    passage:
+      "본 연구는 중학교 2학년 두 개 학급(처치 32명·비교 31명)을 대상으로 플립러닝의 효과를 검증하였다. 학교 여건상 학생을 무작위로 배정하지 못하여 이미 편성된 학급을 그대로 활용하였다. 처치집단은 8주간 플립러닝으로, 비교집단은 전통적 강의식으로 운영하였다. 사전 학업성취 검사에서 두 집단 간 차이를 점검하였고, 사후 검사 결과는 사전점수를 공변량으로 통제하여 분석하였다.",
+    question:
+      "위 가상 연구 서술에서 채택한 연구설계로 가장 적절한 것은?",
+    options: ["준실험연구", "진실험연구", "메타분석", "문화기술지"],
+    answerIndex: 0,
+    relatedMethodName: "준실험연구",
+    relatedStatMethodName: "ANCOVA (공분산분석)",
+    explanation:
+      "무선할당 없이 기존 학급을 활용하고 사전점수를 공변량으로 통제(ANCOVA)했으므로 준실험연구다. 무선할당이 있었다면 진실험이다.",
+  },
+  {
+    seedKey: "dx:statistics:psg:1",
+    type: "passage",
+    area: "statistics",
+    cognitiveLevel: "analyze",
+    passage:
+      "연구자는 에듀테크 수용 모형을 검증하기 위해 대학생 412명의 응답을 수집하였다. '지각된 유용성', '지각된 용이성', '이용의도'는 각각 4~5개 문항으로 측정한 잠재변인으로 설정하였다. 먼저 측정문항이 잠재변인을 잘 반영하는지 확인적 요인분석으로 점검한 뒤, 잠재변인 간 인과 경로(유용성·용이성 → 이용의도)를 추정하고 모형 적합도(CFI=.96, RMSEA=.05)를 보고하였다.",
+    question:
+      "위 가상 연구가 잠재변인 간 인과 경로와 측정모형을 동시에 추정하기 위해 사용한 분석으로 가장 적절한 것은?",
+    options: [
+      "구조방정식모형(SEM)",
+      "다중회귀분석",
+      "이원분산분석",
+      "탐색적 요인분석(EFA)",
+    ],
+    answerIndex: 0,
+    relatedStatMethodName: "구조방정식모형(SEM)",
+    relatedMethodName: "구조방정식모형(SEM)",
+    explanation:
+      "다항목 잠재변인의 측정모형(CFA)과 인과 경로를 동시에 추정하고 적합도를 평가했으므로 구조방정식모형(SEM)이다.",
+  },
+  {
+    seedKey: "dx:statistics:psg:2",
+    type: "passage",
+    area: "statistics",
+    cognitiveLevel: "apply",
+    passage:
+      "본 연구는 LMS 로그 데이터를 활용해 온라인 학습자의 기말 학업성취를 예측하고자 하였다. 예측변인으로 주당 접속시간, 동영상 시청 완료율, 토론 게시글 수, 과제 제출 적시성(모두 연속형)을 투입하였고, 종속변인은 기말 총점(연속형)이었다. 각 예측변인의 표준화 회귀계수(β)를 보고하여 상대적 설명력을 비교하였다.",
+    question:
+      "위 가상 연구에 사용된 통계 분석으로 가장 적절한 것은?",
+    options: [
+      "다중회귀분석",
+      "로지스틱회귀분석",
+      "일원분산분석(ANOVA)",
+      "확인적 요인분석(CFA)",
+    ],
+    answerIndex: 0,
+    relatedStatMethodName: "다중회귀분석",
+    relatedMethodName: "설문조사연구",
+    explanation:
+      "연속형 종속변인 1개를 연속형 예측변인 여러 개로 예측하고 표준화계수로 설명력을 비교했으므로 다중회귀분석이다.",
+  },
+  // ── (b) 한계·누락요소 식별 (evaluate) ──
+  {
+    seedKey: "dx:method:psg:2",
+    type: "passage",
+    area: "method",
+    cognitiveLevel: "analyze",
+    passage:
+      "한 연구는 '게이미피케이션 적용 수업'이 학습몰입을 높인다고 주장하였다. 연구자는 자신이 가르치는 한 학급에 게이미피케이션 수업을 8주간 적용한 뒤 사후 학습몰입 점수가 높게 나타났다고 보고하였다. 그러나 비교집단을 두지 않았고, 사전점수도 측정하지 않았으며, 처치 전후 다른 학교 행사나 성숙 효과는 고려되지 않았다.",
+    question:
+      "위 가상 연구의 인과적 결론을 가장 크게 위협하는 설계상 한계는?",
+    options: [
+      "비교집단과 사전측정이 없어 처치 외 요인(성숙·역사 등)을 배제할 수 없다",
+      "표본의 성별 비율을 보고하지 않았다",
+      "통계 소프트웨어 종류를 명시하지 않았다",
+      "학습몰입 척도의 출판연도가 오래되었다",
+    ],
+    answerIndex: 0,
+    relatedMethodName: "준실험연구",
+    explanation:
+      "단일집단 사후설계는 비교집단·사전측정이 없어 성숙·역사 등 내적타당도 위협을 통제하지 못한다. 이것이 인과 추론을 가장 크게 위협한다.",
+  },
+  {
+    seedKey: "dx:statistics:psg:3",
+    type: "passage",
+    area: "statistics",
+    cognitiveLevel: "analyze",
+    passage:
+      "한 척도개발 연구는 '디지털 시민성' 측정도구를 새로 개발하였다. 연구자는 30개 문항을 구성한 뒤 곧바로 본조사를 실시하고, 전체 문항의 Cronbach α가 .91로 높다는 점만을 근거로 도구의 타당성을 주장하였다. 요인구조에 대한 탐색적·확인적 요인분석이나 다른 척도와의 상관(준거타당도)은 제시되지 않았다.",
+    question:
+      "위 가상 척도개발 연구에서 '타당도' 측면에서 가장 핵심적으로 누락된 절차는?",
+    options: [
+      "요인분석을 통한 구인타당도 검증(및 준거타당도)",
+      "응답자 수를 1,000명 이상으로 늘리는 것",
+      "문항을 모두 역채점 문항으로 바꾸는 것",
+      "결과를 그래프 대신 표로 제시하는 것",
+    ],
+    answerIndex: 0,
+    relatedMethodName: "측정도구 개발과 타당화",
+    relatedStatMethodName: "확인적 요인분석(CFA)",
+    explanation:
+      "Cronbach α는 신뢰도(내적 일관성) 지표일 뿐 타당도를 보장하지 않는다. 구인타당도(요인분석)와 준거타당도 검증이 누락되어 타당성 주장이 약하다.",
+  },
+  {
+    seedKey: "dx:statistics:psg:4",
+    type: "passage",
+    area: "statistics",
+    cognitiveLevel: "analyze",
+    passage:
+      "한 연구는 '교사 자율성 지지'가 '학업참여'에 미치는 영향을 '학습동기'가 매개한다고 주장하였다. 그러나 분석에서는 자율성 지지와 학업참여의 단순 상관계수(r=.42, p<.01)만 제시하였을 뿐, 학습동기를 투입한 매개효과(간접효과)는 통계적으로 검증하지 않았다.",
+    question:
+      "위 가상 연구가 '매개효과'를 주장하기 위해 반드시 보완해야 하는 분석은?",
+    options: [
+      "학습동기를 매개변인으로 투입한 간접효과 검증(SEM·부트스트래핑 등)",
+      "두 변인의 상관계수를 한 번 더 계산하는 것",
+      "응답자의 학년을 통제변인으로 추가하는 것",
+      "기술통계의 평균과 표준편차를 다시 보고하는 것",
+    ],
+    answerIndex: 0,
+    relatedStatMethodName: "구조방정식모형(SEM)",
+    relatedMethodName: "구조방정식모형(SEM)",
+    explanation:
+      "단순 상관만으로는 매개를 입증할 수 없다. 매개변인을 투입해 간접효과(SEM 경로·부트스트래핑)를 유의성 검정해야 매개 주장이 성립한다.",
   },
 ];
 
@@ -1305,12 +1751,19 @@ function identityKey(q: {
   question?: string;
   prompt?: string;
   statement?: string;
+  passage?: string;
 }): string {
   const t = questionType(q);
-  // 본문 텍스트: term=prompt, ox=statement, 그 외=question
+  // 본문 텍스트: term=prompt, ox=statement, passage=지문+질문(지문 공유 문항 구분), 그 외=question
   const text =
-    (t === "term" ? q.prompt : t === "ox" ? q.statement : q.question) ?? "";
-  return `${t}|${text.trim()}`;
+    t === "term"
+      ? q.prompt
+      : t === "ox"
+        ? q.statement
+        : t === "passage"
+          ? `${q.passage ?? ""}::${q.question ?? ""}`
+          : q.question;
+  return `${t}|${(text ?? "").trim()}`;
 }
 
 /**
@@ -1361,6 +1814,11 @@ export async function seedDiagnosticQuestions(
     if (entry.leftItems !== undefined) payload.leftItems = entry.leftItems;
     if (entry.rightItems !== undefined) payload.rightItems = entry.rightItems;
     if (entry.correctMap !== undefined) payload.correctMap = entry.correctMap;
+    if (entry.passage !== undefined) payload.passage = entry.passage;
+    if (entry.relatedMethodName !== undefined)
+      payload.relatedMethodName = entry.relatedMethodName;
+    if (entry.relatedStatMethodName !== undefined)
+      payload.relatedStatMethodName = entry.relatedStatMethodName;
     await diagnosticQuestionsApi.create(payload);
     created += 1;
   }
