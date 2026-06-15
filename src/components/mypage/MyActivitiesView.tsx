@@ -233,7 +233,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                         <div className="flex flex-wrap items-center gap-2">
                           <Calendar size={14} className="text-primary" />
                           <Badge variant="secondary" className="text-[10px]">세미나</Badge>
-                          {checkedInMap.has(s.id) && <Badge variant="secondary" className="bg-green-50 text-green-700 text-[10px]">출석</Badge>}
+                          {checkedInMap.has(s.id) && <Badge variant="secondary" className="bg-green-50 text-green-700 text-[10px] dark:bg-green-950/40 dark:text-green-300">출석</Badge>}
                         </div>
                         <p className="mt-1 truncate font-medium">{s.title}</p>
                         <p className="mt-0.5 text-xs text-muted-foreground">
@@ -286,12 +286,12 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                                 </Badge>
                               )}
                               {(a.year || a.semester) && (
-                                <Badge variant="secondary" className="bg-blue-50 text-[10px] text-blue-700">
+                                <Badge variant="secondary" className="bg-blue-50 text-[10px] text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
                                   {formatSemester(a.year, a.semester)}
                                 </Badge>
                               )}
-                              {role && <Badge variant="secondary" className="bg-sky-50 text-sky-700 text-[10px]">{role}</Badge>}
-                              {a.leaderId === user?.id && <Badge className="bg-amber-50 text-amber-700 text-[10px]">{a.type === "study" ? "모임장" : "담당자"}</Badge>}
+                              {role && <Badge variant="secondary" className="bg-sky-50 text-sky-700 text-[10px] dark:bg-sky-950/40 dark:text-sky-300">{role}</Badge>}
+                              {a.leaderId === user?.id && <Badge className="bg-amber-50 text-amber-700 text-[10px] dark:bg-amber-950/40 dark:text-amber-300">{a.type === "study" ? "모임장" : "담당자"}</Badge>}
                             </div>
                             <p className="mt-1 truncate font-medium">{a.title}</p>
                             <p className="mt-0.5 text-xs text-muted-foreground">
@@ -344,7 +344,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                         const meta = ACTIVITY_META[a.type] ?? ACTIVITY_META.project;
                         const mine = applicationByActivity.get(a.id);
                         const statusLabel = mine?.status === "rejected" ? "반려" : "승인 대기";
-                        const statusColor = mine?.status === "rejected" ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700";
+                        const statusColor = mine?.status === "rejected" ? "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300" : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300";
                         return (
                           <li key={a.id} className="rounded-2xl border bg-card px-5 py-4 hover:border-primary/40">
                             <Link href={`${meta.href}/${a.id}`} className="flex items-center justify-between">
@@ -387,7 +387,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                       <div className="flex items-start justify-between">
                         <div>
                           <div className="flex items-center gap-2">
-                            <Badge variant="secondary" className={c.type === "completion" ? "bg-primary/10 text-primary" : c.type === "appointment" ? "bg-blue-50 text-blue-700" : "bg-amber-50 text-amber-700"}>
+                            <Badge variant="secondary" className={c.type === "completion" ? "bg-primary/10 text-primary" : c.type === "appointment" ? "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300" : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"}>
                               {c.type === "completion" ? "수료증" : c.type === "appointment" ? "임명장" : "감사장"}
                             </Badge>
                             {c.certificateNo && (
@@ -445,12 +445,12 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
                                 <Mic size={14} className="text-blue-600" />
-                                <Badge variant="secondary" className="bg-blue-50 text-blue-700 text-[10px]">인터뷰</Badge>
+                                <Badge variant="secondary" className="bg-blue-50 text-blue-700 text-[10px] dark:bg-blue-950/40 dark:text-blue-300">인터뷰</Badge>
                                 <Badge
                                   variant="outline"
                                   className={cn(
                                     "text-[10px]",
-                                    r.status === "submitted" ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700",
+                                    r.status === "submitted" ? "bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-300" : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
                                   )}
                                 >
                                   {r.status === "submitted" ? "제출 완료" : "임시 저장"}
@@ -499,7 +499,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <Mic size={14} className="text-blue-600" />
-                              <Badge variant="secondary" className="bg-blue-50 text-blue-700 text-[10px]">인터뷰</Badge>
+                              <Badge variant="secondary" className="bg-blue-50 text-blue-700 text-[10px] dark:bg-blue-950/40 dark:text-blue-300">인터뷰</Badge>
                               {p.interview?.deadline && (
                                 <Badge variant="outline" className="text-[10px]">
                                   마감 {new Date(p.interview.deadline).toLocaleDateString("ko-KR")}

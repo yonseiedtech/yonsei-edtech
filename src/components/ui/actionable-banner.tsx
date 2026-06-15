@@ -62,7 +62,7 @@ export default function ActionableBanner({
           type="button"
           onClick={onDismiss}
           aria-label="배너 닫기"
-          className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+          className="absolute right-1 top-1 inline-flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-card hover:text-foreground sm:right-3 sm:top-3 sm:h-7 sm:w-7"
         >
           <X size={14} />
         </button>

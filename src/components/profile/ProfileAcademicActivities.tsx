@@ -296,7 +296,7 @@ export default function ProfileAcademicActivities({ owner }: Props) {
                   active
                     ? "bg-primary/10 text-primary"
                     : c > 0
-                      ? "bg-slate-100 text-slate-600"
+                      ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
                       : "bg-transparent text-muted-foreground/50"
                 }`}
               >
@@ -327,10 +327,10 @@ export default function ProfileAcademicActivities({ owner }: Props) {
                     className={cn(
                       "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
                       isOther
-                        ? "border-slate-200 bg-slate-50 text-slate-600"
+                        ? "border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300"
                         : group.semester === "first"
-                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                          : "border-amber-200 bg-amber-50 text-amber-700",
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+                          : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
                     )}
                   >
                     <CalendarRange size={11} />
@@ -350,7 +350,7 @@ export default function ProfileAcademicActivities({ owner }: Props) {
                           className={cn(
                             "rounded-2xl border px-4 py-3 transition-colors",
                             speaker
-                              ? "border-rose-200 bg-rose-50/40 hover:border-rose-300"
+                              ? "border-rose-200 bg-rose-50/40 hover:border-rose-300 dark:border-rose-800 dark:bg-rose-950/20 dark:hover:border-rose-700"
                               : "hover:border-primary/40",
                           )}
                         >
@@ -360,13 +360,13 @@ export default function ProfileAcademicActivities({ owner }: Props) {
                                 {speaker && (
                                   <Badge
                                     variant="secondary"
-                                    className="gap-0.5 bg-rose-100 text-[10px] font-semibold text-rose-700"
+                                    className="gap-0.5 bg-rose-100 text-[10px] font-semibold text-rose-700 dark:bg-rose-900/50 dark:text-rose-300"
                                   >
                                     <Mic size={9} /> 연사
                                   </Badge>
                                 )}
                               </div>
-                              <p className={cn("truncate text-sm", speaker ? "font-semibold text-rose-900" : "font-medium")}>
+                              <p className={cn("truncate text-sm", speaker ? "font-semibold text-rose-900 dark:text-rose-200" : "font-medium")}>
                                 {s.title}
                               </p>
                               <p className="mt-0.5 text-[11px] text-muted-foreground">
@@ -419,8 +419,8 @@ export default function ProfileAcademicActivities({ owner }: Props) {
                                 variant="secondary"
                                 className={cn(
                                   "gap-0.5 text-[10px] font-medium",
-                                  role.kind === "leader" && "bg-amber-50 text-amber-700",
-                                  role.kind === "role" && "bg-violet-50 text-violet-700",
+                                  role.kind === "leader" && "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
+                                  role.kind === "role" && "bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300",
                                   role.kind === "external" && role.type && EXTERNAL_PARTICIPANT_TYPE_COLORS[role.type],
                                 )}
                               >

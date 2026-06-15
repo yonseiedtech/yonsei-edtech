@@ -46,7 +46,7 @@ const DOMAINS: DomainNode[] = [
     Icon: Pencil,
     topics: ["ISD", "메시지 설계", "교수전략", "시각 자료"],
     theories: ["일반체제이론", "행동주의", "인지주의", "교수설계이론", "통신이론", "지각주의", "구성주의"],
-    color: "bg-blue-50 text-blue-900 border-blue-200",
+    color: "bg-blue-50 text-blue-900 border-blue-200 dark:bg-blue-950/40 dark:text-blue-100 dark:border-blue-800",
     border: "border-l-blue-500",
   },
   {
@@ -55,7 +55,7 @@ const DOMAINS: DomainNode[] = [
     Icon: Hammer,
     topics: ["인쇄자료", "시청각자료", "CBI", "시각화"],
     theories: ["통신이론"],
-    color: "bg-emerald-50 text-emerald-900 border-emerald-200",
+    color: "bg-emerald-50 text-emerald-900 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-100 dark:border-emerald-800",
     border: "border-l-emerald-500",
   },
   {
@@ -64,7 +64,7 @@ const DOMAINS: DomainNode[] = [
     Icon: Wrench,
     topics: ["매체활용", "혁신의 확산", "채택/제도화", "정책/규제", "활용모형"],
     theories: ["여론주도자", "문지기", "조직개발", "혁신확산"],
-    color: "bg-amber-50 text-amber-900 border-amber-200",
+    color: "bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-950/40 dark:text-amber-100 dark:border-amber-800",
     border: "border-l-amber-500",
   },
   {
@@ -73,7 +73,7 @@ const DOMAINS: DomainNode[] = [
     Icon: Settings,
     topics: ["프로젝트", "자원", "전달체계", "정보"],
     theories: ["행동주의", "통신이론", "생산성이론", "체제접근", "동기이론", "정보이론"],
-    color: "bg-purple-50 text-purple-900 border-purple-200",
+    color: "bg-purple-50 text-purple-900 border-purple-200 dark:bg-purple-950/40 dark:text-purple-100 dark:border-purple-800",
     border: "border-l-purple-500",
   },
   {
@@ -82,7 +82,7 @@ const DOMAINS: DomainNode[] = [
     Icon: ClipboardCheck,
     topics: ["요구분석", "준거참조측정", "형성평가", "종합평가"],
     theories: ["행동주의", "일반체제이론", "구성주의", "인지과학"],
-    color: "bg-rose-50 text-rose-900 border-rose-200",
+    color: "bg-rose-50 text-rose-900 border-rose-200 dark:bg-rose-950/40 dark:text-rose-100 dark:border-rose-800",
     border: "border-l-rose-500",
   },
 ];
@@ -228,17 +228,17 @@ export default function EduTechOverview() {
             </p>
 
             {/* AECT 미국 교육공학회 — Sprint 70 */}
-            <div className="rounded-lg border bg-gradient-to-br from-sky-50/40 to-white p-4">
+            <div className="rounded-lg border bg-gradient-to-br from-sky-50/40 to-white p-4 dark:from-sky-950/30 dark:to-card">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="flex items-center gap-2 text-sm font-semibold">
-                  <Globe size={14} className="text-sky-700" />
+                  <Globe size={14} className="text-sky-700 dark:text-sky-400" />
                   AECT — 미국 교육공학회
                 </p>
                 <a
                   href="https://aect.org"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-[10px] text-sky-700 hover:underline"
+                  className="inline-flex items-center gap-1 text-[10px] text-sky-700 hover:underline dark:text-sky-400"
                 >
                   aect.org
                   <ExternalLink size={10} />
@@ -251,13 +251,13 @@ export default function EduTechOverview() {
               </p>
 
               {/* AECT 2023 최신 공식 정의 */}
-              <div className="mt-3 rounded-md border-l-4 border-l-sky-500 bg-sky-50/80 p-3">
-                <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-sky-900">
+              <div className="mt-3 rounded-md border-l-4 border-l-sky-500 bg-sky-50/80 p-3 dark:bg-sky-950/40">
+                <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-sky-900 dark:text-sky-200">
                   <Quote size={10} />
                   AECT 2023 최신 공식 정의
                   <Badge className="ml-1 bg-sky-600 text-[9px] text-white">NEW</Badge>
                 </p>
-                <p className="mt-1.5 text-xs italic leading-relaxed text-sky-950">
+                <p className="mt-1.5 text-xs italic leading-relaxed text-sky-950 dark:text-sky-100">
                   &ldquo;Educational technology is the <strong>ethical study and application</strong>{" "}
                   of <strong>theory, research, and practices</strong> to{" "}
                   <strong>advance knowledge, improve learning and performance</strong>, and{" "}
@@ -283,7 +283,7 @@ export default function EduTechOverview() {
                     <Badge
                       key={k.label}
                       variant="outline"
-                      className="border-sky-200 bg-card text-[10px] font-normal"
+                      className="border-sky-200 bg-card text-[10px] font-normal dark:border-sky-800"
                       title={k.note}
                     >
                       {k.label}
@@ -302,8 +302,8 @@ export default function EduTechOverview() {
                   📜 정의의 진화 1994 → 2008 → 2023
                 </p>
                 <div className="mt-2 space-y-2">
-                  <div className="rounded-md border-l-4 border-l-slate-300 bg-muted/30 p-2">
-                    <p className="text-[10px] font-semibold text-slate-700">1994 (Seels &amp; Richey)</p>
+                  <div className="rounded-md border-l-4 border-l-slate-300 bg-muted/30 p-2 dark:border-l-slate-600">
+                    <p className="text-[10px] font-semibold text-slate-700 dark:text-slate-300">1994 (Seels &amp; Richey)</p>
                     <p className="text-[11px] italic text-foreground/80">
                       &ldquo;Theory and practice of design, development, utilization, management, evaluation of processes and resources for learning.&rdquo;
                     </p>
@@ -311,8 +311,8 @@ export default function EduTechOverview() {
                       <strong>핵심 추가:</strong> 5도메인 모델 (설계·개발·활용·관리·평가)
                     </p>
                   </div>
-                  <div className="rounded-md border-l-4 border-l-sky-300 bg-sky-50/40 p-2">
-                    <p className="text-[10px] font-semibold text-slate-700">2008</p>
+                  <div className="rounded-md border-l-4 border-l-sky-300 bg-sky-50/40 p-2 dark:border-l-sky-700 dark:bg-sky-950/30">
+                    <p className="text-[10px] font-semibold text-slate-700 dark:text-slate-300">2008</p>
                     <p className="text-[11px] italic text-foreground/80">
                       &ldquo;Study and ethical practice of facilitating learning and improving performance by creating, using, and managing appropriate technological processes and resources.&rdquo;
                     </p>
@@ -320,8 +320,8 @@ export default function EduTechOverview() {
                       <strong>핵심 추가:</strong> <em>윤리(ethical)</em> + <em>수행 향상(improving performance)</em> → HRD/기업교육 연결
                     </p>
                   </div>
-                  <div className="rounded-md border-l-4 border-l-sky-500 bg-sky-100/60 p-2">
-                    <p className="text-[10px] font-semibold text-slate-700">2023 (최신)</p>
+                  <div className="rounded-md border-l-4 border-l-sky-500 bg-sky-100/60 p-2 dark:bg-sky-900/40">
+                    <p className="text-[10px] font-semibold text-slate-700 dark:text-slate-300">2023 (최신)</p>
                     <p className="text-[11px] italic text-foreground/80">
                       &ldquo;Ethical study and application … advance knowledge, improve learning and performance, and empower learners … learning experiences and environments using appropriate processes and resources.&rdquo;
                     </p>
@@ -425,15 +425,15 @@ export default function EduTechOverview() {
                     <span className="text-muted-foreground">설계·개발·활용·관리·평가 5도메인 (Seels &amp; Richey)</span>
                   </li>
                   <li>
-                    <strong className="text-sky-900">2008</strong>{" "}
+                    <strong className="text-sky-900 dark:text-sky-300">2008</strong>{" "}
                     <span className="text-foreground">윤리·수행 향상·과정·자원 강조 (현행 정의)</span>
                   </li>
                 </ol>
               </div>
 
               {/* 한국 교육공학회와 비교 */}
-              <div className="mt-3 rounded-md border border-amber-200 bg-amber-50/50 p-3">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-900">
+              <div className="mt-3 rounded-md border border-amber-200 bg-amber-50/50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-900 dark:text-amber-200">
                   🇰🇷 한국 교육공학회 (KSET) 와의 관계
                 </p>
                 <p className="mt-1 text-[11px] leading-relaxed text-foreground">

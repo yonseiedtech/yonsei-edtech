@@ -11,9 +11,9 @@ export const EXTERNAL_PARTICIPANT_TYPE_LABELS: Record<ExternalParticipantType, s
   attendee: "참석",
 };
 export const EXTERNAL_PARTICIPANT_TYPE_COLORS: Record<ExternalParticipantType, string> = {
-  speaker: "bg-purple-100 text-purple-800 border border-purple-200",
-  volunteer: "bg-emerald-100 text-emerald-800 border border-emerald-200",
-  attendee: "bg-slate-100 text-slate-700 border border-slate-200",
+  speaker: "bg-purple-100 text-purple-800 border border-purple-200 dark:bg-purple-950/40 dark:text-purple-200 dark:border-purple-800",
+  volunteer: "bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-200 dark:border-emerald-800",
+  attendee: "bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700",
 };
 
 /** 발표자 신청 시 발표 유형 (학술대회 발표 트랙 분류) */

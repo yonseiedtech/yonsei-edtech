@@ -184,7 +184,7 @@ export function AttendanceChecklist({
           </div>
 
           {visibleEnrollments.length === 0 ? (
-            <p className="rounded-md border border-dashed border-slate-200 bg-slate-50 p-4 text-center text-xs text-muted-foreground">
+            <p className="rounded-md border border-dashed border-slate-200 bg-slate-50 p-4 text-center text-xs text-muted-foreground dark:border-slate-700 dark:bg-slate-800/40">
               등록된 수강생이 없습니다. 운영 콘솔에서 명단을 먼저 추가하세요.
             </p>
           ) : (
@@ -202,7 +202,7 @@ export function AttendanceChecklist({
                         className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
                           isAttended
                             ? "border-emerald-500 bg-emerald-500 text-white"
-                            : "border-slate-300 bg-card text-transparent"
+                            : "border-slate-300 bg-card text-transparent dark:border-slate-600"
                         }`}
                         aria-label={isAttended ? "출석 해제" : "출석 표시"}
                       >
@@ -220,7 +220,7 @@ export function AttendanceChecklist({
                             </Badge>
                           )}
                           {!e.userId && (
-                            <Badge variant="outline" className="border-amber-300 bg-amber-50 text-[10px] text-amber-700">
+                            <Badge variant="outline" className="border-amber-300 bg-amber-50 text-[10px] text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
                               회원 미연동
                             </Badge>
                           )}
@@ -239,7 +239,7 @@ export function AttendanceChecklist({
                               });
                             }}
                             placeholder="결석 사유 (선택)"
-                            className="mt-1 w-full rounded border border-slate-200 bg-card px-2 py-1 text-xs"
+                            className="mt-1 w-full rounded border border-slate-200 bg-card px-2 py-1 text-xs dark:border-slate-700"
                           />
                         )}
                       </div>
@@ -250,14 +250,14 @@ export function AttendanceChecklist({
             </ul>
           )}
 
-          <div className="flex flex-wrap items-center gap-2 rounded-md border border-slate-200 bg-slate-50 p-2 text-xs">
-            <span className="font-medium text-slate-700">결석자 일괄 사유:</span>
+          <div className="flex flex-wrap items-center gap-2 rounded-md border border-slate-200 bg-slate-50 p-2 text-xs dark:border-slate-700 dark:bg-slate-800/40">
+            <span className="font-medium text-slate-700 dark:text-slate-300">결석자 일괄 사유:</span>
             <input
               type="text"
               value={bulkAbsenceMemo}
               onChange={(ev) => setBulkAbsenceMemo(ev.target.value)}
               placeholder="예: 재택 과제 제출"
-              className="flex-1 rounded border border-slate-200 bg-card px-2 py-1"
+              className="flex-1 rounded border border-slate-200 bg-card px-2 py-1 dark:border-slate-700"
             />
             <Button type="button" size="sm" variant="outline" onClick={applyBulkMemo}>
               미체크자에게 일괄 적용

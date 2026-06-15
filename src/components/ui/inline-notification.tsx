@@ -68,7 +68,7 @@ export default function InlineNotification({
           type="button"
           onClick={onDismiss}
           aria-label="알림 닫기"
-          className="ml-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+          className="-m-2 ml-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-card hover:text-foreground sm:m-0 sm:h-7 sm:w-7"
         >
           <X size={14} />
         </button>
