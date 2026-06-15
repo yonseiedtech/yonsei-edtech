@@ -96,12 +96,24 @@ export function isWidgetVisible(
  * D-2: order asc 정렬된 위젯 목록 반환.
  * layout 이 없으면 DEFAULT_DASHBOARD_LAYOUT 위젯 반환.
  * layout 에 order 필드가 없는 구버전 항목은 DASHBOARD_WIDGET_KEYS 인덱스로 폴백.
+ *
+ * 마이그레이션: DASHBOARD_WIDGET_KEYS 에 신규 키가 추가됐는데 저장 레이아웃·프리셋에
+ * 누락된 경우, 목록 끝에 자동 보충(기본 visible 값 적용)해 편집 모드에서 제어 가능하게 한다.
+ * 이로써 신규 위젯 키 추가 시 모든 프리셋·기존 사용자 레이아웃을 일괄 수정할 필요가 없다.
  */
 export function getSortedWidgets(
   layout: DashboardLayout | null,
 ): DashboardWidgetConfig[] {
   const source = layout ? layout.widgets : DEFAULT_DASHBOARD_LAYOUT.widgets;
-  return [...source]
+  const present = new Set(source.map((w) => w.key));
+  const missing: DashboardWidgetConfig[] = DASHBOARD_WIDGET_KEYS.filter(
+    (key) => !present.has(key),
+  ).map((key, i) => ({
+    key,
+    visible: DEFAULT_VISIBLE_WIDGETS.has(key),
+    order: source.length + i,
+  }));
+  return [...source, ...missing]
     .map((w) => ({
       ...w,
       order: w.order ?? DASHBOARD_WIDGET_KEYS.indexOf(w.key),

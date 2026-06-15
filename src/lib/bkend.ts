@@ -2718,6 +2718,61 @@ export const streakEventsApi = {
 };
 
 // ─────────────────────────────────────────────────────────────
+// flashcardsApi — 진단 오답·개념 암기카드 (신규 컬렉션 flashcards)
+//
+// 멱등 저장: deterministic doc id + get-선확인. 같은 (userId, 문항/개념) 재저장 시
+// 내용 필드만 갱신하고 복습 메타(dueAt/streak/…)는 보존한다(복습 진척 리셋 방지).
+// 정렬은 클라이언트(복합 인덱스 회피) — list 는 userId 단일 필터만.
+// firestore.rules 의 flashcards 블록(본인 rw + staff read)과 양쪽 게이트.
+// ─────────────────────────────────────────────────────────────
+import type { Flashcard, FlashcardSource, WrongCardSeed } from "@/types/flashcard";
+import { todayYmdKst as flashcardTodayYmdKst } from "./dday";
+
+export const flashcardsApi = {
+  makeId: (userId: string, source: FlashcardSource, refId: string) =>
+    `${userId}__${source === "concept" ? "concept" : "dx"}__${refId}`,
+  /** 본인 카드 전체 (정렬은 클라이언트). */
+  listByUser: (userId: string) =>
+    dataApi.list<Flashcard>("flashcards", { "filter[userId]": userId, limit: 1000 }),
+  get: (id: string) => dataApi.get<Flashcard>("flashcards", id).catch(() => null),
+  /**
+   * 진단 오답 → 카드 멱등 저장. 존재 시 내용만 update(복습 메타 보존), 신규 시 초기 메타로 upsert.
+   */
+  saveFromWrong: async (userId: string, seed: WrongCardSeed): Promise<Flashcard> => {
+    const id = `${userId}__dx__${seed.questionId}`;
+    const content: Record<string, unknown> = {
+      userId,
+      source: "diagnostic_wrong",
+      front: seed.front,
+      back: seed.back,
+      frontHint: seed.frontHint ?? null,
+      area: seed.area,
+      cognitiveLevel: seed.cognitiveLevel ?? null,
+      sourceQuestionId: seed.questionId,
+      conceptId: seed.conceptId ?? null,
+    };
+    const existing = await dataApi.get<Flashcard>("flashcards", id).catch(() => null);
+    if (existing) {
+      // 멱등 — 복습 메타(dueAt/streak/intervalDays/reviewCount/correctCount/lastReviewedAt) 비변경.
+      return dataApi.update<Flashcard>("flashcards", id, content);
+    }
+    const today = flashcardTodayYmdKst();
+    return dataApi.upsert<Flashcard>("flashcards", id, {
+      ...content,
+      dueAt: today,
+      streak: 0,
+      intervalDays: 1,
+      reviewCount: 0,
+      correctCount: 0,
+      lastReviewedAt: null,
+    });
+  },
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<Flashcard>("flashcards", id, data),
+  delete: (id: string) => dataApi.delete("flashcards", id),
+};
+
+// ─────────────────────────────────────────────────────────────
 // userFeedbackApi — 사용자 피드백 수집
 // write: 인증 사용자 (본인 userId) — 비로그인 anonymous 포함
 // list: 운영진(staff+) 전용

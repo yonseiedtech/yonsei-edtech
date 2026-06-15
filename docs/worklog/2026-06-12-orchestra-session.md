@@ -156,3 +156,6 @@ mpareId 자연 소멸 · queryKey 공유는 의도적(에디터와 동일 데이
 
 ## 사이클 136 — 부엉이 UX·대시보드 UI·진단 v4b·연구활동 대시보드 통합 (2026-06-15)
 부엉이: 불꽃을 네이비 원 안 실제 불처럼·끄기 X 일원화·영구 끄기/다시켜기 안내. 대시보드: 일/주/월 크기 균일·알림센터 하단 정렬·월간 마우스오버 활동·수업/세미나 온오프 구분. 진단 v4b: SVG 연구모형 문항. 연구활동 대시보드: ResearchActivityDashboard·ResearchTimerCompact·useGradActivityData 신규(습관 3분할 총일자/달성/미달성·일자별 차트 폭/하단날짜/미래점선추이/당일점 어제대비 색상·캘린더 3분할).
+
+## 사이클 137 — 진단 학습루프·아카이브 개선·진단 개인화·준비도 재정의·오답 암기카드 (2026-06-15)
+H1 진단→학습 루프(약점 30분 읽기 타이머·DiagnosisReadinessWidget·재진단 넛지). 아카이브 진단 CTA를 교육공학 정의 영역 직후로 이동+정보배열 개선. 진단 개인화 빌더(영역+유형/문항수 커스텀 구성)+DiagnosisHistorySection(이력·약점 그래프). 준비도 재정의(응시 정답률→관련 개념 전체 문항 풀 대비 맞춘 비율)+추가평가 유도 애니메이션. 오답 암기카드(flashcards 컬렉션·SM-2 간소 SRS·FlashcardStudy·/flashcards·flashcardsApi 멱등·firestore.rules·잔디 flashcard-study 연계).

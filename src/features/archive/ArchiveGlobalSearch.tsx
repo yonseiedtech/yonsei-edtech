@@ -21,6 +21,9 @@ import {
 } from "@/lib/bkend";
 import { matchesArchiveSearch } from "@/lib/archive-search";
 
+/** 빈 검색 결과 시 제안할 인기/대표 키워드 — 클릭하면 해당 검색어로 즉시 재검색 */
+const POPULAR_QUERIES = ["자기효능감", "타당도", "실험연구", "학습몰입", "신뢰도"] as const;
+
 interface ResultItem {
   id: string;
   name: string;
@@ -148,9 +151,27 @@ export default function ArchiveGlobalSearch() {
           {loading ? (
             <p className="px-1 py-3 text-center text-sm text-muted-foreground">검색 중…</p>
           ) : total === 0 ? (
-            <p className="px-1 py-3 text-center text-sm text-muted-foreground">
-              &lsquo;{q}&rsquo; 검색 결과가 없습니다.
-            </p>
+            <div className="px-2 py-4 text-center">
+              <p className="text-sm font-medium">&lsquo;{q}&rsquo; 검색 결과가 없습니다.</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                개념·변인·측정도구·연구방법·통계방법·기초용어·글쓰기 전체에서 찾았어요. 더 짧은 키워드로 다시 시도해 보세요.
+              </p>
+              <div className="mt-3">
+                <p className="mb-1.5 text-[11px] font-semibold text-muted-foreground">이런 키워드는 어떠세요?</p>
+                <div className="flex flex-wrap items-center justify-center gap-1.5">
+                  {POPULAR_QUERIES.map((pq) => (
+                    <button
+                      key={pq}
+                      type="button"
+                      onClick={() => setQ(pq)}
+                      className="rounded-full border bg-muted/40 px-2.5 py-1 text-xs text-foreground transition-colors hover:bg-muted"
+                    >
+                      {pq}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="space-y-3">
               {groups.map((g) => (

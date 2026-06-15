@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   archiveConceptsApi,
   archiveVariablesApi,
@@ -11,12 +12,15 @@ import {
 } from "@/lib/bkend";
 import type { ArchiveMeasurementTool } from "@/types/edutech-archive";
 import type { AlumniThesis } from "@/types/alumni";
+import { useStudyTimerStore } from "@/features/research/study-timer/study-timer-store";
+import { useCreateSession } from "@/features/research/study-timer/useStudySessions";
 import {
   Lightbulb,
   ArrowRight,
   ChevronDown,
   Ruler,
   GraduationCap,
+  BookOpen,
 } from "lucide-react";
 
 const MAX_THESES = 4;
@@ -39,6 +43,35 @@ export default function DiagnosticWeakConceptPath({
   weakConceptNames,
 }: DiagnosticWeakConceptPathProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const { active, start: startTimer } = useStudyTimerStore();
+  const { mutateAsync: createSession, isPending: isStarting } = useCreateSession();
+
+  /**
+   * 약점 개념을 주제로 일반 reading 세션 시작 (논문 전용 아님 → source="external").
+   * 종료 흐름: ChatWidget onStop 이 endSession 으로 잔디 반영 + FloatingReadingTimer
+   * handleStop 이 source="external" 로 ReadingLogModal 을 열어 안전하게 처리됨.
+   * 신규 컬렉션·잔디 가중치 추가 없음 (기존 reading 경로 재사용).
+   */
+  async function handleReadConcept(name: string) {
+    if (active) {
+      toast.error("이미 진행 중인 세션이 있습니다");
+      return;
+    }
+    const title = `${name} 집중 읽기`;
+    try {
+      const session = await createSession({ type: "reading", targetTitle: title });
+      startTimer({
+        id: session.id,
+        type: "reading",
+        targetTitle: title,
+        startTime: Date.now(),
+        readingSource: "external",
+      });
+      toast.success("30분 집중 읽기 시작 📖 — 우측 하단 부엉이가 함께해요");
+    } catch {
+      toast.error("타이머 시작에 실패했습니다");
+    }
+  }
 
   // 전체 list 호출은 컬렉션당 1회씩만 (변인/측정도구/논문) + 개념별 get 묶음. staleTime 5분.
   const { data: paths = [], isLoading } = useQuery({
@@ -140,6 +173,16 @@ export default function DiagnosticWeakConceptPath({
               {/* 펼침 패널 — 측정도구 + 졸업생 논문 */}
               {isOpen && (
                 <div className="border-t border-violet-200/60 bg-card/60 px-3 py-2.5 dark:border-violet-800/40 dark:bg-black/20">
+                  {/* 이 개념으로 30분 집중 읽기 — 일반 reading 세션(잔디 반영) */}
+                  <button
+                    type="button"
+                    onClick={() => handleReadConcept(name)}
+                    disabled={isStarting || !!active}
+                    className="mb-2.5 inline-flex items-center gap-1.5 rounded-full bg-violet-600 px-3 py-1.5 text-[12px] font-semibold text-white shadow-sm transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-violet-500 dark:hover:bg-violet-600"
+                  >
+                    <BookOpen size={13} />
+                    {active ? "진행 중인 세션 있음" : "이 개념으로 30분 집중 읽기"}
+                  </button>
                   {isLoading ? (
                     <div
                       className="h-12 animate-pulse rounded-lg bg-violet-100/60 dark:bg-violet-900/20"

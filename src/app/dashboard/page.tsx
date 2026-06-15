@@ -55,6 +55,7 @@ import NewMemberChecklistWidget from "@/features/dashboard/NewMemberChecklistWid
 import AlumniHomeWidgets from "@/features/dashboard/AlumniHomeWidgets";
 import AIForumLiveWidget from "@/features/dashboard/AIForumLiveWidget";
 import SpacedRepetitionWidget from "@/features/dashboard/SpacedRepetitionWidget";
+import DiagnosisReadinessWidget from "@/features/dashboard/DiagnosisReadinessWidget";
 import DailyReflectionPrompt from "@/features/dashboard/DailyReflectionPrompt";
 import { canShowWidget, isAlumni } from "@/features/dashboard/widget-visibility";
 import DraggableWidget from "@/features/dashboard/editing/DraggableWidget";
@@ -383,6 +384,11 @@ function DashboardContent() {
     peerActivityFeed: (
       <section className="mx-auto mt-8 max-w-6xl px-4">
         <PeerActivityFeed />
+      </section>
+    ),
+    diagnosisReadiness: (
+      <section className="mx-auto mt-6 max-w-6xl px-4">
+        <DiagnosisReadinessWidget />
       </section>
     ),
   };

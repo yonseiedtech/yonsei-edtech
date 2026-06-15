@@ -218,6 +218,65 @@ export default function ArchiveLandingPage() {
         {/* ── 교육공학 정의·탐구분야 개관 ── */}
         <EduTechOverview />
 
+        {/* ── 진단평가 CTA (사용자 명시: 정의 영역 직후 — 검색·정의 확인 후 자연스러운 자기진단 유도) ── */}
+        <Link
+          href="/diagnosis"
+          className="group mt-6 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+          aria-label="교육공학 진단평가 시작"
+        >
+          <article className="overflow-hidden rounded-2xl border border-teal-200 bg-gradient-to-br from-teal-50 via-emerald-50 to-cyan-50 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md dark:border-teal-800 dark:from-teal-950/40 dark:via-emerald-950/30 dark:to-cyan-950/40">
+            <div className="flex items-center gap-4 p-5">
+              <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/70 text-teal-700 shadow-sm dark:bg-slate-900/60 dark:text-teal-300">
+                <ClipboardCheck className="h-6 w-6" aria-hidden />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold tracking-tight">먼저, 내 수준을 진단해 볼까요?</h2>
+                  <Badge variant="outline" className="text-[10px] font-medium border-teal-300 bg-white/60 text-teal-700 dark:bg-slate-900/50 dark:text-teal-300">
+                    추천 시작점
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  통계방법·연구방법·핵심개념을 객관식으로 진단해 논문 작성 준비도·연구 분석 준비도를 점수로 확인하고, 약점 개념을 아카이브로 바로 연결합니다.
+                </p>
+              </div>
+              <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">
+                진단 시작
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+              </div>
+            </div>
+          </article>
+        </Link>
+
+        {/* ── 즐겨찾기 모음 (재방문자 빠른 복귀 — 상단 승격, 로그인+즐겨찾기 있을 때만) ── */}
+        {user && favorites.length > 0 && (
+          <Card className="mt-6 rounded-2xl border-amber-200 bg-amber-50/40 shadow-sm dark:border-amber-800 dark:bg-amber-950/20">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Star className="h-4 w-4 fill-amber-400 text-amber-500" aria-hidden />
+                내 관심 저장 ({favorites.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-1.5">
+                {favorites.map((f) => (
+                  <Link key={f.id} href={favoriteHref(f)}>
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "cursor-pointer transition-shadow hover:shadow-sm",
+                        FAVORITE_TYPE_COLORS[f.itemType],
+                      )}
+                    >
+                      [{FAVORITE_TYPE_LABELS[f.itemType]}] {f.itemName ?? f.itemId}
+                    </Badge>
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* ── 흐름 안내 ── */}
         <Card className="mt-6 rounded-2xl border bg-card shadow-sm">
           <CardContent className="py-5">
@@ -535,36 +594,6 @@ export default function ArchiveLandingPage() {
           </article>
         </Link>
 
-        {/* ── 진단평가 (아카이브 개념 기반 자기점검) ── */}
-        <Link
-          href="/diagnosis"
-          className="group mt-6 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
-          aria-label="교육공학 진단평가 시작"
-        >
-          <article className="rounded-2xl border-l-4 border-l-teal-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
-            <div className="flex items-center gap-4 p-5">
-              <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal-100 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300">
-                <ClipboardCheck className="h-5 w-5" aria-hidden />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-semibold tracking-tight">교육공학 진단평가</h2>
-                  <Badge variant="outline" className="text-[10px] font-medium border-teal-300 bg-teal-50 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300">
-                    NEW
-                  </Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  통계방법·연구방법·핵심개념을 객관식으로 진단해 논문 작성 준비도·연구 분석 준비도를 점수로 확인하고, 약점 개념을 아카이브로 연결합니다.
-                </p>
-              </div>
-              <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">
-                시작
-                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
-              </div>
-            </div>
-          </article>
-        </Link>
-
         </section>
         {/* ── 사용 가이드 ── */}
         <Card className="mt-6 rounded-2xl shadow-sm">
@@ -599,35 +628,6 @@ export default function ArchiveLandingPage() {
             </ol>
           </CardContent>
         </Card>
-
-        {/* ── 즐겨찾기 모음 ── */}
-        {user && favorites.length > 0 && (
-          <Card className="mt-6 rounded-2xl border-amber-200 bg-amber-50/40 shadow-sm dark:border-amber-800 dark:bg-amber-950/20">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Star className="h-4 w-4 fill-amber-400 text-amber-500" aria-hidden />
-                내 관심 저장 ({favorites.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-1.5">
-                {favorites.map((f) => (
-                  <Link key={f.id} href={favoriteHref(f)}>
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        "cursor-pointer transition-shadow hover:shadow-sm",
-                        FAVORITE_TYPE_COLORS[f.itemType],
-                      )}
-                    >
-                      [{FAVORITE_TYPE_LABELS[f.itemType]}] {f.itemName ?? f.itemId}
-                    </Badge>
-                  </Link>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
       </div>
     </PageContainer>

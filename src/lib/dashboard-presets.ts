@@ -55,6 +55,16 @@ export const DASHBOARD_PRESETS_META: Record<DashboardPresetId, DashboardPresetMe
   },
 };
 
+/**
+ * 명시 order 배열에 누락된 위젯 키를 끝에 보충한다.
+ * 신규 위젯 키 추가 시 모든 프리셋 배열을 일일이 수정하지 않아도
+ * 편집 모드에서 제어 가능하도록 보장(누락 키는 끝에 hidden 으로 배치).
+ */
+function withMissingKeys(order: DashboardWidgetKey[]): DashboardWidgetKey[] {
+  const present = new Set(order);
+  return [...order, ...DASHBOARD_WIDGET_KEYS.filter((k) => !present.has(k))];
+}
+
 /** 프리셋별 위젯 visible + order 매트릭스 */
 export function buildPresetLayout(preset: DashboardPresetId): DashboardLayout {
   const all = DASHBOARD_WIDGET_KEYS;
@@ -85,12 +95,13 @@ export function buildPresetLayout(preset: DashboardPresetId): DashboardLayout {
         "peerActivityFeed",
         "staffAlerts",
       ];
+      const studentVisible = new Set(studentOrder);
       return {
         schemaVersion: 1,
         updatedAt,
-        widgets: studentOrder.map((key, idx) => ({
+        widgets: withMissingKeys(studentOrder).map((key, idx) => ({
           key,
-          visible: key !== "staffAlerts",
+          visible: studentVisible.has(key) && key !== "staffAlerts",
           order: idx,
         })),
       };
@@ -113,16 +124,22 @@ export function buildPresetLayout(preset: DashboardPresetId): DashboardLayout {
         "dailyReflection",
         "spacedRepetition",
       ];
+      const staffVisible = new Set(staffOrder);
       return {
         schemaVersion: 1,
         updatedAt,
-        widgets: staffOrder.map((key, idx) => ({ key, visible: true, order: idx })),
+        widgets: withMissingKeys(staffOrder).map((key, idx) => ({
+          key,
+          visible: staffVisible.has(key),
+          order: idx,
+        })),
       };
     }
 
     case "research": {
       const researchOrder: DashboardWidgetKey[] = [
         "nextActionBanner",
+        "diagnosisReadiness",
         "myAcademicActivities",
         "spacedRepetition",
         "dailyReflection",
@@ -137,13 +154,14 @@ export function buildPresetLayout(preset: DashboardPresetId): DashboardLayout {
         "peerActivityFeed",
         "staffAlerts",
       ];
+      const researchVisible = new Set(researchOrder);
       const hidden = new Set<DashboardWidgetKey>(["staffAlerts", "peerActivityFeed"]);
       return {
         schemaVersion: 1,
         updatedAt,
-        widgets: researchOrder.map((key, idx) => ({
+        widgets: withMissingKeys(researchOrder).map((key, idx) => ({
           key,
-          visible: !hidden.has(key),
+          visible: researchVisible.has(key) && !hidden.has(key),
           order: idx,
         })),
       };

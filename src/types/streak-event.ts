@@ -18,7 +18,8 @@ export type StreakEventType =
   | "collab-chapter-edit"           // 챕터 편집 1일 (+2, Phase 2 day-bucketed)
   | "collab-meeting"                // 회의 기록 (+3, Phase 2)
   | "collab-milestone"              // 마일스톤 완료 (+5, Phase 2)
-  | "research-journal-publish";     // 연구지 출판 (+10, Phase 3)
+  | "research-journal-publish"      // 연구지 출판 (+10, Phase 3)
+  | "flashcard-study";              // 암기카드 학습 1일 (+2, day-bucketed refId=ymd)
 
 export interface StreakEvent {
   /** `${userId}__${type}__${refId}` */

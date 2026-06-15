@@ -1946,6 +1946,17 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
   },
 ];
 
+/**
+ * 영역별 시드 문항 수 — 준비도(영역 숙련도) 분모의 정적 폴백.
+ * Firestore 에 published 문항이 적재돼 있으면 그 풀 수를 우선 쓰고(런타임 countsByArea),
+ * 비어 있으면(시드 폴백) 이 값을 분모로 사용한다.
+ */
+export function getSeedPoolCountsByArea(): Record<DiagnosticArea, number> {
+  const counts: Record<DiagnosticArea, number> = { statistics: 0, method: 0, concept: 0 };
+  for (const q of SEED_DIAGNOSTIC_QUESTIONS) counts[q.area] += 1;
+  return counts;
+}
+
 export interface DiagnosticSeedResult {
   created: number;
   skipped: number;

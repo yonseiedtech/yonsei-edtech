@@ -10,10 +10,10 @@ import PasswordChangeForm from "@/features/auth/PasswordChangeForm";
 import { usePosts } from "@/features/board/useBoard";
 import { useSeminars } from "@/features/seminar/useSeminar";
 import { useQuery } from "@tanstack/react-query";
-import { certificatesApi, activitiesApi, profilesApi, reviewsApi, diagnosticResultsApi } from "@/lib/bkend";
+import { certificatesApi, activitiesApi, profilesApi, reviewsApi, diagnosticResultsApi, flashcardsApi } from "@/lib/bkend";
 import { auth } from "@/lib/firebase";
 import { enrichCertificates } from "@/lib/denorm-sync";
-import { todayYmdLocal } from "@/lib/dday";
+import { todayYmdLocal, todayYmdKst } from "@/lib/dday";
 import { useResearchPapers } from "@/features/research/useResearchPapers";
 import { useMyInterviewResponses } from "@/features/board/interview-store";
 import type { Certificate, Activity, User, SeminarReview } from "@/types";
@@ -50,6 +50,7 @@ import {
   NotebookPen,
   PackageOpen,
   ClipboardCheck,
+  Layers,
 } from "lucide-react";
 
 // react-easy-crop(39KB gzipped) — 명함 탭 클릭 시에만 chunk 로드
@@ -252,6 +253,30 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
   const latestDiagnostic = diagnosticData?.latest ?? null;
   const previousDiagnostic = diagnosticData?.previous ?? null;
   const diagnosticCount = diagnosticData?.count ?? 0;
+
+  // 암기카드 — 본인 카드 수 + 오늘 복습 대상(dueAt<=today) 수. 정렬·필터는 클라이언트(복합 인덱스 회피).
+  const { data: flashcardSummary } = useQuery({
+    queryKey: ["mypage-flashcards", userId],
+    queryFn: async (): Promise<{ total: number; dueToday: number }> => {
+      const res = await flashcardsApi.listByUser(userId);
+      const list = Array.isArray(res.data) ? res.data : [];
+      const today = todayYmdKst();
+      const dueToday = list.filter((c) => (c.dueAt ?? "") <= today).length;
+      return { total: list.length, dueToday };
+    },
+    enabled: !!user && isSelf,
+    staleTime: 5 * 60_000,
+  });
+  const flashcardTotal = flashcardSummary?.total ?? 0;
+  const flashcardDueToday = flashcardSummary?.dueToday ?? 0;
+
+  // 재진단 넛지 — 마지막 진단 후 14일 이상 경과 시 은은히 권장 (신규 점수 가산 없음, 표시만)
+  const needsRediagnosis = (() => {
+    if (!latestDiagnostic?.createdAt) return false;
+    const last = new Date(latestDiagnostic.createdAt).getTime();
+    if (Number.isNaN(last)) return false;
+    return Date.now() - last >= 14 * 24 * 60 * 60 * 1000;
+  })();
 
   if (!user) return null;
 
@@ -561,6 +586,12 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                         />
                       )}
 
+                      {needsRediagnosis && (
+                        <p className="mt-4 rounded-lg bg-violet-100/70 px-3 py-2 text-[12px] text-violet-800 dark:bg-violet-900/30 dark:text-violet-200">
+                          마지막 진단으로부터 2주가 지났어요. 그동안의 학습을 반영해 재진단해 보면 준비도 변화를 확인할 수 있어요.
+                        </p>
+                      )}
+
                       <div className="mt-4">
                         <Link href="/diagnosis">
                           <Button variant="outline" size="sm" className="border-violet-300 text-violet-700 hover:bg-violet-100 dark:border-violet-700 dark:text-violet-300">
@@ -586,6 +617,36 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                   )}
                   {/* 사이클 122 완료: 진단 완료를 학습 잔디 활동으로 인정 — LearningStreak SCORES.diagnosticComplete(+5)로 createdAt 일별 1회 가산(연구활동🔬). */}
                 </div>
+              )}
+
+              {/* 내 암기카드 — 진단 오답 복습(뒤집기·간격반복). 카드가 있을 때만 노출 (본인만) */}
+              {isSelf && !readOnly && flashcardTotal > 0 && (
+                <Link
+                  href="/flashcards"
+                  className="block rounded-2xl border-2 border-sky-200/60 bg-gradient-to-br from-sky-50 to-sky-100/60 p-5 transition hover:border-sky-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/50 focus-visible:ring-offset-2 dark:border-sky-800/40 dark:from-sky-950/20 dark:to-sky-900/10"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-200/40 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300">
+                      <Layers size={22} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-base font-bold">내 암기카드</h3>
+                        {flashcardDueToday > 0 && (
+                          <Badge className="bg-sky-600 text-[10px] tabular-nums text-white hover:bg-sky-600">
+                            오늘 복습 {flashcardDueToday}장
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="mt-0.5 text-sm text-muted-foreground">
+                        {flashcardDueToday > 0
+                          ? `복습할 카드 ${flashcardDueToday}장이 준비되어 있어요. 뒤집기로 빠르게 점검해보세요.`
+                          : `저장한 카드 ${flashcardTotal}장. 오늘 복습 대상은 없지만 미리 둘러볼 수 있어요.`}
+                      </p>
+                    </div>
+                    <ArrowRight size={18} className="shrink-0 self-center text-sky-700 dark:text-sky-300" />
+                  </div>
+                </Link>
               )}
 
               {(() => {

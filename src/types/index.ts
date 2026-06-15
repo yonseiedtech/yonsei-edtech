@@ -17,6 +17,7 @@ export * from "./foundation-term";
 export * from "./writing-tip";
 export * from "./networking";
 export * from "./diagnostic";
+export * from "./flashcard";
 
 // Phase 2 — 사용자 / 게시판
 export * from "./user";

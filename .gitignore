@@ -60,3 +60,11 @@ ${APPDATA}/
 .firebaserc
 .omc/state/checkpoints/
 .omc/state/sessions/
+
+# gate logs (do not track)
+tsc-out.log
+vitest-out.log
+commit-out.log
+push-out.log
+deploy-out.log
+build-out.log

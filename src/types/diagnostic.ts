@@ -167,6 +167,32 @@ const KNOWN_QUESTION_TYPES: readonly DiagnosticQuestionType[] = [
   "diagram",
 ];
 
+/** 문항 유형 라벨 (개인화 진단 빌더 칩·러너 배지 공용) */
+export const DIAGNOSTIC_QUESTION_TYPE_LABELS: Record<DiagnosticQuestionType, string> = {
+  mcq: "객관식",
+  ordering: "순서 정렬",
+  term: "단어 맞추기",
+  ox: "참 / 거짓",
+  compare: "개념 구분",
+  matching: "짝짓기",
+  scenario: "상황 적용",
+  passage: "지문 분석",
+  diagram: "연구모형 도형",
+};
+
+/** 문항 유형 표시 순서 (빌더 칩 렌더 순서) */
+export const DIAGNOSTIC_QUESTION_TYPE_ORDER: DiagnosticQuestionType[] = [
+  "mcq",
+  "scenario",
+  "passage",
+  "compare",
+  "ordering",
+  "ox",
+  "matching",
+  "term",
+  "diagram",
+];
+
 /** 문항 유형 정규화 — 미지정·잘못된 값은 "mcq" 로 폴백 */
 export function questionType(q: Pick<DiagnosticQuestion, "type">): DiagnosticQuestionType {
   return q.type && KNOWN_QUESTION_TYPES.includes(q.type) ? q.type : "mcq";
@@ -257,9 +283,23 @@ export interface DiagnosticResult {
   weakConceptIds: string[];
   /** 약점 개념 표시용 denorm 이름 (리포트 칩 라벨) */
   weakConceptNames?: string[];
-  /** 논문 작성 준비도 0~100 (개념 + 연구방법 정답률 평균) */
+  /**
+   * 이 회차에서 맞춘 문항 ID 목록 (seed:* 또는 firestore id).
+   * 준비도(영역 숙련도) 누적 집계의 핵심 — 여러 회차의 correctQuestionIds 를 합집합(union)해
+   * "지금까지 한 번이라도 맞춘 고유 문항 수 / 영역 전체 문항 수" 로 환산한다.
+   * 레거시 결과(이 필드 없음)는 누적 분자에 기여하지 않는다(하위호환 — 표시 점수만 보존).
+   */
+  correctQuestionIds?: string[];
+  /**
+   * 논문 작성 준비도 0~100.
+   * v2(영역 숙련도): (개념 + 연구방법) 영역의 누적 숙련도 평균 = 풀 대비 맞춘 고유 문항 비율.
+   * (레거시 결과는 응시 문항 정답률 평균이었다 — 저장 시점 값 그대로 표시.)
+   */
   paperReadiness: number;
-  /** 연구 분석 준비도 0~100 (통계 + 연구방법 정답률 평균) */
+  /**
+   * 연구 분석 준비도 0~100.
+   * v2(영역 숙련도): (통계 + 연구방법) 영역의 누적 숙련도 평균.
+   */
   analysisReadiness: number;
   createdAt?: string;
   updatedAt?: string;
@@ -293,6 +333,78 @@ export function computeReadiness(
   return {
     analysisReadiness: avg([pct("statistics"), pct("method")]),
     paperReadiness: avg([pct("concept"), pct("method")]),
+  };
+}
+
+// ── 준비도 v2 — 영역 숙련도(풀 대비 누적 정답) 기반 ──
+//
+// 사용자 의도: 준비도를 "응시한 문항의 정답률"이 아니라
+//  "해당 영역의 전체 문항 풀 대비 한 번이라도 맞춘 고유 문항 비율" 로 정의한다.
+//   → 일부만 풀면 낮게 나오고, 추가 평가로 더 맞출수록 % 가 오른다(전체 풀이 시 100% 근접).
+//
+// 분모 = 영역별 전체 풀 문항 수(diagnostic-seed 또는 Firestore published, 응시 안 한 문항 포함).
+// 분자 = 그 영역에서 지금까지 한 번이라도 맞춘 고유 문항 수(여러 회차 union).
+//
+// 채점 정오답 로직(gradeQuestion)은 불변 — 여기서는 "환산식" 만 바꾼다.
+
+/** 영역별 전체 문항 수(준비도 분모). diagnostic-seed.getSeedPoolCountsByArea() 또는 Firestore 풀 기준. */
+export type DiagnosticPoolCounts = Partial<Record<DiagnosticArea, number>>;
+
+/**
+ * 영역 숙련도(0~100) — 그 영역에서 맞춘 고유 문항 수 / 전체 풀 문항 수.
+ * 풀 수가 0(미상)이면 0 반환. 누적 정답 수가 풀을 넘어도 100 으로 상한.
+ */
+export function areaMasteryPercent(
+  correctCount: number,
+  poolCount: number | undefined,
+): number {
+  if (!poolCount || poolCount <= 0) return 0;
+  return Math.min(100, Math.round((correctCount / poolCount) * 100));
+}
+
+/**
+ * 누적 정답 문항 ID 집합 → 영역별 맞춘 고유 문항 수.
+ * @param correctIds 지금까지(여러 회차 union) 맞춘 문항 ID 집합
+ * @param areaOfQuestion 문항 ID → 영역 매핑 (풀에서 구성). 매핑 없는 ID 는 무시.
+ */
+export function countCorrectByArea(
+  correctIds: Iterable<string>,
+  areaOfQuestion: (id: string) => DiagnosticArea | undefined,
+): Record<DiagnosticArea, number> {
+  const counts: Record<DiagnosticArea, number> = { statistics: 0, method: 0, concept: 0 };
+  const seen = new Set<string>();
+  for (const id of correctIds) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const area = areaOfQuestion(id);
+    if (area) counts[area] += 1;
+  }
+  return counts;
+}
+
+/**
+ * 준비도 v2 환산 — 영역별 누적 숙련도 평균.
+ *  - analysisReadiness = (통계 + 연구방법) 숙련도 평균
+ *  - paperReadiness    = (개념 + 연구방법) 숙련도 평균
+ * 풀 수가 0 인 영역은 평균에서 제외(데이터 미상). 두 영역 모두 미상이면 0.
+ */
+export function computeReadinessFromMastery(
+  correctCountByArea: Partial<Record<DiagnosticArea, number>>,
+  poolCounts: DiagnosticPoolCounts,
+): { paperReadiness: number; analysisReadiness: number } {
+  const mastery = (area: DiagnosticArea): number | null => {
+    const pool = poolCounts[area];
+    if (!pool || pool <= 0) return null;
+    return areaMasteryPercent(correctCountByArea[area] ?? 0, pool);
+  };
+  const avg = (vals: (number | null)[]): number => {
+    const present = vals.filter((v): v is number => v !== null);
+    if (present.length === 0) return 0;
+    return Math.round(present.reduce((a, b) => a + b, 0) / present.length);
+  };
+  return {
+    analysisReadiness: avg([mastery("statistics"), mastery("method")]),
+    paperReadiness: avg([mastery("concept"), mastery("method")]),
   };
 }
 

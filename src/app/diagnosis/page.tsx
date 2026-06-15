@@ -13,10 +13,11 @@ import {
   diagnosticQuestionsApi,
   diagnosticResultsApi,
 } from "@/lib/bkend";
-import { SEED_DIAGNOSTIC_QUESTIONS } from "@/lib/diagnostic-seed";
+import { SEED_DIAGNOSTIC_QUESTIONS, getSeedPoolCountsByArea } from "@/lib/diagnostic-seed";
 import {
   DIAGNOSTIC_AREA_ORDER,
-  computeReadiness,
+  computeReadinessFromMastery,
+  countCorrectByArea,
   gradeQuestion,
   questionType,
   type AreaScore,
@@ -24,10 +25,16 @@ import {
   type CognitiveScore,
   type DiagnosticAnswer,
   type DiagnosticArea,
+  type DiagnosticPoolCounts,
   type DiagnosticQuestion,
+  type DiagnosticQuestionType,
+  type DiagnosticResult,
 } from "@/types";
-import type { ArchiveConcept } from "@/types";
-import DiagnosisLanding from "@/components/diagnosis/DiagnosisLanding";
+import type { ArchiveConcept, WrongCardSeed } from "@/types";
+import { backText, questionFrontText } from "@/lib/diagnostic-answer-text";
+import DiagnosisLanding, {
+  type CustomDiagnosisConfig,
+} from "@/components/diagnosis/DiagnosisLanding";
 import DiagnosisRunner from "@/components/diagnosis/DiagnosisRunner";
 import DiagnosisReport, { type WeakConcept } from "@/components/diagnosis/DiagnosisReport";
 
@@ -154,7 +161,10 @@ export default function DiagnosisPage() {
   >({});
   const [readiness, setReadiness] = useState({ paperReadiness: 0, analysisReadiness: 0 });
   const [weakConcepts, setWeakConcepts] = useState<WeakConcept[]>([]);
+  const [wrongItems, setWrongItems] = useState<WrongCardSeed[]>([]);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  // 준비도(영역 숙련도) 누적 집계용 — 본인의 과거 결과 correctQuestionIds union
+  const [priorResults, setPriorResults] = useState<DiagnosticResult[]>([]);
 
   // ── 문항 풀 + 개념 로드 ──
   useEffect(() => {
@@ -203,6 +213,50 @@ export default function DiagnosisPage() {
     return counts;
   }, [pool]);
 
+  // 준비도 분모 — 영역별 전체 풀 문항 수. Firestore 풀이 있으면 그 수, 없으면 시드 폴백.
+  const poolCountsByArea = useMemo<DiagnosticPoolCounts>(() => {
+    const total = countsByArea.statistics + countsByArea.method + countsByArea.concept;
+    return total > 0 ? countsByArea : getSeedPoolCountsByArea();
+  }, [countsByArea]);
+
+  // 문항 id → 영역 매핑 (누적 정답 영역 집계용)
+  const areaByQuestionId = useMemo(() => {
+    const map = new Map<string, DiagnosticArea>();
+    for (const q of pool) map.set(q.id, q.area);
+    return map;
+  }, [pool]);
+
+  // 본인 과거 진단 결과 로드 — correctQuestionIds 누적(준비도 상승 집계)
+  useEffect(() => {
+    if (!user) {
+      setPriorResults([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await diagnosticResultsApi.listByUser(user.id);
+        if (!cancelled) setPriorResults(res.data ?? []);
+      } catch (err) {
+        console.error("[diagnosis] load prior results failed", err);
+        if (!cancelled) setPriorResults([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  // 유형별 가용 문항 수 (개인화 빌더 칩에 표시) — 풀 전체 기준.
+  const countsByType = useMemo(() => {
+    const counts: Partial<Record<DiagnosticQuestionType, number>> = {};
+    for (const q of pool) {
+      const t = questionType(q);
+      counts[t] = (counts[t] ?? 0) + 1;
+    }
+    return counts;
+  }, [pool]);
+
   // ── 진단 시작 (문제은행에서 가중 추출 — 매 진단 다른 문제, 영역·유형·인지수준 혼합) ──
   const handleStart = (area: DiagnosticArea | "all") => {
     const ordered: typeof pool = [];
@@ -216,6 +270,36 @@ export default function DiagnosisPage() {
       // 단일 영역: 그 영역에서 유형 혼합으로 N개 추출.
       const inArea = pool.filter((q) => q.area === area);
       ordered.push(...pickMixed(inArea, QUESTIONS_PER_AREA));
+    }
+    if (ordered.length === 0) return;
+    setActiveQuestions(ordered);
+    setSaveState("idle");
+    setPhase("running");
+  };
+
+  // ── 개인화 진단 시작 (사용자가 선택한 영역·유형으로 커스텀 문항셋 구성) ──
+  // 채점·계산 로직은 그대로 — 출제 문항 subset 만 사용자 설정으로 필터링한다.
+  const handleStartCustom = (config: CustomDiagnosisConfig) => {
+    const areas = config.areas.length > 0 ? config.areas : DIAGNOSTIC_AREA_ORDER;
+    const typeSet = new Set(config.types);
+    // 선택 영역 + (유형 선택 시) 선택 유형으로 풀 필터링
+    let candidates = pool.filter((q) => areas.includes(q.area));
+    if (typeSet.size > 0) {
+      candidates = candidates.filter((q) => typeSet.has(questionType(q)));
+    }
+    if (candidates.length === 0) return;
+    // 영역 순서 유지하며 유형 혼합 추출. 문항 수는 선택 가용분과 설정값 중 작은 값.
+    const target = Math.min(config.count, candidates.length);
+    // 영역별로 균등 분배(나머지는 앞 영역부터). 단일 영역이면 그 영역에서 전부.
+    const activeAreas = DIAGNOSTIC_AREA_ORDER.filter((a) => areas.includes(a));
+    const perArea = Math.floor(target / activeAreas.length);
+    let remainder = target - perArea * activeAreas.length;
+    const ordered: typeof pool = [];
+    for (const a of activeAreas) {
+      const inArea = candidates.filter((q) => q.area === a);
+      const quota = perArea + (remainder > 0 ? 1 : 0);
+      if (remainder > 0) remainder -= 1;
+      ordered.push(...pickMixed(inArea, quota));
     }
     if (ordered.length === 0) return;
     setActiveQuestions(ordered);
@@ -241,10 +325,15 @@ export default function DiagnosisPage() {
   };
 
   // ── 채점 (유형별 분기 — gradeQuestion 이 mcq·ordering·term 모두 처리) ──
+  // 채점 정오답 로직은 불변. 준비도는 "영역 숙련도(풀 대비 누적 정답)"로 환산한다.
   const handleComplete = async (answers: Record<string, DiagnosticAnswer>) => {
     const scores: Partial<Record<DiagnosticArea, AreaScore>> = {};
     const cogScores: Partial<Record<CognitiveLevel, CognitiveScore>> = {};
     const weakMap = new Map<string, WeakConcept>();
+    // 이번 회차에서 맞춘 문항 id (준비도 누적 + 저장)
+    const correctIdsThisRound: string[] = [];
+    // 오답 암기카드 소재
+    const wrongSeeds: WrongCardSeed[] = [];
 
     for (const q of activeQuestions) {
       const bucket = scores[q.area] ?? { correct: 0, total: 0 };
@@ -252,9 +341,21 @@ export default function DiagnosisPage() {
       const correct = gradeQuestion(q, answers[q.id]);
       if (correct) {
         bucket.correct += 1;
+        correctIdsThisRound.push(q.id);
       } else {
         const wc = resolveConcept(q);
         if (wc) weakMap.set(wc.id ?? wc.name, wc);
+        // 오답 → 암기카드 소재 수집 (passage 지문은 frontHint 로)
+        wrongSeeds.push({
+          questionId: q.id,
+          front: questionFrontText(q),
+          back: backText(q),
+          frontHint: q.passage ?? undefined,
+          area: q.area,
+          cognitiveLevel: q.cognitiveLevel,
+          conceptId: wc?.id,
+          conceptName: wc?.name,
+        });
       }
       scores[q.area] = bucket;
 
@@ -267,27 +368,41 @@ export default function DiagnosisPage() {
       }
     }
 
-    const computed = computeReadiness(scores);
+    // 준비도 — 과거 회차 correctQuestionIds 와 이번 회차 union → 영역별 고유 정답 수 / 풀.
+    const unionCorrectIds = new Set<string>();
+    for (const r of priorResults) {
+      for (const id of r.correctQuestionIds ?? []) unionCorrectIds.add(id);
+    }
+    for (const id of correctIdsThisRound) unionCorrectIds.add(id);
+    const correctCountByArea = countCorrectByArea(
+      unionCorrectIds,
+      (id) => areaByQuestionId.get(id),
+    );
+    const computed = computeReadinessFromMastery(correctCountByArea, poolCountsByArea);
     const weak = [...weakMap.values()];
 
     setAreaScores(scores);
     setCognitiveScores(cogScores);
     setReadiness(computed);
     setWeakConcepts(weak);
+    setWrongItems(wrongSeeds);
     setPhase("report");
 
     // 결과 저장 (로그인 사용자만)
     if (user) {
       setSaveState("saving");
       try {
-        await diagnosticResultsApi.create({
+        const created = await diagnosticResultsApi.create({
           userId: user.id,
           areaScores: scores,
           weakConceptIds: weak.filter((w) => w.id).map((w) => w.id as string),
           weakConceptNames: weak.map((w) => w.name),
+          correctQuestionIds: correctIdsThisRound,
           paperReadiness: computed.paperReadiness,
           analysisReadiness: computed.analysisReadiness,
         });
+        // 누적 분모/분자 정합 — 방금 저장한 회차를 prior 에 반영(재진단 없이 연속 동작 대비)
+        setPriorResults((prev) => [created, ...prev]);
         setSaveState("saved");
       } catch (err) {
         console.error("[diagnosis] save result failed", err);
@@ -301,9 +416,23 @@ export default function DiagnosisPage() {
     setAreaScores({});
     setCognitiveScores({});
     setWeakConcepts([]);
+    setWrongItems([]);
     setSaveState("idle");
     setPhase("landing");
   };
+
+  // 준비도 100% 미만 → 남은 문항 수(추가 평가 유도). 풀 합계 − 지금까지 맞춘 고유 문항 수.
+  const remainingQuestions = useMemo(() => {
+    const poolTotal =
+      (poolCountsByArea.statistics ?? 0) +
+      (poolCountsByArea.method ?? 0) +
+      (poolCountsByArea.concept ?? 0);
+    const union = new Set<string>();
+    for (const r of priorResults) {
+      for (const id of r.correctQuestionIds ?? []) union.add(id);
+    }
+    return Math.max(0, poolTotal - union.size);
+  }, [poolCountsByArea, priorResults]);
 
   return (
     <PageContainer width="default">
@@ -334,9 +463,12 @@ export default function DiagnosisPage() {
           ) : phase === "landing" ? (
             <DiagnosisLanding
               countsByArea={countsByArea}
+              countsByType={countsByType}
               totalQuestions={pool.length}
               onStart={handleStart}
+              onStartCustom={handleStartCustom}
               loading={loading}
+              userId={user?.id ?? null}
             />
           ) : phase === "running" ? (
             <DiagnosisRunner
@@ -351,7 +483,11 @@ export default function DiagnosisPage() {
               paperReadiness={readiness.paperReadiness}
               analysisReadiness={readiness.analysisReadiness}
               weakConcepts={weakConcepts}
+              wrongItems={wrongItems}
+              remainingQuestions={remainingQuestions}
               onRetry={handleRetry}
+              onRetryMore={handleRetry}
+              userId={user?.id ?? null}
               saveState={saveState}
             />
           )}

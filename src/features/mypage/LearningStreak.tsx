@@ -33,6 +33,7 @@ import {
   userActivityLogsApi,
   paperReadingLogsApi,
   diagnosticResultsApi,
+  streakEventsApi,
 } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import GradActivityDashboard from "./GradActivityDashboard";
@@ -49,6 +50,7 @@ import type {
 } from "@/types";
 import type { PaperReadingLog } from "@/types/paper-reading";
 import type { DiagnosticResult } from "@/types/diagnostic";
+import type { StreakEvent } from "@/types/streak-event";
 import { cn } from "@/lib/utils";
 
 const WEEKS = 53;
@@ -67,6 +69,8 @@ const SCORES = {
   // 사이클 122: 연구 준비도 진단 완료(능동 학습) — 게시글·과제 완료와 동급
   diagnosticComplete: 5,
   paperReading: 4, // 논문·아카이브 열람 1일
+  // 암기카드 학습 1일 — 기존 활동 점수 불변, 신규 채널만 추가(보수 최저점)
+  flashcardStudy: 2,
   reflection: 3,
   timer30: 3,
   comment: 1,
@@ -574,6 +578,14 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
     enabled: !!userId,
     staleTime: 5 * 60_000,
   });
+  // 암기카드 학습 — streak_events(type=flashcard-study) day-bucketed 외부 가산 채널.
+  // 타입 필터는 클라이언트(복합 인덱스 회피) — userId 단일 필터만 서버에 보낸다.
+  const { data: streakEventsRes } = useQuery({
+    queryKey: ["streak", "streak-events", userId],
+    queryFn: () => streakEventsApi.listByUser(userId!),
+    enabled: !!userId,
+    staleTime: 5 * 60_000,
+  });
 
   // 사이클 115: scoresByDay(날짜→점수)를 분리 — full 그리드와 월별 모드가 공유
   // 사이클 117: scoresByDay(점수) + activityByDay(날짜→활동라벨별 점수) 동시 빌드 — 선택일 활동 내역용
@@ -647,6 +659,11 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
       if (ymd) diagnosticDays.add(ymd);
     }
     diagnosticDays.forEach((ymd) => add(ymd, SCORES.diagnosticComplete, "진단평가"));
+    // 암기카드 학습 — streak_events(type=flashcard-study) day-bucketed. event.ymd 기준 1일 1회.
+    for (const ev of (streakEventsRes?.data ?? []) as StreakEvent[]) {
+      if (ev.type !== "flashcard-study") continue;
+      add(ev.ymd, SCORES.flashcardStudy, "암기카드 학습");
+    }
 
     return { scoresByDay: scores, activityByDay: activities };
   }, [
@@ -661,6 +678,7 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
     activityLogsRes,
     paperReadingRes,
     diagnosticRes,
+    streakEventsRes,
   ]);
 
   const stats = useMemo<Stats>(

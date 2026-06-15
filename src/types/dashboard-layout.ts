@@ -26,6 +26,7 @@ export type DashboardWidgetKey =
   | "aiForumLive"
   | "spacedRepetition"
   | "peerActivityFeed"
+  | "diagnosisReadiness"
   | "seminars"
   | "staffAlerts";
 
@@ -100,6 +101,10 @@ export const DASHBOARD_WIDGET_META: Record<
     label: "동료 활동 피드",
     description: "다른 회원의 최근 활동.",
   },
+  diagnosisReadiness: {
+    label: "연구 준비도",
+    description: "진단평가 기반 논문 작성·연구 분석 준비도.",
+  },
   seminars: {
     label: "예정 세미나",
     description: "다가오는 세미나.",
@@ -125,6 +130,7 @@ export const DASHBOARD_WIDGET_KEYS: DashboardWidgetKey[] = [
   "aiForumLive",
   "spacedRepetition",
   "peerActivityFeed",
+  "diagnosisReadiness",
   "seminars",
   "staffAlerts",
 ];
@@ -143,6 +149,7 @@ export const DEFAULT_VISIBLE_WIDGETS: Set<DashboardWidgetKey> = new Set([
   "recentPosts",
   "miniCalendar",
   "myAcademicActivities",
+  "diagnosisReadiness",
   "seminars",
   "staffAlerts", // 역할 게이트로 운영진에게만 표시됨
 ]);
