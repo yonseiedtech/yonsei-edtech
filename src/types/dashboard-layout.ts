@@ -27,6 +27,7 @@ export type DashboardWidgetKey =
   | "spacedRepetition"
   | "peerActivityFeed"
   | "diagnosisReadiness"
+  | "myGrowth"
   | "seminars"
   | "staffAlerts";
 
@@ -105,6 +106,10 @@ export const DASHBOARD_WIDGET_META: Record<
     label: "연구 준비도",
     description: "진단평가 기반 논문 작성·연구 분석 준비도.",
   },
+  myGrowth: {
+    label: "나의 성장",
+    description: "진단 준비도·학습 활동·타이머 누적·연구 진행도 통합 요약.",
+  },
   seminars: {
     label: "예정 세미나",
     description: "다가오는 세미나.",
@@ -131,6 +136,7 @@ export const DASHBOARD_WIDGET_KEYS: DashboardWidgetKey[] = [
   "spacedRepetition",
   "peerActivityFeed",
   "diagnosisReadiness",
+  "myGrowth",
   "seminars",
   "staffAlerts",
 ];

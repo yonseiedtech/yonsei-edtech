@@ -45,6 +45,11 @@ export interface ArchiveConcept extends ArchiveOperationalMeta {
   id: string;
   name: string;
   description?: string;
+  /**
+   * 순화어 — 노션 용어사전집(교육공학 수업 영역) 기준의 우리말 다듬은 용어.
+   * 기존 용어명(name)은 그대로 두고 병기해 표시한다. 운영진이 폼에서 수정 가능.
+   */
+  purifiedName?: string;
   /** 영문/약어 */
   altNames?: string[];
   tags?: string[];

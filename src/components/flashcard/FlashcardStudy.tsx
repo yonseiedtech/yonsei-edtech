@@ -24,6 +24,8 @@ import {
   RotateCw,
   Sparkles,
   PartyPopper,
+  BookOpen,
+  AlertCircle,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,8 +39,35 @@ import {
   DIAGNOSTIC_AREA_COLORS,
   DIAGNOSTIC_AREA_LABELS,
 } from "@/types";
-import type { Flashcard } from "@/types/flashcard";
+import type { Flashcard, FlashcardSource } from "@/types/flashcard";
 import { cn } from "@/lib/utils";
+
+/** 출처 배지 메타 — concept(교육공학 개념) / diagnostic_wrong(진단 오답) 시각 구분. */
+const SOURCE_META: Record<
+  FlashcardSource,
+  { label: string; icon: typeof BookOpen; className: string }
+> = {
+  concept: {
+    label: "교육공학 개념",
+    icon: BookOpen,
+    className:
+      "border-violet-300 bg-violet-50 text-violet-700 dark:border-violet-800 dark:bg-violet-950/30 dark:text-violet-300",
+  },
+  diagnostic_wrong: {
+    label: "진단 오답",
+    icon: AlertCircle,
+    className:
+      "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300",
+  },
+};
+
+/** 출처 필터 — 클라이언트 필터(복합 인덱스 회피). */
+type SourceFilter = "all" | FlashcardSource;
+const FILTER_TABS: { value: SourceFilter; label: string }[] = [
+  { value: "all", label: "전체" },
+  { value: "diagnostic_wrong", label: "진단 오답" },
+  { value: "concept", label: "개념" },
+];
 
 /** 학습 순서 정렬 — 오늘 복습 대상 → 신규(미학습) → 나머지(dueAt 오름차순). */
 function sortForStudy(cards: Flashcard[]): Flashcard[] {
@@ -58,6 +87,7 @@ export default function FlashcardStudy() {
   const userId = user?.id;
 
   const [cards, setCards] = useState<Flashcard[]>([]);
+  const [filter, setFilter] = useState<SourceFilter>("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [index, setIndex] = useState(0);
@@ -92,10 +122,40 @@ export default function FlashcardStudy() {
     };
   }, [userId]);
 
-  const total = cards.length;
-  const dueCount = useMemo(() => cards.filter((c) => isDueToday(c)).length, [cards]);
-  const current = cards[index];
+  // 출처별 카드 수(탭 카운트 표시용) — 전체 로드분 기준.
+  const sourceCounts = useMemo(() => {
+    let dx = 0;
+    let concept = 0;
+    for (const c of cards) {
+      if (c.source === "concept") concept += 1;
+      else dx += 1;
+    }
+    return { all: cards.length, diagnostic_wrong: dx, concept };
+  }, [cards]);
+
+  // 선택된 출처로 필터링한 학습 대상(복합 인덱스 회피 — 클라이언트 필터).
+  const studyCards = useMemo(
+    () => (filter === "all" ? cards : cards.filter((c) => c.source === filter)),
+    [cards, filter],
+  );
+
+  const total = studyCards.length;
+  const dueCount = useMemo(
+    () => studyCards.filter((c) => isDueToday(c)).length,
+    [studyCards],
+  );
+  const current = studyCards[index];
   const progress = total > 0 ? Math.round((reviewedCount / total) * 100) : 0;
+
+  // 필터 변경 시 학습 세션 초기화(인덱스·뒤집기·완료·복습수 리셋).
+  const changeFilter = (next: SourceFilter) => {
+    if (next === filter) return;
+    setFilter(next);
+    setIndex(0);
+    setFlipped(false);
+    setDone(false);
+    setReviewedCount(0);
+  };
 
   // 세션 시작(카드 1장 이상 로드) 시 잔디 1회 가산 — refId=오늘(KST) 1일 1회 멱등.
   useEffect(() => {
@@ -241,8 +301,43 @@ export default function FlashcardStudy() {
 
   if (!current) return null;
 
+  const showFilterTabs =
+    sourceCounts.diagnostic_wrong > 0 && sourceCounts.concept > 0;
+
   return (
     <div>
+      {/* 출처 필터 탭 — 두 출처가 모두 있을 때만 노출(클라이언트 필터) */}
+      {showFilterTabs && (
+        <div
+          className="mb-4 flex flex-wrap gap-1.5"
+          role="tablist"
+          aria-label="암기카드 출처 필터"
+        >
+          {FILTER_TABS.map((tab) => {
+            const active = filter === tab.value;
+            const count = sourceCounts[tab.value];
+            return (
+              <button
+                key={tab.value}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => changeFilter(tab.value)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                  active
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                )}
+              >
+                {tab.label}
+                <span className="tabular-nums opacity-70">{count}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* 진행률 */}
       <div className="mb-4">
         <div className="mb-1.5 flex items-center justify-between text-xs text-muted-foreground">
@@ -283,7 +378,20 @@ export default function FlashcardStudy() {
           )}
         >
           <CardContent className="flex min-h-[16rem] flex-col py-6">
-            <div className="mb-2 flex items-center gap-2">
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              {(() => {
+                const meta = SOURCE_META[current.source] ?? SOURCE_META.diagnostic_wrong;
+                const SourceIcon = meta.icon;
+                return (
+                  <Badge
+                    variant="outline"
+                    className={cn("gap-1 text-[10px]", meta.className)}
+                  >
+                    <SourceIcon className="h-3 w-3" aria-hidden />
+                    {meta.label}
+                  </Badge>
+                );
+              })()}
               {current.area && (
                 <Badge
                   variant="outline"
@@ -328,7 +436,10 @@ export default function FlashcardStudy() {
                     onClick={(e) => e.stopPropagation()}
                     className="mt-4 inline-flex w-fit items-center gap-1 text-xs font-medium text-violet-700 hover:underline dark:text-violet-300"
                   >
-                    관련 개념 아카이브 보기
+                    <BookOpen className="h-3 w-3" aria-hidden />
+                    {current.source === "concept"
+                      ? "개념 정의 바로가기"
+                      : "관련 개념 아카이브 보기"}
                     <ArrowRight className="h-3 w-3" aria-hidden />
                   </Link>
                 )}

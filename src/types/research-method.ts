@@ -60,6 +60,8 @@ export interface ResearchMethodReference {
 export interface ResearchMethod extends ArchiveOperationalMeta {
   id: string;
   name: string;
+  /** 순화어 — 노션 용어사전집 기준 우리말 다듬은 용어. name 과 병기 표시, 운영진 수정 가능. */
+  purifiedName?: string;
   kind: ResearchMethodKind;
   /** 한 줄 요약 (객관적 정의 1~2문장) */
   summary: string;

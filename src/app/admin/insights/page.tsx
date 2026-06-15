@@ -64,13 +64,32 @@ const OperationalKpiSection = dynamic(
   },
 );
 
-type SubTab = "dashboard" | "report" | "members" | "activity" | "opkpi" | "diagnostic";
+const WeeklyOperationsSummary = dynamic(
+  () => import("@/features/insights/WeeklyOperationsSummary"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 size={24} className="animate-spin text-muted-foreground" />
+      </div>
+    ),
+  },
+);
+
+type SubTab =
+  | "summary"
+  | "dashboard"
+  | "report"
+  | "members"
+  | "activity"
+  | "opkpi"
+  | "diagnostic";
 
 function InsightsInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const active: SubTab = (searchParams.get("view") as SubTab) ?? "dashboard";
+  const active: SubTab = (searchParams.get("view") as SubTab) ?? "summary";
 
   function handleChange(next: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -90,6 +109,7 @@ function InsightsInner() {
 
       <Tabs value={active} onValueChange={handleChange}>
         <TabsList>
+          <TabsTrigger value="summary">운영 요약</TabsTrigger>
           <TabsTrigger value="opkpi">운영 KPI</TabsTrigger>
           <TabsTrigger value="dashboard">실시간 대시보드</TabsTrigger>
           <TabsTrigger value="report">학기 보고서</TabsTrigger>
@@ -98,6 +118,9 @@ function InsightsInner() {
           <TabsTrigger value="activity">활동 로그</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="summary" className="mt-4">
+          <WeeklyOperationsSummary />
+        </TabsContent>
         <TabsContent value="opkpi" className="mt-4">
           <OperationalKpiSection />
         </TabsContent>

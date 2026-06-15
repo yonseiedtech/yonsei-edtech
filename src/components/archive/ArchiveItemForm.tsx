@@ -72,6 +72,10 @@ export default function ArchiveItemForm({
 
   // 공통
   const [name, setName] = useState(initial?.name ?? "");
+  // 순화어 — 노션 용어사전집 병기 (개념 한정). 운영진이 자유 수정 가능.
+  const [purifiedName, setPurifiedName] = useState(
+    (initial as { purifiedName?: string } | null)?.purifiedName ?? "",
+  );
   const [description, setDescription] = useState(initial?.description ?? "");
   const [altNames, setAltNames] = useState(
     ((initial as { altNames?: string[] } | null)?.altNames ?? []).join(", "),
@@ -176,10 +180,12 @@ export default function ArchiveItemForm({
 
       let saved: AnyItem;
       if (type === "concept") {
+        // 순화어는 개념에만 병기. 빈 값이면 명시적으로 비움(undefined).
+        const conceptPayload = { ...base, purifiedName: purifiedName.trim() || undefined };
         if (isEdit && initial) {
-          saved = await archiveConceptsApi.update(initial.id, base);
+          saved = await archiveConceptsApi.update(initial.id, conceptPayload);
         } else {
-          saved = await archiveConceptsApi.create(base as Partial<ArchiveConcept>);
+          saved = await archiveConceptsApi.create(conceptPayload as Partial<ArchiveConcept>);
         }
       } else if (type === "variable") {
         const payload = { ...base, type: variableType || undefined };
@@ -314,6 +320,23 @@ export default function ArchiveItemForm({
               placeholder="개념·변인·측정도구에 대한 정의 또는 설명. KCI 등재 논문 인용 권장."
             />
           </div>
+
+          {type === "concept" && (
+            <div>
+              <label htmlFor="purifiedName" className="text-xs font-medium block mb-1">
+                순화어 (우리말 다듬은 용어)
+              </label>
+              <Input
+                id="purifiedName"
+                value={purifiedName}
+                onChange={(e) => setPurifiedName(e.target.value)}
+                placeholder="예: 조망인지 (메타인지)"
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                노션 용어사전집 기준의 우리말 순화어. 입력하면 개념명 옆에 병기됩니다. 비워두면 표시되지 않습니다.
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>

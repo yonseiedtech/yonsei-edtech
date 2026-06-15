@@ -162,3 +162,6 @@ H1 진단→학습 루프(약점 30분 읽기 타이머·DiagnosisReadinessWidge
 
 ## 사이클 138 — UI 시맨틱색·빈상태·달력·진단 진입점/회보색/responseCount·오답풀이·온보딩·아카이브 개념 암기카드·브랜드 네이비 (2026-06-15)
 UI 시맨틱색 SEMANTIC 단일화(3중복 제거). 빈상태 EmptyState 다중액션(모임/세미나/활동). HabitTracker 달력 한달 통합+그래프 길게+날짜 라벨. Header/BottomNav 진단 진입점 추가. 뉴스레터 기본 표지색 네이비. board responseCount fallback. 진단 오답풀이 내 답 대비+전체 문항 리뷰. 신입 온보딩 카드(NewMemberOnboardingCard, 미완료 상시노출). 아카이브 개념→암기카드 저장(saveFromConcept 멱등). OG/globals 브랜드 네이비 HEX 통일.
+
+## 사이클 139 — 아카이브 논문/인용 가이드·암기카드 출처배지·회원가치 대시보드·순화어 병기·운영진 콘솔 (2026-06-15)
+선행연구정리·서론·연구방법·통계 가이드 + 인용 가이드(설계 2건 기반). FlashcardStudy 출처배지(진단오답/교육공학개념)+개념 뒷면 아카이브 링크. dashboard 회원가치 통합위젯(나의 성장). 노션 순화어 53개 아카이브 purifiedName 병기+운영진 편집필드. console 주간 운영요약(신규/활동/이탈위험)+일괄승인 강화.

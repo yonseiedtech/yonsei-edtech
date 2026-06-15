@@ -57,6 +57,8 @@ export default function FoundationTermForm({ initial, userId }: Props) {
   const { user: authUser } = useAuthStore();
 
   const [termName, setTermName] = useState(initial?.term ?? "");
+  // 순화어 — 노션 용어사전집 병기. 운영진 자유 수정 가능.
+  const [purifiedName, setPurifiedName] = useState(initial?.purifiedName ?? "");
   const [abbreviation, setAbbreviation] = useState(initial?.abbreviation ?? "");
   const [englishName, setEnglishName] = useState(initial?.englishName ?? "");
   const [category, setCategory] = useState<FoundationTermCategory>(
@@ -286,6 +288,7 @@ export default function FoundationTermForm({ initial, userId }: Props) {
 
       const payload = {
         term: termName.trim(),
+        purifiedName: purifiedName.trim() || undefined,
         abbreviation: abbreviation.trim() || undefined,
         englishName: englishName.trim() || undefined,
         category,
@@ -359,6 +362,13 @@ export default function FoundationTermForm({ initial, userId }: Props) {
               value={termName}
               onChange={(e) => setTermName(e.target.value)}
               placeholder="예: 독립변인"
+            />
+          </Field>
+          <Field label="순화어 (우리말 다듬은 용어)">
+            <Input
+              value={purifiedName}
+              onChange={(e) => setPurifiedName(e.target.value)}
+              placeholder="예: 실험 (처치)"
             />
           </Field>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

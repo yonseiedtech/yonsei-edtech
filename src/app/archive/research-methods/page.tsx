@@ -79,6 +79,37 @@ const KIND_GUIDES: KindGuide[] = [
   },
 ];
 
+/** 연구질문 유형 → 방법론 매핑 (진입 가이드) */
+const QUESTION_MAPPING: {
+  kind: ResearchMethodKind;
+  heading: string;
+  lead: string;
+  example: string;
+  borderClass: string;
+}[] = [
+  {
+    kind: "quantitative",
+    heading: "영향력을 본다 (숫자로 답)",
+    lead: "변인 간 영향·차이·관계를 수치로 검증하고 싶을 때.",
+    example: "스마트폰 과의존이 학업태도에 미치는 영향은?",
+    borderClass: "border-l-blue-400",
+  },
+  {
+    kind: "qualitative",
+    heading: "경험을 이해한다 (이야기로 답)",
+    lead: "맥락·의미·과정을 깊이 있게 이해하고 싶을 때.",
+    example: "과의존 청소년은 학교생활을 어떻게 경험하는가?",
+    borderClass: "border-l-amber-400",
+  },
+  {
+    kind: "mixed",
+    heading: "둘 다 본다 (수치 + 이야기)",
+    lead: "양적·질적 자료를 통합해 보완적으로 답하고 싶을 때(시간·자원 多).",
+    example: "영향의 크기와 그 경험의 의미를 함께 살펴보려면?",
+    borderClass: "border-l-emerald-400",
+  },
+];
+
 export default function ResearchMethodsLandingPage() {
   const { user } = useAuthStore();
   const canManage = isAtLeast(user, "staff");
@@ -172,6 +203,33 @@ export default function ResearchMethodsLandingPage() {
             }
           />
         </div>
+
+        {/* ── 연구질문 → 방법론 진입 가이드 ── */}
+        <Card className="mt-6 rounded-2xl border bg-card shadow-sm">
+          <CardContent className="py-5">
+            <p className="text-sm font-semibold">
+              방법론보다 <span className="text-primary">연구질문</span>이 먼저입니다
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              방법론을 먼저 정하면 연구가 막히기 쉽습니다. 연구질문이 명확해지면 방법론은 자연스럽게
+              따라옵니다. 내 질문이 아래 어느 쪽에 가까운지 먼저 살펴보세요.
+            </p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              {QUESTION_MAPPING.map((m) => (
+                <div key={m.kind} className={cn("rounded-xl border-l-4 bg-muted/20 p-3.5", m.borderClass)}>
+                  <p className="text-sm font-semibold">{m.heading}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{m.lead}</p>
+                  <p className="mt-2 rounded-lg bg-card px-2.5 py-1.5 text-xs leading-relaxed text-muted-foreground">
+                    예) {m.example}
+                  </p>
+                  <p className="mt-2 text-xs font-medium text-primary">
+                    → {RESEARCH_METHOD_KIND_LABELS[m.kind]} 방법으로
+                  </p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="mt-6">
           <ArchiveSearchBar

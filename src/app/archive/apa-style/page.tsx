@@ -78,7 +78,11 @@ export default function ApaStylePage() {
               <span>
                 APA 7판(American Psychological Association, 2020)의 공개 표준 규칙을 교육공학
                 연구자용으로 정리한 요약입니다. 모든 예시는 <strong>형식 설명용 가상 예시</strong>(가상의
-                저자·논문)이며 실제 문헌이 아닙니다. 정확한 규정과 예외는{" "}
+                저자·논문)이며 실제 문헌이 아닙니다. 본문 인용을 <strong>내 말로 바꾸는 법·표절 회피</strong>는{" "}
+                <Link href="/archive/citation-guide" className="font-medium text-primary underline">
+                  인용 가이드
+                </Link>
+                를 참고하세요. 정확한 규정과 예외는{" "}
                 <em>APA Publication Manual (7th ed.)</em> 원문을, 학위논문 제출 형식은{" "}
                 <strong>소속 대학원 지침</strong>을 우선 확인하세요.
               </span>

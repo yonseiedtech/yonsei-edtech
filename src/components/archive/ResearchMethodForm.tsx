@@ -56,6 +56,8 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
   const { user: authUser } = useAuthStore();
 
   const [name, setName] = useState(initial?.name ?? "");
+  // 순화어 — 노션 용어사전집 병기. 운영진 자유 수정 가능.
+  const [purifiedName, setPurifiedName] = useState(initial?.purifiedName ?? "");
   const [kind, setKind] = useState<ResearchMethodKind>(initial?.kind ?? "quantitative");
   const [summary, setSummary] = useState(initial?.summary ?? "");
   const [accessibleSummary, setAccessibleSummary] = useState(initial?.accessibleSummary ?? "");
@@ -276,6 +278,7 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
 
       const payload = {
         name: name.trim(),
+        purifiedName: purifiedName.trim() || undefined,
         kind,
         summary: summary.trim(),
         accessibleSummary: accessibleSummary.trim() || undefined,
@@ -345,6 +348,13 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
         <CardContent className="space-y-4 py-5">
           <Field label="이름 *">
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="예: 설문조사연구" />
+          </Field>
+          <Field label="순화어 (우리말 다듬은 용어)">
+            <Input
+              value={purifiedName}
+              onChange={(e) => setPurifiedName(e.target.value)}
+              placeholder="예: 우리말 순화어 (기존 용어)"
+            />
           </Field>
           <Field label="유형 *">
             <div className="flex flex-wrap gap-1.5">

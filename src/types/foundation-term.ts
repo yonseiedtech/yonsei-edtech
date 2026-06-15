@@ -81,6 +81,8 @@ export interface FoundationTermReference {
 export interface FoundationTerm extends ArchiveOperationalMeta {
   id: string;
   term: string; // 한국어 용어 (예: "독립변인")
+  /** 순화어 — 노션 용어사전집 기준 우리말 다듬은 용어. term 과 병기 표시, 운영진 수정 가능. */
+  purifiedName?: string;
   abbreviation?: string; // 약어 (예: "IV", "ISD")
   englishName?: string; // 영문 (예: "Independent Variable")
   category: FoundationTermCategory;

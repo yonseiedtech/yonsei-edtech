@@ -149,6 +149,8 @@ export interface StatisticalReference {
 export interface StatisticalMethod extends ArchiveOperationalMeta {
   id: string;
   name: string;
+  /** 순화어 — 노션 용어사전집 기준 우리말 다듬은 용어. name 과 병기 표시, 운영진 수정 가능. */
+  purifiedName?: string;
   category: StatisticalMethodCategory;
   /** 객관적 정의 1~2문장 */
   summary: string;

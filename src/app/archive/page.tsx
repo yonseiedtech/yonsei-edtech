@@ -17,6 +17,8 @@ import {
   PenLine,
   FileText,
   ClipboardCheck,
+  ListChecks,
+  Quote,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -467,7 +469,7 @@ export default function ArchiveLandingPage() {
 
         {/* ── 학습·연구 가이드 (사이클 118: 라이브러리와 시각 구분) ── */}
         <p className="mb-2 mt-8 text-xs font-semibold text-muted-foreground">
-          📖 학습 · 연구 가이드 — 연구방법 · 통계방법 · 글쓰기 · 논문 · APA
+          📖 학습 · 연구 가이드 — 연구방법 · 통계방법 · 글쓰기 · 논문 · 선행연구·서론 · 인용 · APA
         </p>
         {/* ── 연구방법 가이드 (Phase 1) ── */}
         <Link
@@ -519,6 +521,31 @@ export default function ArchiveLandingPage() {
           </article>
         </Link>
 
+        {/* ── 선행연구 정리·서론 작성 가이드 ── */}
+        <Link
+          href="/archive/literature-review-guide"
+          className="group mt-6 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+          aria-label="선행연구 정리·서론 작성 가이드 보기"
+        >
+          <article className="rounded-2xl border-l-4 border-l-teal-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+            <div className="flex items-center gap-4 p-5">
+              <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal-100 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300">
+                <ListChecks className="h-5 w-5" aria-hidden />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-lg font-semibold tracking-tight">선행연구 정리·서론 작성 가이드</h2>
+                <p className="text-sm text-muted-foreground">
+                  선행연구 3대 질문·정리표·한계→연구모형 도출, 서론 4단계 흐름과 묶어쓰기 3패턴까지 논리 구성 과정을 정리합니다.
+                </p>
+              </div>
+              <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">
+                보기
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+              </div>
+            </div>
+          </article>
+        </Link>
+
         {/* ── 논문 쓰기 가이드 (사이클 105) ── */}
         <Link
           href="/archive/paper-guide"
@@ -559,6 +586,31 @@ export default function ArchiveLandingPage() {
                 <h2 className="text-lg font-semibold tracking-tight">학술 글쓰기 가이드</h2>
                 <p className="text-sm text-muted-foreground">
                   번역투·주술호응·시제·맞춤법·학술 관례 — ❌ 잘못된 예와 ✅ 권장 예를 짝지어 정리합니다.
+                </p>
+              </div>
+              <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">
+                보기
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+              </div>
+            </div>
+          </article>
+        </Link>
+
+        {/* ── 논문 인용 가이드 ── */}
+        <Link
+          href="/archive/citation-guide"
+          className="group mt-6 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+          aria-label="논문 인용 가이드 보기"
+        >
+          <article className="rounded-2xl border-l-4 border-l-cyan-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+            <div className="flex items-center gap-4 p-5">
+              <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-100 text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300">
+                <Quote className="h-5 w-5" aria-hidden />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-lg font-semibold tracking-tight">논문 인용 가이드</h2>
+                <p className="text-sm text-muted-foreground">
+                  직접·간접 인용 구분, 표절 회피, 내 말로 쓰는 법 4단계, 저자 수별 본문 인용 표기와 재인용·윤리 — 인용하는 행위 자체를 다룹니다.
                 </p>
               </div>
               <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">

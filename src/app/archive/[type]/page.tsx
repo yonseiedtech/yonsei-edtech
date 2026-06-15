@@ -481,6 +481,7 @@ function ArchiveCard({
 }) {
   const altNames = (item as { altNames?: string[] }).altNames ?? [];
   const tags = (item as { tags?: string[] }).tags ?? [];
+  const purifiedName = (item as { purifiedName?: string }).purifiedName?.trim();
 
   const meta: string[] = [];
   if (type === "variable" && (item as ArchiveVariable).type) {
@@ -498,6 +499,11 @@ function ArchiveCard({
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <CardTitle className="text-base truncate">{item.name}</CardTitle>
+            {purifiedName && (
+              <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-teal-200 bg-teal-50 px-2 py-0.5 text-[10px] font-medium text-teal-800 dark:border-teal-400/30 dark:bg-teal-950/30 dark:text-teal-300">
+                순화어 · {purifiedName}
+              </span>
+            )}
             {altNames.length > 0 && (
               <p className="mt-0.5 text-[11px] text-muted-foreground italic truncate">
                 {altNames.join(" · ")}
