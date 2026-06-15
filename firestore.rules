@@ -1092,10 +1092,14 @@ service cloud.firestore {
     }
 
     // ─── 진단평가 — 결과 (Diagnostic Results, MVP) ───
-    // 본인만 자신의 진단 결과 read/write.
+    // 본인은 자신의 진단 결과 read/write.
+    // 운영진(staff 이상)은 /console/insights 진단평가 탭에서 회원 준비도·약점 집계를 위해
+    // 전체 read 허용(데이터 활용 MVP ①). 쓰기는 여전히 본인만.
     match /diagnostic_results/{docId} {
       allow read, list: if isAuthenticated()
-        && (resource == null || resource.data.userId == request.auth.uid);
+        && (resource == null
+            || resource.data.userId == request.auth.uid
+            || isStaffOrAbove());
       allow create: if isAuthenticated()
         && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isAuthenticated()

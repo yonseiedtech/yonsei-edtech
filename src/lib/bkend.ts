@@ -2392,6 +2392,16 @@ export const diagnosticResultsApi = {
       sort: "createdAt:desc",
       limit: 50,
     }),
+  /**
+   * 운영진(staff+) 콘솔용 — 모든 회원의 진단 결과를 한 번에 로드.
+   * firestore.rules 의 diagnostic_results read 가 staff+ 우회를 허용해야 동작한다.
+   * 회원 준비도·약점은 개인정보이므로 UI(/console/insights)는 admin 전용으로 가드한다.
+   */
+  listAll: (limit = 2000) =>
+    dataApi.list<DiagnosticResult>("diagnostic_results", {
+      sort: "createdAt:desc",
+      limit,
+    }),
   get: (id: string) =>
     dataApi.get<DiagnosticResult>("diagnostic_results", id),
   create: (data: Record<string, unknown>) =>
