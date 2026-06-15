@@ -28,6 +28,8 @@ import PageHeader from "@/components/ui/page-header";
 import InlineNotification from "@/components/ui/inline-notification";
 import EduTechOverview from "@/components/archive/EduTechOverview";
 import ArchiveGlobalSearch from "@/features/archive/ArchiveGlobalSearch";
+import ArchiveStartHere from "@/features/archive/ArchiveStartHere";
+import ArchiveConceptRecommend from "@/features/archive/ArchiveConceptRecommend";
 import PageContainer from "@/components/ui/page-container";
 import { useAuthStore } from "@/features/auth/auth-store";
 import {
@@ -216,6 +218,12 @@ export default function ArchiveLandingPage() {
         <div className="mt-4">
           <ArchiveGlobalSearch />
         </div>
+
+        {/* ── 신입용 추천 경로 (M5 발견성) — 과밀 완화·진입점 명확화 ── */}
+        <ArchiveStartHere />
+
+        {/* ── 관심 주제·진단 약점 기반 개념 추천 (M5 발견성, 읽기 전용 매칭) ── */}
+        <ArchiveConceptRecommend />
 
         {/* ── 교육공학 정의·탐구분야 개관 ── */}
         <EduTechOverview />
