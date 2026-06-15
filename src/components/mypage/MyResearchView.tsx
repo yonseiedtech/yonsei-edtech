@@ -36,6 +36,7 @@ import { Button } from "@/components/ui/button";
 import ThesisJourney from "@/features/research/ThesisJourney";
 import ResearchCockpit from "@/features/research/ResearchCockpit";
 import AdvisorFeedbackLog from "@/features/research/AdvisorFeedbackLog";
+import ResearchActivityDashboard from "@/features/mypage/ResearchActivityDashboard";
 import { formatPeriodLabel } from "@/lib/research-period";
 import {
   currentSemesterRange,
@@ -497,6 +498,9 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
           <TabsContent value="timer" className="mt-5">
             {isSelf ? (
               <div className="space-y-6">
+                {/* 연구활동 전용 대시보드 (research 영역만) + compact 타이머 */}
+                <ResearchActivityDashboard userId={userId} />
+
                 <StudyTimerStats />
 
                 <PaperReadingSection />

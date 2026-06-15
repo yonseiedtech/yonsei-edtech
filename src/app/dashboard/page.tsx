@@ -30,7 +30,12 @@ import { isAtLeast } from "@/lib/permissions";
 import { ROLE_LABELS } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
+import {
+  inferSeminarMode,
+  SEMINAR_MODE_BADGE,
+  SEMINAR_MODE_LABEL,
+} from "@/features/dashboard/timeline/types";
 import ActivityFeed from "@/features/dashboard/ActivityFeed";
 import AcademicCalendarProgress from "@/features/dashboard/AcademicCalendarProgress";
 import DailyClassTimelineWidget from "@/features/dashboard/DailyClassTimelineWidget";
@@ -520,16 +525,21 @@ function DashboardContent() {
             시간표 비대상(졸업생 등)은 프로필 풀폭 폴백. */}
         {/* 사이클 111: 시간표·커맨드센터를 좌측 1fr 로 묶어 폭 정렬(사용자 — 시간표 폭 ≠ 커맨드 그리드),
             우측 컬럼에 프로필 요약 + 알림·할일 미니위젯으로 하단 공백 채움(사용자 요청). */}
+        {/* 사이클 124: 좌·우 컬럼 하단 라인 정렬 (사용자 요청).
+            items-stretch 로 두 컬럼 높이를 맞추고, 우측 마지막 위젯(학습 잔디)을 flex-1 로 늘려
+            좌측 타임라인+커맨드센터 하단과 우측 잔디 하단 라인을 일치시킨다. */}
         {canShowWidget(user.role, "dailyClassTimeline") ? (
-          <div className="mb-6 grid items-start gap-4 lg:grid-cols-[1fr_336px]">
-            <div className="min-w-0 space-y-5">
+          <div className="mb-6 grid items-stretch gap-4 lg:grid-cols-[1fr_336px]">
+            <div className="flex min-w-0 flex-col gap-5">
               <DailyClassTimelineWidget />
               <DashboardCommandCenter />
             </div>
-            <div className="space-y-4">
+            <div className="flex flex-col gap-4">
               <ProfileSummaryCard user={user} />
               <ProfileSideWidget userId={user.id} />
-              <LearningStreak compact />
+              <div className="flex flex-1 flex-col [&>*]:flex-1">
+                <LearningStreak compact />
+              </div>
             </div>
           </div>
         ) : (
@@ -668,6 +678,19 @@ function DashboardContent() {
                 >
                   <span className="truncate font-medium">{s.title}</span>
                   <div className="ml-3 flex shrink-0 items-center gap-2">
+                    {(() => {
+                      const mode = inferSeminarMode(s);
+                      return (
+                        <span
+                          className={cn(
+                            "rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+                            SEMINAR_MODE_BADGE[mode],
+                          )}
+                        >
+                          {SEMINAR_MODE_LABEL[mode]}
+                        </span>
+                      );
+                    })()}
                     <Badge
                       variant={
                         s.status === "upcoming" ? "default" : "secondary"

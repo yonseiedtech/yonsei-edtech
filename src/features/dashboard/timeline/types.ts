@@ -18,6 +18,15 @@ export const DEFAULT_HOUR_START = 17;
 export const DEFAULT_HOUR_END = 24; // 24 = 자정 (00:00)
 export const ROW_HEIGHT_PX = 64;
 
+/**
+ * 일/주/월 뷰 전환 시 콘텐츠 영역 높이가 달라 레이아웃이 점프하는 문제를 막기 위한
+ * 공통 최소 높이 기준. 주간 뷰의 기본 시간 범위(17~24시 = 7시간) 높이를 기준값으로 삼는다.
+ * daily/weekly 그리드는 실제 totalHeight 가 이보다 클 수 있으므로 min-height 로만 적용,
+ * monthly(달력)는 별도 콘텐츠라 같은 min-height 로 바닥 라인을 맞춘다.
+ */
+export const TIMELINE_MIN_CONTENT_PX =
+  ROW_HEIGHT_PX * (DEFAULT_HOUR_END - DEFAULT_HOUR_START); // 64 * 7 = 448
+
 export const VIEW_STORAGE_KEY = "dashboard.classTimeline.view";
 export const HOUR_RANGE_STORAGE_KEY = "dashboard.classTimeline.hourRange";
 export type ViewMode = "daily" | "weekly" | "monthly";
@@ -126,4 +135,45 @@ export function parseHHMM(s?: string): number | null {
 export function formatHour(h: number): string {
   if (h === 24) return "00:00";
   return `${String(h).padStart(2, "0")}:00`;
+}
+
+// ── 세미나 온라인/오프라인(대면/비대면) 구분 ──
+export type SeminarMode = "online" | "offline";
+
+/** location 문자열에 비대면 키워드가 있으면 online 으로 추론 (보수적) */
+const ONLINE_LOCATION_RE = /온라인|비대면|zoom|줌|webex|웹엑스|구글\s*미트|google\s*meet|teams|유튜브|youtube|라이브|live|화상/i;
+
+/**
+ * 세미나의 온/오프라인 모드 판정.
+ *  1) isOnline 플래그가 명시되어 있으면 그대로 사용 (true→online, false→offline)
+ *  2) onlineUrl 이 채워져 있으면 online
+ *  3) location 문자열에 비대면 키워드가 있으면 online
+ *  4) 그 외 모두 offline(대면)으로 간주 — 보수적 폴백
+ */
+export function inferSeminarMode(s: {
+  isOnline?: boolean;
+  onlineUrl?: string;
+  location?: string;
+}): SeminarMode {
+  if (typeof s.isOnline === "boolean") return s.isOnline ? "online" : "offline";
+  if (s.onlineUrl && s.onlineUrl.trim()) return "online";
+  if (s.location && ONLINE_LOCATION_RE.test(s.location)) return "online";
+  return "offline";
+}
+
+export const SEMINAR_MODE_LABEL: Record<SeminarMode, string> = {
+  online: "온라인",
+  offline: "대면",
+};
+
+export const SEMINAR_MODE_BADGE: Record<SeminarMode, string> = {
+  online: "bg-sky-100 text-sky-700",
+  offline: "bg-emerald-100 text-emerald-700",
+};
+
+/** 월간 그리드에 넘기는 세미나 항목 (제목 + 온/오프 모드) */
+export interface MonthSeminar {
+  id: string;
+  title: string;
+  mode: SeminarMode;
 }

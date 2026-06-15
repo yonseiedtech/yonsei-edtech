@@ -1116,6 +1116,9 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
               {/* 알림 / 피드 설정 */}
               {!readOnly && <NotificationSettingsCard user={user} />}
 
+              {/* 읽기 타이머 부엉이 표시 설정 */}
+              {!readOnly && <ReadingOwlSettingsCard />}
+
               {/* 회원 탈퇴 */}
               {!readOnly && <SelfDeleteSection user={user} onDeleted={() => { logout(); router.push("/"); }} />}
             </div>
@@ -1448,6 +1451,67 @@ function NotificationSettingsCard({ user }: { user: User }) {
             }
             ariaLabel="연구지 신규 호수 발간 push 알림 토글"
           />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** 읽기 타이머 부엉이(FloatingReadingTimer) 영구 표시 on/off — localStorage 플래그(omcReadingOwlOff, 별칭 yedu_owl_disabled) */
+function ReadingOwlSettingsCard() {
+  const OWL_OFF_KEY = "omcReadingOwlOff";
+  const OWL_OFF_EVENT = "omc-reading-owl-changed";
+  const [shown, setShown] = useState(true);
+
+  useEffect(() => {
+    setShown(localStorage.getItem(OWL_OFF_KEY) !== "true");
+  }, []);
+
+  async function toggle() {
+    const next = !shown;
+    setShown(next);
+    if (next) {
+      localStorage.removeItem(OWL_OFF_KEY);
+    } else {
+      localStorage.setItem(OWL_OFF_KEY, "true");
+    }
+    // FloatingReadingTimer 가 같은 탭에서 즉시 반영하도록 알림
+    window.dispatchEvent(new Event(OWL_OFF_EVENT));
+    const { toast } = await import("sonner");
+    toast.success(next ? "읽기 타이머 부엉이를 다시 표시합니다 🦉" : "읽기 타이머 부엉이를 숨겼습니다. 언제든 이 설정에서 다시 켤 수 있어요.");
+  }
+
+  return (
+    <div className="mt-6 rounded-2xl border bg-card p-6">
+      <h3 className="flex items-center gap-2 text-base font-semibold">
+        <BookOpen size={18} /> 읽기 타이머
+      </h3>
+      <div className="mt-2 divide-y">
+        <div className="flex items-start justify-between gap-3 py-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium">읽기 타이머 부엉이 표시</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              화면 구석을 따라다니는 학습 부엉이(읽기/쓰기 타이머)를 표시합니다. 끄면 모든 페이지에서 완전히 숨겨지며, 이 설정에서 다시 켤 수 있습니다.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => void toggle()}
+            role="switch"
+            aria-checked={shown}
+            aria-label="읽기 타이머 부엉이 표시 토글"
+            className={cn(
+              "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors",
+              shown ? "bg-primary" : "bg-muted",
+            )}
+          >
+            <span
+              className={cn(
+                "inline-block h-5 w-5 transform rounded-full bg-card shadow transition-transform",
+                shown ? "translate-x-6" : "translate-x-1",
+              )}
+            />
+          </button>
         </div>
       </div>
     </div>

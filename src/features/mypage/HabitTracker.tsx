@@ -3,12 +3,13 @@
 /**
  * HabitTracker — 습관 트래커 매트릭스 컴포넌트
  *
- * 스프레드시트 레이아웃을 그대로 재현:
- *  - 상단 좌: 월 달성 현황 (달성·미달성·달성률 3-stat)
- *  - 상단 중: 일자별 달성 수 area 차트 (SVG 곡선)
- *  - 상단 우: 월 미니 캘린더 (모든 습관 달성일 ring 표시)
+ * 스프레드시트 레이아웃을 재현 + 사이클 123 고도화:
+ *  - 상단 좌: 월 달성 현황 (총 일자 / 달성일 / 미달성 3-stat)
+ *  - 상단 중: 일자별 달성 수 차트 (날짜 축 + 과거 실선 + 오늘 점·깜박임 + 미래 평균 예측 점선)
+ *  - 상단 우: 월 미니 캘린더 3분할 (상순/중순/하순) — 모든 습관 달성일 ring
  *  - 메인: 습관 × 날짜 매트릭스 표 (체크/미체크, 가로스크롤)
- *  - 우측: 습관별 달성 통계 + 진행 바
+ *  - 우측: 습관별 달성 통계 (총 일자 / 달성 / 미달성 3분할) + 진행 바
+ *  - 하단: 범례 (그룹화·가독성 개선)
  */
 
 import { useMemo } from "react";
@@ -50,41 +51,31 @@ function todayYmd(): string {
 
 const DAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"] as const;
 
-/* smooth bezier path through points */
-function smoothPath(points: { x: number; y: number }[]): string {
-  if (points.length < 2) return "";
-  let d = `M ${points[0].x} ${points[0].y}`;
-  for (let i = 1; i < points.length; i++) {
-    const prev = points[i - 1];
-    const curr = points[i];
-    const cpx = (prev.x + curr.x) / 2;
-    d += ` C ${cpx} ${prev.y}, ${cpx} ${curr.y}, ${curr.x} ${curr.y}`;
-  }
-  return d;
-}
-
 /* ─────────────────────────────── sub-components ─────────────────── */
 
-/** 상단 좌: 3-stat 달성 현황 */
+/**
+ * 상단 좌: 3-stat 달성 현황 — 총 일자 / 달성일 / 미달성
+ * (전체 매트릭스 셀이 아닌 "일(日)" 기준 — 그달 달력 일수 대비 활동일)
+ */
 function MonthStats({
-  achieved,
-  missed,
-  rate,
+  totalDays,
+  achievedDays,
+  missedDays,
 }: {
-  achieved: number;
-  missed: number;
-  rate: number;
+  totalDays: number;
+  achievedDays: number;
+  missedDays: number;
 }) {
   const stats = [
-    { label: "달성", value: achieved, color: "text-teal-600 dark:text-teal-400" },
-    { label: "미달성", value: missed, color: "text-rose-500 dark:text-rose-400" },
-    { label: "달성률", value: `${rate}%`, color: "text-indigo-600 dark:text-indigo-400" },
+    { label: "총 일자", value: totalDays, color: "text-foreground/80" },
+    { label: "달성일", value: achievedDays, color: "text-teal-600 dark:text-teal-400" },
+    { label: "미달성", value: missedDays, color: "text-rose-500 dark:text-rose-400" },
   ];
 
   return (
-    <div className="flex gap-6 items-end">
-      {stats.map((s, i) => (
-        <div key={i} className="flex flex-col items-center gap-0.5">
+    <div className="flex gap-5 items-end">
+      {stats.map((s) => (
+        <div key={s.label} className="flex flex-col items-center gap-0.5">
           <span className={cn("text-3xl font-extrabold tabular-nums leading-none", s.color)}>
             {s.value}
           </span>
@@ -97,86 +88,350 @@ function MonthStats({
   );
 }
 
-/** 상단 중: 일자별 달성 수 area 차트 */
+/**
+ * 상단 중: 일자별 달성 수 차트 (사이클 123 고도화)
+ *  - 폭 넓게 + 하단 날짜 축(1·주요 분기·말일).
+ *  - 과거: 실제 달성 수 실선.
+ *  - 오늘(당일): 어제와 선으로 잇지 않고 점만 + 어제 대비 색상 깜박임
+ *      (동일=검정 · 적음=빨강 · 많음=파랑, 점/점선 애니메이션).
+ *  - 미래(아직 안 온 날): 과거 평균 추이를 검정 점선(예측 가이드라인).
+ */
 function DailyChart({
+  month,
   dailyCounts,
   totalDays,
   maxCount,
+  todayDay,
 }: {
+  month: number;
   dailyCounts: number[];
   totalDays: number;
   maxCount: number;
+  /** 이번 달 안에 오늘이 있으면 1-based day, 아니면 null(전부 과거 or 전부 미래) */
+  todayDay: number | null;
 }) {
-  const W = 220;
-  const H = 64;
-  const PAD = 4;
+  const W = 420;
+  const H = 92;
+  const PAD_L = 6;
+  const PAD_R = 6;
+  const PAD_T = 8;
+  const PAD_B = 18; // 날짜 축 공간
 
-  const points = useMemo(() => {
-    return dailyCounts.map((count, i) => ({
-      x: PAD + (i / Math.max(totalDays - 1, 1)) * (W - PAD * 2),
-      y: H - PAD - (count / Math.max(maxCount, 1)) * (H - PAD * 2),
-    }));
-  }, [dailyCounts, totalDays, maxCount]);
+  const yMax = Math.max(maxCount, 1);
 
-  const linePath = smoothPath(points);
-  const areaPath =
-    points.length >= 2
-      ? `${linePath} L ${points[points.length - 1].x} ${H} L ${points[0].x} ${H} Z`
-      : "";
+  const xOf = (dayIdx: number) =>
+    PAD_L + (dayIdx / Math.max(totalDays - 1, 1)) * (W - PAD_L - PAD_R);
+  const yOf = (count: number) =>
+    H - PAD_B - (count / yMax) * (H - PAD_T - PAD_B);
+
+  // 오늘 인덱스(0-based). 이번 달 안에 없으면 모든 날을 "과거"로 본다.
+  const todayIdx = todayDay != null ? todayDay - 1 : totalDays - 1;
+
+  // 과거 구간(어제까지)·오늘·미래 분리
+  const pastPoints = useMemo(() => {
+    const pts: { x: number; y: number; count: number; idx: number }[] = [];
+    const lastPastIdx = todayDay != null ? todayIdx - 1 : totalDays - 1;
+    for (let i = 0; i <= lastPastIdx; i++) {
+      pts.push({ x: xOf(i), y: yOf(dailyCounts[i] ?? 0), count: dailyCounts[i] ?? 0, idx: i });
+    }
+    return pts;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dailyCounts, totalDays, yMax, todayDay, todayIdx]);
+
+  // 과거 평균(달성이 있던 날 평균이 아닌, 경과한 모든 날 평균 — 추이 가이드)
+  const pastAvg = useMemo(() => {
+    if (pastPoints.length === 0) return 0;
+    const sum = pastPoints.reduce((a, p) => a + p.count, 0);
+    return sum / pastPoints.length;
+  }, [pastPoints]);
+
+  // 오늘 포인트 + 어제 대비 비교
+  const todayInfo = useMemo(() => {
+    if (todayDay == null) return null;
+    const todayCount = dailyCounts[todayIdx] ?? 0;
+    const prevCount = todayIdx - 1 >= 0 ? dailyCounts[todayIdx - 1] ?? 0 : null;
+    let trend: "same" | "less" | "more" = "same";
+    if (prevCount != null) {
+      if (todayCount < prevCount) trend = "less";
+      else if (todayCount > prevCount) trend = "more";
+    }
+    return {
+      x: xOf(todayIdx),
+      y: yOf(todayCount),
+      count: todayCount,
+      trend,
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dailyCounts, todayDay, todayIdx, yMax, totalDays]);
+
+  const TREND_COLOR: Record<"same" | "less" | "more", string> = {
+    same: "rgb(24,24,27)", // 검정 (foreground)
+    less: "rgb(244,63,94)", // 빨강 rose-500
+    more: "rgb(59,130,246)", // 파랑 blue-500
+  };
+
+  // 과거 실선 path
+  const pastPath = useMemo(() => {
+    if (pastPoints.length < 1) return "";
+    let d = `M ${pastPoints[0].x} ${pastPoints[0].y}`;
+    for (let i = 1; i < pastPoints.length; i++) {
+      d += ` L ${pastPoints[i].x} ${pastPoints[i].y}`;
+    }
+    return d;
+  }, [pastPoints]);
+
+  // 미래 예측 점선 — 오늘(또는 마지막 과거)에서 시작해 말일까지 평균선 수평
+  const futurePath = useMemo(() => {
+    if (todayDay == null) return ""; // 오늘이 이 달에 없으면 예측 생략
+    const startIdx = todayIdx; // 오늘부터
+    if (startIdx >= totalDays - 1) return "";
+    const y = yOf(pastAvg);
+    return `M ${xOf(startIdx)} ${y} L ${xOf(totalDays - 1)} ${y}`;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todayDay, todayIdx, totalDays, pastAvg, yMax]);
+
+  // 날짜 축 눈금: 1, 8, 15, 22, 말일 (+오늘 별도)
+  const axisTicks = useMemo(() => {
+    const ticks = new Set<number>([1, 8, 15, 22, totalDays]);
+    return Array.from(ticks).filter((d) => d >= 1 && d <= totalDays).sort((a, b) => a - b);
+  }, [totalDays]);
 
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-[10px] text-muted-foreground font-medium">일자별 달성 수</span>
+      <span className="text-[10px] text-muted-foreground font-medium">
+        일자별 달성 수 · {month}월
+      </span>
       <svg
-        width={W}
-        height={H}
         viewBox={`0 0 ${W} ${H}`}
-        aria-hidden="true"
-        className="overflow-visible"
+        preserveAspectRatio="none"
+        role="img"
+        aria-label={`${month}월 일자별 달성 수 추이`}
+        className="w-full h-[92px] overflow-visible"
       >
         <defs>
           <linearGradient id="habitAreaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgb(20,184,166)" stopOpacity="0.35" />
+            <stop offset="0%" stopColor="rgb(20,184,166)" stopOpacity="0.28" />
             <stop offset="100%" stopColor="rgb(20,184,166)" stopOpacity="0.02" />
           </linearGradient>
         </defs>
-        {areaPath && (
-          <path d={areaPath} fill="url(#habitAreaGrad)" />
-        )}
-        {linePath && (
+
+        {/* baseline (축) */}
+        <line
+          x1={PAD_L}
+          y1={H - PAD_B}
+          x2={W - PAD_R}
+          y2={H - PAD_B}
+          stroke="currentColor"
+          className="text-border"
+          strokeWidth={1}
+        />
+
+        {/* 과거 area + 실선 */}
+        {pastPoints.length >= 2 && (
           <path
-            d={linePath}
+            d={`${pastPath} L ${pastPoints[pastPoints.length - 1].x} ${H - PAD_B} L ${pastPoints[0].x} ${H - PAD_B} Z`}
+            fill="url(#habitAreaGrad)"
+          />
+        )}
+        {pastPath && (
+          <path
+            d={pastPath}
             fill="none"
-            stroke="rgb(20,184,166)"
+            stroke="rgb(13,148,136)"
             strokeWidth={2}
             strokeLinecap="round"
             strokeLinejoin="round"
           />
         )}
-        {/* dot on each point */}
-        {points.map((p, i) =>
-          dailyCounts[i] > 0 ? (
+        {/* 과거 달성 점 */}
+        {pastPoints.map((p) =>
+          p.count > 0 ? (
             <circle
-              key={i}
+              key={`past-${p.idx}`}
               cx={p.x}
               cy={p.y}
-              r={2.5}
-              fill="rgb(20,184,166)"
+              r={2.2}
+              fill="rgb(13,148,136)"
               stroke="white"
               strokeWidth={1}
             />
           ) : null,
         )}
+
+        {/* 미래 평균 예측 점선 */}
+        {futurePath && (
+          <>
+            <path
+              d={futurePath}
+              fill="none"
+              stroke="rgb(24,24,27)"
+              className="dark:[stroke:rgb(228,228,231)]"
+              strokeWidth={1.4}
+              strokeDasharray="4 4"
+              strokeOpacity={0.55}
+            />
+            <text
+              x={W - PAD_R}
+              y={yOf(pastAvg) - 4}
+              textAnchor="end"
+              className="fill-muted-foreground"
+              fontSize={8}
+            >
+              평균 {pastAvg.toFixed(1)}
+            </text>
+          </>
+        )}
+
+        {/* 오늘 — 선 없이 점만 + 어제 대비 깜박임 애니메이션 */}
+        {todayInfo && (
+          <g>
+            {/* 펄스 링 */}
+            <circle cx={todayInfo.x} cy={todayInfo.y} r={5} fill={TREND_COLOR[todayInfo.trend]} opacity={0.25}>
+              <animate
+                attributeName="r"
+                values="4;9;4"
+                dur="1.4s"
+                repeatCount="indefinite"
+              />
+              <animate
+                attributeName="opacity"
+                values="0.35;0;0.35"
+                dur="1.4s"
+                repeatCount="indefinite"
+              />
+            </circle>
+            {/* 코어 점 (깜박임) */}
+            <circle cx={todayInfo.x} cy={todayInfo.y} r={3.4} fill={TREND_COLOR[todayInfo.trend]} stroke="white" strokeWidth={1}>
+              <animate
+                attributeName="opacity"
+                values="1;0.35;1"
+                dur="1.4s"
+                repeatCount="indefinite"
+              />
+            </circle>
+            <text
+              x={todayInfo.x}
+              y={todayInfo.y - 8}
+              textAnchor="middle"
+              fontSize={8}
+              fontWeight={700}
+              fill={TREND_COLOR[todayInfo.trend]}
+            >
+              오늘 {todayInfo.count}
+            </text>
+          </g>
+        )}
+
+        {/* 날짜 축 눈금 라벨 */}
+        {axisTicks.map((d) => (
+          <text
+            key={`tick-${d}`}
+            x={xOf(d - 1)}
+            y={H - 5}
+            textAnchor={d === 1 ? "start" : d === totalDays ? "end" : "middle"}
+            className="fill-muted-foreground/70"
+            fontSize={8}
+          >
+            {d}
+          </text>
+        ))}
       </svg>
-      <div className="flex justify-between text-[9px] text-muted-foreground/60">
-        <span>1일</span>
-        <span>{totalDays}일</span>
+
+      {/* 차트 범례 (작게) */}
+      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[8.5px] text-muted-foreground/80">
+        <span className="inline-flex items-center gap-1">
+          <span className="inline-block h-0.5 w-3 rounded-full bg-teal-600" /> 과거 실선
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-foreground" /> 오늘 점(깜박임)
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span
+            className="inline-block h-0 w-3 border-t border-dashed border-foreground/60"
+            aria-hidden
+          />{" "}
+          미래 평균 예측
+        </span>
       </div>
     </div>
   );
 }
 
-/** 상단 우: 미니 캘린더 */
+/** 캘린더 한 조각(상순/중순/하순) — 3분할용 */
+function MiniCalendarSlice({
+  year,
+  month,
+  startDay,
+  endDay,
+  firstDow,
+  allAchievedDays,
+  today,
+  title,
+}: {
+  year: number;
+  month: number;
+  startDay: number;
+  endDay: number;
+  firstDow: number; // 1일의 요일 (0=일)
+  allAchievedDays: Set<string>;
+  today: string;
+  title: string;
+}) {
+  // 이 조각의 시작일 요일에 맞춰 앞 빈칸
+  const startDow = (firstDow + (startDay - 1)) % 7;
+
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-[9px] font-semibold text-muted-foreground/80 text-center">
+        {title}
+      </span>
+      <div className="grid grid-cols-7 gap-0.5">
+        {DAY_LABELS.map((d, i) => (
+          <span
+            key={i}
+            className={cn(
+              "text-center text-[8px] font-bold",
+              i === 0 && "text-rose-500 dark:text-rose-400",
+              i === 6 && "text-blue-500 dark:text-blue-400",
+              i > 0 && i < 6 && "text-muted-foreground/70",
+            )}
+          >
+            {d}
+          </span>
+        ))}
+        {Array.from({ length: startDow }).map((_, i) => (
+          <span key={`b${i}`} />
+        ))}
+        {Array.from({ length: endDay - startDay + 1 }).map((_, i) => {
+          const day = startDay + i;
+          const dow = (firstDow + (day - 1)) % 7;
+          const ymd = ymdOf(year, month, day);
+          const isToday = ymd === today;
+          const isAllAchieved = allAchievedDays.has(ymd);
+
+          return (
+            <div
+              key={day}
+              title={isAllAchieved ? `${ymd} · 모두 달성` : ymd}
+              className={cn(
+                "w-[18px] h-[18px] flex items-center justify-center rounded-full text-[9px] leading-none mx-auto",
+                dow === 0 && "text-rose-500 dark:text-rose-400",
+                dow === 6 && "text-blue-500 dark:text-blue-400",
+                dow > 0 && dow < 6 && "text-foreground/75",
+                isToday && "bg-indigo-100 dark:bg-indigo-900/50 font-bold",
+                isAllAchieved && "ring-2 ring-teal-500 dark:ring-teal-400 font-semibold",
+              )}
+            >
+              {day}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** 상단 우: 미니 캘린더 3분할 (상순 1-10 / 중순 11-20 / 하순 21-말일) */
 function MiniCalendar({
   year,
   month,
@@ -191,72 +446,51 @@ function MiniCalendar({
   allAchievedDays: Set<string>;
 }) {
   const today = todayYmd();
-  // 앞 빈 칸
-  const blanks = firstDow;
+  const slices = [
+    { title: "상순", start: 1, end: Math.min(10, totalDays) },
+    { title: "중순", start: 11, end: Math.min(20, totalDays) },
+    { title: "하순", start: 21, end: totalDays },
+  ].filter((s) => s.start <= totalDays);
 
   return (
-    <div className="flex flex-col gap-1.5 min-w-[180px]">
-      <div className="grid grid-cols-7 gap-0.5">
-        {DAY_LABELS.map((d, i) => (
-          <span
-            key={i}
-            className={cn(
-              "text-center text-[9px] font-bold pb-0.5",
-              i === 0 && "text-rose-500 dark:text-rose-400",
-              i === 6 && "text-blue-500 dark:text-blue-400",
-              i > 0 && i < 6 && "text-muted-foreground",
-            )}
-          >
-            {d}
-          </span>
+    <div className="flex flex-col gap-1.5 min-w-[200px]">
+      <div className="grid grid-cols-3 gap-2">
+        {slices.map((s) => (
+          <MiniCalendarSlice
+            key={s.title}
+            year={year}
+            month={month}
+            startDay={s.start}
+            endDay={s.end}
+            firstDow={firstDow}
+            allAchievedDays={allAchievedDays}
+            today={today}
+            title={s.title}
+          />
         ))}
-        {/* blank cells */}
-        {Array.from({ length: blanks }).map((_, i) => (
-          <span key={`b${i}`} />
-        ))}
-        {/* day cells */}
-        {Array.from({ length: totalDays }).map((_, i) => {
-          const day = i + 1;
-          const dow = (firstDow + i) % 7;
-          const ymd = ymdOf(year, month, day);
-          const isToday = ymd === today;
-          const isAllAchieved = allAchievedDays.has(ymd);
-
-          return (
-            <div
-              key={day}
-              className={cn(
-                "w-5 h-5 flex items-center justify-center rounded-full text-[10px] leading-none mx-auto",
-                dow === 0 && "text-rose-500 dark:text-rose-400",
-                dow === 6 && "text-blue-500 dark:text-blue-400",
-                dow > 0 && dow < 6 && "text-foreground/80",
-                isToday && "bg-indigo-100 dark:bg-indigo-900/50 font-bold",
-                isAllAchieved && "ring-2 ring-teal-500 dark:ring-teal-400 font-semibold",
-              )}
-            >
-              {day}
-            </div>
-          );
-        })}
       </div>
-      <p className="text-[9px] text-muted-foreground/70 leading-tight">
-        습관을 모두 달성한 날에는 동그라미로 표시됩니다
+      <p className="text-[9px] text-muted-foreground/70 leading-tight text-center">
+        <span className="inline-flex w-2.5 h-2.5 rounded-full border-2 border-teal-500 dark:border-teal-400 align-middle mr-1" />
+        모든 습관을 달성한 날
       </p>
     </div>
   );
 }
 
-/** 매트릭스 표 헤더 — 주차 그룹 */
+/** 매트릭스 표 헤더 — 주차 그룹 + 날짜 */
 function MatrixHeader({
+  year,
+  month,
   totalDays,
   firstDow,
   today,
 }: {
+  year: number;
+  month: number;
   totalDays: number;
   firstDow: number;
   today: string;
 }) {
-  // 주차 그룹: 1~7, 8~14, 15~21, 22~28, 29~말일
   const weekGroups = [
     { label: "1주차", start: 1, end: Math.min(7, totalDays) },
     { label: "2주차", start: 8, end: Math.min(14, totalDays) },
@@ -267,9 +501,7 @@ function MatrixHeader({
 
   return (
     <>
-      {/* 주차 라벨 행 */}
       <tr>
-        {/* 좌측 고정 열 */}
         <th className="sticky left-0 z-10 bg-card min-w-[160px] border-b border-r border-border" />
         {weekGroups.map((g) => (
           <th
@@ -280,10 +512,8 @@ function MatrixHeader({
             {g.label}
           </th>
         ))}
-        {/* 우측 통계 열 */}
-        <th className="sticky right-0 z-10 bg-card min-w-[120px] border-b border-l border-border" />
+        <th className="sticky right-0 z-10 bg-card min-w-[150px] border-b border-l border-border" />
       </tr>
-      {/* 날짜 숫자 행 */}
       <tr>
         <th className="sticky left-0 z-10 bg-card border-b border-r border-border">
           <span className="sr-only">습관</span>
@@ -291,7 +521,8 @@ function MatrixHeader({
         {Array.from({ length: totalDays }).map((_, i) => {
           const day = i + 1;
           const dow = (firstDow + i) % 7;
-          // today ymd 매칭은 caller가 ymd를 전달 — 여기선 prop year/month 없으니 오늘 강조는 별도
+          const ymd = ymdOf(year, month, day);
+          const isToday = ymd === today;
           const isWeekend = dow === 0 || dow === 6;
           const isSun = dow === 0;
           const isSat = dow === 6;
@@ -304,6 +535,7 @@ function MatrixHeader({
                 isSun && "text-rose-500 dark:text-rose-400",
                 isSat && "text-blue-500 dark:text-blue-400",
                 !isWeekend && "text-muted-foreground",
+                isToday && "bg-indigo-50/60 dark:bg-indigo-950/30 font-bold text-indigo-600 dark:text-indigo-400",
               )}
             >
               {day}
@@ -311,14 +543,16 @@ function MatrixHeader({
           );
         })}
         <th className="sticky right-0 z-10 bg-card border-b border-l border-border">
-          <span className="text-[10px] font-semibold text-muted-foreground px-2">달성 현황</span>
+          <span className="text-[10px] font-semibold text-muted-foreground px-2">
+            총 / 달성 / 미달성
+          </span>
         </th>
       </tr>
     </>
   );
 }
 
-/** 습관 행 */
+/** 습관 행 — 우측 통계 3분할(총 일자 / 달성 / 미달성) */
 function HabitRow({
   idx,
   habit,
@@ -338,7 +572,6 @@ function HabitRow({
   achievedByDay: Map<string, Set<string>>;
   today: string;
 }) {
-  // 달성 수 계산
   let achievedCount = 0;
   for (let d = 1; d <= totalDays; d++) {
     const ymd = ymdOf(year, month, d);
@@ -347,11 +580,10 @@ function HabitRow({
   const base = habit.target ?? totalDays;
   const rawRate = base > 0 ? achievedCount / base : 0;
   const rate = Math.min(Math.round(rawRate * 100), 100);
-  const missed = (habit.target ?? totalDays) - achievedCount;
+  const missed = Math.max(base - achievedCount, 0);
 
   return (
     <tr className="group">
-      {/* 좌측 고정: 번호 + 라벨 */}
       <td className="sticky left-0 z-10 bg-card border-b border-r border-border px-2 py-1.5 whitespace-nowrap">
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] font-bold text-muted-foreground/60 w-4 shrink-0">
@@ -362,13 +594,10 @@ function HabitRow({
             {habit.label}
           </span>
           {habit.target && (
-            <span className="text-[9px] text-muted-foreground/70 shrink-0">
-              /{habit.target}
-            </span>
+            <span className="text-[9px] text-muted-foreground/70 shrink-0">/{habit.target}</span>
           )}
         </div>
       </td>
-      {/* 날짜별 체크 셀 */}
       {Array.from({ length: totalDays }).map((_, i) => {
         const day = i + 1;
         const dow = (firstDow + i) % 7;
@@ -390,11 +619,7 @@ function HabitRow({
           >
             {isDone ? (
               <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-emerald-100 dark:bg-emerald-900/50 mx-auto">
-                <CheckIcon
-                  size={11}
-                  className="text-emerald-600 dark:text-emerald-400"
-                  strokeWidth={3}
-                />
+                <CheckIcon size={11} className="text-emerald-600 dark:text-emerald-400" strokeWidth={3} />
               </span>
             ) : (
               <span className="inline-flex items-center justify-center w-5 h-5 rounded border border-border/60 bg-muted/20 mx-auto" />
@@ -402,20 +627,24 @@ function HabitRow({
           </td>
         );
       })}
-      {/* 우측 고정: 달성 통계 */}
-      <td className="sticky right-0 z-10 bg-card border-b border-l border-border px-2 py-1.5 min-w-[120px]">
-        <div className="flex flex-col gap-0.5">
-          <div className="flex items-center gap-1.5 text-[10px]">
-            <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-              {achievedCount}
+      {/* 우측 고정: 달성 통계 3분할 */}
+      <td className="sticky right-0 z-10 bg-card border-b border-l border-border px-2 py-1.5 min-w-[150px]">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2 text-[10px] tabular-nums">
+            <span className="flex flex-col items-center leading-none">
+              <span className="font-semibold text-foreground/70">{base}</span>
+              <span className="text-[8px] text-muted-foreground/60">총</span>
             </span>
-            <span className="text-muted-foreground/60">/</span>
-            <span className="text-rose-500 dark:text-rose-400 font-medium">{missed < 0 ? 0 : missed}</span>
-            <span className="ml-auto text-indigo-600 dark:text-indigo-400 font-bold">
-              {rate}%
+            <span className="flex flex-col items-center leading-none">
+              <span className="font-semibold text-emerald-600 dark:text-emerald-400">{achievedCount}</span>
+              <span className="text-[8px] text-muted-foreground/60">달성</span>
             </span>
+            <span className="flex flex-col items-center leading-none">
+              <span className="font-medium text-rose-500 dark:text-rose-400">{missed}</span>
+              <span className="text-[8px] text-muted-foreground/60">미달성</span>
+            </span>
+            <span className="ml-auto text-indigo-600 dark:text-indigo-400 font-bold">{rate}%</span>
           </div>
-          {/* 진행 바 */}
           <div className="h-1 rounded-full bg-indigo-100 dark:bg-indigo-900/40 overflow-hidden">
             <div
               className="h-full rounded-full bg-indigo-500 dark:bg-indigo-400 transition-all duration-700"
@@ -438,9 +667,15 @@ export default function HabitTracker({
 }: HabitTrackerProps) {
   const today = todayYmd();
 
-  // 달력 기초 계산
   const totalDays = new Date(year, month, 0).getDate();
   const firstDow = new Date(year, month - 1, 1).getDay(); // 0=일
+
+  // 이번 달에 오늘이 있으면 1-based day
+  const todayDay = useMemo(() => {
+    const prefix = `${year}-${pad2(month)}-`;
+    if (!today.startsWith(prefix)) return null;
+    return Number(today.slice(8, 10));
+  }, [year, month, today]);
 
   // 일자별 달성 습관 수
   const dailyCounts = useMemo(() => {
@@ -452,14 +687,21 @@ export default function HabitTracker({
 
   const maxDailyCount = Math.max(...dailyCounts, 1);
 
-  // 전체 달성 셀 수 (습관 × 날짜)
-  const totalAchieved = useMemo(() => {
-    return dailyCounts.reduce((sum, c) => sum + c, 0);
-  }, [dailyCounts]);
-
-  const totalCells = habits.length * totalDays;
-  const totalMissed = totalCells - totalAchieved;
-  const overallRate = totalCells > 0 ? Math.min(Math.round((totalAchieved / totalCells) * 100), 100) : 0;
+  // 일(日) 기준 통계 — 총 일자 / 달성일 / 미달성
+  //  - 달성일: 1개 이상 활동이 있던 distinct day (오늘까지만 카운트)
+  //  - 미달성: 경과한 날 중 활동 없던 날
+  const dayStats = useMemo(() => {
+    let achievedDays = 0;
+    let elapsed = 0;
+    for (let d = 1; d <= totalDays; d++) {
+      const ymd = ymdOf(year, month, d);
+      const isFuture = ymd > today;
+      if (!isFuture) elapsed++;
+      const cnt = achievedByDay.get(ymd)?.size ?? 0;
+      if (cnt > 0 && !isFuture) achievedDays++;
+    }
+    return { achievedDays, missedDays: Math.max(elapsed - achievedDays, 0) };
+  }, [year, month, totalDays, achievedByDay, today]);
 
   // 모든 습관 달성한 날
   const allAchievedDays = useMemo(() => {
@@ -474,9 +716,6 @@ export default function HabitTracker({
     return s;
   }, [year, month, totalDays, achievedByDay, habits.length]);
 
-  // 오늘 헤더 강조를 MatrixHeader에 전달하기 위해 today를 직접 계산
-  const todayForHeader = today;
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -486,28 +725,27 @@ export default function HabitTracker({
     >
       {/* ── 상단 3-panel 요약 ── */}
       <div className="flex flex-wrap gap-6 items-start px-4 pt-4 pb-3 border-b border-border bg-muted/20">
-        {/* 좌: 월 달성 현황 */}
-        <div className="flex flex-col gap-1 min-w-[140px]">
+        <div className="flex flex-col gap-1 min-w-[150px]">
           <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
             {month}월 달성 현황
           </span>
           <MonthStats
-            achieved={totalAchieved}
-            missed={totalMissed}
-            rate={overallRate}
+            totalDays={totalDays}
+            achievedDays={dayStats.achievedDays}
+            missedDays={dayStats.missedDays}
           />
         </div>
 
-        {/* 중: 일자별 차트 */}
-        <div className="flex-1 min-w-[180px]">
+        <div className="flex-1 min-w-[260px]">
           <DailyChart
+            month={month}
             dailyCounts={dailyCounts}
             totalDays={totalDays}
             maxCount={maxDailyCount}
+            todayDay={todayDay}
           />
         </div>
 
-        {/* 우: 미니 캘린더 */}
         <MiniCalendar
           year={year}
           month={month}
@@ -520,16 +758,18 @@ export default function HabitTracker({
       {/* ── 메인 매트릭스 표 ── */}
       {habits.length === 0 ? (
         <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-          등록된 습관이 없습니다.
+          표시할 활동이 없습니다. 활동을 추가해보세요.
         </div>
       ) : (
         <div className="overflow-x-auto" role="region" aria-label="습관 트래커 매트릭스">
           <table className="w-max min-w-full border-collapse text-left">
             <thead>
               <MatrixHeader
+                year={year}
+                month={month}
                 totalDays={totalDays}
                 firstDow={firstDow}
-                today={todayForHeader}
+                today={today}
               />
             </thead>
             <tbody>
@@ -551,23 +791,26 @@ export default function HabitTracker({
         </div>
       )}
 
-      {/* ── 범례 ── */}
-      <div className="flex items-center gap-4 px-4 py-2 border-t border-border bg-muted/10">
-        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+      {/* ── 범례 (그룹화·가독성 개선) ── */}
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 px-4 py-2.5 border-t border-border bg-muted/10">
+        <span className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
+          범례
+        </span>
+        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
           <span className="inline-flex w-4 h-4 items-center justify-center rounded bg-emerald-100 dark:bg-emerald-900/50">
             <CheckIcon size={9} className="text-emerald-600 dark:text-emerald-400" strokeWidth={3} />
           </span>
           달성
         </div>
-        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
           <span className="inline-flex w-4 h-4 rounded border border-border/60 bg-muted/20" />
           미달성
         </div>
-        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
           <span className="inline-flex w-4 h-4 rounded-full border-2 border-teal-500 dark:border-teal-400" />
           전체 달성일
         </div>
-        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
           <span className="inline-flex w-4 h-4 rounded bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-700" />
           오늘
         </div>

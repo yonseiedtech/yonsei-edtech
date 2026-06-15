@@ -55,6 +55,7 @@ function seedToQuestion(
     rightItems: entry.rightItems,
     correctMap: entry.correctMap,
     passage: entry.passage,
+    svg: entry.svg,
     relatedMethodName: entry.relatedMethodName,
     relatedStatMethodName: entry.relatedStatMethodName,
     explanation: entry.explanation,

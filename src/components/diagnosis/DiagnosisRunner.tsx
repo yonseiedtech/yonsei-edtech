@@ -12,6 +12,7 @@ import {
   Link2,
   Lightbulb,
   FileText,
+  Network,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -117,6 +118,7 @@ export default function DiagnosisRunner({
       case "compare":
       case "scenario":
       case "passage":
+      case "diagram":
       case "mcq":
       default:
         return typeof a === "number";
@@ -196,9 +198,13 @@ export default function DiagnosisRunner({
       : type === "ox"
         ? current.statement ?? current.question
         : current.question;
-  // compare·scenario·passage 는 mcq 와 동일하게 options/answerIndex 사용
+  // compare·scenario·passage·diagram 는 mcq 와 동일하게 options/answerIndex 사용
   const isChoiceType =
-    type === "mcq" || type === "compare" || type === "scenario" || type === "passage";
+    type === "mcq" ||
+    type === "compare" ||
+    type === "scenario" ||
+    type === "passage" ||
+    type === "diagram";
   const orderingValue = Array.isArray(answers[current.id])
     ? (answers[current.id] as string[])
     : orderingInit[current.id] ?? current.items ?? [];
@@ -282,6 +288,11 @@ export default function DiagnosisRunner({
                 <FileText className="h-3 w-3" aria-hidden />
                 지문 분석
               </Badge>
+            ) : type === "diagram" ? (
+              <Badge variant="secondary" className="gap-1 text-[10px]">
+                <Network className="h-3 w-3" aria-hidden />
+                연구모형 도형
+              </Badge>
             ) : (
               <Badge variant="secondary" className="text-[10px]">
                 객관식
@@ -298,6 +309,22 @@ export default function DiagnosisRunner({
               <p className="whitespace-pre-line text-sm leading-relaxed text-foreground/90">
                 {current.passage}
               </p>
+            </div>
+          )}
+
+          {/* diagram(연구모형 도형): 인라인 SVG 연구모형을 질문 위에 도형으로 표시.
+              신뢰된 시드/운영진 검수 문자열만 적재되므로 dangerouslySetInnerHTML 로 렌더.
+              text-foreground 로 currentColor 기반 stroke/fill 이 다크모드까지 대응된다. */}
+          {type === "diagram" && current.svg && (
+            <div className="mb-4 rounded-xl border border-border bg-muted/30 p-4">
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                연구모형
+              </p>
+              <div
+                className="mx-auto max-w-md text-foreground/90 [&_svg]:h-auto [&_svg]:w-full"
+                // eslint-disable-next-line react/no-danger
+                dangerouslySetInnerHTML={{ __html: current.svg }}
+              />
             </div>
           )}
 

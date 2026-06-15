@@ -58,14 +58,17 @@ import {
   MODE_BORDER,
   // MODE_BADGE 는 FinishedClassPrompts.tsx 로 이관
   ROW_HEIGHT_PX,
+  TIMELINE_MIN_CONTENT_PX,
   VIEW_STORAGE_KEY,
   WEEK_DAY_INDICES,
   addDaysYmd,
   formatHour,
+  inferSeminarMode,
   parseHHMM,
   pickLatestSession,
   semesterToTerm,
   ymd,
+  type MonthSeminar,
   type PlacedActivity,
   type PlacedClass,
   type ViewMode,
@@ -293,11 +296,11 @@ export default function DailyClassTimelineWidget() {
     [parsedOfferings],
   );
   const seminarsByDate = useMemo(() => {
-    const map = new Map<string, string[]>();
+    const map = new Map<string, MonthSeminar[]>();
     (allSeminars ?? []).forEach((s) => {
       if (!s.date) return;
       const arr = map.get(s.date) ?? [];
-      arr.push(s.title);
+      arr.push({ id: s.id, title: s.title, mode: inferSeminarMode(s) });
       map.set(s.date, arr);
     });
     return map;
@@ -955,6 +958,12 @@ export default function DailyClassTimelineWidget() {
         ))}
       </div>
 
+      {/* 콘텐츠 영역 — 일/주/월 전환 시 점프 방지를 위해 주간 기준 min-height 고정.
+          MonthlyGrid 는 자체적으로 동일 min-height 를 적용하므로 여기서는 daily/weekly·로딩만 감싼다. */}
+      <div
+        className={cn(viewMode !== "monthly" && "flex flex-col")}
+        style={viewMode !== "monthly" ? { minHeight: TIMELINE_MIN_CONTENT_PX } : undefined}
+      >
       {isLoading ? (
         <div className="mt-4 h-72 animate-pulse rounded-lg bg-muted" />
       ) : viewMode === "monthly" ? (
@@ -1055,6 +1064,7 @@ export default function DailyClassTimelineWidget() {
           onResetSession={handleResetSession}
         />
       )}
+      </div>
 
       {/* 수업 할 일 영역은 대시보드의 "나의 할 일" 위젯으로 통합됨 (MyTodosWidget) */}
 

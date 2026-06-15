@@ -49,6 +49,7 @@ export const DIAGNOSTIC_AREA_ORDER: DiagnosticArea[] = [
  *  - "matching" : 짝짓기 — 왼쪽 개념을 오른쪽 학자/모델에 연결 (leftItems·rightItems·correctMap)
  *  - "scenario" : 적용 — 연구/분석 상황 맥락에서 적절한 방법·기법 선택 (options·answerIndex, mcq 구조 동일)
  *  - "passage"  : 지문 분석 — 짧은 가상 연구 서술(passage)을 읽고 적용 개념·한계 식별 (passage·options·answerIndex, 채점은 mcq 동일)
+ *  - "diagram"  : 연구모형 도형 — 인라인 SVG 연구모형(매개·조절·경로·집단설계 등)을 보고 모형 유형·적합 분석 식별 (svg·options·answerIndex, 채점은 mcq 동일)
  * 미지정 시 "mcq" 로 간주(하위호환).
  */
 export type DiagnosticQuestionType =
@@ -59,7 +60,8 @@ export type DiagnosticQuestionType =
   | "compare"
   | "matching"
   | "scenario"
-  | "passage";
+  | "passage"
+  | "diagram";
 
 /** 인지수준 태깅 (Bloom 개정 분류 일부) — 리포트에 인지수준별 정답률 표시. */
 export type CognitiveLevel = "remember" | "understand" | "apply" | "analyze";
@@ -105,12 +107,18 @@ export interface DiagnosticQuestion {
   cognitiveLevel?: CognitiveLevel;
   /** 문항(질문). term·ox 유형은 prompt·statement 를 사용하므로 비워도 됨. */
   question: string;
-  /** [mcq·compare·scenario·passage] 보기 (compare 는 혼동 개념 2~4개) */
+  /** [mcq·compare·scenario·passage·diagram] 보기 (compare 는 혼동 개념 2~4개) */
   options?: string[];
-  /** [mcq·compare·scenario·passage] 정답 인덱스 */
+  /** [mcq·compare·scenario·passage·diagram] 정답 인덱스 */
   answerIndex?: number;
   /** [passage] 지문(짧은 가상 연구 서술). question 위에 본문으로 표시. 실제 논문 복제 금지 — 가상 서술. */
   passage?: string;
+  /**
+   * [diagram] 인라인 SVG 연구모형 마크업(신뢰된 시드 문자열). question 위에 도형으로 표시.
+   * 외부 이미지 금지 — 코드로 그린 박스+화살표. 다크모드 대응 위해 stroke/fill 은 currentColor 사용.
+   * dangerouslySetInnerHTML 로 렌더하므로 시드/운영진 검수 문자열만 허용.
+   */
+  svg?: string;
   /** [ordering] 정답 순서로 저장된 단계 목록. 런타임에 셔플해 제시하고, 사용자가 원래 순서로 맞추면 정답. */
   items?: string[];
   /** [term] 개념의 정의 서술(문제 본문). question 대신 화면에 표시. */
@@ -156,6 +164,7 @@ const KNOWN_QUESTION_TYPES: readonly DiagnosticQuestionType[] = [
   "matching",
   "scenario",
   "passage",
+  "diagram",
 ];
 
 /** 문항 유형 정규화 — 미지정·잘못된 값은 "mcq" 로 폴백 */
@@ -165,7 +174,7 @@ export function questionType(q: Pick<DiagnosticQuestion, "type">): DiagnosticQue
 
 /**
  * 사용자 응답 — 유형별로 형태가 다르다.
- *  - mcq·compare·scenario·passage : number (선택한 보기 인덱스)
+ *  - mcq·compare·scenario·passage·diagram : number (선택한 보기 인덱스)
  *  - ordering             : string[] (사용자가 재배열한 단계 순서)
  *  - term                 : string (입력한 텍스트)
  *  - ox                   : boolean (참/거짓 선택)
@@ -184,7 +193,7 @@ export function normalizeTermAnswer(s: string): string {
 
 /**
  * 유형별 채점 — 정답이면 true.
- *  - mcq·compare·scenario·passage : 선택 인덱스 === answerIndex
+ *  - mcq·compare·scenario·passage·diagram : 선택 인덱스 === answerIndex
  *  - ordering             : 재배열 순서가 정답(items)과 완전일치
  *  - term                 : 정규화 후 answer 또는 acceptedAnswers 중 하나와 일치
  *  - ox                   : 선택한 boolean === answerBool
@@ -222,6 +231,7 @@ export function gradeQuestion(
     case "compare":
     case "scenario":
     case "passage":
+    case "diagram":
     case "mcq":
     default:
       return typeof answer === "number" && answer === q.answerIndex;

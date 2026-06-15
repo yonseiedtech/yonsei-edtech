@@ -10,6 +10,7 @@
 //  - matching : 짝짓기 (leftItems·rightItems·correctMap)
 //  - scenario : 상황 적용 — 연구설계·통계 실전 적용(조건제시·논문서술·연구문제·절차추론) (options·answerIndex)
 //  - passage  : 지문 분석 — 가상 연구 서술을 읽고 방법·기법 식별 또는 한계·누락요소 식별 (passage·options·answerIndex)
+//  - diagram  : 연구모형 도형 — 인라인 SVG 연구모형(매개·조절·경로·집단설계)을 보고 모형 유형·적합 분석 식별 (svg·options·answerIndex)
 // 외부 LLM 없이 검증된 정의·표준 절차로 대량 생성하고, 런타임에 영역별 랜덤 출제한다.
 // scenario·passage 는 졸업생 학위논문 전형 기반 — relatedMethodName/relatedStatMethodName 으로
 // 추후 "이 방법을 쓴 졸업생 논문 보기"(/alumni/thesis) 연결용 메타를 남긴다.
@@ -51,6 +52,8 @@ export interface SeedDiagnosticQuestion {
   answerIndex?: number;
   /** [passage] 지문 — 짧은 가상 연구 서술(초록/방법 문단). 실제 논문 복제 금지. */
   passage?: string;
+  /** [diagram] 인라인 SVG 연구모형 마크업(코드로 그린 박스+화살표). 외부 이미지 금지·다크모드 대응 currentColor. */
+  svg?: string;
   /** [ordering] 정답 순서로 나열한 단계 목록 */
   items?: string[];
   /** [term] 개념 정의 서술 (문제 본문) */
@@ -1734,6 +1737,213 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
     explanation:
       "단순 상관만으로는 매개를 입증할 수 없다. 매개변인을 투입해 간접효과(SEM 경로·부트스트래핑)를 유의성 검정해야 매개 주장이 성립한다.",
   },
+
+  // ═════════════════════════════════════════════════════════════
+  // 연구모형 도형 (diagram) — 인라인 SVG 연구모형을 보고 모형 유형·적합 분석 식별.
+  // svg 는 코드로 그린 박스+화살표(외부 이미지 금지). 다크모드 대응: stroke/fill=currentColor,
+  // 컨테이너에 text-foreground 적용 가정. viewBox 좌표계로 박스(rect)·라벨(text)·화살표(line+marker).
+  // 채점은 mcq 동일(answerIndex). relatedStatMethodName 으로 졸업생 논문 연계 메타 남김.
+  // ═════════════════════════════════════════════════════════════
+  {
+    seedKey: "dx:statistics:dgm:1",
+    type: "diagram",
+    area: "statistics",
+    cognitiveLevel: "analyze",
+    svg: `<svg viewBox="0 0 420 120" role="img" aria-label="독립변인에서 매개변인을 거쳐 종속변인으로 가는 매개모형" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;color:currentColor">
+  <defs>
+    <marker id="dgm1-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+  <rect x="8" y="42" width="110" height="38" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <text x="63" y="66" text-anchor="middle" font-size="13" fill="currentColor">플립러닝(X)</text>
+  <rect x="156" y="42" width="108" height="38" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <text x="210" y="66" text-anchor="middle" font-size="13" fill="currentColor">학습몰입(M)</text>
+  <rect x="302" y="42" width="110" height="38" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <text x="357" y="66" text-anchor="middle" font-size="13" fill="currentColor">학업성취(Y)</text>
+  <line x1="120" y1="61" x2="154" y2="61" stroke="currentColor" stroke-width="1.5" marker-end="url(#dgm1-arrow)"/>
+  <line x1="266" y1="61" x2="300" y2="61" stroke="currentColor" stroke-width="1.5" marker-end="url(#dgm1-arrow)"/>
+</svg>`,
+    question: "위 연구모형 도형이 나타내는 모형의 유형은?",
+    options: ["매개모형", "조절모형", "조절된 매개모형", "단순 상관모형"],
+    answerIndex: 0,
+    relatedStatMethodName: "구조방정식모형(SEM)",
+    explanation:
+      "독립변인(X)→매개변인(M)→종속변인(Y)로 영향이 순차 전달되는 구조는 매개모형이다. M 이 X 와 Y 를 잇는 경로 위에 위치한다.",
+  },
+  {
+    seedKey: "dx:statistics:dgm:2",
+    type: "diagram",
+    area: "statistics",
+    cognitiveLevel: "apply",
+    svg: `<svg viewBox="0 0 420 120" role="img" aria-label="독립변인에서 매개변인을 거쳐 종속변인으로 가는 매개모형" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;color:currentColor">
+  <defs>
+    <marker id="dgm2-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+  <rect x="8" y="42" width="120" height="38" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <text x="68" y="66" text-anchor="middle" font-size="13" fill="currentColor">자기효능감(X)</text>
+  <rect x="160" y="42" width="100" height="38" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <text x="210" y="66" text-anchor="middle" font-size="13" fill="currentColor">학습동기(M)</text>
+  <rect x="300" y="42" width="112" height="38" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <text x="356" y="66" text-anchor="middle" font-size="13" fill="currentColor">학업성취(Y)</text>
+  <line x1="128" y1="61" x2="158" y2="61" stroke="currentColor" stroke-width="1.5" marker-end="url(#dgm2-arrow)"/>
+  <line x1="260" y1="61" x2="298" y2="61" stroke="currentColor" stroke-width="1.5" marker-end="url(#dgm2-arrow)"/>
+</svg>`,
+    question: "위 매개모형(X→M→Y)에서 매개효과(간접효과)를 검증하는 데 가장 적합한 분석은?",
+    options: [
+      "부트스트래핑을 통한 간접효과 검증(SEM·PROCESS)",
+      "독립표본 t-검정",
+      "탐색적 요인분석(EFA)",
+      "카이제곱 검정",
+    ],
+    answerIndex: 0,
+    relatedStatMethodName: "구조방정식모형(SEM)",
+    explanation:
+      "매개효과(간접효과 a×b)의 유의성은 부트스트래핑으로 신뢰구간을 추정하는 방식(SEM 경로·PROCESS 매크로)이 표준이다. t-검정·EFA·카이제곱은 매개 검증 도구가 아니다.",
+  },
+  {
+    seedKey: "dx:statistics:dgm:3",
+    type: "diagram",
+    area: "statistics",
+    cognitiveLevel: "analyze",
+    svg: `<svg viewBox="0 0 420 150" role="img" aria-label="독립변인에서 종속변인으로 가는 경로에 조절변인이 작용하는 조절모형" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;color:currentColor">
+  <defs>
+    <marker id="dgm3-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+  <rect x="14" y="58" width="120" height="38" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <text x="74" y="82" text-anchor="middle" font-size="13" fill="currentColor">피드백 유형(X)</text>
+  <rect x="286" y="58" width="120" height="38" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <text x="346" y="82" text-anchor="middle" font-size="13" fill="currentColor">학업성취(Y)</text>
+  <rect x="160" y="8" width="100" height="34" rx="8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="210" y="30" text-anchor="middle" font-size="13" fill="currentColor">사전지식(W)</text>
+  <line x1="134" y1="77" x2="284" y2="77" stroke="currentColor" stroke-width="1.5" marker-end="url(#dgm3-arrow)"/>
+  <line x1="210" y1="42" x2="210" y2="75" stroke="currentColor" stroke-width="1.5" marker-end="url(#dgm3-arrow)"/>
+</svg>`,
+    question: "위 연구모형 도형(조절변인 W 가 X→Y 경로에 작용)이 나타내는 모형의 유형은?",
+    options: ["조절모형", "매개모형", "단순 인과경로모형", "측정모형"],
+    answerIndex: 0,
+    relatedStatMethodName: "다중회귀분석",
+    explanation:
+      "조절변인(W)이 독립변인(X)→종속변인(Y) 경로의 강도·방향에 영향을 주는 구조는 조절모형이다. W 가 X→Y 경로(화살표) 자체를 가리킨다는 점이 매개모형과 다르다.",
+  },
+  {
+    seedKey: "dx:statistics:dgm:4",
+    type: "diagram",
+    area: "statistics",
+    cognitiveLevel: "apply",
+    svg: `<svg viewBox="0 0 420 150" role="img" aria-label="독립변인에서 종속변인으로 가는 경로에 조절변인이 작용하는 조절모형" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;color:currentColor">
+  <defs>
+    <marker id="dgm4-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+  <rect x="14" y="58" width="120" height="38" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <text x="74" y="82" text-anchor="middle" font-size="13" fill="currentColor">협력학습(X)</text>
+  <rect x="286" y="58" width="120" height="38" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <text x="346" y="82" text-anchor="middle" font-size="13" fill="currentColor">문제해결력(Y)</text>
+  <rect x="160" y="8" width="100" height="34" rx="8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="210" y="30" text-anchor="middle" font-size="13" fill="currentColor">자기효능감(W)</text>
+  <line x1="134" y1="77" x2="284" y2="77" stroke="currentColor" stroke-width="1.5" marker-end="url(#dgm4-arrow)"/>
+  <line x1="210" y1="42" x2="210" y2="75" stroke="currentColor" stroke-width="1.5" marker-end="url(#dgm4-arrow)"/>
+</svg>`,
+    question: "위 조절모형(W 가 X→Y 경로를 조절)을 검증할 때 가장 적합한 분석은?",
+    options: [
+      "상호작용항을 투입한 위계적 회귀분석",
+      "부트스트래핑 간접효과 검증",
+      "일원분산분석(ANOVA)",
+      "신뢰도(Cronbach α) 분석",
+    ],
+    answerIndex: 0,
+    relatedStatMethodName: "다중회귀분석",
+    explanation:
+      "조절효과는 독립변인×조절변인의 상호작용항을 위계적 회귀에 추가로 투입해 설명량 증가(ΔR²)와 상호작용항의 유의성으로 검증한다. 부트스트래핑 간접효과는 매개 검증용이다.",
+  },
+  {
+    seedKey: "dx:statistics:dgm:5",
+    type: "diagram",
+    area: "statistics",
+    cognitiveLevel: "analyze",
+    svg: `<svg viewBox="0 0 440 170" role="img" aria-label="잠재변인 두 개를 관측문항으로 측정하고 잠재변인 간 경로를 추정하는 구조방정식 경로도" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;color:currentColor">
+  <defs>
+    <marker id="dgm5-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+  <ellipse cx="110" cy="85" rx="58" ry="30" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <text x="110" y="90" text-anchor="middle" font-size="13" fill="currentColor">학습실재감</text>
+  <ellipse cx="330" cy="85" rx="58" ry="30" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <text x="330" y="90" text-anchor="middle" font-size="13" fill="currentColor">학습만족도</text>
+  <line x1="168" y1="85" x2="270" y2="85" stroke="currentColor" stroke-width="1.5" marker-end="url(#dgm5-arrow)"/>
+  <rect x="22" y="6" width="48" height="26" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+  <text x="46" y="23" text-anchor="middle" font-size="10" fill="currentColor">문항1</text>
+  <rect x="86" y="6" width="48" height="26" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+  <text x="110" y="23" text-anchor="middle" font-size="10" fill="currentColor">문항2</text>
+  <rect x="150" y="6" width="48" height="26" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+  <text x="174" y="23" text-anchor="middle" font-size="10" fill="currentColor">문항3</text>
+  <line x1="110" y1="55" x2="60" y2="33" stroke="currentColor" stroke-width="1.2" marker-end="url(#dgm5-arrow)"/>
+  <line x1="110" y1="55" x2="110" y2="33" stroke="currentColor" stroke-width="1.2" marker-end="url(#dgm5-arrow)"/>
+  <line x1="110" y1="55" x2="172" y2="33" stroke="currentColor" stroke-width="1.2" marker-end="url(#dgm5-arrow)"/>
+</svg>`,
+    question:
+      "위 경로도(타원=잠재변인, 사각형=관측문항)처럼 측정모형과 잠재변인 간 인과경로를 동시에 추정·검증하는 분석은?",
+    options: [
+      "구조방정식모형(SEM)",
+      "독립표본 t-검정",
+      "군집분석",
+      "단순회귀분석",
+    ],
+    answerIndex: 0,
+    relatedStatMethodName: "구조방정식모형(SEM)",
+    explanation:
+      "타원(잠재변인)을 관측문항으로 측정하는 측정모형과 잠재변인 간 경로(구조모형)를 동시에 추정·평가하는 분석은 구조방정식모형(SEM)이다.",
+  },
+  {
+    seedKey: "dx:method:dgm:1",
+    type: "diagram",
+    area: "method",
+    cognitiveLevel: "analyze",
+    svg: `<svg viewBox="0 0 440 170" role="img" aria-label="실험집단과 통제집단에 각각 사전검사 처치 사후검사를 배치한 2집단 사전사후 설계 도식" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;color:currentColor">
+  <defs>
+    <marker id="dgm6-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+  <text x="14" y="50" font-size="12" fill="currentColor">실험집단</text>
+  <text x="14" y="120" font-size="12" fill="currentColor">통제집단</text>
+  <rect x="80" y="28" width="76" height="34" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <text x="118" y="49" text-anchor="middle" font-size="12" fill="currentColor">사전검사</text>
+  <rect x="196" y="28" width="76" height="34" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <text x="234" y="49" text-anchor="middle" font-size="12" fill="currentColor">처치 O</text>
+  <rect x="312" y="28" width="76" height="34" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <text x="350" y="49" text-anchor="middle" font-size="12" fill="currentColor">사후검사</text>
+  <rect x="80" y="98" width="76" height="34" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <text x="118" y="119" text-anchor="middle" font-size="12" fill="currentColor">사전검사</text>
+  <rect x="196" y="98" width="76" height="34" rx="6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="234" y="119" text-anchor="middle" font-size="12" fill="currentColor">처치 X</text>
+  <rect x="312" y="98" width="76" height="34" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <text x="350" y="119" text-anchor="middle" font-size="12" fill="currentColor">사후검사</text>
+  <line x1="156" y1="45" x2="194" y2="45" stroke="currentColor" stroke-width="1.5" marker-end="url(#dgm6-arrow)"/>
+  <line x1="272" y1="45" x2="310" y2="45" stroke="currentColor" stroke-width="1.5" marker-end="url(#dgm6-arrow)"/>
+  <line x1="156" y1="115" x2="194" y2="115" stroke="currentColor" stroke-width="1.5" marker-end="url(#dgm6-arrow)"/>
+  <line x1="272" y1="115" x2="310" y2="115" stroke="currentColor" stroke-width="1.5" marker-end="url(#dgm6-arrow)"/>
+</svg>`,
+    question:
+      "위 설계 도식(실험·통제 두 집단에 사전검사→처치(O/X)→사후검사)이 나타내는 연구설계는?",
+    options: [
+      "이질통제집단 사전-사후검사 설계",
+      "단일집단 사후검사 설계",
+      "시계열 설계",
+      "솔로몬 4집단 설계",
+    ],
+    answerIndex: 0,
+    relatedMethodName: "준실험연구",
+    explanation:
+      "두 집단(실험·통제) 모두 사전검사 후 한 집단만 처치하고 양쪽 모두 사후검사하는 구조는 (이질)통제집단 사전-사후검사 설계다. 무선할당이 없으면 준실험에 해당한다.",
+  },
 ];
 
 export interface DiagnosticSeedResult {
@@ -1815,6 +2025,7 @@ export async function seedDiagnosticQuestions(
     if (entry.rightItems !== undefined) payload.rightItems = entry.rightItems;
     if (entry.correctMap !== undefined) payload.correctMap = entry.correctMap;
     if (entry.passage !== undefined) payload.passage = entry.passage;
+    if (entry.svg !== undefined) payload.svg = entry.svg;
     if (entry.relatedMethodName !== undefined)
       payload.relatedMethodName = entry.relatedMethodName;
     if (entry.relatedStatMethodName !== undefined)
