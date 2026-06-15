@@ -1244,6 +1244,8 @@ function NotificationSettingsCard({ user }: { user: User }) {
     pushCollabReview?: boolean;
     pushJournalIssue?: boolean;
     pushCommBoard?: boolean;
+    /** opt-in: undefined/false → 꺼짐. 명시 true 일 때만 켜짐 */
+    pushFlashcardReview?: boolean;
   };
   const prefs = (user as User & { notificationPrefs?: PrefShape }).notificationPrefs;
   const [digest, setDigest] = useState<boolean>(prefs?.weeklyDigest !== false);
@@ -1263,6 +1265,8 @@ function NotificationSettingsCard({ user }: { user: User }) {
   const [pushCollabReview, setPushCollabReview] = useState<boolean>(prefs?.pushCollabReview !== false);
   const [pushJournalIssue, setPushJournalIssue] = useState<boolean>(prefs?.pushJournalIssue !== false);
   const [pushCommBoard, setPushCommBoard] = useState<boolean>(prefs?.pushCommBoard !== false);
+  // opt-in: undefined/false → false (꺼짐 기본), 명시 true 일 때만 켜짐
+  const [pushFlashcardReview, setPushFlashcardReview] = useState<boolean>(prefs?.pushFlashcardReview === true);
   const [busyKey, setBusyKey] = useState<string | null>(null);
 
   async function updateLeaderboardPref(next: boolean) {
@@ -1524,6 +1528,16 @@ function NotificationSettingsCard({ user }: { user: User }) {
               void updatePref("pushJournalIssue", !pushJournalIssue, setPushJournalIssue, "연구지 신규 호수 발간 알림을")
             }
             ariaLabel="연구지 신규 호수 발간 push 알림 토글"
+          />
+          <ToggleRow
+            title="암기카드 복습 알림"
+            description="오늘 복습할 암기카드(dueAt ≤ 오늘)가 1장 이상일 때 1일 1회 안내. 기본 꺼짐(opt-in)."
+            enabled={pushFlashcardReview}
+            busy={busyKey === "pushFlashcardReview"}
+            onToggle={() =>
+              void updatePref("pushFlashcardReview", !pushFlashcardReview, setPushFlashcardReview, "암기카드 복습 알림을")
+            }
+            ariaLabel="암기카드 복습 알림 push 알림 토글"
           />
         </div>
       </div>

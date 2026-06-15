@@ -160,6 +160,12 @@ export interface NotificationPrefs {
   pushJournalIssue?: boolean;
   /** 소통 보드 내 질문에 새 답변 push (kind=comm_board_answer) — 오케스트라 사이클 4 */
   pushCommBoard?: boolean;
+  /**
+   * 오늘 복습할 암기카드 알림 push (kind=flashcard_review_reminder) — 2차 백로그 v2-R1.
+   * 보수적 기본값(opt-in): undefined/false → 발송 안 함. 명시 true 일 때만 발송.
+   * (다른 push 항목은 기본 opt-out 이지만 본 항목은 알림 피로 방지를 위해 opt-in)
+   */
+  pushFlashcardReview?: boolean;
   /** 신규 알림 도착 시 화면 내 toast 표시 여부 — false 로 명시될 때만 옵트아웃 (기본 true) */
   toastEnabled?: boolean;
 }
@@ -178,6 +184,7 @@ export const PUSH_PREF_FIELD: Record<string, keyof NotificationPrefs> = {
   collab_review: "pushCollabReview",
   journal_issue: "pushJournalIssue",
   comm_board_answer: "pushCommBoard",
+  flashcard_review_reminder: "pushFlashcardReview",
 };
 
 /** UI 라벨 — MyPage 알림 설정 섹션에서 사용 */
@@ -193,7 +200,8 @@ export const PUSH_PREF_LABELS: Record<
   | "pushCollabMilestone"
   | "pushCollabReview"
   | "pushJournalIssue"
-  | "pushCommBoard",
+  | "pushCommBoard"
+  | "pushFlashcardReview",
   { label: string; description: string }
 > = {
   pushStudySession: { label: "스터디 회차 D-1", description: "내일 진행될 스터디/프로젝트 회차 알림" },
@@ -208,6 +216,7 @@ export const PUSH_PREF_LABELS: Record<
   pushCollabReview: { label: "연구지 검수", description: "내 논문의 검수 요청·응답·수정 요청 알림" },
   pushJournalIssue: { label: "연구지 신규 호수", description: "연세 교육공학 연구의 신규 호수 발간 안내" },
   pushCommBoard: { label: "소통 보드 새 답변", description: "내가 올린 질문에 새 답변이 달릴 때 알림" },
+  pushFlashcardReview: { label: "암기카드 복습 알림", description: "오늘 복습할 암기카드가 있을 때 알림 (기본 꺼짐)" },
 };
 
 /**

@@ -62,7 +62,16 @@ const PUSH_PREF_FIELD_BY_KIND: Record<string, string> = {
   class_reminder_daily: "pushClassReminder",
   external_recruitment: "pushExternalRecruitment",
   comm_board_answer: "pushCommBoard",
+  flashcard_review_reminder: "pushFlashcardReview",
 };
+
+/**
+ * opt-in(보수적 기본값) kind 집합.
+ * 여기에 속한 kind 는 notificationPrefs.<field> === true 인 사용자에게만 발송한다
+ * (undefined/false → 제외). 기본 opt-out 정책(undefined/true → 허용)과 구분.
+ *  - flashcard_review_reminder: v2 §5 발송정책 운영진 결정 전까지 알림 피로 방지(2차 백로그 v2-R1)
+ */
+const OPT_IN_KINDS = new Set<string>(["flashcard_review_reminder"]);
 
 export async function filterRecipientsByPreference(
   userIds: string[],
@@ -71,10 +80,11 @@ export async function filterRecipientsByPreference(
   const field = PUSH_PREF_FIELD_BY_KIND[kind];
   if (!field) return userIds; // 미정의 kind 는 기본 통과
   if (userIds.length === 0) return [];
+  const optIn = OPT_IN_KINDS.has(kind);
   const unique = Array.from(new Set(userIds));
   const db = getAdminDb();
   const allowed: string[] = [];
-  // 'in' 제한 30 → 30개씩 chunk + 누락 ID 는 통과 (기본값 true 가정)
+  // 'in' 제한 30 → 30개씩 chunk + 누락 ID 는 (opt-out kind 한정) 통과 (기본값 true 가정)
   for (let i = 0; i < unique.length; i += 30) {
     const chunk = unique.slice(i, i + 30);
     const snap = await db
@@ -86,12 +96,19 @@ export async function filterRecipientsByPreference(
       seen.add(d.id);
       const data = d.data() as { notificationPrefs?: Record<string, boolean | undefined> };
       const v = data.notificationPrefs?.[field];
-      // 명시 false 만 옵트아웃, undefined/true 는 허용
-      if (v !== false) allowed.push(d.id);
+      if (optIn) {
+        // opt-in: 명시 true 일 때만 발송
+        if (v === true) allowed.push(d.id);
+      } else if (v !== false) {
+        // opt-out: 명시 false 만 옵트아웃, undefined/true 는 허용
+        allowed.push(d.id);
+      }
     }
-    // 도큐먼트 없는 ID 도 default true 로 통과
-    for (const uid of chunk) {
-      if (!seen.has(uid)) allowed.push(uid);
+    // 도큐먼트 없는 ID — opt-out kind 만 default true 로 통과 (opt-in 은 제외)
+    if (!optIn) {
+      for (const uid of chunk) {
+        if (!seen.has(uid)) allowed.push(uid);
+      }
     }
   }
   return allowed;
