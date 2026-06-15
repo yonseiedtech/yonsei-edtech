@@ -19,7 +19,7 @@ import type {
   EducationFormat, EvidenceType, CauseType,
   ProblemEvidenceItem, ProblemCauseItem, ProblemMeasurementItem,
   TheoryCard, TheoryConcept,
-  ResearchApproach,
+  ResearchApproach, PaperVariables,
 } from "@/types";
 import {
   useResearchReport,
@@ -29,6 +29,7 @@ import {
 import { useResearchPapers } from "./useResearchPapers";
 import { useLogWritingActivity } from "./useWritingPaperHistory";
 import ResearchReportInterview, { TaskStepsField } from "./ResearchReportInterview";
+import VariableSyncPanel from "./VariableSyncPanel";
 
 interface Props {
   user: User;
@@ -112,6 +113,8 @@ export interface FormState {
   theoryRelationProblem: string;
   theoryRelationRoles: string;
   theoryRelationIntegration: string;
+  // M2 — 연구 모형 ↔ 보고서 변인 동기화
+  variables: PaperVariables;
 }
 
 export type SetField = <K extends keyof FormState>(key: K, value: FormState[K]) => void;
@@ -184,6 +187,7 @@ const EMPTY: FormState = {
   theoryRelationProblem: "",
   theoryRelationRoles: "",
   theoryRelationIntegration: "",
+  variables: {},
 };
 
 function newId(): string {
@@ -288,6 +292,7 @@ function fromReport(r: ResearchReport | undefined): FormState {
     theoryRelationProblem: r.theoryRelationProblem ?? r.theoryConnection ?? "",
     theoryRelationRoles: r.theoryRelationRoles ?? "",
     theoryRelationIntegration: r.theoryRelationIntegration ?? "",
+    variables: r.variables ?? {},
   };
 }
 
@@ -993,7 +998,20 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
         )}
 
         {step === "theory" && (
-          <TheoryStep form={form} setField={setField} readOnly={readOnly} />
+          <div className="space-y-4">
+            <TheoryStep form={form} setField={setField} readOnly={readOnly} />
+            <Section
+              title="2-3. 연구 변인"
+              sub="독립·종속·매개·조절·통제 변인을 정리합니다. ‘연구 모형 그리기’에서 그린 변인을 가져오거나, 여기서 입력한 변인을 모형으로 보낼 수 있어 중복 입력이 필요 없습니다."
+            >
+              <VariableSyncPanel
+                userId={user.id}
+                value={form.variables}
+                onChange={(next) => setField("variables", next)}
+                readOnly={readOnly}
+              />
+            </Section>
+          </div>
         )}
 
         {step === "prior" && (

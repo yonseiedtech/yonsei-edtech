@@ -1,5 +1,7 @@
 // ── 연구 보고서 ──
 
+import type { PaperVariables } from "./research-paper";
+
 export interface ResearchGroup {
   id: string;
   name: string;
@@ -231,6 +233,13 @@ export interface ResearchReport {
   theoryRelationRoles?: string;
   /** 2-2. 통합적 관점 — 이론들이 함께 만들어내는 의미 */
   theoryRelationIntegration?: string;
+  // ── M2 (2026-06): 연구 모형 ↔ 보고서 변인 동기화 ──
+  /**
+   * 연구 변인 — 5종(독립·종속·매개·조절·통제). `ResearchPaper.variables`와 동일 구조 재사용.
+   * 연구 모형(research_models)에서 import 하거나 직접 입력. 모형으로 역방향 export 도 가능.
+   * (옵셔널 — 구버전 데이터 호환)
+   */
+  variables?: PaperVariables;
   lastSavedAt?: string;
   createdAt: string;
   updatedAt: string;
