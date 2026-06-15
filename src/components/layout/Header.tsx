@@ -207,6 +207,7 @@ function NavDropdown({ group }: { group: NavGroup }) {
   const timeout = useRef<ReturnType<typeof setTimeout>>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const sections = getSections(group);
   const allLinks = getAllLinks(group);
@@ -279,8 +280,31 @@ function NavDropdown({ group }: { group: NavGroup }) {
 
       {open && (
         <div
+          ref={menuRef}
           role="menu"
           aria-label={group.label}
+          onKeyDown={(e) => {
+            const items = menuRef.current
+              ? Array.from(menuRef.current.querySelectorAll<HTMLElement>('[role="menuitem"]'))
+              : [];
+            if (items.length === 0) return;
+            const currentIndex = items.indexOf(document.activeElement as HTMLElement);
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              const next = currentIndex < 0 ? 0 : (currentIndex + 1) % items.length;
+              items[next]?.focus();
+            } else if (e.key === "ArrowUp") {
+              e.preventDefault();
+              const prev = currentIndex < 0 ? items.length - 1 : (currentIndex - 1 + items.length) % items.length;
+              items[prev]?.focus();
+            } else if (e.key === "Home") {
+              e.preventDefault();
+              items[0]?.focus();
+            } else if (e.key === "End") {
+              e.preventDefault();
+              items[items.length - 1]?.focus();
+            }
+          }}
           className="absolute left-0 top-full z-50 mt-1.5 min-w-[180px] rounded-2xl border bg-popover py-1.5 shadow-xl animate-in fade-in slide-in-from-top-1 duration-150"
         >
           {sections.map((section, sIdx) => (

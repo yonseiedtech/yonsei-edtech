@@ -91,7 +91,7 @@ export default function MultiAxisTrend({ theses, nameOf }: Props) {
       </div>
 
       {/* 상위 항목 — 빈도 바 + 시대 스파크 */}
-      <ul className="space-y-1.5">
+      <ul className="space-y-1.5" aria-label={`${AXIS_LABELS[axis]} 상위 항목별 논문 빈도 — 항목별 논문 수`}>
         {top.map(({ item, count }) => {
           const label = nameOf(axis, item);
           const isSel = selected === item;
@@ -100,6 +100,8 @@ export default function MultiAxisTrend({ theses, nameOf }: Props) {
               <button
                 type="button"
                 onClick={() => setSelected(isSel ? null : item)}
+                aria-label={`${label} ${count}편 — 누르면 해당 논문 모아보기`}
+                aria-expanded={isSel}
                 className="group flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left transition-colors hover:bg-muted/50"
                 style={isSel ? { backgroundColor: `${accent}14` } : undefined}
               >

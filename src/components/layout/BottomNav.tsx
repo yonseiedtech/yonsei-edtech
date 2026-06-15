@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   GraduationCap,
   Microscope,
@@ -93,11 +93,63 @@ export default function BottomNav() {
   const pathname = usePathname() ?? "";
   const { user } = useAuthStore();
   const [moreOpen, setMoreOpen] = useState(false);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const moreButtonRef = useRef<HTMLButtonElement>(null);
 
   // 라우트 이동 시 시트 자동 닫기
   useEffect(() => {
     setMoreOpen(false);
   }, [pathname]);
+
+  // a11y: 더보기 시트 포커스 트랩 + Escape 닫기 (시각·기능 무변경)
+  useEffect(() => {
+    if (!moreOpen) return;
+
+    const getFocusable = (): HTMLElement[] => {
+      const root = sheetRef.current;
+      if (!root) return [];
+      return Array.from(
+        root.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => el.offsetParent !== null);
+    };
+
+    // 시트가 열리면 첫 포커스 가능한 요소로 이동
+    const focusable = getFocusable();
+    focusable[0]?.focus();
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setMoreOpen(false);
+        moreButtonRef.current?.focus();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const items = getFocusable();
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      const activeEl = document.activeElement as HTMLElement | null;
+      if (e.shiftKey) {
+        if (activeEl === first || !sheetRef.current?.contains(activeEl)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (activeEl === last || !sheetRef.current?.contains(activeEl)) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [moreOpen]);
 
   // 비로그인 상태에서는 숨김 (랜딩에 방해)
   if (!user) return null;
@@ -119,6 +171,7 @@ export default function BottomNav() {
             className="absolute inset-0 bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-200"
           />
           <div
+            ref={sheetRef}
             className="absolute bottom-0 left-0 right-0 rounded-t-2xl border-t bg-card p-4 shadow-2xl animate-in slide-in-from-bottom-4 duration-200"
             style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)" }}
           >
@@ -202,6 +255,7 @@ export default function BottomNav() {
           })}
           <li className="flex-1">
             <button
+              ref={moreButtonRef}
               type="button"
               onClick={() => setMoreOpen((v) => !v)}
               aria-expanded={moreOpen}

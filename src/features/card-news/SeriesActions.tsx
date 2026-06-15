@@ -84,6 +84,7 @@ export default function SeriesActions({ series, isPersisted }: Props) {
         onClick={handleDuplicate}
         disabled={busy !== null}
         title="시리즈 복제"
+        aria-label="시리즈 복제"
         className="inline-flex h-8 w-8 items-center justify-center rounded-md border bg-background text-muted-foreground shadow-sm transition hover:bg-muted hover:text-foreground disabled:opacity-50"
       >
         {busy === "duplicate" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Copy className="h-3.5 w-3.5" />}
@@ -92,6 +93,7 @@ export default function SeriesActions({ series, isPersisted }: Props) {
       <AlertDialog>
         <AlertDialogTrigger
           className="inline-flex h-8 w-8 items-center justify-center rounded-md border bg-background text-destructive shadow-sm transition hover:bg-destructive/10 disabled:opacity-50"
+          aria-label={isPersisted ? "시리즈 삭제" : "기본 시리즈는 삭제할 수 없습니다"}
           title={isPersisted ? "시리즈 삭제" : "기본 시리즈는 삭제할 수 없습니다"}
           disabled={!isPersisted || busy !== null}
         >
