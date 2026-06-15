@@ -30,6 +30,7 @@ import { useResearchPapers } from "./useResearchPapers";
 import { useLogWritingActivity } from "./useWritingPaperHistory";
 import ResearchReportInterview, { TaskStepsField } from "./ResearchReportInterview";
 import VariableSyncPanel from "./VariableSyncPanel";
+import ResearchJourneyGuide from "./ResearchJourneyGuide";
 
 interface Props {
   user: User;
@@ -667,6 +668,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
 
   return (
     <div className="space-y-4">
+      <ResearchJourneyGuide userId={user.id} current="report" readOnly={readOnly} />
       {/* 헤더 */}
       <section className="rounded-2xl border bg-card p-5 dark:bg-card">
         <div className="flex flex-wrap items-start justify-between gap-3">

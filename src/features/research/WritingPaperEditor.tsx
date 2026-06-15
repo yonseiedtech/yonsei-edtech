@@ -72,6 +72,7 @@ import {
   useUpdateWritingPaper,
 } from "./useWritingPaper";
 import { useLogWritingActivity } from "./useWritingPaperHistory";
+import ResearchJourneyGuide from "./ResearchJourneyGuide";
 
 interface Props {
   user: User;
@@ -1451,6 +1452,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
 
   return (
     <div className="space-y-4">
+      <ResearchJourneyGuide userId={user.id} current="thesis" readOnly={readOnly} />
       {/* ── 연구 방향 선택 다이얼로그 ── */}
       <Dialog
         open={profileOpen}

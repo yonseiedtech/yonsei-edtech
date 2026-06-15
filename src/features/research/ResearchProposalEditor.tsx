@@ -21,6 +21,7 @@ import {
 import { useResearchPapers } from "./useResearchPapers";
 import { useLogWritingActivity } from "./useWritingPaperHistory";
 import { formatApa7 } from "@/lib/apa7";
+import ResearchJourneyGuide from "./ResearchJourneyGuide";
 
 interface Props {
   user: User;
@@ -392,6 +393,8 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
 
   function renderHeader() {
     return (
+      <>
+      <ResearchJourneyGuide userId={user.id} current="proposal" readOnly={readOnly} />
       <section className="rounded-2xl border bg-card p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -500,6 +503,7 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
           </div>
         )}
       </section>
+      </>
     );
   }
 
