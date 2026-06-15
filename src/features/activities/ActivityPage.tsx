@@ -52,6 +52,25 @@ const STATUS_COLORS: Record<string, string> = {
   completed: "bg-muted text-muted-foreground",
 };
 
+/** 빈 상태에서 제공할 교차 발견 링크 — 막다른 길 대신 다른 활동 둘러보기 경로 */
+const EMPTY_CROSS_LINKS: Record<ActivityType, { label: string; href: string }[]> = {
+  study: [
+    { label: "프로젝트 둘러보기", href: "/activities/projects" },
+    { label: "대외 학술대회 보기", href: "/activities/external" },
+    { label: "세미나 둘러보기", href: "/seminars" },
+  ],
+  project: [
+    { label: "스터디 둘러보기", href: "/activities/studies" },
+    { label: "대외 학술대회 보기", href: "/activities/external" },
+    { label: "세미나 둘러보기", href: "/seminars" },
+  ],
+  external: [
+    { label: "스터디 둘러보기", href: "/activities/studies" },
+    { label: "프로젝트 둘러보기", href: "/activities/projects" },
+    { label: "세미나 둘러보기", href: "/seminars" },
+  ],
+};
+
 interface FormData {
   title: string; description: string; detailContent: string; date: string; endDate: string;
   status: "upcoming" | "ongoing" | "completed";
@@ -643,8 +662,25 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
             <EmptyState
               icon={CalendarClock}
               title={`${statusTab === "completed" ? "완료된" : statusTab === "active" ? "예정·진행 중인" : "등록된"} ${title}이 없어요`}
-              description="운영진이 새 활동을 등록하면 여기에 표시됩니다."
+              description={
+                statusTab !== "all"
+                  ? "이 상태에 해당하는 활동이 없어요. 전체 목록을 보거나 다른 활동을 둘러보세요."
+                  : "아직 등록된 활동이 없어요. 다른 학술활동을 둘러보거나 세미나를 확인해보세요."
+              }
               className="mt-6"
+              actions={[
+                ...(statusTab !== "all"
+                  ? [{ label: "전체 보기", onClick: () => setStatusTab("all"), variant: "default" as const }]
+                  : []),
+                ...EMPTY_CROSS_LINKS[type].map((link, i) => ({
+                  label: link.label,
+                  href: link.href,
+                  variant: (statusTab === "all" && i === 0 ? "default" : "outline") as "default" | "outline",
+                })),
+                ...(isStaff
+                  ? [{ label: `${title} 등록`, onClick: () => openCreate(), variant: "outline" as const }]
+                  : []),
+              ]}
             />
           ) : viewMode === "gallery" ? (
             <div

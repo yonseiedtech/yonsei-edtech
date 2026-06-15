@@ -159,3 +159,6 @@ mpareId 자연 소멸 · queryKey 공유는 의도적(에디터와 동일 데이
 
 ## 사이클 137 — 진단 학습루프·아카이브 개선·진단 개인화·준비도 재정의·오답 암기카드 (2026-06-15)
 H1 진단→학습 루프(약점 30분 읽기 타이머·DiagnosisReadinessWidget·재진단 넛지). 아카이브 진단 CTA를 교육공학 정의 영역 직후로 이동+정보배열 개선. 진단 개인화 빌더(영역+유형/문항수 커스텀 구성)+DiagnosisHistorySection(이력·약점 그래프). 준비도 재정의(응시 정답률→관련 개념 전체 문항 풀 대비 맞춘 비율)+추가평가 유도 애니메이션. 오답 암기카드(flashcards 컬렉션·SM-2 간소 SRS·FlashcardStudy·/flashcards·flashcardsApi 멱등·firestore.rules·잔디 flashcard-study 연계).
+
+## 사이클 138 — UI 시맨틱색·빈상태·달력·진단 진입점/회보색/responseCount·오답풀이·온보딩·아카이브 개념 암기카드·브랜드 네이비 (2026-06-15)
+UI 시맨틱색 SEMANTIC 단일화(3중복 제거). 빈상태 EmptyState 다중액션(모임/세미나/활동). HabitTracker 달력 한달 통합+그래프 길게+날짜 라벨. Header/BottomNav 진단 진입점 추가. 뉴스레터 기본 표지색 네이비. board responseCount fallback. 진단 오답풀이 내 답 대비+전체 문항 리뷰. 신입 온보딩 카드(NewMemberOnboardingCard, 미완료 상시노출). 아카이브 개념→암기카드 저장(saveFromConcept 멱등). OG/globals 브랜드 네이비 HEX 통일.

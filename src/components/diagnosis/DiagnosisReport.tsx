@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
@@ -17,6 +17,8 @@ import {
   ChevronDown,
   Loader2,
   Sparkles,
+  ListChecks,
+  X,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +47,27 @@ export interface WeakConcept {
   name: string;
 }
 
+/**
+ * 전체 문항 리뷰 항목 — 진단 내부 전용(flashcard.ts 무접촉). 채점 결과·내 답·정답·해설을 담는다.
+ * page.tsx 의 handleComplete 채점 루프에서 수집해 전달한다.
+ */
+export interface ReviewItem {
+  questionId: string;
+  /** 문항 본문(질문) */
+  front: string;
+  /** passage 등 본문 앞 지문(선택) */
+  frontHint?: string;
+  /** 내가 고른 답(사람이 읽을 텍스트). 미응답이면 빈 문자열. */
+  myAnswerText: string;
+  /** 정답 텍스트 */
+  answerText: string;
+  /** 해설(선택) */
+  explanation?: string;
+  /** 채점 결과 — 맞았는지 */
+  correct: boolean;
+  area: DiagnosticArea;
+}
+
 interface DiagnosisReportProps {
   areaScores: Partial<Record<DiagnosticArea, AreaScore>>;
   /** 인지수준(Bloom)별 정답률 — 태깅된 문항만 집계. 비어 있으면 카드 숨김. */
@@ -54,6 +77,8 @@ interface DiagnosisReportProps {
   weakConcepts: WeakConcept[];
   /** 이번 회차 오답 — 암기카드 저장 소재. 비어 있으면 복습 카드 섹션 숨김. */
   wrongItems?: WrongCardSeed[];
+  /** 이번 회차 전 문항 리뷰(맞은 문항 포함) — 내 답·정답·해설. 비어 있으면 전체 리뷰 섹션 숨김. */
+  reviewItems?: ReviewItem[];
   /** 전체 풀에서 아직 한 번도 맞추지 못한 문항 수 — 추가 평가 유도(0 이면 유도 숨김). */
   remainingQuestions?: number;
   /** 로그인 사용자 id — 없으면 암기카드 저장 버튼 비활성. */
@@ -138,12 +163,20 @@ export default function DiagnosisReport({
   analysisReadiness,
   weakConcepts,
   wrongItems = [],
+  reviewItems = [],
   remainingQuestions = 0,
   userId = null,
   onRetry,
   onRetryMore,
   saveState = "idle",
 }: DiagnosisReportProps) {
+  // 오답 카드의 "내 답" 표시용 — questionId → 내가 고른 답 텍스트(전체 리뷰에서 도출)
+  const myAnswerById = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const r of reviewItems) map[r.questionId] = r.myAnswerText;
+    return map;
+  }, [reviewItems]);
+
   // 인지수준 집계가 1개 이상 있을 때만 인지수준 카드 노출
   const hasCognitive = COGNITIVE_LEVEL_ORDER.some(
     (lv) => (cognitiveScores[lv]?.total ?? 0) > 0,
@@ -361,8 +394,15 @@ export default function DiagnosisReport({
 
       {/* 틀린 문항 복습 카드 — 오답을 암기카드로 저장 */}
       {wrongItems.length > 0 && (
-        <WrongCardsSection wrongItems={wrongItems} userId={userId} />
+        <WrongCardsSection
+          wrongItems={wrongItems}
+          userId={userId}
+          myAnswerById={myAnswerById}
+        />
       )}
+
+      {/* 전체 문항 리뷰 — 맞은 문항 포함 내 답·정답·해설(틀린 문항 우선·강조, 맞은 문항 접기 기본) */}
+      {reviewItems.length > 0 && <FullReviewSection reviewItems={reviewItems} />}
 
       {/* 저장 상태 + 재진단 */}
       <div className="mt-8 flex flex-col items-center gap-3">
@@ -397,9 +437,12 @@ type CardSaveState = "idle" | "saving" | "saved" | "error";
 function WrongCardsSection({
   wrongItems,
   userId,
+  myAnswerById,
 }: {
   wrongItems: WrongCardSeed[];
   userId: string | null;
+  /** questionId → 내가 고른 답 텍스트(오답 대비 표시용) */
+  myAnswerById: Record<string, string>;
 }) {
   const [stateById, setStateById] = useState<Record<string, CardSaveState>>({});
   const [openId, setOpenId] = useState<string | null>(null);
@@ -548,6 +591,11 @@ function WrongCardsSection({
                         {seed.frontHint}
                       </p>
                     )}
+                    {myAnswerById[seed.questionId] && (
+                      <p className="mb-2 whitespace-pre-line rounded-md bg-rose-50 px-2 py-1.5 text-sm leading-relaxed text-rose-700 dark:bg-rose-950/30 dark:text-rose-300">
+                        내 답 (오답): {myAnswerById[seed.questionId]}
+                      </p>
+                    )}
                     <p className="whitespace-pre-line text-sm leading-relaxed text-foreground/90">
                       {seed.back || "(정답 정보 없음)"}
                     </p>
@@ -567,6 +615,117 @@ function WrongCardsSection({
               </Button>
             </Link>
           </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * 전체 문항 리뷰 — 맞은 문항 포함 모든 문항의 내 답·정답·해설을 확인.
+ * 틀린 문항은 펼친 상태로 강조, 맞은 문항은 접어 두고 토글로 노출(기본 숨김).
+ * 채점·전달 데이터만 사용 — 별도 저장/네트워크 없음.
+ */
+function FullReviewSection({ reviewItems }: { reviewItems: ReviewItem[] }) {
+  const [showCorrect, setShowCorrect] = useState(false);
+  const wrong = reviewItems.filter((r) => !r.correct);
+  const correct = reviewItems.filter((r) => r.correct);
+  const visible = showCorrect ? reviewItems : wrong;
+
+  return (
+    <Card className="mt-6 rounded-2xl shadow-sm">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <ListChecks className="h-4 w-4 text-primary" aria-hidden />
+          전체 문항 보기 ({reviewItems.length})
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            내가 고른 답과 정답·해설을 한눈에 비교하세요. 틀린 문항을 먼저 보여줍니다.
+          </p>
+          {correct.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowCorrect((v) => !v)}
+              className="shrink-0"
+            >
+              {showCorrect ? "맞은 문항 접기" : `맞은 문항 보기 (${correct.length})`}
+              <ChevronDown
+                className={cn("ml-1 h-3.5 w-3.5 transition-transform", showCorrect && "rotate-180")}
+                aria-hidden
+              />
+            </Button>
+          )}
+        </div>
+
+        {visible.length === 0 ? (
+          <p className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-300">
+            틀린 문항이 없습니다. 모두 정답이에요!
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {visible.map((item, i) => (
+              <li
+                key={item.questionId}
+                className={cn(
+                  "rounded-xl border p-3",
+                  item.correct
+                    ? "border-border bg-card/70"
+                    : "border-rose-200 bg-rose-50/40 dark:border-rose-800/60 dark:bg-rose-950/20",
+                )}
+              >
+                <div className="flex items-start gap-2">
+                  <span
+                    className={cn(
+                      "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold",
+                      item.correct
+                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                        : "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",
+                    )}
+                    aria-hidden
+                  >
+                    {item.correct ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium leading-relaxed">
+                      <span className="mr-1 text-muted-foreground tabular-nums">{i + 1}.</span>
+                      {item.front || "(문항 본문 없음)"}
+                    </p>
+                    {item.frontHint && (
+                      <p className="mt-1.5 whitespace-pre-line border-l-2 border-muted-foreground/30 pl-2 text-xs text-muted-foreground">
+                        {item.frontHint}
+                      </p>
+                    )}
+                    <div className="mt-2 space-y-1.5">
+                      <p
+                        className={cn(
+                          "whitespace-pre-line rounded-md px-2 py-1.5 text-sm leading-relaxed",
+                          item.correct
+                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300"
+                            : "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300",
+                        )}
+                      >
+                        내 답{item.correct ? " (정답)" : " (오답)"}: {item.myAnswerText || "(미응답)"}
+                      </p>
+                      {!item.correct && (
+                        <p className="whitespace-pre-line rounded-md bg-emerald-50 px-2 py-1.5 text-sm leading-relaxed text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
+                          정답: {item.answerText || "(정답 정보 없음)"}
+                        </p>
+                      )}
+                      {item.explanation && (
+                        <p className="whitespace-pre-line px-2 text-xs leading-relaxed text-muted-foreground">
+                          {item.explanation}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
         )}
       </CardContent>
     </Card>

@@ -149,7 +149,7 @@ function docToIssue(doc: Record<string, unknown>): NewsletterIssue {
     issueNumber: (doc.issueNumber as number) ?? 0,
     title: (doc.title as string) ?? "",
     subtitle: (doc.subtitle as string) ?? "",
-    coverColor: (doc.coverColor as string) ?? "from-violet-600 to-indigo-700",
+    coverColor: (doc.coverColor as string) ?? "from-indigo-900 to-slate-800",
     publishDate: (doc.publishDate as string) ?? "",
     editorName: (doc.editorName as string) ?? "",
     sections,

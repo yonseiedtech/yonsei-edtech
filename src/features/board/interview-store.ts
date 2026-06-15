@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   dataApi,
@@ -26,6 +27,21 @@ async function adjustResponseCount(postId: string, delta: number) {
     await updateDoc(fsDoc(db, "posts", postId), { responseCount: increment(delta) });
   } catch (e) {
     console.warn("[interview-store] responseCount adjust failed:", e);
+  }
+}
+
+/**
+ * posts.responseCount를 실제 제출 응답 수로 자가 보정(절대값 set).
+ * 카운팅 로직 도입 이전 레거시 게시글의 stale 카운트를 상세 진입 시 1건만 정정한다.
+ * (전체 일괄 백필 대신 본 게시글만 보정 — prod 일괄 write 위험 회피.)
+ * 실패해도 본 흐름을 막지 않는다.
+ */
+async function reconcileResponseCount(postId: string, actual: number) {
+  if (!postId || actual < 0) return;
+  try {
+    await updateDoc(fsDoc(db, "posts", postId), { responseCount: actual });
+  } catch (e) {
+    console.warn("[interview-store] responseCount reconcile failed:", e);
   }
 }
 
@@ -76,6 +92,29 @@ export function useInterviewResponses(postId: string) {
     staleTime: 1000 * 30,
   });
   return { responses: data ?? [], isLoading };
+}
+
+/**
+ * 상세 페이지에서 로드된 실제 제출 응답 수(actual)와 게시글에 저장된 storedCount를 비교해
+ * 불일치 시 1회만 posts.responseCount를 보정한다. (N+1 없이 이미 로드된 응답 수만 사용)
+ * 레거시 stale 카운트 자가 치유용. 로딩 중이거나 일치하면 아무 것도 하지 않는다.
+ */
+export function useReconcileResponseCount(
+  postId: string,
+  storedCount: number | undefined,
+  actual: number,
+  isLoading: boolean,
+) {
+  const qc = useQueryClient();
+  const done = useRef(false);
+  useEffect(() => {
+    if (isLoading || done.current || !postId) return;
+    if ((storedCount ?? 0) === actual) return;
+    done.current = true;
+    reconcileResponseCount(postId, actual).then(() => {
+      qc.invalidateQueries({ queryKey: ["posts"] });
+    });
+  }, [postId, storedCount, actual, isLoading, qc]);
 }
 
 export function useMyInterviewResponses(userId: string | undefined) {

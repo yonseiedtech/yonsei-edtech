@@ -49,6 +49,7 @@ import { notifyNewsletterPublished } from "@/features/notifications/notify";
 import { useAuthStore } from "@/features/auth/auth-store";
 
 const COVER_COLORS = [
+  { label: "네이비", value: "from-indigo-900 to-slate-800" },
   { label: "보라", value: "from-violet-600 to-indigo-700" },
   { label: "초록", value: "from-emerald-600 to-teal-700" },
   { label: "주황", value: "from-amber-500 to-orange-600" },

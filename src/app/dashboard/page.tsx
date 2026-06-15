@@ -51,6 +51,7 @@ import ComprehensiveExamCountdown from "@/features/dashboard/ComprehensiveExamCo
 import PageHeader from "@/components/ui/page-header";
 import TermBriefHero from "@/components/dashboard/TermBriefHero";
 import NewMemberWelcomeBanner from "@/features/dashboard/NewMemberWelcomeBanner";
+import NewMemberOnboardingCard from "@/features/dashboard/NewMemberOnboardingCard";
 import NewMemberChecklistWidget from "@/features/dashboard/NewMemberChecklistWidget";
 import AlumniHomeWidgets from "@/features/dashboard/AlumniHomeWidgets";
 import AIForumLiveWidget from "@/features/dashboard/AIForumLiveWidget";
@@ -456,6 +457,14 @@ function DashboardContent() {
       {/* ── 플로팅 레이어: 팝업·배너·알림 (레이아웃 흐름 밖) ── */}
       <TodayTodosPopup />
       <PushPermissionPrompt />
+
+      {/* ── 섹션 0: 신입 온보딩 레이어 (UX 보고서 H1) ──
+       *  "환영 + 첫 3가지 핵심 할 일"을 최상단에 두어 Next Action 우선화(H2)의 시각적 1순위 확보.
+       *  만료성 게이트 없이 미완료 시 상시 노출, 3항목 모두 완료 시 카드 자체가 null 렌더 → 자동 숨김.
+       *  empty:hidden — 완료/닫힘 회원에게 빈 div 유령 여백 제거. */}
+      <div className="mx-auto max-w-6xl px-4 empty:hidden">
+        <NewMemberOnboardingCard />
+      </div>
 
       {/* ── 섹션 1: 헤더 영역 ── */}
       {/* 사이클 86: 상단 이중 마진(py + mt) 제거 — 최상위 py 가 상단 여백 담당, 섹션 mt 제거로 과다 여백 해소 */}

@@ -8,13 +8,14 @@
 
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, MapPin, Wallet, Users, Clock, Check } from "lucide-react";
+import { CalendarDays, MapPin, Wallet, Users, Clock, Check, CalendarX2 } from "lucide-react";
 import { toast } from "sonner";
 import PageContainer from "@/components/ui/page-container";
 import PageHeader from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import EmptyState from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { networkingEventsApi, networkingRsvpsApi, networkingDuesApi } from "@/lib/bkend";
@@ -107,9 +108,18 @@ export default function GatheringsPage() {
           <section>
             <h2 className="mb-3 text-sm font-semibold text-muted-foreground">다가오는 모임</h2>
             {upcoming.length === 0 ? (
-              <div className="rounded-2xl border border-dashed bg-card p-8 text-center text-sm text-muted-foreground">
-                예정된 모임이 없습니다.
-              </div>
+              <EmptyState
+                icon={CalendarX2}
+                title="예정된 모임이 없습니다"
+                description="아직 다가오는 모임이 등록되지 않았어요. 다른 활동을 둘러보거나 지난 모임을 확인해보세요."
+                actions={[
+                  { label: "세미나 둘러보기", href: "/seminars", variant: "default" },
+                  { label: "학술활동 둘러보기", href: "/activities/studies", variant: "outline" },
+                  ...(past.length > 0
+                    ? [{ label: "지난 모임 보기", href: "#past-gatherings", variant: "outline" as const }]
+                    : []),
+                ]}
+              />
             ) : (
               <div className="space-y-3">
                 {upcoming.map((ev) => (
@@ -128,7 +138,7 @@ export default function GatheringsPage() {
           </section>
 
           {past.length > 0 && (
-            <section>
+            <section id="past-gatherings" className="scroll-mt-20">
               <h2 className="mb-3 text-sm font-semibold text-muted-foreground">지난 모임</h2>
               <div className="space-y-3">
                 {past.map((ev) => (

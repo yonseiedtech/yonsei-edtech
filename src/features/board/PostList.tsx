@@ -85,16 +85,34 @@ export default function PostList({ posts, hrefPrefix = "/board" }: Props) {
                 </span>
               )}
 
-              {/* 인터뷰 전용 — 참여자 수 */}
-              {post.category === "interview" && (post.responseCount ?? 0) > 0 && (
-                <span
-                  className="flex items-center gap-1 text-primary font-medium"
-                  aria-label={`${post.responseCount}명 참여`}
-                  title="제출된 응답 수"
-                >
-                  <ListChecks size={11} aria-hidden />
-                  {post.responseCount}명 참여
-                </span>
+              {/* 인터뷰 전용 — 참여자 수.
+                  responseCount는 interview-store가 increment/decrement로 관리하나,
+                  카운팅 로직 도입 이전 레거시 게시글은 stale(0/undefined)일 수 있다.
+                  목록에서는 N+1 회피를 위해 실시간 재집계를 하지 않고,
+                  - 카운트가 있으면 "n명 참여"로 정확히 표시
+                  - 0/undefined면 "참여형"으로만 표시(오해 소지 있는 "0명" 미표시)
+                  하며, 게시글 상세 진입 시 InterviewResponses가 실제 응답으로 카운트를 자가 보정한다.
+                  (별도 제안: 전체 stale 보정은 1회성 백필 스크립트가 필요하나 prod 일괄 write 위험으로 보류) */}
+              {post.category === "interview" && post.interview && (
+                (post.responseCount ?? 0) > 0 ? (
+                  <span
+                    className="flex items-center gap-1 text-primary font-medium"
+                    aria-label={`${post.responseCount}명 참여`}
+                    title="제출된 응답 수"
+                  >
+                    <ListChecks size={11} aria-hidden />
+                    {post.responseCount}명 참여
+                  </span>
+                ) : (
+                  <span
+                    className="flex items-center gap-1 text-muted-foreground"
+                    aria-label="참여형 인터뷰"
+                    title="응답을 모집하는 참여형 인터뷰"
+                  >
+                    <ListChecks size={11} aria-hidden />
+                    참여형
+                  </span>
+                )
               )}
 
               {/* 인터뷰 메타 — 진행상태·마감일·대상 */}

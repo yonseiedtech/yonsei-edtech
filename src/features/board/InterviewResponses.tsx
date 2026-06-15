@@ -15,7 +15,7 @@ import {
 import { Trash2, Lock, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { CUSTOM_OPTION_ID, type InterviewMeta, type InterviewResponse } from "@/types";
-import { useInterviewResponses, useDeleteInterviewResponse } from "./interview-store";
+import { useInterviewResponses, useDeleteInterviewResponse, useReconcileResponseCount } from "./interview-store";
 
 const FILL_BLANK_PATTERN = /\(\s+\)|_{3,}/;
 
@@ -34,9 +34,11 @@ import InterviewResponseComments from "./InterviewResponseComments";
 interface Props {
   postId: string;
   meta: InterviewMeta;
+  /** 게시글에 저장된 responseCount — 실제 제출 수와 다르면(레거시 stale) 자가 보정한다. */
+  storedResponseCount?: number;
 }
 
-export default function InterviewResponses({ postId, meta }: Props) {
+export default function InterviewResponses({ postId, meta, storedResponseCount }: Props) {
   const { user } = useAuthStore();
   const isStaffPlus = user ? ["sysadmin", "admin", "president", "staff"].includes(user.role) : false;
   const { responses, isLoading } = useInterviewResponses(postId);
@@ -56,6 +58,8 @@ export default function InterviewResponses({ postId, meta }: Props) {
     () => responses.filter((r) => r.status === "submitted").length,
     [responses],
   );
+  // 레거시 stale 카운트 자가 보정 — 이미 로드된 submittedCount만 사용(추가 쿼리 없음).
+  useReconcileResponseCount(postId, storedResponseCount, submittedCount, isLoading);
   const draftCount = useMemo(
     () => responses.filter((r) => r.status !== "submitted").length,
     [responses],

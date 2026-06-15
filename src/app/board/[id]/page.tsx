@@ -323,6 +323,7 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
           <InterviewResponses
             postId={id}
             meta={post.interview}
+            storedResponseCount={post.responseCount}
           />
         )}
 

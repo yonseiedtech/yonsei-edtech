@@ -33,6 +33,13 @@ const AUTHOR_TYPE_LABEL: Record<string, string> = {
 
 // coverColor (Tailwind gradient 클래스) → 단색 추출 (PDF는 단색만)
 function coverColorToHex(coverColor: string): string {
+  // 전체 그라데이션 클래스 정확 매핑 우선 (substring 충돌 회피).
+  // 기본 네이비 표지 — indigo-900 단색으로 추출.
+  const exactMap: Record<string, string> = {
+    "from-indigo-900 to-slate-800": "#312e81",
+  };
+  if (exactMap[coverColor]) return exactMap[coverColor];
+
   const map: Record<string, string> = {
     violet: "#5b21b6",
     indigo: "#3730a3",
@@ -43,11 +50,12 @@ function coverColorToHex(coverColor: string): string {
     rose: "#9f1239",
     amber: "#b45309",
     purple: "#6b21a8",
+    slate: "#1e293b",
   };
   for (const key of Object.keys(map)) {
     if (coverColor.includes(key)) return map[key];
   }
-  return "#3730a3";
+  return "#312e81";
 }
 
 const styles = StyleSheet.create({

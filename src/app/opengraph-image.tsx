@@ -13,8 +13,9 @@ export default function OgImage() {
           width: "100%",
           height: "100%",
           display: "flex",
+          // 브랜드 표준 네이비 #003378(연세 공식 엠블럼 / --primary 토큰)을 anchor 로 한 그라데이션
           background:
-            "radial-gradient(circle at 85% 15%, rgba(212,175,55,0.12) 0%, transparent 45%), linear-gradient(135deg, #0a1f44 0%, #102a5c 55%, #061635 100%)",
+            "radial-gradient(circle at 85% 15%, rgba(212,175,55,0.12) 0%, transparent 45%), linear-gradient(135deg, #002a5c 0%, #003378 55%, #001d40 100%)",
           color: "#f5f1e6",
           fontFamily: "sans-serif",
           position: "relative",

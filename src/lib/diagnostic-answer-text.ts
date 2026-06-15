@@ -4,7 +4,7 @@
 // 채점(gradeQuestion)과 독립 — 여기서는 사람이 읽을 정답 문자열만 만든다.
 // 러너(DiagnosisRunner)의 유형별 본문 분기와 동일한 규칙을 따른다.
 
-import { questionType, type DiagnosticQuestion } from "@/types";
+import { questionType, type DiagnosticAnswer, type DiagnosticQuestion } from "@/types";
 
 /**
  * 문항의 화면 표시 본문(질문) — 암기카드 앞면 후보.
@@ -83,4 +83,51 @@ export function backText(q: DiagnosticQuestion): string {
   if (ans) parts.push(`정답: ${ans}`);
   if (q.explanation) parts.push(q.explanation);
   return parts.join("\n\n");
+}
+
+/**
+ * 사용자가 고른 응답을 사람이 읽을 텍스트로 환산 — 오답 풀이 "내 답" 표시용.
+ * 채점(gradeQuestion)과 독립 — 여기서는 응답 문자열만 만든다. 미응답은 빈 문자열.
+ *  - mcq·compare·scenario·passage·diagram : options[선택 인덱스]
+ *  - ox                                    : "참 (O)" / "거짓 (X)"
+ *  - term                                  : 입력한 텍스트 그대로
+ *  - ordering                              : 사용자 배열을 "1. … → 2. …" 나열
+ *  - matching                              : leftItems[i] ↔ rightItems[선택 index] 매핑 나열(미선택은 "?")
+ */
+export function userAnswerText(
+  q: DiagnosticQuestion,
+  answer: DiagnosticAnswer | undefined,
+): string {
+  if (answer === undefined) return "";
+  switch (questionType(q)) {
+    case "ox":
+      return typeof answer === "boolean" ? (answer ? "참 (O)" : "거짓 (X)") : "";
+    case "term":
+      return typeof answer === "string" ? answer.trim() : "";
+    case "ordering": {
+      if (!Array.isArray(answer) || answer.length === 0) return "";
+      return (answer as string[]).map((it, i) => `${i + 1}. ${it}`).join("\n");
+    }
+    case "matching": {
+      const left = q.leftItems ?? [];
+      const right = q.rightItems ?? [];
+      if (!Array.isArray(answer) || left.length === 0) return "";
+      return left
+        .map((l, i) => {
+          const ri = (answer as number[])[i];
+          const r = typeof ri === "number" && ri >= 0 ? right[ri] ?? "?" : "?";
+          return `${l} ↔ ${r}`;
+        })
+        .join("\n");
+    }
+    case "compare":
+    case "scenario":
+    case "passage":
+    case "diagram":
+    case "mcq":
+    default: {
+      if (typeof answer !== "number") return "";
+      return q.options?.[answer] ?? "";
+    }
+  }
 }

@@ -32,7 +32,7 @@ nav.overflow-x-auto > button {
   --card-foreground: 212 40% 13%;
   --popover: 0 0% 100%;
   --popover-foreground: 212 40% 13%;
-  --primary: 212 100% 23%;
+  --primary: 212 100% 23%; /* 브랜드 표준 네이비 #003378 (연세 공식 엠블럼 yonsei-emblem.svg 와 일치) */
   --primary-foreground: 0 0% 100%;
   --secondary: 42 63% 55%;
   --secondary-foreground: 0 0% 100%;

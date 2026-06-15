@@ -252,8 +252,36 @@ export default function SeminarsPage() {
               icon={AlertCircle}
               title="검색 결과가 없습니다"
               description={`"${search.trim()}" 에 해당하는 세미나를 찾지 못했습니다. 검색어를 바꾸거나 전체 목록을 확인해보세요.`}
-              actionLabel="검색어 지우기"
-              onAction={() => setSearch("")}
+              actions={[
+                { label: "검색어 지우기", onClick: () => setSearch(""), variant: "default" },
+                ...(statusTab !== "all"
+                  ? [{ label: "전체 세미나 보기", onClick: () => setStatusTab("all"), variant: "outline" as const }]
+                  : []),
+              ]}
+            />
+          ) : sorted.length === 0 ? (
+            <EmptyState
+              icon={Calendar}
+              title={
+                statusTab === "active"
+                  ? "예정·진행 중인 세미나가 없습니다"
+                  : statusTab === "completed"
+                    ? "완료된 세미나가 없습니다"
+                    : "등록된 세미나가 없습니다"
+              }
+              description="아직 표시할 세미나가 없어요. 다른 상태를 살펴보거나 다른 활동을 둘러보세요."
+              actions={[
+                ...(statusTab !== "all"
+                  ? [{ label: "전체 세미나 보기", onClick: () => setStatusTab("all"), variant: "default" as const }]
+                  : []),
+                ...(statusTab !== "completed" && completedSeminars.length > 0
+                  ? [{ label: "지난 세미나 보기", onClick: () => setStatusTab("completed"), variant: "outline" as const }]
+                  : []),
+                { label: "학술활동 둘러보기", href: "/activities/studies", variant: statusTab === "all" ? "default" : "outline" },
+                ...(isStaffOrAbove(user)
+                  ? [{ label: "세미나 등록", href: "/seminars/create", variant: "outline" as const }]
+                  : []),
+              ]}
             />
           ) : (
             <SeminarList seminars={sorted} viewMode={viewMode} />

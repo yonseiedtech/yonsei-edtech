@@ -8,8 +8,9 @@
 import { ReactNode } from "react";
 import { AlertCircle, CheckCircle2, Info, X, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SEMANTIC, KIND_TO_TONE, type SemanticKind } from "@/lib/design-tokens";
 
-export type InlineNotificationKind = "info" | "success" | "warning" | "error";
+export type InlineNotificationKind = SemanticKind;
 
 interface InlineNotificationProps {
   kind?: InlineNotificationKind;
@@ -23,36 +24,12 @@ interface InlineNotificationProps {
   action?: ReactNode;
 }
 
-const KIND_CONFIG: Record<
-  InlineNotificationKind,
-  { icon: typeof Info; bgClass: string; iconClass: string; titleClass: string }
-> = {
-  info: {
-    icon: Info,
-    bgClass: "border-blue-300 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/40",
-    iconClass: "text-blue-600 dark:text-blue-300",
-    titleClass: "text-blue-900 dark:text-blue-100",
-  },
-  success: {
-    icon: CheckCircle2,
-    bgClass:
-      "border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/40",
-    iconClass: "text-emerald-600 dark:text-emerald-300",
-    titleClass: "text-emerald-900 dark:text-emerald-100",
-  },
-  warning: {
-    icon: AlertTriangle,
-    bgClass:
-      "border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/40",
-    iconClass: "text-amber-600 dark:text-amber-300",
-    titleClass: "text-amber-900 dark:text-amber-100",
-  },
-  error: {
-    icon: AlertCircle,
-    bgClass: "border-rose-300 bg-rose-50 dark:border-rose-800 dark:bg-rose-950/40",
-    iconClass: "text-rose-600 dark:text-rose-300",
-    titleClass: "text-rose-900 dark:text-rose-100",
-  },
+/** kind → 아이콘 (컴포넌트 고유). 색·배경은 SEMANTIC 단일 소스 참조. */
+const KIND_ICON: Record<InlineNotificationKind, typeof Info> = {
+  info: Info,
+  success: CheckCircle2,
+  warning: AlertTriangle,
+  error: AlertCircle,
 };
 
 export default function InlineNotification({
@@ -64,21 +41,21 @@ export default function InlineNotification({
   className,
   action,
 }: InlineNotificationProps) {
-  const cfg = KIND_CONFIG[kind];
-  const Icon = cfg.icon;
+  const tone = SEMANTIC[KIND_TO_TONE[kind]];
+  const Icon = KIND_ICON[kind];
   return (
     <div
       role={kind === "error" ? "alert" : "status"}
       aria-live={kind === "error" ? "assertive" : "polite"}
       className={cn(
         "flex items-start gap-3 rounded-2xl border px-4 py-3",
-        cfg.bgClass,
+        tone.notifSurface,
         className,
       )}
     >
-      <Icon size={18} className={cn("mt-0.5 shrink-0", cfg.iconClass)} aria-hidden />
+      <Icon size={18} className={cn("mt-0.5 shrink-0", tone.iconStrong)} aria-hidden />
       <div className="min-w-0 flex-1">
-        <p className={cn("text-sm font-bold", cfg.titleClass)}>{title}</p>
+        <p className={cn("text-sm font-bold", tone.titleStrong)}>{title}</p>
         {description && (
           <div className="mt-0.5 text-xs leading-relaxed text-foreground/80 sm:text-sm">
             {description}

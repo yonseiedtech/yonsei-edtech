@@ -15,6 +15,12 @@
 
 export type SemanticTone = "info" | "warning" | "danger" | "success" | "default";
 
+/**
+ * 알림 컴포넌트(InlineNotification·ActionableBanner)에서 쓰는 kind 명칭.
+ * `error` 는 SEMANTIC 의 `danger` 톤에 대응한다 (KIND_TO_TONE 참조).
+ */
+export type SemanticKind = "info" | "success" | "warning" | "error";
+
 interface SemanticPalette {
   /** 카드/배너 배경 (라이트 + 다크 모드) */
   bg: string;
@@ -30,6 +36,20 @@ interface SemanticPalette {
   chipBg: string;
   /** 배지·작은 칩 텍스트 */
   chipText: string;
+  /**
+   * 알림 컴포넌트용 솔리드 배경 + 테두리 (InlineNotification).
+   * bg(`/60` 반투명) 보다 진한 단색 배경 — 폼·섹션 내부 지속 알림용.
+   */
+  notifSurface: string;
+  /**
+   * 알림 컴포넌트용 그라데이션 배경 + 테두리 (ActionableBanner).
+   * prominent 배너 고유 비주얼.
+   */
+  bannerSurface: string;
+  /** 알림 아이콘 강조 색상 (-600/-300) — accent 보다 진함 */
+  iconStrong: string;
+  /** 알림 제목 강조 색상 (-900/-100) */
+  titleStrong: string;
 }
 
 export const SEMANTIC: Record<SemanticTone, SemanticPalette> = {
@@ -41,6 +61,10 @@ export const SEMANTIC: Record<SemanticTone, SemanticPalette> = {
     accent: "text-primary",
     chipBg: "bg-muted",
     chipText: "text-foreground",
+    notifSurface: "border-border bg-card",
+    bannerSurface: "border-border bg-card",
+    iconStrong: "text-foreground",
+    titleStrong: "text-foreground",
   },
   info: {
     bg: "bg-blue-50/60 dark:bg-blue-950/30",
@@ -50,6 +74,11 @@ export const SEMANTIC: Record<SemanticTone, SemanticPalette> = {
     accent: "text-blue-700 dark:text-blue-300",
     chipBg: "bg-blue-100 dark:bg-blue-900/50",
     chipText: "text-blue-700 dark:text-blue-200",
+    notifSurface: "border-blue-300 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/40",
+    bannerSurface:
+      "border-blue-300/40 bg-gradient-to-br from-blue-50 to-sky-50 dark:from-blue-950/40 dark:to-sky-950/40",
+    iconStrong: "text-blue-600 dark:text-blue-300",
+    titleStrong: "text-blue-900 dark:text-blue-100",
   },
   warning: {
     bg: "bg-amber-50/60 dark:bg-amber-950/30",
@@ -59,6 +88,11 @@ export const SEMANTIC: Record<SemanticTone, SemanticPalette> = {
     accent: "text-amber-700 dark:text-amber-300",
     chipBg: "bg-amber-100 dark:bg-amber-900/50",
     chipText: "text-amber-700 dark:text-amber-200",
+    notifSurface: "border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/40",
+    bannerSurface:
+      "border-amber-300/40 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/40 dark:to-yellow-950/40",
+    iconStrong: "text-amber-600 dark:text-amber-300",
+    titleStrong: "text-amber-900 dark:text-amber-100",
   },
   danger: {
     bg: "bg-rose-50/60 dark:bg-rose-950/30",
@@ -68,6 +102,11 @@ export const SEMANTIC: Record<SemanticTone, SemanticPalette> = {
     accent: "text-rose-700 dark:text-rose-300",
     chipBg: "bg-rose-100 dark:bg-rose-900/50",
     chipText: "text-rose-700 dark:text-rose-200",
+    notifSurface: "border-rose-300 bg-rose-50 dark:border-rose-800 dark:bg-rose-950/40",
+    bannerSurface:
+      "border-rose-300/40 bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-950/40 dark:to-red-950/40",
+    iconStrong: "text-rose-600 dark:text-rose-300",
+    titleStrong: "text-rose-900 dark:text-rose-100",
   },
   success: {
     bg: "bg-emerald-50/60 dark:bg-emerald-950/30",
@@ -77,7 +116,24 @@ export const SEMANTIC: Record<SemanticTone, SemanticPalette> = {
     accent: "text-emerald-700 dark:text-emerald-300",
     chipBg: "bg-emerald-100 dark:bg-emerald-900/50",
     chipText: "text-emerald-700 dark:text-emerald-200",
+    notifSurface:
+      "border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/40",
+    bannerSurface:
+      "border-emerald-300/40 bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/40 dark:to-green-950/40",
+    iconStrong: "text-emerald-600 dark:text-emerald-300",
+    titleStrong: "text-emerald-900 dark:text-emerald-100",
   },
+};
+
+/**
+ * 알림 컴포넌트의 kind → SEMANTIC 톤 매핑.
+ * `error` 는 `danger` 톤으로 수렴 (시맨틱 단일 소스).
+ */
+export const KIND_TO_TONE: Record<SemanticKind, SemanticTone> = {
+  info: "info",
+  success: "success",
+  warning: "warning",
+  error: "danger",
 };
 
 /** 위젯 표준 패딩 */

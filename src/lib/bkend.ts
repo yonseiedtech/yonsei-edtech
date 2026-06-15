@@ -2767,6 +2767,40 @@ export const flashcardsApi = {
       lastReviewedAt: null,
     });
   },
+  /**
+   * 아카이브 교육공학 개념 → 카드 멱등 저장. 앞면=개념명, 뒷면=정의(description).
+   * doc id = `${userId}__concept__${conceptId}`. saveFromWrong 과 동일한 get-선확인 멱등
+   * (재저장 시 복습 메타 보존). area 는 "concept"(교육공학 핵심개념) 고정.
+   */
+  saveFromConcept: async (userId: string, concept: ArchiveConcept): Promise<Flashcard> => {
+    const id = `${userId}__concept__${concept.id}`;
+    const content: Record<string, unknown> = {
+      userId,
+      source: "concept",
+      front: concept.name,
+      back: concept.description ?? "(정의가 등록되지 않은 개념입니다)",
+      frontHint: null,
+      area: "concept",
+      cognitiveLevel: null,
+      sourceQuestionId: null,
+      conceptId: concept.id,
+    };
+    const existing = await dataApi.get<Flashcard>("flashcards", id).catch(() => null);
+    if (existing) {
+      // 멱등 — 복습 메타(dueAt/streak/intervalDays/reviewCount/correctCount/lastReviewedAt) 비변경.
+      return dataApi.update<Flashcard>("flashcards", id, content);
+    }
+    const today = flashcardTodayYmdKst();
+    return dataApi.upsert<Flashcard>("flashcards", id, {
+      ...content,
+      dueAt: today,
+      streak: 0,
+      intervalDays: 1,
+      reviewCount: 0,
+      correctCount: 0,
+      lastReviewedAt: null,
+    });
+  },
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<Flashcard>("flashcards", id, data),
   delete: (id: string) => dataApi.delete("flashcards", id),

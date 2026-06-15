@@ -1,0 +1,344 @@
+[
+  {
+    "original": "변산",
+    "purified": "분산",
+    "english": "",
+    "course": "교육공학 연구기초2"
+  },
+  {
+    "original": "9가지 수업 사태",
+    "purified": "9가지 외부적 교수절차",
+    "english": "Nine Events of Instruction",
+    "course": "교수설계이론"
+  },
+  {
+    "original": "ADDIE 모형",
+    "purified": "교육 훈련 프로그램 개발 모형",
+    "english": "ADDIE MODEL",
+    "course": "교수설계이론"
+  },
+  {
+    "original": "AI",
+    "purified": "정교화된 프로그래밍",
+    "english": "Artificial Intellegence",
+    "course": "교수설계이론"
+  },
+  {
+    "original": "ARCS 이론",
+    "purified": "동기 유발 교수설계",
+    "english": "",
+    "course": "교수설계이론"
+  },
+  {
+    "original": "내용요소 전시이론",
+    "purified": "단위요소 전개이론",
+    "english": "",
+    "course": "교수설계이론"
+  },
+  {
+    "original": "메타인지",
+    "purified": "조망인지",
+    "english": "",
+    "course": "교수학습이론"
+  },
+  {
+    "original": "모델링",
+    "purified": "모형화",
+    "english": "",
+    "course": "교수학습이론"
+  },
+  {
+    "original": "식역법",
+    "purified": "문턱법",
+    "english": "",
+    "course": "교수학습이론"
+  },
+  {
+    "original": "조작적 조건화 이론",
+    "purified": "작동조건화 이론 - SKINNER",
+    "english": "",
+    "course": "교수학습이론"
+  },
+  {
+    "original": "직소모형",
+    "purified": "상호지도 모둠학습",
+    "english": "Jigsaw",
+    "course": "교수학습이론"
+  },
+  {
+    "original": "플립러닝",
+    "purified": "예습 기반 능력 형성 교수 학습",
+    "english": "Flipped Learning",
+    "course": "교수학습이론"
+  },
+  {
+    "original": "피드백",
+    "purified": "되알리기",
+    "english": "",
+    "course": "교수학습이론"
+  },
+  {
+    "original": "소셜러닝",
+    "purified": "개인 간 학습",
+    "english": "SOCIAL",
+    "course": "교수학습이론"
+  },
+  {
+    "original": "학습된 무력감",
+    "purified": "무력화 학습",
+    "english": "",
+    "course": "교수학습이론"
+  },
+  {
+    "original": "F요비",
+    "purified": "F검증 통계치",
+    "english": "",
+    "course": "교육공학연구분석방법"
+  },
+  {
+    "original": "기술통계량",
+    "purified": "기술통계치",
+    "english": "",
+    "course": "교육공학연구분석방법"
+  },
+  {
+    "original": "단일변수사례",
+    "purified": "1변수 일치도 검증",
+    "english": "Contingent",
+    "course": "교육공학연구분석방법"
+  },
+  {
+    "original": "백분위와 정상분포",
+    "purified": "표준정상분표",
+    "english": "",
+    "course": "교육공학연구분석방법"
+  },
+  {
+    "original": "산포도",
+    "purified": "분산도",
+    "english": "",
+    "course": "교육공학연구분석방법"
+  },
+  {
+    "original": "집중편향",
+    "purified": "대표값(치)",
+    "english": "",
+    "course": "교육공학연구분석방법"
+  },
+  {
+    "original": "처치",
+    "purified": "실험",
+    "english": "",
+    "course": "교육공학연구분석방법"
+  },
+  {
+    "original": "터키",
+    "purified": "튀르키",
+    "english": "",
+    "course": "교육공학연구분석방법"
+  },
+  {
+    "original": "",
+    "purified": "분산분석표",
+    "english": "ANOVA TABLE",
+    "course": "교육공학연구분석방법"
+  },
+  {
+    "original": "2 변수 사례와 독립성 검증 : 유관표",
+    "purified": "2변수 독립성 검증(유관성 검증)",
+    "english": "",
+    "course": "교육공학연구분석방법"
+  },
+  {
+    "original": "검정",
+    "purified": "검증",
+    "english": "",
+    "course": "교육공학연구분석방법"
+  },
+  {
+    "original": "STAD모형",
+    "purified": "경쟁 모둠학습",
+    "english": "",
+    "course": ""
+  },
+  {
+    "original": "가네의 수업이론",
+    "purified": "가네의 교수학습조건설계이론",
+    "english": "",
+    "course": "교수설계이론"
+  },
+  {
+    "original": "게이미피케이션",
+    "purified": "게임 기반 학습",
+    "english": "",
+    "course": ""
+  },
+  {
+    "original": "교수법",
+    "purified": "교수전략",
+    "english": "",
+    "course": "교수설계이론"
+  },
+  {
+    "original": "구인전시이론",
+    "purified": "교수학습 단위요소이론",
+    "english": "",
+    "course": "교수설계이론"
+  },
+  {
+    "original": "귀납적 추상화",
+    "purified": "귀납적 사고",
+    "english": "",
+    "course": ""
+  },
+  {
+    "original": "도구적",
+    "purified": "후속 만족인에 의한 결합조건화 이론",
+    "english": "",
+    "course": ""
+  },
+  {
+    "original": "루브릭",
+    "purified": "기준표, 기준항목, 기준요소",
+    "english": "",
+    "course": ""
+  },
+  {
+    "original": "메타버스",
+    "purified": "정교화된 가상 공간",
+    "english": "metaverse",
+    "course": ""
+  },
+  {
+    "original": "모둠활동",
+    "purified": "단순 모둠 활동",
+    "english": "",
+    "course": ""
+  },
+  {
+    "original": "목표기반학습 (목표중심시나리오)",
+    "purified": "시나리오 임무완수 교수학습환경",
+    "english": "Goal-based senario; GBS",
+    "course": "교수설계이론"
+  },
+  {
+    "original": "문제 기반 학습",
+    "purified": "실제 문제 기반 학습",
+    "english": "problem-based learning;PBL",
+    "course": "교수설계이론"
+  },
+  {
+    "original": "블룸 교육목표 분류학",
+    "purified": "블룸 교육목표 분류 오류",
+    "english": "",
+    "course": "교수설계이론"
+  },
+  {
+    "original": "비계",
+    "purified": "인지디딤판",
+    "english": "scafolding",
+    "course": "교수학습이론"
+  },
+  {
+    "original": "선언적 지식",
+    "purified": "",
+    "english": "",
+    "course": ""
+  },
+  {
+    "original": "소그룹",
+    "purified": "소모둠",
+    "english": "",
+    "course": ""
+  },
+  {
+    "original": "에듀테크",
+    "purified": "",
+    "english": "",
+    "course": ""
+  },
+  {
+    "original": "인지적 융통성 이론",
+    "purified": "인지유연화",
+    "english": "",
+    "course": ""
+  },
+  {
+    "original": "임의접근수업",
+    "purified": "임의교수학습",
+    "english": "random access instruction",
+    "course": "교수학습이론"
+  },
+  {
+    "original": "체제적 교수설계",
+    "purified": "체제적 설계",
+    "english": "systemetic disign of instruction",
+    "course": "교수설계이론"
+  },
+  {
+    "original": "프로젝트 학습",
+    "purified": "탐구모둠 지도학습",
+    "english": "investment",
+    "course": ""
+  },
+  {
+    "original": "학습성취도",
+    "purified": "학업성취도",
+    "english": "",
+    "course": ""
+  },
+  {
+    "original": "행동유도성",
+    "purified": "수행유도기제",
+    "english": "afforance",
+    "course": ""
+  },
+  {
+    "original": "전환학습",
+    "purified": "변형생성 학습",
+    "english": "transformative learning",
+    "course": "교수학습이론"
+  },
+  {
+    "original": "",
+    "purified": "아는 것 / 알고싶은 것/ 배우고 싶은 것",
+    "english": "KWL",
+    "course": ""
+  },
+  {
+    "original": "형식도야론",
+    "purified": "인지도제",
+    "english": "formal discpline",
+    "course": ""
+  },
+  {
+    "original": "",
+    "purified": "학습위계의 원리",
+    "english": "learning hierarchy",
+    "course": ""
+  },
+  {
+    "original": "",
+    "purified": "함축의 원리",
+    "english": "Law f Pragnanz",
+    "course": ""
+  },
+  {
+    "original": "조작적 지식",
+    "purified": "논리적 사고",
+    "english": "",
+    "course": ""
+  },
+  {
+    "original": "코치",
+    "purified": "",
+    "english": "",
+    "course": ""
+  },
+  {
+    "original": "인지발달단계",
+    "purified": "사고발달단계",
+    "english": "",
+    "course": ""
+  }
+]

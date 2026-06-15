@@ -31,12 +31,20 @@ import {
   type DiagnosticResult,
 } from "@/types";
 import type { ArchiveConcept, WrongCardSeed } from "@/types";
-import { backText, questionFrontText } from "@/lib/diagnostic-answer-text";
+import {
+  answerText,
+  backText,
+  questionFrontText,
+  userAnswerText,
+} from "@/lib/diagnostic-answer-text";
 import DiagnosisLanding, {
   type CustomDiagnosisConfig,
 } from "@/components/diagnosis/DiagnosisLanding";
 import DiagnosisRunner from "@/components/diagnosis/DiagnosisRunner";
-import DiagnosisReport, { type WeakConcept } from "@/components/diagnosis/DiagnosisReport";
+import DiagnosisReport, {
+  type ReviewItem,
+  type WeakConcept,
+} from "@/components/diagnosis/DiagnosisReport";
 
 type Phase = "landing" | "running" | "report";
 
@@ -162,6 +170,8 @@ export default function DiagnosisPage() {
   const [readiness, setReadiness] = useState({ paperReadiness: 0, analysisReadiness: 0 });
   const [weakConcepts, setWeakConcepts] = useState<WeakConcept[]>([]);
   const [wrongItems, setWrongItems] = useState<WrongCardSeed[]>([]);
+  // 전체 문항 리뷰 — 맞은 문항 포함 내 답·정답·해설(진단 내부 전용 타입)
+  const [reviewItems, setReviewItems] = useState<ReviewItem[]>([]);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   // 준비도(영역 숙련도) 누적 집계용 — 본인의 과거 결과 correctQuestionIds union
   const [priorResults, setPriorResults] = useState<DiagnosticResult[]>([]);
@@ -334,6 +344,8 @@ export default function DiagnosisPage() {
     const correctIdsThisRound: string[] = [];
     // 오답 암기카드 소재
     const wrongSeeds: WrongCardSeed[] = [];
+    // 전체 문항 리뷰 소재 (맞은 문항 포함 — 내 답·정답·해설)
+    const reviews: ReviewItem[] = [];
 
     for (const q of activeQuestions) {
       const bucket = scores[q.area] ?? { correct: 0, total: 0 };
@@ -357,6 +369,17 @@ export default function DiagnosisPage() {
           conceptName: wc?.name,
         });
       }
+      // 전체 리뷰 — 모든 문항(맞은/틀린)의 내 답·정답·해설 수집
+      reviews.push({
+        questionId: q.id,
+        front: questionFrontText(q),
+        frontHint: q.passage ?? undefined,
+        myAnswerText: userAnswerText(q, answers[q.id]),
+        answerText: answerText(q),
+        explanation: q.explanation,
+        correct,
+        area: q.area,
+      });
       scores[q.area] = bucket;
 
       // 인지수준별 집계 (태깅된 문항만)
@@ -386,6 +409,7 @@ export default function DiagnosisPage() {
     setReadiness(computed);
     setWeakConcepts(weak);
     setWrongItems(wrongSeeds);
+    setReviewItems(reviews);
     setPhase("report");
 
     // 결과 저장 (로그인 사용자만)
@@ -417,6 +441,7 @@ export default function DiagnosisPage() {
     setCognitiveScores({});
     setWeakConcepts([]);
     setWrongItems([]);
+    setReviewItems([]);
     setSaveState("idle");
     setPhase("landing");
   };
@@ -484,6 +509,7 @@ export default function DiagnosisPage() {
               analysisReadiness={readiness.analysisReadiness}
               weakConcepts={weakConcepts}
               wrongItems={wrongItems}
+              reviewItems={reviewItems}
               remainingQuestions={remainingQuestions}
               onRetry={handleRetry}
               onRetryMore={handleRetry}

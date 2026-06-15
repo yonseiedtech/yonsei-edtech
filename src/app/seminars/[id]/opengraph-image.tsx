@@ -102,8 +102,9 @@ export default async function OG({
           height: "100%",
           display: "flex",
           flexDirection: "column",
+          // 브랜드 표준 네이비 #003378(연세 공식 엠블럼 / --primary 토큰) anchor
           background:
-            "linear-gradient(135deg, #0a1f44 0%, #102a5c 55%, #061635 100%)",
+            "linear-gradient(135deg, #002a5c 0%, #003378 55%, #001d40 100%)",
           color: "#f5f1e6",
           fontFamily: fontData ? "NanumGothic" : "sans-serif",
           position: "relative",

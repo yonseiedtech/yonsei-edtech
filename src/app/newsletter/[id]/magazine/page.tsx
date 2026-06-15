@@ -300,7 +300,7 @@ function CoverCard({
   issue: { issueNumber: number; title: string; subtitle: string; publishDate: string; editorName: string; coverColor?: string };
   large?: boolean;
 }) {
-  const grad = issue.coverColor || "from-violet-600 to-indigo-700";
+  const grad = issue.coverColor || "from-indigo-900 to-slate-800";
   return (
     <div
       className={cn(

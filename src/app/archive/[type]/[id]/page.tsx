@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Star, ExternalLink, BookText, Network, Tag, Pencil, GraduationCap, BookmarkPlus, BookmarkCheck, Compass } from "lucide-react";
+import { ArrowLeft, Star, ExternalLink, BookText, Network, Tag, Pencil, GraduationCap, BookmarkPlus, BookmarkCheck, Compass, Layers, Check, ArrowRight } from "lucide-react";
 import { JOURNEY_STAGES } from "@/features/research/ThesisJourney";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import {
   archiveFavoritesApi,
   alumniThesesApi,
   profilesApi,
+  flashcardsApi,
 } from "@/lib/bkend";
 import {
   ARCHIVE_ITEM_TYPE_COLORS,
@@ -50,6 +51,8 @@ export default function ArchiveDetailPage() {
   const [loading, setLoading] = useState(true);
   const [isFav, setIsFav] = useState(false);
   const [readingPending, setReadingPending] = useState<string | null>(null);
+  // 개념 → 암기카드 저장 (개념 상세 한정). 멱등·중복 가드 + idle→saving→saved.
+  const [flashcardState, setFlashcardState] = useState<"idle" | "saving" | "saved">("idle");
 
   const canManage = isAtLeast(user, "staff");
 
@@ -223,6 +226,24 @@ export default function ArchiveDetailPage() {
     }
   };
 
+  const handleSaveFlashcard = async () => {
+    if (!user) {
+      toast.error("로그인이 필요합니다");
+      return;
+    }
+    if (type !== "concept" || !item || flashcardState !== "idle") return;
+    setFlashcardState("saving");
+    try {
+      await flashcardsApi.saveFromConcept(user.id, item as ArchiveConcept);
+      setFlashcardState("saved");
+      toast.success("암기카드에 저장했어요");
+    } catch (err) {
+      console.error("[archive-detail] flashcard save failed", err);
+      setFlashcardState("idle");
+      toast.error("암기카드 저장 실패");
+    }
+  };
+
   const handleToggleFav = async () => {
     if (!user || !item) {
       toast.error("로그인이 필요합니다");
@@ -365,7 +386,7 @@ export default function ArchiveDetailPage() {
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-2">
               {canManage && (
                 <Link href={`/archive/${type}/${id}/edit`}>
                   <Button variant="outline" size="sm">
@@ -373,6 +394,30 @@ export default function ArchiveDetailPage() {
                     수정
                   </Button>
                 </Link>
+              )}
+              {type === "concept" && (
+                <Button
+                  variant={flashcardState === "saved" ? "default" : "outline"}
+                  size="sm"
+                  onClick={handleSaveFlashcard}
+                  disabled={!user || flashcardState !== "idle"}
+                  title={!user ? "로그인 후 저장할 수 있어요" : undefined}
+                  className={cn(
+                    flashcardState === "saved" &&
+                      "border-violet-500 bg-violet-600 hover:bg-violet-700",
+                  )}
+                >
+                  {flashcardState === "saved" ? (
+                    <Check className="mr-1 h-4 w-4" />
+                  ) : (
+                    <Layers className="mr-1 h-4 w-4" />
+                  )}
+                  {flashcardState === "saving"
+                    ? "저장 중…"
+                    : flashcardState === "saved"
+                      ? "저장됨"
+                      : "암기카드로 저장"}
+                </Button>
               )}
               {user && (
                 <Button
@@ -387,6 +432,15 @@ export default function ArchiveDetailPage() {
               )}
             </div>
           </div>
+          {type === "concept" && flashcardState === "saved" && (
+            <Link
+              href="/flashcards"
+              className="mt-2 inline-flex w-fit items-center gap-1 text-sm font-medium text-violet-700 hover:underline dark:text-violet-300"
+            >
+              암기카드 학습하기
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+            </Link>
+          )}
         </CardHeader>
         <CardContent className="space-y-4">
           {item.description && (

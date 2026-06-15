@@ -5,8 +5,8 @@
  *
  * 스프레드시트 레이아웃을 재현 + 사이클 123 고도화:
  *  - 상단 좌: 월 달성 현황 (총 일자 / 달성일 / 미달성 3-stat)
- *  - 상단 중: 일자별 달성 수 차트 (날짜 축 + 과거 실선 + 오늘 점·깜박임 + 미래 평균 예측 점선)
- *  - 상단 우: 월 미니 캘린더 3분할 (상순/중순/하순) — 모든 습관 달성일 ring
+ *  - 상단 우: 월 미니 캘린더 (한 달 통합 7열 주 단위 그리드) — 모든 습관 달성일 ring
+ *  - 중단: 일자별 달성 수 차트 (가로 전체폭 + 하단 날짜 축 + 과거 실선 + 오늘 점·깜박임 + 미래 평균 예측 점선)
  *  - 메인: 습관 × 날짜 매트릭스 표 (체크/미체크, 가로스크롤)
  *  - 우측: 습관별 달성 통계 (총 일자 / 달성 / 미달성 3분할) + 진행 바
  *  - 하단: 범례 (그룹화·가독성 개선)
@@ -110,12 +110,12 @@ function DailyChart({
   /** 이번 달 안에 오늘이 있으면 1-based day, 아니면 null(전부 과거 or 전부 미래) */
   todayDay: number | null;
 }) {
-  const W = 420;
-  const H = 92;
-  const PAD_L = 6;
-  const PAD_R = 6;
-  const PAD_T = 8;
-  const PAD_B = 18; // 날짜 축 공간
+  const W = 960; // 가로로 길게 (달력 통합으로 확보한 전체폭 사용)
+  const H = 150;
+  const PAD_L = 10;
+  const PAD_R = 10;
+  const PAD_T = 12;
+  const PAD_B = 26; // 날짜 축 공간 (눈금 + 라벨)
 
   const yMax = Math.max(maxCount, 1);
 
@@ -190,9 +190,9 @@ function DailyChart({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todayDay, todayIdx, totalDays, pastAvg, yMax]);
 
-  // 날짜 축 눈금: 1, 8, 15, 22, 말일 (+오늘 별도)
+  // 날짜 축 눈금: 1·5·10·15·20·25·말일 (가독 라벨)
   const axisTicks = useMemo(() => {
-    const ticks = new Set<number>([1, 8, 15, 22, totalDays]);
+    const ticks = new Set<number>([1, 5, 10, 15, 20, 25, totalDays]);
     return Array.from(ticks).filter((d) => d >= 1 && d <= totalDays).sort((a, b) => a - b);
   }, [totalDays]);
 
@@ -203,10 +203,10 @@ function DailyChart({
       </span>
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        preserveAspectRatio="none"
+        preserveAspectRatio="xMidYMid meet"
         role="img"
         aria-label={`${month}월 일자별 달성 수 추이`}
-        className="w-full h-[92px] overflow-visible"
+        className="w-full h-auto min-h-[120px] overflow-visible"
       >
         <defs>
           <linearGradient id="habitAreaGrad" x1="0" y1="0" x2="0" y2="1">
@@ -250,10 +250,10 @@ function DailyChart({
               key={`past-${p.idx}`}
               cx={p.x}
               cy={p.y}
-              r={2.2}
+              r={3}
               fill="rgb(13,148,136)"
               stroke="white"
-              strokeWidth={1}
+              strokeWidth={1.2}
             />
           ) : null,
         )}
@@ -272,10 +272,10 @@ function DailyChart({
             />
             <text
               x={W - PAD_R}
-              y={yOf(pastAvg) - 4}
+              y={yOf(pastAvg) - 5}
               textAnchor="end"
               className="fill-muted-foreground"
-              fontSize={8}
+              fontSize={11}
             >
               평균 {pastAvg.toFixed(1)}
             </text>
@@ -286,10 +286,10 @@ function DailyChart({
         {todayInfo && (
           <g>
             {/* 펄스 링 */}
-            <circle cx={todayInfo.x} cy={todayInfo.y} r={5} fill={TREND_COLOR[todayInfo.trend]} opacity={0.25}>
+            <circle cx={todayInfo.x} cy={todayInfo.y} r={6} fill={TREND_COLOR[todayInfo.trend]} opacity={0.25}>
               <animate
                 attributeName="r"
-                values="4;9;4"
+                values="5;11;5"
                 dur="1.4s"
                 repeatCount="indefinite"
               />
@@ -301,7 +301,7 @@ function DailyChart({
               />
             </circle>
             {/* 코어 점 (깜박임) */}
-            <circle cx={todayInfo.x} cy={todayInfo.y} r={3.4} fill={TREND_COLOR[todayInfo.trend]} stroke="white" strokeWidth={1}>
+            <circle cx={todayInfo.x} cy={todayInfo.y} r={4.2} fill={TREND_COLOR[todayInfo.trend]} stroke="white" strokeWidth={1.2}>
               <animate
                 attributeName="opacity"
                 values="1;0.35;1"
@@ -311,9 +311,9 @@ function DailyChart({
             </circle>
             <text
               x={todayInfo.x}
-              y={todayInfo.y - 8}
+              y={todayInfo.y - 10}
               textAnchor="middle"
-              fontSize={8}
+              fontSize={11}
               fontWeight={700}
               fill={TREND_COLOR[todayInfo.trend]}
             >
@@ -322,19 +322,34 @@ function DailyChart({
           </g>
         )}
 
-        {/* 날짜 축 눈금 라벨 */}
-        {axisTicks.map((d) => (
-          <text
-            key={`tick-${d}`}
-            x={xOf(d - 1)}
-            y={H - 5}
-            textAnchor={d === 1 ? "start" : d === totalDays ? "end" : "middle"}
-            className="fill-muted-foreground/70"
-            fontSize={8}
-          >
-            {d}
-          </text>
-        ))}
+        {/* 날짜 축 눈금 (틱 마크 + 일자 라벨) */}
+        {axisTicks.map((d) => {
+          const tx = xOf(d - 1);
+          return (
+            <g key={`tick-${d}`}>
+              <line
+                x1={tx}
+                y1={H - PAD_B}
+                x2={tx}
+                y2={H - PAD_B + 4}
+                stroke="currentColor"
+                className="text-border"
+                strokeWidth={1}
+              />
+              <text
+                x={tx}
+                y={H - PAD_B + 16}
+                textAnchor={d === 1 ? "start" : d === totalDays ? "end" : "middle"}
+                className="fill-muted-foreground"
+                fontSize={11}
+                fontWeight={500}
+              >
+                {d}
+                <tspan className="fill-muted-foreground/60" fontSize={9} fontWeight={400}>일</tspan>
+              </text>
+            </g>
+          );
+        })}
       </svg>
 
       {/* 차트 범례 (작게) */}
@@ -357,40 +372,30 @@ function DailyChart({
   );
 }
 
-/** 캘린더 한 조각(상순/중순/하순) — 3분할용 */
-function MiniCalendarSlice({
+/** 상단 우: 미니 캘린더 (한 달 통합 — 7열 주 단위 그리드, 일~토) */
+function MiniCalendar({
   year,
   month,
-  startDay,
-  endDay,
+  totalDays,
   firstDow,
   allAchievedDays,
-  today,
-  title,
 }: {
   year: number;
   month: number;
-  startDay: number;
-  endDay: number;
-  firstDow: number; // 1일의 요일 (0=일)
+  totalDays: number;
+  firstDow: number; // 0=일 (1일의 요일)
   allAchievedDays: Set<string>;
-  today: string;
-  title: string;
 }) {
-  // 이 조각의 시작일 요일에 맞춰 앞 빈칸
-  const startDow = (firstDow + (startDay - 1)) % 7;
+  const today = todayYmd();
 
   return (
-    <div className="flex flex-col gap-1">
-      <span className="text-[9px] font-semibold text-muted-foreground/80 text-center">
-        {title}
-      </span>
+    <div className="flex flex-col gap-1.5 min-w-[210px]">
       <div className="grid grid-cols-7 gap-0.5">
         {DAY_LABELS.map((d, i) => (
           <span
             key={i}
             className={cn(
-              "text-center text-[8px] font-bold",
+              "text-center text-[9px] font-bold",
               i === 0 && "text-rose-500 dark:text-rose-400",
               i === 6 && "text-blue-500 dark:text-blue-400",
               i > 0 && i < 6 && "text-muted-foreground/70",
@@ -399,12 +404,13 @@ function MiniCalendarSlice({
             {d}
           </span>
         ))}
-        {Array.from({ length: startDow }).map((_, i) => (
+        {/* 1일 앞 빈칸 (요일 정렬) */}
+        {Array.from({ length: firstDow }).map((_, i) => (
           <span key={`b${i}`} />
         ))}
-        {Array.from({ length: endDay - startDay + 1 }).map((_, i) => {
-          const day = startDay + i;
-          const dow = (firstDow + (day - 1)) % 7;
+        {Array.from({ length: totalDays }).map((_, i) => {
+          const day = i + 1;
+          const dow = (firstDow + i) % 7;
           const ymd = ymdOf(year, month, day);
           const isToday = ymd === today;
           const isAllAchieved = allAchievedDays.has(ymd);
@@ -414,7 +420,7 @@ function MiniCalendarSlice({
               key={day}
               title={isAllAchieved ? `${ymd} · 모두 달성` : ymd}
               className={cn(
-                "w-[18px] h-[18px] flex items-center justify-center rounded-full text-[9px] leading-none mx-auto",
+                "w-[22px] h-[22px] flex items-center justify-center rounded-full text-[10px] leading-none mx-auto",
                 dow === 0 && "text-rose-500 dark:text-rose-400",
                 dow === 6 && "text-blue-500 dark:text-blue-400",
                 dow > 0 && dow < 6 && "text-foreground/75",
@@ -426,48 +432,6 @@ function MiniCalendarSlice({
             </div>
           );
         })}
-      </div>
-    </div>
-  );
-}
-
-/** 상단 우: 미니 캘린더 3분할 (상순 1-10 / 중순 11-20 / 하순 21-말일) */
-function MiniCalendar({
-  year,
-  month,
-  totalDays,
-  firstDow,
-  allAchievedDays,
-}: {
-  year: number;
-  month: number;
-  totalDays: number;
-  firstDow: number; // 0=일
-  allAchievedDays: Set<string>;
-}) {
-  const today = todayYmd();
-  const slices = [
-    { title: "상순", start: 1, end: Math.min(10, totalDays) },
-    { title: "중순", start: 11, end: Math.min(20, totalDays) },
-    { title: "하순", start: 21, end: totalDays },
-  ].filter((s) => s.start <= totalDays);
-
-  return (
-    <div className="flex flex-col gap-1.5 min-w-[200px]">
-      <div className="grid grid-cols-3 gap-2">
-        {slices.map((s) => (
-          <MiniCalendarSlice
-            key={s.title}
-            year={year}
-            month={month}
-            startDay={s.start}
-            endDay={s.end}
-            firstDow={firstDow}
-            allAchievedDays={allAchievedDays}
-            today={today}
-            title={s.title}
-          />
-        ))}
       </div>
       <p className="text-[9px] text-muted-foreground/70 leading-tight text-center">
         <span className="inline-flex w-2.5 h-2.5 rounded-full border-2 border-teal-500 dark:border-teal-400 align-middle mr-1" />
@@ -723,20 +687,31 @@ export default function HabitTracker({
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="rounded-2xl border border-border bg-card overflow-hidden"
     >
-      {/* ── 상단 3-panel 요약 ── */}
-      <div className="flex flex-wrap gap-6 items-start px-4 pt-4 pb-3 border-b border-border bg-muted/20">
-        <div className="flex flex-col gap-1 min-w-[150px]">
-          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-            {month}월 달성 현황
-          </span>
-          <MonthStats
+      {/* ── 상단 요약 (현황 + 통합 캘린더) ── */}
+      <div className="flex flex-col gap-3 px-4 pt-4 pb-3 border-b border-border bg-muted/20">
+        <div className="flex flex-wrap gap-6 items-start justify-between">
+          <div className="flex flex-col gap-1 min-w-[150px]">
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+              {month}월 달성 현황
+            </span>
+            <MonthStats
+              totalDays={totalDays}
+              achievedDays={dayStats.achievedDays}
+              missedDays={dayStats.missedDays}
+            />
+          </div>
+
+          <MiniCalendar
+            year={year}
+            month={month}
             totalDays={totalDays}
-            achievedDays={dayStats.achievedDays}
-            missedDays={dayStats.missedDays}
+            firstDow={firstDow}
+            allAchievedDays={allAchievedDays}
           />
         </div>
 
-        <div className="flex-1 min-w-[260px]">
+        {/* 일자별 달성 수 차트 — 가로 전체폭 */}
+        <div className="w-full">
           <DailyChart
             month={month}
             dailyCounts={dailyCounts}
@@ -745,14 +720,6 @@ export default function HabitTracker({
             todayDay={todayDay}
           />
         </div>
-
-        <MiniCalendar
-          year={year}
-          month={month}
-          totalDays={totalDays}
-          firstDow={firstDow}
-          allAchievedDays={allAchievedDays}
-        />
       </div>
 
       {/* ── 메인 매트릭스 표 ── */}

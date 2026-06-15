@@ -19,6 +19,7 @@ import {
   Users,
   HelpCircle,
   Images,
+  ClipboardCheck,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -69,6 +70,7 @@ const ITEMS: NavItem[] = [
 /** Sprint UX-5: 하단 네비 "더보기" 시트 — 헤더 펼침 없이는 도달 못 하던 2차 기능 모음 */
 const MORE_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "대시보드", icon: LayoutDashboard },
+  { href: "/diagnosis", label: "진단평가", icon: ClipboardCheck },
   { href: "/calendar", label: "캘린더", icon: Calendar },
   { href: "/seminars", label: "세미나", icon: Presentation },
   { href: "/archive", label: "아카이브", icon: Library },
