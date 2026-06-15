@@ -2363,6 +2363,8 @@ export const statisticalMethodsApi = {
 import type {
   DiagnosticQuestion,
   DiagnosticResult,
+  DiagnosticPeerStats,
+  DiagnosticArea,
 } from "@/types/diagnostic";
 
 export const diagnosticQuestionsApi = {
@@ -2407,6 +2409,29 @@ export const diagnosticResultsApi = {
   create: (data: Record<string, unknown>) =>
     dataApi.create<DiagnosticResult>("diagnostic_results", data),
   delete: (id: string) => dataApi.delete("diagnostic_results", id),
+  /**
+   * 익명 동료 분포(피어 비교, M4) — 서버 API 경유.
+   * firestore.rules 가 회원의 전체 read 를 막으므로 Admin SDK 집계 라우트를 호출한다.
+   * 응답은 익명 집계만(개별 식별 정보 없음). 로그인 필요(Bearer 토큰).
+   * areaValuesAsc/*ValuesAsc 는 내 백분위 계산용 무라벨 분포 값.
+   */
+  fetchPeerStats: async (): Promise<
+    DiagnosticPeerStats & {
+      areaValuesAsc?: Partial<Record<DiagnosticArea, number[]>>;
+      paperValuesAsc?: number[];
+      analysisValuesAsc?: number[];
+    }
+  > => {
+    const idToken = await auth.currentUser?.getIdToken();
+    if (!idToken) throw new Error("로그인이 필요합니다.");
+    const res = await fetch("/api/diagnosis/peer-stats", {
+      headers: { Authorization: `Bearer ${idToken}` },
+    });
+    if (!res.ok) {
+      throw new Error(`peer-stats ${res.status}`);
+    }
+    return res.json();
+  },
 };
 
 // ── 교육공학 아카이브 — 기초 용어 가이드 (Phase 1) ──

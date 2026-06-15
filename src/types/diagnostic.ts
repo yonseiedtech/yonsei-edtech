@@ -408,6 +408,82 @@ export function computeReadinessFromMastery(
   };
 }
 
+// ── 피어 러닝·비교 (M4) — 익명 동료 분포 ──
+//
+// 사용자 의도: 내 영역별 정답률·준비도가 전체 응시자(익명) 대비 어디쯤인지 보여
+//  커뮤니티 동기를 만든다. ⚠️ 개별 회원 식별 금지 — 집계 통계만 노출한다.
+//  데이터가 적으면(표본 부족) 분포를 보류하고 안내한다(graceful).
+//
+// 집계는 서버(Admin SDK)에서만 수행한다(firestore.rules 가 일반 회원의 전체 read 를
+//  막으므로). 클라이언트에는 평균·백분위 같은 익명 수치만 전달한다.
+
+/** 피어 비교를 표시하기 위한 최소 표본 수 — 미만이면 분포 보류(개인 추정 방지·노이즈 회피). */
+export const PEER_STATS_MIN_SAMPLE = 5;
+
+/** 영역별 익명 동료 분포 — 응시 회원들의 그 영역 최신 정답률(%) 집계. */
+export interface PeerAreaStat {
+  /** 표본(해당 영역을 응시한 회원) 수 */
+  sample: number;
+  /** 평균 정답률(0~100) */
+  avg: number;
+  /** 중앙값 정답률(0~100) */
+  median: number;
+}
+
+/** 준비도(논문작성/연구분석) 익명 동료 분포. */
+export interface PeerReadinessStat {
+  sample: number;
+  avg: number;
+  median: number;
+}
+
+/**
+ * 진단 피어 비교 통계 (익명 집계만). 서버에서 산출해 클라이언트로 전달.
+ * 개별 userId·이름·식별 가능한 원자료는 포함하지 않는다.
+ */
+export interface DiagnosticPeerStats {
+  /** 집계에 포함된 응시 회원 수(회원당 최신 결과 1건 기준). */
+  totalMembers: number;
+  /** 영역별 정답률 분포 — 표본이 최소치 미만인 영역은 생략(undefined). */
+  areas: Partial<Record<DiagnosticArea, PeerAreaStat>>;
+  /** 논문 작성 준비도 분포 (표본 부족 시 undefined). */
+  paperReadiness?: PeerReadinessStat;
+  /** 연구 분석 준비도 분포 (표본 부족 시 undefined). */
+  analysisReadiness?: PeerReadinessStat;
+}
+
+/**
+ * 백분위(percentile) — 내 값이 동료 분포 중 몇 % 이상인지(0~100, 반올림).
+ * @param myValue 내 점수(0~100)
+ * @param sortedAsc 동료 값들의 오름차순 정렬 배열(내 값 포함 여부 무관)
+ * 표본이 비면 null(표시 보류). 동점은 "이하" 비율로 계산(상위 N% 직관).
+ */
+export function percentileRank(
+  myValue: number,
+  sortedAsc: number[],
+): number | null {
+  if (sortedAsc.length === 0) return null;
+  let atOrBelow = 0;
+  for (const v of sortedAsc) {
+    if (v <= myValue) atOrBelow += 1;
+    else break; // 정렬되어 있으므로 조기 종료
+  }
+  return Math.round((atOrBelow / sortedAsc.length) * 100);
+}
+
+/** 평균·중앙값 산출 헬퍼 — 빈 배열이면 0. 분포 집계 서버/클라 공용. */
+export function avgMedian(values: number[]): { avg: number; median: number } {
+  if (values.length === 0) return { avg: 0, median: 0 };
+  const sorted = [...values].sort((a, b) => a - b);
+  const avg = Math.round(sorted.reduce((s, v) => s + v, 0) / sorted.length);
+  const mid = Math.floor(sorted.length / 2);
+  const median =
+    sorted.length % 2 === 0
+      ? Math.round((sorted[mid - 1] + sorted[mid]) / 2)
+      : sorted[mid];
+  return { avg, median };
+}
+
 // ── 후속 단계 TODO (MVP 이후) ──
 // TODO(diagnostic): 동적 문항 생성 — 아카이브 개념 description 으로 LLM 객관식 자동 생성.
 // TODO(diagnostic): 적응형(adaptive) — 직전 정오답에 따라 다음 문항 난이도/영역 조정 (IRT 기반).

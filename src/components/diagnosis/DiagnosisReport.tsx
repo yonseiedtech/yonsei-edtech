@@ -25,6 +25,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { flashcardsApi } from "@/lib/bkend";
 import type { WrongCardSeed } from "@/types";
+import PeerComparison, {
+  type PeerStatsPayload,
+} from "@/components/diagnosis/PeerComparison";
 import {
   COGNITIVE_LEVEL_COLORS,
   COGNITIVE_LEVEL_DESCRIPTIONS,
@@ -88,6 +91,13 @@ interface DiagnosisReportProps {
   onRetryMore?: () => void;
   /** 결과 저장 상태 표시 (선택) */
   saveState?: "idle" | "saving" | "saved" | "error";
+  /**
+   * 익명 동료 분포(피어 비교, M4). 미지정·null 이면 비교 섹션 숨김(회귀 없음).
+   * 개별 회원 식별 정보는 포함하지 않는 집계만.
+   */
+  peerStats?: PeerStatsPayload | null;
+  /** 동료 분포 로딩 중 표시 */
+  peerLoading?: boolean;
 }
 
 /** 준비도 수준 라벨·색상 */
@@ -169,6 +179,8 @@ export default function DiagnosisReport({
   onRetry,
   onRetryMore,
   saveState = "idle",
+  peerStats = null,
+  peerLoading = false,
 }: DiagnosisReportProps) {
   // 오답 카드의 "내 답" 표시용 — questionId → 내가 고른 답 텍스트(전체 리뷰에서 도출)
   const myAnswerById = useMemo(() => {
@@ -284,6 +296,17 @@ export default function DiagnosisReport({
           })}
         </CardContent>
       </Card>
+
+      {/* 피어 비교 — 익명 동료 분포 대비 내 위치 (M4). peerStats 미지정/로딩 시에만 노출 판단 */}
+      {(peerStats || peerLoading) && (
+        <PeerComparison
+          areaScores={areaScores}
+          paperReadiness={paperReadiness}
+          analysisReadiness={analysisReadiness}
+          peer={peerStats}
+          loading={peerLoading}
+        />
+      )}
 
       {/* 인지수준(Bloom)별 정답률 — 태깅 문항이 있을 때만 */}
       {hasCognitive && (

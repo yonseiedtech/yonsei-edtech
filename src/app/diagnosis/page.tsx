@@ -45,6 +45,7 @@ import DiagnosisReport, {
   type ReviewItem,
   type WeakConcept,
 } from "@/components/diagnosis/DiagnosisReport";
+import type { PeerStatsPayload } from "@/components/diagnosis/PeerComparison";
 
 type Phase = "landing" | "running" | "report";
 
@@ -175,6 +176,9 @@ export default function DiagnosisPage() {
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   // 준비도(영역 숙련도) 누적 집계용 — 본인의 과거 결과 correctQuestionIds union
   const [priorResults, setPriorResults] = useState<DiagnosticResult[]>([]);
+  // 피어 비교(M4) — 익명 동료 분포. 로그인 회원만 로드, 미로그인/실패 시 null(섹션 숨김).
+  const [peerStats, setPeerStats] = useState<PeerStatsPayload | null>(null);
+  const [peerLoading, setPeerLoading] = useState(false);
 
   // ── 문항 풀 + 개념 로드 ──
   useEffect(() => {
@@ -412,6 +416,21 @@ export default function DiagnosisPage() {
     setReviewItems(reviews);
     setPhase("report");
 
+    // 피어 비교(M4) 익명 동료 분포 로드 — 로그인 회원만. 실패해도 리포트 동작에 영향 없음.
+    if (user) {
+      setPeerLoading(true);
+      diagnosticResultsApi
+        .fetchPeerStats()
+        .then((stats) => setPeerStats(stats))
+        .catch((err) => {
+          console.error("[diagnosis] peer stats load failed", err);
+          setPeerStats(null);
+        })
+        .finally(() => setPeerLoading(false));
+    } else {
+      setPeerStats(null);
+    }
+
     // 결과 저장 (로그인 사용자만)
     if (user) {
       setSaveState("saving");
@@ -443,6 +462,8 @@ export default function DiagnosisPage() {
     setWrongItems([]);
     setReviewItems([]);
     setSaveState("idle");
+    setPeerStats(null);
+    setPeerLoading(false);
     setPhase("landing");
   };
 
@@ -515,6 +536,8 @@ export default function DiagnosisPage() {
               onRetryMore={handleRetry}
               userId={user?.id ?? null}
               saveState={saveState}
+              peerStats={peerStats}
+              peerLoading={peerLoading}
             />
           )}
         </div>
