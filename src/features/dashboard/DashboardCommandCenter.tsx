@@ -107,7 +107,7 @@ export default function DashboardCommandCenter() {
         primary: { value: `${upcomingEvents}`, caption: "다가오는 모임" },
         secondary: { value: `${activePos}`, caption: "내 활동" },
         // 빈 상태(예정 모임·내 활동 모두 0): 시작 유도 문구로 분기 (여정 문서 High ①)
-        cta: upcomingEvents === 0 && activePos === 0 ? "모임 둘러보기" : "모임·네트워킹",
+        cta: upcomingEvents === 0 && activePos === 0 ? "모임 둘러보기" : "모임·행사",
         badge: eventBadge,
       },
       {

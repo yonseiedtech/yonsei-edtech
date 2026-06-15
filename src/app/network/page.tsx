@@ -1,9 +1,11 @@
 "use client";
 
 /**
- * 전공 네트워킹 Map 페이지 (major-network-map MVP)
+ * 회원 관계망 Map 페이지 (major-network-map MVP)
  *
  * /network — AuthGuard, 100명 이하 회원 가정 단일 스레드 빌드.
+ *
+ * 용어 정리(M1): 회원 간 연결망(관계 시각화) 전담. 모임·행사·회비는 /gatherings("모임·행사").
  */
 
 import { useMemo, useState } from "react";
@@ -89,8 +91,8 @@ function NetworkPageContent() {
         {/* ── 페이지 헤더 ── */}
         <PageHeader
           icon={NetworkIcon}
-          title="전공 네트워킹 Map"
-          description="동기·신분 유형 기반으로 회원 간 연결망을 시각화합니다. 노드 클릭 시 회원 정보 미니 카드가 표시됩니다."
+          title="회원 관계망 Map"
+          description="동기·신분 유형 기반으로 회원 간 연결망을 시각화합니다. 노드 클릭 시 회원 정보 미니 카드가 표시됩니다. (모임·행사 신청은 '모임·행사' 페이지에서 진행합니다.)"
         />
 
         <Separator className="mt-6" />

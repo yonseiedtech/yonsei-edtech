@@ -113,7 +113,7 @@ const PUBLIC_NAV: NavGroup[] = [
       {
         sectionLabel: "구성원·네트워크",
         links: [
-          { href: "/gatherings", label: "모임·네트워킹" },
+          { href: "/gatherings", label: "모임·행사" },
           { href: "/members?tab=student", label: "재학생 회원" },
           { href: "/members?tab=alumni", label: "졸업생 회원" },
         ],
@@ -189,7 +189,7 @@ const PUBLIC_NAV: NavGroup[] = [
       { href: "/card-news", label: "카드뉴스" },
       { href: "/gallery", label: "포토갤러리" },
       { href: "/journal", label: "연구지 (Journal)" },
-      { href: "/network", label: "전공 네트워킹 Map" },
+      { href: "/network", label: "회원 관계망 Map" },
     ],
   },
 ];

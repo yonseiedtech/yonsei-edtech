@@ -1,9 +1,12 @@
 "use client";
 
 /**
- * 모임·네트워킹 (회원용) — 사이클 73
+ * 모임·행사 (회원용) — 사이클 73
  * 대학원 생활 행사(개강/종강총회·정기/수시모임·MT)의 참석 신청과 내 회비 상태 확인.
  * 로그인 회원은 참석/불참/미정 신청, 비로그인 방문자는 게스트로 신청 가능.
+ *
+ * 용어 정리(M1): 회원 간 연결망 시각화는 /network("회원 관계망 Map")가 담당.
+ * 본 페이지는 행사·회비 중심으로, "네트워킹" 용어 중첩을 제거함.
  */
 
 import { useMemo, useState } from "react";
@@ -94,8 +97,8 @@ export default function GatheringsPage() {
     <PageContainer width="default">
       <PageHeader
         icon={Users}
-        title="모임·네트워킹"
-        description="개강·종강총회, 정기·수시모임, MT 등 대학원 생활 행사의 참석 신청과 회비 납부 현황을 확인하세요."
+        title="모임·행사"
+        description="개강·종강총회, 정기·수시모임, MT 등 대학원 생활 행사의 참석 신청과 회비 납부 현황을 확인하세요. (회원 간 연결망은 '회원 관계망 Map'에서 확인할 수 있습니다.)"
       />
 
       {isLoading ? (
