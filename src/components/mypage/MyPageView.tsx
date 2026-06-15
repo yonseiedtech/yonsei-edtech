@@ -69,6 +69,7 @@ import ProfileOnboardingBadges from "@/components/profile/ProfileOnboardingBadge
 import ARCSPanel from "@/features/mypage/ARCSPanel";
 import ConnectivismPanel from "@/features/mypage/ConnectivismPanel";
 import DiagnosticWeakConceptPath from "@/components/mypage/DiagnosticWeakConceptPath";
+import MyActivityHub from "@/components/mypage/MyActivityHub";
 import { useAuth } from "@/features/auth/useAuth";
 import { ROLE_LABELS, ENROLLMENT_STATUS_LABELS } from "@/types";
 import { formatDate } from "@/lib/utils";
@@ -1016,6 +1017,18 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
 
           {activeTab === "activities" && (
             <div className="space-y-4">
+              {/* 내 활동 허브 — 신청·참여한 세미나·학술활동·모임 통합 (UX 보고서 §3.1 / M2). 본인만. */}
+              {isSelf && !readOnly && (
+                <div className="rounded-2xl border bg-card p-5">
+                  <MyActivityHub
+                    userId={userId}
+                    mySeminars={mySeminars}
+                    allActivities={allActivities}
+                    myActivities={myActivities}
+                    applicationByActivity={applicationByActivity}
+                  />
+                </div>
+              )}
               <p className="text-sm text-muted-foreground">
                 학술활동·수료증·내 글·인터뷰를 한 화면에서 관리할 수 있습니다.
               </p>
