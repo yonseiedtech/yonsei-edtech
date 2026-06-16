@@ -191,3 +191,5 @@ R1(264d0bd8 복습알림 cron) 포함 일괄. 연구모형→연구문제 자동
 
 ## 사이클 150 — 연구 진행도 위젯(M1)·운영 인사이트 액션화(M3) (2026-06-16)
 M1 내 논문 진행도 X
+## 사이클 151 — UI 중립색 slate to 시맨틱 토큰 마이그레이션 라운드1 (2026-06-16)
+AttendanceChecklist, ProfileAcademicActivities, EduTechOverview의 slate 중립색 11건을 border/muted/muted-foreground 토큰으로(시각회귀0). 상태색(blue/emerald/rose)은 StatusBadge 농도 정렬 선행 필요로 보류.

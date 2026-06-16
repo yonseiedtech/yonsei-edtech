@@ -302,8 +302,8 @@ export default function EduTechOverview() {
                   📜 정의의 진화 1994 → 2008 → 2023
                 </p>
                 <div className="mt-2 space-y-2">
-                  <div className="rounded-md border-l-4 border-l-slate-300 bg-muted/30 p-2 dark:border-l-slate-600">
-                    <p className="text-[10px] font-semibold text-slate-700 dark:text-slate-300">1994 (Seels &amp; Richey)</p>
+                  <div className="rounded-md border-l-4 border-l-border bg-muted/30 p-2">
+                    <p className="text-[10px] font-semibold text-muted-foreground">1994 (Seels &amp; Richey)</p>
                     <p className="text-[11px] italic text-foreground/80">
                       &ldquo;Theory and practice of design, development, utilization, management, evaluation of processes and resources for learning.&rdquo;
                     </p>
@@ -312,7 +312,7 @@ export default function EduTechOverview() {
                     </p>
                   </div>
                   <div className="rounded-md border-l-4 border-l-sky-300 bg-sky-50/40 p-2 dark:border-l-sky-700 dark:bg-sky-950/30">
-                    <p className="text-[10px] font-semibold text-slate-700 dark:text-slate-300">2008</p>
+                    <p className="text-[10px] font-semibold text-muted-foreground">2008</p>
                     <p className="text-[11px] italic text-foreground/80">
                       &ldquo;Study and ethical practice of facilitating learning and improving performance by creating, using, and managing appropriate technological processes and resources.&rdquo;
                     </p>
@@ -321,7 +321,7 @@ export default function EduTechOverview() {
                     </p>
                   </div>
                   <div className="rounded-md border-l-4 border-l-sky-500 bg-sky-100/60 p-2 dark:bg-sky-900/40">
-                    <p className="text-[10px] font-semibold text-slate-700 dark:text-slate-300">2023 (최신)</p>
+                    <p className="text-[10px] font-semibold text-muted-foreground">2023 (최신)</p>
                     <p className="text-[11px] italic text-foreground/80">
                       &ldquo;Ethical study and application … advance knowledge, improve learning and performance, and empower learners … learning experiences and environments using appropriate processes and resources.&rdquo;
                     </p>
