@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
+import { todayYmdKst } from "@/lib/dday";
 
 /**
  * 강의 후기 todo 자동 생성 Cron (매일 13:00 UTC = 22:00 KST)
@@ -18,16 +19,6 @@ import { verifyCronAuth } from "@/lib/cron-auth";
 
 function pad2(n: number): string {
   return String(n).padStart(2, "0");
-}
-
-function todayYmdKst(now: Date = new Date()): string {
-  const fmt = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  return fmt.format(now);
 }
 
 function addDaysYmd(ymd: string, days: number): string {

@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
+import { todayYmdKst } from "@/lib/dday";
 
 /**
  * 주간 다이제스트 이메일 cron — Sprint 54
@@ -67,16 +68,6 @@ interface PersonalDigest {
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
-
-function todayYmdKst(now: Date = new Date()): string {
-  const fmt = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  return fmt.format(now);
 }
 
 /** YYYY-MM-DD(KST) 문자열을 일 단위로 가감 — 지난주 경계 계산용 */

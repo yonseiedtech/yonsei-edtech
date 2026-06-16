@@ -3,6 +3,7 @@ import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { sendPushToUsers, filterRecipientsByPreference } from "@/lib/push-admin";
 import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
+import { tomorrowYmdKst } from "@/lib/dday";
 
 /**
  * 세미나 D-1 push 알림 — Seminar Push (Sprint 6 extension)
@@ -14,28 +15,6 @@ import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
  * 기존 seminar-reminder cron 은 이메일만 보냄 → 일관성을 위해 push 알림 채널 추가.
  * 중복 방지: push_logs/seminar_push_reminder_<seminarId>
  */
-
-function pad2(n: number): string {
-  return String(n).padStart(2, "0");
-}
-
-function todayYmdKst(now: Date = new Date()): string {
-  const fmt = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  return fmt.format(now);
-}
-
-function tomorrowYmdKst(now: Date = new Date()): string {
-  const today = todayYmdKst(now);
-  const [y, m, d] = today.split("-").map(Number);
-  const next = new Date(Date.UTC(y, m - 1, d));
-  next.setUTCDate(next.getUTCDate() + 1);
-  return `${next.getUTCFullYear()}-${pad2(next.getUTCMonth() + 1)}-${pad2(next.getUTCDate())}`;
-}
 
 export async function GET(req: NextRequest) {
   if (!verifyCronAuth(req)) {

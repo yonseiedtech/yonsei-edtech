@@ -113,3 +113,23 @@ export function todayYmdKst(now: Date = new Date()): string {
   });
   return fmt.format(now);
 }
+
+function pad2(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+/** KST 기준 어제 날짜(YYYY-MM-DD). 서버사이드(UTC)에서도 정확. */
+export function yesterdayYmdKst(now: Date = new Date()): string {
+  const [y, m, d] = todayYmdKst(now).split("-").map(Number);
+  const prev = new Date(Date.UTC(y, m - 1, d));
+  prev.setUTCDate(prev.getUTCDate() - 1);
+  return `${prev.getUTCFullYear()}-${pad2(prev.getUTCMonth() + 1)}-${pad2(prev.getUTCDate())}`;
+}
+
+/** KST 기준 내일 날짜(YYYY-MM-DD). 서버사이드(UTC)에서도 정확. */
+export function tomorrowYmdKst(now: Date = new Date()): string {
+  const [y, m, d] = todayYmdKst(now).split("-").map(Number);
+  const next = new Date(Date.UTC(y, m - 1, d));
+  next.setUTCDate(next.getUTCDate() + 1);
+  return `${next.getUTCFullYear()}-${pad2(next.getUTCMonth() + 1)}-${pad2(next.getUTCDate())}`;
+}

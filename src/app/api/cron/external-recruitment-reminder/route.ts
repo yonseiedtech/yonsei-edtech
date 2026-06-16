@@ -3,6 +3,7 @@ import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { sendPushToUsers, filterRecipientsByPreference } from "@/lib/push-admin";
 import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
+import { tomorrowYmdKst } from "@/lib/dday";
 
 /**
  * 대외 학술대회 모집 시작/마감 D-1 push 알림 — 매일 09:00 KST (UTC 00:00) 실행.
@@ -16,28 +17,6 @@ import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
  *
  * 옵트아웃: users.notificationPrefs.pushExternalRecruitment === false 인 사용자 제외.
  */
-
-function pad2(n: number): string {
-  return String(n).padStart(2, "0");
-}
-
-function todayYmdKst(now: Date = new Date()): string {
-  const fmt = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  return fmt.format(now);
-}
-
-function tomorrowYmdKst(now: Date = new Date()): string {
-  const today = todayYmdKst(now);
-  const [y, m, d] = today.split("-").map(Number);
-  const next = new Date(Date.UTC(y, m - 1, d));
-  next.setUTCDate(next.getUTCDate() + 1);
-  return `${next.getUTCFullYear()}-${pad2(next.getUTCMonth() + 1)}-${pad2(next.getUTCDate())}`;
-}
 
 /** ISO 문자열(또는 datetime-local 문자열)을 ms 로 파싱. 실패 시 null. */
 function parseMs(value: unknown): number | null {

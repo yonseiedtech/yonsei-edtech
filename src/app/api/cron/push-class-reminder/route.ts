@@ -3,6 +3,7 @@ import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { sendPushToUsers, filterRecipientsByPreference } from "@/lib/push-admin";
 import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
+import { todayYmdKst } from "@/lib/dday";
 
 /**
  * 오늘 수업 안내 푸시 — Sprint 53 (Vercel Hobby 호환 daily 버전)
@@ -21,16 +22,6 @@ const DAY_NAMES_KO = ["일", "월", "화", "수", "목", "금", "토"] as const;
 
 function pad2(n: number): string {
   return String(n).padStart(2, "0");
-}
-
-function todayYmdKst(now: Date = new Date()): string {
-  const fmt = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  return fmt.format(now);
 }
 
 function nowKstWeekday(now: Date = new Date()): number {

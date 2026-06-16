@@ -3,6 +3,7 @@ import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { sendPushToUsers, filterRecipientsByPreference } from "@/lib/push-admin";
 import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
+import { todayYmdKst } from "@/lib/dday";
 
 /**
  * 암기카드 복습 알림 push — 2차 백로그 v2-R1
@@ -25,16 +26,6 @@ import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
 
 /** 복습 알림 발송 임계(due 카드 수). 운영진 결정 항목 — 기본 1장. */
 const REVIEW_THRESHOLD = 1;
-
-function todayYmdKst(now: Date = new Date()): string {
-  const fmt = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  return fmt.format(now);
-}
 
 export async function GET(req: NextRequest) {
   if (!verifyCronAuth(req)) {

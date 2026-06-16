@@ -199,3 +199,6 @@ design-tokens SEMANTIC chip 토큰 + StatusBadge 전역 variant(success/danger/w
 
 ## 사이클 153 — UI 상태색 마이그레이션 라운드2·콘텐츠 자동초안(M5) (2026-06-16)
 상태색(DiagnosisReport·ProfileAcademicActivities·MyActivitiesView·AttendanceChecklist)을 StatusBadge/STATUS_CHIP 토큰으로(회귀0). M5 세미나/활동 데이터->안내문·카드뉴스·뉴스레터 초안 자동생성(운영진 검수발행).
+
+## 사이클 154 — 기술부채 정리 L2 (2026-06-16)
+boards 잔존 정리·cron 공통 수신자필터/로깅 유틸 추출(18종 중복제거·동작동일)·network/networking 용어 코드 일관화.

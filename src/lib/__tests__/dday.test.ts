@@ -11,6 +11,8 @@ import {
   isDueToday,
   todayYmdLocal,
   todayYmdKst,
+  tomorrowYmdKst,
+  yesterdayYmdKst,
 } from "@/lib/dday";
 
 /** 특정 날짜·시간의 Date 객체 생성 (로컬 시간 기준) */
@@ -157,5 +159,37 @@ describe("todayYmdKst", () => {
     const utcDate = new Date("2026-05-12T23:59:00Z");
     const result = todayYmdKst(utcDate);
     expect(result).toBe("2026-05-13");
+  });
+});
+
+describe("tomorrowYmdKst", () => {
+  it("KST 기준 다음날을 반환", () => {
+    const utcDate = new Date("2026-05-13T01:00:00+09:00");
+    expect(tomorrowYmdKst(utcDate)).toBe("2026-05-14");
+  });
+
+  it("월말 경계를 넘김", () => {
+    // 2026-05-31 23:00 KST → 2026-06-01
+    const utcDate = new Date("2026-05-31T23:00:00+09:00");
+    expect(tomorrowYmdKst(utcDate)).toBe("2026-06-01");
+  });
+
+  it("UTC 자정 직전(KST 오전)에도 KST 날짜의 다음날", () => {
+    // 2026-05-12 23:59 UTC = 2026-05-13 08:59 KST → 다음날 05-14
+    const utcDate = new Date("2026-05-12T23:59:00Z");
+    expect(tomorrowYmdKst(utcDate)).toBe("2026-05-14");
+  });
+});
+
+describe("yesterdayYmdKst", () => {
+  it("KST 기준 전날을 반환", () => {
+    const utcDate = new Date("2026-05-13T01:00:00+09:00");
+    expect(yesterdayYmdKst(utcDate)).toBe("2026-05-12");
+  });
+
+  it("월초 경계를 넘김", () => {
+    // 2026-06-01 09:00 KST → 2026-05-31
+    const utcDate = new Date("2026-06-01T09:00:00+09:00");
+    expect(yesterdayYmdKst(utcDate)).toBe("2026-05-31");
   });
 });

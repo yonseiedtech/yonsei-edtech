@@ -3,6 +3,7 @@ import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { sendPushToUsers, filterRecipientsByPreference } from "@/lib/push-admin";
 import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
+import { tomorrowYmdKst } from "@/lib/dday";
 
 /**
  * 스터디/프로젝트 회차 D-1 알림 — Study Enhancement (Sprint 6)
@@ -13,28 +14,6 @@ import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
  *
  * 중복 방지: push_logs/study_session_reminder_<progressId>
  */
-
-function pad2(n: number): string {
-  return String(n).padStart(2, "0");
-}
-
-function todayYmdKst(now: Date = new Date()): string {
-  const fmt = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  return fmt.format(now);
-}
-
-function tomorrowYmdKst(now: Date = new Date()): string {
-  const today = todayYmdKst(now);
-  const [y, m, d] = today.split("-").map(Number);
-  const next = new Date(Date.UTC(y, m - 1, d));
-  next.setUTCDate(next.getUTCDate() + 1);
-  return `${next.getUTCFullYear()}-${pad2(next.getUTCMonth() + 1)}-${pad2(next.getUTCDate())}`;
-}
 
 export async function GET(req: NextRequest) {
   if (!verifyCronAuth(req)) {
