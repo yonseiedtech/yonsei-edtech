@@ -25,6 +25,7 @@ import {
 } from "@/types";
 import { cn } from "@/lib/utils";
 import DiagnosisHistorySection from "./DiagnosisHistorySection";
+import DiagnosisLearningLoop from "./DiagnosisLearningLoop";
 
 /** 개인화 진단 설정 — 사용자가 직접 구성한 진단 조건 */
 export interface CustomDiagnosisConfig {
@@ -343,6 +344,9 @@ export default function DiagnosisLanding({
 
       {/* 진단 이력 + 약점 영역 그래프 (로그인 사용자 전용) */}
       {userId && <DiagnosisHistorySection userId={userId} />}
+
+      {/* 학습효과 증명루프 — 진단↔복습 상관 (로그인 사용자 전용, R4) */}
+      {userId && <DiagnosisLearningLoop userId={userId} />}
     </div>
   );
 }

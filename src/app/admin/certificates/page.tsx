@@ -37,6 +37,18 @@ type TypeFilter = "all" | "completion" | "appreciation" | "appointment";
 const FONT_DEFAULT = "'Hahmlet', serif";
 const BORDER_COLOR = "#003378";
 
+/** 안전한 한국어 날짜 포맷 — invalid/빈 값이면 fallback 반환 ("Invalid Date" 노출 방지) */
+function formatKoDate(
+  value: string | undefined | null,
+  opts?: Intl.DateTimeFormatOptions,
+  fallback = "-",
+): string {
+  if (!value) return fallback;
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return fallback;
+  return d.toLocaleDateString("ko-KR", opts);
+}
+
 function loadSavedAreaStyles(): Record<AreaKey, AreaStyle> {
   if (typeof window === "undefined") return { ...DEFAULT_AREA_STYLES };
   try {
@@ -131,7 +143,7 @@ export default function CertificatesPage() {
 
   const filtered = certificates.filter((c: Certificate) => {
     if (typeFilter !== "all" && c.type !== typeFilter) return false;
-    if (search && !c.recipientName.includes(search)) return false;
+    if (search && !(c.recipientName ?? "").includes(search)) return false;
     return true;
   });
 
@@ -422,9 +434,10 @@ export default function CertificatesPage() {
   // CertificatePreview용 props 생성
   function buildPreviewProps(cert: Certificate) {
     const seminar = seminars.find((s) => s.id === cert.seminarId);
-    const dateStr = cert.issuedAt || new Date().toISOString();
-    const semester = inferSemester(dateStr);
-    const seminarDate = new Date(dateStr).toLocaleDateString("ko-KR", {
+    const rawDate = cert.issuedAt || new Date().toISOString();
+    const safeDate = isNaN(new Date(rawDate).getTime()) ? new Date().toISOString() : rawDate;
+    const semester = inferSemester(safeDate);
+    const seminarDate = formatKoDate(safeDate, {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -437,7 +450,7 @@ export default function CertificatesPage() {
       seminarTitle: cert.seminarTitle || seminar?.title || "",
       seminarDate,
       semester,
-      recipientName: cert.recipientName,
+      recipientName: cert.recipientName ?? "",
       certificateNo: cert.certificateNo || "",
       bodyText,
       style: { fontFamily: FONT_DEFAULT, borderColor: BORDER_COLOR },
@@ -583,7 +596,7 @@ export default function CertificatesPage() {
                     </span>
                   </td>
                   <td className="px-2 py-2 text-muted-foreground sm:px-4 sm:py-3">
-                    {c.issuedAt ? new Date(c.issuedAt).toLocaleDateString("ko-KR") : "-"}
+                    {formatKoDate(c.issuedAt)}
                   </td>
                   <td className="px-2 py-2 sm:px-4 sm:py-3">
                     {!c.recipientEmail ? (

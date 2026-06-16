@@ -47,6 +47,16 @@ interface PotentialMember {
   recordCount: number;
   lastActivityDate: string;
   records: PotentialRecord[];
+  /** 가입 후보 우선순위 점수 (참여수·최근성·다양성·발표자 가중). 높을수록 유력. */
+  interestScore: number;
+  /** 마지막 활동 이후 경과일 (정렬·연락 타이밍 판단용). 날짜 없으면 null. */
+  daysSinceLastActivity: number | null;
+}
+
+interface ConvertedMember {
+  studentId: string;
+  name: string;
+  joinedAt: string;
 }
 
 interface Bucket {
@@ -57,6 +67,31 @@ interface Bucket {
   records: PotentialRecord[];
 }
 
+const DAY_MS = 86_400_000;
+
+/** 가입 후보 우선순위 점수 — 참여수·최근성·종류 다양성·발표자 가중 합산 */
+function computeInterestScore(
+  records: PotentialRecord[],
+  daysSince: number | null,
+): number {
+  if (records.length === 0) return 0;
+  // 참여 건수 (건당 10점, 상한 60)
+  let score = Math.min(records.length * 10, 60);
+  // 활동·세미나 양쪽 다 참여하면 다양성 보너스
+  const hasActivity = records.some((r) => r.kind === "activity");
+  const hasSeminar = records.some((r) => r.kind === "seminar");
+  if (hasActivity && hasSeminar) score += 15;
+  // 발표자/자원봉사자로 참여한 적 있으면 높은 관여도 가중
+  if (records.some((r) => r.participantType === "speaker")) score += 20;
+  else if (records.some((r) => r.participantType === "volunteer")) score += 10;
+  // 최근성 — 30일 이내 +25, 90일 이내 +10, 그 외 0
+  if (daysSince != null) {
+    if (daysSince <= 30) score += 25;
+    else if (daysSince <= 90) score += 10;
+  }
+  return score;
+}
+
 export async function GET(req: NextRequest) {
   const authResult = await requireAuth(req, "staff");
   if (authResult instanceof NextResponse) return authResult;
@@ -65,14 +100,28 @@ export async function GET(req: NextRequest) {
     const db = getAdminDb();
 
     // ── 승인 회원의 학번 집합 (이미 회원인 학번 제외용) ──
+    // 더불어 최근 30일 내 가입한 회원을 "전환 추적" 후보로 수집한다.
     const usersSnap = await db.collection("users").get();
     const memberStudentIds = new Set<string>();
+    const recentJoins: ConvertedMember[] = [];
+    const nowMs = Date.now();
     for (const doc of usersSnap.docs) {
       const u = doc.data() as Record<string, unknown>;
       if (u.approved === false || u.rejected === true) continue;
       const sid = normalizeStudentId(u.studentId) || normalizeStudentId(u.username);
       if (sid) memberStudentIds.add(sid);
+
+      const createdAt = (u.createdAt as string) || "";
+      const t = createdAt ? Date.parse(createdAt) : NaN;
+      if (!Number.isNaN(t) && nowMs - t <= 30 * DAY_MS) {
+        recentJoins.push({
+          studentId: sid,
+          name: ((u.name as string) ?? "").trim() || "(이름 미상)",
+          joinedAt: createdAt,
+        });
+      }
     }
+    recentJoins.sort((a, b) => (b.joinedAt || "").localeCompare(a.joinedAt || ""));
 
     // 학번 보유 잠재회원: studentId → Bucket
     // 학번 미보유: "이름|이메일" → Bucket
@@ -161,26 +210,52 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    // ── 게스트 이력 보유 학번 집합 (전환 추적용) ──
+    // 버킷이 만들어졌던 학번 = 가입 전 게스트 이력이 있었던 학번.
+    const guestStudentIds = new Set<string>();
+    for (const b of buckets.values()) {
+      if (b.studentId) guestStudentIds.add(b.studentId);
+    }
+
     // ── 응답 조립 ──
     const potentialMembers: PotentialMember[] = [...buckets.values()]
       .map((b) => {
         const dates = b.records.map((rec) => rec.date).filter(Boolean).sort();
+        const lastActivityDate = dates.length > 0 ? dates[dates.length - 1] : "";
+        const lastTs = lastActivityDate ? Date.parse(lastActivityDate) : NaN;
+        const daysSinceLastActivity = Number.isNaN(lastTs)
+          ? null
+          : Math.max(0, Math.floor((nowMs - lastTs) / DAY_MS));
+        const sortedRecords = b.records.sort((x, y) =>
+          (y.date || "").localeCompare(x.date || ""),
+        );
         return {
           studentId: b.studentId,
           name: b.name || "(이름 미상)",
           email: b.email,
           phone: b.phone,
           recordCount: b.records.length,
-          lastActivityDate: dates.length > 0 ? dates[dates.length - 1] : "",
-          records: b.records.sort((x, y) => (y.date || "").localeCompare(x.date || "")),
+          lastActivityDate,
+          records: sortedRecords,
+          daysSinceLastActivity,
+          interestScore: computeInterestScore(sortedRecords, daysSinceLastActivity),
         };
       })
       .sort((a, b) => {
+        if (b.interestScore !== a.interestScore) return b.interestScore - a.interestScore;
         if (b.recordCount !== a.recordCount) return b.recordCount - a.recordCount;
         return (b.lastActivityDate || "").localeCompare(a.lastActivityDate || "");
       });
 
-    return NextResponse.json({ potentialMembers });
+    // 최근 30일 가입자 중 게스트 이력이 있던 = 잠재회원 → 정회원 전환 성공 사례.
+    const recentConversions = recentJoins.filter(
+      (m) => m.studentId && guestStudentIds.has(m.studentId),
+    );
+
+    return NextResponse.json({
+      potentialMembers,
+      recentConversions,
+    });
   } catch (err) {
     console.error("[/api/console/potential-members]", err);
     return NextResponse.json(

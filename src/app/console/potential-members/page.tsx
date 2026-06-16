@@ -9,7 +9,19 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { UserPlus, Loader2, Sparkles, Globe, BookOpen } from "lucide-react";
+import { toast } from "sonner";
+import {
+  UserPlus,
+  Loader2,
+  Sparkles,
+  Globe,
+  BookOpen,
+  Flame,
+  Mail,
+  Phone,
+  Link2,
+  CheckCircle2,
+} from "lucide-react";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { auth as firebaseAuth } from "@/lib/firebase";
 import { Input } from "@/components/ui/input";
@@ -36,6 +48,19 @@ interface PotentialMember {
   recordCount: number;
   lastActivityDate: string;
   records: PotentialRecord[];
+  interestScore: number;
+  daysSinceLastActivity: number | null;
+}
+
+interface ConvertedMember {
+  studentId: string;
+  name: string;
+  joinedAt: string;
+}
+
+interface PotentialMembersResponse {
+  potentialMembers: PotentialMember[];
+  recentConversions: ConvertedMember[];
 }
 
 function formatDate(raw: string): string {
@@ -45,7 +70,42 @@ function formatDate(raw: string): string {
   return d.toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" });
 }
 
-async function fetchPotentialMembers(): Promise<PotentialMember[]> {
+/** 관심도 점수 → 가입 후보 우선순위 등급 (운영진 연락 우선순위 판단용) */
+function interestTier(score: number): { label: string; className: string } {
+  if (score >= 90)
+    return {
+      label: "매우 유력",
+      className:
+        "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300",
+    };
+  if (score >= 60)
+    return {
+      label: "유력",
+      className:
+        "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
+    };
+  if (score >= 30)
+    return {
+      label: "관심",
+      className:
+        "bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300",
+    };
+  return {
+    label: "기본",
+    className: "bg-muted text-muted-foreground",
+  };
+}
+
+/** 마지막 활동 경과일을 사람이 읽기 쉬운 형태로 */
+function recencyLabel(days: number | null): string {
+  if (days == null) return "";
+  if (days <= 1) return "오늘";
+  if (days <= 30) return `${days}일 전`;
+  if (days <= 365) return `${Math.round(days / 30)}개월 전`;
+  return `${Math.round(days / 365)}년+ 전`;
+}
+
+async function fetchPotentialMembers(): Promise<PotentialMembersResponse> {
   const token = await firebaseAuth.currentUser?.getIdToken();
   const res = await fetch("/api/console/potential-members", {
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
@@ -54,8 +114,94 @@ async function fetchPotentialMembers(): Promise<PotentialMember[]> {
     const err = await res.json().catch(() => ({}));
     throw new Error(err?.error ?? `HTTP ${res.status}`);
   }
-  const data = (await res.json()) as { potentialMembers: PotentialMember[] };
-  return data.potentialMembers ?? [];
+  const data = (await res.json()) as PotentialMembersResponse;
+  return {
+    potentialMembers: data.potentialMembers ?? [],
+    recentConversions: data.recentConversions ?? [],
+  };
+}
+
+/** 가입 안내 메일 본문 — 이름·이력 건수를 채운 follow-up 템플릿 */
+function buildInviteMailto(m: PotentialMember): string {
+  const subject = "[연세대 교육공학] 회원 가입 안내";
+  const origin =
+    typeof window !== "undefined" ? window.location.origin : "";
+  const body = [
+    `${m.name}님, 안녕하세요. 연세대학교 교육대학원 교육공학전공 학회입니다.`,
+    "",
+    `학회 학술대회·세미나에 ${m.recordCount}회 참여해 주셔서 감사합니다.`,
+    "회원으로 가입하시면 그동안의 참여 이력이 자동으로 연동되고,",
+    "스터디·세미나·연구 지원 등 회원 전용 활동에 참여하실 수 있습니다.",
+    "",
+    `가입하기: ${origin}/signup`,
+    "",
+    "감사합니다.",
+  ].join("\n");
+  return `mailto:${m.email ?? ""}?subject=${encodeURIComponent(
+    subject,
+  )}&body=${encodeURIComponent(body)}`;
+}
+
+/** 팔로업 액션 버튼 — 메일·전화·가입링크 복사 */
+function FollowUpActions({ m }: { m: PotentialMember }) {
+  const inviteLink =
+    typeof window !== "undefined" ? `${window.location.origin}/signup` : "/signup";
+
+  async function copyInvite() {
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      toast.success("가입 링크를 복사했습니다");
+    } catch {
+      toast.error("복사에 실패했습니다");
+    }
+  }
+
+  const btn =
+    "inline-flex h-7 w-7 items-center justify-center rounded-md border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40";
+
+  return (
+    <div className="flex items-center gap-1">
+      <a
+        href={m.email ? buildInviteMailto(m) : undefined}
+        className={btn}
+        aria-disabled={!m.email}
+        title={m.email ? "가입 안내 메일 보내기" : "이메일 없음"}
+        onClick={(e) => {
+          if (!m.email) e.preventDefault();
+        }}
+      >
+        <Mail size={14} />
+      </a>
+      <a
+        href={m.phone ? `tel:${m.phone}` : undefined}
+        className={btn}
+        aria-disabled={!m.phone}
+        title={m.phone ? "전화 걸기" : "연락처 없음"}
+        onClick={(e) => {
+          if (!m.phone) e.preventDefault();
+        }}
+      >
+        <Phone size={14} />
+      </a>
+      <button type="button" className={btn} title="가입 링크 복사" onClick={copyInvite}>
+        <Link2 size={14} />
+      </button>
+    </div>
+  );
+}
+
+/** 관심도 등급 배지 */
+function InterestBadge({ score }: { score: number }) {
+  const tier = interestTier(score);
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${tier.className}`}
+      title={`관심도 점수 ${score}`}
+    >
+      <Flame size={11} className="shrink-0" />
+      {tier.label}
+    </span>
+  );
 }
 
 function RecordChip({ rec }: { rec: PotentialRecord }) {
@@ -79,15 +225,23 @@ function RecordChip({ rec }: { rec: PotentialRecord }) {
   );
 }
 
+const EMPTY_RESPONSE: PotentialMembersResponse = {
+  potentialMembers: [],
+  recentConversions: [],
+};
+
 function PotentialMembersContent() {
   const [search, setSearch] = useState("");
 
-  const { data: members = [], isLoading, error } = useQuery({
+  const { data = EMPTY_RESPONSE, isLoading, error } = useQuery({
     queryKey: ["console-potential-members"],
     queryFn: fetchPotentialMembers,
     staleTime: 60_000,
     retry: false,
   });
+
+  const members = data.potentialMembers;
+  const conversions = data.recentConversions;
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -112,10 +266,33 @@ function PotentialMembersContent() {
           <Sparkles className="mt-0.5 h-4 w-4 shrink-0" />
           <p className="leading-relaxed">
             대외 학술대회·세미나에 비회원으로 참여한 분들입니다. 회원 가입 시 학번으로
-            활동 이력이 자동 연동됩니다.
+            활동 이력이 자동 연동됩니다. <strong>관심도</strong>가 높은(참여수·최근성·발표
+            참여) 순으로 정렬되며, 각 행의 메일·전화·링크 버튼으로 바로 가입을 권유할 수 있습니다.
           </p>
         </div>
       </div>
+
+      {/* 최근 30일 잠재회원 → 정회원 전환 사례 */}
+      {!isLoading && !error && conversions.length > 0 && (
+        <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/20">
+          <div className="flex items-start gap-2">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+                최근 30일 전환 성공 {conversions.length}명
+              </p>
+              <p className="mt-0.5 text-xs text-emerald-700/80 dark:text-emerald-300/80">
+                비회원으로 참여하다 정회원으로 가입한 분들입니다 —{" "}
+                {conversions
+                  .slice(0, 8)
+                  .map((c) => c.name)
+                  .join(", ")}
+                {conversions.length > 8 ? ` 외 ${conversions.length - 8}명` : ""}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-3">
         <Input
@@ -159,6 +336,7 @@ function PotentialMembersContent() {
             <table className="w-full text-sm">
               <thead className="bg-muted/40 text-xs">
                 <tr>
+                  <th className="px-3 py-2 text-left font-medium">관심도</th>
                   <th className="px-3 py-2 text-left font-medium">이름</th>
                   <th className="px-3 py-2 text-left font-medium">학번</th>
                   <th className="px-3 py-2 text-left font-medium">이메일</th>
@@ -166,11 +344,15 @@ function PotentialMembersContent() {
                   <th className="px-3 py-2 text-left font-medium">참여 건수</th>
                   <th className="px-3 py-2 text-left font-medium">최근 활동일</th>
                   <th className="px-3 py-2 text-left font-medium">참여 이력</th>
+                  <th className="px-3 py-2 text-left font-medium">팔로업</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((m, i) => (
                   <tr key={`${m.studentId}-${m.name}-${i}`} className="border-t align-top">
+                    <td className="px-3 py-2">
+                      <InterestBadge score={m.interestScore} />
+                    </td>
                     <td className="px-3 py-2 font-medium">{m.name}</td>
                     <td className="px-3 py-2 font-mono text-xs">
                       {m.studentId || <span className="text-muted-foreground">-</span>}
@@ -184,13 +366,23 @@ function PotentialMembersContent() {
                     <td className="px-3 py-2">
                       <Badge variant="secondary">{m.recordCount}건</Badge>
                     </td>
-                    <td className="px-3 py-2 text-xs">{formatDate(m.lastActivityDate)}</td>
+                    <td className="px-3 py-2 text-xs">
+                      {formatDate(m.lastActivityDate)}
+                      {m.daysSinceLastActivity != null && (
+                        <span className="ml-1 text-muted-foreground">
+                          ({recencyLabel(m.daysSinceLastActivity)})
+                        </span>
+                      )}
+                    </td>
                     <td className="px-3 py-2">
                       <div className="flex flex-wrap gap-1">
                         {m.records.map((rec, ri) => (
                           <RecordChip key={`${rec.kind}-${rec.id}-${ri}`} rec={rec} />
                         ))}
                       </div>
+                    </td>
+                    <td className="px-3 py-2">
+                      <FollowUpActions m={m} />
                     </td>
                   </tr>
                 ))}
@@ -205,9 +397,14 @@ function PotentialMembersContent() {
                 key={`${m.studentId}-${m.name}-${i}`}
                 className="rounded-2xl border bg-card p-4"
               >
-                <div className="flex items-center justify-between">
-                  <p className="font-semibold">{m.name}</p>
-                  <Badge variant="secondary">{m.recordCount}건</Badge>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <p className="truncate font-semibold">{m.name}</p>
+                    <InterestBadge score={m.interestScore} />
+                  </div>
+                  <Badge variant="secondary" className="shrink-0">
+                    {m.recordCount}건
+                  </Badge>
                 </div>
                 <dl className="mt-2 space-y-0.5 text-xs text-muted-foreground">
                   <div className="flex gap-2">
@@ -224,13 +421,21 @@ function PotentialMembersContent() {
                   </div>
                   <div className="flex gap-2">
                     <dt className="w-16 shrink-0">최근 활동</dt>
-                    <dd>{formatDate(m.lastActivityDate)}</dd>
+                    <dd>
+                      {formatDate(m.lastActivityDate)}
+                      {m.daysSinceLastActivity != null && (
+                        <span className="ml-1">({recencyLabel(m.daysSinceLastActivity)})</span>
+                      )}
+                    </dd>
                   </div>
                 </dl>
                 <div className="mt-2 flex flex-wrap gap-1">
                   {m.records.map((rec, ri) => (
                     <RecordChip key={`${rec.kind}-${rec.id}-${ri}`} rec={rec} />
                   ))}
+                </div>
+                <div className="mt-3 flex items-center justify-end border-t pt-2">
+                  <FollowUpActions m={m} />
                 </div>
               </div>
             ))}

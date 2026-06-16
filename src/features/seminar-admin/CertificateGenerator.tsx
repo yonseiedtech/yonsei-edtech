@@ -1179,8 +1179,10 @@ export function CertificatePreview({
 
 export function inferSemester(dateStr: string): string {
   const d = new Date(dateStr);
-  const year = d.getFullYear();
-  const month = d.getMonth() + 1;
+  // invalid date 가드 — 현재 날짜로 폴백 ("NaN년" 표시 방지)
+  const safe = isNaN(d.getTime()) ? new Date() : d;
+  const year = safe.getFullYear();
+  const month = safe.getMonth() + 1;
   return `${year}년 ${month >= 3 && month <= 8 ? "1" : "2"}학기`;
 }
 
@@ -1707,9 +1709,12 @@ export default function CertificateGenerator() {
     toast.success(`${name}님 ${CERT_LABELS[certType].label} 생성 완료`);
   }
 
-  const previewDate = seminar
-    ? new Date(seminar.date).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })
-    : "";
+  const previewDate = (() => {
+    if (!seminar?.date) return "";
+    const d = new Date(seminar.date);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
+  })();
 
   return (
     <div className="flex flex-col gap-6 lg:flex-row">

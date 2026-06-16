@@ -53,11 +53,13 @@ export default function AttendanceCertificate({
 
   const formattedDate = (() => {
     const d = new Date(seminarDate);
+    if (isNaN(d.getTime())) return "-";
     return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
   })();
 
   const issuedDate = (() => {
-    const d = checkedInAt ? new Date(checkedInAt) : new Date();
+    const parsed = checkedInAt ? new Date(checkedInAt) : new Date();
+    const d = isNaN(parsed.getTime()) ? new Date() : parsed;
     return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
   })();
 

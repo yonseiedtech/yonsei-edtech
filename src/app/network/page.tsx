@@ -23,6 +23,7 @@ import NetworkGraph from "@/features/network/NetworkGraph";
 import NetworkControls from "@/features/network/NetworkControls";
 import MemberMiniDialog from "@/features/network/MemberMiniDialog";
 import NetworkAnalyticsReport from "@/features/network/NetworkAnalyticsReport";
+import CollaboratorRecommendations from "@/features/network/CollaboratorRecommendations";
 import EmptyState from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 import {
@@ -148,6 +149,15 @@ function NetworkPageContent() {
           </div>
         ) : (
           <>
+            {/* 공동 연구자 추천 — 관심사·메타데이터 기반 매칭 + 추천 근거 안내 */}
+            {(!isStaff || activeTab === "map") && user && (
+              <CollaboratorRecommendations
+                me={user}
+                users={users}
+                className="mt-6"
+              />
+            )}
+
             {/* Sprint 67-AI: 운영진 탭 (지도 / 분석 리포트) */}
             {isStaff && (
               <nav
