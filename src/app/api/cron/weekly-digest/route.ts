@@ -48,6 +48,23 @@ interface QuestionLite {
   createdAt: string;
 }
 
+/**
+ * 수신자별 "나의 한 주" 개인 요약 (R2 — 개인화 주간 다이제스트).
+ * 데이터 없는 항목은 호출부에서 줄을 생략(graceful) 한다.
+ */
+interface PersonalDigest {
+  /** 지난 7일(KST) 잔디 활동이 1건 이상 있던 distinct 일수 */
+  activeDays: number;
+  /** 지난 7일 연구/학습 타이머 누적 분 (study_sessions durationMinutes 합) */
+  timerMinutes: number;
+  /** 오늘(KST) 기준 due 인 암기카드 수 (dueAt <= todayKST) */
+  dueCards: number;
+  /** 진단 준비도 변화 — 최신 - 직전 회차 (없으면 null). { paper, analysis } */
+  readinessDelta: { paper: number; analysis: number } | null;
+  /** 미완료 온보딩 항목 라벨 (서버에서 알 수 있는 프로필 기반 항목만) */
+  onboardingTodo: string[];
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
@@ -60,6 +77,28 @@ function todayYmdKst(now: Date = new Date()): string {
     day: "2-digit",
   });
   return fmt.format(now);
+}
+
+/** YYYY-MM-DD(KST) 문자열을 일 단위로 가감 — 지난주 경계 계산용 */
+function shiftYmd(ymd: string, deltaDays: number): string {
+  const [y, m, d] = ymd.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + deltaDays);
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "UTC",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  return fmt.format(dt);
+}
+
+/** ISO(또는 Date) → KST "YYYY-MM-DD" (없거나 파싱 실패 시 null) */
+function isoToYmdKst(iso: string | undefined | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return todayYmdKst(d);
 }
 
 function isMondayKst(now: Date = new Date()): boolean {
@@ -145,7 +184,201 @@ async function loadUnansweredQuestions(db: FirebaseFirestore.Firestore): Promise
     .slice(0, 3);
 }
 
-function buildHtml({ seminars, posts, activities, questions }: { seminars: SeminarLite[]; posts: PostLite[]; activities: ActivityLite[]; questions: QuestionLite[] }): string {
+/* ────────────────────────── 개인화 집계 (R2 — 나의 한 주) ────────────────────────── */
+
+/**
+ * 수신자별 "나의 한 주" 개인 요약을 한 번의 collection-wide 조회로 집계한다.
+ * (회원 수 × 컬렉션 N 의 per-user 조회를 피하고, flashcard-review-reminder cron 과
+ *  동일하게 전수 조회 후 userId 로 그룹핑한다.)
+ *
+ * 읽기 전용 — 어떤 컬렉션도 수정하지 않는다.
+ *
+ * @param userIds 발송 후보 회원 id (그 외 회원 데이터는 결과에 담지 않음)
+ * @param usersById 회원 doc (온보딩 프로필 항목 판정용)
+ * @param todayYmd 오늘(KST) YYYY-MM-DD
+ */
+async function loadPersonalDigests(
+  db: FirebaseFirestore.Firestore,
+  userIds: string[],
+  usersById: Map<string, { bio?: string; researchInterests?: string[]; interestKeywords?: string[] }>,
+  todayYmd: string,
+): Promise<Map<string, PersonalDigest>> {
+  const wanted = new Set(userIds);
+  const weekStart = shiftYmd(todayYmd, -7); // 지난 7일 경계 (KST YMD)
+  const weekStartIso = `${weekStart}T00:00:00.000Z`; // ISO 비교용 하한(보수적으로 넓게)
+
+  // 결과 누적기
+  const activeDaysByUser = new Map<string, Set<string>>();
+  const timerMinByUser = new Map<string, number>();
+  const dueCardsByUser = new Map<string, number>();
+  // 진단 결과는 createdAt desc 로 최신 2건만 필요 → userId 별로 모았다가 정렬
+  const diagByUser = new Map<string, { createdAt: string; paper: number; analysis: number }[]>();
+
+  function markActiveDay(userId: string, ymd: string | null) {
+    if (!ymd || !wanted.has(userId)) return;
+    if (ymd < weekStart) return; // 지난 7일 밖 제외
+    let set = activeDaysByUser.get(userId);
+    if (!set) {
+      set = new Set<string>();
+      activeDaysByUser.set(userId, set);
+    }
+    set.add(ymd);
+  }
+
+  // ── (1) 잔디 활동일 + 연구 타이머 분: study_sessions (지난주) ──
+  // 종료된 세션만, 30분+는 잔디 활동일로, durationMinutes 는 타이머 누적으로.
+  const studySnap = await db
+    .collection("study_sessions")
+    .where("endTime", ">=", weekStartIso)
+    .get();
+  for (const doc of studySnap.docs) {
+    const s = doc.data() as { userId?: string; endTime?: string; durationMinutes?: number };
+    if (!s.userId || !wanted.has(s.userId)) continue;
+    const ymd = isoToYmdKst(s.endTime);
+    if (!ymd || ymd < weekStart) continue;
+    const mins = s.durationMinutes ?? 0;
+    timerMinByUser.set(s.userId, (timerMinByUser.get(s.userId) ?? 0) + mins);
+    if (mins >= 30) markActiveDay(s.userId, ymd);
+  }
+
+  // ── (2) 잔디 활동일 보강: 논문 읽기 기록(readAt) / 진단평가(createdAt) ──
+  // readAt 은 이미 KST YYYY-MM-DD → 지난주 범위 필터.
+  const readSnap = await db
+    .collection("paper_reading_logs")
+    .where("readAt", ">=", weekStart)
+    .get();
+  for (const doc of readSnap.docs) {
+    const r = doc.data() as { userId?: string; readAt?: string };
+    if (!r.userId || !wanted.has(r.userId) || !r.readAt) continue;
+    markActiveDay(r.userId, r.readAt);
+  }
+
+  // ── (3) due 암기카드 수 (dueAt <= todayKST), 진단 준비도 변화 ──
+  const dueSnap = await db
+    .collection("flashcards")
+    .where("dueAt", "<=", todayYmd)
+    .get();
+  for (const doc of dueSnap.docs) {
+    const f = doc.data() as { userId?: string };
+    if (!f.userId || !wanted.has(f.userId)) continue;
+    dueCardsByUser.set(f.userId, (dueCardsByUser.get(f.userId) ?? 0) + 1);
+  }
+
+  // 진단 결과 — 준비도 변화(최신-직전). createdAt 으로 정렬해 상위 2건 사용.
+  const diagSnap = await db.collection("diagnostic_results").get();
+  for (const doc of diagSnap.docs) {
+    const r = doc.data() as {
+      userId?: string;
+      createdAt?: string;
+      paperReadiness?: number;
+      analysisReadiness?: number;
+    };
+    if (!r.userId || !wanted.has(r.userId)) continue;
+    let arr = diagByUser.get(r.userId);
+    if (!arr) {
+      arr = [];
+      diagByUser.set(r.userId, arr);
+    }
+    arr.push({
+      createdAt: r.createdAt ?? "",
+      paper: typeof r.paperReadiness === "number" ? r.paperReadiness : 0,
+      analysis: typeof r.analysisReadiness === "number" ? r.analysisReadiness : 0,
+    });
+    // 진단평가 응시일도 지난주면 잔디 활동일로 반영
+    const ymd = isoToYmdKst(r.createdAt);
+    if (ymd && ymd >= weekStart) markActiveDay(r.userId, ymd);
+  }
+
+  // ── 회원별 결과 조립 ──
+  const out = new Map<string, PersonalDigest>();
+  for (const userId of userIds) {
+    // 진단 준비도 변화 (최신 - 직전)
+    let readinessDelta: PersonalDigest["readinessDelta"] = null;
+    const diag = diagByUser.get(userId);
+    if (diag && diag.length >= 2) {
+      const sorted = diag.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      const latest = sorted[0];
+      const prev = sorted[1];
+      readinessDelta = {
+        paper: latest.paper - prev.paper,
+        analysis: latest.analysis - prev.analysis,
+      };
+    }
+
+    // 미완료 온보딩 (서버가 알 수 있는 프로필 기반 항목만 — visited.* 는 localStorage 라 제외)
+    const u = usersById.get(userId);
+    const onboardingTodo: string[] = [];
+    if (u) {
+      const hasBio = Boolean(u.bio && u.bio.trim().length > 0);
+      if (!hasBio) onboardingTodo.push("자기소개 작성");
+      const interests = Array.isArray(u.researchInterests) ? u.researchInterests : [];
+      const kw = Array.isArray(u.interestKeywords) ? u.interestKeywords : [];
+      if (interests.length + kw.length < 1) onboardingTodo.push("관심 분야 선택");
+    }
+
+    out.set(userId, {
+      activeDays: activeDaysByUser.get(userId)?.size ?? 0,
+      timerMinutes: timerMinByUser.get(userId) ?? 0,
+      dueCards: dueCardsByUser.get(userId) ?? 0,
+      readinessDelta,
+      onboardingTodo,
+    });
+  }
+  return out;
+}
+
+/** 개인 요약에 표시할 내용이 하나라도 있는지 (없으면 개인 블록 자체 생략) */
+function hasPersonalContent(p: PersonalDigest): boolean {
+  return (
+    p.activeDays > 0 ||
+    p.timerMinutes > 0 ||
+    p.dueCards > 0 ||
+    p.readinessDelta !== null ||
+    p.onboardingTodo.length > 0
+  );
+}
+
+/** "나의 한 주" 개인 블록 HTML (내용 없는 줄은 생략) */
+function buildPersonalHtml(p: PersonalDigest): string {
+  const base = "https://yonsei-edtech.vercel.app";
+  const lines: string[] = [];
+
+  if (p.activeDays > 0) {
+    lines.push(`<li>🌱 지난 7일 활동한 날 <b>${p.activeDays}일</b></li>`);
+  }
+  if (p.timerMinutes > 0) {
+    const h = Math.floor(p.timerMinutes / 60);
+    const m = p.timerMinutes % 60;
+    const label = h > 0 ? `${h}시간 ${m}분` : `${m}분`;
+    lines.push(`<li>⏱️ 연구·학습 타이머 누적 <b>${escapeHtml(label)}</b></li>`);
+  }
+  if (p.dueCards > 0) {
+    lines.push(
+      `<li>🃏 오늘 복습할 암기카드 <b>${p.dueCards}장</b> <a href="${base}/flashcards" style="color:#003876;text-decoration:none;font-size:13px">복습하기 →</a></li>`,
+    );
+  }
+  if (p.readinessDelta) {
+    const fmtDelta = (n: number) => (n > 0 ? `▲${n}` : n < 0 ? `▼${Math.abs(n)}` : "변화 없음");
+    const { paper, analysis } = p.readinessDelta;
+    lines.push(
+      `<li>🧭 진단 준비도 변화 — 논문작성 <b>${fmtDelta(paper)}</b> · 연구분석 <b>${fmtDelta(analysis)}</b></li>`,
+    );
+  }
+  if (p.onboardingTodo.length > 0) {
+    lines.push(
+      `<li>📌 시작하기 미완료: ${p.onboardingTodo.map((t) => escapeHtml(t)).join(" · ")} <a href="${base}/mypage/edit" style="color:#003876;text-decoration:none;font-size:13px">완성하기 →</a></li>`,
+    );
+  }
+
+  if (lines.length === 0) return "";
+
+  return `
+      <h3 style="color: #003876; border-left: 4px solid #003876; padding-left: 8px; margin: 24px 0 8px;">🙋 나의 한 주</h3>
+      <ul style="line-height: 1.9; padding-left: 20px;">${lines.join("")}</ul>
+`;
+}
+
+function buildHtml({ seminars, posts, activities, questions, personal }: { seminars: SeminarLite[]; posts: PostLite[]; activities: ActivityLite[]; questions: QuestionLite[]; personal?: PersonalDigest }): string {
   const base = "https://yonsei-edtech.vercel.app";
   const seminarHtml = seminars.length === 0
     ? "<li style=\"color:#888\">예정된 세미나가 없습니다.</li>"
@@ -162,7 +395,7 @@ function buildHtml({ seminars, posts, activities, questions }: { seminars: Semin
     <div style="font-family: 'Pretendard', sans-serif; max-width: 600px; margin: 0 auto; color: #1a1a1a;">
       <h2 style="color: #003876; margin: 0 0 8px;">연세교육공학회 주간 다이제스트</h2>
       <p style="color: #666; margin: 0 0 24px;">이번 주 학회 활동을 한눈에 확인하세요.</p>
-
+${personal ? buildPersonalHtml(personal) : ""}
       <h3 style="color: #003876; border-left: 4px solid #003876; padding-left: 8px; margin: 24px 0 8px;">📅 다가오는 세미나</h3>
       <ul style="line-height: 1.9; padding-left: 20px;">${seminarHtml}</ul>
 
@@ -204,37 +437,98 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
     return { sent: 0, recipients: 0 };
   }
 
-  // 회원 이메일 + userId 수집
+  // 회원 이메일 + userId 수집 (개인화 집계·온보딩 판정에 회원 doc 보존)
   const usersSnap = await db.collection("users").where("approved", "==", true).get();
-  const emails: string[] = [];
+  const recipients: { id: string; email: string }[] = [];
   const userIds: string[] = [];
+  const usersById = new Map<
+    string,
+    { bio?: string; researchInterests?: string[]; interestKeywords?: string[] }
+  >();
   for (const u of usersSnap.docs) {
-    const d = u.data() as { email?: string; contactEmail?: string; notificationPrefs?: { weeklyDigest?: boolean } };
+    const d = u.data() as {
+      email?: string;
+      contactEmail?: string;
+      notificationPrefs?: { weeklyDigest?: boolean };
+      bio?: string;
+      researchInterests?: string[];
+      interestKeywords?: string[];
+    };
     if (d.notificationPrefs?.weeklyDigest === false) continue;
-    const email = d.email || d.contactEmail;
-    if (email) emails.push(email);
     userIds.push(u.id);
+    usersById.set(u.id, {
+      bio: d.bio,
+      researchInterests: d.researchInterests,
+      interestKeywords: d.interestKeywords,
+    });
+    const email = d.email || d.contactEmail;
+    if (email) recipients.push({ id: u.id, email });
   }
-  if (emails.length === 0) return { sent: 0, recipients: 0 };
+  if (recipients.length === 0) return { sent: 0, recipients: 0 };
+
+  // 수신자별 "나의 한 주" 개인 집계 (읽기 전용). 실패해도 비개인화 발송은 계속.
+  let personalById = new Map<string, PersonalDigest>();
+  try {
+    personalById = await loadPersonalDigests(
+      db,
+      recipients.map((r) => r.id),
+      usersById,
+      todayYmd,
+    );
+  } catch (e) {
+    console.error("[email] weekly-digest personal aggregate error:", e);
+  }
 
   const resend = new Resend(key);
   const subject = `[연세교육공학회] 주간 다이제스트 (${weekKey})`;
-  const html = buildHtml({ seminars, posts, activities, questions });
+
+  // 개인 콘텐츠가 있는 회원은 개별 발송(개인 블록 포함), 없는 회원은 공통 BCC 묶음 발송.
+  const personalRecipients = recipients.filter((r) => {
+    const p = personalById.get(r.id);
+    return p ? hasPersonalContent(p) : false;
+  });
+  const genericEmails = recipients
+    .filter((r) => {
+      const p = personalById.get(r.id);
+      return !(p && hasPersonalContent(p));
+    })
+    .map((r) => r.email);
+
+  const genericHtml = buildHtml({ seminars, posts, activities, questions });
 
   let sent = 0;
-  for (let i = 0; i < emails.length; i += 50) {
-    const batch = emails.slice(i, i + 50);
+
+  // (a) 비개인화 회원 — 기존 BCC 묶음 (50건 배치)
+  for (let i = 0; i < genericEmails.length; i += 50) {
+    const batch = genericEmails.slice(i, i + 50);
     try {
       await resend.emails.send({
         from: "연세교육공학회 <noreply@yonsei-edtech.vercel.app>",
         to: "noreply@yonsei-edtech.vercel.app",
         bcc: batch,
         subject,
-        html,
+        html: genericHtml,
       });
       sent += batch.length;
     } catch (e) {
-      console.error("[email] weekly-digest send error:", e);
+      console.error("[email] weekly-digest generic send error:", e);
+    }
+  }
+
+  // (b) 개인 콘텐츠 보유 회원 — 개별 발송 (개인 블록 + 공통 이벤트)
+  for (const r of personalRecipients) {
+    const personal = personalById.get(r.id);
+    const html = buildHtml({ seminars, posts, activities, questions, personal });
+    try {
+      await resend.emails.send({
+        from: "연세교육공학회 <noreply@yonsei-edtech.vercel.app>",
+        to: r.email,
+        subject,
+        html,
+      });
+      sent += 1;
+    } catch (e) {
+      console.error("[email] weekly-digest personal send error:", e);
     }
   }
 
@@ -255,7 +549,7 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
     metadata: { sourceId: `weekly_digest_${weekKey}` },
   });
 
-  return { sent, recipients: emails.length };
+  return { sent, recipients: recipients.length };
 }
 
 export async function GET(req: NextRequest) {
