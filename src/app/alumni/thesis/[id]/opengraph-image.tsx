@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { BRAND } from "@/lib/brand";
 
 export const runtime = "edge";
 export const alt = "연세교육공학회 졸업생 논문";
@@ -101,9 +102,8 @@ export default async function OG({
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          // 브랜드 표준 네이비 #003378(연세 공식 엠블럼 / --primary 토큰) anchor
-          background:
-            "linear-gradient(135deg, #002a5c 0%, #003378 50%, #001d40 100%)",
+          // 브랜드 표준 네이비(BRAND.navy = #003378, 연세 공식 엠블럼 / --primary 토큰) anchor
+          background: `linear-gradient(135deg, #002a5c 0%, ${BRAND.navy} 50%, #001d40 100%)`,
           color: "#f0ece2",
           fontFamily: fontData ? "NanumGothic" : "sans-serif",
           position: "relative",
@@ -120,11 +120,11 @@ export default async function OG({
             gap: 12,
             fontSize: 15,
             letterSpacing: "0.15em",
-            color: "#d4af37",
+            color: BRAND.gold,
             fontWeight: 600,
           }}
         >
-          <div style={{ width: 32, height: 2, background: "#d4af37" }} />
+          <div style={{ width: 32, height: 2, background: BRAND.gold }} />
           연세교육공학회 · 학위논문 아카이브
         </div>
 
@@ -210,7 +210,7 @@ export default async function OG({
                 style={{
                   width: 3,
                   height: 18,
-                  background: "#d4af37",
+                  background: BRAND.gold,
                   borderRadius: 2,
                 }}
               />
@@ -273,7 +273,7 @@ export default async function OG({
               fontSize: 240,
               fontWeight: 900,
               lineHeight: 1,
-              background: "linear-gradient(160deg, #f4d77a 0%, #d4af37 45%, #8a6b1c 100%)",
+              background: `linear-gradient(160deg, #f4d77a 0%, ${BRAND.gold} 45%, #8a6b1c 100%)`,
               backgroundClip: "text",
               color: "transparent",
             }}

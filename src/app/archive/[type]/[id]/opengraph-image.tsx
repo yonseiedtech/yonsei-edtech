@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { BRAND } from "@/lib/brand";
 
 export const runtime = "edge";
 export const alt = "연세교육공학회 아카이브";
@@ -100,7 +101,7 @@ export default async function OG({
   ]);
 
   const typeLabel = isValidType ? TYPE_LABELS[type] : "아카이브";
-  const accentColor = isValidType ? TYPE_ACCENT[type] : "#d4af37";
+  const accentColor = isValidType ? TYPE_ACCENT[type] : BRAND.gold;
   const name = item?.name ?? "교육공학 아카이브";
   const nameEn = item?.nameEn ?? "";
   const description = item?.description ?? "";
@@ -121,8 +122,7 @@ export default async function OG({
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          background:
-            "linear-gradient(135deg, #0d1b33 0%, #12233f 50%, #081525 100%)",
+          background: `linear-gradient(135deg, #002a5c 0%, ${BRAND.navy} 50%, #001d40 100%)`,
           color: "#f0ece2",
           fontFamily: fontData ? "NanumGothic" : "sans-serif",
           position: "relative",
@@ -151,11 +151,11 @@ export default async function OG({
             gap: 12,
             fontSize: 15,
             letterSpacing: "0.12em",
-            color: "#d4af37",
+            color: BRAND.gold,
             fontWeight: 600,
           }}
         >
-          <div style={{ width: 28, height: 2, background: "#d4af37" }} />
+          <div style={{ width: 28, height: 2, background: BRAND.gold }} />
           연세교육공학회 · 교육공학 아카이브
         </div>
 
@@ -281,7 +281,7 @@ export default async function OG({
               fontSize: 240,
               fontWeight: 900,
               lineHeight: 1,
-              background: "linear-gradient(160deg, #f4d77a 0%, #d4af37 45%, #8a6b1c 100%)",
+              background: `linear-gradient(160deg, #f4d77a 0%, ${BRAND.gold} 45%, #8a6b1c 100%)`,
               backgroundClip: "text",
               color: "transparent",
             }}
