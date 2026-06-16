@@ -41,6 +41,7 @@ import {
   Activity,
   CalendarCheck,
   CheckSquare,
+  Download,
   Layout,
   Loader2,
   TrendingDown,
@@ -51,6 +52,10 @@ import {
 import type { SeminarAttendee } from "@/types";
 import type { OnboardingChecklistItem } from "@/types/onboarding-checklist";
 import type { DashboardLayout } from "@/types/dashboard-layout";
+import { useAuthStore } from "@/features/auth/auth-store";
+import { isAdminOrSysadmin } from "@/lib/permissions";
+import { Button } from "@/components/ui/button";
+import { exportCSV } from "@/lib/export-csv";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -159,6 +164,9 @@ function ChartCard({
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function OperationalKpiSection() {
+  const { user } = useAuthStore();
+  const canExport = isAdminOrSysadmin(user);
+
   // ── parallel queries ──
   const { data: membersRes, isLoading: membersLoading } = useQuery({
     queryKey: ["op-kpi", "members"],
@@ -343,8 +351,53 @@ export default function OperationalKpiSection() {
   const isLoading =
     membersLoading || activitiesLoading || seminarsLoading || attendeesLoading;
 
+  // ── CSV 내보내기 (집계 데이터만 — 개인정보 미포함) ──────────────────────────
+  // 학과 제출·보고·백업용. 회원 이름·식별자 등 PII 없이 운영 KPI 집계만 내보낸다.
+  function downloadCsv() {
+    const rows: (string | number)[][] = [];
+    rows.push(["[요약 지표]", ""]);
+    rows.push(["이번 달 신규 가입", kpi.thisMonthNew]);
+    rows.push(["활성 활동 수", kpi.activeActivityCount]);
+    rows.push(["전체 활동 수", kpi.totalActivityCount]);
+    rows.push(["평균 세미나 출석률(%)", kpi.avgAttendanceRate]);
+    rows.push(["체크리스트 활성률(%)", kpi.checklistRate]);
+    rows.push(["개인화 적용률(%)", kpi.personalizationRate]);
+    rows.push(["", ""]);
+    rows.push(["[월별 신규 가입]", ""]);
+    for (const m of kpi.memberGrowth) rows.push([m.month, m.count]);
+    rows.push(["", ""]);
+    rows.push(["[세미나 출석률(최근 3개월)]", "", ""]);
+    rows.push(["월", "출석률(%)", "대상/체크인"]);
+    for (const s of kpi.seminarAttendanceChart) {
+      rows.push([s.month, s.rate, `${s.checkedIn}/${s.total}`]);
+    }
+    rows.push(["", ""]);
+    rows.push(["[활동 유형별 분포]", ""]);
+    for (const a of kpi.activityTypeChart) rows.push([a.name, a.count]);
+
+    exportCSV("operational-kpi", ["항목", "값", "비고"], rows);
+  }
+
   return (
     <div className="space-y-6">
+      {/* 헤더 + CSV 내보내기 (admin 전용 · 집계 데이터만) */}
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground">
+          운영 KPI 집계 지표 — 학과 제출·보고·백업용
+        </p>
+        {canExport && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={downloadCsv}
+            disabled={isLoading}
+          >
+            <Download size={12} className="mr-1" />
+            CSV
+          </Button>
+        )}
+      </div>
+
       {/* KPI 카드 그리드 */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
         <KpiCard

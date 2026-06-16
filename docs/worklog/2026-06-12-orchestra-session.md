@@ -202,3 +202,6 @@ design-tokens SEMANTIC chip 토큰 + StatusBadge 전역 variant(success/danger/w
 
 ## 사이클 154 — 기술부채 정리 L2 (2026-06-16)
 boards 잔존 정리·cron 공통 수신자필터/로깅 유틸 추출(18종 중복제거·동작동일)·network/networking 용어 코드 일관화.
+
+## 사이클 155 — 운영 KPI CSV export (2026-06-16)
+OperationalKpiSection CSV export(집계데이터만 PII미포함·isAdminOrSysadmin 가드). v3-G4 quick win.
