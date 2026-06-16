@@ -30,6 +30,7 @@ import { useResearchPapers } from "./useResearchPapers";
 import { useLogWritingActivity } from "./useWritingPaperHistory";
 import ResearchReportInterview, { TaskStepsField } from "./ResearchReportInterview";
 import VariableSyncPanel from "./VariableSyncPanel";
+import ResearchQuestionSyncPanel from "./ResearchQuestionSyncPanel";
 import ResearchJourneyGuide from "./ResearchJourneyGuide";
 
 interface Props {
@@ -116,6 +117,8 @@ export interface FormState {
   theoryRelationIntegration: string;
   // M2 — 연구 모형 ↔ 보고서 변인 동기화
   variables: PaperVariables;
+  // M4 — 연구 모형 → 연구문제 자동 생성·반영
+  researchQuestions: string[];
 }
 
 export type SetField = <K extends keyof FormState>(key: K, value: FormState[K]) => void;
@@ -189,6 +192,7 @@ const EMPTY: FormState = {
   theoryRelationRoles: "",
   theoryRelationIntegration: "",
   variables: {},
+  researchQuestions: [],
 };
 
 function newId(): string {
@@ -294,6 +298,7 @@ function fromReport(r: ResearchReport | undefined): FormState {
     theoryRelationRoles: r.theoryRelationRoles ?? "",
     theoryRelationIntegration: r.theoryRelationIntegration ?? "",
     variables: r.variables ?? {},
+    researchQuestions: r.researchQuestions ?? [],
   };
 }
 
@@ -1010,6 +1015,17 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
                 userId={user.id}
                 value={form.variables}
                 onChange={(next) => setField("variables", next)}
+                readOnly={readOnly}
+              />
+            </Section>
+            <Section
+              title="2-4. 연구문제"
+              sub="‘연구 모형 그리기’의 변인·관계로 연구문제를 자동 생성해 가져오거나, 여기서 직접 작성·수정할 수 있습니다."
+            >
+              <ResearchQuestionSyncPanel
+                userId={user.id}
+                value={form.researchQuestions}
+                onChange={(next) => setField("researchQuestions", next)}
                 readOnly={readOnly}
               />
             </Section>

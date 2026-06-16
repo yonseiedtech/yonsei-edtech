@@ -22,6 +22,7 @@ import { useResearchPapers } from "./useResearchPapers";
 import { useLogWritingActivity } from "./useWritingPaperHistory";
 import { formatApa7 } from "@/lib/apa7";
 import ResearchJourneyGuide from "./ResearchJourneyGuide";
+import ResearchQuestionSyncPanel from "./ResearchQuestionSyncPanel";
 
 interface Props {
   user: User;
@@ -36,6 +37,7 @@ interface FormState {
   method: string;
   content: string;
   referencePaperIds: string[];
+  researchQuestions: string[];
 }
 
 const EMPTY: FormState = {
@@ -46,6 +48,7 @@ const EMPTY: FormState = {
   method: "",
   content: "",
   referencePaperIds: [],
+  researchQuestions: [],
 };
 
 function fromProposal(p: ResearchProposal | undefined): FormState {
@@ -58,6 +61,7 @@ function fromProposal(p: ResearchProposal | undefined): FormState {
     method: p.method ?? "",
     content: p.content ?? "",
     referencePaperIds: p.referencePaperIds ?? [],
+    researchQuestions: p.researchQuestions ?? [],
   };
 }
 
@@ -702,6 +706,19 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
           placeholder="예: 본 연구는 생성형 AI 기반 쓰기 피드백이 학습자의 쓰기 능력 향상과 쓰기 동기에 미치는 효과를 규명하는 데 목적이 있다."
           rows={5}
           disabled={readOnly}
+        />
+      </Section>
+
+      {/* 연구문제 — 연구 모형에서 자동 생성·반영 */}
+      <Section
+        title="연구문제"
+        sub="‘연구 모형 그리기’의 변인·관계로 연구문제를 자동 생성해 가져오거나, 여기서 직접 작성·수정할 수 있습니다."
+      >
+        <ResearchQuestionSyncPanel
+          userId={user.id}
+          value={form.researchQuestions}
+          onChange={(next) => setField("researchQuestions", next)}
+          readOnly={readOnly}
         />
       </Section>
 

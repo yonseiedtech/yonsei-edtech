@@ -16,7 +16,7 @@ export default function Footer() {
   const { user } = useAuthStore();
 
   return (
-    <footer className="border-t bg-gradient-to-b from-[hsl(212,80%,15%)] via-slate-900 to-[hsl(212,40%,8%)] text-slate-300">
+    <footer className="border-t bg-gradient-to-b from-navy-footer via-slate-900 to-[hsl(214,60%,7%)] text-slate-300">
       <div className="mx-auto max-w-6xl px-4 py-12">
         <div className="grid gap-8 md:grid-cols-3">
           {/* Logo & Description */}
@@ -24,7 +24,7 @@ export default function Footer() {
             <div className="flex items-center gap-2.5">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-card p-1 shadow-sm dark:bg-slate-100">
                 <Image
-                  src="/card-news/brand/shield.png"
+                  src="/yonsei-emblem.svg"
                   alt="연세대학교 엠블럼"
                   width={36}
                   height={36}
@@ -83,7 +83,7 @@ export default function Footer() {
                 href="https://www.instagram.com/edtech_yonsei/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-sky-400 hover:text-sky-300"
+                className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-blue-400 hover:text-blue-300"
               >
                 <Instagram size={16} />
                 @edtech_yonsei

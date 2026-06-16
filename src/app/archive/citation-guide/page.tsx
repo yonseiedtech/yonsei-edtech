@@ -32,7 +32,7 @@ const TOC_SECTIONS: ArchiveTocSection[] = [
 
 function SectionTitle({ no, children }: { no: number; children: React.ReactNode }) {
   return (
-    <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+    <h2 className="flex items-center gap-2 font-display text-lg font-semibold tracking-tight">
       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary">
         {no}
       </span>

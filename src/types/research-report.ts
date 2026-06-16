@@ -240,6 +240,12 @@ export interface ResearchReport {
    * (옵셔널 — 구버전 데이터 호환)
    */
   variables?: PaperVariables;
+  // ── M4 (2026-06): 연구 모형 → 연구문제 자동 생성·반영 ──
+  /**
+   * 연구문제 — 연구 모형(변인·관계)에서 자동 생성해 가져오거나 직접 편집한 문장 목록.
+   * (옵셔널 — 구버전 데이터 호환)
+   */
+  researchQuestions?: string[];
   lastSavedAt?: string;
   createdAt: string;
   updatedAt: string;
@@ -263,6 +269,11 @@ export interface ResearchProposal {
   content: string;
   /** 참고문헌 (ResearchPaper.id 참조, APA7 형식은 렌더링 시 생성) */
   referencePaperIds: string[];
+  /**
+   * 연구문제 — 연구 모형(변인·관계)에서 자동 생성해 가져오거나 직접 편집한 문장 목록.
+   * (옵셔널 — 구버전 데이터 호환)
+   */
+  researchQuestions?: string[];
   lastSavedAt?: string;
   createdAt: string;
   updatedAt: string;

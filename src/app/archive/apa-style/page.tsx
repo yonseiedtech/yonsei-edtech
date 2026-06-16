@@ -38,7 +38,7 @@ function RefBlock({ label, format, example }: { label: string; format: string; e
 
 function SectionTitle({ no, children }: { no: number; children: React.ReactNode }) {
   return (
-    <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+    <h2 className="flex items-center gap-2 font-display text-lg font-semibold tracking-tight">
       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary">
         {no}
       </span>
@@ -83,7 +83,7 @@ export default function ApaStylePage() {
                   인용 가이드
                 </Link>
                 를 참고하세요. 정확한 규정과 예외는{" "}
-                <em>APA Publication Manual (7th ed.)</em> 원문을, 학위논문 제출 형식은{" "}
+                <em className="font-serif">APA Publication Manual (7th ed.)</em> 원문을, 학위논문 제출 형식은{" "}
                 <strong>소속 대학원 지침</strong>을 우선 확인하세요.
               </span>
             }
@@ -213,7 +213,7 @@ export default function ApaStylePage() {
         <Separator className="mt-8" />
         <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
           본 가이드는 APA 7판 공개 표준을 교육공학 연구자가 빠르게 참고하도록 정리한 요약본입니다.
-          세부 규정·예외 사항은 <em>APA Publication Manual (7th ed.)</em> 및 소속 대학원 논문 작성
+          세부 규정·예외 사항은 <em className="font-serif">APA Publication Manual (7th ed.)</em> 및 소속 대학원 논문 작성
           지침을 반드시 확인하시기 바랍니다.
         </p>
 

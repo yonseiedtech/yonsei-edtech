@@ -17,6 +17,10 @@ import { toast } from "sonner";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { useAuthStore } from "@/features/auth/auth-store";
 import ResearchModelEditor from "@/features/research/ResearchModelEditor";
+import {
+  useEnsureResearchReport,
+  useUpdateResearchReport,
+} from "@/features/research/useResearchReport";
 import { EMPTY_RESEARCH_MODEL, type ResearchModelData } from "@/types/research-model";
 import { researchModelsApi } from "@/lib/research-models-api";
 import PageContainer from "@/components/ui/page-container";
@@ -29,6 +33,8 @@ function ResearchModelContent() {
   const [model, setModel] = useState<ResearchModelData>(EMPTY_RESEARCH_MODEL);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const ensureReport = useEnsureResearchReport();
+  const updateReport = useUpdateResearchReport();
 
   const { data, isLoading } = useQuery({
     queryKey: ["research-model", user?.id],
@@ -45,6 +51,20 @@ function ResearchModelContent() {
   }, [data, dirty]);
 
   if (!user) return null;
+
+  async function handleApplyQuestions(questions: string[]) {
+    if (!user) return;
+    try {
+      const report = await ensureReport.mutateAsync(user.id);
+      await updateReport.mutateAsync({
+        id: report.id,
+        data: { researchQuestions: questions },
+      });
+      toast.success("연구 보고서 ‘2-4. 연구문제’에 반영했습니다.");
+    } catch {
+      toast.error("연구 보고서 반영에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    }
+  }
 
   async function handleSave() {
     if (!user) return;
@@ -84,6 +104,7 @@ function ResearchModelContent() {
               setModel(next);
               setDirty(true);
             }}
+            onApplyQuestions={handleApplyQuestions}
           />
         )}
       </div>

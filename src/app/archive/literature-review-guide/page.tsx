@@ -193,7 +193,7 @@ const WEAVING_PATTERNS: {
 
 function SectionTitle({ no, icon: Icon, children }: { no: number; icon: typeof ListChecks; children: React.ReactNode }) {
   return (
-    <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+    <h2 className="flex items-center gap-2 font-display text-lg font-semibold tracking-tight">
       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
         <Icon className="h-4 w-4" aria-hidden />
       </span>
