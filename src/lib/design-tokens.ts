@@ -16,6 +16,13 @@
 export type SemanticTone = "info" | "warning" | "danger" | "success" | "default";
 
 /**
+ * 상태 칩(배지) 표준 변형.
+ * 전역 상태 색(승인=success·위험=danger·대기=warning·정보=info·중립=neutral)을
+ * 단일 토큰으로 수렴하기 위한 키. `StatusBadge` 및 향후 feature 상태색 마이그레이션의 참조점.
+ */
+export type StatusVariant = "success" | "danger" | "warning" | "info" | "neutral";
+
+/**
  * 알림 컴포넌트(InlineNotification·ActionableBanner)에서 쓰는 kind 명칭.
  * `error` 는 SEMANTIC 의 `danger` 톤에 대응한다 (KIND_TO_TONE 참조).
  */
@@ -36,6 +43,12 @@ interface SemanticPalette {
   chipBg: string;
   /** 배지·작은 칩 텍스트 */
   chipText: string;
+  /**
+   * 상태 칩(배지) 1-class 토큰 — bg + text + border 라이트·다크 한 묶음.
+   * StatusBadge variant 및 feature 상태색(`bg-emerald-50 ... border-emerald-200 dark:...`) 마이그레이션 단일 소스.
+   * chipBg/chipText(`-100`/`-700`, 강조 칩)보다 옅은 `-50` 배경 + 테두리 = 상태 배지 표준 농도.
+   */
+  chip: string;
   /**
    * 알림 컴포넌트용 솔리드 배경 + 테두리 (InlineNotification).
    * bg(`/60` 반투명) 보다 진한 단색 배경 — 폼·섹션 내부 지속 알림용.
@@ -61,6 +74,7 @@ export const SEMANTIC: Record<SemanticTone, SemanticPalette> = {
     accent: "text-primary",
     chipBg: "bg-muted",
     chipText: "text-foreground",
+    chip: "bg-muted text-foreground border-border",
     notifSurface: "border-border bg-card",
     bannerSurface: "border-border bg-card",
     iconStrong: "text-foreground",
@@ -74,6 +88,7 @@ export const SEMANTIC: Record<SemanticTone, SemanticPalette> = {
     accent: "text-blue-700 dark:text-blue-300",
     chipBg: "bg-blue-100 dark:bg-blue-900/50",
     chipText: "text-blue-700 dark:text-blue-200",
+    chip: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900",
     notifSurface: "border-blue-300 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/40",
     bannerSurface:
       "border-blue-300/40 bg-gradient-to-br from-blue-50 to-sky-50 dark:from-blue-950/40 dark:to-sky-950/40",
@@ -88,6 +103,7 @@ export const SEMANTIC: Record<SemanticTone, SemanticPalette> = {
     accent: "text-amber-700 dark:text-amber-300",
     chipBg: "bg-amber-100 dark:bg-amber-900/50",
     chipText: "text-amber-700 dark:text-amber-200",
+    chip: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900",
     notifSurface: "border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/40",
     bannerSurface:
       "border-amber-300/40 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/40 dark:to-yellow-950/40",
@@ -102,6 +118,7 @@ export const SEMANTIC: Record<SemanticTone, SemanticPalette> = {
     accent: "text-rose-700 dark:text-rose-300",
     chipBg: "bg-rose-100 dark:bg-rose-900/50",
     chipText: "text-rose-700 dark:text-rose-200",
+    chip: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-900",
     notifSurface: "border-rose-300 bg-rose-50 dark:border-rose-800 dark:bg-rose-950/40",
     bannerSurface:
       "border-rose-300/40 bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-950/40 dark:to-red-950/40",
@@ -116,6 +133,7 @@ export const SEMANTIC: Record<SemanticTone, SemanticPalette> = {
     accent: "text-emerald-700 dark:text-emerald-300",
     chipBg: "bg-emerald-100 dark:bg-emerald-900/50",
     chipText: "text-emerald-700 dark:text-emerald-200",
+    chip: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900",
     notifSurface:
       "border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/40",
     bannerSurface:
@@ -134,6 +152,30 @@ export const KIND_TO_TONE: Record<SemanticKind, SemanticTone> = {
   success: "success",
   warning: "warning",
   error: "danger",
+};
+
+/**
+ * 상태 칩(배지) variant → SEMANTIC tone 매핑.
+ * `neutral` 은 default(중립 회색) 톤에 대응. StatusBadge 및 상태색 마이그레이션의 톤 해석 단일 소스.
+ */
+export const STATUS_VARIANT_TO_TONE: Record<StatusVariant, SemanticTone> = {
+  success: "success",
+  danger: "danger",
+  warning: "warning",
+  info: "info",
+  neutral: "default",
+};
+
+/**
+ * 상태 칩(배지) variant → 1-class chip 토큰 (bg+text+border, 라이트·다크).
+ * `<Badge variant="outline" className={STATUS_CHIP[v]}>` 형태로 직접 소비.
+ */
+export const STATUS_CHIP: Record<StatusVariant, string> = {
+  success: SEMANTIC.success.chip,
+  danger: SEMANTIC.danger.chip,
+  warning: SEMANTIC.warning.chip,
+  info: SEMANTIC.info.chip,
+  neutral: SEMANTIC.default.chip,
 };
 
 /** 위젯 표준 패딩 */

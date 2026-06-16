@@ -193,3 +193,6 @@ R1(264d0bd8 복습알림 cron) 포함 일괄. 연구모형→연구문제 자동
 M1 내 논문 진행도 X
 ## 사이클 151 — UI 중립색 slate to 시맨틱 토큰 마이그레이션 라운드1 (2026-06-16)
 AttendanceChecklist, ProfileAcademicActivities, EduTechOverview의 slate 중립색 11건을 border/muted/muted-foreground 토큰으로(시각회귀0). 상태색(blue/emerald/rose)은 StatusBadge 농도 정렬 선행 필요로 보류.
+
+## 사이클 152 — StatusBadge 토큰 표준화 (2026-06-16)
+design-tokens SEMANTIC chip 토큰 + StatusBadge 전역 variant(success/danger/warning/info/neutral, 하위호환). UI 색상 라운드2 상태색 일괄 마이그레이션 토대.
