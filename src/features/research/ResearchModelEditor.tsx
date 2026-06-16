@@ -40,9 +40,14 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { toPng } from "html-to-image";
-import { Download, Plus, Trash2 } from "lucide-react";
+import { Copy, Download, HelpCircle, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+  generateQuestions,
+  QUESTION_PATTERN_LABELS,
+  type GeneratedQuestion,
+} from "@/lib/research-question-generator";
 import {
   EMPTY_RESEARCH_MODEL,
   RELATION_LABELS,
@@ -117,6 +122,11 @@ interface ResearchModelEditorProps {
   value: ResearchModelData;
   onChange: (next: ResearchModelData) => void;
   readOnly?: boolean;
+  /**
+   * 생성된 연구문제를 외부(보고서/계획서)로 전달할 때 호출.
+   * 주어지면 미리보기 패널에 "보고서/계획서에 반영" 버튼이 나타난다. (없으면 복사만 제공)
+   */
+  onApplyQuestions?: (questions: string[]) => void;
 }
 
 let idCounter = 0;
@@ -140,6 +150,7 @@ function ResearchModelEditorInner({
   value,
   onChange,
   readOnly = false,
+  onApplyQuestions,
 }: ResearchModelEditorProps) {
   const initial = useMemo(() => toFlow(value, { readOnly }), []); // eslint-disable-line react-hooks/exhaustive-deps
   const [nodes, setNodes, onNodesChange] = useNodesState<VariableNodeData>(
@@ -365,6 +376,28 @@ function ResearchModelEditorInner({
     return () => window.removeEventListener("keydown", onKey);
   }, [readOnly, selectedNodeId, selectedEdgeId, deleteSelection]);
 
+  // ── 연구문제 생성 (현재 캔버스의 변인·관계 기반) ──
+  const [questions, setQuestions] = useState<GeneratedQuestion[] | null>(null);
+  const generateQuestionsFromCanvas = useCallback(() => {
+    const data = fromFlow(nodes, edges);
+    const result = generateQuestions(data);
+    setQuestions(result);
+    if (result.length === 0) {
+      toast.info("변인을 추가하면 연구문제를 생성할 수 있습니다.");
+    }
+  }, [nodes, edges]);
+
+  const copyQuestions = useCallback(async () => {
+    if (!questions || questions.length === 0) return;
+    const text = questions.map((q, i) => `${i + 1}. ${q.text}`).join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("연구문제를 복사했습니다.");
+    } catch {
+      toast.error("복사에 실패했습니다.");
+    }
+  }, [questions]);
+
   // ── PNG 내보내기 (html-to-image) ──
   const [exporting, setExporting] = useState(false);
   const exportPng = useCallback(async () => {
@@ -451,6 +484,16 @@ function ResearchModelEditorInner({
           >
             <Download className="h-3.5 w-3.5" aria-hidden="true" />
             {exporting ? "내보내는 중…" : "PNG 내보내기"}
+          </button>
+
+          {/* 연구문제 생성 */}
+          <button
+            type="button"
+            onClick={generateQuestionsFromCanvas}
+            className="flex h-8 items-center gap-1 rounded-md border border-primary/40 bg-primary/5 px-2.5 text-xs font-medium text-primary hover:bg-primary/10"
+          >
+            <HelpCircle className="h-3.5 w-3.5" aria-hidden="true" />
+            연구문제 생성
           </button>
 
           <span className="ml-auto hidden text-[11px] text-muted-foreground sm:inline">
@@ -600,6 +643,68 @@ function ResearchModelEditorInner({
           </aside>
         )}
       </div>
+
+      {/* ── 연구문제 미리보기 패널 (생성 버튼 클릭 후 노출) ── */}
+      {questions !== null && (
+        <div className="rounded-lg border border-primary/30 bg-primary/[0.03] p-3.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <HelpCircle className="h-4 w-4 text-primary" aria-hidden="true" />
+              <h3 className="text-sm font-semibold text-foreground">
+                생성된 연구문제 {questions.length > 0 && `(${questions.length})`}
+              </h3>
+            </div>
+            {questions.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={copyQuestions}
+                  className="inline-flex h-8 items-center gap-1 rounded-md border border-input bg-background px-2.5 text-xs font-medium text-foreground hover:bg-muted"
+                >
+                  <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+                  복사
+                </button>
+                {onApplyQuestions && (
+                  <button
+                    type="button"
+                    onClick={() => onApplyQuestions(questions.map((q) => q.text))}
+                    className="inline-flex h-8 items-center gap-1 rounded-md bg-primary px-2.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+                  >
+                    보고서/계획서에 반영
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {questions.length === 0 ? (
+            <p className="mt-2 text-xs text-muted-foreground">
+              연구문제를 만들려면 변인(독립·종속 등)을 추가하고 관계를 연결해 주세요.
+            </p>
+          ) : (
+            <>
+              <ol className="mt-2.5 space-y-1.5">
+                {questions.map((q, i) => (
+                  <li key={q.id} className="flex items-start gap-2 text-sm text-foreground">
+                    <span className="mt-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary/10 px-1.5 text-[11px] font-bold text-primary">
+                      {i + 1}
+                    </span>
+                    <span className="flex-1 leading-relaxed">
+                      {q.text}
+                      <span className="ml-1.5 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                        {QUESTION_PATTERN_LABELS[q.pattern]}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ol>
+              <p className="mt-2.5 text-[11px] text-muted-foreground">
+                모형 구조로 자동 생성한 초안입니다. 그대로 쓰기보다 연구 맥락에 맞게 다듬어 사용하세요.
+              </p>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
