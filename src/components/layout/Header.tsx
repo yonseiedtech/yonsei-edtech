@@ -13,6 +13,7 @@ import { isAtLeast } from "@/lib/permissions";
 import NotificationBell from "@/features/notifications/NotificationBell";
 import ThemeToggle from "@/components/ThemeToggle";
 import SessionIndicator from "@/features/auth/SessionIndicator";
+import GlobalSearch from "@/components/layout/GlobalSearch";
 
 interface NavLink {
   href: string;
@@ -509,6 +510,7 @@ export default function Header() {
         {/* Auth Area (Desktop) */}
         <div className="hidden items-center gap-2 md:flex">
           {user && <SessionIndicator />}
+          <GlobalSearch />
           <ThemeToggle />
           {user ? (
             <>
@@ -525,8 +527,9 @@ export default function Header() {
           )}
         </div>
 
-        {/* Mobile: theme + hamburger (WCAG 2.5.5: 44px 터치 타겟) */}
+        {/* Mobile: search + theme + hamburger (WCAG 2.5.5: 44px 터치 타겟) */}
         <div className="flex items-center gap-1 md:hidden">
+          <GlobalSearch />
           <ThemeToggle />
           <button
             onClick={() => setMobileOpen(!mobileOpen)}

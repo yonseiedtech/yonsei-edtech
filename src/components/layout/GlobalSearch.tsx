@@ -1,22 +1,29 @@
 "use client";
 
 /**
- * 전역 검색 (Ctrl/Cmd+K) — 오케스트라 사이클 15
+ * 커맨드 팔레트 · 전역 검색 (Ctrl/Cmd+K) — 3차 백로그 G1
  *
- * 아카이브(개념·변인·측정도구)·세미나·학술활동·졸업생 논문 + 페이지 바로가기를
- * 한 입력창에서 검색. cmdk 의존성 없이 Dialog + 키보드 네비 자체 구현.
- * 데이터는 다이얼로그가 처음 열릴 때 1회 병렬 로드(react-query 5분 캐시).
+ * 핵심: 라우트 50+·feature 50+ 시대의 발견성 회복.
+ *   1) 정적 라우트/기능(command-routes.ts)을 **즉시** 검색·이동 — 네트워크 의존 없음(hang 방지).
+ *      역할(visibility)로 로그인/운영진 전용 메뉴 분기.
+ *   2) 동적 콘텐츠(아카이브 개념·세미나·학술활동·졸업생 논문·공지)는 다이얼로그가
+ *      열릴 때 1회 병렬 로드해 **보조로** 합류(react-query 5분 캐시). 로드 전이라도
+ *      정적 라우트 검색은 막힘 없이 동작한다.
+ *
+ * cmdk 의존성 없이 Dialog + 키보드 네비 자체 구현(접근성: combobox/listbox/option).
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Search, Compass, Lightbulb, Variable as VariableIcon, Ruler,
+  Search, Lightbulb, Variable as VariableIcon, Ruler,
   Presentation, Users, GraduationCap, ArrowRight, Loader2, Megaphone,
+  type LucideIcon,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useAuthStore } from "@/features/auth/auth-store";
 import {
   archiveConceptsApi,
   archiveVariablesApi,
@@ -37,6 +44,7 @@ import type {
   Post,
 } from "@/types";
 import { cn } from "@/lib/utils";
+import { GROUP_ORDER, visibleRoutes } from "./command-routes";
 
 interface SearchItem {
   key: string;
@@ -44,7 +52,7 @@ interface SearchItem {
   label: string;
   sub?: string;
   href: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
   /** 검색 매칭 대상 (label 외 별칭·저자 등) */
   haystack: string;
 }
@@ -55,18 +63,6 @@ const ACTIVITY_ROUTE: Record<Activity["type"], string> = {
   external: "external",
 };
 
-const SHORTCUTS: SearchItem[] = [
-  { key: "go:dashboard", group: "바로가기", label: "대시보드", href: "/dashboard", icon: Compass, haystack: "대시보드 dashboard 홈" },
-  { key: "go:journey", group: "바로가기", label: "나의 논문 여정 · 연구활동", href: "/mypage/research", icon: Compass, haystack: "논문 여정 연구활동 에디터 학위논문 지도 노트 코크핏 journey research" },
-  { key: "go:archive", group: "바로가기", label: "교육공학 아카이브", href: "/archive", icon: Lightbulb, haystack: "아카이브 개념 변인 측정도구 archive" },
-  { key: "go:seminars", group: "바로가기", label: "세미나", href: "/seminars", icon: Presentation, haystack: "세미나 seminar" },
-  { key: "go:activities", group: "바로가기", label: "학술활동", href: "/activities", icon: Users, haystack: "학술활동 스터디 프로젝트 대외활동 activities study" },
-  { key: "go:calendar", group: "바로가기", label: "캘린더", href: "/calendar", icon: Compass, haystack: "캘린더 일정 calendar" },
-  { key: "go:research", group: "바로가기", label: "연구 흐름 분석", href: "/research", icon: GraduationCap, haystack: "연구 분석 키워드 계보 research" },
-  { key: "go:thesis", group: "바로가기", label: "졸업생 학위논문", href: "/alumni/thesis", icon: GraduationCap, haystack: "졸업생 학위논문 alumni thesis" },
-];
-
-const GROUP_ORDER = ["바로가기", "공지", "아카이브", "세미나", "학술활동", "졸업생 논문"];
 const PER_GROUP_LIMIT = 5;
 
 const RECENT_KEY = "global-search.recent";
@@ -93,6 +89,7 @@ function saveRecentKey(key: string) {
 
 export default function GlobalSearch() {
   const router = useRouter();
+  const { user } = useAuthStore();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIdx, setActiveIdx] = useState(0);
@@ -123,6 +120,20 @@ export default function GlobalSearch() {
     }
   }, [open]);
 
+  // 정적 라우트 — 역할 기반 필터(즉시 사용 가능, 네트워크 무관)
+  const routeItems: SearchItem[] = useMemo(() => {
+    return visibleRoutes(user?.role).map((r) => ({
+      key: r.key,
+      group: r.group,
+      label: r.label,
+      sub: r.sub,
+      href: r.href,
+      icon: r.icon,
+      haystack: `${r.label} ${r.sub ?? ""} ${r.keywords}`,
+    }));
+  }, [user?.role]);
+
+  // 동적 콘텐츠 — 보조 소스(다이얼로그 열림 시 1회 병렬 로드). 실패해도 정적 검색은 유지.
   const { data: sources, isLoading } = useQuery({
     queryKey: ["global-search-sources"],
     queryFn: async () => {
@@ -159,9 +170,9 @@ export default function GlobalSearch() {
     staleTime: 5 * 60_000,
   });
 
-  const allItems: SearchItem[] = useMemo(() => {
-    if (!sources) return SHORTCUTS;
-    const items: SearchItem[] = [...SHORTCUTS];
+  const dynamicItems: SearchItem[] = useMemo(() => {
+    if (!sources) return [];
+    const items: SearchItem[] = [];
     for (const c of sources.concepts) {
       items.push({
         key: `concept:${c.id}`, group: "아카이브", label: c.name,
@@ -227,6 +238,12 @@ export default function GlobalSearch() {
     }
     return items;
   }, [sources]);
+
+  // 정적 라우트(우선) + 동적 콘텐츠(보조)
+  const allItems: SearchItem[] = useMemo(
+    () => [...routeItems, ...dynamicItems],
+    [routeItems, dynamicItems],
+  );
 
   const results: SearchItem[] = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -315,7 +332,7 @@ export default function GlobalSearch() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="top-[20%] max-w-lg translate-y-0 gap-0 p-0">
           <DialogHeader className="sr-only">
-            <DialogTitle>전역 검색</DialogTitle>
+            <DialogTitle>전역 검색 · 커맨드 팔레트</DialogTitle>
           </DialogHeader>
           <div className="relative border-b">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -324,27 +341,26 @@ export default function GlobalSearch() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={onInputKeyDown}
-              placeholder="아카이브 · 세미나 · 학술활동 · 졸업생 논문 검색…"
+              placeholder="페이지 · 기능 · 아카이브 · 세미나 · 논문 검색…"
               className="h-12 rounded-none border-0 pl-11 pr-4 text-sm shadow-none focus-visible:ring-0"
               role="combobox"
               aria-expanded="true"
               aria-controls="global-search-results"
+              aria-activedescendant={results[activeIdx] ? `gs-opt-${activeIdx}` : undefined}
             />
           </div>
           <div
             ref={listRef}
             id="global-search-results"
             role="listbox"
+            aria-label="검색 결과"
             className="max-h-[50vh] overflow-y-auto p-2"
           >
-            {isLoading && (
-              <p className="flex items-center gap-2 px-3 py-4 text-xs text-muted-foreground">
-                <Loader2 size={13} className="animate-spin" /> 검색 데이터를 불러오는 중…
-              </p>
-            )}
-            {!isLoading && results.length === 0 && (
+            {results.length === 0 && (
               <p className="px-3 py-6 text-center text-xs text-muted-foreground">
-                &ldquo;{query}&rdquo; 에 대한 결과가 없습니다.
+                {query
+                  ? `“${query}” 에 대한 결과가 없습니다.`
+                  : "페이지나 기능 이름을 입력하세요."}
               </p>
             )}
             {(() => {
@@ -362,6 +378,7 @@ export default function GlobalSearch() {
                     )}
                     <button
                       type="button"
+                      id={`gs-opt-${idx}`}
                       data-idx={idx}
                       role="option"
                       aria-selected={idx === activeIdx}
@@ -383,6 +400,11 @@ export default function GlobalSearch() {
                 );
               });
             })()}
+            {isLoading && (
+              <p className="flex items-center gap-2 px-3 py-3 text-[11px] text-muted-foreground">
+                <Loader2 size={12} className="animate-spin" /> 콘텐츠 검색 데이터를 불러오는 중…
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-3 border-t px-4 py-2 text-[10px] text-muted-foreground">
             <span>↑↓ 이동</span>

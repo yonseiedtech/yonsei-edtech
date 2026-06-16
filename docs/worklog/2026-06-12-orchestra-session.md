@@ -205,3 +205,6 @@ boards 잔존 정리·cron 공통 수신자필터/로깅 유틸 추출(18종 중
 
 ## 사이클 155 — 운영 KPI CSV export (2026-06-16)
 OperationalKpiSection CSV export(집계데이터만 PII미포함·isAdminOrSysadmin 가드). v3-G4 quick win.
+
+## 사이클 156 — 전역검색·커맨드팔레트 Cmd+K (2026-06-16)
+v3-G1: 주요 라우트·기능 통합 검색 커맨드팔레트(Cmd/Ctrl+K)·헤더 진입. 라우트 50+ 발견성 개선.
