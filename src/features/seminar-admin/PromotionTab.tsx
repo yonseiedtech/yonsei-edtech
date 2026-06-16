@@ -28,6 +28,10 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+  buildSeminarNoticeDraft,
+  buildSeminarReviewDraft,
+} from "@/features/content-draft/draft-templates";
 import type { PromotionContent, Seminar } from "@/types";
 
 /* ── 리마인더 메시지 템플릿 ── */
@@ -280,6 +284,44 @@ export default function PromotionTab({ seminarId: propSeminarId }: { seminarId?:
             </option>
           ))}
         </select>
+      </div>
+
+      {/* 템플릿 초안 (즉시 생성, AI 불필요) */}
+      <div>
+        <label className="mb-2 block text-sm font-medium">템플릿 초안 (즉시 생성)</label>
+        <p className="mb-2 text-xs text-muted-foreground">
+          세미나 데이터(제목·일시·연사·장소·소개)를 템플릿에 자동 매핑한 초안입니다. AI 호출 없이 즉시 채워지며, 편집 후 복사·저장하세요.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!seminar}
+            onClick={() => {
+              if (!seminar) return;
+              setFormat("press");
+              setResult(buildSeminarNoticeDraft(seminar));
+              toast.success("안내문 초안이 채워졌습니다. 검토 후 발행하세요.");
+            }}
+          >
+            <FileText size={14} className="mr-1" />
+            안내문 초안
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!seminar}
+            onClick={() => {
+              if (!seminar) return;
+              setFormat("press");
+              setResult(buildSeminarReviewDraft(seminar));
+              toast.success("후기 초안이 채워졌습니다. 검토 후 발행하세요.");
+            }}
+          >
+            <FileText size={14} className="mr-1" />
+            후기 초안
+          </Button>
+        </div>
       </div>
 
       {/* 포맷 버튼 */}

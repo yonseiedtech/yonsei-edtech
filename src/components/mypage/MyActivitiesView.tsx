@@ -23,6 +23,7 @@ import EmptyState from "@/components/ui/empty-state";
 import PageHeader from "@/components/ui/page-header";
 import { formatDate } from "@/lib/utils";
 import { formatSemester } from "@/lib/semester";
+import { STATUS_CHIP } from "@/lib/design-tokens";
 import { toast } from "sonner";
 
 const TABS = [
@@ -233,7 +234,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                         <div className="flex flex-wrap items-center gap-2">
                           <Calendar size={14} className="text-primary" />
                           <Badge variant="secondary" className="text-[10px]">세미나</Badge>
-                          {checkedInMap.has(s.id) && <Badge variant="secondary" className="bg-green-50 text-green-700 text-[10px] dark:bg-green-950/40 dark:text-green-300">출석</Badge>}
+                          {checkedInMap.has(s.id) && <Badge variant="outline" className={cn("text-[10px]", STATUS_CHIP.success)}>출석</Badge>}
                         </div>
                         <p className="mt-1 truncate font-medium">{s.title}</p>
                         <p className="mt-0.5 text-xs text-muted-foreground">
@@ -344,14 +345,14 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                         const meta = ACTIVITY_META[a.type] ?? ACTIVITY_META.project;
                         const mine = applicationByActivity.get(a.id);
                         const statusLabel = mine?.status === "rejected" ? "반려" : "승인 대기";
-                        const statusColor = mine?.status === "rejected" ? "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300" : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300";
+                        const statusColor = mine?.status === "rejected" ? STATUS_CHIP.danger : STATUS_CHIP.warning;
                         return (
                           <li key={a.id} className="rounded-2xl border bg-card px-5 py-4 hover:border-primary/40">
                             <Link href={`${meta.href}/${a.id}`} className="flex items-center justify-between">
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2">
                                   <Badge variant="secondary" className="text-[10px]">{meta.label}</Badge>
-                                  <Badge className={cn("text-[10px]", statusColor)}>{statusLabel}</Badge>
+                                  <Badge variant="outline" className={cn("text-[10px]", statusColor)}>{statusLabel}</Badge>
                                 </div>
                                 <p className="mt-1 truncate font-medium">{a.title}</p>
                                 <p className="mt-0.5 text-xs text-muted-foreground">
@@ -450,7 +451,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                                   variant="outline"
                                   className={cn(
                                     "text-[10px]",
-                                    r.status === "submitted" ? "bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-300" : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
+                                    r.status === "submitted" ? STATUS_CHIP.success : STATUS_CHIP.warning,
                                   )}
                                 >
                                   {r.status === "submitted" ? "제출 완료" : "임시 저장"}

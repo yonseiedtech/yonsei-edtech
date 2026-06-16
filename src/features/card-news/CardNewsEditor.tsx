@@ -13,6 +13,7 @@ import {
   ChevronDown,
   Copy,
   Loader2,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CardArtFit } from "./CardArtFit";
 import { cardNewsApi } from "@/lib/bkend";
+import SeminarDraftPicker from "@/features/content-draft/SeminarDraftPicker";
+import { buildCardNewsDraft } from "@/features/content-draft/draft-templates";
+import type { Seminar } from "@/types";
 import type { CardKind, CardNewsSeries, CardSpec } from "./types";
 
 interface Props {
@@ -54,6 +58,7 @@ export default function CardNewsEditor({ initial, isNew }: Props) {
     cards: initial.cards.map((c) => ({ ...c })),
   }));
   const [activeIdx, setActiveIdx] = useState(0);
+  const [showSeminarPicker, setShowSeminarPicker] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -129,6 +134,21 @@ export default function CardNewsEditor({ initial, isNew }: Props) {
         bullets: kind === "feature" || kind === "intro" ? ["불릿 1", "불릿 2"] : undefined,
       };
       return { ...s, cards: [...s.cards, fresh] };
+    });
+    setActiveIdx(series.cards.length);
+  }
+
+  // 세미나 데이터 → 카드뉴스 슬라이드 초안 자동 채우기 (저장은 운영진 수동)
+  function addCardsFromSeminar(seminar: Seminar) {
+    const drafts = buildCardNewsDraft(seminar);
+    setSeries((s) => {
+      const existing = s.cards.map((c) => c.id);
+      const appended: CardSpec[] = [];
+      for (const d of drafts) {
+        const newId = uniqCardId([...existing, ...appended.map((a) => a.id)], d.id);
+        appended.push({ ...d, id: newId });
+      }
+      return { ...s, cards: [...s.cards, ...appended] };
     });
     setActiveIdx(series.cards.length);
   }
@@ -234,6 +254,14 @@ export default function CardNewsEditor({ initial, isNew }: Props) {
               저장됨 · {savedAt.toLocaleTimeString("ko-KR")}
             </span>
           ) : null}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowSeminarPicker(true)}
+          >
+            <Sparkles className="mr-1 h-3.5 w-3.5" />
+            세미나에서 초안
+          </Button>
           <Link
             href={`/console/card-news/${series.id}`}
             target="_blank"
@@ -366,6 +394,13 @@ export default function CardNewsEditor({ initial, isNew }: Props) {
           </div>
         </TabsContent>
       </Tabs>
+
+      <SeminarDraftPicker
+        open={showSeminarPicker}
+        onOpenChange={setShowSeminarPicker}
+        onPick={addCardsFromSeminar}
+        description="세미나를 선택하면 표지·개요·연사·신청 안내 카드 초안이 자동으로 추가됩니다. 추가된 카드를 검토·편집한 뒤 저장하세요."
+      />
     </div>
   );
 }

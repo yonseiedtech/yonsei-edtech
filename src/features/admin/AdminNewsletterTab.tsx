@@ -47,6 +47,10 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { notifyNewsletterPublished } from "@/features/notifications/notify";
 import { useAuthStore } from "@/features/auth/auth-store";
+import SeminarDraftPicker from "@/features/content-draft/SeminarDraftPicker";
+import { buildNewsletterSectionsDraft } from "@/features/content-draft/draft-templates";
+import { Sparkles } from "lucide-react";
+import type { Seminar } from "@/types";
 
 const COVER_COLORS = [
   { label: "네이비", value: "from-indigo-900 to-slate-800" },
@@ -94,6 +98,7 @@ export default function AdminNewsletterTab() {
   );
 
   const [showPostPicker, setShowPostPicker] = useState(false);
+  const [showSeminarPicker, setShowSeminarPicker] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showEditorPicker, setShowEditorPicker] = useState(false);
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
@@ -233,6 +238,15 @@ export default function AdminNewsletterTab() {
       toast.success(`"${post.title}"이 섹션으로 추가되었습니다.`);
     }
     setShowPostPicker(false);
+  }
+
+  // 세미나 데이터 → 뉴스레터 섹션 초안 자동 채우기 (status는 draft 유지)
+  function addFromSeminar(seminar: Seminar) {
+    setSections((prev) => {
+      const drafts = buildNewsletterSectionsDraft(seminar, prev.length + 1);
+      return [...prev, ...drafts.map((d, i) => ({ ...d, order: prev.length + i + 1 }))];
+    });
+    toast.success(`"${seminar.title}" 세미나에서 섹션 초안이 자동 생성되었습니다. 검토 후 발행하세요.`);
   }
 
   function updateSection(id: string, data: Partial<NewsletterSection>) {
@@ -578,6 +592,14 @@ export default function AdminNewsletterTab() {
               <FileText size={14} className="mr-1" />
               게시글에서 추가
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSeminarPicker(true)}
+            >
+              <Sparkles size={14} className="mr-1" />
+              세미나에서 초안 채우기
+            </Button>
           </div>
         </div>
 
@@ -617,6 +639,14 @@ export default function AdminNewsletterTab() {
               >
                 <FileText size={14} className="mr-1" />
                 게시글에서 추가
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSeminarPicker(true)}
+              >
+                <Sparkles size={14} className="mr-1" />
+                세미나에서 초안 채우기
               </Button>
             </div>
           </div>
@@ -964,6 +994,14 @@ export default function AdminNewsletterTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 세미나 초안 자동 채우기 Dialog */}
+      <SeminarDraftPicker
+        open={showSeminarPicker}
+        onOpenChange={setShowSeminarPicker}
+        onPick={addFromSeminar}
+        description="세미나를 선택하면 개요(소식)와 후기(특집) 섹션 초안이 자동으로 추가됩니다. 추가된 섹션을 검토·편집한 뒤 발행하세요."
+      />
 
       {/* 미리보기 Dialog */}
       <Dialog

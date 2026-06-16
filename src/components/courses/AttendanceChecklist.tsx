@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { STATUS_CHIP } from "@/lib/design-tokens";
 import { classSessionsApi } from "@/lib/bkend";
 import {
   buildAttendancePayload,
@@ -220,7 +222,7 @@ export function AttendanceChecklist({
                             </Badge>
                           )}
                           {!e.userId && (
-                            <Badge variant="outline" className="border-amber-300 bg-amber-50 text-[10px] text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+                            <Badge variant="outline" className={cn("text-[10px]", STATUS_CHIP.warning)}>
                               회원 미연동
                             </Badge>
                           )}
