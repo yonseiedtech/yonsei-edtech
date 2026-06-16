@@ -5,6 +5,7 @@ import {
   levelOf,
   formatMinutes,
   chapterBalance,
+  computeReportCompletion,
 } from "../thesis-progress";
 import type { WritingPaper } from "@/types";
 
@@ -151,5 +152,70 @@ describe("chapterBalance — 장별 분량 균형", () => {
 
   it("총 0자 — 빈 배열", () => {
     expect(chapterBalance([], 0)).toHaveLength(0);
+  });
+});
+
+describe("computeReportCompletion — 보고서 완성도 종합 (M1)", () => {
+  it("초기 단계(균형·lint 미측정): 작성률만 반영", () => {
+    const progress = computeThesisProgress({
+      paper: paperWithChapters({ intro: text(100) }),
+      hasProposal: false,
+    });
+    const c = computeReportCompletion({
+      progress,
+      balance: [],
+      cleanChapters: 0,
+      writtenChapters: 0,
+    });
+    // writingPercent = 레벨 1 / 15 = 7% (반올림) → overall 동일
+    expect(c.balancePercent).toBeNull();
+    expect(c.lintPassPercent).toBeNull();
+    expect(c.overallPercent).toBe(progress.percent);
+  });
+
+  it("3개 지표 가중 합산 (작성 60·균형 20·lint 20)", () => {
+    const progress = computeThesisProgress({
+      paper: paperWithChapters({
+        intro: text(3000),
+        background: text(3000),
+        method: text(3000),
+        results: text(3000),
+        conclusion: text(3000),
+      }),
+      hasProposal: true,
+    });
+    const balance = chapterBalance(
+      progress.chapters.map((ch) => ({ key: ch.key, chars: ch.chars })),
+      progress.totalChars,
+    );
+    const c = computeReportCompletion({
+      progress, // 100
+      balance, // 균형 일부 ok
+      cleanChapters: 5,
+      writtenChapters: 5, // lint 100
+    });
+    const expectedBalance = Math.round(
+      (balance.filter((b) => b.status === "ok").length / balance.length) * 100,
+    );
+    const expected = Math.round((100 * 0.6 + expectedBalance * 0.2 + 100 * 0.2) / 1.0);
+    expect(c.writingPercent).toBe(100);
+    expect(c.lintPassPercent).toBe(100);
+    expect(c.balancePercent).toBe(expectedBalance);
+    expect(c.overallPercent).toBe(expected);
+  });
+
+  it("lint warn 있는 장 — 통과율 분수 반영", () => {
+    const progress = computeThesisProgress({
+      paper: paperWithChapters({ intro: text(1000), background: text(1000) }),
+      hasProposal: false,
+    });
+    const c = computeReportCompletion({
+      progress,
+      balance: [],
+      cleanChapters: 1,
+      writtenChapters: 2,
+    });
+    expect(c.lintPassPercent).toBe(50);
+    expect(c.balancePercent).toBeNull();
   });
 });

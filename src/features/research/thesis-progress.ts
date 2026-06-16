@@ -161,3 +161,78 @@ export function chapterBalance(
     return { key: c.key, pct, status, recommended: [lo, hi] };
   });
 }
+
+// ── M1 (2026-06-16): 연구 진행도 상시 가시화 — 보고서 완성도 요약 (순수 함수) ──
+// 에디터 안에서만 보이던 3개 지표(장별 작성률·분량 균형·writing-lint 통과율)를
+// 하나의 읽기 전용 완성도 모델로 합산해 마이페이지·대시보드 위젯이 소비한다.
+// 채점·집필 로직은 건드리지 않고 기존 thesis-progress / writing-lint 출력을 재해석한다.
+
+export interface ReportCompletionInput {
+  /** computeThesisProgress 결과 (장별 레벨·총 글자수·percent) */
+  progress: ThesisProgress;
+  /** chapterBalance 결과 — 빈 배열이면 (총 글자수 미달) 균형 미측정 */
+  balance: ChapterBalance[];
+  /**
+   * writing-lint 경고(warn) 건수가 0건인 "본문이 있는 장"의 수.
+   * 위젯이 lintThesis 를 호출해 장별 warn 집계 후 전달 (순수 함수는 lint 미의존).
+   */
+  cleanChapters: number;
+  /** 본문이 있는(레벨>=1) 장의 수 — lint 통과율 분모 */
+  writtenChapters: number;
+}
+
+export interface ReportCompletion {
+  /** 종합 완성도 0~100 — 작성률(60%)·균형(20%)·lint 통과율(20%) 가중 */
+  overallPercent: number;
+  /** 장별 작성 진행률 0~100 (= progress.percent, 레벨 기반) */
+  writingPercent: number;
+  /** 분량 균형 0~100 — 권장 범위(ok) 장 비율. 미측정이면 null */
+  balancePercent: number | null;
+  /** writing-lint 통과율 0~100 — warn 0건 장 / 본문 있는 장. 본문 없으면 null */
+  lintPassPercent: number | null;
+  /** 균형에서 벗어난(low/high) 장 수 */
+  balanceFlagged: number;
+}
+
+/**
+ * 보고서 완성도 종합 — 3개 지표를 0~100 으로 합산.
+ * 작성 초기(본문·균형 데이터 부족)에는 작성률만 반영하도록 가중치를 보수적으로 재분배한다.
+ */
+export function computeReportCompletion(input: ReportCompletionInput): ReportCompletion {
+  const { progress, balance, cleanChapters, writtenChapters } = input;
+
+  const writingPercent = progress.percent;
+
+  const balanceMeasured = balance.length > 0;
+  const balanceOk = balance.filter((b) => b.status === "ok").length;
+  const balanceFlagged = balance.filter((b) => b.status !== "ok").length;
+  const balancePercent = balanceMeasured
+    ? Math.round((balanceOk / balance.length) * 100)
+    : null;
+
+  const lintPassPercent =
+    writtenChapters > 0
+      ? Math.round((cleanChapters / writtenChapters) * 100)
+      : null;
+
+  // 가중 합산 — 측정 가능한 지표만 가중치를 부여(없으면 작성률로 흡수).
+  let weightSum = 0.6;
+  let scoreSum = writingPercent * 0.6;
+  if (balancePercent !== null) {
+    scoreSum += balancePercent * 0.2;
+    weightSum += 0.2;
+  }
+  if (lintPassPercent !== null) {
+    scoreSum += lintPassPercent * 0.2;
+    weightSum += 0.2;
+  }
+  const overallPercent = Math.round(scoreSum / weightSum);
+
+  return {
+    overallPercent,
+    writingPercent,
+    balancePercent,
+    lintPassPercent,
+    balanceFlagged,
+  };
+}

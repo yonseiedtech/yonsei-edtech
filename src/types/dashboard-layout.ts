@@ -28,6 +28,7 @@ export type DashboardWidgetKey =
   | "peerActivityFeed"
   | "diagnosisReadiness"
   | "myGrowth"
+  | "thesisProgress"
   | "seminars"
   | "staffAlerts";
 
@@ -110,6 +111,10 @@ export const DASHBOARD_WIDGET_META: Record<
     label: "나의 성장",
     description: "진단 준비도·학습 활동·타이머 누적·연구 진행도 통합 요약.",
   },
+  thesisProgress: {
+    label: "내 논문 진행도",
+    description: "보고서 완성도(장별 작성률·분량 균형·점검 통과율)를 한눈에.",
+  },
   seminars: {
     label: "예정 세미나",
     description: "다가오는 세미나.",
@@ -137,6 +142,7 @@ export const DASHBOARD_WIDGET_KEYS: DashboardWidgetKey[] = [
   "peerActivityFeed",
   "diagnosisReadiness",
   "myGrowth",
+  "thesisProgress",
   "seminars",
   "staffAlerts",
 ];

@@ -166,6 +166,12 @@ export interface NotificationPrefs {
    * (다른 push 항목은 기본 opt-out 이지만 본 항목은 알림 피로 방지를 위해 opt-in)
    */
   pushFlashcardReview?: boolean;
+  /**
+   * 운영진 데이터 기반 넛지(이탈 위험·진단 미응시·복습 정체 일괄 발송) push
+   * (kind=admin_nudge) — 2차 백로그 v2-M3.
+   * 기본 opt-out: undefined/true → 발송, 명시 false 일 때만 옵트아웃.
+   */
+  pushAdminNudge?: boolean;
   /** 신규 알림 도착 시 화면 내 toast 표시 여부 — false 로 명시될 때만 옵트아웃 (기본 true) */
   toastEnabled?: boolean;
 }
@@ -185,6 +191,7 @@ export const PUSH_PREF_FIELD: Record<string, keyof NotificationPrefs> = {
   journal_issue: "pushJournalIssue",
   comm_board_answer: "pushCommBoard",
   flashcard_review_reminder: "pushFlashcardReview",
+  admin_nudge: "pushAdminNudge",
 };
 
 /** UI 라벨 — MyPage 알림 설정 섹션에서 사용 */
@@ -201,7 +208,8 @@ export const PUSH_PREF_LABELS: Record<
   | "pushCollabReview"
   | "pushJournalIssue"
   | "pushCommBoard"
-  | "pushFlashcardReview",
+  | "pushFlashcardReview"
+  | "pushAdminNudge",
   { label: string; description: string }
 > = {
   pushStudySession: { label: "스터디 회차 D-1", description: "내일 진행될 스터디/프로젝트 회차 알림" },
@@ -217,6 +225,7 @@ export const PUSH_PREF_LABELS: Record<
   pushJournalIssue: { label: "연구지 신규 호수", description: "연세 교육공학 연구의 신규 호수 발간 안내" },
   pushCommBoard: { label: "소통 보드 새 답변", description: "내가 올린 질문에 새 답변이 달릴 때 알림" },
   pushFlashcardReview: { label: "암기카드 복습 알림", description: "오늘 복습할 암기카드가 있을 때 알림 (기본 꺼짐)" },
+  pushAdminNudge: { label: "운영진 참여 독려 알림", description: "운영진이 보내는 활동·진단·복습 참여 독려 알림" },
 };
 
 /**

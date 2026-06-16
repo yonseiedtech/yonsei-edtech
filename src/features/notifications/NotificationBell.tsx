@@ -22,6 +22,7 @@ const TYPE_ICONS: Record<AppNotification["type"], string> = {
   activity_reminder: "📚",
   weekly_digest: "🗒️",
   flashcard_review_reminder: "🃏",
+  admin_nudge: "📣",
 };
 
 function timeAgo(dateStr: string): string {

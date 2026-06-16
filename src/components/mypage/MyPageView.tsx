@@ -70,6 +70,7 @@ import ARCSPanel from "@/features/mypage/ARCSPanel";
 import ConnectivismPanel from "@/features/mypage/ConnectivismPanel";
 import DiagnosticWeakConceptPath from "@/components/mypage/DiagnosticWeakConceptPath";
 import MyActivityHub from "@/components/mypage/MyActivityHub";
+import ThesisProgressWidget from "@/features/research/ThesisProgressWidget";
 import { useAuth } from "@/features/auth/useAuth";
 import { ROLE_LABELS, ENROLLMENT_STATUS_LABELS } from "@/types";
 import { formatDate } from "@/lib/utils";
@@ -527,6 +528,9 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                   <ArrowRight size={18} className="shrink-0 self-center text-amber-700" />
                 </div>
               </Link>
+
+              {/* M1: 내 논문 진행도 — 보고서 완성도(작성률·분량 균형·lint 통과율) 상시 가시화 (본인만) */}
+              {isSelf && !readOnly && <ThesisProgressWidget variant="card" />}
 
               {/* 진단평가 — 연구 준비도 진단 → 약점 개념 읽기 추천 → 재진단 루프 (본인만) */}
               {isSelf && !readOnly && (

@@ -63,6 +63,7 @@ const PUSH_PREF_FIELD_BY_KIND: Record<string, string> = {
   external_recruitment: "pushExternalRecruitment",
   comm_board_answer: "pushCommBoard",
   flashcard_review_reminder: "pushFlashcardReview",
+  admin_nudge: "pushAdminNudge",
 };
 
 /**

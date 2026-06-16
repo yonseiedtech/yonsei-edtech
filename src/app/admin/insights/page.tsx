@@ -76,8 +76,21 @@ const WeeklyOperationsSummary = dynamic(
   },
 );
 
+const InsightsActionPanel = dynamic(
+  () => import("@/features/insights/InsightsActionPanel"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 size={24} className="animate-spin text-muted-foreground" />
+      </div>
+    ),
+  },
+);
+
 type SubTab =
   | "summary"
+  | "actions"
   | "dashboard"
   | "report"
   | "members"
@@ -110,6 +123,7 @@ function InsightsInner() {
       <Tabs value={active} onValueChange={handleChange}>
         <TabsList>
           <TabsTrigger value="summary">운영 요약</TabsTrigger>
+          <TabsTrigger value="actions">액션 센터</TabsTrigger>
           <TabsTrigger value="opkpi">운영 KPI</TabsTrigger>
           <TabsTrigger value="dashboard">실시간 대시보드</TabsTrigger>
           <TabsTrigger value="report">학기 보고서</TabsTrigger>
@@ -120,6 +134,9 @@ function InsightsInner() {
 
         <TabsContent value="summary" className="mt-4">
           <WeeklyOperationsSummary />
+        </TabsContent>
+        <TabsContent value="actions" className="mt-4">
+          <InsightsActionPanel />
         </TabsContent>
         <TabsContent value="opkpi" className="mt-4">
           <OperationalKpiSection />

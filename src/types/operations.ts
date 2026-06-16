@@ -67,7 +67,8 @@ export type NotificationType =
   | "class_reminder"        // 수업 당일 알림 (cron)
   | "activity_reminder"     // 학술활동 관련 알림 (cron)
   | "weekly_digest"         // 주간 다이제스트 (cron)
-  | "flashcard_review_reminder"; // 오늘 복습할 암기카드 알림 (cron, 2차 백로그 v2-R1)
+  | "flashcard_review_reminder" // 오늘 복습할 암기카드 알림 (cron, 2차 백로그 v2-R1)
+  | "admin_nudge";          // 운영진 데이터 기반 넛지 일괄 발송 (insights 액션화, 2차 백로그 v2-M3)
 
 export interface AppNotification {
   id: string;

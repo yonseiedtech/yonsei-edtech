@@ -58,6 +58,7 @@ import AIForumLiveWidget from "@/features/dashboard/AIForumLiveWidget";
 import SpacedRepetitionWidget from "@/features/dashboard/SpacedRepetitionWidget";
 import DiagnosisReadinessWidget from "@/features/dashboard/DiagnosisReadinessWidget";
 import MyGrowthWidget from "@/features/dashboard/MyGrowthWidget";
+import ThesisProgressWidget from "@/features/research/ThesisProgressWidget";
 import DailyReflectionPrompt from "@/features/dashboard/DailyReflectionPrompt";
 import { canShowWidget, isAlumni } from "@/features/dashboard/widget-visibility";
 import DraggableWidget from "@/features/dashboard/editing/DraggableWidget";
@@ -396,6 +397,11 @@ function DashboardContent() {
     myGrowth: (
       <section className="mx-auto mt-6 max-w-6xl px-4">
         <MyGrowthWidget />
+      </section>
+    ),
+    thesisProgress: (
+      <section className="mx-auto mt-6 max-w-6xl px-4">
+        <ThesisProgressWidget variant="card" />
       </section>
     ),
   };
