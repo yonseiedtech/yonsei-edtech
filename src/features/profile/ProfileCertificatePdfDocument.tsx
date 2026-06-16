@@ -15,6 +15,13 @@ import type {
   RecentPaper,
   User,
 } from "@/types";
+import { DIAGNOSTIC_AREA_LABELS, type DiagnosticArea } from "@/types";
+import type {
+  CertificateSummary,
+  DiagnosisReadinessSummary,
+  ResearchProgressSummary,
+  StreakSummary,
+} from "@/features/profile/portfolio-aggregate";
 
 // Pretendard 한글 폰트 등록 (jsDelivr CDN, OFL)
 Font.register({
@@ -247,6 +254,47 @@ const styles = StyleSheet.create({
     color: "#9ca3af",
     textAlign: "center",
   },
+  // G3 — 연구·활동 요약 통계 카드
+  statGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 4,
+  },
+  statCard: {
+    width: "23.5%",
+    borderWidth: 1,
+    borderColor: "#cbd5e1",
+    borderStyle: "solid",
+    borderRadius: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+  },
+  statLabel: {
+    fontSize: 8,
+    color: "#64748b",
+  },
+  statValue: {
+    fontSize: 17,
+    fontWeight: 700,
+    color: "#1e3a8a",
+    marginTop: 2,
+  },
+  statUnit: {
+    fontSize: 8.5,
+    fontWeight: 400,
+    color: "#94a3b8",
+  },
+  statSub: {
+    fontSize: 7.5,
+    color: "#94a3b8",
+    marginTop: 1,
+  },
+  readinessRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 6,
+  },
 });
 
 interface PortfolioBundle {
@@ -256,6 +304,14 @@ interface PortfolioBundle {
   externals: ExternalActivity[];
   contents: ContentCreation[];
   papers: RecentPaper[];
+  /** G3 자동 집계 — 연구 진행도 요약 (선택) */
+  research?: ResearchProgressSummary;
+  /** G3 자동 집계 — 진단 준비도 요약 (응시 기록 없으면 null) */
+  diagnosis?: DiagnosisReadinessSummary | null;
+  /** G3 자동 집계 — 수료증 요약 */
+  certificates?: CertificateSummary;
+  /** G3 자동 집계 — 학습 잔디 요약 */
+  streak?: StreakSummary;
 }
 
 interface Props {
@@ -278,7 +334,20 @@ export function ProfileCertificatePdfDocument({
   issuedAt,
   verifyUrl,
 }: Props) {
-  const { user, participations, awards, externals, contents, papers } = bundle;
+  const {
+    user,
+    participations,
+    awards,
+    externals,
+    contents,
+    papers,
+    research,
+    diagnosis,
+    certificates,
+    streak,
+  } = bundle;
+
+  const hasSummary = !!(research || diagnosis || certificates || streak);
 
   const visibleParts = publicOnly ? participations.filter((p) => p.verified) : participations;
   const visibleAwards = publicOnly ? awards.filter((a) => a.verified) : awards;
@@ -348,12 +417,80 @@ export function ProfileCertificatePdfDocument({
         </View>
 
         <Text style={styles.intro}>
-          본 증명서는 위 회원이 연세교육공학회에서 수행한 학술활동·산출물·수상·대외활동·콘텐츠 제작 이력을
-          학회 공식 기록을 바탕으로 발급한 것임을 확인합니다.
+          본 증명서는 위 회원이 연세교육공학회에서 수행한 학술활동·산출물·수상·대외활동·콘텐츠 제작 이력과
+          연구 진행도·진단 준비도·수료 현황·학습 활동을 학회 공식 기록을 바탕으로 자동 집계해 발급한 것임을 확인합니다.
           {publicOnly
             ? " 본 문서는 운영진 검증을 완료한 항목만 포함합니다."
             : " 본 문서는 본인 열람용으로, 검증 대기 항목을 포함하며 외부 제출 시 검증 완료본을 별도 발급해야 합니다."}
         </Text>
+
+        {/* 0. 연구·활동 요약 (G3 자동 집계) — 개인 성취 지표이므로 본인판에만 노출(공개판 제외) */}
+        {!publicOnly && hasSummary && (
+          <>
+            <Text style={styles.sectionTitle}>연구·활동 요약</Text>
+            <View style={styles.statGrid}>
+              {research && research.totalChars > 0 && (
+                <View style={styles.statCard}>
+                  <Text style={styles.statLabel}>논문 완성도</Text>
+                  <Text style={styles.statValue}>
+                    {research.completion.overallPercent}
+                    <Text style={styles.statUnit}>%</Text>
+                  </Text>
+                  <Text style={styles.statSub}>
+                    작성률 {research.completion.writingPercent}%
+                  </Text>
+                </View>
+              )}
+              {diagnosis && (
+                <View style={styles.statCard}>
+                  <Text style={styles.statLabel}>연구 준비도</Text>
+                  <Text style={styles.statValue}>
+                    {diagnosis.analysisReadiness}
+                    <Text style={styles.statUnit}>%</Text>
+                  </Text>
+                  <Text style={styles.statSub}>
+                    논문 {diagnosis.paperReadiness}% · {diagnosis.attempts}회 응시
+                  </Text>
+                </View>
+              )}
+              {certificates && (
+                <View style={styles.statCard}>
+                  <Text style={styles.statLabel}>수료증·확인서</Text>
+                  <Text style={styles.statValue}>
+                    {certificates.count}
+                    <Text style={styles.statUnit}>건</Text>
+                  </Text>
+                  <Text style={styles.statSub}>학회 공식 발급</Text>
+                </View>
+              )}
+              {streak && (
+                <View style={styles.statCard}>
+                  <Text style={styles.statLabel}>학습 활동일</Text>
+                  <Text style={styles.statValue}>
+                    {streak.activeDays}
+                    <Text style={styles.statUnit}>일</Text>
+                  </Text>
+                  <Text style={styles.statSub}>
+                    누적 {streak.totalPoints}점 · {streak.activityKinds}종
+                  </Text>
+                </View>
+              )}
+            </View>
+            {diagnosis && (
+              <View style={styles.readinessRow}>
+                {(["statistics", "method", "concept"] as DiagnosticArea[]).map((area) => {
+                  const s = diagnosis.areaScores[area];
+                  if (!s || s.total === 0) return null;
+                  return (
+                    <Text key={area} style={styles.statSub}>
+                      {DIAGNOSTIC_AREA_LABELS[area]} {s.correct}/{s.total}
+                    </Text>
+                  );
+                })}
+              </View>
+            )}
+          </>
+        )}
 
         {/* 1. 학술활동 (참여) */}
         <Text style={styles.sectionTitle}>1. 학술활동 (참여 이력)</Text>
