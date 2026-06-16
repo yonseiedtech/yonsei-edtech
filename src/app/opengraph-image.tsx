@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { BRAND } from "@/lib/brand";
 
 export const runtime = "edge";
 export const alt = "연세교육공학회 - 교육의 미래를 함께 설계합니다";
@@ -13,9 +14,8 @@ export default function OgImage() {
           width: "100%",
           height: "100%",
           display: "flex",
-          // 브랜드 표준 네이비 #003378(연세 공식 엠블럼 / --primary 토큰)을 anchor 로 한 그라데이션
-          background:
-            "radial-gradient(circle at 85% 15%, rgba(212,175,55,0.12) 0%, transparent 45%), linear-gradient(135deg, #002a5c 0%, #003378 55%, #001d40 100%)",
+          // 브랜드 표준 네이비(BRAND.navy = #003378, 연세 공식 엠블럼 / --primary 토큰)을 anchor 로 한 그라데이션
+          background: `radial-gradient(circle at 85% 15%, rgba(212,175,55,0.12) 0%, transparent 45%), linear-gradient(135deg, #002a5c 0%, ${BRAND.navy} 55%, #001d40 100%)`,
           color: "#f5f1e6",
           fontFamily: "sans-serif",
           position: "relative",
@@ -32,7 +32,7 @@ export default function OgImage() {
             gap: 14,
             fontSize: 16,
             letterSpacing: "0.18em",
-            color: "#d4af37",
+            color: BRAND.gold,
             fontWeight: 600,
             textTransform: "uppercase",
           }}
@@ -41,7 +41,7 @@ export default function OgImage() {
             style={{
               width: 36,
               height: 2,
-              background: "#d4af37",
+              background: BRAND.gold,
             }}
           />
           Yonsei · Graduate School of Education
@@ -150,8 +150,7 @@ export default function OgImage() {
               fontWeight: 900,
               lineHeight: 1,
               letterSpacing: "-0.08em",
-              background:
-                "linear-gradient(160deg, #f4d77a 0%, #d4af37 45%, #8a6b1c 100%)",
+              background: `linear-gradient(160deg, #f4d77a 0%, ${BRAND.gold} 45%, #8a6b1c 100%)`,
               backgroundClip: "text",
               color: "transparent",
               textShadow: "0 8px 40px rgba(212,175,55,0.25)",

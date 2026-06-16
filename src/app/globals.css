@@ -32,10 +32,12 @@ nav.overflow-x-auto > button {
   --card-foreground: 212 40% 13%;
   --popover: 0 0% 100%;
   --popover-foreground: 212 40% 13%;
-  --primary: 212 100% 23%; /* 브랜드 표준 네이비 #003378 (연세 공식 엠블럼 yonsei-emblem.svg 와 일치) */
+  --primary: 214 100% 23%; /* 브랜드 표준 네이비 #003378 (연세 공식 엠블럼 yonsei-emblem.svg 와 일치). 흰 텍스트 대비 ≈ 11:1 (WCAG AAA) */
   --primary-foreground: 0 0% 100%;
-  --secondary: 42 63% 55%;
+  --secondary: 46 65% 52%; /* 연세 골드 #d4af37 단일 기준값 (OG·엠블럼 악센트와 통일) */
   --secondary-foreground: 0 0% 100%;
+  /* 푸터 전용 딥 네이비 베이스 (#003378 anchor 의 더 어두운 파생값) */
+  --navy-footer: 214 80% 12%;
   --muted: 210 18% 95%;
   --muted-foreground: 212 16% 35%; /* WCAG AA: 47% → 35% (background 98% 대비 약 5.0:1) */
   --accent: 220 100% 55%;
@@ -44,7 +46,7 @@ nav.overflow-x-auto > button {
   --destructive-foreground: 0 0% 100%;
   --border: 210 18% 90%;
   --input: 210 18% 90%;
-  --ring: 212 100% 23%;
+  --ring: 214 100% 23%;
   --radius: 0.75rem;
 }
 
@@ -68,12 +70,17 @@ nav.overflow-x-auto > button {
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
+  --color-navy-footer: hsl(var(--navy-footer));
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
   --font-sans: var(--font-pretendard), "Pretendard", system-ui, sans-serif;
+  /* 학술 콘텐츠(아카이브 논문 가이드 제목·인용) 한정 세리프 토큰.
+     상단 @import 로 로드되는 한글 세리프 폰트를 절제 적용한다. */
+  --font-display: "Hahmlet", "Noto Serif KR", "Nanum Myeongjo", serif;
+  --font-serif: "Noto Serif KR", "Gowun Batang", "Nanum Myeongjo", serif;
 }
 
 .dark {
