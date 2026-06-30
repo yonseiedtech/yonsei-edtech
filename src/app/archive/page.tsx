@@ -19,6 +19,7 @@ import {
   ClipboardCheck,
   ListChecks,
   Quote,
+  Wand2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -193,6 +194,25 @@ export default function ArchiveLandingPage() {
         />
 
         <Separator className="mt-6" />
+
+        {/* ── 통계방법 추천 마법사 진입 CTA ── */}
+        <Link
+          href="/archive/method-finder"
+          className="group mt-6 flex items-center gap-4 rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/5 to-transparent p-5 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+        >
+          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Wand2 className="h-5 w-5" aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-base font-semibold tracking-tight">
+              어떤 통계를 써야 할지 모르겠다면? — 추천 마법사
+            </span>
+            <span className="mt-0.5 block text-sm text-muted-foreground">
+              몇 가지 질문에 답하면 연구 상황에 맞는 통계방법과 선배 논문을 추천해 드립니다.
+            </span>
+          </span>
+          <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+        </Link>
 
         {/* ── Anchored Instruction 이론 맥락 배너 ── */}
         <div className="mt-6">
