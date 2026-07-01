@@ -34,7 +34,7 @@ import {
   BookOpen, FlaskConical, Microscope, BarChart3, Flag,
   Play, Timer, Lightbulb, Plus, Trash2, History,
   Diff, RotateCcw, ArrowUp, ArrowDown, Download, ClipboardCheck, Quote, Copy, Calculator,
-  Loader2, Compass, GraduationCap, SpellCheck,
+  Loader2, Compass, GraduationCap,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -726,7 +726,6 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   const [step, setStep] = useState<StepKey>("intro");
   // 사이클 70: 초록 탭 — 5장 챕터(step)와 병렬 모드. step 타입은 그대로 두어 챕터 로직 무영향.
   const [onAbstract, setOnAbstract] = useState(false);
-  const [onStyleCheck, setOnStyleCheck] = useState(false);
   // ③→④ 연계용: 아카이브 통계방법(id→seedKey 매핑)
   const [archiveStatMethods, setArchiveStatMethods] = useState<StatisticalMethod[]>([]);
   useEffect(() => {
@@ -878,6 +877,24 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
 
   function markDirty() {
     setDirty(true);
+  }
+
+  /** 현재 장을 기본 구성(템플릿)으로 초기화 — 이 장 내용 삭제 후 기본 절 구조로 되돌림 */
+  function resetChapter(k: WritingPaperChapterKey) {
+    if (readOnly) return;
+    if (
+      !confirm(
+        `'${LINT_CHAPTER_LABELS[k]}' 장을 기본 구성으로 초기화할까요?\n현재 이 장에 작성한 내용은 삭제되고 기본 절 구조로 되돌아갑니다.`,
+      )
+    )
+      return;
+    const approach = profile?.approach ?? "quantitative";
+    setForm((prev) => ({
+      ...prev,
+      sections: { ...prev.sections, [k]: buildTemplateSections(templateHeadings(k, approach)) },
+    }));
+    markDirty();
+    toast.success(`'${LINT_CHAPTER_LABELS[k]}' 장을 기본 구성으로 초기화했습니다.`);
   }
 
   // ── 섹션·단락 조작 ──
@@ -2081,7 +2098,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       {/* ── 스텝 탭 ── */}
       <div className="flex items-center gap-1 rounded-2xl border bg-card p-1.5">
         {STEPS.map((s, i) => {
-          const active = !onAbstract && !onStyleCheck && step === s.key;
+          const active = !onAbstract && step === s.key;
           return (
             <button
               key={s.key}
@@ -2089,7 +2106,6 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
               onClick={() => {
                 setStep(s.key);
                 setOnAbstract(false);
-                setOnStyleCheck(false);
               }}
               className={cn(
                 "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
@@ -2117,13 +2133,10 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         })}
         <button
           type="button"
-          onClick={() => {
-            setOnAbstract(true);
-            setOnStyleCheck(false);
-          }}
+          onClick={() => setOnAbstract(true)}
           className={cn(
             "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
-            onAbstract && !onStyleCheck
+            onAbstract
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
           )}
@@ -2131,27 +2144,9 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           <FileText size={14} />
           <span>초록</span>
         </button>
-        <button
-          type="button"
-          onClick={() => {
-            setOnStyleCheck(true);
-            setOnAbstract(false);
-          }}
-          className={cn(
-            "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
-            onStyleCheck
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground"
-          )}
-        >
-          <SpellCheck size={14} />
-          <span>문체 점검</span>
-        </button>
       </div>
 
-      {onStyleCheck ? (
-        <StyleCheckPanel sections={form.sections} />
-      ) : onAbstract ? (
+      {onAbstract ? (
         <AbstractPanel
           value={form.abstract}
           keywords={form.abstractKeywords}
@@ -2174,9 +2169,22 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           <h4 className="text-sm font-semibold">
             {stepIdx + 1}. {STEPS[stepIdx].label}
           </h4>
-          <span className="text-[11px] text-muted-foreground">
-            {chapterChars(form, step).toLocaleString()}자
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-muted-foreground">
+              {chapterChars(form, step).toLocaleString()}자
+            </span>
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={() => resetChapter(step)}
+                title="이 장을 기본 구성으로 초기화"
+                className="inline-flex items-center gap-1 rounded-lg border border-dashed px-2 py-0.5 text-[10px] text-muted-foreground transition-colors hover:border-destructive/40 hover:text-destructive"
+              >
+                <RotateCcw size={11} />
+                기본값 초기화
+              </button>
+            )}
+          </div>
         </div>
 
         {/* 장 요약 — 세부 절 앞 도입 단락 (항상 표시) */}
@@ -2656,6 +2664,11 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           </div>
         )}
       </section>
+
+      {/* 문체 점검(번역투·시제/태) — 현재 장 인라인, 이전/다음 위 (2026-07-01) */}
+      <div className="mt-1">
+        <StyleCheckPanel sections={{ [step]: form.sections[step] }} />
+      </div>
 
       {/* ── 이전 / 다음 네비게이션 ── */}
       <div className="flex items-center justify-between rounded-2xl border bg-card p-3">
