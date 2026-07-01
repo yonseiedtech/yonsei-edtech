@@ -189,6 +189,19 @@ export interface WritingSection {
   paragraphs: WritingParagraph[];
 }
 
+/**
+ * 구조화된 연구문제 항목 — 서론 '연구 문제'를 항목별로 관리(추가/삭제).
+ * 각 문제에 관련 연구방법(archive_research_methods)·통계방법(archive_statistical_methods) ID를 태그로 연결.
+ */
+export interface ResearchQuestionItem {
+  id: string;
+  text: string;
+  /** archive_research_methods doc id 목록 */
+  researchMethodIds: string[];
+  /** archive_statistical_methods doc id 목록 */
+  statMethodIds: string[];
+}
+
 export interface WritingPaper {
   id: string;
   userId: string;
@@ -206,6 +219,8 @@ export interface WritingPaper {
   abstract?: string;
   /** 초록 키워드 (3~5개 권장) */
   abstractKeywords?: string[];
+  /** 구조화된 연구문제 (서론) — 항목별 텍스트 + 연구방법·통계방법 태그 */
+  researchQuestions?: ResearchQuestionItem[];
   /** UI 표시용 마지막 자동 저장 시각 (ISO) */
   lastSavedAt?: string;
   createdAt: string;

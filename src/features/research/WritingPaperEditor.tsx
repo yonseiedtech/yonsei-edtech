@@ -41,6 +41,7 @@ import { cn } from "@/lib/utils";
 import { chapterCharCount } from "./thesis-progress";
 import { lintThesis, questionCoverage, LINT_CHAPTER_LABELS, type LintIssue, type QuestionCoverage } from "./writing-lint";
 import StyleCheckPanel from "./StyleCheckPanel";
+import ResearchQuestionsPanel from "./ResearchQuestionsPanel";
 import { phrasesForChapter } from "./phrase-bank";
 import MethodHelper, { STAT_METHOD_DESCRIPTIONS, type DesignRef } from "./MethodHelper";
 import DataAnalyzer from "./DataAnalyzer";
@@ -56,6 +57,7 @@ import type {
   ResearchApproachType,
   ResearchDesignType,
   WritingPaperVersion,
+  ResearchQuestionItem,
 } from "@/types";
 import {
   WRITING_APPROACH_LABELS,
@@ -122,7 +124,7 @@ function templateHeadings(
   const qual = approach === "qualitative";
   switch (chapter) {
     case "intro":
-      return ["연구의 필요성", "연구 목적", "연구 문제"];
+      return ["연구의 필요성", "연구 목적"];
     case "background":
       return qual
         ? ["핵심 개념과 이론", "선행연구 고찰"]
@@ -257,6 +259,7 @@ interface FormState {
   sections: SectionsState;
   abstract: string;
   abstractKeywords: string[];
+  researchQuestions: ResearchQuestionItem[];
 }
 
 const CHAPTER_KEYS: WritingPaperChapterKey[] = ["intro", "background", "method", "results", "conclusion"];
@@ -591,7 +594,7 @@ function getSectionGuides(heading: string): string[] | null {
 function buildEmptyForm(approach: ResearchApproachType): FormState {
   const sections = {} as SectionsState;
   for (const k of CHAPTER_KEYS) sections[k] = buildTemplateSections(templateHeadings(k, approach));
-  return { title: "", sections, abstract: "", abstractKeywords: [] };
+  return { title: "", sections, abstract: "", abstractKeywords: [], researchQuestions: [] };
 }
 
 function normalizeSections(list: WritingSection[]): WritingSection[] {
@@ -623,6 +626,7 @@ function fromPaper(p: WritingPaper | undefined, approach: ResearchApproachType):
     sections,
     abstract: p.abstract ?? "",
     abstractKeywords: p.abstractKeywords ?? [],
+    researchQuestions: p.researchQuestions ?? [],
   };
 }
 
@@ -960,6 +964,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           chapters: serializeAll(form.sections),
           abstract: form.abstract,
           abstractKeywords: form.abstractKeywords,
+          researchQuestions: form.researchQuestions,
           lastSavedAt: now,
         },
       });
@@ -2388,6 +2393,18 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
             </div>
           )}
         </div>
+
+        {/* 구조화된 연구문제 — 서론 장 한정 (2026-07-01) */}
+        {step === "intro" && (
+          <ResearchQuestionsPanel
+            items={form.researchQuestions}
+            readOnly={readOnly}
+            onChange={(next) => {
+              setForm((prev) => ({ ...prev, researchQuestions: next }));
+              markDirty();
+            }}
+          />
+        )}
 
         {/* 선택한 분석 방법 기술 — 연구 방법 장 한정 자동 표시 (2026-06-12) */}
         {step === "method" && (profile?.methods?.length ?? 0) > 0 && (
