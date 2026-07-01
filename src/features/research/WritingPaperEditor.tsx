@@ -58,6 +58,7 @@ import type {
   ResearchDesignType,
   WritingPaperVersion,
   ResearchQuestionItem,
+  StatisticalMethod,
 } from "@/types";
 import {
   WRITING_APPROACH_LABELS,
@@ -65,7 +66,7 @@ import {
   STAT_METHOD_LABELS,
 } from "@/types";
 import type { StatMethodType } from "@/types";
-import { advisorFeedbackApi, writingPapersApi, writingPaperVersionsApi, researchProposalsApi } from "@/lib/bkend";
+import { advisorFeedbackApi, writingPapersApi, writingPaperVersionsApi, researchProposalsApi, statisticalMethodsApi } from "@/lib/bkend";
 import type { AdvisorFeedbackNote, ResearchProposal } from "@/types";
 import { useStudyTimerStore } from "./study-timer/study-timer-store";
 import { useCreateSession, useStudySessionsByWritingPaper } from "./study-timer/useStudySessions";
@@ -395,6 +396,21 @@ const ANALYSIS_SKELETONS: Record<StatMethodType, string> = {
   factor_analysis: "측정도구의 구성타당도를 확인하기 위해 요인분석을 실시하였다.",
 };
 
+// ③→④ 연계: 아카이브 통계방법 seedKey → 에디터 StatMethodType (결과 템플릿 매핑)
+// MANOVA·MANCOVA·CVI·CLT 등 StatMethodType 에 없는 항목은 매핑 생략(전용 템플릿 없음).
+const SEEDKEY_TO_STATTYPE: Record<string, StatMethodType> = {
+  "statistical-method:t-test": "ttest",
+  "statistical-method:anova-oneway": "anova",
+  "statistical-method:ancova": "ancova",
+  "statistical-method:multiple-regression": "regression",
+  "statistical-method:logistic-regression": "regression",
+  "statistical-method:correlation": "correlation",
+  "statistical-method:chi-square": "chisquare",
+  "statistical-method:sem": "sem",
+  "statistical-method:efa": "factor_analysis",
+  "statistical-method:cfa": "factor_analysis",
+};
+
 // ── 분석 방법별 결과 '서술문' 템플릿 (2026-07-01) — '연구문제별 결과' 서술 골격 ──
 // APA 보고 관례(통계량·자유도·p·효과크기)를 담은 문장 틀. 빈칸(___)은 본인 수치로 채운다.
 const RESULTS_NARRATIVE_TEMPLATES: Record<StatMethodType, string> = {
@@ -711,6 +727,36 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   // 사이클 70: 초록 탭 — 5장 챕터(step)와 병렬 모드. step 타입은 그대로 두어 챕터 로직 무영향.
   const [onAbstract, setOnAbstract] = useState(false);
   const [onStyleCheck, setOnStyleCheck] = useState(false);
+  // ③→④ 연계용: 아카이브 통계방법(id→seedKey 매핑)
+  const [archiveStatMethods, setArchiveStatMethods] = useState<StatisticalMethod[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    statisticalMethodsApi
+      .listPublished()
+      .then((res) => {
+        if (!cancelled) setArchiveStatMethods(res.data);
+      })
+      .catch((err) => console.error("[writing-paper] stat methods load failed", err));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  // 결과 장 추천 대상 = 프로파일에서 고른 통계방법 ∪ 연구문제에 태그된 통계방법(③)
+  const resultsMethods = useMemo<StatMethodType[]>(() => {
+    const idToSeed = new Map(archiveStatMethods.map((s) => [s.id, s.seedKey ?? ""]));
+    const set = new Set<StatMethodType>(profile?.methods ?? []);
+    for (const q of form.researchQuestions) {
+      for (const id of q.statMethodIds) {
+        const t = SEEDKEY_TO_STATTYPE[idToSeed.get(id) ?? ""];
+        if (t) set.add(t);
+      }
+    }
+    return [...set];
+  }, [archiveStatMethods, profile?.methods, form.researchQuestions]);
+  const taggedOnlyMethods = useMemo(
+    () => new Set(resultsMethods.filter((m) => !(profile?.methods ?? []).includes(m))),
+    [resultsMethods, profile?.methods],
+  );
   const [guideOpen, setGuideOpen] = useState(false);
   const [sectionGuideOpen, setSectionGuideOpen] = useState<string | null>(null);
   const [lintOpen, setLintOpen] = useState(false);
@@ -2504,14 +2550,14 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         )}
 
         {/* 선택한 분석 방법의 기본 가정 검정 — 결과 장 한정 자동 표시 (2026-06-12) */}
-        {step === "results" && (profile?.methods?.length ?? 0) > 0 && (
+        {step === "results" && resultsMethods.length > 0 && (
           <div className="mt-3 rounded-xl border border-sky-200/70 bg-sky-50/40 p-3.5 dark:border-sky-800/50 dark:bg-sky-950/10">
             <p className="flex items-center gap-1.5 text-xs font-semibold text-sky-800 dark:text-sky-200">
               <Microscope size={13} />
-              선택한 분석 방법의 기본 가정 검정 — 결과 보고 전 확인하세요
+              분석 방법별 가정·결과 골격 — 프로파일 선택 + 연구문제 태그(③) 방법 포함
             </p>
             <div className="mt-2.5 space-y-3.5">
-              {profile!.methods!.map((m) => {
+              {resultsMethods.map((m) => {
                 const g = ASSUMPTION_GUIDES[m];
                 if (!g) return null;
                 return (
@@ -2520,6 +2566,11 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                       <span className="text-xs font-bold text-sky-900 dark:text-sky-100">
                         {STAT_METHOD_LABELS[m]}
                       </span>
+                      {taggedOnlyMethods.has(m) && (
+                        <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
+                          연구문제 태그
+                        </span>
+                      )}
                       {g.archiveHref && (
                         <Link
                           href={g.archiveHref}
