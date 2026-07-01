@@ -57,6 +57,45 @@ const RESEARCH_QUESTION = /[^.?!\n]{8,}\?/g;
 
 const LONG_SENTENCE_THRESHOLD = 150;
 
+// ── 번역투·시제/태 문체 점검 규칙 (2026-07-01, writing-tips 42패턴 근거) ──
+// ★탐지 전용: 패턴 위치를 표시할 뿐 수정문을 대신 쓰지 않는다(HITL). 최종 판단은 작성자.
+// ⚠ 과교정 경계: 패턴 ≠ 무조건 오류. 반복·밀도·발표체만 실제 문제. info 규칙은 정당 용법이면 유지.
+const OVERCORRECTION_NOTE = " ※ 패턴이라도 다 고치면 오히려 어색할 수 있습니다 — 반복·밀도만 손보고 정당한 용법은 유지하세요.";
+
+interface StyleRule {
+  id: string;
+  re: RegExp;
+  severity: LintSeverity;
+  /** 패턴 이름(표시용) */
+  label: string;
+  /** 방향 힌트(수정문 아님) */
+  hint: string;
+  /** 과교정 주의 대상(정당 용법이 흔함) */
+  soft?: boolean;
+  cap?: number;
+}
+
+const STYLE_RULES: StyleRule[] = [
+  // 번역투 — 명확한 어법 문제(warn)
+  { id: "trans-double-passive", re: /되어지/g, severity: "warn", label: "이중피동 '~되어지다'", hint: "'-되-'와 '-어지-'가 겹친 이중피동입니다. 한 번의 피동으로 충분합니다." },
+  { id: "trans-passive-jin", re: /(?:보여|불려|여겨|말해|쓰여|다뤄)(?:진|지[다는고며었질])/g, severity: "warn", label: "부자연스러운 피동 '~여/어지다'", hint: "능동 또는 자연스러운 서술로 쓸 수 있는지 검토하세요." },
+  { id: "trans-by", re: /[가-힣]에\s*의(?:해|하여)/g, severity: "warn", label: "피동 '~에 의해'(by)", hint: "행위 주체를 주어로 올려 능동으로 재배치할 수 있는지 보세요." },
+  { id: "trans-japanese-isseo", re: /에\s*있어서/g, severity: "warn", label: "'~에 있어서'(일본어투 ~において)", hint: "'~에서/~의 경우/~에 관해'로 바꾸면 자연스럽습니다." },
+  { id: "trans-saryo", re: /사료(?:된다|되었다|됨)/g, severity: "warn", label: "'~로 사료된다'", hint: "'~로 보인다/판단된다' 등 명확한 동사로." },
+  // 번역투 — 흔해서 과교정 주의(info)
+  { id: "trans-exist", re: /존재(?:한다|하는|했다|하며)/g, severity: "info", label: "'존재한다'(there is)", hint: "대개 '있다'로 충분합니다.", soft: true },
+  { id: "trans-one-of", re: /중\s*하나(?:이다|다|의|인|가)/g, severity: "info", label: "'~중 하나'(one of)", hint: "복수 강조가 꼭 필요하지 않으면 단순하게 단정하세요.", soft: true },
+  { id: "trans-due-to", re: /(?:으로|로)\s*인(?:한|하여|해)/g, severity: "info", label: "'~로 인한/인하여'(due to)", hint: "'~로/~ 때문에'로 간결하게.", soft: true, cap: 4 },
+  { id: "trans-fact-that", re: /라는\s*사실/g, severity: "info", label: "'~라는 사실'(the fact that)", hint: "대개 '라는 사실'은 빼도 뜻이 그대로입니다.", soft: true },
+  { id: "trans-through", re: /(?:을|를)\s*통(?:해|하여)/g, severity: "info", label: "'~을 통해'(through) 남용", hint: "맥락별로 '~로/~에서/~을 거쳐'로 구체화할 수 있습니다.", soft: true, cap: 3 },
+  { id: "trans-about", re: /에\s*대(?:한|하여|해)/g, severity: "info", label: "'~에 대한/대하여'(about) 남용", hint: "목적격 조사(을/를)로 바로 받으면 간결합니다.", soft: true, cap: 3 },
+  { id: "trans-japanese-case", re: /의\s*경우/g, severity: "info", label: "'~의 경우'(일본어투) 남용", hint: "빼거나 조사로 바꿔도 되는 자리가 많습니다.", soft: true, cap: 3 },
+  { id: "trans-progressive", re: /[가-힣]고\s*있(?:다|었다|으며|는|던)/g, severity: "info", label: "진행형 '~고 있다'(-ing) 남용", hint: "실제 진행 상태가 아니면 단순시제(~한다/했다)가 자연스럽습니다.", soft: true, cap: 3 },
+  // 시제·태 — 발표체 헤지, 명사형 종결
+  { id: "voice-hedge", re: /(?:볼|설명할|확인할|말할|생각할|이해할)\s*수\s*있다/g, severity: "info", label: "발표체 헤지 '~ㄹ 수 있다'", hint: "사실·정의·결과는 단정하세요. 능력·가능 용법이면 유지합니다.", soft: true, cap: 4 },
+  { id: "voice-noun-ending", re: /[가-힣](?:함|임)\.(?=\s|$)/g, severity: "info", label: "명사형 종결 '~함/~임'", hint: "학술 본문은 서술형 '~이다/~한다'로 맺습니다(개조식 지양).", soft: true },
+];
+
 /** 어절 끝 조사 제거 — 표기 변형 비교용 (보수적 목록) */
 function stripParticle(w: string): string {
   return w.replace(/(이|가|은|는|을|를|의|와|과|도|만|에서|에게|으로|에|로)$/, "");
@@ -184,6 +223,24 @@ export function lintThesis(sections: LintSections): LintIssue[] {
           heading,
           issues,
         );
+
+        // ── 번역투·시제/태 문체 규칙 (전 장 적용, 탐지 전용) ──
+        for (const r of STYLE_RULES) {
+          collectMatches(
+            text,
+            r.re,
+            (excerpt, matched) => ({
+              severity: r.severity,
+              rule: r.id,
+              message: `문체 점검 — ${r.label}: "${matched.trim()}". ${r.hint}${r.soft ? OVERCORRECTION_NOTE : ""}`,
+              excerpt,
+            }),
+            ch,
+            heading,
+            issues,
+            r.cap ?? 4,
+          );
+        }
 
         // 주술 호응: "목적은 ~" 문장이 "~데 있다/것이다"로 받는지 (서론 한정)
         if (ch === "intro") {
