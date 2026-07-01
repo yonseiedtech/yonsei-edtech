@@ -20,6 +20,7 @@ import {
   ListChecks,
   Quote,
   Wand2,
+  Compass,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -209,6 +210,25 @@ export default function ArchiveLandingPage() {
             </span>
             <span className="mt-0.5 block text-sm text-muted-foreground">
               몇 가지 질문에 답하면 연구 상황에 맞는 통계방법과 선배 논문을 추천해 드립니다.
+            </span>
+          </span>
+          <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+        </Link>
+
+        {/* ── 연구방법 추천 마법사 진입 CTA ── */}
+        <Link
+          href="/archive/research-finder"
+          className="group mt-3 flex items-center gap-4 rounded-2xl border border-amber-300/40 bg-gradient-to-r from-amber-50/60 to-transparent p-5 transition-all hover:-translate-y-0.5 hover:border-amber-400/60 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40 dark:border-amber-900/40 dark:from-amber-950/20"
+        >
+          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+            <Compass className="h-5 w-5" aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-base font-semibold tracking-tight">
+              내 연구에 맞는 연구방법을 찾고 싶다면? — 연구방법 마법사
+            </span>
+            <span className="mt-0.5 block text-sm text-muted-foreground">
+              연구 목적에 답하면 질적·양적·혼합 연구방법과 함께 쓸 방법·분석 통계를 추천해 드립니다.
             </span>
           </span>
           <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
