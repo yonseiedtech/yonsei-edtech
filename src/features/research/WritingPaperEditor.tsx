@@ -2368,6 +2368,18 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           ))}
         </div>
 
+        {/* 구조화된 연구문제 — 서론 상단(섹션 루프 직후·학술 문형 위) (2026-07-01) */}
+        {step === "intro" && (
+          <ResearchQuestionsPanel
+            items={form.researchQuestions}
+            readOnly={readOnly}
+            onChange={(next) => {
+              setForm((prev) => ({ ...prev, researchQuestions: next }));
+              markDirty();
+            }}
+          />
+        )}
+
         {/* 섹션 추가 */}
         {!readOnly && (
           <div className="mt-3 flex flex-wrap items-center gap-1.5">
@@ -2489,18 +2501,6 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
             </div>
           )}
         </div>
-
-        {/* 구조화된 연구문제 — 서론 장 한정 (2026-07-01) */}
-        {step === "intro" && (
-          <ResearchQuestionsPanel
-            items={form.researchQuestions}
-            readOnly={readOnly}
-            onChange={(next) => {
-              setForm((prev) => ({ ...prev, researchQuestions: next }));
-              markDirty();
-            }}
-          />
-        )}
 
         {/* 선택한 분석 방법 기술 — 연구 방법 장 한정 자동 표시 (2026-06-12) */}
         {step === "method" && (profile?.methods?.length ?? 0) > 0 && (
