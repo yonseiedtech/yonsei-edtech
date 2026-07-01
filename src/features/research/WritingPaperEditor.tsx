@@ -395,6 +395,27 @@ const ANALYSIS_SKELETONS: Record<StatMethodType, string> = {
   factor_analysis: "측정도구의 구성타당도를 확인하기 위해 요인분석을 실시하였다.",
 };
 
+// ── 분석 방법별 결과 '서술문' 템플릿 (2026-07-01) — '연구문제별 결과' 서술 골격 ──
+// APA 보고 관례(통계량·자유도·p·효과크기)를 담은 문장 틀. 빈칸(___)은 본인 수치로 채운다.
+const RESULTS_NARRATIVE_TEMPLATES: Record<StatMethodType, string> = {
+  ttest:
+    "독립표본 t검정 결과, 실험집단의 ___ 점수(M=___, SD=___)는 통제집단(M=___, SD=___)보다 높았으며, 그 차이는 통계적으로 유의하였다, t(___)=___, p___. 효과크기는 Cohen's d=___로 ___ 수준이었다.",
+  anova:
+    "일원분산분석 결과, ___에 따른 ___의 차이는 통계적으로 유의하였다, F(___, ___)=___, p___, η²=___. 사후검정(___) 결과, ___ 집단이 ___ 집단보다 유의하게 높았다.",
+  ancova:
+    "사전점수를 공변량으로 통제한 공분산분석 결과, 집단 간 사후 ___의 차이는 유의하였다, F(___, ___)=___, p___, 부분 η²=___. 조정된 평균은 실험집단 ___(SE=___), 통제집단 ___(SE=___)이었다.",
+  regression:
+    "회귀분석 결과, ___은(는) ___을(를) 유의하게 예측하였다, β=___, t=___, p___. 회귀모형의 설명력은 R²=___(조정 R²=___), F(___, ___)=___, p___이었다.",
+  correlation:
+    "상관분석 결과, ___와(과) ___는 유의한 (정적/부적) 상관을 보였다, r=___, p___. 주요 변인 간 상관계수는 <표 Ⅳ-_>에 제시하였다.",
+  chisquare:
+    "카이제곱 검정 결과, ___와(과) ___ 간의 관계는 통계적으로 유의하였다, χ²(___, N=___)=___, p___. 기대빈도 5 미만 셀의 비율을 확인하였다.",
+  sem:
+    "구조방정식모형 분석 결과, 모형의 적합도는 양호하였다(CFI=___, TLI=___, RMSEA=___, SRMR=___). ___→___ 경로계수는 유의하였다, β=___, p___. 간접효과는 부트스트래핑으로 검증하였다(간접효과=___, 95% CI[___, ___]).",
+  factor_analysis:
+    "요인분석 결과 ___개 요인이 추출되었으며, 총 설명분산은 ___%였다. 각 문항의 요인부하량은 ___ 이상이었고, 요인별 신뢰도는 Cronbach's α=___이었다.",
+};
+
 // ── 분석 방법별 결과 표 골격 — 가정·결과 보고용 텍스트 표 (2026-06-12, 사이클 31) ──
 // 표 제목 첫 부분(slice 20)이 방법별로 달라 중복 삽입 가드 키로 사용한다.
 
@@ -1146,6 +1167,35 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     markDirty();
     logEditorEvent(user.id, "table_insert");
     toast.success(`${STAT_METHOD_LABELS[m]} 결과 표 골격을 추가했습니다 — 표 번호와 수치를 채우세요.`);
+  }
+
+  /** 통계방법별 결과 '서술문' 템플릿을 '연구문제별 결과' 섹션에 삽입 (2026-07-01) */
+  function insertResultsNarrative(m: StatMethodType) {
+    if (readOnly || !paper) return;
+    const tmpl = RESULTS_NARRATIVE_TEMPLATES[m];
+    const guard = tmpl.slice(0, 16);
+    const isNarrativeSec = (h: string) => h.includes("연구문제별") || (h.includes("결과") && !h.includes("가정"));
+    const target = form.sections.results.find((sec) => isNarrativeSec(sec.heading));
+    const existing = target ? target.paragraphs.map((par) => par.text) : [];
+    if (existing.some((e) => e.startsWith(guard))) {
+      toast.info(`${STAT_METHOD_LABELS[m]} 결과 서술문 골격은 이미 삽입되어 있습니다.`);
+      return;
+    }
+    setForm((prev) => {
+      const cur = [...prev.sections.results];
+      let idx = cur.findIndex((sec) => isNarrativeSec(sec.heading));
+      if (idx < 0) {
+        cur.push({ id: uid(), heading: "연구문제별 결과", paragraphs: [] });
+        idx = cur.length - 1;
+      }
+      const sec = cur[idx];
+      const kept = sec.paragraphs.filter((par) => par.text.trim());
+      cur[idx] = { ...sec, paragraphs: [...kept, { id: uid(), text: tmpl }] };
+      return { ...prev, sections: { ...prev.sections, results: cur } };
+    });
+    markDirty();
+    logEditorEvent(user.id, "table_insert");
+    toast.success(`${STAT_METHOD_LABELS[m]} 결과 서술문 골격을 추가했습니다 — 빈칸(___)을 수치로 채우세요.`);
   }
 
   /** 데이터 분석기 결과(표·보고 문장)를 결과 장 '가정 검정' 섹션에 삽입 */
@@ -2494,6 +2544,15 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                           className="rounded-full border border-dashed border-sky-400/60 px-2 py-0.5 text-[10px] font-medium text-sky-700 transition-colors hover:bg-sky-600 hover:text-white dark:text-sky-300"
                         >
                           + 결과 표 골격 삽입
+                        </button>
+                      )}
+                      {!readOnly && (
+                        <button
+                          type="button"
+                          onClick={() => insertResultsNarrative(m)}
+                          className="rounded-full border border-dashed border-emerald-400/60 px-2 py-0.5 text-[10px] font-medium text-emerald-700 transition-colors hover:bg-emerald-600 hover:text-white dark:text-emerald-300"
+                        >
+                          + 결과 서술문 삽입
                         </button>
                       )}
                     </div>
