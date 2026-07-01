@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, X, HelpCircle, Compass, BarChart3 } from "lucide-react";
+import Link from "next/link";
+import { Plus, Trash2, X, HelpCircle, Compass, BarChart3, Network } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -147,6 +148,13 @@ export default function ResearchQuestionsPanel({
         연구 문제는 연구방법·통계방법을 압축해 담습니다. 각 문제에 태그를 달아두면 방법·분석 설계가 한눈에 정리됩니다.
         태그는 아카이브(연구방법·통계방법 가이드)에 등록된 항목에서 선택합니다.
       </p>
+      <Link
+        href="/research-model"
+        className="mt-2 inline-flex items-center gap-1 rounded-lg border border-dashed border-primary/30 px-2.5 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary/5"
+      >
+        <Network size={12} />
+        변인(독립·종속·매개)으로 연구문제 만들기 — 연구 모형 도구
+      </Link>
 
       <div className="mt-3 space-y-3">
         {items.length === 0 && (
