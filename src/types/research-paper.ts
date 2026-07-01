@@ -202,6 +202,13 @@ export interface ResearchQuestionItem {
   statMethodIds: string[];
 }
 
+/** 부록 항목 — 제목 + 관련 메모/설명 (설문지·도구·표 등 목록) */
+export interface AppendixItem {
+  id: string;
+  title: string;
+  note: string;
+}
+
 export interface WritingPaper {
   id: string;
   userId: string;
@@ -221,6 +228,8 @@ export interface WritingPaper {
   abstractKeywords?: string[];
   /** 구조화된 연구문제 (서론) — 항목별 텍스트 + 연구방법·통계방법 태그 */
   researchQuestions?: ResearchQuestionItem[];
+  /** 부록 목록 — 제목 + 메모 */
+  appendices?: AppendixItem[];
   /** UI 표시용 마지막 자동 저장 시각 (ISO) */
   lastSavedAt?: string;
   createdAt: string;

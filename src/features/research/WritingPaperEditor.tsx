@@ -34,7 +34,7 @@ import {
   BookOpen, FlaskConical, Microscope, BarChart3, Flag,
   Play, Timer, Lightbulb, Plus, Trash2, History,
   Diff, RotateCcw, ArrowUp, ArrowDown, Download, ClipboardCheck, Quote, Copy, Calculator,
-  Loader2, Compass, GraduationCap,
+  Loader2, Compass, GraduationCap, Paperclip,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -42,6 +42,7 @@ import { chapterCharCount } from "./thesis-progress";
 import { lintThesis, questionCoverage, LINT_CHAPTER_LABELS, type LintIssue, type QuestionCoverage } from "./writing-lint";
 import StyleCheckPanel from "./StyleCheckPanel";
 import ResearchQuestionsPanel from "./ResearchQuestionsPanel";
+import AppendixPanel from "./AppendixPanel";
 import { phrasesForChapter } from "./phrase-bank";
 import MethodHelper, { STAT_METHOD_DESCRIPTIONS, type DesignRef } from "./MethodHelper";
 import DataAnalyzer from "./DataAnalyzer";
@@ -59,6 +60,7 @@ import type {
   WritingPaperVersion,
   ResearchQuestionItem,
   StatisticalMethod,
+  AppendixItem,
 } from "@/types";
 import {
   WRITING_APPROACH_LABELS,
@@ -133,13 +135,13 @@ function templateHeadings(
     case "method":
       return qual
         ? ["연구 설계", "연구 참여자", "자료 수집", "자료 분석", "신뢰성·타당성 확보"]
-        : ["연구 설계", "연구 대상", "측정 도구", "연구 절차", "자료 분석"];
+        : ["연구 설계", "연구 대상", "측정 도구", "프로그램 설계 및 적용", "자료 수집 및 분석"];
     case "results":
       return qual
         ? ["주제(테마)별 결과"]
         : ["기술통계 및 가정 검정", "연구문제별 결과"];
     case "conclusion":
-      return ["요약 및 논의", "시사점", "연구의 한계 및 후속연구 제언"];
+      return ["요약", "결론", "한계 및 시사점"];
   }
 }
 
@@ -261,6 +263,7 @@ interface FormState {
   abstract: string;
   abstractKeywords: string[];
   researchQuestions: ResearchQuestionItem[];
+  appendices: AppendixItem[];
 }
 
 const CHAPTER_KEYS: WritingPaperChapterKey[] = ["intro", "background", "method", "results", "conclusion"];
@@ -631,7 +634,7 @@ function getSectionGuides(heading: string): string[] | null {
 function buildEmptyForm(approach: ResearchApproachType): FormState {
   const sections = {} as SectionsState;
   for (const k of CHAPTER_KEYS) sections[k] = buildTemplateSections(templateHeadings(k, approach));
-  return { title: "", sections, abstract: "", abstractKeywords: [], researchQuestions: [] };
+  return { title: "", sections, abstract: "", abstractKeywords: [], researchQuestions: [], appendices: [] };
 }
 
 function normalizeSections(list: WritingSection[]): WritingSection[] {
@@ -664,6 +667,7 @@ function fromPaper(p: WritingPaper | undefined, approach: ResearchApproachType):
     abstract: p.abstract ?? "",
     abstractKeywords: p.abstractKeywords ?? [],
     researchQuestions: p.researchQuestions ?? [],
+    appendices: p.appendices ?? [],
   };
 }
 
@@ -726,6 +730,12 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   const [step, setStep] = useState<StepKey>("intro");
   // 사이클 70: 초록 탭 — 5장 챕터(step)와 병렬 모드. step 타입은 그대로 두어 챕터 로직 무영향.
   const [onAbstract, setOnAbstract] = useState(false);
+  const [onAppendix, setOnAppendix] = useState(false);
+  // D: 이론배경/방법/결과/결론 절별 하위 탭 — 활성 절 인덱스(장 전환 시 0으로)
+  const [sectionTab, setSectionTab] = useState(0);
+  useEffect(() => {
+    setSectionTab(0);
+  }, [step]);
   // ③→④ 연계용: 아카이브 통계방법(id→seedKey 매핑)
   const [archiveStatMethods, setArchiveStatMethods] = useState<StatisticalMethod[]>([]);
   useEffect(() => {
@@ -897,6 +907,24 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     toast.success(`'${LINT_CHAPTER_LABELS[k]}' 장을 기본 구성으로 초기화했습니다.`);
   }
 
+  /** F: 현재 장의 활성 절에 표 골격 단락을 추가 (섹션 추가와 별개) */
+  function insertTable() {
+    if (readOnly || !paper) return;
+    const table =
+      "<표 _-_> 표 제목\n구분 | 항목1 | 항목2 | 항목3\n___ | ___ | ___ | ___\n___ | ___ | ___ | ___";
+    setForm((prev) => {
+      const cur = [...prev.sections[step]];
+      const bodyIdxs = cur.map((_s, i) => i).filter((i) => !isOverviewSection(cur[i]));
+      if (bodyIdxs.length === 0) return prev;
+      const targetIdx = bodyIdxs[Math.min(sectionTab, bodyIdxs.length - 1)];
+      const sec = cur[targetIdx];
+      cur[targetIdx] = { ...sec, paragraphs: [...sec.paragraphs, { id: uid(), text: table }] };
+      return { ...prev, sections: { ...prev.sections, [step]: cur } };
+    });
+    markDirty();
+    toast.success("표 골격을 추가했습니다 — 열·값을 채우세요.");
+  }
+
   // ── 섹션·단락 조작 ──
 
   function updateSection(k: WritingPaperChapterKey, sectionId: string, patch: Partial<WritingSection>) {
@@ -1049,6 +1077,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           abstract: form.abstract,
           abstractKeywords: form.abstractKeywords,
           researchQuestions: form.researchQuestions,
+          appendices: form.appendices,
           lastSavedAt: now,
         },
       });
@@ -1556,6 +1585,9 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   const currentSections = form.sections[step];
   const overviewSection = currentSections.find(isOverviewSection);
   const bodySections = currentSections.filter((sec) => !isOverviewSection(sec));
+  // D: 서론 외(이론배경·방법·결과·결론)에서 절이 2개 이상이면 하위 탭으로 전환
+  const useSectionTabs = step !== "intro" && bodySections.length > 1;
+  const activeSectionIdx = Math.min(sectionTab, Math.max(0, bodySections.length - 1));
   const unusedTemplates = templateHeadings(step, approach).filter(
     (h) => !currentSections.some((s) => s.heading.trim() === h),
   );
@@ -2098,7 +2130,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       {/* ── 스텝 탭 ── */}
       <div className="flex items-center gap-1 rounded-2xl border bg-card p-1.5">
         {STEPS.map((s, i) => {
-          const active = !onAbstract && step === s.key;
+          const active = !onAbstract && !onAppendix && step === s.key;
           return (
             <button
               key={s.key}
@@ -2106,6 +2138,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
               onClick={() => {
                 setStep(s.key);
                 setOnAbstract(false);
+                setOnAppendix(false);
               }}
               className={cn(
                 "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
@@ -2133,10 +2166,13 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         })}
         <button
           type="button"
-          onClick={() => setOnAbstract(true)}
+          onClick={() => {
+            setOnAbstract(true);
+            setOnAppendix(false);
+          }}
           className={cn(
             "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
-            onAbstract
+            onAbstract && !onAppendix
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
           )}
@@ -2144,9 +2180,34 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           <FileText size={14} />
           <span>초록</span>
         </button>
+        <button
+          type="button"
+          onClick={() => {
+            setOnAppendix(true);
+            setOnAbstract(false);
+          }}
+          className={cn(
+            "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
+            onAppendix
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          )}
+        >
+          <Paperclip size={14} />
+          <span>부록</span>
+        </button>
       </div>
 
-      {onAbstract ? (
+      {onAppendix ? (
+        <AppendixPanel
+          items={form.appendices}
+          readOnly={readOnly}
+          onChange={(next) => {
+            setForm((prev) => ({ ...prev, appendices: next }));
+            markDirty();
+          }}
+        />
+      ) : onAbstract ? (
         <AbstractPanel
           value={form.abstract}
           keywords={form.abstractKeywords}
@@ -2234,8 +2295,33 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         )}
 
         <div className="mt-3 space-y-4">
+          {useSectionTabs && (
+            <div className="mb-3 flex flex-wrap gap-1.5">
+              {bodySections.map((sec, si) => (
+                <button
+                  key={sec.id}
+                  type="button"
+                  onClick={() => setSectionTab(si)}
+                  className={cn(
+                    "rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors",
+                    si === activeSectionIdx
+                      ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                      : "bg-card text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  {si + 1}. {sec.heading.trim() || "(제목 없음)"}
+                </button>
+              ))}
+            </div>
+          )}
           {bodySections.map((sec, si) => (
-            <div key={sec.id} className="rounded-xl border bg-background/50 p-3.5">
+            <div
+              key={sec.id}
+              className={cn(
+                "rounded-xl border bg-background/50 p-3.5",
+                useSectionTabs && si !== activeSectionIdx && "hidden",
+              )}
+            >
               {/* 섹션 헤더 */}
               <div className="flex items-center gap-2">
                 <span className="shrink-0 text-[11px] font-bold text-primary">{si + 1}.</span>
@@ -2398,6 +2484,15 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
             >
               <Plus size={12} />
               섹션 추가
+            </button>
+            <button
+              type="button"
+              onClick={insertTable}
+              className="inline-flex items-center gap-1 rounded-lg border border-dashed px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary/40 hover:text-primary"
+              title="현재 절에 표 골격 추가"
+            >
+              <Plus size={12} />
+              표 추가
             </button>
             {unusedTemplates.map((h) => (
               <button
