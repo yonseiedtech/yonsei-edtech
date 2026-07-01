@@ -72,7 +72,7 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
   const searchParams = useSearchParams();
 
   const rawTab = searchParams.get("tab");
-  const activeTab: ResearchTab = isResearchTab(rawTab) ? rawTab : "writing";
+  const activeTab: ResearchTab = isResearchTab(rawTab) ? rawTab : "report";
 
   const rawSub = searchParams.get("sub");
   const writingSubTab: WritingSubTab = isWritingSubTab(rawSub) ? rawSub : "report";
@@ -353,14 +353,14 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="mt-6 print-hide">
           <TabsList variant="line" className="w-full justify-start gap-2 border-b">
+            <TabsTrigger value="report" className="flex-none">
+              <FileBarChart2 size={14} />연구 리포트
+            </TabsTrigger>
             <TabsTrigger value="writing" className="flex-none">
               <FileText size={14} />내 논문 작성
             </TabsTrigger>
             <TabsTrigger value="reading" className="flex-none">
               <BookOpenCheck size={14} />논문 읽기
-            </TabsTrigger>
-            <TabsTrigger value="report" className="flex-none">
-              <FileBarChart2 size={14} />연구 리포트
             </TabsTrigger>
             <TabsTrigger value="timer" className="flex-none">
               <Clock size={14} />연구 타이머
