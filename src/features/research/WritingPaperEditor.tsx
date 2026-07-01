@@ -34,12 +34,13 @@ import {
   BookOpen, FlaskConical, Microscope, BarChart3, Flag,
   Play, Timer, Lightbulb, Plus, Trash2, History,
   Diff, RotateCcw, ArrowUp, ArrowDown, Download, ClipboardCheck, Quote, Copy, Calculator,
-  Loader2, Compass, GraduationCap,
+  Loader2, Compass, GraduationCap, SpellCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { chapterCharCount } from "./thesis-progress";
 import { lintThesis, questionCoverage, LINT_CHAPTER_LABELS, type LintIssue, type QuestionCoverage } from "./writing-lint";
+import StyleCheckPanel from "./StyleCheckPanel";
 import { phrasesForChapter } from "./phrase-bank";
 import MethodHelper, { STAT_METHOD_DESCRIPTIONS, type DesignRef } from "./MethodHelper";
 import DataAnalyzer from "./DataAnalyzer";
@@ -678,6 +679,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   const [step, setStep] = useState<StepKey>("intro");
   // 사이클 70: 초록 탭 — 5장 챕터(step)와 병렬 모드. step 타입은 그대로 두어 챕터 로직 무영향.
   const [onAbstract, setOnAbstract] = useState(false);
+  const [onStyleCheck, setOnStyleCheck] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [sectionGuideOpen, setSectionGuideOpen] = useState<string | null>(null);
   const [lintOpen, setLintOpen] = useState(false);
@@ -1972,7 +1974,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       {/* ── 스텝 탭 ── */}
       <div className="flex items-center gap-1 rounded-2xl border bg-card p-1.5">
         {STEPS.map((s, i) => {
-          const active = !onAbstract && step === s.key;
+          const active = !onAbstract && !onStyleCheck && step === s.key;
           return (
             <button
               key={s.key}
@@ -1980,6 +1982,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
               onClick={() => {
                 setStep(s.key);
                 setOnAbstract(false);
+                setOnStyleCheck(false);
               }}
               className={cn(
                 "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
@@ -2007,10 +2010,13 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         })}
         <button
           type="button"
-          onClick={() => setOnAbstract(true)}
+          onClick={() => {
+            setOnAbstract(true);
+            setOnStyleCheck(false);
+          }}
           className={cn(
             "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
-            onAbstract
+            onAbstract && !onStyleCheck
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
           )}
@@ -2018,9 +2024,27 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           <FileText size={14} />
           <span>초록</span>
         </button>
+        <button
+          type="button"
+          onClick={() => {
+            setOnStyleCheck(true);
+            setOnAbstract(false);
+          }}
+          className={cn(
+            "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
+            onStyleCheck
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          )}
+        >
+          <SpellCheck size={14} />
+          <span>문체 점검</span>
+        </button>
       </div>
 
-      {onAbstract ? (
+      {onStyleCheck ? (
+        <StyleCheckPanel sections={form.sections} />
+      ) : onAbstract ? (
         <AbstractPanel
           value={form.abstract}
           keywords={form.abstractKeywords}

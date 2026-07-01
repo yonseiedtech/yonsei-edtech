@@ -327,6 +327,25 @@ export function lintThesis(sections: LintSections): LintIssue[] {
   return issues;
 }
 
+export type StyleCategory = "translationese" | "tense-voice";
+
+export const STYLE_CATEGORY_LABELS: Record<StyleCategory, string> = {
+  translationese: "번역투",
+  "tense-voice": "시제·태",
+};
+
+/** 규칙 ID → 문체 카테고리 (번역투/시제·태). 문체 규칙이 아니면 null. */
+export function styleCategoryOf(rule: string): StyleCategory | null {
+  if (rule.startsWith("trans-")) return "translationese";
+  if (rule.startsWith("voice-") || rule === "tense") return "tense-voice";
+  return null;
+}
+
+/** 번역투·시제/태 문체 점검 결과만 추출 (탭 전용 뷰용) */
+export function styleIssues(sections: LintSections): LintIssue[] {
+  return lintThesis(sections).filter((i) => styleCategoryOf(i.rule) !== null);
+}
+
 /** 서론에서 의문문(연구 문제 후보) 추출 — 결과 장 대조용 정보 제공 */
 export function extractResearchQuestions(sections: LintSections): string[] {
   const out: string[] = [];
