@@ -268,6 +268,71 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    // ── 4. 본인 참석(RSVP) 모임·행사 (Phase 2 네트워킹 트랙 통합) ─────────
+    const rsvpSnap = await db
+      .collection("networking_rsvps")
+      .where("userId", "==", uid)
+      .where("status", "==", "attending")
+      .get();
+
+    if (!rsvpSnap.empty) {
+      const eventIds = [...new Set(
+        rsvpSnap.docs.map((d) => (d.data() as { eventId?: string }).eventId).filter(Boolean),
+      )] as string[];
+
+      const chunkSize = 10;
+      for (let i = 0; i < eventIds.length; i += chunkSize) {
+        const chunk = eventIds.slice(i, i + chunkSize);
+        const snap = await db
+          .collection("networking_events")
+          .where("__name__", "in", chunk)
+          .get();
+
+        for (const doc of snap.docs) {
+          const n = doc.data() as {
+            title?: string;
+            startAt?: string;
+            endAt?: string;
+            location?: string;
+            description?: string;
+            status?: string;
+            published?: boolean;
+          };
+          // poll 미확정(startAt 빈 값)·취소·비공개 행사는 제외
+          if (!n.title || !n.startAt || n.status === "cancelled" || n.published === false) continue;
+
+          const dateOnly = toIcsDate(n.startAt);
+          const hasTime = n.startAt.length >= 16;
+          let dtstart: string;
+          let dtend: string;
+          let allDay = false;
+
+          if (hasTime) {
+            const timeStr = toIcsTime(n.startAt.slice(11, 16));
+            dtstart = `${dateOnly}T${timeStr}`;
+            dtend = n.endAt && n.endAt.length >= 16
+              ? `${toIcsDate(n.endAt)}T${toIcsTime(n.endAt.slice(11, 16))}`
+              : `${dateOnly}T${addHoursToTime(n.startAt.slice(11, 16), 2)}`;
+          } else {
+            dtstart = dateOnly;
+            dtend = nextDayIcs(n.startAt.slice(0, 10));
+            allDay = true;
+          }
+
+          events.push({
+            uid: `networking-${doc.id}-${uid}@yonsei-edtech`,
+            summary: `[모임·행사] ${n.title}`,
+            description: n.description ?? "",
+            location: n.location,
+            dtstart,
+            dtend,
+            allDay,
+            url: `${origin}/gatherings`,
+          });
+        }
+      }
+    }
+
     // 날짜순 정렬
     events.sort((a, b) => a.dtstart.localeCompare(b.dtstart));
 

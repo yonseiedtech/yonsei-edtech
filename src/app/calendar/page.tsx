@@ -9,9 +9,10 @@ import {
   courseEnrollmentsApi,
   courseOfferingsApi,
   classSessionsApi,
+  networkingEventsApi,
 } from "@/lib/bkend";
 import { getComputedStatus } from "@/lib/seminar-utils";
-import type { Seminar, Activity, CourseOffering, ClassSession } from "@/types";
+import type { Seminar, Activity, CourseOffering, ClassSession, NetworkingEvent } from "@/types";
 import { cn, safeYmd } from "@/lib/utils";
 import {
   ChevronLeft,
@@ -31,6 +32,7 @@ import {
   CalendarClock,
   List,
   LayoutGrid,
+  PartyPopper,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -55,7 +57,7 @@ type CalendarEvent = {
   endDate?: string;
   time?: string;
   location?: string;
-  type: "seminar" | "project" | "study" | "external" | "course";
+  type: "seminar" | "project" | "study" | "external" | "course" | "networking";
   status: string;
   href: string;
 };
@@ -110,6 +112,15 @@ const TYPE_CONFIG: Record<
     iconText: "text-slate-600 dark:text-slate-400",
     icon: GraduationCap,
   },
+  networking: {
+    label: "모임·행사",
+    barBg: "bg-rose-100 dark:bg-rose-900/50",
+    barText: "text-rose-800 dark:text-rose-200",
+    barBorder: "border-rose-300 dark:border-rose-700",
+    iconBg: "bg-rose-100 dark:bg-rose-900/40",
+    iconText: "text-rose-700 dark:text-rose-300",
+    icon: PartyPopper,
+  },
 };
 
 // 카테고리 필터 뱃지용 컬러 (active 상태)
@@ -119,6 +130,7 @@ const CAT_ACTIVE_CLASS: Record<CalendarEvent["type"], string> = {
   study:    "bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/50 dark:text-purple-200 dark:border-purple-700",
   external: "bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/50 dark:text-amber-200 dark:border-amber-700",
   course:   "bg-slate-100 text-slate-600 border-slate-300 dark:bg-slate-800/60 dark:text-slate-300 dark:border-slate-600",
+  networking: "bg-rose-100 text-rose-700 border-rose-300 dark:bg-rose-900/50 dark:text-rose-200 dark:border-rose-700",
 };
 
 const PUBLIC_FILTER_OPTIONS: { value: CalendarEvent["type"] | "all"; label: string }[] = [
@@ -127,6 +139,7 @@ const PUBLIC_FILTER_OPTIONS: { value: CalendarEvent["type"] | "all"; label: stri
   { value: "project", label: "프로젝트" },
   { value: "study", label: "스터디" },
   { value: "external", label: "대외활동" },
+  { value: "networking", label: "모임·행사" },
 ];
 
 const MEMBER_FILTER_OPTIONS: { value: CalendarEvent["type"] | "all"; label: string }[] = [
@@ -135,7 +148,7 @@ const MEMBER_FILTER_OPTIONS: { value: CalendarEvent["type"] | "all"; label: stri
 ];
 
 const CAT_STORAGE_KEY = "calendar.visibleCategories";
-const ALL_CATS: CalendarEvent["type"][] = ["seminar", "project", "study", "external", "course"];
+const ALL_CATS: CalendarEvent["type"][] = ["seminar", "project", "study", "external", "course", "networking"];
 
 // ─── 유틸 ──────────────────────────────────────────────────────────────────
 function toDateStr(d: Date) {
@@ -242,7 +255,16 @@ export default function CalendarPage() {
         const valid = parsed.filter((v): v is CalendarEvent["type"] =>
           ALL_CATS.includes(v as CalendarEvent["type"]),
         );
-        setVisibleCats(new Set(valid));
+        const set = new Set(valid);
+        // 1회성 마이그레이션: networking 카테고리 도입(Phase 2) 이전 저장분에는
+        // 새 카테고리가 없으므로 최초 1회만 기본 ON 보충. 이후 사용자가 끄면 존중.
+        const MIGRATION_FLAG = "calendar.cats.networkingMigrated";
+        if (!localStorage.getItem(MIGRATION_FLAG)) {
+          set.add("networking");
+          localStorage.setItem(MIGRATION_FLAG, "1");
+          localStorage.setItem(CAT_STORAGE_KEY, JSON.stringify(Array.from(set)));
+        }
+        setVisibleCats(set);
       }
     } catch {}
   }, []);
@@ -290,6 +312,16 @@ export default function CalendarPage() {
       const res = await activitiesApi.list();
       return res.data as unknown as Activity[];
     },
+  });
+
+  // ── 모임·행사 (Phase 2 네트워킹 트랙 통합) — 실패해도 캘린더 전체를 막지 않음 ──
+  const { data: networkingEvents = [] } = useQuery({
+    queryKey: ["networking-events-published"],
+    queryFn: async () => {
+      const res = await networkingEventsApi.listPublished();
+      return res.data as unknown as NetworkingEvent[];
+    },
+    staleTime: 1000 * 60 * 5,
   });
 
   const isInitialLoading = seminarsLoading || activitiesLoading;
@@ -412,9 +444,24 @@ export default function CalendarPage() {
         href: `/activities/${routePath}/${a.id}`,
       });
     }
+    for (const n of networkingEvents) {
+      // poll 모드 미확정(startAt 빈 문자열)·취소 행사는 제외
+      if (!n.startAt || n.status === "cancelled") continue;
+      result.push({
+        id: `networking-${n.id}`,
+        title: n.title,
+        date: safeYmd(n.startAt),
+        endDate: n.endAt ? safeYmd(n.endAt) : undefined,
+        time: n.startAt.length >= 16 ? n.startAt.slice(11, 16) : undefined,
+        location: n.location,
+        type: "networking",
+        status: n.status,
+        href: "/gatherings",
+      });
+    }
     result.push(...courseEvents);
     return result.sort((a, b) => a.date.localeCompare(b.date));
-  }, [seminars, activities, courseEvents]);
+  }, [seminars, activities, courseEvents, networkingEvents]);
 
   const filteredEvents = useMemo(
     () => events.filter((e) => visibleCats.has(e.type)),
