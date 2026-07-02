@@ -39,6 +39,7 @@ import {
 import ActivityFeed from "@/features/dashboard/ActivityFeed";
 import AcademicCalendarProgress from "@/features/dashboard/AcademicCalendarProgress";
 import DailyClassTimelineWidget from "@/features/dashboard/DailyClassTimelineWidget";
+import TodayCard from "@/features/dashboard/TodayCard";
 import MyTodosWidget from "@/features/dashboard/MyTodosWidget";
 import TodayTodosPopup from "@/features/dashboard/TodayTodosPopup";
 import NextActionBanner from "@/features/dashboard/NextActionBanner";
@@ -546,6 +547,10 @@ function DashboardContent() {
         <div className="mt-6 mb-5">
           <JourneyGreetingHeader user={user} />
         </div>
+
+        {/* Phase 3: 오늘 카드 — 개인 액션(복습·이어쓰기·지도노트·참석 모임)만 압축한 히어로.
+            영역 카운트는 아래 커맨드센터 담당. 액션 없으면 자동 숨김. */}
+        <TodayCard />
 
         {/* 사이클 104: F-패턴·정보 빈도 기반 상단 재편 (사용자 요청 — Mayer 멀티미디어/마케팅 시선흐름).
             좌상단(최고 시선)에 매일 보는 '오늘의 시간표', 우측 좁은 컬럼에 프로필 요약(정체성·완성도).
