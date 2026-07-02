@@ -48,16 +48,34 @@ const BUCKET = "yonsei-edtech.firebasestorage.app";
   }
   console.log("ruleset 생성:", ruleset.name);
 
-  const releaseName = `projects/${project}/releases/firebase.storage/${BUCKET}`;
-  res = await fetch(`${base}/releases/firebase.storage/${BUCKET}`, {
-    method: "PATCH",
-    headers: H,
-    body: JSON.stringify({ release: { name: releaseName, rulesetName: ruleset.name } }),
-  });
+  // 기존 storage release 탐색 (버킷 이름이 legacy appspot.com 일 수도 있음)
+  res = await fetch(`${base}/releases`, { headers: H });
+  const listing = await res.json();
+  const releases = (listing.releases ?? []).map((r) => r.name);
+  console.log("기존 releases:", releases.join(", ") || "(없음)");
+  const existing = releases.find((n) => n.includes("firebase.storage"));
+
+  if (existing) {
+    // 갱신
+    const relPath = existing.replace(`projects/${project}/`, "");
+    res = await fetch(`${base}/${relPath}`, {
+      method: "PATCH",
+      headers: H,
+      body: JSON.stringify({ release: { name: existing, rulesetName: ruleset.name } }),
+    });
+  } else {
+    // 최초 생성
+    const releaseName = `projects/${project}/releases/firebase.storage/${BUCKET}`;
+    res = await fetch(`${base}/releases`, {
+      method: "POST",
+      headers: H,
+      body: JSON.stringify({ name: releaseName, rulesetName: ruleset.name }),
+    });
+  }
   const release = await res.json();
   if (!res.ok) {
-    console.error("release 갱신 실패:", JSON.stringify(release).slice(0, 1000));
+    console.error("release 갱신/생성 실패:", JSON.stringify(release).slice(0, 1000));
     process.exit(1);
   }
-  console.log("✅ Storage rules 배포 완료 →", release.rulesetName);
+  console.log("✅ Storage rules 배포 완료 →", release.rulesetName ?? release.name);
 })();
