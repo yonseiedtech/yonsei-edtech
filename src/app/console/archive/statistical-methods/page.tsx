@@ -134,6 +134,7 @@ export default function ConsoleStatisticalMethodsPage() {
   const counts = useMemo(() => {
     const map: Record<CategoryFilter, number> = {
       all: methods.length,
+      basic: 0,
       anova_family: 0,
       regression: 0,
       factor: 0,
@@ -141,6 +142,7 @@ export default function ConsoleStatisticalMethodsPage() {
       mediation_moderation: 0,
       multilevel: 0,
       nonparametric: 0,
+      measurement: 0,
       other: 0,
     };
     for (const m of methods) {
