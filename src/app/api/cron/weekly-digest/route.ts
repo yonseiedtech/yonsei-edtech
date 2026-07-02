@@ -193,7 +193,12 @@ async function loadPersonalDigests(
   userIds: string[],
   usersById: Map<string, { bio?: string; researchInterests?: string[]; interestKeywords?: string[] }>,
   todayYmd: string,
-): Promise<Map<string, PersonalDigest>> {
+): Promise<{
+  personal: Map<string, PersonalDigest>;
+  /** Phase 3 동료 하이라이트용 원시 집계 (지난 7일) */
+  timerMinByUser: Map<string, number>;
+  activeDaysByUser: Map<string, Set<string>>;
+}> {
   const wanted = new Set(userIds);
   const weekStart = shiftYmd(todayYmd, -7); // 지난 7일 경계 (KST YMD)
   const weekStartIso = `${weekStart}T00:00:00.000Z`; // ISO 비교용 하한(보수적으로 넓게)
@@ -315,7 +320,61 @@ async function loadPersonalDigests(
       onboardingTodo,
     });
   }
-  return out;
+  return { personal: out, timerMinByUser, activeDaysByUser };
+}
+
+/**
+ * Phase 3 — 동료 하이라이트 (공통 블록).
+ * 지난 7일 타이머 몰입 1~3위 + 활동일 1~3위. showInLeaderboard=false 회원은 제외
+ * (리더보드와 동일한 공개 정책). 표시할 사람이 없으면 빈 문자열.
+ */
+function buildPeerHighlightHtml(
+  timerMinByUser: Map<string, number>,
+  activeDaysByUser: Map<string, Set<string>>,
+  usersById: Map<string, { name?: string; showInLeaderboard?: boolean }>,
+): string {
+  const visible = (id: string) => {
+    const u = usersById.get(id);
+    return !!u?.name && u.showInLeaderboard !== false;
+  };
+  const fmtMin = (min: number) => {
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return h > 0 ? `${h}시간 ${m}분` : `${m}분`;
+  };
+
+  const timerTop = [...timerMinByUser.entries()]
+    .filter(([id, min]) => min >= 30 && visible(id))
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+  const daysTop = [...activeDaysByUser.entries()]
+    .map(([id, set]) => [id, set.size] as const)
+    .filter(([id, days]) => days >= 2 && visible(id))
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+
+  const lines: string[] = [];
+  if (timerTop.length > 0) {
+    const names = timerTop
+      .map(([id, min]) => `<b>${escapeHtml(usersById.get(id)?.name ?? "")}</b> ${escapeHtml(fmtMin(min))}`)
+      .join(" · ");
+    lines.push(`<li>⏱️ 이번 주 몰입 — ${names}</li>`);
+  }
+  if (daysTop.length > 0) {
+    const names = daysTop
+      .map(([id, days]) => `<b>${escapeHtml(usersById.get(id)?.name ?? "")}</b> ${days}일`)
+      .join(" · ");
+    lines.push(`<li>🌱 꾸준한 활동 — ${names}</li>`);
+  }
+  if (lines.length === 0) return "";
+
+  const base = "https://yonsei-edtech.vercel.app";
+  return `
+      <h3 style="color: #003876; border-left: 4px solid #003876; padding-left: 8px; margin: 24px 0 8px;">👏 동료 하이라이트</h3>
+      <ul style="line-height: 1.9; padding-left: 20px;">${lines.join("")}
+        <li style="color:#888;font-size:13px"><a href="${base}/leaderboard" style="color:#003876;text-decoration:none">리더보드에서 내 순위 보기 →</a></li>
+      </ul>
+`;
 }
 
 /** 개인 요약에 표시할 내용이 하나라도 있는지 (없으면 개인 블록 자체 생략) */
@@ -369,7 +428,7 @@ function buildPersonalHtml(p: PersonalDigest): string {
 `;
 }
 
-function buildHtml({ seminars, posts, activities, questions, personal }: { seminars: SeminarLite[]; posts: PostLite[]; activities: ActivityLite[]; questions: QuestionLite[]; personal?: PersonalDigest }): string {
+function buildHtml({ seminars, posts, activities, questions, personal, peersHtml }: { seminars: SeminarLite[]; posts: PostLite[]; activities: ActivityLite[]; questions: QuestionLite[]; personal?: PersonalDigest; peersHtml?: string }): string {
   const base = "https://yonsei-edtech.vercel.app";
   const seminarHtml = seminars.length === 0
     ? "<li style=\"color:#888\">예정된 세미나가 없습니다.</li>"
@@ -387,6 +446,7 @@ function buildHtml({ seminars, posts, activities, questions, personal }: { semin
       <h2 style="color: #003876; margin: 0 0 8px;">연세교육공학회 주간 다이제스트</h2>
       <p style="color: #666; margin: 0 0 24px;">이번 주 학회 활동을 한눈에 확인하세요.</p>
 ${personal ? buildPersonalHtml(personal) : ""}
+${peersHtml ?? ""}
       <h3 style="color: #003876; border-left: 4px solid #003876; padding-left: 8px; margin: 24px 0 8px;">📅 다가오는 세미나</h3>
       <ul style="line-height: 1.9; padding-left: 20px;">${seminarHtml}</ul>
 
@@ -434,7 +494,7 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
   const userIds: string[] = [];
   const usersById = new Map<
     string,
-    { bio?: string; researchInterests?: string[]; interestKeywords?: string[] }
+    { bio?: string; researchInterests?: string[]; interestKeywords?: string[]; name?: string; showInLeaderboard?: boolean }
   >();
   for (const u of usersSnap.docs) {
     const d = u.data() as {
@@ -444,6 +504,8 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
       bio?: string;
       researchInterests?: string[];
       interestKeywords?: string[];
+      name?: string;
+      showInLeaderboard?: boolean;
     };
     if (d.notificationPrefs?.weeklyDigest === false) continue;
     userIds.push(u.id);
@@ -451,6 +513,8 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
       bio: d.bio,
       researchInterests: d.researchInterests,
       interestKeywords: d.interestKeywords,
+      name: d.name,
+      showInLeaderboard: d.showInLeaderboard,
     });
     const email = d.email || d.contactEmail;
     if (email) recipients.push({ id: u.id, email });
@@ -459,13 +523,17 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
 
   // 수신자별 "나의 한 주" 개인 집계 (읽기 전용). 실패해도 비개인화 발송은 계속.
   let personalById = new Map<string, PersonalDigest>();
+  let peersHtml = "";
   try {
-    personalById = await loadPersonalDigests(
+    const agg = await loadPersonalDigests(
       db,
       recipients.map((r) => r.id),
       usersById,
       todayYmd,
     );
+    personalById = agg.personal;
+    // Phase 3: 동료 하이라이트 — 지난 7일 몰입·활동 상위 회원 (리더보드 공개 정책 준수)
+    peersHtml = buildPeerHighlightHtml(agg.timerMinByUser, agg.activeDaysByUser, usersById);
   } catch (e) {
     console.error("[email] weekly-digest personal aggregate error:", e);
   }
@@ -485,7 +553,7 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
     })
     .map((r) => r.email);
 
-  const genericHtml = buildHtml({ seminars, posts, activities, questions });
+  const genericHtml = buildHtml({ seminars, posts, activities, questions, peersHtml });
 
   let sent = 0;
 
@@ -509,7 +577,7 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
   // (b) 개인 콘텐츠 보유 회원 — 개별 발송 (개인 블록 + 공통 이벤트)
   for (const r of personalRecipients) {
     const personal = personalById.get(r.id);
-    const html = buildHtml({ seminars, posts, activities, questions, personal });
+    const html = buildHtml({ seminars, posts, activities, questions, personal, peersHtml });
     try {
       await resend.emails.send({
         from: "연세교육공학회 <noreply@yonsei-edtech.vercel.app>",

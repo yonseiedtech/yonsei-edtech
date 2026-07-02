@@ -15,12 +15,31 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { ArrowRight, Footprints } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowRight, Footprints, Target } from "lucide-react";
 import { JOURNEY_STAGES } from "@/features/research/ThesisJourney";
 import { getEffectiveSemesterCount } from "@/lib/interview-target";
-import type { User } from "@/types";
+import { diagnosticResultsApi } from "@/lib/bkend";
+import type { User, DiagnosticResult } from "@/types";
 
 export default function StageRecommendationPanel({ user }: { user: User }) {
+  // Phase 3: 진단 결과 배선 — 최신 진단의 약점 개념을 학기 추천에 반영
+  const { data: diagResults = [] } = useQuery({
+    queryKey: ["stage-rec-diagnostics", user.id],
+    queryFn: async () => (await diagnosticResultsApi.listByUser(user.id)).data as DiagnosticResult[],
+    enabled: !!user.id,
+    staleTime: 5 * 60_000,
+  });
+  const weakConcepts = useMemo(() => {
+    const latest = [...diagResults].sort((a, b) =>
+      (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
+    )[0];
+    if (!latest?.weakConceptIds?.length) return [];
+    return latest.weakConceptIds
+      .map((id, i) => ({ id, name: latest.weakConceptNames?.[i] ?? "" }))
+      .filter((c) => c.name)
+      .slice(0, 3);
+  }, [diagResults]);
   const stage = useMemo(() => {
     const override = user.thesisJourneyStage;
     if (typeof override === "number" && override >= 1 && override <= 5) {
@@ -85,6 +104,28 @@ export default function StageRecommendationPanel({ user }: { user: User }) {
           </Link>
         ))}
       </div>
+
+      {/* Phase 3: 진단 약점 개념 보완 추천 (최신 진단 기반, 있을 때만) */}
+      {weakConcepts.length > 0 && (
+        <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[11px]">
+          <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-amber-700 dark:text-amber-300">
+            <Target size={11} />
+            진단 기반 보완
+          </span>
+          {weakConcepts.map((c) => (
+            <Link
+              key={c.id}
+              href={`/archive/concept/${c.id}`}
+              className="rounded-full border border-amber-300/60 bg-amber-50 px-2 py-0.5 text-amber-800 transition-colors hover:bg-amber-100 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-200"
+            >
+              {c.name}
+            </Link>
+          ))}
+          <Link href="/diagnosis" className="text-muted-foreground hover:text-primary hover:underline">
+            재진단 →
+          </Link>
+        </div>
+      )}
 
       {/* 관련 아카이브 딥링크 (있을 때만) */}
       {archiveTopics.length > 0 && (
