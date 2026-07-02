@@ -19,6 +19,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useCreateReadingLog } from "../usePaperReadingLogs";
+import { researchPapersApi } from "@/lib/bkend";
+import { useAuthStore } from "@/features/auth/auth-store";
+import { useQueryClient } from "@tanstack/react-query";
 import ReadingMascot from "./ReadingMascot";
 import {
   PAPER_READING_SOURCE_LABELS,
@@ -56,6 +59,10 @@ export default function ReadingLogModal({
   const [method, setMethod] = useState("");
   const [implication, setImplication] = useState("");
   const { mutateAsync, isPending } = useCreateReadingLog();
+  // Phase 4-C: 읽기 기록 ↔ 서지(research_papers) 브리지 — 기록과 동시에 연구 노트 생성
+  const [alsoAddPaper, setAlsoAddPaper] = useState(false);
+  const { user } = useAuthStore();
+  const qc = useQueryClient();
 
   async function handleSave() {
     if (!title.trim()) {
@@ -77,6 +84,32 @@ export default function ReadingLogModal({
         method: deep ? method.trim() || undefined : undefined,
         implication: deep ? implication.trim() || undefined : undefined,
       });
+      // Phase 4-C: 선택 시 연구활동 서지 목록에도 등록 (정독 메모 → 연구 노트 필드로 이관)
+      if (alsoAddPaper && user) {
+        try {
+          const now = new Date().toISOString();
+          await researchPapersApi.create({
+            userId: user.id,
+            paperType: "academic",
+            title: title.trim(),
+            authors: authors.trim() || undefined,
+            findings: deep ? keyClaim.trim() || undefined : undefined,
+            methodology: deep ? method.trim() || undefined : undefined,
+            myConnection: deep ? implication.trim() || undefined : undefined,
+            insights: oneLine.trim() || undefined,
+            rating: rating || undefined,
+            readStatus: "completed",
+            readCompletedAt: todayYmdLocal(),
+            sourceAlumniThesisId: source === "alumni_thesis" ? refId : undefined,
+            createdAt: now,
+            updatedAt: now,
+          });
+          qc.invalidateQueries({ queryKey: ["research-papers", user.id] });
+        } catch (err) {
+          console.error("[reading-log] research paper bridge failed", err);
+          toast.error("읽기 기록은 저장됐지만 서지 등록에 실패했습니다.");
+        }
+      }
       toast.success(durationMin ? `${durationMin}분 읽기 기록 완료 📖` : "읽기 기록 완료 📖");
       onClose();
     } catch {
@@ -152,6 +185,17 @@ export default function ReadingLogModal({
             rows={2}
             className={taClass}
           />
+
+          {/* Phase 4-C: 서지 목록 브리지 */}
+          <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={alsoAddPaper}
+              onChange={(e) => setAlsoAddPaper(e.target.checked)}
+              className="h-3.5 w-3.5 rounded border-input"
+            />
+            논문 읽기 목록(연구 노트)에도 추가 — 정독 메모가 서지 카드로 이관됩니다
+          </label>
 
           {/* 정독 기록 토글 */}
           <button

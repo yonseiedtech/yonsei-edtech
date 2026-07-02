@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Save, Trash2, AlertTriangle, MessageSquare } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Plus, Save, Trash2, AlertTriangle, MessageSquare, Languages } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,30 @@ import {
   type ChapterStatus,
   type CollabResearchChapter,
 } from "@/types";
+import { styleIssues } from "@/features/research/writing-lint";
+
+/**
+ * Phase 4-C: 협업 챕터에도 개인 논문과 동일한 문체 점검(번역투·시제/태) 요약 적용.
+ * 단일 텍스트를 임시 섹션 구조로 감싸 styleIssues 를 재사용 — 패턴별 건수만 집계.
+ */
+function useCollabStyleSummary(content: string) {
+  return useMemo(() => {
+    const text = content.trim();
+    if (!text) return [] as { label: string; count: number; severity: string }[];
+    const issues = styleIssues({
+      intro: [{ id: "collab", heading: "", paragraphs: [{ id: "p1", text }] }],
+    });
+    const byLabel = new Map<string, { label: string; count: number; severity: string }>();
+    for (const i of issues) {
+      const m = i.message.match(/문체 점검 — (.+?):/);
+      const label = m ? m[1] : i.rule;
+      const cur = byLabel.get(label);
+      if (cur) cur.count += 1;
+      else byLabel.set(label, { label, count: 1, severity: i.severity });
+    }
+    return [...byLabel.values()].sort((a, b) => b.count - a.count).slice(0, 5);
+  }, [content]);
+}
 
 interface Props {
   researchId: string;
@@ -226,6 +250,7 @@ function ChapterEditor({
 }) {
   const [title, setTitle] = useState(chapter.title);
   const [content, setContent] = useState(chapter.content);
+  const styleSummary = useCollabStyleSummary(content);
   const [status, setStatus] = useState<ChapterStatus>(chapter.status);
   const [versionAtLoad, setVersionAtLoad] = useState(chapter.version);
   const updateMut = useUpdateChapter(researchId, chapter.id);
@@ -298,6 +323,20 @@ function ChapterEditor({
             className="font-mono text-sm"
             placeholder="markdown 본문..."
           />
+          {styleSummary.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-dashed bg-muted/30 px-2.5 py-1.5 text-[11px]">
+              <span className="inline-flex items-center gap-1 font-semibold text-rose-600 dark:text-rose-400">
+                <Languages size={11} />
+                문체 점검
+              </span>
+              {styleSummary.map((it) => (
+                <span key={it.label} className="rounded-full border bg-card px-2 py-0.5 text-muted-foreground">
+                  {it.label} {it.count}
+                </span>
+              ))}
+              <span className="text-muted-foreground/70">— 탐지 전용, 고칠지는 작성자 판단</span>
+            </div>
+          )}
           {canEdit && (
             <div className="flex justify-between">
               {isLeader ? (
