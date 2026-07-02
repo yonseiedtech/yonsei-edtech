@@ -97,7 +97,7 @@ export const DASHBOARD_WIDGET_META: Record<
   },
   spacedRepetition: {
     label: "간격 반복 학습",
-    description: "복습 카드 추천.",
+    description: "오늘 복습할 암기카드 + 과거 작성 콘텐츠 다시 보기.",
   },
   peerActivityFeed: {
     label: "동료 활동 피드",
@@ -124,6 +124,17 @@ export const DASHBOARD_WIDGET_META: Record<
     description: "운영진 전용 알림.",
   },
 };
+
+/**
+ * 은퇴 위젯 키 — 대시보드 본문에서 제거됐지만(중복 방지) 저장 레이아웃 호환을 위해
+ * 타입·메타에는 남겨둔 키. 설정/편집 UI 목록에서 제외된다.
+ * - dailyTimeline: 사이클 104 — 상단 2단 그리드로 승격 (항상 표시)
+ * - miniCalendar: 사이클 114 — 시간표 월간 뷰(MonthlyGrid)로 통합
+ */
+export const RETIRED_WIDGET_KEYS: DashboardWidgetKey[] = [
+  "dailyTimeline",
+  "miniCalendar",
+];
 
 /** 모든 위젯 키 (기본 렌더 순서대로) */
 export const DASHBOARD_WIDGET_KEYS: DashboardWidgetKey[] = [

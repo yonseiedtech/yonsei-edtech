@@ -8,14 +8,17 @@
  * - 본 위젯은 사용자가 N일 전 본인이 작성·참여한 콘텐츠를 다시 안내
  *
  * v2 변경: 게시글 외에 본인 작성 세미나 후기(SeminarReview)도 통합. 각 종류는 라벨·링크가 다름.
+ * v3 변경 (Phase 1 대시보드 정비): 진짜 SRS 엔진(flashcards, SM-2 간소화)의 "오늘 복습 대상"
+ *   카드 수를 최상단에 연결 — 위젯 라벨(간격 반복 학습)과 실제 데이터 소스 일치.
  */
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Brain, RotateCcw, Sparkles, MessageSquare, FileText } from "lucide-react";
+import { ArrowRight, Brain, RotateCcw, Sparkles, MessageSquare, FileText, Layers } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { postsApi, reviewsApi } from "@/lib/bkend";
-import type { Post, SeminarReview } from "@/types";
+import { postsApi, reviewsApi, flashcardsApi } from "@/lib/bkend";
+import { isDueToday } from "@/lib/flashcard-srs";
+import type { Flashcard, Post, SeminarReview } from "@/types";
 
 /** 위젯에 노출되는 통일 아이템 */
 interface ReviewItem {
@@ -63,6 +66,7 @@ function parseCreatedAt(value: unknown): Date | null {
 export default function SpacedRepetitionWidget() {
   const { user } = useAuthStore();
   const [items, setItems] = useState<ReviewItem[]>([]);
+  const [flashcardDue, setFlashcardDue] = useState<{ due: number; total: number }>({ due: 0, total: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -80,8 +84,16 @@ export default function SpacedRepetitionWidget() {
         .listByAuthor(myUserId)
         .then((res) => (res.data ?? []) as SeminarReview[])
         .catch(() => [] as SeminarReview[]),
+      flashcardsApi
+        .listByUser(myUserId)
+        .then((res) => (res.data ?? []) as Flashcard[])
+        .catch(() => [] as Flashcard[]),
     ])
-      .then(([posts, reviews]) => {
+      .then(([posts, reviews, cards]) => {
+        setFlashcardDue({
+          due: cards.filter((c) => isDueToday(c)).length,
+          total: cards.length,
+        });
         const myPosts: ReviewItem[] = posts
           .filter((p) => p.authorId === myUserId)
           .map((p) => ({
@@ -153,6 +165,32 @@ export default function SpacedRepetitionWidget() {
           학습이론
         </span>
       </div>
+
+      {/* v3: 진짜 SRS — 오늘 복습 대상 암기카드 (SM-2 간소화, dueAt ≤ 오늘) */}
+      {!loading && flashcardDue.due > 0 && (
+        <Link
+          href="/flashcards"
+          className="group mb-3 flex items-center gap-2.5 rounded-2xl border border-primary/25 bg-primary/5 p-3 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary" aria-hidden>
+            <Layers size={15} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">
+              오늘 복습할 암기카드 <span className="text-primary">{flashcardDue.due}장</span>
+            </p>
+            <p className="text-[11px] text-muted-foreground">
+              전체 {flashcardDue.total}장 · 간격 반복(SM-2) 대기열
+            </p>
+          </div>
+          <ArrowRight size={13} className="shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" aria-hidden />
+        </Link>
+      )}
+      {!loading && flashcardDue.due === 0 && flashcardDue.total > 0 && (
+        <p className="mb-3 rounded-xl border border-emerald-200/70 bg-emerald-50/60 px-3 py-2 text-[11px] font-medium text-emerald-700 dark:border-emerald-800/50 dark:bg-emerald-950/20 dark:text-emerald-300">
+          ✅ 오늘 복습할 암기카드를 모두 마쳤습니다 (전체 {flashcardDue.total}장)
+        </p>
+      )}
 
       {loading ? (
         <div className="flex h-24 items-center justify-center text-xs text-muted-foreground">

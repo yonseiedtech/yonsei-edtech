@@ -23,6 +23,7 @@ import {
   DEFAULT_DASHBOARD_LAYOUT,
   DEFAULT_VISIBLE_WIDGETS,
   DASHBOARD_WIDGET_KEYS,
+  RETIRED_WIDGET_KEYS,
 } from "@/types/dashboard-layout";
 
 // ── D-3 알림 무음 헬퍼 ───────────────────────────────────────────────────────
@@ -114,6 +115,9 @@ export function getSortedWidgets(
     order: source.length + i,
   }));
   return [...source, ...missing]
+    // 은퇴 위젯(본문 상단 승격·통합으로 렌더 노드가 없는 키)은 편집·설정 목록에서 제외.
+    // 저장 레이아웃(base.widgets)에는 그대로 남아 있어 구버전 호환 유지.
+    .filter((w) => !RETIRED_WIDGET_KEYS.includes(w.key))
     .map((w) => ({
       ...w,
       order: w.order ?? DASHBOARD_WIDGET_KEYS.indexOf(w.key),
