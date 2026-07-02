@@ -223,7 +223,9 @@ export default function LabDetailPage({ params }: { params: Promise<{ id: string
                 </div>
                 {(c.authorId === user?.id || canManageLabs(user)) && (
                   <button
-                    onClick={() => deleteComment({ id: c.id, labId: id })}
+                    onClick={() => {
+                      if (confirm("이 댓글을 삭제할까요?")) deleteComment({ id: c.id, labId: id });
+                    }}
                     className="text-xs text-muted-foreground hover:text-red-600"
                   >
                     삭제

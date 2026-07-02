@@ -510,7 +510,9 @@ export default function ReviewManagement({ seminar }: Props) {
                           variant="outline"
                           size="sm"
                           className="text-destructive"
-                          onClick={() => deleteMutation.mutate(r.id)}
+                          onClick={() => {
+                            if (confirm("이 후기를 영구 삭제할까요?")) deleteMutation.mutate(r.id);
+                          }}
                         >
                           <Trash2 size={14} />
                         </Button>

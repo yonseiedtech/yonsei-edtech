@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, startTransition } from "react";
+import { useRef, useEffect, useState, startTransition } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -1289,6 +1289,8 @@ function NotificationSettingsCard({ user }: { user: User }) {
     }
   }
 
+  // 연속 토글 유실 방지 — stale prop 대신 세션 내 누적 변경분을 함께 병합
+  const prefOverridesRef = useRef<Record<string, boolean>>({});
   async function updatePref(
     key: keyof PrefShape,
     next: boolean,
@@ -1297,17 +1299,19 @@ function NotificationSettingsCard({ user }: { user: User }) {
   ) {
     setBusyKey(key);
     setter(next);
+    prefOverridesRef.current[key] = next;
     try {
       await profilesApi.update(user.id, {
         notificationPrefs: {
           ...((user as User & { notificationPrefs?: Record<string, unknown> }).notificationPrefs ?? {}),
-          [key]: next,
+          ...prefOverridesRef.current,
         },
       });
       const { toast } = await import("sonner");
       toast.success(next ? `${label} 켰습니다.` : `${label} 껐습니다.`);
     } catch (e) {
       setter(!next);
+      prefOverridesRef.current[key] = !next;
       const { toast } = await import("sonner");
       toast.error(`설정 변경 실패: ${(e as Error).message}`);
     } finally {

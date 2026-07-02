@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { deleteField } from "firebase/firestore";
 import Link from "next/link";
 import AuthGuard from "@/features/auth/AuthGuard";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
@@ -1049,10 +1050,15 @@ function InlineEditor({
     if (sylNew !== row.syllabusUrl) u.syllabusUrl = sylNew;
     const notesNew = draft.notes.trim() || undefined;
     if (notesNew !== row.notes) u.notes = notesNew;
-    const startNew = draft.semesterStartDate.trim() || undefined;
-    if (startNew !== row.semesterStartDate) u.semesterStartDate = startNew;
-    const endNew = draft.semesterEndDate.trim() || undefined;
-    if (endNew !== row.semesterEndDate) u.semesterEndDate = endNew;
+    // 비우기는 deleteField 로 영속 (undefined 는 dataApi 가 strip 해 조용히 무시됨)
+    const startNew = draft.semesterStartDate.trim();
+    if ((startNew || undefined) !== row.semesterStartDate) {
+      u.semesterStartDate = (startNew || deleteField()) as unknown as string;
+    }
+    const endNew = draft.semesterEndDate.trim();
+    if ((endNew || undefined) !== row.semesterEndDate) {
+      u.semesterEndDate = (endNew || deleteField()) as unknown as string;
+    }
     return u;
   }, [draft, row]);
 

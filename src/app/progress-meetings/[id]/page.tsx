@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useEffect, useMemo, useState } from "react";
+import { deleteField } from "firebase/firestore";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Play,
@@ -126,7 +127,11 @@ export default function ProgressMeetingPage({ params }: PageProps) {
 
   function handleRemoveSlides() {
     if (!confirm("슬라이드를 삭제하시겠습니까?")) return;
-    updateMutation.mutate({ slidesUrl: undefined, slidesName: undefined } as Partial<ProgressMeeting>);
+    // undefined 는 strip 되어 삭제가 no-op — deleteField 로 실제 삭제
+    updateMutation.mutate({
+      slidesUrl: deleteField() as unknown as string,
+      slidesName: deleteField() as unknown as string,
+    } as Partial<ProgressMeeting>);
   }
 
   if (isLoading || !meeting) {

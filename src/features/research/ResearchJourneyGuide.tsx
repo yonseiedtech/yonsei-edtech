@@ -4,7 +4,7 @@
  * 연구 여정 안내 (M3 — 2026-06-16)
  *
  * 분산돼 있던 "연구 계획서 / 연구 보고서 / 논문" 진입점을 단일 "연구 여정" 허브로
- * 묶어, 각 단계가 무엇이고 어떤 순서로 이어지는지(계획서 → 보고서 → 논문) 안내한다.
+ * 묶어, 각 단계가 무엇이고 어떤 순서로 이어지는지(보고서 → 계획서 → 논문) 안내한다.
  * 세 에디터(ResearchProposalEditor·ResearchReportEditor·WritingPaperEditor) 상단에
  * 공통으로 얹어 어디서 시작했든 동일한 단계 지도를 보게 한다.
  *
@@ -46,20 +46,23 @@ interface StepMeta {
   icon: typeof ClipboardList;
 }
 
+// 순서(2026-07-03 사용자 확정): 보고서 → 계획서 → 논문.
+// 연구 보고서 = 계획서 작성에 필요한 정보·연구자의 사고를 먼저 구조화하는 단계,
+// 연구 계획서 = 실제 제출 양식 기준 문서. (MyResearchView 서브탭 순서와 동일)
 const STEPS: StepMeta[] = [
   {
-    key: "proposal",
+    key: "report",
     order: 1,
-    label: "연구 계획서",
-    purpose: "주제·목적·범위·방법을 먼저 잡습니다",
-    icon: ClipboardList,
+    label: "연구 보고서",
+    purpose: "문제 정의·이론·선행연구 등 연구자의 사고를 먼저 구조화합니다",
+    icon: FileEdit,
   },
   {
-    key: "report",
+    key: "proposal",
     order: 2,
-    label: "연구 보고서",
-    purpose: "문제 정의·이론·선행연구를 구조화합니다",
-    icon: FileEdit,
+    label: "연구 계획서",
+    purpose: "제출 양식 기준으로 주제·목적·범위·방법을 확정합니다",
+    icon: ClipboardList,
   },
   {
     key: "thesis",
@@ -206,7 +209,7 @@ export default function ResearchJourneyGuide({ userId, current }: Props) {
         <div className="min-w-0">
           <h2 className="text-sm font-bold tracking-tight">연구 여정</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            계획서 → 보고서 → 논문 순으로 이어집니다. 지금은{" "}
+            보고서 → 계획서 → 논문 순으로 이어집니다. 지금은{" "}
             <span className="font-semibold text-primary">{currentMeta.label}</span>{" "}
             단계 — {currentMeta.purpose}.
           </p>

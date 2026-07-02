@@ -36,6 +36,7 @@ export default function AdminInquiryTab() {
   }
 
   function handleDelete(id: string) {
+    if (!confirm("이 문의를 영구 삭제할까요?")) return;
     deleteInquiry(id);
     toast.success("문의가 삭제되었습니다.");
   }

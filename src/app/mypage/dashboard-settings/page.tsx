@@ -391,6 +391,14 @@ function DashboardSettingsContent() {
         }),
       );
     }
+    // Firestore 백업도 삭제 — 남겨두면 재방문 시 sync 가 옛 레이아웃을 되살림
+    try {
+      const { profilesApi } = await import("@/lib/bkend");
+      const { deleteField } = await import("firebase/firestore");
+      await profilesApi.update(user!.id, { dashboardLayout: deleteField() as unknown as undefined });
+    } catch {
+      // Firestore 삭제 실패해도 로컬 복원은 유효
+    }
     const { toast } = await import("sonner");
     toast.success("기본값으로 복원했습니다.");
   }

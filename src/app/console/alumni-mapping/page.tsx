@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { deleteField } from "firebase/firestore";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import AuthGuard from "@/features/auth/AuthGuard";
@@ -104,7 +105,8 @@ function ConsoleAlumniMappingContent() {
     try {
       await alumniThesesApi.update(thesis.id, {
         authorMappingStatus: status,
-        authorUserId: undefined,
+        // undefined 는 strip 되어 해제가 미영속 — deleteField 로 실제 삭제
+        authorUserId: deleteField() as unknown as string,
       });
       setTheses((prev) =>
         prev.map((t) =>

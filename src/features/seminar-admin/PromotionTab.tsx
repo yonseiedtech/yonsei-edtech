@@ -217,6 +217,7 @@ export default function PromotionTab({ seminarId: propSeminarId }: { seminarId?:
   }
 
   async function handleDelete(id: string) {
+    if (!confirm("이 홍보 콘텐츠를 영구 삭제할까요?")) return;
     try {
       await promotionContentsApi.delete(id);
       queryClient.invalidateQueries({ queryKey: ["promotion_contents", selectedId] });

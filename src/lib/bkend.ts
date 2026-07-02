@@ -533,6 +533,13 @@ export const networkingReviewsApi = {
     dataApi.list<NetworkingReview>("networking_reviews", { "filter[eventId]": eventId, limit: 300 }),
   listByUser: (userId: string) =>
     dataApi.list<NetworkingReview>("networking_reviews", { "filter[userId]": userId, limit: 200 }),
+  /** 1인 1건 보장 — 결정적 doc id (eventId_userId) upsert. 중복 생성으로 평균 왜곡 방지. */
+  upsertMine: (data: Omit<NetworkingReview, "id">) =>
+    dataApi.upsert<NetworkingReview>(
+      "networking_reviews",
+      `${data.eventId}_${data.userId}`,
+      data as unknown as Record<string, unknown>,
+    ),
   create: (data: Omit<NetworkingReview, "id">) =>
     dataApi.create<NetworkingReview>("networking_reviews", data as unknown as Record<string, unknown>),
   update: (id: string, data: Partial<NetworkingReview>) =>

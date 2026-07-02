@@ -310,8 +310,8 @@ export default function FlashcardStudy() {
 
   if (!current) return null;
 
-  const showFilterTabs =
-    sourceCounts.diagnostic_wrong > 0 && sourceCounts.concept > 0;
+  const distinctSources = [sourceCounts.diagnostic_wrong, sourceCounts.concept, sourceCounts.foundation_term].filter((n) => n > 0).length;
+  const showFilterTabs = distinctSources >= 2;
 
   return (
     <div>

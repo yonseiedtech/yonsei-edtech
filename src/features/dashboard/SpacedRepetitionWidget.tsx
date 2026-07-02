@@ -77,7 +77,8 @@ export default function SpacedRepetitionWidget() {
     const myUserId = user.id;
     Promise.all([
       postsApi
-        .list({ limit: 50, sort: "createdAt:desc" })
+        // 무필터 list 는 카테고리 규칙에 의해 전건 거부됨(권한) — readable 경로 사용
+        .listReadable({ limit: 50 })
         .then((res) => (res.data ?? []) as Post[])
         .catch(() => [] as Post[]),
       reviewsApi

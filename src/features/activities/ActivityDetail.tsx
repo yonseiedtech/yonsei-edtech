@@ -1433,6 +1433,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                             </Button>
                             {(isStaff || isLeader) && (
                               <button onClick={async () => {
+                                if (!confirm("이 진행 기록을 영구 삭제할까요? 출석·자료 정보도 함께 사라집니다.")) return;
                                 try {
                                   await activityProgressApi.delete(p.id);
                                   queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });

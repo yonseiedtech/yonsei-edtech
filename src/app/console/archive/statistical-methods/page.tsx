@@ -27,6 +27,7 @@ type CategoryFilter = "all" | StatisticalMethodCategory;
 type PublishFilter = "all" | "published" | "draft";
 
 const CATEGORY_ORDER: StatisticalMethodCategory[] = [
+  "basic",
   "anova_family",
   "regression",
   "factor",
@@ -34,6 +35,7 @@ const CATEGORY_ORDER: StatisticalMethodCategory[] = [
   "mediation_moderation",
   "multilevel",
   "nonparametric",
+  "measurement",
   "other",
 ];
 

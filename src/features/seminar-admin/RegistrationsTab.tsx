@@ -907,6 +907,7 @@ export default function RegistrationsTab() {
   }
 
   async function handleDelete(id: string) {
+    if (!confirm("이 신청자를 명단에서 영구 삭제할까요?")) return;
     try { await registrationsApi.delete(id); toast.success("삭제되었습니다."); refetch(); }
     catch { toast.error("삭제 실패"); }
   }

@@ -94,6 +94,7 @@ export default function AdminTodoTab() {
   }
 
   async function handleDelete(id: string) {
+    if (!confirm("이 할 일을 삭제할까요?")) return;
     try {
       await deleteTodo(id);
       toast.success("삭제되었습니다.");

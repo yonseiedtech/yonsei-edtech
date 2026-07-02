@@ -62,6 +62,7 @@ export default function AdminPostTab() {
   }
 
   async function handleBulkDelete() {
+    if (!confirm(`선택한 게시글 ${selected.size}개를 영구 삭제할까요? 되돌릴 수 없습니다.`)) return;
     try {
       await Promise.all([...selected].map((id) => deletePost(id)));
       toast.success(`${selected.size}개 게시글 삭제 완료`);
@@ -72,6 +73,7 @@ export default function AdminPostTab() {
   }
 
   async function handleDelete(postId: string) {
+    if (!confirm("이 게시글을 영구 삭제할까요? 되돌릴 수 없습니다.")) return;
     try {
       await deletePost(postId);
       toast.success("게시글 삭제 완료");

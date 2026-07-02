@@ -33,6 +33,13 @@ export function extractMentions(
   }
 
   const found = new Map<string, MentionTarget>();
+  // 공백·특수문자 포함 이름(토큰화 불가)은 `@이름` 전체 문자열로 직접 매칭
+  for (const m of members) {
+    if (exclude.has(m.id) || found.has(m.id)) continue;
+    if (/[^가-힣a-zA-Z0-9]/.test(m.name) && text.includes(`@${m.name}`)) {
+      found.set(m.id, m);
+    }
+  }
   for (const match of text.matchAll(TOKEN_RE)) {
     const token = match[1];
     // 가장 긴 접두 일치: 토큰 앞부분이 회원 이름과 정확히 일치하는 가장 긴 이름

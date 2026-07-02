@@ -71,7 +71,8 @@ export default function EventReviews({
           updatedAt: now,
         });
       } else {
-        await networkingReviewsApi.create({
+        // 결정적 id upsert — 탭 중복/재시도로 인한 다중 후기 생성 차단
+        await networkingReviewsApi.upsertMine({
           eventId,
           userId: user.id,
           displayName: user.name ?? "회원",
