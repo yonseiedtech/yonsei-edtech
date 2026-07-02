@@ -176,6 +176,7 @@ const PUBLIC_NAV: NavGroup[] = [
       {
         sectionLabel: "콘텐츠",
         links: [
+          { href: "/studio", label: "디자인 스튜디오" },
           { href: "/ai-forum", label: "AI 포럼 (실험)" },
         ],
       },
