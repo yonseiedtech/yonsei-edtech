@@ -37,6 +37,31 @@ import {
   type RFAnswers,
 } from "@/features/archive/researchFinder";
 
+/** 문서 미로드 시 raw seedKey 노출 방지용 라벨 폴백 */
+const RF_SEEDKEY_LABEL: Record<string, string> = {
+  "research-method:experimental": "실험연구",
+  "research-method:quasi-experimental": "준실험연구",
+  "research-method:survey": "조사연구",
+  "research-method:case-study": "사례연구",
+  "research-method:phenomenology": "현상학적 연구",
+  "research-method:grounded-theory": "근거이론",
+  "research-method:ethnography": "문화기술지",
+  "research-method:narrative-inquiry": "내러티브 탐구",
+  "research-method:action-research": "실행연구",
+  "research-method:qualitative-content-analysis": "질적 내용분석",
+  "research-method:convergent-parallel": "수렴적 병렬 혼합설계",
+  "research-method:explanatory-sequential": "설명적 순차 혼합설계",
+  "research-method:exploratory-sequential": "탐색적 순차 혼합설계",
+  "research-method:mixed-methods-overview": "혼합연구 개관",
+  "research-method:design-based-research": "설계기반연구(DBR)",
+  "research-method:developmental-research": "개발연구",
+  "research-method:program-development": "프로그램 개발연구",
+  "research-method:scale-development": "척도 개발연구",
+  "research-method:meta-analysis": "메타분석",
+  "research-method:delphi": "델파이 조사",
+  "research-method:sem": "구조방정식 연구",
+};
+
 export default function ResearchFinderPage() {
   const { user } = useAuthStore();
   const canManage = isAtLeast(user, "staff");
@@ -205,7 +230,7 @@ export default function ResearchFinderPage() {
                   <span className="text-sm font-medium">추천 연구방법</span>
                 </div>
                 <h2 className="mt-2 text-2xl font-bold tracking-tight">
-                  {primary?.name ?? result.primary}
+                  {primary?.name ?? RF_SEEDKEY_LABEL[result.primary] ?? result.primary}
                 </h2>
                 {primary?.summary && (
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{primary.summary}</p>

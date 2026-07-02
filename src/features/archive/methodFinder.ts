@@ -88,6 +88,7 @@ export const FINDER_QUESTIONS: FinderQuestion[] = [
       { value: "two", label: "서로 다른 2집단", hint: "예: 실험 vs 통제" },
       { value: "three_or_more", label: "3집단 이상", hint: "예: A·B·C 교수법" },
       { value: "one_repeated", label: "같은 대상의 전·후(1집단 반복)", hint: "예: 처치 전후 같은 학생" },
+      { value: "one_repeated_multi", label: "같은 대상 3회 이상 반복측정", hint: "예: 사전·중간·사후" },
     ],
   },
   {
@@ -98,6 +99,23 @@ export const FINDER_QUESTIONS: FinderQuestion[] = [
     options: [
       { value: "yes", label: "있다 (예: 사전점수 보정)" },
       { value: "no", label: "없다" },
+    ],
+  },
+  {
+    id: "normality",
+    when: (a) =>
+      a.goal === "difference" && a.dvCount !== "two_or_more" && a.covariate === "no",
+    title: "표본 크기와 정규성은 어떤가요?",
+    help: "집단당 30명 미만의 작은 표본이거나 점수 분포가 심하게 치우쳤다면 비모수 검정이 안전합니다.",
+    terms: [
+      {
+        term: "비모수 검정",
+        def: "점수 자체가 아니라 순위로 비교하는 방법. 정규분포 가정이 필요 없어 소표본·치우친 분포에서 안전합니다.",
+      },
+    ],
+    options: [
+      { value: "ok", label: "표본이 충분하거나 정규성 확보", hint: "예: 집단당 30명 이상" },
+      { value: "violated", label: "소표본이거나 정규성 의심", hint: "예: 집단당 10~20명, 치우친 분포" },
     ],
   },
   // ── 관계·예측 갈래 ──
@@ -211,7 +229,39 @@ export function recommend(a: FinderAnswers): FinderResult | null {
           "여러 결과변수의 집단 차이를 동시에 보므로 MANOVA가 적합합니다. 개별 결과만 보려면 결과별 ANOVA + 다중비교 보정도 가능합니다.",
       };
     }
+    if (a.groups === "one_repeated_multi") {
+      return a.normality === "violated"
+        ? {
+            primary: SK("friedman"),
+            alternatives: [
+              alt("rm-anova", "표본이 충분하고 정규성·구형성이 확보되면"),
+              alt("wilcoxon-signed-rank", "2시점만 비교하면"),
+            ],
+            rationale:
+              "같은 대상의 3회 이상 반복측정을 소표본·비정규 상황에서 비교하므로 Friedman 검정이 적합합니다. 유의하면 Wilcoxon 쌍별 사후검정(Bonferroni)으로 확인하세요.",
+          }
+        : {
+            primary: SK("rm-anova"),
+            alternatives: [
+              alt("friedman", "소표본·비정규면 비모수 대안"),
+              alt("hlm", "결측 시점이 많거나 성장 궤적을 모형화하려면"),
+            ],
+            rationale:
+              "같은 대상의 3회 이상 반복측정 평균 변화를 보므로 반복측정 분산분석(RM-ANOVA)이 적합합니다. 구형성 위반 시 Greenhouse-Geisser 보정을 쓰세요.",
+          };
+    }
     if (a.groups === "three_or_more") {
+      if (a.normality === "violated") {
+        return {
+          primary: SK("kruskal-wallis"),
+          alternatives: [
+            alt("anova-oneway", "표본이 충분하고 정규성이 확보되면"),
+            alt("mann-whitney", "집단이 2개뿐이면"),
+          ],
+          rationale:
+            "3집단 이상을 소표본·비정규 상황에서 비교하므로 Kruskal-Wallis H 검정이 적합합니다. 유의하면 Dunn 사후검정(Bonferroni)으로 어느 집단 간 차이인지 확인하세요.",
+        };
+      }
       return {
         primary: SK("anova-oneway"),
         alternatives: [
@@ -223,6 +273,21 @@ export function recommend(a: FinderAnswers): FinderResult | null {
       };
     }
     // two or one_repeated
+    if (a.normality === "violated") {
+      return a.groups === "one_repeated"
+        ? {
+            primary: SK("wilcoxon-signed-rank"),
+            alternatives: [alt("t-test", "차이 점수가 정규분포이면 대응표본 t-검정")],
+            rationale:
+              "같은 대상의 전·후 비교를 소표본·비정규 상황에서 하므로 Wilcoxon 부호순위 검정이 적합합니다.",
+          }
+        : {
+            primary: SK("mann-whitney"),
+            alternatives: [alt("t-test", "표본이 충분하고 정규성이 확보되면")],
+            rationale:
+              "서로 다른 2집단을 소표본·비정규 상황에서 비교하므로 Mann-Whitney U 검정이 적합합니다. 중앙값과 효과크기 r 을 함께 보고하세요.",
+          };
+    }
     return {
       primary: SK("t-test"),
       alternatives: [
@@ -283,7 +348,10 @@ export function recommend(a: FinderAnswers): FinderResult | null {
     case "explore":
       return {
         primary: SK("efa"),
-        alternatives: [alt("cfa", "요인 구조 가설을 검증하려면")],
+        alternatives: [
+          alt("cfa", "요인 구조 가설을 검증하려면"),
+          alt("cronbach-alpha", "확인된 요인별 문항 신뢰도 보고에는"),
+        ],
         rationale: "요인 구조를 모르는 상태에서 탐색하므로 탐색적 요인분석(EFA)이 적합합니다.",
       };
     case "confirm":
@@ -292,6 +360,7 @@ export function recommend(a: FinderAnswers): FinderResult | null {
         alternatives: [
           alt("efa", "구조를 모를 때 탐색부터"),
           alt("sem", "잠재변인 간 인과까지 보려면"),
+          alt("cronbach-alpha", "요인별 문항 신뢰도 보고에는"),
         ],
         rationale: "가설화한 요인 구조를 검증하므로 확인적 요인분석(CFA)이 적합합니다.",
       };

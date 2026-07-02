@@ -53,6 +53,13 @@ const SEEDKEY_LABEL: Record<string, string> = {
   "statistical-method:cfa": "확인적 요인분석 (CFA)",
   "statistical-method:sem": "구조방정식모형 (SEM)",
   "statistical-method:cvi": "내용타당도지수 (CVI)",
+  "statistical-method:rm-anova": "반복측정 분산분석 (RM-ANOVA)",
+  "statistical-method:hlm": "다층모형 (HLM/MLM)",
+  "statistical-method:mann-whitney": "Mann-Whitney U 검정",
+  "statistical-method:wilcoxon-signed-rank": "Wilcoxon 부호순위 검정",
+  "statistical-method:kruskal-wallis": "Kruskal-Wallis H 검정",
+  "statistical-method:friedman": "Friedman 검정",
+  "statistical-method:cronbach-alpha": "신뢰도 분석 (Cronbach's α)",
 };
 
 export default function MethodFinderPage() {
