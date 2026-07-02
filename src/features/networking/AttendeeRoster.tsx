@@ -18,6 +18,7 @@ import { Users, MessageSquare, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { networkingRsvpsApi } from "@/lib/bkend";
+import { auth } from "@/lib/firebase";
 import type { NetworkingRsvp } from "@/types";
 
 export default function AttendeeRoster({
@@ -34,18 +35,26 @@ export default function AttendeeRoster({
   const [busy, setBusy] = useState(false);
   const amAttending = myRsvp?.status === "attending" && !!myRsvp.userId;
 
-  const { data: rsvps = [] } = useQuery({
+  // Hotfix-1A: 명단은 서버 API 경유 — 동의자만 서버에서 필터되어 반환 (비동의자·게스트 정보 미전송)
+  const { data: roster = [] } = useQuery({
     queryKey: ["networking-roster", eventId],
-    queryFn: async () => (await networkingRsvpsApi.listByEvent(eventId)).data as NetworkingRsvp[],
+    queryFn: async () => {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) return [];
+      const res = await fetch(`/api/networking/roster?eventId=${encodeURIComponent(eventId)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return [];
+      const body = (await res.json()) as { roster?: { userId: string; displayName: string }[] };
+      return body.roster ?? [];
+    },
     enabled: amAttending,
     staleTime: 60_000,
   });
 
   if (!amAttending || !myRsvp) return null;
 
-  const visible = rsvps.filter(
-    (r) => r.status === "attending" && r.userId && r.showInAttendeeList && r.userId !== myRsvp.userId,
-  );
+  const visible = roster.filter((r) => r.userId !== myRsvp.userId);
   const optedIn = myRsvp.showInAttendeeList === true;
 
   async function toggleOptIn() {
@@ -98,7 +107,7 @@ export default function AttendeeRoster({
         <ul className="mt-2 flex flex-wrap gap-1.5">
           {visible.map((r) => (
             <li
-              key={r.id}
+              key={r.userId}
               className="inline-flex items-center gap-1 rounded-full border bg-card py-0.5 pl-2.5 pr-1 text-xs"
             >
               <Link

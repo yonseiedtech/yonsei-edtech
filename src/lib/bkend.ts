@@ -571,6 +571,17 @@ export const siteSettingsApi = {
 export const registrationsApi = {
   list: (seminarId: string) =>
     dataApi.list<SeminarRegistration>("seminar_registrations", { "filter[seminarId]": seminarId }),
+  /** 본인 신청 여부 확인용 — rules(본인/이메일/스태프)와 정합하는 필터 쿼리 */
+  listMineByUser: (seminarId: string, userId: string) =>
+    dataApi.list<SeminarRegistration>("seminar_registrations", {
+      "filter[seminarId]": seminarId,
+      "filter[userId]": userId,
+    }),
+  listMineByEmail: (seminarId: string, email: string) =>
+    dataApi.list<SeminarRegistration>("seminar_registrations", {
+      "filter[seminarId]": seminarId,
+      "filter[email]": email,
+    }),
   create: (data: Record<string, unknown>) => dataApi.create<SeminarRegistration>("seminar_registrations", data),
   update: (id: string, data: Record<string, unknown>) => dataApi.update<SeminarRegistration>("seminar_registrations", id, data),
   delete: (id: string) => dataApi.delete("seminar_registrations", id),

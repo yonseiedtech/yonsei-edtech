@@ -262,17 +262,21 @@ function SeminarDetail({ id }: { id: string }) {
   const checkinStats = useCheckinStats(id);
   const [justRegistered, setJustRegistered] = useState(false);
 
-  // Registration check
-  const { data: registrations } = useQuery({
-    queryKey: ["registrations", id],
+  // Registration check — 본인 것만 필터 쿼리 (전체 신청자 명단·이메일 노출 차단)
+  const { data: myRegistrations } = useQuery({
+    queryKey: ["registrations-mine", id, user?.id],
     queryFn: async () => {
-      const res = await registrationsApi.list(id);
-      return res.data as unknown as { userId?: string; email?: string }[];
+      const [byUser, byEmail] = await Promise.all([
+        registrationsApi.listMineByUser(id, user!.id).then((r) => r.data).catch(() => []),
+        user?.email
+          ? registrationsApi.listMineByEmail(id, user.email).then((r) => r.data).catch(() => [])
+          : Promise.resolve([]),
+      ]);
+      return [...byUser, ...byEmail] as unknown as { id: string }[];
     },
+    enabled: !!user,
   });
-  const hasRegistration = justRegistered || (registrations ?? []).some(
-    (r) => (user && r.userId === user.id) || (user?.email && r.email === user.email)
-  );
+  const hasRegistration = justRegistered || (myRegistrations ?? []).length > 0;
 
   const handleRegistered = useCallback(() => setJustRegistered(true), []);
 

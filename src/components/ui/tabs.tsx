@@ -25,7 +25,8 @@ function Tabs({
 }
 
 const tabsListVariants = cva(
-  "group/tabs-list inline-flex w-full items-center rounded-lg p-1 text-muted-foreground",
+  // overflow-x-auto: 탭이 많을 때 모바일에서 잘리는 대신 가로 스크롤 (전수감사 Hotfix)
+  "group/tabs-list inline-flex w-full items-center overflow-x-auto rounded-lg p-1 text-muted-foreground [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
   {
     variants: {
       variant: {

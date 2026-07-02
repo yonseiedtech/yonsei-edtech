@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   useSeminar,
@@ -124,6 +124,10 @@ export default function SeminarLMS({ seminarId }: Props) {
   // 연사 후기 링크 (staff 전용)
   const [speakerToken, setSpeakerToken] = useState<string | null>(seminar?.speakerReviewToken ?? null);
   const [generatingToken, setGeneratingToken] = useState(false);
+  // seminar 비동기 로드 후 기존 토큰 동기화 — 기존 링크가 안 보여 재생성(링크 무효화)되는 버그 방지
+  useEffect(() => {
+    if (seminar?.speakerReviewToken) setSpeakerToken(seminar.speakerReviewToken);
+  }, [seminar?.speakerReviewToken]);
 
   async function handleGenerateSpeakerLink() {
     if (!seminar) return;
@@ -273,11 +277,25 @@ export default function SeminarLMS({ seminarId }: Props) {
             ))}
           </div>
 
-          {/* 탭 콘텐츠 */}
+          {/* 탭 콘텐츠 — 자료실·후기는 참석자/운영진만 (무단 열람 차단) */}
           <div className="p-6">
             {activeTab === "overview" && <OverviewSection seminar={seminar} />}
-            {activeTab === "materials" && <MaterialsSection seminar={seminar} />}
-            {activeTab === "reviews" && <SeminarReviews seminar={seminar} />}
+            {activeTab === "materials" &&
+              (hasAccess ? (
+                <MaterialsSection seminar={seminar} />
+              ) : (
+                <p className="py-8 text-center text-sm text-muted-foreground">
+                  자료실은 참석 신청 후 이용할 수 있습니다.
+                </p>
+              ))}
+            {activeTab === "reviews" &&
+              (hasAccess ? (
+                <SeminarReviews seminar={seminar} />
+              ) : (
+                <p className="py-8 text-center text-sm text-muted-foreground">
+                  후기는 참석 신청 후 이용할 수 있습니다.
+                </p>
+              ))}
           </div>
         </div>
       </div>
