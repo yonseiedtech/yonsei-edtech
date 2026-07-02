@@ -55,6 +55,39 @@ export function inferSemesterStartDate(
   return ymd(best!);
 }
 
+/** 수업 기간 (개강일~종강일, 양끝 포함) */
+export interface OfferingPeriod {
+  startDate: string;
+  endDate: string;
+}
+
+/**
+ * 과목의 유효 수업 기간을 해석 (방학 처리의 단일 기준 — Phase 학기설정).
+ * - 개강일: semesterStartDate ?? 학기+수업요일 추론
+ * - 종강일: semesterEndDate ?? 개강일 + totalWeeks(기본 15)*7 - 1일
+ */
+export function resolveOfferingPeriod(params: {
+  year: number;
+  term: "spring" | "fall";
+  weekdays: number[];
+  semesterStartDate?: string;
+  semesterEndDate?: string;
+  totalWeeks?: number;
+}): OfferingPeriod {
+  const startDate =
+    params.semesterStartDate ??
+    inferSemesterStartDate(params.year, params.term, params.weekdays);
+  const endDate =
+    params.semesterEndDate ??
+    ymd(addDays(parseYmd(startDate), (params.totalWeeks ?? DEFAULT_TOTAL_WEEKS) * 7 - 1));
+  return { startDate, endDate };
+}
+
+/** 특정 일자(YYYY-MM-DD)가 수업 기간 안인지 */
+export function isDateInPeriod(period: OfferingPeriod, dateIso: string): boolean {
+  return dateIso >= period.startDate && dateIso <= period.endDate;
+}
+
 export interface WeekRange {
   weekNo: number;
   /** 주차 시작일 YYYY-MM-DD (수업 요일) */

@@ -36,6 +36,7 @@ import {
 } from "@/types";
 import { inferCurrentSemester } from "@/lib/semester";
 import { parseSchedule, fmtTimeRange } from "@/lib/courseSchedule";
+import { resolveOfferingPeriod, isDateInPeriod } from "@/lib/semesterWeeks";
 import { cn } from "@/lib/utils";
 import { DailyGrid } from "./timeline/DailyGrid";
 import { WeeklyGrid } from "./timeline/WeeklyGrid";
@@ -282,11 +283,36 @@ export default function DailyClassTimelineWidget() {
     return (offeringsRes?.data ?? []).filter((o) => courseIds.includes(o.id));
   }, [offeringsRes, courseIds]);
 
-  // 모든 강의 + 파싱 결과
-  const parsedOfferings = useMemo(
+  // 모든 강의 + 파싱 결과 + 수업 기간(개강~종강) — 방학 처리 (학기설정 기능)
+  const allParsedOfferings = useMemo(
     () =>
-      myOfferings.map((o) => ({ offering: o, parsed: parseSchedule(o.schedule) })),
-    [myOfferings],
+      myOfferings.map((o) => {
+        const parsed = parseSchedule(o.schedule);
+        const period = resolveOfferingPeriod({
+          year,
+          term,
+          weekdays: parsed.weekdays,
+          semesterStartDate: o.semesterStartDate,
+          semesterEndDate: o.semesterEndDate,
+          totalWeeks: o.totalWeeks,
+        });
+        return { offering: o, parsed, period };
+      }),
+    [myOfferings, year, term],
+  );
+  const selYmd = ymd(selectedDate);
+  // 선택일이 수업 기간 안인 과목만 시간표에 반영
+  const parsedOfferings = useMemo(
+    () => allParsedOfferings.filter(({ period }) => isDateInPeriod(period, selYmd)),
+    [allParsedOfferings, selYmd],
+  );
+  // 방학 판정 — 등록 과목은 있으나 전부 종강(선택일이 모든 종강일 이후)
+  const isVacation = useMemo(
+    () =>
+      allParsedOfferings.length > 0 &&
+      parsedOfferings.length === 0 &&
+      allParsedOfferings.every(({ period }) => selYmd > period.endDate),
+    [allParsedOfferings, parsedOfferings.length, selYmd],
   );
 
   // 사이클 114: 월간 뷰 데이터 — 수업 요일(반복) + 세미나 날짜
@@ -979,7 +1005,29 @@ export default function DailyClassTimelineWidget() {
       ) : viewMode === "daily" ? (
         todayOfferings.length === 0 &&
         placedDailyActivities.length === 0 ? (
-          parsedOfferings.length === 0 ? (
+          isVacation ? (
+            <div className="mt-4 rounded-2xl border border-dashed bg-muted/20 p-4 text-sm">
+              <p className="font-medium">{semesterLabel} 수업이 모두 종강했습니다.</p>
+              <p className="mt-1 text-[12px] text-muted-foreground">
+                방학 중에는 시간표가 표시되지 않습니다. 과목별 개강·종강일은 운영진이
+                수강과목 관리에서 설정할 수 있습니다.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link
+                  href="/mypage/research?tab=timer"
+                  className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-[12px] font-medium text-white hover:bg-primary/90"
+                >
+                  방학 연구 타이머 시작
+                </Link>
+                <Link
+                  href="/flashcards"
+                  className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-[12px] font-medium hover:bg-muted"
+                >
+                  암기카드 복습
+                </Link>
+              </div>
+            </div>
+          ) : parsedOfferings.length === 0 ? (
             <div className="mt-4 rounded-2xl border border-dashed bg-muted/20 p-4 text-sm">
               <p className="font-medium">
                 {semesterLabel}에 등록된 수강과목이 없어요.

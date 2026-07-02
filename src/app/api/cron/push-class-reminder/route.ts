@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
+import { resolveOfferingPeriod, isDateInPeriod } from "@/lib/semesterWeeks";
 import { sendPushToUsers, filterRecipientsByPreference } from "@/lib/push-admin";
 import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
 import { todayYmdKst } from "@/lib/dday";
@@ -110,10 +111,31 @@ export async function GET(req: NextRequest) {
     const matched: { offeringId: string; courseName: string; recipientCount: number }[] = [];
 
     for (const doc of offeringsSnap.docs) {
-      const o = doc.data() as { schedule?: string; courseName?: string };
+      const o = doc.data() as {
+        schedule?: string;
+        courseName?: string;
+        year?: number;
+        term?: "spring" | "fall";
+        semesterStartDate?: string;
+        semesterEndDate?: string;
+        totalWeeks?: number;
+      };
       const parsed = parseSchedule(o.schedule);
       if (parsed.startMin == null) continue;
       if (!parsed.weekdays.includes(weekday)) continue;
+
+      // 학기설정: 개강 전·종강 후(방학)에는 수업 알림 미발송
+      if (o.year && o.term) {
+        const period = resolveOfferingPeriod({
+          year: o.year,
+          term: o.term,
+          weekdays: parsed.weekdays,
+          semesterStartDate: o.semesterStartDate,
+          semesterEndDate: o.semesterEndDate,
+          totalWeeks: o.totalWeeks,
+        });
+        if (!isDateInPeriod(period, today)) continue;
+      }
 
       // 휴강 자동 제외
       const sessionsSnap = await db

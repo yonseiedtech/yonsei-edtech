@@ -39,6 +39,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { parseSchedule, fmtMin } from "@/lib/courseSchedule";
+import { resolveOfferingPeriod, isDateInPeriod } from "@/lib/semesterWeeks";
 import { inferCurrentSemester } from "@/lib/semester";
 import { usePageHeader } from "@/features/site-settings/useSiteContent";
 import PageHeader from "@/components/ui/page-header";
@@ -389,6 +390,16 @@ export default function CalendarPage() {
       for (const o of myOfferings) {
         const parsed = parseSchedule(o.schedule);
         if (!parsed.weekdays.includes(dayIdx)) continue;
+        // 학기설정: 개강 전·종강 후(방학)에는 수업 이벤트 미생성
+        const period = resolveOfferingPeriod({
+          year: semYear,
+          term,
+          weekdays: parsed.weekdays,
+          semesterStartDate: o.semesterStartDate,
+          semesterEndDate: o.semesterEndDate,
+          totalWeeks: o.totalWeeks,
+        });
+        if (!isDateInPeriod(period, dateStr)) continue;
         const session = sessionByDateCourse.get(`${dateStr}__${o.id}`);
         if (session?.mode === "cancelled") continue;
         const timeLabel =

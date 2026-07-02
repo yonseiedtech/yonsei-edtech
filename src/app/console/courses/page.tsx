@@ -1022,6 +1022,8 @@ function InlineEditor({
       classroom: row.classroom ?? "",
       syllabusUrl: row.syllabusUrl ?? "",
       notes: row.notes ?? "",
+      semesterStartDate: row.semesterStartDate ?? "",
+      semesterEndDate: row.semesterEndDate ?? "",
     }),
     [row]
   );
@@ -1047,6 +1049,10 @@ function InlineEditor({
     if (sylNew !== row.syllabusUrl) u.syllabusUrl = sylNew;
     const notesNew = draft.notes.trim() || undefined;
     if (notesNew !== row.notes) u.notes = notesNew;
+    const startNew = draft.semesterStartDate.trim() || undefined;
+    if (startNew !== row.semesterStartDate) u.semesterStartDate = startNew;
+    const endNew = draft.semesterEndDate.trim() || undefined;
+    if (endNew !== row.semesterEndDate) u.semesterEndDate = endNew;
     return u;
   }, [draft, row]);
 
@@ -1110,6 +1116,27 @@ function InlineEditor({
           placeholder="비고"
           className="sm:col-span-3"
         />
+        {/* 학기설정 — 개강·종강일. 종강일 이후에는 시간표·캘린더·수업 알림에서 자동 제외(방학 처리) */}
+        <div className="sm:col-span-3 grid gap-2 sm:grid-cols-2">
+          <label className="text-[11px] text-muted-foreground">
+            개강일 (미지정 시 학기 첫 주 자동 추론)
+            <Input
+              type="date"
+              value={draft.semesterStartDate}
+              onChange={(e) => setDraft({ ...draft, semesterStartDate: e.target.value })}
+              className="mt-1"
+            />
+          </label>
+          <label className="text-[11px] text-muted-foreground">
+            종강일 (미지정 시 개강일+15주 — 이후 방학으로 처리되어 시간표에서 숨김)
+            <Input
+              type="date"
+              value={draft.semesterEndDate}
+              onChange={(e) => setDraft({ ...draft, semesterEndDate: e.target.value })}
+              className="mt-1"
+            />
+          </label>
+        </div>
       </div>
       <div className="mt-3 flex items-center justify-between gap-2">
         <span className="text-[11px] text-muted-foreground">

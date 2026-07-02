@@ -47,6 +47,11 @@ export interface CourseOffering {
   enrollmentCap?: number;
   /** 학기 개강일(주차 1의 시작일) YYYY-MM-DD — 미지정 시 학기+수업요일에서 자동 추론 */
   semesterStartDate?: string;
+  /**
+   * 종강일 YYYY-MM-DD — 이 날짜 이후에는 시간표·캘린더·수업 알림에서 제외 (방학 처리).
+   * 미지정 시 개강일 + 총 주차(기본 15주)로 자동 계산.
+   */
+  semesterEndDate?: string;
   /** 총 주차 수 (기본 15) */
   totalWeeks?: number;
   createdBy: string;
