@@ -168,7 +168,7 @@ export default function ResearchQuestionsPanel({
         statMethodIds: [],
       })),
     ]);
-    toast.success(`연구 모형에서 연구문제 ${newModelQuestions.length}개를 가져왔습니다. 방법·통계 태그를 달아보세요.`);
+    toast.success(`연구 모형에서 연구문제 ${newModelQuestions.length}개를 가져왔습니다.`);
   }
 
   return (
@@ -176,7 +176,7 @@ export default function ResearchQuestionsPanel({
       <div className="flex items-center justify-between gap-2">
         <p className="flex items-center gap-1.5 text-xs font-semibold text-amber-800 dark:text-amber-200">
           <HelpCircle size={13} />
-          연구 문제 — 항목별로 작성하고, 관련 연구방법·통계방법을 태그로 연결하세요
+          연구 문제
         </p>
         <span className="text-[11px] text-muted-foreground">{items.length}개</span>
       </div>

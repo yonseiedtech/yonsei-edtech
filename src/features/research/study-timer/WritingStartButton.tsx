@@ -60,7 +60,7 @@ export default function WritingStartButton({
         targetTitle: targetTitle || "(제목 없음)",
         startTime: Date.now(),
       });
-      toast.success("글쓰기 타이머 시작 ✍️ — 부엉이가 함께해요");
+      toast.success("글쓰기 타이머를 시작했습니다.");
     } catch {
       toast.error("타이머 시작에 실패했습니다");
     }

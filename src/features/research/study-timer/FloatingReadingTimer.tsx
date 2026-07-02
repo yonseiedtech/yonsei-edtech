@@ -201,7 +201,7 @@ export default function FloatingReadingTimer() {
         ...(type === "reading" ? { readingSource: "external" as PaperReadingSource } : {}),
       });
       setMenuOpen(false);
-      toast.success(`${title} 타이머 시작 🔥`);
+      toast.success(`「${title}」 타이머를 시작했습니다.`);
     } catch {
       toast.error("타이머 시작에 실패했습니다");
     }
@@ -218,7 +218,7 @@ export default function FloatingReadingTimer() {
         refId: active.readingRefId ?? active.paperId,
       });
     } else {
-      toast.success(`「${active.targetTitle}」 글쓰기 ${min}분 기록됨 ✍️`);
+      toast.success(`「${active.targetTitle}」 글쓰기 ${min}분을 기록했습니다.`);
     }
     stop();
     setMenuOpen(false);
@@ -235,7 +235,7 @@ export default function FloatingReadingTimer() {
     localStorage.setItem(LS_HIDE, new Date().toISOString().slice(0, 10));
     setOffChoiceOpen(false);
     setHidden(true);
-    toast("오늘 하루 부엉이를 숨겼어요 🙈", {
+    toast("오늘 하루 부엉이를 숨겼습니다.", {
       description: "내일 다시 자동으로 찾아와요. 계속 끄려면 마이페이지 설정 → 읽기 타이머에서 꺼주세요.",
     });
   }
@@ -244,7 +244,7 @@ export default function FloatingReadingTimer() {
     sessionStorage.setItem(SS_OFF, "true");
     setOffChoiceOpen(false);
     setHidden(true);
-    toast("이번 접속 동안 부엉이를 숨겼어요 🦉", {
+    toast("이번 접속 동안 부엉이를 숨겼습니다.", {
       description: "브라우저를 다시 열면 자동으로 돌아와요. 계속 끄려면 마이페이지 설정 → 읽기 타이머에서 꺼주세요.",
     });
   }

@@ -67,7 +67,7 @@ export default function DiagnosticWeakConceptPath({
         startTime: Date.now(),
         readingSource: "external",
       });
-      toast.success("30분 집중 읽기 시작 📖 — 우측 하단 부엉이가 함께해요");
+      toast.success("30분 집중 읽기를 시작했습니다 — 우측 하단 부엉이 타이머에서 확인하세요.");
     } catch {
       toast.error("타이머 시작에 실패했습니다");
     }

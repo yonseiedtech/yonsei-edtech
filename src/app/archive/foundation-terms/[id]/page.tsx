@@ -236,7 +236,7 @@ export default function FoundationTermDetailPage() {
         accessibleSummary: term.accessibleSummary,
       });
       setCardSaved(true);
-      toast.success("암기카드에 저장했습니다. /flashcards 에서 복습하세요!");
+      toast.success("암기카드에 저장했습니다.");
     } catch (err) {
       console.error("[foundation-term-detail] flashcard save failed", err);
       toast.error("암기카드 저장 실패");

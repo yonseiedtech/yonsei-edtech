@@ -240,7 +240,7 @@ export default function AdvisorFeedbackLog({ userId, readOnly = false }: Props) 
         resolvedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
-      toast.success("반영 완료로 표시했습니다. 수고하셨어요! 🎉");
+      toast.success("반영 완료로 표시했습니다.");
       setResolveTarget(null);
       setResolutionNote("");
       invalidate();

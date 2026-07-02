@@ -81,7 +81,7 @@ export default function EventReviews({
           updatedAt: now,
         });
       }
-      toast.success("후기가 저장되었습니다. 다음 행사 준비에 큰 도움이 돼요!");
+      toast.success("후기가 저장되었습니다.");
       setFormOpen(false);
       qc.invalidateQueries({ queryKey: ["networking-reviews", eventId] });
     } catch (e) {
@@ -138,7 +138,7 @@ export default function EventReviews({
           <Textarea
             rows={2}
             className="min-h-[48px] text-sm"
-            placeholder="한줄 후기 (선택) — 좋았던 점, 다음에 바라는 점"
+            placeholder="한줄 후기 (선택)"
             value={content}
             onChange={(e) => setContent(e.target.value)}
           />

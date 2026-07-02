@@ -433,7 +433,7 @@ export default function NewMemberChecklistWidget() {
         if (!item) return;
         const nextCta = NEXT_CTA_MAP[item.completionType];
         if (nextCta) {
-          toast.success(`🎉 ${item.label} 완료!`, {
+          toast.success(`${item.label} 완료`, {
             description: nextCta.message,
             action: {
               label: nextCta.label,
@@ -442,7 +442,7 @@ export default function NewMemberChecklistWidget() {
             duration: 6000,
           });
         } else {
-          toast.success(`🎉 ${item.label} 완료!`, {
+          toast.success(`${item.label} 완료`, {
             description: "프로필 완성도가 한 단계 올라갔어요.",
             duration: 4000,
           });
@@ -521,7 +521,7 @@ export default function NewMemberChecklistWidget() {
                   ? "🚀 절반 통과 배지 획득!"
                   : badgeId === "speed-adapter"
                   ? `⚡ 신속 적응 배지 획득! +${meta.points}점`
-                  : "🎓 시작하기 마스터 배지 획득!";
+                  : "시작하기 마스터 배지를 획득했습니다.";
               toast.info(label, {
                 description: meta.description,
                 duration: 5000,
@@ -549,7 +549,7 @@ export default function NewMemberChecklistWidget() {
             // 좌·우 발사 2회
             setTimeout(() => fireConfetti({ x: 0.2, y: 0.6 }), 200);
             setTimeout(() => fireConfetti({ x: 0.8, y: 0.6 }), 400);
-            toast.success("🎓 시작하기 체크리스트 완성!", {
+            toast.success("시작하기 체크리스트를 모두 완료했습니다.", {
               description: "프로필 완성도 100% 달성. 마이페이지에서 확인하세요.",
               duration: 6000,
             });

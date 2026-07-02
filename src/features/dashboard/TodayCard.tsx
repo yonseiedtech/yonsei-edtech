@@ -152,7 +152,6 @@ export default function TodayCard() {
       <p className="flex items-center gap-1.5 text-xs font-bold text-primary">
         <Sunrise size={14} />
         오늘 할 일
-        <span className="font-normal text-muted-foreground">— 바로 이어가기</span>
       </p>
       <div className="mt-2.5 flex flex-wrap gap-2">
         {items.map((it) => (

@@ -72,7 +72,7 @@ export default function AttendeeRoster({
         <p className="flex items-center gap-1.5 text-xs font-semibold">
           <Users size={13} />
           참석자 명단
-          <span className="font-normal text-muted-foreground">— 공개 동의 회원만, 참석자끼리 보여요</span>
+          <span className="font-normal text-muted-foreground">(공개 동의 회원만, 참석자에게만 표시)</span>
         </p>
         <button
           type="button"

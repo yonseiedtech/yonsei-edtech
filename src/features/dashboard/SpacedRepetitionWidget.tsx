@@ -14,7 +14,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Brain, RotateCcw, Sparkles, MessageSquare, FileText, Layers } from "lucide-react";
+import { ArrowRight, RotateCcw, Sparkles, MessageSquare, FileText, Layers } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { postsApi, reviewsApi, flashcardsApi } from "@/lib/bkend";
 import { isDueToday } from "@/lib/flashcard-srs";
@@ -160,10 +160,6 @@ export default function SpacedRepetitionWidget() {
             </p>
           </div>
         </div>
-        <span className="hidden items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary sm:inline-flex">
-          <Brain size={10} aria-hidden />
-          학습이론
-        </span>
       </div>
 
       {/* v3: 진짜 SRS — 오늘 복습 대상 암기카드 (SM-2 간소화, dueAt ≤ 오늘) */}

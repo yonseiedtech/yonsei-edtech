@@ -58,7 +58,7 @@ export default function ReadingStartButton({
         readingSource: source,
         readingRefId: refId,
       });
-      toast.success("읽기 타이머 시작 📖 — 우측 하단 부엉이가 함께해요");
+      toast.success("읽기 타이머를 시작했습니다 — 우측 하단 부엉이 타이머에서 확인하세요.");
     } catch {
       toast.error("타이머 시작에 실패했습니다");
     }

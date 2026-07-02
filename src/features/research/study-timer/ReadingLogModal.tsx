@@ -110,7 +110,7 @@ export default function ReadingLogModal({
           toast.error("읽기 기록은 저장됐지만 서지 등록에 실패했습니다.");
         }
       }
-      toast.success(durationMin ? `${durationMin}분 읽기 기록 완료 📖` : "읽기 기록 완료 📖");
+      toast.success(durationMin ? `${durationMin}분 읽기 기록을 저장했습니다.` : "읽기 기록을 저장했습니다.");
       onClose();
     } catch {
       toast.error("저장에 실패했습니다");

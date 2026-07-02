@@ -409,7 +409,7 @@ const STEPS = [
     icon: School,
     question: "이 학습은 어떤 환경에서 일어나고, 학습 후 어디서 활용되나요?",
     hints: [
-      "🎓 ID 분야 용어: Context Analysis(맥락 분석, Tessmer & Richey 1997).",
+      "ID 분야 용어: Context Analysis(맥락 분석, Tessmer & Richey 1997).",
       "Learning Context(학습 맥락) — 강의실 · 시간 · 매체 · 자원 / Transfer Context(전이 맥락) — 학습 후 어디에서 발휘 / Orienting Context(지향 맥락) — 정책 · 문화 · 예산 같은 외적 제약.",
       "이 분석이 누락되면 ‘만든 자료가 현장에서 통하지 않는’ 일이 자주 발생합니다.",
     ],
@@ -420,7 +420,7 @@ const STEPS = [
     icon: School,
     question: "이 학습의 대상 학습자는 누구이며, 인지·정서 특성은 어떠한가요?",
     hints: [
-      "🎓 ID 분야 용어: Learner Analysis(학습자 분석, Smith & Ragan / Dick & Carey).",
+      "ID 분야 용어: Learner Analysis(학습자 분석, Smith & Ragan / Dick & Carey).",
       "프로필(학년 · 인원 · 배경) + 사전 지식 · 학습 양식(인지) + 동기 · 자신감 · 태도(정서) 세 축으로 정리해 주세요.",
       "학습자를 모른 채 설계하면 처방이 빗나갑니다 — ‘1학년인데 4학년 수준 자료를 줬다’와 같은 일이 발생합니다.",
     ],
@@ -431,7 +431,7 @@ const STEPS = [
     icon: School,
     question: "학습자가 무엇을 배워야 하고, 그것을 어떻게 측정 가능한 목표로 진술하나요?",
     hints: [
-      "🎓 ID 분야 용어: Task Analysis(과제 분석, Gagné / Jonassen) + Goal Analysis(목표 분석, Bloom · Mager · Krathwohl · Simpson).",
+      "ID 분야 용어: Task Analysis(과제 분석, Gagné / Jonassen) + Goal Analysis(목표 분석, Bloom · Mager · Krathwohl · Simpson).",
       "과제 분해(큰 학습을 작은 단위로) + 인지 목표(Bloom 행동 동사) + 기능·태도 목표 + Mager ABCD(Audience · Behavior · Condition · Degree) 형식 순으로 정리합니다.",
       "이 분석 결과가 다음 챕터(이론 선택)와 결과 챕터(평가 도구)의 직접적인 근거가 됩니다.",
     ],
@@ -795,7 +795,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
 
         {step === "env" && (
           <div className="space-y-4">
-            <Section title="2-1. 학습 환경 (Learning Context)" sub="🎓 학생들이 어디서·언제·무엇으로 공부하는가 — 강의실, 시간, 매체, 자원.">
+            <Section title="2-1. 학습 환경 (Learning Context)" sub="학생들이 어디서·언제·무엇으로 공부하는가 — 강의실, 시간, 매체, 자원.">
               <Textarea
                 value={form.envLearning}
                 onChange={(e) => setField("envLearning", e.target.value)}
@@ -804,7 +804,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
                 disabled={readOnly}
               />
             </Section>
-            <Section title="2-2. 적용 환경 (Transfer Context)" sub="🎓 배운 걸 어디서 써먹을 것인가 — 학교 수업/직장/생활 어디서?">
+            <Section title="2-2. 적용 환경 (Transfer Context)" sub="배운 걸 어디서 써먹을 것인가 — 학교 수업/직장/생활 어디서?">
               <Textarea
                 value={form.envTransfer}
                 onChange={(e) => setField("envTransfer", e.target.value)}
@@ -813,7 +813,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
                 disabled={readOnly}
               />
             </Section>
-            <Section title="2-3. 제약·맥락 (Orienting Context)" sub="🎓 넘어가야 할 제약과 맥락 — 정책·문화·예산·기간 등.">
+            <Section title="2-3. 제약·맥락 (Orienting Context)" sub="넘어가야 할 제약과 맥락 — 정책·문화·예산·기간 등.">
               <Textarea
                 value={form.envConstraint}
                 onChange={(e) => setField("envConstraint", e.target.value)}
@@ -827,7 +827,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
 
         {step === "learner" && (
           <div className="space-y-4">
-            <Section title="3-1. 학습자 프로필 (Profile)" sub="🎓 ID: Learner Analysis. 학년·인원·배경 — 일상 관찰 그대로 적으세요.">
+            <Section title="3-1. 학습자 프로필 (Profile)" sub="ID: Learner Analysis. 학년·인원·배경 — 일상 관찰 그대로 적으세요.">
               <Input
                 value={form.learnerProfile}
                 onChange={(e) => setField("learnerProfile", e.target.value)}
@@ -835,7 +835,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
                 disabled={readOnly}
               />
             </Section>
-            <Section title="3-2. 인지·지식 수준 (Cognitive)" sub="🎓 사전 지식·학습 양식·전형적 오개념. ‘학생들 머릿속에서 일어나는 일’.">
+            <Section title="3-2. 인지·지식 수준 (Cognitive)" sub="사전 지식·학습 양식·전형적 오개념. ‘학생들 머릿속에서 일어나는 일’.">
               <Textarea
                 value={form.learnerCognitive}
                 onChange={(e) => setField("learnerCognitive", e.target.value)}
@@ -844,7 +844,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
                 disabled={readOnly}
               />
             </Section>
-            <Section title="3-3. 정서·동기 상태 (Affective)" sub="🎓 ARCS — Attention/Relevance/Confidence/Satisfaction. ‘학생들 마음에서 일어나는 일’.">
+            <Section title="3-3. 정서·동기 상태 (Affective)" sub="ARCS — Attention/Relevance/Confidence/Satisfaction. ‘학생들 마음에서 일어나는 일’.">
               <Textarea
                 value={form.learnerAffective}
                 onChange={(e) => setField("learnerAffective", e.target.value)}
@@ -858,7 +858,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
 
         {step === "task" && (
           <div className="space-y-4">
-            <Section title="4-1. 과제 분해 (Task Analysis)" sub="🎓 Gagné 위계 / Jonassen 정보처리. 큰 학습을 작은 단위로 쪼개 단계로 정리하세요. (단계별 입력 · 추가 · 삭제 · 순서 변경)">
+            <Section title="4-1. 과제 분해 (Task Analysis)" sub="Gagné 위계 / Jonassen 정보처리. 큰 학습을 작은 단위로 쪼개 단계로 정리하세요. (단계별 입력 · 추가 · 삭제 · 순서 변경)">
               {readOnly ? (
                 <Textarea
                   value={(form.taskSteps && form.taskSteps.length > 0
@@ -874,14 +874,14 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
             </Section>
             <Section
               title="4-2. 학습 영역 우선순위 (Bloom 3대 영역)"
-              sub="🎓 ‘이 처치로 학습자의 어느 영역을 변화시키려 하나요?’ — Bloom(1956) 인지 + Krathwohl(1964) 정의 + Simpson 심동. 처치-영역 적합성·차시 수의 직접 근거."
+              sub="‘이 처치로 학습자의 어느 영역을 변화시키려 하나요?’ — Bloom(1956) 인지 + Krathwohl(1964) 정의 + Simpson 심동. 처치-영역 적합성·차시 수의 직접 근거."
             >
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {[
-                  { v: "cognitive", label: "🧠 인지", desc: "지식·이해·사고" },
+                  { v: "cognitive", label: "인지", desc: "지식·이해·사고" },
                   { v: "affective", label: "❤️ 정의(태도)", desc: "태도·동기·가치" },
                   { v: "psychomotor", label: "✋ 심동(기능)", desc: "기능·행동·실연" },
-                  { v: "integrated", label: "🔗 통합", desc: "2영역 이상" },
+                  { v: "integrated", label: "통합", desc: "2영역 이상" },
                 ].map((opt) => {
                   const active = form.outcomePriorityDomain === opt.v;
                   return (
@@ -939,7 +939,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
                 </div>
               )}
             </Section>
-            <Section title="4-2. 학습 목표 — 지식·이해 (Bloom 인지)" sub="🎓 Bloom 인지 영역. 기억/이해/적용/분석/평가/창조 행동 동사로.">
+            <Section title="4-2. 학습 목표 — 지식·이해 (Bloom 인지)" sub="Bloom 인지 영역. 기억/이해/적용/분석/평가/창조 행동 동사로.">
               <Textarea
                 value={form.outcomeCognitive}
                 onChange={(e) => setField("outcomeCognitive", e.target.value)}
@@ -948,7 +948,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
                 disabled={readOnly}
               />
             </Section>
-            <Section title="4-3. 학습 목표 — 기능·태도" sub="🎓 Krathwohl 정의적 + Simpson 심동적. 행동·태도 두 축.">
+            <Section title="4-3. 학습 목표 — 기능·태도" sub="Krathwohl 정의적 + Simpson 심동적. 행동·태도 두 축.">
               <Textarea
                 value={form.outcomeSkillAttitude}
                 onChange={(e) => setField("outcomeSkillAttitude", e.target.value)}
@@ -957,7 +957,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
                 disabled={readOnly}
               />
             </Section>
-            <Section title="4-4. Mager ABCD 형식 정교화" sub="🎓 Mager 행동 목표. Audience·Behavior·Condition·Degree 네 요소를 분리해 적어주세요.">
+            <Section title="4-4. Mager ABCD 형식 정교화" sub="Mager 행동 목표. Audience·Behavior·Condition·Degree 네 요소를 분리해 적어주세요.">
               <div className="space-y-2">
                 <div>
                   <p className="mb-0.5 text-[11px] font-semibold text-muted-foreground">A — Audience (학습자)</p>
