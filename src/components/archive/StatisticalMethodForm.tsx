@@ -41,6 +41,7 @@ interface Props {
 }
 
 const CATEGORY_OPTIONS: StatisticalMethodCategory[] = [
+  "basic",
   "anova_family",
   "regression",
   "factor",
@@ -48,6 +49,7 @@ const CATEGORY_OPTIONS: StatisticalMethodCategory[] = [
   "nonparametric",
   "mediation_moderation",
   "multilevel",
+  "measurement",
   "other",
 ];
 
