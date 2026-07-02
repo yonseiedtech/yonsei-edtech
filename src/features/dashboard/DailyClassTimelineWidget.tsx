@@ -315,12 +315,38 @@ export default function DailyClassTimelineWidget() {
       allParsedOfferings.every(({ period }) => selYmd > period.endDate),
     [allParsedOfferings, parsedOfferings.length, selYmd],
   );
+  // 개강 전 판정 — 등록 과목은 있으나 아직 모든 개강일 이전 ("수강과목 없음" 오표시 방지)
+  const isBeforeStart = useMemo(
+    () =>
+      allParsedOfferings.length > 0 &&
+      parsedOfferings.length === 0 &&
+      allParsedOfferings.every(({ period }) => selYmd < period.startDate),
+    [allParsedOfferings, parsedOfferings.length, selYmd],
+  );
+  const earliestStart = useMemo(
+    () =>
+      allParsedOfferings.reduce<string | null>(
+        (min, { period }) => (min === null || period.startDate < min ? period.startDate : min),
+        null,
+      ),
+    [allParsedOfferings],
+  );
 
   // 사이클 114: 월간 뷰 데이터 — 수업 요일(반복) + 세미나 날짜
   const { seminars: allSeminars } = useSeminars();
   const monthClassWeekdays = useMemo(
     () => Array.from(new Set(parsedOfferings.flatMap((o) => o.parsed.weekdays))),
     [parsedOfferings],
+  );
+  // 월간 마커용 기간 목록 — 어느 달을 봐도 개강~종강 기간에만 수업 점 표시
+  const monthClassPeriods = useMemo(
+    () =>
+      allParsedOfferings.map(({ parsed, period }) => ({
+        weekdays: parsed.weekdays,
+        start: period.startDate,
+        end: period.endDate,
+      })),
+    [allParsedOfferings],
   );
   const seminarsByDate = useMemo(() => {
     const map = new Map<string, MonthSeminar[]>();
@@ -669,7 +695,9 @@ export default function DailyClassTimelineWidget() {
       const dayIdx = d.getDay();
       const dateStr = ymd(d);
       const items: PlacedClass[] = [];
-      for (const { offering, parsed } of parsedOfferings) {
+      // 주 전체가 아니라 '각 날짜'가 수업 기간 안일 때만 배치 — 종강일이 주 중간에 걸려도 정확
+      for (const { offering, parsed, period } of allParsedOfferings) {
+        if (!isDateInPeriod(period, dateStr)) continue;
         if (!parsed.weekdays.includes(dayIdx)) continue;
         if (parsed.startMin === null || parsed.endMin === null) continue;
         const s = Math.max(effMinStart, parsed.startMin);
@@ -689,7 +717,7 @@ export default function DailyClassTimelineWidget() {
       }
       return { date: d, dayIndex: dayIdx, items };
     });
-  }, [weekDates, parsedOfferings, weeklySessionsByDateCourse, effMinStart, effMinEnd]);
+  }, [weekDates, allParsedOfferings, weeklySessionsByDateCourse, effMinStart, effMinEnd]);
 
   // daily 활동 배치 — 오늘(today) date 매칭 + 시작/종료시간 있는 것만
   // 시간 미정 항목은 그리드에 표시 불가 → 활동 페이지에서 직접 확인
@@ -996,6 +1024,7 @@ export default function DailyClassTimelineWidget() {
       ) : viewMode === "monthly" ? (
         <MonthlyGrid
           classWeekdays={monthClassWeekdays}
+          classPeriods={monthClassPeriods}
           seminarsByDate={seminarsByDate}
           todayYmd={actualToday}
           onPickDate={(d) => {
@@ -1008,6 +1037,14 @@ export default function DailyClassTimelineWidget() {
         placedDailyActivities.length === 0 ? (
           isVacation ? (
             <VacationModeCard semesterLabel={semesterLabel} term={term} year={year} />
+          ) : isBeforeStart ? (
+            <div className="mt-4 rounded-2xl border border-dashed bg-muted/20 p-4 text-sm">
+              <p className="font-medium">{semesterLabel} 개강 전입니다.</p>
+              <p className="mt-1 text-[12px] text-muted-foreground">
+                등록된 수강과목 {allParsedOfferings.length}건은 개강일
+                {earliestStart ? ` (${earliestStart})` : ""}부터 시간표에 표시됩니다.
+              </p>
+            </div>
           ) : parsedOfferings.length === 0 ? (
             <div className="mt-4 rounded-2xl border border-dashed bg-muted/20 p-4 text-sm">
               <p className="font-medium">

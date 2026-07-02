@@ -30,6 +30,11 @@ function fmtYmd(y: number, m0: number, d: number): string {
 interface MonthlyGridProps {
   /** 수업이 있는 요일 집합 (0=일 ~ 6=토) — parsedOfferings.parsed.weekdays 플랫 */
   classWeekdays: number[];
+  /**
+   * 수업 기간 목록 (선택) — 제공되면 요일+날짜가 개강~종강 기간 안일 때만 마커 표시.
+   * (방학 달에 수업 점이 계속 찍히던 문제의 기간 인지 버전)
+   */
+  classPeriods?: { weekdays: number[]; start: string; end: string }[];
   /** 세미나 날짜(YYYY-MM-DD) → 세미나 항목(제목 + 온/오프 모드) 배열 */
   seminarsByDate: Map<string, MonthSeminar[]>;
   /** 오늘 YYYY-MM-DD */
@@ -40,6 +45,7 @@ interface MonthlyGridProps {
 
 export function MonthlyGrid({
   classWeekdays,
+  classPeriods,
   seminarsByDate,
   todayYmd,
   onPickDate,
@@ -136,7 +142,13 @@ export function MonthlyGrid({
       {/* 날짜 그리드 — flex-1 로 남은 높이를 채워 주간 뷰와 바닥 라인 정렬 */}
       <div className="mt-1 grid flex-1 grid-cols-7 gap-1">
         {cells.map((c) => {
-          const hasClass = c.inMonth && classWd.has(c.wd);
+          const hasClass =
+            c.inMonth &&
+            (classPeriods
+              ? classPeriods.some(
+                  (pd) => pd.weekdays.includes(c.wd) && c.ymd >= pd.start && c.ymd <= pd.end,
+                )
+              : classWd.has(c.wd));
           const seminars = seminarsByDate.get(c.ymd);
           const hasSeminar = !!seminars && seminars.length > 0;
           const isToday = c.ymd === todayYmd;
