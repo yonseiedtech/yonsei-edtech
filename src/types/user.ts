@@ -410,6 +410,10 @@ export interface User { [key: string]: unknown;
    * 미설정 시 getEffectiveSemesterCount() 기반 자동 추정 (휴학·수료생 대응).
    */
   thesisJourneyStage?: number;
+  /**
+   * 방학 주간 연구 목표 시간 (방학 모드 v2 게이지). 미설정 시 게이지 대신 목표 설정 유도.
+   */
+  vacationWeeklyGoalHours?: number;
   createdAt: string;
   updatedAt: string;
 }

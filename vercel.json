@@ -79,6 +79,10 @@
     {
       "path": "/api/cron/networking-reminder",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/semester-start-reminder",
+      "schedule": "0 0 * * *"
     }
   ]
 }

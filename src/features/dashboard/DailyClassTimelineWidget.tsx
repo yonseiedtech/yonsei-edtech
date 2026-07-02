@@ -37,6 +37,7 @@ import {
 import { inferCurrentSemester } from "@/lib/semester";
 import { parseSchedule, fmtTimeRange } from "@/lib/courseSchedule";
 import { resolveOfferingPeriod, isDateInPeriod } from "@/lib/semesterWeeks";
+import VacationModeCard from "@/features/dashboard/VacationModeCard";
 import { cn } from "@/lib/utils";
 import { DailyGrid } from "./timeline/DailyGrid";
 import { WeeklyGrid } from "./timeline/WeeklyGrid";
@@ -1006,27 +1007,7 @@ export default function DailyClassTimelineWidget() {
         todayOfferings.length === 0 &&
         placedDailyActivities.length === 0 ? (
           isVacation ? (
-            <div className="mt-4 rounded-2xl border border-dashed bg-muted/20 p-4 text-sm">
-              <p className="font-medium">{semesterLabel} 수업이 모두 종강했습니다.</p>
-              <p className="mt-1 text-[12px] text-muted-foreground">
-                방학 중에는 시간표가 표시되지 않습니다. 과목별 개강·종강일은 운영진이
-                수강과목 관리에서 설정할 수 있습니다.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Link
-                  href="/mypage/research?tab=timer"
-                  className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-[12px] font-medium text-white hover:bg-primary/90"
-                >
-                  방학 연구 타이머 시작
-                </Link>
-                <Link
-                  href="/flashcards"
-                  className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-[12px] font-medium hover:bg-muted"
-                >
-                  암기카드 복습
-                </Link>
-              </div>
-            </div>
+            <VacationModeCard semesterLabel={semesterLabel} term={term} year={year} />
           ) : parsedOfferings.length === 0 ? (
             <div className="mt-4 rounded-2xl border border-dashed bg-muted/20 p-4 text-sm">
               <p className="font-medium">
