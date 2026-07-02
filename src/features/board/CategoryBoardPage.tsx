@@ -30,7 +30,7 @@ export default function CategoryBoardPage({ category, title, description, icon, 
   const canWrite = user && (!minWriteRole || isAtLeast(user, minWriteRole));
 
   return (
-    <div className="py-12 sm:py-16">
+    <div className="py-6 sm:py-10">
       <div className="mx-auto max-w-4xl px-4">
 
         {/* ── 페이지 헤더 (steppingstone 패턴) ── */}

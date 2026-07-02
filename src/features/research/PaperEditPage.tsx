@@ -12,6 +12,7 @@ import {
   useResearchPaper,
   useUpdateResearchPaper,
 } from "./useResearchPapers";
+import PageContainer from "@/components/ui/page-container";
 import VariablesInput from "./VariablesInput";
 import TagInput from "./TagInput";
 import type {
@@ -170,7 +171,7 @@ export default function PaperEditPage({ paperId }: PaperEditPageProps) {
   // 에러·미존재를 로딩보다 먼저 판정 — 타인/삭제 논문 접근 시 무한 스피너 방지
   if (!isLoading && (error || !paper)) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-12 text-center">
+      <PageContainer width="narrow" className="text-center">
         <AlertCircle size={20} className="mx-auto text-destructive" />
         <p className="mt-2 text-sm text-destructive">
           논문을 찾을 수 없거나 접근 권한이 없습니다.
@@ -181,22 +182,22 @@ export default function PaperEditPage({ paperId }: PaperEditPageProps) {
         >
           <ChevronLeft size={14} /> 분석 노트로
         </Link>
-      </div>
+      </PageContainer>
     );
   }
 
   if (isLoading || !form) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-12 text-center">
+      <PageContainer width="narrow" className="text-center">
         <Loader2 size={20} className="mx-auto animate-spin text-muted-foreground" />
         <p className="mt-2 text-sm text-muted-foreground">논문 정보를 불러오는 중…</p>
-      </div>
+      </PageContainer>
     );
   }
 
   if (error || !paper) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-12 text-center">
+      <PageContainer width="narrow" className="text-center">
         <AlertCircle size={20} className="mx-auto text-destructive" />
         <p className="mt-2 text-sm text-destructive">
           논문을 찾을 수 없습니다.
@@ -207,12 +208,12 @@ export default function PaperEditPage({ paperId }: PaperEditPageProps) {
         >
           <ChevronLeft size={14} /> 분석 노트로
         </Link>
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6">
+    <PageContainer width="narrow">
       {/* 상단 — 뒤로가기 + 저장 상태 */}
       <div className="mb-4 flex items-center justify-between gap-2">
         <Link
@@ -405,7 +406,7 @@ export default function PaperEditPage({ paperId }: PaperEditPageProps) {
           지금 저장
         </Button>
       </div>
-    </div>
+    </PageContainer>
   );
 }
 

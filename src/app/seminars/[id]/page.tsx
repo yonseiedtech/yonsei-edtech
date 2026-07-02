@@ -462,7 +462,7 @@ function SeminarDetail({ id }: { id: string }) {
   return (
     <>
       <SeminarEventJsonLd seminar={seminar} />
-      <PageContainer width="wide">
+      <PageContainer width="default">
         <div className="mb-4 flex items-center justify-between sm:mb-6">
           <Link
             href="/seminars"

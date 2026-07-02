@@ -132,7 +132,7 @@ export default function ProgressMeetingPage({ params }: PageProps) {
   if (isLoading || !meeting) {
     return (
       <div className="py-16">
-        <div className="mx-auto max-w-3xl px-4">
+        <div className="mx-auto max-w-4xl px-4">
           <div className="h-72 animate-pulse rounded-xl bg-muted" />
         </div>
       </div>
@@ -258,7 +258,7 @@ export default function ProgressMeetingPage({ params }: PageProps) {
 
   return (
     <div className="py-10">
-      <div className="mx-auto max-w-3xl px-4">
+      <div className="mx-auto max-w-4xl px-4">
         <BackButton href={backHref} label="활동으로 돌아가기" className="mb-4" />
 
         {/* 헤더 */}

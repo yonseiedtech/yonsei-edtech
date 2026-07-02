@@ -259,7 +259,7 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
   const hasPeriod = !!(periodStart || periodEnd);
 
   return (
-    <div className="py-12">
+    <div className="py-6 sm:py-10">
       <div className="mx-auto max-w-6xl px-4">
         <div className="print-hide">
           <PageHeader

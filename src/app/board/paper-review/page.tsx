@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { BookOpenCheck, ArrowRight, BookMarked } from "lucide-react";
 import CategoryBoardPage from "@/features/board/CategoryBoardPage";
-import PageContainer from "@/components/ui/page-container";
 
 export default function PaperReviewBoardPage() {
   return (
-    <PageContainer width="narrow">
-      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+      {/* 배너 — 게시판 본문과 동일 폭 정렬 */}
+      <div className="mx-auto max-w-4xl px-4 pt-6 sm:pt-10">
       {/* ── 논문 읽기 연동 안내 배너 ── */}
       <div>
         <Link
@@ -40,7 +40,9 @@ export default function PaperReviewBoardPage() {
         </Link>
       </div>
 
-      {/* ── 메인 게시판 ── */}
+      </div>
+
+      {/* ── 메인 게시판 (자체 표준 컨테이너) ── */}
       <CategoryBoardPage
         category="paper_review"
         title="교육공학 논문 리뷰"
@@ -53,7 +55,6 @@ export default function PaperReviewBoardPage() {
           />
         }
       />
-      </div>
-    </PageContainer>
+    </div>
   );
 }
