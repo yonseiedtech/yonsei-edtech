@@ -106,21 +106,29 @@ export default function StudioEditor({ docId }: { docId: string }) {
     });
   }, []);
 
+  const [saveError, setSaveError] = useState<string | null>(null);
   const save = useCallback(async (silent = true) => {
     const cur = docRef.current;
     if (!cur || !dirtyRef.current) return;
+    const approxSize = JSON.stringify(cur.pages).length;
+    if (approxSize > 980_000) {
+      // Firestore 문서 한도(1MiB) — 시도 자체를 막고 지속 배너로 알림 (침묵 실패 방지)
+      setSaveError("문서 용량이 1MB 한도를 초과해 저장할 수 없습니다. 삽입 이미지를 삭제하거나 페이지를 나눠주세요.");
+      return;
+    }
     setSaving(true);
+    // 레이스 방지: await 전에 dirty 를 내리고, 실패 시 복구.
+    // await 중 새 편집이 오면 mutate 가 다시 true 로 올리므로 유실되지 않는다.
+    dirtyRef.current = false;
     try {
       const now = new Date().toISOString();
-      const approxSize = JSON.stringify(cur.pages).length;
-      if (approxSize > 900_000) {
-        toast.error("문서 용량이 한도(1MB)에 근접했습니다. 삽입 이미지를 줄이거나 페이지를 나눠주세요.");
-      }
       await designDocsApi.update(cur.id, { pages: cur.pages, title: cur.title, lastSavedAt: now, updatedAt: now });
-      dirtyRef.current = false;
       setSavedAt(now);
+      setSaveError(null);
       if (!silent) toast.success("저장되었습니다.");
     } catch {
+      dirtyRef.current = true;
+      setSaveError("저장에 실패했습니다. 네트워크를 확인하세요 — 편집 내용은 브라우저에 남아 있습니다.");
       if (!silent) toast.error("저장에 실패했습니다.");
     } finally {
       setSaving(false);
@@ -130,7 +138,16 @@ export default function StudioEditor({ docId }: { docId: string }) {
   useEffect(() => {
     if (readOnly) return;
     const t = setInterval(() => void save(true), 3000);
-    return () => clearInterval(t);
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (dirtyRef.current) e.preventDefault();
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      // SPA 내 이동 시 마지막 편집 flush (3초 미만 편집 유실 방지)
+      void save(true);
+    };
   }, [save, readOnly]);
 
   const page: DesignPage | undefined = doc?.pages[pageIdx];
@@ -157,6 +174,11 @@ export default function StudioEditor({ docId }: { docId: string }) {
 
   function removeSelected() {
     if (!selectedId) return;
+    const el = page?.elements.find((e) => e.id === selectedId);
+    if (el?.locked) {
+      toast.info("잠긴 요소입니다. 잠금을 해제한 뒤 삭제하세요.");
+      return;
+    }
     patchPage((p) => ({ ...p, elements: p.elements.filter((e) => e.id !== selectedId) }));
     setSelectedId(null);
   }
@@ -179,7 +201,7 @@ export default function StudioEditor({ docId }: { docId: string }) {
     function onKey(e: KeyboardEvent) {
       if (e.key !== "Delete" && e.key !== "Backspace") return;
       const t = e.target as HTMLElement;
-      if (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable) return;
+      if (t.closest("input, textarea, select, [contenteditable=true]")) return;
       if (selectedId) {
         e.preventDefault();
         removeSelected();
@@ -215,25 +237,30 @@ export default function StudioEditor({ docId }: { docId: string }) {
     dragRef.current = null;
     window.removeEventListener("pointermove", onPointerMove);
     window.removeEventListener("pointerup", onPointerUp);
+    window.removeEventListener("pointercancel", onPointerUp);
   }, [onPointerMove]);
 
   function startMove(e: React.PointerEvent, el: DesignElement) {
-    if (readOnly || el.locked) return;
+    if (readOnly) return;
     e.preventDefault();
     e.stopPropagation();
     setSelectedId(el.id);
+    // 잠금: 선택·패널 편집(잠금 해제 포함)은 허용, 드래그 이동만 차단
+    if (el.locked) return;
     dragRef.current = { mode: "move", elId: el.id, startX: e.clientX, startY: e.clientY, origX: el.x, origY: el.y };
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
   }
 
   function startResize(e: React.PointerEvent, el: DesignElement, corner: "nw" | "ne" | "sw" | "se") {
-    if (readOnly) return;
+    if (readOnly || el.locked) return;
     e.preventDefault();
     e.stopPropagation();
     dragRef.current = { mode: "resize", elId: el.id, corner, startX: e.clientX, startY: e.clientY, orig: { x: el.x, y: el.y, w: el.w, h: el.h } };
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
   }
 
   // ── 이미지 업로드 ──
@@ -322,9 +349,15 @@ export default function StudioEditor({ docId }: { docId: string }) {
           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">연계: {doc.linked.title}</span>
         )}
         <div className="ml-auto flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">
-            {saving ? "저장 중…" : savedAt ? `자동 저장됨 ${new Date(savedAt).toLocaleTimeString("ko-KR")}` : ""}
-          </span>
+          {saveError ? (
+            <span className="rounded-md bg-destructive/10 px-2 py-1 text-xs font-semibold text-destructive">
+              ⚠ {saveError}
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground">
+              {saving ? "저장 중…" : savedAt ? `자동 저장됨 ${new Date(savedAt).toLocaleTimeString("ko-KR")}` : ""}
+            </span>
+          )}
           {!readOnly && (
             <Button size="sm" variant="outline" onClick={() => void save(false)}>
               <Save size={14} className="mr-1" />저장
@@ -482,6 +515,7 @@ export default function StudioEditor({ docId }: { docId: string }) {
                       width: el.w,
                       height: el.h,
                       cursor: el.locked ? "default" : "move",
+                      touchAction: "none",
                       outline: isSel ? `${Math.max(2, 2 / scale)}px solid #0a4da3` : undefined,
                       outlineOffset: 2,
                     }}
@@ -622,7 +656,12 @@ export default function StudioEditor({ docId }: { docId: string }) {
                 {(["x", "y", "w", "h"] as const).map((k) => (
                   <label key={k} className="text-[11px] uppercase text-muted-foreground">{k}
                     <Input type="number" className="mt-0.5 h-8 px-1.5" value={Math.round(selected[k])}
-                      onChange={(e) => patchElement(selected.id, { [k]: Number(e.target.value) || 0 } as Partial<DesignElement>)} />
+                      disabled={selected.locked}
+                      onChange={(e) => {
+                        const v = Number(e.target.value) || 0;
+                        // w/h 최소 20px — 0 크기로 요소가 사라지는 사고 방지
+                        patchElement(selected.id, { [k]: k === "w" || k === "h" ? Math.max(20, v) : v } as Partial<DesignElement>);
+                      }} />
                   </label>
                 ))}
               </div>
