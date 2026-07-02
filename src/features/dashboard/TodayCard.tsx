@@ -18,7 +18,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Sunrise, Layers, PenLine, ClipboardList, PartyPopper, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatDday } from "@/lib/dday";
+import { formatDday, isoToKstYmd } from "@/lib/dday";
 import { useAuthStore } from "@/features/auth/auth-store";
 import {
   flashcardsApi,
@@ -99,12 +99,17 @@ export default function TodayCard() {
     const latest = [...writingHistory].sort((a, b) =>
       (b.savedAt ?? b.createdAt ?? "").localeCompare(a.savedAt ?? a.createdAt ?? ""),
     )[0];
-    if (latest?.lastChapter) {
+    // 신선도 창(48시간) — 오래된 이력이 히어로 슬롯을 영구 점유하지 않도록
+    const fresh =
+      latest &&
+      Date.now() - new Date(latest.savedAt ?? latest.createdAt ?? 0).getTime() < 48 * 60 * 60 * 1000;
+    if (latest?.lastChapter && fresh) {
       list.push({
         key: "writing",
         icon: PenLine,
         href: "/mypage/research?tab=writing",
-        text: `이어쓰기 — ${FEEDBACK_CHAPTER_LABELS[latest.lastChapter]}`,
+        // proposal/report 이력의 비표준 lastChapter 라벨 폴백 ("undefined" 노출 방지)
+        text: `이어쓰기 — ${FEEDBACK_CHAPTER_LABELS[latest.lastChapter] ?? "논문 초안"}`,
         accent: "text-violet-700 dark:text-violet-300",
       });
     }
@@ -130,7 +135,7 @@ export default function TodayCard() {
       .filter((e) => attendingIds.has(e.id) && (e.startAt ?? "") >= nowIso && e.status !== "cancelled")
       .sort((a, b) => a.startAt.localeCompare(b.startAt))[0];
     if (nextEvent) {
-      const dday = formatDday(nextEvent.startAt.slice(0, 10));
+      const dday = formatDday(isoToKstYmd(nextEvent.startAt));
       if (dday && dday.diffDays >= 0 && dday.diffDays <= 7) {
         list.push({
           key: "gathering",

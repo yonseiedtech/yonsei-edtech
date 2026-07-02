@@ -144,6 +144,29 @@ export default function ActivityWeekDetailPage({
     }
   }, [week]);
 
+  // UX polish: 키보드 ← → 로 회차 이동 (편집 중에는 비활성)
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      // 폼 입력 중에는 무시
+      const t = e.target as HTMLElement | null;
+      if (
+        t && (
+          t.tagName === "INPUT" ||
+          t.tagName === "TEXTAREA" ||
+          t.tagName === "SELECT" ||
+          t.isContentEditable
+        )
+      ) return;
+      if (e.key === "ArrowLeft" && prevWeek) {
+        window.location.href = `${weeksHref}/${prevWeek}`;
+      } else if (e.key === "ArrowRight" && nextWeek) {
+        window.location.href = `${weeksHref}/${nextWeek}`;
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [prevWeek, nextWeek, weeksHref]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20 text-sm text-muted-foreground">
@@ -255,29 +278,6 @@ export default function ActivityWeekDetailPage({
 
   const attendedSet = new Set((week?.attendedUserIds as string[] | undefined) ?? []);
   const materials = (week?.materials as ActivityProgress["materials"]) ?? [];
-
-  // UX polish: 키보드 ← → 로 회차 이동 (편집 중에는 비활성)
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      // 폼 입력 중에는 무시
-      const t = e.target as HTMLElement | null;
-      if (
-        t && (
-          t.tagName === "INPUT" ||
-          t.tagName === "TEXTAREA" ||
-          t.tagName === "SELECT" ||
-          t.isContentEditable
-        )
-      ) return;
-      if (e.key === "ArrowLeft" && prevWeek) {
-        window.location.href = `${weeksHref}/${prevWeek}`;
-      } else if (e.key === "ArrowRight" && nextWeek) {
-        window.location.href = `${weeksHref}/${nextWeek}`;
-      }
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [prevWeek, nextWeek, weeksHref]);
 
   return (
     <div className="mx-auto max-w-4xl space-y-4 px-4 py-6">

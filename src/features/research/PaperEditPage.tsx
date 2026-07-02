@@ -118,18 +118,25 @@ export default function PaperEditPage({ paperId }: PaperEditPageProps) {
   }, [paper, form]);
 
   // 자동 저장 (debounce 1.5s)
+  // 레이스 방지: 저장한 스냅샷을 기억해, 저장 도중 추가 입력이 있었으면 dirty 를 유지한다
+  const savedSnapshotRef = useRef<FormState | null>(null);
+  const formRef = useRef<FormState | null>(null);
+  formRef.current = form;
   useEffect(() => {
     if (!dirty || !form) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
       setSaving(true);
+      const snapshot = form;
+      savedSnapshotRef.current = snapshot;
       try {
         await updateMut.mutateAsync({
           id: paperId,
-          data: formToPayload(form),
+          data: formToPayload(snapshot),
         });
         setLastSavedAt(new Date());
-        setDirty(false);
+        // 저장 중 새 입력이 없었을 때만 dirty 해제 — 최신 입력 유실·이탈경고 누락 방지
+        if (formRef.current === snapshot) setDirty(false);
       } catch (err) {
         toast.error(
           err instanceof Error ? err.message : "저장에 실패했습니다.",
@@ -158,6 +165,24 @@ export default function PaperEditPage({ paperId }: PaperEditPageProps) {
   function patch<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => (prev ? { ...prev, [key]: value } : prev));
     setDirty(true);
+  }
+
+  // 에러·미존재를 로딩보다 먼저 판정 — 타인/삭제 논문 접근 시 무한 스피너 방지
+  if (!isLoading && (error || !paper)) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-12 text-center">
+        <AlertCircle size={20} className="mx-auto text-destructive" />
+        <p className="mt-2 text-sm text-destructive">
+          논문을 찾을 수 없거나 접근 권한이 없습니다.
+        </p>
+        <Link
+          href="/mypage/research"
+          className="mt-4 inline-flex items-center gap-1 text-sm text-primary hover:underline"
+        >
+          <ChevronLeft size={14} /> 분석 노트로
+        </Link>
+      </div>
+    );
   }
 
   if (isLoading || !form) {

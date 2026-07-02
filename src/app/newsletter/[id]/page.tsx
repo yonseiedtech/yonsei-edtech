@@ -10,6 +10,8 @@ import {
   AUTHOR_TYPE_STYLES,
 } from "@/features/newsletter/newsletter-store";
 import type { NewsletterIssue } from "@/features/newsletter/newsletter-store";
+import { useAuthStore } from "@/features/auth/auth-store";
+import { isAtLeast } from "@/lib/permissions";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, BookOpen, Download, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -41,7 +43,11 @@ export default function NewsletterDetailPage({
 }) {
   const { id } = use(params);
   const { issues, isLoading } = useNewsletters();
-  const issue = issues.find((i) => i.id === id);
+  const { user } = useAuthStore();
+  const isStaff = isAtLeast(user, "staff");
+  const found = issues.find((i) => i.id === id);
+  // draft 게이트: 미발행 호는 운영진(미리보기)만 — URL 직접 접근 노출 차단
+  const issue = found && (found.status === "published" || isStaff) ? found : undefined;
   const [pdfBusy, setPdfBusy] = useState(false);
 
   if (isLoading) {

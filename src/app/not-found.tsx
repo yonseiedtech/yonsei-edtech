@@ -78,7 +78,7 @@ export default function NotFound() {
         <p className="mt-6 text-center text-xs text-muted-foreground">
           문제가 계속된다면{" "}
           <Link
-            href="/about/contact"
+            href="/contact"
             className="inline-flex items-center gap-0.5 underline underline-offset-2 hover:text-foreground focus-visible:rounded focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Mail size={11} aria-hidden />

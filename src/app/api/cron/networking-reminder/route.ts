@@ -52,7 +52,10 @@ export async function GET(req: NextRequest) {
         .filter((r) => r.userId);
 
       // ── 1) 행사 D-1 / 당일 → attending 회원 ────────────────────────────
-      const eventDate = ev.startAt ? ev.startAt.slice(0, 10) : "";
+      // UTC ISO → KST 날짜 (slice 는 오전 행사에 하루 오차)
+      const eventDate = ev.startAt
+        ? new Date(new Date(ev.startAt).getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10)
+        : "";
       let daysLeft: number | null = null;
       if (eventDate === today) daysLeft = 0;
       else if (eventDate === tomorrow) daysLeft = 1;
@@ -103,7 +106,9 @@ export async function GET(req: NextRequest) {
       }
 
       // ── 2) RSVP 마감 D-1 → undecided 회원 응답 독려 ─────────────────────
-      const deadlineDate = ev.rsvpDeadline ? ev.rsvpDeadline.slice(0, 10) : "";
+      const deadlineDate = ev.rsvpDeadline
+        ? new Date(new Date(ev.rsvpDeadline).getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10)
+        : "";
       if (deadlineDate === tomorrow) {
         const targets = rsvps.filter((r) => r.status === "undecided").map((r) => r.userId as string);
         notifCount += await notifyOnce(db, {

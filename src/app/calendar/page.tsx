@@ -12,6 +12,7 @@ import {
   networkingEventsApi,
 } from "@/lib/bkend";
 import { getComputedStatus } from "@/lib/seminar-utils";
+import { isoToKstYmd, isoToKstHm } from "@/lib/dday";
 import type { Seminar, Activity, CourseOffering, ClassSession, NetworkingEvent } from "@/types";
 import { cn, safeYmd } from "@/lib/utils";
 import {
@@ -249,8 +250,13 @@ export default function CalendarPage() {
   // 카테고리 설정 영속화
   useEffect(() => {
     try {
+      const MIGRATION_FLAG = "calendar.cats.networkingMigrated";
       const saved = localStorage.getItem(CAT_STORAGE_KEY);
-      if (!saved) return;
+      if (!saved) {
+        // 저장 설정이 없어도 마이그레이션은 완료 처리 — 이후 사용자가 끈 설정을 존중
+        localStorage.setItem(MIGRATION_FLAG, "1");
+        return;
+      }
       const parsed = JSON.parse(saved) as string[];
       if (Array.isArray(parsed)) {
         const valid = parsed.filter((v): v is CalendarEvent["type"] =>
@@ -259,7 +265,6 @@ export default function CalendarPage() {
         const set = new Set(valid);
         // 1회성 마이그레이션: networking 카테고리 도입(Phase 2) 이전 저장분에는
         // 새 카테고리가 없으므로 최초 1회만 기본 ON 보충. 이후 사용자가 끄면 존중.
-        const MIGRATION_FLAG = "calendar.cats.networkingMigrated";
         if (!localStorage.getItem(MIGRATION_FLAG)) {
           set.add("networking");
           localStorage.setItem(MIGRATION_FLAG, "1");
@@ -461,9 +466,10 @@ export default function CalendarPage() {
       result.push({
         id: `networking-${n.id}`,
         title: n.title,
-        date: safeYmd(n.startAt),
-        endDate: n.endAt ? safeYmd(n.endAt) : undefined,
-        time: n.startAt.length >= 16 ? n.startAt.slice(11, 16) : undefined,
+        // startAt 은 UTC ISO — KST 변환 없이 slice 하면 저녁 행사가 오전/전날로 표시됨
+        date: isoToKstYmd(n.startAt),
+        endDate: n.endAt ? isoToKstYmd(n.endAt) : undefined,
+        time: n.startAt.length >= 16 ? isoToKstHm(n.startAt) : undefined,
         location: n.location,
         type: "networking",
         status: n.status,

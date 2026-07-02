@@ -26,8 +26,8 @@ function ReceivedCardInner() {
   const { data: owner, isLoading } = useQuery({
     queryKey: ["user-card", ownerId],
     queryFn: async () => {
-      const res = await profilesApi.get(ownerId);
-      return res.data as unknown as User;
+      // profilesApi.get 은 User 를 직접 반환 (res.data 아님) — QR 명함 전면 파손 수정
+      return (await profilesApi.get(ownerId)) as unknown as User;
     },
     enabled: !!ownerId,
   });

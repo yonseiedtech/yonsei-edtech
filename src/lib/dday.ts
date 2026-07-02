@@ -119,6 +119,20 @@ function pad2(n: number): string {
 }
 
 /** KST 기준 어제 날짜(YYYY-MM-DD). 서버사이드(UTC)에서도 정확. */
+/** ISO(UTC) 문자열 → KST 날짜 YYYY-MM-DD. slice(0,10) 대체 — UTC/KST 하루 오차 방지. */
+export function isoToKstYmd(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso.slice(0, 10);
+  return new Date(d.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+/** ISO(UTC) 문자열 → KST 시각 HH:MM. slice(11,16) 대체. */
+export function isoToKstHm(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return new Date(d.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(11, 16);
+}
+
 export function yesterdayYmdKst(now: Date = new Date()): string {
   const [y, m, d] = todayYmdKst(now).split("-").map(Number);
   const prev = new Date(Date.UTC(y, m - 1, d));

@@ -16,7 +16,15 @@ export default function NoticeDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const { post } = usePost(id);
+  const { post, isLoading } = usePost(id);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <p className="text-sm text-muted-foreground">공지를 불러오는 중…</p>
+      </div>
+    );
+  }
 
   if (!post) {
     return (

@@ -151,7 +151,7 @@ export default function HeroSection() {
             {/* Apple 패턴: 2단 CTA — 주(가입) + 보조(학회 소개 텍스트 링크) */}
             <div className="mt-8 flex flex-wrap items-center gap-4 sm:gap-5">
               <MagneticLink
-                href="/auth/signup"
+                href="/signup"
                 className="inline-flex items-center gap-2 rounded-full bg-primary px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary/90"
               >
                 회원 가입하기

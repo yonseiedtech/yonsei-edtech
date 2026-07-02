@@ -23,11 +23,15 @@ async function fetchIssue(id: string): Promise<{
       snap = await db.collection("newsletters").doc(id).get();
     }
     if (!snap.exists) return null;
-    return snap.data() as {
+    const data = snap.data() as {
       title?: string;
       subtitle?: string;
       thumbnailUrl?: string;
+      status?: string;
     };
+    // draft 호의 제목·부제가 공개 OG 메타로 유출되지 않도록 발행본만 반환
+    if (data.status !== "published") return null;
+    return data;
   } catch {
     return null;
   }

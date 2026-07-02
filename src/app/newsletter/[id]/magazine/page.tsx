@@ -9,6 +9,8 @@ import {
   SECTION_TYPE_STYLES,
   AUTHOR_TYPE_STYLES,
 } from "@/features/newsletter/newsletter-store";
+import { useAuthStore } from "@/features/auth/auth-store";
+import { isAtLeast } from "@/lib/permissions";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ChevronLeft, ChevronRight, Download, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -21,7 +23,11 @@ export default function NewsletterMagazinePage({
 }) {
   const { id } = use(params);
   const { issues, isLoading } = useNewsletters();
-  const issue = issues.find((i) => i.id === id);
+  const { user } = useAuthStore();
+  const isStaff = isAtLeast(user, "staff");
+  const found = issues.find((i) => i.id === id);
+  // draft 게이트: 미발행 호는 운영진(미리보기)만
+  const issue = found && (found.status === "published" || isStaff) ? found : undefined;
 
   const sortedSections = useMemo(
     () => (issue ? [...issue.sections].sort((a, b) => a.order - b.order) : []),

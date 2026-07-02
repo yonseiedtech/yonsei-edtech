@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Loader2 } from "lucide-react";
+import AuthGuard from "@/features/auth/AuthGuard";
 
 // PaperEditPage는 client-only 큰 컴포넌트라 dynamic + ssr:false (Vercel SSG 호환)
 const PaperEditPage = dynamic(
@@ -21,5 +22,9 @@ const PaperEditPage = dynamic(
 export default function Page() {
   const params = useParams<{ id: string }>();
   if (!params?.id) return null;
-  return <PaperEditPage paperId={params.id} />;
+  return (
+    <AuthGuard>
+      <PaperEditPage paperId={params.id} />
+    </AuthGuard>
+  );
 }

@@ -217,6 +217,7 @@ export default function ChaptersBoard({
       <div className="space-y-4">
         {selected ? (
           <ChapterEditor
+            key={selected.id}
             chapter={selected}
             researchId={researchId}
             currentUserId={currentUserId}
@@ -255,11 +256,6 @@ function ChapterEditor({
   const [versionAtLoad, setVersionAtLoad] = useState(chapter.version);
   const updateMut = useUpdateChapter(researchId, chapter.id);
   const deleteMut = useDeleteChapter(researchId);
-
-  // chapter prop 변경 시 (다른 챕터 선택) 폼 재초기화
-  if (chapter.id !== (versionAtLoad as unknown as string).toString().slice(0, 0) /* always false */) {
-    // noop — useState로 충분하지만 시각적 단순화
-  }
 
   const save = async () => {
     try {
