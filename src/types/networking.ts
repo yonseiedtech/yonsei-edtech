@@ -80,6 +80,11 @@ export interface NetworkingRsvp {
   /** 명단 표시용 denorm (회원명 또는 게스트명) */
   displayName: string;
   status: RsvpStatus;
+  /**
+   * 참석자 명단 공개 동의 (Phase 2-D, 옵트인 — 기본 false).
+   * true 인 회원만 행사 참석자끼리 보이는 명단(프로필·쪽지 팔로업)에 노출.
+   */
+  showInAttendeeList?: boolean;
   /** 동반인 수 (본인 제외) */
   companions?: number;
   memo?: string;
@@ -170,3 +175,22 @@ export const NETWORKING_DECISION_LABELS: Record<"manual" | "auto", string> = {
   manual: "운영진이 직접 지정",
   auto: "응답 종합 후 최다 가능일",
 };
+
+/**
+ * 모임·행사 후기 (Phase 2-D) — Firestore `networking_reviews`.
+ * attending RSVP 회원이 지난 행사에 별점+한줄 후기를 남긴다 (행사당 1인 1건).
+ * 세미나 후기와 달리 가벼운 분위기 피드백 — 다음 행사 기획의 환류 데이터.
+ */
+export interface NetworkingReview {
+  id: string;
+  eventId: string;
+  userId: string;
+  /** 표시용 denorm 회원명 */
+  displayName: string;
+  /** 별점 1~5 */
+  rating: number;
+  /** 한줄 후기 (선택) */
+  content?: string;
+  createdAt: string;
+  updatedAt: string;
+}

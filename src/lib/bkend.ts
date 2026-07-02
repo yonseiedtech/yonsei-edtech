@@ -113,6 +113,7 @@ import type {
   CommLikeTarget,
   NetworkingEvent,
   NetworkingRsvp,
+  NetworkingReview,
   NetworkingDue,
   NetworkingAvailability,
   NetworkingEventProgram,
@@ -525,6 +526,18 @@ export const networkingDuesApi = {
   update: (id: string, data: Partial<NetworkingDue>) =>
     dataApi.update<NetworkingDue>("networking_dues", id, data as unknown as Record<string, unknown>),
   remove: (id: string) => dataApi.delete("networking_dues", id),
+};
+
+export const networkingReviewsApi = {
+  listByEvent: (eventId: string) =>
+    dataApi.list<NetworkingReview>("networking_reviews", { "filter[eventId]": eventId, limit: 300 }),
+  listByUser: (userId: string) =>
+    dataApi.list<NetworkingReview>("networking_reviews", { "filter[userId]": userId, limit: 200 }),
+  create: (data: Omit<NetworkingReview, "id">) =>
+    dataApi.create<NetworkingReview>("networking_reviews", data as unknown as Record<string, unknown>),
+  update: (id: string, data: Partial<NetworkingReview>) =>
+    dataApi.update<NetworkingReview>("networking_reviews", id, data as unknown as Record<string, unknown>),
+  remove: (id: string) => dataApi.delete("networking_reviews", id),
 };
 
 // ── 일정 조율(poll) 응답 · 세부 프로그램 (사이클 124) ──

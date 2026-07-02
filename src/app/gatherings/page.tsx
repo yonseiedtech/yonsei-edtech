@@ -10,8 +10,9 @@
  */
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, MapPin, Wallet, Users, Clock, Check, CalendarX2 } from "lucide-react";
+import { CalendarDays, MapPin, Wallet, Users, Clock, Check, CalendarX2, Camera } from "lucide-react";
 import { toast } from "sonner";
 import PageContainer from "@/components/ui/page-container";
 import PageHeader from "@/components/ui/page-header";
@@ -21,7 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { networkingEventsApi, networkingRsvpsApi, networkingDuesApi } from "@/lib/bkend";
+import { networkingEventsApi, networkingRsvpsApi, networkingDuesApi, albumsApi } from "@/lib/bkend";
 import {
   NETWORKING_EVENT_TYPE_LABELS,
   RSVP_STATUS_LABELS,
@@ -30,6 +31,7 @@ import {
   type NetworkingRsvp,
   type NetworkingDue,
   type RsvpStatus,
+  type PhotoAlbum,
 } from "@/types";
 import {
   EVENT_TYPE_COLORS,
@@ -40,6 +42,8 @@ import {
 } from "@/features/networking/networking-helpers";
 import NetworkingProgramManager from "@/features/networking/NetworkingProgramManager";
 import NetworkingPoll from "@/features/networking/NetworkingPoll";
+import AttendeeRoster from "@/features/networking/AttendeeRoster";
+import EventReviews from "@/features/networking/EventReviews";
 
 const RSVP_OPTIONS: RsvpStatus[] = ["attending", "not_attending", "undecided"];
 
@@ -65,6 +69,12 @@ export default function GatheringsPage() {
     enabled: !!user?.id,
     staleTime: 30_000,
   });
+  // Phase 2-D: 행사 연결 앨범 — "행사 사진 보기" 역링크용
+  const { data: albums = [] } = useQuery({
+    queryKey: ["albums-for-gatherings"],
+    queryFn: async () => (await albumsApi.list()).data as unknown as PhotoAlbum[],
+    staleTime: 5 * 60_000,
+  });
 
   const { upcoming, past } = useMemo(() => {
     // 미확정 투표(poll, startAt 없음)는 정렬 키를 비워 항상 다가오는 모임 상단으로
@@ -88,6 +98,13 @@ export default function GatheringsPage() {
     for (const d of myDues) m.set(d.eventId, d);
     return m;
   }, [myDues]);
+  const albumByEvent = useMemo(() => {
+    const m = new Map<string, PhotoAlbum>();
+    for (const a of albums) {
+      if (a.networkingEventId) m.set(a.networkingEventId, a);
+    }
+    return m;
+  }, [albums]);
 
   function refresh() {
     qc.invalidateQueries({ queryKey: ["networking-rsvps", user?.id] });
@@ -133,6 +150,7 @@ export default function GatheringsPage() {
                     isMember={!!user}
                     myRsvp={myRsvpByEvent.get(ev.id)}
                     myDue={myDueByEvent.get(ev.id)}
+                    album={albumByEvent.get(ev.id)}
                     onChanged={refresh}
                   />
                 ))}
@@ -152,6 +170,7 @@ export default function GatheringsPage() {
                     isMember={!!user}
                     myRsvp={myRsvpByEvent.get(ev.id)}
                     myDue={myDueByEvent.get(ev.id)}
+                    album={albumByEvent.get(ev.id)}
                     onChanged={refresh}
                     past
                   />
@@ -171,6 +190,7 @@ function EventCard({
   isMember,
   myRsvp,
   myDue,
+  album,
   onChanged,
   past,
 }: {
@@ -179,6 +199,7 @@ function EventCard({
   isMember: boolean;
   myRsvp?: NetworkingRsvp;
   myDue?: NetworkingDue;
+  album?: PhotoAlbum;
   onChanged: () => void;
   past?: boolean;
 }) {
@@ -295,6 +316,17 @@ function EventCard({
         <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-foreground/80">{ev.description}</p>
       )}
 
+      {/* 행사 사진 보기 (Phase 2-D — 연결된 앨범) */}
+      {album && (
+        <Link
+          href={`/gallery?album=${album.id}`}
+          className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-primary/25 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+        >
+          <Camera size={12} />
+          행사 사진 보기{album.photoCount > 0 ? ` (${album.photoCount}장)` : ""}
+        </Link>
+      )}
+
       {/* 내 회비 상태 */}
       {myDue && (
         <div className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-muted/50 px-2.5 py-1 text-xs">
@@ -364,6 +396,14 @@ function EventCard({
           )}
         </div>
       )}
+      {/* 참석자 명단 (Phase 2-D — 옵트인, 참석자끼리) — 지난 모임에서도 팔로업 가능 */}
+      {ev.status !== "cancelled" && !isPollPending && (
+        <AttendeeRoster eventId={ev.id} myRsvp={myRsvp} onChanged={onChanged} />
+      )}
+
+      {/* 행사 후기 (Phase 2-D) — 지난 행사만 */}
+      {past && ev.status !== "cancelled" && <EventReviews eventId={ev.id} myRsvp={myRsvp} />}
+
       {/* 세부 프로그램 (사이클 124 단계2 — 회원 읽기) */}
       <div className="mt-3">
         <NetworkingProgramManager eventId={ev.id} canEdit={false} />

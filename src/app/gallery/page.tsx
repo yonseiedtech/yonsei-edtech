@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { albumsApi, photosApi } from "@/lib/bkend";
+import { albumsApi, photosApi, networkingEventsApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
-import type { PhotoAlbum, Photo } from "@/types";
+import type { PhotoAlbum, Photo, NetworkingEvent } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,7 +30,7 @@ export default function GalleryPage() {
   const isStaff = isAtLeast(user, "staff");
   const [selectedAlbum, setSelectedAlbum] = useState<PhotoAlbum | null>(null);
   const [showCreateAlbum, setShowCreateAlbum] = useState(false);
-  const [albumForm, setAlbumForm] = useState({ title: "", description: "" });
+  const [albumForm, setAlbumForm] = useState({ title: "", description: "", networkingEventId: "" });
 
   const { data: albums = [], isLoading, error } = useQuery({
     queryKey: ["albums"],
@@ -42,12 +42,30 @@ export default function GalleryPage() {
     },
   });
 
+  // Phase 2-D: ?album=<id> 딥링크 — /gatherings "행사 사진 보기" 등에서 특정 앨범 바로 열기
+  useEffect(() => {
+    if (albums.length === 0 || selectedAlbum) return;
+    const albumId = new URLSearchParams(window.location.search).get("album");
+    if (!albumId) return;
+    const target = albums.find((a) => a.id === albumId);
+    if (target) setSelectedAlbum(target);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [albums]);
+
+  // 앨범 생성 시 연결할 모임·행사 후보 (staff 전용 다이얼로그 열릴 때만)
+  const { data: networkingEvents = [] } = useQuery({
+    queryKey: ["networking-events-for-album"],
+    queryFn: async () => (await networkingEventsApi.listPublished()).data as NetworkingEvent[],
+    enabled: showCreateAlbum && isStaff,
+    staleTime: 5 * 60_000,
+  });
+
   const createAlbum = useMutation({
     mutationFn: (data: Record<string, unknown>) => albumsApi.create(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["albums"] });
       setShowCreateAlbum(false);
-      setAlbumForm({ title: "", description: "" });
+      setAlbumForm({ title: "", description: "", networkingEventId: "" });
       toast.success("앨범이 생성되었습니다.");
     },
   });
@@ -65,6 +83,7 @@ export default function GalleryPage() {
     createAlbum.mutate({
       title: albumForm.title,
       description: albumForm.description,
+      ...(albumForm.networkingEventId ? { networkingEventId: albumForm.networkingEventId } : {}),
       photoCount: 0,
       createdBy: user!.id,
       createdAt: new Date().toISOString(),
@@ -172,6 +191,28 @@ export default function GalleryPage() {
                 placeholder="앨범에 대한 간단한 설명"
                 rows={3}
               />
+            </div>
+            <div>
+              <label htmlFor="album-event" className="text-sm font-semibold">
+                모임·행사 연결 <span className="font-normal text-muted-foreground">(선택)</span>
+              </label>
+              <select
+                id="album-event"
+                className="mt-1 h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                value={albumForm.networkingEventId}
+                onChange={(e) => setAlbumForm((f) => ({ ...f, networkingEventId: e.target.value }))}
+              >
+                <option value="">연결 안 함</option>
+                {networkingEvents.map((ev) => (
+                  <option key={ev.id} value={ev.id}>
+                    {ev.title}
+                    {ev.startAt ? ` (${ev.startAt.slice(0, 10)})` : ""}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                연결하면 모임·행사 카드에 &lsquo;행사 사진 보기&rsquo; 링크가 표시됩니다.
+              </p>
             </div>
           </div>
           <DialogFooter>

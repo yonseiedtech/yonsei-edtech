@@ -227,6 +227,13 @@ service cloud.firestore {
       allow update, delete: if isAuthenticated()
         && (resource.data.userId == request.auth.uid || isStaffOrAbove());
     }
+    // 행사 후기 (Phase 2-D): 로그인 회원 read, 본인 작성·수정, staff 정리 가능.
+    match /networking_reviews/{docId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
+    }
     // 행사 세부 프로그램: 전체 read, staff write.
     match /networking_event_programs/{docId} {
       allow read: if true;

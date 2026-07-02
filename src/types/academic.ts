@@ -376,6 +376,8 @@ export interface PhotoAlbum {
   description?: string;
   seminarId?: string;
   activityId?: string;
+  /** 모임·행사 연결 (Phase 2-D) — /gatherings 카드에서 "행사 사진 보기" 역링크 */
+  networkingEventId?: string;
   coverUrl?: string;
   photoCount: number;
   createdBy: string;

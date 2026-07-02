@@ -5,7 +5,7 @@
  * 받은/보낸 쪽지 + 새 쪽지(회원 검색) + 읽음·삭제.
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, MessageSquarePlus, Search, Trash2, Send, Inbox, SendHorizonal } from "lucide-react";
@@ -61,6 +61,28 @@ function MessagesInner({ user }: { user: User }) {
     enabled: composeOpen,
     staleTime: 5 * 60_000,
   });
+
+  // Phase 2-D: ?compose=<userId> 딥링크 — 모임 참석자 명단 등에서 바로 쪽지 작성.
+  // useSearchParams 대신 window 접근(마운트 1회) — 프리렌더 Suspense 제약 회피.
+  useEffect(() => {
+    const composeId = new URLSearchParams(window.location.search).get("compose");
+    if (!composeId || composeId === user.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const target = await profilesApi.get(composeId);
+        if (!cancelled && target) {
+          setRecipient(target as User);
+          setComposeOpen(true);
+        }
+      } catch {
+        // 대상 조회 실패 시 일반 쪽지함으로 동작
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user.id]);
 
   const received = receivedRes?.data ?? [];
   const sent = sentRes?.data ?? [];

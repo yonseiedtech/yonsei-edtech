@@ -22,9 +22,12 @@ export async function GET(req: NextRequest) {
     const today = kstNow.toISOString().split("T")[0];
     const tomorrow = addDays(kstNow, 1);
 
+    const yesterday = addDays(kstNow, -1);
+
+    // upcoming(리마인더) + closed/done(D+1 후기 요청) 모두 필요 — 상태 3종 조회
     const eventsSnap = await db
       .collection("networking_events")
-      .where("status", "==", "upcoming")
+      .where("status", "in", ["upcoming", "closed", "done"])
       .get();
 
     let notifCount = 0;
@@ -85,6 +88,18 @@ export async function GET(req: NextRequest) {
           }
           await batch.commit();
         }
+      }
+
+      // ── 3) 행사 D+1 → attending 회원 후기 요청 (Phase 2-D) ──────────────
+      if (eventDate === yesterday) {
+        const targets = rsvps.filter((r) => r.status === "attending").map((r) => r.userId as string);
+        notifCount += await notifyOnce(db, {
+          userIds: targets,
+          dedupeTitle: "모임 후기를 남겨주세요",
+          link: "/gatherings#past-gatherings",
+          message: `어제 "${ev.title}" 모임은 어떠셨나요? 별점과 한줄 후기가 다음 행사 준비에 큰 도움이 됩니다.`,
+          eventId: doc.id,
+        });
       }
 
       // ── 2) RSVP 마감 D-1 → undecided 회원 응답 독려 ─────────────────────
