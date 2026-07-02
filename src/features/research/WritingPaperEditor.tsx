@@ -2271,7 +2271,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
               {overviewSection.paragraphs.map((p, pi) => (
                 <div key={p.id} className="group relative">
                   <Textarea
-                    className="min-h-[64px] font-sans text-sm leading-relaxed"
+                    className="min-h-[64px] font-sans text-base leading-relaxed"
                     rows={2}
                     value={p.text}
                     placeholder={`예: 본 장에서는 …을 검토한다. 먼저 …을 살펴보고, 이어서 …을 논의한다.`}
@@ -2417,7 +2417,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                 {sec.paragraphs.map((p, pi) => (
                   <div key={p.id} className="group relative">
                     <Textarea
-                      className="min-h-[72px] font-sans text-sm leading-relaxed"
+                      className="min-h-[72px] font-sans text-base leading-relaxed"
                       rows={3}
                       value={p.text}
                       placeholder={`단락 ${pi + 1}`}

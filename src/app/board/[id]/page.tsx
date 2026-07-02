@@ -302,7 +302,7 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
             </div>
           ) : (
             <div
-              className="mt-6 text-sm leading-relaxed"
+              className="mt-6 max-w-[65ch] text-base leading-relaxed"
               dangerouslySetInnerHTML={{ __html: renderPostContent(post.content) }}
             />
           )}

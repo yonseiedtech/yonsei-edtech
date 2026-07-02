@@ -455,7 +455,7 @@ export default function ArchiveDetailPage() {
           {item.description && (
             <>
               <span id="definition" className="block scroll-mt-24" aria-hidden />
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+              <p className="max-w-[65ch] text-base text-foreground whitespace-pre-wrap leading-relaxed">
                 <ConceptLinkedText
                   text={item.description}
                   excludeConceptId={type === "concept" ? id : undefined}

@@ -236,7 +236,7 @@ export default function NewsletterDetailPage({
                   </Badge>
                 )}
               </div>
-              <div className="mt-6 whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
+              <div className="mt-6 max-w-[65ch] whitespace-pre-wrap text-base leading-relaxed text-foreground">
                 {section.content}
               </div>
             </article>
