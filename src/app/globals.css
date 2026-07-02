@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700;900&family=Hahmlet:wght@600;700;900&family=Gowun+Batang:wght@400;700&display=swap");
+/* 세리프 폰트는 next/font(레이아웃)에서 셀프호스트 로드 — 렌더 블로킹 @import 제거 (Phase 5-D1) */
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -48,6 +48,20 @@ nav.overflow-x-auto > button {
   --input: 210 18% 90%;
   --ring: 214 100% 23%;
   --radius: 0.75rem;
+  /* ── 상태 토큰 (Phase 5-D1) — 성공/경고/정보. 위험은 --destructive 재사용. ── */
+  --success: 152 55% 34%;
+  --success-foreground: 0 0% 100%;
+  --warning: 35 92% 40%;
+  --warning-foreground: 0 0% 100%;
+  --info: 199 89% 40%;
+  --info-foreground: 0 0% 100%;
+  /* ── 카테고리 팔레트 (Phase 5-D1) — 도메인 카테고리 색 맵 26개의 공유 원천(D4에서 채택) ── */
+  --cat-1: 214 84% 45%;  /* blue */
+  --cat-2: 152 55% 38%;  /* emerald */
+  --cat-3: 35 92% 45%;   /* amber */
+  --cat-4: 347 77% 55%;  /* rose */
+  --cat-5: 262 60% 55%;  /* violet */
+  --cat-6: 215 16% 47%;  /* slate */
 }
 
 @theme inline {
@@ -71,6 +85,18 @@ nav.overflow-x-auto > button {
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
   --color-navy-footer: hsl(var(--navy-footer));
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-info: hsl(var(--info));
+  --color-info-foreground: hsl(var(--info-foreground));
+  --color-cat-1: hsl(var(--cat-1));
+  --color-cat-2: hsl(var(--cat-2));
+  --color-cat-3: hsl(var(--cat-3));
+  --color-cat-4: hsl(var(--cat-4));
+  --color-cat-5: hsl(var(--cat-5));
+  --color-cat-6: hsl(var(--cat-6));
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -79,8 +105,8 @@ nav.overflow-x-auto > button {
   --font-sans: var(--font-pretendard), "Pretendard", system-ui, sans-serif;
   /* 학술 콘텐츠(아카이브 논문 가이드 제목·인용) 한정 세리프 토큰.
      상단 @import 로 로드되는 한글 세리프 폰트를 절제 적용한다. */
-  --font-display: "Hahmlet", "Noto Serif KR", "Nanum Myeongjo", serif;
-  --font-serif: "Noto Serif KR", "Gowun Batang", "Nanum Myeongjo", serif;
+  --font-display: var(--font-hahmlet), "Hahmlet", var(--font-noto-serif-kr), "Noto Serif KR", "Nanum Myeongjo", serif;
+  --font-serif: var(--font-noto-serif-kr), "Noto Serif KR", "Nanum Myeongjo", serif;
 }
 
 .dark {
@@ -103,6 +129,18 @@ nav.overflow-x-auto > button {
   --border: 222 18% 22%;
   --input: 222 18% 22%;
   --ring: 212 80% 55%;
+  --success: 152 50% 55%;
+  --success-foreground: 222 30% 10%;
+  --warning: 38 90% 60%;
+  --warning-foreground: 222 30% 10%;
+  --info: 199 85% 60%;
+  --info-foreground: 222 30% 10%;
+  --cat-1: 214 84% 62%;
+  --cat-2: 152 50% 52%;
+  --cat-3: 38 90% 58%;
+  --cat-4: 347 75% 65%;
+  --cat-5: 262 65% 68%;
+  --cat-6: 215 16% 62%;
 }
 
 @layer base {
@@ -112,12 +150,16 @@ nav.overflow-x-auto > button {
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    /* Phase 5-D1: 한국어 어절 보호 — 단어 중간 줄바꿈 방지 (긴 URL 등은 overflow-wrap 이 처리) */
+    word-break: keep-all;
+    overflow-wrap: break-word;
   }
 }
 
 /* 모바일 최적화: 반응형 폰트 크기 */
 html {
-  font-size: clamp(14px, 0.875rem + 0.2vw, 16px);
+  /* Phase 5-D1: 하한 14→15px 상향 — 모바일 실측 본문(text-sm) 12.3→13.1px, 캡션 가독성 개선 */
+  font-size: clamp(15px, 0.9375rem + 0.15vw, 16px);
 }
 
 /* iOS Safari 자동 줌 방지: 폼 입력 폰트 16px 이상 강제 */

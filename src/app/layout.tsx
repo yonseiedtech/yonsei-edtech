@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { Noto_Serif_KR, Hahmlet, Gowun_Batang } from "next/font/google";
+import { Noto_Serif_KR, Hahmlet } from "next/font/google";
 // Inter font removed — Pretendard only
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -39,13 +39,6 @@ const hahmlet = Hahmlet({
   subsets: ["latin"],
   weight: ["400", "600", "700", "900"],
   variable: "--font-hahmlet",
-  display: "swap",
-  preload: false,
-});
-const gowunBatang = Gowun_Batang({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-gowun-batang",
   display: "swap",
   preload: false,
 });
@@ -153,7 +146,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${pretendard.variable} ${notoSerifKR.variable} ${hahmlet.variable} ${gowunBatang.variable} font-sans antialiased`}
+        className={`${pretendard.variable} ${notoSerifKR.variable} ${hahmlet.variable} font-sans antialiased`}
       >
         <QueryProvider>
           <AuthProvider>
