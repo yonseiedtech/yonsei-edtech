@@ -7,7 +7,9 @@ import { db } from "@/lib/firebase";
 import type { Post, Comment, PostCategory } from "@/types";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isStaffOrAbove } from "@/lib/permissions";
-import { notifyComment, notifyNewNotice } from "@/features/notifications/notify";
+import { notifyComment, notifyNewNotice, notifyMention } from "@/features/notifications/notify";
+import { extractMentions } from "@/lib/mentions";
+import { profilesApi } from "@/lib/bkend";
 
 // ── Posts ──
 
@@ -101,6 +103,29 @@ export function useComments(postId: string) {
 
 // ── Create Post ──
 
+/**
+ * Phase 3 — 본문 @멘션 알림 fan-out (실패해도 메인 기능 비차단).
+ * excludeIds: 작성자 본인 + 이미 별도 알림을 받는 대상(게시글 작성자 등).
+ */
+async function notifyMentionsIn(
+  text: string,
+  mentionerName: string,
+  link: string,
+  excludeIds: string[],
+) {
+  try {
+    if (!text.includes("@")) return;
+    const res = await profilesApi.list({ "filter[approved]": "true", limit: 500 });
+    const members = (res.data as unknown as { id: string; name?: string }[])
+      .map((m) => ({ id: m.id, name: m.name ?? "" }))
+      .filter((m) => m.name);
+    const targets = extractMentions(text, members, excludeIds);
+    await Promise.all(targets.map((t) => notifyMention(t.id, mentionerName, text.slice(0, 60), link)));
+  } catch {
+    // 멘션 알림 실패는 무시
+  }
+}
+
 export function useCreatePost() {
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
@@ -138,6 +163,11 @@ export function useCreatePost() {
       if (data.category === "notice") {
         const created = res as unknown as Post;
         notifyNewNotice(data.title ?? "", created.id, user.id);
+      }
+      // Phase 3: 본문 @멘션 알림 (공지 fan-out 대상과 중복돼도 유형이 달라 유지)
+      {
+        const created = res as unknown as Post;
+        void notifyMentionsIn(data.content ?? "", user.name, `/board/${created.id}`, [user.id]);
       }
       return res;
     },
@@ -257,12 +287,21 @@ export function useCreateComment() {
       // commentCount +1
       await updateDoc(doc(db, "posts", data.postId), { commentCount: increment(1) });
       // 게시글 작성자에게 댓글 알림 (본인 댓글 제외)
+      let postAuthorId: string | null = null;
       try {
         const post = await postsApi.get(data.postId) as unknown as Post;
         if (post && post.authorId !== user.id) {
+          postAuthorId = post.authorId;
           notifyComment(post.authorId, user.name, post.title, data.postId);
         }
       } catch { /* 알림 실패는 무시 */ }
+      // Phase 3: 댓글 본문 @멘션 알림 (본인·게시글 작성자 제외 — 작성자는 댓글 알림 수신)
+      void notifyMentionsIn(
+        data.content,
+        user.name,
+        `/board/${data.postId}`,
+        [user.id, ...(postAuthorId ? [postAuthorId] : [])],
+      );
       return res;
     },
     onSuccess: (_data, variables) => {

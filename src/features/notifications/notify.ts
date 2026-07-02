@@ -91,6 +91,22 @@ export function notifyComment(
   );
 }
 
+/** @멘션 알림 (Phase 3) — 게시글·댓글 본문에서 @이름 으로 호출된 회원에게 */
+export function notifyMention(
+  mentionedUserId: string,
+  mentionerName: string,
+  excerpt: string,
+  link: string,
+) {
+  return create(
+    mentionedUserId,
+    "mention",
+    `${mentionerName}님이 회원님을 멘션했습니다`,
+    `"${excerpt}"`,
+    link,
+  );
+}
+
 // 소통 보드 새 답변 알림은 서버 경로(/api/comm/notify-answer)로 이전 —
 // 게스트 답변도 도달 + push 채널 포함 (오케스트라 사이클 4)
 

@@ -69,7 +69,8 @@ export type NotificationType =
   | "weekly_digest"         // 주간 다이제스트 (cron)
   | "flashcard_review_reminder" // 오늘 복습할 암기카드 알림 (cron, 2차 백로그 v2-R1)
   | "admin_nudge"           // 운영진 데이터 기반 넛지 일괄 발송 (insights 액션화, 2차 백로그 v2-M3)
-  | "networking_reminder";  // 모임·행사 D-1/당일·RSVP 마감 리마인더 (cron, Phase 2)
+  | "networking_reminder"   // 모임·행사 D-1/당일·RSVP 마감 리마인더 (cron, Phase 2)
+  | "mention";              // @멘션 — 게시글·댓글에서 이름 호출 (Phase 3)
 
 export interface AppNotification {
   id: string;
