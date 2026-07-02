@@ -24,13 +24,34 @@ import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { designDocsApi, seminarsApi } from "@/lib/bkend";
 import { isStaffOrAbove } from "@/lib/permissions";
-import { uploadImageSmart } from "@/lib/storage";
+import { uploadImage } from "@/lib/upload";
 import PageCanvas from "./PageCanvas";
 import { BRAND_COLORS, BRAND_ASSETS, STUDIO_ICONS, makeText, makeImage, makeShape, makeIcon, makePage, newId } from "./studio-utils";
 import { DESIGN_CANVAS_SIZES, DESIGN_DOC_TYPE_LABELS } from "./studio-types";
 import type { DesignDocument, DesignElement, DesignPage } from "./studio-types";
 
 const EDIT_SCALE_MAX_W = 560;
+
+/** dataURL 을 지정 폭 이하 JPEG 로 재인코딩 (포스터 게시 용량 절감) */
+function shrinkToJpeg(dataUrl: string, maxWidth: number, quality: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const ratio = Math.min(1, maxWidth / img.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * ratio);
+      canvas.height = Math.round(img.height * ratio);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return reject(new Error("canvas context"));
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+}
 
 type DragState =
   | { mode: "move"; elId: string; startX: number; startY: number; origX: number; origY: number }
@@ -91,6 +112,10 @@ export default function StudioEditor({ docId }: { docId: string }) {
     setSaving(true);
     try {
       const now = new Date().toISOString();
+      const approxSize = JSON.stringify(cur.pages).length;
+      if (approxSize > 900_000) {
+        toast.error("문서 용량이 한도(1MB)에 근접했습니다. 삽입 이미지를 줄이거나 페이지를 나눠주세요.");
+      }
       await designDocsApi.update(cur.id, { pages: cur.pages, title: cur.title, lastSavedAt: now, updatedAt: now });
       dirtyRef.current = false;
       setSavedAt(now);
@@ -212,14 +237,15 @@ export default function StudioEditor({ docId }: { docId: string }) {
   }
 
   // ── 이미지 업로드 ──
+  // Firebase Storage 미활성(Blaze 필요) 환경 대응: base64 dataURL 로 문서에 내장.
+  // 800px 리사이즈(≈100~250KB)라 Firestore 문서 1MB 한도 내에서 3~4장까지 안전.
   async function handleUpload(file: File) {
     try {
-      toast.info("이미지 업로드 중…");
-      const url = await uploadImageSmart(file, `studio/${user?.id ?? "anon"}`);
+      const url = await uploadImage(file);
       addElement(makeImage(url, { x: 120, y: 120, w: Math.round(size.width * 0.4), h: Math.round(size.width * 0.3) }));
       toast.success("이미지를 추가했습니다.");
-    } catch {
-      toast.error("이미지 업로드에 실패했습니다.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "이미지 업로드에 실패했습니다.");
     }
   }
 
@@ -232,11 +258,14 @@ export default function StudioEditor({ docId }: { docId: string }) {
       await save(true);
       const { capturePagePng } = await import("./exporters");
       const png = await capturePagePng(doc.pages[0].id);
-      const blob = await (await fetch(png)).blob();
-      const file = new File([blob], `poster-${doc.id}.png`, { type: "image/png" });
-      const { uploadToStorage } = await import("@/lib/storage");
-      const { url } = await uploadToStorage(file, "posters");
-      await seminarsApi.update(doc.linked.refId, { posterUrl: url });
+      // Storage 미활성 환경: JPEG 재인코딩(≤810px)으로 용량을 줄여 dataURL 로 저장
+      // (기존 AI 포스터 생성기와 동일한 seminar.posterUrl 경로)
+      const jpeg = await shrinkToJpeg(png, 810, 0.82);
+      if (jpeg.length > 950_000) {
+        toast.error("포스터 이미지가 저장 한도(1MB)를 초과합니다. 페이지 요소를 줄여주세요.");
+        return;
+      }
+      await seminarsApi.update(doc.linked.refId, { posterUrl: jpeg });
       toast.success("1페이지를 세미나 포스터로 게시했습니다. 세미나 상세에서 확인하세요.");
     } catch (err) {
       console.error("[studio] poster publish failed", err);
@@ -358,7 +387,7 @@ export default function StudioEditor({ docId }: { docId: string }) {
           {imageMenuOpen && (
             <div className="absolute left-2 top-full z-20 mt-1 w-64 space-y-2 rounded-xl border bg-popover p-3 shadow-md">
               <label className="block cursor-pointer rounded-lg border border-dashed p-3 text-center text-xs text-muted-foreground hover:border-primary/40">
-                파일 업로드 (자동 리사이즈 후 스토리지 저장)
+                파일 업로드 (1MB 이하 이미지 · 자동 리사이즈)
                 <input
                   type="file"
                   accept="image/*"
