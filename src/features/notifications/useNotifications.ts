@@ -45,6 +45,7 @@ const TYPE_ICONS: Partial<Record<NotificationType, string>> = {
   class_reminder: "🎓",
   activity_reminder: "📚",
   weekly_digest: "🗒️",
+  networking_reminder: "🎉",
 };
 
 const TOAST_MAX = 3; // 동시 최대 toast 개수

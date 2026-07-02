@@ -661,8 +661,12 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
     diagnosticDays.forEach((ymd) => add(ymd, SCORES.diagnosticComplete, "진단평가"));
     // 암기카드 학습 — streak_events(type=flashcard-study) day-bucketed. event.ymd 기준 1일 1회.
     for (const ev of (streakEventsRes?.data ?? []) as StreakEvent[]) {
-      if (ev.type !== "flashcard-study") continue;
-      add(ev.ymd, SCORES.flashcardStudy, "암기카드 학습");
+      if (ev.type === "flashcard-study") {
+        add(ev.ymd, SCORES.flashcardStudy, "암기카드 학습");
+      } else if (ev.type === "networking-attend") {
+        // Phase 2: 모임·행사 참석 — 행사 당일 cron 이 attending RSVP 회원에게 멱등 적립
+        add(ev.ymd, ev.points || 5, "모임·행사 참석");
+      }
     }
 
     return { scoresByDay: scores, activityByDay: activities };

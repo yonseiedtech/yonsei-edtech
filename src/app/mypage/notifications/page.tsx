@@ -42,6 +42,7 @@ const TYPE_ICONS: Record<NotificationType, string> = {
   weekly_digest: "📊",
   flashcard_review_reminder: "🃏",
   admin_nudge: "📣",
+  networking_reminder: "🎉",
 };
 
 const TYPE_LABELS: Record<NotificationType, string> = {
@@ -60,6 +61,7 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   weekly_digest: "주간 다이제스트",
   flashcard_review_reminder: "암기카드 복습",
   admin_nudge: "운영진 알림",
+  networking_reminder: "모임·행사 알림",
 };
 
 // 필터 탭 정의

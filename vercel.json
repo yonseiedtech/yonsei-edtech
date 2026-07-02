@@ -75,6 +75,10 @@
     {
       "path": "/api/cron/flashcard-review-reminder",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/networking-reminder",
+      "schedule": "0 0 * * *"
     }
   ]
 }

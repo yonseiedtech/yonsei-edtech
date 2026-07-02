@@ -19,7 +19,8 @@ export type StreakEventType =
   | "collab-meeting"                // 회의 기록 (+3, Phase 2)
   | "collab-milestone"              // 마일스톤 완료 (+5, Phase 2)
   | "research-journal-publish"      // 연구지 출판 (+10, Phase 3)
-  | "flashcard-study";              // 암기카드 학습 1일 (+2, day-bucketed refId=ymd)
+  | "flashcard-study"               // 암기카드 학습 1일 (+2, day-bucketed refId=ymd)
+  | "networking-attend";            // 모임·행사 참석 (+5, refId=eventId — 행사 당일 cron 적립)
 
 export interface StreakEvent {
   /** `${userId}__${type}__${refId}` */
