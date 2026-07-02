@@ -47,6 +47,14 @@ interface CategoryGuide {
 
 const CATEGORY_GUIDES: CategoryGuide[] = [
   {
+    category: "basic",
+    title: "기초·상관",
+    description: "분석의 출발점 — 정규성·중심극한정리·상관분석(r)",
+    borderClass: "border-l-teal-400",
+    iconBg: "bg-teal-100 dark:bg-teal-950/60",
+    iconText: "text-teal-700 dark:text-teal-300",
+  },
+  {
     category: "anova_family",
     title: "ANOVA 계열",
     description: "집단 간 평균 차이 검정 — t-test · ANOVA · ANCOVA · MANOVA · MANCOVA",
@@ -101,6 +109,14 @@ const CATEGORY_GUIDES: CategoryGuide[] = [
     borderClass: "border-l-amber-400",
     iconBg: "bg-amber-100 dark:bg-amber-950/60",
     iconText: "text-amber-700 dark:text-amber-300",
+  },
+  {
+    category: "measurement",
+    title: "측정·타당도",
+    description: "도구의 품질 — 내용타당도(CVI)·신뢰도(Cronbach α)",
+    borderClass: "border-l-purple-400",
+    iconBg: "bg-purple-100 dark:bg-purple-950/60",
+    iconText: "text-purple-700 dark:text-purple-300",
   },
   {
     category: "other",
@@ -162,6 +178,7 @@ export default function StatisticalMethodsLandingPage() {
 
   const grouped = useMemo(() => {
     const byCategory: Record<StatisticalMethodCategory, StatisticalMethod[]> = {
+      basic: [],
       anova_family: [],
       regression: [],
       factor: [],
@@ -169,6 +186,7 @@ export default function StatisticalMethodsLandingPage() {
       nonparametric: [],
       mediation_moderation: [],
       multilevel: [],
+      measurement: [],
       other: [],
     };
     for (const m of filteredMethods) {

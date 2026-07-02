@@ -6,6 +6,7 @@ import type { ArchiveOperationalMeta } from "./edutech-archive";
 // 운영진 검수(published) 게이트 — firestore.rules 의 archive_statistical_methods 와 양쪽 게이트.
 
 export type StatisticalMethodCategory =
+  | "basic"
   | "anova_family"
   | "regression"
   | "factor"
@@ -13,9 +14,11 @@ export type StatisticalMethodCategory =
   | "nonparametric"
   | "mediation_moderation"
   | "multilevel"
+  | "measurement"
   | "other";
 
 export const STATISTICAL_METHOD_CATEGORY_LABELS: Record<StatisticalMethodCategory, string> = {
+  basic: "기초·상관",
   anova_family: "ANOVA 계열",
   regression: "회귀분석",
   factor: "요인분석",
@@ -23,10 +26,12 @@ export const STATISTICAL_METHOD_CATEGORY_LABELS: Record<StatisticalMethodCategor
   nonparametric: "비모수",
   mediation_moderation: "매개·조절",
   multilevel: "다층모형",
+  measurement: "측정·타당도",
   other: "기타",
 };
 
 export const STATISTICAL_METHOD_CATEGORY_COLORS: Record<StatisticalMethodCategory, string> = {
+  basic: "bg-teal-50 text-teal-800 border border-teal-200",
   anova_family: "bg-blue-50 text-blue-800 border border-blue-200",
   regression: "bg-violet-50 text-violet-800 border border-violet-200",
   factor: "bg-emerald-50 text-emerald-800 border border-emerald-200",
@@ -34,6 +39,7 @@ export const STATISTICAL_METHOD_CATEGORY_COLORS: Record<StatisticalMethodCategor
   nonparametric: "bg-amber-50 text-amber-800 border border-amber-200",
   mediation_moderation: "bg-rose-50 text-rose-800 border border-rose-200",
   multilevel: "bg-cyan-50 text-cyan-800 border border-cyan-200",
+  measurement: "bg-purple-50 text-purple-800 border border-purple-200",
   other: "bg-slate-50 text-slate-800 border border-slate-200",
 };
 
