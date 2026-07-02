@@ -14,7 +14,7 @@ import {
   Microscope, Lightbulb, ClipboardCheck, Handshake, Library, Megaphone,
   MessageSquare, FileText, Newspaper, Images, Image as ImageIcon, Network,
   Trophy, HelpCircle, Settings, Bell, NotebookPen, Download, Target,
-  Building2, FlaskRound, ScrollText, Award, BookMarked,
+  Building2, FlaskRound, ScrollText, Award, BookMarked, Palette,
   type LucideIcon,
 } from "lucide-react";
 
@@ -49,6 +49,7 @@ export const COMMAND_ROUTES: CommandRoute[] = [
   { key: "r:mypage-portfolio", group: "내 공간", label: "학술 포트폴리오", href: "/mypage/portfolio", icon: Award, keywords: "포트폴리오 portfolio 학술 이력 산출물", visibility: "auth" },
   { key: "r:mypage-calendar", group: "내 공간", label: "내 캘린더", href: "/mypage/calendar", icon: Calendar, keywords: "캘린더 일정 calendar 내 일정", visibility: "auth" },
   { key: "r:mypage-notes", group: "내 공간", label: "내 노트", href: "/mypage/notes", icon: NotebookPen, keywords: "노트 메모 notes 기록", visibility: "auth" },
+  { key: "r:studio", group: "내 공간", label: "디자인 스튜디오", href: "/studio", icon: Palette, keywords: "디자인 스튜디오 카드뉴스 포스터 ppt 슬라이드 canva studio design", visibility: "auth" },
   { key: "r:mypage-messages", group: "내 공간", label: "쪽지함", href: "/mypage/messages", icon: MessageSquare, keywords: "쪽지 메시지 messages dm", visibility: "auth" },
   { key: "r:mypage-notifications", group: "내 공간", label: "알림 설정", href: "/mypage/notifications", icon: Bell, keywords: "알림 설정 notifications 푸시 이메일", visibility: "auth" },
   { key: "r:mypage-data-export", group: "내 공간", label: "내 데이터 내보내기", href: "/mypage/data-export", icon: Download, keywords: "데이터 내보내기 export 다운로드 백업", visibility: "auth" },

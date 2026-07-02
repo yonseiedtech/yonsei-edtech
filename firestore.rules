@@ -227,6 +227,16 @@ service cloud.firestore {
       allow update, delete: if isAuthenticated()
         && (resource.data.userId == request.auth.uid || isStaffOrAbove());
     }
+    // 디자인 스튜디오 문서: 본인 rw, published 는 회원 read, staff 전체 read.
+    match /design_documents/{docId} {
+      allow read: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid
+            || resource.data.published == true
+            || isStaffOrAbove());
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
+    }
     // 행사 후기 (Phase 2-D): 로그인 회원 read, 본인 작성·수정, staff 정리 가능.
     match /networking_reviews/{docId} {
       allow read: if isAuthenticated();

@@ -2885,6 +2885,25 @@ export const flashcardsApi = {
 };
 
 // ─────────────────────────────────────────────────────────────
+// designDocsApi — 디자인 스튜디오 (카드뉴스·포스터·발표 슬라이드)
+// 본인 rw + published 회원 read (firestore.rules design_documents 블록과 게이트)
+// ─────────────────────────────────────────────────────────────
+import type { DesignDocument } from "@/features/studio/studio-types";
+
+export const designDocsApi = {
+  listByUser: (userId: string) =>
+    dataApi.list<DesignDocument>("design_documents", { "filter[userId]": userId, limit: 200 }),
+  listPublished: () =>
+    dataApi.list<DesignDocument>("design_documents", { "filter[published]": true, limit: 200 }),
+  get: (id: string) => dataApi.get<DesignDocument>("design_documents", id),
+  create: (data: Omit<DesignDocument, "id">) =>
+    dataApi.create<DesignDocument>("design_documents", data as unknown as Record<string, unknown>),
+  update: (id: string, data: Partial<DesignDocument>) =>
+    dataApi.update<DesignDocument>("design_documents", id, data as unknown as Record<string, unknown>),
+  remove: (id: string) => dataApi.delete("design_documents", id),
+};
+
+// ─────────────────────────────────────────────────────────────
 // userFeedbackApi — 사용자 피드백 수집
 // write: 인증 사용자 (본인 userId) — 비로그인 anonymous 포함
 // list: 운영진(staff+) 전용

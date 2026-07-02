@@ -48,6 +48,23 @@ service firebase.storage {
                    && request.resource.contentType.matches('image/.*');
     }
 
+    // 디자인 스튜디오 자산 (2026-07-02) — 본인 폴더에만 write, 회원 read
+    match /studio/{userId}/{fileName=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                   && request.auth.uid == userId
+                   && request.resource.size < 10 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    // 스튜디오 → 세미나 포스터 게시 결과물 (공개 히어로 이미지)
+    match /posters/{fileName=**} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.resource.size < 10 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
     // Sprint 67-G: 프로필 사진 (크롭 dialog 결과 업로드)
     // 본인만 write, 모두 read (명함 노출용)
     match /profile-photos/{userId}/{fileName=**} {
