@@ -200,7 +200,7 @@ function StudioContent() {
                       type="button"
                       aria-label="삭제"
                       onClick={() => void handleDelete(d.id)}
-                      className="shrink-0 rounded p-1.5 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                      className="shrink-0 rounded p-2 text-muted-foreground transition-opacity hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100"
                     >
                       <Trash2 size={14} />
                     </button>

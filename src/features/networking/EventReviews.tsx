@@ -115,7 +115,7 @@ export default function EventReviews({
 
       {formOpen && (
         <div className="mt-2 space-y-2 rounded-lg border bg-card p-3">
-          <div className="flex items-center gap-1" role="radiogroup" aria-label="별점">
+          <div className="flex items-center gap-0.5" role="radiogroup" aria-label="별점">
             {[1, 2, 3, 4, 5].map((n) => (
               <button
                 key={n}
@@ -124,10 +124,10 @@ export default function EventReviews({
                 aria-checked={rating === n}
                 aria-label={`${n}점`}
                 onClick={() => setRating(n)}
-                className="p-0.5"
+                className="flex h-11 w-11 items-center justify-center rounded-lg transition-colors hover:bg-muted"
               >
                 <Star
-                  size={18}
+                  size={24}
                   className={cn(
                     "transition-colors",
                     n <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/40",
@@ -135,6 +135,9 @@ export default function EventReviews({
                 />
               </button>
             ))}
+            <span className="ml-1 min-w-8 text-sm font-semibold text-amber-600 dark:text-amber-400">
+              {rating > 0 ? `${rating}점` : ""}
+            </span>
           </div>
           <Textarea
             rows={2}

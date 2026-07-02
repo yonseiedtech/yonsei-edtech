@@ -163,7 +163,7 @@ export default function TodayCard() {
           <Link
             key={it.key}
             href={it.href}
-            className="group inline-flex max-w-full items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 text-xs font-medium shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow"
+            className="group inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-full border bg-card px-3 py-2 text-xs font-medium shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow"
           >
             <it.icon size={13} className={cn("shrink-0", it.accent)} />
             <span className="truncate">{it.text}</span>

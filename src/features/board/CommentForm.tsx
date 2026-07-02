@@ -24,6 +24,7 @@ export default function CommentForm({ postId }: Props) {
   const { user } = useAuthStore();
   const [content, setContent] = useState("");
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [activeIdx, setActiveIdx] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { createComment } = useCreateComment();
 
@@ -44,7 +45,28 @@ export default function CommentForm({ postId }: Props) {
   }, [membersRes, mentionQuery, user?.id]);
 
   function syncMentionState(value: string, caret: number) {
-    setMentionQuery(pendingMentionQuery(value.slice(0, caret)));
+    const q = pendingMentionQuery(value.slice(0, caret));
+    setMentionQuery(q);
+    if (q === null) setActiveIdx(0);
+  }
+
+  // 키보드 내비 (Batch-3): ↑↓ 이동, Enter/Tab 선택, Escape 닫기 — 보편 계약
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (mentionQuery === null || suggestions.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIdx((i) => (i + 1) % suggestions.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIdx((i) => (i - 1 + suggestions.length) % suggestions.length);
+    } else if (e.key === "Enter" || e.key === "Tab") {
+      e.preventDefault();
+      const pick = suggestions[Math.min(activeIdx, suggestions.length - 1)];
+      if (pick?.name) insertMention(pick.name);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      setMentionQuery(null);
+    }
   }
 
   function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
@@ -86,7 +108,12 @@ export default function CommentForm({ postId }: Props) {
         value={content}
         onChange={handleChange}
         onClick={(e) => syncMentionState(content, e.currentTarget.selectionStart ?? 0)}
-        onKeyUp={(e) => syncMentionState(content, e.currentTarget.selectionStart ?? 0)}
+        onKeyDown={handleKeyDown}
+        onKeyUp={(e) => {
+          if (["ArrowDown", "ArrowUp", "Enter", "Tab", "Escape"].includes(e.key) && mentionQuery !== null) return;
+          syncMentionState(content, e.currentTarget.selectionStart ?? 0);
+        }}
+        onBlur={() => setTimeout(() => setMentionQuery(null), 150)}
         placeholder="댓글을 입력하세요... (@이름 으로 회원을 멘션할 수 있어요)"
         rows={3}
         required
@@ -99,17 +126,22 @@ export default function CommentForm({ postId }: Props) {
           role="listbox"
           aria-label="멘션할 회원"
         >
-          {suggestions.map((m) => (
+          <li className="border-b px-3 py-1 text-[10px] text-muted-foreground">↑↓ 이동 · Enter 선택 · Esc 닫기</li>
+          {suggestions.map((m, i) => (
             <li key={m.id}>
               <button
                 type="button"
                 role="option"
-                aria-selected={false}
+                aria-selected={i === activeIdx}
                 onMouseDown={(e) => {
                   e.preventDefault();
                   insertMention(m.name!);
                 }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-accent"
+                onMouseEnter={() => setActiveIdx(i)}
+                className={
+                  "flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors " +
+                  (i === activeIdx ? "bg-accent" : "hover:bg-accent")
+                }
               >
                 <AtSign size={13} className="shrink-0 text-primary" />
                 {m.name}

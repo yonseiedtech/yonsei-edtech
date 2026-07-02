@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   ArrowLeft, Type, Square, Circle, Minus, ImagePlus, Smile, Plus, Copy, Trash2,
-  ChevronUp, ChevronDown, Save, Download, Loader2, Lock, Unlock, Layers,
+  ChevronUp, ChevronDown, Save, Download, Loader2, Lock, Unlock, Layers, Undo2, Redo2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,13 +69,60 @@ export default function StudioEditor({ docId }: { docId: string }) {
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [imageMenuOpen, setImageMenuOpen] = useState(false);
+  // 팝오버 바깥 클릭/Escape 로 닫기 (Batch-3)
+  useEffect(() => {
+    if (!iconPickerOpen && !imageMenuOpen) return;
+    function onDown(e: PointerEvent) {
+      const t = e.target as HTMLElement;
+      if (!t.closest("[data-studio-toolbar]")) {
+        setIconPickerOpen(false);
+        setImageMenuOpen(false);
+      }
+    }
+    function onEsc(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setIconPickerOpen(false);
+        setImageMenuOpen(false);
+      }
+    }
+    window.addEventListener("pointerdown", onDown);
+    window.addEventListener("keydown", onEsc);
+    return () => {
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("keydown", onEsc);
+    };
+  }, [iconPickerOpen, imageMenuOpen]);
   const [exporting, setExporting] = useState<string | null>(null);
+  const [editingTextId, setEditingTextId] = useState<string | null>(null);
   const dirtyRef = useRef(false);
   const docRef = useRef<DesignDocument | null>(null);
   docRef.current = doc;
+  // ── undo/redo (Batch-3): pages 스냅샷 스택. 편집 버스트(드래그·연속 타이핑)는
+  // 400ms 스로틀로 한 스텝으로 묶는다. pages 는 불변 갱신이라 참조 스냅샷 안전. ──
+  const undoStack = useRef<DesignPage[][]>([]);
+  const redoStack = useRef<DesignPage[][]>([]);
+  const lastPushRef = useRef(0);
+  const [historyTick, setHistoryTick] = useState(0); // 버튼 활성화 리렌더 트리거
 
   const size = doc ? DESIGN_CANVAS_SIZES[doc.docType] : { width: 1080, height: 1080 };
-  const scale = Math.min(EDIT_SCALE_MAX_W / size.width, 640 / size.height);
+  // 컨테이너 실측 스케일 — 모바일에서 캔버스가 잘리지 않도록 (Batch-3)
+  const canvasHostRef = useRef<HTMLDivElement | null>(null);
+  const [hostWidth, setHostWidth] = useState<number>(EDIT_SCALE_MAX_W);
+  useEffect(() => {
+    const el = canvasHostRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect.width;
+      if (w) setHostWidth(w);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [loading]);
+  const scale = Math.min(
+    Math.max(120, hostWidth - 8) / size.width,
+    EDIT_SCALE_MAX_W / size.width,
+    640 / size.height,
+  );
 
   // ── 로드 ──
   useEffect(() => {
@@ -101,9 +148,45 @@ export default function StudioEditor({ docId }: { docId: string }) {
   const mutate = useCallback((fn: (d: DesignDocument) => DesignDocument) => {
     setDoc((cur) => {
       if (!cur) return cur;
+      const now = Date.now();
+      if (now - lastPushRef.current > 400) {
+        undoStack.current.push(cur.pages);
+        if (undoStack.current.length > 30) undoStack.current.shift();
+        redoStack.current = [];
+        lastPushRef.current = now;
+        setHistoryTick((t) => t + 1);
+      }
       dirtyRef.current = true;
       return fn(cur);
     });
+  }, []);
+
+  const undo = useCallback(() => {
+    setDoc((cur) => {
+      if (!cur) return cur;
+      const prev = undoStack.current.pop();
+      if (!prev) return cur;
+      redoStack.current.push(cur.pages);
+      dirtyRef.current = true;
+      lastPushRef.current = 0;
+      setHistoryTick((t) => t + 1);
+      return { ...cur, pages: prev };
+    });
+    setSelectedId(null);
+  }, []);
+
+  const redo = useCallback(() => {
+    setDoc((cur) => {
+      if (!cur) return cur;
+      const next = redoStack.current.pop();
+      if (!next) return cur;
+      undoStack.current.push(cur.pages);
+      dirtyRef.current = true;
+      lastPushRef.current = 0;
+      setHistoryTick((t) => t + 1);
+      return { ...cur, pages: next };
+    });
+    setSelectedId(null);
   }, []);
 
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -150,15 +233,20 @@ export default function StudioEditor({ docId }: { docId: string }) {
     };
   }, [save, readOnly]);
 
-  const page: DesignPage | undefined = doc?.pages[pageIdx];
+  // undo/삭제로 페이지 수가 줄어도 항상 유효 인덱스
+  const safePageIdx = doc ? Math.min(pageIdx, doc.pages.length - 1) : 0;
+  useEffect(() => {
+    if (doc && pageIdx !== safePageIdx) setPageIdx(safePageIdx);
+  }, [doc, pageIdx, safePageIdx]);
+  const page: DesignPage | undefined = doc?.pages[safePageIdx];
   const selected = useMemo(
     () => page?.elements.find((e) => e.id === selectedId) ?? null,
     [page, selectedId],
   );
 
   const patchPage = useCallback((fn: (p: DesignPage) => DesignPage) => {
-    mutate((d) => ({ ...d, pages: d.pages.map((p, i) => (i === pageIdx ? fn(p) : p)) }));
-  }, [mutate, pageIdx]);
+    mutate((d) => ({ ...d, pages: d.pages.map((p, i) => (i === safePageIdx ? fn(p) : p)) }));
+  }, [mutate, safePageIdx]);
 
   const patchElement = useCallback((id: string, patch: Partial<DesignElement>) => {
     patchPage((p) => ({
@@ -199,9 +287,21 @@ export default function StudioEditor({ docId }: { docId: string }) {
   // ── 키보드: Delete 로 요소 삭제 (텍스트 입력 중엔 무시) ──
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key !== "Delete" && e.key !== "Backspace") return;
       const t = e.target as HTMLElement;
-      if (t.closest("input, textarea, select, [contenteditable=true]")) return;
+      const typing = !!t.closest("input, textarea, select, [contenteditable=true]");
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !typing) {
+        e.preventDefault();
+        if (e.shiftKey) redo();
+        else undo();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y" && !typing) {
+        e.preventDefault();
+        redo();
+        return;
+      }
+      if (e.key !== "Delete" && e.key !== "Backspace") return;
+      if (typing) return;
       if (selectedId) {
         e.preventDefault();
         removeSelected();
@@ -210,7 +310,7 @@ export default function StudioEditor({ docId }: { docId: string }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedId, pageIdx]);
+  }, [selectedId, pageIdx, undo, redo]);
 
   // ── 드래그/리사이즈 ──
   const dragRef = useRef<DragState>(null);
@@ -370,10 +470,17 @@ export default function StudioEditor({ docId }: { docId: string }) {
             </Button>
           )}
           <div className="flex items-center gap-1">
-            {(["png", "zip", "pdf", "pptx"] as const).map((k) => (
-              <Button key={k} size="sm" variant="outline" disabled={exporting !== null} onClick={() => void runExport(k)}>
+            {(
+              [
+                { k: "png", label: "PNG", title: "현재 페이지를 이미지로 저장" },
+                { k: "zip", label: "전체 ZIP", title: "모든 페이지 이미지를 압축파일로" },
+                { k: "pdf", label: "PDF", title: "전체 페이지를 PDF 문서로" },
+                { k: "pptx", label: "PPT", title: "파워포인트(pptx) 파일로" },
+              ] as const
+            ).map(({ k, label, title }) => (
+              <Button key={k} size="sm" variant="outline" title={title} disabled={exporting !== null} onClick={() => void runExport(k)}>
                 {exporting === k ? <Loader2 size={13} className="mr-1 animate-spin" /> : <Download size={13} className="mr-1" />}
-                {k.toUpperCase()}
+                {label}
               </Button>
             ))}
           </div>
@@ -382,7 +489,10 @@ export default function StudioEditor({ docId }: { docId: string }) {
 
       {/* 툴바 */}
       {!readOnly && (
-        <div className="relative mt-3 flex flex-wrap items-center gap-1.5 rounded-xl border bg-card p-2">
+        <div className="relative mt-3 flex flex-wrap items-center gap-1.5 rounded-xl border bg-card p-2" data-studio-toolbar>
+          <Button size="sm" variant="ghost" title="실행취소 (Ctrl+Z)" disabled={undoStack.current.length === 0} onClick={undo}><Undo2 size={15} /></Button>
+          <Button size="sm" variant="ghost" title="다시실행 (Ctrl+Shift+Z)" disabled={redoStack.current.length === 0} onClick={redo}><Redo2 size={15} /></Button>
+          <span className="mx-1 h-5 w-px bg-border" />
           <Button size="sm" variant="ghost" onClick={() => addElement(makeText({ fontSize: Math.round(size.width * 0.04) }))}><Type size={15} className="mr-1" />텍스트</Button>
           <Button size="sm" variant="ghost" onClick={() => addElement(makeShape("rect"))}><Square size={15} className="mr-1" />사각형</Button>
           <Button size="sm" variant="ghost" onClick={() => addElement(makeShape("circle"))}><Circle size={15} className="mr-1" />원</Button>
@@ -498,7 +608,7 @@ export default function StudioEditor({ docId }: { docId: string }) {
         </div>
 
         {/* 캔버스 */}
-        <div className="flex items-start justify-center overflow-auto rounded-xl border bg-muted/30 p-4">
+        <div ref={canvasHostRef} className="flex items-start justify-start overflow-auto rounded-xl border bg-muted/30 p-4 sm:justify-center">
           <div onPointerDown={() => setSelectedId(null)}>
             <PageCanvas page={page} width={size.width} height={size.height} scale={scale} className="rounded-md shadow-md">
               {/* 편집 오버레이 — 문서 좌표계 내부 (scale 자동 적용) */}
@@ -508,6 +618,9 @@ export default function StudioEditor({ docId }: { docId: string }) {
                   <div
                     key={`ov-${el.id}`}
                     onPointerDown={(e) => startMove(e, el)}
+                    onDoubleClick={() => {
+                      if (!readOnly && el.type === "text" && !el.locked) setEditingTextId(el.id);
+                    }}
                     style={{
                       position: "absolute",
                       left: el.x,
@@ -520,7 +633,38 @@ export default function StudioEditor({ docId }: { docId: string }) {
                       outlineOffset: 2,
                     }}
                   >
-                    {isSel && !readOnly && (["nw", "ne", "sw", "se"] as const).map((corner) => (
+                    {editingTextId === el.id && el.type === "text" && (
+                      <textarea
+                        autoFocus
+                        value={el.text}
+                        onChange={(e) => patchElement(el.id, { text: e.target.value })}
+                        onBlur={() => setEditingTextId(null)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Escape") setEditingTextId(null);
+                          e.stopPropagation();
+                        }}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          width: "100%",
+                          height: "100%",
+                          resize: "none",
+                          background: "rgba(255,255,255,0.92)",
+                          border: `${2 / scale}px dashed #0a4da3`,
+                          outline: "none",
+                          padding: 0,
+                          fontSize: el.fontSize,
+                          fontWeight: el.fontWeight,
+                          fontFamily: el.fontFamily === "display" ? "var(--font-display)" : "var(--font-sans)",
+                          color: el.color,
+                          textAlign: el.align,
+                          lineHeight: el.lineHeight ?? 1.35,
+                          overflow: "hidden",
+                        }}
+                      />
+                    )}
+                    {isSel && !readOnly && editingTextId !== el.id && (["nw", "ne", "sw", "se"] as const).map((corner) => (
                       <span
                         key={corner}
                         onPointerDown={(e) => startResize(e, el, corner)}
@@ -550,7 +694,7 @@ export default function StudioEditor({ docId }: { docId: string }) {
         <div className="rounded-xl border bg-card p-3">
           {!selected ? (
             <p className="text-xs text-muted-foreground">
-              요소를 클릭해 선택하세요. 드래그로 이동, 모서리 핸들로 크기 조절, Delete 키로 삭제할 수 있습니다.
+              요소를 클릭해 선택하세요. 드래그 이동 · 모서리 핸들 크기 조절 · 텍스트는 더블클릭으로 바로 편집 · Delete 삭제 · Ctrl+Z 실행취소.
             </p>
           ) : (
             <div className="space-y-3 text-xs">

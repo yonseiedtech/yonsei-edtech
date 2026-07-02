@@ -114,7 +114,10 @@ export default function VacationModeCard({
       {/* 주간 연구 목표 게이지 */}
       <div className="mt-3 rounded-xl border bg-card p-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs font-semibold">이번 주 연구 시간</p>
+          <p className="text-xs font-semibold">
+            이번 주 연구 시간
+            <span className="ml-1 font-normal text-muted-foreground">(월~일 · 종료된 타이머 세션 기준)</span>
+          </p>
           {!editing ? (
             <button
               type="button"
@@ -132,7 +135,11 @@ export default function VacationModeCard({
                 type="number"
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
-                className="h-7 w-16 text-xs"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void saveGoal();
+                  if (e.key === "Escape") setEditing(false);
+                }}
+                className="h-8 w-16 text-xs"
                 min={1}
                 max={80}
               />

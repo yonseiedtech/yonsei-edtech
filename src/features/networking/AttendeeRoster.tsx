@@ -120,9 +120,9 @@ export default function AttendeeRoster({
                 href={`/mypage/messages?compose=${r.userId}`}
                 aria-label={`${r.displayName}님에게 쪽지 보내기`}
                 title="쪽지 보내기"
-                className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
               >
-                <MessageSquare size={11} />
+                <MessageSquare size={13} />
               </Link>
             </li>
           ))}
