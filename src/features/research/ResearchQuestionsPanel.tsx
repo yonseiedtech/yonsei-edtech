@@ -2,11 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Plus, Trash2, X, HelpCircle, Compass, BarChart3, Network } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Plus, Trash2, X, HelpCircle, Compass, BarChart3, Network, ListPlus } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { researchMethodsApi, statisticalMethodsApi } from "@/lib/bkend";
+import { researchModelsApi } from "@/lib/research-models-api";
+import { generateQuestions } from "@/lib/research-question-generator";
+import { EMPTY_RESEARCH_MODEL } from "@/types/research-model";
+import { useAuthStore } from "@/features/auth/auth-store";
 import type { ResearchQuestionItem, ResearchMethod, StatisticalMethod } from "@/types";
 
 function newId(): string {
@@ -135,6 +141,36 @@ export default function ResearchQuestionsPanel({
     onChange(items.filter((q) => q.id !== id));
   }
 
+  // Phase 4-B: 연구 모형(research_models) → 연구문제 가져오기 (리포트/계획서와 동일 생성 로직)
+  const { user } = useAuthStore();
+  const { data: modelDoc } = useQuery({
+    queryKey: ["research-model", user?.id],
+    queryFn: () => researchModelsApi.get(user!.id),
+    enabled: !!user?.id && !readOnly,
+    staleTime: 60_000,
+  });
+  const modelQuestions = useMemo(
+    () => generateQuestions(modelDoc?.data ?? EMPTY_RESEARCH_MODEL).map((q) => q.text),
+    [modelDoc],
+  );
+  const newModelQuestions = useMemo(() => {
+    const existing = new Set(items.map((q) => q.text.trim()));
+    return modelQuestions.filter((t) => !existing.has(t.trim()));
+  }, [modelQuestions, items]);
+  function importFromModel() {
+    if (newModelQuestions.length === 0) return;
+    onChange([
+      ...items,
+      ...newModelQuestions.map((text) => ({
+        id: newId(),
+        text,
+        researchMethodIds: [],
+        statMethodIds: [],
+      })),
+    ]);
+    toast.success(`연구 모형에서 연구문제 ${newModelQuestions.length}개를 가져왔습니다. 방법·통계 태그를 달아보세요.`);
+  }
+
   return (
     <div className="mt-3 rounded-xl border border-amber-200/70 bg-amber-50/40 p-4 dark:border-amber-800/50 dark:bg-amber-950/10">
       <div className="flex items-center justify-between gap-2">
@@ -148,13 +184,25 @@ export default function ResearchQuestionsPanel({
         연구 문제는 연구방법·통계방법을 압축해 담습니다. 각 문제에 태그를 달아두면 방법·분석 설계가 한눈에 정리됩니다.
         태그는 아카이브(연구방법·통계방법 가이드)에 등록된 항목에서 선택합니다.
       </p>
-      <Link
-        href="/research-model"
-        className="mt-2 inline-flex items-center gap-1 rounded-lg border border-dashed border-primary/30 px-2.5 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary/5"
-      >
-        <Network size={12} />
-        변인(독립·종속·매개)으로 연구문제 만들기 — 연구 모형 도구
-      </Link>
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <Link
+          href="/research-model"
+          className="inline-flex items-center gap-1 rounded-lg border border-dashed border-primary/30 px-2.5 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary/5"
+        >
+          <Network size={12} />
+          변인(독립·종속·매개)으로 연구문제 만들기 — 연구 모형 도구
+        </Link>
+        {!readOnly && newModelQuestions.length > 0 && (
+          <button
+            type="button"
+            onClick={importFromModel}
+            className="inline-flex items-center gap-1 rounded-lg border border-primary/40 bg-primary/5 px-2.5 py-1 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/10"
+          >
+            <ListPlus size={12} />
+            모형에서 연구문제 {newModelQuestions.length}개 가져오기
+          </button>
+        )}
+      </div>
 
       <div className="mt-3 space-y-3">
         {items.length === 0 && (

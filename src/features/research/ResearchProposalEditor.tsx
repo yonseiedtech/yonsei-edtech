@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import type { User, ResearchProposal, ResearchPaper } from "@/types";
+import type { User, ResearchProposal, ResearchPaper , PaperVariables } from "@/types";
 import {
   useResearchProposal,
   useEnsureResearchProposal,
@@ -23,6 +23,7 @@ import { useLogWritingActivity } from "./useWritingPaperHistory";
 import { formatApa7 } from "@/lib/apa7";
 import ResearchJourneyGuide from "./ResearchJourneyGuide";
 import ResearchQuestionSyncPanel from "./ResearchQuestionSyncPanel";
+import VariableSyncPanel from "./VariableSyncPanel";
 
 interface Props {
   user: User;
@@ -38,6 +39,7 @@ interface FormState {
   content: string;
   referencePaperIds: string[];
   researchQuestions: string[];
+  variables: PaperVariables;
 }
 
 const EMPTY: FormState = {
@@ -49,6 +51,7 @@ const EMPTY: FormState = {
   content: "",
   referencePaperIds: [],
   researchQuestions: [],
+  variables: {},
 };
 
 function fromProposal(p: ResearchProposal | undefined): FormState {
@@ -62,6 +65,7 @@ function fromProposal(p: ResearchProposal | undefined): FormState {
     content: p.content ?? "",
     referencePaperIds: p.referencePaperIds ?? [],
     researchQuestions: p.researchQuestions ?? [],
+    variables: p.variables ?? {},
   };
 }
 
@@ -718,6 +722,19 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
           userId={user.id}
           value={form.researchQuestions}
           onChange={(next) => setField("researchQuestions", next)}
+          readOnly={readOnly}
+        />
+      </Section>
+
+      {/* 연구 변인 (Phase 4-B) — 연구 모형과 양방향 동기화 */}
+      <Section
+        title="연구 변인"
+        sub="독립·종속·매개·조절·통제 변인을 정리합니다. ‘연구 모형 그리기’와 양방향으로 동기화할 수 있습니다."
+      >
+        <VariableSyncPanel
+          userId={user.id}
+          value={form.variables}
+          onChange={(next) => setField("variables", next)}
           readOnly={readOnly}
         />
       </Section>

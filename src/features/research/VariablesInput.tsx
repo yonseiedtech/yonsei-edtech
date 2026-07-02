@@ -1,6 +1,9 @@
 "use client";
 
-import type { PaperVariables } from "@/types";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import type { PaperVariables, ArchiveVariable } from "@/types";
+import { archiveVariablesApi } from "@/lib/bkend";
 import TagInput from "./TagInput";
 
 interface Props {
@@ -17,6 +20,20 @@ const CATEGORIES: { key: keyof PaperVariables; label: string; color: string; pla
 ];
 
 export default function VariablesInput({ value, onChange }: Props) {
+  // Phase 4-B: 아카이브 변인 사전(archive_variables) 자동완성 — 입력 시작 시에만 제안.
+  // 자유 입력은 그대로 허용(공용 어휘를 '권장'하되 강제하지 않음).
+  const { data: archiveVarsRes } = useQuery({
+    queryKey: ["archive-variables-for-input"],
+    queryFn: () => archiveVariablesApi.list(),
+    staleTime: 10 * 60_000,
+  });
+  const variableNames = useMemo(() => {
+    const vars = (archiveVarsRes?.data ?? []) as ArchiveVariable[];
+    return [...new Set(vars.map((v) => v.name).filter(Boolean))].sort((a, b) =>
+      a.localeCompare(b, "ko"),
+    );
+  }, [archiveVarsRes]);
+
   function patch(key: keyof PaperVariables, next: string[]) {
     onChange({
       ...value,
@@ -35,6 +52,8 @@ export default function VariablesInput({ value, onChange }: Props) {
             value={value[c.key] ?? []}
             onChange={(next) => patch(c.key, next)}
             placeholder={c.placeholder}
+            suggestions={variableNames}
+            suggestOnlyWhenTyping
             chipClassName={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs ${c.color}`}
           />
         </div>

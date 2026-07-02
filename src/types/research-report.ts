@@ -274,6 +274,8 @@ export interface ResearchProposal {
    * (옵셔널 — 구버전 데이터 호환)
    */
   researchQuestions?: string[];
+  /** 연구 변인 (Phase 4-B) — 연구 모형과 양방향 동기화. ResearchReport.variables 와 동일 구조. */
+  variables?: PaperVariables;
   lastSavedAt?: string;
   createdAt: string;
   updatedAt: string;

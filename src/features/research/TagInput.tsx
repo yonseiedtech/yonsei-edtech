@@ -10,6 +10,8 @@ interface Props {
   onChange: (next: string[]) => void;
   placeholder?: string;
   suggestions?: string[];
+  /** true 면 입력을 시작했을 때만 제안 노출 — 대형 사전(아카이브 변인 등)용 (Phase 4-B) */
+  suggestOnlyWhenTyping?: boolean;
   className?: string;
   chipClassName?: string;
 }
@@ -19,6 +21,7 @@ export default function TagInput({
   onChange,
   placeholder = "입력 후 Enter",
   suggestions,
+  suggestOnlyWhenTyping,
   className,
   chipClassName,
 }: Props) {
@@ -36,9 +39,9 @@ export default function TagInput({
     onChange(value.filter((_, idx) => idx !== i));
   }
 
-  const remainingSuggestions = (suggestions ?? []).filter(
-    (s) => !value.includes(s) && (!draft || s.toLowerCase().includes(draft.toLowerCase()))
-  ).slice(0, 6);
+  const remainingSuggestions = (suggestOnlyWhenTyping && !draft.trim() ? [] : (suggestions ?? []))
+    .filter((s) => !value.includes(s) && (!draft || s.toLowerCase().includes(draft.toLowerCase())))
+    .slice(0, 6);
 
   return (
     <div className={className}>
