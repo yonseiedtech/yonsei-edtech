@@ -1,21 +1,25 @@
 "use client";
 
 import { useMemo } from "react";
-import { SpellCheck, AlertTriangle, CheckCircle2, Languages, Clock } from "lucide-react";
+import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import { SpellCheck, AlertTriangle, CheckCircle2, Languages, Clock, BookOpen } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import InlineNotification from "@/components/ui/inline-notification";
 import { cn } from "@/lib/utils";
+import { writingTipsApi } from "@/lib/bkend";
 import {
   styleIssues,
   styleCategoryOf,
   STYLE_CATEGORY_LABELS,
+  STYLE_RULE_TIP_HINTS,
   LINT_CHAPTER_LABELS,
   type LintIssue,
   type LintSections,
   type StyleCategory,
 } from "./writing-lint";
-import type { WritingPaperChapterKey } from "@/types";
+import type { WritingPaperChapterKey, WritingTip } from "@/types";
 
 const CHAPTER_ORDER: WritingPaperChapterKey[] = [
   "intro",
@@ -41,6 +45,22 @@ function hintOf(message: string): string {
 }
 
 export default function StyleCheckPanel({ sections }: { sections: LintSections }) {
+  // Phase 4-A: 규칙 ↔ 아카이브 글쓰기 팁 카드 딥링크 (카드 = 설명·예문의 정본)
+  const { data: tipsRes } = useQuery({
+    queryKey: ["writing-tips-published"],
+    queryFn: () => writingTipsApi.listPublished(),
+    staleTime: 10 * 60_000,
+  });
+  const tipHrefOfRule = useMemo(() => {
+    const tips = (tipsRes?.data ?? []) as WritingTip[];
+    return (ruleId: string): string | null => {
+      const hint = STYLE_RULE_TIP_HINTS[ruleId];
+      if (!hint || tips.length === 0) return null;
+      const tip = tips.find((t) => (t.title ?? "").includes(hint));
+      return tip ? `/archive/writing-tips/${tip.id}` : null;
+    };
+  }, [tipsRes]);
+
   const { byCat, total, counts, hasText } = useMemo(() => {
     const hasText = CHAPTER_ORDER.some((ch) =>
       (sections[ch] ?? []).some((s) => (s.paragraphs ?? []).some((p) => (p.text ?? "").trim())),
@@ -159,6 +179,15 @@ export default function StyleCheckPanel({ sections }: { sections: LintSections }
                                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                                   {hintOf(i.message)}
                                 </p>
+                              )}
+                              {tipHrefOfRule(i.rule) && (
+                                <Link
+                                  href={tipHrefOfRule(i.rule)!}
+                                  className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+                                >
+                                  <BookOpen size={11} />
+                                  설명·예문 카드 보기
+                                </Link>
                               )}
                             </li>
                           ))}

@@ -96,6 +96,29 @@ const STYLE_RULES: StyleRule[] = [
   { id: "voice-noun-ending", re: /[가-힣](?:함|임)\.(?=\s|$)/g, severity: "info", label: "명사형 종결 '~함/~임'", hint: "학술 본문은 서술형 '~이다/~한다'로 맺습니다(개조식 지양).", soft: true },
 ];
 
+/**
+ * Phase 4-A (지식 SSOT): 규칙 id → 아카이브 writing-tips 카드 제목 부분문자열.
+ * StyleCheckPanel 이 발행된 카드 목록에서 title.includes(힌트) 로 정확한 카드를
+ * 찾아 딥링크한다 (규칙=탐지 엔진, 카드=설명·예문의 정본).
+ */
+export const STYLE_RULE_TIP_HINTS: Record<string, string> = {
+  "trans-double-passive": "이중 피동",
+  "trans-passive-jin": "부자연스러운 피동",
+  "trans-by": "에 의해",
+  "trans-japanese-isseo": "에 있어서",
+  "trans-saryo": "사료된다",
+  "trans-exist": "존재한다",
+  "trans-one-of": "중 하나",
+  "trans-due-to": "로 인한",
+  "trans-fact-that": "라는 사실",
+  "trans-through": "을 통해",
+  "trans-about": "에 대하여",
+  "trans-japanese-case": "의 경우",
+  "trans-progressive": "고 있다",
+  "voice-hedge": "발표체 헤지",
+  "voice-noun-ending": "명사형 종결",
+};
+
 /** 어절 끝 조사 제거 — 표기 변형 비교용 (보수적 목록) */
 function stripParticle(w: string): string {
   return w.replace(/(이|가|은|는|을|를|의|와|과|도|만|에서|에게|으로|에|로)$/, "");

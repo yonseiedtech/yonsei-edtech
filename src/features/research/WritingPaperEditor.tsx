@@ -766,6 +766,16 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     () => new Set(resultsMethods.filter((m) => !(profile?.methods ?? []).includes(m))),
     [resultsMethods, profile?.methods],
   );
+  // Phase 4-A (지식 SSOT): StatMethodType → 아카이브 정확한 문서 딥링크.
+  // 하드코딩된 검색쿼리(archiveHref) 대신, 로드된 아카이브 문서의 seedKey 역매핑으로 해석.
+  const archiveDocHrefByType = useMemo(() => {
+    const m = new Map<StatMethodType, string>();
+    for (const doc of archiveStatMethods) {
+      const t = SEEDKEY_TO_STATTYPE[doc.seedKey ?? ""];
+      if (t && !m.has(t)) m.set(t, `/archive/statistical-methods/${doc.id}`);
+    }
+    return m;
+  }, [archiveStatMethods]);
   const [guideOpen, setGuideOpen] = useState(false);
   const [sectionGuideOpen, setSectionGuideOpen] = useState<string | null>(null);
   const [lintOpen, setLintOpen] = useState(false);
@@ -2642,7 +2652,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
             userId={user.id}
             selectedMethods={profile?.methods ?? []}
             assumptionsByMethod={ASSUMPTIONS_BY_METHOD}
-            archiveByMethod={ARCHIVE_BY_METHOD}
+            archiveByMethod={{ ...ARCHIVE_BY_METHOD, ...Object.fromEntries(archiveDocHrefByType) }}
             readOnly={readOnly}
             hasProfile={!!profile}
             onInsertAnalysis={insertAnalysisSkeleton}
@@ -2674,12 +2684,12 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                           연구문제 태그
                         </span>
                       )}
-                      {g.archiveHref && (
+                      {(archiveDocHrefByType.get(m) ?? g.archiveHref) && (
                         <Link
-                          href={g.archiveHref}
+                          href={archiveDocHrefByType.get(m) ?? g.archiveHref!}
                           className="rounded-full border border-sky-300/60 px-2 py-0.5 text-[10px] text-sky-700 transition-colors hover:bg-sky-100 dark:border-sky-700/60 dark:text-sky-300 dark:hover:bg-sky-900/40"
                         >
-                          아카이브 개념 보기
+                          아카이브 개념 보기{archiveDocHrefByType.has(m) ? " (해석·참고문헌)" : ""}
                         </Link>
                       )}
                       {!readOnly && (

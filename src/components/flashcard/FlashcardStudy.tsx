@@ -59,6 +59,12 @@ const SOURCE_META: Record<
     className:
       "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300",
   },
+  foundation_term: {
+    label: "기초 용어",
+    icon: BookOpen,
+    className:
+      "border-sky-300 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-300",
+  },
 };
 
 /** 출처 필터 — 클라이언트 필터(복합 인덱스 회피). */
@@ -67,6 +73,7 @@ const FILTER_TABS: { value: SourceFilter; label: string }[] = [
   { value: "all", label: "전체" },
   { value: "diagnostic_wrong", label: "진단 오답" },
   { value: "concept", label: "개념" },
+  { value: "foundation_term", label: "기초 용어" },
 ];
 
 /** 학습 순서 정렬 — 오늘 복습 대상 → 신규(미학습) → 나머지(dueAt 오름차순). */
@@ -126,11 +133,13 @@ export default function FlashcardStudy() {
   const sourceCounts = useMemo(() => {
     let dx = 0;
     let concept = 0;
+    let foundationTerm = 0;
     for (const c of cards) {
       if (c.source === "concept") concept += 1;
+      else if (c.source === "foundation_term") foundationTerm += 1;
       else dx += 1;
     }
-    return { all: cards.length, diagnostic_wrong: dx, concept };
+    return { all: cards.length, diagnostic_wrong: dx, concept, foundation_term: foundationTerm };
   }, [cards]);
 
   // 선택된 출처로 필터링한 학습 대상(복합 인덱스 회피 — 클라이언트 필터).
@@ -430,6 +439,17 @@ export default function FlashcardStudy() {
                 <p className="whitespace-pre-line text-sm leading-relaxed text-foreground/90 sm:text-base">
                   {current.back || "(정답 정보 없음)"}
                 </p>
+                {current.foundationTermId && (
+                  <Link
+                    href={`/archive/foundation-terms/${current.foundationTermId}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="mt-4 inline-flex w-fit items-center gap-1 text-xs font-medium text-violet-700 hover:underline dark:text-violet-300"
+                  >
+                    <BookOpen className="h-3 w-3" aria-hidden />
+                    용어 정의 바로가기
+                    <ArrowRight className="h-3 w-3" aria-hidden />
+                  </Link>
+                )}
                 {current.conceptId && (
                   <Link
                     href={`/archive/concept/${current.conceptId}`}

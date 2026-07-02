@@ -2768,7 +2768,7 @@ import { todayYmdKst as flashcardTodayYmdKst } from "./dday";
 
 export const flashcardsApi = {
   makeId: (userId: string, source: FlashcardSource, refId: string) =>
-    `${userId}__${source === "concept" ? "concept" : "dx"}__${refId}`,
+    `${userId}__${source === "concept" ? "concept" : source === "foundation_term" ? "term" : "dx"}__${refId}`,
   /** 본인 카드 전체 (정렬은 클라이언트). */
   listByUser: (userId: string) =>
     dataApi.list<Flashcard>("flashcards", { "filter[userId]": userId, limit: 1000 }),
@@ -2826,6 +2826,46 @@ export const flashcardsApi = {
     const existing = await dataApi.get<Flashcard>("flashcards", id).catch(() => null);
     if (existing) {
       // 멱등 — 복습 메타(dueAt/streak/intervalDays/reviewCount/correctCount/lastReviewedAt) 비변경.
+      return dataApi.update<Flashcard>("flashcards", id, content);
+    }
+    const today = flashcardTodayYmdKst();
+    return dataApi.upsert<Flashcard>("flashcards", id, {
+      ...content,
+      dueAt: today,
+      streak: 0,
+      intervalDays: 1,
+      reviewCount: 0,
+      correctCount: 0,
+      lastReviewedAt: null,
+    });
+  },
+  /**
+   * 기초 용어(archive_foundation_terms) → 카드 멱등 저장 (Phase 4-A).
+   * 앞면=용어(영문 병기), 뒷면=한 줄 요약(+쉬운 비유). doc id = `${userId}__term__${termId}`.
+   */
+  saveFromFoundationTerm: async (
+    userId: string,
+    term: { id: string; term: string; englishName?: string; summary?: string; accessibleSummary?: string },
+  ): Promise<Flashcard> => {
+    const id = `${userId}__term__${term.id}`;
+    const back = [term.summary, term.accessibleSummary ? `쉽게: ${term.accessibleSummary}` : null]
+      .filter(Boolean)
+      .join("\n\n");
+    const content: Record<string, unknown> = {
+      userId,
+      source: "foundation_term",
+      front: term.englishName ? `${term.term} (${term.englishName})` : term.term,
+      back: back || "(요약이 등록되지 않은 용어입니다)",
+      frontHint: null,
+      area: "concept",
+      cognitiveLevel: null,
+      sourceQuestionId: null,
+      conceptId: null,
+      foundationTermId: term.id,
+    };
+    const existing = await dataApi.get<Flashcard>("flashcards", id).catch(() => null);
+    if (existing) {
+      // 멱등 — 복습 메타 비변경.
       return dataApi.update<Flashcard>("flashcards", id, content);
     }
     const today = flashcardTodayYmdKst();

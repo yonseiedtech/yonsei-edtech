@@ -17,6 +17,7 @@ import {
   Link2,
   PenLine,
   Star,
+  Layers,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ import {
   researchMethodsApi,
   statisticalMethodsApi,
   archiveFavoritesApi,
+  flashcardsApi,
 } from "@/lib/bkend";
 import {
   FOUNDATION_TERM_CATEGORY_COLORS,
@@ -64,6 +66,8 @@ export default function FoundationTermDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [isFav, setIsFav] = useState(false);
   const [favPending, setFavPending] = useState(false);
+  const [cardPending, setCardPending] = useState(false);
+  const [cardSaved, setCardSaved] = useState(false);
 
   useEffect(() => {
     if (!params?.id) return;
@@ -219,6 +223,28 @@ export default function FoundationTermDetailPage() {
     }
   }
 
+  // Phase 4-A: 기초 용어 → 암기카드 저장 (멱등 — 재저장 시 복습 진척 보존)
+  async function handleSaveFlashcard() {
+    if (!user || !term || cardPending) return;
+    setCardPending(true);
+    try {
+      await flashcardsApi.saveFromFoundationTerm(user.id, {
+        id: term.id,
+        term: term.term,
+        englishName: term.englishName,
+        summary: term.summary,
+        accessibleSummary: term.accessibleSummary,
+      });
+      setCardSaved(true);
+      toast.success("암기카드에 저장했습니다. /flashcards 에서 복습하세요!");
+    } catch (err) {
+      console.error("[foundation-term-detail] flashcard save failed", err);
+      toast.error("암기카드 저장 실패");
+    } finally {
+      setCardPending(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-12">
@@ -341,6 +367,18 @@ export default function FoundationTermDetailPage() {
               >
                 <Star className={cn("mr-1 h-4 w-4", isFav && "fill-current")} />
                 {isFav ? "관심 저장됨" : "관심 저장"}
+              </Button>
+            )}
+            {user && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSaveFlashcard}
+                disabled={cardPending}
+                title="용어·요약을 암기카드로 저장해 간격 반복으로 복습"
+              >
+                <Layers className="mr-1 h-4 w-4" />
+                {cardSaved ? "암기카드 저장됨" : "암기카드에 저장"}
               </Button>
             )}
             {canManage && (
