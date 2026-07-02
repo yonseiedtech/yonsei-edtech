@@ -6,16 +6,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { profilesApi } from "@/lib/bkend";
-import ResearchPaperList from "@/features/research/ResearchPaperList";
-import WritingPaperEditor from "@/features/research/WritingPaperEditor";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
 import WritingHeatmap from "@/features/research/WritingHeatmap";
 import WritingHistoryList from "@/features/research/WritingHistoryList";
-import ResearchDashboard from "@/features/research/ResearchDashboard";
-import ResearchReportPrint from "@/features/research/ResearchReportPrint";
-import ResearchReportEditor from "@/features/research/ResearchReportEditor";
-import ResearchProposalEditor from "@/features/research/ResearchProposalEditor";
-import StudyTimerStats from "@/features/research/study-timer/StudyTimerStats";
-import PaperReadingSection from "@/features/research/study-timer/PaperReadingSection";
 import ManualSessionDialog from "@/features/research/study-timer/ManualSessionDialog";
 import EditSessionDialog from "@/features/research/study-timer/EditSessionDialog";
 import { useStudySessions, useDeleteSession } from "@/features/research/study-timer/useStudySessions";
@@ -33,10 +27,23 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import ThesisJourney from "@/features/research/ThesisJourney";
 import ResearchCockpit from "@/features/research/ResearchCockpit";
-import AdvisorFeedbackLog from "@/features/research/AdvisorFeedbackLog";
-import ResearchActivityDashboard from "@/features/mypage/ResearchActivityDashboard";
+
+// ── Phase 1 체감속도: 탭 패널 대형 컴포넌트 지연 로딩 ─────────────────────────
+// 5개 탭 × 초대형 에디터(각 80~130KB)를 정적 import 하면 첫 진입 번들에 전부
+// 합산된다. 활성 탭 렌더 시점에만 해당 청크를 내려받도록 dynamic 으로 분리.
+const panelFallback = () => <Skeleton className="h-64 w-full rounded-2xl" />;
+const ResearchPaperList = dynamic(() => import("@/features/research/ResearchPaperList"), { ssr: false, loading: panelFallback });
+const WritingPaperEditor = dynamic(() => import("@/features/research/WritingPaperEditor"), { ssr: false, loading: panelFallback });
+const ResearchDashboard = dynamic(() => import("@/features/research/ResearchDashboard"), { ssr: false, loading: panelFallback });
+const ResearchReportPrint = dynamic(() => import("@/features/research/ResearchReportPrint"), { ssr: false, loading: panelFallback });
+const ResearchReportEditor = dynamic(() => import("@/features/research/ResearchReportEditor"), { ssr: false, loading: panelFallback });
+const ResearchProposalEditor = dynamic(() => import("@/features/research/ResearchProposalEditor"), { ssr: false, loading: panelFallback });
+const StudyTimerStats = dynamic(() => import("@/features/research/study-timer/StudyTimerStats"), { ssr: false, loading: panelFallback });
+const PaperReadingSection = dynamic(() => import("@/features/research/study-timer/PaperReadingSection"), { ssr: false, loading: panelFallback });
+const ThesisJourney = dynamic(() => import("@/features/research/ThesisJourney"), { ssr: false, loading: panelFallback });
+const AdvisorFeedbackLog = dynamic(() => import("@/features/research/AdvisorFeedbackLog"), { ssr: false, loading: panelFallback });
+const ResearchActivityDashboard = dynamic(() => import("@/features/mypage/ResearchActivityDashboard"), { ssr: false, loading: panelFallback });
 import { formatPeriodLabel } from "@/lib/research-period";
 import {
   currentSemesterRange,
