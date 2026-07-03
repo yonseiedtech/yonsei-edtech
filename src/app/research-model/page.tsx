@@ -12,11 +12,12 @@
 
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FlaskConical, Save, Loader2 } from "lucide-react";
+import { FlaskConical, Save, Loader2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { useAuthStore } from "@/features/auth/auth-store";
 import ResearchModelEditor from "@/features/research/ResearchModelEditor";
+import ModelWizard from "@/features/research/ModelWizard";
 import {
   useEnsureResearchReport,
   useUpdateResearchReport,
@@ -33,6 +34,7 @@ function ResearchModelContent() {
   const [model, setModel] = useState<ResearchModelData>(EMPTY_RESEARCH_MODEL);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
   const ensureReport = useEnsureResearchReport();
   const updateReport = useUpdateResearchReport();
 
@@ -87,11 +89,45 @@ function ResearchModelContent() {
         title="연구 모형 그리기"
         description="연구의 변인(독립·종속·매개·조절·통제)과 관계(인과·상관)를 다이어그램으로 그려보세요. 핸들을 끌어 변인을 연결하고, 가설 라벨(H1 등)을 붙일 수 있습니다."
         actions={
-          <Button onClick={handleSave} disabled={saving} className="gap-1.5">
-            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            {saving ? "저장 중…" : "저장"}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setWizardOpen(true)} className="gap-1.5">
+              <Wand2 size={14} />
+              마법사로 만들기
+            </Button>
+            <Button onClick={handleSave} disabled={saving} className="gap-1.5">
+              {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+              {saving ? "저장 중…" : "저장"}
+            </Button>
+          </div>
         }
+      />
+
+      {!isLoading && model.nodes.length === 0 && (
+        <button
+          type="button"
+          onClick={() => setWizardOpen(true)}
+          className="mt-6 flex w-full items-center gap-3 rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-4 text-left transition-colors hover:bg-primary/10"
+        >
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Wand2 size={18} />
+          </span>
+          <span>
+            <span className="block text-sm font-semibold">처음이라면 마법사로 시작하세요</span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">
+              변인 이름 몇 개만 입력하면 배치·화살표·가설 라벨(H1…)까지 자동으로 그려드립니다. 템플릿 5종도 준비되어 있어요.
+            </span>
+          </span>
+        </button>
+      )}
+
+      <ModelWizard
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        hasExisting={model.nodes.length > 0}
+        onApply={(m) => {
+          setModel(m);
+          setDirty(true);
+        }}
       />
 
       <div className="mt-6">
