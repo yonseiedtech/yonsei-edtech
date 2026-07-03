@@ -140,7 +140,10 @@ export default function ResearchFinderPage() {
   const linkedTheses = useMemo(() => {
     if (!primary) return [];
     return theses
-      .filter((t) => (t.researchMethodIds || []).includes(primary.id))
+      // 자동추출(researchMethodIds) ∪ 운영자 큐레이트(researchMethods)
+      .filter((t) =>
+        [...(t.researchMethodIds || []), ...(t.researchMethods || [])].includes(primary.id),
+      )
       .sort((a, b) => (b.awardedYearMonth || "").localeCompare(a.awardedYearMonth || ""))
       .slice(0, 6);
   }, [primary, theses]);

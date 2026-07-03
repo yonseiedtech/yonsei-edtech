@@ -139,7 +139,10 @@ export default function MethodFinderPage() {
   const linkedTheses = useMemo(() => {
     if (!primaryMethod) return [];
     return theses
-      .filter((t) => (t.statMethodIds || []).includes(primaryMethod.id))
+      // 자동추출(statMethodIds) ∪ 운영자 큐레이트(statisticalMethods) — 큐레이션이 추천에 반영되도록
+      .filter((t) =>
+        [...(t.statMethodIds || []), ...(t.statisticalMethods || [])].includes(primaryMethod.id),
+      )
       .sort((a, b) => (b.awardedYearMonth || "").localeCompare(a.awardedYearMonth || ""))
       .slice(0, 6);
   }, [primaryMethod, theses]);

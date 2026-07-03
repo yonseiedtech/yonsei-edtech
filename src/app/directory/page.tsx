@@ -4,7 +4,8 @@ import { useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import AuthGuard from "@/features/auth/AuthGuard";
-import { useMembers } from "@/features/member/useMembers";
+import { useQuery } from "@tanstack/react-query";
+import { auth } from "@/lib/firebase";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import { Badge } from "@/components/ui/badge";
@@ -138,11 +139,29 @@ export function DirectoryContent({
   const { user: viewer } = useAuthStore();
 
   // 운영진: staff + president
-  const { members: staffMembers, isLoading: staffLoading } = useMembers({ role: "staff" });
-  const { members: presidentMembers, isLoading: presLoading } = useMembers({ role: "president" });
-  const { members: advisors, isLoading: advLoading } = useMembers({ role: "advisor" });
-  const { members: regularMembers, isLoading: memLoading } = useMembers({ role: "member" });
-  const { members: alumniMembers, isLoading: alumLoading } = useMembers({ role: "alumni" });
+  // 보류분 처리: 연락처 가시성을 서버에서 강제하는 전용 API 사용
+  // (기존 useMembers 는 전화·이메일 평문이 네트워크 응답에 그대로 실렸음)
+  const { data: dirRes, isLoading: dirLoading } = useQuery({
+    queryKey: ["directory-members"],
+    queryFn: async () => {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error("로그인이 필요합니다.");
+      const res = await fetch("/api/members/directory", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("명단 조회 실패");
+      return (await res.json()) as { members: User[] };
+    },
+    staleTime: 5 * 60_000,
+  });
+  const allDir = useMemo(() => dirRes?.members ?? [], [dirRes]);
+  const byRole = (role: string) => allDir.filter((m) => m.role === role);
+  const staffMembers = useMemo(() => byRole("staff"), [allDir]);
+  const presidentMembers = useMemo(() => byRole("president"), [allDir]);
+  const advisors = useMemo(() => byRole("advisor"), [allDir]);
+  const regularMembers = useMemo(() => byRole("member"), [allDir]);
+  const alumniMembers = useMemo(() => byRole("alumni"), [allDir]);
+  const staffLoading = dirLoading, presLoading = dirLoading, advLoading = dirLoading, memLoading = dirLoading, alumLoading = dirLoading;
 
   const isLoading = staffLoading || presLoading || advLoading || memLoading || alumLoading;
 
