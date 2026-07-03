@@ -52,6 +52,8 @@ interface JourneyStage {
   tips: string[];
   /** 이 단계에서 먼저 볼 아카이브 항목 — 개념·연구방법·통계방법 가이드 딥링크 */
   archiveTopics?: { label: string; href: string }[];
+  /** R6(2026-07-03): 이 학기에 해당하는 연구 여정 단계 — 에디터 상단 7단계 지도와 정렬 */
+  journeySteps?: string[];
 }
 
 /** 대시보드 인사 헤더 등 외부에서 단계 메타 재사용 (체감 스프린트) */
@@ -73,6 +75,7 @@ export const JOURNEY_STAGES: JourneyStage[] = [
       "읽은 논문은 그때그때 분석 노트로 남겨야 2학기에 선행연구 정리가 빨라집니다.",
       "관심 개념은 아카이브에서 '개념→변인→측정도구' 연결을 확인해 두세요.",
     ],
+    journeySteps: ["주제 탐색", "문헌 고찰"],
     archiveTopics: [
       { label: "교육공학", href: "/archive/concept?q=%EA%B5%90%EC%9C%A1%EA%B3%B5%ED%95%99" },
       { label: "교수설계", href: "/archive/concept?q=%EA%B5%90%EC%88%98%EC%84%A4%EA%B3%84" },
@@ -99,6 +102,7 @@ export const JOURNEY_STAGES: JourneyStage[] = [
       "해당 분야 메타분석을 인용하면 연구 필요성과 기대 효과크기의 근거가 강해집니다.",
       "연구보고서 인터뷰 모드(분석·처방·실행연구 등 5트랙)로 한 사이클을 미리 경험해 보세요.",
     ],
+    journeySteps: ["문헌 고찰", "연구 보고서"],
     archiveTopics: [
       { label: "학습동기", href: "/archive/concept?q=%ED%95%99%EC%8A%B5%EB%8F%99%EA%B8%B0" },
       { label: "자기효능감", href: "/archive/concept?q=%EC%9E%90%EA%B8%B0%ED%9A%A8%EB%8A%A5%EA%B0%90" },
@@ -123,6 +127,7 @@ export const JOURNEY_STAGES: JourneyStage[] = [
       "인과 주장은 통계가 아니라 설계로 확보됩니다: ①시간 선행 ②관련성 ③경쟁 가설 배제, 3요건을 계획서에서 미리 논증하세요.",
       "집단 간 사전 점수가 다를 수 있다면 ANCOVA(공변량 통제)를 분석 계획에 명시해 두세요.",
     ],
+    journeySteps: ["연구 계획서", "윤리·도구 확정"],
     archiveTopics: [
       { label: "준실험연구", href: "/archive/research-methods?q=%EC%A4%80%EC%8B%A4%ED%97%98" },
       { label: "인과관계 추론", href: "/archive/research-methods?q=%EC%9D%B8%EA%B3%BC%EA%B4%80%EA%B3%84%20%EC%B6%94%EB%A1%A0" },
@@ -138,6 +143,7 @@ export const JOURNEY_STAGES: JourneyStage[] = [
     goal: "자료를 수집하고 올바른 통계 기법으로 분석하며 본문(1~3장)을 작성합니다.",
     tools: [
       { label: "학위논문 본문 작성", href: "/mypage/research?tab=writing&sub=thesis" },
+      { label: "연구윤리 체크리스트 (방법 장)", href: "/mypage/research?tab=writing&sub=thesis" },
       { label: "연구 타이머로 집필 루틴", href: "/mypage/research?tab=timer" },
       { label: "통계 개념(아카이브)", href: "/archive" },
     ],
@@ -147,6 +153,7 @@ export const JOURNEY_STAGES: JourneyStage[] = [
       "정규성 검정이 기각돼도 표본이 충분하면(n≥30) 중심극한정리로 모수 검정을 방어할 수 있습니다.",
       "탈락·결측은 '예방했다'가 아니라 실제 수치로 보고하는 것이 정석입니다.",
     ],
+    journeySteps: ["윤리·도구 확정", "논문 집필"],
     archiveTopics: [
       { label: "카이제곱 검정", href: "/archive/statistical-methods?q=%EC%B9%B4%EC%9D%B4%EC%A0%9C%EA%B3%B1" },
       { label: "중심극한정리와 정규성", href: "/archive/statistical-methods?q=%EC%A4%91%EC%8B%AC%EA%B7%B9%ED%95%9C%EC%A0%95%EB%A6%AC" },
@@ -162,6 +169,7 @@ export const JOURNEY_STAGES: JourneyStage[] = [
     goal: "결과·논의(4~5장)를 완성하고 타당도 위협 방어 논리로 심사를 준비합니다.",
     tools: [
       { label: "학위논문 마무리", href: "/mypage/research?tab=writing&sub=thesis" },
+      { label: "지도 노트 — 심사 피드백 관리", href: "/mypage/research?tab=writing&sub=thesis" },
       { label: "논문 심사 연습 (따라읽기·STT)", href: "/steppingstone/thesis-defense" },
       { label: "작성 원칙·타당도(아카이브)", href: "/archive" },
     ],
@@ -170,6 +178,7 @@ export const JOURNEY_STAGES: JourneyStage[] = [
       "'차이가 있다(비교)'와 '효과를 미친다(인과)'의 표현 수위를 점검하세요 — 인과 주장은 설계 근거와 함께만.",
       "작성 5원칙 최종 점검: '매우·크게' 같은 모호 표현은 수치로, 동일 개념은 한 용어로 통일, 방법·결과는 과거 시제.",
     ],
+    journeySteps: ["논문 집필", "심사 대응"],
     archiveTopics: [
       { label: "작성 5원칙", href: "/archive/writing-tips" },
       { label: "외적 타당도", href: "/archive/research-methods?q=%EC%99%B8%EC%A0%81%20%ED%83%80%EB%8B%B9%EB%8F%84" },
@@ -422,6 +431,19 @@ export default function ThesisJourney({ user, editable = true }: Props) {
                 )}
               </div>
               <p className="mt-1 text-xs text-muted-foreground">{stage.goal}</p>
+              {stage.journeySteps && stage.journeySteps.length > 0 && (
+                <p className="mt-1 flex flex-wrap items-center gap-1">
+                  <span className="text-[10px] text-muted-foreground">연구 여정:</span>
+                  {stage.journeySteps.map((j) => (
+                    <span
+                      key={j}
+                      className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary"
+                    >
+                      {j}
+                    </span>
+                  ))}
+                </p>
+              )}
               {outputChip(stage.stage) && (
                 <p className="mt-1">
                   <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">

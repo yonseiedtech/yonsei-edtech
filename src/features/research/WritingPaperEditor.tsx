@@ -2821,7 +2821,10 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                 <span className="font-semibold">
                   가설 {form.researchQuestions.filter((q) => q.hypothesisText?.trim()).length}개
                 </span>
-                가 있어요 — H1~ 형식으로 절에 나열할 수 있습니다.
+                가 있어요 — H1~ 형식으로 절에 나열할 수 있습니다.{" "}
+                <span className="text-muted-foreground">
+                  단, 우리 전공 논문은 가설을 본문에 직접 쓰지 않는 관례가 있으니 수록 여부는 지도교수와 확인하세요.
+                </span>
               </p>
               <Button size="sm" variant="outline" className="h-7 shrink-0 text-xs" onClick={insertHypotheses}>
                 &lsquo;연구모형 및 가설&rsquo; 절에 나열

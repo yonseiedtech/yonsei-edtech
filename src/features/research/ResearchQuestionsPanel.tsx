@@ -261,7 +261,10 @@ export default function ResearchQuestionsPanel({
             <div className="mt-2 pl-8">
               <div className="flex flex-wrap items-center gap-2">
                 <p className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
-                  연구 가설 <span className="font-normal text-muted-foreground">(선택 — 양적 연구는 권장)</span>
+                  연구 가설{" "}
+                  <span className="font-normal text-muted-foreground">
+                    (선택 — 분석 방향 설계용. 우리 전공 논문은 가설을 본문에 직접 쓰지 않는 관례가 있어요)
+                  </span>
                 </p>
                 {!readOnly && !q.hypothesisText?.trim() && q.text.trim() && (
                   <button
