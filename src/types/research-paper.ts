@@ -226,6 +226,10 @@ export interface WritingPaper {
   abstract?: string;
   /** 초록 키워드 (3~5개 권장) */
   abstractKeywords?: string[];
+  /** 영문 초록 (R1, 2026-07-03) */
+  abstractEn?: string;
+  /** 참고문헌 텍스트 — 계획서·보고서 문헌에서 APA7 생성 후 자유 편집 (R3, 2026-07-03) */
+  references?: string;
   /** 구조화된 연구문제 (서론) — 항목별 텍스트 + 연구방법·통계방법 태그 */
   researchQuestions?: ResearchQuestionItem[];
   /** 부록 목록 — 제목 + 메모 */

@@ -34,7 +34,7 @@ import {
   BookOpen, FlaskConical, Microscope, BarChart3, Flag,
   Play, Timer, Lightbulb, Plus, Trash2, History,
   Diff, RotateCcw, ArrowUp, ArrowDown, Download, ClipboardCheck, Quote, Copy, Calculator,
-  Loader2, Compass, GraduationCap, Paperclip,
+  Loader2, Compass, GraduationCap, Paperclip, BookMarked,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -69,8 +69,9 @@ import {
   STAT_METHOD_LABELS,
 } from "@/types";
 import type { StatMethodType } from "@/types";
-import { advisorFeedbackApi, writingPapersApi, writingPaperVersionsApi, researchProposalsApi, statisticalMethodsApi } from "@/lib/bkend";
-import type { AdvisorFeedbackNote, ResearchProposal } from "@/types";
+import { advisorFeedbackApi, writingPapersApi, writingPaperVersionsApi, researchProposalsApi, researchReportsApi, researchPapersApi, statisticalMethodsApi } from "@/lib/bkend";
+import type { AdvisorFeedbackNote, ResearchProposal, ResearchReport, ResearchPaper } from "@/types";
+import { formatApa7List } from "@/lib/apa7";
 import { useStudyTimerStore } from "./study-timer/study-timer-store";
 import { useCreateSession, useStudySessionsByWritingPaper } from "./study-timer/useStudySessions";
 import {
@@ -128,7 +129,8 @@ function templateHeadings(
   const qual = approach === "qualitative";
   switch (chapter) {
     case "intro":
-      return ["연구의 필요성", "연구 목적"];
+      // R1(2026-07-03): 용어의 정의(조작적 정의) 절 — 석사논문 필수 요건
+      return ["연구의 필요성", "연구 목적", "용어의 정의"];
     case "background":
       // 2026-07-03 사용자 요청: 기본 절명은 "이론적 배경 N" — 절 이름은 헤더에서 자유 수정.
       // (기존 가이드 절명은 SECTION_GUIDES 키워드로 계속 지원 — 사용자가 이름을 바꾸면 매칭)
@@ -136,15 +138,17 @@ function templateHeadings(
         ? ["이론적 배경 1", "이론적 배경 2", "이론적 배경 3"]
         : ["이론적 배경 1", "이론적 배경 2", "이론적 배경 3", "연구모형 및 가설"];
     case "method":
+      // R1(2026-07-03): 연구 절차(사전-처치-사후 타임라인) 절 추가
       return qual
-        ? ["연구 설계", "연구 참여자", "자료 수집", "자료 분석", "신뢰성·타당성 확보"]
-        : ["연구 설계", "연구 대상", "측정 도구", "프로그램 설계 및 적용", "자료 수집 및 분석"];
+        ? ["연구 설계", "연구 참여자", "연구 절차", "자료 수집", "자료 분석", "신뢰성·타당성 확보"]
+        : ["연구 설계", "연구 대상", "측정 도구", "프로그램 설계 및 적용", "연구 절차", "자료 수집 및 분석"];
     case "results":
       return qual
         ? ["주제(테마)별 결과"]
         : ["기술통계 및 가정 검정", "연구문제별 결과"];
     case "conclusion":
-      return ["요약", "결론", "한계 및 시사점"];
+      // R1(2026-07-03): 논의(선행연구와의 비교 해석)를 결론과 분리 — 심사 단골 요구
+      return ["요약", "논의", "결론", "한계 및 제언"];
   }
 }
 
@@ -265,6 +269,10 @@ interface FormState {
   sections: SectionsState;
   abstract: string;
   abstractKeywords: string[];
+  /** R1(2026-07-03): 영문 초록 */
+  abstractEn: string;
+  /** R3(2026-07-03): 참고문헌 텍스트 — APA7 생성 후 자유 편집 */
+  references: string;
   researchQuestions: ResearchQuestionItem[];
   appendices: AppendixItem[];
 }
@@ -518,6 +526,14 @@ const SECTION_GUIDES: { keywords: string[]; tips: string[] }[] = [
     ],
   },
   {
+    keywords: ["용어의 정의", "용어 정의", "조작적 정의"],
+    tips: [
+      "핵심 변인마다 개념적 정의(이론에 근거한 의미)와 조작적 정의(본 연구에서 무엇으로 측정하는지)를 구분해 제시하세요.",
+      "조작적 정의는 측정 도구와 1:1로 대응해야 합니다 — '본 연구에서 ○○은 △△(개발자, 연도) 척도로 측정한 점수를 의미한다' 형식이 표준입니다.",
+      "여기서 명명한 표현을 논문 끝까지 통일하세요 — 같은 개념을 다른 이름으로 부르면 일관성 지적을 받습니다.",
+    ],
+  },
+  {
     keywords: ["연구 문제", "연구문제"],
     tips: [
       "연구 문제는 서술문보다 의문문이 연구자의 생각을 더 분명히 보여줍니다 — 여러 개라면 복합 서술문 대신 각각 별개의 의문문으로 진술하세요.",
@@ -637,7 +653,7 @@ function getSectionGuides(heading: string): string[] | null {
 function buildEmptyForm(approach: ResearchApproachType): FormState {
   const sections = {} as SectionsState;
   for (const k of CHAPTER_KEYS) sections[k] = buildTemplateSections(templateHeadings(k, approach));
-  return { title: "", sections, abstract: "", abstractKeywords: [], researchQuestions: [], appendices: [] };
+  return { title: "", sections, abstract: "", abstractKeywords: [], abstractEn: "", references: "", researchQuestions: [], appendices: [] };
 }
 
 function normalizeSections(list: WritingSection[]): WritingSection[] {
@@ -669,6 +685,8 @@ function fromPaper(p: WritingPaper | undefined, approach: ResearchApproachType):
     sections,
     abstract: p.abstract ?? "",
     abstractKeywords: p.abstractKeywords ?? [],
+    abstractEn: p.abstractEn ?? "",
+    references: p.references ?? "",
     researchQuestions: p.researchQuestions ?? [],
     appendices: p.appendices ?? [],
   };
@@ -734,6 +752,8 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   // 사이클 70: 초록 탭 — 5장 챕터(step)와 병렬 모드. step 타입은 그대로 두어 챕터 로직 무영향.
   const [onAbstract, setOnAbstract] = useState(false);
   const [onAppendix, setOnAppendix] = useState(false);
+  const [onReferences, setOnReferences] = useState(false);
+  const [refsBusy, setRefsBusy] = useState(false);
   // D: 이론배경/방법/결과/결론 절별 하위 탭 — 활성 절 인덱스(장 전환 시 0으로)
   const [sectionTab, setSectionTab] = useState(0);
   useEffect(() => {
@@ -811,6 +831,14 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     enabled: !readOnly && !!user.id,
     staleTime: 5 * 60_000,
   });
+  // R3: 연구보고서 — 서론(필요성)·이론적 배경 시딩용
+  const { data: reports = [] } = useQuery({
+    queryKey: ["research_report_for_paper", user.id],
+    queryFn: async () => (await researchReportsApi.listByUser(user.id)).data as ResearchReport[],
+    enabled: !readOnly && !!user.id,
+    staleTime: 5 * 60_000,
+  });
+  const report = reports[0];
 
   const pendingByChapter = useMemo(() => {
     const map = new Map<string, AdvisorFeedbackNote[]>();
@@ -1091,6 +1119,8 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           chapters: serializeAll(form.sections),
           abstract: form.abstract,
           abstractKeywords: form.abstractKeywords,
+          abstractEn: form.abstractEn,
+          references: form.references,
           researchQuestions: form.researchQuestions,
           appendices: form.appendices,
           lastSavedAt: now,
@@ -1371,6 +1401,142 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   }
 
   /**
+   * R3(2026-07-03): 연구보고서 → 논문 이관 파이프.
+   * - 현장 문제(현상·영향·중요성) → 서론 '연구의 필요성' 초안
+   * - 이론 카드(정의·선택 이유·핵심 개념·문제 연결) → 이론적 배경 절 (카드당 1절)
+   * - 선행연구 분석 + 이론 종합 → '선행연구 고찰' 절
+   * 이론적 배경 장이 비어 있을 때만 절을 교체하고, 필요성은 해당 절이 비어 있을 때만 채운다.
+   */
+  function seedFromReport() {
+    if (readOnly || !paper || !report) return;
+    const bgEmpty = chapterIsEmpty(form.sections.background);
+    const needSec = form.sections.intro.find((sec) => sec.heading.includes("필요성"));
+    const needEmpty = !needSec || needSec.paragraphs.every((par) => !par.text.trim());
+    if (!bgEmpty && !needEmpty) {
+      toast.info("서론 '연구의 필요성'과 이론적 배경 장에 이미 작성분이 있어 시딩을 건너뜁니다.");
+      return;
+    }
+
+    // 필요성 초안 — v2 구조화 입력 우선, 없으면 레거시 필드
+    const needParts: string[] = [];
+    const phen = (report.problemPhenomena ?? []).map((t) => t.trim()).filter(Boolean);
+    if (phen.length > 0) needParts.push(phen.join(" "));
+    else if (report.problemPhenomenon?.trim()) needParts.push(report.problemPhenomenon.trim());
+    if (report.problemImpact?.trim()) needParts.push(report.problemImpact.trim());
+    if (report.problemImportance?.trim()) needParts.push(report.problemImportance.trim());
+    if (needParts.length === 0 && report.problemDefinition?.trim()) needParts.push(report.problemDefinition.trim());
+    if (needParts.length === 0 && report.fieldProblem?.trim()) needParts.push(report.fieldProblem.trim());
+
+    // 이론적 배경 절 — 이론 카드가 있으면 카드당 1절, 없으면 레거시 단일 이론 필드
+    const bgSections: WritingSection[] = [];
+    const cards = (report.theoryCards ?? []).filter((c) => c.name?.trim());
+    for (const c of cards) {
+      const pars: string[] = [];
+      const meta = [c.scholar?.trim(), c.year?.trim()].filter(Boolean).join(", ");
+      const concepts = (c.concepts ?? []).filter((k) => k.name?.trim());
+      if (c.selectionReason?.trim()) pars.push(c.selectionReason.trim());
+      for (const k of concepts) {
+        pars.push(k.definition?.trim() ? `${k.name.trim()}: ${k.definition.trim()}` : k.name.trim());
+      }
+      if (c.problemLink?.trim()) pars.push(c.problemLink.trim());
+      if (pars.length === 0) pars.push("");
+      bgSections.push({
+        id: uid(),
+        heading: meta ? `${c.name.trim()} (${meta})` : c.name.trim(),
+        paragraphs: pars.map((t) => ({ id: uid(), text: t })),
+      });
+    }
+    if (cards.length === 0 && (report.theoryType?.trim() || report.theoryDefinition?.trim())) {
+      const pars = [report.theoryDefinition, report.theoryConnection]
+        .map((t) => t?.trim())
+        .filter((t): t is string => !!t);
+      bgSections.push({
+        id: uid(),
+        heading: report.theoryType?.trim() || "이론적 배경 1",
+        paragraphs: (pars.length > 0 ? pars : [""]).map((t) => ({ id: uid(), text: t })),
+      });
+    }
+    const priorParts = [
+      report.priorResearchAnalysis,
+      report.theoryRelationProblem,
+      report.theoryRelationRoles,
+      report.theoryRelationIntegration,
+    ]
+      .map((t) => t?.trim())
+      .filter((t): t is string => !!t);
+    if (priorParts.length > 0) {
+      bgSections.push({
+        id: uid(),
+        heading: "선행연구 고찰",
+        paragraphs: priorParts.map((t) => ({ id: uid(), text: t })),
+      });
+    }
+
+    const seedNeed = needEmpty && needParts.length > 0;
+    const seedBg = bgEmpty && bgSections.length > 0;
+    if (!seedNeed && !seedBg) {
+      toast.info("보고서에서 가져올 내용이 없습니다 — 보고서의 문제·이론 장을 먼저 작성하세요.");
+      return;
+    }
+    setForm((prev) => {
+      const next = { ...prev.sections } as SectionsState;
+      if (seedNeed) {
+        const secs = [...next.intro];
+        let idx = secs.findIndex((sec) => sec.heading.includes("필요성"));
+        if (idx < 0) {
+          secs.unshift({ id: uid(), heading: "연구의 필요성", paragraphs: [] });
+          idx = 0;
+        }
+        const kept = secs[idx].paragraphs.filter((par) => par.text.trim());
+        secs[idx] = { ...secs[idx], paragraphs: [...kept, ...needParts.map((t) => ({ id: uid(), text: t }))] };
+        next.intro = secs;
+      }
+      if (seedBg) {
+        // 양적 트랙의 '연구모형 및 가설' 템플릿 절은 유지한 채 앞쪽 빈 템플릿을 교체
+        const keepModel = next.background.filter(
+          (sec) => sec.heading.includes("연구모형") && bgSections.every((b) => !b.heading.includes("연구모형")),
+        );
+        next.background = [...bgSections, ...keepModel];
+      }
+      return { ...prev, sections: next };
+    });
+    markDirty();
+    const done = [seedNeed && "서론(연구의 필요성)", seedBg && "이론적 배경"].filter(Boolean).join("·");
+    toast.success(`연구보고서 내용을 ${done} 초안으로 가져왔습니다 — 인용·문장을 본문 수준으로 다듬어 저장하세요.`);
+    logEditorEvent(user.id, "seed_from_report");
+  }
+
+  /** R3: 계획서 referencePaperIds + 보고서 priorResearchPaperIds → APA7 참고문헌 텍스트 */
+  async function generateReferences() {
+    if (readOnly || !paper) return;
+    const ids = new Set<string>([
+      ...(proposals[0]?.referencePaperIds ?? []),
+      ...(report?.priorResearchPaperIds ?? []),
+    ]);
+    if (ids.size === 0) {
+      toast.info("계획서·보고서에 연결된 문헌이 없습니다 — '읽은 논문'에 등록하고 계획서 참고문헌에 추가하세요.");
+      return;
+    }
+    setRefsBusy(true);
+    try {
+      const res = await researchPapersApi.list(user.id);
+      const papers = (res.data as ResearchPaper[]).filter((pp) => ids.has(pp.id));
+      if (papers.length === 0) {
+        toast.info("연결된 문헌 정보를 찾지 못했습니다.");
+        return;
+      }
+      if (form.references.trim() && !confirm("참고문헌 내용이 이미 있습니다. 생성 결과로 덮어쓸까요?")) return;
+      setForm((prev) => ({ ...prev, references: formatApa7List(papers) }));
+      markDirty();
+      toast.success(`문헌 ${papers.length}편을 APA 7판 형식으로 정렬했습니다 — 확인 후 저장하세요.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "참고문헌 생성에 실패했습니다.");
+    } finally {
+      setRefsBusy(false);
+    }
+  }
+
+  /**
    * 선택한 분석 방법들의 골격(자료 분석 문장 + 가정 검정 보고)을
    * 방법·결과 장에 자동 배치 — 가정을 놓치지 않도록 섹션을 미리 생성한다.
    */
@@ -1572,6 +1738,9 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     if (!hasBody) {
       toast.info("내보낼 작성 내용이 없습니다 — 본문을 작성한 뒤 다시 시도하세요.");
       return;
+    }
+    if (form.references.trim()) {
+      lines.push("참고문헌", "", ...form.references.trim().split("\n"), "");
     }
     lines.push(
       "—",
@@ -1983,17 +2152,30 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         </div>
       </section>
 
-      {/* P2: 계획서 → 본문 시딩 배너 (빈 서론/방법 장 + 계획서 보유 시) */}
-      {!readOnly && paper && proposals.length > 0 &&
-        (chapterIsEmpty(form.sections.intro) || chapterIsEmpty(form.sections.method)) && (
+      {/* P2+R3: 계획서·보고서 → 본문 시딩 배너 (빈 장이 남아 있을 때) */}
+      {!readOnly && paper && (
+        (proposals.length > 0 && (chapterIsEmpty(form.sections.intro) || chapterIsEmpty(form.sections.method))) ||
+        (!!report && chapterIsEmpty(form.sections.background))
+      ) && (
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 px-4 py-3">
             <p className="text-xs text-foreground/85">
-              작성하신 <span className="font-semibold">연구계획서</span>가 있어요 — 목적·범위·방법을 서론과 연구 방법 장의
-              초안으로 가져올 수 있습니다. <span className="text-muted-foreground">(관례상 계획서 1~3장이 학위논문 1~3장의 모태)</span>
+              연구 여정 앞 단계의 산출물을 초안으로 가져올 수 있어요 —{" "}
+              <span className="font-semibold">계획서</span>의 목적·범위·방법은 서론·연구 방법으로,{" "}
+              <span className="font-semibold">보고서</span>의 현장 문제·이론·선행연구는 서론·이론적 배경으로.
             </p>
-            <Button size="sm" variant="outline" className="h-7 shrink-0 text-xs" onClick={() => void seedFromProposal()}>
-              계획서에서 가져오기
-            </Button>
+            <div className="flex shrink-0 gap-2">
+              {proposals.length > 0 &&
+                (chapterIsEmpty(form.sections.intro) || chapterIsEmpty(form.sections.method)) && (
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => void seedFromProposal()}>
+                    계획서에서 가져오기
+                  </Button>
+                )}
+              {!!report && chapterIsEmpty(form.sections.background) && (
+                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => seedFromReport()}>
+                  보고서에서 가져오기
+                </Button>
+              )}
+            </div>
           </div>
         )}
 
@@ -2145,7 +2327,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       {/* ── 스텝 탭 ── */}
       <div className="flex items-center gap-1 rounded-2xl border bg-card p-1.5">
         {STEPS.map((s, i) => {
-          const active = !onAbstract && !onAppendix && step === s.key;
+          const active = !onAbstract && !onAppendix && !onReferences && step === s.key;
           return (
             <button
               key={s.key}
@@ -2154,6 +2336,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                 setStep(s.key);
                 setOnAbstract(false);
                 setOnAppendix(false);
+                setOnReferences(false);
               }}
               className={cn(
                 "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
@@ -2184,10 +2367,11 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           onClick={() => {
             setOnAbstract(true);
             setOnAppendix(false);
+            setOnReferences(false);
           }}
           className={cn(
             "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
-            onAbstract && !onAppendix
+            onAbstract && !onAppendix && !onReferences
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
           )}
@@ -2200,6 +2384,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           onClick={() => {
             setOnAppendix(true);
             setOnAbstract(false);
+            setOnReferences(false);
           }}
           className={cn(
             "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
@@ -2211,9 +2396,61 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           <Paperclip size={14} />
           <span>부록</span>
         </button>
+        <button
+          type="button"
+          onClick={() => {
+            setOnReferences(true);
+            setOnAbstract(false);
+            setOnAppendix(false);
+          }}
+          className={cn(
+            "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
+            onReferences
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          )}
+        >
+          <BookMarked size={14} />
+          <span className="hidden sm:inline">참고문헌</span>
+          <span className="sm:hidden">문헌</span>
+        </button>
       </div>
 
-      {onAppendix ? (
+      {onReferences ? (
+        /* R3: 참고문헌 패널 — 계획서·보고서 연결 문헌을 APA7로 자동 정렬 */
+        <section className="space-y-3 rounded-2xl border bg-card p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h4 className="text-sm font-semibold">참고문헌 (References)</h4>
+            {!readOnly && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                onClick={() => void generateReferences()}
+                disabled={refsBusy || !paper}
+              >
+                {refsBusy ? <Loader2 size={13} className="mr-1 animate-spin" /> : <Quote size={13} className="mr-1" />}
+                계획서·보고서 문헌으로 생성 (APA7)
+              </Button>
+            )}
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            연구계획서·연구보고서에 연결해 둔 &lsquo;읽은 논문&rsquo;을 APA 7판 형식으로 저자·연도순 정렬해 채웁니다.
+            생성 후 자유롭게 편집하세요 — 내용이 이미 있으면 덮어쓰기 전에 확인을 거칩니다.
+          </p>
+          <textarea
+            value={form.references}
+            readOnly={readOnly}
+            onChange={(e) => {
+              setForm((prev) => ({ ...prev, references: e.target.value }));
+              markDirty();
+            }}
+            rows={16}
+            placeholder="참고문헌 목록 — 우측 상단 버튼으로 계획서·보고서의 문헌을 APA7 형식으로 불러올 수 있어요."
+            className="w-full resize-y rounded-xl border bg-background p-3.5 text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 read-only:opacity-60"
+          />
+        </section>
+      ) : onAppendix ? (
         <AppendixPanel
           items={form.appendices}
           readOnly={readOnly}
@@ -2226,6 +2463,11 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         <AbstractPanel
           value={form.abstract}
           keywords={form.abstractKeywords}
+          valueEn={form.abstractEn}
+          onChangeEn={(next) => {
+            setForm((prev) => ({ ...prev, abstractEn: next }));
+            markDirty();
+          }}
           readOnly={readOnly}
           onChange={(next) => {
             setForm((prev) => ({ ...prev, abstract: next }));

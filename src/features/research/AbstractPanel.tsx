@@ -20,6 +20,9 @@ interface Props {
   readOnly?: boolean;
   onChange: (next: string) => void;
   onKeywordsChange: (next: string[]) => void;
+  /** R1(2026-07-03): 영문 초록 — 전달 시 하단에 접이식 영문 초록 입력이 노출 */
+  valueEn?: string;
+  onChangeEn?: (next: string) => void;
 }
 
 // 졸업생 초록 분석에서 도출한 권고치 (참고용)
@@ -85,9 +88,10 @@ const ELEMENT_TEMPLATES: { key: string; label: string; template: string }[] = [
 const LONG_SENTENCE = 90;
 const DOUBLE_PASSIVE = /보여진|되어진|쓰여진|모여진|이루어진다|놓여진/g;
 
-export default function AbstractPanel({ value, keywords, readOnly, onChange, onKeywordsChange }: Props) {
+export default function AbstractPanel({ value, keywords, readOnly, onChange, onKeywordsChange, valueEn, onChangeEn }: Props) {
   const [helpOpen, setHelpOpen] = useState(true);
   const [kwInput, setKwInput] = useState("");
+  const [enOpen, setEnOpen] = useState(() => !!valueEn?.trim());
 
   const chars = value.trim().length;
   const sentenceList = useMemo(() => (value.trim() ? splitSentences(value) : []), [value]);
@@ -315,6 +319,43 @@ export default function AbstractPanel({ value, keywords, readOnly, onChange, onK
           )}
         </div>
       </div>
+
+      {/* 영문 초록 (R1, 2026-07-03) — 대학원 제출 양식 대비, 선택 작성 */}
+      {onChangeEn && (
+        <div className="rounded-xl border">
+          <button
+            type="button"
+            onClick={() => setEnOpen((v) => !v)}
+            aria-expanded={enOpen}
+            className="flex w-full items-center justify-between gap-2 px-3.5 py-2.5 text-left"
+          >
+            <span className="text-xs font-semibold">영문 초록 (Abstract)</span>
+            <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
+              {(valueEn ?? "").trim()
+                ? `${(valueEn ?? "").trim().split(/\s+/).length.toLocaleString()} words`
+                : "선택 — 제출 양식이 요구할 때 작성"}
+              <ChevronDown size={14} className={cn("transition-transform", enOpen && "rotate-180")} />
+            </span>
+          </button>
+          {enOpen && (
+            <div className="space-y-2 border-t px-3.5 py-3">
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                국문 초록과 같은 5단 구성(배경 → 목적 → 방법 → 결과 → 시사점)을 유지하세요.
+                시제는 방법·결과만 과거형(<span className="font-medium">was measured, showed</span>),
+                배경·목적·시사점은 현재형이 관례입니다. 번역기 초벌 후 용어(공식 영문 척도명)를 꼭 대조하세요.
+              </p>
+              <textarea
+                value={valueEn ?? ""}
+                readOnly={readOnly}
+                onChange={(e) => onChangeEn(e.target.value)}
+                rows={10}
+                placeholder="This study aimed to examine the effects of ..."
+                className="w-full resize-y rounded-xl border bg-background p-3.5 text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 read-only:opacity-60"
+              />
+            </div>
+          )}
+        </div>
+      )}
     </section>
   );
 }

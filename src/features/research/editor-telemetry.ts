@@ -23,6 +23,7 @@ export type EditorEvent =
   | "method_helper_open"
   | "analyzer_open"
   | "lint_run"
+  | "seed_from_report"
   | "export_txt"
   | "version_compare"
   | "assumption_insert"
@@ -42,6 +43,7 @@ const EVENT_LABELS: Record<EditorEvent, string> = {
   assumption_insert: "가정 골격 삽입",
   analysis_insert: "분석 문장 삽입",
   table_insert: "결과 표 삽입",
+  seed_from_report: "보고서 초안 가져오기",
 };
 
 export function logEditorEvent(userId: string | undefined, event: EditorEvent) {
