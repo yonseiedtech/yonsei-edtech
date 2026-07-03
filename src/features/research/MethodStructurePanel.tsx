@@ -258,7 +258,7 @@ export default function MethodStructurePanel({
         </button>
         {procOpen && (
           <div className="space-y-2 border-t border-violet-200/60 px-3.5 py-3 dark:border-violet-800/40">
-            {procedure.length === 0 && !readOnly && (
+            {(procedure.length === 0 || mixed) && !readOnly && (
               <div className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed bg-card/50 px-3 py-2.5">
                 <p className="text-[11px] text-muted-foreground">표준 골격으로 시작할 수 있어요:</p>
                 {!qual && (

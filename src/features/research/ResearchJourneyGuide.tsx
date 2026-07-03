@@ -201,7 +201,7 @@ interface Props {
   readOnly?: boolean;
 }
 
-export default function ResearchJourneyGuide({ userId, current }: Props) {
+export default function ResearchJourneyGuide({ userId, current, readOnly }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -243,7 +243,7 @@ export default function ResearchJourneyGuide({ userId, current }: Props) {
 
   // R6: 지원 단계 상태 — ThesisJourney·에디터와 동일 캐시 키 재사용
   const { data: myPapers = [] } = useQuery({
-    queryKey: ["research-papers", userId],
+    queryKey: ["research_papers", userId],
     queryFn: async () => (await researchPapersApi.list(userId)).data,
     staleTime: 5 * 60_000,
   });
@@ -251,6 +251,8 @@ export default function ResearchJourneyGuide({ userId, current }: Props) {
     queryKey: ["advisor-feedback", userId],
     queryFn: async () =>
       (await advisorFeedbackApi.listByUser(userId)).data as AdvisorFeedbackNote[],
+    // QA-v2: 지도 노트는 rules 상 본인 전용 — 콘솔(readOnly) 열람에서 쿼리하면 거부 에러만 남
+    enabled: !readOnly,
     staleTime: 5 * 60_000,
   });
 
@@ -277,6 +279,8 @@ export default function ResearchJourneyGuide({ userId, current }: Props) {
   }, [statusByStep]);
 
   function go(step: StepMeta) {
+    // QA-v2: 콘솔 열람(readOnly) 중 클릭 시 내 마이페이지로 이탈하던 문제 — 네비 비활성
+    if (readOnly) return;
     if (step.kind === "support") {
       if (step.href) router.push(step.href);
       return;

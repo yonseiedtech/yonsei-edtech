@@ -325,8 +325,8 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
     setField("referencePaperIds", ids);
   }
 
-  async function handleSave(showToast = true) {
-    if (!proposal || readOnly) return;
+  async function handleSave(showToast = true): Promise<boolean> {
+    if (!proposal || readOnly) return false;
     setSaving(true);
     const now = new Date().toISOString();
     try {
@@ -344,16 +344,19 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
         title: form.titleKo || "연구 계획서",
       });
       if (showToast) toast.success("저장되었습니다.");
+      return true;
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "저장 실패");
+      return false;
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDraftSave() {
-    await handleSave(false);
-    toast.success("임시 저장되었습니다.");
+    // QA-v2: 실패·no-op 시 거짓 성공 토스트 방지
+    const ok = await handleSave(false);
+    if (ok) toast.success("임시 저장되었습니다.");
   }
 
   const total = useMemo(() => totalChars(form), [form]);

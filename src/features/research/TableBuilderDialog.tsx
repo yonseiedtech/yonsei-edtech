@@ -62,7 +62,10 @@ export default function TableBuilderDialog({
   }
 
   function insert() {
-    const lines = grid.map((row) => row.map((cell) => cell.trim() || "___").join(" | "));
+    // QA-v2: 셀 안의 "|" 는 열 구분자를 깨뜨림 — 전각 슬래시로 치환
+    const lines = grid.map((row) =>
+      row.map((cell) => (cell.trim() ? cell.trim().replace(/\|/g, "／") : "___")).join(" | "),
+    );
     const text = `<표 _-_> ${caption.trim() || "표 제목"}\n${lines.join("\n")}`;
     onInsert(text);
     onOpenChange(false);

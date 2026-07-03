@@ -93,7 +93,9 @@ export const FINDER_QUESTIONS: FinderQuestion[] = [
   },
   {
     id: "covariate",
-    when: (a) => a.goal === "difference",
+    // QA-v2: 반복측정(1집단) 설계에서 공변량 질문이 ANCOVA(집단 비교)로 오라우팅하던 결함 —
+    // 집단 간 비교 설계에서만 묻는다.
+    when: (a) => a.goal === "difference" && (a.groups === "two" || a.groups === "three_or_more"),
     title: "통제하고 싶은 공변량이 있나요?",
     help: "사전점수·학년 등 결과에 영향을 주는 변수를 보정하고 싶다면 '있다'.",
     options: [
@@ -104,7 +106,9 @@ export const FINDER_QUESTIONS: FinderQuestion[] = [
   {
     id: "normality",
     when: (a) =>
-      a.goal === "difference" && a.dvCount !== "two_or_more" && a.covariate === "no",
+      a.goal === "difference" &&
+      a.dvCount !== "two_or_more" &&
+      (a.covariate === "no" || a.groups === "one_repeated" || a.groups === "one_repeated_multi"),
     title: "표본 크기와 정규성은 어떤가요?",
     help: "집단당 30명 미만의 작은 표본이거나 점수 분포가 심하게 치우쳤다면 비모수 검정이 안전합니다.",
     terms: [

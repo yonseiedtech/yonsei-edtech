@@ -19,6 +19,7 @@ import {
   ymd,
   type PlacedActivity,
   type PlacedClass,
+  computeLanes,
 } from "./types";
 
 export function WeeklyGrid({
@@ -87,6 +88,21 @@ export function WeeklyGrid({
           {placedWeekly.map(({ date, items }) => {
             const isToday = ymd(date) === actualToday;
             const dayActivities = placedWeeklyActivities.get(ymd(date)) ?? [];
+            // QA-v2: 겹치는 일정 레인 분할 (요일 컬럼 단위)
+            const laneMap = computeLanes(
+              [
+                ...items.map((it) => ({ key: `c-${it.offering.id}`, top: it.topPx, height: it.heightPx })),
+                ...dayActivities.map((a) => ({ key: `a-${a.progress.id}`, top: a.topPx, height: a.heightPx })),
+              ],
+              40,
+            );
+            const laneStyle = (key: string) => {
+              const li = laneMap.get(key) ?? { lane: 0, lanes: 1 };
+              return {
+                left: `calc(4px + (100% - 8px) * ${li.lane} / ${li.lanes})`,
+                width: `calc((100% - 8px) / ${li.lanes})`,
+              };
+            };
             return (
               <div
                 key={ymd(date)}
@@ -125,8 +141,8 @@ export function WeeklyGrid({
                   return (
                     <div
                       key={c.id}
-                      className="absolute left-1 right-1"
-                      style={{ top: topPx, height: Math.max(heightPx, 40) }}
+                      className="absolute"
+                      style={{ top: topPx, height: Math.max(heightPx, 40), ...laneStyle(`c-${c.id}`) }}
                     >
                       <Link
                         href={`/courses/${c.id}/schedule`}
@@ -182,10 +198,10 @@ export function WeeklyGrid({
                       key={progress.id}
                       href={`/activities/${typePath}/${activity.id}`}
                       className={cn(
-                        "absolute left-1 right-1 overflow-hidden rounded-md border border-l-4 bg-card p-1.5 text-[10px] shadow-sm transition-shadow hover:shadow",
+                        "absolute overflow-hidden rounded-md border border-l-4 bg-card p-1.5 text-[10px] shadow-sm transition-shadow hover:shadow",
                         ACTIVITY_MODE_BORDER[mode],
                       )}
-                      style={{ top: topPx, height: Math.max(heightPx, 40) }}
+                      style={{ top: topPx, height: Math.max(heightPx, 40), ...laneStyle(`a-${progress.id}`) }}
                     >
                       <div className="flex items-center gap-1">
                         <span className="shrink-0 rounded bg-violet-100 px-1 py-0 text-[9px] font-medium text-violet-700">

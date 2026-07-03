@@ -55,13 +55,13 @@ export function buildModel(vars: {
   X.forEach((label, i) => {
     const id = nid("x", i);
     xIds.push(id);
-    nodes.push({ id, type: "independent", label, x: 40, y: 60 + i * 110 });
+    nodes.push({ id, type: "independent", label, x: 40, y: 180 + i * 110 });
   });
 
   let mId: string | null = null;
   if (vars.mediator) {
     mId = nid("m", 0);
-    const midY = 60 + ((X.length - 1) * 110) / 2;
+    const midY = 180 + ((X.length - 1) * 110) / 2;
     nodes.push({ id: mId, type: "mediator", label: vars.mediator, x: 330, y: midY });
   }
 
@@ -69,12 +69,13 @@ export function buildModel(vars: {
   Y.forEach((label, i) => {
     const id = nid("y", i);
     yIds.push(id);
-    nodes.push({ id, type: "dependent", label, x: 620, y: 60 + i * 110 });
+    nodes.push({ id, type: "dependent", label, x: 620, y: 180 + i * 110 });
   });
 
   if (vars.moderator) {
     const wId = nid("w", 0);
-    nodes.push({ id: wId, type: "moderator", label: vars.moderator, x: 330, y: -60 });
+    // QA-v2: 음수 y 는 기본 뷰포트 밖 — 상단 여백(양수) 안에 배치
+    nodes.push({ id: wId, type: "moderator", label: vars.moderator, x: 330, y: 30 });
     yIds.forEach((yId, i) =>
       edges.push({ id: nid("ew", i), source: wId, target: yId, relation: "correlational", label: "조절" }),
     );
@@ -82,7 +83,7 @@ export function buildModel(vars: {
 
   (vars.controls ?? []).forEach((label, i) => {
     const cId = nid("c", i);
-    nodes.push({ id: cId, type: "control", label, x: 40, y: 60 + (X.length + i) * 110 + 60 });
+    nodes.push({ id: cId, type: "control", label, x: 40, y: 180 + (X.length + i) * 110 + 60 });
     yIds.forEach((yId, j) =>
       edges.push({ id: nid("ec", i * 10 + j), source: cId, target: yId, relation: "correlational", label: "통제" }),
     );

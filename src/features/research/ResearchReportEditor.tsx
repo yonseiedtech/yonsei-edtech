@@ -590,8 +590,8 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
     setDirty(true);
   }
 
-  async function handleSave(showToast = true) {
-    if (!report || readOnly) return;
+  async function handleSave(showToast = true): Promise<boolean> {
+    if (!report || readOnly) return false;
     setSaving(true);
     const now = new Date().toISOString();
     try {
@@ -609,16 +609,19 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
         title: "연구 보고서",
       });
       if (showToast) toast.success("저장되었습니다.");
+      return true;
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "저장 실패");
+      return false;
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDraftSave() {
-    await handleSave(false);
-    toast.success("임시 저장되었습니다.");
+    // QA-v2: 실패·readOnly no-op 시 거짓 성공 토스트 방지
+    const ok = await handleSave(false);
+    if (ok) toast.success("임시 저장되었습니다.");
   }
 
   function addGroup() {
@@ -689,7 +692,8 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {/* 보기 모드 토글 */}
+            {/* 보기 모드 토글 — QA-v2: readOnly(콘솔 열람)에서는 인터뷰 모드(입력 가능) 진입 차단 */}
+            {!readOnly && (
             <div className="inline-flex items-center overflow-hidden rounded-md border border-input">
               <button
                 type="button"
@@ -718,6 +722,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
                 <MessageSquareQuote size={12} /> 인터뷰 모드
               </button>
             </div>
+            )}
           {!readOnly && (
             <div className="flex shrink-0 items-center gap-2">
               {savedAt && !saving && (

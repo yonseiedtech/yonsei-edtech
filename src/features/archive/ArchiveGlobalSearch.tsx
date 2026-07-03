@@ -104,7 +104,7 @@ export default function ArchiveGlobalSearch() {
     push("글쓰기", "text-rose-600", writing.data?.data, ["title", "explanation", "wrongExample", "correctExample"], (x) => ({
       id: x.id as string,
       name: (x.title as string) ?? "글쓰기 팁",
-      href: "/archive/writing-tips",
+      href: `/archive/writing-tips/${x.id as string}`,
     }));
 
     return out;

@@ -20,6 +20,7 @@ import {
   MODE_BADGE,
   MODE_BORDER,
   ROW_HEIGHT_PX,
+  computeLanes,
   type PlacedActivity,
   type PlacedClass,
 } from "./types";
@@ -41,6 +42,21 @@ export function DailyGrid({
   nowPx: number | null;
   nowLabel: string;
 }) {
+  // QA-v2: 동시간대 일정이 서로를 완전히 가리던 문제 — 겹침 그룹을 레인으로 분할
+  const laneMap = computeLanes(
+    [
+      ...placed.map((p) => ({ key: `c-${p.offering.id}`, top: p.topPx, height: p.heightPx })),
+      ...placedActivities.map((a) => ({ key: `a-${a.progress.id}`, top: a.topPx, height: a.heightPx })),
+    ],
+    64,
+  );
+  const laneStyle = (key: string) => {
+    const li = laneMap.get(key) ?? { lane: 0, lanes: 1 };
+    return {
+      left: `calc(12px + (100% - 24px) * ${li.lane} / ${li.lanes})`,
+      width: `calc((100% - 24px) / ${li.lanes})`,
+    };
+  };
   return (
     <>
       <div className="mt-4 grid gap-0" style={{ gridTemplateColumns: "44px 1fr" }}>
@@ -91,11 +107,11 @@ export function DailyGrid({
                   href={`/courses/${c.id}/schedule`}
                   aria-label={`${c.courseName} 강의 스케줄로 이동`}
                   className={cn(
-                    "absolute left-3 right-3 block overflow-hidden rounded-2xl border border-l-4 bg-card p-3 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer",
+                    "absolute block overflow-hidden rounded-2xl border border-l-4 bg-card p-3 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer",
                     MODE_BORDER[mode],
                     isCancelled && "opacity-70",
                   )}
-                  style={{ top: topPx, height: Math.max(heightPx, 64) }}
+                  style={{ top: topPx, height: Math.max(heightPx, 64), ...laneStyle(`c-${c.id}`) }}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
@@ -159,10 +175,10 @@ export function DailyGrid({
                 href={`/activities/${typePath}/${activity.id}`}
                 aria-label={`${activity.title} ${progress.week}주차 활동으로 이동`}
                 className={cn(
-                  "absolute left-3 right-3 block overflow-hidden rounded-2xl border border-l-4 bg-card p-3 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/40 cursor-pointer",
+                  "absolute block overflow-hidden rounded-2xl border border-l-4 bg-card p-3 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/40 cursor-pointer",
                   ACTIVITY_MODE_BORDER[mode],
                 )}
-                style={{ top: topPx, height: Math.max(heightPx, 64) }}
+                style={{ top: topPx, height: Math.max(heightPx, 64), ...laneStyle(`a-${progress.id}`) }}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">

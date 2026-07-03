@@ -12,7 +12,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Users, FlaskConical, GraduationCap, ArrowRight, CalendarDays, BookOpen, Gauge } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatDday } from "@/lib/dday";
+import { formatDday, isoToKstYmd, todayYmdKst } from "@/lib/dday";
 import { useAuthStore } from "@/features/auth/auth-store";
 import {
   networkingEventsApi,
@@ -58,7 +58,7 @@ export default function DashboardCommandCenter() {
   // 연구 활동
   const { paper } = useWritingPaper(uid);
   const { data: papers = [] } = useQuery({
-    queryKey: ["research-papers", uid],
+    queryKey: ["research_papers", uid],
     queryFn: async () => (await researchPapersApi.list(uid)).data as ResearchPaper[],
     enabled: !!uid,
     staleTime: 5 * 60_000,
@@ -75,14 +75,15 @@ export default function DashboardCommandCenter() {
     const activePos = positions.filter((p) => !p.endYear).length;
     const writingPct = computeThesisProgress({ paper: paper ?? null, hasProposal: false }).percent;
     const readCount = (papers as { isDraft?: boolean; readStatus?: string }[]).filter((p) => !p.isDraft && p.readStatus === "completed").length;
-    const upcomingSeminars = seminars.filter((s) => (s.date ?? "") >= nowIso.slice(0, 10)).length;
+    // QA-v2: UTC slice 는 KST 자정~9시 사이 어제 날짜 — KST 헬퍼로 통일
+    const upcomingSeminars = seminars.filter((s) => (s.date ?? "") >= todayYmdKst()).length;
 
     // 임박 행사 D-day 배지 (≤7일) — 각 영역의 가장 가까운 미래 행사 (여정 문서 Medium·상황 D)
-    const today = nowIso.slice(0, 10);
+    const today = todayYmdKst();
     const nextEvent = events
       .filter((e) => (e.startAt ?? "") >= nowIso && e.status !== "cancelled")
       .sort((a, b) => (a.startAt ?? "").localeCompare(b.startAt ?? ""))[0];
-    const eventDday = nextEvent?.startAt ? formatDday(nextEvent.startAt.slice(0, 10)) : null;
+    const eventDday = nextEvent?.startAt ? formatDday(isoToKstYmd(nextEvent.startAt)) : null;
     const eventBadge =
       nextEvent && eventDday && eventDday.diffDays >= 0 && eventDday.diffDays <= 7
         ? { label: eventDday.kind === "today" ? "D-day" : eventDday.label, name: nextEvent.title }

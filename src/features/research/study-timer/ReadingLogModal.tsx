@@ -104,7 +104,7 @@ export default function ReadingLogModal({
             createdAt: now,
             updatedAt: now,
           });
-          qc.invalidateQueries({ queryKey: ["research-papers", user.id] });
+          qc.invalidateQueries({ queryKey: ["research_papers", user.id] });
         } catch (err) {
           console.error("[reading-log] research paper bridge failed", err);
           toast.error("읽기 기록은 저장됐지만 서지 등록에 실패했습니다.");

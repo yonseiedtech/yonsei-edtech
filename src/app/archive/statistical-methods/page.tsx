@@ -190,7 +190,8 @@ export default function StatisticalMethodsLandingPage() {
       other: [],
     };
     for (const m of filteredMethods) {
-      byCategory[m.category]?.push(m);
+      // QA-v2: 레거시/미지 카테고리 문서가 어떤 섹션에도 안 뜨던 무음 드롭 — other 로 폴백
+      (byCategory[m.category] ?? byCategory.other).push(m);
     }
     (Object.keys(byCategory) as StatisticalMethodCategory[]).forEach((k) => {
       byCategory[k].sort((a, b) => a.name.localeCompare(b.name, "ko"));

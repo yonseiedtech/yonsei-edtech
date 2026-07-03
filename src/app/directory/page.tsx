@@ -50,7 +50,9 @@ type SortDir = "asc" | "desc";
 
 function csvEscape(v: unknown): string {
   if (v === null || v === undefined) return "";
-  const s = String(v);
+  let s = String(v);
+  // QA-v2: CSV 수식 인젝션 중화 — 선행 =,+,-,@ 는 Excel 이 수식으로 실행
+  if (/^[=+\-@]/.test(s)) s = `'${s}`;
   if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
   return s;
 }

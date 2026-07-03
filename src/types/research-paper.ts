@@ -280,8 +280,6 @@ export interface WritingPaper {
   instruments?: InstrumentItem[];
   /** 연구 절차 타임라인 (R5, 2026-07-03) */
   procedureSteps?: ProcedureStep[];
-  /** 감사의 글 (P2, 2026-07-03) */
-  acknowledgments?: string;
   /** 구조화된 연구문제 (서론) — 항목별 텍스트 + 연구방법·통계방법 태그 */
   researchQuestions?: ResearchQuestionItem[];
   /** 부록 목록 — 제목 + 메모 */
@@ -307,6 +305,16 @@ export interface WritingPaperVersion {
   chapters?: Partial<Record<WritingPaperChapterKey, string>>;
   sections?: Partial<Record<WritingPaperChapterKey, WritingSection[]>>;
   researchProfile?: WritingResearchProfile;
+  // QA-v2(2026-07-03): 스냅샷에 부속 아티팩트 포함 — 구버전 스냅샷은 필드 부재(선택 복원)
+  abstract?: string;
+  abstractKeywords?: string[];
+  abstractEn?: string;
+  references?: string;
+  researchQuestions?: ResearchQuestionItem[];
+  ethicsChecked?: string[];
+  instruments?: InstrumentItem[];
+  procedureSteps?: ProcedureStep[];
+  appendices?: AppendixItem[];
   charCount: number;
   createdAt: string;
 }

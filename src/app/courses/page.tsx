@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
+import { inferCurrentSemester } from "@/lib/semester";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -86,13 +87,14 @@ function categoryRank(c: CourseCategory): number {
   return i < 0 ? CATEGORIES.length : i;
 }
 
+// QA-v2: 1~2월(겨울방학)은 "작년 2학기" — inferCurrentSemester 와 로직 단일화
+// (기존 구현은 1~2월에 존재하지 않는 "올해 2학기"를 기본값으로 삼아 필터·수강계획이 어긋났다)
 function nowYear() {
-  return new Date().getFullYear();
+  return inferCurrentSemester().year;
 }
 
 function defaultTermForToday(): SemesterTerm {
-  const m = new Date().getMonth() + 1;
-  return m >= 3 && m <= 8 ? "spring" : "fall";
+  return inferCurrentSemester().semester === "first" ? "spring" : "fall";
 }
 
 type EnrollMode = "none" | "student" | "auditor";

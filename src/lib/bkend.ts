@@ -1569,6 +1569,7 @@ export const researchReportsApi = {
   listByUser: (userId: string) =>
     dataApi.list<ResearchReport>("research_reports", {
       "filter[userId]": userId,
+      sort: "updatedAt:desc",
       limit: 50,
     }),
   listAll: (limit = 200) =>
@@ -1588,6 +1589,7 @@ export const researchProposalsApi = {
   listByUser: (userId: string) =>
     dataApi.list<ResearchProposal>("research_proposals", {
       "filter[userId]": userId,
+      sort: "updatedAt:desc",
       limit: 50,
     }),
   /** 운영진 콘솔용 — 모든 회원의 연구 계획서를 한 번에 로드 */
@@ -3488,17 +3490,18 @@ export const journalIssuesApi = {
 export const journalArticlesApi = {
   /** 공개 발간 논문 목록 — 비로그인 가능 */
   listPublic: async (): Promise<ResearchJournalArticle[]> => {
+    // QA-v2: reviewStatus 를 서버 필터로 — draft 원문이 클라이언트로 내려오지 않게 (rules list 증명성).
+    // orderBy 제거(복합 인덱스 회피) 후 클라이언트 정렬.
     const q = query(
       collection(db, JOURNAL_ARTICLES_COL),
       where("visibility", "==", "public"),
-      orderBy("publishedAt", "desc"),
+      where("reviewStatus", "==", "published"),
       firestoreLimit(100),
     );
     const snap = await getDocs(q);
-    // reviewStatus=='published' 클라이언트 필터
     return snap.docs
       .map((d) => serializeDoc(d) as unknown as ResearchJournalArticle)
-      .filter((a) => a.reviewStatus === "published");
+      .sort((a, b) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? ""));
   },
 
   /** 학회원 가시 (society + public) — 인증 필요 */
@@ -3507,20 +3510,20 @@ export const journalArticlesApi = {
       getDocs(query(
         collection(db, JOURNAL_ARTICLES_COL),
         where("visibility", "==", "public"),
-        orderBy("publishedAt", "desc"),
+        where("reviewStatus", "==", "published"),
         firestoreLimit(100),
       )),
       getDocs(query(
         collection(db, JOURNAL_ARTICLES_COL),
         where("visibility", "==", "society"),
-        orderBy("publishedAt", "desc"),
+        where("reviewStatus", "==", "published"),
         firestoreLimit(100),
       )),
     ]);
     const all = [
       ...pubSnap.docs.map((d) => serializeDoc(d) as unknown as ResearchJournalArticle),
       ...socSnap.docs.map((d) => serializeDoc(d) as unknown as ResearchJournalArticle),
-    ].filter((a) => a.reviewStatus === "published");
+    ];
     // dedup
     const map = new Map<string, ResearchJournalArticle>();
     all.forEach((a) => map.set(a.id, a));

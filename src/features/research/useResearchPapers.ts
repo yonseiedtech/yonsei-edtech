@@ -39,7 +39,7 @@ export function useCreateResearchPaper() {
     mutationFn: (data: Record<string, unknown>) => researchPapersApi.create(data),
     onSuccess: (_d, vars) => {
       const userId = (vars as { userId?: string }).userId;
-      qc.invalidateQueries({ queryKey: ["research_papers", userId ?? ""] });
+      qc.invalidateQueries({ queryKey: ["research_papers"] });
     },
   });
 }

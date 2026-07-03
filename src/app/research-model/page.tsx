@@ -10,8 +10,8 @@
  * 저장: researchModelsApi.save(uid, model) (doc id = uid, 1인 1개).
  */
 
-import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FlaskConical, Save, Loader2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import AuthGuard from "@/features/auth/AuthGuard";
@@ -31,6 +31,7 @@ import SkeletonWidget from "@/components/ui/skeleton-widget";
 
 function ResearchModelContent() {
   const { user } = useAuthStore();
+  const queryClient = useQueryClient();
   const [model, setModel] = useState<ResearchModelData>(EMPTY_RESEARCH_MODEL);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -45,12 +46,14 @@ function ResearchModelContent() {
     staleTime: 60_000,
   });
 
-  // 저장된 모형 복원 (최초 1회 — 사용자가 편집 시작하면 덮어쓰지 않음)
+  // 저장된 모형 복원 (최초 1회) — QA-v2: dirty 해제 순간 옛 캐시로 되감기던 롤백 수정
+  const hydratedRef = useRef(false);
   useEffect(() => {
-    if (data?.data && !dirty) {
+    if (data?.data && !hydratedRef.current) {
+      hydratedRef.current = true;
       setModel(data.data);
     }
-  }, [data, dirty]);
+  }, [data]);
 
   if (!user) return null;
 
@@ -73,6 +76,11 @@ function ResearchModelContent() {
     setSaving(true);
     try {
       await researchModelsApi.save(user.id, model);
+      // QA-v2: 저장분을 캐시에 반영 — 보고서/계획서 동기화 패널이 stale 모형을 쓰지 않도록
+      queryClient.setQueryData(["research-model", user.id], (prev: unknown) =>
+        prev && typeof prev === "object" ? { ...(prev as object), data: model } : { data: model },
+      );
+      void queryClient.invalidateQueries({ queryKey: ["research-model", user.id] });
       setDirty(false);
       toast.success("연구 모형을 저장했습니다.");
     } catch {

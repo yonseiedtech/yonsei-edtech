@@ -286,8 +286,6 @@ interface FormState {
   /** R5(2026-07-03): 측정도구 신뢰도 표 · 연구 절차 타임라인 */
   instruments: InstrumentItem[];
   procedureSteps: ProcedureStep[];
-  /** P2(2026-07-03): 감사의 글 */
-  acknowledgments: string;
 }
 
 const CHAPTER_KEYS: WritingPaperChapterKey[] = ["intro", "background", "method", "results", "conclusion"];
@@ -555,7 +553,7 @@ const SECTION_GUIDES: { keywords: string[]; tips: string[] }[] = [
     ],
   },
   {
-    keywords: ["핵심 개념", "개념과 이론", "이론적 고찰"],
+    keywords: ["핵심 개념", "개념과 이론", "이론적 고찰", "이론적 배경"],
     tips: [
       "가장 큰 개념(예: 구성주의)부터 제시하고 내 연구의 변인으로 점차 좁혀가세요 — 깔때기 구조가 이론적 배경의 정석입니다.",
       "구인(構因)마다 '개념 정의 → 측정 방법 → 선행연구 결과' 순으로 조직하면 읽기 쉽습니다.",
@@ -675,7 +673,7 @@ function getSectionGuides(heading: string): string[] | null {
 function buildEmptyForm(approach: ResearchApproachType): FormState {
   const sections = {} as SectionsState;
   for (const k of CHAPTER_KEYS) sections[k] = buildTemplateSections(templateHeadings(k, approach));
-  return { title: "", sections, abstract: "", abstractKeywords: [], abstractEn: "", references: "", researchQuestions: [], appendices: [], ethicsChecked: [], instruments: [], procedureSteps: [], acknowledgments: "" };
+  return { title: "", sections, abstract: "", abstractKeywords: [], abstractEn: "", references: "", researchQuestions: [], appendices: [], ethicsChecked: [], instruments: [], procedureSteps: [] };
 }
 
 function normalizeSections(list: WritingSection[]): WritingSection[] {
@@ -714,7 +712,6 @@ function fromPaper(p: WritingPaper | undefined, approach: ResearchApproachType):
     ethicsChecked: p.ethicsChecked ?? [],
     instruments: p.instruments ?? [],
     procedureSteps: p.procedureSteps ?? [],
-    acknowledgments: p.acknowledgments ?? "",
   };
 }
 
@@ -868,7 +865,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   const report = reports[0];
   // R4: 문헌 매트릭스 → 이론적 배경 비교표 삽입용 (ThesisJourney 와 캐시 공유)
   const { data: myPapers = [] } = useQuery({
-    queryKey: ["research-papers", user.id],
+    queryKey: ["research_papers", user.id],
     queryFn: async () => (await researchPapersApi.list(user.id)).data as ResearchPaper[],
     enabled: !readOnly && !!user.id,
     staleTime: 5 * 60_000,
@@ -965,9 +962,37 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, paper, readOnly]);
 
+  // QA-v2: dirty 세대 토큰 — 저장 완료 시 "저장 시작 이후 입력이 없을 때만" dirty 를 내린다
+  const dirtyGenRef = useRef(0);
+  const dirtyRef = useRef(false);
+  useEffect(() => {
+    dirtyRef.current = dirty;
+  }, [dirty]);
+
   function markDirty() {
+    dirtyGenRef.current += 1;
     setDirty(true);
   }
+
+  // QA-v2 High: SPA 내부 이동 가드 — beforeunload 는 클라이언트 라우팅을 못 막는다.
+  // dirty 상태에서 내부 링크 클릭 시 확인 (capture 단계, Next Link 는 defaultPrevented 존중)
+  useEffect(() => {
+    if (readOnly) return;
+    function onDocClick(e: MouseEvent) {
+      if (!dirtyRef.current) return;
+      const a = (e.target as HTMLElement | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
+      if (!a) return;
+      const href = a.getAttribute("href") ?? "";
+      if (!href.startsWith("/")) return; // 외부 링크·해시는 beforeunload 대상
+      if (a.target === "_blank" || e.metaKey || e.ctrlKey || e.shiftKey) return;
+      if (!confirm("저장되지 않은 변경이 있습니다. 이 페이지를 떠나면 사라질 수 있어요.\n이동할까요?")) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }
+    document.addEventListener("click", onDocClick, true);
+    return () => document.removeEventListener("click", onDocClick, true);
+  }, [readOnly]);
 
   /** 현재 장을 기본 구성(템플릿)으로 초기화 — 이 장 내용 삭제 후 기본 절 구조로 되돌림 */
   function resetChapter(k: WritingPaperChapterKey) {
@@ -990,6 +1015,11 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   /** F: 현재 장의 활성 절에 표 단락 삽입 — 표 빌더 팝업(TableBuilderDialog)에서 호출 */
   function insertTable(tableText?: string) {
     if (readOnly || !paper) return;
+    // QA-v2: 절이 없으면 삽입 자체가 안 되는데 성공 토스트가 뜨던 결함 — 선검사
+    if (form.sections[step].every((sec) => isOverviewSection(sec))) {
+      toast.error("표를 넣을 절이 없습니다 — 먼저 '섹션 추가'로 절을 만들어주세요.");
+      return;
+    }
     const table =
       tableText ??
       "<표 _-_> 표 제목\n구분 | 항목1 | 항목2 | 항목3\n___ | ___ | ___ | ___\n___ | ___ | ___ | ___";
@@ -1003,7 +1033,11 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       return { ...prev, sections: { ...prev.sections, [step]: cur } };
     });
     markDirty();
-    toast.success("표 골격을 추가했습니다 — 열·값을 채우세요.");
+    toast.success(
+      tableText
+        ? "표를 삽입했습니다 — 표 번호(<표 _-_>)를 채우고 저장하세요."
+        : "표 골격을 추가했습니다 — 열·값을 채우세요.",
+    );
   }
 
   // ── 섹션·단락 조작 ──
@@ -1132,6 +1166,8 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     if (!paper || readOnly) return;
     setSaving(true);
     const now = new Date().toISOString();
+    // QA-v2: 저장 시작 시점의 dirty 세대 — 저장 중 타이핑분이 payload 에 없으면 dirty 유지
+    const genAtStart = dirtyGenRef.current;
     try {
       // QA P1: last-write-wins 경합 가드 — 다른 탭/기기에서 저장된 흔적이 있으면 확인 후 진행
       try {
@@ -1164,13 +1200,16 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           ethicsChecked: form.ethicsChecked,
           instruments: form.instruments,
           procedureSteps: form.procedureSteps,
-          acknowledgments: form.acknowledgments,
           lastSavedAt: now,
         },
       });
       setSavedAt(now);
       baseSavedAtRef.current = now;
-      setDirty(false);
+      if (dirtyGenRef.current === genAtStart) {
+        setDirty(false);
+      } else if (showToast) {
+        toast.info("저장 중 입력한 내용이 있어요 — 한 번 더 저장해주세요.");
+      }
       logActivity.mutate({
         userId: user.id,
         paperId: paper.id,
@@ -1559,6 +1598,8 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       toast.info("계획서·보고서에 연결된 문헌이 없습니다 — '읽은 논문'에 등록하고 계획서 참고문헌에 추가하세요.");
       return;
     }
+    // QA-v2: 덮어쓰기 확인은 fetch 전에 — await 이후 stale form 검사로 입력분이 소실되는 경합 방지
+    if (form.references.trim() && !confirm("참고문헌 내용이 이미 있습니다. 생성 결과로 덮어쓸까요?")) return;
     setRefsBusy(true);
     try {
       const res = await researchPapersApi.list(user.id);
@@ -1567,7 +1608,6 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         toast.info("연결된 문헌 정보를 찾지 못했습니다.");
         return;
       }
-      if (form.references.trim() && !confirm("참고문헌 내용이 이미 있습니다. 생성 결과로 덮어쓸까요?")) return;
       setForm((prev) => ({ ...prev, references: formatApa7List(papers) }));
       markDirty();
       toast.success(`문헌 ${papers.length}편을 APA 7판 형식으로 정렬했습니다 — 확인 후 저장하세요.`);
@@ -1586,13 +1626,20 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       .filter((t): t is string => !!t);
     if (hyps.length === 0) return;
     const lines = hyps.map((t, i) => `H${i + 1}. ${t}`);
+    // QA-v2: 기존 H목록을 항상 새 목록으로 교체 — 가설 편집·삭제 후 재삽입 시 번호 꼬임 방지
+    const isHypLine = (t: string) => /^H\d+\.\s/.test(t.trim());
     const target = form.sections.background.find(
       (sec) => sec.heading.includes("연구모형") || sec.heading.includes("가설"),
     );
-    const existing = new Set((target?.paragraphs ?? []).map((par) => par.text.trim()));
-    const adds = lines.filter((line) => !existing.has(line));
-    if (adds.length === 0) {
+    const existingHyps = (target?.paragraphs ?? []).map((par) => par.text.trim()).filter(isHypLine);
+    if (existingHyps.length === lines.length && existingHyps.every((t, i) => t === lines[i])) {
       toast.info("모든 가설이 이미 절에 나열되어 있습니다.");
+      return;
+    }
+    if (
+      existingHyps.length > 0 &&
+      !confirm(`절에 있는 기존 가설 ${existingHyps.length}개를 현재 목록(${lines.length}개)으로 교체할까요?`)
+    ) {
       return;
     }
     setForm((prev) => {
@@ -1602,12 +1649,12 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         secs.push({ id: uid(), heading: "연구모형 및 가설", paragraphs: [] });
         idx = secs.length - 1;
       }
-      const kept = secs[idx].paragraphs.filter((par) => par.text.trim());
-      secs[idx] = { ...secs[idx], paragraphs: [...kept, ...adds.map((t) => ({ id: uid(), text: t }))] };
+      const kept = secs[idx].paragraphs.filter((par) => par.text.trim() && !isHypLine(par.text));
+      secs[idx] = { ...secs[idx], paragraphs: [...kept, ...lines.map((t) => ({ id: uid(), text: t }))] };
       return { ...prev, sections: { ...prev.sections, background: secs } };
     });
     markDirty();
-    toast.success(`가설 ${adds.length}개를 '연구모형 및 가설' 절에 나열했습니다 — 각 가설의 이론 근거를 앞 절에서 받쳐주세요.`);
+    toast.success(`가설 ${lines.length}개를 '연구모형 및 가설' 절에 나열했습니다 — 각 가설의 이론 근거를 앞 절에서 받쳐주세요.`);
   }
 
   /** R4: 문헌 매트릭스 → 이론적 배경 '선행연구 고찰' 절에 비교표 삽입 */
@@ -1760,6 +1807,16 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         label,
         sections: form.sections,
         chapters: serializeAll(form.sections),
+        // QA-v2: 참고문헌·초록·연구문제·방법 위젯 데이터도 스냅샷에 포함 (복원 시 선택 반영)
+        abstract: form.abstract,
+        abstractKeywords: form.abstractKeywords,
+        abstractEn: form.abstractEn,
+        references: form.references,
+        researchQuestions: form.researchQuestions,
+        ethicsChecked: form.ethicsChecked,
+        instruments: form.instruments,
+        procedureSteps: form.procedureSteps,
+        appendices: form.appendices,
         charCount: totalChars(form),
         createdAt: new Date().toISOString(),
       };
@@ -1805,10 +1862,28 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         else if (v.chapters?.[k]?.trim()) sections[k] = withOverview(migratePlainText(v.chapters[k]!));
         else sections[k] = buildTemplateSections(templateHeadings(k, restoredApproach));
       }
-      // 본문(5장)만 복원 — 초록은 별개 아티팩트라 현재 값을 보존 (버전 스냅샷은 초록 미포함)
-      setForm((prev) => ({ ...prev, title: v.title ?? "", sections }));
+      // QA-v2: 스냅샷에 담긴 필드는 함께 복원, 없는 필드(구버전 스냅샷)는 현재 값 보존
+      setForm((prev) => ({
+        ...prev,
+        title: v.title ?? "",
+        sections,
+        ...(v.abstract !== undefined ? { abstract: v.abstract } : {}),
+        ...(v.abstractKeywords !== undefined ? { abstractKeywords: v.abstractKeywords } : {}),
+        ...(v.abstractEn !== undefined ? { abstractEn: v.abstractEn } : {}),
+        ...(v.references !== undefined ? { references: v.references } : {}),
+        ...(v.researchQuestions !== undefined ? { researchQuestions: v.researchQuestions } : {}),
+        ...(v.ethicsChecked !== undefined ? { ethicsChecked: v.ethicsChecked } : {}),
+        ...(v.instruments !== undefined ? { instruments: v.instruments } : {}),
+        ...(v.procedureSteps !== undefined ? { procedureSteps: v.procedureSteps } : {}),
+        ...(v.appendices !== undefined ? { appendices: v.appendices } : {}),
+      }));
       setDirty(true);
-      toast.success(`"${v.label}" 버전의 본문을 불러왔습니다 — 초록은 유지됩니다. 저장 버튼을 눌러 확정하세요.`);
+      const withExtras = v.references !== undefined || v.abstract !== undefined;
+      toast.success(
+        withExtras
+          ? `"${v.label}" 버전을 불러왔습니다 (본문·초록·참고문헌 포함) — 저장 버튼을 눌러 확정하세요.`
+          : `"${v.label}" 버전의 본문을 불러왔습니다 — 초록·참고문헌은 유지됩니다. 저장 버튼을 눌러 확정하세요.`,
+      );
     } finally {
       setVersionBusy(false);
     }
@@ -1881,13 +1956,23 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   function buildFigureTocText(): { tables: string[]; figures: string[] } {
     const tables: string[] = [];
     const figures: string[] = [];
+    // QA-v2: "<표 Ⅳ-1>과 같이 …" 같은 본문 참조 문장을 목차에 넣지 않도록 캡션 패턴만 수집
+    const CAPTION_RE = /^<(표|그림)\s[^>]{0,24}>\s*(.*)$/;
+    const isCaption = (line: string): "표" | "그림" | null => {
+      const m = CAPTION_RE.exec(line);
+      if (!m) return null;
+      const rest = m[2].trim();
+      if (rest.length > 60 || /(이다|한다|였다|있다|됐다|되었다|나타났다)[.。]?$/.test(rest)) return null;
+      return m[1] as "표" | "그림";
+    };
     for (const k of CHAPTER_KEYS) {
       for (const sec of form.sections[k]) {
         for (const par of sec.paragraphs) {
           for (const raw of par.text.split("\n")) {
             const line = raw.trim();
-            if (line.startsWith("<표")) tables.push(line);
-            else if (line.startsWith("<그림")) figures.push(line);
+            const kind = isCaption(line);
+            if (kind === "표") tables.push(line);
+            else if (kind === "그림") figures.push(line);
           }
         }
       }
@@ -2640,7 +2725,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           </p>
           <textarea
             value={form.references}
-            readOnly={readOnly}
+            readOnly={readOnly || refsBusy}
             onChange={(e) => {
               setForm((prev) => ({ ...prev, references: e.target.value }));
               markDirty();
@@ -2666,11 +2751,6 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           valueEn={form.abstractEn}
           onChangeEn={(next) => {
             setForm((prev) => ({ ...prev, abstractEn: next }));
-            markDirty();
-          }}
-          valueAck={form.acknowledgments}
-          onChangeAck={(next) => {
-            setForm((prev) => ({ ...prev, acknowledgments: next }));
             markDirty();
           }}
           readOnly={readOnly}
@@ -3371,29 +3451,6 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         onInsert={(text) => insertTable(text)}
       />
 
-      {/* ── 하단 고정 저장 바 (2026-07-03 사용자 요청) — 긴 본문 스크롤 중에도 저장 접근 ── */}
-      {!readOnly && (
-        <div className="sticky bottom-0 z-30 -mx-1 flex items-center justify-between gap-2 rounded-t-xl border border-b-0 bg-background/95 px-3 py-2 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] backdrop-blur">
-          <span className="truncate text-xs text-muted-foreground">
-            {saving
-              ? "저장 중…"
-              : dirty
-                ? "저장되지 않은 변경이 있습니다"
-                : savedAt
-                  ? `마지막 저장 ${new Date(savedAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}`
-                  : ""}
-          </span>
-          <div className="flex shrink-0 items-center gap-2">
-            <Button size="sm" variant="outline" onClick={handleSaveVersion} disabled={versionBusy} title="라벨을 붙여 버전 스냅샷 저장">
-              버전 저장
-            </Button>
-            <Button size="sm" onClick={() => handleSave()} disabled={saving || (!dirty && !!savedAt)}>
-              <Save size={12} className="mr-1" />
-              {saving ? "저장 중…" : dirty ? "저장" : "저장됨"}
-            </Button>
-          </div>
-        </div>
-      )}
 
       {/* ── 이전 / 다음 네비게이션 ── */}
       <div className="flex items-center justify-between rounded-2xl border bg-card p-3">
@@ -3420,6 +3477,30 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         </Button>
       </div>
       </>
+      )}
+
+      {/* ── 하단 고정 저장 바 — 모든 탭(본문·초록·부록·참고문헌) 공통 (QA-v2) ── */}
+      {!readOnly && (
+        <div className="sticky bottom-0 z-30 -mx-1 flex items-center justify-between gap-2 rounded-t-xl border border-b-0 bg-background/95 px-3 py-2 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] backdrop-blur">
+          <span className="truncate text-xs text-muted-foreground">
+            {saving
+              ? "저장 중…"
+              : dirty
+                ? "저장되지 않은 변경이 있습니다"
+                : savedAt
+                  ? `마지막 저장 ${new Date(savedAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}`
+                  : ""}
+          </span>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button size="sm" variant="outline" onClick={handleSaveVersion} disabled={versionBusy} title="라벨을 붙여 버전 스냅샷 저장">
+              버전 저장
+            </Button>
+            <Button size="sm" onClick={() => handleSave()} disabled={saving || (!dirty && !!savedAt)}>
+              <Save size={12} className="mr-1" />
+              {saving ? "저장 중…" : dirty ? "저장" : "저장됨"}
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -44,7 +44,12 @@ function resizeImage(file: File, maxWidth: number, quality: number): Promise<str
       if (!ctx) { reject(new Error("Canvas not supported")); return; }
       ctx.drawImage(img, 0, 0, width, height);
 
-      const dataUrl = canvas.toDataURL(file.type === "image/png" ? "image/png" : "image/jpeg", quality);
+      let dataUrl = canvas.toDataURL(file.type === "image/png" ? "image/png" : "image/jpeg", quality);
+      // QA-v2: 고밀도 PNG 는 800px 리사이즈 후에도 수백 KB — Firestore 문서 한도를 위해 JPEG 폴백
+      if (dataUrl.length > 350_000) {
+        dataUrl = canvas.toDataURL("image/jpeg", quality);
+        if (dataUrl.length > 350_000) dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+      }
       resolve(dataUrl);
     };
 

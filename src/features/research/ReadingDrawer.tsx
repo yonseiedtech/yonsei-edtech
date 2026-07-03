@@ -75,7 +75,7 @@ export default function ReadingDrawer({ userId, chapter }: Props) {
   const [completedOnly, setCompletedOnly] = useState(false);
 
   const { data: papers = [], isLoading } = useQuery({
-    queryKey: ["research-papers", userId],
+    queryKey: ["research_papers", userId],
     queryFn: async () => (await researchPapersApi.list(userId)).data as ResearchPaper[],
     enabled: open && !!userId,
     staleTime: 5 * 60_000,

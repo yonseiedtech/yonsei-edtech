@@ -169,7 +169,7 @@ export const JOURNEY_STAGES: JourneyStage[] = [
     goal: "결과·논의(4~5장)를 완성하고 타당도 위협 방어 논리로 심사를 준비합니다.",
     tools: [
       { label: "학위논문 마무리", href: "/mypage/research?tab=writing&sub=thesis" },
-      { label: "지도 노트 — 심사 피드백 관리", href: "/mypage/research?tab=writing&sub=thesis" },
+      { label: "지도 노트 — 심사 피드백 관리", href: "/mypage/research?tab=feedback" },
       { label: "논문 심사 연습 (따라읽기·STT)", href: "/steppingstone/thesis-defense" },
       { label: "작성 원칙·타당도(아카이브)", href: "/archive" },
     ],
@@ -240,7 +240,7 @@ export default function ThesisJourney({ user, editable = true }: Props) {
 
   // P4: 단계별 산출물 현황 — 기존 캐시 키 재사용 (본인 화면 한정)
   const { data: myPapers = [] } = useQuery({
-    queryKey: ["research-papers", user.id],
+    queryKey: ["research_papers", user.id],
     queryFn: async () => (await researchPapersApi.list(user.id)).data,
     enabled: editable && !!user.id,
     staleTime: 5 * 60_000,

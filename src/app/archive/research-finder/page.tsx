@@ -264,7 +264,7 @@ export default function ResearchFinderPage() {
                   <ul className="mt-3 space-y-2">
                     {result.combines.map((c) => {
                       const m = rmBySeedKey.get(c.seedKey);
-                      const label = m?.name ?? c.seedKey;
+                      const label = m?.name ?? RF_SEEDKEY_LABEL[c.seedKey] ?? c.seedKey;
                       const inner = (
                         <div className="flex items-center justify-between gap-2 rounded-xl border bg-card p-3 transition-colors hover:border-primary/40">
                           <span className="text-sm font-medium">{label}</span>

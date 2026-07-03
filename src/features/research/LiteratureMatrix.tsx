@@ -14,6 +14,7 @@ import { useMemo, useState } from "react";
 import { Table2, Copy, ChevronDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
 import { useResearchPapers, useUpdateResearchPaper } from "./useResearchPapers";
 import { MATRIX_COLUMNS, type MatrixColumnKey, hasMatrixData, paperLabel, buildMatrixTable } from "./literature-matrix";
 import type { User, ResearchPaper } from "@/types";
@@ -21,6 +22,7 @@ import type { User, ResearchPaper } from "@/types";
 export default function LiteratureMatrix({ user, readOnly }: { user: User; readOnly?: boolean }) {
   const { papers, isLoading } = useResearchPapers(user.id);
   const update = useUpdateResearchPaper();
+  const qc = useQueryClient();
   const [open, setOpen] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
   // 셀 편집 버퍼 — `${paperId}:${col}` → 값 (blur 시 저장 후 제거)
@@ -51,23 +53,45 @@ export default function LiteratureMatrix({ user, readOnly }: { user: User; readO
     const k = draftKey(p.id, col);
     if (!(k in drafts)) return;
     const next = drafts[k];
-    setDrafts((d) => {
-      const { [k]: _omit, ...rest } = d;
-      return rest;
-    });
-    if (next.trim() === (p[col] ?? "").trim()) return;
+    if (next.trim() === (p[col] ?? "").trim()) {
+      setDrafts((d) => {
+        const { [k]: _omit, ...rest } = d;
+        return rest;
+      });
+      return;
+    }
     setSavingId(p.id);
     try {
       await update.mutateAsync({ id: p.id, data: { [col]: next.trim() } });
+      // QA-v2: 낙관적 캐시 반영 — 저장~refetch 사이 옛 값으로 깜빡이던 문제 방지
+      qc.setQueryData(["research_papers", user.id], (prev: unknown) =>
+        Array.isArray(prev)
+          ? prev.map((pp) => ((pp as ResearchPaper).id === p.id ? { ...(pp as ResearchPaper), [col]: next.trim() } : pp))
+          : prev,
+      );
+      // 성공 후에만 draft 제거 — 실패 시 입력 유지 (QA-v2)
+      setDrafts((d) => {
+        const { [k]: _omit, ...rest } = d;
+        return rest;
+      });
     } catch {
-      toast.error("셀 저장에 실패했습니다 — 잠시 후 다시 시도하세요.");
+      toast.error("셀 저장에 실패했습니다 — 입력은 남아 있으니 잠시 후 다시 시도하세요.");
     } finally {
       setSavingId((cur) => (cur === p.id ? null : cur));
     }
   }
 
   async function copyTable() {
-    const text = buildMatrixTable(rows);
+    // QA-v2: 마지막 셀 blur 저장이 끝나기 전에도 방금 입력(draft)을 표에 반영
+    const merged = rows.map((p) => {
+      const patch: Partial<ResearchPaper> = {};
+      for (const c of MATRIX_COLUMNS) {
+        const k = draftKey(p.id, c.key);
+        if (k in drafts) patch[c.key] = drafts[k];
+      }
+      return { ...p, ...patch };
+    });
+    const text = buildMatrixTable(merged);
     if (!text) {
       toast.info("복사할 내용이 없습니다 — 셀을 먼저 채워주세요.");
       return;

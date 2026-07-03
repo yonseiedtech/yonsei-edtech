@@ -195,11 +195,14 @@ service cloud.firestore {
 
     // ─── Seminar Registrations ───
     match /seminar_registrations/{docId} {
-      // 본인(userId 또는 가입 이메일) 신청 확인 + 운영진 관리만 read — 신청자 이메일 전체 노출 차단
+      // 본인(userId 또는 가입 이메일) 신청 확인 + 운영진 + 세미나 호스트만 read
+      // QA-v2: 비스태프 호스트(hostUserIds)가 신청자 명단을 못 보던 문제 — 호스트 분기 추가
       allow read: if isAuthenticated()
         && (isStaffOrAbove()
             || resource.data.userId == request.auth.uid
-            || resource.data.email == request.auth.token.email);
+            || resource.data.email == request.auth.token.email
+            || get(/databases/$(database)/documents/seminars/$(resource.data.seminarId))
+                 .data.get('hostUserIds', []).hasAny([request.auth.uid]));
       allow create: if true; // Public registration
       allow update, delete: if isAuthenticated() && isStaffOrAbove();
     }
@@ -248,9 +251,19 @@ service cloud.firestore {
     // 행사 후기 (Phase 2-D): 로그인 회원 read, 본인 작성·수정, staff 정리 가능.
     match /networking_reviews/{docId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      // QA-v2: rating 1~5 정수 서버 강제 — 평균 별점 오염 차단
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5;
       allow update, delete: if isAuthenticated()
         && (resource.data.userId == request.auth.uid || isStaffOrAbove());
+      allow update: if isAuthenticated()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5;
     }
     // 행사 세부 프로그램: 전체 read, staff write.
     match /networking_event_programs/{docId} {
@@ -382,7 +395,9 @@ service cloud.firestore {
 
     // ─── Notifications (알림) ───
     match /notifications/{docId} {
-      allow read: if isAuthenticated();
+      // QA-v2: 타인 알림(멘션·쪽지 프리뷰) 열람 차단 — 본인/운영진만
+      allow read: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
       allow create: if isAuthenticated();
       allow update, delete: if isAuthenticated()
         && (resource.data.userId == request.auth.uid || isStaffOrAbove());
@@ -899,9 +914,9 @@ service cloud.firestore {
     // ─── Sprint 67-D: 받은 명함 (Received Business Cards) ───
     // 본인이 받은 명함만 본인이 read·write 가능 (privacy)
     match /received_business_cards/{docId} {
+      // QA-v2: 무필터 list 가 타인 명함(연락처) 전량 노출 — list 는 read 규칙 증명에 위임
       allow read: if isAuthenticated()
         && resource.data.ownerId == request.auth.uid;
-      allow list: if isAuthenticated();
       allow create: if isAuthenticated()
         && request.resource.data.ownerId == request.auth.uid;
       allow update: if isAuthenticated()
@@ -921,9 +936,9 @@ service cloud.firestore {
     }
     // 참여자 본인 제출만 본인이 read·write 가능, 운영진은 모두 read·feedback write 가능
     match /conference_workbook_submissions/{docId} {
+      // QA-v2: 무필터 list 가 타인 비공개 회고 노출 — list 는 read 규칙 증명에 위임
       allow read: if isAuthenticated()
         && (resource.data.userId == request.auth.uid || isStaffOrAbove());
-      allow list: if isAuthenticated();
       allow create: if isAuthenticated()
         && request.resource.data.userId == request.auth.uid;
       allow update: if isAuthenticated()
@@ -1613,8 +1628,18 @@ service cloud.firestore {
               || isStaffOrAbove()
             ));
 
-      // list — 클라이언트가 visibility/reviewStatus 조건과 함께 쿼리 가정
-      allow list: if true;
+      // QA-v2 Critical: list 전면 개방은 draft/private 전량 덤프 경로 — read 와 동일 게이트.
+      // (클라이언트 쿼리도 visibility+reviewStatus 서버 필터로 전환됨 — bkend listPublic/listSociety)
+      allow list: if
+        (resource.data.visibility == 'public' && resource.data.reviewStatus == 'published')
+        || (isAuthenticated()
+            && resource.data.visibility == 'society'
+            && resource.data.reviewStatus == 'published')
+        || (isAuthenticated() && (
+              isCollabMember(resource.data.researchId)
+              || isCollabLeader(resource.data.researchId)
+              || isStaffOrAbove()
+            ));
 
       // create: 팀 멤버만. 초기 reviewStatus=draft, viewCount=0, downloadCount=0 강제.
       allow create: if isAuthenticated()

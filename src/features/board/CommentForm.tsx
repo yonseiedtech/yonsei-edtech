@@ -52,6 +52,8 @@ export default function CommentForm({ postId }: Props) {
 
   // 키보드 내비 (Batch-3): ↑↓ 이동, Enter/Tab 선택, Escape 닫기 — 보편 계약
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    // QA-v2: 한글 IME 조합 중 Enter/방향키가 멘션을 오삽입하지 않도록
+    if (e.nativeEvent.isComposing || e.keyCode === 229) return;
     if (mentionQuery === null || suggestions.length === 0) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();

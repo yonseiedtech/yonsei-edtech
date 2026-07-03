@@ -177,3 +177,41 @@ export interface MonthSeminar {
   title: string;
   mode: SeminarMode;
 }
+
+
+/**
+ * QA-v2(2026-07-03): 시간 겹침 레인 배정 — 겹치는 일정이 서로를 완전히 가리지 않도록
+ * 클러스터(연결된 겹침 그룹) 단위로 lane(0..n-1)과 lane 총수를 계산한다.
+ * minHeight 는 렌더 시 최소 높이 보정(Math.max)과 동일 값을 넘겨 시각적 겹침 기준을 맞춘다.
+ */
+export function computeLanes(
+  items: { key: string; top: number; height: number }[],
+  minHeight: number,
+): Map<string, { lane: number; lanes: number }> {
+  const sorted = [...items].sort((a, b) => a.top - b.top || b.height - a.height);
+  const result = new Map<string, { lane: number; lanes: number }>();
+  type PlacedLane = { key: string; top: number; bottom: number; lane: number };
+  let cluster: PlacedLane[] = [];
+  let clusterEnd = -Infinity;
+  const flush = () => {
+    if (cluster.length === 0) return;
+    const lanes = Math.max(...cluster.map((c) => c.lane)) + 1;
+    for (const c of cluster) result.set(c.key, { lane: c.lane, lanes });
+    cluster = [];
+  };
+  for (const it of sorted) {
+    const top = it.top;
+    const bottom = it.top + Math.max(it.height, minHeight);
+    if (cluster.length > 0 && top >= clusterEnd) {
+      flush();
+      clusterEnd = -Infinity;
+    }
+    const used = new Set(cluster.filter((c) => c.bottom > top).map((c) => c.lane));
+    let lane = 0;
+    while (used.has(lane)) lane += 1;
+    cluster.push({ key: it.key, top, bottom, lane });
+    clusterEnd = Math.max(clusterEnd, bottom);
+  }
+  flush();
+  return result;
+}

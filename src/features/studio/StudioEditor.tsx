@@ -97,6 +97,10 @@ export default function StudioEditor({ docId }: { docId: string }) {
   const dirtyRef = useRef(false);
   const docRef = useRef<DesignDocument | null>(null);
   docRef.current = doc;
+  // QA-v2: 탭 간 last-writer-wins 방지 — 서버 lastSavedAt 기준선·충돌 플래그·확인 스로틀
+  const baseSavedAtRef = useRef<string | null>(null);
+  const conflictRef = useRef(false);
+  const lastConflictCheckRef = useRef(0);
   // ── undo/redo (Batch-3): pages 스냅샷 스택. 편집 버스트(드래그·연속 타이핑)는
   // 400ms 스로틀로 한 스텝으로 묶는다. pages 는 불변 갱신이라 참조 스냅샷 안전. ──
   const undoStack = useRef<DesignPage[][]>([]);
@@ -130,7 +134,10 @@ export default function StudioEditor({ docId }: { docId: string }) {
     (async () => {
       try {
         const d = await designDocsApi.get(docId);
-        if (!cancelled) setDoc(d);
+        if (!cancelled) {
+          baseSavedAtRef.current = (d as { lastSavedAt?: string } | null)?.lastSavedAt ?? null;
+          setDoc(d);
+        }
       } catch {
         toast.error("문서를 불러오지 못했습니다.");
       } finally {
@@ -192,12 +199,30 @@ export default function StudioEditor({ docId }: { docId: string }) {
   const [saveError, setSaveError] = useState<string | null>(null);
   const save = useCallback(async (silent = true) => {
     const cur = docRef.current;
-    if (!cur || !dirtyRef.current) return;
-    const approxSize = JSON.stringify(cur.pages).length;
+    if (!cur || !dirtyRef.current || conflictRef.current) return;
+    // QA-v2: UTF-16 length 는 한글에서 과소 측정 — 실제 바이트로 판정
+    const approxSize = new TextEncoder().encode(JSON.stringify(cur.pages)).length;
     if (approxSize > 980_000) {
       // Firestore 문서 한도(1MiB) — 시도 자체를 막고 지속 배너로 알림 (침묵 실패 방지)
       setSaveError("문서 용량이 1MB 한도를 초과해 저장할 수 없습니다. 삽입 이미지를 삭제하거나 페이지를 나눠주세요.");
       return;
+    }
+    // QA-v2: 다른 탭/기기 동시 편집 감지 (30초 스로틀) — 무경고 덮어쓰기 방지
+    if (Date.now() - lastConflictCheckRef.current > 30_000) {
+      lastConflictCheckRef.current = Date.now();
+      try {
+        const fresh = await designDocsApi.get(cur.id);
+        const serverSavedAt = (fresh as { lastSavedAt?: string } | null)?.lastSavedAt ?? null;
+        if (serverSavedAt && baseSavedAtRef.current && serverSavedAt !== baseSavedAtRef.current) {
+          conflictRef.current = true;
+          setSaveError(
+            "다른 탭/기기에서 이 문서가 수정되었습니다. 덮어쓰기를 막기 위해 이 탭의 저장을 중단했어요 — 새로고침해 최신 내용을 확인하세요.",
+          );
+          return;
+        }
+      } catch {
+        // 확인 실패(오프라인 등)는 저장을 막지 않음
+      }
     }
     setSaving(true);
     // 레이스 방지: await 전에 dirty 를 내리고, 실패 시 복구.
@@ -206,6 +231,7 @@ export default function StudioEditor({ docId }: { docId: string }) {
     try {
       const now = new Date().toISOString();
       await designDocsApi.update(cur.id, { pages: cur.pages, title: cur.title, lastSavedAt: now, updatedAt: now });
+      baseSavedAtRef.current = now;
       setSavedAt(now);
       setSaveError(null);
       if (!silent) toast.success("저장되었습니다.");
@@ -262,7 +288,11 @@ export default function StudioEditor({ docId }: { docId: string }) {
 
   function removeSelected() {
     if (!selectedId) return;
-    const el = page?.elements.find((e) => e.id === selectedId);
+    // QA-v2: keydown 이펙트의 stale closure 가 잠금 직후 상태를 못 봐 잠긴 요소가 삭제되던 문제
+    // — 항상 최신인 docRef 에서 잠금 상태를 판정한다.
+    const el = docRef.current?.pages
+      .flatMap((p) => p.elements)
+      .find((e) => e.id === selectedId);
     if (el?.locked) {
       toast.info("잠긴 요소입니다. 잠금을 해제한 뒤 삭제하세요.");
       return;

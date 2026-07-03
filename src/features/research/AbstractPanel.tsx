@@ -23,9 +23,6 @@ interface Props {
   /** R1(2026-07-03): 영문 초록 — 전달 시 하단에 접이식 영문 초록 입력이 노출 */
   valueEn?: string;
   onChangeEn?: (next: string) => void;
-  /** P2(2026-07-03): 감사의 글 — 전달 시 하단에 접이식 입력 노출 */
-  valueAck?: string;
-  onChangeAck?: (next: string) => void;
 }
 
 // 졸업생 초록 분석에서 도출한 권고치 (참고용)
@@ -91,11 +88,10 @@ const ELEMENT_TEMPLATES: { key: string; label: string; template: string }[] = [
 const LONG_SENTENCE = 90;
 const DOUBLE_PASSIVE = /보여진|되어진|쓰여진|모여진|이루어진다|놓여진/g;
 
-export default function AbstractPanel({ value, keywords, readOnly, onChange, onKeywordsChange, valueEn, onChangeEn, valueAck, onChangeAck }: Props) {
+export default function AbstractPanel({ value, keywords, readOnly, onChange, onKeywordsChange, valueEn, onChangeEn }: Props) {
   const [helpOpen, setHelpOpen] = useState(true);
   const [kwInput, setKwInput] = useState("");
   const [enOpen, setEnOpen] = useState(() => !!valueEn?.trim());
-  const [ackOpen, setAckOpen] = useState(() => !!valueAck?.trim());
 
   const chars = value.trim().length;
   const sentenceList = useMemo(() => (value.trim() ? splitSentences(value) : []), [value]);
@@ -354,42 +350,6 @@ export default function AbstractPanel({ value, keywords, readOnly, onChange, onK
                 onChange={(e) => onChangeEn(e.target.value)}
                 rows={10}
                 placeholder="This study aimed to examine the effects of ..."
-                className="w-full resize-y rounded-xl border bg-background p-3.5 text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 read-only:opacity-60"
-              />
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 감사의 글 (P2, 2026-07-03) — 앞부속 구성 요소, 관례상 마지막에 작성 */}
-      {onChangeAck && (
-        <div className="rounded-xl border">
-          <button
-            type="button"
-            onClick={() => setAckOpen((v) => !v)}
-            aria-expanded={ackOpen}
-            className="flex w-full items-center justify-between gap-2 px-3.5 py-2.5 text-left"
-          >
-            <span className="text-xs font-semibold">감사의 글</span>
-            <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
-              {(valueAck ?? "").trim()
-                ? `${(valueAck ?? "").trim().length.toLocaleString()}자`
-                : "선택 — 심사가 끝난 뒤 마지막에 써도 됩니다"}
-              <ChevronDown size={14} className={cn("transition-transform", ackOpen && "rotate-180")} />
-            </span>
-          </button>
-          {ackOpen && (
-            <div className="space-y-2 border-t px-3.5 py-3">
-              <p className="text-[11px] leading-relaxed text-muted-foreground">
-                통상 지도교수 → 심사위원 → 도움 주신 분들 → 가족 순으로 씁니다. 형식 제약이 가장 적은 부분이니
-                본인 목소리로 자유롭게 — 제출 직전에 완성하는 경우가 대부분이라 지금은 메모만 남겨도 좋아요.
-              </p>
-              <textarea
-                value={valueAck ?? ""}
-                readOnly={readOnly}
-                onChange={(e) => onChangeAck(e.target.value)}
-                rows={8}
-                placeholder="지도해 주신 ___ 교수님께 깊이 감사드립니다. …"
                 className="w-full resize-y rounded-xl border bg-background p-3.5 text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 read-only:opacity-60"
               />
             </div>
