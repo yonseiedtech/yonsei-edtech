@@ -43,6 +43,7 @@ import { lintThesis, questionCoverage, LINT_CHAPTER_LABELS, type LintIssue, type
 import StyleCheckPanel from "./StyleCheckPanel";
 import ResearchQuestionsPanel from "./ResearchQuestionsPanel";
 import AppendixPanel from "./AppendixPanel";
+import TableBuilderDialog from "./TableBuilderDialog";
 import { phrasesForChapter } from "./phrase-bank";
 import MethodHelper, { STAT_METHOD_DESCRIPTIONS, type DesignRef } from "./MethodHelper";
 import DataAnalyzer from "./DataAnalyzer";
@@ -129,9 +130,11 @@ function templateHeadings(
     case "intro":
       return ["연구의 필요성", "연구 목적"];
     case "background":
+      // 2026-07-03 사용자 요청: 기본 절명은 "이론적 배경 N" — 절 이름은 헤더에서 자유 수정.
+      // (기존 가이드 절명은 SECTION_GUIDES 키워드로 계속 지원 — 사용자가 이름을 바꾸면 매칭)
       return qual
-        ? ["핵심 개념과 이론", "선행연구 고찰"]
-        : ["핵심 개념과 이론", "선행연구 고찰", "연구모형 및 가설"];
+        ? ["이론적 배경 1", "이론적 배경 2", "이론적 배경 3"]
+        : ["이론적 배경 1", "이론적 배경 2", "이론적 배경 3", "연구모형 및 가설"];
     case "method":
       return qual
         ? ["연구 설계", "연구 참여자", "자료 수집", "자료 분석", "신뢰성·타당성 확보"]
@@ -779,6 +782,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   const [guideOpen, setGuideOpen] = useState(false);
   const [sectionGuideOpen, setSectionGuideOpen] = useState<string | null>(null);
   const [lintOpen, setLintOpen] = useState(false);
+  const [tableBuilderOpen, setTableBuilderOpen] = useState(false);
   const [lintIssues, setLintIssues] = useState<LintIssue[] | null>(null);
   const [lintCoverage, setLintCoverage] = useState<QuestionCoverage[]>([]);
   const [phrasesOpen, setPhrasesOpen] = useState(false);
@@ -917,10 +921,11 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     toast.success(`'${LINT_CHAPTER_LABELS[k]}' 장을 기본 구성으로 초기화했습니다.`);
   }
 
-  /** F: 현재 장의 활성 절에 표 골격 단락을 추가 (섹션 추가와 별개) */
-  function insertTable() {
+  /** F: 현재 장의 활성 절에 표 단락 삽입 — 표 빌더 팝업(TableBuilderDialog)에서 호출 */
+  function insertTable(tableText?: string) {
     if (readOnly || !paper) return;
     const table =
+      tableText ??
       "<표 _-_> 표 제목\n구분 | 항목1 | 항목2 | 항목3\n___ | ___ | ___ | ___\n___ | ___ | ___ | ___";
     setForm((prev) => {
       const cur = [...prev.sections[step]];
@@ -2158,7 +2163,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
               )}
             >
               <s.icon size={14} />
-              <span className="hidden sm:inline">{i + 1}. {s.label}</span>
+              <span className="hidden sm:inline">{["Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ"][i]}. {s.label}</span>
               <span className="sm:hidden">{["서론", "이론", "방법", "결과", "결론"][i]}</span>
               {(pendingByChapter.get(s.key)?.length ?? 0) > 0 && (
                 <span
@@ -2238,7 +2243,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       <section className="rounded-2xl border bg-card p-5">
         <div className="flex items-center justify-between">
           <h4 className="text-sm font-semibold">
-            {stepIdx + 1}. {STEPS[stepIdx].label}
+            {["Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ"][stepIdx]}. {STEPS[stepIdx].label}
           </h4>
           <div className="flex items-center gap-2">
             <span className="text-[11px] text-muted-foreground">
@@ -2393,6 +2398,17 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                     >
                       <Trash2 size={13} />
                     </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-primary"
+                      aria-label="지금까지 변경 저장"
+                      title="지금까지의 변경을 저장 (전체 문서 저장)"
+                      disabled={saving || (!dirty && !!savedAt)}
+                      onClick={() => handleSave()}
+                    >
+                      <Save size={13} />
+                    </Button>
                   </div>
                 )}
               </div>
@@ -2497,9 +2513,9 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
             </button>
             <button
               type="button"
-              onClick={insertTable}
+              onClick={() => setTableBuilderOpen(true)}
               className="inline-flex items-center gap-1 rounded-lg border border-dashed px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary/40 hover:text-primary"
-              title="현재 절에 표 골격 추가"
+              title="행·열·이름을 지정해 표 만들기"
             >
               <Plus size={12} />
               표 추가
@@ -2774,6 +2790,37 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       <div className="mt-1">
         <StyleCheckPanel sections={{ [step]: form.sections[step] }} />
       </div>
+
+      {/* 표 빌더 팝업 */}
+      <TableBuilderDialog
+        open={tableBuilderOpen}
+        onOpenChange={setTableBuilderOpen}
+        onInsert={(text) => insertTable(text)}
+      />
+
+      {/* ── 하단 고정 저장 바 (2026-07-03 사용자 요청) — 긴 본문 스크롤 중에도 저장 접근 ── */}
+      {!readOnly && (
+        <div className="sticky bottom-0 z-30 -mx-1 flex items-center justify-between gap-2 rounded-t-xl border border-b-0 bg-background/95 px-3 py-2 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] backdrop-blur">
+          <span className="truncate text-xs text-muted-foreground">
+            {saving
+              ? "저장 중…"
+              : dirty
+                ? "저장되지 않은 변경이 있습니다"
+                : savedAt
+                  ? `마지막 저장 ${new Date(savedAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}`
+                  : ""}
+          </span>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button size="sm" variant="outline" onClick={handleSaveVersion} disabled={versionBusy} title="라벨을 붙여 버전 스냅샷 저장">
+              버전 저장
+            </Button>
+            <Button size="sm" onClick={() => handleSave()} disabled={saving || (!dirty && !!savedAt)}>
+              <Save size={12} className="mr-1" />
+              {saving ? "저장 중…" : dirty ? "저장" : "저장됨"}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* ── 이전 / 다음 네비게이션 ── */}
       <div className="flex items-center justify-between rounded-2xl border bg-card p-3">
