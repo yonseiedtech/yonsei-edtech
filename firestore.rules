@@ -60,7 +60,11 @@ service cloud.firestore {
       // P1-1(2026-07-03): 공개 QR/프로필은 /api/profile/[id]/public 서버 투영으로 이전 —
       // 문서 직접 get 은 인증 필수 (securityAnswerHash·birthDate·calendarToken 비로그인 노출 차단)
       allow get: if isAuthenticated();
-      allow list: if isAuthenticated();
+      // P1-1b(2026-07-04): 회원 간 전체 목록(연락처 포함) 덤프 차단 — 목록은
+      // /api/members/basic(역할 인지 투영) 경유. 직접 list 는 staff + 본인 이메일 필터
+      // (AuthProvider 레거시 계정 부트스트랩: getByEmail)만 허용.
+      allow list: if isStaffOrAbove()
+        || (isAuthenticated() && resource.data.email == request.auth.token.email);
       // 회원가입: 본인이 본인 문서를 처음 만드는 경우 허용 (role=member, approved=false 강제)
       allow create: if isOwner(userId)
         && request.resource.data.role == 'member'

@@ -413,8 +413,32 @@ export const commentsApi = {
   delete: (id: string) => dataApi.delete("comments", id),
 };
 
+/**
+ * P1-1b(2026-07-04): users 클라이언트 list 가 staff 로 축소되어
+ * 목록·일괄 조회는 역할 인지 투영 API(/api/members/basic)를 경유한다.
+ * (staff 요청 = 전체 필드, 일반 회원 = 연락처·학번 제거 — 호출부 시그니처 무변경)
+ */
+async function fetchMembersBasic(params: Record<string, string | number | boolean | undefined>): Promise<{ data: User[] }> {
+  const token = await auth.currentUser?.getIdToken();
+  if (!token) throw new Error("로그인이 필요합니다.");
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v !== undefined && v !== null && v !== "") qs.set(k, String(v));
+  }
+  const res = await fetch(`/api/members/basic?${qs.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("회원 목록 조회에 실패했습니다.");
+  return (await res.json()) as { data: User[] };
+}
+
 export const profilesApi = {
-  list: (params?: QueryParams) => dataApi.list<User>("users", params),
+  list: (params?: QueryParams) =>
+    fetchMembersBasic({
+      approved: params?.["filter[approved]"],
+      role: params?.["filter[role]"] as string | undefined,
+      limit: params?.limit as number | undefined,
+    }),
   get: (id: string) => dataApi.get<User>("users", id),
   /**
    * 여러 사용자 프로필을 일괄 조회 — N+1 회피용.
@@ -425,13 +449,9 @@ export const profilesApi = {
     const unique = Array.from(new Set(ids.filter(Boolean)));
     if (unique.length === 0) return [];
     const chunks: string[][] = [];
-    for (let i = 0; i < unique.length; i += 30) chunks.push(unique.slice(i, i + 30));
+    for (let i = 0; i < unique.length; i += 300) chunks.push(unique.slice(i, i + 300));
     const results = await Promise.all(
-      chunks.map(async (chunk) => {
-        const q = query(collection(db, "users"), where(documentId(), "in", chunk));
-        const snap = await getDocs(q);
-        return snap.docs.map((d) => serializeDoc(d) as User);
-      }),
+      chunks.map(async (chunk) => (await fetchMembersBasic({ ids: chunk.join(",") })).data),
     );
     return results.flat();
   },

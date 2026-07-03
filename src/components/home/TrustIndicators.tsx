@@ -30,13 +30,10 @@ async function fetchYonseiStats(): Promise<Stats> {
   const thesesP = getCountFromServer(collection(db, "alumni_theses")).catch(
     () => getCountFromServer(collection(db, "alumniTheses")),
   );
-  const advisorsP = getCountFromServer(
-    query(
-      collection(db, "users"),
-      where("role", "==", "advisor"),
-      where("approved", "==", true),
-    ),
-  );
+  // P1-1b: users list 가 staff 전용으로 축소 — 공개 랜딩 카운트는 서버 집계 API 사용
+  const advisorsP = fetch("/api/stats/advisors")
+    .then((r) => (r.ok ? (r.json() as Promise<{ count: number }>) : { count: 0 }))
+    .then((j) => ({ data: () => ({ count: j.count }) }));
 
   const [seminars, newsletters, theses, advisors] = await Promise.all([
     seminarsP.catch(() => null),
