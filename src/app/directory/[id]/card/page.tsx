@@ -10,8 +10,7 @@ import BackButton from "@/components/ui/back-button";
 import { useAuthStore } from "@/features/auth/auth-store";
 import BusinessCard from "@/features/card/BusinessCard";
 import { Button } from "@/components/ui/button";
-import { profilesApi } from "@/lib/bkend";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { downloadVCard, userToContact } from "@/features/card/vcard";
 import type { User } from "@/types";
 import { toast } from "sonner";
@@ -23,11 +22,17 @@ function ReceivedCardInner() {
   const ownerId = params.id;
   const exchangeLoggedRef = useRef(false);
 
+  const via = search.get("via") === "link" ? "link" : "qr"; // 명함 페이지 자체가 교환 컨텍스트
   const { data: owner, isLoading } = useQuery({
-    queryKey: ["user-card", ownerId],
+    // P1-1: users 직접 get → 서버 투영 API (비로그인 QR 스캔도 shared 필드로 동작)
+    queryKey: ["user-card", ownerId, viewer?.id ?? "anon"],
     queryFn: async () => {
-      // profilesApi.get 은 User 를 직접 반환 (res.data 아님) — QR 명함 전면 파손 수정
-      return (await profilesApi.get(ownerId)) as unknown as User;
+      const token = await auth.currentUser?.getIdToken().catch(() => undefined);
+      const res = await fetch(`/api/profile/${ownerId}/public?via=${via}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      if (!res.ok) throw new Error("명함 조회 실패");
+      return ((await res.json()) as { user: User }).user;
     },
     enabled: !!ownerId,
   });

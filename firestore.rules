@@ -57,8 +57,9 @@ service cloud.firestore {
 
     // ─── Users ───
     match /users/{userId} {
-      // Public profile (QR scan) — single-doc get is open; list still requires auth
-      allow get: if true;
+      // P1-1(2026-07-03): 공개 QR/프로필은 /api/profile/[id]/public 서버 투영으로 이전 —
+      // 문서 직접 get 은 인증 필수 (securityAnswerHash·birthDate·calendarToken 비로그인 노출 차단)
+      allow get: if isAuthenticated();
       allow list: if isAuthenticated();
       // 회원가입: 본인이 본인 문서를 처음 만드는 경우 허용 (role=member, approved=false 강제)
       allow create: if isOwner(userId)

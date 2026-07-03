@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { profilesApi } from "@/lib/bkend";
+import { auth } from "@/lib/firebase";
 import {
   canAccessProfilePage,
   canViewSection,
@@ -46,8 +46,17 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
   const viewer = useAuthStore((s) => s.user);
 
   const { data: ownerRaw, isLoading, error } = useQuery({
-    queryKey: ["profile-owner", ownerId],
-    queryFn: async () => (await profilesApi.get(ownerId)) as unknown as User,
+    // P1-1: users 직접 get → 서버 투영 API. 뷰어(회원/운영진)·via 에 따라 연락처 가시성이 달라져 키에 포함.
+    queryKey: ["profile-owner", ownerId, viewer?.id ?? "anon", via ?? "none"],
+    queryFn: async () => {
+      const token = await auth.currentUser?.getIdToken().catch(() => undefined);
+      const qs = via ? `?via=${via}` : "";
+      const res = await fetch(`/api/profile/${ownerId}/public${qs}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      if (!res.ok) throw new Error("프로필 조회 실패");
+      return ((await res.json()) as { user: User }).user;
+    },
     enabled: !!ownerId,
     initialData: initialOwner ?? undefined,
     staleTime: 30_000,
