@@ -67,10 +67,22 @@ export default function VariableSyncPanel({ userId, value, onChange, readOnly = 
 
   async function handleExport() {
     if (!canExport) return;
+    // P2(2026-07-04): 보고서에 없는 모형 노드는 삭제됨 — 개수를 계산해 confirm
+    const nextModelPreview = variablesToModel(value, modelData);
+    const keptIds = new Set(nextModelPreview.nodes.map((n) => n.id));
+    const removed = (modelData?.nodes ?? []).filter((n) => !keptIds.has(n.id)).length;
+    if (
+      removed > 0 &&
+      !confirm(
+        `보고서 변인에 없는 모형 노드 ${removed}개(연결된 관계선 포함)가 삭제됩니다.\n계속할까요?`,
+      )
+    ) {
+      return;
+    }
     setExporting(true);
     try {
       // 기존 모형의 엣지·위치를 보존하며 변인 노드만 동기화
-      const nextModel = variablesToModel(value, modelData);
+      const nextModel = nextModelPreview;
       await researchModelsApi.save(userId, nextModel);
       qc.invalidateQueries({ queryKey: ["research-model", userId] });
       toast.success(`보고서 변인 ${reportCount}개를 연구 모형으로 보냈습니다.`);
@@ -115,7 +127,7 @@ export default function VariableSyncPanel({ userId, value, onChange, readOnly = 
                 type="button"
                 onClick={handleExport}
                 disabled={!canExport || exporting}
-                title="보고서 변인을 연구 모형으로 보냅니다 (모형의 관계선·배치는 유지)."
+                title="보고서 변인을 연구 모형으로 보냅니다 — 일치하는 노드의 관계선·배치는 유지되고, 보고서에 없는 변인 노드는 삭제됩니다(삭제 전 확인)."
                 className="inline-flex h-8 items-center gap-1 rounded-md border border-input bg-background px-2.5 text-xs font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {exporting ? <Loader2 size={13} className="animate-spin" /> : <ArrowUpFromLine size={13} />}

@@ -18,6 +18,7 @@ import {
   useEnsureResearchProposal,
   useUpdateResearchProposal,
 } from "./useResearchProposal";
+import { researchProposalsApi } from "@/lib/bkend";
 import { useResearchPapers } from "./useResearchPapers";
 import { useLogWritingActivity } from "./useWritingPaperHistory";
 import { formatApa7 } from "@/lib/apa7";
@@ -293,6 +294,8 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
   const [form, setForm] = useState<FormState>(EMPTY);
   const [hydrated, setHydrated] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
+  // P2(2026-07-04): 탭 간 last-write-wins 방지 — 서버 lastSavedAt 기준선
+  const baseSavedAtRef = useRef<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const ensureTriggeredRef = useRef(false);
@@ -309,6 +312,7 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
     if (proposal && !hydrated) {
       setForm(fromProposal(proposal));
       setSavedAt(proposal.lastSavedAt ?? proposal.updatedAt ?? null);
+      baseSavedAtRef.current = proposal.lastSavedAt ?? null;
       setHydrated(true);
     }
   }, [proposal, hydrated]);
@@ -330,11 +334,25 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
     setSaving(true);
     const now = new Date().toISOString();
     try {
+      // P2: 다른 탭/기기 저장 흔적 확인 — 전체 form 덮어쓰기 무경고 방지
+      try {
+        const fresh = await researchProposalsApi.get(proposal.id);
+        const serverSavedAt = (fresh as ResearchProposal | null)?.lastSavedAt ?? null;
+        if (serverSavedAt && baseSavedAtRef.current && serverSavedAt !== baseSavedAtRef.current) {
+          if (!confirm("다른 탭/기기에서 이 계획서가 저장된 흔적이 있습니다.\n계속 저장하면 그 내용을 덮어씁니다. 진행할까요?")) {
+            setSaving(false);
+            return false;
+          }
+        }
+      } catch {
+        // 확인 실패는 저장을 막지 않음
+      }
       await update.mutateAsync({
         id: proposal.id,
         data: { ...form, lastSavedAt: now },
       });
       setSavedAt(now);
+      baseSavedAtRef.current = now;
       setDirty(false);
       logActivity.mutate({
         userId: user.id,

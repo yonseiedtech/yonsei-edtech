@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -1700,14 +1700,25 @@ interface Props {
   saving: boolean;
   dirty: boolean;
   savedAt?: string;
-  onSave: () => void;
+  onSave: () => Promise<boolean> | boolean | void;
   onDraftSave: () => void;
+  /** 슬라이드 이동 시 무음 자동 임시저장 (P2, 2026-07-04 — 계획서 인터뷰와 일관) */
+  onAutoSave?: () => Promise<boolean> | boolean | void;
 }
 
 export default function ResearchReportInterview({
-  open, onClose, form, setField, total, saving, dirty, savedAt, onSave, onDraftSave,
+  open, onClose, form, setField, total, saving, dirty, savedAt, onSave, onDraftSave, onAutoSave,
 }: Props) {
   const [index, setIndex] = useState(-1);
+
+  // P2: 슬라이드 이동 시 자동 임시저장 — 25+ 슬라이드 작성 중 크래시로 전부 유실되던 문제
+  const prevIndexRef = useRef(-1);
+  useEffect(() => {
+    const moved = prevIndexRef.current !== index && prevIndexRef.current >= 0;
+    prevIndexRef.current = index;
+    if (moved && dirty && !saving) void onAutoSave?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index]);
 
   useEffect(() => {
     if (open) setIndex(-1);
@@ -1970,7 +1981,7 @@ export default function ResearchReportInterview({
               </h2>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:mt-4 sm:text-base">
                 총 <strong className="text-foreground">{totalSlides}개</strong>의 짧은 질문에 답하시면 됩니다.<br />
-                답변은 자동으로 보고서 본문에 저장됩니다.
+                답변은 화면에 즉시 반영되고, 슬라이드를 넘길 때마다 자동으로 임시저장됩니다.
               </p>
               <div className="mt-4 flex flex-wrap justify-center gap-1.5 text-[11px] text-muted-foreground sm:mt-6 sm:gap-3 sm:text-xs">
                 {REAL_CHAPTERS.filter((c) => chapterCounts[c] > 0).map((c) => {
@@ -2019,8 +2030,11 @@ export default function ResearchReportInterview({
                 type="button"
                 size="sm"
                 onClick={() => {
-                  onSave();
-                  onClose();
+                  // P2: 저장 성공 후에만 닫기 — 실패해도 모달이 닫혀 유실로 이어지던 문제
+                  void (async () => {
+                    const ok = await onSave();
+                    if (ok !== false) onClose();
+                  })();
                 }}
                 disabled={saving}
                 className="h-9 min-w-[72px] px-2 text-xs sm:min-w-[88px] sm:px-3 sm:text-sm"

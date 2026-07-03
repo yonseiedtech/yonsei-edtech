@@ -94,6 +94,8 @@ function StudioContent() {
       });
     }
     for (const a of ((activitiesRes?.data ?? []) as unknown as Activity[])) {
+      // Activity.type 에는 conference 가 없음(external = 대외학술대회) — DesignLink.kind 의
+      // "conference" 는 별도 소스 연계용 예약값 (P2 감사 확인, 2026-07-04)
       const kind = a.type === "study" ? "study" : a.type === "project" ? "project" : "external";
       opts.push({
         key: `${kind}:${a.id}`,

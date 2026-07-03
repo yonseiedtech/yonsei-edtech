@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { deleteField } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -182,9 +183,14 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
   ): Promise<ResearchPaper | void> {
     try {
       if (editing) {
+        // P2(2026-07-04): buildPayload 의 `trim() || undefined` 는 stripUndefinedDeep 에서
+        // 키가 통째로 빠져 "지운 값이 되살아나는" 문제 — 수정 경로에서는 deleteField 로 실제 삭제.
+        const cleared = Object.fromEntries(
+          Object.entries(data).map(([k, v]) => [k, v === undefined ? deleteField() : v]),
+        );
         const res = await updatePaper.mutateAsync({
           id: editing.id,
-          data: data as Record<string, unknown>,
+          data: cleared as Record<string, unknown>,
         });
         if (!opts.isDraft) toast.success("논문이 수정되었습니다.");
         return res as ResearchPaper;

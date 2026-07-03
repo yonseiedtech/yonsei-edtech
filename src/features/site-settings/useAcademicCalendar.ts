@@ -112,12 +112,18 @@ function diffDays(a: Date, b: Date): number {
   return Math.round((b.getTime() - a.getTime()) / 86400000);
 }
 
+/** P2(2026-07-04): KST 달력일 — UTC 기준이라 자정~9시 사이 어제로 판정되던 문제 */
+function todayKstUtcDate(now: Date): Date {
+  const kst = new Date(now.getTime() + 9 * 3600000);
+  return new Date(Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth(), kst.getUTCDate()));
+}
+
 export function pickActiveEntry(
   entries: AcademicCalendarEntry[],
   now: Date = new Date(),
 ): AcademicCalendarEntry | null {
   if (entries.length === 0) return null;
-  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const today = todayKstUtcDate(now);
   // 우선순위: 현재 시점이 semesterStart~breakEnd 사이인 학기
   const ranged = entries
     .map((e) => ({
@@ -159,7 +165,7 @@ export function computeProgress(
   entry: AcademicCalendarEntry,
   now: Date = new Date(),
 ): SemesterProgress | null {
-  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const today = todayKstUtcDate(now);
   const semStart = parseYmd(entry.semesterStart);
   const midStart = parseYmd(entry.midtermStart);
   const midEnd = parseYmd(entry.midtermEnd);
@@ -184,6 +190,8 @@ export function computeProgress(
   else if (finEnd && today > finEnd && today <= semEnd) phase = "post_final";
   else if (today > semEnd && breakEnd && today <= breakEnd) phase = "break";
   else if (breakEnd && today > breakEnd) phase = "after";
+  // P2: breakEnd 미입력 시 종강 다음날부터 "수업 (중간 전)"으로 잔류하던 문제 — 방학으로 폴백
+  else if (today > semEnd) phase = "break";
 
   // 다음 마일스톤
   const milestones: { label: string; date: Date | null }[] = [

@@ -10,6 +10,7 @@
  */
 
 import Link from "next/link";
+import { todayYmdKst, isoToKstYmd } from "@/lib/dday";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarClock, Timer, Layers } from "lucide-react";
@@ -50,10 +51,10 @@ export default function VacationModeCard({
   const nextStart = term === "spring" ? `${year}-09-01` : `${year + 1}-03-01`;
   const nextLabel = term === "spring" ? `${year}년 2학기` : `${year + 1}년 1학기`;
   const daysLeft = useMemo(() => {
-    const today = new Date();
+    // P2(2026-07-04): UTC/로컬 Date 혼용 대신 YMD 문자열끼리 UTC epoch 로 비교 — 시간대 무관
     const [y, m, d] = nextStart.split("-").map(Number);
-    const target = new Date(y, m - 1, d);
-    return Math.max(0, Math.ceil((target.getTime() - new Date(ymdLocal(today)).getTime()) / 86400000));
+    const [ty, tm, td] = todayYmdKst().split("-").map(Number);
+    return Math.max(0, Math.round((Date.UTC(y, m - 1, d) - Date.UTC(ty, tm - 1, td)) / 86400000));
   }, [nextStart]);
 
   // 이번 주 연구 타이머 합산 (종료된 세션)
@@ -66,7 +67,7 @@ export default function VacationModeCard({
   const weekMinutes = useMemo(() => {
     const { from, to } = thisWeekRange(new Date());
     return sessions
-      .filter((s) => s.endTime && ymdLocal(new Date(s.endTime)) >= from && ymdLocal(new Date(s.endTime)) <= to)
+      .filter((s) => s.endTime && isoToKstYmd(s.endTime) >= from && isoToKstYmd(s.endTime) <= to)
       .reduce((a, s) => a + (s.durationMinutes ?? 0), 0);
   }, [sessions]);
 

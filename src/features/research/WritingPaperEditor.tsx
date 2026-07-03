@@ -1685,12 +1685,19 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     toast.success("선행연구 비교표를 '선행연구 고찰' 절에 삽입했습니다 — 표 번호와 본문 해설(종합)을 이어 쓰세요.");
   }
 
-  /** R2: 연구윤리 보고 문형을 방법 장 '연구 윤리' 절에 삽입 */
+  /** R2: 연구윤리 보고 문형을 방법 장 '연구 윤리' 절에 삽입.
+   * P2(2026-07-04): 문장 단위 중복 검사 — 항목을 추가 체크 후 재삽입해도 새 문장만 추가된다. */
   function insertEthicsText(text: string) {
     if (readOnly || !paper || !text.trim()) return;
+    const sentences = text
+      .split(/(?<=다\.)\s+/)
+      .map((t) => t.trim())
+      .filter(Boolean);
     const target = form.sections.method.find((sec) => sec.heading.includes("윤리"));
-    if (target && target.paragraphs.some((par) => par.text.trim() === text.trim())) {
-      toast.info("동일한 보고 문형이 이미 삽입되어 있습니다.");
+    const existing = (target?.paragraphs ?? []).map((par) => par.text).join(" ");
+    const adds = sentences.filter((sent) => !existing.includes(sent));
+    if (adds.length === 0) {
+      toast.info("체크한 항목의 보고 문형이 모두 이미 삽입되어 있습니다.");
       return;
     }
     setForm((prev) => {
@@ -1701,20 +1708,28 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         idx = secs.length - 1;
       }
       const kept = secs[idx].paragraphs.filter((par) => par.text.trim());
-      secs[idx] = { ...secs[idx], paragraphs: [...kept, { id: uid(), text }] };
+      secs[idx] = { ...secs[idx], paragraphs: [...kept, { id: uid(), text: adds.join(" ") }] };
       return { ...prev, sections: { ...prev.sections, method: secs } };
     });
     markDirty();
-    toast.success("보고 문형을 '연구 윤리' 절에 삽입했습니다 — 기관명·승인번호 빈칸(___)을 채우세요.");
+    toast.success(`보고 문형 ${adds.length}문장을 '연구 윤리' 절에 삽입했습니다 — 기관명·승인번호 빈칸(___)을 채우세요.`);
   }
 
-  /** R5: 방법 장의 특정 절(키워드 매칭, 없으면 생성)에 단락 삽입 — 표 위젯 공용 */
+  /** R5: 방법 장의 특정 절(키워드 매칭, 없으면 생성)에 단락 삽입 — 표 위젯 공용.
+   * P2(2026-07-04): 같은 제목의 기존 표가 있으면 confirm 후 교체 — 재삽입 시 표 2벌 방지. */
   function insertMethodBlock(keywords: string[], fallbackHeading: string, text: string) {
     if (readOnly || !paper || !text.trim()) return;
+    const titleLine = text.split("\n")[0].trim(); // "<표 _-_> …" 캡션
     const target = form.sections.method.find((sec) => keywords.some((k) => sec.heading.includes(k)));
-    if (target && target.paragraphs.some((par) => par.text.trim() === text.trim())) {
-      toast.info("동일한 표가 이미 삽입되어 있습니다.");
-      return;
+    const dupIdx = (target?.paragraphs ?? []).findIndex(
+      (par) => par.text.trim().split("\n")[0].trim() === titleLine,
+    );
+    if (dupIdx >= 0) {
+      if (target!.paragraphs[dupIdx].text.trim() === text.trim()) {
+        toast.info("동일한 표가 이미 삽입되어 있습니다.");
+        return;
+      }
+      if (!confirm("같은 제목의 표가 이미 있습니다. 최신 내용으로 교체할까요?")) return;
     }
     setForm((prev) => {
       const secs = [...prev.sections.method];
@@ -1723,12 +1738,14 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         secs.push({ id: uid(), heading: fallbackHeading, paragraphs: [] });
         idx = secs.length - 1;
       }
-      const kept = secs[idx].paragraphs.filter((par) => par.text.trim());
+      const kept = secs[idx].paragraphs.filter(
+        (par) => par.text.trim() && par.text.trim().split("\n")[0].trim() !== titleLine,
+      );
       secs[idx] = { ...secs[idx], paragraphs: [...kept, { id: uid(), text }] };
       return { ...prev, sections: { ...prev.sections, method: secs } };
     });
     markDirty();
-    toast.success(`'${fallbackHeading}' 절에 표를 삽입했습니다 — 표 번호와 빈칸(___)을 채우고 저장하세요.`);
+    toast.success(`'${fallbackHeading}' 절에 표를 반영했습니다 — 표 번호와 빈칸(___)을 채우고 저장하세요.`);
   }
 
   /**

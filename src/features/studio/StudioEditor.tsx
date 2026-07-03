@@ -54,8 +54,8 @@ function shrinkToJpeg(dataUrl: string, maxWidth: number, quality: number): Promi
 }
 
 type DragState =
-  | { mode: "move"; elId: string; startX: number; startY: number; origX: number; origY: number }
-  | { mode: "resize"; elId: string; corner: "nw" | "ne" | "sw" | "se"; startX: number; startY: number; orig: { x: number; y: number; w: number; h: number } }
+  | { mode: "move"; elId: string; pointerId?: number; startX: number; startY: number; origX: number; origY: number }
+  | { mode: "resize"; elId: string; pointerId?: number; corner: "nw" | "ne" | "sw" | "se"; startX: number; startY: number; orig: { x: number; y: number; w: number; h: number } }
   | null;
 
 export default function StudioEditor({ docId }: { docId: string }) {
@@ -348,6 +348,8 @@ export default function StudioEditor({ docId }: { docId: string }) {
   const onPointerMove = useCallback((e: PointerEvent) => {
     const drag = dragRef.current;
     if (!drag) return;
+    // P2(2026-07-04): 멀티터치 — 드래그를 시작한 포인터의 이동만 반영
+    if (drag.pointerId !== undefined && e.pointerId !== drag.pointerId) return;
     const dx = (e.clientX - drag.startX) / scale;
     const dy = (e.clientY - drag.startY) / scale;
     if (drag.mode === "move") {
@@ -363,12 +365,25 @@ export default function StudioEditor({ docId }: { docId: string }) {
     }
   }, [patchElement, scale]);
 
-  const onPointerUp = useCallback(() => {
+  const onPointerUp = useCallback((e?: PointerEvent) => {
+    const drag = dragRef.current;
+    // P2: 다른 손가락의 pointerup 이 드래그 전체를 해제하지 않도록
+    if (e && drag && drag.pointerId !== undefined && e.pointerId !== drag.pointerId) return;
     dragRef.current = null;
     window.removeEventListener("pointermove", onPointerMove);
     window.removeEventListener("pointerup", onPointerUp);
     window.removeEventListener("pointercancel", onPointerUp);
   }, [onPointerMove]);
+
+  // P2: 드래그 중 언마운트 시 window 리스너 누수 방지
+  useEffect(() => {
+    return () => {
+      dragRef.current = null;
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+    };
+  }, [onPointerMove, onPointerUp]);
 
   function startMove(e: React.PointerEvent, el: DesignElement) {
     if (readOnly) return;
@@ -377,7 +392,7 @@ export default function StudioEditor({ docId }: { docId: string }) {
     setSelectedId(el.id);
     // 잠금: 선택·패널 편집(잠금 해제 포함)은 허용, 드래그 이동만 차단
     if (el.locked) return;
-    dragRef.current = { mode: "move", elId: el.id, startX: e.clientX, startY: e.clientY, origX: el.x, origY: el.y };
+    dragRef.current = { mode: "move", elId: el.id, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, origX: el.x, origY: el.y };
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
     window.addEventListener("pointercancel", onPointerUp);
@@ -387,7 +402,7 @@ export default function StudioEditor({ docId }: { docId: string }) {
     if (readOnly || el.locked) return;
     e.preventDefault();
     e.stopPropagation();
-    dragRef.current = { mode: "resize", elId: el.id, corner, startX: e.clientX, startY: e.clientY, orig: { x: el.x, y: el.y, w: el.w, h: el.h } };
+    dragRef.current = { mode: "resize", elId: el.id, pointerId: e.pointerId, corner, startX: e.clientX, startY: e.clientY, orig: { x: el.x, y: el.y, w: el.w, h: el.h } };
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
     window.addEventListener("pointercancel", onPointerUp);
@@ -468,7 +483,11 @@ export default function StudioEditor({ docId }: { docId: string }) {
         <Link href="/studio" className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"><ArrowLeft size={16} /></Link>
         <Input
           value={doc.title}
-          onChange={(e) => mutate((d) => ({ ...d, title: e.target.value }))}
+          onChange={(e) => {
+            // P2(2026-07-04): 제목은 undo 스냅샷(pages) 밖 — mutate 를 쓰면 redo 스택만 파괴됨
+            setDoc((d) => (d ? { ...d, title: e.target.value } : d));
+            dirtyRef.current = true;
+          }}
           className="h-9 w-56 font-semibold"
           disabled={readOnly}
         />
@@ -733,6 +752,18 @@ export default function StudioEditor({ docId }: { docId: string }) {
                   {selected.type === "text" ? "텍스트" : selected.type === "image" ? "이미지" : selected.type === "shape" ? "도형" : "아이콘"}
                 </span>
                 <div className="flex gap-1">
+                  {selected.type === "text" && !readOnly && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-1.5 text-[11px]"
+                      title="캔버스에서 바로 편집 (터치 기기는 더블탭이 안 돼 이 버튼 사용)"
+                      onClick={() => setEditingTextId(selected.id)}
+                    >
+                      <Type size={13} className="mr-0.5" />
+                      편집
+                    </Button>
+                  )}
                   <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="뒤로" onClick={() => reorderSelected(-1)}><ChevronDown size={13} /></Button>
                   <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="앞으로" onClick={() => reorderSelected(1)}><ChevronUp size={13} /></Button>
                   <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title={selected.locked ? "잠금 해제" : "잠금"} onClick={() => patchElement(selected.id, { locked: !selected.locked })}>

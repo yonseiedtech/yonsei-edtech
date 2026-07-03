@@ -27,6 +27,7 @@ import {
   useEnsureResearchReport,
   useUpdateResearchReport,
 } from "./useResearchReport";
+import { researchReportsApi } from "@/lib/bkend";
 import { useResearchPapers } from "./useResearchPapers";
 import { useLogWritingActivity } from "./useWritingPaperHistory";
 import ResearchReportInterview, { TaskStepsField } from "./ResearchReportInterview";
@@ -469,10 +470,13 @@ function PaperSelector({
   papers,
   selectedIds,
   onToggle,
+  disabled,
 }: {
   papers: ResearchPaper[];
   selectedIds: string[];
   onToggle: (id: string) => void;
+  /** P2(2026-07-04): readOnly 열람에서 편집 가능해 보이던 문제 — 계획서 버전과 동일 계약 */
+  disabled?: boolean;
 }) {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
@@ -491,14 +495,17 @@ function PaperSelector({
           return (
             <Badge key={id} variant="secondary" className="gap-1 pr-1 text-xs">
               {p ? p.title.slice(0, 30) + (p.title.length > 30 ? "…" : "") : id}
-              <button type="button" onClick={() => onToggle(id)} className="ml-0.5 rounded-full p-0.5 hover:bg-muted">
-                <X size={10} />
-              </button>
+              {!disabled && (
+                <button type="button" onClick={() => onToggle(id)} className="ml-0.5 rounded-full p-0.5 hover:bg-muted">
+                  <X size={10} />
+                </button>
+              )}
             </Badge>
           );
         })}
       </div>
       <div className="relative">
+        {!disabled && (
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
@@ -507,6 +514,7 @@ function PaperSelector({
           <Link2 size={12} />
           논문 연결
         </button>
+        )}
         {open && (
           <div className="absolute left-0 top-full z-10 mt-1 w-80 rounded-lg border bg-card p-2 shadow-lg">
             <Input
@@ -565,6 +573,8 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
   const [form, setForm] = useState<FormState>(EMPTY);
   const [hydrated, setHydrated] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
+  // P2(2026-07-04): 탭 간 last-write-wins 방지 — 서버 lastSavedAt 기준선
+  const baseSavedAtRef = useRef<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [step, setStep] = useState<StepKey>("field");
@@ -581,6 +591,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
     if (report && !hydrated) {
       setForm(fromReport(report));
       setSavedAt(report.lastSavedAt ?? report.updatedAt ?? null);
+      baseSavedAtRef.current = report.lastSavedAt ?? null;
       setHydrated(true);
     }
   }, [report, hydrated]);
@@ -595,11 +606,25 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
     setSaving(true);
     const now = new Date().toISOString();
     try {
+      // P2: 다른 탭/기기 저장 흔적 확인 — 전체 form 덮어쓰기(last-write-wins) 무경고 방지
+      try {
+        const fresh = await researchReportsApi.get(report.id);
+        const serverSavedAt = (fresh as ResearchReport | null)?.lastSavedAt ?? null;
+        if (serverSavedAt && baseSavedAtRef.current && serverSavedAt !== baseSavedAtRef.current) {
+          if (!confirm("다른 탭/기기에서 이 보고서가 저장된 흔적이 있습니다.\n계속 저장하면 그 내용을 덮어씁니다. 진행할까요?")) {
+            setSaving(false);
+            return false;
+          }
+        }
+      } catch {
+        // 확인 실패(오프라인 등)는 저장을 막지 않음
+      }
       await update.mutateAsync({
         id: report.id,
         data: { ...form, lastSavedAt: now },
       });
       setSavedAt(now);
+      baseSavedAtRef.current = now;
       setDirty(false);
       logActivity.mutate({
         userId: user.id,
@@ -763,6 +788,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
         savedAt={savedAt ?? undefined}
         onSave={() => handleSave()}
         onDraftSave={handleDraftSave}
+        onAutoSave={() => handleSave(false)}
       />
 
       {/* 스텝 탭 */}
@@ -1081,6 +1107,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
                   papers={papers}
                   selectedIds={form.priorResearchPaperIds}
                   onToggle={togglePaper}
+                  disabled={readOnly}
                 />
               </div>
             </Section>
@@ -1118,6 +1145,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
                         papers={papers}
                         selectedIds={group.paperIds}
                         onToggle={(pid) => toggleGroupPaper(group.id, pid)}
+                        disabled={readOnly}
                       />
                     </div>
                     <div className="mt-3">

@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useEffect, useMemo, useRef, useState } from "react";
+import { deleteField } from "firebase/firestore";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -495,7 +496,9 @@ function ScheduleContent({ courseId }: { courseId: string }) {
     setSavingSettings(true);
     try {
       const payload: Record<string, unknown> = {
-        semesterStartDate: settingsStart || undefined,
+        // P2(2026-07-04): 빈 값은 undefined 로 두면 stripUndefinedDeep 에서 키가 빠져
+        // 옛 개강일이 그대로 남던 silent no-op — deleteField 로 실제 삭제(자동 추정 복귀)
+        semesterStartDate: settingsStart || deleteField(),
         totalWeeks: settingsWeeks,
       };
       await courseOfferingsApi.update(courseId, payload);

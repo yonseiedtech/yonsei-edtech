@@ -12,6 +12,7 @@
  */
 
 import { useMemo } from "react";
+import { todayYmdKst } from "@/lib/dday";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Sparkles } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -77,7 +78,7 @@ const PROMPTS: { text: string; tag: string }[] = [
 
 /** uid + 날짜로 해시 시드 — 같은 사용자에게 매일 다른 프롬프트, 다음날 또 다른 프롬프트 */
 function dailyIndex(userId: string, prompts: number): number {
-  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const today = todayYmdKst(); // P2: UTC 기준이라 KST 자정~9시에 어제 프롬프트가 뜨던 문제
   const seed = `${userId}_${today}`;
   let hash = 0;
   for (let i = 0; i < seed.length; i++) {

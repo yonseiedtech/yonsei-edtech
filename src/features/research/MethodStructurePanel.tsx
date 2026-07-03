@@ -218,6 +218,11 @@ export default function MethodStructurePanel({
                 </Button>
               </div>
             )}
+            {qual && instruments.some((i) => i.alphaPrior.trim() || i.alphaCurrent.trim()) && (
+              <p className="rounded-lg bg-amber-50 px-2 py-1 text-[10px] text-amber-700 dark:bg-amber-950/30 dark:text-amber-300">
+                ⚠ 양적 모드에서 입력한 신뢰도 α 값이 남아 있어요 — 질적 표에는 표시·삽입되지 않습니다(데이터는 보존).
+              </p>
+            )}
             <p className="text-[10px] text-muted-foreground">
               {qual
                 ? "도구 개발·검토 과정(전문가 검토, 파일럿 면담)과 신뢰성 전략(삼각검증·참여자 확인)은 본문 문장으로 보완하세요."

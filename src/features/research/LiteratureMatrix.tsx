@@ -24,7 +24,8 @@ export default function LiteratureMatrix({ user, readOnly }: { user: User; readO
   const update = useUpdateResearchPaper();
   const qc = useQueryClient();
   const [open, setOpen] = useState(true);
-  const [savingId, setSavingId] = useState<string | null>(null);
+  // P2(2026-07-04): 두 행 연속 blur 시 첫 행 스피너가 조기 소멸하던 문제 — Set 관리
+  const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
   // 셀 편집 버퍼 — `${paperId}:${col}` → 값 (blur 시 저장 후 제거)
   const [drafts, setDrafts] = useState<Record<string, string>>({});
 
@@ -60,7 +61,7 @@ export default function LiteratureMatrix({ user, readOnly }: { user: User; readO
       });
       return;
     }
-    setSavingId(p.id);
+    setSavingIds((prev) => new Set(prev).add(p.id));
     try {
       await update.mutateAsync({ id: p.id, data: { [col]: next.trim() } });
       // QA-v2: 낙관적 캐시 반영 — 저장~refetch 사이 옛 값으로 깜빡이던 문제 방지
@@ -77,7 +78,11 @@ export default function LiteratureMatrix({ user, readOnly }: { user: User; readO
     } catch {
       toast.error("셀 저장에 실패했습니다 — 입력은 남아 있으니 잠시 후 다시 시도하세요.");
     } finally {
-      setSavingId((cur) => (cur === p.id ? null : cur));
+      setSavingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(p.id);
+        return next;
+      });
     }
   }
 
@@ -172,7 +177,7 @@ export default function LiteratureMatrix({ user, readOnly }: { user: User; readO
                           <p className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-muted-foreground" title={p.title}>
                             {p.title}
                           </p>
-                          {savingId === p.id && (
+                          {savingIds.has(p.id) && (
                             <p className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground">
                               <Loader2 size={9} className="animate-spin" /> 저장 중
                             </p>

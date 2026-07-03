@@ -25,8 +25,32 @@ export async function GET(req: NextRequest) {
       { date: `${y + 1}-03-01`, label: `${y + 1}년 1학기`, semKey: `${y + 1}-1` },
     ];
 
+    // P2(2026-07-04): 운영진이 등록한 학사일정(academic_calendar)의 실제 개강일을 우선 사용
+    // — 관례일(3/1·9/1) 하드코딩과 실제 개강일 불일치로 안내 날짜가 어긋나던 문제
+    try {
+      const calSnap = await getAdminDb().collection("academic_calendar").limit(20).get();
+      for (const doc of calSnap.docs) {
+        const c = doc.data() as { year?: number; semester?: string; semesterStart?: string };
+        if (!c.year || !c.semester || !c.semesterStart) continue;
+        const semKey = `${c.year}-${c.semester === "first" ? "1" : "2"}`;
+        const idx = starts.findIndex((st) => st.semKey === semKey);
+        if (idx >= 0) starts[idx] = { ...starts[idx], date: c.semesterStart };
+      }
+    } catch {
+      // 학사일정 조회 실패는 관례일 폴백으로 진행
+    }
+
+    // P2: 정확 일치(7·1)만 트리거하면 cron 1회 실패 시 그 학기 리마인더가 영구 미발송 —
+    // D-7~D-1 범위에서 가장 가까운 미발송 버킷(d7/d1)으로 보정. refId 가드가 중복을 막는다.
     const target = starts
       .map((s) => ({ ...s, daysLeft: diffDays(today, s.date) }))
+      .map((s) =>
+        s.daysLeft >= 2 && s.daysLeft <= 7
+          ? { ...s, daysLeft: 7 }
+          : s.daysLeft === 1
+            ? s
+            : { ...s, daysLeft: -1 },
+      )
       .find((s) => s.daysLeft === 7 || s.daysLeft === 1);
 
     if (!target) {
