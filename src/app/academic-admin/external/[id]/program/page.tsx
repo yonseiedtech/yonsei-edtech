@@ -48,7 +48,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
   if (loadError) {
     return (
-      <div role="alert" className="mx-auto max-w-3xl rounded-md border border-destructive/40 bg-destructive/5 p-6 text-sm text-destructive">
+      <div role="alert" className="mx-auto max-w-6xl rounded-md border border-destructive/40 bg-destructive/5 p-6 text-sm text-destructive">
         {loadError}
       </div>
     );
@@ -56,14 +56,14 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
   if (!user) {
     return (
-      <div className="mx-auto max-w-3xl rounded-md border bg-muted/30 p-6 text-sm text-muted-foreground">
+      <div className="mx-auto max-w-6xl rounded-md border bg-muted/30 p-6 text-sm text-muted-foreground">
         로그인이 필요합니다.
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4">
+    <div className="mx-auto max-w-6xl space-y-4">
       <div className="flex items-center justify-between">
         <Link
           href={`/academic-admin/external/${id}`}

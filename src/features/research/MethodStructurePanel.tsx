@@ -167,7 +167,7 @@ export default function MethodStructurePanel({
                 <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-12">
                   {instFields.map((f) => (
                     <label key={f.key} className={cn("block", f.w)}>
-                      <span className="text-[9px] font-medium text-muted-foreground">{f.label}</span>
+                      <span className="text-[11px] font-medium text-muted-foreground">{f.label}</span>
                       <Input
                         className="h-7 text-[11px]"
                         value={inst[f.key]}
@@ -299,7 +299,7 @@ export default function MethodStructurePanel({
               <div key={s.id} className="rounded-lg border bg-card p-2">
                 <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-12">
                   <label className="block sm:col-span-2">
-                    <span className="text-[9px] font-medium text-muted-foreground">시기</span>
+                    <span className="text-[11px] font-medium text-muted-foreground">시기</span>
                     <Input
                       className="h-7 text-[11px]"
                       value={s.period}
@@ -309,7 +309,7 @@ export default function MethodStructurePanel({
                     />
                   </label>
                   <label className="block sm:col-span-3">
-                    <span className="text-[9px] font-medium text-muted-foreground">단계</span>
+                    <span className="text-[11px] font-medium text-muted-foreground">단계</span>
                     <Input
                       className="h-7 text-[11px]"
                       value={s.label}
@@ -319,7 +319,7 @@ export default function MethodStructurePanel({
                     />
                   </label>
                   <label className="col-span-2 block sm:col-span-7">
-                    <span className="text-[9px] font-medium text-muted-foreground">주요 내용</span>
+                    <span className="text-[11px] font-medium text-muted-foreground">주요 내용</span>
                     <Input
                       className="h-7 text-[11px]"
                       value={s.activity}

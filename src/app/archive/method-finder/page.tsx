@@ -172,11 +172,14 @@ export default function MethodFinderPage() {
         {/* 진행 표시 */}
         {!result && (
           <div className="mt-6 flex items-center gap-2 text-xs text-muted-foreground">
-            <span>질문 {answeredCount + 1}</span>
+            <span>질문 {Math.min(answeredCount + 1, active.length)} / {active.length}</span>
             <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
               <div
                 className="h-full rounded-full bg-primary transition-all"
-                style={{ width: `${Math.min(100, (answeredCount / (answeredCount + 1)) * 100 + 12)}%` }}
+                style={{
+                  // UX-1(2026-07-04): 실제 남은 질문 수 기반 진행률 (기존 공식은 총 질문 수와 무관)
+                  width: `${Math.min(100, Math.round(((answeredCount + 0.5) / Math.max(1, active.length)) * 100))}%`,
+                }}
               />
             </div>
           </div>

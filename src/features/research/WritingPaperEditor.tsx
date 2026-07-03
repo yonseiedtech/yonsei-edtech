@@ -2626,8 +2626,8 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         )}
       </section>
 
-      {/* ── 스텝 탭 ── */}
-      <div className="flex items-center gap-1 rounded-2xl border bg-card p-1.5">
+      {/* ── 스텝 탭 ── UX-1(2026-07-04): 375px 에서 8개 탭 압착 — 가로 스크롤 전환 */}
+      <div className="flex items-center gap-1 overflow-x-auto rounded-2xl border bg-card p-1.5">
         {STEPS.map((s, i) => {
           const active = !onAbstract && !onAppendix && !onReferences && step === s.key;
           return (
@@ -2640,8 +2640,9 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                 setOnAppendix(false);
                 setOnReferences(false);
               }}
+              aria-current={active ? "page" : undefined}
               className={cn(
-                "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
+                "flex flex-1 shrink-0 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
                 active
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -2672,7 +2673,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
             setOnReferences(false);
           }}
           className={cn(
-            "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
+            "flex flex-1 shrink-0 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
             onAbstract && !onAppendix && !onReferences
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -2689,7 +2690,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
             setOnReferences(false);
           }}
           className={cn(
-            "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
+            "flex flex-1 shrink-0 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
             onAppendix
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -2706,7 +2707,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
             setOnAppendix(false);
           }}
           className={cn(
-            "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
+            "flex flex-1 shrink-0 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
             onReferences
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
