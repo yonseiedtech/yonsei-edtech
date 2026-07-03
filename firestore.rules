@@ -224,9 +224,9 @@ service cloud.firestore {
       // read: 본인 RSVP 또는 운영진 — 명단(옵트인 필터)은 서버 API(/api/networking/roster) 경유
       allow read: if isAuthenticated()
         && (resource.data.userId == request.auth.uid || isStaffOrAbove());
-      // create: 게스트(userId 없음)는 허용, 회원 RSVP 는 본인 userId 만 (대리 RSVP·포인트 파밍 차단)
-      allow create: if !("userId" in request.resource.data)
-        || (isAuthenticated() && request.resource.data.userId == request.auth.uid);
+      // P1-5(2026-07-04): 게스트 신청은 /api/networking/rsvp-guest(서버 검증) 경유 —
+      // public create 제거. 회원 RSVP 는 본인 userId 만 (대리 RSVP·포인트 파밍 차단)
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isAuthenticated()
         && (resource.data.userId == request.auth.uid || isStaffOrAbove());
     }

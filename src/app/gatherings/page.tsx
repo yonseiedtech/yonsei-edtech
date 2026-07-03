@@ -245,20 +245,26 @@ function EventCard({
       toast.error("이름과 연락처를 입력해주세요.");
       return;
     }
+    if (closed) {
+      toast.error("신청이 마감되었습니다.");
+      return;
+    }
     setBusy(true);
     try {
-      const now = new Date().toISOString();
-      await networkingRsvpsApi.create({
-        eventId: ev.id,
-        isGuest: true,
-        guestName: guestName.trim(),
-        guestContact: guestContact.trim(),
-        displayName: guestName.trim(),
-        status: "attending",
-        respondedAt: now,
-        createdAt: now,
-        updatedAt: now,
+      // P1-5: 게스트 신청은 서버 API — 마감·정원·중복·속도 제한을 서버가 강제
+      const res = await fetch("/api/networking/rsvp-guest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventId: ev.id,
+          guestName: guestName.trim(),
+          guestContact: guestContact.trim(),
+        }),
       });
+      if (!res.ok) {
+        const j = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(j?.error ?? "신청에 실패했습니다.");
+      }
       toast.success("게스트 참석 신청이 접수되었습니다.");
       setGuestOpen(false);
       setGuestName("");
