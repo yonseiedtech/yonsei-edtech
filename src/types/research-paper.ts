@@ -218,6 +218,34 @@ export interface ResearchQuestionItem {
   hypothesisDirection?: HypothesisDirection;
 }
 
+/** R5(2026-07-03): 측정도구 신뢰도 표 행 — 방법 장 위젯 */
+export interface InstrumentItem {
+  id: string;
+  /** 도구명 (측정 변인) */
+  name: string;
+  /** 출처 — 원개발자·번안자(연도) */
+  source: string;
+  /** 문항 수 — 자유 표기 (예: "20(4요인)") */
+  itemCount: string;
+  /** 척도 (예: 5점 Likert) */
+  scale: string;
+  /** 선행연구 신뢰도 α */
+  alphaPrior: string;
+  /** 본 연구 신뢰도 α — 분석 후 기입 */
+  alphaCurrent: string;
+}
+
+/** R5(2026-07-03): 연구 절차 타임라인 단계 — 방법 장 위젯 */
+export interface ProcedureStep {
+  id: string;
+  /** 시기 (예: 1주차, 2026.3 둘째 주) */
+  period: string;
+  /** 단계 (예: 사전검사·처치·사후검사) */
+  label: string;
+  /** 주요 내용 */
+  activity: string;
+}
+
 /** 부록 항목 — 제목 + 관련 메모/설명 (설문지·도구·표 등 목록) */
 export interface AppendixItem {
   id: string;
@@ -248,6 +276,10 @@ export interface WritingPaper {
   references?: string;
   /** 연구윤리 체크리스트 완료 항목 id 목록 (R2, 2026-07-03) */
   ethicsChecked?: string[];
+  /** 측정도구 신뢰도 표 행 (R5, 2026-07-03) */
+  instruments?: InstrumentItem[];
+  /** 연구 절차 타임라인 (R5, 2026-07-03) */
+  procedureSteps?: ProcedureStep[];
   /** 구조화된 연구문제 (서론) — 항목별 텍스트 + 연구방법·통계방법 태그 */
   researchQuestions?: ResearchQuestionItem[];
   /** 부록 목록 — 제목 + 메모 */

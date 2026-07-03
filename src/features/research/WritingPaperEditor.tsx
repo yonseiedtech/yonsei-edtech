@@ -50,6 +50,7 @@ import DataAnalyzer from "./DataAnalyzer";
 import ReadingDrawer from "./ReadingDrawer";
 import AbstractPanel from "./AbstractPanel";
 import EthicsChecklistPanel from "./EthicsChecklistPanel";
+import MethodStructurePanel from "./MethodStructurePanel";
 import { logEditorEvent } from "./editor-telemetry";
 import type {
   User,
@@ -63,6 +64,8 @@ import type {
   ResearchQuestionItem,
   StatisticalMethod,
   AppendixItem,
+  InstrumentItem,
+  ProcedureStep,
 } from "@/types";
 import {
   WRITING_APPROACH_LABELS,
@@ -280,6 +283,9 @@ interface FormState {
   appendices: AppendixItem[];
   /** R2(2026-07-03): 연구윤리 체크리스트 완료 항목 */
   ethicsChecked: string[];
+  /** R5(2026-07-03): 측정도구 신뢰도 표 · 연구 절차 타임라인 */
+  instruments: InstrumentItem[];
+  procedureSteps: ProcedureStep[];
 }
 
 const CHAPTER_KEYS: WritingPaperChapterKey[] = ["intro", "background", "method", "results", "conclusion"];
@@ -667,7 +673,7 @@ function getSectionGuides(heading: string): string[] | null {
 function buildEmptyForm(approach: ResearchApproachType): FormState {
   const sections = {} as SectionsState;
   for (const k of CHAPTER_KEYS) sections[k] = buildTemplateSections(templateHeadings(k, approach));
-  return { title: "", sections, abstract: "", abstractKeywords: [], abstractEn: "", references: "", researchQuestions: [], appendices: [], ethicsChecked: [] };
+  return { title: "", sections, abstract: "", abstractKeywords: [], abstractEn: "", references: "", researchQuestions: [], appendices: [], ethicsChecked: [], instruments: [], procedureSteps: [] };
 }
 
 function normalizeSections(list: WritingSection[]): WritingSection[] {
@@ -704,6 +710,8 @@ function fromPaper(p: WritingPaper | undefined, approach: ResearchApproachType):
     researchQuestions: p.researchQuestions ?? [],
     appendices: p.appendices ?? [],
     ethicsChecked: p.ethicsChecked ?? [],
+    instruments: p.instruments ?? [],
+    procedureSteps: p.procedureSteps ?? [],
   };
 }
 
@@ -1150,6 +1158,8 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           researchQuestions: form.researchQuestions,
           appendices: form.appendices,
           ethicsChecked: form.ethicsChecked,
+          instruments: form.instruments,
+          procedureSteps: form.procedureSteps,
           lastSavedAt: now,
         },
       });
@@ -1644,6 +1654,29 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     });
     markDirty();
     toast.success("보고 문형을 '연구 윤리' 절에 삽입했습니다 — 기관명·승인번호 빈칸(___)을 채우세요.");
+  }
+
+  /** R5: 방법 장의 특정 절(키워드 매칭, 없으면 생성)에 단락 삽입 — 표 위젯 공용 */
+  function insertMethodBlock(keywords: string[], fallbackHeading: string, text: string) {
+    if (readOnly || !paper || !text.trim()) return;
+    const target = form.sections.method.find((sec) => keywords.some((k) => sec.heading.includes(k)));
+    if (target && target.paragraphs.some((par) => par.text.trim() === text.trim())) {
+      toast.info("동일한 표가 이미 삽입되어 있습니다.");
+      return;
+    }
+    setForm((prev) => {
+      const secs = [...prev.sections.method];
+      let idx = secs.findIndex((sec) => keywords.some((k) => sec.heading.includes(k)));
+      if (idx < 0) {
+        secs.push({ id: uid(), heading: fallbackHeading, paragraphs: [] });
+        idx = secs.length - 1;
+      }
+      const kept = secs[idx].paragraphs.filter((par) => par.text.trim());
+      secs[idx] = { ...secs[idx], paragraphs: [...kept, { id: uid(), text }] };
+      return { ...prev, sections: { ...prev.sections, method: secs } };
+    });
+    markDirty();
+    toast.success(`'${fallbackHeading}' 절에 표를 삽입했습니다 — 표 번호와 빈칸(___)을 채우고 저장하세요.`);
   }
 
   /**
@@ -2896,6 +2929,29 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
               markDirty();
             }}
             onInsert={insertEthicsText}
+          />
+        )}
+
+        {/* R5: 측정도구 신뢰도 표 + 연구 절차 타임라인 (연구 방법 장) */}
+        {step === "method" && (
+          <MethodStructurePanel
+            instruments={form.instruments}
+            procedure={form.procedureSteps}
+            readOnly={readOnly}
+            onInstrumentsChange={(next) => {
+              setForm((prev) => ({ ...prev, instruments: next }));
+              markDirty();
+            }}
+            onProcedureChange={(next) => {
+              setForm((prev) => ({ ...prev, procedureSteps: next }));
+              markDirty();
+            }}
+            onInsertInstruments={(text) =>
+              insertMethodBlock(["측정 도구", "측정도구", "연구 도구", "검사 도구"], "측정 도구", text)
+            }
+            onInsertProcedure={(text) =>
+              insertMethodBlock(["연구 절차", "연구절차", "실험 절차"], "연구 절차", text)
+            }
           />
         )}
 
