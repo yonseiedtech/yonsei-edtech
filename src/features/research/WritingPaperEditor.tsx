@@ -34,7 +34,7 @@ import {
   BookOpen, FlaskConical, Microscope, BarChart3, Flag,
   Play, Timer, Lightbulb, Plus, Trash2, History,
   Diff, RotateCcw, ArrowUp, ArrowDown, Download, ClipboardCheck, Quote, Copy, Calculator,
-  Loader2, Compass, GraduationCap, Paperclip, BookMarked,
+  Loader2, Compass, GraduationCap, Paperclip, BookMarked, ListOrdered,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -286,6 +286,8 @@ interface FormState {
   /** R5(2026-07-03): 측정도구 신뢰도 표 · 연구 절차 타임라인 */
   instruments: InstrumentItem[];
   procedureSteps: ProcedureStep[];
+  /** P2(2026-07-03): 감사의 글 */
+  acknowledgments: string;
 }
 
 const CHAPTER_KEYS: WritingPaperChapterKey[] = ["intro", "background", "method", "results", "conclusion"];
@@ -673,7 +675,7 @@ function getSectionGuides(heading: string): string[] | null {
 function buildEmptyForm(approach: ResearchApproachType): FormState {
   const sections = {} as SectionsState;
   for (const k of CHAPTER_KEYS) sections[k] = buildTemplateSections(templateHeadings(k, approach));
-  return { title: "", sections, abstract: "", abstractKeywords: [], abstractEn: "", references: "", researchQuestions: [], appendices: [], ethicsChecked: [], instruments: [], procedureSteps: [] };
+  return { title: "", sections, abstract: "", abstractKeywords: [], abstractEn: "", references: "", researchQuestions: [], appendices: [], ethicsChecked: [], instruments: [], procedureSteps: [], acknowledgments: "" };
 }
 
 function normalizeSections(list: WritingSection[]): WritingSection[] {
@@ -712,6 +714,7 @@ function fromPaper(p: WritingPaper | undefined, approach: ResearchApproachType):
     ethicsChecked: p.ethicsChecked ?? [],
     instruments: p.instruments ?? [],
     procedureSteps: p.procedureSteps ?? [],
+    acknowledgments: p.acknowledgments ?? "",
   };
 }
 
@@ -825,6 +828,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   const [guideOpen, setGuideOpen] = useState(false);
   const [sectionGuideOpen, setSectionGuideOpen] = useState<string | null>(null);
   const [lintOpen, setLintOpen] = useState(false);
+  const [tocOpen, setTocOpen] = useState(false);
   const [tableBuilderOpen, setTableBuilderOpen] = useState(false);
   const [lintIssues, setLintIssues] = useState<LintIssue[] | null>(null);
   const [lintCoverage, setLintCoverage] = useState<QuestionCoverage[]>([]);
@@ -1160,6 +1164,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           ethicsChecked: form.ethicsChecked,
           instruments: form.instruments,
           procedureSteps: form.procedureSteps,
+          acknowledgments: form.acknowledgments,
           lastSavedAt: now,
         },
       });
@@ -1850,12 +1855,60 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     setLintOpen(true);
   }
 
+  /** P2: 차례 — 작성분이 있는 장·절 구조에서 자동 생성 */
+  function buildTocText(): string {
+    const roman = ["Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ"];
+    const lines: string[] = [];
+    STEPS.forEach((st, i) => {
+      const chapterSecs = form.sections[st.key];
+      const hasContent = chapterSecs.some((sec) => sec.paragraphs.some((par) => par.text.trim()));
+      if (!hasContent) return;
+      lines.push(`${roman[i]}. ${st.label}`);
+      let n = 0;
+      for (const sec of chapterSecs) {
+        if (isOverviewSection(sec)) continue;
+        if (!sec.paragraphs.some((par) => par.text.trim())) continue;
+        n += 1;
+        lines.push(`  ${n}. ${sec.heading.trim() || "본문"}`);
+      }
+    });
+    if (form.references.trim()) lines.push("참고문헌");
+    if (form.appendices.length > 0) lines.push("부록");
+    return lines.join("\n");
+  }
+
+  /** P2: 표·그림 목차 — 본문에서 <표 …>/<그림 …> 라인을 스캔 */
+  function buildFigureTocText(): { tables: string[]; figures: string[] } {
+    const tables: string[] = [];
+    const figures: string[] = [];
+    for (const k of CHAPTER_KEYS) {
+      for (const sec of form.sections[k]) {
+        for (const par of sec.paragraphs) {
+          for (const raw of par.text.split("\n")) {
+            const line = raw.trim();
+            if (line.startsWith("<표")) tables.push(line);
+            else if (line.startsWith("<그림")) figures.push(line);
+          }
+        }
+      }
+    }
+    return { tables, figures };
+  }
+
   /** 작성 본문을 평문 .txt 로 내보내기 — 장(Ⅰ~Ⅴ)·섹션 번호·단락 빈 줄 구분 */
   function handleExportText() {
     logEditorEvent(user.id, "export_txt");
     const roman = ["Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ"];
     const title = form.title.trim() || "학위논문 초안";
     const lines: string[] = [title, ""];
+    // P2: 차례·표 목차 — 작성분이 있을 때만 문서 앞에 포함
+    const tocText = buildTocText();
+    if (tocText) {
+      lines.push("차 례", "", tocText, "");
+      const { tables, figures } = buildFigureTocText();
+      if (tables.length > 0) lines.push("표 목 차", "", ...tables, "");
+      if (figures.length > 0) lines.push("그 림 목 차", "", ...figures, "");
+    }
     let hasBody = false;
     STEPS.forEach((st, i) => {
       const chapterLines: string[] = [];
@@ -2239,6 +2292,10 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
               <ClipboardCheck size={12} className="mr-1" />
               자가 점검
             </Button>
+            <Button variant="outline" size="sm" onClick={() => setTocOpen(true)} title="장·절 구조와 본문의 <표>·<그림>에서 차례를 자동 생성">
+              <ListOrdered size={12} className="mr-1" />
+              목차
+            </Button>
             <Button variant="outline" size="sm" onClick={handleExportText} title="작성 본문을 텍스트 파일로 다운로드">
               <Download size={12} className="mr-1" />
               내보내기
@@ -2611,6 +2668,11 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
             setForm((prev) => ({ ...prev, abstractEn: next }));
             markDirty();
           }}
+          valueAck={form.acknowledgments}
+          onChangeAck={(next) => {
+            setForm((prev) => ({ ...prev, acknowledgments: next }));
+            markDirty();
+          }}
           readOnly={readOnly}
           onChange={(next) => {
             setForm((prev) => ({ ...prev, abstract: next }));
@@ -2938,6 +3000,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
             instruments={form.instruments}
             procedure={form.procedureSteps}
             readOnly={readOnly}
+            approach={profile?.approach}
             onInstrumentsChange={(next) => {
               setForm((prev) => ({ ...prev, instruments: next }));
               markDirty();
@@ -2947,7 +3010,9 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
               markDirty();
             }}
             onInsertInstruments={(text) =>
-              insertMethodBlock(["측정 도구", "측정도구", "연구 도구", "검사 도구"], "측정 도구", text)
+              profile?.approach === "qualitative"
+                ? insertMethodBlock(["자료 수집", "연구 도구", "측정 도구"], "자료 수집", text)
+                : insertMethodBlock(["측정 도구", "측정도구", "연구 도구", "검사 도구"], "측정 도구", text)
             }
             onInsertProcedure={(text) =>
               insertMethodBlock(["연구 절차", "연구절차", "실험 절차"], "연구 절차", text)
@@ -3245,6 +3310,59 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       <div className="mt-1">
         <StyleCheckPanel sections={{ [step]: form.sections[step] }} />
       </div>
+
+      {/* P2: 목차 미리보기 다이얼로그 */}
+      <Dialog open={tocOpen} onOpenChange={setTocOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ListOrdered size={16} className="text-primary" />
+              목차 미리보기
+            </DialogTitle>
+          </DialogHeader>
+          {(() => {
+            const toc = buildTocText();
+            const { tables, figures } = buildFigureTocText();
+            if (!toc) {
+              return (
+                <p className="rounded-lg border border-dashed px-3 py-6 text-center text-xs text-muted-foreground">
+                  아직 작성분이 없습니다 — 본문을 작성하면 장·절 구조에서 차례가 자동 생성됩니다.
+                </p>
+              );
+            }
+            const full = [
+              "차 례", "", toc,
+              ...(tables.length > 0 ? ["", "표 목 차", "", ...tables] : []),
+              ...(figures.length > 0 ? ["", "그 림 목 차", "", ...figures] : []),
+            ].join("\n");
+            return (
+              <>
+                <p className="text-[11px] text-muted-foreground">
+                  작성분이 있는 장·절과 본문의 &lt;표&gt;·&lt;그림&gt; 캡션에서 자동 생성했습니다. 페이지 번호는 최종
+                  편집(한글/워드)에서 자동 목차 기능으로 붙이세요. 텍스트 내보내기에도 포함됩니다.
+                </p>
+                <pre className="max-h-80 overflow-y-auto whitespace-pre-wrap rounded-xl border bg-muted/30 p-3.5 text-xs leading-relaxed">
+                  {full}
+                </pre>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setTocOpen(false)}>닫기</Button>
+                  <Button
+                    onClick={() => {
+                      void navigator.clipboard
+                        .writeText(full)
+                        .then(() => toast.success("목차를 복사했습니다."))
+                        .catch(() => toast.error("클립보드 복사에 실패했습니다."));
+                    }}
+                  >
+                    <Copy size={13} className="mr-1.5" />
+                    복사
+                  </Button>
+                </DialogFooter>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
 
       {/* 표 빌더 팝업 */}
       <TableBuilderDialog

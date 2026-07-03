@@ -280,6 +280,8 @@ export interface WritingPaper {
   instruments?: InstrumentItem[];
   /** 연구 절차 타임라인 (R5, 2026-07-03) */
   procedureSteps?: ProcedureStep[];
+  /** 감사의 글 (P2, 2026-07-03) */
+  acknowledgments?: string;
   /** 구조화된 연구문제 (서론) — 항목별 텍스트 + 연구방법·통계방법 태그 */
   researchQuestions?: ResearchQuestionItem[];
   /** 부록 목록 — 제목 + 메모 */
