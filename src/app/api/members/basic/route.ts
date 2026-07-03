@@ -73,7 +73,8 @@ export async function GET(req: NextRequest) {
       return out;
     });
 
-    return NextResponse.json({ data });
+    // dataApi.list 계약(total) 유지 — useMembers·콘솔 승인 대기 카운트 등이 사용
+    return NextResponse.json({ data, total: data.length });
   } catch (err) {
     console.error("[/api/members/basic]", err);
     return NextResponse.json({ error: "회원 목록 조회에 실패했습니다." }, { status: 500 });

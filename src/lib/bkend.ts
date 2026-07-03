@@ -418,7 +418,7 @@ export const commentsApi = {
  * 목록·일괄 조회는 역할 인지 투영 API(/api/members/basic)를 경유한다.
  * (staff 요청 = 전체 필드, 일반 회원 = 연락처·학번 제거 — 호출부 시그니처 무변경)
  */
-async function fetchMembersBasic(params: Record<string, string | number | boolean | undefined>): Promise<{ data: User[] }> {
+async function fetchMembersBasic(params: Record<string, string | number | boolean | undefined>): Promise<{ data: User[]; total: number; page: number; limit: number }> {
   const token = await auth.currentUser?.getIdToken();
   if (!token) throw new Error("로그인이 필요합니다.");
   const qs = new URLSearchParams();
@@ -429,7 +429,8 @@ async function fetchMembersBasic(params: Record<string, string | number | boolea
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) throw new Error("회원 목록 조회에 실패했습니다.");
-  return (await res.json()) as { data: User[] };
+  const json = (await res.json()) as { data: User[]; total: number };
+  return { ...json, page: 1, limit: json.data.length };
 }
 
 export const profilesApi = {
