@@ -1436,9 +1436,13 @@ service cloud.firestore {
         || isCollabMember(researchId)
         || isSocietyReadableByStaff(researchId)
       );
-      // list 는 본인 참여 연구 array-contains 쿼리 — array-contains 필터 강제 가능하면 더 안전,
-      // 클라이언트가 항상 collaboratorIds array-contains uid 로 쿼리한다고 가정 후 인증만 검증.
-      allow list: if isAuthenticated();
+      // P1-3(2026-07-04): 인증만으로 전 연구 메타(제목·멤버 명단) 열람되던 blanket list 재작성 —
+      // 참여자(array-contains)·리더·운영진 쿼리만 증명 통과.
+      allow list: if isAuthenticated() && (
+        request.auth.uid in resource.data.collaboratorIds
+        || resource.data.leaderId == request.auth.uid
+        || isStaffOrAbove()
+      );
 
       // 생성: leaderId == 본인, collaboratorIds 초기 [본인] 1명, 카운트 강제, workspaceVisibility 고정.
       allow create: if isAuthenticated()
@@ -1467,8 +1471,8 @@ service cloud.firestore {
         || isCollabLeader(resource.data.researchId)
         || isSocietyReadableByStaff(resource.data.researchId)
       );
-      // list: 인증된 사용자만 허용 (실제 결과는 위 read 규칙으로 필터됨)
-      allow list: if isAuthenticated();
+      // P1-3: blanket list 삭제 — listByResearch(researchId 상수)·listByUser(본인)는
+      // 위 read 규칙(list 포함)으로 증명 통과.
 
       // 멤버 추가: leader 가 다른 사람을 등록하거나, 본인이 invite 수락으로 본인을 등록 (invitedBy != self).
       allow create: if isAuthenticated() && (
@@ -1496,13 +1500,14 @@ service cloud.firestore {
     }
 
     match /collaborative_research_invites/{inviteId} {
+      // P1-3: blanket list 삭제. listSent(researchId 상수)를 위해 리더 분기 추가 —
+      // 받은 초대함(recipientId==me)·보낸 초대(연구 리더)만 증명 통과.
       allow read, get: if isAuthenticated() && (
         resource.data.senderId == request.auth.uid
         || resource.data.recipientId == request.auth.uid
+        || isCollabLeader(resource.data.researchId)
         || isStaffOrAbove()
       );
-      // list: 인증된 사용자 (filter[recipientId]=me 또는 filter[senderId]=me 강제)
-      allow list: if isAuthenticated();
 
       // 초대 생성: senderId == 본인 + 본인이 해당 연구 leader. status=pending 강제.
       allow create: if isAuthenticated()
