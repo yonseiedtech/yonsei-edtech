@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Trash2, X, HelpCircle, Compass, BarChart3, Network, ListPlus } from "lucide-react";
+import { Plus, Trash2, X, HelpCircle, Compass, BarChart3, Network, ListPlus, ArrowRightLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +14,28 @@ import { generateQuestions } from "@/lib/research-question-generator";
 import { EMPTY_RESEARCH_MODEL } from "@/types/research-model";
 import { useAuthStore } from "@/features/auth/auth-store";
 import type { ResearchQuestionItem, ResearchMethod, StatisticalMethod } from "@/types";
+
+/**
+ * R2: 연구문제 의문문 → 가설 서술문 초안 변환 (규칙 기반).
+ * 규칙에 안 걸리면 물음표만 떼고 반환 — 사용자가 다듬는다.
+ */
+function toHypothesisDraft(question: string): string {
+  const t = question.trim().replace(/\?+\s*$/, "");
+  if (!t) return "";
+  const rules: [RegExp, string][] = [
+    [/차이가 있는가$/, "차이가 있을 것이다."],
+    [/차이가 있을 것인가$/, "차이가 있을 것이다."],
+    [/영향을 미치는가$/, "영향을 미칠 것이다."],
+    [/효과가 있는가$/, "효과가 있을 것이다."],
+    [/관계가 있는가$/, "관계가 있을 것이다."],
+    [/향상시키는가$/, "향상시킬 것이다."],
+    [/어떠한가$/, "유의한 차이가 있을 것이다."],
+  ];
+  for (const [re, repl] of rules) {
+    if (re.test(t)) return t.replace(re, repl);
+  }
+  return `${t}.`;
+}
 
 function newId(): string {
   try {
@@ -234,6 +256,55 @@ export default function ResearchQuestionsPanel({
                   <Trash2 size={13} />
                 </button>
               )}
+            </div>
+            {/* R2: 연구 가설 — 문제와 1:1 쌍 (서술문으로 바꿨을 때 그대로 가설이 되는지가 시금석) */}
+            <div className="mt-2 pl-8">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+                  연구 가설 <span className="font-normal text-muted-foreground">(선택 — 양적 연구는 권장)</span>
+                </p>
+                {!readOnly && !q.hypothesisText?.trim() && q.text.trim() && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      patch(q.id, (cur) => ({ ...cur, hypothesisText: toHypothesisDraft(cur.text) }))
+                    }
+                    className="inline-flex items-center gap-1 rounded-full border border-dashed border-emerald-400/60 px-2 py-0.5 text-[10px] text-emerald-700 transition-colors hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
+                    title="연구문제를 서술문 가설 초안으로 변환"
+                  >
+                    <ArrowRightLeft size={10} />
+                    문제 → 가설 초안
+                  </button>
+                )}
+              </div>
+              <div className="mt-1 flex flex-col gap-1.5 sm:flex-row">
+                <select
+                  value={q.hypothesisDirection ?? ""}
+                  onChange={(e) =>
+                    patch(q.id, (cur) => ({
+                      ...cur,
+                      hypothesisDirection: e.target.value as ResearchQuestionItem["hypothesisDirection"],
+                    }))
+                  }
+                  disabled={readOnly}
+                  className="h-9 rounded-lg border bg-background px-2 text-[11px] sm:w-40"
+                  aria-label="가설 방향"
+                >
+                  <option value="">방향 미지정</option>
+                  <option value="positive">정적(+) 영향·관계</option>
+                  <option value="negative">부적(−) 영향·관계</option>
+                  <option value="difference">집단 간 차이</option>
+                  <option value="nondirectional">비방향적</option>
+                </select>
+                <Textarea
+                  className="min-h-[36px] flex-1 font-sans text-xs leading-relaxed"
+                  rows={1}
+                  value={q.hypothesisText ?? ""}
+                  placeholder="예: 프로그램에 참여한 집단은 참여하지 않은 집단보다 학업 성취도가 높을 것이다."
+                  onChange={(e) => patch(q.id, (cur) => ({ ...cur, hypothesisText: e.target.value }))}
+                  disabled={readOnly}
+                />
+              </div>
             </div>
             <div className="mt-2 grid grid-cols-1 gap-2 pl-8 sm:grid-cols-2">
               <TagPicker

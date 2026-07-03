@@ -49,6 +49,7 @@ import MethodHelper, { STAT_METHOD_DESCRIPTIONS, type DesignRef } from "./Method
 import DataAnalyzer from "./DataAnalyzer";
 import ReadingDrawer from "./ReadingDrawer";
 import AbstractPanel from "./AbstractPanel";
+import EthicsChecklistPanel from "./EthicsChecklistPanel";
 import { logEditorEvent } from "./editor-telemetry";
 import type {
   User,
@@ -139,9 +140,10 @@ function templateHeadings(
         : ["이론적 배경 1", "이론적 배경 2", "이론적 배경 3", "연구모형 및 가설"];
     case "method":
       // R1(2026-07-03): 연구 절차(사전-처치-사후 타임라인) 절 추가
+      // R2(2026-07-03): '연구 윤리' 절 — 동의·IRB·개인정보 보고 (P0 필수 요건)
       return qual
-        ? ["연구 설계", "연구 참여자", "연구 절차", "자료 수집", "자료 분석", "신뢰성·타당성 확보"]
-        : ["연구 설계", "연구 대상", "측정 도구", "프로그램 설계 및 적용", "연구 절차", "자료 수집 및 분석"];
+        ? ["연구 설계", "연구 참여자", "연구 절차", "자료 수집", "자료 분석", "신뢰성·타당성 확보", "연구 윤리"]
+        : ["연구 설계", "연구 대상", "측정 도구", "프로그램 설계 및 적용", "연구 절차", "자료 수집 및 분석", "연구 윤리"];
     case "results":
       return qual
         ? ["주제(테마)별 결과"]
@@ -275,6 +277,8 @@ interface FormState {
   references: string;
   researchQuestions: ResearchQuestionItem[];
   appendices: AppendixItem[];
+  /** R2(2026-07-03): 연구윤리 체크리스트 완료 항목 */
+  ethicsChecked: string[];
 }
 
 const CHAPTER_KEYS: WritingPaperChapterKey[] = ["intro", "background", "method", "results", "conclusion"];
@@ -594,6 +598,15 @@ const SECTION_GUIDES: { keywords: string[]; tips: string[] }[] = [
     ],
   },
   {
+    keywords: ["연구 윤리", "연구윤리", "윤리적 고려"],
+    tips: [
+      "사람을 대상으로 하는 연구는 소속 기관 IRB(기관생명윤리위원회) 심의 대상인지 먼저 확인하세요 — 학교 현장 연구도 예외가 아니며, 승인(또는 면제) 번호를 본문에 보고합니다.",
+      "동의는 '누구에게, 무엇을 설명하고, 어떤 방식으로' 받았는지 구체적으로 — 미성년 참여자는 법정대리인 동의를 함께 받았음을 명시하세요.",
+      "개인정보는 최소 수집·익명(가명) 처리·보관 기간·폐기 계획의 4요소로 보고하면 방어가 강해집니다.",
+      "에디터의 '연구윤리 체크리스트'(방법 장 하단)를 점검하면 표준 보고 문형을 이 절에 삽입할 수 있습니다.",
+    ],
+  },
+  {
     keywords: ["자료 분석", "분석 방법", "자료분석"],
     tips: [
       "분석 방법마다 선택 이유를 명시하세요 — 사전 점수 차이 통제=ANCOVA, 범주형 동질성=카이제곱(χ²), 2집단 비교=t검정.",
@@ -653,7 +666,7 @@ function getSectionGuides(heading: string): string[] | null {
 function buildEmptyForm(approach: ResearchApproachType): FormState {
   const sections = {} as SectionsState;
   for (const k of CHAPTER_KEYS) sections[k] = buildTemplateSections(templateHeadings(k, approach));
-  return { title: "", sections, abstract: "", abstractKeywords: [], abstractEn: "", references: "", researchQuestions: [], appendices: [] };
+  return { title: "", sections, abstract: "", abstractKeywords: [], abstractEn: "", references: "", researchQuestions: [], appendices: [], ethicsChecked: [] };
 }
 
 function normalizeSections(list: WritingSection[]): WritingSection[] {
@@ -689,6 +702,7 @@ function fromPaper(p: WritingPaper | undefined, approach: ResearchApproachType):
     references: p.references ?? "",
     researchQuestions: p.researchQuestions ?? [],
     appendices: p.appendices ?? [],
+    ethicsChecked: p.ethicsChecked ?? [],
   };
 }
 
@@ -1123,6 +1137,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           references: form.references,
           researchQuestions: form.researchQuestions,
           appendices: form.appendices,
+          ethicsChecked: form.ethicsChecked,
           lastSavedAt: now,
         },
       });
@@ -1534,6 +1549,61 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     } finally {
       setRefsBusy(false);
     }
+  }
+
+  /** R2: 연구문제의 가설 목록을 이론적 배경 '연구모형 및 가설' 절에 H1~ 형식으로 나열 */
+  function insertHypotheses() {
+    if (readOnly || !paper) return;
+    const hyps = form.researchQuestions
+      .map((q) => q.hypothesisText?.trim())
+      .filter((t): t is string => !!t);
+    if (hyps.length === 0) return;
+    const lines = hyps.map((t, i) => `H${i + 1}. ${t}`);
+    const target = form.sections.background.find(
+      (sec) => sec.heading.includes("연구모형") || sec.heading.includes("가설"),
+    );
+    const existing = new Set((target?.paragraphs ?? []).map((par) => par.text.trim()));
+    const adds = lines.filter((line) => !existing.has(line));
+    if (adds.length === 0) {
+      toast.info("모든 가설이 이미 절에 나열되어 있습니다.");
+      return;
+    }
+    setForm((prev) => {
+      const secs = [...prev.sections.background];
+      let idx = secs.findIndex((sec) => sec.heading.includes("연구모형") || sec.heading.includes("가설"));
+      if (idx < 0) {
+        secs.push({ id: uid(), heading: "연구모형 및 가설", paragraphs: [] });
+        idx = secs.length - 1;
+      }
+      const kept = secs[idx].paragraphs.filter((par) => par.text.trim());
+      secs[idx] = { ...secs[idx], paragraphs: [...kept, ...adds.map((t) => ({ id: uid(), text: t }))] };
+      return { ...prev, sections: { ...prev.sections, background: secs } };
+    });
+    markDirty();
+    toast.success(`가설 ${adds.length}개를 '연구모형 및 가설' 절에 나열했습니다 — 각 가설의 이론 근거를 앞 절에서 받쳐주세요.`);
+  }
+
+  /** R2: 연구윤리 보고 문형을 방법 장 '연구 윤리' 절에 삽입 */
+  function insertEthicsText(text: string) {
+    if (readOnly || !paper || !text.trim()) return;
+    const target = form.sections.method.find((sec) => sec.heading.includes("윤리"));
+    if (target && target.paragraphs.some((par) => par.text.trim() === text.trim())) {
+      toast.info("동일한 보고 문형이 이미 삽입되어 있습니다.");
+      return;
+    }
+    setForm((prev) => {
+      const secs = [...prev.sections.method];
+      let idx = secs.findIndex((sec) => sec.heading.includes("윤리"));
+      if (idx < 0) {
+        secs.push({ id: uid(), heading: "연구 윤리", paragraphs: [] });
+        idx = secs.length - 1;
+      }
+      const kept = secs[idx].paragraphs.filter((par) => par.text.trim());
+      secs[idx] = { ...secs[idx], paragraphs: [...kept, { id: uid(), text }] };
+      return { ...prev, sections: { ...prev.sections, method: secs } };
+    });
+    markDirty();
+    toast.success("보고 문형을 '연구 윤리' 절에 삽입했습니다 — 기관명·승인번호 빈칸(___)을 채우세요.");
   }
 
   /**
@@ -2739,6 +2809,36 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
               setForm((prev) => ({ ...prev, researchQuestions: next }));
               markDirty();
             }}
+          />
+        )}
+
+        {/* R2: 가설 → '연구모형 및 가설' 절 나열 배너 (이론적 배경 장) */}
+        {step === "background" && !readOnly && paper &&
+          form.researchQuestions.some((q) => q.hypothesisText?.trim()) && (
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 px-4 py-3">
+              <p className="text-xs text-foreground/85">
+                서론의 연구문제에 작성한{" "}
+                <span className="font-semibold">
+                  가설 {form.researchQuestions.filter((q) => q.hypothesisText?.trim()).length}개
+                </span>
+                가 있어요 — H1~ 형식으로 절에 나열할 수 있습니다.
+              </p>
+              <Button size="sm" variant="outline" className="h-7 shrink-0 text-xs" onClick={insertHypotheses}>
+                &lsquo;연구모형 및 가설&rsquo; 절에 나열
+              </Button>
+            </div>
+          )}
+
+        {/* R2: 연구윤리 체크리스트 (연구 방법 장) */}
+        {step === "method" && (
+          <EthicsChecklistPanel
+            checked={form.ethicsChecked}
+            readOnly={readOnly}
+            onChange={(next) => {
+              setForm((prev) => ({ ...prev, ethicsChecked: next }));
+              markDirty();
+            }}
+            onInsert={insertEthicsText}
           />
         )}
 

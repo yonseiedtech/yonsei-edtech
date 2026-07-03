@@ -193,6 +193,16 @@ export interface WritingSection {
  * 구조화된 연구문제 항목 — 서론 '연구 문제'를 항목별로 관리(추가/삭제).
  * 각 문제에 관련 연구방법(archive_research_methods)·통계방법(archive_statistical_methods) ID를 태그로 연결.
  */
+/** R2(2026-07-03): 연구 가설의 방향 */
+export type HypothesisDirection = "" | "positive" | "negative" | "difference" | "nondirectional";
+
+export const HYPOTHESIS_DIRECTION_LABELS: Record<Exclude<HypothesisDirection, "">, string> = {
+  positive: "정적(+) 영향·관계",
+  negative: "부적(−) 영향·관계",
+  difference: "집단 간 차이",
+  nondirectional: "비방향적",
+};
+
 export interface ResearchQuestionItem {
   id: string;
   text: string;
@@ -200,6 +210,10 @@ export interface ResearchQuestionItem {
   researchMethodIds: string[];
   /** archive_statistical_methods doc id 목록 */
   statMethodIds: string[];
+  /** R2(2026-07-03): 연구문제와 짝을 이루는 연구 가설 — 서술문(…일 것이다) */
+  hypothesisText?: string;
+  /** R2: 가설 방향 — 이론·선행연구 근거가 있으면 방향까지 명시 */
+  hypothesisDirection?: HypothesisDirection;
 }
 
 /** 부록 항목 — 제목 + 관련 메모/설명 (설문지·도구·표 등 목록) */
@@ -230,6 +244,8 @@ export interface WritingPaper {
   abstractEn?: string;
   /** 참고문헌 텍스트 — 계획서·보고서 문헌에서 APA7 생성 후 자유 편집 (R3, 2026-07-03) */
   references?: string;
+  /** 연구윤리 체크리스트 완료 항목 id 목록 (R2, 2026-07-03) */
+  ethicsChecked?: string[];
   /** 구조화된 연구문제 (서론) — 항목별 텍스트 + 연구방법·통계방법 태그 */
   researchQuestions?: ResearchQuestionItem[];
   /** 부록 목록 — 제목 + 메모 */
