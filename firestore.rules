@@ -905,8 +905,7 @@ service cloud.firestore {
     match /user_session_plans/{docId} {
       allow read: if isAuthenticated()
         && (resource.data.userId == request.auth.uid || isStaffOrAbove());
-      // list (운영자 통계 / 본인 모아보기) — query 단에서 userId 필터를 강제
-      allow list: if isAuthenticated();
+      // P1-2: blanket list 제거 — 본인 모아보기는 userId 필터(read 증명), 운영자 통계는 staff 분기
       allow create: if isAuthenticated()
         && request.resource.data.userId == request.auth.uid;
       allow update: if isAuthenticated()
@@ -1237,9 +1236,11 @@ service cloud.firestore {
     // - read: 본인 + 운영진 (isPrivate=true 일 때도 운영진은 열람 가능; 모임장이 staff가 아닐 경우의 제약은 MVP 한계로 수용)
     // - write: 본인만
     match /study_session_reflections/{docId} {
+      // P1-2(2026-07-04): blanket list 제거 — 타인 비공개 회고 열람 차단.
+      // 목록(배지 카운트·리더 뷰)은 /api/activities/reflections 서버 투영 경유,
+      // 본인 단건(getMine)은 userId 필터로 read 증명 통과.
       allow read: if isAuthenticated()
         && (resource.data.userId == request.auth.uid || isStaffOrAbove());
-      allow list: if isAuthenticated();
       allow create: if isAuthenticated()
         && request.resource.data.userId == request.auth.uid;
       allow update: if isAuthenticated()

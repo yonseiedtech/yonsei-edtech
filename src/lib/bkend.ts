@@ -2619,19 +2619,28 @@ export const aiForumMessagesApi = {
 // ─────────────────────────────────────────────────────────────
 // 스터디 회고 (Sprint 1 — Study Enhancement)
 // ─────────────────────────────────────────────────────────────
+/**
+ * P1-2(2026-07-04): 회고 목록은 권한 인지 투영 API(/api/activities/reflections)를 경유 —
+ * blanket list rules 제거. 본인/운영진/리더(비공개 제외)만 내용을 받고 그 외는 카운트용 REDACT.
+ */
+async function fetchReflections(params: { activityId?: string; progressId?: string }): Promise<{ data: StudySessionReflection[]; total: number }> {
+  const token = await auth.currentUser?.getIdToken();
+  if (!token) throw new Error("로그인이 필요합니다.");
+  const qs = new URLSearchParams();
+  if (params.activityId) qs.set("activityId", params.activityId);
+  if (params.progressId) qs.set("progressId", params.progressId);
+  const res = await fetch(`/api/activities/reflections?${qs.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("회고 조회에 실패했습니다.");
+  return (await res.json()) as { data: StudySessionReflection[]; total: number };
+}
+
 export const studySessionReflectionsApi = {
-  /** 활동 전체 회고 — 운영진/리더가 모든 회원 회고 조회 */
-  listByActivity: (activityId: string) =>
-    dataApi.list<StudySessionReflection>("study_session_reflections", {
-      "filter[activityId]": activityId,
-      limit: 1000,
-    }),
-  /** 회차 단위 회고 — 회원 본인이 작성한 회고 조회 시 사용 */
-  listByProgress: (activityProgressId: string) =>
-    dataApi.list<StudySessionReflection>("study_session_reflections", {
-      "filter[activityProgressId]": activityProgressId,
-      limit: 200,
-    }),
+  /** 활동 전체 회고 — 배지 카운트(전 회원)·리더 리포트. 서버 투영(내용은 권한별) */
+  listByActivity: (activityId: string) => fetchReflections({ activityId }),
+  /** 회차 단위 회고 — 리더/운영진 열람용. 서버 투영 */
+  listByProgress: (activityProgressId: string) => fetchReflections({ progressId: activityProgressId }),
   /** 본인의 활동 전체 회고 */
   listByUser: (userId: string, activityId: string) =>
     dataApi.list<StudySessionReflection>("study_session_reflections", {
