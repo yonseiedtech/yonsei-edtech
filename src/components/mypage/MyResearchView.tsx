@@ -34,6 +34,7 @@ import ResearchCockpit from "@/features/research/ResearchCockpit";
 // 합산된다. 활성 탭 렌더 시점에만 해당 청크를 내려받도록 dynamic 으로 분리.
 const panelFallback = () => <Skeleton className="h-64 w-full rounded-2xl" />;
 const ResearchPaperList = dynamic(() => import("@/features/research/ResearchPaperList"), { ssr: false, loading: panelFallback });
+const LiteratureMatrix = dynamic(() => import("@/features/research/LiteratureMatrix"), { ssr: false, loading: panelFallback });
 const WritingPaperEditor = dynamic(() => import("@/features/research/WritingPaperEditor"), { ssr: false, loading: panelFallback });
 const ResearchDashboard = dynamic(() => import("@/features/research/ResearchDashboard"), { ssr: false, loading: panelFallback });
 const ResearchReportPrint = dynamic(() => import("@/features/research/ResearchReportPrint"), { ssr: false, loading: panelFallback });
@@ -423,6 +424,8 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
               periodStart={periodStart}
               periodEnd={periodEnd}
             />
+            {/* R4: 문헌 리뷰 매트릭스 — 연구 여정 '문헌 고찰' 단계 도구 */}
+            <LiteratureMatrix user={user} readOnly={!isSelf || readOnly} />
           </TabsContent>
 
           {/* ── 연구 리포트 ── */}

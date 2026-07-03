@@ -73,6 +73,7 @@ import type { StatMethodType } from "@/types";
 import { advisorFeedbackApi, writingPapersApi, writingPaperVersionsApi, researchProposalsApi, researchReportsApi, researchPapersApi, statisticalMethodsApi } from "@/lib/bkend";
 import type { AdvisorFeedbackNote, ResearchProposal, ResearchReport, ResearchPaper } from "@/types";
 import { formatApa7List } from "@/lib/apa7";
+import { buildMatrixTable, hasMatrixData } from "./literature-matrix";
 import { useStudyTimerStore } from "./study-timer/study-timer-store";
 import { useCreateSession, useStudySessionsByWritingPaper } from "./study-timer/useStudySessions";
 import {
@@ -853,6 +854,17 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     staleTime: 5 * 60_000,
   });
   const report = reports[0];
+  // R4: 문헌 매트릭스 → 이론적 배경 비교표 삽입용 (ThesisJourney 와 캐시 공유)
+  const { data: myPapers = [] } = useQuery({
+    queryKey: ["research-papers", user.id],
+    queryFn: async () => (await researchPapersApi.list(user.id)).data as ResearchPaper[],
+    enabled: !readOnly && !!user.id,
+    staleTime: 5 * 60_000,
+  });
+  const matrixPaperCount = useMemo(
+    () => myPapers.filter((pp) => !pp.isDraft && hasMatrixData(pp)).length,
+    [myPapers],
+  );
 
   const pendingByChapter = useMemo(() => {
     const map = new Map<string, AdvisorFeedbackNote[]>();
@@ -1581,6 +1593,34 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     });
     markDirty();
     toast.success(`가설 ${adds.length}개를 '연구모형 및 가설' 절에 나열했습니다 — 각 가설의 이론 근거를 앞 절에서 받쳐주세요.`);
+  }
+
+  /** R4: 문헌 매트릭스 → 이론적 배경 '선행연구 고찰' 절에 비교표 삽입 */
+  function insertLiteratureMatrix() {
+    if (readOnly || !paper) return;
+    const table = buildMatrixTable(myPapers);
+    if (!table) {
+      toast.info("매트릭스에 정리된 논문이 없습니다 — 논문 읽기 탭의 문헌 리뷰 매트릭스를 먼저 채우세요.");
+      return;
+    }
+    const target = form.sections.background.find((sec) => sec.heading.includes("선행연구"));
+    if (target && target.paragraphs.some((par) => par.text.trim() === table.trim())) {
+      toast.info("동일한 비교표가 이미 삽입되어 있습니다.");
+      return;
+    }
+    setForm((prev) => {
+      const secs = [...prev.sections.background];
+      let idx = secs.findIndex((sec) => sec.heading.includes("선행연구"));
+      if (idx < 0) {
+        secs.push({ id: uid(), heading: "선행연구 고찰", paragraphs: [] });
+        idx = secs.length - 1;
+      }
+      const kept = secs[idx].paragraphs.filter((par) => par.text.trim());
+      secs[idx] = { ...secs[idx], paragraphs: [...kept, { id: uid(), text: table }] };
+      return { ...prev, sections: { ...prev.sections, background: secs } };
+    });
+    markDirty();
+    toast.success("선행연구 비교표를 '선행연구 고찰' 절에 삽입했습니다 — 표 번호와 본문 해설(종합)을 이어 쓰세요.");
   }
 
   /** R2: 연구윤리 보고 문형을 방법 장 '연구 윤리' 절에 삽입 */
@@ -2831,6 +2871,20 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
               </Button>
             </div>
           )}
+
+        {/* R4: 문헌 매트릭스 → 선행연구 비교표 삽입 배너 (이론적 배경 장) */}
+        {step === "background" && !readOnly && paper && matrixPaperCount > 0 && (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 px-4 py-3">
+            <p className="text-xs text-foreground/85">
+              문헌 리뷰 매트릭스에 정리한 논문{" "}
+              <span className="font-semibold">{matrixPaperCount}편</span>이 있어요 — 저자·대상·설계·결과·시사점
+              비교표로 삽입할 수 있습니다.
+            </p>
+            <Button size="sm" variant="outline" className="h-7 shrink-0 text-xs" onClick={insertLiteratureMatrix}>
+              선행연구 비교표 삽입
+            </Button>
+          </div>
+        )}
 
         {/* R2: 연구윤리 체크리스트 (연구 방법 장) */}
         {step === "method" && (

@@ -31,6 +31,8 @@ export interface ResearchPaper {
   url?: string;
 
   variables?: PaperVariables;
+  /** 연구 대상·표본 (R4 문헌 매트릭스 '대상' 열, 2026-07-03) */
+  sample?: string;
   methodology?: string;
   findings?: string;
   insights?: string;

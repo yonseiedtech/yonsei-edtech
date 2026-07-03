@@ -13,6 +13,7 @@ import {
   MessageSquareQuote, LayoutGrid,
 } from "lucide-react";
 import { toast } from "sonner";
+import { buildMatrixTable } from "./literature-matrix";
 import { cn } from "@/lib/utils";
 import type {
   User, ResearchReport, ResearchGroup, ResearchPaper,
@@ -1042,6 +1043,33 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
                 rows={8}
                 disabled={readOnly}
               />
+              {/* R4: 문헌 매트릭스 비교표 붙여넣기 */}
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const table = buildMatrixTable(papers);
+                    if (!table) {
+                      toast.info("문헌 매트릭스에 정리된 논문이 없습니다 — 논문 읽기 탭에서 먼저 채우세요.");
+                      return;
+                    }
+                    if (form.priorResearchAnalysis.includes(table.trim())) {
+                      toast.info("동일한 비교표가 이미 붙어 있습니다.");
+                      return;
+                    }
+                    setField(
+                      "priorResearchAnalysis",
+                      form.priorResearchAnalysis.trim()
+                        ? `${form.priorResearchAnalysis.trimEnd()}\n\n${table}`
+                        : table,
+                    );
+                    toast.success("선행연구 비교표를 붙였습니다 — 표 아래에 종합(공통점·차이·공백)을 이어 쓰세요.");
+                  }}
+                  className="mt-2 inline-flex items-center gap-1 rounded-lg border border-dashed px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                >
+                  + 문헌 매트릭스 비교표 붙여넣기
+                </button>
+              )}
               <div className="mt-3">
                 <p className="mb-1.5 text-xs font-medium text-muted-foreground">연결된 논문</p>
                 <PaperSelector
