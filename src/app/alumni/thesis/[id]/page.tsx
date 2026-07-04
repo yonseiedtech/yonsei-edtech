@@ -659,6 +659,17 @@ export default function AlumniThesisDetailPage() {
           )}
 
           {/* 연구 분석 프로필 — 자동 추출 + 운영진 인라인 검수 (사이클 52) */}
+          {/* C-4(2026-07-04): 졸업생 논문 열람(월 124뷰)의 후속 루프 — 내 연구로 연결 */}
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 px-4 py-2.5 text-sm">
+            <span className="text-foreground/85">이 논문의 방법을 내 연구에 적용해 보세요 —</span>
+            <Link href="/archive/method-finder" className="font-medium text-primary hover:underline">
+              통계방법 따라가기 →
+            </Link>
+            <Link href="/mypage/research?tab=reading" className="font-medium text-primary hover:underline">
+              내 문헌 매트릭스에 정리 →
+            </Link>
+          </div>
+
           <ThesisAnalysisCard thesis={thesis} canEdit={canEdit} onSaved={setThesis} />
 
           {thesis.abstract && (

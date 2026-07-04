@@ -62,6 +62,8 @@ interface PersonalDigest {
   dueCards: number;
   /** 진단 준비도 변화 — 최신 - 직전 회차 (없으면 null). { paper, analysis } */
   readinessDelta: { paper: number; analysis: number } | null;
+  /** C-2(2026-07-04): 안 읽은 인앱 알림 수 — 읽음률 0% 대응, 알림함 진입 유도 */
+  unreadNotifications: number;
   /** 미완료 온보딩 항목 라벨 (서버에서 알 수 있는 프로필 기반 항목만) */
   onboardingTodo: string[];
 }
@@ -285,6 +287,18 @@ async function loadPersonalDigests(
     if (ymd && ymd >= weekStart) markActiveDay(r.userId, ymd);
   }
 
+  // C-2: 미읽음 알림 집계 (단일 쿼리 → userId 버킷)
+  const unreadByUser = new Map<string, number>();
+  try {
+    const unreadSnap = await db.collection("notifications").where("read", "==", false).limit(5000).get();
+    for (const doc of unreadSnap.docs) {
+      const uid = (doc.data() as { userId?: string }).userId;
+      if (uid && wanted.has(uid)) unreadByUser.set(uid, (unreadByUser.get(uid) ?? 0) + 1);
+    }
+  } catch {
+    /* 집계 실패는 다이제스트를 막지 않음 */
+  }
+
   // ── 회원별 결과 조립 ──
   const out = new Map<string, PersonalDigest>();
   for (const userId of userIds) {
@@ -317,6 +331,7 @@ async function loadPersonalDigests(
       timerMinutes: timerMinByUser.get(userId) ?? 0,
       dueCards: dueCardsByUser.get(userId) ?? 0,
       readinessDelta,
+      unreadNotifications: unreadByUser.get(userId) ?? 0,
       onboardingTodo,
     });
   }
@@ -405,6 +420,11 @@ function buildPersonalHtml(p: PersonalDigest): string {
   if (p.dueCards > 0) {
     lines.push(
       `<li>🃏 오늘 복습할 암기카드 <b>${p.dueCards}장</b> <a href="${base}/flashcards" style="color:#003876;text-decoration:none;font-size:13px">복습하기 →</a></li>`,
+    );
+  }
+  if (p.unreadNotifications > 0) {
+    lines.push(
+      `<li>🔔 안 읽은 알림 <b>${p.unreadNotifications}건</b> <a href="${base}/mypage/notifications" style="color:#003876;text-decoration:none;font-size:13px">확인하기 →</a></li>`,
     );
   }
   if (p.readinessDelta) {

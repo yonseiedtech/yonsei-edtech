@@ -94,6 +94,16 @@ function ReceivedCardInner() {
           <BackButton href={`/directory/${owner.id}`} label="프로필로" />
         </div>
 
+        {/* C-4(2026-07-04): 명함(조회 319건)의 후속 루프 — 쪽지 전환 CTA (쪽지 알림 신설됨) */}
+        {viewer && !isSelf && (
+          <Link
+            href={`/mypage/messages?compose=${owner.id}`}
+            className="mb-4 flex items-center justify-center gap-1.5 rounded-xl border border-primary/40 bg-primary/5 px-4 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+          >
+            ✉️ {owner.name}님에게 쪽지 보내기
+          </Link>
+        )}
+
         <h1 className="text-2xl font-bold">{owner.name}님의 명함</h1>
         {!isSelf && <p className="mt-1 text-sm text-muted-foreground">QR 스캔으로 받은 명함이에요.</p>}
 

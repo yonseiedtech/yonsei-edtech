@@ -52,6 +52,10 @@ const DiagnosticInsightsView = dynamic(() => import("@/features/insights/Diagnos
   ),
 });
 
+const AdoptionSection = dynamic(
+  () => import("@/features/insights/AdoptionSection"),
+  { ssr: false },
+);
 const OperationalKpiSection = dynamic(
   () => import("@/features/insights/OperationalKpiSection"),
   {
@@ -139,6 +143,9 @@ function InsightsInner() {
           <InsightsActionPanel />
         </TabsContent>
         <TabsContent value="opkpi" className="mt-4">
+          {/* C-5(2026-07-04): 기능 채택률 — 개강 채택 전환 사이클 KPI */}
+          <AdoptionSection />
+
           <OperationalKpiSection />
         </TabsContent>
         <TabsContent value="dashboard" className="mt-4">

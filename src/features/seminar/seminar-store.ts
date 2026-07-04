@@ -123,6 +123,20 @@ export const useSeminarStore = create<CheckinState>((set, get) => ({
       .then(() => {
         // 보상 원장 통일(2026-07-04): 출석 +10 을 리더보드 원장(streak_events)에 이중 기록
         if (attendee.userId) void streakEventsApi.mirror(attendee.userId, "attend", 10, attendee.seminarId);
+        // C-4(2026-07-04): 체크인 직후 후기 유도 — D+1 크론보다 기억이 생생한 당일 터치
+        if (attendee.userId) {
+          void dataApi
+            .create("notifications", {
+              userId: attendee.userId,
+              type: "seminar_review_request",
+              title: "출석 확인 완료 — 오늘 세미나 어떠셨나요?",
+              message: "기억이 생생할 때 한 줄 후기를 남겨주세요. 다음 세미나 기획에 큰 도움이 됩니다.",
+              link: `/seminars/${attendee.seminarId}?tab=reviews`,
+              read: false,
+              createdAt: new Date().toISOString(),
+            })
+            .catch(() => {});
+        }
       })
       .catch((err) => {
         console.error("[checkin-store] Failed to persist checkin:", err);
