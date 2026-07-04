@@ -11,12 +11,26 @@
  */
 
 import { useMemo, useState } from "react";
-import { Table2, Copy, ChevronDown, Loader2 } from "lucide-react";
+import { Table2, Copy, ChevronDown, Loader2, Download } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { useResearchPapers, useUpdateResearchPaper } from "./useResearchPapers";
-import { MATRIX_COLUMNS, type MatrixColumnKey, hasMatrixData, paperLabel, buildMatrixTable } from "./literature-matrix";
+import {
+  MATRIX_COLUMNS,
+  ALL_MATRIX_COLUMNS,
+  type MatrixColumnKey,
+  type AnyMatrixColumnKey,
+  hasMatrixData,
+  paperLabel,
+  buildMatrixTable,
+  buildMatrixCsv,
+  readonlyCellValue,
+} from "./literature-matrix";
+
+type EditableKey = MatrixColumnKey | "myConnection";
+type SortKey = "authors" | "year" | "filled";
+const PREF_KEY = "lit-matrix-prefs-v1";
 import type { User, ResearchPaper } from "@/types";
 
 export default function LiteratureMatrix({ user, readOnly }: { user: User; readOnly?: boolean }) {
@@ -24,33 +38,65 @@ export default function LiteratureMatrix({ user, readOnly }: { user: User; readO
   const update = useUpdateResearchPaper();
   const qc = useQueryClient();
   const [open, setOpen] = useState(true);
+  // 고도화(2026-07-04): 표시 열·정렬 — localStorage 영속 (기기 단위 설정)
+  const [visibleKeys, setVisibleKeys] = useState<AnyMatrixColumnKey[]>(() => {
+    if (typeof window === "undefined") return MATRIX_COLUMNS.map((c) => c.key);
+    try {
+      const saved = JSON.parse(localStorage.getItem(PREF_KEY) ?? "{}") as { cols?: AnyMatrixColumnKey[] };
+      const valid = (saved.cols ?? []).filter((k) => ALL_MATRIX_COLUMNS.some((c) => c.key === k));
+      return valid.length > 0 ? valid : MATRIX_COLUMNS.map((c) => c.key);
+    } catch {
+      return MATRIX_COLUMNS.map((c) => c.key);
+    }
+  });
+  const [sortKey, setSortKey] = useState<SortKey>(() => {
+    if (typeof window === "undefined") return "authors";
+    try {
+      const saved = JSON.parse(localStorage.getItem(PREF_KEY) ?? "{}") as { sort?: SortKey };
+      return saved.sort === "year" || saved.sort === "filled" ? saved.sort : "authors";
+    } catch {
+      return "authors";
+    }
+  });
+  function persistPrefs(cols: AnyMatrixColumnKey[], sort: SortKey) {
+    try {
+      localStorage.setItem(PREF_KEY, JSON.stringify({ cols, sort }));
+    } catch {
+      /* 저장 실패는 무시 */
+    }
+  }
+  const columns = useMemo(
+    () => ALL_MATRIX_COLUMNS.filter((c) => visibleKeys.includes(c.key)),
+    [visibleKeys],
+  );
   // P2(2026-07-04): 두 행 연속 blur 시 첫 행 스피너가 조기 소멸하던 문제 — Set 관리
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
   // 셀 편집 버퍼 — `${paperId}:${col}` → 값 (blur 시 저장 후 제거)
   const [drafts, setDrafts] = useState<Record<string, string>>({});
 
-  const rows = useMemo(
-    () =>
-      (papers as ResearchPaper[])
-        .filter((p) => !p.isDraft)
-        .sort((a, b) => {
-          const an = (a.authors ?? a.title ?? "").localeCompare(b.authors ?? b.title ?? "", "ko");
-          if (an !== 0) return an;
-          return (a.year ?? 0) - (b.year ?? 0);
-        }),
-    [papers],
-  );
+  const rows = useMemo(() => {
+    const list = (papers as ResearchPaper[]).filter((p) => !p.isDraft);
+    const filledCountOf = (p: ResearchPaper) =>
+      ALL_MATRIX_COLUMNS.filter((c) => readonlyCellValue(p, c.key).trim()).length;
+    return list.sort((a, b) => {
+      if (sortKey === "year") return (b.year ?? 0) - (a.year ?? 0);
+      if (sortKey === "filled") return filledCountOf(b) - filledCountOf(a);
+      const an = (a.authors ?? a.title ?? "").localeCompare(b.authors ?? b.title ?? "", "ko");
+      if (an !== 0) return an;
+      return (a.year ?? 0) - (b.year ?? 0);
+    });
+  }, [papers, sortKey]);
   const filledCount = useMemo(() => rows.filter(hasMatrixData).length, [rows]);
 
-  function draftKey(id: string, col: MatrixColumnKey) {
+  function draftKey(id: string, col: EditableKey) {
     return `${id}:${col}`;
   }
-  function cellValue(p: ResearchPaper, col: MatrixColumnKey): string {
+  function cellValue(p: ResearchPaper, col: EditableKey): string {
     const k = draftKey(p.id, col);
     return k in drafts ? drafts[k] : (p[col] ?? "");
   }
 
-  async function saveCell(p: ResearchPaper, col: MatrixColumnKey) {
+  async function saveCell(p: ResearchPaper, col: EditableKey) {
     const k = draftKey(p.id, col);
     if (!(k in drafts)) return;
     const next = drafts[k];
@@ -86,17 +132,21 @@ export default function LiteratureMatrix({ user, readOnly }: { user: User; readO
     }
   }
 
-  async function copyTable() {
-    // QA-v2: 마지막 셀 blur 저장이 끝나기 전에도 방금 입력(draft)을 표에 반영
-    const merged = rows.map((p) => {
+  function mergedRows(): ResearchPaper[] {
+    // QA-v2: 마지막 셀 blur 저장이 끝나기 전에도 방금 입력(draft)을 반영
+    return rows.map((p) => {
       const patch: Partial<ResearchPaper> = {};
-      for (const c of MATRIX_COLUMNS) {
-        const k = draftKey(p.id, c.key);
-        if (k in drafts) patch[c.key] = drafts[k];
+      for (const c of ALL_MATRIX_COLUMNS) {
+        if (!c.editable) continue;
+        const k = draftKey(p.id, c.key as EditableKey);
+        if (k in drafts) patch[c.key as EditableKey] = drafts[k];
       }
       return { ...p, ...patch };
     });
-    const text = buildMatrixTable(merged);
+  }
+
+  async function copyTable() {
+    const text = buildMatrixTable(mergedRows(), columns);
     if (!text) {
       toast.info("복사할 내용이 없습니다 — 셀을 먼저 채워주세요.");
       return;
@@ -107,6 +157,25 @@ export default function LiteratureMatrix({ user, readOnly }: { user: User; readO
     } catch {
       toast.error("클립보드 복사에 실패했습니다.");
     }
+  }
+
+  /** 고도화: CSV 다운로드 (Excel 호환 — BOM + 인젝션 중화) */
+  function downloadCsv() {
+    const csv = buildMatrixCsv(mergedRows(), columns);
+    if (!csv.includes("\n")) {
+      toast.info("내보낼 논문이 없습니다.");
+      return;
+    }
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `문헌매트릭스_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast.success("CSV 파일로 내보냈습니다 — Excel/스프레드시트에서 열 수 있어요.");
   }
 
   return (
@@ -148,21 +217,81 @@ export default function LiteratureMatrix({ user, readOnly }: { user: User; readO
                   셀을 채우면 논문 상세의 분석 필드와 함께 저장됩니다(포커스 아웃 시 자동 저장). 정리된 논문은
                   연구보고서 &lsquo;선행연구 분석&rsquo;·논문 &lsquo;이론적 배경&rsquo;에서 비교표로 삽입할 수 있어요.
                 </p>
-                <button
-                  type="button"
-                  onClick={() => void copyTable()}
-                  className="inline-flex shrink-0 items-center gap-1 rounded-lg border px-2.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => void copyTable()}
+                    className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                  >
+                    <Copy size={11} />
+                    표 복사
+                  </button>
+                  <button
+                    type="button"
+                    onClick={downloadCsv}
+                    className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                    title="Excel 호환 CSV 로 내려받기 (표시 중인 열 기준)"
+                  >
+                    <Download size={11} />
+                    CSV
+                  </button>
+                </div>
+              </div>
+
+              {/* 고도화(2026-07-04): 열 선택·정렬 */}
+              <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                <span className="text-[11px] font-semibold text-muted-foreground">열:</span>
+                {ALL_MATRIX_COLUMNS.map((c) => {
+                  const on = visibleKeys.includes(c.key);
+                  return (
+                    <button
+                      key={c.key}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => {
+                        const next = on
+                          ? visibleKeys.filter((k) => k !== c.key)
+                          : ALL_MATRIX_COLUMNS.filter((x) => visibleKeys.includes(x.key) || x.key === c.key).map((x) => x.key);
+                        if (next.length === 0) {
+                          toast.info("최소 1개 열은 표시해야 합니다.");
+                          return;
+                        }
+                        setVisibleKeys(next);
+                        persistPrefs(next, sortKey);
+                      }}
+                      className={cn(
+                        "rounded-full border px-2 py-1 text-[11px] transition-colors",
+                        on
+                          ? "border-primary/50 bg-primary/10 font-medium text-primary"
+                          : "border-dashed text-muted-foreground hover:border-primary/40",
+                      )}
+                    >
+                      {c.label}
+                    </button>
+                  );
+                })}
+                <span className="ml-2 text-[11px] font-semibold text-muted-foreground">정렬:</span>
+                <select
+                  value={sortKey}
+                  onChange={(e) => {
+                    const next = e.target.value as SortKey;
+                    setSortKey(next);
+                    persistPrefs(visibleKeys, next);
+                  }}
+                  className="h-7 rounded-lg border bg-background px-1.5 text-[11px]"
+                  aria-label="정렬 기준"
                 >
-                  <Copy size={11} />
-                  비교표 텍스트 복사
-                </button>
+                  <option value="authors">저자순</option>
+                  <option value="year">연도 최신순</option>
+                  <option value="filled">완성도순</option>
+                </select>
               </div>
               <div className="overflow-x-auto rounded-xl border">
                 <table className="w-full min-w-[760px] border-collapse text-xs">
                   <thead>
                     <tr className="bg-muted/50 text-left">
                       <th className="w-44 px-2.5 py-2 font-semibold">연구자(연도)</th>
-                      {MATRIX_COLUMNS.map((c) => (
+                      {columns.map((c) => (
                         <th key={c.key} className="px-2.5 py-2 font-semibold">
                           {c.label}
                         </th>
@@ -183,21 +312,33 @@ export default function LiteratureMatrix({ user, readOnly }: { user: User; readO
                             </p>
                           )}
                         </td>
-                        {MATRIX_COLUMNS.map((c) => (
-                          <td key={c.key} className="px-1.5 py-1.5">
-                            <textarea
-                              value={cellValue(p, c.key)}
-                              readOnly={readOnly}
-                              rows={2}
-                              placeholder={readOnly ? "" : `${c.label} 입력`}
-                              onChange={(e) =>
-                                setDrafts((d) => ({ ...d, [draftKey(p.id, c.key)]: e.target.value }))
-                              }
-                              onBlur={() => void saveCell(p, c.key)}
-                              className="min-h-[52px] w-full resize-y rounded-lg border bg-background p-1.5 text-[11px] leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 read-only:opacity-60"
-                            />
-                          </td>
-                        ))}
+                        {columns.map((c) =>
+                          c.editable ? (
+                            <td key={c.key} className="px-1.5 py-1.5">
+                              <textarea
+                                value={cellValue(p, c.key as EditableKey)}
+                                readOnly={readOnly}
+                                rows={2}
+                                placeholder={readOnly ? "" : `${c.label} 입력`}
+                                onChange={(e) =>
+                                  setDrafts((d) => ({ ...d, [draftKey(p.id, c.key as EditableKey)]: e.target.value }))
+                                }
+                                onBlur={() => void saveCell(p, c.key as EditableKey)}
+                                className="min-h-[52px] w-full resize-y rounded-lg border bg-background p-1.5 text-[11px] leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 read-only:opacity-60"
+                              />
+                            </td>
+                          ) : (
+                            <td key={c.key} className="px-2 py-2 align-top">
+                              <p className="min-w-[80px] text-[11px] leading-relaxed text-foreground/80">
+                                {readonlyCellValue(p, c.key) || (
+                                  <span className="text-muted-foreground/60">
+                                    {c.key === "variables" ? "논문 상세에서 변인 입력" : "—"}
+                                  </span>
+                                )}
+                              </p>
+                            </td>
+                          ),
+                        )}
                       </tr>
                     ))}
                   </tbody>
