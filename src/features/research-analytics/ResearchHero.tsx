@@ -94,13 +94,14 @@ function StatCard({ icon, value, label, suffix = "", delay = 0, active }: StatCa
 /* ──────────────────────────────────────────
    Floating keyword tag
 ────────────────────────────────────────── */
+// UX(2026-07-04): 보라 계열 3종 제거 — 블루·틸·앰버 중심 (히어로가 정신없다는 피드백)
 const GRADIENT_PAIRS: [string, string][] = [
-  ["#6366f1", "#8b5cf6"], // indigo → violet
-  ["#0ea5e9", "#6366f1"], // sky → indigo
+  ["#1d4ed8", "#0ea5e9"], // blue → sky
+  ["#0ea5e9", "#22d3ee"], // sky → cyan
   ["#14b8a6", "#0ea5e9"], // teal → sky
-  ["#8b5cf6", "#ec4899"], // violet → pink
+  ["#f59e0b", "#fbbf24"], // amber
   ["#0369a1", "#14b8a6"], // blue → teal
-  ["#7c3aed", "#6366f1"], // purple → indigo
+  ["#2563eb", "#1e40af"], // blue deep
   ["#0f766e", "#0369a1"], // teal → blue
 ];
 
@@ -284,7 +285,7 @@ export default function ResearchHero({
       label: "진학을 고민한다면",
       desc: "우리 전공의 연구 다양성과 역량을 확인하세요",
       href: "#계보",
-      color: "linear-gradient(135deg,#6366f1,#8b5cf6)",
+      color: "linear-gradient(135deg,#1d4ed8,#0ea5e9)",
     },
     {
       icon: <Search size={16} />,
@@ -315,7 +316,8 @@ export default function ResearchHero({
       className="relative w-full overflow-hidden rounded-3xl"
       aria-labelledby="research-hero-title"
       style={{
-        background: "linear-gradient(135deg, #001a40 0%, #0d1b6e 30%, #3b1fa8 60%, #0f766e 100%)",
+        // UX(2026-07-04 사용자 피드백): 보라 과다 완화 — 연세 네이비 → 블루 → 틸
+        background: "linear-gradient(135deg, #001a40 0%, #002d66 35%, #0b4a8f 65%, #0f766e 100%)",
       }}
     >
       {/* Mesh overlay — subtle noise texture feel */}
@@ -324,9 +326,9 @@ export default function ResearchHero({
         className="pointer-events-none absolute inset-0 opacity-20"
         style={{
           backgroundImage:
-            "radial-gradient(ellipse 60% 50% at 20% 30%, rgba(99,102,241,0.5) 0%, transparent 70%)," +
+            "radial-gradient(ellipse 60% 50% at 20% 30%, rgba(37,99,235,0.45) 0%, transparent 70%)," +
             "radial-gradient(ellipse 50% 60% at 80% 70%, rgba(20,184,166,0.4) 0%, transparent 70%)," +
-            "radial-gradient(ellipse 40% 40% at 50% 50%, rgba(139,92,246,0.3) 0%, transparent 60%)",
+            "radial-gradient(ellipse 40% 40% at 50% 50%, rgba(14,165,233,0.25) 0%, transparent 60%)",
         }}
       />
 
@@ -366,7 +368,7 @@ export default function ResearchHero({
             <span
               className="inline-block"
               style={{
-                background: "linear-gradient(90deg,#a5f3fc,#818cf8,#c4b5fd)",
+                background: "linear-gradient(90deg,#a5f3fc,#60a5fa,#7dd3fc)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
@@ -392,7 +394,7 @@ export default function ResearchHero({
             className="mt-5 text-lg font-black tracking-tight sm:text-xl"
             style={{
               fontFamily: "'Noto Serif KR', serif",
-              backgroundImage: "linear-gradient(90deg,#a5f3fc,#c4b5fd)",
+              backgroundImage: "linear-gradient(90deg,#a5f3fc,#7dd3fc)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",

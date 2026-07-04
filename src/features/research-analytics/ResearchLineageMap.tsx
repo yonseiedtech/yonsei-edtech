@@ -11,7 +11,7 @@ const VIEW_ERAS_DESKTOP = 2;
 const INTERVAL_OPTIONS = [3, 5, 10] as const;
 type IntervalYears = (typeof INTERVAL_OPTIONS)[number];
 
-const PALETTE = ["#1e3a8a", "#0f766e", "#7c3aed", "#b45309"];
+const PALETTE = ["#1e3a8a", "#0f766e", "#2563eb", "#b45309"];
 
 interface Era {
   id: string;

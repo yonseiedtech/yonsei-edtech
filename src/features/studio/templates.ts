@@ -18,12 +18,37 @@ const NAVY = "#003378";
 const GOLD = "#d4af37";
 const PAPER = "#f4f6fa";
 const INK = "#1b1f27";
+// UX(2026-07-04 사용자 피드백): 학회 로고를 템플릿에 정식 반영
+const EMBLEM = "/yonsei-emblem.svg"; // 원형 엠블럼 — 네이비 배경용(흰 테두리)
+const LOGO = "/logo.png"; // 가로형 로크업 — 밝은 배경용
+
+/** 밝은 페이지 공통 푸터 — 엠블럼 + 학회명 (2·3페이지가 따로 놀던 문제의 공통 언어) */
+function lightFooter(docType: DesignDocType) {
+  const { width: W, height: H } = DESIGN_CANVAS_SIZES[docType];
+  const cx = Math.round(W * 0.09);
+  const s = Math.round(W * 0.032);
+  return [
+    makeImage(EMBLEM, {
+      x: cx, y: H - Math.round(W * 0.055), w: s, h: s, fit: "contain", locked: true,
+    }),
+    makeText({
+      x: cx + s + Math.round(W * 0.012), y: H - Math.round(W * 0.052), w: Math.round(W * 0.6), h: Math.round(W * 0.03),
+      text: "연세교육공학회 · Yonsei EdTech",
+      fontSize: Math.round(W * 0.016), fontWeight: 600, fontFamily: "sans",
+      color: "rgba(27,31,39,0.55)",
+    }),
+  ];
+}
 
 /** 커버 페이지 — 네이비 배경 + 골드 라인 + 세리프 타이틀 */
 function coverPage(docType: DesignDocType, p: TemplatePrefill): DesignPage {
   const { width: W, height: H } = DESIGN_CANVAS_SIZES[docType];
   const cx = Math.round(W * 0.09);
+  const emblemSize = Math.round(W * 0.085);
   return makePage(NAVY, [
+    makeImage(EMBLEM, {
+      x: cx, y: Math.round(H * 0.07), w: emblemSize, h: emblemSize, fit: "contain", locked: true,
+    }),
     makeShape("line", { x: cx, y: Math.round(H * 0.18), w: Math.round(W * 0.14), h: 8, fill: GOLD, locked: true }),
     makeText({
       x: cx, y: Math.round(H * 0.24), w: Math.round(W * 0.82), h: Math.round(H * 0.3),
@@ -44,7 +69,7 @@ function coverPage(docType: DesignDocType, p: TemplatePrefill): DesignPage {
     }),
     makeText({
       x: cx, y: H - Math.round(W * 0.07), w: Math.round(W * 0.8), h: Math.round(W * 0.045),
-      text: "연세대학교 교육대학원 교육공학전공 학술학회",
+      text: "연세교육공학회 · Yonsei Educational Technology Association",
       fontSize: Math.round(W * 0.018), fontWeight: 600, fontFamily: "sans",
       color: "rgba(255,255,255,0.6)",
     }),
@@ -63,10 +88,11 @@ function bodyPage(docType: DesignDocType, heading: string, body: string): Design
     }),
     makeShape("line", { x: cx, y: Math.round(H * 0.2), w: Math.round(W * 0.1), h: 6, fill: GOLD, locked: true }),
     makeText({
-      x: cx, y: Math.round(H * 0.26), w: Math.round(W * 0.82), h: Math.round(H * 0.6),
+      x: cx, y: Math.round(H * 0.26), w: Math.round(W * 0.82), h: Math.round(H * 0.55),
       text: body, fontSize: Math.round(W * 0.028), fontWeight: 400, fontFamily: "sans",
       color: INK, lineHeight: 1.6,
     }),
+    ...lightFooter(docType),
   ]);
 }
 
@@ -74,35 +100,43 @@ function bodyPage(docType: DesignDocType, heading: string, body: string): Design
 function highlightPage(docType: DesignDocType, p: TemplatePrefill): DesignPage {
   const { width: W, height: H } = DESIGN_CANVAS_SIZES[docType];
   const cx = Math.round(W * 0.09);
-  return makePage("#ffffff", [
-    makeIcon("Calendar", { x: cx, y: Math.round(H * 0.12), w: Math.round(W * 0.07), h: Math.round(W * 0.07), color: NAVY }),
+  // UX(2026-07-04): 본문(2p)과 시각 언어 통일 — 같은 배경·상단 스트립·헤딩·골드 라인·푸터
+  return makePage(PAPER, [
+    makeShape("rect", { x: 0, y: 0, w: W, h: Math.round(H * 0.035), fill: NAVY, radius: 0, locked: true }),
     makeText({
-      x: cx + Math.round(W * 0.09), y: Math.round(H * 0.125), w: Math.round(W * 0.7), h: Math.round(H * 0.08),
-      text: p.date ?? "일시", fontSize: Math.round(W * 0.032), fontWeight: 700, fontFamily: "sans", color: INK,
+      x: cx, y: Math.round(H * 0.09), w: Math.round(W * 0.82), h: Math.round(H * 0.12),
+      text: "행사 안내", fontSize: Math.round(W * 0.045), fontWeight: 900, fontFamily: "display", color: NAVY,
     }),
-    makeIcon("MapPin", { x: cx, y: Math.round(H * 0.25), w: Math.round(W * 0.07), h: Math.round(W * 0.07), color: NAVY }),
+    makeShape("line", { x: cx, y: Math.round(H * 0.2), w: Math.round(W * 0.1), h: 6, fill: GOLD, locked: true }),
+    makeIcon("Calendar", { x: cx, y: Math.round(H * 0.27), w: Math.round(W * 0.06), h: Math.round(W * 0.06), color: NAVY }),
     makeText({
-      x: cx + Math.round(W * 0.09), y: Math.round(H * 0.255), w: Math.round(W * 0.7), h: Math.round(H * 0.08),
-      text: p.location ?? "장소", fontSize: Math.round(W * 0.032), fontWeight: 700, fontFamily: "sans", color: INK,
+      x: cx + Math.round(W * 0.08), y: Math.round(H * 0.275), w: Math.round(W * 0.7), h: Math.round(H * 0.08),
+      text: p.date ?? "일시", fontSize: Math.round(W * 0.03), fontWeight: 700, fontFamily: "sans", color: INK,
+    }),
+    makeIcon("MapPin", { x: cx, y: Math.round(H * 0.38), w: Math.round(W * 0.06), h: Math.round(W * 0.06), color: NAVY }),
+    makeText({
+      x: cx + Math.round(W * 0.08), y: Math.round(H * 0.385), w: Math.round(W * 0.7), h: Math.round(H * 0.08),
+      text: p.location ?? "장소", fontSize: Math.round(W * 0.03), fontWeight: 700, fontFamily: "sans", color: INK,
     }),
     ...(p.speaker
       ? [
-          makeIcon("Mic", { x: cx, y: Math.round(H * 0.38), w: Math.round(W * 0.07), h: Math.round(W * 0.07), color: NAVY }),
+          makeIcon("Mic", { x: cx, y: Math.round(H * 0.49), w: Math.round(W * 0.06), h: Math.round(W * 0.06), color: NAVY }),
           makeText({
-            x: cx + Math.round(W * 0.09), y: Math.round(H * 0.385), w: Math.round(W * 0.7), h: Math.round(H * 0.12),
-            text: p.speaker, fontSize: Math.round(W * 0.032), fontWeight: 700, fontFamily: "sans", color: INK,
+            x: cx + Math.round(W * 0.08), y: Math.round(H * 0.495), w: Math.round(W * 0.7), h: Math.round(H * 0.1),
+            text: p.speaker, fontSize: Math.round(W * 0.03), fontWeight: 700, fontFamily: "sans", color: INK,
           }),
         ]
       : []),
     makeShape("rect", {
       x: cx, y: Math.round(H * 0.62), w: Math.round(W * 0.82), h: Math.round(H * 0.22),
-      fill: PAPER, radius: 24, locked: true,
+      fill: "#ffffff", radius: 24, locked: true,
     }),
     makeText({
       x: cx + Math.round(W * 0.04), y: Math.round(H * 0.66), w: Math.round(W * 0.74), h: Math.round(H * 0.15),
       text: p.description?.slice(0, 160) ?? "소개 문구를 입력하세요.",
       fontSize: Math.round(W * 0.024), fontWeight: 400, fontFamily: "sans", color: INK, lineHeight: 1.6,
     }),
+    ...lightFooter(docType),
   ]);
 }
 
@@ -113,11 +147,16 @@ function pptPages(p: TemplatePrefill): DesignPage[] {
     bodyPage("ppt", "목차", "1. 배경\n2. 핵심 내용\n3. 논의\n4. 마무리"),
     bodyPage("ppt", "핵심 내용", p.description ?? "본문 내용을 입력하세요."),
     makePage(NAVY, [
+      makeImage(EMBLEM, { x: 590, y: 120, w: 100, h: 100, fit: "contain", locked: true }),
+      makeShape("line", { x: 560, y: 250, w: 160, h: 6, fill: GOLD, locked: true }),
       makeText({
         x: 100, y: 280, w: 1080, h: 160, text: "감사합니다",
         fontSize: 88, fontWeight: 900, fontFamily: "display", color: "#ffffff", align: "center",
       }),
-      makeShape("line", { x: 560, y: 250, w: 160, h: 6, fill: GOLD, locked: true }),
+      makeText({
+        x: 100, y: 470, w: 1080, h: 60, text: "연세교육공학회 · Yonsei Educational Technology Association",
+        fontSize: 22, fontWeight: 600, fontFamily: "sans", color: "rgba(255,255,255,0.6)", align: "center",
+      }),
     ]),
   ];
 }
@@ -132,14 +171,19 @@ export function buildTemplatePages(docType: DesignDocType, p: TemplatePrefill = 
     bodyPage("cardnews", "소개", p.description ?? "무엇을 하는 활동인지 소개를 입력하세요."),
     highlightPage("cardnews", p),
     makePage(NAVY, [
-      makeIcon("PartyPopper", { x: 460, y: 260, w: 160, h: 160, color: GOLD }),
+      makeIcon("PartyPopper", { x: 460, y: 240, w: 160, h: 160, color: GOLD }),
       makeText({
-        x: 90, y: 480, w: 900, h: 140, text: "지금 신청하세요",
+        x: 90, y: 460, w: 900, h: 140, text: "지금 신청하세요",
         fontSize: 64, fontWeight: 900, fontFamily: "display", color: "#ffffff", align: "center",
       }),
       makeText({
-        x: 90, y: 640, w: 900, h: 80, text: "자세한 내용은 학회 홈페이지에서",
+        x: 90, y: 620, w: 900, h: 80, text: "자세한 내용은 학회 홈페이지에서",
         fontSize: 30, fontWeight: 600, fontFamily: "sans", color: "rgba(255,255,255,0.8)", align: "center",
+      }),
+      makeImage(EMBLEM, { x: 495, y: 760, w: 90, h: 90, fit: "contain", locked: true }),
+      makeText({
+        x: 90, y: 870, w: 900, h: 50, text: "연세교육공학회 · Yonsei EdTech",
+        fontSize: 22, fontWeight: 600, fontFamily: "sans", color: "rgba(255,255,255,0.6)", align: "center",
       }),
     ]),
   ];

@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "files": [
+    "src/features/research-analytics/ResearchHero.tsx",
+    "src/features/research-analytics/KeywordCloud.tsx",
+    "src/features/research-analytics/MethodProfile.tsx",
+    "src/features/research-analytics/ResearchLineageMap.tsx",
+    "src/features/research-analytics/SubjectDistribution.tsx",
+    "src/features/research-analytics/ResearchTypeChart.tsx",
+    "src/features/research-analytics/ResearchSearch.tsx",
+    "src/features/studio/templates.ts"
+  ]
+}

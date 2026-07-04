@@ -85,7 +85,7 @@ export default function ResearchSearch({ theses, variableNameOf, measurementName
                           </span>
                         )}
                         {vars.map((v) => (
-                          <span key={v} className="rounded bg-violet-50 px-1 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300">
+                          <span key={v} className="rounded bg-sky-50 px-1 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300">
                             {v}
                           </span>
                         ))}

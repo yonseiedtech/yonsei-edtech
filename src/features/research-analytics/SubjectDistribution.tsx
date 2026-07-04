@@ -18,7 +18,7 @@ const MODE_KEYS: Record<Mode, string[]> = {
   venue: Object.keys(VENUE_DICT),
 };
 
-const COLORS = ["#1e3a8a", "#0f766e", "#7c3aed", "#b45309", "#be185d", "#15803d", "#0369a1"];
+const COLORS = ["#1e3a8a", "#0f766e", "#2563eb", "#b45309", "#be185d", "#15803d", "#0369a1"];
 
 export default function SubjectDistribution({ theses }: { theses: AlumniThesis[] }) {
   const [mode, setMode] = useState<Mode>("audience");

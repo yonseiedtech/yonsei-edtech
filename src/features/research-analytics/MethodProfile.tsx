@@ -28,7 +28,7 @@ const GUIDE_PATH: Record<Mode, string> = {
   method: "/archive/research-methods",
 };
 
-const BAR_COLORS = ["#1e3a8a", "#0f766e", "#7c3aed", "#b45309", "#be185d", "#15803d", "#0369a1", "#9333ea", "#c2410c", "#047857"];
+const BAR_COLORS = ["#1e3a8a", "#0f766e", "#2563eb", "#b45309", "#be185d", "#15803d", "#0369a1", "#0e7490", "#c2410c", "#047857"];
 
 function countMethods(theses: AlumniThesis[], kind: Mode): [string, number][] {
   const counter = new Map<string, number>();

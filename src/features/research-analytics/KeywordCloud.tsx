@@ -22,7 +22,7 @@ interface PlacedWord extends CloudItem {
 const PALETTE = [
   "#1e3a8a", // navy
   "#0369a1", // sky
-  "#7c3aed", // violet
+  "#2563eb", // blue
   "#be185d", // pink
   "#b45309", // amber
   "#15803d", // emerald
@@ -141,17 +141,25 @@ function packWords(
   return result;
 }
 
-const TOPN_OPTIONS = [10, 30, 50, 80] as const;
+// UX(2026-07-04 사용자 피드백): 중간 단위 3종(20·40·60) 추가
+const TOPN_OPTIONS = [10, 20, 30, 40, 50, 60, 80] as const;
 type TopN = (typeof TOPN_OPTIONS)[number];
 
 // 항목 수에 따라 폰트/캔버스 동적 조절 — 많을수록 작게, 적을수록 크게
 // 패딩이 fontSize * 0.35 + 한글 폭 1.0× 반영하여 캔버스 여유 확보
-function dimensionsFor(n: number): {
+function dimensionsFor(n: number, narrow = false): {
   width: number;
   height: number;
   maxFont: number;
   minFont: number;
 } {
+  // UX(2026-07-04): 모바일(<640px)은 좁고 긴 캔버스 — 넓은 캔버스를 축소 렌더하면 글자가 뭉개짐
+  if (narrow) {
+    if (n <= 10) return { width: 460, height: 420, maxFont: 38, minFont: 17 };
+    if (n <= 30) return { width: 480, height: 560, maxFont: 30, minFont: 13 };
+    if (n <= 50) return { width: 500, height: 700, maxFont: 26, minFont: 11 };
+    return { width: 520, height: 820, maxFont: 22, minFont: 10 };
+  }
   if (n <= 10) return { width: 900, height: 380, maxFont: 52, minFont: 22 };
   if (n <= 30) return { width: 960, height: 520, maxFont: 42, minFont: 16 };
   if (n <= 50) return { width: 1000, height: 640, maxFont: 36, minFont: 13 };
@@ -167,6 +175,15 @@ export default function KeywordCloud({
 }) {
   const [hover, setHover] = useState<string | null>(null);
   const [topN, setTopN] = useState<TopN>(defaultTopN);
+  // 모바일 판정 — matchMedia 구독
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 640px)");
+    const sync = () => setNarrow(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
 
   const dataRange = useMemo(() => thesesYearRange(theses), [theses]);
   const [yearStart, setYearStart] = useState<number>(dataRange.min);
@@ -203,7 +220,7 @@ export default function KeywordCloud({
   }, [theses, lo, hi]);
 
   const sliced = useMemo(() => filteredCounts.slice(0, topN), [filteredCounts, topN]);
-  const dims = useMemo(() => dimensionsFor(sliced.length), [sliced.length]);
+  const dims = useMemo(() => dimensionsFor(sliced.length, narrow), [sliced.length, narrow]);
 
   const placed = useMemo(
     () => packWords(sliced, dims.width, dims.height, dims.maxFont, dims.minFont),
