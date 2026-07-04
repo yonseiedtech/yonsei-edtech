@@ -113,6 +113,15 @@ export default function LoginForm({ onSuccess, hideSignupLink, signupHref }: Log
             <p className="text-xs text-amber-600">
               일반적으로 1~2일 이내에 승인이 완료됩니다.
             </p>
+            {/* RT-3(2026-07-04): 승인 대기 중에도 가치를 맛보게 — 공개 콘텐츠 링크 */}
+            <div className="mt-2 border-t border-amber-200 pt-2">
+              <p className="mb-1.5 text-xs font-medium text-amber-800">기다리는 동안 둘러보세요</p>
+              <div className="flex flex-wrap gap-1.5">
+                <a href="/about" className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-xs text-amber-800 hover:bg-amber-100">학회 소개</a>
+                <a href="/card-news" className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-xs text-amber-800 hover:bg-amber-100">카드뉴스</a>
+                <a href="/journal" className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-xs text-amber-800 hover:bg-amber-100">연구지</a>
+              </div>
+            </div>
           </div>
         </div>
 

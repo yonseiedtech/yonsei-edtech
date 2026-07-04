@@ -30,6 +30,8 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import type { ResearchPaper } from "@/types";
+import { researchModelsApi } from "@/lib/research-models-api";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -64,6 +66,7 @@ import {
   streakEventsApi,
   commQuestionsApi,
   commAnswersApi,
+  researchPapersApi,
 } from "@/lib/bkend";
 import type {
   SeminarAttendee,
@@ -255,6 +258,31 @@ export default function NewMemberChecklistWidget() {
     staleTime: 5 * 60_000,
   });
 
+  // RT-3: 신규 기능 완료 판정 데이터
+  const { data: matrixPapersRes } = useQuery({
+    queryKey: ["onboarding", "matrix-papers", user?.id],
+    enabled: !!user?.id,
+    staleTime: 5 * 60_000,
+    queryFn: async () => (await researchPapersApi.list(user!.id)).data as ResearchPaper[],
+  });
+  const hasMatrixEntry = useMemo(
+    () =>
+      ((matrixPapersRes ?? []) as ResearchPaper[]).some(
+        (p) => !p.isDraft && (p.sample?.trim() || p.methodology?.trim() || p.findings?.trim() || p.insights?.trim()),
+      ),
+    [matrixPapersRes],
+  );
+  const { data: hasModel } = useQuery({
+    queryKey: ["onboarding", "research-model", user?.id],
+    enabled: !!user?.id,
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const res = await researchModelsApi.get(user!.id);
+      return ((res?.data?.nodes?.length ?? 0) > 0) as boolean;
+    },
+  });
+  const studioVisited = typeof window !== "undefined" && window.localStorage.getItem("yedu_onboarding_visited_studio") === "1";
+
   const { data: commBoardExists } = useQuery({
     queryKey: ["onboarding-checklist", "comm-board-exists", userId],
     queryFn: async () => {
@@ -329,6 +357,12 @@ export default function NewMemberChecklistWidget() {
         return typeof user.thesisJourneyStage === "number";
       case "participated.commBoard":
         return commBoardExists === true;
+      case "used.literatureMatrix":
+        return hasMatrixEntry;
+      case "used.researchModel":
+        return hasModel === true;
+      case "visited.studio":
+        return studioVisited;
       default:
         return false;
     }

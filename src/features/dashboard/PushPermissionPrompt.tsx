@@ -79,6 +79,18 @@ export default function PushPermissionPrompt() {
         setShow(false);
         return;
       }
+      // RT-3(2026-07-04): 가입 3일 이내에는 보류 — 가치 경험 전에 권한부터 요구하는 안티패턴 방지
+      const createdRaw = (user as { createdAt?: unknown }).createdAt;
+      const createdMs =
+        typeof createdRaw === "string"
+          ? new Date(createdRaw).getTime()
+          : typeof (createdRaw as { seconds?: number })?.seconds === "number"
+            ? (createdRaw as { seconds: number }).seconds * 1000
+            : null;
+      if (createdMs != null && Date.now() - createdMs < 3 * 24 * 60 * 60 * 1000) {
+        setShow(false);
+        return;
+      }
       setShow(true);
     })();
     return () => {

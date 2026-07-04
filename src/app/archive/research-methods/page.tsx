@@ -190,6 +190,17 @@ export default function ResearchMethodsLandingPage() {
           description="양적·질적·혼합 연구방법론을 절차·기본 가정·강점·약점과 함께 정리합니다. 동일한 방법을 사용한 학회 졸업생 학위논문도 함께 확인할 수 있습니다."
         />
 
+        {/* RT-3(2026-07-04): 파인더 크로스링크 */}
+        <Link
+          href="/archive/research-finder"
+          className="mt-4 flex items-center justify-between gap-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 px-4 py-2.5 text-sm transition-colors hover:bg-primary/10"
+        >
+          <span className="text-foreground/85">
+            어떤 연구방법을 골라야 할지 모르겠다면 — <span className="font-semibold text-primary">몇 가지 질문으로 추천받기</span>
+          </span>
+          <span aria-hidden className="shrink-0 text-primary">→</span>
+        </Link>
+
         <div className="mt-6">
           <InlineNotification
             kind="info"

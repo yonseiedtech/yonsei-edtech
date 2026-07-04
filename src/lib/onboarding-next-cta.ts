@@ -63,13 +63,28 @@ export const NEXT_CTA_MAP: Record<ChecklistCompletionType, NextCta | null> = {
     label: "연구보고서 작성",
   },
   "submitted.research": {
-    message: "다음은 강의 후기를 작성해보세요.",
-    href: "/courses",
-    label: "수강 강의 보기",
+    message: "읽은 논문을 문헌 매트릭스로 정리해보세요.",
+    href: "/mypage/research?tab=reading",
+    label: "문헌 매트릭스 열기",
   },
   "wrote.lectureReview": {
     message: "다음은 동료 활동을 살펴보세요.",
     href: "/dashboard",
     label: "대시보드 보기",
+  },
+  "used.literatureMatrix": {
+    message: "정리한 문헌으로 연구 모형을 그려보세요.",
+    href: "/research-model",
+    label: "연구 모형 그리기",
+  },
+  "used.researchModel": {
+    message: "모형의 변인으로 연구문제를 만들어보세요.",
+    href: "/mypage/research?tab=writing",
+    label: "논문 여정 열기",
+  },
+  "visited.studio": {
+    message: "만든 자료는 카드뉴스로 공유할 수 있어요.",
+    href: "/card-news",
+    label: "카드뉴스 보기",
   },
 };

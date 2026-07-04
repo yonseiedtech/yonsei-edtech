@@ -65,6 +65,7 @@ const CardSection = dynamic(
 );
 import EmptyState from "@/components/ui/empty-state";
 import LearningStreak from "@/features/mypage/LearningStreak";
+import ProfileViewsWidget from "@/features/mypage/ProfileViewsWidget";
 import ProfileOnboardingBadges from "@/components/profile/ProfileOnboardingBadges";
 import ARCSPanel from "@/features/mypage/ARCSPanel";
 import ConnectivismPanel from "@/features/mypage/ConnectivismPanel";
@@ -416,6 +417,9 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                   <ProfileOnboardingBadges badges={user.onboardingBadges} />
                 </div>
               )}
+
+              {/* RT-3(2026-07-04): 최근 7일 프로필 조회 — 수집만 되고 미노출이던 사회적 신호 */}
+              <ProfileViewsWidget />
 
               {/* Sprint 56: 학습 잔디 — 365일 활동 그리드 + streak + 마일스톤 */}
               <LearningStreak />

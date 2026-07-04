@@ -33,7 +33,11 @@ export type ChecklistCompletionType =
   | "submitted.research"
   | "wrote.lectureReview"
   | "set.thesisJourneyStage"
-  | "participated.commBoard";
+  | "participated.commBoard"
+  // RT-3(2026-07-04): 신규 기능 온보딩 — 문헌 매트릭스·연구모형·스튜디오
+  | "used.literatureMatrix"
+  | "used.researchModel"
+  | "visited.studio";
 
 export const CHECKLIST_COMPLETION_LABELS: Record<ChecklistCompletionType, string> = {
   "profile.bio": "프로필 자기소개 작성",
@@ -49,6 +53,9 @@ export const CHECKLIST_COMPLETION_LABELS: Record<ChecklistCompletionType, string
   "wrote.lectureReview": "강의 후기 작성 1건",
   "set.thesisJourneyStage": "논문 여정 단계 설정",
   "participated.commBoard": "소통 보드 질문/답변 1건",
+  "used.literatureMatrix": "문헌 매트릭스에 논문 1편 정리",
+  "used.researchModel": "연구 모형 그리기",
+  "visited.studio": "디자인 스튜디오 둘러보기",
 };
 
 /** 위젯에서 렌더 가능한 lucide 아이콘 화이트리스트. */

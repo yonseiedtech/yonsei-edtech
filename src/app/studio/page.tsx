@@ -6,7 +6,7 @@
  * 연계해 템플릿을 프리필할 수 있다 (회원 누구나 본인 문서).
  */
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Palette, Plus, Trash2, Loader2 } from "lucide-react";
@@ -276,6 +276,15 @@ function StudioContent() {
 }
 
 export default function StudioPage() {
+  // RT-3(2026-07-04): 온보딩 '스튜디오 둘러보기' 완료 신호
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("yedu_onboarding_visited_studio", "1");
+    } catch {
+      /* 무시 */
+    }
+  }, []);
+
   return (
     <AuthGuard>
       <StudioContent />

@@ -1019,6 +1019,10 @@ export default function DailyClassTimelineWidget() {
         className={cn(viewMode !== "monthly" && "flex flex-col")}
         style={viewMode !== "monthly" ? { minHeight: TIMELINE_MIN_CONTENT_PX } : undefined}
       >
+      {/* RT-3(2026-07-04): 방학 안내가 일간 뷰 전용이라 주말 자동 주간 전환 시 사라지던 문제 */}
+      {!isLoading && isVacation && viewMode !== "daily" && (
+        <VacationModeCard semesterLabel={semesterLabel} term={term} year={year} />
+      )}
       {isLoading ? (
         <div className="mt-4 h-72 animate-pulse rounded-lg bg-muted" />
       ) : viewMode === "monthly" ? (

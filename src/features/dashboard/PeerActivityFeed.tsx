@@ -14,6 +14,7 @@
  */
 
 import { useMemo } from "react";
+import type { SeminarReview } from "@/types";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { MessageSquare, FileText, GraduationCap, Users } from "lucide-react";
@@ -21,6 +22,7 @@ import {
   postsApi,
   courseReviewsApi,
   profilesApi,
+  dataApi,
 } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { useIsWidgetMuted } from "@/lib/dashboard-layout";
@@ -28,7 +30,7 @@ import type { Post, CourseReview, User } from "@/types";
 import WidgetCard from "@/components/ui/widget-card";
 import EmptyState from "@/components/ui/empty-state";
 
-type FeedKind = "post" | "course_review";
+type FeedKind = "post" | "course_review" | "seminar_review";
 
 interface FeedItem {
   id: string;
@@ -55,6 +57,12 @@ const KIND_META: Record<
     iconClass: "bg-emerald-100 text-emerald-700",
     Icon: GraduationCap,
     verb: "강의 후기 작성",
+  },
+  seminar_review: {
+    label: "세미나 후기",
+    iconClass: "bg-violet-100 text-violet-700",
+    Icon: FileText,
+    verb: "세미나 후기 작성",
   },
 };
 
@@ -89,6 +97,13 @@ export default function PeerActivityFeed() {
   const { data: courseRevRes } = useQuery({
     queryKey: ["peer-feed", "course-reviews"],
     queryFn: () => courseReviewsApi.list({ limit: 30 }),
+    staleTime: muted ? 15 * 60_000 : 5 * 60_000,
+    enabled: !!user && !muted,
+  });
+  // RT-3(2026-07-04): 헤더 주석에 명시돼 있었으나 실제로는 조회하지 않던 세미나 후기 소스 복원
+  const { data: seminarRevRes } = useQuery({
+    queryKey: ["peer-feed", "seminar-reviews"],
+    queryFn: () => dataApi.list<SeminarReview>("seminar_reviews", { "filter[visibility]": "public", limit: 30 }),
     staleTime: muted ? 15 * 60_000 : 5 * 60_000,
     enabled: !!user && !muted,
   });
@@ -127,9 +142,23 @@ export default function PeerActivityFeed() {
         createdAt: r.createdAt,
       });
     }
+    const seminarReviews = (seminarRevRes?.data ?? []) as SeminarReview[];
+    for (const r of seminarReviews) {
+      if (!r.createdAt || new Date(r.createdAt).getTime() < cutoff) continue;
+      if (myId && r.authorId === myId) continue;
+      out.push({
+        id: `sr:${r.id}`,
+        kind: "seminar_review",
+        authorId: r.authorId,
+        authorName: r.authorName ?? "",
+        title: r.content.slice(0, 40),
+        href: `/seminars/${r.seminarId}`,
+        createdAt: r.createdAt,
+      });
+    }
     out.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     return out.slice(0, 30); // 후속 author 필터링 여유분
-  }, [postsRes, courseRevRes, myId]);
+  }, [postsRes, courseRevRes, seminarRevRes, myId]);
 
   // 작성자별 feedOptIn 조회 (배치)
   const authorIds = useMemo(() => {

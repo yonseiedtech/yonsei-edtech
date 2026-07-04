@@ -62,6 +62,28 @@ export const SEED_ITEMS: SeedChecklistItem[] = [
     completionType: "favorited.archive",
     enabled: true,
   },
+  // RT-3(2026-07-04): 첫 여정을 연구 도구로 연결 — 시드가 구세대 5항목에 멈춰 있던 문제
+  {
+    label: "내 논문 여정 단계 설정",
+    href: "/mypage/research",
+    icon: "GraduationCap",
+    completionType: "set.thesisJourneyStage",
+    enabled: true,
+  },
+  {
+    label: "문헌 매트릭스에 논문 1편 정리",
+    href: "/mypage/research?tab=reading",
+    icon: "BookOpen",
+    completionType: "used.literatureMatrix",
+    enabled: true,
+  },
+  {
+    label: "연구 모형 그려보기",
+    href: "/research-model",
+    icon: "Sparkles",
+    completionType: "used.researchModel",
+    enabled: true,
+  },
 ];
 
 export interface ChecklistSeedResult {
