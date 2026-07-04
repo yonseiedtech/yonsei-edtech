@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -105,6 +105,12 @@ export default function MethodFinderPage() {
   }, [methods]);
 
   const current = nextQuestion(answers);
+  // UX-1(2026-07-04): 질문 전환 시 포커스 유실(키보드가 body 로 떨어짐) — 새 질문 제목으로 이동
+  const questionRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (current) questionRef.current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current?.id]);
   const active = activeQuestions(answers);
   const answeredCount = active.filter((q) => answers[q.id] != null).length;
   const result = recommend(answers);
@@ -187,9 +193,15 @@ export default function MethodFinderPage() {
 
         {/* 질문 카드 */}
         {!result && current && (
-          <Card className="mt-4 rounded-2xl">
+          <Card className="mt-4 rounded-2xl" aria-live="polite">
             <CardContent className="p-6">
-              <h2 className="text-lg font-semibold leading-snug">{current.title}</h2>
+              <h2
+                ref={questionRef}
+                tabIndex={-1}
+                className="text-lg font-semibold leading-snug outline-none"
+              >
+                {current.title}
+              </h2>
               {current.help && (
                 <p className="mt-1 text-sm text-muted-foreground">{current.help}</p>
               )}

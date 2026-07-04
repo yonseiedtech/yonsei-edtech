@@ -1017,7 +1017,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     if (readOnly || !paper) return;
     // QA-v2: 절이 없으면 삽입 자체가 안 되는데 성공 토스트가 뜨던 결함 — 선검사
     if (form.sections[step].every((sec) => isOverviewSection(sec))) {
-      toast.error("표를 넣을 절이 없습니다 — 먼저 '섹션 추가'로 절을 만들어주세요.");
+      toast.error("표를 넣을 절이 없습니다 — 먼저 '절 추가'로 절을 만들어주세요.");
       return;
     }
     const table =
@@ -1043,6 +1043,12 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   // ── 섹션·단락 조작 ──
 
   function updateSection(k: WritingPaperChapterKey, sectionId: string, patch: Partial<WritingSection>) {
+    // UX-1(2026-07-04): "장 요약"은 개요 절 식별자(헤딩 기반) — 일반 절 이름으로 쓰면
+    // 해당 절이 편집 화면에서 사라지므로 차단
+    if (patch.heading !== undefined && patch.heading.trim() === "장 요약") {
+      toast.error("'장 요약'은 예약된 절 이름입니다 — 다른 이름을 사용해주세요.");
+      return;
+    }
     setForm((prev) => ({
       ...prev,
       sections: {
@@ -1132,7 +1138,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     markDirty();
   }
 
-  function addSection(k: WritingPaperChapterKey, heading = "새 섹션") {
+  function addSection(k: WritingPaperChapterKey, heading = "새 절") {
     setForm((prev) => ({
       ...prev,
       sections: {
@@ -1146,7 +1152,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   function removeSection(k: WritingPaperChapterKey, sectionId: string) {
     const sec = form.sections[k].find((s) => s.id === sectionId);
     const hasContent = sec?.paragraphs.some((p) => p.text.trim());
-    if (hasContent && !confirm(`"${sec?.heading}" 섹션과 단락을 모두 삭제하시겠습니까?`)) return;
+    if (hasContent && !confirm(`"${sec?.heading}" 절과 단락을 모두 삭제하시겠습니까?`)) return;
     setForm((prev) => {
       const remain = prev.sections[k].filter((s) => s.id !== sectionId);
       return {
@@ -1281,7 +1287,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     const existing = target ? target.paragraphs.map((p) => p.text) : [];
     const adds = g.skeleton.filter((t) => !existing.some((e) => e.startsWith(t.slice(0, 14))));
     if (adds.length === 0) {
-      toast.info(`${STAT_METHOD_LABELS[m]} 보고 골격은 이미 삽입되어 있습니다 — '${ASSUMPTION_SECTION_HEADING}' 섹션을 확인하세요.`);
+      toast.info(`${STAT_METHOD_LABELS[m]} 보고 골격은 이미 삽입되어 있습니다 — '${ASSUMPTION_SECTION_HEADING}' 절을 확인하세요.`);
       return;
     }
     setForm((prev) => {
@@ -1301,7 +1307,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     toast.success(`${STAT_METHOD_LABELS[m]} 가정 검정 보고 골격을 추가했습니다 — 빈칸(___)을 결과값으로 채우세요.`);
   }
 
-  /** 선택한 분석 방법의 기술 골격을 연구 방법 장 '자료 분석' 섹션에 삽입 */
+  /** 선택한 분석 방법의 기술 골격을 연구 방법 장 '자료 분석' 절에 삽입 */
   function insertAnalysisSkeleton(m: StatMethodType) {
     if (readOnly || !paper) return;
     const text = ANALYSIS_SKELETONS[m];
@@ -1309,7 +1315,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     const target = form.sections.method.find((sec) => matches(sec.heading));
     const existing = target ? target.paragraphs.map((par) => par.text) : [];
     if (existing.some((e) => e.startsWith(text.slice(0, 12)))) {
-      toast.info(`${STAT_METHOD_LABELS[m]} 기술 문장은 이미 삽입되어 있습니다 — '${ANALYSIS_SECTION_HEADING}' 섹션을 확인하세요.`);
+      toast.info(`${STAT_METHOD_LABELS[m]} 기술 문장은 이미 삽입되어 있습니다 — '${ANALYSIS_SECTION_HEADING}' 절을 확인하세요.`);
       return;
     }
     setForm((prev) => {
@@ -1326,7 +1332,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     });
     markDirty();
     logEditorEvent(user.id, "analysis_insert");
-    toast.success(`${STAT_METHOD_LABELS[m]} 기술 문장을 '${ANALYSIS_SECTION_HEADING}' 섹션에 추가했습니다 — 빈칸(___)을 변인명으로 채우세요.`);
+    toast.success(`${STAT_METHOD_LABELS[m]} 기술 문장을 '${ANALYSIS_SECTION_HEADING}' 절에 추가했습니다 — 빈칸(___)을 변인명으로 채우세요.`);
   }
 
   /** 선택한 연구 설계의 기술 골격을 연구 방법 장 '연구 설계' 섹션에 삽입 */
@@ -1337,7 +1343,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     const target = form.sections.method.find((sec) => matches(sec.heading));
     const existing = target ? target.paragraphs.map((par) => par.text) : [];
     if (existing.some((e) => e.startsWith(text.slice(0, 12)))) {
-      toast.info("이 설계의 기술 골격은 이미 삽입되어 있습니다 — '연구 설계' 섹션을 확인하세요.");
+      toast.info("이 설계의 기술 골격은 이미 삽입되어 있습니다 — '연구 설계' 절을 확인하세요.");
       return;
     }
     setForm((prev) => {
@@ -1356,7 +1362,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       return { ...prev, sections: { ...prev.sections, method: cur } };
     });
     markDirty();
-    toast.success(`${ref.label} 기술 골격을 '연구 설계' 섹션에 추가했습니다 — 빈칸(___)을 채우세요.`);
+    toast.success(`${ref.label} 기술 골격을 '연구 설계' 절에 추가했습니다 — 빈칸(___)을 채우세요.`);
   }
 
   /** 분석 방법의 결과 표 골격을 결과 장 '가정 검정' 섹션에 삽입 */
@@ -1439,7 +1445,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     });
     markDirty();
     if (step !== "results") setStep("results");
-    toast.success("분석 결과를 '기술통계 및 가정 검정' 섹션에 삽입했습니다 — 표 번호를 채우고 저장하세요.");
+    toast.success("분석 결과를 '기술통계 및 가정 검정' 절에 삽입했습니다 — 표 번호를 채우고 저장하세요.");
   }
 
   /** P2: 연구계획서의 목적·범위·방법을 빈 서론/방법 장의 초안 단락으로 시딩 */
@@ -2040,6 +2046,22 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     if (form.references.trim()) {
       lines.push("참고문헌", "", ...form.references.trim().split("\n"), "");
     }
+    // UX-1(2026-07-04): 초록·영문 초록·부록도 내보내기에 포함 (관례 위치)
+    if (form.abstract.trim()) {
+      lines.push("국문 초록", "", form.abstract.trim(), "");
+      if (form.abstractKeywords.length > 0) lines.push(`주요어: ${form.abstractKeywords.join(", ")}`, "");
+    }
+    if (form.abstractEn.trim()) {
+      lines.push("Abstract", "", form.abstractEn.trim(), "");
+    }
+    if (form.appendices.length > 0) {
+      lines.push("부록", "");
+      form.appendices.forEach((ap, i) => {
+        lines.push(`부록 ${i + 1}. ${ap.title}`);
+        if (ap.note.trim()) lines.push(ap.note.trim());
+        lines.push("");
+      });
+    }
     lines.push(
       "—",
       `총 ${totalChars(form).toLocaleString()}자 · ${new Date().toLocaleDateString("ko-KR")} 내보냄 · 연세교육공학회 논문 에디터`,
@@ -2070,8 +2092,14 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   // D: 서론 외(이론배경·방법·결과·결론)에서 절이 2개 이상이면 하위 탭으로 전환
   const useSectionTabs = step !== "intro" && bodySections.length > 1;
   const activeSectionIdx = Math.min(sectionTab, Math.max(0, bodySections.length - 1));
+  // UX-1(2026-07-04): "요약 및 논의" 절이 있는데 "+ 요약"·"+ 논의" 칩이 떠 중복 절을 유도하던 문제
+  // — 정확 일치 외에 부분 포함 관계도 사용된 것으로 간주
   const unusedTemplates = templateHeadings(step, approach).filter(
-    (h) => !currentSections.some((s) => s.heading.trim() === h),
+    (h) =>
+      !currentSections.some((s) => {
+        const cur = s.heading.trim();
+        return cur.length >= 2 && (cur === h || cur.includes(h) || h.includes(cur));
+      }),
   );
 
   if (isLoading || (!paper && !readOnly)) {
@@ -2888,7 +2916,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                 <Input
                   className="h-8 flex-1 border-transparent bg-transparent px-1 text-sm font-semibold shadow-none focus-visible:border-input"
                   value={sec.heading}
-                  placeholder="섹션 제목 (예: 연구의 필요성)"
+                  placeholder="절 제목 (예: 연구의 필요성)"
                   onChange={(e) => updateSection(step, sec.id, { heading: e.target.value })}
                   disabled={readOnly}
                 />
@@ -2901,7 +2929,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                     }}
                     aria-expanded={sectionGuideOpen === sec.id}
                     aria-label="이 섹션 작성 가이드"
-                    title="이 섹션 작성 가이드"
+                    title="이 절 작성 가이드"
                     className={cn(
                       "shrink-0 rounded-md p-1.5 transition-colors",
                       sectionGuideOpen === sec.id
@@ -3127,7 +3155,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
               className="inline-flex items-center gap-1 rounded-lg border border-dashed px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary/40 hover:text-primary"
             >
               <Plus size={12} />
-              섹션 추가
+              절 추가
             </button>
             <button
               type="button"
@@ -3144,7 +3172,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                 type="button"
                 onClick={() => addSection(step, h)}
                 className="rounded-full border bg-muted/40 px-2.5 py-1 text-[11px] text-muted-foreground hover:border-primary/40 hover:text-primary"
-                title="추천 섹션 추가"
+                title="추천 절 추가"
               >
                 + {h}
               </button>
@@ -3266,7 +3294,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                     <button
                       type="button"
                       onClick={() => insertAnalysisSkeleton(m)}
-                      className="rounded-full border border-dashed border-sky-400/60 px-2 py-0.5 text-[10px] font-medium text-sky-700 transition-colors hover:bg-sky-600 hover:text-white dark:text-sky-300"
+                      className="rounded-full border border-dashed border-sky-400/60 px-2.5 py-1.5 text-[11px] font-medium text-sky-700 transition-colors hover:bg-sky-600 hover:text-white dark:text-sky-300"
                     >
                       + 기술 문장 삽입
                     </button>
@@ -3321,7 +3349,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                       {(archiveDocHrefByType.get(m) ?? g.archiveHref) && (
                         <Link
                           href={archiveDocHrefByType.get(m) ?? g.archiveHref!}
-                          className="rounded-full border border-sky-300/60 px-2 py-0.5 text-[10px] text-sky-700 transition-colors hover:bg-sky-100 dark:border-sky-700/60 dark:text-sky-300 dark:hover:bg-sky-900/40"
+                          className="rounded-full border border-sky-300/60 px-2.5 py-1.5 text-[11px] text-sky-700 transition-colors hover:bg-sky-100 dark:border-sky-700/60 dark:text-sky-300 dark:hover:bg-sky-900/40"
                         >
                           아카이브 개념 보기{archiveDocHrefByType.has(m) ? " (해석·참고문헌)" : ""}
                         </Link>
@@ -3330,7 +3358,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                         <button
                           type="button"
                           onClick={() => insertAssumptionSkeleton(m)}
-                          className="rounded-full border border-dashed border-sky-400/60 px-2 py-0.5 text-[10px] font-medium text-sky-700 transition-colors hover:bg-sky-600 hover:text-white dark:text-sky-300"
+                          className="rounded-full border border-dashed border-sky-400/60 px-2.5 py-1.5 text-[11px] font-medium text-sky-700 transition-colors hover:bg-sky-600 hover:text-white dark:text-sky-300"
                         >
                           + 보고 골격 섹션에 삽입
                         </button>
@@ -3339,7 +3367,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                         <button
                           type="button"
                           onClick={() => insertResultTable(m)}
-                          className="rounded-full border border-dashed border-sky-400/60 px-2 py-0.5 text-[10px] font-medium text-sky-700 transition-colors hover:bg-sky-600 hover:text-white dark:text-sky-300"
+                          className="rounded-full border border-dashed border-sky-400/60 px-2.5 py-1.5 text-[11px] font-medium text-sky-700 transition-colors hover:bg-sky-600 hover:text-white dark:text-sky-300"
                         >
                           + 결과 표 골격 삽입
                         </button>

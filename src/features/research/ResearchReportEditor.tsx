@@ -28,6 +28,7 @@ import {
   useUpdateResearchReport,
 } from "./useResearchReport";
 import { researchReportsApi } from "@/lib/bkend";
+import EditorSaveBar from "./EditorSaveBar";
 import { useResearchPapers } from "./useResearchPapers";
 import { useLogWritingActivity } from "./useWritingPaperHistory";
 import ResearchReportInterview, { TaskStepsField } from "./ResearchReportInterview";
@@ -1182,6 +1183,21 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
         )}
       </div>
 
+      {/* UX-1(2026-07-04): 하단 고정 저장 바 — 논문 에디터와 일관 */}
+      {!readOnly && (
+        <EditorSaveBar
+          dirty={dirty}
+          saving={saving}
+          savedAt={savedAt}
+          onSave={() => void handleSave()}
+          extra={
+            <Button size="sm" variant="outline" onClick={() => void handleDraftSave()} disabled={saving || !dirty}>
+              임시저장
+            </Button>
+          }
+        />
+      )}
+
       {/* 이전 / 다음 네비게이션 */}
       <div className="flex items-center justify-between rounded-2xl border bg-card p-3">
         <Button
@@ -1464,7 +1480,7 @@ function Field12Problem({ form, setField, readOnly }: FieldStepProps) {
                     <button
                       type="button"
                       onClick={() => removeEvidence(ev.id)}
-                      className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      className="rounded-md p-2.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                       aria-label="근거 삭제"
                     >
                       <Trash2 size={14} />
@@ -1529,7 +1545,7 @@ function Field12Problem({ form, setField, readOnly }: FieldStepProps) {
                     <button
                       type="button"
                       onClick={() => removeCause(c.id)}
-                      className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      className="rounded-md p-2.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                       aria-label="원인 삭제"
                     >
                       <Trash2 size={14} />
@@ -1694,7 +1710,7 @@ function Field15Measurement({ form, setField, readOnly }: FieldStepProps) {
                       <button
                         type="button"
                         onClick={() => removeRow(m.id)}
-                        className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        className="rounded-md p-2.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                         aria-label="행 삭제"
                       >
                         <Trash2 size={14} />
@@ -2004,7 +2020,7 @@ function TheoryCardEditor({ index, total, card, readOnly, onChange, onRemove, on
               onClick={() => onMove(-1)}
               disabled={index === 0}
               title="위로 이동"
-              className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
+              className="rounded-md p-2.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
             >
               <ChevronLeft size={13} className="rotate-90" />
             </button>
@@ -2013,7 +2029,7 @@ function TheoryCardEditor({ index, total, card, readOnly, onChange, onRemove, on
               onClick={() => onMove(1)}
               disabled={index === total - 1}
               title="아래로 이동"
-              className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
+              className="rounded-md p-2.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
             >
               <ChevronRight size={13} className="rotate-90" />
             </button>
@@ -2021,7 +2037,7 @@ function TheoryCardEditor({ index, total, card, readOnly, onChange, onRemove, on
               type="button"
               onClick={onRemove}
               title="이론 카드 삭제"
-              className="rounded-md p-1.5 text-muted-foreground hover:bg-rose-50 hover:text-rose-600"
+              className="rounded-md p-2.5 text-muted-foreground hover:bg-rose-50 hover:text-rose-600"
             >
               <Trash2 size={13} />
             </button>

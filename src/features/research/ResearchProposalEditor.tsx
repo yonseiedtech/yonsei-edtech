@@ -19,6 +19,7 @@ import {
   useUpdateResearchProposal,
 } from "./useResearchProposal";
 import { researchProposalsApi } from "@/lib/bkend";
+import EditorSaveBar from "./EditorSaveBar";
 import { useResearchPapers } from "./useResearchPapers";
 import { useLogWritingActivity } from "./useWritingPaperHistory";
 import { formatApa7 } from "@/lib/apa7";
@@ -841,6 +842,21 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
           )}
         </div>
       </Section>
+
+      {/* UX-1(2026-07-04): 하단 고정 저장 바 — 논문·보고서 에디터와 일관 */}
+      {!readOnly && (
+        <EditorSaveBar
+          dirty={dirty}
+          saving={saving}
+          savedAt={savedAt}
+          onSave={() => void handleSave()}
+          extra={
+            <Button size="sm" variant="outline" onClick={() => void handleDraftSave()} disabled={saving || !dirty}>
+              임시저장
+            </Button>
+          }
+        />
+      )}
     </div>
   );
 }

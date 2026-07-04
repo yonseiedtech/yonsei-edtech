@@ -477,10 +477,10 @@ export default function AdvisorFeedbackLog({ userId, readOnly = false }: Props) 
                           다시 열기
                         </Button>
                       )}
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0" aria-label="수정" onClick={() => openEdit(n)}>
+                      <Button variant="ghost" size="sm" className="h-9 w-9 p-0" aria-label="수정" onClick={() => openEdit(n)}>
                         <Pencil size={12} />
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" aria-label="삭제" onClick={() => handleDelete(n)}>
+                      <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-destructive" aria-label="삭제" onClick={() => handleDelete(n)}>
                         <Trash2 size={12} />
                       </Button>
                     </span>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -109,6 +109,12 @@ export default function ResearchFinderPage() {
   }, [statMethods]);
 
   const current = rfNextQuestion(answers);
+  // UX-1(2026-07-04): 질문 전환 시 포커스 유실(키보드가 body 로 떨어짐) — 새 질문 제목으로 이동
+  const questionRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (current) questionRef.current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current?.id]);
   const active = rfActiveQuestions(answers);
   const answeredCount = active.filter((q) => answers[q.id] != null).length;
   const result = rfRecommend(answers);
@@ -180,9 +186,15 @@ export default function ResearchFinderPage() {
         )}
 
         {!result && current && (
-          <Card className="mt-4 rounded-2xl">
+          <Card className="mt-4 rounded-2xl" aria-live="polite">
             <CardContent className="p-6">
-              <h2 className="text-lg font-semibold leading-snug">{current.title}</h2>
+              <h2
+                ref={questionRef}
+                tabIndex={-1}
+                className="text-lg font-semibold leading-snug outline-none"
+              >
+                {current.title}
+              </h2>
               {current.help && <p className="mt-1 text-sm text-muted-foreground">{current.help}</p>}
               {current.terms && current.terms.length > 0 && (
                 <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/30">
