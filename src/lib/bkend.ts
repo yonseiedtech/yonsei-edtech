@@ -1588,11 +1588,13 @@ export const defenseQuestionTemplatesApi = {
 
 export const researchReportsApi = {
   listByUser: (userId: string) =>
-    dataApi.list<ResearchReport>("research_reports", {
-      "filter[userId]": userId,
-      sort: "updatedAt:desc",
-      limit: 50,
-    }),
+    // HOTFIX(2026-07-04): filter+orderBy 는 복합 인덱스 필요(운영 인덱스 오류) — 클라이언트 정렬로 결정성 확보
+    dataApi
+      .list<ResearchReport>("research_reports", { "filter[userId]": userId, limit: 50 })
+      .then((res) => ({
+        ...res,
+        data: [...res.data].sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? "")),
+      })),
   listAll: (limit = 200) =>
     dataApi.list<ResearchReport>("research_reports", {
       sort: "updatedAt:desc",
@@ -1608,11 +1610,13 @@ export const researchReportsApi = {
 
 export const researchProposalsApi = {
   listByUser: (userId: string) =>
-    dataApi.list<ResearchProposal>("research_proposals", {
-      "filter[userId]": userId,
-      sort: "updatedAt:desc",
-      limit: 50,
-    }),
+    // HOTFIX(2026-07-04): filter+orderBy 복합 인덱스 오류 — 클라이언트 정렬
+    dataApi
+      .list<ResearchProposal>("research_proposals", { "filter[userId]": userId, limit: 50 })
+      .then((res) => ({
+        ...res,
+        data: [...res.data].sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? "")),
+      })),
   /** 운영진 콘솔용 — 모든 회원의 연구 계획서를 한 번에 로드 */
   listAll: (limit = 500) =>
     dataApi.list<ResearchProposal>("research_proposals", {
