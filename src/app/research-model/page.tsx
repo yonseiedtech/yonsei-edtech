@@ -24,6 +24,7 @@ import {
 } from "@/features/research/useResearchReport";
 import { EMPTY_RESEARCH_MODEL, type ResearchModelData } from "@/types/research-model";
 import { researchModelsApi } from "@/lib/research-models-api";
+import { streakEventsApi } from "@/lib/bkend";
 import PageContainer from "@/components/ui/page-container";
 import PageHeader from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -82,6 +83,12 @@ function ResearchModelContent() {
       );
       void queryClient.invalidateQueries({ queryKey: ["research-model", user.id] });
       setDirty(false);
+      // RT-2(2026-07-04): 연구 모형 작성 잔디 +3 (day-bucketed 멱등)
+      {
+        const d = new Date();
+        const ymdKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        void streakEventsApi.add({ userId: user.id, type: "model-edit", refId: ymdKey, points: 3 }).catch(() => {});
+      }
       toast.success("연구 모형을 저장했습니다.");
     } catch {
       toast.error("저장에 실패했습니다. 잠시 후 다시 시도해주세요.");

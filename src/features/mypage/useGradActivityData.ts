@@ -26,6 +26,7 @@ import {
   userActivityLogsApi,
   paperReadingLogsApi,
   diagnosticResultsApi,
+  streakEventsApi,
 } from "@/lib/bkend";
 import type {
   SeminarAttendee,
@@ -152,7 +153,14 @@ export function useGradActivityData(userId: string | undefined): GradActivityDat
     ...qOpts,
   });
 
-  const isLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9 || l10 || l11;
+  // RT-2(2026-07-04): streak_events — 잔디에는 보이는데 월간 매트릭스엔 빠져 있던 자기모순 해소
+  const { data: streakEventsRes, isLoading: l12 } = useQuery({
+    queryKey: ["grad-activity", "streak-events", userId],
+    queryFn: () => streakEventsApi.listByUser(userId!),
+    ...qOpts,
+  });
+
+  const isLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9 || l10 || l11 || l12;
 
   const { scoresByDay, activityByDay } = useMemo(() => {
     const scores = new Map<string, number>();
@@ -163,6 +171,29 @@ export function useGradActivityData(userId: string | undefined): GradActivityDat
       const day = activities.get(ymd) ?? new Map<string, number>();
       day.set(label, (day.get(label) ?? 0) + score);
       activities.set(ymd, day);
+    }
+
+    // streak_events 일괄 수집 (LearningStreak 의 EV 라벨과 동일 축약)
+    {
+      const EV_LABELS: Record<string, string> = {
+        "flashcard-study": "암기카드 학습",
+        "networking-attend": "모임·행사 참석",
+        "onboarding-checklist": "온보딩 체크리스트",
+        "onboarding-badge": "온보딩 배지",
+        "collab-research-join": "공동 연구 참여",
+        "collab-chapter-edit": "공동 집필",
+        "collab-meeting": "연구 회의",
+        "collab-milestone": "마일스톤 달성",
+        "research-journal-publish": "연구지 출판",
+        "matrix-edit": "문헌 매트릭스 정리",
+        "model-edit": "연구 모형 작성",
+        "studio-edit": "스튜디오 제작",
+        "vacation-goal-week": "방학 주간 목표 달성",
+      };
+      for (const ev of (streakEventsRes?.data ?? []) as { type: string; ymd?: string; points?: number }[]) {
+        if (!ev.ymd || !ev.points) continue;
+        add(ev.ymd, ev.points, EV_LABELS[ev.type] ?? "학회 활동");
+      }
     }
 
     for (const a of (attendeesRes?.data ?? []) as SeminarAttendee[]) {
@@ -229,6 +260,7 @@ export function useGradActivityData(userId: string | undefined): GradActivityDat
     return { scoresByDay: scores, activityByDay: activities };
   }, [
     attendeesRes,
+    streakEventsRes,
     studyRes,
     postsRes,
     courseReviewsRes,

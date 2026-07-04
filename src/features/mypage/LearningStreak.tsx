@@ -672,6 +672,10 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
       "collab-meeting": "연구 회의",
       "collab-milestone": "마일스톤 달성",
       "research-journal-publish": "연구지 출판",
+      "matrix-edit": "문헌 매트릭스 정리",
+      "model-edit": "연구 모형 작성",
+      "studio-edit": "스튜디오 제작",
+      "vacation-goal-week": "방학 주간 목표 달성",
     };
     for (const ev of (streakEventsRes?.data ?? []) as StreakEvent[]) {
       const pts = ev.type === "flashcard-study" ? SCORES.flashcardStudy : ev.points || 0;

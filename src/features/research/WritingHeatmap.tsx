@@ -178,6 +178,21 @@ export default function WritingHeatmap({ history }: Props) {
     return n;
   }, [cells]);
 
+  // RT-2(2026-07-04): 일 단위 연속 작성일 — "오늘 끊기면 아깝다"는 복귀 압력의 최소 단위
+  const writeStreak = useMemo(() => {
+    const key = (dt: Date) =>
+      `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+    const activeToday = (dailyMap.get(key(today))?.count ?? 0) > 0;
+    let n = 0;
+    const cur = new Date(today);
+    if (!activeToday) cur.setDate(cur.getDate() - 1);
+    while ((dailyMap.get(key(cur))?.count ?? 0) > 0) {
+      n += 1;
+      cur.setDate(cur.getDate() - 1);
+    }
+    return { days: n, activeToday };
+  }, [dailyMap, today]);
+
   const weeks = cells.weeks;
   const cellData = cells.cells;
 
@@ -274,6 +289,14 @@ export default function WritingHeatmap({ history }: Props) {
 
           <p className="text-[11px] text-muted-foreground">
             활동일 <span className="font-medium text-foreground">{totalActiveDays}일</span>
+            {writeStreak.days > 0 && (
+              <span className="ml-2 font-medium text-orange-600 dark:text-orange-400">
+                🔥 연속 {writeStreak.days}일
+                {!writeStreak.activeToday && (
+                  <span className="ml-1 font-normal text-muted-foreground">— 오늘 저장하면 이어져요</span>
+                )}
+              </span>
+            )}
           </p>
         </div>
         <div className="hidden items-center gap-1 text-[10px] text-muted-foreground sm:flex">

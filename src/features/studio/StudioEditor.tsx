@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { designDocsApi, seminarsApi } from "@/lib/bkend";
+import { designDocsApi, seminarsApi, streakEventsApi } from "@/lib/bkend";
 import { isStaffOrAbove } from "@/lib/permissions";
 import { uploadImage } from "@/lib/upload";
 import PageCanvas from "./PageCanvas";
@@ -101,6 +101,8 @@ export default function StudioEditor({ docId }: { docId: string }) {
   const baseSavedAtRef = useRef<string | null>(null);
   const conflictRef = useRef(false);
   const lastConflictCheckRef = useRef(0);
+  // RT-2: 스튜디오 제작 잔디 적립 — 세션당 1회 (멱등 day-bucket)
+  const streakLoggedRef = useRef(false);
   // ── undo/redo (Batch-3): pages 스냅샷 스택. 편집 버스트(드래그·연속 타이핑)는
   // 400ms 스로틀로 한 스텝으로 묶는다. pages 는 불변 갱신이라 참조 스냅샷 안전. ──
   const undoStack = useRef<DesignPage[][]>([]);
@@ -234,6 +236,12 @@ export default function StudioEditor({ docId }: { docId: string }) {
       baseSavedAtRef.current = now;
       setSavedAt(now);
       setSaveError(null);
+      if (!streakLoggedRef.current && user?.id) {
+        streakLoggedRef.current = true;
+        const d = new Date();
+        const ymdKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        void streakEventsApi.add({ userId: user.id, type: "studio-edit", refId: ymdKey, points: 2 }).catch(() => {});
+      }
       if (!silent) toast.success("저장되었습니다.");
     } catch {
       dirtyRef.current = true;

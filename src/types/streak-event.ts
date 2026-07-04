@@ -20,7 +20,12 @@ export type StreakEventType =
   | "collab-milestone"              // 마일스톤 완료 (+5, Phase 2)
   | "research-journal-publish"      // 연구지 출판 (+10, Phase 3)
   | "flashcard-study"               // 암기카드 학습 1일 (+2, day-bucketed refId=ymd)
-  | "networking-attend";            // 모임·행사 참석 (+5, refId=eventId — 행사 당일 cron 적립)
+  | "networking-attend"             // 모임·행사 참석 (+5, refId=eventId — 행사 당일 cron 적립)
+  // RT-2(2026-07-04): 신규 연구 활동 3종 + 방학 주간 목표 — 보상 0점이던 활동을 잔디·리더보드에 연결
+  | "matrix-edit"                   // 문헌 매트릭스 정리 1일 (+2, refId=ymd)
+  | "model-edit"                    // 연구 모형 저장 1일 (+3, refId=ymd)
+  | "studio-edit"                   // 스튜디오 제작 1일 (+2, refId=ymd)
+  | "vacation-goal-week";           // 방학 주간 목표 달성 (+5, refId=주 시작 ymd)
 
 export interface StreakEvent {
   /** `${userId}__${type}__${refId}` */

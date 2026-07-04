@@ -11,14 +11,14 @@
 
 import Link from "next/link";
 import { todayYmdKst, isoToKstYmd } from "@/lib/dday";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarClock, Timer, Layers } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { studySessionsApi, profilesApi } from "@/lib/bkend";
+import { studySessionsApi, profilesApi, streakEventsApi } from "@/lib/bkend";
 import type { StudySession } from "@/types";
 
 function ymdLocal(d: Date): string {
@@ -99,6 +99,38 @@ export default function VacationModeCard({
   }
 
   const pct = goalHours ? Math.min(100, Math.round((weekMinutes / (goalHours * 60)) * 100)) : 0;
+
+  // RT-2(2026-07-04): 주간 목표 달성 보상 — 100% 도달 시 잔디 +5(주 시작일 멱등) + 연속 주 라벨
+  const achieved = !!goalHours && weekMinutes >= goalHours * 60;
+  const weekStart = thisWeekRange(new Date()).from;
+  const awardedRef = useRef(false);
+  useEffect(() => {
+    if (!achieved || awardedRef.current || !uid) return;
+    awardedRef.current = true;
+    void streakEventsApi
+      .add({ userId: uid, type: "vacation-goal-week", refId: weekStart, points: 5 })
+      .catch(() => {});
+  }, [achieved, uid, weekStart]);
+  const { data: goalEvents = [] } = useQuery({
+    queryKey: ["vacation-goal-weeks", uid],
+    enabled: !!uid,
+    staleTime: 5 * 60_000,
+    queryFn: async () =>
+      ((await streakEventsApi.listByUser(uid)).data as { type: string; refId: string }[]).filter(
+        (e) => e.type === "vacation-goal-week",
+      ),
+  });
+  const consecutiveWeeks = useMemo(() => {
+    const weeks = new Set(goalEvents.map((e) => e.refId));
+    if (achieved) weeks.add(weekStart);
+    let n = 0;
+    const cur = new Date(`${weekStart}T00:00:00`);
+    while (weeks.has(`${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}-${String(cur.getDate()).padStart(2, "0")}`)) {
+      n += 1;
+      cur.setDate(cur.getDate() - 7);
+    }
+    return n;
+  }, [goalEvents, achieved, weekStart]);
   const weekH = Math.floor(weekMinutes / 60);
   const weekM = weekMinutes % 60;
 
@@ -160,6 +192,12 @@ export default function VacationModeCard({
             <span className="ml-1 text-xs font-medium text-muted-foreground">/ {goalHours}시간 ({pct}%)</span>
           ) : null}
         </p>
+        {achieved && (
+          <p className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
+            🎉 이번 주 목표 달성! 잔디 +5
+            {consecutiveWeeks >= 2 && <span className="font-bold">· 🔥 {consecutiveWeeks}주 연속</span>}
+          </p>
+        )}
         {goalHours ? (
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
             <div

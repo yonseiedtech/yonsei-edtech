@@ -83,7 +83,18 @@ export default function ChatWidget() {
   // 종료 핸들러 등록 (store → API). ref로 endSession을 우회해 dep 안정화
   useEffect(() => {
     setStopHandler((session) => {
-      endSessionRef.current.mutate({ sessionId: session.id });
+      // RT-2(2026-07-04): 종료 순간 피드백 — 기록 시간과 잔디 반영 기준(30분)을 즉시 알림
+      void endSessionRef.current
+        .mutateAsync({ sessionId: session.id })
+        .then(({ durationMinutes }) => {
+          const mins = Math.round(durationMinutes);
+          toast.success(
+            mins >= 30
+              ? `${mins}분 기록 완료 — 학습 잔디에 반영됩니다 🌱`
+              : `${mins}분 기록 완료 — 30분 이상 집중하면 잔디(+3)에 반영돼요.`,
+          );
+        })
+        .catch(() => {});
     });
     return () => setStopHandler(null);
   }, [setStopHandler]);

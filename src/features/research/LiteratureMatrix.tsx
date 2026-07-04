@@ -10,12 +10,13 @@
  * 논문 에디터(이론적 배경)·연구보고서(선행연구 분석)의 삽입 버튼으로 가져간다.
  */
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { Table2, Copy, ChevronDown, Loader2, Download } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { useResearchPapers, useUpdateResearchPaper } from "./useResearchPapers";
+import { streakEventsApi } from "@/lib/bkend";
 import {
   MATRIX_COLUMNS,
   ALL_MATRIX_COLUMNS,
@@ -71,6 +72,8 @@ export default function LiteratureMatrix({ user, readOnly }: { user: User; readO
   );
   // P2(2026-07-04): 두 행 연속 blur 시 첫 행 스피너가 조기 소멸하던 문제 — Set 관리
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
+  // RT-2: 매트릭스 정리 잔디 적립 — 세션당 1회만 시도(멱등 id 라 재호출 무해)
+  const streakLoggedRef = useRef(false);
   // 셀 편집 버퍼 — `${paperId}:${col}` → 값 (blur 시 저장 후 제거)
   const [drafts, setDrafts] = useState<Record<string, string>>({});
 
@@ -110,6 +113,13 @@ export default function LiteratureMatrix({ user, readOnly }: { user: User; readO
     setSavingIds((prev) => new Set(prev).add(p.id));
     try {
       await update.mutateAsync({ id: p.id, data: { [col]: next.trim() } });
+      // RT-2(2026-07-04): 문헌 정리 활동 잔디 +2 (day-bucketed 멱등)
+      if (!streakLoggedRef.current) {
+        streakLoggedRef.current = true;
+        const d = new Date();
+        const ymdKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        void streakEventsApi.add({ userId: user.id, type: "matrix-edit", refId: ymdKey, points: 2 }).catch(() => {});
+      }
       // QA-v2: 낙관적 캐시 반영 — 저장~refetch 사이 옛 값으로 깜빡이던 문제 방지
       qc.setQueryData(["research_papers", user.id], (prev: unknown) =>
         Array.isArray(prev)
