@@ -30,16 +30,24 @@ function parseTimestamp(value: unknown): number | null {
 
 export default function NewMemberWelcomeBanner() {
   const { user } = useAuthStore();
-  const [dismissed, setDismissed] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return window.localStorage.getItem(DISMISS_KEY) === "1";
-    } catch {
-      return false;
-    }
-  });
+  // 리텐션(2026-07-04): 전역 키는 공용 PC·계정 전환 시 신규 회원이 배너를 영영 못 보게 함 — per-user 키
+  const [dismissTick, setDismissTick] = useState(0);
 
-  if (!user || dismissed) return null;
+  if (!user) return null;
+  const userKey = `${DISMISS_KEY}.${user.id}`;
+  let dismissed = false;
+  if (typeof window !== "undefined") {
+    try {
+      dismissed =
+        window.localStorage.getItem(userKey) === "1" ||
+        // 구 전역 키 호환 — 이미 닫은 기존 사용자에게 재노출하지 않음
+        window.localStorage.getItem(DISMISS_KEY) === "1";
+    } catch {
+      dismissed = false;
+    }
+  }
+  void dismissTick;
+  if (dismissed) return null;
 
   const createdAtMs = parseTimestamp((user as { createdAt?: unknown }).createdAt);
   if (createdAtMs == null) return null;
@@ -48,12 +56,12 @@ export default function NewMemberWelcomeBanner() {
   if (ageMs > WELCOME_WINDOW_MS) return null;
 
   function handleDismiss() {
-    setDismissed(true);
     try {
-      window.localStorage.setItem(DISMISS_KEY, "1");
+      window.localStorage.setItem(userKey, "1");
     } catch {
       // ignore
     }
+    setDismissTick((t) => t + 1);
   }
 
   return (

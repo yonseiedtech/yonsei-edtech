@@ -70,7 +70,11 @@ export type NotificationType =
   | "flashcard_review_reminder" // 오늘 복습할 암기카드 알림 (cron, 2차 백로그 v2-R1)
   | "admin_nudge"           // 운영진 데이터 기반 넛지 일괄 발송 (insights 액션화, 2차 백로그 v2-M3)
   | "networking_reminder"   // 모임·행사 D-1/당일·RSVP 마감 리마인더 (cron, Phase 2)
-  | "mention";              // @멘션 — 게시글·댓글에서 이름 호출 (Phase 3)
+  | "mention"               // @멘션 — 게시글·댓글에서 이름 호출 (Phase 3)
+  | "direct_message"        // 쪽지 수신 (리텐션 재감사 2026-07-04)
+  | "collab_invite"         // 공동 연구 초대 수신
+  | "reaction"              // 내 글에 이모지 공감
+  | "profile_like";         // 내 프로필 좋아요
 
 export interface AppNotification {
   id: string;

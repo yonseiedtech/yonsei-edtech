@@ -16,6 +16,11 @@ import {
   GraduationCap,
   Quote,
   BarChart3,
+  Microscope,
+  BookMarked,
+  Network,
+  Palette,
+  Target,
 } from "lucide-react";
 import PageContainer from "@/components/ui/page-container";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +44,89 @@ interface Feature {
 }
 
 const FEATURES: Feature[] = [
+  {
+    id: "research-journey-v2",
+    icon: Microscope,
+    badge: "NEW · 연구 여정",
+    badgeVariant: "default",
+    title: "연구 여정 대개편 — 보고서가 계획서·논문까지 흘러갑니다",
+    description:
+      "주제 탐색부터 심사 대응까지 7단계 지도로 통합됐고, 보고서의 문제·이론·선행연구·학습자·환경 분석이 계획서와 논문 초안으로 자동 이관됩니다. 논문 에디터에는 용어의 정의·연구 절차·연구 윤리 절, 목차 자동 생성, 표 만들기 팝업, 측정도구 신뢰도 표, APA7 참고문헌 자동 정렬이 추가됐어요.",
+    highlights: [
+      "'보고서에서 가져오기' 한 번으로 서론·이론적 배경·연구 방법 초안 완성",
+      "연구윤리 체크리스트(동의·IRB·개인정보) + 보고 문형 삽입",
+      "목차·표 목차 자동 생성, 참고문헌 APA 7판 자동 정렬",
+    ],
+    cta: "논문 에디터 열기",
+    ctaHref: "/mypage/research?tab=writing",
+    color: "from-indigo-500/10 to-transparent",
+    iconBg: "bg-indigo-100 dark:bg-indigo-950/40",
+    iconColor: "text-indigo-600 dark:text-indigo-400",
+  },
+  {
+    id: "literature-matrix",
+    icon: BookMarked,
+    badge: "NEW · 문헌 고찰",
+    badgeVariant: "default",
+    title: "문헌 리뷰 매트릭스 — 읽은 논문이 비교표가 됩니다",
+    description:
+      "논문 읽기 탭에서 읽은 논문을 대상·설계·결과·시사점 열로 정리하는 비교표 편집기. 열 선택·정렬(저자/연도/완성도)·CSV 내보내기를 지원하고, 완성된 표는 보고서 선행연구·논문 이론적 배경에 클릭 한 번으로 삽입됩니다.",
+    highlights: [
+      "셀 자동 저장 — 논문 상세 분석 필드와 동기화",
+      "Excel 호환 CSV 내려받기",
+      "심사 단골 요구 '선행연구 비교표' 원클릭 삽입",
+    ],
+    cta: "문헌 매트릭스 열기",
+    ctaHref: "/mypage/research?tab=reading",
+    color: "from-emerald-500/10 to-transparent",
+    iconBg: "bg-emerald-100 dark:bg-emerald-950/40",
+    iconColor: "text-emerald-600 dark:text-emerald-400",
+  },
+  {
+    id: "research-model-wizard",
+    icon: Network,
+    badge: "NEW · 연구 모형",
+    badgeVariant: "default",
+    title: "연구모형 마법사 — 변인 이름만 넣으면 모형이 그려집니다",
+    description:
+      "독립·종속·매개·조절·통제 변인 이름만 입력하면 표준 배치와 관계선까지 자동 생성. 매개·조절·조절된 매개 등 대표 모형 5종 템플릿도 제공합니다.",
+    highlights: ["질문 5개로 모형 자동 생성", "템플릿 5종 — 이름만 바꾸면 완성", "보고서·계획서 변인과 양방향 동기화"],
+    cta: "연구 모형 그리기",
+    ctaHref: "/research-model",
+    color: "from-sky-500/10 to-transparent",
+    iconBg: "bg-sky-100 dark:bg-sky-950/40",
+    iconColor: "text-sky-600 dark:text-sky-400",
+  },
+  {
+    id: "design-studio",
+    icon: Palette,
+    badge: "NEW · 콘텐츠",
+    badgeVariant: "default",
+    title: "디자인 스튜디오 — 카드뉴스·포스터·발표 슬라이드 제작",
+    description:
+      "Canva 스타일 자유 캔버스에서 텍스트·도형·이미지를 배치하고 PNG·PDF·PPT로 내보냅니다. 세미나·스터디 활동과 연계해 소개 자료를 바로 만들 수 있어요.",
+    highlights: ["실행 취소/다시 실행·요소 잠금", "PNG/ZIP/PDF/PPT 내보내기", "활동 연계 자동 채우기"],
+    cta: "스튜디오 열기",
+    ctaHref: "/studio",
+    color: "from-violet-500/10 to-transparent",
+    iconBg: "bg-violet-100 dark:bg-violet-950/40",
+    iconColor: "text-violet-600 dark:text-violet-400",
+  },
+  {
+    id: "finders",
+    icon: Target,
+    badge: "NEW · 아카이브",
+    badgeVariant: "default",
+    title: "통계·연구방법 파인더 — 몇 가지 질문으로 방법 추천",
+    description:
+      "무엇을 비교하는지, 집단이 몇 개인지 같은 질문에 답하면 적합한 통계방법(비모수 포함)과 연구방법(질적·혼합 포함)을 추천하고 선배 논문 사례까지 연결합니다.",
+    highlights: ["반복측정·공변량 분기 반영", "질적·혼합 설계 8종 포함", "선배 학위논문 사례 매칭"],
+    cta: "통계방법 파인더 열기",
+    ctaHref: "/archive/method-finder",
+    color: "from-amber-500/10 to-transparent",
+    iconBg: "bg-amber-100 dark:bg-amber-950/40",
+    iconColor: "text-amber-600 dark:text-amber-400",
+  },
   {
     id: "stat-model-diagrams",
     icon: BarChart3,

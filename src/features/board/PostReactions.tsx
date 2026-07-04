@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import { notifyReaction } from "@/features/notifications/notify";
 import { toast } from "sonner";
 import {
   POST_REACTION_EMOJIS,
@@ -22,9 +23,12 @@ import { Loader2 } from "lucide-react";
 
 interface Props {
   postId: string;
+  /** 리텐션(2026-07-04): 공감 시 작성자 알림용 (본인 공감은 미발송) */
+  authorId?: string;
+  postTitle?: string;
 }
 
-export default function PostReactions({ postId }: Props) {
+export default function PostReactions({ postId, authorId, postTitle }: Props) {
   const { user } = useAuthStore();
   const [reactions, setReactions] = useState<PostReaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,6 +81,9 @@ export default function PostReactions({ postId }: Props) {
     setTogglingType(type);
     try {
       const added = await postReactionsApi.toggle(user.id, postId, type);
+      if (added && authorId && authorId !== user.id) {
+        void notifyReaction(authorId, user.name, postId, postTitle ?? "게시글");
+      }
       // 낙관적 갱신
       if (added) {
         setReactions((prev) => [

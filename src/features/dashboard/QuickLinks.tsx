@@ -6,7 +6,7 @@
  */
 
 import Link from "next/link";
-import { FlaskConical, CalendarRange, Award, BookOpen, FileText } from "lucide-react";
+import { FlaskConical, CalendarRange, Award, BookOpen, FileText, Sparkles } from "lucide-react";
 
 const LINKS: { href: string; label: string; icon: typeof FlaskConical }[] = [
   { href: "/mypage/research", label: "내 연구", icon: FlaskConical },
@@ -14,13 +14,15 @@ const LINKS: { href: string; label: string; icon: typeof FlaskConical }[] = [
   { href: "/mypage/activities?tab=certificates", label: "수료증", icon: Award },
   { href: "/seminars", label: "세미나", icon: BookOpen },
   { href: "/archive/paper-guide", label: "논문 가이드", icon: FileText },
+  // 리텐션(2026-07-04): 신규 기능 발견 경로 — 첫 화면에 새 기능 진입점 1칸
+  { href: "/whats-new", label: "새 기능", icon: Sparkles },
 ];
 
 export default function QuickLinks() {
   return (
     <nav
       aria-label="빠른 바로가기"
-      className="grid grid-cols-3 gap-2 sm:grid-cols-5"
+      className="grid grid-cols-3 gap-2 sm:grid-cols-6"
     >
       {LINKS.map((l) => (
         <Link

@@ -24,6 +24,20 @@ export default async function CardNewsIndexPage() {
         description="학회 운영·연구·활동 소식을 카드 형식으로 정리해 소개합니다."
       />
 
+      {/* 리텐션(2026-07-04): 스튜디오 자연 유입 문맥 — 카드뉴스 화면에서 제작 도구로 */}
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 px-4 py-3">
+        <p className="text-xs text-foreground/85">
+          직접 만들어보고 싶다면 — <span className="font-semibold">디자인 스튜디오</span>에서 카드뉴스·포스터·발표
+          슬라이드를 제작하고 PNG·PDF·PPT로 내보낼 수 있어요.
+        </p>
+        <Link
+          href="/studio"
+          className="inline-flex shrink-0 items-center rounded-lg border border-primary/40 bg-card px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+        >
+          스튜디오에서 만들기 →
+        </Link>
+      </div>
+
       {series.length === 0 ? (
         <div className="mt-10 rounded-2xl border bg-card p-6">
           <EmptyState

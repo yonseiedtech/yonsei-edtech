@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import { notifyDirectMessage } from "@/features/notifications/notify";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, MessageSquarePlus, Search, Trash2, Send, Inbox, SendHorizonal } from "lucide-react";
@@ -110,6 +111,8 @@ function MessagesInner({ user }: { user: User }) {
         read: false,
         createdAt: new Date().toISOString(),
       });
+      // 리텐션(2026-07-04): 수신자 인앱 알림 — 쪽지함을 열지 않아도 벨로 인지
+      void notifyDirectMessage(recipient.id, user.name, content.trim());
       toast.success(`${recipient.name}님에게 쪽지를 보냈습니다.`);
       setComposeOpen(false);
       setRecipient(null);

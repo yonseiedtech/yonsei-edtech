@@ -210,3 +210,50 @@ export function notifySeminarReminder(
     `/seminars/${seminarId}`,
   );
 }
+
+
+// ── 리텐션 재감사(2026-07-04): 발생해도 상대가 모르던 상호작용 4종의 알림 연결 ──
+
+/** 쪽지 수신 — 수신자가 쪽지함을 열지 않아도 벨/토스트로 인지 */
+export function notifyDirectMessage(toUserId: string, fromName: string, excerpt: string) {
+  return create(
+    toUserId,
+    "direct_message",
+    `${fromName}님의 쪽지`,
+    excerpt.length > 60 ? `${excerpt.slice(0, 60)}…` : excerpt,
+    "/mypage/messages",
+  );
+}
+
+/** 공동 연구 초대 — 가장 강한 재방문 사유인 팀 합류 요청 */
+export function notifyCollabInvite(recipientId: string, senderName: string, researchTitle: string) {
+  return create(
+    recipientId,
+    "collab_invite",
+    "공동 연구 초대",
+    `${senderName}님이 "${researchTitle}" 연구에 초대했습니다 — 수락/거절을 선택해 주세요.`,
+    "/collab",
+  );
+}
+
+/** 게시글 이모지 공감 — 가장 값싼 재방문 트리거 */
+export function notifyReaction(authorId: string, reactorName: string, postId: string, postTitle: string) {
+  return create(
+    authorId,
+    "reaction",
+    "회원님의 글에 공감이 달렸어요",
+    `${reactorName}님이 "${postTitle.slice(0, 40)}" 글에 공감했습니다.`,
+    `/board/${postId}`,
+  );
+}
+
+/** 프로필 좋아요 — 상호 방문 유도 */
+export function notifyProfileLike(profileOwnerId: string, likerName: string, likerId: string) {
+  return create(
+    profileOwnerId,
+    "profile_like",
+    "프로필 좋아요",
+    `${likerName}님이 회원님의 프로필을 좋아합니다.`,
+    `/profile/${likerId}`,
+  );
+}

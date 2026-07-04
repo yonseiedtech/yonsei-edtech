@@ -342,7 +342,7 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
         {/* Sprint 67-AO: 게시글 공감 reaction (인터뷰 외 모든 카테고리) */}
         {post.type !== "interview" && (
           <section className="mt-8">
-            <PostReactions postId={post.id} />
+            <PostReactions postId={post.id} authorId={post.authorId} postTitle={post.title} />
           </section>
         )}
 

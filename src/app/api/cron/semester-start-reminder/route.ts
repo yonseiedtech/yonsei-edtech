@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
+import { sendPushToUsers } from "@/lib/push-admin";
 
 /**
  * 개강 리마인더 Cron (매일 09:00 KST) — 방학 이탈 회원 회수 안전망.
@@ -96,7 +97,24 @@ export async function GET(req: NextRequest) {
       await batch.commit();
     }
 
-    return Response.json({ ok: true, date: today, semester: target.semKey, daysLeft: target.daysLeft, notifCount });
+    // 리텐션(2026-07-04): "방학 이탈 회수 안전망"이 인앱 전용이면 정작 이탈자는 못 본다 — 웹푸시 병행
+    let pushResult: unknown = null;
+    if (targets.length > 0) {
+      try {
+        pushResult = await sendPushToUsers(targets, {
+          title: `${target.label} 개강 D-${target.daysLeft}`,
+          body:
+            target.daysLeft === 7
+              ? "일주일 뒤 개강입니다 — 수강 과목과 시간표를 미리 확인해 보세요."
+              : "내일 개강입니다 — 시간표를 확인하세요.",
+          link: "/courses?tab=mine",
+        });
+      } catch (e) {
+        console.error("[semester-start-reminder] push failed", e);
+      }
+    }
+
+    return Response.json({ ok: true, date: today, semester: target.semKey, daysLeft: target.daysLeft, notifCount, pushResult });
   } catch (err) {
     console.error("[cron/semester-start-reminder]", err);
     return Response.json({ error: "Internal error" }, { status: 500 });

@@ -6,6 +6,7 @@
 // ────────────────────────────────────────────────────────────
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { notifyCollabInvite } from "@/features/notifications/notify";
 import { toast } from "sonner";
 import {
   collabResearchApi,
@@ -152,7 +153,8 @@ export function useCreateCollabInvite() {
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: collabInviteKeys.sent(vars.researchId) });
       toast.success("초대를 보냈습니다");
-      // 별도 push 알림은 PR #5 에서 추가
+      // 리텐션(2026-07-04): 수신자 인앱 알림 — /collab 에 들어가야만 보이던 초대를 벨로 연결
+      void notifyCollabInvite(vars.recipientId, vars.senderName, vars.researchTitle);
     },
     onError: (err) => {
       console.error("[useCreateCollabInvite]", err);

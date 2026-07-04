@@ -660,13 +660,22 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
     }
     diagnosticDays.forEach((ymd) => add(ymd, SCORES.diagnosticComplete, "진단평가"));
     // 암기카드 학습 — streak_events(type=flashcard-study) day-bucketed. event.ymd 기준 1일 1회.
+    // 리텐션(2026-07-04): 화이트리스트 2종만 렌더하던 것을 전 타입 일괄 가산으로 —
+    // 체크리스트·배지·협업·연구지 이벤트가 리더보드엔 잡히는데 본인 잔디엔 안 보이던 자기모순 해소
+    const EV_LABELS: Record<string, string> = {
+      "flashcard-study": "암기카드 학습",
+      "networking-attend": "모임·행사 참석",
+      "onboarding-checklist": "온보딩 체크리스트",
+      "onboarding-badge": "온보딩 배지",
+      "collab-research-join": "공동 연구 참여",
+      "collab-chapter-edit": "공동 집필",
+      "collab-meeting": "연구 회의",
+      "collab-milestone": "마일스톤 달성",
+      "research-journal-publish": "연구지 출판",
+    };
     for (const ev of (streakEventsRes?.data ?? []) as StreakEvent[]) {
-      if (ev.type === "flashcard-study") {
-        add(ev.ymd, SCORES.flashcardStudy, "암기카드 학습");
-      } else if (ev.type === "networking-attend") {
-        // Phase 2: 모임·행사 참석 — 행사 당일 cron 이 attending RSVP 회원에게 멱등 적립
-        add(ev.ymd, ev.points || 5, "모임·행사 참석");
-      }
+      const pts = ev.type === "flashcard-study" ? SCORES.flashcardStudy : ev.points || 0;
+      if (pts > 0) add(ev.ymd, pts, EV_LABELS[ev.type] ?? "학회 활동");
     }
 
     return { scoresByDay: scores, activityByDay: activities };

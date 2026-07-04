@@ -54,6 +54,16 @@ function pickEra(year: number | null): string | null {
 }
 
 export default function ResearchAnalyticsPage() {
+  // 리텐션(2026-07-04): 온보딩 체크리스트 "둘러보기" 완료 신호 — 이 키를 읽는 위젯만 있고
+  // 쓰는 곳이 없어 영구 미완료였던 죽은 항목을 살린다 (NewMemberChecklistWidget 참조)
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("yedu_onboarding_visited_research", "1");
+    } catch {
+      /* 시크릿 모드 등 저장 불가는 무시 */
+    }
+  }, []);
+
   const { user } = useAuthStore();
   const [theses, setTheses] = useState<AlumniThesis[]>([]);
   const [varNames, setVarNames] = useState<Map<string, string>>(new Map());

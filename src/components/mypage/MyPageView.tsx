@@ -109,7 +109,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [whatsNewDismissed, setWhatsNewDismissed] = useState(
-    () => typeof window !== "undefined" && localStorage.getItem("yonsei_whats_new_dismissed_v2") === "true",
+    () => typeof window !== "undefined" && localStorage.getItem("yonsei_whats_new_dismissed_v3") === "true",
   );
   // 체감 스프린트: 이론 인사이트 패널(ARCS·Connectivism) 기본 접힘 — 통계 중복·스크롤 깊이 축소
   const [insightsOpen, setInsightsOpen] = useState(false);
@@ -381,7 +381,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                     type="button"
                     aria-label="닫기"
                     onClick={() => {
-                      localStorage.setItem("yonsei_whats_new_dismissed_v2", "true");
+                      localStorage.setItem("yonsei_whats_new_dismissed_v3", "true");
                       setWhatsNewDismissed(true);
                     }}
                     className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

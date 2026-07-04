@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { notifyProfileLike } from "@/features/notifications/notify";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { profileLikesApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -52,6 +53,12 @@ export function useProfileLikes(profileId: string | undefined) {
           ];
       qc.setQueryData(["profile-likes", profileId], { data: next });
       return { prev };
+    },
+    onSuccess: (added) => {
+      // 리텐션(2026-07-04): 좋아요가 카운트에만 묻히던 문제 — 프로필 주인에게 알림 (본인 제외)
+      if (added && profileId && viewer?.id && profileId !== viewer.id) {
+        void notifyProfileLike(profileId, viewer.name, viewer.id);
+      }
     },
     onError: (_err, _vars, ctx) => {
       if (ctx?.prev) qc.setQueryData(["profile-likes", profileId], ctx.prev);

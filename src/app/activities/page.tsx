@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { BookOpen, FolderKanban, Users, Globe, Calendar, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -54,6 +54,16 @@ const activities = [
 ];
 
 export default function ActivitiesPage() {
+  // 리텐션(2026-07-04): 온보딩 체크리스트 "둘러보기" 완료 신호 — 이 키를 읽는 위젯만 있고
+  // 쓰는 곳이 없어 영구 미완료였던 죽은 항목을 살린다 (NewMemberChecklistWidget 참조)
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("yedu_onboarding_visited_activities", "1");
+    } catch {
+      /* 시크릿 모드 등 저장 불가는 무시 */
+    }
+  }, []);
+
   const { seminars } = useSeminars("completed");
   const { posts } = usePosts("all");
   const header = usePageHeader("activities", {
