@@ -71,6 +71,7 @@ import ProfileSummaryCard from "@/features/dashboard/ProfileSummaryCard";
 import ProfileSideWidget from "@/features/dashboard/ProfileSideWidget";
 import QuickLinks from "@/features/dashboard/QuickLinks";
 import NewPostsBadge from "@/features/dashboard/NewPostsBadge";
+import SemesterKickoffBanner from "@/features/dashboard/SemesterKickoffBanner";
 import LearningStreak from "@/features/mypage/LearningStreak";
 import StageRecommendationPanel from "@/features/dashboard/StageRecommendationPanel";
 import {
@@ -595,6 +596,9 @@ function DashboardContent() {
             <DashboardCommandCenter />
           </div>
         )}
+
+        {/* C-1: 개강 주간(D-7~D+14) 자동 노출 재활성화 배너 */}
+        <SemesterKickoffBanner />
 
         {/* RT-1: 지난 방문 이후 새 글 뱃지 — 게시판 재방문 트리거 */}
         <NewPostsBadge prevVisit={prevVisitRef.current ?? null} />
