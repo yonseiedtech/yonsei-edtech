@@ -25,6 +25,10 @@ const TYPE_ICONS: Record<AppNotification["type"], string> = {
   admin_nudge: "📣",
   networking_reminder: "🎉",
   mention: "🙋",
+  direct_message: "✉️",
+  collab_invite: "🤝",
+  reaction: "❤️",
+  profile_like: "👍",
 };
 
 function timeAgo(dateStr: string): string {
