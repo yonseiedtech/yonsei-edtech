@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { notifyComment } from "@/features/notifications/notify";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   dataApi,
@@ -322,7 +323,7 @@ export function useCreateInterviewComment() {
   const qc = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const m = useMutation({
-    mutationFn: async (data: { responseId: string; postId: string; questionId?: string; content: string }) => {
+    mutationFn: async (data: { responseId: string; postId: string; questionId?: string; content: string; respondentId?: string }) => {
       if (!user) throw new Error("로그인이 필요합니다.");
       const payload: Record<string, unknown> = {
         responseId: data.responseId,
@@ -333,7 +334,12 @@ export function useCreateInterviewComment() {
       };
       if (data.questionId) payload.questionId = data.questionId;
       if (user.role) payload.authorRole = user.role;
-      return await interviewResponseCommentsApi.create(payload);
+      const res = await interviewResponseCommentsApi.create(payload);
+      // RT-1(2026-07-04): 응답 작성자에게 댓글 알림 — 릴레이 인터뷰 회신 루프 단절 해소
+      if (data.respondentId && data.respondentId !== user.id) {
+        void notifyComment(data.respondentId, user.name, "인터뷰 응답", data.postId);
+      }
+      return res;
     },
     onSuccess: (_d, v) => {
       qc.invalidateQueries({ queryKey: ["interview_response_comments", v.responseId] });

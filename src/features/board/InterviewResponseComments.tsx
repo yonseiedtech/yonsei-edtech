@@ -64,7 +64,7 @@ export default function InterviewResponseComments({
     const content = draft.trim();
     if (!content) return;
     try {
-      await createComment({ responseId, postId, questionId, content });
+      await createComment({ responseId, postId, questionId, content, respondentId });
       setDraft("");
       if (compact) setOpen(true);
     } catch (e) {

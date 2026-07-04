@@ -1,10 +1,11 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { auth } from "@/lib/firebase";
 import { seminarsApi, sessionsApi, attendeesApi, profilesApi, waitlistApi } from "@/lib/bkend";
 import { syncAttendeeIds } from "@/lib/bkend";
 import { getComputedStatus } from "@/lib/seminar-utils";
-import { notifyNewSeminar, notifyWaitlistPromoted } from "@/features/notifications/notify";
+import { notifyWaitlistPromoted } from "@/features/notifications/notify";
 import type { WaitlistEntry } from "@/types";
 import type { Seminar, SeminarSession, SeminarAttendee, User } from "@/types";
 
@@ -55,7 +56,20 @@ export function useCreateSeminar() {
     mutationFn: async (data: Omit<Seminar, "id" | "attendeeIds" | "createdAt" | "updatedAt">) => {
       const res = await seminarsApi.create(data as unknown as Record<string, unknown>);
       const created = res as unknown as Seminar;
-      notifyNewSeminar(data.title, created.id, data.createdBy);
+      // RT-1(2026-07-04): fan-out 서버화 — 인앱 배치 + 웹푸시 병행 (staff 전용 API)
+      void (async () => {
+        try {
+          const token = await auth.currentUser?.getIdToken();
+          if (!token) return;
+          await fetch("/api/notify/fanout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ kind: "seminar_new", title: data.title, refId: created.id }),
+          });
+        } catch {
+          /* 알림 실패는 등록을 막지 않음 */
+        }
+      })();
       return res;
     },
     onSuccess: () => {
@@ -129,8 +143,20 @@ export function useToggleAttendance() {
       }
       // 대기열 상태 변경
       await waitlistApi.update(first.id, { status: "promoted", promotedAt: new Date().toISOString() });
-      // 알림
-      notifyWaitlistPromoted(first.userId, seminarTitle, seminarId);
+      // RT-1(2026-07-04): 확정 알림 서버 발송(인앱+웹푸시) — 시간-민감 이벤트가 인앱 전용이던 문제
+      try {
+        const token = await auth.currentUser?.getIdToken();
+        if (token) {
+          await fetch("/api/seminars/waitlist-notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ seminarId, userId: first.userId, seminarTitle }),
+          });
+        }
+      } catch {
+        // 폴백: 서버 발송 실패 시 인앱만이라도
+        notifyWaitlistPromoted(first.userId, seminarTitle, seminarId);
+      }
     } catch {
       // 승격 실패는 메인 로직 블로킹하지 않음
     }

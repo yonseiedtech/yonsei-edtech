@@ -1,6 +1,7 @@
 "use client";
 
-import { Fragment, useEffect, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useState, type ReactNode, useRef } from "react";
+import { profilesApi } from "@/lib/bkend";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -69,6 +70,7 @@ import DashboardCommandCenter from "@/features/dashboard/DashboardCommandCenter"
 import ProfileSummaryCard from "@/features/dashboard/ProfileSummaryCard";
 import ProfileSideWidget from "@/features/dashboard/ProfileSideWidget";
 import QuickLinks from "@/features/dashboard/QuickLinks";
+import NewPostsBadge from "@/features/dashboard/NewPostsBadge";
 import LearningStreak from "@/features/mypage/LearningStreak";
 import StageRecommendationPanel from "@/features/dashboard/StageRecommendationPanel";
 import {
@@ -139,6 +141,19 @@ function StatCard({
 
 function DashboardContent() {
   const { user } = useAuthStore();
+  // RT-1(2026-07-04): "지난 방문 이후 새 글" 기준 시각 — 갱신 전에 이전 값을 캡처
+  const prevVisitRef = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    if (!user?.id) return;
+    if (prevVisitRef.current === undefined) {
+      prevVisitRef.current = (user.lastVisitAt as string | undefined) ?? null;
+    }
+    const prev = user.lastVisitAt ? new Date(user.lastVisitAt).getTime() : 0;
+    if (Date.now() - prev > 60 * 60 * 1000) {
+      void profilesApi.update(user.id, { lastVisitAt: new Date().toISOString() }).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
   const isStaff = isAtLeast(user, "staff");
 
   // D-2c: 인라인 편집 모드 (드래그·토글 즉시 저장)
@@ -580,6 +595,9 @@ function DashboardContent() {
             <DashboardCommandCenter />
           </div>
         )}
+
+        {/* RT-1: 지난 방문 이후 새 글 뱃지 — 게시판 재방문 트리거 */}
+        <NewPostsBadge prevVisit={prevVisitRef.current ?? null} />
 
         {/* 사이클 113b: 빠른 바로가기 한 줄 (사용자 요청 — 별도 영역) */}
         <div className="mb-6">

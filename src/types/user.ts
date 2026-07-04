@@ -274,6 +274,8 @@ export const OFFICE_OF_EDUCATION_OPTIONS: readonly string[] = [
 export const OFFICE_OF_EDUCATION_OTHER_LABEL = "기타 (직접 입력)" as const;
 
 export interface User { [key: string]: unknown;
+  /** 마지막 대시보드 방문 시각(ISO) — "지난 방문 이후 새 글" 뱃지 기준 (RT-1, 2026-07-04) */
+  lastVisitAt?: string;
   id: string;
   username: string;
   email?: string;

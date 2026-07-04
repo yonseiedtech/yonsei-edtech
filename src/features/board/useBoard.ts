@@ -2,12 +2,13 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { postsApi, commentsApi } from "@/lib/bkend";
+import { auth } from "@/lib/firebase";
 import { doc, updateDoc, increment } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Post, Comment, PostCategory } from "@/types";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isStaffOrAbove } from "@/lib/permissions";
-import { notifyComment, notifyNewNotice, notifyMention } from "@/features/notifications/notify";
+import { notifyComment, notifyMention } from "@/features/notifications/notify";
 import { extractMentions } from "@/lib/mentions";
 import { profilesApi } from "@/lib/bkend";
 
@@ -159,10 +160,23 @@ export function useCreatePost() {
       if (data.linkedPaper) payload.linkedPaper = data.linkedPaper;
       payload.likeCount = 0;
       const res = await postsApi.create(payload);
-      // 공지사항이면 전체 회원에게 알림
+      // RT-1(2026-07-04): 공지 fan-out 서버화 — 작성자 브라우저 Promise.all(탭 닫으면 유실)
+      // 대신 서버 배치 + 웹푸시 병행 (/api/notify/fanout, staff 전용)
       if (data.category === "notice") {
         const created = res as unknown as Post;
-        notifyNewNotice(data.title ?? "", created.id, user.id);
+        void (async () => {
+          try {
+            const token = await auth.currentUser?.getIdToken();
+            if (!token) return;
+            await fetch("/api/notify/fanout", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ kind: "notice", title: data.title ?? "", refId: created.id }),
+            });
+          } catch {
+            /* 알림 실패는 게시를 막지 않음 */
+          }
+        })();
       }
       // Phase 3: 본문 @멘션 알림 (공지 fan-out 대상과 중복돼도 유형이 달라 유지)
       {
@@ -288,19 +302,34 @@ export function useCreateComment() {
       await updateDoc(doc(db, "posts", data.postId), { commentCount: increment(1) });
       // 게시글 작성자에게 댓글 알림 (본인 댓글 제외)
       let postAuthorId: string | null = null;
+      const notified = new Set<string>([user.id]);
       try {
         const post = await postsApi.get(data.postId) as unknown as Post;
         if (post && post.authorId !== user.id) {
           postAuthorId = post.authorId;
+          notified.add(post.authorId);
           notifyComment(post.authorId, user.name, post.title, data.postId);
         }
+        // RT-1(2026-07-04): 스레드 구독 — 같은 글의 기존 댓글 참여자에게도 알림
+        // (멘션 받은 사람이 답글을 달아도 원 멘션자가 모르던 회신 루프 단절 해소)
+        try {
+          const existing = await commentsApi.list(data.postId);
+          const participants = Array.from(
+            new Set((existing.data as { authorId?: string }[]).map((c) => c.authorId).filter(Boolean)),
+          ) as string[];
+          for (const pid of participants) {
+            if (notified.has(pid)) continue;
+            notified.add(pid);
+            notifyComment(pid, user.name, post?.title ?? "게시글", data.postId);
+          }
+        } catch { /* 참여자 알림 실패는 무시 */ }
       } catch { /* 알림 실패는 무시 */ }
-      // Phase 3: 댓글 본문 @멘션 알림 (본인·게시글 작성자 제외 — 작성자는 댓글 알림 수신)
+      // Phase 3: 댓글 본문 @멘션 알림 (이미 댓글/작성자 알림을 받은 대상 제외)
       void notifyMentionsIn(
         data.content,
         user.name,
         `/board/${data.postId}`,
-        [user.id, ...(postAuthorId ? [postAuthorId] : [])],
+        Array.from(notified),
       );
       return res;
     },
