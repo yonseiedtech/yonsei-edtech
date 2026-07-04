@@ -138,7 +138,31 @@ export default function StudioEditor({ docId }: { docId: string }) {
         const d = await designDocsApi.get(docId);
         if (!cancelled) {
           baseSavedAtRef.current = (d as { lastSavedAt?: string } | null)?.lastSavedAt ?? null;
-          setDoc(d);
+          // 신뢰성(2026-07-04): 저장 실패 시점의 로컬 백업이 서버본보다 최신이면 복구 제안
+          try {
+            const raw = localStorage.getItem(`studio_backup_${docId}`);
+            if (raw) {
+              const backup = JSON.parse(raw) as { title?: string; pages?: DesignPage[]; at?: number };
+              const serverAt = (d as { lastSavedAt?: string } | null)?.lastSavedAt;
+              const serverMs = serverAt ? new Date(serverAt).getTime() : 0;
+              if (backup.pages?.length && (backup.at ?? 0) > serverMs) {
+                if (confirm("저장되지 못한 편집 내용의 로컬 백업이 있습니다. 복구할까요?\n(취소하면 백업은 삭제됩니다)")) {
+                  setDoc({ ...(d as DesignDocument), title: backup.title ?? (d as DesignDocument).title, pages: backup.pages });
+                  dirtyRef.current = true;
+                  toast.info("로컬 백업을 불러왔습니다 — 용량을 줄인 뒤 저장해 주세요.");
+                } else {
+                  localStorage.removeItem(`studio_backup_${docId}`);
+                  setDoc(d);
+                }
+              } else {
+                setDoc(d);
+              }
+            } else {
+              setDoc(d);
+            }
+          } catch {
+            setDoc(d);
+          }
         }
       } catch {
         toast.error("문서를 불러오지 못했습니다.");
@@ -206,7 +230,18 @@ export default function StudioEditor({ docId }: { docId: string }) {
     const approxSize = new TextEncoder().encode(JSON.stringify(cur.pages)).length;
     if (approxSize > 980_000) {
       // Firestore 문서 한도(1MiB) — 시도 자체를 막고 지속 배너로 알림 (침묵 실패 방지)
-      setSaveError("문서 용량이 1MB 한도를 초과해 저장할 수 없습니다. 삽입 이미지를 삭제하거나 페이지를 나눠주세요.");
+      // 신뢰성(2026-07-04): 저장 불가 구간의 편집이 탭 크래시로 전부 유실되지 않도록 로컬 백업
+      try {
+        localStorage.setItem(
+          `studio_backup_${cur.id}`,
+          JSON.stringify({ title: cur.title, pages: cur.pages, at: Date.now() }),
+        );
+      } catch {
+        /* 저장소 부족 등은 무시 */
+      }
+      setSaveError(
+        "문서 용량이 1MB 한도를 초과해 저장할 수 없습니다. 삽입 이미지를 삭제하거나 페이지를 나눠주세요. (편집 내용은 이 브라우저에 임시 백업됨)",
+      );
       return;
     }
     // QA-v2: 다른 탭/기기 동시 편집 감지 (30초 스로틀) — 무경고 덮어쓰기 방지
@@ -236,6 +271,12 @@ export default function StudioEditor({ docId }: { docId: string }) {
       baseSavedAtRef.current = now;
       setSavedAt(now);
       setSaveError(null);
+      // 저장 성공 시 로컬 백업 정리 (오래된 백업이 다음 로드에서 복구 제안되지 않도록)
+      try {
+        localStorage.removeItem(`studio_backup_${cur.id}`);
+      } catch {
+        /* 무시 */
+      }
       if (!streakLoggedRef.current && user?.id) {
         streakLoggedRef.current = true;
         const d = new Date();
@@ -245,7 +286,15 @@ export default function StudioEditor({ docId }: { docId: string }) {
       if (!silent) toast.success("저장되었습니다.");
     } catch {
       dirtyRef.current = true;
-      setSaveError("저장에 실패했습니다. 네트워크를 확인하세요 — 편집 내용은 브라우저에 남아 있습니다.");
+      try {
+        localStorage.setItem(
+          `studio_backup_${cur.id}`,
+          JSON.stringify({ title: cur.title, pages: cur.pages, at: Date.now() }),
+        );
+      } catch {
+        /* 무시 */
+      }
+      setSaveError("저장에 실패했습니다. 네트워크를 확인하세요 — 편집 내용은 이 브라우저에 임시 백업됐습니다.");
       if (!silent) toast.error("저장에 실패했습니다.");
     } finally {
       setSaving(false);

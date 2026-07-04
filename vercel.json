@@ -5,6 +5,10 @@
       "schedule": "0 0 * * *"
     },
     {
+      "path": "/api/cron/deadline-reminder",
+      "schedule": "0 0 * * *"
+    },
+    {
       "path": "/api/cron/seminar-reminder",
       "schedule": "0 0 * * *"
     },

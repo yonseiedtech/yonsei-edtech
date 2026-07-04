@@ -327,10 +327,19 @@ function migrateTheoryCards(r: ResearchReport): TheoryCard[] {
 }
 
 function totalChars(form: FormState): number {
+  // 신뢰성(2026-07-04): v1→v2 마이그레이션이 legacy 원본을 보존하므로, v2 데이터가 있으면
+  // legacy 카운트를 제외 — 글자수·활동 로그가 이중 계산되던 문제
+  const hasV2Problem = form.problemPhenomena.length > 0 || form.problemEvidences.length > 0 || form.problemCauses.length > 0;
+  const hasV2Theory = (form.theoryCards?.length ?? 0) > 0;
   const textFields = [
     form.fieldDescription, form.fieldProblem,
-    form.problemPhenomenon, form.problemEvidence, form.problemCause, form.problemDefinition,
-    form.theoryType, form.theoryDefinition, form.theoryConnection,
+    hasV2Problem ? "" : form.problemPhenomenon,
+    hasV2Problem ? "" : form.problemEvidence,
+    hasV2Problem ? "" : form.problemCause,
+    form.problemDefinition,
+    hasV2Theory ? "" : form.theoryType,
+    hasV2Theory ? "" : form.theoryDefinition,
+    hasV2Theory ? "" : form.theoryConnection,
     form.priorResearchAnalysis,
     form.fieldAudience, form.fieldSubject,
     form.problemImpact, form.problemImportance,

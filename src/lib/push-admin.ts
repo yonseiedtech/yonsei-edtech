@@ -70,9 +70,12 @@ const PUSH_PREF_FIELD_BY_KIND: Record<string, string> = {
  * opt-in(보수적 기본값) kind 집합.
  * 여기에 속한 kind 는 notificationPrefs.<field> === true 인 사용자에게만 발송한다
  * (undefined/false → 제외). 기본 opt-out 정책(undefined/true → 허용)과 구분.
- *  - flashcard_review_reminder: v2 §5 발송정책 운영진 결정 전까지 알림 피로 방지(2차 백로그 v2-R1)
+ *  - (2026-07-04 리텐션 재감사) flashcard_review_reminder 를 opt-in 에서 제외:
+ *    발송 크론이 "오늘 복습할 카드를 실제 보유한 사용자"만 대상으로 하므로,
+ *    카드를 만든 적 없는 회원에게는 애초에 가지 않는다 — 보유자 한정 opt-out 이
+ *    SRS 복습 루프(가장 반복성 높은 재방문 트리거)를 살리면서 알림 피로도 낮다.
  */
-const OPT_IN_KINDS = new Set<string>(["flashcard_review_reminder"]);
+const OPT_IN_KINDS = new Set<string>([]);
 
 export async function filterRecipientsByPreference(
   userIds: string[],
