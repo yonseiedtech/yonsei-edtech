@@ -23,7 +23,7 @@ import type { User, StudySession } from "@/types";
 import {
   BookOpen, FileText, BookOpenCheck, FileBarChart2,
   X, CalendarRange, Printer, FileEdit, ClipboardList,
-  Clock, Plus, Pencil, Trash2, GraduationCap,
+  Clock, Plus, Pencil, Trash2, GraduationCap, Lightbulb,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,7 @@ const PaperReadingSection = dynamic(() => import("@/features/research/study-time
 const ThesisJourney = dynamic(() => import("@/features/research/ThesisJourney"), { ssr: false, loading: panelFallback });
 const AdvisorFeedbackLog = dynamic(() => import("@/features/research/AdvisorFeedbackLog"), { ssr: false, loading: panelFallback });
 const ResearchActivityDashboard = dynamic(() => import("@/features/mypage/ResearchActivityDashboard"), { ssr: false, loading: panelFallback });
+const TopicExplorer = dynamic(() => import("@/features/research/topic-explorer/TopicExplorer"), { ssr: false, loading: panelFallback });
 import { formatPeriodLabel } from "@/lib/research-period";
 import {
   currentSemesterRange,
@@ -61,16 +62,23 @@ interface Props {
   readOnly?: boolean;
 }
 
-type ResearchTab = "writing" | "reading" | "report" | "timer" | "feedback";
-type WritingSubTab = "report" | "proposal" | "thesis";
+type ResearchTab = "report" | "explore" | "reading" | "reportdoc" | "proposal" | "writing" | "feedback";
 type WritingPeriodMode = "semester" | "1year" | "yearly" | "custom";
 
 function isResearchTab(v: string | null): v is ResearchTab {
-  return v === "writing" || v === "reading" || v === "report" || v === "timer" || v === "feedback";
+  return v === "report" || v === "explore" || v === "reading" || v === "reportdoc"
+    || v === "proposal" || v === "writing" || v === "feedback";
 }
 
-function isWritingSubTab(v: string | null): v is WritingSubTab {
-  return v === "report" || v === "proposal" || v === "thesis";
+/** 2026-07-04 탭 개편 이전 URL 하위호환 — timer→리포트(통합), writing&sub=… → 평탄화 탭 */
+function normalizeResearchTab(tab: string | null, sub: string | null): ResearchTab {
+  if (tab === "timer") return "report";
+  if (tab === "writing") {
+    if (sub === "report") return "reportdoc";
+    if (sub === "proposal") return "proposal";
+    return "writing";
+  }
+  return isResearchTab(tab) ? tab : "report";
 }
 
 export default function MyResearchView({ userId, readOnly = false }: Props) {
@@ -80,10 +88,8 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
   const searchParams = useSearchParams();
 
   const rawTab = searchParams.get("tab");
-  const activeTab: ResearchTab = isResearchTab(rawTab) ? rawTab : "report";
-
   const rawSub = searchParams.get("sub");
-  const writingSubTab: WritingSubTab = isWritingSubTab(rawSub) ? rawSub : "report";
+  const activeTab: ResearchTab = normalizeResearchTab(rawTab, rawSub);
 
   // 연구 리포트 기간 필터
   const fromParam = searchParams.get("from") || "";
@@ -200,13 +206,6 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", next);
     params.delete("sub");
-    router.replace(`/mypage/research?${params.toString()}`, { scroll: false });
-  }
-
-  function handleSubTabChange(sub: WritingSubTab) {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("tab", "writing");
-    params.set("sub", sub);
     router.replace(`/mypage/research?${params.toString()}`, { scroll: false });
   }
 
@@ -360,60 +359,55 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
         )}
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="mt-6 print-hide">
+          {/* 2026-07-04 개편: 논문 여정 순서(주제 탐색→문헌고찰→보고서→계획서→논문)로 평탄화, 타이머는 리포트에 통합 */}
           <TabsList variant="line" className="w-full justify-start gap-2 border-b">
             <TabsTrigger value="report" className="flex-none">
               <FileBarChart2 size={14} />연구 리포트
             </TabsTrigger>
-            <TabsTrigger value="writing" className="flex-none">
-              <FileText size={14} />내 논문 작성
+            <TabsTrigger value="explore" className="flex-none">
+              <Lightbulb size={14} />주제 탐색
             </TabsTrigger>
             <TabsTrigger value="reading" className="flex-none">
-              <BookOpenCheck size={14} />논문 읽기
+              <BookOpenCheck size={14} />논문 읽기(문헌고찰)
             </TabsTrigger>
-            <TabsTrigger value="timer" className="flex-none">
-              <Clock size={14} />연구 타이머
+            <TabsTrigger value="reportdoc" className="flex-none">
+              <FileEdit size={14} />연구보고서
+            </TabsTrigger>
+            <TabsTrigger value="proposal" className="flex-none">
+              <ClipboardList size={14} />연구계획서
+            </TabsTrigger>
+            <TabsTrigger value="writing" className="flex-none">
+              <FileText size={14} />논문 작성
             </TabsTrigger>
             <TabsTrigger value="feedback" className="flex-none">
               <GraduationCap size={14} />지도 노트
             </TabsTrigger>
           </TabsList>
 
-          {/* ── 내 논문 작성 ── */}
+          {/* ── 주제 탐색 (인터뷰 모드) ── */}
+          <TabsContent value="explore" className="mt-5">
+            {isSelf ? (
+              <TopicExplorer user={user} />
+            ) : (
+              <p className="text-sm text-muted-foreground py-12 text-center">
+                주제 탐색은 본인만 사용할 수 있습니다.
+              </p>
+            )}
+          </TabsContent>
+
+          {/* ── 연구보고서 ── */}
+          <TabsContent value="reportdoc" className="mt-5">
+            <ResearchReportEditor user={user} readOnly={!isSelf || readOnly} />
+          </TabsContent>
+
+          {/* ── 연구계획서 ── */}
+          <TabsContent value="proposal" className="mt-5">
+            <ResearchProposalEditor user={user} readOnly={!isSelf || readOnly} />
+          </TabsContent>
+
+          {/* ── 논문 작성 ── */}
           <TabsContent value="writing" className="mt-5">
-            {/* 서브탭 */}
-            <div className="inline-flex rounded-lg border bg-card p-1 gap-1 mb-5">
-              <SubTabBtn
-                label="연구 보고서"
-                icon={<FileEdit size={13} />}
-                active={writingSubTab === "report"}
-                onClick={() => handleSubTabChange("report")}
-              />
-              <SubTabBtn
-                label="연구 계획서"
-                icon={<ClipboardList size={13} />}
-                active={writingSubTab === "proposal"}
-                onClick={() => handleSubTabChange("proposal")}
-              />
-              <SubTabBtn
-                label="논문"
-                icon={<FileText size={13} />}
-                active={writingSubTab === "thesis"}
-                onClick={() => handleSubTabChange("thesis")}
-              />
-            </div>
-
-            {/* 서브탭 콘텐츠 */}
-            {writingSubTab === "report" && (
-              <ResearchReportEditor user={user} readOnly={!isSelf || readOnly} />
-            )}
-
-            {writingSubTab === "proposal" && (
-              <ResearchProposalEditor user={user} readOnly={!isSelf || readOnly} />
-            )}
-
-            {writingSubTab === "thesis" && (
-              <WritingPaperEditor user={user} readOnly={!isSelf || readOnly} />
-            )}
+            <WritingPaperEditor user={user} readOnly={!isSelf || readOnly} />
           </TabsContent>
 
           {/* ── 논문 읽기 ── */}
@@ -501,13 +495,14 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
                   periodEnd={periodEnd}
                 />
               )}
-            </div>
-          </TabsContent>
 
-          {/* ── 연구 타이머 ── */}
-          <TabsContent value="timer" className="mt-5">
-            {isSelf ? (
-              <div className="space-y-6">
+              {/* ── 연구 타이머 (2026-07-04 개편: 별도 탭 → 리포트 탭 통합) — 본인 전용 ── */}
+              {isSelf && (
+                <div className="space-y-6 border-t pt-6 print-hide">
+                  <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                    <Clock size={14} />
+                    연구 타이머
+                  </h3>
                 {/* 연구활동 전용 대시보드 (research 영역만) + compact 타이머 */}
                 <ResearchActivityDashboard userId={userId} />
 
@@ -597,12 +592,9 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
                     </ul>
                   )}
                 </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground py-12 text-center">
-                연구 타이머는 본인만 확인할 수 있습니다.
-              </p>
-            )}
+                </div>
+              )}
+            </div>
           </TabsContent>
 
           {/* ── 지도 노트 (교수 피드백 기록·반영 추적) — 본인 전용 ── */}
@@ -672,19 +664,3 @@ function PeriodModeBtn({ label, active, onClick }: { label: string; active: bool
   );
 }
 
-function SubTabBtn({ label, icon, active, onClick }: { label: string; icon: React.ReactNode; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-        active
-          ? "bg-primary text-primary-foreground shadow-sm"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-      }`}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}

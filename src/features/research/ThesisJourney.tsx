@@ -65,6 +65,7 @@ export const JOURNEY_STAGES: JourneyStage[] = [
     icon: Compass,
     goal: "관심 분야의 지형을 파악하고 선행 논문 읽기 습관을 만듭니다.",
     tools: [
+      { label: "주제 탐색 인터뷰", href: "/mypage/research?tab=explore" },
       { label: "논문 읽기 시작", href: "/mypage/research?tab=reading" },
       { label: "졸업생 학위논문 둘러보기", href: "/alumni/thesis" },
       { label: "연구 흐름 분석 보기", href: "/research" },
@@ -92,7 +93,7 @@ export const JOURNEY_STAGES: JourneyStage[] = [
     icon: Target,
     goal: "연구 문제를 측정 가능한 형태로 좁히고 선행연구를 체계적으로 정리합니다.",
     tools: [
-      { label: "연구보고서(소논문) 작성", href: "/mypage/research?tab=writing&sub=report" },
+      { label: "연구보고서(소논문) 작성", href: "/mypage/research?tab=reportdoc" },
       { label: "연구 모형 그리기", href: "/research-model" },
       { label: "아카이브 변인·측정도구", href: "/archive" },
       { label: "읽기 리스트 정리", href: "/mypage/research?tab=reading" },
@@ -117,7 +118,7 @@ export const JOURNEY_STAGES: JourneyStage[] = [
     icon: FileText,
     goal: "종합시험을 통과하고, 연구 설계가 정당화된 계획서를 완성합니다.",
     tools: [
-      { label: "계획서 인터뷰 모드", href: "/mypage/research?tab=writing&sub=proposal" },
+      { label: "계획서 인터뷰 모드", href: "/mypage/research?tab=proposal" },
       { label: "연구 모형 그리기", href: "/research-model" },
       { label: "연구방법론 개념(아카이브)", href: "/archive" },
       { label: "종합시험 현황", href: "/courses" },
@@ -142,9 +143,9 @@ export const JOURNEY_STAGES: JourneyStage[] = [
     icon: Database,
     goal: "자료를 수집하고 올바른 통계 기법으로 분석하며 본문(1~3장)을 작성합니다.",
     tools: [
-      { label: "학위논문 본문 작성", href: "/mypage/research?tab=writing&sub=thesis" },
-      { label: "연구윤리 체크리스트 (방법 장)", href: "/mypage/research?tab=writing&sub=thesis" },
-      { label: "연구 타이머로 집필 루틴", href: "/mypage/research?tab=timer" },
+      { label: "학위논문 본문 작성", href: "/mypage/research?tab=writing" },
+      { label: "연구윤리 체크리스트 (방법 장)", href: "/mypage/research?tab=writing" },
+      { label: "연구 타이머로 집필 루틴", href: "/mypage/research?tab=report" },
       { label: "통계 개념(아카이브)", href: "/archive" },
     ],
     tips: [
@@ -168,7 +169,7 @@ export const JOURNEY_STAGES: JourneyStage[] = [
     icon: Award,
     goal: "결과·논의(4~5장)를 완성하고 타당도 위협 방어 논리로 심사를 준비합니다.",
     tools: [
-      { label: "학위논문 마무리", href: "/mypage/research?tab=writing&sub=thesis" },
+      { label: "학위논문 마무리", href: "/mypage/research?tab=writing" },
       { label: "지도 노트 — 심사 피드백 관리", href: "/mypage/research?tab=feedback" },
       { label: "논문 심사 연습 (따라읽기·STT)", href: "/steppingstone/thesis-defense" },
       { label: "작성 원칙·타당도(아카이브)", href: "/archive" },

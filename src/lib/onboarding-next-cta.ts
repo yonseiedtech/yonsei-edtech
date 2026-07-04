@@ -59,7 +59,7 @@ export const NEXT_CTA_MAP: Record<ChecklistCompletionType, NextCta | null> = {
   },
   "participated.commBoard": {
     message: "다음은 연구보고서를 작성해보세요.",
-    href: "/mypage/research?tab=writing&sub=report",
+    href: "/mypage/research?tab=reportdoc",
     label: "연구보고서 작성",
   },
   "submitted.research": {

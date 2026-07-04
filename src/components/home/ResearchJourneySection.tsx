@@ -51,7 +51,7 @@ const STAGES: PublicStage[] = [
     summary: "개념→변인→측정도구 연결로 연구 문제를 측정 가능한 형태로 좁힙니다.",
     features: [
       { label: "아카이브 변인·측정도구", href: "/archive" },
-      { label: "연구보고서 인터뷰 모드", href: "/mypage/research?tab=writing&sub=report" },
+      { label: "연구보고서 인터뷰 모드", href: "/mypage/research?tab=reportdoc" },
     ],
   },
   {
@@ -61,7 +61,7 @@ const STAGES: PublicStage[] = [
     icon: FileText,
     summary: "질문에 답하면 계획서가 완성되는 인터뷰 모드로 연구 설계를 정당화합니다.",
     features: [
-      { label: "계획서 인터뷰 모드", href: "/mypage/research?tab=writing&sub=proposal" },
+      { label: "계획서 인터뷰 모드", href: "/mypage/research?tab=proposal" },
       { label: "연구방법론 개념", href: "/archive" },
     ],
   },
@@ -72,8 +72,8 @@ const STAGES: PublicStage[] = [
     icon: Database,
     summary: "연구 타이머로 집필 루틴을 만들고 5장 에디터에서 본문을 채워갑니다.",
     features: [
-      { label: "학위논문 에디터", href: "/mypage/research?tab=writing&sub=thesis" },
-      { label: "연구 타이머", href: "/mypage/research?tab=timer" },
+      { label: "학위논문 에디터", href: "/mypage/research?tab=writing" },
+      { label: "연구 타이머", href: "/mypage/research?tab=report" },
     ],
   },
   {

@@ -23,13 +23,14 @@
     }
   },
   "files": [
-    "src/features/research-analytics/ResearchHero.tsx",
-    "src/features/research-analytics/KeywordCloud.tsx",
-    "src/features/research-analytics/MethodProfile.tsx",
-    "src/features/research-analytics/ResearchLineageMap.tsx",
-    "src/features/research-analytics/SubjectDistribution.tsx",
-    "src/features/research-analytics/ResearchTypeChart.tsx",
-    "src/features/research-analytics/ResearchSearch.tsx",
-    "src/features/studio/templates.ts"
+    "src/components/mypage/MyResearchView.tsx",
+    "src/features/research/topic-explorer/topic-explorer-logic.ts",
+    "src/features/research/topic-explorer/TopicExplorer.tsx",
+    "src/features/research/ThesisJourney.tsx",
+    "src/features/research/ResearchJourneyGuide.tsx",
+    "src/components/home/ResearchJourneySection.tsx",
+    "src/features/dashboard/VacationModeCard.tsx",
+    "src/lib/onboarding-next-cta.ts",
+    "src/components/layout/command-routes.ts"
   ]
 }

@@ -113,7 +113,7 @@ const STEPS: StepMeta[] = [
     purpose: "IRB·동의 절차를 점검하고 측정도구를 확정합니다",
     icon: ShieldCheck,
     kind: "support",
-    href: "/mypage/research?tab=writing&sub=thesis",
+    href: "/mypage/research?tab=writing",
   },
   {
     key: "thesis",
