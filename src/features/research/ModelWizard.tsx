@@ -16,6 +16,10 @@ import { Input } from "@/components/ui/input";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import type {
   ResearchModelData, ResearchModelNode, ResearchModelEdge, VariableKind,
@@ -166,9 +170,22 @@ export default function ModelWizard({
     [xRaw, yRaw],
   );
 
+  // UX(2026-07-04): Dialog 위에 브라우저 confirm 이 뜨던 스타일 단절 — AlertDialog 로 통일
+  const [pendingModel, setPendingModel] = useState<ResearchModelData | null>(null);
+
   function apply(model: ResearchModelData) {
-    if (hasExisting && !confirm("기존 모형을 덮어씁니다. 계속할까요?")) return;
+    if (hasExisting) {
+      setPendingModel(model);
+      return;
+    }
     onApply(model);
+    onOpenChange(false);
+  }
+
+  function confirmOverwrite() {
+    if (!pendingModel) return;
+    onApply(pendingModel);
+    setPendingModel(null);
     onOpenChange(false);
   }
 
@@ -305,6 +322,22 @@ export default function ModelWizard({
           )}
         </DialogFooter>
       </DialogContent>
+
+      {/* 기존 모형 덮어쓰기 확인 — 앱 다이얼로그 패턴으로 통일 */}
+      <AlertDialog open={!!pendingModel} onOpenChange={(o) => !o && setPendingModel(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>기존 모형을 덮어쓸까요?</AlertDialogTitle>
+            <AlertDialogDescription>
+              캔버스에 있는 현재 모형(변인·관계선)이 생성 결과로 교체됩니다. 되돌릴 수 없어요.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmOverwrite}>덮어쓰기</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

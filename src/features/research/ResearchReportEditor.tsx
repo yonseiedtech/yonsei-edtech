@@ -10,8 +10,7 @@ import {
   Save, CheckCircle2, ChevronLeft, ChevronRight,
   FileText, School, BookOpen, FlaskConical,
   Plus, Trash2, Link2, X, Lightbulb, Target, Ruler, Sparkles,
-  MessageSquareQuote, LayoutGrid,
-} from "lucide-react";
+  MessageSquareQuote, LayoutGrid, ChevronUp, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { buildMatrixTable } from "./literature-matrix";
 import { cn } from "@/lib/utils";
@@ -2029,18 +2028,20 @@ function TheoryCardEditor({ index, total, card, readOnly, onChange, onRemove, on
               onClick={() => onMove(-1)}
               disabled={index === 0}
               title="위로 이동"
+              aria-label="이론 카드 위로 이동"
               className="rounded-md p-2.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
             >
-              <ChevronLeft size={13} className="rotate-90" />
+              <ChevronUp size={13} />
             </button>
             <button
               type="button"
               onClick={() => onMove(1)}
               disabled={index === total - 1}
               title="아래로 이동"
+              aria-label="이론 카드 아래로 이동"
               className="rounded-md p-2.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
             >
-              <ChevronRight size={13} className="rotate-90" />
+              <ChevronDown size={13} />
             </button>
             <button
               type="button"

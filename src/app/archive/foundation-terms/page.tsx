@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -122,18 +123,19 @@ function groupBySubCategory(
   return groups;
 }
 
-export default function FoundationTermsLandingPage() {
+function FoundationTermsLandingPageInner() {
   const { user } = useAuthStore();
   const canManage = isAtLeast(user, "staff");
 
   const [terms, setTerms] = useState<FoundationTerm[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  // 사이클 101: ?q= 로 진입 시 검색어 prefill (StatModelDiagram 변인 개념 툴팁의 "아카이브에서 자세히" 링크 등)
+  // UX(2026-07-04): soft navigation(뒤로가기·칩 재클릭)에도 ?q= 를 반영
+  const searchParams = useSearchParams();
   useEffect(() => {
-    const q = new URLSearchParams(window.location.search).get("q");
-    if (q) setQuery(q);
-  }, []);
+    const q = searchParams.get("q");
+    if (q !== null) setQuery(q);
+  }, [searchParams]);
 
   useEffect(() => {
     let cancelled = false;
@@ -405,5 +407,16 @@ export default function FoundationTermsLandingPage() {
         </div>
       </div>
     </PageContainer>
+  );
+}
+
+
+// UX(2026-07-04): useSearchParams 는 Suspense 경계 필요 — 래퍼로 충족.
+// (기존 window 1회 읽기는 soft navigation 시 ?q= 변경을 못 따라가던 문제)
+export default function FoundationTermsLandingPage() {
+  return (
+    <Suspense fallback={null}>
+      <FoundationTermsLandingPageInner />
+    </Suspense>
   );
 }

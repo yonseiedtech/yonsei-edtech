@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { notFound, useParams } from "next/navigation";
+import { useEffect, useMemo, useState, Suspense } from "react";
+import { notFound, useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -83,7 +83,7 @@ const TYPE_META: Record<
   },
 };
 
-export default function ArchiveTypeListPage() {
+function ArchiveTypeListPageInner() {
   const params = useParams<{ type: string }>();
   const type = params?.type as ArchiveItemType;
   const { user } = useAuthStore();
@@ -92,11 +92,12 @@ export default function ArchiveTypeListPage() {
   const [favorites, setFavorites] = useState<ArchiveFavorite[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  // 여정 등 외부 딥링크의 ?q= 초기 검색어 (useSearchParams 의 Suspense 경계 요구 회피)
+  // UX(2026-07-04): soft navigation(뒤로가기·칩 재클릭)에도 ?q= 를 반영
+  const searchParams = useSearchParams();
   useEffect(() => {
-    const q = new URLSearchParams(window.location.search).get("q");
-    if (q) setQuery(q);
-  }, []);
+    const q = searchParams.get("q");
+    if (q !== null) setQuery(q);
+  }, [searchParams]);
 
   const canManage = isAtLeast(user, "staff");
 
@@ -578,5 +579,16 @@ function ArchiveCard({
         </Link>
       </CardContent>
     </Card>
+  );
+}
+
+
+// UX(2026-07-04): useSearchParams 는 Suspense 경계 필요 — 래퍼로 충족.
+// (기존 window 1회 읽기는 soft navigation 시 ?q= 변경을 못 따라가던 문제)
+export default function ArchiveTypeListPage() {
+  return (
+    <Suspense fallback={null}>
+      <ArchiveTypeListPageInner />
+    </Suspense>
   );
 }

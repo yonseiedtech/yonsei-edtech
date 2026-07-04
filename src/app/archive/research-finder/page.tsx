@@ -70,12 +70,15 @@ export default function ResearchFinderPage() {
   const [statMethods, setStatMethods] = useState<StatisticalMethod[]>([]);
   const [theses, setTheses] = useState<AlumniThesis[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [retryTick, setRetryTick] = useState(0);
   const [answers, setAnswers] = useState<RFAnswers>({});
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
+      setLoadFailed(false);
       try {
         const [rm, sm, at] = await Promise.all([
           canManage ? researchMethodsApi.list() : researchMethodsApi.listPublished(),
@@ -87,6 +90,7 @@ export default function ResearchFinderPage() {
         setStatMethods(sm.data);
         setTheses(at.data);
       } catch (err) {
+        setLoadFailed(true);
         console.error("[research-finder] load failed", err);
       } finally {
         if (!cancelled) setLoading(false);
@@ -95,7 +99,7 @@ export default function ResearchFinderPage() {
     return () => {
       cancelled = true;
     };
-  }, [canManage]);
+  }, [canManage, retryTick]);
 
   const rmBySeedKey = useMemo(() => {
     const m = new Map<string, ResearchMethod>();
@@ -182,6 +186,20 @@ export default function ResearchFinderPage() {
                 }}
               />
             </div>
+          </div>
+        )}
+
+        {/* UX(2026-07-04): 로드 실패 안내 + 재시도 */}
+        {loadFailed && (
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+            <span>가이드 데이터를 불러오지 못했습니다 — 추천 결과의 상세 링크·선배 논문 매칭이 표시되지 않을 수 있어요.</span>
+            <button
+              type="button"
+              onClick={() => setRetryTick((t) => t + 1)}
+              className="shrink-0 rounded-lg border border-amber-400 bg-white px-2.5 py-1 text-xs font-medium hover:bg-amber-100 dark:bg-transparent"
+            >
+              다시 시도
+            </button>
           </div>
         )}
 

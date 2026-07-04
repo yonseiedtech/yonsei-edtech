@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -128,18 +129,19 @@ const CATEGORY_GUIDES: CategoryGuide[] = [
   },
 ];
 
-export default function StatisticalMethodsLandingPage() {
+function StatisticalMethodsLandingPageInner() {
   const { user } = useAuthStore();
   const canManage = isAtLeast(user, "staff");
 
   const [methods, setMethods] = useState<StatisticalMethod[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  // 여정·에디터 딥링크의 ?q= 초기 검색어 (Suspense 요구 회피 — window 1회 읽기)
+  // UX(2026-07-04): soft navigation(뒤로가기·칩 재클릭)에도 ?q= 를 반영
+  const searchParams = useSearchParams();
   useEffect(() => {
-    const q = new URLSearchParams(window.location.search).get("q");
-    if (q) setQuery(q);
-  }, []);
+    const q = searchParams.get("q");
+    if (q !== null) setQuery(q);
+  }, [searchParams]);
 
   useEffect(() => {
     let cancelled = false;
@@ -362,5 +364,16 @@ export default function StatisticalMethodsLandingPage() {
         </div>
       </div>
     </PageContainer>
+  );
+}
+
+
+// UX(2026-07-04): useSearchParams 는 Suspense 경계 필요 — 래퍼로 충족.
+// (기존 window 1회 읽기는 soft navigation 시 ?q= 변경을 못 따라가던 문제)
+export default function StatisticalMethodsLandingPage() {
+  return (
+    <Suspense fallback={null}>
+      <StatisticalMethodsLandingPageInner />
+    </Suspense>
   );
 }
