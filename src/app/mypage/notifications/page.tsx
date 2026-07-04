@@ -44,6 +44,10 @@ const TYPE_ICONS: Record<NotificationType, string> = {
   admin_nudge: "📣",
   networking_reminder: "🎉",
   mention: "🙋",
+  direct_message: "✉️",
+  collab_invite: "🤝",
+  reaction: "❤️",
+  profile_like: "👍",
 };
 
 const TYPE_LABELS: Record<NotificationType, string> = {
@@ -64,6 +68,10 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   admin_nudge: "운영진 알림",
   networking_reminder: "모임·행사 알림",
   mention: "멘션",
+  direct_message: "쪽지",
+  collab_invite: "연구 초대",
+  reaction: "공감",
+  profile_like: "프로필 좋아요",
 };
 
 // 필터 탭 정의
