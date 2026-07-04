@@ -678,6 +678,9 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
       "vacation-goal-week": "방학 주간 목표 달성",
     };
     for (const ev of (streakEventsRes?.data ?? []) as StreakEvent[]) {
+      // 보상 원장 통일(2026-07-04): mirror 는 리더보드용 이중 기록 — 잔디는 도메인
+      // 컬렉션(출석·타이머·집필 등)을 원본으로 이미 합산하므로 제외 (이중 계산 차단)
+      if (ev.type === "mirror") continue;
       const pts = ev.type === "flashcard-study" ? SCORES.flashcardStudy : ev.points || 0;
       if (pts > 0) add(ev.ymd, pts, EV_LABELS[ev.type] ?? "학회 활동");
     }

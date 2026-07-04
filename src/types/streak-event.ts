@@ -25,7 +25,10 @@ export type StreakEventType =
   | "matrix-edit"                   // 문헌 매트릭스 정리 1일 (+2, refId=ymd)
   | "model-edit"                    // 연구 모형 저장 1일 (+3, refId=ymd)
   | "studio-edit"                   // 스튜디오 제작 1일 (+2, refId=ymd)
-  | "vacation-goal-week";           // 방학 주간 목표 달성 (+5, refId=주 시작 ymd)
+  | "vacation-goal-week"            // 방학 주간 목표 달성 (+5, refId=주 시작 ymd)
+  // 보상 원장 통일(2026-07-04): 도메인 활동(출석·타이머·집필·글·후기·완독·진단)의 리더보드
+  // 반영용 이중 기록. 잔디·월간 대시보드는 도메인 컬렉션을 원본으로 쓰므로 mirror 는 합산에서 제외.
+  | "mirror";                       // refId=`${source}_${ymd|고유id}` (예: attend_{seminarId}, post_2026-07-04)
 
 export interface StreakEvent {
   /** `${userId}__${type}__${refId}` */

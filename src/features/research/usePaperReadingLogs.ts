@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { paperReadingLogsApi } from "@/lib/bkend";
+import { paperReadingLogsApi, streakEventsApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import type { PaperReadingLog } from "@/types/paper-reading";
 
@@ -41,6 +41,8 @@ export function useCreateReadingLog() {
         createdAt: now,
         updatedAt: now,
       });
+      // 보상 원장 통일(2026-07-04): 읽기 기록 1일 +4 리더보드 이중 기록
+      if (user?.id) void streakEventsApi.mirror(user.id, "reading", 4);
       return res as unknown as PaperReadingLog;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["paper-reading-logs"] }),

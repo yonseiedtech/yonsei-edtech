@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { courseOfferingsApi, courseReviewsApi } from "@/lib/bkend";
+import { courseOfferingsApi, courseReviewsApi, streakEventsApi } from "@/lib/bkend";
 import { isAtLeast } from "@/lib/permissions";
 import {
   ASSIGNMENT_FREQUENCY_LABELS,
@@ -650,6 +650,8 @@ function ComposeDialog({
         createdAt: now,
         updatedAt: now,
       });
+      // 보상 원장 통일(2026-07-04): 강의 후기 1일 +5 리더보드 이중 기록
+      if (user?.id) void streakEventsApi.mirror(user.id, "courseReview", 5);
       qc.invalidateQueries({ queryKey: ["elective-reviews-all"] });
       qc.invalidateQueries({ queryKey: ["course-reviews", offering.id] });
       onOpenChange(false);

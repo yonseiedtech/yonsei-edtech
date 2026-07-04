@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { collection, query, where, onSnapshot, type Unsubscribe } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { SeminarAttendee, CheckinResult } from "@/types";
-import { attendeesApi, dataApi } from "@/lib/bkend";
+import { attendeesApi, dataApi, streakEventsApi } from "@/lib/bkend";
 
 /**
  * Checkin-focused store.
@@ -120,6 +120,10 @@ export const useSeminarStore = create<CheckinState>((set, get) => ({
         checkedInAt: now,
         checkedInBy: staffUserId,
       })
+      .then(() => {
+        // 보상 원장 통일(2026-07-04): 출석 +10 을 리더보드 원장(streak_events)에 이중 기록
+        if (attendee.userId) void streakEventsApi.mirror(attendee.userId, "attend", 10, attendee.seminarId);
+      })
       .catch((err) => {
         console.error("[checkin-store] Failed to persist checkin:", err);
         set((state) => ({
@@ -170,6 +174,9 @@ export const useSeminarStore = create<CheckinState>((set, get) => ({
         checkedIn: true,
         checkedInAt: now,
         checkedInBy: `self_${staffUserId}`,
+      })
+      .then(() => {
+        if (attendee!.userId) void streakEventsApi.mirror(attendee!.userId, "attend", 10, attendee!.seminarId);
       })
       .catch((err) => {
         console.error("[checkin-store] self checkin persist error:", err);

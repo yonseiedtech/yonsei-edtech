@@ -2787,6 +2787,19 @@ export const streakEventsApi = {
       "filter[userId]": userId,
       limit: 1000,
     }),
+  /**
+   * 보상 원장 통일(2026-07-04): 도메인 활동의 리더보드 반영용 이중 기록.
+   * refSuffix 미지정 시 오늘(로컬 ymd)로 day-bucket — 같은 소스·날짜는 1회만.
+   * 실패는 조용히 무시(주 기능 비차단).
+   */
+  mirror: (userId: string, source: string, points: number, refSuffix?: string) => {
+    const d = new Date();
+    const ymd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    return streakEventsApi
+      .add({ userId, type: "mirror", refId: `${source}_${refSuffix ?? ymd}`, points })
+      .catch(() => null);
+  },
+
   /** 멱등 add — 같은 (userId,type,refId) 재호출 시 한 번만 가산. */
   add: async (params: {
     userId: string;

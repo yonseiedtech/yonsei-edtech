@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { writingPaperHistoryApi } from "@/lib/bkend";
+import { writingPaperHistoryApi, streakEventsApi } from "@/lib/bkend";
 import type { WritingPaperHistory, WritingPaperChapterKey } from "@/types";
 
 const THROTTLE_MS = 5 * 60 * 1000; // 5분
@@ -56,6 +56,8 @@ export function useLogWritingActivity() {
         lastChapter: args.lastChapter,
         title: args.title,
       });
+      // 보상 원장 통일(2026-07-04): 논문 작성 1일 +6 리더보드 이중 기록
+      void streakEventsApi.mirror(args.userId, "writing", 6);
       // 낙관적 업데이트: 새 항목을 캐시 맨 앞에 삽입
       qc.setQueryData<WritingPaperHistory[]>(cacheKey, (prev) => {
         const next = prev ? [created, ...prev] : [created];

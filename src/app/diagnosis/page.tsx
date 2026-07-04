@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { streakEventsApi } from "@/lib/bkend";
 import Link from "next/link";
 import { ArrowLeft, ClipboardCheck } from "lucide-react";
 import PageContainer from "@/components/ui/page-container";
@@ -444,6 +445,8 @@ export default function DiagnosisPage() {
           paperReadiness: computed.paperReadiness,
           analysisReadiness: computed.analysisReadiness,
         });
+        // 보상 원장 통일(2026-07-04): 진단 완료 1일 +5 리더보드 이중 기록
+        if (user?.id) void streakEventsApi.mirror(user.id, "diagnostic", 5);
         // 누적 분모/분자 정합 — 방금 저장한 회차를 prior 에 반영(재진단 없이 연속 동작 대비)
         setPriorResults((prev) => [created, ...prev]);
         setSaveState("saved");

@@ -1309,8 +1309,9 @@ service cloud.firestore {
     // write: 본인(userId 일치) 또는 운영진. delete 는 운영진만.
     match /streak_events/{docId} {
       allow read, list: if isAuthenticated();
+      // 보상 원장 통일(2026-07-04): 세미나 체크인은 스태프 기기에서 참석자 몫을 기록 — 스태프 대행 허용
       allow create: if isAuthenticated()
-        && request.resource.data.userId == request.auth.uid;
+        && (request.resource.data.userId == request.auth.uid || isStaffOrAbove());
       allow update: if isAuthenticated()
         && (resource.data.userId == request.auth.uid || isStaffOrAbove());
       allow delete: if isAuthenticated() && isStaffOrAbove();

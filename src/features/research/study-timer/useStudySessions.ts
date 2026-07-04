@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { studySessionsApi } from "@/lib/bkend";
+import { studySessionsApi, streakEventsApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { todayYmdLocal } from "@/lib/dday";
 import type { StudySession, StudySessionType } from "@/types";
@@ -107,6 +107,10 @@ export function useEndSession() {
         ...(memo !== undefined && { memo }),
         updatedAt: new Date().toISOString(),
       });
+      // 보상 원장 통일(2026-07-04): 30분 이상 세션 +3 리더보드 이중 기록 (1일 1회)
+      if (durationMinutes >= 30 && session.userId) {
+        void streakEventsApi.mirror(session.userId, "timer30", 3);
+      }
 
       return { durationMinutes };
     },

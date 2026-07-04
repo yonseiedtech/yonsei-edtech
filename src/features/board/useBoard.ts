@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { postsApi, commentsApi } from "@/lib/bkend";
+import { postsApi, commentsApi, streakEventsApi } from "@/lib/bkend";
 import { auth } from "@/lib/firebase";
 import { doc, updateDoc, increment } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -160,6 +160,8 @@ export function useCreatePost() {
       if (data.linkedPaper) payload.linkedPaper = data.linkedPaper;
       payload.likeCount = 0;
       const res = await postsApi.create(payload);
+      // 보상 원장 통일(2026-07-04): 글 작성 1일 +5 리더보드 이중 기록
+      void streakEventsApi.mirror(user.id, "post", 5);
       // RT-1(2026-07-04): 공지 fan-out 서버화 — 작성자 브라우저 Promise.all(탭 닫으면 유실)
       // 대신 서버 배치 + 웹푸시 병행 (/api/notify/fanout, staff 전용)
       if (data.category === "notice") {
@@ -300,6 +302,8 @@ export function useCreateComment() {
       });
       // commentCount +1
       await updateDoc(doc(db, "posts", data.postId), { commentCount: increment(1) });
+      // 보상 원장 통일(2026-07-04): 댓글 1일 +1 리더보드 이중 기록
+      void streakEventsApi.mirror(user.id, "comment", 1);
       // 게시글 작성자에게 댓글 알림 (본인 댓글 제외)
       let postAuthorId: string | null = null;
       const notified = new Set<string>([user.id]);

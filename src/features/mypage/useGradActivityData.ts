@@ -191,6 +191,7 @@ export function useGradActivityData(userId: string | undefined): GradActivityDat
         "vacation-goal-week": "방학 주간 목표 달성",
       };
       for (const ev of (streakEventsRes?.data ?? []) as { type: string; ymd?: string; points?: number }[]) {
+        if (ev.type === "mirror") continue; // 리더보드용 이중 기록 — 도메인 원본과 중복 방지
         if (!ev.ymd || !ev.points) continue;
         add(ev.ymd, ev.points, EV_LABELS[ev.type] ?? "학회 활동");
       }
