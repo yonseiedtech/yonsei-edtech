@@ -23,14 +23,26 @@ export async function GET(req: NextRequest) {
 
     // 주의: read(등호)+createdAt(범위) 복합 쿼리는 인덱스 필요 — 단일 범위 쿼리 후 메모리 필터
     // (30일 초과분만 스캔하므로 후보 자체가 적다)
+    // ⚠ createdAt 타입 혼재(QA v3): 서버 fan-out=ISO 문자열, 클라이언트 dataApi.create=Timestamp.
+    //   Timestamp는 문자열보다 앞에 정렬되어 범위 쿼리에 전부 걸리므로, 실제 나이 판정은
+    //   반드시 ISO 로 정규화한 메모리 필터에서 수행한다 (미정규화 시 신규 알림까지 삭제됨).
+    const toIso = (v: unknown): string => {
+      if (typeof v === "string") return v;
+      if (v && typeof (v as { toDate?: () => Date }).toDate === "function") {
+        return (v as { toDate: () => Date }).toDate().toISOString();
+      }
+      return "";
+    };
     const snap = await db
       .collection("notifications")
       .where("createdAt", "<", cutoffRead)
       .limit(1500)
       .get();
     const targets = snap.docs.filter((doc) => {
-      const x = doc.data() as { read?: boolean; createdAt?: string };
-      return x.read === true || (x.createdAt ?? "") < cutoffUnread;
+      const x = doc.data() as { read?: boolean; createdAt?: unknown };
+      const created = toIso(x.createdAt);
+      if (!created) return false;
+      return (x.read === true && created < cutoffRead) || created < cutoffUnread;
     });
     let deleted = 0;
     for (let i = 0; i < targets.length; i += 500) {
