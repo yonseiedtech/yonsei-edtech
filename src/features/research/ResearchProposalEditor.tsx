@@ -20,6 +20,8 @@ import {
 } from "./useResearchProposal";
 import { researchProposalsApi } from "@/lib/bkend";
 import EditorSaveBar from "./EditorSaveBar";
+import { useResearchReport } from "./useResearchReport";
+import { RESEARCH_APPROACH_LABELS } from "@/types";
 import { useResearchPapers } from "./useResearchPapers";
 import { useLogWritingActivity } from "./useWritingPaperHistory";
 import { formatApa7 } from "@/lib/apa7";
@@ -287,6 +289,8 @@ function isFieldFilled(form: FormState, key: InterviewStep["key"]): boolean {
 
 export default function ResearchProposalEditor({ user, readOnly = false }: Props) {
   const { proposal, isLoading } = useResearchProposal(user.id);
+  // R3-확장(2026-07-04): 보고서 → 계획서 시딩 소스
+  const { report } = useResearchReport(readOnly ? undefined : user.id);
   const ensure = useEnsureResearchProposal();
   const update = useUpdateResearchProposal();
   const logActivity = useLogWritingActivity();
@@ -376,6 +380,59 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
     // QA-v2: 실패·no-op 시 거짓 성공 토스트 방지
     const ok = await handleSave(false);
     if (ok) toast.success("임시 저장되었습니다.");
+  }
+
+  /** R3-확장(2026-07-04): 연구보고서 → 계획서 빈 필드 시딩 (작성분은 건드리지 않음) */
+  function seedFromReport() {
+    if (readOnly || !proposal || !report) return;
+    const patch: Partial<FormState> = {};
+    if (!form.purpose.trim()) {
+      const parts = [
+        report.problemDefinition?.trim(),
+        report.problemImportance?.trim(),
+        report.diagnosisGap?.trim() ? `현재 상태와 목표 간 격차: ${report.diagnosisGap.trim()}` : undefined,
+      ].filter(Boolean) as string[];
+      if (parts.length > 0) patch.purpose = parts.join(" ");
+    }
+    if (!form.scope.trim()) {
+      const parts = [
+        report.scopeAudience?.trim() ? `대상: ${report.scopeAudience.trim()}` : undefined,
+        report.scopeContext?.trim() ? `맥락: ${report.scopeContext.trim()}` : undefined,
+        report.scopeExclusion?.trim() ? `제외·한정: ${report.scopeExclusion.trim()}` : undefined,
+      ].filter(Boolean) as string[];
+      if (parts.length > 0) patch.scope = parts.join(" / ");
+    }
+    if (!form.method.trim()) {
+      const approachLabel =
+        report.researchApproach && report.researchApproach in RESEARCH_APPROACH_LABELS
+          ? RESEARCH_APPROACH_LABELS[report.researchApproach as keyof typeof RESEARCH_APPROACH_LABELS]
+          : undefined;
+      const parts = [
+        approachLabel ? `본 연구는 ${approachLabel} 접근을 취한다.` : undefined,
+        report.fieldAudience?.trim() ? `연구 대상은 ${report.fieldAudience.trim()}이다.` : undefined,
+        report.envLearning?.trim() ? `학습 환경: ${report.envLearning.trim()}` : undefined,
+      ].filter(Boolean) as string[];
+      if (parts.length > 0) patch.method = parts.join(" ");
+    }
+    if (!form.content.trim()) {
+      const cardNames = (report.theoryCards ?? []).map((c) => c.name?.trim()).filter(Boolean);
+      const parts = [
+        cardNames.length > 0 ? `이론적 기반: ${cardNames.join(", ")}.` : undefined,
+        report.priorResearchAnalysis?.trim()
+          ? `선행연구 분석 요약: ${report.priorResearchAnalysis.trim().slice(0, 400)}`
+          : undefined,
+      ].filter(Boolean) as string[];
+      if (parts.length > 0) patch.content = parts.join(" ");
+    }
+    const keys = Object.keys(patch);
+    if (keys.length === 0) {
+      toast.info("가져올 내용이 없거나, 모든 항목에 이미 작성분이 있습니다.");
+      return;
+    }
+    setForm((prev) => ({ ...prev, ...patch }));
+    setDirty(true);
+    const LABELS: Record<string, string> = { purpose: "연구 목적", scope: "연구 범위", method: "연구 방법", content: "연구 내용" };
+    toast.success(`보고서에서 ${keys.map((k) => LABELS[k]).join("·")} 초안을 가져왔습니다 — 제출 문장 수준으로 다듬어 저장하세요.`);
   }
 
   const total = useMemo(() => totalChars(form), [form]);
@@ -691,6 +748,20 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
       {renderHeader()}
 
       {/* 논문 제목 */}
+      {/* R3-확장: 보고서 → 계획서 시딩 배너 (빈 항목이 있을 때만) */}
+      {!readOnly && proposal && report &&
+        (!form.purpose.trim() || !form.scope.trim() || !form.method.trim() || !form.content.trim()) && (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 px-4 py-3">
+            <p className="text-xs text-foreground/85">
+              작성하신 <span className="font-semibold">연구보고서</span>가 있어요 — 문제 정의·범위·이론·선행연구를
+              비어 있는 항목의 초안으로 가져올 수 있습니다.
+            </p>
+            <Button size="sm" variant="outline" className="h-7 shrink-0 text-xs" onClick={seedFromReport}>
+              보고서에서 가져오기
+            </Button>
+          </div>
+        )}
+
       <Section
         title="1. 논문 제목"
         sub="국문·영문 제목을 각각 입력하세요. 영문 제목은 저널 투고·초록 작성 시 활용됩니다."

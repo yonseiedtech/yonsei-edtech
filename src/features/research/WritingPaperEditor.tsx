@@ -1497,12 +1497,14 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   function seedFromReport() {
     if (readOnly || !paper || !report) return;
     const bgEmpty = chapterIsEmpty(form.sections.background);
-    const needSec = form.sections.intro.find((sec) => sec.heading.includes("필요성"));
-    const needEmpty = !needSec || needSec.paragraphs.every((par) => !par.text.trim());
-    if (!bgEmpty && !needEmpty) {
-      toast.info("서론 '연구의 필요성'과 이론적 배경 장에 이미 작성분이 있어 시딩을 건너뜁니다.");
-      return;
-    }
+    const sectionEmpty = (k: WritingPaperChapterKey, kw: string[]) => {
+      const sec = form.sections[k].find((sc) => kw.some((w) => sc.heading.includes(w)));
+      return !sec || sec.paragraphs.every((par) => !par.text.trim());
+    };
+    const needEmpty = sectionEmpty("intro", ["필요성"]);
+    // R3-확장(2026-07-04): 방법 장 절 단위 시딩 대상
+    const subjectEmpty = sectionEmpty("method", ["연구 대상", "연구 참여자"]);
+    const programEmpty = sectionEmpty("method", ["프로그램"]);
 
     // 필요성 초안 — v2 구조화 입력 우선, 없으면 레거시 필드
     const needParts: string[] = [];
@@ -1513,6 +1515,37 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     if (report.problemImportance?.trim()) needParts.push(report.problemImportance.trim());
     if (needParts.length === 0 && report.problemDefinition?.trim()) needParts.push(report.problemDefinition.trim());
     if (needParts.length === 0 && report.fieldProblem?.trim()) needParts.push(report.fieldProblem.trim());
+    // R3-확장: 문제 진단(1.5장) — 기존 시도의 한계·격차·핵심 원인은 필요성 논증의 재료
+    if (report.diagnosisAttempts?.trim()) needParts.push(`기존 시도와 한계: ${report.diagnosisAttempts.trim()}`);
+    if (report.diagnosisGap?.trim()) needParts.push(`현재 상태와 목표 간 격차: ${report.diagnosisGap.trim()}`);
+    if (report.diagnosisPrimaryCause?.trim()) needParts.push(`본 연구가 집중하는 핵심 원인: ${report.diagnosisPrimaryCause.trim()}`);
+
+    // R3-확장: 학습자 분석(3장) → '연구 대상/참여자' 절 초안
+    const subjectParts: string[] = [];
+    if (report.fieldAudience?.trim()) subjectParts.push(`본 연구의 대상은 ${report.fieldAudience.trim()}이다.`);
+    if (report.learnerProfile?.trim()) subjectParts.push(report.learnerProfile.trim());
+    if (report.learnerCognitive?.trim()) subjectParts.push(`인지·지식 수준: ${report.learnerCognitive.trim()}`);
+    if (report.learnerAffective?.trim()) subjectParts.push(`정서·동기 특성: ${report.learnerAffective.trim()}`);
+
+    // R3-확장: 환경 분석(2장)·학습 과제·목표(4장) → '프로그램 설계 및 적용' 절 초안
+    const programParts: string[] = [];
+    if (report.envLearning?.trim()) programParts.push(`학습 환경: ${report.envLearning.trim()}`);
+    if (report.envTransfer?.trim()) programParts.push(`적용(전이) 환경: ${report.envTransfer.trim()}`);
+    if (report.envConstraint?.trim()) programParts.push(`제약·맥락: ${report.envConstraint.trim()}`);
+    const steps = (report.taskSteps ?? []).map((t) => t.trim()).filter(Boolean);
+    if (steps.length > 0) {
+      programParts.push(`학습 과제 위계: ${steps.map((t, i) => `(${i + 1}) ${t}`).join(" → ")}`);
+    } else if (report.taskDecompose?.trim()) {
+      programParts.push(`학습 과제 위계: ${report.taskDecompose.trim()}`);
+    }
+    const mager = [report.outcomeMagerA, report.outcomeMagerB, report.outcomeMagerC, report.outcomeMagerD]
+      .map((t) => t?.trim())
+      .filter(Boolean)
+      .join(" / ");
+    if (mager) programParts.push(`학습 목표(Mager ABCD): ${mager}`);
+    else if (report.outcomeMagerABCD?.trim()) programParts.push(`학습 목표: ${report.outcomeMagerABCD.trim()}`);
+    if (report.outcomeCognitive?.trim()) programParts.push(`인지적 목표: ${report.outcomeCognitive.trim()}`);
+    if (report.outcomeSkillAttitude?.trim()) programParts.push(`기능·태도 목표: ${report.outcomeSkillAttitude.trim()}`);
 
     // 이론적 배경 절 — 이론 카드가 있으면 카드당 1절, 없으면 레거시 단일 이론 필드
     const bgSections: WritingSection[] = [];
@@ -1561,22 +1594,41 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
 
     const seedNeed = needEmpty && needParts.length > 0;
     const seedBg = bgEmpty && bgSections.length > 0;
-    if (!seedNeed && !seedBg) {
-      toast.info("보고서에서 가져올 내용이 없습니다 — 보고서의 문제·이론 장을 먼저 작성하세요.");
+    const seedSubject = subjectEmpty && subjectParts.length > 0;
+    const seedProgram = programEmpty && programParts.length > 0;
+    if (!seedNeed && !seedBg && !seedSubject && !seedProgram) {
+      toast.info("보고서에서 가져올 내용이 없거나, 대상 절에 이미 작성분이 있습니다.");
       return;
     }
+    const fillSection = (
+      secs: WritingSection[],
+      kw: string[],
+      fallbackHeading: string,
+      parts: string[],
+    ): WritingSection[] => {
+      const arr = [...secs];
+      let idx = arr.findIndex((sc) => kw.some((w) => sc.heading.includes(w)));
+      if (idx < 0) {
+        arr.push({ id: uid(), heading: fallbackHeading, paragraphs: [] });
+        idx = arr.length - 1;
+      }
+      const kept = arr[idx].paragraphs.filter((par) => par.text.trim());
+      arr[idx] = { ...arr[idx], paragraphs: [...kept, ...parts.map((t) => ({ id: uid(), text: t }))] };
+      return arr;
+    };
     setForm((prev) => {
       const next = { ...prev.sections } as SectionsState;
-      if (seedNeed) {
-        const secs = [...next.intro];
-        let idx = secs.findIndex((sec) => sec.heading.includes("필요성"));
-        if (idx < 0) {
-          secs.unshift({ id: uid(), heading: "연구의 필요성", paragraphs: [] });
-          idx = 0;
-        }
-        const kept = secs[idx].paragraphs.filter((par) => par.text.trim());
-        secs[idx] = { ...secs[idx], paragraphs: [...kept, ...needParts.map((t) => ({ id: uid(), text: t }))] };
-        next.intro = secs;
+      if (seedNeed) next.intro = fillSection(next.intro, ["필요성"], "연구의 필요성", needParts);
+      if (seedSubject) {
+        next.method = fillSection(
+          next.method,
+          ["연구 대상", "연구 참여자"],
+          profile?.approach === "qualitative" ? "연구 참여자" : "연구 대상",
+          subjectParts,
+        );
+      }
+      if (seedProgram) {
+        next.method = fillSection(next.method, ["프로그램"], "프로그램 설계 및 적용", programParts);
       }
       if (seedBg) {
         // 양적 트랙의 '연구모형 및 가설' 템플릿 절은 유지한 채 앞쪽 빈 템플릿을 교체
@@ -1588,7 +1640,14 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       return { ...prev, sections: next };
     });
     markDirty();
-    const done = [seedNeed && "서론(연구의 필요성)", seedBg && "이론적 배경"].filter(Boolean).join("·");
+    const done = [
+      seedNeed && "서론(필요성·진단)",
+      seedBg && "이론적 배경",
+      seedSubject && "연구 대상(학습자 분석)",
+      seedProgram && "프로그램 설계(환경·과제·목표)",
+    ]
+      .filter(Boolean)
+      .join(" · ");
     toast.success(`연구보고서 내용을 ${done} 초안으로 가져왔습니다 — 인용·문장을 본문 수준으로 다듬어 저장하세요.`);
     logEditorEvent(user.id, "seed_from_report");
   }
@@ -2485,13 +2544,13 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       {/* P2+R3: 계획서·보고서 → 본문 시딩 배너 (빈 장이 남아 있을 때) */}
       {!readOnly && paper && (
         (proposals.length > 0 && (chapterIsEmpty(form.sections.intro) || chapterIsEmpty(form.sections.method))) ||
-        (!!report && chapterIsEmpty(form.sections.background))
+        (!!report && (chapterIsEmpty(form.sections.background) || chapterIsEmpty(form.sections.method)))
       ) && (
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 px-4 py-3">
             <p className="text-xs text-foreground/85">
               연구 여정 앞 단계의 산출물을 초안으로 가져올 수 있어요 —{" "}
               <span className="font-semibold">계획서</span>의 목적·범위·방법은 서론·연구 방법으로,{" "}
-              <span className="font-semibold">보고서</span>의 현장 문제·이론·선행연구는 서론·이론적 배경으로.
+              <span className="font-semibold">보고서</span>의 문제·이론·선행연구·학습자·환경 분석은 서론·이론적 배경·연구 방법으로.
             </p>
             <div className="flex shrink-0 gap-2">
               {proposals.length > 0 &&
@@ -2500,7 +2559,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                     계획서에서 가져오기
                   </Button>
                 )}
-              {!!report && chapterIsEmpty(form.sections.background) && (
+              {!!report && (chapterIsEmpty(form.sections.background) || chapterIsEmpty(form.sections.method)) && (
                 <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => seedFromReport()}>
                   보고서에서 가져오기
                 </Button>
