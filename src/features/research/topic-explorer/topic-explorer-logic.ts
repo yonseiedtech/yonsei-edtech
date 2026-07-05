@@ -92,6 +92,8 @@ export const TE_QUESTIONS: TEQuestion[] = [
     options: [
       { value: "corp_hrd", label: "사내 HRD·교육 부서", hint: "연수 기획·운영 — 개입 설계가 상대적으로 쉬움" },
       { value: "corp_edtech", label: "교육 서비스·에듀테크 기업", hint: "제품·콘텐츠 개발 — 사용자 데이터 활용 가능" },
+      { value: "corp_public", label: "공기업·공공기관 산하 기업", hint: "체계적 연수 제도 — 집합·의무교육 맥락" },
+      { value: "corp_startup", label: "스타트업·중소기업", hint: "소규모·빠른 변화 — 무형식학습·OJT 중심" },
       { value: "corp_field", label: "일반 직무 현장 (교육 담당 아님)", hint: "동료·본인 경험 기반 — 설문·면담 중심" },
     ],
   },
@@ -303,6 +305,8 @@ const TE_FIELD_DETAIL_META: Record<string, { subjects: string[]; target: string 
   lifelong: { subjects: ["성인학습자", "학부모"], target: "평생교육 성인학습자" },
   corp_hrd: { subjects: ["기업 구성원", "성인학습자"], target: "기업 구성원(사내 교육 대상자)" },
   corp_edtech: { subjects: ["기업 구성원", "성인학습자"], target: "교육 서비스 사용자(학습자)" },
+  corp_public: { subjects: ["기업 구성원", "성인학습자"], target: "공기업 구성원" },
+  corp_startup: { subjects: ["기업 구성원", "성인학습자"], target: "스타트업(중소기업) 구성원" },
   corp_field: { subjects: ["기업 구성원", "성인학습자"], target: "동료 직무 종사자" },
   univ_undergrad: { subjects: ["대학생"], target: "대학생(학부생)" },
   univ_grad: { subjects: ["대학원생"], target: "대학원생" },
