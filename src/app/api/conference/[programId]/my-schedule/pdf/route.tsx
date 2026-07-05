@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { requireAuth } from "@/lib/api-auth";
+import { ROLE_HIERARCHY } from "@/lib/permissions";
 import { pdf } from "@react-pdf/renderer";
 import { PersonalSchedulePdfDocument } from "@/features/conference/PersonalSchedulePdfDocument";
 import type { ConferenceProgram, UserSessionPlan, Activity } from "@/types";
@@ -12,7 +14,13 @@ export async function GET(
   ctx: { params: Promise<{ programId: string }> },
 ) {
   const { programId } = await ctx.params;
+  // QA-v3 H(보안): 무인증 userId 파라미터만으로 타인 일정 PDF 를 반환하던 IDOR — 본인/스태프만 허용
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
   const userId = req.nextUrl.searchParams.get("userId");
+  if (userId && userId !== auth.id && ROLE_HIERARCHY[auth.role] < ROLE_HIERARCHY.staff) {
+    return NextResponse.json({ error: "본인 일정만 내려받을 수 있습니다." }, { status: 403 });
+  }
   const userNameParam = req.nextUrl.searchParams.get("userName") ?? "";
   if (!userId) {
     return NextResponse.json({ error: "userId 쿼리 파라미터가 필요합니다." }, { status: 400 });

@@ -804,8 +804,8 @@ service cloud.firestore {
     // 운영진이 편집·발행하면 비로그인 방문자도 슬라이더로 볼 수 있어야 함
     match /card_news_series/{docId} {
       allow read: if true;
-      allow write: if isAuthenticated()
-        && getUserRole() in ['president', 'admin', 'sysadmin'];
+      // QA-v3: 콘솔 메뉴가 staff+ 에게 편집 UI 를 열어주므로 룰도 staff+ (기존 president+ 는 전부 거부되어 편집분 유실)
+      allow write: if isAuthenticated() && isStaffOrAbove();
     }
 
     // ─── Host Retrospectives (Track 7 F6: 호스트 회고) ───
@@ -1321,11 +1321,22 @@ service cloud.firestore {
     // write: 인증 사용자 — 본인 userId 로 제출 (익명은 userId 필드 없이 create)
     // read/list: 운영진(staff+) 전용
     match /user_feedback/{docId} {
-      allow create: if isAuthenticated()
-        && (
-          !("userId" in request.resource.data)
-          || request.resource.data.userId == request.auth.uid
-        );
+      // QA-v3: 폼이 "비로그인 익명 제출"을 안내하므로 비인증 create 허용 — 단 userId 사칭 불가·크기 제한
+      allow create: if (
+        (isAuthenticated()
+          && (
+            !("userId" in request.resource.data)
+            || request.resource.data.userId == request.auth.uid
+          ))
+        || (
+          !isAuthenticated()
+          && !("userId" in request.resource.data)
+          && request.resource.data.title is string
+          && request.resource.data.title.size() <= 200
+          && request.resource.data.body is string
+          && request.resource.data.body.size() <= 5000
+        )
+      );
       allow read, list: if isAuthenticated() && isStaffOrAbove();
       allow update: if isAuthenticated() && isStaffOrAbove();
       allow delete: if isAuthenticated() && isAdmin();
@@ -1456,9 +1467,14 @@ service cloud.firestore {
         && request.resource.data.workspaceVisibility == 'members_only';
 
       // 수정: leader 만. leaderId·createdBy 는 절대 변경 불가 (이양은 Phase 4 별도 트랜잭션).
-      allow update: if isCollabLeader(researchId)
+      // QA-v3: 초대 수락자가 본인 uid 를 collaboratorIds 에 1개 추가하는 것만 예외 허용 (denorm 즉시화)
+      allow update: if (isCollabLeader(researchId)
         && request.resource.data.leaderId == resource.data.leaderId
-        && request.resource.data.createdBy == resource.data.createdBy;
+        && request.resource.data.createdBy == resource.data.createdBy)
+        || (isAuthenticated()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['collaboratorIds', 'updatedAt'])
+          && request.resource.data.collaboratorIds.size() == resource.data.collaboratorIds.size() + 1
+          && request.resource.data.collaboratorIds.toSet().difference(resource.data.collaboratorIds.toSet()) == [request.auth.uid].toSet());
 
       // 삭제: leader 또는 admin.
       allow delete: if isCollabLeader(researchId) || isAdmin();

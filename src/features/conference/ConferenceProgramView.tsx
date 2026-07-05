@@ -448,15 +448,36 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                 </Badge>
               )}
               {myCount > 0 && (
-                <a
-                  href={`/api/conference/${program.id}/my-schedule/pdf?userId=${encodeURIComponent(user.id)}${user.name ? `&userName=${encodeURIComponent(user.name)}` : ""}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="button"
                   title="내 일정만 모은 PDF 다운로드"
                   className="inline-flex h-7 items-center gap-1 rounded-md border border-input bg-background px-2.5 text-xs font-medium text-foreground hover:bg-muted"
+                  onClick={async () => {
+                    // QA-v3 H(보안): PDF 라우트가 인증 필수로 바뀜 — Bearer 토큰 fetch 로 다운로드
+                    try {
+                      const { auth } = await import("@/lib/firebase");
+                      const token = await auth.currentUser?.getIdToken();
+                      if (!token) throw new Error("로그인이 필요합니다.");
+                      const res = await fetch(
+                        `/api/conference/${program.id}/my-schedule/pdf?userId=${encodeURIComponent(user.id)}${user.name ? `&userName=${encodeURIComponent(user.name)}` : ""}`,
+                        { headers: { Authorization: `Bearer ${token}` } },
+                      );
+                      if (!res.ok) throw new Error("다운로드 실패");
+                      const blob = await res.blob();
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = "내_학회_일정.pdf";
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    } catch (e) {
+                      const { toast } = await import("sonner");
+                      toast.error(e instanceof Error ? e.message : "PDF 다운로드에 실패했습니다.");
+                    }
+                  }}
                 >
                   <Download className="h-3 w-3" /> 내 일정 PDF
-                </a>
+                </button>
               )}
             </div>
           )}

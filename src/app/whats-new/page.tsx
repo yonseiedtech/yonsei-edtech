@@ -142,9 +142,9 @@ const FEATURES: Feature[] = [
     ],
     cta: "통계방법 가이드 열기",
     ctaHref: "/archive/statistical-methods",
-    color: "from-cyan-50 to-cyan-100/60",
-    iconBg: "bg-cyan-100/80",
-    iconColor: "text-cyan-700",
+    color: "from-cyan-50 to-cyan-100/60 dark:from-cyan-950/30 dark:to-cyan-950/30",
+    iconBg: "bg-cyan-100/80 dark:bg-cyan-950/40",
+    iconColor: "text-cyan-700 dark:text-cyan-400",
   },
   {
     id: "archive-foundation-expansion",
@@ -161,9 +161,9 @@ const FEATURES: Feature[] = [
     ],
     cta: "기초 용어 사전 열기",
     ctaHref: "/archive/foundation-terms",
-    color: "from-amber-50 to-amber-100/60",
-    iconBg: "bg-amber-100/80",
-    iconColor: "text-amber-700",
+    color: "from-amber-50 to-amber-100/60 dark:from-amber-950/30 dark:to-amber-950/30",
+    iconBg: "bg-amber-100/80 dark:bg-amber-950/40",
+    iconColor: "text-amber-700 dark:text-amber-400",
   },
   {
     id: "thesis-journey-suite",
@@ -180,9 +180,9 @@ const FEATURES: Feature[] = [
     ],
     cta: "나의 논문 여정 열기",
     ctaHref: "/mypage/research",
-    color: "from-sky-50 to-sky-100/60",
-    iconBg: "bg-sky-100/80",
-    iconColor: "text-sky-700",
+    color: "from-sky-50 to-sky-100/60 dark:from-sky-950/30 dark:to-sky-950/30",
+    iconBg: "bg-sky-100/80 dark:bg-sky-950/40",
+    iconColor: "text-sky-700 dark:text-sky-400",
   },
   {
     id: "reading-apa-doi",
@@ -199,9 +199,9 @@ const FEATURES: Feature[] = [
     ],
     cta: "논문 읽기 노트 열기",
     ctaHref: "/mypage/research",
-    color: "from-emerald-50 to-emerald-100/60",
-    iconBg: "bg-emerald-100/80",
-    iconColor: "text-emerald-700",
+    color: "from-emerald-50 to-emerald-100/60 dark:from-emerald-950/30 dark:to-emerald-950/30",
+    iconBg: "bg-emerald-100/80 dark:bg-emerald-950/40",
+    iconColor: "text-emerald-700 dark:text-emerald-400",
   },
   {
     id: "scholar-seminal-works",
@@ -218,9 +218,9 @@ const FEATURES: Feature[] = [
     ],
     cta: "아카이브 개념 보기",
     ctaHref: "/archive/concept",
-    color: "from-indigo-50 to-indigo-100/60",
-    iconBg: "bg-indigo-100/80",
-    iconColor: "text-indigo-700",
+    color: "from-indigo-50 to-indigo-100/60 dark:from-indigo-950/30 dark:to-indigo-950/30",
+    iconBg: "bg-indigo-100/80 dark:bg-indigo-950/40",
+    iconColor: "text-indigo-700 dark:text-indigo-400",
   },
   {
     id: "research-design-profile",
@@ -237,9 +237,9 @@ const FEATURES: Feature[] = [
     ],
     cta: "연구 동향 분석 열기",
     ctaHref: "/research",
-    color: "from-violet-50 to-violet-100/60",
-    iconBg: "bg-violet-100/80",
-    iconColor: "text-violet-700",
+    color: "from-violet-50 to-violet-100/60 dark:from-violet-950/30 dark:to-violet-950/30",
+    iconBg: "bg-violet-100/80 dark:bg-violet-950/40",
+    iconColor: "text-violet-700 dark:text-violet-400",
   },
   {
     id: "dashboard-phase-d",
@@ -256,9 +256,9 @@ const FEATURES: Feature[] = [
     ],
     cta: "대시보드 설정 열기",
     ctaHref: "/mypage/dashboard-settings",
-    color: "from-blue-50 to-blue-100/60",
-    iconBg: "bg-blue-100/80",
-    iconColor: "text-blue-700",
+    color: "from-blue-50 to-blue-100/60 dark:from-blue-950/30 dark:to-blue-950/30",
+    iconBg: "bg-blue-100/80 dark:bg-blue-950/40",
+    iconColor: "text-blue-700 dark:text-blue-400",
   },
   {
     id: "onboarding-checklist",
@@ -275,9 +275,9 @@ const FEATURES: Feature[] = [
     ],
     cta: "대시보드에서 확인",
     ctaHref: "/dashboard",
-    color: "from-green-50 to-green-100/60",
-    iconBg: "bg-green-100/80",
-    iconColor: "text-green-700",
+    color: "from-green-50 to-green-100/60 dark:from-green-950/30 dark:to-green-950/30",
+    iconBg: "bg-green-100/80 dark:bg-green-950/40",
+    iconColor: "text-green-700 dark:text-green-400",
   },
   {
     id: "notification-center",
@@ -294,9 +294,9 @@ const FEATURES: Feature[] = [
     ],
     cta: "알림 설정 열기",
     ctaHref: "/mypage/notifications",
-    color: "from-purple-50 to-purple-100/60",
-    iconBg: "bg-purple-100/80",
-    iconColor: "text-purple-700",
+    color: "from-purple-50 to-purple-100/60 dark:from-purple-950/30 dark:to-purple-950/30",
+    iconBg: "bg-purple-100/80 dark:bg-purple-950/40",
+    iconColor: "text-purple-700 dark:text-purple-400",
   },
   {
     id: "archive-enhanced",
@@ -313,9 +313,9 @@ const FEATURES: Feature[] = [
     ],
     cta: "아카이브 보러 가기",
     ctaHref: "/archive",
-    color: "from-amber-50 to-amber-100/60",
-    iconBg: "bg-amber-100/80",
-    iconColor: "text-amber-700",
+    color: "from-amber-50 to-amber-100/60 dark:from-amber-950/30 dark:to-amber-950/30",
+    iconBg: "bg-amber-100/80 dark:bg-amber-950/40",
+    iconColor: "text-amber-700 dark:text-amber-400",
   },
   {
     id: "external-activity-status",
@@ -332,9 +332,9 @@ const FEATURES: Feature[] = [
     ],
     cta: "대외활동 보러 가기",
     ctaHref: "/activities/external",
-    color: "from-rose-50 to-rose-100/60",
-    iconBg: "bg-rose-100/80",
-    iconColor: "text-rose-700",
+    color: "from-rose-50 to-rose-100/60 dark:from-rose-950/30 dark:to-rose-950/30",
+    iconBg: "bg-rose-100/80 dark:bg-rose-950/40",
+    iconColor: "text-rose-700 dark:text-rose-400",
   },
 ];
 
@@ -410,7 +410,7 @@ export default function WhatsNewPage() {
                   <div className="mt-4">
                     <Link
                       href={feature.ctaHref}
-                      className="inline-flex items-center gap-1.5 rounded-lg border bg-white/80 px-3 py-1.5 text-sm font-medium text-foreground shadow-xs transition hover:bg-white hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="inline-flex items-center gap-1.5 rounded-lg border bg-white/80 px-3 py-1.5 text-sm font-medium text-foreground shadow-xs transition hover:bg-white dark:bg-white/10 dark:hover:bg-white/20 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       {feature.cta}
                       <ArrowRight size={14} />
@@ -424,14 +424,14 @@ export default function WhatsNewPage() {
       </div>
 
       {/* 피드백 CTA */}
-      <div className="mt-10 rounded-2xl border bg-gradient-to-br from-slate-50 to-slate-100/60 p-6">
+      <div className="mt-10 rounded-2xl border bg-gradient-to-br from-slate-50 to-slate-100/60 dark:from-slate-950/30 dark:to-slate-950/30 p-6">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-200/80 text-slate-600">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-200/80 text-slate-600 dark:bg-slate-800/80 dark:text-slate-400">
               <MessageSquare size={18} />
             </div>
             <div>
-              <p className="font-semibold text-slate-800">이 기능에 대한 의견이 있으신가요?</p>
+              <p className="font-semibold text-slate-800 dark:text-slate-200">이 기능에 대한 의견이 있으신가요?</p>
               <p className="mt-0.5 text-sm text-muted-foreground">
                 버그 제보, UI 개선 제안, 새 기능 요청을 자유롭게 남겨주세요.
               </p>
@@ -439,7 +439,7 @@ export default function WhatsNewPage() {
           </div>
           <Link
             href="/feedback"
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border bg-white/80 px-4 py-2 text-sm font-medium text-foreground shadow-xs transition hover:bg-white hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border bg-white/80 px-4 py-2 text-sm font-medium text-foreground shadow-xs transition hover:bg-white dark:bg-white/10 dark:hover:bg-white/20 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <MessageSquare size={14} />
             피드백 남기기

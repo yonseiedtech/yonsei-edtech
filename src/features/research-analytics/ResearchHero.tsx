@@ -7,12 +7,16 @@ import { BookOpen, Hash, TrendingUp, GraduationCap, Search, Users, Award } from 
 /* ──────────────────────────────────────────
    Props
 ────────────────────────────────────────── */
+export type PersonaNavTarget = "keyword" | "lineage" | "method";
+
 export interface ResearchHeroProps {
   total: number;
   yearRange: string;
   keywordCount: number;
   topKeywords: { word: string; count: number }[];
   eras: { label: string; range: string; count: number; highlight: string }[];
+  /** QA-v3 H16: 페르소나 CTA — 존재하지 않는 #앵커 대신 페이지가 탭 전환·스크롤을 수행 */
+  onPersonaNav?: (target: PersonaNavTarget) => void;
 }
 
 /* ──────────────────────────────────────────
@@ -95,14 +99,14 @@ function StatCard({ icon, value, label, suffix = "", delay = 0, active }: StatCa
    Floating keyword tag
 ────────────────────────────────────────── */
 // UX(2026-07-04): 보라 계열 3종 제거 — 블루·틸·앰버 중심 (히어로가 정신없다는 피드백)
+// QA-v3 H9: 흰 12px 글자 기준 대비 4:1+ 확보 — 밝은 sky/amber/teal 톤은 판독 불가였음
 const GRADIENT_PAIRS: [string, string][] = [
-  ["#1d4ed8", "#0ea5e9"], // blue → sky
-  ["#0ea5e9", "#22d3ee"], // sky → cyan
-  ["#14b8a6", "#0ea5e9"], // teal → sky
-  ["#f59e0b", "#fbbf24"], // amber
-  ["#0369a1", "#14b8a6"], // blue → teal
-  ["#2563eb", "#1e40af"], // blue deep
-  ["#0f766e", "#0369a1"], // teal → blue
+  ["#1d4ed8", "#0369a1"], // blue-700 → sky-800
+  ["#0369a1", "#0e7490"], // sky-800 → cyan-700
+  ["#0f766e", "#0369a1"], // teal-700 → sky-800
+  ["#b45309", "#92400e"], // amber-700 → amber-800
+  ["#2563eb", "#1e40af"], // blue-600 → blue-800
+  ["#155e75", "#164e63"], // cyan-800 → cyan-900
 ];
 
 function pickGradient(word: string): [string, string] {
@@ -223,14 +227,15 @@ interface PersonaCTAItem {
   icon: React.ReactNode;
   label: string;
   desc: string;
-  href: string;
+  target: PersonaNavTarget;
   color: string;
 }
 
-function PersonaCTA({ item, index, active }: { item: PersonaCTAItem; index: number; active: boolean }) {
+function PersonaCTA({ item, index, active, onNav }: { item: PersonaCTAItem; index: number; active: boolean; onNav?: (t: PersonaNavTarget) => void }) {
   return (
-    <motion.a
-      href={item.href}
+    <motion.button
+      type="button"
+      onClick={() => onNav?.(item.target)}
       initial={{ opacity: 0, y: 20 }}
       animate={active ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.5, delay: 0.55 + index * 0.08, ease: [0.22, 1, 0.36, 1] }}
@@ -253,7 +258,7 @@ function PersonaCTA({ item, index, active }: { item: PersonaCTAItem; index: numb
       </span>
       <span className="text-[11px] font-bold text-white/90 leading-snug">{item.label}</span>
       <span className="text-[10.5px] text-white/55 leading-snug">{item.desc}</span>
-    </motion.a>
+    </motion.button>
   );
 }
 
@@ -266,6 +271,7 @@ export default function ResearchHero({
   keywordCount,
   topKeywords,
   eras,
+  onPersonaNav,
 }: ResearchHeroProps) {
   const ref = useRef<HTMLElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-80px" });
@@ -284,28 +290,28 @@ export default function ResearchHero({
       icon: <GraduationCap size={16} />,
       label: "진학을 고민한다면",
       desc: "우리 전공의 연구 다양성과 역량을 확인하세요",
-      href: "#계보",
+      target: "lineage",
       color: "linear-gradient(135deg,#1d4ed8,#0ea5e9)",
     },
     {
       icon: <Search size={16} />,
       label: "연구주제를 찾는다면",
       desc: "키워드 트렌드로 공백 주제를 발견하세요",
-      href: "#키워드",
+      target: "keyword",
       color: "linear-gradient(135deg,#0ea5e9,#6366f1)",
     },
     {
       icon: <Users size={16} />,
       label: "동문이라면",
       desc: "내 연구가 계보 어디에 위치하는지 보세요",
-      href: "#계보",
+      target: "lineage",
       color: "linear-gradient(135deg,#14b8a6,#0ea5e9)",
     },
     {
       icon: <Award size={16} />,
       label: "연구역량이 궁금하다면",
       desc: "시대별 패러다임 변화와 방법론 분포 확인",
-      href: "#방법론",
+      target: "method",
       color: "linear-gradient(135deg,#f59e0b,#ef4444)",
     },
   ];
@@ -512,7 +518,7 @@ export default function ResearchHero({
           </motion.p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {personas.map((item, i) => (
-              <PersonaCTA key={item.label} item={item} index={i} active={isInView} />
+              <PersonaCTA key={item.label} item={item} index={i} active={isInView} onNav={onPersonaNav} />
             ))}
           </div>
         </div>

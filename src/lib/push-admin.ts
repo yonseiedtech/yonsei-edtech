@@ -16,12 +16,14 @@ export interface PushPayload {
   tag?: string;
 }
 
-/** 만료/실패로 삭제 대상이 되는 FCM 에러 코드 */
+/** 만료/실패로 삭제 대상이 되는 FCM 에러 코드.
+ *  QA-v3: invalid-argument 는 payload 문제(토큰과 무관)에도 발생 — 포함 시 정상 토큰이 대량 삭제됨. */
 const STALE_ERROR_CODES = new Set([
   "messaging/registration-token-not-registered",
   "messaging/invalid-registration-token",
-  "messaging/invalid-argument",
 ]);
+
+const SITE_ORIGIN = "https://yonsei-edtech.vercel.app";
 
 interface PushTokenDoc {
   userId: string;
@@ -137,6 +139,8 @@ export async function sendPushToUsers(
   const messaging = getAdminMessaging();
   const db = getAdminDb();
 
+  // QA-v3: webpush.fcm_options.link 는 HTTPS 절대 URL 필수 — 상대경로면 INVALID_ARGUMENT 로 발송 거부
+  const absoluteLink = payload.link.startsWith("http") ? payload.link : `${SITE_ORIGIN}${payload.link}`;
   const messages = tokenDocs.map((t) => ({
     token: t.data.token,
     notification: {
@@ -148,7 +152,7 @@ export async function sendPushToUsers(
       tag: payload.tag ?? "yonsei-edtech",
     },
     webpush: {
-      fcmOptions: { link: payload.link },
+      fcmOptions: { link: absoluteLink },
     },
   }));
 

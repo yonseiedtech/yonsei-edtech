@@ -538,9 +538,18 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
                   ) : (
                     <ul className="divide-y divide-border">
                       {studySessions.slice(0, 20).map((s) => {
-                        const date = s.startTime?.slice(0, 10) ?? "";
-                        const start = s.startTime?.slice(11, 16) ?? "";
-                        const end = s.endTime?.slice(11, 16) ?? "";
+                        // QA-v3 H2: 저장값은 UTC ISO — 로컬(KST) 시각으로 변환 표시
+                        const hm = (iso?: string | null) => {
+                          if (!iso) return "";
+                          const d = new Date(iso);
+                          return isNaN(d.getTime()) ? "" : `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+                        };
+                        const sd = s.startTime ? new Date(s.startTime) : null;
+                        const date = sd && !isNaN(sd.getTime())
+                          ? `${sd.getFullYear()}-${String(sd.getMonth() + 1).padStart(2, "0")}-${String(sd.getDate()).padStart(2, "0")}`
+                          : "";
+                        const start = hm(s.startTime);
+                        const end = hm(s.endTime);
                         const minutes = s.durationMinutes ?? 0;
                         const completed = !!s.endTime;
                         return (

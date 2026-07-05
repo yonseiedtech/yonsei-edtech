@@ -26,13 +26,15 @@ export default function EditSessionDialog({ open, session, onClose }: Props) {
   const [endTime, setEndTime] = useState("10:00");
   const [memo, setMemo] = useState("");
 
+  // QA-v3 H2: 저장값은 UTC ISO — slice 프리필은 UTC 시각을 로컬로 재해석시켜
+  // "수정"만 눌러도 세션이 -9h 이동하는 데이터 파괴를 일으켰다. 로컬 변환 프리필로 교정.
   useEffect(() => {
     if (!session) return;
     setType(session.type ?? "reading");
     setTargetTitle(session.targetTitle ?? "");
-    setDate(session.startTime?.slice(0, 10) ?? "");
-    setStartTime(session.startTime?.slice(11, 16) ?? "09:00");
-    setEndTime(session.endTime?.slice(11, 16) ?? "10:00");
+    setDate(toLocalYmd(session.startTime) || "");
+    setStartTime(toLocalHm(session.startTime) || "09:00");
+    setEndTime(toLocalHm(session.endTime) || "10:00");
     setMemo(session.memo ?? "");
   }, [session]);
 
@@ -147,4 +149,18 @@ export default function EditSessionDialog({ open, session, onClose }: Props) {
       </DialogContent>
     </Dialog>
   );
+}
+
+function toLocalYmd(iso?: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function toLocalHm(iso?: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }

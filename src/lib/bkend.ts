@@ -498,10 +498,11 @@ export const attendeesApi = {
     dataApi.list<SeminarAttendee>("seminar_attendees", { "filter[studentId]": studentId, "filter[isGuest]": "true" }),
   findGuestsByEmail: (email: string) =>
     dataApi.list<SeminarAttendee>("seminar_attendees", { "filter[email]": email, "filter[isGuest]": "true" }),
+  // QA-v3 H1: qrToken 이 어디서도 발급되지 않아 QR 스캔 체크인이 전면 불능이었음 — 등록 시 발급
   add: (seminarId: string, userId: string) =>
-    dataApi.create<SeminarAttendee>("seminar_attendees", { seminarId, userId }),
+    dataApi.create<SeminarAttendee>("seminar_attendees", { seminarId, userId, qrToken: crypto.randomUUID() }),
   addWithDetails: (seminarId: string, data: Record<string, unknown>) =>
-    dataApi.create<SeminarAttendee>("seminar_attendees", { seminarId, ...data }),
+    dataApi.create<SeminarAttendee>("seminar_attendees", { seminarId, qrToken: crypto.randomUUID(), ...data }),
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<SeminarAttendee>("seminar_attendees", id, data),
   remove: (id: string) => dataApi.delete("seminar_attendees", id),
@@ -3251,7 +3252,7 @@ export const collabInvitesApi = {
     return dataApi.create<CollabResearchInvite>(COLLAB_INVITES_COL, payload);
   },
 
-  /** 수락: invite update + members upsert + streak event. denorm 동기화는 leader 의 reconcile 진입 시. */
+  /** 수락: invite update + members upsert + collaboratorIds denorm + streak event. */
   accept: async (
     inviteId: string,
     recipientId: string,
@@ -3274,6 +3275,17 @@ export const collabInvitesApi = {
       creditRoles: [],
       invitedBy: invite.senderId,
     });
+
+    // 2.5) QA-v3: collaboratorIds denorm 즉시 갱신 — 기존엔 leader 의 reconcile 재방문 전까지
+    //      수락자의 /collab 목록(array-contains)에 연구가 보이지 않았다. 룰이 "본인 uid 1개 추가"만 허용.
+    try {
+      await updateDoc(doc(db, COLLAB_RESEARCH_COL, invite.researchId), {
+        collaboratorIds: arrayUnion(recipientId),
+        updatedAt: serverTimestamp(),
+      });
+    } catch (err) {
+      console.warn("[collabInvitesApi.accept] collaboratorIds denorm failed (reconcile 이 보정)", err);
+    }
 
     // 3) Streak event (+3) — 멱등 doc id 로 중복 가산 방지. 실패해도 수락은 유지.
     try {
@@ -3617,16 +3629,31 @@ export const journalArticlesApi = {
     ];
   },
 
-  /** 특정 호수의 발간 논문 */
+  /** 특정 호수의 발간 논문.
+   *  QA-v3: list 룰이 visibility+reviewStatus 증명을 요구 — issueId 단독 쿼리는 비-staff 전원 거부됨.
+   *  public/society 두 증명형 쿼리를 병합하고 pageStart 는 클라이언트 정렬(복합 인덱스 회피). */
   listByIssue: async (issueId: string): Promise<ResearchJournalArticle[]> => {
-    const q = query(
-      collection(db, JOURNAL_ARTICLES_COL),
-      where("issueId", "==", issueId),
-      orderBy("pageStart", "asc"),
-      firestoreLimit(50),
-    );
-    const snap = await getDocs(q);
-    return snap.docs.map((d) => serializeDoc(d) as unknown as ResearchJournalArticle);
+    const mk = (visibility: string) =>
+      query(
+        collection(db, JOURNAL_ARTICLES_COL),
+        where("issueId", "==", issueId),
+        where("reviewStatus", "==", "published"),
+        where("visibility", "==", visibility),
+        firestoreLimit(50),
+      );
+    const queries = [mk("public")];
+    if (auth.currentUser) queries.push(mk("society"));
+    const snaps = await Promise.all(queries.map((q) => getDocs(q)));
+    const seen = new Set<string>();
+    const out: ResearchJournalArticle[] = [];
+    for (const snap of snaps) {
+      for (const d of snap.docs) {
+        if (seen.has(d.id)) continue;
+        seen.add(d.id);
+        out.push(serializeDoc(d) as unknown as ResearchJournalArticle);
+      }
+    }
+    return out.sort((a, b) => (a.pageStart ?? 0) - (b.pageStart ?? 0));
   },
 
   get: (id: string) => dataApi.get<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id),

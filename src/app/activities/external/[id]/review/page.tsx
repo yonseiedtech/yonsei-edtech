@@ -90,7 +90,11 @@ export default function AttendeeReviewPage() {
 
   // 데이터 로드
   useEffect(() => {
-    if (!activityId || !user) return;
+    // QA-v3 H11: 비로그인이면 로딩을 해제해야 로그인 안내 분기에 도달한다 (기존: 무한 스켈레톤)
+    if (!activityId || !user) {
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     (async () => {
       setLoading(true);

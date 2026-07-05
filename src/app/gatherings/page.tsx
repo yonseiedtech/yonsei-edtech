@@ -216,19 +216,18 @@ function EventCard({
     if (!user || busy) return;
     setBusy(true);
     try {
-      const now = new Date().toISOString();
-      if (myRsvp) {
-        await networkingRsvpsApi.update(myRsvp.id, { status, respondedAt: now, updatedAt: now });
-      } else {
-        await networkingRsvpsApi.create({
-          eventId: ev.id,
-          userId: user.id,
-          displayName: user.name ?? "회원",
-          status,
-          respondedAt: now,
-          createdAt: now,
-          updatedAt: now,
-        });
+      // QA-v3: 회원 RSVP 도 서버 검증 경유 — 클라이언트 직접 create 는 정원·마감 검사를 우회했음
+      const { auth } = await import("@/lib/firebase");
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error("로그인이 필요합니다.");
+      const res = await fetch("/api/networking/rsvp", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId: ev.id, status }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? "신청에 실패했습니다.");
       }
       toast.success(`'${RSVP_STATUS_LABELS[status]}'(으)로 신청했습니다.`);
       onChanged();

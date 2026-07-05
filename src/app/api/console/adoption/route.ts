@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api-auth";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { Timestamp } from "firebase-admin/firestore";
 
 /**
  * GET /api/console/adoption (C-5, 2026-07-04) — 기능 채택률 스냅샷 (staff 전용).
@@ -23,6 +24,16 @@ export async function GET(req: NextRequest) {
     }
   };
   const col = (n: string) => db.collection(n);
+  // QA-v3 H3: dataApi.create 는 createdAt 을 Timestamp 로, 서버 경로는 ISO 문자열로 기록 —
+  // 타입 브래키팅 때문에 한쪽 비교만 하면 상시 0. 두 타입을 각각 세어 합산한다.
+  const tsCut = (d: number) => Timestamp.fromDate(new Date(Date.now() - d * 86400000));
+  const cnt2 = async (name: string, field: string, days: number): Promise<number> => {
+    const [a, b] = await Promise.all([
+      cnt(col(name).where(field, ">", iso(days))),
+      cnt(col(name).where(field, ">", tsCut(days))),
+    ]);
+    return Math.max(a, 0) + Math.max(b, 0);
+  };
 
   try {
     const [
@@ -51,10 +62,10 @@ export async function GET(req: NextRequest) {
       cnt(col("research_reports").where("lastSavedAt", ">", iso(30))),
       cnt(col("research_models")),
       cnt(col("research_papers").where("methodology", ">", "")),
-      cnt(col("paper_reading_logs").where("createdAt", ">", iso(30))),
-      cnt(col("study_sessions").where("createdAt", ">", iso(30))),
-      cnt(col("posts").where("createdAt", ">", iso(30))),
-      cnt(col("comments").where("createdAt", ">", iso(30))),
+      cnt2("paper_reading_logs", "createdAt", 30),
+      cnt2("study_sessions", "createdAt", 30),
+      cnt2("posts", "createdAt", 30),
+      cnt2("comments", "createdAt", 30),
       cnt(col("notifications")),
       cnt(col("notifications").where("read", "==", false)),
       cnt(col("design_documents")),

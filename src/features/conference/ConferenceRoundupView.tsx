@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { conferenceProgramsApi, userSessionPlansApi } from "@/lib/bkend";
+import { conferenceProgramsApi } from "@/lib/bkend";
 import Stat from "./Stat";
 import {
   CONFERENCE_SESSION_CATEGORY_COLORS,
@@ -51,8 +51,19 @@ export default function ConferenceRoundupView({ activityId, activityTitle }: Pro
         const first = progRes?.data?.[0] ?? null;
         if (!cancelled) setProgram(first);
         if (first) {
-          const planRes = await userSessionPlansApi.listByProgram(first.id);
-          if (!cancelled) setPlans(planRes?.data ?? []);
+          // QA-v3: user_session_plans list 룰은 본인/스태프 전용 — 라운드업(전체 후기)은
+          // 서버 투영 API 경유 (후기 있는 plan 만, 개인 일정 선택은 비노출)
+          const { auth } = await import("@/lib/firebase");
+          const token = await auth.currentUser?.getIdToken();
+          if (token) {
+            const res = await fetch(`/api/conference/${first.id}/roundup`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.ok) {
+              const body = (await res.json()) as { data: UserSessionPlan[] };
+              if (!cancelled) setPlans(body.data ?? []);
+            }
+          }
         }
       } finally {
         if (!cancelled) setLoading(false);

@@ -382,7 +382,8 @@ function AlbumDetail({
           continue;
         }
         try {
-          const dataUrl = await readFileAsDataUrl(file);
+          // QA-v3: base64 는 원본의 약 1.37배 — Firestore 문서 1MiB 한도에 맞춰 리사이즈·압축
+          const dataUrl = await compressImageToDataUrl(file);
           await photosApi.create({
             albumId: album.id,
             url: dataUrl,
@@ -665,4 +666,32 @@ function readFileAsDataUrl(file: File): Promise<string> {
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
+}
+
+/** QA-v3: 사진을 최대 1600px·JPEG 로 리사이즈해 Firestore 문서 한도(1MiB) 안으로 압축.
+ *  기존엔 원본 base64 를 그대로 저장해 ~780KB 초과 원본(대부분의 폰 사진)이 전부 실패했다. */
+async function compressImageToDataUrl(file: File): Promise<string> {
+  const original = await readFileAsDataUrl(file);
+  // 이미 충분히 작은 파일(움짤 포함)은 원본 유지
+  if (original.length <= 700_000) return original;
+
+  const img = new Image();
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = () => reject(new Error("이미지를 읽지 못했습니다"));
+    img.src = original;
+  });
+  const MAX = 1600;
+  const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(img.width * scale));
+  canvas.height = Math.max(1, Math.round(img.height * scale));
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("캔버스를 사용할 수 없습니다");
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  for (const quality of [0.82, 0.7, 0.55, 0.4]) {
+    const out = canvas.toDataURL("image/jpeg", quality);
+    if (out.length <= 950_000) return out;
+  }
+  throw new Error("사진을 충분히 압축하지 못했습니다 — 더 작은 이미지로 시도해주세요");
 }

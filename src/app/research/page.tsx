@@ -66,6 +66,7 @@ export default function ResearchAnalyticsPage() {
 
   const { user } = useAuthStore();
   const [theses, setTheses] = useState<AlumniThesis[]>([]);
+  const [analysisTab, setAnalysisTab] = useState("keyword");
   const [varNames, setVarNames] = useState<Map<string, string>>(new Map());
   const [measNames, setMeasNames] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -222,6 +223,14 @@ export default function ResearchAnalyticsPage() {
             {/* ── 히어로 (리브랜딩) — PageHeader 타이틀과 세로 여백 확보(사이클 122) ── */}
             <div className="mt-8 sm:mt-12">
               <ResearchHero
+                onPersonaNav={(target) => {
+                  if (target === "method") {
+                    document.getElementById("method-top")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    return;
+                  }
+                  setAnalysisTab(target);
+                  document.getElementById("analysis-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
                 total={stats.total}
                 yearRange={stats.yearRange}
                 keywordCount={keywordCount}
@@ -250,11 +259,13 @@ export default function ResearchAnalyticsPage() {
             </div>
 
             {/* 연구 설계 Top 5 — 모든 탭 공통 상단 노출 (모바일 1열) */}
-            <div className="mt-6">
+            <div className="mt-6" id="method-top">
               <MethodTopStrip theses={theses} />
             </div>
 
-            <Tabs defaultValue="keyword" className="mt-8">
+            {/* QA-v3 H16: 히어로 페르소나 CTA 가 탭 전환+스크롤로 착지하도록 제어형 탭 */}
+            <div id="analysis-tabs" />
+            <Tabs value={analysisTab} onValueChange={setAnalysisTab} className="mt-8">
               <TabsList variant="line" className="flex-wrap justify-start gap-1 border-b bg-transparent p-0">
                 <TabsTrigger
                   value="keyword"

@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import QrCodeDisplay from "@/features/seminar/QrCodeDisplay";
+import { attendeesApi } from "@/lib/bkend";
 import SeminarRegistrationForm from "@/features/seminar/SeminarRegistrationForm";
 import { Button } from "@/components/ui/button";
 import {
@@ -185,6 +187,9 @@ export default function RegistrationSection({
 
       {/* QR code */}
       {isAttending && myAttendee && computedStatus === "upcoming" && (
+        <QrTokenSelfHeal attendee={myAttendee} />
+      )}
+      {isAttending && myAttendee && computedStatus === "upcoming" && (
         <div className="mt-6 border-t pt-6">
           <h3 className="mb-3 text-sm font-bold">내 출석 QR 코드</h3>
           <div className="flex justify-center">
@@ -198,4 +203,15 @@ export default function RegistrationSection({
       )}
     </div>
   );
+}
+
+/** QA-v3 H1: qrToken 발급 이전(레거시) 참석 문서에 토큰을 지연 발급 — store 구독으로 즉시 반영됨 */
+function QrTokenSelfHeal({ attendee }: { attendee: SeminarAttendee }) {
+  useEffect(() => {
+    if (attendee.qrToken) return;
+    void attendeesApi
+      .update(attendee.id, { qrToken: crypto.randomUUID() })
+      .catch(() => {});
+  }, [attendee.id, attendee.qrToken]);
+  return null;
 }

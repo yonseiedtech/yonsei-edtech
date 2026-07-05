@@ -24,7 +24,6 @@ export async function POST(req: NextRequest) {
   }
   const seminarId = (body.seminarId ?? "").trim();
   const userId = (body.userId ?? "").trim();
-  const seminarTitle = (body.seminarTitle ?? "세미나").trim();
   if (!seminarId || !userId) {
     return NextResponse.json({ error: "seminarId·userId 가 필요합니다." }, { status: 400 });
   }
@@ -40,6 +39,25 @@ export async function POST(req: NextRequest) {
       .get();
     if (att.empty) {
       return NextResponse.json({ error: "대상이 참가자로 확인되지 않습니다." }, { status: 400 });
+    }
+
+    // QA-v3 H(보안): 클라이언트가 보낸 제목을 그대로 쓰면 임의 문구 삽입(스푸핑) 가능 — 세미나 문서에서 조회
+    const semSnap = await db.collection("seminars").doc(seminarId).get();
+    if (!semSnap.exists) {
+      return NextResponse.json({ error: "세미나를 찾을 수 없습니다." }, { status: 404 });
+    }
+    const seminarTitle = ((semSnap.data() as { title?: string }).title ?? "세미나").trim();
+
+    // 반복 발송(스팸) 차단 — 동일 세미나·대상에 대한 확정 알림은 1회만
+    const dup = await db
+      .collection("notifications")
+      .where("userId", "==", userId)
+      .where("type", "==", "waitlist_promoted")
+      .where("link", "==", `/seminars/${seminarId}`)
+      .limit(1)
+      .get();
+    if (!dup.empty) {
+      return NextResponse.json({ ok: true, deduped: true });
     }
 
     const nowIso = new Date().toISOString();

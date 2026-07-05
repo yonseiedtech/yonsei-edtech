@@ -550,7 +550,7 @@ export default function SemesterRoadmap() {
             비로그인 상태에서는 체크박스를 사용할 수 없습니다.
           </p>
           <a
-            href="/auth/login"
+            href="/login"
             className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
           >
             <Check size={14} />

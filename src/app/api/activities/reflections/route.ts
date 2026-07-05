@@ -58,8 +58,9 @@ export async function GET(req: NextRequest) {
     const isStaff = ROLE_HIERARCHY[viewer.role] >= ROLE_HIERARCHY.staff;
     let isLeader = false;
     if (!isStaff) {
-      // 리더 판정 — activityId 는 파라미터 또는 문서에서 도출
-      const actId = activityId ?? (docs[0]?.activityId as string | undefined);
+      // QA-v3 H(보안): 리더 판정은 반드시 조회된 문서의 activityId 기준 —
+      // 파라미터 activityId 를 신뢰하면 자기 활동 ID + 타 활동 progressId 조합으로 우회 가능.
+      const actId = (docs[0]?.activityId as string | undefined) ?? activityId ?? undefined;
       if (actId) {
         const act = await db.collection("activities").doc(actId).get();
         isLeader = act.exists && (act.data() as { leaderId?: string }).leaderId === viewer.id;

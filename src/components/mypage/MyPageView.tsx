@@ -1273,8 +1273,9 @@ function NotificationSettingsCard({ user }: { user: User }) {
   const [pushCollabReview, setPushCollabReview] = useState<boolean>(prefs?.pushCollabReview !== false);
   const [pushJournalIssue, setPushJournalIssue] = useState<boolean>(prefs?.pushJournalIssue !== false);
   const [pushCommBoard, setPushCommBoard] = useState<boolean>(prefs?.pushCommBoard !== false);
-  // opt-in: undefined/false → false (꺼짐 기본), 명시 true 일 때만 켜짐
-  const [pushFlashcardReview, setPushFlashcardReview] = useState<boolean>(prefs?.pushFlashcardReview === true);
+  // QA-v3 H7: 서버 정책은 보유자 한정 opt-out(미설정=발송) — UI 도 동일 의미로 표시해야
+  // "꺼짐으로 보이는데 발송되는" 역전이 없다. 명시 false 일 때만 꺼짐.
+  const [pushFlashcardReview, setPushFlashcardReview] = useState<boolean>(prefs?.pushFlashcardReview !== false);
   const [busyKey, setBusyKey] = useState<string | null>(null);
 
   async function updateLeaderboardPref(next: boolean) {
@@ -1543,7 +1544,7 @@ function NotificationSettingsCard({ user }: { user: User }) {
           />
           <ToggleRow
             title="암기카드 복습 알림"
-            description="오늘 복습할 암기카드(dueAt ≤ 오늘)가 1장 이상일 때 1일 1회 안내. 기본 꺼짐(opt-in)."
+            description="오늘 복습할 암기카드(dueAt ≤ 오늘)가 1장 이상일 때 1일 1회 안내. 복습할 카드가 있는 회원에게만 발송되며 기본 켜짐."
             enabled={pushFlashcardReview}
             busy={busyKey === "pushFlashcardReview"}
             onToggle={() =>
