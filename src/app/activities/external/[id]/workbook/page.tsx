@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import PageContainer from "@/components/ui/page-container";
@@ -368,6 +368,17 @@ function ReviewSection({
   const [highlights, setHighlights] = useState<string[]>(existing?.highlights ?? []);
   const [suggestions, setSuggestions] = useState<string[]>(existing?.suggestions ?? []);
   const [rating, setRating] = useState(existing?.rating ?? 0);
+
+  // 기존 후기가 뒤늦게 도착하거나 저장 후 서버값이 갱신되면 폼을 동기화.
+  // deps 가 updatedAt 이라 타이핑 중 포커스 복귀 refetch(값 불변)로는 발동하지 않는다.
+  useEffect(() => {
+    if (!existing) return;
+    setOverallReview(existing.overallReview ?? "");
+    setHighlights(existing.highlights ?? []);
+    setSuggestions(existing.suggestions ?? []);
+    setRating(existing.rating ?? 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existing?.updatedAt]);
   const [isSaving, setIsSaving] = useState(false);
 
   const { user } = useAuthStore();
@@ -475,7 +486,7 @@ function WorkbookPage({ activityId }: { activityId: string }) {
     enabled: !!userId && !!activityId,
   });
 
-  const { data: review } = useQuery({
+  const { data: review, isLoading: reviewLoading } = useQuery({
     queryKey: ["workbook-review", userId, activityId],
     queryFn: async () => {
       try {
@@ -563,8 +574,9 @@ function WorkbookPage({ activityId }: { activityId: string }) {
           )}
         </div>
 
-        {/* 전체 후기 */}
-        {!isLoading && (
+        {/* 전체 후기 — QA-v3 보류건(2026-07-06 수정): 기존 후기 로드가 끝나기 전에
+            폼이 빈 값으로 마운트되면 저장 시 기존 후기를 빈 값으로 덮어쓰는 race */}
+        {!isLoading && !reviewLoading && (
           <ReviewSection
             userId={userId}
             activityId={activityId}

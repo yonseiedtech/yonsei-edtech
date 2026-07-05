@@ -23,10 +23,6 @@
     }
   },
   "files": [
-    "src/features/research/topic-explorer/topic-explorer-logic.ts",
-    "src/features/research/topic-explorer/TopicExplorer.tsx",
-    "src/lib/bkend.ts",
-    "src/types/topic-exploration.ts",
-    "src/features/research/__tests__/topic-explorer-logic.test.ts"
+    "src/app/activities/external/[id]/workbook/page.tsx"
   ]
 }
