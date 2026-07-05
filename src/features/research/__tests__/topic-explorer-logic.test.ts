@@ -113,6 +113,17 @@ describe("topic-explorer 추천", () => {
     expect(r.subjectTerms).toContain("장애 학습자");
   });
 
+  it("특수교육공학 세부 선택이 소재·키워드에 반영된다", () => {
+    const r = teRecommend({
+      field: "school_k12", fieldDetail: "special",
+      interest: "ai_edtech", interestDetail: "assistive",
+      intervention: "can_intervene", problem: "effect", scale: "small",
+    })!;
+    expect(r.frames[0].sentence).toContain("보조공학");
+    expect(r.interestTerms).toContain("UDL");
+    expect(r.interestTerms).toContain("특수교육");
+  });
+
   it("broad 세부 선택은 상위 분야 기본값을 유지한다", () => {
     const r = teRecommend({
       field: "school_k12", fieldDetail: "middle",
