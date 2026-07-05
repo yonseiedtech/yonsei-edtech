@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect, lazy, Suspense } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { useAuthStore } from "@/features/auth/auth-store";
 import { useQuery } from "@tanstack/react-query";
 import { MessageCircle, Loader2, Pause, Play, Square, Pencil } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -64,6 +65,7 @@ export default function ChatWidget() {
 
   // ───── Timer integration ─────
   // 상태는 selector + shallow 비교로 안정 구독
+  const { user: viewerUser } = useAuthStore();
   const { active, elapsed, isPaused, ghost } = useStudyTimerStore(
     useShallow((s) => ({ active: s.active, elapsed: s.elapsed, isPaused: s.isPaused, ghost: s.ghost })),
   );
@@ -189,7 +191,8 @@ export default function ChatWidget() {
     : { right: 24, bottom: 24 };
 
   // 설정 로드 전 깜빡임 방지 + 숨김 상태에서 패널/FAB 모두 미노출
-  if (visibleLoading || !isVisible) return null;
+  // QA-v3 결정(2026-07-05): 챗봇은 회원 전용 — API 도 401 로 차단되므로 게스트에겐 위젯 미노출
+  if (visibleLoading || !isVisible || !viewerUser) return null;
 
   // 진행링 dasharray (25분 1cycle)
   const progress = active ? (elapsed % RING_PERIOD_SEC) / RING_PERIOD_SEC : 0;

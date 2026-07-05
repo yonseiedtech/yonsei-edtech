@@ -10,8 +10,12 @@ export const maxDuration = 30;
 const DEFAULT_GREETING = "안녕하세요! 연세교육공학회 챗봇입니다. 궁금한 점이 있으시면 편하게 질문해 주세요! 😊";
 
 export async function POST(req: NextRequest) {
+  // QA-v3 보류건 결정(2026-07-05): 비로그인 차단 — 익명 LLM 비용 남용 벡터 제거
   const authUser = await verifyAuth(req).catch(() => null);
-  const user = authUser ?? { id: "guest", name: "비로그인", role: "guest" as const };
+  if (!authUser) {
+    return Response.json({ error: "로그인 후 이용할 수 있습니다." }, { status: 401 });
+  }
+  const user = authUser;
 
   const rateLimited = checkRateLimit(getClientId(req, user.id), { limit: 30, windowSec: 60 });
   if (rateLimited) return rateLimited;

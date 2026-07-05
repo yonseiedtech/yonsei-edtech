@@ -69,18 +69,40 @@ export async function GET(req: NextRequest) {
         return Response.json({ verified: false, message: "유효하지 않은 연사 후기 링크입니다." });
       }
 
-      // 이미 연사 후기 작성 여부 확인
+      // QA-v3 다중 연사: speakers[] 기반 명단 + ?speakerName= 본인 선택 + 연사별 기존 후기 매칭
+      // (기존: 단일 speaker 필드 + docs[0] 고정이라 두 번째 연사가 첫 연사 후기를 덮어씀)
+      const seminar = semDoc.data();
+      const speakerNames: string[] = Array.isArray(seminar?.speakers)
+        ? (seminar!.speakers as { name?: string }[]).map((sp) => sp?.name ?? "").filter(Boolean)
+        : [];
+      if (speakerNames.length === 0 && seminar?.speaker) speakerNames.push(seminar.speaker as string);
+
+      const requestedName = req.nextUrl.searchParams.get("speakerName");
+      const selected =
+        requestedName && speakerNames.includes(requestedName)
+          ? requestedName
+          : speakerNames.length <= 1
+            ? (speakerNames[0] ?? (seminar?.speaker as string | undefined) ?? null)
+            : null;
+
       const reviewSnapshot = await db.collection("seminar_reviews")
         .where("seminarId", "==", seminarId)
         .where("type", "==", "speaker")
         .get();
 
       let existingReview = null;
-      if (!reviewSnapshot.empty) {
-        const doc = reviewSnapshot.docs[0];
-        const data = doc.data();
+      let matchedDoc = null;
+      if (selected) {
+        matchedDoc =
+          reviewSnapshot.docs.find((d) => (d.data().authorName as string) === selected) ??
+          // 레거시(단일 연사) 후기는 authorName 불일치 가능 — 단일 연사일 때만 첫 문서 폴백
+          (speakerNames.length <= 1 ? reviewSnapshot.docs[0] : undefined) ??
+          null;
+      }
+      if (matchedDoc) {
+        const data = matchedDoc.data();
         existingReview = {
-          id: doc.id,
+          id: matchedDoc.id,
           content: data.content,
           rating: data.rating,
           questionAnswers: data.questionAnswers || null,
@@ -90,12 +112,12 @@ export async function GET(req: NextRequest) {
         };
       }
 
-      const seminar = semDoc.data();
       return Response.json({
         verified: true,
         seminarTitle: seminar?.title,
-        speakerName: seminar?.speaker,
-        alreadyReviewed: !reviewSnapshot.empty,
+        speakerName: selected,
+        speakers: speakerNames,
+        alreadyReviewed: !!matchedDoc,
         existingReview,
       });
     } catch (err) {
@@ -247,7 +269,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 연사 후기인 경우 토큰 검증
+    // 연사 후기인 경우 토큰 검증 + 다중 연사 명단·중복 검증 (QA-v3)
     if (type === "speaker") {
       if (!speakerToken) {
         return Response.json({ error: "연사 후기 토큰이 필요합니다." }, { status: 403 });
@@ -255,6 +277,28 @@ export async function POST(req: NextRequest) {
       const semDoc = await db.collection("seminars").doc(seminarId).get();
       if (!semDoc.exists || semDoc.data()?.speakerReviewToken !== speakerToken) {
         return Response.json({ error: "유효하지 않은 연사 후기 토큰입니다." }, { status: 403 });
+      }
+      const semData = semDoc.data();
+      const validNames: string[] = Array.isArray(semData?.speakers)
+        ? (semData!.speakers as { name?: string }[]).map((sp) => sp?.name ?? "").filter(Boolean)
+        : [];
+      if (validNames.length === 0 && semData?.speaker) validNames.push(semData.speaker as string);
+      if (validNames.length > 0 && !validNames.includes(authorName)) {
+        return Response.json({ error: "등록된 연사 명단에 없는 이름입니다." }, { status: 400 });
+      }
+      // 연사별 1회 — 같은 연사의 후기가 이미 있으면 새로 만들지 않음 (수정 흐름으로 유도)
+      const dup = await db
+        .collection("seminar_reviews")
+        .where("seminarId", "==", seminarId)
+        .where("type", "==", "speaker")
+        .where("authorName", "==", authorName)
+        .limit(1)
+        .get();
+      if (!dup.empty) {
+        return Response.json(
+          { error: "이미 이 연사의 후기가 등록되어 있습니다. 링크로 다시 접속하면 수정할 수 있어요.", alreadyReviewed: true },
+          { status: 409 },
+        );
       }
     }
 
@@ -266,7 +310,8 @@ export async function POST(req: NextRequest) {
       type: resolvedType,
       content: content.slice(0, 5000),
       rating: safeRating,
-      authorId: authorId || `guest_${authorName}`,
+      // QA-v3: 연사 후기는 연사별 결정적 ID 를 서버가 강제 (다중 연사 충돌·클라이언트 위조 방지)
+      authorId: type === "speaker" ? `speaker_${seminarId}__${authorName.slice(0, 60)}` : (authorId || `guest_${authorName}`),
       authorName: authorName.slice(0, 100),
       authorRole: resolvedAuthorRole,
       studentId: studentId || null,
@@ -327,8 +372,21 @@ export async function PATCH(req: NextRequest) {
     // - 게스트 후기(guest_*): 기존 방식 유지 (authorId 일치만 확인, 호환성)
     const docAuthorId = doc.data()?.authorId as string | undefined;
     const isGuestReview = docAuthorId?.startsWith("guest_") ?? false;
+    const isSpeakerReview = docAuthorId?.startsWith("speaker_") ?? false;
 
-    if (!isGuestReview) {
+    if (isSpeakerReview) {
+      // QA-v3: 연사 후기 수정은 세미나 토큰으로 본인 확인
+      // (기존엔 회원 분기로 빠져 uid 비교 → 연사 수정이 항상 401/403 이던 잠복 결함)
+      const speakerToken = (body as { speakerToken?: string }).speakerToken;
+      const docSeminarId = doc.data()?.seminarId as string | undefined;
+      if (!speakerToken || !docSeminarId) {
+        return Response.json({ error: "연사 후기 토큰이 필요합니다." }, { status: 403 });
+      }
+      const semDoc = await db.collection("seminars").doc(docSeminarId).get();
+      if (!semDoc.exists || semDoc.data()?.speakerReviewToken !== speakerToken) {
+        return Response.json({ error: "유효하지 않은 연사 후기 토큰입니다." }, { status: 403 });
+      }
+    } else if (!isGuestReview) {
       // 회원 후기는 인증 토큰 필수
       if (!auth) {
         return Response.json({ error: "회원 후기 수정은 로그인이 필요합니다." }, { status: 401 });

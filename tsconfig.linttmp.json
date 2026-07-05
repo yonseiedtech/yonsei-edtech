@@ -23,7 +23,9 @@
     }
   },
   "files": [
-    "src/app/labs/[id]/layout.tsx",
-    "src/features/dashboard/SemesterKickoffBanner.tsx"
+    "src/app/api/ai/chat/route.ts",
+    "src/components/chat/ChatWidget.tsx",
+    "src/app/api/reviews/route.ts",
+    "src/app/seminars/[id]/speaker-review/page.tsx"
   ]
 }

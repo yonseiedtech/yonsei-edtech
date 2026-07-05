@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import PageContainer from "@/components/ui/page-container";
 import type { Photo } from "@/types";
 
-type Step = "verifying" | "write" | "done" | "error";
+type Step = "verifying" | "select" | "write" | "done" | "error";
 
 interface ExistingReview {
   id: string;
@@ -174,6 +174,7 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
 
   const [step, setStep] = useState<Step>("verifying");
   const [speakerName, setSpeakerName] = useState("");
+  const [speakers, setSpeakers] = useState<string[]>([]);
   const [errorMsg, setErrorMsg] = useState("");
   const [submittedReview, setSubmittedReview] = useState<SubmittedReview | null>(null);
   const [downloading, setDownloading] = useState(false);
@@ -267,23 +268,30 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
     }
   }, [speakerName, seminar?.title]);
 
-  // 토큰 검증
-  useEffect(() => {
-    if (!token || !seminarId) {
-      setErrorMsg("유효하지 않은 연사 후기 링크입니다.");
-      setStep("error");
-      return;
-    }
-
-    async function verify() {
+  // 토큰 검증 — QA-v3 다중 연사: 명단이 2인 이상이면 본인 선택 단계를 거친 뒤 재검증
+  const verifyAs = useCallback(
+    async (selName?: string) => {
+      if (!token || !seminarId) {
+        setErrorMsg("유효하지 않은 연사 후기 링크입니다.");
+        setStep("error");
+        return;
+      }
       try {
-        const params = new URLSearchParams({ seminarId, token: token! });
+        const params = new URLSearchParams({ seminarId, token });
+        if (selName) params.set("speakerName", selName);
         const res = await fetch(`/api/reviews?${params}`);
         const data = await res.json();
 
         if (!data.verified) {
           setErrorMsg(data.message || "유효하지 않은 링크입니다.");
           setStep("error");
+          return;
+        }
+
+        const names: string[] = Array.isArray(data.speakers) ? data.speakers : [];
+        setSpeakers(names);
+        if (!data.speakerName && names.length > 1) {
+          setStep("select");
           return;
         }
 
@@ -306,10 +314,13 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
         setErrorMsg("인증 중 오류가 발생했습니다.");
         setStep("error");
       }
-    }
+    },
+    [token, seminarId],
+  );
 
-    verify();
-  }, [token, seminarId]);
+  useEffect(() => {
+    void verifyAs();
+  }, [verifyAs]);
 
   function handleStartEdit() {
     if (!existingReview) return;
@@ -335,7 +346,8 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
             reviewId: existingReview.id,
             content: content.trim(),
             rating,
-            authorId: `speaker_${seminarId}`,
+            authorId: `speaker_${seminarId}__${speakerName.slice(0, 60)}`,
+            speakerToken: token,
             questionAnswers: Object.keys(questionAnswers).length > 0 ? questionAnswers : undefined,
             recommendedTopics: recommendedTopics.trim() || undefined,
             recommendedSpeakers: recommendedSpeakers.trim() || undefined,
@@ -354,7 +366,7 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
             type: "speaker",
             content: content.trim(),
             rating,
-            authorId: `speaker_${seminarId}`,
+            authorId: `speaker_${seminarId}__${speakerName.slice(0, 60)}`,
             authorName: speakerName,
             speakerToken: token,
             questionAnswers: Object.keys(questionAnswers).length > 0 ? questionAnswers : undefined,
@@ -456,6 +468,32 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
           <div className="rounded-2xl border bg-card p-6 text-center">
             <Loader2 size={32} className="mx-auto mb-4 animate-spin text-primary" />
             <p className="text-sm text-muted-foreground">연사 인증 중...</p>
+          </div>
+        )}
+
+        {/* QA-v3 다중 연사: 본인 선택 */}
+        {step === "select" && (
+          <div className="rounded-2xl border bg-card p-6">
+            <h2 className="text-lg font-bold">어느 연사이신가요?</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              이 세미나에는 연사가 여러 분 등록되어 있습니다. 본인 이름을 선택하면 이름별로 후기가 저장됩니다.
+            </p>
+            <div className="mt-4 grid gap-2">
+              {speakers.map((name) => (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => {
+                    setStep("verifying");
+                    void verifyAs(name);
+                  }}
+                  className="flex items-center justify-between rounded-xl border bg-card px-4 py-3 text-left text-sm font-medium transition-colors hover:border-primary/40 hover:bg-primary/5"
+                >
+                  {name}
+                  <span className="text-xs text-muted-foreground">선택</span>
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
