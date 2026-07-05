@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { popupsApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -10,6 +11,7 @@ import {
   canShowNotification,
   getActiveModal,
   publishActiveModal,
+  releaseActiveModal,
   subscribeActiveModalChange,
 } from "@/features/dashboard/notification-orchestrator";
 
@@ -48,8 +50,12 @@ function setDismiss(id: string, duration: PopupDismissDuration) {
   localStorage.setItem(STORAGE_KEY_PREFIX + id, String(expiresAt));
 }
 
+/** 팝업을 띄우지 않는 경로 — 로그인/가입/재동의 등 집중 흐름 (QA-v3 M) */
+const SUPPRESSED_PATHS = ["/login", "/signup", "/consent", "/forgot-password"];
+
 export default function SitePopupGate() {
   const { user } = useAuthStore();
+  const pathname = usePathname();
   const [closedIds, setClosedIds] = useState<Set<string>>(new Set());
 
   const { data } = useQuery({
@@ -111,19 +117,25 @@ export default function SitePopupGate() {
     if (visiblePopup && !modalSuppressed) {
       publishActiveModal("site-popup");
       return () => {
-        publishActiveModal(null);
+        releaseActiveModal("site-popup");
       };
     }
     return undefined;
   }, [visiblePopup, modalSuppressed]);
 
-  if (!visiblePopup || modalSuppressed) return null;
+  const pathSuppressed = SUPPRESSED_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  if (!visiblePopup || modalSuppressed || pathSuppressed) return null;
 
   return (
     <SitePopupModal
       popup={visiblePopup}
       onClose={() => {
-        // 일반 X / 닫기는 세션 동안만 안 뜸 (당장 다시 안뜨게)
+        // QA-v3 M: React state 만으로는 새로고침마다 재노출 — 세션 저장으로 "탭 닫기 전까지" 유지
+        try {
+          sessionStorage.setItem(SESSION_KEY_PREFIX + visiblePopup.id, "1");
+        } catch {
+          /* 무시 */
+        }
         setClosedIds((prev) => new Set(prev).add(visiblePopup.id));
       }}
       onDismissUntil={() => {

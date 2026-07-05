@@ -98,7 +98,10 @@ export async function GET(req: NextRequest) {
         notifications: {
           total: notifTotal,
           unread: notifUnread,
-          readRate: notifTotal > 0 ? Math.round(((notifTotal - notifUnread) / notifTotal) * 100) : null,
+          readRate:
+            notifTotal > 0 && notifUnread >= 0
+              ? Math.round(((notifTotal - notifUnread) / notifTotal) * 100)
+              : null,
         },
         studioDocs,
         eventsByType,

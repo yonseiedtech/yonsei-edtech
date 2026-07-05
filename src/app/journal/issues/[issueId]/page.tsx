@@ -31,7 +31,7 @@ export default function JournalIssuePage({ params }: PageProps) {
     return (
       <PageContainer>
         <BackButton href="/journal" label="연구지 목록" />
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/40">
           <CardContent className="flex items-center gap-3 p-6">
             <AlertCircle className="text-red-500" />
             <p className="text-sm">호수를 찾을 수 없습니다.</p>
@@ -53,7 +53,7 @@ export default function JournalIssuePage({ params }: PageProps) {
         <h1 className="text-3xl font-bold">
           {issue.title ?? `연세 교육공학 연구 ${formatIssueCode(issue.volume, issue.number)}`}
         </h1>
-        <p className="text-sm text-zinc-600">
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
           {formatIssueCode(issue.volume, issue.number)} · {articles.length}편 수록
         </p>
       </header>
@@ -84,7 +84,7 @@ export default function JournalIssuePage({ params }: PageProps) {
                   )}
                 </div>
                 <h3 className="text-base font-semibold">{a.titleKo}</h3>
-                <p className="text-xs text-zinc-600">
+                <p className="text-xs text-zinc-600 dark:text-zinc-400">
                   {a.authors.map((au) => au.displayName).join(", ")}
                 </p>
               </CardContent>

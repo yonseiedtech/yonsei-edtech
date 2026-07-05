@@ -13,7 +13,8 @@ export function useResearchProposal(userId: string | undefined) {
       const sorted = [...res.data].sort((a, b) =>
         (b.updatedAt ?? "").localeCompare(a.updatedAt ?? "")
       );
-      return sorted[0] as ResearchProposal | undefined;
+      // QA-v3 M: react-query v5 는 undefined resolve 를 에러로 처리 — 문서 0건이면 null
+      return (sorted[0] ?? null) as ResearchProposal | null;
     },
     enabled: !!userId,
     staleTime: 1000 * 30,

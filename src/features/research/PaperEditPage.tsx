@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useAuthStore } from "@/features/auth/auth-store";
 import Link from "next/link";
 import { ChevronLeft, Loader2, Check, Star, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -103,6 +104,10 @@ interface PaperEditPageProps {
 export default function PaperEditPage({ paperId }: PaperEditPageProps) {
   const { paper, isLoading, error } = useResearchPaper(paperId);
   const updateMut = useUpdateResearchPaper();
+  const { user: viewer } = useAuthStore();
+  // QA-v3 M: staff 는 룰상 타인 논문 read 가 허용되어 편집 폼이 열리고
+  // 자동저장이 update 거부로 반복 실패하던 문제 — 소유자만 편집
+  const notOwner = !!paper && !!viewer && paper.userId !== viewer.id;
 
   const [form, setForm] = useState<FormState | null>(null);
   const [dirty, setDirty] = useState(false);
@@ -112,11 +117,11 @@ export default function PaperEditPage({ paperId }: PaperEditPageProps) {
 
   // paper 로드 시 폼 초기화
   useEffect(() => {
-    if (paper && !form) {
+    if (paper && !form && !notOwner) {
       setForm(paperToForm(paper));
       setLastSavedAt(new Date());
     }
-  }, [paper, form]);
+  }, [paper, form, notOwner]);
 
   // 자동 저장 (debounce 1.5s)
   // 레이스 방지: 저장한 스냅샷을 기억해, 저장 도중 추가 입력이 있었으면 dirty 를 유지한다
@@ -178,6 +183,23 @@ export default function PaperEditPage({ paperId }: PaperEditPageProps) {
         </p>
         <Link
           href="/mypage/research"
+          className="mt-4 inline-flex items-center gap-1 text-sm text-primary hover:underline"
+        >
+          <ChevronLeft size={14} /> 분석 노트로
+        </Link>
+      </PageContainer>
+    );
+  }
+
+  if (notOwner) {
+    return (
+      <PageContainer width="narrow" className="text-center">
+        <AlertCircle size={20} className="mx-auto text-muted-foreground" />
+        <p className="mt-2 text-sm text-muted-foreground">
+          본인이 등록한 논문만 편집할 수 있습니다. 열람은 운영 콘솔의 연구활동 보기를 이용하세요.
+        </p>
+        <Link
+          href="/mypage/research?tab=reading"
           className="mt-4 inline-flex items-center gap-1 text-sm text-primary hover:underline"
         >
           <ChevronLeft size={14} /> 분석 노트로

@@ -145,7 +145,7 @@ export const JOURNEY_STAGES: JourneyStage[] = [
     tools: [
       { label: "학위논문 본문 작성", href: "/mypage/research?tab=writing" },
       { label: "연구윤리 체크리스트 (방법 장)", href: "/mypage/research?tab=writing" },
-      { label: "연구 타이머로 집필 루틴", href: "/mypage/research?tab=report" },
+      { label: "연구 타이머로 집필 루틴", href: "/mypage/research?tab=report&focus=timer" },
       { label: "통계 개념(아카이브)", href: "/archive" },
     ],
     tips: [

@@ -81,12 +81,14 @@ export const AUTHOR_TYPE_STYLES: Record<string, string> = {
 
 const TABLE = "newsletters";
 
-export async function fetchNewsletters(): Promise<NewsletterIssue[]> {
-  const res = await dataApi.list<Record<string, unknown>>(TABLE, {
-    sort: "issueNumber:desc",
-    limit: 100,
-  });
-  return res.data.map(docToIssue);
+export async function fetchNewsletters(includeDrafts = false): Promise<NewsletterIssue[]> {
+  // QA-v3 M: read 룰이 published 공개로 강화됨 — 비스태프는 status 등호로 증명형 쿼리
+  // (equality+orderBy 는 복합 인덱스가 필요하므로 서버 정렬 대신 클라이언트 정렬)
+  const res = includeDrafts
+    ? await dataApi.list<Record<string, unknown>>(TABLE, { sort: "issueNumber:desc", limit: 100 })
+    : await dataApi.list<Record<string, unknown>>(TABLE, { "filter[status]": "published", limit: 100 });
+  const items = res.data.map(docToIssue);
+  return includeDrafts ? items : items.sort((a, b) => b.issueNumber - a.issueNumber);
 }
 
 export async function createNewsletter(
@@ -167,10 +169,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const QUERY_KEY = ["newsletters"];
 
-export function useNewsletters() {
+export function useNewsletters(opts?: { includeDrafts?: boolean }) {
+  const includeDrafts = opts?.includeDrafts ?? false;
   const { data, isLoading } = useQuery({
-    queryKey: QUERY_KEY,
-    queryFn: fetchNewsletters,
+    queryKey: [...QUERY_KEY, includeDrafts],
+    queryFn: () => fetchNewsletters(includeDrafts),
     staleTime: 1000 * 60 * 5,
   });
   return { issues: data ?? [], isLoading };

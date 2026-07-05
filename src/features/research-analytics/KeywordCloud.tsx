@@ -106,9 +106,12 @@ function packWords(
     let y = cy;
 
     const stepAngle = 0.32;
+    // QA-v3 M: 고정 계수(√t×2.4, 최대 ≈263px)는 확대된 캔버스(1040×760 등)의
+    // 가장자리 ~40%에 도달 불가 — 대각 절반까지 닿도록 캔버스 비례 계수 사용
+    const radiusStep = (Math.hypot(width, height) / 2) / Math.sqrt(12000);
     for (let t = 0; t < 12000; t++) {
       const angle = t * stepAngle;
-      const radius = Math.sqrt(t) * 2.4;
+      const radius = Math.sqrt(t) * radiusStep;
       x = cx + radius * Math.cos(angle) - w / 2;
       y = cy + radius * Math.sin(angle) - h / 2;
       if (x < 4 || y < 4 || x + w > width - 4 || y + h > height - 4) continue;
@@ -313,7 +316,7 @@ export default function KeywordCloud({
       </div>
 
       {/* 연도 범위 슬라이더 */}
-      <div className="mb-4 rounded-lg border bg-slate-50/50 px-3 py-2.5">
+      <div className="mb-4 rounded-lg border bg-muted/40 px-3 py-2.5">
         <div className="mb-1.5 flex items-center justify-between text-[11px]">
           <span className="font-medium text-muted-foreground">조회 기간</span>
           <span className="font-semibold text-foreground">
@@ -401,7 +404,7 @@ export default function KeywordCloud({
       </div>
 
       {/* Hover 상세 패널 */}
-      <div className="mt-3 min-h-[112px] rounded-2xl border bg-gradient-to-br from-slate-50 to-white p-3 transition-all duration-200">
+      <div className="mt-3 min-h-[112px] rounded-2xl border bg-gradient-to-br from-muted/40 to-card p-3 transition-all duration-200">
         {hover && hoverDetail ? (
           <div className="animate-in fade-in slide-in-from-bottom-1 duration-200">
             {/* 헤더: 키워드명 + 총 건수 */}
@@ -434,7 +437,7 @@ export default function KeywordCloud({
                         title={`${y}년: ${c}건`}
                       >
                         <div
-                          className={`w-full rounded-sm ${c > 0 ? "bg-primary/70" : "bg-slate-100"}`}
+                          className={`w-full rounded-sm ${c > 0 ? "bg-primary/70" : "bg-muted"}`}
                           style={{ height: `${Math.max(h, c > 0 ? 6 : 2)}%` }}
                         />
                       </div>
@@ -451,7 +454,7 @@ export default function KeywordCloud({
                       {hoverDetail.coKeywords.map(([k, c]) => (
                         <span
                           key={k}
-                          className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-card px-2 py-0.5 text-[10.5px]"
+                          className="inline-flex items-center gap-1 rounded-full border bg-card px-2 py-0.5 text-[10.5px]"
                         >
                           <span className="font-medium text-foreground">{k}</span>
                           <span className="tabular-nums text-muted-foreground">{c}</span>
@@ -476,7 +479,7 @@ export default function KeywordCloud({
                           href={`/alumni/thesis/${t.id}`}
                           className="group flex items-start gap-1.5 rounded-md px-1.5 py-1 hover:bg-primary/5"
                         >
-                          <span className="shrink-0 rounded bg-slate-100 px-1.5 text-[10px] tabular-nums text-muted-foreground">
+                          <span className="shrink-0 rounded bg-muted px-1.5 text-[10px] tabular-nums text-muted-foreground">
                             {y ?? "—"}
                           </span>
                           <span className="line-clamp-1 text-foreground/80 group-hover:text-primary">

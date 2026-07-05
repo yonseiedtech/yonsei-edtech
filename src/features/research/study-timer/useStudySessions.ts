@@ -89,16 +89,24 @@ export function useEndSession() {
       sessionId,
       focusScore,
       memo,
+      elapsedMinutes,
     }: {
       sessionId: string;
       focusScore?: number;
       memo?: string;
+      /** QA-v3 M: 스토어의 일시정지 보정이 반영된 실제 집중 시간(분) — 없으면 DB startTime 기준 */
+      elapsedMinutes?: number;
     }) => {
       const existing = await studySessionsApi.get(sessionId);
       const session = existing as unknown as StudySession;
       const start = new Date(session.startTime).getTime();
       const end = Date.now();
-      const durationMinutes = Math.round(((end - start) / 60000) * 10) / 10;
+      const rawMinutes = Math.round(((end - start) / 60000) * 10) / 10;
+      // 일시정지 보정값이 오면 그쪽을 신뢰 (단, DB 기준을 넘을 수는 없음)
+      const durationMinutes =
+        typeof elapsedMinutes === "number" && elapsedMinutes >= 0
+          ? Math.min(elapsedMinutes, rawMinutes)
+          : rawMinutes;
 
       await studySessionsApi.update(sessionId, {
         endTime: new Date().toISOString(),

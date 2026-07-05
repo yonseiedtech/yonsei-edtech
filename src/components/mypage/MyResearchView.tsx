@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -90,6 +90,17 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
   const rawTab = searchParams.get("tab");
   const rawSub = searchParams.get("sub");
   const activeTab: ResearchTab = normalizeResearchTab(rawTab, rawSub);
+
+  // QA-v3 M: 딥링크 — ?focus=timer|matrix 등으로 탭 내부 섹션에 착지
+  // (탭 통합 후 "연구 타이머"·"문헌 매트릭스" 링크가 탭 상단에 떨어지던 문제)
+  const focusParam = searchParams.get("focus");
+  useEffect(() => {
+    if (!focusParam) return;
+    const t = setTimeout(() => {
+      document.getElementById(`focus-${focusParam}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 700); // dynamic 패널 청크 로드 대기
+    return () => clearTimeout(t);
+  }, [focusParam, activeTab]);
 
   // 연구 리포트 기간 필터
   const fromParam = searchParams.get("from") || "";
@@ -420,7 +431,9 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
               periodEnd={periodEnd}
             />
             {/* R4: 문헌 리뷰 매트릭스 — 연구 여정 '문헌 고찰' 단계 도구 */}
-            <LiteratureMatrix user={user} readOnly={!isSelf || readOnly} />
+            <div id="focus-matrix">
+              <LiteratureMatrix user={user} readOnly={!isSelf || readOnly} />
+            </div>
           </TabsContent>
 
           {/* ── 연구 리포트 ── */}
@@ -499,7 +512,7 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
 
               {/* ── 연구 타이머 (2026-07-04 개편: 별도 탭 → 리포트 탭 통합) — 본인 전용 ── */}
               {isSelf && (
-                <div className="space-y-6 border-t pt-6 print-hide">
+                <div id="focus-timer" className="space-y-6 border-t pt-6 print-hide">
                   <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
                     <Clock size={14} />
                     연구 타이머

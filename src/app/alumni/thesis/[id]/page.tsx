@@ -291,13 +291,13 @@ export default function AlumniThesisDetailPage() {
       : [...current, thesis.id];
     try {
       await profilesApi.update(viewer.id, {
-        thesisReadingList: next.length > 0 ? next : undefined,
+        thesisReadingList: next /* QA-v3: undefined 는 strip 되어 필드가 안 지워짐 — 빈 배열로 저장 */,
       });
       const authState = useAuthStore.getState();
       if (authState.user && authState.user.id === viewer.id) {
         authState.setUser({
           ...authState.user,
-          thesisReadingList: next.length > 0 ? next : undefined,
+          thesisReadingList: next /* QA-v3: undefined 는 strip 되어 필드가 안 지워짐 — 빈 배열로 저장 */,
         });
       }
       toast.success(

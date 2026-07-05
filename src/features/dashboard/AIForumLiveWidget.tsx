@@ -13,7 +13,7 @@ import { ArrowRight, Bot, Sparkles } from "lucide-react";
 import { aiForumsApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { useIsWidgetMuted } from "@/lib/dashboard-layout";
-import {
+import { FALLBACK_AI_PERSONA,
   AI_PERSONAS,
   type AIForumTopic,
 } from "@/types/ai-forum";
@@ -142,15 +142,18 @@ export default function AIForumLiveWidget() {
               </h4>
               <div className="mt-2 flex items-center gap-1">
                 <div className="flex -space-x-1">
-                  {personaPreview.map((p) => (
-                    <span
-                      key={p}
-                      title={AI_PERSONAS[p].name}
-                      className="flex h-5 w-5 items-center justify-center rounded-full border border-card bg-muted text-[10px]"
-                    >
-                      {AI_PERSONAS[p].avatarEmoji}
-                    </span>
-                  ))}
+                  {personaPreview.map((p) => {
+                    const persona = AI_PERSONAS[p] ?? FALLBACK_AI_PERSONA;
+                    return (
+                      <span
+                        key={p}
+                        title={persona.name}
+                        className="flex h-5 w-5 items-center justify-center rounded-full border border-card bg-muted text-[10px]"
+                      >
+                        {persona.avatarEmoji}
+                      </span>
+                    );
+                  })}
                 </div>
                 <span className="text-[10px] text-muted-foreground">
                   {t.participants.length}명 참여

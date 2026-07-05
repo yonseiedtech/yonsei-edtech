@@ -53,7 +53,21 @@ export default function TopicExplorer({ user }: Props) {
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(storageKey);
-      if (raw) setAnswers(JSON.parse(raw) as TEAnswers);
+      if (raw) {
+        // QA-v3 M: 오염/구버전 값 방어 — 알려진 질문 id·선택지 값만 복원
+        // (미검증 복원은 frames 0개의 빈 결과 카드 또는 null 인덱싱 크래시로 이어짐)
+        const parsed = JSON.parse(raw) as unknown;
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          const cleaned: TEAnswers = {};
+          for (const q of TE_QUESTIONS) {
+            const v = (parsed as Record<string, unknown>)[q.id];
+            if (typeof v === "string" && q.options.some((o) => o.value === v)) {
+              cleaned[q.id] = v;
+            }
+          }
+          setAnswers(cleaned);
+        }
+      }
     } catch {
       /* 무시 */
     }

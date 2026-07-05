@@ -15,11 +15,15 @@ function fmtMinutes(min: number): string {
 }
 
 function semesterStartIso(): string {
+  // QA-v3 M: 기존 m<6 분기는 7~8월에 9/1(미래), 1~2월에 3/1(미래)을 반환해
+  // 방학 내내 "이번 학기" 통계가 0 이 되던 오류. 직전 개강일 기준으로 교정.
   const now = new Date();
   const y = now.getFullYear();
-  const m = now.getMonth();
-  // 1학기: 3월 1일 / 2학기: 9월 1일 기준
-  const start = m < 6 ? new Date(y, 2, 1) : new Date(y, 8, 1);
+  const m = now.getMonth(); // 0-based
+  const start =
+    m >= 8 ? new Date(y, 8, 1) // 9~12월 → 당해 9/1
+    : m >= 2 ? new Date(y, 2, 1) // 3~8월 → 당해 3/1
+    : new Date(y - 1, 8, 1); // 1~2월 → 전년 9/1
   return todayYmdLocal(start);
 }
 

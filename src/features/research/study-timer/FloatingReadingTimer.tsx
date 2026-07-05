@@ -75,7 +75,9 @@ export default function FloatingReadingTimer() {
     const off = localStorage.getItem(LS_OFF) === "true";
     const sessionOff = sessionStorage.getItem(SS_OFF) === "true";
     const hideUntil = localStorage.getItem(LS_HIDE);
-    const today = new Date().toISOString().slice(0, 10);
+    // QA-v3: UTC 날짜는 KST 오전 9시에 하루가 갱신됨 — 로컬 날짜로
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     setHidden(off || sessionOff || hideUntil === today);
   }, []);
 

@@ -1164,7 +1164,7 @@ function TaReportSection({
             {orphanEnrollments.map((e) => (
               <span
                 key={e.id}
-                className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-card pl-2 pr-0.5 py-0.5 text-[11px] text-amber-900"
+                className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-card pl-2 pr-0.5 py-0.5 text-[11px] text-amber-900 dark:border-amber-700 dark:text-amber-300"
               >
                 <Link
                   href={e.userId ? `/profile/${e.userId}` : "#"}
@@ -1172,7 +1172,7 @@ function TaReportSection({
                 >
                   {e.studentName}
                   {e.role && e.role !== "student" && (
-                    <span className="ml-1 text-[10px] text-amber-900/70">
+                    <span className="ml-1 text-[10px] text-amber-900/70 dark:text-amber-300/70">
                       · {ENROLLMENT_ROLE_LABELS[e.role]}
                     </span>
                   )}
@@ -1182,7 +1182,7 @@ function TaReportSection({
                   onClick={() => handleDelete(e)}
                   disabled={deletingId === e.id}
                   aria-label="수강 등록 삭제"
-                  className="ml-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full text-amber-900/70 hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
+                  className="ml-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full text-amber-900/70 hover:bg-destructive/10 hover:text-destructive disabled:opacity-40 dark:text-amber-300/70"
                 >
                   <Trash2 size={10} />
                 </button>

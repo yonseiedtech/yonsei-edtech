@@ -42,8 +42,9 @@ export default function PopupEditor({ popup, onClose, onSaved }: Props) {
     imageUrl: popup?.imageUrl ?? "",
     ctaLabel: popup?.ctaLabel ?? "",
     ctaUrl: popup?.ctaUrl ?? "",
-    startsAt: popup?.startsAt?.slice(0, 10) ?? todayPlus(0),
-    endsAt: popup?.endsAt?.slice(0, 10) ?? todayPlus(7),
+    // QA-v3 M: 저장은 KST(+09:00) 기준 ISO — UTC slice 로 읽으면 재저장마다 하루씩 당겨짐
+    startsAt: popup?.startsAt ? isoToKstYmd(popup.startsAt) : todayPlus(0),
+    endsAt: popup?.endsAt ? isoToKstYmd(popup.endsAt) : todayPlus(7),
     audience: popup?.audience ?? ("all" as PopupAudience),
     position: popup?.position ?? ("center" as PopupPosition),
     dismissDuration: popup?.dismissDuration ?? ("1d" as PopupDismissDuration),
@@ -300,4 +301,10 @@ function Field({ label, required, children }: { label: string; required?: boolea
       {children}
     </div>
   );
+}
+
+/** UTC ISO → KST 달력 날짜(YYYY-MM-DD) */
+function isoToKstYmd(iso: string): string {
+  const d = new Date(new Date(iso).getTime() + 9 * 3600_000);
+  return d.toISOString().slice(0, 10);
 }

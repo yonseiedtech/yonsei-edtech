@@ -47,7 +47,7 @@ export const COMMAND_ROUTES: CommandRoute[] = [
   { key: "r:mypage", group: "내 공간", label: "마이페이지", href: "/mypage", icon: User, keywords: "마이페이지 mypage 내 정보 프로필 잔디 활동", visibility: "auth" },
   { key: "r:mypage-research", group: "내 공간", label: "내 연구활동 · 논문 여정", href: "/mypage/research", icon: Microscope, keywords: "연구활동 논문 여정 학위논문 에디터 지도 노트 코크핏 journey research", visibility: "auth" },
   { key: "r:research-model", group: "내 공간", label: "연구 모형 그리기", sub: "마법사·템플릿", href: "/research-model", icon: Network, keywords: "연구 모형 변인 독립 종속 매개 조절 다이어그램 마법사 research model wizard", visibility: "auth" },
-  { key: "r:literature-matrix", group: "내 공간", label: "문헌 리뷰 매트릭스", sub: "선행연구 비교표", href: "/mypage/research?tab=reading", icon: BookMarked, keywords: "문헌 매트릭스 선행연구 비교표 리뷰 literature matrix", visibility: "auth" },
+  { key: "r:literature-matrix", group: "내 공간", label: "문헌 리뷰 매트릭스", sub: "선행연구 비교표", href: "/mypage/research?tab=reading&focus=matrix", icon: BookMarked, keywords: "문헌 매트릭스 선행연구 비교표 리뷰 literature matrix", visibility: "auth" },
   { key: "r:topic-explorer", group: "내 공간", label: "주제 탐색 인터뷰", sub: "연구 주제 찾기", href: "/mypage/research?tab=explore", icon: BookMarked, keywords: "주제 탐색 연구주제 인터뷰 topic explorer 아이디어", visibility: "auth" },
   { key: "r:method-finder", group: "내 공간", label: "통계방법 찾기", sub: "질문으로 추천", href: "/archive/method-finder", icon: Target, keywords: "통계방법 찾기 파인더 추천 t검정 anova ancova method finder", visibility: "auth" },
   { key: "r:research-finder", group: "내 공간", label: "연구방법 찾기", sub: "질문으로 추천", href: "/archive/research-finder", icon: Compass, keywords: "연구방법 찾기 파인더 질적 양적 혼합 설계 research finder", visibility: "auth" },
@@ -68,7 +68,7 @@ export const COMMAND_ROUTES: CommandRoute[] = [
   { key: "r:steppingstone-defense", group: "대학원 생활", label: "논문 심사 연습", href: "/steppingstone/thesis-defense", icon: Presentation, keywords: "논문 심사 연습 디펜스 defense 발표", visibility: "auth" },
   { key: "r:steppingstone-conference", group: "대학원 생활", label: "학술대회 디딤판", href: "/steppingstone/conference", icon: Presentation, keywords: "학술대회 컨퍼런스 conference 발표", visibility: "auth" },
   { key: "r:courses", group: "대학원 생활", label: "내 수강과목", href: "/courses", icon: BookOpen, keywords: "수강 과목 courses 강의 시간표 수업", visibility: "auth" },
-  { key: "r:exam-schedule", group: "대학원 생활", label: "종합시험 일정", href: "/exam-schedule-admin", icon: ClipboardCheck, keywords: "종합시험 시험 일정 exam schedule", visibility: "auth" },
+  { key: "r:exam-schedule", group: "대학원 생활", label: "종합시험 일정 관리", href: "/exam-schedule-admin", icon: ClipboardCheck, keywords: "종합시험 시험 일정 exam schedule", visibility: "staff" },
 
   // ── 학술 활동 ──
   { key: "r:activities", group: "학술 활동", label: "활동 소개", href: "/activities", icon: Users, keywords: "학술활동 활동 activities 소개", visibility: "both" },

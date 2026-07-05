@@ -9,6 +9,7 @@ import {
 } from "@/features/ai-forum/demo-data";
 import {
   AI_PERSONAS,
+  FALLBACK_AI_PERSONA,
   type AIForumMessage,
   type AIForumTopic,
   type APACitation,
@@ -155,7 +156,7 @@ export default async function AIForumDetailPage({ params }: Props) {
             </div>
             <div className="space-y-3">
               {msgs.map((m) => {
-                const persona = AI_PERSONAS[m.persona];
+                const persona = AI_PERSONAS[m.persona] ?? FALLBACK_AI_PERSONA;
                 return (
                   <article
                     key={m.id}

@@ -31,7 +31,7 @@ export default function JournalArticlePage({ params }: PageProps) {
     return (
       <PageContainer>
         <BackButton href="/journal" label="연구지 목록" />
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/40">
           <CardContent className="flex items-center gap-3 p-6">
             <AlertCircle className="text-red-500" />
             <p className="text-sm">논문을 찾을 수 없습니다 (열람 권한 없음 또는 미발간).</p>

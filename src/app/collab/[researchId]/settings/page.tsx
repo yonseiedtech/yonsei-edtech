@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, Trash2 } from "lucide-react";
+import { AlertCircle, AlertTriangle, Trash2 } from "lucide-react";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { useAuthStore } from "@/features/auth/auth-store";
 import PageContainer from "@/components/ui/page-container";
@@ -50,10 +50,24 @@ function SettingsContent({ researchId }: { researchId: string }) {
   const updateMut = useUpdateCollabResearch(researchId);
   const deleteMut = useDeleteCollabResearch();
 
-  if (isLoading || !research || !user) {
+  if (isLoading || !user) {
     return (
       <PageContainer>
         <p className="py-12 text-center text-sm text-zinc-500">불러오는 중...</p>
+      </PageContainer>
+    );
+  }
+
+  if (!research) {
+    return (
+      <PageContainer>
+        <BackButton href="/collab" label="공동 연구 목록" />
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="flex items-center gap-3 p-6">
+            <AlertCircle className="text-red-500" />
+            <p className="text-sm">연구를 찾을 수 없거나 접근 권한이 없습니다.</p>
+          </CardContent>
+        </Card>
       </PageContainer>
     );
   }

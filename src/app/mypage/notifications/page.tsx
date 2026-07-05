@@ -365,7 +365,7 @@ function NotificationsContent() {
             </button>
           )}
           <Link
-            href="/mypage"
+            href="/mypage?tab=settings"
             className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted"
             title="알림 설정"
             aria-label="알림 설정"
@@ -507,7 +507,7 @@ function NotificationsContent() {
             </div>
             {!searchQuery.trim() && (
               <Link
-                href="/mypage"
+                href="/mypage?tab=settings"
                 className="flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
               >
                 <Bell size={14} />
@@ -541,7 +541,7 @@ function NotificationsContent() {
       {/* 알림 설정 안내 */}
       <p className="mt-4 text-center text-xs text-muted-foreground">
         알림 수신 설정은{" "}
-        <Link href="/mypage" className="font-medium text-primary hover:underline">
+        <Link href="/mypage?tab=settings" className="font-medium text-primary hover:underline">
           마이페이지 → 알림 설정
         </Link>
         에서 변경할 수 있습니다.

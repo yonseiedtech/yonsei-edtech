@@ -31,6 +31,11 @@ const REQUIRED = [
     { fieldPath: "userId", order: "ASCENDING" },
     { fieldPath: "createdAt", order: "DESCENDING" },
   ]},
+  // 알림 정리 크론 — 읽음 30일 초과 분리 쿼리 (QA-v3 기아 해소)
+  { collectionGroup: "notifications", fields: [
+    { fieldPath: "read", order: "ASCENDING" },
+    { fieldPath: "createdAt", order: "ASCENDING" },
+  ]},
   // 쪽지함 (받은/보낸)
   { collectionGroup: "direct_messages", fields: [
     { fieldPath: "toId", order: "ASCENDING" },

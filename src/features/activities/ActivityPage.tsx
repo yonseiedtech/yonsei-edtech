@@ -194,6 +194,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
       if (!res.ok) throw new Error("삭제 실패");
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["activities", type] }); toast.success("삭제되었습니다."); },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "삭제에 실패했습니다."),
   });
 
   // 참여 신청 (atomic arrayUnion)
@@ -208,6 +209,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
       if (!res.ok) throw new Error("참여 실패");
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["activities", type] }); toast.success("참여 신청이 완료되었습니다."); },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "참여 신청에 실패했습니다."),
   });
 
   const leaveMutation = useMutation({
@@ -217,6 +219,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
       if (!res.ok) throw new Error("취소 실패");
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["activities", type] }); toast.success("참여가 취소되었습니다."); },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "참여 취소에 실패했습니다."),
   });
 
   function openCreate() { setEditId(null); setForm(emptyForm); setDialogOpen(true); }

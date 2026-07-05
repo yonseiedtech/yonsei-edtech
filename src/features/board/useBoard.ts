@@ -211,10 +211,28 @@ export function useUpdatePost() {
         category: data.category,
       };
       if (data.imageUrls) payload.imageUrls = data.imageUrls;
-      if (data.poll) {
-        // 수정 시 기존 집계값은 보존하므로, question/options label/설정만 병합.
-        // 실제 서버에서는 options의 voteCount를 절대 덮어쓰지 않도록 처리 필요.
-        payload.poll = data.poll;
+      if ("poll" in data) {
+        if (!data.poll) {
+          // QA-v3 M: 투표 제거 — truthy 가드였을 땐 제거가 저장되지 않았음
+          payload.poll = null;
+        } else {
+          // QA-v3 M: 편집 화면 스냅샷의 집계값이 편집 중 들어온 투표를 롤백하지 않도록
+          // 서버 현재값(voteCount/totalVotes)을 id 기준으로 병합
+          try {
+            const fresh = (await postsApi.get(id)) as Post;
+            const freshOpts = new Map((fresh.poll?.options ?? []).map((o) => [o.id, o.voteCount]));
+            payload.poll = {
+              ...data.poll,
+              totalVotes: fresh.poll?.totalVotes ?? data.poll.totalVotes ?? 0,
+              options: data.poll.options.map((o) => ({
+                ...o,
+                voteCount: freshOpts.get(o.id) ?? o.voteCount ?? 0,
+              })),
+            };
+          } catch {
+            payload.poll = data.poll;
+          }
+        }
       }
       if (data.attachments) payload.attachments = data.attachments;
       if ("type" in data) payload.type = data.type ?? null;

@@ -81,7 +81,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
   const respondedPostIds = new Set(myInterviewResponses.map((r) => r.postId));
   const respondedInterviews = posts.filter((p) => p.type === "interview" && respondedPostIds.has(p.id));
   const postById = new Map<string, Post>(posts.map((p) => [p.id, p]));
-  const mySeminars = seminars.filter((s) => s.attendeeIds.includes(userId));
+  const mySeminars = seminars.filter((s) => Array.isArray(s.attendeeIds) && s.attendeeIds.includes(userId));
 
   const { data: allActivities = [] } = useQuery({
     queryKey: ["activities", "all"],
@@ -460,10 +460,10 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                               <p className="mt-1 truncate font-medium">{p.title}</p>
                               <p className="mt-0.5 text-xs text-muted-foreground">
                                 {r.submittedAt ? `제출 ${formatDate(r.submittedAt)}` : r.updatedAt ? `저장 ${formatDate(r.updatedAt)}` : ""}
-                                {" · "}답변 {r.answers.length}개
+                                {" · "}답변 {Array.isArray(r.answers) ? r.answers.length : 0}개
                               </p>
                               <div className="mt-3 flex flex-wrap items-center gap-2">
-                                {p.interview && r.answers.length > 0 && (
+                                {p.interview && Array.isArray(r.answers) && r.answers.length > 0 && (
                                   <Button
                                     type="button"
                                     variant="default"
@@ -509,7 +509,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                             </div>
                             <p className="mt-1 truncate font-medium">{p.title}</p>
                             <p className="mt-0.5 text-xs text-muted-foreground">
-                              {formatDate(p.createdAt)} · 질문 {p.interview?.questions.length ?? 0}개
+                              {formatDate(p.createdAt)} · 질문 {p.interview?.questions?.length ?? 0}개
                             </p>
                           </div>
                           <ChevronRight size={14} className="shrink-0 text-muted-foreground" />

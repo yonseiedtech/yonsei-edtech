@@ -167,14 +167,9 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
   }
 
   function openEdit(p: ResearchPaper) {
-    // 편집 가능 모드: 별도 편집 페이지로 이동 (paper-edit-page PDCA)
-    if (!readOnly) {
-      router.push(`/mypage/research/papers/${p.id}`);
-      return;
-    }
-    // readOnly(운영 콘솔 등): 기존 다이얼로그 보기 모드 유지
-    setEditing(p);
-    setDialogOpen(true);
+    // QA-v3 M: readOnly 에선 카드의 편집 버튼 자체를 숨기므로 이 함수는 편집 모드 전용
+    if (readOnly) return;
+    router.push(`/mypage/research/papers/${p.id}`);
   }
 
   async function handleSubmit(
@@ -236,7 +231,8 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
   }
 
   async function confirmDelete() {
-    if (!pendingDelete) return;
+    // QA-v3 M: readOnly(콘솔 열람) 계약 — 삭제 경로 이중 차단
+    if (readOnly || !pendingDelete) return;
     try {
       await deletePaper.mutateAsync(pendingDelete.id);
       toast.success("삭제되었습니다.");
@@ -310,7 +306,7 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
           관심 연구 분야를 추가하시면 연세교육공학 졸업생 논문이 추천됩니다.
         </p>
 
-        <AlumniThesisRecommendations interests={interests} />
+        {!readOnly && <AlumniThesisRecommendations interests={interests} />}
       </section>
 
       {/* 읽기 리스트: 북마크한 졸업생 학위논문 */}
@@ -567,8 +563,8 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
                 <ResearchPaperCard
                   key={p.id}
                   paper={p}
-                  onEdit={() => openEdit(p)}
-                  onDelete={() => setPendingDelete(p)}
+                  onEdit={readOnly ? undefined : () => openEdit(p)}
+                  onDelete={readOnly ? undefined : () => setPendingDelete(p)}
                   onQuickUpdate={
                     readOnly
                       ? undefined

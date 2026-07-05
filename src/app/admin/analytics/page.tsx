@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { dataApi, profilesApi, seminarsApi } from "@/lib/bkend";
+import { dataApi, postsApi, profilesApi, seminarsApi } from "@/lib/bkend";
 import {
   BarChart, Bar, PieChart, Pie, Cell, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
@@ -86,7 +86,8 @@ export default function AnalyticsPage() {
   });
   const { data: postsRes } = useQuery({
     queryKey: ["analytics", "posts"],
-    queryFn: () => dataApi.list<Post>("posts", { limit: 1000 }),
+    // QA-v3 M: 카테고리 무필터 posts list 는 rules 정적 평가에서 거부(2026-06-12 실증) — listReadable 사용
+    queryFn: () => postsApi.listReadable({ limit: 1000, includeResources: true, includeStaff: true }),
   });
   const { data: attendeesRes } = useQuery({
     queryKey: ["analytics", "attendees"],

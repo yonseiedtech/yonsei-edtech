@@ -73,7 +73,7 @@ const STAGES: PublicStage[] = [
     summary: "연구 타이머로 집필 루틴을 만들고 5장 에디터에서 본문을 채워갑니다.",
     features: [
       { label: "학위논문 에디터", href: "/mypage/research?tab=writing" },
-      { label: "연구 타이머", href: "/mypage/research?tab=report" },
+      { label: "연구 타이머", href: "/mypage/research?tab=report&focus=timer" },
     ],
   },
   {

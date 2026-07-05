@@ -37,10 +37,11 @@ export const GRAPH_NODE_TYPE_LABELS: Record<GraphNodeType, string> = {
 };
 
 /** 노드 종류별 색상 (Tailwind 표준 팔레트와 톤 일치) */
+// QA-v3 M: 전역 규약(ARCHIVE_ITEM_TYPE_COLORS — concept=violet, variable=blue, measurement=emerald)과 정합
 export const GRAPH_NODE_TYPE_COLORS: Record<GraphNodeType, string> = {
-  concept: "#3b82f6", // blue-500
-  variable: "#10b981", // emerald-500
-  measurement: "#a855f7", // purple-500
+  concept: "#8b5cf6", // violet-500
+  variable: "#3b82f6", // blue-500
+  measurement: "#10b981", // emerald-500
   "research-method": "#f43f5e", // rose-500
   "statistical-method": "#f97316", // orange-500
   "foundation-term": "#06b6d4", // cyan-500

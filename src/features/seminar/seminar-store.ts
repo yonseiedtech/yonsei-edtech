@@ -124,19 +124,7 @@ export const useSeminarStore = create<CheckinState>((set, get) => ({
         // 보상 원장 통일(2026-07-04): 출석 +10 을 리더보드 원장(streak_events)에 이중 기록
         if (attendee.userId) void streakEventsApi.mirror(attendee.userId, "attend", 10, attendee.seminarId);
         // C-4(2026-07-04): 체크인 직후 후기 유도 — D+1 크론보다 기억이 생생한 당일 터치
-        if (attendee.userId) {
-          void dataApi
-            .create("notifications", {
-              userId: attendee.userId,
-              type: "seminar_review_request",
-              title: "출석 확인 완료 — 오늘 세미나 어떠셨나요?",
-              message: "기억이 생생할 때 한 줄 후기를 남겨주세요. 다음 세미나 기획에 큰 도움이 됩니다.",
-              link: `/seminars/${attendee.seminarId}?tab=reviews`,
-              read: false,
-              createdAt: new Date().toISOString(),
-            })
-            .catch(() => {});
-        }
+        if (attendee.userId) void sendDayOfReviewNudge(attendee.userId, attendee.seminarId);
       })
       .catch((err) => {
         console.error("[checkin-store] Failed to persist checkin:", err);
@@ -190,7 +178,11 @@ export const useSeminarStore = create<CheckinState>((set, get) => ({
         checkedInBy: `self_${staffUserId}`,
       })
       .then(() => {
-        if (attendee!.userId) void streakEventsApi.mirror(attendee!.userId, "attend", 10, attendee!.seminarId);
+        if (attendee!.userId) {
+          void streakEventsApi.mirror(attendee!.userId, "attend", 10, attendee!.seminarId);
+          // QA-v3: 셀프 체크인도 당일 후기 유도 발송 (기존엔 스태프 스캔 경로만 — 비대칭)
+          void sendDayOfReviewNudge(attendee!.userId, attendee!.seminarId);
+        }
       })
       .catch((err) => {
         console.error("[checkin-store] self checkin persist error:", err);
@@ -220,3 +212,28 @@ export const useSeminarStore = create<CheckinState>((set, get) => ({
     return { total: atts.length, checkedIn, remaining: atts.length - checkedIn };
   },
 }));
+
+/** QA-v3: 당일 후기 유도 — 발송 전 refId 기준 dedupe (크론 경로·기기 중복 스캔과 교차 방지) */
+async function sendDayOfReviewNudge(userId: string, seminarId: string): Promise<void> {
+  try {
+    const existing = await dataApi.list("notifications", {
+      "filter[userId]": userId,
+      "filter[type]": "seminar_review_request",
+      "filter[refId]": seminarId,
+      limit: 1,
+    });
+    if (existing.data.length > 0) return;
+    await dataApi.create("notifications", {
+      userId,
+      type: "seminar_review_request",
+      refId: seminarId,
+      title: "출석 확인 완료 — 오늘 세미나 어떠셨나요?",
+      message: "기억이 생생할 때 한 줄 후기를 남겨주세요. 다음 세미나 기획에 큰 도움이 됩니다.",
+      link: `/seminars/${seminarId}/review`,
+      read: false,
+      createdAt: new Date().toISOString(),
+    });
+  } catch {
+    /* 알림 실패는 체크인에 영향 없음 */
+  }
+}

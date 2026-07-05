@@ -67,6 +67,8 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
     queryKey: ["networking-availability", event.id],
     queryFn: async () => (await networkingAvailabilityApi.listByEvent(event.id)).data as NetworkingAvailability[],
     refetchInterval: 7000,
+    // QA-v3 M: 룰이 인증을 요구 — 게스트에겐 7초마다 permission-denied 가 반복되던 문제
+    enabled: !!user,
   });
 
   const tallies = useMemo(() => tallyAvailability(responses, candidateSlots), [responses, candidateSlots]);

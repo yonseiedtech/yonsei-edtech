@@ -158,7 +158,14 @@ export default function SubjectDistribution({ theses }: { theses: AlumniThesis[]
                   </path>
                 );
               })}
-              <text textAnchor="middle" dy="0.3em" fontSize={14} fontWeight={700} fill="#0f172a">
+              <text
+                textAnchor="middle"
+                dy="0.3em"
+                fontSize={14}
+                fontWeight={700}
+                fill="currentColor"
+                className="text-foreground"
+              >
                 {grandTotal}
               </text>
               <text textAnchor="middle" dy="2em" fontSize={9} fill="#64748b">

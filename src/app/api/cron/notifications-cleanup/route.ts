@@ -33,12 +33,27 @@ export async function GET(req: NextRequest) {
       }
       return "";
     };
-    const snap = await db
-      .collection("notifications")
-      .where("createdAt", "<", cutoffRead)
-      .limit(1500)
-      .get();
-    const targets = snap.docs.filter((doc) => {
+    // QA-v3 M: 단일 창(암묵 createdAt 오름차순 1,500건)은 30~90일 미읽음이 창을 독점하면
+    // 그보다 새로운 "읽음 30일 초과"가 영영 못 들어오는 기아 발생 — 읽음/미읽음 쿼리 분리.
+    // (read+createdAt 복합 인덱스 필요 — firestore.indexes.json 등재)
+    const [readSnap, unreadWindowSnap] = await Promise.all([
+      db.collection("notifications")
+        .where("read", "==", true)
+        .where("createdAt", "<", cutoffRead)
+        .limit(750)
+        .get(),
+      db.collection("notifications")
+        .where("createdAt", "<", cutoffUnread)
+        .limit(750)
+        .get(),
+    ]);
+    const seenIds = new Set<string>();
+    const candidates = [...readSnap.docs, ...unreadWindowSnap.docs].filter((d) => {
+      if (seenIds.has(d.id)) return false;
+      seenIds.add(d.id);
+      return true;
+    });
+    const targets = candidates.filter((doc) => {
       const x = doc.data() as { read?: boolean; createdAt?: unknown };
       const created = toIso(x.createdAt);
       if (!created) return false;

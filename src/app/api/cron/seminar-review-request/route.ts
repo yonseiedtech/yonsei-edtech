@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
+import { sentReviewRequestUserIds } from "@/lib/seminar-review-dedupe";
 
 function escapeHtml(str: string): string {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -144,13 +145,8 @@ export async function GET(req: NextRequest) {
       const pendingUserIds = attendeeUserIds.filter((uid) => !reviewedUserIds.has(uid));
       if (pendingUserIds.length === 0) continue;
 
-      // Sprint 69 핫픽스: 사용자 단위 가드 (기존: 1건이라도 있으면 batch 전체 skip → 후속 attendee 누락)
-      const existingNotif = await db
-        .collection("notifications")
-        .where("type", "==", "seminar_review_request")
-        .where("link", "==", `/seminars/${seminarId}/review`)
-        .get();
-      const sentSet = new Set(existingNotif.docs.map((d) => d.data().userId as string));
+      // QA-v3: 경로 간(당일 체크인·completed 전환) 교차 dedupe — 통합 헬퍼
+      const sentSet = await sentReviewRequestUserIds(db, seminarId);
       const newRecipients = pendingUserIds.filter((uid) => !sentSet.has(uid));
 
       if (newRecipients.length > 0) {
@@ -160,6 +156,7 @@ export async function GET(req: NextRequest) {
           batch.set(ref, {
             userId: uid,
             type: "seminar_review_request",
+            refId: seminarId,
             title: "세미나 후기를 남겨주세요",
             message: `"${seminar.title}" 세미나의 후기를 작성해 주세요.`,
             link: `/seminars/${seminarId}/review`,

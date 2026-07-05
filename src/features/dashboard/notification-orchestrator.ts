@@ -55,7 +55,7 @@ export function getActiveModal(): ModalNotificationKey | null {
   return isModalKey(v) ? v : null;
 }
 
-/** 모달 슬롯 점유 발행 — open 시 자기 키로, close 시 null 로 호출 */
+/** 모달 슬롯 점유 발행 — open 시 자기 키로, close 시 releaseActiveModal(자기 키) 호출 */
 export function publishActiveModal(key: ModalNotificationKey | null): void {
   if (!isBrowser()) return;
   if (key) {
@@ -66,6 +66,17 @@ export function publishActiveModal(key: ModalNotificationKey | null): void {
   window.dispatchEvent(
     new CustomEvent(EVENT, { detail: { active: key } }),
   );
+}
+
+/**
+ * QA-v3 M: 소유권 인지 해제 — 다른 컴포넌트가 mount 시 무조건 null 발행해
+ * 활성 팝업의 슬롯을 지우고 모달 2개가 동시 노출되던 경합 방지.
+ * 현재 점유자가 자기 키일 때만 슬롯을 비운다.
+ */
+export function releaseActiveModal(key: ModalNotificationKey): void {
+  if (!isBrowser()) return;
+  if (getActiveModal() !== key) return;
+  publishActiveModal(null);
 }
 
 /**

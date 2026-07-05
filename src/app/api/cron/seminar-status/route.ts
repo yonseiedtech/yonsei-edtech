@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
+import { sentReviewRequestUserIds } from "@/lib/seminar-review-dedupe";
 import { nextCertSeq, formatCertNo } from "@/lib/cert-counter";
 
 function escapeHtml(str: string): string {
@@ -71,12 +72,8 @@ export async function GET(req: NextRequest) {
 
         // Sprint 69 핫픽스: 사용자 단위 가드 (기존: 1건이라도 있으면 batch 전체 skip → 후속 attendee 영구 누락)
         if (attendeeIds.length > 0) {
-          const existing = await db
-            .collection("notifications")
-            .where("type", "==", "review_request")
-            .where("link", "==", `/seminars/${docSnap.id}/review`)
-            .get();
-          const sentUserIds = new Set(existing.docs.map((d) => d.data().userId as string));
+          // QA-v3: 경로 간(당일 체크인·D+1 크론) 교차 dedupe — 표준 type/refId 로 통일
+          const sentUserIds = await sentReviewRequestUserIds(db, docSnap.id);
           const newRecipients = attendeeIds.filter((uid) => !sentUserIds.has(uid));
 
           if (newRecipients.length > 0) {
@@ -85,7 +82,8 @@ export async function GET(req: NextRequest) {
               const ref = db.collection("notifications").doc();
               batch.set(ref, {
                 userId,
-                type: "review_request",
+                type: "seminar_review_request",
+                refId: docSnap.id,
                 title: "세미나 후기를 남겨주세요!",
                 message: `"${seminar.title}" 세미나에 참석해 주셔서 감사합니다. 후기를 남겨주세요.`,
                 link: `/seminars/${docSnap.id}/review`,
@@ -132,8 +130,8 @@ export async function GET(req: NextRequest) {
       // Sprint 69 핫픽스: 사용자 단위 가드 (기존: 1건이라도 있으면 전체 skip)
       const existingReminder = await db
         .collection("notifications")
-        .where("type", "==", "review_request")
-        .where("link", "==", `/seminars/${docSnap.id}/review`)
+        .where("type", "==", "seminar_review_request")
+        .where("refId", "==", docSnap.id)
         .where("title", "==", "아직 후기를 남기지 않으셨나요?")
         .get();
       const reminderSentSet = new Set(existingReminder.docs.map((d) => d.data().userId as string));
@@ -156,7 +154,8 @@ export async function GET(req: NextRequest) {
         const ref = db.collection("notifications").doc();
         batch.set(ref, {
           userId,
-          type: "review_request",
+          type: "seminar_review_request",
+          refId: docSnap.id,
           title: "아직 후기를 남기지 않으셨나요?",
           message: `"${seminar.title}" 세미나 후기를 아직 작성하지 않으셨습니다. 소중한 의견을 남겨주세요!`,
           link: `/seminars/${docSnap.id}/review`,

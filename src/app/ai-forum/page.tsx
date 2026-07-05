@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Bot, Sparkles, Users } from "lucide-react";
 import { DEMO_FORUM_TOPICS } from "@/features/ai-forum/demo-data";
-import { AI_PERSONAS, type AIForumTopic } from "@/types/ai-forum";
+import { AI_PERSONAS, FALLBACK_AI_PERSONA, type AIForumTopic } from "@/types/ai-forum";
 import { aiForumsApi } from "@/lib/bkend";
 import PageContainer from "@/components/ui/page-container";
 
@@ -149,15 +149,18 @@ export default async function AIForumListPage() {
                 </p>
                 <div className="mt-3 flex items-center gap-2">
                   <div className="flex -space-x-1.5">
-                    {topic.participants.slice(0, 6).map((p) => (
-                      <span
-                        key={p}
-                        title={AI_PERSONAS[p].name}
-                        className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-card bg-muted text-sm shadow-sm"
-                      >
-                        {AI_PERSONAS[p].avatarEmoji}
-                      </span>
-                    ))}
+                    {topic.participants.slice(0, 6).map((p) => {
+                      const persona = AI_PERSONAS[p] ?? FALLBACK_AI_PERSONA;
+                      return (
+                        <span
+                          key={p}
+                          title={persona.name}
+                          className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-card bg-muted text-sm shadow-sm"
+                        >
+                          {persona.avatarEmoji}
+                        </span>
+                      );
+                    })}
                   </div>
                   <span className="ml-1 text-xs text-muted-foreground">
                     {topic.participants.length}명 참여

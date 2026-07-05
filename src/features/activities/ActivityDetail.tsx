@@ -524,6 +524,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
       queryClient.invalidateQueries({ queryKey: ["activity", activityId] });
       toast.success("참여자가 제외되었습니다.");
     },
+    onError: (e: Error) => toast.error(e.message || "참여자 제외에 실패했습니다."),
   });
 
   // 운영진 직접 추가 — 회원을 참여자로 추가 + 기본 역할("운영진") 자동 부여 → 역할이 비어있어도 운영진 분류됨
@@ -603,6 +604,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
       toast.success("역할이 저장되었습니다.");
       setRoleDialog(null);
     },
+    onError: (e: Error) => toast.error(e.message || "역할 저장에 실패했습니다."),
   });
 
   // 참여자 메모 저장
@@ -618,6 +620,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
       toast.success("메모가 저장되었습니다.");
       setNoteDialog(null);
     },
+    onError: (e: Error) => toast.error(e.message || "메모 저장에 실패했습니다."),
   });
 
   // 참여자 신청 상태 변경 (해당 사용자의 applicant row 가 있을 때만 의미가 있음)
@@ -641,6 +644,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
       queryClient.invalidateQueries({ queryKey: ["activity-applicants", activityId] });
       toast.success(result?.isExternalReject ? "신청이 취소되었습니다." : "상태가 변경되었습니다.");
     },
+    onError: (e: Error) => toast.error(e.message || "상태 변경에 실패했습니다."),
   });
 
   // 거절 이력 삭제 (관리자) — applicants에서 완전 제거
@@ -660,6 +664,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
       queryClient.invalidateQueries({ queryKey: ["activity-applicants", activityId] });
       toast.success("이력이 삭제되었습니다.");
     },
+    onError: (e: Error) => toast.error(e.message || "이력 삭제에 실패했습니다."),
   });
 
   // 신청 승인/거절 (관리자)
@@ -688,6 +693,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
       queryClient.invalidateQueries({ queryKey: ["activity-applicants", activityId] });
       toast.success(result?.isExternalReject ? "신청이 취소되었습니다." : "처리되었습니다.");
     },
+    onError: (e: Error) => toast.error(e.message || "처리에 실패했습니다."),
   });
 
   // Sprint UX-3: pending 신청 다중 선택 일괄 승인/거절 (운영진)
@@ -725,6 +731,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
         toast.success(`${result.count}명 ${action} 처리되었습니다.`);
       }
     },
+    onError: (e: Error) => toast.error(e.message || "일괄 처리에 실패했습니다."),
   });
 
   if (!activity) {

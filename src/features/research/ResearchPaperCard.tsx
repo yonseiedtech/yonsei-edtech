@@ -11,8 +11,10 @@ import { toast } from "sonner";
 
 interface Props {
   paper: ResearchPaper;
-  onEdit: () => void;
-  onDelete: () => void;
+  /** 미제공(readOnly 열람) 시 편집 버튼 숨김 */
+  onEdit?: () => void;
+  /** 미제공(readOnly 열람) 시 삭제 버튼 숨김 */
+  onDelete?: () => void;
   /** 카드 내 인라인 업데이트(읽기 상태 토글 등). 옵셔널 — 미제공 시 토글 비활성. */
   onQuickUpdate?: (patch: Partial<ResearchPaper>) => void | Promise<void>;
 }
@@ -142,6 +144,7 @@ export default function ResearchPaperCard({ paper, onEdit, onDelete, onQuickUpda
           >
             <Quote size={14} />
           </button>
+          {onEdit && (
           <button
             type="button"
             onClick={onEdit}
@@ -150,14 +153,17 @@ export default function ResearchPaperCard({ paper, onEdit, onDelete, onQuickUpda
           >
             <Pencil size={14} />
           </button>
-          <button
-            type="button"
-            onClick={onDelete}
-            className="rounded p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-            title="삭제"
-          >
-            <Trash2 size={14} />
-          </button>
+          )}
+          {onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="rounded p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+              title="삭제"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
         </div>
       </div>
 

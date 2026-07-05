@@ -26,7 +26,8 @@ export default function AuthGuard({ children, allowedRoles, requireAdmin }: Prop
 
     if (!user) {
       if (typeof window !== "undefined") {
-        sessionStorage.setItem("returnUrl", window.location.pathname);
+        // QA-v3 M: 쿼리스트링(?tab=…, ?compose=…)까지 보존해야 로그인 후 딥링크가 살아남는다
+        sessionStorage.setItem("returnUrl", window.location.pathname + window.location.search);
       }
       router.push("/login");
       return;

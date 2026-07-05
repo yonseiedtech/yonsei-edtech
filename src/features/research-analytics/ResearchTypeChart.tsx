@@ -284,7 +284,7 @@ export default function ResearchTypeChart({ theses }: { theses: AlumniThesis[] }
             METHOD_LABELS.mixed + " (양적+질적)",
             METHOD_LABELS.unknown + " (초록 부족·미분류)",
           ]}
-          colors={["#1e3a8a", "#2563eb", "#0f766e", "#cbd5e1"]}
+          colors={["#1e3a8a", "#0d9488", "#d97706", "#cbd5e1"]}
         />
       </div>
 
@@ -302,7 +302,7 @@ export default function ResearchTypeChart({ theses }: { theses: AlumniThesis[] }
             series: [quantQual.left, quantQual.right, quantQual.neither],
           }}
           labels={["정량 (효과·영향·관계)", "정성 (사례·경험·인식)", "기타"]}
-          colors={["#1e3a8a", "#2563eb", "#e2e8f0"]}
+          colors={["#1e3a8a", "#0d9488", "#e2e8f0"]}
         />
       </div>
 

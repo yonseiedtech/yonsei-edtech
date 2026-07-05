@@ -135,7 +135,7 @@ export default function TitleNgramTrend({ theses }: { theses: AlumniThesis[] }) 
       </div>
 
       {/* 사용자 정의 기간 */}
-      <div className="mb-3 rounded-lg border bg-slate-50/50 px-3 py-2.5">
+      <div className="mb-3 rounded-lg border bg-muted/40 px-3 py-2.5">
         <div className="mb-1.5 flex items-center justify-between text-[11px]">
           <span className="font-medium text-muted-foreground">분석 기간</span>
           <span className="font-semibold text-foreground">
@@ -184,7 +184,7 @@ export default function TitleNgramTrend({ theses }: { theses: AlumniThesis[] }) 
       ) : (
         <div className="rounded-lg border bg-card">
           {/* 타이틀 행 */}
-          <div className="grid grid-cols-[28px_minmax(0,1fr)_140px_36px] items-center gap-3 border-b bg-slate-50/70 px-3 py-2 text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="grid grid-cols-[28px_minmax(0,1fr)_140px_36px] items-center gap-3 border-b bg-muted/60 px-3 py-2 text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
             <span className="text-right">순위</span>
             <span>{n}어절 키워드</span>
             <span className="grid grid-cols-5 gap-[2px] text-center text-[9.5px] normal-case tracking-normal">
@@ -207,13 +207,13 @@ export default function TitleNgramTrend({ theses }: { theses: AlumniThesis[] }) 
                   onMouseEnter={() => setHoverIdx(i)}
                   onMouseLeave={() => setHoverIdx(null)}
                   className={`grid grid-cols-[28px_minmax(0,1fr)_140px_36px] items-center gap-3 px-3 py-2 text-[12px] transition-colors ${
-                    isHover ? "bg-primary/5" : "hover:bg-slate-50"
+                    isHover ? "bg-primary/5" : "hover:bg-muted/50"
                   }`}
                 >
                   <span className="text-right tabular-nums text-muted-foreground">{i + 1}</span>
                   <div className="min-w-0">
                     <p className="truncate font-medium text-foreground">{it.ngram}</p>
-                    <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-slate-100">
+                    <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-muted">
                       <div
                         className="h-full rounded-full bg-primary/70 transition-[width] duration-500"
                         style={{ width: `${widthPct}%` }}
@@ -236,7 +236,7 @@ export default function TitleNgramTrend({ theses }: { theses: AlumniThesis[] }) 
                                 ? "bg-primary"
                                 : c > 0
                                   ? "bg-primary/40"
-                                  : "bg-slate-200"
+                                  : "bg-muted"
                             }`}
                             style={{ height: `${h}%`, minHeight: c > 0 ? 2 : 0 }}
                             title={`${era}: ${c}건`}
@@ -256,7 +256,7 @@ export default function TitleNgramTrend({ theses }: { theses: AlumniThesis[] }) 
       )}
 
       {/* Hover 상세 — 해당 N-gram 포함 논문 미리보기 */}
-      <div className="mt-3 min-h-[88px] rounded-2xl border bg-gradient-to-br from-slate-50 to-white p-3 transition-all duration-200">
+      <div className="mt-3 min-h-[88px] rounded-2xl border bg-gradient-to-br from-muted/40 to-card p-3 transition-all duration-200">
         {hoverIdx != null && hoverPapers.length > 0 ? (
           <div className="animate-in fade-in slide-in-from-bottom-1 duration-200">
             <div className="mb-2 flex items-baseline justify-between border-b pb-1.5">
@@ -276,7 +276,7 @@ export default function TitleNgramTrend({ theses }: { theses: AlumniThesis[] }) 
                       href={`/alumni/thesis/${t.id}`}
                       className="group flex items-start gap-1.5 rounded-md px-1.5 py-1 hover:bg-primary/5"
                     >
-                      <span className="shrink-0 rounded bg-slate-100 px-1.5 text-[10px] tabular-nums text-muted-foreground">
+                      <span className="shrink-0 rounded bg-muted px-1.5 text-[10px] tabular-nums text-muted-foreground">
                         {y ?? "—"}
                       </span>
                       <span className="line-clamp-1 text-foreground/80 group-hover:text-primary">

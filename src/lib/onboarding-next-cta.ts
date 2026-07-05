@@ -34,8 +34,8 @@ export const NEXT_CTA_MAP: Record<ChecklistCompletionType, NextCta | null> = {
   },
   "visited.research": {
     message: "다음은 연구 보고서를 작성해보세요.",
-    href: "/mypage/research",
-    label: "연구활동 보기",
+    href: "/mypage/research?tab=reportdoc",
+    label: "연구 보고서 쓰기",
   },
   "attended.seminar": {
     message: "다음은 후기를 작성해보세요.",
@@ -49,8 +49,8 @@ export const NEXT_CTA_MAP: Record<ChecklistCompletionType, NextCta | null> = {
   },
   "participated.activity": {
     message: "다음은 연구 보고서를 작성해보세요.",
-    href: "/mypage/research",
-    label: "연구활동 보기",
+    href: "/mypage/research?tab=reportdoc",
+    label: "연구 보고서 쓰기",
   },
   "set.thesisJourneyStage": {
     message: "다음은 소통 보드에서 동료들과 질문을 나눠보세요.",

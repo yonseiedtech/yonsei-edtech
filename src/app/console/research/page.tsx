@@ -203,7 +203,8 @@ export default function ConsoleResearchPage() {
         dataOnlyUserIds.map((id) => profilesApi.get(id)),
       );
       return results
-        .map((r) => (r.status === "fulfilled" ? (r.value.data as User | undefined) : undefined))
+        // QA-v3 M: profilesApi.get 은 User 를 직접 반환 — .data 참조는 항상 undefined 였음
+        .map((r) => (r.status === "fulfilled" ? (r.value as unknown as User | undefined) : undefined))
         .filter((u): u is User => !!u);
     },
     enabled: dataOnlyUserIds.length > 0,

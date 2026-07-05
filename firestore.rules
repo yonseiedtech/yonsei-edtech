@@ -357,8 +357,10 @@ service cloud.firestore {
     }
 
     // ─── Newsletters (학회보) ───
+    // QA-v3 M: read if true 는 draft 본문까지 네트워크로 노출 — published 만 공개
     match /newsletters/{docId} {
-      allow read: if true;
+      allow read: if resource.data.status == 'published'
+        || (isAuthenticated() && isStaffOrAbove());
       allow write: if isAuthenticated() && isStaffOrAbove();
     }
 
@@ -453,7 +455,8 @@ service cloud.firestore {
     // ─── Photos (갤러리 사진) ───
     match /photos/{docId} {
       allow read: if true;
-      allow create: if isAuthenticated();
+      // QA-v3 M: 업로드 UI 는 staff 전용 — SDK 직접 호출로 임의 앨범 삽입 방지
+      allow create: if isAuthenticated() && isStaffOrAbove();
       allow update, delete: if isAuthenticated()
         && (resource.data.uploadedBy == request.auth.uid || isStaffOrAbove());
     }
@@ -1570,6 +1573,8 @@ service cloud.firestore {
         isCollabMember(resource.data.researchId)
         || isCollabLeader(resource.data.researchId)
         || isSocietyReadableByStaff(resource.data.researchId)
+        // QA-v3 M: 멘션 인박스 — 본인이 멘션된 댓글은 연구 무관 조회 허용 (array-contains 증명)
+        || request.auth.uid in resource.data.get('mentionedUserIds', [])
       );
       allow create: if isAuthenticated()
         && request.resource.data.authorId == request.auth.uid
@@ -1610,6 +1615,8 @@ service cloud.firestore {
         isCollabMember(resource.data.researchId)
         || isCollabLeader(resource.data.researchId)
         || isSocietyReadableByStaff(resource.data.researchId)
+        // QA-v3 M: "내 마일스톤" — 본인이 담당자인 항목은 연구 무관 조회 허용
+        || request.auth.uid in resource.data.get('assigneeIds', [])
       );
       allow create: if isAuthenticated() && (
         isCollabMember(request.resource.data.researchId)

@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils";
 import {
   canShowNotification,
   publishActiveModal,
+  releaseActiveModal,
   subscribeActiveModalChange,
 } from "@/features/dashboard/notification-orchestrator";
 
@@ -212,9 +213,10 @@ export default function TodayTodosPopup() {
 
   // Sprint 2: open 상태를 NotificationOrchestrator 에 발행 (다른 알림 자동 보류)
   useEffect(() => {
-    publishActiveModal(open ? "today-todos" : null);
+    if (open) publishActiveModal("today-todos");
+    else releaseActiveModal("today-todos");
     return () => {
-      publishActiveModal(null);
+      releaseActiveModal("today-todos");
     };
   }, [open]);
 

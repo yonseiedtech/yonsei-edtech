@@ -435,15 +435,24 @@ function SeminarDetail({ id }: { id: string }) {
   }
 
   const myWaitlistEntry = user ? waitlist.find((w) => w.userId === user.id) : undefined;
+  const [toggleBusy, setToggleBusy] = useState(false);
 
-  function handleToggle() {
-    if (!user) return;
+  async function handleToggle() {
+    // QA-v3 M: 더블클릭 시 attendee 중복 생성·정원 초과 — 진행 중 재진입 차단 + 완료 후 토스트
+    if (!user || toggleBusy) return;
     if (!isAttending && isFull) {
       toast.error("정원이 마감되었습니다. 대기열에 등록해 주세요.");
       return;
     }
-    toggleAttendance(seminar!.id, user.id, seminar!.title);
-    toast.success(isAttending ? "참석이 취소되었습니다." : "참석 신청되었습니다.");
+    setToggleBusy(true);
+    try {
+      await toggleAttendance(seminar!.id, user.id, seminar!.title);
+      toast.success(isAttending ? "참석이 취소되었습니다." : "참석 신청되었습니다.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "처리에 실패했습니다.");
+    } finally {
+      setToggleBusy(false);
+    }
   }
 
   function handleJoinWaitlist() {

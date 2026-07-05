@@ -56,12 +56,18 @@ interface Props {
 function OverviewSection({ seminar }: { seminar: NonNullable<ReturnType<typeof useSeminar>> }) {
   const computed = getComputedStatus(seminar);
 
+  const { user: lmsViewer } = useAuthStore();
+  const canSeeRegistrations =
+    !!lmsViewer &&
+    (isAtLeast(lmsViewer, "staff") || (seminar.hostUserIds ?? []).includes(lmsViewer.id));
   const { data: registrations } = useQuery({
     queryKey: ["registrations", seminar.id],
     queryFn: async () => {
       const res = await registrationsApi.list(seminar.id);
       return res.data as unknown as { id: string }[];
     },
+    // QA-v3 M: 룰상 staff/호스트/본인 전용 — 권한 없는 사용자의 반복 permission-denied 차단
+    enabled: canSeeRegistrations,
   });
   const totalAttendees = seminar.attendeeIds.length + (registrations?.length ?? 0);
 

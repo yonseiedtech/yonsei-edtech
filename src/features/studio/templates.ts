@@ -44,7 +44,8 @@ function lightFooter(docType: DesignDocType) {
 function coverPage(docType: DesignDocType, p: TemplatePrefill): DesignPage {
   const { width: W, height: H } = DESIGN_CANVAS_SIZES[docType];
   const cx = Math.round(W * 0.09);
-  const emblemSize = Math.round(W * 0.085);
+  // QA-v3 M: 16:9(ppt)에서 W 비례 엠블럼이 H*0.18 골드라인과 겹침 — H 비례 상한 적용
+  const emblemSize = Math.round(Math.min(W * 0.085, H * 0.09));
   return makePage(NAVY, [
     makeImage(EMBLEM, {
       x: cx, y: Math.round(H * 0.07), w: emblemSize, h: emblemSize, fit: "contain", locked: true,
@@ -133,7 +134,7 @@ function highlightPage(docType: DesignDocType, p: TemplatePrefill): DesignPage {
     }),
     makeText({
       x: cx + Math.round(W * 0.04), y: Math.round(H * 0.66), w: Math.round(W * 0.74), h: Math.round(H * 0.15),
-      text: p.description?.slice(0, 160) ?? "소개 문구를 입력하세요.",
+      text: p.description?.slice(0, 110) ?? "소개 문구를 입력하세요.",
       fontSize: Math.round(W * 0.024), fontWeight: 400, fontFamily: "sans", color: INK, lineHeight: 1.6,
     }),
     ...lightFooter(docType),

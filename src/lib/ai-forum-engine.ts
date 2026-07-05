@@ -13,7 +13,7 @@
 import { generateText } from "ai";
 import type { Firestore } from "firebase-admin/firestore";
 import { models } from "@/lib/ai";
-import { AI_PERSONAS, type AIPersonaKey } from "@/types/ai-forum";
+import { AI_PERSONAS, type AIPersonaKey , FALLBACK_AI_PERSONA} from "@/types/ai-forum";
 
 export const MAX_FORUM_COST_USD = 0.5;
 export const MAX_OUTPUT_TOKENS = 450;
@@ -64,7 +64,7 @@ export interface TickResult {
 }
 
 export function buildSystemPrompt(persona: AIPersonaKey, topic: ForumDoc): string {
-  const p = AI_PERSONAS[persona];
+  const p = AI_PERSONAS[persona] ?? FALLBACK_AI_PERSONA;
   return [
     `당신은 "${p.name}" 입니다.`,
     `역할: ${p.description}`,
@@ -97,7 +97,7 @@ function buildUserPrompt(priorMessages: MessageDoc[], currentRound: number): str
   if (priorMessages.length > 0) {
     lines.push("[이전 발언 (요약)]");
     for (const m of priorMessages) {
-      const p = AI_PERSONAS[m.persona];
+      const p = AI_PERSONAS[m.persona] ?? FALLBACK_AI_PERSONA;
       lines.push(`라운드 ${m.round} · ${p.name}: ${m.content.slice(0, 280)}`);
       lines.push("");
     }
@@ -197,7 +197,7 @@ export async function processOneTick(
       const summaryPrompt =
         "다음은 AI 포럼의 전체 발언 흐름입니다. 합의된 사항과 미해결 과제를 각 3줄 이내로 정리해주세요. 한국어로.";
       const summaryContext = priorMessages
-        .map((m) => `${AI_PERSONAS[m.persona].name}: ${m.content.slice(0, 200)}`)
+        .map((m) => `${(AI_PERSONAS[m.persona] ?? FALLBACK_AI_PERSONA).name}: ${m.content.slice(0, 200)}`)
         .join("\n");
       try {
         const summaryResult = await generateText({

@@ -206,7 +206,7 @@ export default function ResearchJourneyGuide({ userId, current, readOnly }: Prop
   const searchParams = useSearchParams();
 
   const { data: proposal } = useQuery({
-    queryKey: ["research_proposal", userId],
+    queryKey: ["journey-guide", "research_proposal", userId],
     queryFn: async () => {
       const res = await researchProposalsApi.listByUser(userId);
       const sorted = [...res.data].sort((a, b) =>
@@ -218,7 +218,7 @@ export default function ResearchJourneyGuide({ userId, current, readOnly }: Prop
   });
 
   const { data: report } = useQuery({
-    queryKey: ["research_report", userId],
+    queryKey: ["journey-guide", "research_report", userId],
     queryFn: async () => {
       const res = await researchReportsApi.listByUser(userId);
       const sorted = [...res.data].sort((a, b) =>
@@ -230,7 +230,7 @@ export default function ResearchJourneyGuide({ userId, current, readOnly }: Prop
   });
 
   const { data: paper } = useQuery({
-    queryKey: ["writing_paper", userId],
+    queryKey: ["journey-guide", "writing_paper", userId],
     queryFn: async () => {
       const res = await writingPapersApi.listByUser(userId);
       const sorted = [...res.data].sort((a, b) =>

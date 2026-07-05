@@ -250,10 +250,21 @@ export default function StudioEditor({ docId }: { docId: string }) {
       try {
         const fresh = await designDocsApi.get(cur.id);
         const serverSavedAt = (fresh as { lastSavedAt?: string } | null)?.lastSavedAt ?? null;
-        if (serverSavedAt && baseSavedAtRef.current && serverSavedAt !== baseSavedAtRef.current) {
+        // QA-v3 M: baseline 이 null(첫 저장 전)이어도 서버에 저장 기록이 있으면 충돌 —
+        // 기존 조건은 "첫 저장 전" 창구로 무경고 덮어쓰기를 통과시켰다.
+        if (serverSavedAt && serverSavedAt !== baseSavedAtRef.current) {
           conflictRef.current = true;
+          // QA-v3 M: 충돌 경로도 로컬 백업 — "새로고침하세요" 안내를 따르면 이 탭의 편집이 유실됐음
+          try {
+            localStorage.setItem(
+              `studio_backup_${cur.id}`,
+              JSON.stringify({ title: cur.title, pages: cur.pages, at: Date.now() }),
+            );
+          } catch {
+            /* 무시 */
+          }
           setSaveError(
-            "다른 탭/기기에서 이 문서가 수정되었습니다. 덮어쓰기를 막기 위해 이 탭의 저장을 중단했어요 — 새로고침해 최신 내용을 확인하세요.",
+            "다른 탭/기기에서 이 문서가 수정되었습니다. 덮어쓰기를 막기 위해 이 탭의 저장을 중단했어요 — 이 탭의 편집 내용은 브라우저에 임시 백업됐습니다. 새로고침해 최신 내용을 확인하세요.",
           );
           return;
         }

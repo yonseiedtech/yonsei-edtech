@@ -78,12 +78,10 @@ export default function MultiAxisTrend({ theses, nameOf }: Props) {
             key={a}
             type="button"
             onClick={() => switchAxis(a)}
-            className="rounded-full px-3 py-1.5 text-xs font-medium transition-colors"
-            style={
-              a === axis
-                ? { backgroundColor: AXIS_ACCENT[a], color: "#fff" }
-                : { backgroundColor: "var(--muted, #f1f5f9)", color: "#475569" }
-            }
+            className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+              a === axis ? "" : "bg-muted text-muted-foreground"
+            }`}
+            style={a === axis ? { backgroundColor: AXIS_ACCENT[a], color: "#fff" } : undefined}
           >
             {AXIS_LABELS[a]}
           </button>

@@ -341,7 +341,8 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
                 textAnchor="middle"
                 fontSize={12}
                 fontWeight={700}
-                fill="#0f172a"
+                fill="currentColor"
+                className="text-foreground"
               >
                 {era.label}
               </text>
@@ -404,7 +405,8 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
                   y={n.y + 4}
                   fontSize={11}
                   fontWeight={active ? 700 : 500}
-                  fill={dim ? "#94a3b8" : "#1e293b"}
+                  fill="currentColor"
+                  className={dim ? "text-slate-400 dark:text-slate-500" : "text-foreground"}
                   style={{
                     fontFamily:
                       "'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, sans-serif",

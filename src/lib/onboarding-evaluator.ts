@@ -71,6 +71,12 @@ export function evalCompletionForUser(
       return typeof user.thesisJourneyStage === "number";
     case "participated.commBoard":
       return false; // 회원×보드 전수 조회 비용 — 콘솔 매트릭스에서는 미집계 (visited.* 패턴)
+    // QA-v3: RT-3 신규 3종 — case 누락으로 default 에 떨어지던 것을 명시.
+    // visited.studio 는 localStorage(운영진 모름), matrix/model 은 회원×전수 조회 비용으로 미집계.
+    case "visited.studio":
+    case "used.literatureMatrix":
+    case "used.researchModel":
+      return false;
     default:
       return false;
   }

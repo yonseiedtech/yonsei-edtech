@@ -84,8 +84,12 @@ export default function ChatWidget() {
   useEffect(() => {
     setStopHandler((session) => {
       // RT-2(2026-07-04): 종료 순간 피드백 — 기록 시간과 잔디 반영 기준(30분)을 즉시 알림
+      // QA-v3 M: 스토어 startTime 은 일시정지만큼 보정되어 있음 — 이 값 기준 시간이 실제 집중 시간
       void endSessionRef.current
-        .mutateAsync({ sessionId: session.id })
+        .mutateAsync({
+          sessionId: session.id,
+          elapsedMinutes: Math.max(0, Math.round(((Date.now() - session.startTime) / 60000) * 10) / 10),
+        })
         .then(({ durationMinutes }) => {
           const mins = Math.round(durationMinutes);
           toast.success(

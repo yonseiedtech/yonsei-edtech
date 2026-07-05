@@ -138,6 +138,8 @@ function MessagesInner({ user }: { user: User }) {
   }
 
   async function handleDelete(id: string) {
+    // QA-v3 M: 쪽지는 발신·수신이 공유하는 단일 문서 — 삭제하면 상대방 보관함에서도 사라짐
+    if (!window.confirm("이 쪽지를 삭제할까요?\n상대방의 보관함에서도 함께 삭제되며 되돌릴 수 없습니다.")) return;
     try {
       await messagesApi.delete(id);
       qc.invalidateQueries({ queryKey: ["messages-received", user.id] });

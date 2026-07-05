@@ -241,7 +241,7 @@ export default function MyTodosWidget() {
       list.push({
         id: "no-proposal",
         title: "연구 계획서 작성하기",
-        href: "/mypage/research",
+        href: "/mypage/research?tab=proposal",
         note: "아직 작성된 연구 계획서가 없어요",
       });
     } else {
@@ -251,7 +251,7 @@ export default function MyTodosWidget() {
       list.push({
         id: latest.id,
         title: latest.titleKo || latest.titleEn || "연구 계획서 이어 작성",
-        href: "/mypage/research",
+        href: "/mypage/research?tab=proposal",
         note: "마지막 저장 후 이어 작성",
       });
     }
@@ -259,7 +259,7 @@ export default function MyTodosWidget() {
       list.push({
         id: "no-report",
         title: "연구 보고서 시작하기",
-        href: "/mypage/research",
+        href: "/mypage/research?tab=reportdoc",
         note: "1·2장부터 차근차근 채워보세요",
       });
     } else {
@@ -273,7 +273,7 @@ export default function MyTodosWidget() {
       list.push({
         id: latestReport.id,
         title: reportLabel,
-        href: "/mypage/research",
+        href: "/mypage/research?tab=reportdoc",
         note: "마지막 저장 후 이어 작성",
       });
     }

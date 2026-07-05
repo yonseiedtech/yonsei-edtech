@@ -289,9 +289,10 @@ export default function AgentsPage() {
   }
 
   const userRoleLevel = ROLE_HIERARCHY[user.role] ?? 0;
-  const ADMIN_LEVEL = ROLE_HIERARCHY["admin"] ?? 0;
+  // QA-v3 M: 개별 에이전트 minRole 이 staff 인데 페이지가 admin 게이트 — staff 로 정합
+  const ADMIN_LEVEL = ROLE_HIERARCHY["staff"] ?? 0;
 
-  /* 관리자 미만 접근 차단 */
+  /* 운영진 미만 접근 차단 */
   if (userRoleLevel < ADMIN_LEVEL) {
     return (
       <PageContainer width="narrow">

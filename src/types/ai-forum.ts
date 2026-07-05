@@ -101,6 +101,22 @@ export const AI_PERSONAS: Record<AIPersonaKey, AIPersona> = {
   },
 };
 
+/**
+ * 미등록 페르소나 키 폴백 — Firestore 등 외부 데이터에 AI_PERSONAS 에 없는 키가
+ * 들어와도 UI 가 크래시하지 않도록 `AI_PERSONAS[key] ?? FALLBACK_AI_PERSONA` 로 사용.
+ */
+export const FALLBACK_AI_PERSONA: AIPersona = {
+  key: "unknown" as AIPersonaKey,
+  name: "미등록 페르소나",
+  shortName: "미등록",
+  description: "등록되지 않은 AI 페르소나",
+  color: "text-zinc-600 dark:text-zinc-300",
+  accentBorder: "border-l-zinc-400 dark:border-l-zinc-500",
+  accentBg: "bg-zinc-100 dark:bg-zinc-800/60",
+  accentRing: "ring-zinc-200 dark:ring-zinc-700",
+  avatarEmoji: "🤖",
+};
+
 export type AIForumStatus = "scheduled" | "in_progress" | "completed" | "archived";
 
 export interface AIForumTopic {

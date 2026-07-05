@@ -33,11 +33,15 @@ import { computeThesisProgress, formatMinutes } from "@/features/research/thesis
 import { todayYmdLocal } from "@/lib/dday";
 import type { DiagnosticResult } from "@/types/diagnostic";
 
-/** 이번 학기 시작 ymd (1학기 3/1, 2학기 9/1 — StudyTimerStats 와 동일 기준) */
+/** 이번 학기 시작 ymd — 직전 개강일(3/1·9/1) 기준. QA-v3: 방학에 미래 날짜가 되던 오류 교정 */
 function semesterStartYmd(): string {
   const now = new Date();
   const y = now.getFullYear();
-  const start = now.getMonth() < 6 ? new Date(y, 2, 1) : new Date(y, 8, 1);
+  const m = now.getMonth();
+  const start =
+    m >= 8 ? new Date(y, 8, 1)
+    : m >= 2 ? new Date(y, 2, 1)
+    : new Date(y - 1, 8, 1);
   return todayYmdLocal(start);
 }
 
@@ -205,7 +209,7 @@ export default function MyGrowthWidget() {
           value={formatMinutes(timer.totalMin)}
           sub={timer.sessionCount > 0 ? `· ${timer.sessionCount}회` : undefined}
           color="text-blue-600 dark:text-blue-400"
-          href="/research"
+          href="/mypage/research?tab=report&focus=timer"
         />
 
         {/* 4. 연구 진행도 */}
@@ -215,7 +219,7 @@ export default function MyGrowthWidget() {
           value={`${thesis.percent}%`}
           pct={thesis.percent}
           color="text-amber-600 dark:text-amber-400"
-          href="/research"
+          href="/mypage/research?tab=writing"
         />
       </div>
     </div>

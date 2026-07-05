@@ -399,7 +399,9 @@ function hasPersonalContent(p: PersonalDigest): boolean {
     p.timerMinutes > 0 ||
     p.dueCards > 0 ||
     p.readinessDelta !== null ||
-    p.onboardingTodo.length > 0
+    p.onboardingTodo.length > 0 ||
+    // QA-v3: 미읽음 알림만 있는 회원(=이탈 위험군, C-2 타깃)이 generic 묶음으로 빠지던 문제
+    p.unreadNotifications > 0
   );
 }
 

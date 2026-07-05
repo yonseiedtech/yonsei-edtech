@@ -8,12 +8,13 @@ export function useWritingPaper(userId: string | undefined) {
   const { data, isLoading } = useQuery({
     queryKey: ["writing_paper", userId ?? "guest"],
     queryFn: async () => {
-      if (!userId) return undefined;
+      // QA-v3 M: react-query v5 는 undefined resolve 를 에러로 처리 — null 로
+      if (!userId) return null;
       const res = await writingPapersApi.listByUser(userId);
       const sorted = [...res.data].sort((a, b) =>
         (b.updatedAt ?? "").localeCompare(a.updatedAt ?? "")
       );
-      return sorted[0];
+      return sorted[0] ?? null;
     },
     enabled: !!userId,
     staleTime: 1000 * 30,

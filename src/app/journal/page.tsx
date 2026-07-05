@@ -27,7 +27,7 @@ export default function JournalIndexPage() {
 
   const { data: issues = [] } = usePublishedIssues();
   const { data: publicArticles = [] } = usePublicArticles();
-  const { data: societyArticles = [] } = useSocietyArticles();
+  const { data: societyArticles = [] } = useSocietyArticles(isAuthed);
   const articles = isAuthed ? societyArticles : publicArticles;
 
   const [search, setSearch] = useState("");
@@ -149,7 +149,7 @@ export default function JournalIndexPage() {
                     )}
                   </div>
                   <h3 className="text-base font-semibold">{article.titleKo}</h3>
-                  <p className="text-xs text-zinc-600">
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
                     {article.authors
                       .slice(0, 3)
                       .map((a) => a.displayName)
@@ -157,7 +157,7 @@ export default function JournalIndexPage() {
                     {article.authors.length > 3 && ` 외 ${article.authors.length - 3}명`}
                   </p>
                   {article.abstractKo && (
-                    <p className="line-clamp-2 text-sm text-zinc-700">
+                    <p className="line-clamp-2 text-sm text-zinc-700 dark:text-zinc-300">
                       {article.abstractKo}
                     </p>
                   )}

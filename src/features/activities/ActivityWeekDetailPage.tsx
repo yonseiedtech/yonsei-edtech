@@ -84,9 +84,17 @@ export default function ActivityWeekDetailPage({
     queryKey: ["activity-progress", activityId],
     queryFn: async () => {
       const res = await activityProgressApi.list(activityId);
-      return ((res.data ?? []) as ActivityProgress[]).sort(
-        (a, b) => (a.week ?? 0) - (b.week ?? 0),
-      );
+      // QA-v3 M: 목록(ActivityDetail)의 "Week N" 번호는 날짜 오름차순 위치 기반 —
+      // 같은 queryKey 를 공유하므로 정렬도 동일해야 N번째 링크가 같은 회차를 연다.
+      return ((res.data ?? []) as ActivityProgress[]).sort((a, b) => {
+        const aDate = a.date ?? "";
+        const bDate = b.date ?? "";
+        if (aDate !== bDate) return aDate.localeCompare(bDate);
+        const aStart = a.startTime ?? "";
+        const bStart = b.startTime ?? "";
+        if (aStart !== bStart) return aStart.localeCompare(bStart);
+        return (a.week ?? 0) - (b.week ?? 0);
+      });
     },
   });
 

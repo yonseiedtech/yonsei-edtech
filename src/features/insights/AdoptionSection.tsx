@@ -30,10 +30,12 @@ interface Adoption {
 }
 
 function Stat({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+  // QA-v3 M: 집계 실패 시 서버가 -1 센티널을 반환 — 지표값으로 노출하지 않고 "—" 표시
+  const display = typeof value === "number" && value < 0 ? "—" : value;
   return (
     <div className="rounded-xl border bg-card px-3 py-2.5">
       <p className="text-[11px] text-muted-foreground">{label}</p>
-      <p className="text-lg font-bold tabular-nums">{value}</p>
+      <p className="text-lg font-bold tabular-nums">{display}</p>
       {sub && <p className="text-[10px] text-muted-foreground">{sub}</p>}
     </div>
   );

@@ -94,9 +94,10 @@ export default function SeminarReviews({ seminar }: Props) {
     subTab === "speaker" ? isStaff :
     subTab === "staff" ? isStaff : false;
 
-  const alreadyWritten = subTab === "attendee"
-    ? allReviews.some((r) => r.type === "attendee" && r.authorId === user?.id)
-    : false;
+  // QA-v3 M: 운영진 탭도 본인 기준 중복 방지 (연사 탭은 스태프가 여러 연사를 대행 등록하므로 제외)
+  const alreadyWritten = subTab === "speaker"
+    ? false
+    : allReviews.some((r) => r.type === subTab && r.authorId === user?.id);
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => reviewsApi.delete(id),

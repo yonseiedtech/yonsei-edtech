@@ -402,6 +402,12 @@ export default function NewMemberChecklistWidget() {
     hasParticipation,
     hasResearchReport,
     hasLectureReview,
+    // QA-v3 M: RT-3 신규 항목 4종 누락 — 늦게 resolve 되면 완료가 세션 내내 미완료로 표시되고
+    // 다른 deps 변경 순간 일괄 재계산되며 가짜 "방금 완료" 컨페티가 터지던 문제
+    hasMatrixEntry,
+    hasModel,
+    studioVisited,
+    commBoardExists,
   ]);
 
   const completedCount = items.filter((it) => it.completed).length;

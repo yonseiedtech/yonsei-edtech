@@ -23,29 +23,7 @@
     }
   },
   "files": [
-    "src/lib/bkend.ts",
-    "src/lib/push-admin.ts",
-    "src/features/seminar/QrCodeDisplay.tsx",
-    "src/features/seminar/detail/RegistrationSection.tsx",
-    "src/features/research/study-timer/EditSessionDialog.tsx",
-    "src/components/mypage/MyResearchView.tsx",
-    "src/components/mypage/MyPageView.tsx",
-    "src/app/api/console/adoption/route.ts",
-    "src/app/api/activities/reflections/route.ts",
-    "src/app/api/conference/[programId]/my-schedule/pdf/route.tsx",
-    "src/app/api/conference/[programId]/roundup/route.ts",
-    "src/app/api/seminars/waitlist-notify/route.ts",
-    "src/app/api/networking/rsvp/route.ts",
-    "src/features/steppingstone/SemesterRoadmap.tsx",
-    "src/features/research-analytics/ResearchHero.tsx",
-    "src/app/activities/external/[id]/my-volunteer/page.tsx",
-    "src/app/activities/external/[id]/review/page.tsx",
-    "src/features/conference/ConferenceProgramView.tsx",
-    "src/features/conference/ConferenceRoundupView.tsx",
-    "src/app/gatherings/page.tsx",
-    "src/app/gallery/page.tsx",
-    "src/app/research/page.tsx",
-    "src/app/whats-new/page.tsx",
-    "src/app/courses/[id]/schedule/page.tsx"
+    "src/features/research/study-timer/useStudySessions.ts",
+    "src/components/chat/ChatWidget.tsx"
   ]
 }

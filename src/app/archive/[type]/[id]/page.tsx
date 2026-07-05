@@ -208,13 +208,13 @@ export default function ArchiveDetailPage() {
       : [...current, thesisId];
     try {
       await profilesApi.update(user.id, {
-        thesisReadingList: next.length > 0 ? next : undefined,
+        thesisReadingList: next /* QA-v3: undefined 는 strip 되어 필드가 안 지워짐 — 빈 배열로 저장 */,
       });
       const authState = useAuthStore.getState();
       if (authState.user && authState.user.id === user.id) {
         authState.setUser({
           ...authState.user,
-          thesisReadingList: next.length > 0 ? next : undefined,
+          thesisReadingList: next /* QA-v3: undefined 는 strip 되어 필드가 안 지워짐 — 빈 배열로 저장 */,
         });
       }
       toast.success(isInList ? "읽기 리스트에서 제거" : "읽기 리스트에 추가");

@@ -77,11 +77,13 @@ export function usePublicArticles() {
   });
 }
 
-export function useSocietyArticles() {
+export function useSocietyArticles(enabled: boolean = true) {
   return useQuery({
     queryKey: journalKeys.articlesSociety(),
     queryFn: () => journalArticlesApi.listSociety(),
     staleTime: 30_000,
+    // QA-v3 M: 게스트(비로그인)에게 society 쿼리가 무조건 발사되던 문제
+    enabled,
   });
 }
 

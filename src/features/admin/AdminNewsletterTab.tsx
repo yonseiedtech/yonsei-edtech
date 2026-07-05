@@ -84,7 +84,7 @@ function enrollmentOptions(): string[] {
 
 export default function AdminNewsletterTab() {
   const router = useRouter();
-  const { issues, isLoading: issuesLoading } = useNewsletters();
+  const { issues, isLoading: issuesLoading } = useNewsletters({ includeDrafts: true });
   const createMutation = useCreateNewsletter();
   const updateMutation = useUpdateNewsletter();
   const deleteMutation = useDeleteNewsletter();

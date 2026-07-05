@@ -370,11 +370,17 @@ export default function AdminMemberTab() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, allMembers, members, searchQuery, sortKey, sortDir, onboardingFilter]);
 
-  function handleRoleChange(userId: string, newRole: UserRole) {
+  async function handleRoleChange(userId: string, newRole: UserRole) {
     const target = allMembers.find((m) => m.id === userId);
-    changeRole({ id: userId, role: newRole });
-    toast.success("역할이 변경되었습니다.");
-    logAudit({ action: "역할 변경", category: "role", detail: `${target?.name ?? userId}: ${target?.role ?? "?"} → ${newRole}`, targetId: userId, targetName: target?.name, userId: user?.id ?? "", userName: user?.name ?? "" });
+    // QA-v3 M: 드롭다운 오클릭 한 번으로 즉시 승격되던 문제 — 확인 + 실제 성공 후에만 토스트·감사로그
+    if (!window.confirm(`${target?.name ?? userId} 님의 역할을 "${target?.role ?? "?"}" → "${newRole}" 로 변경할까요?`)) return;
+    try {
+      await changeRole({ id: userId, role: newRole });
+      toast.success("역할이 변경되었습니다.");
+      logAudit({ action: "역할 변경", category: "role", detail: `${target?.name ?? userId}: ${target?.role ?? "?"} → ${newRole}`, targetId: userId, targetName: target?.name, userId: user?.id ?? "", userName: user?.name ?? "" });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "역할 변경에 실패했습니다.");
+    }
   }
 
   async function executeHandover() {
@@ -500,7 +506,7 @@ export default function AdminMemberTab() {
     return (
       <select
         value={m.role}
-        onChange={(e) => handleRoleChange(m.id, e.target.value as UserRole)}
+        onChange={(e) => void handleRoleChange(m.id, e.target.value as UserRole)}
         className={cn(
           "inline-flex w-fit cursor-pointer rounded-md border px-1.5 py-0.5 text-[10px] font-semibold leading-none appearance-none outline-none",
           ROLE_COLORS[m.role] || ROLE_COLORS.member,
