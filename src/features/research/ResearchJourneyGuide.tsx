@@ -74,10 +74,10 @@ const STEPS: StepMeta[] = [
     key: "topic",
     label: "주제 탐색",
     semester: "1학기",
-    purpose: "선행 논문을 읽으며 관심 분야의 지형을 파악합니다",
+    purpose: "인터뷰로 주제 방향을 잡고, 선행 논문으로 지형을 파악합니다",
     icon: Compass,
     kind: "support",
-    href: "/mypage/research?tab=reading",
+    href: "/mypage/research?tab=explore",
   },
   {
     key: "literature",
@@ -286,9 +286,11 @@ export default function ResearchJourneyGuide({ userId, current, readOnly }: Prop
       return;
     }
     if (step.editorSub === current) return;
+    // QA-v3 L: 개편된 평탄화 탭 키로 직접 발행 (legacy writing&sub= shim 의존 제거)
+    const flatTab = step.editorSub === "report" ? "reportdoc" : step.editorSub === "proposal" ? "proposal" : "writing";
     const params = new URLSearchParams(searchParams.toString());
-    params.set("tab", "writing");
-    params.set("sub", step.editorSub!);
+    params.delete("sub");
+    params.set("tab", flatTab);
     router.replace(`/mypage/research?${params.toString()}`, { scroll: false });
   }
 

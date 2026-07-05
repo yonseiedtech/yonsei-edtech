@@ -27,8 +27,10 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title || "연세교육공학회";
-  const body = payload.notification?.body || "";
+  // QA-v3 L: notification 필드가 있으면 브라우저가 자동 표시 — 수동 표시까지 하면 알림 2개 중복
+  if (payload.notification) return;
+  const title = payload.data?.title || "연세교육공학회";
+  const body = payload.data?.body || "";
   const link = payload.data?.link || "/dashboard";
   const tag = payload.data?.tag || "yonsei-edtech";
 

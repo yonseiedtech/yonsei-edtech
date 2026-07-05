@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     const result = await processOneTick(db, forumId);
     return Response.json(result, { status: result.status ?? 200 });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "unknown error";
-    return Response.json({ error: msg }, { status: 500 });
+    console.error("[ai-forum/advance]", err);
+    return Response.json({ error: "처리에 실패했습니다." }, { status: 500 });
   }
 }

@@ -449,8 +449,8 @@ export default function AdvisorFeedbackLog({ userId, readOnly = false }: Props) 
                     <CircleDashed size={15} className="shrink-0 text-amber-500" />
                   )}
                   <span className="text-xs font-semibold tabular-nums">{n.meetingDate}</span>
-                  <Badge variant="secondary" className={cn("text-[10px]", SOURCE_COLORS[n.source])}>
-                    {FEEDBACK_SOURCE_LABELS[n.source]}
+                  <Badge variant="secondary" className={cn("text-[10px]", SOURCE_COLORS[n.source] ?? "")}>
+                    {FEEDBACK_SOURCE_LABELS[n.source] ?? n.source}
                   </Badge>
                   <Badge variant="outline" className="text-[10px]">
                     {FEEDBACK_CHAPTER_LABELS[n.chapter] ?? "전반"}

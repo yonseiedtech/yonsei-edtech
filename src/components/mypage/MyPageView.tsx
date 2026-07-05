@@ -340,6 +340,8 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
         {/* 탭 네비게이션 */}
         <nav className="mt-6 flex gap-1 overflow-x-auto border-b" aria-label="마이페이지 탭">
           {TABS.map((tab) => {
+            // QA-v3 L: 명함 콘텐츠는 본인 전용 — readOnly/타인 열람에선 탭 자체를 숨겨 빈 패널 방지
+            if (tab.key === "card" && (!isSelf || readOnly)) return null;
             const isActive = activeTab === tab.key;
             return (
               <button

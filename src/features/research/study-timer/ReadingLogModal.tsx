@@ -6,7 +6,7 @@
  * 빠른(별점+한 줄) / 정독(핵심 주장·방법·시사점) 2단 입력.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Star } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -59,6 +59,21 @@ export default function ReadingLogModal({
   const [method, setMethod] = useState("");
   const [implication, setImplication] = useState("");
   const { mutateAsync, isPending } = useCreateReadingLog();
+
+  // QA-v3 L: 모달이 상시 마운트라 이전 저장 내용(제목·별점·소감)이 다음 열림에 잔존 —
+  // 그대로 저장하면 중복 기록이 생기던 문제. 열릴 때 기본값으로 리셋.
+  useEffect(() => {
+    if (!open) return;
+    setTitle(defaultTitle ?? "");
+    setAuthors(defaultAuthors ?? "");
+    setRating(0);
+    setOneLine("");
+    setDeep(false);
+    setKeyClaim("");
+    setMethod("");
+    setImplication("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
   // Phase 4-C: 읽기 기록 ↔ 서지(research_papers) 브리지 — 기록과 동시에 연구 노트 생성
   const [alsoAddPaper, setAlsoAddPaper] = useState(false);
   const { user } = useAuthStore();

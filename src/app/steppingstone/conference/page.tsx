@@ -170,7 +170,7 @@ export default function ConferenceGuidePage() {
             <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-emerald-600" />
             <span className="text-sm font-medium">
               발표 자료·포스터를{" "}
-              <Link href="/edutech-archive" className="text-primary underline-offset-2 hover:underline">
+              <Link href="/archive" className="text-primary underline-offset-2 hover:underline">
                 에듀테크 아카이브
               </Link>
               에 보관 — 향후 연구에 재활용

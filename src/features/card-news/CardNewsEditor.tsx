@@ -164,6 +164,12 @@ export default function CardNewsEditor({ initial, isNew }: Props) {
         setError("카드 ID가 중복되었습니다. 각 카드의 ID를 고유하게 지정하세요.");
       return;
     }
+    // QA-v3 L: 빈 문자열·슬래시 등이 문서 ID 로 저장되던 문제 — URL 안전 슬러그만 허용
+    if (isNew && !/^[a-z0-9][a-z0-9-]*$/i.test(series.id)) {
+      if (!opts.silent)
+        setError("시리즈 ID 는 영문/숫자/하이픈만 사용할 수 있습니다 (예: 2026-04-launch).");
+      return;
+    }
     setSaving(true);
     try {
       const payload = {

@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
           type: "activity_reminder",
           title,
           message,
-          link: "/courses?tab=comprehensive-exam",
+          link: "/courses",
           refId,
           read: false,
           createdAt: nowIso,
@@ -98,7 +98,7 @@ export async function GET(req: NextRequest) {
         pushResult = await sendPushToUsers(fresh, {
           title,
           body: message,
-          link: "/courses?tab=comprehensive-exam",
+          link: "/courses",
           tag: refId,
         });
       } catch (e) {

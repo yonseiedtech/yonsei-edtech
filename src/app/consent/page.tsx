@@ -6,7 +6,7 @@ import InlineNotification from "@/components/ui/inline-notification";
 import { Separator } from "@/components/ui/separator";
 import PageContainer from "@/components/ui/page-container";
 
-export const CONSENT_VERSION = CURRENT_TERMS.collection;
+const CONSENT_VERSION = CURRENT_TERMS.collection;
 
 export const metadata: Metadata = {
   title: "개인정보 수집·이용 동의서",

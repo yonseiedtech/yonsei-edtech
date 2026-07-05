@@ -203,7 +203,11 @@ export async function POST(req: NextRequest) {
     await assertAdmin(req);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    return Response.json({ error: msg }, { status: msg === "forbidden" ? 403 : 401 });
+    // QA-v3 L: verifyIdToken 등 내부 메시지를 에코하지 않음
+    return Response.json(
+      { error: msg === "forbidden" ? "권한이 없습니다." : "인증에 실패했습니다." },
+      { status: msg === "forbidden" ? 403 : 401 },
+    );
   }
 
   let payload: {

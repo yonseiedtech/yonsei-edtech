@@ -49,7 +49,7 @@ export default async function CardNewsIndexPage() {
       ) : (
         <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {series.map((s) => {
-            const cover = s.cards.find((c) => c.kind === "cover") ?? s.cards[0];
+            const cover = (s.cards ?? []).find((c) => c.kind === "cover") ?? (s.cards ?? [])[0];
             return (
               <li key={s.id}>
                 <Link
@@ -93,7 +93,7 @@ export default async function CardNewsIndexPage() {
                         {s.publishedAt}
                       </span>
                       <span className="rounded-full bg-muted px-2 py-0.5">
-                        {s.cards.length}장
+                        {(s.cards ?? []).length}장
                       </span>
                     </div>
                   </div>

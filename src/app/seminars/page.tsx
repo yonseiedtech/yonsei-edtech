@@ -90,7 +90,7 @@ export default function SeminarsPage() {
   }, [visibleSeminars, ongoingSeminars, completedSeminars, statusTab, search]);
 
   const sorted = useMemo(
-    () => [...filtered].sort((a, b) => b.date.localeCompare(a.date)),
+    () => [...filtered].sort((a, b) => (b.date ?? "").localeCompare(a.date ?? "")),
     [filtered],
   );
 

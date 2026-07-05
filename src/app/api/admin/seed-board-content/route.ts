@@ -352,7 +352,7 @@ export async function POST(req: NextRequest) {
           : "모든 콘텐츠가 이미 등록되어 있습니다",
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "unknown error";
-    return Response.json({ error: msg }, { status: 500 });
+    console.error("[seed-board-content]", err);
+    return Response.json({ error: "시드에 실패했습니다." }, { status: 500 });
   }
 }

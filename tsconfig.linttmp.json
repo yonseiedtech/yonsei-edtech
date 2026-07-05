@@ -23,7 +23,7 @@
     }
   },
   "files": [
-    "src/features/research/study-timer/useStudySessions.ts",
-    "src/components/chat/ChatWidget.tsx"
+    "src/app/labs/[id]/layout.tsx",
+    "src/features/dashboard/SemesterKickoffBanner.tsx"
   ]
 }

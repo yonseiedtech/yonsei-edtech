@@ -924,12 +924,14 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
+                    {type === "external" && (
                     <Link
                       href={`/console/academic/external/${activityId}/program`}
                       className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-card px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
                     >
                       <Pencil size={14} /> 시간표 편집
                     </Link>
+                    )}
                     {type === "external" && (
                       <>
                         <Link

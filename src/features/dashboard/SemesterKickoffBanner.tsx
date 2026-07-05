@@ -39,6 +39,8 @@ export default function SemesterKickoffBanner() {
   const [tick, setTick] = useState(0);
   const sem = activeKickoffSemester();
   if (!user || !sem) return null;
+  // QA-v3 L: 시간표·수강 유도 배너는 재학 회원 대상 — 졸업생/게스트에겐 무의미
+  if (user.role === "alumni" || user.enrollmentStatus === "graduated") return null;
 
   const dismissKey = `yedu_kickoff_dismissed_${sem.key}.${user.id}`;
   let dismissed = false;

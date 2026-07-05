@@ -83,8 +83,8 @@ export default function ActivitiesPage() {
         color: "bg-primary/10 text-primary",
         title: s.title,
         desc: `${speakerLabel} 발표 · ${s.location}`,
-        date: s.date,
-        sortKey: s.date,
+        date: s.date ?? "",
+        sortKey: s.date ?? "",
       };
     });
 

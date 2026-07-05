@@ -325,7 +325,7 @@ export default function HelpPage() {
                       </div>
                     </summary>
                     <div className="border-t bg-muted/20 px-5 py-4 text-sm leading-relaxed text-foreground/85">
-                      <span className="text-primary">A.</span> {faq.a}
+                      <span className="text-primary">A.</span> {renderFaqAnswer(faq.a)}
                     </div>
                   </details>
                 ))}
@@ -352,4 +352,24 @@ export default function HelpPage() {
     </div>
     </PageContainer>
   );
+}
+
+/** QA-v3 L: FAQ 답변의 [라벨](/경로) 마크다운 링크가 평문으로 노출되던 문제 — 링크로 렌더 */
+function renderFaqAnswer(text: string): React.ReactNode {
+  const parts: React.ReactNode[] = [];
+  const re = /\[([^\]]+)\]\(([^)]+)\)/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  let key = 0;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) parts.push(text.slice(last, m.index));
+    parts.push(
+      <Link key={key++} href={m[2]} className="font-medium text-primary hover:underline">
+        {m[1]}
+      </Link>,
+    );
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts.length > 0 ? parts : text;
 }

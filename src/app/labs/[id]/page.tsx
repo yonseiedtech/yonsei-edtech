@@ -52,6 +52,10 @@ function LabDetailContent({ id }: { id: string }) {
   if (!lab) return <p className="py-20 text-center text-sm text-muted-foreground">실험을 찾을 수 없습니다.</p>;
 
   const canManage = canManageLabs(user) || lab.ownerId === user?.id;
+  // QA-v3 L: 목록은 draft 를 숨기는데 상세 URL 직접 접근은 열려 있던 비대칭
+  if (lab.status === "draft" && !canManage) {
+    return <p className="py-20 text-center text-sm text-muted-foreground">준비 중인 실험입니다.</p>;
+  }
   const canPromote = canPromoteLab(user);
 
   async function onToggle(emoji: LabEmoji) {

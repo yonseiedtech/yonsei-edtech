@@ -16,10 +16,10 @@ export async function loadAllSeries(): Promise<CardNewsSeries[]> {
     const ids = new Set(remote.map((s) => s.id));
     const fallback = CARD_NEWS_SERIES.filter((s) => !ids.has(s.id));
     const merged = [...remote, ...fallback];
-    return merged.sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+    return merged.sort((a, b) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? ""));
   } catch {
     return [...CARD_NEWS_SERIES].sort((a, b) =>
-      b.publishedAt.localeCompare(a.publishedAt),
+      (b.publishedAt ?? "").localeCompare(a.publishedAt ?? ""),
     );
   }
 }

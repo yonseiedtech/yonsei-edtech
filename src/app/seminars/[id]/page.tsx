@@ -289,10 +289,12 @@ function SeminarDetail({ id }: { id: string }) {
   }
 
   const computedStatus = getComputedStatus(seminar);
-  const isAttending = user ? seminar.attendeeIds.includes(user.id) : false;
+  // QA-v3 L: attendeeIds 결손 레거시 문서 방어
+  const attendeeIdsSafe = Array.isArray(seminar.attendeeIds) ? seminar.attendeeIds : [];
+  const isAttending = user ? attendeeIdsSafe.includes(user.id) : false;
   const isFull =
     seminar.maxAttendees != null &&
-    seminar.attendeeIds.length >= seminar.maxAttendees;
+    attendeeIdsSafe.length >= seminar.maxAttendees;
 
   /* ── Edit handlers ── */
   function openEditInfo() {

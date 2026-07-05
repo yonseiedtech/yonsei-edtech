@@ -44,10 +44,10 @@ const SECTIONS: Section[] = [
     icon: Lightbulb,
     description: "선배들이 알려준 실전 팁.",
     items: [
-      { label: "분석 노트 작성으로 본인 연구 자산 누적", href: "/analysis-notes" },
-      { label: "에듀테크 아카이브 — 선행연구 정리", href: "/edutech-archive" },
+      { label: "분석 노트 작성으로 본인 연구 자산 누적", href: "/mypage/research?tab=reading" },
+      { label: "에듀테크 아카이브 — 선행연구 정리", href: "/archive" },
       { label: "논문 리뷰 게시판 — 동료 리뷰", href: "/board/paper-review" },
-      { label: "디펜스 연습 도구 (음성 채점·따라 읽기)", href: "/defense-practice" },
+      { label: "디펜스 연습 도구 (음성 채점·따라 읽기)", href: "/steppingstone/thesis-defense" },
     ],
   },
   {

@@ -69,6 +69,8 @@ export async function GET(req: NextRequest) {
       for (const f of HARD_SECRET) delete out[f];
       if (!isStaff) {
         for (const f of CONTACT_FIELDS) delete out[f];
+        // QA-v3 L: username 은 로그인 ID(비밀번호 찾기 3요소 중 하나) — 회원 간 노출 불필요
+        delete out.username;
       }
       return out;
     });

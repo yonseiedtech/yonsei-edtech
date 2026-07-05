@@ -71,7 +71,18 @@ export default function GalleryPage() {
   });
 
   const deleteAlbum = useMutation({
-    mutationFn: (id: string) => albumsApi.delete(id),
+    mutationFn: async (id: string) => {
+      // QA-v3 L: 하위 사진 고아화 방지 — 앨범 삭제 전 사진 문서 정리
+      try {
+        const res = await photosApi.list(id);
+        await Promise.allSettled(
+          (res.data as unknown as Photo[]).map((p) => photosApi.delete(p.id)),
+        );
+      } catch {
+        /* 사진 정리 실패는 앨범 삭제를 막지 않음 */
+      }
+      await albumsApi.delete(id);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["albums"] });
       toast.success("앨범이 삭제되었습니다.");
@@ -361,7 +372,17 @@ function AlbumDetail({
   });
 
   const deletePhoto = useMutation({
-    mutationFn: (id: string) => photosApi.delete(id),
+    mutationFn: async (id: string) => {
+      await photosApi.delete(id);
+      // QA-v3 L: 업로드 경로와 동일하게 photoCount/coverUrl denorm 동기화
+      const res = await photosApi.list(album.id);
+      const remaining = res.data as unknown as Photo[];
+      await albumsApi.update(album.id, {
+        photoCount: remaining.length,
+        coverUrl: remaining[0]?.url ?? "",
+        updatedAt: new Date().toISOString(),
+      });
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["photos", album.id] });
       qc.invalidateQueries({ queryKey: ["albums"] });

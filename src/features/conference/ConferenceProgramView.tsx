@@ -414,7 +414,7 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
         </CardHeader>
         <CardContent className="flex flex-wrap items-center justify-between gap-3 text-sm">
           <div className="flex flex-wrap items-center gap-3 text-muted-foreground">
-            <span>{program.days.length}일간 · 총 {program.days.reduce((s, d) => s + d.sessions.length, 0)}개 세션</span>
+            <span>{(program.days ?? []).length}일간 · 총 {(program.days ?? []).reduce((s, d) => s + (d.sessions ?? []).length, 0)}개 세션</span>
             {program.uploadedSourceUrl && (
               <a
                 href={program.uploadedSourceUrl}

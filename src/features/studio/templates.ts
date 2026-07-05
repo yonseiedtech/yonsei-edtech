@@ -20,7 +20,6 @@ const PAPER = "#f4f6fa";
 const INK = "#1b1f27";
 // UX(2026-07-04 사용자 피드백): 학회 로고를 템플릿에 정식 반영
 const EMBLEM = "/yonsei-emblem.svg"; // 원형 엠블럼 — 네이비 배경용(흰 테두리)
-const LOGO = "/logo.png"; // 가로형 로크업 — 밝은 배경용
 
 /** 밝은 페이지 공통 푸터 — 엠블럼 + 학회명 (2·3페이지가 따로 놀던 문제의 공통 언어) */
 function lightFooter(docType: DesignDocType) {
@@ -35,7 +34,7 @@ function lightFooter(docType: DesignDocType) {
       x: cx + s + Math.round(W * 0.012), y: H - Math.round(W * 0.052), w: Math.round(W * 0.6), h: Math.round(W * 0.03),
       text: "연세교육공학회 · Yonsei EdTech",
       fontSize: Math.round(W * 0.016), fontWeight: 600, fontFamily: "sans",
-      color: "rgba(27,31,39,0.55)",
+      color: "rgba(27,31,39,0.55)", locked: true,
     }),
   ];
 }

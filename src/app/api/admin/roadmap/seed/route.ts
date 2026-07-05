@@ -162,7 +162,7 @@ export async function POST(req: NextRequest) {
           : "모든 단계가 이미 등록되어 있어 추가 작업 없음",
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "unknown error";
-    return Response.json({ error: msg }, { status: 500 });
+    console.error("[roadmap/seed]", err);
+    return Response.json({ error: "시드에 실패했습니다." }, { status: 500 });
   }
 }

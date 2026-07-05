@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { getAdminDb } from "@/lib/firebase-admin";
 import type { ApplicantEntry } from "@/types";
 
@@ -41,6 +42,10 @@ export async function POST(
   req: NextRequest,
   ctx: { params: Promise<{ id: string }> },
 ) {
+  // QA-v3 L: 비인증 엔드포인트 — 이름+학번 브루트포스(신청 여부 오라클) 완화
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const limited = checkRateLimit(`app-lookup:${ip}`, { limit: 10, windowSec: 60 });
+  if (limited) return limited;
   const { id: activityId } = await ctx.params;
   if (!activityId) {
     return NextResponse.json({ error: "활동 ID가 필요합니다." }, { status: 400 });

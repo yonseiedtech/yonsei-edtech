@@ -355,7 +355,7 @@ export default function StudioEditor({ docId }: { docId: string }) {
   }
 
   function removeSelected() {
-    if (!selectedId) return;
+    if (readOnly || !selectedId) return;
     // QA-v2: keydown 이펙트의 stale closure 가 잠금 직후 상태를 못 봐 잠긴 요소가 삭제되던 문제
     // — 항상 최신인 docRef 에서 잠금 상태를 판정한다.
     const el = docRef.current?.pages
@@ -370,7 +370,13 @@ export default function StudioEditor({ docId }: { docId: string }) {
   }
 
   function reorderSelected(dir: 1 | -1) {
-    if (!selectedId) return;
+    if (readOnly || !selectedId) return;
+    // QA-v3 L: 잠긴 요소는 z-순서도 고정
+    const cur = docRef.current?.pages.flatMap((p) => p.elements).find((e) => e.id === selectedId);
+    if (cur?.locked) {
+      toast.info("잠긴 요소입니다. 잠금을 해제한 뒤 순서를 바꾸세요.");
+      return;
+    }
     patchPage((p) => {
       const idx = p.elements.findIndex((e) => e.id === selectedId);
       const to = idx + dir;
