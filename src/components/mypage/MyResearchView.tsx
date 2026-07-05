@@ -358,9 +358,10 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
           </div>
         )}
 
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="mt-6 print-hide">
+        {/* QA-v3 C1: Tabs 루트에 print-hide 를 걸면 내부 인쇄 영역(ResearchReportPrint)까지 조상 규칙으로 숨겨짐 — 비인쇄 요소에 개별 적용 */}
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="mt-6">
           {/* 2026-07-04 개편: 논문 여정 순서(주제 탐색→문헌고찰→보고서→계획서→논문)로 평탄화, 타이머는 리포트에 통합 */}
-          <TabsList variant="line" className="w-full justify-start gap-2 border-b">
+          <TabsList variant="line" className="w-full justify-start gap-2 border-b print-hide">
             <TabsTrigger value="report" className="flex-none">
               <FileBarChart2 size={14} />연구 리포트
             </TabsTrigger>
@@ -426,7 +427,7 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
           <TabsContent value="report" className="mt-5">
             <div className="space-y-6">
               {/* 기간 필터 */}
-              <section className="rounded-2xl border bg-card p-4">
+              <section className="rounded-2xl border bg-card p-4 print-hide">
                 <div className="flex flex-col gap-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">

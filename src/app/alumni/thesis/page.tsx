@@ -86,47 +86,6 @@ export default function AlumniThesisListPage() {
     };
   }, [initialized, user]);
 
-  /* ── 비로그인 게이트 ── */
-  if (initialized && !user) {
-    return (
-      <PageContainer width="narrow">
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="rounded-2xl border bg-card p-10 text-center shadow-sm">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <Lock size={26} />
-            </div>
-            <h1 className="mt-4 text-xl font-bold tracking-tight">회원 전용 콘텐츠</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              졸업생 학위논문 아카이브(저자·지도교수·초록·원문 링크)는
-              <br />
-              연세교육공학회 회원에게만 공개됩니다.
-            </p>
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-              <Link href="/login">
-                <Button>로그인</Button>
-              </Link>
-              <Link href="/signup">
-                <Button variant="outline">회원가입</Button>
-              </Link>
-              <Link href="/research">
-                <Button variant="ghost" className="text-muted-foreground">
-                  <BarChart3 size={14} className="mr-1.5" />
-                  연구 분석 페이지로
-                </Button>
-              </Link>
-            </div>
-            <p className="mt-5 text-[11px] text-muted-foreground">
-              비회원은 연구 키워드 분석·연구 계보·시대별 흐름을{" "}
-              <Link href="/research" className="text-primary hover:underline">
-                /research
-              </Link>{" "}
-              에서 확인할 수 있습니다.
-            </p>
-          </div>
-        </div>
-      </PageContainer>
-    );
-  }
 
   const years = useMemo(() => {
     const set = new Set<number>();
@@ -200,6 +159,49 @@ export default function AlumniThesisListPage() {
 
   const hasActiveFilter =
     search.trim() !== "" || yearFilter !== "all" || advisorFilter !== "all";
+
+  /* QA-v3 C2: 비로그인 게이트 — 반드시 모든 훅 뒤에 위치 (훅 사이 early return 은 훅 순서 위반 크래시) */
+  /* ── 비로그인 게이트 ── */
+  if (initialized && !user) {
+    return (
+      <PageContainer width="narrow">
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="rounded-2xl border bg-card p-10 text-center shadow-sm">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <Lock size={26} />
+            </div>
+            <h1 className="mt-4 text-xl font-bold tracking-tight">회원 전용 콘텐츠</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              졸업생 학위논문 아카이브(저자·지도교수·초록·원문 링크)는
+              <br />
+              연세교육공학회 회원에게만 공개됩니다.
+            </p>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+              <Link href="/login">
+                <Button>로그인</Button>
+              </Link>
+              <Link href="/signup">
+                <Button variant="outline">회원가입</Button>
+              </Link>
+              <Link href="/research">
+                <Button variant="ghost" className="text-muted-foreground">
+                  <BarChart3 size={14} className="mr-1.5" />
+                  연구 분석 페이지로
+                </Button>
+              </Link>
+            </div>
+            <p className="mt-5 text-[11px] text-muted-foreground">
+              비회원은 연구 키워드 분석·연구 계보·시대별 흐름을{" "}
+              <Link href="/research" className="text-primary hover:underline">
+                /research
+              </Link>{" "}
+              에서 확인할 수 있습니다.
+            </p>
+          </div>
+        </div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer width="narrow">

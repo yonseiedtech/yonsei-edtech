@@ -1475,10 +1475,10 @@ service cloud.firestore {
       // P1-3: blanket list 삭제 — listByResearch(researchId 상수)·listByUser(본인)는
       // 위 read 규칙(list 포함)으로 증명 통과.
 
-      // 멤버 추가: leader 가 다른 사람을 등록하거나, 본인이 invite 수락으로 본인을 등록 (invitedBy != self).
+      // 멤버 추가: leader 는 본인 포함 누구든 등록(팀 생성 시 자기 등록 — QA-v3 C3),
+      // 또는 본인이 invite 수락으로 본인을 등록 (invitedBy != self).
       allow create: if isAuthenticated() && (
-        (isCollabLeader(request.resource.data.researchId)
-          && request.resource.data.userId != request.auth.uid)
+        isCollabLeader(request.resource.data.researchId)
         || (request.resource.data.userId == request.auth.uid
           && request.resource.data.invitedBy != request.auth.uid)
       );

@@ -394,7 +394,7 @@ function ChapterCommentSection({
   currentUserId: string;
   isLeader: boolean;
 }) {
-  const { data: comments = [] } = useChapterComments(chapterId);
+  const { data: comments = [] } = useChapterComments(researchId, chapterId);
   const createMut = useCreateComment(chapterId);
   const toggleMut = useToggleResolveComment(chapterId);
   const deleteMut = useDeleteComment(chapterId);

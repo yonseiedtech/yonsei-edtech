@@ -199,6 +199,9 @@ html {
     display: none !important;
   }
   /* 리포트 영역만 정상 흐름으로 표시 */
+  .report-print header {
+    display: block !important;
+  }
   .report-print {
     display: block !important;
     max-width: none !important;

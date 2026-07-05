@@ -26,7 +26,8 @@ describe("generateSecurityAnswerHash / verifySecurityAnswer (PBKDF2)", () => {
     expect(verifySecurityAnswer("다른 답", stored).ok).toBe(false);
   });
 
-  it("동일 답이라도 salt 가 달라 저장값이 매번 다름", () => {
+  // WSL 등 저성능 환경에서 PBKDF2 2회가 5초 기본 한도를 넘는 플레이크 → 여유 한도
+  it("동일 답이라도 salt 가 달라 저장값이 매번 다름", { timeout: 30_000 }, () => {
     const a = generateSecurityAnswerHash(ANSWER);
     const b = generateSecurityAnswerHash(ANSWER);
     expect(a).not.toBe(b);

@@ -126,10 +126,10 @@ export function useDeleteChapter(researchId: string) {
 
 // ── Comments ──
 
-export function useChapterComments(chapterId: string | undefined) {
+export function useChapterComments(researchId: string, chapterId: string | undefined) {
   return useQuery({
     queryKey: collabPhase2Keys.comments(chapterId),
-    queryFn: () => (chapterId ? collabCommentsApi.listByChapter(chapterId) : []),
+    queryFn: () => (chapterId ? collabCommentsApi.listByChapter(researchId, chapterId) : []),
     enabled: !!chapterId,
     staleTime: 10_000,
     refetchInterval: 30_000, // 30초마다 새 댓글 polling

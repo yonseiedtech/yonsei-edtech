@@ -23,6 +23,10 @@
     }
   },
   "files": [
-    "src/app/api/cron/notifications-cleanup/route.ts"
+    "src/components/mypage/MyResearchView.tsx",
+    "src/app/alumni/thesis/page.tsx",
+    "src/lib/bkend.ts",
+    "src/features/collaborative-research/api/useCollabPhase2.ts",
+    "src/features/collaborative-research/components/ChaptersBoard.tsx"
   ]
 }

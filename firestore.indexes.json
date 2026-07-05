@@ -1,15 +1,15 @@
 {
   "indexes": [
     {
-      "collectionGroup": "course_enrollments",
+      "collectionGroup": "activity_materials",
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "userId",
+          "fieldPath": "activityId",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "year",
+          "fieldPath": "createdAt",
           "order": "DESCENDING"
         }
       ]
@@ -29,42 +29,6 @@
       ]
     },
     {
-      "collectionGroup": "course_session_notes",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "courseOfferingId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "userId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "date",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "course_todos",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "courseOfferingId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "userId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "agent_jobs",
       "queryScope": "COLLECTION",
       "fields": [
@@ -75,90 +39,6 @@
         {
           "fieldPath": "createdAt",
           "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "comments",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "postId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "seminar_materials",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "seminarId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "photo_albums",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "seminarId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "photos",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "albumId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "activity_materials",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "activityId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "lab_comments",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "labId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "ASCENDING"
         }
       ]
     },
@@ -195,8 +75,8 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "collaboratorIds",
-          "arrayConfig": "CONTAINS"
+          "fieldPath": "collaborationType",
+          "order": "ASCENDING"
         },
         {
           "fieldPath": "updatedAt",
@@ -209,67 +89,11 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "collaborationType",
-          "order": "ASCENDING"
+          "fieldPath": "collaboratorIds",
+          "arrayConfig": "CONTAINS"
         },
         {
           "fieldPath": "updatedAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "collaborative_research_members",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "userId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "collaborative_research_members",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "researchId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "collaborative_research_invites",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "recipientId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "collaborative_research_invites",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "researchId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
           "order": "DESCENDING"
         }
       ]
@@ -317,6 +141,34 @@
       ]
     },
     {
+      "collectionGroup": "collaborative_research_invites",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "recipientId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "collaborative_research_invites",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "researchId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "collaborative_research_meetings",
       "queryScope": "COLLECTION",
       "fields": [
@@ -331,7 +183,7 @@
       ]
     },
     {
-      "collectionGroup": "collaborative_research_milestones",
+      "collectionGroup": "collaborative_research_members",
       "queryScope": "COLLECTION",
       "fields": [
         {
@@ -339,7 +191,21 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "targetDate",
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "collaborative_research_members",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
           "order": "ASCENDING"
         }
       ]
@@ -359,15 +225,209 @@
       ]
     },
     {
-      "collectionGroup": "research_journal_issues",
+      "collectionGroup": "collaborative_research_milestones",
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "status",
+          "fieldPath": "researchId",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "publishedAt",
+          "fieldPath": "targetDate",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "comments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "postId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "course_enrollments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "year",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "course_session_notes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "courseOfferingId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "course_todos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "courseOfferingId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "diagnostic_results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "direct_messages",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "fromId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "direct_messages",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "toId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "host_retrospectives",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "activityType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "activityId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "lab_comments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "labId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "notifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "photo_albums",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "seminarId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "photos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "albumId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "posts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "category",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
           "order": "DESCENDING"
         }
       ]
@@ -377,11 +437,25 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "visibility",
+          "fieldPath": "issueId",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "publishedAt",
+          "fieldPath": "pageStart",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "research_journal_articles",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "researchId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "updatedAt",
           "order": "DESCENDING"
         }
       ]
@@ -405,35 +479,95 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "researchId",
+          "fieldPath": "visibility",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "updatedAt",
+          "fieldPath": "publishedAt",
           "order": "DESCENDING"
         }
       ]
     },
     {
-      "collectionGroup": "research_journal_articles",
+      "collectionGroup": "research_journal_issues",
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "issueId",
+          "fieldPath": "status",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "pageStart",
-          "order": "ASCENDING"
+          "fieldPath": "publishedAt",
+          "order": "DESCENDING"
         }
       ]
     },
     {
-      "collectionGroup": "posts",
+      "collectionGroup": "seminar_materials",
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "category",
+          "fieldPath": "seminarId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "seminars",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "attendeeIds",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "seminars",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "site_popups",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "active",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "priority",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "user_activity_logs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "pathGroup",
           "order": "ASCENDING"
         },
         {

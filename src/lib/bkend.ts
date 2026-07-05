@@ -3371,15 +3371,19 @@ export const collabChaptersApi = {
 };
 
 export const collabCommentsApi = {
-  listByChapter: async (chapterId: string): Promise<CollabResearchComment[]> => {
+  // QA-v3 C4: comments read 룰은 researchId 기반(isCollabMember) — researchId 등호 필터가
+  // 있어야 쿼리 증명이 통과한다. orderBy 는 복합 인덱스 의존이라 제거하고 클라이언트 정렬.
+  listByChapter: async (researchId: string, chapterId: string): Promise<CollabResearchComment[]> => {
     const q = query(
       collection(db, COLLAB_COMMENTS_COL),
+      where("researchId", "==", researchId),
       where("chapterId", "==", chapterId),
-      orderBy("createdAt", "desc"),
       firestoreLimit(100),
     );
     const snap = await getDocs(q);
-    return snap.docs.map((d) => serializeDoc(d) as unknown as CollabResearchComment);
+    return snap.docs
+      .map((d) => serializeDoc(d) as unknown as CollabResearchComment)
+      .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
   },
 
   listMentioningMe: async (userId: string): Promise<CollabResearchComment[]> => {
