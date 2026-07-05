@@ -13,23 +13,23 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, ArrowRight, RotateCcw, Lightbulb, CheckCircle2,
   GraduationCap, BookMarked, Compass, ClipboardCheck, Copy,
-  AlertTriangle, Sparkles, ExternalLink,
+  AlertTriangle, Sparkles, ExternalLink, History, Trash2, X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { alumniThesesApi, archiveConceptsApi } from "@/lib/bkend";
-import type { User } from "@/types";
+import { alumniThesesApi, archiveConceptsApi, diagnosticResultsApi, topicExplorationsApi } from "@/lib/bkend";
+import type { TopicExploration, User } from "@/types";
 import { OCCUPATION_LABELS } from "@/types";
 import {
   TE_QUESTIONS, teNextQuestion, teActiveQuestions, teRecommend,
-  teFieldFromOccupation, teMatchTheses, teMatchConcepts,
+  teFieldFromOccupation, teMatchTheses, teMatchConcepts, teAnswersSummary,
   type TEAnswers,
 } from "./topic-explorer-logic";
 
@@ -120,12 +120,77 @@ export default function TopicExplorer({ user }: Props) {
 
   const recommendedField = teFieldFromOccupation(user.occupation);
 
+  // ── 결과 저장·비교 (2026-07-05 사용자 요청) ──
+  const qc = useQueryClient();
+  const [compareOpen, setCompareOpen] = useState(false);
+  const [compareId, setCompareId] = useState<string | null>(null);
+  const savedKeyRef = useRef<string | null>(null);
+  const { data: history = [] } = useQuery({
+    queryKey: ["topic-explorations", user.id],
+    queryFn: () => topicExplorationsApi.listByUser(user.id),
+    enabled: !!result || compareOpen,
+    staleTime: 30_000,
+  });
+
+  // 결과가 나오면 자동 저장 — 직전 저장(세션 내) 또는 최신 이력과 동일한 답 조합이면 건너뜀
+  useEffect(() => {
+    if (!result || !restored) return;
+    const key = JSON.stringify(answers);
+    if (savedKeyRef.current === key) return;
+    if (history.some((h) => JSON.stringify(h.answers) === key)) {
+      savedKeyRef.current = key;
+      return;
+    }
+    savedKeyRef.current = key;
+    void topicExplorationsApi
+      .create({
+        userId: user.id,
+        exploredAt: new Date().toISOString(),
+        answers,
+        answersSummary: teAnswersSummary(answers),
+        frames: result.frames.map((f) => ({ sentence: f.sentence, approach: f.approach, rationale: f.rationale })),
+        caution: result.caution ?? null,
+      })
+      .then(() => qc.invalidateQueries({ queryKey: ["topic-explorations", user.id] }))
+      .catch(() => {
+        savedKeyRef.current = null; // 실패 시 다음 기회에 재시도
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result, restored, answers, history]);
+
+  async function deleteExploration(id: string) {
+    if (!window.confirm("이 탐색 기록을 삭제할까요?")) return;
+    try {
+      await topicExplorationsApi.remove(id);
+      if (compareId === id) setCompareId(null);
+      void qc.invalidateQueries({ queryKey: ["topic-explorations", user.id] });
+    } catch {
+      toast.error("삭제에 실패했습니다.");
+    }
+  }
+
+  // ── 진단평가 연계: 최근 진단의 약점 개념과 추천 개념 대조 ──
+  const { data: latestDiagnostic } = useQuery({
+    queryKey: ["te-latest-diagnostic", user.id],
+    queryFn: async () => (await diagnosticResultsApi.listByUser(user.id)).data[0] ?? null,
+    enabled: !!result,
+    staleTime: 60_000,
+  });
+  const weakSet = useMemo(
+    () => new Set(Array.isArray(latestDiagnostic?.weakConceptIds) ? latestDiagnostic!.weakConceptIds : []),
+    [latestDiagnostic],
+  );
+  const weakMatchedCount = conceptMatches.filter((c) => weakSet.has(c.id)).length;
+
+  const compareTarget = compareId ? history.find((h) => h.id === compareId) ?? null : null;
+
   function choose(qid: string, value: string) {
     setAnswers((prev) => {
       const idx = TE_QUESTIONS.findIndex((q) => q.id === qid);
       const laterIds = TE_QUESTIONS.slice(idx + 1).map((q) => q.id);
       const next: TEAnswers = { ...prev, [qid]: value };
-      for (const id of laterIds) delete next[id];
+      // 세부 질문은 같은 id 의 변형(when 분기)이 여럿 — 방금 답한 키는 지우지 않는다
+      for (const id of laterIds) if (id !== qid) delete next[id];
       return next;
     });
   }
@@ -226,6 +291,120 @@ export default function TopicExplorer({ user }: Props) {
       {/* ── 결과 ── */}
       {result && (
         <div className="space-y-4">
+          {/* 상단 액션 — 스크롤 없이 바로 다시 탐색/비교 (2026-07-05 요청) */}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground">
+              {teAnswersSummary(answers)}
+            </p>
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCompareOpen((v) => !v)}
+              >
+                <History size={13} className="mr-1" />
+                비교하기{history.length > 0 ? ` (${history.length})` : ""}
+              </Button>
+              <Button variant="outline" size="sm" onClick={reset}>
+                <RotateCcw size={13} className="mr-1" />
+                다시 탐색하기
+              </Button>
+            </div>
+          </div>
+
+          {/* 비교 패널 — 저장된 탐색 이력에서 골라 현재 결과와 나란히 */}
+          {compareOpen && (
+            <Card className="rounded-2xl border-dashed">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between">
+                  <h3 className="flex items-center gap-1.5 text-sm font-semibold">
+                    <History className="h-4 w-4" aria-hidden />
+                    저장된 탐색 기록
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => { setCompareOpen(false); setCompareId(null); }}
+                    className="rounded-md p-1 text-muted-foreground hover:bg-muted"
+                    aria-label="비교 닫기"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  추천을 받을 때마다 자동 저장됩니다. 기록을 선택하면 현재 결과와 나란히 비교합니다.
+                </p>
+                {history.length === 0 ? (
+                  <p className="mt-3 text-sm text-muted-foreground">아직 저장된 기록이 없습니다.</p>
+                ) : (
+                  <ul className="mt-3 space-y-2">
+                    {history.map((h) => (
+                      <li
+                        key={h.id}
+                        className={`rounded-xl border p-3 transition-colors ${compareId === h.id ? "border-primary/60 bg-primary/5" : "bg-card"}`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <button
+                            type="button"
+                            className="min-w-0 flex-1 text-left"
+                            onClick={() => setCompareId((prev) => (prev === h.id ? null : h.id))}
+                          >
+                            <p className="text-[11px] tabular-nums text-muted-foreground">{fmtDateTime(h.exploredAt)}</p>
+                            <p className="mt-0.5 truncate text-xs font-medium">{h.answersSummary}</p>
+                            <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                              {h.frames?.[0]?.sentence ?? "(프레임 없음)"}
+                            </p>
+                          </button>
+                          <div className="flex shrink-0 items-center gap-1">
+                            <span className="rounded-md border px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                              {compareId === h.id ? "비교 중" : "비교"}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => void deleteExploration(h.id)}
+                              className="rounded-md p-1 text-muted-foreground hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30"
+                              aria-label="기록 삭제"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {compareTarget && (
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-xl border bg-card p-3">
+                      <p className="text-[11px] font-bold text-primary">지금 결과</p>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">{teAnswersSummary(answers)}</p>
+                      <ul className="mt-2 space-y-1.5">
+                        {result.frames.map((f, i) => (
+                          <li key={i} className="text-xs leading-relaxed">
+                            <Badge variant="outline" className={`mr-1 px-1 py-0 text-[9px] ${APPROACH_BADGE[f.approach] ?? ""}`}>{f.approach}</Badge>
+                            {f.sentence}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="rounded-xl border bg-card p-3">
+                      <p className="text-[11px] font-bold">{fmtDateTime(compareTarget.exploredAt)} 결과</p>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">{compareTarget.answersSummary}</p>
+                      <ul className="mt-2 space-y-1.5">
+                        {(compareTarget.frames ?? []).map((f, i) => (
+                          <li key={i} className="text-xs leading-relaxed">
+                            <Badge variant="outline" className={`mr-1 px-1 py-0 text-[9px] ${APPROACH_BADGE[f.approach] ?? ""}`}>{f.approach}</Badge>
+                            {f.sentence}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* 추천 주제 방향 */}
           <Card className="rounded-2xl border-l-4 border-l-amber-400">
             <CardContent className="p-6">
@@ -262,6 +441,80 @@ export default function TopicExplorer({ user }: Props) {
                   <p>{result.caution}</p>
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* 이어서 볼 아카이브 개념 */}
+          <Card className="rounded-2xl">
+            <CardContent className="p-5">
+              <h3 className="flex items-center gap-1.5 text-sm font-semibold">
+                <BookMarked className="h-4 w-4" aria-hidden />
+                이어서 볼 교육공학 아카이브 개념
+              </h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                주제를 이론과 연결하려면 관련 개념부터 읽어두는 것이 지름길입니다.
+              </p>
+              {conceptsLoading ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Skeleton key={i} className="h-7 w-24 rounded-full" />
+                  ))}
+                </div>
+              ) : conceptMatches.length === 0 ? (
+                <p className="mt-3 text-sm text-muted-foreground">
+                  매칭된 개념이 없습니다. <Link href="/archive" className="text-primary hover:underline">아카이브</Link>에서 직접 찾아보세요.
+                </p>
+              ) : (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {conceptMatches.map((c) => (
+                    <Link key={c.id} href={`/archive/concept/${c.id}`}>
+                      <Badge
+                        variant="outline"
+                        className={`cursor-pointer px-3 py-1 text-xs hover:border-primary/40 ${
+                          weakSet.has(c.id)
+                            ? "border-amber-400 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200"
+                            : ""
+                        }`}
+                      >
+                        {c.name}
+                        {weakSet.has(c.id) && <span className="ml-1 text-[9px] font-bold">약점</span>}
+                      </Badge>
+                    </Link>
+                  ))}
+                </div>
+              )}
+
+              {/* 개념 이해도 확인 — 최근 진단평가의 약점 개념과 대조 (2026-07-05 요청) */}
+              <div className="mt-4 rounded-xl border bg-muted/30 p-3">
+                <p className="flex items-center gap-1.5 text-xs font-semibold">
+                  <ClipboardCheck size={13} className="text-primary" />
+                  이 주제 개념, 얼마나 이해하고 있나요?
+                </p>
+                {latestDiagnostic ? (
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    최근 진단({fmtDate(latestDiagnostic.createdAt)}) 기준, 추천 개념 {conceptMatches.length}개 중{" "}
+                    {weakMatchedCount > 0 ? (
+                      <>
+                        <span className="font-semibold text-amber-700 dark:text-amber-300">{weakMatchedCount}개가 약점</span>으로
+                        나타났어요. 아래 <span className="font-medium">약점</span> 배지가 붙은 개념부터 읽고, 진단으로 다시 확인해보세요.
+                      </>
+                    ) : (
+                      <>약점으로 나타난 개념은 없어요. 주제를 좁힌 만큼 진단을 한 번 더 돌려 확인해보는 것도 좋습니다.</>
+                    )}
+                  </p>
+                ) : (
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    아직 진단 이력이 없어요 — 추천 주제 주변 개념의 이해도를 진단평가로 확인하고 시작하면
+                    이론적 배경 집필이 훨씬 수월해집니다.
+                  </p>
+                )}
+                <Link
+                  href="/diagnosis"
+                  className="mt-2 inline-flex items-center gap-1 rounded-lg border border-primary/40 bg-card px-2.5 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+                >
+                  <ClipboardCheck size={12} /> 진단평가로 이해도 확인하기
+                </Link>
+              </div>
             </CardContent>
           </Card>
 
@@ -311,40 +564,6 @@ export default function TopicExplorer({ user }: Props) {
               >
                 졸업생 논문 DB 전체 보기 <ExternalLink size={11} />
               </Link>
-            </CardContent>
-          </Card>
-
-          {/* 이어서 볼 아카이브 개념 */}
-          <Card className="rounded-2xl">
-            <CardContent className="p-5">
-              <h3 className="flex items-center gap-1.5 text-sm font-semibold">
-                <BookMarked className="h-4 w-4" aria-hidden />
-                이어서 볼 교육공학 아카이브 개념
-              </h3>
-              <p className="mt-1 text-xs text-muted-foreground">
-                주제를 이론과 연결하려면 관련 개념부터 읽어두는 것이 지름길입니다.
-              </p>
-              {conceptsLoading ? (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Skeleton key={i} className="h-7 w-24 rounded-full" />
-                  ))}
-                </div>
-              ) : conceptMatches.length === 0 ? (
-                <p className="mt-3 text-sm text-muted-foreground">
-                  매칭된 개념이 없습니다. <Link href="/archive" className="text-primary hover:underline">아카이브</Link>에서 직접 찾아보세요.
-                </p>
-              ) : (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {conceptMatches.map((c) => (
-                    <Link key={c.id} href={`/archive/concept/${c.id}`}>
-                      <Badge variant="outline" className="cursor-pointer px-3 py-1 text-xs hover:border-primary/40">
-                        {c.name}
-                      </Badge>
-                    </Link>
-                  ))}
-                </div>
-              )}
             </CardContent>
           </Card>
 
@@ -408,4 +627,20 @@ export default function TopicExplorer({ user }: Props) {
       )}
     </div>
   );
+}
+
+function fmtDateTime(iso?: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+
+function fmtDate(iso?: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }

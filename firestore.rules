@@ -903,6 +903,14 @@ service cloud.firestore {
       allow create, update, delete: if isAuthenticated() && isStaffOrAbove();
     }
 
+    // ─── Topic Explorations (주제 탐색 결과 저장, 2026-07-05) ───
+    // 본인 전용 — userId 등호 쿼리로 list 증명
+    match /topic_explorations/{docId} {
+      allow read, list: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
     // ─── User Session Plans (회원 세션 선택·후기 v3) ───
     // 본인은 자신의 plan CRUD, 운영진은 통계용 read
     match /user_session_plans/{docId} {

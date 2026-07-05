@@ -117,6 +117,7 @@ import type {
   NetworkingDue,
   NetworkingAvailability,
   NetworkingEventProgram,
+  TopicExploration,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -2443,6 +2444,21 @@ export const diagnosticQuestionsApi = {
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<DiagnosticQuestion>("diagnostic_questions", id, data),
   delete: (id: string) => dataApi.delete("diagnostic_questions", id),
+};
+
+// ── 주제 탐색 결과 저장 (2026-07-05) — 본인 read/write, firestore.rules topic_explorations ──
+export const topicExplorationsApi = {
+  /** 본인 탐색 이력 — 정렬은 클라이언트(exploredAt desc, 복합 인덱스 회피) */
+  listByUser: async (userId: string): Promise<TopicExploration[]> => {
+    const res = await dataApi.list<TopicExploration>("topic_explorations", {
+      "filter[userId]": userId,
+      limit: 50,
+    });
+    return [...res.data].sort((a, b) => (b.exploredAt ?? "").localeCompare(a.exploredAt ?? ""));
+  },
+  create: (data: Omit<TopicExploration, "id" | "createdAt" | "updatedAt">) =>
+    dataApi.create<TopicExploration>("topic_explorations", data as unknown as Record<string, unknown>),
+  remove: (id: string) => dataApi.delete("topic_explorations", id),
 };
 
 export const diagnosticResultsApi = {

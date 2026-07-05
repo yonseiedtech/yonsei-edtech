@@ -23,9 +23,10 @@
     }
   },
   "files": [
-    "src/app/api/ai/chat/route.ts",
-    "src/components/chat/ChatWidget.tsx",
-    "src/app/api/reviews/route.ts",
-    "src/app/seminars/[id]/speaker-review/page.tsx"
+    "src/features/research/topic-explorer/topic-explorer-logic.ts",
+    "src/features/research/topic-explorer/TopicExplorer.tsx",
+    "src/lib/bkend.ts",
+    "src/types/topic-exploration.ts",
+    "src/features/research/__tests__/topic-explorer-logic.test.ts"
   ]
 }
