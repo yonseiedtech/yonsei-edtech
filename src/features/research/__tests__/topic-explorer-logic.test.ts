@@ -103,6 +103,16 @@ describe("topic-explorer 추천", () => {
     expect(r.interestTerms).toContain("챗봇");
   });
 
+  it("특수학교 선택 시 대상·매칭 라벨이 특수교육 기준으로 바뀐다", () => {
+    const r = teRecommend({
+      field: "school_k12", fieldDetail: "special",
+      interest: "ai_edtech", interestDetail: "gen_ai",
+      intervention: "can_intervene", problem: "effect", scale: "small",
+    })!;
+    expect(r.frames[0].sentence).toContain("특수교육 대상 학생");
+    expect(r.subjectTerms).toContain("장애 학습자");
+  });
+
   it("broad 세부 선택은 상위 분야 기본값을 유지한다", () => {
     const r = teRecommend({
       field: "school_k12", fieldDetail: "middle",
