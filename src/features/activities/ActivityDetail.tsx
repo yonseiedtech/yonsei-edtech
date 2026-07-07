@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { activitiesApi, activityApplicantsApi } from "@/lib/bkend";
+import { activitiesApi, activityApplicantsApi, activityParticipationsApi } from "@/lib/bkend";
 import { auth } from "@/lib/firebase";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
@@ -490,6 +490,8 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
       if (!activity) return;
       if (participants.includes(memberId)) return;
       await activitiesApi.update(activityId, { participants: [...participants, memberId] });
+      // 참여 레코드 자동 적재(2026-07-07) — 운영진/리더 확정분. 검증은 운영진이 후속
+      void activityParticipationsApi.recordAuto({ userId: memberId, activityId, verified: false });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activity", activityId] });

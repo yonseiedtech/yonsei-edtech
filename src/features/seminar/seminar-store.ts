@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { collection, query, where, onSnapshot, type Unsubscribe } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { SeminarAttendee, CheckinResult } from "@/types";
-import { attendeesApi, dataApi, streakEventsApi } from "@/lib/bkend";
+import { activityParticipationsApi, attendeesApi, dataApi, streakEventsApi } from "@/lib/bkend";
 
 /**
  * Checkin-focused store.
@@ -122,9 +122,13 @@ export const useSeminarStore = create<CheckinState>((set, get) => ({
       })
       .then(() => {
         // 보상 원장 통일(2026-07-04): 출석 +10 을 리더보드 원장(streak_events)에 이중 기록
-        if (attendee.userId) void streakEventsApi.mirror(attendee.userId, "attend", 10, attendee.seminarId);
-        // C-4(2026-07-04): 체크인 직후 후기 유도 — D+1 크론보다 기억이 생생한 당일 터치
-        if (attendee.userId) void sendDayOfReviewNudge(attendee.userId, attendee.seminarId);
+        if (attendee.userId) {
+          void streakEventsApi.mirror(attendee.userId, "attend", 10, attendee.seminarId);
+          // 참여 레코드 자동 적재(2026-07-07) — 증명서·포트폴리오 입력단. 체크인=출석확인이라 verified
+          void activityParticipationsApi.recordAuto({ userId: attendee.userId, seminarId: attendee.seminarId, verified: true });
+          // C-4(2026-07-04): 체크인 직후 후기 유도 — D+1 크론보다 기억이 생생한 당일 터치
+          void sendDayOfReviewNudge(attendee.userId, attendee.seminarId);
+        }
       })
       .catch((err) => {
         console.error("[checkin-store] Failed to persist checkin:", err);
@@ -180,6 +184,8 @@ export const useSeminarStore = create<CheckinState>((set, get) => ({
       .then(() => {
         if (attendee!.userId) {
           void streakEventsApi.mirror(attendee!.userId, "attend", 10, attendee!.seminarId);
+          // 참여 레코드 자동 적재(2026-07-07)
+          void activityParticipationsApi.recordAuto({ userId: attendee!.userId, seminarId: attendee!.seminarId, verified: true });
           // QA-v3: 셀프 체크인도 당일 후기 유도 발송 (기존엔 스태프 스캔 경로만 — 비대칭)
           void sendDayOfReviewNudge(attendee!.userId, attendee!.seminarId);
         }

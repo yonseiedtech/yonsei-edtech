@@ -43,7 +43,7 @@ import type {
   InterviewResponseReaction, InterviewResponseComment,
   ProfileLike, ProfileView, StudySession,
   ApplicantEntry, PublicSpeaker,
-  ActivityParticipation, Award, ExternalActivity, ContentCreation,
+  ActivityParticipation, ActivityRole, Award, ExternalActivity, ContentCreation,
   AlumniThesis, ThesisReference, ThesisClaim,
   CourseOffering, CourseEnrollment, ClassSession, ClassSessionMode, CourseSessionNote, CourseTodo, SemesterTerm, ComprehensiveExamRecord, CourseReview,
   GuideTrack, GuideItem, GuideProgress,
@@ -1739,6 +1739,41 @@ export const profileViewsApi = {
 // ── Track 2: 학술 포트폴리오 ──
 
 export const activityParticipationsApi = {
+  /**
+   * 자동 적재(2026-07-07): 세미나 체크인·활동 참여 확정 시 참여 레코드를 멱등 생성.
+   *  · 결정적 id 로 중복 방지, 이미 있으면(수동 편집·검증 반영분) 건드리지 않음.
+   *  · 증명서·포트폴리오·인사이트가 이 컬렉션을 소비 — 입력단 연결이 목적.
+   */
+  recordAuto: async (params: {
+    userId: string;
+    seminarId?: string;
+    activityId?: string;
+    role?: ActivityRole;
+    verified?: boolean;
+    startedAt?: string;
+  }): Promise<void> => {
+    const refKey =
+      params.seminarId ? `${params.userId}__seminar__${params.seminarId}`
+      : params.activityId ? `${params.userId}__activity__${params.activityId}`
+      : null;
+    if (!refKey) return;
+    const ref = doc(db, "activity_participations", refKey);
+    const existing = await getDoc(ref);
+    if (existing.exists()) return; // 멱등 — 수동 검증/편집 보존
+    await setDoc(ref, stripUndefinedDeep({
+      id: refKey,
+      userId: params.userId,
+      seminarId: params.seminarId,
+      activityId: params.activityId,
+      role: params.role ?? "participant",
+      outputs: [],
+      verified: params.verified ?? false,
+      startedAt: params.startedAt ?? new Date().toISOString(),
+      source: "auto",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    }));
+  },
   listByUser: (userId: string) =>
     dataApi.list<ActivityParticipation>("activity_participations", {
       "filter[userId]": userId,

@@ -79,6 +79,8 @@ export interface ActivityParticipation {
   verified: boolean;
   verifiedBy?: string;
   verifiedAt?: string;
+  /** 적재 출처 — "auto"(체크인·참여확정 자동) | undefined(수동 등록) */
+  source?: "auto";
   createdAt: string;
   updatedAt: string;
 }

@@ -680,8 +680,12 @@ service cloud.firestore {
     // ─── Activity Participations (Track 2: 학술활동 이력) ───
     match /activity_participations/{docId} {
       allow read: if true;
+      // 자동 적재(2026-07-07): 본인·staff·(그 활동의 리더)가 참여 레코드 생성
       allow create: if isAuthenticated() && (
-        request.resource.data.userId == request.auth.uid || isStaffOrAbove()
+        request.resource.data.userId == request.auth.uid
+        || isStaffOrAbove()
+        || (request.resource.data.get('activityId', null) != null
+            && get(/databases/$(database)/documents/activities/$(request.resource.data.activityId)).data.get('leaderId', '') == request.auth.uid)
       );
       allow update, delete: if isAuthenticated() && (
         resource.data.userId == request.auth.uid || isStaffOrAbove()

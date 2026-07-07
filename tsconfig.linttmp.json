@@ -23,6 +23,9 @@
     }
   },
   "files": [
-    "src/app/directory/[id]/card/page.tsx"
+    "src/lib/bkend.ts",
+    "src/types/portfolio.ts",
+    "src/features/seminar/seminar-store.ts",
+    "src/features/activities/ActivityDetail.tsx"
   ]
 }
