@@ -66,6 +66,55 @@ const REQUIRED = [
     { fieldPath: "activityId", order: "ASCENDING" },
     { fieldPath: "createdAt", order: "DESCENDING" },
   ]},
+  // ── codex 교차분석(2026-07-07): where+orderBy(다른필드) 복합 인덱스 누락 ──
+  // 온보딩 위젯 — enabled=true + order asc (신규 항목이 위젯에 안 뜨던 원인)
+  { collectionGroup: "onboarding_checklist", fields: [
+    { fieldPath: "enabled", order: "ASCENDING" },
+    { fieldPath: "order", order: "ASCENDING" },
+  ]},
+  // 학기 로드맵 — published + order asc
+  { collectionGroup: "roadmap_stages", fields: [
+    { fieldPath: "published", order: "ASCENDING" },
+    { fieldPath: "order", order: "ASCENDING" },
+  ]},
+  // 강의 후기 — 과목별 / 작성자별 최신순
+  { collectionGroup: "course_reviews", fields: [
+    { fieldPath: "courseOfferingId", order: "ASCENDING" },
+    { fieldPath: "createdAt", order: "DESCENDING" },
+  ]},
+  { collectionGroup: "course_reviews", fields: [
+    { fieldPath: "authorId", order: "ASCENDING" },
+    { fieldPath: "createdAt", order: "DESCENDING" },
+  ]},
+  // 세미나 대기열 — 순번 asc (자동 승격)
+  { collectionGroup: "seminar_waitlist", fields: [
+    { fieldPath: "seminarId", order: "ASCENDING" },
+    { fieldPath: "position", order: "ASCENDING" },
+  ]},
+  // 세미나 홍보물 이력 — 세미나별 최신순
+  { collectionGroup: "promotion_contents", fields: [
+    { fieldPath: "seminarId", order: "ASCENDING" },
+    { fieldPath: "createdAt", order: "DESCENDING" },
+  ]},
+  // 인터뷰 응답 댓글 — 응답별 오래된순
+  { collectionGroup: "interview_response_comments", fields: [
+    { fieldPath: "responseId", order: "ASCENDING" },
+    { fieldPath: "createdAt", order: "ASCENDING" },
+  ]},
+  // 명함 교환 — 받은/준 목록 최신순
+  { collectionGroup: "business_card_exchanges", fields: [
+    { fieldPath: "receiverId", order: "ASCENDING" },
+    { fieldPath: "createdAt", order: "DESCENDING" },
+  ]},
+  { collectionGroup: "business_card_exchanges", fields: [
+    { fieldPath: "ownerId", order: "ASCENDING" },
+    { fieldPath: "createdAt", order: "DESCENDING" },
+  ]},
+  // 에이전트 워크플로우 실행 이력 — 본인 최신순
+  { collectionGroup: "agent_workflow_runs", fields: [
+    { fieldPath: "userId", order: "ASCENDING" },
+    { fieldPath: "createdAt", order: "DESCENDING" },
+  ]},
 ];
 
 function fieldKey(f) {

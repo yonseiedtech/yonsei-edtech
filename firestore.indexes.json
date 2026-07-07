@@ -43,6 +43,48 @@
       ]
     },
     {
+      "collectionGroup": "agent_workflow_runs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "business_card_exchanges",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "ownerId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "business_card_exchanges",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "receiverId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "certificates",
       "queryScope": "COLLECTION",
       "fields": [
@@ -267,6 +309,34 @@
       ]
     },
     {
+      "collectionGroup": "course_reviews",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "authorId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "course_reviews",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "courseOfferingId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "course_session_notes",
       "queryScope": "COLLECTION",
       "fields": [
@@ -363,6 +433,20 @@
       ]
     },
     {
+      "collectionGroup": "interview_response_comments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "responseId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "lab_comments",
       "queryScope": "COLLECTION",
       "fields": [
@@ -405,6 +489,20 @@
       ]
     },
     {
+      "collectionGroup": "onboarding_checklist",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "enabled",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "order",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "photo_albums",
       "queryScope": "COLLECTION",
       "fields": [
@@ -438,6 +536,20 @@
       "fields": [
         {
           "fieldPath": "category",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "promotion_contents",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "seminarId",
           "order": "ASCENDING"
         },
         {
@@ -517,6 +629,20 @@
       ]
     },
     {
+      "collectionGroup": "roadmap_stages",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "published",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "order",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "seminar_materials",
       "queryScope": "COLLECTION",
       "fields": [
@@ -527,6 +653,20 @@
         {
           "fieldPath": "createdAt",
           "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "seminar_waitlist",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "seminarId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "position",
+          "order": "ASCENDING"
         }
       ]
     },
