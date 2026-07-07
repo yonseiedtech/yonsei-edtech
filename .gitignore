@@ -68,3 +68,6 @@ commit-out.log
 push-out.log
 deploy-out.log
 build-out.log
+
+# 시드/컴파일 임시 산출물
+.seed-tmp/
