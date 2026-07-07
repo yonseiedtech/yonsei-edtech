@@ -23,6 +23,6 @@
     }
   },
   "files": [
-    "src/app/activities/external/[id]/workbook/page.tsx"
+    "src/app/mypage/messages/page.tsx"
   ]
 }

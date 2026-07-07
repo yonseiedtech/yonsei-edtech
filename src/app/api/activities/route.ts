@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { requireAuth } from "@/lib/api-auth";
+import { ROLE_HIERARCHY } from "@/lib/permissions";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
 /**
@@ -99,6 +100,13 @@ export async function PATCH(req: NextRequest) {
     if (!id) return Response.json({ error: "ID가 필요합니다." }, { status: 400 });
 
     const db = getAdminDb();
+
+    // codex-H7(2026-07-07): join/leave 는 본인만 (스태프는 대행 허용) — 타인 강제 참여/탈퇴 차단
+    const isStaff = ROLE_HIERARCHY[authResult.role] >= ROLE_HIERARCHY.staff;
+    if ((joinUserId && joinUserId !== authResult.id && !isStaff)
+      || (leaveUserId && leaveUserId !== authResult.id && !isStaff)) {
+      return Response.json({ error: "본인만 신청/취소할 수 있습니다." }, { status: 403 });
+    }
 
     // 참여 신청 (atomic)
     if (joinUserId) {

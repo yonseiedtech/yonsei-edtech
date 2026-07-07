@@ -201,8 +201,9 @@ export default function AlumniThesisDetailPage() {
 
         if (t.authorUserId) {
           try {
-            const a = await profilesApi.get(t.authorUserId);
-            if (!cancelled) setAuthor(a);
+            // codex-C1: users 직접 get(타인) 대신 서버 투영(members/basic) 경유
+            const list = await profilesApi.listByIds([t.authorUserId]);
+            if (!cancelled && list[0]) setAuthor(list[0]);
           } catch {
             // 매핑된 회원 조회 실패는 무시
           }

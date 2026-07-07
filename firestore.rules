@@ -57,9 +57,10 @@ service cloud.firestore {
 
     // ─── Users ───
     match /users/{userId} {
-      // P1-1(2026-07-03): 공개 QR/프로필은 /api/profile/[id]/public 서버 투영으로 이전 —
-      // 문서 직접 get 은 인증 필수 (securityAnswerHash·birthDate·calendarToken 비로그인 노출 차단)
-      allow get: if isAuthenticated();
+      // codex-C1(2026-07-07): 로그인 회원이 임의 uid get 시 securityAnswerHash·birthDate·
+      // calendarToken·학번·전화가 노출 → 본인/staff 로 제한. 타인 프로필은 /api/profile/[id]/public·
+      // /api/members/basic 서버 투영 경유(민감필드 제거).
+      allow get: if isOwner(userId) || isStaffOrAbove();
       // P1-1b(2026-07-04): 회원 간 전체 목록(연락처 포함) 덤프 차단 — 목록은
       // /api/members/basic(역할 인지 투영) 경유. 직접 list 는 staff + 본인 이메일 필터
       // (AuthProvider 레거시 계정 부트스트랩: getByEmail)만 허용.
@@ -191,9 +192,17 @@ service cloud.firestore {
     // ─── Seminar Attendees ───
     match /seminar_attendees/{docId} {
       allow read: if true;
-      // Authenticated users can register themselves
-      allow create: if isAuthenticated();
-      // Only self or staff+ can update/delete
+      // codex-C2(2026-07-07): 수료증 위조 방지 — 일반 회원은 checkedIn/checkedInBy 부여 불가
+      //   (체크인은 스태프 대행 또는 QR 토큰 경로에서만). 스태프는 대행 등록·체크인 자유.
+      //   userId 미검증은 대기열 자동승격·게스트 신청 폼 호환을 위해 유지(명단 오염은 별도 대응).
+      allow create: if isAuthenticated() && (
+        isStaffOrAbove()
+        || (
+          request.resource.data.get('checkedIn', false) == false
+          && request.resource.data.get('checkedInBy', null) == null
+        )
+      );
+      // Only self or staff+ can update/delete (스태프 대행 체크인은 여기서)
       allow update, delete: if isAuthenticated()
         && (resource.data.userId == request.auth.uid || isStaffOrAbove());
     }
@@ -319,20 +328,23 @@ service cloud.firestore {
     // ─── Activities (프로젝트, 스터디, 대외활동) ───
     match /activities/{docId} {
       // 회원 본인이 참가/취소 신청 시 applicants/participants 만 수정
-      function isApplyOnlyUpdate() {
-        return request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['applicants', 'participants', 'updatedAt']);
+      // codex-H6(2026-07-07): participants 배열 통째 덮어쓰기·비로그인 applicants 삭제 차단.
+      //   신청/참여 반영은 Admin SDK 서버 라우트(/api/activities/*)로 일원화하고, 룰의 직접 update 는
+      //   applicants 만(로그인/게스트 신청 호환) 허용. participants 변경은 staff 또는 서버 경유.
+      function isApplicantsOnlyUpdate() {
+        return isAuthenticated()
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['applicants', 'updatedAt']);
       }
-      // 비회원 게스트 신청 시 applicants 만 수정
-      function isGuestApplyUpdate() {
-        return request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['applicants', 'updatedAt']);
+      // 활동 리더(스터디·프로젝트 모임장)는 participants 관리 허용
+      function isActivityLeader() {
+        return isAuthenticated()
+          && resource.data.get('leaderId', '') == request.auth.uid;
       }
       allow read: if true;
       allow create, delete: if isAuthenticated() && isStaffOrAbove();
-      allow update: if (isAuthenticated() && isStaffOrAbove())
-        || (isAuthenticated() && isApplyOnlyUpdate())
-        || isGuestApplyUpdate();
+      allow update: if (isAuthenticated() && (isStaffOrAbove() || isActivityLeader()))
+        || isApplicantsOnlyUpdate();
     }
 
     // ─── Activity Applicants (data-split: 신청자 PII 비공개 분리) ───
@@ -352,7 +364,9 @@ service cloud.firestore {
 
     // ─── Fee Payments (학회비 납부 기록) ───
     match /fee_payments/{docId} {
-      allow read: if isAuthenticated();
+      // codex-H3(2026-07-07): 전 회원 납부내역(금액·학번·메모) 노출 차단 — 본인/staff 만
+      allow read: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
       allow write: if isAuthenticated() && isStaffOrAbove();
     }
 
@@ -405,7 +419,10 @@ service cloud.firestore {
       // QA-v2: 타인 알림(멘션·쪽지 프리뷰) 열람 차단 — 본인/운영진만
       allow read: if isAuthenticated()
         && (resource.data.userId == request.auth.uid || isStaffOrAbove());
-      allow create: if isAuthenticated();
+      // codex-H4(2026-07-07): 타인에게 알림 스푸핑 차단 — 본인/staff 만 생성
+      //   (서버 fan-out·크론은 Admin SDK 라 룰 우회)
+      allow create: if isAuthenticated()
+        && (request.resource.data.userId == request.auth.uid || isStaffOrAbove());
       allow update, delete: if isAuthenticated()
         && (resource.data.userId == request.auth.uid || isStaffOrAbove());
     }
@@ -1321,10 +1338,23 @@ service cloud.firestore {
     match /streak_events/{docId} {
       allow read, list: if isAuthenticated();
       // 보상 원장 통일(2026-07-04): 세미나 체크인은 스태프 기기에서 참석자 몫을 기록 — 스태프 대행 허용
+      // codex-H5(2026-07-07): points 무검증 → 리더보드 조작. 본인 생성은 상한(≤50) 적용, 스태프는 자유.
       allow create: if isAuthenticated()
-        && (request.resource.data.userId == request.auth.uid || isStaffOrAbove());
+        && (
+          (request.resource.data.userId == request.auth.uid
+            && request.resource.data.points is int
+            && request.resource.data.points >= 0
+            && request.resource.data.points <= 50)
+          || isStaffOrAbove()
+        );
       allow update: if isAuthenticated()
-        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
+        && (
+          (resource.data.userId == request.auth.uid
+            && request.resource.data.points is int
+            && request.resource.data.points >= 0
+            && request.resource.data.points <= 50)
+          || isStaffOrAbove()
+        );
       allow delete: if isAuthenticated() && isStaffOrAbove();
     }
 

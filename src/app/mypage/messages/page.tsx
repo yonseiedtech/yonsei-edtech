@@ -71,9 +71,10 @@ function MessagesInner({ user }: { user: User }) {
     let cancelled = false;
     (async () => {
       try {
-        const target = await profilesApi.get(composeId);
-        if (!cancelled && target) {
-          setRecipient(target as User);
+        // codex-C1: users 직접 get(타인) 대신 서버 투영(members/basic) 경유
+        const list = await profilesApi.listByIds([composeId]);
+        if (!cancelled && list[0]) {
+          setRecipient(list[0] as User);
           setComposeOpen(true);
         }
       } catch {

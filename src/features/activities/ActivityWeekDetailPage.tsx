@@ -117,16 +117,8 @@ export default function ActivityWeekDetailPage({
     queryKey: ["activity-participants-users", activityId, participantIds.join(",")],
     enabled: participantIds.length > 0,
     queryFn: async () => {
-      const results = await Promise.all(
-        participantIds.map(async (id) => {
-          try {
-            return (await profilesApi.get(id)) as User;
-          } catch {
-            return null;
-          }
-        }),
-      );
-      return results.filter((u): u is User => !!u);
+      // codex-C1: users 직접 get(타인) 대신 서버 투영(members/basic) 일괄 조회
+      return await profilesApi.listByIds(participantIds);
     },
   });
 
