@@ -115,6 +115,11 @@ const REQUIRED = [
     { fieldPath: "userId", order: "ASCENDING" },
     { fieldPath: "createdAt", order: "DESCENDING" },
   ]},
+  // codex-L2(2026-07-07): sitemap 동적 경로 — published 학회보 최신순
+  { collectionGroup: "newsletters", fields: [
+    { fieldPath: "status", order: "ASCENDING" },
+    { fieldPath: "publishedAt", order: "DESCENDING" },
+  ]},
 ];
 
 function fieldKey(f) {

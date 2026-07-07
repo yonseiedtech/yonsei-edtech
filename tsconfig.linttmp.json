@@ -23,9 +23,6 @@
     }
   },
   "files": [
-    "src/lib/bkend.ts",
-    "src/features/board/PostForm.tsx",
-    "src/features/seminar/SeminarForm.tsx",
-    "src/app/api/cron/weekly-digest/route.ts"
+    "src/app/directory/[id]/card/page.tsx"
   ]
 }

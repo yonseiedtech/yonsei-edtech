@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { addDoc, collection, getDocs, query, serverTimestamp, where } from "firebase/firestore";
+import { collection, doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { Download, UserPlus } from "lucide-react";
 import BackButton from "@/components/ui/back-button";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -48,15 +48,11 @@ function ReceivedCardInner() {
     exchangeLoggedRef.current = true;
     (async () => {
       try {
-        const existing = await getDocs(
-          query(
-            collection(db, "business_card_exchanges"),
-            where("ownerId", "==", owner.id),
-            where("receiverId", "==", viewer.id),
-          ),
-        );
-        if (!existing.empty) return;
-        await addDoc(collection(db, "business_card_exchanges"), {
+        // codex-L3: 결정적 ID(ownerId_receiverId)로 중복 교환 로그 방지 (두 탭 동시 열기 race)
+        const exId = `${owner.id}_${viewer.id}`;
+        const exRef = doc(collection(db, "business_card_exchanges"), exId);
+        if ((await getDoc(exRef)).exists()) return;
+        await setDoc(exRef, {
           ownerId: owner.id,
           ownerName: owner.name,
           receiverId: viewer.id,
