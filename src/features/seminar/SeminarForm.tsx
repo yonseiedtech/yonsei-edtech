@@ -193,6 +193,9 @@ export default function SeminarForm() {
       toast.error(verr);
       return;
     }
+    // codex-M11: 더블클릭 시 세미나 2건 + fan-out 2회 방지
+    if (isSaving) return;
+    setIsSaving(true);
     try {
       const seminarData = buildSeminarData(data, "upcoming");
       await createSeminar(seminarData as unknown as Omit<Seminar, "id" | "attendeeIds" | "createdAt" | "updatedAt">);
@@ -201,6 +204,7 @@ export default function SeminarForm() {
     } catch (err) {
       console.error("세미나 등록 실패:", err);
       toast.error(err instanceof Error ? err.message : "세미나 등록에 실패했습니다.");
+      setIsSaving(false);
     }
   }
 
@@ -485,9 +489,9 @@ export default function SeminarForm() {
               <Save size={16} className="mr-1" />
               {isSaving ? "저장 중..." : "임시저장"}
             </Button>
-            <Button type="submit">
+            <Button type="submit" disabled={isSaving}>
               <Send size={16} className="mr-1" />
-              등록
+              {isSaving ? "등록 중..." : "등록"}
             </Button>
           </div>
         </form>

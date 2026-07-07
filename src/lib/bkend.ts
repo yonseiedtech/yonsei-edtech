@@ -136,6 +136,18 @@ function parseFilters(params?: QueryParams): QueryConstraint[] {
   if (!params) return constraints;
   for (const [key, value] of Object.entries(params)) {
     if (value === undefined) continue;
+    // codex-M9(2026-07-07): filter[field][in]=a,b,c 지원 — 기존엔 무시되어 전체 로드됨
+    const inMatch = key.match(/^filter\[(\w+)\]\[in\]$/);
+    if (inMatch) {
+      const arr = String(value).split(",").map((v) => v.trim()).filter(Boolean);
+      if (arr.length === 0) {
+        // 빈 in → 결과 없음을 강제 (전체 로드 방지)
+        constraints.push(where(inMatch[1], "in", ["__never__"]));
+      } else {
+        constraints.push(where(inMatch[1], "in", arr.slice(0, 30)));
+      }
+      continue;
+    }
     const match = key.match(/^filter\[(\w+)\]$/);
     if (match) {
       const field = match[1];
@@ -2122,13 +2134,16 @@ export const guideItemsApi = {
       "filter[trackId]": trackId,
       limit: 500,
     }),
-  /** 트랙 내 published 항목만 (회원 뷰) — published 인덱스 필요 시 클라이언트 필터로 폴백 */
+  /** 트랙 내 published 항목만 (회원 뷰).
+   *  codex-M10(2026-07-07): trackId 단독 쿼리는 draft 포함 요청 → 룰(published==true|staff)
+   *  정적 평가에서 거부(permission-denied). published==true 서버 필터로 증명형 쿼리. */
   listPublishedByTrack: async (trackId: string) => {
     const res = await dataApi.list<GuideItem>("guide_items", {
       "filter[trackId]": trackId,
+      "filter[published]": "true",
       limit: 500,
     });
-    return { ...res, data: res.data.filter((i) => i.published) };
+    return res;
   },
   get: (id: string) => dataApi.get<GuideItem>("guide_items", id),
   create: (data: Record<string, unknown>) =>

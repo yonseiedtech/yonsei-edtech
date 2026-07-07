@@ -55,6 +55,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
   const [showPaperPicker, setShowPaperPicker] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { createPost } = useCreatePost();
   const { updatePost } = useUpdatePost();
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<PostData>({
@@ -172,6 +173,9 @@ export default function PostForm({ mode = "create", initialData, initialCategory
       ? { type: "interview" as const, interview }
       : { type: undefined, interview: undefined };
     const paperPayload = category === "paper_review" && linkedPaper ? { linkedPaper } : { linkedPaper: undefined };
+    // codex-M11: 더블클릭 시 게시글 2건 + 공지 fan-out 2회 방지
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       if (mode === "edit" && initialData) {
         await updatePost({ id: initialData.id, data: { ...data, category, imageUrls, poll: poll ?? undefined, ...extra, ...paperPayload } });
@@ -204,6 +208,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
       }
     } catch {
       toast.error(mode === "edit" ? "게시글 수정에 실패했습니다." : "게시글 등록에 실패했습니다.");
+      setIsSubmitting(false);
     }
   }
 
@@ -493,7 +498,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
             >
               취소
             </Button>
-            <Button type="submit">
+            <Button type="submit" disabled={isSubmitting}>
               {isEdit ? (
                 <>
                   <Save size={16} className="mr-1" />

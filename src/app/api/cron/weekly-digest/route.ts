@@ -646,19 +646,30 @@ export async function GET(req: NextRequest) {
       return Response.json({ ok: true, skipped: "not Monday KST", todayYmd });
     }
 
-    // 중복 방지
-    const dupSnap = await db
-      .collection("email_logs")
-      .where("type", "==", "weekly_digest")
-      .where("targetId", "==", todayYmd)
-      .limit(1)
-      .get();
-    if (!dupSnap.empty) {
-      return Response.json({ ok: true, skipped: "already sent", todayYmd });
+    // codex-M12(2026-07-07): 조회→발송이 원자적이지 않아 재시도·동시호출 시 중복 발송.
+    //   결정적 ID(weekly_digest_lock_<weekKey>) create 로 원자적 예약 — create 는 문서가
+    //   이미 있으면 실패하므로 동시 호출 중 하나만 통과.
+    const lockRef = db.collection("email_logs").doc(`weekly_digest_lock_${todayYmd}`);
+    try {
+      await lockRef.create({
+        type: "weekly_digest_lock",
+        targetId: todayYmd,
+        status: "sending",
+        createdAt: new Date().toISOString(),
+      });
+    } catch {
+      return Response.json({ ok: true, skipped: "already sent (lock)", todayYmd });
     }
 
-    const result = await sendDigest(db, todayYmd);
-    return Response.json({ ok: true, todayYmd, ...result });
+    try {
+      const result = await sendDigest(db, todayYmd);
+      await lockRef.update({ status: "sent", sentAt: new Date().toISOString(), recipientCount: result.sent });
+      return Response.json({ ok: true, todayYmd, ...result });
+    } catch (e) {
+      // 발송 실패 시 락 해제 — 다음 실행이 재시도할 수 있도록
+      await lockRef.delete().catch(() => {});
+      throw e;
+    }
   } catch (err) {
     console.error("[cron/weekly-digest]", err);
     return Response.json({ error: "Internal error" }, { status: 500 });

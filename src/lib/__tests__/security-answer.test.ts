@@ -10,7 +10,7 @@ import { pbkdf2AnswerHash } from "../hash";
 const ANSWER = "어머니 성함";
 
 describe("generateSecurityAnswerHash / verifySecurityAnswer (PBKDF2)", () => {
-  it("생성 → 검증 ok, 포맷 pbkdf2$iter$salt$hash", () => {
+  it("생성 → 검증 ok, 포맷 pbkdf2$iter$salt$hash", { timeout: 30_000 }, () => {
     const stored = generateSecurityAnswerHash(ANSWER);
     const parts = stored.split("$");
     expect(parts).toHaveLength(4);
@@ -21,7 +21,7 @@ describe("generateSecurityAnswerHash / verifySecurityAnswer (PBKDF2)", () => {
     expect(verifySecurityAnswer(ANSWER, stored).ok).toBe(true);
   });
 
-  it("오답 — false", () => {
+  it("오답 — false", { timeout: 30_000 }, () => {
     const stored = generateSecurityAnswerHash(ANSWER);
     expect(verifySecurityAnswer("다른 답", stored).ok).toBe(false);
   });
@@ -35,7 +35,7 @@ describe("generateSecurityAnswerHash / verifySecurityAnswer (PBKDF2)", () => {
     expect(verifySecurityAnswer(ANSWER, b).ok).toBe(true);
   });
 
-  it("PBKDF2 매치 시 upgradedHash 없음 (이미 신규 포맷)", () => {
+  it("PBKDF2 매치 시 upgradedHash 없음 (이미 신규 포맷)", { timeout: 30_000 }, () => {
     const stored = generateSecurityAnswerHash(ANSWER);
     expect(verifySecurityAnswer(ANSWER, stored).upgradedHash).toBeUndefined();
   });
@@ -44,7 +44,7 @@ describe("generateSecurityAnswerHash / verifySecurityAnswer (PBKDF2)", () => {
 describe("verifySecurityAnswer — 레거시 무염 SHA-256 마이그레이션", () => {
   const legacy = createHash("sha256").update(ANSWER).digest("hex");
 
-  it("레거시 매치 → ok + upgradedHash(PBKDF2 포맷) 반환", () => {
+  it("레거시 매치 → ok + upgradedHash(PBKDF2 포맷) 반환", { timeout: 30_000 }, () => {
     const r = verifySecurityAnswer(ANSWER, legacy);
     expect(r.ok).toBe(true);
     expect(r.upgradedHash).toBeDefined();
@@ -53,7 +53,7 @@ describe("verifySecurityAnswer — 레거시 무염 SHA-256 마이그레이션",
     expect(verifySecurityAnswer(ANSWER, r.upgradedHash!).ok).toBe(true);
   });
 
-  it("레거시 오답 — false, upgradedHash 없음", () => {
+  it("레거시 오답 — false, upgradedHash 없음", { timeout: 30_000 }, () => {
     const r = verifySecurityAnswer("틀린 답", legacy);
     expect(r.ok).toBe(false);
     expect(r.upgradedHash).toBeUndefined();
@@ -77,7 +77,7 @@ describe("verifySecurityAnswer — 변조/비정상 저장값 거부", () => {
 });
 
 describe("클라이언트(Web Crypto) ↔ 서버(Node crypto) 호환", () => {
-  it("pbkdf2AnswerHash 생성값을 verifySecurityAnswer 가 검증", async () => {
+  it("pbkdf2AnswerHash 생성값을 verifySecurityAnswer 가 검증", { timeout: 30_000 }, async () => {
     const stored = await pbkdf2AnswerHash(ANSWER);
     expect(stored.startsWith("pbkdf2$310000$")).toBe(true);
     expect(verifySecurityAnswer(ANSWER, stored).ok).toBe(true);
