@@ -79,12 +79,14 @@ export interface NetworkingEvent {
   updatedAt: string;
 }
 
-export type RsvpStatus = "attending" | "not_attending" | "undecided";
+export type RsvpStatus = "attending" | "not_attending" | "undecided" | "waitlisted";
 
 export const RSVP_STATUS_LABELS: Record<RsvpStatus, string> = {
   attending: "참석",
   not_attending: "불참",
   undecided: "미정",
+  // G2(2026-07-08): 정원 초과 시 서버가 자동 부여. 사용자가 직접 선택하는 값이 아님.
+  waitlisted: "대기",
 };
 
 export interface NetworkingRsvp {
@@ -105,6 +107,8 @@ export interface NetworkingRsvp {
   showInAttendeeList?: boolean;
   /** 동반인 수 (본인 제외) */
   companions?: number;
+  /** 당일 현장 체크인 시각 (ISO). set = 실참석, unset = 미체크인 — G3(2026-07-08). staff 가 콘솔에서 토글. */
+  attendedAt?: string;
   memo?: string;
   respondedAt: string;
   createdAt: string;

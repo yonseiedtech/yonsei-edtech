@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
     const tomorrow = addDays(kstNow, 1);
 
     const yesterday = addDays(kstNow, -1);
+    const threeDaysAgo = addDays(kstNow, -3);
 
     // upcoming(리마인더) + closed/done(D+1 후기 요청) 모두 필요 — 상태 3종 조회
     const eventsSnap = await db
@@ -52,6 +53,7 @@ export async function GET(req: NextRequest) {
         pollPeriodEnd?: string;
         pollTimeSlots?: string[];
         pollReminderSentAt?: string;
+        duesReminderSentAt?: string;
         visibility?: "public" | "private";
         shareToken?: string;
       };
@@ -84,7 +86,7 @@ export async function GET(req: NextRequest) {
         .where("eventId", "==", doc.id)
         .get();
       const rsvps = rsvpSnap.docs
-        .map((d) => d.data() as { userId?: string; status?: string })
+        .map((d) => d.data() as { userId?: string; status?: string; attendedAt?: string })
         .filter((r) => r.userId);
 
       // ── 1) 행사 D-1 / 당일 → attending 회원 ────────────────────────────
@@ -111,11 +113,22 @@ export async function GET(req: NextRequest) {
           });
         }
 
-        // 행사 당일: attending 회원에게 학습 잔디 가산점 멱등 적립 (deterministic doc id)
-        if (daysLeft === 0 && targets.length > 0) {
+        // 행사 당일: 학습 잔디 가산점 멱등 적립 (deterministic doc id)
+        // G3(2026-07-08): 실참석 기준 전환 — 체크인(attendedAt)이 하나라도 기록된 이벤트는
+        // "엄격 모드"로 체크인한 회원에게만 적립하고, 아무도 체크인하지 않은(체크인 기능 미사용) 이벤트는
+        // 하위호환으로 기존처럼 attending 전원 적립한다.
+        // 주의: 이 cron 은 매일 09:00 실행이라 저녁 행사의 현장 체크인은 이 시점에 아직 없을 수 있다.
+        // 그런 이벤트는 자연히 "체크인 없음 → 전원 적립"(하위호환)으로 처리된다.
+        const attendingRsvps = rsvps.filter((r) => r.status === "attending");
+        const anyCheckedIn = attendingRsvps.some((r) => r.attendedAt);
+        const streakTargets = (anyCheckedIn
+          ? attendingRsvps.filter((r) => r.attendedAt)
+          : attendingRsvps
+        ).map((r) => r.userId as string);
+        if (daysLeft === 0 && streakTargets.length > 0) {
           const batch = db.batch();
           const nowIso = new Date().toISOString();
-          for (const userId of targets) {
+          for (const userId of streakTargets) {
             const ref = db.collection("streak_events").doc(`${userId}__networking-attend__${doc.id}`);
             batch.set(ref, {
               userId,
@@ -143,6 +156,29 @@ export async function GET(req: NextRequest) {
           message: `어제 "${ev.title}" 모임은 어떠셨나요? 별점과 한줄 후기가 다음 행사 준비에 큰 도움이 됩니다.`,
           eventId: doc.id,
         });
+      }
+
+      // ── 6) 회비 미납 알림 D+3 (G5) → unpaid due 회원에게 이벤트당 1회 ──
+      // 멱등: 이벤트 문서 duesReminderSentAt 마커 + notifyOnce 사용자 단위 dedupe 이중 가드.
+      if (eventDate === threeDaysAgo && gatheringsLink && !ev.duesReminderSentAt) {
+        const duesSnap = await db
+          .collection("networking_dues")
+          .where("eventId", "==", doc.id)
+          .get();
+        const unpaidTargets = duesSnap.docs
+          .map((d) => d.data() as { userId?: string; status?: string })
+          .filter((d) => d.userId && d.status === "unpaid")
+          .map((d) => d.userId as string);
+        if (unpaidTargets.length > 0) {
+          notifCount += await notifyOnce(db, {
+            userIds: unpaidTargets,
+            dedupeTitle: "회비 미납 안내",
+            link: gatheringsLink,
+            message: `"${ev.title}" 회비가 아직 미납 상태입니다. 마이페이지에서 납부 여부를 확인해 주세요.`,
+            eventId: doc.id,
+          });
+        }
+        await doc.ref.update({ duesReminderSentAt: new Date().toISOString() });
       }
 
       // ── 2) RSVP 마감 D-1 → undecided 회원 응답 독려 ─────────────────────

@@ -67,7 +67,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "이미 같은 이름·연락처로 신청되어 있습니다." }, { status: 409 });
     }
 
-    // 정원 (capacity 설정 행사만) — 참석 상태 + 동반 인원 합산
+    // 정원 (capacity 설정 행사만) — 참석 상태 + 동반 인원 합산.
+    // G2(2026-07-08): 초과 시 409 거부 대신 대기자(waitlisted)로 저장한다(게스트는 단순 저장 — 트랜잭션화는 G20 스코프).
+    let status: "attending" | "waitlisted" = "attending";
+    let waitlistPosition: number | null = null;
     if (typeof ev.capacity === "number" && ev.capacity > 0) {
       const attSnap = await rsvpCol
         .where("eventId", "==", eventId)
@@ -80,7 +83,13 @@ export async function POST(req: NextRequest) {
       );
       // 신청 본인 인원(1 + 동반인)까지 포함해 초과 여부 판정 (G6: 동반인 반영)
       if (headcount + 1 + companions > ev.capacity) {
-        return NextResponse.json({ error: "정원이 가득 찼습니다." }, { status: 409 });
+        status = "waitlisted";
+        const wlSnap = await rsvpCol
+          .where("eventId", "==", eventId)
+          .where("status", "==", "waitlisted")
+          .limit(1000)
+          .get();
+        waitlistPosition = wlSnap.size + 1;
       }
     }
 
@@ -90,13 +99,13 @@ export async function POST(req: NextRequest) {
       guestName,
       guestContact,
       displayName: guestName,
-      status: "attending",
+      status,
       companions,
       respondedAt: nowIso,
       createdAt: nowIso,
       updatedAt: nowIso,
     });
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, waitlisted: status === "waitlisted", waitlistPosition });
   } catch (err) {
     console.error("[/api/networking/rsvp-guest]", err);
     return NextResponse.json({ error: "신청 접수에 실패했습니다." }, { status: 500 });

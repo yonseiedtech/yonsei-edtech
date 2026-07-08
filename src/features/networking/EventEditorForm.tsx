@@ -19,6 +19,7 @@ import {
   notifyGatheringInvite,
   notifyGatheringCancelled,
   notifyGatheringPostponed,
+  notifyGatheringPollStarted,
 } from "@/features/notifications/notify";
 import { formatEventDate } from "@/features/networking/networking-helpers";
 import {
@@ -213,6 +214,11 @@ export default function EventEditorForm({
       } else {
         const created = await networkingEventsApi.create({ ...payload, createdBy: createdByUid, createdAt: now } as Omit<NetworkingEvent, "id">);
         eventId = created.id;
+        // G14(2026-07-08): 신규 공개 poll 모임 생성 시 승인 회원 전체에 투표 개시 알림.
+        // 비공개 poll 은 초대 알림(H2)이 담당하므로 공개만. 전체 발송 실패는 무시(fire-and-forget).
+        if (isPoll && form.published && !isPrivate) {
+          notifyGatheringPollStarted(form.title.trim()).catch(() => {});
+        }
       }
       // private 이면 토큰 매핑을 기록(upsert — idempotent). 레거시 값도 여기로 이관된다.
       if (isPrivate && token) {

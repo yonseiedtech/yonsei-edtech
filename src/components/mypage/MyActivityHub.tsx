@@ -22,19 +22,21 @@ import {
   BookOpen,
   FolderKanban,
   ClipboardList,
+  Wallet,
 } from "lucide-react";
 import EmptyState from "@/components/ui/empty-state";
 import { cn, formatDate } from "@/lib/utils";
-import { networkingEventsApi, networkingRsvpsApi } from "@/lib/bkend";
+import { networkingEventsApi, networkingRsvpsApi, networkingDuesApi } from "@/lib/bkend";
 import {
   RSVP_STATUS_LABELS,
   NETWORKING_EVENT_TYPE_LABELS,
   type NetworkingEvent,
   type NetworkingRsvp,
+  type NetworkingDue,
   type Activity,
   type Seminar,
 } from "@/types";
-import { formatEventDate, isPastEvent } from "@/features/networking/networking-helpers";
+import { formatEventDate, isPastEvent, formatWon } from "@/features/networking/networking-helpers";
 
 type ApplicationLite = {
   activityId: string;
@@ -155,6 +157,19 @@ export default function MyActivityHub({
     staleTime: 30_000,
     enabled: !!userId,
   });
+  // G5(2026-07-08): 내 미납 회비 — 여러 모임에 걸친 unpaid due 합계. 미납 0이면 미노출.
+  const { data: myDues = [] } = useQuery({
+    queryKey: ["myhub-networking-dues", userId],
+    queryFn: async () =>
+      (await networkingDuesApi.listByUser(userId)).data as NetworkingDue[],
+    staleTime: 30_000,
+    enabled: !!userId,
+  });
+  const unpaidDues = useMemo(() => myDues.filter((d) => d.status === "unpaid"), [myDues]);
+  const unpaidTotal = useMemo(
+    () => unpaidDues.reduce((sum, d) => sum + (d.amount ?? 0), 0),
+    [unpaidDues],
+  );
 
   const items = useMemo<HubItem[]>(() => {
     const out: HubItem[] = [];
@@ -314,6 +329,27 @@ export default function MyActivityHub({
           </span>
         </div>
       </div>
+
+      {/* G5: 내 미납 회비 요약 (미납 있을 때만) */}
+      {unpaidDues.length > 0 && (
+        <Link
+          href="/gatherings"
+          className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50/60 p-3.5 transition hover:border-amber-300 dark:border-amber-900 dark:bg-amber-950/30"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+            <Wallet size={18} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
+              미납 회비 {unpaidDues.length}건 · {formatWon(unpaidTotal)}
+            </p>
+            <p className="mt-0.5 text-xs text-amber-700/80 dark:text-amber-300/80">
+              모임 회비가 아직 납부되지 않았습니다. 총무에게 납부해 주세요.
+            </p>
+          </div>
+          <ChevronRight size={16} className="shrink-0 text-amber-600 dark:text-amber-400" />
+        </Link>
+      )}
 
       {items.length === 0 ? (
         <EmptyState

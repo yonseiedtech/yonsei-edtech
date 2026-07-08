@@ -8,7 +8,8 @@
 
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Users, Wallet, Download, Check, Pencil } from "lucide-react";
+import { Plus, Users, Wallet, Download, Check, Pencil, UserCheck } from "lucide-react";
+import { deleteField } from "firebase/firestore";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,7 +26,7 @@ import {
   type NetworkingDue,
   type DueStatus,
 } from "@/types";
-import { computeSettlement, formatEventDate, formatWon } from "@/features/networking/networking-helpers";
+import { computeSettlement, formatEventDate, formatWon, isPastEvent } from "@/features/networking/networking-helpers";
 import NetworkingProgramManager from "@/features/networking/NetworkingProgramManager";
 import NetworkingPoll from "@/features/networking/NetworkingPoll";
 import EventEditorForm from "@/features/networking/EventEditorForm";
@@ -145,9 +146,33 @@ function EventManager({ event, onEdit, confirmedByUid }: { event: NetworkingEven
     return m;
   }, [dues]);
   const attending = rsvps.filter((r) => r.status === "attending");
+  const waitlisted = rsvps.filter((r) => r.status === "waitlisted");
+  // G3(2026-07-08): 노쇼 = 참석 확정인데 행사 종료 후에도 미체크인. 종료 전에는 무의미하므로 지난 행사만 집계.
+  const eventEnded =
+    !(event.schedulingMode === "poll" && !event.startAt) &&
+    !!event.startAt &&
+    isPastEvent(event, new Date().toISOString());
+  const noShowCount = eventEnded ? attending.filter((r) => !r.attendedAt).length : 0;
 
+  function refreshRsvps() {
+    qc.invalidateQueries({ queryKey: ["console-networking-rsvps", event.id] });
+  }
   function refreshDues() {
     qc.invalidateQueries({ queryKey: ["console-networking-dues", event.id] });
+  }
+
+  // G3: 현장 체크인 토글 — staff 가 attendedAt set/unset (firestore.rules 상 staff update 허용).
+  async function toggleCheckIn(r: NetworkingRsvp) {
+    try {
+      await networkingRsvpsApi.update(r.id, {
+        attendedAt: r.attendedAt
+          ? (deleteField() as unknown as undefined)
+          : new Date().toISOString(),
+      });
+      refreshRsvps();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "체크인 변경 실패");
+    }
   }
 
   /** 참석자 기준 회비 레코드 일괄 생성 (없는 것만) */
@@ -265,7 +290,20 @@ function EventManager({ event, onEdit, confirmedByUid }: { event: NetworkingEven
 
       {/* 명단 */}
       <div>
-        <p className="mb-2 text-xs font-semibold text-muted-foreground">참석자 명단 ({rsvps.length})</p>
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          <p className="text-xs font-semibold text-muted-foreground">참석자 명단 ({rsvps.length})</p>
+          {/* G2: 대기자 수 · G3: 노쇼 수 */}
+          {waitlisted.length > 0 && (
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+              대기 {waitlisted.length}명
+            </span>
+          )}
+          {noShowCount > 0 && (
+            <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-medium text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
+              노쇼 {noShowCount}명
+            </span>
+          )}
+        </div>
         {rsvps.length === 0 ? (
           <p className="text-xs text-muted-foreground">아직 신청자가 없습니다.</p>
         ) : (
@@ -275,6 +313,7 @@ function EventManager({ event, onEdit, confirmedByUid }: { event: NetworkingEven
                 <tr className="border-b text-left text-muted-foreground">
                   <th className="py-1.5 pr-2">이름</th>
                   <th className="pr-2">참석</th>
+                  <th className="pr-2">체크인</th>
                   <th className="pr-2">회비</th>
                   <th>연락처</th>
                 </tr>
@@ -289,7 +328,31 @@ function EventManager({ event, onEdit, confirmedByUid }: { event: NetworkingEven
                         {r.isGuest && <span className="ml-1 rounded bg-muted px-1 text-[10px] text-muted-foreground">게스트</span>}
                         {(r.companions ?? 0) > 0 && <span className="ml-1 text-muted-foreground">+{r.companions}</span>}
                       </td>
-                      <td className="pr-2">{RSVP_STATUS_LABELS[r.status]}</td>
+                      <td className="pr-2">
+                        <span className={cn(r.status === "waitlisted" && "text-amber-600 dark:text-amber-400")}>
+                          {RSVP_STATUS_LABELS[r.status]}
+                        </span>
+                      </td>
+                      <td className="pr-2">
+                        {r.status === "attending" ? (
+                          <button
+                            type="button"
+                            onClick={() => toggleCheckIn(r)}
+                            className={cn(
+                              "inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] transition-colors",
+                              r.attendedAt
+                                ? "bg-emerald-600 text-white"
+                                : "bg-muted text-muted-foreground hover:bg-muted/70",
+                            )}
+                            title={r.attendedAt ? "체크인 취소" : "현장 체크인"}
+                          >
+                            <UserCheck size={9} />
+                            {r.attendedAt ? "참석확인" : "체크인"}
+                          </button>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </td>
                       <td className="pr-2">
                         {due ? (
                           <div className="flex gap-1">

@@ -207,6 +207,20 @@ export function notifyGatheringInvite(userId: string, eventTitle: string, token:
   );
 }
 
+/**
+ * 모임 일정 투표 개시 알림 — G14(2026-07-08). 공개 poll 모임 신규 생성 시 승인 회원 전체에 fan-out.
+ * 비공개 poll 은 초대 알림(H2)이 담당하므로 호출부에서 공개 모임만 호출한다.
+ * notifyNewNotice·notifyNewSeminar 와 동일한 전체 공지성 fanOut 패턴 재사용.
+ */
+export function notifyGatheringPollStarted(eventTitle: string) {
+  return fanOut(
+    "networking_reminder",
+    "일정 투표가 시작되었습니다",
+    `「${eventTitle}」 일정 투표가 시작되었습니다`,
+    "/gatherings",
+  );
+}
+
 /** 모임 취소 알림 — G1(2026-07-08). attending/undecided 신청자에게 발송. link 는 공개/비공개에 따라 호출부에서 결정. */
 export function notifyGatheringCancelled(userId: string, eventTitle: string, link: string) {
   return create(

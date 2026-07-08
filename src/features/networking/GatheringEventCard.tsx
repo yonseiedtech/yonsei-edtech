@@ -71,6 +71,8 @@ export default function GatheringEventCard({
   // G6(2026-07-08): 동반인 수 입력 — 회원(참석 시)·게스트 신청 폼
   const [companions, setCompanions] = useState(myRsvp?.companions ?? 0);
   const [guestCompanions, setGuestCompanions] = useState(0);
+  // G2(2026-07-08): 서버가 정원 초과로 대기자 배정 시 반환하는 순번(제출 직후 표시용)
+  const [waitlistPos, setWaitlistPos] = useState<number | null>(null);
   const closed = isRsvpClosed(ev, nowIso);
   // 미확정 일정 투표 — 날짜가 아직 정해지지 않아 RSVP 대신 투표 UI 노출
   const isPollPending = ev.schedulingMode === "poll" && !ev.startAt;
@@ -137,7 +139,19 @@ export default function GatheringEventCard({
         const body = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error ?? "신청에 실패했습니다.");
       }
-      toast.success(`'${RSVP_STATUS_LABELS[status]}'(으)로 신청했습니다.`);
+      // G2: 정원 초과면 서버가 대기자(waitlisted)로 저장 — 순번 안내
+      const data = (await res.json().catch(() => ({}))) as { waitlisted?: boolean; waitlistPosition?: number | null };
+      if (data.waitlisted) {
+        setWaitlistPos(data.waitlistPosition ?? null);
+        toast.success(
+          data.waitlistPosition
+            ? `정원이 가득 차 대기자로 등록했습니다 (대기 ${data.waitlistPosition}번).`
+            : "정원이 가득 차 대기자로 등록했습니다.",
+        );
+      } else {
+        setWaitlistPos(null);
+        toast.success(`'${RSVP_STATUS_LABELS[status]}'(으)로 신청했습니다.`);
+      }
       onChanged();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "신청에 실패했습니다.");
@@ -173,7 +187,16 @@ export default function GatheringEventCard({
         const j = (await res.json().catch(() => null)) as { error?: string } | null;
         throw new Error(j?.error ?? "신청에 실패했습니다.");
       }
-      toast.success("게스트 참석 신청이 접수되었습니다.");
+      const j = (await res.json().catch(() => ({}))) as { waitlisted?: boolean; waitlistPosition?: number | null };
+      if (j.waitlisted) {
+        toast.success(
+          j.waitlistPosition
+            ? `정원이 가득 차 대기자로 접수되었습니다 (대기 ${j.waitlistPosition}번).`
+            : "정원이 가득 차 대기자로 접수되었습니다.",
+        );
+      } else {
+        toast.success("게스트 참석 신청이 접수되었습니다.");
+      }
       setGuestOpen(false);
       setGuestName("");
       setGuestContact("");
@@ -311,6 +334,13 @@ export default function GatheringEventCard({
                 })}
                 {closed && <span className="text-[11px] text-muted-foreground">신청이 마감되었습니다.</span>}
               </div>
+              {/* G2: 대기자 안내 — 정원 초과로 대기자 명단에 등록된 상태 */}
+              {myRsvp?.status === "waitlisted" && (
+                <p className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                  정원이 가득 차 대기자 명단에 있습니다
+                  {waitlistPos ? ` (대기 ${waitlistPos}번)` : ""}. 자리가 나면 자동으로 참석 확정됩니다.
+                </p>
+              )}
               {/* G6: 참석 시 동반인 수 입력 — 변경 즉시 서버 반영 */}
               {myRsvp?.status === "attending" && !closed && (
                 <div className="flex items-center gap-1.5 text-xs">
