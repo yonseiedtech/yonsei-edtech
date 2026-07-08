@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/ui/page-header";
 import PageContainer from "@/components/ui/page-container";
 import ProfileCertificateDownloadButton from "@/components/profile/ProfileCertificateDownloadButton";
+import PortfolioAutofillDialog from "@/components/profile/PortfolioAutofillDialog";
 import {
   Award as AwardIcon,
   Globe,
@@ -250,12 +251,22 @@ function PortfolioContent() {
             title="학술 포트폴리오"
             description="수상·대외활동·콘텐츠 제작 이력을 직접 등록하세요. 운영진 검증 후 프로필에 정식 표기됩니다."
           />
-          <div className="flex shrink-0 flex-col items-end gap-1">
-            <ProfileCertificateDownloadButton
-              ownerId={viewer.id}
-              ownerName={viewer.name}
-              full
-            />
+          <div className="flex shrink-0 flex-col items-end gap-1.5">
+            <div className="flex flex-wrap items-center justify-end gap-1.5">
+              <PortfolioAutofillDialog
+                userId={viewer.id}
+                recentPapers={viewer.recentPapers ?? []}
+                existingExternals={externals}
+                onAdded={(created) =>
+                  setExternals((prev) => [...created, ...prev])
+                }
+              />
+              <ProfileCertificateDownloadButton
+                ownerId={viewer.id}
+                ownerName={viewer.name}
+                full
+              />
+            </div>
             <p className="text-[10px] text-muted-foreground">
               연구 진행도·진단 준비도·수료증·학습 잔디까지 자동 적재됩니다.
             </p>

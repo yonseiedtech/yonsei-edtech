@@ -153,6 +153,12 @@ export interface ExternalActivity {
   verifiedBy?: string;
   verifiedAt?: string;
   rejectionReason?: string;
+  /**
+   * G3 자동 적재 출처 키 — "내 활동 자동 불러오기"로 생성된 항목의 멱등 키.
+   * (예: "seminar:{id}", "paper:{정규화제목}") 동일 키 재적재를 방지한다.
+   * 수동 등록 항목은 undefined.
+   */
+  autoSourceRef?: string;
   createdAt: string;
   updatedAt: string;
 }
