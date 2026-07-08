@@ -21,6 +21,9 @@ import {
   Bell,
   BellOff,
   ChevronRight,
+  Activity,
+  Layers,
+  FolderPlus,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { useIsWidgetMuted } from "@/lib/dashboard-layout";
@@ -29,15 +32,23 @@ import {
   courseOfferingsApi,
   courseTodosApi,
   seminarsApi,
+  diagnosticResultsApi,
+  flashcardsApi,
+  awardsApi,
+  externalActivitiesApi,
+  contentCreationsApi,
 } from "@/lib/bkend";
 import { parseSchedule } from "@/lib/courseSchedule";
 import { inferCurrentSemester } from "@/lib/semester";
+import { isDueToday } from "@/lib/flashcard-srs";
 import { useGraduationSummary } from "@/features/mypage/useGraduationSummary";
 import {
   type CourseEnrollment,
   type CourseOffering,
   type CourseTodo,
   type Seminar,
+  type DiagnosticResult,
+  type Flashcard,
 } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -113,6 +124,25 @@ const KIND_META: Record<NextActionKind, { label: string; iconClass: string; Icon
   seminar: { label: "다음 세미나", iconClass: "bg-blue-100 text-blue-700", Icon: CalendarClock },
   todo: { label: "마감 임박 할 일", iconClass: "bg-amber-100 text-amber-700", Icon: ListTodo },
 };
+
+/**
+ * 발견성 넛지 — 시간 임박 액션이 없을 때 1건만 노출하는 "먼저 권하는" 추천.
+ * 우선순위: 진단 미응시 > due 암기카드 > 빈 포트폴리오 (졸업요건 넛지는 이보다 낮음).
+ */
+type DiscoveryKind = "diagnostic" | "flashcard" | "portfolio";
+
+interface DiscoveryNudge {
+  kind: DiscoveryKind;
+  href: string;
+  Icon: typeof CalendarClock;
+  title: string;
+  badge: string;
+  subtitle: string;
+  ariaLabel: string;
+  iconWrapClass: string;
+  badgeClass: string;
+  accentClass: string;
+}
 
 export default function NextActionBanner() {
   const { user } = useAuthStore();
@@ -298,7 +328,102 @@ export default function NextActionBanner() {
 
   const top = candidates[0];
 
-  // ── 졸업요건 미달 넛지 (최저 우선순위: 시간 임박 액션이 없을 때만) ──
+  // ── 발견성 넛지 데이터 (시간 임박 액션이 없을 때만 의미) ──
+  // 진단 이력·암기카드는 대시보드 상주 위젯과 동일 캐시 키 재사용
+  //  → StageRecommendationPanel(["stage-rec-diagnostics"]) · TodayCard(["today-flashcards"]) 와 dedupe, 추가 로드 비용 0.
+  const { data: diagnostics } = useQuery({
+    queryKey: ["stage-rec-diagnostics", userId],
+    queryFn: async () =>
+      (await diagnosticResultsApi.listByUser(userId as string)).data as DiagnosticResult[],
+    enabled: !!userId,
+    staleTime: 5 * 60_000,
+  });
+  const { data: flashcards } = useQuery({
+    queryKey: ["today-flashcards", userId],
+    queryFn: async () => (await flashcardsApi.listByUser(userId as string)).data as Flashcard[],
+    enabled: !!userId,
+    staleTime: 5 * 60_000,
+  });
+
+  const diagnosticCount = diagnostics?.length; // undefined = 로딩 중(넛지 판단 보류)
+  const dueCardCount = useMemo(
+    () => (flashcards ?? []).filter((c) => isDueToday(c)).length,
+    [flashcards],
+  );
+
+  // 빈 포트폴리오는 대시보드 비상주 신규 쿼리(3콜)라 앞선 넛지가 모두 해당 없을 때만 지연 로드.
+  const needPortfolioCheck =
+    !!userId && !top && diagnosticCount !== undefined && diagnosticCount > 0 && dueCardCount === 0;
+  const { data: portfolioCount } = useQuery({
+    queryKey: ["nudge-portfolio-count", userId],
+    queryFn: async () => {
+      const [a, e, c] = await Promise.all([
+        awardsApi.listByUser(userId as string),
+        externalActivitiesApi.listByUser(userId as string),
+        contentCreationsApi.listByUser(userId as string),
+      ]);
+      return a.data.length + e.data.length + c.data.length;
+    },
+    enabled: needPortfolioCheck,
+    staleTime: 5 * 60_000,
+  });
+
+  // 넛지 1건 선정 (진단 미응시 > due 카드 > 빈 포트폴리오). 로딩 중이면 조용히 보류.
+  const discovery: DiscoveryNudge | null = useMemo(() => {
+    if (!userId) return null;
+    // 1) 미응시 진단
+    if (diagnosticCount === 0) {
+      return {
+        kind: "diagnostic",
+        href: "/diagnosis",
+        Icon: Activity,
+        title: "연구 준비도 진단 받아보기",
+        badge: "진단",
+        subtitle: "5분 진단으로 내 연구 준비도·약점 확인",
+        ariaLabel: "연구 준비도 진단 받기 · 진단 페이지로 이동",
+        iconWrapClass: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+        badgeClass: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+        accentClass:
+          "border-blue-200 bg-blue-50/50 hover:bg-blue-50 dark:border-blue-900 dark:bg-blue-950/20 dark:hover:bg-blue-950/30",
+      };
+    }
+    if (diagnosticCount === undefined) return null; // 아직 로딩 — 넛지 보류
+    // 2) due 암기카드
+    if (dueCardCount > 0) {
+      return {
+        kind: "flashcard",
+        href: "/flashcards",
+        Icon: Layers,
+        title: `오늘 복습할 카드 ${dueCardCount}장`,
+        badge: "복습",
+        subtitle: "진단 오답 암기카드로 약점 굳히기",
+        ariaLabel: `오늘 복습할 암기카드 ${dueCardCount}장 · 암기카드 페이지로 이동`,
+        iconWrapClass: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300",
+        badgeClass: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300",
+        accentClass:
+          "border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50 dark:border-indigo-900 dark:bg-indigo-950/20 dark:hover:bg-indigo-950/30",
+      };
+    }
+    // 3) 빈 포트폴리오 (포트폴리오 쿼리가 로드된 뒤에만 판정)
+    if (portfolioCount === 0) {
+      return {
+        kind: "portfolio",
+        href: "/mypage/portfolio",
+        Icon: FolderPlus,
+        title: "활동 자동 불러오기로 포트폴리오 채우기",
+        badge: "포트폴리오",
+        subtitle: "수료증·세미나 발표를 자동으로 모아 정리",
+        ariaLabel: "포트폴리오 자동 불러오기 · 포트폴리오 페이지로 이동",
+        iconWrapClass: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
+        badgeClass: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
+        accentClass:
+          "border-violet-200 bg-violet-50/50 hover:bg-violet-50 dark:border-violet-900 dark:bg-violet-950/20 dark:hover:bg-violet-950/30",
+      };
+    }
+    return null;
+  }, [userId, diagnosticCount, dueCardCount, portfolioCount]);
+
+  // ── 졸업요건 미달 넛지 (최저 우선순위: 시간 임박 액션·발견성 넛지가 모두 없을 때만) ──
   const { remainingCount, topUnmet } = useGraduationSummary(userId);
 
   if (!user) return null;
@@ -320,8 +445,57 @@ export default function NextActionBanner() {
     );
   }
 
-  // 시간 임박 액션이 없을 때만 졸업요건 넛지를 노출 (능동 리마인더)
+  // 시간 임박 액션이 없을 때만 발견성 넛지 → 졸업요건 넛지 순으로 1건 노출 (능동 리마인더)
   if (!top) {
+    // 발견성 넛지 우선 (진단 미응시 > due 카드 > 빈 포트폴리오)
+    if (discovery) {
+      const DiscoveryIcon = discovery.Icon;
+      return (
+        <div className="mx-auto max-w-6xl px-4">
+          <Link
+            href={discovery.href}
+            className={cn(
+              "group flex items-center gap-2 rounded-2xl border px-3 py-1.5 shadow-sm transition-colors sm:gap-3 sm:py-2",
+              discovery.accentClass,
+            )}
+            role="status"
+            aria-label={discovery.ariaLabel}
+          >
+            <div
+              className={cn(
+                "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
+                discovery.iconWrapClass,
+              )}
+              aria-hidden="true"
+            >
+              <DiscoveryIcon size={14} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <span className="truncate text-sm font-semibold text-foreground">
+                  {discovery.title}
+                </span>
+                <span
+                  className={cn(
+                    "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+                    discovery.badgeClass,
+                  )}
+                >
+                  {discovery.badge}
+                </span>
+              </div>
+              <p className="truncate text-[11px] text-muted-foreground">{discovery.subtitle}</p>
+            </div>
+            <ChevronRight
+              size={14}
+              className="shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+              aria-hidden="true"
+            />
+          </Link>
+        </div>
+      );
+    }
+    // 졸업요건 넛지 (최저 우선순위)
     if (remainingCount <= 0 || !topUnmet) return null;
     return (
       <div className="mx-auto max-w-6xl px-4">
