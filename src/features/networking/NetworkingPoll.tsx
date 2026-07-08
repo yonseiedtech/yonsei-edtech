@@ -12,9 +12,10 @@
 
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { CalendarCheck, Sparkles, Users as UsersIcon, Lock, ChevronLeft, ChevronRight, Check, X } from "lucide-react";
+import { CalendarCheck, Sparkles, Users as UsersIcon, Lock, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { networkingAvailabilityApi, networkingEventsApi } from "@/lib/bkend";
@@ -376,51 +377,62 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
         })}
       </div>
 
-      {/* 날짜 선택 → 시간대 패널 (pollTimeSlots 있을 때) */}
-      {hasTimeCols && selectedDate && (
-        <div className="mt-3 rounded-xl border bg-background p-3">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs font-semibold">{fullDateLabel(selectedDate)} · 가능 시간대</span>
-            <button
-              type="button"
-              onClick={() => setSelectedDate(null)}
-              aria-label="시간대 패널 닫기"
-              className="text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <X size={14} />
-            </button>
-          </div>
-          {!user && (
-            <p className="mb-2 text-[11px] text-muted-foreground">로그인하면 시간대를 선택할 수 있습니다.</p>
-          )}
-          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-            {(slotsByDate.get(selectedDate) ?? []).map((slot) => {
-              const tally = tallyBySlot.get(slot);
-              const count = tally?.count ?? 0;
-              const names = tally?.names ?? [];
-              const time = slot.split("|")[1];
-              const mine = mySlots.has(slot);
-              return (
-                <button
-                  key={slot}
-                  type="button"
-                  disabled={!user || busy || pollClosed}
-                  onClick={() => toggleSlot(slot)}
-                  title={names.length ? `${names.join(", ")} (${count}명)` : "응답 없음"}
-                  className={cn(
-                    "flex items-center justify-between gap-1 rounded-lg border px-2.5 py-2 text-[11px] font-semibold tabular-nums transition-colors disabled:cursor-default",
-                    heatClass(count, maxCount),
-                    mine && "ring-2 ring-teal-500 ring-offset-1 dark:ring-offset-card",
-                    user && !pollClosed && "hover:border-indigo-400",
-                  )}
-                >
-                  <span>{time}</span>
-                  <span>{count > 0 ? `${count}명` : ""}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+      {/* 날짜 클릭 → 시간대 선택 팝업 (pollTimeSlots 있을 때) */}
+      {hasTimeCols && (
+        <Dialog open={!!selectedDate} onOpenChange={(open) => { if (!open) setSelectedDate(null); }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-1.5 text-sm">
+                <CalendarCheck size={15} className="text-indigo-600 dark:text-indigo-400" />
+                {selectedDate ? fullDateLabel(selectedDate) : ""} · 가능 시간대
+              </DialogTitle>
+            </DialogHeader>
+            <p className="text-[11px] text-muted-foreground">
+              {user
+                ? pollClosed
+                  ? "투표가 마감되었습니다."
+                  : "시간대를 눌러 내 가능 여부를 저장하세요. 진할수록 많은 회원이 가능합니다."
+                : "로그인하면 시간대를 선택할 수 있습니다."}
+            </p>
+            <div className="mt-1 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {(selectedDate ? slotsByDate.get(selectedDate) ?? [] : []).map((slot) => {
+                const tally = tallyBySlot.get(slot);
+                const count = tally?.count ?? 0;
+                const names = tally?.names ?? [];
+                const time = slot.split("|")[1];
+                const mine = mySlots.has(slot);
+                return (
+                  <button
+                    key={slot}
+                    type="button"
+                    disabled={!user || busy || pollClosed}
+                    onClick={() => toggleSlot(slot)}
+                    aria-pressed={mine}
+                    title={names.length ? `${names.join(", ")} (${count}명)` : "응답 없음"}
+                    className={cn(
+                      "flex min-h-[52px] flex-col rounded-lg border px-3 py-2.5 text-left transition-colors disabled:cursor-default",
+                      heatClass(count, maxCount),
+                      mine && "ring-2 ring-teal-500 ring-offset-1 dark:ring-offset-background",
+                      user && !pollClosed && "hover:border-indigo-400",
+                    )}
+                  >
+                    <span className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold tabular-nums">{time}</span>
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold tabular-nums">
+                        {mine && <Check size={11} />}
+                        <UsersIcon size={11} className="opacity-70" />
+                        {count}명
+                      </span>
+                    </span>
+                    {names.length > 0 && (
+                      <span className="mt-1 block truncate text-[10px] opacity-80">{names.join(", ")}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* 범례 */}

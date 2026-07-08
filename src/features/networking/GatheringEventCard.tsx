@@ -9,7 +9,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarDays, MapPin, Wallet, Clock, Check, Camera, Lock, Copy } from "lucide-react";
+import { CalendarDays, MapPin, Wallet, Clock, Check, Camera, Lock, Copy, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,6 +90,28 @@ export default function GatheringEventCard({
       toast.success("공유 링크를 복사했습니다.");
     } catch {
       toast.error("복사에 실패했습니다.");
+    }
+  }
+
+  // 일정 투표 "가능 일정 종합" 공유 — 비로그인 열람 가능한 공개 종합 페이지(/gatherings/poll/[id]).
+  // navigator.share(OS 공유시트 → 카카오톡 포함) 우선, 미지원 시 클립보드 복사 폴백.
+  async function sharePollSummary() {
+    const url = `${window.location.origin}/gatherings/poll/${ev.id}`;
+    const title = `「${ev.title}」 일정 투표 현황`;
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title, url });
+        return;
+      } catch (e) {
+        // 사용자가 공유시트를 닫으면 조용히 종료, 그 외엔 클립보드로 폴백
+        if (e instanceof DOMException && e.name === "AbortError") return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("종합 링크를 복사했습니다. 카카오톡·SNS에 붙여넣어 공유하세요.");
+    } catch {
+      toast.error("공유에 실패했습니다.");
     }
   }
 
@@ -241,6 +263,14 @@ export default function GatheringEventCard({
       {/* 일정 조율 투표 (미확정 poll) */}
       {isPollPending && ev.status !== "cancelled" && (
         <div className="mt-3.5">
+          {/* 공개 모임만 종합 공유 (비공개는 id 종합 페이지가 404 — 스코프 외) */}
+          {canManage && !isPrivate && (
+            <div className="mb-2 flex justify-end">
+              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={sharePollSummary}>
+                <Share2 size={12} className="mr-1" /> 종합 공유
+              </Button>
+            </div>
+          )}
           <NetworkingPoll event={ev} canEdit={false} />
         </div>
       )}
