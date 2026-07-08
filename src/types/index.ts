@@ -76,6 +76,7 @@ export * from "./onboarding-badge";
 // P1: 학습 잔디 외부 가산점 이벤트 (체크리스트·배지)
 export * from "./streak-event";
 export * from "./topic-exploration";
+export * from "./graduation";
 
 // 사용자 피드백
 export * from "./feedback";

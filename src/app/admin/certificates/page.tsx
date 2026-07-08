@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Award, Heart, Trash2, Eye, Printer, FileDown, Loader2, ListPlus, CheckSquare, Square, Link2, RefreshCw, Mail, MailCheck, MailX, MailWarning } from "lucide-react";
 import { registrationsApi, certificatesApi, profilesApi } from "@/lib/bkend";
+import { exportCSV } from "@/lib/export-csv";
 import type { SeminarRegistration, User } from "@/types";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { auth } from "@/lib/firebase";
@@ -494,6 +495,29 @@ export default function CertificatesPage() {
               선택 {selected.size}건 이메일 발송
             </Button>
           )}
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={filtered.length === 0}
+            onClick={() =>
+              exportCSV(
+                "발급문서",
+                ["증서번호", "유형", "세미나명", "수여자", "회원연결", "이메일", "이메일발송", "발급일"],
+                filtered.map((c: Certificate) => [
+                  c.certificateNo || "",
+                  c.type === "completion" ? "수료증" : c.type === "appointment" ? "임명장" : "감사장",
+                  c.seminarTitle,
+                  c.recipientName,
+                  c.recipientUserId ? "회원" : "게스트",
+                  c.recipientEmail || "",
+                  c.emailSent ? "발송" : "미발송",
+                  c.issuedAt ? formatKoDate(c.issuedAt) : "",
+                ]),
+              )
+            }
+          >
+            <FileDown size={14} className="mr-1" /> CSV
+          </Button>
           <Button size="sm" variant="outline" onClick={handleBulkResync} disabled={bulkSyncing}>
             {bulkSyncing ? <Loader2 size={14} className="mr-1 animate-spin" /> : <RefreshCw size={14} className="mr-1" />}
             일괄 재동기화

@@ -1,15 +1,18 @@
 "use client";
 
 /**
- * NetworkingPoll — 일정 조율(when2meet) 투표 UI (사이클 124 단계3)
+ * NetworkingPoll — 일정 조율 투표 UI (캘린더 뷰, 사이클 124 → 캘린더 개편)
  * 운영진이 기간만 정한 poll 행사에서, 회원이 가능한 날짜/시간 슬롯을 토글 저장하고
- * 전체 응답을 실시간 집계하여 최다 가능 슬롯을 히트맵으로 강조한다.
+ * 전체 응답을 실시간 집계하여 월 단위 캘린더 히트맵으로 강조한다.
  * canEdit(운영진)면 최종 슬롯을 확정해 startAt 지정 + schedulingMode "fixed" 전환.
+ *
+ * 데이터 모델(NetworkingAvailability.availableSlots)과 유틸(buildCandidateSlots/tallyAvailability/
+ * bestSlots/formatSlotLabel)은 그대로 재사용하고 UI(when2meet 그리드 → 캘린더)만 개편했다.
  */
 
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { CalendarCheck, Sparkles, Users as UsersIcon, Lock } from "lucide-react";
+import { CalendarCheck, Sparkles, Users as UsersIcon, Lock, ChevronLeft, ChevronRight, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -28,6 +31,8 @@ interface Props {
   canEdit: boolean;
 }
 
+const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+
 /** 응답 수 → 히트맵 색상 강도 (인디고). 0이면 무색 */
 function heatClass(count: number, max: number): string {
   if (count <= 0 || max <= 0) return "border-border bg-background text-muted-foreground";
@@ -38,29 +43,65 @@ function heatClass(count: number, max: number): string {
   return "border-indigo-200 bg-indigo-100 text-indigo-800 dark:border-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200";
 }
 
+const pad = (n: number) => String(n).padStart(2, "0");
+const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const monthIndex = (d: Date) => d.getFullYear() * 12 + d.getMonth();
+
+/** "YYYY-MM-DD" → "7월 18일 (금)" */
+function fullDateLabel(date: string): string {
+  const d = new Date(`${date}T00:00:00`);
+  if (isNaN(d.getTime())) return date;
+  return `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEKDAYS[d.getDay()]})`;
+}
+
+/** viewMonth 기준 캘린더 셀(일~토, 앞뒤 달 채움) */
+function buildMonthCells(view: Date): { date: string; day: number; inMonth: boolean }[] {
+  const y = view.getFullYear();
+  const m = view.getMonth();
+  const firstDow = new Date(y, m, 1).getDay();
+  const lastDate = new Date(y, m + 1, 0).getDate();
+  const cells: { date: string; day: number; inMonth: boolean }[] = [];
+  for (let i = firstDow - 1; i >= 0; i--) {
+    const d = new Date(y, m, -i);
+    cells.push({ date: ymd(d), day: d.getDate(), inMonth: false });
+  }
+  for (let d = 1; d <= lastDate; d++) {
+    const dt = new Date(y, m, d);
+    cells.push({ date: ymd(dt), day: d, inMonth: true });
+  }
+  let trailing = 1;
+  while (cells.length % 7 !== 0) {
+    const dt = new Date(y, m + 1, trailing++);
+    cells.push({ date: ymd(dt), day: dt.getDate(), inMonth: false });
+  }
+  return cells;
+}
+
 export default function NetworkingPoll({ event, canEdit }: Props) {
   const qc = useQueryClient();
   const { user } = useAuthStore();
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [pickedSlot, setPickedSlot] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const candidateSlots = useMemo(
     () => buildCandidateSlots(event.pollPeriodStart ?? "", event.pollPeriodEnd ?? "", event.pollTimeSlots),
     [event.pollPeriodStart, event.pollPeriodEnd, event.pollTimeSlots],
   );
 
-  // 후보 슬롯을 날짜별로 그룹화 (행=날짜, 열=시간대)
-  const rows = useMemo(() => {
-    const byDate = new Map<string, string[]>();
+  // 후보 슬롯을 날짜별로 그룹화
+  const slotsByDate = useMemo(() => {
+    const m = new Map<string, string[]>();
     for (const slot of candidateSlots) {
       const [date] = slot.split("|");
-      const arr = byDate.get(date) ?? [];
+      const arr = m.get(date) ?? [];
       arr.push(slot);
-      byDate.set(date, arr);
+      m.set(date, arr);
     }
-    return Array.from(byDate.entries());
+    return m;
   }, [candidateSlots]);
+  const periodDates = useMemo(() => new Set(slotsByDate.keys()), [slotsByDate]);
 
   // 전체 응답 실시간 조회 (히트맵 집계)
   const { data: responses = [] } = useQuery({
@@ -80,16 +121,71 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
   const maxCount = useMemo(() => Math.max(0, ...tallies.map((t) => t.count)), [tallies]);
   const best = useMemo(() => bestSlots(tallies), [tallies]);
 
+  // 날짜 단위 집계 — 각 날짜의 최고 슬롯 count + 그 시간대
+  const dateAgg = useMemo(() => {
+    const m = new Map<string, { count: number; bestTime?: string }>();
+    for (const [date, slots] of slotsByDate) {
+      let top: { count: number; bestTime?: string } = { count: 0, bestTime: undefined };
+      for (const slot of slots) {
+        const t = tallyBySlot.get(slot);
+        const c = t?.count ?? 0;
+        if (c > top.count) top = { count: c, bestTime: t?.time };
+      }
+      m.set(date, top);
+    }
+    return m;
+  }, [slotsByDate, tallyBySlot]);
+
+  // 상위 최다 가능 날짜 (동률 포함, 상위 3개)
+  const bestDates = useMemo(() => {
+    const arr = Array.from(dateAgg.entries())
+      .filter(([, v]) => v.count > 0)
+      .sort((a, b) => b[1].count - a[1].count || a[0].localeCompare(b[0]));
+    return arr.slice(0, 3).map(([date, v]) => ({ date, count: v.count, bestTime: v.bestTime }));
+  }, [dateAgg]);
+
   // 내 응답
   const myResponse = useMemo(
     () => (user ? responses.find((r) => r.userId === user.id) ?? null : null),
     [responses, user],
   );
   const mySlots = useMemo(() => new Set(myResponse?.availableSlots ?? []), [myResponse]);
+  const myDateSet = useMemo(() => {
+    const s = new Set<string>();
+    for (const slot of mySlots) s.add(slot.split("|")[0]);
+    return s;
+  }, [mySlots]);
 
   const pollClosed = !!event.pollDeadline && new Date(event.pollDeadline).getTime() < Date.now();
+  const hasTimeCols = (event.pollTimeSlots?.length ?? 0) > 0;
 
-  /** 슬롯 토글 → upsert */
+  // 월 네비게이션
+  const monthBounds = useMemo(() => {
+    const s = new Date(`${event.pollPeriodStart ?? ""}T00:00:00`);
+    const e = new Date(`${event.pollPeriodEnd ?? ""}T00:00:00`);
+    const first = isNaN(s.getTime()) ? new Date() : new Date(s.getFullYear(), s.getMonth(), 1);
+    const last = isNaN(e.getTime()) ? first : new Date(e.getFullYear(), e.getMonth(), 1);
+    return { first, last };
+  }, [event.pollPeriodStart, event.pollPeriodEnd]);
+  const [viewMonth, setViewMonth] = useState(() => {
+    const d = new Date(`${event.pollPeriodStart ?? ""}T00:00:00`);
+    return isNaN(d.getTime()) ? new Date() : new Date(d.getFullYear(), d.getMonth(), 1);
+  });
+  const multiMonth = monthIndex(monthBounds.first) !== monthIndex(monthBounds.last);
+  const prevDisabled = monthIndex(viewMonth) <= monthIndex(monthBounds.first);
+  const nextDisabled = monthIndex(viewMonth) >= monthIndex(monthBounds.last);
+  function shiftMonth(delta: number) {
+    setSelectedDate(null);
+    setViewMonth((cur) => {
+      const next = new Date(cur.getFullYear(), cur.getMonth() + delta, 1);
+      if (monthIndex(next) < monthIndex(monthBounds.first)) return monthBounds.first;
+      if (monthIndex(next) > monthIndex(monthBounds.last)) return monthBounds.last;
+      return next;
+    });
+  }
+  const cells = useMemo(() => buildMonthCells(viewMonth), [viewMonth]);
+
+  /** 슬롯 토글 → upsert (기존 로직 재사용) */
   async function toggleSlot(slot: string) {
     if (!user || busy || pollClosed) return;
     setBusy(true);
@@ -119,7 +215,16 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
     }
   }
 
-  /** 운영진 확정 → startAt 지정 + fixed 전환 */
+  function onDateClick(date: string) {
+    if (!periodDates.has(date)) return;
+    if (hasTimeCols) {
+      setSelectedDate((p) => (p === date ? null : date));
+    } else {
+      toggleSlot(date);
+    }
+  }
+
+  /** 운영진 확정 → startAt 지정 + fixed 전환 (기존 로직 유지) */
   const confirmM = useMutation({
     mutationFn: async (slot: string) => {
       const [date, time] = slot.split("|");
@@ -150,8 +255,6 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
     );
   }
 
-  const hasTimeCols = (event.pollTimeSlots?.length ?? 0) > 0;
-
   return (
     <section className="rounded-2xl border bg-card p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -163,73 +266,162 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
         </span>
       </div>
 
-      {/* 최다 가능 배지 */}
-      {best.length > 0 && (
-        <div className="mb-3 flex flex-wrap items-center gap-1.5 rounded-xl bg-indigo-50 px-3 py-2 dark:bg-indigo-950/40">
-          <Sparkles size={13} className="text-indigo-600 dark:text-indigo-300" />
-          <span className="text-xs font-semibold text-indigo-700 dark:text-indigo-200">가장 많이 가능한 날:</span>
-          {best.map((t) => (
-            <span
-              key={t.slot}
-              className="inline-flex items-center gap-1 rounded-full bg-indigo-600 px-2 py-0.5 text-[11px] font-medium text-white dark:bg-indigo-500"
-            >
-              {formatSlotLabel(t.slot)} · {t.count}명
-            </span>
-          ))}
-        </div>
-      )}
+      {/* 현재 최다 가능 일정 (날짜 단위 집계) */}
+      <div className="mb-3 rounded-xl bg-indigo-50 px-3 py-2.5 dark:bg-indigo-950/40">
+        <p className="flex items-center gap-1.5 text-xs font-semibold text-indigo-700 dark:text-indigo-200">
+          <Sparkles size={13} className="text-indigo-600 dark:text-indigo-300" /> 현재 최다 가능 일정
+        </p>
+        {bestDates.length > 0 ? (
+          <ul className="mt-1.5 space-y-1">
+            {bestDates.map((b) => (
+              <li key={b.date} className="text-xs text-indigo-800 dark:text-indigo-100">
+                <b>{fullDateLabel(b.date)}</b> · {b.count}명 가능
+                {b.bestTime && (
+                  <span className="text-indigo-600 dark:text-indigo-300"> — {b.bestTime} 최다</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            아직 응답이 없습니다. 가능한 날짜를 선택해 첫 응답을 남겨보세요.
+          </p>
+        )}
+      </div>
 
       <p className="mb-2 text-[11px] text-muted-foreground">
         {user
           ? pollClosed
             ? "투표가 마감되었습니다."
-            : "가능한 칸을 눌러 표시하세요. 진하게 칠해질수록 많은 회원이 가능한 시간입니다."
+            : hasTimeCols
+              ? "날짜를 눌러 가능한 시간대를 선택하세요. 진하게 칠해질수록 많은 회원이 가능합니다."
+              : "가능한 날짜를 눌러 표시하세요. 진하게 칠해질수록 많은 회원이 가능합니다."
           : "로그인하면 가능한 일정을 투표할 수 있습니다."}
       </p>
 
-      {/* 후보 슬롯 그리드 — 행=날짜, (시간대 있으면) 열=시간 */}
-      <div className="overflow-x-auto">
-        <div className="min-w-max space-y-1.5">
-          {hasTimeCols && (
-            <div className="flex items-center gap-1.5 pl-[88px]">
-              {event.pollTimeSlots!.map((t) => (
-                <div key={t} className="w-16 text-center text-[10px] font-medium text-muted-foreground">{t}</div>
-              ))}
-            </div>
-          )}
-          {rows.map(([date, slots]) => (
-            <div key={date} className="flex items-center gap-1.5">
-              <div className="w-[82px] shrink-0 text-right text-[11px] font-medium text-foreground/80">
-                {formatSlotLabel(date)}
-              </div>
-              {slots.map((slot) => {
-                const tally = tallyBySlot.get(slot);
-                const count = tally?.count ?? 0;
-                const mine = mySlots.has(slot);
-                const names = tally?.names ?? [];
-                return (
-                  <button
-                    key={slot}
-                    type="button"
-                    disabled={!user || busy || pollClosed}
-                    onClick={() => toggleSlot(slot)}
-                    title={names.length ? `${names.join(", ")} (${count}명)` : "응답 없음"}
-                    className={cn(
-                      "relative flex h-9 items-center justify-center rounded-lg border text-[11px] font-semibold tabular-nums transition-colors disabled:cursor-default",
-                      hasTimeCols ? "w-16" : "min-w-[3.5rem] flex-1 px-2",
-                      heatClass(count, maxCount),
-                      mine && "ring-2 ring-teal-500 ring-offset-1 dark:ring-offset-card",
-                      user && !pollClosed && "hover:border-indigo-400",
-                    )}
-                  >
-                    {count > 0 ? count : ""}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
-        </div>
+      {/* 월 네비게이션 */}
+      <div className="mb-2 flex items-center justify-between">
+        {multiMonth ? (
+          <button
+            type="button"
+            onClick={() => shiftMonth(-1)}
+            disabled={prevDisabled}
+            aria-label="이전 달"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-default disabled:opacity-30"
+          >
+            <ChevronLeft size={16} />
+          </button>
+        ) : (
+          <span className="h-7 w-7" />
+        )}
+        <span className="text-sm font-semibold">
+          {viewMonth.getFullYear()}년 {viewMonth.getMonth() + 1}월
+        </span>
+        {multiMonth ? (
+          <button
+            type="button"
+            onClick={() => shiftMonth(1)}
+            disabled={nextDisabled}
+            aria-label="다음 달"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-default disabled:opacity-30"
+          >
+            <ChevronRight size={16} />
+          </button>
+        ) : (
+          <span className="h-7 w-7" />
+        )}
       </div>
+
+      {/* 요일 헤더 */}
+      <div className="grid grid-cols-7 text-center text-[10px] font-semibold text-muted-foreground">
+        {WEEKDAYS.map((w, i) => (
+          <div key={w} className={cn("py-1", i === 0 && "text-rose-500 dark:text-rose-400", i === 6 && "text-blue-500 dark:text-blue-400")}>
+            {w}
+          </div>
+        ))}
+      </div>
+
+      {/* 캘린더 그리드 */}
+      <div className="grid grid-cols-7 gap-1">
+        {cells.map((cell) => {
+          const inPeriod = periodDates.has(cell.date);
+          const count = dateAgg.get(cell.date)?.count ?? 0;
+          const mine = myDateSet.has(cell.date);
+          const isSelected = selectedDate === cell.date;
+          const clickable = inPeriod && (hasTimeCols ? true : !!user && !pollClosed);
+          return (
+            <button
+              key={cell.date}
+              type="button"
+              disabled={!clickable}
+              onClick={() => onDateClick(cell.date)}
+              title={inPeriod && count > 0 ? `${count}명 가능` : undefined}
+              className={cn(
+                "relative flex aspect-square flex-col items-center justify-center rounded-lg border p-0.5 text-[11px] tabular-nums transition-colors",
+                inPeriod ? heatClass(count, maxCount) : "border-transparent bg-transparent text-muted-foreground/40",
+                !cell.inMonth && "opacity-40",
+                inPeriod && clickable && "hover:border-indigo-400",
+                mine && "ring-2 ring-teal-500 ring-offset-1 dark:ring-offset-card",
+                isSelected && "ring-2 ring-indigo-500 ring-offset-1 dark:ring-offset-card",
+                !clickable && "cursor-default",
+              )}
+            >
+              <span className="font-medium leading-none">{cell.day}</span>
+              {inPeriod && count > 0 && (
+                <span className="mt-0.5 text-[9px] font-semibold leading-none">{count}명</span>
+              )}
+              {mine && <Check size={9} className="absolute right-0.5 top-0.5" />}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 날짜 선택 → 시간대 패널 (pollTimeSlots 있을 때) */}
+      {hasTimeCols && selectedDate && (
+        <div className="mt-3 rounded-xl border bg-background p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-xs font-semibold">{fullDateLabel(selectedDate)} · 가능 시간대</span>
+            <button
+              type="button"
+              onClick={() => setSelectedDate(null)}
+              aria-label="시간대 패널 닫기"
+              className="text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <X size={14} />
+            </button>
+          </div>
+          {!user && (
+            <p className="mb-2 text-[11px] text-muted-foreground">로그인하면 시간대를 선택할 수 있습니다.</p>
+          )}
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+            {(slotsByDate.get(selectedDate) ?? []).map((slot) => {
+              const tally = tallyBySlot.get(slot);
+              const count = tally?.count ?? 0;
+              const names = tally?.names ?? [];
+              const time = slot.split("|")[1];
+              const mine = mySlots.has(slot);
+              return (
+                <button
+                  key={slot}
+                  type="button"
+                  disabled={!user || busy || pollClosed}
+                  onClick={() => toggleSlot(slot)}
+                  title={names.length ? `${names.join(", ")} (${count}명)` : "응답 없음"}
+                  className={cn(
+                    "flex items-center justify-between gap-1 rounded-lg border px-2.5 py-2 text-[11px] font-semibold tabular-nums transition-colors disabled:cursor-default",
+                    heatClass(count, maxCount),
+                    mine && "ring-2 ring-teal-500 ring-offset-1 dark:ring-offset-card",
+                    user && !pollClosed && "hover:border-indigo-400",
+                  )}
+                >
+                  <span>{time}</span>
+                  <span>{count > 0 ? `${count}명` : ""}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* 범례 */}
       <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
@@ -244,7 +436,7 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
         </span>
       </div>
 
-      {/* 운영진 확정 패널 */}
+      {/* 운영진 확정 패널 (기존 플로우 유지) */}
       {canEdit && (
         <div className="mt-4 rounded-xl border border-indigo-200 bg-indigo-50/60 p-3 dark:border-indigo-900 dark:bg-indigo-950/30">
           <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-indigo-700 dark:text-indigo-200">

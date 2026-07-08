@@ -70,8 +70,10 @@ import ProfileOnboardingBadges from "@/components/profile/ProfileOnboardingBadge
 import ARCSPanel from "@/features/mypage/ARCSPanel";
 import ConnectivismPanel from "@/features/mypage/ConnectivismPanel";
 import DiagnosticWeakConceptPath from "@/components/mypage/DiagnosticWeakConceptPath";
+import LearningEffectCard from "@/features/mypage/LearningEffectCard";
 import MyActivityHub from "@/components/mypage/MyActivityHub";
 import ThesisProgressWidget from "@/features/research/ThesisProgressWidget";
+import GraduationChecklistCard from "@/features/mypage/GraduationChecklistCard";
 import { useAuth } from "@/features/auth/useAuth";
 import { ROLE_LABELS, ENROLLMENT_STATUS_LABELS } from "@/types";
 import { formatDate } from "@/lib/utils";
@@ -538,6 +540,9 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
               {/* M1: 내 논문 진행도 — 보고서 완성도(작성률·분량 균형·lint 통과율) 상시 가시화 (본인만) */}
               {isSelf && !readOnly && <ThesisProgressWidget variant="card" />}
 
+              {/* 졸업요건 체크표 — 학점 자동 합산 + 관문 자가 체크 (본인만) */}
+              {isSelf && !readOnly && <GraduationChecklistCard userId={userId} />}
+
               {/* 진단평가 — 연구 준비도 진단 → 약점 개념 읽기 추천 → 재진단 루프 (본인만) */}
               {isSelf && !readOnly && (
                 <div className="rounded-2xl border-2 border-violet-200/60 bg-gradient-to-br from-violet-50 to-violet-100/60 p-5 dark:border-violet-800/40 dark:from-violet-950/20 dark:to-violet-900/10">
@@ -629,6 +634,9 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                   {/* 사이클 122 완료: 진단 완료를 학습 잔디 활동으로 인정 — LearningStreak SCORES.diagnosticComplete(+5)로 createdAt 일별 1회 가산(연구활동🔬). */}
                 </div>
               )}
+
+              {/* 학습효과 증명 루프 (G2) — 복습한 약점 개념이 재진단에서 개선됐는지 교차 분석 (본인만) */}
+              {isSelf && !readOnly && <LearningEffectCard userId={userId} />}
 
               {/* 내 암기카드 — 진단 오답 복습(뒤집기·간격반복). 카드가 있을 때만 노출 (본인만) */}
               {isSelf && !readOnly && flashcardTotal > 0 && (

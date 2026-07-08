@@ -245,6 +245,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
       label: "학사",
       items: [
         { href: "/console/courses", label: "수강과목 마스터", icon: BookOpen },
+        { href: "/console/graduation", label: "졸업요건", icon: GraduationCap },
         { href: "/console/research", label: "연구활동", icon: FlaskConical },
         { href: "/console/academic/manage", label: "학술활동 대시보드", icon: GraduationCap },
         { href: "/console/academic/applications", label: "신청 승인 대시보드", icon: ClipboardCheck, adminOnly: true },

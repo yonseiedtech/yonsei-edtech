@@ -926,6 +926,16 @@ service cloud.firestore {
       allow create, update, delete: if isAuthenticated() && isStaffOrAbove();
     }
 
+    // ─── Graduation Requirements / Progress (졸업요건 체크표, 2026-07-07) ───
+    match /graduation_requirements/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isStaffOrAbove();
+    }
+    match /graduation_progress/{userId} {
+      allow read: if isAuthenticated() && (userId == request.auth.uid || isStaffOrAbove());
+      allow write: if isAuthenticated() && (userId == request.auth.uid || isStaffOrAbove());
+    }
+
     // ─── Topic Explorations (주제 탐색 결과 저장, 2026-07-05) ───
     // 본인 전용 — userId 등호 쿼리로 list 증명
     match /topic_explorations/{docId} {

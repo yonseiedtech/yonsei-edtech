@@ -461,8 +461,8 @@ export default function CalendarPage() {
       });
     }
     for (const n of networkingEvents) {
-      // poll 모드 미확정(startAt 빈 문자열)·취소 행사는 제외
-      if (!n.startAt || n.status === "cancelled") continue;
+      // poll 모드 미확정(startAt 빈 문자열)·취소·비공개(private) 행사는 제외
+      if (!n.startAt || n.status === "cancelled" || n.visibility === "private") continue;
       result.push({
         id: `networking-${n.id}`,
         title: n.title,

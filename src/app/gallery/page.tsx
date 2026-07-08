@@ -55,7 +55,11 @@ export default function GalleryPage() {
   // 앨범 생성 시 연결할 모임·행사 후보 (staff 전용 다이얼로그 열릴 때만)
   const { data: networkingEvents = [] } = useQuery({
     queryKey: ["networking-events-for-album"],
-    queryFn: async () => (await networkingEventsApi.listPublished()).data as NetworkingEvent[],
+    queryFn: async () =>
+      // 비공개(private) 모임은 앨범 연결 후보에서도 제외
+      ((await networkingEventsApi.listPublished()).data as NetworkingEvent[]).filter(
+        (e) => e.visibility !== "private",
+      ),
     enabled: showCreateAlbum && isStaff,
     staleTime: 5 * 60_000,
   });

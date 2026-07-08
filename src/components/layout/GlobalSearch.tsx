@@ -19,6 +19,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Search, Lightbulb, Variable as VariableIcon, Ruler,
   Presentation, Users, GraduationCap, ArrowRight, Loader2, Megaphone,
+  BookOpen, Layers,
   type LucideIcon,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -33,6 +34,8 @@ import {
   alumniThesesApi,
   postsApi,
   dataApi,
+  courseOfferingsApi,
+  flashcardsApi,
 } from "@/lib/bkend";
 import type {
   ArchiveConcept,
@@ -42,7 +45,10 @@ import type {
   Activity,
   AlumniThesis,
   Post,
+  CourseOffering,
 } from "@/types";
+import type { Flashcard } from "@/types/flashcard";
+import { SEMESTER_TERM_LABELS } from "@/types";
 import { cn } from "@/lib/utils";
 import { GROUP_ORDER, visibleRoutes } from "./command-routes";
 
@@ -135,9 +141,9 @@ export default function GlobalSearch() {
 
   // 동적 콘텐츠 — 보조 소스(다이얼로그 열림 시 1회 병렬 로드). 실패해도 정적 검색은 유지.
   const { data: sources, isLoading } = useQuery({
-    queryKey: ["global-search-sources"],
+    queryKey: ["global-search-sources", user?.id ?? "anon"],
     queryFn: async () => {
-      const [concepts, variables, measurements, seminars, activities, theses, notices, statMethods, resMethods] =
+      const [concepts, variables, measurements, seminars, activities, theses, notices, statMethods, resMethods, courses, myCards] =
         await Promise.all([
           archiveConceptsApi.list(),
           archiveVariablesApi.list(),
@@ -150,6 +156,9 @@ export default function GlobalSearch() {
           // rules 가 published 조건부 read — 무필터 list 는 거부되므로 filter 필수 (posts 교훈)
           dataApi.list<{ id: string; name?: string; summary?: string }>("archive_statistical_methods", { "filter[published]": true, limit: 100 }),
           dataApi.list<{ id: string; name?: string; summary?: string }>("archive_research_methods", { "filter[published]": true, limit: 100 }),
+          courseOfferingsApi.list(),
+          // 내 암기카드 — 본인 필터 필수(rules). 비로그인은 빈 목록.
+          user?.id ? flashcardsApi.listByUser(user.id) : Promise.resolve({ data: [] as Flashcard[] }),
         ]);
       const noticeArr = (notices.data as unknown as Post[]).sort((a, b) =>
         (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
@@ -164,6 +173,8 @@ export default function GlobalSearch() {
         notices: noticeArr,
         statMethods: statMethods.data,
         resMethods: resMethods.data,
+        courses: courses.data as unknown as CourseOffering[],
+        myCards: myCards.data as unknown as Flashcard[],
       };
     },
     enabled: open,
@@ -234,6 +245,21 @@ export default function GlobalSearch() {
         key: `notice:${n.id}`, group: "공지", label: n.title,
         sub: (n.createdAt ?? "").slice(0, 10), href: `/notices/${n.id}`, icon: Megaphone,
         haystack: n.title,
+      });
+    }
+    for (const c of sources.courses) {
+      items.push({
+        key: `course:${c.id}`, group: "강의", label: c.courseName,
+        sub: `${c.year} ${SEMESTER_TERM_LABELS[c.term] ?? ""}${c.professor ? ` · ${c.professor}` : ""}`,
+        href: `/courses/${c.id}`, icon: BookOpen,
+        haystack: `${c.courseName} ${c.courseCode ?? ""} ${c.professor ?? ""}`,
+      });
+    }
+    for (const f of sources.myCards) {
+      items.push({
+        key: `card:${f.id}`, group: "암기카드", label: f.front,
+        sub: "내 암기카드", href: "/flashcards", icon: Layers,
+        haystack: `${f.front} ${f.back}`,
       });
     }
     return items;

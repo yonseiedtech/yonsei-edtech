@@ -54,6 +54,14 @@ export interface NetworkingEvent {
   hostName?: string;
   /** 운영 학기 "2026-1" — 전공회비 운영 맥락 (학회 회계와 분리 집계) */
   semester?: string;
+  /**
+   * 공개 범위 — 미지정=public(기존 데이터 호환).
+   * private: 공개 목록(모임/캘린더/갤러리)에서 숨기고 공유 링크(토큰)로만 접근.
+   * firestore.rules read 는 공개(if true) 유지 — 노출 제어는 클라이언트 필터 + 토큰 URL.
+   */
+  visibility?: "public" | "private";
+  /** private 일 때만 존재 — 공유 링크 토큰 (/gatherings/p/{shareToken}) */
+  shareToken?: string;
   status: NetworkingEventStatus;
   published: boolean;
   createdBy: string;

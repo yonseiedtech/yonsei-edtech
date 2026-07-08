@@ -118,6 +118,8 @@ import type {
   NetworkingAvailability,
   NetworkingEventProgram,
   TopicExploration,
+  GraduationRequirement,
+  GraduationProgress,
 } from "@/types";
 
 // ── Token helpers (Firebase가 자동 관리 — 호환용 no-op) ──
@@ -527,6 +529,9 @@ export const networkingEventsApi = {
   listPublished: () =>
     dataApi.list<NetworkingEvent>("networking_events", { "filter[published]": true, limit: 200 }),
   get: (id: string) => dataApi.get<NetworkingEvent>("networking_events", id),
+  /** 비공개(private) 모임 공유 링크 접근 — shareToken 으로 단건 조회 */
+  getByToken: (token: string) =>
+    dataApi.list<NetworkingEvent>("networking_events", { "filter[shareToken]": token, limit: 1 }),
   create: (data: Omit<NetworkingEvent, "id">) =>
     dataApi.create<NetworkingEvent>("networking_events", data as unknown as Record<string, unknown>),
   update: (id: string, data: Partial<NetworkingEvent>) =>
@@ -1941,6 +1946,34 @@ export const courseEnrollmentsApi = {
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<CourseEnrollment>("course_enrollments", id, data),
   delete: (id: string) => dataApi.delete("course_enrollments", id),
+};
+
+// ── 졸업요건 (2026-07-07) — 설정 문서(staff 편집) + 개인 관문 진행(본인) ──
+export const graduationRequirementsApi = {
+  /** 기본 요건 문서 (없으면 null — UI 가 DEFAULT 로 폴백) */
+  getDefault: async (): Promise<GraduationRequirement | null> => {
+    try {
+      return await dataApi.get<GraduationRequirement>("graduation_requirements", "default");
+    } catch {
+      return null;
+    }
+  },
+  upsertDefault: (data: Record<string, unknown>) =>
+    dataApi.upsert<GraduationRequirement>("graduation_requirements", "default", data),
+};
+
+export const graduationProgressApi = {
+  /** 본인 관문 체크 문서 (없으면 null) */
+  get: async (userId: string): Promise<GraduationProgress | null> => {
+    try {
+      return await dataApi.get<GraduationProgress>("graduation_progress", userId);
+    } catch {
+      return null;
+    }
+  },
+  /** 본인 문서 upsert (docId = userId) */
+  upsert: (userId: string, data: Record<string, unknown>) =>
+    dataApi.upsert<GraduationProgress>("graduation_progress", userId, { userId, ...data }),
 };
 
 // 종합시험 응시 기록 (회원 self-input + 운영진 조회)
