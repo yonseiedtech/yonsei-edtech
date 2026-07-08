@@ -21,14 +21,25 @@ export function listDates(startDate: string, endDate: string): string[] {
 }
 
 /** 후보 슬롯 목록 — 시간대 없으면 날짜만, 있으면 날짜×시간 */
+/**
+ * 시간대 미설정 이벤트 기본값 (2026-07-08) — timeSlots 비어 있으면 "날짜만 토글" 모드가 되어
+ * 시간대 선택 팝업·시간대 집계가 아예 비활성되는 설계 공백이 있었음(사용자 리포트).
+ * 후보 생성 단계에서 일괄 폴백해 투표 UI·공유 페이지·cron 자동확정이 항상 동일한 슬롯을 본다.
+ */
+export const DEFAULT_POLL_TIME_SLOTS = ["12:00", "15:00", "18:00", "19:00", "20:00"];
+
+export function effectivePollTimeSlots(timeSlots?: string[]): string[] {
+  return timeSlots && timeSlots.length > 0 ? timeSlots : DEFAULT_POLL_TIME_SLOTS;
+}
+
 export function buildCandidateSlots(
   periodStart: string,
   periodEnd: string,
   timeSlots?: string[],
 ): string[] {
   const dates = listDates(periodStart, periodEnd);
-  if (!timeSlots || timeSlots.length === 0) return dates;
-  return dates.flatMap((d) => timeSlots.map((t) => `${d}|${t}`));
+  const times = effectivePollTimeSlots(timeSlots);
+  return dates.flatMap((d) => times.map((t) => `${d}|${t}`));
 }
 
 /** 응답 → 슬롯별 집계 (실시간 히트맵용) */

@@ -10,7 +10,7 @@
  * bestSlots/formatSlotLabel)은 그대로 재사용하고 UI(when2meet 그리드 → 캘린더)만 개편했다.
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { CalendarCheck, Sparkles, Users as UsersIcon, Lock, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { toast } from "sonner";
@@ -159,7 +159,6 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
   }, [mySlots]);
 
   const pollClosed = !!event.pollDeadline && new Date(event.pollDeadline).getTime() < Date.now();
-  const hasTimeCols = (event.pollTimeSlots?.length ?? 0) > 0;
 
   // 월 네비게이션
   const monthBounds = useMemo(() => {
@@ -173,6 +172,13 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
     const d = new Date(`${event.pollPeriodStart ?? ""}T00:00:00`);
     return isNaN(d.getTime()) ? new Date() : new Date(d.getFullYear(), d.getMonth(), 1);
   });
+  // codex Medium: 같은 컴포넌트 인스턴스가 다른 이벤트/기간을 받으면(콘솔 상세 전환 등)
+  // viewMonth 가 이전 기간에 머물러 후보 날짜가 안 보임 — 이벤트·기간 변경 시 재동기화.
+  useEffect(() => {
+    const d = new Date(`${event.pollPeriodStart ?? ""}T00:00:00`);
+    setSelectedDate(null);
+    setViewMonth(isNaN(d.getTime()) ? new Date() : new Date(d.getFullYear(), d.getMonth(), 1));
+  }, [event.id, event.pollPeriodStart]);
   const multiMonth = monthIndex(monthBounds.first) !== monthIndex(monthBounds.last);
   const prevDisabled = monthIndex(viewMonth) <= monthIndex(monthBounds.first);
   const nextDisabled = monthIndex(viewMonth) >= monthIndex(monthBounds.last);
@@ -217,13 +223,10 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
     }
   }
 
+  // 시간대 미설정 이벤트도 DEFAULT_POLL_TIME_SLOTS 폴백(buildCandidateSlots)으로 항상 팝업 모드
   function onDateClick(date: string) {
     if (!periodDates.has(date)) return;
-    if (hasTimeCols) {
-      setSelectedDate((p) => (p === date ? null : date));
-    } else {
-      toggleSlot(date);
-    }
+    setSelectedDate((p) => (p === date ? null : date));
   }
 
   /** 운영진 확정 → startAt 지정 + fixed 전환 (기존 로직 유지) */
@@ -294,9 +297,7 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
         {user
           ? pollClosed
             ? "투표가 마감되었습니다."
-            : hasTimeCols
-              ? "날짜를 눌러 가능한 시간대를 선택하세요. 진하게 칠해질수록 많은 회원이 가능합니다."
-              : "가능한 날짜를 눌러 표시하세요. 진하게 칠해질수록 많은 회원이 가능합니다."
+            : "날짜를 눌러 가능한 시간대를 선택하세요. 진하게 칠해질수록 많은 회원이 가능합니다."
           : "로그인하면 가능한 일정을 투표할 수 있습니다."}
       </p>
 
@@ -349,7 +350,7 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
           const count = dateAgg.get(cell.date)?.count ?? 0;
           const mine = myDateSet.has(cell.date);
           const isSelected = selectedDate === cell.date;
-          const clickable = inPeriod && (hasTimeCols ? true : !!user && !pollClosed);
+          const clickable = inPeriod;
           return (
             <button
               key={cell.date}
@@ -377,8 +378,8 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
         })}
       </div>
 
-      {/* 날짜 클릭 → 시간대 선택 팝업 (pollTimeSlots 있을 때) */}
-      {hasTimeCols && (
+      {/* 날짜 클릭 → 시간대 선택 팝업 (시간대 미설정 이벤트는 기본 시간대 폴백) */}
+      {(
         <Dialog open={!!selectedDate} onOpenChange={(open) => { if (!open) setSelectedDate(null); }}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>

@@ -15,7 +15,7 @@ import type { Metadata } from "next";
 import { CalendarCheck, Users, Sparkles, CalendarClock, ShieldCheck } from "lucide-react";
 import PageContainer from "@/components/ui/page-container";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { buildCandidateSlots, tallyAvailability, formatSlotLabel } from "@/features/networking/networking-utils";
+import { buildCandidateSlots, tallyAvailability, formatSlotLabel, effectivePollTimeSlots } from "@/features/networking/networking-utils";
 import type { NetworkingEvent, NetworkingAvailability, SlotTally } from "@/types";
 
 export const runtime = "nodejs";
@@ -116,7 +116,8 @@ export default async function PollSummaryPage({ params }: Props) {
   if (!data) notFound();
   const { event, responses } = data;
 
-  const timeSlots = event.pollTimeSlots ?? [];
+  // 시간대 미설정 이벤트도 기본 시간대 폴백 — 투표 UI(buildCandidateSlots)와 동일 슬롯 체계 유지
+  const timeSlots = effectivePollTimeSlots(event.pollTimeSlots);
   const hasTime = timeSlots.length > 0;
   const candidateSlots = buildCandidateSlots(
     event.pollPeriodStart ?? "",

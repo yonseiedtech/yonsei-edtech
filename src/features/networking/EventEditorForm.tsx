@@ -52,7 +52,9 @@ interface EventForm {
 
 const EMPTY_FORM: EventForm = {
   type: "regular", title: "", description: "", schedulingMode: "fixed", startAt: "",
-  pollPeriodStart: "", pollPeriodEnd: "", pollTimeSlots: "", pollDeadline: "", pollDecisionMode: "auto",
+  // pollTimeSlots 기본값 — 비워 두면 투표가 "날짜만" 모드가 되어 시간대 선택이 비활성되던 문제 방지
+  // (렌더 측도 DEFAULT_POLL_TIME_SLOTS 폴백이 있지만, 폼에 보여 줘야 staff 가 수정할 수 있다)
+  pollPeriodStart: "", pollPeriodEnd: "", pollTimeSlots: "12:00, 15:00, 18:00, 19:00, 20:00", pollDeadline: "", pollDecisionMode: "auto",
   location: "", feeAmount: "0", rsvpDeadline: "", capacity: "", hostName: "", semester: "", visibility: "public", status: "upcoming", published: true,
 };
 
@@ -278,7 +280,7 @@ export default function EventEditorForm({
               <Input type="date" value={form.pollPeriodEnd} onChange={(e) => set("pollPeriodEnd", e.target.value)} className="mt-1" />
             </label>
             <label className="text-xs">시간대 옵션 (쉼표 구분, 비우면 날짜만)
-              <Input value={form.pollTimeSlots} onChange={(e) => set("pollTimeSlots", e.target.value)} className="mt-1" placeholder="예: 18:00, 19:00 또는 오후, 저녁" />
+              <Input value={form.pollTimeSlots} onChange={(e) => set("pollTimeSlots", e.target.value)} className="mt-1" placeholder="예: 18:00, 19:00 (비우면 기본 시간대 12:00~20:00 적용)" />
             </label>
             <label className="text-xs">투표 마감
               <Input type="datetime-local" value={form.pollDeadline} onChange={(e) => set("pollDeadline", e.target.value)} className="mt-1" />
