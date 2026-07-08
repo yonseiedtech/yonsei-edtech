@@ -207,6 +207,28 @@ export function notifyGatheringInvite(userId: string, eventTitle: string, token:
   );
 }
 
+/** 모임 취소 알림 — G1(2026-07-08). attending/undecided 신청자에게 발송. link 는 공개/비공개에 따라 호출부에서 결정. */
+export function notifyGatheringCancelled(userId: string, eventTitle: string, link: string) {
+  return create(
+    userId,
+    "networking_reminder",
+    "모임 취소 안내",
+    `「${eventTitle}」 모임이 취소되었습니다`,
+    link,
+  );
+}
+
+/** 모임 일시 변경(연기) 알림 — G1(2026-07-08). newDateLabel 은 사람이 읽는 형식으로 호출부에서 포맷. */
+export function notifyGatheringPostponed(userId: string, eventTitle: string, newDateLabel: string, link: string) {
+  return create(
+    userId,
+    "networking_reminder",
+    "모임 일시 변경 안내",
+    `「${eventTitle}」 일시가 변경되었습니다: ${newDateLabel}`,
+    link,
+  );
+}
+
 export function notifySeminarReminder(
   userId: string,
   seminarTitle: string,

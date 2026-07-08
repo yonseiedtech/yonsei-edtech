@@ -51,6 +51,12 @@ const pad = (n: number) => String(n).padStart(2, "0");
 const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const monthIndex = (d: Date) => d.getFullYear() * 12 + d.getMonth();
 
+/** 슬롯의 시간대가 HH:MM 형식인지 (G12: 자유 텍스트 시간대는 확정 시 18:00 폴백) */
+function slotHasValidTime(slot: string): boolean {
+  const t = slot.split("|")[1];
+  return !!t && /^\d{1,2}:\d{2}$/.test(t);
+}
+
 /** "YYYY-MM-DD" → "7월 18일 (금)" */
 function fullDateLabel(date: string): string {
   const d = new Date(`${date}T00:00:00`);
@@ -88,6 +94,8 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
   const [confirming, setConfirming] = useState(false);
   const [pickedSlot, setPickedSlot] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  // G12: 자유 텍스트 시간대 확정 시 운영진이 직접 시각을 지정 (기본 18:00)
+  const [confirmTime, setConfirmTime] = useState("18:00");
 
   // 비로그인 게스트 투표 — 이름·학번을 로컬에 보관하고 서버(availability-guest)로 저장.
   // 게스트는 rules 상 응답 목록을 읽을 수 없어 본인 선택만 로컬(guestSlots)로 표시한다.
@@ -329,9 +337,14 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
 
   /** 운영진 확정 → startAt 지정 + fixed 전환 (기존 로직 유지) */
   const confirmM = useMutation({
-    mutationFn: async (slot: string) => {
-      // "HH:MM" 형식이 아닌 자유 텍스트 시간대("저녁" 등)는 18:00 기본값으로 안전 폴백
-      const startAt = resolveSlotStartAt(slot);
+    mutationFn: async ({ slot, timeOverride }: { slot: string; timeOverride?: string }) => {
+      // "HH:MM" 형식이 아닌 자유 텍스트 시간대("저녁" 등)는 18:00 기본값으로 안전 폴백.
+      // G12: 운영진이 시각을 직접 지정한 경우(timeOverride) 그 시각으로 확정한다.
+      const [date] = slot.split("|");
+      const startAt =
+        timeOverride && /^\d{1,2}:\d{2}$/.test(timeOverride)
+          ? new Date(`${date}T${timeOverride}:00`).toISOString()
+          : resolveSlotStartAt(slot);
       const now = new Date().toISOString();
       await networkingEventsApi.update(event.id, {
         startAt,
@@ -348,6 +361,47 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "확정에 실패했습니다."),
   });
+
+  // G12: 확정 확인 프롬프트 — 자유 텍스트 시간대면 경고 + 시각 직접 입력을 노출.
+  function renderConfirmPrompt(slot: string) {
+    const validTime = slotHasValidTime(slot);
+    const timeLabel = slot.split("|")[1];
+    return (
+      <div className="space-y-2">
+        {!validTime && (
+          <div className="rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-2 text-[11px] text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-200">
+            <p>「{timeLabel}」는 시각이 아니어서 아래 시각으로 확정됩니다. 계속할까요?</p>
+            <label className="mt-1.5 inline-flex items-center gap-1.5 font-medium">
+              확정 시각
+              <Input
+                type="time"
+                value={confirmTime}
+                onChange={(e) => setConfirmTime(e.target.value)}
+                className="h-7 w-28 text-xs"
+              />
+            </label>
+          </div>
+        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-foreground">
+            <b>{formatSlotLabel(slot)}</b>
+            {!validTime && confirmTime ? ` (${confirmTime})` : ""}(으)로 확정하시겠어요? 투표가 종료됩니다.
+          </span>
+          <Button
+            size="sm"
+            className="h-7 text-xs"
+            disabled={confirmM.isPending}
+            onClick={() => confirmM.mutate({ slot, timeOverride: validTime ? undefined : confirmTime })}
+          >
+            확정
+          </Button>
+          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setConfirming(false)}>
+            취소
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (candidateSlots.length === 0) {
     return (
@@ -367,6 +421,26 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
           <UsersIcon size={12} /> 응답 {responses.length}명
         </span>
       </div>
+
+      {/* G10(2026-07-08): 마감됐지만 아직 미확정(startAt 없음)인 "확정 대기" 구간 안내 */}
+      {pollClosed && !event.startAt && (
+        <div
+          className={cn(
+            "mb-3 rounded-xl border px-3 py-2 text-[11px]",
+            event.pollDecisionMode === "auto"
+              ? "border-indigo-200 bg-indigo-50/70 text-indigo-800 dark:border-indigo-900 dark:bg-indigo-950/30 dark:text-indigo-100"
+              : canEdit
+                ? "border-amber-300 bg-amber-50 font-semibold text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-100"
+                : "border-border bg-muted/40 text-muted-foreground",
+          )}
+        >
+          {event.pollDecisionMode === "auto"
+            ? "투표가 마감되었습니다 — 곧 자동 확정됩니다(매일 오전 확정 처리)."
+            : canEdit
+              ? "확정 대기 중 — 아래에서 확정해 주세요."
+              : "운영진 확정 대기 중입니다."}
+        </div>
+      )}
 
       {/* 현재 최다 가능 일정 (날짜 단위 집계) */}
       <div className="mb-3 rounded-xl bg-indigo-50 px-3 py-2.5 dark:bg-indigo-950/40">
@@ -618,18 +692,23 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
           </p>
           {event.pollDecisionMode === "auto" ? (
             best.length > 0 ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs text-muted-foreground">
-                  최다 가능: <b className="text-foreground">{formatSlotLabel(best[0].slot)}</b> ({best[0].count}명)
-                </span>
-                <Button
-                  size="sm"
-                  className="h-8 text-xs"
-                  disabled={confirmM.isPending}
-                  onClick={() => confirmM.mutate(best[0].slot)}
-                >
-                  이 날로 확정
-                </Button>
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    최다 가능: <b className="text-foreground">{formatSlotLabel(best[0].slot)}</b> ({best[0].count}명)
+                  </span>
+                  {!confirming && (
+                    <Button
+                      size="sm"
+                      className="h-8 text-xs"
+                      disabled={confirmM.isPending}
+                      onClick={() => { setConfirmTime("18:00"); setConfirming(true); }}
+                    >
+                      이 날로 확정
+                    </Button>
+                  )}
+                </div>
+                {confirming && renderConfirmPrompt(best[0].slot)}
               </div>
             ) : (
               <p className="text-xs text-muted-foreground">아직 응답이 없습니다.</p>
@@ -662,19 +741,9 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
               </div>
               {pickedSlot &&
                 (confirming ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-foreground">
-                      <b>{formatSlotLabel(pickedSlot)}</b>(으)로 확정하시겠어요? 투표가 종료됩니다.
-                    </span>
-                    <Button size="sm" className="h-7 text-xs" disabled={confirmM.isPending} onClick={() => confirmM.mutate(pickedSlot)}>
-                      확정
-                    </Button>
-                    <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setConfirming(false)}>
-                      취소
-                    </Button>
-                  </div>
+                  renderConfirmPrompt(pickedSlot)
                 ) : (
-                  <Button size="sm" className="h-8 text-xs" onClick={() => setConfirming(true)}>
+                  <Button size="sm" className="h-8 text-xs" onClick={() => { setConfirmTime("18:00"); setConfirming(true); }}>
                     이 날로 확정
                   </Button>
                 ))}

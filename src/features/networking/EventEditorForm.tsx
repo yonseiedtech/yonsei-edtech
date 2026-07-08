@@ -12,10 +12,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { deleteField } from "firebase/firestore";
 import { cn } from "@/lib/utils";
-import { networkingEventsApi, eventTokensApi } from "@/lib/bkend";
+import { networkingEventsApi, eventTokensApi, networkingRsvpsApi } from "@/lib/bkend";
 import MemberAutocomplete, { type SelectedMember } from "@/components/ui/MemberAutocomplete";
 import { useAllMembers } from "@/features/member/useMembers";
-import { notifyGatheringInvite } from "@/features/notifications/notify";
+import {
+  notifyGatheringInvite,
+  notifyGatheringCancelled,
+  notifyGatheringPostponed,
+} from "@/features/notifications/notify";
+import { formatEventDate } from "@/features/networking/networking-helpers";
 import {
   NETWORKING_EVENT_TYPE_LABELS,
   NETWORKING_EVENT_STATUS_LABELS,
@@ -141,6 +146,11 @@ export default function EventEditorForm({
         toast.error("후보 기간 종료일이 시작일보다 빠릅니다.");
         return;
       }
+      // G11(2026-07-08): 자동 확정은 cron 이 pollDeadline 을 전제로 동작 — 마감일 없으면 영구 미확정.
+      if (form.pollDecisionMode === "auto" && !form.pollDeadline) {
+        toast.error("자동 확정은 투표 마감일이 필요합니다.");
+        return;
+      }
     } else if (!form.startAt) {
       toast.error("고정 일정은 일시가 필수입니다.");
       return;
@@ -149,6 +159,16 @@ export default function EventEditorForm({
     try {
       const now = new Date().toISOString();
       const isPrivate = form.visibility === "private";
+      // G1(2026-07-08): 수정 저장 시 initial 대비 (a) 취소 전환 (b) 일시 변경(연기) 감지.
+      // 취소가 우선 — 취소면 연기 알림은 발송하지 않는다. datetime-local 표현으로 비교해 오탐 방지.
+      const cancelledNow = !!initial && initial.status !== "cancelled" && form.status === "cancelled";
+      const postponedNow =
+        !!initial &&
+        !isPoll &&
+        !cancelledNow &&
+        !!initial.startAt &&
+        !!form.startAt &&
+        isoToLocal(initial.startAt) !== form.startAt;
       // High-1(2026-07-08): 공유 토큰은 이벤트 문서가 아니라 networking_event_tokens 에만 기록한다.
       // 토큰 값 결정: 레거시 shareToken(이관 대상) → 기존 매핑 → 신규 uuid.
       let token: string | null = null;
@@ -209,6 +229,32 @@ export default function EventEditorForm({
           invitedUserIds: Array.from(new Set([...existingInvitedIds, ...newInviteIds])),
         });
         setInviteSelections([]);
+      }
+      // G1: 취소·연기 시 참석/미정 회원(userId 보유)에게 인앱 알림. 비공개는 토큰 링크(없으면 스킵),
+      // 공개는 /gatherings. 알림 실패는 저장 성공을 막지 않는다.
+      if (initial && (cancelledNow || postponedNow)) {
+        try {
+          const changeLink = isPrivate ? (token ? `/gatherings/p/${token}` : null) : "/gatherings";
+          if (changeLink) {
+            const rsvps = (await networkingRsvpsApi.listByEvent(eventId)).data;
+            const targetIds = Array.from(
+              new Set(
+                rsvps
+                  .filter((r) => r.userId && (r.status === "attending" || r.status === "undecided"))
+                  .map((r) => r.userId as string),
+              ),
+            );
+            await Promise.all(
+              targetIds.map((uid) =>
+                cancelledNow
+                  ? notifyGatheringCancelled(uid, form.title.trim(), changeLink)
+                  : notifyGatheringPostponed(uid, form.title.trim(), formatEventDate(payload.startAt), changeLink),
+              ),
+            );
+          }
+        } catch {
+          /* 알림 실패는 저장 성공을 막지 않는다 */
+        }
       }
       toast.success("저장되었습니다.");
       if (isPrivate && token) {
@@ -291,6 +337,17 @@ export default function EventEditorForm({
                   <option key={m} value={m}>{NETWORKING_DECISION_LABELS[m]}</option>
                 ))}
               </select>
+              {/* G11(2026-07-08): auto 는 마감일 필수(저장 차단), manual 은 마감 없음 경고 */}
+              {form.pollDecisionMode === "auto" && !form.pollDeadline && (
+                <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                  자동 확정은 투표 마감일이 필요합니다. 위에서 투표 마감을 설정하세요.
+                </p>
+              )}
+              {form.pollDecisionMode === "manual" && !form.pollDeadline && (
+                <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-400">
+                  투표 마감이 없어 자동으로 종료되지 않습니다. 운영진이 직접 확정해야 합니다.
+                </p>
+              )}
             </label>
           </>
         )}

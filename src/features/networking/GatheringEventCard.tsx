@@ -68,6 +68,9 @@ export default function GatheringEventCard({
   const [guestOpen, setGuestOpen] = useState(false);
   const [guestName, setGuestName] = useState("");
   const [guestContact, setGuestContact] = useState("");
+  // G6(2026-07-08): 동반인 수 입력 — 회원(참석 시)·게스트 신청 폼
+  const [companions, setCompanions] = useState(myRsvp?.companions ?? 0);
+  const [guestCompanions, setGuestCompanions] = useState(0);
   const closed = isRsvpClosed(ev, nowIso);
   // 미확정 일정 투표 — 날짜가 아직 정해지지 않아 RSVP 대신 투표 UI 노출
   const isPollPending = ev.schedulingMode === "poll" && !ev.startAt;
@@ -115,7 +118,7 @@ export default function GatheringEventCard({
     }
   }
 
-  async function setMemberRsvp(status: RsvpStatus) {
+  async function setMemberRsvp(status: RsvpStatus, comp?: number) {
     if (!user || busy) return;
     setBusy(true);
     try {
@@ -123,10 +126,12 @@ export default function GatheringEventCard({
       const { auth } = await import("@/lib/firebase");
       const token = await auth.currentUser?.getIdToken();
       if (!token) throw new Error("로그인이 필요합니다.");
+      // G6: 참석일 때만 동반인 수 전송(그 외 상태는 서버가 0 으로 강제)
+      const companionsToSend = status === "attending" ? (comp ?? companions) : 0;
       const res = await fetch("/api/networking/rsvp", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ eventId: ev.id, status }),
+        body: JSON.stringify({ eventId: ev.id, status, companions: companionsToSend }),
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { error?: string };
@@ -161,6 +166,7 @@ export default function GatheringEventCard({
           eventId: ev.id,
           guestName: guestName.trim(),
           guestContact: guestContact.trim(),
+          companions: guestCompanions,
         }),
       });
       if (!res.ok) {
@@ -171,6 +177,7 @@ export default function GatheringEventCard({
       setGuestOpen(false);
       setGuestName("");
       setGuestContact("");
+      setGuestCompanions(0);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "신청에 실패했습니다.");
     } finally {
@@ -279,38 +286,76 @@ export default function GatheringEventCard({
       {!past && ev.status !== "cancelled" && !isPollPending && (
         <div className="mt-3.5 border-t pt-3">
           {isMember ? (
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="mr-1 text-xs font-medium text-muted-foreground">참석 신청:</span>
-              {RSVP_OPTIONS.map((s) => {
-                const active = myRsvp?.status === s;
-                return (
-                  <button
-                    key={s}
-                    type="button"
-                    disabled={busy || closed}
-                    onClick={() => setMemberRsvp(s)}
-                    className={cn(
-                      "inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50",
-                      active
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-background text-muted-foreground hover:border-primary/40",
-                    )}
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="mr-1 text-xs font-medium text-muted-foreground">참석 신청:</span>
+                {RSVP_OPTIONS.map((s) => {
+                  const active = myRsvp?.status === s;
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      disabled={busy || closed}
+                      onClick={() => setMemberRsvp(s)}
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50",
+                        active
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-background text-muted-foreground hover:border-primary/40",
+                      )}
+                    >
+                      {active && <Check size={11} />}
+                      {RSVP_STATUS_LABELS[s]}
+                    </button>
+                  );
+                })}
+                {closed && <span className="text-[11px] text-muted-foreground">신청이 마감되었습니다.</span>}
+              </div>
+              {/* G6: 참석 시 동반인 수 입력 — 변경 즉시 서버 반영 */}
+              {myRsvp?.status === "attending" && !closed && (
+                <div className="flex items-center gap-1.5 text-xs">
+                  <span className="text-muted-foreground">동반인</span>
+                  <select
+                    value={companions}
+                    disabled={busy}
+                    onChange={(e) => {
+                      const v = Number(e.target.value);
+                      setCompanions(v);
+                      setMemberRsvp("attending", v);
+                    }}
+                    className="rounded-lg border bg-background px-2 py-1 text-xs disabled:opacity-50"
                   >
-                    {active && <Check size={11} />}
-                    {RSVP_STATUS_LABELS[s]}
-                  </button>
-                );
-              })}
-              {closed && <span className="text-[11px] text-muted-foreground">신청이 마감되었습니다.</span>}
+                    {Array.from({ length: 10 }, (_, i) => (
+                      <option key={i} value={i}>{i}</option>
+                    ))}
+                  </select>
+                  <span className="text-muted-foreground">명</span>
+                </div>
+              )}
             </div>
           ) : closed ? (
             <p className="text-xs text-muted-foreground">신청이 마감되었습니다.</p>
           ) : guestOpen ? (
             <div className="space-y-2">
               <p className="text-xs font-medium text-muted-foreground">게스트(비회원) 참석 신청</p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Input value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="이름" className="h-8 max-w-[140px] text-xs" />
                 <Input value={guestContact} onChange={(e) => setGuestContact(e.target.value)} placeholder="연락처(전화/이메일)" className="h-8 max-w-[200px] text-xs" />
+                {/* G6: 게스트 동반인 수 */}
+                <label className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                  동반인
+                  <select
+                    value={guestCompanions}
+                    disabled={busy}
+                    onChange={(e) => setGuestCompanions(Number(e.target.value))}
+                    className="h-8 rounded-lg border bg-background px-2 text-xs disabled:opacity-50"
+                  >
+                    {Array.from({ length: 10 }, (_, i) => (
+                      <option key={i} value={i}>{i}</option>
+                    ))}
+                  </select>
+                  명
+                </label>
                 <Button size="sm" className="h-8 text-xs" disabled={busy} onClick={submitGuest}>신청</Button>
                 <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setGuestOpen(false)}>취소</Button>
               </div>

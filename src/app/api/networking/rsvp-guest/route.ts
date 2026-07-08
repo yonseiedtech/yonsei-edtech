@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   const limited = checkRateLimit(`rsvp_guest_${getClientId(req)}`, { limit: 5, windowSec: 3600 });
   if (limited) return limited;
 
-  let body: { eventId?: string; guestName?: string; guestContact?: string };
+  let body: { eventId?: string; guestName?: string; guestContact?: string; companions?: number };
   try {
     body = await req.json();
   } catch {
@@ -36,6 +36,11 @@ export async function POST(req: NextRequest) {
   if (guestName.length > 30 || guestContact.length > 60) {
     return NextResponse.json({ error: "입력이 너무 깁니다." }, { status: 400 });
   }
+  // G6(2026-07-08): 동반인 수(0~9 정수)
+  if (body.companions !== undefined && (!Number.isInteger(body.companions) || body.companions < 0 || body.companions > 9)) {
+    return NextResponse.json({ error: "동반인 수는 0~9 사이여야 합니다." }, { status: 400 });
+  }
+  const companions = body.companions ?? 0;
 
   try {
     const db = getAdminDb();
@@ -73,7 +78,8 @@ export async function POST(req: NextRequest) {
         (sum, d) => sum + 1 + ((d.data() as { companions?: number }).companions ?? 0),
         0,
       );
-      if (headcount >= ev.capacity) {
+      // 신청 본인 인원(1 + 동반인)까지 포함해 초과 여부 판정 (G6: 동반인 반영)
+      if (headcount + 1 + companions > ev.capacity) {
         return NextResponse.json({ error: "정원이 가득 찼습니다." }, { status: 409 });
       }
     }
@@ -85,6 +91,7 @@ export async function POST(req: NextRequest) {
       guestContact,
       displayName: guestName,
       status: "attending",
+      companions,
       respondedAt: nowIso,
       createdAt: nowIso,
       updatedAt: nowIso,

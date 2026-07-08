@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
 
-  let body: { eventId?: string; status?: string };
+  let body: { eventId?: string; status?: string; companions?: number };
   try {
     body = await req.json();
   } catch {
@@ -26,6 +26,11 @@ export async function POST(req: NextRequest) {
   if (!eventId || !["attending", "not_attending", "undecided"].includes(status)) {
     return NextResponse.json({ error: "eventId·status 가 올바르지 않습니다." }, { status: 400 });
   }
+  // G6(2026-07-08): 동반인 수(0~9 정수). 참석이 아닐 땐 0 으로 강제.
+  if (body.companions !== undefined && (!Number.isInteger(body.companions) || body.companions < 0 || body.companions > 9)) {
+    return NextResponse.json({ error: "동반인 수는 0~9 사이여야 합니다." }, { status: 400 });
+  }
+  const companions = status === "attending" ? (body.companions ?? 0) : 0;
 
   try {
     const db = getAdminDb();
@@ -51,17 +56,19 @@ export async function POST(req: NextRequest) {
         const headcount = attSnap.docs
           .filter((d) => d.id !== mine?.id)
           .reduce((sum, d) => sum + 1 + ((d.data() as { companions?: number }).companions ?? 0), 0);
-        if (headcount >= ev.capacity) return { error: "정원이 가득 찼습니다.", status: 409 };
+        // 본인 인원(1 + 동반인)까지 포함해 초과 여부 판정 (G6: 동반인 반영)
+        if (headcount + 1 + companions > ev.capacity) return { error: "정원이 가득 찼습니다.", status: 409 };
       }
 
       if (mine) {
-        tx.update(mine.ref, { status, respondedAt: nowIso, updatedAt: nowIso });
+        tx.update(mine.ref, { status, companions, respondedAt: nowIso, updatedAt: nowIso });
       } else {
         tx.create(rsvpCol.doc(), {
           eventId,
           userId: auth.id,
           displayName: auth.name ?? "회원",
           status,
+          companions,
           respondedAt: nowIso,
           createdAt: nowIso,
           updatedAt: nowIso,
