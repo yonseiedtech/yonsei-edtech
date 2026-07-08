@@ -236,6 +236,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
       items: [
         { href: "/console/posts", label: "게시글", icon: FileText },
         { href: "/console/newsletter", label: "학회보", icon: Newspaper },
+        { href: "/console/journal", label: "학회지 운영", icon: BookOpen },
         { href: "/console/card-news", label: "카드뉴스", icon: Images },
         { href: "/console/popups", label: "팝업 공지", icon: Megaphone },
       ],
