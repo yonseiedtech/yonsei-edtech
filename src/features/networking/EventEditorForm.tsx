@@ -47,6 +47,7 @@ interface EventForm {
   pollDecisionMode: "manual" | "auto";
   location: string;
   feeAmount: string;
+  autoDues: boolean;
   rsvpDeadline: string;
   capacity: string;
   hostName: string;
@@ -61,8 +62,26 @@ const EMPTY_FORM: EventForm = {
   // pollTimeSlots 기본값 — 비워 두면 투표가 "날짜만" 모드가 되어 시간대 선택이 비활성되던 문제 방지
   // (렌더 측도 DEFAULT_POLL_TIME_SLOTS 폴백이 있지만, 폼에 보여 줘야 staff 가 수정할 수 있다)
   pollPeriodStart: "", pollPeriodEnd: "", pollTimeSlots: "12:00, 15:00, 18:00, 19:00, 20:00", pollDeadline: "", pollDecisionMode: "auto",
-  location: "", feeAmount: "0", rsvpDeadline: "", capacity: "", hostName: "", semester: "", visibility: "public", status: "upcoming", published: true,
+  location: "", feeAmount: "0", autoDues: false, rsvpDeadline: "", capacity: "", hostName: "", semester: "", visibility: "public", status: "upcoming", published: true,
 };
+
+/** NetworkingEvent → EventForm (수정·복제 공통 프리필) */
+function eventToForm(ev: NetworkingEvent): EventForm {
+  return {
+    type: ev.type, title: ev.title, description: ev.description ?? "",
+    schedulingMode: ev.schedulingMode ?? "fixed",
+    startAt: isoToLocal(ev.startAt),
+    pollPeriodStart: ev.pollPeriodStart ?? "", pollPeriodEnd: ev.pollPeriodEnd ?? "",
+    pollTimeSlots: (ev.pollTimeSlots ?? []).join(", "),
+    pollDeadline: isoToLocal(ev.pollDeadline), pollDecisionMode: ev.pollDecisionMode ?? "auto",
+    location: ev.location ?? "",
+    feeAmount: String(ev.feeAmount ?? 0), autoDues: ev.autoDues ?? false, rsvpDeadline: isoToLocal(ev.rsvpDeadline),
+    capacity: ev.capacity ? String(ev.capacity) : "", hostName: ev.hostName ?? "",
+    semester: ev.semester ?? "",
+    visibility: ev.visibility ?? "public",
+    status: ev.status, published: ev.published,
+  };
+}
 
 /** "18:00, 오후" 자유 입력 → 배열 (빈 항목 제거) */
 function parseTimeSlots(raw: string): string[] {
@@ -85,29 +104,31 @@ export interface EventEditorFormProps {
   onClose: () => void;
   onSaved: () => void;
   createdByUid: string;
+  /**
+   * G4(2026-07-09): 모임 복제 — 값을 프리필하되 신규(create)로 저장한다.
+   * initial 은 null 이어야 한다(복제는 새 문서). 제목엔 " (복사)"를 붙이고
+   * startAt·poll 기간·마감은 비운다. RSVP·회비·프로그램(자식 컬렉션)은 복제하지 않는다.
+   */
+  duplicateFrom?: NetworkingEvent | null;
 }
 
 export default function EventEditorForm({
-  initial, onClose, onSaved, createdByUid,
+  initial, onClose, onSaved, createdByUid, duplicateFrom,
 }: EventEditorFormProps) {
-  const [form, setForm] = useState<EventForm>(
-    initial
-      ? {
-          type: initial.type, title: initial.title, description: initial.description ?? "",
-          schedulingMode: initial.schedulingMode ?? "fixed",
-          startAt: isoToLocal(initial.startAt),
-          pollPeriodStart: initial.pollPeriodStart ?? "", pollPeriodEnd: initial.pollPeriodEnd ?? "",
-          pollTimeSlots: (initial.pollTimeSlots ?? []).join(", "),
-          pollDeadline: isoToLocal(initial.pollDeadline), pollDecisionMode: initial.pollDecisionMode ?? "auto",
-          location: initial.location ?? "",
-          feeAmount: String(initial.feeAmount ?? 0), rsvpDeadline: isoToLocal(initial.rsvpDeadline),
-          capacity: initial.capacity ? String(initial.capacity) : "", hostName: initial.hostName ?? "",
-          semester: initial.semester ?? "",
-          visibility: initial.visibility ?? "public",
-          status: initial.status, published: initial.published,
-        }
-      : EMPTY_FORM,
-  );
+  const [form, setForm] = useState<EventForm>(() => {
+    if (initial) return eventToForm(initial);
+    if (duplicateFrom) {
+      return {
+        ...eventToForm(duplicateFrom),
+        title: `${duplicateFrom.title} (복사)`,
+        // 일정·투표 기간·마감은 새로 정하도록 비운다.
+        startAt: "", pollPeriodStart: "", pollPeriodEnd: "", pollDeadline: "", rsvpDeadline: "",
+        // 지난 모임을 복제해도 신규는 "신청 가능"으로 시작.
+        status: "upcoming",
+      };
+    }
+    return EMPTY_FORM;
+  });
   const [busy, setBusy] = useState(false);
   // 저장 후 private 이면 공유 링크를 폼 안에서 복사할 수 있게 노출
   const [shareLink, setShareLink] = useState<string | null>(null);
@@ -196,6 +217,8 @@ export default function EventEditorForm({
         pollDecisionMode: isPoll ? form.pollDecisionMode : undefined,
         location: form.location.trim() || undefined,
         feeAmount: Number(form.feeAmount) || 0,
+        // G19(2026-07-09): 참석 확정 시 회비 자동 생성 옵션. 무료 행사면 저장하지 않음.
+        autoDues: Number(form.feeAmount) > 0 ? form.autoDues : undefined,
         rsvpDeadline: form.rsvpDeadline ? localToIso(form.rsvpDeadline) : undefined,
         capacity: form.capacity ? Number(form.capacity) : undefined,
         hostName: form.hostName.trim() || undefined,
@@ -279,7 +302,7 @@ export default function EventEditorForm({
   return (
     <div className="rounded-2xl border bg-card p-5 shadow-sm">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold">{initial ? "행사 수정" : "새 행사 등록"}</h2>
+        <h2 className="text-sm font-semibold">{initial ? "행사 수정" : duplicateFrom ? "행사 복제" : "새 행사 등록"}</h2>
         <button type="button" onClick={onClose} className="text-muted-foreground hover:text-foreground"><X size={16} /></button>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -365,6 +388,13 @@ export default function EventEditorForm({
         </label>
         <label className="text-xs">회비(원)
           <Input type="number" value={form.feeAmount} onChange={(e) => set("feeAmount", e.target.value)} className="mt-1" />
+          {/* G19(2026-07-09): 참석 확정 시 회비 자동 생성 옵션 — 유료 행사에서만 노출 */}
+          {Number(form.feeAmount) > 0 && (
+            <span className="mt-1.5 flex items-center gap-1.5 font-normal text-muted-foreground">
+              <input type="checkbox" checked={form.autoDues} onChange={(e) => set("autoDues", e.target.checked)} />
+              참석 확정 시 회비 자동 생성
+            </span>
+          )}
         </label>
         <label className="text-xs">정원(빈칸=무제한)
           <Input type="number" value={form.capacity} onChange={(e) => set("capacity", e.target.value)} className="mt-1" />

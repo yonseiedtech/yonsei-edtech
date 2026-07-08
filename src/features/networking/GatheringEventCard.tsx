@@ -73,6 +73,8 @@ export default function GatheringEventCard({
   const [guestCompanions, setGuestCompanions] = useState(0);
   // G2(2026-07-08): 서버가 정원 초과로 대기자 배정 시 반환하는 순번(제출 직후 표시용)
   const [waitlistPos, setWaitlistPos] = useState<number | null>(null);
+  // G7(2026-07-09): 게스트 신청 완료 후 본인 확인·취소 링크(관리 토큰 포함)
+  const [guestManageLink, setGuestManageLink] = useState<string | null>(null);
   const closed = isRsvpClosed(ev, nowIso);
   // 미확정 일정 투표 — 날짜가 아직 정해지지 않아 RSVP 대신 투표 UI 노출
   const isPollPending = ev.schedulingMode === "poll" && !ev.startAt;
@@ -160,6 +162,44 @@ export default function GatheringEventCard({
     }
   }
 
+  // G8(2026-07-09): 회원 신청 완전 철회 — rsvp 라우트 status:"withdraw"(문서 삭제 + 대기자 승격).
+  async function withdrawRsvp() {
+    if (!user || busy || !myRsvp) return;
+    if (!window.confirm("참석 신청을 철회하시겠어요? 참석자 명단에서 삭제됩니다.")) return;
+    setBusy(true);
+    try {
+      const { auth } = await import("@/lib/firebase");
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error("로그인이 필요합니다.");
+      const res = await fetch("/api/networking/rsvp", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId: ev.id, status: "withdraw" }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? "철회에 실패했습니다.");
+      }
+      setWaitlistPos(null);
+      toast.success("참석 신청을 철회했습니다.");
+      onChanged();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "철회에 실패했습니다.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function copyGuestLink() {
+    if (!guestManageLink) return;
+    try {
+      await navigator.clipboard.writeText(guestManageLink);
+      toast.success("확인 링크를 복사했습니다.");
+    } catch {
+      toast.error("복사에 실패했습니다. 링크를 직접 선택해 복사해주세요.");
+    }
+  }
+
   async function submitGuest() {
     if (busy) return;
     if (!guestName.trim() || !guestContact.trim()) {
@@ -187,7 +227,11 @@ export default function GatheringEventCard({
         const j = (await res.json().catch(() => null)) as { error?: string } | null;
         throw new Error(j?.error ?? "신청에 실패했습니다.");
       }
-      const j = (await res.json().catch(() => ({}))) as { waitlisted?: boolean; waitlistPosition?: number | null };
+      const j = (await res.json().catch(() => ({}))) as {
+        waitlisted?: boolean;
+        waitlistPosition?: number | null;
+        manageToken?: string;
+      };
       if (j.waitlisted) {
         toast.success(
           j.waitlistPosition
@@ -196,6 +240,10 @@ export default function GatheringEventCard({
         );
       } else {
         toast.success("게스트 참석 신청이 접수되었습니다.");
+      }
+      // G7: 관리 토큰이 오면 본인 확인·취소 링크를 안내
+      if (j.manageToken) {
+        setGuestManageLink(`${window.location.origin}/gatherings?guest_rsvp=${j.manageToken}`);
       }
       setGuestOpen(false);
       setGuestName("");
@@ -362,6 +410,17 @@ export default function GatheringEventCard({
                   <span className="text-muted-foreground">명</span>
                 </div>
               )}
+              {/* G8: 신청 완전 철회 */}
+              {myRsvp && !closed && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={withdrawRsvp}
+                  className="text-[11px] text-muted-foreground underline underline-offset-2 transition-colors hover:text-rose-600 disabled:opacity-50 dark:hover:text-rose-400"
+                >
+                  신청 철회
+                </button>
+              )}
             </div>
           ) : closed ? (
             <p className="text-xs text-muted-foreground">신청이 마감되었습니다.</p>
@@ -394,6 +453,26 @@ export default function GatheringEventCard({
             <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => setGuestOpen(true)}>
               게스트로 참석 신청
             </Button>
+          )}
+          {/* G7: 게스트 신청 완료 후 본인 확인·취소 링크 */}
+          {guestManageLink && (
+            <div className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50/60 p-2.5 text-[11px] dark:border-emerald-900 dark:bg-emerald-950/30">
+              <p className="font-medium text-emerald-700 dark:text-emerald-200">신청이 접수되었습니다.</p>
+              <p className="mt-0.5 text-muted-foreground">
+                아래 링크로 신청을 확인하거나 취소할 수 있습니다. 재방문 시 필요하니 저장해두세요.
+              </p>
+              <div className="mt-1.5 flex items-center gap-1.5">
+                <input
+                  readOnly
+                  value={guestManageLink}
+                  onFocus={(e) => e.currentTarget.select()}
+                  className="min-w-0 flex-1 rounded border bg-background px-2 py-1 text-[11px]"
+                />
+                <Button size="sm" variant="outline" className="h-7 shrink-0 text-[11px]" onClick={copyGuestLink}>
+                  <Copy size={11} className="mr-1" />복사
+                </Button>
+              </div>
+            </div>
           )}
         </div>
       )}

@@ -567,6 +567,9 @@ export const eventTokensApi = {
 export const networkingRsvpsApi = {
   listByEvent: (eventId: string) =>
     dataApi.list<NetworkingRsvp>("networking_rsvps", { "filter[eventId]": eventId, limit: 500 }),
+  /** 전체 RSVP (G18 운영 통계 — staff 전용, rules 상 staff read 허용) */
+  listAll: (limit = 2000) =>
+    dataApi.list<NetworkingRsvp>("networking_rsvps", { limit }),
   listByUser: (userId: string) =>
     dataApi.list<NetworkingRsvp>("networking_rsvps", { "filter[userId]": userId, limit: 200 }),
   check: (eventId: string, userId: string) =>
@@ -584,6 +587,9 @@ export const networkingRsvpsApi = {
 export const networkingDuesApi = {
   listByEvent: (eventId: string) =>
     dataApi.list<NetworkingDue>("networking_dues", { "filter[eventId]": eventId, limit: 500 }),
+  /** 전체 회비 레코드 (G18 운영 통계 — staff 전용, rules 상 staff read 허용) */
+  listAll: (limit = 2000) =>
+    dataApi.list<NetworkingDue>("networking_dues", { limit }),
   listByUser: (userId: string) =>
     dataApi.list<NetworkingDue>("networking_dues", { "filter[userId]": userId, limit: 200 }),
   create: (data: Omit<NetworkingDue, "id">) =>

@@ -23,7 +23,8 @@ export async function POST(req: NextRequest) {
   }
   const eventId = (body.eventId ?? "").trim();
   const status = (body.status ?? "").trim();
-  if (!eventId || !["attending", "not_attending", "undecided"].includes(status)) {
+  // G8(2026-07-09): "withdraw" = 신청 완전 철회(문서 삭제). 나머지는 상태 갱신.
+  if (!eventId || !["attending", "not_attending", "undecided", "withdraw"].includes(status)) {
     return NextResponse.json({ error: "eventId·status 가 올바르지 않습니다." }, { status: 400 });
   }
   // G6(2026-07-08): 동반인 수(0~9 정수). 참석이 아닐 땐 0 으로 강제.
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
     const nowIso = new Date().toISOString();
     const rsvpCol = db.collection("networking_rsvps");
 
-    type RsvpDoc = { status?: string; companions?: number; createdAt?: string; userId?: string };
+    type RsvpDoc = { status?: string; companions?: number; createdAt?: string; userId?: string; displayName?: string };
     const seatsOf = (d: RsvpDoc) => 1 + (d.companions ?? 0);
 
     const result = await db.runTransaction(async (tx) => {
@@ -55,6 +56,46 @@ export async function POST(req: NextRequest) {
       const attendingSeats = allSnap.docs
         .filter((d) => d.id !== mine?.id && (d.data() as RsvpDoc).status === "attending")
         .reduce((sum, d) => sum + seatsOf(d.data() as RsvpDoc), 0);
+
+      // G2/G8 승격: 빈자리(free)를 waitlist 를 createdAt 최선순으로 채운다.
+      // (동일 트랜잭션 내 read 로 확보한 문서만 승격 — FIFO 공정성 위해 안 맞으면 중단)
+      const promoteFrom = (free: number): { userId?: string; isGuest?: boolean; displayName?: string }[] => {
+        const promoted: { userId?: string; isGuest?: boolean; displayName?: string }[] = [];
+        if (cap === null) return promoted;
+        const waitlisted = allSnap.docs
+          .filter((d) => d.id !== mine?.id && (d.data() as RsvpDoc).status === "waitlisted")
+          .sort((a, b) =>
+            ((a.data() as RsvpDoc).createdAt ?? "").localeCompare((b.data() as RsvpDoc).createdAt ?? ""),
+          );
+        for (const w of waitlisted) {
+          const wd = w.data() as RsvpDoc & { isGuest?: boolean };
+          const need = seatsOf(wd);
+          if (need <= free) {
+            tx.update(w.ref, { status: "attending", updatedAt: nowIso });
+            free -= need;
+            promoted.push({ userId: wd.userId, isGuest: wd.isGuest, displayName: wd.displayName });
+          } else {
+            break; // 최선순이 못 들어가면 뒤 순번도 건너뛰지 않는다(순번 보존)
+          }
+        }
+        return promoted;
+      };
+
+      // G8(2026-07-09): 완전 철회 — 본인 문서 삭제 후 빈자리를 대기자에게 승격.
+      if (status === "withdraw") {
+        if (mine) tx.delete(mine.ref);
+        const promoted = cap !== null ? promoteFrom(cap - attendingSeats) : [];
+        return {
+          ok: true,
+          effectiveStatus: "withdrawn" as const,
+          waitlistPosition: null,
+          promoted,
+          eventTitle: ev.title,
+          visibility: ev.visibility ?? "public",
+          feeAmount: ev.feeAmount ?? 0,
+          autoDues: ev.autoDues === true,
+        };
+      }
 
       // G2(2026-07-08): 참석 요청이 정원을 넘기면 409 대신 대기자(waitlisted)로 저장한다.
       // status 는 위에서 attending/not_attending/undecided 중 하나로 검증됨.
@@ -90,28 +131,8 @@ export async function POST(req: NextRequest) {
         waitlistPosition = ahead + 1;
       }
 
-      // G2 승격: 본인 변경으로 참석 좌석이 줄어 빈자리가 생기면 waitlist 를 createdAt 최선순으로 채운다.
-      // (동일 트랜잭션 내 read 로 확보한 문서만 승격 — FIFO 공정성 위해 안 맞으면 중단)
-      const promoted: { userId?: string; isGuest?: boolean }[] = [];
-      if (cap !== null && effectiveStatus !== "attending") {
-        let free = cap - attendingSeats; // 본인은 이제 참석이 아니므로 좌석 미점유
-        const waitlisted = allSnap.docs
-          .filter((d) => d.id !== mine?.id && (d.data() as RsvpDoc).status === "waitlisted")
-          .sort((a, b) =>
-            ((a.data() as RsvpDoc).createdAt ?? "").localeCompare((b.data() as RsvpDoc).createdAt ?? ""),
-          );
-        for (const w of waitlisted) {
-          const wd = w.data() as RsvpDoc & { isGuest?: boolean };
-          const need = seatsOf(wd);
-          if (need <= free) {
-            tx.update(w.ref, { status: "attending", updatedAt: nowIso });
-            free -= need;
-            promoted.push({ userId: wd.userId, isGuest: wd.isGuest });
-          } else {
-            break; // 최선순이 못 들어가면 뒤 순번도 건너뛰지 않는다(순번 보존)
-          }
-        }
-      }
+      // G2 승격: 본인 변경으로 참석 좌석이 줄어 빈자리가 생기면 승격한다.
+      const promoted = cap !== null && effectiveStatus !== "attending" ? promoteFrom(cap - attendingSeats) : [];
 
       return {
         ok: true,
@@ -120,6 +141,8 @@ export async function POST(req: NextRequest) {
         promoted,
         eventTitle: ev.title,
         visibility: ev.visibility ?? "public",
+        feeAmount: ev.feeAmount ?? 0,
+        autoDues: ev.autoDues === true,
       };
     });
 
@@ -154,6 +177,38 @@ export async function POST(req: NextRequest) {
           }),
         ),
       );
+    }
+
+    // G19(2026-07-09): 참석 확정 시 회비 자동 생성(멱등 — 기존 due 있으면 스킵). autoDues + feeAmount>0 일 때만.
+    // 대상: 본인이 참석 확정된 경우 + 대기자에서 승격된 회원. 게스트 승격은 콘솔 일괄 생성으로 처리(스코프).
+    if (result.autoDues && result.feeAmount > 0) {
+      const duesCol = db.collection("networking_dues");
+      const ensureDue = async (userId: string, displayName: string) => {
+        const existing = await duesCol
+          .where("eventId", "==", eventId)
+          .where("userId", "==", userId)
+          .limit(1)
+          .get();
+        if (!existing.empty) return;
+        const dueNow = new Date().toISOString();
+        await duesCol.add({
+          eventId,
+          userId,
+          displayName,
+          amount: result.feeAmount,
+          status: "unpaid",
+          createdAt: dueNow,
+          updatedAt: dueNow,
+        });
+      };
+      const targets: { userId: string; displayName: string }[] = [];
+      if (result.effectiveStatus === "attending") {
+        targets.push({ userId: auth.id, displayName: auth.name ?? "회원" });
+      }
+      for (const p of promotedMembers) {
+        if (p.userId) targets.push({ userId: p.userId, displayName: p.displayName ?? "회원" });
+      }
+      await Promise.all(targets.map((t) => ensureDue(t.userId, t.displayName).catch(() => {})));
     }
 
     return NextResponse.json({

@@ -47,6 +47,11 @@ export interface NetworkingEvent {
   location?: string;
   /** 회비(원). 0 이면 무료 */
   feeAmount: number;
+  /**
+   * 참석 확정 시 회비 자동 생성 (G19, 2026-07-09).
+   * true + feeAmount>0 이면 RSVP 라우트가 attending 전환(승격 포함) 시 해당 회원 due 를 멱등 생성한다.
+   */
+  autoDues?: boolean;
   /** 참석 신청 마감 (ISO, 선택) */
   rsvpDeadline?: string;
   /** 정원 (0/미설정 = 무제한) */
@@ -109,6 +114,12 @@ export interface NetworkingRsvp {
   companions?: number;
   /** 당일 현장 체크인 시각 (ISO). set = 실참석, unset = 미체크인 — G3(2026-07-08). staff 가 콘솔에서 토글. */
   attendedAt?: string;
+  /**
+   * 게스트 신청 관리 토큰 (G7, 2026-07-09) — 추측 불가 uuid.
+   * 게스트가 로그인 없이 본인 신청을 조회·취소할 때 사용(`/gatherings?guest_rsvp={토큰}`).
+   * 회원 RSVP·레거시 게스트 신청(토큰 없음)은 미설정 — 하위호환.
+   */
+  manageToken?: string;
   memo?: string;
   respondedAt: string;
   createdAt: string;

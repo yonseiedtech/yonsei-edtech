@@ -8,7 +8,7 @@
 
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Users, Wallet, Download, Check, Pencil, UserCheck } from "lucide-react";
+import { Plus, Users, Wallet, Download, Check, Pencil, UserCheck, Copy, BarChart3, CheckCheck } from "lucide-react";
 import { deleteField } from "firebase/firestore";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ import { computeSettlement, formatEventDate, formatWon, isPastEvent } from "@/fe
 import NetworkingProgramManager from "@/features/networking/NetworkingProgramManager";
 import NetworkingPoll from "@/features/networking/NetworkingPoll";
 import EventEditorForm from "@/features/networking/EventEditorForm";
+import NetworkingStats from "@/features/networking/NetworkingStats";
 
 const DUE_STATUSES = Object.keys(DUE_STATUS_LABELS) as DueStatus[];
 
@@ -38,6 +39,10 @@ export default function ConsoleNetworkingPage() {
   const qc = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState<NetworkingEvent | "new" | null>(null);
+  // G4(2026-07-09): 복제 대상 — 설정되면 EventEditorForm 을 복제(신규 저장) 모드로 연다.
+  const [duplicating, setDuplicating] = useState<NetworkingEvent | null>(null);
+  // G18(2026-07-09): 운영/통계 탭
+  const [tab, setTab] = useState<"manage" | "stats">("manage");
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["console-networking-events"],
@@ -49,30 +54,57 @@ export default function ConsoleNetworkingPage() {
 
   const selected = events.find((e) => e.id === selectedId) ?? null;
 
+  function closeEditor() {
+    setEditing(null);
+    setDuplicating(null);
+  }
+  function savedEditor() {
+    qc.invalidateQueries({ queryKey: ["console-networking-events"] });
+    closeEditor();
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="flex items-center gap-2 text-lg font-bold">
           <Users size={20} /> 모임·네트워킹 운영
         </h1>
-        <Button size="sm" onClick={() => setEditing("new")}>
+        <Button size="sm" onClick={() => { setDuplicating(null); setEditing("new"); }}>
           <Plus size={15} className="mr-1" /> 새 행사
         </Button>
       </div>
 
-      {editing && (
+      {/* 탭 — 운영 / 통계 */}
+      <div className="inline-flex rounded-lg border bg-background p-0.5 text-xs">
+        {(["manage", "stats"] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTab(t)}
+            className={cn(
+              "inline-flex items-center gap-1 rounded-md px-3 py-1.5 font-medium transition-colors",
+              tab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {t === "manage" ? <Users size={13} /> : <BarChart3 size={13} />}
+            {t === "manage" ? "운영" : "통계"}
+          </button>
+        ))}
+      </div>
+
+      {(editing || duplicating) && (
         <EventEditorForm
-          initial={editing === "new" ? null : editing}
-          onClose={() => setEditing(null)}
-          onSaved={() => {
-            qc.invalidateQueries({ queryKey: ["console-networking-events"] });
-            setEditing(null);
-          }}
+          initial={editing && editing !== "new" ? editing : null}
+          duplicateFrom={duplicating}
+          onClose={closeEditor}
+          onSaved={savedEditor}
           createdByUid={user?.id ?? ""}
         />
       )}
 
-      {isLoading ? (
+      {tab === "stats" ? (
+        <NetworkingStats events={events} />
+      ) : isLoading ? (
         <Skeleton className="h-64 w-full rounded-2xl" />
       ) : (
         <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
@@ -111,7 +143,8 @@ export default function ConsoleNetworkingPage() {
             {selected ? (
               <EventManager
                 event={selected}
-                onEdit={() => setEditing(selected)}
+                onEdit={() => { setDuplicating(null); setEditing(selected); }}
+                onDuplicate={() => { setEditing(null); setDuplicating(selected); }}
                 confirmedByUid={user?.id ?? ""}
               />
             ) : (
@@ -126,7 +159,7 @@ export default function ConsoleNetworkingPage() {
   );
 }
 
-function EventManager({ event, onEdit, confirmedByUid }: { event: NetworkingEvent; onEdit: () => void; confirmedByUid: string }) {
+function EventManager({ event, onEdit, onDuplicate, confirmedByUid }: { event: NetworkingEvent; onEdit: () => void; onDuplicate: () => void; confirmedByUid: string }) {
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
 
@@ -209,6 +242,31 @@ function EventManager({ event, onEdit, confirmedByUid }: { event: NetworkingEven
     }
   }
 
+  // G19(2026-07-09): 미납 회비 일괄 납부 처리 — 확인 다이얼로그 후 unpaid → paid.
+  async function markAllPaid() {
+    const unpaid = dues.filter((d) => d.status === "unpaid");
+    if (unpaid.length === 0) {
+      toast.info("미납 회비가 없습니다.");
+      return;
+    }
+    if (!window.confirm(`미납 회비 ${unpaid.length}건을 모두 납부 처리할까요?`)) return;
+    setBusy(true);
+    try {
+      const now = new Date().toISOString();
+      await Promise.all(
+        unpaid.map((d) =>
+          networkingDuesApi.update(d.id, { status: "paid", paidAt: now, confirmedBy: confirmedByUid, updatedAt: now }),
+        ),
+      );
+      toast.success(`${unpaid.length}건을 납부 처리했습니다.`);
+      refreshDues();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "일괄 처리 실패");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function setDueStatus(due: NetworkingDue, status: DueStatus) {
     try {
       const now = new Date().toISOString();
@@ -256,6 +314,7 @@ function EventManager({ event, onEdit, confirmedByUid }: { event: NetworkingEven
         </div>
         <div className="flex gap-1.5">
           <Button size="sm" variant="outline" onClick={onEdit}><Pencil size={13} className="mr-1" />수정</Button>
+          <Button size="sm" variant="outline" onClick={onDuplicate}><Copy size={13} className="mr-1" />복제</Button>
           <Button size="sm" variant="outline" onClick={exportCsv}><Download size={13} className="mr-1" />CSV</Button>
         </div>
       </div>
@@ -281,11 +340,18 @@ function EventManager({ event, onEdit, confirmedByUid }: { event: NetworkingEven
         ))}
       </div>
 
-      {/* 회비 일괄 생성 */}
+      {/* 회비 일괄 생성 · 전원 납부 처리 */}
       {event.feeAmount > 0 && (
-        <Button size="sm" variant="outline" disabled={busy} onClick={generateDues}>
-          <Wallet size={13} className="mr-1" />참석자 회비 항목 생성 (미생성분만)
-        </Button>
+        <div className="flex flex-wrap gap-1.5">
+          <Button size="sm" variant="outline" disabled={busy} onClick={generateDues}>
+            <Wallet size={13} className="mr-1" />참석자 회비 항목 생성 (미생성분만)
+          </Button>
+          {dues.some((d) => d.status === "unpaid") && (
+            <Button size="sm" variant="outline" disabled={busy} onClick={markAllPaid}>
+              <CheckCheck size={13} className="mr-1" />전원 납부 처리
+            </Button>
+          )}
+        </div>
       )}
 
       {/* 명단 */}

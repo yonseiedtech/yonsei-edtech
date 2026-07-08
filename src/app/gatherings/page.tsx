@@ -30,6 +30,7 @@ import {
 import { isPastEvent } from "@/features/networking/networking-helpers";
 import EventEditorForm from "@/features/networking/EventEditorForm";
 import GatheringEventCard from "@/features/networking/GatheringEventCard";
+import GuestRsvpBanner from "@/features/networking/GuestRsvpBanner";
 
 export default function GatheringsPage() {
   const { user } = useAuthStore();
@@ -116,6 +117,9 @@ export default function GatheringsPage() {
           ) : undefined
         }
       />
+
+      {/* G7: 게스트 신청 확인·취소 (guest_rsvp 토큰으로 접근 시 자동 노출) */}
+      <GuestRsvpBanner />
 
       {canCreate && (
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
