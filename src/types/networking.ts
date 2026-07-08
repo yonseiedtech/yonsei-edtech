@@ -154,8 +154,13 @@ export interface NetworkingSettlement {
 export interface NetworkingAvailability {
   id: string;
   eventId: string;
+  /** 회원 응답이면 회원 uid, 게스트(비회원) 응답이면 빈 문자열 */
   userId: string;
   userName: string;
+  /** 게스트(비회원) 응답자의 학번 — 잠재회원 집계 키. 회원 응답은 미설정 */
+  studentId?: string;
+  /** true = 비로그인 게스트 투표(availability-guest 라우트로 저장) */
+  isGuest?: boolean;
   /** 가능 슬롯 — 날짜만 "YYYY-MM-DD" 또는 시간대 "YYYY-MM-DD|HH:MM" */
   availableSlots: string[];
   note?: string;

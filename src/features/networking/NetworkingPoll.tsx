@@ -10,11 +10,13 @@
  * bestSlots/formatSlotLabel)은 그대로 재사용하고 UI(when2meet 그리드 → 캘린더)만 개편했다.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { CalendarCheck, Sparkles, Users as UsersIcon, Lock, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { CalendarCheck, Sparkles, Users as UsersIcon, Lock, ChevronLeft, ChevronRight, Check, LogIn, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -87,6 +89,28 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
   const [pickedSlot, setPickedSlot] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
+  // 비로그인 게스트 투표 — 이름·학번을 로컬에 보관하고 서버(availability-guest)로 저장.
+  // 게스트는 rules 상 응답 목록을 읽을 수 없어 본인 선택만 로컬(guestSlots)로 표시한다.
+  const [guestVoter, setGuestVoter] = useState<{ name: string; studentId: string } | null>(null);
+  const [guestSlots, setGuestSlots] = useState<Set<string>>(new Set());
+  const [guestFormOpen, setGuestFormOpen] = useState(false);
+  const [guestNameInput, setGuestNameInput] = useState("");
+  const [guestStudentIdInput, setGuestStudentIdInput] = useState("");
+  const guestSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("gatherings.guestVoter");
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { name?: unknown; studentId?: unknown };
+      if (typeof parsed?.name === "string" && typeof parsed?.studentId === "string") {
+        setGuestVoter({ name: parsed.name, studentId: parsed.studentId });
+      }
+    } catch {
+      /* localStorage 접근 불가·파싱 실패 시 무시 */
+    }
+  }, []);
+
   const candidateSlots = useMemo(
     () => buildCandidateSlots(event.pollPeriodStart ?? "", event.pollPeriodEnd ?? "", event.pollTimeSlots),
     [event.pollPeriodStart, event.pollPeriodEnd, event.pollTimeSlots],
@@ -151,7 +175,11 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
     () => (user ? responses.find((r) => r.userId === user.id) ?? null : null),
     [responses, user],
   );
-  const mySlots = useMemo(() => new Set(myResponse?.availableSlots ?? []), [myResponse]);
+  // 회원은 서버 응답, 게스트는 로컬 선택(guestSlots) 기준
+  const mySlots = useMemo(
+    () => (user ? new Set(myResponse?.availableSlots ?? []) : guestSlots),
+    [user, myResponse, guestSlots],
+  );
   const myDateSet = useMemo(() => {
     const s = new Set<string>();
     for (const slot of mySlots) s.add(slot.split("|")[0]);
@@ -159,6 +187,8 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
   }, [mySlots]);
 
   const pollClosed = !!event.pollDeadline && new Date(event.pollDeadline).getTime() < Date.now();
+  const isGuestVoting = !user && !!guestVoter;
+  const canVote = (!!user || isGuestVoting) && !pollClosed;
 
   // 월 네비게이션
   const monthBounds = useMemo(() => {
@@ -193,9 +223,77 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
   }
   const cells = useMemo(() => buildMonthCells(viewMonth), [viewMonth]);
 
-  /** 슬롯 토글 → upsert (기존 로직 재사용) */
+  /** 게스트 선택을 서버로 저장 (debounce 800ms — 토글 반복 시 마지막 상태만 반영) */
+  async function saveGuestVotes(slots: string[]) {
+    const voter = guestVoter;
+    if (!voter) return;
+    try {
+      const res = await fetch("/api/networking/availability-guest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventId: event.id,
+          guestName: voter.name,
+          studentId: voter.studentId,
+          availableSlots: slots,
+        }),
+      });
+      if (!res.ok) {
+        const j = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(j?.error ?? "저장에 실패했습니다.");
+      }
+      toast.success("가능 일정이 저장되었습니다.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "저장에 실패했습니다.");
+    }
+  }
+
+  function scheduleGuestSave(slots: string[]) {
+    if (guestSaveTimer.current) clearTimeout(guestSaveTimer.current);
+    guestSaveTimer.current = setTimeout(() => void saveGuestVotes(slots), 800);
+  }
+
+  /** 게스트 투표 시작 — 이름·학번 검증 후 로컬 보관 → 캘린더 활성화 */
+  function submitGuestVoter() {
+    const name = guestNameInput.trim();
+    const sid = guestStudentIdInput.trim();
+    if (!name || !sid) {
+      toast.error("이름과 학번을 입력해주세요.");
+      return;
+    }
+    if (name.length > 30) {
+      toast.error("이름이 너무 깁니다.");
+      return;
+    }
+    if (!/^[0-9-]{1,20}$/.test(sid)) {
+      toast.error("학번은 숫자와 하이픈만 입력할 수 있습니다.");
+      return;
+    }
+    const voter = { name, studentId: sid };
+    try {
+      localStorage.setItem("gatherings.guestVoter", JSON.stringify(voter));
+    } catch {
+      /* 저장 실패해도 이번 세션 투표는 진행 */
+    }
+    setGuestVoter(voter);
+    setGuestFormOpen(false);
+  }
+
+  /** 슬롯 토글 → 회원은 서버 upsert, 게스트는 로컬 선택 후 debounce 저장 */
   async function toggleSlot(slot: string) {
-    if (!user || busy || pollClosed) return;
+    if (pollClosed) return;
+    if (!user) {
+      if (!guestVoter) return;
+      setGuestSlots((prev) => {
+        const next = new Set(prev);
+        if (next.has(slot)) next.delete(slot);
+        else next.add(slot);
+        scheduleGuestSave(Array.from(next));
+        return next;
+      });
+      return;
+    }
+    if (busy) return;
     setBusy(true);
     const next = new Set(mySlots);
     if (next.has(slot)) next.delete(slot);
@@ -294,12 +392,73 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
       </div>
 
       <p className="mb-2 text-[11px] text-muted-foreground">
-        {user
-          ? pollClosed
-            ? "투표가 마감되었습니다."
-            : "날짜를 눌러 가능한 시간대를 선택하세요. 진하게 칠해질수록 많은 회원이 가능합니다."
-          : "로그인하면 가능한 일정을 투표할 수 있습니다."}
+        {pollClosed
+          ? "투표가 마감되었습니다."
+          : user
+            ? "날짜를 눌러 가능한 시간대를 선택하세요. 진하게 칠해질수록 많은 회원이 가능합니다."
+            : isGuestVoting
+              ? "날짜를 눌러 가능한 시간대를 선택하세요. 전체 집계는 공유 페이지에서 확인할 수 있습니다."
+              : "가능한 일정을 투표해 주세요. 로그인 또는 비로그인으로 참여할 수 있습니다."}
       </p>
+
+      {/* 비로그인 투표 진입 (미로그인 & 아직 게스트 등록 전) */}
+      {!user && !guestVoter && !pollClosed && (
+        <div className="mb-3 rounded-xl border border-dashed bg-muted/30 p-3">
+          {!guestFormOpen ? (
+            <div className="flex flex-wrap gap-2">
+              <Link href="/login" className={cn(buttonVariants({ size: "sm" }))}>
+                <LogIn size={13} /> 로그인하고 투표
+              </Link>
+              <Button size="sm" variant="outline" onClick={() => setGuestFormOpen(true)}>
+                비로그인으로 투표
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-[11px] font-medium text-foreground">이름과 학번을 입력하면 바로 투표할 수 있어요.</p>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Input
+                  value={guestNameInput}
+                  onChange={(e) => setGuestNameInput(e.target.value)}
+                  placeholder="이름"
+                  maxLength={30}
+                  className="h-8 text-sm sm:flex-1"
+                />
+                <Input
+                  value={guestStudentIdInput}
+                  onChange={(e) => setGuestStudentIdInput(e.target.value)}
+                  placeholder="학번"
+                  maxLength={20}
+                  inputMode="numeric"
+                  className="h-8 text-sm sm:flex-1"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") submitGuestVoter();
+                  }}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={submitGuestVoter}>투표 시작</Button>
+                <Button size="sm" variant="ghost" onClick={() => setGuestFormOpen(false)}>취소</Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 게스트 투표 중 안내 배너 */}
+      {isGuestVoting && (
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-indigo-200 bg-indigo-50/60 px-3 py-2 dark:border-indigo-900 dark:bg-indigo-950/30">
+          <p className="text-[11px] text-indigo-800 dark:text-indigo-100">
+            비로그인 투표 중 · <b>{guestVoter?.name}</b> 님 · 선택 {guestSlots.size}개
+          </p>
+          <Link
+            href={`/gatherings/poll/${event.id}`}
+            className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 underline-offset-2 hover:underline dark:text-indigo-300"
+          >
+            전체 집계 보기 <ExternalLink size={11} />
+          </Link>
+        </div>
+      )}
 
       {/* 월 네비게이션 */}
       <div className="mb-2 flex items-center justify-between">
@@ -389,11 +548,13 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
               </DialogTitle>
             </DialogHeader>
             <p className="text-[11px] text-muted-foreground">
-              {user
-                ? pollClosed
-                  ? "투표가 마감되었습니다."
-                  : "시간대를 눌러 내 가능 여부를 저장하세요. 진할수록 많은 회원이 가능합니다."
-                : "로그인하면 시간대를 선택할 수 있습니다."}
+              {pollClosed
+                ? "투표가 마감되었습니다."
+                : canVote
+                  ? user
+                    ? "시간대를 눌러 내 가능 여부를 저장하세요. 진할수록 많은 회원이 가능합니다."
+                    : "시간대를 눌러 가능 여부를 저장하세요. 선택은 자동 저장됩니다."
+                  : "로그인 또는 비로그인 투표를 시작하면 시간대를 선택할 수 있습니다."}
             </p>
             <div className="mt-1 grid grid-cols-1 gap-2 sm:grid-cols-2">
               {(selectedDate ? slotsByDate.get(selectedDate) ?? [] : []).map((slot) => {
@@ -406,7 +567,7 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
                   <button
                     key={slot}
                     type="button"
-                    disabled={!user || busy || pollClosed}
+                    disabled={!canVote || busy}
                     onClick={() => toggleSlot(slot)}
                     aria-pressed={mine}
                     title={names.length ? `${names.join(", ")} (${count}명)` : "응답 없음"}
@@ -414,7 +575,7 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
                       "flex min-h-[52px] flex-col rounded-lg border px-3 py-2.5 text-left transition-colors disabled:cursor-default",
                       heatClass(count, maxCount),
                       mine && "ring-2 ring-teal-500 ring-offset-1 dark:ring-offset-background",
-                      user && !pollClosed && "hover:border-indigo-400",
+                      canVote && "hover:border-indigo-400",
                     )}
                   >
                     <span className="flex items-center justify-between gap-2">

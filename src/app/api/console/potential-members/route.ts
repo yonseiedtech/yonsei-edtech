@@ -13,6 +13,7 @@ import type { ApplicantEntry, ExternalParticipantType } from "@/types";
  *  (a) 활동 신청자 — activity_applicants/{id}.applicants 중 isGuest===true.
  *      activity_applicants 문서가 없는 활동은 activities/{id}.applicants 임베드로 dual-read fallback.
  *  (b) 세미나 비회원 등록 — seminar_registrations 중 userId 없는(게스트) 항목.
+ *  (c) 모임 일정 투표 게스트 — networking_availability 중 isGuest===true 항목.
  *
  * 그룹핑
  *  - 학번(studentId) 정규화 후 같은 학번 = 같은 잠재회원.
@@ -31,7 +32,7 @@ function normalizeStudentId(raw: unknown): string {
 }
 
 interface PotentialRecord {
-  kind: "activity" | "seminar";
+  kind: "activity" | "seminar" | "networking";
   id: string;
   title: string;
   date: string;
@@ -208,6 +209,37 @@ export async function GET(req: NextRequest) {
         date: (r.createdAt as string) || meta?.date || "",
         status: r.status as string | undefined,
       });
+    }
+
+    // ── (c) 모임 일정 투표 게스트 응답 (networking_availability) ──
+    const availSnap = await db
+      .collection("networking_availability")
+      .where("isGuest", "==", true)
+      .get();
+    if (!availSnap.empty) {
+      // 게스트 응답이 있을 때만 이벤트 제목 맵을 로드 (불필요한 전체 read 회피)
+      const eventTitles = new Map<string, string>();
+      const evSnap = await db.collection("networking_events").get();
+      for (const e of evSnap.docs) {
+        eventTitles.set(e.id, (e.data().title as string) ?? "(모임)");
+      }
+      for (const doc of availSnap.docs) {
+        const a = doc.data() as Record<string, unknown>;
+        const sid = normalizeStudentId(a.studentId);
+        if (sid && memberStudentIds.has(sid)) continue;
+        const name = ((a.guestName as string) ?? "").trim();
+        if (!sid && !name) continue;
+
+        const title = eventTitles.get((a.eventId as string) ?? "") ?? "(모임)";
+        const b = bucketFor(sid, name, undefined);
+        if (!b.name && name) b.name = name;
+        b.records.push({
+          kind: "networking",
+          id: (a.eventId as string) ?? doc.id,
+          title: `모임 일정 투표: ${title}`,
+          date: (a.updatedAt as string) || (a.createdAt as string) || "",
+        });
+      }
     }
 
     // ── 게스트 이력 보유 학번 집합 (전환 추적용) ──
