@@ -71,6 +71,8 @@ import ARCSPanel from "@/features/mypage/ARCSPanel";
 import ConnectivismPanel from "@/features/mypage/ConnectivismPanel";
 import DiagnosticWeakConceptPath from "@/components/mypage/DiagnosticWeakConceptPath";
 import LearningEffectCard from "@/features/mypage/LearningEffectCard";
+import ReadingResearchLoopCard from "@/features/mypage/ReadingResearchLoopCard";
+import DefensePracticeTrendCard from "@/features/mypage/DefensePracticeTrendCard";
 import MyActivityHub from "@/components/mypage/MyActivityHub";
 import ThesisProgressWidget from "@/features/research/ThesisProgressWidget";
 import GraduationChecklistCard from "@/features/mypage/GraduationChecklistCard";
@@ -637,6 +639,12 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
 
               {/* 학습효과 증명 루프 (G2) — 복습한 약점 개념이 재진단에서 개선됐는지 교차 분석 (본인만) */}
               {isSelf && !readOnly && <LearningEffectCard userId={userId} />}
+
+              {/* 읽기 → 연구 진척 병치 (M5) — 최근 4주 논문 읽기 × 논문 작성 글자 증가 (본인만) */}
+              {isSelf && !readOnly && <ReadingResearchLoopCard userId={userId} />}
+
+              {/* 심사 연습 추세 (M5) — 논문 심사 연습 회차별 평균 점수 시계열 (본인만) */}
+              {isSelf && !readOnly && <DefensePracticeTrendCard userId={userId} />}
 
               {/* 내 암기카드 — 진단 오답 복습(뒤집기·간격반복). 카드가 있을 때만 노출 (본인만) */}
               {isSelf && !readOnly && flashcardTotal > 0 && (
