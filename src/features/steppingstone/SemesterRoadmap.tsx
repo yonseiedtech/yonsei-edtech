@@ -18,12 +18,15 @@ import {
   BookOpen,
   Brain,
   Check,
+  GraduationCap,
   Sparkles,
   Star,
   Target,
   Trophy,
 } from "lucide-react";
+import Link from "next/link";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { useGraduationSummary } from "@/features/mypage/useGraduationSummary";
 import { getEffectiveSemesterCount } from "@/lib/interview-target";
 import { roadmapStagesApi } from "@/lib/bkend";
 import {
@@ -392,6 +395,10 @@ export default function SemesterRoadmap() {
   const isAlumni = !!(user as { isAlumni?: boolean } | null)?.isAlumni;
   const isLoggedIn = !!user;
 
+  // 졸업요건 요약 (본인 화면 전용 — H3 연동 위젯)
+  const { summary: gradSummary, remainingCount: gradRemaining, unmetItems: gradUnmet } =
+    useGraduationSummary(user?.id);
+
   // Firestore 에서 운영진이 관리하는 stage 들 불러오기 (없으면 fallback)
   const [stages, setStages] = useState<RoadmapItem[]>(STATIC_FALLBACK);
   useEffect(() => {
@@ -469,6 +476,47 @@ export default function SemesterRoadmap() {
           </div>
         )}
       </div>
+
+      {/* ── 졸업요건 요약 위젯 (H3 — 본인 화면 전용, 데이터 부족 시 조용히 숨김) ── */}
+      {isLoggedIn && gradSummary && (
+        <Link
+          href="/mypage#graduation-checklist"
+          className="mb-4 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/50 px-4 py-3 transition-colors hover:bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/30"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+            <GraduationCap size={16} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-bold">졸업요건 충족률</p>
+              <span className="text-sm font-bold tabular-nums text-emerald-700 dark:text-emerald-300">
+                {gradSummary.percent}%
+              </span>
+            </div>
+            {gradSummary.allMet ? (
+              <p className="mt-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
+                모든 졸업요건을 충족했습니다 🎓
+              </p>
+            ) : (
+              <div className="mt-1 flex flex-wrap items-center gap-1">
+                <span className="text-[11px] text-muted-foreground">남은 요건 {gradRemaining}개 ·</span>
+                {gradUnmet.slice(0, 4).map((it) => (
+                  <span
+                    key={it.key}
+                    className="inline-flex items-center rounded-full bg-card px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
+                  >
+                    {it.label}
+                    {it.shortfall ? ` ${it.shortfall}학점` : ""}
+                  </span>
+                ))}
+                {gradUnmet.length > 4 && (
+                  <span className="text-[10px] text-muted-foreground">+{gradUnmet.length - 4}</span>
+                )}
+              </div>
+            )}
+          </div>
+        </Link>
+      )}
 
       {/* ── 전체 진행률 요약 (Mastery Learning — Bloom, 1968) ── */}
       {isLoggedIn && overallProgress.total > 0 && (

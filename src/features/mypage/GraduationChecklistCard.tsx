@@ -6,27 +6,14 @@
  * 요건 문서(graduation_requirements/default)가 없으면 코드 기본값(DEFAULT_GRADUATION_REQUIREMENT)으로 폴백.
  */
 
-import { useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { GraduationCap, Check, ChevronDown, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import {
-  courseEnrollmentsApi,
-  courseOfferingsApi,
-  comprehensiveExamsApi,
-  graduationRequirementsApi,
-  graduationProgressApi,
-} from "@/lib/bkend";
-import {
-  DEFAULT_GRADUATION_REQUIREMENT,
-  type GraduationRequirement,
-  type GraduationProgress,
-  type CourseEnrollment,
-  type CourseOffering,
-  type ComprehensiveExamRecord,
-} from "@/types";
-import { computeGraduationProgress } from "@/lib/graduation-progress";
+import { graduationProgressApi } from "@/lib/bkend";
+import { type GraduationProgress } from "@/types";
+import { useGraduationSummary } from "./useGraduationSummary";
 
 interface Props {
   userId: string;
@@ -37,67 +24,7 @@ export default function GraduationChecklistCard({ userId }: Props) {
   const [expandedRule, setExpandedRule] = useState<string | null>(null);
   const [savingKey, setSavingKey] = useState<string | null>(null);
 
-  const { data: requirement } = useQuery({
-    queryKey: ["graduation-requirement"],
-    queryFn: async (): Promise<GraduationRequirement> => {
-      const doc = await graduationRequirementsApi.getDefault();
-      return doc ?? { id: "default", ...DEFAULT_GRADUATION_REQUIREMENT };
-    },
-    staleTime: 5 * 60_000,
-  });
-
-  const { data: enrollments = [], isLoading: loadingEnrollments } = useQuery({
-    queryKey: ["graduation-enrollments", userId],
-    queryFn: async () =>
-      (await courseEnrollmentsApi.listByUser(userId)).data as unknown as CourseEnrollment[],
-    enabled: !!userId,
-    staleTime: 60_000,
-  });
-
-  const courseIds = useMemo(
-    () => Array.from(new Set(enrollments.map((e) => e.courseOfferingId).filter(Boolean))).sort(),
-    [enrollments]
-  );
-
-  const { data: offeringsById = new Map<string, CourseOffering>() } = useQuery({
-    queryKey: ["graduation-offerings", courseIds.join(",")],
-    queryFn: async () => {
-      const map = new Map<string, CourseOffering>();
-      const results = await Promise.all(
-        courseIds.map(async (id) => {
-          try {
-            return (await courseOfferingsApi.get(id)) as unknown as CourseOffering;
-          } catch {
-            return null;
-          }
-        })
-      );
-      for (const o of results) if (o) map.set(o.id, o);
-      return map;
-    },
-    enabled: courseIds.length > 0,
-    staleTime: 5 * 60_000,
-  });
-
-  const { data: examRecords = [] } = useQuery({
-    queryKey: ["graduation-exams", userId],
-    queryFn: async () =>
-      (await comprehensiveExamsApi.listByUser(userId)).data as unknown as ComprehensiveExamRecord[],
-    enabled: !!userId,
-    staleTime: 60_000,
-  });
-
-  const { data: progress = null } = useQuery({
-    queryKey: ["graduation-progress", userId],
-    queryFn: () => graduationProgressApi.get(userId),
-    enabled: !!userId,
-    staleTime: 30_000,
-  });
-
-  const summary = useMemo(() => {
-    if (!requirement) return null;
-    return computeGraduationProgress(requirement, enrollments, offeringsById, examRecords, progress);
-  }, [requirement, enrollments, offeringsById, examRecords, progress]);
+  const { requirement, summary, progress, loadingEnrollments } = useGraduationSummary(userId);
 
   async function toggleMilestone(key: string, next: boolean) {
     if (savingKey) return;
@@ -120,7 +47,7 @@ export default function GraduationChecklistCard({ userId }: Props) {
   if (!requirement || !summary) return null;
 
   return (
-    <div className="rounded-2xl border-2 border-emerald-200/60 bg-gradient-to-br from-emerald-50 to-emerald-100/60 p-5 dark:border-emerald-800/40 dark:from-emerald-950/20 dark:to-emerald-900/10">
+    <div id="graduation-checklist" className="scroll-mt-24 rounded-2xl border-2 border-emerald-200/60 bg-gradient-to-br from-emerald-50 to-emerald-100/60 p-5 dark:border-emerald-800/40 dark:from-emerald-950/20 dark:to-emerald-900/10">
       <div className="flex items-start gap-4">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-200/40 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
           <GraduationCap size={22} />

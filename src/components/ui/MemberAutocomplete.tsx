@@ -6,7 +6,7 @@ import { useAllMembers } from "@/features/member/useMembers";
 import { Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface SelectedMember {
+export interface SelectedMember {
   id: string;
   name: string;
   studentId?: string;

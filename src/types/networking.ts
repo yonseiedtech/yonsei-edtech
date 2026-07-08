@@ -67,6 +67,11 @@ export interface NetworkingEvent {
    * 남아 있는 레거시 값은 수정 시 매핑 문서로 이관 후 deleteField 로 제거된다.
    */
   shareToken?: string;
+  /**
+   * 비공개 모임 초대 알림 발송 대상 회원 id 목록 (H2, 2026-07-08).
+   * 이미 초대 알림을 보낸 회원을 기록해 재발송을 막는다.
+   */
+  invitedUserIds?: string[];
   status: NetworkingEventStatus;
   published: boolean;
   createdBy: string;

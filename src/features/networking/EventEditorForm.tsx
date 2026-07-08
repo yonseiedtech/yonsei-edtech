@@ -13,6 +13,9 @@ import { Input } from "@/components/ui/input";
 import { deleteField } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 import { networkingEventsApi, eventTokensApi } from "@/lib/bkend";
+import MemberAutocomplete, { type SelectedMember } from "@/components/ui/MemberAutocomplete";
+import { useAllMembers } from "@/features/member/useMembers";
+import { notifyGatheringInvite } from "@/features/notifications/notify";
 import {
   NETWORKING_EVENT_TYPE_LABELS,
   NETWORKING_EVENT_STATUS_LABELS,
@@ -103,6 +106,12 @@ export default function EventEditorForm({
   const [copied, setCopied] = useState(false);
   const set = <K extends keyof EventForm>(k: K, v: EventForm[K]) => setForm((p) => ({ ...p, [k]: v }));
 
+  // H2(2026-07-08): 비공개 모임 초대 알림 — 신규 초대 대상 선택 및 기존 초대자 표시
+  const { members: allMembers } = useAllMembers();
+  const existingInvitedIds = initial?.invitedUserIds ?? [];
+  const existingInvitedMembers = allMembers.filter((m) => existingInvitedIds.includes(m.id));
+  const [inviteSelections, setInviteSelections] = useState<SelectedMember[]>([]);
+
   async function copyShareLink() {
     if (!shareLink) return;
     try {
@@ -186,6 +195,18 @@ export default function EventEditorForm({
       // private 이면 토큰 매핑을 기록(upsert — idempotent). 레거시 값도 여기로 이관된다.
       if (isPrivate && token) {
         await eventTokensApi.create(token, { eventId, createdBy: createdByUid });
+      }
+      // H2(2026-07-08): 새로 선택한 초대 대상에게만 인앱 알림 발송 — 이미 초대된 회원은
+      // MemberAutocomplete excludeIds 로 선택지에서 걸러지므로 재발송되지 않는다.
+      if (isPrivate && token && inviteSelections.length > 0) {
+        const newInviteIds = inviteSelections.map((m) => m.id);
+        await Promise.all(
+          newInviteIds.map((uid) => notifyGatheringInvite(uid, form.title.trim(), token as string)),
+        );
+        await networkingEventsApi.update(eventId, {
+          invitedUserIds: Array.from(new Set([...existingInvitedIds, ...newInviteIds])),
+        });
+        setInviteSelections([]);
       }
       toast.success("저장되었습니다.");
       if (isPrivate && token) {
@@ -313,9 +334,56 @@ export default function EventEditorForm({
             ))}
           </div>
           {form.visibility === "private" && (
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              목록·캘린더·갤러리에 노출되지 않고, 공유 링크를 가진 사람만 접근합니다.
-            </p>
+            <>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                목록·캘린더·갤러리에 노출되지 않고, 공유 링크를 가진 사람만 접근합니다.
+              </p>
+              <div className="mt-3">
+                <span className="text-muted-foreground">초대할 회원</span>
+                {existingInvitedMembers.length > 0 && (
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {existingInvitedMembers.map((m) => (
+                      <span
+                        key={m.id}
+                        className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[11px] text-muted-foreground"
+                      >
+                        {m.name} · 초대됨
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {inviteSelections.length > 0 && (
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {inviteSelections.map((m) => (
+                      <span
+                        key={m.id}
+                        className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-200"
+                      >
+                        {m.name}
+                        <button
+                          type="button"
+                          onClick={() => setInviteSelections((p) => p.filter((s) => s.id !== m.id))}
+                          className="hover:text-red-500"
+                          aria-label="선택 해제"
+                        >
+                          <X size={10} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <MemberAutocomplete
+                  value=""
+                  onSelect={(m) => setInviteSelections((p) => [...p, { id: m.id, name: m.name, studentId: m.studentId }])}
+                  excludeIds={[...existingInvitedIds, ...inviteSelections.map((s) => s.id)]}
+                  placeholder="초대할 회원 검색"
+                  className="mt-1.5"
+                />
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  저장 시 새로 선택한 회원에게 초대 알림(공유 링크 포함)이 발송됩니다.
+                </p>
+              </div>
+            </>
           )}
         </div>
         <label className="flex items-center gap-2 text-xs">

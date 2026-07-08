@@ -196,6 +196,17 @@ export function notifyWaitlistPromoted(
   );
 }
 
+/** 비공개 모임 초대 — H2(2026-07-08). 기존 networking_reminder 타입 재사용(최소 diff). */
+export function notifyGatheringInvite(userId: string, eventTitle: string, token: string) {
+  return create(
+    userId,
+    "networking_reminder",
+    "모임 초대",
+    `"${eventTitle}" 모임에 초대되었습니다`,
+    `/gatherings/p/${token}`,
+  );
+}
+
 export function notifySeminarReminder(
   userId: string,
   seminarTitle: string,

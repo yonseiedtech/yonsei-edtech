@@ -32,6 +32,7 @@ import {
 } from "@/lib/bkend";
 import { parseSchedule } from "@/lib/courseSchedule";
 import { inferCurrentSemester } from "@/lib/semester";
+import { useGraduationSummary } from "@/features/mypage/useGraduationSummary";
 import {
   type CourseEnrollment,
   type CourseOffering,
@@ -297,6 +298,9 @@ export default function NextActionBanner() {
 
   const top = candidates[0];
 
+  // ── 졸업요건 미달 넛지 (최저 우선순위: 시간 임박 액션이 없을 때만) ──
+  const { remainingCount, topUnmet } = useGraduationSummary(userId);
+
   if (!user) return null;
 
   // 숨김 상태일 때는 작은 "다시 보기" 버튼만
@@ -316,7 +320,53 @@ export default function NextActionBanner() {
     );
   }
 
-  if (!top) return null;
+  // 시간 임박 액션이 없을 때만 졸업요건 넛지를 노출 (능동 리마인더)
+  if (!top) {
+    if (remainingCount <= 0 || !topUnmet) return null;
+    return (
+      <div className="mx-auto max-w-6xl px-4">
+        <Link
+          href="/mypage#graduation-checklist"
+          className="group flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50/50 px-3 py-1.5 shadow-sm transition-colors hover:bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/30 sm:gap-3 sm:py-2"
+          role="status"
+          aria-label={`졸업요건 ${remainingCount}개 남음 · 마이페이지 체크표로 이동`}
+        >
+          <div
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+            aria-hidden="true"
+          >
+            <GraduationCap size={14} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5">
+              <span className="truncate text-sm font-semibold text-foreground">
+                졸업요건 {remainingCount}개 남음
+              </span>
+              <span className="shrink-0 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                체크표
+              </span>
+            </div>
+            <p className="truncate text-[11px] text-muted-foreground">
+              <span>최다 부족</span>
+              <span className="mx-1" aria-hidden="true">·</span>
+              <span className="font-medium">{topUnmet.label}</span>
+              {topUnmet.shortfall ? (
+                <>
+                  <span className="mx-1" aria-hidden="true">·</span>
+                  <span className="tabular-nums">{topUnmet.shortfall}학점 부족</span>
+                </>
+              ) : null}
+            </p>
+          </div>
+          <ChevronRight
+            size={14}
+            className="shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+            aria-hidden="true"
+          />
+        </Link>
+      </div>
+    );
+  }
 
   const diffMs = top.startAt.getTime() - now.getTime();
   const remainingLabel = formatRemaining(diffMs);
