@@ -131,8 +131,13 @@ export async function POST(req: NextRequest) {
         waitlistPosition = ahead + 1;
       }
 
-      // G2 승격: 본인 변경으로 참석 좌석이 줄어 빈자리가 생기면 승격한다.
-      const promoted = cap !== null && effectiveStatus !== "attending" ? promoteFrom(cap - attendingSeats) : [];
+      // G2/M2 승격: 본인 변경 후 "실제 빈 좌석"을 계산해 승격한다.
+      // M2(2026-07-09): 예전에는 effectiveStatus!=="attending" 일 때만 승격을 돌려, attending 을
+      // 유지한 채 동반인만 줄인 경우(예: 4석→1석) 생긴 빈자리가 방치됐다. 본인이 attending 이면
+      // 본인 좌석(1+companions)을 차감하고 남는 free>0 이면 승격을 트리거하도록 조건을 바꾼다.
+      const mySeats = effectiveStatus === "attending" ? 1 + companions : 0;
+      const freeSeats = cap !== null ? cap - attendingSeats - mySeats : 0;
+      const promoted = cap !== null && freeSeats > 0 ? promoteFrom(freeSeats) : [];
 
       return {
         ok: true,
@@ -148,6 +153,24 @@ export async function POST(req: NextRequest) {
 
     if ("error" in result && result.error) {
       return NextResponse.json({ error: result.error }, { status: result.status ?? 400 });
+    }
+
+    // M1(2026-07-09): 참석 이탈(철회·불참·미정·대기 강등) 시 본인 unpaid due 정리.
+    // 예전에는 autoDues 로 생성된 회비가 철회/전환 후에도 unpaid 로 남아 마이페이지 미납 배지·
+    // D+3 독촉이 참석하지 않는 회원에게 발송되고 통계(회수율·total)도 오염됐다.
+    // 삭제 대상은 본인(userId) · unpaid 만 — paid·exempt 는 보존, autoDues 여부와 무관(콘솔 수동 생성분 포함).
+    if (result.effectiveStatus !== "attending") {
+      const unpaidDues = await db
+        .collection("networking_dues")
+        .where("eventId", "==", eventId)
+        .where("userId", "==", auth.id)
+        .where("status", "==", "unpaid")
+        .get();
+      if (!unpaidDues.empty) {
+        const batch = db.batch();
+        unpaidDues.docs.forEach((d) => batch.delete(d.ref));
+        await batch.commit();
+      }
     }
 
     // 승격된 회원(userId 보유)에게 인앱 알림 — 게스트는 인앱 계정이 없어 스킵(콘솔 명단에 참석으로 표시).
@@ -184,14 +207,19 @@ export async function POST(req: NextRequest) {
     if (result.autoDues && result.feeAmount > 0) {
       const duesCol = db.collection("networking_dues");
       const ensureDue = async (userId: string, displayName: string) => {
+        // 레거시(랜덤 id) due 가 이미 있으면 스킵 — 콘솔 dueByKey(userId 기준 dedupe)와 이중 생성 방지.
         const existing = await duesCol
           .where("eventId", "==", eventId)
           .where("userId", "==", userId)
           .limit(1)
           .get();
         if (!existing.empty) return;
+        // M4(2026-07-09): deterministic doc id(`${eventId}__${userId}`) + create 로 멱등 생성.
+        // read-then-add 는 원자성이 없어 동시 요청(네트워크 재시도, 본인 확정+승격 경로 중첩)이
+        // 각각 existing.empty=true 를 읽고 둘 다 add → 같은 회원 due 2행이 생겼다. deterministic id
+        // 로 만들면 동시 create 중 하나만 성공하고 나머지는 ALREADY_EXISTS 로 실패(아래 catch 로 무시).
         const dueNow = new Date().toISOString();
-        await duesCol.add({
+        await duesCol.doc(`${eventId}__${userId}`).create({
           eventId,
           userId,
           displayName,

@@ -112,20 +112,25 @@ export async function GET(req: NextRequest) {
             eventId: doc.id,
           });
         }
+      }
 
-        // 행사 당일: 학습 잔디 가산점 멱등 적립 (deterministic doc id)
-        // G3(2026-07-08): 실참석 기준 전환 — 체크인(attendedAt)이 하나라도 기록된 이벤트는
-        // "엄격 모드"로 체크인한 회원에게만 적립하고, 아무도 체크인하지 않은(체크인 기능 미사용) 이벤트는
-        // 하위호환으로 기존처럼 attending 전원 적립한다.
-        // 주의: 이 cron 은 매일 09:00 실행이라 저녁 행사의 현장 체크인은 이 시점에 아직 없을 수 있다.
-        // 그런 이벤트는 자연히 "체크인 없음 → 전원 적립"(하위호환)으로 처리된다.
+      // ── 3-a) 행사 D+1 → 실참석 학습 잔디 가산점 멱등 적립 (H1, 2026-07-09) ──
+      // 과거: 당일(D+0) 09:00 cron 에서 적립했다. 그러나 저녁 행사는 이 시점에 현장 체크인이
+      // 아직 없어 anyCheckedIn=false → 하위호환(전원 적립) 분기로 귀결됐고, deterministic id +
+      // merge 라 저녁에 노쇼가 확정돼도 회수가 불가능해 엄격 모드가 사실상 무력화됐다.
+      // 해결: 적립을 D+1(행사 다음날)로 이동해 현장 체크인이 모두 기록된 뒤 평가한다.
+      //   - 체크인(attendedAt) 1건 이상 → 실제 체크인한 회원에게만 적립(엄격 모드 실동작)
+      //   - 하나도 없음(체크인 기능 미사용 행사) → 하위호환으로 attending 전원 적립
+      // 멱등 doc id 는 행사 기준(${userId}__networking-attend__${eventId})이라 적립 시점을
+      // 옮겨도 중복 적립되지 않는다(ymd 도 eventDate 로 유지).
+      if (eventDate === yesterday) {
         const attendingRsvps = rsvps.filter((r) => r.status === "attending");
         const anyCheckedIn = attendingRsvps.some((r) => r.attendedAt);
         const streakTargets = (anyCheckedIn
           ? attendingRsvps.filter((r) => r.attendedAt)
           : attendingRsvps
         ).map((r) => r.userId as string);
-        if (daysLeft === 0 && streakTargets.length > 0) {
+        if (streakTargets.length > 0) {
           const batch = db.batch();
           const nowIso = new Date().toISOString();
           for (const userId of streakTargets) {
@@ -144,7 +149,7 @@ export async function GET(req: NextRequest) {
         }
       }
 
-      // ── 3) 행사 D+1 → attending 회원 후기 요청 (Phase 2-D) ──────────────
+      // ── 3-b) 행사 D+1 → attending 회원 후기 요청 (Phase 2-D) ──────────────
       if (eventDate === yesterday && gatheringsLink) {
         const targets = rsvps.filter((r) => r.status === "attending").map((r) => r.userId as string);
         // #past-gatherings 앵커는 공개 목록 페이지 전용 — 비공개(공유 토큰) 페이지엔 없음
