@@ -8,11 +8,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { CalendarDays, MapPin, Wallet, Clock, Check, Camera, Lock, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { eventTokensApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import {
   NETWORKING_EVENT_TYPE_LABELS,
@@ -71,10 +73,20 @@ export default function GatheringEventCard({
   const isPollPending = ev.schedulingMode === "poll" && !ev.startAt;
   const isPrivate = ev.visibility === "private";
 
+  // High-1(2026-07-08): 공유 토큰은 networking_event_tokens 매핑에서 조회(staff 만 list 가능).
+  // 레거시 이벤트 문서의 shareToken 필드가 있으면 폴백.
+  const { data: tokenMapping } = useQuery({
+    queryKey: ["networking-event-token", ev.id],
+    queryFn: async () => (await eventTokensApi.listByEvent(ev.id)).data[0] ?? null,
+    enabled: !!canManage && isPrivate,
+    staleTime: 5 * 60_000,
+  });
+  const shareToken = tokenMapping?.id ?? ev.shareToken;
+
   async function copyShareLink() {
-    if (!ev.shareToken) return;
+    if (!shareToken) return;
     try {
-      await navigator.clipboard.writeText(`${window.location.origin}/gatherings/p/${ev.shareToken}`);
+      await navigator.clipboard.writeText(`${window.location.origin}/gatherings/p/${shareToken}`);
       toast.success("공유 링크를 복사했습니다.");
     } catch {
       toast.error("복사에 실패했습니다.");
@@ -171,7 +183,7 @@ export default function GatheringEventCard({
           </div>
           <h3 className="mt-1.5 text-base font-bold leading-snug">{ev.title}</h3>
         </div>
-        {isPrivate && canManage && ev.shareToken && (
+        {isPrivate && canManage && shareToken && (
           <Button size="sm" variant="outline" className="h-7 shrink-0 text-xs" onClick={copyShareLink}>
             <Copy size={12} className="mr-1" /> 링크 복사
           </Button>

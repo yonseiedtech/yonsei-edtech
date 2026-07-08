@@ -20,7 +20,7 @@ import { FALLBACK_AI_PERSONA,
 import { DEMO_FORUM_TOPICS } from "@/features/ai-forum/demo-data";
 
 const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
-  scheduled: { label: "예정", cls: "bg-slate-100 text-slate-700" },
+  scheduled: { label: "예정", cls: "bg-muted text-muted-foreground" },
   in_progress: {
     label: "진행 중",
     cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",

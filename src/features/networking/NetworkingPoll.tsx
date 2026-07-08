@@ -24,6 +24,7 @@ import {
   tallyAvailability,
   bestSlots,
   formatSlotLabel,
+  resolveSlotStartAt,
 } from "@/features/networking/networking-utils";
 
 interface Props {
@@ -227,9 +228,8 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
   /** 운영진 확정 → startAt 지정 + fixed 전환 (기존 로직 유지) */
   const confirmM = useMutation({
     mutationFn: async (slot: string) => {
-      const [date, time] = slot.split("|");
-      // 시간대가 있으면 그 시각, 없으면 18:00 기본
-      const startAt = new Date(`${date}T${time ?? "18:00"}:00`).toISOString();
+      // "HH:MM" 형식이 아닌 자유 텍스트 시간대("저녁" 등)는 18:00 기본값으로 안전 폴백
+      const startAt = resolveSlotStartAt(slot);
       const now = new Date().toISOString();
       await networkingEventsApi.update(event.id, {
         startAt,

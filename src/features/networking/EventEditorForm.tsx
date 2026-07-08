@@ -10,8 +10,9 @@ import { toast } from "sonner";
 import { X, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { deleteField } from "firebase/firestore";
 import { cn } from "@/lib/utils";
-import { networkingEventsApi } from "@/lib/bkend";
+import { networkingEventsApi, eventTokensApi } from "@/lib/bkend";
 import {
   NETWORKING_EVENT_TYPE_LABELS,
   NETWORKING_EVENT_STATUS_LABELS,
@@ -137,14 +138,25 @@ export default function EventEditorForm({
     try {
       const now = new Date().toISOString();
       const isPrivate = form.visibility === "private";
-      // private 생성 시 토큰 자동 생성 · 수정 시 기존 토큰 보존
-      const shareToken = isPrivate ? (initial?.shareToken ?? crypto.randomUUID()) : undefined;
+      // High-1(2026-07-08): 공유 토큰은 이벤트 문서가 아니라 networking_event_tokens 에만 기록한다.
+      // 토큰 값 결정: 레거시 shareToken(이관 대상) → 기존 매핑 → 신규 uuid.
+      let token: string | null = null;
+      if (isPrivate) {
+        if (initial?.shareToken) {
+          token = initial.shareToken; // 레거시 값 재사용(링크 불변) — 아래에서 이벤트 문서엔 deleteField
+        } else if (initial?.id) {
+          const existing = await eventTokensApi.listByEvent(initial.id);
+          token = existing.data[0]?.id ?? crypto.randomUUID();
+        } else {
+          token = crypto.randomUUID();
+        }
+      }
       const payload = {
         type: form.type, title: form.title.trim(), description: form.description.trim() || undefined,
         schedulingMode: form.schedulingMode,
-        // poll 모드는 일시 입력을 노출하지 않으므로 startAt이 빈 문자열로 남음.
-        // gatherings 카드가 startAt 유무로 투표/확정을 분기한다.
-        startAt: localToIso(form.startAt),
+        // Medium-1(2026-07-08): poll 모드는 startAt 을 반드시 비운다(고정→poll 전환 시 잔존 startAt 이
+        // 투표 UI 를 숨기는 버그 차단). gatherings 카드가 startAt 유무로 투표/확정을 분기한다.
+        startAt: isPoll ? "" : localToIso(form.startAt),
         pollPeriodStart: isPoll ? form.pollPeriodStart : undefined,
         pollPeriodEnd: isPoll ? form.pollPeriodEnd : undefined,
         pollTimeSlots: isPoll ? parseTimeSlots(form.pollTimeSlots) : undefined,
@@ -157,18 +169,28 @@ export default function EventEditorForm({
         hostName: form.hostName.trim() || undefined,
         semester: form.semester.trim() || undefined,
         visibility: form.visibility,
-        shareToken,
+        // 레거시 shareToken 필드가 남아 있으면 제거(마이그레이션) — 없으면 저장하지 않음.
+        shareToken: initial?.shareToken
+          ? (deleteField() as unknown as string | undefined)
+          : undefined,
         status: form.status, published: form.published, updatedAt: now,
       };
+      let eventId: string;
       if (initial) {
         await networkingEventsApi.update(initial.id, payload);
+        eventId = initial.id;
       } else {
-        await networkingEventsApi.create({ ...payload, createdBy: createdByUid, createdAt: now } as Omit<NetworkingEvent, "id">);
+        const created = await networkingEventsApi.create({ ...payload, createdBy: createdByUid, createdAt: now } as Omit<NetworkingEvent, "id">);
+        eventId = created.id;
+      }
+      // private 이면 토큰 매핑을 기록(upsert — idempotent). 레거시 값도 여기로 이관된다.
+      if (isPrivate && token) {
+        await eventTokensApi.create(token, { eventId, createdBy: createdByUid });
       }
       toast.success("저장되었습니다.");
-      if (isPrivate && shareToken) {
+      if (isPrivate && token) {
         // 링크 복사 패널을 유지하고, 닫을 때(onSaved) 목록을 새로고침
-        setShareLink(`${window.location.origin}/gatherings/p/${shareToken}`);
+        setShareLink(`${window.location.origin}/gatherings/p/${token}`);
       } else {
         onSaved();
       }

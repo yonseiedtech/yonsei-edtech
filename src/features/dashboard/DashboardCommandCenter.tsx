@@ -46,7 +46,11 @@ export default function DashboardCommandCenter() {
   // 대학원 생활
   const { data: events = [] } = useQuery({
     queryKey: ["dashboard-networking-events"],
-    queryFn: async () => (await networkingEventsApi.listPublished()).data as NetworkingEvent[],
+    queryFn: async () =>
+      // 비공개(unlisted) 모임은 대시보드 집계·임박 배지에서 제외 (codex 리뷰 High-2)
+      ((await networkingEventsApi.listPublished()).data as NetworkingEvent[]).filter(
+        (e) => e.visibility !== "private",
+      ),
     staleTime: 3 * 60_000,
   });
   const { data: positions = [] } = useQuery({

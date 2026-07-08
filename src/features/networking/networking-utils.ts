@@ -3,6 +3,8 @@
 
 import type { NetworkingAvailability, SlotTally } from "@/types";
 
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
 /** 기간 내 날짜 목록 (YYYY-MM-DD, 양끝 포함) */
 export function listDates(startDate: string, endDate: string): string[] {
   const out: string[] = [];
@@ -10,8 +12,10 @@ export function listDates(startDate: string, endDate: string): string[] {
   const s = new Date(`${startDate}T00:00:00`);
   const e = new Date(`${endDate}T00:00:00`);
   if (isNaN(s.getTime()) || isNaN(e.getTime()) || e < s) return out;
+  // codex 리뷰(2026-07-08): toISOString() 은 UTC 변환 — KST 등 UTC+ 지역에서 날짜가 하루
+  // 앞당겨지는 버그. ScheduleSelector.tsx listDates 와 동일하게 로컬 필드 조립으로 수정.
   for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
-    out.push(d.toISOString().slice(0, 10));
+    out.push(`${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`);
   }
   return out;
 }
@@ -64,4 +68,17 @@ export function formatSlotLabel(slot: string): string {
   const dow = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
   const base = `${d.getMonth() + 1}/${d.getDate()}(${dow})`;
   return time ? `${base} ${time}` : base;
+}
+
+/**
+ * 슬롯 → 확정 시각(ISO). 운영진 수동 확정(NetworkingPoll.tsx confirmM)과 cron 자동 확정
+ * (cron/networking-reminder) 양쪽에서 공용으로 사용.
+ * codex 리뷰(2026-07-08): pollTimeSlots 는 EventEditorForm 에서 "저녁, 오후" 같은 자유 텍스트도
+ * 허용하므로 `new Date(\`\${date}T\${time}:00\`)` 가 RangeError 로 터질 수 있다.
+ * "HH:MM" 형식일 때만 사용하고, 아니면 18:00 기본값으로 안전 폴백한다.
+ */
+export function resolveSlotStartAt(slot: string): string {
+  const [date, time] = slot.split("|");
+  const safeTime = time && /^\d{1,2}:\d{2}$/.test(time) ? time : "18:00";
+  return new Date(`${date}T${safeTime}:00`).toISOString();
 }

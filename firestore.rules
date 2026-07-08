@@ -227,6 +227,17 @@ service cloud.firestore {
       allow read: if true;
       allow create, update, delete: if isAuthenticated() && isStaffOrAbove();
     }
+    // 비공개 모임 공유 토큰 매핑 (High-1 보안 핫픽스 2026-07-08):
+    // networking_events 는 공개 read 라 shareToken 을 이벤트 문서에 두면 SDK 쿼리로 열거(harvest)됨.
+    // 토큰을 별도 컬렉션(문서 id = 토큰, 추측 불가 uuid)으로 분리 —
+    //   get: 토큰을 아는 사람만 문서 id 로 접근(list 불가 → 열거 차단)
+    //   list: staff 만 eventId 역조회 허용
+    //   create/delete: staff 만. update 는 불허(토큰 변조 방지).
+    match /networking_event_tokens/{token} {
+      allow get: if true;
+      allow list: if isAuthenticated() && isStaffOrAbove();
+      allow create, delete: if isAuthenticated() && isStaffOrAbove();
+    }
     // 참석 신청: 게스트(비회원) 신청 허용(public create), 로그인 회원은 명단 read,
     //           본인(userId) 또는 staff 만 수정/삭제.
     match /networking_rsvps/{docId} {

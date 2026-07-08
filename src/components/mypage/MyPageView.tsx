@@ -925,7 +925,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                   activity: { icon: FolderKanban, bg: "bg-emerald-100 dark:bg-emerald-950/50", fg: "text-emerald-700 dark:text-emerald-300" },
                   seminar: { icon: Calendar, bg: "bg-primary/15", fg: "text-primary" },
                   certificate: { icon: Award, bg: "bg-amber-100 dark:bg-amber-950/50", fg: "text-amber-700 dark:text-amber-300" },
-                  post: { icon: FileText, bg: "bg-slate-100 dark:bg-slate-800", fg: "text-slate-700 dark:text-slate-300" },
+                  post: { icon: FileText, bg: "bg-muted", fg: "text-muted-foreground" },
                   interview: { icon: Mic, bg: "bg-blue-100 dark:bg-blue-950/50", fg: "text-blue-700 dark:text-blue-300" },
                 };
 
@@ -1085,7 +1085,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                 className="flex items-center justify-between rounded-2xl border bg-card px-5 py-4 transition hover:border-primary/40 hover:shadow-sm"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted text-muted-foreground">
                     <FileText size={20} />
                   </div>
                   <div>

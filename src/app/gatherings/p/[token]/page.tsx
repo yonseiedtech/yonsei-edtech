@@ -17,7 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/ui/empty-state";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isStaffOrAbove } from "@/lib/permissions";
-import { networkingEventsApi, networkingRsvpsApi, networkingDuesApi, albumsApi } from "@/lib/bkend";
+import { networkingEventsApi, eventTokensApi, networkingRsvpsApi, networkingDuesApi, albumsApi } from "@/lib/bkend";
 import type { NetworkingEvent, NetworkingRsvp, NetworkingDue, PhotoAlbum } from "@/types";
 import GatheringEventCard from "@/features/networking/GatheringEventCard";
 
@@ -32,6 +32,16 @@ export default function PrivateGatheringPage() {
   const { data: event, isLoading } = useQuery({
     queryKey: ["networking-event-by-token", token],
     queryFn: async () => {
+      // High-1(2026-07-08): 신규 경로 — 토큰 매핑(networking_event_tokens) → eventId → 이벤트.
+      const mapping = await eventTokensApi.get(token);
+      if (mapping?.eventId) {
+        try {
+          return await networkingEventsApi.get(mapping.eventId);
+        } catch {
+          /* 이벤트가 삭제됐으면 아래 레거시 폴백으로 */
+        }
+      }
+      // 레거시 폴백 — 이벤트 문서의 shareToken 필드로 조회(마이그레이션 전 데이터).
       const res = await networkingEventsApi.getByToken(token);
       return (res.data as NetworkingEvent[])[0] ?? null;
     },

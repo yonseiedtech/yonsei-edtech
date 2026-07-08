@@ -298,7 +298,8 @@ export async function GET(req: NextRequest) {
             status?: string;
             published?: boolean;
           };
-          // poll 미확정(startAt 빈 값)·취소·비공개 행사는 제외
+          // poll 미확정(startAt 빈 값)·취소·미게시(published=false) 행사는 제외.
+          // visibility="private"(링크 공유 모임)는 의도적으로 포함 — 본인이 RSVP한 개인 캘린더이므로.
           if (!n.title || !n.startAt || n.status === "cancelled" || n.published === false) continue;
 
           const dateOnly = toIcsDate(n.startAt);

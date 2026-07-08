@@ -96,10 +96,11 @@ export default function ConsoleNetworkingPage() {
                   <span className="text-[11px] font-medium text-muted-foreground">
                     {NETWORKING_EVENT_TYPE_LABELS[ev.type]} · {NETWORKING_EVENT_STATUS_LABELS[ev.status]}
                   </span>
-                  {!ev.published && <span className="rounded bg-rose-50 px-1.5 text-[10px] text-rose-600">비공개</span>}
+                  {!ev.published && <span className="rounded bg-rose-50 px-1.5 text-[10px] text-rose-600">미게시</span>}
+                  {ev.visibility === "private" && <span className="rounded bg-violet-50 px-1.5 text-[10px] text-violet-600">비공개 링크</span>}
                 </div>
                 <p className="mt-1 truncate text-sm font-semibold">{ev.title}</p>
-                <p className="text-[11px] text-muted-foreground">{formatEventDate(ev.startAt)} · 회비 {formatWon(ev.feeAmount)}</p>
+                <p className="text-[11px] text-muted-foreground">{ev.startAt ? formatEventDate(ev.startAt) : "일정 투표 중"} · 회비 {formatWon(ev.feeAmount)}</p>
               </button>
             ))}
           </div>

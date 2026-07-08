@@ -60,7 +60,12 @@ export interface NetworkingEvent {
    * firestore.rules read 는 공개(if true) 유지 — 노출 제어는 클라이언트 필터 + 토큰 URL.
    */
   visibility?: "public" | "private";
-  /** private 일 때만 존재 — 공유 링크 토큰 (/gatherings/p/{shareToken}) */
+  /**
+   * @deprecated (High-1 보안 핫픽스 2026-07-08) 레거시 호환용 — 신규 저장 금지.
+   * networking_events 는 공개 read 라 이 필드에 토큰을 두면 SDK 쿼리로 열거된다.
+   * 토큰은 `networking_event_tokens/{token}` 컬렉션(NetworkingEventToken)에만 기록한다.
+   * 남아 있는 레거시 값은 수정 시 매핑 문서로 이관 후 deleteField 로 제거된다.
+   */
   shareToken?: string;
   status: NetworkingEventStatus;
   published: boolean;
@@ -199,6 +204,21 @@ export interface NetworkingReview {
   rating: number;
   /** 한줄 후기 (선택) */
   content?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * 비공개 모임 공유 토큰 매핑 (High-1 보안 핫픽스 2026-07-08) — Firestore `networking_event_tokens`.
+ * 문서 id 가 곧 토큰(추측 불가 uuid). networking_events 의 공개 read 로 인한
+ * shareToken 열거를 차단하기 위해 토큰↔eventId 매핑을 별도 컬렉션에 분리한다.
+ * get 은 토큰을 아는 사람만(문서 id 지정), list(열거)는 staff 만 허용.
+ */
+export interface NetworkingEventToken {
+  /** 문서 id === 공유 토큰 */
+  id: string;
+  eventId: string;
+  createdBy: string;
   createdAt: string;
   updatedAt: string;
 }

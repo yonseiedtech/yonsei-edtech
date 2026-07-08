@@ -112,6 +112,7 @@ import type {
   CommContextType,
   CommLikeTarget,
   NetworkingEvent,
+  NetworkingEventToken,
   NetworkingRsvp,
   NetworkingReview,
   NetworkingDue,
@@ -529,7 +530,10 @@ export const networkingEventsApi = {
   listPublished: () =>
     dataApi.list<NetworkingEvent>("networking_events", { "filter[published]": true, limit: 200 }),
   get: (id: string) => dataApi.get<NetworkingEvent>("networking_events", id),
-  /** 비공개(private) 모임 공유 링크 접근 — shareToken 으로 단건 조회 */
+  /**
+   * @deprecated (High-1 2026-07-08) 레거시 폴백 전용 — 이벤트 문서의 shareToken 필드로 단건 조회.
+   * 신규 경로는 eventTokensApi.get(token) → networking_events.get(eventId) 를 사용한다.
+   */
   getByToken: (token: string) =>
     dataApi.list<NetworkingEvent>("networking_events", { "filter[shareToken]": token, limit: 1 }),
   create: (data: Omit<NetworkingEvent, "id">) =>
@@ -537,6 +541,27 @@ export const networkingEventsApi = {
   update: (id: string, data: Partial<NetworkingEvent>) =>
     dataApi.update<NetworkingEvent>("networking_events", id, data as unknown as Record<string, unknown>),
   remove: (id: string) => dataApi.delete("networking_events", id),
+};
+
+// ── 비공개 모임 공유 토큰 매핑 (High-1 보안 핫픽스 2026-07-08) ──
+// networking_events 공개 read 로 인한 shareToken 열거를 차단하기 위해
+// 토큰↔eventId 매핑을 별도 컬렉션(문서 id = 토큰)에 분리 저장한다.
+// firestore.rules networking_event_tokens 와 양쪽 게이트.
+export const eventTokensApi = {
+  /** 토큰(문서 id)으로 단건 조회 — 없으면 null. rules 상 get 은 누구나, list(열거)는 staff 만. */
+  get: async (token: string): Promise<NetworkingEventToken | null> => {
+    try {
+      return await dataApi.get<NetworkingEventToken>("networking_event_tokens", token);
+    } catch {
+      return null;
+    }
+  },
+  /** staff 역조회 — eventId 로 발급된 토큰 매핑 목록 */
+  listByEvent: (eventId: string) =>
+    dataApi.list<NetworkingEventToken>("networking_event_tokens", { "filter[eventId]": eventId, limit: 10 }),
+  /** 토큰 매핑 생성(upsert — 문서 id = 토큰, idempotent) */
+  create: (token: string, data: Omit<NetworkingEventToken, "id" | "createdAt" | "updatedAt">) =>
+    dataApi.upsert<NetworkingEventToken>("networking_event_tokens", token, data as unknown as Record<string, unknown>),
 };
 
 export const networkingRsvpsApi = {
