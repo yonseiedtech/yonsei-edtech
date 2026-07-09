@@ -113,6 +113,7 @@ import type {
   CommLikeTarget,
   NetworkingEvent,
   NetworkingEventToken,
+  NetworkingEventInvites,
   NetworkingRsvp,
   NetworkingReview,
   NetworkingDue,
@@ -562,6 +563,24 @@ export const eventTokensApi = {
   /** 토큰 매핑 생성(upsert — 문서 id = 토큰, idempotent) */
   create: (token: string, data: Omit<NetworkingEventToken, "id" | "createdAt" | "updatedAt">) =>
     dataApi.upsert<NetworkingEventToken>("networking_event_tokens", token, data as unknown as Record<string, unknown>),
+};
+
+// ── 비공개 모임 초대 명단 (Phase 4-A 프라이버시 핫픽스 2026-07-09) ──
+// networking_events 공개 read 로 인한 invitedUserIds 노출을 차단하기 위해
+// 초대한 회원 id 목록을 staff 전용 별도 컬렉션(문서 id = eventId)에 분리 저장한다.
+// firestore.rules networking_event_invites 와 양쪽 게이트(read/write staff 전용).
+export const eventInvitesApi = {
+  /** eventId(문서 id)로 초대 명단 조회 — 없으면 null. rules 상 staff 전용. */
+  get: async (eventId: string): Promise<NetworkingEventInvites | null> => {
+    try {
+      return await dataApi.get<NetworkingEventInvites>("networking_event_invites", eventId);
+    } catch {
+      return null;
+    }
+  },
+  /** 초대 명단 기록(upsert — 문서 id = eventId, idempotent). 누적 병합은 호출부에서 계산. */
+  upsert: (eventId: string, data: Omit<NetworkingEventInvites, "id" | "createdAt" | "updatedAt">) =>
+    dataApi.upsert<NetworkingEventInvites>("networking_event_invites", eventId, data as unknown as Record<string, unknown>),
 };
 
 export const networkingRsvpsApi = {

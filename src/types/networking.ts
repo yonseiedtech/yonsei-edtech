@@ -73,8 +73,10 @@ export interface NetworkingEvent {
    */
   shareToken?: string;
   /**
-   * 비공개 모임 초대 알림 발송 대상 회원 id 목록 (H2, 2026-07-08).
-   * 이미 초대 알림을 보낸 회원을 기록해 재발송을 막는다.
+   * @deprecated (Phase 4-A 프라이버시 핫픽스 2026-07-09) 레거시 호환용 — 신규 저장 금지.
+   * networking_events 는 공개 read 라 이 필드에 초대 명단을 두면 SDK 쿼리로 누구에게나 노출된다.
+   * 초대 명단은 `networking_event_invites/{eventId}` 컬렉션(NetworkingEventInvites)에만 기록한다.
+   * 남아 있는 레거시 값은 수정 시 invites 문서로 병합 후 deleteField 로 제거된다.
    */
   invitedUserIds?: string[];
   status: NetworkingEventStatus;
@@ -244,6 +246,22 @@ export interface NetworkingEventToken {
   id: string;
   eventId: string;
   createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * 비공개 모임 초대 명단 (Phase 4-A 프라이버시 핫픽스 2026-07-09) — Firestore `networking_event_invites`.
+ * 문서 id === eventId. networking_events 의 공개 read 로 인한 invitedUserIds 노출을 차단하기 위해
+ * 초대 알림을 보낸 회원 id 목록을 staff 전용 별도 컬렉션에 분리 저장한다(재발송 방지·누적 기록).
+ * read/write 모두 staff 전용 — 초대 발송·중복 방지는 staff 폼에서만 사용한다.
+ */
+export interface NetworkingEventInvites {
+  /** 문서 id === eventId */
+  id: string;
+  /** 이미 초대 알림을 보낸 회원 id 목록 (재발송 방지·누적) */
+  invitedUserIds: string[];
+  updatedBy: string;
   createdAt: string;
   updatedAt: string;
 }

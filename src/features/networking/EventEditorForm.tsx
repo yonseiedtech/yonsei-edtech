@@ -5,14 +5,14 @@
  * console(운영진 콘솔)과 /gatherings(staff+ 빠른 생성 다이얼로그) 양쪽에서 공용으로 사용.
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { X, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { deleteField } from "firebase/firestore";
 import { cn } from "@/lib/utils";
-import { networkingEventsApi, eventTokensApi, networkingRsvpsApi } from "@/lib/bkend";
+import { networkingEventsApi, eventTokensApi, eventInvitesApi, networkingRsvpsApi } from "@/lib/bkend";
 import MemberAutocomplete, { type SelectedMember } from "@/components/ui/MemberAutocomplete";
 import { useAllMembers } from "@/features/member/useMembers";
 import {
@@ -137,9 +137,29 @@ export default function EventEditorForm({
 
   // H2(2026-07-08): 비공개 모임 초대 알림 — 신규 초대 대상 선택 및 기존 초대자 표시
   const { members: allMembers } = useAllMembers();
-  const existingInvitedIds = initial?.invitedUserIds ?? [];
-  const existingInvitedMembers = allMembers.filter((m) => existingInvitedIds.includes(m.id));
   const [inviteSelections, setInviteSelections] = useState<SelectedMember[]>([]);
+  // Phase 4-A(2026-07-09): 초대 명단은 이벤트 문서가 아니라 networking_event_invites 에서 조회한다.
+  // 레거시 폴백 — 이벤트 문서에 남은 invitedUserIds 도 병합해 표시(수정 저장 시 invites 로 이관됨).
+  const [loadedInviteIds, setLoadedInviteIds] = useState<string[] | null>(null);
+  useEffect(() => {
+    if (!initial?.id) {
+      setLoadedInviteIds([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const invites = await eventInvitesApi.get(initial.id);
+      if (cancelled) return;
+      const fromDoc = invites?.invitedUserIds ?? [];
+      const legacy = initial.invitedUserIds ?? []; // 레거시(이벤트 문서 잔존) 병합
+      setLoadedInviteIds(Array.from(new Set([...fromDoc, ...legacy])));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [initial?.id, initial?.invitedUserIds]);
+  const existingInvitedIds = loadedInviteIds ?? initial?.invitedUserIds ?? [];
+  const existingInvitedMembers = allMembers.filter((m) => existingInvitedIds.includes(m.id));
 
   async function copyShareLink() {
     if (!shareLink) return;
@@ -228,6 +248,11 @@ export default function EventEditorForm({
         shareToken: initial?.shareToken
           ? (deleteField() as unknown as string | undefined)
           : undefined,
+        // Phase 4-A(2026-07-09): 레거시 invitedUserIds 가 이벤트 문서에 남아 있으면 제거(마이그레이션).
+        // 초대 명단은 아래에서 networking_event_invites 로 병합·이관한다.
+        invitedUserIds: initial?.invitedUserIds
+          ? (deleteField() as unknown as string[] | undefined)
+          : undefined,
         status: form.status, published: form.published, updatedAt: now,
       };
       let eventId: string;
@@ -249,15 +274,24 @@ export default function EventEditorForm({
       }
       // H2(2026-07-08): 새로 선택한 초대 대상에게만 인앱 알림 발송 — 이미 초대된 회원은
       // MemberAutocomplete excludeIds 로 선택지에서 걸러지므로 재발송되지 않는다.
-      if (isPrivate && token && inviteSelections.length > 0) {
+      // Phase 4-A(2026-07-09): 초대 누적 기록은 이벤트 문서 대신 networking_event_invites(staff 전용)에 upsert.
+      // 신규 선택이 있거나 레거시 invitedUserIds 이관이 필요할 때만 invites 문서를 기록한다.
+      if (isPrivate && token) {
+        const legacyInviteIds = initial?.invitedUserIds ?? [];
         const newInviteIds = inviteSelections.map((m) => m.id);
-        await Promise.all(
-          newInviteIds.map((uid) => notifyGatheringInvite(uid, form.title.trim(), token as string)),
-        );
-        await networkingEventsApi.update(eventId, {
-          invitedUserIds: Array.from(new Set([...existingInvitedIds, ...newInviteIds])),
-        });
-        setInviteSelections([]);
+        if (newInviteIds.length > 0) {
+          await Promise.all(
+            newInviteIds.map((uid) => notifyGatheringInvite(uid, form.title.trim(), token as string)),
+          );
+        }
+        if (newInviteIds.length > 0 || legacyInviteIds.length > 0) {
+          // existingInvitedIds 는 invites 문서 + 레거시를 이미 병합한 값(useEffect 로 로드).
+          await eventInvitesApi.upsert(eventId, {
+            invitedUserIds: Array.from(new Set([...existingInvitedIds, ...newInviteIds])),
+            updatedBy: createdByUid,
+          });
+        }
+        if (newInviteIds.length > 0) setInviteSelections([]);
       }
       // G1: 취소·연기 시 참석/미정 회원(userId 보유)에게 인앱 알림. 비공개는 토큰 링크(없으면 스킵),
       // 공개는 /gatherings. 알림 실패는 저장 성공을 막지 않는다.

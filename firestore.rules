@@ -238,6 +238,13 @@ service cloud.firestore {
       allow list: if isAuthenticated() && isStaffOrAbove();
       allow create, delete: if isAuthenticated() && isStaffOrAbove();
     }
+    // 비공개 모임 초대 명단 (Phase 4-A 프라이버시 핫픽스 2026-07-09):
+    // networking_events 는 공개 read 라 invitedUserIds 를 이벤트 문서에 두면 SDK 쿼리로 노출됨.
+    // 초대한 회원 id 목록을 별도 컬렉션(문서 id = eventId)으로 분리 —
+    //   초대 발송·중복 방지는 staff 폼에서만 쓰므로 read/write 모두 staff 전용.
+    match /networking_event_invites/{eventId} {
+      allow read, write: if isAuthenticated() && isStaffOrAbove();
+    }
     // 참석 신청: 게스트(비회원) 신청 허용(public create), 로그인 회원은 명단 read,
     //           본인(userId) 또는 staff 만 수정/삭제.
     match /networking_rsvps/{docId} {
