@@ -604,3 +604,42 @@ export async function seedFoundationTerms(
   }
   return { created, skipped };
 }
+
+export interface FoundationTermRefreshResult {
+  updated: number;
+  skipped: number;
+  notFound: number;
+}
+
+/**
+ * 기존 기초용어의 **메타 필드만** 시드 기준으로 보수적 갱신 (2026-07-12).
+ * - aectTerm: 시드 값이 있고 기존과 다르면 갱신 (AECT 공식 역어 반영 경로)
+ * - englishName·abbreviation: 기존이 비어 있을 때만 채움
+ * - summary·definition·confusedWith 등 본문은 운영자 검수 콘텐츠이므로 건드리지 않음
+ */
+export async function refreshFoundationTermsMeta(
+  existing: FoundationTerm[],
+): Promise<FoundationTermRefreshResult> {
+  const byTerm = new Map(existing.map((t) => [t.term.trim(), t]));
+  const result: FoundationTermRefreshResult = { updated: 0, skipped: 0, notFound: 0 };
+  for (const entry of SEED_FOUNDATION_TERMS) {
+    const cur = byTerm.get(entry.term);
+    if (!cur) {
+      result.notFound += 1;
+      continue;
+    }
+    const patch: Partial<FoundationTerm> = {};
+    if (entry.aectTerm && (cur.aectTerm ?? "") !== entry.aectTerm) {
+      patch.aectTerm = entry.aectTerm;
+    }
+    if (entry.englishName && !cur.englishName) patch.englishName = entry.englishName;
+    if (entry.abbreviation && !cur.abbreviation) patch.abbreviation = entry.abbreviation;
+    if (Object.keys(patch).length === 0) {
+      result.skipped += 1;
+      continue;
+    }
+    await foundationTermsApi.update(cur.id, patch);
+    result.updated += 1;
+  }
+  return result;
+}

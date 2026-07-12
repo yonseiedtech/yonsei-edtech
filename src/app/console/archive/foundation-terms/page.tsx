@@ -23,7 +23,7 @@ import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import { foundationTermsApi } from "@/lib/bkend";
-import { seedFoundationTerms } from "@/lib/foundation-terms-seed";
+import { refreshFoundationTermsMeta, seedFoundationTerms } from "@/lib/foundation-terms-seed";
 import {
   FOUNDATION_TERM_CATEGORY_COLORS,
   FOUNDATION_TERM_CATEGORY_LABELS,
@@ -90,6 +90,27 @@ export default function ConsoleFoundationTermsPage() {
     } catch (err) {
       console.error("[console-foundation-terms] seed failed", err);
       toast.error(err instanceof Error ? err.message : "시드 적재 실패");
+    } finally {
+      setSeeding(false);
+    }
+  }
+
+  async function handleRefreshMeta() {
+    if (!user) return;
+    if (
+      !confirm(
+        "기존 용어의 메타 필드를 시드 기준으로 갱신합니다.\n(AECT 공식 역어 채움 + 비어 있는 영문명/약어 보충 — 요약·정의 등 본문은 보존)\n진행하시겠습니까?",
+      )
+    )
+      return;
+    setSeeding(true);
+    try {
+      const r = await refreshFoundationTermsMeta(terms);
+      toast.success(`메타 갱신 완료 — 갱신 ${r.updated}, 변경없음 ${r.skipped}, 미존재 ${r.notFound}`);
+      load();
+    } catch (err) {
+      console.error("[console-foundation-terms] refresh meta failed", err);
+      toast.error(err instanceof Error ? err.message : "메타 갱신 실패");
     } finally {
       setSeeding(false);
     }
@@ -181,6 +202,20 @@ export default function ConsoleFoundationTermsPage() {
                 <Sparkles className="mr-1 h-4 w-4" />
               )}
               기본 시드 추가
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefreshMeta}
+              disabled={seeding}
+              title="기존 용어에 AECT 공식 역어·비어 있는 영문명/약어를 시드 기준으로 채움 (본문 보존)"
+            >
+              {seeding ? (
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="mr-1 h-4 w-4" />
+              )}
+              메타 갱신
             </Button>
             <Link href="/console/archive/foundation-terms/new">
               <Button size="sm">
