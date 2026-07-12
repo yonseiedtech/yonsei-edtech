@@ -874,6 +874,125 @@ export const SEED_CONCEPTS: SeedConcept[] = [
       AECT_REF(103),
     ],
   },
+
+  // ─── 2026-07-12 보강 3차: AECT 갭 9개 (이론·전략·상호작용 계열) ───
+  {
+    seedKey: "concept:cultural-historical-activity-theory",
+    name: "문화역사적 활동이론",
+    aectTerm: "문화역사적 활동이론",
+    altNames: ["Cultural Historical Activity Theory", "CHAT", "활동이론", "Activity Theory"],
+    description:
+      "인간의 의식과 학습을 유기체와 환경을 갈라놓는 이원론에서 벗어나, 문화적으로 매개된 활동 속에서 이해하려는 이론적 프레임워크. 1920~30년대 러시아의 Vygotsky와 Leontiev의 작업으로 거슬러 올라가며, 사회문화적 이론·사회역사적 이론과 여러 형태로 함께 언급된다. Vygotsky의 중재된 행위 개념 — 개인은 인공물·도구·타인과의 기호적 상호작용을 통해 의미와 의식을 발달시킨다 — 이 출발점이고, 자극-반응 모형을 크게 벗어나 주체·도구(매개 인공물)·목표(대상)를 인간활동 분석의 최소 단위로 삼는다. CSCL·활동체제 분석 등 교육공학 연구 설계에서 활발히 활용된다.",
+    tags: ["학습이론", "Vygotsky", "사회문화"],
+    references: [
+      "Engeström, Y. (1987). Learning by expanding: An activity-theoretical approach to developmental research. Orienta-Konsultit.",
+      AECT_REF(115),
+    ],
+  },
+  {
+    seedKey: "concept:elaboration-strategies",
+    name: "정교화 전략",
+    aectTerm: "정교화 전략",
+    altNames: ["Elaboration Strategies", "정교화", "Elaboration"],
+    description:
+      "학습할 내용과 사전지식 사이에 안정적인 내적 연결을 구축하는 인지전략. 새 정보를 기존 지식에 기대어 확장·연결함으로써 학습과 기억의 효율을 높이고 작동기억의 부담을 줄인다. 바꾸어 말하기·요약·유추·생성적 노트·스스로 질문하고 답하기 등이 대표 기법이며, 실생활 문제해결을 돕는 인지구조 형성을 지향한다. 1970년대 Reigeluth와 동료들은 이를 교수설계 차원으로 확장한 정교화 이론(Elaboration Theory)을 제안해, 단순한 것에서 복잡한 것으로 나아가는 범위·계열 결정의 안내 틀을 제공했다.",
+    tags: ["인지", "학습전략", "Reigeluth"],
+    references: [
+      "Reigeluth, C. M. (1999). The elaboration theory: Guidance for scope and sequence decisions. In C. M. Reigeluth (Ed.), Instructional-design theories and models: A new paradigm of instructional theory (pp. 425-453). Lawrence Erlbaum.",
+      AECT_REF(159),
+    ],
+  },
+  {
+    seedKey: "concept:conditions-of-learning",
+    name: "학습의 조건",
+    aectTerm: "학습의 조건",
+    altNames: ["Conditions of Learning", "가네의 학습조건"],
+    description:
+      "Gagné(1985)의 고전적 연구에서 비롯된 개념으로, 학습이 일어나기 위한 조건을 내적 조건과 외적 조건의 두 범주로 나눈다. 내적 조건은 수업 중 학습자 안에서 일어나는 정신적 과정 — 자극을 감각기억으로 수용하고, 장기기억을 위해 자료를 부호화하며, 전이를 위해 일반화하는 것 — 을 말하고, 외적 조건은 이를 지원하도록 밖에서 마련되는 교수 사태를 말한다. 학습이 근본적으로 내면적 활동이라는 인지주의·정보처리이론의 입장을 반영하며, 학습성과 유형별로 다른 조건이 필요하다는 통찰이 9가지 교수사태(events of instruction) 설계의 근거가 된다.",
+    tags: ["학습이론", "Gagné", "교수설계"],
+    references: [
+      "Gagné, R. M. (1985). The conditions of learning and theory of instruction (4th ed.). Holt, Rinehart and Winston.",
+      AECT_REF(101),
+    ],
+  },
+  {
+    seedKey: "concept:attribution-theory",
+    name: "귀인이론",
+    aectTerm: "귀인이론",
+    altNames: ["Attribution Theory"],
+    description:
+      "자신의 수행의 질에 대해 학습자가 대는 이유(귀인)가 이후의 동기와 수행에 어떤 영향을 미치는지 설명하는 이론. 학업적 성공·실패에 대한 해석이 동기와 수행을 좌우한다는 것이 핵심이며(Weiner, 1985), 학습자는 결과를 운·과제 난이도·능력·노력 중 하나로 설명하는 경향이 있다. 통제 소재(내적/외적) 개념과 통합되어, 결과를 자신이 통제할 수 있는 요인(특히 노력)에 귀인하는 학습자가 향후 학업에서 더 유리하다는 연구가 축적되었다. 학습 동기 설계·피드백 문구 설계에서 노력 귀인을 촉진하는 근거로 쓰인다.",
+    tags: ["동기", "Weiner", "이론적 지향"],
+    references: [
+      "Weiner, B. (1985). An attributional theory of achievement motivation and emotion. Psychological Review, 92(4), 548-573.",
+      AECT_REF(45),
+    ],
+  },
+  {
+    seedKey: "concept:inquiry-based-learning",
+    name: "탐구 기반 학습",
+    aectTerm: "탐구 기반 학습",
+    altNames: ["Inquiry-Based Learning", "탐구학습", "탐구기반학습"],
+    description:
+      "지식이 실제 세계에서 어떻게 작동하는지를 실제적인 방법으로 파고들며 세상을 이해하고 알아가는 역동적 과정. 질문·문제·이슈를 출발점으로 학습자가 스스로 탐구를 설계하고 증거를 모아 결론에 이르며, 교수자는 안내자 역할을 한다. 발견학습과 가까우나, 탐구 기반 프로그램은 학습자가 아이디어를 입증하는 데 과학적이고 논리적인 규칙을 체계적으로 익히게 된다는 점이 강조된다. 과학교육에서 출발해 학습자 중심 수업·문제 기반 학습·프로젝트 기반 학습과 한 계열을 이룬다.",
+    tags: ["교수전략", "탐구", "학습자 중심"],
+    references: [
+      "Kuhlthau, C. C., Maniotes, L. K., & Caspari, A. K. (2007). Guided inquiry: Learning in the 21st century. Libraries Unlimited.",
+      AECT_REF(217),
+    ],
+  },
+  {
+    seedKey: "concept:learner-centered-instruction",
+    name: "학습자 중심 수업",
+    aectTerm: "학습자 중심 수업",
+    altNames: ["Learner-Centered Instruction", "학습자 중심 교육"],
+    description:
+      "단일한 교수방법이라기보다 교수자 중심의 반대편에 서는 교수 패러다임. '개별 학습자와 학습 자체에 초점을 둔 관점'(McCombs & Whisler, 1997)으로 정의되며, 구성주의에 기반을 둔다 — 지식은 개별적으로 또는 사회적 합의를 통해 구성되고, 실제 맥락에 연계될 때 더 쉽게 습득된다. 학습자는 교수자가 전달하는 내용을 수동적으로 받는 대신 학습 과정에 능동적으로 참여해 자신의 지식을 구성한다. 미국심리학회(APA) 특별팀이 정리한 학습자 중심 심리학 원리(인지·메타인지, 동기·정서, 발달·사회, 개인차 요인)가 대표적 준거 틀이다.",
+    tags: ["교수 패러다임", "구성주의", "학습자 중심"],
+    references: [
+      "McCombs, B. L., & Whisler, J. S. (1997). The learner-centered classroom and school. Jossey-Bass.",
+      AECT_REF(244),
+    ],
+  },
+  {
+    seedKey: "concept:feedback",
+    name: "피드백",
+    aectTerm: "피드백",
+    altNames: ["Feedback"],
+    description:
+      "바람직한 성취를 향한 진행 상황을 점검·평가할 수 있도록 설계된, 목표 달성에 관한 정보(Spector et al., 2008). 학습에 근본적인 요소로(Hattie & Timperley, 2007), 교수설계의 거의 모든 국면에서 발견되며 교수체제설계(ISD)의 이론적 기반이 되는 주요 요소로 꼽힌다. ISD의 순환적 특성 자체가 과정을 개선하는 정보(형성평가)에 의존하고, 수행 능숙도는 연습과 피드백을 함께 요구한다. 수행향상시스템의 중요한 원리이기도 하며, 시기(즉시/지연)·구체성·정서적 톤이 효과를 좌우하는 설계 변수로 연구된다.",
+    tags: ["교수전략", "형성평가", "설계 요소"],
+    references: [
+      "Hattie, J., & Timperley, H. (2007). The power of feedback. Review of Educational Research, 77(1), 81-112.",
+      AECT_REF(181),
+    ],
+  },
+  {
+    seedKey: "concept:interaction",
+    name: "상호작용",
+    aectTerm: "상호작용",
+    altNames: ["Interaction"],
+    description:
+      "합의된 단일 정의는 없지만, 교수적 관점에서는 '학습자와 학습환경 간에 서로 영향을 주고받는 상호 교환적 사건'(Nuriddin, 2011)으로 정의된다. 학습자-교수자·학습자-학습자·학습자-내용의 고전적 3유형(Moore)에 학습자-인터페이스를 더한 4유형 구분이 널리 쓰이고, 실시간 여부에 따라 동시적/비동시적 상호작용으로도 나뉜다. 원격교육에서 상호작용은 필요하고 가능해야 하지만 그것이 학습의 전부는 아니며, 강요된 상호작용은 없는 것만큼 해로울 수 있다는 경계도 함께 논의된다. 협력 과정을 통한 지식 구성을 지원하도록 설계하는 것이 요점이다.",
+    tags: ["상호작용", "원격교육", "설계 요소"],
+    references: [
+      "Moore, M. G. (1989). Three types of interaction. American Journal of Distance Education, 3(2), 1-7.",
+      AECT_REF(234),
+    ],
+  },
+  {
+    seedKey: "concept:just-in-time-learning",
+    name: "적시학습",
+    aectTerm: "적시학습",
+    altNames: ["Just-in-Time Learning", "JIT 학습"],
+    description:
+      "미래 언젠가 쓸 지식을 미리 배워 두는 전통적·계열적 학습과 달리, 요구가 생기는 바로 그 시점에 필요한 정보를 제공받는 비계열적 학습. 효과적인 학습은 활동·맥락·실제에 내재되어 있을 때 일어난다는 상황학습 관점(Lave & Wenger, 1991)에 뿌리를 두며, 학습의 실제적 요구는 합법적 주변적 참여의 과정을 통해 생겨난다. 직무보조·수행지원(EPSS)이 개인 차원의 적시학습이라면, 소셜 네트워킹 도구와 온라인 실천공동체는 협력 차원의 적시학습 수단을 제공한다. 마이크로러닝·검색 기반 학습의 이론적 배경이기도 하다.",
+    tags: ["JIT", "상황학습", "HRD"],
+    references: [
+      "Lave, J., & Wenger, E. (1991). Situated learning: Legitimate peripheral participation. Cambridge University Press.",
+      AECT_REF(237),
+    ],
+  },
 ];
 
 // ─── 변인 (Variables) ─────────────────────────────────────────
@@ -1489,6 +1608,10 @@ export const SEED_CONCEPT_VARIABLE_LINKS: Record<string, string[]> = {
   "블렌디드 러닝": ["학습 만족도", "상호작용"],
   "모바일 학습": ["학습 지속의도"],
   "원격교육": ["학습 만족도", "학습 지속의도", "상호작용"],
+  // 3차 (상호작용·학습자 중심 계열)
+  "상호작용": ["상호작용", "학습 만족도"],
+  "학습자 중심 수업": ["학습참여"],
+  "귀인이론": ["학업적 자기효능감"],
 };
 
 // 변인 이름 → 관련 측정도구 이름들. 시드 적용 시 자동으로 measurementIds 채움 + 측정도구에 역참조 variableIds.
