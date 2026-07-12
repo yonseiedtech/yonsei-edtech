@@ -33,7 +33,7 @@ export default function AectTerminologyPage() {
         <PageHeader
           icon={BookMarked}
           title="AECT 용어 표준 사전"
-          description={`AECT 공식 용어집의 표제어 ${AECT_TERMS.length}개·공식 역어·6개 영역 분류를 표준으로 정리했습니다.`}
+          description={`AECT 공식 용어집의 표제어 ${AECT_TERMS.length}개·공식 역어·6개 영역 분류를 정리하고, 아카이브 개념과 연결된 항목에는 개념 설명을 함께 제공합니다.`}
         />
 
         <Separator className="mt-6" />
@@ -70,8 +70,11 @@ export default function AectTerminologyPage() {
                 <em className="font-serif">
                   『{AECT_SOURCE.titleKo}』({AECT_SOURCE.publisherKo}, {AECT_SOURCE.yearTranslation})
                 </em>
-                의 <strong>표제어·역어 대응 정보</strong>와 영역 분류만 수록합니다. 각 용어의
-                해설 본문은 원저작물을 참조하시기 바랍니다. 원서{" "}
+                의 <strong>표제어·역어 대응</strong>과 영역 분류를 수록하고, 아카이브 개념과 연결된
+                항목에는 <strong>개념 설명</strong>을 함께 제공하는{" "}
+                <strong>개념 설명 인덱스</strong>입니다. 개념 설명은 원서 해설 본문을 그대로
+                옮기지 않고 자체 재서술(패러프레이즈)한 내용이며, 각 항목의 아카이브 페이지에서
+                자세한 정보를 확인할 수 있습니다. 원서{" "}
                 <em className="font-serif">{AECT_SOURCE.titleEn}</em>는{" "}
                 {AECT_SOURCE.publisherEn}({AECT_SOURCE.yearOriginal})에서, 번역서는{" "}
                 {AECT_SOURCE.publisherKo}에서 발행되었습니다.
