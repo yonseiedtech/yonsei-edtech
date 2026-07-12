@@ -847,10 +847,10 @@ export default function ResearchDesignEditor({ user, readOnly = false }: Props) 
         )}
       </Section>
 
-      {/* 6. 프로그램 개발 설계 — 효과분석(개발) 연구 */}
+      {/* 6. 프로그램 설계·개발 — 효과분석(개발) 연구 */}
       <Section
         n={6}
-        title="프로그램 개발 설계"
+        title="프로그램 설계·개발"
         done={status.program}
         optional={!form.programDesign.enabled}
       >
@@ -873,7 +873,7 @@ export default function ResearchDesignEditor({ user, readOnly = false }: Props) 
                 placeholder="예: 주 1회 40분, 총 8회기 — 1~2회 도입, 3~6회 핵심 활동, 7~8회 정리·평가" rows={2} />
             </Field>
             <div>
-              <p className="mb-1.5 text-xs font-medium text-muted-foreground">ADDIE 단계 점검</p>
+              <p className="mb-1.5 text-xs font-medium text-muted-foreground">ADDIE 단계 점검 (설계 모델·가네 9절차·과정안은 가이드에서)</p>
               <div className="flex flex-wrap gap-1.5">
                 {ADDIE_STEPS.map((s) => {
                   const on = form.programDesign.addieChecked.includes(s.id);
@@ -902,7 +902,7 @@ export default function ResearchDesignEditor({ user, readOnly = false }: Props) 
               href="/steppingstone/program-development"
               className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
             >
-              프로그램 개발 가이드(인지 디딤판) 열기 <ExternalLink size={10} />
+              프로그램 설계·개발 가이드(ADDIE·가네 9절차·과정안) 열기 <ExternalLink size={10} />
             </Link>
           </div>
         )}
