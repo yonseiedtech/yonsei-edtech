@@ -701,6 +701,166 @@ export const SEED_CONCEPTS: SeedConcept[] = [
       AECT_REF(305),
     ],
   },
+  // ─── 2026-07-12 보강 2차: AECT 갭 12개 (이론·게임·수행공학·조직 계열) ───
+  {
+    seedKey: "concept:mastery-learning",
+    name: "완전학습",
+    aectTerm: "완전학습",
+    altNames: ["Mastery Learning"],
+    description:
+      "적절한 학습 상황과 질 높은 수업, 충분한 시간이 주어지면 거의 모든 학생이 높은 수준의 학업성취에 도달할 수 있다고 보는 교수 접근(Carroll, 1963; Bloom, 1976). Carroll이 적성을 '학습에 필요한 시간'으로 재개념화한 학교학습 모형이 출발점이며, Bloom은 학습에 실제로 사용한 시간이 학습 수준을 설명한다고 보고 형성평가-교정 학습의 순환으로 이를 체계화했다. 진도가 아니라 도달 기준(mastery criterion)을 고정하고 시간을 변수로 두는 발상의 전환이 핵심으로, 개별화 수업·완전학습형 이러닝 설계의 이론적 기반이다.",
+    tags: ["교수전략", "Bloom", "개별화"],
+    references: [
+      "Bloom, B. S. (1976). Human characteristics and school learning. McGraw-Hill.",
+      "Carroll, J. B. (1963). A model of school learning. Teachers College Record, 64(8), 723-733.",
+      AECT_REF(273),
+    ],
+  },
+  {
+    seedKey: "concept:anchored-instruction",
+    name: "앵커드 교수법",
+    aectTerm: "앵커드 교수법",
+    altNames: ["Anchored Instruction", "정황 교수", "앵커드 수업"],
+    description:
+      "실제적 상황을 학습의 기본 닻(anchor)으로 삼는 교육학적 접근. 실제 세계의 상황을 문제와 문제해결 경로의 토대로 제시하고, 추상적 개념이 아니라 학습자에게 친숙한 맥락 위에서 수업을 전개한다. 통합적이고 실제적인 레슨을 위해 주제(theme) 중심으로 구성하기도 하며, 문제해결 연습의 한 부분으로 기능한다. 밴더빌트 인지테크놀로지그룹(CTGV)의 재스퍼 우드베리(Jasper Woodbury) 비디오 시리즈가 대표 사례로, 상황인지·실제적 활동 이론과 맞닿아 있다.",
+    tags: ["교수전략", "상황학습", "문제해결"],
+    references: [
+      "Cognition and Technology Group at Vanderbilt (1990). Anchored instruction and its relationship to situated cognition. Educational Researcher, 19(6), 2-10.",
+      AECT_REF(38),
+    ],
+  },
+  {
+    seedKey: "concept:dual-coding-theory",
+    name: "이중부호화이론",
+    aectTerm: "이중부호화이론",
+    altNames: ["Dual Coding Theory", "DCT"],
+    description:
+      "Paivio(1971)가 제안하고 정교화해 온 이론으로, 작동기억에는 언어 정보를 다루는 시스템(로고젠)과 비언어적 객체·사건을 다루는 시스템(이마젠)의 구분된 두 시스템이 있다고 본다. 두 시스템은 독립적으로 작동하되 병렬·동시 작동이 가능하고, '개'라는 단어와 개의 이미지처럼 연계된 연합적 처리가 일어난다. 구체적 단어보다 그림이 더 쉽게 회상된다는 연구 결과에 바탕을 두며, Mayer의 멀티미디어 학습 인지이론이 이중부호화·인지부하·능동적 처리를 통합하면서 이러닝 설계 원리의 뿌리가 되었다.",
+    tags: ["인지", "Paivio", "멀티미디어 학습"],
+    references: [
+      "Paivio, A. (1971). Imagery and verbal processes. Holt, Rinehart & Winston.",
+      "Paivio, A. (1986). Mental representations: A dual coding approach. Oxford University Press.",
+      AECT_REF(151),
+    ],
+  },
+  {
+    seedKey: "concept:distributed-cognition",
+    name: "분산인지",
+    aectTerm: "분산인지",
+    altNames: ["Distributed Cognition"],
+    description:
+      "인지가 개인의 머릿속에만 있지 않고 사람들 사이, 그리고 문화적으로 제공된 도구·기구에 걸쳐 분산되어 있다고 보는 관점. 인지심리학자이자 인류학자인 Edwin Hutchins가 1990년대 미 군함의 항해 조정 작업을 관찰한 연구에서 발전시켰다. '사람은 다른 사람들과 협력하여, 그리고 문화적으로 제공된 도구의 도움으로 생각한다'(Salomon, 1993)는 명제로 요약되며, 인지는 복잡한 사회문화적 세계 안에서 항상 맥락화된다고 본다. CSCL·인지도구·팀 기반 문제해결 환경 설계의 이론적 근거가 된다.",
+    tags: ["인지", "사회문화", "CSCL"],
+    references: [
+      "Hutchins, E. (1995). Cognition in the wild. MIT Press.",
+      "Salomon, G. (Ed.). (1993). Distributed cognitions: Psychological and educational considerations. Cambridge University Press.",
+      AECT_REF(148),
+    ],
+  },
+  {
+    seedKey: "concept:knowledge-management",
+    name: "지식경영",
+    aectTerm: "지식경영",
+    altNames: ["Knowledge Management", "KM"],
+    description:
+      "경쟁 우위를 얻고 유지하기 위해 조직 안에서 지식을 수집·개발·공유·적용하는 일련의 활동과 과정. 1990년대에 인지과학의 발전과 인간 학습·메타인지에 대한 이해가 비즈니스 경영 분야와 결합하며 형성됐고, 조직이 물리적 자산보다 인간 자산(지적자본)에 더 큰 가치를 두기 시작한 흐름을 반영한다. 데이터(분절된 사실)-정보(맥락 부여)-지식(경험·의사소통·추론으로 처리된 고차원)의 위계 구분이 기초 개념이며, 인력 노령화·이직에 따른 조직 지식 유출의 해결책으로 주목받는다. 전문가 시스템·조직이론·인지과학이 이론적 기반이다.",
+    tags: ["조직", "HRD", "지식"],
+    references: [
+      "Nonaka, I., & Takeuchi, H. (1995). The knowledge-creating company. Oxford University Press.",
+      AECT_REF(240),
+    ],
+  },
+  {
+    seedKey: "concept:learning-organization",
+    name: "학습조직",
+    aectTerm: "학습조직",
+    altNames: ["Learning Organization"],
+    description:
+      "구성원들이 진정으로 원하는 결과를 만들어 내고, 새롭고 확장된 사고방식이 길러지며, 협력적 노력이 가능하고, 함께 학습하는 방법을 지속적으로 알아 가는 조직(Senge, 1990). 전략적 개발의 관점에서 모든 구성원의 학습을 촉진하고, 가치 있는 정보와 지식을 생산해 행동을 바꾸고 최종 결과물을 향상시키는 곳으로 설명된다. 단기 성과가 아닌 장기 지속성에 투자해야 하며, 학습과정에 영향을 미치는 사람·운영 절차(미션과 정책)·문화와 공유 가치의 세 요인이 좌우한다. 지식경영·수행 향상과 함께 조직 차원 교육공학의 핵심 축이다.",
+    tags: ["조직", "Senge", "HRD"],
+    references: [
+      "Senge, P. M. (1990). The fifth discipline: The art and practice of the learning organization. Doubleday.",
+      AECT_REF(258),
+    ],
+  },
+  {
+    seedKey: "concept:performance-improvement",
+    name: "수행 향상",
+    aectTerm: "수행 향상",
+    altNames: ["Performance Improvement", "PI", "수행공학", "Human Performance Technology", "HPT"],
+    description:
+      "측정 가능한 수행과 결과 지향적 체제 안에서 조직·절차·개인의 수행을 어떻게 향상시킬지를 다루는 분야. 수행공학(HPT)과 사실상 동의어지만, 도구보다 성과에 초점을 둔다는 뜻에서 '수행 향상'이 선호되기도 한다. 수행의 기회와 문제를 체제적 접근으로 다루면서 교수설계(ID)의 지평을 훈련 바깥(환경·유인·프로세스 개선)으로 확장했다. 가장 널리 쓰이는 ISPI 수행 향상 모형은 수행 분석-원인 분석-인터벤션 선정·설계·개발-실행-평가의 서로 연결된 다섯 요소로 구성된다.",
+    tags: ["HPT", "HRD", "수행공학"],
+    references: [
+      "Van Tiem, D. M., Moseley, J. L., & Dessinger, J. C. (2004). Fundamentals of performance technology (2nd ed.). ISPI.",
+      AECT_REF(321),
+    ],
+  },
+  {
+    seedKey: "concept:epss",
+    name: "전자수행지원 시스템",
+    aectTerm: "전자수행지원 시스템",
+    altNames: ["Electronic Performance Support System", "EPSS", "수행지원시스템"],
+    description:
+      "과제 완수를 안내하고 정보를 제공하는, 컴퓨터로 전달되는 수행 향상 인터벤션. 훈련처럼 작업 '이전'에 배우는 것이 아니라 작업이 수행되는 '동안' 적시(just-in-time)에 활용된다는 점이 두드러진 특징이다. 수행자가 작업 맥락 안에서 구체적 과제를 더 잘 해내도록 돕는 적시 정보·자원·도구의 저장소로, '매우 정교한 과학기술적 직무보조(job aid)'로도 설명된다. 과제를 수행하는 동안 필요한 지식과 기술을 자연스럽게 습득하게 한다는 점에서 형식 훈련의 대안·보완재로 다뤄진다.",
+    tags: ["HPT", "직무지원", "JIT"],
+    references: [
+      "Gery, G. (1991). Electronic performance support systems. Weingarten Publications.",
+      AECT_REF(162),
+    ],
+  },
+  {
+    seedKey: "concept:simulation",
+    name: "시뮬레이션",
+    aectTerm: "시뮬레이션",
+    altNames: ["Simulation"],
+    description:
+      "특정한 사회적·물리적 실재를 점진적으로 전개하는 사례 연구(evolving case study)로, 참가자가 진짜와 같은 역할을 수행하며 위험과 문제를 다루고 자신의 결정이 미치는 영향을 경험하게 하는 방법(Gredler, 2004). 컴퓨터 기반 시뮬레이션은 자연 또는 인공 시스템·과정의 모델을 포함하는 프로그램으로 정의되며(De Jong & van Joolingen, 1998), 참여자가 가상 시스템의 변수를 조작하고 결과를 관찰하는 경험적 시뮬레이션과 상징적 시뮬레이션으로 나뉜다. 현실을 반영하는 정도인 충실성(fidelity)이 핵심 설계 변수이고, '이기는 것'이 목적인 게임과 구분된다. 군사·의학·비즈니스·과학 교육에서 오랜 역사를 갖는다.",
+    tags: ["시뮬레이션", "게임", "경험학습"],
+    references: [
+      "Gredler, M. E. (2004). Games and simulations and their relationships to learning. In D. H. Jonassen (Ed.), Handbook of research on educational communications and technology (2nd ed., pp. 571-581). Lawrence Erlbaum.",
+      AECT_REF(377),
+    ],
+  },
+  {
+    seedKey: "concept:digital-game-based-learning",
+    name: "디지털 게임 기반 학습",
+    aectTerm: "디지털 게임 기반 학습",
+    altNames: ["Digital Game-Based Learning", "DGBL", "게임기반학습"],
+    description:
+      "디지털 게임에 의해 촉진되거나 지원되는 학습. 게임은 '참가자들이 규칙으로 정의된 인위적 갈등에 참여하고 양적인 결과로 나타나는 시스템'(Salen & Zimmerman, 2003)으로 정의되며, 목적 달성을 위해 내용·지식을 적용해야 하는 경쟁적 활동이라는 점이 특징이다. 상용 기성 게임(COTS)을 교수-학습용으로 전용하는 접근과 학습을 위해 처음부터 설계된 기능성 게임(serious game)으로 나뉘고, 시뮬레이션·전략·액션·역할극의 네 핵심 유형(Apperley, 2006)으로 범주화된다. 게이미피케이션(게임 요소의 부분 적용)과 달리 완결된 게임 플레이 자체가 학습 활동이 된다.",
+    tags: ["게임", "기능성 게임", "동기"],
+    references: [
+      "Prensky, M. (2001). Digital game-based learning. McGraw-Hill.",
+      AECT_REF(134),
+    ],
+  },
+  {
+    seedKey: "concept:pedagogical-agent",
+    name: "교육용 에이전트",
+    aectTerm: "에이전트",
+    altNames: ["Pedagogical Agent", "Agent", "교육학적 에이전트", "학습 에이전트"],
+    description:
+      "에이전트는 두 가지 의미를 갖는다(Erickson, 1997) — 행동 개시·목표 설정·계획·의사소통·상황 대응을 인간의 직접 통제 없이 수행하는 자율적 컴퓨터 프로그램이라는 의미와, 사용자에게 인간처럼 보이는 생명체의 특징이라는 의미다. 교육 분야에서 가장 자주 논의되는 것은 교육용(pedagogical) 에이전트로, 교육적 상황에서 학습을 지원하거나 촉진하기 위해 고안된 애니메이션 캐릭터를 가리킨다. 움직이고 말하며 사용자와 상호작용하는 인터페이스·애니메이티드·인텔리전트 에이전트 등 다양한 수식어와 결합해 쓰이며, AI 튜터·학습 동반자(learning companion) 연구의 계보로 이어진다.",
+    tags: ["에이전트", "AI", "멀티미디어"],
+    references: [
+      "Johnson, W. L., Rickel, J. W., & Lester, J. C. (2000). Animated pedagogical agents: Face-to-face interaction in interactive learning environments. IJAIED, 11(1), 47-78.",
+      AECT_REF(33),
+    ],
+  },
+  {
+    seedKey: "concept:cognitive-tools",
+    name: "인지도구",
+    aectTerm: "인지도구",
+    altNames: ["Cognitive Tools", "마인드툴", "Mindtools"],
+    description:
+      "테크놀로지'로' 학습하는 것(learning with technology)을 가리키는 개념으로, 테크놀로지'로부터' 학습하는 것(learning from technology)과 대비된다. 인지과학적 관점과 더불어 학습을 촉진하기 위해 정보기술을 사고의 파트너로 사용하면서 발달했고, 사회문화적 심리학과 활동이론이 개념 발전의 풍부한 자원을 제공했다. 개념지도·시뮬레이션·데이터베이스·스프레드시트처럼 학습자가 지식을 조직·표상·성찰하도록 인지 부담을 나눠 지는 도구들이 해당하며, Jonassen의 마인드툴(mindtools) 논의로 널리 알려졌다.",
+    tags: ["인지", "테크놀로지 통합", "Jonassen"],
+    references: [
+      "Jonassen, D. H. (2000). Computers as mindtools for schools: Engaging critical thinking (2nd ed.). Merrill.",
+      AECT_REF(79),
+    ],
+  },
   {
     seedKey: "concept:cone-of-experience",
     name: "경험의 원추",
