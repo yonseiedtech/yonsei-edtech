@@ -83,6 +83,24 @@ export default function DiagnosisRunner({
     return map;
   }, [questions]);
 
+  // choice형(mcq·compare·scenario·passage·diagram) 보기 표시 순서 — 문항별 원본 인덱스 순열.
+  // 시드의 answerIndex 가 특정 위치(주로 0)에 편중되어 있어, 셔플 없이는 정답 위치가 패턴으로
+  // 노출된다. 표시만 섞고 응답·채점은 원본 인덱스로 유지 (2026-07-12).
+  const optionOrders = useMemo(() => {
+    const map: Record<string, number[]> = {};
+    for (const q of questions) {
+      const t = questionType(q);
+      if (
+        (t === "mcq" || t === "compare" || t === "scenario" || t === "passage" || t === "diagram") &&
+        q.options &&
+        q.options.length > 1
+      ) {
+        map[q.id] = shuffle(q.options.map((_, i) => i));
+      }
+    }
+    return map;
+  }, [questions]);
+
   // ordering 문항은 처음 진입 시 셔플 순서를 응답 기본값으로 채워 둔다(제출 가능).
   useEffect(() => {
     setAnswers((prev) => {
@@ -335,13 +353,16 @@ export default function DiagnosisRunner({
           {/* ── mcq · compare(개념 구분) · scenario(상황 적용): 보기 선택 ── */}
           {isChoiceType && (
             <div className="mt-5 flex flex-col gap-2.5">
-              {(current.options ?? []).map((option, i) => {
-                const isSelected = answers[current.id] === i;
+              {(optionOrders[current.id] ?? (current.options ?? []).map((_, i) => i)).map(
+                (origIdx, displayIdx) => {
+                const option = (current.options ?? [])[origIdx];
+                const i = displayIdx; // 라벨(A/B/C…)은 표시 순서 기준
+                const isSelected = answers[current.id] === origIdx;
                 return (
                   <button
-                    key={i}
+                    key={origIdx}
                     type="button"
-                    onClick={() => selectOption(i)}
+                    onClick={() => selectOption(origIdx)}
                     aria-pressed={isSelected}
                     className={cn(
                       "flex items-center gap-3 rounded-xl border p-3.5 text-left text-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1",

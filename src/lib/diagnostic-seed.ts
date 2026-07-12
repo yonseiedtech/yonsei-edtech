@@ -2396,6 +2396,428 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
     explanation:
       "발견학습은 학습자가 스스로 규칙성을 찾는 귀납적 교수전략이고, 개념·규칙을 먼저 설명하는 접근은 연역적(설명식)이다.",
   },
+
+  // ═════════════════════════════════════════════════════════════
+  // 교육공학 핵심개념 확충 2차 (2026-07-12) — archive-seed.ts 보강 2차·3차
+  // 신규 21개 개념(concept:mastery-learning ~ concept:just-in-time-learning) 커버리지 보강.
+  // 각 문항은 해당 개념 description 에 명시된 검증 가능한 사실만 근거로 작성.
+  // ── 핵심개념 mcq (17) — dx:concept:29~45 ──
+  // ═════════════════════════════════════════════════════════════
+  {
+    seedKey: "dx:concept:29",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:mastery-learning",
+    question:
+      "적절한 수업과 충분한 시간이 주어지면 거의 모든 학생이 높은 성취에 도달할 수 있다고 보아, 도달 기준을 고정하고 학습 시간을 변수로 두는 발상의 전환을 담은 교수 접근은?",
+    options: ["완전학습", "발견학습", "프로그램 수업", "선행조직자"],
+    answerIndex: 0,
+    explanation:
+      "완전학습(mastery learning)은 Carroll이 적성을 '학습에 필요한 시간'으로 재개념화한 학교학습 모형에서 출발했고, Bloom이 형성평가-교정 학습의 순환으로 체계화했다. 진도가 아니라 도달 기준을 고정하고 시간을 변수로 두는 것이 핵심이다.",
+  },
+  {
+    seedKey: "dx:concept:30",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:anchored-instruction",
+    question:
+      "실제 세계의 상황을 학습의 기본 닻(anchor)으로 삼아 그 위에서 수업을 전개하며, 밴더빌트 인지테크놀로지그룹(CTGV)의 재스퍼 우드베리 비디오 시리즈가 대표 사례인 교수법은?",
+    options: ["앵커드 교수법", "선행조직자", "프로그램 수업", "직접교수"],
+    answerIndex: 0,
+    explanation:
+      "앵커드 교수법(anchored instruction)은 실제적 상황을 닻으로 삼아 그 맥락 위에서 문제해결을 전개하며, CTGV의 재스퍼 우드베리 시리즈가 대표 사례로 상황인지와 맞닿아 있다.",
+  },
+  {
+    seedKey: "dx:concept:31",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:dual-coding-theory",
+    question:
+      "작동기억에 언어 정보를 다루는 시스템과 비언어적 객체·사건을 다루는 시스템이라는 구분된 두 시스템이 있다고 보는, Paivio가 제안한 이론은?",
+    options: ["이중부호화이론", "인지부하이론", "스키마이론", "정보처리이론"],
+    answerIndex: 0,
+    explanation:
+      "이중부호화이론(dual coding theory)은 Paivio가 제안했으며, 언어 시스템(로고젠)과 비언어 시스템(이마젠)이 독립적이되 병렬로 작동한다고 본다. Mayer의 멀티미디어 학습 인지이론의 뿌리다.",
+  },
+  {
+    seedKey: "dx:concept:32",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:distributed-cognition",
+    question:
+      "인지가 개인의 머릿속에만 있지 않고 사람들 사이, 그리고 문화적으로 제공된 도구·기구에 걸쳐 분산되어 있다고 보는, Hutchins가 발전시킨 관점은?",
+    options: ["분산인지", "상황인지", "인지도구", "이중부호화이론"],
+    answerIndex: 0,
+    explanation:
+      "분산인지(distributed cognition)는 Hutchins가 군함 항해 조정 관찰 연구에서 발전시켰으며, 사람은 타인과 협력하고 문화적 도구의 도움을 받아 생각한다고 본다. CSCL 설계의 이론적 근거다.",
+  },
+  {
+    seedKey: "dx:concept:33",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:knowledge-management",
+    question:
+      "경쟁 우위를 위해 조직 안에서 지식을 수집·개발·공유·적용하는 활동으로, 데이터-정보-지식의 위계 구분을 기초로 삼고 조직 지식 유출의 해결책으로 주목받는 분야는?",
+    options: ["지식경영", "학습분석", "요구사정", "수행 향상"],
+    answerIndex: 0,
+    explanation:
+      "지식경영(knowledge management)은 조직 안에서 지식을 수집·공유·적용하는 활동으로, 데이터(분절된 사실)-정보(맥락 부여)-지식(고차원 처리)의 위계 구분이 기초 개념이다.",
+  },
+  {
+    seedKey: "dx:concept:34",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:learning-organization",
+    question:
+      "구성원들이 원하는 결과를 만들어 내고 확장된 사고방식이 길러지며 함께 학습하는 방법을 지속적으로 알아 가는 조직을 가리키며, Senge가 제시한 개념은?",
+    options: ["학습조직", "실천공동체", "지식경영", "수행지원시스템"],
+    answerIndex: 0,
+    explanation:
+      "학습조직(learning organization)은 Senge(1990)가 제시했으며, 단기 성과가 아닌 장기 지속성에 투자하고 사람·운영 절차·문화와 공유 가치가 학습을 좌우한다고 본다.",
+  },
+  {
+    seedKey: "dx:concept:35",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:performance-improvement",
+    question:
+      "측정 가능한 수행과 결과 지향적 체제 안에서 조직·절차·개인의 수행 향상을 다루며, 교수설계의 지평을 훈련 바깥(환경·유인·프로세스 개선)으로 확장한 분야는?",
+    options: ["수행 향상(수행공학·HPT)", "요구사정", "형성평가", "완전학습"],
+    answerIndex: 0,
+    explanation:
+      "수행 향상(performance improvement, HPT)은 수행 문제를 체제적으로 다루면서 ID의 지평을 훈련 바깥으로 확장했다. ISPI 모형은 수행 분석-원인 분석-인터벤션 선정·설계·개발-실행-평가의 다섯 요소로 구성된다.",
+  },
+  {
+    seedKey: "dx:concept:36",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:epss",
+    question:
+      "과제 완수를 안내하고 정보를 제공하는 컴퓨터 전달 인터벤션으로, 훈련처럼 작업 '이전'이 아니라 작업이 수행되는 '동안' 적시(just-in-time)에 활용되는 것은?",
+    options: [
+      "전자수행지원 시스템(EPSS)",
+      "학습관리시스템(LMS)",
+      "지능형 튜터링 시스템",
+      "학습객체 저장소",
+    ],
+    answerIndex: 0,
+    explanation:
+      "전자수행지원 시스템(EPSS)은 작업이 수행되는 동안 적시에 활용되는 수행 향상 인터벤션으로, '매우 정교한 직무보조(job aid)'로도 설명되며 형식 훈련의 대안·보완재로 다뤄진다.",
+  },
+  {
+    seedKey: "dx:concept:37",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:pedagogical-agent",
+    question:
+      "교육적 상황에서 학습을 지원·촉진하기 위해 고안된, 움직이고 말하며 사용자와 상호작용하는 애니메이션 캐릭터를 가리키는 개념은?",
+    options: ["교육용 에이전트", "학습객체", "인지도구", "선행조직자"],
+    answerIndex: 0,
+    explanation:
+      "교육용(pedagogical) 에이전트는 학습을 지원·촉진하도록 고안된 애니메이션 캐릭터로, AI 튜터·학습 동반자(learning companion) 연구의 계보로 이어진다.",
+  },
+  {
+    seedKey: "dx:concept:38",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:cognitive-tools",
+    question:
+      "테크놀로지'로부터' 학습하는 것(learning from technology)과 대비되는, 정보기술을 사고의 파트너로 사용해 테크놀로지'로' 학습하도록 돕는 도구를 가리키며 Jonassen의 마인드툴로 알려진 개념은?",
+    options: ["인지도구", "학습관리시스템", "경험의 원추", "교육용 에이전트"],
+    answerIndex: 0,
+    explanation:
+      "인지도구(cognitive tools)는 테크놀로지'로' 학습하기를 가리키며, 개념지도·시뮬레이션·스프레드시트처럼 학습자가 지식을 조직·표상·성찰하도록 돕는다. Jonassen의 마인드툴로 널리 알려졌다.",
+  },
+  {
+    seedKey: "dx:concept:39",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:cultural-historical-activity-theory",
+    question:
+      "인간의 의식과 학습을 문화적으로 매개된 활동 속에서 이해하려는 이론으로, 1920~30년대 러시아의 Vygotsky·Leontiev의 작업에 뿌리를 두고 주체·도구·목표를 활동 분석의 최소 단위로 삼는 것은?",
+    options: [
+      "문화역사적 활동이론",
+      "정보처리이론",
+      "귀인이론",
+      "이중부호화이론",
+    ],
+    answerIndex: 0,
+    explanation:
+      "문화역사적 활동이론(CHAT)은 Vygotsky·Leontiev의 작업에 뿌리를 두며, Vygotsky의 중재된 행위 개념을 출발점으로 주체·도구(매개 인공물)·목표(대상)를 인간활동 분석의 최소 단위로 삼는다.",
+  },
+  {
+    seedKey: "dx:concept:40",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:conditions-of-learning",
+    question:
+      "학습이 일어나기 위한 조건을 학습자 안에서 일어나는 정신적 과정(내적 조건)과 이를 지원하도록 밖에서 마련되는 교수 사태(외적 조건)로 나눈 Gagné의 개념은?",
+    options: ["학습의 조건", "경험의 원추", "선행조직자", "완전학습"],
+    answerIndex: 0,
+    explanation:
+      "학습의 조건(conditions of learning)은 Gagné(1985)의 개념으로, 내적 조건(정신적 과정)과 외적 조건(교수 사태)을 구분하며 학습성과 유형별로 다른 조건이 필요하다는 통찰이 9가지 교수사태 설계의 근거가 된다.",
+  },
+  {
+    seedKey: "dx:concept:41",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:attribution-theory",
+    question:
+      "학습자가 학업적 성공·실패를 운·과제 난이도·능력·노력 중 하나로 설명하는 경향에 주목해, 그 해석이 이후 동기와 수행에 미치는 영향을 다루는 이론은?",
+    options: ["귀인이론", "자기효능감이론", "기대-가치이론", "목표지향이론"],
+    answerIndex: 0,
+    explanation:
+      "귀인이론(attribution theory)은 성공·실패에 대한 귀인이 동기와 수행을 좌우한다고 보며(Weiner), 학습자는 결과를 운·과제 난이도·능력·노력 중 하나로 설명하는 경향이 있다.",
+  },
+  {
+    seedKey: "dx:concept:42",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:inquiry-based-learning",
+    question:
+      "질문·문제·이슈를 출발점으로 학습자가 스스로 탐구를 설계하고 증거를 모아 결론에 이르며 교수자는 안내자 역할을 하는, 과학교육에서 출발한 접근은?",
+    options: ["탐구 기반 학습", "직접교수", "프로그램 수업", "완전학습"],
+    answerIndex: 0,
+    explanation:
+      "탐구 기반 학습(inquiry-based learning)은 질문을 출발점으로 학습자가 탐구를 설계하고 증거를 모아 결론에 이르는 과정으로, 학습자가 과학적·논리적 규칙을 체계적으로 익히게 된다는 점이 강조된다.",
+  },
+  {
+    seedKey: "dx:concept:43",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:learner-centered-instruction",
+    question:
+      "교수자 중심의 반대편에 서서 개별 학습자와 학습 자체에 초점을 두는 교수 패러다임으로, 구성주의에 기반해 학습자가 학습 과정에 능동적으로 참여해 지식을 구성한다고 보는 것은?",
+    options: ["학습자 중심 수업", "직접교수", "프로그램 수업", "행동주의 교수"],
+    answerIndex: 0,
+    explanation:
+      "학습자 중심 수업(learner-centered instruction)은 개별 학습자와 학습에 초점을 둔 관점으로 구성주의에 기반하며, APA 특별팀이 정리한 학습자 중심 심리학 원리가 대표적 준거 틀이다.",
+  },
+  {
+    seedKey: "dx:concept:44",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:interaction",
+    question:
+      "Moore가 제시한 학습자-교수자·학습자-학습자·학습자-내용의 세 유형에 하나를 더해 널리 쓰이는 상호작용 4유형에서, 추가된 네 번째 유형은?",
+    options: [
+      "학습자-인터페이스 상호작용",
+      "교수자-내용 상호작용",
+      "교수자-교수자 상호작용",
+      "내용-내용 상호작용",
+    ],
+    answerIndex: 0,
+    explanation:
+      "상호작용(interaction)은 Moore의 고전적 3유형(학습자-교수자·학습자-학습자·학습자-내용)에 학습자-인터페이스를 더한 4유형 구분이 널리 쓰이며, 동시적/비동시적으로도 나뉜다.",
+  },
+  {
+    seedKey: "dx:concept:45",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:just-in-time-learning",
+    question:
+      "미래에 쓸 지식을 미리 배워 두는 전통적·계열적 학습과 달리, 요구가 생기는 바로 그 시점에 필요한 정보를 제공받는 비계열적 학습으로 상황학습 관점에 뿌리를 둔 것은?",
+    options: ["적시학습", "선행학습", "완전학습", "발견학습"],
+    answerIndex: 0,
+    explanation:
+      "적시학습(just-in-time learning)은 요구가 생기는 시점에 필요한 정보를 제공받는 비계열적 학습으로, 효과적 학습은 활동·맥락·실제에 내재된다는 상황학습 관점(Lave & Wenger)에 뿌리를 둔다.",
+  },
+
+  // ── 핵심개념 term (3) — dx:concept:term:13~15 ──
+  {
+    seedKey: "dx:concept:term:13",
+    type: "term",
+    cognitiveLevel: "remember",
+    area: "concept",
+    conceptSeedKey: "concept:feedback",
+    prompt:
+      "바람직한 성취를 향한 진행 상황을 점검·평가할 수 있도록 설계된, 목표 달성에 관한 정보를 뜻하며 교수체제설계(ISD)의 순환적 특성이 의존하는 핵심 요소는? (한글 또는 영문)",
+    answer: "피드백",
+    acceptedAnswers: ["feedback"],
+    explanation:
+      "피드백(feedback)은 목표 달성에 관한 정보로 학습에 근본적인 요소이며, ISD의 순환적 개선(형성평가)이 여기에 의존한다. 시기·구체성·정서적 톤이 효과를 좌우하는 설계 변수다.",
+  },
+  {
+    seedKey: "dx:concept:term:14",
+    type: "term",
+    cognitiveLevel: "remember",
+    area: "concept",
+    conceptSeedKey: "concept:simulation",
+    prompt:
+      "참가자가 진짜와 같은 역할을 수행하며 자신의 결정이 미치는 영향을 경험하게 하는, 사회적·물리적 실재를 점진적으로 전개하는 사례 연구형 방법은? '이기는 것'이 목적인 게임과 구분된다. (한글 또는 영문)",
+    answer: "시뮬레이션",
+    acceptedAnswers: ["simulation", "모의실험", "모의훈련"],
+    explanation:
+      "시뮬레이션(simulation)은 참가자가 진짜 같은 역할을 수행하며 결정의 영향을 경험하는 방법으로, 현실을 반영하는 정도인 충실성(fidelity)이 핵심 설계 변수이고 '이기는 것'이 목적인 게임과 구분된다.",
+  },
+  {
+    seedKey: "dx:concept:term:15",
+    type: "term",
+    cognitiveLevel: "remember",
+    area: "concept",
+    conceptSeedKey: "concept:digital-game-based-learning",
+    prompt:
+      "규칙으로 정의된 인위적 갈등에 참여해 목적 달성을 위해 내용·지식을 적용하는 경쟁적 활동을 학습에 활용하는 것으로, 게임 요소의 부분 적용(게이미피케이션)과 달리 완결된 게임 플레이 자체가 학습 활동이 되는 접근은? (한글 또는 영문)",
+    answer: "디지털 게임 기반 학습",
+    acceptedAnswers: [
+      "digital game-based learning",
+      "DGBL",
+      "게임기반학습",
+      "게임 기반 학습",
+      "디지털게임기반학습",
+    ],
+    explanation:
+      "디지털 게임 기반 학습(DGBL)은 목적 달성을 위해 지식을 적용하는 경쟁적 게임을 학습에 활용하며, 게임 요소만 부분 적용하는 게이미피케이션과 달리 완결된 게임 플레이 자체가 학습 활동이 된다.",
+  },
+
+  // ── 핵심개념 ox (4) — dx:concept:ox:10~13 ──
+  {
+    seedKey: "dx:concept:ox:10",
+    type: "ox",
+    area: "concept",
+    cognitiveLevel: "understand",
+    conceptSeedKey: "concept:mastery-learning",
+    statement:
+      "완전학습은 도달해야 할 성취 기준을 고정하고 학습에 드는 시간을 변수로 두어, 충분한 시간이 주어지면 거의 모든 학생이 높은 성취에 이를 수 있다고 본다.",
+    answerBool: true,
+    explanation:
+      "참. 완전학습은 진도가 아니라 도달 기준(mastery criterion)을 고정하고 시간을 변수로 두는 발상의 전환이 핵심이다(Carroll, Bloom).",
+  },
+  {
+    seedKey: "dx:concept:ox:11",
+    type: "ox",
+    area: "concept",
+    cognitiveLevel: "understand",
+    conceptSeedKey: "concept:dual-coding-theory",
+    statement:
+      "이중부호화이론은 언어 정보와 비언어적(심상) 정보가 하나의 단일한 시스템에서 통합 처리된다고 본다.",
+    answerBool: false,
+    explanation:
+      "거짓. 이중부호화이론은 언어 시스템(로고젠)과 비언어 시스템(이마젠)이라는 구분된 두 시스템이 독립적이되 병렬로 작동한다고 본다. '단일 시스템'이 아니다.",
+  },
+  {
+    seedKey: "dx:concept:ox:12",
+    type: "ox",
+    area: "concept",
+    cognitiveLevel: "understand",
+    conceptSeedKey: "concept:epss",
+    statement:
+      "전자수행지원 시스템(EPSS)은 형식 훈련처럼 작업 이전에 학습하는 것이 아니라 작업이 수행되는 동안 적시에 활용된다는 점이 두드러진 특징이다.",
+    answerBool: true,
+    explanation:
+      "참. EPSS는 작업 '이전'이 아니라 작업이 수행되는 '동안' 적시(just-in-time)에 활용되며, 이 점이 형식 훈련과 구별되는 특징이다.",
+  },
+  {
+    seedKey: "dx:concept:ox:13",
+    type: "ox",
+    area: "concept",
+    cognitiveLevel: "understand",
+    conceptSeedKey: "concept:attribution-theory",
+    statement:
+      "귀인이론에 따르면, 결과를 자신이 통제할 수 있는 요인(특히 노력)에 귀인하는 학습자가 향후 학업에서 더 유리한 경향이 있다.",
+    answerBool: true,
+    explanation:
+      "참. 통제 소재 개념과 통합된 귀인이론은 결과를 통제 가능한 요인(특히 노력)에 귀인하는 학습자가 더 유리하다고 보며, 이는 노력 귀인을 촉진하는 피드백 설계의 근거가 된다.",
+  },
+
+  // ── 핵심개념 compare (5) — dx:concept:cmp:9~13 ──
+  {
+    seedKey: "dx:concept:cmp:9",
+    type: "compare",
+    area: "concept",
+    cognitiveLevel: "analyze",
+    conceptSeedKey: "concept:digital-game-based-learning",
+    question:
+      "'진짜 같은 역할 수행으로 결정의 영향을 경험하되 이기는 것이 목적이 아닌' 방법과 '규칙으로 정의된 갈등에서 이기는 것을 목적으로 지식을 적용하는' 방법으로 올바르게 짝지어진 것은?",
+    options: [
+      "시뮬레이션(승패 목적 없음) · 디지털 게임 기반 학습(승리 목적)",
+      "디지털 게임 기반 학습(승패 목적 없음) · 시뮬레이션(승리 목적)",
+    ],
+    answerIndex: 0,
+    explanation:
+      "시뮬레이션은 결정의 영향을 경험하게 하되 '이기는 것'이 목적이 아니고, 디지털 게임 기반 학습은 목적 달성(승리)을 위해 지식을 적용하는 경쟁적 활동이라는 점에서 구분된다.",
+  },
+  {
+    seedKey: "dx:concept:cmp:10",
+    type: "compare",
+    area: "concept",
+    cognitiveLevel: "analyze",
+    conceptSeedKey: "concept:knowledge-management",
+    question:
+      "'조직 안에서 지식을 수집·공유·적용하는 활동·과정'에 초점을 둔 개념과 '함께 학습하는 방법을 지속적으로 알아 가는 조직 형태'에 초점을 둔 개념으로 올바르게 짝지어진 것은?",
+    options: [
+      "지식경영(지식 관리 활동) · 학습조직(조직 형태)",
+      "학습조직(지식 관리 활동) · 지식경영(조직 형태)",
+    ],
+    answerIndex: 0,
+    explanation:
+      "지식경영은 조직 안에서 지식을 수집·공유·적용하는 활동·과정에, 학습조직은 함께 학습하는 방법을 지속적으로 알아 가는 조직 형태에 초점을 둔다.",
+  },
+  {
+    seedKey: "dx:concept:cmp:11",
+    type: "compare",
+    area: "concept",
+    cognitiveLevel: "analyze",
+    conceptSeedKey: "concept:epss",
+    question:
+      "'작업이 수행되는 동안 적시에 정보를 제공'하는 지원과 '작업 이전에 미리 지식·기술을 익히게' 하는 접근으로 올바르게 짝지어진 것은?",
+    options: [
+      "전자수행지원 시스템(작업 중 적시) · 형식 훈련(작업 이전 사전학습)",
+      "형식 훈련(작업 중 적시) · 전자수행지원 시스템(작업 이전 사전학습)",
+    ],
+    answerIndex: 0,
+    explanation:
+      "EPSS는 작업이 수행되는 동안 적시에 정보를 제공하고, 형식 훈련은 작업 이전에 미리 지식·기술을 익히게 한다는 점에서 대비된다.",
+  },
+  {
+    seedKey: "dx:concept:cmp:12",
+    type: "compare",
+    area: "concept",
+    cognitiveLevel: "analyze",
+    conceptSeedKey: "concept:elaboration-strategies",
+    question:
+      "'새 정보를 사전지식에 연결·확장해 안정적 내적 연결을 만드는' 전략과 '정보를 단순히 반복해 되뇌는' 전략으로 올바르게 짝지어진 것은?",
+    options: [
+      "정교화(사전지식 연결) · 리허설(단순 반복)",
+      "리허설(사전지식 연결) · 정교화(단순 반복)",
+    ],
+    answerIndex: 0,
+    explanation:
+      "정교화 전략은 새 정보를 사전지식에 기대어 확장·연결해 안정적인 내적 연결을 구축하고, 리허설(시연)은 정보를 단순히 반복해 되뇌는 전략이라는 점에서 구분된다.",
+  },
+  {
+    seedKey: "dx:concept:cmp:13",
+    type: "compare",
+    area: "concept",
+    cognitiveLevel: "analyze",
+    conceptSeedKey: "concept:inquiry-based-learning",
+    question:
+      "'질문·증거·논리적 규칙을 체계적으로 익히며 세상을 알아 가는 과정'을 강조하는 접근과 '학습자가 문제 공간을 탐구하며 스스로 규칙성을 찾아내도록 이끄는' 귀납적 교수전략으로 올바르게 짝지어진 것은?",
+    options: [
+      "탐구 기반 학습(체계적 증거·규칙) · 발견학습(스스로 규칙성 발견)",
+      "발견학습(체계적 증거·규칙) · 탐구 기반 학습(스스로 규칙성 발견)",
+    ],
+    answerIndex: 0,
+    explanation:
+      "탐구 기반 학습은 학습자가 과학적·논리적 규칙을 체계적으로 익히며 증거로 결론에 이르는 점이 강조되고, 발견학습은 학습자가 문제 공간을 탐구하며 스스로 규칙성을 찾도록 이끄는 귀납적 전략이다. 두 개념은 가까운 한 계열이다.",
+  },
 ];
 
 /**
