@@ -32,6 +32,8 @@ export interface SeedConcept {
   description: string;
   /** AECT 공식 역어 — 『교육공학 용어해설』(Richey 편, 학지사 2020) 표제어 기준. */
   aectTerm?: string;
+  /** 순화어 — 노션 용어사전집·『교수학습공학』(이명근, 2025) 용어 체계 기준 병기. */
+  purifiedName?: string;
   altNames?: string[];
   tags?: string[];
   references?: string[];
@@ -73,6 +75,14 @@ export interface SeedMeasurement {
  */
 const AECT_REF = (page: number): string =>
   `Richey, R. C. (Ed.). (2013). Encyclopedia of terminology for educational communications and technology. Springer. [이현우, 임규연, 정재삼, 허희옥 공역 (2020). 교육공학 용어해설 (p. ${page}). 학지사]`;
+
+/**
+ * 『교수학습공학: 이론적 기초와 동향』(이명근, 2025) 참고문헌 문자열.
+ * 연세대 교육대학원 직계 저자의 학습이론 11계열 체계 — 표기·분류 참조 및 재서술 출처.
+ * ⚠️ 본문 전재 금지 — 설명은 자체 재서술만.
+ */
+const LEE_REF = (page: number): string =>
+  `이명근 (2025). 교수학습공학: 이론적 기초와 동향 (p. ${page}). 학지사.`;
 
 // ─── 개념 (Concepts) ─────────────────────────────────────────
 // seedKey 형식: `concept:{kebab-slug}` — 사용자가 이름 수정해도 동일 항목 인식.
@@ -993,6 +1003,120 @@ export const SEED_CONCEPTS: SeedConcept[] = [
       AECT_REF(237),
     ],
   },
+
+  // ─── 2026-07-13 보강 4차: 『교수학습공학』(이명근, 2025) 학습이론 계열 7종 ───
+  // 순화어(purifiedName)는 노션 용어사전집·이 책의 용어 체계 기준. 설명은 자체 재서술.
+  {
+    seedKey: "concept:classical-conditioning",
+    name: "고전적 조건화",
+    purifiedName: "고전 조건화",
+    altNames: ["Classical Conditioning", "파블로프 조건화", "Pavlovian Conditioning"],
+    description:
+      "Pavlov(1849~1936)가 소화 생리학 연구(1904년 노벨 생리의학상) 과정에서 발견해 체계화한, 인간 학습에 대한 과학적 탐구의 출발점이 된 이론. 무조건 자극(먹이)에 자연히 따르는 무조건 반응(침 분비) 앞에 중립 자극(종소리)을 반복해서 짝지으면, 중립 자극만으로도 반응이 일어나는 조건 자극-조건 반응의 연합이 형성된다. 학습을 자극 간 연합으로 설명하는 연합론의 원형이지만, 우세한 자극이 다른 자극의 연합을 가로막는 차단(blocking) 같은 현상은 단순한 자극 인접만으로 설명되지 않아, 학습에 대한 다른 관점(인지적 접근)의 필요성을 시사한 한계로 논의된다.",
+    tags: ["학습이론", "행동주의", "Pavlov"],
+    references: [
+      "Pavlov, I. P. (1927). Conditioned reflexes: An investigation of the physiological activity of the cerebral cortex. Oxford University Press.",
+      LEE_REF(45),
+    ],
+  },
+  {
+    seedKey: "concept:connectionism-conditioning",
+    name: "결합 조건화",
+    altNames: [
+      "Connectionism",
+      "도구적 조건화",
+      "수단 조건화",
+      "Instrumental Conditioning",
+      "시행착오 학습",
+      "Trial-and-Error Learning",
+      "효과의 법칙",
+      "Law of Effect",
+    ],
+    description:
+      "최초의 현대 학습이론가로 평가되는 Thorndike(1874~1949)의 이론. 학습을 자극과 반응 사이의 결합(connection)이 형성·강화되는 과정으로 보며, 시행착오를 거쳐 보상을 얻는 데 성공한 반응이 살아남는다는 점에서 수단(도구적) 조건화로도 분류된다. 학습의 전제 조건으로 준비도의 법칙·연습의 법칙·효과의 법칙의 3대 학습법칙을 제시했고, 특히 만족스러운 결과가 뒤따른 결합이 강해진다는 효과의 법칙은 이후 Skinner의 강화 개념으로 이어지는 다리가 되었다. 진화론의 영향을 받은 기능주의적 입장에서 교육 문제 해결에 이론을 적용할 것을 역설한 학자이기도 하다.",
+    tags: ["학습이론", "행동주의", "Thorndike"],
+    references: [
+      "Thorndike, E. L. (1911). Animal intelligence: Experimental studies. Macmillan.",
+      LEE_REF(57),
+    ],
+  },
+  {
+    seedKey: "concept:contiguous-conditioning",
+    name: "인접 조건화",
+    altNames: ["Contiguous Conditioning", "근접 조건형성", "Contiguity Theory"],
+    description:
+      "Guthrie(1886~1959)가 고전 조건화(Pavlov)와 결합 조건화(Thorndike)의 영향 아래 수립한 이론으로, 자극과 반응이 시간적으로 붙어(인접) 일어나는 것 자체를 학습의 충분조건으로 본다. 강화나 반복 없이도 어떤 자극 상황에서 마지막으로 한 행동이 그 상황과 단번에 연합된다는 일회시행 학습(one-trial learning)이 특징적 주장이다. 습관을 고치려면 나쁜 반응을 부르는 자극 상황에서 다른 반응이 일어나게 만들라는 습관 교정법(역치법·피로법·상반자극법)이 실천적 함의로 꼽히며, 연합론적 행동주의의 독특한 갈래로 생명력을 유지하고 있다.",
+    tags: ["학습이론", "행동주의", "Guthrie"],
+    references: [
+      "Guthrie, E. R. (1952). The psychology of learning (Rev. ed.). Harper & Row.",
+      LEE_REF(69),
+    ],
+  },
+  {
+    seedKey: "concept:operant-conditioning",
+    name: "조작적 조건화",
+    purifiedName: "작동 조건화",
+    altNames: ["Operant Conditioning", "작동적 조건화", "작동 조건화"],
+    description:
+      "Skinner가 정립한 이론으로, 행동을 유발하는 사전 자극을 정확히 짚을 수 있는 고전·결합 조건화와 달리, 유기체가 먼저 방출한 행동(작동 반응)이 그 뒤에 따라오는 결과에 의해 미래 발생 가능성이 결정된다고 본다. 학습의 본질은 '강화 유관(reinforcement contingency)에 의한 작동 반응의 조형(shaping)'으로 요약된다. 결과가 행동을 늘리면 강화, 줄이면 벌이며, 여기서의 강화인(reinforcer)은 목표 달성의 수단으로 주어지는 보상(reward)과 개념적으로 구분된다. 프로그램 수업·행동목표·수행 중심 설계 등 교육공학 초기 방법론의 직접적 뿌리다.",
+    tags: ["학습이론", "행동주의", "Skinner"],
+    references: [
+      "Skinner, B. F. (1953). Science and human behavior. Macmillan.",
+      LEE_REF(79),
+    ],
+  },
+  {
+    seedKey: "concept:gestalt-learning-theory",
+    name: "형태주의 학습이론",
+    altNames: ["Gestalt Theory", "게슈탈트 이론", "통찰학습", "Insight Learning"],
+    description:
+      "Köhler·Koffka·Lewin 등이 발전시킨, 행동주의의 요소 분해적 접근에 맞서 학습을 지각 전체 구조(형태, Gestalt)의 재조직으로 설명하는 이론. 근본 원리는 모든 심리적 사상이 유의미하고 완전하며 단순해지려는 경향을 지닌다는 함축의 원리(law of Prägnanz)이고, 그 아래 완결성·근린성·유사성·연속성·공통행선의 지각 원리들이 놓인다. 학습자는 자극 상황과 상호작용하는 가운데 지각의 변화로 형태를 파악하며 — 문제 상황의 요소 관계를 한순간에 재구조화하는 통찰(insight)이 대표 현상 — 문제에 대한 정확한 표상 형성을 학습의 본질로 본다는 점에서 인지주의의 선구가 되었다.",
+    tags: ["학습이론", "인지주의", "Gestalt"],
+    references: [
+      "Köhler, W. (1925). The mentality of apes. Harcourt, Brace.",
+      LEE_REF(93),
+    ],
+  },
+  {
+    seedKey: "concept:latent-learning",
+    name: "잠재학습",
+    purifiedName: "신호학습",
+    altNames: [
+      "Latent Learning",
+      "Sign Learning",
+      "목적적 행동주의",
+      "Purposive Behaviorism",
+      "인지도",
+      "Cognitive Map",
+    ],
+    description:
+      "Tolman(1886~1959)이 수립한 이론으로, 강화 없이도 학습이 일어나 저장되었다가 필요할 때 수행으로 드러난다는 잠재학습 현상을 통해 학습과 수행을 개념적으로 분리했다. 유기체는 자극-반응의 기계적 연쇄가 아니라 '무엇이 무엇으로 이어지는가'라는 신호-의미 관계(sign-significate)를 학습하며, 미로를 학습한 쥐가 공간의 인지도(cognitive map)를 형성한다는 실험이 유명하다. 환경 변인과 개인차 변인 사이에 가설·욕구·식별·운동기능 같은 중재 변인을 두어 행동을 설명한 목적적 행동주의는 행동주의와 인지주의를 잇는 가교로 평가된다.",
+    tags: ["학습이론", "인지주의 가교", "Tolman"],
+    references: [
+      "Tolman, E. C. (1948). Cognitive maps in rats and men. Psychological Review, 55(4), 189-208.",
+      LEE_REF(107),
+    ],
+  },
+  {
+    seedKey: "concept:observational-learning",
+    name: "관찰학습",
+    altNames: [
+      "Observational Learning",
+      "사회학습이론",
+      "Social Learning Theory",
+      "사회인지이론",
+      "Social Cognitive Theory",
+      "모델링",
+      "Modeling",
+    ],
+    description:
+      "Bandura가 체계화한 이론으로, 인간은 직접 강화를 받지 않아도 타인(모델)의 행동과 그 결과를 관찰하는 것만으로 학습한다고 본다. 선택적 주의집중으로 파지된 인지 표상이 본보기(template) 역할을 하고, 인지적 연습을 거쳐 부호화·저장되었다가 긍정적 결과(강화)가 예상될 때 행동으로 산출된다 — 주의·파지·산출·동기의 과정 구분이 여기서 나온다. 모델이 강화받는 것을 보는 대리 강화는 기대를 형성하고 동기를 유발하는 정보적 기능을 하며, 자기 관찰·자기 평가에서 오는 내적(자기) 강화가 외재적 강화보다 강력하다는 행동의 자기조절 원리는 자기효능감·자기조절학습 이론으로 발전했다.",
+    tags: ["학습이론", "사회인지", "Bandura"],
+    references: [
+      "Bandura, A. (1977). Social learning theory. Prentice-Hall.",
+      LEE_REF(145),
+    ],
+  },
 ];
 
 // ─── 변인 (Variables) ─────────────────────────────────────────
@@ -1612,6 +1736,8 @@ export const SEED_CONCEPT_VARIABLE_LINKS: Record<string, string[]> = {
   "상호작용": ["상호작용", "학습 만족도"],
   "학습자 중심 수업": ["학습참여"],
   "귀인이론": ["학업적 자기효능감"],
+  // 4차 (『교수학습공학』 학습이론 계열 — 관찰학습만 변인 연결, 나머지 이론은 메타 개념)
+  "관찰학습": ["학업적 자기효능감", "자기조절 학습전략"],
 };
 
 // 변인 이름 → 관련 측정도구 이름들. 시드 적용 시 자동으로 measurementIds 채움 + 측정도구에 역참조 variableIds.
@@ -1847,6 +1973,8 @@ export async function refreshArchiveSeedReferences(
     const same =
       existing.description === c.description &&
       (existing.aectTerm ?? undefined) === c.aectTerm &&
+      // purifiedName 은 "시드에 있고 기존에 비어 있을 때만 채움" — 그 경우만 차이로 판정 (멱등).
+      !(c.purifiedName && !existing.purifiedName) &&
       deepEqualArr(existing.references as string[] | undefined, seedRefs) &&
       deepEqualArr(existing.altNames as string[] | undefined, seedAlts) &&
       deepEqualArr(existing.tags as string[] | undefined, seedTags);
@@ -1857,6 +1985,8 @@ export async function refreshArchiveSeedReferences(
     await archiveConceptsApi.update(existing.id, {
       description: c.description,
       ...(c.aectTerm ? { aectTerm: c.aectTerm } : {}),
+      // purifiedName 은 시드에 값이 있을 때만 채움 — 운영자가 직접 입력한 순화어는 보존.
+      ...(c.purifiedName && !existing.purifiedName ? { purifiedName: c.purifiedName } : {}),
       references: seedRefs,
       altNames: seedAlts,
       tags: seedTags,
