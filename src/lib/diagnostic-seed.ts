@@ -1944,6 +1944,458 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
     explanation:
       "두 집단(실험·통제) 모두 사전검사 후 한 집단만 처치하고 양쪽 모두 사후검사하는 구조는 (이질)통제집단 사전-사후검사 설계다. 무선할당이 없으면 준실험에 해당한다.",
   },
+
+  // ═════════════════════════════════════════════════════════════
+  // 교육공학 핵심개념 확충 (2026-07-12) — archive-seed.ts AECT 『교육공학 용어해설』
+  // 신규 23개 개념(concept:behaviorism ~ concept:cone-of-experience) 커버리지 보강.
+  // 각 문항은 해당 개념 description 에 명시된 검증 가능한 사실만 근거로 작성.
+  // ── 핵심개념 mcq (15) — dx:concept:14~28 ──
+  // ═════════════════════════════════════════════════════════════
+  {
+    seedKey: "dx:concept:14",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:behaviorism",
+    question:
+      "학습을 관찰 가능한 행동의 변화로 이해하며, 행동은 뒤따르는 결과(강화·약화)에 따라 조성된다는 작동적 조건화를 정립한 학자와 사조로 옳은 것은?",
+    options: [
+      "Skinner - 행동주의",
+      "Piaget - 구성주의",
+      "Bruner - 발견학습",
+      "Ausubel - 유의미학습",
+    ],
+    answerIndex: 0,
+    explanation:
+      "행동주의는 학습을 관찰 가능한 행동 변화로 보며, Skinner가 행동은 결과(강화·약화)에 따라 조성된다는 작동적 조건화를 정립해 고전적 조건화와 구분했다.",
+  },
+  {
+    seedKey: "dx:concept:15",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:cognitive-learning-theory",
+    question:
+      "학습자가 정보를 획득·처리·조직·저장·인출하는 방식에 주목하며, 스키마이론·정보처리이론·전이 연구 등을 아우르는 학습이론 계열은?",
+    options: ["행동주의", "인지주의 학습이론", "상황인지", "보편적 학습설계"],
+    answerIndex: 1,
+    explanation:
+      "인지주의 학습이론은 인지 과정에 주목하는 이론 계열로, Ausubel의 유의미학습, Bruner의 발견학습, Gagné의 학습성과 영역 등이 대표적이다.",
+  },
+  {
+    seedKey: "dx:concept:16",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:schema-theory",
+    question:
+      "사람이 경험을 사진처럼 저장하지 않고 심적 표상으로 구성하며, 회상은 저장물의 재생이 아니라 스키마에 기반한 재구성이라고 보는 인지 이론은?",
+    options: ["정보처리이론", "스키마이론", "인지부하이론", "행동주의"],
+    answerIndex: 1,
+    explanation:
+      "스키마이론은 Bartlett의 연구에서 출발했으며, 회상을 스키마 기반의 재구성으로 설명한다. Piaget의 동화·조절 개념과도 연결된다.",
+  },
+  {
+    seedKey: "dx:concept:17",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:information-processing-theory",
+    question:
+      "인간의 학습을 자극이 주의·지각을 거쳐 작업기억·장기기억에서 처리·저장·인출되는 흐름으로 설명하며, 작업기억 용량의 한계(7±2)를 다루는 이론은?",
+    options: ["정보처리이론", "구성주의", "상황인지", "발견학습"],
+    answerIndex: 0,
+    explanation:
+      "정보처리이론은 학습을 정보의 처리 흐름으로 설명하며, Miller의 매직 넘버(7±2)와 청크 단위 처리 개념이 대표적이다.",
+  },
+  {
+    seedKey: "dx:concept:18",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:cognitive-apprenticeship",
+    question:
+      "전통적 도제가 눈에 보이는 기술을 전수하는 것과 달리, 전문가의 보이지 않는 사고 과정을 가시화해 관찰·연습하게 하는 교수 모형은?",
+    options: ["인지적 도제", "문제 기반 학습", "선행조직자", "보편적 학습설계"],
+    answerIndex: 0,
+    explanation:
+      "인지적 도제는 전문가의 인지적·초인지적 과정을 겉으로 드러내 배우게 하며, 방법 차원은 모델링·코칭·스캐폴딩·발화·성찰·탐구로 구성된다.",
+  },
+  {
+    seedKey: "dx:concept:19",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:advance-organizer",
+    question:
+      "본문 학습 내용보다 추상성·일반성·포괄성이 높은 수준에서 핵심 아이디어의 뼈대를 미리 제시해, 새 정보가 기존 인지구조에 포섭되도록 돕는 Ausubel의 도입 자료는?",
+    options: ["선행조직자", "스캐폴딩", "학습객체", "인지전략"],
+    answerIndex: 0,
+    explanation:
+      "선행조직자(advance organizer)는 Ausubel이 제안했으며, 설명적(expository) 조직자와 비교적(comparative) 조직자의 두 유형이 있다.",
+  },
+  {
+    seedKey: "dx:concept:20",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:problem-based-learning",
+    question:
+      "실제 현장에서 만날 법한 실제적·비구조화된 문제 속에 학습자를 놓고 교수자는 촉진자 역할을 맡는 접근으로, 1970년대 맥마스터대 의과대학에서 창안된 것은?",
+    options: ["문제 기반 학습(PBL)", "선행조직자", "프로그램 수업", "경험의 원추"],
+    answerIndex: 0,
+    explanation:
+      "문제 기반 학습(PBL)은 강의로 얻은 지식이 임상 실습으로 전이되지 못하는 문제를 해결하기 위해 맥마스터대 의과대학에서 창안됐다.",
+  },
+  {
+    seedKey: "dx:concept:21",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:self-directed-learning",
+    question:
+      "학습자가 자신의 학습 프로젝트를 선택·주도하도록 힘을 갖추는 것을 강조하며, Knowles가 성인학습이론(안드라고지)의 일부로 대중화한 개념은?",
+    options: ["자기주도학습", "발견학습", "협력학습", "마이크로러닝"],
+    answerIndex: 0,
+    explanation:
+      "자기주도학습(SDL)은 Tough의 연구와 Knowles의 안드라고지를 통해 대중화됐으며, 무엇을 왜 배울지 결정하는 학습 기획의 주도권을 강조한다.",
+  },
+  {
+    seedKey: "dx:concept:22",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:discovery-learning",
+    question:
+      "개념·규칙을 먼저 설명하는 연역적 접근과 반대로, 학습자가 문제 공간을 탐구하며 스스로 규칙성을 찾아내도록 이끄는 귀납적 교수전략은?",
+    options: ["발견학습", "직접교수", "선행조직자", "프로그램 수업"],
+    answerIndex: 0,
+    explanation:
+      "발견학습(discovery learning)은 Bruner가 이끈 인지 혁명과 함께 확산된 귀납적 교수전략으로, 순수 발견보다 안내된 발견이 효과적이라는 연구가 축적되어 있다.",
+  },
+  {
+    seedKey: "dx:concept:23",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:distance-education",
+    question:
+      "교사와 학습자가 물리적으로 떨어진 상태에서 매체를 통해 상호작용하며 이루어지는, 기관 기반의 형식 교육을 가리키는 용어는?",
+    options: ["원격교육", "독학", "마이크로러닝", "학습분석"],
+    answerIndex: 0,
+    explanation:
+      "원격교육은 교사와 학습자의 물리적 분리를 전제로 매체를 통해 상호작용하며, 기관 기반 형식 교육이라는 점에서 독학과 구별된다.",
+  },
+  {
+    seedKey: "dx:concept:24",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:universal-design-for-learning",
+    question:
+      "건축의 보편적 설계에서 출발해, 완성 후 덧대는 방식이 아니라 처음부터 다양성을 고려해 모든 학생이 사용할 수 있는 유연한 교육과정을 설계하려는 접근(CAST)은?",
+    options: ["보편적 학습설계(UDL)", "적응학습", "공개교육자료", "블렌디드 러닝"],
+    answerIndex: 0,
+    explanation:
+      "보편적 학습설계(UDL)는 처음부터 다양성을 고려해 설계하며, 특정 집단을 위한 기능이 모두에게 유용해지는 것이 전형적 사례다. 특수교육 지원을 대체하지는 않는다.",
+  },
+  {
+    seedKey: "dx:concept:25",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:open-educational-resources",
+    question:
+      "전통적 저작권 제한보다 자유롭게 교수·학습·연구에 사용·수정·공유할 수 있도록 허가된 디지털 자료로, MIT의 오픈코스웨어(OCW) 운동과 연결되는 개념은?",
+    options: ["공개교육자료(OER)", "학습객체", "학습관리시스템(LMS)", "마이크로러닝"],
+    answerIndex: 0,
+    explanation:
+      "공개교육자료(OER)는 접근·사용·수정·공유를 가능하게 하는 것이 본질이며, MIT의 오픈코스웨어(OCW) 운동과 유네스코 2012 파리 세계대회가 확산의 이정표다.",
+  },
+  {
+    seedKey: "dx:concept:26",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:learning-object",
+    question:
+      "학습을 지원하기 위해 사용·재사용·참조될 수 있는 자원으로, Wiley(2000)가 정의하고 메타데이터 표준과 저장소를 통한 공유·재사용이 실용적 핵심인 개념은?",
+    options: ["학습객체", "공개교육자료", "선행조직자", "인지전략"],
+    answerIndex: 0,
+    explanation:
+      "학습객체(learning object)는 Wiley가 정의했으며, 메타데이터 표준과 저장소(repository)를 통한 공유·재사용이 실용적 핵심이다.",
+  },
+  {
+    seedKey: "dx:concept:27",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:needs-assessment",
+    question:
+      "현재 성과와 바람직한 성과 사이의 차이(요구)를 확인하고 우선순위를 정하는 절차로, 교수설계 ADDIE의 첫 단계(분석)를 이루는 활동은?",
+    options: ["요구사정", "형성평가", "학습분석", "총괄평가"],
+    answerIndex: 0,
+    explanation:
+      "요구사정(needs assessment)은 성과 차이를 확인하고 우선순위를 정하는 절차로 ADDIE의 첫 단계 활동이며, Kaufman·Rossett·Mager 등이 방법론을 발전시켰다.",
+  },
+  {
+    seedKey: "dx:concept:28",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:cone-of-experience",
+    question:
+      "Edgar Dale이 제시한, 매체가 제공하는 학습 경험을 아래(직접적·목적적 경험)에서 위(언어기호)로 구체성-추상성 차원에 따라 배열한 모형은?",
+    options: [
+      "경험의 원추",
+      "SAMR 모델",
+      "ADDIE 모델",
+      "블룸의 교육목표 분류",
+    ],
+    answerIndex: 0,
+    explanation:
+      "경험의 원추(Cone of Experience)는 Dale이 제시했으며, 구체성-추상성 차원으로 매체 경험을 배열하고 Bruner의 행위적-영상적-상징적 표상 분류와 대응된다.",
+  },
+
+  // ── 핵심개념 term (6) — dx:concept:term:7~12 ──
+  {
+    seedKey: "dx:concept:term:7",
+    type: "term",
+    cognitiveLevel: "remember",
+    area: "concept",
+    conceptSeedKey: "concept:scaffolding",
+    prompt:
+      "학습자가 혼자서는 해내기 어려운 과제를 수행할 때 제공하며, 학습자가 능숙해지면 점차 거두어들이는(fading) 일시적 지원을 뜻하는 개념은? (한글 또는 영문)",
+    answer: "스캐폴딩",
+    acceptedAnswers: ["scaffolding", "비계", "발판"],
+    explanation:
+      "스캐폴딩(scaffolding, 비계)은 Vygotsky의 근접발달영역에 뿌리를 둔 일시적 지원으로, 학습자가 능숙해지면 점차 거두어들인다(fading).",
+  },
+  {
+    seedKey: "dx:concept:term:8",
+    type: "term",
+    cognitiveLevel: "remember",
+    area: "concept",
+    conceptSeedKey: "concept:situated-cognition",
+    prompt:
+      "지식은 그것이 쓰이는 상황과 분리되지 않고 사회문화적 맥락 안에 존재한다고 보며, 실천공동체를 지식 구성의 틀로 삼는 관점은? (한글 또는 영문)",
+    answer: "상황인지",
+    acceptedAnswers: ["situated cognition", "상황학습", "situated learning", "상황적 인지"],
+    explanation:
+      "상황인지(situated cognition)는 학습이 특정 맥락에서 일어나며 의미가 사회적으로 구성된다고 보는 관점으로, 인지적 도제·앵커드 교수법의 이론적 기초다.",
+  },
+  {
+    seedKey: "dx:concept:term:9",
+    type: "term",
+    cognitiveLevel: "remember",
+    area: "concept",
+    conceptSeedKey: "concept:mobile-learning",
+    prompt:
+      "기술의 유동성과 학습자·학습의 이동성을 전제로, 학습 환경과 공간을 넘나들며 일어나는 학습을 가리키는 용어는? (한글 또는 영문)",
+    answer: "모바일 학습",
+    acceptedAnswers: ["mobile learning", "m-러닝", "엠러닝", "m-learning", "모바일러닝"],
+    explanation:
+      "모바일 학습(mobile learning)은 언제 어디서나 자료에 접근한다는 이동성을 전제로 하며, 유비쿼터스 학습(U-러닝)과 가까운 개념이다.",
+  },
+  {
+    seedKey: "dx:concept:term:10",
+    type: "term",
+    cognitiveLevel: "remember",
+    area: "concept",
+    conceptSeedKey: "concept:blended-learning",
+    prompt:
+      "면대면 학습과 온라인(매개된) 학습을 의도적으로 통합해 의도된 학습경험을 만들어 내는 학습 형태를 가리키는 용어는? (한글 또는 영문)",
+    answer: "블렌디드 러닝",
+    acceptedAnswers: ["blended learning", "혼합학습", "혼합형 학습", "블렌디드러닝"],
+    explanation:
+      "블렌디드 러닝(blended learning)은 면대면과 온라인 두 양식을 의도적으로 통합하는 학습 형태로, 플립러닝은 대표적 설계 사례다.",
+  },
+  {
+    seedKey: "dx:concept:term:11",
+    type: "term",
+    cognitiveLevel: "remember",
+    area: "concept",
+    conceptSeedKey: "concept:constructivism",
+    prompt:
+      "지식은 전달받는 것이 아니라 학습자가 환경과 상호작용하며 스스로 구성한다고 보는 인식론이자 학습이론은? (한글 또는 영문)",
+    answer: "구성주의",
+    acceptedAnswers: ["constructivism", "구성주의 학습이론"],
+    explanation:
+      "구성주의(constructivism)는 지식이 학습자에 의해 구성된다고 보며, Piaget는 발달을 학습의 선행 조건으로, Vygotsky는 학습이 발달을 이끈다고 보았다.",
+  },
+  {
+    seedKey: "dx:concept:term:12",
+    type: "term",
+    cognitiveLevel: "remember",
+    area: "concept",
+    conceptSeedKey: "concept:cognitive-strategies",
+    prompt:
+      "청킹·리허설·정교화·기억술처럼 정보를 저장하고 떠올리는 일을 돕는 정신적 기술로, Gagné가 학습성과의 다섯 영역 중 하나로 꼽은 것은? (한글 또는 영문)",
+    answer: "인지전략",
+    acceptedAnswers: ["cognitive strategies", "인지 전략", "cognitive strategy"],
+    explanation:
+      "인지전략(cognitive strategies)은 기억 유지와 사고를 관리하는 정신적 기술로, 메타인지가 그 효과적 사용을 돕는다. Gagné의 학습성과 다섯 영역 중 하나다.",
+  },
+
+  // ── 핵심개념 ox (5) — dx:concept:ox:5~9 ──
+  {
+    seedKey: "dx:concept:ox:5",
+    type: "ox",
+    area: "concept",
+    cognitiveLevel: "understand",
+    conceptSeedKey: "concept:behaviorism",
+    statement:
+      "Skinner의 작동적 조건화는 행동에 뒤따르는 결과(강화·약화)가 이후 행동의 발생 가능성을 조성한다고 본다.",
+    answerBool: true,
+    explanation:
+      "참. Skinner의 작동적 조건화는 행동이 결과(강화·약화)에 따라 조성된다고 보며, 이는 자극-반응을 다루는 고전적 조건화와 구분된다.",
+  },
+  {
+    seedKey: "dx:concept:ox:6",
+    type: "ox",
+    area: "concept",
+    cognitiveLevel: "understand",
+    conceptSeedKey: "concept:schema-theory",
+    statement:
+      "Piaget는 새 경험을 기존 스키마에 통합하는 것을 조절, 스키마 자체를 바꾸는 것을 동화라고 불렀다.",
+    answerBool: false,
+    explanation:
+      "거짓. 새 경험을 기존 스키마에 통합하는 것이 동화(assimilation), 스키마 자체를 바꾸는 것이 조절(accommodation)이다. 용어가 뒤바뀌었다.",
+  },
+  {
+    seedKey: "dx:concept:ox:7",
+    type: "ox",
+    area: "concept",
+    cognitiveLevel: "understand",
+    conceptSeedKey: "concept:project-based-learning",
+    statement:
+      "프로젝트 기반 학습(PjBL)은 추진 질문(driving question)에 답하기 위해 학습자가 탐구·협력하며 배운 내용을 산출물로 표현하는 데 중점을 둔다.",
+    answerBool: true,
+    explanation:
+      "참. 프로젝트 기반 학습은 추진 질문에 답하는 산출물 제작에 중점을 두며, 이 점에서 문제 규정에 초점을 둔 문제 기반 학습과 구분된다.",
+  },
+  {
+    seedKey: "dx:concept:ox:8",
+    type: "ox",
+    area: "concept",
+    cognitiveLevel: "understand",
+    conceptSeedKey: "concept:learning-transfer",
+    statement:
+      "익힌 기술을 유사한 상황에서 그대로 활용하는 것을 원전이(far transfer), 새롭고 복잡한 상황으로 창의적으로 확장 적용하는 것을 근전이(near transfer)라고 한다.",
+    answerBool: false,
+    explanation:
+      "거짓. 유사한 상황에서 그대로 활용하는 것이 근전이(near transfer), 새롭고 복잡한 상황으로 확장 적용하는 것이 원전이(far transfer)다. 용어가 뒤바뀌었다.",
+  },
+  {
+    seedKey: "dx:concept:ox:9",
+    type: "ox",
+    area: "concept",
+    cognitiveLevel: "understand",
+    conceptSeedKey: "concept:cone-of-experience",
+    statement:
+      "Dale은 경험의 원추를 학습이 반드시 거쳐야 할 정확한 순서로 읽어야 한다고 강조했다.",
+    answerBool: false,
+    explanation:
+      "거짓. Dale 자신도 원추를 학습 과정의 정확한 순서로 읽는 오류를 경계했으며, 학습자에게 필요한 구체성 수준에 맞춰 매체를 고르라는 의미다.",
+  },
+
+  // ── 핵심개념 compare (6) — dx:concept:cmp:3~8 ──
+  {
+    seedKey: "dx:concept:cmp:3",
+    type: "compare",
+    area: "concept",
+    cognitiveLevel: "analyze",
+    conceptSeedKey: "concept:project-based-learning",
+    question:
+      "'실제적·비구조화된 문제를 규정하고 해결하는 데 초점'을 둔 접근과 '추진 질문에 답하는 산출물 제작에 초점'을 둔 접근으로 올바르게 짝지어진 것은?",
+    options: [
+      "문제 기반 학습(문제 해결) · 프로젝트 기반 학습(산출물 제작)",
+      "프로젝트 기반 학습(문제 해결) · 문제 기반 학습(산출물 제작)",
+    ],
+    answerIndex: 0,
+    explanation:
+      "문제 기반 학습(PBL)은 문제 규정·해결에, 프로젝트 기반 학습(PjBL)은 산출물 제작에 중점을 둔다.",
+  },
+  {
+    seedKey: "dx:concept:cmp:4",
+    type: "compare",
+    area: "concept",
+    cognitiveLevel: "analyze",
+    conceptSeedKey: "concept:self-directed-learning",
+    question:
+      "'과제 수행 중의 인지·행동 조절'에 초점을 둔 개념과 '무엇을 왜 배울지 결정하는 학습 기획의 주도권'을 강조하는 개념으로 올바르게 짝지어진 것은?",
+    options: [
+      "자기조절학습(수행 중 조절) · 자기주도학습(학습 기획 주도)",
+      "자기주도학습(수행 중 조절) · 자기조절학습(학습 기획 주도)",
+    ],
+    answerIndex: 0,
+    explanation:
+      "자기조절학습은 과제 수행 중의 인지·행동 조절에, 자기주도학습은 무엇을 왜 배울지 결정하는 학습 기획 전반의 주도권에 초점을 둔다.",
+  },
+  {
+    seedKey: "dx:concept:cmp:5",
+    type: "compare",
+    area: "concept",
+    cognitiveLevel: "analyze",
+    conceptSeedKey: "concept:learning-transfer",
+    question:
+      "'익힌 기술을 유사한 상황에서 그대로 활용'하는 전이와 '새롭고 복잡한 상황으로 창의적으로 확장 적용'하는 전이로 올바르게 짝지어진 것은?",
+    options: [
+      "근전이(유사 상황 활용) · 원전이(새 상황 확장)",
+      "원전이(유사 상황 활용) · 근전이(새 상황 확장)",
+    ],
+    answerIndex: 0,
+    explanation:
+      "근전이(near transfer)는 유사 상황에서 그대로 활용, 원전이(far transfer)는 새롭고 복잡한 상황으로 확장 적용하는 것이다.",
+  },
+  {
+    seedKey: "dx:concept:cmp:6",
+    type: "compare",
+    area: "concept",
+    cognitiveLevel: "analyze",
+    conceptSeedKey: "concept:needs-assessment",
+    question:
+      "요구사정 맥락에서 '성과 차이의 확인'에 해당하는 것과 '차이의 요소와 근본 원인 규명'에 해당하는 것으로 올바르게 짝지어진 것은?",
+    options: [
+      "사정(assessment, 차이 확인) · 분석(analysis, 근본 원인 규명)",
+      "분석(analysis, 차이 확인) · 사정(assessment, 근본 원인 규명)",
+    ],
+    answerIndex: 0,
+    explanation:
+      "요구사정에서 사정(assessment)은 성과 차이의 확인, 분석(analysis)은 차이의 요소와 근본 원인 규명을 가리킨다는 구분이 제안된다.",
+  },
+  {
+    seedKey: "dx:concept:cmp:7",
+    type: "compare",
+    area: "concept",
+    cognitiveLevel: "understand",
+    conceptSeedKey: "concept:blended-learning",
+    question:
+      "면대면과 온라인을 통합하는 '더 넓은 상위 범주'와 그 '대표적 설계 사례'로 올바르게 짝지어진 것은?",
+    options: [
+      "블렌디드 러닝(상위 범주) · 플립러닝(설계 사례)",
+      "플립러닝(상위 범주) · 블렌디드 러닝(설계 사례)",
+    ],
+    answerIndex: 0,
+    explanation:
+      "블렌디드 러닝은 면대면과 온라인을 통합하는 넓은 범주이고, 플립러닝은 그 대표적 설계 사례다.",
+  },
+  {
+    seedKey: "dx:concept:cmp:8",
+    type: "compare",
+    area: "concept",
+    cognitiveLevel: "analyze",
+    conceptSeedKey: "concept:discovery-learning",
+    question:
+      "학습자가 스스로 규칙성을 찾도록 이끄는 '귀납적 접근'과 개념·규칙을 먼저 설명하는 '연역적 접근'으로 올바르게 짝지어진 것은?",
+    options: [
+      "발견학습(귀납적) · 설명식 수업(연역적)",
+      "설명식 수업(귀납적) · 발견학습(연역적)",
+    ],
+    answerIndex: 0,
+    explanation:
+      "발견학습은 학습자가 스스로 규칙성을 찾는 귀납적 교수전략이고, 개념·규칙을 먼저 설명하는 접근은 연역적(설명식)이다.",
+  },
 ];
 
 /**
