@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { GraduationCap, BookOpen, ScrollText, Award, ArrowRight, Compass } from "lucide-react";
+import { GraduationCap, BookOpen, ScrollText, Award, ArrowRight, Compass, Blocks } from "lucide-react";
 import { guideTracksApi } from "@/lib/bkend";
 import { GUIDE_TRACK_LABELS, type GuideTrack, type GuideTrackKey } from "@/types";
 import SemesterRoadmap from "@/features/steppingstone/SemesterRoadmap";
@@ -163,6 +163,40 @@ export default function SteppingstoneHubPage() {
           })}
         </div>
       )}
+
+      {/* 셀프 가이드 도구 — 특정 트랙에 속하지 않는 단독 가이드 */}
+      <section className="mt-10">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          셀프 가이드 도구
+        </h2>
+        <Link href="/steppingstone/program-development" className="block">
+          <div className="group relative flex flex-col overflow-hidden rounded-2xl border bg-card p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg">
+            <div
+              aria-hidden
+              className="absolute inset-y-0 left-0 w-1 bg-indigo-600 transition-all group-hover:w-1.5"
+            />
+            <div className="flex items-center gap-3">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700 shadow-sm transition-transform group-hover:scale-105 dark:bg-indigo-950 dark:text-indigo-300">
+                <Blocks size={26} />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold tracking-tight sm:text-xl">
+                  교육훈련 프로그램 개발 가이드
+                </h3>
+                <p className="text-xs text-muted-foreground">ADDIE 5단계 · 이론 렌즈 · 산출물 체크리스트</p>
+              </div>
+            </div>
+            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+              연수·수업·HRD 프로그램을 분석·설계·개발·실행·평가 다섯 단계로 따라가며, 각 단계에서
+              참고할 교육공학 개념과 산출물을 정리한 셀프 가이드입니다.
+            </p>
+            <div className="mt-5 flex items-center gap-1 text-sm font-semibold text-primary transition-all group-hover:gap-2">
+              <span>바로가기</span>
+              <ArrowRight size={16} />
+            </div>
+          </div>
+        </Link>
+      </section>
 
       <SemesterRoadmap />
 
