@@ -1117,6 +1117,153 @@ export const SEED_CONCEPTS: SeedConcept[] = [
       LEE_REF(145),
     ],
   },
+
+  // ─── 2026-07-13 보강 5차: AECT 교수설계·미시전략·매체 계열 11종 ───
+  // "용어 나열이 아닌 개념 설명" 원칙 — 전량 자체 재서술(패러프레이즈) + 표제어 페이지 인용.
+  {
+    seedKey: "concept:instructional-objectives",
+    name: "교수목표",
+    aectTerm: "교수목표",
+    altNames: ["Instructional Objectives", "학습목표", "행동목표", "Behavioral Objectives"],
+    description:
+      "미리 설계된 수업을 마친 뒤 학생이 할 수 있게 되는 것을 기술한 진술문. 막연한 기대가 아니라 관찰·측정 가능한 수행으로 표현하는 것이 요체이며, Mager의 고전적 정식에서는 수행 행동(무엇을 하는가)·조건(어떤 상황에서)·준거(어느 수준이면 합격인가)의 세 요소로 구성한다. 목표는 콘텐츠 선정·계열화·평가 문항 설계의 기준점이 되어 교수설계 전 과정을 정렬(alignment)시키며, 준거 참조 측정·평가 모형과 직접 연결된다. 지나치게 잘게 쪼개면 복잡한 학습을 놓친다는 비판과 함께 역량 기반 진술로 확장되어 왔다.",
+    tags: ["교수설계", "목표", "Mager"],
+    references: [
+      "Mager, R. F. (1997). Preparing instructional objectives (3rd ed.). CEP Press.",
+      AECT_REF(225),
+    ],
+  },
+  {
+    seedKey: "concept:instructional-design-models",
+    name: "교수설계 모형",
+    aectTerm: "교수설계 모형",
+    altNames: ["Instructional Design Models", "ID 모형", "교수설계모델"],
+    description:
+      "교수설계 절차를 단순화해 소개하는 표상. 일반적으로 과정의 흐름도를 시각적으로 제시하며, 설계 과제에서 수행해야 하는 단계들을 설명한다. 모든 모형은 어느 정도의 구조와 순서를 갖고 제시된 실재의 재현이며, 주제에 대한 이상적 관점을 반영한다(Richey, Klein & Tracey, 2011). ADDIE가 가장 보편적 틀이고 Dick & Carey(체제적 설계)·Kemp(순환적)·래피드 프로토타이핑(반복적) 등이 대표적이며, 어떤 모형을 고르는가는 프로젝트의 맥락·규모·불확실성에 따른 설계 판단의 문제다.",
+    tags: ["교수설계", "모형", "ADDIE"],
+    references: [
+      "Gustafson, K. L., & Branch, R. M. (2002). Survey of instructional development models (4th ed.). ERIC Clearinghouse on Information & Technology.",
+      AECT_REF(223),
+    ],
+  },
+  {
+    seedKey: "concept:sequencing",
+    name: "계열화",
+    aectTerm: "계열화",
+    altNames: ["Sequencing", "내용 계열화", "학습 계열"],
+    description:
+      "학습자가 학습목표에 도달하도록 돕기 위해 콘텐츠를 효율적으로 배열하는 일(Morrison, Ross, Kalman & Kemp, 2011). 콘텐츠를 어떻게 묶고 어떤 순서로 제시할지 결정하는 활동으로, 교수설계 지식기반의 핵심 영역이자 설계자의 가장 큰 관심사로 꼽힌다(Richey, Klein & Tracey, 2011). 주제 간 관계와 교수 단위의 크기에 따라 중요성이 좌우되며, Gagné의 학습위계(위계적 계열화), Reigeluth의 정교화 이론(단순→복잡), Bruner의 나선형 교육과정 등이 대표적 접근법이다.",
+    tags: ["교수설계", "계열화", "구조화"],
+    references: [
+      "Reigeluth, C. M. (1999). The elaboration theory: Guidance for scope and sequence decisions. In Instructional-design theories and models (Vol. 2, pp. 425-453). Lawrence Erlbaum.",
+      AECT_REF(372),
+    ],
+  },
+  {
+    seedKey: "concept:systems-approach",
+    name: "체제적 접근",
+    aectTerm: "체제적 접근",
+    altNames: ["Systems Approach", "체제 접근", "시스템 접근"],
+    description:
+      "교수 문제를 서로 연결된 요소들의 전체(체제)로 보고, 투입-과정-산출-피드백의 순환 속에서 분석·설계·평가하는 교수설계공학의 기본 관점. 일반체제이론에서 비롯되어, 부분의 합이 아닌 요소 간 상호작용으로 성과가 결정된다는 사고를 교수 개발에 적용한다. 목표-내용-방법-평가가 정렬된 하나의 체제로 다뤄지므로 한 요소의 변화는 다른 요소의 조정을 요구하고, 형성평가 피드백이 체제를 지속적으로 개선한다. 교수체제설계(ISD)와 ADDIE 계열 모형 전체의 철학적 토대다.",
+    tags: ["교수설계", "체제이론", "ISD"],
+    references: [
+      "Dick, W., Carey, L., & Carey, J. O. (2015). The systematic design of instruction (8th ed.). Pearson.",
+      AECT_REF(385),
+    ],
+  },
+  {
+    seedKey: "concept:programmed-instruction",
+    name: "프로그램 수업",
+    aectTerm: "프로그램 수업",
+    purifiedName: "프로그램화 교수학습",
+    altNames: ["Programed Instruction", "Programmed Instruction", "프로그램 학습"],
+    description:
+      "1950년대 중반 Skinner의 논문으로 각광받은 수업 방식. 수업을 프레임이라는 아주 작은 단계(종종 한두 문장의 정보)로 나누고, 각 프레임 끝에 괄호 채우기·단답형 질문에 응답하게 한 뒤, 곧바로 정답을 제시해 즉각적 피드백을 주는 세 가지가 핵심 특징이다. 올바른 반응 직후의 피드백이 긍정적 강화로 작동한다는 작동적 조건화 원리의 직접 적용이며, 모든 학습자가 같은 순서를 밟는 선형적 프로그램과 응답에 따라 경로가 갈라지는 Crowder의 내재적(분기형) 프로그램으로 나뉜다. 개별화 수업·CAI·적응학습으로 이어지는 계보의 출발점이다.",
+    tags: ["교수전략", "행동주의", "Skinner"],
+    references: [
+      "Skinner, B. F. (1958). Teaching machines. Science, 128(3330), 969-977.",
+      AECT_REF(340),
+    ],
+  },
+  {
+    seedKey: "concept:individualized-instruction",
+    name: "개별화 수업",
+    aectTerm: "개별화 수업",
+    altNames: ["Individualized Instruction", "개별화 교육", "개별 학습"],
+    description:
+      "학습자마다 다른 특성·요구·흥미에 부합하도록 속도·내용·교수적 처치를 조정한 경험을 제공하려는 수업 접근. 진도를 모니터링하고 성취 결과에 따라 다음 수업을 처방하는 순환이 기본 구조다. 표준화된 집단 교육에서 벗어나려는 시도는 20세기 초 Burk의 자기교수 단원, Washburne의 위네트카 계획까지 거슬러 오르며, 프로그램 수업의 등장과 함께 교육공학의 중심 주제가 되었다. 디지털 기술이 개별 학습자에게 시청각 매체를 원격 전달할 수 있게 되면서 활성화됐고, 오늘날 적응학습·AI 기반 개인화의 역사적 뿌리다.",
+    tags: ["교수전략", "개별화", "적응학습"],
+    references: [
+      "Keller, F. S. (1968). \"Good-bye, teacher...\". Journal of Applied Behavior Analysis, 1(1), 79-89.",
+      AECT_REF(198),
+    ],
+  },
+  {
+    seedKey: "concept:chunking",
+    name: "청킹",
+    aectTerm: "청킹",
+    altNames: ["Chunking", "덩이짓기", "묶음화"],
+    description:
+      "정보처리를 촉진하기 위해 콘텐츠를 소단위로 쪼개거나 개별 요소들을 의미 있는 그룹으로 묶는 미시적 교수전략. 청크는 '서로 강하게 관련되어 있으면서 다른 청크와는 약하게 관련된 개념들의 집합'(Cowan, 2001)이다. Miller(1956)의 단기기억 용량 연구(7±2)에서 창안된 개념으로, 이후 연구는 용량을 약 4개 청크로 보기도 한다. 낱개 정보를 유의미한 덩이로 재조직하면 작동기억에서 처리 가능한 정보량이 실질적으로 늘어나며(Sweller, 1994), 학습 콘텐츠 분할·화면 설계·마이크로러닝 설계의 근거가 된다.",
+    tags: ["인지", "미시전략", "작동기억"],
+    references: [
+      "Miller, G. A. (1956). The magical number seven, plus or minus two. Psychological Review, 63(2), 81-97.",
+      AECT_REF(67),
+    ],
+  },
+  {
+    seedKey: "concept:mnemonic",
+    name: "기억술",
+    aectTerm: "기억술",
+    altNames: ["Mnemonic", "연상기호", "니모닉"],
+    description:
+      "정보를 더 기억하기 쉽게 만드는 것을 유일한 목적으로 정보를 조직·부호화하는 전략(Bellezza, 1981). Bloom 분류체계의 기억 수준 학습을 위한 미시적 전략으로, 대개 시각적 이미지를 동반한다. 첫 글자 기록법(두문자어)·쇄기법(peg-word)·장소법·이야기 구성법·운문과 노래 만들기 등이 널리 쓰이는 기법이며, '빨주노초파남보'처럼 색깔 이름의 첫 글자를 활용하는 사례가 전형적이다. 무의미해 보이는 정보에 인위적 조직과 심상을 부여해 인출 단서를 만든다는 점에서 정교화 전략의 특수한 형태로 볼 수 있다.",
+    tags: ["인지", "미시전략", "기억"],
+    references: [
+      "Bellezza, F. S. (1981). Mnemonic devices: Classification, characteristics, and criteria. Review of Educational Research, 51(2), 247-275.",
+      AECT_REF(286),
+    ],
+  },
+  {
+    seedKey: "concept:practice",
+    name: "연습",
+    aectTerm: "연습",
+    altNames: ["Practice", "훈련", "반복 연습"],
+    description:
+      "학습자가 특정 기술의 일부 또는 전체를 반복 수행하도록 하는 교수 기법. 효과적이려면 수행에 대한 피드백이 반드시 동반되어야 한다. 이유는 다르지만 대부분의 교수이론이 연습을 강조한다 — 행동주의는 강화를 주려면 관찰 가능한 반응이 필요하다는 점에서, 정보처리이론은 폭넓고 다양한 연습이 장기기억 저장을 만든다는 점에서(Driscoll, 2005), 구성주의는 복잡하고 실제적인 환경 속 문제 기반 활동이 곧 연습이라는 점에서다. '연습은 학습을 증진시킨다'는 가장 단순한 원칙(Bransford et al., 1999) 위에, 전체 과제 대 부분 과제 연습, 전문성 개발을 위한 주도면밀한 연습(deliberate practice, Ericsson) 논의가 이어진다.",
+    tags: ["교수전략", "미시전략", "피드백"],
+    references: [
+      "Ericsson, K. A., Krampe, R. T., & Tesch-Römer, C. (1993). The role of deliberate practice in the acquisition of expert performance. Psychological Review, 100(3), 363-406.",
+      AECT_REF(324),
+    ],
+  },
+  {
+    seedKey: "concept:media-utilization",
+    name: "매체 활용",
+    aectTerm: "매체 활용",
+    altNames: ["Media Utilization", "미디어 활용", "매체 선정"],
+    description:
+      "교수설계 과정에서 방법의 선택과 동시에 이루어지는 매체 선택·활용 결정. 학습환경이라는 맥락 안에서 효과성뿐 아니라 실행가능성과 현실성(비용·접근성·운영)을 함께 고려해야 한다. 매체의 활용은 계열화와 상호작용성을 높이고 학습에 정서적·미적 요소를 더하는 수단이며(Seels, 2011), 효과적으로 쓰이면 학습자가 자신의 능력을 탐구·확장하게 하는 지식 창출의 자극제가 된다. '매체는 학습에 영향을 주지 않는 운반 수단인가'라는 Clark-Kozma 논쟁과, 시연을 통한 학습은 콘텐츠 관련 매체를 관찰할 때 강화된다는 Merrill의 으뜸원리가 이 개념을 둘러싼 대표 논의다.",
+    tags: ["매체", "교수설계", "선정"],
+    references: [
+      "Clark, R. E. (1983). Reconsidering research on learning from media. Review of Educational Research, 53(4), 445-459.",
+      AECT_REF(277),
+    ],
+  },
+  {
+    seedKey: "concept:mental-model-progression",
+    name: "정신모형 진전",
+    aectTerm: "정신모형 진전",
+    altNames: ["Mental Model Progression", "정신모형 계열화"],
+    description:
+      "사례 유형이나 문제·완성된 예제의 범주가 점진적으로 더 정교화된 지원 지식(개념적 모형→인과적 모형→목표계획 모형 같은 정신모형)이 되도록 배열하는 중간 수준의 계열화 접근법(van Merriënboer, 1997). 가장 단순하고 대표적이며 구체적인 아이디어에서 출발해, 이후 모형들이 이전 모형에 복잡성과 상세함을 더해 가며 정교화된다. 단순한 것에서 복잡한 것으로 나아간다는 점에서 Reigeluth의 정교화이론·전체-부분 접근법과 밀접하고, 4C/ID 같은 복잡한 학습 설계에서 지원 정보 계열화의 원리로 쓰인다.",
+    tags: ["교수설계", "계열화", "정신모형"],
+    references: [
+      "van Merriënboer, J. J. G. (1997). Training complex cognitive skills: A four-component instructional design model. Educational Technology Publications.",
+      AECT_REF(281),
+    ],
+  },
 ];
 
 // ─── 변인 (Variables) ─────────────────────────────────────────
